@@ -3,6 +3,7 @@ import cors from '@fastify/cors';
 import rateLimit from '@fastify/rate-limit';
 import helmet from '@fastify/helmet';
 import { config } from 'dotenv';
+import { authRoutes } from './routes/auth.js';
 import { keyRoutes } from './routes/keys.js';
 import { proxyRoutes } from './routes/proxy.js';
 
@@ -41,6 +42,7 @@ async function start() {
   app.get('/health', async () => ({ status: 'ok', service: 'zkvault' }));
 
   // API routes
+  await app.register(authRoutes, { prefix: '/api/v1/auth' });
   await app.register(keyRoutes, { prefix: '/api/v1/keys' });
   await app.register(proxyRoutes, { prefix: '/api/v1/proxy' });
 

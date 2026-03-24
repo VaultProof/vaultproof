@@ -41,7 +41,7 @@ describe('ZK Vault Integration Tests', () => {
     await prisma.user.upsert({
       where: { email: TEST_USER_EMAIL },
       update: {},
-      create: { id: TEST_USER_ID, email: TEST_USER_EMAIL },
+      create: { id: TEST_USER_ID, email: TEST_USER_EMAIL, passwordHash: '$2a$12$test' },
     });
     app = await buildApp();
   });
