@@ -3,6 +3,7 @@ import cors from '@fastify/cors';
 import rateLimit from '@fastify/rate-limit';
 import helmet from '@fastify/helmet';
 import { config } from 'dotenv';
+import { requireProxyAuth } from './middleware/proxy-auth.js';
 import { authRoutes } from './routes/auth.js';
 import { keyRoutes } from './routes/keys.js';
 import { proxyRoutes } from './routes/proxy.js';
@@ -18,19 +19,26 @@ async function start() {
 
   // Security headers
   await app.register(helmet, {
-    contentSecurityPolicy: false, // Widget needs to be embeddable
+    contentSecurityPolicy: false,
     crossOriginEmbedderPolicy: false,
   });
 
-  // CORS — restrict to known origins
+  // CORS
   await app.register(cors, {
     origin: ALLOWED_ORIGINS,
-    methods: ['GET', 'POST'],
+    methods: ['GET', 'POST', 'PUT', 'DELETE'],
     credentials: true,
   });
 
   // Rate limiting
   await app.register(rateLimit, { max: 100, timeWindow: '1 minute' });
+
+  // Proxy authentication — all /api/* routes require Worker signature
+  app.addHook('onRequest', async (request, reply) => {
+    if (request.url.startsWith('/api/')) {
+      await requireProxyAuth(request, reply);
+    }
+  });
 
   // Generic error handler — never leak internals
   app.setErrorHandler((error, request, reply) => {
@@ -39,7 +47,7 @@ async function start() {
     reply.status(code).send({ error: 'Internal server error' });
   });
 
-  // Health check (no auth)
+  // Health check (no proxy auth required)
   app.get('/health', async () => ({ status: 'ok', service: 'zkvault' }));
 
   // API routes
