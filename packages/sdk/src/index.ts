@@ -2,7 +2,7 @@
  * @zkvault/sdk — Simple SDK for storing and using API keys through ZK Vault.
  *
  * Usage:
- *   const vault = new ZKVault('https://dashboard-production-b76c.up.railway.app');
+ *   const vault = new ZKVault('https://zkvault.riallabs.com');
  *   await vault.login('user@example.com', 'password');
  *   const key = await vault.store('sk-my-openai-key', 'openai', 'Production');
  *   const response = await vault.proxy(key.id, '/v1/chat/completions', {
@@ -14,7 +14,7 @@
 import { splitString, serializeShare } from '@zkvault/shamir';
 
 export interface ZKVaultConfig {
-  /** Base URL of the ZK Vault API (e.g., 'https://dashboard-production-b76c.up.railway.app') */
+  /** Base URL of the ZK Vault API (e.g., 'https://zkvault.riallabs.com') */
   apiUrl: string;
   /** App ID for access control (default: 'sdk') */
   appId?: string;
