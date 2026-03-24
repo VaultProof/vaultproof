@@ -1,0 +1,64 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id        String    @id @default(uuid())
+  email     String    @unique
+  createdAt DateTime  @default(now()) @map("created_at")
+  keySlots  KeySlot[]
+
+  @@map("users")
+}
+
+model KeySlot {
+  id               String      @id @default(uuid())
+  userId           String      @map("user_id")
+  user             User        @relation(fields: [userId], references: [id])
+  provider         String      // "openai", "anthropic", "google", etc.
+  label            String      // user-friendly name
+  share1Encrypted  Bytes       @map("share1_encrypted")
+  vaultCommitment  String      @map("vault_commitment")
+  authAppsRoot     String      @map("auth_apps_root")
+  status           String      @default("ACTIVE")
+  createdAt        DateTime    @default(now()) @map("created_at")
+  rotatedAt        DateTime?   @map("rotated_at")
+  accessLogs       AccessLog[]
+  appGrants        AppGrant[]
+
+  @@map("key_slots")
+}
+
+model AppGrant {
+  id         String    @id @default(uuid())
+  keySlotId  String    @map("key_slot_id")
+  keySlot    KeySlot   @relation(fields: [keySlotId], references: [id])
+  appId      String    @map("app_id")
+  appName    String    @map("app_name")
+  permissions String   @default("{}")
+  grantedAt  DateTime  @default(now()) @map("granted_at")
+  revokedAt  DateTime? @map("revoked_at")
+
+  @@map("app_grants")
+}
+
+model AccessLog {
+  id        String   @id @default(uuid())
+  keySlotId String   @map("key_slot_id")
+  keySlot   KeySlot  @relation(fields: [keySlotId], references: [id])
+  appId     String   @map("app_id")
+  action    String   // "api_call", "key_rotation", "grant", "revoke"
+  zkProof   String   @map("zk_proof")
+  nullifier String   @unique
+  timestamp DateTime @default(now())
+  metadata  String?
+
+  @@map("access_logs")
+}
+
+// KeyStatus values: "ACTIVE", "ROTATED", "REVOKED" (stored as String for SQLite compat)
