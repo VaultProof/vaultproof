@@ -2,7 +2,8 @@
 
 export { ZKKeyConnect } from './ZKKeyConnect.js';
 export { VaultClient } from './vault-client.js';
-export { initZKEngine, isZKReady, generateZKProof } from './zk-engine.js';
+export { initZKEngine, isZKReady, generateZKProof, randomField, buildAppMerkleTree } from './zk-engine.js';
+export { poseidon2Hash, initPoseidon, isPoseidonReady } from './poseidon.js';
 export { PROVIDERS } from './types.js';
 export type {
   Provider,

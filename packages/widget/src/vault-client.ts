@@ -3,11 +3,11 @@ import {
   initZKEngine,
   isZKReady,
   generateZKProof,
-  fieldHash,
   randomField,
   buildAppMerkleTree,
   type ProofInputs,
 } from './zk-engine.js';
+import { poseidon2Hash, initPoseidon } from './poseidon.js';
 
 export interface VaultConfig {
   vaultUrl: string;
@@ -54,6 +54,7 @@ export class VaultClient {
    * Call this early (e.g., on page load) so proof generation is instant later.
    */
   async warmup(): Promise<boolean> {
+    await initPoseidon();
     return initZKEngine();
   }
 
@@ -76,14 +77,14 @@ export class VaultClient {
     const slotSecret = randomField();
 
     // 3. Compute share hash (field-compatible hash of Share 2)
-    const shareHash = fieldHash(share2Serialized, '0');
+    const shareHash = await poseidon2Hash(share2Serialized, '0');
 
     // 4. Compute vault commitment: Poseidon(slotSecret, shareHash)
-    const vaultCommitment = fieldHash(slotSecret, shareHash);
+    const vaultCommitment = await poseidon2Hash(slotSecret, shareHash);
 
     // 5. Build authorized apps Merkle tree (initially just this app)
-    const appIdHash = fieldHash(this.config.appId, '0');
-    const { root: authorizedAppsRoot } = buildAppMerkleTree(
+    const appIdHash = await poseidon2Hash(this.config.appId, '0');
+    const { root: authorizedAppsRoot } = await buildAppMerkleTree(
       [this.config.appId],
       this.config.appId
     );
@@ -145,15 +146,15 @@ export class VaultClient {
     // 1. Generate fresh nonce
     const nonce = randomField();
 
-    // 2. Compute nullifier: fieldHash(slotSecret, nonce)
-    const nullifier = fieldHash(keyInfo.slotSecret, nonce);
+    // 2. Compute nullifier: await poseidon2Hash(slotSecret, nonce)
+    const nullifier = await poseidon2Hash(keyInfo.slotSecret, nonce);
 
     // 3. Compute app ID hash
-    const appIdHash = fieldHash(this.config.appId, '0');
+    const appIdHash = await poseidon2Hash(this.config.appId, '0');
 
     // 4. Build Merkle proof for this app
     const apps = keyInfo.authorizedApps || [this.config.appId];
-    const { root, path, indices } = buildAppMerkleTree(apps, this.config.appId);
+    const { root, path, indices } = await buildAppMerkleTree(apps, this.config.appId);
 
     // 5. Generate real ZK proof
     let zkProof: string;

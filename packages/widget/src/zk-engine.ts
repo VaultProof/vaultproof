@@ -114,22 +114,13 @@ export async function generateZKProof(inputs: ProofInputs): Promise<GeneratedPro
 }
 
 /**
- * Compute a Poseidon-compatible hash of two field elements.
- * Uses the circuit's poseidon_hash function via witness execution.
+ * Compute Poseidon2 hash of two field elements.
+ * Uses the SAME Poseidon2 implementation as the Noir circuit via @aztec/bb.js.
  *
- * For standalone hashing outside the circuit, we use a simple
- * field-compatible hash. In production, this should use the same
- * Poseidon2 implementation as the Noir circuit.
+ * IMPORTANT: This is async because it may need to initialize WASM on first call.
+ * Use fieldHashSync() only after initPoseidon() has been called.
  */
-export function fieldHash(a: string, b: string): string {
-  // Simple deterministic hash that produces a field element
-  // This is a placeholder — in production, use actual Poseidon2 WASM
-  const combined = BigInt(a) ^ BigInt(b);
-  // Keep within Noir's field size (BN254)
-  const BN254_MODULUS = BigInt('21888242871839275222246405745257275088548364400416034343698204186575808495617');
-  const result = ((combined % BN254_MODULUS) + BN254_MODULUS) % BN254_MODULUS;
-  return result.toString();
-}
+export { poseidon2Hash as fieldHashAsync, poseidon2HashSync as fieldHash, initPoseidon, isPoseidonReady } from './poseidon.js';
 
 /**
  * Generate a random field element suitable for Noir circuits.
@@ -146,16 +137,21 @@ export function randomField(): string {
 }
 
 /**
- * Build a simple Merkle tree for authorized apps.
+ * Build a Merkle tree for authorized apps using real Poseidon2 hashes.
  * Returns the root and the membership proof for a given app.
  */
-export function buildAppMerkleTree(appIds: string[], targetAppId: string): {
+export async function buildAppMerkleTree(appIds: string[], targetAppId: string): Promise<{
   root: string;
   path: string[];
   indices: number[];
-} {
+}> {
+  const { poseidon2Hash } = await import('./poseidon.js');
+
   // Hash each app ID to get leaf
-  const leaves = appIds.map((id) => fieldHash(id, '0'));
+  const leaves: string[] = [];
+  for (const id of appIds) {
+    leaves.push(await poseidon2Hash(id, '0'));
+  }
 
   // Pad to power of 2
   const depth = Math.max(1, Math.ceil(Math.log2(Math.max(leaves.length, 2))));
@@ -165,7 +161,7 @@ export function buildAppMerkleTree(appIds: string[], targetAppId: string): {
   }
 
   // Find target index
-  const targetLeaf = fieldHash(targetAppId, '0');
+  const targetLeaf = await poseidon2Hash(targetAppId, '0');
   let targetIdx = paddedLeaves.indexOf(targetLeaf);
   if (targetIdx === -1) throw new Error('App not in authorized list');
 
@@ -182,7 +178,7 @@ export function buildAppMerkleTree(appIds: string[], targetAppId: string): {
     // Build next level
     const nextLevel: string[] = [];
     for (let i = 0; i < currentLevel.length; i += 2) {
-      nextLevel.push(fieldHash(currentLevel[i], currentLevel[i + 1] || '0'));
+      nextLevel.push(await poseidon2Hash(currentLevel[i], currentLevel[i + 1] || '0'));
     }
     currentLevel = nextLevel;
     targetIdx = Math.floor(targetIdx / 2);
