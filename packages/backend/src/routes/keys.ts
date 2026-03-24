@@ -12,8 +12,9 @@ const prisma = new PrismaClient();
 const storeKeySchema = z.object({
   provider: z.string().min(1).max(50),
   label: z.string().max(100).optional(),
-  share1: z.string().min(1), // base64-encoded Share 1
+  share1: z.string().min(1),
   vaultCommitment: z.string().min(1),
+  authAppsRoot: z.string().optional(),
   appId: z.string().min(1).max(100).optional(),
   appName: z.string().max(100).optional(),
 });
@@ -31,7 +32,7 @@ export async function keyRoutes(app: FastifyInstance) {
       return reply.status(400).send({ error: 'Invalid input', details: parsed.error.issues });
     }
 
-    const { provider, label, share1, vaultCommitment, appId, appName } = parsed.data;
+    const { provider, label, share1, vaultCommitment, authAppsRoot, appId, appName } = parsed.data;
     const userId = request.auth!.userId;
 
     // Check tier key slot limit (skip in test environment)
@@ -54,7 +55,7 @@ export async function keyRoutes(app: FastifyInstance) {
         label: label || `${provider} key`,
         share1Encrypted: new Uint8Array(encrypt(Buffer.from(share1, 'utf-8'))),
         vaultCommitment,
-        authAppsRoot: '',
+        authAppsRoot: authAppsRoot || '',
       },
     });
 
@@ -188,5 +189,77 @@ export async function keyRoutes(app: FastifyInstance) {
     });
 
     return { logs };
+  });
+
+  // Rotate key (auth: must own it)
+  app.post('/:keySlotId/rotate', { preHandler: requireAuth }, async (request, reply) => {
+    const { keySlotId } = request.params as { keySlotId: string };
+    const userId = request.auth!.userId;
+
+    const rotateSchema = z.object({
+      share1: z.string().min(1),
+      vaultCommitment: z.string().min(1),
+      authAppsRoot: z.string().optional(),
+    });
+
+    const parsed = rotateSchema.safeParse(request.body);
+    if (!parsed.success) {
+      return reply.status(400).send({ error: 'Invalid input' });
+    }
+
+    const slot = await prisma.keySlot.findUnique({ where: { id: keySlotId } });
+    if (!slot) return reply.status(404).send({ error: 'Key slot not found' });
+    if (slot.userId !== userId) return reply.status(403).send({ error: 'Not your key slot' });
+    if (slot.status !== 'ACTIVE') return reply.status(400).send({ error: 'Key slot not active' });
+
+    await prisma.keySlot.update({
+      where: { id: keySlotId },
+      data: {
+        share1Encrypted: new Uint8Array(encrypt(Buffer.from(parsed.data.share1, 'utf-8'))),
+        vaultCommitment: parsed.data.vaultCommitment,
+        authAppsRoot: parsed.data.authAppsRoot || slot.authAppsRoot,
+        rotatedAt: new Date(),
+      },
+    });
+
+    // Log rotation event
+    await prisma.accessLog.create({
+      data: {
+        keySlotId,
+        appId: 'system',
+        action: 'key_rotation',
+        zkProof: 'rotation',
+        nullifier: `rotation-${keySlotId}-${Date.now()}`,
+        metadata: JSON.stringify({ rotatedAt: new Date().toISOString() }),
+      },
+    });
+
+    return { status: 'rotated' };
+  });
+
+  // Export logs as CSV (auth: must own the key slot)
+  app.get('/:keySlotId/logs/export', { preHandler: requireAuth }, async (request, reply) => {
+    const { keySlotId } = request.params as { keySlotId: string };
+    const userId = request.auth!.userId;
+
+    const slot = await prisma.keySlot.findUnique({ where: { id: keySlotId } });
+    if (!slot) return reply.status(404).send({ error: 'Key slot not found' });
+    if (slot.userId !== userId) return reply.status(403).send({ error: 'Not your key slot' });
+
+    const logs = await prisma.accessLog.findMany({
+      where: { keySlotId },
+      orderBy: { timestamp: 'desc' },
+      take: 10000,
+    });
+
+    const csv = 'timestamp,action,appId,nullifier,metadata\n' +
+      logs.map((l) =>
+        `${l.timestamp.toISOString()},${l.action},${l.appId},${l.nullifier},"${(l.metadata || '').replace(/"/g, '""')}"`
+      ).join('\n');
+
+    reply
+      .header('Content-Type', 'text/csv')
+      .header('Content-Disposition', `attachment; filename="zkvault-logs-${keySlotId}.csv"`)
+      .send(csv);
   });
 }

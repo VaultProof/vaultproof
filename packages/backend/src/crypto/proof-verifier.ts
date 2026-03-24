@@ -84,8 +84,12 @@ export async function verifyProof(
     }
   }
 
-  // Placeholder: accept any non-empty proof string
-  // This is the MVP fallback — real verification is above
+  // Placeholder fallback — controlled by env var
+  if (process.env.REQUIRE_REAL_PROOFS === 'true') {
+    return { valid: false, reason: 'Real proof required but Noir verifier not available' };
+  }
+
+  // MVP fallback: accept non-empty proof strings
   if (!proofHex || proofHex.length < 10) {
     return { valid: false, reason: 'Proof too short' };
   }
