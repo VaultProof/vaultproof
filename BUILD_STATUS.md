@@ -3,6 +3,58 @@
 **Last Updated:** 2026-03-24
 **Total Tests:** 35/35 passing (zero failures)
 
+## Full Feature Inventory (2026-03-24)
+
+### Production Deployment
+- **Backend API:** `dashboard-production-b76c.up.railway.app` (Railway)
+- **Dashboard:** `rial-labs.web.app/zkvault/dashboard/` (Firebase)
+- **Landing Page:** `rial-labs.web.app/zkvault/` (Firebase)
+- **Database:** Supabase PostgreSQL (pooler connection)
+- **GitHub:** `github.com/windsurftemplate/zkvault` (private)
+
+### API Endpoints (15 total)
+```
+Auth:
+  POST /api/v1/auth/register     — create account
+  POST /api/v1/auth/login        — get JWT token
+  GET  /api/v1/auth/me           — current user profile
+  PUT  /api/v1/auth/password     — change password
+  DELETE /api/v1/auth/account    — delete account + all data
+
+Keys:
+  POST /api/v1/keys/store        — store Shamir-split key
+  GET  /api/v1/keys/list         — list user's keys
+  POST /api/v1/keys/revoke/:id   — revoke key (zeros Share 1)
+  POST /api/v1/keys/:id/grant    — grant app access
+  POST /api/v1/keys/:id/revoke-app/:appId — revoke app access
+  GET  /api/v1/keys/:id/logs     — access logs for key
+  POST /api/v1/keys/:id/rotate   — rotate key with new share
+  GET  /api/v1/keys/:id/logs/export — CSV export for compliance
+
+Proxy:
+  POST /api/v1/proxy/call        — proxied API call with ZK proof + SSE streaming
+
+Stats:
+  GET  /api/v1/stats/overview    — total keys, calls, error rate
+  GET  /api/v1/stats/usage       — calls per day (chart data)
+  GET  /api/v1/stats/by-key      — per-key breakdown
+```
+
+### Dashboard Pages (5)
+- Login/Register (`login.html`)
+- Overview with stats + charts (`index.html`)
+- Keys with search/filter/test/snippets (`keys.html`)
+- Access Logs with filters + CSV export (`logs.html`)
+- Settings: profile, password, plan, API token, delete account (`settings.html`)
+
+### ZK Proof Engine
+- Noir circuit compiled (14KB artifact)
+- Browser-side proof generation via `@noir-lang/noir_js` + Barretenberg WASM (~11MB, lazy loaded)
+- Field-compatible hashing for Poseidon commitments
+- Merkle tree builder for app authorization
+- Server-side proof verification with Barretenberg
+- Controllable via `REQUIRE_REAL_PROOFS` env var
+
 ## Latest Session Log (2026-03-24)
 
 ### P0 Completed
