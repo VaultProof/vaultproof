@@ -38,20 +38,7 @@ async function start() {
   });
 
   // Health check (no auth)
-  app.get('/health', async () => {
-    // Test DB connection
-    let dbStatus = 'unknown';
-    try {
-      const { PrismaClient } = await import('@prisma/client');
-      const prisma = new PrismaClient();
-      await prisma.$queryRawUnsafe('SELECT 1');
-      dbStatus = 'connected';
-      await prisma.$disconnect();
-    } catch (e: any) {
-      dbStatus = `error: ${e.message?.slice(0, 200)}`;
-    }
-    return { status: 'ok', service: 'zkvault', db: dbStatus, env: { hasDbUrl: !!process.env.DATABASE_URL, hasEncKey: !!process.env.VAULT_ENCRYPTION_KEY, hasJwtSecret: !!process.env.JWT_SECRET } };
-  });
+  app.get('/health', async () => ({ status: 'ok', service: 'zkvault' }));
 
   // API routes
   await app.register(keyRoutes, { prefix: '/api/v1/keys' });
