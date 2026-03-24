@@ -6,6 +6,7 @@ import { config } from 'dotenv';
 import { authRoutes } from './routes/auth.js';
 import { keyRoutes } from './routes/keys.js';
 import { proxyRoutes } from './routes/proxy.js';
+import { statsRoutes } from './routes/stats.js';
 
 config();
 
@@ -45,6 +46,7 @@ async function start() {
   await app.register(authRoutes, { prefix: '/api/v1/auth' });
   await app.register(keyRoutes, { prefix: '/api/v1/keys' });
   await app.register(proxyRoutes, { prefix: '/api/v1/proxy' });
+  await app.register(statsRoutes, { prefix: '/api/v1/stats' });
 
   await app.listen({ port: PORT, host: '0.0.0.0' });
   console.log(`ZK Vault backend running on port ${PORT}`);

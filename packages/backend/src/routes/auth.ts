@@ -2,7 +2,7 @@ import type { FastifyInstance } from 'fastify';
 import { PrismaClient } from '@prisma/client';
 import { z } from 'zod';
 import bcrypt from 'bcryptjs';
-import { generateToken } from '../middleware/auth.js';
+import { generateToken, requireAuth } from '../middleware/auth.js';
 
 const prisma = new PrismaClient();
 
@@ -63,5 +63,61 @@ export async function authRoutes(app: FastifyInstance) {
     const token = generateToken(user.id, user.email);
 
     return { token, user: { id: user.id, email: user.email } };
+  });
+
+  // Get current user
+  app.get('/me', { preHandler: requireAuth }, async (request) => {
+    const user = await prisma.user.findUnique({
+      where: { id: request.auth!.userId },
+      select: { id: true, email: true, createdAt: true },
+    });
+    if (!user) return { error: 'User not found' };
+    return { user };
+  });
+
+  // Change password
+  app.put('/password', { preHandler: requireAuth }, async (request, reply) => {
+    const schema = z.object({
+      currentPassword: z.string().min(1),
+      newPassword: z.string().min(8).max(100),
+    });
+
+    const parsed = schema.safeParse(request.body);
+    if (!parsed.success) {
+      return reply.status(400).send({ error: 'Invalid input' });
+    }
+
+    const user = await prisma.user.findUnique({ where: { id: request.auth!.userId } });
+    if (!user) return reply.status(404).send({ error: 'User not found' });
+
+    const valid = await bcrypt.compare(parsed.data.currentPassword, user.passwordHash);
+    if (!valid) return reply.status(401).send({ error: 'Current password is incorrect' });
+
+    const newHash = await bcrypt.hash(parsed.data.newPassword, 12);
+    await prisma.user.update({
+      where: { id: user.id },
+      data: { passwordHash: newHash },
+    });
+
+    return { status: 'password_changed' };
+  });
+
+  // Delete account
+  app.delete('/account', { preHandler: requireAuth }, async (request) => {
+    const userId = request.auth!.userId;
+
+    // Delete all data in order (foreign key constraints)
+    const keySlots = await prisma.keySlot.findMany({ where: { userId }, select: { id: true } });
+    const keySlotIds = keySlots.map((k) => k.id);
+
+    if (keySlotIds.length > 0) {
+      await prisma.accessLog.deleteMany({ where: { keySlotId: { in: keySlotIds } } });
+      await prisma.appGrant.deleteMany({ where: { keySlotId: { in: keySlotIds } } });
+      await prisma.keySlot.deleteMany({ where: { userId } });
+    }
+
+    await prisma.user.delete({ where: { id: userId } });
+
+    return { status: 'account_deleted' };
   });
 }
