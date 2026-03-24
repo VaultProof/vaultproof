@@ -10,7 +10,8 @@
     "skipLibCheck": true,
     "declaration": true,
     "sourceMap": true,
-    "jsx": "react-jsx"
+    "jsx": "react-jsx",
+    "resolveJsonModule": true
   },
   "include": ["src/**/*"]
 }
