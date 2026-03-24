@@ -6,7 +6,7 @@
     "apps/*"
   ],
   "scripts": {
-    "build": "turbo run build --filter=@zkvault/shamir --filter=@zkvault/backend",
+    "build": "turbo run build --filter=@zkvault/shamir --filter=@zkvault/backend --force",
     "start": "node packages/backend/dist/index.js",
     "dev": "turbo run dev",
     "test": "turbo run test",
