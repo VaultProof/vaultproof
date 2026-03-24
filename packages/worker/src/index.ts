@@ -75,7 +75,6 @@ export default {
         const headers = forwardHeaders(request.headers);
         headers.set('X-Proxy-Signature', signature);
         headers.set('X-Proxy-Timestamp', timestamp);
-        headers.set('X-Proxy-Secret', proxySecret); // Backend validates this matches its env
         headers.set('X-Forwarded-For', clientIp);
 
         const backendRequest = new Request(`${backendUrl}${url.pathname}${url.search}`, {
