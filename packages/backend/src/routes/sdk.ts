@@ -23,7 +23,6 @@ import { encrypt, decrypt, zeroBuffer } from '../crypto/encryption.js';
 import { encryptShare2, decryptShare2 } from '../crypto/share2-encryption.js';
 import { authenticateDevKey } from './developer-keys.js';
 import { randomBytes } from 'crypto';
-import axios from 'axios';
 
 const prisma = new PrismaClient();
 
@@ -159,29 +158,65 @@ export async function sdkRoutes(app: FastifyInstance) {
     const startTime = Date.now();
 
     try {
-      const response = await axios({
-        method: (method || 'POST') as any,
-        url: `${providerUrl}${path}`,
-        headers: { ...reqHeaders, ...authHeader, 'Content-Type': 'application/json' },
-        data: reqBody,
-        timeout: 30000,
-        validateStatus: () => true,
+      const upstreamUrl = `${providerUrl}${path}`;
+      const fetchHeaders: Record<string, string> = {
+        ...reqHeaders,
+        ...authHeader,
+        'Content-Type': 'application/json',
+      };
+
+      const response = await fetch(upstreamUrl, {
+        method: (method || 'POST') as string,
+        headers: fetchHeaders,
+        body: reqBody ? JSON.stringify(reqBody) : undefined,
       });
 
+      // Zero the key immediately after sending the request
       apiKey = '';
 
-      await prisma.accessLog.create({
+      const contentType = response.headers.get('content-type') || '';
+      const latencyMs = Date.now() - startTime;
+
+      // Log the call (non-blocking)
+      prisma.accessLog.create({
         data: {
           keySlotId: keyId,
           appId: (request as any).devAuth.keyId,
           action: 'api_call',
           zkProof: 'sdk-authenticated',
           nullifier: `sdk-${randomBytes(16).toString('hex')}`,
-          metadata: JSON.stringify({ endpoint: path, status_code: response.status, latency_ms: Date.now() - startTime }),
+          metadata: JSON.stringify({ endpoint: path, status_code: response.status, latency_ms: latencyMs }),
         },
-      });
+      }).catch(() => {});
 
-      return reply.status(response.status).send(response.data);
+      // SSE streaming — forward chunks as they arrive
+      if (contentType.includes('text/event-stream') && response.body) {
+        reply.raw.writeHead(response.status, {
+          'Content-Type': 'text/event-stream',
+          'Cache-Control': 'no-cache',
+          'Connection': 'keep-alive',
+        });
+
+        const reader = response.body.getReader();
+        const decoder = new TextDecoder();
+
+        try {
+          while (true) {
+            const { done, value } = await reader.read();
+            if (done) break;
+            reply.raw.write(decoder.decode(value, { stream: true }));
+          }
+        } catch {
+          // Client disconnected or upstream error
+        } finally {
+          reply.raw.end();
+        }
+        return;
+      }
+
+      // Standard JSON response
+      const data = await response.text();
+      reply.status(response.status).header('Content-Type', contentType || 'application/json').send(data);
     } catch {
       apiKey = '';
       return reply.status(502).send({ error: 'Upstream API error' });
