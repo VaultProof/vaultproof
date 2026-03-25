@@ -173,8 +173,10 @@
                 <a href="#shamir" class="nav-link block text-sm text-gray-500 py-1.5 px-3 rounded-r pl-6">Shamir Secret Sharing</a>
                 <a href="#zk-proofs" class="nav-link block text-sm text-gray-500 py-1.5 px-3 rounded-r pl-6">Zero-Knowledge Proofs</a>
 
-                <div class="pt-4 pb-1 px-3 text-[0.6875rem] font-semibold text-gray-600 uppercase tracking-wider">References</div>
+                <div class="pt-4 pb-1 px-3 text-[0.6875rem] font-semibold text-gray-600 uppercase tracking-wider">Packages</div>
+                <a href="#packages" class="nav-link block text-sm text-gray-500 py-1.5 px-3 rounded-r">Package Overview</a>
                 <a href="#sdk-reference" class="nav-link block text-sm text-gray-500 py-1.5 px-3 rounded-r">SDK Reference</a>
+                <a href="#connect-widget" class="nav-link block text-sm text-gray-500 py-1.5 px-3 rounded-r">Connect Widget</a>
                 <a href="#cli-reference" class="nav-link block text-sm text-gray-500 py-1.5 px-3 rounded-r">CLI Reference</a>
                 <a href="#dashboard" class="nav-link block text-sm text-gray-500 py-1.5 px-3 rounded-r">Dashboard</a>
                 <a href="#api-reference" class="nav-link block text-sm text-gray-500 py-1.5 px-3 rounded-r">API Reference</a>
@@ -561,6 +563,65 @@ $ vaultproof store -h</pre>
 
 
             <!-- ============================================================ -->
+            <!-- PACKAGES OVERVIEW -->
+            <!-- ============================================================ -->
+            <section id="packages" class="mb-20">
+                <h2 class="text-3xl font-bold text-white mb-2">Packages</h2>
+                <p class="text-gray-500 mb-8">VaultProof ships 4 npm packages. Install only the one you need -- dependencies are bundled automatically.</p>
+
+                <div class="space-y-4 mb-8">
+                    <div class="endpoint-card">
+                        <div class="flex items-baseline gap-3 mb-2">
+                            <code class="font-mono text-sm text-vp-accent font-semibold">@vaultproof/sdk</code>
+                            <span class="text-xs text-gray-600">Most developers use this</span>
+                        </div>
+                        <p class="text-gray-400 text-sm mb-3">JavaScript/TypeScript library you <code class="font-mono text-xs text-vp-accent">import</code> in your app. Handles Shamir splitting, encryption, and proxied API calls. Includes <code class="font-mono text-xs">@vaultproof/shamir</code> as a dependency.</p>
+                        <div class="code-block">
+                            <div class="code-header">install</div>
+<pre class="text-gray-300">npm install @vaultproof/sdk</pre>
+                        </div>
+                    </div>
+
+                    <div class="endpoint-card">
+                        <div class="flex items-baseline gap-3 mb-2">
+                            <code class="font-mono text-sm text-vp-accent font-semibold">@vaultproof/cli</code>
+                            <span class="text-xs text-gray-600">Terminal &amp; CI/CD</span>
+                        </div>
+                        <p class="text-gray-400 text-sm mb-3">Command-line tool for managing keys from your terminal, shell scripts, or CI/CD pipelines. Same backend, different interface. Includes <code class="font-mono text-xs">@vaultproof/shamir</code> as a dependency.</p>
+                        <div class="code-block">
+                            <div class="code-header">install</div>
+<pre class="text-gray-300">npm install -g @vaultproof/cli</pre>
+                        </div>
+                    </div>
+
+                    <div class="endpoint-card">
+                        <div class="flex items-baseline gap-3 mb-2">
+                            <code class="font-mono text-sm text-vp-accent font-semibold">@vaultproof/connect</code>
+                            <span class="text-xs text-gray-600">Embed in your app</span>
+                        </div>
+                        <p class="text-gray-400 text-sm mb-3">Drop-in React component for apps that need "Bring Your Own Key" (BYOK). Users paste their API key into your app, the widget splits it with Shamir + generates a ZK proof, and sends encrypted shares to VaultProof. Your app never sees the raw key.</p>
+                        <div class="code-block">
+                            <div class="code-header">install</div>
+<pre class="text-gray-300">npm install @vaultproof/connect</pre>
+                        </div>
+                    </div>
+
+                    <div class="endpoint-card">
+                        <div class="flex items-baseline gap-3 mb-2">
+                            <code class="font-mono text-sm text-vp-accent font-semibold">@vaultproof/shamir</code>
+                            <span class="text-xs text-gray-600">Internal -- rarely needed directly</span>
+                        </div>
+                        <p class="text-gray-400 text-sm">The Shamir Secret Sharing engine over GF(256). Bundled inside the SDK, CLI, and Connect widget. Only install this directly if you want raw splitting without VaultProof infrastructure.</p>
+                    </div>
+                </div>
+
+                <div class="callout-warn">
+                    <p class="text-sm text-amber-200"><strong class="text-amber-300">You don't need to install multiple packages.</strong> Each one includes <code class="font-mono text-xs">@vaultproof/shamir</code> automatically. Just pick the interface that fits your workflow.</p>
+                </div>
+            </section>
+
+
+            <!-- ============================================================ -->
             <!-- SECTION 4: SDK REFERENCE -->
             <!-- ============================================================ -->
             <section id="sdk-reference" class="mb-20">
@@ -762,6 +823,137 @@ $ vaultproof store -h</pre>
                                     <td class="text-gray-500"><code class="font-mono text-xs">api.together.xyz</code></td>
                                     <td><code class="font-mono text-xs">Authorization: Bearer</code></td>
                                 </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </section>
+
+
+            <!-- ============================================================ -->
+            <!-- CONNECT WIDGET -->
+            <!-- ============================================================ -->
+            <section id="connect-widget" class="mb-20">
+                <h2 class="text-3xl font-bold text-white mb-2">Connect Widget</h2>
+                <p class="text-gray-500 mb-8">A drop-in React component for apps that need "Bring Your Own Key". Your users paste their API key, the widget handles everything else.</p>
+
+                <div class="mb-8">
+                    <h3 class="text-lg font-semibold text-white mb-4">Installation</h3>
+                    <div class="code-block">
+                        <div class="code-header">terminal</div>
+<pre class="text-gray-300"><span class="str">npm install @vaultproof/connect</span></pre>
+                    </div>
+                    <p class="text-gray-500 text-sm mt-3">Requires React 18+ as a peer dependency.</p>
+                </div>
+
+                <div class="mb-8">
+                    <h3 class="text-lg font-semibold text-white mb-4">Basic Usage</h3>
+                    <div class="code-block">
+                        <div class="code-header">App.tsx</div>
+<pre class="text-gray-300"><span class="kw">import</span> { ZKKeyConnect } <span class="kw">from</span> <span class="str">'@vaultproof/connect'</span>
+
+<span class="kw">function</span> <span class="fn">Settings</span>() {
+  <span class="kw">return</span> (
+    &lt;<span class="fn">ZKKeyConnect</span>
+      <span class="typ">vaultUrl</span>=<span class="str">"https://api.vaultproof.dev"</span>
+      <span class="typ">appId</span>=<span class="str">"my-app-id"</span>
+      <span class="typ">appName</span>=<span class="str">"My App"</span>
+      <span class="typ">userId</span>={currentUser.id}
+      <span class="typ">providers</span>={[<span class="str">'openai'</span>, <span class="str">'anthropic'</span>]}
+      <span class="typ">onSuccess</span>={(keyId, provider) =&gt; {
+        console.log(<span class="str">`Key stored: ${keyId} (${provider})`</span>)
+      }}
+      <span class="typ">onError</span>={(error) =&gt; console.error(error)}
+      <span class="typ">theme</span>=<span class="str">"dark"</span>
+    /&gt;
+  )
+}</pre>
+                    </div>
+                </div>
+
+                <div class="mb-8">
+                    <h3 class="text-lg font-semibold text-white mb-4">Props</h3>
+                    <div class="bg-vp-surface border border-vp-border rounded-xl overflow-hidden">
+                        <table class="doc-table">
+                            <thead><tr><th>Prop</th><th>Type</th><th>Required</th><th>Description</th></tr></thead>
+                            <tbody>
+                                <tr>
+                                    <td><code class="font-mono text-xs text-vp-accent">vaultUrl</code></td>
+                                    <td><code class="font-mono text-xs">string</code></td>
+                                    <td>Yes</td>
+                                    <td>VaultProof API URL (<code class="font-mono text-xs">https://api.vaultproof.dev</code>)</td>
+                                </tr>
+                                <tr>
+                                    <td><code class="font-mono text-xs text-vp-accent">appId</code></td>
+                                    <td><code class="font-mono text-xs">string</code></td>
+                                    <td>Yes</td>
+                                    <td>Your app's unique identifier (for app grant tracking)</td>
+                                </tr>
+                                <tr>
+                                    <td><code class="font-mono text-xs text-vp-accent">appName</code></td>
+                                    <td><code class="font-mono text-xs">string</code></td>
+                                    <td>Yes</td>
+                                    <td>Your app's display name (shown in dashboard)</td>
+                                </tr>
+                                <tr>
+                                    <td><code class="font-mono text-xs text-vp-accent">userId</code></td>
+                                    <td><code class="font-mono text-xs">string</code></td>
+                                    <td>Yes</td>
+                                    <td>The current user's ID in your system</td>
+                                </tr>
+                                <tr>
+                                    <td><code class="font-mono text-xs text-vp-accent">providers</code></td>
+                                    <td><code class="font-mono text-xs">string[]</code></td>
+                                    <td>No</td>
+                                    <td>Which providers to show. Default: all (<code class="font-mono text-xs">'openai'</code>, <code class="font-mono text-xs">'anthropic'</code>, <code class="font-mono text-xs">'google'</code>, <code class="font-mono text-xs">'together'</code>)</td>
+                                </tr>
+                                <tr>
+                                    <td><code class="font-mono text-xs text-vp-accent">onSuccess</code></td>
+                                    <td><code class="font-mono text-xs">(keyId, provider) =&gt; void</code></td>
+                                    <td>No</td>
+                                    <td>Called after key is stored. Use the keyId to make proxied calls.</td>
+                                </tr>
+                                <tr>
+                                    <td><code class="font-mono text-xs text-vp-accent">onError</code></td>
+                                    <td><code class="font-mono text-xs">(error) =&gt; void</code></td>
+                                    <td>No</td>
+                                    <td>Called on any error during splitting/storing</td>
+                                </tr>
+                                <tr>
+                                    <td><code class="font-mono text-xs text-vp-accent">theme</code></td>
+                                    <td><code class="font-mono text-xs">'light' | 'dark'</code></td>
+                                    <td>No</td>
+                                    <td>Widget color scheme. Default: <code class="font-mono text-xs">'light'</code></td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <div class="mb-8">
+                    <h3 class="text-lg font-semibold text-white mb-4">How It Works</h3>
+                    <div class="bg-vp-surface border border-vp-border rounded-xl p-6">
+                        <ol class="list-decimal list-inside space-y-3 text-sm text-gray-400">
+                            <li><strong class="text-white">User selects a provider</strong> (OpenAI, Anthropic, etc.) and pastes their API key</li>
+                            <li><strong class="text-white">Widget splits the key</strong> using Shamir Secret Sharing (2-of-2) in the browser -- the raw key never leaves the page</li>
+                            <li><strong class="text-white">Share 1 is sent to VaultProof</strong> encrypted with the server's key (AES-256-GCM)</li>
+                            <li><strong class="text-white">Share 2 is stored in localStorage</strong> on the user's device</li>
+                            <li><strong class="text-white">A ZK proof is generated</strong> (Noir circuit via Barretenberg WASM) proving ownership without revealing the key</li>
+                            <li><strong class="text-white">Your app receives a keyId</strong> via the <code class="font-mono text-xs text-vp-accent">onSuccess</code> callback -- use this to make proxied API calls</li>
+                        </ol>
+                    </div>
+                </div>
+
+                <div>
+                    <h3 class="text-lg font-semibold text-white mb-4">Supported Providers</h3>
+                    <div class="bg-vp-surface border border-vp-border rounded-xl overflow-hidden">
+                        <table class="doc-table">
+                            <thead><tr><th>Provider</th><th>Value</th><th>Key Prefix</th><th>Docs</th></tr></thead>
+                            <tbody>
+                                <tr><td class="text-white">OpenAI</td><td><code class="font-mono text-xs text-vp-accent">'openai'</code></td><td><code class="font-mono text-xs">sk-proj-...</code></td><td><a href="https://platform.openai.com/api-keys" class="text-vp-accent text-xs hover:underline">Get key</a></td></tr>
+                                <tr><td class="text-white">Anthropic</td><td><code class="font-mono text-xs text-vp-accent">'anthropic'</code></td><td><code class="font-mono text-xs">sk-ant-...</code></td><td><a href="https://console.anthropic.com/settings/keys" class="text-vp-accent text-xs hover:underline">Get key</a></td></tr>
+                                <tr><td class="text-white">Google AI</td><td><code class="font-mono text-xs text-vp-accent">'google'</code></td><td><code class="font-mono text-xs">AIza...</code></td><td><a href="https://aistudio.google.com/app/apikey" class="text-vp-accent text-xs hover:underline">Get key</a></td></tr>
+                                <tr><td class="text-white">Together.ai</td><td><code class="font-mono text-xs text-vp-accent">'together'</code></td><td><code class="font-mono text-xs">tgp-...</code></td><td><a href="https://api.together.xyz/settings/api-keys" class="text-vp-accent text-xs hover:underline">Get key</a></td></tr>
                             </tbody>
                         </table>
                     </div>
