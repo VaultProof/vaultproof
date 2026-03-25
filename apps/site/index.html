@@ -238,6 +238,18 @@
                 <a href="/app/login" class="bg-vp-accent hover:bg-indigo-500 px-7 py-3.5 rounded-btn font-semibold text-white transition-all btn-glow text-base">Start Free</a>
                 <a href="/docs" class="border border-vp-border hover:border-gray-500 px-7 py-3.5 rounded-btn font-semibold text-gray-300 transition-all text-base hover:bg-white/[0.02]">View Docs</a>
             </div>
+
+            <!-- Install commands -->
+            <div class="flex items-center justify-center gap-6 flex-wrap mt-8 reveal delay-2">
+                <div class="flex items-center gap-2 bg-white/[0.04] border border-white/[0.08] rounded-xl px-4 py-2.5 cursor-pointer hover:bg-white/[0.06] transition group" onclick="navigator.clipboard.writeText('npm i @vaultproof/sdk')">
+                    <code class="text-sm font-mono text-gray-400"><span class="text-gray-600">$</span> npm i <span class="text-indigo-400">@vaultproof/sdk</span></code>
+                    <svg class="w-4 h-4 text-gray-600 group-hover:text-gray-400 transition" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"/></svg>
+                </div>
+                <div class="flex items-center gap-2 bg-white/[0.04] border border-white/[0.08] rounded-xl px-4 py-2.5 cursor-pointer hover:bg-white/[0.06] transition group" onclick="navigator.clipboard.writeText('npm i -g @vaultproof/cli')">
+                    <code class="text-sm font-mono text-gray-400"><span class="text-gray-600">$</span> npm i -g <span class="text-indigo-400">@vaultproof/cli</span></code>
+                    <svg class="w-4 h-4 text-gray-600 group-hover:text-gray-400 transition" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"/></svg>
+                </div>
+            </div>
         </div>
 
         <!-- Live terminal -->
