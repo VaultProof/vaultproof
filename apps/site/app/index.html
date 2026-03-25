@@ -146,6 +146,15 @@
         </svg>
         <span class="sidebar-label">Settings</span>
       </a>
+
+      <div class="mt-4 pt-4 border-t border-border">
+        <a href="/docs" class="sidebar-nav-item flex items-center gap-3 px-3 py-2.5 rounded-xl text-gray-400 hover:text-white hover:bg-white/5 text-sm transition">
+          <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"/>
+          </svg>
+          <span class="sidebar-label">Documentation</span>
+        </a>
+      </div>
     </nav>
 
     <!-- Sidebar Bottom -->
@@ -184,12 +193,25 @@
 
       <div class="flex items-center gap-3">
         <!-- Notification bell -->
-        <button class="relative p-2 text-gray-400 hover:text-white transition rounded-lg hover:bg-white/5">
-          <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"/>
-          </svg>
-          <span class="absolute top-1.5 right-1.5 w-2 h-2 bg-red-500 rounded-full"></span>
-        </button>
+        <div class="relative">
+          <button id="notifBell" onclick="toggleNotifications()" class="relative p-2 text-gray-400 hover:text-white transition rounded-lg hover:bg-white/5">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"/>
+            </svg>
+            <span id="notifDot" class="absolute top-1.5 right-1.5 w-2 h-2 bg-red-500 rounded-full hidden"></span>
+          </button>
+
+          <!-- Notification dropdown -->
+          <div id="notifDropdown" class="hidden absolute right-0 top-full mt-2 w-80 bg-card border border-border rounded-xl shadow-2xl z-50 overflow-hidden">
+            <div class="px-4 py-3 border-b border-border flex items-center justify-between">
+              <span class="text-sm font-semibold text-white">Notifications</span>
+              <button onclick="markAllRead()" class="text-xs text-brand hover:text-brand-hover transition">Mark all read</button>
+            </div>
+            <div id="notifList" class="max-h-80 overflow-y-auto">
+              <div class="px-4 py-6 text-center text-sm text-gray-500">No notifications</div>
+            </div>
+          </div>
+        </div>
 
         <!-- User avatar -->
         <div id="userAvatar" class="w-8 h-8 rounded-full bg-gradient-to-br from-brand to-cyan flex items-center justify-center text-sm font-semibold text-white cursor-default select-none"></div>
@@ -744,10 +766,89 @@
       }).catch(() => {});
     }
 
+    // ── Notifications ──
+    const NOTIF_READ_KEY = 'vaultproof_notif_read';
+
+    function getReadIds() {
+      try { return JSON.parse(localStorage.getItem(NOTIF_READ_KEY) || '[]'); } catch { return []; }
+    }
+
+    async function loadNotifications() {
+      try {
+        const res = await fetch('/notifications.json?t=' + Date.now());
+        if (!res.ok) return;
+        const notifs = await res.json();
+        const readIds = getReadIds();
+        const unread = notifs.filter(n => !readIds.includes(n.id));
+
+        // Show/hide red dot
+        document.getElementById('notifDot').classList.toggle('hidden', unread.length === 0);
+
+        // Render list
+        const list = document.getElementById('notifList');
+        if (notifs.length === 0) {
+          list.innerHTML = '<div class="px-4 py-6 text-center text-sm text-gray-500">No notifications</div>';
+          return;
+        }
+
+        const typeColors = {
+          update: 'bg-brand/20 text-brand',
+          maintenance: 'bg-yellow-500/20 text-yellow-400',
+          alert: 'bg-red-500/20 text-red-400',
+          info: 'bg-cyan/20 text-cyan'
+        };
+
+        list.innerHTML = notifs.map(n => {
+          const isUnread = !readIds.includes(n.id);
+          const colors = typeColors[n.type] || typeColors.info;
+          return `
+            <div class="px-4 py-3 border-b border-border/50 hover:bg-white/[0.02] transition ${isUnread ? '' : 'opacity-60'}">
+              <div class="flex items-start gap-3">
+                ${isUnread ? '<span class="mt-1.5 w-2 h-2 rounded-full bg-brand flex-shrink-0"></span>' : '<span class="mt-1.5 w-2 h-2 flex-shrink-0"></span>'}
+                <div class="flex-1 min-w-0">
+                  <div class="flex items-center gap-2 mb-0.5">
+                    <span class="text-xs font-medium px-1.5 py-0.5 rounded ${colors}">${n.type}</span>
+                    <span class="text-xs text-gray-600">${n.date}</span>
+                  </div>
+                  <p class="text-sm font-medium text-white">${n.title}</p>
+                  <p class="text-xs text-gray-400 mt-0.5">${n.message}</p>
+                  ${n.link ? `<a href="${n.link}" class="text-xs text-brand hover:text-brand-hover mt-1 inline-block">Learn more &rarr;</a>` : ''}
+                </div>
+              </div>
+            </div>`;
+        }).join('');
+      } catch {}
+    }
+
+    function toggleNotifications() {
+      const dd = document.getElementById('notifDropdown');
+      dd.classList.toggle('hidden');
+    }
+
+    function markAllRead() {
+      fetch('/notifications.json?t=' + Date.now())
+        .then(r => r.json())
+        .then(notifs => {
+          localStorage.setItem(NOTIF_READ_KEY, JSON.stringify(notifs.map(n => n.id)));
+          document.getElementById('notifDot').classList.add('hidden');
+          loadNotifications();
+        }).catch(() => {});
+    }
+
+    // Close dropdown on outside click
+    document.addEventListener('click', (e) => {
+      const dd = document.getElementById('notifDropdown');
+      const bell = document.getElementById('notifBell');
+      if (!dd.contains(e.target) && !bell.contains(e.target)) {
+        dd.classList.add('hidden');
+      }
+    });
+
     // ── Init ──
     loadOverview();
     loadUsageChart();
     loadKeys();
+    loadNotifications();
   </script>
 </body>
 </html>
