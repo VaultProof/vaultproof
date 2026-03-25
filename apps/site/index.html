@@ -501,68 +501,104 @@ const res = await vault.proxy(key, '/v1/chat/completions', {
     </section>
 
     <!-- Pricing -->
-    <section id="pricing" class="relative z-10 max-w-5xl mx-auto px-6 py-24">
+    <section id="pricing" class="relative z-10 max-w-6xl mx-auto px-6 py-24">
         <div class="text-center mb-16">
-            <h2 class="text-3xl md:text-4xl font-bold text-white mb-4 reveal">Simple, transparent pricing</h2>
+            <h2 class="text-3xl md:text-4xl font-bold text-white mb-4 reveal" style="font-family:'Space Grotesk',sans-serif">Simple, transparent pricing</h2>
             <p class="text-gray-500 text-lg reveal delay-1">Start free. Upgrade when you need more.</p>
         </div>
-        <div class="grid md:grid-cols-2 gap-6 max-w-3xl mx-auto">
+
+        <!-- Tier cards -->
+        <div class="grid md:grid-cols-2 lg:grid-cols-4 gap-5 mb-12">
             <!-- Free -->
-            <div class="bg-vp-surface border border-vp-border rounded-[16px] p-8 card-hover reveal delay-1">
+            <div class="bg-vp-surface border border-vp-border rounded-[16px] p-6 card-hover reveal delay-1 flex flex-col">
                 <div class="text-sm font-semibold text-gray-400 mb-2 uppercase tracking-wide">Free</div>
-                <div class="flex items-baseline gap-1 mb-6">
-                    <span class="text-5xl font-extrabold text-white">$0</span>
-                    <span class="text-gray-500 text-sm">/month</span>
+                <div class="flex items-baseline gap-1 mb-5">
+                    <span class="text-4xl font-extrabold text-white">$0</span>
+                    <span class="text-gray-500 text-sm">/mo</span>
                 </div>
-                <ul class="space-y-3 text-sm text-gray-400 mb-8">
-                    <li class="flex items-center gap-3">
-                        <svg width="16" height="16" fill="none" stroke="#6366f1" stroke-width="2"><path d="M13.3 4L6 11.3 2.7 8"/></svg>
-                        3 key slots
-                    </li>
-                    <li class="flex items-center gap-3">
-                        <svg width="16" height="16" fill="none" stroke="#6366f1" stroke-width="2"><path d="M13.3 4L6 11.3 2.7 8"/></svg>
-                        1,000 proxied calls / month
-                    </li>
-                    <li class="flex items-center gap-3">
-                        <svg width="16" height="16" fill="none" stroke="#6366f1" stroke-width="2"><path d="M13.3 4L6 11.3 2.7 8"/></svg>
-                        Shamir splitting + ZK proofs
-                    </li>
-                    <li class="flex items-center gap-3">
-                        <svg width="16" height="16" fill="none" stroke="#6366f1" stroke-width="2"><path d="M13.3 4L6 11.3 2.7 8"/></svg>
-                        Community support
-                    </li>
+                <ul class="space-y-2.5 text-sm text-gray-400 mb-6 flex-1">
+                    <li class="flex items-center gap-2.5"><svg width="14" height="14" fill="none" stroke="#6366f1" stroke-width="2"><path d="M11.5 3.5L5.25 9.75 2.5 7"/></svg>3 API keys</li>
+                    <li class="flex items-center gap-2.5"><svg width="14" height="14" fill="none" stroke="#6366f1" stroke-width="2"><path d="M11.5 3.5L5.25 9.75 2.5 7"/></svg>1,000 calls / month</li>
+                    <li class="flex items-center gap-2.5"><svg width="14" height="14" fill="none" stroke="#6366f1" stroke-width="2"><path d="M11.5 3.5L5.25 9.75 2.5 7"/></svg>1 app grant per key</li>
+                    <li class="flex items-center gap-2.5"><svg width="14" height="14" fill="none" stroke="#6366f1" stroke-width="2"><path d="M11.5 3.5L5.25 9.75 2.5 7"/></svg>1 developer key</li>
+                    <li class="flex items-center gap-2.5"><svg width="14" height="14" fill="none" stroke="#6366f1" stroke-width="2"><path d="M11.5 3.5L5.25 9.75 2.5 7"/></svg>7 days log retention</li>
+                    <li class="flex items-center gap-2.5"><svg width="14" height="14" fill="none" stroke="#6366f1" stroke-width="2"><path d="M11.5 3.5L5.25 9.75 2.5 7"/></svg>SSE streaming</li>
+                    <li class="flex items-center gap-2.5"><svg width="14" height="14" fill="none" stroke="#6366f1" stroke-width="2"><path d="M11.5 3.5L5.25 9.75 2.5 7"/></svg>Shamir + ZK proofs</li>
+                    <li class="flex items-center gap-2.5 text-gray-600"><svg width="14" height="14" fill="none" stroke="#333" stroke-width="2"><path d="M3 7h8"/></svg>Hard cutoff at limit</li>
                 </ul>
-                <a href="/app/login" class="block text-center border border-vp-border hover:border-gray-500 px-6 py-3 rounded-btn font-semibold text-gray-300 transition-all hover:bg-white/[0.02]">Get Started</a>
+                <a href="/app/login" class="block text-center border border-vp-border hover:border-gray-500 px-5 py-2.5 rounded-btn font-semibold text-gray-300 transition-all hover:bg-white/[0.02] text-sm">Get Started</a>
             </div>
-            <!-- Pro -->
-            <div class="bg-vp-surface border-2 border-vp-accent rounded-[16px] p-8 card-hover pro-glow relative reveal delay-2">
-                <div class="absolute -top-3.5 left-1/2 -translate-x-1/2 bg-vp-accent text-xs font-bold px-4 py-1.5 rounded-full text-white shadow-lg shadow-vp-accent/20">Most Popular</div>
-                <div class="text-sm font-semibold text-vp-accent mb-2 uppercase tracking-wide">Pro</div>
-                <div class="flex items-baseline gap-1 mb-6">
-                    <span class="text-5xl font-extrabold text-white">$12</span>
-                    <span class="text-gray-500 text-sm">/month</span>
+
+            <!-- Starter -->
+            <div class="bg-vp-surface border border-vp-border rounded-[16px] p-6 card-hover reveal delay-2 flex flex-col">
+                <div class="text-sm font-semibold text-gray-400 mb-2 uppercase tracking-wide">Starter</div>
+                <div class="flex items-baseline gap-1 mb-5">
+                    <span class="text-4xl font-extrabold text-white">$5</span>
+                    <span class="text-gray-500 text-sm">/mo</span>
                 </div>
-                <ul class="space-y-3 text-sm text-gray-400 mb-8">
-                    <li class="flex items-center gap-3">
-                        <svg width="16" height="16" fill="none" stroke="#6366f1" stroke-width="2"><path d="M13.3 4L6 11.3 2.7 8"/></svg>
-                        20 key slots
-                    </li>
-                    <li class="flex items-center gap-3">
-                        <svg width="16" height="16" fill="none" stroke="#6366f1" stroke-width="2"><path d="M13.3 4L6 11.3 2.7 8"/></svg>
-                        50,000 proxied calls / month
-                    </li>
-                    <li class="flex items-center gap-3">
-                        <svg width="16" height="16" fill="none" stroke="#6366f1" stroke-width="2"><path d="M13.3 4L6 11.3 2.7 8"/></svg>
-                        Usage analytics dashboard
-                    </li>
-                    <li class="flex items-center gap-3">
-                        <svg width="16" height="16" fill="none" stroke="#6366f1" stroke-width="2"><path d="M13.3 4L6 11.3 2.7 8"/></svg>
-                        Priority support
-                    </li>
+                <ul class="space-y-2.5 text-sm text-gray-400 mb-6 flex-1">
+                    <li class="flex items-center gap-2.5"><svg width="14" height="14" fill="none" stroke="#6366f1" stroke-width="2"><path d="M11.5 3.5L5.25 9.75 2.5 7"/></svg>10 API keys</li>
+                    <li class="flex items-center gap-2.5"><svg width="14" height="14" fill="none" stroke="#6366f1" stroke-width="2"><path d="M11.5 3.5L5.25 9.75 2.5 7"/></svg>10,000 calls / month</li>
+                    <li class="flex items-center gap-2.5"><svg width="14" height="14" fill="none" stroke="#6366f1" stroke-width="2"><path d="M11.5 3.5L5.25 9.75 2.5 7"/></svg>5 app grants per key</li>
+                    <li class="flex items-center gap-2.5"><svg width="14" height="14" fill="none" stroke="#6366f1" stroke-width="2"><path d="M11.5 3.5L5.25 9.75 2.5 7"/></svg>3 developer keys</li>
+                    <li class="flex items-center gap-2.5"><svg width="14" height="14" fill="none" stroke="#6366f1" stroke-width="2"><path d="M11.5 3.5L5.25 9.75 2.5 7"/></svg>30 days log retention</li>
+                    <li class="flex items-center gap-2.5"><svg width="14" height="14" fill="none" stroke="#6366f1" stroke-width="2"><path d="M11.5 3.5L5.25 9.75 2.5 7"/></svg>SSE streaming</li>
+                    <li class="flex items-center gap-2.5"><svg width="14" height="14" fill="none" stroke="#6366f1" stroke-width="2"><path d="M11.5 3.5L5.25 9.75 2.5 7"/></svg>Shamir + ZK proofs</li>
+                    <li class="flex items-center gap-2.5"><svg width="14" height="14" fill="none" stroke="#6366f1" stroke-width="2"><path d="M11.5 3.5L5.25 9.75 2.5 7"/></svg>$0.50 / 1K overage calls</li>
                 </ul>
-                <a href="/app/login" class="block text-center bg-vp-accent hover:bg-indigo-500 px-6 py-3 rounded-btn font-semibold text-white transition-all btn-glow">Start Pro</a>
+                <a href="/app/login" class="block text-center border border-vp-border hover:border-gray-500 px-5 py-2.5 rounded-btn font-semibold text-gray-300 transition-all hover:bg-white/[0.02] text-sm">Start Starter</a>
+            </div>
+
+            <!-- Pro -->
+            <div class="bg-vp-surface border-2 border-vp-accent rounded-[16px] p-6 card-hover pro-glow relative reveal delay-3 flex flex-col">
+                <div class="absolute -top-3 left-1/2 -translate-x-1/2 bg-vp-accent text-xs font-bold px-3.5 py-1 rounded-full text-white shadow-lg shadow-vp-accent/20">Most Popular</div>
+                <div class="text-sm font-semibold text-vp-accent mb-2 uppercase tracking-wide">Pro</div>
+                <div class="flex items-baseline gap-1 mb-5">
+                    <span class="text-4xl font-extrabold text-white">$15</span>
+                    <span class="text-gray-500 text-sm">/mo</span>
+                </div>
+                <ul class="space-y-2.5 text-sm text-gray-400 mb-6 flex-1">
+                    <li class="flex items-center gap-2.5"><svg width="14" height="14" fill="none" stroke="#6366f1" stroke-width="2"><path d="M11.5 3.5L5.25 9.75 2.5 7"/></svg>30 API keys</li>
+                    <li class="flex items-center gap-2.5"><svg width="14" height="14" fill="none" stroke="#6366f1" stroke-width="2"><path d="M11.5 3.5L5.25 9.75 2.5 7"/></svg>100,000 calls / month</li>
+                    <li class="flex items-center gap-2.5"><svg width="14" height="14" fill="none" stroke="#6366f1" stroke-width="2"><path d="M11.5 3.5L5.25 9.75 2.5 7"/></svg>20 app grants per key</li>
+                    <li class="flex items-center gap-2.5"><svg width="14" height="14" fill="none" stroke="#6366f1" stroke-width="2"><path d="M11.5 3.5L5.25 9.75 2.5 7"/></svg>10 developer keys</li>
+                    <li class="flex items-center gap-2.5"><svg width="14" height="14" fill="none" stroke="#6366f1" stroke-width="2"><path d="M11.5 3.5L5.25 9.75 2.5 7"/></svg>90 days log retention</li>
+                    <li class="flex items-center gap-2.5"><svg width="14" height="14" fill="none" stroke="#6366f1" stroke-width="2"><path d="M11.5 3.5L5.25 9.75 2.5 7"/></svg>CSV log export</li>
+                    <li class="flex items-center gap-2.5"><svg width="14" height="14" fill="none" stroke="#6366f1" stroke-width="2"><path d="M11.5 3.5L5.25 9.75 2.5 7"/></svg>SSE streaming</li>
+                    <li class="flex items-center gap-2.5"><svg width="14" height="14" fill="none" stroke="#6366f1" stroke-width="2"><path d="M11.5 3.5L5.25 9.75 2.5 7"/></svg>$0.30 / 1K overage calls</li>
+                </ul>
+                <a href="/app/login" class="block text-center bg-vp-accent hover:bg-indigo-500 px-5 py-2.5 rounded-btn font-semibold text-white transition-all btn-glow text-sm">Start Pro</a>
+            </div>
+
+            <!-- Team -->
+            <div class="bg-vp-surface border border-vp-border rounded-[16px] p-6 card-hover reveal delay-4 flex flex-col">
+                <div class="text-sm font-semibold text-gray-400 mb-2 uppercase tracking-wide">Team</div>
+                <div class="flex items-baseline gap-1 mb-5">
+                    <span class="text-4xl font-extrabold text-white">$39</span>
+                    <span class="text-gray-500 text-sm">/mo</span>
+                </div>
+                <ul class="space-y-2.5 text-sm text-gray-400 mb-6 flex-1">
+                    <li class="flex items-center gap-2.5"><svg width="14" height="14" fill="none" stroke="#6366f1" stroke-width="2"><path d="M11.5 3.5L5.25 9.75 2.5 7"/></svg>100 API keys</li>
+                    <li class="flex items-center gap-2.5"><svg width="14" height="14" fill="none" stroke="#6366f1" stroke-width="2"><path d="M11.5 3.5L5.25 9.75 2.5 7"/></svg>500,000 calls / month</li>
+                    <li class="flex items-center gap-2.5"><svg width="14" height="14" fill="none" stroke="#6366f1" stroke-width="2"><path d="M11.5 3.5L5.25 9.75 2.5 7"/></svg>100 app grants per key</li>
+                    <li class="flex items-center gap-2.5"><svg width="14" height="14" fill="none" stroke="#6366f1" stroke-width="2"><path d="M11.5 3.5L5.25 9.75 2.5 7"/></svg>25 developer keys</li>
+                    <li class="flex items-center gap-2.5"><svg width="14" height="14" fill="none" stroke="#6366f1" stroke-width="2"><path d="M11.5 3.5L5.25 9.75 2.5 7"/></svg>5 team members</li>
+                    <li class="flex items-center gap-2.5"><svg width="14" height="14" fill="none" stroke="#6366f1" stroke-width="2"><path d="M11.5 3.5L5.25 9.75 2.5 7"/></svg>1 year log retention</li>
+                    <li class="flex items-center gap-2.5"><svg width="14" height="14" fill="none" stroke="#6366f1" stroke-width="2"><path d="M11.5 3.5L5.25 9.75 2.5 7"/></svg>CSV export + priority support</li>
+                    <li class="flex items-center gap-2.5"><svg width="14" height="14" fill="none" stroke="#6366f1" stroke-width="2"><path d="M11.5 3.5L5.25 9.75 2.5 7"/></svg>$0.15 / 1K overage calls</li>
+                </ul>
+                <a href="/app/login" class="block text-center border border-vp-border hover:border-gray-500 px-5 py-2.5 rounded-btn font-semibold text-gray-300 transition-all hover:bg-white/[0.02] text-sm">Start Team</a>
             </div>
         </div>
+
+        <!-- Enterprise -->
+        <div class="bg-vp-surface border border-vp-border rounded-[16px] p-8 max-w-2xl mx-auto text-center reveal delay-5">
+            <div class="text-sm font-semibold text-gray-400 mb-2 uppercase tracking-wide">Enterprise</div>
+            <p class="text-gray-400 text-sm mb-4">Unlimited keys, unlimited calls, SSO, SLA, TEE option, dedicated proxy, SOC 2 report.</p>
+            <a href="mailto:hello@vaultproof.dev" class="inline-block border border-vp-border hover:border-gray-500 px-6 py-2.5 rounded-btn font-semibold text-gray-300 transition-all hover:bg-white/[0.02] text-sm">Contact Sales</a>
+        </div>
+
+        <p class="text-center text-xs text-gray-600 mt-6">All plans include Shamir secret sharing, ZK proof verification, and SSE streaming. No credit card required for Free.</p>
     </section>
 
     <!-- CTA -->
