@@ -29,7 +29,7 @@ export function sendWelcomeEmail(to: string): void {
     html: `
       <div style="font-family: system-ui, sans-serif; max-width: 500px; margin: 0 auto; color: #e2e8f0;">
         <h1 style="color: #fff; font-size: 24px;">Welcome to VaultProof</h1>
-        <p style="color: #94a3b8; line-height: 1.6;">Your API keys are now protected with Shamir secret sharing and zero-knowledge proofs.</p>
+        <p style="color: #94a3b8; line-height: 1.6;">Your API keys are now protected with VaultProof. We split, encrypt, and store your keys so no one can see them — not even us.</p>
 
         <h3 style="color: #fff; font-size: 16px; margin-top: 24px;">Quick start:</h3>
         <ol style="color: #94a3b8; line-height: 2;">
