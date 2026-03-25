@@ -2,7 +2,7 @@ import { useState, useCallback } from 'react';
 import { VaultClient, type StoredKeyInfo } from './vault-client.js';
 import { PROVIDERS, type Provider, type WidgetStatus, type ZKKeyConnectProps } from './types.js';
 
-const DEFAULT_PROVIDERS: Provider[] = ['openai', 'anthropic', 'google', 'together'];
+const DEFAULT_PROVIDERS: Provider[] = ['openai', 'anthropic', 'google', 'together', 'other'];
 
 const SHARE2_STORAGE_PREFIX = 'vaultproof_share2_';
 

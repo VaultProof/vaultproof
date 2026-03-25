@@ -102,6 +102,7 @@ export default function KeysDashboard() {
                   <option value="anthropic">Anthropic</option>
                   <option value="google">Google AI</option>
                   <option value="together">Together.ai</option>
+                  <option value="other">Other</option>
                 </select>
               </div>
               <div>
