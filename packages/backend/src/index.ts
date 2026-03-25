@@ -26,6 +26,7 @@ import { statsRoutes } from './routes/stats.js';
 import { developerKeyRoutes } from './routes/developer-keys.js';
 import { sdkRoutes } from './routes/sdk.js';
 import { billingRoutes } from './routes/billing.js';
+import { transparentProxyRoutes } from './routes/transparent-proxy.js';
 
 config();
 
@@ -101,6 +102,9 @@ async function start() {
   await app.register(developerKeyRoutes, { prefix: '/api/v1/dev-keys' });
   await app.register(sdkRoutes, { prefix: '/api/v1/sdk' });
   await app.register(billingRoutes, { prefix: '/api/v1/billing' });
+
+  // Transparent proxy — must be after /api/v1/ routes to avoid conflicts
+  await app.register(transparentProxyRoutes, { prefix: '/v1' });
 
   await app.listen({ port: PORT, host: '0.0.0.0' });
   console.log(`VaultProof backend running on port ${PORT}`);

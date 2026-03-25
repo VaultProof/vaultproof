@@ -175,6 +175,7 @@
 
                 <div class="pt-4 pb-1 px-3 text-[0.6875rem] font-semibold text-gray-600 uppercase tracking-wider">Packages</div>
                 <a href="#packages" class="nav-link block text-sm text-gray-500 py-1.5 px-3 rounded-r">Package Overview</a>
+                <a href="#proxy-url-reference" class="nav-link block text-sm text-gray-500 py-1.5 px-3 rounded-r font-medium text-emerald-400/80">Proxy URL Reference</a>
                 <a href="#sdk-reference" class="nav-link block text-sm text-gray-500 py-1.5 px-3 rounded-r">SDK Reference</a>
                 <a href="#connect-widget" class="nav-link block text-sm text-gray-500 py-1.5 px-3 rounded-r">Connect Widget</a>
                 <a href="#cli-reference" class="nav-link block text-sm text-gray-500 py-1.5 px-3 rounded-r">CLI Reference</a>
@@ -235,17 +236,23 @@
             <!-- ============================================================ -->
             <section id="quick-start" class="mb-20">
                 <h2 class="text-3xl font-bold text-white mb-2">Quick Start</h2>
-                <p class="text-gray-500 mb-8">Three ways to use VaultProof. Pick the one that fits your workflow.</p>
+                <p class="text-gray-500 mb-8">Four ways to use VaultProof. The Proxy URL is the fastest -- one line change and every SDK works.</p>
 
-                <!-- SDK vs CLI vs Dashboard -->
+                <!-- Proxy URL vs SDK vs CLI vs Dashboard -->
                 <div class="bg-vp-surface border border-vp-border rounded-xl overflow-hidden mb-8">
                     <table class="doc-table">
                         <thead><tr><th>Tool</th><th>What it is</th><th>Use when</th><th>Install</th></tr></thead>
                         <tbody>
+                            <tr class="bg-vp-accent/[0.04]">
+                                <td><code class="font-mono text-xs text-vp-accent">Proxy URL</code> <span class="text-[0.625rem] font-bold text-emerald-400 ml-1">RECOMMENDED</span></td>
+                                <td>Change your base URL to route through VaultProof</td>
+                                <td>Any app using OpenAI, Anthropic, Google, or any AI SDK</td>
+                                <td>No install -- just change one line</td>
+                            </tr>
                             <tr>
                                 <td><code class="font-mono text-xs text-vp-accent">@vaultproof/sdk</code></td>
                                 <td>JavaScript/TypeScript library you <code class="font-mono text-xs">import</code> in your app code</td>
-                                <td>Building an app that needs to store/use API keys programmatically</td>
+                                <td>Programmatic key management (store, rotate, revoke)</td>
                                 <td><code class="font-mono text-xs">npm i @vaultproof/sdk</code></td>
                             </tr>
                             <tr>
@@ -265,16 +272,68 @@
                 </div>
 
                 <div class="callout-warn mb-8">
-                    <p class="text-sm text-amber-200"><strong class="text-amber-300">All three tools do the same thing under the hood:</strong> Shamir-split your key locally, encrypt both shares with different keys, and proxy API calls without the server ever seeing the full key. The only difference is the interface.</p>
+                    <p class="text-sm text-amber-200"><strong class="text-amber-300">All four tools do the same thing under the hood:</strong> Shamir-split your key, encrypt both shares with different keys, and proxy API calls without the server ever seeing the full key. The only difference is the interface.</p>
                 </div>
 
-                <!-- Path A: SDK -->
+                <!-- Path A: Proxy URL (RECOMMENDED) -->
                 <div class="mb-8">
                     <div class="flex items-center gap-3 mb-4">
-                        <span class="bg-vp-accent/15 text-vp-accent text-xs font-bold px-2.5 py-1 rounded">FOR YOUR APP</span>
+                        <span class="bg-emerald-500/15 text-emerald-400 text-xs font-bold px-2.5 py-1 rounded">RECOMMENDED</span>
+                        <h3 class="text-lg font-semibold text-white">Proxy URL -- 1-line change</h3>
+                    </div>
+                    <p class="text-gray-500 text-sm mb-4">The fastest way to use VaultProof. Keep your existing SDK, just change the base URL. All SDK features work -- streaming, retries, types, everything.</p>
+
+                    <p class="text-gray-400 text-xs font-semibold uppercase tracking-wider mb-3">Setup (once)</p>
+                    <ol class="list-decimal list-inside space-y-1.5 text-sm text-gray-400 mb-6">
+                        <li>Store your API key: <code class="font-mono text-xs text-vp-accent">vaultproof store -p openai</code></li>
+                        <li>Change your base URL (see examples below)</li>
+                        <li>Done -- your existing code works, key is protected</li>
+                    </ol>
+
+                    <div class="code-block mb-4">
+                        <div class="code-header">OpenAI (Node.js)</div>
+<pre class="text-gray-300"><span class="kw">import</span> OpenAI <span class="kw">from</span> <span class="str">'openai'</span>
+
+<span class="kw">const</span> client = <span class="kw">new</span> <span class="fn">OpenAI</span>({
+  apiKey: process.env.<span class="typ">VAULTPROOF_API_KEY</span>,  <span class="cmt">// vp_live_ key</span>
+  baseURL: <span class="str">'https://api.vaultproof.dev/v1/openai'</span>
+})
+
+<span class="cmt">// Use normally -- all SDK features work (streaming, retries, types)</span>
+<span class="kw">const</span> res = <span class="kw">await</span> client.chat.completions.<span class="fn">create</span>({
+  model: <span class="str">'gpt-4'</span>,
+  messages: [{ role: <span class="str">'user'</span>, content: <span class="str">'Hello'</span> }]
+})</pre>
+                    </div>
+
+                    <div class="code-block mb-4">
+                        <div class="code-header">Anthropic (Node.js)</div>
+<pre class="text-gray-300"><span class="kw">import</span> Anthropic <span class="kw">from</span> <span class="str">'@anthropic-ai/sdk'</span>
+
+<span class="kw">const</span> client = <span class="kw">new</span> <span class="fn">Anthropic</span>({
+  apiKey: process.env.<span class="typ">VAULTPROOF_API_KEY</span>,
+  baseURL: <span class="str">'https://api.vaultproof.dev/v1/anthropic'</span>
+})</pre>
+                    </div>
+
+                    <div class="code-block">
+                        <div class="code-header">Python</div>
+<pre class="text-gray-300"><span class="kw">import</span> openai
+
+client = openai.<span class="fn">OpenAI</span>(
+    api_key=<span class="str">"vp_live_..."</span>,
+    base_url=<span class="str">"https://api.vaultproof.dev/v1/openai"</span>
+)</pre>
+                    </div>
+                </div>
+
+                <!-- Path B: SDK -->
+                <div class="mb-8">
+                    <div class="flex items-center gap-3 mb-4">
+                        <span class="bg-vp-accent/15 text-vp-accent text-xs font-bold px-2.5 py-1 rounded">FOR PROGRAMMATIC KEY MANAGEMENT</span>
                         <h3 class="text-lg font-semibold text-white">SDK -- import into your code</h3>
                     </div>
-                    <p class="text-gray-500 text-sm mb-4">Use the SDK when your application needs to store and use API keys. The SDK handles Shamir splitting, encryption, and proxying automatically inside your Node.js/TypeScript app.</p>
+                    <p class="text-gray-500 text-sm mb-4">Use the SDK when your application needs to programmatically store, rotate, and revoke API keys. The SDK handles Shamir splitting, encryption, and proxying automatically inside your Node.js/TypeScript app.</p>
 
                     <div class="code-block mb-4">
                         <div class="code-header">terminal</div>
@@ -305,7 +364,7 @@
                     </div>
                 </div>
 
-                <!-- Path B: CLI -->
+                <!-- Path D: CLI -->
                 <div class="mb-8">
                     <div class="flex items-center gap-3 mb-4">
                         <span class="bg-vp-accent/15 text-vp-accent text-xs font-bold px-2.5 py-1 rounded">FOR YOUR TERMINAL</span>
@@ -346,7 +405,7 @@ $ vaultproof store -h</pre>
                     </div>
                 </div>
 
-                <!-- Path C: Dashboard -->
+                <!-- Path E: Dashboard -->
                 <div>
                     <div class="flex items-center gap-3 mb-4">
                         <span class="bg-vp-accent/15 text-vp-accent text-xs font-bold px-2.5 py-1 rounded">FOR YOUR BROWSER</span>
@@ -619,6 +678,113 @@ $ vaultproof store -h</pre>
 
                 <div class="callout-warn">
                     <p class="text-sm text-amber-200"><strong class="text-amber-300">You don't need to install multiple packages.</strong> Each one includes <code class="font-mono text-xs">@vaultproof/shamir</code> automatically. Just pick the interface that fits your workflow.</p>
+                </div>
+            </section>
+
+
+            <!-- ============================================================ -->
+            <!-- SECTION 3.5: PROXY URL REFERENCE -->
+            <!-- ============================================================ -->
+            <section id="proxy-url-reference" class="mb-20">
+                <h2 class="text-3xl font-bold text-white mb-2">Proxy URL Reference</h2>
+                <p class="text-gray-500 mb-8">The recommended way to use VaultProof. Route any AI SDK through VaultProof by changing one URL.</p>
+
+                <!-- URL Pattern -->
+                <div class="mb-8">
+                    <h3 class="text-lg font-semibold text-white mb-4">URL Pattern</h3>
+                    <div class="code-block mb-4">
+                        <div class="code-header">pattern</div>
+<pre class="text-gray-300">https://api.vaultproof.dev/v1/<span class="typ">{provider}</span>/<span class="typ">{path}</span></pre>
+                    </div>
+                    <p class="text-gray-400 text-sm">Replace <code class="font-mono text-xs text-vp-accent">{provider}</code> with the provider name and <code class="font-mono text-xs text-vp-accent">{path}</code> with the original API path. VaultProof forwards the request exactly (method, body, headers, query string).</p>
+                </div>
+
+                <!-- Supported Providers -->
+                <div class="mb-8">
+                    <h3 class="text-lg font-semibold text-white mb-4">Supported Providers</h3>
+                    <div class="bg-vp-surface border border-vp-border rounded-xl overflow-hidden">
+                        <table class="doc-table">
+                            <thead><tr><th>Provider</th><th>Proxy Base URL</th><th>Upstream</th></tr></thead>
+                            <tbody>
+                                <tr>
+                                    <td><code class="font-mono text-xs text-vp-accent">openai</code></td>
+                                    <td><code class="font-mono text-xs">https://api.vaultproof.dev/v1/openai</code></td>
+                                    <td><code class="font-mono text-xs text-gray-500">https://api.openai.com</code></td>
+                                </tr>
+                                <tr>
+                                    <td><code class="font-mono text-xs text-vp-accent">anthropic</code></td>
+                                    <td><code class="font-mono text-xs">https://api.vaultproof.dev/v1/anthropic</code></td>
+                                    <td><code class="font-mono text-xs text-gray-500">https://api.anthropic.com</code></td>
+                                </tr>
+                                <tr>
+                                    <td><code class="font-mono text-xs text-vp-accent">google</code></td>
+                                    <td><code class="font-mono text-xs">https://api.vaultproof.dev/v1/google</code></td>
+                                    <td><code class="font-mono text-xs text-gray-500">https://generativelanguage.googleapis.com</code></td>
+                                </tr>
+                                <tr>
+                                    <td><code class="font-mono text-xs text-vp-accent">together</code></td>
+                                    <td><code class="font-mono text-xs">https://api.vaultproof.dev/v1/together</code></td>
+                                    <td><code class="font-mono text-xs text-gray-500">https://api.together.xyz</code></td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- How Authentication Works -->
+                <div class="mb-8">
+                    <h3 class="text-lg font-semibold text-white mb-4">How Authentication Works</h3>
+                    <ol class="list-decimal list-inside space-y-2 text-sm text-gray-400">
+                        <li>Send your <code class="font-mono text-xs text-vp-accent">vp_live_</code> key as the <code class="font-mono text-xs">Authorization: Bearer</code> header (this is the same field SDKs use for <code class="font-mono text-xs">apiKey</code>)</li>
+                        <li>VaultProof identifies your account and finds your most recent <strong class="text-white">ACTIVE</strong> key for that provider</li>
+                        <li>The key is reconstructed from Shamir shares for ~100ms, used to call the upstream API, then zeroed from memory</li>
+                        <li>The response (including SSE streaming) is forwarded back to you transparently</li>
+                    </ol>
+                </div>
+
+                <div class="callout-info mb-8">
+                    <p class="text-sm text-indigo-300"><strong>SSE streaming works transparently.</strong> The proxy forwards chunked responses as they arrive. Your SDK's streaming helpers, retry logic, and type safety all work exactly as they would against the real API.</p>
+                </div>
+
+                <!-- Examples -->
+                <div class="mb-8">
+                    <h3 class="text-lg font-semibold text-white mb-4">Examples</h3>
+
+                    <div class="code-block mb-4">
+                        <div class="code-header">curl</div>
+<pre class="text-gray-300">curl https://api.vaultproof.dev/v1/openai/v1/models \
+  -H <span class="str">"Authorization: Bearer vp_live_..."</span></pre>
+                    </div>
+
+                    <div class="code-block mb-4">
+                        <div class="code-header">Node.js (OpenAI SDK)</div>
+<pre class="text-gray-300"><span class="kw">import</span> OpenAI <span class="kw">from</span> <span class="str">'openai'</span>
+
+<span class="kw">const</span> client = <span class="kw">new</span> <span class="fn">OpenAI</span>({
+  apiKey: process.env.<span class="typ">VAULTPROOF_API_KEY</span>,
+  baseURL: <span class="str">'https://api.vaultproof.dev/v1/openai'</span>
+})
+
+<span class="kw">const</span> res = <span class="kw">await</span> client.chat.completions.<span class="fn">create</span>({
+  model: <span class="str">'gpt-4'</span>,
+  messages: [{ role: <span class="str">'user'</span>, content: <span class="str">'Hello'</span> }]
+})</pre>
+                    </div>
+
+                    <div class="code-block">
+                        <div class="code-header">Python (openai library)</div>
+<pre class="text-gray-300"><span class="kw">import</span> openai
+
+client = openai.<span class="fn">OpenAI</span>(
+    api_key=<span class="str">"vp_live_..."</span>,
+    base_url=<span class="str">"https://api.vaultproof.dev/v1/openai"</span>
+)
+
+res = client.chat.completions.<span class="fn">create</span>(
+    model=<span class="str">"gpt-4"</span>,
+    messages=[{<span class="str">"role"</span>: <span class="str">"user"</span>, <span class="str">"content"</span>: <span class="str">"Hello"</span>}]
+)</pre>
+                    </div>
                 </div>
             </section>
 
