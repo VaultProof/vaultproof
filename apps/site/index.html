@@ -33,8 +33,19 @@
             theme: {
                 extend: {
                     colors: {
-                        'dark-blue': '#0a0e1a',
-                        'dark-blue-lighter': '#0f1628',
+                        'vp-bg': '#0a0a0f',
+                        'vp-surface': '#111118',
+                        'vp-border': '#1e1e2e',
+                        'vp-accent': '#6366f1',
+                        'vp-cyan': '#06b6d4',
+                    },
+                    fontFamily: {
+                        sans: ['Inter', 'system-ui', 'sans-serif'],
+                        mono: ['JetBrains Mono', 'monospace'],
+                    },
+                    borderRadius: {
+                        'card': '12px',
+                        'btn': '12px',
                     }
                 }
             }
@@ -43,214 +54,675 @@
 
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Geist:wght@300;400;500;600;700;800&family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
 
     <style>
-        :root { font-family: 'Geist', 'Inter', sans-serif; }
+        * { font-family: 'Inter', system-ui, sans-serif; }
         ::selection { background: #6366f1; color: #fff; }
-        body { background: linear-gradient(180deg, #0a0e1a 0%, #0d1220 50%, #0a0e1a 100%); }
-        .font-mono { font-family: 'JetBrains Mono', monospace !important; }
-        @keyframes fadeInUp { from { opacity: 0; transform: translateY(30px); } to { opacity: 1; transform: translateY(0); } }
-        .animate-in { animation: fadeInUp 0.6s ease-out forwards; }
-        .delay-1 { animation-delay: 0.1s; opacity: 0; }
-        .delay-2 { animation-delay: 0.2s; opacity: 0; }
-        .delay-3 { animation-delay: 0.3s; opacity: 0; }
+        body { background: #0a0a0f; }
+
+        /* Animated gradient orbs */
+        .orb {
+            position: fixed;
+            border-radius: 50%;
+            filter: blur(120px);
+            pointer-events: none;
+            z-index: 0;
+            will-change: transform;
+        }
+        .orb-1 {
+            width: 600px; height: 600px;
+            background: radial-gradient(circle, rgba(99,102,241,0.12) 0%, transparent 70%);
+            top: -10%; left: -5%;
+            animation: drift1 25s ease-in-out infinite;
+        }
+        .orb-2 {
+            width: 500px; height: 500px;
+            background: radial-gradient(circle, rgba(88,28,135,0.10) 0%, transparent 70%);
+            top: 40%; right: -10%;
+            animation: drift2 30s ease-in-out infinite;
+        }
+        .orb-3 {
+            width: 450px; height: 450px;
+            background: radial-gradient(circle, rgba(99,102,241,0.08) 0%, transparent 70%);
+            bottom: 5%; left: 20%;
+            animation: drift3 22s ease-in-out infinite;
+        }
+        @keyframes drift1 {
+            0%, 100% { transform: translate(0, 0) scale(1); }
+            33% { transform: translate(80px, 60px) scale(1.1); }
+            66% { transform: translate(-40px, 30px) scale(0.95); }
+        }
+        @keyframes drift2 {
+            0%, 100% { transform: translate(0, 0) scale(1); }
+            33% { transform: translate(-60px, -40px) scale(1.05); }
+            66% { transform: translate(50px, -80px) scale(0.9); }
+        }
+        @keyframes drift3 {
+            0%, 100% { transform: translate(0, 0) scale(1); }
+            33% { transform: translate(70px, -50px) scale(1.08); }
+            66% { transform: translate(-30px, 40px) scale(0.92); }
+        }
+
+        /* Terminal cursor blink */
+        .cursor {
+            display: inline-block;
+            width: 8px;
+            height: 18px;
+            background: #22c55e;
+            vertical-align: text-bottom;
+            animation: blink 1s step-end infinite;
+        }
+        @keyframes blink {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0; }
+        }
+
+        /* Indigo glow button */
+        .btn-glow {
+            box-shadow: 0 0 20px rgba(99,102,241,0.3), 0 0 60px rgba(99,102,241,0.1);
+            transition: all 0.3s ease;
+        }
+        .btn-glow:hover {
+            box-shadow: 0 0 30px rgba(99,102,241,0.5), 0 0 80px rgba(99,102,241,0.2);
+            transform: translateY(-1px);
+        }
+
+        /* Card hover lift */
+        .card-hover {
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+        .card-hover:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 12px 40px rgba(0,0,0,0.3);
+        }
+
+        /* Scroll animations */
+        .reveal {
+            opacity: 0;
+            transform: translateY(30px);
+            transition: opacity 0.7s ease, transform 0.7s ease;
+        }
+        .reveal.visible {
+            opacity: 1;
+            transform: translateY(0);
+        }
+        .reveal.delay-1 { transition-delay: 0.1s; }
+        .reveal.delay-2 { transition-delay: 0.2s; }
+        .reveal.delay-3 { transition-delay: 0.3s; }
+        .reveal.delay-4 { transition-delay: 0.4s; }
+
+        /* Dashed connector line for how-it-works */
+        .step-connector {
+            border-top: 2px dashed #1e1e2e;
+            position: absolute;
+            top: 50%;
+            width: 100%;
+            left: 0;
+            z-index: 0;
+            animation: dashMove 2s linear infinite;
+        }
+        @keyframes dashMove {
+            0% { stroke-dashoffset: 0; }
+            100% { stroke-dashoffset: -20; }
+        }
+
+        /* Pro card glow */
+        .pro-glow {
+            box-shadow: 0 0 30px rgba(99,102,241,0.15), inset 0 0 30px rgba(99,102,241,0.03);
+        }
+
+        /* Scrollbar */
+        ::-webkit-scrollbar { width: 8px; }
+        ::-webkit-scrollbar-track { background: #0a0a0f; }
+        ::-webkit-scrollbar-thumb { background: #1e1e2e; border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: #2e2e3e; }
+
+        /* Mobile nav */
+        .mobile-menu { display: none; }
+        .mobile-menu.open { display: flex; }
     </style>
 </head>
-<body class="text-gray-200 min-h-screen">
+<body class="text-gray-300 min-h-screen relative overflow-x-hidden">
+
+    <!-- Animated background orbs -->
+    <div class="orb orb-1"></div>
+    <div class="orb orb-2"></div>
+    <div class="orb orb-3"></div>
 
     <!-- Nav -->
-    <nav class="flex items-center justify-between px-6 py-5 max-w-6xl mx-auto">
-        <a href="/" class="flex items-center gap-3">
-            <span class="text-xl font-bold text-white">Rial Labs</span>
-        </a>
-        <div class="flex items-center gap-6">
-            <a href="/" class="text-sm text-gray-400 hover:text-white transition">Home</a>
-            <a href="/projects.html" class="text-sm text-gray-400 hover:text-white transition">Projects</a>
-            <a href="/docs" class="text-sm text-gray-400 hover:text-white transition">Docs</a>
-            <a href="/verify" class="text-sm text-gray-400 hover:text-white transition">Verify</a>
-            <a href="#pricing" class="text-sm text-gray-400 hover:text-white transition">Pricing</a>
-            <a href="#contact" class="bg-indigo-600 hover:bg-indigo-500 text-sm px-4 py-2 rounded-lg font-medium text-white transition">Get Started</a>
+    <nav class="relative z-10 border-b border-vp-border/50 backdrop-blur-sm bg-vp-bg/80 sticky top-0">
+        <div class="flex items-center justify-between px-6 py-4 max-w-6xl mx-auto">
+            <a href="/" class="flex items-center gap-2.5">
+                <svg width="28" height="28" viewBox="0 0 28 28" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <rect width="28" height="28" rx="6" fill="#6366f1" fill-opacity="0.15"/>
+                    <path d="M8 8L14 4L20 8V16L14 20L8 16V8Z" stroke="#6366f1" stroke-width="1.5" fill="none"/>
+                    <path d="M14 10V15" stroke="#6366f1" stroke-width="1.5" stroke-linecap="round"/>
+                    <circle cx="14" cy="17" r="1" fill="#6366f1"/>
+                </svg>
+                <span class="text-lg font-bold text-white tracking-tight">VaultProof</span>
+            </a>
+
+            <!-- Desktop links -->
+            <div class="hidden md:flex items-center gap-8">
+                <a href="/docs" class="text-sm text-gray-400 hover:text-white transition-colors">Docs</a>
+                <a href="/verify" class="text-sm text-gray-400 hover:text-white transition-colors">Verify</a>
+                <a href="#pricing" class="text-sm text-gray-400 hover:text-white transition-colors">Pricing</a>
+                <a href="/app/login" class="text-sm text-gray-400 hover:text-white transition-colors">Dashboard</a>
+                <a href="/app/login" class="bg-vp-accent hover:bg-indigo-500 text-sm px-5 py-2 rounded-btn font-semibold text-white transition-all btn-glow">Get Started</a>
+            </div>
+
+            <!-- Mobile hamburger -->
+            <button id="mobileToggle" class="md:hidden text-gray-400 hover:text-white" aria-label="Toggle menu">
+                <svg width="24" height="24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 6h16M4 12h16M4 18h16"/></svg>
+            </button>
+        </div>
+
+        <!-- Mobile menu -->
+        <div id="mobileMenu" class="mobile-menu flex-col gap-4 px-6 pb-6 md:hidden bg-vp-bg/95 backdrop-blur-sm">
+            <a href="/docs" class="text-sm text-gray-400 hover:text-white transition-colors py-1">Docs</a>
+            <a href="/verify" class="text-sm text-gray-400 hover:text-white transition-colors py-1">Verify</a>
+            <a href="#pricing" class="text-sm text-gray-400 hover:text-white transition-colors py-1">Pricing</a>
+            <a href="/app/login" class="text-sm text-gray-400 hover:text-white transition-colors py-1">Dashboard</a>
+            <a href="/app/login" class="bg-vp-accent hover:bg-indigo-500 text-sm px-5 py-2.5 rounded-btn font-semibold text-white transition-all text-center btn-glow mt-2">Get Started</a>
         </div>
     </nav>
 
     <!-- Hero -->
-    <section class="max-w-4xl mx-auto px-6 pt-20 pb-16 text-center animate-in">
-        <div class="inline-flex items-center gap-2 bg-red-500/10 border border-red-500/20 rounded-full px-4 py-1.5 mb-8">
-            <span class="text-xs font-medium text-red-400">39M secrets leaked on GitHub in 2024. We fix that.</span>
+    <section class="relative z-10 max-w-5xl mx-auto px-6 pt-24 pb-20">
+        <div class="text-center mb-16">
+            <h1 class="text-5xl md:text-7xl font-black tracking-tight leading-[1.08] mb-6 text-white reveal">
+                Your secrets deserve<br>
+                <span class="bg-gradient-to-r from-vp-accent to-vp-cyan bg-clip-text text-transparent">a vault.</span>
+            </h1>
+            <p class="text-lg md:text-xl text-gray-400 max-w-2xl mx-auto mb-10 leading-relaxed reveal delay-1">
+                Shamir secret sharing splits your API key the instant you enter it. Zero-knowledge proofs authorize every access. Your key never exists whole on any server.
+            </p>
+            <div class="flex items-center justify-center gap-4 flex-wrap reveal delay-2">
+                <a href="/app/login" class="bg-vp-accent hover:bg-indigo-500 px-7 py-3.5 rounded-btn font-semibold text-white transition-all btn-glow text-base">Start Free</a>
+                <a href="/docs" class="border border-vp-border hover:border-gray-500 px-7 py-3.5 rounded-btn font-semibold text-gray-300 transition-all text-base hover:bg-white/[0.02]">View Docs</a>
+            </div>
         </div>
-        <h1 class="text-5xl md:text-6xl font-extrabold tracking-tight leading-tight mb-6 text-white">
-            The only API key vault where <span class="text-indigo-400">even we can't see your keys</span>
-        </h1>
-        <p class="text-lg text-gray-400 max-w-2xl mx-auto mb-10">
-            Shamir secret sharing splits your key the instant you enter it. Zero-knowledge proofs authorize every access. Your key never exists whole on any server.
-        </p>
-        <div class="flex items-center justify-center gap-4 flex-wrap">
-            <a href="#contact" class="bg-indigo-600 hover:bg-indigo-500 px-6 py-3 rounded-xl font-semibold text-white transition">Get Early Access</a>
-            <a href="#how-it-works" class="border border-gray-700 hover:border-gray-500 px-6 py-3 rounded-xl font-semibold text-gray-300 transition">How It Works</a>
+
+        <!-- Live terminal -->
+        <div class="reveal delay-3 max-w-2xl mx-auto">
+            <div class="bg-vp-surface border border-vp-border rounded-[16px] overflow-hidden shadow-2xl shadow-black/40">
+                <div class="flex items-center gap-2 px-4 py-3 border-b border-vp-border bg-vp-bg/50">
+                    <div class="w-3 h-3 rounded-full bg-red-500/70"></div>
+                    <div class="w-3 h-3 rounded-full bg-yellow-500/70"></div>
+                    <div class="w-3 h-3 rounded-full bg-green-500/70"></div>
+                    <span class="text-xs text-gray-600 ml-2 font-mono">vaultproof-cli</span>
+                </div>
+                <div class="p-5 font-mono text-sm leading-7 min-h-[200px]" id="terminal">
+                    <span class="text-gray-500">$</span> <span id="terminalText" class="text-green-400"></span><span class="cursor" id="terminalCursor"></span>
+                    <div id="terminalOutput" class="text-gray-500 mt-1"></div>
+                </div>
+            </div>
         </div>
     </section>
 
-    <!-- Stats -->
-    <section class="max-w-4xl mx-auto px-6 py-12 animate-in delay-1">
-        <div class="grid grid-cols-2 md:grid-cols-4 gap-6">
-            <div class="text-center"><div class="text-3xl font-bold text-indigo-400">39M</div><div class="text-xs text-gray-500 mt-1">Secrets leaked on GitHub (2024)</div></div>
-            <div class="text-center"><div class="text-3xl font-bold text-indigo-400">81%</div><div class="text-xs text-gray-500 mt-1">Surge in AI credential leaks</div></div>
-            <div class="text-center"><div class="text-3xl font-bold text-indigo-400">$4.88M</div><div class="text-xs text-gray-500 mt-1">Avg cost of credential breach</div></div>
-            <div class="text-center"><div class="text-3xl font-bold text-indigo-400">64%</div><div class="text-xs text-gray-500 mt-1">Leaked secrets never revoked</div></div>
+    <!-- Stats bar -->
+    <section class="relative z-10 border-y border-vp-border bg-vp-surface/50 backdrop-blur-sm">
+        <div class="max-w-5xl mx-auto px-6 py-10">
+            <div class="grid grid-cols-2 md:grid-cols-4 gap-8" id="statsBar">
+                <div class="text-center reveal">
+                    <div class="text-3xl md:text-4xl font-extrabold text-white mb-1"><span class="counter" data-target="39" data-suffix="M">0</span></div>
+                    <div class="text-xs md:text-sm text-gray-500">Secrets leaked on GitHub (2024)</div>
+                </div>
+                <div class="text-center reveal delay-1">
+                    <div class="text-3xl md:text-4xl font-extrabold text-white mb-1"><span class="counter" data-target="81" data-suffix="%">0</span></div>
+                    <div class="text-xs md:text-sm text-gray-500">Surge in AI credential leaks</div>
+                </div>
+                <div class="text-center reveal delay-2">
+                    <div class="text-3xl md:text-4xl font-extrabold text-white mb-1">$<span class="counter" data-target="4.88" data-suffix="M" data-decimals="2">0</span></div>
+                    <div class="text-xs md:text-sm text-gray-500">Avg cost of credential breach</div>
+                </div>
+                <div class="text-center reveal delay-3">
+                    <div class="text-3xl md:text-4xl font-extrabold text-white mb-1"><span class="counter" data-target="64" data-suffix="%">0</span></div>
+                    <div class="text-xs md:text-sm text-gray-500">Leaked secrets never revoked</div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Features -->
+    <section class="relative z-10 max-w-5xl mx-auto px-6 py-24">
+        <div class="text-center mb-16">
+            <h2 class="text-3xl md:text-4xl font-bold text-white mb-4 reveal">Built on cryptographic guarantees</h2>
+            <p class="text-gray-500 text-lg reveal delay-1">Not policies. Not promises. Math.</p>
+        </div>
+        <div class="grid md:grid-cols-3 gap-6">
+            <!-- Key Splitting -->
+            <div class="bg-vp-surface border border-vp-border rounded-[16px] p-7 card-hover reveal delay-1">
+                <div class="w-12 h-12 rounded-card bg-vp-accent/10 flex items-center justify-center mb-5">
+                    <svg width="24" height="24" fill="none" stroke="#6366f1" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="6" cy="12" r="3"/><circle cx="18" cy="12" r="3"/><path d="M9 12h6"/><path d="M12 3v4M12 17v4"/></svg>
+                </div>
+                <h3 class="text-lg font-bold text-white mb-2">Key Splitting</h3>
+                <p class="text-sm text-gray-400 leading-relaxed">Your API key is split into shares using Shamir Secret Sharing the instant you paste it. The original is destroyed in-browser. Half a key is cryptographic garbage.</p>
+            </div>
+            <!-- Zero-Knowledge Proofs -->
+            <div class="bg-vp-surface border border-vp-border rounded-[16px] p-7 card-hover reveal delay-2">
+                <div class="w-12 h-12 rounded-card bg-vp-accent/10 flex items-center justify-center mb-5">
+                    <svg width="24" height="24" fill="none" stroke="#6366f1" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><path d="M9 12l2 2 4-4"/></svg>
+                </div>
+                <h3 class="text-lg font-bold text-white mb-2">Zero-Knowledge Proofs</h3>
+                <p class="text-sm text-gray-400 leading-relaxed">Every access is authorized by a ZK proof that verifies ownership without revealing the key. We prove you have the right to use it without ever seeing it.</p>
+            </div>
+            <!-- Ephemeral Reconstruction -->
+            <div class="bg-vp-surface border border-vp-border rounded-[16px] p-7 card-hover reveal delay-3">
+                <div class="w-12 h-12 rounded-card bg-vp-accent/10 flex items-center justify-center mb-5">
+                    <svg width="24" height="24" fill="none" stroke="#6366f1" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
+                </div>
+                <h3 class="text-lg font-bold text-white mb-2">Ephemeral Reconstruction</h3>
+                <p class="text-sm text-gray-400 leading-relaxed">Shares combine in a secure enclave for approximately 100ms. The API call is made, the response returns, and all key material is zeroed from memory.</p>
+            </div>
         </div>
     </section>
 
     <!-- How It Works -->
-    <section id="how-it-works" class="max-w-4xl mx-auto px-6 py-16 animate-in delay-2">
-        <h2 class="text-3xl font-bold text-center text-white mb-12">How It Works</h2>
-        <div class="grid md:grid-cols-3 gap-8">
-            <div class="bg-dark-blue-lighter border border-gray-800 rounded-2xl p-6">
-                <div class="text-3xl mb-4">&#9988;</div>
-                <h3 class="text-lg font-bold text-white mb-2">1. Key is split instantly</h3>
-                <p class="text-sm text-gray-400">You paste your API key. It's immediately split into two shares using Shamir Secret Sharing. The full key is destroyed. This happens in your browser &mdash; it never leaves your device whole.</p>
-            </div>
-            <div class="bg-dark-blue-lighter border border-gray-800 rounded-2xl p-6">
-                <div class="text-3xl mb-4">&#128274;</div>
-                <h3 class="text-lg font-bold text-white mb-2">2. Shares stored separately</h3>
-                <p class="text-sm text-gray-400">Share 1 goes to our vault (encrypted). Share 2 stays on your device. Neither share alone reveals anything &mdash; half a key is cryptographic garbage.</p>
-            </div>
-            <div class="bg-dark-blue-lighter border border-gray-800 rounded-2xl p-6">
-                <div class="text-3xl mb-4">&#9889;</div>
-                <h3 class="text-lg font-bold text-white mb-2">3. Ephemeral reconstruction</h3>
-                <p class="text-sm text-gray-400">When you make an API call, a zero-knowledge proof authorizes the request. Shares combine for ~100ms, the call is made, memory is zeroed. Every access is cryptographically logged.</p>
+    <section id="how-it-works" class="relative z-10 max-w-5xl mx-auto px-6 py-24">
+        <div class="text-center mb-16">
+            <h2 class="text-3xl md:text-4xl font-bold text-white mb-4 reveal">How It Works</h2>
+            <p class="text-gray-500 text-lg reveal delay-1">Three steps. Zero trust required.</p>
+        </div>
+        <div class="relative">
+            <!-- Dashed connector (desktop only) -->
+            <svg class="hidden md:block absolute top-[72px] left-0 w-full h-4 z-0" preserveAspectRatio="none">
+                <line x1="20%" y1="8" x2="80%" y2="8" stroke="#1e1e2e" stroke-width="2" stroke-dasharray="8 6">
+                    <animate attributeName="stroke-dashoffset" from="0" to="-28" dur="2s" repeatCount="indefinite"/>
+                </line>
+            </svg>
+            <div class="grid md:grid-cols-3 gap-8 relative z-10">
+                <!-- Step 1 -->
+                <div class="text-center reveal delay-1">
+                    <div class="w-[72px] h-[72px] rounded-full bg-vp-surface border-2 border-vp-accent/40 flex items-center justify-center mx-auto mb-6">
+                        <span class="text-2xl font-bold text-vp-accent">1</span>
+                    </div>
+                    <h3 class="text-lg font-bold text-white mb-2">Store</h3>
+                    <p class="text-sm text-gray-400 leading-relaxed">Paste your API key. Shamir Secret Sharing instantly splits it into encrypted shares in your browser. The original key is destroyed before it ever leaves your device.</p>
+                </div>
+                <!-- Step 2 -->
+                <div class="text-center reveal delay-2">
+                    <div class="w-[72px] h-[72px] rounded-full bg-vp-surface border-2 border-vp-accent/40 flex items-center justify-center mx-auto mb-6">
+                        <span class="text-2xl font-bold text-vp-accent">2</span>
+                    </div>
+                    <h3 class="text-lg font-bold text-white mb-2">Authorize</h3>
+                    <p class="text-sm text-gray-400 leading-relaxed">When you need to use a key, a zero-knowledge proof cryptographically verifies you are the rightful owner. No passwords, no tokens, no trust.</p>
+                </div>
+                <!-- Step 3 -->
+                <div class="text-center reveal delay-3">
+                    <div class="w-[72px] h-[72px] rounded-full bg-vp-surface border-2 border-vp-accent/40 flex items-center justify-center mx-auto mb-6">
+                        <span class="text-2xl font-bold text-vp-accent">3</span>
+                    </div>
+                    <h3 class="text-lg font-bold text-white mb-2">Proxy</h3>
+                    <p class="text-sm text-gray-400 leading-relaxed">Shares are reconstructed in a secure enclave for ~100ms. The API call is proxied, the response is returned, and all key material is zeroed from memory.</p>
+                </div>
             </div>
         </div>
     </section>
 
-    <!-- Architecture Diagram -->
-    <section class="max-w-4xl mx-auto px-6 py-16">
-        <h2 class="text-3xl font-bold text-center text-white mb-12">Architecture</h2>
-        <div class="bg-dark-blue-lighter border border-gray-800 rounded-2xl p-8 font-mono text-sm overflow-x-auto">
-<pre class="text-gray-400 leading-relaxed">
-&#x250C;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2510;                         &#x250C;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2510;
-&#x2502;  <span class="text-indigo-400">Your App</span>          &#x2502;  Access token +         &#x2502;  <span class="text-green-400">VaultProof</span>               &#x2502;
-&#x2502;  (embeds widget)   &#x2502;  ZK proof              &#x2502;                        &#x2502;
-&#x2502;                    &#x2502; &#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2192; &#x2502;  1. Verify ZK proof    &#x2502;
-&#x2502;  User's device     &#x2502;  Share 2 (encrypted)    &#x2502;  2. Retrieve Share 1   &#x2502;
-&#x2502;  holds Share 2     &#x2502; &#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2192; &#x2502;  3. Combine shares     &#x2502;
-&#x2502;                    &#x2502;                         &#x2502;  4. Make API call      &#x2502;
-&#x2502;                    &#x2502;  &#x2190;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500; &#x2502;  5. Zero memory        &#x2502;
-&#x2502;                    &#x2502;  API response            &#x2502;  6. Return response     &#x2502;
-&#x2514;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2518;                         &#x2514;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x252C;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2518;
-                                                       &#x2502;
-                                                       &#x25BC;
-                                             &#x250C;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2510;
-                                             &#x2502;  <span class="text-yellow-400">OpenAI / Google</span>  &#x2502;
-                                             &#x2502;  <span class="text-yellow-400">Anthropic / etc.</span> &#x2502;
-                                             &#x2514;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2518;
-</pre>
+    <!-- Code Example -->
+    <section class="relative z-10 max-w-5xl mx-auto px-6 py-24">
+        <div class="text-center mb-16">
+            <h2 class="text-3xl md:text-4xl font-bold text-white mb-4 reveal">3 Lines. Zero Trust.</h2>
+            <p class="text-gray-500 text-lg reveal delay-1">Install the SDK and start making cryptographically secure API calls.</p>
+        </div>
+        <div class="max-w-2xl mx-auto reveal delay-2">
+            <div class="bg-vp-surface border border-vp-border rounded-[16px] overflow-hidden">
+                <div class="flex items-center justify-between px-5 py-3 border-b border-vp-border">
+                    <span class="text-xs text-gray-600 font-mono">index.js</span>
+                    <button onclick="copyCode()" class="text-xs text-gray-500 hover:text-white transition-colors flex items-center gap-1.5" id="copyBtn">
+                        <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2"><rect x="5" y="5" width="8" height="8" rx="1.5"/><path d="M3 9V3a1.5 1.5 0 011.5-1.5H9"/></svg>
+                        Copy
+                    </button>
+                </div>
+                <div class="p-5 font-mono text-sm leading-7 overflow-x-auto">
+                    <div class="text-gray-500">// npm install @vaultproof/sdk</div>
+                    <div class="mt-3"></div>
+                    <div><span class="text-purple-400">const</span> <span class="text-gray-300">vault</span> <span class="text-gray-500">=</span> <span class="text-purple-400">new</span> <span class="text-yellow-300">VaultProof</span><span class="text-gray-500">(</span><span class="text-green-400">'vp_live_abc123...'</span><span class="text-gray-500">)</span></div>
+                    <div class="mt-1"><span class="text-purple-400">const</span> <span class="text-gray-300">key</span> <span class="text-gray-500">=</span> <span class="text-purple-400">await</span> <span class="text-gray-300">vault</span><span class="text-gray-500">.</span><span class="text-yellow-300">store</span><span class="text-gray-500">(</span><span class="text-green-400">'sk-openai-key'</span><span class="text-gray-500">,</span> <span class="text-green-400">'openai'</span><span class="text-gray-500">)</span></div>
+                    <div class="mt-1"><span class="text-purple-400">const</span> <span class="text-gray-300">res</span> <span class="text-gray-500">=</span> <span class="text-purple-400">await</span> <span class="text-gray-300">vault</span><span class="text-gray-500">.</span><span class="text-yellow-300">proxy</span><span class="text-gray-500">(</span><span class="text-gray-300">key</span><span class="text-gray-500">,</span> <span class="text-green-400">'/v1/chat/completions'</span><span class="text-gray-500">,</span> <span class="text-gray-500">{</span></div>
+                    <div class="pl-6"><span class="text-gray-300">model</span><span class="text-gray-500">:</span> <span class="text-green-400">'gpt-4'</span><span class="text-gray-500">,</span> <span class="text-gray-300">messages</span><span class="text-gray-500">:</span> <span class="text-gray-500">[{</span> <span class="text-gray-300">role</span><span class="text-gray-500">:</span> <span class="text-green-400">'user'</span><span class="text-gray-500">,</span> <span class="text-gray-300">content</span><span class="text-gray-500">:</span> <span class="text-green-400">'Hello!'</span> <span class="text-gray-500">}]</span></div>
+                    <div><span class="text-gray-500">})</span></div>
+                </div>
+            </div>
+            <pre id="codeRaw" class="hidden">npm install @vaultproof/sdk
+
+const vault = new VaultProof('vp_live_abc123...')
+const key = await vault.store('sk-openai-key', 'openai')
+const res = await vault.proxy(key, '/v1/chat/completions', {
+  model: 'gpt-4', messages: [{ role: 'user', content: 'Hello!' }]
+})</pre>
         </div>
     </section>
 
     <!-- Comparison Table -->
-    <section class="max-w-4xl mx-auto px-6 py-16">
-        <h2 class="text-3xl font-bold text-center text-white mb-12">vs Every Other Secrets Tool</h2>
-        <div class="overflow-x-auto">
-            <table class="w-full text-sm">
-                <thead>
-                    <tr class="border-b border-gray-800">
-                        <th class="text-left py-3 px-4 text-gray-400 font-medium">Product</th>
-                        <th class="text-center py-3 px-4 text-gray-400 font-medium">Can see your key?</th>
-                        <th class="text-center py-3 px-4 text-gray-400 font-medium">ZK Proofs?</th>
-                        <th class="text-center py-3 px-4 text-gray-400 font-medium">Key Splitting?</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <tr class="border-b border-gray-800/50"><td class="py-3 px-4 text-gray-300">HashiCorp Vault (IBM, $6.4B)</td><td class="py-3 px-4 text-center text-red-400">Yes</td><td class="py-3 px-4 text-center text-red-400">No</td><td class="py-3 px-4 text-center text-red-400">No</td></tr>
-                    <tr class="border-b border-gray-800/50"><td class="py-3 px-4 text-gray-300">1Password ($400M ARR)</td><td class="py-3 px-4 text-center text-red-400">Yes</td><td class="py-3 px-4 text-center text-red-400">No</td><td class="py-3 px-4 text-center text-red-400">No</td></tr>
-                    <tr class="border-b border-gray-800/50"><td class="py-3 px-4 text-gray-300">AWS Secrets Manager</td><td class="py-3 px-4 text-center text-red-400">Yes</td><td class="py-3 px-4 text-center text-red-400">No</td><td class="py-3 px-4 text-center text-red-400">No</td></tr>
-                    <tr class="border-b border-gray-800/50"><td class="py-3 px-4 text-gray-300">Infisical ($16M Series A)</td><td class="py-3 px-4 text-center text-red-400">Yes</td><td class="py-3 px-4 text-center text-red-400">No</td><td class="py-3 px-4 text-center text-red-400">No</td></tr>
-                    <tr class="border-b border-gray-800/50"><td class="py-3 px-4 text-gray-300">Doppler ($28.9M raised)</td><td class="py-3 px-4 text-center text-red-400">Yes</td><td class="py-3 px-4 text-center text-red-400">No</td><td class="py-3 px-4 text-center text-red-400">No</td></tr>
-                    <tr class="border-b border-gray-800/50"><td class="py-3 px-4 text-gray-300">OpenRouter (BYOK)</td><td class="py-3 px-4 text-center text-red-400">Yes</td><td class="py-3 px-4 text-center text-red-400">No</td><td class="py-3 px-4 text-center text-red-400">No</td></tr>
-                    <tr class="border-b border-indigo-500/30 bg-indigo-500/5"><td class="py-3 px-4 font-bold text-indigo-400">VaultProof (Rial Labs)</td><td class="py-3 px-4 text-center text-green-400 font-bold">Never</td><td class="py-3 px-4 text-center text-green-400 font-bold">Yes (Noir)</td><td class="py-3 px-4 text-center text-green-400 font-bold">Yes (Shamir)</td></tr>
-                </tbody>
-            </table>
+    <section class="relative z-10 max-w-5xl mx-auto px-6 py-24">
+        <div class="text-center mb-16">
+            <h2 class="text-3xl md:text-4xl font-bold text-white mb-4 reveal">vs Every Other Secrets Tool</h2>
+            <p class="text-gray-500 text-lg reveal delay-1">Every competitor can see your keys. We literally cannot.</p>
         </div>
-    </section>
-
-    <!-- Breaches -->
-    <section class="max-w-4xl mx-auto px-6 py-16">
-        <h2 class="text-3xl font-bold text-center text-white mb-4">Breaches We Would Have Prevented</h2>
-        <p class="text-center text-gray-500 mb-12">Half a key is cryptographic garbage. These breaches become harmless.</p>
-        <div class="grid md:grid-cols-2 gap-4" id="breaches"></div>
-    </section>
-
-    <!-- Developer Integration -->
-    <section class="max-w-4xl mx-auto px-6 py-16">
-        <h2 class="text-3xl font-bold text-center text-white mb-4">3 Lines. Zero Trust.</h2>
-        <p class="text-center text-gray-500 mb-10">Install the SDK, add your API key, and start making secure calls.</p>
-        <div class="bg-dark-blue-lighter border border-gray-800 rounded-2xl p-6 font-mono text-sm overflow-x-auto">
-            <div class="text-gray-500">// npm install @vaultproof/sdk</div><br>
-            <div><span class="text-purple-400">const</span> <span class="text-gray-300">vault = </span><span class="text-purple-400">new</span> <span class="text-yellow-300">VaultProof</span>(<span class="text-green-400">'vp_live_abc123...'</span>)</div>
-            <div><span class="text-purple-400">const</span> <span class="text-gray-300">key = </span><span class="text-purple-400">await</span> <span class="text-gray-300">vault.</span><span class="text-yellow-300">store</span>(<span class="text-green-400">'sk-openai-key'</span>, <span class="text-green-400">'openai'</span>)</div>
-            <div><span class="text-purple-400">const</span> <span class="text-gray-300">res = </span><span class="text-purple-400">await</span> <span class="text-gray-300">vault.</span><span class="text-yellow-300">proxy</span>(<span class="text-gray-300">key, </span><span class="text-green-400">'/v1/chat/completions'</span>, {</div>
-            <div class="pl-4"><span class="text-gray-300">model: </span><span class="text-green-400">'gpt-4'</span>, <span class="text-gray-300">messages: [{ role: </span><span class="text-green-400">'user'</span>, <span class="text-gray-300">content: </span><span class="text-green-400">'Hello!'</span> <span class="text-gray-300">}]</span></div>
-            <div class="text-gray-300">})</div>
+        <div class="reveal delay-2 overflow-x-auto">
+            <div class="bg-vp-surface border border-vp-border rounded-[16px] overflow-hidden">
+                <table class="w-full text-sm">
+                    <thead>
+                        <tr class="border-b border-vp-border bg-vp-bg/50">
+                            <th class="text-left py-4 px-6 text-gray-400 font-semibold">Platform</th>
+                            <th class="text-center py-4 px-4 text-gray-400 font-semibold">Can see your key?</th>
+                            <th class="text-center py-4 px-4 text-gray-400 font-semibold">ZK Proofs?</th>
+                            <th class="text-center py-4 px-4 text-gray-400 font-semibold">Key Splitting?</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr class="border-b border-vp-border/50 hover:bg-white/[0.01] transition-colors">
+                            <td class="py-3.5 px-6 text-gray-300">HashiCorp Vault</td>
+                            <td class="py-3.5 px-4 text-center text-red-400">Yes</td>
+                            <td class="py-3.5 px-4 text-center text-red-400">No</td>
+                            <td class="py-3.5 px-4 text-center text-red-400">No</td>
+                        </tr>
+                        <tr class="border-b border-vp-border/50 hover:bg-white/[0.01] transition-colors">
+                            <td class="py-3.5 px-6 text-gray-300">1Password</td>
+                            <td class="py-3.5 px-4 text-center text-red-400">Yes</td>
+                            <td class="py-3.5 px-4 text-center text-red-400">No</td>
+                            <td class="py-3.5 px-4 text-center text-red-400">No</td>
+                        </tr>
+                        <tr class="border-b border-vp-border/50 hover:bg-white/[0.01] transition-colors">
+                            <td class="py-3.5 px-6 text-gray-300">AWS Secrets Manager</td>
+                            <td class="py-3.5 px-4 text-center text-red-400">Yes</td>
+                            <td class="py-3.5 px-4 text-center text-red-400">No</td>
+                            <td class="py-3.5 px-4 text-center text-red-400">No</td>
+                        </tr>
+                        <tr class="border-b border-vp-border/50 hover:bg-white/[0.01] transition-colors">
+                            <td class="py-3.5 px-6 text-gray-300">Infisical</td>
+                            <td class="py-3.5 px-4 text-center text-red-400">Yes</td>
+                            <td class="py-3.5 px-4 text-center text-red-400">No</td>
+                            <td class="py-3.5 px-4 text-center text-red-400">No</td>
+                        </tr>
+                        <tr class="border-b border-vp-border/50 hover:bg-white/[0.01] transition-colors">
+                            <td class="py-3.5 px-6 text-gray-300">Doppler</td>
+                            <td class="py-3.5 px-4 text-center text-red-400">Yes</td>
+                            <td class="py-3.5 px-4 text-center text-red-400">No</td>
+                            <td class="py-3.5 px-4 text-center text-red-400">No</td>
+                        </tr>
+                        <tr class="border-b border-vp-border/50 hover:bg-white/[0.01] transition-colors">
+                            <td class="py-3.5 px-6 text-gray-300">OpenRouter</td>
+                            <td class="py-3.5 px-4 text-center text-red-400">Yes</td>
+                            <td class="py-3.5 px-4 text-center text-red-400">No</td>
+                            <td class="py-3.5 px-4 text-center text-red-400">No</td>
+                        </tr>
+                        <tr class="bg-vp-accent/[0.06] border-t-2 border-vp-accent/30">
+                            <td class="py-4 px-6 font-bold text-vp-accent flex items-center gap-2">
+                                <svg width="16" height="16" viewBox="0 0 28 28" fill="none"><path d="M8 8L14 4L20 8V16L14 20L8 16V8Z" stroke="#6366f1" stroke-width="2" fill="none"/></svg>
+                                VaultProof
+                            </td>
+                            <td class="py-4 px-4 text-center text-green-400 font-bold">Never</td>
+                            <td class="py-4 px-4 text-center text-green-400 font-bold">Yes</td>
+                            <td class="py-4 px-4 text-center text-green-400 font-bold">Yes</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
         </div>
     </section>
 
     <!-- Pricing -->
-    <section id="pricing" class="max-w-4xl mx-auto px-6 py-16">
-        <h2 class="text-3xl font-bold text-center text-white mb-12">Pricing</h2>
-        <div class="grid md:grid-cols-3 gap-6">
-            <div class="bg-dark-blue-lighter border border-gray-800 rounded-2xl p-6">
-                <div class="text-lg font-bold text-white mb-1">Free</div>
-                <div class="text-3xl font-extrabold text-white mb-4">$0<span class="text-sm text-gray-500 font-normal">/mo</span></div>
-                <ul class="space-y-2 text-sm text-gray-400"><li>3 key slots</li><li>1,000 proxied calls/mo</li><li>1 app grant per key</li></ul>
+    <section id="pricing" class="relative z-10 max-w-5xl mx-auto px-6 py-24">
+        <div class="text-center mb-16">
+            <h2 class="text-3xl md:text-4xl font-bold text-white mb-4 reveal">Simple, transparent pricing</h2>
+            <p class="text-gray-500 text-lg reveal delay-1">Start free. Upgrade when you need more.</p>
+        </div>
+        <div class="grid md:grid-cols-2 gap-6 max-w-3xl mx-auto">
+            <!-- Free -->
+            <div class="bg-vp-surface border border-vp-border rounded-[16px] p-8 card-hover reveal delay-1">
+                <div class="text-sm font-semibold text-gray-400 mb-2 uppercase tracking-wide">Free</div>
+                <div class="flex items-baseline gap-1 mb-6">
+                    <span class="text-5xl font-extrabold text-white">$0</span>
+                    <span class="text-gray-500 text-sm">/month</span>
+                </div>
+                <ul class="space-y-3 text-sm text-gray-400 mb-8">
+                    <li class="flex items-center gap-3">
+                        <svg width="16" height="16" fill="none" stroke="#6366f1" stroke-width="2"><path d="M13.3 4L6 11.3 2.7 8"/></svg>
+                        3 key slots
+                    </li>
+                    <li class="flex items-center gap-3">
+                        <svg width="16" height="16" fill="none" stroke="#6366f1" stroke-width="2"><path d="M13.3 4L6 11.3 2.7 8"/></svg>
+                        1,000 proxied calls / month
+                    </li>
+                    <li class="flex items-center gap-3">
+                        <svg width="16" height="16" fill="none" stroke="#6366f1" stroke-width="2"><path d="M13.3 4L6 11.3 2.7 8"/></svg>
+                        Shamir splitting + ZK proofs
+                    </li>
+                    <li class="flex items-center gap-3">
+                        <svg width="16" height="16" fill="none" stroke="#6366f1" stroke-width="2"><path d="M13.3 4L6 11.3 2.7 8"/></svg>
+                        Community support
+                    </li>
+                </ul>
+                <a href="/app/login" class="block text-center border border-vp-border hover:border-gray-500 px-6 py-3 rounded-btn font-semibold text-gray-300 transition-all hover:bg-white/[0.02]">Get Started</a>
             </div>
-            <div class="bg-dark-blue-lighter border-2 border-indigo-500 rounded-2xl p-6 relative">
-                <div class="absolute -top-3 left-1/2 -translate-x-1/2 bg-indigo-600 text-xs font-bold px-3 py-1 rounded-full text-white">Most Popular</div>
-                <div class="text-lg font-bold text-white mb-1">Pro</div>
-                <div class="text-3xl font-extrabold text-white mb-4">$12<span class="text-sm text-gray-500 font-normal">/mo</span></div>
-                <ul class="space-y-2 text-sm text-gray-400"><li>20 key slots</li><li>50K proxied calls/mo</li><li>Unlimited app grants</li><li>Usage analytics</li></ul>
-            </div>
-            <div class="bg-dark-blue-lighter border border-gray-800 rounded-2xl p-6">
-                <div class="text-lg font-bold text-white mb-1">Team</div>
-                <div class="text-3xl font-extrabold text-white mb-4">$39<span class="text-sm text-gray-500 font-normal">/mo</span></div>
-                <ul class="space-y-2 text-sm text-gray-400"><li>100 key slots</li><li>200K proxied calls/mo</li><li>Team sharing + SSO</li><li>Audit log export</li></ul>
+            <!-- Pro -->
+            <div class="bg-vp-surface border-2 border-vp-accent rounded-[16px] p-8 card-hover pro-glow relative reveal delay-2">
+                <div class="absolute -top-3.5 left-1/2 -translate-x-1/2 bg-vp-accent text-xs font-bold px-4 py-1.5 rounded-full text-white shadow-lg shadow-vp-accent/20">Most Popular</div>
+                <div class="text-sm font-semibold text-vp-accent mb-2 uppercase tracking-wide">Pro</div>
+                <div class="flex items-baseline gap-1 mb-6">
+                    <span class="text-5xl font-extrabold text-white">$12</span>
+                    <span class="text-gray-500 text-sm">/month</span>
+                </div>
+                <ul class="space-y-3 text-sm text-gray-400 mb-8">
+                    <li class="flex items-center gap-3">
+                        <svg width="16" height="16" fill="none" stroke="#6366f1" stroke-width="2"><path d="M13.3 4L6 11.3 2.7 8"/></svg>
+                        20 key slots
+                    </li>
+                    <li class="flex items-center gap-3">
+                        <svg width="16" height="16" fill="none" stroke="#6366f1" stroke-width="2"><path d="M13.3 4L6 11.3 2.7 8"/></svg>
+                        50,000 proxied calls / month
+                    </li>
+                    <li class="flex items-center gap-3">
+                        <svg width="16" height="16" fill="none" stroke="#6366f1" stroke-width="2"><path d="M13.3 4L6 11.3 2.7 8"/></svg>
+                        Usage analytics dashboard
+                    </li>
+                    <li class="flex items-center gap-3">
+                        <svg width="16" height="16" fill="none" stroke="#6366f1" stroke-width="2"><path d="M13.3 4L6 11.3 2.7 8"/></svg>
+                        Priority support
+                    </li>
+                </ul>
+                <a href="/app/login" class="block text-center bg-vp-accent hover:bg-indigo-500 px-6 py-3 rounded-btn font-semibold text-white transition-all btn-glow">Start Pro</a>
             </div>
         </div>
     </section>
 
     <!-- CTA -->
-    <section id="contact" class="max-w-4xl mx-auto px-6 py-20 text-center">
-        <h2 class="text-3xl font-bold text-white mb-4">Stop trusting. Start proving.</h2>
-        <p class="text-gray-500 mb-8">Breaches are architecturally impossible, not just policy-prohibited.</p>
-        <a href="mailto:nelson@riallabs.com?subject=ZK%20Vault%20Early%20Access" class="inline-block bg-indigo-600 hover:bg-indigo-500 px-8 py-4 rounded-xl font-semibold text-lg text-white transition">Request Early Access</a>
+    <section class="relative z-10 max-w-5xl mx-auto px-6 py-24">
+        <div class="bg-vp-surface border border-vp-border rounded-[20px] p-12 md:p-16 text-center relative overflow-hidden reveal">
+            <!-- Subtle accent glow -->
+            <div class="absolute top-0 left-1/2 -translate-x-1/2 w-[400px] h-[200px] bg-vp-accent/10 blur-[100px] rounded-full pointer-events-none"></div>
+            <h2 class="text-3xl md:text-4xl font-bold text-white mb-4 relative">Stop trusting. Start proving.</h2>
+            <p class="text-gray-400 text-lg mb-10 max-w-xl mx-auto relative">Breaches are architecturally impossible, not just policy-prohibited.</p>
+            <div class="flex flex-col sm:flex-row items-center justify-center gap-4 relative">
+                <div class="flex w-full sm:w-auto">
+                    <input type="email" id="ctaEmail" placeholder="you@company.com" class="bg-vp-bg border border-vp-border rounded-l-btn px-5 py-3.5 text-sm text-white placeholder-gray-600 focus:outline-none focus:border-vp-accent/50 w-full sm:w-64 transition-colors">
+                    <button onclick="handleCTA()" class="bg-vp-accent hover:bg-indigo-500 px-6 py-3.5 rounded-r-btn font-semibold text-white transition-all btn-glow text-sm whitespace-nowrap">Get Started</button>
+                </div>
+            </div>
+            <p class="text-xs text-gray-600 mt-4 relative">Free tier includes 3 keys and 1,000 calls/month. No credit card required.</p>
+        </div>
     </section>
 
     <!-- Footer -->
-    <footer class="border-t border-gray-800 py-8 px-6 text-center text-sm text-gray-600">
-        <a href="/" class="text-gray-400 hover:text-white transition">Rial Labs</a> &mdash; Zero-knowledge API key infrastructure
+    <footer class="relative z-10 border-t border-vp-border">
+        <div class="max-w-5xl mx-auto px-6 py-12">
+            <div class="flex flex-col md:flex-row items-center justify-between gap-6">
+                <div class="flex flex-col items-center md:items-start gap-2">
+                    <div class="flex items-center gap-2.5">
+                        <svg width="22" height="22" viewBox="0 0 28 28" fill="none"><rect width="28" height="28" rx="6" fill="#6366f1" fill-opacity="0.15"/><path d="M8 8L14 4L20 8V16L14 20L8 16V8Z" stroke="#6366f1" stroke-width="1.5" fill="none"/><path d="M14 10V15" stroke="#6366f1" stroke-width="1.5" stroke-linecap="round"/><circle cx="14" cy="17" r="1" fill="#6366f1"/></svg>
+                        <span class="text-sm font-bold text-white">VaultProof</span>
+                        <span class="text-xs text-gray-600">by Rial Labs</span>
+                    </div>
+                    <p class="text-xs text-gray-600">Built for developers who refuse to trust blindly.</p>
+                </div>
+                <div class="flex items-center gap-8">
+                    <a href="/docs" class="text-sm text-gray-500 hover:text-white transition-colors">Docs</a>
+                    <a href="/verify" class="text-sm text-gray-500 hover:text-white transition-colors">Verify</a>
+                    <a href="/app/login" class="text-sm text-gray-500 hover:text-white transition-colors">Dashboard</a>
+                    <a href="https://github.com/riallabs" target="_blank" rel="noopener" class="text-sm text-gray-500 hover:text-white transition-colors">GitHub</a>
+                </div>
+            </div>
+        </div>
     </footer>
 
     <script>
-        // Render breaches
-        const breaches = [
-            { company: "Toyota", detail: "API key on GitHub for 5 years", impact: "296K customer records" },
-            { company: "Uber", detail: "Hard-coded credentials in repo", impact: "57M records compromised" },
-            { company: "Twitch", detail: "6,600 secrets in leaked source", impact: "194 AWS keys, 69 Twilio keys" },
-            { company: "CircleCI", detail: "All customer secrets stolen", impact: "Every customer rotated everything" },
-            { company: "Codecov", detail: "Supply chain key extraction", impact: "23K+ customers for 2+ months" },
-            { company: "xAI", detail: "SpaceX/Tesla LLM key on GitHub", impact: "2 months of unauthorized access" },
+        // Mobile menu toggle
+        document.getElementById('mobileToggle').addEventListener('click', function() {
+            document.getElementById('mobileMenu').classList.toggle('open');
+        });
+
+        // Scroll reveal with IntersectionObserver
+        const revealObserver = new IntersectionObserver(function(entries) {
+            entries.forEach(function(entry) {
+                if (entry.isIntersecting) {
+                    entry.target.classList.add('visible');
+                    revealObserver.unobserve(entry.target);
+                }
+            });
+        }, { threshold: 0.1, rootMargin: '0px 0px -40px 0px' });
+
+        document.querySelectorAll('.reveal').forEach(function(el) {
+            revealObserver.observe(el);
+        });
+
+        // Count-up animation for stats
+        var countStarted = false;
+        var statsObserver = new IntersectionObserver(function(entries) {
+            entries.forEach(function(entry) {
+                if (entry.isIntersecting && !countStarted) {
+                    countStarted = true;
+                    document.querySelectorAll('.counter').forEach(function(counter) {
+                        var target = parseFloat(counter.getAttribute('data-target'));
+                        var suffix = counter.getAttribute('data-suffix') || '';
+                        var decimals = parseInt(counter.getAttribute('data-decimals') || '0');
+                        var duration = 2000;
+                        var startTime = null;
+
+                        function step(timestamp) {
+                            if (!startTime) startTime = timestamp;
+                            var progress = Math.min((timestamp - startTime) / duration, 1);
+                            var eased = 1 - Math.pow(1 - progress, 3);
+                            var current = (target * eased).toFixed(decimals);
+                            counter.textContent = current + suffix;
+                            if (progress < 1) {
+                                requestAnimationFrame(step);
+                            } else {
+                                counter.textContent = (decimals > 0 ? target.toFixed(decimals) : target) + suffix;
+                            }
+                        }
+                        requestAnimationFrame(step);
+                    });
+                }
+            });
+        }, { threshold: 0.3 });
+
+        var statsBar = document.getElementById('statsBar');
+        if (statsBar) statsObserver.observe(statsBar);
+
+        // Terminal typing animation
+        var terminalLines = [
+            { cmd: 'vaultproof store --provider openai --key sk-proj-abc...xyz', delay: 40, output: [
+                '<span class="text-gray-500">Splitting key with Shamir (2-of-2)...</span>',
+                '<span class="text-green-400">Key stored.</span> <span class="text-gray-500">ID: vk_8f3a2b1c</span>',
+                '<span class="text-gray-600">Share 1 -> vault (encrypted) | Share 2 -> local device</span>'
+            ]},
+            { cmd: 'vaultproof proxy vk_8f3a2b1c /v1/chat/completions --model gpt-4', delay: 35, output: [
+                '<span class="text-gray-500">Generating ZK proof of ownership...</span>',
+                '<span class="text-cyan-400">Proof verified.</span> <span class="text-gray-500">Reconstructing key (~100ms)...</span>',
+                '<span class="text-green-400">200 OK</span> <span class="text-gray-600">| 847 tokens | key zeroed from memory</span>'
+            ]},
+            { cmd: 'vaultproof revoke vk_8f3a2b1c --zero-all', delay: 40, output: [
+                '<span class="text-gray-500">Destroying all shares...</span>',
+                '<span class="text-yellow-400">Share 1 zeroed from vault.</span>',
+                '<span class="text-yellow-400">Share 2 zeroed from device.</span>',
+                '<span class="text-green-400">Key vk_8f3a2b1c permanently destroyed.</span> <span class="text-gray-600">No recovery possible.</span>'
+            ]}
         ];
-        const container = document.getElementById('breaches');
-        breaches.forEach(b => {
-            container.innerHTML += `
-                <div class="bg-dark-blue-lighter border border-gray-800 rounded-xl p-4 flex items-start gap-3">
-                    <div class="text-red-400 text-lg mt-0.5">&#9888;</div>
-                    <div>
-                        <div class="font-bold text-white">${b.company}</div>
-                        <div class="text-sm text-gray-400">${b.detail}</div>
-                        <div class="text-xs text-red-400 mt-1">${b.impact}</div>
-                    </div>
-                </div>`;
+
+        var termText = document.getElementById('terminalText');
+        var termOutput = document.getElementById('terminalOutput');
+        var termCursor = document.getElementById('terminalCursor');
+        var currentLine = 0;
+
+        function typeCommand(line, charIndex, callback) {
+            if (charIndex < line.cmd.length) {
+                termText.textContent += line.cmd[charIndex];
+                setTimeout(function() { typeCommand(line, charIndex + 1, callback); }, line.delay);
+            } else {
+                setTimeout(callback, 400);
+            }
+        }
+
+        function showOutput(lines, lineIndex, callback) {
+            if (lineIndex < lines.length) {
+                var div = document.createElement('div');
+                div.innerHTML = lines[lineIndex];
+                div.style.opacity = '0';
+                termOutput.appendChild(div);
+                requestAnimationFrame(function() {
+                    div.style.transition = 'opacity 0.3s ease';
+                    div.style.opacity = '1';
+                });
+                setTimeout(function() { showOutput(lines, lineIndex + 1, callback); }, 350);
+            } else {
+                setTimeout(callback, 2000);
+            }
+        }
+
+        function runTerminal() {
+            var line = terminalLines[currentLine];
+            termText.textContent = '';
+            termOutput.innerHTML = '';
+
+            typeCommand(line, 0, function() {
+                showOutput(line.output, 0, function() {
+                    currentLine = (currentLine + 1) % terminalLines.length;
+                    runTerminal();
+                });
+            });
+        }
+
+        // Start terminal after a short delay
+        setTimeout(runTerminal, 800);
+
+        // Copy code button
+        function copyCode() {
+            var raw = document.getElementById('codeRaw').textContent;
+            navigator.clipboard.writeText(raw).then(function() {
+                var btn = document.getElementById('copyBtn');
+                btn.innerHTML = '<svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2"><path d="M13.3 4L6 11.3 2.7 8"/></svg> Copied!';
+                btn.classList.add('text-green-400');
+                setTimeout(function() {
+                    btn.innerHTML = '<svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2"><rect x="5" y="5" width="8" height="8" rx="1.5"/><path d="M3 9V3a1.5 1.5 0 011.5-1.5H9"/></svg> Copy';
+                    btn.classList.remove('text-green-400');
+                }, 2000);
+            });
+        }
+
+        // CTA email handler
+        function handleCTA() {
+            var email = document.getElementById('ctaEmail').value;
+            if (email) {
+                window.location.href = '/app/login?email=' + encodeURIComponent(email);
+            } else {
+                window.location.href = '/app/login';
+            }
+        }
+
+        // Enter key for CTA input
+        document.getElementById('ctaEmail').addEventListener('keydown', function(e) {
+            if (e.key === 'Enter') handleCTA();
+        });
+
+        // Close mobile menu on anchor click
+        document.querySelectorAll('#mobileMenu a').forEach(function(link) {
+            link.addEventListener('click', function() {
+                document.getElementById('mobileMenu').classList.remove('open');
+            });
         });
     </script>
 </body>
