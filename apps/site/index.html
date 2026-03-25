@@ -195,10 +195,10 @@
         <div class="flex items-center justify-between px-6 py-4 max-w-6xl mx-auto">
             <a href="/" class="flex items-center gap-2.5">
                 <svg width="28" height="28" viewBox="0 0 28 28" fill="none" xmlns="http://www.w3.org/2000/svg">
-                    <rect width="28" height="28" rx="6" fill="#6366f1" fill-opacity="0.15"/>
-                    <path d="M8 8L14 4L20 8V16L14 20L8 16V8Z" stroke="#6366f1" stroke-width="1.5" fill="none"/>
-                    <path d="M14 10V15" stroke="#6366f1" stroke-width="1.5" stroke-linecap="round"/>
-                    <circle cx="14" cy="17" r="1" fill="#6366f1"/>
+                    <rect x="4" y="4" width="20" height="20" rx="4" stroke="#6366f1" stroke-width="1.5" fill="#6366f1" fill-opacity="0.12"/>
+                    <circle cx="14" cy="14" r="4" stroke="#6366f1" stroke-width="1.5"/>
+                    <circle cx="14" cy="14" r="1.2" fill="#6366f1"/>
+                    <line x1="18" y1="14" x2="21" y2="14" stroke="#6366f1" stroke-width="1.5" stroke-linecap="round"/>
                 </svg>
                 <span class="text-lg font-bold text-white tracking-tight">VaultProof</span>
             </a>
@@ -380,9 +380,9 @@
                 <div class="p-5 font-mono text-sm leading-7 overflow-x-auto">
                     <div class="text-gray-500">// npm install @vaultproof/sdk</div>
                     <div class="mt-3"></div>
-                    <div><span class="text-purple-400">const</span> <span class="text-gray-300">vault</span> <span class="text-gray-500">=</span> <span class="text-purple-400">new</span> <span class="text-yellow-300">VaultProof</span><span class="text-gray-500">(</span><span class="text-green-400">'vp_live_abc123...'</span><span class="text-gray-500">)</span></div>
-                    <div class="mt-1"><span class="text-purple-400">const</span> <span class="text-gray-300">key</span> <span class="text-gray-500">=</span> <span class="text-purple-400">await</span> <span class="text-gray-300">vault</span><span class="text-gray-500">.</span><span class="text-yellow-300">store</span><span class="text-gray-500">(</span><span class="text-green-400">'sk-openai-key'</span><span class="text-gray-500">,</span> <span class="text-green-400">'openai'</span><span class="text-gray-500">)</span></div>
-                    <div class="mt-1"><span class="text-purple-400">const</span> <span class="text-gray-300">res</span> <span class="text-gray-500">=</span> <span class="text-purple-400">await</span> <span class="text-gray-300">vault</span><span class="text-gray-500">.</span><span class="text-yellow-300">proxy</span><span class="text-gray-500">(</span><span class="text-gray-300">key</span><span class="text-gray-500">,</span> <span class="text-green-400">'/v1/chat/completions'</span><span class="text-gray-500">,</span> <span class="text-gray-500">{</span></div>
+                    <div><span class="text-indigo-400">const</span> <span class="text-gray-300">vault</span> <span class="text-gray-500">=</span> <span class="text-indigo-400">new</span> <span class="text-yellow-300">VaultProof</span><span class="text-gray-500">(</span><span class="text-green-400">'vp_live_abc123...'</span><span class="text-gray-500">)</span></div>
+                    <div class="mt-1"><span class="text-indigo-400">const</span> <span class="text-gray-300">key</span> <span class="text-gray-500">=</span> <span class="text-indigo-400">await</span> <span class="text-gray-300">vault</span><span class="text-gray-500">.</span><span class="text-yellow-300">store</span><span class="text-gray-500">(</span><span class="text-green-400">'sk-openai-key'</span><span class="text-gray-500">,</span> <span class="text-green-400">'openai'</span><span class="text-gray-500">)</span></div>
+                    <div class="mt-1"><span class="text-indigo-400">const</span> <span class="text-gray-300">res</span> <span class="text-gray-500">=</span> <span class="text-indigo-400">await</span> <span class="text-gray-300">vault</span><span class="text-gray-500">.</span><span class="text-yellow-300">proxy</span><span class="text-gray-500">(</span><span class="text-gray-300">key</span><span class="text-gray-500">,</span> <span class="text-green-400">'/v1/chat/completions'</span><span class="text-gray-500">,</span> <span class="text-gray-500">{</span></div>
                     <div class="pl-6"><span class="text-gray-300">model</span><span class="text-gray-500">:</span> <span class="text-green-400">'gpt-4'</span><span class="text-gray-500">,</span> <span class="text-gray-300">messages</span><span class="text-gray-500">:</span> <span class="text-gray-500">[{</span> <span class="text-gray-300">role</span><span class="text-gray-500">:</span> <span class="text-green-400">'user'</span><span class="text-gray-500">,</span> <span class="text-gray-300">content</span><span class="text-gray-500">:</span> <span class="text-green-400">'Hello!'</span> <span class="text-gray-500">}]</span></div>
                     <div><span class="text-gray-500">})</span></div>
                 </div>

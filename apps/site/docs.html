@@ -1466,25 +1466,25 @@ Authorization: Bearer &lt;jwt_token&gt;
                         <p class="text-gray-400 text-sm">User sessions use JWT tokens with 7-day expiry. Developer API keys (<code class="font-mono text-xs text-vp-accent">vp_live_</code>) are hashed with bcrypt and stored in the database. The raw key is never stored.</p>
                     </div>
 
-                    <div class="endpoint-card border-l-2 border-l-purple-500/50">
+                    <div class="endpoint-card border-l-2 border-l-indigo-500/50">
                         <div class="flex items-center gap-3 mb-2">
-                            <span class="text-purple-400 font-mono text-xs font-bold bg-purple-500/10 px-2 py-0.5 rounded">L6</span>
+                            <span class="text-indigo-400 font-mono text-xs font-bold bg-indigo-500/10 px-2 py-0.5 rounded">L6</span>
                             <h4 class="text-white font-semibold">Nullifier Replay Prevention</h4>
                         </div>
                         <p class="text-gray-400 text-sm">Every proxy call requires a unique nullifier (a random hex string). Used nullifiers are stored in the database. If an attacker intercepts a request and tries to replay it, the server rejects it because the nullifier has already been consumed.</p>
                     </div>
 
-                    <div class="endpoint-card border-l-2 border-l-purple-500/50">
+                    <div class="endpoint-card border-l-2 border-l-indigo-500/50">
                         <div class="flex items-center gap-3 mb-2">
-                            <span class="text-purple-400 font-mono text-xs font-bold bg-purple-500/10 px-2 py-0.5 rounded">L7</span>
+                            <span class="text-indigo-400 font-mono text-xs font-bold bg-indigo-500/10 px-2 py-0.5 rounded">L7</span>
                             <h4 class="text-white font-semibold">Rate Limiting</h4>
                         </div>
                         <p class="text-gray-400 text-sm">Two layers of rate limiting: 60 requests/minute per IP at the Cloudflare edge, and 100 requests/minute per user at the backend. Brute-force and DDoS attempts are throttled before they reach the application.</p>
                     </div>
 
-                    <div class="endpoint-card border-l-2 border-l-purple-500/50">
+                    <div class="endpoint-card border-l-2 border-l-indigo-500/50">
                         <div class="flex items-center gap-3 mb-2">
-                            <span class="text-purple-400 font-mono text-xs font-bold bg-purple-500/10 px-2 py-0.5 rounded">L8</span>
+                            <span class="text-indigo-400 font-mono text-xs font-bold bg-indigo-500/10 px-2 py-0.5 rounded">L8</span>
                             <h4 class="text-white font-semibold">Noir ZK Proofs</h4>
                         </div>
                         <p class="text-gray-400 text-sm">Zero-knowledge proofs (written in Noir, verified with Barretenberg) cryptographically prove key ownership, app authorization, and request freshness without revealing any sensitive data. Proof verification happens on every proxy call.</p>
