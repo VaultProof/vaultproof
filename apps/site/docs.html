@@ -231,14 +231,46 @@
             <!-- ============================================================ -->
             <section id="quick-start" class="mb-20">
                 <h2 class="text-3xl font-bold text-white mb-2">Quick Start</h2>
-                <p class="text-gray-500 mb-8">Three ways to get started. Pick the one that fits your workflow.</p>
+                <p class="text-gray-500 mb-8">Three ways to use VaultProof. Pick the one that fits your workflow.</p>
+
+                <!-- SDK vs CLI vs Dashboard -->
+                <div class="bg-vp-surface border border-vp-border rounded-xl overflow-hidden mb-8">
+                    <table class="doc-table">
+                        <thead><tr><th>Tool</th><th>What it is</th><th>Use when</th><th>Install</th></tr></thead>
+                        <tbody>
+                            <tr>
+                                <td><code class="font-mono text-xs text-vp-accent">@vaultproof/sdk</code></td>
+                                <td>JavaScript/TypeScript library you <code class="font-mono text-xs">import</code> in your app code</td>
+                                <td>Building an app that needs to store/use API keys programmatically</td>
+                                <td><code class="font-mono text-xs">npm i @vaultproof/sdk</code></td>
+                            </tr>
+                            <tr>
+                                <td><code class="font-mono text-xs text-vp-accent">@vaultproof/cli</code></td>
+                                <td>Terminal command you run in your shell</td>
+                                <td>Managing keys manually, CI/CD pipelines, scripting, testing</td>
+                                <td><code class="font-mono text-xs">npm i -g @vaultproof/cli</code></td>
+                            </tr>
+                            <tr>
+                                <td><a href="/app" class="text-vp-accent hover:underline">Dashboard</a></td>
+                                <td>Web UI at vaultproof.dev/app</td>
+                                <td>Visual key management, usage monitoring, team settings</td>
+                                <td>No install -- just open in browser</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <div class="callout-warn mb-8">
+                    <p class="text-sm text-amber-200"><strong class="text-amber-300">All three tools do the same thing under the hood:</strong> Shamir-split your key locally, encrypt both shares with different keys, and proxy API calls without the server ever seeing the full key. The only difference is the interface.</p>
+                </div>
 
                 <!-- Path A: SDK -->
                 <div class="mb-8">
                     <div class="flex items-center gap-3 mb-4">
-                        <span class="bg-vp-accent/15 text-vp-accent text-xs font-bold px-2.5 py-1 rounded">RECOMMENDED</span>
-                        <h3 class="text-lg font-semibold text-white">Path A: SDK (for applications)</h3>
+                        <span class="bg-vp-accent/15 text-vp-accent text-xs font-bold px-2.5 py-1 rounded">FOR YOUR APP</span>
+                        <h3 class="text-lg font-semibold text-white">SDK -- import into your code</h3>
                     </div>
+                    <p class="text-gray-500 text-sm mb-4">Use the SDK when your application needs to store and use API keys. The SDK handles Shamir splitting, encryption, and proxying automatically inside your Node.js/TypeScript app.</p>
 
                     <div class="code-block mb-4">
                         <div class="code-header">terminal</div>
@@ -259,13 +291,23 @@
 <span class="kw">const</span> res = <span class="kw">await</span> vault.<span class="fn">proxy</span>(key.id, <span class="str">'/v1/chat/completions'</span>, {
   model: <span class="str">'gpt-4'</span>,
   messages: [{ role: <span class="str">'user'</span>, content: <span class="str">'Hello!'</span> }]
-})</pre>
+})
+
+<span class="cmt">// List all stored keys</span>
+<span class="kw">const</span> keys = <span class="kw">await</span> vault.<span class="fn">keys</span>()
+
+<span class="cmt">// Revoke a key (destroys both shares permanently)</span>
+<span class="kw">await</span> vault.<span class="fn">revoke</span>(key.id)</pre>
                     </div>
                 </div>
 
                 <!-- Path B: CLI -->
                 <div class="mb-8">
-                    <h3 class="text-lg font-semibold text-white mb-4">Path B: CLI (for terminal and CI/CD)</h3>
+                    <div class="flex items-center gap-3 mb-4">
+                        <span class="bg-vp-accent/15 text-vp-accent text-xs font-bold px-2.5 py-1 rounded">FOR YOUR TERMINAL</span>
+                        <h3 class="text-lg font-semibold text-white">CLI -- run from the command line</h3>
+                    </div>
+                    <p class="text-gray-500 text-sm mb-4">Use the CLI to manage keys from your terminal, automate with shell scripts, or integrate into CI/CD pipelines. Same security as the SDK, just a different interface.</p>
 
                     <div class="code-block mb-4">
                         <div class="code-header">terminal</div>
@@ -274,27 +316,46 @@
 
                     <div class="code-block">
                         <div class="code-header">terminal</div>
-<pre class="text-gray-300"><span class="cmt"># Authenticate</span>
-<span class="str">vaultproof login</span>
+<pre class="text-gray-300"><span class="cmt"># Create an account and log in</span>
+$ vaultproof register
+$ vaultproof login
 
-<span class="cmt"># Store a key (you'll be prompted to paste it securely)</span>
-<span class="str">vaultproof store --provider openai --label "Production"</span>
+<span class="cmt"># Create a developer API key (writes to .env)</span>
+$ vaultproof dev-key create
+$ export VAULTPROOF_API_KEY=vp_live_...
+
+<span class="cmt"># Store a key (prompted securely, never visible)</span>
+$ vaultproof store -p openai -l "Production"
+
+<span class="cmt"># List stored keys</span>
+$ vaultproof keys
 
 <span class="cmt"># Make a proxied API call</span>
-<span class="str">vaultproof proxy --key KEY_ID --path /v1/models --method GET</span></pre>
+$ vaultproof proxy -k vk_8f3a --path /v1/models -m GET
+
+<span class="cmt"># Check everything is working</span>
+$ vaultproof status
+
+<span class="cmt"># Get help on any command</span>
+$ vaultproof -h
+$ vaultproof store -h</pre>
                     </div>
                 </div>
 
                 <!-- Path C: Dashboard -->
                 <div>
-                    <h3 class="text-lg font-semibold text-white mb-4">Path C: Dashboard (for manual management)</h3>
+                    <div class="flex items-center gap-3 mb-4">
+                        <span class="bg-vp-accent/15 text-vp-accent text-xs font-bold px-2.5 py-1 rounded">FOR YOUR BROWSER</span>
+                        <h3 class="text-lg font-semibold text-white">Dashboard -- visual web interface</h3>
+                    </div>
+                    <p class="text-gray-500 text-sm mb-4">Use the dashboard to manage keys visually, monitor usage, view logs, and configure settings. No install needed.</p>
                     <div class="bg-vp-surface border border-vp-border rounded-xl p-5">
                         <ol class="list-decimal list-inside space-y-2 text-sm text-gray-400">
                             <li>Go to <a href="/app/login" class="text-vp-accent hover:underline">vaultproof.dev/app</a> and create an account or log in</li>
                             <li>Navigate to <strong class="text-white">Keys</strong> and click <strong class="text-white">Add Key</strong></li>
                             <li>Paste your API key, select the provider, and add a label</li>
                             <li>Click <strong class="text-white">Test Key</strong> to verify it works through the proxy</li>
-                            <li>Go to <strong class="text-white">Settings &rarr; API Keys</strong> to create a <code class="font-mono text-xs text-vp-accent">vp_live_</code> developer key for SDK use</li>
+                            <li>Go to <strong class="text-white">Settings &rarr; API Keys</strong> to create a <code class="font-mono text-xs text-vp-accent">vp_live_</code> developer key for SDK/CLI use</li>
                         </ol>
                     </div>
                 </div>
