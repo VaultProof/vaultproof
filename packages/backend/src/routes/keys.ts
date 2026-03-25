@@ -17,6 +17,7 @@ const storeKeySchema = z.object({
   authAppsRoot: z.string().optional(),
   appId: z.string().min(1).max(100).optional(),
   appName: z.string().max(100).optional(),
+  expiresAt: z.string().datetime().optional(),
 });
 
 const grantAppSchema = z.object({
@@ -32,7 +33,7 @@ export async function keyRoutes(app: FastifyInstance) {
       return reply.status(400).send({ error: 'Invalid input', details: parsed.error.issues });
     }
 
-    const { provider, label, share1, vaultCommitment, authAppsRoot, appId, appName } = parsed.data;
+    const { provider, label, share1, vaultCommitment, authAppsRoot, appId, appName, expiresAt } = parsed.data;
     const userId = request.auth!.userId;
 
     // Check tier key slot limit (skip in test environment)
@@ -58,6 +59,7 @@ export async function keyRoutes(app: FastifyInstance) {
         share1Encrypted: new Uint8Array(encrypt(Buffer.from(share1, 'utf-8'))),
         vaultCommitment,
         authAppsRoot: authAppsRoot || '',
+        expiresAt: expiresAt ? new Date(expiresAt) : undefined,
       },
     });
 

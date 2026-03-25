@@ -57,6 +57,12 @@ export async function proxyRoutes(app: FastifyInstance) {
     if (!keySlot || keySlot.status !== 'ACTIVE') {
       return reply.status(404).send({ error: 'Key slot not found or inactive' });
     }
+
+    // Check expiry
+    if (keySlot.expiresAt && new Date(keySlot.expiresAt) < new Date()) {
+      return reply.status(410).send({ error: 'Key has expired', expiresAt: keySlot.expiresAt });
+    }
+
     if (keySlot.appGrants.length === 0) {
       return reply.status(403).send({ error: 'App not authorized for this key' });
     }

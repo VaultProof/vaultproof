@@ -15,6 +15,7 @@ model User {
   tier                 String         @default("free") // free, starter, pro, team, enterprise
   stripeCustomerId     String?        @unique @map("stripe_customer_id")
   stripeSubscriptionId String?        @map("stripe_subscription_id")
+  refreshToken         String?        @unique @map("refresh_token")
   createdAt            DateTime       @default(now()) @map("created_at")
   keySlots             KeySlot[]
   developerKeys        DeveloperKey[]
@@ -50,6 +51,7 @@ model KeySlot {
   status           String      @default("ACTIVE")
   createdAt        DateTime    @default(now()) @map("created_at")
   rotatedAt        DateTime?   @map("rotated_at")
+  expiresAt        DateTime?   @map("expires_at")
   accessLogs       AccessLog[]
   appGrants        AppGrant[]
 

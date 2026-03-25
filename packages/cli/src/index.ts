@@ -362,6 +362,7 @@ program
   .description("Store a new API key with Shamir splitting")
   .requiredOption("-p, --provider <provider>", "API provider (openai, anthropic, google, etc.)")
   .option("-l, --label <label>", "Label for this key")
+  .option("--expires <date>", "Key expiry date (ISO 8601, e.g. 2026-12-31)")
   .addHelpText(
     "after",
     `
@@ -379,7 +380,7 @@ ${chalk.bold("How it works:")}
 ${chalk.bold("Requires:")} VAULTPROOF_API_KEY environment variable
 `
   )
-  .action(async (opts: { provider: string; label?: string }) => {
+  .action(async (opts: { provider: string; label?: string; expires?: string }) => {
     const apiKey = await promptHidden("API Key: ");
 
     if (!apiKey) {
@@ -410,6 +411,7 @@ ${chalk.bold("Requires:")} VAULTPROOF_API_KEY environment variable
         label: opts.label ?? "",
         share1,
         share2,
+        expiresAt: opts.expires ? new Date(opts.expires).toISOString() : undefined,
       },
       auth: "apikey",
     });

@@ -2,7 +2,7 @@ import type { FastifyInstance } from 'fastify';
 import { PrismaClient } from '@prisma/client';
 import { z } from 'zod';
 import bcrypt from 'bcryptjs';
-import { generateToken, requireAuth } from '../middleware/auth.js';
+import { generateToken, generateRefreshToken, requireAuth } from '../middleware/auth.js';
 
 const prisma = new PrismaClient();
 
@@ -31,14 +31,15 @@ export async function authRoutes(app: FastifyInstance) {
       return reply.status(409).send({ error: 'Email already registered' });
     }
 
+    const refreshToken = generateRefreshToken();
     const passwordHash = await bcrypt.hash(password, 12);
     const user = await prisma.user.create({
-      data: { email, passwordHash },
+      data: { email, passwordHash, refreshToken },
     });
 
     const token = generateToken(user.id, user.email);
 
-    return { token, user: { id: user.id, email: user.email } };
+    return { token, refreshToken, user: { id: user.id, email: user.email } };
   });
 
   // Login
@@ -60,9 +61,29 @@ export async function authRoutes(app: FastifyInstance) {
       return reply.status(401).send({ error: 'Invalid email or password' });
     }
 
+    const refreshToken = generateRefreshToken();
+    await prisma.user.update({ where: { id: user.id }, data: { refreshToken } });
+
     const token = generateToken(user.id, user.email);
 
-    return { token, user: { id: user.id, email: user.email } };
+    return { token, refreshToken, user: { id: user.id, email: user.email } };
+  });
+
+  // Refresh token → new JWT
+  app.post('/refresh', async (request, reply) => {
+    const schema = z.object({ refreshToken: z.string().min(1) });
+    const parsed = schema.safeParse(request.body);
+    if (!parsed.success) {
+      return reply.status(400).send({ error: 'Invalid input' });
+    }
+
+    const user = await prisma.user.findUnique({ where: { refreshToken: parsed.data.refreshToken } });
+    if (!user) {
+      return reply.status(401).send({ error: 'Invalid refresh token' });
+    }
+
+    const token = generateToken(user.id, user.email);
+    return { token };
   });
 
   // Get current user

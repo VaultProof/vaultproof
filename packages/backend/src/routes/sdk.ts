@@ -54,6 +54,7 @@ export async function sdkRoutes(app: FastifyInstance) {
       share2: z.string().min(1),       // Serialized Shamir Share 2 (base64)
       provider: z.enum(['openai', 'anthropic', 'google', 'together']),
       label: z.string().max(100).optional(),
+      expiresAt: z.string().datetime().optional(),
     });
 
     const parsed = schema.safeParse(request.body);
@@ -62,7 +63,7 @@ export async function sdkRoutes(app: FastifyInstance) {
     }
 
     const { userId, keyId: devKeyId, rawKey: vpKey } = (request as any).devAuth;
-    const { share1, share2, provider, label } = parsed.data;
+    const { share1, share2, provider, label, expiresAt } = parsed.data;
 
     // Encrypt Share 1 with VAULT_ENCRYPTION_KEY (server secret)
     const share1Encrypted = encrypt(Buffer.from(share1, 'utf-8'));
@@ -81,6 +82,7 @@ export async function sdkRoutes(app: FastifyInstance) {
         share2Encrypted: new Uint8Array(share2Encrypted),
         vaultCommitment: commitment,
         authAppsRoot: '',
+        expiresAt: expiresAt ? new Date(expiresAt) : undefined,
       },
     });
 
@@ -122,6 +124,11 @@ export async function sdkRoutes(app: FastifyInstance) {
     const keySlot = await prisma.keySlot.findUnique({ where: { id: keyId } });
     if (!keySlot || keySlot.userId !== userId || keySlot.status !== 'ACTIVE') {
       return reply.status(404).send({ error: 'Key not found' });
+    }
+
+    // Check expiry
+    if (keySlot.expiresAt && new Date(keySlot.expiresAt) < new Date()) {
+      return reply.status(410).send({ error: 'Key has expired', expiresAt: keySlot.expiresAt });
     }
 
     if (!keySlot.share2Encrypted || keySlot.share2Encrypted.length === 0) {
@@ -257,6 +264,78 @@ export async function sdkRoutes(app: FastifyInstance) {
     });
 
     return { status: 'revoked' };
+  });
+
+  // Validate a key against its provider
+  app.post('/validate', async (request, reply) => {
+    const schema = z.object({ keyId: z.string().min(1) });
+    const parsed = schema.safeParse(request.body);
+    if (!parsed.success) return reply.status(400).send({ error: 'Invalid input' });
+
+    const { userId, rawKey: vpKey } = (request as any).devAuth;
+    const { keyId } = parsed.data;
+
+    const keySlot = await prisma.keySlot.findUnique({ where: { id: keyId } });
+    if (!keySlot || keySlot.userId !== userId || keySlot.status !== 'ACTIVE') {
+      return reply.status(404).send({ error: 'Key not found' });
+    }
+
+    // Check expiry
+    if (keySlot.expiresAt && new Date(keySlot.expiresAt) < new Date()) {
+      return reply.status(410).send({ error: 'Key has expired', expiresAt: keySlot.expiresAt });
+    }
+
+    // Reconstruct key ephemerally
+    let apiKey: string;
+    try {
+      const decrypted1 = decrypt(Buffer.from(keySlot.share1Encrypted));
+      const s1 = deserializeShare(decrypted1.toString('utf-8'));
+      zeroBuffer(decrypted1);
+
+      if (!keySlot.share2Encrypted || keySlot.share2Encrypted.length === 0) {
+        return reply.status(400).send({ error: 'Share 2 not available' });
+      }
+      const share2Str = decryptShare2(Buffer.from(keySlot.share2Encrypted), vpKey);
+      const s2 = deserializeShare(share2Str);
+      apiKey = new TextDecoder().decode(combine([s1, s2]));
+    } catch {
+      return reply.status(400).send({ error: 'Key reconstruction failed' });
+    }
+
+    // Test against provider
+    const providerUrl = PROVIDER_URLS[keySlot.provider];
+    if (!providerUrl) {
+      apiKey = '';
+      return reply.status(400).send({ error: 'Unknown provider' });
+    }
+
+    const authHeader = buildAuthHeader(keySlot.provider, apiKey);
+    const startTime = Date.now();
+
+    try {
+      const res = await fetch(`${providerUrl}/v1/models`, {
+        method: 'GET',
+        headers: { ...authHeader },
+      });
+      apiKey = '';
+      const latencyMs = Date.now() - startTime;
+
+      return {
+        valid: res.ok,
+        provider: keySlot.provider,
+        status: res.status,
+        latencyMs,
+        error: res.ok ? undefined : `Provider returned ${res.status}`,
+      };
+    } catch (err) {
+      apiKey = '';
+      return {
+        valid: false,
+        provider: keySlot.provider,
+        latencyMs: Date.now() - startTime,
+        error: 'Connection failed',
+      };
+    }
   });
 }
 
