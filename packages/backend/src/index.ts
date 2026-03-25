@@ -16,6 +16,28 @@ config();
 const PORT = parseInt(process.env.PORT || '3333', 10);
 const ALLOWED_ORIGINS = process.env.ALLOWED_ORIGINS?.split(',') || ['http://localhost:3000'];
 
+// Validate required secrets in production
+if (process.env.NODE_ENV !== 'test' && process.env.NODE_ENV !== 'development') {
+  const missing: string[] = [];
+  if (!process.env.JWT_SECRET || process.env.JWT_SECRET === 'vaultproof-dev-secret-change-in-production') {
+    missing.push('JWT_SECRET (must be set to a unique production value)');
+  }
+  if (!process.env.VAULT_ENCRYPTION_KEY) {
+    missing.push('VAULT_ENCRYPTION_KEY');
+  }
+  if (!process.env.PROXY_SECRET) {
+    missing.push('PROXY_SECRET');
+  }
+  if (missing.length > 0) {
+    console.error('FATAL: Missing required secrets for production:');
+    missing.forEach(s => console.error(`  - ${s}`));
+    process.exit(1);
+  }
+  if (!process.env.REQUIRE_REAL_PROOFS) {
+    console.warn('WARNING: REQUIRE_REAL_PROOFS not set. ZK proof verification uses placeholder fallback.');
+  }
+}
+
 async function start() {
   const app = Fastify({ logger: true });
 

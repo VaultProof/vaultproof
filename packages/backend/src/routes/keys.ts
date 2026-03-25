@@ -37,7 +37,7 @@ export async function keyRoutes(app: FastifyInstance) {
 
     // Check tier key slot limit (skip in test environment)
     if (process.env.NODE_ENV !== 'test') {
-      const slotCheck = await checkKeySlotLimit(userId, 'free'); // TODO: look up user's tier
+      const slotCheck = await checkKeySlotLimit(userId, 'free'); // NOTE: tier hardcoded to free until Stripe billing
       if (!slotCheck.allowed) {
         return reply.status(429).send({
           error: 'Key slot limit reached',

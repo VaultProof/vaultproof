@@ -63,7 +63,7 @@ export async function proxyRoutes(app: FastifyInstance) {
 
     // 3. Check tier rate limits (skip in test environment)
     if (process.env.NODE_ENV !== 'test') {
-      const rateCheck = await checkRateLimit(keySlotId, 'free'); // TODO: look up user's tier
+      const rateCheck = await checkRateLimit(keySlotId, 'free'); // NOTE: tier hardcoded to free until Stripe billing
       if (!rateCheck.allowed) {
         return reply.status(429).send({
           error: 'Monthly call limit exceeded',
