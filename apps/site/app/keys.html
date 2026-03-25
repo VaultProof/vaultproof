@@ -51,19 +51,19 @@
       </div>
     </div>
     <nav class="flex-1 p-3 space-y-1">
-      <a href="index.html" class="flex items-center gap-3 px-3 py-2.5 rounded-xl text-gray-400 hover:text-white hover:bg-white/5 text-sm transition">
+      <a href="./" class="flex items-center gap-3 px-3 py-2.5 rounded-xl text-gray-400 hover:text-white hover:bg-white/5 text-sm transition">
         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zm10 0a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zm10 0a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z"/></svg>
         Overview
       </a>
-      <a href="keys.html" class="flex items-center gap-3 px-3 py-2.5 rounded-xl bg-brand/20 text-brand font-medium text-sm">
+      <a href="keys" class="flex items-center gap-3 px-3 py-2.5 rounded-xl bg-brand/20 text-brand font-medium text-sm">
         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z"/></svg>
         Keys
       </a>
-      <a href="logs.html" class="flex items-center gap-3 px-3 py-2.5 rounded-xl text-gray-400 hover:text-white hover:bg-white/5 text-sm transition">
+      <a href="logs" class="flex items-center gap-3 px-3 py-2.5 rounded-xl text-gray-400 hover:text-white hover:bg-white/5 text-sm transition">
         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/></svg>
         Logs
       </a>
-      <a href="settings.html" class="flex items-center gap-3 px-3 py-2.5 rounded-xl text-gray-400 hover:text-white hover:bg-white/5 text-sm transition">
+      <a href="settings" class="flex items-center gap-3 px-3 py-2.5 rounded-xl text-gray-400 hover:text-white hover:bg-white/5 text-sm transition">
         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.066 2.573c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.573 1.066c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.066-2.573c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
         Settings
       </a>
@@ -231,7 +231,7 @@
     const token = localStorage.getItem('vaultproof_token');
     const user = JSON.parse(localStorage.getItem('vaultproof_user') || '{}');
 
-    if (!token) { window.location.href = 'login.html'; }
+    if (!token) { window.location.href = 'login'; }
 
     const sidebarEl = document.getElementById('sidebar');
     const overlayEl = document.getElementById('sidebarOverlay');
@@ -246,7 +246,7 @@
     function logout() {
       localStorage.removeItem('vaultproof_token');
       localStorage.removeItem('vaultproof_user');
-      window.location.href = 'login.html';
+      window.location.href = 'login';
     }
 
     async function apiFetch(url, options = {}) {
@@ -258,7 +258,7 @@
           ...(options.headers || {})
         }
       });
-      if (res.status === 401) { window.location.href = 'login.html'; return null; }
+      if (res.status === 401) { window.location.href = 'login'; return null; }
       return res;
     }
 
@@ -549,7 +549,7 @@
           headers: { 'Authorization': 'Bearer ' + token, 'Content-Type': 'application/json' },
           body: JSON.stringify({ provider: provider, label: label || provider + ' key', share1: share1, vaultCommitment: commitment, appId: 'vaultproof-dashboard', appName: 'VaultProof Dashboard' })
         });
-        if (res.status === 401) { window.location.href = 'login.html'; return; }
+        if (res.status === 401) { window.location.href = 'login'; return; }
         var data = await res.json();
         if (!res.ok) throw new Error(data.error || 'Failed to store key');
 
@@ -588,7 +588,7 @@
           method: 'POST',
           headers: { 'Authorization': 'Bearer ' + token }
         });
-        if (revokeRes.status === 401) { window.location.href = 'login.html'; return; }
+        if (revokeRes.status === 401) { window.location.href = 'login'; return; }
         localStorage.removeItem('vaultproof_share2_' + keyId);
 
         // Split new key using real Shamir SSS
@@ -606,7 +606,7 @@
           headers: { 'Authorization': 'Bearer ' + token, 'Content-Type': 'application/json' },
           body: JSON.stringify({ provider: provider, label: label, share1: share1, vaultCommitment: commitment, appId: 'vaultproof-dashboard', appName: 'VaultProof Dashboard' })
         });
-        if (res.status === 401) { window.location.href = 'login.html'; return; }
+        if (res.status === 401) { window.location.href = 'login'; return; }
         var data = await res.json();
         if (!res.ok) throw new Error(data.error || 'Failed to store new key');
 
@@ -633,7 +633,7 @@
           method: 'POST',
           headers: { 'Authorization': 'Bearer ' + token }
         });
-        if (res.status === 401) { window.location.href = 'login.html'; return; }
+        if (res.status === 401) { window.location.href = 'login'; return; }
         if (!res.ok) throw new Error('Failed to revoke');
         localStorage.removeItem('vaultproof_share2_' + keySlotId);
         expandedKeyId = null;
@@ -649,7 +649,7 @@
         var res = await fetch(API + '/keys/list', {
           headers: { 'Authorization': 'Bearer ' + token }
         });
-        if (res.status === 401) { window.location.href = 'login.html'; return; }
+        if (res.status === 401) { window.location.href = 'login'; return; }
         var data = await res.json();
         allKeys = data.keySlots || [];
 

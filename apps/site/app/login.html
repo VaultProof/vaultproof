@@ -63,7 +63,7 @@
 
         // Check if already logged in
         const token = localStorage.getItem('vaultproof_token');
-        if (token) window.location.href = 'keys.html';
+        if (token) window.location.href = 'keys';
 
         function showTab(tab) {
             document.getElementById('loginForm').classList.toggle('hidden', tab !== 'login');
@@ -98,7 +98,7 @@
 
                 localStorage.setItem('vaultproof_token', data.token);
                 localStorage.setItem('vaultproof_user', JSON.stringify(data.user));
-                window.location.href = 'keys.html';
+                window.location.href = 'keys';
             } catch (err) {
                 errEl.textContent = err.message;
                 errEl.classList.remove('hidden');
@@ -130,7 +130,7 @@
 
                 localStorage.setItem('vaultproof_token', data.token);
                 localStorage.setItem('vaultproof_user', JSON.stringify(data.user));
-                window.location.href = 'keys.html';
+                window.location.href = 'keys';
             } catch (err) {
                 errEl.textContent = err.message;
                 errEl.classList.remove('hidden');
