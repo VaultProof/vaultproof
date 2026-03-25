@@ -81,7 +81,7 @@ export async function statsRoutes(app: FastifyInstance) {
   app.get('/usage', { preHandler: requireAuth }, async (request) => {
     const userId = request.auth!.userId;
     const { days } = request.query as { days?: string };
-    const numDays = Math.min(parseInt(days || '30', 10), 90);
+    const numDays = Math.max(1, Math.min(parseInt(days || '30', 10) || 30, 90));
 
     const keySlots = await prisma.keySlot.findMany({
       where: { userId },

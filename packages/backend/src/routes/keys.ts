@@ -4,6 +4,7 @@ import { z } from 'zod';
 import { encrypt } from '../crypto/encryption.js';
 import { requireAuth } from '../middleware/auth.js';
 import { checkKeySlotLimit } from '../middleware/tier-limits.js';
+import { randomBytes } from 'crypto';
 
 const prisma = new PrismaClient();
 
@@ -24,6 +25,13 @@ const grantAppSchema = z.object({
   appId: z.string().min(1).max(100),
   appName: z.string().max(100).optional(),
 });
+
+function escapeCSV(value: string): string {
+  if (typeof value !== 'string') return '';
+  const escaped = value.replace(/"/g, '""');
+  if (/^[=+\-@\t\r]/.test(escaped)) return `"'${escaped}"`;
+  return `"${escaped}"`;
+}
 
 export async function keyRoutes(app: FastifyInstance) {
   // Store a new key (receives Share 1 from the widget after client-side split)
@@ -233,7 +241,7 @@ export async function keyRoutes(app: FastifyInstance) {
         appId: 'system',
         action: 'key_rotation',
         zkProof: 'rotation',
-        nullifier: `rotation-${keySlotId}-${Date.now()}`,
+        nullifier: `rotation-${keySlotId}-${randomBytes(16).toString('hex')}`,
         metadata: JSON.stringify({ rotatedAt: new Date().toISOString() }),
       },
     });
@@ -258,7 +266,7 @@ export async function keyRoutes(app: FastifyInstance) {
 
     const csv = 'timestamp,action,appId,nullifier,metadata\n' +
       logs.map((l) =>
-        `${l.timestamp.toISOString()},${l.action},${l.appId},${l.nullifier},"${(l.metadata || '').replace(/"/g, '""')}"`
+        `${l.timestamp.toISOString()},${escapeCSV(l.action)},${escapeCSV(l.appId)},${escapeCSV(l.nullifier)},${escapeCSV(l.metadata || '')}`
       ).join('\n');
 
     reply

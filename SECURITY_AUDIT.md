@@ -10,6 +10,10 @@
 ### Key Storage (Shamir + Dual Encryption)
 
 **Status: SECURE**
+@vaultproof/shamir — Shamir secret sharing
+@vaultproof/sdk — SDK for developers
+@vaultproof/cli — CLI tool
+@vaultproof/connect — React widget
 
 The API key never exists whole on the server.
 

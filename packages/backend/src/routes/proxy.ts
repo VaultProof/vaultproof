@@ -16,6 +16,13 @@ const PROVIDER_URLS: Record<string, string> = {
   anthropic: 'https://api.anthropic.com',
   google: 'https://generativelanguage.googleapis.com',
   together: 'https://api.together.xyz',
+  mistral: 'https://api.mistral.ai',
+  cohere: 'https://api.cohere.com',
+  groq: 'https://api.groq.com',
+  perplexity: 'https://api.perplexity.ai',
+  fireworks: 'https://api.fireworks.ai',
+  deepseek: 'https://api.deepseek.com',
+  replicate: 'https://api.replicate.com',
   adzuna: 'https://api.adzuna.com',
 };
 
@@ -33,7 +40,8 @@ const proxyCallSchema = z.object({
 });
 
 export async function proxyRoutes(app: FastifyInstance) {
-  // Standard (non-streaming) proxy call
+  // NOTE: No requireAuth — widget flow authenticates via ZK proof + app grant + nullifier.
+  // Users send Share 2 directly. JWT is not used in the widget flow.
   app.post('/call', async (request, reply) => {
     const parsed = proxyCallSchema.safeParse(request.body);
     if (!parsed.success) {
@@ -106,7 +114,8 @@ export async function proxyRoutes(app: FastifyInstance) {
         where: { nullifier },
         data: { metadata: JSON.stringify({ endpoint: targetPath, proofRejected: true, reason: proofResult.reason }) },
       });
-      return reply.status(403).send({ error: 'Invalid ZK proof', reason: proofResult.reason });
+      request.log.warn(`Proof rejected for keySlot ${keySlotId}: ${proofResult.reason}`);
+      return reply.status(403).send({ error: 'Invalid ZK proof' });
     }
 
     // 5. Reconstruct API key ephemerally

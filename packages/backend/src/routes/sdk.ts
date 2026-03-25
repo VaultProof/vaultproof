@@ -33,6 +33,13 @@ const PROVIDER_URLS: Record<string, string> = {
   anthropic: 'https://api.anthropic.com',
   google: 'https://generativelanguage.googleapis.com',
   together: 'https://api.together.xyz',
+  mistral: 'https://api.mistral.ai',
+  cohere: 'https://api.cohere.com',
+  groq: 'https://api.groq.com',
+  perplexity: 'https://api.perplexity.ai',
+  fireworks: 'https://api.fireworks.ai',
+  deepseek: 'https://api.deepseek.com',
+  replicate: 'https://api.replicate.com',
 };
 
 export async function sdkRoutes(app: FastifyInstance) {
@@ -46,7 +53,7 @@ export async function sdkRoutes(app: FastifyInstance) {
     // Enforce IP allowlist
     const devKey = auth.devKey;
     if (devKey.allowedIps) {
-      const clientIp = request.headers['x-forwarded-for'] as string || request.ip;
+      const clientIp = (request.headers['cf-connecting-ip'] as string) || request.ip;
       const allowed = devKey.allowedIps.split(',').map((s: string) => s.trim());
       if (!allowed.includes(clientIp)) {
         return reply.status(403).send({ error: 'IP not allowed for this API key' });
@@ -65,7 +72,7 @@ export async function sdkRoutes(app: FastifyInstance) {
       // SDK sends pre-split, pre-encrypted shares
       share1: z.string().min(1),       // Serialized Shamir Share 1 (base64)
       share2: z.string().min(1),       // Serialized Shamir Share 2 (base64)
-      provider: z.enum(['openai', 'anthropic', 'google', 'together']),
+      provider: z.string().min(1).max(50).toLowerCase(),
       label: z.string().max(100).optional(),
       expiresAt: z.string().datetime().optional(),
     });

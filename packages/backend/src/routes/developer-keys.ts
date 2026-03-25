@@ -34,7 +34,18 @@ export async function developerKeyRoutes(app: FastifyInstance) {
       allowedEndpoints: z.string().max(500).optional(),
       alertEmail: z.string().email().optional(),
       alertThreshold: z.number().int().min(1).optional(),
-      webhookUrl: z.string().url().optional(),
+      webhookUrl: z.string().url().refine(
+        (url) => {
+          try {
+            const u = new URL(url);
+            const h = u.hostname.toLowerCase();
+            if (h === 'localhost' || /^(127\.|0\.|10\.|172\.(1[6-9]|2\d|3[01])\.|192\.168\.|169\.254\.)/.test(h)) return false;
+            if (u.protocol !== 'https:' && process.env.NODE_ENV !== 'test') return false;
+            return true;
+          } catch { return false; }
+        },
+        { message: 'Must be a public HTTPS URL' }
+      ).optional(),
       webhookSecret: z.string().min(16).optional(),
     });
 
@@ -65,7 +76,7 @@ export async function developerKeyRoutes(app: FastifyInstance) {
       },
     });
 
-    // Return the full key ONCE — after this, only the hash is used for lookup
+    // Key is shown ONCE at creation. Never returned again (list endpoint returns masked version).
     return {
       id: devKey.id,
       key, // ⚠️ Show only once — save it now!
@@ -112,7 +123,18 @@ export async function developerKeyRoutes(app: FastifyInstance) {
       allowedEndpoints: z.string().max(500).optional(),
       alertEmail: z.string().email().optional(),
       alertThreshold: z.number().int().min(1).optional(),
-      webhookUrl: z.string().url().optional(),
+      webhookUrl: z.string().url().refine(
+        (url) => {
+          try {
+            const u = new URL(url);
+            const h = u.hostname.toLowerCase();
+            if (h === 'localhost' || /^(127\.|0\.|10\.|172\.(1[6-9]|2\d|3[01])\.|192\.168\.|169\.254\.)/.test(h)) return false;
+            if (u.protocol !== 'https:' && process.env.NODE_ENV !== 'test') return false;
+            return true;
+          } catch { return false; }
+        },
+        { message: 'Must be a public HTTPS URL' }
+      ).optional(),
       webhookSecret: z.string().min(16).optional(),
     });
 

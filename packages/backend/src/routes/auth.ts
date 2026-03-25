@@ -25,7 +25,8 @@ export async function authRoutes(app: FastifyInstance) {
       return reply.status(400).send({ error: 'Invalid input', details: parsed.error.issues });
     }
 
-    const { email, password } = parsed.data;
+    const email = parsed.data.email.toLowerCase().trim();
+    const { password } = parsed.data;
 
     const existing = await prisma.user.findUnique({ where: { email } });
     if (existing) {
@@ -51,7 +52,8 @@ export async function authRoutes(app: FastifyInstance) {
       return reply.status(400).send({ error: 'Invalid input' });
     }
 
-    const { email, password } = parsed.data;
+    const email = parsed.data.email.toLowerCase().trim();
+    const { password } = parsed.data;
 
     const user = await prisma.user.findUnique({ where: { email } });
     if (!user) {

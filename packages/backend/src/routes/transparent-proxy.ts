@@ -38,6 +38,34 @@ const PROVIDERS: Record<string, { upstream: string; authHeader: (key: string) =>
     upstream: 'https://api.together.xyz',
     authHeader: (key) => ({ Authorization: `Bearer ${key}` }),
   },
+  mistral: {
+    upstream: 'https://api.mistral.ai',
+    authHeader: (key) => ({ Authorization: `Bearer ${key}` }),
+  },
+  cohere: {
+    upstream: 'https://api.cohere.com',
+    authHeader: (key) => ({ Authorization: `Bearer ${key}` }),
+  },
+  groq: {
+    upstream: 'https://api.groq.com',
+    authHeader: (key) => ({ Authorization: `Bearer ${key}` }),
+  },
+  perplexity: {
+    upstream: 'https://api.perplexity.ai',
+    authHeader: (key) => ({ Authorization: `Bearer ${key}` }),
+  },
+  fireworks: {
+    upstream: 'https://api.fireworks.ai',
+    authHeader: (key) => ({ Authorization: `Bearer ${key}` }),
+  },
+  deepseek: {
+    upstream: 'https://api.deepseek.com',
+    authHeader: (key) => ({ Authorization: `Bearer ${key}` }),
+  },
+  replicate: {
+    upstream: 'https://api.replicate.com',
+    authHeader: (key) => ({ Authorization: `Bearer ${key}` }),
+  },
 };
 
 /**
@@ -86,7 +114,7 @@ export async function transparentProxyRoutes(app: FastifyInstance) {
 
     // --- b2. Enforce IP allowlist ---
     if (auth.devKey.allowedIps) {
-      const clientIp = request.headers['x-forwarded-for'] as string || request.ip;
+      const clientIp = (request.headers['cf-connecting-ip'] as string) || request.ip;
       const allowed = auth.devKey.allowedIps.split(',').map((s: string) => s.trim());
       if (!allowed.includes(clientIp)) {
         return reply.status(403).send({ error: 'IP not allowed for this API key' });
