@@ -80,11 +80,15 @@ export async function proxyRoutes(app: FastifyInstance) {
     });
 
     // 4. Verify ZK proof (falls back to placeholder if Noir not loaded)
+    // Calculate tree depth from number of authorized apps (ceil(log2(n)), min 1)
+    const allGrants = await prisma.appGrant.count({ where: { keySlotId, revokedAt: null } });
+    const treeDepth = Math.max(1, Math.ceil(Math.log2(Math.max(2, allGrants))));
+
     const proofResult = await verifyProof(zkProof, {
       vaultCommitment: keySlot.vaultCommitment,
       appIdHash: appId,
       authorizedAppsRoot: keySlot.authAppsRoot,
-      treeDepth: 1,
+      treeDepth,
       nullifier,
     });
 

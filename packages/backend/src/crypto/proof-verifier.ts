@@ -12,8 +12,23 @@ import { fileURLToPath } from 'url';
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 
-// Path to compiled circuit artifact
-const CIRCUIT_PATH = join(__dirname, '..', '..', '..', 'circuits', 'target', 'key_auth.json');
+// Path to compiled circuit artifact — try multiple locations
+function findCircuitPath(): string {
+  const candidates = [
+    join(__dirname, '..', '..', '..', 'circuits', 'target', 'key_auth.json'),     // from dist/crypto/
+    join(__dirname, '..', '..', '..', '..', 'circuits', 'target', 'key_auth.json'), // from src/crypto/
+    join(process.cwd(), 'packages', 'circuits', 'target', 'key_auth.json'),         // from repo root
+    join(process.cwd(), '..', 'circuits', 'target', 'key_auth.json'),               // from packages/backend/
+  ];
+  for (const p of candidates) {
+    try {
+      readFileSync(p);
+      return p;
+    } catch {}
+  }
+  return candidates[0]; // Default, will fail gracefully in initVerifier
+}
+const CIRCUIT_PATH = findCircuitPath();
 
 let circuitLoaded = false;
 let noir: any = null;
