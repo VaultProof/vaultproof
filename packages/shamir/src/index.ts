@@ -5,7 +5,7 @@
  * can reconstruct the original. Each byte of the secret is independently
  * shared using polynomial interpolation over GF(256).
  *
- * For ZK Vault:
+ * For VaultProof:
  * - Solo users: 2-of-2 (vault + device)
  * - Teams: 2-of-n (vault + any team member)
  */

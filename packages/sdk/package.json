@@ -1,5 +1,5 @@
 {
-  "name": "@zkvault/sdk",
+  "name": "@vaultproof/sdk",
   "version": "1.0.0",
   "description": "ZK Vault SDK — Store API keys with Shamir splitting, make proxied calls with zero-knowledge proofs",
   "type": "module",
@@ -16,7 +16,7 @@
     "test": "node --test dist/sdk.test.js"
   },
   "dependencies": {
-    "@zkvault/shamir": "1.0.0"
+    "@vaultproof/shamir": "1.0.0"
   },
   "devDependencies": {
     "typescript": "^5.7.0",

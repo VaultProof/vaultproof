@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login | VaultProof</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        :root { font-family: 'Geist', sans-serif; }
+        body { background: linear-gradient(180deg, #0a0e1a 0%, #0d1220 50%, #0a0e1a 100%); }
+    </style>
+</head>
+<body class="min-h-screen text-gray-200 flex items-center justify-center">
+    <div class="w-full max-w-sm px-6">
+        <div class="text-center mb-8">
+            <span class="text-3xl">&#128274;</span>
+            <h1 class="text-2xl font-bold text-white mt-2">VaultProof</h1>
+            <p class="text-sm text-gray-500 mt-1">Zero-knowledge API key infrastructure</p>
+        </div>
+
+        <!-- Toggle -->
+        <div class="flex bg-gray-900 rounded-lg p-1 mb-6">
+            <button id="loginTab" onclick="showTab('login')" class="flex-1 py-2 text-sm font-medium rounded-md bg-indigo-600 text-white transition">Login</button>
+            <button id="registerTab" onclick="showTab('register')" class="flex-1 py-2 text-sm font-medium rounded-md text-gray-400 transition">Register</button>
+        </div>
+
+        <!-- Login Form -->
+        <form id="loginForm" onsubmit="handleLogin(event)">
+            <div class="mb-4">
+                <label class="block text-sm text-gray-400 mb-1">Email</label>
+                <input type="email" id="loginEmail" required class="w-full bg-gray-900 border border-gray-800 rounded-lg px-3 py-2.5 text-sm text-white focus:border-indigo-500 focus:outline-none" placeholder="you@example.com">
+            </div>
+            <div class="mb-6">
+                <label class="block text-sm text-gray-400 mb-1">Password</label>
+                <input type="password" id="loginPassword" required class="w-full bg-gray-900 border border-gray-800 rounded-lg px-3 py-2.5 text-sm text-white focus:border-indigo-500 focus:outline-none" placeholder="••••••••">
+            </div>
+            <div id="loginError" class="hidden mb-4 p-3 bg-red-500/10 border border-red-500/20 rounded-lg text-sm text-red-400"></div>
+            <button type="submit" id="loginBtn" class="w-full bg-indigo-600 hover:bg-indigo-500 text-white py-2.5 rounded-lg font-medium text-sm transition">Login</button>
+        </form>
+
+        <!-- Register Form -->
+        <form id="registerForm" class="hidden" onsubmit="handleRegister(event)">
+            <div class="mb-4">
+                <label class="block text-sm text-gray-400 mb-1">Email</label>
+                <input type="email" id="regEmail" required class="w-full bg-gray-900 border border-gray-800 rounded-lg px-3 py-2.5 text-sm text-white focus:border-indigo-500 focus:outline-none" placeholder="you@example.com">
+            </div>
+            <div class="mb-6">
+                <label class="block text-sm text-gray-400 mb-1">Password</label>
+                <input type="password" id="regPassword" required minlength="8" class="w-full bg-gray-900 border border-gray-800 rounded-lg px-3 py-2.5 text-sm text-white focus:border-indigo-500 focus:outline-none" placeholder="Min 8 characters">
+            </div>
+            <div id="regError" class="hidden mb-4 p-3 bg-red-500/10 border border-red-500/20 rounded-lg text-sm text-red-400"></div>
+            <button type="submit" id="regBtn" class="w-full bg-indigo-600 hover:bg-indigo-500 text-white py-2.5 rounded-lg font-medium text-sm transition">Create Account</button>
+        </form>
+
+        <p class="text-center text-xs text-gray-600 mt-6">
+            <a href="/" class="hover:text-gray-400 transition">&larr; Back to VaultProof</a>
+        </p>
+    </div>
+
+    <script>
+        const API = 'https://api.vaultproof.dev/api/v1';
+
+        // Check if already logged in
+        const token = localStorage.getItem('vaultproof_token');
+        if (token) window.location.href = 'keys.html';
+
+        function showTab(tab) {
+            document.getElementById('loginForm').classList.toggle('hidden', tab !== 'login');
+            document.getElementById('registerForm').classList.toggle('hidden', tab !== 'register');
+            document.getElementById('loginTab').className = tab === 'login'
+                ? 'flex-1 py-2 text-sm font-medium rounded-md bg-indigo-600 text-white transition'
+                : 'flex-1 py-2 text-sm font-medium rounded-md text-gray-400 transition';
+            document.getElementById('registerTab').className = tab === 'register'
+                ? 'flex-1 py-2 text-sm font-medium rounded-md bg-indigo-600 text-white transition'
+                : 'flex-1 py-2 text-sm font-medium rounded-md text-gray-400 transition';
+        }
+
+        async function handleLogin(e) {
+            e.preventDefault();
+            const btn = document.getElementById('loginBtn');
+            const errEl = document.getElementById('loginError');
+            errEl.classList.add('hidden');
+            btn.textContent = 'Logging in...';
+            btn.disabled = true;
+
+            try {
+                const res = await fetch(`${API}/auth/login`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        email: document.getElementById('loginEmail').value,
+                        password: document.getElementById('loginPassword').value,
+                    }),
+                });
+                const data = await res.json();
+                if (!res.ok) throw new Error(data.error || 'Login failed');
+
+                localStorage.setItem('vaultproof_token', data.token);
+                localStorage.setItem('vaultproof_user', JSON.stringify(data.user));
+                window.location.href = 'keys.html';
+            } catch (err) {
+                errEl.textContent = err.message;
+                errEl.classList.remove('hidden');
+            } finally {
+                btn.textContent = 'Login';
+                btn.disabled = false;
+            }
+        }
+
+        async function handleRegister(e) {
+            e.preventDefault();
+            const btn = document.getElementById('regBtn');
+            const errEl = document.getElementById('regError');
+            errEl.classList.add('hidden');
+            btn.textContent = 'Creating account...';
+            btn.disabled = true;
+
+            try {
+                const res = await fetch(`${API}/auth/register`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        email: document.getElementById('regEmail').value,
+                        password: document.getElementById('regPassword').value,
+                    }),
+                });
+                const data = await res.json();
+                if (!res.ok) throw new Error(data.error || 'Registration failed');
+
+                localStorage.setItem('vaultproof_token', data.token);
+                localStorage.setItem('vaultproof_user', JSON.stringify(data.user));
+                window.location.href = 'keys.html';
+            } catch (err) {
+                errEl.textContent = err.message;
+                errEl.classList.remove('hidden');
+            } finally {
+                btn.textContent = 'Create Account';
+                btn.disabled = false;
+            }
+        }
+    </script>
+</body>
+</html>

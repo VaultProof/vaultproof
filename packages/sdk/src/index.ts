@@ -1,8 +1,8 @@
 /**
- * @zkvault/sdk — Simple SDK for storing and using API keys through ZK Vault.
+ * @vaultproof/sdk — Simple SDK for storing and using API keys through VaultProof.
  *
  * Usage:
- *   const vault = new ZKVault('https://zkvault.riallabs.com');
+ *   const vault = new VaultProof('https://api.vaultproof.dev');
  *   await vault.login('user@example.com', 'password');
  *   const key = await vault.store('sk-my-openai-key', 'openai', 'Production');
  *   const response = await vault.proxy(key.id, '/v1/chat/completions', {
@@ -11,10 +11,10 @@
  *   });
  */
 
-import { splitString, serializeShare } from '@zkvault/shamir';
+import { splitString, serializeShare } from '@vaultproof/shamir';
 
-export interface ZKVaultConfig {
-  /** Base URL of the ZK Vault API (e.g., 'https://zkvault.riallabs.com') */
+export interface VaultProofConfig {
+  /** Base URL of the VaultProof API (e.g., 'https://api.vaultproof.dev') */
   apiUrl: string;
   /** App ID for access control (default: 'sdk') */
   appId?: string;
@@ -39,12 +39,12 @@ export interface ProxyResponse {
   ok: boolean;
 }
 
-export class ZKVault {
+export class VaultProof {
   private apiUrl: string;
   private appId: string;
   private token: string | null = null;
 
-  constructor(config: string | ZKVaultConfig) {
+  constructor(config: string | VaultProofConfig) {
     if (typeof config === 'string') {
       this.apiUrl = config;
       this.appId = 'sdk';
@@ -112,7 +112,7 @@ export class ZKVault {
         share1,
         vaultCommitment: commitment,
         appId: this.appId,
-        appName: `ZK Vault SDK (${this.appId})`,
+        appName: `VaultProof SDK (${this.appId})`,
       },
       auth: true,
     });
@@ -127,7 +127,7 @@ export class ZKVault {
   }
 
   /**
-   * Make a proxied API call through ZK Vault.
+   * Make a proxied API call through VaultProof.
    * The key is reconstructed ephemerally — never stored whole on the server.
    *
    * @param keyId - Key slot ID from store()
@@ -230,4 +230,4 @@ export class ZKVault {
   }
 }
 
-export default ZKVault;
+export default VaultProof;

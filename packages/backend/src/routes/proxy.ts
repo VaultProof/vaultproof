@@ -1,7 +1,7 @@
 import type { FastifyInstance } from 'fastify';
 import { PrismaClient } from '@prisma/client';
 import { z } from 'zod';
-import { combine, deserializeShare, type Share } from '@zkvault/shamir';
+import { combine, deserializeShare, type Share } from '@vaultproof/shamir';
 import { decrypt, zeroBuffer } from '../crypto/encryption.js';
 import { verifyProof } from '../crypto/proof-verifier.js';
 import { checkRateLimit } from '../middleware/tier-limits.js';

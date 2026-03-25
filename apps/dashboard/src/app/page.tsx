@@ -187,7 +187,7 @@ export default function LandingPage() {
           </div>
           <br />
           <div className="text-gray-300">{"<"}<span className="text-yellow-300">ZKKeyConnect</span></div>
-          <div className="text-gray-300 pl-4">{"vaultUrl="}<span className="text-green-400">{'"https://riallabs.com/zkvault/api"'}</span></div>
+          <div className="text-gray-300 pl-4">{"vaultUrl="}<span className="text-green-400">{'"https://dashboard-production-b76c.up.railway.app"'}</span></div>
           <div className="text-gray-300 pl-4">{"appId="}<span className="text-green-400">{'"my-app-123"'}</span></div>
           <div className="text-gray-300 pl-4">{"appName="}<span className="text-green-400">{'"My AI App"'}</span></div>
           <div className="text-gray-300 pl-4">{"userId={user.id}"}</div>

@@ -1,4 +1,4 @@
-// @zkvault/connect — Drop-in React widget for zero-knowledge API key storage
+// @vaultproof/connect — Drop-in React widget for zero-knowledge API key storage
 
 export { ZKKeyConnect } from './ZKKeyConnect.js';
 export { VaultClient } from './vault-client.js';

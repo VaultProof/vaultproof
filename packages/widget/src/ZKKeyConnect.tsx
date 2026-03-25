@@ -4,7 +4,7 @@ import { PROVIDERS, type Provider, type WidgetStatus, type ZKKeyConnectProps } f
 
 const DEFAULT_PROVIDERS: Provider[] = ['openai', 'anthropic', 'google', 'together'];
 
-const SHARE2_STORAGE_PREFIX = 'zkvault_share2_';
+const SHARE2_STORAGE_PREFIX = 'vaultproof_share2_';
 
 export function ZKKeyConnect({
   vaultUrl,

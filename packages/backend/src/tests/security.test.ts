@@ -1,5 +1,5 @@
 /**
- * ZK Vault Security Tests
+ * VaultProof Security Tests
  *
  * Tests cryptographic properties: single share reveals nothing,
  * encryption at rest, replay prevention, brute force resistance.
@@ -8,7 +8,7 @@
 import { describe, it } from 'node:test';
 import assert from 'node:assert/strict';
 import { randomBytes } from 'crypto';
-import { split, combine, splitString, combineToString, serializeShare, deserializeShare } from '@zkvault/shamir';
+import { split, combine, splitString, combineToString, serializeShare, deserializeShare } from '@vaultproof/shamir';
 import { encrypt, decrypt, zeroBuffer } from '../crypto/encryption.js';
 
 // Set encryption key for tests

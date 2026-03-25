@@ -1,12 +1,12 @@
 {
-  "name": "zkvault",
+  "name": "vaultproof",
   "private": true,
   "workspaces": [
     "packages/*",
     "apps/*"
   ],
   "scripts": {
-    "build": "turbo run build --filter=@zkvault/shamir --filter=@zkvault/backend --force",
+    "build": "turbo run build --filter=@vaultproof/shamir --filter=@vaultproof/backend --force",
     "start": "node packages/backend/dist/index.js",
     "deploy:worker": "cd packages/worker && npx wrangler deploy",
     "dev": "turbo run dev",

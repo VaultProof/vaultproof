@@ -48,7 +48,7 @@ async function start() {
   });
 
   // Health check (no proxy auth required)
-  app.get('/health', async () => ({ status: 'ok', service: 'zkvault' }));
+  app.get('/health', async () => ({ status: 'ok', service: 'vaultproof' }));
 
   // API routes
   await app.register(authRoutes, { prefix: '/api/v1/auth' });
@@ -57,7 +57,7 @@ async function start() {
   await app.register(statsRoutes, { prefix: '/api/v1/stats' });
 
   await app.listen({ port: PORT, host: '0.0.0.0' });
-  console.log(`ZK Vault backend running on port ${PORT}`);
+  console.log(`VaultProof backend running on port ${PORT}`);
 }
 
 start().catch((err) => {

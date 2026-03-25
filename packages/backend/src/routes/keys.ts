@@ -259,7 +259,7 @@ export async function keyRoutes(app: FastifyInstance) {
 
     reply
       .header('Content-Type', 'text/csv')
-      .header('Content-Disposition', `attachment; filename="zkvault-logs-${keySlotId}.csv"`)
+      .header('Content-Disposition', `attachment; filename="vaultproof-logs-${keySlotId}.csv"`)
       .send(csv);
   });
 }

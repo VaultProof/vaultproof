@@ -1,0 +1,305 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>API Docs | VaultProof</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <script>
+        tailwind.config = { theme: { extend: { colors: { 'dark-blue': '#0a0e1a', 'dark-blue-lighter': '#0f1628' } } } };
+    </script>
+    <style>
+        :root { font-family: 'Geist', sans-serif; }
+        body { background: linear-gradient(180deg, #0a0e1a 0%, #0d1220 50%, #0a0e1a 100%); }
+        .mono { font-family: 'JetBrains Mono', monospace; }
+        pre { tab-size: 2; }
+    </style>
+</head>
+<body class="text-gray-200 min-h-screen">
+    <!-- Nav -->
+    <nav class="flex items-center justify-between px-6 py-5 max-w-5xl mx-auto">
+        <a href="/" class="flex items-center gap-2"><span class="text-xl font-bold text-white">VaultProof</span><span class="text-xs text-gray-500 ml-1">Docs</span></a>
+        <div class="flex items-center gap-6">
+            <a href="/" class="text-sm text-gray-400 hover:text-white transition">Home</a>
+            <a href="/app/login.html" class="bg-indigo-600 hover:bg-indigo-500 text-sm px-4 py-2 rounded-lg font-medium text-white transition">Dashboard</a>
+        </div>
+    </nav>
+
+    <div class="max-w-5xl mx-auto px-6 py-8">
+        <h1 class="text-4xl font-extrabold text-white mb-2">API Documentation</h1>
+        <p class="text-gray-500 mb-10">Everything you need to integrate VaultProof into your app.</p>
+
+        <!-- Quick Start -->
+        <section class="mb-12">
+            <h2 class="text-2xl font-bold text-white mb-4">Quick Start</h2>
+            <div class="bg-dark-blue-lighter border border-gray-800 rounded-2xl p-6 mono text-sm overflow-x-auto">
+<pre class="text-gray-300 leading-relaxed"><span class="text-gray-500">// 1. Install the SDK</span>
+<span class="text-green-400">npm install @vaultproof/sdk</span>
+
+<span class="text-gray-500">// 2. Initialize</span>
+<span class="text-purple-400">import</span> { ZKVault } <span class="text-purple-400">from</span> <span class="text-green-400">'@vaultproof/sdk'</span>
+
+<span class="text-purple-400">const</span> vault = <span class="text-purple-400">new</span> <span class="text-yellow-300">ZKVault</span>(<span class="text-green-400">'https://api.vaultproof.dev'</span>)
+
+<span class="text-gray-500">// 3. Login</span>
+<span class="text-purple-400">await</span> vault.login(<span class="text-green-400">'you@example.com'</span>, <span class="text-green-400">'password'</span>)
+
+<span class="text-gray-500">// 4. Store an API key (Shamir-split, encrypted, never sent whole)</span>
+<span class="text-purple-400">const</span> key = <span class="text-purple-400">await</span> vault.store(<span class="text-green-400">'sk-your-openai-key'</span>, <span class="text-green-400">'openai'</span>, <span class="text-green-400">'Production'</span>)
+
+<span class="text-gray-500">// 5. Make proxied API calls (key reconstructed for ~100ms, then zeroed)</span>
+<span class="text-purple-400">const</span> res = <span class="text-purple-400">await</span> vault.proxy(key.id, key.share2, <span class="text-green-400">'/v1/chat/completions'</span>, {
+  model: <span class="text-green-400">'gpt-4'</span>,
+  messages: [{ role: <span class="text-green-400">'user'</span>, content: <span class="text-green-400">'Hello!'</span> }]
+})
+
+console.log(res.data)
+</pre>
+            </div>
+        </section>
+
+        <!-- Base URL -->
+        <section class="mb-12">
+            <h2 class="text-2xl font-bold text-white mb-4">Base URL</h2>
+            <div class="bg-dark-blue-lighter border border-gray-800 rounded-xl p-4 mono text-sm">
+                <span class="text-green-400">https://api.vaultproof.dev</span>
+            </div>
+            <p class="text-gray-500 text-sm mt-2">All requests go through Cloudflare's edge network (330+ cities). HMAC-signed and rate-limited.</p>
+        </section>
+
+        <!-- Auth -->
+        <section class="mb-12">
+            <h2 class="text-2xl font-bold text-white mb-6">Authentication</h2>
+
+            <div class="space-y-6">
+                <div class="bg-dark-blue-lighter border border-gray-800 rounded-2xl p-6">
+                    <div class="flex items-center gap-3 mb-3">
+                        <span class="bg-green-900/50 text-green-400 text-xs font-bold px-2 py-1 rounded">POST</span>
+                        <code class="mono text-sm text-white">/api/v1/auth/register</code>
+                    </div>
+                    <p class="text-gray-400 text-sm mb-3">Create a new account.</p>
+                    <div class="mono text-xs bg-gray-900/50 rounded-xl p-4 overflow-x-auto">
+<pre class="text-gray-300">Request:  { "email": "you@example.com", "password": "min8chars" }
+Response: { "token": "eyJ...", "user": { "id": "uuid", "email": "..." } }</pre>
+                    </div>
+                </div>
+
+                <div class="bg-dark-blue-lighter border border-gray-800 rounded-2xl p-6">
+                    <div class="flex items-center gap-3 mb-3">
+                        <span class="bg-green-900/50 text-green-400 text-xs font-bold px-2 py-1 rounded">POST</span>
+                        <code class="mono text-sm text-white">/api/v1/auth/login</code>
+                    </div>
+                    <p class="text-gray-400 text-sm mb-3">Login and get a JWT token (valid 7 days).</p>
+                    <div class="mono text-xs bg-gray-900/50 rounded-xl p-4 overflow-x-auto">
+<pre class="text-gray-300">Request:  { "email": "you@example.com", "password": "yourpass" }
+Response: { "token": "eyJ...", "user": { "id": "uuid", "email": "..." } }</pre>
+                    </div>
+                </div>
+            </div>
+            <p class="text-gray-500 text-sm mt-4">Include the token in all subsequent requests: <code class="mono text-xs text-indigo-400">Authorization: Bearer &lt;token&gt;</code></p>
+        </section>
+
+        <!-- Keys -->
+        <section class="mb-12">
+            <h2 class="text-2xl font-bold text-white mb-6">Key Management</h2>
+
+            <div class="space-y-6">
+                <div class="bg-dark-blue-lighter border border-gray-800 rounded-2xl p-6">
+                    <div class="flex items-center gap-3 mb-3">
+                        <span class="bg-green-900/50 text-green-400 text-xs font-bold px-2 py-1 rounded">POST</span>
+                        <code class="mono text-sm text-white">/api/v1/keys/store</code>
+                        <span class="text-xs text-yellow-400">Auth required</span>
+                    </div>
+                    <p class="text-gray-400 text-sm mb-3">Store a Shamir-split API key. Send only Share 1 (encrypted server-side). Keep Share 2 on device.</p>
+                    <div class="mono text-xs bg-gray-900/50 rounded-xl p-4 overflow-x-auto">
+<pre class="text-gray-300">Request: {
+  "provider": "openai",        <span class="text-gray-600">// openai | anthropic | google | together</span>
+  "label": "Production GPT-4", <span class="text-gray-600">// optional friendly name</span>
+  "share1": "base64...",       <span class="text-gray-600">// Shamir Share 1 (base64 serialized)</span>
+  "vaultCommitment": "hex...", <span class="text-gray-600">// Hash commitment for ZK verification</span>
+  "appId": "my-app",           <span class="text-gray-600">// optional app identifier</span>
+  "appName": "My App"          <span class="text-gray-600">// optional app name</span>
+}
+Response: { "keySlotId": "uuid", "grantId": "uuid", "status": "stored" }</pre>
+                    </div>
+                </div>
+
+                <div class="bg-dark-blue-lighter border border-gray-800 rounded-2xl p-6">
+                    <div class="flex items-center gap-3 mb-3">
+                        <span class="bg-blue-900/50 text-blue-400 text-xs font-bold px-2 py-1 rounded">GET</span>
+                        <code class="mono text-sm text-white">/api/v1/keys/list</code>
+                        <span class="text-xs text-yellow-400">Auth required</span>
+                    </div>
+                    <p class="text-gray-400 text-sm mb-3">List all your active keys with connected apps.</p>
+                    <div class="mono text-xs bg-gray-900/50 rounded-xl p-4 overflow-x-auto">
+<pre class="text-gray-300">Response: {
+  "keySlots": [{
+    "id": "uuid",
+    "provider": "openai",
+    "label": "Production GPT-4",
+    "status": "ACTIVE",
+    "createdAt": "2026-03-24T...",
+    "appGrants": [{ "id": "uuid", "appId": "my-app", "appName": "My App" }]
+  }]
+}</pre>
+                    </div>
+                </div>
+
+                <div class="bg-dark-blue-lighter border border-gray-800 rounded-2xl p-6">
+                    <div class="flex items-center gap-3 mb-3">
+                        <span class="bg-green-900/50 text-green-400 text-xs font-bold px-2 py-1 rounded">POST</span>
+                        <code class="mono text-sm text-white">/api/v1/keys/revoke/:keySlotId</code>
+                        <span class="text-xs text-yellow-400">Auth required</span>
+                    </div>
+                    <p class="text-gray-400 text-sm mb-3">Revoke a key. Destroys Share 1 (zeroed in DB). Irreversible.</p>
+                </div>
+
+                <div class="bg-dark-blue-lighter border border-gray-800 rounded-2xl p-6">
+                    <div class="flex items-center gap-3 mb-3">
+                        <span class="bg-green-900/50 text-green-400 text-xs font-bold px-2 py-1 rounded">POST</span>
+                        <code class="mono text-sm text-white">/api/v1/keys/:keySlotId/rotate</code>
+                        <span class="text-xs text-yellow-400">Auth required</span>
+                    </div>
+                    <p class="text-gray-400 text-sm mb-3">Rotate a key with a new Shamir share. Old share is replaced.</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- Proxy -->
+        <section class="mb-12">
+            <h2 class="text-2xl font-bold text-white mb-6">Proxied API Calls</h2>
+
+            <div class="bg-dark-blue-lighter border border-gray-800 rounded-2xl p-6">
+                <div class="flex items-center gap-3 mb-3">
+                    <span class="bg-green-900/50 text-green-400 text-xs font-bold px-2 py-1 rounded">POST</span>
+                    <code class="mono text-sm text-white">/api/v1/proxy/call</code>
+                </div>
+                <p class="text-gray-400 text-sm mb-3">Make an API call through VaultProof. Key is reconstructed ephemerally (~100ms) then zeroed. Supports SSE streaming for LLM APIs.</p>
+                <div class="mono text-xs bg-gray-900/50 rounded-xl p-4 overflow-x-auto">
+<pre class="text-gray-300">Request: {
+  "keySlotId": "uuid",            <span class="text-gray-600">// from /keys/store response</span>
+  "share2": "base64...",          <span class="text-gray-600">// your Share 2 (stored on device)</span>
+  "zkProof": "hex...",            <span class="text-gray-600">// ZK proof of authorization</span>
+  "nullifier": "hex...",          <span class="text-gray-600">// unique per request (replay prevention)</span>
+  "appId": "my-app",              <span class="text-gray-600">// must be an authorized app</span>
+  "targetPath": "/v1/chat/completions",  <span class="text-gray-600">// API endpoint</span>
+  "method": "POST",               <span class="text-gray-600">// HTTP method</span>
+  "stream": false,                <span class="text-gray-600">// true for SSE streaming</span>
+  "body": {                       <span class="text-gray-600">// forwarded to the API provider</span>
+    "model": "gpt-4",
+    "messages": [{ "role": "user", "content": "Hello!" }]
+  }
+}
+Response: <span class="text-gray-600">// The API provider's response, forwarded directly</span></pre>
+                </div>
+
+                <div class="mt-4 p-4 bg-indigo-500/5 border border-indigo-500/20 rounded-xl">
+                    <p class="text-sm text-indigo-300"><strong>Security:</strong> Every call requires a unique nullifier (prevents replay). The ZK proof cryptographically proves you own the key slot and the requesting app is authorized. The SDK handles all of this automatically.</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- Stats -->
+        <section class="mb-12">
+            <h2 class="text-2xl font-bold text-white mb-6">Stats & Analytics</h2>
+            <div class="space-y-4">
+                <div class="bg-dark-blue-lighter border border-gray-800 rounded-2xl p-5">
+                    <div class="flex items-center gap-3 mb-2">
+                        <span class="bg-blue-900/50 text-blue-400 text-xs font-bold px-2 py-1 rounded">GET</span>
+                        <code class="mono text-sm text-white">/api/v1/stats/overview</code>
+                    </div>
+                    <p class="text-gray-500 text-sm">Total keys, API calls this month, error rate, active apps, recent activity.</p>
+                </div>
+                <div class="bg-dark-blue-lighter border border-gray-800 rounded-2xl p-5">
+                    <div class="flex items-center gap-3 mb-2">
+                        <span class="bg-blue-900/50 text-blue-400 text-xs font-bold px-2 py-1 rounded">GET</span>
+                        <code class="mono text-sm text-white">/api/v1/stats/usage?days=30</code>
+                    </div>
+                    <p class="text-gray-500 text-sm">Calls per day for the last N days (for charts).</p>
+                </div>
+                <div class="bg-dark-blue-lighter border border-gray-800 rounded-2xl p-5">
+                    <div class="flex items-center gap-3 mb-2">
+                        <span class="bg-blue-900/50 text-blue-400 text-xs font-bold px-2 py-1 rounded">GET</span>
+                        <code class="mono text-sm text-white">/api/v1/stats/by-key</code>
+                    </div>
+                    <p class="text-gray-500 text-sm">Per-key breakdown: calls, errors, last used.</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- Supported Providers -->
+        <section class="mb-12">
+            <h2 class="text-2xl font-bold text-white mb-6">Supported Providers</h2>
+            <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+                <div class="bg-dark-blue-lighter border border-gray-800 rounded-xl p-4 text-center">
+                    <div class="text-lg font-bold text-green-400">OpenAI</div>
+                    <div class="text-xs text-gray-500 mt-1">GPT-4, DALL-E, Whisper</div>
+                </div>
+                <div class="bg-dark-blue-lighter border border-gray-800 rounded-xl p-4 text-center">
+                    <div class="text-lg font-bold text-orange-400">Anthropic</div>
+                    <div class="text-xs text-gray-500 mt-1">Claude 4, Haiku, Opus</div>
+                </div>
+                <div class="bg-dark-blue-lighter border border-gray-800 rounded-xl p-4 text-center">
+                    <div class="text-lg font-bold text-blue-400">Google AI</div>
+                    <div class="text-xs text-gray-500 mt-1">Gemini Pro, Flash</div>
+                </div>
+                <div class="bg-dark-blue-lighter border border-gray-800 rounded-xl p-4 text-center">
+                    <div class="text-lg font-bold text-purple-400">Together.ai</div>
+                    <div class="text-xs text-gray-500 mt-1">Llama, Mixtral, etc.</div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Rate Limits -->
+        <section class="mb-12">
+            <h2 class="text-2xl font-bold text-white mb-6">Rate Limits</h2>
+            <table class="w-full text-sm">
+                <thead><tr class="border-b border-gray-800 text-gray-400"><th class="text-left py-2">Tier</th><th class="text-left py-2">Price</th><th class="text-left py-2">Key Slots</th><th class="text-left py-2">Proxied Calls/mo</th></tr></thead>
+                <tbody>
+                    <tr class="border-b border-gray-800/50"><td class="py-2 text-white">Free</td><td>$0</td><td>3</td><td>1,000</td></tr>
+                    <tr class="border-b border-gray-800/50"><td class="py-2 text-indigo-400 font-medium">Pro</td><td>$12/mo</td><td>20</td><td>50,000</td></tr>
+                    <tr class="border-b border-gray-800/50"><td class="py-2 text-white">Team</td><td>$39/mo</td><td>100</td><td>200,000</td></tr>
+                    <tr><td class="py-2 text-white">Enterprise</td><td>Custom</td><td>Unlimited</td><td>Unlimited</td></tr>
+                </tbody>
+            </table>
+            <p class="text-gray-600 text-xs mt-3">Edge rate limit: 60 requests/minute per IP. Backend rate limit: 100 requests/minute per user.</p>
+        </section>
+
+        <!-- Security -->
+        <section class="mb-12">
+            <h2 class="text-2xl font-bold text-white mb-6">Security Architecture</h2>
+            <div class="grid md:grid-cols-2 gap-4">
+                <div class="bg-dark-blue-lighter border border-gray-800 rounded-xl p-5">
+                    <div class="text-green-400 font-bold mb-2">Shamir Secret Sharing</div>
+                    <p class="text-sm text-gray-400">Your API key is split into 2 shares using GF(256) polynomial interpolation. Neither share alone reveals anything. Half a key is cryptographic garbage.</p>
+                </div>
+                <div class="bg-dark-blue-lighter border border-gray-800 rounded-xl p-5">
+                    <div class="text-green-400 font-bold mb-2">AES-256-GCM Encryption</div>
+                    <p class="text-sm text-gray-400">Share 1 is encrypted at rest with a unique salt and IV per encryption. Tampered data is detected and rejected via auth tag.</p>
+                </div>
+                <div class="bg-dark-blue-lighter border border-gray-800 rounded-xl p-5">
+                    <div class="text-green-400 font-bold mb-2">Zero-Knowledge Proofs</div>
+                    <p class="text-sm text-gray-400">Noir ZK circuit proves key ownership and app authorization without revealing the key. Verified with Barretenberg on every proxy call.</p>
+                </div>
+                <div class="bg-dark-blue-lighter border border-gray-800 rounded-xl p-5">
+                    <div class="text-green-400 font-bold mb-2">Ephemeral Reconstruction</div>
+                    <p class="text-sm text-gray-400">The full API key exists in memory for ~100ms during the proxied call, then is zeroed. It never hits disk, logs, or persistent storage.</p>
+                </div>
+                <div class="bg-dark-blue-lighter border border-gray-800 rounded-xl p-5">
+                    <div class="text-green-400 font-bold mb-2">HMAC-Signed Edge Proxy</div>
+                    <p class="text-sm text-gray-400">All requests are HMAC-SHA256 signed at Cloudflare's edge. Backend rejects unsigned requests. Direct access is blocked.</p>
+                </div>
+                <div class="bg-dark-blue-lighter border border-gray-800 rounded-xl p-5">
+                    <div class="text-green-400 font-bold mb-2">Nullifier Replay Prevention</div>
+                    <p class="text-sm text-gray-400">Every proxy call requires a unique nullifier stored in DB. Replayed requests are detected and rejected instantly.</p>
+                </div>
+            </div>
+        </section>
+    </div>
+
+    <footer class="border-t border-gray-800 py-8 px-6 text-center text-sm text-gray-600">
+        <a href="/" class="text-gray-400 hover:text-white transition">VaultProof</a> by <a href="/" class="text-gray-400 hover:text-white transition">Rial Labs</a>
+    </footer>
+</body>
+</html>

@@ -8,7 +8,7 @@
 import type { FastifyRequest, FastifyReply } from 'fastify';
 import jwt from 'jsonwebtoken';
 
-const JWT_SECRET = process.env.JWT_SECRET || 'zkvault-dev-secret-change-in-production';
+const JWT_SECRET = process.env.JWT_SECRET || 'vaultproof-dev-secret-change-in-production';
 
 export interface AuthPayload {
   userId: string;

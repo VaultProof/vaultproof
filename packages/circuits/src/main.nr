@@ -1,4 +1,4 @@
-// ZK Vault -- Key Authorization Circuit
+// VaultProof -- Key Authorization Circuit
 //
 // Proves:
 // 1. User owns a key slot (knows slot_secret that hashes to vault_commitment)

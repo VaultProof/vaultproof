@@ -1,0 +1,260 @@
+<!DOCTYPE html>
+<html lang="en" class="scroll-smooth">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>VaultProof | Zero-Knowledge API Key Infrastructure | Rial Labs</title>
+    <meta name="description" content="The only API key vault where even we can't see your keys. Shamir secret sharing + zero-knowledge proofs = breaches are architecturally impossible.">
+    <meta http-equiv="X-Content-Type-Options" content="nosniff">
+    <meta http-equiv="X-Frame-Options" content="DENY">
+    <meta name="referrer" content="strict-origin-when-cross-origin">
+
+    <!-- Firebase Analytics -->
+    <script type="module">
+        import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js';
+        import { getAnalytics, logEvent } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-analytics.js';
+        const firebaseConfig = {
+            apiKey: "AIzaSyCdtdlH-gDnm4ft5iOye8hqIBewOSeqUEA",
+            authDomain: "rial-labs.firebaseapp.com",
+            projectId: "rial-labs",
+            storageBucket: "rial-labs.firebasestorage.app",
+            messagingSenderId: "694599722986",
+            appId: "1:694599722986:web:70b155a1742809fc40b493",
+            measurementId: "G-SVCPMH18DS"
+        };
+        const app = initializeApp(firebaseConfig);
+        const analytics = getAnalytics(app);
+        logEvent(analytics, 'page_view', { page_title: 'VaultProof' });
+    </script>
+
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        'dark-blue': '#0a0e1a',
+                        'dark-blue-lighter': '#0f1628',
+                    }
+                }
+            }
+        }
+    </script>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Geist:wght@300;400;500;600;700;800&family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+
+    <style>
+        :root { font-family: 'Geist', 'Inter', sans-serif; }
+        ::selection { background: #6366f1; color: #fff; }
+        body { background: linear-gradient(180deg, #0a0e1a 0%, #0d1220 50%, #0a0e1a 100%); }
+        .font-mono { font-family: 'JetBrains Mono', monospace !important; }
+        @keyframes fadeInUp { from { opacity: 0; transform: translateY(30px); } to { opacity: 1; transform: translateY(0); } }
+        .animate-in { animation: fadeInUp 0.6s ease-out forwards; }
+        .delay-1 { animation-delay: 0.1s; opacity: 0; }
+        .delay-2 { animation-delay: 0.2s; opacity: 0; }
+        .delay-3 { animation-delay: 0.3s; opacity: 0; }
+    </style>
+</head>
+<body class="text-gray-200 min-h-screen">
+
+    <!-- Nav -->
+    <nav class="flex items-center justify-between px-6 py-5 max-w-6xl mx-auto">
+        <a href="/" class="flex items-center gap-3">
+            <span class="text-xl font-bold text-white">Rial Labs</span>
+        </a>
+        <div class="flex items-center gap-6">
+            <a href="/" class="text-sm text-gray-400 hover:text-white transition">Home</a>
+            <a href="/projects.html" class="text-sm text-gray-400 hover:text-white transition">Projects</a>
+            <a href="/docs.html" class="text-sm text-gray-400 hover:text-white transition">Docs</a>
+            <a href="/verify.html" class="text-sm text-gray-400 hover:text-white transition">Verify</a>
+            <a href="#pricing" class="text-sm text-gray-400 hover:text-white transition">Pricing</a>
+            <a href="#contact" class="bg-indigo-600 hover:bg-indigo-500 text-sm px-4 py-2 rounded-lg font-medium text-white transition">Get Started</a>
+        </div>
+    </nav>
+
+    <!-- Hero -->
+    <section class="max-w-4xl mx-auto px-6 pt-20 pb-16 text-center animate-in">
+        <div class="inline-flex items-center gap-2 bg-red-500/10 border border-red-500/20 rounded-full px-4 py-1.5 mb-8">
+            <span class="text-xs font-medium text-red-400">39M secrets leaked on GitHub in 2024. We fix that.</span>
+        </div>
+        <h1 class="text-5xl md:text-6xl font-extrabold tracking-tight leading-tight mb-6 text-white">
+            The only API key vault where <span class="text-indigo-400">even we can't see your keys</span>
+        </h1>
+        <p class="text-lg text-gray-400 max-w-2xl mx-auto mb-10">
+            Shamir secret sharing splits your key the instant you enter it. Zero-knowledge proofs authorize every access. Your key never exists whole on any server.
+        </p>
+        <div class="flex items-center justify-center gap-4 flex-wrap">
+            <a href="#contact" class="bg-indigo-600 hover:bg-indigo-500 px-6 py-3 rounded-xl font-semibold text-white transition">Get Early Access</a>
+            <a href="#how-it-works" class="border border-gray-700 hover:border-gray-500 px-6 py-3 rounded-xl font-semibold text-gray-300 transition">How It Works</a>
+        </div>
+    </section>
+
+    <!-- Stats -->
+    <section class="max-w-4xl mx-auto px-6 py-12 animate-in delay-1">
+        <div class="grid grid-cols-2 md:grid-cols-4 gap-6">
+            <div class="text-center"><div class="text-3xl font-bold text-indigo-400">39M</div><div class="text-xs text-gray-500 mt-1">Secrets leaked on GitHub (2024)</div></div>
+            <div class="text-center"><div class="text-3xl font-bold text-indigo-400">81%</div><div class="text-xs text-gray-500 mt-1">Surge in AI credential leaks</div></div>
+            <div class="text-center"><div class="text-3xl font-bold text-indigo-400">$4.88M</div><div class="text-xs text-gray-500 mt-1">Avg cost of credential breach</div></div>
+            <div class="text-center"><div class="text-3xl font-bold text-indigo-400">64%</div><div class="text-xs text-gray-500 mt-1">Leaked secrets never revoked</div></div>
+        </div>
+    </section>
+
+    <!-- How It Works -->
+    <section id="how-it-works" class="max-w-4xl mx-auto px-6 py-16 animate-in delay-2">
+        <h2 class="text-3xl font-bold text-center text-white mb-12">How It Works</h2>
+        <div class="grid md:grid-cols-3 gap-8">
+            <div class="bg-dark-blue-lighter border border-gray-800 rounded-2xl p-6">
+                <div class="text-3xl mb-4">&#9988;</div>
+                <h3 class="text-lg font-bold text-white mb-2">1. Key is split instantly</h3>
+                <p class="text-sm text-gray-400">You paste your API key. It's immediately split into two shares using Shamir Secret Sharing. The full key is destroyed. This happens in your browser &mdash; it never leaves your device whole.</p>
+            </div>
+            <div class="bg-dark-blue-lighter border border-gray-800 rounded-2xl p-6">
+                <div class="text-3xl mb-4">&#128274;</div>
+                <h3 class="text-lg font-bold text-white mb-2">2. Shares stored separately</h3>
+                <p class="text-sm text-gray-400">Share 1 goes to our vault (encrypted). Share 2 stays on your device. Neither share alone reveals anything &mdash; half a key is cryptographic garbage.</p>
+            </div>
+            <div class="bg-dark-blue-lighter border border-gray-800 rounded-2xl p-6">
+                <div class="text-3xl mb-4">&#9889;</div>
+                <h3 class="text-lg font-bold text-white mb-2">3. Ephemeral reconstruction</h3>
+                <p class="text-sm text-gray-400">When you make an API call, a zero-knowledge proof authorizes the request. Shares combine for ~100ms, the call is made, memory is zeroed. Every access is cryptographically logged.</p>
+            </div>
+        </div>
+    </section>
+
+    <!-- Architecture Diagram -->
+    <section class="max-w-4xl mx-auto px-6 py-16">
+        <h2 class="text-3xl font-bold text-center text-white mb-12">Architecture</h2>
+        <div class="bg-dark-blue-lighter border border-gray-800 rounded-2xl p-8 font-mono text-sm overflow-x-auto">
+<pre class="text-gray-400 leading-relaxed">
+&#x250C;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2510;                         &#x250C;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2510;
+&#x2502;  <span class="text-indigo-400">Your App</span>          &#x2502;  Access token +         &#x2502;  <span class="text-green-400">VaultProof</span>               &#x2502;
+&#x2502;  (embeds widget)   &#x2502;  ZK proof              &#x2502;                        &#x2502;
+&#x2502;                    &#x2502; &#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2192; &#x2502;  1. Verify ZK proof    &#x2502;
+&#x2502;  User's device     &#x2502;  Share 2 (encrypted)    &#x2502;  2. Retrieve Share 1   &#x2502;
+&#x2502;  holds Share 2     &#x2502; &#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2192; &#x2502;  3. Combine shares     &#x2502;
+&#x2502;                    &#x2502;                         &#x2502;  4. Make API call      &#x2502;
+&#x2502;                    &#x2502;  &#x2190;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500; &#x2502;  5. Zero memory        &#x2502;
+&#x2502;                    &#x2502;  API response            &#x2502;  6. Return response     &#x2502;
+&#x2514;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2518;                         &#x2514;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x252C;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2518;
+                                                       &#x2502;
+                                                       &#x25BC;
+                                             &#x250C;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2510;
+                                             &#x2502;  <span class="text-yellow-400">OpenAI / Google</span>  &#x2502;
+                                             &#x2502;  <span class="text-yellow-400">Anthropic / etc.</span> &#x2502;
+                                             &#x2514;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2518;
+</pre>
+        </div>
+    </section>
+
+    <!-- Comparison Table -->
+    <section class="max-w-4xl mx-auto px-6 py-16">
+        <h2 class="text-3xl font-bold text-center text-white mb-12">vs Every Other Secrets Tool</h2>
+        <div class="overflow-x-auto">
+            <table class="w-full text-sm">
+                <thead>
+                    <tr class="border-b border-gray-800">
+                        <th class="text-left py-3 px-4 text-gray-400 font-medium">Product</th>
+                        <th class="text-center py-3 px-4 text-gray-400 font-medium">Can see your key?</th>
+                        <th class="text-center py-3 px-4 text-gray-400 font-medium">ZK Proofs?</th>
+                        <th class="text-center py-3 px-4 text-gray-400 font-medium">Key Splitting?</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr class="border-b border-gray-800/50"><td class="py-3 px-4 text-gray-300">HashiCorp Vault (IBM, $6.4B)</td><td class="py-3 px-4 text-center text-red-400">Yes</td><td class="py-3 px-4 text-center text-red-400">No</td><td class="py-3 px-4 text-center text-red-400">No</td></tr>
+                    <tr class="border-b border-gray-800/50"><td class="py-3 px-4 text-gray-300">1Password ($400M ARR)</td><td class="py-3 px-4 text-center text-red-400">Yes</td><td class="py-3 px-4 text-center text-red-400">No</td><td class="py-3 px-4 text-center text-red-400">No</td></tr>
+                    <tr class="border-b border-gray-800/50"><td class="py-3 px-4 text-gray-300">AWS Secrets Manager</td><td class="py-3 px-4 text-center text-red-400">Yes</td><td class="py-3 px-4 text-center text-red-400">No</td><td class="py-3 px-4 text-center text-red-400">No</td></tr>
+                    <tr class="border-b border-gray-800/50"><td class="py-3 px-4 text-gray-300">Infisical ($16M Series A)</td><td class="py-3 px-4 text-center text-red-400">Yes</td><td class="py-3 px-4 text-center text-red-400">No</td><td class="py-3 px-4 text-center text-red-400">No</td></tr>
+                    <tr class="border-b border-gray-800/50"><td class="py-3 px-4 text-gray-300">Doppler ($28.9M raised)</td><td class="py-3 px-4 text-center text-red-400">Yes</td><td class="py-3 px-4 text-center text-red-400">No</td><td class="py-3 px-4 text-center text-red-400">No</td></tr>
+                    <tr class="border-b border-gray-800/50"><td class="py-3 px-4 text-gray-300">OpenRouter (BYOK)</td><td class="py-3 px-4 text-center text-red-400">Yes</td><td class="py-3 px-4 text-center text-red-400">No</td><td class="py-3 px-4 text-center text-red-400">No</td></tr>
+                    <tr class="border-b border-indigo-500/30 bg-indigo-500/5"><td class="py-3 px-4 font-bold text-indigo-400">VaultProof (Rial Labs)</td><td class="py-3 px-4 text-center text-green-400 font-bold">Never</td><td class="py-3 px-4 text-center text-green-400 font-bold">Yes (Noir)</td><td class="py-3 px-4 text-center text-green-400 font-bold">Yes (Shamir)</td></tr>
+                </tbody>
+            </table>
+        </div>
+    </section>
+
+    <!-- Breaches -->
+    <section class="max-w-4xl mx-auto px-6 py-16">
+        <h2 class="text-3xl font-bold text-center text-white mb-4">Breaches We Would Have Prevented</h2>
+        <p class="text-center text-gray-500 mb-12">Half a key is cryptographic garbage. These breaches become harmless.</p>
+        <div class="grid md:grid-cols-2 gap-4" id="breaches"></div>
+    </section>
+
+    <!-- Developer Integration -->
+    <section class="max-w-4xl mx-auto px-6 py-16">
+        <h2 class="text-3xl font-bold text-center text-white mb-4">One Component. Zero Trust.</h2>
+        <p class="text-center text-gray-500 mb-10">Drop our widget into any BYOK app. Your users' keys are safe.</p>
+        <div class="bg-dark-blue-lighter border border-gray-800 rounded-2xl p-6 font-mono text-sm overflow-x-auto">
+            <div class="text-gray-500">// npm install @vaultproof/connect</div><br>
+            <div><span class="text-purple-400">import</span> <span class="text-gray-300">{ </span><span class="text-yellow-300">ZKKeyConnect</span><span class="text-gray-300"> } </span><span class="text-purple-400">from</span> <span class="text-green-400">'@vaultproof/connect'</span></div><br>
+            <div class="text-gray-300">&lt;<span class="text-yellow-300">ZKKeyConnect</span></div>
+            <div class="text-gray-300 pl-4">vaultUrl=<span class="text-green-400">"https://riallabs.com/api"</span></div>
+            <div class="text-gray-300 pl-4">appId=<span class="text-green-400">"my-app-123"</span></div>
+            <div class="text-gray-300 pl-4">appName=<span class="text-green-400">"My AI App"</span></div>
+            <div class="text-gray-300 pl-4">userId={user.id}</div>
+            <div class="text-gray-300 pl-4">providers={['openai', 'anthropic']}</div>
+            <div class="text-gray-300">/&gt;</div>
+        </div>
+    </section>
+
+    <!-- Pricing -->
+    <section id="pricing" class="max-w-4xl mx-auto px-6 py-16">
+        <h2 class="text-3xl font-bold text-center text-white mb-12">Pricing</h2>
+        <div class="grid md:grid-cols-3 gap-6">
+            <div class="bg-dark-blue-lighter border border-gray-800 rounded-2xl p-6">
+                <div class="text-lg font-bold text-white mb-1">Free</div>
+                <div class="text-3xl font-extrabold text-white mb-4">$0<span class="text-sm text-gray-500 font-normal">/mo</span></div>
+                <ul class="space-y-2 text-sm text-gray-400"><li>3 key slots</li><li>1,000 proxied calls/mo</li><li>1 app grant per key</li></ul>
+            </div>
+            <div class="bg-dark-blue-lighter border-2 border-indigo-500 rounded-2xl p-6 relative">
+                <div class="absolute -top-3 left-1/2 -translate-x-1/2 bg-indigo-600 text-xs font-bold px-3 py-1 rounded-full text-white">Most Popular</div>
+                <div class="text-lg font-bold text-white mb-1">Pro</div>
+                <div class="text-3xl font-extrabold text-white mb-4">$12<span class="text-sm text-gray-500 font-normal">/mo</span></div>
+                <ul class="space-y-2 text-sm text-gray-400"><li>20 key slots</li><li>50K proxied calls/mo</li><li>Unlimited app grants</li><li>Usage analytics</li></ul>
+            </div>
+            <div class="bg-dark-blue-lighter border border-gray-800 rounded-2xl p-6">
+                <div class="text-lg font-bold text-white mb-1">Team</div>
+                <div class="text-3xl font-extrabold text-white mb-4">$39<span class="text-sm text-gray-500 font-normal">/mo</span></div>
+                <ul class="space-y-2 text-sm text-gray-400"><li>100 key slots</li><li>200K proxied calls/mo</li><li>Team sharing + SSO</li><li>Audit log export</li></ul>
+            </div>
+        </div>
+    </section>
+
+    <!-- CTA -->
+    <section id="contact" class="max-w-4xl mx-auto px-6 py-20 text-center">
+        <h2 class="text-3xl font-bold text-white mb-4">Stop trusting. Start proving.</h2>
+        <p class="text-gray-500 mb-8">Breaches are architecturally impossible, not just policy-prohibited.</p>
+        <a href="mailto:nelson@riallabs.com?subject=ZK%20Vault%20Early%20Access" class="inline-block bg-indigo-600 hover:bg-indigo-500 px-8 py-4 rounded-xl font-semibold text-lg text-white transition">Request Early Access</a>
+    </section>
+
+    <!-- Footer -->
+    <footer class="border-t border-gray-800 py-8 px-6 text-center text-sm text-gray-600">
+        <a href="/" class="text-gray-400 hover:text-white transition">Rial Labs</a> &mdash; Zero-knowledge API key infrastructure
+    </footer>
+
+    <script>
+        // Render breaches
+        const breaches = [
+            { company: "Toyota", detail: "API key on GitHub for 5 years", impact: "296K customer records" },
+            { company: "Uber", detail: "Hard-coded credentials in repo", impact: "57M records compromised" },
+            { company: "Twitch", detail: "6,600 secrets in leaked source", impact: "194 AWS keys, 69 Twilio keys" },
+            { company: "CircleCI", detail: "All customer secrets stolen", impact: "Every customer rotated everything" },
+            { company: "Codecov", detail: "Supply chain key extraction", impact: "23K+ customers for 2+ months" },
+            { company: "xAI", detail: "SpaceX/Tesla LLM key on GitHub", impact: "2 months of unauthorized access" },
+        ];
+        const container = document.getElementById('breaches');
+        breaches.forEach(b => {
+            container.innerHTML += `
+                <div class="bg-dark-blue-lighter border border-gray-800 rounded-xl p-4 flex items-start gap-3">
+                    <div class="text-red-400 text-lg mt-0.5">&#9888;</div>
+                    <div>
+                        <div class="font-bold text-white">${b.company}</div>
+                        <div class="text-sm text-gray-400">${b.detail}</div>
+                        <div class="text-xs text-red-400 mt-1">${b.impact}</div>
+                    </div>
+                </div>`;
+        });
+    </script>
+</body>
+</html>

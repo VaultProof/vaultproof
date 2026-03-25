@@ -1,4 +1,4 @@
-import { splitString, serializeShare } from '@zkvault/shamir';
+import { splitString, serializeShare } from '@vaultproof/shamir';
 import {
   initZKEngine,
   isZKReady,

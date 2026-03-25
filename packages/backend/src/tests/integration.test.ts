@@ -1,5 +1,5 @@
 /**
- * ZK Vault Integration Tests
+ * VaultProof Integration Tests
  *
  * Tests the full flow: store key → proxy call → revoke → app auth
  * Uses SQLite dev database and real Shamir splitting.
@@ -9,7 +9,7 @@ import { describe, it, before, after } from 'node:test';
 import assert from 'node:assert/strict';
 import Fastify from 'fastify';
 import { PrismaClient } from '@prisma/client';
-import { splitString, serializeShare } from '@zkvault/shamir';
+import { splitString, serializeShare } from '@vaultproof/shamir';
 import { keyRoutes } from '../routes/keys.js';
 import { proxyRoutes } from '../routes/proxy.js';
 import { generateToken } from '../middleware/auth.js';
@@ -33,7 +33,7 @@ const TEST_USER_ID = 'test-user-001';
 const TEST_USER_EMAIL = 'test@zkvault.dev';
 const AUTH_HEADER = { authorization: `Bearer ${generateToken(TEST_USER_ID, TEST_USER_EMAIL)}` };
 
-describe('ZK Vault Integration Tests', () => {
+describe('VaultProof Integration Tests', () => {
   let app: Awaited<ReturnType<typeof buildApp>>;
 
   before(async () => {

@@ -1,5 +1,5 @@
 /**
- * ZK Vault — Secured Cloudflare Worker Edge Proxy
+ * VaultProof — Secured Cloudflare Worker Edge Proxy
  *
  * Security layers:
  * 1. HMAC request signing (Worker -> Backend) — prevents direct backend access
@@ -59,7 +59,7 @@ export default {
     const url = new URL(request.url);
     if (url.pathname === '/health') {
       return Response.json(
-        { status: 'ok', service: 'zkvault-edge', edge: true, secured: true },
+        { status: 'ok', service: 'vaultproof-edge', edge: true, secured: true },
         { headers: { ...corsHeaders(origin, allowedOrigins), ...securityHeaders() } }
       );
     }

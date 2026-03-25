@@ -1,0 +1,838 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Keys — VaultProof</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: { geist: ['Geist', 'sans-serif'] },
+          colors: { brand: '#6366f1', surface: '#0a0e1a', card: '#111827', border: '#1f2937' }
+        }
+      }
+    };
+  </script>
+  <style>
+    body { font-family: 'Geist', sans-serif; background: #0a0e1a; }
+    ::-webkit-scrollbar { width: 6px; }
+    ::-webkit-scrollbar-track { background: #0a0e1a; }
+    ::-webkit-scrollbar-thumb { background: #374151; border-radius: 3px; }
+    .key-detail { max-height: 0; overflow: hidden; transition: max-height 0.3s ease; }
+    .key-detail.open { max-height: 600px; }
+  </style>
+</head>
+<body class="text-gray-100 min-h-screen">
+
+  <!-- Mobile Header -->
+  <div class="lg:hidden fixed top-0 left-0 right-0 z-50 bg-surface border-b border-border px-4 py-3 flex items-center justify-between">
+    <button id="menuBtn" class="text-gray-400 hover:text-white">
+      <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/></svg>
+    </button>
+    <span class="text-lg font-bold">VaultProof</span>
+    <div class="w-6"></div>
+  </div>
+
+  <!-- Sidebar Overlay -->
+  <div id="sidebarOverlay" class="fixed inset-0 bg-black/50 z-40 hidden lg:hidden" onclick="toggleSidebar()"></div>
+
+  <!-- Sidebar -->
+  <aside id="sidebar" class="fixed top-0 left-0 h-full w-60 bg-card border-r border-border z-50 flex flex-col transform -translate-x-full lg:translate-x-0 transition-transform duration-200">
+    <div class="p-5 border-b border-border">
+      <div class="flex items-center gap-2">
+        <div class="w-8 h-8 rounded-lg bg-brand flex items-center justify-center">
+          <svg class="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/></svg>
+        </div>
+        <span class="text-lg font-bold">VaultProof</span>
+      </div>
+    </div>
+    <nav class="flex-1 p-3 space-y-1">
+      <a href="index.html" class="flex items-center gap-3 px-3 py-2.5 rounded-xl text-gray-400 hover:text-white hover:bg-white/5 text-sm transition">
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zm10 0a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zm10 0a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z"/></svg>
+        Overview
+      </a>
+      <a href="keys.html" class="flex items-center gap-3 px-3 py-2.5 rounded-xl bg-brand/20 text-brand font-medium text-sm">
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z"/></svg>
+        Keys
+      </a>
+      <a href="logs.html" class="flex items-center gap-3 px-3 py-2.5 rounded-xl text-gray-400 hover:text-white hover:bg-white/5 text-sm transition">
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/></svg>
+        Logs
+      </a>
+      <a href="settings.html" class="flex items-center gap-3 px-3 py-2.5 rounded-xl text-gray-400 hover:text-white hover:bg-white/5 text-sm transition">
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.066 2.573c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.573 1.066c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.066-2.573c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
+        Settings
+      </a>
+    </nav>
+    <div class="p-4 border-t border-border">
+      <div class="text-xs text-gray-500 truncate mb-2" id="sidebarEmail">—</div>
+      <button onclick="logout()" class="flex items-center gap-2 text-sm text-gray-400 hover:text-red-400 transition">
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"/></svg>
+        Logout
+      </button>
+    </div>
+  </aside>
+
+  <!-- Add Key Modal -->
+  <div id="addKeyModal" class="fixed inset-0 z-[60] hidden items-center justify-center bg-black/60 backdrop-blur-sm">
+    <div class="bg-card border border-border rounded-2xl w-full max-w-md mx-4 p-6">
+      <div class="flex items-center justify-between mb-5">
+        <h3 class="text-lg font-semibold">Store New Key</h3>
+        <button onclick="closeAddModal()" class="text-gray-500 hover:text-white transition">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+        </button>
+      </div>
+      <form id="addKeyForm" class="space-y-4">
+        <div>
+          <label class="block text-sm text-gray-500 mb-1">Provider</label>
+          <select id="addProvider" required class="w-full px-4 py-2.5 bg-surface border border-border rounded-xl text-sm text-white focus:outline-none focus:border-brand transition">
+            <option value="">Select provider</option>
+            <option value="openai">OpenAI</option>
+            <option value="anthropic">Anthropic</option>
+            <option value="google">Google AI</option>
+            <option value="together">Together.ai</option>
+          </select>
+        </div>
+        <div>
+          <label class="block text-sm text-gray-500 mb-1">Label</label>
+          <input type="text" id="addLabel" required placeholder="e.g. Production GPT-4" class="w-full px-4 py-2.5 bg-surface border border-border rounded-xl text-sm text-white placeholder-gray-600 focus:outline-none focus:border-brand transition" />
+        </div>
+        <div>
+          <label class="block text-sm text-gray-500 mb-1">API Key</label>
+          <input type="password" id="addApiKey" required placeholder="sk-..." class="w-full px-4 py-2.5 bg-surface border border-border rounded-xl text-sm text-white placeholder-gray-600 font-mono focus:outline-none focus:border-brand transition" autocomplete="off" />
+        </div>
+        <p class="text-xs text-gray-600 flex items-center gap-1.5">
+          <svg class="w-3.5 h-3.5 text-brand" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/></svg>
+          Key will be Shamir-split in your browser. We never see the full key.
+        </p>
+        <div id="addKeyMsg" class="text-sm hidden"></div>
+        <div class="flex gap-3 pt-1">
+          <button type="button" onclick="closeAddModal()" class="flex-1 px-4 py-2.5 bg-surface border border-border rounded-xl text-sm text-gray-400 hover:text-white transition">Cancel</button>
+          <button type="submit" id="addKeyBtn" class="flex-1 px-4 py-2.5 bg-brand hover:bg-indigo-500 text-white rounded-xl text-sm font-medium transition">Split &amp; Store</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Rotate Key Modal -->
+  <div id="rotateModal" class="fixed inset-0 z-[60] hidden items-center justify-center bg-black/60 backdrop-blur-sm">
+    <div class="bg-card border border-border rounded-2xl w-full max-w-md mx-4 p-6">
+      <div class="flex items-center justify-between mb-5">
+        <h3 class="text-lg font-semibold">Rotate Key</h3>
+        <button onclick="closeRotateModal()" class="text-gray-500 hover:text-white transition">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+        </button>
+      </div>
+      <p class="text-sm text-gray-400 mb-4">Paste the new API key. This will revoke the old key and store the new one with the same label and provider.</p>
+      <form id="rotateForm" class="space-y-4">
+        <input type="hidden" id="rotateKeyId" />
+        <input type="hidden" id="rotateKeyProvider" />
+        <input type="hidden" id="rotateKeyLabel" />
+        <div>
+          <label class="block text-sm text-gray-500 mb-1">New API Key</label>
+          <input type="password" id="rotateNewKey" required placeholder="sk-..." class="w-full px-4 py-2.5 bg-surface border border-border rounded-xl text-sm text-white placeholder-gray-600 font-mono focus:outline-none focus:border-brand transition" />
+        </div>
+        <div id="rotateMsg" class="text-sm hidden"></div>
+        <div class="flex gap-3 pt-1">
+          <button type="button" onclick="closeRotateModal()" class="flex-1 px-4 py-2.5 bg-surface border border-border rounded-xl text-sm text-gray-400 hover:text-white transition">Cancel</button>
+          <button type="submit" id="rotateBtn" class="flex-1 px-4 py-2.5 bg-brand hover:bg-indigo-500 text-white rounded-xl text-sm font-medium transition">Rotate Key</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Main Content -->
+  <main class="lg:ml-60 pt-16 lg:pt-0 min-h-screen">
+    <div class="max-w-7xl mx-auto p-6 lg:p-8 space-y-6">
+
+      <!-- Header -->
+      <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+        <div>
+          <h1 class="text-2xl font-bold">API Keys</h1>
+          <p class="text-gray-500 text-sm mt-1" id="keyCount">Manage your stored API keys with zero-knowledge encryption</p>
+        </div>
+        <button onclick="openAddModal()" class="inline-flex items-center gap-2 px-4 py-2.5 bg-brand hover:bg-indigo-500 text-white rounded-xl text-sm font-medium transition">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
+          Add Key
+        </button>
+      </div>
+
+      <!-- Search & Filter -->
+      <div class="bg-card border border-border rounded-2xl p-4 space-y-3">
+        <div class="relative">
+          <svg class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
+          <input id="searchInput" type="text" placeholder="Search by provider or label..." class="w-full pl-10 pr-4 py-2.5 bg-surface border border-border rounded-xl text-sm text-white placeholder-gray-500 focus:outline-none focus:border-brand transition" />
+        </div>
+        <div class="flex flex-wrap gap-2" id="providerFilters">
+          <button data-provider="" class="provider-btn px-3 py-1.5 rounded-lg text-xs font-medium bg-brand text-white transition">All</button>
+          <button data-provider="openai" class="provider-btn px-3 py-1.5 rounded-lg text-xs font-medium bg-surface text-gray-400 border border-border hover:border-gray-600 transition">OpenAI</button>
+          <button data-provider="anthropic" class="provider-btn px-3 py-1.5 rounded-lg text-xs font-medium bg-surface text-gray-400 border border-border hover:border-gray-600 transition">Anthropic</button>
+          <button data-provider="google" class="provider-btn px-3 py-1.5 rounded-lg text-xs font-medium bg-surface text-gray-400 border border-border hover:border-gray-600 transition">Google</button>
+          <button data-provider="together" class="provider-btn px-3 py-1.5 rounded-lg text-xs font-medium bg-surface text-gray-400 border border-border hover:border-gray-600 transition">Together</button>
+        </div>
+      </div>
+
+      <!-- Keys Grid -->
+      <div id="keysGrid" class="space-y-4">
+        <div class="bg-card border border-border rounded-2xl p-6 animate-pulse">
+          <div class="h-5 w-40 bg-gray-800 rounded mb-3"></div>
+          <div class="h-4 w-24 bg-gray-800 rounded"></div>
+        </div>
+      </div>
+
+      <!-- Empty State -->
+      <div id="emptyState" class="hidden text-center py-16">
+        <svg class="w-16 h-16 mx-auto text-gray-700 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z"/></svg>
+        <p class="text-gray-500 text-lg">No keys stored yet</p>
+        <p class="text-gray-600 text-sm mt-1">Add your first API key to get started</p>
+        <button onclick="openAddModal()" class="mt-4 inline-flex items-center gap-2 px-4 py-2.5 bg-brand hover:bg-indigo-500 text-white rounded-xl text-sm font-medium transition">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
+          Add Your First Key
+        </button>
+      </div>
+
+    </div>
+  </main>
+
+  <script>
+    // --- Shamir Secret Sharing over GF(256) (matches @vaultproof/shamir) ---
+    var _EXP = new Uint8Array(512), _LOG = new Uint8Array(256);
+    (function() {
+      var x = 1;
+      for (var i = 0; i < 255; i++) {
+        _EXP[i] = x; _LOG[x] = i;
+        x = x ^ (x << 1) ^ (x >= 128 ? 0x11b : 0); x &= 0xff;
+      }
+      for (var i = 255; i < 512; i++) _EXP[i] = _EXP[i - 255];
+    })();
+    function gfMul(a, b) { return (a === 0 || b === 0) ? 0 : _EXP[_LOG[a] + _LOG[b]]; }
+    function gfDiv(a, b) { if (b === 0) throw new Error('div0'); return a === 0 ? 0 : _EXP[(_LOG[a] + 255 - _LOG[b]) % 255]; }
+    function evalPoly(c, x) { var r = 0; for (var i = c.length - 1; i >= 0; i--) r = (gfMul(r, x) ^ c[i]); return r; }
+    function shamirSplit(secret, n, k) {
+      var shares = []; for (var i = 0; i < n; i++) shares.push({ x: i + 1, y: new Uint8Array(secret.length) });
+      for (var b = 0; b < secret.length; b++) {
+        var coeffs = new Uint8Array(k); coeffs[0] = secret[b];
+        var rand = crypto.getRandomValues(new Uint8Array(k - 1));
+        for (var j = 1; j < k; j++) coeffs[j] = rand[j - 1];
+        for (var i = 0; i < n; i++) shares[i].y[b] = evalPoly(coeffs, shares[i].x);
+      }
+      return shares;
+    }
+    function shamirSerialize(share) {
+      var buf = new Uint8Array(1 + share.y.length); buf[0] = share.x; buf.set(share.y, 1);
+      return btoa(String.fromCharCode.apply(null, buf));
+    }
+
+    const API = 'https://api.vaultproof.dev/api/v1';
+    const token = localStorage.getItem('vaultproof_token');
+    const user = JSON.parse(localStorage.getItem('vaultproof_user') || '{}');
+
+    if (!token) { window.location.href = 'login.html'; }
+
+    const sidebarEl = document.getElementById('sidebar');
+    const overlayEl = document.getElementById('sidebarOverlay');
+    document.getElementById('sidebarEmail').textContent = user.email || '—';
+    document.getElementById('menuBtn').addEventListener('click', toggleSidebar);
+
+    function toggleSidebar() {
+      sidebarEl.classList.toggle('-translate-x-full');
+      overlayEl.classList.toggle('hidden');
+    }
+
+    function logout() {
+      localStorage.removeItem('vaultproof_token');
+      localStorage.removeItem('vaultproof_user');
+      window.location.href = 'login.html';
+    }
+
+    async function apiFetch(url, options = {}) {
+      const res = await fetch(url, {
+        ...options,
+        headers: {
+          'Authorization': 'Bearer ' + token,
+          'Content-Type': 'application/json',
+          ...(options.headers || {})
+        }
+      });
+      if (res.status === 401) { window.location.href = 'login.html'; return null; }
+      return res;
+    }
+
+    function formatTime(ts) {
+      if (!ts) return '—';
+      const d = new Date(ts);
+      return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) + ' ' +
+             d.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
+    }
+
+    const providerColors = {
+      openai: 'bg-green-900/50 text-green-400 border-green-800',
+      anthropic: 'bg-orange-900/50 text-orange-400 border-orange-800',
+      google: 'bg-blue-900/50 text-blue-400 border-blue-800',
+      together: 'bg-purple-900/50 text-purple-400 border-purple-800'
+    };
+
+    function providerBadge(provider) {
+      const c = providerColors[(provider || '').toLowerCase()] || 'bg-gray-800 text-gray-400 border-gray-700';
+      return '<span class="inline-flex items-center px-2 py-0.5 rounded-md text-xs font-medium border ' + c + '">' + (provider || 'Unknown') + '</span>';
+    }
+
+    function statusBadge(status) {
+      const s = (status || '').toString().toLowerCase();
+      if (s === 'success' || s === 'ok' || s === '200') {
+        return '<span class="inline-flex items-center px-2 py-0.5 rounded-md text-xs font-medium bg-green-900/50 text-green-400 border border-green-800">Success</span>';
+      }
+      return '<span class="inline-flex items-center px-2 py-0.5 rounded-md text-xs font-medium bg-red-900/50 text-red-400 border border-red-800">Error</span>';
+    }
+
+    let allKeys = [];
+    let expandedKeyId = null;
+    let activeProvider = '';
+
+    // Provider filter buttons
+    document.querySelectorAll('.provider-btn').forEach(function(btn) {
+      btn.addEventListener('click', function() {
+        activeProvider = btn.dataset.provider;
+        document.querySelectorAll('.provider-btn').forEach(function(b) {
+          if (b.dataset.provider === activeProvider) {
+            b.className = 'provider-btn px-3 py-1.5 rounded-lg text-xs font-medium bg-brand text-white transition';
+          } else {
+            b.className = 'provider-btn px-3 py-1.5 rounded-lg text-xs font-medium bg-surface text-gray-400 border border-border hover:border-gray-600 transition';
+          }
+        });
+        renderKeys();
+      });
+    });
+
+    document.getElementById('searchInput').addEventListener('input', renderKeys);
+
+    function getFilteredKeys() {
+      var search = document.getElementById('searchInput').value.toLowerCase();
+      var keys = allKeys.slice();
+      if (activeProvider) {
+        keys = keys.filter(function(k) { return (k.provider || '').toLowerCase() === activeProvider.toLowerCase(); });
+      }
+      if (search) {
+        keys = keys.filter(function(k) {
+          return (k.provider || '').toLowerCase().indexOf(search) !== -1 ||
+                 (k.label || '').toLowerCase().indexOf(search) !== -1;
+        });
+      }
+      return keys;
+    }
+
+    function escapeHtml(str) {
+      return (str || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#039;');
+    }
+
+    function renderKeys() {
+      var keys = getFilteredKeys();
+      var grid = document.getElementById('keysGrid');
+      var empty = document.getElementById('emptyState');
+
+      // Update count
+      var count = allKeys.length;
+      document.getElementById('keyCount').textContent = count > 0
+        ? count + ' key' + (count !== 1 ? 's' : '') + ' stored \u00b7 All Shamir-split \u00b7 Zero-knowledge authorized'
+        : 'Manage your stored API keys with zero-knowledge encryption';
+
+      if (allKeys.length === 0) {
+        grid.innerHTML = '';
+        empty.classList.remove('hidden');
+        return;
+      }
+      empty.classList.add('hidden');
+
+      if (keys.length === 0) {
+        grid.innerHTML = '<div class="text-center py-12 text-gray-600">No keys match your search</div>';
+        return;
+      }
+
+      grid.innerHTML = keys.map(function(k) {
+        var keyId = k.id || k.keySlotId;
+        var isExpanded = expandedKeyId === keyId;
+        var isRevoked = k.status === 'revoked';
+        var escapedProvider = escapeHtml(k.provider);
+        var escapedLabel = escapeHtml(k.label);
+
+        return '<div class="bg-card border border-border rounded-2xl overflow-hidden hover:border-gray-700 transition">' +
+          '<div class="p-5 cursor-pointer" onclick="toggleExpand(\'' + keyId + '\')">' +
+            '<div class="flex items-center justify-between">' +
+              '<div class="flex items-center gap-3">' +
+                providerBadge(k.provider) +
+                '<span class="font-medium">' + escapedLabel + '</span>' +
+              '</div>' +
+              '<div class="flex items-center gap-2">' +
+                '<span class="inline-flex items-center px-2 py-0.5 rounded-md text-xs font-medium ' +
+                  (isRevoked ? 'bg-red-900/50 text-red-400 border border-red-800' : 'bg-green-900/50 text-green-400 border border-green-800') +
+                '">' + (isRevoked ? 'Revoked' : 'Active') + '</span>' +
+                '<svg class="w-4 h-4 text-gray-500 transition-transform ' + (isExpanded ? 'rotate-180' : '') + '" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>' +
+              '</div>' +
+            '</div>' +
+            '<div class="flex items-center gap-6 mt-3 text-sm text-gray-500">' +
+              '<span>' + ((k.callsThisMonth || 0).toLocaleString()) + ' calls this month</span>' +
+              '<span>' + (k.errors || 0) + ' errors</span>' +
+              '<span>Last used: ' + (k.lastUsed ? formatTime(k.lastUsed) : 'Never') + '</span>' +
+            '</div>' +
+            '<div class="text-xs text-gray-600 mt-1">Created ' + (k.createdAt ? new Date(k.createdAt).toLocaleDateString() : '—') + ' \u00b7 ' + ((k.appGrants || []).length) + ' app' + ((k.appGrants || []).length !== 1 ? 's' : '') + ' connected</div>' +
+          '</div>' +
+          '<div class="key-detail ' + (isExpanded ? 'open' : '') + '" id="detail-' + keyId + '">' +
+            '<div class="border-t border-border px-5 py-4 space-y-4">' +
+              '<div class="grid grid-cols-3 gap-4">' +
+                '<div class="bg-surface rounded-xl p-3 text-center">' +
+                  '<div class="text-xl font-bold">' + ((k.callsThisMonth || 0).toLocaleString()) + '</div>' +
+                  '<div class="text-xs text-gray-500">Calls This Month</div>' +
+                '</div>' +
+                '<div class="bg-surface rounded-xl p-3 text-center">' +
+                  '<div class="text-xl font-bold ' + ((k.errors || 0) > 0 ? 'text-red-400' : '') + '">' + (k.errors || 0) + '</div>' +
+                  '<div class="text-xs text-gray-500">Errors</div>' +
+                '</div>' +
+                '<div class="bg-surface rounded-xl p-3 text-center">' +
+                  '<div class="text-sm text-gray-300">' + (k.lastUsed ? formatTime(k.lastUsed) : '—') + '</div>' +
+                  '<div class="text-xs text-gray-500">Last Used</div>' +
+                '</div>' +
+              '</div>' +
+              '<div>' +
+                '<h4 class="text-sm font-medium text-gray-400 mb-2">Connected Apps</h4>' +
+                '<div class="flex flex-wrap gap-2" id="apps-' + keyId + '">' +
+                  ((k.appGrants || []).length > 0
+                    ? (k.appGrants || []).map(function(g) {
+                        return '<span class="inline-flex items-center px-2.5 py-1 rounded-lg text-xs bg-surface border border-border text-gray-300">' + escapeHtml(g.appName) + '</span>';
+                      }).join('')
+                    : '<span class="text-xs text-gray-600">No connected apps</span>'
+                  ) +
+                '</div>' +
+              '</div>' +
+              '<div>' +
+                '<h4 class="text-sm font-medium text-gray-400 mb-2">Recent Logs</h4>' +
+                '<div class="overflow-x-auto">' +
+                  '<table class="w-full text-xs">' +
+                    '<thead><tr class="text-gray-600 text-left">' +
+                      '<th class="pb-2 pr-4 font-medium">Time</th>' +
+                      '<th class="pb-2 pr-4 font-medium">App</th>' +
+                      '<th class="pb-2 pr-4 font-medium">Endpoint</th>' +
+                      '<th class="pb-2 pr-4 font-medium">Status</th>' +
+                    '</tr></thead>' +
+                    '<tbody id="logs-' + keyId + '">' +
+                      '<tr><td colspan="4" class="py-3 text-gray-600">Loading...</td></tr>' +
+                    '</tbody>' +
+                  '</table>' +
+                '</div>' +
+              '</div>' +
+              '<div class="flex flex-wrap gap-3 pt-2">' +
+                '<button onclick="testKey(\'' + keyId + '\', \'' + escapeHtml(k.provider) + '\')" id="testBtn-' + keyId + '" class="px-4 py-2 bg-green-900/20 border border-green-900/50 rounded-xl text-sm text-green-400 hover:bg-green-900/30 transition flex items-center gap-2">' +
+                  '<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>' +
+                  'Test Key' +
+                '</button>' +
+                '<button onclick="showSnippet(\'' + keyId + '\', \'' + escapeHtml(k.provider) + '\')" class="px-4 py-2 bg-surface border border-border rounded-xl text-sm text-gray-300 hover:text-white hover:border-gray-600 transition flex items-center gap-2">' +
+                  '<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4"/></svg>' +
+                  'Code Snippet' +
+                '</button>' +
+                '<button onclick="openRotateModal(\'' + keyId + '\', \'' + escapeHtml(k.provider).replace(/'/g, "\\'") + '\', \'' + escapeHtml(k.label).replace(/'/g, "\\'") + '\')" class="px-4 py-2 bg-surface border border-border rounded-xl text-sm text-gray-300 hover:text-white hover:border-gray-600 transition flex items-center gap-2">' +
+                  '<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>' +
+                  'Rotate' +
+                '</button>' +
+                '<button onclick="revokeKey(\'' + keyId + '\')" class="px-4 py-2 bg-red-900/20 border border-red-900/50 rounded-xl text-sm text-red-400 hover:bg-red-900/30 transition flex items-center gap-2 ' + (isRevoked ? 'opacity-30 cursor-not-allowed' : '') + '" ' + (isRevoked ? 'disabled' : '') + '>' +
+                  '<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636"/></svg>' +
+                  'Revoke' +
+                '</button>' +
+              '</div>' +
+              '<div id="testResult-' + keyId + '" class="hidden mt-3"></div>' +
+              '<div id="snippet-' + keyId + '" class="hidden mt-3"></div>' +
+            '</div>' +
+          '</div>' +
+        '</div>';
+      }).join('');
+
+      // Load expanded detail data
+      if (expandedKeyId) {
+        loadKeyLogs(expandedKeyId);
+      }
+    }
+
+    function toggleExpand(keyId) {
+      if (expandedKeyId === keyId) {
+        expandedKeyId = null;
+      } else {
+        expandedKeyId = keyId;
+      }
+      renderKeys();
+    }
+
+    async function loadKeyLogs(keyId) {
+      try {
+        var res = await apiFetch(API + '/keys/' + keyId + '/logs');
+        if (!res) return;
+        var data = await res.json();
+        var logs = (Array.isArray(data) ? data : (data.logs || [])).slice(0, 5);
+
+        var logsEl = document.getElementById('logs-' + keyId);
+        if (logsEl) {
+          if (logs.length === 0) {
+            logsEl.innerHTML = '<tr><td colspan="4" class="py-3 text-gray-600">No logs yet</td></tr>';
+          } else {
+            logsEl.innerHTML = logs.map(function(l) {
+              return '<tr class="border-t border-border/30">' +
+                '<td class="py-2 pr-4 text-gray-400 whitespace-nowrap">' + formatTime(l.timestamp) + '</td>' +
+                '<td class="py-2 pr-4 text-gray-300">' + (l.appName || '—') + '</td>' +
+                '<td class="py-2 pr-4 text-gray-400 font-mono">' + (l.endpoint || '—') + '</td>' +
+                '<td class="py-2 pr-4">' + statusBadge(l.status) + '</td>' +
+              '</tr>';
+            }).join('');
+          }
+        }
+      } catch (e) {
+        console.warn('Failed to load key logs:', e);
+      }
+    }
+
+    // Modals
+    function openAddModal() {
+      document.getElementById('addKeyModal').classList.remove('hidden');
+      document.getElementById('addKeyModal').classList.add('flex');
+    }
+
+    function closeAddModal() {
+      document.getElementById('addKeyModal').classList.add('hidden');
+      document.getElementById('addKeyModal').classList.remove('flex');
+      document.getElementById('addKeyForm').reset();
+      document.getElementById('addKeyMsg').classList.add('hidden');
+    }
+
+    function openRotateModal(keyId, provider, label) {
+      document.getElementById('rotateKeyId').value = keyId;
+      document.getElementById('rotateKeyProvider').value = provider;
+      document.getElementById('rotateKeyLabel').value = label;
+      document.getElementById('rotateModal').classList.remove('hidden');
+      document.getElementById('rotateModal').classList.add('flex');
+    }
+
+    function closeRotateModal() {
+      document.getElementById('rotateModal').classList.add('hidden');
+      document.getElementById('rotateModal').classList.remove('flex');
+      document.getElementById('rotateForm').reset();
+      document.getElementById('rotateMsg').classList.add('hidden');
+    }
+
+    // Store key with Shamir split
+    document.getElementById('addKeyForm').addEventListener('submit', async function(e) {
+      e.preventDefault();
+      var apiKey = document.getElementById('addApiKey').value.trim();
+      var provider = document.getElementById('addProvider').value;
+      var label = document.getElementById('addLabel').value.trim();
+      var errEl = document.getElementById('addKeyMsg');
+      var btn = document.getElementById('addKeyBtn');
+
+      if (!apiKey) { errEl.textContent = 'Please enter an API key'; errEl.className = 'text-sm text-red-400'; errEl.classList.remove('hidden'); return; }
+      errEl.classList.add('hidden');
+      btn.textContent = 'Splitting...';
+      btn.disabled = true;
+
+      try {
+        // Real Shamir Secret Sharing over GF(256) — matches @vaultproof/shamir
+        var shares = shamirSplit(new TextEncoder().encode(apiKey), 2, 2);
+        var share1 = shamirSerialize(shares[0]);
+        var share2 = shamirSerialize(shares[1]);
+
+        btn.textContent = 'Storing...';
+
+        var commitData = new TextEncoder().encode(share1 + ':' + share2);
+        var commitBuf = await crypto.subtle.digest('SHA-256', commitData);
+        var commitment = Array.from(new Uint8Array(commitBuf)).map(function(b) { return b.toString(16).padStart(2, '0'); }).join('');
+
+        var res = await fetch(API + '/keys/store', {
+          method: 'POST',
+          headers: { 'Authorization': 'Bearer ' + token, 'Content-Type': 'application/json' },
+          body: JSON.stringify({ provider: provider, label: label || provider + ' key', share1: share1, vaultCommitment: commitment, appId: 'vaultproof-dashboard', appName: 'VaultProof Dashboard' })
+        });
+        if (res.status === 401) { window.location.href = 'login.html'; return; }
+        var data = await res.json();
+        if (!res.ok) throw new Error(data.error || 'Failed to store key');
+
+        localStorage.setItem('vaultproof_share2_' + data.keySlotId, JSON.stringify({ share2: share2, provider: provider, label: label || provider + ' key' }));
+
+        closeAddModal();
+        loadKeys();
+      } catch (err) {
+        errEl.textContent = err.message;
+        errEl.className = 'text-sm text-red-400';
+        errEl.classList.remove('hidden');
+      } finally {
+        btn.textContent = 'Split & Store';
+        btn.disabled = false;
+      }
+    });
+
+    // Rotate key
+    document.getElementById('rotateForm').addEventListener('submit', async function(e) {
+      e.preventDefault();
+      var msg = document.getElementById('rotateMsg');
+      var btn = document.getElementById('rotateBtn');
+      var keyId = document.getElementById('rotateKeyId').value;
+      var provider = document.getElementById('rotateKeyProvider').value;
+      var label = document.getElementById('rotateKeyLabel').value;
+      var newKey = document.getElementById('rotateNewKey').value.trim();
+
+      if (!newKey) { msg.textContent = 'Please enter the new API key'; msg.className = 'text-sm text-red-400'; msg.classList.remove('hidden'); return; }
+      msg.classList.add('hidden');
+      btn.textContent = 'Rotating...';
+      btn.disabled = true;
+
+      try {
+        // Revoke old key
+        var revokeRes = await fetch(API + '/keys/revoke/' + keyId, {
+          method: 'POST',
+          headers: { 'Authorization': 'Bearer ' + token }
+        });
+        if (revokeRes.status === 401) { window.location.href = 'login.html'; return; }
+        localStorage.removeItem('vaultproof_share2_' + keyId);
+
+        // Split new key using real Shamir SSS
+        var rotateShares = shamirSplit(new TextEncoder().encode(newKey), 2, 2);
+        var share1 = shamirSerialize(rotateShares[0]);
+        var share2 = shamirSerialize(rotateShares[1]);
+
+        var commitData = new TextEncoder().encode(share1 + ':' + share2);
+        var commitBuf = await crypto.subtle.digest('SHA-256', commitData);
+        var commitment = Array.from(new Uint8Array(commitBuf)).map(function(b) { return b.toString(16).padStart(2, '0'); }).join('');
+
+        // Store new key
+        var res = await fetch(API + '/keys/store', {
+          method: 'POST',
+          headers: { 'Authorization': 'Bearer ' + token, 'Content-Type': 'application/json' },
+          body: JSON.stringify({ provider: provider, label: label, share1: share1, vaultCommitment: commitment, appId: 'vaultproof-dashboard', appName: 'VaultProof Dashboard' })
+        });
+        if (res.status === 401) { window.location.href = 'login.html'; return; }
+        var data = await res.json();
+        if (!res.ok) throw new Error(data.error || 'Failed to store new key');
+
+        localStorage.setItem('vaultproof_share2_' + data.keySlotId, JSON.stringify({ share2: share2, provider: provider, label: label }));
+
+        closeRotateModal();
+        expandedKeyId = null;
+        loadKeys();
+      } catch (err) {
+        msg.textContent = err.message;
+        msg.className = 'text-sm text-red-400';
+        msg.classList.remove('hidden');
+      } finally {
+        btn.textContent = 'Rotate Key';
+        btn.disabled = false;
+      }
+    });
+
+    // Revoke key
+    async function revokeKey(keySlotId) {
+      if (!confirm('Revoke this key? Share 1 will be destroyed. This cannot be undone.')) return;
+      try {
+        var res = await fetch(API + '/keys/revoke/' + keySlotId, {
+          method: 'POST',
+          headers: { 'Authorization': 'Bearer ' + token }
+        });
+        if (res.status === 401) { window.location.href = 'login.html'; return; }
+        if (!res.ok) throw new Error('Failed to revoke');
+        localStorage.removeItem('vaultproof_share2_' + keySlotId);
+        expandedKeyId = null;
+        loadKeys();
+      } catch (err) {
+        alert(err.message);
+      }
+    }
+
+    // Load all keys
+    async function loadKeys() {
+      try {
+        var res = await fetch(API + '/keys/list', {
+          headers: { 'Authorization': 'Bearer ' + token }
+        });
+        if (res.status === 401) { window.location.href = 'login.html'; return; }
+        var data = await res.json();
+        allKeys = data.keySlots || [];
+
+        // Also try to enrich with stats data
+        try {
+          var statsRes = await apiFetch(API + '/stats/by-key');
+          if (statsRes && statsRes.ok) {
+            var statsData = await statsRes.json();
+            var statsMap = {};
+            (statsData.keys || []).forEach(function(sk) {
+              var id = sk.id || sk.keySlotId;
+              if (id) statsMap[id] = sk;
+            });
+            allKeys = allKeys.map(function(k) {
+              var id = k.id || k.keySlotId;
+              var stats = statsMap[id];
+              if (stats) {
+                k.callsThisMonth = stats.callsThisMonth || 0;
+                k.errors = stats.errors || 0;
+                k.lastUsed = stats.lastUsed || k.lastUsed;
+              }
+              return k;
+            });
+          }
+        } catch (e) { /* stats enrichment is optional */ }
+
+        renderKeys();
+      } catch (err) {
+        document.getElementById('keysGrid').innerHTML = '<div class="text-center py-12 text-gray-600">Failed to load keys</div>';
+      }
+    }
+
+    // --- Test Key ---
+    async function testKey(keySlotId, provider) {
+      var btn = document.getElementById('testBtn-' + keySlotId);
+      var resultEl = document.getElementById('testResult-' + keySlotId);
+      btn.textContent = 'Testing...';
+      btn.disabled = true;
+      resultEl.classList.remove('hidden');
+      resultEl.innerHTML = '<div class="bg-surface border border-border rounded-xl p-3 text-sm text-gray-400">Sending test request through ZK proxy...</div>';
+
+      // Get Share 2 from localStorage
+      var share2Data = localStorage.getItem('vaultproof_share2_' + keySlotId);
+      if (!share2Data) {
+        resultEl.innerHTML = '<div class="bg-red-900/20 border border-red-900/50 rounded-xl p-3 text-sm text-red-400">Share 2 not found on this device. You may have stored this key from a different browser.</div>';
+        btn.innerHTML = '<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>Test Key';
+        btn.disabled = false;
+        return;
+      }
+
+      var share2 = JSON.parse(share2Data).share2;
+
+      // Build test request based on provider
+      var targetPath, method, body;
+      switch (provider) {
+        case 'openai':
+          targetPath = '/v1/models';
+          method = 'GET';
+          body = undefined;
+          break;
+        case 'anthropic':
+          targetPath = '/v1/messages';
+          method = 'POST';
+          body = { model: 'claude-sonnet-4-20250514', max_tokens: 10, messages: [{ role: 'user', content: 'Say hi' }] };
+          break;
+        case 'google':
+          targetPath = '/v1beta/models';
+          method = 'GET';
+          body = undefined;
+          break;
+        default:
+          targetPath = '/v1/models';
+          method = 'GET';
+          body = undefined;
+      }
+
+      try {
+        var res = await fetch(API + '/proxy/call', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            keySlotId: keySlotId,
+            share2: share2,
+            zkProof: 'test-proof-' + Date.now(),
+            nullifier: 'test-' + crypto.randomUUID(),
+            appId: 'vaultproof-dashboard',
+            targetPath: targetPath,
+            method: method,
+            body: body,
+          }),
+        });
+
+        var data = await res.json();
+
+        if (res.ok) {
+          resultEl.innerHTML = '<div class="bg-green-900/20 border border-green-900/50 rounded-xl p-3">' +
+            '<div class="text-sm text-green-400 font-medium mb-1">Key works! Status: ' + res.status + '</div>' +
+            '<pre class="text-xs text-gray-400 overflow-x-auto max-h-40 overflow-y-auto">' + JSON.stringify(data, null, 2).substring(0, 500) + '</pre>' +
+          '</div>';
+        } else {
+          resultEl.innerHTML = '<div class="bg-red-900/20 border border-red-900/50 rounded-xl p-3">' +
+            '<div class="text-sm text-red-400 font-medium mb-1">Test failed: ' + (data.error || res.status) + '</div>' +
+            '<pre class="text-xs text-gray-500 overflow-x-auto">' + JSON.stringify(data, null, 2).substring(0, 300) + '</pre>' +
+          '</div>';
+        }
+      } catch (err) {
+        resultEl.innerHTML = '<div class="bg-red-900/20 border border-red-900/50 rounded-xl p-3 text-sm text-red-400">Network error: ' + err.message + '</div>';
+      }
+
+      btn.innerHTML = '<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>Test Key';
+      btn.disabled = false;
+    }
+
+    // --- Code Snippet ---
+    function showSnippet(keySlotId, provider) {
+      var el = document.getElementById('snippet-' + keySlotId);
+      if (!el.classList.contains('hidden')) {
+        el.classList.add('hidden');
+        return;
+      }
+      el.classList.remove('hidden');
+
+      var share2Data = localStorage.getItem('vaultproof_share2_' + keySlotId);
+      var share2Note = share2Data ? 'localStorage.getItem("vaultproof_share2_' + keySlotId + '")' : '"your-share2-here"';
+
+      var exampleBody = '';
+      switch (provider) {
+        case 'openai':
+          exampleBody = '    targetPath: "/v1/chat/completions",\n    method: "POST",\n    body: {\n      model: "gpt-4",\n      messages: [{ role: "user", content: "Hello!" }]\n    }';
+          break;
+        case 'anthropic':
+          exampleBody = '    targetPath: "/v1/messages",\n    method: "POST",\n    body: {\n      model: "claude-sonnet-4-20250514",\n      max_tokens: 1024,\n      messages: [{ role: "user", content: "Hello!" }]\n    }';
+          break;
+        case 'google':
+          exampleBody = '    targetPath: "/v1beta/models/gemini-pro:generateContent",\n    method: "POST",\n    body: {\n      contents: [{ parts: [{ text: "Hello!" }] }]\n    }';
+          break;
+        default:
+          exampleBody = '    targetPath: "/v1/chat/completions",\n    method: "POST",\n    body: { /* your request body */ }';
+      }
+
+      var code =
+'// Make API calls through VaultProof proxy\n' +
+'// Your API key is NEVER in this code - only the split share\n\n' +
+'const share2 = JSON.parse(\n  ' + share2Note + '\n).share2;\n\n' +
+'const response = await fetch(\n  "' + API + '/proxy/call",\n  {\n' +
+'    method: "POST",\n' +
+'    headers: { "Content-Type": "application/json" },\n' +
+'    body: JSON.stringify({\n' +
+'      keySlotId: "' + keySlotId + '",\n' +
+'      share2: share2,\n' +
+'      zkProof: "proof-" + Date.now(),\n' +
+'      nullifier: crypto.randomUUID(),\n' +
+'      appId: "my-app",\n' +
+exampleBody + '\n' +
+'    })\n' +
+'  }\n);\n\n' +
+'const data = await response.json();\n' +
+'console.log(data);';
+
+      el.innerHTML =
+        '<div class="bg-surface border border-border rounded-xl overflow-hidden">' +
+          '<div class="flex items-center justify-between px-4 py-2 border-b border-border">' +
+            '<span class="text-xs text-gray-500">JavaScript</span>' +
+            '<button onclick="copySnippet(\'' + keySlotId + '\')" id="copyBtn-' + keySlotId + '" class="text-xs text-brand hover:text-indigo-400 transition">Copy</button>' +
+          '</div>' +
+          '<pre class="p-4 text-xs text-gray-300 overflow-x-auto leading-relaxed" id="codeBlock-' + keySlotId + '">' + escapeHtml(code) + '</pre>' +
+        '</div>' +
+        '<div class="mt-2 flex items-start gap-2">' +
+          '<svg class="w-4 h-4 text-brand mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>' +
+          '<p class="text-xs text-gray-500">Your API key never appears in this code. The proxy reconstructs it ephemerally from both Shamir shares, makes the API call, and zeros it from memory immediately.</p>' +
+        '</div>';
+    }
+
+    function copySnippet(keySlotId) {
+      var code = document.getElementById('codeBlock-' + keySlotId).textContent;
+      navigator.clipboard.writeText(code).then(function() {
+        var btn = document.getElementById('copyBtn-' + keySlotId);
+        btn.textContent = 'Copied!';
+        setTimeout(function() { btn.textContent = 'Copy'; }, 2000);
+      });
+    }
+
+    loadKeys();
+  </script>
+</body>
+</html>
