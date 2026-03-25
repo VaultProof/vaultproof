@@ -30,7 +30,7 @@ async function buildApp() {
 
 // Test user
 const TEST_USER_ID = 'test-user-001';
-const TEST_USER_EMAIL = 'test@zkvault.dev';
+const TEST_USER_EMAIL = 'test@vaultproof.dev';
 const AUTH_HEADER = { authorization: `Bearer ${generateToken(TEST_USER_ID, TEST_USER_EMAIL)}` };
 
 describe('VaultProof Integration Tests', () => {

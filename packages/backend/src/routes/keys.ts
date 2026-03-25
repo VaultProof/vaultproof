@@ -43,7 +43,7 @@ export async function keyRoutes(app: FastifyInstance) {
           error: 'Key slot limit reached',
           used: slotCheck.used,
           limit: slotCheck.limit,
-          upgrade: 'https://riallabs.com/zkvault#pricing',
+          upgrade: 'https://vaultproof.dev#pricing',
         });
       }
     }

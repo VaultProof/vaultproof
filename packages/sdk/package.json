@@ -1,7 +1,7 @@
 {
   "name": "@vaultproof/sdk",
   "version": "1.0.0",
-  "description": "ZK Vault SDK — Store API keys with Shamir splitting, make proxied calls with zero-knowledge proofs",
+  "description": "VaultProof SDK — Store API keys with Shamir splitting, make proxied calls with zero-knowledge proofs",
   "type": "module",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",

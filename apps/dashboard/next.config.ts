@@ -2,7 +2,7 @@ import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
   output: "export",
-  basePath: "/zkvault/dashboard",
+  basePath: "/vaultproof/dashboard",
   images: { unoptimized: true },
 };
 

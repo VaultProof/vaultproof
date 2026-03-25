@@ -69,7 +69,7 @@ export async function proxyRoutes(app: FastifyInstance) {
           error: 'Monthly call limit exceeded',
           used: rateCheck.used,
           limit: rateCheck.limit,
-          upgrade: 'https://riallabs.com/zkvault#pricing',
+          upgrade: 'https://vaultproof.dev#pricing',
         });
       }
     }

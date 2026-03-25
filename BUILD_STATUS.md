@@ -1,4 +1,4 @@
-# ZK Vault — Build Status
+# VaultProof — Build Status
 
 **Last Updated:** 2026-03-24
 **Total Tests:** 35/35 passing (zero failures)
@@ -7,10 +7,10 @@
 
 ### Production Deployment
 - **Backend API:** `dashboard-production-b76c.up.railway.app` (Railway)
-- **Dashboard:** `rial-labs.web.app/zkvault/dashboard/` (Firebase)
-- **Landing Page:** `rial-labs.web.app/zkvault/` (Firebase)
+- **Dashboard:** `vaultproof.dev/dashboard/` (Firebase)
+- **Landing Page:** `vaultproof.dev/` (Firebase)
 - **Database:** Supabase PostgreSQL (pooler connection)
-- **GitHub:** `github.com/windsurftemplate/zkvault` (private)
+- **GitHub:** `github.com/windsurftemplate/vaultproof` (private)
 
 ### API Endpoints (15 total)
 ```
@@ -90,12 +90,12 @@ Stats:
 
 | Package | Path | Status | Tests |
 |---|---|---|---|
-| `@zkvault/shamir` | `packages/shamir/` | Complete | 10/10 |
+| `@vaultproof/shamir` | `packages/shamir/` | Complete | 10/10 |
 | `key_auth` Noir circuit | `packages/circuits/` | Complete | 4/4 |
-| `@zkvault/backend` | `packages/backend/` | Complete | 21/21 |
-| `@zkvault/connect` widget | `packages/widget/` | Compiles | Manual testing |
+| `@vaultproof/backend` | `packages/backend/` | Complete | 21/21 |
+| `@vaultproof/connect` widget | `packages/widget/` | Compiles | Manual testing |
 | Dashboard (Next.js) | `apps/dashboard/` | Builds | Demo data |
-| Landing page | riallabs.com/zkvault | Live | Firebase deployed |
+| Landing page | vaultproof.dev | Live | Firebase deployed |
 
 ---
 
@@ -176,7 +176,7 @@ Stats:
 ## Architecture
 
 ```
-zkvault/
+vaultproof/
 ├── packages/
 │   ├── shamir/              Shamir SSS (GF(256), 2-of-n threshold)
 │   │   └── src/index.ts     split(), combine(), serialize/deserialize
@@ -191,7 +191,7 @@ zkvault/
 │   │   │   ├── routes/proxy.ts   Ephemeral reconstruction + SSE streaming
 │   │   │   └── tests/            Integration + security tests
 │   │   └── prisma/schema.prisma  Users, KeySlots, AppGrants, AccessLogs
-│   └── widget/              @zkvault/connect React widget
+│   └── widget/              @vaultproof/connect React widget
 │       ├── src/ZKKeyConnect.tsx  Drop-in BYOK component
 │       ├── src/vault-client.ts   Client-side split + proxy calls
 │       └── src/types.ts          Provider definitions
@@ -205,7 +205,7 @@ zkvault/
 
 ```bash
 # Build everything
-cd /Users/nelson/projects/zkvault && npx turbo run build
+cd /Users/nelson/projects/vaultproof && npx turbo run build
 
 # Run all backend tests
 cd packages/backend && npx tsc && node --test dist/tests/*.test.js

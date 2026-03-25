@@ -62,7 +62,7 @@ export default function KeysDashboard() {
       <nav className="flex items-center justify-between px-6 py-4 max-w-6xl mx-auto border-b border-gray-800">
         <Link href="/" className="flex items-center gap-2">
           <span className="text-2xl">&#128274;</span>
-          <span className="text-xl font-bold">ZK Vault</span>
+          <span className="text-xl font-bold">VaultProof</span>
         </Link>
         <div className="flex items-center gap-4">
           <span className="text-sm text-gray-500">demo@riallabs.com</span>

@@ -41,11 +41,11 @@ No product exists that combines zero-knowledge proofs with API key management. E
 
 **Today's problem:** Developer puts `OPENAI_KEY=sk-abc123xyz789` in code → commits → pushes → key is leaked. Full key. Game over. 39M secrets leaked on GitHub in 2024 alone.
 
-**With ZK Vault:** The developer never has the full key in their codebase. They integrate via our SDK:
+**With VaultProof:** The developer never has the full key in their codebase. They integrate via our SDK:
 
 ```
 # What's in the developer's .env / code:
-ZKVAULT_ACCESS_TOKEN=zt_blind_token_no_key_material
+VAULTPROOF_ACCESS_TOKEN=zt_blind_token_no_key_material
 
 # What's NOT in the developer's environment:
 # The actual API key. It doesn't exist here. Ever.
@@ -58,7 +58,7 @@ If the access token leaks on GitHub, an attacker **cannot:**
 
 **A leaked access token is cryptographic garbage without both shares + a valid ZK proof.**
 
-| Real Breach | What leaked | With ZK Vault |
+| Real Breach | What leaked | With VaultProof |
 |---|---|---|
 | Toyota (key on GitHub 5 years) | Full API key → 296K records | Access token → zero access |
 | Uber (hardcoded in repo) | Full credentials → 57M records | Access token → zero access |
@@ -85,7 +85,7 @@ This is what people already do when they lose access to anything. The old shares
 
 **Today's problem:** 5 devs share an API key via .env, Slack, or 1Password. Dev leaves → key should be rotated at the provider. 64% of teams never do it.
 
-**With ZK Vault — 2-of-n Shamir threshold:**
+**With VaultProof — 2-of-n Shamir threshold:**
 
 ```
 Admin enters API key
@@ -116,7 +116,7 @@ Any one dev's share + vault's share = reconstruct the key
 
 ```
 ┌──────────────────┐                         ┌──────────────────────┐
-│  App Developer's  │  Access token +         │  ZK Vault Backend     │
+│  App Developer's  │  Access token +         │  VaultProof Backend     │
 │  App (embeds      │  ZK proof              │                       │
 │  <ZKKeyConnect/>) │ ──────────────────────→ │  1. Verify ZK proof   │
 │                   │                         │  2. Retrieve Share 1  │
@@ -210,7 +210,7 @@ Any one dev's share + vault's share = reconstruct the key
 7. Integrate Noir WASM proof generation in browser
 8. Client-side Shamir splitting on key entry
 9. Share 2 encrypted storage on device (localStorage + encryption)
-10. Publish to npm as `@zkvault/connect`
+10. Publish to npm as `@vaultproof/connect`
 
 ### Phase 3: Dashboard (Week 4)
 11. Next.js vault dashboard with Supabase Auth

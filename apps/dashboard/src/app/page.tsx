@@ -7,7 +7,7 @@ export default function LandingPage() {
       <nav className="flex items-center justify-between px-6 py-4 max-w-6xl mx-auto">
         <div className="flex items-center gap-2">
           <span className="text-2xl">&#128274;</span>
-          <span className="text-xl font-bold">ZK Vault</span>
+          <span className="text-xl font-bold">VaultProof</span>
           <span className="text-xs text-gray-500 ml-1">by RIAL Labs</span>
         </div>
         <div className="flex items-center gap-6">
@@ -135,7 +135,7 @@ export default function LandingPage() {
                 </tr>
               ))}
               <tr className="border-b border-indigo-500/30 bg-indigo-500/5">
-                <td className="py-3 px-4 font-bold text-indigo-400">ZK Vault</td>
+                <td className="py-3 px-4 font-bold text-indigo-400">VaultProof</td>
                 <td className="py-3 px-4 text-center text-green-400 font-bold">Never</td>
                 <td className="py-3 px-4 text-center text-green-400 font-bold">Yes (Noir)</td>
                 <td className="py-3 px-4 text-center text-green-400 font-bold">Yes (Shamir)</td>
@@ -175,7 +175,7 @@ export default function LandingPage() {
         <h2 className="text-3xl font-bold text-center mb-4">One Component. Zero Trust.</h2>
         <p className="text-center text-gray-500 mb-10">Drop our widget into any app.</p>
         <div className="bg-gray-900 border border-gray-800 rounded-2xl p-6 font-mono text-sm overflow-x-auto">
-          <div className="text-gray-500">{"// npm install @zkvault/connect"}</div>
+          <div className="text-gray-500">{"// npm install @vaultproof/connect"}</div>
           <br />
           <div>
             <span className="text-purple-400">import</span>
@@ -183,7 +183,7 @@ export default function LandingPage() {
             <span className="text-yellow-300">ZKKeyConnect</span>
             <span className="text-gray-300">{" } "}</span>
             <span className="text-purple-400">from</span>
-            <span className="text-green-400">{" '@zkvault/connect'"}</span>
+            <span className="text-green-400">{" '@vaultproof/connect'"}</span>
           </div>
           <br />
           <div className="text-gray-300">{"<"}<span className="text-yellow-300">ZKKeyConnect</span></div>
@@ -244,7 +244,7 @@ export default function LandingPage() {
 
       {/* Footer */}
       <footer className="border-t border-gray-800 py-8 px-6 text-center text-sm text-gray-600">
-        ZK Vault by <a href="https://riallabs.com" className="text-gray-400 hover:text-white transition">RIAL Labs</a> &mdash; Zero-knowledge API key infrastructure
+        VaultProof by <a href="https://riallabs.com" className="text-gray-400 hover:text-white transition">RIAL Labs</a> &mdash; Zero-knowledge API key infrastructure
       </footer>
     </div>
   );
