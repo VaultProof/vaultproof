@@ -244,7 +244,7 @@ export default function LandingPage() {
 
       {/* Footer */}
       <footer className="border-t border-gray-800 py-8 px-6 text-center text-sm text-gray-600">
-        VaultProof by <a href="https://riallabs.com" className="text-gray-400 hover:text-white transition">RIAL Labs</a> &mdash; Zero-knowledge API key infrastructure
+        VaultProof by <a href="https://vaultproof.dev" className="text-gray-400 hover:text-white transition">VaultProof</a> &mdash; Zero-knowledge API key infrastructure
       </footer>
     </div>
   );

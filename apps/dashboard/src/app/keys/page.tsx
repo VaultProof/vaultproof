@@ -65,7 +65,7 @@ export default function KeysDashboard() {
           <span className="text-xl font-bold">VaultProof</span>
         </Link>
         <div className="flex items-center gap-4">
-          <span className="text-sm text-gray-500">demo@riallabs.com</span>
+          <span className="text-sm text-gray-500">demo@vaultproof.dev</span>
           <div className="w-8 h-8 rounded-full bg-indigo-600 flex items-center justify-center text-sm font-bold">
             N
           </div>
