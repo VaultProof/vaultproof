@@ -621,21 +621,19 @@ const res = await vault.proxy(key, '/v1/chat/completions', {
 
         // Terminal typing animation
         var terminalLines = [
-            { cmd: 'vaultproof store --provider openai --key sk-proj-abc...xyz', delay: 40, output: [
-                '<span class="text-gray-500">Splitting key with Shamir (2-of-2)...</span>',
-                '<span class="text-green-400">Key stored.</span> <span class="text-gray-500">ID: vk_8f3a2b1c</span>',
-                '<span class="text-gray-600">Share 1 -> vault (encrypted) | Share 2 -> local device</span>'
+            { cmd: 'vaultproof store --provider openai', delay: 40, output: [
+                '<span class="text-gray-500">API Key: ••••••••••••••••••••••••</span>',
+                '<span class="text-gray-500">Splitting key with Shamir secret sharing...</span>',
+                '<span class="text-gray-500">Storing encrypted shares...</span>',
+                '<span class="text-indigo-400">Key stored: vk_8f3a2b1c (openai)</span>',
+                '<span class="text-gray-600">  Key was Shamir-split locally. Server never saw the full key.</span>'
             ]},
-            { cmd: 'vaultproof proxy vk_8f3a2b1c /v1/chat/completions --model gpt-4', delay: 35, output: [
-                '<span class="text-gray-500">Generating ZK proof of ownership...</span>',
-                '<span class="text-cyan-400">Proof verified.</span> <span class="text-gray-500">Reconstructing key (~100ms)...</span>',
-                '<span class="text-green-400">200 OK</span> <span class="text-gray-600">| 847 tokens | key zeroed from memory</span>'
+            { cmd: 'vaultproof proxy --key vk_8f3a2b1c --path /v1/chat/completions --method POST --body \'{"model":"gpt-4","messages":[{"role":"user","content":"Hello"}]}\'', delay: 30, output: [
+                '<span class="text-gray-500">{"choices":[{"message":{"content":"Hello! How can I help you today?"}}]}</span>',
             ]},
-            { cmd: 'vaultproof revoke vk_8f3a2b1c --zero-all', delay: 40, output: [
-                '<span class="text-gray-500">Destroying all shares...</span>',
-                '<span class="text-yellow-400">Share 1 zeroed from vault.</span>',
-                '<span class="text-yellow-400">Share 2 zeroed from device.</span>',
-                '<span class="text-green-400">Key vk_8f3a2b1c permanently destroyed.</span> <span class="text-gray-600">No recovery possible.</span>'
+            { cmd: 'vaultproof revoke vk_8f3a2b1c', delay: 40, output: [
+                '<span class="text-gray-500">Are you sure you want to revoke key vk_8f3a2b1c? (y/N) y</span>',
+                '<span class="text-indigo-400">Key vk_8f3a2b1c revoked.</span>'
             ]}
         ];
 
