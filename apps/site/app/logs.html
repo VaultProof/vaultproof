@@ -222,20 +222,14 @@
     }
 
     function providerBadge(provider) {
-      const colors = {
-        openai: 'bg-green-900/50 text-green-400 border-green-800',
-        anthropic: 'bg-orange-900/50 text-orange-400 border-orange-800',
-        google: 'bg-blue-900/50 text-blue-400 border-blue-800',
-        together: 'bg-indigo-900/50 text-indigo-400 border-indigo-800'
-      };
-      const c = colors[(provider || '').toLowerCase()] || 'bg-gray-800 text-gray-400 border-gray-700';
+      const c = 'bg-indigo-900/50 text-indigo-400 border-indigo-800';
       return `<span class="inline-flex items-center px-2 py-0.5 rounded-lg text-xs font-medium border ${c}">${provider || 'Unknown'}</span>`;
     }
 
     function statusBadge(status) {
       if ((status || '').toString().toLowerCase() === 'success' || (status || '').toString().toLowerCase() === 'ok' || status === 200 || status === '200') {
-        return `<span class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-lg text-xs font-medium bg-green-900/40 text-green-400 border border-green-800">
-          <span class="w-1.5 h-1.5 rounded-full bg-green-400 pulse-green"></span>Success</span>`;
+        return `<span class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-lg text-xs font-medium bg-indigo-900/40 text-indigo-400 border border-indigo-800">
+          <span class="w-1.5 h-1.5 rounded-full bg-indigo-400"></span>Success</span>`;
       }
       return `<span class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-lg text-xs font-medium bg-red-900/40 text-red-400 border border-red-800">
         <span class="w-1.5 h-1.5 rounded-full bg-red-400"></span>Error</span>`;
@@ -246,7 +240,7 @@
         return `<span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-lg text-xs font-medium bg-[#6366f1]/15 text-[#6366f1] border border-indigo-800">
           <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>Verified</span>`;
       }
-      return `<span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-lg text-xs font-medium bg-yellow-900/20 text-yellow-500/70 border border-yellow-800/30">Pending</span>`;
+      return `<span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-lg text-xs font-medium bg-gray-800/30 text-gray-500 border border-gray-700/30">Pending</span>`;
     }
 
     let allLogs = [];
