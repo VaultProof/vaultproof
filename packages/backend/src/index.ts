@@ -47,8 +47,8 @@ async function start() {
     request.log.error(error);
     const code = (error as any).statusCode || 500;
     reply.status(code).send({
-      error: error.message,
-      type: error.name,
+      error: (error as Error).message,
+      type: (error as Error).name,
     });
   });
 
