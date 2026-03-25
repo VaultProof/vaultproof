@@ -723,6 +723,28 @@
                     </div>
                 </div>
 
+                <!-- Global Flags -->
+                <div class="mb-8">
+                    <h3 class="text-lg font-semibold text-white mb-4">Global Flags</h3>
+                    <div class="bg-vp-surface border border-vp-border rounded-xl overflow-hidden">
+                        <table class="doc-table">
+                            <thead><tr><th>Flag</th><th>Description</th></tr></thead>
+                            <tbody>
+                                <tr><td><code class="font-mono text-xs text-vp-accent">-h, --help</code></td><td>Show help for any command</td></tr>
+                                <tr><td><code class="font-mono text-xs text-vp-accent">-v, --version</code></td><td>Show CLI version</td></tr>
+                                <tr><td><code class="font-mono text-xs text-vp-accent">--json</code></td><td>Output results as JSON (works on all list commands)</td></tr>
+                                <tr><td><code class="font-mono text-xs text-vp-accent">--api-url &lt;url&gt;</code></td><td>Override API URL for this command</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                    <div class="code-block mt-4">
+                        <div class="code-header">examples</div>
+<pre class="text-gray-300">$ vaultproof -h                  <span class="cmt"># overview + quick start guide</span>
+$ vaultproof store -h            <span class="cmt"># detailed help for store command</span>
+$ vaultproof keys --json | jq    <span class="cmt"># pipe JSON output to jq</span></pre>
+                    </div>
+                </div>
+
                 <!-- Auth Commands -->
                 <div class="mb-8">
                     <h3 class="text-lg font-semibold text-white mb-4">Authentication</h3>
@@ -730,20 +752,73 @@
                         <div class="endpoint-card">
                             <div class="flex items-baseline gap-3 mb-2">
                                 <code class="font-mono text-sm text-white font-semibold">vaultproof login</code>
+                                <span class="text-gray-600 text-xs font-mono">alias: l</span>
                             </div>
-                            <p class="text-gray-500 text-sm">Interactive login with email and password. Stores JWT token at <code class="font-mono text-xs text-vp-accent">~/.vaultproof/config.json</code>.</p>
+                            <p class="text-gray-500 text-sm mb-2">Log in to your VaultProof account. Stores JWT token at <code class="font-mono text-xs text-vp-accent">~/.vaultproof/config.json</code>. Token expires after 7 days.</p>
+                            <div class="bg-vp-surface border border-vp-border rounded-xl overflow-hidden mt-3">
+                                <table class="doc-table">
+                                    <thead><tr><th>Flag</th><th>Description</th></tr></thead>
+                                    <tbody>
+                                        <tr><td><code class="font-mono text-xs text-vp-accent">-e, --email &lt;email&gt;</code></td><td>Email address (skips prompt)</td></tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                            <div class="code-block mt-3">
+                                <div class="code-header">examples</div>
+<pre class="text-gray-300">$ vaultproof login
+$ vaultproof login -e you@example.com
+$ vaultproof l</pre>
+                            </div>
                         </div>
+
+                        <div class="endpoint-card">
+                            <div class="flex items-baseline gap-3 mb-2">
+                                <code class="font-mono text-sm text-white font-semibold">vaultproof logout</code>
+                            </div>
+                            <p class="text-gray-500 text-sm">Log out and clear stored credentials from <code class="font-mono text-xs text-vp-accent">~/.vaultproof/config.json</code>. Does not affect your <code class="font-mono text-xs text-vp-accent">VAULTPROOF_API_KEY</code> env var.</p>
+                        </div>
+
                         <div class="endpoint-card">
                             <div class="flex items-baseline gap-3 mb-2">
                                 <code class="font-mono text-sm text-white font-semibold">vaultproof register</code>
+                                <span class="text-gray-600 text-xs font-mono">alias: signup</span>
                             </div>
-                            <p class="text-gray-500 text-sm">Create a new VaultProof account interactively.</p>
+                            <p class="text-gray-500 text-sm mb-2">Create a new VaultProof account. Password must be at least 8 characters. Automatically logs you in after registration.</p>
+                            <div class="bg-vp-surface border border-vp-border rounded-xl overflow-hidden mt-3">
+                                <table class="doc-table">
+                                    <thead><tr><th>Flag</th><th>Description</th></tr></thead>
+                                    <tbody>
+                                        <tr><td><code class="font-mono text-xs text-vp-accent">-e, --email &lt;email&gt;</code></td><td>Email address (skips prompt)</td></tr>
+                                    </tbody>
+                                </table>
+                            </div>
                         </div>
+
                         <div class="endpoint-card">
                             <div class="flex items-baseline gap-3 mb-2">
                                 <code class="font-mono text-sm text-white font-semibold">vaultproof whoami</code>
+                                <span class="text-gray-600 text-xs font-mono">alias: me</span>
                             </div>
-                            <p class="text-gray-500 text-sm">Display the currently authenticated user's email and account ID.</p>
+                            <p class="text-gray-500 text-sm">Display the currently authenticated user's email and creation date.</p>
+                        </div>
+
+                        <div class="endpoint-card">
+                            <div class="flex items-baseline gap-3 mb-2">
+                                <code class="font-mono text-sm text-white font-semibold">vaultproof status</code>
+                                <span class="text-gray-600 text-xs font-mono">alias: st</span>
+                            </div>
+                            <p class="text-gray-500 text-sm mb-2">Check connection, authentication, and API key status at a glance.</p>
+                            <div class="code-block mt-3">
+                                <div class="code-header">example output</div>
+<pre class="text-gray-300">$ vaultproof status
+
+<span class="str">VaultProof Status</span>
+
+<span class="str">API: https://api.vaultproof.dev (vaultproof-edge)</span>
+  Auth:    Logged in as you@example.com
+  API Key: vp_live_abc1...ef89
+  Config:  ~/.vaultproof/config.json</pre>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -754,28 +829,81 @@
                     <div class="space-y-4">
                         <div class="endpoint-card">
                             <div class="flex items-baseline gap-3 mb-2">
-                                <code class="font-mono text-sm text-white font-semibold">vaultproof store --provider &lt;p&gt; --label &lt;l&gt;</code>
+                                <code class="font-mono text-sm text-white font-semibold">vaultproof store</code>
+                                <span class="text-gray-600 text-xs font-mono">alias: add</span>
                             </div>
-                            <p class="text-gray-500 text-sm mb-3">Store an API key. You will be prompted to paste the key securely (input is hidden). The key is Shamir-split and encrypted before being sent to the server.</p>
+                            <p class="text-gray-500 text-sm mb-3">Store an API key with Shamir splitting. The key is split locally -- the server never sees the full key.</p>
+                            <div class="bg-vp-surface border border-vp-border rounded-xl overflow-hidden mb-3">
+                                <table class="doc-table">
+                                    <thead><tr><th>Flag</th><th>Description</th><th>Required</th></tr></thead>
+                                    <tbody>
+                                        <tr><td><code class="font-mono text-xs text-vp-accent">-p, --provider &lt;name&gt;</code></td><td>API provider (openai, anthropic, google, etc.)</td><td>Yes</td></tr>
+                                        <tr><td><code class="font-mono text-xs text-vp-accent">-l, --label &lt;text&gt;</code></td><td>Label for this key</td><td>No</td></tr>
+                                    </tbody>
+                                </table>
+                            </div>
                             <div class="code-block">
-                                <div class="code-header">example</div>
-<pre class="text-gray-300">$ vaultproof store --provider openai --label "Production GPT-4"
-<span class="cmt">? Paste your API key: ********</span>
-<span class="str">Key stored successfully.</span>
-<span class="str">Key ID: 7f2a9c3b-...</span></pre>
+                                <div class="code-header">examples</div>
+<pre class="text-gray-300">$ vaultproof store -p openai
+<span class="cmt">API Key: ************************</span>
+<span class="str">Key stored: vk_8f3a2b1c (openai)</span>
+<span class="cmt">  Key was Shamir-split locally. Server never saw the full key.</span>
+
+$ vaultproof store -p anthropic -l "Production Claude"
+$ vaultproof add -p google -l "Vertex AI"</pre>
                             </div>
                         </div>
+
                         <div class="endpoint-card">
                             <div class="flex items-baseline gap-3 mb-2">
                                 <code class="font-mono text-sm text-white font-semibold">vaultproof keys</code>
+                                <span class="text-gray-600 text-xs font-mono">alias: ls</span>
                             </div>
-                            <p class="text-gray-500 text-sm">List all stored keys with provider, label, status, and creation date.</p>
+                            <p class="text-gray-500 text-sm mb-2">List all stored API keys with provider, label, and creation date.</p>
+                            <div class="bg-vp-surface border border-vp-border rounded-xl overflow-hidden mb-3">
+                                <table class="doc-table">
+                                    <thead><tr><th>Flag</th><th>Description</th></tr></thead>
+                                    <tbody>
+                                        <tr><td><code class="font-mono text-xs text-vp-accent">--json</code></td><td>Output as JSON for scripting</td></tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                            <div class="code-block">
+                                <div class="code-header">examples</div>
+<pre class="text-gray-300">$ vaultproof keys
+<span class="str">ID          Provider      Label                   Created</span>
+<span class="cmt">------------------------------------------------------------</span>
+vk_8f3a2b   openai        Production GPT-4        2d ago
+vk_c91ef4   anthropic     Claude Sonnet           5h ago
+
+<span class="cmt">2 keys total</span>
+
+$ vaultproof keys --json | jq '.[].provider'</pre>
+                            </div>
                         </div>
+
                         <div class="endpoint-card">
                             <div class="flex items-baseline gap-3 mb-2">
                                 <code class="font-mono text-sm text-white font-semibold">vaultproof revoke &lt;keyId&gt;</code>
+                                <span class="text-gray-600 text-xs font-mono">alias: rm</span>
                             </div>
-                            <p class="text-gray-500 text-sm">Permanently revoke a key. Both encrypted shares are destroyed on the server. This cannot be undone.</p>
+                            <p class="text-gray-500 text-sm mb-2">Permanently revoke a key. Both encrypted shares are zeroed on the server. This cannot be undone.</p>
+                            <div class="bg-vp-surface border border-vp-border rounded-xl overflow-hidden mb-3">
+                                <table class="doc-table">
+                                    <thead><tr><th>Flag</th><th>Description</th></tr></thead>
+                                    <tbody>
+                                        <tr><td><code class="font-mono text-xs text-vp-accent">-y, --yes</code></td><td>Skip confirmation prompt</td></tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                            <div class="code-block">
+                                <div class="code-header">examples</div>
+<pre class="text-gray-300">$ vaultproof revoke vk_8f3a2b1c
+<span class="cmt">Permanently revoke key vk_8f3a2b1c? This cannot be undone. (y/N) y</span>
+<span class="str">Key vk_8f3a2b1c revoked. Both shares destroyed.</span>
+
+$ vaultproof rm vk_8f3a2b1c -y    <span class="cmt"># skip confirmation</span></pre>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -785,18 +913,64 @@
                     <h3 class="text-lg font-semibold text-white mb-4">Proxy Calls</h3>
                     <div class="endpoint-card">
                         <div class="flex items-baseline gap-3 mb-2">
-                            <code class="font-mono text-sm text-white font-semibold">vaultproof proxy --key &lt;id&gt; --path &lt;path&gt; --method &lt;m&gt; --body &lt;json&gt;</code>
+                            <code class="font-mono text-sm text-white font-semibold">vaultproof proxy</code>
+                            <span class="text-gray-600 text-xs font-mono">alias: call</span>
                         </div>
-                        <p class="text-gray-500 text-sm mb-3">Make a proxied API call from the terminal.</p>
+                        <p class="text-gray-500 text-sm mb-3">Make a proxied API call. The server decrypts both shares, reconstructs the key for ~100ms, makes the call, then zeros everything.</p>
+                        <div class="bg-vp-surface border border-vp-border rounded-xl overflow-hidden mb-3">
+                            <table class="doc-table">
+                                <thead><tr><th>Flag</th><th>Description</th><th>Required</th></tr></thead>
+                                <tbody>
+                                    <tr><td><code class="font-mono text-xs text-vp-accent">-k, --key &lt;keyId&gt;</code></td><td>Key ID from <code class="font-mono text-xs">vaultproof keys</code></td><td>Yes</td></tr>
+                                    <tr><td><code class="font-mono text-xs text-vp-accent">--path &lt;path&gt;</code></td><td>API path (e.g., /v1/chat/completions)</td><td>Yes</td></tr>
+                                    <tr><td><code class="font-mono text-xs text-vp-accent">-m, --method &lt;method&gt;</code></td><td>HTTP method (default: POST)</td><td>No</td></tr>
+                                    <tr><td><code class="font-mono text-xs text-vp-accent">-d, --body &lt;json&gt;</code></td><td>Request body as JSON string</td><td>No</td></tr>
+                                    <tr><td><code class="font-mono text-xs text-vp-accent">-f, --file &lt;path&gt;</code></td><td>Read request body from a JSON file</td><td>No</td></tr>
+                                </tbody>
+                            </table>
+                        </div>
                         <div class="code-block">
-                            <div class="code-header">example</div>
+                            <div class="code-header">examples</div>
 <pre class="text-gray-300"><span class="cmt"># GET request</span>
-$ vaultproof proxy --key 7f2a9c3b-... --path /v1/models --method GET
+$ vaultproof proxy -k vk_8f3a2b1c --path /v1/models -m GET
 
-<span class="cmt"># POST request with body</span>
-$ vaultproof proxy --key 7f2a9c3b-... --path /v1/chat/completions \
-  --method POST \
-  --body '{"model":"gpt-4","messages":[{"role":"user","content":"Hello"}]}'</pre>
+<span class="cmt"># POST with inline JSON body</span>
+$ vaultproof proxy -k vk_8f3a2b1c --path /v1/chat/completions \
+  -d '{"model":"gpt-4","messages":[{"role":"user","content":"Hello"}]}'
+
+<span class="cmt"># POST with body from file</span>
+$ vaultproof proxy -k vk_8f3a2b1c --path /v1/chat/completions -f request.json
+
+<span class="cmt"># Using the alias</span>
+$ vaultproof call -k vk_8f3a2b1c --path /v1/models -m GET</pre>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Logs -->
+                <div class="mb-8">
+                    <h3 class="text-lg font-semibold text-white mb-4">Access Logs</h3>
+                    <div class="endpoint-card">
+                        <div class="flex items-baseline gap-3 mb-2">
+                            <code class="font-mono text-sm text-white font-semibold">vaultproof logs</code>
+                        </div>
+                        <p class="text-gray-500 text-sm mb-3">View recent access logs for all proxied API calls.</p>
+                        <div class="bg-vp-surface border border-vp-border rounded-xl overflow-hidden mb-3">
+                            <table class="doc-table">
+                                <thead><tr><th>Flag</th><th>Description</th><th>Default</th></tr></thead>
+                                <tbody>
+                                    <tr><td><code class="font-mono text-xs text-vp-accent">-k, --key &lt;keyId&gt;</code></td><td>Filter by key ID</td><td>All keys</td></tr>
+                                    <tr><td><code class="font-mono text-xs text-vp-accent">-n, --limit &lt;n&gt;</code></td><td>Number of entries</td><td>20</td></tr>
+                                    <tr><td><code class="font-mono text-xs text-vp-accent">--json</code></td><td>Output as JSON</td><td>--</td></tr>
+                                </tbody>
+                            </table>
+                        </div>
+                        <div class="code-block">
+                            <div class="code-header">examples</div>
+<pre class="text-gray-300">$ vaultproof logs
+$ vaultproof logs -n 50
+$ vaultproof logs -k vk_8f3a2b1c
+$ vaultproof logs --json | jq '.[] | .endpoint'</pre>
                         </div>
                     </div>
                 </div>
@@ -804,45 +978,145 @@ $ vaultproof proxy --key 7f2a9c3b-... --path /v1/chat/completions \
                 <!-- Developer Keys -->
                 <div class="mb-8">
                     <h3 class="text-lg font-semibold text-white mb-4">Developer API Keys</h3>
+                    <p class="text-gray-500 text-sm mb-4">Developer keys (<code class="font-mono text-xs text-vp-accent">vp_live_</code> / <code class="font-mono text-xs text-vp-accent">vp_test_</code>) authenticate your SDK and CLI requests. They are different from the API keys you store in the vault.</p>
                     <div class="space-y-4">
                         <div class="endpoint-card">
-                            <code class="font-mono text-sm text-white font-semibold">vaultproof dev-key create --label &lt;l&gt;</code>
-                            <p class="text-gray-500 text-sm mt-2">Create a new <code class="font-mono text-xs text-vp-accent">vp_live_</code> developer API key. The full key is shown once -- save it immediately.</p>
+                            <div class="flex items-baseline gap-3 mb-2">
+                                <code class="font-mono text-sm text-white font-semibold">vaultproof dev-key create</code>
+                                <span class="text-gray-600 text-xs font-mono">parent alias: dk</span>
+                            </div>
+                            <p class="text-gray-500 text-sm mb-2">Create a new developer API key. The full key is shown once -- save it immediately.</p>
+                            <div class="bg-vp-surface border border-vp-border rounded-xl overflow-hidden mb-3">
+                                <table class="doc-table">
+                                    <thead><tr><th>Flag</th><th>Description</th><th>Default</th></tr></thead>
+                                    <tbody>
+                                        <tr><td><code class="font-mono text-xs text-vp-accent">-l, --label &lt;text&gt;</code></td><td>Label for this key</td><td>"default"</td></tr>
+                                        <tr><td><code class="font-mono text-xs text-vp-accent">-m, --mode &lt;mode&gt;</code></td><td>live or test</td><td>live</td></tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                            <div class="code-block">
+                                <div class="code-header">examples</div>
+<pre class="text-gray-300">$ vaultproof dev-key create
+<span class="str">Developer API key created:</span>
+  <span class="str">vp_live_a8Kj3mNp9xRt2wQz7vBc...</span>
+
+  Save this key -- you won't see it again!
+
+<span class="cmt">Write to .env file in current directory? (y/N) y</span>
+  Written to .env
+
+$ vaultproof dk create -l "CI/CD" -m test
+$ vaultproof dk create -l "Production" -m live</pre>
+                            </div>
                         </div>
+
                         <div class="endpoint-card">
-                            <code class="font-mono text-sm text-white font-semibold">vaultproof dev-key list</code>
-                            <p class="text-gray-500 text-sm mt-2">List all developer API keys (masked).</p>
+                            <div class="flex items-baseline gap-3 mb-2">
+                                <code class="font-mono text-sm text-white font-semibold">vaultproof dev-key list</code>
+                                <span class="text-gray-600 text-xs font-mono">alias: dk ls</span>
+                            </div>
+                            <p class="text-gray-500 text-sm mb-2">List all developer API keys (masked).</p>
+                            <div class="bg-vp-surface border border-vp-border rounded-xl overflow-hidden mb-3">
+                                <table class="doc-table">
+                                    <thead><tr><th>Flag</th><th>Description</th></tr></thead>
+                                    <tbody>
+                                        <tr><td><code class="font-mono text-xs text-vp-accent">--json</code></td><td>Output as JSON</td></tr>
+                                    </tbody>
+                                </table>
+                            </div>
                         </div>
+
                         <div class="endpoint-card">
-                            <code class="font-mono text-sm text-white font-semibold">vaultproof dev-key revoke &lt;id&gt;</code>
-                            <p class="text-gray-500 text-sm mt-2">Revoke a developer API key. All SDK calls using this key will immediately stop working.</p>
+                            <div class="flex items-baseline gap-3 mb-2">
+                                <code class="font-mono text-sm text-white font-semibold">vaultproof dev-key revoke &lt;id&gt;</code>
+                            </div>
+                            <p class="text-gray-500 text-sm mb-2">Revoke a developer API key. All SDK/CLI calls using this key will immediately stop working.</p>
+                            <div class="bg-vp-surface border border-vp-border rounded-xl overflow-hidden">
+                                <table class="doc-table">
+                                    <thead><tr><th>Flag</th><th>Description</th></tr></thead>
+                                    <tbody>
+                                        <tr><td><code class="font-mono text-xs text-vp-accent">-y, --yes</code></td><td>Skip confirmation prompt</td></tr>
+                                    </tbody>
+                                </table>
+                            </div>
                         </div>
                     </div>
                 </div>
 
                 <!-- Config -->
-                <div>
+                <div class="mb-8">
                     <h3 class="text-lg font-semibold text-white mb-4">Configuration</h3>
-                    <div class="bg-vp-surface border border-vp-border rounded-xl p-6">
-                        <p class="text-gray-400 text-sm mb-4">The CLI stores its configuration at <code class="font-mono text-xs text-vp-accent">~/.vaultproof/config.json</code>. This includes your JWT token and preferences.</p>
-                        <p class="text-gray-400 text-sm mb-3">You can also configure the CLI via environment variables:</p>
-                        <div class="bg-vp-surface border border-vp-border rounded-xl overflow-hidden">
-                            <table class="doc-table">
-                                <thead><tr><th>Variable</th><th>Description</th><th>Default</th></tr></thead>
-                                <tbody>
-                                    <tr>
-                                        <td><code class="font-mono text-xs text-vp-accent">VAULTPROOF_API_KEY</code></td>
-                                        <td>Developer API key (overrides config file)</td>
-                                        <td>--</td>
-                                    </tr>
-                                    <tr>
-                                        <td><code class="font-mono text-xs text-vp-accent">VAULTPROOF_API_URL</code></td>
-                                        <td>Custom API base URL</td>
-                                        <td><code class="font-mono text-xs">https://api.vaultproof.dev</code></td>
-                                    </tr>
-                                </tbody>
-                            </table>
+                    <div class="space-y-4">
+                        <div class="endpoint-card">
+                            <div class="flex items-baseline gap-3 mb-2">
+                                <code class="font-mono text-sm text-white font-semibold">vaultproof config</code>
+                            </div>
+                            <p class="text-gray-500 text-sm">Show current CLI configuration: API URL, auth status, developer key, and config file path.</p>
                         </div>
+
+                        <div class="endpoint-card">
+                            <div class="flex items-baseline gap-3 mb-2">
+                                <code class="font-mono text-sm text-white font-semibold">vaultproof config set &lt;key&gt; &lt;value&gt;</code>
+                            </div>
+                            <p class="text-gray-500 text-sm mb-2">Update a config value.</p>
+                            <div class="code-block mt-3">
+                                <div class="code-header">examples</div>
+<pre class="text-gray-300">$ vaultproof config set api-url https://api.vaultproof.dev
+$ vaultproof config set api-url http://localhost:3333</pre>
+                            </div>
+                        </div>
+
+                        <div class="endpoint-card">
+                            <div class="flex items-baseline gap-3 mb-2">
+                                <code class="font-mono text-sm text-white font-semibold">vaultproof config reset</code>
+                            </div>
+                            <p class="text-gray-500 text-sm">Clear all configuration (token, email, preferences). Asks for confirmation.</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Environment Variables -->
+                <div>
+                    <h3 class="text-lg font-semibold text-white mb-4">Environment Variables</h3>
+                    <div class="bg-vp-surface border border-vp-border rounded-xl overflow-hidden">
+                        <table class="doc-table">
+                            <thead><tr><th>Variable</th><th>Description</th><th>Default</th></tr></thead>
+                            <tbody>
+                                <tr>
+                                    <td><code class="font-mono text-xs text-vp-accent">VAULTPROOF_API_KEY</code></td>
+                                    <td>Developer API key -- required for store, keys, proxy, revoke, and logs commands</td>
+                                    <td>--</td>
+                                </tr>
+                                <tr>
+                                    <td><code class="font-mono text-xs text-vp-accent">VAULTPROOF_API_URL</code></td>
+                                    <td>Custom API base URL (overrides config file and default)</td>
+                                    <td><code class="font-mono text-xs">https://api.vaultproof.dev</code></td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                    <div class="code-block mt-4">
+                        <div class="code-header">quick start</div>
+<pre class="text-gray-300"><span class="cmt"># 1. Create an account and log in</span>
+$ vaultproof register
+$ vaultproof login
+
+<span class="cmt"># 2. Create a developer API key</span>
+$ vaultproof dev-key create
+<span class="cmt"># writes VAULTPROOF_API_KEY to .env</span>
+
+<span class="cmt"># 3. Load the env var</span>
+$ export VAULTPROOF_API_KEY=vp_live_...
+
+<span class="cmt"># 4. Store an API key</span>
+$ vaultproof store -p openai -l "GPT-4 Production"
+
+<span class="cmt"># 5. Make proxied calls</span>
+$ vaultproof proxy -k vk_8f3a --path /v1/models -m GET
+
+<span class="cmt"># 6. Check everything is working</span>
+$ vaultproof status</pre>
                     </div>
                 </div>
             </section>
