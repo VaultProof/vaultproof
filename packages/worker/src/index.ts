@@ -145,7 +145,7 @@ function corsHeaders(origin: string, allowed: string[]): Record<string, string> 
   return {
     'Access-Control-Allow-Origin': isAllowed ? origin || '*' : '',
     'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
-    'Access-Control-Allow-Headers': 'Content-Type, Authorization',
+    'Access-Control-Allow-Headers': 'Content-Type, Authorization, X-API-Key',
     'Access-Control-Allow-Credentials': 'true',
     'Access-Control-Max-Age': '86400',
   };
@@ -165,7 +165,7 @@ function securityHeaders(): Record<string, string> {
 // --- Forward Headers ---
 function forwardHeaders(headers: Headers): Headers {
   const forwarded = new Headers();
-  const forwardList = ['authorization', 'content-type', 'content-length', 'accept'];
+  const forwardList = ['authorization', 'content-type', 'content-length', 'accept', 'x-api-key'];
   for (const key of forwardList) {
     const value = headers.get(key);
     if (value) forwarded.set(key, value);
