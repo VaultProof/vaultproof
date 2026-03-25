@@ -119,6 +119,16 @@ export async function developerKeyRoutes(app: FastifyInstance) {
       return reply.status(404).send({ error: 'Key not found' });
     }
 
+    // IP allowlist and usage alerts require Pro tier or higher
+    const user = await prisma.user.findUnique({ where: { id: userId }, select: { tier: true } });
+    const tier = user?.tier || 'free';
+    const proTiers = ['pro', 'team', 'enterprise'];
+    if (!proTiers.includes(tier)) {
+      if (parsed.data.allowedIps || parsed.data.alertEmail || parsed.data.alertThreshold) {
+        return reply.status(403).send({ error: 'IP allowlist and usage alerts require Pro plan or higher', upgrade: 'https://vaultproof.dev#pricing' });
+      }
+    }
+
     const updated = await prisma.developerKey.update({
       where: { id: keyId },
       data: {
