@@ -19,8 +19,9 @@
     "node": ">=22"
   },
   "dependencies": {
-    "prisma": "^6.4.0",
-    "@prisma/client": "^6.4.0"
+    "@noir-lang/noir_js": "^0.36.0",
+    "@prisma/client": "^6.4.0",
+    "prisma": "^6.4.0"
   },
   "devDependencies": {
     "turbo": "^2.4.0",
