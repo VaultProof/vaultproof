@@ -42,14 +42,11 @@ async function start() {
     }
   });
 
-  // Error handler — temporarily verbose for debugging
+  // Error handler — log details server-side, generic message to client
   app.setErrorHandler((error, request, reply) => {
     request.log.error(error);
     const code = (error as any).statusCode || 500;
-    reply.status(code).send({
-      error: (error as Error).message,
-      type: (error as Error).name,
-    });
+    reply.status(code).send({ error: 'Internal server error' });
   });
 
   // Health check (no proxy auth required)
