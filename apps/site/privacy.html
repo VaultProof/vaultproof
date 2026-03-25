@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Privacy Policy | VaultProof</title>
+    <meta name="description" content="VaultProof Privacy Policy — how we handle your data with zero-knowledge security.">
+    <meta http-equiv="X-Content-Type-Options" content="nosniff">
+    <meta http-equiv="X-Frame-Options" content="DENY">
+    <meta name="referrer" content="strict-origin-when-cross-origin">
+
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        'vp-bg': '#0a0a0f',
+                        'vp-surface': '#111118',
+                        'vp-border': '#1e1e2e',
+                        'vp-accent': '#6366f1',
+                        'vp-cyan': '#06b6d4',
+                    },
+                    fontFamily: {
+                        sans: ['Inter', 'system-ui', 'sans-serif'],
+                        mono: ['JetBrains Mono', 'monospace'],
+                    }
+                }
+            }
+        }
+    </script>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
+
+    <style>
+        * { font-family: 'Inter', system-ui, sans-serif; }
+        ::selection { background: #6366f1; color: #fff; }
+        body { background: #0a0a0f; }
+    </style>
+</head>
+<body class="text-gray-300 min-h-screen">
+
+    <!-- Nav -->
+    <nav class="border-b border-vp-border/50 backdrop-blur-sm bg-vp-bg/80 sticky top-0 z-50">
+        <div class="flex items-center justify-between px-6 py-4 max-w-6xl mx-auto">
+            <a href="/" class="flex items-center gap-2.5">
+                <img src="/logo-sm.png" alt="VaultProof" width="28" height="28" />
+                <span class="text-lg font-bold text-white tracking-tight" style="font-family:'Space Grotesk',sans-serif">VaultProof</span>
+            </a>
+            <div class="flex items-center gap-8">
+                <a href="/" class="text-sm text-gray-400 hover:text-white transition-colors">Home</a>
+                <a href="/docs" class="text-sm text-gray-400 hover:text-white transition-colors">Docs</a>
+                <a href="/#pricing" class="text-sm text-gray-400 hover:text-white transition-colors">Pricing</a>
+                <a href="/app/login" class="text-sm text-gray-400 hover:text-white transition-colors">Login</a>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Content -->
+    <main class="max-w-3xl mx-auto px-6 py-16">
+        <h1 class="text-4xl font-extrabold text-white mb-2 tracking-tight" style="font-family:'Space Grotesk',sans-serif">Privacy Policy</h1>
+        <p class="text-sm text-gray-500 mb-12">Last updated: March 25, 2026</p>
+
+        <div class="space-y-10 text-gray-400 leading-relaxed">
+
+            <!-- 1 -->
+            <section>
+                <h2 class="text-xl font-bold text-white mb-3">1. Data We Collect</h2>
+                <ul class="list-disc list-inside space-y-1.5 ml-1">
+                    <li><strong class="text-gray-300">Email address</strong> -- used for authentication and account communication</li>
+                    <li><strong class="text-gray-300">Hashed password</strong> -- bcrypt-hashed, never stored in plaintext</li>
+                    <li><strong class="text-gray-300">Encrypted key shares</strong> -- Shamir shares encrypted with AES-256-GCM; we never store or see your full plaintext API keys</li>
+                    <li><strong class="text-gray-300">Usage logs</strong> -- timestamps, endpoint paths, and HTTP status codes for proxy calls</li>
+                    <li><strong class="text-gray-300">Stripe customer ID</strong> -- for processing billing on paid plans</li>
+                </ul>
+            </section>
+
+            <!-- 2 -->
+            <section>
+                <h2 class="text-xl font-bold text-white mb-3">2. Data We Do NOT Collect</h2>
+                <ul class="list-disc list-inside space-y-1.5 ml-1">
+                    <li><strong class="text-gray-300">Full API keys</strong> -- keys are Shamir-split on the client before transmission; the server never receives the complete key</li>
+                    <li><strong class="text-gray-300">Browsing history</strong> -- we do not track pages you visit outside VaultProof</li>
+                    <li><strong class="text-gray-300">IP addresses</strong> -- IPs are used in-memory for rate limiting only and are not persisted or logged</li>
+                </ul>
+            </section>
+
+            <!-- 3 -->
+            <section>
+                <h2 class="text-xl font-bold text-white mb-3">3. How We Use Your Data</h2>
+                <ul class="list-disc list-inside space-y-1.5 ml-1">
+                    <li>Authenticate you and manage your account</li>
+                    <li>Store encrypted Shamir shares so your keys can be reassembled for proxied API calls</li>
+                    <li>Process billing through Stripe</li>
+                    <li>Monitor and improve service reliability and performance</li>
+                </ul>
+            </section>
+
+            <!-- 4 -->
+            <section>
+                <h2 class="text-xl font-bold text-white mb-3">4. Third-Party Services</h2>
+                <p class="mb-3">We use the following third-party services to operate VaultProof:</p>
+                <ul class="list-disc list-inside space-y-1.5 ml-1">
+                    <li><strong class="text-gray-300">Stripe</strong> -- payment processing and subscription management</li>
+                    <li><strong class="text-gray-300">Supabase</strong> -- PostgreSQL database hosting and authentication infrastructure</li>
+                    <li><strong class="text-gray-300">Cloudflare</strong> -- CDN, DDoS protection, and edge proxy workers</li>
+                    <li><strong class="text-gray-300">Sentry</strong> -- error tracking and performance monitoring (no PII is sent to Sentry)</li>
+                </ul>
+            </section>
+
+            <!-- 5 -->
+            <section>
+                <h2 class="text-xl font-bold text-white mb-3">5. Data Retention</h2>
+                <p>While your account is active, all associated data is retained. When you delete your account, all data is permanently destroyed via cascading delete -- this includes encrypted shares, usage logs, billing references, and account metadata. Deletion is irreversible.</p>
+            </section>
+
+            <!-- 6 -->
+            <section>
+                <h2 class="text-xl font-bold text-white mb-3">6. Security</h2>
+                <p>We take security seriously. Our architecture includes:</p>
+                <ul class="list-disc list-inside space-y-1.5 ml-1 mt-3">
+                    <li><strong class="text-gray-300">AES-256-GCM encryption</strong> for all stored key shares</li>
+                    <li><strong class="text-gray-300">Shamir Secret Sharing</strong> -- keys are split before leaving your device</li>
+                    <li><strong class="text-gray-300">Zero-knowledge proofs</strong> (Noir) for key verification without exposure</li>
+                    <li><strong class="text-gray-300">HMAC-based proxy authentication</strong> to prevent unauthorized API calls</li>
+                </ul>
+            </section>
+
+            <!-- 7 -->
+            <section>
+                <h2 class="text-xl font-bold text-white mb-3">7. Your Rights</h2>
+                <p>You have the right to:</p>
+                <ul class="list-disc list-inside space-y-1.5 ml-1 mt-3">
+                    <li><strong class="text-gray-300">Access</strong> your stored data through the Dashboard</li>
+                    <li><strong class="text-gray-300">Export</strong> your data at any time</li>
+                    <li><strong class="text-gray-300">Delete</strong> your account and all associated data</li>
+                    <li><strong class="text-gray-300">Revoke</strong> any stored API key at any time</li>
+                </ul>
+            </section>
+
+            <!-- 8 -->
+            <section>
+                <h2 class="text-xl font-bold text-white mb-3">8. GDPR</h2>
+                <p>We process personal data under the lawful basis of legitimate interest (providing the Service you signed up for). Data is stored in the United States via Supabase (AWS infrastructure). If you are located in the EU/EEA, you may request access to, correction of, or deletion of your personal data by contacting us. We will respond to GDPR requests within 30 days.</p>
+            </section>
+
+            <!-- 9 -->
+            <section>
+                <h2 class="text-xl font-bold text-white mb-3">9. Cookies and Local Storage</h2>
+                <p>VaultProof does not use tracking cookies. We use <code class="text-gray-300 bg-vp-surface px-1.5 py-0.5 rounded text-sm">localStorage</code> for two purposes only:</p>
+                <ul class="list-disc list-inside space-y-1.5 ml-1 mt-3">
+                    <li>Storing your authentication token (so you stay logged in)</li>
+                    <li>Storing notification read state (so dismissed notices stay dismissed)</li>
+                </ul>
+                <p class="mt-3">No third-party tracking cookies are set.</p>
+            </section>
+
+            <!-- 10 -->
+            <section>
+                <h2 class="text-xl font-bold text-white mb-3">10. Children</h2>
+                <p>VaultProof is not intended for use by anyone under the age of 18. We do not knowingly collect personal data from minors. If we learn that we have collected data from a user under 18, we will delete their account and data promptly.</p>
+            </section>
+
+            <!-- 11 -->
+            <section>
+                <h2 class="text-xl font-bold text-white mb-3">11. Contact</h2>
+                <p>If you have questions about this Privacy Policy or want to exercise your data rights, contact us at <a href="mailto:hello@vaultproof.dev" class="text-vp-accent hover:underline">hello@vaultproof.dev</a>.</p>
+            </section>
+
+        </div>
+    </main>
+
+</body>
+</html>

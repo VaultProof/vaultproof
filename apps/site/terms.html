@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Terms of Service | VaultProof</title>
+    <meta name="description" content="VaultProof Terms of Service — rules and conditions for using our zero-knowledge API key infrastructure.">
+    <meta http-equiv="X-Content-Type-Options" content="nosniff">
+    <meta http-equiv="X-Frame-Options" content="DENY">
+    <meta name="referrer" content="strict-origin-when-cross-origin">
+
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        'vp-bg': '#0a0a0f',
+                        'vp-surface': '#111118',
+                        'vp-border': '#1e1e2e',
+                        'vp-accent': '#6366f1',
+                        'vp-cyan': '#06b6d4',
+                    },
+                    fontFamily: {
+                        sans: ['Inter', 'system-ui', 'sans-serif'],
+                        mono: ['JetBrains Mono', 'monospace'],
+                    }
+                }
+            }
+        }
+    </script>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
+
+    <style>
+        * { font-family: 'Inter', system-ui, sans-serif; }
+        ::selection { background: #6366f1; color: #fff; }
+        body { background: #0a0a0f; }
+    </style>
+</head>
+<body class="text-gray-300 min-h-screen">
+
+    <!-- Nav -->
+    <nav class="border-b border-vp-border/50 backdrop-blur-sm bg-vp-bg/80 sticky top-0 z-50">
+        <div class="flex items-center justify-between px-6 py-4 max-w-6xl mx-auto">
+            <a href="/" class="flex items-center gap-2.5">
+                <img src="/logo-sm.png" alt="VaultProof" width="28" height="28" />
+                <span class="text-lg font-bold text-white tracking-tight" style="font-family:'Space Grotesk',sans-serif">VaultProof</span>
+            </a>
+            <div class="flex items-center gap-8">
+                <a href="/" class="text-sm text-gray-400 hover:text-white transition-colors">Home</a>
+                <a href="/docs" class="text-sm text-gray-400 hover:text-white transition-colors">Docs</a>
+                <a href="/#pricing" class="text-sm text-gray-400 hover:text-white transition-colors">Pricing</a>
+                <a href="/app/login" class="text-sm text-gray-400 hover:text-white transition-colors">Login</a>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Content -->
+    <main class="max-w-3xl mx-auto px-6 py-16">
+        <h1 class="text-4xl font-extrabold text-white mb-2 tracking-tight" style="font-family:'Space Grotesk',sans-serif">Terms of Service</h1>
+        <p class="text-sm text-gray-500 mb-12">Last updated: March 25, 2026</p>
+
+        <div class="space-y-10 text-gray-400 leading-relaxed">
+
+            <!-- 1 -->
+            <section>
+                <h2 class="text-xl font-bold text-white mb-3">1. Service Description</h2>
+                <p>VaultProof ("the Service") is an API key storage and proxy platform operated by Rial Labs. We split your API keys using Shamir Secret Sharing, encrypt the resulting shares with AES-256-GCM, and reassemble them only for the milliseconds required to execute a proxied API call. Zero-knowledge proofs (Noir) allow you to verify that your key is stored correctly without ever revealing it. Your raw API key is never stored whole on any server.</p>
+            </section>
+
+            <!-- 2 -->
+            <section>
+                <h2 class="text-xl font-bold text-white mb-3">2. Account Terms</h2>
+                <p>To use VaultProof you must create an account with a valid email address and password. You must be at least 18 years of age. You are responsible for maintaining the confidentiality of your credentials and for all activity that occurs under your account. You agree to notify us immediately of any unauthorized access.</p>
+            </section>
+
+            <!-- 3 -->
+            <section>
+                <h2 class="text-xl font-bold text-white mb-3">3. Acceptable Use</h2>
+                <p>You agree not to use VaultProof for any illegal activity, to abuse or overload the proxy infrastructure, to attempt to extract other users' data, or to circumvent rate limits or security controls. We reserve the right to suspend or terminate accounts that violate these terms.</p>
+            </section>
+
+            <!-- 4 -->
+            <section>
+                <h2 class="text-xl font-bold text-white mb-3">4. API Key Responsibility</h2>
+                <p>You own your API keys. VaultProof never sees, stores, or logs your full plaintext API keys. Keys are split client-side using Shamir Secret Sharing before being transmitted to our servers. You are solely responsible for creating, rotating, and revoking your keys with the underlying API providers (e.g., OpenAI, Anthropic, Google).</p>
+            </section>
+
+            <!-- 5 -->
+            <section>
+                <h2 class="text-xl font-bold text-white mb-3">5. Service Availability</h2>
+                <p>VaultProof is provided on a best-effort basis. We aim for high availability but do not guarantee any specific uptime or SLA unless you are on an Enterprise plan with a separately negotiated agreement. Scheduled maintenance windows will be communicated in advance when possible.</p>
+            </section>
+
+            <!-- 6 -->
+            <section>
+                <h2 class="text-xl font-bold text-white mb-3">6. Data Handling</h2>
+                <p>We store encrypted Shamir shares of your API keys, never plaintext keys. Shares are encrypted with AES-256-GCM and stored in our database. For full details on what data we collect and how we handle it, please see our <a href="/privacy" class="text-vp-accent hover:underline">Privacy Policy</a>.</p>
+            </section>
+
+            <!-- 7 -->
+            <section>
+                <h2 class="text-xl font-bold text-white mb-3">7. Payment Terms</h2>
+                <p>Paid plans are billed through Stripe on a monthly or annual cycle. Each plan includes specific limits on the number of stored keys and proxy calls per month. If you exceed your plan's limits, additional usage may be throttled or billed as overage according to your plan's terms. All fees are non-refundable except as required by law.</p>
+            </section>
+
+            <!-- 8 -->
+            <section>
+                <h2 class="text-xl font-bold text-white mb-3">8. Termination</h2>
+                <p>Either party may terminate this agreement at any time. You may delete your account from the Dashboard. We may terminate or suspend your access if you violate these terms. Upon termination, all your data (encrypted shares, account information, usage logs) will be permanently deleted upon request via cascading delete.</p>
+            </section>
+
+            <!-- 9 -->
+            <section>
+                <h2 class="text-xl font-bold text-white mb-3">9. Limitation of Liability</h2>
+                <p>TO THE MAXIMUM EXTENT PERMITTED BY LAW, VAULTPROOF AND RIAL LABS SHALL NOT BE LIABLE FOR ANY INDIRECT, INCIDENTAL, SPECIAL, CONSEQUENTIAL, OR PUNITIVE DAMAGES, OR ANY LOSS OF PROFITS, DATA, OR GOODWILL, ARISING FROM YOUR USE OF THE SERVICE. OUR TOTAL LIABILITY SHALL NOT EXCEED THE AMOUNT YOU PAID US IN THE TWELVE MONTHS PRECEDING THE CLAIM.</p>
+            </section>
+
+            <!-- 10 -->
+            <section>
+                <h2 class="text-xl font-bold text-white mb-3">10. Modifications</h2>
+                <p>We may update these Terms of Service from time to time. When we make material changes, we will notify you via email or a prominent notice on the Service. Your continued use of VaultProof after changes take effect constitutes acceptance of the revised terms.</p>
+            </section>
+
+            <!-- 11 -->
+            <section>
+                <h2 class="text-xl font-bold text-white mb-3">11. Contact</h2>
+                <p>If you have questions about these terms, contact us at <a href="mailto:hello@vaultproof.dev" class="text-vp-accent hover:underline">hello@vaultproof.dev</a>.</p>
+            </section>
+
+        </div>
+    </main>
+
+</body>
+</html>

@@ -1,3 +1,18 @@
+import * as Sentry from '@sentry/node';
+
+if (process.env.SENTRY_DSN) {
+  Sentry.init({
+    dsn: process.env.SENTRY_DSN,
+    environment: process.env.NODE_ENV || 'production',
+    beforeSend(event) {
+      // Don't report 4xx client errors
+      const status = event.contexts?.response?.status_code as number;
+      if (status && status >= 400 && status < 500) return null;
+      return event;
+    },
+  });
+}
+
 import Fastify from 'fastify';
 import cors from '@fastify/cors';
 import rateLimit from '@fastify/rate-limit';
@@ -69,6 +84,9 @@ async function start() {
   app.setErrorHandler((error, request, reply) => {
     request.log.error(error);
     const code = (error as any).statusCode || 500;
+    if (code >= 500 && process.env.SENTRY_DSN) {
+      Sentry.captureException(error, { extra: { url: request.url, method: request.method } });
+    }
     reply.status(code).send({ error: 'Internal server error' });
   });
 
