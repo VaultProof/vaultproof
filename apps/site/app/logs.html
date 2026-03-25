@@ -6,28 +6,44 @@
   <title>Logs — VaultProof</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
-  <link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
   <script>
     tailwind.config = {
       theme: {
         extend: {
-          fontFamily: { geist: ['Geist', 'sans-serif'] },
-          colors: { brand: '#6366f1', surface: '#0a0e1a', card: '#111827', border: '#1f2937' }
+          fontFamily: { inter: ['Inter', 'sans-serif'], mono: ['JetBrains Mono', 'monospace'] },
+          colors: { brand: '#6366f1', 'brand-hover': '#5558e6', cyan: '#06b6d4', surface: '#0a0a0f', card: '#111118', border: '#1e1e2e' }
         }
       }
     };
   </script>
   <style>
-    body { font-family: 'Geist', sans-serif; background: #0a0e1a; }
+    body { font-family: 'Inter', sans-serif; background: #0a0a0f; }
+    .font-mono, code, .monospace { font-family: 'JetBrains Mono', monospace; }
     ::-webkit-scrollbar { width: 6px; }
-    ::-webkit-scrollbar-track { background: #0a0e1a; }
-    ::-webkit-scrollbar-thumb { background: #374151; border-radius: 3px; }
+    ::-webkit-scrollbar-track { background: #0a0a0f; }
+    ::-webkit-scrollbar-thumb { background: #1e1e2e; border-radius: 3px; }
+    .btn-glow { box-shadow: 0 0 20px rgba(99, 102, 241, 0.15); }
+    .btn-glow:hover { box-shadow: 0 0 25px rgba(99, 102, 241, 0.25); }
+    @keyframes fadeSlideIn {
+      from { opacity: 0; transform: translateY(8px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    .row-animate { animation: fadeSlideIn 0.3s ease forwards; opacity: 0; }
+    .row-hover:hover { border-left: 3px solid #6366f1; }
+    .date-pill { transition: all 0.15s ease; }
+    .date-pill.active { background: #6366f1; color: white; }
+    .date-pill:not(.active) { background: transparent; color: #9ca3af; }
+    .date-pill:not(.active):hover { background: rgba(99, 102, 241, 0.1); color: #c7d2fe; }
+    @keyframes pulse-green { 0%, 100% { box-shadow: 0 0 0 0 rgba(34, 197, 94, 0.4); } 50% { box-shadow: 0 0 0 4px rgba(34, 197, 94, 0); } }
+    .pulse-green { animation: pulse-green 2s infinite; }
   </style>
 </head>
 <body class="text-gray-100 min-h-screen">
 
   <!-- Mobile Header -->
-  <div class="lg:hidden fixed top-0 left-0 right-0 z-50 bg-surface border-b border-border px-4 py-3 flex items-center justify-between">
+  <div class="lg:hidden fixed top-0 left-0 right-0 z-50 bg-[#0a0a0f] border-b border-[#1e1e2e] px-4 py-3 flex items-center justify-between">
     <button id="menuBtn" class="text-gray-400 hover:text-white">
       <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/></svg>
     </button>
@@ -39,10 +55,10 @@
   <div id="sidebarOverlay" class="fixed inset-0 bg-black/50 z-40 hidden lg:hidden" onclick="toggleSidebar()"></div>
 
   <!-- Sidebar -->
-  <aside id="sidebar" class="fixed top-0 left-0 h-full w-60 bg-card border-r border-border z-50 flex flex-col transform -translate-x-full lg:translate-x-0 transition-transform duration-200">
-    <div class="p-5 border-b border-border">
+  <aside id="sidebar" class="fixed top-0 left-0 h-full w-60 bg-[#111118] border-r border-[#1e1e2e] z-50 flex flex-col transform -translate-x-full lg:translate-x-0 transition-transform duration-200">
+    <div class="p-5 border-b border-[#1e1e2e]">
       <div class="flex items-center gap-2">
-        <div class="w-8 h-8 rounded-lg bg-brand flex items-center justify-center">
+        <div class="w-8 h-8 rounded-xl bg-[#6366f1] flex items-center justify-center btn-glow">
           <svg class="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/></svg>
         </div>
         <span class="text-lg font-bold">VaultProof</span>
@@ -51,22 +67,22 @@
     <nav class="flex-1 p-3 space-y-1">
       <a href="./" class="flex items-center gap-3 px-3 py-2.5 rounded-xl text-gray-400 hover:text-white hover:bg-white/5 text-sm transition">
         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zm10 0a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zm10 0a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z"/></svg>
-        Overview
+        Dashboard
       </a>
       <a href="keys" class="flex items-center gap-3 px-3 py-2.5 rounded-xl text-gray-400 hover:text-white hover:bg-white/5 text-sm transition">
         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z"/></svg>
-        Keys
+        API Keys
       </a>
-      <a href="logs" class="flex items-center gap-3 px-3 py-2.5 rounded-xl bg-brand/20 text-brand font-medium text-sm">
+      <a href="logs" class="flex items-center gap-3 px-3 py-2.5 rounded-xl bg-[#6366f1]/15 text-[#6366f1] font-medium text-sm border border-[#6366f1]/20">
         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/></svg>
-        Logs
+        Access Logs
       </a>
       <a href="settings" class="flex items-center gap-3 px-3 py-2.5 rounded-xl text-gray-400 hover:text-white hover:bg-white/5 text-sm transition">
         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.066 2.573c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.573 1.066c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.066-2.573c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
         Settings
       </a>
     </nav>
-    <div class="p-4 border-t border-border">
+    <div class="p-4 border-t border-[#1e1e2e]">
       <div class="text-xs text-gray-500 truncate mb-2" id="sidebarEmail">—</div>
       <button onclick="logout()" class="flex items-center gap-2 text-sm text-gray-400 hover:text-red-400 transition">
         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"/></svg>
@@ -85,56 +101,56 @@
           <h1 class="text-2xl font-bold">Access Logs</h1>
           <p class="text-gray-500 text-sm mt-1">Track every API call routed through VaultProof</p>
         </div>
-        <button onclick="exportCSV()" class="inline-flex items-center gap-2 px-4 py-2 bg-card border border-border rounded-xl text-sm text-gray-300 hover:text-white hover:border-gray-600 transition">
+        <button onclick="exportCSV()" class="inline-flex items-center gap-2 px-4 py-2.5 bg-transparent border border-[#1e1e2e] rounded-xl text-sm text-gray-300 hover:text-white hover:border-[#6366f1]/50 transition">
           <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
           Export CSV
         </button>
       </div>
 
       <!-- Search & Filters -->
-      <div class="bg-card border border-border rounded-2xl p-4 space-y-3">
+      <div class="bg-[#111118] border border-[#1e1e2e] rounded-xl p-4 space-y-3">
         <div class="flex flex-col sm:flex-row gap-3">
           <div class="flex-1 relative">
             <svg class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
-            <input id="searchInput" type="text" placeholder="Search by app name or key label..." class="w-full pl-10 pr-4 py-2.5 bg-surface border border-border rounded-xl text-sm text-white placeholder-gray-500 focus:outline-none focus:border-brand transition" />
+            <input id="searchInput" type="text" placeholder="Search by app name or endpoint..." class="w-full pl-10 pr-4 py-2.5 bg-[#111118] border border-[#1e1e2e] rounded-xl text-sm text-white placeholder-gray-500 focus:outline-none focus:border-[#6366f1] transition" />
           </div>
         </div>
-        <div class="flex flex-wrap gap-3">
-          <select id="filterKey" class="bg-surface border border-border rounded-xl px-3 py-2 text-sm text-gray-300 focus:outline-none focus:border-brand">
+        <div class="flex flex-wrap items-center gap-3">
+          <select id="filterKey" class="bg-[#111118] border border-[#1e1e2e] rounded-xl px-3 py-2 text-sm text-gray-300 focus:outline-none focus:border-[#6366f1]">
             <option value="">All Keys</option>
           </select>
-          <select id="filterStatus" class="bg-surface border border-border rounded-xl px-3 py-2 text-sm text-gray-300 focus:outline-none focus:border-brand">
+          <select id="filterStatus" class="bg-[#111118] border border-[#1e1e2e] rounded-xl px-3 py-2 text-sm text-gray-300 focus:outline-none focus:border-[#6366f1]">
             <option value="">All Status</option>
             <option value="success">Success</option>
             <option value="error">Error</option>
           </select>
-          <select id="filterDate" class="bg-surface border border-border rounded-xl px-3 py-2 text-sm text-gray-300 focus:outline-none focus:border-brand">
-            <option value="7">Last 7 days</option>
-            <option value="30" selected>Last 30 days</option>
-            <option value="all">All time</option>
-          </select>
+          <div class="flex items-center bg-[#0a0a0f] rounded-xl p-1 border border-[#1e1e2e]">
+            <button onclick="setDateFilter('7')" class="date-pill px-3 py-1.5 rounded-lg text-xs font-medium" data-days="7">7d</button>
+            <button onclick="setDateFilter('30')" class="date-pill active px-3 py-1.5 rounded-lg text-xs font-medium" data-days="30">30d</button>
+            <button onclick="setDateFilter('all')" class="date-pill px-3 py-1.5 rounded-lg text-xs font-medium" data-days="all">All</button>
+          </div>
         </div>
       </div>
 
       <!-- Table -->
-      <div class="bg-card border border-border rounded-2xl overflow-hidden">
+      <div class="bg-[#111118] border border-[#1e1e2e] rounded-xl overflow-hidden">
         <div class="overflow-x-auto">
           <table class="w-full text-sm">
             <thead>
-              <tr class="border-b border-border text-gray-500 text-left">
-                <th class="px-5 py-3 font-medium">Timestamp</th>
-                <th class="px-5 py-3 font-medium">Key</th>
-                <th class="px-5 py-3 font-medium">App</th>
-                <th class="px-5 py-3 font-medium">Endpoint</th>
-                <th class="px-5 py-3 font-medium">Status</th>
-                <th class="px-5 py-3 font-medium">Latency</th>
-                <th class="px-5 py-3 font-medium">ZK Proof</th>
+              <tr class="border-b border-[#1e1e2e] text-gray-500 text-left text-xs uppercase tracking-wider">
+                <th class="px-5 py-3.5 font-medium">Timestamp</th>
+                <th class="px-5 py-3.5 font-medium">Key</th>
+                <th class="px-5 py-3.5 font-medium">App</th>
+                <th class="px-5 py-3.5 font-medium">Endpoint</th>
+                <th class="px-5 py-3.5 font-medium">Status</th>
+                <th class="px-5 py-3.5 font-medium">Latency</th>
+                <th class="px-5 py-3.5 font-medium">ZK Proof</th>
               </tr>
             </thead>
             <tbody id="logsBody">
-              <tr><td colspan="7" class="px-5 py-12 text-center text-gray-600">
-                <div class="flex flex-col items-center gap-2">
-                  <div class="h-6 w-6 border-2 border-brand border-t-transparent rounded-full animate-spin"></div>
+              <tr><td colspan="7" class="px-5 py-16 text-center text-gray-600">
+                <div class="flex flex-col items-center gap-3">
+                  <div class="h-6 w-6 border-2 border-[#6366f1] border-t-transparent rounded-full animate-spin"></div>
                   <span>Loading logs...</span>
                 </div>
               </td></tr>
@@ -143,12 +159,23 @@
         </div>
       </div>
 
+      <!-- Empty state (hidden by default) -->
+      <div id="emptyState" class="hidden bg-[#111118] border border-[#1e1e2e] rounded-xl py-16 text-center">
+        <div class="flex flex-col items-center gap-3">
+          <div class="w-12 h-12 rounded-xl bg-[#1e1e2e] flex items-center justify-center">
+            <svg class="w-6 h-6 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/></svg>
+          </div>
+          <div class="text-gray-500 text-sm">No logs yet</div>
+          <div class="text-gray-600 text-xs">API call logs will appear here once you start making requests</div>
+        </div>
+      </div>
+
       <!-- Pagination -->
       <div class="flex items-center justify-between" id="paginationWrap" style="display: none;">
         <div class="text-sm text-gray-500" id="paginationInfo">—</div>
         <div class="flex gap-2">
-          <button id="prevBtn" onclick="changePage(-1)" class="px-3 py-1.5 bg-card border border-border rounded-lg text-sm text-gray-400 hover:text-white hover:border-gray-600 transition disabled:opacity-30 disabled:cursor-not-allowed">Previous</button>
-          <button id="nextBtn" onclick="changePage(1)" class="px-3 py-1.5 bg-card border border-border rounded-lg text-sm text-gray-400 hover:text-white hover:border-gray-600 transition disabled:opacity-30 disabled:cursor-not-allowed">Next</button>
+          <button id="prevBtn" onclick="changePage(-1)" class="px-4 py-2 bg-[#111118] border border-[#1e1e2e] rounded-xl text-sm text-gray-400 hover:text-white hover:border-[#6366f1]/50 transition disabled:opacity-30 disabled:cursor-not-allowed">Previous</button>
+          <button id="nextBtn" onclick="changePage(1)" class="px-4 py-2 bg-[#111118] border border-[#1e1e2e] rounded-xl text-sm text-gray-400 hover:text-white hover:border-[#6366f1]/50 transition disabled:opacity-30 disabled:cursor-not-allowed">Next</button>
         </div>
       </div>
 
@@ -202,40 +229,54 @@
         together: 'bg-purple-900/50 text-purple-400 border-purple-800'
       };
       const c = colors[(provider || '').toLowerCase()] || 'bg-gray-800 text-gray-400 border-gray-700';
-      return `<span class="inline-flex items-center px-2 py-0.5 rounded-md text-xs font-medium border ${c}">${provider || 'Unknown'}</span>`;
+      return `<span class="inline-flex items-center px-2 py-0.5 rounded-lg text-xs font-medium border ${c}">${provider || 'Unknown'}</span>`;
     }
 
     function statusBadge(status) {
-      if ((status || '').toLowerCase() === 'success' || (status || '').toLowerCase() === 'ok' || status === 200 || status === '200') {
-        return '<span class="inline-flex items-center px-2 py-0.5 rounded-md text-xs font-medium bg-green-900/50 text-green-400 border border-green-800">Success</span>';
+      if ((status || '').toString().toLowerCase() === 'success' || (status || '').toString().toLowerCase() === 'ok' || status === 200 || status === '200') {
+        return `<span class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-lg text-xs font-medium bg-green-900/40 text-green-400 border border-green-800">
+          <span class="w-1.5 h-1.5 rounded-full bg-green-400 pulse-green"></span>Success</span>`;
       }
-      return '<span class="inline-flex items-center px-2 py-0.5 rounded-md text-xs font-medium bg-red-900/50 text-red-400 border border-red-800">Error</span>';
+      return `<span class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-lg text-xs font-medium bg-red-900/40 text-red-400 border border-red-800">
+        <span class="w-1.5 h-1.5 rounded-full bg-red-400"></span>Error</span>`;
     }
 
     function zkBadge(verified) {
       if (verified) {
-        return '<span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-xs font-medium bg-brand/20 text-brand border border-indigo-800"><svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>Verified</span>';
+        return `<span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-lg text-xs font-medium bg-[#6366f1]/15 text-[#6366f1] border border-indigo-800">
+          <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>Verified</span>`;
       }
-      return '<span class="text-gray-600 text-xs">—</span>';
+      return `<span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-lg text-xs font-medium bg-yellow-900/20 text-yellow-500/70 border border-yellow-800/30">Pending</span>`;
     }
 
     let allLogs = [];
     let allKeys = [];
     let currentPage = 1;
+    let currentDateFilter = '30';
     const PAGE_SIZE = 25;
+
+    function setDateFilter(value) {
+      currentDateFilter = value;
+      document.querySelectorAll('.date-pill').forEach(pill => {
+        pill.classList.toggle('active', pill.dataset.days === value);
+      });
+      currentPage = 1;
+      renderLogs();
+    }
 
     function getFilteredLogs() {
       const search = document.getElementById('searchInput').value.toLowerCase();
       const keyFilter = document.getElementById('filterKey').value;
       const statusFilter = document.getElementById('filterStatus').value;
-      const dateFilter = document.getElementById('filterDate').value;
+      const dateFilter = currentDateFilter;
 
       let logs = [...allLogs];
 
       if (search) {
         logs = logs.filter(l =>
           (l.appName || '').toLowerCase().includes(search) ||
-          (l.keyLabel || '').toLowerCase().includes(search)
+          (l.keyLabel || '').toLowerCase().includes(search) ||
+          (l.endpoint || '').toLowerCase().includes(search)
         );
       }
 
@@ -269,23 +310,41 @@
       const page = filtered.slice(start, start + PAGE_SIZE);
 
       const tbody = document.getElementById('logsBody');
+      const emptyState = document.getElementById('emptyState');
+      const tableWrap = tbody.closest('.bg-\\[\\#111118\\]');
+
+      if (allLogs.length === 0) {
+        tbody.closest('table').closest('.bg-\\[\\#111118\\]').classList.add('hidden');
+        emptyState.classList.remove('hidden');
+        document.getElementById('paginationWrap').style.display = 'none';
+        return;
+      }
+
+      tbody.closest('table').closest('.overflow-hidden').parentElement.classList.remove('hidden');
+      emptyState.classList.add('hidden');
+
       if (page.length === 0) {
-        tbody.innerHTML = '<tr><td colspan="7" class="px-5 py-12 text-center text-gray-600">No logs match your filters</td></tr>';
+        tbody.innerHTML = `<tr><td colspan="7" class="px-5 py-16 text-center text-gray-600">
+          <div class="flex flex-col items-center gap-3">
+            <svg class="w-8 h-8 text-gray-700" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
+            <span>No logs match your filters</span>
+          </div>
+        </td></tr>`;
       } else {
-        tbody.innerHTML = page.map(l => `
-          <tr class="border-b border-border/50 hover:bg-white/[0.02] transition">
-            <td class="px-5 py-3 text-gray-400 whitespace-nowrap text-xs">${formatTime(l.timestamp)}</td>
-            <td class="px-5 py-3 whitespace-nowrap">
+        tbody.innerHTML = page.map((l, i) => `
+          <tr class="border-b border-[#1e1e2e]/50 bg-[#111118] row-hover hover:bg-[#6366f1]/[0.03] transition-all row-animate" style="animation-delay: ${i * 30}ms">
+            <td class="px-5 py-3.5 text-gray-400 whitespace-nowrap text-xs">${formatTime(l.timestamp)}</td>
+            <td class="px-5 py-3.5 whitespace-nowrap">
               <div class="flex items-center gap-2">
                 ${providerBadge(l.provider)}
                 <span class="text-gray-300 text-xs">${l.keyLabel || '—'}</span>
               </div>
             </td>
-            <td class="px-5 py-3 text-gray-300 whitespace-nowrap">${l.appName || '—'}</td>
-            <td class="px-5 py-3 text-gray-400 whitespace-nowrap font-mono text-xs">${l.endpoint || '—'}</td>
-            <td class="px-5 py-3 whitespace-nowrap">${statusBadge(l.status)}</td>
-            <td class="px-5 py-3 text-gray-400 whitespace-nowrap">${l.latency != null ? l.latency + 'ms' : '—'}</td>
-            <td class="px-5 py-3 whitespace-nowrap">${zkBadge(l.zkProofVerified)}</td>
+            <td class="px-5 py-3.5 text-gray-300 whitespace-nowrap text-sm">${l.appName || '—'}</td>
+            <td class="px-5 py-3.5 text-gray-400 whitespace-nowrap font-mono text-xs">${l.endpoint || '—'}</td>
+            <td class="px-5 py-3.5 whitespace-nowrap">${statusBadge(l.status)}</td>
+            <td class="px-5 py-3.5 text-gray-400 whitespace-nowrap text-sm font-mono">${l.latency != null ? l.latency + '<span class="text-gray-600 text-xs ml-0.5">ms</span>' : '—'}</td>
+            <td class="px-5 py-3.5 whitespace-nowrap">${zkBadge(l.zkProofVerified)}</td>
           </tr>
         `).join('');
       }
@@ -293,7 +352,7 @@
       // Pagination
       const wrap = document.getElementById('paginationWrap');
       wrap.style.display = filtered.length > 0 ? 'flex' : 'none';
-      document.getElementById('paginationInfo').textContent = `Showing ${start + 1}–${Math.min(start + PAGE_SIZE, filtered.length)} of ${filtered.length} logs`;
+      document.getElementById('paginationInfo').textContent = `Page ${currentPage} of ${totalPages} — ${filtered.length} total logs`;
       document.getElementById('prevBtn').disabled = currentPage <= 1;
       document.getElementById('nextBtn').disabled = currentPage >= totalPages;
     }
@@ -308,7 +367,6 @@
     document.getElementById('searchInput').addEventListener('input', () => { currentPage = 1; renderLogs(); });
     document.getElementById('filterKey').addEventListener('change', () => { currentPage = 1; renderLogs(); });
     document.getElementById('filterStatus').addEventListener('change', () => { currentPage = 1; renderLogs(); });
-    document.getElementById('filterDate').addEventListener('change', () => { currentPage = 1; renderLogs(); });
 
     function exportCSV() {
       const filtered = getFilteredLogs();
@@ -340,7 +398,8 @@
       try {
         const keysData = await apiFetch('/stats/by-key');
         if (!keysData || !keysData.keys) {
-          document.getElementById('logsBody').innerHTML = '<tr><td colspan="7" class="px-5 py-12 text-center text-gray-600">No keys found</td></tr>';
+          allLogs = [];
+          renderLogs();
           return;
         }
 
@@ -380,7 +439,7 @@
         renderLogs();
       } catch (e) {
         console.error('Failed to load logs:', e);
-        document.getElementById('logsBody').innerHTML = '<tr><td colspan="7" class="px-5 py-12 text-center text-gray-600">Failed to load logs</td></tr>';
+        document.getElementById('logsBody').innerHTML = '<tr><td colspan="7" class="px-5 py-16 text-center text-gray-600">Failed to load logs</td></tr>';
       }
     }
 

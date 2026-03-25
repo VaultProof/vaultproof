@@ -1,144 +1,229 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Login | VaultProof</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-    <style>
-        :root { font-family: 'Geist', sans-serif; }
-        body { background: linear-gradient(180deg, #0a0e1a 0%, #0d1220 50%, #0a0e1a 100%); }
-    </style>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Login | VaultProof</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['Inter', 'sans-serif'],
+            mono: ['JetBrains Mono', 'monospace']
+          },
+          colors: {
+            brand: '#6366f1',
+            'brand-hover': '#5558e6',
+            cyan: '#06b6d4',
+            surface: '#0a0a0f',
+            card: '#111118',
+            border: '#1e1e2e'
+          }
+        }
+      }
+    };
+  </script>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; }
+    body { font-family: 'Inter', sans-serif; background: #0a0a0f; margin: 0; }
+
+    /* Animated gradient orbs */
+    @keyframes drift1 {
+      0%   { transform: translate(0, 0) scale(1); }
+      25%  { transform: translate(60px, -40px) scale(1.1); }
+      50%  { transform: translate(-30px, 50px) scale(0.95); }
+      75%  { transform: translate(-60px, -20px) scale(1.05); }
+      100% { transform: translate(0, 0) scale(1); }
+    }
+    @keyframes drift2 {
+      0%   { transform: translate(0, 0) scale(1); }
+      25%  { transform: translate(-50px, 30px) scale(1.08); }
+      50%  { transform: translate(40px, -60px) scale(0.92); }
+      75%  { transform: translate(30px, 40px) scale(1.05); }
+      100% { transform: translate(0, 0) scale(1); }
+    }
+    .orb-1 {
+      position: fixed;
+      width: 500px;
+      height: 500px;
+      border-radius: 50%;
+      background: radial-gradient(circle, rgba(99,102,241,0.15) 0%, transparent 70%);
+      top: -100px;
+      right: -100px;
+      animation: drift1 20s ease-in-out infinite;
+      pointer-events: none;
+      z-index: 0;
+    }
+    .orb-2 {
+      position: fixed;
+      width: 400px;
+      height: 400px;
+      border-radius: 50%;
+      background: radial-gradient(circle, rgba(139,92,246,0.12) 0%, transparent 70%);
+      bottom: -80px;
+      left: -80px;
+      animation: drift2 25s ease-in-out infinite;
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    .btn-glow {
+      box-shadow: 0 0 20px rgba(99,102,241,0.3);
+    }
+    .btn-glow:hover {
+      box-shadow: 0 0 30px rgba(99,102,241,0.4);
+    }
+  </style>
 </head>
 <body class="min-h-screen text-gray-200 flex items-center justify-center">
-    <div class="w-full max-w-sm px-6">
-        <div class="text-center mb-8">
-            <span class="text-3xl">&#128274;</span>
-            <h1 class="text-2xl font-bold text-white mt-2">VaultProof</h1>
-            <p class="text-sm text-gray-500 mt-1">Zero-knowledge API key infrastructure</p>
-        </div>
 
-        <!-- Toggle -->
-        <div class="flex bg-gray-900 rounded-lg p-1 mb-6">
-            <button id="loginTab" onclick="showTab('login')" class="flex-1 py-2 text-sm font-medium rounded-md bg-indigo-600 text-white transition">Login</button>
-            <button id="registerTab" onclick="showTab('register')" class="flex-1 py-2 text-sm font-medium rounded-md text-gray-400 transition">Register</button>
-        </div>
+  <!-- Animated orbs -->
+  <div class="orb-1"></div>
+  <div class="orb-2"></div>
 
-        <!-- Login Form -->
-        <form id="loginForm" onsubmit="handleLogin(event)">
-            <div class="mb-4">
-                <label class="block text-sm text-gray-400 mb-1">Email</label>
-                <input type="email" id="loginEmail" required class="w-full bg-gray-900 border border-gray-800 rounded-lg px-3 py-2.5 text-sm text-white focus:border-indigo-500 focus:outline-none" placeholder="you@example.com">
-            </div>
-            <div class="mb-6">
-                <label class="block text-sm text-gray-400 mb-1">Password</label>
-                <input type="password" id="loginPassword" required class="w-full bg-gray-900 border border-gray-800 rounded-lg px-3 py-2.5 text-sm text-white focus:border-indigo-500 focus:outline-none" placeholder="••••••••">
-            </div>
-            <div id="loginError" class="hidden mb-4 p-3 bg-red-500/10 border border-red-500/20 rounded-lg text-sm text-red-400"></div>
-            <button type="submit" id="loginBtn" class="w-full bg-indigo-600 hover:bg-indigo-500 text-white py-2.5 rounded-lg font-medium text-sm transition">Login</button>
-        </form>
+  <div class="w-full max-w-md px-6 relative z-10">
 
-        <!-- Register Form -->
-        <form id="registerForm" class="hidden" onsubmit="handleRegister(event)">
-            <div class="mb-4">
-                <label class="block text-sm text-gray-400 mb-1">Email</label>
-                <input type="email" id="regEmail" required class="w-full bg-gray-900 border border-gray-800 rounded-lg px-3 py-2.5 text-sm text-white focus:border-indigo-500 focus:outline-none" placeholder="you@example.com">
-            </div>
-            <div class="mb-6">
-                <label class="block text-sm text-gray-400 mb-1">Password</label>
-                <input type="password" id="regPassword" required minlength="8" class="w-full bg-gray-900 border border-gray-800 rounded-lg px-3 py-2.5 text-sm text-white focus:border-indigo-500 focus:outline-none" placeholder="Min 8 characters">
-            </div>
-            <div id="regError" class="hidden mb-4 p-3 bg-red-500/10 border border-red-500/20 rounded-lg text-sm text-red-400"></div>
-            <button type="submit" id="regBtn" class="w-full bg-indigo-600 hover:bg-indigo-500 text-white py-2.5 rounded-lg font-medium text-sm transition">Create Account</button>
-        </form>
-
-        <p class="text-center text-xs text-gray-600 mt-6">
-            <a href="/" class="hover:text-gray-400 transition">&larr; Back to VaultProof</a>
-        </p>
+    <!-- Logo -->
+    <div class="text-center mb-8">
+      <div class="inline-flex items-center justify-center w-14 h-14 rounded-2xl bg-gradient-to-br from-brand to-purple-500 mb-4">
+        <svg class="w-7 h-7 text-white" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/>
+        </svg>
+      </div>
+      <h1 class="text-2xl font-bold text-white tracking-tight">VaultProof</h1>
+      <p class="text-sm text-gray-500 mt-1">Zero-knowledge API key infrastructure</p>
     </div>
 
-    <script>
-        const API = 'https://api.vaultproof.dev/api/v1';
+    <!-- Card -->
+    <div class="bg-card border border-border rounded-2xl p-6">
 
-        // Check if already logged in
-        const token = localStorage.getItem('vaultproof_token');
-        if (token) window.location.href = 'keys';
+      <!-- Tab Toggle -->
+      <div class="flex bg-[#0a0a0f] rounded-xl p-1 mb-6">
+        <button id="loginTab" onclick="showTab('login')" class="flex-1 py-2.5 text-sm font-medium rounded-xl bg-brand text-white transition-all duration-200">Login</button>
+        <button id="registerTab" onclick="showTab('register')" class="flex-1 py-2.5 text-sm font-medium rounded-xl text-gray-400 hover:text-gray-300 transition-all duration-200">Register</button>
+      </div>
 
-        function showTab(tab) {
-            document.getElementById('loginForm').classList.toggle('hidden', tab !== 'login');
-            document.getElementById('registerForm').classList.toggle('hidden', tab !== 'register');
-            document.getElementById('loginTab').className = tab === 'login'
-                ? 'flex-1 py-2 text-sm font-medium rounded-md bg-indigo-600 text-white transition'
-                : 'flex-1 py-2 text-sm font-medium rounded-md text-gray-400 transition';
-            document.getElementById('registerTab').className = tab === 'register'
-                ? 'flex-1 py-2 text-sm font-medium rounded-md bg-indigo-600 text-white transition'
-                : 'flex-1 py-2 text-sm font-medium rounded-md text-gray-400 transition';
-        }
+      <!-- Login Form -->
+      <form id="loginForm" onsubmit="handleLogin(event)" class="space-y-4">
+        <div>
+          <label class="block text-sm text-gray-400 mb-1.5">Email</label>
+          <input type="email" id="loginEmail" required class="w-full bg-[#111118] border border-[#1e1e2e] rounded-xl px-4 py-2.5 text-sm text-white placeholder-gray-600 focus:border-[#6366f1] focus:outline-none transition" placeholder="you@example.com" />
+        </div>
+        <div>
+          <label class="block text-sm text-gray-400 mb-1.5">Password</label>
+          <input type="password" id="loginPassword" required class="w-full bg-[#111118] border border-[#1e1e2e] rounded-xl px-4 py-2.5 text-sm text-white placeholder-gray-600 focus:border-[#6366f1] focus:outline-none transition" placeholder="Enter your password" />
+        </div>
+        <div id="loginError" class="hidden p-3 bg-red-500/10 border border-red-500/30 rounded-xl text-sm text-red-400"></div>
+        <button type="submit" id="loginBtn" class="w-full bg-brand hover:bg-brand-hover text-white py-2.5 rounded-xl font-medium text-sm transition-all duration-200 btn-glow">Login</button>
+      </form>
 
-        async function handleLogin(e) {
-            e.preventDefault();
-            const btn = document.getElementById('loginBtn');
-            const errEl = document.getElementById('loginError');
-            errEl.classList.add('hidden');
-            btn.textContent = 'Logging in...';
-            btn.disabled = true;
+      <!-- Register Form -->
+      <form id="registerForm" class="hidden space-y-4" onsubmit="handleRegister(event)">
+        <div>
+          <label class="block text-sm text-gray-400 mb-1.5">Email</label>
+          <input type="email" id="regEmail" required class="w-full bg-[#111118] border border-[#1e1e2e] rounded-xl px-4 py-2.5 text-sm text-white placeholder-gray-600 focus:border-[#6366f1] focus:outline-none transition" placeholder="you@example.com" />
+        </div>
+        <div>
+          <label class="block text-sm text-gray-400 mb-1.5">Password</label>
+          <input type="password" id="regPassword" required minlength="8" class="w-full bg-[#111118] border border-[#1e1e2e] rounded-xl px-4 py-2.5 text-sm text-white placeholder-gray-600 focus:border-[#6366f1] focus:outline-none transition" placeholder="Min 8 characters" />
+        </div>
+        <div id="regError" class="hidden p-3 bg-red-500/10 border border-red-500/30 rounded-xl text-sm text-red-400"></div>
+        <button type="submit" id="regBtn" class="w-full bg-brand hover:bg-brand-hover text-white py-2.5 rounded-xl font-medium text-sm transition-all duration-200 btn-glow">Create Account</button>
+      </form>
+    </div>
 
-            try {
-                const res = await fetch(`${API}/auth/login`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        email: document.getElementById('loginEmail').value,
-                        password: document.getElementById('loginPassword').value,
-                    }),
-                });
-                const data = await res.json();
-                if (!res.ok) throw new Error(data.error || 'Login failed');
+    <!-- Back link -->
+    <p class="text-center text-xs text-gray-600 mt-6">
+      <a href="/" class="hover:text-gray-400 transition">&larr; Back to VaultProof</a>
+    </p>
+  </div>
 
-                localStorage.setItem('vaultproof_token', data.token);
-                localStorage.setItem('vaultproof_user', JSON.stringify(data.user));
-                window.location.href = 'keys';
-            } catch (err) {
-                errEl.textContent = err.message;
-                errEl.classList.remove('hidden');
-            } finally {
-                btn.textContent = 'Login';
-                btn.disabled = false;
-            }
-        }
+  <script>
+    const API = 'https://api.vaultproof.dev/api/v1';
 
-        async function handleRegister(e) {
-            e.preventDefault();
-            const btn = document.getElementById('regBtn');
-            const errEl = document.getElementById('regError');
-            errEl.classList.add('hidden');
-            btn.textContent = 'Creating account...';
-            btn.disabled = true;
+    // Check if already logged in
+    const token = localStorage.getItem('vaultproof_token');
+    if (token) window.location.href = './';
 
-            try {
-                const res = await fetch(`${API}/auth/register`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        email: document.getElementById('regEmail').value,
-                        password: document.getElementById('regPassword').value,
-                    }),
-                });
-                const data = await res.json();
-                if (!res.ok) throw new Error(data.error || 'Registration failed');
+    function showTab(tab) {
+      document.getElementById('loginForm').classList.toggle('hidden', tab !== 'login');
+      document.getElementById('registerForm').classList.toggle('hidden', tab !== 'register');
+      document.getElementById('loginTab').className = tab === 'login'
+        ? 'flex-1 py-2.5 text-sm font-medium rounded-xl bg-brand text-white transition-all duration-200'
+        : 'flex-1 py-2.5 text-sm font-medium rounded-xl text-gray-400 hover:text-gray-300 transition-all duration-200';
+      document.getElementById('registerTab').className = tab === 'register'
+        ? 'flex-1 py-2.5 text-sm font-medium rounded-xl bg-brand text-white transition-all duration-200'
+        : 'flex-1 py-2.5 text-sm font-medium rounded-xl text-gray-400 hover:text-gray-300 transition-all duration-200';
+    }
 
-                localStorage.setItem('vaultproof_token', data.token);
-                localStorage.setItem('vaultproof_user', JSON.stringify(data.user));
-                window.location.href = 'keys';
-            } catch (err) {
-                errEl.textContent = err.message;
-                errEl.classList.remove('hidden');
-            } finally {
-                btn.textContent = 'Create Account';
-                btn.disabled = false;
-            }
-        }
-    </script>
+    async function handleLogin(e) {
+      e.preventDefault();
+      const btn = document.getElementById('loginBtn');
+      const errEl = document.getElementById('loginError');
+      errEl.classList.add('hidden');
+      btn.textContent = 'Logging in...';
+      btn.disabled = true;
+
+      try {
+        const res = await fetch(`${API}/auth/login`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            email: document.getElementById('loginEmail').value,
+            password: document.getElementById('loginPassword').value,
+          }),
+        });
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.error || 'Login failed');
+
+        localStorage.setItem('vaultproof_token', data.token);
+        localStorage.setItem('vaultproof_user', JSON.stringify(data.user));
+        window.location.href = './';
+      } catch (err) {
+        errEl.textContent = err.message;
+        errEl.classList.remove('hidden');
+      } finally {
+        btn.textContent = 'Login';
+        btn.disabled = false;
+      }
+    }
+
+    async function handleRegister(e) {
+      e.preventDefault();
+      const btn = document.getElementById('regBtn');
+      const errEl = document.getElementById('regError');
+      errEl.classList.add('hidden');
+      btn.textContent = 'Creating account...';
+      btn.disabled = true;
+
+      try {
+        const res = await fetch(`${API}/auth/register`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            email: document.getElementById('regEmail').value,
+            password: document.getElementById('regPassword').value,
+          }),
+        });
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.error || 'Registration failed');
+
+        localStorage.setItem('vaultproof_token', data.token);
+        localStorage.setItem('vaultproof_user', JSON.stringify(data.user));
+        window.location.href = './';
+      } catch (err) {
+        errEl.textContent = err.message;
+        errEl.classList.remove('hidden');
+      } finally {
+        btn.textContent = 'Create Account';
+        btn.disabled = false;
+      }
+    }
+  </script>
 </body>
 </html>
