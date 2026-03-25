@@ -16,6 +16,7 @@ import { decrypt, zeroBuffer } from '../crypto/encryption.js';
 import { decryptShare2 } from '../crypto/share2-encryption.js';
 import { authenticateDevKey } from './developer-keys.js';
 import { randomBytes } from 'crypto';
+import { sendUsageAlert } from '../services/email.js';
 
 const prisma = new PrismaClient();
 
@@ -215,8 +216,7 @@ export async function transparentProxyRoutes(app: FastifyInstance) {
           where: { appId: auth.devKey.id, timestamp: { gte: oneHourAgo } },
         }).then(count => {
           if (count >= auth.devKey.alertThreshold!) {
-            console.log(`ALERT: Dev key ${auth.devKey.id} exceeded ${auth.devKey.alertThreshold} calls/hour (${count}). Alert: ${auth.devKey.alertEmail}`);
-            // TODO: send actual email via Resend/SendGrid when configured
+            sendUsageAlert(auth.devKey.alertEmail!, auth.devKey.label, count, auth.devKey.alertThreshold!);
           }
         }).catch(() => {});
       }

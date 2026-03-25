@@ -3,6 +3,7 @@ import { PrismaClient } from '@prisma/client';
 import { z } from 'zod';
 import bcrypt from 'bcryptjs';
 import { generateToken, generateRefreshToken, requireAuth } from '../middleware/auth.js';
+import { sendWelcomeEmail } from '../services/email.js';
 
 const prisma = new PrismaClient();
 
@@ -38,6 +39,7 @@ export async function authRoutes(app: FastifyInstance) {
     });
 
     const token = generateToken(user.id, user.email);
+    sendWelcomeEmail(user.email);
 
     return { token, refreshToken, user: { id: user.id, email: user.email } };
   });
