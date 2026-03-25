@@ -2,7 +2,7 @@
  * Per-key-slot rate limiting based on pricing tier.
  *
  * Tracks API calls per key slot per calendar month.
- * Enforces limits: Free=1K, Pro=50K, Team=200K, Enterprise=unlimited.
+ * Enforces limits: Free=1K, Starter=10K, Pro=100K, Team=500K, Enterprise=unlimited.
  */
 
 import { PrismaClient } from '@prisma/client';
@@ -17,8 +17,9 @@ export interface TierLimits {
 
 const TIERS: Record<string, TierLimits> = {
   free: { maxCallsPerMonth: 1000, maxKeySlots: 3, maxAppGrantsPerKey: 1 },
-  pro: { maxCallsPerMonth: 50000, maxKeySlots: 20, maxAppGrantsPerKey: 100 },
-  team: { maxCallsPerMonth: 200000, maxKeySlots: 100, maxAppGrantsPerKey: 100 },
+  starter: { maxCallsPerMonth: 10000, maxKeySlots: 10, maxAppGrantsPerKey: 5 },
+  pro: { maxCallsPerMonth: 100000, maxKeySlots: 30, maxAppGrantsPerKey: 20 },
+  team: { maxCallsPerMonth: 500000, maxKeySlots: 100, maxAppGrantsPerKey: 100 },
   enterprise: { maxCallsPerMonth: Infinity, maxKeySlots: Infinity, maxAppGrantsPerKey: Infinity },
 };
 

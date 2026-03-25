@@ -63,7 +63,9 @@ export async function proxyRoutes(app: FastifyInstance) {
 
     // 3. Check tier rate limits (skip in test environment)
     if (process.env.NODE_ENV !== 'test') {
-      const rateCheck = await checkRateLimit(keySlotId, 'free'); // NOTE: tier hardcoded to free until Stripe billing
+      const slotOwner = await prisma.user.findUnique({ where: { id: keySlot.userId }, select: { tier: true } });
+      const tier = (slotOwner?.tier as string) || 'free';
+      const rateCheck = await checkRateLimit(keySlotId, tier);
       if (!rateCheck.allowed) {
         return reply.status(429).send({
           error: 'Monthly call limit exceeded',

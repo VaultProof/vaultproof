@@ -175,6 +175,74 @@
         </div>
       </section>
 
+      <!-- Billing & Plan -->
+      <section id="billingSection" class="bg-[#111118] border border-[#1e1e2e] rounded-xl p-6">
+        <h2 class="text-lg font-semibold mb-4 flex items-center gap-2">
+          <svg class="w-5 h-5 text-[#06b6d4]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z"/></svg>
+          Billing & Plan
+        </h2>
+
+        <!-- Billing status message (success/cancel from Stripe redirect) -->
+        <div id="billingMsg" class="hidden mb-4 p-3 rounded-xl text-sm"></div>
+
+        <!-- Current plan display -->
+        <div class="flex items-center gap-3 mb-6">
+          <span class="text-sm text-gray-400">Current Plan:</span>
+          <span id="billingTierBadge" class="inline-flex items-center px-3 py-1 rounded-xl bg-[#6366f1]/15 text-[#6366f1] text-sm font-medium border border-[#6366f1]/30 capitalize">
+            <span class="h-4 w-4 border-2 border-[#6366f1] border-t-transparent rounded-full animate-spin mr-2 inline-block"></span>
+            Loading...
+          </span>
+        </div>
+
+        <!-- Upgrade tier cards -->
+        <div id="billingUpgradeCards" class="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
+          <div class="p-4 bg-[#0a0a0f] border border-[#1e1e2e] rounded-xl">
+            <div class="text-sm font-semibold text-white mb-1">Starter</div>
+            <div class="text-2xl font-bold text-white mb-1">$5<span class="text-sm font-normal text-gray-500">/mo</span></div>
+            <ul class="text-xs text-gray-400 space-y-1 mb-4">
+              <li>10,000 API calls/mo</li>
+              <li>10 key slots</li>
+              <li>5 app grants per key</li>
+            </ul>
+            <button onclick="upgradeTier('starter')" data-tier="starter" class="billing-upgrade-btn w-full px-4 py-2 bg-[#6366f1] hover:bg-[#5558e6] text-white rounded-xl text-sm font-medium transition btn-glow">
+              Upgrade
+            </button>
+          </div>
+          <div class="p-4 bg-[#0a0a0f] border border-[#6366f1]/30 rounded-xl ring-1 ring-[#6366f1]/20">
+            <div class="text-sm font-semibold text-white mb-1">Pro <span class="text-xs text-[#6366f1] ml-1">Popular</span></div>
+            <div class="text-2xl font-bold text-white mb-1">$15<span class="text-sm font-normal text-gray-500">/mo</span></div>
+            <ul class="text-xs text-gray-400 space-y-1 mb-4">
+              <li>100,000 API calls/mo</li>
+              <li>30 key slots</li>
+              <li>20 app grants per key</li>
+            </ul>
+            <button onclick="upgradeTier('pro')" data-tier="pro" class="billing-upgrade-btn w-full px-4 py-2 bg-[#6366f1] hover:bg-[#5558e6] text-white rounded-xl text-sm font-medium transition btn-glow">
+              Upgrade
+            </button>
+          </div>
+          <div class="p-4 bg-[#0a0a0f] border border-[#1e1e2e] rounded-xl">
+            <div class="text-sm font-semibold text-white mb-1">Team</div>
+            <div class="text-2xl font-bold text-white mb-1">$39<span class="text-sm font-normal text-gray-500">/mo</span></div>
+            <ul class="text-xs text-gray-400 space-y-1 mb-4">
+              <li>500,000 API calls/mo</li>
+              <li>100 key slots</li>
+              <li>100 app grants per key</li>
+            </ul>
+            <button onclick="upgradeTier('team')" data-tier="team" class="billing-upgrade-btn w-full px-4 py-2 bg-[#6366f1] hover:bg-[#5558e6] text-white rounded-xl text-sm font-medium transition btn-glow">
+              Upgrade
+            </button>
+          </div>
+        </div>
+
+        <!-- Manage billing (shown when subscribed) -->
+        <div id="billingManage" class="hidden">
+          <button onclick="openBillingPortal()" class="px-5 py-2.5 bg-[#111118] border border-[#1e1e2e] hover:border-[#6366f1]/50 text-gray-300 hover:text-white rounded-xl text-sm font-medium transition flex items-center gap-2">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.066 2.573c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.573 1.066c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.066-2.573c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
+            Manage Billing
+          </button>
+        </div>
+      </section>
+
       <!-- Developer API Keys -->
       <section class="bg-[#111118] border border-[#1e1e2e] rounded-xl p-6">
         <div class="flex items-center justify-between mb-4">
@@ -630,9 +698,132 @@
       }
     }
 
+    // Billing
+    function checkBillingParams() {
+      const params = new URLSearchParams(window.location.search);
+      const msg = document.getElementById('billingMsg');
+      if (params.get('billing') === 'success') {
+        msg.textContent = 'Payment successful! Your plan has been upgraded.';
+        msg.className = 'mb-4 p-3 rounded-xl text-sm bg-green-900/30 border border-green-800/50 text-green-400';
+        msg.classList.remove('hidden');
+        // Clean URL
+        window.history.replaceState({}, '', window.location.pathname);
+      } else if (params.get('billing') === 'cancel') {
+        msg.textContent = 'Checkout was cancelled. No changes were made to your plan.';
+        msg.className = 'mb-4 p-3 rounded-xl text-sm bg-yellow-900/30 border border-yellow-800/50 text-yellow-400';
+        msg.classList.remove('hidden');
+        window.history.replaceState({}, '', window.location.pathname);
+      }
+    }
+
+    async function loadBillingStatus() {
+      try {
+        const res = await apiFetch('/billing/status');
+        if (!res) return;
+        const data = await res.json();
+        const currentTier = data.tier || 'free';
+        const isSubscribed = data.subscribed || false;
+
+        // Update badge
+        const badge = document.getElementById('billingTierBadge');
+        const tierColors = {
+          free: 'bg-gray-700/30 text-gray-400 border-gray-600/30',
+          starter: 'bg-cyan-900/30 text-cyan-400 border-cyan-700/30',
+          pro: 'bg-[#6366f1]/15 text-[#6366f1] border-[#6366f1]/30',
+          team: 'bg-purple-900/30 text-purple-400 border-purple-700/30',
+          enterprise: 'bg-amber-900/30 text-amber-400 border-amber-700/30'
+        };
+        const colorClass = tierColors[currentTier] || tierColors.free;
+        badge.className = `inline-flex items-center px-3 py-1 rounded-xl text-sm font-medium capitalize ${colorClass}`;
+        badge.textContent = currentTier === 'free' ? 'Free Plan' : currentTier.charAt(0).toUpperCase() + currentTier.slice(1) + ' Plan';
+
+        // Update upgrade buttons — hide current tier and below
+        const tierOrder = ['free', 'starter', 'pro', 'team', 'enterprise'];
+        const currentIdx = tierOrder.indexOf(currentTier);
+        document.querySelectorAll('.billing-upgrade-btn').forEach(btn => {
+          const btnTier = btn.getAttribute('data-tier');
+          const btnIdx = tierOrder.indexOf(btnTier);
+          if (btnIdx <= currentIdx) {
+            btn.disabled = true;
+            btn.textContent = btnTier === currentTier ? 'Current' : 'Included';
+            btn.className = btn.className.replace('bg-[#6366f1] hover:bg-[#5558e6]', 'bg-gray-800 cursor-not-allowed').replace('btn-glow', '');
+            btn.classList.add('opacity-50');
+          }
+        });
+
+        // Hide upgrade cards entirely for enterprise
+        if (currentTier === 'enterprise') {
+          document.getElementById('billingUpgradeCards').classList.add('hidden');
+        }
+
+        // Show manage billing if subscribed
+        if (isSubscribed) {
+          document.getElementById('billingManage').classList.remove('hidden');
+        }
+      } catch (e) {
+        console.error('Failed to load billing status:', e);
+        const badge = document.getElementById('billingTierBadge');
+        badge.textContent = 'Free Plan';
+        badge.className = 'inline-flex items-center px-3 py-1 rounded-xl bg-gray-700/30 text-gray-400 text-sm font-medium border border-gray-600/30 capitalize';
+      }
+    }
+
+    async function upgradeTier(tier) {
+      const btn = document.querySelector(`.billing-upgrade-btn[data-tier="${tier}"]`);
+      const origText = btn.textContent;
+      btn.disabled = true;
+      btn.textContent = 'Redirecting...';
+
+      try {
+        const res = await apiFetch('/billing/checkout', {
+          method: 'POST',
+          body: JSON.stringify({ tier })
+        });
+        if (!res) { btn.disabled = false; btn.textContent = origText; return; }
+
+        if (res.ok) {
+          const data = await res.json();
+          if (data.url) {
+            window.location.href = data.url;
+            return;
+          }
+        }
+
+        const err = await res.json().catch(() => ({}));
+        alert(err.error || err.message || 'Failed to start checkout');
+      } catch (e) {
+        alert('Network error. Please try again.');
+      }
+
+      btn.disabled = false;
+      btn.textContent = origText;
+    }
+
+    async function openBillingPortal() {
+      try {
+        const res = await apiFetch('/billing/portal', { method: 'POST' });
+        if (!res) return;
+
+        if (res.ok) {
+          const data = await res.json();
+          if (data.url) {
+            window.location.href = data.url;
+            return;
+          }
+        }
+
+        const err = await res.json().catch(() => ({}));
+        alert(err.error || err.message || 'Failed to open billing portal');
+      } catch (e) {
+        alert('Network error. Please try again.');
+      }
+    }
+
     // Init
+    checkBillingParams();
     loadProfile();
     loadUsage();
+    loadBillingStatus();
     loadDevKeys();
   </script>
 </body>

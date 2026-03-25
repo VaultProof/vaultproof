@@ -37,7 +37,9 @@ export async function keyRoutes(app: FastifyInstance) {
 
     // Check tier key slot limit (skip in test environment)
     if (process.env.NODE_ENV !== 'test') {
-      const slotCheck = await checkKeySlotLimit(userId, 'free'); // NOTE: tier hardcoded to free until Stripe billing
+      const user = await prisma.user.findUnique({ where: { id: userId }, select: { tier: true } });
+      const tier = (user?.tier as string) || 'free';
+      const slotCheck = await checkKeySlotLimit(userId, tier);
       if (!slotCheck.allowed) {
         return reply.status(429).send({
           error: 'Key slot limit reached',
