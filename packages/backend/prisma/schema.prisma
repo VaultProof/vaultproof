@@ -39,7 +39,8 @@ model KeySlot {
   user             User        @relation(fields: [userId], references: [id])
   provider         String      // "openai", "anthropic", "google", etc.
   label            String      // user-friendly name
-  share1Encrypted  Bytes       @map("share1_encrypted")
+  share1Encrypted  Bytes       @map("share1_encrypted")  // Encrypted with VAULT_ENCRYPTION_KEY
+  share2Encrypted  Bytes?      @map("share2_encrypted")  // Encrypted with key derived from vp_live_ key
   vaultCommitment  String      @map("vault_commitment")
   authAppsRoot     String      @map("auth_apps_root")
   status           String      @default("ACTIVE")

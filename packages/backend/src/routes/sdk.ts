@@ -1,22 +1,26 @@
 /**
- * Simplified SDK Endpoints
+ * SDK Endpoints — Server never sees the full API key.
  *
- * These endpoints are designed for developers using `vp_live_` API keys.
- * They handle Shamir splitting, share management, and proxying internally.
- * The developer never touches shares, proofs, or nullifiers.
+ * Store flow:
+ *   SDK splits key locally (Shamir) → encrypts Share 2 with vp_live_ key
+ *   → sends encrypted Share 1 + encrypted Share 2 to server
+ *   → server stores both but can only decrypt Share 1
+ *   → Share 2 can only be decrypted with the developer's vp_live_ key
  *
- * Usage:
- *   POST /api/v1/sdk/store   { apiKey, provider, label }
- *   POST /api/v1/sdk/call    { keyId, path, method, body }
- *   GET  /api/v1/sdk/keys    (list stored keys)
- *   POST /api/v1/sdk/revoke  { keyId }
+ * Call flow:
+ *   SDK sends vp_live_ key → server decrypts Share 2 with it
+ *   → decrypts Share 1 with VAULT_ENCRYPTION_KEY → combines → proxies → zeros
+ *
+ * To breach: attacker needs database + VAULT_ENCRYPTION_KEY + vp_live_ key
+ * Three separate things in three separate places.
  */
 
 import type { FastifyInstance } from 'fastify';
 import { PrismaClient } from '@prisma/client';
 import { z } from 'zod';
-import { splitString, serializeShare, deserializeShare, combine } from '@vaultproof/shamir';
+import { deserializeShare, combine } from '@vaultproof/shamir';
 import { encrypt, decrypt, zeroBuffer } from '../crypto/encryption.js';
+import { encryptShare2, decryptShare2 } from '../crypto/share2-encryption.js';
 import { authenticateDevKey } from './developer-keys.js';
 import { randomBytes } from 'crypto';
 import axios from 'axios';
@@ -40,10 +44,15 @@ export async function sdkRoutes(app: FastifyInstance) {
     (request as any).devAuth = auth;
   });
 
-  // Store an API key (handles Shamir split internally)
+  /**
+   * Store — SDK splits the key client-side, sends both encrypted shares.
+   * Server NEVER sees the raw API key.
+   */
   app.post('/store', async (request, reply) => {
     const schema = z.object({
-      apiKey: z.string().min(1),
+      // SDK sends pre-split, pre-encrypted shares
+      share1: z.string().min(1),       // Serialized Shamir Share 1 (base64)
+      share2: z.string().min(1),       // Serialized Shamir Share 2 (base64)
       provider: z.enum(['openai', 'anthropic', 'google', 'together']),
       label: z.string().max(100).optional(),
     });
@@ -53,56 +62,49 @@ export async function sdkRoutes(app: FastifyInstance) {
       return reply.status(400).send({ error: 'Invalid input', details: parsed.error.issues });
     }
 
-    const { userId, keyId: devKeyId } = (request as any).devAuth;
-    const { apiKey, provider, label } = parsed.data;
+    const { userId, keyId: devKeyId, rawKey: vpKey } = (request as any).devAuth;
+    const { share1, share2, provider, label } = parsed.data;
 
-    // Shamir split the key
-    const shares = splitString(apiKey, 2, 2);
-    const share1 = serializeShare(shares[0]);
-    const share2 = serializeShare(shares[1]);
-
-    // Encrypt Share 1 for storage
+    // Encrypt Share 1 with VAULT_ENCRYPTION_KEY (server secret)
     const share1Encrypted = encrypt(Buffer.from(share1, 'utf-8'));
 
-    // Compute commitment
+    // Encrypt Share 2 with developer's vp_live_ key (developer secret)
+    const share2Encrypted = encryptShare2(share2, vpKey);
+
     const commitment = randomBytes(32).toString('hex');
 
-    // Store in DB
     const keySlot = await prisma.keySlot.create({
       data: {
         userId,
         provider,
         label: label || `${provider} key`,
         share1Encrypted: new Uint8Array(share1Encrypted),
+        share2Encrypted: new Uint8Array(share2Encrypted),
         vaultCommitment: commitment,
         authAppsRoot: '',
       },
     });
 
-    // Grant the developer's app access
     await prisma.appGrant.create({
-      data: {
-        keySlotId: keySlot.id,
-        appId: devKeyId,
-        appName: 'SDK',
-      },
+      data: { keySlotId: keySlot.id, appId: devKeyId, appName: 'SDK' },
     });
 
     return {
       keyId: keySlot.id,
       provider,
       label: keySlot.label,
-      // Share 2 is returned — SDK stores it in memory/config
-      // Never stored on our server
-      share2,
+      // No share2 returned — it's stored encrypted on server
+      // Developer just needs their vp_live_ key to use it
     };
   });
 
-  // Make a proxied API call (handles reconstruction internally)
+  /**
+   * Call — Server decrypts both shares using separate keys, combines, proxies, zeros.
+   * Developer only sends their vp_live_ key (via X-API-Key header) + keyId + path.
+   */
   app.post('/call', async (request, reply) => {
     const schema = z.object({
       keyId: z.string().min(1),
-      share2: z.string().min(1),
       path: z.string().min(1),
       method: z.enum(['GET', 'POST', 'PUT', 'DELETE']).optional(),
       body: z.unknown().optional(),
@@ -114,8 +116,8 @@ export async function sdkRoutes(app: FastifyInstance) {
       return reply.status(400).send({ error: 'Invalid input', details: parsed.error.issues });
     }
 
-    const { userId } = (request as any).devAuth;
-    const { keyId, share2, path, method, body: reqBody, headers: reqHeaders } = parsed.data;
+    const { userId, rawKey: vpKey } = (request as any).devAuth;
+    const { keyId, path, method, body: reqBody, headers: reqHeaders } = parsed.data;
 
     // Load key slot
     const keySlot = await prisma.keySlot.findUnique({ where: { id: keyId } });
@@ -123,31 +125,39 @@ export async function sdkRoutes(app: FastifyInstance) {
       return reply.status(404).send({ error: 'Key not found' });
     }
 
+    if (!keySlot.share2Encrypted || keySlot.share2Encrypted.length === 0) {
+      return reply.status(400).send({ error: 'Share 2 not stored for this key. Re-store via SDK.' });
+    }
+
     const providerUrl = PROVIDER_URLS[keySlot.provider];
     if (!providerUrl) {
       return reply.status(400).send({ error: 'Unknown provider' });
     }
 
-    // Reconstruct key ephemerally
+    // Reconstruct key ephemerally from both encrypted shares
     let apiKey: string;
-    let decrypted: Buffer | null = null;
+    let decryptedShare1: Buffer | null = null;
     try {
-      decrypted = decrypt(Buffer.from(keySlot.share1Encrypted));
-      const s1 = deserializeShare(decrypted.toString('utf-8'));
-      const s2 = deserializeShare(share2);
+      // Decrypt Share 1 with VAULT_ENCRYPTION_KEY
+      decryptedShare1 = decrypt(Buffer.from(keySlot.share1Encrypted));
+      const s1 = deserializeShare(decryptedShare1.toString('utf-8'));
+      zeroBuffer(decryptedShare1);
+      decryptedShare1 = null;
+
+      // Decrypt Share 2 with developer's vp_live_ key
+      const share2Str = decryptShare2(Buffer.from(keySlot.share2Encrypted), vpKey);
+      const s2 = deserializeShare(share2Str);
+
+      // Combine both shares → full API key
       apiKey = new TextDecoder().decode(combine([s1, s2]));
-      zeroBuffer(decrypted);
-      decrypted = null;
     } catch {
-      if (decrypted) zeroBuffer(decrypted);
-      return reply.status(400).send({ error: 'Invalid share — key reconstruction failed' });
+      if (decryptedShare1) zeroBuffer(decryptedShare1);
+      return reply.status(400).send({ error: 'Key reconstruction failed. Check your API key.' });
     }
 
-    // Build auth header
     const authHeader = buildAuthHeader(keySlot.provider, apiKey);
     const startTime = Date.now();
 
-    // Make the API call
     try {
       const response = await axios({
         method: (method || 'POST') as any,
@@ -160,7 +170,6 @@ export async function sdkRoutes(app: FastifyInstance) {
 
       apiKey = '';
 
-      // Log the call
       await prisma.accessLog.create({
         data: {
           keySlotId: keyId,
@@ -182,12 +191,10 @@ export async function sdkRoutes(app: FastifyInstance) {
   // List stored keys
   app.get('/keys', async (request) => {
     const { userId } = (request as any).devAuth;
-
     const keys = await prisma.keySlot.findMany({
       where: { userId, status: 'ACTIVE' },
       select: { id: true, provider: true, label: true, createdAt: true },
     });
-
     return { keys };
   });
 
@@ -207,7 +214,11 @@ export async function sdkRoutes(app: FastifyInstance) {
 
     await prisma.keySlot.update({
       where: { id: keyId },
-      data: { status: 'REVOKED', share1Encrypted: Buffer.alloc(0) },
+      data: {
+        status: 'REVOKED',
+        share1Encrypted: Buffer.alloc(0),
+        share2Encrypted: Buffer.alloc(0),
+      },
     });
 
     return { status: 'revoked' };

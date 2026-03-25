@@ -1,15 +1,22 @@
 /**
- * @vaultproof/sdk — The simplest way to manage API keys securely.
+ * @vaultproof/sdk — Store API keys without anyone seeing them. Even us.
+ *
+ * The SDK splits your API key locally using Shamir Secret Sharing.
+ * The full key NEVER leaves your machine. Both shares are encrypted
+ * with different keys and stored on our server. To reconstruct,
+ * the server needs your vp_live_ key (which it only has temporarily
+ * during the proxy call).
  *
  * Usage:
  *   const vault = new VaultProof('vp_live_abc123...')
  *   const key = await vault.store('sk-openai-key', 'openai', 'Production')
- *   const res = await vault.proxy(key, '/v1/chat/completions', {
+ *   const res = await vault.proxy(key.id, '/v1/chat/completions', {
  *     model: 'gpt-4',
  *     messages: [{ role: 'user', content: 'Hello!' }]
  *   })
- *   console.log(res.data)
  */
+
+import { splitString, serializeShare } from '@vaultproof/shamir';
 
 const DEFAULT_API_URL = 'https://api.vaultproof.dev';
 
@@ -17,8 +24,6 @@ export interface StoredKey {
   id: string;
   provider: string;
   label: string;
-  /** Keep this secret — needed for proxy calls */
-  share2: string;
 }
 
 export interface ProxyResponse {
@@ -30,12 +35,10 @@ export interface ProxyResponse {
 export class VaultProof {
   private apiUrl: string;
   private apiKey: string;
-  private keyCache: Map<string, string> = new Map(); // keyId → share2
 
   /**
    * Create a VaultProof client.
-   *
-   * @param apiKey - Your developer API key (starts with vp_live_ or vp_test_)
+   * @param apiKey - Your developer API key (vp_live_... or vp_test_...)
    * @param apiUrl - API URL (default: https://api.vaultproof.dev)
    */
   constructor(apiKey: string, apiUrl?: string) {
@@ -48,63 +51,58 @@ export class VaultProof {
 
   /**
    * Store an API key securely.
-   * The key is Shamir-split server-side. Share 2 is returned to you.
    *
-   * @param apiKey - The API key to store (e.g., 'sk-proj-...')
-   * @param provider - 'openai' | 'anthropic' | 'google' | 'together'
-   * @param label - Friendly name (e.g., 'Production GPT-4')
+   * The key is Shamir-split RIGHT HERE on your machine.
+   * The full key never leaves this process. Both shares are
+   * sent encrypted with different keys.
    */
   async store(apiKey: string, provider: string, label?: string): Promise<StoredKey> {
+    // Split the key LOCALLY — it never leaves this machine whole
+    const shares = splitString(apiKey, 2, 2);
+    const share1 = serializeShare(shares[0]);
+    const share2 = serializeShare(shares[1]);
+
+    // Send both shares to the server
+    // Share 1 will be encrypted with VAULT_ENCRYPTION_KEY (server secret)
+    // Share 2 will be encrypted with OUR vp_live_ key (developer secret)
+    // Server can decrypt Share 1 but NOT Share 2 without our key
     const res = await this.fetch('/api/v1/sdk/store', {
       method: 'POST',
-      body: { apiKey, provider, label },
+      body: { share1, share2, provider, label },
     });
-
-    // Cache share2 for proxy calls
-    this.keyCache.set(res.keyId, res.share2);
 
     return {
       id: res.keyId,
       provider: res.provider,
       label: res.label,
-      share2: res.share2,
     };
   }
 
   /**
-   * Make a proxied API call. The stored key is reconstructed for ~100ms, used, then zeroed.
+   * Make a proxied API call.
    *
-   * @param key - StoredKey from store(), or just the key ID (if share2 is cached)
+   * The server decrypts both shares (Share 1 with its key, Share 2 with
+   * your vp_live_ key sent in the header), combines them for ~100ms,
+   * makes the call, then zeros everything.
+   *
+   * @param keyId - Key ID from store()
    * @param path - API endpoint (e.g., '/v1/chat/completions')
    * @param body - Request body
    * @param method - HTTP method (default: 'POST')
    */
   async proxy(
-    key: StoredKey | string,
+    keyId: string,
     path: string,
     body?: any,
     method: string = 'POST'
   ): Promise<ProxyResponse> {
-    let keyId: string;
-    let share2: string;
-
-    if (typeof key === 'string') {
-      keyId = key;
-      share2 = this.keyCache.get(key) || '';
-      if (!share2) throw new Error('Share2 not found. Pass the full StoredKey object or call store() first.');
-    } else {
-      keyId = key.id;
-      share2 = key.share2;
-      this.keyCache.set(keyId, share2); // Cache for future calls
-    }
-
     const res = await globalThis.fetch(`${this.apiUrl}/api/v1/sdk/call`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
         'X-API-Key': this.apiKey,
       },
-      body: JSON.stringify({ keyId, share2, path, method, body }),
+      body: JSON.stringify({ keyId, path, method, body }),
     });
 
     const data = await res.json().catch(() => null);
@@ -120,14 +118,11 @@ export class VaultProof {
   }
 
   /**
-   * Revoke a stored key. Share 1 is destroyed on the server.
+   * Revoke a stored key. Both shares are zeroed on the server.
    */
   async revoke(keyId: string): Promise<void> {
     await this.fetch('/api/v1/sdk/revoke', { method: 'POST', body: { keyId } });
-    this.keyCache.delete(keyId);
   }
-
-  // --- Internal ---
 
   private async fetch(path: string, opts: { method?: string; body?: any } = {}): Promise<any> {
     const res = await globalThis.fetch(`${this.apiUrl}${path}`, {

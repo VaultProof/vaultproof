@@ -112,7 +112,7 @@ export async function developerKeyRoutes(app: FastifyInstance) {
 export async function authenticateDevKey(
   request: any,
   reply: any
-): Promise<{ userId: string; keyId: string } | null> {
+): Promise<{ userId: string; keyId: string; rawKey: string } | null> {
   const authHeader = request.headers.authorization as string;
   const apiKeyHeader = request.headers['x-api-key'] as string;
 
@@ -139,5 +139,5 @@ export async function authenticateDevKey(
     data: { lastUsed: new Date() },
   }).catch(() => {}); // Non-blocking
 
-  return { userId: devKey.userId, keyId: devKey.id };
+  return { userId: devKey.userId, keyId: devKey.id, rawKey };
 }
