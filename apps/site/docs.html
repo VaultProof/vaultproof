@@ -33,28 +33,22 @@
         <!-- Quick Start -->
         <section class="mb-12">
             <h2 class="text-2xl font-bold text-white mb-4">Quick Start</h2>
+            <p class="text-gray-400 text-sm mb-4">Three lines. That's it.</p>
             <div class="bg-dark-blue-lighter border border-gray-800 rounded-2xl p-6 mono text-sm overflow-x-auto">
-<pre class="text-gray-300 leading-relaxed"><span class="text-gray-500">// 1. Install the SDK</span>
+<pre class="text-gray-300 leading-relaxed"><span class="text-gray-500">// 1. Install</span>
 <span class="text-green-400">npm install @vaultproof/sdk</span>
 
-<span class="text-gray-500">// 2. Initialize</span>
-<span class="text-purple-400">import</span> { VaultProof } <span class="text-purple-400">from</span> <span class="text-green-400">'@vaultproof/sdk'</span>
+<span class="text-gray-500">// 2. Initialize with your developer API key</span>
+<span class="text-purple-400">import</span> VaultProof <span class="text-purple-400">from</span> <span class="text-green-400">'@vaultproof/sdk'</span>
+<span class="text-purple-400">const</span> vault = <span class="text-purple-400">new</span> <span class="text-yellow-300">VaultProof</span>(<span class="text-green-400">'vp_live_abc123...'</span>)
 
-<span class="text-purple-400">const</span> vault = <span class="text-purple-400">new</span> <span class="text-yellow-300">VaultProof</span>(<span class="text-green-400">'https://api.vaultproof.dev'</span>)
+<span class="text-gray-500">// 3. Store a key and make proxied calls</span>
+<span class="text-purple-400">const</span> key = <span class="text-purple-400">await</span> vault.store(<span class="text-green-400">'sk-openai-key'</span>, <span class="text-green-400">'openai'</span>, <span class="text-green-400">'Production'</span>)
 
-<span class="text-gray-500">// 3. Login</span>
-<span class="text-purple-400">await</span> vault.login(<span class="text-green-400">'you@example.com'</span>, <span class="text-green-400">'password'</span>)
-
-<span class="text-gray-500">// 4. Store an API key (Shamir-split, encrypted, never sent whole)</span>
-<span class="text-purple-400">const</span> key = <span class="text-purple-400">await</span> vault.store(<span class="text-green-400">'sk-your-openai-key'</span>, <span class="text-green-400">'openai'</span>, <span class="text-green-400">'Production'</span>)
-
-<span class="text-gray-500">// 5. Make proxied API calls (key reconstructed for ~100ms, then zeroed)</span>
-<span class="text-purple-400">const</span> res = <span class="text-purple-400">await</span> vault.proxy(key.id, key.share2, <span class="text-green-400">'/v1/chat/completions'</span>, {
+<span class="text-purple-400">const</span> res = <span class="text-purple-400">await</span> vault.proxy(key, <span class="text-green-400">'/v1/chat/completions'</span>, {
   model: <span class="text-green-400">'gpt-4'</span>,
   messages: [{ role: <span class="text-green-400">'user'</span>, content: <span class="text-green-400">'Hello!'</span> }]
 })
-
-console.log(res.data)
 </pre>
             </div>
         </section>
@@ -98,6 +92,34 @@ Response: { "token": "eyJ...", "user": { "id": "uuid", "email": "..." } }</pre>
                 </div>
             </div>
             <p class="text-gray-500 text-sm mt-4">Include the token in all subsequent requests: <code class="mono text-xs text-indigo-400">Authorization: Bearer &lt;token&gt;</code></p>
+        </section>
+
+        <!-- Developer API Keys -->
+        <section class="mb-12">
+            <h2 class="text-2xl font-bold text-white mb-6">Developer API Keys</h2>
+            <p class="text-gray-400 text-sm mb-4">Developer API keys let you authenticate SDK calls without managing JWTs. They use a <code class="mono text-xs text-indigo-400">vp_live_</code> prefix and are scoped to your account.</p>
+
+            <div class="bg-dark-blue-lighter border border-gray-800 rounded-2xl p-6 mb-6">
+                <h3 class="text-lg font-semibold text-white mb-3">Getting Your Key</h3>
+                <ol class="list-decimal list-inside space-y-2 text-sm text-gray-400">
+                    <li>Go to <strong class="text-white">Settings &rarr; API Keys &rarr; Create Key</strong></li>
+                    <li>You'll receive a <code class="mono text-xs text-indigo-400">vp_live_</code> prefixed key</li>
+                    <li>Add it to your <code class="mono text-xs text-indigo-400">.env</code> file:</li>
+                </ol>
+                <div class="mt-3 mono text-xs bg-gray-900/50 rounded-xl p-4 overflow-x-auto">
+<pre class="text-gray-300">VAULTPROOF_API_KEY=vp_live_...</pre>
+                </div>
+            </div>
+
+            <div class="bg-dark-blue-lighter border border-gray-800 rounded-2xl p-6">
+                <h3 class="text-lg font-semibold text-white mb-3">Using With the SDK</h3>
+                <div class="mono text-xs bg-gray-900/50 rounded-xl p-4 overflow-x-auto">
+<pre class="text-gray-300"><span class="text-purple-400">import</span> VaultProof <span class="text-purple-400">from</span> <span class="text-green-400">'@vaultproof/sdk'</span>
+
+<span class="text-purple-400">const</span> vault = <span class="text-purple-400">new</span> <span class="text-yellow-300">VaultProof</span>(process.env.<span class="text-indigo-400">VAULTPROOF_API_KEY</span>)
+<span class="text-gray-500">// That's it — all SDK methods are now authenticated</span></pre>
+                </div>
+            </div>
         </section>
 
         <!-- Keys -->
@@ -196,6 +218,129 @@ Response: <span class="text-gray-600">// The API provider's response, forwarded 
 
                 <div class="mt-4 p-4 bg-indigo-500/5 border border-indigo-500/20 rounded-xl">
                     <p class="text-sm text-indigo-300"><strong>Security:</strong> Every call requires a unique nullifier (prevents replay). The ZK proof cryptographically proves you own the key slot and the requesting app is authorized. The SDK handles all of this automatically.</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- SDK Endpoints -->
+        <section class="mb-12">
+            <h2 class="text-2xl font-bold text-white mb-6">SDK Endpoints</h2>
+
+            <div class="space-y-6">
+                <div class="bg-dark-blue-lighter border border-gray-800 rounded-2xl p-6">
+                    <div class="flex items-center gap-3 mb-3">
+                        <span class="bg-green-900/50 text-green-400 text-xs font-bold px-2 py-1 rounded">POST</span>
+                        <code class="mono text-sm text-white">/api/v1/sdk/store</code>
+                        <span class="text-xs text-yellow-400">API Key required</span>
+                    </div>
+                    <p class="text-gray-400 text-sm mb-3">Store an API key via the SDK. Shamir-split and encrypted server-side.</p>
+                    <div class="mono text-xs bg-gray-900/50 rounded-xl p-4 overflow-x-auto">
+<pre class="text-gray-300">Request: {
+  "apiKey": "sk-...",          <span class="text-gray-600">// the API key to store</span>
+  "provider": "openai",        <span class="text-gray-600">// openai | anthropic | google | together</span>
+  "label": "Production"        <span class="text-gray-600">// optional friendly name</span>
+}
+Response: { "keyId": "uuid", "status": "stored" }</pre>
+                    </div>
+                </div>
+
+                <div class="bg-dark-blue-lighter border border-gray-800 rounded-2xl p-6">
+                    <div class="flex items-center gap-3 mb-3">
+                        <span class="bg-green-900/50 text-green-400 text-xs font-bold px-2 py-1 rounded">POST</span>
+                        <code class="mono text-sm text-white">/api/v1/sdk/call</code>
+                        <span class="text-xs text-yellow-400">API Key required</span>
+                    </div>
+                    <p class="text-gray-400 text-sm mb-3">Make a proxied API call through VaultProof.</p>
+                    <div class="mono text-xs bg-gray-900/50 rounded-xl p-4 overflow-x-auto">
+<pre class="text-gray-300">Request: {
+  "keyId": "uuid",             <span class="text-gray-600">// from /sdk/store response</span>
+  "share2": "base64...",       <span class="text-gray-600">// Share 2 (returned by SDK)</span>
+  "path": "/v1/chat/completions",  <span class="text-gray-600">// API endpoint</span>
+  "method": "POST",            <span class="text-gray-600">// HTTP method</span>
+  "body": { ... }              <span class="text-gray-600">// forwarded to the API provider</span>
+}
+Response: <span class="text-gray-600">// The API provider's response, forwarded directly</span></pre>
+                    </div>
+                </div>
+
+                <div class="bg-dark-blue-lighter border border-gray-800 rounded-2xl p-6">
+                    <div class="flex items-center gap-3 mb-3">
+                        <span class="bg-blue-900/50 text-blue-400 text-xs font-bold px-2 py-1 rounded">GET</span>
+                        <code class="mono text-sm text-white">/api/v1/sdk/keys</code>
+                        <span class="text-xs text-yellow-400">API Key required</span>
+                    </div>
+                    <p class="text-gray-400 text-sm">List all stored keys for this developer API key.</p>
+                </div>
+
+                <div class="bg-dark-blue-lighter border border-gray-800 rounded-2xl p-6">
+                    <div class="flex items-center gap-3 mb-3">
+                        <span class="bg-green-900/50 text-green-400 text-xs font-bold px-2 py-1 rounded">POST</span>
+                        <code class="mono text-sm text-white">/api/v1/sdk/revoke</code>
+                        <span class="text-xs text-yellow-400">API Key required</span>
+                    </div>
+                    <p class="text-gray-400 text-sm mb-3">Revoke a stored key. Irreversible.</p>
+                    <div class="mono text-xs bg-gray-900/50 rounded-xl p-4 overflow-x-auto">
+<pre class="text-gray-300">Request: { "keyId": "uuid" }
+Response: { "status": "revoked" }</pre>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Developer Key Management -->
+        <section class="mb-12">
+            <h2 class="text-2xl font-bold text-white mb-6">Developer Key Management</h2>
+            <p class="text-gray-400 text-sm mb-4">Manage your <code class="mono text-xs text-indigo-400">vp_live_</code> developer API keys programmatically.</p>
+
+            <div class="space-y-6">
+                <div class="bg-dark-blue-lighter border border-gray-800 rounded-2xl p-6">
+                    <div class="flex items-center gap-3 mb-3">
+                        <span class="bg-green-900/50 text-green-400 text-xs font-bold px-2 py-1 rounded">POST</span>
+                        <code class="mono text-sm text-white">/api/v1/dev-keys/create</code>
+                        <span class="text-xs text-yellow-400">Auth required</span>
+                    </div>
+                    <p class="text-gray-400 text-sm mb-3">Create a new developer API key.</p>
+                    <div class="mono text-xs bg-gray-900/50 rounded-xl p-4 overflow-x-auto">
+<pre class="text-gray-300">Request: {
+  "label": "Production",      <span class="text-gray-600">// friendly name</span>
+  "mode": "live"               <span class="text-gray-600">// "live" or "test"</span>
+}
+Response: {
+  "id": "uuid",
+  "key": "vp_live_abc123...", <span class="text-gray-600">// shown ONCE — save it now</span>
+  "label": "Production",
+  "createdAt": "2026-03-24T..."
+}</pre>
+                    </div>
+                </div>
+
+                <div class="bg-dark-blue-lighter border border-gray-800 rounded-2xl p-6">
+                    <div class="flex items-center gap-3 mb-3">
+                        <span class="bg-blue-900/50 text-blue-400 text-xs font-bold px-2 py-1 rounded">GET</span>
+                        <code class="mono text-sm text-white">/api/v1/dev-keys/list</code>
+                        <span class="text-xs text-yellow-400">Auth required</span>
+                    </div>
+                    <p class="text-gray-400 text-sm mb-3">List all developer API keys (masked).</p>
+                    <div class="mono text-xs bg-gray-900/50 rounded-xl p-4 overflow-x-auto">
+<pre class="text-gray-300">Response: {
+  "keys": [{
+    "id": "uuid",
+    "maskedKey": "vp_live_abc1...f456",
+    "label": "Production",
+    "lastUsedAt": "2026-03-24T...",
+    "createdAt": "2026-03-24T..."
+  }]
+}</pre>
+                    </div>
+                </div>
+
+                <div class="bg-dark-blue-lighter border border-gray-800 rounded-2xl p-6">
+                    <div class="flex items-center gap-3 mb-3">
+                        <span class="bg-green-900/50 text-green-400 text-xs font-bold px-2 py-1 rounded">POST</span>
+                        <code class="mono text-sm text-white">/api/v1/dev-keys/:id/revoke</code>
+                        <span class="text-xs text-yellow-400">Auth required</span>
+                    </div>
+                    <p class="text-gray-400 text-sm">Revoke a developer API key. Irreversible. All SDK calls using this key will stop working.</p>
                 </div>
             </div>
         </section>

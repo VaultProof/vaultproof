@@ -183,18 +183,15 @@
 
     <!-- Developer Integration -->
     <section class="max-w-4xl mx-auto px-6 py-16">
-        <h2 class="text-3xl font-bold text-center text-white mb-4">One Component. Zero Trust.</h2>
-        <p class="text-center text-gray-500 mb-10">Drop our widget into any BYOK app. Your users' keys are safe.</p>
+        <h2 class="text-3xl font-bold text-center text-white mb-4">3 Lines. Zero Trust.</h2>
+        <p class="text-center text-gray-500 mb-10">Install the SDK, add your API key, and start making secure calls.</p>
         <div class="bg-dark-blue-lighter border border-gray-800 rounded-2xl p-6 font-mono text-sm overflow-x-auto">
-            <div class="text-gray-500">// npm install @vaultproof/connect</div><br>
-            <div><span class="text-purple-400">import</span> <span class="text-gray-300">{ </span><span class="text-yellow-300">ZKKeyConnect</span><span class="text-gray-300"> } </span><span class="text-purple-400">from</span> <span class="text-green-400">'@vaultproof/connect'</span></div><br>
-            <div class="text-gray-300">&lt;<span class="text-yellow-300">ZKKeyConnect</span></div>
-            <div class="text-gray-300 pl-4">vaultUrl=<span class="text-green-400">"https://riallabs.com/api"</span></div>
-            <div class="text-gray-300 pl-4">appId=<span class="text-green-400">"my-app-123"</span></div>
-            <div class="text-gray-300 pl-4">appName=<span class="text-green-400">"My AI App"</span></div>
-            <div class="text-gray-300 pl-4">userId={user.id}</div>
-            <div class="text-gray-300 pl-4">providers={['openai', 'anthropic']}</div>
-            <div class="text-gray-300">/&gt;</div>
+            <div class="text-gray-500">// npm install @vaultproof/sdk</div><br>
+            <div><span class="text-purple-400">const</span> <span class="text-gray-300">vault = </span><span class="text-purple-400">new</span> <span class="text-yellow-300">VaultProof</span>(<span class="text-green-400">'vp_live_abc123...'</span>)</div>
+            <div><span class="text-purple-400">const</span> <span class="text-gray-300">key = </span><span class="text-purple-400">await</span> <span class="text-gray-300">vault.</span><span class="text-yellow-300">store</span>(<span class="text-green-400">'sk-openai-key'</span>, <span class="text-green-400">'openai'</span>)</div>
+            <div><span class="text-purple-400">const</span> <span class="text-gray-300">res = </span><span class="text-purple-400">await</span> <span class="text-gray-300">vault.</span><span class="text-yellow-300">proxy</span>(<span class="text-gray-300">key, </span><span class="text-green-400">'/v1/chat/completions'</span>, {</div>
+            <div class="pl-4"><span class="text-gray-300">model: </span><span class="text-green-400">'gpt-4'</span>, <span class="text-gray-300">messages: [{ role: </span><span class="text-green-400">'user'</span>, <span class="text-gray-300">content: </span><span class="text-green-400">'Hello!'</span> <span class="text-gray-300">}]</span></div>
+            <div class="text-gray-300">})</div>
         </div>
     </section>
 
