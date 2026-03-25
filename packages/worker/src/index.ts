@@ -141,14 +141,21 @@ async function hmacSign(payload: string, secret: string): Promise<string> {
 
 // --- CORS ---
 function corsHeaders(origin: string, allowed: string[]): Record<string, string> {
+  // If no allowed origins configured, allow all
   const isAllowed = allowed.length === 0 || allowed.includes(origin) || allowed.includes('*');
-  return {
-    'Access-Control-Allow-Origin': isAllowed ? origin || '*' : '',
+  const headers: Record<string, string> = {
     'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
     'Access-Control-Allow-Headers': 'Content-Type, Authorization, X-API-Key',
     'Access-Control-Allow-Credentials': 'true',
     'Access-Control-Max-Age': '86400',
   };
+  if (isAllowed && origin) {
+    headers['Access-Control-Allow-Origin'] = origin;
+  } else if (isAllowed) {
+    headers['Access-Control-Allow-Origin'] = '*';
+  }
+  // If not allowed, omit the header entirely — browser will block
+  return headers;
 }
 
 // --- Security Headers ---
