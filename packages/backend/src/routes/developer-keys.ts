@@ -29,6 +29,11 @@ export async function developerKeyRoutes(app: FastifyInstance) {
     const schema = z.object({
       label: z.string().max(100).optional(),
       mode: z.enum(['live', 'test']).optional(),
+      allowedIps: z.string().max(500).optional(),
+      allowedProviders: z.string().max(200).optional(),
+      allowedEndpoints: z.string().max(500).optional(),
+      alertEmail: z.string().email().optional(),
+      alertThreshold: z.number().int().min(1).optional(),
     });
 
     const parsed = schema.safeParse(request.body || {});
@@ -48,6 +53,11 @@ export async function developerKeyRoutes(app: FastifyInstance) {
         keyHash,
         label: parsed.data.label || 'Default',
         mode,
+        allowedIps: parsed.data.allowedIps,
+        allowedProviders: parsed.data.allowedProviders,
+        allowedEndpoints: parsed.data.allowedEndpoints,
+        alertEmail: parsed.data.alertEmail,
+        alertThreshold: parsed.data.alertThreshold,
       },
     });
 
@@ -86,6 +96,50 @@ export async function developerKeyRoutes(app: FastifyInstance) {
     };
   });
 
+  // Update security settings on a developer key
+  app.put('/:keyId/settings', { preHandler: requireAuth }, async (request, reply) => {
+    const { keyId } = request.params as { keyId: string };
+    const userId = request.auth!.userId;
+
+    const schema = z.object({
+      allowedIps: z.string().max(500).optional(),
+      allowedProviders: z.string().max(200).optional(),
+      allowedEndpoints: z.string().max(500).optional(),
+      alertEmail: z.string().email().optional(),
+      alertThreshold: z.number().int().min(1).optional(),
+    });
+
+    const parsed = schema.safeParse(request.body || {});
+    if (!parsed.success) {
+      return reply.status(400).send({ error: 'Invalid input', details: parsed.error.issues });
+    }
+
+    const key = await prisma.developerKey.findUnique({ where: { id: keyId } });
+    if (!key || key.userId !== userId) {
+      return reply.status(404).send({ error: 'Key not found' });
+    }
+
+    const updated = await prisma.developerKey.update({
+      where: { id: keyId },
+      data: {
+        allowedIps: parsed.data.allowedIps ?? key.allowedIps,
+        allowedProviders: parsed.data.allowedProviders ?? key.allowedProviders,
+        allowedEndpoints: parsed.data.allowedEndpoints ?? key.allowedEndpoints,
+        alertEmail: parsed.data.alertEmail ?? key.alertEmail,
+        alertThreshold: parsed.data.alertThreshold ?? key.alertThreshold,
+      },
+    });
+
+    return {
+      id: updated.id,
+      allowedIps: updated.allowedIps,
+      allowedProviders: updated.allowedProviders,
+      allowedEndpoints: updated.allowedEndpoints,
+      alertEmail: updated.alertEmail,
+      alertThreshold: updated.alertThreshold,
+    };
+  });
+
   // Revoke a developer key
   app.post('/:keyId/revoke', { preHandler: requireAuth }, async (request, reply) => {
     const { keyId } = request.params as { keyId: string };
@@ -112,7 +166,7 @@ export async function developerKeyRoutes(app: FastifyInstance) {
 export async function authenticateDevKey(
   request: any,
   reply: any
-): Promise<{ userId: string; keyId: string; rawKey: string } | null> {
+): Promise<{ userId: string; keyId: string; rawKey: string; devKey: any } | null> {
   const authHeader = request.headers.authorization as string;
   const apiKeyHeader = request.headers['x-api-key'] as string;
 
@@ -139,5 +193,5 @@ export async function authenticateDevKey(
     data: { lastUsed: new Date() },
   }).catch(() => {}); // Non-blocking
 
-  return { userId: devKey.userId, keyId: devKey.id, rawKey };
+  return { userId: devKey.userId, keyId: devKey.id, rawKey, devKey };
 }

@@ -24,16 +24,21 @@ model User {
 }
 
 model DeveloperKey {
-  id        String    @id @default(uuid())
-  userId    String    @map("user_id")
-  user      User      @relation(fields: [userId], references: [id])
-  key       String    @unique // "vp_live_..." or "vp_test_..."
-  keyHash   String    @unique @map("key_hash") // SHA-256 hash for lookup
-  label     String    @default("Default")
-  mode      String    @default("live") // "live" or "test"
-  lastUsed  DateTime? @map("last_used")
-  createdAt DateTime  @default(now()) @map("created_at")
-  revokedAt DateTime? @map("revoked_at")
+  id                 String    @id @default(uuid())
+  userId             String    @map("user_id")
+  user               User      @relation(fields: [userId], references: [id])
+  key                String    @unique // "vp_live_..." or "vp_test_..."
+  keyHash            String    @unique @map("key_hash") // SHA-256 hash for lookup
+  label              String    @default("Default")
+  mode               String    @default("live") // "live" or "test"
+  allowedIps         String?   @map("allowed_ips") // comma-separated IPs, null = allow all
+  allowedProviders   String?   @map("allowed_providers") // comma-separated: "openai,anthropic", null = allow all
+  allowedEndpoints   String?   @map("allowed_endpoints") // comma-separated: "/v1/chat/completions,/v1/models", null = allow all
+  alertEmail         String?   @map("alert_email") // email for usage alerts, null = no alerts
+  alertThreshold     Int?      @map("alert_threshold") // calls per hour to trigger alert, null = no alert
+  lastUsed           DateTime? @map("last_used")
+  createdAt          DateTime  @default(now()) @map("created_at")
+  revokedAt          DateTime? @map("revoked_at")
 
   @@map("developer_keys")
 }

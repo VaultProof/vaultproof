@@ -82,6 +82,32 @@ export async function transparentProxyRoutes(app: FastifyInstance) {
       return reply.status(401).send({ error: 'Invalid API key. Send your vp_live_ key as Bearer token.' });
     }
 
+    // --- b2. Enforce IP allowlist ---
+    if (auth.devKey.allowedIps) {
+      const clientIp = request.headers['x-forwarded-for'] as string || request.ip;
+      const allowed = auth.devKey.allowedIps.split(',').map((s: string) => s.trim());
+      if (!allowed.includes(clientIp)) {
+        return reply.status(403).send({ error: 'IP not allowed for this API key' });
+      }
+    }
+
+    // --- b3. Enforce provider restriction ---
+    if (auth.devKey.allowedProviders) {
+      const allowed = auth.devKey.allowedProviders.split(',').map((s: string) => s.trim());
+      if (!allowed.includes(provider)) {
+        return reply.status(403).send({ error: `Provider '${provider}' not allowed for this API key` });
+      }
+    }
+
+    // --- b4. Enforce endpoint restriction ---
+    if (auth.devKey.allowedEndpoints) {
+      const allowed = auth.devKey.allowedEndpoints.split(',').map((s: string) => s.trim());
+      const requestPath = '/' + wildcardPath;
+      if (!allowed.some((ep: string) => requestPath.startsWith(ep))) {
+        return reply.status(403).send({ error: 'Endpoint not allowed for this API key' });
+      }
+    }
+
     // --- c. Find active key slot for this provider ---
     const keySlot = await prisma.keySlot.findFirst({
       where: { userId: auth.userId, provider, status: 'ACTIVE' },
@@ -181,6 +207,19 @@ export async function transparentProxyRoutes(app: FastifyInstance) {
           }),
         },
       }).catch(() => {});
+
+      // Usage alert check (non-blocking)
+      if (auth.devKey.alertThreshold && auth.devKey.alertEmail) {
+        const oneHourAgo = new Date(Date.now() - 3600_000);
+        prisma.accessLog.count({
+          where: { appId: auth.devKey.id, timestamp: { gte: oneHourAgo } },
+        }).then(count => {
+          if (count >= auth.devKey.alertThreshold!) {
+            console.log(`ALERT: Dev key ${auth.devKey.id} exceeded ${auth.devKey.alertThreshold} calls/hour (${count}). Alert: ${auth.devKey.alertEmail}`);
+            // TODO: send actual email via Resend/SendGrid when configured
+          }
+        }).catch(() => {});
+      }
 
       // --- i. Handle SSE streaming ---
       if (contentType.includes('text/event-stream') && response.body) {

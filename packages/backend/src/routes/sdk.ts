@@ -40,6 +40,17 @@ export async function sdkRoutes(app: FastifyInstance) {
     if (!auth) {
       return reply.status(401).send({ error: 'Invalid API key. Use your vp_live_ key.' });
     }
+
+    // Enforce IP allowlist
+    const devKey = auth.devKey;
+    if (devKey.allowedIps) {
+      const clientIp = request.headers['x-forwarded-for'] as string || request.ip;
+      const allowed = devKey.allowedIps.split(',').map((s: string) => s.trim());
+      if (!allowed.includes(clientIp)) {
+        return reply.status(403).send({ error: 'IP not allowed for this API key' });
+      }
+    }
+
     (request as any).devAuth = auth;
   });
 
@@ -117,7 +128,7 @@ export async function sdkRoutes(app: FastifyInstance) {
       return reply.status(400).send({ error: 'Invalid input', details: parsed.error.issues });
     }
 
-    const { userId, rawKey: vpKey } = (request as any).devAuth;
+    const { userId, rawKey: vpKey, devKey: authDevKey } = (request as any).devAuth;
     const { keyId, path, method, body: reqBody, headers: reqHeaders } = parsed.data;
 
     // Load key slot
@@ -133,6 +144,22 @@ export async function sdkRoutes(app: FastifyInstance) {
 
     if (!keySlot.share2Encrypted || keySlot.share2Encrypted.length === 0) {
       return reply.status(400).send({ error: 'Share 2 not stored for this key. Re-store via SDK.' });
+    }
+
+    // Enforce provider restriction
+    if (authDevKey.allowedProviders) {
+      const allowed = authDevKey.allowedProviders.split(',').map((s: string) => s.trim());
+      if (!allowed.includes(keySlot.provider)) {
+        return reply.status(403).send({ error: `Provider '${keySlot.provider}' not allowed for this API key` });
+      }
+    }
+
+    // Enforce endpoint restriction
+    if (authDevKey.allowedEndpoints) {
+      const allowed = authDevKey.allowedEndpoints.split(',').map((s: string) => s.trim());
+      if (!allowed.some((ep: string) => path.startsWith(ep))) {
+        return reply.status(403).send({ error: 'Endpoint not allowed for this API key' });
+      }
     }
 
     const providerUrl = PROVIDER_URLS[keySlot.provider];
@@ -195,6 +222,19 @@ export async function sdkRoutes(app: FastifyInstance) {
           metadata: JSON.stringify({ endpoint: path, status_code: response.status, latency_ms: latencyMs }),
         },
       }).catch(() => {});
+
+      // Usage alert check (non-blocking)
+      if (authDevKey.alertThreshold && authDevKey.alertEmail) {
+        const oneHourAgo = new Date(Date.now() - 3600_000);
+        prisma.accessLog.count({
+          where: { appId: authDevKey.id, timestamp: { gte: oneHourAgo } },
+        }).then(count => {
+          if (count >= authDevKey.alertThreshold!) {
+            console.log(`ALERT: Dev key ${authDevKey.id} exceeded ${authDevKey.alertThreshold} calls/hour (${count}). Alert: ${authDevKey.alertEmail}`);
+            // TODO: send actual email via Resend/SendGrid when configured
+          }
+        }).catch(() => {});
+      }
 
       // SSE streaming — forward chunks as they arrive
       if (contentType.includes('text/event-stream') && response.body) {
