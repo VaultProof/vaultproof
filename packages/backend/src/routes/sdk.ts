@@ -23,7 +23,8 @@ import { encrypt, decrypt, zeroBuffer } from '../crypto/encryption.js';
 import { encryptShare2, decryptShare2 } from '../crypto/share2-encryption.js';
 import { authenticateDevKey } from './developer-keys.js';
 import { randomBytes } from 'crypto';
-import { sendUsageAlert, sendKeyExpiryWarning } from '../services/email.js';
+import { sendUsageAlert, sendKeyExpiryWarning, sendInvalidKeyAlert } from '../services/email.js';
+import { sendWebhook } from '../services/webhook.js';
 
 const prisma = new PrismaClient();
 
@@ -101,6 +102,14 @@ export async function sdkRoutes(app: FastifyInstance) {
     await prisma.appGrant.create({
       data: { keySlotId: keySlot.id, appId: devKeyId, appName: 'SDK' },
     });
+
+    // Webhook notification (non-blocking)
+    const authDevKeyStore = (request as any).devAuth.devKey;
+    if (authDevKeyStore.webhookUrl && authDevKeyStore.webhookSecret) {
+      sendWebhook(authDevKeyStore.webhookUrl, authDevKeyStore.webhookSecret, 'key.stored', {
+        keyId: keySlot.id, provider, label: keySlot.label,
+      });
+    }
 
     return {
       keyId: keySlot.id,
@@ -224,6 +233,18 @@ export async function sdkRoutes(app: FastifyInstance) {
         },
       }).catch(() => {});
 
+      // Webhook notification (non-blocking)
+      if (authDevKey.webhookUrl && authDevKey.webhookSecret) {
+        sendWebhook(authDevKey.webhookUrl, authDevKey.webhookSecret, 'proxy.call', {
+          keyId, path, status: response.status, latencyMs,
+        });
+      }
+
+      // Invalid key alert — notify if provider rejected the key (opt-in via alertEmail)
+      if ((response.status === 401 || response.status === 403) && authDevKey.alertEmail) {
+        sendInvalidKeyAlert(authDevKey.alertEmail, keySlot.label, keySlot.provider, response.status, path);
+      }
+
       // Usage alert check (non-blocking)
       if (authDevKey.alertThreshold && authDevKey.alertEmail) {
         const oneHourAgo = new Date(Date.now() - 3600_000);
@@ -302,6 +323,14 @@ export async function sdkRoutes(app: FastifyInstance) {
         share2Encrypted: Buffer.alloc(0),
       },
     });
+
+    // Webhook notification (non-blocking)
+    const authDevKeyRevoke = (request as any).devAuth.devKey;
+    if (authDevKeyRevoke.webhookUrl && authDevKeyRevoke.webhookSecret) {
+      sendWebhook(authDevKeyRevoke.webhookUrl, authDevKeyRevoke.webhookSecret, 'key.revoked', {
+        keyId,
+      });
+    }
 
     return { status: 'revoked' };
   });

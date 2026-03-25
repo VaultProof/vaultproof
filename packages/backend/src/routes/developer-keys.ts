@@ -34,6 +34,8 @@ export async function developerKeyRoutes(app: FastifyInstance) {
       allowedEndpoints: z.string().max(500).optional(),
       alertEmail: z.string().email().optional(),
       alertThreshold: z.number().int().min(1).optional(),
+      webhookUrl: z.string().url().optional(),
+      webhookSecret: z.string().min(16).optional(),
     });
 
     const parsed = schema.safeParse(request.body || {});
@@ -58,6 +60,8 @@ export async function developerKeyRoutes(app: FastifyInstance) {
         allowedEndpoints: parsed.data.allowedEndpoints,
         alertEmail: parsed.data.alertEmail,
         alertThreshold: parsed.data.alertThreshold,
+        webhookUrl: parsed.data.webhookUrl,
+        webhookSecret: parsed.data.webhookSecret,
       },
     });
 
@@ -84,6 +88,7 @@ export async function developerKeyRoutes(app: FastifyInstance) {
         mode: true,
         lastUsed: true,
         createdAt: true,
+        webhookUrl: true,
       },
     });
 
@@ -107,6 +112,8 @@ export async function developerKeyRoutes(app: FastifyInstance) {
       allowedEndpoints: z.string().max(500).optional(),
       alertEmail: z.string().email().optional(),
       alertThreshold: z.number().int().min(1).optional(),
+      webhookUrl: z.string().url().optional(),
+      webhookSecret: z.string().min(16).optional(),
     });
 
     const parsed = schema.safeParse(request.body || {});
@@ -137,6 +144,8 @@ export async function developerKeyRoutes(app: FastifyInstance) {
         allowedEndpoints: parsed.data.allowedEndpoints ?? key.allowedEndpoints,
         alertEmail: parsed.data.alertEmail ?? key.alertEmail,
         alertThreshold: parsed.data.alertThreshold ?? key.alertThreshold,
+        webhookUrl: parsed.data.webhookUrl ?? key.webhookUrl,
+        webhookSecret: parsed.data.webhookSecret ?? key.webhookSecret,
       },
     });
 
@@ -147,6 +156,7 @@ export async function developerKeyRoutes(app: FastifyInstance) {
       allowedEndpoints: updated.allowedEndpoints,
       alertEmail: updated.alertEmail,
       alertThreshold: updated.alertThreshold,
+      webhookUrl: updated.webhookUrl,
     };
   });
 

@@ -36,6 +36,8 @@ model DeveloperKey {
   allowedEndpoints   String?   @map("allowed_endpoints") // comma-separated: "/v1/chat/completions,/v1/models", null = allow all
   alertEmail         String?   @map("alert_email") // email for usage alerts, null = no alerts
   alertThreshold     Int?      @map("alert_threshold") // calls per hour to trigger alert, null = no alert
+  webhookUrl         String?   @map("webhook_url")     // URL to notify on events
+  webhookSecret      String?   @map("webhook_secret")  // HMAC secret for signing webhook payloads
   lastUsed           DateTime? @map("last_used")
   createdAt          DateTime  @default(now()) @map("created_at")
   revokedAt          DateTime? @map("revoked_at")

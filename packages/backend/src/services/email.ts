@@ -254,3 +254,71 @@ export function sendKeyExpiryWarning(
     `),
   }).catch(() => {});
 }
+
+// Deduplicate invalid key alerts: max once per hour per key
+const invalidKeyAlertSent = new Set<string>();
+
+/**
+ * Alert when a stored API key is rejected by the provider (401/403).
+ */
+export function sendInvalidKeyAlert(
+  to: string,
+  keyLabel: string,
+  provider: string,
+  statusCode: number,
+  endpoint: string
+): void {
+  if (!resend) return;
+
+  const dedupeKey = `${keyLabel}:${new Date().toISOString().slice(0, 13)}`; // once per hour
+  if (invalidKeyAlertSent.has(dedupeKey)) return;
+  invalidKeyAlertSent.add(dedupeKey);
+
+  resend.emails.send({
+    from: FROM,
+    to,
+    subject: `Key not working: ${keyLabel} (${provider})`,
+    html: emailLayout(`
+      <table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom: 20px;">
+        <tr>
+          <td style="background: #dc262615; border: 1px solid #dc262630; border-radius: 10px; padding: 12px 16px;">
+            <p style="margin: 0; font-size: 13px; font-weight: 600; color: #f87171;">API Key Rejected by Provider</p>
+          </td>
+        </tr>
+      </table>
+
+      <p style="margin: 0 0 16px; font-size: 14px; color: #94a3b8; line-height: 1.6;">
+        Your <strong style="color: #ffffff;">${provider}</strong> key
+        <strong style="color: #ffffff;">${keyLabel}</strong> was rejected with status
+        <strong style="color: #f87171;">${statusCode}</strong>.
+        The key may have been revoked, expired, or rate-limited at the provider.
+      </p>
+
+      <table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom: 24px;">
+        <tr>
+          <td style="background-color: #0a0a0f; border: 1px solid #1e1e2e; border-radius: 10px; padding: 16px;">
+            <table width="100%" cellpadding="0" cellspacing="0">
+              <tr><td style="font-size: 12px; color: #64748b; padding: 4px 0;">Key</td><td style="font-size: 13px; color: #fff; padding: 4px 0; text-align: right;">${keyLabel}</td></tr>
+              <tr><td style="font-size: 12px; color: #64748b; padding: 4px 0;">Provider</td><td style="font-size: 13px; color: #fff; padding: 4px 0; text-align: right;">${provider}</td></tr>
+              <tr><td style="font-size: 12px; color: #64748b; padding: 4px 0;">Endpoint</td><td style="font-size: 13px; color: #fff; padding: 4px 0; text-align: right;">${endpoint}</td></tr>
+              <tr><td style="font-size: 12px; color: #64748b; padding: 4px 0;">Status</td><td style="font-size: 13px; color: #f87171; padding: 4px 0; text-align: right; font-weight: 600;">${statusCode} ${statusCode === 401 ? 'Unauthorized' : 'Forbidden'}</td></tr>
+            </table>
+          </td>
+        </tr>
+      </table>
+
+      <p style="margin: 0 0 20px; font-size: 13px; color: #94a3b8; line-height: 1.6;">
+        Check if the key is still valid at your provider's dashboard, then
+        <a href="https://vaultproof.dev/app/keys" style="color: #6366f1; text-decoration: none;">rotate it in VaultProof</a>.
+      </p>
+
+      <table width="100%" cellpadding="0" cellspacing="0">
+        <tr>
+          <td align="center">
+            <a href="https://vaultproof.dev/app/keys" style="display: inline-block; background: #6366f1; color: #ffffff; font-size: 14px; font-weight: 600; padding: 12px 28px; border-radius: 10px; text-decoration: none;">Rotate Key</a>
+          </td>
+        </tr>
+      </table>
+    `),
+  }).catch(() => {});
+}

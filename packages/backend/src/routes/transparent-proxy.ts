@@ -16,7 +16,8 @@ import { decrypt, zeroBuffer } from '../crypto/encryption.js';
 import { decryptShare2 } from '../crypto/share2-encryption.js';
 import { authenticateDevKey } from './developer-keys.js';
 import { randomBytes } from 'crypto';
-import { sendUsageAlert } from '../services/email.js';
+import { sendUsageAlert, sendInvalidKeyAlert } from '../services/email.js';
+import { sendWebhook } from '../services/webhook.js';
 
 const prisma = new PrismaClient();
 
@@ -208,6 +209,18 @@ export async function transparentProxyRoutes(app: FastifyInstance) {
           }),
         },
       }).catch(() => {});
+
+      // Webhook notification (non-blocking)
+      if (auth.devKey.webhookUrl && auth.devKey.webhookSecret) {
+        sendWebhook(auth.devKey.webhookUrl, auth.devKey.webhookSecret, 'proxy.call', {
+          keyId: keySlot.id, path: `/${wildcardPath}`, status: response.status, latencyMs,
+        });
+      }
+
+      // Invalid key alert — notify if provider rejected the key (opt-in via alertEmail)
+      if ((response.status === 401 || response.status === 403) && auth.devKey.alertEmail) {
+        sendInvalidKeyAlert(auth.devKey.alertEmail, keySlot.label, keySlot.provider, response.status, '/' + wildcardPath);
+      }
 
       // Usage alert check (non-blocking)
       if (auth.devKey.alertThreshold && auth.devKey.alertEmail) {
