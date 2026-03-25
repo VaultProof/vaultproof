@@ -8,13 +8,29 @@ datasource db {
 }
 
 model User {
-  id           String    @id @default(uuid())
-  email        String    @unique
-  passwordHash String    @map("password_hash")
-  createdAt    DateTime  @default(now()) @map("created_at")
-  keySlots     KeySlot[]
+  id            String         @id @default(uuid())
+  email         String         @unique
+  passwordHash  String         @map("password_hash")
+  createdAt     DateTime       @default(now()) @map("created_at")
+  keySlots      KeySlot[]
+  developerKeys DeveloperKey[]
 
   @@map("users")
+}
+
+model DeveloperKey {
+  id        String    @id @default(uuid())
+  userId    String    @map("user_id")
+  user      User      @relation(fields: [userId], references: [id])
+  key       String    @unique // "vp_live_..." or "vp_test_..."
+  keyHash   String    @unique @map("key_hash") // SHA-256 hash for lookup
+  label     String    @default("Default")
+  mode      String    @default("live") // "live" or "test"
+  lastUsed  DateTime? @map("last_used")
+  createdAt DateTime  @default(now()) @map("created_at")
+  revokedAt DateTime? @map("revoked_at")
+
+  @@map("developer_keys")
 }
 
 model KeySlot {

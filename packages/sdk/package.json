@@ -15,9 +15,7 @@
     "build": "tsc",
     "test": "node --test dist/sdk.test.js"
   },
-  "dependencies": {
-    "@vaultproof/shamir": "1.0.0"
-  },
+  "dependencies": {},
   "devDependencies": {
     "typescript": "^5.7.0",
     "@types/node": "^22.0.0"

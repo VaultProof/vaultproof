@@ -8,6 +8,8 @@ import { authRoutes } from './routes/auth.js';
 import { keyRoutes } from './routes/keys.js';
 import { proxyRoutes } from './routes/proxy.js';
 import { statsRoutes } from './routes/stats.js';
+import { developerKeyRoutes } from './routes/developer-keys.js';
+import { sdkRoutes } from './routes/sdk.js';
 
 config();
 
@@ -55,6 +57,8 @@ async function start() {
   await app.register(keyRoutes, { prefix: '/api/v1/keys' });
   await app.register(proxyRoutes, { prefix: '/api/v1/proxy' });
   await app.register(statsRoutes, { prefix: '/api/v1/stats' });
+  await app.register(developerKeyRoutes, { prefix: '/api/v1/dev-keys' });
+  await app.register(sdkRoutes, { prefix: '/api/v1/sdk' });
 
   await app.listen({ port: PORT, host: '0.0.0.0' });
   console.log(`VaultProof backend running on port ${PORT}`);

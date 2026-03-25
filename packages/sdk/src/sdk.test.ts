@@ -3,36 +3,33 @@ import assert from 'node:assert/strict';
 import { VaultProof } from './index.js';
 
 describe('@vaultproof/sdk', () => {
-  it('creates an instance with string config', () => {
-    const vault = new VaultProof('https://example.com');
+  it('creates an instance with API key', () => {
+    const vault = new VaultProof('vp_live_test123abc');
     assert.ok(vault);
   });
 
-  it('creates an instance with object config', () => {
-    const vault = new VaultProof({ apiUrl: 'https://example.com', appId: 'my-app' });
-    assert.ok(vault);
-  });
-
-  it('throws when calling store without auth', async () => {
-    const vault = new VaultProof('https://example.com');
-    await assert.rejects(
-      () => vault.store('sk-test', 'openai'),
-      /Not authenticated/
+  it('rejects invalid API key prefix', () => {
+    assert.throws(
+      () => new VaultProof('sk-not-a-vaultproof-key'),
+      /Must start with vp_/
     );
   });
 
-  it('throws when calling list without auth', async () => {
-    const vault = new VaultProof('https://example.com');
-    await assert.rejects(
-      () => vault.list(),
-      /Not authenticated/
-    );
+  it('accepts custom API URL', () => {
+    const vault = new VaultProof('vp_live_test123', 'https://custom.api.com');
+    assert.ok(vault);
   });
 
-  it('can set token manually', () => {
-    const vault = new VaultProof('https://example.com');
-    vault.setToken('my-jwt-token');
-    // Should not throw on list (will fail on network, but auth check passes)
+  it('accepts test mode keys', () => {
+    const vault = new VaultProof('vp_test_abc123');
     assert.ok(vault);
+  });
+
+  it('proxy throws without share2 for string key ID', async () => {
+    const vault = new VaultProof('vp_live_test123');
+    await assert.rejects(
+      () => vault.proxy('some-key-id', '/v1/models'),
+      /Share2 not found/
+    );
   });
 });

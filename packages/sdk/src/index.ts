@@ -1,36 +1,24 @@
 /**
- * @vaultproof/sdk — Simple SDK for storing and using API keys through VaultProof.
+ * @vaultproof/sdk — The simplest way to manage API keys securely.
  *
  * Usage:
- *   const vault = new VaultProof('https://api.vaultproof.dev');
- *   await vault.login('user@example.com', 'password');
- *   const key = await vault.store('sk-my-openai-key', 'openai', 'Production');
- *   const response = await vault.proxy(key.id, '/v1/chat/completions', {
+ *   const vault = new VaultProof('vp_live_abc123...')
+ *   const key = await vault.store('sk-openai-key', 'openai', 'Production')
+ *   const res = await vault.proxy(key, '/v1/chat/completions', {
  *     model: 'gpt-4',
  *     messages: [{ role: 'user', content: 'Hello!' }]
- *   });
+ *   })
+ *   console.log(res.data)
  */
 
-import { splitString, serializeShare } from '@vaultproof/shamir';
-
-export interface VaultProofConfig {
-  /** Base URL of the VaultProof API (e.g., 'https://api.vaultproof.dev') */
-  apiUrl: string;
-  /** App ID for access control (default: 'sdk') */
-  appId?: string;
-}
+const DEFAULT_API_URL = 'https://api.vaultproof.dev';
 
 export interface StoredKey {
-  /** Key slot ID (UUID) */
   id: string;
-  /** Provider name */
   provider: string;
-  /** User-friendly label */
   label: string;
-  /** Serialized Share 2 (base64) — keep this secret, stored locally */
+  /** Keep this secret — needed for proxy calls */
   share2: string;
-  /** Vault commitment hash */
-  commitment: string;
 }
 
 export interface ProxyResponse {
@@ -41,124 +29,82 @@ export interface ProxyResponse {
 
 export class VaultProof {
   private apiUrl: string;
-  private appId: string;
-  private token: string | null = null;
-
-  constructor(config: string | VaultProofConfig) {
-    if (typeof config === 'string') {
-      this.apiUrl = config;
-      this.appId = 'sdk';
-    } else {
-      this.apiUrl = config.apiUrl;
-      this.appId = config.appId || 'sdk';
-    }
-  }
+  private apiKey: string;
+  private keyCache: Map<string, string> = new Map(); // keyId → share2
 
   /**
-   * Set an existing JWT token (if you already have one).
-   */
-  setToken(token: string): void {
-    this.token = token;
-  }
-
-  /**
-   * Register a new account.
-   */
-  async register(email: string, password: string): Promise<{ token: string; userId: string }> {
-    const res = await this.fetch('/api/v1/auth/register', {
-      method: 'POST',
-      body: { email, password },
-    });
-    this.token = res.token;
-    return { token: res.token, userId: res.user.id };
-  }
-
-  /**
-   * Login to an existing account.
-   */
-  async login(email: string, password: string): Promise<{ token: string; userId: string }> {
-    const res = await this.fetch('/api/v1/auth/login', {
-      method: 'POST',
-      body: { email, password },
-    });
-    this.token = res.token;
-    return { token: res.token, userId: res.user.id };
-  }
-
-  /**
-   * Store an API key. Shamir-splits it client-side, sends only Share 1 to vault.
+   * Create a VaultProof client.
    *
-   * @param apiKey - Your API key (e.g., 'sk-proj-...')
-   * @param provider - Provider name: 'openai', 'anthropic', 'google', 'together'
-   * @param label - Friendly label (e.g., 'Production GPT-4')
-   * @returns StoredKey object — save the `share2` field securely!
+   * @param apiKey - Your developer API key (starts with vp_live_ or vp_test_)
+   * @param apiUrl - API URL (default: https://api.vaultproof.dev)
+   */
+  constructor(apiKey: string, apiUrl?: string) {
+    if (!apiKey.startsWith('vp_')) {
+      throw new Error('Invalid API key. Must start with vp_live_ or vp_test_');
+    }
+    this.apiKey = apiKey;
+    this.apiUrl = apiUrl || DEFAULT_API_URL;
+  }
+
+  /**
+   * Store an API key securely.
+   * The key is Shamir-split server-side. Share 2 is returned to you.
+   *
+   * @param apiKey - The API key to store (e.g., 'sk-proj-...')
+   * @param provider - 'openai' | 'anthropic' | 'google' | 'together'
+   * @param label - Friendly name (e.g., 'Production GPT-4')
    */
   async store(apiKey: string, provider: string, label?: string): Promise<StoredKey> {
-    this.requireAuth();
-
-    // Split the key — it's destroyed after this
-    const shares = splitString(apiKey, 2, 2);
-    const share1 = serializeShare(shares[0]);
-    const share2 = serializeShare(shares[1]);
-
-    // Compute commitment
-    const commitment = await this.sha256(share1 + ':' + share2);
-
-    const res = await this.fetch('/api/v1/keys/store', {
+    const res = await this.fetch('/api/v1/sdk/store', {
       method: 'POST',
-      body: {
-        provider,
-        label: label || `${provider} key`,
-        share1,
-        vaultCommitment: commitment,
-        appId: this.appId,
-        appName: `VaultProof SDK (${this.appId})`,
-      },
-      auth: true,
+      body: { apiKey, provider, label },
     });
 
+    // Cache share2 for proxy calls
+    this.keyCache.set(res.keyId, res.share2);
+
     return {
-      id: res.keySlotId,
-      provider,
-      label: label || `${provider} key`,
-      share2,
-      commitment,
+      id: res.keyId,
+      provider: res.provider,
+      label: res.label,
+      share2: res.share2,
     };
   }
 
   /**
-   * Make a proxied API call through VaultProof.
-   * The key is reconstructed ephemerally — never stored whole on the server.
+   * Make a proxied API call. The stored key is reconstructed for ~100ms, used, then zeroed.
    *
-   * @param keyId - Key slot ID from store()
-   * @param share2 - Share 2 from store() result
-   * @param targetPath - API endpoint (e.g., '/v1/chat/completions')
-   * @param body - Request body (for POST/PUT)
+   * @param key - StoredKey from store(), or just the key ID (if share2 is cached)
+   * @param path - API endpoint (e.g., '/v1/chat/completions')
+   * @param body - Request body
    * @param method - HTTP method (default: 'POST')
    */
   async proxy(
-    keyId: string,
-    share2: string,
-    targetPath: string,
+    key: StoredKey | string,
+    path: string,
     body?: any,
     method: string = 'POST'
   ): Promise<ProxyResponse> {
-    const nullifier = this.randomId();
-    const proof = await this.sha256(share2 + ':' + nullifier);
+    let keyId: string;
+    let share2: string;
 
-    const res = await fetch(`${this.apiUrl}/api/v1/proxy/call`, {
+    if (typeof key === 'string') {
+      keyId = key;
+      share2 = this.keyCache.get(key) || '';
+      if (!share2) throw new Error('Share2 not found. Pass the full StoredKey object or call store() first.');
+    } else {
+      keyId = key.id;
+      share2 = key.share2;
+      this.keyCache.set(keyId, share2); // Cache for future calls
+    }
+
+    const res = await globalThis.fetch(`${this.apiUrl}/api/v1/sdk/call`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        keySlotId: keyId,
-        share2,
-        zkProof: proof,
-        nullifier,
-        appId: this.appId,
-        targetPath,
-        method,
-        body,
-      }),
+      headers: {
+        'Content-Type': 'application/json',
+        'X-API-Key': this.apiKey,
+      },
+      body: JSON.stringify({ keyId, share2, path, method, body }),
     });
 
     const data = await res.json().catch(() => null);
@@ -166,67 +112,36 @@ export class VaultProof {
   }
 
   /**
-   * List all your stored keys.
+   * List all stored keys.
    */
-  async list(): Promise<Array<{ id: string; provider: string; label: string; status: string; createdAt: string }>> {
-    this.requireAuth();
-    const res = await this.fetch('/api/v1/keys/list', { auth: true });
-    return res.keySlots || [];
+  async keys(): Promise<Array<{ id: string; provider: string; label: string; createdAt: string }>> {
+    const res = await this.fetch('/api/v1/sdk/keys');
+    return res.keys || [];
   }
 
   /**
-   * Revoke a key (destroys Share 1 on the server).
+   * Revoke a stored key. Share 1 is destroyed on the server.
    */
   async revoke(keyId: string): Promise<void> {
-    this.requireAuth();
-    await this.fetch(`/api/v1/keys/revoke/${keyId}`, { method: 'POST', auth: true });
+    await this.fetch('/api/v1/sdk/revoke', { method: 'POST', body: { keyId } });
+    this.keyCache.delete(keyId);
   }
 
-  /**
-   * Get usage stats.
-   */
-  async stats(): Promise<{ totalKeys: number; totalCalls: number; errorRate: number; activeApps: number }> {
-    this.requireAuth();
-    return this.fetch('/api/v1/stats/overview', { auth: true });
-  }
+  // --- Internal ---
 
-  // --- Helpers ---
-
-  private requireAuth() {
-    if (!this.token) throw new Error('Not authenticated. Call login() or setToken() first.');
-  }
-
-  private async fetch(path: string, opts: { method?: string; body?: any; auth?: boolean } = {}): Promise<any> {
-    const headers: Record<string, string> = { 'Content-Type': 'application/json' };
-    if (opts.auth && this.token) {
-      headers['Authorization'] = `Bearer ${this.token}`;
-    }
-
+  private async fetch(path: string, opts: { method?: string; body?: any } = {}): Promise<any> {
     const res = await globalThis.fetch(`${this.apiUrl}${path}`, {
       method: opts.method || 'GET',
-      headers,
+      headers: {
+        'Content-Type': 'application/json',
+        'X-API-Key': this.apiKey,
+      },
       body: opts.body ? JSON.stringify(opts.body) : undefined,
     });
 
     const data = await res.json().catch(() => ({}));
-    if (!res.ok) {
-      throw new Error(data.error || `Request failed: ${res.status}`);
-    }
+    if (!res.ok) throw new Error(data.error || `Request failed: ${res.status}`);
     return data;
-  }
-
-  private randomId(): string {
-    const bytes = new Uint8Array(32);
-    crypto.getRandomValues(bytes);
-    return Array.from(bytes).map((b) => b.toString(16).padStart(2, '0')).join('');
-  }
-
-  private async sha256(input: string): Promise<string> {
-    const data = new TextEncoder().encode(input);
-    const buf = new ArrayBuffer(data.length);
-    new Uint8Array(buf).set(data);
-    const hash = await crypto.subtle.digest('SHA-256', buf);
-    return Array.from(new Uint8Array(hash)).map((b) => b.toString(16).padStart(2, '0')).join('');
   }
 }
 
