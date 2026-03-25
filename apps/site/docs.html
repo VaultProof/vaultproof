@@ -5,6 +5,9 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Developer Documentation | VaultProof</title>
     <meta name="description" content="Complete developer documentation for VaultProof — the password manager for API keys. SDK, CLI, API reference, security architecture, and integration guides.">
+    <meta property="og:title" content="Developer Documentation | VaultProof">
+    <meta property="og:description" content="Complete developer documentation for VaultProof — SDK, CLI, API reference, security architecture, and integration guides.">
+    <meta property="og:url" content="https://vaultproof.dev/docs">
     <meta http-equiv="X-Content-Type-Options" content="nosniff">
     <meta http-equiv="X-Frame-Options" content="DENY">
     <meta name="referrer" content="strict-origin-when-cross-origin">
@@ -316,7 +319,7 @@
 })</pre>
                     </div>
 
-                    <div class="code-block">
+                    <div class="code-block mb-4">
                         <div class="code-header">Python</div>
 <pre class="text-gray-300"><span class="kw">import</span> openai
 
@@ -324,6 +327,26 @@ client = openai.<span class="fn">OpenAI</span>(
     api_key=<span class="str">"vp_live_..."</span>,
     base_url=<span class="str">"https://api.vaultproof.dev/v1/openai"</span>
 )</pre>
+                    </div>
+
+                    <div class="code-block mb-4">
+                        <div class="code-header">Groq (Node.js)</div>
+<pre class="text-gray-300"><span class="kw">import</span> Groq <span class="kw">from</span> <span class="str">'groq-sdk'</span>
+
+<span class="kw">const</span> client = <span class="kw">new</span> <span class="fn">Groq</span>({
+  apiKey: process.env.<span class="typ">VAULTPROOF_API_KEY</span>,
+  baseURL: <span class="str">'https://api.vaultproof.dev/v1/groq'</span>
+})</pre>
+                    </div>
+
+                    <div class="code-block">
+                        <div class="code-header">DeepSeek (Node.js)</div>
+<pre class="text-gray-300"><span class="kw">import</span> OpenAI <span class="kw">from</span> <span class="str">'openai'</span>
+
+<span class="kw">const</span> client = <span class="kw">new</span> <span class="fn">OpenAI</span>({
+  apiKey: process.env.<span class="typ">VAULTPROOF_API_KEY</span>,
+  baseURL: <span class="str">'https://api.vaultproof.dev/v1/deepseek'</span>
+})</pre>
                     </div>
                 </div>
 
@@ -726,9 +749,45 @@ $ vaultproof store -h</pre>
                                     <td><code class="font-mono text-xs">https://api.vaultproof.dev/v1/together</code></td>
                                     <td><code class="font-mono text-xs text-gray-500">https://api.together.xyz</code></td>
                                 </tr>
+                                <tr>
+                                    <td><code class="font-mono text-xs text-vp-accent">mistral</code></td>
+                                    <td><code class="font-mono text-xs">https://api.vaultproof.dev/v1/mistral</code></td>
+                                    <td><code class="font-mono text-xs text-gray-500">https://api.mistral.ai</code></td>
+                                </tr>
+                                <tr>
+                                    <td><code class="font-mono text-xs text-vp-accent">cohere</code></td>
+                                    <td><code class="font-mono text-xs">https://api.vaultproof.dev/v1/cohere</code></td>
+                                    <td><code class="font-mono text-xs text-gray-500">https://api.cohere.com</code></td>
+                                </tr>
+                                <tr>
+                                    <td><code class="font-mono text-xs text-vp-accent">groq</code></td>
+                                    <td><code class="font-mono text-xs">https://api.vaultproof.dev/v1/groq</code></td>
+                                    <td><code class="font-mono text-xs text-gray-500">https://api.groq.com</code></td>
+                                </tr>
+                                <tr>
+                                    <td><code class="font-mono text-xs text-vp-accent">perplexity</code></td>
+                                    <td><code class="font-mono text-xs">https://api.vaultproof.dev/v1/perplexity</code></td>
+                                    <td><code class="font-mono text-xs text-gray-500">https://api.perplexity.ai</code></td>
+                                </tr>
+                                <tr>
+                                    <td><code class="font-mono text-xs text-vp-accent">fireworks</code></td>
+                                    <td><code class="font-mono text-xs">https://api.vaultproof.dev/v1/fireworks</code></td>
+                                    <td><code class="font-mono text-xs text-gray-500">https://api.fireworks.ai</code></td>
+                                </tr>
+                                <tr>
+                                    <td><code class="font-mono text-xs text-vp-accent">deepseek</code></td>
+                                    <td><code class="font-mono text-xs">https://api.vaultproof.dev/v1/deepseek</code></td>
+                                    <td><code class="font-mono text-xs text-gray-500">https://api.deepseek.com</code></td>
+                                </tr>
+                                <tr>
+                                    <td><code class="font-mono text-xs text-vp-accent">replicate</code></td>
+                                    <td><code class="font-mono text-xs">https://api.vaultproof.dev/v1/replicate</code></td>
+                                    <td><code class="font-mono text-xs text-gray-500">https://api.replicate.com</code></td>
+                                </tr>
                             </tbody>
                         </table>
                     </div>
+                    <p class="text-gray-500 text-sm mt-3">You can also store keys for any custom provider. Custom providers work with the SDK and CLI but not the transparent proxy URL (no upstream URL configured).</p>
                 </div>
 
                 <!-- How Authentication Works -->
@@ -868,7 +927,7 @@ res = client.chat.completions.<span class="fn">create</span>(
                                         <td><code class="font-mono text-xs text-vp-accent">provider</code></td>
                                         <td><code class="font-mono text-xs">string</code></td>
                                         <td>Yes</td>
-                                        <td><code class="font-mono text-xs">'openai'</code> | <code class="font-mono text-xs">'anthropic'</code> | <code class="font-mono text-xs">'google'</code> | <code class="font-mono text-xs">'together'</code></td>
+                                        <td><code class="font-mono text-xs">'openai'</code> | <code class="font-mono text-xs">'anthropic'</code> | <code class="font-mono text-xs">'google'</code> | <code class="font-mono text-xs">'together'</code> | <code class="font-mono text-xs">'mistral'</code> | <code class="font-mono text-xs">'cohere'</code> | <code class="font-mono text-xs">'groq'</code> | <code class="font-mono text-xs">'perplexity'</code> | <code class="font-mono text-xs">'fireworks'</code> | <code class="font-mono text-xs">'deepseek'</code> | <code class="font-mono text-xs">'replicate'</code></td>
                                     </tr>
                                     <tr>
                                         <td><code class="font-mono text-xs text-vp-accent">label</code></td>
@@ -977,7 +1036,7 @@ res = client.chat.completions.<span class="fn">create</span>(
                                     <td class="text-white font-medium">Anthropic</td>
                                     <td><code class="font-mono text-xs text-vp-accent">'anthropic'</code></td>
                                     <td class="text-gray-500"><code class="font-mono text-xs">api.anthropic.com</code></td>
-                                    <td><code class="font-mono text-xs">x-api-key</code></td>
+                                    <td><code class="font-mono text-xs">x-api-key + anthropic-version</code></td>
                                 </tr>
                                 <tr>
                                     <td class="text-white font-medium">Google AI</td>
@@ -991,9 +1050,52 @@ res = client.chat.completions.<span class="fn">create</span>(
                                     <td class="text-gray-500"><code class="font-mono text-xs">api.together.xyz</code></td>
                                     <td><code class="font-mono text-xs">Authorization: Bearer</code></td>
                                 </tr>
+                                <tr>
+                                    <td class="text-white font-medium">Mistral</td>
+                                    <td><code class="font-mono text-xs text-vp-accent">'mistral'</code></td>
+                                    <td class="text-gray-500"><code class="font-mono text-xs">api.mistral.ai</code></td>
+                                    <td><code class="font-mono text-xs">Authorization: Bearer</code></td>
+                                </tr>
+                                <tr>
+                                    <td class="text-white font-medium">Cohere</td>
+                                    <td><code class="font-mono text-xs text-vp-accent">'cohere'</code></td>
+                                    <td class="text-gray-500"><code class="font-mono text-xs">api.cohere.com</code></td>
+                                    <td><code class="font-mono text-xs">Authorization: Bearer</code></td>
+                                </tr>
+                                <tr>
+                                    <td class="text-white font-medium">Groq</td>
+                                    <td><code class="font-mono text-xs text-vp-accent">'groq'</code></td>
+                                    <td class="text-gray-500"><code class="font-mono text-xs">api.groq.com</code></td>
+                                    <td><code class="font-mono text-xs">Authorization: Bearer</code></td>
+                                </tr>
+                                <tr>
+                                    <td class="text-white font-medium">Perplexity</td>
+                                    <td><code class="font-mono text-xs text-vp-accent">'perplexity'</code></td>
+                                    <td class="text-gray-500"><code class="font-mono text-xs">api.perplexity.ai</code></td>
+                                    <td><code class="font-mono text-xs">Authorization: Bearer</code></td>
+                                </tr>
+                                <tr>
+                                    <td class="text-white font-medium">Fireworks</td>
+                                    <td><code class="font-mono text-xs text-vp-accent">'fireworks'</code></td>
+                                    <td class="text-gray-500"><code class="font-mono text-xs">api.fireworks.ai</code></td>
+                                    <td><code class="font-mono text-xs">Authorization: Bearer</code></td>
+                                </tr>
+                                <tr>
+                                    <td class="text-white font-medium">DeepSeek</td>
+                                    <td><code class="font-mono text-xs text-vp-accent">'deepseek'</code></td>
+                                    <td class="text-gray-500"><code class="font-mono text-xs">api.deepseek.com</code></td>
+                                    <td><code class="font-mono text-xs">Authorization: Bearer</code></td>
+                                </tr>
+                                <tr>
+                                    <td class="text-white font-medium">Replicate</td>
+                                    <td><code class="font-mono text-xs text-vp-accent">'replicate'</code></td>
+                                    <td class="text-gray-500"><code class="font-mono text-xs">api.replicate.com</code></td>
+                                    <td><code class="font-mono text-xs">Authorization: Bearer</code></td>
+                                </tr>
                             </tbody>
                         </table>
                     </div>
+                    <p class="text-gray-500 text-sm mt-3">You can also store keys for any custom provider. Custom providers work with the SDK and CLI but not the transparent proxy URL (no upstream URL configured).</p>
                 </div>
             </section>
 
@@ -1073,7 +1175,7 @@ res = client.chat.completions.<span class="fn">create</span>(
                                     <td><code class="font-mono text-xs text-vp-accent">providers</code></td>
                                     <td><code class="font-mono text-xs">string[]</code></td>
                                     <td>No</td>
-                                    <td>Which providers to show. Default: all (<code class="font-mono text-xs">'openai'</code>, <code class="font-mono text-xs">'anthropic'</code>, <code class="font-mono text-xs">'google'</code>, <code class="font-mono text-xs">'together'</code>)</td>
+                                    <td>Which providers to show. Default: all (<code class="font-mono text-xs">'openai'</code>, <code class="font-mono text-xs">'anthropic'</code>, <code class="font-mono text-xs">'google'</code>, <code class="font-mono text-xs">'together'</code>, <code class="font-mono text-xs">'mistral'</code>, <code class="font-mono text-xs">'cohere'</code>, <code class="font-mono text-xs">'groq'</code>, <code class="font-mono text-xs">'perplexity'</code>, <code class="font-mono text-xs">'fireworks'</code>, <code class="font-mono text-xs">'deepseek'</code>, <code class="font-mono text-xs">'replicate'</code>)</td>
                                 </tr>
                                 <tr>
                                     <td><code class="font-mono text-xs text-vp-accent">onSuccess</code></td>
@@ -1122,9 +1224,17 @@ res = client.chat.completions.<span class="fn">create</span>(
                                 <tr><td class="text-white">Anthropic</td><td><code class="font-mono text-xs text-vp-accent">'anthropic'</code></td><td><code class="font-mono text-xs">sk-ant-...</code></td><td><a href="https://console.anthropic.com/settings/keys" class="text-vp-accent text-xs hover:underline">Get key</a></td></tr>
                                 <tr><td class="text-white">Google AI</td><td><code class="font-mono text-xs text-vp-accent">'google'</code></td><td><code class="font-mono text-xs">AIza...</code></td><td><a href="https://aistudio.google.com/app/apikey" class="text-vp-accent text-xs hover:underline">Get key</a></td></tr>
                                 <tr><td class="text-white">Together.ai</td><td><code class="font-mono text-xs text-vp-accent">'together'</code></td><td><code class="font-mono text-xs">tgp-...</code></td><td><a href="https://api.together.xyz/settings/api-keys" class="text-vp-accent text-xs hover:underline">Get key</a></td></tr>
+                                <tr><td class="text-white">Mistral</td><td><code class="font-mono text-xs text-vp-accent">'mistral'</code></td><td><code class="font-mono text-xs">--</code></td><td><a href="https://console.mistral.ai/api-keys" class="text-vp-accent text-xs hover:underline">Get key</a></td></tr>
+                                <tr><td class="text-white">Cohere</td><td><code class="font-mono text-xs text-vp-accent">'cohere'</code></td><td><code class="font-mono text-xs">--</code></td><td><a href="https://dashboard.cohere.com/api-keys" class="text-vp-accent text-xs hover:underline">Get key</a></td></tr>
+                                <tr><td class="text-white">Groq</td><td><code class="font-mono text-xs text-vp-accent">'groq'</code></td><td><code class="font-mono text-xs">gsk_...</code></td><td><a href="https://console.groq.com/keys" class="text-vp-accent text-xs hover:underline">Get key</a></td></tr>
+                                <tr><td class="text-white">Perplexity</td><td><code class="font-mono text-xs text-vp-accent">'perplexity'</code></td><td><code class="font-mono text-xs">pplx-...</code></td><td><a href="https://www.perplexity.ai/settings/api" class="text-vp-accent text-xs hover:underline">Get key</a></td></tr>
+                                <tr><td class="text-white">Fireworks</td><td><code class="font-mono text-xs text-vp-accent">'fireworks'</code></td><td><code class="font-mono text-xs">fw_...</code></td><td><a href="https://fireworks.ai/api-keys" class="text-vp-accent text-xs hover:underline">Get key</a></td></tr>
+                                <tr><td class="text-white">DeepSeek</td><td><code class="font-mono text-xs text-vp-accent">'deepseek'</code></td><td><code class="font-mono text-xs">sk-...</code></td><td><a href="https://platform.deepseek.com/api_keys" class="text-vp-accent text-xs hover:underline">Get key</a></td></tr>
+                                <tr><td class="text-white">Replicate</td><td><code class="font-mono text-xs text-vp-accent">'replicate'</code></td><td><code class="font-mono text-xs">r8_...</code></td><td><a href="https://replicate.com/account/api-tokens" class="text-vp-accent text-xs hover:underline">Get key</a></td></tr>
                             </tbody>
                         </table>
                     </div>
+                    <p class="text-gray-500 text-sm mt-3">You can also store keys for any custom provider. Custom providers work with the SDK and CLI but not the transparent proxy URL (no upstream URL configured).</p>
                 </div>
             </section>
 
@@ -1258,7 +1368,7 @@ $ vaultproof l</pre>
                                 <table class="doc-table">
                                     <thead><tr><th>Flag</th><th>Description</th><th>Required</th></tr></thead>
                                     <tbody>
-                                        <tr><td><code class="font-mono text-xs text-vp-accent">-p, --provider &lt;name&gt;</code></td><td>API provider (openai, anthropic, google, etc.)</td><td>Yes</td></tr>
+                                        <tr><td><code class="font-mono text-xs text-vp-accent">-p, --provider &lt;name&gt;</code></td><td>API provider (openai, anthropic, google, together, mistral, cohere, groq, perplexity, fireworks, deepseek, replicate, or custom)</td><td>Yes</td></tr>
                                         <tr><td><code class="font-mono text-xs text-vp-accent">-l, --label &lt;text&gt;</code></td><td>Label for this key</td><td>No</td></tr>
                                     </tbody>
                                 </table>
