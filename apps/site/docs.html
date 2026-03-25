@@ -1,450 +1,1643 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" class="scroll-smooth">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>API Docs | VaultProof</title>
+    <title>Developer Documentation | VaultProof</title>
+    <meta name="description" content="Complete developer documentation for VaultProof — the password manager for API keys. SDK, CLI, API reference, security architecture, and integration guides.">
+    <meta http-equiv="X-Content-Type-Options" content="nosniff">
+    <meta http-equiv="X-Frame-Options" content="DENY">
+    <meta name="referrer" content="strict-origin-when-cross-origin">
+
     <script src="https://cdn.tailwindcss.com"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
     <script>
-        tailwind.config = { theme: { extend: { colors: { 'dark-blue': '#0a0e1a', 'dark-blue-lighter': '#0f1628' } } } };
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        'vp-bg': '#0a0a0f',
+                        'vp-surface': '#111118',
+                        'vp-border': '#1e1e2e',
+                        'vp-accent': '#6366f1',
+                        'vp-cyan': '#06b6d4',
+                    },
+                    fontFamily: {
+                        sans: ['Inter', 'system-ui', 'sans-serif'],
+                        mono: ['JetBrains Mono', 'monospace'],
+                    }
+                }
+            }
+        }
     </script>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+
     <style>
-        :root { font-family: 'Geist', sans-serif; }
-        body { background: linear-gradient(180deg, #0a0e1a 0%, #0d1220 50%, #0a0e1a 100%); }
-        .mono { font-family: 'JetBrains Mono', monospace; }
-        pre { tab-size: 2; }
+        * { font-family: 'Inter', system-ui, sans-serif; }
+        ::selection { background: #6366f1; color: #fff; }
+        body { background: #0a0a0f; }
+
+        /* Sidebar */
+        .sidebar { scrollbar-width: thin; scrollbar-color: #1e1e2e transparent; }
+        .sidebar::-webkit-scrollbar { width: 4px; }
+        .sidebar::-webkit-scrollbar-track { background: transparent; }
+        .sidebar::-webkit-scrollbar-thumb { background: #1e1e2e; border-radius: 4px; }
+
+        /* Nav active state */
+        .nav-link { transition: all 0.15s ease; border-left: 2px solid transparent; }
+        .nav-link:hover { color: #e2e8f0; border-left-color: #333; }
+        .nav-link.active { color: #6366f1; border-left-color: #6366f1; background: rgba(99,102,241,0.05); }
+
+        /* Code blocks */
+        .code-block {
+            background: #0d0d14;
+            border: 1px solid #1e1e2e;
+            border-radius: 12px;
+            overflow-x: auto;
+            font-family: 'JetBrains Mono', monospace;
+        }
+        .code-block pre { padding: 1.25rem; font-size: 0.8125rem; line-height: 1.7; }
+        .code-header {
+            background: #111118;
+            border-bottom: 1px solid #1e1e2e;
+            padding: 0.5rem 1rem;
+            font-size: 0.75rem;
+            color: #64748b;
+            font-family: 'JetBrains Mono', monospace;
+            border-radius: 12px 12px 0 0;
+        }
+        .code-header + pre { border-radius: 0 0 12px 12px; }
+
+        /* Syntax highlighting */
+        .kw { color: #c084fc; }
+        .str { color: #34d399; }
+        .cmt { color: #475569; }
+        .fn { color: #fbbf24; }
+        .num { color: #f472b6; }
+        .typ { color: #60a5fa; }
+
+        /* Tables */
+        .doc-table { width: 100%; font-size: 0.875rem; }
+        .doc-table th { text-align: left; padding: 0.75rem 1rem; color: #94a3b8; border-bottom: 1px solid #1e1e2e; font-weight: 500; }
+        .doc-table td { padding: 0.75rem 1rem; border-bottom: 1px solid #1e1e2e; color: #cbd5e1; }
+        .doc-table tr:last-child td { border-bottom: none; }
+
+        /* Endpoint cards */
+        .endpoint-card { background: #111118; border: 1px solid #1e1e2e; border-radius: 12px; padding: 1.5rem; }
+        .method-badge { font-size: 0.6875rem; font-weight: 700; padding: 0.25rem 0.5rem; border-radius: 4px; font-family: 'JetBrains Mono', monospace; }
+        .method-get { background: rgba(59,130,246,0.15); color: #60a5fa; }
+        .method-post { background: rgba(34,197,94,0.15); color: #4ade80; }
+        .method-delete { background: rgba(239,68,68,0.15); color: #f87171; }
+
+        /* Flow diagrams */
+        .flow-step {
+            position: relative;
+            padding-left: 2.5rem;
+            padding-bottom: 1.5rem;
+        }
+        .flow-step::before {
+            content: attr(data-step);
+            position: absolute;
+            left: 0;
+            top: 0;
+            width: 1.75rem;
+            height: 1.75rem;
+            background: rgba(99,102,241,0.15);
+            color: #6366f1;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.75rem;
+            font-weight: 600;
+        }
+        .flow-step::after {
+            content: '';
+            position: absolute;
+            left: 0.8125rem;
+            top: 1.75rem;
+            bottom: 0;
+            width: 1px;
+            background: #1e1e2e;
+        }
+        .flow-step:last-child::after { display: none; }
+        .flow-step:last-child { padding-bottom: 0; }
+
+        /* Callout boxes */
+        .callout-info { background: rgba(99,102,241,0.06); border: 1px solid rgba(99,102,241,0.2); border-radius: 12px; padding: 1rem 1.25rem; }
+        .callout-warn { background: rgba(251,191,36,0.06); border: 1px solid rgba(251,191,36,0.2); border-radius: 12px; padding: 1rem 1.25rem; }
+        .callout-danger { background: rgba(239,68,68,0.06); border: 1px solid rgba(239,68,68,0.2); border-radius: 12px; padding: 1rem 1.25rem; }
+
+        /* Smooth scroll offset for sticky header */
+        section[id] { scroll-margin-top: 2rem; }
+
+        /* Breach scenario table */
+        .breach-table td:first-child { color: #f87171; font-weight: 500; }
+        .breach-table td:nth-child(2) { color: #4ade80; }
     </style>
 </head>
-<body class="text-gray-200 min-h-screen">
-    <!-- Nav -->
-    <nav class="flex items-center justify-between px-6 py-5 max-w-5xl mx-auto">
-        <a href="/" class="flex items-center gap-2"><span class="text-xl font-bold text-white">VaultProof</span><span class="text-xs text-gray-500 ml-1">Docs</span></a>
-        <div class="flex items-center gap-6">
-            <a href="/" class="text-sm text-gray-400 hover:text-white transition">Home</a>
-            <a href="/app/login" class="bg-indigo-600 hover:bg-indigo-500 text-sm px-4 py-2 rounded-lg font-medium text-white transition">Dashboard</a>
+<body class="text-gray-300 min-h-screen">
+
+    <!-- Top Nav -->
+    <nav class="fixed top-0 left-0 right-0 z-50 border-b border-vp-border bg-vp-bg/90 backdrop-blur-xl">
+        <div class="flex items-center justify-between px-6 py-4 max-w-[1400px] mx-auto">
+            <div class="flex items-center gap-4">
+                <a href="/" class="flex items-center gap-2">
+                    <span class="text-xl font-bold text-white">VaultProof</span>
+                </a>
+                <span class="text-vp-border">|</span>
+                <span class="text-sm text-gray-500 font-medium">Developer Documentation</span>
+            </div>
+            <div class="flex items-center gap-5">
+                <a href="/" class="text-sm text-gray-400 hover:text-white transition">Home</a>
+                <a href="/app/login" class="bg-vp-accent hover:bg-indigo-500 text-sm px-4 py-2 rounded-xl font-medium text-white transition">Dashboard</a>
+            </div>
         </div>
     </nav>
 
-    <div class="max-w-5xl mx-auto px-6 py-8">
-        <h1 class="text-4xl font-extrabold text-white mb-2">API Documentation</h1>
-        <p class="text-gray-500 mb-10">Everything you need to integrate VaultProof into your app.</p>
+    <div class="flex max-w-[1400px] mx-auto pt-[73px]">
 
-        <!-- Quick Start -->
-        <section class="mb-12">
-            <h2 class="text-2xl font-bold text-white mb-4">Quick Start</h2>
-            <p class="text-gray-400 text-sm mb-4">Three lines. That's it.</p>
-            <div class="bg-dark-blue-lighter border border-gray-800 rounded-2xl p-6 mono text-sm overflow-x-auto">
-<pre class="text-gray-300 leading-relaxed"><span class="text-gray-500">// 1. Install</span>
-<span class="text-green-400">npm install @vaultproof/sdk</span>
+        <!-- Sidebar -->
+        <aside class="sidebar hidden lg:block fixed top-[73px] left-0 w-[260px] h-[calc(100vh-73px)] overflow-y-auto border-r border-vp-border py-8 px-5" style="left: max(0px, calc((100vw - 1400px) / 2));">
+            <nav class="space-y-1" id="sidebar-nav">
+                <a href="#overview" class="nav-link block text-sm text-gray-500 py-1.5 px-3 rounded-r">Overview</a>
+                <a href="#quick-start" class="nav-link block text-sm text-gray-500 py-1.5 px-3 rounded-r">Quick Start</a>
 
-<span class="text-gray-500">// 2. Initialize with your developer API key</span>
-<span class="text-purple-400">import</span> VaultProof <span class="text-purple-400">from</span> <span class="text-green-400">'@vaultproof/sdk'</span>
-<span class="text-purple-400">const</span> vault = <span class="text-purple-400">new</span> <span class="text-yellow-300">VaultProof</span>(<span class="text-green-400">'vp_live_abc123...'</span>)
+                <div class="pt-4 pb-1 px-3 text-[0.6875rem] font-semibold text-gray-600 uppercase tracking-wider">Architecture</div>
+                <a href="#how-it-works" class="nav-link block text-sm text-gray-500 py-1.5 px-3 rounded-r">How It Works</a>
+                <a href="#key-storage-flow" class="nav-link block text-sm text-gray-500 py-1.5 px-3 rounded-r pl-6">Key Storage Flow</a>
+                <a href="#proxy-call-flow" class="nav-link block text-sm text-gray-500 py-1.5 px-3 rounded-r pl-6">Proxy Call Flow</a>
+                <a href="#breach-scenarios" class="nav-link block text-sm text-gray-500 py-1.5 px-3 rounded-r pl-6">Breach Scenarios</a>
+                <a href="#shamir" class="nav-link block text-sm text-gray-500 py-1.5 px-3 rounded-r pl-6">Shamir Secret Sharing</a>
+                <a href="#zk-proofs" class="nav-link block text-sm text-gray-500 py-1.5 px-3 rounded-r pl-6">Zero-Knowledge Proofs</a>
 
-<span class="text-gray-500">// 3. Store a key and make proxied calls</span>
-<span class="text-purple-400">const</span> key = <span class="text-purple-400">await</span> vault.store(<span class="text-green-400">'sk-openai-key'</span>, <span class="text-green-400">'openai'</span>, <span class="text-green-400">'Production'</span>)
+                <div class="pt-4 pb-1 px-3 text-[0.6875rem] font-semibold text-gray-600 uppercase tracking-wider">References</div>
+                <a href="#sdk-reference" class="nav-link block text-sm text-gray-500 py-1.5 px-3 rounded-r">SDK Reference</a>
+                <a href="#cli-reference" class="nav-link block text-sm text-gray-500 py-1.5 px-3 rounded-r">CLI Reference</a>
+                <a href="#dashboard" class="nav-link block text-sm text-gray-500 py-1.5 px-3 rounded-r">Dashboard</a>
+                <a href="#api-reference" class="nav-link block text-sm text-gray-500 py-1.5 px-3 rounded-r">API Reference</a>
 
-<span class="text-purple-400">const</span> res = <span class="text-purple-400">await</span> vault.proxy(key, <span class="text-green-400">'/v1/chat/completions'</span>, {
-  model: <span class="text-green-400">'gpt-4'</span>,
-  messages: [{ role: <span class="text-green-400">'user'</span>, content: <span class="text-green-400">'Hello!'</span> }]
-})
-</pre>
-            </div>
-        </section>
+                <div class="pt-4 pb-1 px-3 text-[0.6875rem] font-semibold text-gray-600 uppercase tracking-wider">More</div>
+                <a href="#security-architecture" class="nav-link block text-sm text-gray-500 py-1.5 px-3 rounded-r">Security Architecture</a>
+                <a href="#faq" class="nav-link block text-sm text-gray-500 py-1.5 px-3 rounded-r">FAQ</a>
+            </nav>
+        </aside>
 
-        <!-- Base URL -->
-        <section class="mb-12">
-            <h2 class="text-2xl font-bold text-white mb-4">Base URL</h2>
-            <div class="bg-dark-blue-lighter border border-gray-800 rounded-xl p-4 mono text-sm">
-                <span class="text-green-400">https://api.vaultproof.dev</span>
-            </div>
-            <p class="text-gray-500 text-sm mt-2">All requests go through Cloudflare's edge network (330+ cities). HMAC-signed and rate-limited.</p>
-        </section>
+        <!-- Main Content -->
+        <main class="flex-1 lg:ml-[260px] px-6 md:px-12 py-10 max-w-4xl">
 
-        <!-- Auth -->
-        <section class="mb-12">
-            <h2 class="text-2xl font-bold text-white mb-6">Authentication</h2>
 
-            <div class="space-y-6">
-                <div class="bg-dark-blue-lighter border border-gray-800 rounded-2xl p-6">
-                    <div class="flex items-center gap-3 mb-3">
-                        <span class="bg-green-900/50 text-green-400 text-xs font-bold px-2 py-1 rounded">POST</span>
-                        <code class="mono text-sm text-white">/api/v1/auth/register</code>
+            <!-- ============================================================ -->
+            <!-- SECTION 1: OVERVIEW -->
+            <!-- ============================================================ -->
+            <section id="overview" class="mb-20">
+                <h1 class="text-4xl font-extrabold text-white mb-3 tracking-tight">VaultProof Documentation</h1>
+                <p class="text-lg text-gray-400 mb-8 leading-relaxed max-w-2xl">Everything you need to store, protect, and proxy your API keys with zero-knowledge security.</p>
+
+                <div class="bg-vp-surface border border-vp-border rounded-xl p-6 mb-8">
+                    <h2 class="text-xl font-bold text-white mb-3">What is VaultProof?</h2>
+                    <p class="text-gray-400 leading-relaxed mb-4">
+                        VaultProof is a security layer for API keys. It splits your keys using Shamir Secret Sharing, encrypts the shares separately, and reassembles them only for the milliseconds it takes to make a proxied API call. Your raw API key is never stored whole on any server.
+                    </p>
+                    <p class="text-gray-400 leading-relaxed mb-4">
+                        It is built for developers who work with third-party API keys -- OpenAI, Anthropic, Google AI, Together.ai, and more. If you have ever committed a key to GitHub, emailed a key to a teammate, or stored a key in plaintext in a .env file on a server, VaultProof solves that problem.
+                    </p>
+                    <div class="callout-warn mt-5">
+                        <p class="text-sm text-amber-200"><strong class="text-amber-300">The problem is real:</strong> In 2024, GitHub detected 39 million leaked secrets in public repositories. API keys are the number one attack vector for credential theft. One leaked OpenAI key can cost you thousands of dollars in minutes.</p>
                     </div>
-                    <p class="text-gray-400 text-sm mb-3">Create a new account.</p>
-                    <div class="mono text-xs bg-gray-900/50 rounded-xl p-4 overflow-x-auto">
-<pre class="text-gray-300">Request:  { "email": "you@example.com", "password": "min8chars" }
-Response: { "token": "eyJ...", "user": { "id": "uuid", "email": "..." } }</pre>
+                </div>
+
+                <div class="grid md:grid-cols-3 gap-4">
+                    <div class="bg-vp-surface border border-vp-border rounded-xl p-5">
+                        <div class="text-vp-accent font-semibold mb-2">Store</div>
+                        <p class="text-sm text-gray-500">Split and encrypt API keys with Shamir Secret Sharing. No one -- including us -- can see the full key.</p>
+                    </div>
+                    <div class="bg-vp-surface border border-vp-border rounded-xl p-5">
+                        <div class="text-vp-accent font-semibold mb-2">Proxy</div>
+                        <p class="text-sm text-gray-500">Make API calls through VaultProof. The key is reconstructed in memory for ~100ms, then destroyed.</p>
+                    </div>
+                    <div class="bg-vp-surface border border-vp-border rounded-xl p-5">
+                        <div class="text-vp-accent font-semibold mb-2">Audit</div>
+                        <p class="text-sm text-gray-500">Every proxied call is logged with timestamp, endpoint, status code, and latency. Full audit trail.</p>
+                    </div>
+                </div>
+            </section>
+
+
+            <!-- ============================================================ -->
+            <!-- SECTION 2: QUICK START -->
+            <!-- ============================================================ -->
+            <section id="quick-start" class="mb-20">
+                <h2 class="text-3xl font-bold text-white mb-2">Quick Start</h2>
+                <p class="text-gray-500 mb-8">Three ways to get started. Pick the one that fits your workflow.</p>
+
+                <!-- Path A: SDK -->
+                <div class="mb-8">
+                    <div class="flex items-center gap-3 mb-4">
+                        <span class="bg-vp-accent/15 text-vp-accent text-xs font-bold px-2.5 py-1 rounded">RECOMMENDED</span>
+                        <h3 class="text-lg font-semibold text-white">Path A: SDK (for applications)</h3>
+                    </div>
+
+                    <div class="code-block mb-4">
+                        <div class="code-header">terminal</div>
+<pre class="text-gray-300"><span class="str">npm install @vaultproof/sdk</span></pre>
+                    </div>
+
+                    <div class="code-block">
+                        <div class="code-header">app.js</div>
+<pre class="text-gray-300"><span class="kw">import</span> VaultProof <span class="kw">from</span> <span class="str">'@vaultproof/sdk'</span>
+
+<span class="cmt">// Initialize with your developer API key</span>
+<span class="kw">const</span> vault = <span class="kw">new</span> <span class="fn">VaultProof</span>(process.env.<span class="typ">VAULTPROOF_API_KEY</span>)
+
+<span class="cmt">// Store an API key (split + encrypted automatically)</span>
+<span class="kw">const</span> key = <span class="kw">await</span> vault.<span class="fn">store</span>(<span class="str">'sk-openai-key-here'</span>, <span class="str">'openai'</span>, <span class="str">'Production'</span>)
+
+<span class="cmt">// Make a proxied API call (key reconstructed for ~100ms, then zeroed)</span>
+<span class="kw">const</span> res = <span class="kw">await</span> vault.<span class="fn">proxy</span>(key.id, <span class="str">'/v1/chat/completions'</span>, {
+  model: <span class="str">'gpt-4'</span>,
+  messages: [{ role: <span class="str">'user'</span>, content: <span class="str">'Hello!'</span> }]
+})</pre>
                     </div>
                 </div>
 
-                <div class="bg-dark-blue-lighter border border-gray-800 rounded-2xl p-6">
-                    <div class="flex items-center gap-3 mb-3">
-                        <span class="bg-green-900/50 text-green-400 text-xs font-bold px-2 py-1 rounded">POST</span>
-                        <code class="mono text-sm text-white">/api/v1/auth/login</code>
+                <!-- Path B: CLI -->
+                <div class="mb-8">
+                    <h3 class="text-lg font-semibold text-white mb-4">Path B: CLI (for terminal and CI/CD)</h3>
+
+                    <div class="code-block mb-4">
+                        <div class="code-header">terminal</div>
+<pre class="text-gray-300"><span class="str">npm install -g @vaultproof/cli</span></pre>
                     </div>
-                    <p class="text-gray-400 text-sm mb-3">Login and get a JWT token (valid 7 days).</p>
-                    <div class="mono text-xs bg-gray-900/50 rounded-xl p-4 overflow-x-auto">
-<pre class="text-gray-300">Request:  { "email": "you@example.com", "password": "yourpass" }
-Response: { "token": "eyJ...", "user": { "id": "uuid", "email": "..." } }</pre>
+
+                    <div class="code-block">
+                        <div class="code-header">terminal</div>
+<pre class="text-gray-300"><span class="cmt"># Authenticate</span>
+<span class="str">vaultproof login</span>
+
+<span class="cmt"># Store a key (you'll be prompted to paste it securely)</span>
+<span class="str">vaultproof store --provider openai --label "Production"</span>
+
+<span class="cmt"># Make a proxied API call</span>
+<span class="str">vaultproof proxy --key KEY_ID --path /v1/models --method GET</span></pre>
                     </div>
                 </div>
-            </div>
-            <p class="text-gray-500 text-sm mt-4">Include the token in all subsequent requests: <code class="mono text-xs text-indigo-400">Authorization: Bearer &lt;token&gt;</code></p>
-        </section>
 
-        <!-- Developer API Keys -->
-        <section class="mb-12">
-            <h2 class="text-2xl font-bold text-white mb-6">Developer API Keys</h2>
-            <p class="text-gray-400 text-sm mb-4">Developer API keys let you authenticate SDK calls without managing JWTs. They use a <code class="mono text-xs text-indigo-400">vp_live_</code> prefix and are scoped to your account.</p>
-
-            <div class="bg-dark-blue-lighter border border-gray-800 rounded-2xl p-6 mb-6">
-                <h3 class="text-lg font-semibold text-white mb-3">Getting Your Key</h3>
-                <ol class="list-decimal list-inside space-y-2 text-sm text-gray-400">
-                    <li>Go to <strong class="text-white">Settings &rarr; API Keys &rarr; Create Key</strong></li>
-                    <li>You'll receive a <code class="mono text-xs text-indigo-400">vp_live_</code> prefixed key</li>
-                    <li>Add it to your <code class="mono text-xs text-indigo-400">.env</code> file:</li>
-                </ol>
-                <div class="mt-3 mono text-xs bg-gray-900/50 rounded-xl p-4 overflow-x-auto">
-<pre class="text-gray-300">VAULTPROOF_API_KEY=vp_live_...</pre>
-                </div>
-            </div>
-
-            <div class="bg-dark-blue-lighter border border-gray-800 rounded-2xl p-6">
-                <h3 class="text-lg font-semibold text-white mb-3">Using With the SDK</h3>
-                <div class="mono text-xs bg-gray-900/50 rounded-xl p-4 overflow-x-auto">
-<pre class="text-gray-300"><span class="text-purple-400">import</span> VaultProof <span class="text-purple-400">from</span> <span class="text-green-400">'@vaultproof/sdk'</span>
-
-<span class="text-purple-400">const</span> vault = <span class="text-purple-400">new</span> <span class="text-yellow-300">VaultProof</span>(process.env.<span class="text-indigo-400">VAULTPROOF_API_KEY</span>)
-<span class="text-gray-500">// That's it — all SDK methods are now authenticated</span></pre>
-                </div>
-            </div>
-        </section>
-
-        <!-- Keys -->
-        <section class="mb-12">
-            <h2 class="text-2xl font-bold text-white mb-6">Key Management</h2>
-
-            <div class="space-y-6">
-                <div class="bg-dark-blue-lighter border border-gray-800 rounded-2xl p-6">
-                    <div class="flex items-center gap-3 mb-3">
-                        <span class="bg-green-900/50 text-green-400 text-xs font-bold px-2 py-1 rounded">POST</span>
-                        <code class="mono text-sm text-white">/api/v1/keys/store</code>
-                        <span class="text-xs text-yellow-400">Auth required</span>
+                <!-- Path C: Dashboard -->
+                <div>
+                    <h3 class="text-lg font-semibold text-white mb-4">Path C: Dashboard (for manual management)</h3>
+                    <div class="bg-vp-surface border border-vp-border rounded-xl p-5">
+                        <ol class="list-decimal list-inside space-y-2 text-sm text-gray-400">
+                            <li>Go to <a href="/app/login" class="text-vp-accent hover:underline">vaultproof.dev/app</a> and create an account or log in</li>
+                            <li>Navigate to <strong class="text-white">Keys</strong> and click <strong class="text-white">Add Key</strong></li>
+                            <li>Paste your API key, select the provider, and add a label</li>
+                            <li>Click <strong class="text-white">Test Key</strong> to verify it works through the proxy</li>
+                            <li>Go to <strong class="text-white">Settings &rarr; API Keys</strong> to create a <code class="font-mono text-xs text-vp-accent">vp_live_</code> developer key for SDK use</li>
+                        </ol>
                     </div>
-                    <p class="text-gray-400 text-sm mb-3">Store a Shamir-split API key. Send only Share 1 (encrypted server-side). Keep Share 2 on device.</p>
-                    <div class="mono text-xs bg-gray-900/50 rounded-xl p-4 overflow-x-auto">
-<pre class="text-gray-300">Request: {
-  "provider": "openai",        <span class="text-gray-600">// openai | anthropic | google | together</span>
-  "label": "Production GPT-4", <span class="text-gray-600">// optional friendly name</span>
-  "share1": "base64...",       <span class="text-gray-600">// Shamir Share 1 (base64 serialized)</span>
-  "vaultCommitment": "hex...", <span class="text-gray-600">// Hash commitment for ZK verification</span>
-  "appId": "my-app",           <span class="text-gray-600">// optional app identifier</span>
-  "appName": "My App"          <span class="text-gray-600">// optional app name</span>
+                </div>
+            </section>
+
+
+            <!-- ============================================================ -->
+            <!-- SECTION 3: HOW IT WORKS -->
+            <!-- ============================================================ -->
+            <section id="how-it-works" class="mb-20">
+                <h2 class="text-3xl font-bold text-white mb-2">How It Works</h2>
+                <p class="text-gray-500 mb-10">A deep dive into the cryptographic pipeline that protects your keys.</p>
+
+                <!-- 3.1 Key Storage Flow -->
+                <div id="key-storage-flow" class="mb-14">
+                    <h3 class="text-xl font-semibold text-white mb-6">3.1 Key Storage Flow</h3>
+                    <p class="text-gray-400 text-sm mb-6">When you call <code class="font-mono text-xs text-vp-accent">vault.store()</code>, here is exactly what happens:</p>
+
+                    <div class="space-y-0">
+                        <div class="flow-step" data-step="1">
+                            <div class="text-white font-medium text-sm mb-1">You provide the raw API key</div>
+                            <p class="text-gray-500 text-sm">You call <code class="font-mono text-xs text-vp-accent">vault.store('sk-openai-key', 'openai', 'Production')</code>. The SDK receives the raw key in local memory.</p>
+                        </div>
+                        <div class="flow-step" data-step="2">
+                            <div class="text-white font-medium text-sm mb-1">Shamir Secret Sharing splits the key</div>
+                            <p class="text-gray-500 text-sm">The SDK uses Shamir Secret Sharing over GF(256) with polynomial interpolation to split the key into exactly 2 shares. Each share alone is cryptographic garbage -- indistinguishable from random bytes. Neither share reveals any information about the original key.</p>
+                        </div>
+                        <div class="flow-step" data-step="3">
+                            <div class="text-white font-medium text-sm mb-1">Share 1 is encrypted with the server key</div>
+                            <p class="text-gray-500 text-sm">Share 1 is sent to the VaultProof server, where it is encrypted with <strong class="text-gray-300">AES-256-GCM</strong> using the server-side <code class="font-mono text-xs text-vp-accent">VAULT_ENCRYPTION_KEY</code>. A unique IV and salt are generated per encryption. The ciphertext and auth tag are stored in PostgreSQL.</p>
+                        </div>
+                        <div class="flow-step" data-step="4">
+                            <div class="text-white font-medium text-sm mb-1">Share 2 is encrypted with your developer key</div>
+                            <p class="text-gray-500 text-sm">Share 2 is encrypted with <strong class="text-gray-300">AES-256-GCM</strong> using a key derived from your <code class="font-mono text-xs text-vp-accent">vp_live_</code> developer API key. This encrypted share is also stored server-side, but it cannot be decrypted without your developer key.</p>
+                        </div>
+                        <div class="flow-step" data-step="5">
+                            <div class="text-white font-medium text-sm mb-1">Raw key is destroyed</div>
+                            <p class="text-gray-500 text-sm">The original API key is zeroed from memory immediately after splitting. It never leaves your machine whole. From this point forward, the key only exists as two separately encrypted shares.</p>
+                        </div>
+                        <div class="flow-step" data-step="6">
+                            <div class="text-white font-medium text-sm mb-1">Key slot ID returned</div>
+                            <p class="text-gray-500 text-sm">The server returns a <code class="font-mono text-xs text-vp-accent">keyId</code> (UUID). You use this ID for all future proxy calls. The SDK caches Share 2 locally for subsequent requests.</p>
+                        </div>
+                    </div>
+
+                    <div class="callout-info mt-6">
+                        <p class="text-sm text-indigo-300"><strong>Key point:</strong> At no point does the VaultProof server possess enough information to reconstruct your API key on its own. The server holds encrypted Share 1 (locked with the server key) and encrypted Share 2 (locked with your developer key). Both decryption keys are needed.</p>
+                    </div>
+                </div>
+
+                <!-- 3.2 Proxy Call Flow -->
+                <div id="proxy-call-flow" class="mb-14">
+                    <h3 class="text-xl font-semibold text-white mb-6">3.2 Proxy Call Flow</h3>
+                    <p class="text-gray-400 text-sm mb-6">When you call <code class="font-mono text-xs text-vp-accent">vault.proxy()</code>, the key is temporarily reconstructed to make the API call on your behalf:</p>
+
+                    <div class="space-y-0">
+                        <div class="flow-step" data-step="1">
+                            <div class="text-white font-medium text-sm mb-1">You initiate the proxy call</div>
+                            <p class="text-gray-500 text-sm">You call <code class="font-mono text-xs text-vp-accent">vault.proxy(keyId, '/v1/chat/completions', body)</code>. The SDK sends your developer key in the <code class="font-mono text-xs">X-API-Key</code> header over HTTPS.</p>
+                        </div>
+                        <div class="flow-step" data-step="2">
+                            <div class="text-white font-medium text-sm mb-1">Edge proxy validates and forwards</div>
+                            <p class="text-gray-500 text-sm">The request hits Cloudflare's edge network. The edge worker HMAC-signs the request with <code class="font-mono text-xs text-vp-accent">HMAC-SHA256</code> and forwards it to the backend. Unsigned or rate-limited requests are rejected at the edge.</p>
+                        </div>
+                        <div class="flow-step" data-step="3">
+                            <div class="text-white font-medium text-sm mb-1">Server decrypts Share 1</div>
+                            <p class="text-gray-500 text-sm">The backend retrieves the encrypted Share 1 from PostgreSQL and decrypts it using <code class="font-mono text-xs text-vp-accent">VAULT_ENCRYPTION_KEY</code> with AES-256-GCM. The auth tag is verified to detect tampering.</p>
+                        </div>
+                        <div class="flow-step" data-step="4">
+                            <div class="text-white font-medium text-sm mb-1">Server decrypts Share 2</div>
+                            <p class="text-gray-500 text-sm">The backend decrypts Share 2 using a key derived from your <code class="font-mono text-xs text-vp-accent">vp_live_</code> developer key (sent in the request header). Both shares are now in plaintext in server RAM.</p>
+                        </div>
+                        <div class="flow-step" data-step="5">
+                            <div class="text-white font-medium text-sm mb-1">Shamir reconstruction</div>
+                            <p class="text-gray-500 text-sm">The two shares are combined via Shamir polynomial interpolation to reconstruct the original API key. The full key now exists in RAM.</p>
+                        </div>
+                        <div class="flow-step" data-step="6">
+                            <div class="text-white font-medium text-sm mb-1">API call made to provider</div>
+                            <p class="text-gray-500 text-sm">The server makes the HTTP request to the provider (OpenAI, Anthropic, etc.) using the reconstructed key in the appropriate auth header. Streaming (SSE) is supported for LLM APIs.</p>
+                        </div>
+                        <div class="flow-step" data-step="7">
+                            <div class="text-white font-medium text-sm mb-1">Key zeroed from memory</div>
+                            <p class="text-gray-500 text-sm">Immediately after the API call completes, the reconstructed key and both plaintext shares are overwritten with zeros in memory. The key existed in RAM for approximately 100ms. It never touches disk, logs, or persistent storage.</p>
+                        </div>
+                        <div class="flow-step" data-step="8">
+                            <div class="text-white font-medium text-sm mb-1">Response forwarded to you</div>
+                            <p class="text-gray-500 text-sm">The provider's response is forwarded directly to your application. For streaming responses, SSE events are piped through in real time.</p>
+                        </div>
+                        <div class="flow-step" data-step="9">
+                            <div class="text-white font-medium text-sm mb-1">Access logged</div>
+                            <p class="text-gray-500 text-sm">The call is logged with: timestamp, endpoint path, HTTP method, response status code, latency (ms), provider, and key ID. The request/response body is never logged.</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 3.3 Breach Scenarios -->
+                <div id="breach-scenarios" class="mb-14">
+                    <h3 class="text-xl font-semibold text-white mb-6">3.3 What Happens in a Breach</h3>
+                    <p class="text-gray-400 text-sm mb-6">VaultProof is designed so that compromising any single component does not expose your API keys. Here is what an attacker gets in each scenario:</p>
+
+                    <div class="bg-vp-surface border border-vp-border rounded-xl overflow-hidden">
+                        <table class="doc-table breach-table">
+                            <thead>
+                                <tr>
+                                    <th>Scenario</th>
+                                    <th>What Attacker Gets</th>
+                                    <th>Can They Reconstruct Keys?</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td>Database breached</td>
+                                    <td class="text-gray-400">Two encrypted blobs per key (AES-256-GCM ciphertext). Without either decryption key, this is indistinguishable from random data.</td>
+                                    <td><span class="text-red-400 font-semibold">No</span></td>
+                                </tr>
+                                <tr>
+                                    <td>VAULT_ENCRYPTION_KEY leaked</td>
+                                    <td class="text-gray-400">Can decrypt Share 1. But Share 2 is still encrypted with the user's <code class="font-mono text-xs text-vp-accent">vp_live_</code> key. One share alone reveals nothing (Shamir property).</td>
+                                    <td><span class="text-red-400 font-semibold">No</span></td>
+                                </tr>
+                                <tr>
+                                    <td>vp_live_ key leaked</td>
+                                    <td class="text-gray-400">Can decrypt Share 2. But Share 1 is still encrypted with <code class="font-mono text-xs">VAULT_ENCRYPTION_KEY</code>. One share alone reveals nothing.</td>
+                                    <td><span class="text-red-400 font-semibold">No</span></td>
+                                </tr>
+                                <tr>
+                                    <td>Database + VAULT_ENCRYPTION_KEY</td>
+                                    <td class="text-gray-400">Decrypted Share 1. Encrypted Share 2 (still locked).</td>
+                                    <td><span class="text-red-400 font-semibold">No</span></td>
+                                </tr>
+                                <tr>
+                                    <td>Database + vp_live_ key</td>
+                                    <td class="text-gray-400">Encrypted Share 1 (still locked). Decrypted Share 2.</td>
+                                    <td><span class="text-red-400 font-semibold">No</span></td>
+                                </tr>
+                                <tr>
+                                    <td class="!text-amber-400">All three compromised</td>
+                                    <td class="text-gray-400">Both shares decrypted. Shamir reconstruction possible.</td>
+                                    <td><span class="text-amber-400 font-semibold">Yes</span> -- requires all three</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <div class="callout-danger mt-6">
+                        <p class="text-sm text-red-300"><strong>Three independent secrets</strong> must all be compromised simultaneously to reconstruct any API key: (1) the database contents, (2) the server-side <code class="font-mono text-xs">VAULT_ENCRYPTION_KEY</code>, and (3) the user's <code class="font-mono text-xs">vp_live_</code> developer key. These are stored in different systems with different access controls.</p>
+                    </div>
+                </div>
+
+                <!-- 3.4 Shamir Secret Sharing -->
+                <div id="shamir" class="mb-14">
+                    <h3 class="text-xl font-semibold text-white mb-6">3.4 Shamir Secret Sharing Explained</h3>
+
+                    <div class="bg-vp-surface border border-vp-border rounded-xl p-6 mb-6">
+                        <h4 class="text-white font-medium mb-3">The simple version</h4>
+                        <p class="text-gray-400 text-sm leading-relaxed">
+                            Think of it like tearing a photo in half. Each half looks like random noise -- you cannot tell what the photo is from either piece alone. Only when you put both halves together do you see the picture. VaultProof tears your API key into two pieces of cryptographic noise. Each piece is then locked in a separate safe with a separate key. To see the photo again, you need to open both safes.
+                        </p>
+                    </div>
+
+                    <div class="bg-vp-surface border border-vp-border rounded-xl p-6">
+                        <h4 class="text-white font-medium mb-3">The technical version</h4>
+                        <p class="text-gray-400 text-sm leading-relaxed mb-4">
+                            Shamir Secret Sharing (SSS) works over a finite field -- in VaultProof's case, <strong class="text-gray-300">GF(256)</strong> (the Galois Field with 256 elements, where each element fits in one byte).
+                        </p>
+                        <p class="text-gray-400 text-sm leading-relaxed mb-4">
+                            For each byte of the secret, the algorithm constructs a random polynomial of degree <code class="font-mono text-xs text-vp-accent">k-1</code> (where <code class="font-mono text-xs text-vp-accent">k=2</code> is the threshold). The constant term of the polynomial is the secret byte. The shares are evaluations of this polynomial at distinct non-zero points in GF(256).
+                        </p>
+                        <p class="text-gray-400 text-sm leading-relaxed mb-4">
+                            With a 2-of-2 threshold scheme, this means: a random polynomial <code class="font-mono text-xs text-vp-accent">f(x) = a1*x + s</code> is constructed for each byte <code class="font-mono text-xs text-vp-accent">s</code> of the key, where <code class="font-mono text-xs text-vp-accent">a1</code> is a random coefficient. Share 1 = <code class="font-mono text-xs text-vp-accent">f(1)</code>, Share 2 = <code class="font-mono text-xs text-vp-accent">f(2)</code>. Given only one share, the attacker has one equation with two unknowns -- every possible value of the secret is equally likely.
+                        </p>
+                        <p class="text-gray-400 text-sm leading-relaxed">
+                            Reconstruction uses <strong class="text-gray-300">Lagrange interpolation</strong> over GF(256) to recover the original polynomial from 2 evaluation points, then reads the constant term (the secret byte).
+                        </p>
+                    </div>
+                </div>
+
+                <!-- 3.5 Zero-Knowledge Proofs -->
+                <div id="zk-proofs">
+                    <h3 class="text-xl font-semibold text-white mb-6">3.5 Zero-Knowledge Proofs</h3>
+                    <p class="text-gray-400 text-sm mb-6">For advanced security, VaultProof uses zero-knowledge proofs (ZK proofs) written in <a href="https://noir-lang.org" class="text-vp-accent hover:underline" target="_blank" rel="noopener">Noir</a> and verified with Barretenberg. The ZK circuit proves three things without revealing any sensitive data:</p>
+
+                    <div class="grid md:grid-cols-3 gap-4 mb-6">
+                        <div class="bg-vp-surface border border-vp-border rounded-xl p-5">
+                            <div class="text-vp-accent font-semibold text-sm mb-2">1. Ownership</div>
+                            <p class="text-gray-500 text-xs leading-relaxed">You own the key slot you are requesting access to. The proof verifies your vault commitment hash matches without revealing the key material.</p>
+                        </div>
+                        <div class="bg-vp-surface border border-vp-border rounded-xl p-5">
+                            <div class="text-vp-accent font-semibold text-sm mb-2">2. Authorization</div>
+                            <p class="text-gray-500 text-xs leading-relaxed">The requesting application has been granted access to this key slot. The proof checks the app grant without exposing the grant chain.</p>
+                        </div>
+                        <div class="bg-vp-surface border border-vp-border rounded-xl p-5">
+                            <div class="text-vp-accent font-semibold text-sm mb-2">3. Freshness</div>
+                            <p class="text-gray-500 text-xs leading-relaxed">The request is fresh and not replayed. Each proof includes a unique nullifier that is stored server-side. If the same nullifier appears twice, the request is rejected.</p>
+                        </div>
+                    </div>
+
+                    <div class="callout-info">
+                        <p class="text-sm text-indigo-300"><strong>Note:</strong> When using the SDK, ZK proof generation is handled automatically. You do not need to interact with the Noir circuit directly. The SDK generates proofs client-side before each proxy call.</p>
+                    </div>
+                </div>
+            </section>
+
+
+            <!-- ============================================================ -->
+            <!-- SECTION 4: SDK REFERENCE -->
+            <!-- ============================================================ -->
+            <section id="sdk-reference" class="mb-20">
+                <h2 class="text-3xl font-bold text-white mb-2">SDK Reference</h2>
+                <p class="text-gray-500 mb-8">The JavaScript/TypeScript SDK for storing keys and making proxied API calls.</p>
+
+                <!-- Installation -->
+                <div class="mb-8">
+                    <h3 class="text-lg font-semibold text-white mb-4">Installation</h3>
+                    <div class="code-block">
+                        <div class="code-header">terminal</div>
+<pre class="text-gray-300"><span class="str">npm install @vaultproof/sdk</span>
+<span class="cmt"># or</span>
+<span class="str">yarn add @vaultproof/sdk</span>
+<span class="cmt"># or</span>
+<span class="str">pnpm add @vaultproof/sdk</span></pre>
+                    </div>
+                </div>
+
+                <!-- Constructor -->
+                <div class="mb-8">
+                    <h3 class="text-lg font-semibold text-white mb-4">Constructor</h3>
+                    <div class="code-block mb-4">
+<pre class="text-gray-300"><span class="kw">new</span> <span class="fn">VaultProof</span>(apiKey: <span class="typ">string</span>, apiUrl?: <span class="typ">string</span>)</pre>
+                    </div>
+                    <div class="bg-vp-surface border border-vp-border rounded-xl overflow-hidden">
+                        <table class="doc-table">
+                            <thead><tr><th>Parameter</th><th>Type</th><th>Required</th><th>Description</th></tr></thead>
+                            <tbody>
+                                <tr>
+                                    <td><code class="font-mono text-xs text-vp-accent">apiKey</code></td>
+                                    <td><code class="font-mono text-xs">string</code></td>
+                                    <td>Yes</td>
+                                    <td>Your <code class="font-mono text-xs text-vp-accent">vp_live_</code> or <code class="font-mono text-xs text-vp-accent">vp_test_</code> developer API key</td>
+                                </tr>
+                                <tr>
+                                    <td><code class="font-mono text-xs text-vp-accent">apiUrl</code></td>
+                                    <td><code class="font-mono text-xs">string</code></td>
+                                    <td>No</td>
+                                    <td>Custom API URL. Default: <code class="font-mono text-xs">https://api.vaultproof.dev</code></td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                    <div class="code-block mt-4">
+                        <div class="code-header">example</div>
+<pre class="text-gray-300"><span class="kw">import</span> VaultProof <span class="kw">from</span> <span class="str">'@vaultproof/sdk'</span>
+
+<span class="cmt">// Production</span>
+<span class="kw">const</span> vault = <span class="kw">new</span> <span class="fn">VaultProof</span>(process.env.<span class="typ">VAULTPROOF_API_KEY</span>)
+
+<span class="cmt">// Custom API URL (self-hosted or staging)</span>
+<span class="kw">const</span> vault = <span class="kw">new</span> <span class="fn">VaultProof</span>(<span class="str">'vp_test_...'</span>, <span class="str">'https://staging-api.vaultproof.dev'</span>)</pre>
+                    </div>
+                </div>
+
+                <!-- Methods -->
+                <div class="mb-8">
+                    <h3 class="text-lg font-semibold text-white mb-6">Methods</h3>
+
+                    <!-- vault.store -->
+                    <div class="endpoint-card mb-6">
+                        <h4 class="text-white font-mono text-sm font-semibold mb-3">vault.store(apiKey, provider, label?)</h4>
+                        <p class="text-gray-400 text-sm mb-4">Splits an API key using Shamir Secret Sharing, encrypts both shares, and stores them on the VaultProof server. The raw key is destroyed after splitting.</p>
+                        <div class="bg-vp-surface border border-vp-border rounded-xl overflow-hidden mb-4">
+                            <table class="doc-table">
+                                <thead><tr><th>Parameter</th><th>Type</th><th>Required</th><th>Description</th></tr></thead>
+                                <tbody>
+                                    <tr>
+                                        <td><code class="font-mono text-xs text-vp-accent">apiKey</code></td>
+                                        <td><code class="font-mono text-xs">string</code></td>
+                                        <td>Yes</td>
+                                        <td>The raw API key to store</td>
+                                    </tr>
+                                    <tr>
+                                        <td><code class="font-mono text-xs text-vp-accent">provider</code></td>
+                                        <td><code class="font-mono text-xs">string</code></td>
+                                        <td>Yes</td>
+                                        <td><code class="font-mono text-xs">'openai'</code> | <code class="font-mono text-xs">'anthropic'</code> | <code class="font-mono text-xs">'google'</code> | <code class="font-mono text-xs">'together'</code></td>
+                                    </tr>
+                                    <tr>
+                                        <td><code class="font-mono text-xs text-vp-accent">label</code></td>
+                                        <td><code class="font-mono text-xs">string</code></td>
+                                        <td>No</td>
+                                        <td>Friendly name (e.g., "Production", "Staging")</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                        <p class="text-gray-500 text-xs mb-2">Returns:</p>
+                        <div class="code-block">
+<pre class="text-gray-300">{ id: <span class="str">"uuid"</span>, provider: <span class="str">"openai"</span>, label: <span class="str">"Production"</span> }</pre>
+                        </div>
+                    </div>
+
+                    <!-- vault.proxy -->
+                    <div class="endpoint-card mb-6">
+                        <h4 class="text-white font-mono text-sm font-semibold mb-3">vault.proxy(keyId, path, body?, method?)</h4>
+                        <p class="text-gray-400 text-sm mb-4">Makes a proxied API call through VaultProof. The key is reconstructed in server RAM for approximately 100ms, then zeroed. The provider's response is returned directly.</p>
+                        <div class="bg-vp-surface border border-vp-border rounded-xl overflow-hidden mb-4">
+                            <table class="doc-table">
+                                <thead><tr><th>Parameter</th><th>Type</th><th>Required</th><th>Description</th></tr></thead>
+                                <tbody>
+                                    <tr>
+                                        <td><code class="font-mono text-xs text-vp-accent">keyId</code></td>
+                                        <td><code class="font-mono text-xs">string</code></td>
+                                        <td>Yes</td>
+                                        <td>Key slot ID returned from <code class="font-mono text-xs">store()</code></td>
+                                    </tr>
+                                    <tr>
+                                        <td><code class="font-mono text-xs text-vp-accent">path</code></td>
+                                        <td><code class="font-mono text-xs">string</code></td>
+                                        <td>Yes</td>
+                                        <td>API endpoint path (e.g., <code class="font-mono text-xs">'/v1/chat/completions'</code>)</td>
+                                    </tr>
+                                    <tr>
+                                        <td><code class="font-mono text-xs text-vp-accent">body</code></td>
+                                        <td><code class="font-mono text-xs">object</code></td>
+                                        <td>No</td>
+                                        <td>Request body forwarded to the provider</td>
+                                    </tr>
+                                    <tr>
+                                        <td><code class="font-mono text-xs text-vp-accent">method</code></td>
+                                        <td><code class="font-mono text-xs">string</code></td>
+                                        <td>No</td>
+                                        <td>HTTP method. Default: <code class="font-mono text-xs">'POST'</code></td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                        <p class="text-gray-500 text-xs mb-2">Returns:</p>
+                        <div class="code-block">
+<pre class="text-gray-300">{ status: <span class="num">200</span>, data: { <span class="cmt">/* provider response */</span> }, ok: <span class="kw">true</span> }</pre>
+                        </div>
+                    </div>
+
+                    <!-- vault.keys -->
+                    <div class="endpoint-card mb-6">
+                        <h4 class="text-white font-mono text-sm font-semibold mb-3">vault.keys()</h4>
+                        <p class="text-gray-400 text-sm mb-4">Lists all stored keys associated with your developer API key.</p>
+                        <p class="text-gray-500 text-xs mb-2">Returns:</p>
+                        <div class="code-block">
+<pre class="text-gray-300">[
+  { id: <span class="str">"uuid"</span>, provider: <span class="str">"openai"</span>, label: <span class="str">"Production"</span>, createdAt: <span class="str">"2026-03-24T..."</span> },
+  { id: <span class="str">"uuid"</span>, provider: <span class="str">"anthropic"</span>, label: <span class="str">"Staging"</span>, createdAt: <span class="str">"2026-03-22T..."</span> }
+]</pre>
+                        </div>
+                    </div>
+
+                    <!-- vault.revoke -->
+                    <div class="endpoint-card">
+                        <h4 class="text-white font-mono text-sm font-semibold mb-3">vault.revoke(keyId)</h4>
+                        <p class="text-gray-400 text-sm mb-4">Permanently destroys both encrypted shares on the server. This is irreversible. The key can never be reconstructed after revocation.</p>
+                        <div class="bg-vp-surface border border-vp-border rounded-xl overflow-hidden mb-4">
+                            <table class="doc-table">
+                                <thead><tr><th>Parameter</th><th>Type</th><th>Required</th><th>Description</th></tr></thead>
+                                <tbody>
+                                    <tr>
+                                        <td><code class="font-mono text-xs text-vp-accent">keyId</code></td>
+                                        <td><code class="font-mono text-xs">string</code></td>
+                                        <td>Yes</td>
+                                        <td>Key slot ID to revoke</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                        <p class="text-gray-500 text-xs">Returns: <code class="font-mono text-xs">void</code></p>
+                    </div>
+                </div>
+
+                <!-- Supported Providers -->
+                <div>
+                    <h3 class="text-lg font-semibold text-white mb-4">Supported Providers</h3>
+                    <div class="bg-vp-surface border border-vp-border rounded-xl overflow-hidden">
+                        <table class="doc-table">
+                            <thead><tr><th>Provider</th><th>Value</th><th>Base URL</th><th>Auth Header</th></tr></thead>
+                            <tbody>
+                                <tr>
+                                    <td class="text-white font-medium">OpenAI</td>
+                                    <td><code class="font-mono text-xs text-vp-accent">'openai'</code></td>
+                                    <td class="text-gray-500"><code class="font-mono text-xs">api.openai.com</code></td>
+                                    <td><code class="font-mono text-xs">Authorization: Bearer</code></td>
+                                </tr>
+                                <tr>
+                                    <td class="text-white font-medium">Anthropic</td>
+                                    <td><code class="font-mono text-xs text-vp-accent">'anthropic'</code></td>
+                                    <td class="text-gray-500"><code class="font-mono text-xs">api.anthropic.com</code></td>
+                                    <td><code class="font-mono text-xs">x-api-key</code></td>
+                                </tr>
+                                <tr>
+                                    <td class="text-white font-medium">Google AI</td>
+                                    <td><code class="font-mono text-xs text-vp-accent">'google'</code></td>
+                                    <td class="text-gray-500"><code class="font-mono text-xs">generativelanguage.googleapis.com</code></td>
+                                    <td><code class="font-mono text-xs">x-goog-api-key</code></td>
+                                </tr>
+                                <tr>
+                                    <td class="text-white font-medium">Together.ai</td>
+                                    <td><code class="font-mono text-xs text-vp-accent">'together'</code></td>
+                                    <td class="text-gray-500"><code class="font-mono text-xs">api.together.xyz</code></td>
+                                    <td><code class="font-mono text-xs">Authorization: Bearer</code></td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </section>
+
+
+            <!-- ============================================================ -->
+            <!-- SECTION 5: CLI REFERENCE -->
+            <!-- ============================================================ -->
+            <section id="cli-reference" class="mb-20">
+                <h2 class="text-3xl font-bold text-white mb-2">CLI Reference</h2>
+                <p class="text-gray-500 mb-8">Command-line tool for managing keys from your terminal or CI/CD pipelines.</p>
+
+                <div class="mb-6">
+                    <h3 class="text-lg font-semibold text-white mb-4">Installation</h3>
+                    <div class="code-block">
+                        <div class="code-header">terminal</div>
+<pre class="text-gray-300"><span class="str">npm install -g @vaultproof/cli</span></pre>
+                    </div>
+                </div>
+
+                <!-- Auth Commands -->
+                <div class="mb-8">
+                    <h3 class="text-lg font-semibold text-white mb-4">Authentication</h3>
+                    <div class="space-y-4">
+                        <div class="endpoint-card">
+                            <div class="flex items-baseline gap-3 mb-2">
+                                <code class="font-mono text-sm text-white font-semibold">vaultproof login</code>
+                            </div>
+                            <p class="text-gray-500 text-sm">Interactive login with email and password. Stores JWT token at <code class="font-mono text-xs text-vp-accent">~/.vaultproof/config.json</code>.</p>
+                        </div>
+                        <div class="endpoint-card">
+                            <div class="flex items-baseline gap-3 mb-2">
+                                <code class="font-mono text-sm text-white font-semibold">vaultproof register</code>
+                            </div>
+                            <p class="text-gray-500 text-sm">Create a new VaultProof account interactively.</p>
+                        </div>
+                        <div class="endpoint-card">
+                            <div class="flex items-baseline gap-3 mb-2">
+                                <code class="font-mono text-sm text-white font-semibold">vaultproof whoami</code>
+                            </div>
+                            <p class="text-gray-500 text-sm">Display the currently authenticated user's email and account ID.</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Key Commands -->
+                <div class="mb-8">
+                    <h3 class="text-lg font-semibold text-white mb-4">Key Management</h3>
+                    <div class="space-y-4">
+                        <div class="endpoint-card">
+                            <div class="flex items-baseline gap-3 mb-2">
+                                <code class="font-mono text-sm text-white font-semibold">vaultproof store --provider &lt;p&gt; --label &lt;l&gt;</code>
+                            </div>
+                            <p class="text-gray-500 text-sm mb-3">Store an API key. You will be prompted to paste the key securely (input is hidden). The key is Shamir-split and encrypted before being sent to the server.</p>
+                            <div class="code-block">
+                                <div class="code-header">example</div>
+<pre class="text-gray-300">$ vaultproof store --provider openai --label "Production GPT-4"
+<span class="cmt">? Paste your API key: ********</span>
+<span class="str">Key stored successfully.</span>
+<span class="str">Key ID: 7f2a9c3b-...</span></pre>
+                            </div>
+                        </div>
+                        <div class="endpoint-card">
+                            <div class="flex items-baseline gap-3 mb-2">
+                                <code class="font-mono text-sm text-white font-semibold">vaultproof keys</code>
+                            </div>
+                            <p class="text-gray-500 text-sm">List all stored keys with provider, label, status, and creation date.</p>
+                        </div>
+                        <div class="endpoint-card">
+                            <div class="flex items-baseline gap-3 mb-2">
+                                <code class="font-mono text-sm text-white font-semibold">vaultproof revoke &lt;keyId&gt;</code>
+                            </div>
+                            <p class="text-gray-500 text-sm">Permanently revoke a key. Both encrypted shares are destroyed on the server. This cannot be undone.</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Proxy -->
+                <div class="mb-8">
+                    <h3 class="text-lg font-semibold text-white mb-4">Proxy Calls</h3>
+                    <div class="endpoint-card">
+                        <div class="flex items-baseline gap-3 mb-2">
+                            <code class="font-mono text-sm text-white font-semibold">vaultproof proxy --key &lt;id&gt; --path &lt;path&gt; --method &lt;m&gt; --body &lt;json&gt;</code>
+                        </div>
+                        <p class="text-gray-500 text-sm mb-3">Make a proxied API call from the terminal.</p>
+                        <div class="code-block">
+                            <div class="code-header">example</div>
+<pre class="text-gray-300"><span class="cmt"># GET request</span>
+$ vaultproof proxy --key 7f2a9c3b-... --path /v1/models --method GET
+
+<span class="cmt"># POST request with body</span>
+$ vaultproof proxy --key 7f2a9c3b-... --path /v1/chat/completions \
+  --method POST \
+  --body '{"model":"gpt-4","messages":[{"role":"user","content":"Hello"}]}'</pre>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Developer Keys -->
+                <div class="mb-8">
+                    <h3 class="text-lg font-semibold text-white mb-4">Developer API Keys</h3>
+                    <div class="space-y-4">
+                        <div class="endpoint-card">
+                            <code class="font-mono text-sm text-white font-semibold">vaultproof dev-key create --label &lt;l&gt;</code>
+                            <p class="text-gray-500 text-sm mt-2">Create a new <code class="font-mono text-xs text-vp-accent">vp_live_</code> developer API key. The full key is shown once -- save it immediately.</p>
+                        </div>
+                        <div class="endpoint-card">
+                            <code class="font-mono text-sm text-white font-semibold">vaultproof dev-key list</code>
+                            <p class="text-gray-500 text-sm mt-2">List all developer API keys (masked).</p>
+                        </div>
+                        <div class="endpoint-card">
+                            <code class="font-mono text-sm text-white font-semibold">vaultproof dev-key revoke &lt;id&gt;</code>
+                            <p class="text-gray-500 text-sm mt-2">Revoke a developer API key. All SDK calls using this key will immediately stop working.</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Config -->
+                <div>
+                    <h3 class="text-lg font-semibold text-white mb-4">Configuration</h3>
+                    <div class="bg-vp-surface border border-vp-border rounded-xl p-6">
+                        <p class="text-gray-400 text-sm mb-4">The CLI stores its configuration at <code class="font-mono text-xs text-vp-accent">~/.vaultproof/config.json</code>. This includes your JWT token and preferences.</p>
+                        <p class="text-gray-400 text-sm mb-3">You can also configure the CLI via environment variables:</p>
+                        <div class="bg-vp-surface border border-vp-border rounded-xl overflow-hidden">
+                            <table class="doc-table">
+                                <thead><tr><th>Variable</th><th>Description</th><th>Default</th></tr></thead>
+                                <tbody>
+                                    <tr>
+                                        <td><code class="font-mono text-xs text-vp-accent">VAULTPROOF_API_KEY</code></td>
+                                        <td>Developer API key (overrides config file)</td>
+                                        <td>--</td>
+                                    </tr>
+                                    <tr>
+                                        <td><code class="font-mono text-xs text-vp-accent">VAULTPROOF_API_URL</code></td>
+                                        <td>Custom API base URL</td>
+                                        <td><code class="font-mono text-xs">https://api.vaultproof.dev</code></td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+
+            <!-- ============================================================ -->
+            <!-- SECTION 6: DASHBOARD -->
+            <!-- ============================================================ -->
+            <section id="dashboard" class="mb-20">
+                <h2 class="text-3xl font-bold text-white mb-2">Dashboard</h2>
+                <p class="text-gray-500 mb-8">Web interface for managing keys, viewing logs, and monitoring usage at <a href="/app/login" class="text-vp-accent hover:underline">vaultproof.dev/app</a>.</p>
+
+                <div class="space-y-6">
+                    <div class="endpoint-card">
+                        <h3 class="text-white font-semibold mb-3">Overview Page</h3>
+                        <p class="text-gray-400 text-sm mb-3">Your home screen after login. At a glance you see:</p>
+                        <ul class="space-y-1.5 text-sm text-gray-500">
+                            <li class="flex items-start gap-2"><span class="text-vp-accent mt-0.5">&#8226;</span> <span><strong class="text-gray-300">Total keys stored</strong> -- active key count across all providers</span></li>
+                            <li class="flex items-start gap-2"><span class="text-vp-accent mt-0.5">&#8226;</span> <span><strong class="text-gray-300">API calls this month</strong> -- total proxied requests with trend indicator</span></li>
+                            <li class="flex items-start gap-2"><span class="text-vp-accent mt-0.5">&#8226;</span> <span><strong class="text-gray-300">Usage chart</strong> -- daily call volume for the past 30 days</span></li>
+                            <li class="flex items-start gap-2"><span class="text-vp-accent mt-0.5">&#8226;</span> <span><strong class="text-gray-300">Key health</strong> -- per-key error rates and last-used timestamps</span></li>
+                            <li class="flex items-start gap-2"><span class="text-vp-accent mt-0.5">&#8226;</span> <span><strong class="text-gray-300">Recent activity</strong> -- last 10 proxy calls with status</span></li>
+                        </ul>
+                    </div>
+
+                    <div class="endpoint-card">
+                        <h3 class="text-white font-semibold mb-3">Keys Page</h3>
+                        <p class="text-gray-400 text-sm mb-3">Full key management interface:</p>
+                        <ul class="space-y-1.5 text-sm text-gray-500">
+                            <li class="flex items-start gap-2"><span class="text-vp-accent mt-0.5">&#8226;</span> <span><strong class="text-gray-300">Add Key</strong> -- paste a key, select provider, add a label. Shamir splitting happens in-browser.</span></li>
+                            <li class="flex items-start gap-2"><span class="text-vp-accent mt-0.5">&#8226;</span> <span><strong class="text-gray-300">Test Key</strong> -- one-click test that makes a lightweight proxy call to verify the key works.</span></li>
+                            <li class="flex items-start gap-2"><span class="text-vp-accent mt-0.5">&#8226;</span> <span><strong class="text-gray-300">Rotate</strong> -- replace the stored shares with a new API key without changing the key slot ID.</span></li>
+                            <li class="flex items-start gap-2"><span class="text-vp-accent mt-0.5">&#8226;</span> <span><strong class="text-gray-300">Revoke</strong> -- permanently destroy both shares. Irreversible.</span></li>
+                            <li class="flex items-start gap-2"><span class="text-vp-accent mt-0.5">&#8226;</span> <span><strong class="text-gray-300">Code snippets</strong> -- copy-paste SDK and cURL examples for each key.</span></li>
+                        </ul>
+                    </div>
+
+                    <div class="endpoint-card">
+                        <h3 class="text-white font-semibold mb-3">Logs Page</h3>
+                        <p class="text-gray-400 text-sm mb-3">Complete audit trail of every proxied API call:</p>
+                        <ul class="space-y-1.5 text-sm text-gray-500">
+                            <li class="flex items-start gap-2"><span class="text-vp-accent mt-0.5">&#8226;</span> <span><strong class="text-gray-300">Search</strong> -- filter by key, provider, status code, date range</span></li>
+                            <li class="flex items-start gap-2"><span class="text-vp-accent mt-0.5">&#8226;</span> <span><strong class="text-gray-300">Details</strong> -- timestamp, endpoint, method, status, latency (ms)</span></li>
+                            <li class="flex items-start gap-2"><span class="text-vp-accent mt-0.5">&#8226;</span> <span><strong class="text-gray-300">Export CSV</strong> -- download logs for external analysis or compliance</span></li>
+                        </ul>
+                    </div>
+
+                    <div class="endpoint-card">
+                        <h3 class="text-white font-semibold mb-3">Settings Page</h3>
+                        <p class="text-gray-400 text-sm mb-3">Account and security configuration:</p>
+                        <ul class="space-y-1.5 text-sm text-gray-500">
+                            <li class="flex items-start gap-2"><span class="text-vp-accent mt-0.5">&#8226;</span> <span><strong class="text-gray-300">Profile</strong> -- email and account details</span></li>
+                            <li class="flex items-start gap-2"><span class="text-vp-accent mt-0.5">&#8226;</span> <span><strong class="text-gray-300">Password</strong> -- change password (requires current password)</span></li>
+                            <li class="flex items-start gap-2"><span class="text-vp-accent mt-0.5">&#8226;</span> <span><strong class="text-gray-300">Developer API Keys</strong> -- create, list, and revoke <code class="font-mono text-xs text-vp-accent">vp_live_</code> keys</span></li>
+                            <li class="flex items-start gap-2"><span class="text-vp-accent mt-0.5">&#8226;</span> <span><strong class="text-gray-300">Plan</strong> -- view current tier (Free/Pro/Team/Enterprise) and usage limits</span></li>
+                        </ul>
+                    </div>
+                </div>
+            </section>
+
+
+            <!-- ============================================================ -->
+            <!-- SECTION 7: API REFERENCE -->
+            <!-- ============================================================ -->
+            <section id="api-reference" class="mb-20">
+                <h2 class="text-3xl font-bold text-white mb-2">API Reference</h2>
+                <p class="text-gray-500 mb-4">Base URL: <code class="font-mono text-sm text-vp-accent">https://api.vaultproof.dev</code></p>
+                <p class="text-gray-500 text-sm mb-8">All requests go through Cloudflare's edge network (330+ cities). HMAC-signed and rate-limited. All request and response bodies are JSON (<code class="font-mono text-xs">Content-Type: application/json</code>).</p>
+
+                <!-- Auth Endpoints -->
+                <div class="mb-10">
+                    <h3 class="text-xl font-semibold text-white mb-5">Authentication</h3>
+                    <div class="space-y-4">
+
+                        <div class="endpoint-card">
+                            <div class="flex items-center gap-3 mb-3">
+                                <span class="method-badge method-post">POST</span>
+                                <code class="font-mono text-sm text-white">/api/v1/auth/register</code>
+                            </div>
+                            <p class="text-gray-400 text-sm mb-3">Create a new account.</p>
+                            <div class="code-block">
+<pre class="text-gray-300"><span class="cmt">// Request</span>
+{ <span class="str">"email"</span>: <span class="str">"you@example.com"</span>, <span class="str">"password"</span>: <span class="str">"min8chars"</span> }
+
+<span class="cmt">// Response (200)</span>
+{ <span class="str">"token"</span>: <span class="str">"eyJ..."</span>, <span class="str">"user"</span>: { <span class="str">"id"</span>: <span class="str">"uuid"</span>, <span class="str">"email"</span>: <span class="str">"you@example.com"</span> } }
+
+<span class="cmt">// Error (409)</span>
+{ <span class="str">"error"</span>: <span class="str">"Email already registered"</span> }</pre>
+                            </div>
+                        </div>
+
+                        <div class="endpoint-card">
+                            <div class="flex items-center gap-3 mb-3">
+                                <span class="method-badge method-post">POST</span>
+                                <code class="font-mono text-sm text-white">/api/v1/auth/login</code>
+                            </div>
+                            <p class="text-gray-400 text-sm mb-3">Login and receive a JWT token (valid 7 days).</p>
+                            <div class="code-block">
+<pre class="text-gray-300"><span class="cmt">// Request</span>
+{ <span class="str">"email"</span>: <span class="str">"you@example.com"</span>, <span class="str">"password"</span>: <span class="str">"yourpass"</span> }
+
+<span class="cmt">// Response (200)</span>
+{ <span class="str">"token"</span>: <span class="str">"eyJ..."</span>, <span class="str">"user"</span>: { <span class="str">"id"</span>: <span class="str">"uuid"</span>, <span class="str">"email"</span>: <span class="str">"you@example.com"</span> } }
+
+<span class="cmt">// Error (401)</span>
+{ <span class="str">"error"</span>: <span class="str">"Invalid credentials"</span> }</pre>
+                            </div>
+                        </div>
+
+                        <div class="endpoint-card">
+                            <div class="flex items-center gap-3 mb-3">
+                                <span class="method-badge method-get">GET</span>
+                                <code class="font-mono text-sm text-white">/api/v1/auth/me</code>
+                                <span class="text-xs text-amber-400 font-medium">Auth required</span>
+                            </div>
+                            <p class="text-gray-400 text-sm mb-3">Get current user profile.</p>
+                            <div class="code-block">
+<pre class="text-gray-300"><span class="cmt">// Headers</span>
+Authorization: Bearer &lt;jwt_token&gt;
+
+<span class="cmt">// Response (200)</span>
+{ <span class="str">"id"</span>: <span class="str">"uuid"</span>, <span class="str">"email"</span>: <span class="str">"you@example.com"</span>, <span class="str">"plan"</span>: <span class="str">"free"</span>, <span class="str">"createdAt"</span>: <span class="str">"..."</span> }</pre>
+                            </div>
+                        </div>
+
+                        <div class="endpoint-card">
+                            <div class="flex items-center gap-3 mb-3">
+                                <span class="method-badge method-post">POST</span>
+                                <code class="font-mono text-sm text-white">/api/v1/auth/password</code>
+                                <span class="text-xs text-amber-400 font-medium">Auth required</span>
+                            </div>
+                            <p class="text-gray-400 text-sm mb-3">Change password.</p>
+                            <div class="code-block">
+<pre class="text-gray-300"><span class="cmt">// Request</span>
+{ <span class="str">"currentPassword"</span>: <span class="str">"oldpass"</span>, <span class="str">"newPassword"</span>: <span class="str">"newpass8+"</span> }
+
+<span class="cmt">// Response (200)</span>
+{ <span class="str">"status"</span>: <span class="str">"updated"</span> }</pre>
+                            </div>
+                        </div>
+
+                        <div class="endpoint-card">
+                            <div class="flex items-center gap-3 mb-3">
+                                <span class="method-badge method-delete">DELETE</span>
+                                <code class="font-mono text-sm text-white">/api/v1/auth/account</code>
+                                <span class="text-xs text-amber-400 font-medium">Auth required</span>
+                            </div>
+                            <p class="text-gray-400 text-sm">Delete account and all stored keys. Irreversible.</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Key Endpoints -->
+                <div class="mb-10">
+                    <h3 class="text-xl font-semibold text-white mb-5">Key Management</h3>
+                    <p class="text-gray-500 text-sm mb-4">All key endpoints require <code class="font-mono text-xs text-vp-accent">Authorization: Bearer &lt;jwt&gt;</code>.</p>
+                    <div class="space-y-4">
+
+                        <div class="endpoint-card">
+                            <div class="flex items-center gap-3 mb-3">
+                                <span class="method-badge method-post">POST</span>
+                                <code class="font-mono text-sm text-white">/api/v1/keys/store</code>
+                            </div>
+                            <p class="text-gray-400 text-sm mb-3">Store a Shamir-split API key.</p>
+                            <div class="code-block">
+<pre class="text-gray-300"><span class="cmt">// Request</span>
+{
+  <span class="str">"provider"</span>: <span class="str">"openai"</span>,
+  <span class="str">"label"</span>: <span class="str">"Production GPT-4"</span>,
+  <span class="str">"share1"</span>: <span class="str">"base64..."</span>,            <span class="cmt">// Shamir Share 1</span>
+  <span class="str">"vaultCommitment"</span>: <span class="str">"hex..."</span>,    <span class="cmt">// Hash commitment for ZK</span>
+  <span class="str">"appId"</span>: <span class="str">"my-app"</span>,               <span class="cmt">// optional</span>
+  <span class="str">"appName"</span>: <span class="str">"My App"</span>              <span class="cmt">// optional</span>
 }
-Response: { "keySlotId": "uuid", "grantId": "uuid", "status": "stored" }</pre>
-                    </div>
-                </div>
 
-                <div class="bg-dark-blue-lighter border border-gray-800 rounded-2xl p-6">
-                    <div class="flex items-center gap-3 mb-3">
-                        <span class="bg-blue-900/50 text-blue-400 text-xs font-bold px-2 py-1 rounded">GET</span>
-                        <code class="mono text-sm text-white">/api/v1/keys/list</code>
-                        <span class="text-xs text-yellow-400">Auth required</span>
-                    </div>
-                    <p class="text-gray-400 text-sm mb-3">List all your active keys with connected apps.</p>
-                    <div class="mono text-xs bg-gray-900/50 rounded-xl p-4 overflow-x-auto">
-<pre class="text-gray-300">Response: {
-  "keySlots": [{
-    "id": "uuid",
-    "provider": "openai",
-    "label": "Production GPT-4",
-    "status": "ACTIVE",
-    "createdAt": "2026-03-24T...",
-    "appGrants": [{ "id": "uuid", "appId": "my-app", "appName": "My App" }]
+<span class="cmt">// Response (201)</span>
+{ <span class="str">"keySlotId"</span>: <span class="str">"uuid"</span>, <span class="str">"grantId"</span>: <span class="str">"uuid"</span>, <span class="str">"status"</span>: <span class="str">"stored"</span> }</pre>
+                            </div>
+                        </div>
+
+                        <div class="endpoint-card">
+                            <div class="flex items-center gap-3 mb-3">
+                                <span class="method-badge method-get">GET</span>
+                                <code class="font-mono text-sm text-white">/api/v1/keys/list</code>
+                            </div>
+                            <p class="text-gray-400 text-sm mb-3">List all keys with app grants.</p>
+                            <div class="code-block">
+<pre class="text-gray-300"><span class="cmt">// Response (200)</span>
+{
+  <span class="str">"keySlots"</span>: [{
+    <span class="str">"id"</span>: <span class="str">"uuid"</span>,
+    <span class="str">"provider"</span>: <span class="str">"openai"</span>,
+    <span class="str">"label"</span>: <span class="str">"Production GPT-4"</span>,
+    <span class="str">"status"</span>: <span class="str">"ACTIVE"</span>,
+    <span class="str">"createdAt"</span>: <span class="str">"2026-03-24T..."</span>,
+    <span class="str">"appGrants"</span>: [{ <span class="str">"id"</span>: <span class="str">"uuid"</span>, <span class="str">"appId"</span>: <span class="str">"my-app"</span>, <span class="str">"appName"</span>: <span class="str">"My App"</span> }]
   }]
 }</pre>
+                            </div>
+                        </div>
+
+                        <div class="endpoint-card">
+                            <div class="flex items-center gap-3 mb-3">
+                                <span class="method-badge method-post">POST</span>
+                                <code class="font-mono text-sm text-white">/api/v1/keys/revoke/:keySlotId</code>
+                            </div>
+                            <p class="text-gray-400 text-sm">Revoke a key. Destroys Share 1 (zeroed in DB). Irreversible.</p>
+                        </div>
+
+                        <div class="endpoint-card">
+                            <div class="flex items-center gap-3 mb-3">
+                                <span class="method-badge method-post">POST</span>
+                                <code class="font-mono text-sm text-white">/api/v1/keys/:keySlotId/grant</code>
+                            </div>
+                            <p class="text-gray-400 text-sm mb-3">Grant an application access to a key slot.</p>
+                            <div class="code-block">
+<pre class="text-gray-300"><span class="cmt">// Request</span>
+{ <span class="str">"appId"</span>: <span class="str">"new-app"</span>, <span class="str">"appName"</span>: <span class="str">"New App"</span> }
+
+<span class="cmt">// Response (201)</span>
+{ <span class="str">"grantId"</span>: <span class="str">"uuid"</span>, <span class="str">"status"</span>: <span class="str">"granted"</span> }</pre>
+                            </div>
+                        </div>
+
+                        <div class="endpoint-card">
+                            <div class="flex items-center gap-3 mb-3">
+                                <span class="method-badge method-post">POST</span>
+                                <code class="font-mono text-sm text-white">/api/v1/keys/:keySlotId/revoke-app</code>
+                            </div>
+                            <p class="text-gray-400 text-sm mb-3">Revoke an application's access to a key slot.</p>
+                            <div class="code-block">
+<pre class="text-gray-300"><span class="cmt">// Request</span>
+{ <span class="str">"appId"</span>: <span class="str">"old-app"</span> }
+
+<span class="cmt">// Response (200)</span>
+{ <span class="str">"status"</span>: <span class="str">"revoked"</span> }</pre>
+                            </div>
+                        </div>
+
+                        <div class="endpoint-card">
+                            <div class="flex items-center gap-3 mb-3">
+                                <span class="method-badge method-get">GET</span>
+                                <code class="font-mono text-sm text-white">/api/v1/keys/:keySlotId/logs</code>
+                            </div>
+                            <p class="text-gray-400 text-sm mb-3">Get access logs for a specific key.</p>
+                            <div class="code-block">
+<pre class="text-gray-300"><span class="cmt">// Query params: ?page=1&limit=50</span>
+
+<span class="cmt">// Response (200)</span>
+{
+  <span class="str">"logs"</span>: [{
+    <span class="str">"id"</span>: <span class="str">"uuid"</span>,
+    <span class="str">"endpoint"</span>: <span class="str">"/v1/chat/completions"</span>,
+    <span class="str">"method"</span>: <span class="str">"POST"</span>,
+    <span class="str">"statusCode"</span>: <span class="num">200</span>,
+    <span class="str">"latencyMs"</span>: <span class="num">847</span>,
+    <span class="str">"createdAt"</span>: <span class="str">"2026-03-24T..."</span>
+  }],
+  <span class="str">"total"</span>: <span class="num">1284</span>,
+  <span class="str">"page"</span>: <span class="num">1</span>
+}</pre>
+                            </div>
+                        </div>
+
+                        <div class="endpoint-card">
+                            <div class="flex items-center gap-3 mb-3">
+                                <span class="method-badge method-post">POST</span>
+                                <code class="font-mono text-sm text-white">/api/v1/keys/:keySlotId/rotate</code>
+                            </div>
+                            <p class="text-gray-400 text-sm mb-3">Rotate the stored shares with a new API key. The key slot ID stays the same.</p>
+                            <div class="code-block">
+<pre class="text-gray-300"><span class="cmt">// Request</span>
+{
+  <span class="str">"share1"</span>: <span class="str">"base64..."</span>,           <span class="cmt">// new Shamir Share 1</span>
+  <span class="str">"vaultCommitment"</span>: <span class="str">"hex..."</span>   <span class="cmt">// new commitment</span>
+}
+
+<span class="cmt">// Response (200)</span>
+{ <span class="str">"status"</span>: <span class="str">"rotated"</span> }</pre>
+                            </div>
+                        </div>
+
+                        <div class="endpoint-card">
+                            <div class="flex items-center gap-3 mb-3">
+                                <span class="method-badge method-get">GET</span>
+                                <code class="font-mono text-sm text-white">/api/v1/keys/:keySlotId/logs/export</code>
+                            </div>
+                            <p class="text-gray-400 text-sm">Export access logs as CSV for compliance and external analysis.</p>
+                        </div>
                     </div>
                 </div>
 
-                <div class="bg-dark-blue-lighter border border-gray-800 rounded-2xl p-6">
-                    <div class="flex items-center gap-3 mb-3">
-                        <span class="bg-green-900/50 text-green-400 text-xs font-bold px-2 py-1 rounded">POST</span>
-                        <code class="mono text-sm text-white">/api/v1/keys/revoke/:keySlotId</code>
-                        <span class="text-xs text-yellow-400">Auth required</span>
+                <!-- SDK Endpoints -->
+                <div class="mb-10">
+                    <h3 class="text-xl font-semibold text-white mb-5">SDK Endpoints</h3>
+                    <p class="text-gray-500 text-sm mb-4">Authenticated with <code class="font-mono text-xs text-vp-accent">X-API-Key: vp_live_...</code> header.</p>
+                    <div class="space-y-4">
+
+                        <div class="endpoint-card">
+                            <div class="flex items-center gap-3 mb-3">
+                                <span class="method-badge method-post">POST</span>
+                                <code class="font-mono text-sm text-white">/api/v1/sdk/store</code>
+                            </div>
+                            <p class="text-gray-400 text-sm mb-3">Store an API key via the SDK. The server handles Shamir splitting and encryption.</p>
+                            <div class="code-block">
+<pre class="text-gray-300"><span class="cmt">// Request</span>
+{
+  <span class="str">"apiKey"</span>: <span class="str">"sk-..."</span>,
+  <span class="str">"provider"</span>: <span class="str">"openai"</span>,
+  <span class="str">"label"</span>: <span class="str">"Production"</span>
+}
+
+<span class="cmt">// Response (201)</span>
+{ <span class="str">"keyId"</span>: <span class="str">"uuid"</span>, <span class="str">"status"</span>: <span class="str">"stored"</span> }</pre>
+                            </div>
+                        </div>
+
+                        <div class="endpoint-card">
+                            <div class="flex items-center gap-3 mb-3">
+                                <span class="method-badge method-post">POST</span>
+                                <code class="font-mono text-sm text-white">/api/v1/sdk/call</code>
+                            </div>
+                            <p class="text-gray-400 text-sm mb-3">Make a proxied API call. Key is reconstructed ephemerally.</p>
+                            <div class="code-block">
+<pre class="text-gray-300"><span class="cmt">// Request</span>
+{
+  <span class="str">"keyId"</span>: <span class="str">"uuid"</span>,
+  <span class="str">"share2"</span>: <span class="str">"base64..."</span>,
+  <span class="str">"path"</span>: <span class="str">"/v1/chat/completions"</span>,
+  <span class="str">"method"</span>: <span class="str">"POST"</span>,
+  <span class="str">"body"</span>: { <span class="str">"model"</span>: <span class="str">"gpt-4"</span>, <span class="str">"messages"</span>: [...] }
+}
+
+<span class="cmt">// Response: provider's response forwarded directly</span></pre>
+                            </div>
+                        </div>
+
+                        <div class="endpoint-card">
+                            <div class="flex items-center gap-3 mb-3">
+                                <span class="method-badge method-get">GET</span>
+                                <code class="font-mono text-sm text-white">/api/v1/sdk/keys</code>
+                            </div>
+                            <p class="text-gray-400 text-sm">List all stored keys for this developer API key.</p>
+                        </div>
+
+                        <div class="endpoint-card">
+                            <div class="flex items-center gap-3 mb-3">
+                                <span class="method-badge method-post">POST</span>
+                                <code class="font-mono text-sm text-white">/api/v1/sdk/revoke</code>
+                            </div>
+                            <p class="text-gray-400 text-sm mb-3">Revoke a stored key.</p>
+                            <div class="code-block">
+<pre class="text-gray-300"><span class="cmt">// Request</span>
+{ <span class="str">"keyId"</span>: <span class="str">"uuid"</span> }
+
+<span class="cmt">// Response (200)</span>
+{ <span class="str">"status"</span>: <span class="str">"revoked"</span> }</pre>
+                            </div>
+                        </div>
                     </div>
-                    <p class="text-gray-400 text-sm mb-3">Revoke a key. Destroys Share 1 (zeroed in DB). Irreversible.</p>
                 </div>
 
-                <div class="bg-dark-blue-lighter border border-gray-800 rounded-2xl p-6">
-                    <div class="flex items-center gap-3 mb-3">
-                        <span class="bg-green-900/50 text-green-400 text-xs font-bold px-2 py-1 rounded">POST</span>
-                        <code class="mono text-sm text-white">/api/v1/keys/:keySlotId/rotate</code>
-                        <span class="text-xs text-yellow-400">Auth required</span>
+                <!-- Developer Key Endpoints -->
+                <div class="mb-10">
+                    <h3 class="text-xl font-semibold text-white mb-5">Developer Key Management</h3>
+                    <p class="text-gray-500 text-sm mb-4">Authenticated with <code class="font-mono text-xs text-vp-accent">Authorization: Bearer &lt;jwt&gt;</code>.</p>
+                    <div class="space-y-4">
+
+                        <div class="endpoint-card">
+                            <div class="flex items-center gap-3 mb-3">
+                                <span class="method-badge method-post">POST</span>
+                                <code class="font-mono text-sm text-white">/api/v1/dev-keys/create</code>
+                            </div>
+                            <p class="text-gray-400 text-sm mb-3">Create a new developer API key.</p>
+                            <div class="code-block">
+<pre class="text-gray-300"><span class="cmt">// Request</span>
+{ <span class="str">"label"</span>: <span class="str">"Production"</span>, <span class="str">"mode"</span>: <span class="str">"live"</span> }
+
+<span class="cmt">// Response (201) -- key shown ONCE</span>
+{
+  <span class="str">"id"</span>: <span class="str">"uuid"</span>,
+  <span class="str">"key"</span>: <span class="str">"vp_live_abc123..."</span>,
+  <span class="str">"label"</span>: <span class="str">"Production"</span>,
+  <span class="str">"createdAt"</span>: <span class="str">"2026-03-24T..."</span>
+}</pre>
+                            </div>
+                        </div>
+
+                        <div class="endpoint-card">
+                            <div class="flex items-center gap-3 mb-3">
+                                <span class="method-badge method-get">GET</span>
+                                <code class="font-mono text-sm text-white">/api/v1/dev-keys/list</code>
+                            </div>
+                            <p class="text-gray-400 text-sm mb-3">List all developer API keys (masked).</p>
+                            <div class="code-block">
+<pre class="text-gray-300"><span class="cmt">// Response (200)</span>
+{
+  <span class="str">"keys"</span>: [{
+    <span class="str">"id"</span>: <span class="str">"uuid"</span>,
+    <span class="str">"maskedKey"</span>: <span class="str">"vp_live_abc1...f456"</span>,
+    <span class="str">"label"</span>: <span class="str">"Production"</span>,
+    <span class="str">"lastUsedAt"</span>: <span class="str">"2026-03-24T..."</span>,
+    <span class="str">"createdAt"</span>: <span class="str">"2026-03-24T..."</span>
+  }]
+}</pre>
+                            </div>
+                        </div>
+
+                        <div class="endpoint-card">
+                            <div class="flex items-center gap-3 mb-3">
+                                <span class="method-badge method-post">POST</span>
+                                <code class="font-mono text-sm text-white">/api/v1/dev-keys/:id/revoke</code>
+                            </div>
+                            <p class="text-gray-400 text-sm">Revoke a developer API key. All SDK calls using this key stop working immediately.</p>
+                        </div>
                     </div>
-                    <p class="text-gray-400 text-sm mb-3">Rotate a key with a new Shamir share. Old share is replaced.</p>
                 </div>
-            </div>
-        </section>
 
-        <!-- Proxy -->
-        <section class="mb-12">
-            <h2 class="text-2xl font-bold text-white mb-6">Proxied API Calls</h2>
-
-            <div class="bg-dark-blue-lighter border border-gray-800 rounded-2xl p-6">
-                <div class="flex items-center gap-3 mb-3">
-                    <span class="bg-green-900/50 text-green-400 text-xs font-bold px-2 py-1 rounded">POST</span>
-                    <code class="mono text-sm text-white">/api/v1/proxy/call</code>
-                </div>
-                <p class="text-gray-400 text-sm mb-3">Make an API call through VaultProof. Key is reconstructed ephemerally (~100ms) then zeroed. Supports SSE streaming for LLM APIs.</p>
-                <div class="mono text-xs bg-gray-900/50 rounded-xl p-4 overflow-x-auto">
-<pre class="text-gray-300">Request: {
-  "keySlotId": "uuid",            <span class="text-gray-600">// from /keys/store response</span>
-  "share2": "base64...",          <span class="text-gray-600">// your Share 2 (stored on device)</span>
-  "zkProof": "hex...",            <span class="text-gray-600">// ZK proof of authorization</span>
-  "nullifier": "hex...",          <span class="text-gray-600">// unique per request (replay prevention)</span>
-  "appId": "my-app",              <span class="text-gray-600">// must be an authorized app</span>
-  "targetPath": "/v1/chat/completions",  <span class="text-gray-600">// API endpoint</span>
-  "method": "POST",               <span class="text-gray-600">// HTTP method</span>
-  "stream": false,                <span class="text-gray-600">// true for SSE streaming</span>
-  "body": {                       <span class="text-gray-600">// forwarded to the API provider</span>
-    "model": "gpt-4",
-    "messages": [{ "role": "user", "content": "Hello!" }]
+                <!-- Proxy Endpoint -->
+                <div class="mb-10">
+                    <h3 class="text-xl font-semibold text-white mb-5">Proxy</h3>
+                    <div class="endpoint-card">
+                        <div class="flex items-center gap-3 mb-3">
+                            <span class="method-badge method-post">POST</span>
+                            <code class="font-mono text-sm text-white">/api/v1/proxy/call</code>
+                        </div>
+                        <p class="text-gray-400 text-sm mb-3">Make a proxied API call with ZK proof authorization. Supports SSE streaming.</p>
+                        <div class="code-block">
+<pre class="text-gray-300"><span class="cmt">// Request</span>
+{
+  <span class="str">"keySlotId"</span>: <span class="str">"uuid"</span>,
+  <span class="str">"share2"</span>: <span class="str">"base64..."</span>,
+  <span class="str">"zkProof"</span>: <span class="str">"hex..."</span>,
+  <span class="str">"nullifier"</span>: <span class="str">"hex..."</span>,           <span class="cmt">// unique per request</span>
+  <span class="str">"appId"</span>: <span class="str">"my-app"</span>,
+  <span class="str">"targetPath"</span>: <span class="str">"/v1/chat/completions"</span>,
+  <span class="str">"method"</span>: <span class="str">"POST"</span>,
+  <span class="str">"stream"</span>: <span class="kw">false</span>,
+  <span class="str">"body"</span>: {
+    <span class="str">"model"</span>: <span class="str">"gpt-4"</span>,
+    <span class="str">"messages"</span>: [{ <span class="str">"role"</span>: <span class="str">"user"</span>, <span class="str">"content"</span>: <span class="str">"Hello!"</span> }]
   }
 }
-Response: <span class="text-gray-600">// The API provider's response, forwarded directly</span></pre>
-                </div>
 
-                <div class="mt-4 p-4 bg-indigo-500/5 border border-indigo-500/20 rounded-xl">
-                    <p class="text-sm text-indigo-300"><strong>Security:</strong> Every call requires a unique nullifier (prevents replay). The ZK proof cryptographically proves you own the key slot and the requesting app is authorized. The SDK handles all of this automatically.</p>
-                </div>
-            </div>
-        </section>
-
-        <!-- SDK Endpoints -->
-        <section class="mb-12">
-            <h2 class="text-2xl font-bold text-white mb-6">SDK Endpoints</h2>
-
-            <div class="space-y-6">
-                <div class="bg-dark-blue-lighter border border-gray-800 rounded-2xl p-6">
-                    <div class="flex items-center gap-3 mb-3">
-                        <span class="bg-green-900/50 text-green-400 text-xs font-bold px-2 py-1 rounded">POST</span>
-                        <code class="mono text-sm text-white">/api/v1/sdk/store</code>
-                        <span class="text-xs text-yellow-400">API Key required</span>
-                    </div>
-                    <p class="text-gray-400 text-sm mb-3">Store an API key via the SDK. Shamir-split and encrypted server-side.</p>
-                    <div class="mono text-xs bg-gray-900/50 rounded-xl p-4 overflow-x-auto">
-<pre class="text-gray-300">Request: {
-  "apiKey": "sk-...",          <span class="text-gray-600">// the API key to store</span>
-  "provider": "openai",        <span class="text-gray-600">// openai | anthropic | google | together</span>
-  "label": "Production"        <span class="text-gray-600">// optional friendly name</span>
-}
-Response: { "keyId": "uuid", "status": "stored" }</pre>
+<span class="cmt">// Response: provider's response forwarded directly</span>
+<span class="cmt">// If stream: true, SSE events are piped through</span></pre>
+                        </div>
+                        <div class="callout-info mt-4">
+                            <p class="text-sm text-indigo-300"><strong>Note:</strong> The SDK handles ZK proof generation, nullifier creation, and Share 2 management automatically. You only need to use this endpoint directly if you are building a custom client.</p>
+                        </div>
                     </div>
                 </div>
 
-                <div class="bg-dark-blue-lighter border border-gray-800 rounded-2xl p-6">
-                    <div class="flex items-center gap-3 mb-3">
-                        <span class="bg-green-900/50 text-green-400 text-xs font-bold px-2 py-1 rounded">POST</span>
-                        <code class="mono text-sm text-white">/api/v1/sdk/call</code>
-                        <span class="text-xs text-yellow-400">API Key required</span>
-                    </div>
-                    <p class="text-gray-400 text-sm mb-3">Make a proxied API call through VaultProof.</p>
-                    <div class="mono text-xs bg-gray-900/50 rounded-xl p-4 overflow-x-auto">
-<pre class="text-gray-300">Request: {
-  "keyId": "uuid",             <span class="text-gray-600">// from /sdk/store response</span>
-  "share2": "base64...",       <span class="text-gray-600">// Share 2 (returned by SDK)</span>
-  "path": "/v1/chat/completions",  <span class="text-gray-600">// API endpoint</span>
-  "method": "POST",            <span class="text-gray-600">// HTTP method</span>
-  "body": { ... }              <span class="text-gray-600">// forwarded to the API provider</span>
-}
-Response: <span class="text-gray-600">// The API provider's response, forwarded directly</span></pre>
-                    </div>
-                </div>
+                <!-- Stats Endpoints -->
+                <div class="mb-10">
+                    <h3 class="text-xl font-semibold text-white mb-5">Stats &amp; Analytics</h3>
+                    <p class="text-gray-500 text-sm mb-4">Authenticated with <code class="font-mono text-xs text-vp-accent">Authorization: Bearer &lt;jwt&gt;</code>.</p>
+                    <div class="space-y-4">
 
-                <div class="bg-dark-blue-lighter border border-gray-800 rounded-2xl p-6">
-                    <div class="flex items-center gap-3 mb-3">
-                        <span class="bg-blue-900/50 text-blue-400 text-xs font-bold px-2 py-1 rounded">GET</span>
-                        <code class="mono text-sm text-white">/api/v1/sdk/keys</code>
-                        <span class="text-xs text-yellow-400">API Key required</span>
-                    </div>
-                    <p class="text-gray-400 text-sm">List all stored keys for this developer API key.</p>
-                </div>
-
-                <div class="bg-dark-blue-lighter border border-gray-800 rounded-2xl p-6">
-                    <div class="flex items-center gap-3 mb-3">
-                        <span class="bg-green-900/50 text-green-400 text-xs font-bold px-2 py-1 rounded">POST</span>
-                        <code class="mono text-sm text-white">/api/v1/sdk/revoke</code>
-                        <span class="text-xs text-yellow-400">API Key required</span>
-                    </div>
-                    <p class="text-gray-400 text-sm mb-3">Revoke a stored key. Irreversible.</p>
-                    <div class="mono text-xs bg-gray-900/50 rounded-xl p-4 overflow-x-auto">
-<pre class="text-gray-300">Request: { "keyId": "uuid" }
-Response: { "status": "revoked" }</pre>
-                    </div>
-                </div>
-            </div>
-        </section>
-
-        <!-- Developer Key Management -->
-        <section class="mb-12">
-            <h2 class="text-2xl font-bold text-white mb-6">Developer Key Management</h2>
-            <p class="text-gray-400 text-sm mb-4">Manage your <code class="mono text-xs text-indigo-400">vp_live_</code> developer API keys programmatically.</p>
-
-            <div class="space-y-6">
-                <div class="bg-dark-blue-lighter border border-gray-800 rounded-2xl p-6">
-                    <div class="flex items-center gap-3 mb-3">
-                        <span class="bg-green-900/50 text-green-400 text-xs font-bold px-2 py-1 rounded">POST</span>
-                        <code class="mono text-sm text-white">/api/v1/dev-keys/create</code>
-                        <span class="text-xs text-yellow-400">Auth required</span>
-                    </div>
-                    <p class="text-gray-400 text-sm mb-3">Create a new developer API key.</p>
-                    <div class="mono text-xs bg-gray-900/50 rounded-xl p-4 overflow-x-auto">
-<pre class="text-gray-300">Request: {
-  "label": "Production",      <span class="text-gray-600">// friendly name</span>
-  "mode": "live"               <span class="text-gray-600">// "live" or "test"</span>
-}
-Response: {
-  "id": "uuid",
-  "key": "vp_live_abc123...", <span class="text-gray-600">// shown ONCE — save it now</span>
-  "label": "Production",
-  "createdAt": "2026-03-24T..."
+                        <div class="endpoint-card">
+                            <div class="flex items-center gap-3 mb-3">
+                                <span class="method-badge method-get">GET</span>
+                                <code class="font-mono text-sm text-white">/api/v1/stats/overview</code>
+                            </div>
+                            <p class="text-gray-400 text-sm mb-3">Dashboard overview stats.</p>
+                            <div class="code-block">
+<pre class="text-gray-300"><span class="cmt">// Response (200)</span>
+{
+  <span class="str">"totalKeys"</span>: <span class="num">5</span>,
+  <span class="str">"callsThisMonth"</span>: <span class="num">1284</span>,
+  <span class="str">"errorRate"</span>: <span class="num">0.02</span>,
+  <span class="str">"activeApps"</span>: <span class="num">3</span>,
+  <span class="str">"recentActivity"</span>: [...]
 }</pre>
-                    </div>
-                </div>
+                            </div>
+                        </div>
 
-                <div class="bg-dark-blue-lighter border border-gray-800 rounded-2xl p-6">
-                    <div class="flex items-center gap-3 mb-3">
-                        <span class="bg-blue-900/50 text-blue-400 text-xs font-bold px-2 py-1 rounded">GET</span>
-                        <code class="mono text-sm text-white">/api/v1/dev-keys/list</code>
-                        <span class="text-xs text-yellow-400">Auth required</span>
-                    </div>
-                    <p class="text-gray-400 text-sm mb-3">List all developer API keys (masked).</p>
-                    <div class="mono text-xs bg-gray-900/50 rounded-xl p-4 overflow-x-auto">
-<pre class="text-gray-300">Response: {
-  "keys": [{
-    "id": "uuid",
-    "maskedKey": "vp_live_abc1...f456",
-    "label": "Production",
-    "lastUsedAt": "2026-03-24T...",
-    "createdAt": "2026-03-24T..."
+                        <div class="endpoint-card">
+                            <div class="flex items-center gap-3 mb-3">
+                                <span class="method-badge method-get">GET</span>
+                                <code class="font-mono text-sm text-white">/api/v1/stats/usage?days=30</code>
+                            </div>
+                            <p class="text-gray-400 text-sm mb-3">Daily call volume for charting.</p>
+                            <div class="code-block">
+<pre class="text-gray-300"><span class="cmt">// Response (200)</span>
+{
+  <span class="str">"usage"</span>: [
+    { <span class="str">"date"</span>: <span class="str">"2026-03-24"</span>, <span class="str">"calls"</span>: <span class="num">47</span> },
+    { <span class="str">"date"</span>: <span class="str">"2026-03-23"</span>, <span class="str">"calls"</span>: <span class="num">62</span> },
+    ...
+  ]
+}</pre>
+                            </div>
+                        </div>
+
+                        <div class="endpoint-card">
+                            <div class="flex items-center gap-3 mb-3">
+                                <span class="method-badge method-get">GET</span>
+                                <code class="font-mono text-sm text-white">/api/v1/stats/by-key</code>
+                            </div>
+                            <p class="text-gray-400 text-sm mb-3">Per-key usage breakdown.</p>
+                            <div class="code-block">
+<pre class="text-gray-300"><span class="cmt">// Response (200)</span>
+{
+  <span class="str">"keys"</span>: [{
+    <span class="str">"keyId"</span>: <span class="str">"uuid"</span>,
+    <span class="str">"provider"</span>: <span class="str">"openai"</span>,
+    <span class="str">"label"</span>: <span class="str">"Production"</span>,
+    <span class="str">"totalCalls"</span>: <span class="num">892</span>,
+    <span class="str">"errors"</span>: <span class="num">12</span>,
+    <span class="str">"lastUsedAt"</span>: <span class="str">"2026-03-24T..."</span>
   }]
 }</pre>
+                            </div>
+                        </div>
                     </div>
                 </div>
 
-                <div class="bg-dark-blue-lighter border border-gray-800 rounded-2xl p-6">
-                    <div class="flex items-center gap-3 mb-3">
-                        <span class="bg-green-900/50 text-green-400 text-xs font-bold px-2 py-1 rounded">POST</span>
-                        <code class="mono text-sm text-white">/api/v1/dev-keys/:id/revoke</code>
-                        <span class="text-xs text-yellow-400">Auth required</span>
+                <!-- Error Codes -->
+                <div>
+                    <h3 class="text-xl font-semibold text-white mb-5">Error Codes</h3>
+                    <div class="bg-vp-surface border border-vp-border rounded-xl overflow-hidden">
+                        <table class="doc-table">
+                            <thead><tr><th>Code</th><th>Meaning</th><th>Common Cause</th></tr></thead>
+                            <tbody>
+                                <tr>
+                                    <td><code class="font-mono text-xs text-amber-400">400</code></td>
+                                    <td>Bad Request</td>
+                                    <td class="text-gray-500">Missing or invalid fields in the request body</td>
+                                </tr>
+                                <tr>
+                                    <td><code class="font-mono text-xs text-amber-400">401</code></td>
+                                    <td>Unauthorized</td>
+                                    <td class="text-gray-500">Missing, expired, or invalid JWT / API key</td>
+                                </tr>
+                                <tr>
+                                    <td><code class="font-mono text-xs text-amber-400">403</code></td>
+                                    <td>Forbidden</td>
+                                    <td class="text-gray-500">ZK proof verification failed, app not authorized, or nullifier replayed</td>
+                                </tr>
+                                <tr>
+                                    <td><code class="font-mono text-xs text-amber-400">404</code></td>
+                                    <td>Not Found</td>
+                                    <td class="text-gray-500">Key slot ID does not exist or has been revoked</td>
+                                </tr>
+                                <tr>
+                                    <td><code class="font-mono text-xs text-amber-400">409</code></td>
+                                    <td>Conflict</td>
+                                    <td class="text-gray-500">Email already registered, duplicate nullifier</td>
+                                </tr>
+                                <tr>
+                                    <td><code class="font-mono text-xs text-amber-400">429</code></td>
+                                    <td>Too Many Requests</td>
+                                    <td class="text-gray-500">Rate limit exceeded (60/min edge, 100/min backend)</td>
+                                </tr>
+                                <tr>
+                                    <td><code class="font-mono text-xs text-amber-400">500</code></td>
+                                    <td>Internal Server Error</td>
+                                    <td class="text-gray-500">Server-side failure. Contact support.</td>
+                                </tr>
+                                <tr>
+                                    <td><code class="font-mono text-xs text-amber-400">502</code></td>
+                                    <td>Bad Gateway</td>
+                                    <td class="text-gray-500">Provider API returned an error during proxy call</td>
+                                </tr>
+                            </tbody>
+                        </table>
                     </div>
-                    <p class="text-gray-400 text-sm">Revoke a developer API key. Irreversible. All SDK calls using this key will stop working.</p>
+                    <p class="text-gray-600 text-xs mt-3">All error responses follow the format: <code class="font-mono text-xs">{ "error": "Human-readable message" }</code></p>
                 </div>
-            </div>
-        </section>
+            </section>
 
-        <!-- Stats -->
-        <section class="mb-12">
-            <h2 class="text-2xl font-bold text-white mb-6">Stats & Analytics</h2>
-            <div class="space-y-4">
-                <div class="bg-dark-blue-lighter border border-gray-800 rounded-2xl p-5">
-                    <div class="flex items-center gap-3 mb-2">
-                        <span class="bg-blue-900/50 text-blue-400 text-xs font-bold px-2 py-1 rounded">GET</span>
-                        <code class="mono text-sm text-white">/api/v1/stats/overview</code>
+
+            <!-- ============================================================ -->
+            <!-- SECTION 8: SECURITY ARCHITECTURE -->
+            <!-- ============================================================ -->
+            <section id="security-architecture" class="mb-20">
+                <h2 class="text-3xl font-bold text-white mb-2">Security Architecture</h2>
+                <p class="text-gray-500 mb-8">Eight layers of defense between your API keys and an attacker.</p>
+
+                <!-- Security Layers -->
+                <div class="space-y-4 mb-10">
+                    <div class="endpoint-card border-l-2 border-l-green-500/50">
+                        <div class="flex items-center gap-3 mb-2">
+                            <span class="text-green-400 font-mono text-xs font-bold bg-green-500/10 px-2 py-0.5 rounded">L1</span>
+                            <h4 class="text-white font-semibold">Shamir Secret Sharing</h4>
+                        </div>
+                        <p class="text-gray-400 text-sm">API keys are split into 2 shares using polynomial interpolation over GF(256). Each share alone is information-theoretically secure -- no amount of computation can extract the secret from a single share. This is not encryption (which can be brute-forced); it is mathematically impossible.</p>
                     </div>
-                    <p class="text-gray-500 text-sm">Total keys, API calls this month, error rate, active apps, recent activity.</p>
-                </div>
-                <div class="bg-dark-blue-lighter border border-gray-800 rounded-2xl p-5">
-                    <div class="flex items-center gap-3 mb-2">
-                        <span class="bg-blue-900/50 text-blue-400 text-xs font-bold px-2 py-1 rounded">GET</span>
-                        <code class="mono text-sm text-white">/api/v1/stats/usage?days=30</code>
+
+                    <div class="endpoint-card border-l-2 border-l-green-500/50">
+                        <div class="flex items-center gap-3 mb-2">
+                            <span class="text-green-400 font-mono text-xs font-bold bg-green-500/10 px-2 py-0.5 rounded">L2</span>
+                            <h4 class="text-white font-semibold">AES-256-GCM -- Share 1 Encryption</h4>
+                        </div>
+                        <p class="text-gray-400 text-sm">Share 1 is encrypted at rest with AES-256-GCM using the server-side <code class="font-mono text-xs text-vp-accent">VAULT_ENCRYPTION_KEY</code>. Each encryption uses a unique random IV and salt. The GCM auth tag detects any tampering with the ciphertext.</p>
                     </div>
-                    <p class="text-gray-500 text-sm">Calls per day for the last N days (for charts).</p>
-                </div>
-                <div class="bg-dark-blue-lighter border border-gray-800 rounded-2xl p-5">
-                    <div class="flex items-center gap-3 mb-2">
-                        <span class="bg-blue-900/50 text-blue-400 text-xs font-bold px-2 py-1 rounded">GET</span>
-                        <code class="mono text-sm text-white">/api/v1/stats/by-key</code>
+
+                    <div class="endpoint-card border-l-2 border-l-green-500/50">
+                        <div class="flex items-center gap-3 mb-2">
+                            <span class="text-green-400 font-mono text-xs font-bold bg-green-500/10 px-2 py-0.5 rounded">L3</span>
+                            <h4 class="text-white font-semibold">AES-256-GCM -- Share 2 Encryption</h4>
+                        </div>
+                        <p class="text-gray-400 text-sm">Share 2 is encrypted with AES-256-GCM using a key derived from the user's <code class="font-mono text-xs text-vp-accent">vp_live_</code> developer key. This means even with full server access, Share 2 cannot be decrypted without the user's key.</p>
                     </div>
-                    <p class="text-gray-500 text-sm">Per-key breakdown: calls, errors, last used.</p>
-                </div>
-            </div>
-        </section>
 
-        <!-- Supported Providers -->
-        <section class="mb-12">
-            <h2 class="text-2xl font-bold text-white mb-6">Supported Providers</h2>
-            <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
-                <div class="bg-dark-blue-lighter border border-gray-800 rounded-xl p-4 text-center">
-                    <div class="text-lg font-bold text-green-400">OpenAI</div>
-                    <div class="text-xs text-gray-500 mt-1">GPT-4, DALL-E, Whisper</div>
-                </div>
-                <div class="bg-dark-blue-lighter border border-gray-800 rounded-xl p-4 text-center">
-                    <div class="text-lg font-bold text-orange-400">Anthropic</div>
-                    <div class="text-xs text-gray-500 mt-1">Claude 4, Haiku, Opus</div>
-                </div>
-                <div class="bg-dark-blue-lighter border border-gray-800 rounded-xl p-4 text-center">
-                    <div class="text-lg font-bold text-blue-400">Google AI</div>
-                    <div class="text-xs text-gray-500 mt-1">Gemini Pro, Flash</div>
-                </div>
-                <div class="bg-dark-blue-lighter border border-gray-800 rounded-xl p-4 text-center">
-                    <div class="text-lg font-bold text-purple-400">Together.ai</div>
-                    <div class="text-xs text-gray-500 mt-1">Llama, Mixtral, etc.</div>
-                </div>
-            </div>
-        </section>
+                    <div class="endpoint-card border-l-2 border-l-blue-500/50">
+                        <div class="flex items-center gap-3 mb-2">
+                            <span class="text-blue-400 font-mono text-xs font-bold bg-blue-500/10 px-2 py-0.5 rounded">L4</span>
+                            <h4 class="text-white font-semibold">HMAC-SHA256 Edge Signing</h4>
+                        </div>
+                        <p class="text-gray-400 text-sm">All requests are HMAC-SHA256 signed at Cloudflare's edge network before reaching the backend. The backend rejects any request without a valid HMAC signature. Direct access to the backend is blocked -- all traffic must flow through the edge.</p>
+                    </div>
 
-        <!-- Rate Limits -->
-        <section class="mb-12">
-            <h2 class="text-2xl font-bold text-white mb-6">Rate Limits</h2>
-            <table class="w-full text-sm">
-                <thead><tr class="border-b border-gray-800 text-gray-400"><th class="text-left py-2">Tier</th><th class="text-left py-2">Price</th><th class="text-left py-2">Key Slots</th><th class="text-left py-2">Proxied Calls/mo</th></tr></thead>
-                <tbody>
-                    <tr class="border-b border-gray-800/50"><td class="py-2 text-white">Free</td><td>$0</td><td>3</td><td>1,000</td></tr>
-                    <tr class="border-b border-gray-800/50"><td class="py-2 text-indigo-400 font-medium">Pro</td><td>$12/mo</td><td>20</td><td>50,000</td></tr>
-                    <tr class="border-b border-gray-800/50"><td class="py-2 text-white">Team</td><td>$39/mo</td><td>100</td><td>200,000</td></tr>
-                    <tr><td class="py-2 text-white">Enterprise</td><td>Custom</td><td>Unlimited</td><td>Unlimited</td></tr>
-                </tbody>
-            </table>
-            <p class="text-gray-600 text-xs mt-3">Edge rate limit: 60 requests/minute per IP. Backend rate limit: 100 requests/minute per user.</p>
-        </section>
+                    <div class="endpoint-card border-l-2 border-l-blue-500/50">
+                        <div class="flex items-center gap-3 mb-2">
+                            <span class="text-blue-400 font-mono text-xs font-bold bg-blue-500/10 px-2 py-0.5 rounded">L5</span>
+                            <h4 class="text-white font-semibold">JWT Authentication</h4>
+                        </div>
+                        <p class="text-gray-400 text-sm">User sessions use JWT tokens with 7-day expiry. Developer API keys (<code class="font-mono text-xs text-vp-accent">vp_live_</code>) are hashed with bcrypt and stored in the database. The raw key is never stored.</p>
+                    </div>
 
-        <!-- Security -->
-        <section class="mb-12">
-            <h2 class="text-2xl font-bold text-white mb-6">Security Architecture</h2>
-            <div class="grid md:grid-cols-2 gap-4">
-                <div class="bg-dark-blue-lighter border border-gray-800 rounded-xl p-5">
-                    <div class="text-green-400 font-bold mb-2">Shamir Secret Sharing</div>
-                    <p class="text-sm text-gray-400">Your API key is split into 2 shares using GF(256) polynomial interpolation. Neither share alone reveals anything. Half a key is cryptographic garbage.</p>
+                    <div class="endpoint-card border-l-2 border-l-purple-500/50">
+                        <div class="flex items-center gap-3 mb-2">
+                            <span class="text-purple-400 font-mono text-xs font-bold bg-purple-500/10 px-2 py-0.5 rounded">L6</span>
+                            <h4 class="text-white font-semibold">Nullifier Replay Prevention</h4>
+                        </div>
+                        <p class="text-gray-400 text-sm">Every proxy call requires a unique nullifier (a random hex string). Used nullifiers are stored in the database. If an attacker intercepts a request and tries to replay it, the server rejects it because the nullifier has already been consumed.</p>
+                    </div>
+
+                    <div class="endpoint-card border-l-2 border-l-purple-500/50">
+                        <div class="flex items-center gap-3 mb-2">
+                            <span class="text-purple-400 font-mono text-xs font-bold bg-purple-500/10 px-2 py-0.5 rounded">L7</span>
+                            <h4 class="text-white font-semibold">Rate Limiting</h4>
+                        </div>
+                        <p class="text-gray-400 text-sm">Two layers of rate limiting: 60 requests/minute per IP at the Cloudflare edge, and 100 requests/minute per user at the backend. Brute-force and DDoS attempts are throttled before they reach the application.</p>
+                    </div>
+
+                    <div class="endpoint-card border-l-2 border-l-purple-500/50">
+                        <div class="flex items-center gap-3 mb-2">
+                            <span class="text-purple-400 font-mono text-xs font-bold bg-purple-500/10 px-2 py-0.5 rounded">L8</span>
+                            <h4 class="text-white font-semibold">Noir ZK Proofs</h4>
+                        </div>
+                        <p class="text-gray-400 text-sm">Zero-knowledge proofs (written in Noir, verified with Barretenberg) cryptographically prove key ownership, app authorization, and request freshness without revealing any sensitive data. Proof verification happens on every proxy call.</p>
+                    </div>
                 </div>
-                <div class="bg-dark-blue-lighter border border-gray-800 rounded-xl p-5">
-                    <div class="text-green-400 font-bold mb-2">AES-256-GCM Encryption</div>
-                    <p class="text-sm text-gray-400">Share 1 is encrypted at rest with a unique salt and IV per encryption. Tampered data is detected and rejected via auth tag.</p>
+
+                <!-- Additional Security -->
+                <div class="grid md:grid-cols-2 gap-4 mb-8">
+                    <div class="endpoint-card">
+                        <h4 class="text-white font-semibold mb-2">Memory Zeroing</h4>
+                        <p class="text-gray-500 text-sm">After every proxy call, the reconstructed API key and both plaintext shares are explicitly overwritten with zero bytes in memory. The key exists in server RAM for approximately 100ms. It is never written to disk, swap, or logs.</p>
+                    </div>
+                    <div class="endpoint-card">
+                        <h4 class="text-white font-semibold mb-2">TLS Everywhere</h4>
+                        <p class="text-gray-500 text-sm">All traffic between the client, Cloudflare edge, and backend uses TLS 1.3. All traffic between the backend and API providers uses TLS. No plaintext transmission anywhere in the pipeline.</p>
+                    </div>
                 </div>
-                <div class="bg-dark-blue-lighter border border-gray-800 rounded-xl p-5">
-                    <div class="text-green-400 font-bold mb-2">Zero-Knowledge Proofs</div>
-                    <p class="text-sm text-gray-400">Noir ZK circuit proves key ownership and app authorization without revealing the key. Verified with Barretenberg on every proxy call.</p>
+
+                <!-- Rate Limits Table -->
+                <div>
+                    <h3 class="text-lg font-semibold text-white mb-4">Plan Limits</h3>
+                    <div class="bg-vp-surface border border-vp-border rounded-xl overflow-hidden">
+                        <table class="doc-table">
+                            <thead><tr><th>Tier</th><th>Price</th><th>Key Slots</th><th>Proxied Calls/mo</th><th>Support</th></tr></thead>
+                            <tbody>
+                                <tr>
+                                    <td class="text-white">Free</td>
+                                    <td>$0</td>
+                                    <td>3</td>
+                                    <td>1,000</td>
+                                    <td class="text-gray-500">Community</td>
+                                </tr>
+                                <tr>
+                                    <td class="text-vp-accent font-medium">Pro</td>
+                                    <td>$12/mo</td>
+                                    <td>20</td>
+                                    <td>50,000</td>
+                                    <td class="text-gray-500">Email</td>
+                                </tr>
+                                <tr>
+                                    <td class="text-white">Team</td>
+                                    <td>$39/mo</td>
+                                    <td>100</td>
+                                    <td>200,000</td>
+                                    <td class="text-gray-500">Priority</td>
+                                </tr>
+                                <tr>
+                                    <td class="text-white">Enterprise</td>
+                                    <td>Custom</td>
+                                    <td>Unlimited</td>
+                                    <td>Unlimited</td>
+                                    <td class="text-gray-500">Dedicated</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
                 </div>
-                <div class="bg-dark-blue-lighter border border-gray-800 rounded-xl p-5">
-                    <div class="text-green-400 font-bold mb-2">Ephemeral Reconstruction</div>
-                    <p class="text-sm text-gray-400">The full API key exists in memory for ~100ms during the proxied call, then is zeroed. It never hits disk, logs, or persistent storage.</p>
+            </section>
+
+
+            <!-- ============================================================ -->
+            <!-- SECTION 9: FAQ -->
+            <!-- ============================================================ -->
+            <section id="faq" class="mb-20">
+                <h2 class="text-3xl font-bold text-white mb-2">Frequently Asked Questions</h2>
+                <p class="text-gray-500 mb-8">Common questions from developers evaluating VaultProof.</p>
+
+                <div class="space-y-4">
+                    <div class="endpoint-card">
+                        <h4 class="text-white font-semibold mb-2">"Can VaultProof see my API keys?"</h4>
+                        <p class="text-gray-400 text-sm">No -- and this is by design, not by policy. Your API key is split into two shares using Shamir Secret Sharing before it is stored. Share 1 is encrypted with a server-side key. Share 2 is encrypted with your developer key. Neither share alone contains any information about the original key (this is an information-theoretic guarantee, not a computational one). The only time the full key exists is during a proxy call, when both shares are decrypted and combined in RAM for approximately 100ms, then immediately zeroed. There is no "admin mode" that can view stored keys.</p>
+                    </div>
+
+                    <div class="endpoint-card">
+                        <h4 class="text-white font-semibold mb-2">"What if I lose my vp_live_ developer key?"</h4>
+                        <p class="text-gray-400 text-sm">Create a new developer key from the Dashboard (Settings &rarr; API Keys). You will need to re-store any API keys that were encrypted with the old developer key, because Share 2 was encrypted using that key and cannot be decrypted without it. This is a security feature -- it means a stolen developer key can be rotated and the old one becomes useless.</p>
+                    </div>
+
+                    <div class="endpoint-card">
+                        <h4 class="text-white font-semibold mb-2">"What if VaultProof goes down?"</h4>
+                        <p class="text-gray-400 text-sm">If the VaultProof server is unavailable, proxied API calls will fail because the key cannot be reconstructed. However, your API keys at the provider (OpenAI, Anthropic, etc.) are completely unaffected. VaultProof does not modify, rotate, or delete your provider keys. You can always use your original API keys directly if needed. We recommend keeping a backup of critical keys in a secure location for disaster recovery.</p>
+                    </div>
+
+                    <div class="endpoint-card">
+                        <h4 class="text-white font-semibold mb-2">"Is this open source?"</h4>
+                        <p class="text-gray-400 text-sm">The Noir ZK circuit is open source so the cryptographic proofs can be independently audited and verified. The SDK and CLI are distributed as npm packages. The backend server and edge proxy are proprietary.</p>
+                    </div>
+
+                    <div class="endpoint-card">
+                        <h4 class="text-white font-semibold mb-2">"What providers are supported?"</h4>
+                        <p class="text-gray-400 text-sm">Currently: OpenAI, Anthropic, Google AI (Gemini), and Together.ai. Each provider has its own base URL and auth header format, which VaultProof handles automatically. More providers are coming -- contact us if you need a specific provider.</p>
+                    </div>
+
+                    <div class="endpoint-card">
+                        <h4 class="text-white font-semibold mb-2">"How is this different from 1Password or HashiCorp Vault?"</h4>
+                        <p class="text-gray-400 text-sm">1Password and HashiCorp Vault store secrets and give them back to you in plaintext when you need them. Your application then uses the key directly, meaning it exists in your app's memory, potentially in logs, and definitely in network traffic. VaultProof never gives you the key back. Instead, it makes the API call for you using the reconstructed key, which only exists in VaultProof's RAM for ~100ms. Your application never touches the raw key after initial storage.</p>
+                    </div>
+
+                    <div class="endpoint-card">
+                        <h4 class="text-white font-semibold mb-2">"What about HIPAA / SOC 2?"</h4>
+                        <p class="text-gray-400 text-sm">Enterprise tier with compliance certifications is coming. The current architecture (encryption at rest, TLS in transit, audit logging, access controls) is designed with compliance in mind. Contact us at <span class="text-vp-accent">team@vaultproof.dev</span> for enterprise inquiries.</p>
+                    </div>
+
+                    <div class="endpoint-card">
+                        <h4 class="text-white font-semibold mb-2">"Does VaultProof add latency to my API calls?"</h4>
+                        <p class="text-gray-400 text-sm">Yes, but it is minimal. The overhead is the time to decrypt both shares and reconstruct the key (a few milliseconds) plus one additional network hop (Cloudflare edge to backend). For most LLM API calls, which take 500ms-5s to complete, VaultProof adds less than 50ms of overhead -- typically under 2% of the total request time.</p>
+                    </div>
+
+                    <div class="endpoint-card">
+                        <h4 class="text-white font-semibold mb-2">"Can I use VaultProof in production?"</h4>
+                        <p class="text-gray-400 text-sm">Yes. VaultProof runs on Cloudflare's edge network (330+ cities worldwide) with multi-region database replication. The SDK uses <code class="font-mono text-xs text-vp-accent">vp_live_</code> keys for production and <code class="font-mono text-xs text-vp-accent">vp_test_</code> keys for development/staging environments.</p>
+                    </div>
                 </div>
-                <div class="bg-dark-blue-lighter border border-gray-800 rounded-xl p-5">
-                    <div class="text-green-400 font-bold mb-2">HMAC-Signed Edge Proxy</div>
-                    <p class="text-sm text-gray-400">All requests are HMAC-SHA256 signed at Cloudflare's edge. Backend rejects unsigned requests. Direct access is blocked.</p>
-                </div>
-                <div class="bg-dark-blue-lighter border border-gray-800 rounded-xl p-5">
-                    <div class="text-green-400 font-bold mb-2">Nullifier Replay Prevention</div>
-                    <p class="text-sm text-gray-400">Every proxy call requires a unique nullifier stored in DB. Replayed requests are detected and rejected instantly.</p>
-                </div>
-            </div>
-        </section>
+            </section>
+
+
+            <!-- Footer -->
+            <footer class="border-t border-vp-border pt-8 pb-12 text-center">
+                <p class="text-sm text-gray-600">
+                    <a href="/" class="text-gray-400 hover:text-white transition">VaultProof</a> by <a href="/" class="text-gray-400 hover:text-white transition">Rial Labs</a>
+                </p>
+            </footer>
+
+        </main>
     </div>
 
-    <footer class="border-t border-gray-800 py-8 px-6 text-center text-sm text-gray-600">
-        <a href="/" class="text-gray-400 hover:text-white transition">VaultProof</a> by <a href="/" class="text-gray-400 hover:text-white transition">Rial Labs</a>
-    </footer>
+    <!-- Sidebar active state tracking -->
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const links = document.querySelectorAll('#sidebar-nav .nav-link');
+            const sections = [];
+
+            links.forEach(link => {
+                const id = link.getAttribute('href')?.slice(1);
+                if (id) {
+                    const el = document.getElementById(id);
+                    if (el) sections.push({ id, el, link });
+                }
+            });
+
+            const activate = () => {
+                let current = sections[0];
+                for (const s of sections) {
+                    if (s.el.getBoundingClientRect().top <= 120) current = s;
+                }
+                links.forEach(l => l.classList.remove('active'));
+                if (current) current.link.classList.add('active');
+            };
+
+            window.addEventListener('scroll', activate, { passive: true });
+            activate();
+        });
+    </script>
+
 </body>
 </html>
