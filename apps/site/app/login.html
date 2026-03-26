@@ -172,14 +172,14 @@
 
   <script>
     // ── Supabase client ──
-    const supabase = window.supabase.createClient(
+    const sbClient = window.supabase.createClient(
       'https://gwzkjiomemjlhtrdrlan.supabase.co',
       'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imd3emtqaW9tZW1qbGh0cmRybGFuIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQzNDM3ODIsImV4cCI6MjA4OTkxOTc4Mn0.tgHUvpBvFiojetuqIP0sKb0iBNbKDJHdeo9n3Tofa3o'
     );
 
     // ── Check if already logged in ──
     (async () => {
-      const { data: { session } } = await supabase.auth.getSession();
+      const { data: { session } } = await sbClient.auth.getSession();
       if (session) {
         localStorage.setItem('vaultproof_token', session.access_token);
         localStorage.setItem('vaultproof_user', JSON.stringify({
@@ -191,7 +191,7 @@
     })();
 
     // ── Listen for auth state changes (handles OAuth callback) ──
-    supabase.auth.onAuthStateChange((event, session) => {
+    sbClient.auth.onAuthStateChange((event, session) => {
       if (event === 'SIGNED_IN' && session) {
         localStorage.setItem('vaultproof_token', session.access_token);
         localStorage.setItem('vaultproof_user', JSON.stringify({
@@ -204,7 +204,7 @@
 
     // ── GitHub OAuth ──
     async function loginWithGitHub() {
-      const { error } = await supabase.auth.signInWithOAuth({
+      const { error } = await sbClient.auth.signInWithOAuth({
         provider: 'github',
         options: { redirectTo: window.location.origin + '/app/login' }
       });
@@ -248,7 +248,7 @@
       btn.disabled = true;
 
       try {
-        const { data, error } = await supabase.auth.signInWithPassword({
+        const { data, error } = await sbClient.auth.signInWithPassword({
           email: document.getElementById('loginEmail').value,
           password: document.getElementById('loginPassword').value,
         });
@@ -279,7 +279,7 @@
       btn.disabled = true;
 
       try {
-        const { data, error } = await supabase.auth.signUp({
+        const { data, error } = await sbClient.auth.signUp({
           email: document.getElementById('regEmail').value,
           password: document.getElementById('regPassword').value,
         });
