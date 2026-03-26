@@ -15,14 +15,42 @@
         :root { font-family: 'Geist', sans-serif; }
         body { background: linear-gradient(180deg, #0a0e1a 0%, #0d1220 50%, #0a0e1a 100%); }
         .mono { font-family: 'JetBrains Mono', monospace; }
+
+        .mobile-menu { display: none; }
+        .mobile-menu.open { display: flex; }
     </style>
 </head>
 <body class="text-gray-200 min-h-screen">
-    <nav class="flex items-center justify-between px-6 py-5 max-w-5xl mx-auto">
-        <a href="/" class="flex items-center gap-2"><span class="text-xl font-bold text-white">VaultProof</span><span class="text-xs text-gray-500 ml-1">Verify</span></a>
-        <div class="flex items-center gap-6">
-            <a href="/docs" class="text-sm text-gray-400 hover:text-white transition">Docs</a>
-            <a href="/app/login" class="bg-indigo-600 hover:bg-indigo-500 text-sm px-4 py-2 rounded-lg font-medium text-white transition">Dashboard</a>
+    <nav class="relative z-10 border-b border-gray-800/50 backdrop-blur-sm sticky top-0" style="background: rgba(10,14,26,0.8);">
+        <div class="flex items-center justify-between px-6 py-4 max-w-5xl mx-auto">
+            <a href="/" class="flex items-center gap-2"><span class="text-xl font-bold text-white">VaultProof</span><span class="text-xs text-gray-500 ml-1">Verify</span></a>
+
+            <!-- Desktop links -->
+            <div class="hidden md:flex items-center gap-8">
+                <a href="/docs" class="text-sm text-gray-400 hover:text-white transition">Docs</a>
+                <a href="/guides" class="text-sm text-gray-400 hover:text-white transition">Guides</a>
+                <a href="/compare" class="text-sm text-gray-400 hover:text-white transition">Compare</a>
+                <a href="/blog" class="text-sm text-gray-400 hover:text-white transition">Blog</a>
+                <a href="/#pricing" class="text-sm text-gray-400 hover:text-white transition">Pricing</a>
+                <a href="/app/login" class="text-sm text-gray-400 hover:text-white transition">Dashboard</a>
+                <a href="/app/login" class="bg-indigo-600 hover:bg-indigo-500 text-sm px-5 py-2 rounded-lg font-semibold text-white transition">Get Started</a>
+            </div>
+
+            <!-- Mobile hamburger -->
+            <button id="mobileToggle" class="md:hidden text-gray-400 hover:text-white" aria-label="Toggle menu">
+                <svg width="24" height="24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 6h16M4 12h16M4 18h16"/></svg>
+            </button>
+        </div>
+
+        <!-- Mobile menu -->
+        <div id="mobileMenu" class="mobile-menu flex-col gap-4 px-6 pb-6 md:hidden backdrop-blur-sm" style="background: rgba(10,14,26,0.95);">
+            <a href="/docs" class="text-sm text-gray-400 hover:text-white transition py-1">Docs</a>
+            <a href="/guides" class="text-sm text-gray-400 hover:text-white transition py-1">Guides</a>
+            <a href="/compare" class="text-sm text-gray-400 hover:text-white transition py-1">Compare</a>
+            <a href="/blog" class="text-sm text-gray-400 hover:text-white transition py-1">Blog</a>
+            <a href="/#pricing" class="text-sm text-gray-400 hover:text-white transition py-1">Pricing</a>
+            <a href="/app/login" class="text-sm text-gray-400 hover:text-white transition py-1">Dashboard</a>
+            <a href="/app/login" class="bg-indigo-600 hover:bg-indigo-500 text-sm px-5 py-2.5 rounded-lg font-semibold text-white transition text-center mt-2">Get Started</a>
         </div>
     </nav>
 
@@ -267,5 +295,15 @@ fn main(
     <footer class="border-t border-gray-800 py-8 px-6 text-center text-sm text-gray-600">
         <a href="/" class="text-gray-400 hover:text-white transition">VaultProof</a> by <a href="/" class="text-gray-400 hover:text-white transition">Rial Labs</a>
     </footer>
+    <script>
+        document.getElementById('mobileToggle').addEventListener('click', function() {
+            document.getElementById('mobileMenu').classList.toggle('open');
+        });
+        document.querySelectorAll('#mobileMenu a').forEach(function(link) {
+            link.addEventListener('click', function() {
+                document.getElementById('mobileMenu').classList.remove('open');
+            });
+        });
+    </script>
 </body>
 </html>

@@ -41,23 +41,47 @@
         * { font-family: 'Inter', system-ui, sans-serif; }
         ::selection { background: #6366f1; color: #fff; }
         body { background: #0a0a0f; }
+
+        .mobile-menu { display: none; }
+        .mobile-menu.open { display: flex; }
     </style>
 </head>
 <body class="text-gray-300 min-h-screen">
 
     <!-- Nav -->
-    <nav class="border-b border-vp-border/50 backdrop-blur-sm bg-vp-bg/80 sticky top-0 z-50">
+    <nav class="relative z-50 border-b border-vp-border/50 backdrop-blur-sm bg-vp-bg/80 sticky top-0">
         <div class="flex items-center justify-between px-6 py-4 max-w-6xl mx-auto">
             <a href="/" class="flex items-center gap-2.5">
                 <img src="/logo-sm.png" alt="VaultProof" width="28" height="28" />
                 <span class="text-lg font-bold text-white tracking-tight" style="font-family:'Space Grotesk',sans-serif">VaultProof</span>
             </a>
-            <div class="flex items-center gap-8">
-                <a href="/" class="text-sm text-gray-400 hover:text-white transition-colors">Home</a>
+
+            <!-- Desktop links -->
+            <div class="hidden md:flex items-center gap-8">
                 <a href="/docs" class="text-sm text-gray-400 hover:text-white transition-colors">Docs</a>
+                <a href="/guides" class="text-sm text-gray-400 hover:text-white transition-colors">Guides</a>
+                <a href="/compare" class="text-sm text-gray-400 hover:text-white transition-colors">Compare</a>
+                <a href="/blog" class="text-sm text-gray-400 hover:text-white transition-colors">Blog</a>
                 <a href="/#pricing" class="text-sm text-gray-400 hover:text-white transition-colors">Pricing</a>
-                <a href="/app/login" class="text-sm text-gray-400 hover:text-white transition-colors">Login</a>
+                <a href="/app/login" class="text-sm text-gray-400 hover:text-white transition-colors">Dashboard</a>
+                <a href="/app/login" class="bg-vp-accent hover:bg-indigo-500 text-sm px-5 py-2 rounded-btn font-semibold text-white transition-all">Get Started</a>
             </div>
+
+            <!-- Mobile hamburger -->
+            <button id="mobileToggle" class="md:hidden text-gray-400 hover:text-white" aria-label="Toggle menu">
+                <svg width="24" height="24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 6h16M4 12h16M4 18h16"/></svg>
+            </button>
+        </div>
+
+        <!-- Mobile menu -->
+        <div id="mobileMenu" class="mobile-menu flex-col gap-4 px-6 pb-6 md:hidden bg-vp-bg/95 backdrop-blur-sm">
+            <a href="/docs" class="text-sm text-gray-400 hover:text-white transition-colors py-1">Docs</a>
+            <a href="/guides" class="text-sm text-gray-400 hover:text-white transition-colors py-1">Guides</a>
+            <a href="/compare" class="text-sm text-gray-400 hover:text-white transition-colors py-1">Compare</a>
+            <a href="/blog" class="text-sm text-gray-400 hover:text-white transition-colors py-1">Blog</a>
+            <a href="/#pricing" class="text-sm text-gray-400 hover:text-white transition-colors py-1">Pricing</a>
+            <a href="/app/login" class="text-sm text-gray-400 hover:text-white transition-colors py-1">Dashboard</a>
+            <a href="/app/login" class="bg-vp-accent hover:bg-indigo-500 text-sm px-5 py-2.5 rounded-btn font-semibold text-white transition-all text-center mt-2">Get Started</a>
         </div>
     </nav>
 
@@ -175,5 +199,15 @@
         </div>
     </main>
 
+    <script>
+        document.getElementById('mobileToggle').addEventListener('click', function() {
+            document.getElementById('mobileMenu').classList.toggle('open');
+        });
+        document.querySelectorAll('#mobileMenu a').forEach(function(link) {
+            link.addEventListener('click', function() {
+                document.getElementById('mobileMenu').classList.remove('open');
+            });
+        });
+    </script>
 </body>
 </html>
