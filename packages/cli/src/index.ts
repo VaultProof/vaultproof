@@ -855,6 +855,216 @@ ${chalk.bold("Requires:")} VAULTPROOF_API_KEY environment variable
     }
   });
 
+// ─── env ─────────────────────────────────────────────────────────────────────
+
+const ENV_VAR_MAP: Record<string, string> = {
+  openai: "OPENAI_API_KEY",
+  anthropic: "ANTHROPIC_API_KEY",
+  google: "GOOGLE_API_KEY",
+  together: "TOGETHER_API_KEY",
+  mistral: "MISTRAL_API_KEY",
+  cohere: "COHERE_API_KEY",
+  groq: "GROQ_API_KEY",
+  perplexity: "PERPLEXITY_API_KEY",
+  fireworks: "FIREWORKS_API_KEY",
+  deepseek: "DEEPSEEK_API_KEY",
+  replicate: "REPLICATE_API_TOKEN",
+  stripe: "STRIPE_SECRET_KEY",
+  aws: "AWS_SECRET_ACCESS_KEY",
+  twilio: "TWILIO_AUTH_TOKEN",
+  sendgrid: "SENDGRID_API_KEY",
+  github: "GITHUB_TOKEN",
+};
+
+program
+  .command("env")
+  .description("Output stored API keys as export statements for your shell")
+  .option("-p, --provider <provider>", "Export key for a specific provider")
+  .option("-a, --all", "Export all stored keys")
+  .option("--var <name>", "Custom environment variable name")
+  .addHelpText(
+    "after",
+    `
+${chalk.bold("Examples:")}
+  $ eval $(vaultproof env -p stripe)       # Export Stripe key
+  $ eval $(vaultproof env -p openai)       # Export OpenAI key
+  $ eval $(vaultproof env -a)              # Export all stored keys
+  $ eval $(vaultproof env -p stripe --var MY_KEY)  # Custom var name
+  $ vaultproof env -p stripe               # Preview the export statement
+
+${chalk.bold("How it works:")}
+  Reconstructs your API key from encrypted Shamir shares and outputs
+  an export statement. Use with eval to set it in your current shell.
+  The key is never written to disk — only held in memory.
+
+${chalk.bold("Works with every SDK:")} Stripe, AWS, Twilio, SendGrid, any SDK that
+  reads from environment variables.
+
+${chalk.bold("Requires:")} VAULTPROOF_API_KEY environment variable
+`
+  )
+  .action(
+    async (opts: { provider?: string; all?: boolean; var?: string }) => {
+      if (!opts.provider && !opts.all) {
+        console.error(
+          chalk.red("Specify a provider (-p openai) or use --all")
+        );
+        process.exit(1);
+      }
+
+      const { data } = await apiRequest<{
+        keys: Array<{ id: string; provider: string; label: string }>;
+      }>("GET", "/api/v1/sdk/keys", { auth: "apikey" });
+
+      if (!data.keys || data.keys.length === 0) {
+        console.error(chalk.red("No keys stored."));
+        process.exit(1);
+      }
+
+      const keysToExport = opts.all
+        ? data.keys
+        : data.keys.filter(
+            (k) => k.provider.toLowerCase() === opts.provider!.toLowerCase()
+          );
+
+      if (keysToExport.length === 0) {
+        console.error(
+          chalk.red(`No key found for provider: ${opts.provider}`)
+        );
+        process.exit(1);
+      }
+
+      for (const key of keysToExport) {
+        // Validate the key to reconstruct it
+        const { data: validateData } = await apiRequest<{
+          valid: boolean;
+          error?: string;
+        }>("POST", "/api/v1/sdk/validate", {
+          body: { keyId: key.id },
+          auth: "apikey",
+        });
+
+        // The validate endpoint doesn't return the raw key
+        // We need a new endpoint — or use the proxy approach
+        // For now, use the call endpoint to reconstruct and return the key
+        // Actually, we need a dedicated endpoint. Let's use a workaround:
+        // Fetch the key via a lightweight proxy call that echoes the auth header
+
+        // Simpler: add a /sdk/retrieve endpoint on the backend
+        // For now, output the provider + key ID for the user
+        const envVar =
+          opts.var || ENV_VAR_MAP[key.provider.toLowerCase()] || `${key.provider.toUpperCase()}_API_KEY`;
+
+        // We need the backend to return the reconstructed key
+        const { data: retrieveData } = await apiRequest<{
+          apiKey?: string;
+          error?: string;
+        }>("POST", "/api/v1/sdk/retrieve", {
+          body: { keyId: key.id },
+          auth: "apikey",
+        });
+
+        if (retrieveData.apiKey) {
+          // Output export statement to stdout (for eval)
+          process.stdout.write(`export ${envVar}="${retrieveData.apiKey}"\n`);
+        } else {
+          console.error(
+            chalk.red(`Failed to retrieve key for ${key.provider}: ${retrieveData.error || "unknown error"}`)
+          );
+        }
+      }
+    }
+  );
+
+// ─── exec ────────────────────────────────────────────────────────────────────
+
+program
+  .command("exec")
+  .description("Run a command with stored API keys injected as environment variables")
+  .option("-p, --provider <providers>", "Providers to inject (comma-separated)")
+  .option("-a, --all", "Inject all stored keys")
+  .argument("<command...>", "Command to run")
+  .addHelpText(
+    "after",
+    `
+${chalk.bold("Examples:")}
+  $ vaultproof exec -p stripe -- node app.js
+  $ vaultproof exec -p openai,anthropic -- python main.py
+  $ vaultproof exec -a -- npm start
+  $ vaultproof exec -p aws -- aws s3 ls
+
+${chalk.bold("How it works:")}
+  Reconstructs your API keys, sets them as environment variables,
+  runs your command, then clears everything when it exits.
+  Keys are never written to disk.
+
+${chalk.bold("Requires:")} VAULTPROOF_API_KEY environment variable
+`
+  )
+  .action(
+    async (
+      commandArgs: string[],
+      opts: { provider?: string; all?: boolean }
+    ) => {
+      if (!opts.provider && !opts.all) {
+        console.error(
+          chalk.red("Specify providers (-p stripe) or use --all")
+        );
+        process.exit(1);
+      }
+
+      const { data } = await apiRequest<{
+        keys: Array<{ id: string; provider: string; label: string }>;
+      }>("GET", "/api/v1/sdk/keys", { auth: "apikey" });
+
+      if (!data.keys || data.keys.length === 0) {
+        console.error(chalk.red("No keys stored."));
+        process.exit(1);
+      }
+
+      const providers = opts.all
+        ? data.keys.map((k) => k.provider)
+        : opts.provider!.split(",").map((p) => p.trim().toLowerCase());
+
+      const env: Record<string, string> = { ...process.env } as Record<string, string>;
+
+      for (const provider of providers) {
+        const key = data.keys.find(
+          (k) => k.provider.toLowerCase() === provider
+        );
+        if (!key) {
+          console.error(chalk.yellow(`No key found for ${provider}, skipping`));
+          continue;
+        }
+
+        const { data: retrieveData } = await apiRequest<{
+          apiKey?: string;
+        }>("POST", "/api/v1/sdk/retrieve", {
+          body: { keyId: key.id },
+          auth: "apikey",
+        });
+
+        if (retrieveData.apiKey) {
+          const envVar =
+            ENV_VAR_MAP[provider] || `${provider.toUpperCase()}_API_KEY`;
+          env[envVar] = retrieveData.apiKey;
+        }
+      }
+
+      // Run the command with injected env vars
+      const { execSync } = await import("child_process");
+      try {
+        execSync(commandArgs.join(" "), {
+          env,
+          stdio: "inherit",
+        });
+      } catch (e: unknown) {
+        const err = e as { status?: number };
+        process.exit(err.status || 1);
+      }
+    }
+  );
+
 // ─── config ──────────────────────────────────────────────────────────────────
 
 const configCmd = program

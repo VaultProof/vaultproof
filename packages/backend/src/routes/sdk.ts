@@ -298,6 +298,59 @@ export async function sdkRoutes(app: FastifyInstance) {
     }
   });
 
+  /**
+   * Retrieve — Reconstruct the raw API key from encrypted shares.
+   * Used by CLI `vaultproof env` and `vaultproof exec` commands.
+   * The key is reconstructed server-side and returned over TLS.
+   */
+  app.post('/retrieve', async (request, reply) => {
+    const schema = z.object({ keyId: z.string().min(1) });
+    const parsed = schema.safeParse(request.body);
+    if (!parsed.success) return reply.status(400).send({ error: 'Invalid input' });
+
+    const { userId, rawKey: vpKey } = (request as any).devAuth;
+    const { keyId } = parsed.data;
+
+    const keySlot = await prisma.keySlot.findUnique({ where: { id: keyId } });
+    if (!keySlot || keySlot.userId !== userId || keySlot.status !== 'ACTIVE') {
+      return reply.status(404).send({ error: 'Key not found' });
+    }
+
+    if (keySlot.expiresAt && new Date(keySlot.expiresAt) < new Date()) {
+      return reply.status(410).send({ error: 'Key has expired' });
+    }
+
+    if (!keySlot.share2Encrypted || keySlot.share2Encrypted.length === 0) {
+      return reply.status(400).send({ error: 'Share 2 not available' });
+    }
+
+    let apiKey: string;
+    try {
+      const decrypted1 = decrypt(Buffer.from(keySlot.share1Encrypted));
+      const s1 = deserializeShare(decrypted1.toString('utf-8'));
+      zeroBuffer(decrypted1);
+      const share2Str = decryptShare2(Buffer.from(keySlot.share2Encrypted), vpKey);
+      const s2 = deserializeShare(share2Str);
+      apiKey = new TextDecoder().decode(combine([s1, s2]));
+    } catch {
+      return reply.status(400).send({ error: 'Key reconstruction failed' });
+    }
+
+    // Log the retrieval
+    prisma.accessLog.create({
+      data: {
+        keySlotId: keyId,
+        appId: (request as any).devAuth.keyId,
+        action: 'key_retrieval',
+        zkProof: 'sdk-authenticated',
+        nullifier: `retrieve-${randomBytes(16).toString('hex')}`,
+        metadata: JSON.stringify({ provider: keySlot.provider }),
+      },
+    }).catch(() => {});
+
+    return { apiKey, provider: keySlot.provider };
+  });
+
   // List stored keys
   app.get('/keys', async (request) => {
     const { userId } = (request as any).devAuth;
