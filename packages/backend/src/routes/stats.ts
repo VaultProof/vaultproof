@@ -149,10 +149,16 @@ export async function statsRoutes(app: FastifyInstance) {
       },
     });
 
+    const dayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+
     const breakdown = await Promise.all(
       keySlots.map(async (key) => {
         const totalCalls = await prisma.accessLog.count({
           where: { keySlotId: key.id, action: 'api_call', timestamp: { gte: monthStart } },
+        });
+
+        const dailyCalls = await prisma.accessLog.count({
+          where: { keySlotId: key.id, action: 'api_call', timestamp: { gte: dayStart } },
         });
 
         const errorCalls = await prisma.accessLog.count({
@@ -177,6 +183,8 @@ export async function statsRoutes(app: FastifyInstance) {
           createdAt: key.createdAt,
           apps: key.appGrants,
           callsThisMonth: totalCalls,
+          dailyUsed: dailyCalls,
+          monthlyUsed: totalCalls,
           errorsThisMonth: errorCalls,
           lastUsed: lastLog?.timestamp || null,
         };

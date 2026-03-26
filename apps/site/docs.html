@@ -989,6 +989,24 @@ res = client.chat.completions.<span class="fn">create</span>(
                                         <td>No</td>
                                         <td>Friendly name (e.g., "Production", "Staging")</td>
                                     </tr>
+                                    <tr>
+                                        <td><code class="font-mono text-xs text-vp-accent">dailyLimit</code></td>
+                                        <td><code class="font-mono text-xs">number</code></td>
+                                        <td>No</td>
+                                        <td>Max API calls per day. <code class="font-mono text-xs">null</code> or omitted = unlimited</td>
+                                    </tr>
+                                    <tr>
+                                        <td><code class="font-mono text-xs text-vp-accent">monthlyLimit</code></td>
+                                        <td><code class="font-mono text-xs">number</code></td>
+                                        <td>No</td>
+                                        <td>Max API calls per month. <code class="font-mono text-xs">null</code> or omitted = unlimited</td>
+                                    </tr>
+                                    <tr>
+                                        <td><code class="font-mono text-xs text-vp-accent">blockOnLimit</code></td>
+                                        <td><code class="font-mono text-xs">boolean</code></td>
+                                        <td>No</td>
+                                        <td>If <code class="font-mono text-xs">true</code> (default), calls are blocked with HTTP 429 when the limit is hit. If <code class="font-mono text-xs">false</code>, calls continue but an alert email is sent.</td>
+                                    </tr>
                                 </tbody>
                             </table>
                         </div>
@@ -1053,7 +1071,7 @@ res = client.chat.completions.<span class="fn">create</span>(
                     </div>
 
                     <!-- vault.revoke -->
-                    <div class="endpoint-card">
+                    <div class="endpoint-card mb-6">
                         <h4 class="text-white font-mono text-sm font-semibold mb-3">vault.revoke(keyId)</h4>
                         <p class="text-gray-400 text-sm mb-4">Permanently destroys both encrypted shares on the server. This is irreversible. The key can never be reconstructed after revocation.</p>
                         <div class="bg-vp-surface border border-vp-border rounded-xl overflow-hidden mb-4">
@@ -1070,6 +1088,47 @@ res = client.chat.completions.<span class="fn">create</span>(
                             </table>
                         </div>
                         <p class="text-gray-500 text-xs">Returns: <code class="font-mono text-xs">void</code></p>
+                    </div>
+
+                    <!-- PUT /keys/:id/limits -->
+                    <div class="endpoint-card">
+                        <h4 class="text-white font-mono text-sm font-semibold mb-3">PUT /sdk/keys/:keyId/limits</h4>
+                        <p class="text-gray-400 text-sm mb-4">Update per-key call limits. Set daily and monthly caps to control API usage. When a limit is reached, calls are either blocked (HTTP 429) or allowed with an alert email, depending on the <code class="font-mono text-xs text-vp-accent">blockOnLimit</code> setting.</p>
+                        <div class="bg-vp-surface border border-vp-border rounded-xl overflow-hidden mb-4">
+                            <table class="doc-table">
+                                <thead><tr><th>Parameter</th><th>Type</th><th>Required</th><th>Description</th></tr></thead>
+                                <tbody>
+                                    <tr>
+                                        <td><code class="font-mono text-xs text-vp-accent">dailyLimit</code></td>
+                                        <td><code class="font-mono text-xs">number | null</code></td>
+                                        <td>No</td>
+                                        <td>Max calls per day. Set to <code class="font-mono text-xs">null</code> to remove the limit.</td>
+                                    </tr>
+                                    <tr>
+                                        <td><code class="font-mono text-xs text-vp-accent">monthlyLimit</code></td>
+                                        <td><code class="font-mono text-xs">number | null</code></td>
+                                        <td>No</td>
+                                        <td>Max calls per month. Set to <code class="font-mono text-xs">null</code> to remove the limit.</td>
+                                    </tr>
+                                    <tr>
+                                        <td><code class="font-mono text-xs text-vp-accent">blockOnLimit</code></td>
+                                        <td><code class="font-mono text-xs">boolean</code></td>
+                                        <td>No</td>
+                                        <td>If <code class="font-mono text-xs">true</code>, calls return 429 when limit is hit. If <code class="font-mono text-xs">false</code>, calls continue but an alert email is sent.</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                        <p class="text-gray-500 text-xs mb-2">Returns:</p>
+                        <div class="code-block">
+<pre class="text-gray-300">{ status: <span class="str">"updated"</span>, dailyLimit: <span class="num">500</span>, monthlyLimit: <span class="num">10000</span>, blockOnLimit: <span class="kw">true</span> }</pre>
+                        </div>
+                        <div class="mt-4 bg-amber-500/5 border border-amber-500/20 rounded-xl p-4">
+                            <p class="text-amber-400 text-xs font-medium mb-1">Rate limit response (HTTP 429)</p>
+                            <div class="code-block mt-2">
+<pre class="text-gray-300">{ error: <span class="str">"Daily call limit reached"</span>, limit: <span class="num">500</span>, used: <span class="num">500</span>, resets: <span class="str">"midnight UTC"</span> }</pre>
+                            </div>
+                        </div>
                     </div>
                 </div>
 

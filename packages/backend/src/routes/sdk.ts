@@ -73,6 +73,9 @@ export async function sdkRoutes(app: FastifyInstance) {
       provider: z.string().min(1).max(50).toLowerCase(),
       label: z.string().max(100).optional(),
       expiresAt: z.string().datetime().optional(),
+      dailyLimit: z.number().int().min(1).optional(),
+      monthlyLimit: z.number().int().min(1).optional(),
+      blockOnLimit: z.boolean().optional(),
     });
 
     const parsed = schema.safeParse(request.body);
@@ -81,7 +84,7 @@ export async function sdkRoutes(app: FastifyInstance) {
     }
 
     const { userId, keyId: devKeyId, rawKey: vpKey } = (request as any).devAuth;
-    const { share1, share2, provider, label, expiresAt } = parsed.data;
+    const { share1, share2, provider, label, expiresAt, dailyLimit, monthlyLimit, blockOnLimit } = parsed.data;
 
     // Encrypt Share 1 with VAULT_ENCRYPTION_KEY (server secret)
     const share1Encrypted = encrypt(Buffer.from(share1, 'utf-8'));
@@ -101,6 +104,9 @@ export async function sdkRoutes(app: FastifyInstance) {
         vaultCommitment: commitment,
         authAppsRoot: '',
         expiresAt: expiresAt ? new Date(expiresAt) : undefined,
+        dailyLimit,
+        monthlyLimit,
+        blockOnLimit: blockOnLimit ?? true,
       },
     });
 
@@ -155,6 +161,52 @@ export async function sdkRoutes(app: FastifyInstance) {
     // Check expiry
     if (keySlot.expiresAt && new Date(keySlot.expiresAt) < new Date()) {
       return reply.status(410).send({ error: 'Key has expired', expiresAt: keySlot.expiresAt });
+    }
+
+    // Check per-key daily/monthly limits
+    if (keySlot.dailyLimit || keySlot.monthlyLimit) {
+      const now = new Date();
+
+      if (keySlot.dailyLimit) {
+        const dayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+        const dailyCount = await prisma.accessLog.count({
+          where: { keySlotId: keyId, action: 'api_call', timestamp: { gte: dayStart } },
+        });
+        if (dailyCount >= keySlot.dailyLimit) {
+          if (keySlot.blockOnLimit) {
+            return reply.status(429).send({
+              error: 'Daily call limit reached',
+              limit: keySlot.dailyLimit,
+              used: dailyCount,
+              resets: 'midnight UTC',
+            });
+          }
+          // Alert only mode — continue but notify
+          if (authDevKey.alertEmail) {
+            sendUsageAlert(authDevKey.alertEmail, keySlot.label, dailyCount, keySlot.dailyLimit);
+          }
+        }
+      }
+
+      if (keySlot.monthlyLimit) {
+        const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
+        const monthlyCount = await prisma.accessLog.count({
+          where: { keySlotId: keyId, action: 'api_call', timestamp: { gte: monthStart } },
+        });
+        if (monthlyCount >= keySlot.monthlyLimit) {
+          if (keySlot.blockOnLimit) {
+            return reply.status(429).send({
+              error: 'Monthly call limit reached',
+              limit: keySlot.monthlyLimit,
+              used: monthlyCount,
+              resets: 'next month',
+            });
+          }
+          if (authDevKey.alertEmail) {
+            sendUsageAlert(authDevKey.alertEmail, keySlot.label, monthlyCount, keySlot.monthlyLimit);
+          }
+        }
+      }
     }
 
     if (!keySlot.share2Encrypted || keySlot.share2Encrypted.length === 0) {
@@ -391,6 +443,48 @@ export async function sdkRoutes(app: FastifyInstance) {
     }
 
     return { status: 'revoked' };
+  });
+
+  // Update per-key call limits
+  app.put('/keys/:keyId/limits', async (request, reply) => {
+    const schema = z.object({
+      dailyLimit: z.number().int().min(1).nullable().optional(),
+      monthlyLimit: z.number().int().min(1).nullable().optional(),
+      blockOnLimit: z.boolean().optional(),
+    });
+
+    const parsed = schema.safeParse(request.body);
+    if (!parsed.success) {
+      return reply.status(400).send({ error: 'Invalid input', details: parsed.error.issues });
+    }
+
+    const { userId } = (request as any).devAuth;
+    const { keyId } = request.params as { keyId: string };
+
+    const keySlot = await prisma.keySlot.findUnique({ where: { id: keyId } });
+    if (!keySlot || keySlot.userId !== userId) {
+      return reply.status(404).send({ error: 'Key not found' });
+    }
+    if (keySlot.status !== 'ACTIVE') {
+      return reply.status(400).send({ error: 'Key slot not active' });
+    }
+
+    const updateData: Record<string, unknown> = {};
+    if (parsed.data.dailyLimit !== undefined) updateData.dailyLimit = parsed.data.dailyLimit;
+    if (parsed.data.monthlyLimit !== undefined) updateData.monthlyLimit = parsed.data.monthlyLimit;
+    if (parsed.data.blockOnLimit !== undefined) updateData.blockOnLimit = parsed.data.blockOnLimit;
+
+    await prisma.keySlot.update({
+      where: { id: keyId },
+      data: updateData,
+    });
+
+    return {
+      status: 'updated',
+      dailyLimit: parsed.data.dailyLimit ?? keySlot.dailyLimit,
+      monthlyLimit: parsed.data.monthlyLimit ?? keySlot.monthlyLimit,
+      blockOnLimit: parsed.data.blockOnLimit ?? keySlot.blockOnLimit,
+    };
   });
 
   // Validate a key against its provider

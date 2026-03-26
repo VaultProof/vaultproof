@@ -95,6 +95,10 @@ export async function keyRoutes(app: FastifyInstance) {
         label: true,
         status: true,
         createdAt: true,
+        expiresAt: true,
+        dailyLimit: true,
+        monthlyLimit: true,
+        blockOnLimit: true,
         appGrants: {
           where: { revokedAt: null },
           select: { id: true, appId: true, appName: true, grantedAt: true },
@@ -245,6 +249,45 @@ export async function keyRoutes(app: FastifyInstance) {
     });
 
     return { status: 'rotated' };
+  });
+
+  // Update per-key call limits (auth: must own it)
+  app.put('/:keySlotId/limits', { preHandler: requireAuth }, async (request, reply) => {
+    const { keySlotId } = request.params as { keySlotId: string };
+    const userId = request.auth!.userId;
+
+    const limitsSchema = z.object({
+      dailyLimit: z.number().int().min(1).nullable().optional(),
+      monthlyLimit: z.number().int().min(1).nullable().optional(),
+      blockOnLimit: z.boolean().optional(),
+    });
+
+    const parsed = limitsSchema.safeParse(request.body);
+    if (!parsed.success) {
+      return reply.status(400).send({ error: 'Invalid input', details: parsed.error.issues });
+    }
+
+    const slot = await prisma.keySlot.findUnique({ where: { id: keySlotId } });
+    if (!slot) return reply.status(404).send({ error: 'Key slot not found' });
+    if (slot.userId !== userId) return reply.status(403).send({ error: 'Not your key slot' });
+    if (slot.status !== 'ACTIVE') return reply.status(400).send({ error: 'Key slot not active' });
+
+    const updateData: Record<string, unknown> = {};
+    if (parsed.data.dailyLimit !== undefined) updateData.dailyLimit = parsed.data.dailyLimit;
+    if (parsed.data.monthlyLimit !== undefined) updateData.monthlyLimit = parsed.data.monthlyLimit;
+    if (parsed.data.blockOnLimit !== undefined) updateData.blockOnLimit = parsed.data.blockOnLimit;
+
+    const updated = await prisma.keySlot.update({
+      where: { id: keySlotId },
+      data: updateData,
+    });
+
+    return {
+      status: 'updated',
+      dailyLimit: updated.dailyLimit,
+      monthlyLimit: updated.monthlyLimit,
+      blockOnLimit: updated.blockOnLimit,
+    };
   });
 
   // Export logs as CSV (auth: must own the key slot)

@@ -161,6 +161,51 @@ export async function transparentProxyRoutes(app: FastifyInstance) {
       return reply.status(410).send({ error: 'Key has expired', expiresAt: keySlot.expiresAt });
     }
 
+    // --- d2. Check per-key daily/monthly limits ---
+    if (keySlot.dailyLimit || keySlot.monthlyLimit) {
+      const now = new Date();
+
+      if (keySlot.dailyLimit) {
+        const dayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+        const dailyCount = await prisma.accessLog.count({
+          where: { keySlotId: keySlot.id, action: 'transparent_proxy', timestamp: { gte: dayStart } },
+        });
+        if (dailyCount >= keySlot.dailyLimit) {
+          if (keySlot.blockOnLimit) {
+            return reply.status(429).send({
+              error: 'Daily call limit reached',
+              limit: keySlot.dailyLimit,
+              used: dailyCount,
+              resets: 'midnight UTC',
+            });
+          }
+          if (auth.devKey.alertEmail) {
+            sendUsageAlert(auth.devKey.alertEmail, keySlot.label, dailyCount, keySlot.dailyLimit);
+          }
+        }
+      }
+
+      if (keySlot.monthlyLimit) {
+        const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
+        const monthlyCount = await prisma.accessLog.count({
+          where: { keySlotId: keySlot.id, action: 'transparent_proxy', timestamp: { gte: monthStart } },
+        });
+        if (monthlyCount >= keySlot.monthlyLimit) {
+          if (keySlot.blockOnLimit) {
+            return reply.status(429).send({
+              error: 'Monthly call limit reached',
+              limit: keySlot.monthlyLimit,
+              used: monthlyCount,
+              resets: 'next month',
+            });
+          }
+          if (auth.devKey.alertEmail) {
+            sendUsageAlert(auth.devKey.alertEmail, keySlot.label, monthlyCount, keySlot.monthlyLimit);
+          }
+        }
+      }
+    }
+
     if (!keySlot.share2Encrypted || keySlot.share2Encrypted.length === 0) {
       return reply.status(400).send({ error: 'Share 2 not stored for this key. Re-store via SDK.' });
     }
