@@ -2,13 +2,12 @@ const API = 'https://api.vaultproof.dev/api/v1';
 
 // Check auth state
 async function init() {
-  const { vp_api_key, vp_signing_in } = await chrome.storage.local.get(['vp_api_key', 'vp_signing_in']);
+  const { vp_api_key, vp_signed_in } = await chrome.storage.local.get(['vp_api_key', 'vp_signed_in']);
   if (!vp_api_key) {
     showLoginView();
     // Show key input if they already clicked sign in
-    if (vp_signing_in) {
-      const step = document.getElementById('apiKeyStep');
-      if (step) step.style.display = 'block';
+    if (vp_signed_in) {
+      document.getElementById('apiKeyStep').style.display = 'block';
     }
   } else {
     showMainView(vp_api_key);
@@ -100,11 +99,9 @@ async function storeKey() {
 
 function connect() {
   chrome.tabs.create({ url: 'https://vaultproof.dev/app/login' });
-  // Show the API key input after they click sign in
-  const step = document.getElementById('apiKeyStep');
-  if (step) step.style.display = 'block';
-  // Remember they clicked sign in
-  chrome.storage.local.set({ vp_signing_in: true });
+  // Show the key input and remember for next popup open
+  document.getElementById('apiKeyStep').style.display = 'block';
+  chrome.storage.local.set({ vp_signed_in: true });
 }
 
 function openDashboard() {
