@@ -518,6 +518,7 @@
     function copyToken() {
       navigator.clipboard.writeText(token).then(() => {
         const msg = document.getElementById('copyMsg');
+        if (!msg) return;
         msg.classList.remove('hidden');
         setTimeout(() => msg.classList.add('hidden'), 2000);
       });
