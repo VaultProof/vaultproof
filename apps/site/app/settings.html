@@ -320,27 +320,6 @@
         </div>
       </section>
 
-      <!-- API Token -->
-      <section class="bg-[#111118] border border-[#1e1e2e] rounded-xl p-6">
-        <h2 class="text-lg font-semibold mb-2 flex items-center gap-2">
-          <svg class="w-5 h-5 text-[#06b6d4]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/></svg>
-          API Token
-        </h2>
-        <p class="text-sm text-gray-500 mb-4">Use this token for programmatic access to the VaultProof API.</p>
-        <div class="flex gap-2">
-          <div class="flex-1 relative">
-            <input type="password" id="tokenDisplay" readonly class="w-full px-4 py-2.5 bg-[#111118] border border-[#1e1e2e] rounded-xl text-sm text-gray-300 font-mono focus:outline-none focus:border-[#6366f1] pr-10" />
-            <button onclick="toggleTokenVisibility()" class="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-300 transition" id="toggleTokenBtn" title="Show/Hide">
-              <svg id="eyeIcon" class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/></svg>
-            </button>
-          </div>
-          <button onclick="copyToken()" class="px-4 py-2.5 bg-[#111118] border border-[#1e1e2e] rounded-xl text-sm text-gray-300 hover:text-white hover:border-[#6366f1]/50 transition flex items-center gap-2">
-            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 5H6a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2v-1M8 5a2 2 0 002 2h2a2 2 0 002-2M8 5a2 2 0 012-2h2a2 2 0 012 2m0 0h2a2 2 0 012 2v3m2 4H10m0 0l3-3m-3 3l3 3"/></svg>
-            Copy
-          </button>
-        </div>
-        <div id="copyMsg" class="text-xs text-indigo-400 mt-2 hidden">Copied to clipboard!</div>
-      </section>
 
       <!-- Danger Zone -->
       <section class="bg-[#111118] border-2 border-red-900/50 rounded-xl p-6">
