@@ -409,36 +409,29 @@
       document.getElementById('sessionExpired').classList.remove('hidden');
     }
 
-    // Refresh the Supabase token on page load so expired JWTs don't block API calls
+    // Supabase client for token refresh (only used when API returns 401)
     const _sb = window.supabase.createClient(
       'https://gwzkjiomemjlhtrdrlan.supabase.co',
       'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imd3emtqaW9tZW1qbGh0cmRybGFuIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQzNDM3ODIsImV4cCI6MjA4OTkxOTc4Mn0.tgHUvpBvFiojetuqIP0sKb0iBNbKDJHdeo9n3Tofa3o'
     );
 
-    async function refreshToken() {
-      for (let attempt = 0; attempt < 2; attempt++) {
-        try {
-          // Try refreshSession first (forces a new access token from the refresh token)
-          const { data, error } = await _sb.auth.refreshSession();
-          if (!error && data.session) {
-            token = data.session.access_token;
-            localStorage.setItem('vaultproof_token', token);
-            return true;
-          }
-          // Fall back to getSession (may still have a valid session)
-          const { data: sessionData, error: sessionError } = await _sb.auth.getSession();
-          if (!sessionError && sessionData.session) {
-            token = sessionData.session.access_token;
-            localStorage.setItem('vaultproof_token', token);
-            return true;
-          }
-          if (attempt === 1) { showSessionExpired(); return false; }
-          await new Promise(r => setTimeout(r, 1000));
-        } catch (e) {
-          console.error('Token refresh failed:', e);
-          if (attempt === 1) { showSessionExpired(); return false; }
-          await new Promise(r => setTimeout(r, 1000));
+    // Try to get a fresh token from Supabase (called on 401, not on page load)
+    async function tryRefreshToken() {
+      try {
+        const { data, error } = await _sb.auth.refreshSession();
+        if (!error && data.session) {
+          token = data.session.access_token;
+          localStorage.setItem('vaultproof_token', token);
+          return true;
         }
+        const { data: sd, error: se } = await _sb.auth.getSession();
+        if (!se && sd.session) {
+          token = sd.session.access_token;
+          localStorage.setItem('vaultproof_token', token);
+          return true;
+        }
+      } catch (e) {
+        console.error('Token refresh failed:', e);
       }
       return false;
     }
@@ -466,6 +459,8 @@
       window.location.href = 'login';
     }
 
+    let _refreshAttempted = false;
+
     async function apiFetch(path, options = {}) {
       try {
         const res = await fetch(`${API}${path}`, {
@@ -476,7 +471,17 @@
             ...(options.headers || {})
           }
         });
-        if (res.status === 401) { showSessionExpired(); return null; }
+        if (res.status === 401) {
+          // Try refreshing token once, then retry the request
+          if (!_refreshAttempted) {
+            _refreshAttempted = true;
+            const refreshed = await tryRefreshToken();
+            if (refreshed) return apiFetch(path, options);
+          }
+          showSessionExpired();
+          return null;
+        }
+        _refreshAttempted = false; // Reset on success
         if (res.status === 429) {
           const data = await res.json().catch(() => ({}));
           showToast(data.error || 'Rate limited — try again in a moment', 'warning');
@@ -1127,16 +1132,12 @@
     }
 
     // Init — refresh token first, then load data in parallel
-    async function init() {
-      const ok = await refreshToken();
-      if (!ok) return;
-      checkBillingParams();
-      loadProfile();
-      loadUsage();
-      loadBillingStatus();
-      loadDevKeys();
-    }
-    init();
+    // Load everything immediately — apiFetch handles 401 with auto-refresh
+    checkBillingParams();
+    loadProfile();
+    loadUsage();
+    loadBillingStatus();
+    loadDevKeys();
   </script>
 </body>
 </html>

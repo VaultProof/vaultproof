@@ -213,28 +213,22 @@
       'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imd3emtqaW9tZW1qbGh0cmRybGFuIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQzNDM3ODIsImV4cCI6MjA4OTkxOTc4Mn0.tgHUvpBvFiojetuqIP0sKb0iBNbKDJHdeo9n3Tofa3o'
     );
 
-    async function refreshToken() {
-      for (let attempt = 0; attempt < 2; attempt++) {
-        try {
-          const { data, error } = await _sb.auth.refreshSession();
-          if (!error && data.session) {
-            token = data.session.access_token;
-            localStorage.setItem('vaultproof_token', token);
-            return true;
-          }
-          const { data: sd, error: se } = await _sb.auth.getSession();
-          if (!se && sd.session) {
-            token = sd.session.access_token;
-            localStorage.setItem('vaultproof_token', token);
-            return true;
-          }
-          if (attempt === 1) { showSessionExpired(); return false; }
-          await new Promise(r => setTimeout(r, 1000));
-        } catch (e) {
-          console.error('Token refresh failed:', e);
-          if (attempt === 1) { showSessionExpired(); return false; }
-          await new Promise(r => setTimeout(r, 1000));
+    async function tryRefreshToken() {
+      try {
+        const { data, error } = await _sb.auth.refreshSession();
+        if (!error && data.session) {
+          token = data.session.access_token;
+          localStorage.setItem('vaultproof_token', token);
+          return true;
         }
+        const { data: sd, error: se } = await _sb.auth.getSession();
+        if (!se && sd.session) {
+          token = sd.session.access_token;
+          localStorage.setItem('vaultproof_token', token);
+          return true;
+        }
+      } catch (e) {
+        console.error('Token refresh failed:', e);
       }
       return false;
     }
@@ -282,12 +276,23 @@
       window.location.href = 'login';
     }
 
+    let _refreshAttempted = false;
+
     async function apiFetch(path) {
       try {
         const res = await fetch(`${API}${path}`, {
           headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' }
         });
-        if (res.status === 401) { showSessionExpired(); return null; }
+        if (res.status === 401) {
+          if (!_refreshAttempted) {
+            _refreshAttempted = true;
+            const refreshed = await tryRefreshToken();
+            if (refreshed) return apiFetch(path);
+          }
+          showSessionExpired();
+          return null;
+        }
+        _refreshAttempted = false;
         if (res.status === 429) {
           showToast('Rate limited — try again in a moment', 'warning');
           return null;
@@ -527,7 +532,7 @@
       }
     }
 
-    refreshToken().then(ok => { if (ok) loadLogs(); });
+    loadLogs();
   </script>
 </body>
 </html>
