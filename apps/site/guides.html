@@ -1,0 +1,487 @@
+<!DOCTYPE html>
+<html lang="en" class="scroll-smooth">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Setup Guides | VaultProof</title>
+    <meta name="description" content="Use VaultProof with Claude Code, Cursor, Continue.dev, OpenAI SDK, Anthropic SDK, and cURL. One line change to secure your API keys.">
+    <meta property="og:title" content="Setup Guides | VaultProof">
+    <meta property="og:description" content="Use VaultProof with your favorite AI tools. One line change to secure your API keys with zero-knowledge encryption.">
+    <meta property="og:url" content="https://vaultproof.dev/guides">
+    <meta property="og:type" content="website">
+    <meta property="og:image" content="https://vaultproof.dev/logo-lg.png">
+    <meta name="twitter:card" content="summary">
+    <meta name="twitter:title" content="Setup Guides | VaultProof">
+    <meta name="twitter:description" content="Use VaultProof with your favorite AI tools. One line change.">
+    <meta http-equiv="X-Content-Type-Options" content="nosniff">
+    <meta http-equiv="X-Frame-Options" content="DENY">
+    <meta name="referrer" content="strict-origin-when-cross-origin">
+
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        'vp-bg': '#0a0a0f',
+                        'vp-surface': '#111118',
+                        'vp-border': '#1e1e2e',
+                        'vp-accent': '#6366f1',
+                        'vp-cyan': '#06b6d4',
+                    },
+                    fontFamily: {
+                        sans: ['Inter', 'system-ui', 'sans-serif'],
+                        mono: ['JetBrains Mono', 'monospace'],
+                    },
+                    borderRadius: {
+                        'card': '12px',
+                        'btn': '12px',
+                    }
+                }
+            }
+        }
+    </script>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
+
+    <style>
+        * { font-family: 'Inter', system-ui, sans-serif; }
+        ::selection { background: #6366f1; color: #fff; }
+        body { background: #0a0a0f; }
+
+        .code-block {
+            background: #0d0d14;
+            border: 1px solid #1e1e2e;
+            border-radius: 0 0 12px 12px;
+            overflow-x: auto;
+            font-family: 'JetBrains Mono', monospace;
+        }
+        .code-block pre { padding: 1.25rem; font-size: 0.8125rem; line-height: 1.7; color: #e2e8f0; }
+        .code-header {
+            background: #111118;
+            border: 1px solid #1e1e2e;
+            border-bottom: none;
+            padding: 0.5rem 1rem;
+            font-size: 0.75rem;
+            color: #64748b;
+            font-family: 'JetBrains Mono', monospace;
+            border-radius: 12px 12px 0 0;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .kw { color: #c084fc; }
+        .str { color: #34d399; }
+        .cmt { color: #475569; }
+        .fn { color: #fbbf24; }
+        .typ { color: #60a5fa; }
+
+        .guide-card {
+            background: #111118;
+            border: 1px solid #1e1e2e;
+            border-radius: 16px;
+            overflow: hidden;
+            transition: border-color 0.2s ease;
+        }
+        .guide-card:hover { border-color: #6366f1; }
+
+        .guide-toggle { cursor: pointer; }
+        .guide-body { display: none; }
+        .guide-body.open { display: block; }
+        .guide-chevron { transition: transform 0.2s ease; }
+        .guide-chevron.open { transform: rotate(180deg); }
+
+        .step-num {
+            width: 28px;
+            height: 28px;
+            border-radius: 50%;
+            background: rgba(99, 102, 241, 0.15);
+            color: #6366f1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.75rem;
+            font-weight: 700;
+            flex-shrink: 0;
+        }
+
+        .mobile-menu { display: none; }
+        .mobile-menu.open { display: flex; }
+
+        .tool-icon {
+            width: 44px;
+            height: 44px;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.25rem;
+            font-weight: 700;
+            flex-shrink: 0;
+        }
+    </style>
+</head>
+<body class="text-white antialiased">
+
+    <!-- Navbar -->
+    <nav class="relative z-10 border-b border-vp-border/50 backdrop-blur-sm bg-vp-bg/80 sticky top-0">
+        <div class="flex items-center justify-between px-6 py-4 max-w-6xl mx-auto">
+            <a href="/" class="flex items-center gap-2.5">
+                <img src="/logo-sm.png" alt="VaultProof" width="28" height="28" />
+                <span class="text-lg font-bold text-white tracking-tight" style="font-family:'Space Grotesk',sans-serif">VaultProof</span>
+            </a>
+
+            <!-- Desktop links -->
+            <div class="hidden md:flex items-center gap-8">
+                <a href="/" class="text-sm text-gray-400 hover:text-white transition-colors">Home</a>
+                <a href="/docs" class="text-sm text-gray-400 hover:text-white transition-colors">Docs</a>
+                <a href="/#pricing" class="text-sm text-gray-400 hover:text-white transition-colors">Pricing</a>
+                <a href="/guides" class="text-sm text-white font-medium transition-colors">Guides</a>
+                <a href="/app/login" class="text-sm text-gray-400 hover:text-white transition-colors">Login</a>
+                <a href="/app/login" class="bg-vp-accent hover:bg-indigo-500 text-sm px-5 py-2 rounded-btn font-semibold text-white transition-all">Get Started</a>
+            </div>
+
+            <!-- Mobile hamburger -->
+            <button id="mobileToggle" class="md:hidden text-gray-400 hover:text-white" aria-label="Toggle menu">
+                <svg width="24" height="24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 6h16M4 12h16M4 18h16"/></svg>
+            </button>
+        </div>
+
+        <!-- Mobile menu -->
+        <div id="mobileMenu" class="mobile-menu flex-col gap-4 px-6 pb-6 md:hidden bg-vp-bg/95 backdrop-blur-sm">
+            <a href="/" class="text-sm text-gray-400 hover:text-white transition-colors py-1">Home</a>
+            <a href="/docs" class="text-sm text-gray-400 hover:text-white transition-colors py-1">Docs</a>
+            <a href="/#pricing" class="text-sm text-gray-400 hover:text-white transition-colors py-1">Pricing</a>
+            <a href="/guides" class="text-sm text-white font-medium py-1">Guides</a>
+            <a href="/app/login" class="text-sm text-gray-400 hover:text-white transition-colors py-1">Login</a>
+            <a href="/app/login" class="bg-vp-accent hover:bg-indigo-500 text-sm px-5 py-2.5 rounded-btn font-semibold text-white transition-all text-center mt-2">Get Started</a>
+        </div>
+    </nav>
+
+    <!-- Hero -->
+    <section class="max-w-4xl mx-auto px-6 pt-20 pb-14 text-center">
+        <h1 class="text-4xl md:text-5xl font-bold mb-5 tracking-tight" style="font-family:'Space Grotesk',sans-serif">Setup Guides</h1>
+        <p class="text-gray-400 text-lg max-w-2xl mx-auto">Use VaultProof with your favorite AI tools. One line change.</p>
+    </section>
+
+    <!-- Prerequisites -->
+    <section class="max-w-4xl mx-auto px-6 pb-12">
+        <div class="bg-vp-surface border border-vp-border rounded-2xl p-6">
+            <div class="flex items-start gap-3">
+                <div class="text-vp-accent text-xl mt-0.5">
+                    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4"/><path d="M12 8h.01"/></svg>
+                </div>
+                <div>
+                    <h3 class="font-semibold text-white mb-2">Prerequisites</h3>
+                    <ul class="text-gray-400 text-sm space-y-1.5">
+                        <li>1. Create a <a href="/app/login" class="text-vp-accent hover:underline">VaultProof account</a></li>
+                        <li>2. Store your API key: <code class="text-xs bg-vp-bg px-2 py-0.5 rounded font-mono text-gray-300">vaultproof store -p anthropic</code></li>
+                        <li>3. Get your VaultProof proxy key (<code class="text-xs bg-vp-bg px-2 py-0.5 rounded font-mono text-gray-300">vp_live_...</code>) from the dashboard</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Guides -->
+    <section class="max-w-4xl mx-auto px-6 pb-24 space-y-5">
+
+        <!-- 1. Claude Code -->
+        <div class="guide-card">
+            <div class="guide-toggle flex items-center justify-between p-6" onclick="toggleGuide(this)">
+                <div class="flex items-center gap-4">
+                    <div class="tool-icon bg-[#d97706]/10 text-[#fbbf24]" style="font-family:'Space Grotesk',sans-serif">C</div>
+                    <div>
+                        <h3 class="font-semibold text-white text-lg">Claude Code</h3>
+                        <p class="text-gray-500 text-sm mt-0.5">Anthropic CLI &mdash; set an env var and go</p>
+                    </div>
+                </div>
+                <svg class="guide-chevron text-gray-500" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg>
+            </div>
+            <div class="guide-body">
+                <div class="px-6 pb-6 space-y-4">
+                    <div class="flex items-start gap-3">
+                        <div class="step-num mt-0.5">1</div>
+                        <p class="text-gray-400 text-sm pt-1">Store your Anthropic key in VaultProof</p>
+                    </div>
+                    <div class="flex items-start gap-3">
+                        <div class="step-num mt-0.5">2</div>
+                        <p class="text-gray-400 text-sm pt-1">Set VaultProof as the base URL</p>
+                    </div>
+                    <div class="flex items-start gap-3">
+                        <div class="step-num mt-0.5">3</div>
+                        <p class="text-gray-400 text-sm pt-1">Use Claude Code normally &mdash; your real key is never in your environment</p>
+                    </div>
+
+                    <div>
+                        <div class="code-header"><span>bash</span></div>
+                        <div class="code-block">
+<pre><span class="cmt"># Store your Anthropic key in VaultProof</span>
+vaultproof store -p anthropic
+
+<span class="cmt"># Set VaultProof as the base URL</span>
+<span class="kw">export</span> ANTHROPIC_BASE_URL=<span class="str">https://api.vaultproof.dev/v1/anthropic</span>
+<span class="kw">export</span> ANTHROPIC_API_KEY=<span class="str">vp_live_your_key_here</span>
+
+<span class="cmt"># Use Claude Code normally — your real key is never in your environment</span></pre>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 2. Cursor -->
+        <div class="guide-card">
+            <div class="guide-toggle flex items-center justify-between p-6" onclick="toggleGuide(this)">
+                <div class="flex items-center gap-4">
+                    <div class="tool-icon bg-[#6366f1]/10 text-[#818cf8]" style="font-family:'Space Grotesk',sans-serif">Cu</div>
+                    <div>
+                        <h3 class="font-semibold text-white text-lg">Cursor</h3>
+                        <p class="text-gray-500 text-sm mt-0.5">AI code editor &mdash; change two settings</p>
+                    </div>
+                </div>
+                <svg class="guide-chevron text-gray-500" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg>
+            </div>
+            <div class="guide-body">
+                <div class="px-6 pb-6 space-y-4">
+                    <p class="text-gray-400 text-sm">Cursor uses an OpenAI-compatible API. Open Cursor settings and update:</p>
+                    <div class="flex items-start gap-3">
+                        <div class="step-num mt-0.5">1</div>
+                        <p class="text-gray-400 text-sm pt-1">Store your API key in VaultProof</p>
+                    </div>
+                    <div class="flex items-start gap-3">
+                        <div class="step-num mt-0.5">2</div>
+                        <div class="text-gray-400 text-sm pt-1">
+                            Set <strong class="text-gray-300">API Base URL</strong> to: <code class="text-xs bg-vp-bg px-2 py-0.5 rounded font-mono text-vp-accent">https://api.vaultproof.dev/v1/openai</code>
+                        </div>
+                    </div>
+                    <div class="flex items-start gap-3">
+                        <div class="step-num mt-0.5">3</div>
+                        <div class="text-gray-400 text-sm pt-1">
+                            Set <strong class="text-gray-300">API Key</strong> to: <code class="text-xs bg-vp-bg px-2 py-0.5 rounded font-mono text-vp-accent">vp_live_your_key_here</code>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 3. VS Code + Continue.dev -->
+        <div class="guide-card">
+            <div class="guide-toggle flex items-center justify-between p-6" onclick="toggleGuide(this)">
+                <div class="flex items-center gap-4">
+                    <div class="tool-icon bg-[#06b6d4]/10 text-[#22d3ee]" style="font-family:'Space Grotesk',sans-serif">VS</div>
+                    <div>
+                        <h3 class="font-semibold text-white text-lg">VS Code + Continue.dev</h3>
+                        <p class="text-gray-500 text-sm mt-0.5">Open-source AI extension &mdash; edit config.json</p>
+                    </div>
+                </div>
+                <svg class="guide-chevron text-gray-500" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg>
+            </div>
+            <div class="guide-body">
+                <div class="px-6 pb-6 space-y-4">
+                    <div class="flex items-start gap-3">
+                        <div class="step-num mt-0.5">1</div>
+                        <p class="text-gray-400 text-sm pt-1">Store your API key in VaultProof</p>
+                    </div>
+                    <div class="flex items-start gap-3">
+                        <div class="step-num mt-0.5">2</div>
+                        <p class="text-gray-400 text-sm pt-1">Change the base URL in your Continue config</p>
+                    </div>
+                    <div class="flex items-start gap-3">
+                        <div class="step-num mt-0.5">3</div>
+                        <p class="text-gray-400 text-sm pt-1">Done &mdash; Continue routes through VaultProof</p>
+                    </div>
+
+                    <div>
+                        <div class="code-header"><span>.continue/config.json</span></div>
+                        <div class="code-block">
+<pre>{
+  <span class="str">"models"</span>: [{
+    <span class="str">"provider"</span>: <span class="str">"openai"</span>,
+    <span class="str">"apiBase"</span>: <span class="str">"https://api.vaultproof.dev/v1/openai"</span>,
+    <span class="str">"apiKey"</span>: <span class="str">"vp_live_your_key_here"</span>,
+    <span class="str">"model"</span>: <span class="str">"gpt-4"</span>
+  }]
+}</pre>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 4. OpenAI Python SDK -->
+        <div class="guide-card">
+            <div class="guide-toggle flex items-center justify-between p-6" onclick="toggleGuide(this)">
+                <div class="flex items-center gap-4">
+                    <div class="tool-icon bg-[#10b981]/10 text-[#34d399]" style="font-family:'Space Grotesk',sans-serif">OA</div>
+                    <div>
+                        <h3 class="font-semibold text-white text-lg">OpenAI Python SDK</h3>
+                        <p class="text-gray-500 text-sm mt-0.5">Add base_url param to your client</p>
+                    </div>
+                </div>
+                <svg class="guide-chevron text-gray-500" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg>
+            </div>
+            <div class="guide-body">
+                <div class="px-6 pb-6 space-y-4">
+                    <div class="flex items-start gap-3">
+                        <div class="step-num mt-0.5">1</div>
+                        <p class="text-gray-400 text-sm pt-1">Store your OpenAI key in VaultProof</p>
+                    </div>
+                    <div class="flex items-start gap-3">
+                        <div class="step-num mt-0.5">2</div>
+                        <p class="text-gray-400 text-sm pt-1">Change the base URL in your Python client</p>
+                    </div>
+                    <div class="flex items-start gap-3">
+                        <div class="step-num mt-0.5">3</div>
+                        <p class="text-gray-400 text-sm pt-1">Done &mdash; all requests route through VaultProof</p>
+                    </div>
+
+                    <div>
+                        <div class="code-header"><span>python</span></div>
+                        <div class="code-block">
+<pre><span class="kw">import</span> openai
+
+client = openai.<span class="fn">OpenAI</span>(
+    api_key=<span class="str">"vp_live_your_key_here"</span>,
+    base_url=<span class="str">"https://api.vaultproof.dev/v1/openai"</span>
+)</pre>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 5. Anthropic Python SDK -->
+        <div class="guide-card">
+            <div class="guide-toggle flex items-center justify-between p-6" onclick="toggleGuide(this)">
+                <div class="flex items-center gap-4">
+                    <div class="tool-icon bg-[#d97706]/10 text-[#fbbf24]" style="font-family:'Space Grotesk',sans-serif">An</div>
+                    <div>
+                        <h3 class="font-semibold text-white text-lg">Anthropic Python SDK</h3>
+                        <p class="text-gray-500 text-sm mt-0.5">Add base_url param to your client</p>
+                    </div>
+                </div>
+                <svg class="guide-chevron text-gray-500" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg>
+            </div>
+            <div class="guide-body">
+                <div class="px-6 pb-6 space-y-4">
+                    <div class="flex items-start gap-3">
+                        <div class="step-num mt-0.5">1</div>
+                        <p class="text-gray-400 text-sm pt-1">Store your Anthropic key in VaultProof</p>
+                    </div>
+                    <div class="flex items-start gap-3">
+                        <div class="step-num mt-0.5">2</div>
+                        <p class="text-gray-400 text-sm pt-1">Change the base URL in your Python client</p>
+                    </div>
+                    <div class="flex items-start gap-3">
+                        <div class="step-num mt-0.5">3</div>
+                        <p class="text-gray-400 text-sm pt-1">Done &mdash; your real key never leaves VaultProof</p>
+                    </div>
+
+                    <div>
+                        <div class="code-header"><span>python</span></div>
+                        <div class="code-block">
+<pre><span class="kw">import</span> anthropic
+
+client = anthropic.<span class="fn">Anthropic</span>(
+    api_key=<span class="str">"vp_live_your_key_here"</span>,
+    base_url=<span class="str">"https://api.vaultproof.dev/v1/anthropic"</span>
+)</pre>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 6. cURL / Any HTTP Client -->
+        <div class="guide-card">
+            <div class="guide-toggle flex items-center justify-between p-6" onclick="toggleGuide(this)">
+                <div class="flex items-center gap-4">
+                    <div class="tool-icon bg-[#f43f5e]/10 text-[#fb7185]" style="font-family:'JetBrains Mono',monospace; font-size: 0.75rem;">&gt;_</div>
+                    <div>
+                        <h3 class="font-semibold text-white text-lg">cURL / Any HTTP Client</h3>
+                        <p class="text-gray-500 text-sm mt-0.5">Works with any tool that speaks HTTP</p>
+                    </div>
+                </div>
+                <svg class="guide-chevron text-gray-500" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg>
+            </div>
+            <div class="guide-body">
+                <div class="px-6 pb-6 space-y-4">
+                    <div class="flex items-start gap-3">
+                        <div class="step-num mt-0.5">1</div>
+                        <p class="text-gray-400 text-sm pt-1">Store your API key in VaultProof</p>
+                    </div>
+                    <div class="flex items-start gap-3">
+                        <div class="step-num mt-0.5">2</div>
+                        <p class="text-gray-400 text-sm pt-1">Point your request at the VaultProof proxy URL</p>
+                    </div>
+                    <div class="flex items-start gap-3">
+                        <div class="step-num mt-0.5">3</div>
+                        <p class="text-gray-400 text-sm pt-1">Done &mdash; use your vp_live_ key in the Authorization header</p>
+                    </div>
+
+                    <div>
+                        <div class="code-header"><span>bash</span></div>
+                        <div class="code-block">
+<pre>curl https://api.vaultproof.dev/v1/openai/v1/chat/completions \
+  -H <span class="str">"Authorization: Bearer vp_live_your_key_here"</span> \
+  -H <span class="str">"Content-Type: application/json"</span> \
+  -d <span class="str">'{"model":"gpt-4","messages":[{"role":"user","content":"Hello"}]}'</span></pre>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    </section>
+
+    <!-- Footer -->
+    <footer class="border-t border-vp-border">
+        <div class="max-w-5xl mx-auto px-6 py-12">
+            <div class="flex flex-col md:flex-row items-center justify-between gap-6">
+                <div class="flex flex-col items-center md:items-start gap-2">
+                    <div class="flex items-center gap-2.5">
+                        <svg width="22" height="22" viewBox="0 0 28 28" fill="none"><rect width="28" height="28" rx="6" fill="#6366f1" fill-opacity="0.15"/><path d="M8 8L14 4L20 8V16L14 20L8 16V8Z" stroke="#6366f1" stroke-width="1.5" fill="none"/><path d="M14 10V15" stroke="#6366f1" stroke-width="1.5" stroke-linecap="round"/><circle cx="14" cy="17" r="1" fill="#6366f1"/></svg>
+                        <span class="text-sm font-bold text-white">VaultProof</span>
+                        <span class="text-xs text-gray-600">by Rial Labs</span>
+                    </div>
+                    <p class="text-xs text-gray-600">Built for developers who refuse to trust blindly.</p>
+                </div>
+                <div class="flex items-center gap-8">
+                    <a href="/docs" class="text-sm text-gray-500 hover:text-white transition-colors">Docs</a>
+                    <a href="/guides" class="text-sm text-gray-500 hover:text-white transition-colors">Guides</a>
+                    <a href="/verify" class="text-sm text-gray-500 hover:text-white transition-colors">Verify</a>
+                    <a href="/app/login" class="text-sm text-gray-500 hover:text-white transition-colors">Dashboard</a>
+                    <a href="/terms" class="text-sm text-gray-500 hover:text-white transition-colors">Terms</a>
+                    <a href="/privacy" class="text-sm text-gray-500 hover:text-white transition-colors">Privacy</a>
+                </div>
+            </div>
+        </div>
+    </footer>
+
+    <script>
+        // Mobile menu toggle
+        document.getElementById('mobileToggle').addEventListener('click', function() {
+            document.getElementById('mobileMenu').classList.toggle('open');
+        });
+
+        // Guide expand/collapse
+        function toggleGuide(header) {
+            var body = header.nextElementSibling;
+            var chevron = header.querySelector('.guide-chevron');
+            body.classList.toggle('open');
+            chevron.classList.toggle('open');
+        }
+
+        // Open first guide by default
+        document.addEventListener('DOMContentLoaded', function() {
+            var first = document.querySelector('.guide-toggle');
+            if (first) toggleGuide(first);
+        });
+    </script>
+
+</body>
+</html>

@@ -105,6 +105,7 @@
     /* Quick actions */
     .quick-actions { backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); }
   </style>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
 <body class="text-gray-100 min-h-screen flex">
 
@@ -454,7 +455,14 @@
     window.addEventListener('resize', handleResize);
     handleResize();
 
-    function logout() {
+    async function logout() {
+      try {
+        const sb = window.supabase.createClient(
+          'https://gwzkjiomemjlhtrdrlan.supabase.co',
+          'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imd3emtqaW9tZW1qbGh0cmRybGFuIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQzNDM3ODIsImV4cCI6MjA4OTkxOTc4Mn0.tgHUvpBvFiojetuqIP0sKb0iBNbKDJHdeo9n3Tofa3o'
+        );
+        await sb.auth.signOut();
+      } catch {}
       localStorage.removeItem('vaultproof_token');
       localStorage.removeItem('vaultproof_user');
       window.location.href = 'login';
