@@ -293,6 +293,132 @@
         </div>
     </section>
 
+    <!-- Vibe Coding Pain Points -->
+    <section class="relative z-10 max-w-5xl mx-auto px-6 py-24">
+        <div class="text-center mb-14 reveal">
+            <h2 class="text-3xl md:text-4xl font-bold text-white mb-4" style="font-family:'Space Grotesk',sans-serif">Vibe coding is leaking your API keys</h2>
+            <p class="text-gray-400 text-lg max-w-2xl mx-auto">AI coding tools like Cursor, Windsurf, and Claude Code make building fast. But they also make leaking secrets easy.</p>
+        </div>
+
+        <!-- Problem stats row -->
+        <div class="grid md:grid-cols-3 gap-6 mb-14">
+            <div class="bg-vp-surface border border-vp-border rounded-2xl p-6 text-center reveal delay-1">
+                <div class="text-4xl font-extrabold text-red-400 mb-2">81%</div>
+                <div class="text-sm text-gray-400">surge in AI service credential leaks in 2025</div>
+                <div class="text-xs text-gray-600 mt-2">Source: GitGuardian 2026</div>
+            </div>
+            <div class="bg-vp-surface border border-vp-border rounded-2xl p-6 text-center reveal delay-2">
+                <div class="text-4xl font-extrabold text-red-400 mb-2">1 in 5</div>
+                <div class="text-sm text-gray-400">vibe-coded sites expose at least one API key</div>
+                <div class="text-xs text-gray-600 mt-2">Source: RedHunt Labs 2026</div>
+            </div>
+            <div class="bg-vp-surface border border-vp-border rounded-2xl p-6 text-center reveal delay-3">
+                <div class="text-4xl font-extrabold text-red-400 mb-2">$82K</div>
+                <div class="text-sm text-gray-400">bill from a single stolen API key overnight</div>
+                <div class="text-xs text-gray-600 mt-2">Source: Developer report, Feb 2026</div>
+            </div>
+        </div>
+
+        <!-- How it happens -->
+        <div class="bg-vp-surface border border-vp-border rounded-2xl p-8 mb-10 reveal delay-1">
+            <h3 class="text-xl font-bold text-white mb-6" style="font-family:'Space Grotesk',sans-serif">How vibe coders lose their API keys</h3>
+            <div class="grid md:grid-cols-2 gap-6">
+                <div class="space-y-4">
+                    <div class="flex gap-3">
+                        <div class="w-8 h-8 rounded-lg bg-red-500/10 flex items-center justify-center flex-shrink-0 mt-0.5">
+                            <span class="text-red-400 text-sm font-bold">1</span>
+                        </div>
+                        <div>
+                            <div class="text-sm font-medium text-white">AI puts keys in your code</div>
+                            <div class="text-xs text-gray-500 mt-1">Cursor, Copilot, and Claude Code generate code with API keys hardcoded in source files. Repos using Copilot have a 6.4% secret leak rate — 40% above average.</div>
+                        </div>
+                    </div>
+                    <div class="flex gap-3">
+                        <div class="w-8 h-8 rounded-lg bg-red-500/10 flex items-center justify-center flex-shrink-0 mt-0.5">
+                            <span class="text-red-400 text-sm font-bold">2</span>
+                        </div>
+                        <div>
+                            <div class="text-sm font-medium text-white">You push to GitHub</div>
+                            <div class="text-xs text-gray-500 mt-1">28.6M new secrets were added to public GitHub commits in 2025. Attackers harvest stolen keys within 5 minutes of exposure.</div>
+                        </div>
+                    </div>
+                    <div class="flex gap-3">
+                        <div class="w-8 h-8 rounded-lg bg-red-500/10 flex items-center justify-center flex-shrink-0 mt-0.5">
+                            <span class="text-red-400 text-sm font-bold">3</span>
+                        </div>
+                        <div>
+                            <div class="text-sm font-medium text-white">Someone runs up your bill</div>
+                            <div class="text-xs text-gray-500 mt-1">Stolen OpenAI and Google Cloud keys have cost developers thousands overnight. 64% of leaked secrets are never revoked.</div>
+                        </div>
+                    </div>
+                </div>
+                <div class="space-y-4">
+                    <div class="flex gap-3">
+                        <div class="w-8 h-8 rounded-lg bg-red-500/10 flex items-center justify-center flex-shrink-0 mt-0.5">
+                            <span class="text-red-400 text-sm font-bold">4</span>
+                        </div>
+                        <div>
+                            <div class="text-sm font-medium text-white">Malicious packages steal keys</div>
+                            <div class="text-xs text-gray-500 mt-1">SANDWORM_MODE attack (Feb 2026): 19 npm packages injected rogue MCP servers into Claude Code, Cursor, and Windsurf to steal API keys from your environment.</div>
+                        </div>
+                    </div>
+                    <div class="flex gap-3">
+                        <div class="w-8 h-8 rounded-lg bg-red-500/10 flex items-center justify-center flex-shrink-0 mt-0.5">
+                            <span class="text-red-400 text-sm font-bold">5</span>
+                        </div>
+                        <div>
+                            <div class="text-sm font-medium text-white">.env files are not enough</div>
+                            <div class="text-xs text-gray-500 mt-1">AI agents have direct access to your .env files. Every process on your machine can read plaintext credentials. Moving keys to .env doesn't stop the AI from seeing them.</div>
+                        </div>
+                    </div>
+                    <div class="flex gap-3">
+                        <div class="w-8 h-8 rounded-lg bg-red-500/10 flex items-center justify-center flex-shrink-0 mt-0.5">
+                            <span class="text-red-400 text-sm font-bold">6</span>
+                        </div>
+                        <div>
+                            <div class="text-sm font-medium text-white">45% of AI code has security flaws</div>
+                            <div class="text-xs text-gray-500 mt-1">Veracode found nearly half of AI-generated code contains vulnerabilities. AI-generated code now causes 1 in 5 security breaches (Aikido Security 2026).</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Solution -->
+        <div class="bg-gradient-to-r from-vp-accent/10 to-transparent border border-vp-accent/20 rounded-2xl p-8 reveal delay-2">
+            <h3 class="text-xl font-bold text-white mb-4" style="font-family:'Space Grotesk',sans-serif">VaultProof fixes this with one line</h3>
+            <div class="grid md:grid-cols-2 gap-8 items-center">
+                <div class="space-y-3">
+                    <div class="flex items-start gap-3">
+                        <svg class="w-5 h-5 text-vp-accent flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>
+                        <div class="text-sm text-gray-300"><strong class="text-white">Your API key never touches your code.</strong> It's split and encrypted before it leaves your machine.</div>
+                    </div>
+                    <div class="flex items-start gap-3">
+                        <svg class="w-5 h-5 text-vp-accent flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>
+                        <div class="text-sm text-gray-300"><strong class="text-white">AI agents only see your VaultProof key.</strong> If it leaks, it's useless alone — the real key stays encrypted.</div>
+                    </div>
+                    <div class="flex items-start gap-3">
+                        <svg class="w-5 h-5 text-vp-accent flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>
+                        <div class="text-sm text-gray-300"><strong class="text-white">Works with every AI tool.</strong> Change your base URL — Cursor, Windsurf, Claude Code, any SDK.</div>
+                    </div>
+                    <div class="flex items-start gap-3">
+                        <svg class="w-5 h-5 text-vp-accent flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>
+                        <div class="text-sm text-gray-300"><strong class="text-white">Instant alerts if something's wrong.</strong> Get notified if your key is rejected, usage spikes, or it's about to expire.</div>
+                    </div>
+                </div>
+                <div class="bg-vp-bg border border-vp-border rounded-xl p-5 font-mono text-sm">
+                    <div class="text-gray-500 mb-2"># Before (dangerous)</div>
+                    <div class="text-red-400 mb-1">export OPENAI_API_KEY=sk-proj-abc123...</div>
+                    <div class="text-red-400/50 text-xs mb-4">^ exposed in .env, shell history, AI context</div>
+                    <div class="text-gray-500 mb-2"># After (secure)</div>
+                    <div class="text-indigo-400 mb-1">export OPENAI_API_KEY=vp_live_...</div>
+                    <div class="text-indigo-400 mb-1">export OPENAI_BASE_URL=https://api.vaultproof.dev/v1/openai</div>
+                    <div class="text-indigo-400/50 text-xs">^ useless alone, real key is split + encrypted</div>
+                </div>
+            </div>
+        </div>
+    </section>
+
     <!-- Install -->
     <section class="relative z-10 max-w-4xl mx-auto px-6 py-20">
         <div class="text-center mb-10 reveal">
