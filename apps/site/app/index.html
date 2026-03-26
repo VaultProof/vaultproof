@@ -462,22 +462,28 @@
     }
 
     // Refresh the Supabase token on page load
+    const _sb = window.supabase.createClient(
+      'https://gwzkjiomemjlhtrdrlan.supabase.co',
+      'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imd3emtqaW9tZW1qbGh0cmRybGFuIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQzNDM3ODIsImV4cCI6MjA4OTkxOTc4Mn0.tgHUvpBvFiojetuqIP0sKb0iBNbKDJHdeo9n3Tofa3o'
+    );
+
     async function refreshToken() {
       for (let attempt = 0; attempt < 2; attempt++) {
         try {
-          const sb = window.supabase.createClient(
-            'https://gwzkjiomemjlhtrdrlan.supabase.co',
-            'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imd3emtqaW9tZW1qbGh0cmRybGFuIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQzNDM3ODIsImV4cCI6MjA4OTkxOTc4Mn0.tgHUvpBvFiojetuqIP0sKb0iBNbKDJHdeo9n3Tofa3o'
-          );
-          const { data, error } = await sb.auth.getSession();
-          if (error || !data.session) {
-            if (attempt === 1) { showSessionExpired(); return false; }
-            await new Promise(r => setTimeout(r, 1000));
-            continue;
+          const { data, error } = await _sb.auth.refreshSession();
+          if (!error && data.session) {
+            token = data.session.access_token;
+            localStorage.setItem('vaultproof_token', token);
+            return true;
           }
-          token = data.session.access_token;
-          localStorage.setItem('vaultproof_token', token);
-          return true;
+          const { data: sd, error: se } = await _sb.auth.getSession();
+          if (!se && sd.session) {
+            token = sd.session.access_token;
+            localStorage.setItem('vaultproof_token', token);
+            return true;
+          }
+          if (attempt === 1) { showSessionExpired(); return false; }
+          await new Promise(r => setTimeout(r, 1000));
         } catch (e) {
           console.error('Token refresh failed:', e);
           if (attempt === 1) { showSessionExpired(); return false; }
