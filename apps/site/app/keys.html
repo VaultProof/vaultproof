@@ -877,7 +877,7 @@
 
     // Revoke key
     async function revokeKey(keySlotId) {
-      if (!confirm('Revoke this key? Share 1 will be destroyed. This cannot be undone.')) return;
+      if (!confirm('Permanently delete this key?\n\nBoth encrypted shares will be destroyed. VaultProof never stores your raw key — we cannot retrieve it for you.\n\nYou will need to generate a new key from your provider.\n\nThis cannot be undone.')) return;
       try {
         var res = await fetch(API + '/keys/revoke/' + keySlotId, {
           method: 'POST',
