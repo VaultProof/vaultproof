@@ -140,9 +140,24 @@
             <label class="block text-sm text-gray-400 mb-1.5">Password</label>
             <input type="password" id="loginPassword" required class="w-full bg-[#111118] border border-[#1e1e2e] rounded-xl px-4 py-2.5 text-sm text-white placeholder-gray-600 focus:border-[#6366f1] focus:outline-none transition" placeholder="Enter your password" />
           </div>
+          <div class="text-right mt-1">
+            <button type="button" onclick="showResetForm()" class="text-xs text-indigo-400 hover:underline">Forgot password?</button>
+          </div>
           <div id="loginError" class="hidden p-3 bg-red-500/10 border border-red-500/30 rounded-xl text-sm text-red-400"></div>
           <button type="submit" id="loginBtn" class="w-full bg-brand hover:bg-brand-hover text-white py-2.5 rounded-xl font-medium text-sm transition-all duration-200 btn-glow">Login</button>
         </form>
+
+        <!-- Password Reset Form -->
+        <div id="resetForm" class="hidden space-y-4">
+          <p class="text-sm text-gray-400">Enter your email and we'll send a reset link.</p>
+          <div>
+            <label class="block text-sm text-gray-400 mb-1.5">Email</label>
+            <input type="email" id="resetEmail" required class="w-full bg-[#111118] border border-[#1e1e2e] rounded-xl px-4 py-2.5 text-sm text-white placeholder-gray-600 focus:border-[#6366f1] focus:outline-none transition" placeholder="you@example.com" />
+          </div>
+          <div id="resetStatus" class="hidden p-3 rounded-xl text-sm"></div>
+          <button type="button" onclick="handleReset()" id="resetBtn" class="w-full bg-brand hover:bg-brand-hover text-white py-2.5 rounded-xl font-medium text-sm transition-all duration-200 btn-glow">Send Reset Link</button>
+          <button type="button" onclick="hideResetForm()" class="w-full text-xs text-gray-500 hover:text-gray-400 mt-2">Back to login</button>
+        </div>
 
         <!-- Register Form -->
         <form id="registerForm" class="hidden space-y-4" onsubmit="handleRegister(event)">
@@ -275,6 +290,42 @@
         btn.textContent = 'Login';
         btn.disabled = false;
       }
+    }
+
+    // ── Password Reset ──
+    function showResetForm() {
+      document.getElementById('loginForm').classList.add('hidden');
+      document.getElementById('resetForm').classList.remove('hidden');
+    }
+
+    function hideResetForm() {
+      document.getElementById('resetForm').classList.add('hidden');
+      document.getElementById('loginForm').classList.remove('hidden');
+    }
+
+    async function handleReset() {
+      const email = document.getElementById('resetEmail').value;
+      const btn = document.getElementById('resetBtn');
+      const status = document.getElementById('resetStatus');
+
+      btn.textContent = 'Sending...';
+      btn.disabled = true;
+
+      const { error } = await sbClient.auth.resetPasswordForEmail(email, {
+        redirectTo: window.location.origin + '/app/login'
+      });
+
+      status.classList.remove('hidden');
+      if (error) {
+        status.className = 'p-3 rounded-xl text-sm bg-red-500/10 border border-red-500/30 text-red-400';
+        status.textContent = error.message;
+      } else {
+        status.className = 'p-3 rounded-xl text-sm bg-indigo-500/10 border border-indigo-500/30 text-indigo-400';
+        status.textContent = 'Reset link sent! Check your email.';
+      }
+
+      btn.textContent = 'Send Reset Link';
+      btn.disabled = false;
     }
 
     // ── Email/Password register via Supabase ──
