@@ -25,7 +25,7 @@ export default {
     // Hardcoded fallback matches current Railway deployment. Override via BACKEND_URL env var.
     const backendUrl = env.BACKEND_URL || 'https://dashboard-production-b76c.up.railway.app';
     const proxySecret = env.PROXY_SECRET || '';
-    const allowedOrigins = (env.ALLOWED_ORIGINS || 'https://vaultproof.dev').split(',').map((s) => s.trim()).filter(Boolean);
+    const allowedOrigins = (env.ALLOWED_ORIGINS || 'https://vaultproof.dev,https://www.vaultproof.dev').split(',').map((s) => s.trim()).filter(Boolean);
     const origin = request.headers.get('Origin') || '';
     const clientIp = request.headers.get('CF-Connecting-IP') || 'unknown';
 
