@@ -36,13 +36,18 @@ export async function requireAuth(request: FastifyRequest, reply: FastifyReply) 
 
   const token = header.slice(7);
 
-  // In test mode, accept test tokens
-  if (process.env.NODE_ENV === 'test' && token.startsWith('test-token-')) {
-    const userId = token.replace('test-token-', '');
-    const user = await prisma.user.findUnique({ where: { id: userId } });
-    if (user) {
-      request.auth = { userId: user.id, email: user.email };
-      return;
+  // SECURITY: Test-only auth bypass. This block is gated on NODE_ENV === 'test'
+  // (exact match — undefined or empty string won't pass). The token must also
+  // start with 'test-token-' and resolve to an existing user in the database.
+  // Never set NODE_ENV=test in production.
+  if (process.env.NODE_ENV === 'test') {
+    if (token.startsWith('test-token-')) {
+      const userId = token.replace('test-token-', '');
+      const user = await prisma.user.findUnique({ where: { id: userId } });
+      if (user) {
+        request.auth = { userId: user.id, email: user.email };
+        return;
+      }
     }
   }
 
@@ -54,13 +59,15 @@ export async function requireAuth(request: FastifyRequest, reply: FastifyReply) 
   const email = (user.email || '').toLowerCase().trim();
 
   // Auto-create in our DB on first login (for OAuth users)
-  let dbUser = await prisma.user.findUnique({ where: { email } });
-  if (!dbUser) {
-    dbUser = await prisma.user.create({
-      data: { id: user.id, email, passwordHash: 'oauth' },
-    });
-    sendWelcomeEmail(email);
-  }
+  // Use upsert to avoid race condition when two concurrent requests
+  // both see findUnique return null and try to create the same user.
+  const isNew = !(await prisma.user.findUnique({ where: { email } }));
+  const dbUser = await prisma.user.upsert({
+    where: { email },
+    update: {},
+    create: { id: user.id, email, passwordHash: 'oauth' },
+  });
+  if (isNew) sendWelcomeEmail(email);
 
   request.auth = { userId: dbUser.id, email: dbUser.email };
 }

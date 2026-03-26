@@ -16,8 +16,34 @@ const FROM = 'VaultProof <noreply@vaultproof.dev>';
 // Logo hosted on Cloudflare Pages
 const LOGO_URL = 'https://vaultproof.dev/logo-md.png';
 
-// Deduplicate expiry warnings: Set of "keyId:date" to send max once per day
-const expiryWarningSent = new Set<string>();
+/** Escape user-provided strings before embedding in HTML email templates. */
+function escapeHtml(text: string): string {
+  return text
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#039;');
+}
+
+// --- Bounded dedup caches with TTL ---
+const MAX_CACHE = 10000;
+const expiryWarningSent = new Map<string, number>();
+const invalidKeyAlertSent = new Map<string, number>();
+
+function isRecentlySent(cache: Map<string, number>, key: string, ttlMs: number): boolean {
+  const sent = cache.get(key);
+  if (sent && Date.now() - sent < ttlMs) return true;
+  // Evict old entries if cache is too large
+  if (cache.size > MAX_CACHE) {
+    const now = Date.now();
+    for (const [k, v] of cache) {
+      if (now - v > ttlMs) cache.delete(k);
+    }
+  }
+  cache.set(key, Date.now());
+  return false;
+}
 
 // Shared email wrapper
 function emailLayout(content: string): string {
@@ -144,7 +170,7 @@ export function sendUsageAlert(
   resend.emails.send({
     from: FROM,
     to,
-    subject: `Usage alert: ${keyLabel} exceeded ${threshold} calls/hour`,
+    subject: `Usage alert: ${escapeHtml(keyLabel)} exceeded ${threshold} calls/hour`,
     html: emailLayout(`
       <table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom: 20px;">
         <tr>
@@ -155,7 +181,7 @@ export function sendUsageAlert(
       </table>
 
       <p style="margin: 0 0 16px; font-size: 14px; color: #94a3b8; line-height: 1.6;">
-        Your developer key <strong style="color: #ffffff;">${keyLabel}</strong> made
+        Your developer key <strong style="color: #ffffff;">${escapeHtml(keyLabel)}</strong> made
         <strong style="color: #f87171;">${callCount} calls</strong> in the last hour,
         exceeding your threshold of <strong style="color: #ffffff;">${threshold}</strong>.
       </p>
@@ -164,7 +190,7 @@ export function sendUsageAlert(
         <tr>
           <td style="background-color: #0a0a0f; border: 1px solid #1e1e2e; border-radius: 10px; padding: 16px;">
             <table width="100%" cellpadding="0" cellspacing="0">
-              <tr><td style="font-size: 12px; color: #64748b; padding: 4px 0;">Key</td><td style="font-size: 13px; color: #fff; padding: 4px 0; text-align: right;">${keyLabel}</td></tr>
+              <tr><td style="font-size: 12px; color: #64748b; padding: 4px 0;">Key</td><td style="font-size: 13px; color: #fff; padding: 4px 0; text-align: right;">${escapeHtml(keyLabel)}</td></tr>
               <tr><td style="font-size: 12px; color: #64748b; padding: 4px 0;">Calls (last hour)</td><td style="font-size: 13px; color: #f87171; padding: 4px 0; text-align: right; font-weight: 600;">${callCount}</td></tr>
               <tr><td style="font-size: 12px; color: #64748b; padding: 4px 0;">Threshold</td><td style="font-size: 13px; color: #fff; padding: 4px 0; text-align: right;">${threshold}</td></tr>
             </table>
@@ -201,8 +227,7 @@ export function sendKeyExpiryWarning(
 
   const today = new Date().toISOString().split('T')[0];
   const dedupeKey = `${keyLabel}:${today}`;
-  if (expiryWarningSent.has(dedupeKey)) return;
-  expiryWarningSent.add(dedupeKey);
+  if (isRecentlySent(expiryWarningSent, dedupeKey, 24 * 60 * 60 * 1000)) return; // 24h TTL
 
   const daysLeft = Math.ceil((expiresAt.getTime() - Date.now()) / (1000 * 60 * 60 * 24));
   const urgencyColor = daysLeft <= 1 ? '#ef4444' : daysLeft <= 3 ? '#f59e0b' : '#6366f1';
@@ -210,7 +235,7 @@ export function sendKeyExpiryWarning(
   resend.emails.send({
     from: FROM,
     to,
-    subject: `Key expiring: ${keyLabel} (${provider}) — ${daysLeft} days left`,
+    subject: `Key expiring: ${escapeHtml(keyLabel)} (${escapeHtml(provider)}) — ${daysLeft} days left`,
     html: emailLayout(`
       <table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom: 20px;">
         <tr>
@@ -223,8 +248,8 @@ export function sendKeyExpiryWarning(
       </table>
 
       <p style="margin: 0 0 16px; font-size: 14px; color: #94a3b8; line-height: 1.6;">
-        Your <strong style="color: #ffffff;">${provider}</strong> key
-        <strong style="color: #ffffff;">${keyLabel}</strong> expires in
+        Your <strong style="color: #ffffff;">${escapeHtml(provider)}</strong> key
+        <strong style="color: #ffffff;">${escapeHtml(keyLabel)}</strong> expires in
         <strong style="color: ${urgencyColor};">${daysLeft} day${daysLeft === 1 ? '' : 's'}</strong>.
       </p>
 
@@ -232,8 +257,8 @@ export function sendKeyExpiryWarning(
         <tr>
           <td style="background-color: #0a0a0f; border: 1px solid #1e1e2e; border-radius: 10px; padding: 16px;">
             <table width="100%" cellpadding="0" cellspacing="0">
-              <tr><td style="font-size: 12px; color: #64748b; padding: 4px 0;">Key</td><td style="font-size: 13px; color: #fff; padding: 4px 0; text-align: right;">${keyLabel}</td></tr>
-              <tr><td style="font-size: 12px; color: #64748b; padding: 4px 0;">Provider</td><td style="font-size: 13px; color: #fff; padding: 4px 0; text-align: right;">${provider}</td></tr>
+              <tr><td style="font-size: 12px; color: #64748b; padding: 4px 0;">Key</td><td style="font-size: 13px; color: #fff; padding: 4px 0; text-align: right;">${escapeHtml(keyLabel)}</td></tr>
+              <tr><td style="font-size: 12px; color: #64748b; padding: 4px 0;">Provider</td><td style="font-size: 13px; color: #fff; padding: 4px 0; text-align: right;">${escapeHtml(provider)}</td></tr>
               <tr><td style="font-size: 12px; color: #64748b; padding: 4px 0;">Expires</td><td style="font-size: 13px; color: ${urgencyColor}; padding: 4px 0; text-align: right; font-weight: 600;">${expiresAt.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}</td></tr>
             </table>
           </td>
@@ -255,9 +280,6 @@ export function sendKeyExpiryWarning(
   }).catch(() => {});
 }
 
-// Deduplicate invalid key alerts: max once per hour per key
-const invalidKeyAlertSent = new Set<string>();
-
 /**
  * Alert when a stored API key is rejected by the provider (401/403).
  */
@@ -270,14 +292,13 @@ export function sendInvalidKeyAlert(
 ): void {
   if (!resend) return;
 
-  const dedupeKey = `${keyLabel}:${new Date().toISOString().slice(0, 13)}`; // once per hour
-  if (invalidKeyAlertSent.has(dedupeKey)) return;
-  invalidKeyAlertSent.add(dedupeKey);
+  const dedupeKey = `${keyLabel}:${new Date().toISOString().slice(0, 13)}`;
+  if (isRecentlySent(invalidKeyAlertSent, dedupeKey, 60 * 60 * 1000)) return; // 1h TTL
 
   resend.emails.send({
     from: FROM,
     to,
-    subject: `Key not working: ${keyLabel} (${provider})`,
+    subject: `Key not working: ${escapeHtml(keyLabel)} (${escapeHtml(provider)})`,
     html: emailLayout(`
       <table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom: 20px;">
         <tr>
@@ -288,8 +309,8 @@ export function sendInvalidKeyAlert(
       </table>
 
       <p style="margin: 0 0 16px; font-size: 14px; color: #94a3b8; line-height: 1.6;">
-        Your <strong style="color: #ffffff;">${provider}</strong> key
-        <strong style="color: #ffffff;">${keyLabel}</strong> was rejected with status
+        Your <strong style="color: #ffffff;">${escapeHtml(provider)}</strong> key
+        <strong style="color: #ffffff;">${escapeHtml(keyLabel)}</strong> was rejected with status
         <strong style="color: #f87171;">${statusCode}</strong>.
         The key may have been revoked, expired, or rate-limited at the provider.
       </p>
@@ -298,9 +319,9 @@ export function sendInvalidKeyAlert(
         <tr>
           <td style="background-color: #0a0a0f; border: 1px solid #1e1e2e; border-radius: 10px; padding: 16px;">
             <table width="100%" cellpadding="0" cellspacing="0">
-              <tr><td style="font-size: 12px; color: #64748b; padding: 4px 0;">Key</td><td style="font-size: 13px; color: #fff; padding: 4px 0; text-align: right;">${keyLabel}</td></tr>
-              <tr><td style="font-size: 12px; color: #64748b; padding: 4px 0;">Provider</td><td style="font-size: 13px; color: #fff; padding: 4px 0; text-align: right;">${provider}</td></tr>
-              <tr><td style="font-size: 12px; color: #64748b; padding: 4px 0;">Endpoint</td><td style="font-size: 13px; color: #fff; padding: 4px 0; text-align: right;">${endpoint}</td></tr>
+              <tr><td style="font-size: 12px; color: #64748b; padding: 4px 0;">Key</td><td style="font-size: 13px; color: #fff; padding: 4px 0; text-align: right;">${escapeHtml(keyLabel)}</td></tr>
+              <tr><td style="font-size: 12px; color: #64748b; padding: 4px 0;">Provider</td><td style="font-size: 13px; color: #fff; padding: 4px 0; text-align: right;">${escapeHtml(provider)}</td></tr>
+              <tr><td style="font-size: 12px; color: #64748b; padding: 4px 0;">Endpoint</td><td style="font-size: 13px; color: #fff; padding: 4px 0; text-align: right;">${escapeHtml(endpoint)}</td></tr>
               <tr><td style="font-size: 12px; color: #64748b; padding: 4px 0;">Status</td><td style="font-size: 13px; color: #f87171; padding: 4px 0; text-align: right; font-weight: 600;">${statusCode} ${statusCode === 401 ? 'Unauthorized' : 'Forbidden'}</td></tr>
             </table>
           </td>
