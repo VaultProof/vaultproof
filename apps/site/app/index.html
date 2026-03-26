@@ -1014,7 +1014,7 @@
       let overview, keys, devKeys;
       try { overview = await apiFetch('/stats/overview'); } catch { overview = null; }
       try { keys = await apiFetch('/stats/by-key'); } catch { keys = null; }
-      try { devKeys = await apiFetch('/dev-keys'); } catch { devKeys = null; }
+      try { devKeys = await apiFetch('/dev-keys/list'); } catch { devKeys = null; }
 
       const totalKeys = overview?.totalKeys || (keys?.keys || []).length || 0;
       const totalCalls = overview?.totalCalls || 0;
