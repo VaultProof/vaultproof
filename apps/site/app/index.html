@@ -223,6 +223,26 @@
     <div class="flex-1 flex">
       <!-- Main content area -->
       <main class="flex-1 p-6 lg:p-8 overflow-y-auto">
+        <!-- Toast notification -->
+        <div id="toast" class="fixed top-4 right-4 z-50 hidden max-w-sm">
+          <div id="toastInner" class="flex items-center gap-3 px-4 py-3 rounded-xl border text-sm shadow-lg backdrop-blur-sm">
+            <span id="toastMsg"></span>
+            <button onclick="document.getElementById('toast').classList.add('hidden')" class="text-gray-400 hover:text-white ml-2">&times;</button>
+          </div>
+        </div>
+
+        <!-- Session expired overlay -->
+        <div id="sessionExpired" class="fixed inset-0 z-[100] bg-black/80 backdrop-blur-sm hidden flex items-center justify-center">
+          <div class="bg-[#111118] border border-[#1e1e2e] rounded-2xl p-8 max-w-sm text-center">
+            <div class="w-14 h-14 rounded-full bg-red-500/10 border border-red-500/20 flex items-center justify-center mx-auto mb-4">
+              <svg class="w-7 h-7 text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>
+            </div>
+            <h3 class="text-lg font-semibold text-white mb-2">Session Expired</h3>
+            <p class="text-sm text-gray-400 mb-6">Your session has expired. Please sign in again to continue.</p>
+            <a href="login" class="inline-block px-6 py-2.5 bg-[#6366f1] hover:bg-[#5558e6] text-white rounded-xl text-sm font-medium transition btn-glow">Sign In Again</a>
+          </div>
+        </div>
+
         <div class="max-w-[1200px] space-y-8">
 
           <!-- Page Header -->
@@ -420,24 +440,51 @@
 
     if (!token) { window.location.href = 'login'; }
 
+    // Shared UI helpers
+    function showToast(message, type = 'error') {
+      const toast = document.getElementById('toast');
+      const inner = document.getElementById('toastInner');
+      const msg = document.getElementById('toastMsg');
+      msg.textContent = message;
+      const styles = {
+        error: 'bg-red-900/80 border-red-800/50 text-red-200',
+        warning: 'bg-yellow-900/80 border-yellow-800/50 text-yellow-200',
+        info: 'bg-[#111118] border-[#1e1e2e] text-gray-300'
+      };
+      inner.className = `flex items-center gap-3 px-4 py-3 rounded-xl border text-sm shadow-lg backdrop-blur-sm ${styles[type] || styles.error}`;
+      toast.classList.remove('hidden');
+      clearTimeout(toast._timer);
+      toast._timer = setTimeout(() => toast.classList.add('hidden'), 5000);
+    }
+
+    function showSessionExpired() {
+      document.getElementById('sessionExpired').classList.remove('hidden');
+    }
+
     // Refresh the Supabase token on page load
     async function refreshToken() {
-      try {
-        const sb = window.supabase.createClient(
-          'https://gwzkjiomemjlhtrdrlan.supabase.co',
-          'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imd3emtqaW9tZW1qbGh0cmRybGFuIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQzNDM3ODIsImV4cCI6MjA4OTkxOTc4Mn0.tgHUvpBvFiojetuqIP0sKb0iBNbKDJHdeo9n3Tofa3o'
-        );
-        const { data, error } = await sb.auth.getSession();
-        if (error || !data.session) {
-          localStorage.removeItem('vaultproof_token');
-          window.location.href = 'login';
-          return;
+      for (let attempt = 0; attempt < 2; attempt++) {
+        try {
+          const sb = window.supabase.createClient(
+            'https://gwzkjiomemjlhtrdrlan.supabase.co',
+            'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imd3emtqaW9tZW1qbGh0cmRybGFuIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQzNDM3ODIsImV4cCI6MjA4OTkxOTc4Mn0.tgHUvpBvFiojetuqIP0sKb0iBNbKDJHdeo9n3Tofa3o'
+          );
+          const { data, error } = await sb.auth.getSession();
+          if (error || !data.session) {
+            if (attempt === 1) { showSessionExpired(); return false; }
+            await new Promise(r => setTimeout(r, 1000));
+            continue;
+          }
+          token = data.session.access_token;
+          localStorage.setItem('vaultproof_token', token);
+          return true;
+        } catch (e) {
+          console.error('Token refresh failed:', e);
+          if (attempt === 1) { showSessionExpired(); return false; }
+          await new Promise(r => setTimeout(r, 1000));
         }
-        token = data.session.access_token;
-        localStorage.setItem('vaultproof_token', token);
-      } catch (e) {
-        console.error('Token refresh failed:', e);
       }
+      return false;
     }
 
     // ── User info ──
@@ -490,12 +537,25 @@
 
     // ── API helper ──
     async function apiFetch(path) {
-      const res = await fetch(`${API}${path}`, {
-        headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' }
-      });
-      if (res.status === 401) { window.location.href = 'login'; return null; }
-      if (!res.ok) throw new Error(`HTTP ${res.status}`);
-      return res.json();
+      try {
+        const res = await fetch(`${API}${path}`, {
+          headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' }
+        });
+        if (res.status === 401) { showSessionExpired(); return null; }
+        if (res.status === 429) {
+          showToast('Rate limited — try again in a moment', 'warning');
+          return null;
+        }
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        return res.json();
+      } catch (e) {
+        if (e.message && e.message.startsWith('HTTP')) {
+          showToast('Something went wrong on our end', 'error');
+        } else {
+          showToast('Connection lost — check your internet', 'error');
+        }
+        return null;
+      }
     }
 
     // ── Mock Data ──
@@ -606,6 +666,8 @@
       } catch (e) {
         console.warn('Overview API failed, using mock data:', e);
         data = MOCK.overview;
+        showToast('Unable to load live data — showing cached values', 'warning');
+        document.querySelectorAll('.stat-card, [class*="stat"]').forEach(el => el.style.opacity = '0.6');
       }
 
       document.getElementById('statKeys').textContent = formatNumber(data.totalKeys);
@@ -779,6 +841,7 @@
       } catch (e) {
         console.warn('Keys API failed, using mock data:', e);
         data = { keys: MOCK.keys };
+        showToast('Unable to load keys', 'warning');
       }
 
       const keys = data.keys || [];
@@ -961,7 +1024,8 @@
 
     // ── Init ──
     async function init() {
-      await refreshToken();
+      const ok = await refreshToken();
+      if (!ok) return;
       loadOverview();
       loadUsageChart();
       loadKeys();
