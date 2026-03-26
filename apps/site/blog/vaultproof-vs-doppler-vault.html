@@ -1,0 +1,444 @@
+<!DOCTYPE html>
+<html lang="en" class="scroll-smooth">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>VaultProof vs Doppler vs HashiCorp Vault — Which One for API Keys? | VaultProof Blog</title>
+    <meta name="description" content="Detailed comparison of VaultProof, Doppler, and HashiCorp Vault for API key management. Architecture, pricing, developer experience, and trust models compared.">
+    <meta name="keywords" content="VaultProof vs Doppler, VaultProof vs HashiCorp Vault, secrets management comparison, API key vault, Doppler alternative, HashiCorp Vault alternative">
+    <meta property="og:title" content="VaultProof vs Doppler vs HashiCorp Vault — Which One for API Keys?">
+    <meta property="og:description" content="All three manage secrets. Only one mathematically can't see yours. Detailed comparison of architecture, pricing, and trust models.">
+    <meta property="og:url" content="https://vaultproof.dev/blog/vaultproof-vs-doppler-vault">
+    <meta property="og:type" content="article">
+    <meta property="og:image" content="https://vaultproof.dev/logo-lg.png">
+    <meta property="article:published_time" content="2026-03-26">
+    <meta property="article:author" content="VaultProof Team">
+    <meta name="twitter:card" content="summary">
+    <meta name="twitter:title" content="VaultProof vs Doppler vs HashiCorp Vault — Which One for API Keys?">
+    <meta name="twitter:description" content="All three manage secrets. Only one mathematically can't see yours.">
+    <meta http-equiv="X-Content-Type-Options" content="nosniff">
+    <meta http-equiv="X-Frame-Options" content="DENY">
+    <meta name="referrer" content="strict-origin-when-cross-origin">
+    <link rel="canonical" href="https://vaultproof.dev/blog/vaultproof-vs-doppler-vault">
+
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        'vp-bg': '#0a0a0f',
+                        'vp-surface': '#111118',
+                        'vp-border': '#1e1e2e',
+                        'vp-accent': '#6366f1',
+                        'vp-cyan': '#06b6d4',
+                    },
+                    fontFamily: {
+                        sans: ['Inter', 'system-ui', 'sans-serif'],
+                        mono: ['JetBrains Mono', 'monospace'],
+                    },
+                    borderRadius: {
+                        'card': '12px',
+                        'btn': '12px',
+                    }
+                }
+            }
+        }
+    </script>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
+
+    <style>
+        * { font-family: 'Inter', system-ui, sans-serif; }
+        ::selection { background: #6366f1; color: #fff; }
+        body { background: #0a0a0f; }
+
+        .btn-glow {
+            box-shadow: 0 0 20px rgba(99,102,241,0.3), 0 0 60px rgba(99,102,241,0.1);
+            transition: all 0.3s ease;
+        }
+        .btn-glow:hover {
+            box-shadow: 0 0 30px rgba(99,102,241,0.5), 0 0 80px rgba(99,102,241,0.2);
+            transform: translateY(-1px);
+        }
+
+        .prose h2 { font-family: 'Space Grotesk', sans-serif; }
+
+        .compare-table {
+            border-collapse: separate;
+            border-spacing: 0;
+            width: 100%;
+        }
+        .compare-table th,
+        .compare-table td {
+            padding: 0.75rem 1rem;
+            text-align: center;
+            border-bottom: 1px solid #1e1e2e;
+            font-size: 0.8125rem;
+        }
+        .compare-table th:first-child,
+        .compare-table td:first-child {
+            text-align: left;
+            font-weight: 500;
+            color: #cbd5e1;
+        }
+        .compare-table thead th {
+            font-weight: 600;
+            color: #94a3b8;
+            background: #0d0d14;
+            position: sticky;
+            top: 0;
+            z-index: 2;
+            font-size: 0.75rem;
+        }
+        .compare-table tbody tr:last-child td {
+            border-bottom: none;
+        }
+        .compare-table tbody tr:hover {
+            background: rgba(99,102,241,0.03);
+        }
+        .compare-table th.vp-col {
+            background: rgba(99,102,241,0.1);
+            color: #a5b4fc;
+            border-top: 2px solid #6366f1;
+        }
+        .compare-table td.vp-col {
+            background: rgba(99,102,241,0.04);
+        }
+
+        .card-hover {
+            transition: transform 0.3s ease, box-shadow 0.3s ease, border-color 0.3s ease;
+        }
+        .card-hover:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 12px 40px rgba(0,0,0,0.3);
+            border-color: #6366f1;
+        }
+
+        ::-webkit-scrollbar { width: 8px; }
+        ::-webkit-scrollbar-track { background: #0a0a0f; }
+        ::-webkit-scrollbar-thumb { background: #1e1e2e; border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: #2e2e3e; }
+
+        .mobile-menu { display: none; }
+        .mobile-menu.open { display: flex; }
+    </style>
+</head>
+<body class="text-gray-300 min-h-screen">
+
+    <!-- Nav -->
+    <nav class="relative z-10 border-b border-vp-border/50 backdrop-blur-sm bg-vp-bg/80 sticky top-0">
+        <div class="flex items-center justify-between px-6 py-4 max-w-6xl mx-auto">
+            <a href="/" class="flex items-center gap-2.5">
+                <img src="/logo-sm.png" alt="VaultProof" width="28" height="28" />
+                <span class="text-lg font-bold text-white tracking-tight" style="font-family:'Space Grotesk',sans-serif">VaultProof</span>
+            </a>
+
+            <div class="hidden md:flex items-center gap-8">
+                <a href="/" class="text-sm text-gray-400 hover:text-white transition-colors">Home</a>
+                <a href="/docs" class="text-sm text-gray-400 hover:text-white transition-colors">Docs</a>
+                <a href="/guides" class="text-sm text-gray-400 hover:text-white transition-colors">Guides</a>
+                <a href="/compare" class="text-sm text-gray-400 hover:text-white transition-colors">Compare</a>
+                <a href="/blog" class="text-sm text-white font-medium transition-colors">Blog</a>
+                <a href="/#pricing" class="text-sm text-gray-400 hover:text-white transition-colors">Pricing</a>
+                <a href="/app/login" class="text-sm text-gray-400 hover:text-white transition-colors">Login</a>
+                <a href="/app/login" class="bg-vp-accent hover:bg-indigo-500 text-sm px-5 py-2 rounded-btn font-semibold text-white transition-all btn-glow">Get Started</a>
+            </div>
+
+            <button id="mobileToggle" class="md:hidden text-gray-400 hover:text-white" aria-label="Toggle menu">
+                <svg width="24" height="24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 6h16M4 12h16M4 18h16"/></svg>
+            </button>
+        </div>
+
+        <div id="mobileMenu" class="mobile-menu flex-col gap-4 px-6 pb-6 md:hidden bg-vp-bg/95 backdrop-blur-sm">
+            <a href="/" class="text-sm text-gray-400 hover:text-white transition-colors py-1">Home</a>
+            <a href="/docs" class="text-sm text-gray-400 hover:text-white transition-colors py-1">Docs</a>
+            <a href="/guides" class="text-sm text-gray-400 hover:text-white transition-colors py-1">Guides</a>
+            <a href="/compare" class="text-sm text-gray-400 hover:text-white transition-colors py-1">Compare</a>
+            <a href="/blog" class="text-sm text-white font-medium transition-colors py-1">Blog</a>
+            <a href="/#pricing" class="text-sm text-gray-400 hover:text-white transition-colors py-1">Pricing</a>
+            <a href="/app/login" class="text-sm text-gray-400 hover:text-white transition-colors py-1">Login</a>
+            <a href="/app/login" class="bg-vp-accent hover:bg-indigo-500 text-sm px-5 py-2.5 rounded-btn font-semibold text-white transition-all text-center btn-glow mt-2">Get Started</a>
+        </div>
+    </nav>
+
+    <!-- Article -->
+    <article class="max-w-[700px] mx-auto px-6 pt-12 pb-20">
+
+        <!-- Back link -->
+        <a href="/blog" class="inline-flex items-center gap-2 text-sm text-gray-500 hover:text-vp-accent transition-colors mb-8">
+            <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><path d="M10 12L6 8l4-4"/></svg>
+            Back to blog
+        </a>
+
+        <!-- Header -->
+        <header class="mb-10">
+            <h1 class="text-3xl md:text-4xl font-black tracking-tight text-white mb-4" style="font-family:'Space Grotesk',sans-serif">VaultProof vs Doppler vs HashiCorp Vault &mdash; Which One for API Keys?</h1>
+            <div class="flex items-center gap-4 text-sm text-gray-500">
+                <span>VaultProof Team</span>
+                <span class="w-1 h-1 rounded-full bg-gray-600"></span>
+                <time datetime="2026-03-26">March 26, 2026</time>
+                <span class="w-1 h-1 rounded-full bg-gray-600"></span>
+                <span>7 min read</span>
+            </div>
+        </header>
+
+        <!-- Content -->
+        <div class="space-y-8 text-gray-300 leading-relaxed text-[0.9375rem]">
+
+            <!-- Quick comparison table -->
+            <section>
+                <h2 class="text-2xl font-bold text-white mb-4">Quick comparison</h2>
+                <p class="mb-6">Before we dive into the details, here's the high-level view:</p>
+
+                <div class="bg-vp-surface border border-vp-border rounded-card overflow-x-auto">
+                    <table class="compare-table">
+                        <thead>
+                            <tr>
+                                <th class="text-left">Feature</th>
+                                <th class="vp-col">VaultProof</th>
+                                <th>Doppler</th>
+                                <th>HashiCorp Vault</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>Can see your key?</td>
+                                <td class="vp-col"><span class="text-emerald-400 font-medium">Never (Shamir split)</span></td>
+                                <td><span class="text-red-400">Yes (plaintext)</span></td>
+                                <td><span class="text-red-400">Yes (plaintext)</span></td>
+                            </tr>
+                            <tr>
+                                <td>Key splitting (Shamir)</td>
+                                <td class="vp-col"><span class="text-emerald-400">Yes</span></td>
+                                <td><span class="text-gray-600">No</span></td>
+                                <td><span class="text-gray-600">No</span></td>
+                            </tr>
+                            <tr>
+                                <td>Zero-knowledge proofs</td>
+                                <td class="vp-col"><span class="text-emerald-400">Yes (Noir)</span></td>
+                                <td><span class="text-gray-600">No</span></td>
+                                <td><span class="text-gray-600">No</span></td>
+                            </tr>
+                            <tr>
+                                <td>1-line integration</td>
+                                <td class="vp-col"><span class="text-emerald-400">Proxy URL</span></td>
+                                <td><span class="text-gray-400">doppler run</span></td>
+                                <td><span class="text-gray-600">No (SDK required)</span></td>
+                            </tr>
+                            <tr>
+                                <td>Works with any SDK</td>
+                                <td class="vp-col"><span class="text-emerald-400">Yes (baseURL swap)</span></td>
+                                <td><span class="text-gray-400">Via env vars</span></td>
+                                <td><span class="text-gray-600">Vault SDK only</span></td>
+                            </tr>
+                            <tr>
+                                <td>Self-hosted option</td>
+                                <td class="vp-col"><span class="text-gray-400">Coming soon</span></td>
+                                <td><span class="text-gray-600">No</span></td>
+                                <td><span class="text-emerald-400">Yes</span></td>
+                            </tr>
+                            <tr>
+                                <td>Free tier</td>
+                                <td class="vp-col"><span class="text-emerald-400">5 keys, 1K calls/mo</span></td>
+                                <td><span class="text-gray-400">5 users</span></td>
+                                <td><span class="text-gray-600">None (OSS only)</span></td>
+                            </tr>
+                            <tr>
+                                <td>Paid pricing</td>
+                                <td class="vp-col"><span class="text-emerald-400">$9/mo</span></td>
+                                <td><span class="text-gray-400">$23/user/mo</span></td>
+                                <td><span class="text-gray-400">$1.58/hr+</span></td>
+                            </tr>
+                            <tr>
+                                <td>Setup time</td>
+                                <td class="vp-col"><span class="text-emerald-400">30 seconds</span></td>
+                                <td><span class="text-gray-400">5 minutes</span></td>
+                                <td><span class="text-gray-400">Hours/days</span></td>
+                            </tr>
+                            <tr>
+                                <td>Best for</td>
+                                <td class="vp-col"><span class="text-indigo-400">AI developers</span></td>
+                                <td><span class="text-gray-400">Dev teams</span></td>
+                                <td><span class="text-gray-400">Enterprise infra</span></td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+
+            <!-- HashiCorp Vault -->
+            <section>
+                <h2 class="text-2xl font-bold text-white mb-4">HashiCorp Vault: powerful but complex</h2>
+                <p class="mb-4">HashiCorp Vault is the industry standard for secrets management in enterprise environments. It handles everything from database credentials to PKI certificates to cloud IAM.</p>
+                <p class="mb-4"><strong class="text-white">What it does well:</strong></p>
+                <ul class="list-disc list-inside space-y-2 text-gray-400 ml-2 mb-4">
+                    <li>Dynamic secrets &mdash; generates short-lived credentials on the fly</li>
+                    <li>Encryption as a service &mdash; encrypt/decrypt without managing keys</li>
+                    <li>Audit logging &mdash; every access is recorded</li>
+                    <li>Policy engine &mdash; fine-grained access control</li>
+                    <li>Self-hosted &mdash; runs on your infrastructure</li>
+                </ul>
+                <p class="mb-4"><strong class="text-white">The catch:</strong></p>
+                <ul class="list-disc list-inside space-y-2 text-gray-400 ml-2">
+                    <li><strong class="text-gray-300">It requires infrastructure.</strong> You need to run, maintain, and secure Vault servers. HA setup requires Consul or Raft. This is a DevOps project, not a developer tool.</li>
+                    <li><strong class="text-gray-300">It costs real money.</strong> HCP Vault starts at $1.58/hr (~$1,150/mo). Self-hosted is "free" but requires engineer time.</li>
+                    <li><strong class="text-gray-300">Integration isn't simple.</strong> You need the Vault SDK, a Vault token, and code to fetch secrets at runtime. There's no "change one line" option.</li>
+                    <li><strong class="text-gray-300">It sees your keys in plaintext.</strong> When you store a secret in Vault, the Vault server decrypts and re-encrypts it. At runtime, it returns the plaintext key. A compromised Vault server means all secrets are exposed.</li>
+                </ul>
+                <p class="mt-4 text-gray-500">Vault is the right choice for enterprises managing thousands of dynamic credentials across complex infrastructure. It's overkill for a developer who needs to store 5 API keys securely.</p>
+            </section>
+
+            <!-- Doppler -->
+            <section>
+                <h2 class="text-2xl font-bold text-white mb-4">Doppler: developer-friendly, but they see your keys</h2>
+                <p class="mb-4">Doppler is the developer's secrets manager. It's well-designed, has great DX, and integrates with everything from Vercel to AWS to GitHub Actions.</p>
+                <p class="mb-4"><strong class="text-white">What it does well:</strong></p>
+                <ul class="list-disc list-inside space-y-2 text-gray-400 ml-2 mb-4">
+                    <li><code class="bg-vp-surface border border-vp-border px-1.5 py-0.5 rounded text-xs font-mono text-gray-400">doppler run</code> &mdash; injects env vars at runtime, like VaultProof's CLI</li>
+                    <li>Environment management &mdash; dev, staging, production configs</li>
+                    <li>Team sharing &mdash; centralized secrets for your whole team</li>
+                    <li>Native integrations &mdash; Vercel, Netlify, Railway, Fly.io, etc.</li>
+                    <li>Audit logs and version history</li>
+                </ul>
+                <p class="mb-4"><strong class="text-white">The catch:</strong></p>
+                <ul class="list-disc list-inside space-y-2 text-gray-400 ml-2">
+                    <li><strong class="text-gray-300">Doppler sees your keys in plaintext.</strong> When you store a secret, Doppler's servers have it. Their team can technically access it. A breach of Doppler means your keys are exposed. You're trusting their security team with your most sensitive credentials.</li>
+                    <li><strong class="text-gray-300">$23/user/month adds up.</strong> For a team of 10, that's $230/mo just for secrets management. And every team member needs access.</li>
+                    <li><strong class="text-gray-300">No proxy URL option.</strong> You can't just swap a base URL and be done. You need to use <code class="bg-vp-surface border border-vp-border px-1.5 py-0.5 rounded text-xs font-mono text-gray-400">doppler run</code> or their SDK integrations.</li>
+                </ul>
+                <p class="mt-4 text-gray-500">Doppler is great for teams who trust their secrets provider. If "they promise not to look at our keys" is good enough for your threat model, Doppler is a solid choice.</p>
+            </section>
+
+            <!-- VaultProof -->
+            <section>
+                <h2 class="text-2xl font-bold text-white mb-4">VaultProof: keys are split &mdash; we can't see them</h2>
+                <p class="mb-4">VaultProof takes a fundamentally different approach. Instead of storing your key and promising not to look at it, we split it using <strong class="text-white">Shamir's Secret Sharing</strong> so that no single party ever has the complete key.</p>
+                <p class="mb-4"><strong class="text-white">How it works:</strong></p>
+                <ul class="list-disc list-inside space-y-2 text-gray-400 ml-2 mb-4">
+                    <li>When you store a key, it's split into 3 shares in your browser (client-side)</li>
+                    <li>Share 1 is encrypted and stored by VaultProof</li>
+                    <li>Share 2 goes to your browser's local storage</li>
+                    <li>Share 3 is derived from your password</li>
+                    <li>The full key is <strong class="text-gray-300">never sent to our servers</strong></li>
+                </ul>
+                <p class="mb-4"><strong class="text-white">At runtime:</strong></p>
+                <ul class="list-disc list-inside space-y-2 text-gray-400 ml-2 mb-4">
+                    <li>Your app calls VaultProof's proxy URL</li>
+                    <li>The proxy reconstructs the key from shares in a Cloudflare Worker (edge, ephemeral memory)</li>
+                    <li>The key is injected into the upstream API call</li>
+                    <li>The key is never logged, stored, or returned</li>
+                </ul>
+                <p class="mb-4"><strong class="text-white">What this means:</strong></p>
+                <ul class="list-disc list-inside space-y-2 text-gray-400 ml-2">
+                    <li>A VaultProof database breach reveals only encrypted partial shares &mdash; useless without the other shares</li>
+                    <li>VaultProof employees <strong class="text-gray-300">mathematically cannot</strong> access your keys</li>
+                    <li>Zero-knowledge proofs (Noir) let you verify a key is valid without revealing it</li>
+                    <li><strong class="text-gray-300">1-line integration</strong> &mdash; swap <code class="bg-vp-surface border border-vp-border px-1.5 py-0.5 rounded text-xs font-mono text-gray-400">baseURL</code> and you're done</li>
+                    <li><strong class="text-gray-300">Free tier</strong> &mdash; 5 keys, 1,000 proxy calls/month. Pro at $9/mo.</li>
+                </ul>
+            </section>
+
+            <!-- When to use which -->
+            <section>
+                <h2 class="text-2xl font-bold text-white mb-4">When to use which</h2>
+
+                <div class="space-y-4">
+                    <div class="bg-vp-surface border border-vp-border rounded-card p-5">
+                        <h3 class="text-white font-semibold mb-2">Use HashiCorp Vault when...</h3>
+                        <p class="text-sm text-gray-400">You're an enterprise with complex infrastructure, need dynamic secrets (database creds, cloud IAM), have a dedicated DevOps/platform team, and budget is not a constraint. You need the Swiss Army knife of secrets management.</p>
+                    </div>
+
+                    <div class="bg-vp-surface border border-vp-border rounded-card p-5">
+                        <h3 class="text-white font-semibold mb-2">Use Doppler when...</h3>
+                        <p class="text-sm text-gray-400">You have a development team that needs shared access to secrets, you trust your secrets provider to handle them responsibly, you want great integrations with deploy platforms, and you're OK with your provider seeing your keys in plaintext.</p>
+                    </div>
+
+                    <div class="bg-vp-surface border border-vp-border rounded-card p-5" style="border-color: #6366f1;">
+                        <h3 class="text-white font-semibold mb-2">Use VaultProof when...</h3>
+                        <p class="text-sm text-gray-400">You're a developer or small team building with AI APIs. You want the simplest possible integration (one line). You don't want to trust <em>anyone</em> with your keys &mdash; including your secrets provider. You want zero-knowledge guarantees, not just promises. And you want to start for free.</p>
+                    </div>
+                </div>
+
+                <p class="mt-6 text-gray-500">The bottom line: <strong class="text-gray-300">Vault is for infrastructure teams. Doppler is for dev teams who trust their provider. VaultProof is for developers who trust no one &mdash; including us.</strong></p>
+            </section>
+
+        </div>
+
+        <!-- CTA Banner -->
+        <div class="mt-16 bg-vp-surface border border-vp-border rounded-card p-8 text-center" style="border-color: #6366f1;">
+            <h3 class="text-xl font-bold text-white mb-3" style="font-family:'Space Grotesk',sans-serif">Try VaultProof free</h3>
+            <p class="text-gray-400 mb-6 max-w-md mx-auto">5 keys. 1,000 proxy calls/month. No credit card required. Set up in 30 seconds.</p>
+            <a href="/app/login" class="inline-block bg-vp-accent hover:bg-indigo-500 px-7 py-3 rounded-btn font-semibold text-white transition-all btn-glow">Get Started Free</a>
+        </div>
+
+        <!-- Share -->
+        <div class="mt-10 flex items-center gap-4">
+            <span class="text-sm text-gray-500">Share:</span>
+            <a href="https://twitter.com/intent/tweet?text=VaultProof%20vs%20Doppler%20vs%20HashiCorp%20Vault&url=https://vaultproof.dev/blog/vaultproof-vs-doppler-vault" target="_blank" rel="noopener" class="text-gray-500 hover:text-white transition-colors">
+                <svg width="20" height="20" fill="currentColor" viewBox="0 0 24 24"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg>
+            </a>
+            <a href="https://www.linkedin.com/sharing/share-offsite/?url=https://vaultproof.dev/blog/vaultproof-vs-doppler-vault" target="_blank" rel="noopener" class="text-gray-500 hover:text-white transition-colors">
+                <svg width="20" height="20" fill="currentColor" viewBox="0 0 24 24"><path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433a2.062 2.062 0 01-2.063-2.065 2.064 2.064 0 112.063 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z"/></svg>
+            </a>
+        </div>
+
+        <!-- Related posts -->
+        <div class="mt-16">
+            <h3 class="text-lg font-bold text-white mb-6" style="font-family:'Space Grotesk',sans-serif">Related posts</h3>
+            <div class="grid gap-4 md:grid-cols-2">
+                <a href="/blog/secure-openai-api-key" class="block bg-vp-surface border border-vp-border rounded-card p-5 card-hover">
+                    <div class="text-xs text-gray-500 mb-2">5 min read</div>
+                    <h4 class="text-sm font-semibold text-white mb-1">How to Secure Your OpenAI API Key in 2026</h4>
+                    <p class="text-xs text-gray-500">39M secrets leaked on GitHub. Here are 3 ways to protect your keys.</p>
+                </a>
+                <a href="/blog/vibe-coding-leaking-secrets" class="block bg-vp-surface border border-vp-border rounded-card p-5 card-hover">
+                    <div class="text-xs text-gray-500 mb-2">6 min read</div>
+                    <h4 class="text-sm font-semibold text-white mb-1">Vibe Coding Is Leaking Your Secrets</h4>
+                    <p class="text-xs text-gray-500">AI coding tools make building 10x faster, but security is an afterthought.</p>
+                </a>
+            </div>
+        </div>
+
+    </article>
+
+    <!-- Footer -->
+    <footer class="border-t border-vp-border">
+        <div class="max-w-5xl mx-auto px-6 py-12">
+            <div class="flex flex-col md:flex-row items-center justify-between gap-6">
+                <div class="flex flex-col items-center md:items-start gap-2">
+                    <div class="flex items-center gap-2.5">
+                        <svg width="22" height="22" viewBox="0 0 28 28" fill="none"><rect width="28" height="28" rx="6" fill="#6366f1" fill-opacity="0.15"/><path d="M8 8L14 4L20 8V16L14 20L8 16V8Z" stroke="#6366f1" stroke-width="1.5" fill="none"/><path d="M14 10V15" stroke="#6366f1" stroke-width="1.5" stroke-linecap="round"/><circle cx="14" cy="17" r="1" fill="#6366f1"/></svg>
+                        <span class="text-sm font-bold text-white">VaultProof</span>
+                        <span class="text-xs text-gray-600">by Rial Labs</span>
+                    </div>
+                    <p class="text-xs text-gray-600">Built for developers who refuse to trust blindly.</p>
+                </div>
+                <div class="flex items-center gap-8 flex-wrap justify-center">
+                    <a href="/docs" class="text-sm text-gray-500 hover:text-white transition-colors">Docs</a>
+                    <a href="/guides" class="text-sm text-gray-500 hover:text-white transition-colors">Guides</a>
+                    <a href="/compare" class="text-sm text-gray-500 hover:text-white transition-colors">Compare</a>
+                    <a href="/blog" class="text-sm text-gray-500 hover:text-white transition-colors">Blog</a>
+                    <a href="/verify" class="text-sm text-gray-500 hover:text-white transition-colors">Verify</a>
+                    <a href="/app/login" class="text-sm text-gray-500 hover:text-white transition-colors">Dashboard</a>
+                    <a href="/terms" class="text-sm text-gray-500 hover:text-white transition-colors">Terms</a>
+                    <a href="/privacy" class="text-sm text-gray-500 hover:text-white transition-colors">Privacy</a>
+                </div>
+            </div>
+        </div>
+    </footer>
+
+    <script>
+        document.getElementById('mobileToggle').addEventListener('click', function() {
+            document.getElementById('mobileMenu').classList.toggle('open');
+        });
+        document.querySelectorAll('#mobileMenu a').forEach(function(link) {
+            link.addEventListener('click', function() {
+                document.getElementById('mobileMenu').classList.remove('open');
+            });
+        });
+    </script>
+</body>
+</html>

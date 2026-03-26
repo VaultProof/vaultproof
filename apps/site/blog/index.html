@@ -1,0 +1,213 @@
+<!DOCTYPE html>
+<html lang="en" class="scroll-smooth">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Blog | VaultProof — Security Insights for Developers</title>
+    <meta name="description" content="Security insights, API key management best practices, and zero-knowledge architecture deep dives from the VaultProof team.">
+    <meta name="keywords" content="API key security blog, secrets management, zero knowledge proofs, developer security, VaultProof blog">
+    <meta property="og:title" content="VaultProof Blog — Security Insights for Developers">
+    <meta property="og:description" content="Security insights, API key management best practices, and zero-knowledge architecture deep dives.">
+    <meta property="og:url" content="https://vaultproof.dev/blog">
+    <meta property="og:type" content="website">
+    <meta property="og:image" content="https://vaultproof.dev/logo-lg.png">
+    <meta name="twitter:card" content="summary">
+    <meta name="twitter:title" content="VaultProof Blog — Security Insights for Developers">
+    <meta name="twitter:description" content="Security insights, API key management best practices, and zero-knowledge architecture deep dives.">
+    <meta http-equiv="X-Content-Type-Options" content="nosniff">
+    <meta http-equiv="X-Frame-Options" content="DENY">
+    <meta name="referrer" content="strict-origin-when-cross-origin">
+    <link rel="canonical" href="https://vaultproof.dev/blog">
+
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        'vp-bg': '#0a0a0f',
+                        'vp-surface': '#111118',
+                        'vp-border': '#1e1e2e',
+                        'vp-accent': '#6366f1',
+                        'vp-cyan': '#06b6d4',
+                    },
+                    fontFamily: {
+                        sans: ['Inter', 'system-ui', 'sans-serif'],
+                        mono: ['JetBrains Mono', 'monospace'],
+                    },
+                    borderRadius: {
+                        'card': '12px',
+                        'btn': '12px',
+                    }
+                }
+            }
+        }
+    </script>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
+
+    <style>
+        * { font-family: 'Inter', system-ui, sans-serif; }
+        ::selection { background: #6366f1; color: #fff; }
+        body { background: #0a0a0f; }
+
+        .btn-glow {
+            box-shadow: 0 0 20px rgba(99,102,241,0.3), 0 0 60px rgba(99,102,241,0.1);
+            transition: all 0.3s ease;
+        }
+        .btn-glow:hover {
+            box-shadow: 0 0 30px rgba(99,102,241,0.5), 0 0 80px rgba(99,102,241,0.2);
+            transform: translateY(-1px);
+        }
+
+        .card-hover {
+            transition: transform 0.3s ease, box-shadow 0.3s ease, border-color 0.3s ease;
+        }
+        .card-hover:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 12px 40px rgba(0,0,0,0.3);
+            border-color: #6366f1;
+        }
+
+        ::-webkit-scrollbar { width: 8px; }
+        ::-webkit-scrollbar-track { background: #0a0a0f; }
+        ::-webkit-scrollbar-thumb { background: #1e1e2e; border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: #2e2e3e; }
+
+        .mobile-menu { display: none; }
+        .mobile-menu.open { display: flex; }
+    </style>
+</head>
+<body class="text-gray-300 min-h-screen">
+
+    <!-- Nav -->
+    <nav class="relative z-10 border-b border-vp-border/50 backdrop-blur-sm bg-vp-bg/80 sticky top-0">
+        <div class="flex items-center justify-between px-6 py-4 max-w-6xl mx-auto">
+            <a href="/" class="flex items-center gap-2.5">
+                <img src="/logo-sm.png" alt="VaultProof" width="28" height="28" />
+                <span class="text-lg font-bold text-white tracking-tight" style="font-family:'Space Grotesk',sans-serif">VaultProof</span>
+            </a>
+
+            <!-- Desktop links -->
+            <div class="hidden md:flex items-center gap-8">
+                <a href="/" class="text-sm text-gray-400 hover:text-white transition-colors">Home</a>
+                <a href="/docs" class="text-sm text-gray-400 hover:text-white transition-colors">Docs</a>
+                <a href="/guides" class="text-sm text-gray-400 hover:text-white transition-colors">Guides</a>
+                <a href="/compare" class="text-sm text-gray-400 hover:text-white transition-colors">Compare</a>
+                <a href="/blog" class="text-sm text-white font-medium transition-colors">Blog</a>
+                <a href="/#pricing" class="text-sm text-gray-400 hover:text-white transition-colors">Pricing</a>
+                <a href="/app/login" class="text-sm text-gray-400 hover:text-white transition-colors">Login</a>
+                <a href="/app/login" class="bg-vp-accent hover:bg-indigo-500 text-sm px-5 py-2 rounded-btn font-semibold text-white transition-all btn-glow">Get Started</a>
+            </div>
+
+            <!-- Mobile hamburger -->
+            <button id="mobileToggle" class="md:hidden text-gray-400 hover:text-white" aria-label="Toggle menu">
+                <svg width="24" height="24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 6h16M4 12h16M4 18h16"/></svg>
+            </button>
+        </div>
+
+        <!-- Mobile menu -->
+        <div id="mobileMenu" class="mobile-menu flex-col gap-4 px-6 pb-6 md:hidden bg-vp-bg/95 backdrop-blur-sm">
+            <a href="/" class="text-sm text-gray-400 hover:text-white transition-colors py-1">Home</a>
+            <a href="/docs" class="text-sm text-gray-400 hover:text-white transition-colors py-1">Docs</a>
+            <a href="/guides" class="text-sm text-gray-400 hover:text-white transition-colors py-1">Guides</a>
+            <a href="/compare" class="text-sm text-gray-400 hover:text-white transition-colors py-1">Compare</a>
+            <a href="/blog" class="text-sm text-white font-medium transition-colors py-1">Blog</a>
+            <a href="/#pricing" class="text-sm text-gray-400 hover:text-white transition-colors py-1">Pricing</a>
+            <a href="/app/login" class="text-sm text-gray-400 hover:text-white transition-colors py-1">Login</a>
+            <a href="/app/login" class="bg-vp-accent hover:bg-indigo-500 text-sm px-5 py-2.5 rounded-btn font-semibold text-white transition-all text-center btn-glow mt-2">Get Started</a>
+        </div>
+    </nav>
+
+    <!-- Hero -->
+    <section class="max-w-4xl mx-auto px-6 pt-20 pb-12 text-center">
+        <h1 class="text-4xl md:text-5xl font-black tracking-tight text-white mb-4" style="font-family:'Space Grotesk',sans-serif">Blog</h1>
+        <p class="text-lg text-gray-400 max-w-xl mx-auto" style="font-family:'Space Grotesk',sans-serif">Security insights for developers</p>
+    </section>
+
+    <!-- Blog post cards -->
+    <section class="max-w-4xl mx-auto px-6 pb-24">
+        <div class="grid gap-6">
+
+            <!-- Post 1 -->
+            <a href="/blog/secure-openai-api-key" class="block bg-vp-surface border border-vp-border rounded-card p-6 md:p-8 card-hover">
+                <div class="flex items-center gap-4 text-sm text-gray-500 mb-3">
+                    <time datetime="2026-03-26">March 26, 2026</time>
+                    <span class="w-1 h-1 rounded-full bg-gray-600"></span>
+                    <span>5 min read</span>
+                </div>
+                <h2 class="text-xl md:text-2xl font-bold text-white mb-3" style="font-family:'Space Grotesk',sans-serif">How to Secure Your OpenAI API Key in 2026</h2>
+                <p class="text-gray-400 leading-relaxed mb-4">39 million secrets leaked on GitHub last year. OpenAI keys start with sk-proj-, making them trivially easy to scan. Bots find them in under 5 minutes. Here's how to actually protect yours.</p>
+                <span class="text-vp-accent font-medium text-sm">Read more &rarr;</span>
+            </a>
+
+            <!-- Post 2 -->
+            <a href="/blog/vibe-coding-leaking-secrets" class="block bg-vp-surface border border-vp-border rounded-card p-6 md:p-8 card-hover">
+                <div class="flex items-center gap-4 text-sm text-gray-500 mb-3">
+                    <time datetime="2026-03-26">March 26, 2026</time>
+                    <span class="w-1 h-1 rounded-full bg-gray-600"></span>
+                    <span>6 min read</span>
+                </div>
+                <h2 class="text-xl md:text-2xl font-bold text-white mb-3" style="font-family:'Space Grotesk',sans-serif">Vibe Coding Is Leaking Your Secrets &mdash; Here's the Fix</h2>
+                <p class="text-gray-400 leading-relaxed mb-4">AI coding tools make building 10x faster, but security is an afterthought. 81% surge in AI credential leaks. 1 in 5 vibe-coded sites expose API keys. The numbers are terrifying.</p>
+                <span class="text-vp-accent font-medium text-sm">Read more &rarr;</span>
+            </a>
+
+            <!-- Post 3 -->
+            <a href="/blog/vaultproof-vs-doppler-vault" class="block bg-vp-surface border border-vp-border rounded-card p-6 md:p-8 card-hover">
+                <div class="flex items-center gap-4 text-sm text-gray-500 mb-3">
+                    <time datetime="2026-03-26">March 26, 2026</time>
+                    <span class="w-1 h-1 rounded-full bg-gray-600"></span>
+                    <span>7 min read</span>
+                </div>
+                <h2 class="text-xl md:text-2xl font-bold text-white mb-3" style="font-family:'Space Grotesk',sans-serif">VaultProof vs Doppler vs HashiCorp Vault &mdash; Which One for API Keys?</h2>
+                <p class="text-gray-400 leading-relaxed mb-4">All three manage secrets. Only one mathematically can't see yours. A detailed comparison of architecture, pricing, developer experience, and trust models.</p>
+                <span class="text-vp-accent font-medium text-sm">Read more &rarr;</span>
+            </a>
+
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="border-t border-vp-border">
+        <div class="max-w-5xl mx-auto px-6 py-12">
+            <div class="flex flex-col md:flex-row items-center justify-between gap-6">
+                <div class="flex flex-col items-center md:items-start gap-2">
+                    <div class="flex items-center gap-2.5">
+                        <svg width="22" height="22" viewBox="0 0 28 28" fill="none"><rect width="28" height="28" rx="6" fill="#6366f1" fill-opacity="0.15"/><path d="M8 8L14 4L20 8V16L14 20L8 16V8Z" stroke="#6366f1" stroke-width="1.5" fill="none"/><path d="M14 10V15" stroke="#6366f1" stroke-width="1.5" stroke-linecap="round"/><circle cx="14" cy="17" r="1" fill="#6366f1"/></svg>
+                        <span class="text-sm font-bold text-white">VaultProof</span>
+                        <span class="text-xs text-gray-600">by Rial Labs</span>
+                    </div>
+                    <p class="text-xs text-gray-600">Built for developers who refuse to trust blindly.</p>
+                </div>
+                <div class="flex items-center gap-8 flex-wrap justify-center">
+                    <a href="/docs" class="text-sm text-gray-500 hover:text-white transition-colors">Docs</a>
+                    <a href="/guides" class="text-sm text-gray-500 hover:text-white transition-colors">Guides</a>
+                    <a href="/compare" class="text-sm text-gray-500 hover:text-white transition-colors">Compare</a>
+                    <a href="/blog" class="text-sm text-gray-500 hover:text-white transition-colors">Blog</a>
+                    <a href="/verify" class="text-sm text-gray-500 hover:text-white transition-colors">Verify</a>
+                    <a href="/app/login" class="text-sm text-gray-500 hover:text-white transition-colors">Dashboard</a>
+                    <a href="https://github.com/windsurftemplate/vaultproof" target="_blank" rel="noopener" class="text-sm text-gray-500 hover:text-white transition-colors">GitHub</a>
+                    <a href="/terms" class="text-sm text-gray-500 hover:text-white transition-colors">Terms</a>
+                    <a href="/privacy" class="text-sm text-gray-500 hover:text-white transition-colors">Privacy</a>
+                    <a href="https://status.vaultproof.dev" class="text-sm text-gray-500 hover:text-white transition-colors">Status</a>
+                    <a href="mailto:hello@vaultproof.dev" class="text-sm text-gray-500 hover:text-white transition-colors">Contact</a>
+                </div>
+            </div>
+        </div>
+    </footer>
+
+    <script>
+        document.getElementById('mobileToggle').addEventListener('click', function() {
+            document.getElementById('mobileMenu').classList.toggle('open');
+        });
+        document.querySelectorAll('#mobileMenu a').forEach(function(link) {
+            link.addEventListener('click', function() {
+                document.getElementById('mobileMenu').classList.remove('open');
+            });
+        });
+    </script>
+</body>
+</html>
