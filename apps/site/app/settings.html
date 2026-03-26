@@ -140,7 +140,7 @@
           Plan & Usage
         </h2>
         <div class="flex items-center gap-3 mb-6">
-          <span class="inline-flex items-center px-3 py-1 rounded-xl bg-[#6366f1]/15 text-[#6366f1] text-sm font-medium border border-[#6366f1]/30">Free Plan</span>
+          <span id="planBadge" class="inline-flex items-center px-3 py-1 rounded-xl bg-[#6366f1]/15 text-[#6366f1] text-sm font-medium border border-[#6366f1]/30">Loading...</span>
         </div>
         <div class="space-y-5">
           <div>
@@ -162,15 +162,15 @@
             </div>
           </div>
         </div>
-        <div class="mt-6 p-4 bg-[#6366f1]/10 border border-[#6366f1]/20 rounded-xl">
+        <div id="upgradeProBanner" class="mt-6 p-4 bg-[#6366f1]/10 border border-[#6366f1]/20 rounded-xl">
           <div class="flex items-center justify-between">
             <div>
               <div class="text-sm font-medium text-white">Need more?</div>
-              <div class="text-xs text-gray-400 mt-0.5">Upgrade to Pro for unlimited keys, 50k calls/mo, and priority support.</div>
+              <div class="text-xs text-gray-400 mt-0.5">Upgrade for more keys, calls, and priority support.</div>
             </div>
-            <button class="px-4 py-2 bg-[#6366f1] hover:bg-[#5558e6] text-white rounded-xl text-sm font-medium transition btn-glow whitespace-nowrap">
-              Upgrade to Pro
-            </button>
+            <a href="#billing" class="px-4 py-2 bg-[#6366f1] hover:bg-[#5558e6] text-white rounded-xl text-sm font-medium transition btn-glow whitespace-nowrap">
+              View Plans
+            </a>
           </div>
         </div>
       </section>
@@ -923,6 +923,28 @@
         badge.className = `inline-flex items-center px-3 py-1 rounded-xl text-sm font-medium capitalize ${colorClass}`;
         badge.textContent = currentTier === 'free' ? 'Free Plan' : currentTier.charAt(0).toUpperCase() + currentTier.slice(1) + ' Plan';
 
+        // Update Plan & Usage section
+        const planBadge = document.getElementById('planBadge');
+        if (planBadge) {
+          const planColor = tierColors[currentTier] || tierColors.free;
+          planBadge.className = `inline-flex items-center px-3 py-1 rounded-xl text-sm font-medium capitalize ${planColor}`;
+          planBadge.textContent = currentTier === 'free' ? 'Free Plan' : currentTier.charAt(0).toUpperCase() + currentTier.slice(1) + ' Plan';
+        }
+        const tierLimits = {
+          free: { keys: 3, calls: 1000 },
+          starter: { keys: 10, calls: 10000 },
+          pro: { keys: 30, calls: 100000 },
+          team: { keys: 100, calls: 500000 },
+          enterprise: { keys: Infinity, calls: Infinity },
+        };
+        const limits = tierLimits[currentTier] || tierLimits.free;
+        const keysLabel = limits.keys === Infinity ? 'Unlimited' : limits.keys.toLocaleString();
+        const callsLabel = limits.calls === Infinity ? 'Unlimited' : limits.calls.toLocaleString();
+        const keysUsedEl = document.getElementById('keysUsed');
+        const callsUsedEl = document.getElementById('callsUsed');
+        if (keysUsedEl) keysUsedEl.parentElement.innerHTML = `<span id="keysUsed">${keysUsedEl.textContent}</span> / ${keysLabel}`;
+        if (callsUsedEl) callsUsedEl.parentElement.innerHTML = `<span id="callsUsed">${callsUsedEl.textContent}</span> / ${callsLabel}`;
+
         // Update upgrade buttons — hide current tier and below
         const tierOrder = ['free', 'starter', 'pro', 'team', 'enterprise'];
         const currentIdx = tierOrder.indexOf(currentTier);
@@ -936,6 +958,12 @@
             btn.classList.add('opacity-50');
           }
         });
+
+        // Hide upgrade banner for paid tiers
+        if (currentTier !== 'free') {
+          const banner = document.getElementById('upgradeProBanner');
+          if (banner) banner.classList.add('hidden');
+        }
 
         // Hide upgrade cards entirely for enterprise
         if (currentTier === 'enterprise') {
