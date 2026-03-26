@@ -213,6 +213,52 @@
     </div>
   </div>
 
+  <!-- Import .env Modal -->
+  <div id="importModal" class="hidden fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm">
+    <div class="bg-[#111118] border border-[#1e1e2e] rounded-2xl p-6 w-full max-w-lg mx-4">
+      <div class="flex items-center justify-between mb-4">
+        <h3 class="text-lg font-semibold text-white">Import from .env</h3>
+        <button onclick="closeImportModal()" class="text-gray-500 hover:text-white">&times;</button>
+      </div>
+
+      <!-- Step 1: Paste/Upload -->
+      <div id="importStep1">
+        <p class="text-sm text-gray-400 mb-4">Paste your .env file contents or drag a file here. VaultProof will detect your API keys automatically.</p>
+        <textarea id="envInput" rows="8" class="w-full bg-[#0a0a0f] border border-[#1e1e2e] rounded-xl px-4 py-3 text-sm text-gray-300 font-mono placeholder-gray-600 focus:border-[#6366f1] focus:outline-none resize-none" placeholder="OPENAI_API_KEY=sk-proj-abc123...
+ANTHROPIC_API_KEY=sk-ant-xyz789...
+STRIPE_SECRET_KEY=sk_live_..."></textarea>
+        <div class="flex items-center gap-3 mt-3">
+          <label class="flex-1 flex items-center justify-center gap-2 px-4 py-2.5 bg-[#0a0a0f] border border-dashed border-[#1e1e2e] rounded-xl text-sm text-gray-500 hover:text-gray-300 hover:border-gray-500 cursor-pointer transition">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13"/></svg>
+            Upload .env file
+            <input type="file" id="envFileInput" accept=".env,.env.local,.env.production" class="hidden" onchange="handleFileUpload(event)">
+          </label>
+          <button onclick="parseEnvInput()" class="px-6 py-2.5 bg-[#6366f1] hover:bg-[#5558e6] text-white rounded-xl text-sm font-medium transition">Scan Keys</button>
+        </div>
+      </div>
+
+      <!-- Step 2: Preview detected keys -->
+      <div id="importStep2" class="hidden">
+        <div id="detectedKeysList" class="space-y-2 max-h-64 overflow-y-auto mb-4"></div>
+        <div class="flex gap-3">
+          <button onclick="showImportStep(1)" class="flex-1 px-4 py-2.5 bg-[#111118] border border-[#1e1e2e] rounded-xl text-sm text-gray-400 hover:text-white transition">Back</button>
+          <button onclick="importAllKeys()" id="importAllBtn" class="flex-1 px-4 py-2.5 bg-[#6366f1] hover:bg-[#5558e6] text-white rounded-xl text-sm font-medium transition">Import All</button>
+        </div>
+        <div id="importStatus" class="text-sm mt-3 min-h-[20px]"></div>
+      </div>
+
+      <!-- Step 3: Done — show new .env -->
+      <div id="importStep3" class="hidden">
+        <p class="text-sm text-gray-400 mb-3">Keys imported! Replace your .env with this secure version:</p>
+        <textarea id="newEnvOutput" rows="8" readonly class="w-full bg-[#0a0a0f] border border-[#1e1e2e] rounded-xl px-4 py-3 text-sm text-indigo-400 font-mono resize-none"></textarea>
+        <div class="flex gap-3 mt-3">
+          <button onclick="copyNewEnv()" class="flex-1 px-4 py-2.5 bg-[#6366f1] hover:bg-[#5558e6] text-white rounded-xl text-sm font-medium transition">Copy New .env</button>
+          <button onclick="closeImportModal()" class="flex-1 px-4 py-2.5 bg-[#111118] border border-[#1e1e2e] rounded-xl text-sm text-gray-400 hover:text-white transition">Done</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
   <!-- Main wrapper -->
   <div id="mainWrapper" class="flex-1 flex flex-col min-h-screen transition-all duration-200 lg:ml-[240px]">
 
@@ -259,10 +305,16 @@
             <h2 class="text-2xl font-bold">API Keys</h2>
             <p class="text-gray-500 text-sm mt-1" id="keySubtitle">Manage your stored API keys with zero-knowledge encryption</p>
           </div>
-          <button onclick="openAddModal()" class="inline-flex items-center gap-2 px-5 py-2.5 bg-brand hover:bg-brand-hover text-white rounded-xl text-sm font-medium transition btn-glow">
-            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
-            + New Key
-          </button>
+          <div class="flex items-center gap-2">
+            <button onclick="openImportModal()" class="px-4 py-2 bg-[#111118] border border-[#1e1e2e] rounded-xl text-sm text-gray-300 hover:text-white hover:border-gray-500 transition flex items-center gap-2">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"/></svg>
+              Import .env
+            </button>
+            <button onclick="openAddModal()" class="inline-flex items-center gap-2 px-5 py-2.5 bg-brand hover:bg-brand-hover text-white rounded-xl text-sm font-medium transition btn-glow">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
+              + New Key
+            </button>
+          </div>
         </div>
 
         <!-- Search & Filter -->
@@ -1293,6 +1345,231 @@ exampleBody + '\n' +
         msgEl.className = 'text-xs text-red-400';
         msgEl.classList.remove('hidden');
       }
+    }
+
+    // --- Import .env Feature ---
+    const ENV_PROVIDER_MAP = {
+      'OPENAI_API_KEY': 'openai',
+      'OPENAI_KEY': 'openai',
+      'ANTHROPIC_API_KEY': 'anthropic',
+      'CLAUDE_API_KEY': 'anthropic',
+      'GOOGLE_API_KEY': 'google',
+      'GOOGLE_AI_KEY': 'google',
+      'GEMINI_API_KEY': 'google',
+      'TOGETHER_API_KEY': 'together',
+      'TOGETHER_AI_KEY': 'together',
+      'MISTRAL_API_KEY': 'mistral',
+      'COHERE_API_KEY': 'cohere',
+      'GROQ_API_KEY': 'groq',
+      'PERPLEXITY_API_KEY': 'perplexity',
+      'FIREWORKS_API_KEY': 'fireworks',
+      'DEEPSEEK_API_KEY': 'deepseek',
+      'REPLICATE_API_TOKEN': 'replicate',
+      'REPLICATE_API_KEY': 'replicate',
+      'STRIPE_SECRET_KEY': 'stripe',
+      'STRIPE_API_KEY': 'stripe',
+      'AWS_SECRET_ACCESS_KEY': 'aws',
+      'TWILIO_AUTH_TOKEN': 'twilio',
+      'SENDGRID_API_KEY': 'sendgrid',
+      'GITHUB_TOKEN': 'github',
+      'GITHUB_API_KEY': 'github',
+    };
+
+    const PREFIX_PROVIDER_MAP = {
+      'sk-proj-': 'openai',
+      'sk-ant-': 'anthropic',
+      'AIza': 'google',
+      'gsk_': 'groq',
+      'sk_live_': 'stripe',
+      'sk_test_': 'stripe',
+      'AKIA': 'aws',
+    };
+
+    let detectedKeys = [];
+
+    function openImportModal() {
+      document.getElementById('importModal').classList.remove('hidden');
+      showImportStep(1);
+    }
+
+    function closeImportModal() {
+      document.getElementById('importModal').classList.add('hidden');
+      document.getElementById('envInput').value = '';
+      detectedKeys = [];
+    }
+
+    function showImportStep(step) {
+      document.getElementById('importStep1').classList.toggle('hidden', step !== 1);
+      document.getElementById('importStep2').classList.toggle('hidden', step !== 2);
+      document.getElementById('importStep3').classList.toggle('hidden', step !== 3);
+    }
+
+    function handleFileUpload(event) {
+      var file = event.target.files[0];
+      if (!file) return;
+      var reader = new FileReader();
+      reader.onload = function(e) {
+        document.getElementById('envInput').value = e.target.result;
+        parseEnvInput();
+      };
+      reader.readAsText(file);
+    }
+
+    function parseEnvInput() {
+      var text = document.getElementById('envInput').value.trim();
+      if (!text) return;
+
+      detectedKeys = [];
+      var lines = text.split('\n');
+
+      for (var li = 0; li < lines.length; li++) {
+        var trimmed = lines[li].trim();
+        if (!trimmed || trimmed.startsWith('#')) continue;
+
+        var eqIdx = trimmed.indexOf('=');
+        if (eqIdx === -1) continue;
+
+        var envName = trimmed.slice(0, eqIdx).trim();
+        var value = trimmed.slice(eqIdx + 1).trim();
+        // Remove quotes
+        if ((value.startsWith('"') && value.endsWith('"')) || (value.startsWith("'") && value.endsWith("'"))) {
+          value = value.slice(1, -1);
+        }
+
+        if (!value || value.length < 8) continue;
+        // Skip VaultProof's own keys
+        if (value.startsWith('vp_')) continue;
+
+        // Detect provider
+        var provider = ENV_PROVIDER_MAP[envName.toUpperCase()] || null;
+        if (!provider) {
+          var prefixes = Object.keys(PREFIX_PROVIDER_MAP);
+          for (var pi = 0; pi < prefixes.length; pi++) {
+            if (value.startsWith(prefixes[pi])) { provider = PREFIX_PROVIDER_MAP[prefixes[pi]]; break; }
+          }
+        }
+        if (!provider) provider = 'other';
+
+        detectedKeys.push({ envName: envName, value: value, provider: provider, selected: true });
+      }
+
+      if (detectedKeys.length === 0) {
+        showToast('No API keys detected. Check your .env format.', 'warning');
+        return;
+      }
+
+      renderDetectedKeys();
+      showImportStep(2);
+    }
+
+    function renderDetectedKeys() {
+      var list = document.getElementById('detectedKeysList');
+      var html = '<p class="text-xs text-gray-500 mb-2">Found ' + detectedKeys.length + ' key' + (detectedKeys.length === 1 ? '' : 's') + ':</p>';
+      for (var i = 0; i < detectedKeys.length; i++) {
+        var k = detectedKeys[i];
+        var masked = k.value.slice(0, 12) + '\u2022\u2022\u2022\u2022\u2022\u2022\u2022\u2022' + k.value.slice(-4);
+        html += '<label class="flex items-center gap-3 p-3 bg-[#0a0a0f] border border-[#1e1e2e] rounded-xl cursor-pointer hover:border-gray-500 transition">' +
+          '<input type="checkbox" ' + (k.selected ? 'checked' : '') + ' onchange="detectedKeys[' + i + '].selected = this.checked" class="rounded">' +
+          '<div class="flex-1 min-w-0">' +
+          '<div class="text-sm text-white font-medium">' + k.envName + '</div>' +
+          '<div class="text-xs text-gray-500 font-mono truncate">' + masked + '</div>' +
+          '</div>' +
+          '<span class="text-xs px-2 py-0.5 rounded-lg bg-indigo-500/10 text-indigo-400 border border-indigo-500/20">' + k.provider + '</span>' +
+          '</label>';
+      }
+      list.innerHTML = html;
+    }
+
+    async function importAllKeys() {
+      var toImport = detectedKeys.filter(function(k) { return k.selected; });
+      if (toImport.length === 0) return;
+
+      var btn = document.getElementById('importAllBtn');
+      btn.textContent = 'Importing...';
+      btn.disabled = true;
+
+      var statusEl = document.getElementById('importStatus');
+      var imported = 0;
+      var failed = 0;
+      var newEnvLines = [];
+
+      for (var i = 0; i < toImport.length; i++) {
+        var k = toImport[i];
+        try {
+          statusEl.textContent = 'Importing ' + k.envName + ' (' + (imported + 1) + '/' + toImport.length + ')...';
+          statusEl.className = 'text-sm mt-3 text-gray-400';
+
+          // Shamir split (reusing existing inline implementation)
+          var shares = shamirSplit(new TextEncoder().encode(k.value), 2, 2);
+          var share1 = shamirSerialize(shares[0]);
+          var share2 = shamirSerialize(shares[1]);
+
+          // Compute commitment (same as Add Key flow)
+          var commitData = new TextEncoder().encode(share1 + ':' + share2);
+          var commitBuf = await crypto.subtle.digest('SHA-256', commitData);
+          var commitment = Array.from(new Uint8Array(commitBuf)).map(function(b) { return b.toString(16).padStart(2, '0'); }).join('');
+
+          var res = await fetch(API + '/keys/store', {
+            method: 'POST',
+            headers: { 'Authorization': 'Bearer ' + token, 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              provider: k.provider,
+              label: k.envName,
+              share1: share1,
+              vaultCommitment: commitment,
+              appId: 'vaultproof-dashboard',
+              appName: 'VaultProof Dashboard'
+            })
+          });
+
+          if (res.status === 401) { window.location.href = 'login'; return; }
+          var data = await res.json();
+          if (!res.ok) throw new Error(data.error || 'Store failed');
+
+          // Persist share2 locally (same as Add Key flow)
+          localStorage.setItem('vaultproof_share2_' + data.keySlotId, JSON.stringify({ share2: share2, provider: k.provider, label: k.envName }));
+
+          imported++;
+
+          // Build replacement .env lines
+          var proxyProviders = ['openai','anthropic','google','together','mistral','cohere','groq','perplexity','fireworks','deepseek','replicate'];
+          if (proxyProviders.indexOf(k.provider) !== -1) {
+            newEnvLines.push('# ' + k.envName + ' — secured by VaultProof (proxy)');
+            newEnvLines.push(k.envName + '=${VAULTPROOF_API_KEY}');
+            var baseUrlMap = {
+              openai: 'OPENAI_BASE_URL=https://api.vaultproof.dev/v1/openai',
+              anthropic: 'ANTHROPIC_BASE_URL=https://api.vaultproof.dev/v1/anthropic',
+            };
+            if (baseUrlMap[k.provider]) newEnvLines.push(baseUrlMap[k.provider]);
+          } else {
+            newEnvLines.push('# ' + k.envName + ' — secured by VaultProof (use: vaultproof env -p ' + k.provider + ')');
+          }
+          newEnvLines.push('');
+        } catch (err) {
+          failed++;
+        }
+      }
+
+      // Build final .env output
+      var finalEnv = '# VaultProof \u2014 your API keys are now split and encrypted\nVAULTPROOF_API_KEY=' + token + '\n\n' + newEnvLines.join('\n');
+      document.getElementById('newEnvOutput').value = finalEnv;
+
+      statusEl.textContent = 'Imported ' + imported + ' key' + (imported === 1 ? '' : 's') + (failed > 0 ? ', ' + failed + ' failed' : '');
+      statusEl.className = 'text-sm mt-3 ' + (failed > 0 ? 'text-amber-400' : 'text-indigo-400');
+
+      btn.textContent = 'Import All';
+      btn.disabled = false;
+
+      loadKeys();
+      showImportStep(3);
+    }
+
+    function copyNewEnv() {
+      var text = document.getElementById('newEnvOutput').value;
+      navigator.clipboard.writeText(text);
+      var btn = event.target;
+      btn.textContent = 'Copied!';
+      setTimeout(function() { btn.textContent = 'Copy New .env'; }, 2000);
     }
 
     loadKeys();
