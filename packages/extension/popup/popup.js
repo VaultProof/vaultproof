@@ -109,24 +109,8 @@ function openDashboard() {
 }
 
 async function disconnect() {
-  await chrome.storage.local.remove(['vp_token', 'vp_api_key']);
+  await chrome.storage.local.remove(['vp_token', 'vp_api_key', 'vp_signed_in']);
   showLoginView();
-}
-
-// Settings: save API key
-async function saveApiKey() {
-  const key = document.getElementById('vpKeyInput').value.trim();
-  if (!key.startsWith('vp_')) {
-    const status = document.getElementById('settingsStatus');
-    status.textContent = 'Key must start with vp_live_ or vp_test_';
-    status.className = '';
-    return;
-  }
-  await chrome.storage.local.set({ vp_api_key: key });
-  const status = document.getElementById('settingsStatus');
-  status.textContent = 'Saved!';
-  status.className = 'saved';
-  showMainView(key);
 }
 
 document.addEventListener('DOMContentLoaded', () => {
@@ -134,7 +118,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // Login view
   document.getElementById('connectBtn').addEventListener('click', connect);
-  document.getElementById('saveKeyBtn').addEventListener('click', saveApiKey);
 
   // Main view
   document.getElementById('storeBtn').addEventListener('click', storeKey);

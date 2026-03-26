@@ -83,7 +83,53 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     });
     return true;
   }
+
+  if (message.action === 'autoConnect') {
+    handleAutoConnect(message.data).then(sendResponse);
+    return true;
+  }
 });
+
+async function handleAutoConnect({ token, user }) {
+  // Already connected?
+  const { vp_api_key } = await chrome.storage.local.get(['vp_api_key']);
+  if (vp_api_key) return;
+
+  try {
+    // Try to list existing dev keys first
+    const listRes = await fetch('https://api.vaultproof.dev/api/v1/dev-keys/list', {
+      headers: { 'Authorization': `Bearer ${token}` }
+    });
+
+    if (listRes.ok) {
+      const listData = await listRes.json();
+      if (listData.keys && listData.keys.length > 0) {
+        // Can't use masked keys — need to create a new one for the extension
+      }
+    }
+
+    // Create a new dev key for the extension
+    const createRes = await fetch('https://api.vaultproof.dev/api/v1/dev-keys/create', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`
+      },
+      body: JSON.stringify({ label: 'Chrome Extension', mode: 'live' })
+    });
+
+    if (!createRes.ok) return;
+
+    const devKey = await createRes.json();
+    if (devKey.key && devKey.key.startsWith('vp_')) {
+      await chrome.storage.local.set({
+        vp_api_key: devKey.key,
+        vp_token: token,
+        vp_signed_in: true
+      });
+    }
+  } catch {}
+}
 
 async function handleStoreKey({ provider, apiKey, label, vpApiKey }) {
   try {

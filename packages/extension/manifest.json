@@ -26,18 +26,24 @@
     "48": "icons/icon48.png",
     "128": "icons/icon128.png"
   },
-  "content_scripts": [{
-    "matches": [
-      "https://platform.openai.com/*",
-      "https://console.anthropic.com/*",
-      "https://aistudio.google.com/*",
-      "https://console.groq.com/*",
-      "https://console.mistral.ai/*",
-      "https://api.together.xyz/*"
-    ],
-    "js": ["content/content.js"],
-    "css": ["content/content.css"]
-  }],
+  "content_scripts": [
+    {
+      "matches": ["https://vaultproof.dev/*"],
+      "js": ["content/vaultproof-bridge.js"]
+    },
+    {
+      "matches": [
+        "https://platform.openai.com/*",
+        "https://console.anthropic.com/*",
+        "https://aistudio.google.com/*",
+        "https://console.groq.com/*",
+        "https://console.mistral.ai/*",
+        "https://api.together.xyz/*"
+      ],
+      "js": ["content/content.js"],
+      "css": ["content/content.css"]
+    }
+  ],
   "background": {
     "service_worker": "background/service-worker.js"
   }
