@@ -425,9 +425,10 @@
         const res = await apiFetch('/auth/me');
         if (!res) return;
         const data = await res.json();
-        document.getElementById('profileEmail').textContent = data.email || user.email || '—';
-        document.getElementById('profileCreated').textContent = data.createdAt
-          ? new Date(data.createdAt).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })
+        const profile = data.user || data;
+        document.getElementById('profileEmail').textContent = profile.email || user.email || '—';
+        document.getElementById('profileCreated').textContent = profile.createdAt
+          ? new Date(profile.createdAt).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })
           : '—';
       } catch (e) {
         console.error('Failed to load profile:', e);
