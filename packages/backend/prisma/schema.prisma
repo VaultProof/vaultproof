@@ -11,11 +11,10 @@ datasource db {
 model User {
   id                   String         @id @default(uuid())
   email                String         @unique
-  passwordHash         String         @map("password_hash")
+  passwordHash         String?        @map("password_hash")
   tier                 String         @default("free") // free, starter, pro, team, enterprise
   stripeCustomerId     String?        @unique @map("stripe_customer_id")
   stripeSubscriptionId String?        @map("stripe_subscription_id")
-  refreshToken         String?        @unique @map("refresh_token")
   createdAt            DateTime       @default(now()) @map("created_at")
   keySlots             KeySlot[]
   developerKeys        DeveloperKey[]

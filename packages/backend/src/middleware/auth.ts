@@ -1,15 +1,21 @@
 /**
- * JWT authentication middleware for Fastify.
+ * Supabase Auth middleware for Fastify.
  *
- * Protects routes by verifying Bearer tokens in the Authorization header.
- * Extracts userId from the JWT payload and attaches it to the request.
+ * Verifies Bearer tokens via supabase.auth.getUser() and attaches
+ * the authenticated user to request.auth.
  */
 
 import type { FastifyRequest, FastifyReply } from 'fastify';
-import jwt from 'jsonwebtoken';
-import { randomBytes } from 'crypto';
+import { createClient } from '@supabase/supabase-js';
+import { PrismaClient } from '@prisma/client';
+import { sendWelcomeEmail } from '../services/email.js';
 
-const JWT_SECRET = process.env.JWT_SECRET || 'vaultproof-dev-secret-change-in-production';
+const supabase = createClient(
+  process.env.SUPABASE_URL || '',
+  process.env.SUPABASE_ANON_KEY || ''
+);
+
+const prisma = new PrismaClient();
 
 export interface AuthPayload {
   userId: string;
@@ -29,27 +35,37 @@ export async function requireAuth(request: FastifyRequest, reply: FastifyReply) 
   }
 
   const token = header.slice(7);
-  try {
-    const payload = jwt.verify(token, JWT_SECRET) as AuthPayload;
-    if (!payload.userId) {
-      return reply.status(401).send({ error: 'Invalid token payload' });
+
+  // In test mode, accept test tokens
+  if (process.env.NODE_ENV === 'test' && token.startsWith('test-token-')) {
+    const userId = token.replace('test-token-', '');
+    const user = await prisma.user.findUnique({ where: { id: userId } });
+    if (user) {
+      request.auth = { userId: user.id, email: user.email };
+      return;
     }
-    request.auth = payload;
-  } catch {
+  }
+
+  const { data: { user }, error } = await supabase.auth.getUser(token);
+  if (error || !user) {
     return reply.status(401).send({ error: 'Invalid or expired token' });
   }
+
+  const email = (user.email || '').toLowerCase().trim();
+
+  // Auto-create in our DB on first login (for OAuth users)
+  let dbUser = await prisma.user.findUnique({ where: { email } });
+  if (!dbUser) {
+    dbUser = await prisma.user.create({
+      data: { id: user.id, email, passwordHash: 'oauth' },
+    });
+    sendWelcomeEmail(email);
+  }
+
+  request.auth = { userId: dbUser.id, email: dbUser.email };
 }
 
-/**
- * Generate a short-lived JWT access token.
- */
-export function generateToken(userId: string, email: string): string {
-  return jwt.sign({ userId, email }, JWT_SECRET, { expiresIn: '1h' });
-}
-
-/**
- * Generate a long-lived refresh token (random, stored in DB).
- */
-export function generateRefreshToken(): string {
-  return 'vp_rt_' + randomBytes(32).toString('base64url');
+/** @deprecated Kept for test compatibility only. Supabase handles real tokens. */
+export function generateToken(userId: string, _email: string): string {
+  return 'test-token-' + userId;
 }
