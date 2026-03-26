@@ -18,23 +18,6 @@
     <meta http-equiv="X-Frame-Options" content="DENY">
     <meta name="referrer" content="strict-origin-when-cross-origin">
 
-    <!-- Firebase Analytics -->
-    <script type="module">
-        import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js';
-        import { getAnalytics, logEvent } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-analytics.js';
-        const firebaseConfig = {
-            apiKey: "AIzaSyCdtdlH-gDnm4ft5iOye8hqIBewOSeqUEA",
-            authDomain: "rial-labs.firebaseapp.com",
-            projectId: "rial-labs",
-            storageBucket: "rial-labs.firebasestorage.app",
-            messagingSenderId: "694599722986",
-            appId: "1:694599722986:web:70b155a1742809fc40b493",
-            measurementId: "G-SVCPMH18DS"
-        };
-        const app = initializeApp(firebaseConfig);
-        const analytics = getAnalytics(app);
-        logEvent(analytics, 'page_view', { page_title: 'VaultProof' });
-    </script>
 
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
