@@ -6,12 +6,10 @@
  */
 
 import type { FastifyInstance } from 'fastify';
-import { PrismaClient } from '@prisma/client';
+import { prisma } from '../lib/prisma.js';
 import { z } from 'zod';
 import { randomBytes, createHash } from 'crypto';
 import { requireAuth } from '../middleware/auth.js';
-
-const prisma = new PrismaClient();
 
 function generateApiKey(mode: string = 'live'): string {
   const prefix = mode === 'test' ? 'vp_test_' : 'vp_live_';

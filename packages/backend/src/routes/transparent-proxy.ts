@@ -10,7 +10,7 @@
  */
 
 import type { FastifyInstance, FastifyRequest, FastifyReply } from 'fastify';
-import { PrismaClient } from '@prisma/client';
+import { prisma } from '../lib/prisma.js';
 import { deserializeShare, combine } from '@vaultproof/shamir';
 import { decrypt, zeroBuffer } from '../crypto/encryption.js';
 import { decryptShare2 } from '../crypto/share2-encryption.js';
@@ -18,8 +18,6 @@ import { authenticateDevKey } from './developer-keys.js';
 import { randomBytes } from 'crypto';
 import { sendUsageAlert, sendInvalidKeyAlert } from '../services/email.js';
 import { sendWebhook } from '../services/webhook.js';
-
-const prisma = new PrismaClient();
 
 const PROVIDERS: Record<string, { upstream: string; authHeader: (key: string) => Record<string, string> }> = {
   openai: {

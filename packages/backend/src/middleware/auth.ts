@@ -7,15 +7,13 @@
 
 import type { FastifyRequest, FastifyReply } from 'fastify';
 import { createClient } from '@supabase/supabase-js';
-import { PrismaClient } from '@prisma/client';
+import { prisma } from '../lib/prisma.js';
 import { sendWelcomeEmail } from '../services/email.js';
 
 const supabase = createClient(
   process.env.SUPABASE_URL || '',
   process.env.SUPABASE_ANON_KEY || ''
 );
-
-const prisma = new PrismaClient();
 
 export interface AuthPayload {
   userId: string;

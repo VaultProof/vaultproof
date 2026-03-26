@@ -1,12 +1,10 @@
 import type { FastifyInstance } from 'fastify';
-import { PrismaClient } from '@prisma/client';
+import { prisma } from '../lib/prisma.js';
 import { z } from 'zod';
 import { encrypt } from '../crypto/encryption.js';
 import { requireAuth } from '../middleware/auth.js';
 import { checkKeySlotLimit } from '../middleware/tier-limits.js';
 import { randomBytes } from 'crypto';
-
-const prisma = new PrismaClient();
 
 // --- Zod schemas ---
 

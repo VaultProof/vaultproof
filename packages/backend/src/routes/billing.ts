@@ -1,9 +1,7 @@
 import type { FastifyInstance } from 'fastify';
 import Stripe from 'stripe';
-import { PrismaClient } from '@prisma/client';
+import { prisma } from '../lib/prisma.js';
 import { requireAuth } from '../middleware/auth.js';
-
-const prisma = new PrismaClient();
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!);
 

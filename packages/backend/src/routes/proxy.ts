@@ -1,5 +1,5 @@
 import type { FastifyInstance } from 'fastify';
-import { PrismaClient } from '@prisma/client';
+import { prisma } from '../lib/prisma.js';
 import { z } from 'zod';
 import { combine, deserializeShare, type Share } from '@vaultproof/shamir';
 import { decrypt, zeroBuffer } from '../crypto/encryption.js';
@@ -8,8 +8,6 @@ import { checkRateLimit } from '../middleware/tier-limits.js';
 import axios from 'axios';
 import https from 'https';
 import http from 'http';
-
-const prisma = new PrismaClient();
 
 const PROVIDER_URLS: Record<string, string> = {
   openai: 'https://api.openai.com',

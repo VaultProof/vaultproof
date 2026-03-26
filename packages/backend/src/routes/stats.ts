@@ -1,8 +1,6 @@
 import type { FastifyInstance } from 'fastify';
-import { PrismaClient } from '@prisma/client';
+import { prisma } from '../lib/prisma.js';
 import { requireAuth } from '../middleware/auth.js';
-
-const prisma = new PrismaClient();
 
 export async function statsRoutes(app: FastifyInstance) {
   // Overview stats

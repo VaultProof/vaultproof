@@ -16,7 +16,7 @@
  */
 
 import type { FastifyInstance } from 'fastify';
-import { PrismaClient } from '@prisma/client';
+import { prisma } from '../lib/prisma.js';
 import { z } from 'zod';
 import { deserializeShare, combine } from '@vaultproof/shamir';
 import { encrypt, decrypt, zeroBuffer } from '../crypto/encryption.js';
@@ -25,8 +25,6 @@ import { authenticateDevKey } from './developer-keys.js';
 import { randomBytes } from 'crypto';
 import { sendUsageAlert, sendKeyExpiryWarning, sendInvalidKeyAlert } from '../services/email.js';
 import { sendWebhook } from '../services/webhook.js';
-
-const prisma = new PrismaClient();
 
 const PROVIDER_URLS: Record<string, string> = {
   openai: 'https://api.openai.com',

@@ -5,9 +5,7 @@
  * Enforces limits: Free=1K, Starter=10K, Pro=100K, Team=500K, Enterprise=unlimited.
  */
 
-import { PrismaClient } from '@prisma/client';
-
-const prisma = new PrismaClient();
+import { prisma } from '../lib/prisma.js';
 
 export interface TierLimits {
   maxCallsPerMonth: number;
