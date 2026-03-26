@@ -11,15 +11,13 @@ async function init() {
 }
 
 function showLoginView() {
-  // Show connect button, hide main content
   document.getElementById('loginView').style.display = 'block';
   document.getElementById('mainView').style.display = 'none';
-  document.getElementById('settingsView').style.display = 'none';
+  document.getElementById('tierBadge').style.display = 'none';
 }
 
 async function showMainView(apiKey) {
   document.getElementById('loginView').style.display = 'none';
-  document.getElementById('settingsView').style.display = 'none';
   document.getElementById('mainView').style.display = 'block';
   document.getElementById('tierBadge').style.display = 'inline-block';
 
@@ -124,22 +122,12 @@ async function saveApiKey() {
   showMainView(key);
 }
 
-function showSettingsView() {
-  document.getElementById('loginView').style.display = 'none';
-  document.getElementById('mainView').style.display = 'none';
-  document.getElementById('settingsView').style.display = 'block';
-}
-
 document.addEventListener('DOMContentLoaded', () => {
   init();
 
   // Login view
   document.getElementById('connectBtn').addEventListener('click', connect);
-  document.getElementById('showSettingsBtn').addEventListener('click', showSettingsView);
-
-  // Settings view
   document.getElementById('saveKeyBtn').addEventListener('click', saveApiKey);
-  document.getElementById('backToLoginBtn').addEventListener('click', showLoginView);
 
   // Main view
   document.getElementById('storeBtn').addEventListener('click', storeKey);
