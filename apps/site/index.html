@@ -396,7 +396,10 @@
                     <div class="text-gray-500 mb-2"># After (secure)</div>
                     <div class="text-indigo-400 mb-1">export OPENAI_API_KEY=vp_live_...</div>
                     <div class="text-indigo-400 mb-1">export OPENAI_BASE_URL=https://api.vaultproof.dev/v1/openai</div>
-                    <div class="text-indigo-400/50 text-xs">^ useless alone, real key is split + encrypted</div>
+                    <div class="text-indigo-400/50 text-xs mb-4">^ useless alone, real key is split + encrypted</div>
+                    <div class="text-gray-500 mb-2"># Or inject into any SDK (Stripe, AWS, anything)</div>
+                    <div class="text-indigo-400 mb-1">eval $(vaultproof env -p stripe)</div>
+                    <div class="text-indigo-400 mb-1">node app.js  <span class="text-indigo-400/50 text-xs"># STRIPE_SECRET_KEY set automatically</span></div>
                 </div>
             </div>
         </div>

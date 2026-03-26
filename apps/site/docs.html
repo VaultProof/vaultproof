@@ -259,6 +259,12 @@
                                 <td>Programmatic key management (store, rotate, revoke)</td>
                                 <td><code class="font-mono text-xs">npm i @vaultproof/sdk</code></td>
                             </tr>
+                            <tr class="bg-cyan-500/[0.04]">
+                                <td><code class="font-mono text-xs text-vp-cyan">Env Injection</code> <span class="text-[0.625rem] font-bold text-cyan-400 ml-1">ANY SDK</span></td>
+                                <td><code class="font-mono text-xs">vaultproof env</code> / <code class="font-mono text-xs">vaultproof exec</code></td>
+                                <td>Any SDK (Stripe, AWS, Twilio, Sendgrid, anything that reads env vars)</td>
+                                <td><code class="font-mono text-xs">npm i -g @vaultproof/cli</code></td>
+                            </tr>
                             <tr>
                                 <td><code class="font-mono text-xs text-vp-accent">@vaultproof/cli</code></td>
                                 <td>Terminal command you run in your shell</td>
@@ -351,7 +357,29 @@ client = openai.<span class="fn">OpenAI</span>(
                     </div>
                 </div>
 
-                <!-- Path B: SDK -->
+                <!-- Path B: Env Injection -->
+                <div class="mb-8">
+                    <div class="flex items-center gap-3 mb-4">
+                        <span class="bg-cyan-500/15 text-cyan-400 text-xs font-bold px-2.5 py-1 rounded">FOR ANY SDK</span>
+                        <h3 class="text-lg font-semibold text-white">Environment Injection -- works with every SDK</h3>
+                    </div>
+                    <p class="text-gray-500 text-sm mb-4">Use <code class="font-mono text-xs text-vp-cyan">vaultproof env</code> or <code class="font-mono text-xs text-vp-cyan">vaultproof exec</code> to inject stored API keys as environment variables. Works with Stripe, AWS, Twilio, Sendgrid -- anything that reads env vars.</p>
+
+                    <div class="code-block">
+                        <div class="code-header">bash</div>
+<pre class="text-gray-300"><span class="cmt"># Store your key once</span>
+vaultproof store -p stripe -l <span class="str">"Production"</span>
+
+<span class="cmt"># Option 1: Export to current shell</span>
+<span class="kw">eval</span> $(vaultproof env -p stripe)
+node app.js  <span class="cmt"># Stripe SDK reads STRIPE_SECRET_KEY automatically</span>
+
+<span class="cmt"># Option 2: Run with injection (auto-cleans)</span>
+vaultproof exec -p stripe -- node app.js</pre>
+                    </div>
+                </div>
+
+                <!-- Path C: SDK -->
                 <div class="mb-8">
                     <div class="flex items-center gap-3 mb-4">
                         <span class="bg-vp-accent/15 text-vp-accent text-xs font-bold px-2.5 py-1 rounded">FOR PROGRAMMATIC KEY MANAGEMENT</span>
@@ -1475,6 +1503,85 @@ $ vaultproof proxy -k vk_8f3a2b1c --path /v1/chat/completions -f request.json
 
 <span class="cmt"># Using the alias</span>
 $ vaultproof call -k vk_8f3a2b1c --path /v1/models -m GET</pre>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Environment Injection -->
+                <div class="mb-8">
+                    <h3 class="text-lg font-semibold text-white mb-4">Environment Injection</h3>
+                    <p class="text-gray-500 text-sm mb-4">Works with every SDK -- Stripe, AWS, Twilio, anything that reads environment variables.</p>
+                    <div class="space-y-4">
+                        <div class="endpoint-card">
+                            <div class="flex items-baseline gap-3 mb-2">
+                                <code class="font-mono text-sm text-white font-semibold">vaultproof env -p &lt;provider&gt;</code>
+                            </div>
+                            <p class="text-gray-500 text-sm mb-3">Output stored API keys as export statements. Use with <code class="font-mono text-xs text-vp-accent">eval</code> to set in your shell.</p>
+                            <div class="bg-vp-surface border border-vp-border rounded-xl overflow-hidden mb-3">
+                                <table class="doc-table">
+                                    <thead><tr><th>Flag</th><th>Description</th><th>Required</th></tr></thead>
+                                    <tbody>
+                                        <tr><td><code class="font-mono text-xs text-vp-accent">-p, --provider &lt;name&gt;</code></td><td>Specific provider to export</td><td>One of -p or -a</td></tr>
+                                        <tr><td><code class="font-mono text-xs text-vp-accent">-a, --all</code></td><td>Export all stored keys</td><td>One of -p or -a</td></tr>
+                                        <tr><td><code class="font-mono text-xs text-vp-accent">--var &lt;name&gt;</code></td><td>Custom environment variable name</td><td>No</td></tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                            <div class="code-block">
+                                <div class="code-header">examples</div>
+<pre class="text-gray-300">$ <span class="kw">eval</span> $(vaultproof env -p stripe)         <span class="cmt"># Export Stripe key</span>
+$ <span class="kw">eval</span> $(vaultproof env -p openai)         <span class="cmt"># Export OpenAI key</span>
+$ <span class="kw">eval</span> $(vaultproof env -a)                <span class="cmt"># Export all stored keys</span>
+$ <span class="kw">eval</span> $(vaultproof env -p aws --var MY_AWS_KEY)  <span class="cmt"># Custom var name</span></pre>
+                            </div>
+                            <div class="callout-info mt-3">
+                                <p class="text-sm text-indigo-200">Works with every SDK -- Stripe, AWS, Twilio, anything that reads environment variables.</p>
+                            </div>
+                        </div>
+
+                        <div class="endpoint-card">
+                            <div class="flex items-baseline gap-3 mb-2">
+                                <code class="font-mono text-sm text-white font-semibold">vaultproof exec -p &lt;providers&gt; -- &lt;command&gt;</code>
+                            </div>
+                            <p class="text-gray-500 text-sm mb-3">Run a command with API keys injected as environment variables. Keys are cleared when the command exits.</p>
+                            <div class="bg-vp-surface border border-vp-border rounded-xl overflow-hidden mb-3">
+                                <table class="doc-table">
+                                    <thead><tr><th>Flag</th><th>Description</th><th>Required</th></tr></thead>
+                                    <tbody>
+                                        <tr><td><code class="font-mono text-xs text-vp-accent">-p, --provider &lt;names&gt;</code></td><td>Comma-separated providers to inject</td><td>One of -p or -a</td></tr>
+                                        <tr><td><code class="font-mono text-xs text-vp-accent">-a, --all</code></td><td>Inject all stored keys</td><td>One of -p or -a</td></tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                            <div class="code-block">
+                                <div class="code-header">examples</div>
+<pre class="text-gray-300">$ vaultproof exec -p stripe -- node app.js
+$ vaultproof exec -p openai,anthropic -- python main.py
+$ vaultproof exec -a -- npm start
+$ vaultproof exec -p aws -- aws s3 ls</pre>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Environment Variable Mapping -->
+                    <div class="mt-6">
+                        <h4 class="text-base font-semibold text-white mb-3">Environment Variable Mapping</h4>
+                        <div class="bg-vp-surface border border-vp-border rounded-xl overflow-hidden">
+                            <table class="doc-table">
+                                <thead><tr><th>Provider</th><th>Env Variable</th></tr></thead>
+                                <tbody>
+                                    <tr><td><code class="font-mono text-xs text-vp-accent">openai</code></td><td><code class="font-mono text-xs text-gray-300">OPENAI_API_KEY</code></td></tr>
+                                    <tr><td><code class="font-mono text-xs text-vp-accent">anthropic</code></td><td><code class="font-mono text-xs text-gray-300">ANTHROPIC_API_KEY</code></td></tr>
+                                    <tr><td><code class="font-mono text-xs text-vp-accent">stripe</code></td><td><code class="font-mono text-xs text-gray-300">STRIPE_SECRET_KEY</code></td></tr>
+                                    <tr><td><code class="font-mono text-xs text-vp-accent">aws</code></td><td><code class="font-mono text-xs text-gray-300">AWS_SECRET_ACCESS_KEY</code></td></tr>
+                                    <tr><td><code class="font-mono text-xs text-vp-accent">google</code></td><td><code class="font-mono text-xs text-gray-300">GOOGLE_API_KEY</code></td></tr>
+                                    <tr><td><code class="font-mono text-xs text-vp-accent">groq</code></td><td><code class="font-mono text-xs text-gray-300">GROQ_API_KEY</code></td></tr>
+                                    <tr><td><code class="font-mono text-xs text-vp-accent">mistral</code></td><td><code class="font-mono text-xs text-gray-300">MISTRAL_API_KEY</code></td></tr>
+                                    <tr><td><code class="font-mono text-xs text-vp-accent">twilio</code></td><td><code class="font-mono text-xs text-gray-300">TWILIO_AUTH_TOKEN</code></td></tr>
+                                    <tr><td><code class="font-mono text-xs text-vp-accent">sendgrid</code></td><td><code class="font-mono text-xs text-gray-300">SENDGRID_API_KEY</code></td></tr>
+                                    <tr><td><code class="font-mono text-xs text-vp-accent">github</code></td><td><code class="font-mono text-xs text-gray-300">GITHUB_TOKEN</code></td></tr>
+                                </tbody>
+                            </table>
                         </div>
                     </div>
                 </div>

@@ -396,7 +396,51 @@ client = anthropic.<span class="fn">Anthropic</span>(
             </div>
         </div>
 
-        <!-- 6. cURL / Any HTTP Client -->
+        <!-- 6. Any SDK (Stripe, AWS, Twilio) -->
+        <div class="guide-card">
+            <div class="guide-toggle flex items-center justify-between p-6" onclick="toggleGuide(this)">
+                <div class="flex items-center gap-4">
+                    <div class="tool-icon bg-[#06b6d4]/10 text-[#22d3ee]" style="font-family:'Space Grotesk',sans-serif">*</div>
+                    <div>
+                        <h3 class="font-semibold text-white text-lg">Any SDK (Stripe, AWS, Twilio)</h3>
+                        <p class="text-gray-500 text-sm mt-0.5">Env injection &mdash; works with every SDK</p>
+                    </div>
+                </div>
+                <svg class="guide-chevron text-gray-500" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg>
+            </div>
+            <div class="guide-body">
+                <div class="px-6 pb-6 space-y-4">
+                    <div class="flex items-start gap-3">
+                        <div class="step-num mt-0.5">1</div>
+                        <p class="text-gray-400 text-sm pt-1">Store your API key in VaultProof</p>
+                    </div>
+                    <div class="flex items-start gap-3">
+                        <div class="step-num mt-0.5">2</div>
+                        <p class="text-gray-400 text-sm pt-1">Run your app with the key injected, or export to your shell</p>
+                    </div>
+                    <div class="flex items-start gap-3">
+                        <div class="step-num mt-0.5">3</div>
+                        <p class="text-gray-400 text-sm pt-1">Done &mdash; the SDK reads the environment variable automatically</p>
+                    </div>
+
+                    <div>
+                        <div class="code-header"><span>bash</span></div>
+                        <div class="code-block">
+<pre><span class="cmt"># Store your key</span>
+vaultproof store -p stripe -l <span class="str">"Production Stripe"</span>
+
+<span class="cmt"># Run your app with the key injected</span>
+vaultproof exec -p stripe -- node app.js
+
+<span class="cmt"># Or export to your shell</span>
+<span class="kw">eval</span> $(vaultproof env -p stripe)</pre>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 7. cURL / Any HTTP Client -->
         <div class="guide-card">
             <div class="guide-toggle flex items-center justify-between p-6" onclick="toggleGuide(this)">
                 <div class="flex items-center gap-4">
