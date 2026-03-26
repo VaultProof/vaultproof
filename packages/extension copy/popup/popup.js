@@ -21,18 +21,6 @@ async function showMainView(apiKey) {
   document.getElementById('loginView').style.display = 'none';
   document.getElementById('settingsView').style.display = 'none';
   document.getElementById('mainView').style.display = 'block';
-  document.getElementById('tierBadge').style.display = 'inline-block';
-
-  // Fetch tier from billing status
-  try {
-    const res = await fetch(`${API}/billing/status`, { headers: { 'X-API-Key': apiKey } });
-    if (res.ok) {
-      const data = await res.json();
-      const badge = document.getElementById('tierBadge');
-      badge.textContent = (data.tier || 'free').charAt(0).toUpperCase() + (data.tier || 'free').slice(1);
-    }
-  } catch {}
-
   loadKeys(apiKey);
 }
 

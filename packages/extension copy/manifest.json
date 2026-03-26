@@ -1,0 +1,44 @@
+{
+  "manifest_version": 3,
+  "name": "VaultProof — API Key Security",
+  "version": "1.0.0",
+  "description": "Store API keys securely with one click. Keys are split with Shamir secret sharing — no one can see them, not even us.",
+  "permissions": ["storage", "activeTab"],
+  "host_permissions": [
+    "https://api.vaultproof.dev/*",
+    "https://platform.openai.com/*",
+    "https://console.anthropic.com/*",
+    "https://aistudio.google.com/*",
+    "https://console.groq.com/*",
+    "https://console.mistral.ai/*",
+    "https://api.together.xyz/*"
+  ],
+  "action": {
+    "default_popup": "popup/popup.html",
+    "default_icon": {
+      "16": "icons/icon16.png",
+      "48": "icons/icon48.png",
+      "128": "icons/icon128.png"
+    }
+  },
+  "icons": {
+    "16": "icons/icon16.png",
+    "48": "icons/icon48.png",
+    "128": "icons/icon128.png"
+  },
+  "content_scripts": [{
+    "matches": [
+      "https://platform.openai.com/*",
+      "https://console.anthropic.com/*",
+      "https://aistudio.google.com/*",
+      "https://console.groq.com/*",
+      "https://console.mistral.ai/*",
+      "https://api.together.xyz/*"
+    ],
+    "js": ["content/content.js"],
+    "css": ["content/content.css"]
+  }],
+  "background": {
+    "service_worker": "background/service-worker.js"
+  }
+}
