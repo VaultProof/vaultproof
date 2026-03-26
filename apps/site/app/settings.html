@@ -499,13 +499,15 @@
     }
 
     // Token display
-    document.getElementById('tokenDisplay').value = token || '';
+    const tokenDisplayEl = document.getElementById('tokenDisplay');
+    if (tokenDisplayEl) tokenDisplayEl.value = token || '';
     let tokenVisible = false;
 
     function toggleTokenVisibility() {
       tokenVisible = !tokenVisible;
-      document.getElementById('tokenDisplay').type = tokenVisible ? 'text' : 'password';
+      if (tokenDisplayEl) tokenDisplayEl.type = tokenVisible ? 'text' : 'password';
       const eyeIcon = document.getElementById('eyeIcon');
+      if (!eyeIcon) return;
       if (tokenVisible) {
         eyeIcon.innerHTML = '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.878 9.878L3 3m6.878 6.878L21 21"/>';
       } else {
