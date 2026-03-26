@@ -155,6 +155,7 @@ function corsHeaders(origin: string, allowed: string[]): Record<string, string> 
 // --- Security Headers ---
 function securityHeaders(): Record<string, string> {
   return {
+    'Strict-Transport-Security': 'max-age=31536000; includeSubDomains; preload',
     'X-Content-Type-Options': 'nosniff',
     'X-Frame-Options': 'DENY',
     'X-XSS-Protection': '1; mode=block',

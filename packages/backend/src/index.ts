@@ -62,6 +62,7 @@ async function start() {
   await app.register(helmet, {
     contentSecurityPolicy: false,
     crossOriginEmbedderPolicy: false,
+    hsts: { maxAge: 31536000, includeSubDomains: true, preload: true },
   });
 
   // CORS
