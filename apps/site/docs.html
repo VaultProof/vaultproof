@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Developer Documentation | VaultProof</title>
-    <meta name="description" content="Complete developer documentation for VaultProof — the password manager for API keys. SDK, CLI, API reference, security architecture, and integration guides.">
+    <meta name="description" content="Complete developer documentation for VaultProof — the password manager for API keys and secrets. SDK, CLI, API reference, security architecture, and integration guides.">
     <meta property="og:title" content="Developer Documentation | VaultProof">
     <meta property="og:description" content="Complete developer documentation for VaultProof — SDK, CLI, API reference, security architecture, and integration guides.">
     <meta property="og:url" content="https://vaultproof.dev/docs">
@@ -204,12 +204,12 @@
             <!-- ============================================================ -->
             <section id="overview" class="mb-20">
                 <h1 class="text-4xl font-extrabold text-white mb-3 tracking-tight">VaultProof Documentation</h1>
-                <p class="text-lg text-gray-400 mb-8 leading-relaxed max-w-2xl">Everything you need to store, protect, and proxy your API keys with zero-knowledge security.</p>
+                <p class="text-lg text-gray-400 mb-8 leading-relaxed max-w-2xl">Everything you need to store, protect, and proxy your API keys and secrets with zero-knowledge security.</p>
 
                 <div class="bg-vp-surface border border-vp-border rounded-xl p-6 mb-8">
                     <h2 class="text-xl font-bold text-white mb-3">What is VaultProof?</h2>
                     <p class="text-gray-400 leading-relaxed mb-4">
-                        VaultProof is a security layer for API keys. It splits your keys using Shamir Secret Sharing, encrypts the shares separately, and reassembles them only for the milliseconds it takes to make a proxied API call. Your raw API key is never stored whole on any server.
+                        VaultProof is a security layer for API keys and secrets. It splits your keys using Shamir Secret Sharing, encrypts the shares separately, and reassembles them only for the milliseconds it takes to make a proxied API call. Your raw API key is never stored whole on any server.
                     </p>
                     <p class="text-gray-400 leading-relaxed mb-4">
                         It is built for developers who work with third-party API keys -- OpenAI, Anthropic, Google AI, Together.ai, and more. If you have ever committed a key to GitHub, emailed a key to a teammate, or stored a key in plaintext in a .env file on a server, VaultProof solves that problem.
