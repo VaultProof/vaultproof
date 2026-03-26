@@ -5,3 +5,6 @@ dist/
 *.tsbuildinfo
 *.db
 .next/
+.DS_Store
+*.crx
+*.pem
