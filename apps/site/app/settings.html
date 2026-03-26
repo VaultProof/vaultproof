@@ -363,10 +363,30 @@
 
   <script>
     const API = 'https://api.vaultproof.dev/api/v1';
-    const token = localStorage.getItem('vaultproof_token');
+    let token = localStorage.getItem('vaultproof_token');
     const user = JSON.parse(localStorage.getItem('vaultproof_user') || '{}');
 
     if (!token) { window.location.href = 'login'; }
+
+    // Refresh the Supabase token on page load so expired JWTs don't block API calls
+    async function refreshToken() {
+      try {
+        const sb = window.supabase.createClient(
+          'https://gwzkjiomemjlhtrdrlan.supabase.co',
+          'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imd3emtqaW9tZW1qbGh0cmRybGFuIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQzNDM3ODIsImV4cCI6MjA4OTkxOTc4Mn0.tgHUvpBvFiojetuqIP0sKb0iBNbKDJHdeo9n3Tofa3o'
+        );
+        const { data, error } = await sb.auth.getSession();
+        if (error || !data.session) {
+          localStorage.removeItem('vaultproof_token');
+          window.location.href = 'login';
+          return;
+        }
+        token = data.session.access_token;
+        localStorage.setItem('vaultproof_token', token);
+      } catch (e) {
+        console.error('Token refresh failed:', e);
+      }
+    }
 
     const sidebarEl = document.getElementById('sidebar');
     const overlayEl = document.getElementById('sidebarOverlay');
@@ -451,7 +471,7 @@
         if (!res) return;
         const data = await res.json();
         const keysUsed = data.totalKeys || 0;
-        const callsUsed = data.apiCalls || 0;
+        const callsUsed = data.totalCalls || 0;
 
         document.getElementById('keysUsed').textContent = keysUsed;
         document.getElementById('keysBar').style.width = Math.min(100, (keysUsed / 3) * 100) + '%';
@@ -462,6 +482,8 @@
         if (callsUsed >= 900) document.getElementById('callsBar').classList.replace('bg-[#6366f1]', 'bg-red-500');
       } catch (e) {
         console.error('Failed to load usage:', e);
+        document.getElementById('keysUsed').textContent = '0';
+        document.getElementById('callsUsed').textContent = '0';
       }
     }
 
@@ -656,12 +678,12 @@
               <div class="flex items-center justify-between py-4 gap-4">
                 <div class="min-w-0 flex-1">
                   <div class="flex items-center gap-2 flex-wrap">
-                    <code class="text-sm font-mono text-gray-300">${k.maskedKey || k.masked_key || 'vp_live_****'}</code>
+                    <code class="text-sm font-mono text-gray-300">${k.key || k.maskedKey || k.masked_key || 'vp_live_****'}</code>
                     ${k.label ? `<span class="text-xs text-gray-500 bg-[#0a0a0f] px-2 py-0.5 rounded-lg border border-[#1e1e2e]">${k.label}</span>` : ''}
                     ${modeBadge}
                   </div>
                   <div class="text-xs text-gray-600 mt-1.5">
-                    Created ${new Date(k.createdAt || k.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}${k.lastUsedAt || k.last_used_at ? ' &middot; Last used ' + new Date(k.lastUsedAt || k.last_used_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) : ' &middot; Never used'}
+                    Created ${new Date(k.createdAt || k.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}${k.lastUsed || k.lastUsedAt || k.last_used_at ? ' &middot; Last used ' + new Date(k.lastUsed || k.lastUsedAt || k.last_used_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) : ' &middot; Never used'}
                   </div>
                 </div>
                 <div class="flex items-center gap-2">
@@ -903,7 +925,7 @@
         if (!res) return;
         const data = await res.json();
         const currentTier = data.tier || 'free';
-        const isSubscribed = data.subscribed || false;
+        const isSubscribed = data.hasSubscription || data.subscribed || false;
 
         // Update badge
         const badge = document.getElementById('billingTierBadge');
@@ -974,6 +996,11 @@
         const badge = document.getElementById('billingTierBadge');
         badge.textContent = 'Free Plan';
         badge.className = 'inline-flex items-center px-3 py-1 rounded-xl bg-gray-700/30 text-gray-400 text-sm font-medium border border-gray-600/30 capitalize';
+        const planBadge = document.getElementById('planBadge');
+        if (planBadge) {
+          planBadge.textContent = 'Free Plan';
+          planBadge.className = 'inline-flex items-center px-3 py-1 rounded-xl bg-gray-700/30 text-gray-400 text-sm font-medium border border-gray-600/30';
+        }
       }
     }
 
@@ -1028,12 +1055,16 @@
       }
     }
 
-    // Init
-    checkBillingParams();
-    loadProfile();
-    loadUsage();
-    loadBillingStatus();
-    loadDevKeys();
+    // Init — refresh token first, then load data in parallel
+    async function init() {
+      await refreshToken();
+      checkBillingParams();
+      loadProfile();
+      loadUsage();
+      loadBillingStatus();
+      loadDevKeys();
+    }
+    init();
   </script>
 </body>
 </html>

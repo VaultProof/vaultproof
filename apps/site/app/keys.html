@@ -303,10 +303,29 @@
     }
 
     const API = 'https://api.vaultproof.dev/api/v1';
-    const token = localStorage.getItem('vaultproof_token');
+    let token = localStorage.getItem('vaultproof_token');
     const user = JSON.parse(localStorage.getItem('vaultproof_user') || '{}');
 
     if (!token) { window.location.href = 'login'; }
+
+    async function refreshToken() {
+      try {
+        const sb = window.supabase.createClient(
+          'https://gwzkjiomemjlhtrdrlan.supabase.co',
+          'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imd3emtqaW9tZW1qbGh0cmRybGFuIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQzNDM3ODIsImV4cCI6MjA4OTkxOTc4Mn0.tgHUvpBvFiojetuqIP0sKb0iBNbKDJHdeo9n3Tofa3o'
+        );
+        const { data, error } = await sb.auth.getSession();
+        if (error || !data.session) {
+          localStorage.removeItem('vaultproof_token');
+          window.location.href = 'login';
+          return;
+        }
+        token = data.session.access_token;
+        localStorage.setItem('vaultproof_token', token);
+      } catch (e) {
+        console.error('Token refresh failed:', e);
+      }
+    }
 
     const sidebarEl = document.getElementById('sidebar');
     const overlayEl = document.getElementById('sidebarOverlay');
@@ -1048,7 +1067,7 @@ exampleBody + '\n' +
       }
     }
 
-    loadKeys();
+    refreshToken().then(() => loadKeys());
   </script>
 </body>
 </html>
