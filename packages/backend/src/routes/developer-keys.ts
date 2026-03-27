@@ -83,6 +83,17 @@ export async function developerKeyRoutes(app: FastifyInstance) {
     }
 
     const userId = request.auth!.userId;
+
+    // Rate limit: max 5 non-revoked developer keys per account
+    const existingKeys = await prisma.developerKey.count({
+      where: { userId, revokedAt: null },
+    });
+    if (existingKeys >= 5) {
+      return reply.status(429).send({
+        error: 'Maximum 5 developer keys per account. Revoke unused keys first.',
+      });
+    }
+
     const mode = parsed.data.mode || 'live';
     const key = generateApiKey(mode);
     const keyHash = hashKey(key);

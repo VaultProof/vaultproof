@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Report Abuse | VaultProof</title>
+    <meta name="description" content="Report stolen, leaked, or unauthorized API keys stored on VaultProof.">
+    <meta property="og:title" content="Report Abuse | VaultProof">
+    <meta property="og:description" content="Report stolen, leaked, or unauthorized API keys stored on VaultProof.">
+    <meta property="og:url" content="https://vaultproof.dev/abuse">
+    <meta http-equiv="X-Content-Type-Options" content="nosniff">
+    <meta http-equiv="X-Frame-Options" content="DENY">
+    <meta name="referrer" content="strict-origin-when-cross-origin">
+
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        'vp-bg': '#0a0a0f',
+                        'vp-surface': '#111118',
+                        'vp-border': '#1e1e2e',
+                        'vp-accent': '#6366f1',
+                        'vp-cyan': '#06b6d4',
+                    },
+                    fontFamily: {
+                        sans: ['Inter', 'system-ui', 'sans-serif'],
+                        mono: ['JetBrains Mono', 'monospace'],
+                    }
+                }
+            }
+        }
+    </script>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
+
+    <style>
+        * { font-family: 'Inter', system-ui, sans-serif; }
+        ::selection { background: #6366f1; color: #fff; }
+        body { background: #0a0a0f; }
+
+        .mobile-menu { display: none; }
+        .mobile-menu.open { display: flex; }
+    </style>
+</head>
+<body class="text-gray-300 min-h-screen">
+
+    <!-- Nav -->
+    <nav class="relative z-50 border-b border-vp-border/50 backdrop-blur-sm bg-vp-bg/80 sticky top-0">
+        <div class="flex items-center justify-between px-6 py-4 max-w-6xl mx-auto">
+            <a href="/" class="flex items-center gap-2.5">
+                <img src="/logo-sm.png" alt="VaultProof" width="28" height="28" />
+                <span class="text-lg font-bold text-white tracking-tight" style="font-family:'Space Grotesk',sans-serif">VaultProof</span>
+            </a>
+
+            <!-- Desktop links -->
+            <div class="hidden md:flex items-center gap-8">
+                <a href="/docs" class="text-sm text-gray-400 hover:text-white transition-colors">Docs</a>
+                <a href="/guides" class="text-sm text-gray-400 hover:text-white transition-colors">Guides</a>
+                <a href="/compare" class="text-sm text-gray-400 hover:text-white transition-colors">Compare</a>
+                <a href="/blog" class="text-sm text-gray-400 hover:text-white transition-colors">Blog</a>
+                <a href="/#pricing" class="text-sm text-gray-400 hover:text-white transition-colors">Pricing</a>
+                <a href="/app/login" class="text-sm text-gray-400 hover:text-white transition-colors">Dashboard</a>
+                <a href="/app/login" class="bg-vp-accent hover:bg-indigo-500 text-sm px-5 py-2 rounded-btn font-semibold text-white transition-all">Get Started</a>
+            </div>
+
+            <!-- Mobile hamburger -->
+            <button id="mobileToggle" class="md:hidden text-gray-400 hover:text-white" aria-label="Toggle menu">
+                <svg width="24" height="24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 6h16M4 12h16M4 18h16"/></svg>
+            </button>
+        </div>
+
+        <!-- Mobile menu -->
+        <div id="mobileMenu" class="mobile-menu flex-col gap-4 px-6 pb-6 md:hidden bg-vp-bg/95 backdrop-blur-sm">
+            <a href="/docs" class="text-sm text-gray-400 hover:text-white transition-colors py-1">Docs</a>
+            <a href="/guides" class="text-sm text-gray-400 hover:text-white transition-colors py-1">Guides</a>
+            <a href="/compare" class="text-sm text-gray-400 hover:text-white transition-colors py-1">Compare</a>
+            <a href="/blog" class="text-sm text-gray-400 hover:text-white transition-colors py-1">Blog</a>
+            <a href="/#pricing" class="text-sm text-gray-400 hover:text-white transition-colors py-1">Pricing</a>
+            <a href="/app/login" class="text-sm text-gray-400 hover:text-white transition-colors py-1">Dashboard</a>
+            <a href="/app/login" class="bg-vp-accent hover:bg-indigo-500 text-sm px-5 py-2.5 rounded-btn font-semibold text-white transition-all text-center mt-2">Get Started</a>
+        </div>
+    </nav>
+
+    <!-- Content -->
+    <main class="max-w-3xl mx-auto px-6 py-16">
+        <h1 class="text-4xl font-extrabold text-white mb-2 tracking-tight" style="font-family:'Space Grotesk',sans-serif">Report Abuse</h1>
+        <p class="text-gray-400 mb-12 leading-relaxed">If you believe an API key stored on VaultProof was stolen, leaked, or is being used without authorization, report it here.</p>
+
+        <div class="space-y-10 text-gray-400 leading-relaxed">
+
+            <!-- Report Form -->
+            <section>
+                <form action="mailto:abuse@vaultproof.dev" method="POST" enctype="text/plain" class="space-y-6">
+
+                    <div>
+                        <label for="email" class="block text-sm font-semibold text-white mb-2">Your Email <span class="text-red-400">*</span></label>
+                        <input type="email" id="email" name="email" required placeholder="you@example.com"
+                            class="w-full bg-vp-surface border border-vp-border rounded-lg px-4 py-3 text-gray-300 placeholder-gray-600 focus:outline-none focus:border-vp-accent focus:ring-1 focus:ring-vp-accent transition-colors text-sm">
+                    </div>
+
+                    <div>
+                        <label for="role" class="block text-sm font-semibold text-white mb-2">Your Role <span class="text-red-400">*</span></label>
+                        <select id="role" name="role" required
+                            class="w-full bg-vp-surface border border-vp-border rounded-lg px-4 py-3 text-gray-300 focus:outline-none focus:border-vp-accent focus:ring-1 focus:ring-vp-accent transition-colors text-sm">
+                            <option value="" disabled selected class="text-gray-600">Select your role</option>
+                            <option value="API provider">API provider</option>
+                            <option value="Key owner">Key owner</option>
+                            <option value="Security researcher">Security researcher</option>
+                            <option value="Law enforcement">Law enforcement</option>
+                            <option value="Other">Other</option>
+                        </select>
+                    </div>
+
+                    <div>
+                        <label for="description" class="block text-sm font-semibold text-white mb-2">Description <span class="text-red-400">*</span></label>
+                        <textarea id="description" name="description" required rows="5" placeholder="Describe the abuse you are reporting..."
+                            class="w-full bg-vp-surface border border-vp-border rounded-lg px-4 py-3 text-gray-300 placeholder-gray-600 focus:outline-none focus:border-vp-accent focus:ring-1 focus:ring-vp-accent transition-colors text-sm resize-y"></textarea>
+                    </div>
+
+                    <div>
+                        <label for="evidence" class="block text-sm font-semibold text-white mb-2">Evidence <span class="text-gray-600 font-normal">(optional)</span></label>
+                        <textarea id="evidence" name="evidence" rows="4" placeholder="Key prefix, provider name, incident details, timestamps..."
+                            class="w-full bg-vp-surface border border-vp-border rounded-lg px-4 py-3 text-gray-300 placeholder-gray-600 focus:outline-none focus:border-vp-accent focus:ring-1 focus:ring-vp-accent transition-colors text-sm resize-y"></textarea>
+                    </div>
+
+                    <button type="submit"
+                        class="bg-vp-accent hover:bg-indigo-500 text-sm px-8 py-3 rounded-lg font-semibold text-white transition-all">
+                        Submit Report
+                    </button>
+                </form>
+
+                <p class="mt-6 text-sm text-gray-500">For urgent requests, email <a href="mailto:abuse@vaultproof.dev" class="text-vp-accent hover:underline">abuse@vaultproof.dev</a> directly.</p>
+            </section>
+
+            <!-- What happens next -->
+            <section>
+                <h2 class="text-xl font-bold text-white mb-3">What Happens Next</h2>
+                <ul class="list-disc list-inside space-y-1.5 ml-1">
+                    <li>We review all abuse reports within 24 hours</li>
+                    <li>We investigate the claim by cross-referencing access logs and provider reports</li>
+                    <li>If the report is confirmed, we immediately revoke the key and terminate the associated account</li>
+                    <li>We notify the reporter of the outcome when possible</li>
+                </ul>
+            </section>
+
+        </div>
+    </main>
+
+    <!-- Footer -->
+    <footer class="border-t border-vp-border mt-16">
+        <div class="max-w-5xl mx-auto px-6 py-12">
+            <div class="flex flex-col md:flex-row items-center justify-between gap-6">
+                <div class="flex flex-col items-center md:items-start gap-2">
+                    <div class="flex items-center gap-2.5">
+                        <svg width="22" height="22" viewBox="0 0 28 28" fill="none"><rect width="28" height="28" rx="6" fill="#6366f1" fill-opacity="0.15"/><path d="M8 8L14 4L20 8V16L14 20L8 16V8Z" stroke="#6366f1" stroke-width="1.5" fill="none"/><path d="M14 10V15" stroke="#6366f1" stroke-width="1.5" stroke-linecap="round"/><circle cx="14" cy="17" r="1" fill="#6366f1"/></svg>
+                        <span class="text-sm font-bold text-white">VaultProof</span>
+                        <span class="text-xs text-gray-600">by Rial Labs</span>
+                    </div>
+                    <p class="text-xs text-gray-600">Built for developers who refuse to trust blindly.</p>
+                </div>
+                <div class="flex items-center gap-8">
+                    <a href="/docs" class="text-sm text-gray-500 hover:text-white transition-colors">Docs</a>
+                    <a href="/guides" class="text-sm text-gray-500 hover:text-white transition-colors">Guides</a>
+                    <a href="/verify" class="text-sm text-gray-500 hover:text-white transition-colors">Verify</a>
+                    <a href="/app/login" class="text-sm text-gray-500 hover:text-white transition-colors">Dashboard</a>
+                    <a href="/terms" class="text-sm text-gray-500 hover:text-white transition-colors">Terms</a>
+                    <a href="/privacy" class="text-sm text-gray-500 hover:text-white transition-colors">Privacy</a>
+                    <a href="/abuse" class="text-sm text-gray-500 hover:text-white transition-colors">Abuse</a>
+                </div>
+            </div>
+        </div>
+    </footer>
+
+    <script>
+        document.getElementById('mobileToggle').addEventListener('click', function() {
+            document.getElementById('mobileMenu').classList.toggle('open');
+        });
+        document.querySelectorAll('#mobileMenu a').forEach(function(link) {
+            link.addEventListener('click', function() {
+                document.getElementById('mobileMenu').classList.remove('open');
+            });
+        });
+    </script>
+</body>
+</html>
