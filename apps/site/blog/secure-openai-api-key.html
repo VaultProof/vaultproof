@@ -227,7 +227,7 @@
 });</pre>
                 </div>
 
-                <p class="mb-4">VaultProof's proxy reconstructs your key from Shamir shares at the edge (Cloudflare Workers), injects it into the upstream request, and forwards it to OpenAI. The key is assembled in memory for microseconds and never logged, stored, or returned.</p>
+                <p class="mb-4">VaultProof's proxy reconstructs your key from Shamir shares at the edge, injects it into the upstream request, and forwards it to OpenAI. The key is assembled in memory for microseconds and never logged, stored, or returned.</p>
                 <p>This works with <strong class="text-white">every OpenAI SDK</strong> &mdash; Node, Python, Go, Rust, curl. Any tool that lets you set a base URL works instantly.</p>
             </section>
 
