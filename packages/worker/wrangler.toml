@@ -1,6 +1,6 @@
 name = "vaultproof-api"
 main = "src/index.ts"
-compatibility_date = "2024-12-01"
+compatibility_date = "2026-03-27"
 
 [vars]
 ALLOWED_ORIGINS = "https://vaultproof.dev"
