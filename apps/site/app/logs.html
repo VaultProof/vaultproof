@@ -510,12 +510,21 @@
           try {
             const data = await apiFetch(`/keys/${keyId}/logs`);
             const logs = Array.isArray(data) ? data : (data && data.logs ? data.logs : []);
-            return logs.map(l => ({
-              ...l,
-              keyLabel: l.keyLabel || k.label,
-              provider: l.provider || k.provider,
-              keySlotId: keyId
-            }));
+            return logs.map(l => {
+              let meta = {};
+              try { meta = typeof l.metadata === 'string' ? JSON.parse(l.metadata) : (l.metadata || {}); } catch {}
+              return {
+                ...l,
+                keyLabel: l.keyLabel || k.label,
+                provider: l.provider || meta.provider || k.provider,
+                keySlotId: keyId,
+                appName: l.appName || l.appId || '—',
+                endpoint: l.endpoint || meta.endpoint || l.action || '—',
+                status: l.status || meta.status_code || meta.status || (l.action === 'api_call' || l.action === 'transparent_proxy' ? 'ok' : '—'),
+                latency: l.latency ?? meta.latency_ms ?? meta.latencyMs ?? null,
+                zkProofVerified: l.zkProofVerified ?? (l.action === 'nullifier_claim' || meta.zkProof ? true : null),
+              };
+            });
           } catch (e) {
             console.warn(`Failed to fetch logs for key ${keyId}:`, e);
             return [];
