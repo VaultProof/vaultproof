@@ -139,9 +139,10 @@ ${chalk.bold("Notes:")}
               <div style="text-align:center;">
                 <div style="font-size:48px;margin-bottom:16px;">&#10003;</div>
                 <h1 style="font-size:24px;margin-bottom:8px;">Connected to VaultProof CLI</h1>
-                <p style="color:#888;">You can close this tab and return to your terminal.</p>
+                <p style="color:#888;">This tab will close automatically...</p>
               </div>
             </body>
+            <script>setTimeout(function(){window.close()},1500)</script>
             </html>
           `);
 
