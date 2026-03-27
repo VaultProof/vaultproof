@@ -1057,6 +1057,45 @@ res = client.chat.completions.<span class="fn">create</span>(
                         </div>
                     </div>
 
+                    <!-- vault.retrieve -->
+                    <div class="endpoint-card mb-6">
+                        <h4 class="text-white font-mono text-sm font-semibold mb-3">vault.retrieve(keyId)</h4>
+                        <p class="text-gray-400 text-sm mb-4">Retrieves the raw API key by reconstructing it from both encrypted shares on the server. The key is returned over TLS. Use this for providers that aren't supported by the transparent proxy (e.g., Stripe, Supabase, SMTP, or any custom provider).</p>
+                        <div class="bg-vp-surface border border-vp-border rounded-xl overflow-hidden mb-4">
+                            <table class="doc-table">
+                                <thead><tr><th>Parameter</th><th>Type</th><th>Required</th><th>Description</th></tr></thead>
+                                <tbody>
+                                    <tr>
+                                        <td><code class="font-mono text-xs text-vp-accent">keyId</code></td>
+                                        <td><code class="font-mono text-xs">string</code></td>
+                                        <td>Yes</td>
+                                        <td>Key slot ID to retrieve</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                        <p class="text-gray-500 text-xs mb-2">Returns:</p>
+                        <div class="code-block">
+<pre class="text-gray-300">{ apiKey: <span class="str">"sk-live-abc123..."</span>, provider: <span class="str">"stripe"</span> }</pre>
+                        </div>
+                        <div class="mt-4 code-block">
+                            <div class="code-header">Example: Stripe (non-proxy provider)</div>
+<pre class="text-gray-300"><span class="kw">import</span> Stripe <span class="kw">from</span> <span class="str">'stripe'</span>;
+<span class="kw">import</span> VaultProof <span class="kw">from</span> <span class="str">'@vaultproof/sdk'</span>;
+
+<span class="kw">const</span> vault = <span class="kw">new</span> VaultProof(process.env.VAULTPROOF_API_KEY);
+
+<span class="cmt">// Retrieve the key at request time — never hardcoded, never in .env</span>
+<span class="kw">const</span> { apiKey } = <span class="kw">await</span> vault.retrieve(<span class="str">'your-stripe-key-id'</span>);
+<span class="kw">const</span> stripe = <span class="kw">new</span> Stripe(apiKey);</pre>
+                        </div>
+                        <div class="mt-4 bg-indigo-500/5 border border-indigo-500/20 rounded-xl p-4">
+                            <p class="text-indigo-400 text-xs font-medium mb-1">When to use retrieve() vs proxy()</p>
+                            <p class="text-gray-400 text-xs"><strong class="text-white">proxy()</strong> routes your API call through VaultProof's transparent proxy — the key is never returned to your code. Use it for supported AI providers (OpenAI, Anthropic, etc.).</p>
+                            <p class="text-gray-400 text-xs mt-1"><strong class="text-white">retrieve()</strong> returns the raw key so you can pass it to the provider's own SDK. Use it for everything else (Stripe, Supabase, AWS, SMTP, etc.).</p>
+                        </div>
+                    </div>
+
                     <!-- vault.keys -->
                     <div class="endpoint-card mb-6">
                         <h4 class="text-white font-mono text-sm font-semibold mb-3">vault.keys()</h4>

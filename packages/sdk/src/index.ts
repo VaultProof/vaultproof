@@ -110,6 +110,21 @@ export class VaultProof {
   }
 
   /**
+   * Retrieve the raw API key from VaultProof.
+   *
+   * The key is reconstructed server-side from both encrypted shares
+   * and returned over TLS. Use this for providers that aren't supported
+   * by the transparent proxy (e.g., Stripe, Supabase, SMTP).
+   */
+  async retrieve(keyId: string): Promise<{ apiKey: string; provider: string }> {
+    const res = await this.fetch('/api/v1/sdk/retrieve', {
+      method: 'POST',
+      body: { keyId },
+    });
+    return { apiKey: res.apiKey, provider: res.provider };
+  }
+
+  /**
    * List all stored keys.
    */
   async keys(): Promise<Array<{ id: string; provider: string; label: string; createdAt: string }>> {

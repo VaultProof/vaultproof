@@ -554,24 +554,26 @@ program
   .option("-l, --label <label>", "Label for this key")
   .option("--expires <date>", "Key expiry date (ISO 8601, e.g. 2026-12-31)")
   .option("--value <key>", "API key value (non-interactive, for scripting)")
+  .option("--var <envVar>", "Environment variable name (e.g. NEXT_PUBLIC_SUPABASE_URL)")
   .addHelpText(
     "after",
     `
 ${chalk.bold("Examples:")}
   $ vaultproof store -p openai
   $ vaultproof store -p anthropic -l "Production key"
-  $ vaultproof store --provider google --label "Vertex AI"
+  $ vaultproof store -p supabase -l url --var NEXT_PUBLIC_SUPABASE_URL
 
 ${chalk.bold("How it works:")}
   1. You paste your API key (hidden input)
-  2. Key is Shamir-split locally into 2 shares
-  3. Both shares are sent encrypted with different keys
-  4. The full API key NEVER leaves your machine
+  2. You choose the env var name it exports as
+  3. Key is Shamir-split locally into 2 shares
+  4. Both shares are sent encrypted with different keys
+  5. The full API key NEVER leaves your machine
 
 ${chalk.bold("Requires:")} VAULTPROOF_API_KEY environment variable
 `
   )
-  .action(async (opts: { provider: string; label?: string; expires?: string; value?: string }) => {
+  .action(async (opts: { provider: string; label?: string; expires?: string; value?: string; var?: string }) => {
     const apiKey = opts.value ?? await promptHidden("API Key: ");
 
     if (!apiKey) {
@@ -582,6 +584,22 @@ ${chalk.bold("Requires:")} VAULTPROOF_API_KEY environment variable
     if (apiKey.length < 8) {
       console.error(chalk.red("API key seems too short. Check your input."));
       process.exit(1);
+    }
+
+    // Resolve default env var name using existing inference
+    const defaultEnvVar = resolveEnvVar(
+      { provider: opts.provider, label: opts.label ?? "" },
+      [{ provider: opts.provider, label: opts.label ?? "" }]
+    );
+
+    let envVar: string | undefined = opts.var;
+    if (!envVar && !opts.value) {
+      // Interactive mode — prompt with smart default
+      const answer = await prompt(`Env var name [${defaultEnvVar}]: `);
+      envVar = answer || defaultEnvVar;
+    } else if (!envVar) {
+      // Non-interactive (--value passed) — use default
+      envVar = defaultEnvVar;
     }
 
     const spinner = ora("Splitting key with Shamir secret sharing...").start();
@@ -596,12 +614,14 @@ ${chalk.bold("Requires:")} VAULTPROOF_API_KEY environment variable
       id: string;
       provider: string;
       label: string;
+      envVar: string | null;
     }>("POST", "/api/v1/sdk/store", {
       body: {
         provider: opts.provider,
         label: opts.label ?? "",
         share1,
         share2,
+        envVar,
         expiresAt: opts.expires ? new Date(opts.expires).toISOString() : undefined,
       },
       auth: "apikey",
@@ -621,13 +641,11 @@ ${chalk.bold("Requires:")} VAULTPROOF_API_KEY environment variable
         `Key stored: ${truncatedId} (${data.provider}${data.label ? " / " + data.label : ""})`
       )
     );
+    console.log(chalk.dim(`  Will export as ${chalk.reset(data.envVar || envVar || defaultEnvVar)}`));
     console.log(
       chalk.dim(
         "  Key was Shamir-split locally. Server never saw the full key."
       )
-    );
-    console.log(
-      chalk.dim(`  Use ${chalk.reset("vaultproof proxy -k " + data.id.slice(0, 8))} to make API calls.`)
     );
   });
 
@@ -1048,99 +1066,7 @@ ${chalk.bold("Requires:")} VAULTPROOF_API_KEY environment variable
 
 // ─── env ─────────────────────────────────────────────────────────────────────
 
-const ENV_VAR_MAP: Record<string, string> = {
-  openai: "OPENAI_API_KEY",
-  anthropic: "ANTHROPIC_API_KEY",
-  google: "GOOGLE_API_KEY",
-  together: "TOGETHER_API_KEY",
-  mistral: "MISTRAL_API_KEY",
-  cohere: "COHERE_API_KEY",
-  groq: "GROQ_API_KEY",
-  perplexity: "PERPLEXITY_API_KEY",
-  fireworks: "FIREWORKS_API_KEY",
-  deepseek: "DEEPSEEK_API_KEY",
-  replicate: "REPLICATE_API_TOKEN",
-  stripe: "STRIPE_SECRET_KEY",
-  aws: "AWS_SECRET_ACCESS_KEY",
-  twilio: "TWILIO_AUTH_TOKEN",
-  sendgrid: "SENDGRID_API_KEY",
-  github: "GITHUB_TOKEN",
-};
-
-// Known label → env var overrides for providers with multiple keys
-const LABEL_VAR_MAP: Record<string, Record<string, string>> = {
-  supabase: {
-    anon: "SUPABASE_ANON_KEY",
-    anon_key: "SUPABASE_ANON_KEY",
-    service_role: "SUPABASE_SERVICE_ROLE_KEY",
-    service_role_key: "SUPABASE_SERVICE_ROLE_KEY",
-    jwt_secret: "SUPABASE_JWT_SECRET",
-    url: "SUPABASE_URL",
-  },
-  stripe: {
-    secret: "STRIPE_SECRET_KEY",
-    secret_key: "STRIPE_SECRET_KEY",
-    publishable: "STRIPE_PUBLISHABLE_KEY",
-    publishable_key: "STRIPE_PUBLISHABLE_KEY",
-    webhook_secret: "STRIPE_WEBHOOK_SECRET",
-  },
-  aws: {
-    access_key: "AWS_ACCESS_KEY_ID",
-    secret_key: "AWS_SECRET_ACCESS_KEY",
-    secret_access_key: "AWS_SECRET_ACCESS_KEY",
-    region: "AWS_REGION",
-  },
-  firebase: {
-    api_key: "FIREBASE_API_KEY",
-    auth_domain: "FIREBASE_AUTH_DOMAIN",
-    project_id: "FIREBASE_PROJECT_ID",
-    service_account: "FIREBASE_SERVICE_ACCOUNT_KEY",
-  },
-  twilio: {
-    auth_token: "TWILIO_AUTH_TOKEN",
-    account_sid: "TWILIO_ACCOUNT_SID",
-  },
-};
-
-/**
- * Resolve the env var name for a key, handling multiple keys per provider.
- * - Custom --var flag always wins
- * - Known label mappings (e.g. supabase/anon → SUPABASE_ANON_KEY)
- * - If multiple keys for same provider, append _LABEL suffix
- * - Single key for a provider uses the standard name
- */
-function resolveEnvVar(
-  key: { provider: string; label: string },
-  allKeys: Array<{ provider: string; label: string }>,
-  customVar?: string
-): string {
-  if (customVar) return customVar;
-
-  const provider = key.provider.toLowerCase();
-  const labelNorm = key.label.toLowerCase().replace(/[\s-]+/g, "_");
-
-  // Check known label mappings first
-  const labelMap = LABEL_VAR_MAP[provider];
-  if (labelMap && labelMap[labelNorm]) {
-    return labelMap[labelNorm];
-  }
-
-  // Count how many keys share this provider
-  const sameProvider = allKeys.filter(
-    (k) => k.provider.toLowerCase() === provider
-  );
-
-  // Single key → use standard env var
-  if (sameProvider.length === 1) {
-    return ENV_VAR_MAP[provider] || `${provider.toUpperCase()}_API_KEY`;
-  }
-
-  // Multiple keys, no known mapping → PROVIDER_LABEL format
-  const base = ENV_VAR_MAP[provider]?.replace(/_API_KEY$|_SECRET_KEY$|_AUTH_TOKEN$|_TOKEN$/, "")
-    || provider.toUpperCase();
-  const suffix = labelNorm.toUpperCase();
-  return `${base}_${suffix}`;
-}
+import { ENV_VAR_MAP, resolveEnvVar } from "./env-vars.js";
 
 program
   .command("env")
