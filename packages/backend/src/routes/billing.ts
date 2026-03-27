@@ -8,9 +8,9 @@ const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!);
 // --- Tier definitions ---
 
 const TIERS = {
-  starter: { name: 'VaultProof Starter', price: 500, interval: 'month' as const },
-  pro: { name: 'VaultProof Pro', price: 1500, interval: 'month' as const },
-  team: { name: 'VaultProof Team', price: 3900, interval: 'month' as const },
+  starter: { name: 'VaultProof Starter', price: 900, interval: 'month' as const },
+  pro: { name: 'VaultProof Pro', price: 2900, interval: 'month' as const },
+  unlimited: { name: 'VaultProof Unlimited', price: 9900, interval: 'month' as const },
 } as const;
 
 type Tier = keyof typeof TIERS;
@@ -105,7 +105,7 @@ export async function billingRoutes(app: FastifyInstance) {
     async (request, reply) => {
       const { tier } = request.body;
       if (!tier || !TIERS[tier]) {
-        return reply.status(400).send({ error: 'Invalid tier. Must be starter, pro, or team.' });
+        return reply.status(400).send({ error: 'Invalid tier. Must be starter or pro.' });
       }
 
       const userId = request.auth!.userId;

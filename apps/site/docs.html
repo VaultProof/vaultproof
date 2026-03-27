@@ -1894,7 +1894,7 @@ $ vaultproof status</pre>
                             <li class="flex items-start gap-2"><span class="text-vp-accent mt-0.5">&#8226;</span> <span><strong class="text-gray-300">Profile</strong> -- email and account details</span></li>
                             <li class="flex items-start gap-2"><span class="text-vp-accent mt-0.5">&#8226;</span> <span><strong class="text-gray-300">Password</strong> -- change password (requires current password)</span></li>
                             <li class="flex items-start gap-2"><span class="text-vp-accent mt-0.5">&#8226;</span> <span><strong class="text-gray-300">Developer API Keys</strong> -- create, list, and revoke <code class="font-mono text-xs text-vp-accent">vp_live_</code> keys</span></li>
-                            <li class="flex items-start gap-2"><span class="text-vp-accent mt-0.5">&#8226;</span> <span><strong class="text-gray-300">Plan</strong> -- view current tier (Free/Pro/Team/Enterprise) and usage limits</span></li>
+                            <li class="flex items-start gap-2"><span class="text-vp-accent mt-0.5">&#8226;</span> <span><strong class="text-gray-300">Plan</strong> -- view current tier (Free/Starter/Pro) and usage limits</span></li>
                         </ul>
                     </div>
                 </div>
@@ -2505,35 +2505,31 @@ Authorization: Bearer &lt;jwt_token&gt;
                     <h3 class="text-lg font-semibold text-white mb-4">Plan Limits</h3>
                     <div class="bg-vp-surface border border-vp-border rounded-xl overflow-hidden">
                         <table class="doc-table">
-                            <thead><tr><th>Tier</th><th>Price</th><th>Key Slots</th><th>Proxied Calls/mo</th><th>Support</th></tr></thead>
+                            <thead><tr><th>Tier</th><th>Price</th><th>Key Slots</th><th>Proxied Calls/mo</th><th>Dev Keys</th><th>Log Retention</th></tr></thead>
                             <tbody>
                                 <tr>
                                     <td class="text-white">Free</td>
                                     <td>$0</td>
                                     <td>3</td>
                                     <td>1,000</td>
-                                    <td class="text-gray-500">Community</td>
+                                    <td>1</td>
+                                    <td class="text-gray-500">7 days</td>
+                                </tr>
+                                <tr>
+                                    <td class="text-white">Starter</td>
+                                    <td>$9/mo</td>
+                                    <td>10</td>
+                                    <td>25,000</td>
+                                    <td>3</td>
+                                    <td class="text-gray-500">30 days</td>
                                 </tr>
                                 <tr>
                                     <td class="text-vp-accent font-medium">Pro</td>
-                                    <td>$12/mo</td>
-                                    <td>20</td>
-                                    <td>50,000</td>
-                                    <td class="text-gray-500">Email</td>
-                                </tr>
-                                <tr>
-                                    <td class="text-white">Team</td>
-                                    <td>$39/mo</td>
-                                    <td>100</td>
-                                    <td>200,000</td>
-                                    <td class="text-gray-500">Priority</td>
-                                </tr>
-                                <tr>
-                                    <td class="text-white">Enterprise</td>
-                                    <td>Custom</td>
-                                    <td>Unlimited</td>
-                                    <td>Unlimited</td>
-                                    <td class="text-gray-500">Dedicated</td>
+                                    <td>$29/mo</td>
+                                    <td>25</td>
+                                    <td>250,000</td>
+                                    <td>10</td>
+                                    <td class="text-gray-500">90 days</td>
                                 </tr>
                             </tbody>
                         </table>
@@ -2582,7 +2578,7 @@ Authorization: Bearer &lt;jwt_token&gt;
 
                     <div class="endpoint-card">
                         <h4 class="text-white font-semibold mb-2">"What about HIPAA / SOC 2?"</h4>
-                        <p class="text-gray-400 text-sm">Enterprise tier with compliance certifications is coming. The current architecture (encryption at rest, TLS in transit, audit logging, access controls) is designed with compliance in mind. Contact us at <span class="text-vp-accent">team@vaultproof.dev</span> for enterprise inquiries.</p>
+                        <p class="text-gray-400 text-sm">Compliance certifications are on the roadmap. The current architecture (encryption at rest, TLS in transit, audit logging, access controls) is designed with compliance in mind. Contact us at <span class="text-vp-accent">team@vaultproof.dev</span> for compliance inquiries.</p>
                     </div>
 
                     <div class="endpoint-card">

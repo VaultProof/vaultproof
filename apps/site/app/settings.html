@@ -216,40 +216,34 @@
         </div>
 
         <!-- Upgrade tier cards -->
-        <div id="billingUpgradeCards" class="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
+        <div id="billingUpgradeCards" class="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-6">
           <div class="p-4 bg-[#0a0a0f] border border-[#1e1e2e] rounded-xl">
             <div class="text-sm font-semibold text-white mb-1">Starter</div>
-            <div class="text-2xl font-bold text-white mb-1">$5<span class="text-sm font-normal text-gray-500">/mo</span></div>
+            <div class="text-2xl font-bold text-white mb-1">$9<span class="text-sm font-normal text-gray-500">/mo</span></div>
             <ul class="text-xs text-gray-400 space-y-1 mb-4">
-              <li>10,000 API calls/mo</li>
+              <li>25,000 API calls/mo</li>
               <li>10 key slots</li>
-              <li>5 app grants per key</li>
+              <li>3 developer keys</li>
+              <li>30 days log retention</li>
+              <li>Overage $0.50/1K calls</li>
             </ul>
             <button onclick="upgradeTier('starter')" data-tier="starter" class="billing-upgrade-btn w-full px-4 py-2 bg-[#6366f1] hover:bg-[#5558e6] text-white rounded-xl text-sm font-medium transition btn-glow">
               Upgrade
             </button>
           </div>
           <div class="p-4 bg-[#0a0a0f] border border-[#6366f1]/30 rounded-xl ring-1 ring-[#6366f1]/20">
-            <div class="text-sm font-semibold text-white mb-1">Pro <span class="text-xs text-[#6366f1] ml-1">Popular</span></div>
-            <div class="text-2xl font-bold text-white mb-1">$15<span class="text-sm font-normal text-gray-500">/mo</span></div>
+            <div class="text-sm font-semibold text-white mb-1">Pro <span class="text-xs text-[#6366f1] ml-1">Most Popular</span></div>
+            <div class="text-2xl font-bold text-white mb-1">$29<span class="text-sm font-normal text-gray-500">/mo</span></div>
             <ul class="text-xs text-gray-400 space-y-1 mb-4">
-              <li>100,000 API calls/mo</li>
-              <li>30 key slots</li>
-              <li>20 app grants per key</li>
+              <li>250,000 API calls/mo</li>
+              <li>25 key slots</li>
+              <li>10 developer keys</li>
+              <li>90 days log retention</li>
+              <li>IP allowlist, budget caps, usage alerts</li>
+              <li>CSV export</li>
+              <li>Overage $0.30/1K calls</li>
             </ul>
             <button onclick="upgradeTier('pro')" data-tier="pro" class="billing-upgrade-btn w-full px-4 py-2 bg-[#6366f1] hover:bg-[#5558e6] text-white rounded-xl text-sm font-medium transition btn-glow">
-              Upgrade
-            </button>
-          </div>
-          <div class="p-4 bg-[#0a0a0f] border border-[#1e1e2e] rounded-xl">
-            <div class="text-sm font-semibold text-white mb-1">Team</div>
-            <div class="text-2xl font-bold text-white mb-1">$39<span class="text-sm font-normal text-gray-500">/mo</span></div>
-            <ul class="text-xs text-gray-400 space-y-1 mb-4">
-              <li>500,000 API calls/mo</li>
-              <li>100 key slots</li>
-              <li>100 app grants per key</li>
-            </ul>
-            <button onclick="upgradeTier('team')" data-tier="team" class="billing-upgrade-btn w-full px-4 py-2 bg-[#6366f1] hover:bg-[#5558e6] text-white rounded-xl text-sm font-medium transition btn-glow">
               Upgrade
             </button>
           </div>
@@ -1012,8 +1006,6 @@
           free: 'bg-gray-700/30 text-gray-400 border-gray-600/30',
           starter: 'bg-cyan-900/30 text-cyan-400 border-cyan-700/30',
           pro: 'bg-[#6366f1]/15 text-[#6366f1] border-[#6366f1]/30',
-          team: 'bg-purple-900/30 text-purple-400 border-purple-700/30',
-          enterprise: 'bg-amber-900/30 text-amber-400 border-amber-700/30'
         };
         const colorClass = tierColors[currentTier] || tierColors.free;
         badge.className = `inline-flex items-center px-3 py-1 rounded-xl text-sm font-medium capitalize ${colorClass}`;
@@ -1028,10 +1020,8 @@
         }
         const tierLimits = {
           free: { keys: 3, calls: 1000 },
-          starter: { keys: 10, calls: 10000 },
-          pro: { keys: 30, calls: 100000 },
-          team: { keys: 100, calls: 500000 },
-          enterprise: { keys: Infinity, calls: Infinity },
+          starter: { keys: 10, calls: 25000 },
+          pro: { keys: 25, calls: 250000 },
         };
         const limits = tierLimits[currentTier] || tierLimits.free;
         const keysLabel = limits.keys === Infinity ? 'Unlimited' : limits.keys.toLocaleString();
@@ -1042,7 +1032,7 @@
         if (callsUsedEl) callsUsedEl.parentElement.innerHTML = `<span id="callsUsed">${callsUsedEl.textContent}</span> / ${callsLabel}`;
 
         // Update upgrade buttons — hide current tier and below
-        const tierOrder = ['free', 'starter', 'pro', 'team', 'enterprise'];
+        const tierOrder = ['free', 'starter', 'pro'];
         const currentIdx = tierOrder.indexOf(currentTier);
         document.querySelectorAll('.billing-upgrade-btn').forEach(btn => {
           const btnTier = btn.getAttribute('data-tier');
@@ -1061,8 +1051,8 @@
           if (banner) banner.classList.add('hidden');
         }
 
-        // Hide upgrade cards entirely for enterprise
-        if (currentTier === 'enterprise') {
+        // Hide upgrade cards entirely for pro (top tier)
+        if (currentTier === 'pro') {
           document.getElementById('billingUpgradeCards').classList.add('hidden');
         }
 

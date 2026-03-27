@@ -149,7 +149,7 @@ export async function developerKeyRoutes(app: FastifyInstance) {
     // IP allowlist and usage alerts require Pro tier or higher
     const user = await prisma.user.findUnique({ where: { id: userId }, select: { tier: true } });
     const tier = user?.tier || 'free';
-    const proTiers = ['pro', 'team', 'enterprise'];
+    const proTiers = ['pro', 'unlimited'];
     if (!proTiers.includes(tier)) {
       if (parsed.data.allowedIps || parsed.data.alertEmail || parsed.data.alertThreshold) {
         return reply.status(403).send({ error: 'IP allowlist and usage alerts require Pro plan or higher', upgrade: 'https://vaultproof.dev#pricing' });

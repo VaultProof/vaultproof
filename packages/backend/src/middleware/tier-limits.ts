@@ -2,7 +2,7 @@
  * Per-key-slot rate limiting based on pricing tier.
  *
  * Tracks API calls per key slot per calendar month.
- * Enforces limits: Free=1K, Starter=10K, Pro=100K, Team=500K, Enterprise=unlimited.
+ * Enforces limits: Free=1K, Starter=25K, Pro=250K, Unlimited=1M.
  */
 
 import { prisma } from '../lib/prisma.js';
@@ -15,10 +15,9 @@ export interface TierLimits {
 
 const TIERS: Record<string, TierLimits> = {
   free: { maxCallsPerMonth: 1000, maxKeySlots: 3, maxAppGrantsPerKey: 1 },
-  starter: { maxCallsPerMonth: 10000, maxKeySlots: 10, maxAppGrantsPerKey: 5 },
-  pro: { maxCallsPerMonth: 100000, maxKeySlots: 30, maxAppGrantsPerKey: 20 },
-  team: { maxCallsPerMonth: 500000, maxKeySlots: 100, maxAppGrantsPerKey: 100 },
-  enterprise: { maxCallsPerMonth: Infinity, maxKeySlots: Infinity, maxAppGrantsPerKey: Infinity },
+  starter: { maxCallsPerMonth: 25000, maxKeySlots: 10, maxAppGrantsPerKey: 5 },
+  pro: { maxCallsPerMonth: 250000, maxKeySlots: 50, maxAppGrantsPerKey: 20 },
+  unlimited: { maxCallsPerMonth: 1000000, maxKeySlots: 1000, maxAppGrantsPerKey: 100 },
 };
 
 /**
@@ -30,10 +29,6 @@ export async function checkRateLimit(
   tier: string = 'free'
 ): Promise<{ allowed: boolean; used: number; limit: number; remaining: number }> {
   const limits = TIERS[tier] || TIERS.free;
-
-  if (limits.maxCallsPerMonth === Infinity) {
-    return { allowed: true, used: 0, limit: Infinity, remaining: Infinity };
-  }
 
   // Count calls this calendar month
   const now = new Date();

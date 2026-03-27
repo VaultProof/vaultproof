@@ -741,7 +741,6 @@ const res = await vault.proxy(key, '/v1/chat/completions', {
                 <ul class="space-y-2.5 text-sm text-gray-400 mb-6 flex-1">
                     <li class="flex items-center gap-2.5"><svg width="14" height="14" fill="none" stroke="#6366f1" stroke-width="2"><path d="M11.5 3.5L5.25 9.75 2.5 7"/></svg>3 API keys</li>
                     <li class="flex items-center gap-2.5"><svg width="14" height="14" fill="none" stroke="#6366f1" stroke-width="2"><path d="M11.5 3.5L5.25 9.75 2.5 7"/></svg>1,000 calls / month</li>
-                    <li class="flex items-center gap-2.5"><svg width="14" height="14" fill="none" stroke="#6366f1" stroke-width="2"><path d="M11.5 3.5L5.25 9.75 2.5 7"/></svg>1 app grant per key</li>
                     <li class="flex items-center gap-2.5"><svg width="14" height="14" fill="none" stroke="#6366f1" stroke-width="2"><path d="M11.5 3.5L5.25 9.75 2.5 7"/></svg>1 developer key</li>
                     <li class="flex items-center gap-2.5"><svg width="14" height="14" fill="none" stroke="#6366f1" stroke-width="2"><path d="M11.5 3.5L5.25 9.75 2.5 7"/></svg>7 days log retention</li>
                     <li class="flex items-center gap-2.5"><svg width="14" height="14" fill="none" stroke="#6366f1" stroke-width="2"><path d="M11.5 3.5L5.25 9.75 2.5 7"/></svg>SSE streaming</li>
@@ -756,18 +755,17 @@ const res = await vault.proxy(key, '/v1/chat/completions', {
             <div class="bg-vp-surface border border-vp-border rounded-[16px] p-6 card-hover reveal delay-2 flex flex-col">
                 <div class="text-sm font-semibold text-gray-400 mb-2 uppercase tracking-wide">Starter</div>
                 <div class="flex items-baseline gap-1 mb-5">
-                    <span class="text-4xl font-extrabold text-white">$5</span>
+                    <span class="text-4xl font-extrabold text-white">$9</span>
                     <span class="text-gray-500 text-sm">/mo</span>
                 </div>
                 <ul class="space-y-2.5 text-sm text-gray-400 mb-6 flex-1">
                     <li class="flex items-center gap-2.5"><svg width="14" height="14" fill="none" stroke="#6366f1" stroke-width="2"><path d="M11.5 3.5L5.25 9.75 2.5 7"/></svg>10 API keys</li>
-                    <li class="flex items-center gap-2.5"><svg width="14" height="14" fill="none" stroke="#6366f1" stroke-width="2"><path d="M11.5 3.5L5.25 9.75 2.5 7"/></svg>10,000 calls / month</li>
-                    <li class="flex items-center gap-2.5"><svg width="14" height="14" fill="none" stroke="#6366f1" stroke-width="2"><path d="M11.5 3.5L5.25 9.75 2.5 7"/></svg>5 app grants per key</li>
+                    <li class="flex items-center gap-2.5"><svg width="14" height="14" fill="none" stroke="#6366f1" stroke-width="2"><path d="M11.5 3.5L5.25 9.75 2.5 7"/></svg>25,000 calls / month</li>
                     <li class="flex items-center gap-2.5"><svg width="14" height="14" fill="none" stroke="#6366f1" stroke-width="2"><path d="M11.5 3.5L5.25 9.75 2.5 7"/></svg>3 developer keys</li>
                     <li class="flex items-center gap-2.5"><svg width="14" height="14" fill="none" stroke="#6366f1" stroke-width="2"><path d="M11.5 3.5L5.25 9.75 2.5 7"/></svg>30 days log retention</li>
                     <li class="flex items-center gap-2.5"><svg width="14" height="14" fill="none" stroke="#6366f1" stroke-width="2"><path d="M11.5 3.5L5.25 9.75 2.5 7"/></svg>SSE streaming</li>
                     <li class="flex items-center gap-2.5"><svg width="14" height="14" fill="none" stroke="#6366f1" stroke-width="2"><path d="M11.5 3.5L5.25 9.75 2.5 7"/></svg>Shamir + ZK proofs</li>
-                    <li class="flex items-center gap-2.5"><svg width="14" height="14" fill="none" stroke="#6366f1" stroke-width="2"><path d="M11.5 3.5L5.25 9.75 2.5 7"/></svg>$0.50 / 1K overage calls</li>
+                    <li class="flex items-center gap-2.5"><svg width="14" height="14" fill="none" stroke="#6366f1" stroke-width="2"><path d="M11.5 3.5L5.25 9.75 2.5 7"/></svg>Overage $0.50 / 1K calls</li>
                     <li class="flex items-center gap-2.5 text-gray-600"><svg width="14" height="14" fill="none" stroke="#333" stroke-width="2"><path d="M3 7h8"/></svg>No IP allowlist or alerts</li>
                 </ul>
                 <a href="/app/login" class="block text-center border border-vp-border hover:border-gray-500 px-5 py-2.5 rounded-btn font-semibold text-gray-300 transition-all hover:bg-white/[0.02] text-sm">Start Starter</a>
@@ -778,48 +776,39 @@ const res = await vault.proxy(key, '/v1/chat/completions', {
                 <div class="absolute -top-3 left-1/2 -translate-x-1/2 bg-vp-accent text-xs font-bold px-3.5 py-1 rounded-full text-white shadow-lg shadow-vp-accent/20">Most Popular</div>
                 <div class="text-sm font-semibold text-vp-accent mb-2 uppercase tracking-wide">Pro</div>
                 <div class="flex items-baseline gap-1 mb-5">
-                    <span class="text-4xl font-extrabold text-white">$15</span>
+                    <span class="text-4xl font-extrabold text-white">$29</span>
                     <span class="text-gray-500 text-sm">/mo</span>
                 </div>
                 <ul class="space-y-2.5 text-sm text-gray-400 mb-6 flex-1">
-                    <li class="flex items-center gap-2.5"><svg width="14" height="14" fill="none" stroke="#6366f1" stroke-width="2"><path d="M11.5 3.5L5.25 9.75 2.5 7"/></svg>30 API keys</li>
-                    <li class="flex items-center gap-2.5"><svg width="14" height="14" fill="none" stroke="#6366f1" stroke-width="2"><path d="M11.5 3.5L5.25 9.75 2.5 7"/></svg>100,000 calls / month</li>
-                    <li class="flex items-center gap-2.5"><svg width="14" height="14" fill="none" stroke="#6366f1" stroke-width="2"><path d="M11.5 3.5L5.25 9.75 2.5 7"/></svg>20 app grants per key</li>
-                    <li class="flex items-center gap-2.5"><svg width="14" height="14" fill="none" stroke="#6366f1" stroke-width="2"><path d="M11.5 3.5L5.25 9.75 2.5 7"/></svg>10 developer keys</li>
+                    <li class="flex items-center gap-2.5"><svg width="14" height="14" fill="none" stroke="#6366f1" stroke-width="2"><path d="M11.5 3.5L5.25 9.75 2.5 7"/></svg>50 API keys</li>
+                    <li class="flex items-center gap-2.5"><svg width="14" height="14" fill="none" stroke="#6366f1" stroke-width="2"><path d="M11.5 3.5L5.25 9.75 2.5 7"/></svg>250,000 calls / month</li>
+                    <li class="flex items-center gap-2.5"><svg width="14" height="14" fill="none" stroke="#6366f1" stroke-width="2"><path d="M11.5 3.5L5.25 9.75 2.5 7"/></svg>15 developer keys</li>
                     <li class="flex items-center gap-2.5"><svg width="14" height="14" fill="none" stroke="#6366f1" stroke-width="2"><path d="M11.5 3.5L5.25 9.75 2.5 7"/></svg>90 days log retention</li>
-                    <li class="flex items-center gap-2.5"><svg width="14" height="14" fill="none" stroke="#6366f1" stroke-width="2"><path d="M11.5 3.5L5.25 9.75 2.5 7"/></svg>CSV log export</li>
                     <li class="flex items-center gap-2.5"><svg width="14" height="14" fill="none" stroke="#6366f1" stroke-width="2"><path d="M11.5 3.5L5.25 9.75 2.5 7"/></svg>IP allowlist + usage alerts</li>
-                    <li class="flex items-center gap-2.5"><svg width="14" height="14" fill="none" stroke="#6366f1" stroke-width="2"><path d="M11.5 3.5L5.25 9.75 2.5 7"/></svg>$0.30 / 1K overage calls</li>
+                    <li class="flex items-center gap-2.5"><svg width="14" height="14" fill="none" stroke="#6366f1" stroke-width="2"><path d="M11.5 3.5L5.25 9.75 2.5 7"/></svg>Budget caps</li>
+                    <li class="flex items-center gap-2.5"><svg width="14" height="14" fill="none" stroke="#6366f1" stroke-width="2"><path d="M11.5 3.5L5.25 9.75 2.5 7"/></svg>CSV log export</li>
+                    <li class="flex items-center gap-2.5"><svg width="14" height="14" fill="none" stroke="#6366f1" stroke-width="2"><path d="M11.5 3.5L5.25 9.75 2.5 7"/></svg>Overage $0.30 / 1K calls</li>
                 </ul>
                 <a href="/app/login" class="block text-center bg-vp-accent hover:bg-indigo-500 px-5 py-2.5 rounded-btn font-semibold text-white transition-all btn-glow text-sm">Start Pro</a>
             </div>
 
-            <!-- Team -->
+            <!-- Unlimited -->
             <div class="bg-vp-surface border border-vp-border rounded-[16px] p-6 card-hover reveal delay-4 flex flex-col">
-                <div class="text-sm font-semibold text-gray-400 mb-2 uppercase tracking-wide">Team</div>
+                <div class="text-sm font-semibold text-gray-400 mb-2 uppercase tracking-wide">Unlimited</div>
                 <div class="flex items-baseline gap-1 mb-5">
-                    <span class="text-4xl font-extrabold text-white">$39</span>
+                    <span class="text-4xl font-extrabold text-white">$99</span>
                     <span class="text-gray-500 text-sm">/mo</span>
                 </div>
                 <ul class="space-y-2.5 text-sm text-gray-400 mb-6 flex-1">
-                    <li class="flex items-center gap-2.5"><svg width="14" height="14" fill="none" stroke="#6366f1" stroke-width="2"><path d="M11.5 3.5L5.25 9.75 2.5 7"/></svg>100 API keys</li>
-                    <li class="flex items-center gap-2.5"><svg width="14" height="14" fill="none" stroke="#6366f1" stroke-width="2"><path d="M11.5 3.5L5.25 9.75 2.5 7"/></svg>500,000 calls / month</li>
-                    <li class="flex items-center gap-2.5"><svg width="14" height="14" fill="none" stroke="#6366f1" stroke-width="2"><path d="M11.5 3.5L5.25 9.75 2.5 7"/></svg>100 app grants per key</li>
-                    <li class="flex items-center gap-2.5"><svg width="14" height="14" fill="none" stroke="#6366f1" stroke-width="2"><path d="M11.5 3.5L5.25 9.75 2.5 7"/></svg>25 developer keys</li>
-                    <li class="flex items-center gap-2.5"><svg width="14" height="14" fill="none" stroke="#6366f1" stroke-width="2"><path d="M11.5 3.5L5.25 9.75 2.5 7"/></svg>IP allowlist + usage alerts</li>
-                    <li class="flex items-center gap-2.5"><svg width="14" height="14" fill="none" stroke="#6366f1" stroke-width="2"><path d="M11.5 3.5L5.25 9.75 2.5 7"/></svg>1 year log retention</li>
-                    <li class="flex items-center gap-2.5"><svg width="14" height="14" fill="none" stroke="#6366f1" stroke-width="2"><path d="M11.5 3.5L5.25 9.75 2.5 7"/></svg>CSV export + priority support</li>
-                    <li class="flex items-center gap-2.5"><svg width="14" height="14" fill="none" stroke="#6366f1" stroke-width="2"><path d="M11.5 3.5L5.25 9.75 2.5 7"/></svg>$0.15 / 1K overage calls</li>
+                    <li class="flex items-center gap-2.5"><svg width="14" height="14" fill="none" stroke="#6366f1" stroke-width="2"><path d="M11.5 3.5L5.25 9.75 2.5 7"/></svg>Unlimited API keys</li>
+                    <li class="flex items-center gap-2.5"><svg width="14" height="14" fill="none" stroke="#6366f1" stroke-width="2"><path d="M11.5 3.5L5.25 9.75 2.5 7"/></svg>Unlimited calls / month</li>
+                    <li class="flex items-center gap-2.5"><svg width="14" height="14" fill="none" stroke="#6366f1" stroke-width="2"><path d="M11.5 3.5L5.25 9.75 2.5 7"/></svg>100 developer keys</li>
+                    <li class="flex items-center gap-2.5"><svg width="14" height="14" fill="none" stroke="#6366f1" stroke-width="2"><path d="M11.5 3.5L5.25 9.75 2.5 7"/></svg>Everything in Pro</li>
+                    <li class="flex items-center gap-2.5"><svg width="14" height="14" fill="none" stroke="#6366f1" stroke-width="2"><path d="M11.5 3.5L5.25 9.75 2.5 7"/></svg>Priority support</li>
+                    <li class="flex items-center gap-2.5"><svg width="14" height="14" fill="none" stroke="#6366f1" stroke-width="2"><path d="M11.5 3.5L5.25 9.75 2.5 7"/></svg>No overage charges</li>
                 </ul>
-                <a href="/app/login" class="block text-center border border-vp-border hover:border-gray-500 px-5 py-2.5 rounded-btn font-semibold text-gray-300 transition-all hover:bg-white/[0.02] text-sm">Start Team</a>
+                <a href="/app/login" class="block text-center border border-vp-border hover:border-gray-500 px-5 py-2.5 rounded-btn font-semibold text-gray-300 transition-all hover:bg-white/[0.02] text-sm">Go Unlimited</a>
             </div>
-        </div>
-
-        <!-- Enterprise -->
-        <div class="bg-vp-surface border border-vp-border rounded-[16px] p-8 max-w-2xl mx-auto text-center reveal delay-5">
-            <div class="text-sm font-semibold text-gray-400 mb-2 uppercase tracking-wide">Enterprise</div>
-            <p class="text-gray-400 text-sm mb-4">Unlimited keys, unlimited calls, SSO, SLA, TEE option, dedicated proxy, SOC 2 report.</p>
-            <a href="mailto:hello@vaultproof.dev" class="inline-block border border-vp-border hover:border-gray-500 px-6 py-2.5 rounded-btn font-semibold text-gray-300 transition-all hover:bg-white/[0.02] text-sm">Contact Sales</a>
         </div>
 
     </section>
