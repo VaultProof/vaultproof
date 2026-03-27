@@ -1,0 +1,429 @@
+<!DOCTYPE html>
+<html lang="en" class="scroll-smooth">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Changelog | VaultProof</title>
+    <meta name="description" content="What's new in VaultProof. See the latest features, improvements, and updates to the zero-knowledge API key vault.">
+    <meta name="keywords" content="VaultProof changelog, VaultProof updates, API key security updates, new features, release notes">
+    <meta property="og:title" content="Changelog — VaultProof">
+    <meta property="og:description" content="What's new in VaultProof. See the latest features, improvements, and updates.">
+    <meta property="og:url" content="https://vaultproof.dev/changelog">
+    <meta property="og:type" content="website">
+    <meta property="og:image" content="https://vaultproof.dev/logo-lg.png">
+    <meta name="twitter:card" content="summary">
+    <meta name="twitter:title" content="Changelog — VaultProof">
+    <meta name="twitter:description" content="What's new in VaultProof. See the latest features and updates.">
+    <meta http-equiv="X-Content-Type-Options" content="nosniff">
+    <meta http-equiv="X-Frame-Options" content="DENY">
+    <meta name="referrer" content="strict-origin-when-cross-origin">
+
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        'vp-bg': '#0a0a0f',
+                        'vp-surface': '#111118',
+                        'vp-border': '#1e1e2e',
+                        'vp-accent': '#6366f1',
+                        'vp-cyan': '#06b6d4',
+                    },
+                    fontFamily: {
+                        sans: ['Inter', 'system-ui', 'sans-serif'],
+                        mono: ['JetBrains Mono', 'monospace'],
+                    },
+                    borderRadius: {
+                        'card': '12px',
+                        'btn': '12px',
+                    }
+                }
+            }
+        }
+    </script>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
+
+    <style>
+        * { font-family: 'Inter', system-ui, sans-serif; }
+        ::selection { background: #6366f1; color: #fff; }
+        body { background: #0a0a0f; }
+
+        /* Animated gradient orbs */
+        .orb {
+            position: fixed;
+            border-radius: 50%;
+            filter: blur(120px);
+            pointer-events: none;
+            z-index: 0;
+            will-change: transform;
+        }
+        .orb-1 {
+            width: 600px; height: 600px;
+            background: radial-gradient(circle, rgba(99,102,241,0.25) 0%, transparent 70%);
+            top: -10%; left: -5%;
+            animation: drift1 25s ease-in-out infinite;
+        }
+        .orb-2 {
+            width: 500px; height: 500px;
+            background: radial-gradient(circle, rgba(99,102,241,0.18) 0%, transparent 70%);
+            top: 40%; right: -10%;
+            animation: drift2 30s ease-in-out infinite;
+        }
+        @keyframes drift1 {
+            0%, 100% { transform: translate(0, 0) scale(1); }
+            33% { transform: translate(80px, 60px) scale(1.1); }
+            66% { transform: translate(-40px, 30px) scale(0.95); }
+        }
+        @keyframes drift2 {
+            0%, 100% { transform: translate(0, 0) scale(1); }
+            33% { transform: translate(-60px, -40px) scale(1.05); }
+            66% { transform: translate(50px, -80px) scale(0.9); }
+        }
+
+        /* Indigo glow button */
+        .btn-glow {
+            box-shadow: 0 0 20px rgba(99,102,241,0.3), 0 0 60px rgba(99,102,241,0.1);
+            transition: all 0.3s ease;
+        }
+        .btn-glow:hover {
+            box-shadow: 0 0 30px rgba(99,102,241,0.5), 0 0 80px rgba(99,102,241,0.2);
+            transform: translateY(-1px);
+        }
+
+        /* Card hover lift */
+        .card-hover {
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+        .card-hover:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 12px 40px rgba(0,0,0,0.3);
+        }
+
+        /* Scroll animations */
+        .reveal {
+            opacity: 0;
+            transform: translateY(30px);
+            transition: opacity 0.7s ease, transform 0.7s ease;
+        }
+        .reveal.visible {
+            opacity: 1;
+            transform: translateY(0);
+        }
+        .reveal.delay-1 { transition-delay: 0.1s; }
+        .reveal.delay-2 { transition-delay: 0.2s; }
+        .reveal.delay-3 { transition-delay: 0.3s; }
+
+        /* Mobile nav */
+        .mobile-menu { display: none; }
+        .mobile-menu.open { display: flex; }
+
+        /* Scrollbar */
+        ::-webkit-scrollbar { width: 8px; }
+        ::-webkit-scrollbar-track { background: #0a0a0f; }
+        ::-webkit-scrollbar-thumb { background: #1e1e2e; border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: #2e2e3e; }
+    </style>
+</head>
+<body class="text-gray-300 min-h-screen relative overflow-x-hidden">
+
+    <!-- Animated background orbs -->
+    <div class="orb orb-1"></div>
+    <div class="orb orb-2"></div>
+
+    <!-- Nav -->
+    <nav class="relative z-10 border-b border-vp-border/50 backdrop-blur-sm bg-vp-bg/80 sticky top-0">
+        <div class="flex items-center justify-between px-6 py-4 max-w-6xl mx-auto">
+            <a href="/" class="flex items-center gap-2.5">
+                <img src="/logo-sm.png" alt="VaultProof" width="28" height="28" />
+                <span class="text-lg font-bold text-white tracking-tight" style="font-family:'Space Grotesk',sans-serif">VaultProof</span>
+            </a>
+
+            <!-- Desktop links -->
+            <div class="hidden md:flex items-center gap-8">
+                <a href="/docs" class="text-sm text-gray-400 hover:text-white transition-colors">Docs</a>
+                <a href="/guides" class="text-sm text-gray-400 hover:text-white transition-colors">Guides</a>
+                <a href="/compare" class="text-sm text-gray-400 hover:text-white transition-colors">Compare</a>
+                <a href="/blog" class="text-sm text-gray-400 hover:text-white transition-colors">Blog</a>
+                <a href="/#pricing" class="text-sm text-gray-400 hover:text-white transition-colors">Pricing</a>
+                <a href="/app/login" class="text-sm text-gray-400 hover:text-white transition-colors">Dashboard</a>
+                <a href="/app/login" class="bg-vp-accent hover:bg-indigo-500 text-sm px-5 py-2 rounded-btn font-semibold text-white transition-all btn-glow">Get Started</a>
+            </div>
+
+            <!-- Mobile hamburger -->
+            <button id="mobileToggle" class="md:hidden text-gray-400 hover:text-white" aria-label="Toggle menu">
+                <svg width="24" height="24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 6h16M4 12h16M4 18h16"/></svg>
+            </button>
+        </div>
+
+        <!-- Mobile menu -->
+        <div id="mobileMenu" class="mobile-menu flex-col gap-4 px-6 pb-6 md:hidden bg-vp-bg/95 backdrop-blur-sm">
+            <a href="/docs" class="text-sm text-gray-400 hover:text-white transition-colors py-1">Docs</a>
+            <a href="/guides" class="text-sm text-gray-400 hover:text-white transition-colors py-1">Guides</a>
+            <a href="/compare" class="text-sm text-gray-400 hover:text-white transition-colors py-1">Compare</a>
+            <a href="/blog" class="text-sm text-gray-400 hover:text-white transition-colors py-1">Blog</a>
+            <a href="/#pricing" class="text-sm text-gray-400 hover:text-white transition-colors py-1">Pricing</a>
+            <a href="/app/login" class="text-sm text-gray-400 hover:text-white transition-colors py-1">Dashboard</a>
+            <a href="/app/login" class="bg-vp-accent hover:bg-indigo-500 text-sm px-5 py-2.5 rounded-btn font-semibold text-white transition-all text-center btn-glow mt-2">Get Started</a>
+        </div>
+    </nav>
+
+    <!-- Header -->
+    <section class="relative z-10 max-w-3xl mx-auto px-6 pt-24 pb-12">
+        <div class="text-center reveal">
+            <h1 class="text-4xl md:text-5xl font-bold text-white mb-4" style="font-family:'Space Grotesk',sans-serif">Changelog</h1>
+            <p class="text-lg text-gray-400">What's new in VaultProof</p>
+        </div>
+    </section>
+
+    <!-- Changelog Entries -->
+    <section class="relative z-10 max-w-3xl mx-auto px-6 pb-24">
+
+        <!-- Month heading -->
+        <div class="mb-8 reveal delay-1">
+            <h2 class="text-xl font-bold text-white mb-6" style="font-family:'Space Grotesk',sans-serif">March 2026</h2>
+            <div class="space-y-4">
+
+                <div class="bg-vp-surface border border-vp-border rounded-2xl p-6 card-hover reveal delay-1">
+                    <div class="flex items-start gap-4">
+                        <span class="shrink-0 text-xs font-medium text-vp-accent bg-vp-accent/10 px-3 py-1 rounded-full mt-0.5">Mar 26</span>
+                        <div>
+                            <h3 class="text-base font-semibold text-white mb-1">Per-key budget caps</h3>
+                            <p class="text-sm text-gray-400 leading-relaxed">Set daily and monthly call limits on each stored key. Protect against runaway costs.</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="bg-vp-surface border border-vp-border rounded-2xl p-6 card-hover reveal delay-1">
+                    <div class="flex items-start gap-4">
+                        <span class="shrink-0 text-xs font-medium text-vp-accent bg-vp-accent/10 px-3 py-1 rounded-full mt-0.5">Mar 24</span>
+                        <div>
+                            <h3 class="text-base font-semibold text-white mb-1">Provider fallback</h3>
+                            <p class="text-sm text-gray-400 leading-relaxed">If OpenAI returns 500, VaultProof auto-retries with Groq or Together.</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="bg-vp-surface border border-vp-border rounded-2xl p-6 card-hover reveal delay-1">
+                    <div class="flex items-start gap-4">
+                        <span class="shrink-0 text-xs font-medium text-vp-accent bg-vp-accent/10 px-3 py-1 rounded-full mt-0.5">Mar 22</span>
+                        <div>
+                            <h3 class="text-base font-semibold text-white mb-1">.env import</h3>
+                            <p class="text-sm text-gray-400 leading-relaxed">Drag and drop your .env file. VaultProof detects all API keys and imports them in one click.</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="bg-vp-surface border border-vp-border rounded-2xl p-6 card-hover reveal delay-2">
+                    <div class="flex items-start gap-4">
+                        <span class="shrink-0 text-xs font-medium text-vp-accent bg-vp-accent/10 px-3 py-1 rounded-full mt-0.5">Mar 20</span>
+                        <div>
+                            <h3 class="text-base font-semibold text-white mb-1">Annual pricing</h3>
+                            <p class="text-sm text-gray-400 leading-relaxed">Save 17% with annual billing. Monthly/annual toggle on pricing page.</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="bg-vp-surface border border-vp-border rounded-2xl p-6 card-hover reveal delay-2">
+                    <div class="flex items-start gap-4">
+                        <span class="shrink-0 text-xs font-medium text-vp-accent bg-vp-accent/10 px-3 py-1 rounded-full mt-0.5">Mar 19</span>
+                        <div>
+                            <h3 class="text-base font-semibold text-white mb-1">Overage billing</h3>
+                            <p class="text-sm text-gray-400 leading-relaxed">Paid tiers continue working past limits. Free tier blocks at limit.</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="bg-vp-surface border border-vp-border rounded-2xl p-6 card-hover reveal delay-2">
+                    <div class="flex items-start gap-4">
+                        <span class="shrink-0 text-xs font-medium text-vp-accent bg-vp-accent/10 px-3 py-1 rounded-full mt-0.5">Mar 18</span>
+                        <div>
+                            <h3 class="text-base font-semibold text-white mb-1">11 providers</h3>
+                            <p class="text-sm text-gray-400 leading-relaxed">OpenAI, Anthropic, Google, Groq, Mistral, Together, Cohere, Perplexity, Fireworks, DeepSeek, Replicate.</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="bg-vp-surface border border-vp-border rounded-2xl p-6 card-hover reveal delay-2">
+                    <div class="flex items-start gap-4">
+                        <span class="shrink-0 text-xs font-medium text-vp-accent bg-vp-accent/10 px-3 py-1 rounded-full mt-0.5">Mar 16</span>
+                        <div>
+                            <h3 class="text-base font-semibold text-white mb-1">Environment injection</h3>
+                            <p class="text-sm text-gray-400 leading-relaxed"><code class="text-indigo-400 bg-vp-bg px-1.5 py-0.5 rounded text-xs">vaultproof env</code> and <code class="text-indigo-400 bg-vp-bg px-1.5 py-0.5 rounded text-xs">vaultproof exec</code> work with ANY SDK (Stripe, AWS, Twilio).</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="bg-vp-surface border border-vp-border rounded-2xl p-6 card-hover reveal delay-3">
+                    <div class="flex items-start gap-4">
+                        <span class="shrink-0 text-xs font-medium text-vp-accent bg-vp-accent/10 px-3 py-1 rounded-full mt-0.5">Mar 14</span>
+                        <div>
+                            <h3 class="text-base font-semibold text-white mb-1">Transparent proxy</h3>
+                            <p class="text-sm text-gray-400 leading-relaxed">Change your base URL, keep your SDK. One line change.</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="bg-vp-surface border border-vp-border rounded-2xl p-6 card-hover reveal delay-3">
+                    <div class="flex items-start gap-4">
+                        <span class="shrink-0 text-xs font-medium text-vp-accent bg-vp-accent/10 px-3 py-1 rounded-full mt-0.5">Mar 12</span>
+                        <div>
+                            <h3 class="text-base font-semibold text-white mb-1">Chrome + Safari extensions</h3>
+                            <p class="text-sm text-gray-400 leading-relaxed">Auto-detect API keys on provider pages, store with one click.</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="bg-vp-surface border border-vp-border rounded-2xl p-6 card-hover reveal delay-3">
+                    <div class="flex items-start gap-4">
+                        <span class="shrink-0 text-xs font-medium text-vp-accent bg-vp-accent/10 px-3 py-1 rounded-full mt-0.5">Mar 10</span>
+                        <div>
+                            <h3 class="text-base font-semibold text-white mb-1">GitHub + Google OAuth</h3>
+                            <p class="text-sm text-gray-400 leading-relaxed">Sign in with GitHub or Google. No password needed.</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="bg-vp-surface border border-vp-border rounded-2xl p-6 card-hover reveal delay-3">
+                    <div class="flex items-start gap-4">
+                        <span class="shrink-0 text-xs font-medium text-vp-accent bg-vp-accent/10 px-3 py-1 rounded-full mt-0.5">Mar 8</span>
+                        <div>
+                            <h3 class="text-base font-semibold text-white mb-1">Developer webhooks</h3>
+                            <p class="text-sm text-gray-400 leading-relaxed">HMAC-signed POST notifications for key events.</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="bg-vp-surface border border-vp-border rounded-2xl p-6 card-hover reveal delay-3">
+                    <div class="flex items-start gap-4">
+                        <span class="shrink-0 text-xs font-medium text-vp-accent bg-vp-accent/10 px-3 py-1 rounded-full mt-0.5">Mar 7</span>
+                        <div>
+                            <h3 class="text-base font-semibold text-white mb-1">IP allowlist + usage alerts</h3>
+                            <p class="text-sm text-gray-400 leading-relaxed">Restrict keys by IP, get notified on unusual usage (Pro+).</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="bg-vp-surface border border-vp-border rounded-2xl p-6 card-hover reveal delay-3">
+                    <div class="flex items-start gap-4">
+                        <span class="shrink-0 text-xs font-medium text-vp-accent bg-vp-accent/10 px-3 py-1 rounded-full mt-0.5">Mar 6</span>
+                        <div>
+                            <h3 class="text-base font-semibold text-white mb-1">Email notifications</h3>
+                            <p class="text-sm text-gray-400 leading-relaxed">Welcome emails, usage alerts, key expiry warnings, invalid key alerts.</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="bg-vp-surface border border-vp-border rounded-2xl p-6 card-hover reveal delay-3">
+                    <div class="flex items-start gap-4">
+                        <span class="shrink-0 text-xs font-medium text-vp-accent bg-vp-accent/10 px-3 py-1 rounded-full mt-0.5">Mar 5</span>
+                        <div>
+                            <h3 class="text-base font-semibold text-white mb-1">Stripe billing</h3>
+                            <p class="text-sm text-gray-400 leading-relaxed">4 tiers: Free, Starter $9, Pro $29, Max $99.</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="bg-vp-surface border border-vp-border rounded-2xl p-6 card-hover reveal delay-3">
+                    <div class="flex items-start gap-4">
+                        <span class="shrink-0 text-xs font-medium text-vp-accent bg-vp-accent/10 px-3 py-1 rounded-full mt-0.5">Mar 4</span>
+                        <div>
+                            <h3 class="text-base font-semibold text-white mb-1">Blog</h3>
+                            <p class="text-sm text-gray-400 leading-relaxed">SEO articles on API key security and vibe coding.</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="bg-vp-surface border border-vp-border rounded-2xl p-6 card-hover reveal delay-3">
+                    <div class="flex items-start gap-4">
+                        <span class="shrink-0 text-xs font-medium text-vp-accent bg-vp-accent/10 px-3 py-1 rounded-full mt-0.5">Mar 3</span>
+                        <div>
+                            <h3 class="text-base font-semibold text-white mb-1">Comparison page</h3>
+                            <p class="text-sm text-gray-400 leading-relaxed">VaultProof vs HashiCorp Vault, 1Password, AWS, Doppler, Infisical.</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="bg-vp-surface border border-vp-border rounded-2xl p-6 card-hover reveal delay-3">
+                    <div class="flex items-start gap-4">
+                        <span class="shrink-0 text-xs font-medium text-vp-accent bg-vp-accent/10 px-3 py-1 rounded-full mt-0.5">Mar 2</span>
+                        <div>
+                            <h3 class="text-base font-semibold text-white mb-1">Security audits</h3>
+                            <p class="text-sm text-gray-400 leading-relaxed">3 audits completed, 62+ tests passing.</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="bg-vp-surface border border-vp-accent/30 rounded-2xl p-6 card-hover reveal delay-3">
+                    <div class="flex items-start gap-4">
+                        <span class="shrink-0 text-xs font-bold text-white bg-vp-accent px-3 py-1 rounded-full mt-0.5">Mar 1</span>
+                        <div>
+                            <h3 class="text-base font-semibold text-white mb-1">Launch</h3>
+                            <p class="text-sm text-gray-400 leading-relaxed">VaultProof goes live at vaultproof.dev.</p>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="relative z-10 border-t border-vp-border">
+        <div class="max-w-5xl mx-auto px-6 py-12">
+            <div class="flex flex-col md:flex-row items-center justify-between gap-6">
+                <div class="flex flex-col items-center md:items-start gap-2">
+                    <div class="flex items-center gap-2.5">
+                        <svg width="22" height="22" viewBox="0 0 28 28" fill="none"><rect width="28" height="28" rx="6" fill="#6366f1" fill-opacity="0.15"/><path d="M8 8L14 4L20 8V16L14 20L8 16V8Z" stroke="#6366f1" stroke-width="1.5" fill="none"/><path d="M14 10V15" stroke="#6366f1" stroke-width="1.5" stroke-linecap="round"/><circle cx="14" cy="17" r="1" fill="#6366f1"/></svg>
+                        <span class="text-sm font-bold text-white">VaultProof</span>
+                        <span class="text-xs text-gray-600">by Rial Labs</span>
+                    </div>
+                    <p class="text-xs text-gray-600">Built for developers who refuse to trust blindly.</p>
+                </div>
+                <div class="flex items-center gap-8 flex-wrap justify-center">
+                    <a href="/docs" class="text-sm text-gray-500 hover:text-white transition-colors">Docs</a>
+                    <a href="/guides" class="text-sm text-gray-500 hover:text-white transition-colors">Guides</a>
+                    <a href="/compare" class="text-sm text-gray-500 hover:text-white transition-colors">Compare</a>
+                    <a href="/changelog" class="text-sm text-gray-500 hover:text-white transition-colors">Changelog</a>
+                    <a href="/verify" class="text-sm text-gray-500 hover:text-white transition-colors">Verify</a>
+                    <a href="/app/login" class="text-sm text-gray-500 hover:text-white transition-colors">Dashboard</a>
+                    <a href="https://github.com/windsurftemplate/vaultproof" target="_blank" rel="noopener" class="text-sm text-gray-500 hover:text-white transition-colors">GitHub</a>
+                    <a href="/terms" class="text-sm text-gray-500 hover:text-white transition-colors">Terms</a>
+                    <a href="/privacy" class="text-sm text-gray-500 hover:text-white transition-colors">Privacy</a>
+                </div>
+            </div>
+        </div>
+    </footer>
+
+    <script>
+        // Mobile menu toggle
+        document.getElementById('mobileToggle').addEventListener('click', function() {
+            document.getElementById('mobileMenu').classList.toggle('open');
+        });
+
+        // Scroll reveal with IntersectionObserver
+        var revealObserver = new IntersectionObserver(function(entries) {
+            entries.forEach(function(entry) {
+                if (entry.isIntersecting) {
+                    entry.target.classList.add('visible');
+                    revealObserver.unobserve(entry.target);
+                }
+            });
+        }, { threshold: 0.1 });
+
+        document.querySelectorAll('.reveal').forEach(function(el) {
+            revealObserver.observe(el);
+        });
+
+        // Close mobile menu on link click
+        document.querySelectorAll('#mobileMenu a').forEach(function(link) {
+            link.addEventListener('click', function() {
+                document.getElementById('mobileMenu').classList.remove('open');
+            });
+        });
+    </script>
+</body>
+</html>

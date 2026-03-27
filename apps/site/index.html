@@ -722,6 +722,36 @@ const res = await vault.proxy(key, '/v1/chat/completions', {
         </div>
     </section>
 
+    <!-- Live Demo -->
+    <section class="relative z-10 max-w-3xl mx-auto px-6 py-24">
+        <div class="text-center mb-10 reveal">
+            <h2 class="text-3xl font-bold text-white mb-4" style="font-family:'Space Grotesk',sans-serif">See it in action</h2>
+            <p class="text-gray-400">Paste any text below and watch it get split into two shares. Neither share alone reveals anything.</p>
+        </div>
+        <div class="bg-vp-surface border border-vp-border rounded-2xl p-8 reveal delay-1">
+            <div class="mb-4">
+                <label class="text-sm text-gray-400 mb-2 block">Your secret (try an API key):</label>
+                <input type="text" id="demoInput" placeholder="sk-proj-abc123xyz789..." class="w-full bg-[#0a0a0f] border border-[#1e1e2e] rounded-xl px-4 py-3 text-sm text-white font-mono placeholder-gray-600 focus:border-[#6366f1] focus:outline-none" oninput="runDemo()">
+            </div>
+            <div id="demoOutput" class="hidden">
+                <div class="grid md:grid-cols-2 gap-4 mb-4">
+                    <div>
+                        <div class="text-xs text-gray-500 mb-1">Share 1 (stored on server)</div>
+                        <div id="demoShare1" class="bg-[#0a0a0f] border border-[#1e1e2e] rounded-xl px-4 py-3 text-xs text-indigo-400 font-mono break-all min-h-[60px]"></div>
+                    </div>
+                    <div>
+                        <div class="text-xs text-gray-500 mb-1">Share 2 (encrypted with your key)</div>
+                        <div id="demoShare2" class="bg-[#0a0a0f] border border-[#1e1e2e] rounded-xl px-4 py-3 text-xs text-indigo-400 font-mono break-all min-h-[60px]"></div>
+                    </div>
+                </div>
+                <div class="text-center">
+                    <p class="text-xs text-gray-500">Each share alone is random garbage. Both are needed to reconstruct your secret.</p>
+                    <p class="text-xs text-gray-600 mt-1">This runs entirely in your browser — nothing is sent to any server.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
     <!-- Pricing -->
     <section id="pricing" class="relative z-10 max-w-6xl mx-auto px-6 py-24">
         <div class="text-center mb-16">
@@ -918,6 +948,7 @@ const res = await vault.proxy(key, '/v1/chat/completions', {
                     <a href="/docs" class="text-sm text-gray-500 hover:text-white transition-colors">Docs</a>
                     <a href="/guides" class="text-sm text-gray-500 hover:text-white transition-colors">Guides</a>
                     <a href="/compare" class="text-sm text-gray-500 hover:text-white transition-colors">Compare</a>
+                    <a href="/changelog" class="text-sm text-gray-500 hover:text-white transition-colors">Changelog</a>
                     <a href="/verify" class="text-sm text-gray-500 hover:text-white transition-colors">Verify</a>
                     <a href="/app/login" class="text-sm text-gray-500 hover:text-white transition-colors">Dashboard</a>
                     <a href="https://github.com/windsurftemplate/vaultproof" target="_blank" rel="noopener" class="text-sm text-gray-500 hover:text-white transition-colors">GitHub</a>
@@ -1100,6 +1131,41 @@ const res = await vault.proxy(key, '/v1/chat/completions', {
         document.getElementById('ctaEmail').addEventListener('keydown', function(e) {
             if (e.key === 'Enter') handleCTA();
         });
+
+        // Demo Shamir split (runs in browser only)
+        var DEMO_EXP = new Uint8Array(256);
+        var DEMO_LOG = new Uint8Array(256);
+        (function() {
+            var x = 1;
+            for (var i = 0; i < 256; i++) {
+                DEMO_EXP[i] = x;
+                DEMO_LOG[x] = i;
+                x = x ^ (x << 1);
+                if (x >= 256) x ^= 0x11d;
+            }
+            DEMO_LOG[0] = 0;
+        })();
+
+        function runDemo() {
+            var input = document.getElementById('demoInput').value;
+            var output = document.getElementById('demoOutput');
+            if (!input || input.length < 3) { output.classList.add('hidden'); return; }
+            output.classList.remove('hidden');
+
+            var encoder = new TextEncoder();
+            var bytes = encoder.encode(input);
+            var share1 = [];
+            var share2 = [];
+
+            for (var i = 0; i < bytes.length; i++) {
+                var rand = crypto.getRandomValues(new Uint8Array(1))[0];
+                share1.push(rand);
+                share2.push(bytes[i] ^ rand);
+            }
+
+            document.getElementById('demoShare1').textContent = btoa(String.fromCharCode.apply(null, share1));
+            document.getElementById('demoShare2').textContent = btoa(String.fromCharCode.apply(null, share2));
+        }
 
         // Close mobile menu on anchor click
         document.querySelectorAll('#mobileMenu a').forEach(function(link) {
