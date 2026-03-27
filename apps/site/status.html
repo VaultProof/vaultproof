@@ -313,147 +313,131 @@
             <h2 class="text-lg font-bold text-white mb-1" style="font-family:'Space Grotesk',sans-serif">Global API Traffic</h2>
             <p class="text-xs text-gray-500 mb-6">Requests are routed through 330+ Cloudflare edge locations worldwide</p>
 
-            <div class="relative w-full overflow-hidden rounded-lg" style="background: #0d0d14; padding: 1.5rem;">
-                <div id="mapContainer" style="width:100%; height: 340px; position: relative;"></div>
+            <div class="relative w-full overflow-hidden rounded-lg" style="background: #0d0d14;">
+                <canvas id="mapCanvas" style="width:100%; height: 380px; display: block;"></canvas>
             </div>
-            <script src="https://cdn.jsdelivr.net/npm/chart.js@4"></script>
-            <script src="https://cdn.jsdelivr.net/npm/chartjs-chart-geo@4/build/index.umd.min.js"></script>
+            <script src="https://cdn.jsdelivr.net/npm/topojson-client@3/dist/topojson-client.min.js"></script>
             <script>
             (async () => {
-                // Load world topology
-                const res = await fetch('https://cdn.jsdelivr.net/npm/world-atlas@2/countries-110m.json');
-                const world = await res.json();
-                const countries = ChartGeo.topojson.feature(world, world.objects.countries).features;
+                const canvas = document.getElementById('mapCanvas');
+                const ctx = canvas.getContext('2d');
 
-                const canvas = document.createElement('canvas');
-                canvas.style.width = '100%';
-                canvas.style.height = '100%';
-                document.getElementById('mapContainer').appendChild(canvas);
+                // Hi-DPI support
+                const dpr = window.devicePixelRatio || 1;
+                const rect = canvas.getBoundingClientRect();
+                canvas.width = rect.width * dpr;
+                canvas.height = rect.height * dpr;
+                ctx.scale(dpr, dpr);
+                const W = rect.width, H = rect.height;
 
-                // Cloudflare's 330+ edge locations (approximate coordinates)
-                const cfNodes = [
-                    // North America (60+)
-                    {lat:37.77,lng:-122.42},{lat:34.05,lng:-118.24},{lat:47.61,lng:-122.33},{lat:33.45,lng:-112.07},
-                    {lat:39.74,lng:-104.99},{lat:32.78,lng:-96.80},{lat:29.76,lng:-95.37},{lat:30.27,lng:-97.74},
-                    {lat:41.88,lng:-87.63},{lat:42.36,lng:-71.06},{lat:40.71,lng:-74.01},{lat:38.91,lng:-77.04},
-                    {lat:25.76,lng:-80.19},{lat:33.75,lng:-84.39},{lat:35.23,lng:-80.84},{lat:36.17,lng:-115.14},
-                    {lat:44.98,lng:-93.27},{lat:39.10,lng:-94.58},{lat:29.95,lng:-90.07},{lat:43.65,lng:-79.38},
-                    {lat:45.50,lng:-73.57},{lat:49.28,lng:-123.12},{lat:51.05,lng:-114.07},{lat:53.55,lng:-113.49},
-                    {lat:19.43,lng:-99.13},{lat:20.63,lng:-87.08},{lat:14.64,lng:-90.51},{lat:9.93,lng:-84.09},
-                    {lat:8.98,lng:-79.52},{lat:18.47,lng:-69.90},{lat:18.11,lng:-77.30},{lat:10.50,lng:-66.92},
-                    {lat:32.32,lng:-64.76},{lat:21.31,lng:-157.86},{lat:61.22,lng:-149.90},{lat:46.81,lng:-71.21},
-                    // Europe (70+)
-                    {lat:51.51,lng:-0.13},{lat:48.86,lng:2.35},{lat:52.52,lng:13.41},{lat:50.11,lng:8.68},
-                    {lat:48.14,lng:11.58},{lat:47.37,lng:8.54},{lat:52.37,lng:4.90},{lat:50.85,lng:4.35},
-                    {lat:59.33,lng:18.07},{lat:60.17,lng:24.94},{lat:59.91,lng:10.75},{lat:55.68,lng:12.57},
-                    {lat:40.42,lng:-3.70},{lat:41.39,lng:2.17},{lat:38.72,lng:-9.14},{lat:41.01,lng:28.98},
-                    {lat:37.98,lng:23.73},{lat:45.46,lng:9.19},{lat:41.90,lng:12.50},{lat:48.21,lng:16.37},
-                    {lat:50.08,lng:14.44},{lat:52.23,lng:21.01},{lat:47.50,lng:19.04},{lat:46.06,lng:14.51},
-                    {lat:44.43,lng:26.10},{lat:42.70,lng:23.32},{lat:53.35,lng:-6.26},{lat:55.95,lng:-3.19},
-                    {lat:51.90,lng:-8.47},{lat:64.14,lng:-21.90},{lat:54.69,lng:25.28},{lat:56.95,lng:24.11},
-                    {lat:59.44,lng:24.75},{lat:44.82,lng:20.46},{lat:43.86,lng:18.41},{lat:42.44,lng:19.26},
-                    {lat:41.33,lng:19.82},{lat:43.25,lng:76.95},{lat:41.30,lng:69.28},{lat:38.56,lng:68.77},
-                    // Asia Pacific (80+)
-                    {lat:35.68,lng:139.69},{lat:34.69,lng:135.50},{lat:1.35,lng:103.82},{lat:22.40,lng:114.11},
-                    {lat:25.03,lng:121.57},{lat:37.57,lng:126.98},{lat:14.60,lng:120.98},{lat:13.76,lng:100.50},
-                    {lat:21.03,lng:105.85},{lat:3.14,lng:101.69},{lat:-6.21,lng:106.85},{lat:28.61,lng:77.21},
-                    {lat:19.08,lng:72.88},{lat:12.97,lng:77.59},{lat:13.08,lng:80.27},{lat:17.39,lng:78.49},
-                    {lat:22.57,lng:88.36},{lat:23.81,lng:90.41},{lat:27.72,lng:85.32},{lat:6.93,lng:79.85},
-                    {lat:33.69,lng:73.04},{lat:31.55,lng:74.35},{lat:24.87,lng:67.01},{lat:39.92,lng:116.46},
-                    {lat:31.23,lng:121.47},{lat:22.54,lng:114.06},{lat:23.13,lng:113.26},{lat:30.57,lng:104.07},
-                    {lat:-33.87,lng:151.21},{lat:-37.81,lng:144.96},{lat:-27.47,lng:153.03},{lat:-31.95,lng:115.86},
-                    {lat:-36.85,lng:174.76},{lat:-41.29,lng:174.78},{lat:16.87,lng:96.20},{lat:11.56,lng:104.92},
-                    // Middle East (15+)
-                    {lat:25.21,lng:55.27},{lat:24.45,lng:54.65},{lat:26.07,lng:50.56},{lat:25.29,lng:51.53},
-                    {lat:23.59,lng:58.38},{lat:29.38,lng:47.99},{lat:33.31,lng:44.37},{lat:32.89,lng:13.18},
-                    {lat:31.95,lng:35.93},{lat:33.89,lng:35.50},{lat:40.18,lng:44.51},{lat:41.72,lng:44.79},
-                    // Africa (30+)
-                    {lat:-33.93,lng:18.42},{lat:-26.20,lng:28.05},{lat:6.52,lng:3.38},{lat:5.56,lng:-0.19},
-                    {lat:-1.29,lng:36.82},{lat:-6.79,lng:39.28},{lat:-4.32,lng:15.31},{lat:-15.39,lng:28.32},
-                    {lat:-17.83,lng:31.05},{lat:36.75,lng:3.06},{lat:33.59,lng:-7.62},{lat:34.02,lng:-6.84},
-                    {lat:30.03,lng:31.23},{lat:9.02,lng:38.75},{lat:14.72,lng:-17.47},{lat:12.37,lng:-1.52},
-                    {lat:-18.91,lng:47.52},{lat:-20.16,lng:57.50},{lat:0.35,lng:32.60},{lat:15.50,lng:32.56},
-                    // South America (20+)
-                    {lat:-23.55,lng:-46.63},{lat:-22.91,lng:-43.17},{lat:-15.79,lng:-47.88},{lat:-3.72,lng:-38.53},
-                    {lat:-30.03,lng:-51.23},{lat:-34.60,lng:-58.38},{lat:-33.45,lng:-70.67},{lat:-12.05,lng:-77.04},
-                    {lat:4.71,lng:-74.07},{lat:10.49,lng:-66.88},{lat:-2.17,lng:-79.92},{lat:-17.78,lng:-63.18},
-                    {lat:-25.26,lng:-57.58},{lat:-34.91,lng:-56.19},{lat:6.80,lng:-58.16},{lat:5.84,lng:-55.17},
+                // Simple Equirectangular projection
+                function project(lng, lat) {
+                    const x = (lng + 180) / 360 * W;
+                    const y = (90 - lat) / 180 * H;
+                    return [x, y];
+                }
+
+                // Load and draw country outlines
+                try {
+                    const res = await fetch('https://cdn.jsdelivr.net/npm/world-atlas@2/countries-110m.json');
+                    const world = await res.json();
+                    const countries = topojson.feature(world, world.objects.countries).features;
+
+                    ctx.fillStyle = '#12121f';
+                    ctx.fillRect(0, 0, W, H);
+
+                    // Draw countries
+                    countries.forEach(country => {
+                        const geom = country.geometry;
+                        const coords = geom.type === 'Polygon' ? [geom.coordinates] : geom.coordinates;
+                        coords.forEach(polygon => {
+                            polygon.forEach(ring => {
+                                ctx.beginPath();
+                                ring.forEach((pt, i) => {
+                                    const [x, y] = project(pt[0], pt[1]);
+                                    if (i === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y);
+                                });
+                                ctx.closePath();
+                                ctx.fillStyle = '#1a1a2e';
+                                ctx.fill();
+                                ctx.strokeStyle = '#252540';
+                                ctx.lineWidth = 0.4;
+                                ctx.stroke();
+                            });
+                        });
+                    });
+                } catch {
+                    // Fallback: just draw background
+                    ctx.fillStyle = '#12121f';
+                    ctx.fillRect(0, 0, W, H);
+                }
+
+                // 330+ edge locations
+                const nodes = [
+                    // North America
+                    [37.77,-122.42],[34.05,-118.24],[47.61,-122.33],[33.45,-112.07],[39.74,-104.99],
+                    [32.78,-96.80],[29.76,-95.37],[30.27,-97.74],[41.88,-87.63],[42.36,-71.06],
+                    [40.71,-74.01],[38.91,-77.04],[25.76,-80.19],[33.75,-84.39],[35.23,-80.84],
+                    [36.17,-115.14],[44.98,-93.27],[39.10,-94.58],[29.95,-90.07],[43.65,-79.38],
+                    [45.50,-73.57],[49.28,-123.12],[51.05,-114.07],[53.55,-113.49],[19.43,-99.13],
+                    [20.63,-87.08],[14.64,-90.51],[9.93,-84.09],[8.98,-79.52],[18.47,-69.90],
+                    [21.31,-157.86],[61.22,-149.90],[46.81,-71.21],[32.32,-64.76],
+                    // Europe
+                    [51.51,-0.13],[48.86,2.35],[52.52,13.41],[50.11,8.68],[48.14,11.58],
+                    [47.37,8.54],[52.37,4.90],[50.85,4.35],[59.33,18.07],[60.17,24.94],
+                    [59.91,10.75],[55.68,12.57],[40.42,-3.70],[41.39,2.17],[38.72,-9.14],
+                    [41.01,28.98],[37.98,23.73],[45.46,9.19],[41.90,12.50],[48.21,16.37],
+                    [50.08,14.44],[52.23,21.01],[47.50,19.04],[46.06,14.51],[44.43,26.10],
+                    [42.70,23.32],[53.35,-6.26],[55.95,-3.19],[64.14,-21.90],[54.69,25.28],
+                    [56.95,24.11],[59.44,24.75],[44.82,20.46],[43.86,18.41],[42.44,19.26],
+                    // Asia Pacific
+                    [35.68,139.69],[34.69,135.50],[1.35,103.82],[22.40,114.11],[25.03,121.57],
+                    [37.57,126.98],[14.60,120.98],[13.76,100.50],[21.03,105.85],[3.14,101.69],
+                    [-6.21,106.85],[28.61,77.21],[19.08,72.88],[12.97,77.59],[13.08,80.27],
+                    [17.39,78.49],[22.57,88.36],[23.81,90.41],[27.72,85.32],[6.93,79.85],
+                    [33.69,73.04],[31.55,74.35],[24.87,67.01],[39.92,116.46],[31.23,121.47],
+                    [22.54,114.06],[23.13,113.26],[30.57,104.07],[-33.87,151.21],[-37.81,144.96],
+                    [-27.47,153.03],[-31.95,115.86],[-36.85,174.76],[-41.29,174.78],
+                    [16.87,96.20],[11.56,104.92],
+                    // Middle East
+                    [25.21,55.27],[24.45,54.65],[26.07,50.56],[25.29,51.53],[23.59,58.38],
+                    [29.38,47.99],[33.31,44.37],[31.95,35.93],[33.89,35.50],[40.18,44.51],
+                    // Africa
+                    [-33.93,18.42],[-26.20,28.05],[6.52,3.38],[5.56,-0.19],[-1.29,36.82],
+                    [-6.79,39.28],[-4.32,15.31],[-15.39,28.32],[-17.83,31.05],[36.75,3.06],
+                    [33.59,-7.62],[34.02,-6.84],[30.03,31.23],[9.02,38.75],[14.72,-17.47],
+                    [12.37,-1.52],[-18.91,47.52],[-20.16,57.50],[0.35,32.60],[15.50,32.56],
+                    // South America
+                    [-23.55,-46.63],[-22.91,-43.17],[-15.79,-47.88],[-3.72,-38.53],
+                    [-30.03,-51.23],[-34.60,-58.38],[-33.45,-70.67],[-12.05,-77.04],
+                    [4.71,-74.07],[10.49,-66.88],[-2.17,-79.92],[-17.78,-63.18],
+                    [-25.26,-57.58],[-34.91,-56.19],[6.80,-58.16],[5.84,-55.17],
                 ];
 
-                new Chart(canvas, {
-                    type: 'choropleth',
-                    data: {
-                        labels: countries.map(c => c.properties.name),
-                        datasets: [{
-                            label: 'Countries',
-                            outline: countries,
-                            data: countries.map(c => ({ feature: c, value: 0 })),
-                        }]
-                    },
-                    options: {
-                        responsive: true,
-                        maintainAspectRatio: false,
-                        showOutline: true,
-                        showGraticule: false,
-                        plugins: {
-                            legend: { display: false },
-                            tooltip: { enabled: false },
-                        },
-                        scales: {
-                            projection: {
-                                axis: 'x',
-                                projection: 'equalEarth',
-                            },
-                            color: {
-                                axis: 'x',
-                                quantize: 1,
-                                display: false,
-                            },
-                        },
-                        elements: {
-                            geoFeature: {
-                                backgroundColor: '#1a1a2e',
-                                borderColor: '#2a2a40',
-                                borderWidth: 0.5,
-                            },
-                        },
-                    },
-                    plugins: [{
-                        id: 'edgeNodes',
-                        afterDraw(chart) {
-                            const ctx = chart.ctx;
-                            const proj = chart.scales.projection;
-                            const now = Date.now();
-
-                            // Draw all 330+ CF edge nodes as small glowing dots
-                            cfNodes.forEach((node, i) => {
-                                const pos = proj.projection([node.lng, node.lat]);
-                                if (!pos) return;
-                                const x = pos[0], y = pos[1];
-
-                                // Glow
-                                ctx.beginPath();
-                                ctx.arc(x, y, 3, 0, Math.PI * 2);
-                                ctx.fillStyle = 'rgba(99, 102, 241, 0.25)';
-                                ctx.fill();
-
-                                // Dot
-                                ctx.beginPath();
-                                ctx.arc(x, y, 1.2, 0, Math.PI * 2);
-                                ctx.fillStyle = 'rgba(99, 102, 241, 0.8)';
-                                ctx.fill();
-                            });
-                            ctx.setLineDash([]);
-
-                            // Request animation for pulse
-                            requestAnimationFrame(() => chart.draw());
-                        }
-                    }]
+                // Draw edge nodes
+                nodes.forEach(([lat, lng]) => {
+                    const [x, y] = project(lng, lat);
+                    // Glow
+                    ctx.beginPath();
+                    ctx.arc(x, y, 3.5, 0, Math.PI * 2);
+                    ctx.fillStyle = 'rgba(99, 102, 241, 0.2)';
+                    ctx.fill();
+                    // Dot
+                    ctx.beginPath();
+                    ctx.arc(x, y, 1.5, 0, Math.PI * 2);
+                    ctx.fillStyle = 'rgba(99, 102, 241, 0.85)';
+                    ctx.fill();
                 });
+
+                // Node count label
+                ctx.font = '11px Inter, sans-serif';
+                ctx.fillStyle = '#4b5563';
+                ctx.textAlign = 'right';
+                ctx.fillText(nodes.length + '+ edge locations', W - 16, H - 12);
             })();
             </script>
 
-            <p class="text-xs text-gray-600 mt-4 text-center">Traffic data updates in real-time as usage grows</p>
+            <p class="text-xs text-gray-600 mt-4 text-center">Traffic is routed through 330+ edge locations worldwide</p>
         </div>
     </section>
 
