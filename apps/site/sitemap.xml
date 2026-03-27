@@ -3,7 +3,13 @@
   <url><loc>https://vaultproof.dev/</loc><priority>1.0</priority><changefreq>weekly</changefreq></url>
   <url><loc>https://vaultproof.dev/docs</loc><priority>0.9</priority><changefreq>weekly</changefreq></url>
   <url><loc>https://vaultproof.dev/guides</loc><priority>0.8</priority><changefreq>weekly</changefreq></url>
-  <url><loc>https://vaultproof.dev/verify</loc><priority>0.7</priority><changefreq>monthly</changefreq></url>
+  <url><loc>https://vaultproof.dev/compare</loc><priority>0.8</priority><changefreq>monthly</changefreq></url>
+  <url><loc>https://vaultproof.dev/blog</loc><priority>0.8</priority><changefreq>weekly</changefreq></url>
+  <url><loc>https://vaultproof.dev/blog/secure-openai-api-key</loc><priority>0.7</priority><changefreq>monthly</changefreq></url>
+  <url><loc>https://vaultproof.dev/blog/vibe-coding-leaking-secrets</loc><priority>0.7</priority><changefreq>monthly</changefreq></url>
+  <url><loc>https://vaultproof.dev/blog/vaultproof-vs-doppler-vault</loc><priority>0.7</priority><changefreq>monthly</changefreq></url>
+  <url><loc>https://vaultproof.dev/changelog</loc><priority>0.5</priority><changefreq>weekly</changefreq></url>
+  <url><loc>https://vaultproof.dev/verify</loc><priority>0.6</priority><changefreq>monthly</changefreq></url>
   <url><loc>https://vaultproof.dev/terms</loc><priority>0.3</priority><changefreq>monthly</changefreq></url>
   <url><loc>https://vaultproof.dev/privacy</loc><priority>0.3</priority><changefreq>monthly</changefreq></url>
   <url><loc>https://vaultproof.dev/app/login</loc><priority>0.6</priority><changefreq>monthly</changefreq></url>
