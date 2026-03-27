@@ -78,14 +78,41 @@ const FALLBACK_MAP: Record<string, string[]> = {
   fireworks: ['openai', 'groq', 'together'],
 };
 
-const STRIPPED_HEADERS = new Set([
-  'authorization',
-  'x-api-key',
-  'host',
-  'connection',
-  'transfer-encoding',
-  'content-length', // recalculated by fetch
+// Allowlist: only these headers are forwarded to upstream providers.
+// Using allowlist (not blacklist) prevents arbitrary header injection.
+const ALLOWED_FORWARD_HEADERS = new Set([
+  'content-type',
+  'accept',
+  'accept-encoding',
+  'accept-language',
+  'cache-control',
+  'user-agent',
+  // Provider-specific safe headers
+  'anthropic-version',
+  'openai-beta',
+  'x-stainless-lang',
+  'x-stainless-package-version',
+  'x-stainless-os',
+  'x-stainless-runtime',
+  'x-stainless-runtime-version',
 ]);
+
+// Per dev-key rate limiter — 60 calls/min per key (in-memory, resets on restart)
+const keyRateLimitMap = new Map<string, { tokens: number; windowStart: number }>();
+const KEY_RATE_LIMIT = 60;
+const KEY_RATE_WINDOW = 60_000;
+
+function checkKeyRateLimit(keyId: string): boolean {
+  const now = Date.now();
+  const bucket = keyRateLimitMap.get(keyId);
+  if (!bucket || now - bucket.windowStart >= KEY_RATE_WINDOW) {
+    keyRateLimitMap.set(keyId, { tokens: KEY_RATE_LIMIT - 1, windowStart: now });
+    return true;
+  }
+  if (bucket.tokens <= 0) return false;
+  bucket.tokens--;
+  return true;
+}
 
 export async function transparentProxyRoutes(app: FastifyInstance) {
   // Preserve raw body for exact passthrough to upstream providers.
@@ -118,7 +145,12 @@ export async function transparentProxyRoutes(app: FastifyInstance) {
       return reply.status(401).send({ error: 'Invalid API key. Send your vp_live_ key as Bearer token.' });
     }
 
-    // --- b2. Enforce IP allowlist ---
+    // --- b2. Per-key rate limit ---
+    if (!checkKeyRateLimit(auth.keyId)) {
+      return reply.status(429).send({ error: 'Rate limit exceeded for this API key (60 req/min). Slow down or upgrade your plan.' });
+    }
+
+    // --- b3. Enforce IP allowlist ---
     if (auth.devKey.allowedIps) {
       const clientIp = (request.headers['cf-connecting-ip'] as string) || request.ip;
       const allowed = auth.devKey.allowedIps.split(',').map((s: string) => s.trim());
@@ -127,7 +159,7 @@ export async function transparentProxyRoutes(app: FastifyInstance) {
       }
     }
 
-    // --- b3. Enforce provider restriction ---
+    // --- b4. Enforce provider restriction ---
     if (auth.devKey.allowedProviders) {
       const allowed = auth.devKey.allowedProviders.split(',').map((s: string) => s.trim());
       if (!allowed.includes(provider)) {
@@ -135,7 +167,7 @@ export async function transparentProxyRoutes(app: FastifyInstance) {
       }
     }
 
-    // --- b4. Enforce endpoint restriction ---
+    // --- b5. Enforce endpoint restriction ---
     if (auth.devKey.allowedEndpoints) {
       const allowed = auth.devKey.allowedEndpoints.split(',').map((s: string) => s.trim());
       const requestPath = '/' + wildcardPath;
@@ -290,9 +322,9 @@ export async function transparentProxyRoutes(app: FastifyInstance) {
     // --- g. Forward the exact request ---
     const baseForwardHeaders: Record<string, string> = {};
 
-    // Copy original headers, stripping auth-related and hop-by-hop headers
+    // Forward only explicitly allowed headers — prevents arbitrary header injection
     for (const [key, value] of Object.entries(request.headers)) {
-      if (STRIPPED_HEADERS.has(key.toLowerCase()) || !value) continue;
+      if (!ALLOWED_FORWARD_HEADERS.has(key.toLowerCase()) || !value) continue;
       baseForwardHeaders[key] = Array.isArray(value) ? value.join(', ') : value;
     }
 
@@ -308,24 +340,25 @@ export async function transparentProxyRoutes(app: FastifyInstance) {
     // Inject real provider auth header for primary request
     const forwardHeaders = { ...baseForwardHeaders, ...providerConfig.authHeader(apiKey) };
 
+    // Only fallback if primary fetch throws (network unreachable), not on 5xx.
+    let fallbackProvider: string | null = null;
+    let fallbackKeySlot: typeof keySlot | null = null;
+    let response: Response;
+
     try {
-      let response = await fetch(upstreamUrl, {
+      response = await fetch(upstreamUrl, {
         method,
         headers: forwardHeaders,
         body: body ? new Uint8Array(body) : undefined,
       });
-
-      // --- h. Zero the API key immediately ---
       apiKey = '';
+    } catch {
+      // Primary provider unreachable — try compatible fallbacks
+      apiKey = '';
+      let resolved = false;
 
-      // --- Fallback logic: retry with a compatible provider on 5xx ---
-      let fallbackProvider: string | null = null;
-      let fallbackKeySlot: typeof keySlot | null = null;
-
-      if (response.status >= 500 && response.status <= 599 && FALLBACK_MAP[provider]) {
-        const fallbackCandidates = FALLBACK_MAP[provider];
-
-        for (const candidate of fallbackCandidates) {
+      if (FALLBACK_MAP[provider]) {
+        for (const candidate of FALLBACK_MAP[provider]) {
           const candidateSlot = await prisma.keySlot.findFirst({
             where: { userId: auth.userId, provider: candidate, status: 'ACTIVE' },
             orderBy: { createdAt: 'desc' },
@@ -335,34 +368,23 @@ export async function transparentProxyRoutes(app: FastifyInstance) {
           if (candidateSlot.expiresAt && new Date(candidateSlot.expiresAt) < new Date()) continue;
           if (!candidateSlot.share2Encrypted || candidateSlot.share2Encrypted.length === 0) continue;
 
-          // Found a valid fallback — reconstruct key and retry
           let fallbackKey: string;
-          try {
-            fallbackKey = reconstructKey(candidateSlot);
-          } catch {
-            continue; // reconstruction failed, try next
-          }
+          try { fallbackKey = reconstructKey(candidateSlot); } catch { continue; }
 
           const fallbackConfig = PROVIDERS[candidate];
-          const fallbackUrl = `${fallbackConfig.upstream}/${wildcardPath}${queryString}`;
           const fallbackHeaders = { ...baseForwardHeaders, ...fallbackConfig.authHeader(fallbackKey) };
 
           try {
-            const retryResponse = await fetch(fallbackUrl, {
-              method,
-              headers: fallbackHeaders,
-              body: body ? new Uint8Array(body) : undefined,
-            });
-
-            // Zero fallback key immediately
+            const retryResponse = await fetch(
+              `${fallbackConfig.upstream}/${wildcardPath}${queryString}`,
+              { method, headers: fallbackHeaders, body: body ? new Uint8Array(body) : undefined }
+            );
             fallbackKey = '';
-
-            // Use the fallback response regardless of status (we tried our best)
             response = retryResponse;
             fallbackProvider = candidate;
             fallbackKeySlot = candidateSlot;
+            resolved = true;
 
-            // Log the fallback event (non-blocking)
             prisma.accessLog.create({
               data: {
                 keySlotId: candidateSlot.id,
@@ -371,24 +393,24 @@ export async function transparentProxyRoutes(app: FastifyInstance) {
                 zkProof: 'sdk-authenticated',
                 nullifier: `proxy-fallback-${randomBytes(16).toString('hex')}`,
                 metadata: JSON.stringify({
-                  original_provider: provider,
-                  fallback_provider: candidate,
-                  endpoint: `/${wildcardPath}`,
-                  method,
-                  status_code: retryResponse.status,
-                  latency_ms: Date.now() - startTime,
+                  original_provider: provider, fallback_provider: candidate,
+                  endpoint: `/${wildcardPath}`, method,
+                  status_code: retryResponse.status, latency_ms: Date.now() - startTime,
                 }),
               },
             }).catch(() => {});
 
-            break; // Only one retry
-          } catch {
-            fallbackKey = '';
-            continue; // Fetch itself failed, try next candidate
-          }
+            break;
+          } catch { fallbackKey = ''; continue; }
         }
       }
 
+      if (!resolved) {
+        return reply.status(502).send({ error: 'Upstream provider unreachable' });
+      }
+    }
+
+    try {
       const contentType = response.headers.get('content-type') || '';
       const latencyMs = Date.now() - startTime;
       const activeKeySlot = fallbackKeySlot || keySlot;
@@ -403,17 +425,13 @@ export async function transparentProxyRoutes(app: FastifyInstance) {
           zkProof: 'sdk-authenticated',
           nullifier: `proxy-${randomBytes(16).toString('hex')}`,
           metadata: JSON.stringify({
-            provider: activeProvider,
-            endpoint: `/${wildcardPath}`,
-            method,
-            status_code: response.status,
-            latency_ms: latencyMs,
+            provider: activeProvider, endpoint: `/${wildcardPath}`, method,
+            status_code: response.status, latency_ms: latencyMs,
             ...(fallbackProvider ? { fallback_from: provider } : {}),
           }),
         },
       }).catch(() => {});
 
-      // Webhook notification (non-blocking)
       if (auth.devKey.webhookUrl && auth.devKey.webhookSecret) {
         sendWebhook(auth.devKey.webhookUrl, auth.devKey.webhookSecret, 'proxy.call', {
           keyId: activeKeySlot.id, path: `/${wildcardPath}`, status: response.status, latencyMs,
@@ -421,12 +439,10 @@ export async function transparentProxyRoutes(app: FastifyInstance) {
         });
       }
 
-      // Invalid key alert — notify if provider rejected the key (opt-in via alertEmail)
       if ((response.status === 401 || response.status === 403) && auth.devKey.alertEmail) {
         sendInvalidKeyAlert(auth.devKey.alertEmail, activeKeySlot.label, activeKeySlot.provider, response.status, '/' + wildcardPath);
       }
 
-      // Usage alert check (non-blocking)
       if (auth.devKey.alertThreshold && auth.devKey.alertEmail) {
         const oneHourAgo = new Date(Date.now() - 3600_000);
         prisma.accessLog.count({
@@ -438,7 +454,7 @@ export async function transparentProxyRoutes(app: FastifyInstance) {
         }).catch(() => {});
       }
 
-      // --- i. Handle SSE streaming ---
+      // --- i. SSE streaming ---
       if (contentType.includes('text/event-stream') && response.body) {
         const sseHeaders: Record<string, string> = {
           'Content-Type': 'text/event-stream',
@@ -449,12 +465,9 @@ export async function transparentProxyRoutes(app: FastifyInstance) {
           sseHeaders['X-VaultProof-Fallback'] = 'true';
           sseHeaders['X-VaultProof-Provider'] = fallbackProvider;
         }
-
         reply.raw.writeHead(response.status, sseHeaders);
-
         const reader = response.body.getReader();
         const decoder = new TextDecoder();
-
         try {
           while (true) {
             const { done, value } = await reader.read();
@@ -462,28 +475,21 @@ export async function transparentProxyRoutes(app: FastifyInstance) {
             reply.raw.write(decoder.decode(value, { stream: true }));
           }
         } catch {
-          // Client disconnected or upstream error
+          // Client disconnected
         } finally {
           reply.raw.end();
         }
         return;
       }
 
-      // --- j. Standard response passthrough ---
+      // --- j. Standard response ---
       const data = await response.arrayBuffer();
-      const replyObj = reply
-        .status(response.status)
-        .header('Content-Type', contentType || 'application/json');
-
+      const replyObj = reply.status(response.status).header('Content-Type', contentType || 'application/json');
       if (fallbackProvider) {
-        replyObj
-          .header('X-VaultProof-Fallback', 'true')
-          .header('X-VaultProof-Provider', fallbackProvider);
+        replyObj.header('X-VaultProof-Fallback', 'true').header('X-VaultProof-Provider', fallbackProvider);
       }
-
       replyObj.send(Buffer.from(data));
     } catch {
-      apiKey = '';
       return reply.status(502).send({ error: 'Upstream provider error' });
     }
   });

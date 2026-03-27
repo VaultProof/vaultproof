@@ -53,9 +53,28 @@ async function initVerifier() {
 
     console.log('Noir proof verifier initialized');
   } catch (err) {
-    console.warn('Could not initialize Noir verifier:', (err as Error).message);
-    console.warn('Falling back to placeholder verification');
+    const isProduction = process.env.NODE_ENV === 'production';
+    const requireReal = process.env.REQUIRE_REAL_PROOFS === 'true';
+    if (isProduction || requireReal) {
+      console.error('CRITICAL: Noir proof verifier failed to load in production:', (err as Error).message);
+      console.error('CRITICAL: All ZK proof verifications will be rejected. Set REQUIRE_REAL_PROOFS=true to enforce.');
+      if (requireReal) {
+        // Hard fail — don't allow the server to silently accept unverified proofs
+        throw new Error(`Noir verifier required but failed to initialize: ${(err as Error).message}`);
+      }
+    } else {
+      console.warn('Could not initialize Noir verifier:', (err as Error).message);
+      console.warn('Falling back to placeholder verification');
+    }
   }
+}
+
+/**
+ * Warm up the Noir verifier at server startup.
+ * In production, this will throw if REQUIRE_REAL_PROOFS=true and circuit fails to load.
+ */
+export async function warmupVerifier(): Promise<void> {
+  await initVerifier();
 }
 
 export interface ProofPublicInputs {

@@ -201,13 +201,14 @@ export async function billingRoutes(app: FastifyInstance) {
       return reply.status(400).send({ error: 'Missing signature or body' });
     }
 
+    const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET;
+    if (!webhookSecret) {
+      return reply.status(500).send({ error: 'Webhook secret not configured' });
+    }
+
     let event: Stripe.Event;
     try {
-      event = stripe.webhooks.constructEvent(
-        rawBody,
-        signature,
-        process.env.STRIPE_WEBHOOK_SECRET!,
-      );
+      event = stripe.webhooks.constructEvent(rawBody, signature, webhookSecret);
     } catch (err) {
       request.log.error(err, 'Webhook signature verification failed');
       return reply.status(400).send({ error: 'Invalid webhook signature' });
@@ -224,13 +225,14 @@ export async function billingRoutes(app: FastifyInstance) {
             : session.subscription?.id;
 
         if (userId && tier) {
-          await prisma.user.update({
-            where: { id: userId },
-            data: {
-              tier,
-              stripeSubscriptionId: subscriptionId ?? null,
-            },
-          });
+          // Idempotency: skip if tier already matches (duplicate webhook delivery)
+          const existing = await prisma.user.findUnique({ where: { id: userId }, select: { tier: true, stripeSubscriptionId: true } });
+          if (existing?.tier !== tier) {
+            await prisma.user.update({
+              where: { id: userId },
+              data: { tier, stripeSubscriptionId: subscriptionId ?? null },
+            });
+          }
         }
         break;
       }

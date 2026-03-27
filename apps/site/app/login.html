@@ -193,7 +193,23 @@
 
     // ── Check for CLI callback param ──
     const urlParams = new URLSearchParams(window.location.search);
-    const cliCallback = urlParams.get('cli_callback');
+    const rawCliCallback = urlParams.get('cli_callback');
+    const cliState = urlParams.get('state');
+
+    // Validate cli_callback is localhost/127.0.0.1 only (prevent open redirect)
+    let cliCallback = null;
+    if (rawCliCallback) {
+      try {
+        const cbUrl = new URL(rawCliCallback);
+        if (cbUrl.hostname === 'localhost' || cbUrl.hostname === '127.0.0.1') {
+          cliCallback = rawCliCallback;
+        } else {
+          console.warn('cli_callback rejected: not localhost');
+        }
+      } catch {
+        console.warn('cli_callback rejected: invalid URL');
+      }
+    }
 
     // Show CLI banner if logging in from CLI
     if (cliCallback) {
@@ -216,7 +232,7 @@
 
         // If CLI callback, redirect to CLI with token
         if (cliCallback) {
-          window.location.href = `${cliCallback}?token=${session.access_token}&refresh_token=${encodeURIComponent(session.refresh_token)}&email=${encodeURIComponent(session.user.email)}`;
+          window.location.href = `${cliCallback}?token=${session.access_token}&refresh_token=${encodeURIComponent(session.refresh_token)}&email=${encodeURIComponent(session.user.email)}&state=${encodeURIComponent(cliState || '')}`;
           return;
         }
 
@@ -235,7 +251,7 @@
 
         // If CLI callback, redirect to CLI with token
         if (cliCallback) {
-          window.location.href = `${cliCallback}?token=${session.access_token}&refresh_token=${encodeURIComponent(session.refresh_token)}&email=${encodeURIComponent(session.user.email)}`;
+          window.location.href = `${cliCallback}?token=${session.access_token}&refresh_token=${encodeURIComponent(session.refresh_token)}&email=${encodeURIComponent(session.user.email)}&state=${encodeURIComponent(cliState || '')}`;
           return;
         }
 
@@ -247,7 +263,7 @@
     async function loginWithGitHub() {
       // Preserve CLI callback param through OAuth redirect
       const redirectUrl = cliCallback
-        ? `${window.location.origin}/app/login?cli_callback=${encodeURIComponent(cliCallback)}`
+        ? `${window.location.origin}/app/login?cli_callback=${encodeURIComponent(cliCallback)}&state=${encodeURIComponent(cliState || '')}`
         : `${window.location.origin}/app/login`;
       const { error } = await sbClient.auth.signInWithOAuth({
         provider: 'github',
@@ -260,7 +276,7 @@
     async function loginWithGoogle() {
       // Preserve CLI callback param through OAuth redirect
       const redirectUrl = cliCallback
-        ? `${window.location.origin}/app/login?cli_callback=${encodeURIComponent(cliCallback)}`
+        ? `${window.location.origin}/app/login?cli_callback=${encodeURIComponent(cliCallback)}&state=${encodeURIComponent(cliState || '')}`
         : `${window.location.origin}/app/login`;
       const { error } = await sbClient.auth.signInWithOAuth({
         provider: 'google',

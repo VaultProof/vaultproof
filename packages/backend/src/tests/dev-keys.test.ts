@@ -7,6 +7,7 @@
 
 import { describe, it, before, after } from 'node:test';
 import assert from 'node:assert/strict';
+import { randomBytes, createHash } from 'node:crypto';
 import Fastify from 'fastify';
 import { PrismaClient } from '@prisma/client';
 import { developerKeyRoutes } from '../routes/developer-keys.js';
@@ -45,7 +46,16 @@ describe('Developer Key Route Tests', () => {
   });
 
   after(async () => {
-    // Clean up dev keys and user
+    // Delete session tokens before dev keys (no cascade in schema)
+    const devKeyIds = (
+      await prisma.developerKey.findMany({
+        where: { userId: TEST_USER_ID },
+        select: { id: true },
+      })
+    ).map((k) => k.id);
+    if (devKeyIds.length > 0) {
+      await prisma.sessionToken.deleteMany({ where: { developerKeyId: { in: devKeyIds } } });
+    }
     await prisma.developerKey.deleteMany({ where: { userId: TEST_USER_ID } });
     await prisma.user.deleteMany({ where: { id: TEST_USER_ID } });
     await prisma.$disconnect();
@@ -207,5 +217,235 @@ describe('Developer Key Route Tests', () => {
     assert.equal(sdkRes.statusCode, 401);
     const data = sdkRes.json();
     assert.ok(data.error);
+  });
+
+  // --- Session Token Creation ---
+
+  it('ST-1: creates a session token for a valid active key', async () => {
+    const createRes = await app.inject({
+      method: 'POST',
+      url: '/api/v1/dev-keys/create',
+      headers: AUTH_HEADER,
+      payload: { label: 'Session Token Test Key' },
+    });
+    const { id: keyId } = createRes.json();
+
+    const sessionRes = await app.inject({
+      method: 'POST',
+      url: `/api/v1/dev-keys/${keyId}/session`,
+      headers: AUTH_HEADER,
+    });
+
+    assert.equal(sessionRes.statusCode, 200);
+    const data = sessionRes.json();
+    assert.ok(data.token, 'Should return a token');
+    assert.ok(!data.token.startsWith('vp_'), 'Session token should not look like a dev key');
+    assert.ok(data.expiresAt, 'Should return an expiresAt');
+    assert.ok(
+      new Date(data.expiresAt).getTime() > Date.now() + 4 * 60 * 1000,
+      'Token should expire at least 4 minutes from now'
+    );
+  });
+
+  it('ST-2: session endpoint returns 403 for a revoked key', async () => {
+    const createRes = await app.inject({
+      method: 'POST',
+      url: '/api/v1/dev-keys/create',
+      headers: AUTH_HEADER,
+      payload: { label: 'Revoke Before Session' },
+    });
+    const { id: keyId } = createRes.json();
+
+    await app.inject({
+      method: 'POST',
+      url: `/api/v1/dev-keys/${keyId}/revoke`,
+      headers: AUTH_HEADER,
+    });
+
+    const sessionRes = await app.inject({
+      method: 'POST',
+      url: `/api/v1/dev-keys/${keyId}/session`,
+      headers: AUTH_HEADER,
+    });
+
+    assert.equal(sessionRes.statusCode, 403);
+    assert.ok(sessionRes.json().error);
+  });
+
+  it('ST-3: session endpoint returns 404 for another user\'s key', async () => {
+    const OTHER_USER_ID = 'devkey-test-user-002';
+    const OTHER_USER_EMAIL = 'devkey-test2@vaultproof.dev';
+
+    await prisma.user.upsert({
+      where: { email: OTHER_USER_EMAIL },
+      update: {},
+      create: { id: OTHER_USER_ID, email: OTHER_USER_EMAIL, passwordHash: '$2a$12$test' },
+    });
+
+    const createRes = await app.inject({
+      method: 'POST',
+      url: '/api/v1/dev-keys/create',
+      headers: { authorization: `Bearer ${generateToken(OTHER_USER_ID, OTHER_USER_EMAIL)}` },
+      payload: { label: 'Other User Key' },
+    });
+    const { id: foreignKeyId } = createRes.json();
+
+    // Try to get a session token for another user's key
+    const sessionRes = await app.inject({
+      method: 'POST',
+      url: `/api/v1/dev-keys/${foreignKeyId}/session`,
+      headers: AUTH_HEADER, // original user's auth
+    });
+
+    assert.equal(sessionRes.statusCode, 404);
+
+    // Teardown second user
+    await prisma.developerKey.deleteMany({ where: { userId: OTHER_USER_ID } });
+    await prisma.user.deleteMany({ where: { id: OTHER_USER_ID } });
+  });
+
+  // --- SDK Authentication with Session Token ---
+
+  it('ST-4: SDK route accepts valid dev key + valid session token', async () => {
+    const createRes = await app.inject({
+      method: 'POST',
+      url: '/api/v1/dev-keys/create',
+      headers: AUTH_HEADER,
+      payload: { label: 'SDK Session Auth Key' },
+    });
+    const { id: keyId, key } = createRes.json();
+
+    const sessionRes = await app.inject({
+      method: 'POST',
+      url: `/api/v1/dev-keys/${keyId}/session`,
+      headers: AUTH_HEADER,
+    });
+    const { token: sessionToken } = sessionRes.json();
+
+    const sdkRes = await app.inject({
+      method: 'GET',
+      url: '/api/v1/sdk/keys',
+      headers: { 'x-api-key': key, 'x-vaultproof-session': sessionToken },
+    });
+
+    assert.equal(sdkRes.statusCode, 200);
+    assert.ok(Array.isArray(sdkRes.json().keys));
+  });
+
+  it('ST-5: SDK route rejects valid dev key + garbage session token', async () => {
+    const createRes = await app.inject({
+      method: 'POST',
+      url: '/api/v1/dev-keys/create',
+      headers: AUTH_HEADER,
+      payload: { label: 'SDK Garbage Session Key' },
+    });
+    const { key } = createRes.json();
+
+    const sdkRes = await app.inject({
+      method: 'GET',
+      url: '/api/v1/sdk/keys',
+      headers: { 'x-api-key': key, 'x-vaultproof-session': 'garbage-session-token' },
+    });
+
+    assert.equal(sdkRes.statusCode, 401);
+  });
+
+  it('ST-6: SDK route rejects valid dev key + expired session token', async () => {
+    const createRes = await app.inject({
+      method: 'POST',
+      url: '/api/v1/dev-keys/create',
+      headers: AUTH_HEADER,
+      payload: { label: 'SDK Expired Session Key' },
+    });
+    const { id: keyId, key } = createRes.json();
+
+    // Directly insert an already-expired session token
+    const rawToken = randomBytes(32).toString('base64url');
+    const tokenHash = createHash('sha256').update(rawToken).digest('hex');
+    await prisma.sessionToken.create({
+      data: {
+        developerKeyId: keyId,
+        tokenHash,
+        expiresAt: new Date(Date.now() - 1000), // already expired
+      },
+    });
+
+    const sdkRes = await app.inject({
+      method: 'GET',
+      url: '/api/v1/sdk/keys',
+      headers: { 'x-api-key': key, 'x-vaultproof-session': rawToken },
+    });
+
+    assert.equal(sdkRes.statusCode, 401);
+  });
+
+  it('ST-7: SDK route rejects session token belonging to a different dev key', async () => {
+    // Create two keys
+    const resA = await app.inject({
+      method: 'POST',
+      url: '/api/v1/dev-keys/create',
+      headers: AUTH_HEADER,
+      payload: { label: 'Key A' },
+    });
+    const resB = await app.inject({
+      method: 'POST',
+      url: '/api/v1/dev-keys/create',
+      headers: AUTH_HEADER,
+      payload: { label: 'Key B' },
+    });
+    const { id: keyIdA, key: keyA } = resA.json();
+    const { key: keyB } = resB.json();
+
+    // Get session token for keyA
+    const sessionRes = await app.inject({
+      method: 'POST',
+      url: `/api/v1/dev-keys/${keyIdA}/session`,
+      headers: AUTH_HEADER,
+    });
+    const { token: keyASession } = sessionRes.json();
+
+    // Try to use keyA's session token with keyB
+    const sdkRes = await app.inject({
+      method: 'GET',
+      url: '/api/v1/sdk/keys',
+      headers: { 'x-api-key': keyB, 'x-vaultproof-session': keyASession },
+    });
+
+    assert.equal(sdkRes.statusCode, 401);
+  });
+
+  // --- Revocation Cascade ---
+
+  it('ST-8: revoking a dev key deletes its session tokens', async () => {
+    const createRes = await app.inject({
+      method: 'POST',
+      url: '/api/v1/dev-keys/create',
+      headers: AUTH_HEADER,
+      payload: { label: 'Cascade Revoke Key' },
+    });
+    const { id: keyId } = createRes.json();
+
+    // Get a session token
+    await app.inject({
+      method: 'POST',
+      url: `/api/v1/dev-keys/${keyId}/session`,
+      headers: AUTH_HEADER,
+    });
+
+    // Confirm session token exists
+    const tokensBefore = await prisma.sessionToken.findMany({ where: { developerKeyId: keyId } });
+    assert.ok(tokensBefore.length >= 1, 'Session token should exist before revocation');
+
+    // Revoke the key
+    const revokeRes = await app.inject({
+      method: 'POST',
+      url: `/api/v1/dev-keys/${keyId}/revoke`,
+      headers: AUTH_HEADER,
+    });
+    assert.equal(revokeRes.statusCode, 200);
+
+    // Confirm session tokens were deleted
+    const tokensAfter = await prisma.sessionToken.findMany({ where: { developerKeyId: keyId } });
+    assert.equal(tokensAfter.length, 0, 'Session tokens should be deleted after revocation');
   });
 });

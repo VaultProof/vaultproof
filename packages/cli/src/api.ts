@@ -1,5 +1,5 @@
 import chalk from "chalk";
-import { getApiUrl, getToken, getApiKey, getRefreshToken, updateConfig } from "./config.js";
+import { getApiUrl, getToken, getApiKey, updateConfig } from "./config.js";
 
 export interface ApiResponse<T = unknown> {
   ok: boolean;
@@ -19,6 +19,14 @@ let sessionToken: string | null = null;
 let sessionExpiresAt: number = 0;
 let sessionRefreshPromise: Promise<void> | null = null;
 
+// In-memory refresh token — set after login, never persisted to disk
+let inMemoryRefreshToken: string | null = null;
+
+/** Store the Supabase refresh token in memory (set once after login). */
+export function setInMemoryRefreshToken(token: string): void {
+  inMemoryRefreshToken = token;
+}
+
 /** Returns the expiry timestamp (ms) of a JWT, or 0 if unparseable. */
 function jwtExpiry(token: string): number {
   try {
@@ -36,7 +44,7 @@ function jwtExpiry(token: string): number {
  * Updates config on success. Silent on failure.
  */
 async function refreshJwt(): Promise<void> {
-  const refreshToken = getRefreshToken();
+  const refreshToken = inMemoryRefreshToken;
   if (!refreshToken) return;
 
   try {
@@ -52,7 +60,9 @@ async function refreshJwt(): Promise<void> {
         token: string;
         refreshToken: string;
       };
-      updateConfig({ token: data.token, refreshToken: data.refreshToken });
+      // Write new JWT to disk so management commands keep working; keep refresh token in memory only
+      updateConfig({ token: data.token });
+      inMemoryRefreshToken = data.refreshToken;
     }
   } catch {
     // Network failure — keep existing JWT
@@ -146,6 +156,7 @@ export async function refreshSessionToken(devKeyId: string): Promise<void> {
         // JWT expired or key revoked — clear session so we don't keep sending a bad token
         sessionToken = null;
         sessionExpiresAt = 0;
+        console.warn(chalk.yellow('\nWarning: VaultProof session expired. Run `vaultproof login` to restore full security.'));
       }
       // Other non-2xx (e.g. 500) — keep old token until it expires naturally
     } catch {
@@ -175,6 +186,7 @@ export function startSessionRefresh(devKeyId: string): () => void {
 export function clearSession(): void {
   sessionToken = null;
   sessionExpiresAt = 0;
+  inMemoryRefreshToken = null;
 }
 
 export async function apiRequest<T = unknown>(

@@ -27,6 +27,7 @@ import { developerKeyRoutes } from './routes/developer-keys.js';
 import { sdkRoutes } from './routes/sdk.js';
 import { billingRoutes } from './routes/billing.js';
 import { transparentProxyRoutes } from './routes/transparent-proxy.js';
+import { warmupVerifier } from './crypto/proof-verifier.js';
 
 config();
 
@@ -106,6 +107,9 @@ async function start() {
 
   // Transparent proxy — must be after /api/v1/ routes to avoid conflicts
   await app.register(transparentProxyRoutes, { prefix: '/v1' });
+
+  // Warm up Noir verifier (throws in production if REQUIRE_REAL_PROOFS=true and circuit missing)
+  await warmupVerifier();
 
   await app.listen({ port: PORT, host: '0.0.0.0' });
   console.log(`VaultProof backend running on port ${PORT}`);

@@ -12,7 +12,7 @@ import {
   getToken,
   getApiKey,
 } from "./config.js";
-import { apiRequest, apiRequestNoAuth, refreshSessionToken, startSessionRefresh } from "./api.js";
+import { apiRequest, apiRequestNoAuth, refreshSessionToken, startSessionRefresh, setInMemoryRefreshToken, clearSession } from "./api.js";
 import { prompt, promptHidden, confirm } from "./prompts.js";
 import { splitString, serializeShare } from "@vaultproof/shamir";
 
@@ -98,8 +98,10 @@ ${chalk.bold("Notes:")}
     await new Promise<void>((resolve) => server.listen(0, resolve));
     const port = (server.address() as any).port;
 
-    const callbackUrl = `http://localhost:${port}/callback`;
-    const loginUrl = `https://vaultproof.dev/app/login?cli_callback=${encodeURIComponent(callbackUrl)}`;
+    const callbackUrl = `http://127.0.0.1:${port}/callback`;
+    const { randomBytes: _rb } = await import("crypto");
+    const loginState = _rb(16).toString("hex");
+    const loginUrl = `https://vaultproof.dev/app/login?cli_callback=${encodeURIComponent(callbackUrl)}&state=${loginState}`;
 
     const spinner = ora("Waiting for browser login...").start();
     spinner.info(`Opening browser: ${chalk.cyan(loginUrl)}`);
@@ -132,6 +134,17 @@ ${chalk.bold("Notes:")}
           const token = url.searchParams.get("token");
           const refreshToken = url.searchParams.get("refresh_token");
           const email = url.searchParams.get("email");
+          const receivedState = url.searchParams.get("state");
+
+          // Validate state nonce to prevent CSRF
+          if (receivedState !== loginState) {
+            res.writeHead(400, { "Content-Type": "text/plain" });
+            res.end("Invalid state");
+            clearTimeout(timeout);
+            server.close();
+            resolve(null);
+            return;
+          }
 
           // Send success page to browser
           res.writeHead(200, { "Content-Type": "text/html" });
@@ -192,7 +205,8 @@ ${chalk.bold("Notes:")}
               )
             );
             // Still save the token for JWT-based commands
-            updateConfig({ token: result.token, refreshToken: result.refreshToken ?? undefined, email: result.email });
+            updateConfig({ token: result.token, email: result.email });
+            if (result.refreshToken) setInMemoryRefreshToken(result.refreshToken);
             spinner.succeed(
               chalk.green(`Logged in as ${chalk.bold(result.email)}`)
             );
@@ -210,7 +224,8 @@ ${chalk.bold("Notes:")}
       const devKey = (await createRes.json()) as any;
 
       // Save everything
-      updateConfig({ token: result.token, refreshToken: result.refreshToken ?? undefined, email: result.email });
+      updateConfig({ token: result.token, email: result.email });
+      if (result.refreshToken) setInMemoryRefreshToken(result.refreshToken);
 
       spinner.succeed(
         chalk.green(`Logged in as ${chalk.bold(result.email)}`)
@@ -283,6 +298,7 @@ ${chalk.bold("Notes:")}
       return;
     }
 
+    clearSession();
     clearConfig();
     console.log(chalk.green("Logged out."));
   });

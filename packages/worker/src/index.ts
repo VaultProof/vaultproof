@@ -22,9 +22,12 @@ const RATE_WINDOW = 60_000; // 1 minute
 
 export default {
   async fetch(request: Request, env: Env): Promise<Response> {
-    // Hardcoded fallback matches current Railway deployment. Override via BACKEND_URL env var.
-    const backendUrl = env.BACKEND_URL || 'https://dashboard-production-b76c.up.railway.app';
-    const proxySecret = env.PROXY_SECRET || '';
+    if (!env.BACKEND_URL || !env.PROXY_SECRET) {
+      console.error('Worker misconfigured: BACKEND_URL and PROXY_SECRET are required');
+      return Response.json({ error: 'Service misconfigured' }, { status: 500 });
+    }
+    const backendUrl = env.BACKEND_URL;
+    const proxySecret = env.PROXY_SECRET;
     const allowedOrigins = (env.ALLOWED_ORIGINS || 'https://vaultproof.dev,https://www.vaultproof.dev').split(',').map((s) => s.trim()).filter(Boolean);
     const origin = request.headers.get('Origin') || '';
     const clientIp = request.headers.get('CF-Connecting-IP') || 'unknown';
@@ -127,7 +130,7 @@ export default {
 
 // --- HMAC Signing ---
 async function hmacSign(payload: string, secret: string): Promise<string> {
-  if (!secret) return 'no-secret';
+  if (!secret) throw new Error('PROXY_SECRET not set');
   const encoder = new TextEncoder();
   const key = await crypto.subtle.importKey(
     'raw',

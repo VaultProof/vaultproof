@@ -5,7 +5,6 @@ import os from "node:os";
 export interface VaultProofConfig {
   apiUrl?: string;
   token?: string;
-  refreshToken?: string;
   email?: string;
 }
 
@@ -58,10 +57,6 @@ export function getApiUrl(): string {
 
 export function getToken(): string | undefined {
   return readConfig().token;
-}
-
-export function getRefreshToken(): string | undefined {
-  return readConfig().refreshToken;
 }
 
 export function getApiKey(): string | undefined {

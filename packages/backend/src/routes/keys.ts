@@ -26,7 +26,7 @@ const grantAppSchema = z.object({
 
 function escapeCSV(value: string): string {
   if (typeof value !== 'string') return '';
-  const escaped = value.replace(/"/g, '""');
+  const escaped = value.replace(/"/g, '""').replace(/[\r\n]/g, ' ');
   if (/^[=+\-@\t\r]/.test(escaped)) return `"'${escaped}"`;
   return `"${escaped}"`;
 }
