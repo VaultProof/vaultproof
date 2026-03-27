@@ -76,6 +76,7 @@ export async function sdkRoutes(app: FastifyInstance) {
       dailyLimit: z.number().int().min(1).optional(),
       monthlyLimit: z.number().int().min(1).optional(),
       blockOnLimit: z.boolean().optional(),
+      envVar: z.string().max(100).optional(),
     });
 
     const parsed = schema.safeParse(request.body);
@@ -84,7 +85,7 @@ export async function sdkRoutes(app: FastifyInstance) {
     }
 
     const { userId, keyId: devKeyId, rawKey: vpKey } = (request as any).devAuth;
-    const { share1, share2, provider, label, expiresAt, dailyLimit, monthlyLimit, blockOnLimit } = parsed.data;
+    const { share1, share2, provider, label, expiresAt, dailyLimit, monthlyLimit, blockOnLimit, envVar } = parsed.data;
 
     // Encrypt Share 1 with VAULT_ENCRYPTION_KEY (server secret)
     const share1Encrypted = encrypt(Buffer.from(share1, 'utf-8'));
@@ -107,6 +108,7 @@ export async function sdkRoutes(app: FastifyInstance) {
         dailyLimit,
         monthlyLimit,
         blockOnLimit: blockOnLimit ?? true,
+        envVar: envVar || undefined,
       },
     });
 
@@ -126,8 +128,7 @@ export async function sdkRoutes(app: FastifyInstance) {
       keyId: keySlot.id,
       provider,
       label: keySlot.label,
-      // No share2 returned — it's stored encrypted on server
-      // Developer just needs their vp_live_ key to use it
+      envVar: keySlot.envVar,
     };
   });
 
@@ -447,12 +448,73 @@ export async function sdkRoutes(app: FastifyInstance) {
     return { apiKey, provider: keySlot.provider };
   });
 
+  /**
+   * Batch Retrieve — Reconstruct multiple API keys in a single round trip.
+   * Accepts an array of key IDs, returns all reconstructed keys at once.
+   */
+  app.post('/retrieve-batch', async (request, reply) => {
+    const schema = z.object({ keyIds: z.array(z.string().min(1)).min(1).max(20) });
+    const parsed = schema.safeParse(request.body);
+    if (!parsed.success) return reply.status(400).send({ error: 'Invalid input. Provide keyIds array (max 20).' });
+
+    const { userId, rawKey: vpKey } = (request as any).devAuth;
+    const { keyIds } = parsed.data;
+
+    const keySlots = await prisma.keySlot.findMany({
+      where: { id: { in: keyIds }, userId, status: 'ACTIVE' },
+    });
+
+    const results: Array<{ keyId: string; apiKey?: string; provider?: string; error?: string }> = [];
+
+    for (const requestedId of keyIds) {
+      const slot = keySlots.find(s => s.id === requestedId);
+      if (!slot) {
+        results.push({ keyId: requestedId, error: 'Key not found' });
+        continue;
+      }
+      if (slot.expiresAt && new Date(slot.expiresAt) < new Date()) {
+        results.push({ keyId: requestedId, error: 'Key has expired' });
+        continue;
+      }
+      if (!slot.share2Encrypted || slot.share2Encrypted.length === 0) {
+        results.push({ keyId: requestedId, error: 'Share 2 not available' });
+        continue;
+      }
+
+      try {
+        const decrypted1 = decrypt(Buffer.from(slot.share1Encrypted));
+        const s1 = deserializeShare(decrypted1.toString('utf-8'));
+        zeroBuffer(decrypted1);
+        const share2Str = decryptShare2(Buffer.from(slot.share2Encrypted), vpKey);
+        const s2 = deserializeShare(share2Str);
+        const apiKey = new TextDecoder().decode(combine([s1, s2]));
+        results.push({ keyId: requestedId, apiKey, provider: slot.provider });
+      } catch {
+        results.push({ keyId: requestedId, error: 'Key reconstruction failed' });
+      }
+    }
+
+    // Log batch retrieval (fire-and-forget)
+    prisma.accessLog.create({
+      data: {
+        keySlotId: keyIds[0],
+        appId: (request as any).devAuth.keyId,
+        action: 'key_retrieval_batch',
+        zkProof: 'sdk-authenticated',
+        nullifier: `retrieve-batch-${randomBytes(16).toString('hex')}`,
+        metadata: JSON.stringify({ count: keyIds.length, providers: results.filter(r => r.provider).map(r => r.provider) }),
+      },
+    }).catch(() => {});
+
+    return { keys: results };
+  });
+
   // List stored keys
   app.get('/keys', async (request) => {
     const { userId } = (request as any).devAuth;
     const keys = await prisma.keySlot.findMany({
       where: { userId, status: 'ACTIVE' },
-      select: { id: true, provider: true, label: true, createdAt: true },
+      select: { id: true, provider: true, label: true, envVar: true, createdAt: true },
     });
     return { keys };
   });

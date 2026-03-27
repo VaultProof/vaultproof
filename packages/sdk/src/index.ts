@@ -125,6 +125,18 @@ export class VaultProof {
   }
 
   /**
+   * Retrieve multiple API keys in a single round trip.
+   * Much faster than calling retrieve() in a loop when you need several keys.
+   */
+  async retrieveBatch(keyIds: string[]): Promise<Array<{ keyId: string; apiKey?: string; provider?: string; error?: string }>> {
+    const res = await this.fetch('/api/v1/sdk/retrieve-batch', {
+      method: 'POST',
+      body: { keyIds },
+    });
+    return res.keys || [];
+  }
+
+  /**
    * List all stored keys.
    */
   async keys(): Promise<Array<{ id: string; provider: string; label: string; createdAt: string }>> {

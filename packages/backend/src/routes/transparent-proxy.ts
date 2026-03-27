@@ -176,43 +176,22 @@ export async function transparentProxyRoutes(app: FastifyInstance) {
       }
     }
 
-    // --- Kill switch — blocks ALL proxy calls for this user ---
-    const userAccount = await prisma.user.findUnique({ where: { id: auth.userId }, select: { killSwitch: true, globalDailyLimit: true, globalMonthlyLimit: true } });
+    // --- Parallel DB queries: user account + key slot in one round trip ---
+    const [userAccount, keySlot] = await Promise.all([
+      prisma.user.findUnique({
+        where: { id: auth.userId },
+        select: { killSwitch: true, globalDailyLimit: true, globalMonthlyLimit: true, tier: true },
+      }),
+      prisma.keySlot.findFirst({
+        where: { userId: auth.userId, provider, status: 'ACTIVE' },
+        orderBy: { createdAt: 'desc' },
+      }),
+    ]);
+
+    // --- Kill switch ---
     if (userAccount?.killSwitch) {
       return reply.status(503).send({ error: 'All proxy calls are paused. Disable the kill switch in your dashboard to resume.' });
     }
-
-    // --- Global daily/monthly limits (across ALL keys) ---
-    if (userAccount?.globalDailyLimit || userAccount?.globalMonthlyLimit) {
-      const userKeySlots = await prisma.keySlot.findMany({ where: { userId: auth.userId }, select: { id: true } });
-      const allKeyIds = userKeySlots.map(k => k.id);
-
-      if (userAccount.globalDailyLimit && allKeyIds.length > 0) {
-        const dayStart = new Date(new Date().getFullYear(), new Date().getMonth(), new Date().getDate());
-        const dailyTotal = await prisma.accessLog.count({
-          where: { keySlotId: { in: allKeyIds }, action: 'transparent_proxy', timestamp: { gte: dayStart } },
-        });
-        if (dailyTotal >= userAccount.globalDailyLimit) {
-          return reply.status(429).send({ error: 'Global daily call limit reached', limit: userAccount.globalDailyLimit, used: dailyTotal });
-        }
-      }
-
-      if (userAccount.globalMonthlyLimit && allKeyIds.length > 0) {
-        const monthStart = new Date(new Date().getFullYear(), new Date().getMonth(), 1);
-        const monthlyTotal = await prisma.accessLog.count({
-          where: { keySlotId: { in: allKeyIds }, action: 'transparent_proxy', timestamp: { gte: monthStart } },
-        });
-        if (monthlyTotal >= userAccount.globalMonthlyLimit) {
-          return reply.status(429).send({ error: 'Global monthly call limit reached', limit: userAccount.globalMonthlyLimit, used: monthlyTotal });
-        }
-      }
-    }
-
-    // --- c. Find active key slot for this provider ---
-    const keySlot = await prisma.keySlot.findFirst({
-      where: { userId: auth.userId, provider, status: 'ACTIVE' },
-      orderBy: { createdAt: 'desc' },
-    });
 
     if (!keySlot) {
       return reply.status(404).send({
@@ -225,61 +204,88 @@ export async function transparentProxyRoutes(app: FastifyInstance) {
       return reply.status(410).send({ error: 'Key has expired', expiresAt: keySlot.expiresAt });
     }
 
-    // --- d2. Check per-key daily/monthly limits ---
-    // Look up the user's tier to decide hard block vs overage
-    const proxyUser = await prisma.user.findUnique({ where: { id: auth.userId }, select: { tier: true } });
-    const proxyTier = (proxyUser?.tier as string) || 'free';
+    const proxyTier = (userAccount?.tier as string) || 'free';
 
-    if (keySlot.dailyLimit || keySlot.monthlyLimit) {
+    // --- Global + per-key limits (parallel where possible) ---
+    const needsGlobalLimits = userAccount?.globalDailyLimit || userAccount?.globalMonthlyLimit;
+    const needsKeyLimits = keySlot.dailyLimit || keySlot.monthlyLimit;
+
+    if (needsGlobalLimits || needsKeyLimits) {
       const now = new Date();
+      const dayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+      const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
 
+      // Build all count queries in parallel
+      const countQueries: Promise<number>[] = [];
+      const queryLabels: string[] = [];
+
+      if (userAccount?.globalDailyLimit) {
+        countQueries.push(
+          prisma.keySlot.findMany({ where: { userId: auth.userId }, select: { id: true } })
+            .then(slots => slots.length === 0 ? 0 : prisma.accessLog.count({
+              where: { keySlotId: { in: slots.map(k => k.id) }, action: 'transparent_proxy', timestamp: { gte: dayStart } },
+            }))
+        );
+        queryLabels.push('globalDaily');
+      }
+      if (userAccount?.globalMonthlyLimit) {
+        countQueries.push(
+          prisma.keySlot.findMany({ where: { userId: auth.userId }, select: { id: true } })
+            .then(slots => slots.length === 0 ? 0 : prisma.accessLog.count({
+              where: { keySlotId: { in: slots.map(k => k.id) }, action: 'transparent_proxy', timestamp: { gte: monthStart } },
+            }))
+        );
+        queryLabels.push('globalMonthly');
+      }
       if (keySlot.dailyLimit) {
-        const dayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-        const dailyCount = await prisma.accessLog.count({
-          where: { keySlotId: keySlot.id, action: 'transparent_proxy', timestamp: { gte: dayStart } },
-        });
-        if (dailyCount >= keySlot.dailyLimit) {
-          if (keySlot.blockOnLimit) {
-            // Free tier: always hard block
-            if (proxyTier === 'free') {
-              return reply.status(429).send({
-                error: 'Daily call limit reached',
-                limit: keySlot.dailyLimit,
-                used: dailyCount,
-                resets: 'midnight UTC',
-              });
-            }
-            // Paid tiers: allow but log as overage
-            request.log.info({ msg: 'Daily overage call allowed', keySlotId: keySlot.id, tier: proxyTier, used: dailyCount, limit: keySlot.dailyLimit });
-          }
-          if (auth.devKey.alertEmail) {
-            sendUsageAlert(auth.devKey.alertEmail, keySlot.label, dailyCount, keySlot.dailyLimit);
-          }
-        }
+        countQueries.push(
+          prisma.accessLog.count({
+            where: { keySlotId: keySlot.id, action: 'transparent_proxy', timestamp: { gte: dayStart } },
+          })
+        );
+        queryLabels.push('keyDaily');
+      }
+      if (keySlot.monthlyLimit) {
+        countQueries.push(
+          prisma.accessLog.count({
+            where: { keySlotId: keySlot.id, action: 'transparent_proxy', timestamp: { gte: monthStart } },
+          })
+        );
+        queryLabels.push('keyMonthly');
       }
 
-      if (keySlot.monthlyLimit) {
-        const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
-        const monthlyCount = await prisma.accessLog.count({
-          where: { keySlotId: keySlot.id, action: 'transparent_proxy', timestamp: { gte: monthStart } },
-        });
-        if (monthlyCount >= keySlot.monthlyLimit) {
-          if (keySlot.blockOnLimit) {
-            // Free tier: always hard block
-            if (proxyTier === 'free') {
-              return reply.status(429).send({
-                error: 'Monthly call limit reached',
-                limit: keySlot.monthlyLimit,
-                used: monthlyCount,
-                resets: 'next month',
-              });
-            }
-            // Paid tiers: allow but log as overage
-            request.log.info({ msg: 'Monthly overage call allowed', keySlotId: keySlot.id, tier: proxyTier, used: monthlyCount, limit: keySlot.monthlyLimit });
-          }
-          if (auth.devKey.alertEmail) {
-            sendUsageAlert(auth.devKey.alertEmail, keySlot.label, monthlyCount, keySlot.monthlyLimit);
-          }
+      const counts = await Promise.all(countQueries);
+      const countMap = Object.fromEntries(queryLabels.map((l, i) => [l, counts[i]]));
+
+      // Check global limits
+      if (userAccount?.globalDailyLimit && countMap.globalDaily >= userAccount.globalDailyLimit) {
+        return reply.status(429).send({ error: 'Global daily call limit reached', limit: userAccount.globalDailyLimit, used: countMap.globalDaily });
+      }
+      if (userAccount?.globalMonthlyLimit && countMap.globalMonthly >= userAccount.globalMonthlyLimit) {
+        return reply.status(429).send({ error: 'Global monthly call limit reached', limit: userAccount.globalMonthlyLimit, used: countMap.globalMonthly });
+      }
+
+      // Check per-key limits
+      if (keySlot.dailyLimit && countMap.keyDaily >= keySlot.dailyLimit) {
+        if (keySlot.blockOnLimit && proxyTier === 'free') {
+          return reply.status(429).send({ error: 'Daily call limit reached', limit: keySlot.dailyLimit, used: countMap.keyDaily, resets: 'midnight UTC' });
+        }
+        if (keySlot.blockOnLimit) {
+          request.log.info({ msg: 'Daily overage call allowed', keySlotId: keySlot.id, tier: proxyTier, used: countMap.keyDaily, limit: keySlot.dailyLimit });
+        }
+        if (auth.devKey.alertEmail) {
+          sendUsageAlert(auth.devKey.alertEmail, keySlot.label, countMap.keyDaily, keySlot.dailyLimit);
+        }
+      }
+      if (keySlot.monthlyLimit && countMap.keyMonthly >= keySlot.monthlyLimit) {
+        if (keySlot.blockOnLimit && proxyTier === 'free') {
+          return reply.status(429).send({ error: 'Monthly call limit reached', limit: keySlot.monthlyLimit, used: countMap.keyMonthly, resets: 'next month' });
+        }
+        if (keySlot.blockOnLimit) {
+          request.log.info({ msg: 'Monthly overage call allowed', keySlotId: keySlot.id, tier: proxyTier, used: countMap.keyMonthly, limit: keySlot.monthlyLimit });
+        }
+        if (auth.devKey.alertEmail) {
+          sendUsageAlert(auth.devKey.alertEmail, keySlot.label, countMap.keyMonthly, keySlot.monthlyLimit);
         }
       }
     }
@@ -343,7 +349,7 @@ export async function transparentProxyRoutes(app: FastifyInstance) {
     // Only fallback if primary fetch throws (network unreachable), not on 5xx.
     let fallbackProvider: string | null = null;
     let fallbackKeySlot: typeof keySlot | null = null;
-    let response: Response;
+    let response!: Response;
 
     try {
       response = await fetch(upstreamUrl, {
