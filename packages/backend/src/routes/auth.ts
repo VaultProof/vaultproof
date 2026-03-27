@@ -1,9 +1,33 @@
 import type { FastifyInstance } from 'fastify';
 import { prisma } from '../lib/prisma.js';
 import { requireAuth } from '../middleware/auth.js';
+import { createClient } from '@supabase/supabase-js';
 import { z } from 'zod';
 
+const supabase = createClient(
+  process.env.SUPABASE_URL || '',
+  process.env.SUPABASE_ANON_KEY || ''
+);
+
 export async function authRoutes(app: FastifyInstance) {
+  // Refresh a Supabase access token using a refresh token
+  // Used by the CLI when the 1-hour JWT is near expiry
+  app.post('/refresh', async (request, reply) => {
+    const schema = z.object({ refreshToken: z.string().min(1) });
+    const parsed = schema.safeParse(request.body);
+    if (!parsed.success) return reply.status(400).send({ error: 'Missing refreshToken' });
+
+    const { data, error } = await supabase.auth.refreshSession({ refresh_token: parsed.data.refreshToken });
+    if (error || !data.session) {
+      return reply.status(401).send({ error: 'Invalid or expired refresh token' });
+    }
+
+    return {
+      token: data.session.access_token,
+      refreshToken: data.session.refresh_token,
+    };
+  });
+
   // Get current user
   app.get('/me', { preHandler: requireAuth }, async (request) => {
     const user = await prisma.user.findUnique({

@@ -216,7 +216,7 @@
 
         // If CLI callback, redirect to CLI with token
         if (cliCallback) {
-          window.location.href = `${cliCallback}?token=${session.access_token}&email=${encodeURIComponent(session.user.email)}`;
+          window.location.href = `${cliCallback}?token=${session.access_token}&refresh_token=${encodeURIComponent(session.refresh_token)}&email=${encodeURIComponent(session.user.email)}`;
           return;
         }
 
@@ -235,7 +235,7 @@
 
         // If CLI callback, redirect to CLI with token
         if (cliCallback) {
-          window.location.href = `${cliCallback}?token=${session.access_token}&email=${encodeURIComponent(session.user.email)}`;
+          window.location.href = `${cliCallback}?token=${session.access_token}&refresh_token=${encodeURIComponent(session.refresh_token)}&email=${encodeURIComponent(session.user.email)}`;
           return;
         }
 
@@ -320,7 +320,7 @@
 
         // If CLI callback, redirect to CLI with token
         if (cliCallback) {
-          window.location.href = `${cliCallback}?token=${data.session.access_token}&email=${encodeURIComponent(data.user.email)}`;
+          window.location.href = `${cliCallback}?token=${data.session.access_token}&refresh_token=${encodeURIComponent(data.session.refresh_token)}&email=${encodeURIComponent(data.user.email)}`;
           return;
         }
 
@@ -395,7 +395,7 @@
 
           // If CLI callback, redirect to CLI with token
           if (cliCallback) {
-            window.location.href = `${cliCallback}?token=${data.session.access_token}&email=${encodeURIComponent(data.user.email)}`;
+            window.location.href = `${cliCallback}?token=${data.session.access_token}&refresh_token=${encodeURIComponent(data.session.refresh_token)}&email=${encodeURIComponent(data.user.email)}`;
             return;
           }
 

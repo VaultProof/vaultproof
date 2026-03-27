@@ -35,21 +35,26 @@ export interface ProxyResponse {
 export class VaultProof {
   private apiUrl: string;
   private apiKey: string;
-  private deviceSecret?: string;
+  private sessionToken?: string;
 
   /**
    * Create a VaultProof client.
    * @param apiKey - Your developer API key (vp_live_... or vp_test_...)
    * @param apiUrl - API URL (default: https://api.vaultproof.dev)
-   * @param deviceSecret - Optional device secret for HMAC signing (Pro feature)
+   * @param sessionToken - Optional session token (from /dev-keys/:id/session)
    */
-  constructor(apiKey: string, apiUrl?: string, deviceSecret?: string) {
+  constructor(apiKey: string, apiUrl?: string, sessionToken?: string) {
     if (!apiKey.startsWith('vp_')) {
       throw new Error('Invalid API key. Must start with vp_live_ or vp_test_');
     }
     this.apiKey = apiKey;
     this.apiUrl = apiUrl || DEFAULT_API_URL;
-    this.deviceSecret = deviceSecret;
+    this.sessionToken = sessionToken;
+  }
+
+  /** Update the session token (e.g., after refresh). */
+  setSessionToken(token: string): void {
+    this.sessionToken = token;
   }
 
   /**
@@ -60,15 +65,10 @@ export class VaultProof {
    * sent encrypted with different keys.
    */
   async store(apiKey: string, provider: string, label?: string): Promise<StoredKey> {
-    // Split the key LOCALLY — it never leaves this machine whole
     const shares = splitString(apiKey, 2, 2);
     const share1 = serializeShare(shares[0]);
     const share2 = serializeShare(shares[1]);
 
-    // Send both shares to the server
-    // Share 1 will be encrypted with VAULT_ENCRYPTION_KEY (server secret)
-    // Share 2 will be encrypted with OUR vp_live_ key (developer secret)
-    // Server can decrypt Share 1 but NOT Share 2 without our key
     const res = await this.fetch('/api/v1/sdk/store', {
       method: 'POST',
       body: { share1, share2, provider, label },
@@ -83,15 +83,6 @@ export class VaultProof {
 
   /**
    * Make a proxied API call.
-   *
-   * The server decrypts both shares (Share 1 with its key, Share 2 with
-   * your vp_live_ key sent in the header), combines them for ~100ms,
-   * makes the call, then zeros everything.
-   *
-   * @param keyId - Key ID from store()
-   * @param path - API endpoint (e.g., '/v1/chat/completions')
-   * @param body - Request body
-   * @param method - HTTP method (default: 'POST')
    */
   async proxy(
     keyId: string,
@@ -104,15 +95,8 @@ export class VaultProof {
       'X-API-Key': this.apiKey,
     };
 
-    if (this.deviceSecret) {
-      const crypto = await import('crypto');
-      const timestamp = Date.now().toString();
-      const hash = crypto.createHash('sha256').update(this.deviceSecret).digest('hex');
-      const signature = crypto.createHmac('sha256', hash)
-        .update(`${this.apiKey}:${timestamp}`)
-        .digest('hex');
-      proxyHeaders['X-VaultProof-Device-Signature'] = signature;
-      proxyHeaders['X-VaultProof-Device-Timestamp'] = timestamp;
+    if (this.sessionToken) {
+      proxyHeaders['X-VaultProof-Session'] = this.sessionToken;
     }
 
     const res = await globalThis.fetch(`${this.apiUrl}/api/v1/sdk/call`, {
@@ -146,15 +130,8 @@ export class VaultProof {
       'X-API-Key': this.apiKey,
     };
 
-    if (this.deviceSecret) {
-      const crypto = await import('crypto');
-      const timestamp = Date.now().toString();
-      const hash = crypto.createHash('sha256').update(this.deviceSecret).digest('hex');
-      const signature = crypto.createHmac('sha256', hash)
-        .update(`${this.apiKey}:${timestamp}`)
-        .digest('hex');
-      headers['X-VaultProof-Device-Signature'] = signature;
-      headers['X-VaultProof-Device-Timestamp'] = timestamp;
+    if (this.sessionToken) {
+      headers['X-VaultProof-Session'] = this.sessionToken;
     }
 
     const res = await globalThis.fetch(`${this.apiUrl}${path}`, {

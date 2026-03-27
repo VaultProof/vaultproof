@@ -1,5 +1,5 @@
 import chalk from "chalk";
-import { getApiUrl, getToken, getApiKey } from "./config.js";
+import { getApiUrl, getToken, getApiKey, getRefreshToken, updateConfig } from "./config.js";
 
 export interface ApiResponse<T = unknown> {
   ok: boolean;
@@ -13,6 +13,51 @@ export interface ApiErrorBody {
 }
 
 export type AuthMode = "jwt" | "apikey";
+
+// In-memory session token — never written to disk
+let sessionToken: string | null = null;
+let sessionExpiresAt: number = 0;
+let sessionRefreshPromise: Promise<void> | null = null;
+
+/** Returns the expiry timestamp (ms) of a JWT, or 0 if unparseable. */
+function jwtExpiry(token: string): number {
+  try {
+    const payload = JSON.parse(
+      Buffer.from(token.split(".")[1], "base64url").toString()
+    );
+    return typeof payload.exp === "number" ? payload.exp * 1000 : 0;
+  } catch {
+    return 0;
+  }
+}
+
+/**
+ * Refresh the Supabase access token using the stored refresh token.
+ * Updates config on success. Silent on failure.
+ */
+async function refreshJwt(): Promise<void> {
+  const refreshToken = getRefreshToken();
+  if (!refreshToken) return;
+
+  try {
+    const baseUrl = getApiUrl();
+    const response = await fetch(`${baseUrl}/api/v1/auth/refresh`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ refreshToken }),
+    });
+
+    if (response.ok) {
+      const data = (await response.json()) as {
+        token: string;
+        refreshToken: string;
+      };
+      updateConfig({ token: data.token, refreshToken: data.refreshToken });
+    }
+  } catch {
+    // Network failure — keep existing JWT
+  }
+}
 
 function getAuthHeaders(mode: AuthMode): Record<string, string> {
   const headers: Record<string, string> = {
@@ -41,7 +86,95 @@ function getAuthHeaders(mode: AuthMode): Record<string, string> {
     headers["X-API-Key"] = apiKey;
   }
 
+  // Attach session token if we have one (in-memory only)
+  if (sessionToken && Date.now() < sessionExpiresAt) {
+    headers["X-VaultProof-Session"] = sessionToken;
+  }
+
   return headers;
+}
+
+/**
+ * Fetch a new session token from the server.
+ * Requires BOTH a valid Supabase JWT and the vp_live_ key.
+ */
+export async function refreshSessionToken(devKeyId: string): Promise<void> {
+  // Prevent concurrent refresh calls
+  if (sessionRefreshPromise) {
+    await sessionRefreshPromise;
+    return;
+  }
+
+  sessionRefreshPromise = (async () => {
+    const baseUrl = getApiUrl();
+
+    // Refresh JWT first if it expires within 5 minutes
+    const currentToken = getToken();
+    if (currentToken) {
+      const expiry = jwtExpiry(currentToken);
+      if (expiry > 0 && expiry - Date.now() < 5 * 60 * 1000) {
+        await refreshJwt();
+      }
+    }
+
+    const token = getToken();
+    const apiKey = getApiKey();
+
+    if (!token || !apiKey) return;
+
+    try {
+      const response = await fetch(
+        `${baseUrl}/api/v1/dev-keys/${devKeyId}/session`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+            "X-API-Key": apiKey,
+          },
+        }
+      );
+
+      if (response.ok) {
+        const data = (await response.json()) as {
+          token: string;
+          expiresAt: string;
+        };
+        sessionToken = data.token;
+        sessionExpiresAt = new Date(data.expiresAt).getTime();
+      } else if (response.status === 401 || response.status === 403) {
+        // JWT expired or key revoked — clear session so we don't keep sending a bad token
+        sessionToken = null;
+        sessionExpiresAt = 0;
+      }
+      // Other non-2xx (e.g. 500) — keep old token until it expires naturally
+    } catch {
+      // Network failure — keep old token, stay quiet
+    }
+  })();
+
+  try {
+    await sessionRefreshPromise;
+  } finally {
+    sessionRefreshPromise = null;
+  }
+}
+
+/**
+ * Start a background interval that refreshes the session token every 4 min.
+ * Returns a cleanup function to stop the interval.
+ */
+export function startSessionRefresh(devKeyId: string): () => void {
+  const interval = setInterval(() => {
+    refreshSessionToken(devKeyId).catch(() => {});
+  }, 4 * 60 * 1000); // Refresh at 4 min (token lasts 5 min)
+
+  return () => clearInterval(interval);
+}
+
+export function clearSession(): void {
+  sessionToken = null;
+  sessionExpiresAt = 0;
 }
 
 export async function apiRequest<T = unknown>(
@@ -57,32 +190,6 @@ export async function apiRequest<T = unknown>(
   const url = `${baseUrl}${path}`;
   const auth = options.auth ?? "jwt";
   const headers = getAuthHeaders(auth);
-
-  // Add device signing if available
-  try {
-    const fs = await import("fs");
-    const path = await import("path");
-    const os = await import("os");
-    const devicePath = path.join(os.homedir(), ".vaultproof", "device.json");
-    if (fs.existsSync(devicePath)) {
-      const device = JSON.parse(fs.readFileSync(devicePath, "utf-8"));
-      const crypto = await import("crypto");
-      const timestamp = Date.now().toString();
-      const apiKey = getApiKey();
-      if (apiKey && device.secret) {
-        const signature = crypto
-          .createHmac(
-            "sha256",
-            crypto.createHash("sha256").update(device.secret).digest("hex")
-          )
-          .update(`${apiKey}:${timestamp}`)
-          .digest("hex");
-
-        headers["X-VaultProof-Device-Signature"] = signature;
-        headers["X-VaultProof-Device-Timestamp"] = timestamp;
-      }
-    }
-  } catch {} // Silently skip if no device secret
 
   const fetchOptions: RequestInit = {
     method: method.toUpperCase(),
