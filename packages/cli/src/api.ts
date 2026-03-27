@@ -1,5 +1,5 @@
 import chalk from "chalk";
-import { getApiUrl, getToken, getApiKey, updateConfig } from "./config.js";
+import { getApiUrl, getDirectUrl, getToken, getApiKey, updateConfig } from "./config.js";
 
 export interface ApiResponse<T = unknown> {
   ok: boolean;
@@ -198,9 +198,9 @@ export async function apiRequest<T = unknown>(
     stream?: boolean;
   } = {}
 ): Promise<ApiResponse<T>> {
-  const baseUrl = getApiUrl();
-  const url = `${baseUrl}${path}`;
   const auth = options.auth ?? "jwt";
+  const baseUrl = auth === "apikey" ? getDirectUrl() : getApiUrl();
+  const url = `${baseUrl}${path}`;
   const headers = getAuthHeaders(auth);
 
   const fetchOptions: RequestInit = {

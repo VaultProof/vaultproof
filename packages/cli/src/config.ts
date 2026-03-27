@@ -55,10 +55,36 @@ export function getApiUrl(): string {
   );
 }
 
+/** Direct backend URL — skips the CF Worker for SDK-authenticated calls. */
+export function getDirectUrl(): string {
+  return (
+    process.env.VAULTPROOF_DIRECT_URL ||
+    "https://dashboard-production-b76c.up.railway.app"
+  );
+}
+
 export function getToken(): string | undefined {
   return readConfig().token;
 }
 
 export function getApiKey(): string | undefined {
-  return process.env.VAULTPROOF_API_KEY;
+  // Environment variable always wins
+  if (process.env.VAULTPROOF_API_KEY) return process.env.VAULTPROOF_API_KEY;
+
+  // Fall back to dotenv files in cwd
+  const dotenvFiles = ['.env', '.env.local', '.env.development', '.env.development.local'];
+  for (const file of dotenvFiles) {
+    const filePath = path.join(process.cwd(), file);
+    try {
+      if (fs.existsSync(filePath)) {
+        const content = fs.readFileSync(filePath, 'utf-8');
+        const match = content.match(/^VAULTPROOF_API_KEY\s*=\s*["']?([^\s"'#]+)["']?/m);
+        if (match) return match[1];
+      }
+    } catch {
+      // Unreadable file — skip
+    }
+  }
+
+  return undefined;
 }
