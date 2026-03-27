@@ -2,6 +2,23 @@
 
 How to revert each part of VaultProof if something breaks in production.
 
+## Zero-downtime architecture
+
+VaultProof is designed so that no deploy or rollback causes downtime:
+
+| Layer | How it stays up |
+|-------|----------------|
+| **Cloudflare Workers** | Atomic edge deploys — old version serves until new version is fully deployed worldwide. No gap. |
+| **Railway backend** | Rolling deploy with health check (`/health`). New instance must pass health check before Railway routes traffic to it. Old instance stays alive until handoff is complete. |
+| **Graceful shutdown** | On SIGTERM (Railway sends this before killing), the backend finishes all in-flight requests before exiting. No dropped connections. |
+| **Database** | Supabase Postgres — always on, no deploy involved. Migrations should be additive (add columns, don't drop or rename). |
+| **npm packages** | Users pin versions. A bad publish doesn't affect anyone until they explicitly upgrade. |
+
+**Rule: never make breaking database migrations.** Always:
+- Add new columns (with defaults), don't rename or drop
+- Deploy code that handles both old and new schema first
+- Only remove old columns after all instances run the new code
+
 ---
 
 ## 1. Backend (Railway)

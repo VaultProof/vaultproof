@@ -113,6 +113,17 @@ async function start() {
 
   await app.listen({ port: PORT, host: '0.0.0.0' });
   console.log(`VaultProof backend running on port ${PORT}`);
+
+  // Graceful shutdown — finish in-flight requests before exiting
+  const shutdown = async (signal: string) => {
+    console.log(`${signal} received, shutting down gracefully...`);
+    await app.close();
+    console.log('Server closed. Exiting.');
+    process.exit(0);
+  };
+
+  process.on('SIGTERM', () => shutdown('SIGTERM'));
+  process.on('SIGINT', () => shutdown('SIGINT'));
 }
 
 start().catch((err) => {
