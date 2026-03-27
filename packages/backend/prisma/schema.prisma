@@ -67,6 +67,8 @@ model KeySlot {
   accessLogs       AccessLog[]
   appGrants        AppGrant[]
 
+  @@index([userId, status])     // speeds up key listing per user
+  @@index([userId, provider])   // speeds up transparent proxy key lookup
   @@map("key_slots")
 }
 
@@ -94,6 +96,9 @@ model AccessLog {
   timestamp DateTime @default(now())
   metadata  String?
 
+  @@index([keySlotId, action, timestamp])  // speeds up rate limit counts + usage queries
+  @@index([keySlotId, timestamp])           // speeds up log listing + export
+  @@index([appId, timestamp])              // speeds up per-app usage queries
   @@map("access_logs")
 }
 
