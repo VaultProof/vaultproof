@@ -509,71 +509,51 @@ vaultproof exec -p stripe -- node app.js
             <div class="guide-body">
                 <div class="px-6 pb-6 space-y-4">
 
-                    <div class="bg-amber-500/5 border border-amber-500/20 rounded-xl p-4">
-                        <p class="text-amber-400 text-xs font-medium mb-1">This is a real migration, not a one-liner</p>
-                        <p class="text-gray-400 text-xs">You're moving every secret out of your .env and into VaultProof. Budget 30&ndash;60 minutes depending on how many keys your app uses.</p>
-                    </div>
-
                     <div class="flex items-start gap-3">
                         <div class="step-num mt-0.5">1</div>
                         <div class="text-gray-400 text-sm pt-1">
-                            <strong class="text-white">Install the SDK</strong>
+                            <strong class="text-white">Install the SDK and CLI</strong>
                         </div>
                     </div>
                     <div>
                         <div class="code-header"><span>bash</span></div>
                         <div class="code-block">
-<pre>npm install @vaultproof/sdk</pre>
+<pre>npm install @vaultproof/sdk
+npm install -g @vaultproof/cli</pre>
                         </div>
                     </div>
 
                     <div class="flex items-start gap-3">
                         <div class="step-num mt-0.5">2</div>
                         <div class="text-gray-400 text-sm pt-1">
-                            <strong class="text-white">Store every secret in VaultProof</strong><br>
-                            Do this once per key. Use labels to tell them apart.
+                            <strong class="text-white">Run migrate from your project directory</strong><br>
+                            It reads your .env, asks which secrets to store, and prints everything you need.
                         </div>
                     </div>
                     <div>
                         <div class="code-header"><span>bash</span></div>
                         <div class="code-block">
-<pre><span class="cmt"># Store each key with a clear label</span>
-vaultproof store -p stripe -l <span class="str">"secret"</span>
-vaultproof store -p supabase -l <span class="str">"service_role"</span>
-vaultproof store -p supabase -l <span class="str">"anon"</span>
-
-<span class="cmt"># Note the key IDs that come back &mdash; you'll need them</span></pre>
+<pre>vaultproof migrate</pre>
                         </div>
                     </div>
+                    <div class="bg-vp-surface border border-vp-border rounded-xl p-4 mt-2">
+                        <p class="text-gray-500 text-xs font-medium mb-2">What this does:</p>
+                        <ul class="text-gray-400 text-xs space-y-1">
+                            <li>&bull; Reads your .env (only key names and values &mdash; nothing else is scanned)</li>
+                            <li>&bull; Separates secrets from config (e.g. STRIPE_SECRET_KEY vs NEXT_PUBLIC_APP_URL)</li>
+                            <li>&bull; Asks you one-by-one which secrets to store</li>
+                            <li>&bull; Stores them in VaultProof via Shamir split</li>
+                            <li>&bull; Prints a ready-to-use <code class="font-mono text-vp-accent">lib/vault.ts</code> helper</li>
+                            <li>&bull; Prints which env vars to remove from your hosting</li>
+                        </ul>
+                        <p class="text-gray-500 text-xs mt-2"><strong class="text-gray-400">Does NOT modify any files.</strong> Everything is printed to your terminal for you to copy.</p>
+                    </div>
 
-                    <div class="flex items-start gap-3">
+                    <div class="flex items-start gap-3 mt-2">
                         <div class="step-num mt-0.5">3</div>
                         <div class="text-gray-400 text-sm pt-1">
-                            <strong class="text-white">Create a secrets helper</strong><br>
-                            One file that all your server code imports.
-                        </div>
-                    </div>
-                    <div>
-                        <div class="code-header"><span>lib/vault.ts</span></div>
-                        <div class="code-block">
-<pre><span class="kw">import</span> VaultProof <span class="kw">from</span> <span class="str">'@vaultproof/sdk'</span>;
-
-<span class="kw">const</span> vault = <span class="kw">new</span> VaultProof(process.env.VAULTPROOF_API_KEY!);
-
-<span class="cmt">// Map friendly names to VaultProof key IDs</span>
-<span class="kw">const</span> KEY_IDS: Record&lt;<span class="typ">string</span>, <span class="typ">string</span>&gt; = {
-  STRIPE_SECRET_KEY:         <span class="str">'your-stripe-key-id'</span>,
-  SUPABASE_SERVICE_ROLE_KEY: <span class="str">'your-supabase-sr-key-id'</span>,
-  SUPABASE_ANON_KEY:         <span class="str">'your-supabase-anon-key-id'</span>,
-  SMTP_PASSWORD:             <span class="str">'your-smtp-key-id'</span>,
-};
-
-<span class="kw">export async function</span> <span class="fn">getSecret</span>(name: <span class="typ">string</span>): Promise&lt;<span class="typ">string</span>&gt; {
-  <span class="kw">const</span> keyId = KEY_IDS[name];
-  <span class="kw">if</span> (!keyId) <span class="kw">throw new</span> Error(<span class="str">`Unknown secret: ${name}`</span>);
-  <span class="kw">const</span> { apiKey } = <span class="kw">await</span> vault.retrieve(keyId);
-  <span class="kw">return</span> apiKey;
-}</pre>
+                            <strong class="text-white">Copy the vault.ts helper into your project</strong><br>
+                            The migrate command prints this &mdash; paste it into <code class="text-xs bg-vp-bg px-2 py-0.5 rounded font-mono text-gray-300">lib/vault.ts</code>.
                         </div>
                     </div>
 
