@@ -1,10 +1,15 @@
 {
   "name": "@vaultproof/cli",
-  "version": "1.3.0",
+  "version": "1.4.0",
   "description": "VaultProof CLI — manage API keys from the terminal",
   "type": "module",
-  "bin": { "vaultproof": "dist/index.js" },
-  "scripts": { "build": "tsc", "dev": "tsx src/index.ts" },
+  "bin": {
+    "vaultproof": "dist/index.js"
+  },
+  "scripts": {
+    "build": "tsc",
+    "dev": "tsx src/index.ts"
+  },
   "dependencies": {
     "@vaultproof/shamir": "1.0.0",
     "commander": "^13.0.0",
