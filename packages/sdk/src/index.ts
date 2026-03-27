@@ -19,7 +19,7 @@
 import { splitString, serializeShare } from '@vaultproof/shamir';
 
 const DEFAULT_API_URL = 'https://api.vaultproof.dev';
-const DEFAULT_DIRECT_URL = 'https://backend.vaultproof.dev';
+const DEFAULT_DIRECT_URL = 'https://dashboard-production-b76c.up.railway.app';
 
 export interface VaultProofOptions {
   /** API URL routed through the edge proxy (default: https://api.vaultproof.dev) */
