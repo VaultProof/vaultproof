@@ -427,13 +427,20 @@
                     [34, 197, 94],    // green
                 ];
 
-                function spawnFlow(i) {
+                function spawnFlow(i, randomStart) {
                     const a = Math.floor(Math.random() * projected.length);
                     let b = Math.floor(Math.random() * projected.length);
                     while (b === a) b = Math.floor(Math.random() * projected.length);
-                    return { from: a, to: b, t: 0, speed: 0.002 + Math.random() * 0.002, color: FLOW_COLORS[i % FLOW_COLORS.length] };
+                    return {
+                        from: a, to: b,
+                        t: randomStart ? Math.random() : 0,
+                        speed: 0.001 + Math.random() * 0.006,
+                        delay: randomStart ? 0 : Math.random() * 3000,
+                        startTime: Date.now(),
+                        color: FLOW_COLORS[i % FLOW_COLORS.length],
+                    };
                 }
-                for (let i = 0; i < MAX_FLOWS; i++) flows.push(spawnFlow(i));
+                for (let i = 0; i < MAX_FLOWS; i++) flows.push(spawnFlow(i, true));
 
                 function animate() {
                     ctx.putImageData(mapImage, 0, 0);
@@ -454,9 +461,15 @@
 
                     // Draw flowing lines
                     flows.forEach((f, i) => {
+                        // Wait for random delay before starting
+                        if (now - f.startTime < f.delay) return;
+
                         f.t += f.speed;
                         if (f.t >= 1) {
-                            Object.assign(f, spawnFlow(i));
+                            Object.assign(f, spawnFlow(i, false));
+                            f.delay = Math.random() * 2000;
+                            f.startTime = now;
+                            return;
                         }
 
                         const [x1, y1] = projected[f.from];
