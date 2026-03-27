@@ -352,67 +352,127 @@
             <h2 class="text-lg font-bold text-white mb-1" style="font-family:'Space Grotesk',sans-serif">Global API Traffic</h2>
             <p class="text-xs text-gray-500 mb-6">Requests are routed through the nearest edge node</p>
 
-            <div class="relative w-full overflow-hidden rounded-lg" style="background: #0d0d14;">
-                <svg viewBox="0 0 1000 500" xmlns="http://www.w3.org/2000/svg" class="w-full h-auto">
-                    <!-- Simplified world map continents -->
-                    <g fill="#1e1e2e" stroke="#2a2a3e" stroke-width="0.5">
-                        <!-- North America -->
-                        <path d="M150,120 L160,100 L180,95 L210,90 L240,85 L270,90 L290,100 L300,95 L310,100 L305,115 L295,130 L280,145 L270,155 L260,160 L250,175 L240,185 L230,190 L215,195 L200,200 L190,210 L180,220 L170,225 L160,215 L150,200 L145,185 L140,170 L135,155 L140,140 Z"/>
-                        <!-- Greenland -->
-                        <path d="M290,60 L310,55 L330,58 L340,65 L335,78 L320,85 L305,82 L295,75 Z"/>
-                        <!-- South America -->
-                        <path d="M220,250 L235,245 L250,250 L265,255 L280,270 L290,290 L295,310 L290,330 L285,350 L275,370 L265,385 L255,395 L245,390 L235,375 L230,355 L225,335 L220,315 L215,295 L210,275 L215,260 Z"/>
-                        <!-- Europe -->
-                        <path d="M440,95 L455,88 L470,90 L485,85 L500,90 L515,95 L520,105 L525,115 L520,125 L510,130 L500,135 L490,140 L480,142 L470,138 L460,132 L450,125 L445,115 L440,105 Z"/>
-                        <!-- Africa -->
-                        <path d="M450,165 L465,158 L480,155 L500,158 L515,165 L525,180 L530,200 L535,220 L530,245 L525,265 L515,280 L505,295 L490,305 L475,300 L465,285 L455,265 L450,245 L445,225 L442,205 L445,185 Z"/>
-                        <!-- Asia (main body) -->
-                        <path d="M530,80 L560,70 L590,65 L620,60 L660,58 L700,60 L730,65 L760,72 L780,80 L790,90 L795,105 L790,120 L780,130 L765,138 L750,145 L730,148 L710,150 L690,148 L670,142 L650,138 L630,135 L610,130 L590,125 L570,118 L555,110 L540,100 Z"/>
-                        <!-- India -->
-                        <path d="M630,155 L645,150 L660,155 L670,168 L675,185 L670,200 L660,215 L648,220 L635,215 L625,200 L622,185 L625,168 Z"/>
-                        <!-- Southeast Asia -->
-                        <path d="M700,160 L720,155 L740,158 L755,165 L760,178 L755,190 L740,195 L725,192 L712,185 L705,175 Z"/>
-                        <!-- Australia -->
-                        <path d="M740,290 L765,280 L790,278 L815,282 L835,290 L845,305 L840,322 L830,335 L815,340 L795,342 L775,338 L758,328 L748,315 L742,302 Z"/>
-                        <!-- Japan / Islands -->
-                        <path d="M800,100 L808,95 L815,100 L818,112 L815,125 L808,130 L800,125 L798,112 Z"/>
-                        <!-- Indonesia arc -->
-                        <path d="M720,230 L735,225 L750,228 L765,230 L780,228 L790,232 L785,240 L770,242 L755,240 L740,238 L725,236 Z"/>
-                        <!-- UK / Ireland -->
-                        <path d="M430,90 L438,86 L443,90 L440,98 L434,100 L430,96 Z"/>
-                    </g>
-
-                    <!-- Grid lines (subtle) -->
-                    <g stroke="#1a1a28" stroke-width="0.3" stroke-dasharray="4,8" opacity="0.5">
-                        <line x1="0" y1="125" x2="1000" y2="125"/>
-                        <line x1="0" y1="250" x2="1000" y2="250"/>
-                        <line x1="0" y1="375" x2="1000" y2="375"/>
-                        <line x1="250" y1="0" x2="250" y2="500"/>
-                        <line x1="500" y1="0" x2="500" y2="500"/>
-                        <line x1="750" y1="0" x2="750" y2="500"/>
-                    </g>
-
-                    <!-- San Francisco dot -->
-                    <circle cx="170" cy="140" r="3" fill="#6366f1" opacity="0.9"/>
-                    <circle cx="170" cy="140" r="3" fill="#6366f1" class="map-dot-pulse" opacity="0.5"/>
-                    <text x="170" y="157" text-anchor="middle" fill="#9ca3af" font-size="9" font-family="Inter, sans-serif">San Francisco</text>
-
-                    <!-- London dot -->
-                    <circle cx="438" cy="95" r="3" fill="#6366f1" opacity="0.9"/>
-                    <circle cx="438" cy="95" r="3" fill="#6366f1" class="map-dot-pulse map-dot-pulse-delay-1" opacity="0.5"/>
-                    <text x="438" y="80" text-anchor="middle" fill="#9ca3af" font-size="9" font-family="Inter, sans-serif">London</text>
-
-                    <!-- Tokyo dot -->
-                    <circle cx="808" cy="115" r="3" fill="#6366f1" opacity="0.9"/>
-                    <circle cx="808" cy="115" r="3" fill="#6366f1" class="map-dot-pulse map-dot-pulse-delay-2" opacity="0.5"/>
-                    <text x="808" y="108" text-anchor="end" fill="#9ca3af" font-size="9" font-family="Inter, sans-serif">Tokyo</text>
-
-                    <!-- Connection arcs (subtle) -->
-                    <path d="M170,140 Q300,50 438,95" fill="none" stroke="#6366f1" stroke-width="0.5" opacity="0.2" stroke-dasharray="4,4"/>
-                    <path d="M438,95 Q620,40 808,115" fill="none" stroke="#6366f1" stroke-width="0.5" opacity="0.2" stroke-dasharray="4,4"/>
-                    <path d="M170,140 Q500,20 808,115" fill="none" stroke="#6366f1" stroke-width="0.5" opacity="0.12" stroke-dasharray="4,4"/>
-                </svg>
+            <div class="relative w-full overflow-hidden rounded-lg" style="background: #0d0d14; padding: 1.5rem;">
+                <div id="mapContainer" style="width:100%; height: 340px; position: relative;"></div>
             </div>
+            <script src="https://cdn.jsdelivr.net/npm/chart.js@4"></script>
+            <script src="https://cdn.jsdelivr.net/npm/chartjs-chart-geo@4/build/index.umd.min.js"></script>
+            <script>
+            (async () => {
+                // Load world topology
+                const res = await fetch('https://cdn.jsdelivr.net/npm/world-atlas@2/countries-110m.json');
+                const world = await res.json();
+                const countries = ChartGeo.topojson.feature(world, world.objects.countries).features;
+
+                const canvas = document.createElement('canvas');
+                canvas.style.width = '100%';
+                canvas.style.height = '100%';
+                document.getElementById('mapContainer').appendChild(canvas);
+
+                const edgeNodes = [
+                    { label: 'San Francisco', lat: 37.77, lng: -122.42 },
+                    { label: 'London', lat: 51.51, lng: -0.13 },
+                    { label: 'Tokyo', lat: 35.68, lng: 139.69 },
+                    { label: 'Sydney', lat: -33.87, lng: 151.21 },
+                    { label: 'Sao Paulo', lat: -23.55, lng: -46.63 },
+                ];
+
+                new Chart(canvas, {
+                    type: 'choropleth',
+                    data: {
+                        labels: countries.map(c => c.properties.name),
+                        datasets: [{
+                            label: 'Countries',
+                            outline: countries,
+                            data: countries.map(c => ({ feature: c, value: 0 })),
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        showOutline: true,
+                        showGraticule: false,
+                        plugins: {
+                            legend: { display: false },
+                            tooltip: { enabled: false },
+                        },
+                        scales: {
+                            projection: {
+                                axis: 'x',
+                                projection: 'equalEarth',
+                            },
+                            color: {
+                                axis: 'x',
+                                quantize: 1,
+                                display: false,
+                            },
+                        },
+                        elements: {
+                            geoFeature: {
+                                backgroundColor: '#1a1a2e',
+                                borderColor: '#2a2a40',
+                                borderWidth: 0.5,
+                            },
+                        },
+                    },
+                    plugins: [{
+                        id: 'edgeNodes',
+                        afterDraw(chart) {
+                            const ctx = chart.ctx;
+                            const proj = chart.scales.projection;
+                            const now = Date.now();
+
+                            edgeNodes.forEach((node, i) => {
+                                const pos = proj.projection([node.lng, node.lat]);
+                                if (!pos) return;
+                                const x = pos[0], y = pos[1];
+
+                                // Pulse ring
+                                const pulseR = 6 + 4 * Math.sin((now / 800) + i * 2);
+                                const pulseAlpha = 0.3 - 0.15 * Math.sin((now / 800) + i * 2);
+                                ctx.beginPath();
+                                ctx.arc(x, y, pulseR, 0, Math.PI * 2);
+                                ctx.fillStyle = `rgba(99, 102, 241, ${pulseAlpha})`;
+                                ctx.fill();
+
+                                // Solid dot
+                                ctx.beginPath();
+                                ctx.arc(x, y, 4, 0, Math.PI * 2);
+                                ctx.fillStyle = '#6366f1';
+                                ctx.fill();
+
+                                // Label
+                                ctx.font = '10px Inter, sans-serif';
+                                ctx.fillStyle = '#9ca3af';
+                                ctx.textAlign = 'center';
+                                ctx.fillText(node.label, x, y - 12);
+                            });
+
+                            // Connection lines
+                            ctx.strokeStyle = 'rgba(99, 102, 241, 0.15)';
+                            ctx.lineWidth = 1;
+                            ctx.setLineDash([4, 6]);
+                            for (let i = 0; i < edgeNodes.length; i++) {
+                                for (let j = i + 1; j < edgeNodes.length; j++) {
+                                    const a = proj.projection([edgeNodes[i].lng, edgeNodes[i].lat]);
+                                    const b = proj.projection([edgeNodes[j].lng, edgeNodes[j].lat]);
+                                    if (!a || !b) continue;
+                                    ctx.beginPath();
+                                    const mx = (a[0] + b[0]) / 2, my = Math.min(a[1], b[1]) - 20;
+                                    ctx.moveTo(a[0], a[1]);
+                                    ctx.quadraticCurveTo(mx, my, b[0], b[1]);
+                                    ctx.stroke();
+                                }
+                            }
+                            ctx.setLineDash([]);
+
+                            // Request animation for pulse
+                            requestAnimationFrame(() => chart.draw());
+                        }
+                    }]
+                });
+            })();
+            </script>
 
             <p class="text-xs text-gray-600 mt-4 text-center">Traffic data updates in real-time as usage grows</p>
         </div>
