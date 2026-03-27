@@ -526,6 +526,21 @@ npm install -g @vaultproof/cli</pre>
                     <div class="flex items-start gap-3">
                         <div class="step-num mt-0.5">2</div>
                         <div class="text-gray-400 text-sm pt-1">
+                            <strong class="text-white">Test your connection</strong><br>
+                            Verify your API key works before storing anything.
+                        </div>
+                    </div>
+                    <div>
+                        <div class="code-header"><span>bash</span></div>
+                        <div class="code-block">
+<pre>vaultproof test
+<span class="cmt"># ✔ Connected — 0 keys stored</span></pre>
+                        </div>
+                    </div>
+
+                    <div class="flex items-start gap-3">
+                        <div class="step-num mt-0.5">3</div>
+                        <div class="text-gray-400 text-sm pt-1">
                             <strong class="text-white">Run migrate from your project directory</strong><br>
                             It reads your .env, asks which secrets to store, and prints everything you need.
                         </div>
@@ -550,7 +565,7 @@ npm install -g @vaultproof/cli</pre>
                     </div>
 
                     <div class="flex items-start gap-3 mt-2">
-                        <div class="step-num mt-0.5">3</div>
+                        <div class="step-num mt-0.5">4</div>
                         <div class="text-gray-400 text-sm pt-1">
                             <strong class="text-white">Copy the vault.ts helper into your project</strong><br>
                             The migrate command prints this &mdash; paste it into <code class="text-xs bg-vp-bg px-2 py-0.5 rounded font-mono text-gray-300">lib/vault.ts</code>.
@@ -558,7 +573,7 @@ npm install -g @vaultproof/cli</pre>
                     </div>
 
                     <div class="flex items-start gap-3">
-                        <div class="step-num mt-0.5">4</div>
+                        <div class="step-num mt-0.5">5</div>
                         <div class="text-gray-400 text-sm pt-1">
                             <strong class="text-white">Replace process.env.X in your server code</strong><br>
                             Every file that reads a secret needs to change. This is the bulk of the work.
@@ -582,7 +597,7 @@ npm install -g @vaultproof/cli</pre>
                     </div>
 
                     <div class="flex items-start gap-3">
-                        <div class="step-num mt-0.5">5</div>
+                        <div class="step-num mt-0.5">6</div>
                         <div class="text-gray-400 text-sm pt-1">
                             <strong class="text-white">Update your hosting env vars</strong><br>
                             Remove every secret. Keep only non-secret config and your VaultProof key.
@@ -606,7 +621,7 @@ NEXT_PUBLIC_APP_URL=https://yourapp.com
                     </div>
 
                     <div class="flex items-start gap-3">
-                        <div class="step-num mt-0.5">6</div>
+                        <div class="step-num mt-0.5">7</div>
                         <div class="text-gray-400 text-sm pt-1">
                             <strong class="text-white">Test locally, then deploy</strong><br>
                             Make sure every feature that touches a secret still works.

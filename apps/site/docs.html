@@ -1506,6 +1506,44 @@ $ vaultproof l</pre>
                     </div>
                 </div>
 
+                <!-- Setup Commands -->
+                <div class="mb-8">
+                    <h3 class="text-lg font-semibold text-white mb-4">Setup</h3>
+                    <div class="space-y-4">
+                        <div class="endpoint-card">
+                            <div class="flex items-baseline gap-3 mb-2">
+                                <code class="font-mono text-sm text-white font-semibold">vaultproof test</code>
+                            </div>
+                            <p class="text-gray-500 text-sm mb-2">Test your connection to VaultProof. Verifies your API key is valid and shows how many keys you have stored.</p>
+                            <div class="code-block mt-3">
+                                <div class="code-header">example</div>
+<pre class="text-gray-300">$ vaultproof test
+<span class="str">✔ Connected — 3 keys stored</span></pre>
+                            </div>
+                        </div>
+
+                        <div class="endpoint-card">
+                            <div class="flex items-baseline gap-3 mb-2">
+                                <code class="font-mono text-sm text-white font-semibold">vaultproof migrate</code>
+                            </div>
+                            <p class="text-gray-500 text-sm mb-2">Scan your <code class="font-mono text-xs text-vp-accent">.env</code> file, store secrets in VaultProof, and print a ready-to-use <code class="font-mono text-xs text-vp-accent">lib/vault.ts</code> helper. Does not modify any files.</p>
+                            <div class="bg-vp-surface border border-vp-border rounded-xl overflow-hidden mt-3">
+                                <table class="doc-table">
+                                    <thead><tr><th>Flag</th><th>Description</th></tr></thead>
+                                    <tbody>
+                                        <tr><td><code class="font-mono text-xs text-vp-accent">-f, --file &lt;path&gt;</code></td><td>Path to .env file (default: <code class="font-mono text-xs">.env</code>)</td></tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                            <div class="code-block mt-3">
+                                <div class="code-header">examples</div>
+<pre class="text-gray-300">$ vaultproof migrate
+$ vaultproof migrate -f .env.production</pre>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
                 <!-- Key Commands -->
                 <div class="mb-8">
                     <h3 class="text-lg font-semibold text-white mb-4">Key Management</h3>
