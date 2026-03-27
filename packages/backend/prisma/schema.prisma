@@ -66,6 +66,7 @@ model KeySlot {
   user             User        @relation(fields: [userId], references: [id])
   provider         String      // "openai", "anthropic", "google", etc.
   label            String      // user-friendly name
+  envVar           String?     @map("env_var")     // exact env var name, e.g. "NEXT_PUBLIC_SUPABASE_URL"
   share1Encrypted  Bytes       @map("share1_encrypted")  // Encrypted with VAULT_ENCRYPTION_KEY
   share2Encrypted  Bytes?      @map("share2_encrypted")  // Encrypted with key derived from vp_live_ key
   vaultCommitment  String      @map("vault_commitment")
