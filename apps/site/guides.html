@@ -494,7 +494,164 @@ vaultproof exec -p stripe -- node app.js
             </div>
         </div>
 
-        <!-- 7. cURL / Any HTTP Client -->
+        <!-- 7. Production App Migration -->
+        <div class="guide-card">
+            <div class="guide-toggle flex items-center justify-between p-6" onclick="toggleGuide(this)">
+                <div class="flex items-center gap-4">
+                    <div class="tool-icon bg-[#10b981]/10 text-[#34d399]" style="font-family:'Space Grotesk',sans-serif">VP</div>
+                    <div>
+                        <h3 class="font-semibold text-white text-lg">Production App (Vercel, Railway, etc.)</h3>
+                        <p class="text-gray-500 text-sm mt-0.5">Remove all secrets from your hosting &mdash; only keep VAULTPROOF_API_KEY</p>
+                    </div>
+                </div>
+                <svg class="guide-chevron text-gray-500" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg>
+            </div>
+            <div class="guide-body">
+                <div class="px-6 pb-6 space-y-4">
+
+                    <div class="bg-amber-500/5 border border-amber-500/20 rounded-xl p-4">
+                        <p class="text-amber-400 text-xs font-medium mb-1">This is a real migration, not a one-liner</p>
+                        <p class="text-gray-400 text-xs">You're moving every secret out of your .env and into VaultProof. Budget 30&ndash;60 minutes depending on how many keys your app uses.</p>
+                    </div>
+
+                    <div class="flex items-start gap-3">
+                        <div class="step-num mt-0.5">1</div>
+                        <div class="text-gray-400 text-sm pt-1">
+                            <strong class="text-white">Install the SDK</strong>
+                        </div>
+                    </div>
+                    <div>
+                        <div class="code-header"><span>bash</span></div>
+                        <div class="code-block">
+<pre>npm install @vaultproof/sdk</pre>
+                        </div>
+                    </div>
+
+                    <div class="flex items-start gap-3">
+                        <div class="step-num mt-0.5">2</div>
+                        <div class="text-gray-400 text-sm pt-1">
+                            <strong class="text-white">Store every secret in VaultProof</strong><br>
+                            Do this once per key. Use labels to tell them apart.
+                        </div>
+                    </div>
+                    <div>
+                        <div class="code-header"><span>bash</span></div>
+                        <div class="code-block">
+<pre><span class="cmt"># Store each key with a clear label</span>
+vaultproof store -p stripe -l <span class="str">"secret"</span>
+vaultproof store -p supabase -l <span class="str">"service_role"</span>
+vaultproof store -p supabase -l <span class="str">"anon"</span>
+
+<span class="cmt"># Note the key IDs that come back &mdash; you'll need them</span></pre>
+                        </div>
+                    </div>
+
+                    <div class="flex items-start gap-3">
+                        <div class="step-num mt-0.5">3</div>
+                        <div class="text-gray-400 text-sm pt-1">
+                            <strong class="text-white">Create a secrets helper</strong><br>
+                            One file that all your server code imports.
+                        </div>
+                    </div>
+                    <div>
+                        <div class="code-header"><span>lib/vault.ts</span></div>
+                        <div class="code-block">
+<pre><span class="kw">import</span> VaultProof <span class="kw">from</span> <span class="str">'@vaultproof/sdk'</span>;
+
+<span class="kw">const</span> vault = <span class="kw">new</span> VaultProof(process.env.VAULTPROOF_API_KEY!);
+
+<span class="cmt">// Map friendly names to VaultProof key IDs</span>
+<span class="kw">const</span> KEY_IDS: Record&lt;<span class="typ">string</span>, <span class="typ">string</span>&gt; = {
+  STRIPE_SECRET_KEY:         <span class="str">'your-stripe-key-id'</span>,
+  SUPABASE_SERVICE_ROLE_KEY: <span class="str">'your-supabase-sr-key-id'</span>,
+  SUPABASE_ANON_KEY:         <span class="str">'your-supabase-anon-key-id'</span>,
+  SMTP_PASSWORD:             <span class="str">'your-smtp-key-id'</span>,
+};
+
+<span class="kw">export async function</span> <span class="fn">getSecret</span>(name: <span class="typ">string</span>): Promise&lt;<span class="typ">string</span>&gt; {
+  <span class="kw">const</span> keyId = KEY_IDS[name];
+  <span class="kw">if</span> (!keyId) <span class="kw">throw new</span> Error(<span class="str">`Unknown secret: ${name}`</span>);
+  <span class="kw">const</span> { apiKey } = <span class="kw">await</span> vault.retrieve(keyId);
+  <span class="kw">return</span> apiKey;
+}</pre>
+                        </div>
+                    </div>
+
+                    <div class="flex items-start gap-3">
+                        <div class="step-num mt-0.5">4</div>
+                        <div class="text-gray-400 text-sm pt-1">
+                            <strong class="text-white">Replace process.env.X in your server code</strong><br>
+                            Every file that reads a secret needs to change. This is the bulk of the work.
+                        </div>
+                    </div>
+                    <div>
+                        <div class="code-header"><span>Before (secret in .env)</span></div>
+                        <div class="code-block">
+<pre><span class="kw">import</span> Stripe <span class="kw">from</span> <span class="str">'stripe'</span>;
+<span class="kw">const</span> stripe = <span class="kw">new</span> Stripe(process.env.STRIPE_SECRET_KEY!);</pre>
+                        </div>
+                    </div>
+                    <div class="mt-2">
+                        <div class="code-header"><span>After (secret from VaultProof)</span></div>
+                        <div class="code-block">
+<pre><span class="kw">import</span> Stripe <span class="kw">from</span> <span class="str">'stripe'</span>;
+<span class="kw">import</span> { getSecret } <span class="kw">from</span> <span class="str">'@/lib/vault'</span>;
+
+<span class="kw">const</span> stripe = <span class="kw">new</span> Stripe(<span class="kw">await</span> getSecret(<span class="str">'STRIPE_SECRET_KEY'</span>));</pre>
+                        </div>
+                    </div>
+
+                    <div class="flex items-start gap-3">
+                        <div class="step-num mt-0.5">5</div>
+                        <div class="text-gray-400 text-sm pt-1">
+                            <strong class="text-white">Update your hosting env vars</strong><br>
+                            Remove every secret. Keep only non-secret config and your VaultProof key.
+                        </div>
+                    </div>
+                    <div>
+                        <div class="code-header"><span>Vercel / Railway / .env</span></div>
+                        <div class="code-block">
+<pre><span class="cmt"># Keep &mdash; this is your only secret</span>
+VAULTPROOF_API_KEY=vp_live_your_key_here
+
+<span class="cmt"># Keep &mdash; these are config, not secrets</span>
+NEXT_PUBLIC_SUPABASE_URL=https://your-project.supabase.co
+NEXT_PUBLIC_APP_URL=https://yourapp.com
+
+<span class="cmt"># DELETE all of these &mdash; they now come from VaultProof</span>
+<span class="cmt"># STRIPE_SECRET_KEY=sk_live_...</span>
+<span class="cmt"># SUPABASE_SERVICE_ROLE_KEY=eyJ...</span>
+<span class="cmt"># SMTP_PASSWORD=...</span></pre>
+                        </div>
+                    </div>
+
+                    <div class="flex items-start gap-3">
+                        <div class="step-num mt-0.5">6</div>
+                        <div class="text-gray-400 text-sm pt-1">
+                            <strong class="text-white">Test locally, then deploy</strong><br>
+                            Make sure every feature that touches a secret still works.
+                        </div>
+                    </div>
+                    <div>
+                        <div class="code-header"><span>bash</span></div>
+                        <div class="code-block">
+<pre><span class="cmt"># Test locally with only VAULTPROOF_API_KEY set</span>
+VAULTPROOF_API_KEY=vp_live_... npm run dev
+
+<span class="cmt"># Check: payments work? auth works? emails send?</span>
+<span class="cmt"># Then deploy as normal</span></pre>
+                        </div>
+                    </div>
+
+                    <div class="bg-indigo-500/5 border border-indigo-500/20 rounded-xl p-4 mt-2">
+                        <p class="text-indigo-400 text-xs font-medium mb-1">What about latency?</p>
+                        <p class="text-gray-400 text-xs">Each <code class="font-mono text-vp-accent">getSecret()</code> call adds ~100&ndash;200ms for the round trip. This happens once per request, and the key is only in memory for the duration of that request. For most apps (payments, auth, emails) this is unnoticeable.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 8. cURL / Any HTTP Client -->
         <div class="guide-card">
             <div class="guide-toggle flex items-center justify-between p-6" onclick="toggleGuide(this)">
                 <div class="flex items-center gap-4">
