@@ -1405,6 +1405,47 @@ function timeAgo(date: Date): string {
   return `${Math.floor(months / 12)}y ago`;
 }
 
+// ─── test ────────────────────────────────────────────────────────────────────
+
+async function testConnection(): Promise<boolean> {
+  const spinner = ora("Testing connection to VaultProof...").start();
+
+  // Check API key
+  const apiKey = getApiKey();
+  if (!apiKey) {
+    spinner.fail("No API key found");
+    console.error(chalk.dim("  Set VAULTPROOF_API_KEY or run `vaultproof dev-key create`."));
+    return false;
+  }
+  if (!apiKey.startsWith("vp_live_") && !apiKey.startsWith("vp_test_")) {
+    spinner.fail("Invalid API key format");
+    console.error(chalk.dim("  Key must start with vp_live_ or vp_test_"));
+    return false;
+  }
+
+  // Hit the backend to verify the key works
+  try {
+    const { data } = await apiRequest<{ keys: unknown[] }>("GET", "/api/v1/sdk/keys", {
+      auth: "apikey",
+    });
+    spinner.succeed(`Connected — ${(data.keys || []).length} key${(data.keys || []).length === 1 ? "" : "s"} stored`);
+    return true;
+  } catch {
+    spinner.fail("Connection failed");
+    return false;
+  }
+}
+
+program
+  .command("test")
+  .description("Test your connection to VaultProof")
+  .action(async () => {
+    console.log();
+    const ok = await testConnection();
+    if (!ok) process.exit(1);
+    console.log();
+  });
+
 // ─── migrate ─────────────────────────────────────────────────────────────────
 
 import { LABEL_VAR_MAP } from "./env-vars.js";
@@ -1483,11 +1524,10 @@ ${chalk.bold("Example:")}
 `
   )
   .action(async (opts: { file: string }) => {
-    const apiKey = getApiKey();
-    if (!apiKey) {
-      console.error(chalk.red("No API key found. Set VAULTPROOF_API_KEY or run `vaultproof dev-key create`."));
-      process.exit(1);
-    }
+    // Test connection first
+    console.log();
+    const connected = await testConnection();
+    if (!connected) process.exit(1);
 
     // Read .env file
     const envPath = opts.file;
