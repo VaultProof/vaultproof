@@ -1,6 +1,6 @@
 {
   "name": "@vaultproof/cli",
-  "version": "1.1.0",
+  "version": "1.2.0",
   "description": "VaultProof CLI — manage API keys from the terminal",
   "type": "module",
   "bin": { "vaultproof": "dist/index.js" },
