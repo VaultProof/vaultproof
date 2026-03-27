@@ -79,11 +79,23 @@ export async function proxyRoutes(app: FastifyInstance) {
       const tier = (slotOwner?.tier as string) || 'free';
       const rateCheck = await checkRateLimit(keySlotId, tier);
       if (!rateCheck.allowed) {
-        return reply.status(429).send({
-          error: 'Monthly call limit exceeded',
+        // Free tier: hard block
+        if (tier === 'free') {
+          return reply.status(429).send({
+            error: 'Monthly call limit exceeded',
+            used: rateCheck.used,
+            limit: rateCheck.limit,
+            upgrade: 'https://vaultproof.dev#pricing',
+          });
+        }
+        // Paid tiers (starter, pro, max): allow but log as overage
+        // Billing happens via Stripe metered usage or manual invoice
+        request.log.info({
+          msg: 'Overage call allowed',
+          keySlotId,
+          tier,
           used: rateCheck.used,
           limit: rateCheck.limit,
-          upgrade: 'https://vaultproof.dev#pricing',
         });
       }
     }

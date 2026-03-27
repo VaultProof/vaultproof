@@ -164,6 +164,10 @@ export async function sdkRoutes(app: FastifyInstance) {
     }
 
     // Check per-key daily/monthly limits
+    // Look up the user's tier to decide hard block vs overage
+    const sdkUser = await prisma.user.findUnique({ where: { id: userId }, select: { tier: true } });
+    const sdkTier = (sdkUser?.tier as string) || 'free';
+
     if (keySlot.dailyLimit || keySlot.monthlyLimit) {
       const now = new Date();
 
@@ -174,12 +178,17 @@ export async function sdkRoutes(app: FastifyInstance) {
         });
         if (dailyCount >= keySlot.dailyLimit) {
           if (keySlot.blockOnLimit) {
-            return reply.status(429).send({
-              error: 'Daily call limit reached',
-              limit: keySlot.dailyLimit,
-              used: dailyCount,
-              resets: 'midnight UTC',
-            });
+            // Free tier: always hard block
+            if (sdkTier === 'free') {
+              return reply.status(429).send({
+                error: 'Daily call limit reached',
+                limit: keySlot.dailyLimit,
+                used: dailyCount,
+                resets: 'midnight UTC',
+              });
+            }
+            // Paid tiers: allow but log as overage
+            request.log.info({ msg: 'Daily overage call allowed', keySlotId: keyId, tier: sdkTier, used: dailyCount, limit: keySlot.dailyLimit });
           }
           // Alert only mode — continue but notify
           if (authDevKey.alertEmail) {
@@ -195,12 +204,17 @@ export async function sdkRoutes(app: FastifyInstance) {
         });
         if (monthlyCount >= keySlot.monthlyLimit) {
           if (keySlot.blockOnLimit) {
-            return reply.status(429).send({
-              error: 'Monthly call limit reached',
-              limit: keySlot.monthlyLimit,
-              used: monthlyCount,
-              resets: 'next month',
-            });
+            // Free tier: always hard block
+            if (sdkTier === 'free') {
+              return reply.status(429).send({
+                error: 'Monthly call limit reached',
+                limit: keySlot.monthlyLimit,
+                used: monthlyCount,
+                resets: 'next month',
+              });
+            }
+            // Paid tiers: allow but log as overage
+            request.log.info({ msg: 'Monthly overage call allowed', keySlotId: keyId, tier: sdkTier, used: monthlyCount, limit: keySlot.monthlyLimit });
           }
           if (authDevKey.alertEmail) {
             sendUsageAlert(authDevKey.alertEmail, keySlot.label, monthlyCount, keySlot.monthlyLimit);

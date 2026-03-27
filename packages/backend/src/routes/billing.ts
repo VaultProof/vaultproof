@@ -1,5 +1,6 @@
 import type { FastifyInstance } from 'fastify';
 import Stripe from 'stripe';
+import { z } from 'zod';
 import { prisma } from '../lib/prisma.js';
 import { requireAuth } from '../middleware/auth.js';
 
@@ -8,22 +9,23 @@ const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!);
 // --- Tier definitions ---
 
 const TIERS = {
-  starter: { name: 'VaultProof Starter', price: 900, interval: 'month' as const },
-  pro: { name: 'VaultProof Pro', price: 2900, interval: 'month' as const },
-  max: { name: 'VaultProof Max', price: 9900, interval: 'month' as const },
+  starter: { name: 'VaultProof Starter', price: 900, annualPrice: 9000, interval: 'month' as const },
+  pro: { name: 'VaultProof Pro', price: 2900, annualPrice: 29000, interval: 'month' as const },
+  max: { name: 'VaultProof Max', price: 9900, annualPrice: 99000, interval: 'month' as const },
 } as const;
 
 type Tier = keyof typeof TIERS;
 
-// Module-level cache for Stripe Price IDs
-const priceIdCache = new Map<Tier, string>();
+// Module-level cache for Stripe Price IDs (monthly and annual)
+const priceIdCache = new Map<string, string>();
 
 /**
- * Ensures Stripe products and prices exist for each tier.
+ * Ensures Stripe products and prices exist for each tier (both monthly and annual).
  * Creates them if missing and caches the price IDs.
  */
-async function ensurePrices(): Promise<Map<Tier, string>> {
-  if (priceIdCache.size === Object.keys(TIERS).length) {
+async function ensurePrices(): Promise<Map<string, string>> {
+  const expectedCount = Object.keys(TIERS).length * 2; // monthly + annual per tier
+  if (priceIdCache.size === expectedCount) {
     return priceIdCache;
   }
 
@@ -46,31 +48,53 @@ async function ensurePrices(): Promise<Map<Tier, string>> {
       productId = product.id;
     }
 
-    // Look for an active recurring price on this product matching the amount
+    // Look for active recurring prices on this product
     const prices = await stripe.prices.list({
       product: productId,
       active: true,
       limit: 100,
     });
 
-    const existingPrice = prices.data.find(
+    // --- Monthly price ---
+    const existingMonthly = prices.data.find(
       (p) =>
         p.unit_amount === config.price &&
-        p.recurring?.interval === config.interval &&
+        p.recurring?.interval === 'month' &&
         p.currency === 'usd',
     );
 
-    if (existingPrice) {
-      priceIdCache.set(tier, existingPrice.id);
+    if (existingMonthly) {
+      priceIdCache.set(tier, existingMonthly.id);
     } else {
-      const price = await stripe.prices.create({
+      const monthlyPrice = await stripe.prices.create({
         product: productId,
         unit_amount: config.price,
         currency: 'usd',
-        recurring: { interval: config.interval },
-        metadata: { vaultproof_tier: tier },
+        recurring: { interval: 'month' },
+        metadata: { vaultproof_tier: tier, billing_period: 'monthly' },
       });
-      priceIdCache.set(tier, price.id);
+      priceIdCache.set(tier, monthlyPrice.id);
+    }
+
+    // --- Annual price (10 months = 2 months free) ---
+    const existingAnnual = prices.data.find(
+      (p) =>
+        p.unit_amount === config.annualPrice &&
+        p.recurring?.interval === 'year' &&
+        p.currency === 'usd',
+    );
+
+    if (existingAnnual) {
+      priceIdCache.set(`${tier}_annual`, existingAnnual.id);
+    } else {
+      const annualPrice = await stripe.prices.create({
+        product: productId,
+        unit_amount: config.annualPrice,
+        currency: 'usd',
+        recurring: { interval: 'year' },
+        metadata: { vaultproof_tier: tier, billing_period: 'annual' },
+      });
+      priceIdCache.set(`${tier}_annual`, annualPrice.id);
     }
   }
 
@@ -98,15 +122,23 @@ export async function billingRoutes(app: FastifyInstance) {
   /**
    * POST /checkout
    * Creates a Stripe Checkout session for a subscription tier.
+   * Accepts optional `annual: true` for yearly billing (2 months free).
    */
-  app.post<{ Body: { tier: Tier } }>(
+  app.post<{ Body: { tier: Tier; annual?: boolean } }>(
     '/checkout',
     { preHandler: requireAuth },
     async (request, reply) => {
-      const { tier } = request.body;
-      if (!tier || !TIERS[tier]) {
-        return reply.status(400).send({ error: 'Invalid tier. Must be starter or pro.' });
+      const checkoutSchema = z.object({
+        tier: z.enum(['starter', 'pro', 'max']),
+        annual: z.boolean().optional(),
+      });
+
+      const parsed = checkoutSchema.safeParse(request.body);
+      if (!parsed.success) {
+        return reply.status(400).send({ error: 'Invalid input. tier must be starter, pro, or max.' });
       }
+
+      const { tier, annual } = parsed.data;
 
       const userId = request.auth!.userId;
       const user = await prisma.user.findUnique({ where: { id: userId } });
@@ -116,7 +148,8 @@ export async function billingRoutes(app: FastifyInstance) {
 
       // Ensure Stripe prices are initialized
       const prices = await ensurePrices();
-      const priceId = prices.get(tier)!;
+      const priceKey = annual ? `${tier}_annual` : tier;
+      const priceId = prices.get(priceKey)!;
 
       // Create or retrieve Stripe customer
       let customerId = user.stripeCustomerId;
@@ -149,7 +182,7 @@ export async function billingRoutes(app: FastifyInstance) {
         line_items: [{ price: priceId, quantity: 1 }],
         success_url: 'https://vaultproof.dev/app/settings?billing=success',
         cancel_url: 'https://vaultproof.dev/app/settings?billing=cancel',
-        metadata: { userId, tier },
+        metadata: { userId, tier, billingPeriod: annual ? 'annual' : 'monthly' },
       });
 
       return { url: session.url };
@@ -259,6 +292,41 @@ export async function billingRoutes(app: FastifyInstance) {
       tier: user.tier ?? 'free',
       stripeCustomerId: user.stripeCustomerId ?? null,
       hasSubscription: !!user.stripeSubscriptionId,
+    };
+  });
+
+  /**
+   * GET /usage
+   * Returns current month usage and overage billing info.
+   */
+  app.get('/usage', { preHandler: requireAuth }, async (request, reply) => {
+    const userId = request.auth!.userId;
+    const user = await prisma.user.findUnique({ where: { id: userId }, select: { tier: true } });
+    const tier = (user?.tier as string) || 'free';
+
+    const tierLimits: Record<string, number> = { free: 1000, starter: 25000, pro: 250000, max: 1000000 };
+    const overageRates: Record<string, number> = { free: 0, starter: 0.0005, pro: 0.0003, max: 0 }; // per call
+
+    const monthStart = new Date(new Date().getFullYear(), new Date().getMonth(), 1);
+    const keySlots = await prisma.keySlot.findMany({ where: { userId }, select: { id: true } });
+    const keySlotIds = keySlots.map(k => k.id);
+
+    const totalCalls = keySlotIds.length > 0 ? await prisma.accessLog.count({
+      where: { keySlotId: { in: keySlotIds }, action: 'api_call', timestamp: { gte: monthStart } },
+    }) : 0;
+
+    const limit = tierLimits[tier] || 1000;
+    const overageCalls = Math.max(0, totalCalls - limit);
+    const rate = overageRates[tier] || 0;
+    const overageCost = overageCalls * rate;
+
+    return {
+      tier,
+      totalCalls,
+      limit,
+      overageCalls,
+      overageRate: rate > 0 ? `$${rate}/call` : 'N/A',
+      estimatedOverageCost: `$${overageCost.toFixed(2)}`,
     };
   });
 }
