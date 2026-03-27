@@ -51,14 +51,20 @@ ${chalk.bold("Config file:")}    ~/.vaultproof/config.json
 program
   .command("login")
   .alias("l")
-  .description("Log in to your VaultProof account")
-  .option("-e, --email <email>", "Email address (skips prompt)")
+  .description("Log in to your VaultProof account via browser")
+  .option("-e, --email <email>", "Email for password login (skips browser)")
   .addHelpText(
     "after",
     `
 ${chalk.bold("Examples:")}
-  $ vaultproof login
-  $ vaultproof login -e you@example.com
+  $ vaultproof login          # Opens browser for GitHub/Google/email login
+  $ vaultproof login -e you@example.com  # Password login in terminal
+
+${chalk.bold("How it works:")}
+  1. Opens your browser to vaultproof.dev
+  2. You sign in with GitHub, Google, or email
+  3. CLI automatically receives your credentials
+  4. A developer API key is created for you
 
 ${chalk.bold("Notes:")}
   Stores session token at ~/.vaultproof/config.json
@@ -66,21 +72,186 @@ ${chalk.bold("Notes:")}
 `
   )
   .action(async (opts: { email?: string }) => {
-    const email = opts.email || (await prompt("Email: "));
-    const password = await promptHidden("Password: ");
+    // If email provided, use terminal-based password login (legacy)
+    if (opts.email) {
+      const password = await promptHidden("Password: ");
+      const spinner = ora("Logging in...").start();
 
-    const spinner = ora("Logging in...").start();
+      const { data } = await apiRequestNoAuth<{
+        token: string;
+        email: string;
+      }>("POST", "/api/v1/auth/login", { email: opts.email, password });
 
-    const { data } = await apiRequestNoAuth<{
+      updateConfig({ token: data.token, email: data.email ?? opts.email });
+      spinner.succeed(
+        chalk.green(`Logged in as ${chalk.bold(data.email ?? opts.email)}`)
+      );
+      return;
+    }
+
+    // Browser login flow
+    const { createServer } = await import("http");
+    const { URL } = await import("url");
+
+    // Find a free port
+    const server = createServer();
+    await new Promise<void>((resolve) => server.listen(0, resolve));
+    const port = (server.address() as any).port;
+
+    const callbackUrl = `http://localhost:${port}/callback`;
+    const loginUrl = `https://vaultproof.dev/app/login?cli_callback=${encodeURIComponent(callbackUrl)}`;
+
+    const spinner = ora("Waiting for browser login...").start();
+    spinner.info(`Opening browser: ${chalk.cyan(loginUrl)}`);
+
+    // Open browser
+    const { exec } = await import("child_process");
+    const openCmd =
+      process.platform === "darwin"
+        ? "open"
+        : process.platform === "win32"
+          ? "start"
+          : "xdg-open";
+    exec(`${openCmd} "${loginUrl}"`);
+
+    // Wait for callback
+    const result = await new Promise<{
       token: string;
       email: string;
-    }>("POST", "/api/v1/auth/login", { email, password });
+    } | null>((resolve) => {
+      const timeout = setTimeout(() => {
+        server.close();
+        resolve(null);
+      }, 120000); // 2 minute timeout
 
-    updateConfig({ token: data.token, email: data.email ?? email });
+      server.on("request", async (req, res) => {
+        const url = new URL(req.url || "/", `http://localhost:${port}`);
 
-    spinner.succeed(
-      chalk.green(`Logged in as ${chalk.bold(data.email ?? email)}`)
-    );
+        if (url.pathname === "/callback") {
+          const token = url.searchParams.get("token");
+          const email = url.searchParams.get("email");
+
+          // Send success page to browser
+          res.writeHead(200, { "Content-Type": "text/html" });
+          res.end(`
+            <html>
+            <body style="background:#0a0a0f;color:#e2e2e8;font-family:system-ui;display:flex;align-items:center;justify-content:center;height:100vh;margin:0;">
+              <div style="text-align:center;">
+                <div style="font-size:48px;margin-bottom:16px;">&#10003;</div>
+                <h1 style="font-size:24px;margin-bottom:8px;">Connected to VaultProof CLI</h1>
+                <p style="color:#888;">You can close this tab and return to your terminal.</p>
+              </div>
+            </body>
+            </html>
+          `);
+
+          clearTimeout(timeout);
+          server.close();
+          resolve(token && email ? { token, email } : null);
+        } else {
+          res.writeHead(404);
+          res.end();
+        }
+      });
+    });
+
+    if (!result) {
+      spinner.fail(chalk.red("Login timed out or was cancelled."));
+      process.exit(1);
+    }
+
+    spinner.text = "Creating developer API key...";
+
+    // Use the token to create a dev key
+    try {
+      const apiUrl = getApiUrl();
+      const createRes = await fetch(`${apiUrl}/api/v1/dev-keys/create`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${result.token}`,
+        },
+        body: JSON.stringify({ label: "CLI", mode: "live" }),
+      });
+
+      if (!createRes.ok) {
+        // May already have keys — try to list them
+        const listRes = await fetch(`${apiUrl}/api/v1/dev-keys/list`, {
+          headers: { Authorization: `Bearer ${result.token}` },
+        });
+        if (listRes.ok) {
+          const listData = (await listRes.json()) as any;
+          if (listData.keys && listData.keys.length > 0) {
+            // Existing keys are masked — user needs to create manually or use existing
+            spinner.fail(
+              chalk.red(
+                "Could not create developer key. Create one manually in Settings."
+              )
+            );
+            // Still save the token for JWT-based commands
+            updateConfig({ token: result.token, email: result.email });
+            spinner.succeed(
+              chalk.green(`Logged in as ${chalk.bold(result.email)}`)
+            );
+            console.log(
+              chalk.dim(
+                "  Set VAULTPROOF_API_KEY manually from Settings -> Developer Keys"
+              )
+            );
+            return;
+          }
+        }
+        throw new Error("Failed to create developer key");
+      }
+
+      const devKey = (await createRes.json()) as any;
+
+      // Save everything
+      updateConfig({ token: result.token, email: result.email });
+
+      spinner.succeed(
+        chalk.green(`Logged in as ${chalk.bold(result.email)}`)
+      );
+      console.log(
+        `  ${chalk.bold("Developer key:")} ${chalk.cyan(devKey.key)}`
+      );
+      console.log();
+      console.log(chalk.dim("  Add to your environment:"));
+      console.log(chalk.dim(`  export VAULTPROOF_API_KEY=${devKey.key}`));
+
+      // Offer to write to .env
+      const writeEnv = await confirm(
+        "\nWrite VAULTPROOF_API_KEY to .env in current directory?"
+      );
+      if (writeEnv) {
+        const fs = await import("node:fs");
+        const envLine = `VAULTPROOF_API_KEY=${devKey.key}\n`;
+        const envPath = ".env";
+        if (fs.existsSync(envPath)) {
+          const existing = fs.readFileSync(envPath, "utf-8");
+          if (existing.includes("VAULTPROOF_API_KEY=")) {
+            const updated = existing.replace(
+              /VAULTPROOF_API_KEY=.*/,
+              `VAULTPROOF_API_KEY=${devKey.key}`
+            );
+            fs.writeFileSync(envPath, updated);
+          } else {
+            fs.appendFileSync(envPath, envLine);
+          }
+        } else {
+          fs.writeFileSync(envPath, envLine);
+        }
+        console.log(chalk.dim("  Written to .env"));
+      }
+    } catch (err) {
+      spinner.fail(
+        chalk.red("Login succeeded but failed to create developer key.")
+      );
+      updateConfig({ token: result.token, email: result.email });
+      console.log(
+        chalk.dim("  Create a key manually: vaultproof dev-key create")
+      );
+    }
   });
 
 // ─── logout ──────────────────────────────────────────────────────────────────

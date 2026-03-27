@@ -191,6 +191,19 @@
       'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imd3emtqaW9tZW1qbGh0cmRybGFuIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQzNDM3ODIsImV4cCI6MjA4OTkxOTc4Mn0.tgHUvpBvFiojetuqIP0sKb0iBNbKDJHdeo9n3Tofa3o'
     );
 
+    // ── Check for CLI callback param ──
+    const urlParams = new URLSearchParams(window.location.search);
+    const cliCallback = urlParams.get('cli_callback');
+
+    // Show CLI banner if logging in from CLI
+    if (cliCallback) {
+      const banner = document.createElement('div');
+      banner.className = 'p-3 bg-indigo-500/10 border border-indigo-500/30 rounded-xl text-sm text-indigo-400 mb-4 text-center';
+      banner.textContent = 'Signing in from VaultProof CLI \u2014 log in below to connect.';
+      const target = document.querySelector('.bg-card');
+      if (target) target.prepend(banner);
+    }
+
     // ── Check if already logged in ──
     (async () => {
       const { data: { session } } = await sbClient.auth.getSession();
@@ -200,6 +213,13 @@
           id: session.user.id,
           email: session.user.email
         }));
+
+        // If CLI callback, redirect to CLI with token
+        if (cliCallback) {
+          window.location.href = `${cliCallback}?token=${session.access_token}&email=${encodeURIComponent(session.user.email)}`;
+          return;
+        }
+
         window.location.href = './';
       }
     })();
@@ -212,24 +232,39 @@
           id: session.user.id,
           email: session.user.email
         }));
+
+        // If CLI callback, redirect to CLI with token
+        if (cliCallback) {
+          window.location.href = `${cliCallback}?token=${session.access_token}&email=${encodeURIComponent(session.user.email)}`;
+          return;
+        }
+
         window.location.href = './';
       }
     });
 
     // ── GitHub OAuth ──
     async function loginWithGitHub() {
+      // Preserve CLI callback param through OAuth redirect
+      const redirectUrl = cliCallback
+        ? `${window.location.origin}/app/login?cli_callback=${encodeURIComponent(cliCallback)}`
+        : `${window.location.origin}/app/login`;
       const { error } = await sbClient.auth.signInWithOAuth({
         provider: 'github',
-        options: { redirectTo: window.location.origin + '/app/login' }
+        options: { redirectTo: redirectUrl }
       });
       if (error) showError(error.message);
     }
 
     // ── Google OAuth ──
     async function loginWithGoogle() {
+      // Preserve CLI callback param through OAuth redirect
+      const redirectUrl = cliCallback
+        ? `${window.location.origin}/app/login?cli_callback=${encodeURIComponent(cliCallback)}`
+        : `${window.location.origin}/app/login`;
       const { error } = await sbClient.auth.signInWithOAuth({
         provider: 'google',
-        options: { redirectTo: window.location.origin + '/app/login' }
+        options: { redirectTo: redirectUrl }
       });
       if (error) showError(error.message);
     }
@@ -282,6 +317,13 @@
           id: data.user.id,
           email: data.user.email
         }));
+
+        // If CLI callback, redirect to CLI with token
+        if (cliCallback) {
+          window.location.href = `${cliCallback}?token=${data.session.access_token}&email=${encodeURIComponent(data.user.email)}`;
+          return;
+        }
+
         window.location.href = './';
       } catch (err) {
         errEl.textContent = err.message;
@@ -350,6 +392,13 @@
             id: data.user.id,
             email: data.user.email
           }));
+
+          // If CLI callback, redirect to CLI with token
+          if (cliCallback) {
+            window.location.href = `${cliCallback}?token=${data.session.access_token}&email=${encodeURIComponent(data.user.email)}`;
+            return;
+          }
+
           window.location.href = './';
         } else {
           // Email confirmation required
