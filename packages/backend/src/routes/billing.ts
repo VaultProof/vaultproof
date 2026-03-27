@@ -6,6 +6,10 @@ import { requireAuth } from '../middleware/auth.js';
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!);
 
+// Stripe webhook event deduplication (in-memory)
+const processedEventIds = new Set<string>();
+const MAX_PROCESSED_EVENTS = 10000;
+
 // --- Tier definitions ---
 
 const TIERS = {
@@ -212,6 +216,21 @@ export async function billingRoutes(app: FastifyInstance) {
     } catch (err) {
       request.log.error(err, 'Webhook signature verification failed');
       return reply.status(400).send({ error: 'Invalid webhook signature' });
+    }
+
+    // Deduplicate: skip already-processed events
+    if (processedEventIds.has(event.id)) {
+      return reply.status(200).send({ received: true, duplicate: true });
+    }
+    processedEventIds.add(event.id);
+    if (processedEventIds.size > MAX_PROCESSED_EVENTS) {
+      // Remove oldest entries (Sets maintain insertion order)
+      const iterator = processedEventIds.values();
+      for (let i = 0; i < 1000; i++) iterator.next();
+      // Recreate with remaining
+      const remaining = [...processedEventIds].slice(1000);
+      processedEventIds.clear();
+      remaining.forEach(id => processedEventIds.add(id));
     }
 
     switch (event.type) {

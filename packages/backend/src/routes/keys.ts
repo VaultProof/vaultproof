@@ -11,9 +11,9 @@ import { randomBytes } from 'crypto';
 const storeKeySchema = z.object({
   provider: z.string().min(1).max(50),
   label: z.string().max(100).optional(),
-  share1: z.string().min(1),
-  vaultCommitment: z.string().min(1),
-  authAppsRoot: z.string().optional(),
+  share1: z.string().min(1).max(2048),
+  vaultCommitment: z.string().min(1).max(2048),
+  authAppsRoot: z.string().max(2048).optional(),
   appId: z.string().min(1).max(100).optional(),
   appName: z.string().max(100).optional(),
   expiresAt: z.string().datetime().optional(),
@@ -211,9 +211,9 @@ export async function keyRoutes(app: FastifyInstance) {
     const userId = request.auth!.userId;
 
     const rotateSchema = z.object({
-      share1: z.string().min(1),
-      vaultCommitment: z.string().min(1),
-      authAppsRoot: z.string().optional(),
+      share1: z.string().min(1).max(2048),
+      vaultCommitment: z.string().min(1).max(2048),
+      authAppsRoot: z.string().max(2048).optional(),
     });
 
     const parsed = rotateSchema.safeParse(request.body);

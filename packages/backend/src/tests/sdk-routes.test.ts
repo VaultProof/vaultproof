@@ -288,4 +288,38 @@ describe('SDK Routes Tests', () => {
     assert.equal(callRes.statusCode, 404);
     assert.ok(callRes.json().error, 'Should return an error for revoked key');
   });
+
+  // --- Test 7: Store key with envVar and return it in list ---
+
+  it('stores a key with envVar and returns it in list', async () => {
+    const shares = splitString('sk-test-envvar-key-12345678', 2, 2);
+    const storeRes = await app.inject({
+      method: 'POST',
+      url: '/api/v1/sdk/store',
+      headers: sdkHeaders,
+      payload: {
+        provider: 'supabase',
+        label: 'url',
+        share1: serializeShare(shares[0]),
+        share2: serializeShare(shares[1]),
+        envVar: 'NEXT_PUBLIC_SUPABASE_URL',
+      },
+    });
+
+    assert.equal(storeRes.statusCode, 200);
+    const storeData = storeRes.json();
+    assert.equal(storeData.envVar, 'NEXT_PUBLIC_SUPABASE_URL');
+
+    // Verify it comes back in the keys list
+    const listRes = await app.inject({
+      method: 'GET',
+      url: '/api/v1/sdk/keys',
+      headers: sdkHeaders,
+    });
+
+    assert.equal(listRes.statusCode, 200);
+    const found = listRes.json().keys.find((k: any) => k.id === storeData.keyId);
+    assert.ok(found, 'Key should appear in list');
+    assert.equal(found.envVar, 'NEXT_PUBLIC_SUPABASE_URL');
+  });
 });

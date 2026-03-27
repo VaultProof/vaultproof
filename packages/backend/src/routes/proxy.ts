@@ -9,6 +9,18 @@ import axios from 'axios';
 import https from 'https';
 import http from 'http';
 
+// Safe headers allowlist — only these are forwarded to upstream providers
+const SAFE_FORWARD_HEADERS = new Set(['content-type', 'accept', 'accept-encoding', 'accept-language', 'cache-control', 'user-agent', 'anthropic-version', 'openai-beta']);
+
+function filterSafeHeaders(headers?: Record<string, string>): Record<string, string> {
+  if (!headers) return {};
+  const filtered: Record<string, string> = {};
+  for (const [k, v] of Object.entries(headers)) {
+    if (SAFE_FORWARD_HEADERS.has(k.toLowerCase())) filtered[k] = v;
+  }
+  return filtered;
+}
+
 const PROVIDER_URLS: Record<string, string> = {
   openai: 'https://api.openai.com',
   anthropic: 'https://api.anthropic.com',
@@ -25,15 +37,15 @@ const PROVIDER_URLS: Record<string, string> = {
 };
 
 const proxyCallSchema = z.object({
-  keySlotId: z.string().min(1),
-  share2: z.string().min(1),
-  zkProof: z.string().min(1),
-  nullifier: z.string().min(1),
+  keySlotId: z.string().min(1).max(100),
+  share2: z.string().min(1).max(2048),
+  zkProof: z.string().min(1).max(10000),
+  nullifier: z.string().min(1).max(500),
   appId: z.string().min(1).max(100),
   targetPath: z.string().min(1).max(500),
   method: z.enum(['GET', 'POST', 'PUT', 'DELETE', 'PATCH']).optional().default('POST'),
   stream: z.boolean().optional().default(false),
-  headers: z.record(z.string(), z.string()).optional(),
+  headers: z.record(z.string().max(200), z.string().max(8192)).optional().refine((h) => !h || Object.keys(h).length <= 20, { message: 'Max 20 headers' }),
   body: z.unknown().optional(),
 });
 
@@ -48,9 +60,21 @@ export async function proxyRoutes(app: FastifyInstance) {
 
     const { keySlotId, share2, zkProof, nullifier, appId, targetPath, method, stream, headers: clientHeaders, body: clientBody } = parsed.data;
 
-    // 1. Check nullifier (replay prevention)
-    const existingLog = await prisma.accessLog.findUnique({ where: { nullifier } });
-    if (existingLog) {
+    // 1. Claim nullifier atomically (replay prevention).
+    // Insert first — if another concurrent request has the same nullifier, the
+    // unique constraint will throw, and we reject as replay. No TOCTOU gap.
+    try {
+      await prisma.accessLog.create({
+        data: {
+          keySlotId: keySlotId,
+          appId,
+          action: 'nullifier_claim',
+          zkProof: 'pending',
+          nullifier,
+        },
+      });
+    } catch {
+      // Unique constraint violation → replay
       return reply.status(403).send({ error: 'Proof already used (replay detected)' });
     }
 
@@ -100,9 +124,10 @@ export async function proxyRoutes(app: FastifyInstance) {
       }
     }
 
-    // 4. Log nullifier BEFORE proof verification (ensures replay prevention even if proof fails)
-    await prisma.accessLog.create({
-      data: { keySlotId, appId, action: 'api_call', zkProof, nullifier, metadata: JSON.stringify({ endpoint: targetPath, status: 'pending' }) },
+    // 4. Update the nullifier claim with proof details (nullifier was already inserted atomically above)
+    await prisma.accessLog.updateMany({
+      where: { nullifier },
+      data: { action: 'api_call', zkProof, metadata: JSON.stringify({ endpoint: targetPath, status: 'pending' }) },
     });
 
     // 4. Verify ZK proof (falls back to placeholder if Noir not loaded)
@@ -170,7 +195,7 @@ export async function proxyRoutes(app: FastifyInstance) {
             path: url.pathname + url.search,
             method: method,
             headers: {
-              ...clientHeaders,
+              ...filterSafeHeaders(clientHeaders),
               ...authHeader,
               'Content-Type': 'application/json',
               ...(bodyStr ? { 'Content-Length': Buffer.byteLength(bodyStr).toString() } : {}),
@@ -238,7 +263,7 @@ export async function proxyRoutes(app: FastifyInstance) {
       const response = await axios({
         method: method as any,
         url: targetUrl,
-        headers: { ...clientHeaders, ...authHeader, 'Content-Type': 'application/json' },
+        headers: { ...filterSafeHeaders(clientHeaders), ...authHeader, 'Content-Type': 'application/json' },
         data: clientBody,
         timeout: 30000,
         validateStatus: () => true,

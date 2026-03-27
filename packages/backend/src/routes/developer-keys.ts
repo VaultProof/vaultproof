@@ -10,6 +10,47 @@ import { prisma } from '../lib/prisma.js';
 import { z } from 'zod';
 import { randomBytes, createHash } from 'crypto';
 import { requireAuth } from '../middleware/auth.js';
+import { isIP } from 'net';
+
+/** Validate webhook URL is a public HTTPS URL (blocks SSRF via private IPs, IPv6, decimal notation) */
+function isPublicUrl(url: string): boolean {
+  try {
+    const u = new URL(url);
+    const h = u.hostname.toLowerCase();
+
+    // Must be HTTPS in production
+    if (u.protocol !== 'https:' && process.env.NODE_ENV !== 'test') return false;
+
+    // Block localhost variants
+    if (h === 'localhost' || h === '[::1]' || h === '::1') return false;
+
+    // Block IPv4 private/reserved ranges (including decimal/octal notation)
+    if (isIP(h) === 4 || /^\d+$/.test(h)) {
+      // Parse decimal notation (e.g. 2130706433 = 127.0.0.1)
+      let ip = h;
+      if (/^\d+$/.test(h)) {
+        const num = parseInt(h, 10);
+        if (num >= 0 && num <= 0xFFFFFFFF) {
+          ip = `${(num >>> 24) & 0xFF}.${(num >>> 16) & 0xFF}.${(num >>> 8) & 0xFF}.${num & 0xFF}`;
+        }
+      }
+      if (/^(127\.|0\.|10\.|172\.(1[6-9]|2\d|3[01])\.|192\.168\.|169\.254\.|100\.(6[4-9]|[7-9]\d|1[0-2]\d))/.test(ip)) return false;
+    }
+
+    // Block IPv6 private/reserved
+    if (h.startsWith('[') || isIP(h) === 6) {
+      const v6 = h.replace(/^\[|\]$/g, '');
+      if (/^(::1|fe80:|fc00:|fd00:|::ffff:(127\.|10\.|192\.168\.|172\.(1[6-9]|2\d|3[01])\.))/.test(v6.toLowerCase())) return false;
+    }
+
+    // Block URL credentials (user:pass@host)
+    if (u.username || u.password) return false;
+
+    return true;
+  } catch { return false; }
+}
+
+const webhookUrlSchema = z.string().url().refine(isPublicUrl, { message: 'Must be a public HTTPS URL' }).optional();
 
 function generateApiKey(mode: string = 'live'): string {
   const prefix = mode === 'test' ? 'vp_test_' : 'vp_live_';
@@ -32,19 +73,8 @@ export async function developerKeyRoutes(app: FastifyInstance) {
       allowedEndpoints: z.string().max(500).optional(),
       alertEmail: z.string().email().optional(),
       alertThreshold: z.number().int().min(1).optional(),
-      webhookUrl: z.string().url().refine(
-        (url) => {
-          try {
-            const u = new URL(url);
-            const h = u.hostname.toLowerCase();
-            if (h === 'localhost' || /^(127\.|0\.|10\.|172\.(1[6-9]|2\d|3[01])\.|192\.168\.|169\.254\.)/.test(h)) return false;
-            if (u.protocol !== 'https:' && process.env.NODE_ENV !== 'test') return false;
-            return true;
-          } catch { return false; }
-        },
-        { message: 'Must be a public HTTPS URL' }
-      ).optional(),
-      webhookSecret: z.string().min(16).optional(),
+      webhookUrl: webhookUrlSchema,
+      webhookSecret: z.string().min(16).max(256).optional(),
     });
 
     const parsed = schema.safeParse(request.body || {});
@@ -75,13 +105,21 @@ export async function developerKeyRoutes(app: FastifyInstance) {
     });
 
     // Key is shown ONCE at creation. Never returned again (list endpoint returns masked version).
-    return {
+    const response = {
       id: devKey.id,
       key, // ⚠️ Show only once — save it now!
       label: devKey.label,
       mode: devKey.mode,
       createdAt: devKey.createdAt,
     };
+
+    // Mask the stored key — full key was returned to user above, never needed again
+    await prisma.developerKey.update({
+      where: { id: devKey.id },
+      data: { key: key.slice(0, 12) + '...' + key.slice(-4) },
+    });
+
+    return response;
   });
 
   // List developer keys (shows masked keys, not full)
@@ -121,19 +159,8 @@ export async function developerKeyRoutes(app: FastifyInstance) {
       allowedEndpoints: z.string().max(500).optional(),
       alertEmail: z.string().email().optional(),
       alertThreshold: z.number().int().min(1).optional(),
-      webhookUrl: z.string().url().refine(
-        (url) => {
-          try {
-            const u = new URL(url);
-            const h = u.hostname.toLowerCase();
-            if (h === 'localhost' || /^(127\.|0\.|10\.|172\.(1[6-9]|2\d|3[01])\.|192\.168\.|169\.254\.)/.test(h)) return false;
-            if (u.protocol !== 'https:' && process.env.NODE_ENV !== 'test') return false;
-            return true;
-          } catch { return false; }
-        },
-        { message: 'Must be a public HTTPS URL' }
-      ).optional(),
-      webhookSecret: z.string().min(16).optional(),
+      webhookUrl: webhookUrlSchema,
+      webhookSecret: z.string().min(16).max(256).optional(),
     });
 
     const parsed = schema.safeParse(request.body || {});

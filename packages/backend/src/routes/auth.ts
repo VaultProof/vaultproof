@@ -12,6 +12,14 @@ const supabase = createClient(
 // In-memory rate limiter for /refresh — 5 attempts per IP per minute
 const refreshRateLimit = new Map<string, { count: number; resetAt: number }>();
 
+// Clean up stale entries every 5 minutes
+setInterval(() => {
+  const now = Date.now();
+  for (const [ip, record] of refreshRateLimit) {
+    if (now > record.resetAt) refreshRateLimit.delete(ip);
+  }
+}, 5 * 60_000);
+
 function checkRefreshRateLimit(ip: string): boolean {
   const now = Date.now();
   const record = refreshRateLimit.get(ip);
@@ -28,12 +36,13 @@ export async function authRoutes(app: FastifyInstance) {
   // Refresh a Supabase access token using a refresh token
   // Used by the CLI when the JWT is near expiry
   app.post('/refresh', async (request, reply) => {
-    const clientIp = (request.headers['x-forwarded-for'] as string)?.split(',')[0].trim() || request.ip;
+    // Use request.ip (respects Fastify trustProxy), NOT x-forwarded-for (spoofable)
+    const clientIp = request.ip;
     if (!checkRefreshRateLimit(clientIp)) {
       return reply.status(429).send({ error: 'Too many refresh attempts. Try again in a minute.' });
     }
 
-    const schema = z.object({ refreshToken: z.string().min(1) });
+    const schema = z.object({ refreshToken: z.string().min(1).max(2048) });
     const parsed = schema.safeParse(request.body);
     if (!parsed.success) return reply.status(400).send({ error: 'Missing refreshToken' });
 

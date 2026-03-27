@@ -102,6 +102,14 @@ const keyRateLimitMap = new Map<string, { tokens: number; windowStart: number }>
 const KEY_RATE_LIMIT = 60;
 const KEY_RATE_WINDOW = 60_000;
 
+// Clean up stale entries every 5 minutes
+setInterval(() => {
+  const now = Date.now();
+  for (const [keyId, bucket] of keyRateLimitMap) {
+    if (now - bucket.windowStart >= KEY_RATE_WINDOW) keyRateLimitMap.delete(keyId);
+  }
+}, 5 * 60_000);
+
 function checkKeyRateLimit(keyId: string): boolean {
   const now = Date.now();
   const bucket = keyRateLimitMap.get(keyId);
@@ -152,7 +160,9 @@ export async function transparentProxyRoutes(app: FastifyInstance) {
 
     // --- b3. Enforce IP allowlist ---
     if (auth.devKey.allowedIps) {
-      const clientIp = (request.headers['cf-connecting-ip'] as string) || request.ip;
+      // Only trust cf-connecting-ip if the request came through the CF Worker (has proxy signature)
+      const hasProxySignature = !!request.headers['x-proxy-signature'];
+      const clientIp = hasProxySignature ? (request.headers['cf-connecting-ip'] as string) || request.ip : request.ip;
       const allowed = auth.devKey.allowedIps.split(',').map((s: string) => s.trim());
       if (!allowed.includes(clientIp)) {
         return reply.status(403).send({ error: 'IP not allowed for this API key' });

@@ -52,7 +52,9 @@ if (process.env.NODE_ENV !== 'test' && process.env.NODE_ENV !== 'development') {
     process.exit(1);
   }
   if (!process.env.REQUIRE_REAL_PROOFS) {
-    console.warn('WARNING: REQUIRE_REAL_PROOFS not set. ZK proof verification uses placeholder fallback.');
+    console.error('FATAL: REQUIRE_REAL_PROOFS not set. ZK proof verification would use insecure placeholder.');
+    console.error('  Set REQUIRE_REAL_PROOFS=true in your environment variables.');
+    process.exit(1);
   }
 }
 

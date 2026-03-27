@@ -51,7 +51,9 @@ export async function sdkRoutes(app: FastifyInstance) {
     // Enforce IP allowlist
     const devKey = auth.devKey;
     if (devKey.allowedIps) {
-      const clientIp = (request.headers['cf-connecting-ip'] as string) || request.ip;
+      // Only trust cf-connecting-ip if the request came through the CF Worker (has proxy signature)
+      const hasProxySignature = !!request.headers['x-proxy-signature'];
+      const clientIp = hasProxySignature ? (request.headers['cf-connecting-ip'] as string) || request.ip : request.ip;
       const allowed = devKey.allowedIps.split(',').map((s: string) => s.trim());
       if (!allowed.includes(clientIp)) {
         return reply.status(403).send({ error: 'IP not allowed for this API key' });
@@ -68,8 +70,8 @@ export async function sdkRoutes(app: FastifyInstance) {
   app.post('/store', async (request, reply) => {
     const schema = z.object({
       // SDK sends pre-split, pre-encrypted shares
-      share1: z.string().min(1),       // Serialized Shamir Share 1 (base64)
-      share2: z.string().min(1),       // Serialized Shamir Share 2 (base64)
+      share1: z.string().min(1).max(2048),       // Serialized Shamir Share 1 (base64)
+      share2: z.string().min(1).max(2048),       // Serialized Shamir Share 2 (base64)
       provider: z.string().min(1).max(50).toLowerCase(),
       label: z.string().max(100).optional(),
       expiresAt: z.string().datetime().optional(),
@@ -138,11 +140,11 @@ export async function sdkRoutes(app: FastifyInstance) {
    */
   app.post('/call', async (request, reply) => {
     const schema = z.object({
-      keyId: z.string().min(1),
-      path: z.string().min(1),
+      keyId: z.string().min(1).max(100),
+      path: z.string().min(1).max(2000),
       method: z.enum(['GET', 'POST', 'PUT', 'DELETE']).optional(),
       body: z.unknown().optional(),
-      headers: z.record(z.string(), z.string()).optional(),
+      headers: z.record(z.string().max(200), z.string().max(8192)).optional().refine((h) => !h || Object.keys(h).length <= 20, { message: 'Max 20 headers' }),
     });
 
     const parsed = schema.safeParse(request.body);
@@ -307,8 +309,16 @@ export async function sdkRoutes(app: FastifyInstance) {
 
     try {
       const upstreamUrl = `${providerUrl}${path}`;
+      // Only forward safe headers — prevent Host, Transfer-Encoding, etc. injection
+      const SAFE_HEADERS = new Set(['content-type', 'accept', 'accept-encoding', 'accept-language', 'cache-control', 'user-agent', 'anthropic-version', 'openai-beta']);
+      const filteredHeaders: Record<string, string> = {};
+      if (reqHeaders) {
+        for (const [k, v] of Object.entries(reqHeaders)) {
+          if (SAFE_HEADERS.has(k.toLowerCase())) filteredHeaders[k] = v;
+        }
+      }
       const fetchHeaders: Record<string, string> = {
-        ...reqHeaders,
+        ...filteredHeaders,
         ...authHeader,
         'Content-Type': 'application/json',
       };
@@ -401,7 +411,7 @@ export async function sdkRoutes(app: FastifyInstance) {
    * The key is reconstructed server-side and returned over TLS.
    */
   app.post('/retrieve', async (request, reply) => {
-    const schema = z.object({ keyId: z.string().min(1) });
+    const schema = z.object({ keyId: z.string().min(1).max(100) });
     const parsed = schema.safeParse(request.body);
     if (!parsed.success) return reply.status(400).send({ error: 'Invalid input' });
 
@@ -453,7 +463,7 @@ export async function sdkRoutes(app: FastifyInstance) {
    * Accepts an array of key IDs, returns all reconstructed keys at once.
    */
   app.post('/retrieve-batch', async (request, reply) => {
-    const schema = z.object({ keyIds: z.array(z.string().min(1)).min(1).max(20) });
+    const schema = z.object({ keyIds: z.array(z.string().min(1).max(100)).min(1).max(20) });
     const parsed = schema.safeParse(request.body);
     if (!parsed.success) return reply.status(400).send({ error: 'Invalid input. Provide keyIds array (max 20).' });
 
@@ -521,7 +531,7 @@ export async function sdkRoutes(app: FastifyInstance) {
 
   // Revoke a key
   app.post('/revoke', async (request, reply) => {
-    const schema = z.object({ keyId: z.string().min(1) });
+    const schema = z.object({ keyId: z.string().min(1).max(100) });
     const parsed = schema.safeParse(request.body);
     if (!parsed.success) return reply.status(400).send({ error: 'Invalid input' });
 
@@ -597,7 +607,7 @@ export async function sdkRoutes(app: FastifyInstance) {
 
   // Validate a key against its provider
   app.post('/validate', async (request, reply) => {
-    const schema = z.object({ keyId: z.string().min(1) });
+    const schema = z.object({ keyId: z.string().min(1).max(100) });
     const parsed = schema.safeParse(request.body);
     if (!parsed.success) return reply.status(400).send({ error: 'Invalid input' });
 

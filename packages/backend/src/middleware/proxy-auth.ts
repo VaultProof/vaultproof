@@ -27,12 +27,15 @@ export async function requireProxyAuth(request: FastifyRequest, reply: FastifyRe
     return;
   }
 
-  // Allow SDK-direct requests: if the request has an X-API-Key header
-  // (vp_live_ or vp_test_), skip HMAC check. The SDK routes have their
-  // own authenticateDevKey middleware that validates the key.
+  // Allow SDK-direct requests: skip HMAC only for SDK and transparent proxy routes.
+  // These routes have their own authenticateDevKey middleware.
   const apiKey = request.headers['x-api-key'] as string;
   if (apiKey && apiKey.startsWith('vp_')) {
-    return;
+    const url = request.url.split('?')[0];
+    if (url.startsWith('/api/v1/sdk/') || url.startsWith('/v1/')) {
+      return;
+    }
+    // For non-SDK routes, vp_ key header does NOT bypass HMAC
   }
 
   const timestamp = request.headers['x-proxy-timestamp'] as string;
