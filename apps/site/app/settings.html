@@ -154,6 +154,54 @@
         </form>
       </section>
 
+      <!-- Safety Controls -->
+      <section class="bg-[#111118] border border-[#1e1e2e] rounded-xl p-6">
+        <h2 class="text-lg font-semibold mb-4 flex items-center gap-2">
+          <svg class="w-5 h-5 text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L4.082 16.5c-.77.833.192 2.5 1.732 2.5z"/></svg>
+          Safety Controls
+        </h2>
+
+        <!-- Kill Switch -->
+        <div class="mb-6">
+          <div class="flex items-center justify-between mb-2">
+            <div>
+              <div class="text-sm font-medium text-white">Emergency Stop</div>
+              <div class="text-xs text-gray-500">Instantly block ALL proxy calls across all your stored keys</div>
+            </div>
+            <button id="killSwitchBtn" onclick="showKillSwitchModal()" class="px-4 py-2 bg-red-500/10 border border-red-500/20 text-red-400 rounded-xl text-sm font-medium hover:bg-red-500/20 transition">
+              Activate
+            </button>
+          </div>
+          <div id="killSwitchActive" class="hidden p-3 bg-red-500/10 border border-red-500/30 rounded-xl">
+            <div class="flex items-center justify-between">
+              <div class="flex items-center gap-2">
+                <span class="w-2 h-2 rounded-full bg-red-500 animate-pulse"></span>
+                <span class="text-sm text-red-400 font-medium">Kill switch is active — all proxy calls are blocked</span>
+              </div>
+              <button onclick="deactivateKillSwitch()" class="px-3 py-1.5 bg-[#111118] border border-[#1e1e2e] rounded-lg text-xs text-gray-400 hover:text-white transition">Resume All</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Global Limits -->
+        <div>
+          <div class="text-sm font-medium text-white mb-2">Global Call Limits</div>
+          <div class="text-xs text-gray-500 mb-3">Maximum calls per day/month across ALL your stored keys combined</div>
+          <div class="grid grid-cols-2 gap-3 mb-3">
+            <div>
+              <label class="text-xs text-gray-500 mb-1 block">Daily limit</label>
+              <input type="number" id="globalDailyLimit" placeholder="No limit" min="1" class="w-full px-3 py-2 bg-[#0a0a0f] border border-[#1e1e2e] rounded-lg text-sm text-gray-300 focus:border-[#6366f1] focus:outline-none">
+            </div>
+            <div>
+              <label class="text-xs text-gray-500 mb-1 block">Monthly limit</label>
+              <input type="number" id="globalMonthlyLimit" placeholder="No limit" min="1" class="w-full px-3 py-2 bg-[#0a0a0f] border border-[#1e1e2e] rounded-lg text-sm text-gray-300 focus:border-[#6366f1] focus:outline-none">
+            </div>
+          </div>
+          <button onclick="saveGlobalLimits()" class="px-4 py-2 bg-[#6366f1] hover:bg-[#5558e6] text-white rounded-lg text-xs font-medium transition">Save Limits</button>
+          <span id="globalLimitStatus" class="text-xs ml-3"></span>
+        </div>
+      </section>
+
       <!-- Plan & Usage -->
       <section class="bg-[#111118] border border-[#1e1e2e] rounded-xl p-6">
         <h2 class="text-lg font-semibold mb-4 flex items-center gap-2">
@@ -401,6 +449,24 @@
 
     </div>
   </main>
+
+  <!-- Kill Switch Confirmation Modal -->
+  <div id="killSwitchModal" class="hidden fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm">
+    <div class="bg-[#111118] border-2 border-red-500/30 rounded-2xl p-6 w-full max-w-sm mx-4 text-center">
+      <div class="text-4xl mb-4">&#9888;&#65039;</div>
+      <h3 class="text-lg font-bold text-white mb-2">Emergency Stop</h3>
+      <p class="text-sm text-gray-400 mb-4">This will immediately block ALL proxy calls for ALL your stored keys. No API calls will go through until you resume.</p>
+      <p class="text-sm text-gray-400 mb-2">Step 1: Type <strong class="text-red-400">STOP</strong></p>
+      <input type="text" id="killSwitchConfirm" placeholder="Type STOP" class="w-full px-4 py-2.5 bg-[#0a0a0f] border border-red-500/30 rounded-xl text-sm text-white text-center font-mono focus:outline-none focus:border-red-500 mb-3">
+      <p class="text-sm text-gray-400 mb-2">Step 2: Enter your password</p>
+      <input type="password" id="killSwitchPassword" placeholder="Your password" class="w-full px-4 py-2.5 bg-[#0a0a0f] border border-red-500/30 rounded-xl text-sm text-white text-center focus:outline-none focus:border-red-500 mb-2">
+      <div id="killSwitchError" class="hidden text-xs text-red-400 mb-3"></div>
+      <div class="flex gap-3">
+        <button onclick="closeKillSwitchModal()" class="flex-1 px-4 py-2.5 bg-[#111118] border border-[#1e1e2e] rounded-xl text-sm text-gray-400 hover:text-white transition">Cancel</button>
+        <button onclick="confirmKillSwitch()" id="confirmKillBtn" class="flex-1 px-4 py-2.5 bg-red-500 hover:bg-red-600 text-white rounded-xl text-sm font-medium transition disabled:opacity-50 disabled:cursor-not-allowed" disabled>Activate Kill Switch</button>
+      </div>
+    </div>
+  </div>
 
   <script>
     const API = 'https://api.vaultproof.dev/api/v1';
@@ -1175,6 +1241,104 @@
       }
     }
 
+    // Kill switch
+    function showKillSwitchModal() {
+      document.getElementById('killSwitchModal').classList.remove('hidden');
+      document.getElementById('killSwitchConfirm').value = '';
+      document.getElementById('killSwitchPassword').value = '';
+      document.getElementById('killSwitchError').classList.add('hidden');
+      document.getElementById('confirmKillBtn').disabled = true;
+    }
+
+    function closeKillSwitchModal() {
+      document.getElementById('killSwitchModal').classList.add('hidden');
+    }
+
+    function checkKillSwitchReady() {
+      var stopOk = document.getElementById('killSwitchConfirm').value.toUpperCase() === 'STOP';
+      var passOk = document.getElementById('killSwitchPassword').value.length >= 1;
+      document.getElementById('confirmKillBtn').disabled = !(stopOk && passOk);
+    }
+    document.getElementById('killSwitchConfirm')?.addEventListener('input', checkKillSwitchReady);
+    document.getElementById('killSwitchPassword')?.addEventListener('input', checkKillSwitchReady);
+
+    async function confirmKillSwitch() {
+      if (document.getElementById('killSwitchConfirm').value.toUpperCase() !== 'STOP') return;
+      var password = document.getElementById('killSwitchPassword').value;
+      var errEl = document.getElementById('killSwitchError');
+      errEl.classList.add('hidden');
+
+      // Verify password via Supabase
+      try {
+        var sb = window.supabase.createClient(
+          'https://gwzkjiomemjlhtrdrlan.supabase.co',
+          'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imd3emtqaW9tZW1qbGh0cmRybGFuIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQzNDM3ODIsImV4cCI6MjA4OTkxOTc4Mn0.tgHUvpBvFiojetuqIP0sKb0iBNbKDJHdeo9n3Tofa3o'
+        );
+        var userJson = localStorage.getItem('vaultproof_user');
+        var email = userJson ? JSON.parse(userJson).email : '';
+        var { error } = await sb.auth.signInWithPassword({ email: email, password: password });
+        if (error) {
+          errEl.textContent = 'Incorrect password';
+          errEl.classList.remove('hidden');
+          return;
+        }
+      } catch {
+        errEl.textContent = 'Password verification failed';
+        errEl.classList.remove('hidden');
+        return;
+      }
+
+      await apiFetch('/auth/kill-switch', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ enabled: true }) });
+      closeKillSwitchModal();
+      document.getElementById('killSwitchActive').classList.remove('hidden');
+      document.getElementById('killSwitchBtn').classList.add('hidden');
+    }
+
+    async function deactivateKillSwitch() {
+      if (!confirm('Resume all proxy calls?')) return;
+      await apiFetch('/auth/kill-switch', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ enabled: false }) });
+      document.getElementById('killSwitchActive').classList.add('hidden');
+      document.getElementById('killSwitchBtn').classList.remove('hidden');
+    }
+
+    // Global limits
+    async function saveGlobalLimits() {
+      const daily = document.getElementById('globalDailyLimit').value;
+      const monthly = document.getElementById('globalMonthlyLimit').value;
+      const res = await apiFetch('/auth/global-limits', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          globalDailyLimit: daily ? parseInt(daily) : null,
+          globalMonthlyLimit: monthly ? parseInt(monthly) : null,
+        }),
+      });
+      const status = document.getElementById('globalLimitStatus');
+      if (res && res.ok) {
+        status.textContent = 'Saved!';
+        status.className = 'text-xs ml-3 text-indigo-400';
+      } else {
+        status.textContent = 'Failed';
+        status.className = 'text-xs ml-3 text-red-400';
+      }
+    }
+
+    // Load kill switch + global limits state on page load
+    async function loadSafetyControls() {
+      try {
+        const res = await apiFetch('/auth/me');
+        if (!res) return;
+        const data = await res.json();
+        const user = data.user || data;
+        if (user.killSwitch) {
+          document.getElementById('killSwitchActive').classList.remove('hidden');
+          document.getElementById('killSwitchBtn').classList.add('hidden');
+        }
+        if (user.globalDailyLimit) document.getElementById('globalDailyLimit').value = user.globalDailyLimit;
+        if (user.globalMonthlyLimit) document.getElementById('globalMonthlyLimit').value = user.globalMonthlyLimit;
+      } catch {}
+    }
+
     // Init — refresh token first, then load data in parallel
     // Load everything immediately — apiFetch handles 401 with auto-refresh
     checkBillingParams();
@@ -1182,6 +1346,7 @@
     loadUsage();
     loadBillingStatus();
     loadDevKeys();
+    loadSafetyControls();
   </script>
 </body>
 </html>

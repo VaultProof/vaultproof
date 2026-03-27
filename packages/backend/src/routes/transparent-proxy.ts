@@ -144,6 +144,38 @@ export async function transparentProxyRoutes(app: FastifyInstance) {
       }
     }
 
+    // --- Kill switch — blocks ALL proxy calls for this user ---
+    const userAccount = await prisma.user.findUnique({ where: { id: auth.userId }, select: { killSwitch: true, globalDailyLimit: true, globalMonthlyLimit: true } });
+    if (userAccount?.killSwitch) {
+      return reply.status(503).send({ error: 'All proxy calls are paused. Disable the kill switch in your dashboard to resume.' });
+    }
+
+    // --- Global daily/monthly limits (across ALL keys) ---
+    if (userAccount?.globalDailyLimit || userAccount?.globalMonthlyLimit) {
+      const userKeySlots = await prisma.keySlot.findMany({ where: { userId: auth.userId }, select: { id: true } });
+      const allKeyIds = userKeySlots.map(k => k.id);
+
+      if (userAccount.globalDailyLimit && allKeyIds.length > 0) {
+        const dayStart = new Date(new Date().getFullYear(), new Date().getMonth(), new Date().getDate());
+        const dailyTotal = await prisma.accessLog.count({
+          where: { keySlotId: { in: allKeyIds }, action: 'transparent_proxy', timestamp: { gte: dayStart } },
+        });
+        if (dailyTotal >= userAccount.globalDailyLimit) {
+          return reply.status(429).send({ error: 'Global daily call limit reached', limit: userAccount.globalDailyLimit, used: dailyTotal });
+        }
+      }
+
+      if (userAccount.globalMonthlyLimit && allKeyIds.length > 0) {
+        const monthStart = new Date(new Date().getFullYear(), new Date().getMonth(), 1);
+        const monthlyTotal = await prisma.accessLog.count({
+          where: { keySlotId: { in: allKeyIds }, action: 'transparent_proxy', timestamp: { gte: monthStart } },
+        });
+        if (monthlyTotal >= userAccount.globalMonthlyLimit) {
+          return reply.status(429).send({ error: 'Global monthly call limit reached', limit: userAccount.globalMonthlyLimit, used: monthlyTotal });
+        }
+      }
+    }
+
     // --- c. Find active key slot for this provider ---
     const keySlot = await prisma.keySlot.findFirst({
       where: { userId: auth.userId, provider, status: 'ACTIVE' },

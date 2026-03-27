@@ -152,6 +152,38 @@ export async function sdkRoutes(app: FastifyInstance) {
     const { userId, rawKey: vpKey, devKey: authDevKey } = (request as any).devAuth;
     const { keyId, path, method, body: reqBody, headers: reqHeaders } = parsed.data;
 
+    // Kill switch — blocks ALL proxy calls for this user
+    const userAccount = await prisma.user.findUnique({ where: { id: userId }, select: { killSwitch: true, globalDailyLimit: true, globalMonthlyLimit: true } });
+    if (userAccount?.killSwitch) {
+      return reply.status(503).send({ error: 'All proxy calls are paused. Disable the kill switch in your dashboard to resume.' });
+    }
+
+    // Global daily/monthly limits (across ALL keys)
+    if (userAccount?.globalDailyLimit || userAccount?.globalMonthlyLimit) {
+      const userKeySlots = await prisma.keySlot.findMany({ where: { userId }, select: { id: true } });
+      const allKeyIds = userKeySlots.map(k => k.id);
+
+      if (userAccount.globalDailyLimit && allKeyIds.length > 0) {
+        const dayStart = new Date(new Date().getFullYear(), new Date().getMonth(), new Date().getDate());
+        const dailyTotal = await prisma.accessLog.count({
+          where: { keySlotId: { in: allKeyIds }, action: 'api_call', timestamp: { gte: dayStart } },
+        });
+        if (dailyTotal >= userAccount.globalDailyLimit) {
+          return reply.status(429).send({ error: 'Global daily call limit reached', limit: userAccount.globalDailyLimit, used: dailyTotal });
+        }
+      }
+
+      if (userAccount.globalMonthlyLimit && allKeyIds.length > 0) {
+        const monthStart = new Date(new Date().getFullYear(), new Date().getMonth(), 1);
+        const monthlyTotal = await prisma.accessLog.count({
+          where: { keySlotId: { in: allKeyIds }, action: 'api_call', timestamp: { gte: monthStart } },
+        });
+        if (monthlyTotal >= userAccount.globalMonthlyLimit) {
+          return reply.status(429).send({ error: 'Global monthly call limit reached', limit: userAccount.globalMonthlyLimit, used: monthlyTotal });
+        }
+      }
+    }
+
     // Load key slot
     const keySlot = await prisma.keySlot.findUnique({ where: { id: keyId } });
     if (!keySlot || keySlot.userId !== userId || keySlot.status !== 'ACTIVE') {
