@@ -631,8 +631,12 @@
     function activityColor(type) {
       const map = {
         api_call: { bg: 'bg-indigo-500/15', text: 'text-indigo-400', dot: 'bg-indigo-400' },
-        key_rotation: { bg: 'bg-indigo-500/15', text: 'text-indigo-400', dot: 'bg-indigo-400' },
-        revoke: { bg: 'bg-red-500/15', text: 'text-red-400', dot: 'bg-red-400' }
+        transparent_proxy: { bg: 'bg-cyan-500/15', text: 'text-cyan-400', dot: 'bg-cyan-400' },
+        key_retrieval: { bg: 'bg-emerald-500/15', text: 'text-emerald-400', dot: 'bg-emerald-400' },
+        key_retrieval_batch: { bg: 'bg-emerald-500/15', text: 'text-emerald-400', dot: 'bg-emerald-400' },
+        key_rotation: { bg: 'bg-amber-500/15', text: 'text-amber-400', dot: 'bg-amber-400' },
+        nullifier_claim: { bg: 'bg-purple-500/15', text: 'text-purple-400', dot: 'bg-purple-400' },
+        revoke: { bg: 'bg-red-500/15', text: 'text-red-400', dot: 'bg-red-400' },
       };
       return map[type] || { bg: 'bg-gray-500/15', text: 'text-gray-400', dot: 'bg-gray-400' };
     }
@@ -709,9 +713,28 @@
         feed.innerHTML = '<div class="text-center text-gray-600 text-sm py-8">No recent activity</div>';
         return;
       }
+      const actionLabels = {
+        api_call: 'API Call',
+        transparent_proxy: 'Proxy Call',
+        key_retrieval: 'Key Retrieved',
+        key_retrieval_batch: 'Batch Retrieve',
+        key_rotation: 'Key Rotated',
+        nullifier_claim: 'ZK Proof Call',
+        revoke: 'Key Revoked',
+      };
       feed.innerHTML = events.map((ev, i) => {
-        const c = activityColor(ev.type);
-        const labels = { api_call: 'API Call', key_rotation: 'Key Rotated', revoke: 'Key Revoked' };
+        const type = ev.action || ev.type || 'unknown';
+        const c = activityColor(type);
+        const keyLabel = (ev.keySlot && ev.keySlot.label) || ev.keyLabel || '--';
+        const provider = (ev.keySlot && ev.keySlot.provider) || '';
+        let description = ev.description || '';
+        if (!description && ev.metadata) {
+          try {
+            const meta = typeof ev.metadata === 'string' ? JSON.parse(ev.metadata) : ev.metadata;
+            description = meta.endpoint || meta.provider || '';
+          } catch {}
+        }
+        if (!description) description = provider || ev.appId || '--';
         return `
           <div class="flex gap-3 p-3 rounded-xl hover:bg-white/[0.03] transition anim-fade-up" style="animation-delay:${600 + i * 80}ms">
             <div class="flex-shrink-0 mt-0.5">
@@ -719,13 +742,13 @@
             </div>
             <div class="min-w-0 flex-1">
               <div class="flex items-center gap-2 mb-0.5">
-                <span class="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-medium ${c.bg} ${c.text}">${labels[ev.type] || ev.type}</span>
+                <span class="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-medium ${c.bg} ${c.text}">${actionLabels[type] || type}</span>
               </div>
-              <p class="text-sm text-gray-300 truncate">${ev.description || '--'}</p>
+              <p class="text-sm text-gray-300 truncate">${description}</p>
               <div class="flex items-center gap-2 mt-1 text-xs text-gray-500">
                 <span>${relativeTime(ev.timestamp)}</span>
                 <span class="text-gray-600">&middot;</span>
-                <span class="font-mono text-gray-500 truncate">${ev.keyLabel || '--'}</span>
+                <span class="font-mono text-gray-500 truncate">${keyLabel}</span>
               </div>
             </div>
           </div>
