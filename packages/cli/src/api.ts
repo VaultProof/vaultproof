@@ -58,6 +58,32 @@ export async function apiRequest<T = unknown>(
   const auth = options.auth ?? "jwt";
   const headers = getAuthHeaders(auth);
 
+  // Add device signing if available
+  try {
+    const fs = await import("fs");
+    const path = await import("path");
+    const os = await import("os");
+    const devicePath = path.join(os.homedir(), ".vaultproof", "device.json");
+    if (fs.existsSync(devicePath)) {
+      const device = JSON.parse(fs.readFileSync(devicePath, "utf-8"));
+      const crypto = await import("crypto");
+      const timestamp = Date.now().toString();
+      const apiKey = getApiKey();
+      if (apiKey && device.secret) {
+        const signature = crypto
+          .createHmac(
+            "sha256",
+            crypto.createHash("sha256").update(device.secret).digest("hex")
+          )
+          .update(`${apiKey}:${timestamp}`)
+          .digest("hex");
+
+        headers["X-VaultProof-Device-Signature"] = signature;
+        headers["X-VaultProof-Device-Timestamp"] = timestamp;
+      }
+    }
+  } catch {} // Silently skip if no device secret
+
   const fetchOptions: RequestInit = {
     method: method.toUpperCase(),
     headers,

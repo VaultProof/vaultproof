@@ -40,6 +40,8 @@ model DeveloperKey {
   alertThreshold     Int?      @map("alert_threshold") // calls per hour to trigger alert, null = no alert
   webhookUrl         String?   @map("webhook_url")     // URL to notify on events
   webhookSecret      String?   @map("webhook_secret")  // HMAC secret for signing webhook payloads
+  deviceSigningEnabled  Boolean   @default(false) @map("device_signing_enabled")
+  deviceSecrets         String?   @map("device_secrets")  // JSON array of registered device secret hashes
   lastUsed           DateTime? @map("last_used")
   createdAt          DateTime  @default(now()) @map("created_at")
   revokedAt          DateTime? @map("revoked_at")

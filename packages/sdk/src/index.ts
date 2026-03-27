@@ -35,18 +35,21 @@ export interface ProxyResponse {
 export class VaultProof {
   private apiUrl: string;
   private apiKey: string;
+  private deviceSecret?: string;
 
   /**
    * Create a VaultProof client.
    * @param apiKey - Your developer API key (vp_live_... or vp_test_...)
    * @param apiUrl - API URL (default: https://api.vaultproof.dev)
+   * @param deviceSecret - Optional device secret for HMAC signing (Pro feature)
    */
-  constructor(apiKey: string, apiUrl?: string) {
+  constructor(apiKey: string, apiUrl?: string, deviceSecret?: string) {
     if (!apiKey.startsWith('vp_')) {
       throw new Error('Invalid API key. Must start with vp_live_ or vp_test_');
     }
     this.apiKey = apiKey;
     this.apiUrl = apiUrl || DEFAULT_API_URL;
+    this.deviceSecret = deviceSecret;
   }
 
   /**
@@ -96,12 +99,25 @@ export class VaultProof {
     body?: any,
     method: string = 'POST'
   ): Promise<ProxyResponse> {
+    const proxyHeaders: Record<string, string> = {
+      'Content-Type': 'application/json',
+      'X-API-Key': this.apiKey,
+    };
+
+    if (this.deviceSecret) {
+      const crypto = await import('crypto');
+      const timestamp = Date.now().toString();
+      const hash = crypto.createHash('sha256').update(this.deviceSecret).digest('hex');
+      const signature = crypto.createHmac('sha256', hash)
+        .update(`${this.apiKey}:${timestamp}`)
+        .digest('hex');
+      proxyHeaders['X-VaultProof-Device-Signature'] = signature;
+      proxyHeaders['X-VaultProof-Device-Timestamp'] = timestamp;
+    }
+
     const res = await globalThis.fetch(`${this.apiUrl}/api/v1/sdk/call`, {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'X-API-Key': this.apiKey,
-      },
+      headers: proxyHeaders,
       body: JSON.stringify({ keyId, path, method, body }),
     });
 
@@ -125,12 +141,25 @@ export class VaultProof {
   }
 
   private async fetch(path: string, opts: { method?: string; body?: any } = {}): Promise<any> {
+    const headers: Record<string, string> = {
+      'Content-Type': 'application/json',
+      'X-API-Key': this.apiKey,
+    };
+
+    if (this.deviceSecret) {
+      const crypto = await import('crypto');
+      const timestamp = Date.now().toString();
+      const hash = crypto.createHash('sha256').update(this.deviceSecret).digest('hex');
+      const signature = crypto.createHmac('sha256', hash)
+        .update(`${this.apiKey}:${timestamp}`)
+        .digest('hex');
+      headers['X-VaultProof-Device-Signature'] = signature;
+      headers['X-VaultProof-Device-Timestamp'] = timestamp;
+    }
+
     const res = await globalThis.fetch(`${this.apiUrl}${path}`, {
       method: opts.method || 'GET',
-      headers: {
-        'Content-Type': 'application/json',
-        'X-API-Key': this.apiKey,
-      },
+      headers,
       body: opts.body ? JSON.stringify(opts.body) : undefined,
     });
 

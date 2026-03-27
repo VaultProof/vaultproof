@@ -197,6 +197,63 @@ export async function developerKeyRoutes(app: FastifyInstance) {
 
     return { status: 'revoked' };
   });
+
+  // Register a new device secret for HMAC signing
+  app.post('/:keyId/register-device', { preHandler: requireAuth }, async (request, reply) => {
+    const { keyId } = request.params as { keyId: string };
+    const userId = request.auth!.userId;
+    const schema = z.object({ deviceSecretHash: z.string().min(32) });
+    const parsed = schema.safeParse(request.body);
+    if (!parsed.success) return reply.status(400).send({ error: 'Invalid input' });
+
+    const key = await prisma.developerKey.findUnique({ where: { id: keyId } });
+    if (!key || key.userId !== userId) return reply.status(404).send({ error: 'Key not found' });
+
+    // Add device hash to the list (max 10 devices)
+    const existing = key.deviceSecrets ? JSON.parse(key.deviceSecrets) : [];
+    if (existing.length >= 10) return reply.status(400).send({ error: 'Maximum 10 devices. Remove one first.' });
+    existing.push({ hash: parsed.data.deviceSecretHash, registeredAt: new Date().toISOString() });
+
+    await prisma.developerKey.update({
+      where: { id: keyId },
+      data: { deviceSecrets: JSON.stringify(existing) },
+    });
+
+    return { status: 'device_registered', devices: existing.length };
+  });
+
+  // Toggle device signing on/off (Pro/Max only)
+  app.put('/:keyId/device-signing', { preHandler: requireAuth }, async (request, reply) => {
+    const { keyId } = request.params as { keyId: string };
+    const userId = request.auth!.userId;
+    const schema = z.object({ enabled: z.boolean() });
+    const parsed = schema.safeParse(request.body);
+    if (!parsed.success) return reply.status(400).send({ error: 'Invalid input' });
+
+    // Must be Pro or Max tier
+    const user = await prisma.user.findUnique({ where: { id: userId }, select: { tier: true } });
+    if (!['pro', 'max'].includes(user?.tier || 'free')) {
+      return reply.status(403).send({ error: 'Device signing requires Pro plan or higher' });
+    }
+
+    const key = await prisma.developerKey.findUnique({ where: { id: keyId } });
+    if (!key || key.userId !== userId) return reply.status(404).send({ error: 'Key not found' });
+
+    // Must have at least 1 registered device before enabling
+    if (parsed.data.enabled) {
+      const devices = key.deviceSecrets ? JSON.parse(key.deviceSecrets) : [];
+      if (devices.length === 0) {
+        return reply.status(400).send({ error: 'Register at least one device before enabling' });
+      }
+    }
+
+    await prisma.developerKey.update({
+      where: { id: keyId },
+      data: { deviceSigningEnabled: parsed.data.enabled },
+    });
+
+    return { deviceSigningEnabled: parsed.data.enabled };
+  });
 }
 
 /**
@@ -226,6 +283,41 @@ export async function authenticateDevKey(
   });
 
   if (!devKey || devKey.revokedAt) return null;
+
+  // Check device signing
+  if (devKey.deviceSigningEnabled) {
+    const signature = request.headers['x-vaultproof-device-signature'] as string;
+    const timestamp = request.headers['x-vaultproof-device-timestamp'] as string;
+
+    if (!signature || !timestamp) {
+      return null; // Will cause 401 upstream
+    }
+
+    // Check timestamp is within 30 seconds
+    const ts = parseInt(timestamp, 10);
+    if (isNaN(ts) || Math.abs(Date.now() - ts) > 30000) {
+      return null;
+    }
+
+    // Verify signature against registered devices
+    const devices = devKey.deviceSecrets ? JSON.parse(devKey.deviceSecrets) : [];
+    const { createHmac } = await import('crypto');
+
+    let deviceValid = false;
+    for (const device of devices) {
+      const expected = createHmac('sha256', device.hash)
+        .update(`${rawKey}:${timestamp}`)
+        .digest('hex');
+      if (expected === signature) {
+        deviceValid = true;
+        break;
+      }
+    }
+
+    if (!deviceValid) {
+      return null;
+    }
+  }
 
   // Update last used
   await prisma.developerKey.update({

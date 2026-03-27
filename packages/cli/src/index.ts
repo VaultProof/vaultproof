@@ -220,12 +220,51 @@ ${chalk.bold("Notes:")}
       console.log(chalk.dim("  Add to your environment:"));
       console.log(chalk.dim(`  export VAULTPROOF_API_KEY=${devKey.key}`));
 
+      // Generate device secret
+      const crypto = await import("crypto");
+      const deviceSecret = crypto.randomBytes(32).toString("hex");
+
+      // Hash it (we send the hash to the server, keep the raw secret local)
+      const deviceSecretHash = crypto
+        .createHash("sha256")
+        .update(deviceSecret)
+        .digest("hex");
+
+      // Register with the server
+      await fetch(`${apiUrl}/api/v1/dev-keys/${devKey.id}/register-device`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${result.token}`,
+        },
+        body: JSON.stringify({ deviceSecretHash }),
+      });
+
+      // Save device secret locally
+      const path = await import("path");
+      const os = await import("os");
+      const fs = await import("node:fs");
+      const configDir = path.join(os.homedir(), ".vaultproof");
+      fs.mkdirSync(configDir, { recursive: true, mode: 0o700 });
+      fs.writeFileSync(
+        path.join(configDir, "device.json"),
+        JSON.stringify({
+          secret: deviceSecret,
+          keyId: devKey.id,
+          registeredAt: new Date().toISOString(),
+        }),
+        { mode: 0o600 }
+      );
+
+      console.log(
+        chalk.dim("  Device secret saved to ~/.vaultproof/device.json")
+      );
+
       // Offer to write to .env
       const writeEnv = await confirm(
         "\nWrite VAULTPROOF_API_KEY to .env in current directory?"
       );
       if (writeEnv) {
-        const fs = await import("node:fs");
         const envLine = `VAULTPROOF_API_KEY=${devKey.key}\n`;
         const envPath = ".env";
         if (fs.existsSync(envPath)) {
