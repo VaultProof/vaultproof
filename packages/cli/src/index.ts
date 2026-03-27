@@ -574,6 +574,7 @@ program
   .requiredOption("-p, --provider <provider>", "API provider (openai, anthropic, google, etc.)")
   .option("-l, --label <label>", "Label for this key")
   .option("--expires <date>", "Key expiry date (ISO 8601, e.g. 2026-12-31)")
+  .option("--value <key>", "API key value (non-interactive, for scripting)")
   .addHelpText(
     "after",
     `
@@ -591,8 +592,8 @@ ${chalk.bold("How it works:")}
 ${chalk.bold("Requires:")} VAULTPROOF_API_KEY environment variable
 `
   )
-  .action(async (opts: { provider: string; label?: string; expires?: string }) => {
-    const apiKey = await promptHidden("API Key: ");
+  .action(async (opts: { provider: string; label?: string; expires?: string; value?: string }) => {
+    const apiKey = opts.value ?? await promptHidden("API Key: ");
 
     if (!apiKey) {
       console.error(chalk.red("API key cannot be empty."));
@@ -1087,6 +1088,81 @@ const ENV_VAR_MAP: Record<string, string> = {
   github: "GITHUB_TOKEN",
 };
 
+// Known label → env var overrides for providers with multiple keys
+const LABEL_VAR_MAP: Record<string, Record<string, string>> = {
+  supabase: {
+    anon: "SUPABASE_ANON_KEY",
+    anon_key: "SUPABASE_ANON_KEY",
+    service_role: "SUPABASE_SERVICE_ROLE_KEY",
+    service_role_key: "SUPABASE_SERVICE_ROLE_KEY",
+    jwt_secret: "SUPABASE_JWT_SECRET",
+    url: "SUPABASE_URL",
+  },
+  stripe: {
+    secret: "STRIPE_SECRET_KEY",
+    secret_key: "STRIPE_SECRET_KEY",
+    publishable: "STRIPE_PUBLISHABLE_KEY",
+    publishable_key: "STRIPE_PUBLISHABLE_KEY",
+    webhook_secret: "STRIPE_WEBHOOK_SECRET",
+  },
+  aws: {
+    access_key: "AWS_ACCESS_KEY_ID",
+    secret_key: "AWS_SECRET_ACCESS_KEY",
+    secret_access_key: "AWS_SECRET_ACCESS_KEY",
+    region: "AWS_REGION",
+  },
+  firebase: {
+    api_key: "FIREBASE_API_KEY",
+    auth_domain: "FIREBASE_AUTH_DOMAIN",
+    project_id: "FIREBASE_PROJECT_ID",
+    service_account: "FIREBASE_SERVICE_ACCOUNT_KEY",
+  },
+  twilio: {
+    auth_token: "TWILIO_AUTH_TOKEN",
+    account_sid: "TWILIO_ACCOUNT_SID",
+  },
+};
+
+/**
+ * Resolve the env var name for a key, handling multiple keys per provider.
+ * - Custom --var flag always wins
+ * - Known label mappings (e.g. supabase/anon → SUPABASE_ANON_KEY)
+ * - If multiple keys for same provider, append _LABEL suffix
+ * - Single key for a provider uses the standard name
+ */
+function resolveEnvVar(
+  key: { provider: string; label: string },
+  allKeys: Array<{ provider: string; label: string }>,
+  customVar?: string
+): string {
+  if (customVar) return customVar;
+
+  const provider = key.provider.toLowerCase();
+  const labelNorm = key.label.toLowerCase().replace(/[\s-]+/g, "_");
+
+  // Check known label mappings first
+  const labelMap = LABEL_VAR_MAP[provider];
+  if (labelMap && labelMap[labelNorm]) {
+    return labelMap[labelNorm];
+  }
+
+  // Count how many keys share this provider
+  const sameProvider = allKeys.filter(
+    (k) => k.provider.toLowerCase() === provider
+  );
+
+  // Single key → use standard env var
+  if (sameProvider.length === 1) {
+    return ENV_VAR_MAP[provider] || `${provider.toUpperCase()}_API_KEY`;
+  }
+
+  // Multiple keys, no known mapping → PROVIDER_LABEL format
+  const base = ENV_VAR_MAP[provider]?.replace(/_API_KEY$|_SECRET_KEY$|_AUTH_TOKEN$|_TOKEN$/, "")
+    || provider.toUpperCase();
+  const suffix = labelNorm.toUpperCase();
+  return `${base}_${suffix}`;
+}
+
 program
   .command("env")
   .description("Output stored API keys as export statements for your shell")
@@ -1145,28 +1221,17 @@ ${chalk.bold("Requires:")} VAULTPROOF_API_KEY environment variable
         process.exit(1);
       }
 
+      const seen = new Set<string>();
       for (const key of keysToExport) {
-        // Validate the key to reconstruct it
-        const { data: validateData } = await apiRequest<{
-          valid: boolean;
-          error?: string;
-        }>("POST", "/api/v1/sdk/validate", {
-          body: { keyId: key.id },
-          auth: "apikey",
-        });
+        const envVar = resolveEnvVar(key, data.keys, opts.var);
 
-        // The validate endpoint doesn't return the raw key
-        // We need a new endpoint — or use the proxy approach
-        // For now, use the call endpoint to reconstruct and return the key
-        // Actually, we need a dedicated endpoint. Let's use a workaround:
-        // Fetch the key via a lightweight proxy call that echoes the auth header
+        if (seen.has(envVar)) {
+          console.error(
+            chalk.yellow(`Warning: duplicate env var ${envVar} — use labels to differentiate (e.g. "anon", "service_role")`)
+          );
+        }
+        seen.add(envVar);
 
-        // Simpler: add a /sdk/retrieve endpoint on the backend
-        // For now, output the provider + key ID for the user
-        const envVar =
-          opts.var || ENV_VAR_MAP[key.provider.toLowerCase()] || `${key.provider.toUpperCase()}_API_KEY`;
-
-        // We need the backend to return the reconstructed key
         const { data: retrieveData } = await apiRequest<{
           apiKey?: string;
           error?: string;
@@ -1176,7 +1241,6 @@ ${chalk.bold("Requires:")} VAULTPROOF_API_KEY environment variable
         });
 
         if (retrieveData.apiKey) {
-          // Output export statement to stdout (for eval)
           process.stdout.write(`export ${envVar}="${retrieveData.apiKey}"\n`);
         } else {
           console.error(
@@ -1234,19 +1298,23 @@ ${chalk.bold("Requires:")} VAULTPROOF_API_KEY environment variable
       }
 
       const providers = opts.all
-        ? data.keys.map((k) => k.provider)
+        ? [...new Set(data.keys.map((k) => k.provider.toLowerCase()))]
         : opts.provider!.split(",").map((p) => p.trim().toLowerCase());
 
       const env: Record<string, string> = { ...process.env } as Record<string, string>;
 
-      for (const provider of providers) {
-        const key = data.keys.find(
-          (k) => k.provider.toLowerCase() === provider
-        );
-        if (!key) {
-          console.error(chalk.yellow(`No key found for ${provider}, skipping`));
-          continue;
-        }
+      // Collect ALL keys for requested providers (not just the first)
+      const keysToInject = data.keys.filter((k) =>
+        providers.includes(k.provider.toLowerCase())
+      );
+
+      if (keysToInject.length === 0) {
+        console.error(chalk.yellow(`No keys found for: ${providers.join(", ")}`));
+        process.exit(1);
+      }
+
+      for (const key of keysToInject) {
+        const envVar = resolveEnvVar(key, data.keys);
 
         const { data: retrieveData } = await apiRequest<{
           apiKey?: string;
@@ -1256,8 +1324,6 @@ ${chalk.bold("Requires:")} VAULTPROOF_API_KEY environment variable
         });
 
         if (retrieveData.apiKey) {
-          const envVar =
-            ENV_VAR_MAP[provider] || `${provider.toUpperCase()}_API_KEY`;
           env[envVar] = retrieveData.apiKey;
         }
       }
