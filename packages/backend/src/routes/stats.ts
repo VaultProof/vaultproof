@@ -21,7 +21,7 @@ export async function statsRoutes(app: FastifyInstance) {
       ? await prisma.accessLog.count({
           where: {
             keySlotId: { in: keySlotIds },
-            action: 'api_call',
+            action: { in: ['api_call', 'transparent_proxy', 'key_retrieval', 'key_retrieval_batch'] },
             timestamp: { gte: monthStart },
           },
         })
@@ -32,7 +32,7 @@ export async function statsRoutes(app: FastifyInstance) {
       ? await prisma.accessLog.count({
           where: {
             keySlotId: { in: keySlotIds },
-            action: 'api_call',
+            action: { in: ['api_call', 'transparent_proxy', 'key_retrieval', 'key_retrieval_batch'] },
             timestamp: { gte: monthStart },
             metadata: { contains: '"error":true' },
           },
@@ -95,7 +95,7 @@ export async function statsRoutes(app: FastifyInstance) {
     const logs = await prisma.accessLog.findMany({
       where: {
         keySlotId: { in: keySlotIds },
-        action: 'api_call',
+        action: { in: ['api_call', 'transparent_proxy', 'key_retrieval', 'key_retrieval_batch'] },
         timestamp: { gte: startDate },
       },
       select: { timestamp: true, metadata: true },
@@ -154,24 +154,24 @@ export async function statsRoutes(app: FastifyInstance) {
     const breakdown = await Promise.all(
       keySlots.map(async (key) => {
         const totalCalls = await prisma.accessLog.count({
-          where: { keySlotId: key.id, action: 'api_call', timestamp: { gte: monthStart } },
+          where: { keySlotId: key.id, action: { in: ['api_call', 'transparent_proxy', 'key_retrieval', 'key_retrieval_batch'] }, timestamp: { gte: monthStart } },
         });
 
         const dailyCalls = await prisma.accessLog.count({
-          where: { keySlotId: key.id, action: 'api_call', timestamp: { gte: dayStart } },
+          where: { keySlotId: key.id, action: { in: ['api_call', 'transparent_proxy', 'key_retrieval', 'key_retrieval_batch'] }, timestamp: { gte: dayStart } },
         });
 
         const errorCalls = await prisma.accessLog.count({
           where: {
             keySlotId: key.id,
-            action: 'api_call',
+            action: { in: ['api_call', 'transparent_proxy', 'key_retrieval', 'key_retrieval_batch'] },
             timestamp: { gte: monthStart },
             metadata: { contains: '"error":true' },
           },
         });
 
         const lastLog = await prisma.accessLog.findFirst({
-          where: { keySlotId: key.id, action: 'api_call' },
+          where: { keySlotId: key.id, action: { in: ['api_call', 'transparent_proxy', 'key_retrieval', 'key_retrieval_batch'] } },
           orderBy: { timestamp: 'desc' },
           select: { timestamp: true },
         });
