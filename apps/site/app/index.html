@@ -882,7 +882,7 @@
             <td class="px-6 py-4">
               <span class="inline-flex items-center px-2 py-0.5 rounded-md text-xs font-medium border ${pc.bg} ${pc.text} ${pc.border}">${k.provider || 'Unknown'}</span>
             </td>
-            <td class="px-6 py-4 text-gray-400 text-sm whitespace-nowrap">${formatDate(k.created)}</td>
+            <td class="px-6 py-4 text-gray-400 text-sm whitespace-nowrap">${formatDate(k.createdAt || k.created)}</td>
             <td class="px-6 py-4 text-gray-400 text-sm whitespace-nowrap">${k.lastUsed ? relativeTime(k.lastUsed) : 'Never'}</td>
             <td class="px-6 py-4 text-sm font-medium">${formatNumber(k.callsThisMonth)}</td>
             <td class="px-6 py-4">
