@@ -19,6 +19,16 @@
 import { splitString, serializeShare } from '@vaultproof/shamir';
 
 const DEFAULT_API_URL = 'https://api.vaultproof.dev';
+const DEFAULT_DIRECT_URL = 'https://backend.vaultproof.dev';
+
+export interface VaultProofOptions {
+  /** API URL routed through the edge proxy (default: https://api.vaultproof.dev) */
+  apiUrl?: string;
+  /** Direct backend URL — skips the edge proxy for faster SDK calls (default: https://backend.vaultproof.dev) */
+  directUrl?: string;
+  /** Session token (from /dev-keys/:id/session) */
+  sessionToken?: string;
+}
 
 export interface StoredKey {
   id: string;
@@ -34,22 +44,32 @@ export interface ProxyResponse {
 
 export class VaultProof {
   private apiUrl: string;
+  private directUrl: string;
   private apiKey: string;
   private sessionToken?: string;
 
   /**
    * Create a VaultProof client.
    * @param apiKey - Your developer API key (vp_live_... or vp_test_...)
-   * @param apiUrl - API URL (default: https://api.vaultproof.dev)
-   * @param sessionToken - Optional session token (from /dev-keys/:id/session)
+   * @param options - Configuration options, or a string for backwards-compatible apiUrl
+   * @param sessionToken - Deprecated: use options.sessionToken instead
    */
-  constructor(apiKey: string, apiUrl?: string, sessionToken?: string) {
+  constructor(apiKey: string, options?: string | VaultProofOptions, sessionToken?: string) {
     if (!apiKey.startsWith('vp_')) {
       throw new Error('Invalid API key. Must start with vp_live_ or vp_test_');
     }
     this.apiKey = apiKey;
-    this.apiUrl = apiUrl || DEFAULT_API_URL;
-    this.sessionToken = sessionToken;
+
+    // Backwards compatible: second arg can be a string (apiUrl) or options object
+    if (typeof options === 'string') {
+      this.apiUrl = options || DEFAULT_API_URL;
+      this.directUrl = DEFAULT_DIRECT_URL;
+      this.sessionToken = sessionToken;
+    } else {
+      this.apiUrl = options?.apiUrl || DEFAULT_API_URL;
+      this.directUrl = options?.directUrl || DEFAULT_DIRECT_URL;
+      this.sessionToken = options?.sessionToken || sessionToken;
+    }
   }
 
   /** Update the session token (e.g., after refresh). */
@@ -99,7 +119,7 @@ export class VaultProof {
       proxyHeaders['X-VaultProof-Session'] = this.sessionToken;
     }
 
-    const res = await globalThis.fetch(`${this.apiUrl}/api/v1/sdk/call`, {
+    const res = await globalThis.fetch(`${this.directUrl}/api/v1/sdk/call`, {
       method: 'POST',
       headers: proxyHeaders,
       body: JSON.stringify({ keyId, path, method, body }),
@@ -120,6 +140,7 @@ export class VaultProof {
     const res = await this.fetch('/api/v1/sdk/retrieve', {
       method: 'POST',
       body: { keyId },
+      direct: true,
     });
     return { apiKey: res.apiKey, provider: res.provider };
   }
@@ -132,6 +153,7 @@ export class VaultProof {
     const res = await this.fetch('/api/v1/sdk/retrieve-batch', {
       method: 'POST',
       body: { keyIds },
+      direct: true,
     });
     return res.keys || [];
   }
@@ -151,7 +173,7 @@ export class VaultProof {
     await this.fetch('/api/v1/sdk/revoke', { method: 'POST', body: { keyId } });
   }
 
-  private async fetch(path: string, opts: { method?: string; body?: any } = {}): Promise<any> {
+  private async fetch(path: string, opts: { method?: string; body?: any; direct?: boolean } = {}): Promise<any> {
     const headers: Record<string, string> = {
       'Content-Type': 'application/json',
       'X-API-Key': this.apiKey,
@@ -161,7 +183,8 @@ export class VaultProof {
       headers['X-VaultProof-Session'] = this.sessionToken;
     }
 
-    const res = await globalThis.fetch(`${this.apiUrl}${path}`, {
+    const baseUrl = opts.direct ? this.directUrl : this.apiUrl;
+    const res = await globalThis.fetch(`${baseUrl}${path}`, {
       method: opts.method || 'GET',
       headers,
       body: opts.body ? JSON.stringify(opts.body) : undefined,
