@@ -219,47 +219,46 @@
     </nav>
 
     <!-- Hero -->
-    <section class="relative z-10 max-w-5xl mx-auto px-6 pt-24 pb-20">
-        <div class="text-center mb-16">
-            <h1 class="text-5xl md:text-7xl font-black tracking-tight leading-[1.08] mb-6 text-white reveal" style="font-family:'Space Grotesk',sans-serif">
-                Store API keys without<br>
-                anyone seeing them.<br>
-                <span class="bg-gradient-to-r from-vp-accent to-vp-cyan bg-clip-text text-transparent">Even us.</span>
-            </h1>
-            <p class="text-lg md:text-xl text-gray-400 max-w-2xl mx-auto mb-10 leading-relaxed reveal delay-1" style="font-family:'Space Grotesk',sans-serif">
-                The password manager for API keys and secrets. One line change. Every SDK works. Your keys are never exposed.
-            </p>
-            <div class="flex items-center justify-center gap-4 flex-wrap reveal delay-2">
-                <a href="/app/login" class="bg-vp-accent hover:bg-indigo-500 px-7 py-3.5 rounded-btn font-semibold text-white transition-all btn-glow text-base">Start Free</a>
-                <a href="/docs" class="border border-vp-border hover:border-gray-500 px-7 py-3.5 rounded-btn font-semibold text-gray-300 transition-all text-base hover:bg-white/[0.02]">View Docs</a>
-            </div>
-            <p class="text-xs text-gray-500 mt-4 reveal delay-2">No credit card required. Set up in 30 seconds.</p>
-
-        </div>
-
-        <!-- Live terminal -->
-        <div class="reveal delay-3 max-w-2xl mx-auto">
-            <div class="bg-vp-surface border border-vp-border rounded-[16px] overflow-hidden shadow-2xl shadow-black/40">
-                <div class="flex items-center gap-2 px-4 py-3 border-b border-vp-border bg-vp-bg/50">
-                    <div class="w-3 h-3 rounded-full bg-red-500/70"></div>
-                    <div class="w-3 h-3 rounded-full bg-yellow-500/70"></div>
-                    <div class="w-3 h-3 rounded-full bg-green-500/70"></div>
-                    <span class="text-xs text-gray-600 ml-2 font-mono">vaultproof-cli</span>
+    <section class="relative z-10 max-w-6xl mx-auto px-6 pt-20 pb-24">
+        <div class="grid md:grid-cols-2 gap-12 items-center">
+            <div>
+                <h1 class="text-4xl md:text-5xl lg:text-6xl font-black tracking-tight leading-[1.08] mb-6 text-white reveal" style="font-family:'Space Grotesk',sans-serif">
+                    Store API keys without anyone seeing them. <span class="bg-gradient-to-r from-vp-accent to-vp-cyan bg-clip-text text-transparent">Even us.</span>
+                </h1>
+                <p class="text-lg text-gray-400 max-w-lg mb-8 leading-relaxed reveal delay-1" style="font-family:'Space Grotesk',sans-serif">
+                    The password manager for API keys and secrets. One line change. Every SDK works. Your keys are never exposed.
+                </p>
+                <div class="flex items-center gap-4 flex-wrap reveal delay-2">
+                    <a href="/app/login" class="bg-vp-accent hover:bg-indigo-500 px-7 py-3.5 rounded-btn font-semibold text-white transition-all btn-glow text-base">Start Free</a>
+                    <a href="/docs" class="border border-vp-border hover:border-gray-500 px-7 py-3.5 rounded-btn font-semibold text-gray-300 transition-all text-base hover:bg-white/[0.02]">View Docs</a>
                 </div>
-                <div class="p-5 font-mono text-sm leading-7 min-h-[200px]" id="terminal">
-                    <span class="text-gray-500">$</span> <span id="terminalText" class="text-green-400"></span><span class="cursor" id="terminalCursor"></span>
-                    <div id="terminalOutput" class="text-gray-500 mt-1"></div>
+                <p class="text-xs text-gray-500 mt-4 reveal delay-2">No credit card required. Set up in 30 seconds.</p>
+
+                <div class="flex items-center gap-6 mt-8 reveal delay-3">
+                    <span class="text-xs text-gray-600 uppercase tracking-wider">Secured by</span>
+                    <span class="text-xs text-gray-500 font-medium">Cloudflare</span>
+                    <span class="text-xs text-gray-500 font-medium">Supabase</span>
+                    <span class="text-xs text-gray-500 font-medium">ZK Proofs</span>
+                    <span class="text-xs text-gray-500 font-medium">AES-256</span>
+                    <span class="text-xs text-gray-500 font-medium">Split Keys</span>
                 </div>
             </div>
-        </div>
 
-        <div class="flex items-center justify-center gap-8 mt-12 reveal delay-3">
-            <span class="text-xs text-gray-600 uppercase tracking-wider">Secured by</span>
-            <span class="text-xs text-gray-500 font-medium">Cloudflare</span>
-            <span class="text-xs text-gray-500 font-medium">Supabase</span>
-            <span class="text-xs text-gray-500 font-medium">ZK Proofs</span>
-            <span class="text-xs text-gray-500 font-medium">AES-256</span>
-            <span class="text-xs text-gray-500 font-medium">Split Keys</span>
+            <!-- Live terminal -->
+            <div class="reveal delay-3">
+                <div class="bg-vp-surface border border-vp-border rounded-[16px] overflow-hidden shadow-2xl shadow-black/40">
+                    <div class="flex items-center gap-2 px-4 py-3 border-b border-vp-border bg-vp-bg/50">
+                        <div class="w-3 h-3 rounded-full bg-red-500/70"></div>
+                        <div class="w-3 h-3 rounded-full bg-yellow-500/70"></div>
+                        <div class="w-3 h-3 rounded-full bg-green-500/70"></div>
+                        <span class="text-xs text-gray-600 ml-2 font-mono">vaultproof-cli</span>
+                    </div>
+                    <div class="p-5 font-mono text-sm leading-7 min-h-[200px]" id="terminal">
+                        <span class="text-gray-500">$</span> <span id="terminalText" class="text-green-400"></span><span class="cursor" id="terminalCursor"></span>
+                        <div id="terminalOutput" class="text-gray-500 mt-1"></div>
+                    </div>
+                </div>
+            </div>
         </div>
     </section>
 
