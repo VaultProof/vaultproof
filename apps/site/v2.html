@@ -28,7 +28,7 @@
                         'vp-accent': '#6366f1',
                         'vp-cyan': '#06b6d4',
                         'vp-navy': '#1a1a2e',
-                        'vp-body': '#6b7280',
+                        'vp-body': '#4b5563',
                     },
                     fontFamily: {
                         heading: ['Space Grotesk', 'system-ui', 'sans-serif'],
@@ -118,30 +118,30 @@
 <body class="min-h-screen relative overflow-x-hidden">
 
     <!-- Nav -->
-    <nav id="mainNav" class="sticky top-0 z-50 bg-white/90 backdrop-blur-md border-b border-gray-100 transition-shadow">
-        <div class="flex items-center justify-between px-6 py-4 max-w-6xl mx-auto">
+    <nav id="mainNav" class="sticky top-0 z-50 bg-white/95 backdrop-blur-md border-b border-gray-200 transition-shadow">
+        <div class="flex items-center justify-between px-6 py-3 max-w-6xl mx-auto">
             <a href="/" class="flex items-center gap-2.5">
-                <img src="/logo-sm.png" alt="VaultProof" width="28" height="28" />
-                <span class="text-lg font-bold text-vp-accent tracking-tight font-heading">VaultProof</span>
+                <img src="/logo-sm.png" alt="VaultProof" width="32" height="32" />
+                <span class="text-xl font-extrabold text-vp-navy tracking-tight font-heading">Vault<span class="text-vp-accent">Proof</span></span>
             </a>
-            <div class="hidden md:flex items-center gap-8">
-                <a href="/docs" class="text-sm text-vp-body hover:text-vp-navy transition-colors font-medium">Docs</a>
-                <a href="/guides" class="text-sm text-vp-body hover:text-vp-navy transition-colors font-medium">Guides</a>
-                <a href="/compare" class="text-sm text-vp-body hover:text-vp-navy transition-colors font-medium">Compare</a>
-                <a href="/blog" class="text-sm text-vp-body hover:text-vp-navy transition-colors font-medium">Blog</a>
-                <a href="#pricing" class="text-sm text-vp-body hover:text-vp-navy transition-colors font-medium">Pricing</a>
-                <a href="/app/login" class="text-sm text-vp-body hover:text-vp-navy transition-colors font-medium">Dashboard</a>
-                <a href="/app/login" class="bg-vp-accent hover:bg-indigo-600 text-sm px-5 py-2.5 rounded-btn font-semibold text-white transition-all">Get Started</a>
+            <div class="hidden md:flex items-center gap-6">
+                <a href="/docs" class="text-sm text-gray-700 hover:text-vp-accent transition-colors font-medium">Docs</a>
+                <a href="/guides" class="text-sm text-gray-700 hover:text-vp-accent transition-colors font-medium">Guides</a>
+                <a href="/compare" class="text-sm text-gray-700 hover:text-vp-accent transition-colors font-medium">Compare</a>
+                <a href="/blog" class="text-sm text-gray-700 hover:text-vp-accent transition-colors font-medium">Blog</a>
+                <a href="#pricing" class="text-sm text-gray-700 hover:text-vp-accent transition-colors font-medium">Pricing</a>
+                <a href="/app/login" class="text-sm text-gray-700 hover:text-vp-accent transition-colors font-medium">Dashboard</a>
+                <a href="/app/login" class="bg-vp-accent hover:bg-indigo-600 text-sm px-6 py-2.5 rounded-btn font-semibold text-white transition-all shadow-md shadow-indigo-500/20 hover:shadow-lg hover:shadow-indigo-500/30">Get Started</a>
             </div>
-            <button id="mobileToggle" class="md:hidden text-vp-body hover:text-vp-navy" aria-label="Toggle menu">
+            <button id="mobileToggle" class="md:hidden text-gray-700 hover:text-vp-navy" aria-label="Toggle menu">
                 <svg width="24" height="24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 6h16M4 12h16M4 18h16"/></svg>
             </button>
         </div>
         <div id="mobileMenu" class="mobile-menu flex-col gap-4 px-6 pb-6 md:hidden bg-white/95 backdrop-blur-sm">
-            <a href="/docs" class="text-sm text-vp-body hover:text-vp-navy transition-colors py-1">Docs</a>
-            <a href="/guides" class="text-sm text-vp-body hover:text-vp-navy transition-colors py-1">Guides</a>
-            <a href="/compare" class="text-sm text-vp-body hover:text-vp-navy transition-colors py-1">Compare</a>
-            <a href="/blog" class="text-sm text-vp-body hover:text-vp-navy transition-colors py-1">Blog</a>
+            <a href="/docs" class="text-sm text-gray-700 hover:text-vp-accent transition-colors py-1 font-medium">Docs</a>
+            <a href="/guides" class="text-sm text-gray-700 hover:text-vp-accent transition-colors py-1 font-medium">Guides</a>
+            <a href="/compare" class="text-sm text-gray-700 hover:text-vp-accent transition-colors py-1 font-medium">Compare</a>
+            <a href="/blog" class="text-sm text-gray-700 hover:text-vp-accent transition-colors py-1 font-medium">Blog</a>
             <a href="#pricing" class="text-sm text-vp-body hover:text-vp-navy transition-colors py-1">Pricing</a>
             <a href="/app/login" class="text-sm text-vp-body hover:text-vp-navy transition-colors py-1">Dashboard</a>
             <a href="/app/login" class="bg-vp-accent hover:bg-indigo-600 text-sm px-5 py-2.5 rounded-btn font-semibold text-white transition-all text-center mt-2">Get Started</a>
