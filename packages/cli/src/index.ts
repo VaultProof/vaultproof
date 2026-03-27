@@ -1405,6 +1405,252 @@ function timeAgo(date: Date): string {
   return `${Math.floor(months / 12)}y ago`;
 }
 
+// ─── migrate ─────────────────────────────────────────────────────────────────
+
+import { LABEL_VAR_MAP } from "./env-vars.js";
+
+// Reverse map: ENV_VAR_NAME → { provider, label }
+const KNOWN_SECRETS: Record<string, { provider: string; label: string }> = {};
+for (const [provider, envVar] of Object.entries(ENV_VAR_MAP)) {
+  KNOWN_SECRETS[envVar] = { provider, label: "default" };
+}
+for (const [provider, labels] of Object.entries(LABEL_VAR_MAP)) {
+  for (const [label, envVar] of Object.entries(labels)) {
+    if (!KNOWN_SECRETS[envVar]) {
+      KNOWN_SECRETS[envVar] = { provider, label };
+    }
+  }
+}
+
+// Common secret patterns — env vars that look like secrets
+const SECRET_PATTERNS = [
+  /KEY/i, /SECRET/i, /TOKEN/i, /PASSWORD/i, /CREDENTIAL/i,
+  /DSN/i, /AUTH/i, /PRIVATE/i,
+];
+
+// Known non-secret env vars (public config, not secrets)
+const NON_SECRETS = new Set([
+  "NODE_ENV", "PORT", "HOST", "TZ", "CI", "VAULTPROOF_API_KEY", "VAULTPROOF_API_URL",
+  "VAULTPROOF_DIRECT_URL", "NEXT_PUBLIC_SUPABASE_URL", "NEXT_PUBLIC_APP_URL",
+  "NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY", "DATABASE_URL", "DIRECT_URL",
+]);
+
+function looksLikeSecret(name: string): boolean {
+  if (NON_SECRETS.has(name)) return false;
+  if (name.startsWith("NEXT_PUBLIC_")) return false;
+  return SECRET_PATTERNS.some((p) => p.test(name));
+}
+
+function parseEnvFile(content: string): Array<{ name: string; value: string }> {
+  const entries: Array<{ name: string; value: string }> = [];
+  for (const line of content.split("\n")) {
+    const trimmed = line.trim();
+    if (!trimmed || trimmed.startsWith("#")) continue;
+    const eqIndex = trimmed.indexOf("=");
+    if (eqIndex === -1) continue;
+    const name = trimmed.slice(0, eqIndex).trim();
+    let value = trimmed.slice(eqIndex + 1).trim();
+    // Strip quotes
+    if ((value.startsWith('"') && value.endsWith('"')) || (value.startsWith("'") && value.endsWith("'"))) {
+      value = value.slice(1, -1);
+    }
+    if (name && value) entries.push({ name, value });
+  }
+  return entries;
+}
+
+program
+  .command("migrate")
+  .description("Scan your .env and migrate secrets to VaultProof")
+  .option("-f, --file <path>", "Path to .env file", ".env")
+  .addHelpText(
+    "after",
+    `
+${chalk.bold("What it does:")}
+  1. Reads your .env file (in current directory)
+  2. Identifies which entries look like secrets
+  3. Asks you which ones to store in VaultProof
+  4. Stores them and prints a ready-to-use vault.ts helper
+
+${chalk.bold("What it does NOT do:")}
+  - Does not modify any files
+  - Does not scan other directories
+  - Does not delete anything from your .env
+
+${chalk.bold("Example:")}
+  $ vaultproof migrate
+  $ vaultproof migrate -f .env.production
+`
+  )
+  .action(async (opts: { file: string }) => {
+    const apiKey = getApiKey();
+    if (!apiKey) {
+      console.error(chalk.red("No API key found. Set VAULTPROOF_API_KEY or run `vaultproof dev-key create`."));
+      process.exit(1);
+    }
+
+    // Read .env file
+    const envPath = opts.file;
+    let content: string;
+    try {
+      content = (await import("node:fs")).readFileSync(envPath, "utf-8");
+    } catch {
+      console.error(chalk.red(`Could not read ${envPath}`));
+      console.error(chalk.dim("  Run this command from the directory with your .env file."));
+      process.exit(1);
+    }
+
+    const entries = parseEnvFile(content);
+    if (entries.length === 0) {
+      console.log(chalk.yellow("No entries found in " + envPath));
+      process.exit(0);
+    }
+
+    // Identify secrets
+    const secrets = entries.filter((e) => looksLikeSecret(e.name));
+    const config = entries.filter((e) => !looksLikeSecret(e.name));
+
+    console.log(chalk.bold("\nFound in " + envPath + ":\n"));
+
+    if (secrets.length === 0) {
+      console.log(chalk.yellow("  No secrets detected. Your .env might only contain config values."));
+      process.exit(0);
+    }
+
+    // Show what was found
+    console.log(chalk.cyan("  Secrets (will ask to store):"));
+    for (const s of secrets) {
+      const masked = s.value.slice(0, 6) + "..." + s.value.slice(-4);
+      const known = KNOWN_SECRETS[s.name];
+      const tag = known ? chalk.dim(` (${known.provider})`) : "";
+      console.log(`    ${chalk.white(s.name)} = ${chalk.dim(masked)}${tag}`);
+    }
+
+    if (config.length > 0) {
+      console.log(chalk.gray("\n  Config (skipping — not secrets):"));
+      for (const c of config) {
+        console.log(`    ${chalk.dim(c.name)}`);
+      }
+    }
+
+    console.log();
+
+    // Ask which to store
+    const toStore: Array<{ name: string; value: string; provider: string; label: string }> = [];
+
+    for (const secret of secrets) {
+      const known = KNOWN_SECRETS[secret.name];
+      const defaultProvider = known?.provider || "";
+      const defaultLabel = known?.label !== "default" ? known?.label || "" : "";
+
+      const yes = await confirm(`  Store ${chalk.white(secret.name)} in VaultProof?`);
+      if (!yes) continue;
+
+      let provider = defaultProvider;
+      if (!provider) {
+        provider = await prompt(`    Provider (e.g. stripe, aws, custom): `);
+        if (!provider) {
+          console.log(chalk.dim("    Skipped."));
+          continue;
+        }
+      }
+
+      let label = defaultLabel;
+      if (!label) {
+        label = await prompt(`    Label (optional, press enter to skip): `);
+      }
+
+      toStore.push({ name: secret.name, value: secret.value, provider, label: label || "default" });
+    }
+
+    if (toStore.length === 0) {
+      console.log(chalk.yellow("\nNothing to store. Done."));
+      process.exit(0);
+    }
+
+    // Store each key
+    console.log(chalk.bold(`\nStoring ${toStore.length} key${toStore.length > 1 ? "s" : ""}...\n`));
+
+    const stored: Array<{ name: string; keyId: string; provider: string; label: string }> = [];
+
+    for (const item of toStore) {
+      const spinner = ora(`  Storing ${item.name}...`).start();
+
+      const shares = splitString(item.value, 2, 2);
+      const share1 = serializeShare(shares[0]);
+      const share2 = serializeShare(shares[1]);
+
+      try {
+        const { data } = await apiRequest<{ keyId: string }>("POST", "/api/v1/sdk/store", {
+          body: {
+            share1,
+            share2,
+            provider: item.provider,
+            label: item.label === "default" ? `${item.provider} key` : item.label,
+            envVar: item.name,
+          },
+          auth: "apikey",
+        });
+
+        stored.push({ name: item.name, keyId: data.keyId, provider: item.provider, label: item.label });
+        spinner.succeed(`  ${chalk.green(item.name)} stored`);
+      } catch {
+        spinner.fail(`  ${chalk.red(item.name)} failed`);
+      }
+    }
+
+    if (stored.length === 0) {
+      console.log(chalk.red("\nAll stores failed. Check your API key and try again."));
+      process.exit(1);
+    }
+
+    // Print the vault.ts helper
+    console.log(chalk.bold("\n─── Copy this into your project as lib/vault.ts ───\n"));
+
+    const keyEntries = stored
+      .map((s) => `  ${JSON.stringify(s.name)}: ${JSON.stringify(s.keyId)},`)
+      .join("\n");
+
+    const helperCode = `import VaultProof from '@vaultproof/sdk';
+
+const vault = new VaultProof(process.env.VAULTPROOF_API_KEY!);
+
+const KEY_IDS: Record<string, string> = {
+${keyEntries}
+};
+
+export async function getSecret(name: string): Promise<string> {
+  const keyId = KEY_IDS[name];
+  if (!keyId) throw new Error(\`Unknown secret: \${name}\`);
+  const { apiKey } = await vault.retrieve(keyId);
+  return apiKey;
+}`;
+
+    console.log(helperCode);
+
+    // Print what to remove from hosting
+    console.log(chalk.bold("\n─── Remove these from your hosting (Vercel, Railway, etc.) ───\n"));
+    for (const s of stored) {
+      console.log(`  ${chalk.red("DELETE")}  ${s.name}`);
+    }
+    console.log(`\n  ${chalk.green("KEEP")}    VAULTPROOF_API_KEY=vp_live_...`);
+
+    if (config.length > 0) {
+      console.log(chalk.dim(`\n  These are config, not secrets — keep them as-is:`));
+      for (const c of config) {
+        console.log(`  ${chalk.dim("KEEP")}    ${c.name}`);
+      }
+    }
+
+    console.log(chalk.bold("\n─── Usage ───\n"));
+    console.log(chalk.dim("  Replace this:"));
+    console.log(`    const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!);`);
+    console.log(chalk.dim("\n  With this:"));
+    console.log(`    import { getSecret } from '@/lib/vault';`);
+    console.log(`    const stripe = new Stripe(await getSecret('STRIPE_SECRET_KEY'));`);
+    console.log();
+  });
+
 // ─── Run ─────────────────────────────────────────────────────────────────────
 
 program.parse();
