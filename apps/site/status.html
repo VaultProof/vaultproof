@@ -414,26 +414,103 @@
                     [-25.26,-57.58],[-34.91,-56.19],[6.80,-58.16],[5.84,-55.17],
                 ];
 
-                // Draw edge nodes
-                nodes.forEach(([lat, lng]) => {
-                    const [x, y] = project(lng, lat);
-                    // Glow
-                    ctx.beginPath();
-                    ctx.arc(x, y, 3.5, 0, Math.PI * 2);
-                    ctx.fillStyle = 'rgba(99, 102, 241, 0.2)';
-                    ctx.fill();
-                    // Dot
-                    ctx.beginPath();
-                    ctx.arc(x, y, 1.5, 0, Math.PI * 2);
-                    ctx.fillStyle = 'rgba(99, 102, 241, 0.85)';
-                    ctx.fill();
-                });
+                // Pre-project all node positions
+                const projected = nodes.map(([lat, lng]) => project(lng, lat));
 
-                // Node count label
-                ctx.font = '11px Inter, sans-serif';
-                ctx.fillStyle = '#4b5563';
-                ctx.textAlign = 'right';
-                ctx.fillText(nodes.length + '+ edge locations', W - 16, H - 12);
+                // Save the static map as an image so we don't redraw countries every frame
+                const mapImage = ctx.getImageData(0, 0, canvas.width, canvas.height);
+
+                // Traveling packets: small bright dots that move between random nodes
+                const packets = [];
+                const MAX_PACKETS = 8;
+
+                function spawnPacket() {
+                    const a = Math.floor(Math.random() * projected.length);
+                    let b = Math.floor(Math.random() * projected.length);
+                    while (b === a) b = Math.floor(Math.random() * projected.length);
+                    packets.push({ from: a, to: b, t: 0, speed: 0.003 + Math.random() * 0.004 });
+                }
+                for (let i = 0; i < MAX_PACKETS; i++) spawnPacket();
+
+                function animate() {
+                    // Restore static map
+                    ctx.putImageData(mapImage, 0, 0);
+
+                    const now = Date.now();
+
+                    // Draw edge nodes with subtle pulse
+                    projected.forEach(([x, y], i) => {
+                        const pulse = 0.15 + 0.1 * Math.sin(now / 1200 + i * 0.5);
+                        // Glow
+                        ctx.beginPath();
+                        ctx.arc(x, y, 3.5 + Math.sin(now / 1000 + i) * 0.5, 0, Math.PI * 2);
+                        ctx.fillStyle = `rgba(99, 102, 241, ${pulse})`;
+                        ctx.fill();
+                        // Dot
+                        ctx.beginPath();
+                        ctx.arc(x, y, 1.5, 0, Math.PI * 2);
+                        ctx.fillStyle = 'rgba(99, 102, 241, 0.85)';
+                        ctx.fill();
+                    });
+
+                    // Draw and update traveling packets
+                    packets.forEach((p, i) => {
+                        p.t += p.speed;
+                        if (p.t >= 1) {
+                            // Respawn
+                            const a = Math.floor(Math.random() * projected.length);
+                            let b = Math.floor(Math.random() * projected.length);
+                            while (b === a) b = Math.floor(Math.random() * projected.length);
+                            p.from = a; p.to = b; p.t = 0;
+                            p.speed = 0.003 + Math.random() * 0.004;
+                        }
+
+                        const [x1, y1] = projected[p.from];
+                        const [x2, y2] = projected[p.to];
+                        // Curved path (arc above the straight line)
+                        const mx = (x1 + x2) / 2;
+                        const my = Math.min(y1, y2) - 30 - Math.abs(x2 - x1) * 0.08;
+                        const t = p.t;
+                        // Quadratic bezier
+                        const px = (1-t)*(1-t)*x1 + 2*(1-t)*t*mx + t*t*x2;
+                        const py = (1-t)*(1-t)*y1 + 2*(1-t)*t*my + t*t*y2;
+
+                        // Trail
+                        const trail = 0.06;
+                        for (let s = 0; s < 4; s++) {
+                            const tt = Math.max(0, t - trail * s);
+                            const tx = (1-tt)*(1-tt)*x1 + 2*(1-tt)*tt*mx + tt*tt*x2;
+                            const ty = (1-tt)*(1-tt)*y1 + 2*(1-tt)*tt*my + tt*tt*y2;
+                            ctx.beginPath();
+                            ctx.arc(tx, ty, 2 - s * 0.4, 0, Math.PI * 2);
+                            ctx.fillStyle = `rgba(99, 102, 241, ${0.7 - s * 0.15})`;
+                            ctx.fill();
+                        }
+
+                        // Bright head
+                        ctx.beginPath();
+                        ctx.arc(px, py, 2.5, 0, Math.PI * 2);
+                        ctx.fillStyle = 'rgba(165, 180, 252, 0.9)';
+                        ctx.fill();
+
+                        // Connection line (faint)
+                        ctx.beginPath();
+                        ctx.moveTo(x1, y1);
+                        ctx.quadraticCurveTo(mx, my, x2, y2);
+                        ctx.strokeStyle = `rgba(99, 102, 241, ${0.08 * (1 - t)})`;
+                        ctx.lineWidth = 0.5;
+                        ctx.stroke();
+                    });
+
+                    // Node count label
+                    ctx.font = '11px Inter, sans-serif';
+                    ctx.fillStyle = '#4b5563';
+                    ctx.textAlign = 'right';
+                    ctx.fillText(nodes.length + '+ edge locations', W - 16, H - 12);
+
+                    requestAnimationFrame(animate);
+                }
+                animate();
             })();
             </script>
 
