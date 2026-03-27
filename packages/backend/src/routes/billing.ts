@@ -10,7 +10,7 @@ const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!);
 const TIERS = {
   starter: { name: 'VaultProof Starter', price: 900, interval: 'month' as const },
   pro: { name: 'VaultProof Pro', price: 2900, interval: 'month' as const },
-  unlimited: { name: 'VaultProof Unlimited', price: 9900, interval: 'month' as const },
+  max: { name: 'VaultProof Max', price: 9900, interval: 'month' as const },
 } as const;
 
 type Tier = keyof typeof TIERS;
