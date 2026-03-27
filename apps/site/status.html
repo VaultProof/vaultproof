@@ -420,86 +420,92 @@
                 // Save the static map as an image so we don't redraw countries every frame
                 const mapImage = ctx.getImageData(0, 0, canvas.width, canvas.height);
 
-                // Traveling packets: small bright dots that move between random nodes
-                const packets = [];
-                const MAX_PACKETS = 8;
+                // Flowing colored lines between random nodes
+                const flows = [];
+                const MAX_FLOWS = 6;
+                const FLOW_COLORS = [
+                    [99, 102, 241],   // indigo
+                    [6, 182, 212],    // cyan
+                    [139, 92, 246],   // purple
+                    [16, 185, 129],   // emerald
+                    [244, 114, 182],  // pink
+                    [251, 191, 36],   // amber
+                ];
 
-                function spawnPacket() {
+                function spawnFlow(i) {
                     const a = Math.floor(Math.random() * projected.length);
                     let b = Math.floor(Math.random() * projected.length);
                     while (b === a) b = Math.floor(Math.random() * projected.length);
-                    packets.push({ from: a, to: b, t: 0, speed: 0.003 + Math.random() * 0.004 });
+                    return { from: a, to: b, t: 0, speed: 0.002 + Math.random() * 0.002, color: FLOW_COLORS[i % FLOW_COLORS.length] };
                 }
-                for (let i = 0; i < MAX_PACKETS; i++) spawnPacket();
+                for (let i = 0; i < MAX_FLOWS; i++) flows.push(spawnFlow(i));
 
                 function animate() {
-                    // Restore static map
                     ctx.putImageData(mapImage, 0, 0);
-
                     const now = Date.now();
 
                     // Draw edge nodes with subtle pulse
                     projected.forEach(([x, y], i) => {
                         const pulse = 0.15 + 0.1 * Math.sin(now / 1200 + i * 0.5);
-                        // Glow
                         ctx.beginPath();
                         ctx.arc(x, y, 3.5 + Math.sin(now / 1000 + i) * 0.5, 0, Math.PI * 2);
                         ctx.fillStyle = `rgba(99, 102, 241, ${pulse})`;
                         ctx.fill();
-                        // Dot
                         ctx.beginPath();
                         ctx.arc(x, y, 1.5, 0, Math.PI * 2);
                         ctx.fillStyle = 'rgba(99, 102, 241, 0.85)';
                         ctx.fill();
                     });
 
-                    // Draw and update traveling packets
-                    packets.forEach((p, i) => {
-                        p.t += p.speed;
-                        if (p.t >= 1) {
-                            // Respawn
-                            const a = Math.floor(Math.random() * projected.length);
-                            let b = Math.floor(Math.random() * projected.length);
-                            while (b === a) b = Math.floor(Math.random() * projected.length);
-                            p.from = a; p.to = b; p.t = 0;
-                            p.speed = 0.003 + Math.random() * 0.004;
+                    // Draw flowing lines
+                    flows.forEach((f, i) => {
+                        f.t += f.speed;
+                        if (f.t >= 1) {
+                            Object.assign(f, spawnFlow(i));
                         }
 
-                        const [x1, y1] = projected[p.from];
-                        const [x2, y2] = projected[p.to];
-                        // Curved path (arc above the straight line)
+                        const [x1, y1] = projected[f.from];
+                        const [x2, y2] = projected[f.to];
                         const mx = (x1 + x2) / 2;
-                        const my = Math.min(y1, y2) - 30 - Math.abs(x2 - x1) * 0.08;
-                        const t = p.t;
-                        // Quadratic bezier
-                        const px = (1-t)*(1-t)*x1 + 2*(1-t)*t*mx + t*t*x2;
-                        const py = (1-t)*(1-t)*y1 + 2*(1-t)*t*my + t*t*y2;
+                        const my = Math.min(y1, y2) - 20 - Math.abs(x2 - x1) * 0.06;
+                        const [r, g, b] = f.color;
 
-                        // Trail
-                        const trail = 0.06;
-                        for (let s = 0; s < 4; s++) {
-                            const tt = Math.max(0, t - trail * s);
-                            const tx = (1-tt)*(1-tt)*x1 + 2*(1-tt)*tt*mx + tt*tt*x2;
-                            const ty = (1-tt)*(1-tt)*y1 + 2*(1-tt)*tt*my + tt*tt*y2;
+                        // Draw the line progressively (0 to current t)
+                        const steps = 60;
+                        const headT = f.t;
+                        const tailT = Math.max(0, f.t - 0.35);
+
+                        ctx.lineCap = 'round';
+                        for (let s = 0; s < steps; s++) {
+                            const st = tailT + (headT - tailT) * (s / steps);
+                            const et = tailT + (headT - tailT) * ((s + 1) / steps);
+                            const sx = (1-st)*(1-st)*x1 + 2*(1-st)*st*mx + st*st*x2;
+                            const sy = (1-st)*(1-st)*y1 + 2*(1-st)*st*my + st*st*y2;
+                            const ex = (1-et)*(1-et)*x1 + 2*(1-et)*et*mx + et*et*x2;
+                            const ey = (1-et)*(1-et)*y1 + 2*(1-et)*et*my + et*et*y2;
+
+                            // Fade from tail to head
+                            const alpha = 0.1 + 0.5 * (s / steps);
                             ctx.beginPath();
-                            ctx.arc(tx, ty, 2 - s * 0.4, 0, Math.PI * 2);
-                            ctx.fillStyle = `rgba(99, 102, 241, ${0.7 - s * 0.15})`;
-                            ctx.fill();
+                            ctx.moveTo(sx, sy);
+                            ctx.lineTo(ex, ey);
+                            ctx.strokeStyle = `rgba(${r}, ${g}, ${b}, ${alpha})`;
+                            ctx.lineWidth = 1.5 + (s / steps) * 1;
+                            ctx.stroke();
                         }
 
-                        // Bright head
+                        // Bright dot at head
+                        const hx = (1-headT)*(1-headT)*x1 + 2*(1-headT)*headT*mx + headT*headT*x2;
+                        const hy = (1-headT)*(1-headT)*y1 + 2*(1-headT)*headT*my + headT*headT*y2;
                         ctx.beginPath();
-                        ctx.arc(px, py, 2.5, 0, Math.PI * 2);
-                        ctx.fillStyle = 'rgba(165, 180, 252, 0.9)';
+                        ctx.arc(hx, hy, 2.5, 0, Math.PI * 2);
+                        ctx.fillStyle = `rgba(${r}, ${g}, ${b}, 0.9)`;
                         ctx.fill();
-
-                        // Connection line (faint)
+                        // Glow around head
                         ctx.beginPath();
-                        ctx.moveTo(x1, y1);
-                        ctx.quadraticCurveTo(mx, my, x2, y2);
-                        ctx.strokeStyle = `rgba(99, 102, 241, ${0.08 * (1 - t)})`;
-                        ctx.lineWidth = 0.5;
-                        ctx.stroke();
+                        ctx.arc(hx, hy, 5, 0, Math.PI * 2);
+                        ctx.fillStyle = `rgba(${r}, ${g}, ${b}, 0.15)`;
+                        ctx.fill();
                     });
 
                     // Node count label
