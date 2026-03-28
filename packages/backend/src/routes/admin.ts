@@ -490,13 +490,15 @@ export async function adminRoutes(app: FastifyInstance) {
       return reply.status(400).send({ error: 'Cannot delete an admin account' });
     }
 
-    const keySlots = await prisma.keySlot.findMany({
-      where: { userId },
-      select: { id: true },
-    });
+    const keySlots = await prisma.keySlot.findMany({ where: { userId }, select: { id: true } });
     const keySlotIds = keySlots.map(k => k.id);
+    const devKeys = await prisma.developerKey.findMany({ where: { userId }, select: { id: true } });
+    const devKeyIds = devKeys.map(k => k.id);
 
     await prisma.$transaction([
+      ...(devKeyIds.length > 0 ? [
+        prisma.sessionToken.deleteMany({ where: { developerKeyId: { in: devKeyIds } } }),
+      ] : []),
       ...(keySlotIds.length > 0 ? [
         prisma.accessLog.deleteMany({ where: { keySlotId: { in: keySlotIds } } }),
         prisma.appGrant.deleteMany({ where: { keySlotId: { in: keySlotIds } } }),
