@@ -198,6 +198,22 @@
       'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imd3emtqaW9tZW1qbGh0cmRybGFuIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQzNDM3ODIsImV4cCI6MjA4OTkxOTc4Mn0.tgHUvpBvFiojetuqIP0sKb0iBNbKDJHdeo9n3Tofa3o'
     );
 
+    // ── Handle email confirmation code exchange ──
+    const hashParams = new URLSearchParams(window.location.hash.slice(1));
+    const urlSearchParams = new URLSearchParams(window.location.search);
+    const confirmCode = urlSearchParams.get('code');
+    if (confirmCode) {
+      sbClient.auth.exchangeCodeForSession(confirmCode).then(({ data, error }) => {
+        if (!error && data.session) {
+          localStorage.setItem('vaultproof_token', data.session.access_token);
+          localStorage.setItem('vaultproof_user', JSON.stringify({
+            id: data.user.id, email: data.user.email
+          }));
+          window.location.href = './';
+        }
+      }).catch(() => {});
+    }
+
     // ── Check for CLI callback param ──
     const urlParams = new URLSearchParams(window.location.search);
     const rawCliCallback = urlParams.get('cli_callback');
