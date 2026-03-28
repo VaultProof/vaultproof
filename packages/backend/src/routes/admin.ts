@@ -418,6 +418,23 @@ export async function adminRoutes(app: FastifyInstance) {
     };
   });
 
+  // ─── Change user tier ────────────────────────────────────────────
+  app.put('/users/:userId/tier', async (request, reply) => {
+    const { userId } = request.params as { userId: string };
+    const { tier } = request.body as { tier: string };
+    const validTiers = ['free', 'starter', 'pro', 'team', 'enterprise', 'banned'];
+
+    if (!tier || !validTiers.includes(tier)) {
+      return reply.status(400).send({ error: 'Invalid tier. Must be one of: ' + validTiers.join(', ') });
+    }
+
+    const user = await prisma.user.findUnique({ where: { id: userId }, select: { id: true, email: true } });
+    if (!user) return reply.status(404).send({ error: 'User not found' });
+
+    await prisma.user.update({ where: { id: userId }, data: { tier } });
+    return { message: 'Tier updated', userId, email: user.email, tier };
+  });
+
   // ─── Ban user ─────────────────────────────────────────────────────
   app.post('/users/:userId/ban', async (request, reply) => {
     const { userId } = request.params as { userId: string };
@@ -453,5 +470,42 @@ export async function adminRoutes(app: FastifyInstance) {
       userId,
       email: user.email,
     };
+  });
+
+  // ─── Delete user (full wipe) ────────────────────────────────────
+  app.delete('/users/:userId', async (request, reply) => {
+    const { userId } = request.params as { userId: string };
+
+    const user = await prisma.user.findUnique({
+      where: { id: userId },
+      select: { id: true, email: true },
+    });
+
+    if (!user) {
+      return reply.status(404).send({ error: 'User not found' });
+    }
+
+    // Prevent deleting your own admin account
+    if (ADMIN_EMAILS.includes(user.email.toLowerCase())) {
+      return reply.status(400).send({ error: 'Cannot delete an admin account' });
+    }
+
+    const keySlots = await prisma.keySlot.findMany({
+      where: { userId },
+      select: { id: true },
+    });
+    const keySlotIds = keySlots.map(k => k.id);
+
+    await prisma.$transaction([
+      ...(keySlotIds.length > 0 ? [
+        prisma.accessLog.deleteMany({ where: { keySlotId: { in: keySlotIds } } }),
+        prisma.appGrant.deleteMany({ where: { keySlotId: { in: keySlotIds } } }),
+      ] : []),
+      prisma.keySlot.deleteMany({ where: { userId } }),
+      prisma.developerKey.deleteMany({ where: { userId } }),
+      prisma.user.delete({ where: { id: userId } }),
+    ]);
+
+    return { message: 'User and all data permanently deleted', userId, email: user.email };
   });
 }

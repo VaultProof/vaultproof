@@ -227,7 +227,15 @@
         <button class="btn btn-ghost text-xs" onclick="closeUserDetail()">&larr; Back to users</button>
         <span id="detail-email" class="text-lg font-semibold"></span>
         <span id="detail-tier-badge" class="badge"></span>
-        <button id="detail-ban-btn" class="btn btn-danger text-xs ml-auto" onclick="confirmBan()">Ban User</button>
+        <select id="detail-tier-select" onchange="changeTier()" class="ml-auto bg-[#111118] border border-[#1e1e2e] rounded-lg px-3 py-1.5 text-xs text-gray-300 outline-none">
+          <option value="free">free</option>
+          <option value="starter">starter</option>
+          <option value="pro">pro</option>
+          <option value="team">team</option>
+          <option value="enterprise">enterprise</option>
+        </select>
+        <button id="detail-delete-btn" class="btn btn-danger text-xs" onclick="confirmDelete()">Delete</button>
+        <button id="detail-ban-btn" class="btn btn-danger text-xs" onclick="confirmBan()">Ban</button>
       </div>
 
       <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
@@ -330,11 +338,25 @@
   <div class="modal">
     <h3 class="text-lg font-semibold mb-2">Ban User</h3>
     <p class="text-sm text-gray-400 mb-1">Are you sure you want to ban this user?</p>
-    <p class="text-sm text-gray-400 mb-4">This will set their tier to "banned" and revoke all developer keys. This action cannot be easily undone.</p>
+    <p class="text-sm text-gray-400 mb-4">This will set their tier to "banned" and revoke all developer keys.</p>
     <p id="ban-modal-email" class="mono text-sm text-red-400 mb-4"></p>
     <div class="flex justify-end gap-2">
       <button class="btn btn-ghost" onclick="closeBanModal()">Cancel</button>
       <button class="btn btn-danger" onclick="executeBan()">Ban User</button>
+    </div>
+  </div>
+</div>
+
+<!-- Delete confirmation modal -->
+<div id="delete-modal" class="overlay hidden">
+  <div class="modal">
+    <h3 class="text-lg font-semibold mb-2 text-red-400">Permanently Delete Account</h3>
+    <p class="text-sm text-gray-400 mb-1">This will permanently delete the user and ALL their data:</p>
+    <p class="text-sm text-gray-400 mb-4">Keys, dev keys, access logs, app grants — everything. This cannot be undone.</p>
+    <p id="delete-modal-email" class="mono text-sm text-red-400 mb-4"></p>
+    <div class="flex justify-end gap-2">
+      <button class="btn btn-ghost" onclick="closeDeleteModal()">Cancel</button>
+      <button class="btn btn-danger" onclick="executeDelete()">Delete Forever</button>
     </div>
   </div>
 </div>
@@ -526,6 +548,7 @@ async function openUserDetail(userId) {
     const tierBadge = document.getElementById('detail-tier-badge');
     tierBadge.textContent = u.tier;
     tierBadge.className = `badge badge-${u.tier}`;
+    document.getElementById('detail-tier-select').value = u.tier;
 
     document.getElementById('detail-keys').textContent = u.keySlots.length;
     document.getElementById('detail-devkeys').textContent = u.developerKeys.length;
@@ -771,6 +794,45 @@ async function executeBan() {
   } catch (e) {
     console.error('Ban failed', e);
     alert('Ban failed. Check console.');
+  }
+}
+
+// ─── Delete ───────────────────────────────────────────────────────
+function confirmDelete() {
+  document.getElementById('delete-modal-email').textContent = currentUserEmail;
+  document.getElementById('delete-modal').classList.remove('hidden');
+}
+
+function closeDeleteModal() {
+  document.getElementById('delete-modal').classList.add('hidden');
+}
+
+async function executeDelete() {
+  try {
+    await apiFetch(`/users/${currentUserId}`, { method: 'DELETE' });
+    closeDeleteModal();
+    closeUserDetail();
+    await loadStats();
+    await loadUsers(usersCurrentPage);
+  } catch (e) {
+    console.error('Delete failed', e);
+    alert('Delete failed. Check console.');
+  }
+}
+
+// ─── Change tier ──────────────────────────────────────────────────
+async function changeTier() {
+  const newTier = document.getElementById('detail-tier-select').value;
+  try {
+    await apiFetch(`/users/${currentUserId}/tier`, {
+      method: 'PUT',
+      body: JSON.stringify({ tier: newTier }),
+    });
+    await openUserDetail(currentUserId);
+    await loadStats();
+  } catch (e) {
+    console.error('Tier change failed', e);
+    alert('Tier change failed. Check console.');
   }
 }
 
