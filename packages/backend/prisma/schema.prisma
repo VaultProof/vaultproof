@@ -18,9 +18,12 @@ model User {
   globalDailyLimit     Int?           @map("global_daily_limit")    // max total calls/day across ALL keys
   globalMonthlyLimit   Int?           @map("global_monthly_limit")  // max total calls/month across ALL keys
   killSwitch           Boolean        @default(false) @map("kill_switch") // true = ALL proxy calls blocked
+  promoCode            String?        @map("promo_code")
+  tierExpiresAt        DateTime?      @map("tier_expires_at")
   createdAt            DateTime       @default(now()) @map("created_at")
   keySlots             KeySlot[]
   developerKeys        DeveloperKey[]
+  promoFeedback        PromoFeedback[]
 
   @@map("users")
 }
@@ -114,6 +117,16 @@ model AccessLog {
   @@index([keySlotId, timestamp])           // speeds up log listing + export
   @@index([appId, timestamp])              // speeds up per-app usage queries
   @@map("access_logs")
+}
+
+model PromoFeedback {
+  id        String   @id @default(uuid())
+  userId    String   @map("user_id")
+  user      User     @relation(fields: [userId], references: [id])
+  feedback  String
+  createdAt DateTime @default(now()) @map("created_at")
+
+  @@map("promo_feedback")
 }
 
 // KeyStatus values: "ACTIVE", "ROTATED", "REVOKED" (stored as String for SQLite compat)
