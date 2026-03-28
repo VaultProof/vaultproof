@@ -663,18 +663,51 @@
         const keysUsed = data.totalKeys || 0;
         const callsUsed = data.totalCalls || 0;
 
-        document.getElementById('keysUsed').textContent = keysUsed;
-        document.getElementById('keysBar').style.width = Math.min(100, (keysUsed / 3) * 100) + '%';
-        if (keysUsed >= 3) document.getElementById('keysBar').classList.replace('bg-[#6366f1]', 'bg-red-500');
-
-        document.getElementById('callsUsed').textContent = callsUsed.toLocaleString();
-        document.getElementById('callsBar').style.width = Math.min(100, (callsUsed / 1000) * 100) + '%';
-        if (callsUsed >= 900) document.getElementById('callsBar').classList.replace('bg-[#6366f1]', 'bg-red-500');
+        // Store for later tier-based update
+        window._usageData = { keysUsed, callsUsed };
+        updateUsageBars(keysUsed, callsUsed);
       } catch (e) {
         console.error('Failed to load usage:', e);
         document.getElementById('keysUsed').textContent = '—';
         document.getElementById('callsUsed').textContent = '—';
         showToast('Unable to load usage data', 'warning');
+      }
+    }
+
+    function updateUsageBars(keysUsed, callsUsed) {
+      const tierLimits = {
+        free: { keys: 3, calls: 10000 },
+        starter: { keys: 10, calls: 50000 },
+        pro: { keys: 100, calls: 500000 },
+        team: { keys: 500, calls: 2000000 },
+        enterprise: { keys: Infinity, calls: Infinity },
+      };
+      const tier = window._currentTier || 'free';
+      const limits = tierLimits[tier] || tierLimits.free;
+
+      const keysMax = limits.keys === Infinity ? 'Unlimited' : limits.keys.toLocaleString();
+      const callsMax = limits.calls === Infinity ? 'Unlimited' : limits.calls.toLocaleString();
+
+      document.getElementById('keysUsed').textContent = keysUsed;
+      const keysParent = document.getElementById('keysUsed').parentElement;
+      keysParent.innerHTML = `<span id="keysUsed">${keysUsed}</span> / ${keysMax}`;
+
+      document.getElementById('callsUsed').textContent = callsUsed.toLocaleString();
+      const callsParent = document.getElementById('callsUsed').parentElement;
+      callsParent.innerHTML = `<span id="callsUsed">${callsUsed.toLocaleString()}</span> / ${callsMax}`;
+
+      if (limits.keys === Infinity) {
+        document.getElementById('keysBar').style.width = '5%';
+      } else {
+        document.getElementById('keysBar').style.width = Math.min(100, (keysUsed / limits.keys) * 100) + '%';
+        if (keysUsed >= limits.keys) document.getElementById('keysBar').classList.replace('bg-[#6366f1]', 'bg-red-500');
+      }
+
+      if (limits.calls === Infinity) {
+        document.getElementById('callsBar').style.width = '5%';
+      } else {
+        document.getElementById('callsBar').style.width = Math.min(100, (callsUsed / limits.calls) * 100) + '%';
+        if (callsUsed >= limits.calls * 0.9) document.getElementById('callsBar').classList.replace('bg-[#6366f1]', 'bg-red-500');
       }
     }
 
@@ -1116,6 +1149,7 @@
         if (!res) return;
         const data = await res.json();
         const currentTier = data.tier || 'free';
+        window._currentTier = currentTier;
         const isSubscribed = data.hasSubscription || data.subscribed || false;
 
         // Update badge
@@ -1124,6 +1158,8 @@
           free: 'bg-gray-700/30 text-gray-400 border-gray-600/30',
           starter: 'bg-cyan-900/30 text-cyan-400 border-cyan-700/30',
           pro: 'bg-[#6366f1]/15 text-[#6366f1] border-[#6366f1]/30',
+          team: 'bg-purple-900/30 text-purple-400 border-purple-700/30',
+          enterprise: 'bg-amber-900/30 text-amber-400 border-amber-700/30',
         };
         const colorClass = tierColors[currentTier] || tierColors.free;
         badge.className = `inline-flex items-center px-3 py-1 rounded-xl text-sm font-medium capitalize ${colorClass}`;
@@ -1140,6 +1176,8 @@
           free: { keys: 3, calls: 10000 },
           starter: { keys: 10, calls: 50000 },
           pro: { keys: 100, calls: 500000 },
+          team: { keys: 500, calls: 2000000 },
+          enterprise: { keys: Infinity, calls: Infinity },
         };
         const limits = tierLimits[currentTier] || tierLimits.free;
         const keysLabel = limits.keys === Infinity ? 'Max' : limits.keys.toLocaleString();
@@ -1150,7 +1188,7 @@
         if (callsUsedEl) callsUsedEl.parentElement.innerHTML = `<span id="callsUsed">${callsUsedEl.textContent}</span> / ${callsLabel}`;
 
         // Update upgrade buttons — hide current tier and below
-        const tierOrder = ['free', 'starter', 'pro'];
+        const tierOrder = ['free', 'starter', 'pro', 'team', 'enterprise'];
         const currentIdx = tierOrder.indexOf(currentTier);
         document.querySelectorAll('.billing-upgrade-btn').forEach(btn => {
           const btnTier = btn.getAttribute('data-tier');
@@ -1167,6 +1205,11 @@
         if (currentTier !== 'free') {
           const banner = document.getElementById('upgradeProBanner');
           if (banner) banner.classList.add('hidden');
+        }
+
+        // Re-render usage bars with correct tier limits
+        if (window._usageData) {
+          updateUsageBars(window._usageData.keysUsed, window._usageData.callsUsed);
         }
 
         // Hide upgrade cards entirely for top tier
