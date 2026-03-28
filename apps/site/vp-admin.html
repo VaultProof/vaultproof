@@ -115,7 +115,6 @@
       <div class="tab" data-tab="users" onclick="switchTab('users')">Users</div>
       <div class="tab" data-tab="logs" onclick="switchTab('logs')">Logs</div>
       <div class="tab" data-tab="promo" onclick="switchTab('promo')">Promo</div>
-      <div class="tab" data-tab="analytics" onclick="switchTab('analytics')">Analytics</div>
     </div>
 
     <!-- Overview tab -->
@@ -154,6 +153,73 @@
         <div class="stat-card">
           <div class="stat-value" id="stat-tiers">-</div>
           <div class="stat-label">Tier Breakdown</div>
+        </div>
+      </div>
+
+      <!-- Analytics section -->
+      <h3 class="text-sm font-semibold text-gray-400 mb-3 mt-6">Site Analytics</h3>
+      <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+        <div class="stat-card">
+          <div class="stat-value" id="a-views-today">-</div>
+          <div class="stat-label">Views Today</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-value" id="a-visitors-today">-</div>
+          <div class="stat-label">Visitors Today</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-value" id="a-views-month">-</div>
+          <div class="stat-label">Views (30d)</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-value" id="a-signups-month">-</div>
+          <div class="stat-label">Signups (30d)</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-value" id="a-views-week">-</div>
+          <div class="stat-label">Views (7d)</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-value" id="a-signups-week">-</div>
+          <div class="stat-label">Signups (7d)</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-value" id="a-signups-today">-</div>
+          <div class="stat-label">Signups Today</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-value" id="a-total-users">-</div>
+          <div class="stat-label">Total Users</div>
+        </div>
+      </div>
+
+      <!-- Traffic chart -->
+      <div class="panel mb-6">
+        <h3 class="text-sm font-semibold text-gray-400 mb-3">Traffic (30 days)</h3>
+        <div style="height:300px"><canvas id="trafficChart"></canvas></div>
+      </div>
+
+      <!-- Signups chart -->
+      <div class="panel mb-6">
+        <h3 class="text-sm font-semibold text-gray-400 mb-3">Signups (30 days)</h3>
+        <div style="height:250px"><canvas id="signupsChart"></canvas></div>
+      </div>
+
+      <!-- Two column: Top Pages + Referrers -->
+      <div class="grid md:grid-cols-2 gap-6">
+        <div class="panel">
+          <h3 class="text-sm font-semibold text-gray-400 mb-3">Top Pages</h3>
+          <table>
+            <thead><tr><th>Page</th><th>Views</th></tr></thead>
+            <tbody id="a-pages-tbody"></tbody>
+          </table>
+        </div>
+        <div class="panel">
+          <h3 class="text-sm font-semibold text-gray-400 mb-3">Top Referrers</h3>
+          <table>
+            <thead><tr><th>Referrer</th><th>Visits</th></tr></thead>
+            <tbody id="a-referrers-tbody"></tbody>
+          </table>
         </div>
       </div>
     </div>
@@ -254,75 +320,6 @@
           <thead><tr><th>Email</th><th>Feedback</th><th>Date</th></tr></thead>
           <tbody id="promo-feedback-tbody"></tbody>
         </table>
-      </div>
-    </div>
-
-    <!-- Analytics tab -->
-    <div id="tab-analytics" class="hidden fade-in">
-      <!-- Overview stats -->
-      <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
-        <div class="stat-card">
-          <div class="stat-value" id="a-views-today">-</div>
-          <div class="stat-label">Views Today</div>
-        </div>
-        <div class="stat-card">
-          <div class="stat-value" id="a-visitors-today">-</div>
-          <div class="stat-label">Visitors Today</div>
-        </div>
-        <div class="stat-card">
-          <div class="stat-value" id="a-views-month">-</div>
-          <div class="stat-label">Views (30d)</div>
-        </div>
-        <div class="stat-card">
-          <div class="stat-value" id="a-signups-month">-</div>
-          <div class="stat-label">Signups (30d)</div>
-        </div>
-        <div class="stat-card">
-          <div class="stat-value" id="a-views-week">-</div>
-          <div class="stat-label">Views (7d)</div>
-        </div>
-        <div class="stat-card">
-          <div class="stat-value" id="a-signups-week">-</div>
-          <div class="stat-label">Signups (7d)</div>
-        </div>
-        <div class="stat-card">
-          <div class="stat-value" id="a-signups-today">-</div>
-          <div class="stat-label">Signups Today</div>
-        </div>
-        <div class="stat-card">
-          <div class="stat-value" id="a-total-users">-</div>
-          <div class="stat-label">Total Users</div>
-        </div>
-      </div>
-
-      <!-- Traffic chart -->
-      <div class="panel mb-6">
-        <h3 class="text-sm font-semibold text-gray-400 mb-3">Traffic (30 days)</h3>
-        <div style="height:300px"><canvas id="trafficChart"></canvas></div>
-      </div>
-
-      <!-- Signups chart -->
-      <div class="panel mb-6">
-        <h3 class="text-sm font-semibold text-gray-400 mb-3">Signups (30 days)</h3>
-        <div style="height:250px"><canvas id="signupsChart"></canvas></div>
-      </div>
-
-      <!-- Two column: Top Pages + Referrers -->
-      <div class="grid md:grid-cols-2 gap-6">
-        <div class="panel">
-          <h3 class="text-sm font-semibold text-gray-400 mb-3">Top Pages</h3>
-          <table>
-            <thead><tr><th>Page</th><th>Views</th></tr></thead>
-            <tbody id="a-pages-tbody"></tbody>
-          </table>
-        </div>
-        <div class="panel">
-          <h3 class="text-sm font-semibold text-gray-400 mb-3">Top Referrers</h3>
-          <table>
-            <thead><tr><th>Referrer</th><th>Visits</th></tr></thead>
-            <tbody id="a-referrers-tbody"></tbody>
-          </table>
-        </div>
       </div>
     </div>
 
@@ -563,12 +560,11 @@ setInterval(() => {
 function switchTab(tab) {
   document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
   document.querySelector(`.tab[data-tab="${tab}"]`).classList.add('active');
-  ['overview', 'users', 'logs', 'promo', 'analytics'].forEach(t => {
+  ['overview', 'users', 'logs', 'promo'].forEach(t => {
     document.getElementById(`tab-${t}`).classList.toggle('hidden', t !== tab);
   });
   document.getElementById('user-detail').classList.add('hidden');
   if (tab === 'promo') loadPromo();
-  if (tab === 'analytics') loadAnalytics();
 }
 
 // ─── Stats ───────────────────────────────────────────────────────
