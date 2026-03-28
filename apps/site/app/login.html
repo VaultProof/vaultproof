@@ -96,6 +96,13 @@
       <p class="text-sm text-gray-500 mt-1">Zero-knowledge API key infrastructure</p>
     </div>
 
+    <!-- Promo banner -->
+    <div id="promoBanner" class="hidden mb-4 p-3 bg-indigo-500/10 border border-indigo-500/30 rounded-xl text-center" style="max-width:400px;margin:0 auto">
+      <div class="text-sm font-medium text-indigo-400">Product Hunt Promo</div>
+      <div class="text-xs text-gray-400 mt-1">Sign up to claim your free Pro account for 1 year</div>
+      <div id="promoSpots" class="text-xs text-gray-500 mt-1"></div>
+    </div>
+
     <!-- Card -->
     <div class="bg-card border border-border rounded-2xl p-6">
 
@@ -212,6 +219,27 @@
       }
     }
 
+    // ── Detect ?promo= param and store ──
+    const promoParam = urlParams.get('promo');
+    if (promoParam) localStorage.setItem('vp_promo', promoParam.toUpperCase());
+
+    // ── Show promo banner if promo exists ──
+    if (localStorage.getItem('vp_promo')) {
+      const banner = document.getElementById('promoBanner');
+      if (banner) banner.classList.remove('hidden');
+      // Check spots left
+      fetch('https://api.vaultproof.dev/api/v1/promo/check/' + localStorage.getItem('vp_promo'))
+        .then(r => r.json())
+        .then(d => {
+          if (d.valid && d.spotsLeft > 0) {
+            document.getElementById('promoSpots').textContent = d.spotsLeft + ' of 200 spots remaining';
+          } else if (d.valid && d.spotsLeft <= 0) {
+            document.getElementById('promoSpots').textContent = 'All spots have been claimed';
+            document.getElementById('promoSpots').classList.add('text-red-400');
+          }
+        }).catch(() => {});
+    }
+
     // Show CLI banner if logging in from CLI
     if (cliCallback) {
       const banner = document.createElement('div');
@@ -219,6 +247,21 @@
       banner.textContent = 'Signing in from VaultProof CLI \u2014 log in below to connect.';
       const target = document.querySelector('.bg-card');
       if (target) target.prepend(banner);
+    }
+
+    // ── Auto-redeem promo helper ──
+    async function redeemPendingPromo(session) {
+      const pendingPromo = localStorage.getItem('vp_promo');
+      if (pendingPromo && session) {
+        try {
+          const res = await fetch('https://api.vaultproof.dev/api/v1/promo/redeem', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + session.access_token },
+            body: JSON.stringify({ code: pendingPromo }),
+          });
+          if (res.ok) localStorage.removeItem('vp_promo');
+        } catch (e) { console.error('Promo redeem failed:', e); }
+      }
     }
 
     // ── Check if already logged in ──
@@ -231,6 +274,9 @@
           email: session.user.email
         }));
 
+        // Auto-redeem promo before redirect
+        await redeemPendingPromo(session);
+
         // If CLI callback, redirect to CLI with token
         if (cliCallback) {
           window.location.href = `${cliCallback}?token=${session.access_token}&refresh_token=${encodeURIComponent(session.refresh_token)}&email=${encodeURIComponent(session.user.email)}&state=${encodeURIComponent(cliState || '')}`;
@@ -242,13 +288,16 @@
     })();
 
     // ── Listen for auth state changes (handles OAuth callback) ──
-    sbClient.auth.onAuthStateChange((event, session) => {
+    sbClient.auth.onAuthStateChange(async (event, session) => {
       if (event === 'SIGNED_IN' && session) {
         localStorage.setItem('vaultproof_token', session.access_token);
         localStorage.setItem('vaultproof_user', JSON.stringify({
           id: session.user.id,
           email: session.user.email
         }));
+
+        // Auto-redeem promo before redirect
+        await redeemPendingPromo(session);
 
         // If CLI callback, redirect to CLI with token
         if (cliCallback) {
@@ -262,10 +311,11 @@
 
     // ── GitHub OAuth ──
     async function loginWithGitHub() {
-      // Preserve CLI callback param through OAuth redirect
+      // Preserve CLI callback and promo params through OAuth redirect
+      const promoSuffix = localStorage.getItem('vp_promo') ? `&promo=${localStorage.getItem('vp_promo')}` : '';
       const redirectUrl = cliCallback
-        ? `${window.location.origin}/app/login?cli_callback=${encodeURIComponent(cliCallback)}&state=${encodeURIComponent(cliState || '')}`
-        : `${window.location.origin}/app/login`;
+        ? `${window.location.origin}/app/login?cli_callback=${encodeURIComponent(cliCallback)}&state=${encodeURIComponent(cliState || '')}${promoSuffix}`
+        : `${window.location.origin}/app/login${promoSuffix ? '?' + promoSuffix.slice(1) : ''}`;
       const { error } = await sbClient.auth.signInWithOAuth({
         provider: 'github',
         options: { redirectTo: redirectUrl }
@@ -275,10 +325,11 @@
 
     // ── Google OAuth ──
     async function loginWithGoogle() {
-      // Preserve CLI callback param through OAuth redirect
+      // Preserve CLI callback and promo params through OAuth redirect
+      const promoSuffix = localStorage.getItem('vp_promo') ? `&promo=${localStorage.getItem('vp_promo')}` : '';
       const redirectUrl = cliCallback
-        ? `${window.location.origin}/app/login?cli_callback=${encodeURIComponent(cliCallback)}&state=${encodeURIComponent(cliState || '')}`
-        : `${window.location.origin}/app/login`;
+        ? `${window.location.origin}/app/login?cli_callback=${encodeURIComponent(cliCallback)}&state=${encodeURIComponent(cliState || '')}${promoSuffix}`
+        : `${window.location.origin}/app/login${promoSuffix ? '?' + promoSuffix.slice(1) : ''}`;
       const { error } = await sbClient.auth.signInWithOAuth({
         provider: 'google',
         options: { redirectTo: redirectUrl }
@@ -334,6 +385,9 @@
           id: data.user.id,
           email: data.user.email
         }));
+
+        // Auto-redeem promo before redirect
+        await redeemPendingPromo(data.session);
 
         // If CLI callback, redirect to CLI with token
         if (cliCallback) {
@@ -409,6 +463,9 @@
             id: data.user.id,
             email: data.user.email
           }));
+
+          // Auto-redeem promo before redirect
+          await redeemPendingPromo(data.session);
 
           // If CLI callback, redirect to CLI with token
           if (cliCallback) {
