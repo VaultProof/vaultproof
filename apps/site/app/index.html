@@ -107,7 +107,8 @@
   </style>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
-<body class="text-gray-100 min-h-screen flex">
+<body class="text-gray-100 min-h-screen flex justify-center">
+  <div class="w-full max-w-[1600px] flex relative">
 
   <!-- Sidebar Overlay (mobile) -->
   <div id="sidebarOverlay" class="fixed inset-0 bg-black/60 z-40 hidden lg:hidden" onclick="toggleMobileSidebar()"></div>
@@ -1063,5 +1064,6 @@
     loadNotifications();
     checkOnboarding();
   </script>
+  </div><!-- max-width wrapper -->
 </body>
 </html>
