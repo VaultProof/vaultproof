@@ -1,41 +1,42 @@
 import type { FastifyInstance, FastifyRequest, FastifyReply } from 'fastify';
 import { prisma } from '../lib/prisma.js';
-import { timingSafeEqual } from 'crypto';
+import { createClient } from '@supabase/supabase-js';
 
 /**
  * Hidden admin routes — owner-only.
  *
- * Every request requires the X-Admin-Key header to match
- * the ADMIN_SECRET environment variable. These routes are
- * registered outside the /api/ prefix so they skip the
- * Worker proxy-auth hook entirely.
+ * Authenticates via Supabase Bearer token and checks the email
+ * against ADMIN_EMAILS (comma-separated) env var.
  */
 
-function safeCompare(a: string, b: string): boolean {
-  try {
-    const bufA = Buffer.from(a, 'utf8');
-    const bufB = Buffer.from(b, 'utf8');
-    if (bufA.length !== bufB.length) return false;
-    return timingSafeEqual(bufA, bufB);
-  } catch {
-    return false;
-  }
-}
+const ADMIN_EMAILS = (process.env.ADMIN_EMAILS || 'yee.nelsonk@gmail.com')
+  .split(',').map(e => e.trim().toLowerCase());
 
-async function requireAdminKey(request: FastifyRequest, reply: FastifyReply) {
-  const secret = process.env.ADMIN_SECRET;
-  if (!secret) {
-    return reply.status(403).send({ error: 'Forbidden' });
+const supabase = createClient(
+  process.env.SUPABASE_URL || '',
+  process.env.SUPABASE_ANON_KEY || ''
+);
+
+async function requireAdmin(request: FastifyRequest, reply: FastifyReply) {
+  const header = request.headers.authorization;
+  if (!header || !header.startsWith('Bearer ')) {
+    return reply.status(401).send({ error: 'Missing authorization' });
   }
-  const provided = request.headers['x-admin-key'] as string | undefined;
-  if (!provided || !safeCompare(provided, secret)) {
+
+  const token = header.slice(7);
+  const { data: { user }, error } = await supabase.auth.getUser(token);
+  if (error || !user || !user.email) {
+    return reply.status(401).send({ error: 'Invalid or expired token' });
+  }
+
+  if (!ADMIN_EMAILS.includes(user.email.toLowerCase())) {
     return reply.status(403).send({ error: 'Forbidden' });
   }
 }
 
 export async function adminRoutes(app: FastifyInstance) {
   // Auth guard on every route in this plugin
-  app.addHook('onRequest', requireAdminKey);
+  app.addHook('onRequest', requireAdmin);
 
   // ─── List all users ───────────────────────────────────────────────
   app.get('/users', async (request) => {

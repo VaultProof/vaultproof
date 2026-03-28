@@ -7,6 +7,7 @@
   <meta name="robots" content="noindex, nofollow" />
   <title>System</title>
   <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
@@ -79,12 +80,13 @@
 <div id="auth-gate" class="min-h-screen flex items-center justify-center">
   <div class="text-center">
     <div style="font-size:32px; margin-bottom:16px;">&#128274;</div>
-    <p class="text-sm text-gray-400 mb-4">Enter admin key</p>
-    <form id="auth-form" class="flex gap-2">
-      <input type="password" id="key-input" placeholder="Admin key" class="w-64" autofocus />
-      <button type="submit" class="btn btn-primary">Go</button>
+    <p class="text-sm text-gray-400 mb-4">Sign in with your account</p>
+    <form id="auth-form" class="space-y-3" style="width:300px">
+      <input type="email" id="admin-email" placeholder="Email" class="w-full" autofocus />
+      <input type="password" id="admin-password" placeholder="Password" class="w-full" />
+      <button type="submit" class="btn btn-primary w-full">Sign In</button>
     </form>
-    <p id="auth-error" class="text-red-400 text-xs mt-3 hidden">Invalid key</p>
+    <p id="auth-error" class="text-red-400 text-xs mt-3 hidden">Access denied — not an admin account</p>
   </div>
 </div>
 
@@ -316,18 +318,23 @@
 // ─── Config ──────────────────────────────────────────────────────
 const API = 'https://api.vaultproof.dev/admin';
 
-// ─── Auth ────────────────────────────────────────────────────────
-let adminKey = sessionStorage.getItem('_ak') || '';
+// ─── Supabase ────────────────────────────────────────────────────
+const sbClient = window.supabase.createClient(
+  'https://gwzkjiomemjlhtrdrlan.supabase.co',
+  'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imd3emtqaW9tZW1qbGh0cmRybGFuIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDI3NjU2MTgsImV4cCI6MjA1ODM0MTYxOH0.KuSMGRqMJ8KzVUqWXMhDhGps2n2EiMlBAaplbzTxMoo'
+);
+
+let accessToken = '';
 
 function getHeaders() {
-  return { 'Content-Type': 'application/json', 'X-Admin-Key': adminKey };
+  return { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + accessToken };
 }
 
 async function apiFetch(path, opts = {}) {
   const res = await fetch(`${API}${path}`, { ...opts, headers: { ...getHeaders(), ...(opts.headers || {}) } });
-  if (res.status === 403) {
-    sessionStorage.removeItem('_ak');
-    adminKey = '';
+  if (res.status === 401 || res.status === 403) {
+    accessToken = '';
+    await sbClient.auth.signOut();
     document.getElementById('dashboard').classList.add('hidden');
     document.getElementById('auth-gate').classList.remove('hidden');
     document.getElementById('auth-error').classList.remove('hidden');
@@ -339,24 +346,46 @@ async function apiFetch(path, opts = {}) {
 
 document.getElementById('auth-form').addEventListener('submit', async (e) => {
   e.preventDefault();
-  const key = document.getElementById('key-input').value.trim();
-  if (!key) return;
-  adminKey = key;
+  const email = document.getElementById('admin-email').value.trim();
+  const password = document.getElementById('admin-password').value;
+  if (!email || !password) return;
+
+  const { data, error } = await sbClient.auth.signInWithPassword({ email, password });
+  if (error || !data.session) {
+    document.getElementById('auth-error').classList.remove('hidden');
+    return;
+  }
+
+  accessToken = data.session.access_token;
   try {
     await apiFetch('/stats');
-    sessionStorage.setItem('_ak', key);
     document.getElementById('auth-gate').classList.add('hidden');
     document.getElementById('dashboard').classList.remove('hidden');
     init();
   } catch {
-    adminKey = '';
+    accessToken = '';
+    await sbClient.auth.signOut();
     document.getElementById('auth-error').classList.remove('hidden');
   }
 });
 
+// Auto-login if session exists
+(async () => {
+  const { data: { session } } = await sbClient.auth.getSession();
+  if (session) {
+    accessToken = session.access_token;
+    try {
+      await apiFetch('/stats');
+      document.getElementById('auth-gate').classList.add('hidden');
+      document.getElementById('dashboard').classList.remove('hidden');
+      init();
+    } catch { accessToken = ''; }
+  }
+})();
+
 function logout() {
-  sessionStorage.removeItem('_ak');
-  adminKey = '';
+  accessToken = '';
+  sbClient.auth.signOut();
   location.reload();
 }
 
