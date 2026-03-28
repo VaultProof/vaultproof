@@ -387,7 +387,10 @@ async function apiFetch(path, opts = {}) {
     document.getElementById('auth-error').classList.remove('hidden');
     throw new Error('Unauthorized');
   }
-  if (!res.ok) throw new Error(`API error: ${res.status}`);
+  if (!res.ok) {
+    const body = await res.text().catch(() => '');
+    throw new Error(`API ${res.status}: ${body}`);
+  }
   return res.json();
 }
 
@@ -816,7 +819,7 @@ async function executeDelete() {
     await loadUsers(usersCurrentPage);
   } catch (e) {
     console.error('Delete failed', e);
-    alert('Delete failed. Check console.');
+    alert('Delete failed: ' + e.message);
   }
 }
 
