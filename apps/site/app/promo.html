@@ -4,7 +4,7 @@
     <link rel="icon" type="image/png" href="/logo-sm.png">
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Login | VaultProof</title>
+  <title>Product Hunt Promo | VaultProof</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
@@ -94,6 +94,13 @@
     <div class="text-center mb-8">
       <h1 class="text-2xl font-bold text-white tracking-tight" style="font-family:'Space Grotesk',sans-serif">VaultProof</h1>
       <p class="text-sm text-gray-500 mt-1">Zero-knowledge API key infrastructure</p>
+    </div>
+
+    <!-- Promo banner -->
+    <div class="mb-4 p-3 bg-indigo-500/10 border border-indigo-500/30 rounded-xl text-center" style="max-width:400px;margin:0 auto">
+      <div class="text-sm font-medium text-indigo-400">Welcome Product Hunt users!</div>
+      <div class="text-xs text-gray-400 mt-1">Free Pro account for 1 year and help us improve VaultProof with your feedback</div>
+      <div id="promoSpots" class="text-xs text-gray-500 mt-1"></div>
     </div>
 
     <!-- Card -->
@@ -212,8 +219,20 @@
       }
     }
 
-    // ── Clear any leftover promo from localStorage ──
-    localStorage.removeItem('vp_promo');
+    // ── Hardcoded promo code for this page ──
+    localStorage.setItem('vp_promo', 'PRODUCTHUNT');
+
+    // Check spots left
+    fetch('https://api.vaultproof.dev/api/v1/promo/check/PRODUCTHUNT')
+      .then(r => r.json())
+      .then(d => {
+        if (d.valid && d.spotsLeft > 0) {
+          document.getElementById('promoSpots').textContent = d.spotsLeft + ' of 200 spots remaining';
+        } else if (d.valid && d.spotsLeft <= 0) {
+          document.getElementById('promoSpots').textContent = 'All spots have been claimed';
+          document.getElementById('promoSpots').classList.add('text-red-400');
+        }
+      }).catch(() => {});
 
     // Show CLI banner if logging in from CLI
     if (cliCallback) {
@@ -222,6 +241,21 @@
       banner.textContent = 'Signing in from VaultProof CLI \u2014 log in below to connect.';
       const target = document.querySelector('.bg-card');
       if (target) target.prepend(banner);
+    }
+
+    // ── Auto-redeem promo helper ──
+    async function redeemPendingPromo(session) {
+      const pendingPromo = localStorage.getItem('vp_promo');
+      if (pendingPromo && session) {
+        try {
+          const res = await fetch('https://api.vaultproof.dev/api/v1/promo/redeem', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + session.access_token },
+            body: JSON.stringify({ code: pendingPromo }),
+          });
+          if (res.ok) localStorage.removeItem('vp_promo');
+        } catch (e) { console.error('Promo redeem failed:', e); }
+      }
     }
 
     // ── Check if already logged in ──
@@ -233,6 +267,9 @@
           id: session.user.id,
           email: session.user.email
         }));
+
+        // Auto-redeem promo before redirect
+        await redeemPendingPromo(session);
 
         // If CLI callback, redirect to CLI with token
         if (cliCallback) {
@@ -253,6 +290,9 @@
           email: session.user.email
         }));
 
+        // Auto-redeem promo before redirect
+        await redeemPendingPromo(session);
+
         // If CLI callback, redirect to CLI with token
         if (cliCallback) {
           window.location.href = `${cliCallback}?token=${session.access_token}&refresh_token=${encodeURIComponent(session.refresh_token)}&email=${encodeURIComponent(session.user.email)}&state=${encodeURIComponent(cliState || '')}`;
@@ -266,8 +306,8 @@
     // ── GitHub OAuth ──
     async function loginWithGitHub() {
       const redirectUrl = cliCallback
-        ? `${window.location.origin}/app/login?cli_callback=${encodeURIComponent(cliCallback)}&state=${encodeURIComponent(cliState || '')}`
-        : `${window.location.origin}/app/login`;
+        ? `${window.location.origin}/app/promo?cli_callback=${encodeURIComponent(cliCallback)}&state=${encodeURIComponent(cliState || '')}`
+        : `${window.location.origin}/app/promo`;
       const { error } = await sbClient.auth.signInWithOAuth({
         provider: 'github',
         options: { redirectTo: redirectUrl }
@@ -278,8 +318,8 @@
     // ── Google OAuth ──
     async function loginWithGoogle() {
       const redirectUrl = cliCallback
-        ? `${window.location.origin}/app/login?cli_callback=${encodeURIComponent(cliCallback)}&state=${encodeURIComponent(cliState || '')}`
-        : `${window.location.origin}/app/login`;
+        ? `${window.location.origin}/app/promo?cli_callback=${encodeURIComponent(cliCallback)}&state=${encodeURIComponent(cliState || '')}`
+        : `${window.location.origin}/app/promo`;
       const { error } = await sbClient.auth.signInWithOAuth({
         provider: 'google',
         options: { redirectTo: redirectUrl }
@@ -336,6 +376,9 @@
           email: data.user.email
         }));
 
+        // Auto-redeem promo before redirect
+        await redeemPendingPromo(data.session);
+
         // If CLI callback, redirect to CLI with token
         if (cliCallback) {
           window.location.href = `${cliCallback}?token=${data.session.access_token}&refresh_token=${encodeURIComponent(data.session.refresh_token)}&email=${encodeURIComponent(data.user.email)}`;
@@ -372,7 +415,7 @@
       btn.disabled = true;
 
       const { error } = await sbClient.auth.resetPasswordForEmail(email, {
-        redirectTo: window.location.origin + '/app/login'
+        redirectTo: window.location.origin + '/app/promo'
       });
 
       status.classList.remove('hidden');
@@ -410,6 +453,9 @@
             id: data.user.id,
             email: data.user.email
           }));
+
+          // Auto-redeem promo before redirect
+          await redeemPendingPromo(data.session);
 
           // If CLI callback, redirect to CLI with token
           if (cliCallback) {
