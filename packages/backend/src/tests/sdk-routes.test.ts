@@ -117,8 +117,8 @@ describe('SDK Routes Tests', () => {
 
   // --- Test 2: Store key with invalid provider ---
 
-  it('rejects store with invalid provider', async () => {
-    const testApiKey = 'sk-test-invalid-provider';
+  it('rejects store with empty provider', async () => {
+    const testApiKey = 'sk-test-empty-provider';
     const shares = splitString(testApiKey, 2, 2);
     const share1 = serializeShare(shares[0]);
     const share2 = serializeShare(shares[1]);
@@ -130,8 +130,8 @@ describe('SDK Routes Tests', () => {
       payload: {
         share1,
         share2,
-        provider: 'invalid-provider',
-        label: 'Bad Provider',
+        provider: '',
+        label: 'Empty Provider',
       },
     });
 

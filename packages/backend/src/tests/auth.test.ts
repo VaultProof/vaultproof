@@ -1,8 +1,8 @@
 /**
  * Auth Route Tests
  *
- * Tests registration, login, and protected /me endpoint.
- * Uses Fastify inject() with a mini app that only registers auth routes.
+ * Tests the current auth routes: /me, /refresh, /kill-switch, /global-limits, /account.
+ * Registration and login are handled by Supabase (not tested here).
  */
 
 import { describe, it, before, after } from 'node:test';
@@ -19,12 +19,8 @@ process.env.NODE_ENV = 'test';
 
 const prisma = new PrismaClient();
 
-const TEST_EMAILS = [
-  'auth-test-1@vaultproof.dev',
-  'auth-test-2@vaultproof.dev',
-  'auth-test-3@vaultproof.dev',
-  'auth-test-login@vaultproof.dev',
-];
+const TEST_USER_ID = 'auth-test-user-001';
+const TEST_USER_EMAIL = 'auth-test@vaultproof.dev';
 
 async function buildApp() {
   const app = Fastify();
@@ -34,160 +30,29 @@ async function buildApp() {
 
 describe('Auth Route Tests', () => {
   let app: Awaited<ReturnType<typeof buildApp>>;
+  let token: string;
 
   before(async () => {
-    // Clean up any leftover test data from previous runs
-    await prisma.user.deleteMany({
-      where: { email: { in: TEST_EMAILS } },
+    // Create test user
+    await prisma.user.upsert({
+      where: { email: TEST_USER_EMAIL },
+      update: {},
+      create: { id: TEST_USER_ID, email: TEST_USER_EMAIL, passwordHash: '$2a$12$test' },
     });
+
+    token = generateToken(TEST_USER_ID, TEST_USER_EMAIL);
     app = await buildApp();
   });
 
   after(async () => {
-    // Clean up all test users
-    await prisma.user.deleteMany({
-      where: { email: { in: TEST_EMAILS } },
-    });
+    await prisma.user.deleteMany({ where: { email: TEST_USER_EMAIL } });
     await prisma.$disconnect();
     await app.close();
-  });
-
-  // --- Registration ---
-
-  it('registers with valid email and password, returns token and user', async () => {
-    const res = await app.inject({
-      method: 'POST',
-      url: '/api/v1/auth/register',
-      payload: {
-        email: 'auth-test-1@vaultproof.dev',
-        password: 'securePass123',
-      },
-    });
-
-    assert.equal(res.statusCode, 200);
-    const data = res.json();
-    assert.ok(data.token, 'Response should contain a token');
-    assert.ok(data.user, 'Response should contain a user object');
-    assert.equal(data.user.email, 'auth-test-1@vaultproof.dev');
-    assert.ok(data.user.id, 'User should have an id');
-  });
-
-  it('rejects registration with duplicate email (409)', async () => {
-    // First, register a user
-    await app.inject({
-      method: 'POST',
-      url: '/api/v1/auth/register',
-      payload: {
-        email: 'auth-test-2@vaultproof.dev',
-        password: 'securePass123',
-      },
-    });
-
-    // Try to register again with the same email
-    const res = await app.inject({
-      method: 'POST',
-      url: '/api/v1/auth/register',
-      payload: {
-        email: 'auth-test-2@vaultproof.dev',
-        password: 'differentPass456',
-      },
-    });
-
-    assert.equal(res.statusCode, 409);
-    const data = res.json();
-    assert.ok(data.error.includes('already'));
-  });
-
-  it('rejects registration with short password (400)', async () => {
-    const res = await app.inject({
-      method: 'POST',
-      url: '/api/v1/auth/register',
-      payload: {
-        email: 'auth-test-3@vaultproof.dev',
-        password: 'short',
-      },
-    });
-
-    assert.equal(res.statusCode, 400);
-    const data = res.json();
-    assert.ok(data.error);
-  });
-
-  // --- Login ---
-
-  it('logs in with correct credentials, returns token', async () => {
-    // Register first
-    await app.inject({
-      method: 'POST',
-      url: '/api/v1/auth/register',
-      payload: {
-        email: 'auth-test-login@vaultproof.dev',
-        password: 'loginTestPass99',
-      },
-    });
-
-    // Login
-    const res = await app.inject({
-      method: 'POST',
-      url: '/api/v1/auth/login',
-      payload: {
-        email: 'auth-test-login@vaultproof.dev',
-        password: 'loginTestPass99',
-      },
-    });
-
-    assert.equal(res.statusCode, 200);
-    const data = res.json();
-    assert.ok(data.token, 'Login should return a token');
-    assert.ok(data.user, 'Login should return a user object');
-    assert.equal(data.user.email, 'auth-test-login@vaultproof.dev');
-  });
-
-  it('rejects login with wrong password (401)', async () => {
-    const res = await app.inject({
-      method: 'POST',
-      url: '/api/v1/auth/login',
-      payload: {
-        email: 'auth-test-login@vaultproof.dev',
-        password: 'wrongPassword999',
-      },
-    });
-
-    assert.equal(res.statusCode, 401);
-    const data = res.json();
-    assert.ok(data.error.includes('Invalid'));
-  });
-
-  it('rejects login with non-existent email (401)', async () => {
-    const res = await app.inject({
-      method: 'POST',
-      url: '/api/v1/auth/login',
-      payload: {
-        email: 'does-not-exist@vaultproof.dev',
-        password: 'anyPassword123',
-      },
-    });
-
-    assert.equal(res.statusCode, 401);
-    const data = res.json();
-    assert.ok(data.error.includes('Invalid'));
   });
 
   // --- GET /me ---
 
   it('GET /me with valid token returns user info', async () => {
-    // Register and capture the token
-    const registerRes = await app.inject({
-      method: 'POST',
-      url: '/api/v1/auth/register',
-      payload: {
-        email: 'auth-test-3@vaultproof.dev',
-        password: 'meTestPass123',
-      },
-    });
-
-    const { token } = registerRes.json();
-
     const res = await app.inject({
       method: 'GET',
       url: '/api/v1/auth/me',
@@ -197,7 +62,7 @@ describe('Auth Route Tests', () => {
     assert.equal(res.statusCode, 200);
     const data = res.json();
     assert.ok(data.user, 'Should return user object');
-    assert.equal(data.user.email, 'auth-test-3@vaultproof.dev');
+    assert.equal(data.user.email, TEST_USER_EMAIL);
     assert.ok(data.user.id);
     assert.ok(data.user.createdAt);
   });
@@ -223,5 +88,89 @@ describe('Auth Route Tests', () => {
     assert.equal(res.statusCode, 401);
     const data = res.json();
     assert.ok(data.error);
+  });
+
+  // --- POST /kill-switch ---
+
+  it('POST /kill-switch toggles kill switch on', async () => {
+    const res = await app.inject({
+      method: 'POST',
+      url: '/api/v1/auth/kill-switch',
+      headers: { authorization: `Bearer ${token}` },
+      payload: { enabled: true },
+    });
+
+    assert.equal(res.statusCode, 200);
+    const data = res.json();
+    assert.equal(data.killSwitch, true);
+  });
+
+  it('POST /kill-switch toggles kill switch off', async () => {
+    const res = await app.inject({
+      method: 'POST',
+      url: '/api/v1/auth/kill-switch',
+      headers: { authorization: `Bearer ${token}` },
+      payload: { enabled: false },
+    });
+
+    assert.equal(res.statusCode, 200);
+    const data = res.json();
+    assert.equal(data.killSwitch, false);
+  });
+
+  it('POST /kill-switch rejects invalid input', async () => {
+    const res = await app.inject({
+      method: 'POST',
+      url: '/api/v1/auth/kill-switch',
+      headers: { authorization: `Bearer ${token}` },
+      payload: { enabled: 'not-a-boolean' },
+    });
+
+    assert.equal(res.statusCode, 400);
+  });
+
+  // --- PUT /global-limits ---
+
+  it('PUT /global-limits sets daily and monthly limits', async () => {
+    const res = await app.inject({
+      method: 'PUT',
+      url: '/api/v1/auth/global-limits',
+      headers: { authorization: `Bearer ${token}` },
+      payload: { globalDailyLimit: 500, globalMonthlyLimit: 10000 },
+    });
+
+    assert.equal(res.statusCode, 200);
+    const data = res.json();
+    assert.equal(data.globalDailyLimit, 500);
+    assert.equal(data.globalMonthlyLimit, 10000);
+  });
+
+  it('PUT /global-limits clears limits with null', async () => {
+    const res = await app.inject({
+      method: 'PUT',
+      url: '/api/v1/auth/global-limits',
+      headers: { authorization: `Bearer ${token}` },
+      payload: { globalDailyLimit: null, globalMonthlyLimit: null },
+    });
+
+    assert.equal(res.statusCode, 200);
+    const data = res.json();
+    assert.equal(data.globalDailyLimit, null);
+    assert.equal(data.globalMonthlyLimit, null);
+  });
+
+  // --- Auth required on all routes ---
+
+  it('all protected routes reject unauthenticated requests', async () => {
+    const routes = [
+      { method: 'GET' as const, url: '/api/v1/auth/me' },
+      { method: 'POST' as const, url: '/api/v1/auth/kill-switch' },
+      { method: 'PUT' as const, url: '/api/v1/auth/global-limits' },
+    ];
+
+    for (const route of routes) {
+      const res = await app.inject({ method: route.method, url: route.url });
+      assert.equal(res.statusCode, 401, `${route.method} ${route.url} should require auth`);
+    }
   });
 });
