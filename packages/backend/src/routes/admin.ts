@@ -510,4 +510,66 @@ export async function adminRoutes(app: FastifyInstance) {
 
     return { message: 'User and all data permanently deleted', userId, email: user.email };
   });
+
+  // ─── Promo stats ────────────────────────────────────────────────
+  app.get('/promo/stats', async () => {
+    const [totalRedeemed, totalFeedback] = await Promise.all([
+      prisma.user.count({ where: { promoCode: { not: null } } }),
+      prisma.promoFeedback.count(),
+    ]);
+
+    const byCode = await prisma.user.groupBy({
+      by: ['promoCode'],
+      where: { promoCode: { not: null } },
+      _count: { id: true },
+    });
+
+    return { totalRedeemed, totalFeedback, byCode };
+  });
+
+  // ─── Promo users list ──────────────────────────────────────────
+  app.get('/promo/users', async (request) => {
+    const { page, limit } = request.query as { page?: string; limit?: string };
+    const pageNum = Math.max(1, parseInt(page || '1', 10));
+    const take = Math.min(200, Math.max(1, parseInt(limit || '50', 10)));
+    const skip = (pageNum - 1) * take;
+
+    const [users, total] = await Promise.all([
+      prisma.user.findMany({
+        where: { promoCode: { not: null } },
+        skip, take,
+        orderBy: { createdAt: 'desc' },
+        select: {
+          id: true, email: true, tier: true, promoCode: true,
+          tierExpiresAt: true, createdAt: true,
+          _count: { select: { promoFeedback: true } },
+        },
+      }),
+      prisma.user.count({ where: { promoCode: { not: null } } }),
+    ]);
+
+    return { users, total, page: pageNum, limit: take };
+  });
+
+  // ─── All promo feedback ────────────────────────────────────────
+  app.get('/promo/feedback', async (request) => {
+    const { page, limit } = request.query as { page?: string; limit?: string };
+    const pageNum = Math.max(1, parseInt(page || '1', 10));
+    const take = Math.min(200, Math.max(1, parseInt(limit || '50', 10)));
+    const skip = (pageNum - 1) * take;
+
+    const [feedback, total] = await Promise.all([
+      prisma.promoFeedback.findMany({
+        skip, take,
+        orderBy: { createdAt: 'desc' },
+        select: {
+          id: true, feedback: true, createdAt: true,
+          user: { select: { email: true, promoCode: true } },
+        },
+      }),
+      prisma.promoFeedback.count(),
+    ]);
+
+    return { feedback, total, page: pageNum, limit: take };
+  });
 }

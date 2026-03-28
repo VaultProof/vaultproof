@@ -61,7 +61,7 @@ export async function authRoutes(app: FastifyInstance) {
   app.get('/me', { preHandler: requireAuth }, async (request) => {
     const user = await prisma.user.findUnique({
       where: { id: request.auth!.userId },
-      select: { id: true, email: true, createdAt: true, tier: true, killSwitch: true, globalDailyLimit: true, globalMonthlyLimit: true },
+      select: { id: true, email: true, createdAt: true, tier: true, killSwitch: true, globalDailyLimit: true, globalMonthlyLimit: true, promoCode: true, tierExpiresAt: true },
     });
     if (!user) return { error: 'User not found' };
     return { user };

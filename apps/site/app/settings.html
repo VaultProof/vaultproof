@@ -1212,6 +1212,41 @@
           updateUsageBars(window._usageData.keysUsed, window._usageData.callsUsed);
         }
 
+        // Check promo status
+        try {
+          const meRes = await apiFetch('/auth/me');
+          if (meRes) {
+            const meData = await meRes.json();
+            if (meData.user?.promoCode) {
+              window._promoCode = meData.user.promoCode;
+              window._tierExpiresAt = meData.user.tierExpiresAt;
+            }
+          }
+        } catch (e) {}
+
+        // Show promo label if applicable
+        if (window._promoCode) {
+          const promoLabel = currentTier.charAt(0).toUpperCase() + currentTier.slice(1) + ' (Product Hunt)';
+          if (planBadge) planBadge.textContent = promoLabel;
+          badge.textContent = promoLabel;
+
+          // Show expiry
+          if (window._tierExpiresAt) {
+            const expiryDate = new Date(window._tierExpiresAt).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' });
+            const expiryEl = document.createElement('div');
+            expiryEl.className = 'text-xs text-gray-500 mt-2';
+            expiryEl.textContent = 'Promo expires: ' + expiryDate;
+            if (planBadge) planBadge.parentElement.appendChild(expiryEl);
+          }
+        }
+
+        // Hide upgrade cards and banner for promo users
+        if (window._promoCode) {
+          document.getElementById('billingUpgradeCards').classList.add('hidden');
+          const promoBanner = document.getElementById('upgradeProBanner');
+          if (promoBanner) promoBanner.classList.add('hidden');
+        }
+
         // Hide upgrade cards entirely for top tier
         if (currentTier === 'pro') {
           document.getElementById('billingUpgradeCards').classList.add('hidden');
