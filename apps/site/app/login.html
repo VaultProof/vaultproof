@@ -468,6 +468,7 @@
         const { data, error } = await sbClient.auth.signUp({
           email: document.getElementById('regEmail').value,
           password: document.getElementById('regPassword').value,
+          options: { emailRedirectTo: window.location.origin + '/app/login' },
         });
         if (error) throw error;
 
