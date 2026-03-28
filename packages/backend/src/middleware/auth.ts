@@ -68,6 +68,14 @@ export async function requireAuth(request: FastifyRequest, reply: FastifyReply) 
   if (isNew) sendWelcomeEmail(email);
 
   request.auth = { userId: dbUser.id, email: dbUser.email };
+
+  // Auto-expire promo tiers
+  if (dbUser.tierExpiresAt && dbUser.tierExpiresAt < new Date() && dbUser.promoCode) {
+    await prisma.user.update({
+      where: { id: dbUser.id },
+      data: { tier: 'free', tierExpiresAt: null },
+    });
+  }
 }
 
 /** @deprecated Kept for test compatibility only. Supabase handles real tokens. */
