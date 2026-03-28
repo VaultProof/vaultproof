@@ -962,6 +962,8 @@ async function loadPromo() {
     uTbody.innerHTML = '';
     for (const u of users.users) {
       const tr = document.createElement('tr');
+      tr.style.cursor = 'pointer';
+      tr.onclick = () => openUserDetail(u.id);
       tr.innerHTML = `
         <td class="mono text-xs">${esc(u.email)}</td>
         <td><span class="badge badge-pro">${esc(u.promoCode)}</span></td>
