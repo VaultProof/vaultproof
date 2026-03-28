@@ -26,6 +26,7 @@ import { statsRoutes } from './routes/stats.js';
 import { developerKeyRoutes } from './routes/developer-keys.js';
 import { sdkRoutes } from './routes/sdk.js';
 import { billingRoutes } from './routes/billing.js';
+import { promoRoutes } from './routes/promo.js';
 import { transparentProxyRoutes } from './routes/transparent-proxy.js';
 import { adminRoutes } from './routes/admin.js';
 import { warmupVerifier } from './crypto/proof-verifier.js';
@@ -110,6 +111,7 @@ async function start() {
   await app.register(developerKeyRoutes, { prefix: '/api/v1/dev-keys' });
   await app.register(sdkRoutes, { prefix: '/api/v1/sdk' });
   await app.register(billingRoutes, { prefix: '/api/v1/billing' });
+  await app.register(promoRoutes, { prefix: '/api/v1/promo' });
 
   // Transparent proxy — must be after /api/v1/ routes to avoid conflicts
   await app.register(transparentProxyRoutes, { prefix: '/v1' });
