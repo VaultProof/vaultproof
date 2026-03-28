@@ -659,64 +659,93 @@ const res = await vault.proxy(key, '/v1/chat/completions', {
     <section class="relative z-10 max-w-5xl mx-auto px-6 py-24">
         <div class="text-center mb-16">
             <h2 class="text-3xl md:text-4xl font-bold text-white mb-4 reveal">vs Every Other Secrets Tool</h2>
-            <p class="text-gray-500 text-lg reveal delay-1">Every competitor can see your keys. We literally cannot.</p>
+            <p class="text-gray-500 text-lg reveal delay-1">The features developers actually compare.</p>
         </div>
         <div class="reveal delay-2 overflow-x-auto">
             <div class="bg-vp-surface border border-vp-border rounded-[16px] overflow-hidden">
                 <table class="w-full text-sm">
                     <thead>
                         <tr class="border-b border-vp-border bg-vp-bg/50">
-                            <th class="text-left py-4 px-6 text-gray-400 font-semibold">Platform</th>
-                            <th class="text-center py-4 px-4 text-gray-400 font-semibold">Can see your key?</th>
-                            <th class="text-center py-4 px-4 text-gray-400 font-semibold">ZK Proofs?</th>
-                            <th class="text-center py-4 px-4 text-gray-400 font-semibold">Key Splitting?</th>
+                            <th class="text-left py-4 px-5 text-gray-400 font-semibold">Feature</th>
+                            <th class="text-center py-4 px-3 text-gray-400 font-semibold">VaultProof</th>
+                            <th class="text-center py-4 px-3 text-gray-400 font-semibold">Doppler</th>
+                            <th class="text-center py-4 px-3 text-gray-400 font-semibold">Infisical</th>
+                            <th class="text-center py-4 px-3 text-gray-400 font-semibold">AWS SM</th>
+                            <th class="text-center py-4 px-3 text-gray-400 font-semibold">.env files</th>
                         </tr>
                     </thead>
                     <tbody>
-                        <tr class="border-b border-vp-border/50 hover:bg-white/[0.01] transition-colors">
-                            <td class="py-3.5 px-6 text-gray-300">HashiCorp Vault</td>
-                            <td class="py-3.5 px-4 text-center text-red-400">Yes</td>
-                            <td class="py-3.5 px-4 text-center text-red-400">No</td>
-                            <td class="py-3.5 px-4 text-center text-red-400">No</td>
+                        <tr class="border-b border-vp-border/50">
+                            <td class="py-3.5 px-5 text-gray-300">Provider can't see your keys</td>
+                            <td class="py-3.5 px-3 text-center text-green-400 font-medium">&#10003;</td>
+                            <td class="py-3.5 px-3 text-center text-red-400">&#10007;</td>
+                            <td class="py-3.5 px-3 text-center text-red-400">&#10007;</td>
+                            <td class="py-3.5 px-3 text-center text-red-400">&#10007;</td>
+                            <td class="py-3.5 px-3 text-center text-red-400">&#10007;</td>
                         </tr>
-                        <tr class="border-b border-vp-border/50 hover:bg-white/[0.01] transition-colors">
-                            <td class="py-3.5 px-6 text-gray-300">1Password</td>
-                            <td class="py-3.5 px-4 text-center text-red-400">Yes</td>
-                            <td class="py-3.5 px-4 text-center text-red-400">No</td>
-                            <td class="py-3.5 px-4 text-center text-red-400">No</td>
+                        <tr class="border-b border-vp-border/50">
+                            <td class="py-3.5 px-5 text-gray-300">Works with existing SDKs (no code change)</td>
+                            <td class="py-3.5 px-3 text-center text-green-400 font-medium">&#10003;</td>
+                            <td class="py-3.5 px-3 text-center text-green-400">&#10003;</td>
+                            <td class="py-3.5 px-3 text-center text-green-400">&#10003;</td>
+                            <td class="py-3.5 px-3 text-center text-yellow-400">Partial</td>
+                            <td class="py-3.5 px-3 text-center text-green-400">&#10003;</td>
                         </tr>
-                        <tr class="border-b border-vp-border/50 hover:bg-white/[0.01] transition-colors">
-                            <td class="py-3.5 px-6 text-gray-300">AWS Secrets Manager</td>
-                            <td class="py-3.5 px-4 text-center text-red-400">Yes</td>
-                            <td class="py-3.5 px-4 text-center text-red-400">No</td>
-                            <td class="py-3.5 px-4 text-center text-red-400">No</td>
+                        <tr class="border-b border-vp-border/50">
+                            <td class="py-3.5 px-5 text-gray-300">Free tier</td>
+                            <td class="py-3.5 px-3 text-center text-green-400 font-medium">10K calls</td>
+                            <td class="py-3.5 px-3 text-center text-green-400">5 users</td>
+                            <td class="py-3.5 px-3 text-center text-green-400">5 users</td>
+                            <td class="py-3.5 px-3 text-center text-red-400">Pay per use</td>
+                            <td class="py-3.5 px-3 text-center text-green-400">Free</td>
                         </tr>
-                        <tr class="border-b border-vp-border/50 hover:bg-white/[0.01] transition-colors">
-                            <td class="py-3.5 px-6 text-gray-300">Infisical</td>
-                            <td class="py-3.5 px-4 text-center text-red-400">Yes</td>
-                            <td class="py-3.5 px-4 text-center text-red-400">No</td>
-                            <td class="py-3.5 px-4 text-center text-red-400">No</td>
+                        <tr class="border-b border-vp-border/50">
+                            <td class="py-3.5 px-5 text-gray-300">Setup time</td>
+                            <td class="py-3.5 px-3 text-center text-green-400 font-medium">2 min</td>
+                            <td class="py-3.5 px-3 text-center text-gray-400">10 min</td>
+                            <td class="py-3.5 px-3 text-center text-gray-400">15 min</td>
+                            <td class="py-3.5 px-3 text-center text-gray-400">30+ min</td>
+                            <td class="py-3.5 px-3 text-center text-green-400">0 min</td>
                         </tr>
-                        <tr class="border-b border-vp-border/50 hover:bg-white/[0.01] transition-colors">
-                            <td class="py-3.5 px-6 text-gray-300">Doppler</td>
-                            <td class="py-3.5 px-4 text-center text-red-400">Yes</td>
-                            <td class="py-3.5 px-4 text-center text-red-400">No</td>
-                            <td class="py-3.5 px-4 text-center text-red-400">No</td>
+                        <tr class="border-b border-vp-border/50">
+                            <td class="py-3.5 px-5 text-gray-300">Self-hosting required</td>
+                            <td class="py-3.5 px-3 text-center text-green-400 font-medium">No</td>
+                            <td class="py-3.5 px-3 text-center text-green-400">No</td>
+                            <td class="py-3.5 px-3 text-center text-yellow-400">Optional</td>
+                            <td class="py-3.5 px-3 text-center text-green-400">No</td>
+                            <td class="py-3.5 px-3 text-center text-green-400">No</td>
                         </tr>
-                        <tr class="border-b border-vp-border/50 hover:bg-white/[0.01] transition-colors">
-                            <td class="py-3.5 px-6 text-gray-300">OpenRouter</td>
-                            <td class="py-3.5 px-4 text-center text-red-400">Yes</td>
-                            <td class="py-3.5 px-4 text-center text-red-400">No</td>
-                            <td class="py-3.5 px-4 text-center text-red-400">No</td>
+                        <tr class="border-b border-vp-border/50">
+                            <td class="py-3.5 px-5 text-gray-300">Per-key budget caps</td>
+                            <td class="py-3.5 px-3 text-center text-green-400 font-medium">&#10003;</td>
+                            <td class="py-3.5 px-3 text-center text-red-400">&#10007;</td>
+                            <td class="py-3.5 px-3 text-center text-red-400">&#10007;</td>
+                            <td class="py-3.5 px-3 text-center text-red-400">&#10007;</td>
+                            <td class="py-3.5 px-3 text-center text-red-400">&#10007;</td>
                         </tr>
-                        <tr class="bg-vp-accent/[0.06] border-t-2 border-vp-accent/30">
-                            <td class="py-4 px-6 font-bold text-vp-accent flex items-center gap-2">
-                                <svg width="16" height="16" viewBox="0 0 28 28" fill="none"><path d="M8 8L14 4L20 8V16L14 20L8 16V8Z" stroke="#6366f1" stroke-width="2" fill="none"/></svg>
-                                VaultProof
-                            </td>
-                            <td class="py-4 px-4 text-center text-green-400 font-bold">Never</td>
-                            <td class="py-4 px-4 text-center text-green-400 font-bold">Yes</td>
-                            <td class="py-4 px-4 text-center text-green-400 font-bold">Yes</td>
+                        <tr class="border-b border-vp-border/50">
+                            <td class="py-3.5 px-5 text-gray-300">Kill switch (freeze all calls instantly)</td>
+                            <td class="py-3.5 px-3 text-center text-green-400 font-medium">&#10003;</td>
+                            <td class="py-3.5 px-3 text-center text-red-400">&#10007;</td>
+                            <td class="py-3.5 px-3 text-center text-red-400">&#10007;</td>
+                            <td class="py-3.5 px-3 text-center text-red-400">&#10007;</td>
+                            <td class="py-3.5 px-3 text-center text-red-400">&#10007;</td>
+                        </tr>
+                        <tr class="border-b border-vp-border/50">
+                            <td class="py-3.5 px-5 text-gray-300">Works with AI coding tools</td>
+                            <td class="py-3.5 px-3 text-center text-green-400 font-medium">&#10003;</td>
+                            <td class="py-3.5 px-3 text-center text-yellow-400">Partial</td>
+                            <td class="py-3.5 px-3 text-center text-yellow-400">Partial</td>
+                            <td class="py-3.5 px-3 text-center text-red-400">&#10007;</td>
+                            <td class="py-3.5 px-3 text-center text-red-400">Exposed</td>
+                        </tr>
+                        <tr>
+                            <td class="py-3.5 px-5 text-gray-300">Safe if database is breached</td>
+                            <td class="py-3.5 px-3 text-center text-green-400 font-medium">&#10003;</td>
+                            <td class="py-3.5 px-3 text-center text-red-400">&#10007;</td>
+                            <td class="py-3.5 px-3 text-center text-red-400">&#10007;</td>
+                            <td class="py-3.5 px-3 text-center text-red-400">&#10007;</td>
+                            <td class="py-3.5 px-3 text-center text-red-400">&#10007;</td>
                         </tr>
                     </tbody>
                 </table>
