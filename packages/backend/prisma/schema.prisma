@@ -129,4 +129,19 @@ model PromoFeedback {
   @@map("promo_feedback")
 }
 
+model AnalyticsEvent {
+  id        String   @id @default(uuid())
+  type      String   // "pageview", "signup", "key_stored", "first_api_call"
+  page      String?  // URL path for pageviews
+  referrer  String?  // referrer domain
+  sessionId String?  @map("session_id") // random ID from localStorage
+  userId    String?  @map("user_id")    // set for product events
+  metadata  String?  // JSON string for extra data
+  createdAt DateTime @default(now()) @map("created_at")
+
+  @@index([type, createdAt])
+  @@index([createdAt])
+  @@map("analytics_events")
+}
+
 // KeyStatus values: "ACTIVE", "ROTATED", "REVOKED" (stored as String for SQLite compat)
