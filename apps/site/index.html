@@ -173,6 +173,14 @@
         /* Mobile nav */
         .mobile-menu { display: none; }
         .mobile-menu.open { display: flex; }
+
+        @font-face {
+            font-family: '23SecToMidnight';
+            src: url('/fonts/23-seconds-to-midnight.ttf') format('truetype');
+            font-weight: normal;
+            font-style: normal;
+            font-display: swap;
+        }
     </style>
 </head>
 <body class="text-gray-300 min-h-screen relative overflow-x-hidden">
@@ -183,10 +191,9 @@
     <div class="orb orb-3"></div>
 
     <!-- Nav -->
-    <nav class="relative z-50 border-b border-vp-border/50 bg-black sticky top-0">
+    <nav class="relative z-50 border-b border-vp-border/50 backdrop-blur-sm bg-vp-bg/80 sticky top-0">
         <div class="flex items-center justify-between px-6 py-4 max-w-6xl mx-auto">
             <a href="/" class="flex items-center gap-2.5">
-                <img src="/logo-sm.png" alt="VaultProof" width="28" height="28" />
                 <span class="text-lg font-bold text-white tracking-tight" style="font-family:'Space Grotesk',sans-serif">VaultProof</span>
             </a>
 
@@ -223,7 +230,7 @@
     <section class="relative z-10 max-w-6xl mx-auto px-6 pt-20 pb-24">
         <div class="grid md:grid-cols-2 gap-12 items-center">
             <div>
-                <h1 class="text-4xl md:text-5xl lg:text-6xl font-bold tracking-tight leading-[1.08] mb-6 text-white reveal" style="font-family:'Marvel',sans-serif">
+                <h1 class="text-4xl md:text-5xl lg:text-6xl font-black tracking-tight leading-[1.08] mb-6 text-white reveal" style="font-family:'Space Grotesk',sans-serif">
                     Store API keys without anyone seeing them. <span class="bg-gradient-to-r from-vp-accent to-vp-cyan bg-clip-text text-transparent">Even us.</span>
                 </h1>
                 <p class="text-lg text-gray-400 max-w-lg mb-8 leading-relaxed reveal delay-1" style="font-family:'Space Grotesk',sans-serif">
