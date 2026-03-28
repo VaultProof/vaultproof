@@ -15,6 +15,7 @@ const geistMono = Geist_Mono({
 export const metadata: Metadata = {
   title: "VaultProof",
   description: "Zero-knowledge API key vault. Your keys are split the moment you enter them.",
+  icons: { icon: "/logovp.png" },
 };
 
 export default function RootLayout({

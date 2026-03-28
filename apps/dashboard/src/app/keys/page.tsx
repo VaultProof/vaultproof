@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import Image from "next/image";
 import Link from "next/link";
 
 interface KeySlot {
@@ -60,9 +61,8 @@ export default function KeysDashboard() {
     <div className="min-h-screen bg-gray-950 text-white">
       {/* Nav */}
       <nav className="flex items-center justify-between px-6 py-4 max-w-6xl mx-auto border-b border-gray-800">
-        <Link href="/" className="flex items-center gap-2">
-          <span className="text-2xl">&#128274;</span>
-          <span className="text-xl font-bold">VaultProof</span>
+        <Link href="/">
+          <Image src="/logovp.png" alt="VaultProof" width={120} height={32} />
         </Link>
         <div className="flex items-center gap-4">
           <span className="text-sm text-gray-500">demo@vaultproof.dev</span>

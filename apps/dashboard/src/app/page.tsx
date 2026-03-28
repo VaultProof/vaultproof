@@ -1,3 +1,4 @@
+import Image from "next/image";
 import Link from "next/link";
 import { MatrixBackground } from "./components/MatrixBackground";
 
@@ -8,9 +9,7 @@ export default function LandingPage() {
       {/* Nav */}
       <nav className="flex items-center justify-between px-6 py-4 max-w-6xl mx-auto">
         <div className="flex items-center gap-2">
-          <span className="text-2xl">&#128274;</span>
-          <span className="text-xl font-bold">VaultProof</span>
-          <span className="text-xs text-gray-500 ml-1">by RIAL Labs</span>
+          <Image src="/logovp.png" alt="VaultProof" width={120} height={32} />
         </div>
         <div className="flex items-center gap-6">
           <Link href="/keys" className="text-sm text-gray-400 hover:text-white transition">
