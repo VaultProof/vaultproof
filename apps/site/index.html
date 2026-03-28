@@ -492,7 +492,7 @@
                     <svg width="24" height="24" fill="none" stroke="#6366f1" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><path d="M9 12l2 2 4-4"/></svg>
                 </div>
                 <h3 class="text-lg font-bold text-white mb-2">Zero-Knowledge Proofs</h3>
-                <p class="text-sm text-gray-400 leading-relaxed">Every access is authorized by a ZK proof that verifies ownership without revealing the key. We prove you have the right to use it without ever seeing it.</p>
+                <p class="text-sm text-gray-400 leading-relaxed">App-to-app access is authorized by ZK proofs that verify ownership without revealing the key. SDK access is secured by split-key authentication — your developer key alone cannot reconstruct the secret.</p>
             </div>
             <!-- Ephemeral Reconstruction -->
             <div class="bg-vp-surface border border-vp-border rounded-[16px] p-7 card-hover reveal delay-3">
@@ -500,7 +500,7 @@
                     <svg width="24" height="24" fill="none" stroke="#6366f1" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
                 </div>
                 <h3 class="text-lg font-bold text-white mb-2">Ephemeral Reconstruction</h3>
-                <p class="text-sm text-gray-400 leading-relaxed">Shares combine in a secure enclave for approximately 100ms. The API call is made, the response returns, and all key material is zeroed from memory.</p>
+                <p class="text-sm text-gray-400 leading-relaxed">Shares combine in an isolated memory for approximately 100ms. The API call is made, the response returns, and all key material is zeroed from memory.</p>
             </div>
         </div>
     </section>
@@ -534,7 +534,7 @@
                     <svg class="w-5 h-5 text-indigo-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
                 </div>
                 <h3 class="text-white font-semibold mb-2">Auto-fallback if a provider is down</h3>
-                <p class="text-sm text-gray-400 leading-relaxed">Store keys for multiple providers. If OpenAI returns a 500, VaultProof automatically retries with Groq or Together. Your agent never stops working.</p>
+                <p class="text-sm text-gray-400 leading-relaxed">Store keys for multiple providers. If a provider is unreachable, VaultProof automatically retries with Groq or Together. Your agent never stops working.</p>
             </div>
 
             <div class="bg-vp-surface border border-vp-border rounded-2xl p-6 reveal delay-4">
@@ -606,7 +606,7 @@
                         <span class="text-2xl font-bold text-vp-accent">2</span>
                     </div>
                     <h3 class="text-lg font-bold text-white mb-2">Authorize</h3>
-                    <p class="text-sm text-gray-400 leading-relaxed">When you need to use a key, a zero-knowledge proof cryptographically verifies you are the rightful owner. No passwords, no tokens, no trust.</p>
+                    <p class="text-sm text-gray-400 leading-relaxed">When you need to use a key, a zero-knowledge proof cryptographically verifies you are the rightful owner. No shared secrets, no single point of compromise.</p>
                 </div>
                 <!-- Step 3 -->
                 <div class="text-center reveal delay-3">
@@ -614,7 +614,7 @@
                         <span class="text-2xl font-bold text-vp-accent">3</span>
                     </div>
                     <h3 class="text-lg font-bold text-white mb-2">Proxy</h3>
-                    <p class="text-sm text-gray-400 leading-relaxed">Shares are reconstructed in a secure enclave for ~100ms. The API call is proxied, the response is returned, and all key material is zeroed from memory.</p>
+                    <p class="text-sm text-gray-400 leading-relaxed">Shares are reconstructed in an isolated memory for ~100ms. The API call is proxied, the response is returned, and all key material is zeroed from memory.</p>
                 </div>
             </div>
         </div>
@@ -892,7 +892,7 @@ const res = await vault.proxy(key, '/v1/chat/completions', {
                     <svg class="w-4 h-4 text-gray-500 transition-transform" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7"/></svg>
                 </button>
                 <div class="hidden px-5 pb-5">
-                    <p class="text-sm text-gray-400 leading-relaxed">Your proxy calls won't work until we're back up, but your keys are safe. Both encrypted shares remain in the database. We use Cloudflare's global edge network (99.99% uptime) and monitor every 5 minutes.</p>
+                    <p class="text-sm text-gray-400 leading-relaxed">Your proxy calls won't work until we're back up, but your keys are safe. Both encrypted shares remain in the database. We use a global edge network with 330+ locations and monitor uptime continuously.</p>
                 </div>
             </div>
             <div class="bg-vp-surface border border-vp-border rounded-xl overflow-hidden reveal delay-2">
@@ -910,7 +910,7 @@ const res = await vault.proxy(key, '/v1/chat/completions', {
                     <svg class="w-4 h-4 text-gray-500 transition-transform" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7"/></svg>
                 </button>
                 <div class="hidden px-5 pb-5">
-                    <p class="text-sm text-gray-400 leading-relaxed">Yes. Use <code class="text-indigo-400 bg-vp-bg px-1.5 py-0.5 rounded text-xs">vaultproof exec -p stripe -- node app.js</code> to inject your key as an environment variable at runtime. Works with every SDK that reads from env vars.</p>
+                    <p class="text-sm text-gray-400 leading-relaxed">Yes. For local dev, use <code class="text-indigo-400 bg-vp-bg px-1.5 py-0.5 rounded text-xs">vaultproof exec -p stripe -- node app.js</code> to inject keys as env vars. For production, use <code class="text-indigo-400 bg-vp-bg px-1.5 py-0.5 rounded text-xs">vault.retrieve()</code> in your code to fetch keys at runtime. Works with every SDK.</p>
                 </div>
             </div>
             <div class="bg-vp-surface border border-vp-border rounded-xl overflow-hidden reveal delay-3">
@@ -928,7 +928,7 @@ const res = await vault.proxy(key, '/v1/chat/completions', {
                     <svg class="w-4 h-4 text-gray-500 transition-transform" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7"/></svg>
                 </button>
                 <div class="hidden px-5 pb-5">
-                    <p class="text-sm text-gray-400 leading-relaxed">30-50ms. For a 2-10 second LLM response, it's imperceptible. SSE streaming is fully supported — chunks arrive as they're generated.</p>
+                    <p class="text-sm text-gray-400 leading-relaxed">Typically under 100ms. For a 2-10 second LLM response, it's imperceptible. SSE streaming is fully supported — chunks arrive as they're generated.</p>
                 </div>
             </div>
         </div>
