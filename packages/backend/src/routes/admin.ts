@@ -572,4 +572,140 @@ export async function adminRoutes(app: FastifyInstance) {
 
     return { feedback, total, page: pageNum, limit: take };
   });
+
+  // ─── Analytics: traffic over time ───────────────────────────────
+  app.get('/analytics/traffic', async (request) => {
+    const { days } = request.query as { days?: string };
+    const numDays = Math.min(90, Math.max(1, parseInt(days || '30', 10)));
+    const since = new Date();
+    since.setDate(since.getDate() - numDays);
+
+    const events = await prisma.analyticsEvent.findMany({
+      where: { type: 'pageview', createdAt: { gte: since } },
+      select: { createdAt: true, sessionId: true },
+      orderBy: { createdAt: 'asc' },
+    });
+
+    // Group by day
+    const dailyMap: Record<string, { views: number; visitors: Set<string> }> = {};
+    for (const e of events) {
+      const day = e.createdAt.toISOString().slice(0, 10);
+      if (!dailyMap[day]) dailyMap[day] = { views: 0, visitors: new Set() };
+      dailyMap[day].views++;
+      if (e.sessionId) dailyMap[day].visitors.add(e.sessionId);
+    }
+
+    const traffic = Object.entries(dailyMap).map(([date, d]) => ({
+      date, views: d.views, visitors: d.visitors.size,
+    }));
+
+    return { traffic };
+  });
+
+  // ─── Analytics: top pages ───────────────────────────────────────
+  app.get('/analytics/pages', async (request) => {
+    const { days } = request.query as { days?: string };
+    const numDays = Math.min(90, Math.max(1, parseInt(days || '30', 10)));
+    const since = new Date();
+    since.setDate(since.getDate() - numDays);
+
+    const events = await prisma.analyticsEvent.findMany({
+      where: { type: 'pageview', createdAt: { gte: since } },
+      select: { page: true },
+    });
+
+    const pageCounts: Record<string, number> = {};
+    for (const e of events) {
+      if (e.page) pageCounts[e.page] = (pageCounts[e.page] || 0) + 1;
+    }
+
+    const pages = Object.entries(pageCounts)
+      .map(([page, views]) => ({ page, views }))
+      .sort((a, b) => b.views - a.views)
+      .slice(0, 20);
+
+    return { pages };
+  });
+
+  // ─── Analytics: referrers ───────────────────────────────────────
+  app.get('/analytics/referrers', async (request) => {
+    const { days } = request.query as { days?: string };
+    const numDays = Math.min(90, Math.max(1, parseInt(days || '30', 10)));
+    const since = new Date();
+    since.setDate(since.getDate() - numDays);
+
+    const events = await prisma.analyticsEvent.findMany({
+      where: { type: 'pageview', referrer: { not: null }, createdAt: { gte: since } },
+      select: { referrer: true },
+    });
+
+    const refCounts: Record<string, number> = {};
+    for (const e of events) {
+      if (e.referrer) refCounts[e.referrer] = (refCounts[e.referrer] || 0) + 1;
+    }
+
+    const referrers = Object.entries(refCounts)
+      .map(([referrer, count]) => ({ referrer, count }))
+      .sort((a, b) => b.count - a.count)
+      .slice(0, 20);
+
+    return { referrers };
+  });
+
+  // ─── Analytics: signups over time ──────────────────────────────
+  app.get('/analytics/signups', async (request) => {
+    const { days } = request.query as { days?: string };
+    const numDays = Math.min(90, Math.max(1, parseInt(days || '30', 10)));
+    const since = new Date();
+    since.setDate(since.getDate() - numDays);
+
+    const users = await prisma.user.findMany({
+      where: { createdAt: { gte: since } },
+      select: { createdAt: true },
+      orderBy: { createdAt: 'asc' },
+    });
+
+    const dailyMap: Record<string, number> = {};
+    for (const u of users) {
+      const day = u.createdAt.toISOString().slice(0, 10);
+      dailyMap[day] = (dailyMap[day] || 0) + 1;
+    }
+
+    const signups = Object.entries(dailyMap).map(([date, count]) => ({ date, count }));
+    const totalSignups = await prisma.user.count();
+
+    return { signups, totalSignups };
+  });
+
+  // ─── Analytics: overview stats ─────────────────────────────────
+  app.get('/analytics/overview', async () => {
+    const now = new Date();
+    const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    const weekAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+    const monthAgo = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
+
+    const [viewsToday, viewsWeek, viewsMonth, signupsToday, signupsWeek, signupsMonth, totalUsers] = await Promise.all([
+      prisma.analyticsEvent.count({ where: { type: 'pageview', createdAt: { gte: todayStart } } }),
+      prisma.analyticsEvent.count({ where: { type: 'pageview', createdAt: { gte: weekAgo } } }),
+      prisma.analyticsEvent.count({ where: { type: 'pageview', createdAt: { gte: monthAgo } } }),
+      prisma.user.count({ where: { createdAt: { gte: todayStart } } }),
+      prisma.user.count({ where: { createdAt: { gte: weekAgo } } }),
+      prisma.user.count({ where: { createdAt: { gte: monthAgo } } }),
+      prisma.user.count(),
+    ]);
+
+    // Unique visitors today
+    const todayEvents = await prisma.analyticsEvent.findMany({
+      where: { type: 'pageview', createdAt: { gte: todayStart } },
+      select: { sessionId: true },
+      distinct: ['sessionId'],
+    });
+
+    return {
+      viewsToday, viewsWeek, viewsMonth,
+      visitorsToday: todayEvents.length,
+      signupsToday, signupsWeek, signupsMonth,
+      totalUsers,
+    };
+  });
 }

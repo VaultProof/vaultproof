@@ -29,6 +29,7 @@ import { billingRoutes } from './routes/billing.js';
 import { promoRoutes } from './routes/promo.js';
 import { transparentProxyRoutes } from './routes/transparent-proxy.js';
 import { adminRoutes } from './routes/admin.js';
+import { analyticsRoutes } from './routes/analytics.js';
 import { warmupVerifier } from './crypto/proof-verifier.js';
 
 config();
@@ -99,6 +100,9 @@ async function start() {
 
   // Health check (no proxy auth required)
   app.get('/health', async () => ({ status: 'ok', service: 'vaultproof' }));
+
+  // Analytics routes (outside /api/ prefix — no proxy auth needed)
+  await app.register(analyticsRoutes, { prefix: '/analytics' });
 
   // Hidden admin routes (outside /api/ prefix — skips proxy auth hook)
   await app.register(adminRoutes, { prefix: '/admin' });
