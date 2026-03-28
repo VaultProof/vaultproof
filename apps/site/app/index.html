@@ -769,7 +769,7 @@
 
       document.getElementById('chartLoading').classList.add('hidden');
 
-      const days = data.days || [];
+      const days = data.usage || data.days || [];
       if (!days.length) return;
 
       const labels = days.map(d => {
