@@ -96,6 +96,7 @@
         .method-get { background: rgba(59,130,246,0.15); color: #60a5fa; }
         .method-post { background: rgba(34,197,94,0.15); color: #4ade80; }
         .method-delete { background: rgba(239,68,68,0.15); color: #f87171; }
+        .method-put { background: rgba(251,191,36,0.15); color: #fbbf24; }
 
         /* Flow diagrams */
         .flow-step {
@@ -1096,6 +1097,75 @@ res = client.chat.completions.<span class="fn">create</span>(
                         </div>
                     </div>
 
+                    <!-- vault.retrieveBatch -->
+                    <div class="endpoint-card mb-6">
+                        <h4 class="text-white font-mono text-sm font-semibold mb-3">vault.retrieveBatch(keyIds)</h4>
+                        <p class="text-gray-400 text-sm mb-4">Retrieve multiple API keys in a single round trip. More efficient than calling <code class="font-mono text-xs text-vp-accent">retrieve()</code> in a loop. Maximum 20 keys per batch.</p>
+                        <div class="bg-vp-surface border border-vp-border rounded-xl overflow-hidden mb-4">
+                            <table class="doc-table">
+                                <thead><tr><th>Parameter</th><th>Type</th><th>Required</th><th>Description</th></tr></thead>
+                                <tbody>
+                                    <tr>
+                                        <td><code class="font-mono text-xs text-vp-accent">keyIds</code></td>
+                                        <td><code class="font-mono text-xs">string[]</code></td>
+                                        <td>Yes</td>
+                                        <td>Array of key slot IDs to retrieve (max 20)</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                        <p class="text-gray-500 text-xs mb-2">Returns:</p>
+                        <div class="code-block">
+<pre class="text-gray-300">[
+  { keyId: <span class="str">"uuid-1"</span>, apiKey: <span class="str">"sk-live-abc..."</span>, provider: <span class="str">"stripe"</span> },
+  { keyId: <span class="str">"uuid-2"</span>, apiKey: <span class="str">"key-xyz..."</span>, provider: <span class="str">"openai"</span> },
+  { keyId: <span class="str">"uuid-3"</span>, error: <span class="str">"Key not found"</span> }
+]</pre>
+                        </div>
+                        <div class="mt-4 code-block">
+                            <div class="code-header">Example: Batch retrieve</div>
+<pre class="text-gray-300"><span class="kw">const</span> results = <span class="kw">await</span> vault.retrieveBatch([
+  <span class="str">'stripe-key-id'</span>,
+  <span class="str">'openai-key-id'</span>,
+  <span class="str">'twilio-key-id'</span>
+]);
+
+<span class="kw">for</span> (<span class="kw">const</span> { keyId, apiKey, error } <span class="kw">of</span> results) {
+  <span class="kw">if</span> (error) console.warn(<span class="str">`Failed to retrieve <span class="kw">${</span>keyId<span class="kw">}</span>: <span class="kw">${</span>error<span class="kw">}</span>`</span>);
+}</pre>
+                        </div>
+                    </div>
+
+                    <!-- vault.setSessionToken -->
+                    <div class="endpoint-card mb-6">
+                        <h4 class="text-white font-mono text-sm font-semibold mb-3">vault.setSessionToken(token)</h4>
+                        <p class="text-gray-400 text-sm mb-4">Updates the session token used for authenticated requests. Call this after refreshing an expired token to avoid re-initializing the SDK.</p>
+                        <div class="bg-vp-surface border border-vp-border rounded-xl overflow-hidden mb-4">
+                            <table class="doc-table">
+                                <thead><tr><th>Parameter</th><th>Type</th><th>Required</th><th>Description</th></tr></thead>
+                                <tbody>
+                                    <tr>
+                                        <td><code class="font-mono text-xs text-vp-accent">token</code></td>
+                                        <td><code class="font-mono text-xs">string</code></td>
+                                        <td>Yes</td>
+                                        <td>New session token (e.g., after refresh)</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                        <p class="text-gray-500 text-xs mb-2">Returns: <code class="font-mono text-xs">void</code></p>
+                        <div class="mt-4 code-block">
+                            <div class="code-header">Example: Token refresh</div>
+<pre class="text-gray-300"><span class="cmt">// After refreshing the token</span>
+<span class="kw">const</span> { token } = <span class="kw">await</span> fetch(<span class="str">'/api/v1/auth/refresh'</span>, {
+  method: <span class="str">'POST'</span>,
+  body: JSON.stringify({ refreshToken })
+}).then(<span class="fn">r</span> => r.json());
+
+vault.setSessionToken(token);</pre>
+                        </div>
+                    </div>
+
                     <!-- vault.keys -->
                     <div class="endpoint-card mb-6">
                         <h4 class="text-white font-mono text-sm font-semibold mb-3">vault.keys()</h4>
@@ -1541,6 +1611,32 @@ $ vaultproof l</pre>
 $ vaultproof migrate -f .env.production</pre>
                             </div>
                         </div>
+
+                        <div class="endpoint-card">
+                            <div class="flex items-baseline gap-3 mb-2">
+                                <code class="font-mono text-sm text-white font-semibold">vaultproof config</code>
+                            </div>
+                            <p class="text-gray-500 text-sm">Show current CLI configuration: API URL, auth status, developer key, and config file path.</p>
+                        </div>
+
+                        <div class="endpoint-card">
+                            <div class="flex items-baseline gap-3 mb-2">
+                                <code class="font-mono text-sm text-white font-semibold">vaultproof config set &lt;key&gt; &lt;value&gt;</code>
+                            </div>
+                            <p class="text-gray-500 text-sm mb-2">Set a config value (e.g., apiUrl).</p>
+                            <div class="code-block mt-3">
+                                <div class="code-header">examples</div>
+<pre class="text-gray-300">$ vaultproof config set api-url https://api.vaultproof.dev
+$ vaultproof config set api-url http://localhost:3333</pre>
+                            </div>
+                        </div>
+
+                        <div class="endpoint-card">
+                            <div class="flex items-baseline gap-3 mb-2">
+                                <code class="font-mono text-sm text-white font-semibold">vaultproof config reset</code>
+                            </div>
+                            <p class="text-gray-500 text-sm">Reset configuration to defaults. Clears token, email, and preferences. Asks for confirmation.</p>
+                        </div>
                     </div>
                 </div>
 
@@ -1844,38 +1940,6 @@ $ vaultproof dk create -l "Production" -m live</pre>
                     </div>
                 </div>
 
-                <!-- Config -->
-                <div class="mb-8">
-                    <h3 class="text-lg font-semibold text-white mb-4">Configuration</h3>
-                    <div class="space-y-4">
-                        <div class="endpoint-card">
-                            <div class="flex items-baseline gap-3 mb-2">
-                                <code class="font-mono text-sm text-white font-semibold">vaultproof config</code>
-                            </div>
-                            <p class="text-gray-500 text-sm">Show current CLI configuration: API URL, auth status, developer key, and config file path.</p>
-                        </div>
-
-                        <div class="endpoint-card">
-                            <div class="flex items-baseline gap-3 mb-2">
-                                <code class="font-mono text-sm text-white font-semibold">vaultproof config set &lt;key&gt; &lt;value&gt;</code>
-                            </div>
-                            <p class="text-gray-500 text-sm mb-2">Update a config value.</p>
-                            <div class="code-block mt-3">
-                                <div class="code-header">examples</div>
-<pre class="text-gray-300">$ vaultproof config set api-url https://api.vaultproof.dev
-$ vaultproof config set api-url http://localhost:3333</pre>
-                            </div>
-                        </div>
-
-                        <div class="endpoint-card">
-                            <div class="flex items-baseline gap-3 mb-2">
-                                <code class="font-mono text-sm text-white font-semibold">vaultproof config reset</code>
-                            </div>
-                            <p class="text-gray-500 text-sm">Clear all configuration (token, email, preferences). Asks for confirmation.</p>
-                        </div>
-                    </div>
-                </div>
-
                 <!-- Environment Variables -->
                 <div>
                     <h3 class="text-lg font-semibold text-white mb-4">Environment Variables</h3>
@@ -2066,6 +2130,40 @@ Authorization: Bearer &lt;jwt_token&gt;
                                 <span class="text-xs text-amber-400 font-medium">Auth required</span>
                             </div>
                             <p class="text-gray-400 text-sm">Delete account and all stored keys. Irreversible.</p>
+                        </div>
+
+                        <div class="endpoint-card">
+                            <div class="flex items-center gap-3 mb-3">
+                                <span class="method-badge method-post">POST</span>
+                                <code class="font-mono text-sm text-white">/api/v1/auth/refresh</code>
+                            </div>
+                            <p class="text-gray-400 text-sm mb-3">Refresh access token using a refresh token. No auth required. Rate limited: 5/min per IP.</p>
+                            <div class="code-block">
+<pre class="text-gray-300"><span class="cmt">// Request</span>
+{ <span class="str">"refreshToken"</span>: <span class="str">"rt_abc123..."</span> }
+
+<span class="cmt">// Response (200)</span>
+{ <span class="str">"token"</span>: <span class="str">"eyJ..."</span>, <span class="str">"expiresIn"</span>: <span class="num">604800</span> }
+
+<span class="cmt">// Error (401)</span>
+{ <span class="str">"error"</span>: <span class="str">"Invalid or expired refresh token"</span> }</pre>
+                            </div>
+                        </div>
+
+                        <div class="endpoint-card">
+                            <div class="flex items-center gap-3 mb-3">
+                                <span class="method-badge method-put">PUT</span>
+                                <code class="font-mono text-sm text-white">/api/v1/auth/global-limits</code>
+                                <span class="text-xs text-amber-400 font-medium">Auth required</span>
+                            </div>
+                            <p class="text-gray-400 text-sm mb-3">Set global daily and monthly call limits across all keys.</p>
+                            <div class="code-block">
+<pre class="text-gray-300"><span class="cmt">// Request</span>
+{ <span class="str">"globalDailyLimit"</span>: <span class="num">5000</span>, <span class="str">"globalMonthlyLimit"</span>: <span class="num">100000</span> }
+
+<span class="cmt">// Response (200)</span>
+{ <span class="str">"status"</span>: <span class="str">"updated"</span>, <span class="str">"globalDailyLimit"</span>: <span class="num">5000</span>, <span class="str">"globalMonthlyLimit"</span>: <span class="num">100000</span> }</pre>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -2277,6 +2375,58 @@ Authorization: Bearer &lt;jwt_token&gt;
 { <span class="str">"status"</span>: <span class="str">"revoked"</span> }</pre>
                             </div>
                         </div>
+
+                        <div class="endpoint-card">
+                            <div class="flex items-center gap-3 mb-3">
+                                <span class="method-badge method-post">POST</span>
+                                <code class="font-mono text-sm text-white">/api/v1/sdk/retrieve</code>
+                            </div>
+                            <p class="text-gray-400 text-sm mb-3">Reconstruct and return the raw API key from its encrypted shares.</p>
+                            <div class="code-block">
+<pre class="text-gray-300"><span class="cmt">// Request</span>
+{ <span class="str">"keyId"</span>: <span class="str">"uuid"</span> }
+
+<span class="cmt">// Response (200)</span>
+{ <span class="str">"apiKey"</span>: <span class="str">"sk-live-abc123..."</span>, <span class="str">"provider"</span>: <span class="str">"stripe"</span> }</pre>
+                            </div>
+                        </div>
+
+                        <div class="endpoint-card">
+                            <div class="flex items-center gap-3 mb-3">
+                                <span class="method-badge method-post">POST</span>
+                                <code class="font-mono text-sm text-white">/api/v1/sdk/retrieve-batch</code>
+                            </div>
+                            <p class="text-gray-400 text-sm mb-3">Batch retrieve up to 20 keys in a single round trip.</p>
+                            <div class="code-block">
+<pre class="text-gray-300"><span class="cmt">// Request</span>
+{ <span class="str">"keyIds"</span>: [<span class="str">"uuid-1"</span>, <span class="str">"uuid-2"</span>, <span class="str">"uuid-3"</span>] }
+
+<span class="cmt">// Response (200)</span>
+[
+  { <span class="str">"keyId"</span>: <span class="str">"uuid-1"</span>, <span class="str">"apiKey"</span>: <span class="str">"sk-live-abc..."</span>, <span class="str">"provider"</span>: <span class="str">"stripe"</span> },
+  { <span class="str">"keyId"</span>: <span class="str">"uuid-2"</span>, <span class="str">"apiKey"</span>: <span class="str">"key-xyz..."</span>, <span class="str">"provider"</span>: <span class="str">"openai"</span> },
+  { <span class="str">"keyId"</span>: <span class="str">"uuid-3"</span>, <span class="str">"error"</span>: <span class="str">"Key not found"</span> }
+]</pre>
+                            </div>
+                        </div>
+
+                        <div class="endpoint-card">
+                            <div class="flex items-center gap-3 mb-3">
+                                <span class="method-badge method-post">POST</span>
+                                <code class="font-mono text-sm text-white">/api/v1/sdk/validate</code>
+                            </div>
+                            <p class="text-gray-400 text-sm mb-3">Validate a stored key against its provider. Checks that the key is still active and has valid permissions.</p>
+                            <div class="code-block">
+<pre class="text-gray-300"><span class="cmt">// Request</span>
+{ <span class="str">"keyId"</span>: <span class="str">"uuid"</span> }
+
+<span class="cmt">// Response (200)</span>
+{ <span class="str">"valid"</span>: <span class="kw">true</span>, <span class="str">"provider"</span>: <span class="str">"openai"</span>, <span class="str">"checkedAt"</span>: <span class="str">"2026-03-27T..."</span> }
+
+<span class="cmt">// Response (200) — invalid key</span>
+{ <span class="str">"valid"</span>: <span class="kw">false</span>, <span class="str">"provider"</span>: <span class="str">"openai"</span>, <span class="str">"reason"</span>: <span class="str">"Key revoked by provider"</span> }</pre>
+                            </div>
+                        </div>
                     </div>
                 </div>
 
@@ -2332,6 +2482,43 @@ Authorization: Bearer &lt;jwt_token&gt;
                                 <code class="font-mono text-sm text-white">/api/v1/dev-keys/:id/revoke</code>
                             </div>
                             <p class="text-gray-400 text-sm">Revoke a developer API key. All SDK calls using this key stop working immediately.</p>
+                        </div>
+
+                        <div class="endpoint-card">
+                            <div class="flex items-center gap-3 mb-3">
+                                <span class="method-badge method-put">PUT</span>
+                                <code class="font-mono text-sm text-white">/api/v1/dev-keys/:keyId/settings</code>
+                                <span class="text-xs text-amber-400 font-medium">Auth required</span>
+                            </div>
+                            <p class="text-gray-400 text-sm mb-3">Update settings for a developer key (allowed IPs, allowed providers, webhook URL, etc.).</p>
+                            <div class="code-block">
+<pre class="text-gray-300"><span class="cmt">// Request</span>
+{
+  <span class="str">"allowedIps"</span>: [<span class="str">"203.0.113.0/24"</span>],
+  <span class="str">"allowedProviders"</span>: [<span class="str">"openai"</span>, <span class="str">"anthropic"</span>],
+  <span class="str">"webhookUrl"</span>: <span class="str">"https://example.com/webhook"</span>
+}
+
+<span class="cmt">// Response (200)</span>
+{ <span class="str">"status"</span>: <span class="str">"updated"</span>, <span class="str">"keyId"</span>: <span class="str">"uuid"</span> }</pre>
+                            </div>
+                        </div>
+
+                        <div class="endpoint-card">
+                            <div class="flex items-center gap-3 mb-3">
+                                <span class="method-badge method-post">POST</span>
+                                <code class="font-mono text-sm text-white">/api/v1/dev-keys/:keyId/session</code>
+                                <span class="text-xs text-amber-400 font-medium">Auth required</span>
+                            </div>
+                            <p class="text-gray-400 text-sm mb-3">Create a short-lived session token (5-minute TTL) scoped to a specific developer key. Useful for browser-based SDK usage.</p>
+                            <div class="code-block">
+<pre class="text-gray-300"><span class="cmt">// Response (201)</span>
+{
+  <span class="str">"sessionToken"</span>: <span class="str">"vps_abc123..."</span>,
+  <span class="str">"expiresAt"</span>: <span class="str">"2026-03-27T12:05:00Z"</span>,
+  <span class="str">"ttl"</span>: <span class="num">300</span>
+}</pre>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -2430,6 +2617,80 @@ Authorization: Bearer &lt;jwt_token&gt;
     <span class="str">"errors"</span>: <span class="num">12</span>,
     <span class="str">"lastUsedAt"</span>: <span class="str">"2026-03-24T..."</span>
   }]
+}</pre>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Billing Endpoints -->
+                <div class="mb-10">
+                    <h3 class="text-xl font-semibold text-white mb-5">Billing</h3>
+                    <p class="text-gray-500 text-sm mb-4">Authenticated with <code class="font-mono text-xs text-vp-accent">Authorization: Bearer &lt;jwt&gt;</code>.</p>
+                    <div class="space-y-4">
+
+                        <div class="endpoint-card">
+                            <div class="flex items-center gap-3 mb-3">
+                                <span class="method-badge method-post">POST</span>
+                                <code class="font-mono text-sm text-white">/api/v1/billing/checkout</code>
+                                <span class="text-xs text-amber-400 font-medium">Auth required</span>
+                            </div>
+                            <p class="text-gray-400 text-sm mb-3">Create a Stripe checkout session to subscribe or upgrade.</p>
+                            <div class="code-block">
+<pre class="text-gray-300"><span class="cmt">// Request</span>
+{ <span class="str">"tier"</span>: <span class="str">"starter"</span> | <span class="str">"pro"</span> | <span class="str">"max"</span>, <span class="str">"annual"</span>: <span class="kw">false</span> }
+
+<span class="cmt">// Response (200)</span>
+{ <span class="str">"url"</span>: <span class="str">"https://checkout.stripe.com/c/pay/..."</span> }</pre>
+                            </div>
+                        </div>
+
+                        <div class="endpoint-card">
+                            <div class="flex items-center gap-3 mb-3">
+                                <span class="method-badge method-post">POST</span>
+                                <code class="font-mono text-sm text-white">/api/v1/billing/portal</code>
+                                <span class="text-xs text-amber-400 font-medium">Auth required</span>
+                            </div>
+                            <p class="text-gray-400 text-sm mb-3">Open the Stripe billing portal to manage subscription, payment methods, and invoices.</p>
+                            <div class="code-block">
+<pre class="text-gray-300"><span class="cmt">// Response (200)</span>
+{ <span class="str">"url"</span>: <span class="str">"https://billing.stripe.com/p/session/..."</span> }</pre>
+                            </div>
+                        </div>
+
+                        <div class="endpoint-card">
+                            <div class="flex items-center gap-3 mb-3">
+                                <span class="method-badge method-get">GET</span>
+                                <code class="font-mono text-sm text-white">/api/v1/billing/status</code>
+                                <span class="text-xs text-amber-400 font-medium">Auth required</span>
+                            </div>
+                            <p class="text-gray-400 text-sm mb-3">Get current subscription status.</p>
+                            <div class="code-block">
+<pre class="text-gray-300"><span class="cmt">// Response (200)</span>
+{
+  <span class="str">"plan"</span>: <span class="str">"pro"</span>,
+  <span class="str">"status"</span>: <span class="str">"active"</span>,
+  <span class="str">"currentPeriodEnd"</span>: <span class="str">"2026-04-24T..."</span>,
+  <span class="str">"cancelAtPeriodEnd"</span>: <span class="kw">false</span>
+}</pre>
+                            </div>
+                        </div>
+
+                        <div class="endpoint-card">
+                            <div class="flex items-center gap-3 mb-3">
+                                <span class="method-badge method-get">GET</span>
+                                <code class="font-mono text-sm text-white">/api/v1/billing/usage</code>
+                                <span class="text-xs text-amber-400 font-medium">Auth required</span>
+                            </div>
+                            <p class="text-gray-400 text-sm mb-3">Get usage stats and limits for the current billing period.</p>
+                            <div class="code-block">
+<pre class="text-gray-300"><span class="cmt">// Response (200)</span>
+{
+  <span class="str">"plan"</span>: <span class="str">"pro"</span>,
+  <span class="str">"keys"</span>: { <span class="str">"used"</span>: <span class="num">8</span>, <span class="str">"limit"</span>: <span class="num">50</span> },
+  <span class="str">"calls"</span>: { <span class="str">"used"</span>: <span class="num">4200</span>, <span class="str">"limit"</span>: <span class="num">50000</span> },
+  <span class="str">"periodStart"</span>: <span class="str">"2026-03-24T..."</span>,
+  <span class="str">"periodEnd"</span>: <span class="str">"2026-04-24T..."</span>
 }</pre>
                             </div>
                         </div>
