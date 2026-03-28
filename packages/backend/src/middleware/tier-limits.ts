@@ -21,23 +21,33 @@ const TIERS: Record<string, TierLimits> = {
   max: { maxCallsPerMonth: 500000, maxKeySlots: 100, maxAppGrantsPerKey: 20 },
 };
 
-// Track which users already got a 90% warning this month (prevent spam)
-const warned90: Map<string, number> = new Map();
+// Track which warnings have been sent this month (prevent spam)
+// Key format: `${keySlotId}:${threshold}` e.g. "abc123:90" or "abc123:100"
+const warnedThresholds: Map<string, number> = new Map();
 
 // Clean up monthly
 setInterval(() => {
   const now = Date.now();
-  for (const [key, ts] of warned90) {
-    if (now - ts > 30 * 24 * 60 * 60_000) warned90.delete(key);
+  for (const [key, ts] of warnedThresholds) {
+    if (now - ts > 30 * 24 * 60 * 60_000) warnedThresholds.delete(key);
   }
 }, 60 * 60_000);
 
 const CALL_ACTIONS = ['api_call', 'transparent_proxy', 'key_retrieval', 'key_retrieval_batch'];
 
+// 5% hidden buffer — users see "limit reached" at 100% but calls continue until 105%
+const BUFFER_PERCENT = 1.05;
+
 /**
  * Check if a key slot has exceeded its monthly call limit.
- * Returns the current usage and whether the limit is exceeded.
- * Sends a 90% warning email if threshold crossed.
+ *
+ * Advertised limit: the number shown to users (e.g. 10,000)
+ * Hard limit: advertised + 5% buffer (e.g. 10,500) — silent grace period
+ *
+ * Notifications:
+ * - 90%: email warning "approaching your limit"
+ * - 100%: email "limit reached, upgrade to continue"
+ * - 105%: hard block
  */
 export async function checkRateLimit(
   keySlotId: string,
@@ -45,6 +55,8 @@ export async function checkRateLimit(
   alertEmail?: string | null
 ): Promise<{ allowed: boolean; used: number; limit: number; remaining: number; nearLimit: boolean }> {
   const limits = TIERS[tier] || TIERS.free;
+  const advertisedLimit = limits.maxCallsPerMonth;
+  const hardLimit = Math.floor(advertisedLimit * BUFFER_PERCENT);
 
   // Count all call types this calendar month
   const now = new Date();
@@ -58,22 +70,39 @@ export async function checkRateLimit(
     },
   });
 
-  const remaining = Math.max(0, limits.maxCallsPerMonth - used);
-  const nearLimit = used >= limits.maxCallsPerMonth * 0.9;
+  const remaining = Math.max(0, advertisedLimit - used);
+  const nearLimit = used >= advertisedLimit * 0.9;
+  const atLimit = used >= advertisedLimit;
+  const overBuffer = used >= hardLimit;
 
-  // Send 90% warning (once per user per month)
-  if (nearLimit && alertEmail && !warned90.has(keySlotId)) {
-    warned90.set(keySlotId, Date.now());
-    // Import dynamically to avoid circular dependency
-    import('../services/email.js').then(({ sendUsageAlert }) => {
-      sendUsageAlert(alertEmail, `Key ${keySlotId.slice(0, 8)}...`, used, limits.maxCallsPerMonth);
-    }).catch(() => {});
+  // Send 90% warning (once per key per month)
+  if (nearLimit && !atLimit && alertEmail) {
+    const key90 = `${keySlotId}:90`;
+    if (!warnedThresholds.has(key90)) {
+      warnedThresholds.set(key90, Date.now());
+      import('../services/email.js').then(({ sendUsageAlert }) => {
+        sendUsageAlert(alertEmail, `Key ${keySlotId.slice(0, 8)}...`, used, advertisedLimit);
+      }).catch(() => {});
+    }
+  }
+
+  // Send 100% notification (once per key per month)
+  if (atLimit && alertEmail) {
+    const key100 = `${keySlotId}:100`;
+    if (!warnedThresholds.has(key100)) {
+      warnedThresholds.set(key100, Date.now());
+      import('../services/email.js').then(({ sendUsageAlert }) => {
+        sendUsageAlert(alertEmail, `Key ${keySlotId.slice(0, 8)}...`, used, advertisedLimit);
+      }).catch(() => {});
+    }
   }
 
   return {
-    allowed: used < limits.maxCallsPerMonth,
+    // Block at hard limit (105%), not at advertised limit (100%)
+    allowed: !overBuffer,
+    // Show advertised limit to the user, not the hard limit
     used,
-    limit: limits.maxCallsPerMonth,
+    limit: advertisedLimit,
     remaining,
     nearLimit,
   };

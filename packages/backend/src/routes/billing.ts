@@ -322,7 +322,7 @@ export async function billingRoutes(app: FastifyInstance) {
 
   /**
    * GET /usage
-   * Returns current month usage and overage billing info.
+   * Returns current month usage and limits.
    */
   app.get('/usage', { preHandler: requireAuth }, async (request, reply) => {
     const userId = request.auth!.userId;
@@ -330,28 +330,24 @@ export async function billingRoutes(app: FastifyInstance) {
     const tier = (user?.tier as string) || 'free';
 
     const tierLimits: Record<string, number> = { free: 10000, starter: 50000, pro: 500000 };
-    const overageRates: Record<string, number> = { free: 0, starter: 0.0005, pro: 0.0003 }; // per call
 
     const monthStart = new Date(new Date().getFullYear(), new Date().getMonth(), 1);
     const keySlots = await prisma.keySlot.findMany({ where: { userId }, select: { id: true } });
     const keySlotIds = keySlots.map(k => k.id);
 
     const totalCalls = keySlotIds.length > 0 ? await prisma.accessLog.count({
-      where: { keySlotId: { in: keySlotIds }, action: 'api_call', timestamp: { gte: monthStart } },
+      where: { keySlotId: { in: keySlotIds }, action: { in: ['api_call', 'transparent_proxy', 'key_retrieval', 'key_retrieval_batch'] }, timestamp: { gte: monthStart } },
     }) : 0;
 
-    const limit = tierLimits[tier] || 1000;
-    const overageCalls = Math.max(0, totalCalls - limit);
-    const rate = overageRates[tier] || 0;
-    const overageCost = overageCalls * rate;
+    const limit = tierLimits[tier] || 10000;
+    const percentUsed = limit > 0 ? Math.round((totalCalls / limit) * 100) : 0;
 
     return {
       tier,
       totalCalls,
       limit,
-      overageCalls,
-      overageRate: rate > 0 ? `$${rate}/call` : 'N/A',
-      estimatedOverageCost: `$${overageCost.toFixed(2)}`,
+      percentUsed,
+      remaining: Math.max(0, limit - totalCalls),
     };
   });
 }
