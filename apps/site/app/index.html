@@ -1058,13 +1058,52 @@
       document.getElementById('onboardingChecklist').classList.remove('hidden');
     }
 
+    // ── Promo Feedback Nudge ──
+    async function checkPromoFeedback() {
+      try {
+        const data = await apiFetch('/promo/feedback/status');
+        if (!data) return;
+        if (data.isPromo && !data.submittedThisWeek) {
+          document.getElementById('feedbackNudge').classList.remove('hidden');
+        }
+      } catch (e) { /* silently ignore for non-promo users */ }
+    }
+
+    async function submitFeedback() {
+      const text = document.getElementById('feedbackText').value.trim();
+      if (!text) return;
+      try {
+        await fetch(`${API}/promo/feedback`, {
+          method: 'POST',
+          headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
+          body: JSON.stringify({ feedback: text }),
+        });
+        document.getElementById('feedbackNudge').classList.add('hidden');
+      } catch (e) { console.error('Feedback submit failed:', e); }
+    }
+
+    function dismissFeedback() {
+      document.getElementById('feedbackNudge').classList.add('hidden');
+    }
+
     // ── Init — load immediately, apiFetch handles 401 with auto-refresh ──
     loadOverview();
     loadUsageChart();
     loadKeys();
     loadNotifications();
     checkOnboarding();
+    checkPromoFeedback();
   </script>
   </div><!-- max-width wrapper -->
+<!-- Promo Feedback Nudge -->
+<div id="feedbackNudge" class="hidden fixed bottom-6 right-6 z-50 bg-[#111118] border border-[#6366f1]/30 rounded-2xl p-5 shadow-2xl shadow-black/50 max-w-sm" style="animation: fadeIn 0.3s ease">
+  <div class="text-sm font-semibold text-white mb-1">How's VaultProof working for you?</div>
+  <div class="text-xs text-gray-500 mb-3">Share a quick thought — helps us improve!</div>
+  <textarea id="feedbackText" rows="3" class="w-full bg-[#0a0a0f] border border-[#1e1e2e] rounded-xl px-3 py-2 text-sm text-gray-300 focus:border-[#6366f1] focus:outline-none resize-none" placeholder="What would you improve?"></textarea>
+  <div class="flex gap-2 mt-3">
+    <button onclick="submitFeedback()" class="flex-1 px-4 py-2 bg-[#6366f1] hover:bg-[#5558e6] text-white rounded-xl text-sm font-medium transition">Submit</button>
+    <button onclick="dismissFeedback()" class="px-4 py-2 text-gray-500 hover:text-gray-300 text-sm transition">Later</button>
+  </div>
+</div>
 </body>
 </html>
