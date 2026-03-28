@@ -411,11 +411,28 @@
 
         window.location.href = './';
       } catch (err) {
-        errEl.textContent = err.message;
+        errEl.innerHTML = err.message;
+        if (err.message.toLowerCase().includes('not confirmed')) {
+          errEl.innerHTML += '<br><button onclick="resendConfirmation()" class="mt-2 text-indigo-400 hover:underline text-xs">Resend confirmation email</button>';
+        }
         errEl.classList.remove('hidden');
       } finally {
         btn.textContent = 'Login';
         btn.disabled = false;
+      }
+    }
+
+    async function resendConfirmation() {
+      const email = document.getElementById('loginEmail').value;
+      if (!email) return;
+      const { error } = await sbClient.auth.resend({ type: 'signup', email, options: { emailRedirectTo: window.location.origin + '/app/login' } });
+      const errEl = document.getElementById('loginError');
+      if (error) {
+        errEl.textContent = error.message;
+      } else {
+        errEl.innerHTML = 'Confirmation email resent! Check your inbox.';
+        errEl.classList.remove('text-red-400', 'bg-red-500/10', 'border-red-500/30');
+        errEl.classList.add('text-green-400', 'bg-green-500/10', 'border-green-500/30');
       }
     }
 
