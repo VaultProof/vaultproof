@@ -475,6 +475,22 @@ export async function transparentProxyRoutes(app: FastifyInstance) {
         });
       }
 
+      // Detect IP restriction errors from the provider and add a helpful hint
+      if (response.status === 403) {
+        // Read the body to check for IP-related error messages
+        const clonedRes = response.clone();
+        try {
+          const errText = await clonedRes.text();
+          const lowerErr = errText.toLowerCase();
+          if (lowerErr.includes('ip') || lowerErr.includes('address') || lowerErr.includes('origin') || lowerErr.includes('whitelist') || lowerErr.includes('allowlist')) {
+            return reply.status(403).send({
+              error: `${activeProvider} rejected the request due to IP restrictions. The proxy call came from VaultProof's server, not your IP. Fix: remove the IP restriction on your ${activeProvider} key, or use vault.retrieve() instead of the proxy so your server makes the call directly.`,
+              provider_response: errText.slice(0, 500),
+            });
+          }
+        } catch {}
+      }
+
       if ((response.status === 401 || response.status === 403) && auth.devKey.alertEmail) {
         sendInvalidKeyAlert(auth.devKey.alertEmail, activeKeySlot.label, activeKeySlot.provider, response.status, '/' + wildcardPath);
       }

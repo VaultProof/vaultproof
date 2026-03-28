@@ -367,6 +367,21 @@ export async function sdkRoutes(app: FastifyInstance) {
         });
       }
 
+      // Detect IP restriction errors and return a helpful message
+      if (response.status === 403) {
+        try {
+          const clonedRes = response.clone();
+          const errText = await clonedRes.text();
+          const lowerErr = errText.toLowerCase();
+          if (lowerErr.includes('ip') || lowerErr.includes('address') || lowerErr.includes('origin') || lowerErr.includes('whitelist') || lowerErr.includes('allowlist')) {
+            return reply.status(403).send({
+              error: `${keySlot.provider} rejected the request due to IP restrictions. The call came from VaultProof's server, not your IP. Fix: remove the IP restriction on your ${keySlot.provider} key, or use vault.retrieve() so your server makes the call directly.`,
+              provider_response: errText.slice(0, 500),
+            });
+          }
+        } catch {}
+      }
+
       // Invalid key alert — notify if provider rejected the key (opt-in via alertEmail)
       if ((response.status === 401 || response.status === 403) && authDevKey.alertEmail) {
         sendInvalidKeyAlert(authDevKey.alertEmail, keySlot.label, keySlot.provider, response.status, path);
