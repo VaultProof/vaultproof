@@ -62,7 +62,7 @@ export default function KeysDashboard() {
       {/* Nav */}
       <nav className="flex items-center justify-between px-6 py-4 max-w-6xl mx-auto border-b border-gray-800">
         <Link href="/">
-          <Image src="/logovp.png" alt="VaultProof" width={1232} height={976} style={{ height: "40px", width: "auto" }} />
+          <Image src="/logo2.png" alt="VaultProof" width={40} height={40} />
         </Link>
         <div className="flex items-center gap-4">
           <span className="text-sm text-gray-500">demo@vaultproof.dev</span>
