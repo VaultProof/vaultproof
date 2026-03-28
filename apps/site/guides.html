@@ -291,6 +291,11 @@
                         <p class="text-gray-500 text-xs font-medium mb-2">Supported providers</p>
                         <p class="text-gray-400 text-xs">OpenAI, Anthropic, Google AI, Mistral, Cohere, Groq, Perplexity, DeepSeek, Fireworks, Together.ai, Replicate. The URL pattern is always <code class="font-mono text-vp-accent">https://api.vaultproof.dev/v1/{provider}</code>.</p>
                     </div>
+
+                    <div class="bg-amber-500/5 border border-amber-500/20 rounded-xl p-4 mt-2">
+                        <p class="text-amber-400 text-xs font-medium mb-1">Getting an IP restriction error?</p>
+                        <p class="text-gray-400 text-xs">If your API key has IP restrictions, the proxy call comes from VaultProof's server, not yours. Either remove the IP restriction on your key, or use <code class="font-mono text-vp-accent">vault.retrieve()</code> instead so your server makes the call directly.</p>
+                    </div>
                 </div>
             </div>
         </div>
