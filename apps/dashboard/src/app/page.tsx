@@ -9,7 +9,7 @@ export default function LandingPage() {
       {/* Nav */}
       <nav className="flex items-center justify-between px-6 py-4 max-w-6xl mx-auto">
         <div className="flex items-center gap-2">
-          <Image src="/logovp.png" alt="VaultProof" width={120} height={32} />
+          <Image src="/logovp.png" alt="VaultProof" width={1232} height={976} style={{ height: "40px", width: "auto" }} />
         </div>
         <div className="flex items-center gap-6">
           <Link href="/keys" className="text-sm text-gray-400 hover:text-white transition">
@@ -32,7 +32,7 @@ export default function LandingPage() {
           </span>
         </div>
 
-        <h1 className="text-5xl md:text-6xl font-extrabold tracking-tight leading-tight mb-6">
+        <h1 className="text-6xl md:text-8xl font-[family-name:var(--font-bebas-neue)] tracking-widest leading-none mb-6 uppercase">
           The only API key vault where{" "}
           <span className="text-indigo-400">even we can&apos;t see your keys</span>
         </h1>
