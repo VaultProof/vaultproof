@@ -156,6 +156,23 @@
         </div>
       </div>
 
+      <!-- Promo section -->
+      <h3 class="text-sm font-semibold text-gray-400 mb-3 mt-6">Product Hunt Promo</h3>
+      <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+        <div class="stat-card">
+          <div class="stat-value" id="ov-promo-redeemed">-</div>
+          <div class="stat-label">Redeemed / 200</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-value" id="ov-promo-spots">-</div>
+          <div class="stat-label">Spots Left</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-value" id="ov-promo-feedback">-</div>
+          <div class="stat-label">Feedback Received</div>
+        </div>
+      </div>
+
       <!-- Analytics section -->
       <h3 class="text-sm font-semibold text-gray-400 mb-3 mt-6">Site Analytics</h3>
       <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
@@ -584,6 +601,16 @@ async function loadStats() {
     document.getElementById('stat-tiers').style.fontSize = '13px';
   } catch (e) {
     console.error('Failed to load stats', e);
+  }
+
+  // Promo stats on overview
+  try {
+    const p = await apiFetch('/promo/stats');
+    document.getElementById('ov-promo-redeemed').textContent = p.totalRedeemed;
+    document.getElementById('ov-promo-spots').textContent = Math.max(0, 200 - p.totalRedeemed);
+    document.getElementById('ov-promo-feedback').textContent = p.totalFeedback;
+  } catch (e) {
+    console.error('Failed to load promo stats', e);
   }
 }
 
