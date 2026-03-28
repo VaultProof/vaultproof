@@ -8,7 +8,7 @@
   <title>System</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4"></script>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
@@ -115,6 +115,7 @@
       <div class="tab" data-tab="users" onclick="switchTab('users')">Users</div>
       <div class="tab" data-tab="logs" onclick="switchTab('logs')">Logs</div>
       <div class="tab" data-tab="promo" onclick="switchTab('promo')">Promo</div>
+      <div class="tab" data-tab="analytics" onclick="switchTab('analytics')">Analytics</div>
     </div>
 
     <!-- Overview tab -->
@@ -253,6 +254,75 @@
           <thead><tr><th>Email</th><th>Feedback</th><th>Date</th></tr></thead>
           <tbody id="promo-feedback-tbody"></tbody>
         </table>
+      </div>
+    </div>
+
+    <!-- Analytics tab -->
+    <div id="tab-analytics" class="hidden fade-in">
+      <!-- Overview stats -->
+      <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+        <div class="stat-card">
+          <div class="stat-value" id="a-views-today">-</div>
+          <div class="stat-label">Views Today</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-value" id="a-visitors-today">-</div>
+          <div class="stat-label">Visitors Today</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-value" id="a-views-month">-</div>
+          <div class="stat-label">Views (30d)</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-value" id="a-signups-month">-</div>
+          <div class="stat-label">Signups (30d)</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-value" id="a-views-week">-</div>
+          <div class="stat-label">Views (7d)</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-value" id="a-signups-week">-</div>
+          <div class="stat-label">Signups (7d)</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-value" id="a-signups-today">-</div>
+          <div class="stat-label">Signups Today</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-value" id="a-total-users">-</div>
+          <div class="stat-label">Total Users</div>
+        </div>
+      </div>
+
+      <!-- Traffic chart -->
+      <div class="panel mb-6">
+        <h3 class="text-sm font-semibold text-gray-400 mb-3">Traffic (30 days)</h3>
+        <div style="height:300px"><canvas id="trafficChart"></canvas></div>
+      </div>
+
+      <!-- Signups chart -->
+      <div class="panel mb-6">
+        <h3 class="text-sm font-semibold text-gray-400 mb-3">Signups (30 days)</h3>
+        <div style="height:250px"><canvas id="signupsChart"></canvas></div>
+      </div>
+
+      <!-- Two column: Top Pages + Referrers -->
+      <div class="grid md:grid-cols-2 gap-6">
+        <div class="panel">
+          <h3 class="text-sm font-semibold text-gray-400 mb-3">Top Pages</h3>
+          <table>
+            <thead><tr><th>Page</th><th>Views</th></tr></thead>
+            <tbody id="a-pages-tbody"></tbody>
+          </table>
+        </div>
+        <div class="panel">
+          <h3 class="text-sm font-semibold text-gray-400 mb-3">Top Referrers</h3>
+          <table>
+            <thead><tr><th>Referrer</th><th>Visits</th></tr></thead>
+            <tbody id="a-referrers-tbody"></tbody>
+          </table>
+        </div>
       </div>
     </div>
 
@@ -480,6 +550,7 @@ async function init() {
   await loadUsers(1);
   await loadGlobalLogs(1);
   await loadPromo();
+  loadAnalytics();
 }
 
 // Live clock
@@ -492,11 +563,12 @@ setInterval(() => {
 function switchTab(tab) {
   document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
   document.querySelector(`.tab[data-tab="${tab}"]`).classList.add('active');
-  ['overview', 'users', 'logs', 'promo'].forEach(t => {
+  ['overview', 'users', 'logs', 'promo', 'analytics'].forEach(t => {
     document.getElementById(`tab-${t}`).classList.toggle('hidden', t !== tab);
   });
   document.getElementById('user-detail').classList.add('hidden');
   if (tab === 'promo') loadPromo();
+  if (tab === 'analytics') loadAnalytics();
 }
 
 // ─── Stats ───────────────────────────────────────────────────────
@@ -919,6 +991,118 @@ async function loadPromo() {
     }
   } catch (e) {
     console.error('Failed to load promo data', e);
+  }
+}
+
+// ─── Analytics ──────────────────────────────────────────────────
+let trafficChartInstance = null;
+let signupsChartInstance = null;
+
+async function loadAnalytics() {
+  try {
+    const [overview, traffic, signups, pages, referrers] = await Promise.all([
+      apiFetch('/analytics/overview'),
+      apiFetch('/analytics/traffic?days=30'),
+      apiFetch('/analytics/signups?days=30'),
+      apiFetch('/analytics/pages?days=30'),
+      apiFetch('/analytics/referrers?days=30'),
+    ]);
+
+    // Overview cards
+    document.getElementById('a-views-today').textContent = overview.viewsToday.toLocaleString();
+    document.getElementById('a-visitors-today').textContent = overview.visitorsToday.toLocaleString();
+    document.getElementById('a-views-week').textContent = overview.viewsWeek.toLocaleString();
+    document.getElementById('a-views-month').textContent = overview.viewsMonth.toLocaleString();
+    document.getElementById('a-signups-today').textContent = overview.signupsToday.toLocaleString();
+    document.getElementById('a-signups-week').textContent = overview.signupsWeek.toLocaleString();
+    document.getElementById('a-signups-month').textContent = overview.signupsMonth.toLocaleString();
+    document.getElementById('a-total-users').textContent = overview.totalUsers.toLocaleString();
+
+    // Traffic chart
+    if (trafficChartInstance) trafficChartInstance.destroy();
+    const tCtx = document.getElementById('trafficChart').getContext('2d');
+    trafficChartInstance = new Chart(tCtx, {
+      type: 'line',
+      data: {
+        labels: traffic.traffic.map(d => d.date.slice(5)),
+        datasets: [
+          {
+            label: 'Page Views',
+            data: traffic.traffic.map(d => d.views),
+            borderColor: '#6366f1',
+            backgroundColor: 'rgba(99,102,241,0.1)',
+            fill: true,
+            tension: 0.3,
+          },
+          {
+            label: 'Unique Visitors',
+            data: traffic.traffic.map(d => d.visitors),
+            borderColor: '#06b6d4',
+            backgroundColor: 'rgba(6,182,212,0.1)',
+            fill: true,
+            tension: 0.3,
+          },
+        ],
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: { legend: { labels: { color: '#9ca3af' } } },
+        scales: {
+          x: { ticks: { color: '#6b7280' }, grid: { color: '#1e1e2e' } },
+          y: { ticks: { color: '#6b7280' }, grid: { color: '#1e1e2e' }, beginAtZero: true },
+        },
+      },
+    });
+
+    // Signups chart
+    if (signupsChartInstance) signupsChartInstance.destroy();
+    const sCtx = document.getElementById('signupsChart').getContext('2d');
+    signupsChartInstance = new Chart(sCtx, {
+      type: 'bar',
+      data: {
+        labels: signups.signups.map(d => d.date.slice(5)),
+        datasets: [{
+          label: 'Signups',
+          data: signups.signups.map(d => d.count),
+          backgroundColor: '#6366f1',
+          borderRadius: 4,
+        }],
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: { legend: { labels: { color: '#9ca3af' } } },
+        scales: {
+          x: { ticks: { color: '#6b7280' }, grid: { color: '#1e1e2e' } },
+          y: { ticks: { color: '#6b7280', stepSize: 1 }, grid: { color: '#1e1e2e' }, beginAtZero: true },
+        },
+      },
+    });
+
+    // Top pages table
+    const pTbody = document.getElementById('a-pages-tbody');
+    pTbody.innerHTML = '';
+    for (const p of pages.pages) {
+      const tr = document.createElement('tr');
+      tr.innerHTML = `<td class="text-xs">${esc(p.page)}</td><td>${p.views}</td>`;
+      pTbody.appendChild(tr);
+    }
+
+    // Referrers table
+    const rTbody = document.getElementById('a-referrers-tbody');
+    rTbody.innerHTML = '';
+    if (referrers.referrers.length === 0) {
+      rTbody.innerHTML = '<tr><td colspan="2" class="text-gray-600 text-xs">No referrer data yet</td></tr>';
+    } else {
+      for (const r of referrers.referrers) {
+        const tr = document.createElement('tr');
+        tr.innerHTML = `<td class="text-xs">${esc(r.referrer)}</td><td>${r.count}</td>`;
+        rTbody.appendChild(tr);
+      }
+    }
+  } catch (e) {
+    console.error('Failed to load analytics', e);
   }
 }
 
