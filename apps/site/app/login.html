@@ -223,8 +223,8 @@
     const promoParam = urlParams.get('promo');
     if (promoParam) localStorage.setItem('vp_promo', promoParam.toUpperCase());
 
-    // ── Show promo banner if promo exists ──
-    if (localStorage.getItem('vp_promo')) {
+    // ── Show promo banner only when ?promo= is in the URL ──
+    if (promoParam) {
       const banner = document.getElementById('promoBanner');
       if (banner) banner.classList.remove('hidden');
       // Check spots left
