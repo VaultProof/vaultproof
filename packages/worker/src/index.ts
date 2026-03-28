@@ -68,8 +68,8 @@ export default {
       );
     }
 
-    // --- Forward /api/* and /v1/* to backend with signed request ---
-    if (url.pathname.startsWith('/api/') || url.pathname.startsWith('/v1/')) {
+    // --- Forward /api/*, /v1/*, and /admin/* to backend with signed request ---
+    if (url.pathname.startsWith('/api/') || url.pathname.startsWith('/v1/') || url.pathname.startsWith('/admin/')) {
       try {
         // --- Layer 1 + 2: HMAC request signing with timestamp ---
         const timestamp = Date.now().toString();
@@ -169,7 +169,7 @@ function securityHeaders(): Record<string, string> {
 // --- Forward Headers ---
 function forwardHeaders(headers: Headers): Headers {
   const forwarded = new Headers();
-  const forwardList = ['authorization', 'content-type', 'content-length', 'accept', 'x-api-key', 'stripe-signature', 'x-vaultproof-session'];
+  const forwardList = ['authorization', 'content-type', 'content-length', 'accept', 'x-api-key', 'x-admin-key', 'stripe-signature', 'x-vaultproof-session'];
   for (const key of forwardList) {
     const value = headers.get(key);
     if (value) forwarded.set(key, value);
