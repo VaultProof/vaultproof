@@ -1,7 +1,6 @@
 User-agent: *
 Allow: /
 Disallow: /app/
-Disallow: /vp-admin
 Allow: /app/login
 
 Sitemap: https://vaultproof.dev/sitemap.xml
