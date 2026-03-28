@@ -8,6 +8,7 @@
   <title>System</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
@@ -98,9 +99,11 @@
 <!-- Main dashboard (hidden until auth) -->
 <div id="dashboard" class="hidden fade-in">
   <!-- Header -->
-  <div class="border-b border-[#1e1e2e] px-6 py-4 flex items-center justify-between">
+  <div class="border-b border-[#1e1e2e] px-6 py-3 flex items-center justify-between bg-[#060609]">
     <div class="flex items-center gap-3">
-      <span class="text-sm font-semibold text-gray-400">VaultProof Admin</span>
+      <div class="w-2 h-2 rounded-full bg-green-400 animate-pulse"></div>
+      <span class="text-sm font-bold text-white tracking-wide" style="font-family:'JetBrains Mono',monospace">VAULTPROOF COMMAND CENTER</span>
+      <span class="text-[10px] text-gray-600 ml-2" id="live-clock"></span>
     </div>
     <button onclick="logout()" class="btn btn-ghost text-xs">Logout</button>
   </div>
@@ -244,6 +247,23 @@
           <div class="stat-value mono text-sm" id="detail-created">-</div>
           <div class="stat-label">Joined</div>
         </div>
+      </div>
+
+      <!-- Usage chart -->
+      <div class="panel p-4 mb-4">
+        <h3 class="text-sm font-semibold text-gray-400 mb-3">Usage (30 days)</h3>
+        <div style="height:200px"><canvas id="user-usage-chart"></canvas></div>
+      </div>
+
+      <!-- Per-key breakdown -->
+      <div class="panel mb-4">
+        <div class="p-4 border-b border-[#1e1e2e]">
+          <h3 class="text-sm font-semibold text-gray-400">Per-Key Stats</h3>
+        </div>
+        <table>
+          <thead><tr><th>Provider</th><th>Label</th><th>Today</th><th>This Month</th><th>Errors</th><th>Last Used</th></tr></thead>
+          <tbody id="detail-perkey-tbody"></tbody>
+        </table>
       </div>
 
       <!-- User info -->
@@ -401,17 +421,11 @@ async function init() {
   await loadGlobalLogs(1);
 }
 
-// Auto-login if key in session
-if (adminKey) {
-  apiFetch('/stats').then(() => {
-    document.getElementById('auth-gate').classList.add('hidden');
-    document.getElementById('dashboard').classList.remove('hidden');
-    init();
-  }).catch(() => {
-    sessionStorage.removeItem('_ak');
-    adminKey = '';
-  });
-}
+// Live clock
+setInterval(() => {
+  const el = document.getElementById('live-clock');
+  if (el) el.textContent = new Date().toLocaleTimeString('en-US', { hour12: false });
+}, 1000);
 
 // ─── Tabs ────────────────────────────────────────────────────────
 function switchTab(tab) {
@@ -579,8 +593,79 @@ async function openUserDetail(userId) {
       `;
       actTbody.appendChild(tr);
     }
+
+    // Load per-user stats (chart + per-key breakdown)
+    await loadUserStats(userId);
   } catch (e) {
     console.error('Failed to load user detail', e);
+  }
+}
+
+let userUsageChart = null;
+
+async function loadUserStats(userId) {
+  try {
+    const stats = await apiFetch(`/users/${userId}/stats?days=30`);
+
+    // Update overview cards with richer data
+    document.getElementById('detail-calls').textContent = fmt(stats.overview.totalCalls);
+
+    // Per-key breakdown table
+    const pkTbody = document.getElementById('detail-perkey-tbody');
+    pkTbody.innerHTML = '';
+    for (const k of stats.keys) {
+      const tr = document.createElement('tr');
+      tr.innerHTML = `
+        <td>${esc(k.provider)}</td>
+        <td>${esc(k.label)}</td>
+        <td>${fmt(k.callsToday)}</td>
+        <td>${fmt(k.callsThisMonth)}</td>
+        <td class="${k.errorsThisMonth > 0 ? 'text-red-400' : 'text-gray-500'}">${fmt(k.errorsThisMonth)}</td>
+        <td class="text-gray-500 text-xs">${k.lastUsed ? fmtTime(k.lastUsed) : 'never'}</td>
+      `;
+      pkTbody.appendChild(tr);
+    }
+
+    // Usage chart
+    if (userUsageChart) userUsageChart.destroy();
+    const ctx = document.getElementById('user-usage-chart').getContext('2d');
+    userUsageChart = new Chart(ctx, {
+      type: 'line',
+      data: {
+        labels: stats.usage.map(d => d.date.slice(5)),
+        datasets: [
+          {
+            label: 'Calls',
+            data: stats.usage.map(d => d.calls),
+            borderColor: '#6366f1',
+            backgroundColor: 'rgba(99,102,241,0.1)',
+            fill: true,
+            tension: 0.3,
+            pointRadius: 0,
+          },
+          {
+            label: 'Errors',
+            data: stats.usage.map(d => d.errors),
+            borderColor: '#ef4444',
+            backgroundColor: 'rgba(239,68,68,0.1)',
+            fill: true,
+            tension: 0.3,
+            pointRadius: 0,
+          },
+        ],
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: { legend: { labels: { color: '#64748b', font: { size: 11 } } } },
+        scales: {
+          x: { ticks: { color: '#475569', font: { size: 10 } }, grid: { color: '#1e1e2e' } },
+          y: { beginAtZero: true, ticks: { color: '#475569', font: { size: 10 } }, grid: { color: '#1e1e2e' } },
+        },
+      },
+    });
+  } catch (e) {
+    console.error('Failed to load user stats', e);
   }
 }
 

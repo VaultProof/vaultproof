@@ -337,6 +337,87 @@ export async function adminRoutes(app: FastifyInstance) {
     };
   });
 
+  // ─── Per-user stats (same view the user sees) ───────────────────
+  app.get('/users/:userId/stats', async (request, reply) => {
+    const { userId } = request.params as { userId: string };
+    const { days } = request.query as { days?: string };
+    const numDays = Math.max(1, Math.min(parseInt(days || '30', 10) || 30, 90));
+
+    const user = await prisma.user.findUnique({ where: { id: userId }, select: { id: true } });
+    if (!user) return reply.status(404).send({ error: 'User not found' });
+
+    const now = new Date();
+    const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
+    const dayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    const startDate = new Date(); startDate.setDate(startDate.getDate() - numDays);
+
+    const keySlots = await prisma.keySlot.findMany({
+      where: { userId, status: 'ACTIVE' },
+      select: {
+        id: true, provider: true, label: true, createdAt: true,
+        appGrants: { where: { revokedAt: null }, select: { appId: true, appName: true } },
+      },
+    });
+    const keySlotIds = keySlots.map(k => k.id);
+    const callActions = ['api_call', 'transparent_proxy', 'key_retrieval', 'key_retrieval_batch'];
+
+    // Overview
+    const [totalCalls, errorCalls, activeApps] = keySlotIds.length > 0
+      ? await Promise.all([
+          prisma.accessLog.count({ where: { keySlotId: { in: keySlotIds }, action: { in: callActions }, timestamp: { gte: monthStart } } }),
+          prisma.accessLog.count({ where: { keySlotId: { in: keySlotIds }, action: { in: callActions }, timestamp: { gte: monthStart }, metadata: { contains: '"error":true' } } }),
+          prisma.appGrant.findMany({ where: { keySlotId: { in: keySlotIds }, revokedAt: null }, select: { appId: true }, distinct: ['appId'] }),
+        ])
+      : [0, 0, []];
+
+    // Usage chart (daily)
+    const logs = keySlotIds.length > 0
+      ? await prisma.accessLog.findMany({
+          where: { keySlotId: { in: keySlotIds }, action: { in: callActions }, timestamp: { gte: startDate } },
+          select: { timestamp: true, metadata: true },
+          orderBy: { timestamp: 'asc' },
+        })
+      : [];
+
+    const dailyMap: Record<string, { calls: number; errors: number }> = {};
+    for (let i = 0; i < numDays; i++) {
+      const d = new Date(); d.setDate(d.getDate() - (numDays - 1 - i));
+      dailyMap[d.toISOString().split('T')[0]] = { calls: 0, errors: 0 };
+    }
+    for (const log of logs) {
+      const key = log.timestamp.toISOString().split('T')[0];
+      if (dailyMap[key]) {
+        dailyMap[key].calls++;
+        if (log.metadata && typeof log.metadata === 'string' && log.metadata.includes('"error":true')) dailyMap[key].errors++;
+      }
+    }
+
+    // Per-key breakdown
+    const perKey = await Promise.all(keySlots.map(async (key) => {
+      const [monthly, daily, errors, lastLog] = await Promise.all([
+        prisma.accessLog.count({ where: { keySlotId: key.id, action: { in: callActions }, timestamp: { gte: monthStart } } }),
+        prisma.accessLog.count({ where: { keySlotId: key.id, action: { in: callActions }, timestamp: { gte: dayStart } } }),
+        prisma.accessLog.count({ where: { keySlotId: key.id, action: { in: callActions }, timestamp: { gte: monthStart }, metadata: { contains: '"error":true' } } }),
+        prisma.accessLog.findFirst({ where: { keySlotId: key.id, action: { in: callActions } }, orderBy: { timestamp: 'desc' }, select: { timestamp: true } }),
+      ]);
+      return {
+        id: key.id, provider: key.provider, label: key.label, createdAt: key.createdAt,
+        apps: key.appGrants, callsToday: daily, callsThisMonth: monthly,
+        errorsThisMonth: errors, lastUsed: lastLog?.timestamp || null,
+      };
+    }));
+
+    return {
+      overview: {
+        totalKeys: keySlots.length, totalCalls, errorCalls,
+        errorRate: totalCalls > 0 ? Math.round((errorCalls / totalCalls) * 100) : 0,
+        activeApps: Array.isArray(activeApps) ? activeApps.length : 0,
+      },
+      usage: Object.entries(dailyMap).map(([date, data]) => ({ date, ...data })),
+      keys: perKey,
+    };
+  });
+
   // ─── Ban user ─────────────────────────────────────────────────────
   app.post('/users/:userId/ban', async (request, reply) => {
     const { userId } = request.params as { userId: string };
