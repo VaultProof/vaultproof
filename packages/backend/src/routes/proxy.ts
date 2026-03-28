@@ -94,7 +94,7 @@ export async function proxyRoutes(app: FastifyInstance) {
     }
 
     if (keySlot.appGrants.length === 0) {
-      return reply.status(403).send({ error: 'App not authorized for this key' });
+      return reply.status(403).send({ error: `App '${appId}' is not authorized to use this key. Grant access in the VaultProof dashboard.` });
     }
 
     // 3. Check tier rate limits (skip in test environment)
@@ -150,7 +150,7 @@ export async function proxyRoutes(app: FastifyInstance) {
         data: { metadata: JSON.stringify({ endpoint: targetPath, proofRejected: true, reason: proofResult.reason }) },
       });
       request.log.warn(`Proof rejected for keySlot ${keySlotId}: ${proofResult.reason}`);
-      return reply.status(403).send({ error: 'Invalid ZK proof' });
+      return reply.status(403).send({ error: 'ZK proof verification failed. The proof may be expired or generated with incorrect parameters.' });
     }
 
     // 5. Reconstruct API key ephemerally

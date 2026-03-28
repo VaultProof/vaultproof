@@ -43,9 +43,22 @@ const PROVIDER_URLS: Record<string, string> = {
 export async function sdkRoutes(app: FastifyInstance) {
   // Authenticate all SDK routes with developer API key
   app.addHook('onRequest', async (request, reply) => {
+    const authHeaderVal = request.headers.authorization as string;
+    const apiKeyHeaderVal = request.headers['x-api-key'] as string;
+    const rawKeyValue = apiKeyHeaderVal || (authHeaderVal ? authHeaderVal.slice(7) : '');
+    if (rawKeyValue && !rawKeyValue.startsWith('vp_')) {
+      return reply.status(401).send({ error: 'Invalid API key format. Keys start with vp_live_ or vp_test_. Get yours from the VaultProof dashboard.' });
+    }
+
     const auth = await authenticateDevKey(request, reply);
     if (!auth) {
-      return reply.status(401).send({ error: 'Invalid API key. Use your vp_live_ key.' });
+      if (!rawKeyValue) {
+        return reply.status(401).send({ error: 'Invalid API key format. Keys start with vp_live_ or vp_test_. Get yours from the VaultProof dashboard.' });
+      }
+      if ((request as any).__vpKeyRevoked) {
+        return reply.status(401).send({ error: 'This API key has been revoked. Create a new one in the VaultProof dashboard.' });
+      }
+      return reply.status(401).send({ error: 'API key not recognized. It may have been revoked or never existed. Check your VAULTPROOF_API_KEY.' });
     }
 
     // Enforce IP allowlist
@@ -190,7 +203,7 @@ export async function sdkRoutes(app: FastifyInstance) {
     // Load key slot
     const keySlot = await prisma.keySlot.findUnique({ where: { id: keyId } });
     if (!keySlot || keySlot.userId !== userId || keySlot.status !== 'ACTIVE') {
-      return reply.status(404).send({ error: 'Key not found' });
+      return reply.status(404).send({ error: 'Key not found. Check the key ID is correct and the key hasn\'t been revoked.' });
     }
 
     // Check expiry
@@ -259,7 +272,7 @@ export async function sdkRoutes(app: FastifyInstance) {
     }
 
     if (!keySlot.share2Encrypted || keySlot.share2Encrypted.length === 0) {
-      return reply.status(400).send({ error: 'Share 2 not stored for this key. Re-store via SDK.' });
+      return reply.status(400).send({ error: 'Key cannot be reconstructed. It may have been revoked or corrupted. Try re-storing the key.' });
     }
 
     // Enforce provider restriction
@@ -301,7 +314,7 @@ export async function sdkRoutes(app: FastifyInstance) {
       apiKey = new TextDecoder().decode(combine([s1, s2]));
     } catch {
       if (decryptedShare1) zeroBuffer(decryptedShare1);
-      return reply.status(400).send({ error: 'Key reconstruction failed. Check your API key.' });
+      return reply.status(400).send({ error: 'Key reconstruction failed. Your developer key (vp_live_) may not match the one used to store this key.' });
     }
 
     const authHeader = buildAuthHeader(keySlot.provider, apiKey);
@@ -420,7 +433,7 @@ export async function sdkRoutes(app: FastifyInstance) {
 
     const keySlot = await prisma.keySlot.findUnique({ where: { id: keyId } });
     if (!keySlot || keySlot.userId !== userId || keySlot.status !== 'ACTIVE') {
-      return reply.status(404).send({ error: 'Key not found' });
+      return reply.status(404).send({ error: 'Key not found. Check the key ID is correct and the key hasn\'t been revoked.' });
     }
 
     if (keySlot.expiresAt && new Date(keySlot.expiresAt) < new Date()) {
@@ -428,7 +441,7 @@ export async function sdkRoutes(app: FastifyInstance) {
     }
 
     if (!keySlot.share2Encrypted || keySlot.share2Encrypted.length === 0) {
-      return reply.status(400).send({ error: 'Share 2 not available' });
+      return reply.status(400).send({ error: 'Key cannot be reconstructed. It may have been revoked or corrupted. Try re-storing the key.' });
     }
 
     let apiKey: string;
@@ -440,7 +453,7 @@ export async function sdkRoutes(app: FastifyInstance) {
       const s2 = deserializeShare(share2Str);
       apiKey = new TextDecoder().decode(combine([s1, s2]));
     } catch {
-      return reply.status(400).send({ error: 'Key reconstruction failed' });
+      return reply.status(400).send({ error: 'Key reconstruction failed. Your developer key (vp_live_) may not match the one used to store this key.' });
     }
 
     // Log the retrieval
@@ -479,7 +492,7 @@ export async function sdkRoutes(app: FastifyInstance) {
     for (const requestedId of keyIds) {
       const slot = keySlots.find(s => s.id === requestedId);
       if (!slot) {
-        results.push({ keyId: requestedId, error: 'Key not found' });
+        results.push({ keyId: requestedId, error: 'Key not found. Check the key ID is correct and the key hasn\'t been revoked.' });
         continue;
       }
       if (slot.expiresAt && new Date(slot.expiresAt) < new Date()) {
@@ -487,7 +500,7 @@ export async function sdkRoutes(app: FastifyInstance) {
         continue;
       }
       if (!slot.share2Encrypted || slot.share2Encrypted.length === 0) {
-        results.push({ keyId: requestedId, error: 'Share 2 not available' });
+        results.push({ keyId: requestedId, error: 'Key cannot be reconstructed. It may have been revoked or corrupted. Try re-storing the key.' });
         continue;
       }
 
@@ -500,7 +513,7 @@ export async function sdkRoutes(app: FastifyInstance) {
         const apiKey = new TextDecoder().decode(combine([s1, s2]));
         results.push({ keyId: requestedId, apiKey, provider: slot.provider });
       } catch {
-        results.push({ keyId: requestedId, error: 'Key reconstruction failed' });
+        results.push({ keyId: requestedId, error: 'Key reconstruction failed. Your developer key (vp_live_) may not match the one used to store this key.' });
       }
     }
 
@@ -540,7 +553,7 @@ export async function sdkRoutes(app: FastifyInstance) {
 
     const keySlot = await prisma.keySlot.findUnique({ where: { id: keyId } });
     if (!keySlot || keySlot.userId !== userId) {
-      return reply.status(404).send({ error: 'Key not found' });
+      return reply.status(404).send({ error: 'Key not found. Check the key ID is correct and the key hasn\'t been revoked.' });
     }
 
     await prisma.keySlot.update({
@@ -581,7 +594,7 @@ export async function sdkRoutes(app: FastifyInstance) {
 
     const keySlot = await prisma.keySlot.findUnique({ where: { id: keyId } });
     if (!keySlot || keySlot.userId !== userId) {
-      return reply.status(404).send({ error: 'Key not found' });
+      return reply.status(404).send({ error: 'Key not found. Check the key ID is correct and the key hasn\'t been revoked.' });
     }
     if (keySlot.status !== 'ACTIVE') {
       return reply.status(400).send({ error: 'Key slot not active' });
@@ -616,7 +629,7 @@ export async function sdkRoutes(app: FastifyInstance) {
 
     const keySlot = await prisma.keySlot.findUnique({ where: { id: keyId } });
     if (!keySlot || keySlot.userId !== userId || keySlot.status !== 'ACTIVE') {
-      return reply.status(404).send({ error: 'Key not found' });
+      return reply.status(404).send({ error: 'Key not found. Check the key ID is correct and the key hasn\'t been revoked.' });
     }
 
     // Check expiry
@@ -632,13 +645,13 @@ export async function sdkRoutes(app: FastifyInstance) {
       zeroBuffer(decrypted1);
 
       if (!keySlot.share2Encrypted || keySlot.share2Encrypted.length === 0) {
-        return reply.status(400).send({ error: 'Share 2 not available' });
+        return reply.status(400).send({ error: 'Key cannot be reconstructed. It may have been revoked or corrupted. Try re-storing the key.' });
       }
       const share2Str = decryptShare2(Buffer.from(keySlot.share2Encrypted), vpKey);
       const s2 = deserializeShare(share2Str);
       apiKey = new TextDecoder().decode(combine([s1, s2]));
     } catch {
-      return reply.status(400).send({ error: 'Key reconstruction failed' });
+      return reply.status(400).send({ error: 'Key reconstruction failed. Your developer key (vp_live_) may not match the one used to store this key.' });
     }
 
     // Test against provider

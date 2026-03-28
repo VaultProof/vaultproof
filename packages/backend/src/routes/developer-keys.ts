@@ -286,12 +286,23 @@ export async function authenticateDevKey(
 
   if (!rawKey) return null;
 
+  // Validate key format before DB lookup
+  if (!rawKey.startsWith('vp_live_') && !rawKey.startsWith('vp_test_')) {
+    return null;
+  }
+
   const keyHash = hashKey(rawKey);
   const devKey = await prisma.developerKey.findUnique({
     where: { keyHash },
   });
 
-  if (!devKey || devKey.revokedAt) return null;
+  if (!devKey) return null;
+
+  if (devKey.revokedAt) {
+    // Signal revoked status so callers can return a specific message
+    (request as any).__vpKeyRevoked = true;
+    return null;
+  }
 
   // Validate session token if present (opportunistic)
   // Interactive CLI always sends one; CI/scripts don't — both are valid

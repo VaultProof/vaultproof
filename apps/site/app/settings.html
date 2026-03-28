@@ -1136,7 +1136,7 @@
           planBadge.textContent = currentTier === 'free' ? 'Free Plan' : currentTier.charAt(0).toUpperCase() + currentTier.slice(1) + ' Plan';
         }
         const tierLimits = {
-          free: { keys: 3, calls: 1000 },
+          free: { keys: 3, calls: 10000 },
           starter: { keys: 10, calls: 25000 },
           pro: { keys: 50, calls: 250000 },
           max: { keys: Infinity, calls: Infinity },

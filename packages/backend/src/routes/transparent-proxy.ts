@@ -19,6 +19,8 @@ import { randomBytes } from 'crypto';
 import { sendUsageAlert, sendInvalidKeyAlert } from '../services/email.js';
 import { sendWebhook } from '../services/webhook.js';
 
+const NON_PROXY_PROVIDERS = new Set(['stripe', 'aws', 'supabase', 'twilio', 'sendgrid', 'github', 'firebase', 'smtp', 'mailgun', 'postmark']);
+
 const PROVIDERS: Record<string, { upstream: string; authHeader: (key: string) => Record<string, string> }> = {
   openai: {
     upstream: 'https://api.openai.com',
@@ -142,15 +144,33 @@ export async function transparentProxyRoutes(app: FastifyInstance) {
 
     const providerConfig = PROVIDERS[provider];
     if (!providerConfig) {
+      if (NON_PROXY_PROVIDERS.has(provider)) {
+        return reply.status(400).send({
+          error: `"${provider}" doesn't support the transparent proxy. Use vault.retrieve() in the SDK instead. See https://vaultproof.dev/docs#sdk-reference`,
+        });
+      }
       return reply.status(400).send({
-        error: `Unknown provider "${provider}". Supported: ${Object.keys(PROVIDERS).join(', ')}`,
+        error: `Unknown provider "${provider}". Supported: openai, anthropic, google, together, mistral, cohere, groq, perplexity, fireworks, deepseek, replicate. For other providers, use vault.retrieve().`,
       });
     }
 
     // --- b. Authenticate developer key (vp_live_ from Authorization header) ---
+    const authHeader = request.headers.authorization as string;
+    const apiKeyHeader = request.headers['x-api-key'] as string;
+    const rawKeyValue = apiKeyHeader || (authHeader ? authHeader.slice(7) : '');
+    if (rawKeyValue && !rawKeyValue.startsWith('vp_')) {
+      return reply.status(401).send({ error: 'Invalid API key format. Keys start with vp_live_ or vp_test_. Get yours from the VaultProof dashboard.' });
+    }
+
     const auth = await authenticateDevKey(request, reply);
     if (!auth) {
-      return reply.status(401).send({ error: 'Invalid API key. Send your vp_live_ key as Bearer token.' });
+      if (!rawKeyValue) {
+        return reply.status(401).send({ error: 'Invalid API key format. Keys start with vp_live_ or vp_test_. Get yours from the VaultProof dashboard.' });
+      }
+      if ((request as any).__vpKeyRevoked) {
+        return reply.status(401).send({ error: 'This API key has been revoked. Create a new one in the VaultProof dashboard.' });
+      }
+      return reply.status(401).send({ error: 'API key not recognized. It may have been revoked or never existed. Check your VAULTPROOF_API_KEY.' });
     }
 
     // --- b2. Per-key rate limit ---
@@ -301,7 +321,7 @@ export async function transparentProxyRoutes(app: FastifyInstance) {
     }
 
     if (!keySlot.share2Encrypted || keySlot.share2Encrypted.length === 0) {
-      return reply.status(400).send({ error: 'Share 2 not stored for this key. Re-store via SDK.' });
+      return reply.status(400).send({ error: 'Key cannot be reconstructed. It may have been revoked or corrupted. Try re-storing the key.' });
     }
 
     // --- Helper: reconstruct API key from a key slot's shares ---
@@ -326,7 +346,7 @@ export async function transparentProxyRoutes(app: FastifyInstance) {
     try {
       apiKey = reconstructKey(keySlot);
     } catch {
-      return reply.status(400).send({ error: 'Key reconstruction failed. Check your API key.' });
+      return reply.status(400).send({ error: 'Key reconstruction failed. Your developer key (vp_live_) may not match the one used to store this key.' });
     }
 
     // --- f. Build upstream URL ---

@@ -325,7 +325,7 @@ export async function billingRoutes(app: FastifyInstance) {
     const user = await prisma.user.findUnique({ where: { id: userId }, select: { tier: true } });
     const tier = (user?.tier as string) || 'free';
 
-    const tierLimits: Record<string, number> = { free: 1000, starter: 25000, pro: 250000, max: 1000000 };
+    const tierLimits: Record<string, number> = { free: 10000, starter: 25000, pro: 250000, max: 1000000 };
     const overageRates: Record<string, number> = { free: 0, starter: 0.0005, pro: 0.0003, max: 0 }; // per call
 
     const monthStart = new Date(new Date().getFullYear(), new Date().getMonth(), 1);

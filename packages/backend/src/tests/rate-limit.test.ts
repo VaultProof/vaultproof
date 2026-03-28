@@ -119,12 +119,12 @@ describe('Rate Limit Tests', () => {
     assert.equal(result.limit, 3);
   });
 
-  // --- Test 4: checkRateLimit after 1000 calls ---
+  // --- Test 4: checkRateLimit after 10000 calls ---
 
-  it('blocks requests after 1000 access logs (free tier limit)', async () => {
-    // Insert 1000 access logs for the test key slot
+  it('blocks requests after 10000 access logs (free tier limit)', async () => {
+    // Insert 10000 access logs for the test key slot
     const logs = [];
-    for (let i = 0; i < 1000; i++) {
+    for (let i = 0; i < 10000; i++) {
       logs.push({
         keySlotId: testKeySlotId,
         appId: 'test-ratelimit-app',
@@ -146,8 +146,8 @@ describe('Rate Limit Tests', () => {
     const result = await checkRateLimit(testKeySlotId, 'free');
 
     assert.equal(result.allowed, false);
-    assert.equal(result.used, 1000);
-    assert.equal(result.limit, 1000);
+    assert.equal(result.used, 10000);
+    assert.equal(result.limit, 10000);
     assert.equal(result.remaining, 0);
   });
 });
