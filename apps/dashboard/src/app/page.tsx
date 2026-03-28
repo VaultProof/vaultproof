@@ -1,11 +1,9 @@
 import Image from "next/image";
 import Link from "next/link";
-import { MatrixBackground } from "./components/MatrixBackground";
 
 export default function LandingPage() {
   return (
-    <div className="relative min-h-screen text-white" style={{ zIndex: 1 }}>
-      <MatrixBackground />
+    <div className="min-h-screen bg-gray-950 text-white">
       {/* Nav */}
       <nav className="flex items-center justify-between px-6 py-4 max-w-6xl mx-auto">
         <div className="flex items-center gap-2">
