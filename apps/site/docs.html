@@ -1319,6 +1319,63 @@ vault.setSessionToken(token);</pre>
                     </div>
                     <p class="text-gray-500 text-sm mt-3">You can also store keys for any custom provider. Custom providers work with the SDK and CLI but not the transparent proxy URL (no upstream URL configured).</p>
                 </div>
+
+                <!-- Which Keys to Store -->
+                <div class="mt-10">
+                    <h3 class="text-lg font-semibold text-white mb-4">Which keys to store</h3>
+                    <div class="bg-vp-surface border border-vp-border rounded-xl overflow-hidden">
+                        <table class="doc-table">
+                            <thead><tr><th>Key type</th><th>Store?</th><th>Notes</th></tr></thead>
+                            <tbody>
+                                <tr>
+                                    <td class="text-white font-medium">API secret keys</td>
+                                    <td><span class="text-green-400">Yes</span></td>
+                                    <td class="text-gray-400">OpenAI, Anthropic, Stripe secret key, AWS secret access key, etc.</td>
+                                </tr>
+                                <tr>
+                                    <td class="text-white font-medium">OAuth client secrets</td>
+                                    <td><span class="text-green-400">Yes</span></td>
+                                    <td class="text-gray-400">Google OAuth, GitHub OAuth client secrets. Use <code class="font-mono text-xs text-vp-accent">vault.retrieve()</code> at runtime.</td>
+                                </tr>
+                                <tr>
+                                    <td class="text-white font-medium">Service account JSON</td>
+                                    <td><span class="text-green-400">Yes</span></td>
+                                    <td class="text-gray-400">GCP service accounts, Firebase admin keys. Store the entire JSON string.</td>
+                                </tr>
+                                <tr>
+                                    <td class="text-white font-medium">Database passwords</td>
+                                    <td><span class="text-green-400">Yes</span></td>
+                                    <td class="text-gray-400">SMTP passwords, Redis auth tokens, database credentials.</td>
+                                </tr>
+                                <tr>
+                                    <td class="text-white font-medium">PEM / SSH private keys</td>
+                                    <td><span class="text-green-400">Yes</span></td>
+                                    <td class="text-gray-400">Multi-line keys work. Shamir handles newlines and special characters.</td>
+                                </tr>
+                                <tr>
+                                    <td class="text-white font-medium">Publishable / public keys</td>
+                                    <td><span class="text-red-400">No</span></td>
+                                    <td class="text-gray-400">Stripe publishable key, Supabase anon key, Firebase API key. These are public by design.</td>
+                                </tr>
+                                <tr>
+                                    <td class="text-white font-medium">Short-lived OAuth tokens</td>
+                                    <td><span class="text-red-400">No</span></td>
+                                    <td class="text-gray-400">User access tokens, JWTs, STS temporary credentials. These expire too quickly.</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- IP Restrictions Note -->
+                <div class="mt-6 bg-amber-500/5 border border-amber-500/20 rounded-xl p-5">
+                    <p class="text-amber-400 text-sm font-medium mb-2">Keys with IP restrictions</p>
+                    <p class="text-gray-400 text-sm mb-2">Some providers let you restrict API keys to specific IP addresses. How this interacts with VaultProof depends on which method you use:</p>
+                    <ul class="text-gray-400 text-sm space-y-1 ml-4 list-disc">
+                        <li><strong class="text-white">vault.retrieve()</strong> &mdash; No problem. Your server fetches the key and makes the API call from its own IP.</li>
+                        <li><strong class="text-white">Transparent proxy</strong> &mdash; The API call comes from VaultProof's server. Remove the IP restriction and rely on VaultProof's per-key rate limits and budget caps instead.</li>
+                    </ul>
+                </div>
             </section>
 
 
