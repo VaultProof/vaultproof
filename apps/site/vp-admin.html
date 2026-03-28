@@ -1,0 +1,686 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="robots" content="noindex, nofollow" />
+  <title>System</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: { sans: ['Inter', 'sans-serif'], mono: ['JetBrains Mono', 'monospace'] },
+          colors: {
+            brand: '#6366f1',
+            'brand-light': '#818cf8',
+            cyan: '#06b6d4',
+            surface: '#0a0a0f',
+            card: '#111118',
+            border: '#1e1e2e',
+            danger: '#ef4444',
+          },
+          borderRadius: { xl: '12px', '2xl': '16px' }
+        }
+      }
+    };
+  </script>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; }
+    body { font-family: 'Inter', sans-serif; background: #0a0a0f; margin: 0; color: #e2e8f0; }
+    ::-webkit-scrollbar { width: 6px; height: 6px; }
+    ::-webkit-scrollbar-track { background: #0a0a0f; }
+    ::-webkit-scrollbar-thumb { background: #2a2a3a; border-radius: 3px; }
+    ::-webkit-scrollbar-thumb:hover { background: #3a3a4a; }
+    @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+    .fade-in { animation: fadeIn 0.3s ease-out; }
+    .mono { font-family: 'JetBrains Mono', monospace; }
+    table { border-collapse: collapse; width: 100%; }
+    th { text-align: left; padding: 10px 12px; font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; color: #64748b; border-bottom: 1px solid #1e1e2e; }
+    td { padding: 10px 12px; font-size: 13px; border-bottom: 1px solid #1e1e2e; }
+    tr:hover td { background: rgba(99,102,241,0.04); }
+    .badge { display: inline-block; padding: 2px 8px; border-radius: 9999px; font-size: 11px; font-weight: 600; }
+    .badge-free { background: rgba(100,116,139,0.2); color: #94a3b8; }
+    .badge-starter { background: rgba(6,182,212,0.15); color: #06b6d4; }
+    .badge-pro { background: rgba(99,102,241,0.15); color: #818cf8; }
+    .badge-team { background: rgba(168,85,247,0.15); color: #a855f7; }
+    .badge-enterprise { background: rgba(245,158,11,0.15); color: #f59e0b; }
+    .badge-banned { background: rgba(239,68,68,0.15); color: #ef4444; }
+    .tab { padding: 8px 16px; font-size: 13px; font-weight: 500; cursor: pointer; border-bottom: 2px solid transparent; color: #64748b; transition: all 0.15s; }
+    .tab:hover { color: #e2e8f0; }
+    .tab.active { color: #818cf8; border-bottom-color: #6366f1; }
+    .btn { padding: 6px 14px; border-radius: 8px; font-size: 13px; font-weight: 500; cursor: pointer; border: none; transition: all 0.15s; }
+    .btn-primary { background: #6366f1; color: #fff; }
+    .btn-primary:hover { background: #4f46e5; }
+    .btn-danger { background: rgba(239,68,68,0.15); color: #ef4444; border: 1px solid rgba(239,68,68,0.3); }
+    .btn-danger:hover { background: rgba(239,68,68,0.25); }
+    .btn-ghost { background: transparent; color: #94a3b8; border: 1px solid #1e1e2e; }
+    .btn-ghost:hover { background: #1e1e2e; color: #e2e8f0; }
+    input[type="text"], input[type="password"] {
+      background: #111118; border: 1px solid #1e1e2e; border-radius: 8px; padding: 8px 12px;
+      color: #e2e8f0; font-size: 13px; outline: none; transition: border-color 0.15s;
+    }
+    input[type="text"]:focus, input[type="password"]:focus { border-color: #6366f1; }
+    .stat-card { background: #111118; border: 1px solid #1e1e2e; border-radius: 12px; padding: 20px; }
+    .stat-value { font-size: 28px; font-weight: 700; color: #f1f5f9; }
+    .stat-label { font-size: 12px; font-weight: 500; color: #64748b; margin-top: 4px; }
+    .panel { background: #111118; border: 1px solid #1e1e2e; border-radius: 12px; overflow: hidden; }
+    .overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.6); z-index: 50; display: flex; align-items: center; justify-content: center; }
+    .modal { background: #111118; border: 1px solid #1e1e2e; border-radius: 16px; padding: 24px; max-width: 440px; width: 100%; }
+  </style>
+</head>
+<body>
+
+<!-- Auth gate -->
+<div id="auth-gate" class="min-h-screen flex items-center justify-center">
+  <div class="text-center">
+    <div style="font-size:32px; margin-bottom:16px;">&#128274;</div>
+    <p class="text-sm text-gray-400 mb-4">Enter admin key</p>
+    <form id="auth-form" class="flex gap-2">
+      <input type="password" id="key-input" placeholder="Admin key" class="w-64" autofocus />
+      <button type="submit" class="btn btn-primary">Go</button>
+    </form>
+    <p id="auth-error" class="text-red-400 text-xs mt-3 hidden">Invalid key</p>
+  </div>
+</div>
+
+<!-- Main dashboard (hidden until auth) -->
+<div id="dashboard" class="hidden fade-in">
+  <!-- Header -->
+  <div class="border-b border-[#1e1e2e] px-6 py-4 flex items-center justify-between">
+    <div class="flex items-center gap-3">
+      <span class="text-sm font-semibold text-gray-400">VaultProof Admin</span>
+    </div>
+    <button onclick="logout()" class="btn btn-ghost text-xs">Logout</button>
+  </div>
+
+  <div class="max-w-7xl mx-auto px-6 py-6">
+    <!-- Tabs -->
+    <div class="flex gap-1 mb-6 border-b border-[#1e1e2e]">
+      <div class="tab active" data-tab="overview" onclick="switchTab('overview')">Overview</div>
+      <div class="tab" data-tab="users" onclick="switchTab('users')">Users</div>
+      <div class="tab" data-tab="logs" onclick="switchTab('logs')">Logs</div>
+    </div>
+
+    <!-- Overview tab -->
+    <div id="tab-overview" class="fade-in">
+      <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+        <div class="stat-card">
+          <div class="stat-value" id="stat-users">-</div>
+          <div class="stat-label">Total Users</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-value" id="stat-keys">-</div>
+          <div class="stat-label">Active Keys</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-value" id="stat-calls-today">-</div>
+          <div class="stat-label">Calls Today</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-value" id="stat-active">-</div>
+          <div class="stat-label">Active (7d)</div>
+        </div>
+      </div>
+      <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+        <div class="stat-card">
+          <div class="stat-value" id="stat-calls-month">-</div>
+          <div class="stat-label">Calls This Month</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-value" id="stat-calls-all">-</div>
+          <div class="stat-label">Total Calls (All Time)</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-value" id="stat-dev-keys">-</div>
+          <div class="stat-label">Dev Keys</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-value" id="stat-tiers">-</div>
+          <div class="stat-label">Tier Breakdown</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Users tab -->
+    <div id="tab-users" class="hidden fade-in">
+      <div class="flex items-center gap-3 mb-4">
+        <input type="text" id="user-search" placeholder="Search by email..." class="w-64" oninput="debounceSearch()" />
+        <span id="user-count" class="text-xs text-gray-500"></span>
+      </div>
+      <div class="panel">
+        <table>
+          <thead>
+            <tr>
+              <th>Email</th>
+              <th>Tier</th>
+              <th>Keys</th>
+              <th>Dev Keys</th>
+              <th>Total Calls</th>
+              <th>Joined</th>
+            </tr>
+          </thead>
+          <tbody id="users-tbody"></tbody>
+        </table>
+      </div>
+      <div class="flex items-center justify-between mt-4">
+        <button class="btn btn-ghost text-xs" id="users-prev" onclick="usersPage(-1)" disabled>Previous</button>
+        <span id="users-page-info" class="text-xs text-gray-500"></span>
+        <button class="btn btn-ghost text-xs" id="users-next" onclick="usersPage(1)">Next</button>
+      </div>
+    </div>
+
+    <!-- Logs tab -->
+    <div id="tab-logs" class="hidden fade-in">
+      <div class="flex items-center gap-3 mb-4">
+        <select id="log-action-filter" onchange="loadGlobalLogs(1)" class="bg-[#111118] border border-[#1e1e2e] rounded-lg px-3 py-2 text-sm text-gray-300 outline-none">
+          <option value="">All actions</option>
+          <option value="transparent_proxy">transparent_proxy</option>
+          <option value="api_call">api_call</option>
+          <option value="key_retrieval">key_retrieval</option>
+          <option value="key_retrieval_batch">key_retrieval_batch</option>
+          <option value="key_rotation">key_rotation</option>
+          <option value="grant">grant</option>
+          <option value="revoke">revoke</option>
+        </select>
+        <span id="log-count" class="text-xs text-gray-500"></span>
+      </div>
+      <div class="panel">
+        <table>
+          <thead>
+            <tr>
+              <th>Time</th>
+              <th>User</th>
+              <th>Provider</th>
+              <th>Action</th>
+              <th>App ID</th>
+              <th>Metadata</th>
+            </tr>
+          </thead>
+          <tbody id="logs-tbody"></tbody>
+        </table>
+      </div>
+      <div class="flex items-center justify-between mt-4">
+        <button class="btn btn-ghost text-xs" id="logs-prev" onclick="globalLogsPage(-1)" disabled>Previous</button>
+        <span id="logs-page-info" class="text-xs text-gray-500"></span>
+        <button class="btn btn-ghost text-xs" id="logs-next" onclick="globalLogsPage(1)">Next</button>
+      </div>
+    </div>
+
+    <!-- User detail (shown in-place) -->
+    <div id="user-detail" class="hidden fade-in">
+      <div class="flex items-center gap-3 mb-6">
+        <button class="btn btn-ghost text-xs" onclick="closeUserDetail()">&larr; Back to users</button>
+        <span id="detail-email" class="text-lg font-semibold"></span>
+        <span id="detail-tier-badge" class="badge"></span>
+        <button id="detail-ban-btn" class="btn btn-danger text-xs ml-auto" onclick="confirmBan()">Ban User</button>
+      </div>
+
+      <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+        <div class="stat-card">
+          <div class="stat-value" id="detail-keys">-</div>
+          <div class="stat-label">Key Slots</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-value" id="detail-devkeys">-</div>
+          <div class="stat-label">Dev Keys</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-value" id="detail-calls">-</div>
+          <div class="stat-label">Total Calls</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-value mono text-sm" id="detail-created">-</div>
+          <div class="stat-label">Joined</div>
+        </div>
+      </div>
+
+      <!-- User info -->
+      <div class="panel p-4 mb-4">
+        <h3 class="text-sm font-semibold text-gray-400 mb-3">Profile</h3>
+        <div id="detail-profile" class="text-sm text-gray-300 space-y-1"></div>
+      </div>
+
+      <!-- Key slots -->
+      <div class="panel mb-4">
+        <div class="p-4 border-b border-[#1e1e2e]">
+          <h3 class="text-sm font-semibold text-gray-400">Key Slots</h3>
+        </div>
+        <table>
+          <thead><tr><th>Provider</th><th>Label</th><th>Status</th><th>Daily Limit</th><th>Monthly Limit</th><th>Created</th></tr></thead>
+          <tbody id="detail-keyslots-tbody"></tbody>
+        </table>
+      </div>
+
+      <!-- Dev keys -->
+      <div class="panel mb-4">
+        <div class="p-4 border-b border-[#1e1e2e]">
+          <h3 class="text-sm font-semibold text-gray-400">Developer Keys</h3>
+        </div>
+        <table>
+          <thead><tr><th>Label</th><th>Mode</th><th>Allowed Providers</th><th>Last Used</th><th>Created</th><th>Revoked</th></tr></thead>
+          <tbody id="detail-devkeys-tbody"></tbody>
+        </table>
+      </div>
+
+      <!-- Recent activity -->
+      <div class="panel mb-4">
+        <div class="p-4 border-b border-[#1e1e2e] flex items-center justify-between">
+          <h3 class="text-sm font-semibold text-gray-400">Recent Activity (last 50)</h3>
+          <button class="btn btn-ghost text-xs" onclick="loadUserLogs(currentUserId, 1)">View all logs</button>
+        </div>
+        <table>
+          <thead><tr><th>Time</th><th>Provider</th><th>Action</th><th>App ID</th><th>Metadata</th></tr></thead>
+          <tbody id="detail-activity-tbody"></tbody>
+        </table>
+      </div>
+
+      <!-- Full user logs (toggled) -->
+      <div id="user-logs-panel" class="panel hidden mb-4">
+        <div class="p-4 border-b border-[#1e1e2e]">
+          <h3 class="text-sm font-semibold text-gray-400">All Logs</h3>
+        </div>
+        <table>
+          <thead><tr><th>Time</th><th>Provider</th><th>Action</th><th>App ID</th><th>Metadata</th></tr></thead>
+          <tbody id="user-logs-tbody"></tbody>
+        </table>
+        <div class="flex items-center justify-between p-4">
+          <button class="btn btn-ghost text-xs" id="ulogs-prev" onclick="userLogsPage(-1)" disabled>Previous</button>
+          <span id="ulogs-page-info" class="text-xs text-gray-500"></span>
+          <button class="btn btn-ghost text-xs" id="ulogs-next" onclick="userLogsPage(1)">Next</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Ban confirmation modal -->
+<div id="ban-modal" class="overlay hidden">
+  <div class="modal">
+    <h3 class="text-lg font-semibold mb-2">Ban User</h3>
+    <p class="text-sm text-gray-400 mb-1">Are you sure you want to ban this user?</p>
+    <p class="text-sm text-gray-400 mb-4">This will set their tier to "banned" and revoke all developer keys. This action cannot be easily undone.</p>
+    <p id="ban-modal-email" class="mono text-sm text-red-400 mb-4"></p>
+    <div class="flex justify-end gap-2">
+      <button class="btn btn-ghost" onclick="closeBanModal()">Cancel</button>
+      <button class="btn btn-danger" onclick="executeBan()">Ban User</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ─── Config ──────────────────────────────────────────────────────
+const API = 'https://api.vaultproof.dev/admin';
+
+// ─── Auth ────────────────────────────────────────────────────────
+let adminKey = sessionStorage.getItem('_ak') || '';
+
+function getHeaders() {
+  return { 'Content-Type': 'application/json', 'X-Admin-Key': adminKey };
+}
+
+async function apiFetch(path, opts = {}) {
+  const res = await fetch(`${API}${path}`, { ...opts, headers: { ...getHeaders(), ...(opts.headers || {}) } });
+  if (res.status === 403) {
+    sessionStorage.removeItem('_ak');
+    adminKey = '';
+    document.getElementById('dashboard').classList.add('hidden');
+    document.getElementById('auth-gate').classList.remove('hidden');
+    document.getElementById('auth-error').classList.remove('hidden');
+    throw new Error('Unauthorized');
+  }
+  if (!res.ok) throw new Error(`API error: ${res.status}`);
+  return res.json();
+}
+
+document.getElementById('auth-form').addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const key = document.getElementById('key-input').value.trim();
+  if (!key) return;
+  adminKey = key;
+  try {
+    await apiFetch('/stats');
+    sessionStorage.setItem('_ak', key);
+    document.getElementById('auth-gate').classList.add('hidden');
+    document.getElementById('dashboard').classList.remove('hidden');
+    init();
+  } catch {
+    adminKey = '';
+    document.getElementById('auth-error').classList.remove('hidden');
+  }
+});
+
+function logout() {
+  sessionStorage.removeItem('_ak');
+  adminKey = '';
+  location.reload();
+}
+
+// ─── Init ────────────────────────────────────────────────────────
+async function init() {
+  await loadStats();
+  await loadUsers(1);
+  await loadGlobalLogs(1);
+}
+
+// Auto-login if key in session
+if (adminKey) {
+  apiFetch('/stats').then(() => {
+    document.getElementById('auth-gate').classList.add('hidden');
+    document.getElementById('dashboard').classList.remove('hidden');
+    init();
+  }).catch(() => {
+    sessionStorage.removeItem('_ak');
+    adminKey = '';
+  });
+}
+
+// ─── Tabs ────────────────────────────────────────────────────────
+function switchTab(tab) {
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  document.querySelector(`.tab[data-tab="${tab}"]`).classList.add('active');
+  ['overview', 'users', 'logs'].forEach(t => {
+    document.getElementById(`tab-${t}`).classList.toggle('hidden', t !== tab);
+  });
+  document.getElementById('user-detail').classList.add('hidden');
+}
+
+// ─── Stats ───────────────────────────────────────────────────────
+async function loadStats() {
+  try {
+    const s = await apiFetch('/stats');
+    document.getElementById('stat-users').textContent = fmt(s.totalUsers);
+    document.getElementById('stat-keys').textContent = fmt(s.totalKeys);
+    document.getElementById('stat-calls-today').textContent = fmt(s.callsToday);
+    document.getElementById('stat-calls-month').textContent = fmt(s.callsThisMonth);
+    document.getElementById('stat-calls-all').textContent = fmt(s.totalCallsAllTime);
+    document.getElementById('stat-active').textContent = fmt(s.activeUsersLast7Days);
+    document.getElementById('stat-dev-keys').textContent = fmt(s.totalDevKeys);
+
+    const tierStr = Object.entries(s.tiers || {}).map(([k,v]) => `${k}: ${v}`).join(', ');
+    document.getElementById('stat-tiers').textContent = tierStr || '-';
+    document.getElementById('stat-tiers').style.fontSize = '13px';
+  } catch (e) {
+    console.error('Failed to load stats', e);
+  }
+}
+
+// ─── Users ───────────────────────────────────────────────────────
+let usersCurrentPage = 1;
+let usersSearchTerm = '';
+let searchTimeout = null;
+
+function debounceSearch() {
+  clearTimeout(searchTimeout);
+  searchTimeout = setTimeout(() => {
+    usersSearchTerm = document.getElementById('user-search').value.trim();
+    loadUsers(1);
+  }, 300);
+}
+
+async function loadUsers(page) {
+  usersCurrentPage = page;
+  try {
+    const params = new URLSearchParams({ page: String(page), limit: '50' });
+    if (usersSearchTerm) params.set('search', usersSearchTerm);
+    const data = await apiFetch(`/users?${params}`);
+    const tbody = document.getElementById('users-tbody');
+    tbody.innerHTML = '';
+
+    for (const u of data.users) {
+      const tr = document.createElement('tr');
+      tr.style.cursor = 'pointer';
+      tr.onclick = () => openUserDetail(u.id);
+      tr.innerHTML = `
+        <td class="mono text-xs">${esc(u.email)}</td>
+        <td><span class="badge badge-${u.tier}">${esc(u.tier)}</span></td>
+        <td>${u.keyCount}</td>
+        <td>${u.devKeyCount}</td>
+        <td>${fmt(u.totalCalls)}</td>
+        <td class="text-gray-500 text-xs">${fmtDate(u.createdAt)}</td>
+      `;
+      tbody.appendChild(tr);
+    }
+
+    const totalPages = Math.ceil(data.total / data.limit) || 1;
+    document.getElementById('user-count').textContent = `${data.total} users`;
+    document.getElementById('users-page-info').textContent = `Page ${page} of ${totalPages}`;
+    document.getElementById('users-prev').disabled = page <= 1;
+    document.getElementById('users-next').disabled = page >= totalPages;
+  } catch (e) {
+    console.error('Failed to load users', e);
+  }
+}
+
+function usersPage(delta) {
+  loadUsers(usersCurrentPage + delta);
+}
+
+// ─── User detail ─────────────────────────────────────────────────
+let currentUserId = null;
+let currentUserEmail = '';
+
+async function openUserDetail(userId) {
+  currentUserId = userId;
+  try {
+    const u = await apiFetch(`/users/${userId}`);
+    currentUserEmail = u.email;
+
+    document.getElementById('tab-users').classList.add('hidden');
+    document.getElementById('user-detail').classList.remove('hidden');
+    document.getElementById('user-logs-panel').classList.add('hidden');
+
+    document.getElementById('detail-email').textContent = u.email;
+    const tierBadge = document.getElementById('detail-tier-badge');
+    tierBadge.textContent = u.tier;
+    tierBadge.className = `badge badge-${u.tier}`;
+
+    document.getElementById('detail-keys').textContent = u.keySlots.length;
+    document.getElementById('detail-devkeys').textContent = u.developerKeys.length;
+    document.getElementById('detail-calls').textContent = fmt(u.totalCalls);
+    document.getElementById('detail-created').textContent = fmtDate(u.createdAt);
+
+    // Ban button visibility
+    document.getElementById('detail-ban-btn').classList.toggle('hidden', u.tier === 'banned');
+
+    // Profile
+    document.getElementById('detail-profile').innerHTML = `
+      <div><span class="text-gray-500">ID:</span> <span class="mono">${esc(u.id)}</span></div>
+      <div><span class="text-gray-500">Email:</span> ${esc(u.email)}</div>
+      <div><span class="text-gray-500">Tier:</span> ${esc(u.tier)}</div>
+      <div><span class="text-gray-500">Stripe Customer:</span> ${esc(u.stripeCustomerId || 'none')}</div>
+      <div><span class="text-gray-500">Stripe Sub:</span> ${esc(u.stripeSubscriptionId || 'none')}</div>
+      <div><span class="text-gray-500">Daily Limit:</span> ${u.globalDailyLimit ?? 'none'}</div>
+      <div><span class="text-gray-500">Monthly Limit:</span> ${u.globalMonthlyLimit ?? 'none'}</div>
+      <div><span class="text-gray-500">Kill Switch:</span> ${u.killSwitch ? 'ON' : 'off'}</div>
+    `;
+
+    // Key slots
+    const ksTbody = document.getElementById('detail-keyslots-tbody');
+    ksTbody.innerHTML = '';
+    for (const ks of u.keySlots) {
+      const tr = document.createElement('tr');
+      tr.innerHTML = `
+        <td>${esc(ks.provider)}</td>
+        <td>${esc(ks.label)}</td>
+        <td><span class="badge ${ks.status === 'ACTIVE' ? 'badge-pro' : 'badge-banned'}">${esc(ks.status)}</span></td>
+        <td>${ks.dailyLimit ?? '-'}</td>
+        <td>${ks.monthlyLimit ?? '-'}</td>
+        <td class="text-gray-500 text-xs">${fmtDate(ks.createdAt)}</td>
+      `;
+      ksTbody.appendChild(tr);
+    }
+
+    // Dev keys
+    const dkTbody = document.getElementById('detail-devkeys-tbody');
+    dkTbody.innerHTML = '';
+    for (const dk of u.developerKeys) {
+      const tr = document.createElement('tr');
+      tr.innerHTML = `
+        <td>${esc(dk.label)}</td>
+        <td>${esc(dk.mode)}</td>
+        <td class="text-xs">${esc(dk.allowedProviders || 'all')}</td>
+        <td class="text-gray-500 text-xs">${dk.lastUsed ? fmtDate(dk.lastUsed) : '-'}</td>
+        <td class="text-gray-500 text-xs">${fmtDate(dk.createdAt)}</td>
+        <td>${dk.revokedAt ? '<span class="text-red-400 text-xs">' + fmtDate(dk.revokedAt) + '</span>' : '<span class="text-green-400 text-xs">active</span>'}</td>
+      `;
+      dkTbody.appendChild(tr);
+    }
+
+    // Recent activity
+    const actTbody = document.getElementById('detail-activity-tbody');
+    actTbody.innerHTML = '';
+    for (const log of u.recentActivity) {
+      const tr = document.createElement('tr');
+      tr.innerHTML = `
+        <td class="text-gray-500 text-xs">${fmtTime(log.timestamp)}</td>
+        <td>${esc(log.keySlot?.provider || '-')}</td>
+        <td>${esc(log.action)}</td>
+        <td class="mono text-xs">${esc(truncate(log.appId, 20))}</td>
+        <td class="text-xs text-gray-500">${esc(truncate(log.metadata || '', 60))}</td>
+      `;
+      actTbody.appendChild(tr);
+    }
+  } catch (e) {
+    console.error('Failed to load user detail', e);
+  }
+}
+
+function closeUserDetail() {
+  document.getElementById('user-detail').classList.add('hidden');
+  document.getElementById('tab-users').classList.remove('hidden');
+  currentUserId = null;
+}
+
+// ─── User logs ───────────────────────────────────────────────────
+let userLogsCurrentPage = 1;
+
+async function loadUserLogs(userId, page) {
+  userLogsCurrentPage = page;
+  document.getElementById('user-logs-panel').classList.remove('hidden');
+  try {
+    const data = await apiFetch(`/users/${userId}/logs?page=${page}&limit=100`);
+    const tbody = document.getElementById('user-logs-tbody');
+    tbody.innerHTML = '';
+
+    for (const log of data.logs) {
+      const tr = document.createElement('tr');
+      tr.innerHTML = `
+        <td class="text-gray-500 text-xs">${fmtTime(log.timestamp)}</td>
+        <td>${esc(log.keySlot?.provider || '-')}</td>
+        <td>${esc(log.action)}</td>
+        <td class="mono text-xs">${esc(truncate(log.appId, 20))}</td>
+        <td class="text-xs text-gray-500">${esc(truncate(log.metadata || '', 60))}</td>
+      `;
+      tbody.appendChild(tr);
+    }
+
+    const totalPages = Math.ceil(data.total / data.limit) || 1;
+    document.getElementById('ulogs-page-info').textContent = `Page ${page} of ${totalPages} (${data.total} logs)`;
+    document.getElementById('ulogs-prev').disabled = page <= 1;
+    document.getElementById('ulogs-next').disabled = page >= totalPages;
+  } catch (e) {
+    console.error('Failed to load user logs', e);
+  }
+}
+
+function userLogsPage(delta) {
+  loadUserLogs(currentUserId, userLogsCurrentPage + delta);
+}
+
+// ─── Global logs ─────────────────────────────────────────────────
+let globalLogsCurrentPage = 1;
+
+async function loadGlobalLogs(page) {
+  globalLogsCurrentPage = page;
+  try {
+    const action = document.getElementById('log-action-filter').value;
+    const params = new URLSearchParams({ page: String(page), limit: '100' });
+    if (action) params.set('action', action);
+
+    const data = await apiFetch(`/logs?${params}`);
+    const tbody = document.getElementById('logs-tbody');
+    tbody.innerHTML = '';
+
+    for (const log of data.logs) {
+      const tr = document.createElement('tr');
+      tr.innerHTML = `
+        <td class="text-gray-500 text-xs">${fmtTime(log.timestamp)}</td>
+        <td class="mono text-xs">${esc(log.keySlot?.user?.email || '-')}</td>
+        <td>${esc(log.keySlot?.provider || '-')}</td>
+        <td>${esc(log.action)}</td>
+        <td class="mono text-xs">${esc(truncate(log.appId, 20))}</td>
+        <td class="text-xs text-gray-500">${esc(truncate(log.metadata || '', 50))}</td>
+      `;
+      tbody.appendChild(tr);
+    }
+
+    const totalPages = Math.ceil(data.total / data.limit) || 1;
+    document.getElementById('log-count').textContent = `${data.total} logs`;
+    document.getElementById('logs-page-info').textContent = `Page ${page} of ${totalPages}`;
+    document.getElementById('logs-prev').disabled = page <= 1;
+    document.getElementById('logs-next').disabled = page >= totalPages;
+  } catch (e) {
+    console.error('Failed to load global logs', e);
+  }
+}
+
+function globalLogsPage(delta) {
+  loadGlobalLogs(globalLogsCurrentPage + delta);
+}
+
+// ─── Ban ─────────────────────────────────────────────────────────
+function confirmBan() {
+  document.getElementById('ban-modal-email').textContent = currentUserEmail;
+  document.getElementById('ban-modal').classList.remove('hidden');
+}
+
+function closeBanModal() {
+  document.getElementById('ban-modal').classList.add('hidden');
+}
+
+async function executeBan() {
+  try {
+    await apiFetch(`/users/${currentUserId}/ban`, { method: 'POST' });
+    closeBanModal();
+    await openUserDetail(currentUserId);
+    await loadStats();
+  } catch (e) {
+    console.error('Ban failed', e);
+    alert('Ban failed. Check console.');
+  }
+}
+
+// ─── Helpers ─────────────────────────────────────────────────────
+function esc(str) {
+  const div = document.createElement('div');
+  div.textContent = String(str);
+  return div.innerHTML;
+}
+
+function fmt(n) {
+  return Number(n).toLocaleString();
+}
+
+function fmtDate(d) {
+  if (!d) return '-';
+  return new Date(d).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' });
+}
+
+function fmtTime(d) {
+  if (!d) return '-';
+  const dt = new Date(d);
+  return dt.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) + ' ' +
+         dt.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+}
+
+function truncate(s, len) {
+  if (!s) return '';
+  return s.length > len ? s.slice(0, len) + '...' : s;
+}
+</script>
+</body>
+</html>
