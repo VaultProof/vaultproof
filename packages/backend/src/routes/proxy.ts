@@ -99,9 +99,9 @@ export async function proxyRoutes(app: FastifyInstance) {
 
     // 3. Check tier rate limits (skip in test environment)
     if (process.env.NODE_ENV !== 'test') {
-      const slotOwner = await prisma.user.findUnique({ where: { id: keySlot.userId }, select: { tier: true } });
+      const slotOwner = await prisma.user.findUnique({ where: { id: keySlot.userId }, select: { tier: true, email: true } });
       const tier = (slotOwner?.tier as string) || 'free';
-      const rateCheck = await checkRateLimit(keySlotId, tier);
+      const rateCheck = await checkRateLimit(keySlotId, tier, slotOwner?.email);
       if (!rateCheck.allowed) {
         // Free tier: hard block
         if (tier === 'free') {
@@ -121,6 +121,11 @@ export async function proxyRoutes(app: FastifyInstance) {
           used: rateCheck.used,
           limit: rateCheck.limit,
         });
+      }
+
+      // Add warning header when near limit
+      if (rateCheck.nearLimit) {
+        reply.header('X-VaultProof-Usage-Warning', `${rateCheck.used}/${rateCheck.limit} calls used this month (${Math.round(rateCheck.used / rateCheck.limit * 100)}%)`);
       }
     }
 
