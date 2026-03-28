@@ -121,10 +121,9 @@ export default {
       }
     }
 
-    return Response.json(
-      { error: 'Not found' },
-      { status: 404, headers: { ...corsHeaders(origin, allowedOrigins), ...securityHeaders() } }
-    );
+    // Pass through to origin (Cloudflare Pages) — prevents the Worker from
+    // eating static asset requests if it's ever routed on the main domain.
+    return fetch(request);
   },
 };
 

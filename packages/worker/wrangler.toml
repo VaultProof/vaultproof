@@ -2,5 +2,9 @@ name = "vaultproof-api"
 main = "src/index.ts"
 compatibility_date = "2026-03-27"
 
+[[routes]]
+pattern = "api.vaultproof.dev/*"
+zone_name = "vaultproof.dev"
+
 [vars]
 ALLOWED_ORIGINS = "https://vaultproof.dev"
