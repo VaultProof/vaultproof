@@ -68,8 +68,8 @@ export default {
       );
     }
 
-    // --- Forward /api/*, /v1/*, and /admin/* to backend with signed request ---
-    if (url.pathname.startsWith('/api/') || url.pathname.startsWith('/v1/') || url.pathname.startsWith('/admin/')) {
+    // --- Forward /api/*, /v1/*, /admin/*, and /analytics/* to backend with signed request ---
+    if (url.pathname.startsWith('/api/') || url.pathname.startsWith('/v1/') || url.pathname.startsWith('/admin/') || url.pathname.startsWith('/analytics/')) {
       try {
         // --- Layer 1 + 2: HMAC request signing with timestamp ---
         const timestamp = Date.now().toString();
