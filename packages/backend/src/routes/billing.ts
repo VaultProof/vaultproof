@@ -13,9 +13,8 @@ const MAX_PROCESSED_EVENTS = 10000;
 // --- Tier definitions ---
 
 const TIERS = {
-  starter: { name: 'VaultProof Starter', price: 900, annualPrice: 9000, interval: 'month' as const },
-  pro: { name: 'VaultProof Pro', price: 2900, annualPrice: 29000, interval: 'month' as const },
-  max: { name: 'VaultProof Max', price: 9900, annualPrice: 99000, interval: 'month' as const },
+  starter: { name: 'VaultProof Starter', price: 500, annualPrice: 5000, interval: 'month' as const },
+  pro: { name: 'VaultProof Pro', price: 2000, annualPrice: 20000, interval: 'month' as const },
 } as const;
 
 type Tier = keyof typeof TIERS;
@@ -139,10 +138,15 @@ export async function billingRoutes(app: FastifyInstance) {
 
       const parsed = checkoutSchema.safeParse(request.body);
       if (!parsed.success) {
-        return reply.status(400).send({ error: 'Invalid input. tier must be starter, pro, or max.' });
+        return reply.status(400).send({ error: 'Invalid input. tier must be starter or pro.' });
       }
 
       const { tier, annual } = parsed.data;
+
+      // Enterprise tier — no self-serve checkout
+      if (tier === 'max') {
+        return reply.status(400).send({ error: 'The Max tier has been replaced by Enterprise. Contact us at hello@vaultproof.dev for custom pricing.' });
+      }
 
       const userId = request.auth!.userId;
       const user = await prisma.user.findUnique({ where: { id: userId } });
@@ -325,8 +329,8 @@ export async function billingRoutes(app: FastifyInstance) {
     const user = await prisma.user.findUnique({ where: { id: userId }, select: { tier: true } });
     const tier = (user?.tier as string) || 'free';
 
-    const tierLimits: Record<string, number> = { free: 10000, starter: 25000, pro: 250000, max: 1000000 };
-    const overageRates: Record<string, number> = { free: 0, starter: 0.0005, pro: 0.0003, max: 0 }; // per call
+    const tierLimits: Record<string, number> = { free: 10000, starter: 50000, pro: 500000 };
+    const overageRates: Record<string, number> = { free: 0, starter: 0.0005, pro: 0.0003 }; // per call
 
     const monthStart = new Date(new Date().getFullYear(), new Date().getMonth(), 1);
     const keySlots = await prisma.keySlot.findMany({ where: { userId }, select: { id: true } });
