@@ -199,17 +199,19 @@
     );
 
     // ── Handle email confirmation code exchange ──
-    const hashParams = new URLSearchParams(window.location.hash.slice(1));
+    let isRedirecting = false;
     const urlSearchParams = new URLSearchParams(window.location.search);
     const confirmCode = urlSearchParams.get('code');
     if (confirmCode) {
       sbClient.auth.exchangeCodeForSession(confirmCode).then(({ data, error }) => {
-        if (!error && data.session) {
+        if (!error && data.session && !isRedirecting) {
+          isRedirecting = true;
           localStorage.setItem('vaultproof_token', data.session.access_token);
           localStorage.setItem('vaultproof_user', JSON.stringify({
             id: data.user.id, email: data.user.email
           }));
-          window.location.href = './';
+          // Remove code from URL to prevent re-exchange loop
+          window.location.replace('./');
         }
       }).catch(() => {});
     }
@@ -278,32 +280,36 @@
       }
     }
 
-    // ── Check if already logged in ──
-    (async () => {
-      const { data: { session } } = await sbClient.auth.getSession();
-      if (session) {
-        localStorage.setItem('vaultproof_token', session.access_token);
-        localStorage.setItem('vaultproof_user', JSON.stringify({
-          id: session.user.id,
-          email: session.user.email
-        }));
+    // ── Check if already logged in (skip if handling code exchange) ──
+    if (!confirmCode) {
+      (async () => {
+        const { data: { session } } = await sbClient.auth.getSession();
+        if (session && !isRedirecting) {
+          isRedirecting = true;
+          localStorage.setItem('vaultproof_token', session.access_token);
+          localStorage.setItem('vaultproof_user', JSON.stringify({
+            id: session.user.id,
+            email: session.user.email
+          }));
 
-        // Auto-redeem promo before redirect
-        await redeemPendingPromo(session);
+          // Auto-redeem promo before redirect
+          await redeemPendingPromo(session);
 
-        // If CLI callback, redirect to CLI with token
-        if (cliCallback) {
-          window.location.href = `${cliCallback}?token=${session.access_token}&refresh_token=${encodeURIComponent(session.refresh_token)}&email=${encodeURIComponent(session.user.email)}&state=${encodeURIComponent(cliState || '')}`;
-          return;
+          // If CLI callback, redirect to CLI with token
+          if (cliCallback) {
+            window.location.href = `${cliCallback}?token=${session.access_token}&refresh_token=${encodeURIComponent(session.refresh_token)}&email=${encodeURIComponent(session.user.email)}&state=${encodeURIComponent(cliState || '')}`;
+            return;
+          }
+
+          window.location.replace('./');
         }
-
-        window.location.href = './';
-      }
-    })();
+      })();
+    }
 
     // ── Listen for auth state changes (handles OAuth callback) ──
     sbClient.auth.onAuthStateChange(async (event, session) => {
-      if (event === 'SIGNED_IN' && session) {
+      if (event === 'SIGNED_IN' && session && !isRedirecting) {
+        isRedirecting = true;
         localStorage.setItem('vaultproof_token', session.access_token);
         localStorage.setItem('vaultproof_user', JSON.stringify({
           id: session.user.id,
@@ -319,7 +325,7 @@
           return;
         }
 
-        window.location.href = './';
+        window.location.replace('./');
       }
     });
 
