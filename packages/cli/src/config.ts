@@ -47,20 +47,13 @@ export function clearConfig(): void {
   }
 }
 
-export function getApiUrl(): string {
-  return (
-    process.env.VAULTPROOF_API_URL ||
-    readConfig().apiUrl ||
-    "https://api.vaultproof.dev"
-  );
+export function getApiUrl(): string | undefined {
+  return process.env.VAULTPROOF_API_URL || readConfig().apiUrl || undefined;
 }
 
 /** Direct backend URL — skips the CF Worker for SDK-authenticated calls. */
-export function getDirectUrl(): string {
-  return (
-    process.env.VAULTPROOF_DIRECT_URL ||
-    "https://dashboard-production-b76c.up.railway.app"
-  );
+export function getDirectUrl(): string | undefined {
+  return process.env.VAULTPROOF_DIRECT_URL || undefined;
 }
 
 export function getToken(): string | undefined {

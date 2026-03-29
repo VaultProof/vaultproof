@@ -18,13 +18,13 @@
 
 import { splitString, serializeShare } from '@vaultproof/shamir';
 
-const DEFAULT_API_URL = 'https://api.vaultproof.dev';
-const DEFAULT_DIRECT_URL = 'https://dashboard-production-b76c.up.railway.app';
+const DEFAULT_API_URL = undefined;
+const DEFAULT_DIRECT_URL = undefined;
 
 export interface VaultProofOptions {
-  /** API URL routed through the edge proxy (default: https://api.vaultproof.dev) */
+  /** API URL routed through the edge proxy */
   apiUrl?: string;
-  /** Direct backend URL — skips the edge proxy for faster SDK calls (default: https://backend.vaultproof.dev) */
+  /** Direct backend URL — skips the edge proxy for faster SDK calls */
   directUrl?: string;
   /** Session token (from /dev-keys/:id/session) */
   sessionToken?: string;
@@ -43,8 +43,8 @@ export interface ProxyResponse {
 }
 
 export class VaultProof {
-  private apiUrl: string;
-  private directUrl: string;
+  private apiUrl: string | undefined;
+  private directUrl: string | undefined;
   private apiKey: string;
   private sessionToken?: string;
 
