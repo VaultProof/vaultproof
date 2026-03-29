@@ -198,20 +198,40 @@
       'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imd3emtqaW9tZW1qbGh0cmRybGFuIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQzNDM3ODIsImV4cCI6MjA4OTkxOTc4Mn0.tgHUvpBvFiojetuqIP0sKb0iBNbKDJHdeo9n3Tofa3o'
     );
 
-    // ── Handle email confirmation code exchange ──
+    // ── Loop detection ──
     let isRedirecting = false;
+    const loopKey = 'vp_login_redirects';
+    const loopCount = parseInt(sessionStorage.getItem(loopKey) || '0', 10);
+    if (loopCount > 3) {
+      // Break the loop — clear everything and show the login form
+      sessionStorage.removeItem(loopKey);
+      localStorage.removeItem('vaultproof_token');
+      localStorage.removeItem('vaultproof_user');
+      localStorage.removeItem('vp_promo');
+      sbClient.auth.signOut().catch(() => {});
+      console.warn('Login loop detected — cleared auth state');
+    }
+
+    function safeRedirect(url) {
+      if (isRedirecting) return;
+      isRedirecting = true;
+      sessionStorage.setItem(loopKey, String(loopCount + 1));
+      // Clear loop counter after successful navigation (2s timeout)
+      setTimeout(function() { sessionStorage.removeItem(loopKey); }, 2000);
+      window.location.replace(url);
+    }
+
+    // ── Handle email confirmation code exchange ──
     const urlSearchParams = new URLSearchParams(window.location.search);
     const confirmCode = urlSearchParams.get('code');
     if (confirmCode) {
       sbClient.auth.exchangeCodeForSession(confirmCode).then(({ data, error }) => {
-        if (!error && data.session && !isRedirecting) {
-          isRedirecting = true;
+        if (!error && data.session) {
           localStorage.setItem('vaultproof_token', data.session.access_token);
           localStorage.setItem('vaultproof_user', JSON.stringify({
             id: data.user.id, email: data.user.email
           }));
-          // Remove code from URL to prevent re-exchange loop
-          window.location.replace('./');
+          safeRedirect('./');
         }
       }).catch(() => {});
     }
@@ -280,12 +300,11 @@
       }
     }
 
-    // ── Check if already logged in (skip if handling code exchange) ──
-    if (!confirmCode) {
+    // ── Check if already logged in (skip if handling code exchange or loop detected) ──
+    if (!confirmCode && loopCount <= 3) {
       (async () => {
         const { data: { session } } = await sbClient.auth.getSession();
         if (session && !isRedirecting) {
-          isRedirecting = true;
           localStorage.setItem('vaultproof_token', session.access_token);
           localStorage.setItem('vaultproof_user', JSON.stringify({
             id: session.user.id,
@@ -301,7 +320,7 @@
             return;
           }
 
-          window.location.replace('./');
+          safeRedirect('./');
         }
       })();
     }
@@ -309,7 +328,6 @@
     // ── Listen for auth state changes (handles OAuth callback) ──
     sbClient.auth.onAuthStateChange(async (event, session) => {
       if (event === 'SIGNED_IN' && session && !isRedirecting) {
-        isRedirecting = true;
         localStorage.setItem('vaultproof_token', session.access_token);
         localStorage.setItem('vaultproof_user', JSON.stringify({
           id: session.user.id,
@@ -325,7 +343,7 @@
           return;
         }
 
-        window.location.replace('./');
+        safeRedirect('./');
       }
     });
 
@@ -415,7 +433,7 @@
           return;
         }
 
-        window.location.href = './';
+        safeRedirect('./');
       } catch (err) {
         errEl.innerHTML = err.message;
         if (err.message.toLowerCase().includes('not confirmed')) {
@@ -511,7 +529,7 @@
             return;
           }
 
-          window.location.href = './';
+          safeRedirect('./');
         } else {
           // Email confirmation required
           errEl.textContent = 'Check your email to confirm your account.';
