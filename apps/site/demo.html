@@ -570,6 +570,31 @@
             <span class="guide-tip">Your API keys are listed here. Click 'Add Key' to store a new one.</span>
           </div>
 
+          <!-- Developer API Key -->
+          <div id="dev-key-card" class="bg-card border border-border rounded-2xl p-6 anim-fade-up" style="animation-delay:550ms">
+            <div class="flex items-center gap-3 mb-4">
+              <div class="w-8 h-8 rounded-lg bg-cyan-500/10 flex items-center justify-center">
+                <svg class="w-4 h-4 text-cyan-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4"/></svg>
+              </div>
+              <div>
+                <h2 class="text-lg font-semibold">Developer API Key</h2>
+                <p class="text-xs text-gray-500 mt-0.5">Use this key to authenticate your app or CLI with VaultProof</p>
+              </div>
+            </div>
+            <div class="flex items-center gap-2 bg-surface border border-border rounded-xl px-4 py-3 mb-4">
+              <code class="text-sm font-mono text-indigo-400 flex-1 truncate">vp_live_demo_k9x2mQpL8rNvT4wZbYeJfHdCsUoAiG3</code>
+              <button class="text-xs text-gray-500 hover:text-white px-2 py-1 rounded border border-border hover:border-gray-500 transition" onclick="this.textContent='Copied!';setTimeout(()=>this.textContent='Copy',1500)">Copy</button>
+            </div>
+            <div class="bg-surface border border-border rounded-xl p-4 font-mono text-xs space-y-1.5">
+              <div class="text-gray-500 mb-2"># Paste into your project's .env file:</div>
+              <div><span class="text-cyan-400">VAULTPROOF_API_KEY</span><span class="text-white">=</span><span class="text-green-400">vp_live_...</span></div>
+              <div class="mt-2 text-gray-500"># Then use it in your code:</div>
+              <div><span class="text-gray-500">fetch</span><span class="text-white">(</span><span class="text-green-400">'https://proxy.vaultproof.dev/openai/...'</span><span class="text-white">, &#123;</span></div>
+              <div class="pl-4"><span class="text-gray-400">headers:</span> <span class="text-white">&#123;</span> <span class="text-green-400">'Authorization'</span><span class="text-white">: </span><span class="text-green-400">`Bearer ${process.env.VAULTPROOF_API_KEY}`</span> <span class="text-white">&#125;</span></div>
+              <div><span class="text-white">&#125;)</span></div>
+            </div>
+          </div>
+
           <!-- CLI Getting Started -->
           <div id="cli-card" class="bg-card border border-border rounded-2xl p-6 anim-fade-up" style="animation-delay:600ms">
             <div class="flex items-center gap-3 mb-4">
@@ -974,6 +999,8 @@
     { target: '#stats-cards', text: 'These cards show your real-time usage \u2014 total keys stored, active providers, API calls today, and error rate.', position: 'bottom' },
     { target: '#keys-table', text: 'This is where your API keys live. Each key is split using Shamir Secret Sharing \u2014 we never see your full key. You can add, rotate, or revoke keys here.', position: 'bottom' },
     { target: '#keys-header', text: 'To store a key, click \u2018Add Key\u2019, choose your provider (OpenAI, Anthropic, etc.), and paste your key. It\u2019s split instantly in your browser.', position: 'bottom' },
+    { target: '#dev-key-card', text: 'After adding your API keys, go to the API Keys page \u2192 Developer API Keys and create a \u2018vp_live_\u2019 key. This is how your app or CLI authenticates with VaultProof.', position: 'bottom' },
+    { target: '#dev-key-card', text: 'Copy the \u2018vp_live_\u2019 key and paste it into your project\u2019s .env file as VAULTPROOF_API_KEY. Then use it as the Bearer token when calling the VaultProof proxy \u2014 your stored keys are now accessible from your app.', position: 'top' },
     { target: '#activity-feed', text: 'Every API call, key rotation, and access event shows up here in real time. Full audit trail for your keys.', position: 'left' },
     { target: '#nav-api-keys', text: 'Manage all your stored keys from the API Keys page.', position: 'right' },
     { target: '#nav-access-logs', text: 'View detailed logs of every proxied API call \u2014 who made it, when, and which key was used.', position: 'right' },
