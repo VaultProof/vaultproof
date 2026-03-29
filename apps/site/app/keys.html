@@ -1751,19 +1751,18 @@ exampleBody + '\n' +
       btn.textContent = 'Creating...';
 
       try {
-        var res = await fetch(API + '/dev-keys/create', {
+        var res = await apiFetch(API + '/dev-keys/create', {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
           body: JSON.stringify({ label: label, mode: mode }),
         });
-        if (res.ok) {
+        if (res && res.ok) {
           var data = await res.json();
           newlyCreatedKey = data.key;
           document.getElementById('newKeyValue').textContent = data.key;
           document.getElementById('newKeyBox').classList.remove('hidden');
           hideCreateForm();
           loadDevKeys();
-        } else {
+        } else if (res) {
           var err = await res.json().catch(function() { return {}; });
           alert(err.message || 'Failed to create key');
         }
@@ -1789,10 +1788,12 @@ exampleBody + '\n' +
       var table = document.getElementById('devKeysTable');
 
       try {
-        var res = await fetch(API + '/dev-keys/list', {
-          headers: { 'Authorization': 'Bearer ' + token }
-        });
-        if (!res.ok) return;
+        var res = await apiFetch(API + '/dev-keys/list');
+        if (!res || !res.ok) {
+          loading.classList.add('hidden');
+          empty.classList.remove('hidden');
+          return;
+        }
         var data = await res.json();
         var keys = data.keys || data || [];
 
@@ -1838,12 +1839,9 @@ exampleBody + '\n' +
     async function revokeDevKey(id) {
       if (!confirm('Revoke this developer key? All SDK/CLI calls using it will stop immediately.')) return;
       try {
-        var res = await fetch(API + '/dev-keys/' + id + '/revoke', {
-          method: 'POST',
-          headers: { 'Authorization': 'Bearer ' + token }
-        });
-        if (res.ok) loadDevKeys();
-        else alert('Failed to revoke key');
+        var res = await apiFetch(API + '/dev-keys/' + id + '/revoke', { method: 'POST' });
+        if (res && res.ok) loadDevKeys();
+        else if (res) alert('Failed to revoke key');
       } catch (e) {
         alert('Network error');
       }
