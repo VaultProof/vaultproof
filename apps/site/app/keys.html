@@ -1870,6 +1870,7 @@ exampleBody + '\n' +
       var loading = document.getElementById('devKeysLoading');
       var empty = document.getElementById('devKeysEmpty');
       var table = document.getElementById('devKeysTable');
+      linkedIdsMap = {};
 
       try {
         var res = await apiFetch(API + '/dev-keys/list');
@@ -1901,22 +1902,105 @@ exampleBody + '\n' +
           var lastUsed = k.lastUsed || k.last_used;
           var lastUsedStr = lastUsed ? 'Last used ' + new Date(lastUsed).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) : 'Never used';
           var revoked = k.revokedAt || k.revoked_at;
-          return '<div class="flex items-center justify-between py-4 gap-4">' +
-            '<div class="min-w-0 flex-1">' +
-              '<div class="flex items-center gap-2 flex-wrap">' +
-                '<code class="text-sm font-mono text-gray-300">' + masked + '</code>' +
-                (k.label ? '<span class="text-xs text-gray-500 bg-[#0a0a0f] px-2 py-0.5 rounded-lg border border-[#1e1e2e]">' + k.label + '</span>' : '') +
-                modeBadge +
-                (revoked ? '<span class="text-xs text-red-400">(revoked)</span>' : '') +
+          var linkedIds = k.allowedKeySlotIds ? k.allowedKeySlotIds.split(',').map(function(s){return s.trim();}).filter(Boolean) : [];
+          linkedIdsMap[k.id] = linkedIds;
+          var linkedBadge = linkedIds.length > 0
+            ? '<span class="text-xs text-indigo-400 bg-indigo-900/20 border border-indigo-800/40 px-2 py-0.5 rounded-lg">' + linkedIds.length + ' linked key' + (linkedIds.length > 1 ? 's' : '') + '</span>'
+            : '<span class="text-xs text-gray-600 bg-[#0a0a0f] border border-[#1e1e2e] px-2 py-0.5 rounded-lg">All keys</span>';
+          return '<div class="border-b border-[#1e1e2e] last:border-0">' +
+            '<div class="flex items-center justify-between py-4 gap-4">' +
+              '<div class="min-w-0 flex-1">' +
+                '<div class="flex items-center gap-2 flex-wrap">' +
+                  '<code class="text-sm font-mono text-gray-300">' + escapeHtml(masked) + '</code>' +
+                  (k.label ? '<span class="text-xs text-gray-500 bg-[#0a0a0f] px-2 py-0.5 rounded-lg border border-[#1e1e2e]">' + escapeHtml(k.label) + '</span>' : '') +
+                  modeBadge +
+                  (revoked ? '<span class="text-xs text-red-400">(revoked)</span>' : '') +
+                '</div>' +
+                '<div class="flex items-center gap-2 mt-1.5">' +
+                  '<span class="text-xs text-gray-600">Created ' + created + ' &middot; ' + lastUsedStr + '</span>' +
+                  '<span class="text-gray-700">&middot;</span>' +
+                  linkedBadge +
+                '</div>' +
               '</div>' +
-              '<div class="text-xs text-gray-600 mt-1.5">Created ' + created + ' &middot; ' + lastUsedStr + '</div>' +
+              (!revoked ? '<div class="flex items-center gap-2">' +
+                '<button onclick="toggleLinkedPanel(\'' + k.id + '\')" class="px-3 py-1.5 text-xs text-indigo-400 hover:text-indigo-300 border border-indigo-900/50 hover:border-indigo-800 hover:bg-indigo-900/20 rounded-xl transition whitespace-nowrap">Link Keys</button>' +
+                '<button onclick="revokeDevKey(\'' + k.id + '\')" class="px-3 py-1.5 text-xs text-red-400 hover:text-red-300 border border-red-900/50 hover:border-red-800 hover:bg-red-900/20 rounded-xl transition whitespace-nowrap">Revoke</button>' +
+              '</div>' : '') +
             '</div>' +
-            (!revoked ? '<button onclick="revokeDevKey(\'' + k.id + '\')" class="px-3 py-1.5 text-xs text-red-400 hover:text-red-300 border border-red-900/50 hover:border-red-800 hover:bg-red-900/20 rounded-xl transition whitespace-nowrap">Revoke</button>' : '') +
+            '<div id="linkedPanel-' + k.id + '" class="hidden pb-4">' +
+              '<div class="p-4 bg-[#0a0a0f] border border-[#1e1e2e] rounded-xl">' +
+                '<p class="text-xs text-gray-400 mb-3">Choose which stored API keys this <code class="text-indigo-400">vp_live_</code> key can access. Leave all unchecked to allow all keys.</p>' +
+                '<div id="linkedChecks-' + k.id + '" class="space-y-2 mb-3"></div>' +
+                '<div class="flex items-center gap-2">' +
+                  '<button onclick="saveLinkedKeys(\'' + k.id + '\')" class="px-3 py-1.5 bg-[#6366f1] hover:bg-[#5558e6] text-white rounded-xl text-xs font-medium transition">Save</button>' +
+                  '<button onclick="toggleLinkedPanel(\'' + k.id + '\')" class="px-3 py-1.5 text-xs text-gray-500 hover:text-white transition">Cancel</button>' +
+                  '<span id="linkedMsg-' + k.id + '" class="text-xs text-gray-500 hidden"></span>' +
+                '</div>' +
+              '</div>' +
+            '</div>' +
           '</div>';
         }).join('');
       } catch (e) {
         loading.classList.add('hidden');
         empty.classList.remove('hidden');
+      }
+    }
+
+    // Map of devKeyId -> array of currently linked key slot IDs (populated when table renders)
+    var linkedIdsMap = {};
+
+    function toggleLinkedPanel(keyId) {
+      var panel = document.getElementById('linkedPanel-' + keyId);
+      var isHidden = panel.classList.contains('hidden');
+      panel.classList.toggle('hidden');
+      if (!isHidden) return; // closing — nothing more to do
+
+      var container = document.getElementById('linkedChecks-' + keyId);
+      if (allKeys.length === 0) {
+        container.innerHTML = '<span class="text-xs text-gray-500">No stored API keys yet. Add one first.</span>';
+        return;
+      }
+      var currentIds = linkedIdsMap[keyId] || [];
+      container.innerHTML = allKeys.map(function(k) {
+        var slotId = k.id || k.keySlotId;
+        var checked = currentIds.includes(slotId) ? ' checked' : '';
+        var providerLabel = escapeHtml(k.provider || 'Unknown');
+        var nameLabel = k.label ? ' \u2014 ' + escapeHtml(k.label) : '';
+        return '<label class="flex items-center gap-2 text-sm text-gray-300 cursor-pointer select-none">' +
+          '<input type="checkbox" value="' + escapeHtml(slotId) + '"' + checked +
+          ' class="linked-cb-' + escapeHtml(keyId) + ' rounded accent-indigo-500 cursor-pointer" />' +
+          '<span>' + providerLabel + nameLabel + '</span>' +
+          '</label>';
+      }).join('');
+    }
+
+    async function saveLinkedKeys(keyId) {
+      var checkboxes = document.querySelectorAll('.linked-cb-' + keyId + ':checked');
+      var ids = Array.from(checkboxes).map(function(cb) { return cb.value; });
+      var msg = document.getElementById('linkedMsg-' + keyId);
+      msg.textContent = 'Saving\u2026';
+      msg.classList.remove('hidden', 'text-red-400');
+      msg.classList.add('text-gray-500');
+      try {
+        var res = await apiFetch(API + '/dev-keys/' + keyId + '/settings', {
+          method: 'PUT',
+          body: JSON.stringify({ allowedKeySlotIds: ids.join(',') }),
+        });
+        if (res && res.ok) {
+          msg.textContent = 'Saved!';
+          msg.classList.replace('text-gray-500', 'text-green-400');
+          setTimeout(function() {
+            msg.classList.add('hidden');
+            loadDevKeys();
+          }, 900);
+        } else {
+          var err = res ? await res.json().catch(function() { return {}; }) : {};
+          msg.textContent = err.error || 'Failed to save';
+          msg.classList.replace('text-gray-500', 'text-red-400');
+        }
+      } catch (e) {
+        msg.textContent = 'Network error';
+        msg.classList.replace('text-gray-500', 'text-red-400');
       }
     }
 

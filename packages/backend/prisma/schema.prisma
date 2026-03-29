@@ -39,6 +39,7 @@ model DeveloperKey {
   allowedIps         String?   @map("allowed_ips") // comma-separated IPs, null = allow all
   allowedProviders   String?   @map("allowed_providers") // comma-separated: "openai,anthropic", null = allow all
   allowedEndpoints   String?   @map("allowed_endpoints") // comma-separated: "/v1/chat/completions,/v1/models", null = allow all
+  allowedKeySlotIds  String?   @map("allowed_key_slot_ids") // comma-separated key slot IDs; null = access all user's keys
   alertEmail         String?   @map("alert_email") // email for usage alerts, null = no alerts
   alertThreshold     Int?      @map("alert_threshold") // calls per hour to trigger alert, null = no alert
   webhookUrl         String?   @map("webhook_url")     // URL to notify on events

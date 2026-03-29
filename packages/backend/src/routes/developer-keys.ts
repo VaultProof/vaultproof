@@ -147,6 +147,7 @@ export async function developerKeyRoutes(app: FastifyInstance) {
         lastUsed: true,
         createdAt: true,
         webhookUrl: true,
+        allowedKeySlotIds: true,
       },
     });
 
@@ -168,6 +169,7 @@ export async function developerKeyRoutes(app: FastifyInstance) {
       allowedIps: z.string().max(500).optional(),
       allowedProviders: z.string().max(200).optional(),
       allowedEndpoints: z.string().max(500).optional(),
+      allowedKeySlotIds: z.string().max(2000).optional().nullable(),
       alertEmail: z.string().email().optional(),
       alertThreshold: z.number().int().min(1).optional(),
       webhookUrl: webhookUrlSchema,
@@ -194,12 +196,37 @@ export async function developerKeyRoutes(app: FastifyInstance) {
       }
     }
 
+    // Validate that any provided key slot IDs belong to this user
+    let validatedKeySlotIds: string | null | undefined = undefined;
+    if (parsed.data.allowedKeySlotIds !== undefined) {
+      if (!parsed.data.allowedKeySlotIds) {
+        validatedKeySlotIds = null; // empty string or null = clear restriction
+      } else {
+        const ids = parsed.data.allowedKeySlotIds.split(',').map((s) => s.trim()).filter(Boolean);
+        if (ids.length > 0) {
+          const owned = await prisma.keySlot.findMany({
+            where: { id: { in: ids }, userId },
+            select: { id: true },
+          });
+          const ownedIds = owned.map((k) => k.id);
+          const invalid = ids.filter((id) => !ownedIds.includes(id));
+          if (invalid.length > 0) {
+            return reply.status(400).send({ error: 'Some key slot IDs do not belong to your account' });
+          }
+          validatedKeySlotIds = ownedIds.join(',');
+        } else {
+          validatedKeySlotIds = null;
+        }
+      }
+    }
+
     const updated = await prisma.developerKey.update({
       where: { id: keyId },
       data: {
         allowedIps: parsed.data.allowedIps ?? key.allowedIps,
         allowedProviders: parsed.data.allowedProviders ?? key.allowedProviders,
         allowedEndpoints: parsed.data.allowedEndpoints ?? key.allowedEndpoints,
+        allowedKeySlotIds: validatedKeySlotIds !== undefined ? validatedKeySlotIds : key.allowedKeySlotIds,
         alertEmail: parsed.data.alertEmail ?? key.alertEmail,
         alertThreshold: parsed.data.alertThreshold ?? key.alertThreshold,
         webhookUrl: parsed.data.webhookUrl ?? key.webhookUrl,
@@ -212,6 +239,7 @@ export async function developerKeyRoutes(app: FastifyInstance) {
       allowedIps: updated.allowedIps,
       allowedProviders: updated.allowedProviders,
       allowedEndpoints: updated.allowedEndpoints,
+      allowedKeySlotIds: updated.allowedKeySlotIds,
       alertEmail: updated.alertEmail,
       alertThreshold: updated.alertThreshold,
       webhookUrl: updated.webhookUrl,

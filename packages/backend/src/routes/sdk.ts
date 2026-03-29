@@ -275,6 +275,14 @@ export async function sdkRoutes(app: FastifyInstance) {
       return reply.status(400).send({ error: 'Key cannot be reconstructed. It may have been revoked or corrupted. Try re-storing the key.' });
     }
 
+    // Enforce linked key restriction
+    if (authDevKey.allowedKeySlotIds) {
+      const allowed = authDevKey.allowedKeySlotIds.split(',').map((s: string) => s.trim()).filter(Boolean);
+      if (allowed.length > 0 && !allowed.includes(keyId)) {
+        return reply.status(403).send({ error: 'This API key is not linked to the requested key slot. Update linked keys in your dashboard.' });
+      }
+    }
+
     // Enforce provider restriction
     if (authDevKey.allowedProviders) {
       const allowed = authDevKey.allowedProviders.split(',').map((s: string) => s.trim());
