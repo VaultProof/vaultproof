@@ -327,29 +327,82 @@ STRIPE_SECRET_KEY=sk_live_..."></textarea>
           </div>
         </div>
 
-        <!-- Developer API Key -->
-        <div class="bg-[#111118] border border-[#1e1e2e] rounded-2xl p-5">
-          <div class="flex items-center justify-between">
-            <div class="flex items-center gap-3">
-              <div class="w-8 h-8 rounded-lg bg-indigo-500/10 flex items-center justify-center">
-                <svg class="w-4 h-4 text-indigo-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M8 9l3 3-3 3m5 0h3M5 20h14a2 2 0 002-2V6a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
+        <!-- Developer API Keys -->
+        <section class="bg-[#111118] border border-[#1e1e2e] rounded-2xl p-6">
+          <div class="flex items-center justify-between mb-4">
+            <div>
+              <h2 class="text-lg font-semibold flex items-center gap-2">
+                <svg class="w-5 h-5 text-[#06b6d4]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4"/></svg>
+                Developer API Keys
+              </h2>
+              <p class="text-sm text-gray-500 mt-1">Create <code class="text-xs text-[#6366f1] font-mono">vp_live_</code> keys for SDK and CLI authentication.</p>
+            </div>
+            <button onclick="showCreateForm()" id="createKeyBtn" class="px-4 py-2.5 bg-[#6366f1] hover:bg-[#5558e6] text-white rounded-xl text-sm font-medium transition btn-glow whitespace-nowrap flex items-center gap-2">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
+              Create API Key
+            </button>
+          </div>
+
+          <!-- Create key form -->
+          <div id="createKeyForm" class="hidden mb-6 p-4 bg-[#0a0a0f] border border-[#1e1e2e] rounded-xl space-y-3 fade-in">
+            <div class="flex flex-col sm:flex-row gap-3">
+              <div class="flex-1">
+                <label class="block text-xs text-gray-500 mb-1">Label</label>
+                <input type="text" id="newKeyLabel" placeholder="e.g. Production SDK" class="w-full px-4 py-2.5 bg-[#111118] border border-[#1e1e2e] rounded-xl text-sm text-white placeholder-gray-600 focus:outline-none focus:border-[#6366f1] transition" />
               </div>
               <div>
-                <div class="text-sm font-medium text-white">Your Developer API Key</div>
-                <div class="text-xs text-gray-500">Use this key in your app or CLI to authenticate with VaultProof</div>
+                <label class="block text-xs text-gray-500 mb-1">Mode</label>
+                <select id="newKeyMode" class="px-4 py-2.5 bg-[#111118] border border-[#1e1e2e] rounded-xl text-sm text-gray-300 focus:outline-none focus:border-[#6366f1]">
+                  <option value="live">Live</option>
+                  <option value="test">Test</option>
+                </select>
               </div>
             </div>
-            <div class="flex items-center gap-2">
-              <code id="devKeyDisplay" class="text-xs font-mono text-gray-400 bg-[#0a0a0f] px-3 py-1.5 rounded-lg border border-[#1e1e2e]">Loading...</code>
-              <button onclick="copyDevKey()" class="text-gray-500 hover:text-white transition p-1.5" title="Copy">
-                <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"/></svg>
-              </button>
+            <div class="flex gap-2">
+              <button onclick="createDevKeyFull()" id="submitKeyBtn" class="px-4 py-2 bg-[#6366f1] hover:bg-[#5558e6] text-white rounded-xl text-sm font-medium transition btn-glow">Create</button>
+              <button onclick="hideCreateForm()" class="px-4 py-2 bg-transparent border border-[#1e1e2e] text-gray-400 hover:text-white rounded-xl text-sm transition">Cancel</button>
             </div>
           </div>
-          <div id="noDevKey" class="hidden mt-3 text-xs text-gray-500">
-            No developer key yet. <button onclick="createDevKey()" class="text-indigo-400 hover:underline">Create one</button> or use the CLI: <code class="text-cyan-400">vaultproof dev-key create</code>
+
+          <!-- New key display -->
+          <div id="newKeyBox" class="hidden mb-6 p-4 bg-indigo-900/15 border-2 border-indigo-700/50 rounded-xl">
+            <div class="flex items-center gap-2 mb-2">
+              <svg class="w-4 h-4 text-indigo-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+              <span class="text-sm font-medium text-indigo-400">API Key Created</span>
+            </div>
+            <div class="flex items-center gap-2 mb-2">
+              <code id="newKeyValue" class="flex-1 text-sm font-mono text-indigo-300 bg-indigo-900/30 px-3 py-2.5 rounded-xl break-all"></code>
+              <button onclick="copyNewKey()" class="px-3 py-2.5 bg-indigo-800/50 hover:bg-indigo-800/80 text-indigo-300 rounded-xl text-sm transition flex items-center gap-1.5">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 5H6a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2v-1M8 5a2 2 0 002 2h2a2 2 0 002-2M8 5a2 2 0 012-2h2a2 2 0 012 2m0 0h2a2 2 0 012 2v3m2 4H10m0 0l3-3m-3 3l3 3"/></svg>
+                Copy
+              </button>
+            </div>
+            <p class="text-xs text-gray-400 flex items-center gap-1.5">
+              <svg class="w-3.5 h-3.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L4.082 16.5c-.77.833.192 2.5 1.732 2.5z"/></svg>
+              Save this — shown once only. You won't see this key again.
+            </p>
           </div>
-        </div>
+
+          <!-- Key list -->
+          <div id="devKeysList">
+            <div id="devKeysLoading" class="text-sm text-gray-500 py-4 text-center">
+              <div class="flex items-center justify-center gap-2">
+                <div class="h-4 w-4 border-2 border-[#6366f1] border-t-transparent rounded-full animate-spin"></div>
+                Loading keys...
+              </div>
+            </div>
+            <div id="devKeysEmpty" class="hidden text-sm text-gray-500 py-8 text-center">
+              <div class="flex flex-col items-center gap-2">
+                <div class="w-10 h-10 rounded-xl bg-[#1e1e2e] flex items-center justify-center">
+                  <svg class="w-5 h-5 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z"/></svg>
+                </div>
+                <span>No developer API keys yet</span>
+                <span class="text-xs text-gray-600">Create one to get started with the SDK or CLI</span>
+              </div>
+            </div>
+            <div id="devKeysTable" class="hidden divide-y divide-[#1e1e2e]"></div>
+          </div>
+        </section>
 
         <!-- Search & Filter -->
         <div class="space-y-3">
@@ -1677,62 +1730,128 @@ exampleBody + '\n' +
       setTimeout(function() { btn.textContent = 'Copy New .env'; }, 2000);
     }
 
-    // ── Developer Key display ──
-    async function loadDevKey() {
+    // ── Developer API Keys ──
+    var newlyCreatedKey = '';
+
+    function showCreateForm() {
+      document.getElementById('createKeyForm').classList.remove('hidden');
+      document.getElementById('newKeyLabel').focus();
+    }
+
+    function hideCreateForm() {
+      document.getElementById('createKeyForm').classList.add('hidden');
+      document.getElementById('newKeyLabel').value = '';
+      document.getElementById('newKeyMode').value = 'live';
+    }
+
+    async function createDevKeyFull() {
+      var btn = document.getElementById('submitKeyBtn');
+      var label = document.getElementById('newKeyLabel').value.trim() || 'SDK Key';
+      var mode = document.getElementById('newKeyMode').value;
+      btn.disabled = true;
+      btn.textContent = 'Creating...';
+
+      try {
+        var res = await fetch(API + '/dev-keys', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
+          body: JSON.stringify({ label: label, mode: mode }),
+        });
+        if (res.ok) {
+          var data = await res.json();
+          newlyCreatedKey = data.key;
+          document.getElementById('newKeyValue').textContent = data.key;
+          document.getElementById('newKeyBox').classList.remove('hidden');
+          hideCreateForm();
+          loadDevKeys();
+        } else {
+          var err = await res.json().catch(function() { return {}; });
+          alert(err.message || 'Failed to create key');
+        }
+      } catch (e) {
+        alert('Network error. Please try again.');
+      }
+      btn.disabled = false;
+      btn.textContent = 'Create';
+    }
+
+    function copyNewKey() {
+      navigator.clipboard.writeText(newlyCreatedKey).then(function() {
+        var btn = event.currentTarget;
+        var orig = btn.innerHTML;
+        btn.innerHTML = '<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg> Copied!';
+        setTimeout(function() { btn.innerHTML = orig; }, 2000);
+      });
+    }
+
+    async function loadDevKeys() {
+      var loading = document.getElementById('devKeysLoading');
+      var empty = document.getElementById('devKeysEmpty');
+      var table = document.getElementById('devKeysTable');
+
       try {
         var res = await fetch(API + '/dev-keys', {
           headers: { 'Authorization': 'Bearer ' + token }
         });
         if (!res.ok) return;
         var data = await res.json();
-        var keys = (data.keys || data || []).filter(function(k) { return !k.revokedAt; });
-        if (keys.length > 0) {
-          var k = keys[0];
-          var masked = k.key ? k.key.slice(0, 12) + '...' + k.key.slice(-4) : k.label || 'vp_live_***';
-          document.getElementById('devKeyDisplay').textContent = masked;
-          document.getElementById('devKeyDisplay').dataset.full = k.key || '';
-        } else {
-          document.getElementById('devKeyDisplay').textContent = 'No key';
-          document.getElementById('noDevKey').classList.remove('hidden');
+        var keys = data.keys || [];
+
+        loading.classList.add('hidden');
+
+        if (keys.length === 0) {
+          empty.classList.remove('hidden');
+          table.classList.add('hidden');
+          return;
         }
+
+        empty.classList.add('hidden');
+        table.classList.remove('hidden');
+        table.innerHTML = keys.map(function(k) {
+          var mode = k.mode || 'live';
+          var modeBadge = mode === 'test'
+            ? '<span class="inline-flex items-center px-2 py-0.5 rounded-lg text-xs font-medium bg-gray-800/50 text-gray-400 border border-gray-700/50">test</span>'
+            : '<span class="inline-flex items-center px-2 py-0.5 rounded-lg text-xs font-medium bg-indigo-900/30 text-indigo-400 border border-indigo-800/50">live</span>';
+          var masked = k.key || k.maskedKey || 'vp_live_****';
+          var created = new Date(k.createdAt || k.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+          var lastUsed = k.lastUsed || k.last_used;
+          var lastUsedStr = lastUsed ? 'Last used ' + new Date(lastUsed).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) : 'Never used';
+          var revoked = k.revokedAt || k.revoked_at;
+          return '<div class="flex items-center justify-between py-4 gap-4">' +
+            '<div class="min-w-0 flex-1">' +
+              '<div class="flex items-center gap-2 flex-wrap">' +
+                '<code class="text-sm font-mono text-gray-300">' + masked + '</code>' +
+                (k.label ? '<span class="text-xs text-gray-500 bg-[#0a0a0f] px-2 py-0.5 rounded-lg border border-[#1e1e2e]">' + k.label + '</span>' : '') +
+                modeBadge +
+                (revoked ? '<span class="text-xs text-red-400">(revoked)</span>' : '') +
+              '</div>' +
+              '<div class="text-xs text-gray-600 mt-1.5">Created ' + created + ' &middot; ' + lastUsedStr + '</div>' +
+            '</div>' +
+            (!revoked ? '<button onclick="revokeDevKey(\'' + k.id + '\')" class="px-3 py-1.5 text-xs text-red-400 hover:text-red-300 border border-red-900/50 hover:border-red-800 hover:bg-red-900/20 rounded-xl transition whitespace-nowrap">Revoke</button>' : '') +
+          '</div>';
+        }).join('');
       } catch (e) {
-        document.getElementById('devKeyDisplay').textContent = 'No key';
-        document.getElementById('noDevKey').classList.remove('hidden');
+        loading.classList.add('hidden');
+        empty.classList.remove('hidden');
       }
     }
 
-    function copyDevKey() {
-      var full = document.getElementById('devKeyDisplay').dataset.full;
-      if (full) {
-        navigator.clipboard.writeText(full);
-        var el = document.getElementById('devKeyDisplay');
-        var orig = el.textContent;
-        el.textContent = 'Copied!';
-        setTimeout(function() { el.textContent = orig; }, 1500);
-      }
-    }
-
-    async function createDevKey() {
+    async function revokeDevKey(id) {
+      if (!confirm('Revoke this developer key? All SDK/CLI calls using it will stop immediately.')) return;
       try {
-        var res = await fetch(API + '/dev-keys', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
-          body: JSON.stringify({ label: 'default', mode: 'live' }),
+        var res = await fetch(API + '/dev-keys/' + id, {
+          method: 'DELETE',
+          headers: { 'Authorization': 'Bearer ' + token }
         });
-        if (!res.ok) throw new Error('Failed');
-        var data = await res.json();
-        var key = data.key || data.fullKey || '';
-        document.getElementById('devKeyDisplay').textContent = key;
-        document.getElementById('devKeyDisplay').dataset.full = key;
-        document.getElementById('noDevKey').classList.add('hidden');
-        alert('Developer key created! Copy it now — it won\'t be shown again in full.\n\n' + key);
+        if (res.ok) loadDevKeys();
+        else alert('Failed to revoke key');
       } catch (e) {
-        alert('Failed to create developer key: ' + e.message);
+        alert('Network error');
       }
     }
 
     loadKeys();
-    loadDevKey();
+    loadDevKeys();
   </script>
 <!-- Analytics -->
 <script>
