@@ -227,27 +227,32 @@
       window.location.replace(url);
     }
 
-    // ── Handle email confirmation code exchange ──
+    // ── Handle email confirmation / OAuth PKCE code exchange ──
+    // Note: Supabase SDK also auto-exchanges ?code= via detectSessionInUrl. If the SDK wins
+    // the race, onAuthStateChange('SIGNED_IN') handles the redirect and this call returns an
+    // error — we silently ignore it to avoid a false "Email confirmation failed" flash.
     const urlSearchParams = new URLSearchParams(window.location.search);
     const confirmCode = urlSearchParams.get('code');
     if (confirmCode) {
-      sbClient.auth.exchangeCodeForSession(confirmCode).then(({ data, error }) => {
+      sbClient.auth.exchangeCodeForSession(confirmCode).then(async ({ data, error }) => {
         if (!error && data.session) {
           localStorage.setItem('vaultproof_token', data.session.access_token);
           localStorage.setItem('vaultproof_user', JSON.stringify({
             id: data.user.id, email: data.user.email
           }));
+          await redeemPendingPromo(data.session);
           safeRedirect('./');
-        } else if (error) {
-          var errEl = document.getElementById('authError');
-          errEl.textContent = 'Email confirmation failed. Please try logging in with your email and password.';
-          errEl.classList.remove('hidden');
+        } else if (error && !isRedirecting) {
+          // Delay so onAuthStateChange can redirect first if it handled the exchange
+          setTimeout(function() {
+            if (!isRedirecting) {
+              var errEl = document.getElementById('authError');
+              errEl.textContent = 'Email confirmation failed. Please try logging in with your email and password.';
+              errEl.classList.remove('hidden');
+            }
+          }, 800);
         }
-      }).catch(function() {
-        var errEl = document.getElementById('authError');
-        errEl.textContent = 'Email confirmation failed. Please try logging in with your email and password.';
-        errEl.classList.remove('hidden');
-      });
+      }).catch(function() {});
     }
 
     // ── Check for CLI callback param ──
@@ -279,14 +284,17 @@
     // Pre-fill promo input if ?promo= is in URL (backwards compat)
     if (promoParam) {
       localStorage.setItem('vp_promo', promoParam);
-      const input = document.getElementById('promoCodeInput');
-      if (input) {
-        input.value = promoParam;
-        document.getElementById('promoRow').classList.remove('hidden');
-        const msg = document.getElementById('promoCodeMsg');
-        msg.textContent = 'Code saved \u2014 will be applied after you sign up.';
-        msg.className = 'text-xs text-indigo-400 mt-1.5';
-        msg.classList.remove('hidden');
+      // Don't show promo UI during OAuth/email callback (?code= present) — avoids flash before redirect
+      if (!confirmCode) {
+        const input = document.getElementById('promoCodeInput');
+        if (input) {
+          input.value = promoParam;
+          document.getElementById('promoRow').classList.remove('hidden');
+          const msg = document.getElementById('promoCodeMsg');
+          msg.textContent = 'Code saved \u2014 will be applied after you sign up.';
+          msg.className = 'text-xs text-indigo-400 mt-1.5';
+          msg.classList.remove('hidden');
+        }
       }
     }
 
