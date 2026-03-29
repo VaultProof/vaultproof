@@ -1155,6 +1155,58 @@
       document.getElementById('feedbackNudge').classList.add('hidden');
     }
 
+    // ── Welcome modal ──
+    async function checkWelcome() {
+      if (localStorage.getItem('vp_welcomed')) return;
+      document.getElementById('welcomeModal').classList.remove('hidden');
+    }
+
+    function dismissWelcome() {
+      localStorage.setItem('vp_welcomed', '1');
+      document.getElementById('welcomeModal').classList.add('hidden');
+    }
+
+    async function redeemWelcomePromo() {
+      const input = document.getElementById('welcomePromoInput');
+      const code = input.value.trim().toUpperCase();
+      const msg = document.getElementById('welcomePromoMsg');
+      if (!code) { input.focus(); return; }
+      if (!/^[A-Z0-9_-]{1,50}$/.test(code)) {
+        msg.textContent = 'Invalid code format.';
+        msg.className = 'text-xs text-red-400 mt-2';
+        return;
+      }
+      const btn = document.getElementById('welcomePromoBtn');
+      btn.disabled = true;
+      btn.textContent = 'Redeeming…';
+      msg.textContent = '';
+      try {
+        const res = await fetch(`${API}/promo/redeem`, {
+          method: 'POST',
+          headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
+          body: JSON.stringify({ code }),
+        });
+        const data = await res.json().catch(() => ({}));
+        if (res.ok) {
+          msg.textContent = 'Pro access activated — enjoy VaultProof!';
+          msg.className = 'text-xs text-green-400 mt-2';
+          btn.textContent = 'Redeemed!';
+          input.disabled = true;
+          localStorage.removeItem('vp_promo');
+        } else {
+          msg.textContent = data.error || 'Could not redeem code.';
+          msg.className = 'text-xs text-red-400 mt-2';
+          btn.disabled = false;
+          btn.textContent = 'Apply';
+        }
+      } catch (e) {
+        msg.textContent = 'Network error — try again.';
+        msg.className = 'text-xs text-red-400 mt-2';
+        btn.disabled = false;
+        btn.textContent = 'Apply';
+      }
+    }
+
     // ── Init — load immediately, apiFetch handles 401 with auto-refresh ──
     loadOverview();
     loadUsageChart();
@@ -1162,8 +1214,64 @@
     loadNotifications();
     checkOnboarding();
     checkPromoFeedback();
+    checkWelcome();
   </script>
   </div><!-- max-width wrapper -->
+<!-- Welcome Modal -->
+<div id="welcomeModal" class="hidden fixed inset-0 z-50 flex items-center justify-center p-4" style="background:rgba(0,0,0,0.7);backdrop-filter:blur(4px)">
+  <div class="bg-[#111118] border border-[#1e1e2e] rounded-2xl shadow-2xl shadow-black/60 w-full max-w-md p-8" style="animation:slideUp 0.3s ease">
+    <!-- Icon -->
+    <div class="w-12 h-12 rounded-2xl bg-indigo-500/15 border border-indigo-500/20 flex items-center justify-center mb-5">
+      <svg class="w-6 h-6 text-indigo-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+      </svg>
+    </div>
+    <!-- Heading -->
+    <h2 class="text-xl font-bold text-white mb-2" style="font-family:'Space Grotesk',sans-serif">Welcome to VaultProof</h2>
+    <p class="text-sm text-gray-400 mb-6 leading-relaxed">Your API keys are now protected with zero-knowledge encryption. Store keys, proxy requests, and sleep easy knowing your credentials never touch our servers in plain text.</p>
+    <!-- Steps -->
+    <div class="space-y-3 mb-6">
+      <div class="flex items-start gap-3">
+        <span class="w-5 h-5 rounded-full bg-indigo-500/20 border border-indigo-500/40 flex items-center justify-center flex-shrink-0 mt-0.5 text-xs text-indigo-400 font-bold">1</span>
+        <div>
+          <p class="text-sm font-medium text-white">Store your first API key</p>
+          <p class="text-xs text-gray-500">Head to <a href="/app/keys" class="text-indigo-400 hover:underline">Keys</a> and add any provider key — OpenAI, Anthropic, and more.</p>
+        </div>
+      </div>
+      <div class="flex items-start gap-3">
+        <span class="w-5 h-5 rounded-full bg-indigo-500/20 border border-indigo-500/40 flex items-center justify-center flex-shrink-0 mt-0.5 text-xs text-indigo-400 font-bold">2</span>
+        <div>
+          <p class="text-sm font-medium text-white">Create a developer key</p>
+          <p class="text-xs text-gray-500">Generate a <code class="text-indigo-400">vp_live_</code> key and drop it in your project's <code class="text-gray-400">.env</code> file.</p>
+        </div>
+      </div>
+      <div class="flex items-start gap-3">
+        <span class="w-5 h-5 rounded-full bg-indigo-500/20 border border-indigo-500/40 flex items-center justify-center flex-shrink-0 mt-0.5 text-xs text-indigo-400 font-bold">3</span>
+        <div>
+          <p class="text-sm font-medium text-white">Proxy your first request</p>
+          <p class="text-xs text-gray-500">Point your SDK at <code class="text-indigo-400">api.vaultproof.dev</code> — no other code changes needed.</p>
+        </div>
+      </div>
+    </div>
+    <!-- Promo code -->
+    <div class="border-t border-[#1e1e2e] pt-5 mb-5">
+      <p class="text-xs text-gray-500 mb-2">Have a promo code? Get 1 year of Pro free.</p>
+      <div class="flex gap-2">
+        <input id="welcomePromoInput" type="text" placeholder="PRODUCTHUNT" maxlength="50"
+          class="flex-1 bg-[#0a0a0f] border border-[#1e1e2e] rounded-xl px-3 py-2 text-sm text-gray-300 font-mono uppercase focus:border-indigo-500 focus:outline-none placeholder-gray-700"
+          onkeydown="if(event.key==='Enter') redeemWelcomePromo()" />
+        <button id="welcomePromoBtn" onclick="redeemWelcomePromo()"
+          class="px-4 py-2 bg-[#1e1e2e] hover:bg-[#2a2a3a] text-gray-300 hover:text-white rounded-xl text-sm font-medium transition">Apply</button>
+      </div>
+      <p id="welcomePromoMsg" class="text-xs text-gray-500 mt-2"></p>
+    </div>
+    <!-- CTA -->
+    <button onclick="dismissWelcome()" class="w-full px-4 py-2.5 bg-[#6366f1] hover:bg-[#5558e6] text-white rounded-xl text-sm font-semibold transition">
+      Get started
+    </button>
+  </div>
+</div>
+
 <!-- Promo Feedback Nudge -->
 <div id="feedbackNudge" class="hidden fixed bottom-6 right-6 z-50 bg-[#111118] border border-[#6366f1]/30 rounded-2xl p-5 shadow-2xl shadow-black/50 max-w-sm" style="animation: fadeIn 0.3s ease">
   <div class="text-sm font-semibold text-white mb-1">You're helping shape VaultProof!</div>
