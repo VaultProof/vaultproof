@@ -166,7 +166,7 @@
                 <a href="/compare" class="text-sm text-gray-400 hover:text-white transition">Compare</a>
                 <a href="/blog" class="text-sm text-gray-400 hover:text-white transition">Insights</a>
                 <a href="/#pricing" class="text-sm text-gray-400 hover:text-white transition">Pricing</a>
-                <a href="/app/login" class="text-sm text-gray-400 hover:text-white transition">Dashboard</a>
+                <a href="/app/login" class="nav-dashboard text-sm text-gray-400 hover:text-white transition" style="display:none">Dashboard</a>
                 <a href="/app/login" class="bg-vp-accent hover:bg-indigo-500 text-sm px-4 py-2 rounded-xl font-medium text-white transition">Get Started</a>
             </div>
 
@@ -183,7 +183,7 @@
             <a href="/compare" class="text-sm text-gray-400 hover:text-white transition py-1">Compare</a>
             <a href="/blog" class="text-sm text-gray-400 hover:text-white transition py-1">Insights</a>
             <a href="/#pricing" class="text-sm text-gray-400 hover:text-white transition py-1">Pricing</a>
-            <a href="/app/login" class="text-sm text-gray-400 hover:text-white transition py-1">Dashboard</a>
+            <a href="/app/login" class="nav-dashboard text-sm text-gray-400 hover:text-white transition py-1" style="display:none">Dashboard</a>
             <a href="/app/login" class="bg-vp-accent hover:bg-indigo-500 text-sm px-5 py-2.5 rounded-xl font-medium text-white transition text-center mt-2">Get Started</a>
         </div>
     </nav>
@@ -3064,6 +3064,27 @@ Authorization: Bearer &lt;jwt_token&gt;
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ type: 'pageview', page: location.pathname, referrer: ref, sessionId: sid }),
   }).catch(function(){});
+})();
+</script>
+<script>
+(function() {
+    function isLoggedIn() {
+        for (var i = 0; i < localStorage.length; i++) {
+            var key = localStorage.key(i);
+            if (key && key.startsWith('sb-') && key.endsWith('-auth-token')) {
+                try {
+                    var d = JSON.parse(localStorage.getItem(key));
+                    if (d && d.access_token && d.expires_at > Date.now() / 1000) return true;
+                } catch(e) {}
+            }
+        }
+        return false;
+    }
+    if (isLoggedIn()) {
+        document.querySelectorAll('.nav-dashboard').forEach(function(el) {
+            el.style.display = '';
+        });
+    }
 })();
 </script>
 </body>

@@ -208,7 +208,7 @@
                     <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><polygon points="5,3 19,12 5,21"/></svg>
                     Demo
                 </a>
-                <a href="/app/login" class="text-sm text-gray-400 hover:text-white transition-colors">Dashboard</a>
+                <a href="/app/login" class="nav-dashboard text-sm text-gray-400 hover:text-white transition-colors" style="display:none">Dashboard</a>
                 <a href="/app/login" class="bg-vp-accent hover:bg-indigo-500 text-sm px-5 py-2 rounded-btn font-semibold text-white transition-all btn-glow">Get Started</a>
             </div>
 
@@ -226,7 +226,7 @@
             <a href="/blog" class="text-sm text-gray-400 hover:text-white transition-colors py-1">Insights</a>
             <a href="#pricing" class="text-sm text-gray-400 hover:text-white transition-colors py-1">Pricing</a>
             <a href="/demo" class="text-sm text-indigo-400 hover:text-indigo-300 transition-colors py-1 font-medium">Demo</a>
-            <a href="/app/login" class="text-sm text-gray-400 hover:text-white transition-colors py-1">Dashboard</a>
+            <a href="/app/login" class="nav-dashboard text-sm text-gray-400 hover:text-white transition-colors py-1" style="display:none">Dashboard</a>
             <a href="/app/login" class="bg-vp-accent hover:bg-indigo-500 text-sm px-5 py-2.5 rounded-btn font-semibold text-white transition-all text-center btn-glow mt-2">Get Started</a>
         </div>
     </nav>
@@ -985,7 +985,7 @@ const res = await vault.proxy(key, '/v1/chat/completions', {
                     <a href="/compare" class="text-sm text-gray-500 hover:text-white transition-colors">Compare</a>
                     <a href="/changelog" class="text-sm text-gray-500 hover:text-white transition-colors">Changelog</a>
                     <a href="/verify" class="text-sm text-gray-500 hover:text-white transition-colors">Verify</a>
-                    <a href="/app/login" class="text-sm text-gray-500 hover:text-white transition-colors">Dashboard</a>
+                    <a href="/app/login" class="nav-dashboard text-sm text-gray-500 hover:text-white transition-colors" style="display:none">Dashboard</a>
                     <a href="https://github.com/windsurftemplate/vaultproof" target="_blank" rel="noopener" class="text-sm text-gray-500 hover:text-white transition-colors">GitHub</a>
                     <a href="/terms" class="text-sm text-gray-500 hover:text-white transition-colors">Terms</a>
                     <a href="/privacy" class="text-sm text-gray-500 hover:text-white transition-colors">Privacy</a>
@@ -1222,6 +1222,27 @@ const res = await vault.proxy(key, '/v1/chat/completions', {
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ type: 'pageview', page: location.pathname, referrer: ref, sessionId: sid }),
   }).catch(function(){});
+})();
+</script>
+<script>
+(function() {
+    function isLoggedIn() {
+        for (var i = 0; i < localStorage.length; i++) {
+            var key = localStorage.key(i);
+            if (key && key.startsWith('sb-') && key.endsWith('-auth-token')) {
+                try {
+                    var d = JSON.parse(localStorage.getItem(key));
+                    if (d && d.access_token && d.expires_at > Date.now() / 1000) return true;
+                } catch(e) {}
+            }
+        }
+        return false;
+    }
+    if (isLoggedIn()) {
+        document.querySelectorAll('.nav-dashboard').forEach(function(el) {
+            el.style.display = '';
+        });
+    }
 })();
 </script>
 </body>
