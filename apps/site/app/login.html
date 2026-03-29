@@ -232,8 +232,16 @@
             id: data.user.id, email: data.user.email
           }));
           safeRedirect('./');
+        } else if (error) {
+          var errEl = document.getElementById('authError');
+          errEl.textContent = 'Email confirmation failed. Please try logging in with your email and password.';
+          errEl.classList.remove('hidden');
         }
-      }).catch(() => {});
+      }).catch(function() {
+        var errEl = document.getElementById('authError');
+        errEl.textContent = 'Email confirmation failed. Please try logging in with your email and password.';
+        errEl.classList.remove('hidden');
+      });
     }
 
     // ── Check for CLI callback param ──
@@ -256,9 +264,10 @@
       }
     }
 
-    // ── Detect ?promo= param and store ──
+    // ── Detect ?promo= param and store (clear stale promo if no param) ──
     const promoParam = urlParams.get('promo');
     if (promoParam) localStorage.setItem('vp_promo', promoParam.toUpperCase());
+    else localStorage.removeItem('vp_promo');
 
     // ── Show promo banner only when ?promo= is in the URL ──
     if (promoParam) {
@@ -285,23 +294,27 @@
       if (target) target.prepend(banner);
     }
 
-    // ── Auto-redeem promo helper ──
+    // ── Auto-redeem promo helper (3s timeout to avoid blocking login) ──
     async function redeemPendingPromo(session) {
       const pendingPromo = localStorage.getItem('vp_promo');
       if (pendingPromo && session) {
         try {
+          const controller = new AbortController();
+          const timeout = setTimeout(function() { controller.abort(); }, 3000);
           const res = await fetch('https://api.vaultproof.dev/api/v1/promo/redeem', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + session.access_token },
             body: JSON.stringify({ code: pendingPromo }),
+            signal: controller.signal,
           });
+          clearTimeout(timeout);
           if (res.ok) localStorage.removeItem('vp_promo');
-        } catch (e) { console.error('Promo redeem failed:', e); }
+        } catch (e) { console.error('Promo redeem failed or timed out:', e); }
       }
     }
 
     // ── Check if already logged in (skip if handling code exchange or loop detected) ──
-    if (!confirmCode && loopCount <= 3) {
+    if (!confirmCode && loopHistory.length < 3) {
       (async () => {
         const { data: { session } } = await sbClient.auth.getSession();
         if (session && !isRedirecting) {
