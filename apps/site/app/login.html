@@ -198,26 +198,26 @@
       'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imd3emtqaW9tZW1qbGh0cmRybGFuIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQzNDM3ODIsImV4cCI6MjA4OTkxOTc4Mn0.tgHUvpBvFiojetuqIP0sKb0iBNbKDJHdeo9n3Tofa3o'
     );
 
-    // ── Loop detection ──
+    // ── Loop detection (timestamp-based) ──
     let isRedirecting = false;
-    const loopKey = 'vp_login_redirects';
-    const loopCount = parseInt(sessionStorage.getItem(loopKey) || '0', 10);
-    if (loopCount > 3) {
-      // Break the loop — clear everything and show the login form
+    const loopKey = 'vp_login_ts';
+    const now = Date.now();
+    const loopHistory = JSON.parse(sessionStorage.getItem(loopKey) || '[]').filter(function(t) { return now - t < 5000; });
+    if (loopHistory.length >= 3) {
+      // 3+ redirects in 5 seconds = loop. Break it.
       sessionStorage.removeItem(loopKey);
       localStorage.removeItem('vaultproof_token');
       localStorage.removeItem('vaultproof_user');
       localStorage.removeItem('vp_promo');
-      sbClient.auth.signOut().catch(() => {});
+      sbClient.auth.signOut().catch(function() {});
       console.warn('Login loop detected — cleared auth state');
     }
 
     function safeRedirect(url) {
       if (isRedirecting) return;
       isRedirecting = true;
-      sessionStorage.setItem(loopKey, String(loopCount + 1));
-      // Clear loop counter after successful navigation (2s timeout)
-      setTimeout(function() { sessionStorage.removeItem(loopKey); }, 2000);
+      loopHistory.push(Date.now());
+      sessionStorage.setItem(loopKey, JSON.stringify(loopHistory));
       window.location.replace(url);
     }
 
