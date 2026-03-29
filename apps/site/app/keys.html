@@ -1790,6 +1790,27 @@ exampleBody + '\n' +
     // ── Developer API Keys ──
     var newlyCreatedKey = '';
 
+    // Restore unsaved key from sessionStorage on page load
+    (function() {
+      var saved = sessionStorage.getItem('vp_pending_devkey');
+      if (saved) {
+        try {
+          var parsed = JSON.parse(saved);
+          // Expire after 30 minutes
+          if (parsed.key && Date.now() - parsed.ts < 30 * 60 * 1000) {
+            newlyCreatedKey = parsed.key;
+            document.getElementById('newKeyValue').textContent = parsed.key;
+            document.getElementById('newKeyBox').classList.remove('hidden');
+            // Add a warning that this is a recovered key
+            var warn = document.getElementById('newKeyBox').querySelector('p');
+            if (warn) warn.textContent = '\u26a0\ufe0f Key recovered from your last session \u2014 copy it now, it won\'t appear again after you close this tab.';
+          } else {
+            sessionStorage.removeItem('vp_pending_devkey');
+          }
+        } catch(e) { sessionStorage.removeItem('vp_pending_devkey'); }
+      }
+    })();
+
     function showCreateForm() {
       document.getElementById('createKeyForm').classList.remove('hidden');
       document.getElementById('newKeyLabel').focus();
@@ -1816,13 +1837,17 @@ exampleBody + '\n' +
         if (res && res.ok) {
           var data = await res.json();
           newlyCreatedKey = data.key;
+          // Persist to sessionStorage so a refresh doesn't lose it
+          sessionStorage.setItem('vp_pending_devkey', JSON.stringify({ key: data.key, ts: Date.now() }));
           document.getElementById('newKeyValue').textContent = data.key;
+          var warn = document.getElementById('newKeyBox').querySelector('p');
+          if (warn) warn.textContent = 'Save this \u2014 shown once only. You won\'t see this key again.';
           document.getElementById('newKeyBox').classList.remove('hidden');
           hideCreateForm();
           loadDevKeys();
         } else if (res) {
           var err = await res.json().catch(function() { return {}; });
-          alert(err.message || 'Failed to create key');
+          alert(err.error || err.message || 'Failed to create key');
         }
       } catch (e) {
         alert('Network error. Please try again.');
@@ -1833,6 +1858,7 @@ exampleBody + '\n' +
 
     function copyNewKey() {
       navigator.clipboard.writeText(newlyCreatedKey).then(function() {
+        sessionStorage.removeItem('vp_pending_devkey');
         var btn = event.currentTarget;
         var orig = btn.innerHTML;
         btn.innerHTML = '<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg> Copied!';
