@@ -35,7 +35,9 @@ import { warmupVerifier } from './crypto/proof-verifier.js';
 config();
 
 const PORT = parseInt(process.env.PORT || '3333', 10);
-const ALLOWED_ORIGINS = process.env.ALLOWED_ORIGINS?.split(',') || ['http://localhost:3000'];
+const ALLOWED_ORIGINS = (process.env.ALLOWED_ORIGINS || '')
+  .split(',').map(o => o.trim()).filter(Boolean);
+if (!ALLOWED_ORIGINS.length) ALLOWED_ORIGINS.push('http://localhost:3000');
 
 // Validate required secrets in production
 if (process.env.NODE_ENV !== 'test' && process.env.NODE_ENV !== 'development') {
@@ -48,6 +50,13 @@ if (process.env.NODE_ENV !== 'test' && process.env.NODE_ENV !== 'development') {
   }
   if (!process.env.PROXY_SECRET) {
     missing.push('PROXY_SECRET');
+  }
+  if (!process.env.ALLOWED_ORIGINS) {
+    missing.push('ALLOWED_ORIGINS');
+  }
+  const nonHttpsOrigins = ALLOWED_ORIGINS.filter(o => !o.startsWith('https://'));
+  if (nonHttpsOrigins.length) {
+    missing.push(`ALLOWED_ORIGINS must use https:// in production (found: ${nonHttpsOrigins.join(', ')})`);
   }
   if (missing.length > 0) {
     console.error('FATAL: Missing required secrets for production:');

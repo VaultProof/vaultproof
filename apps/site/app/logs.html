@@ -340,9 +340,15 @@
              d.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
     }
 
+    function escapeHtml(str) {
+      return (str == null ? '' : String(str))
+        .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;').replace(/'/g, '&#039;');
+    }
+
     function providerBadge(provider) {
       const c = 'bg-indigo-900/50 text-indigo-400 border-indigo-800';
-      return `<span class="inline-flex items-center px-2 py-0.5 rounded-lg text-xs font-medium border ${c}">${provider || 'Unknown'}</span>`;
+      return `<span class="inline-flex items-center px-2 py-0.5 rounded-lg text-xs font-medium border ${c}">${escapeHtml(provider || 'Unknown')}</span>`;
     }
 
     function statusBadge(status) {
@@ -450,11 +456,11 @@
             <td class="px-5 py-3.5 whitespace-nowrap">
               <div class="flex items-center gap-2">
                 ${providerBadge(l.provider)}
-                <span class="text-gray-300 text-xs">${l.keyLabel || '—'}</span>
+                <span class="text-gray-300 text-xs">${escapeHtml(l.keyLabel || '—')}</span>
               </div>
             </td>
-            <td class="px-5 py-3.5 text-gray-300 whitespace-nowrap text-sm">${l.appName || '—'}</td>
-            <td class="px-5 py-3.5 text-gray-400 whitespace-nowrap font-mono text-xs">${l.endpoint || '—'}</td>
+            <td class="px-5 py-3.5 text-gray-300 whitespace-nowrap text-sm">${escapeHtml(l.appName || '—')}</td>
+            <td class="px-5 py-3.5 text-gray-400 whitespace-nowrap font-mono text-xs">${escapeHtml(l.endpoint || '—')}</td>
             <td class="px-5 py-3.5 whitespace-nowrap">${statusBadge(l.status)}</td>
             <td class="px-5 py-3.5 text-gray-400 whitespace-nowrap text-sm font-mono">${l.latency != null ? l.latency + '<span class="text-gray-600 text-xs ml-0.5">ms</span>' : '—'}</td>
             <td class="px-5 py-3.5 whitespace-nowrap">${zkBadge(l.zkProofVerified)}</td>

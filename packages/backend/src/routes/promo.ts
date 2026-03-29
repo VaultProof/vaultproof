@@ -12,7 +12,7 @@ const PROMO_CODES: Record<string, { tier: string; durationDays: number; maxRedem
 export async function promoRoutes(app: FastifyInstance) {
   // POST /redeem — Redeem a promo code (requires auth)
   app.post('/redeem', { preHandler: [requireAuth] }, async (request, reply) => {
-    const schema = z.object({ code: z.string().min(1).max(100) });
+    const schema = z.object({ code: z.string().min(1).max(50).regex(/^[A-Z0-9_-]+$/i) });
     const parsed = schema.safeParse(request.body);
     if (!parsed.success) return reply.status(400).send({ error: 'Missing or invalid code' });
 
@@ -54,6 +54,7 @@ export async function promoRoutes(app: FastifyInstance) {
   // GET /check/:code — Check if a promo code is valid (no auth)
   app.get('/check/:code', async (request, reply) => {
     const { code } = request.params as { code: string };
+    if (!/^[A-Z0-9_-]{1,50}$/i.test(code)) return reply.status(400).send({ error: 'Invalid promo code format' });
     const normalized = code.toUpperCase().trim();
     const config = PROMO_CODES[normalized];
     if (!config) return reply.status(404).send({ error: 'Invalid promo code' });

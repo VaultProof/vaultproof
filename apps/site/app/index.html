@@ -669,6 +669,12 @@
     };
 
     // ── Utilities ──
+    function escapeHtml(str) {
+      return (str == null ? '' : String(str))
+        .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;').replace(/'/g, '&#039;');
+    }
+
     function relativeTime(ts) {
       if (!ts) return '--';
       const diff = Math.floor((Date.now() - new Date(ts).getTime()) / 1000);
@@ -790,8 +796,8 @@
       feed.innerHTML = events.map((ev, i) => {
         const type = ev.action || ev.type || 'unknown';
         const c = activityColor(type);
-        const keyLabel = (ev.keySlot && ev.keySlot.label) || ev.keyLabel || '--';
-        const provider = (ev.keySlot && ev.keySlot.provider) || '';
+        const keyLabel = escapeHtml((ev.keySlot && ev.keySlot.label) || ev.keyLabel || '--');
+        const provider = escapeHtml((ev.keySlot && ev.keySlot.provider) || '');
         let description = ev.description || '';
         if (!description && ev.metadata) {
           try {
@@ -799,7 +805,7 @@
             description = meta.endpoint || meta.provider || '';
           } catch {}
         }
-        if (!description) description = provider || ev.appId || '--';
+        description = escapeHtml(description || provider || ev.appId || '--');
         return `
           <div class="flex gap-3 p-3 rounded-xl hover:bg-white/[0.03] transition anim-fade-up" style="animation-delay:${600 + i * 80}ms">
             <div class="flex-shrink-0 mt-0.5">

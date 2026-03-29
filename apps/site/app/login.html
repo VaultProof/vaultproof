@@ -249,15 +249,17 @@
     const rawCliCallback = urlParams.get('cli_callback');
     const cliState = urlParams.get('state');
 
-    // Validate cli_callback is localhost/127.0.0.1 only (prevent open redirect)
+    // Validate cli_callback: must be http/https on localhost/127.0.0.1 only
     let cliCallback = null;
     if (rawCliCallback) {
       try {
         const cbUrl = new URL(rawCliCallback);
-        if (cbUrl.hostname === 'localhost' || cbUrl.hostname === '127.0.0.1') {
+        const safeProtocol = cbUrl.protocol === 'http:' || cbUrl.protocol === 'https:';
+        const safeHost = cbUrl.hostname === 'localhost' || cbUrl.hostname === '127.0.0.1';
+        if (safeProtocol && safeHost) {
           cliCallback = rawCliCallback;
         } else {
-          console.warn('cli_callback rejected: not localhost');
+          console.warn('cli_callback rejected: must be http/https on localhost');
         }
       } catch {
         console.warn('cli_callback rejected: invalid URL');
@@ -265,8 +267,10 @@
     }
 
     // ── Detect ?promo= param and store (clear stale promo if no param) ──
-    const promoParam = urlParams.get('promo');
-    if (promoParam) localStorage.setItem('vp_promo', promoParam.toUpperCase());
+    const rawPromo = urlParams.get('promo');
+    // Only accept alphanumeric + underscore/hyphen, max 50 chars
+    const promoParam = rawPromo && /^[A-Z0-9_-]{1,50}$/i.test(rawPromo) ? rawPromo.toUpperCase() : null;
+    if (promoParam) localStorage.setItem('vp_promo', promoParam);
     else localStorage.removeItem('vp_promo');
 
     // ── Show promo banner only when ?promo= is in the URL ──
@@ -274,7 +278,7 @@
       const banner = document.getElementById('promoBanner');
       if (banner) banner.classList.remove('hidden');
       // Check if promo is still available
-      fetch('https://api.vaultproof.dev/api/v1/promo/check/' + promoParam.toUpperCase())
+      fetch('https://api.vaultproof.dev/api/v1/promo/check/' + encodeURIComponent(promoParam))
         .then(r => r.json())
         .then(d => {
           if (d.valid && d.spotsLeft <= 0) {

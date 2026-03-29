@@ -994,8 +994,8 @@ STRIPE_SECRET_KEY=sk_live_..."></textarea>
             logsEl.innerHTML = logs.map(function(l) {
               return '<tr class="border-t border-border/30">' +
                 '<td class="py-2 pr-4 text-gray-400 whitespace-nowrap">' + formatTime(l.timestamp) + '</td>' +
-                '<td class="py-2 pr-4 text-gray-300">' + (l.appName || '\u2014') + '</td>' +
-                '<td class="py-2 pr-4 text-gray-400 font-mono">' + (l.endpoint || '\u2014') + '</td>' +
+                '<td class="py-2 pr-4 text-gray-300">' + escapeHtml(l.appName || '\u2014') + '</td>' +
+                '<td class="py-2 pr-4 text-gray-400 font-mono">' + escapeHtml(l.endpoint || '\u2014') + '</td>' +
                 '<td class="py-2 pr-4">' + statusBadge(l.status) + '</td>' +
               '</tr>';
             }).join('');
@@ -1271,16 +1271,16 @@ STRIPE_SECRET_KEY=sk_live_..."></textarea>
         if (res.ok) {
           resultEl.innerHTML = '<div class="bg-indigo-500/10 border border-indigo-500/20 rounded-xl p-3">' +
             '<div class="text-sm text-indigo-400 font-medium mb-1">Key works! Status: ' + res.status + '</div>' +
-            '<pre class="text-xs text-gray-400 overflow-x-auto max-h-40 overflow-y-auto font-mono">' + JSON.stringify(data, null, 2).substring(0, 500) + '</pre>' +
+            '<pre class="text-xs text-gray-400 overflow-x-auto max-h-40 overflow-y-auto font-mono">' + escapeHtml(JSON.stringify(data, null, 2).substring(0, 500)) + '</pre>' +
           '</div>';
         } else {
           resultEl.innerHTML = '<div class="bg-red-500/10 border border-red-500/20 rounded-xl p-3">' +
-            '<div class="text-sm text-red-400 font-medium mb-1">Test failed: ' + (data.error || res.status) + '</div>' +
-            '<pre class="text-xs text-gray-500 overflow-x-auto font-mono">' + JSON.stringify(data, null, 2).substring(0, 300) + '</pre>' +
+            '<div class="text-sm text-red-400 font-medium mb-1">Test failed: ' + escapeHtml(String(data.error || res.status)) + '</div>' +
+            '<pre class="text-xs text-gray-500 overflow-x-auto font-mono">' + escapeHtml(JSON.stringify(data, null, 2).substring(0, 300)) + '</pre>' +
           '</div>';
         }
       } catch (err) {
-        resultEl.innerHTML = '<div class="bg-red-500/10 border border-red-500/20 rounded-xl p-3 text-sm text-red-400">Network error: ' + err.message + '</div>';
+        resultEl.innerHTML = '<div class="bg-red-500/10 border border-red-500/20 rounded-xl p-3 text-sm text-red-400">Network error: ' + escapeHtml(err.message) + '</div>';
       }
 
       btn.innerHTML = '<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>Test';
@@ -1631,7 +1631,7 @@ exampleBody + '\n' +
           '<div class="text-sm text-white font-medium">' + k.envName + '</div>' +
           '<div class="text-xs text-gray-500 font-mono truncate">' + masked + '</div>' +
           '</div>' +
-          '<span class="text-xs px-2 py-0.5 rounded-lg bg-indigo-500/10 text-indigo-400 border border-indigo-500/20">' + k.provider + '</span>' +
+          '<span class="text-xs px-2 py-0.5 rounded-lg bg-indigo-500/10 text-indigo-400 border border-indigo-500/20">' + escapeHtml(k.provider) + '</span>' +
           '</label>';
       }
       list.innerHTML = html;
