@@ -1007,8 +1007,14 @@
     // Add highlight
     target.classList.add('guide-highlight');
 
-    // Scroll target into view
-    target.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    // Scroll target into view — for fixed/sidebar elements, scroll to top first
+    var rect = target.getBoundingClientRect();
+    if (rect.top < 0 || rect.bottom > window.innerHeight) {
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+    setTimeout(function() {
+      target.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    }, 100);
 
     // Update bubble content
     textEl.textContent = s.text;
