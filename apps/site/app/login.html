@@ -96,10 +96,16 @@
       <p class="text-sm text-gray-500 mt-1">Zero-knowledge API key infrastructure</p>
     </div>
 
-    <!-- Promo banner -->
-    <div id="promoBanner" class="hidden mb-4 p-3 bg-indigo-500/10 border border-indigo-500/30 rounded-xl text-center" style="max-width:400px;margin:0 auto">
-      <div class="text-sm font-medium text-indigo-400">Welcome Product Hunt users!</div>
-      <div id="promoMessage" class="text-xs text-gray-400 mt-1">Free Pro account for 1 year and help us improve VaultProof with your feedback</div>
+    <!-- Promo code entry -->
+    <div class="mb-4 text-center" style="max-width:400px;margin:0 auto">
+      <button type="button" onclick="document.getElementById('promoRow').classList.toggle('hidden')" class="text-xs text-indigo-400 hover:text-indigo-300 transition">Have a promo code?</button>
+      <div id="promoRow" class="hidden mt-2 flex gap-2">
+        <input id="promoCodeInput" type="text" placeholder="Enter code" maxlength="50"
+          class="flex-1 bg-[#111118] border border-[#1e1e2e] rounded-xl px-3 py-2 text-sm text-gray-300 font-mono uppercase focus:border-indigo-500 focus:outline-none placeholder-gray-600"
+          onkeydown="if(event.key==='Enter') applyPromoCode()" />
+        <button type="button" onclick="applyPromoCode()" class="px-4 py-2 bg-[#1e1e2e] hover:bg-[#2a2a3a] text-gray-300 hover:text-white rounded-xl text-sm font-medium transition">Apply</button>
+      </div>
+      <p id="promoCodeMsg" class="text-xs mt-1.5 hidden"></p>
     </div>
 
     <!-- Card -->
@@ -270,23 +276,46 @@
     const rawPromo = urlParams.get('promo');
     // Only accept alphanumeric + underscore/hyphen, max 50 chars
     const promoParam = rawPromo && /^[A-Z0-9_-]{1,50}$/i.test(rawPromo) ? rawPromo.toUpperCase() : null;
-    if (promoParam) localStorage.setItem('vp_promo', promoParam);
-    else localStorage.removeItem('vp_promo');
-
-    // ── Show promo banner only when ?promo= is in the URL ──
+    // Pre-fill promo input if ?promo= is in URL (backwards compat)
     if (promoParam) {
-      const banner = document.getElementById('promoBanner');
-      if (banner) banner.classList.remove('hidden');
-      // Check if promo is still available
-      fetch('https://api.vaultproof.dev/api/v1/promo/check/' + encodeURIComponent(promoParam))
-        .then(r => r.json())
-        .then(d => {
-          if (d.valid && d.spotsLeft <= 0) {
-            document.getElementById('promoMessage').textContent = 'This promo has ended — all spots have been claimed. You can still sign up for a free account!';
-            document.getElementById('promoMessage').classList.remove('text-gray-400');
-            document.getElementById('promoMessage').classList.add('text-gray-500');
+      localStorage.setItem('vp_promo', promoParam);
+      const input = document.getElementById('promoCodeInput');
+      if (input) {
+        input.value = promoParam;
+        document.getElementById('promoRow').classList.remove('hidden');
+        const msg = document.getElementById('promoCodeMsg');
+        msg.textContent = 'Code saved \u2014 will be applied after you sign up.';
+        msg.className = 'text-xs text-indigo-400 mt-1.5';
+        msg.classList.remove('hidden');
+      }
+    }
+
+    function applyPromoCode() {
+      const input = document.getElementById('promoCodeInput');
+      const msg = document.getElementById('promoCodeMsg');
+      const code = input.value.trim().toUpperCase();
+      msg.classList.remove('hidden');
+      if (!code) { msg.textContent = 'Enter a code first.'; msg.className = 'text-xs text-red-400 mt-1.5'; return; }
+      if (!/^[A-Z0-9_-]{1,50}$/.test(code)) { msg.textContent = 'Invalid code format.'; msg.className = 'text-xs text-red-400 mt-1.5'; return; }
+      // Check availability before saving
+      fetch('https://api.vaultproof.dev/api/v1/promo/check/' + encodeURIComponent(code))
+        .then(function(r) { return r.json(); })
+        .then(function(d) {
+          if (!d.valid || d.spotsLeft <= 0) {
+            msg.textContent = 'This promo has ended \u2014 all spots claimed.';
+            msg.className = 'text-xs text-red-400 mt-1.5';
+          } else {
+            localStorage.setItem('vp_promo', code);
+            msg.textContent = 'Code saved \u2014 will be applied after you sign up.';
+            msg.className = 'text-xs text-indigo-400 mt-1.5';
           }
-        }).catch(() => {});
+        })
+        .catch(function() {
+          // Save anyway if network check fails; redeem will validate server-side
+          localStorage.setItem('vp_promo', code);
+          msg.textContent = 'Code saved \u2014 will be applied after you sign up.';
+          msg.className = 'text-xs text-indigo-400 mt-1.5';
+        });
     }
 
     // Show CLI banner if logging in from CLI
