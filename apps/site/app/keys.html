@@ -1752,7 +1752,7 @@ exampleBody + '\n' +
       btn.textContent = 'Creating...';
 
       try {
-        var res = await fetch(API + '/dev-keys', {
+        var res = await fetch(API + '/dev-keys/create', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
           body: JSON.stringify({ label: label, mode: mode }),
@@ -1790,12 +1790,12 @@ exampleBody + '\n' +
       var table = document.getElementById('devKeysTable');
 
       try {
-        var res = await fetch(API + '/dev-keys', {
+        var res = await fetch(API + '/dev-keys/list', {
           headers: { 'Authorization': 'Bearer ' + token }
         });
         if (!res.ok) return;
         var data = await res.json();
-        var keys = data.keys || [];
+        var keys = data.keys || data || [];
 
         loading.classList.add('hidden');
 
@@ -1839,8 +1839,8 @@ exampleBody + '\n' +
     async function revokeDevKey(id) {
       if (!confirm('Revoke this developer key? All SDK/CLI calls using it will stop immediately.')) return;
       try {
-        var res = await fetch(API + '/dev-keys/' + id, {
-          method: 'DELETE',
+        var res = await fetch(API + '/dev-keys/' + id + '/revoke', {
+          method: 'POST',
           headers: { 'Authorization': 'Bearer ' + token }
         });
         if (res.ok) loadDevKeys();
