@@ -22,6 +22,18 @@ export const ENV_VAR_MAP: Record<string, string> = {
   twilio: "TWILIO_AUTH_TOKEN",
   sendgrid: "SENDGRID_API_KEY",
   github: "GITHUB_TOKEN",
+  clerk: "CLERK_SECRET_KEY",
+  contentful: "CONTENTFUL_ACCESS_TOKEN",
+  fauna: "FAUNA_SECRET",
+  apollo: "APOLLO_KEY",
+  posthog: "POSTHOG_API_KEY",
+  neon: "NEON_API_KEY",
+  upstash: "UPSTASH_REDIS_TOKEN",
+  brevo: "BREVO_API_KEY",
+  sanity: "SANITY_API_TOKEN",
+  algolia: "ALGOLIA_API_KEY",
+  pinecone: "PINECONE_API_KEY",
+  datadog: "DATADOG_API_KEY",
 };
 
 // Known label → env var overrides for providers with multiple keys

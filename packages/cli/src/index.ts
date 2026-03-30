@@ -25,7 +25,7 @@ program
       "  Store API keys without anyone seeing them. Even us.\n" +
       "  Keys are Shamir-split locally — the server never sees the full key."
   )
-  .version("1.7.1", "-v, --version")
+  .version("1.7.2", "-v, --version")
   .option("--json", "Output results as JSON")
   .option("--api-url <url>", "Override API URL")
   .addHelpText(
@@ -1558,6 +1558,27 @@ const KEY_PREFIX_PATTERNS: Array<{ pattern: RegExp; provider: string }> = [
   { pattern: /^dG9rO[a-zA-Z0-9+=]{40,}$/, provider: "intercom" },
   // Vercel
   { pattern: /^[a-zA-Z0-9]{24}$/, provider: "vercel" }, // Only used if env name contains VERCEL
+  // GraphQL / Headless CMS / BaaS
+  { pattern: /^service:[a-zA-Z0-9_-]+:[a-zA-Z0-9_-]+$/, provider: "apollo" },
+  { pattern: /^CFPAT-[a-zA-Z0-9_-]{40,}$/, provider: "contentful" },
+  { pattern: /^fnA[a-zA-Z0-9_-]{20,}$/, provider: "fauna" },
+  { pattern: /^sk[a-zA-Z0-9]{40,}$/, provider: "sanity" }, // Only if env name contains SANITY
+  { pattern: /^snapi_[a-zA-Z0-9]{20,}$/, provider: "sanity" },
+  { pattern: /^Bearer [a-zA-Z0-9_-]{40,}$/, provider: "hygraph" }, // Only if env name contains HYGRAPH or GRAPHCMS
+  { pattern: /^sk-[a-zA-Z0-9]{10,20}-[a-zA-Z0-9]{10,}$/, provider: "convex" },
+  { pattern: /^phc_[a-zA-Z0-9]{30,}$/, provider: "posthog" },
+  { pattern: /^xkeysib-[a-zA-Z0-9]{40,}$/, provider: "brevo" },
+  { pattern: /^nk_[a-zA-Z0-9]{20,}$/, provider: "neon" },
+  { pattern: /^sb-[a-zA-Z0-9]{20,}$/, provider: "supabase" },
+  // Clerk keys use sk_test_/sk_live_ like Stripe — detected via env var name only
+  // (see KNOWN_SECRETS mapping: CLERK_SECRET_KEY → clerk)
+  { pattern: /^whsec_[a-zA-Z0-9]{20,}$/, provider: "svix" },
+  // Algolia
+  { pattern: /^[a-f0-9]{32}$/, provider: "algolia" }, // Only used if env name contains ALGOLIA
+  // Pinecone
+  { pattern: /^[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}$/, provider: "pinecone" }, // Only if env name contains PINECONE
+  // Upstash (Redis/Kafka)
+  { pattern: /^AX[a-zA-Z0-9]{30,}$/, provider: "upstash" },
 ];
 
 // Providers that work well through the transparent proxy
@@ -1691,7 +1712,7 @@ function shannonEntropy(str: string): number {
 }
 
 // Ambiguous patterns that need env var name context to avoid false positives
-const AMBIGUOUS_PROVIDERS = new Set(["datadog", "vercel", "cloudflare"]);
+const AMBIGUOUS_PROVIDERS = new Set(["datadog", "vercel", "cloudflare", "sanity", "hygraph", "graphcms", "algolia", "pinecone", "clerk"]);
 
 /** Detect provider from key value prefix. Uses env var name for ambiguous patterns. */
 function detectProviderFromValue(value: string, envName?: string): string | null {
