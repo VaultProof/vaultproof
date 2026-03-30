@@ -1246,6 +1246,23 @@ const res = await vault.proxy(key, '/v1/chat/completions', {
             el.style.display = '';
         });
     }
+
+    // Highlight Pricing nav link when pricing section is visible
+    var pricingSection = document.getElementById('pricing');
+    var pricingLinks = document.querySelectorAll('a[href="#pricing"], a[href="/#pricing"]');
+    if (pricingSection && pricingLinks.length) {
+        new IntersectionObserver(function(entries) {
+            pricingLinks.forEach(function(link) {
+                if (entries[0].isIntersecting) {
+                    link.classList.remove('text-gray-400', 'hover:text-white');
+                    link.classList.add('text-white', 'font-medium');
+                } else {
+                    link.classList.remove('text-white', 'font-medium');
+                    link.classList.add('text-gray-400', 'hover:text-white');
+                }
+            });
+        }, { threshold: 0.15 }).observe(pricingSection);
+    }
 })();
 </script>
 </body>
