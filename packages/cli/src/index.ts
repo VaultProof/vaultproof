@@ -1572,6 +1572,32 @@ const ENV_INJECTION_PROVIDERS = new Set([
   "resend", "smtp", "github", "slack", "mailgun", "postmark",
 ]);
 
+// Provider key rotation URLs — where users go to rotate compromised keys
+const ROTATION_URLS: Record<string, string> = {
+  openai: "https://platform.openai.com/api-keys",
+  anthropic: "https://console.anthropic.com/settings/keys",
+  stripe: "https://dashboard.stripe.com/apikeys",
+  google: "https://console.cloud.google.com/apis/credentials",
+  together: "https://api.together.xyz/settings/api-keys",
+  groq: "https://console.groq.com/keys",
+  mistral: "https://console.mistral.ai/api-keys",
+  cohere: "https://dashboard.cohere.com/api-keys",
+  perplexity: "https://www.perplexity.ai/settings/api",
+  fireworks: "https://fireworks.ai/account/api-keys",
+  deepseek: "https://platform.deepseek.com/api_keys",
+  replicate: "https://replicate.com/account/api-tokens",
+  sendgrid: "https://app.sendgrid.com/settings/api_keys",
+  resend: "https://resend.com/api-keys",
+  github: "https://github.com/settings/tokens",
+  aws: "https://console.aws.amazon.com/iam/home#/security_credentials",
+  supabase: "https://supabase.com/dashboard/project/_/settings/api",
+  twilio: "https://console.twilio.com/us1/account/keys-credentials/api-keys",
+  datadog: "https://app.datadoghq.com/organization-settings/api-keys",
+  slack: "https://api.slack.com/apps",
+  discord: "https://discord.com/developers/applications",
+  firebase: "https://console.firebase.google.com/project/_/settings/general",
+};
+
 // Base URL env var names for proxy-mode providers
 const BASE_URL_MAP: Record<string, string> = {
   openai: "OPENAI_BASE_URL",
@@ -2301,6 +2327,100 @@ ${chalk.bold("Example:")}
         console.log(chalk.dim(`    ${r.file} → ${r.envName}`));
       }
       console.log();
+    }
+
+    // ─── Fix Guidance ──────────────────────────────────────────────────
+
+    // Active keys — need immediate rotation
+    const activeKeys = allKeys.filter((k) => verifyResults?.get(k.value) === "active");
+    // Git history keys
+    const historyKeys = allKeys.filter((k) => k.file === "(git history)");
+    // Hardcoded in source
+    const hardcodedKeys = allKeys.filter((k) => k.type === "source");
+    // Group hardcoded by value to count duplicates
+    const hardcodedByValue = new Map<string, FoundKey[]>();
+    for (const k of hardcodedKeys) {
+      const existing = hardcodedByValue.get(k.value) || [];
+      existing.push(k);
+      hardcodedByValue.set(k.value, existing);
+    }
+
+    if (activeKeys.length > 0 || historyKeys.length > 0 || hardcodedKeys.length > 0) {
+      console.log(chalk.bold.red("  ─── Action Required ───\n"));
+    }
+
+    if (activeKeys.length > 0) {
+      console.log(chalk.red(`  ${activeKeys.length} ACTIVE key${activeKeys.length !== 1 ? "s" : ""} found — rotate immediately:\n`));
+      for (const key of activeKeys) {
+        const masked = key.value.slice(0, 6) + "..." + key.value.slice(-4);
+        const rotateUrl = ROTATION_URLS[key.provider];
+        console.log(chalk.red(`    ${key.envName} (${masked})`));
+        if (rotateUrl) {
+          console.log(chalk.dim(`      Rotate at: ${rotateUrl}`));
+        }
+        console.log(chalk.dim(`      Then update your .env with the new key`));
+        console.log();
+      }
+    }
+
+    if (historyKeys.length > 0) {
+      const activeInHistory = historyKeys.filter((k) => verifyResults?.get(k.value) === "active").length;
+      const revokedInHistory = historyKeys.filter((k) => verifyResults?.get(k.value) === "revoked").length;
+      console.log(chalk.yellow(`  ${historyKeys.length} key${historyKeys.length !== 1 ? "s" : ""} found in git history${activeInHistory > 0 ? ` (${activeInHistory} still active!)` : revokedInHistory > 0 ? ` (${revokedInHistory} already revoked)` : ""}`));
+      console.log(chalk.dim("    Keys in git history cannot be removed by deleting files."));
+      console.log(chalk.dim("    Even after rotating, old values are visible in commit history."));
+      console.log(chalk.dim("    If this repo is public, see:"));
+      console.log(chalk.dim("    https://docs.github.com/en/authentication/keeping-your-account-and-data-secure/removing-sensitive-data-from-a-repository\n"));
+    }
+
+    if (hardcodedKeys.length > 0) {
+      for (const [, keys] of hardcodedByValue) {
+        const k = keys[0];
+        if (keys.length > 1) {
+          console.log(chalk.yellow(`  ${keys.length} files have the same ${k.provider} key hardcoded.`));
+          console.log(chalk.dim(`    Move it to .env and use process.env.${k.envName} instead.\n`));
+        } else {
+          console.log(chalk.yellow(`  Hardcoded ${k.provider} key in ${k.file}:${k.line}`));
+          console.log(chalk.dim(`    Move it to .env and use process.env.${k.envName} instead.\n`));
+        }
+      }
+    }
+
+    // ─── Rotation confirmation ──────────────────────────────────────────
+
+    if (activeKeys.length > 0 && !opts.dryRun) {
+      console.log(chalk.bold("  Please rotate the active keys above before continuing.\n"));
+
+      for (const key of activeKeys) {
+        const masked = key.value.slice(0, 6) + "..." + key.value.slice(-4);
+        const rotateUrl = ROTATION_URLS[key.provider];
+        if (rotateUrl) console.log(chalk.dim(`    ${key.envName}: ${rotateUrl}`));
+
+        const rotated = await confirm(`  Have you rotated ${chalk.white(key.envName)} (${masked})?`);
+        if (rotated) {
+          // Re-verify the old key to confirm it's actually revoked now
+          const recheck = await verifyKey(key.provider, key.value);
+          if (recheck === "active") {
+            console.log(chalk.red(`    The old key is still active. Please rotate it before continuing.`));
+            const skip = await confirm(`    Continue anyway?`);
+            if (!skip) {
+              console.log(chalk.dim("    Run the scan again after rotating.\n"));
+              process.exit(0);
+            }
+          } else if (recheck === "revoked") {
+            console.log(chalk.green(`    ✓ Confirmed — old key is now revoked.\n`));
+          } else {
+            console.log(chalk.dim(`    Could not verify — please confirm manually.\n`));
+          }
+        } else {
+          const skip = await confirm(`    Skip and continue anyway?`);
+          if (!skip) {
+            console.log(chalk.dim("    Run the scan again after rotating.\n"));
+            process.exit(0);
+          }
+          console.log();
+        }
+      }
     }
 
     if (opts.dryRun) {

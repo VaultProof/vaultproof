@@ -708,4 +708,100 @@ export async function adminRoutes(app: FastifyInstance) {
       totalUsers,
     };
   });
+
+  // ─── Referral stats (ad tracking from partner sites) ────────────
+  app.get('/analytics/referral-stats', async (request) => {
+    const { days, source } = request.query as { days?: string; source?: string };
+    const numDays = Math.min(90, Math.max(1, parseInt(days || '30', 10)));
+    const since = new Date();
+    since.setDate(since.getDate() - numDays);
+
+    const referrerFilter = source || 'promptsforeveryone';
+
+    // Ad clicks (tracked as pageviews with page=/ad-click/* and referrer=source)
+    const adClicks = await prisma.analyticsEvent.findMany({
+      where: {
+        type: 'pageview',
+        referrer: referrerFilter,
+        page: { startsWith: '/ad-click/' },
+        createdAt: { gte: since },
+      },
+      select: { page: true, sessionId: true, createdAt: true },
+      orderBy: { createdAt: 'asc' },
+    });
+
+    // Landing page visits from this referrer (organic or ad-driven)
+    const landingVisits = await prisma.analyticsEvent.findMany({
+      where: {
+        type: 'pageview',
+        referrer: { contains: referrerFilter },
+        page: { not: { startsWith: '/ad-click/' } },
+        createdAt: { gte: since },
+      },
+      select: { page: true, sessionId: true, createdAt: true },
+      orderBy: { createdAt: 'asc' },
+    });
+
+    // Signups that came from sessions that also had a referrer visit
+    const referralSessionIds = new Set([
+      ...adClicks.map(e => e.sessionId).filter(Boolean),
+      ...landingVisits.map(e => e.sessionId).filter(Boolean),
+    ]);
+
+    const signups = referralSessionIds.size > 0
+      ? await prisma.analyticsEvent.count({
+          where: {
+            type: 'signup',
+            sessionId: { in: Array.from(referralSessionIds) as string[] },
+            createdAt: { gte: since },
+          },
+        })
+      : 0;
+
+    // Daily breakdown
+    const dailyMap: Record<string, { clicks: number; visits: number; sessions: Set<string> }> = {};
+    for (const e of adClicks) {
+      const day = e.createdAt.toISOString().slice(0, 10);
+      if (!dailyMap[day]) dailyMap[day] = { clicks: 0, visits: 0, sessions: new Set() };
+      dailyMap[day].clicks++;
+      if (e.sessionId) dailyMap[day].sessions.add(e.sessionId);
+    }
+    for (const e of landingVisits) {
+      const day = e.createdAt.toISOString().slice(0, 10);
+      if (!dailyMap[day]) dailyMap[day] = { clicks: 0, visits: 0, sessions: new Set() };
+      dailyMap[day].visits++;
+      if (e.sessionId) dailyMap[day].sessions.add(e.sessionId);
+    }
+
+    const daily = Object.entries(dailyMap)
+      .sort(([a], [b]) => a.localeCompare(b))
+      .map(([date, d]) => ({ date, clicks: d.clicks, visits: d.visits, uniqueVisitors: d.sessions.size }));
+
+    // Clicks by ad variant
+    const variantCounts: Record<string, number> = {};
+    for (const e of adClicks) {
+      const variant = e.page?.replace('/ad-click/', '') || 'unknown';
+      variantCounts[variant] = (variantCounts[variant] || 0) + 1;
+    }
+
+    const uniqueClickers = new Set(adClicks.map(e => e.sessionId).filter(Boolean));
+    const uniqueVisitors = new Set(landingVisits.map(e => e.sessionId).filter(Boolean));
+
+    return {
+      source: referrerFilter,
+      period: `${numDays} days`,
+      summary: {
+        totalAdClicks: adClicks.length,
+        uniqueAdClickers: uniqueClickers.size,
+        totalLandingVisits: landingVisits.length,
+        uniqueLandingVisitors: uniqueVisitors.size,
+        signupsFromReferral: signups,
+        conversionRate: uniqueClickers.size > 0
+          ? `${((signups / uniqueClickers.size) * 100).toFixed(1)}%`
+          : '0%',
+      },
+      byVariant: variantCounts,
+      daily,
+    };
+  });
 }
