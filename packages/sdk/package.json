@@ -1,0 +1,25 @@
+{
+  "name": "@vaultproof/sdk",
+  "version": "2.3.1",
+  "description": "VaultProof SDK — Store API keys with Shamir splitting, make proxied calls with zero-knowledge proofs",
+  "type": "module",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "exports": {
+    ".": {
+      "import": "./dist/index.js",
+      "types": "./dist/index.d.ts"
+    }
+  },
+  "scripts": {
+    "build": "tsc",
+    "test": "node --test dist/sdk.test.js"
+  },
+  "dependencies": {
+    "@vaultproof/shamir": "*"
+  },
+  "devDependencies": {
+    "typescript": "^5.7.0",
+    "@types/node": "^22.0.0"
+  }
+}
