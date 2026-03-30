@@ -1247,22 +1247,16 @@ const res = await vault.proxy(key, '/v1/chat/completions', {
         });
     }
 
-    // Highlight Pricing nav link when pricing section is visible
-    var pricingSection = document.getElementById('pricing');
+    // Highlight Pricing nav link when clicked — stays white until user leaves page
     var pricingLinks = document.querySelectorAll('a[href="#pricing"], a[href="/#pricing"]');
-    if (pricingSection && pricingLinks.length) {
-        new IntersectionObserver(function(entries) {
-            pricingLinks.forEach(function(link) {
-                if (entries[0].isIntersecting) {
-                    link.classList.remove('text-gray-400', 'hover:text-white');
-                    link.classList.add('text-white', 'font-medium');
-                } else {
-                    link.classList.remove('text-white', 'font-medium');
-                    link.classList.add('text-gray-400', 'hover:text-white');
-                }
-            });
-        }, { threshold: 0.15 }).observe(pricingSection);
+    function activatePricing() {
+        pricingLinks.forEach(function(link) {
+            link.classList.remove('text-gray-400', 'hover:text-white');
+            link.classList.add('text-white', 'font-medium');
+        });
     }
+    pricingLinks.forEach(function(link) { link.addEventListener('click', activatePricing); });
+    if (window.location.hash === '#pricing') activatePricing();
 })();
 </script>
 </body>
