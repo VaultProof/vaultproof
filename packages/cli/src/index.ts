@@ -25,7 +25,7 @@ program
       "  Store API keys without anyone seeing them. Even us.\n" +
       "  Keys are Shamir-split locally — the server never sees the full key."
   )
-  .version("1.0.0", "-v, --version")
+  .version("1.7.0", "-v, --version")
   .option("--json", "Output results as JSON")
   .option("--api-url <url>", "Override API URL")
   .addHelpText(
