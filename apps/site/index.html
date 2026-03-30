@@ -900,7 +900,7 @@ const res = await vault.proxy(key, '/v1/chat/completions', {
             <div class="flex flex-col sm:flex-row items-center justify-center gap-4 relative">
                 <div class="flex w-full sm:w-auto">
                     <input type="email" id="ctaEmail" placeholder="you@company.com" class="bg-vp-bg border border-vp-border rounded-l-btn px-5 py-3.5 text-sm text-white placeholder-gray-600 focus:outline-none focus:border-vp-accent/50 w-full sm:w-64 transition-colors">
-                    <button onclick="handleCTA()" class="bg-vp-accent hover:bg-indigo-500 px-6 py-3.5 rounded-r-btn font-semibold text-white transition-all btn-glow text-sm whitespace-nowrap">Get Started</button>
+                    <button id="ctaBtn" onclick="handleCTA()" class="bg-vp-accent hover:bg-indigo-500 px-6 py-3.5 rounded-r-btn font-semibold text-white transition-all btn-glow text-sm whitespace-nowrap disabled:opacity-60">Get Started</button>
                 </div>
             </div>
             <p class="text-xs text-gray-600 mt-4 relative">Free tier includes 3 keys and 10,000 calls/month. No credit card required.</p>
@@ -1157,12 +1157,29 @@ const res = await vault.proxy(key, '/v1/chat/completions', {
         }
 
         // CTA email handler
-        function handleCTA() {
-            var email = document.getElementById('ctaEmail').value;
-            if (email) {
-                window.location.href = '/app/login?email=' + encodeURIComponent(email);
-            } else {
+        async function handleCTA() {
+            var email = document.getElementById('ctaEmail').value.trim();
+            var btn = document.getElementById('ctaBtn');
+            if (!email) {
                 window.location.href = '/app/login';
+                return;
+            }
+            btn.disabled = true;
+            btn.textContent = 'Saving...';
+            try {
+                var res = await fetch('https://api.vaultproof.dev/api/waitlist', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ email: email })
+                });
+                if (res.ok) {
+                    btn.textContent = "You're on the list!";
+                    document.getElementById('ctaEmail').value = '';
+                } else {
+                    window.location.href = '/app/login?email=' + encodeURIComponent(email);
+                }
+            } catch (e) {
+                window.location.href = '/app/login?email=' + encodeURIComponent(email);
             }
         }
 

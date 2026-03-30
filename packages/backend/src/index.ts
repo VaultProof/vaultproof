@@ -30,6 +30,7 @@ import { promoRoutes } from './routes/promo.js';
 import { transparentProxyRoutes } from './routes/transparent-proxy.js';
 import { adminRoutes } from './routes/admin.js';
 import { analyticsRoutes } from './routes/analytics.js';
+import { waitlistRoutes } from './routes/waitlist.js';
 import { warmupVerifier } from './crypto/proof-verifier.js';
 
 config();
@@ -115,6 +116,9 @@ async function start() {
 
   // Hidden admin routes (outside /api/ prefix — skips proxy auth hook)
   await app.register(adminRoutes, { prefix: '/admin' });
+
+  // Public waitlist route (no auth)
+  await app.register(waitlistRoutes);
 
   // API routes
   await app.register(authRoutes, { prefix: '/api/v1/auth' });
