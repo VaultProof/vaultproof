@@ -23,7 +23,11 @@ export function sendWebhook(
   const body = JSON.stringify(payload);
   const signature = createHmac('sha256', secret).update(body).digest('hex');
 
-  // Non-blocking
+  // Non-blocking — abort after 5 s so a slow or unresponsive endpoint
+  // doesn't hold open a connection indefinitely.
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), 5_000);
+
   fetch(url, {
     method: 'POST',
     headers: {
@@ -32,5 +36,6 @@ export function sendWebhook(
       'X-VaultProof-Event': event,
     },
     body,
-  }).catch(() => {});
+    signal: controller.signal,
+  }).catch(() => {}).finally(() => clearTimeout(timer));
 }

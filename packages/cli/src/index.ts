@@ -615,6 +615,8 @@ ${chalk.bold("Requires:")} VAULTPROOF_API_KEY environment variable
       provider: string;
       label: string;
       envVar: string | null;
+      warning?: string;
+      duplicateKeyIds?: string[];
     }>("POST", "/api/v1/sdk/store", {
       body: {
         provider: opts.provider,
@@ -647,6 +649,14 @@ ${chalk.bold("Requires:")} VAULTPROOF_API_KEY environment variable
         "  Key was Shamir-split locally. Server never saw the full key."
       )
     );
+
+    if (data.warning) {
+      console.log(chalk.yellow(`\n  ⚠ ${data.warning}`));
+      if (data.duplicateKeyIds?.length) {
+        console.log(chalk.dim(`  Existing key${data.duplicateKeyIds.length > 1 ? "s" : ""}: ${data.duplicateKeyIds.join(", ")}`));
+        console.log(chalk.dim("  Use `vaultproof revoke <keyId>` to remove the old one."));
+      }
+    }
   });
 
 // ─── proxy ───────────────────────────────────────────────────────────────────
@@ -1449,6 +1459,8 @@ program
 // ─── migrate ─────────────────────────────────────────────────────────────────
 
 import { LABEL_VAR_MAP } from "./env-vars.js";
+import { existsSync, mkdirSync, readFileSync, writeFileSync, copyFileSync, unlinkSync, readdirSync, statSync, appendFileSync } from "node:fs";
+import { join, relative, basename, dirname } from "node:path";
 
 // Reverse map: ENV_VAR_NAME → { provider, label }
 const KNOWN_SECRETS: Record<string, { provider: string; label: string }> = {};
@@ -1476,10 +1488,149 @@ const NON_SECRETS = new Set([
   "NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY", "DATABASE_URL", "DIRECT_URL",
 ]);
 
-function looksLikeSecret(name: string): boolean {
+// Known API key prefixes → provider classification (high confidence)
+// Sourced from secrets-patterns-db, TruffleHog, Gitleaks, and provider docs
+const KEY_PREFIX_PATTERNS: Array<{ pattern: RegExp; provider: string }> = [
+  // AI / LLM providers
+  { pattern: /^sk-proj-/, provider: "openai" },
+  { pattern: /^sk-[a-zA-Z0-9]{40,}$/, provider: "openai" },
+  { pattern: /^sk-ant-/, provider: "anthropic" },
+  { pattern: /^tog_/, provider: "together" },
+  { pattern: /^gsk_[a-zA-Z0-9]{40,}$/, provider: "groq" },
+  { pattern: /^pplx-[a-zA-Z0-9]{40,}$/, provider: "perplexity" },
+  { pattern: /^r8_[a-zA-Z0-9]{30,}$/, provider: "replicate" },
+  { pattern: /^fw_[a-zA-Z0-9]{30,}$/, provider: "fireworks" },
+  // Payments
+  { pattern: /^sk_live_/, provider: "stripe" },
+  { pattern: /^sk_test_/, provider: "stripe" },
+  { pattern: /^pk_live_/, provider: "stripe" },
+  { pattern: /^pk_test_/, provider: "stripe" },
+  { pattern: /^whsec_/, provider: "stripe" },
+  { pattern: /^rk_live_/, provider: "stripe" },
+  { pattern: /^rk_test_/, provider: "stripe" },
+  // Google / Firebase
+  { pattern: /^AIza[0-9A-Za-z_-]{35}$/, provider: "google" },
+  // AWS
+  { pattern: /^AKIA[0-9A-Z]{16}$/, provider: "aws" },
+  { pattern: /^ASIA[0-9A-Z]{16}$/, provider: "aws" },
+  // Email / messaging
+  { pattern: /^SG\.[a-zA-Z0-9_-]+\.[a-zA-Z0-9_-]+$/, provider: "sendgrid" },
+  { pattern: /^re_[a-zA-Z0-9]{20,}$/, provider: "resend" },
+  { pattern: /^key-[a-zA-Z0-9]{20,}$/, provider: "mailgun" },
+  { pattern: /^[a-f0-9]{32}-us\d+$/, provider: "mailchimp" },
+  // Slack / Discord / Telegram
+  { pattern: /^xoxb-/, provider: "slack" },
+  { pattern: /^xoxp-/, provider: "slack" },
+  { pattern: /^xoxa-/, provider: "slack" },
+  { pattern: /^xoxs-/, provider: "slack" },
+  { pattern: /^[MN][A-Za-z0-9]{23,}\.[A-Za-z0-9_-]{6}\.[A-Za-z0-9_-]{27,}$/, provider: "discord" },
+  { pattern: /^\d{8,10}:[A-Za-z0-9_-]{35}$/, provider: "telegram" },
+  // GitHub
+  { pattern: /^ghp_[a-zA-Z0-9]{36}$/, provider: "github" },
+  { pattern: /^ghs_[a-zA-Z0-9]{36}$/, provider: "github" },
+  { pattern: /^gho_[a-zA-Z0-9]{36}$/, provider: "github" },
+  { pattern: /^github_pat_[a-zA-Z0-9]{22}_[a-zA-Z0-9]{59}$/, provider: "github" },
+  // GitLab
+  { pattern: /^glpat-[a-zA-Z0-9_-]{20}$/, provider: "gitlab" },
+  // Cloud / hosting
+  { pattern: /^dop_v1_[a-f0-9]{64}$/, provider: "digitalocean" },
+  { pattern: /^doo_v1_[a-f0-9]{64}$/, provider: "digitalocean" },
+  { pattern: /^FLWSECK-[a-zA-Z0-9]{32,}$/, provider: "flutterwave" },
+  // Monitoring / observability
+  { pattern: /^dd[a-z]_[a-zA-Z0-9]{32,}$/, provider: "datadog" },
+  { pattern: /^[a-f0-9]{32}$/, provider: "datadog" }, // Only used if env name contains DATADOG
+  { pattern: /^dbt[a-z]_[a-zA-Z0-9]{40,}$/, provider: "databricks" },
+  // Twilio
+  { pattern: /^SK[a-f0-9]{32}$/, provider: "twilio" },
+  { pattern: /^AC[a-f0-9]{32}$/, provider: "twilio" },
+  // Supabase (JWT format)
+  { pattern: /^eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9\./, provider: "supabase" },
+  // npm / package registries
+  { pattern: /^npm_[a-zA-Z0-9]{36}$/, provider: "npm" },
+  { pattern: /^pypi-[a-zA-Z0-9_-]{50,}$/, provider: "pypi" },
+  // Databases
+  { pattern: /^mongodb\+srv:\/\//, provider: "mongodb" },
+  // Cloudflare
+  { pattern: /^[a-zA-Z0-9_-]{37}\.[a-zA-Z0-9_-]{37,}$/, provider: "cloudflare" },
+  // HubSpot
+  { pattern: /^pat-[a-z]{2}-[a-f0-9]{8}-[a-f0-9]{4}-/, provider: "hubspot" },
+  // Intercom
+  { pattern: /^dG9rO[a-zA-Z0-9+=]{40,}$/, provider: "intercom" },
+  // Vercel
+  { pattern: /^[a-zA-Z0-9]{24}$/, provider: "vercel" }, // Only used if env name contains VERCEL
+];
+
+// Providers that work well through the transparent proxy
+const PROXY_PROVIDERS = new Set([
+  "openai", "anthropic", "google", "together", "mistral", "cohere",
+  "groq", "perplexity", "fireworks", "deepseek", "replicate",
+]);
+
+// Providers that need the real key at runtime (webhooks, signatures, etc.)
+const ENV_INJECTION_PROVIDERS = new Set([
+  "stripe", "aws", "supabase", "twilio", "sendgrid", "firebase",
+  "resend", "smtp", "github", "slack", "mailgun", "postmark",
+]);
+
+// Base URL env var names for proxy-mode providers
+const BASE_URL_MAP: Record<string, string> = {
+  openai: "OPENAI_BASE_URL",
+  anthropic: "ANTHROPIC_BASE_URL",
+  google: "GOOGLE_API_BASE_URL",
+  together: "TOGETHER_API_BASE_URL",
+  mistral: "MISTRAL_API_BASE_URL",
+  cohere: "COHERE_API_BASE_URL",
+  groq: "GROQ_API_BASE_URL",
+  perplexity: "PERPLEXITY_API_BASE_URL",
+  fireworks: "FIREWORKS_API_BASE_URL",
+  deepseek: "DEEPSEEK_API_BASE_URL",
+  replicate: "REPLICATE_API_BASE_URL",
+};
+
+// Directories/files to skip when scanning source code
+const SKIP_DIRS = new Set([
+  "node_modules", ".git", "dist", "build", ".next", ".nuxt", ".output",
+  ".vaultproof", ".vercel", ".turbo", "coverage", "__pycache__", ".tox",
+  "vendor", "target", "pkg",
+]);
+
+const SKIP_FILES = new Set([
+  "package-lock.json", "yarn.lock", "pnpm-lock.yaml", "bun.lockb",
+  "Cargo.lock", "go.sum", "Gemfile.lock", "poetry.lock",
+]);
+
+// Source file extensions to scan for hardcoded keys
+const SOURCE_EXTENSIONS = new Set([
+  ".ts", ".tsx", ".js", ".jsx", ".mjs", ".cjs",
+  ".py", ".go", ".rb", ".java", ".kt", ".rs",
+  ".php", ".cs", ".swift",
+]);
+
+// Config files to scan for env var references (reminders, not rewriting)
+const CONFIG_FILES = new Set([
+  "docker-compose.yml", "docker-compose.yaml",
+  "vercel.json", "railway.json", "fly.toml", "render.yaml",
+  "Dockerfile",
+]);
+
+const CI_GLOBS = [
+  ".github/workflows/*.yml",
+  ".github/workflows/*.yaml",
+  ".gitlab-ci.yml",
+  ".circleci/config.yml",
+];
+
+function looksLikeSecret(name: string, value?: string): boolean {
   if (NON_SECRETS.has(name)) return false;
   if (name.startsWith("NEXT_PUBLIC_")) return false;
-  return SECRET_PATTERNS.some((p) => p.test(name));
+  if (!SECRET_PATTERNS.some((p) => p.test(name))) return false;
+  // Entropy filter: reject values that look like config, not secrets.
+  // Known prefix keys skip entropy check (they're already high-confidence).
+  if (value && !detectProviderFromValue(value, name)) {
+    const entropy = shannonEntropy(value);
+    if (entropy < 3.5) return false; // "localhost:3000", "true", "development", etc.
+  }
+  return true;
 }
 
 function parseEnvFile(content: string): Array<{ name: string; value: string }> {
@@ -1491,7 +1642,6 @@ function parseEnvFile(content: string): Array<{ name: string; value: string }> {
     if (eqIndex === -1) continue;
     const name = trimmed.slice(0, eqIndex).trim();
     let value = trimmed.slice(eqIndex + 1).trim();
-    // Strip quotes
     if ((value.startsWith('"') && value.endsWith('"')) || (value.startsWith("'") && value.endsWith("'"))) {
       value = value.slice(1, -1);
     }
@@ -1500,195 +1650,906 @@ function parseEnvFile(content: string): Array<{ name: string; value: string }> {
   return entries;
 }
 
+/** Shannon entropy — measures randomness of a string. Real secrets score > 4.0. */
+function shannonEntropy(str: string): number {
+  if (!str || str.length === 0) return 0;
+  const freq = new Map<string, number>();
+  for (const ch of str) freq.set(ch, (freq.get(ch) || 0) + 1);
+  let entropy = 0;
+  const len = str.length;
+  for (const count of freq.values()) {
+    const p = count / len;
+    entropy -= p * Math.log2(p);
+  }
+  return entropy;
+}
+
+// Ambiguous patterns that need env var name context to avoid false positives
+const AMBIGUOUS_PROVIDERS = new Set(["datadog", "vercel", "cloudflare"]);
+
+/** Detect provider from key value prefix. Uses env var name for ambiguous patterns. */
+function detectProviderFromValue(value: string, envName?: string): string | null {
+  for (const { pattern, provider } of KEY_PREFIX_PATTERNS) {
+    if (!pattern.test(value)) continue;
+    // Ambiguous patterns (short hex, generic formats) require env name confirmation
+    if (AMBIGUOUS_PROVIDERS.has(provider)) {
+      if (!envName || !envName.toUpperCase().includes(provider.toUpperCase())) continue;
+    }
+    return provider;
+  }
+  return null;
+}
+
+/** Recommend proxy or env-injection for a provider. */
+function recommendMode(provider: string): "proxy" | "env-injection" {
+  if (PROXY_PROVIDERS.has(provider)) return "proxy";
+  return "env-injection";
+}
+
+// ── Live key verification ─────────────────────────────────────────────────
+
+/** Lightweight API endpoints for verifying keys are active. */
+const VERIFY_ENDPOINTS: Record<string, { url: string; headers: (key: string) => Record<string, string> }> = {
+  openai:    { url: "https://api.openai.com/v1/models", headers: (k) => ({ Authorization: `Bearer ${k}` }) },
+  anthropic: { url: "https://api.anthropic.com/v1/models", headers: (k) => ({ "x-api-key": k, "anthropic-version": "2023-06-01" }) },
+  stripe:    { url: "https://api.stripe.com/v1/balance", headers: (k) => ({ Authorization: `Bearer ${k}` }) },
+  together:  { url: "https://api.together.xyz/v1/models", headers: (k) => ({ Authorization: `Bearer ${k}` }) },
+  groq:      { url: "https://api.groq.com/openai/v1/models", headers: (k) => ({ Authorization: `Bearer ${k}` }) },
+  mistral:   { url: "https://api.mistral.ai/v1/models", headers: (k) => ({ Authorization: `Bearer ${k}` }) },
+  cohere:    { url: "https://api.cohere.com/v1/models", headers: (k) => ({ Authorization: `Bearer ${k}` }) },
+  perplexity: { url: "https://api.perplexity.ai/chat/completions", headers: (k) => ({ Authorization: `Bearer ${k}` }) },
+  fireworks: { url: "https://api.fireworks.ai/inference/v1/models", headers: (k) => ({ Authorization: `Bearer ${k}` }) },
+  deepseek:  { url: "https://api.deepseek.com/v1/models", headers: (k) => ({ Authorization: `Bearer ${k}` }) },
+  replicate: { url: "https://api.replicate.com/v1/models", headers: (k) => ({ Authorization: `Bearer ${k}` }) },
+  sendgrid:  { url: "https://api.sendgrid.com/v3/scopes", headers: (k) => ({ Authorization: `Bearer ${k}` }) },
+  resend:    { url: "https://api.resend.com/api-keys", headers: (k) => ({ Authorization: `Bearer ${k}` }) },
+  github:    { url: "https://api.github.com/user", headers: (k) => ({ Authorization: `Bearer ${k}`, "User-Agent": "VaultProof-CLI" }) },
+  datadog:   { url: "https://api.datadoghq.com/api/v1/validate", headers: (k) => ({ "DD-API-KEY": k }) },
+};
+
+type VerifyStatus = "active" | "revoked" | "unknown";
+
+/**
+ * Verify a single key by calling the provider's API.
+ * Returns "active" (2xx/429), "revoked" (401/403), or "unknown" (error/timeout).
+ */
+async function verifyKey(provider: string, value: string): Promise<VerifyStatus> {
+  const endpoint = VERIFY_ENDPOINTS[provider];
+  if (!endpoint) return "unknown";
+
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), 5000);
+
+  try {
+    const res = await fetch(endpoint.url, {
+      method: "GET",
+      headers: endpoint.headers(value),
+      signal: controller.signal,
+    });
+    clearTimeout(timer);
+    // 2xx or 429 (rate limited but key is valid) → active
+    if (res.status < 400 || res.status === 429) return "active";
+    // 401/403 → key rejected
+    if (res.status === 401 || res.status === 403) return "revoked";
+    return "unknown";
+  } catch {
+    clearTimeout(timer);
+    return "unknown";
+  }
+}
+
+/** Verify all keys in parallel (max 5 concurrent). */
+async function verifyKeys(keys: FoundKey[]): Promise<Map<string, VerifyStatus>> {
+  const results = new Map<string, VerifyStatus>();
+  const CONCURRENCY = 5;
+
+  for (let i = 0; i < keys.length; i += CONCURRENCY) {
+    const batch = keys.slice(i, i + CONCURRENCY);
+    const promises = batch.map(async (key) => {
+      const status = await verifyKey(key.provider, key.value);
+      results.set(key.value, status);
+    });
+    await Promise.all(promises);
+  }
+
+  return results;
+}
+
+/** Walk directory tree, yielding file paths. Skips SKIP_DIRS and binary files. */
+function walkDir(dir: string, maxDepth = 5, depth = 0): string[] {
+  if (depth > maxDepth) return [];
+  const results: string[] = [];
+  let entries: string[];
+  try { entries = readdirSync(dir); } catch { return []; }
+  for (const entry of entries) {
+    if (SKIP_DIRS.has(entry)) continue;
+    if (SKIP_FILES.has(entry)) continue;
+    const fullPath = join(dir, entry);
+    let stat;
+    try { stat = statSync(fullPath); } catch { continue; }
+    if (stat.isDirectory()) {
+      results.push(...walkDir(fullPath, maxDepth, depth + 1));
+    } else if (stat.isFile()) {
+      results.push(fullPath);
+    }
+  }
+  return results;
+}
+
+interface FoundKey {
+  envName: string;
+  value: string;
+  provider: string;
+  label: string;
+  mode: "proxy" | "env-injection";
+  file: string;
+  line?: number;
+  type: "env" | "source" | "config" | "ci";
+}
+
+/** Scan source files for hardcoded API key patterns. */
+function scanSourceFiles(dir: string): FoundKey[] {
+  const found: FoundKey[] = [];
+  const files = walkDir(dir);
+  for (const filePath of files) {
+    const ext = filePath.slice(filePath.lastIndexOf("."));
+    if (!SOURCE_EXTENSIONS.has(ext)) continue;
+    let content: string;
+    try { content = readFileSync(filePath, "utf-8"); } catch { continue; }
+    // Limit to files < 500KB to avoid scanning minified bundles
+    if (content.length > 500_000) continue;
+    const lines = content.split("\n");
+    for (let i = 0; i < lines.length; i++) {
+      const line = lines[i];
+      // Look for string literals containing known key prefixes
+      for (const { pattern, provider } of KEY_PREFIX_PATTERNS) {
+        // Match quoted strings: "sk-proj-..." or 'sk-proj-...'
+        const stringMatches = line.matchAll(/["'`]([^"'`]{10,512})["'`]/g);
+        for (const m of stringMatches) {
+          const val = m[1];
+          if (pattern.test(val)) {
+            const mode = recommendMode(provider);
+            const envName = KNOWN_SECRETS[ENV_VAR_MAP[provider]]
+              ? ENV_VAR_MAP[provider]
+              : `${provider.toUpperCase()}_API_KEY`;
+            found.push({
+              envName,
+              value: val,
+              provider,
+              label: "default",
+              mode,
+              file: relative(dir, filePath),
+              line: i + 1,
+              type: "source",
+            });
+          }
+        }
+      }
+    }
+  }
+  return found;
+}
+
+/** Scan config and CI files for env var name references (for reminders). */
+function scanConfigFiles(dir: string, envNames: Set<string>): Array<{ file: string; envName: string; type: "config" | "ci" }> {
+  const reminders: Array<{ file: string; envName: string; type: "config" | "ci" }> = [];
+
+  // Config files in project root
+  for (const configFile of CONFIG_FILES) {
+    const fullPath = join(dir, configFile);
+    if (!existsSync(fullPath)) continue;
+    let content: string;
+    try { content = readFileSync(fullPath, "utf-8"); } catch { continue; }
+    for (const envName of envNames) {
+      if (content.includes(envName)) {
+        reminders.push({ file: configFile, envName, type: "config" });
+      }
+    }
+  }
+
+  // CI files
+  for (const ciGlob of CI_GLOBS) {
+    const ciPath = join(dir, ciGlob.replace("*", ""));
+    const ciDir = dirname(ciPath);
+    if (!existsSync(ciDir)) continue;
+    let ciFiles: string[];
+    try { ciFiles = readdirSync(ciDir); } catch { continue; }
+    for (const file of ciFiles) {
+      if (!file.endsWith(".yml") && !file.endsWith(".yaml")) continue;
+      const fullPath = join(ciDir, file);
+      let content: string;
+      try { content = readFileSync(fullPath, "utf-8"); } catch { continue; }
+      for (const envName of envNames) {
+        if (content.includes(envName)) {
+          reminders.push({ file: relative(dir, fullPath), envName, type: "ci" });
+        }
+      }
+    }
+  }
+
+  return reminders;
+}
+
+/** Create backup of files that will be modified. Returns backup directory path. */
+function createBackup(dir: string, filesToBackup: string[]): string {
+  const timestamp = new Date().toISOString().replace(/[:.]/g, "-").slice(0, 19);
+  const backupDir = join(dir, ".vaultproof", "backup", timestamp);
+  mkdirSync(backupDir, { recursive: true });
+
+  for (const file of filesToBackup) {
+    const fullPath = join(dir, file);
+    if (!existsSync(fullPath)) continue;
+    const backupPath = join(backupDir, file);
+    mkdirSync(dirname(backupPath), { recursive: true });
+    copyFileSync(fullPath, backupPath);
+  }
+
+  // Record which files were new (created by migrate, should be deleted on revert)
+  writeFileSync(join(backupDir, "__new_files.json"), JSON.stringify([]), "utf-8");
+
+  return backupDir;
+}
+
+/** Track a file that was created (not modified) so revert can delete it. */
+function trackNewFile(backupDir: string, file: string): void {
+  const newFilesPath = join(backupDir, "__new_files.json");
+  const existing: string[] = JSON.parse(readFileSync(newFilesPath, "utf-8"));
+  existing.push(file);
+  writeFileSync(newFilesPath, JSON.stringify(existing), "utf-8");
+}
+
+/** Rewrite a .env file: replace a key's value, optionally add a BASE_URL line after it. */
+function rewriteEnvLine(envContent: string, envName: string, newValue: string, addAfter?: string): string {
+  const lines = envContent.split("\n");
+  const result: string[] = [];
+  for (const line of lines) {
+    const trimmed = line.trim();
+    if (trimmed.startsWith(`${envName}=`)) {
+      result.push(`${envName}=${newValue}`);
+      if (addAfter) result.push(addAfter);
+    } else {
+      result.push(line);
+    }
+  }
+  return result.join("\n");
+}
+
+/** Ensure .vaultproof/ is in .gitignore */
+function ensureGitignore(dir: string): void {
+  const gitignorePath = join(dir, ".gitignore");
+  if (existsSync(gitignorePath)) {
+    const content = readFileSync(gitignorePath, "utf-8");
+    if (!content.includes(".vaultproof")) {
+      appendFileSync(gitignorePath, "\n# VaultProof backups\n.vaultproof/\n");
+    }
+  } else {
+    writeFileSync(gitignorePath, "# VaultProof backups\n.vaultproof/\n", "utf-8");
+  }
+}
+
+/** Find the most recent backup directory. */
+function findLatestBackup(dir: string): string | null {
+  const backupRoot = join(dir, ".vaultproof", "backup");
+  if (!existsSync(backupRoot)) return null;
+  const entries = readdirSync(backupRoot).sort().reverse();
+  return entries.length > 0 ? join(backupRoot, entries[0]) : null;
+}
+
 program
   .command("migrate")
-  .description("Scan your .env and migrate secrets to VaultProof")
-  .option("-f, --file <path>", "Path to .env file", ".env")
+  .description("Scan project, store API keys in VaultProof, and rewrite configs (Pro only)")
+  .option("-f, --file <path>", "Path to primary .env file", ".env")
+  .option("--revert [timestamp]", "Revert to backup (latest or specific timestamp)")
+  .option("--dry-run", "Show what would be changed without modifying files")
+  .option("--verify", "Verify keys are active by calling provider APIs")
+  .option("--no-verify", "Skip key verification")
+  .option("--git-history", "Also scan git commit history for deleted keys")
+  .option("--output <format>", "Output format: terminal, json (default: terminal)", "terminal")
   .addHelpText(
     "after",
     `
 ${chalk.bold("What it does:")}
-  1. Reads your .env file (in current directory)
-  2. Identifies which entries look like secrets
-  3. Asks you which ones to store in VaultProof
-  4. Stores them and prints a ready-to-use vault.ts helper
+  1. Scans .env files, source code, configs, and CI for API keys
+  2. Asks you to approve each key before storing
+  3. Stores approved keys in VaultProof (Shamir-split, encrypted)
+  4. Rewrites .env files (proxy or env-injection mode per key)
+  5. Shows reminders for CI/hosting env vars you need to update
 
-${chalk.bold("What it does NOT do:")}
-  - Does not modify any files
-  - Does not scan other directories
-  - Does not delete anything from your .env
+${chalk.bold("Modes:")}
+  ${chalk.cyan("proxy")}          Change baseURL — key never leaves VaultProof (OpenAI, Anthropic, etc.)
+  ${chalk.cyan("env-injection")}  Real key injected at runtime via ${chalk.dim("vaultproof exec")} (Stripe, AWS, etc.)
+
+${chalk.bold("Safety:")}
+  - Backs up every modified file to .vaultproof/backup/
+  - Asks before each change
+  - ${chalk.dim("vaultproof migrate --revert")} restores all files
 
 ${chalk.bold("Example:")}
   $ vaultproof migrate
   $ vaultproof migrate -f .env.production
+  $ vaultproof migrate --dry-run
+  $ vaultproof migrate --revert
 `
   )
-  .action(async (opts: { file: string }) => {
-    // Test connection first
-    console.log();
-    const connected = await testConnection();
-    if (!connected) process.exit(1);
+  .action(async (opts: { file: string; revert?: boolean | string; dryRun?: boolean; verify?: boolean; gitHistory?: boolean; output?: string }) => {
+    const projectDir = process.cwd();
 
-    // Read .env file
-    const envPath = opts.file;
-    let content: string;
-    try {
-      content = (await import("node:fs")).readFileSync(envPath, "utf-8");
-    } catch {
-      console.error(chalk.red(`Could not read ${envPath}`));
-      console.error(chalk.dim("  Run this command from the directory with your .env file."));
-      process.exit(1);
-    }
-
-    const entries = parseEnvFile(content);
-    if (entries.length === 0) {
-      console.log(chalk.yellow("No entries found in " + envPath));
-      process.exit(0);
-    }
-
-    // Identify secrets
-    const secrets = entries.filter((e) => looksLikeSecret(e.name));
-    const config = entries.filter((e) => !looksLikeSecret(e.name));
-
-    console.log(chalk.bold("\nFound in " + envPath + ":\n"));
-
-    if (secrets.length === 0) {
-      console.log(chalk.yellow("  No secrets detected. Your .env might only contain config values."));
-      process.exit(0);
-    }
-
-    // Show what was found
-    console.log(chalk.cyan("  Secrets (will ask to store):"));
-    for (const s of secrets) {
-      const masked = s.value.slice(0, 6) + "..." + s.value.slice(-4);
-      const known = KNOWN_SECRETS[s.name];
-      const tag = known ? chalk.dim(` (${known.provider})`) : "";
-      console.log(`    ${chalk.white(s.name)} = ${chalk.dim(masked)}${tag}`);
-    }
-
-    if (config.length > 0) {
-      console.log(chalk.gray("\n  Config (skipping — not secrets):"));
-      for (const c of config) {
-        console.log(`    ${chalk.dim(c.name)}`);
-      }
-    }
-
-    console.log();
-
-    // Ask which to store
-    const toStore: Array<{ name: string; value: string; provider: string; label: string }> = [];
-
-    for (const secret of secrets) {
-      const known = KNOWN_SECRETS[secret.name];
-      const defaultProvider = known?.provider || "";
-      const defaultLabel = known?.label !== "default" ? known?.label || "" : "";
-
-      const yes = await confirm(`  Store ${chalk.white(secret.name)} in VaultProof?`);
-      if (!yes) continue;
-
-      let provider = defaultProvider;
-      if (!provider) {
-        provider = await prompt(`    Provider (e.g. stripe, aws, custom): `);
-        if (!provider) {
-          console.log(chalk.dim("    Skipped."));
-          continue;
+    // ─── Revert mode ──────────────────────────────────────────────────
+    if (opts.revert !== undefined) {
+      let backupDir: string | null;
+      if (typeof opts.revert === "string" && opts.revert !== "") {
+        backupDir = join(projectDir, ".vaultproof", "backup", opts.revert);
+        if (!existsSync(backupDir)) {
+          console.error(chalk.red(`Backup not found: ${opts.revert}`));
+          process.exit(1);
+        }
+      } else {
+        backupDir = findLatestBackup(projectDir);
+        if (!backupDir) {
+          console.error(chalk.red("No backups found in .vaultproof/backup/"));
+          process.exit(1);
         }
       }
 
-      let label = defaultLabel;
-      if (!label) {
-        label = await prompt(`    Label (optional, press enter to skip): `);
+      console.log(chalk.bold(`\nRestoring from backup (${basename(backupDir)})...\n`));
+
+      // Restore backed-up files
+      const files = walkDir(backupDir, 3);
+      for (const file of files) {
+        const rel = relative(backupDir, file);
+        if (rel === "__new_files.json") continue;
+        const targetPath = join(projectDir, rel);
+        mkdirSync(dirname(targetPath), { recursive: true });
+        copyFileSync(file, targetPath);
+        console.log(`  ${chalk.green("✓")} ${rel} restored`);
       }
 
-      toStore.push({ name: secret.name, value: secret.value, provider, label: label || "default" });
-    }
+      // Delete files that were created by migrate
+      const newFilesPath = join(backupDir, "__new_files.json");
+      if (existsSync(newFilesPath)) {
+        const newFiles: string[] = JSON.parse(readFileSync(newFilesPath, "utf-8"));
+        for (const file of newFiles) {
+          const targetPath = join(projectDir, file);
+          if (existsSync(targetPath)) {
+            unlinkSync(targetPath);
+            console.log(`  ${chalk.green("✓")} ${file} removed`);
+          }
+        }
+      }
 
-    if (toStore.length === 0) {
-      console.log(chalk.yellow("\nNothing to store. Done."));
+      console.log(chalk.yellow("\n  Keys stored in VaultProof were NOT deleted."));
+      console.log(chalk.dim("  Run `vaultproof revoke <keyId>` to remove them if needed.\n"));
       process.exit(0);
     }
 
-    // Store each key
-    console.log(chalk.bold(`\nStoring ${toStore.length} key${toStore.length > 1 ? "s" : ""}...\n`));
+    // ─── Main migrate flow ─────────────────────────────────────────────
 
-    const stored: Array<{ name: string; keyId: string; provider: string; label: string }> = [];
+    console.log();
+    console.log(chalk.yellow.bold("  ⚠  WARNING: This command will modify files in your project."));
+    console.log(chalk.yellow("     Back up your project or commit your changes before proceeding."));
+    console.log(chalk.yellow("     VaultProof will also create a local backup in .vaultproof/backup/\n"));
+
+    const proceed = await confirm("  Continue?");
+    if (!proceed) process.exit(0);
+
+    // Test connection + check limits (skip for dry-run — scan locally only)
+    let tierInfo: { tier: string; used: number; limit: number; available: number; migrateEnabled: boolean };
+    if (opts.dryRun) {
+      tierInfo = { tier: "pro", used: 0, limit: 100, available: 100, migrateEnabled: true };
+      console.log(chalk.dim("\n  --dry-run: skipping API connection check\n"));
+    } else {
+      console.log();
+      const connected = await testConnection();
+      if (!connected) process.exit(1);
+
+      const limitsSpinner = ora("  Checking account limits...").start();
+      try {
+        const { data: keysData } = await apiRequest<{ keys: unknown[] }>("GET", "/api/v1/sdk/keys", { auth: "apikey" });
+        const used = (keysData.keys || []).length;
+        // Tier limits — the /limits endpoint may not exist yet, so fall back to
+        // a generous default and let the server enforce the real limit on store.
+        let limit = 100;
+        let tier = "pro";
+        let migrateEnabled = true;
+        try {
+          const { data: limitsData } = await apiRequest<{ tier: string; keySlots: { used: number; limit: number }; features: { migrate: boolean } }>("GET", "/api/v1/sdk/limits", { auth: "apikey" });
+          tier = limitsData.tier;
+          limit = limitsData.keySlots.limit;
+          migrateEnabled = limitsData.features.migrate;
+        } catch {
+          // /limits endpoint doesn't exist yet — fall through
+        }
+        tierInfo = { tier, used, limit, available: Math.max(0, limit - used), migrateEnabled };
+        limitsSpinner.succeed(`  ${chalk.cyan(tierInfo.tier)} plan (${tierInfo.used}/${tierInfo.limit} key slots used, ${tierInfo.available} available)`);
+      } catch {
+        limitsSpinner.fail("  Could not check limits");
+        process.exit(1);
+      }
+
+      if (!tierInfo.migrateEnabled) {
+        console.log(chalk.red("\n  vaultproof migrate is available on the Pro plan."));
+        console.log(chalk.dim("  Upgrade at https://vaultproof.dev/app/settings\n"));
+        process.exit(1);
+      }
+    }
+
+    // ─── Phase 1: Scan ──────────────────────────────────────────────────
+
+    const scanSpinner = ora("  Scanning project...").start();
+
+    // Scan all .env files
+    const envFiles: string[] = [];
+    const rootFiles = readdirSync(projectDir);
+    for (const f of rootFiles) {
+      if (f === ".env" || f.startsWith(".env.")) {
+        envFiles.push(f);
+      }
+    }
+
+    // Parse all env files
+    const allEnvKeys: FoundKey[] = [];
+    const seenValues = new Set<string>(); // Deduplicate same key across .env files
+
+    for (const envFile of envFiles) {
+      const fullPath = join(projectDir, envFile);
+      let content: string;
+      try { content = readFileSync(fullPath, "utf-8"); } catch { continue; }
+      const entries = parseEnvFile(content);
+      for (const entry of entries) {
+        if (!looksLikeSecret(entry.name, entry.value)) continue;
+        if (seenValues.has(entry.value)) continue;
+        seenValues.add(entry.value);
+
+        const known = KNOWN_SECRETS[entry.name];
+        let provider = known?.provider || detectProviderFromValue(entry.value, entry.name) || "";
+        const label = known?.label !== "default" ? known?.label || "default" : "default";
+        const mode = provider ? recommendMode(provider) : "env-injection";
+
+        allEnvKeys.push({
+          envName: entry.name,
+          value: entry.value,
+          provider,
+          label,
+          mode,
+          file: envFile,
+          type: "env",
+        });
+      }
+    }
+
+    // Scan source files for hardcoded keys
+    const sourceKeys = scanSourceFiles(projectDir);
+
+    // Deduplicate: skip source keys whose value was already found in .env
+    const uniqueSourceKeys = sourceKeys.filter((k) => !seenValues.has(k.value));
+    for (const k of uniqueSourceKeys) seenValues.add(k.value);
+
+    const allKeys = [...allEnvKeys, ...uniqueSourceKeys];
+
+    // Scan config/CI files for env var name references
+    const envNamesFound = new Set(allKeys.map((k) => k.envName));
+    // Deduplicate config reminders (same env name can appear via multiple .env files)
+    const configRemindersRaw = scanConfigFiles(projectDir, envNamesFound);
+    const configRemindersSeen = new Set<string>();
+    const configReminders = configRemindersRaw.filter((r) => {
+      const key = `${r.file}:${r.envName}`;
+      if (configRemindersSeen.has(key)) return false;
+      configRemindersSeen.add(key);
+      return true;
+    });
+
+    scanSpinner.succeed(`  Found ${allKeys.length} API key${allKeys.length !== 1 ? "s" : ""} across ${new Set(allKeys.map((k) => k.file)).size} file${new Set(allKeys.map((k) => k.file)).size !== 1 ? "s" : ""}`);
+
+    // ─── Git history scanning (optional) ─────────────────────────────────
+    if (opts.gitHistory) {
+      const gitSpinner = ora("  Scanning git history for deleted keys...").start();
+      try {
+        const { execSync } = await import("node:child_process");
+        // Get deleted lines from git history (additions that were later removed)
+        // Scan full diff history for all commits — catches deleted lines in still-existing files
+        const gitLog = execSync("git log --all -p -- '*.env' '*.env.*' '.env' '.env.*'", {
+          cwd: projectDir,
+          encoding: "utf-8",
+          maxBuffer: 10 * 1024 * 1024,
+          timeout: 30000,
+        });
+
+        let gitKeysFound = 0;
+        for (const line of gitLog.split("\n")) {
+          // Lines that were removed start with -
+          if (!line.startsWith("-") || line.startsWith("---")) continue;
+          const content = line.slice(1).trim();
+          const eqIndex = content.indexOf("=");
+          if (eqIndex === -1) continue;
+          const name = content.slice(0, eqIndex).trim();
+          let value = content.slice(eqIndex + 1).trim();
+          if ((value.startsWith('"') && value.endsWith('"')) || (value.startsWith("'") && value.endsWith("'"))) {
+            value = value.slice(1, -1);
+          }
+          if (!value || value.length < 10) continue;
+          // Skip if already found in working tree
+          if (seenValues.has(value)) continue;
+
+          const provider = detectProviderFromValue(value, name);
+          if (!provider) continue;
+          seenValues.add(value);
+
+          allKeys.push({
+            envName: name,
+            value,
+            provider,
+            label: "default",
+            mode: recommendMode(provider),
+            file: "(git history)",
+            type: "env",
+          });
+          gitKeysFound++;
+        }
+        gitSpinner.succeed(`  Found ${gitKeysFound} additional key${gitKeysFound !== 1 ? "s" : ""} in git history`);
+      } catch {
+        gitSpinner.warn("  Git history scan skipped (not a git repo or git not available)");
+      }
+    }
+
+    // ─── Allowlist filtering ──────────────────────────────────────────────
+    const ignorePath = join(projectDir, ".vaultproofignore");
+    if (existsSync(ignorePath)) {
+      const ignoreContent = readFileSync(ignorePath, "utf-8");
+      const ignorePatterns: string[] = [];
+      for (const line of ignoreContent.split("\n")) {
+        const trimmed = line.trim();
+        if (!trimmed || trimmed.startsWith("#")) continue;
+        ignorePatterns.push(trimmed);
+      }
+      if (ignorePatterns.length > 0) {
+        const beforeCount = allKeys.length;
+        const filtered = allKeys.filter((key) => {
+          for (const pattern of ignorePatterns) {
+            // Match env var name directly
+            if (key.envName === pattern) return false;
+            // Match file path glob (simple prefix matching)
+            if (key.file && key.file.startsWith(pattern.replace("*", ""))) return false;
+          }
+          return true;
+        });
+        allKeys.length = 0;
+        allKeys.push(...filtered);
+        if (beforeCount !== allKeys.length) {
+          console.log(chalk.dim(`  .vaultproofignore: skipped ${beforeCount - allKeys.length} key${beforeCount - allKeys.length !== 1 ? "s" : ""}`));
+        }
+      }
+    }
+
+    if (allKeys.length === 0) {
+      console.log(chalk.yellow("\n  No API keys detected. Nothing to migrate.\n"));
+      process.exit(0);
+    }
+
+    // ─── Live key verification (optional) ────────────────────────────────
+    let verifyResults: Map<string, VerifyStatus> | null = null;
+    if (opts.verify) {
+      const verifiableKeys = allKeys.filter((k) => k.provider && VERIFY_ENDPOINTS[k.provider]);
+      if (verifiableKeys.length > 0) {
+        const verifySpinner = ora(`  Verifying ${verifiableKeys.length} key${verifiableKeys.length !== 1 ? "s" : ""} against provider APIs...`).start();
+        verifyResults = await verifyKeys(verifiableKeys);
+        const active = [...verifyResults.values()].filter((v) => v === "active").length;
+        const revoked = [...verifyResults.values()].filter((v) => v === "revoked").length;
+        const unknown = [...verifyResults.values()].filter((v) => v === "unknown").length;
+        verifySpinner.succeed(`  Verified: ${active} active, ${revoked} revoked, ${unknown} unknown`);
+      }
+    }
+
+    // Check capacity
+    if (allKeys.length > tierInfo.available) {
+      console.log(chalk.yellow(`\n  Found ${allKeys.length} keys but only ${tierInfo.available} slots available.`));
+      console.log(chalk.dim("  You can choose which keys to migrate, or upgrade your plan.\n"));
+    }
+
+    // ─── JSON output mode ─────────────────────────────────────────────────
+    if (opts.output === "json") {
+      const jsonOutput = {
+        keys: allKeys.map((k) => ({
+          envName: k.envName,
+          provider: k.provider,
+          mode: k.mode,
+          file: k.file,
+          line: k.line,
+          type: k.type,
+          entropy: shannonEntropy(k.value),
+          verified: verifyResults?.get(k.value) || null,
+          masked: k.value.slice(0, 6) + "..." + k.value.slice(-4),
+        })),
+        configReminders: configReminders.map((r) => ({ file: r.file, envName: r.envName, type: r.type })),
+        account: { tier: tierInfo.tier, slotsUsed: tierInfo.used, slotsLimit: tierInfo.limit, slotsAvailable: tierInfo.available },
+      };
+      console.log(JSON.stringify(jsonOutput, null, 2));
+      process.exit(0);
+    }
+
+    // ─── Display findings ────────────────────────────────────────────────
+
+    console.log(chalk.bold("\n  Scan results:\n"));
+
+    // Group by file
+    const byFile = new Map<string, FoundKey[]>();
+    for (const key of allKeys) {
+      const existing = byFile.get(key.file) || [];
+      existing.push(key);
+      byFile.set(key.file, existing);
+    }
+
+    for (const [file, keys] of byFile) {
+      console.log(chalk.white(`  ${file}`));
+      for (const key of keys) {
+        const masked = key.value.slice(0, 6) + "..." + key.value.slice(-4);
+        const modeTag = key.mode === "proxy" ? chalk.cyan("proxy") : chalk.magenta("env-injection");
+        const lineTag = key.line ? chalk.dim(`:${key.line}`) : "";
+        const providerTag = key.provider ? chalk.dim(` (${key.provider})`) : chalk.yellow(" (unknown provider)");
+        const verifyTag = verifyResults?.get(key.value)
+          ? (verifyResults.get(key.value) === "active" ? chalk.green(" ✓ active")
+            : verifyResults.get(key.value) === "revoked" ? chalk.red(" ✗ revoked")
+            : chalk.dim(" ? unknown"))
+          : "";
+        console.log(`    ${chalk.white(key.envName)}${lineTag} = ${chalk.dim(masked)}  → ${modeTag}${providerTag}${verifyTag}`);
+      }
+      console.log();
+    }
+
+    if (configReminders.length > 0) {
+      console.log(chalk.dim("  Referenced in (will show reminders):"));
+      for (const r of configReminders) {
+        console.log(chalk.dim(`    ${r.file} → ${r.envName}`));
+      }
+      console.log();
+    }
+
+    if (opts.dryRun) {
+      console.log(chalk.yellow("  --dry-run: No changes made.\n"));
+      process.exit(0);
+    }
+
+    // ─── Phase 2: Interactive approval + store ───────────────────────────
+
+    const toStore: FoundKey[] = [];
+    let slotsUsed = 0;
+
+    for (let i = 0; i < allKeys.length; i++) {
+      const key = allKeys[i];
+
+      if (slotsUsed >= tierInfo.available) {
+        console.log(chalk.yellow(`  No more key slots available (${tierInfo.available} used). Skipping remaining keys.`));
+        break;
+      }
+
+      const masked = key.value.slice(0, 6) + "..." + key.value.slice(-4);
+      const modeLabel = key.mode === "proxy" ? chalk.cyan("proxy") : chalk.magenta("env-injection");
+
+      // Auto-skip revoked keys
+      if (verifyResults?.get(key.value) === "revoked") {
+        console.log(chalk.dim(`  Step ${i + 1} of ${allKeys.length}: ${key.envName} (${masked}) — ${chalk.red("skipped (revoked)")}`));
+        console.log();
+        continue;
+      }
+
+      console.log(chalk.bold(`  Step ${i + 1} of ${allKeys.length}: ${chalk.white(key.envName)} (${masked})`));
+      console.log(chalk.dim(`    File: ${key.file}${key.line ? `:${key.line}` : ""}`));
+
+      // Ask for provider if unknown
+      if (!key.provider) {
+        key.provider = await prompt("    Provider (e.g. stripe, aws, openai): ");
+        if (!key.provider) {
+          console.log(chalk.dim("    Skipped.\n"));
+          continue;
+        }
+        key.mode = recommendMode(key.provider);
+      }
+
+      console.log(chalk.dim(`    Provider: ${key.provider}`));
+      console.log(chalk.dim(`    Mode: ${modeLabel} (${key.mode === "proxy" ? "change baseURL, key never leaves VaultProof" : "real key injected at runtime via vaultproof exec"})`));
+
+      const answer = await prompt(`    [y]es / [n]o / [e] switch mode / [s]kip rest: `);
+      const choice = answer.toLowerCase().trim();
+
+      if (choice === "s") break;
+      if (choice === "n" || choice === "") {
+        console.log();
+        continue;
+      }
+      if (choice === "e") {
+        key.mode = key.mode === "proxy" ? "env-injection" : "proxy";
+        console.log(chalk.dim(`    Switched to ${key.mode}`));
+      }
+      if (choice === "y" || choice === "e") {
+        toStore.push(key);
+        slotsUsed++;
+        console.log();
+      } else {
+        console.log();
+      }
+    }
+
+    if (toStore.length === 0) {
+      console.log(chalk.yellow("\n  Nothing to store. Done.\n"));
+      process.exit(0);
+    }
+
+    // ─── Phase 3: Backup ─────────────────────────────────────────────────
+
+    const filesToModify = [...new Set(toStore.filter((k) => k.type === "env").map((k) => k.file))];
+    // Also backup source files with hardcoded keys
+    for (const k of toStore) {
+      if (k.type === "source" && !filesToModify.includes(k.file)) {
+        filesToModify.push(k.file);
+      }
+    }
+
+    console.log(chalk.bold(`\n  Backing up ${filesToModify.length} file${filesToModify.length !== 1 ? "s" : ""} to .vaultproof/backup/\n`));
+    const backupDir = createBackup(projectDir, filesToModify);
+    for (const f of filesToModify) {
+      console.log(`    ${chalk.green("✓")} ${f}`);
+    }
+    ensureGitignore(projectDir);
+
+    // ─── Phase 4: Store keys ──────────────────────────────────────────────
+
+    console.log(chalk.bold(`\n  Storing ${toStore.length} key${toStore.length !== 1 ? "s" : ""} in VaultProof...\n`));
+
+    const stored: Array<FoundKey & { keyId: string }> = [];
 
     for (const item of toStore) {
-      const spinner = ora(`  Storing ${item.name}...`).start();
+      const spinner = ora(`    Storing ${item.envName}...`).start();
 
       const shares = splitString(item.value, 2, 2);
       const share1 = serializeShare(shares[0]);
       const share2 = serializeShare(shares[1]);
 
       try {
-        const { data } = await apiRequest<{ keyId: string }>("POST", "/api/v1/sdk/store", {
+        const { data } = await apiRequest<{ keyId: string; warning?: string }>("POST", "/api/v1/sdk/store", {
           body: {
             share1,
             share2,
             provider: item.provider,
             label: item.label === "default" ? `${item.provider} key` : item.label,
-            envVar: item.name,
+            envVar: item.envName,
           },
           auth: "apikey",
         });
 
-        stored.push({ name: item.name, keyId: data.keyId, provider: item.provider, label: item.label });
-        spinner.succeed(`  ${chalk.green(item.name)} stored`);
+        stored.push({ ...item, keyId: data.keyId });
+        const dupTag = data.warning ? chalk.yellow(" ⚠ duplicate") : "";
+        spinner.succeed(`    ${chalk.green(item.envName)} stored (${data.keyId.slice(0, 8)}...)${dupTag}`);
       } catch {
-        spinner.fail(`  ${chalk.red(item.name)} failed`);
+        spinner.fail(`    ${chalk.red(item.envName)} failed`);
       }
     }
 
     if (stored.length === 0) {
-      console.log(chalk.red("\nAll stores failed. Check your API key and try again."));
+      console.log(chalk.red("\n  All stores failed. Check your API key and try again."));
+      console.log(chalk.dim(`  To restore files: vaultproof migrate --revert\n`));
       process.exit(1);
     }
 
-    // Print the vault.ts helper
-    console.log(chalk.bold("\n─── Copy this into your project as lib/vault.ts ───\n"));
+    // ─── Phase 5: Rewrite files ──────────────────────────────────────────
 
-    const keyEntries = stored
-      .map((s) => `  ${JSON.stringify(s.name)}: ${JSON.stringify(s.keyId)},`)
-      .join("\n");
+    console.log(chalk.bold("\n  Rewriting files...\n"));
 
-    const helperCode = `import VaultProof from '@vaultproof/sdk';
+    const vpApiKey = getApiKey() || "vp_live_YOUR_KEY_HERE";
 
-const vault = new VaultProof(process.env.VAULTPROOF_API_KEY!);
+    // Rewrite .env files
+    const envFilesModified = new Set<string>();
+    for (const key of stored) {
+      if (key.type !== "env") continue;
+      const envPath = join(projectDir, key.file);
+      let content: string;
+      try { content = readFileSync(envPath, "utf-8"); } catch { continue; }
 
-const KEY_IDS: Record<string, string> = {
-${keyEntries}
-};
+      if (key.mode === "proxy") {
+        // Replace key value with vp_live_ key, add BASE_URL
+        const baseUrlVar = BASE_URL_MAP[key.provider];
+        const baseUrlLine = baseUrlVar
+          ? `${baseUrlVar}=https://api.vaultproof.dev/v1/${key.provider}`
+          : undefined;
+        content = rewriteEnvLine(content, key.envName, vpApiKey, baseUrlLine);
+      } else {
+        // Env-injection mode: comment out the real value
+        content = rewriteEnvLine(
+          content,
+          key.envName,
+          `# Managed by VaultProof — injected at runtime via: vaultproof exec -- <your command>`,
+        );
+      }
 
-export async function getSecret(name: string): Promise<string> {
-  const keyId = KEY_IDS[name];
-  if (!keyId) throw new Error(\`Unknown secret: \${name}\`);
-  const { apiKey } = await vault.retrieve(keyId);
-  return apiKey;
-}`;
-
-    console.log(helperCode);
-
-    // Print what to remove from hosting
-    console.log(chalk.bold("\n─── Remove these from your hosting (Vercel, Railway, etc.) ───\n"));
-    for (const s of stored) {
-      console.log(`  ${chalk.red("DELETE")}  ${s.name}`);
+      writeFileSync(envPath, content, "utf-8");
+      envFilesModified.add(key.file);
+      console.log(`    ${chalk.green("✓")} ${key.file}: ${key.envName} rewritten (${key.mode})`);
     }
-    console.log(`\n  ${chalk.green("KEEP")}    VAULTPROOF_API_KEY=vp_live_...`);
 
-    if (config.length > 0) {
-      console.log(chalk.dim(`\n  These are config, not secrets — keep them as-is:`));
-      for (const c of config) {
-        console.log(`  ${chalk.dim("KEEP")}    ${c.name}`);
+    // Rewrite source files with hardcoded keys
+    for (const key of stored) {
+      if (key.type !== "source" || !key.line) continue;
+      const srcPath = join(projectDir, key.file);
+      let content: string;
+      try { content = readFileSync(srcPath, "utf-8"); } catch { continue; }
+      // Replace the hardcoded value with process.env reference
+      content = content.replace(
+        new RegExp(`(["'\`])${key.value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}\\1`, "g"),
+        `process.env.${key.envName}!`,
+      );
+      writeFileSync(srcPath, content, "utf-8");
+      console.log(`    ${chalk.green("✓")} ${key.file}:${key.line}: replaced hardcoded key with process.env.${key.envName}`);
+    }
+
+    // Generate vaultproof.json
+    const vpConfig: Record<string, { keyId: string; provider: string; mode: string }> = {};
+    for (const key of stored) {
+      vpConfig[key.envName] = { keyId: key.keyId, provider: key.provider, mode: key.mode };
+    }
+    const vpConfigPath = join(projectDir, "vaultproof.json");
+    const isNewConfig = !existsSync(vpConfigPath);
+    writeFileSync(vpConfigPath, JSON.stringify({ keys: vpConfig }, null, 2) + "\n", "utf-8");
+    if (isNewConfig) trackNewFile(backupDir, "vaultproof.json");
+    console.log(`    ${chalk.green("✓")} vaultproof.json ${isNewConfig ? "created" : "updated"}`);
+
+    // ─── Phase 6: Summary ────────────────────────────────────────────────
+
+    console.log(chalk.bold("\n  ─── Summary ───\n"));
+
+    console.log(chalk.green(`  ✓ ${stored.length} key${stored.length !== 1 ? "s" : ""} stored in VaultProof`));
+    console.log(chalk.green(`  ✓ ${envFilesModified.size} file${envFilesModified.size !== 1 ? "s" : ""} rewritten`));
+
+    const proxyKeys = stored.filter((k) => k.mode === "proxy");
+    const envKeys = stored.filter((k) => k.mode === "env-injection");
+
+    if (proxyKeys.length > 0) {
+      console.log(chalk.cyan(`\n  Proxy mode (${proxyKeys.length} key${proxyKeys.length !== 1 ? "s" : ""}):`));
+      console.log(chalk.dim("  These keys never leave VaultProof. Your SDK uses the proxy URL automatically."));
+      for (const k of proxyKeys) {
+        console.log(chalk.dim(`    ${k.envName} → https://api.vaultproof.dev/v1/${k.provider}`));
       }
     }
 
-    console.log(chalk.bold("\n─── Usage ───\n"));
-    console.log(chalk.dim("  Replace this:"));
-    console.log(`    const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!);`);
-    console.log(chalk.dim("\n  With this:"));
-    console.log(`    import { getSecret } from '@/lib/vault';`);
-    console.log(`    const stripe = new Stripe(await getSecret('STRIPE_SECRET_KEY'));`);
-    console.log();
+    if (envKeys.length > 0) {
+      console.log(chalk.magenta(`\n  Env-injection mode (${envKeys.length} key${envKeys.length !== 1 ? "s" : ""}):`));
+      console.log(chalk.dim("  These keys are injected at runtime. Start your app with:"));
+      console.log(chalk.white(`    vaultproof exec -- <your start command>`));
+      for (const k of envKeys) {
+        console.log(chalk.dim(`    ${k.envName} → injected from VaultProof at startup`));
+      }
+    }
+
+    // Config/CI reminders
+    if (configReminders.length > 0) {
+      console.log(chalk.yellow(`\n  ⚠ ${configReminders.length} file${configReminders.length !== 1 ? "s" : ""} need manual updates:`));
+      for (const r of configReminders) {
+        if (r.type === "ci") {
+          console.log(chalk.yellow(`    • ${r.file}: update ${r.envName} secret`));
+        } else {
+          console.log(chalk.yellow(`    • ${r.file}: update ${r.envName} env var`));
+        }
+      }
+    }
+
+    // Hosting reminders
+    console.log(chalk.yellow("\n  ⚠ Remember to set VAULTPROOF_API_KEY in:"));
+    console.log(chalk.dim("    • Your local .env (check if already set)"));
+    if (configReminders.some((r) => r.file.includes("github"))) {
+      console.log(chalk.dim("    • GitHub Actions secrets"));
+    }
+    if (configReminders.some((r) => r.file === "vercel.json")) {
+      console.log(chalk.dim("    • Vercel environment variables"));
+    }
+    if (configReminders.some((r) => r.file === "railway.json")) {
+      console.log(chalk.dim("    • Railway environment variables"));
+    }
+    if (configReminders.some((r) => r.file.includes("fly"))) {
+      console.log(chalk.dim("    • Fly.io secrets"));
+    }
+    console.log(chalk.dim("    • Any other deploy targets"));
+
+    console.log(chalk.bold("\n  To undo all changes:"));
+    console.log(chalk.white(`    vaultproof migrate --revert\n`));
+
+    console.log(chalk.dim("  Run your app locally to test before pushing.\n"));
   });
 
 // ─── Run ─────────────────────────────────────────────────────────────────────

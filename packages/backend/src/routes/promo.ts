@@ -25,24 +25,29 @@ export async function promoRoutes(app: FastifyInstance) {
     if (!user) return reply.status(404).send({ error: 'User not found' });
     if (user.promoCode) return reply.status(409).send({ error: 'You have already redeemed a promo code' });
 
-    // Check hard cap
-    const redeemed = await prisma.user.count({ where: { promoCode: code } });
-    if (redeemed >= config.maxRedemptions) {
-      return reply.status(410).send({ error: 'This promo code has reached its redemption limit' });
-    }
-
-    // Apply promo
     const tierExpiresAt = new Date();
     tierExpiresAt.setDate(tierExpiresAt.getDate() + config.durationDays);
 
-    const updated = await prisma.user.update({
-      where: { id: user.id },
-      data: {
-        tier: config.tier,
-        promoCode: code,
-        tierExpiresAt,
-      },
-    });
+    // Atomic check-and-apply: re-check the cap inside a transaction so two concurrent
+    // requests can't both slip through when the count is exactly at limit - 1.
+    let updated: { tier: string; tierExpiresAt: Date | null };
+    try {
+      updated = await prisma.$transaction(async (tx) => {
+        const redeemed = await tx.user.count({ where: { promoCode: code } });
+        if (redeemed >= config.maxRedemptions) {
+          throw Object.assign(new Error('limit_reached'), { code: 'LIMIT_REACHED' });
+        }
+        return tx.user.update({
+          where: { id: user.id },
+          data: { tier: config.tier, promoCode: code, tierExpiresAt },
+        });
+      });
+    } catch (err: unknown) {
+      if (err instanceof Error && (err as NodeJS.ErrnoException).code === 'LIMIT_REACHED') {
+        return reply.status(410).send({ error: 'This promo code has reached its redemption limit' });
+      }
+      throw err;
+    }
 
     return {
       success: true,

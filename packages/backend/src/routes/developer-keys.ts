@@ -97,11 +97,14 @@ export async function developerKeyRoutes(app: FastifyInstance) {
     const mode = parsed.data.mode || 'live';
     const key = generateApiKey(mode);
     const keyHash = hashKey(key);
+    // Store the masked version immediately — the full key is never written to the database.
+    // Returning the key from the local variable ensures it never touches persistent storage.
+    const maskedKey = key.slice(0, 12) + '...' + key.slice(-4);
 
     const devKey = await prisma.developerKey.create({
       data: {
         userId,
-        key, // Stored full key — shown once at creation
+        key: maskedKey,
         keyHash,
         label: parsed.data.label || 'Default',
         mode,
@@ -115,22 +118,14 @@ export async function developerKeyRoutes(app: FastifyInstance) {
       },
     });
 
-    // Key is shown ONCE at creation. Never returned again (list endpoint returns masked version).
-    const response = {
+    // Return full key once — exists only in the local variable above, never in the DB.
+    return {
       id: devKey.id,
       key, // ⚠️ Show only once — save it now!
       label: devKey.label,
       mode: devKey.mode,
       createdAt: devKey.createdAt,
     };
-
-    // Mask the stored key — full key was returned to user above, never needed again
-    await prisma.developerKey.update({
-      where: { id: devKey.id },
-      data: { key: key.slice(0, 12) + '...' + key.slice(-4) },
-    });
-
-    return response;
   });
 
   // List developer keys (shows masked keys, not full)

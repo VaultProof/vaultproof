@@ -6,7 +6,12 @@ import { requireAuth } from '../middleware/auth.js';
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!);
 
-// Stripe webhook event deduplication (in-memory)
+// Stripe webhook event deduplication (in-memory).
+// KNOWN LIMITATION: this Set resets on every server restart/deploy. Stripe retries
+// failed webhooks for up to 3 days, so a deploy immediately after a payment could
+// process the same event twice. All webhook handlers are idempotent (upsert / update
+// to the same value), so duplicate processing has no user-visible effect.
+// TODO: replace with a DB unique constraint on a StripeEvent table for full safety.
 const processedEventIds = new Set<string>();
 const MAX_PROCESSED_EVENTS = 10000;
 
@@ -228,10 +233,7 @@ export async function billingRoutes(app: FastifyInstance) {
     }
     processedEventIds.add(event.id);
     if (processedEventIds.size > MAX_PROCESSED_EVENTS) {
-      // Remove oldest entries (Sets maintain insertion order)
-      const iterator = processedEventIds.values();
-      for (let i = 0; i < 1000; i++) iterator.next();
-      // Recreate with remaining
+      // Drop the oldest 1000 entries (Sets maintain insertion order).
       const remaining = [...processedEventIds].slice(1000);
       processedEventIds.clear();
       remaining.forEach(id => processedEventIds.add(id));

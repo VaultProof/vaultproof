@@ -102,6 +102,21 @@ export async function sdkRoutes(app: FastifyInstance) {
     const { userId, keyId: devKeyId, rawKey: vpKey } = (request as any).devAuth;
     const { share1, share2, provider, label, expiresAt, dailyLimit, monthlyLimit, blockOnLimit, envVar } = parsed.data;
 
+    // Check for duplicate keys — same provider + label or same provider + envVar
+    const effectiveLabel = label || `${provider} key`;
+    const duplicates = await prisma.keySlot.findMany({
+      where: {
+        userId,
+        provider,
+        status: 'ACTIVE',
+        OR: [
+          { label: effectiveLabel },
+          ...(envVar ? [{ envVar }] : []),
+        ],
+      },
+      select: { id: true, label: true, envVar: true },
+    });
+
     // Encrypt Share 1 with VAULT_ENCRYPTION_KEY (server secret)
     const share1Encrypted = encrypt(Buffer.from(share1, 'utf-8'));
 
@@ -139,12 +154,19 @@ export async function sdkRoutes(app: FastifyInstance) {
       });
     }
 
-    return {
+    const response: Record<string, unknown> = {
       keyId: keySlot.id,
       provider,
       label: keySlot.label,
       envVar: keySlot.envVar,
     };
+
+    if (duplicates.length > 0) {
+      response.warning = `You already have ${duplicates.length} active ${provider} key${duplicates.length > 1 ? 's' : ''} with the same label or env var. Consider revoking the old one to avoid confusion.`;
+      response.duplicateKeyIds = duplicates.map((d) => d.id);
+    }
+
+    return response;
   });
 
   /**
@@ -563,6 +585,41 @@ export async function sdkRoutes(app: FastifyInstance) {
       select: { id: true, provider: true, label: true, envVar: true, createdAt: true },
     });
     return { keys };
+  });
+
+  // Account limits — used by CLI `migrate` to check capacity before scanning
+  app.get('/limits', async (request) => {
+    const { userId } = (request as any).devAuth;
+
+    const [user, usedSlots] = await Promise.all([
+      prisma.user.findUnique({ where: { id: userId }, select: { tier: true } }),
+      prisma.keySlot.count({ where: { userId, status: 'ACTIVE' } }),
+    ]);
+
+    const tier = (user?.tier as string) || 'free';
+
+    // Import tier definitions inline to avoid circular deps
+    const TIER_LIMITS: Record<string, { maxKeySlots: number }> = {
+      free: { maxKeySlots: 3 },
+      starter: { maxKeySlots: 10 },
+      pro: { maxKeySlots: 50 },
+      max: { maxKeySlots: 50 },
+      enterprise: { maxKeySlots: 1000 },
+    };
+
+    const limits = TIER_LIMITS[tier] || TIER_LIMITS.free;
+
+    return {
+      tier,
+      keySlots: {
+        used: usedSlots,
+        limit: limits.maxKeySlots,
+        available: Math.max(0, limits.maxKeySlots - usedSlots),
+      },
+      features: {
+        migrate: tier === 'pro' || tier === 'max' || tier === 'enterprise',
+      },
+    };
   });
 
   // Revoke a key

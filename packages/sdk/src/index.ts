@@ -34,6 +34,10 @@ export interface StoredKey {
   id: string;
   provider: string;
   label: string;
+  /** Set when a key with the same provider + label already exists. */
+  warning?: string;
+  /** IDs of existing keys that match the same provider + label. */
+  duplicateKeyIds?: string[];
 }
 
 export interface ProxyResponse {
@@ -94,11 +98,14 @@ export class VaultProof {
       body: { share1, share2, provider, label },
     });
 
-    return {
+    const result: StoredKey = {
       id: res.keyId,
       provider: res.provider,
       label: res.label,
     };
+    if (res.warning) result.warning = res.warning;
+    if (res.duplicateKeyIds) result.duplicateKeyIds = res.duplicateKeyIds;
+    return result;
   }
 
   /**

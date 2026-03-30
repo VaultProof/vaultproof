@@ -60,25 +60,7 @@ export async function proxyRoutes(app: FastifyInstance) {
 
     const { keySlotId, share2, zkProof, nullifier, appId, targetPath, method, stream, headers: clientHeaders, body: clientBody } = parsed.data;
 
-    // 1. Claim nullifier atomically (replay prevention).
-    // Insert first — if another concurrent request has the same nullifier, the
-    // unique constraint will throw, and we reject as replay. No TOCTOU gap.
-    try {
-      await prisma.accessLog.create({
-        data: {
-          keySlotId: keySlotId,
-          appId,
-          action: 'nullifier_claim',
-          zkProof: 'pending',
-          nullifier,
-        },
-      });
-    } catch {
-      // Unique constraint violation → replay
-      return reply.status(403).send({ error: 'Proof already used (replay detected)' });
-    }
-
-    // 2. Load key slot + verify app authorization
+    // 1. Load key slot + verify app authorization (read-only, no DB writes yet)
     const keySlot = await prisma.keySlot.findUnique({
       where: { id: keySlotId },
       include: { appGrants: { where: { appId, revokedAt: null } } },
@@ -93,11 +75,12 @@ export async function proxyRoutes(app: FastifyInstance) {
       return reply.status(410).send({ error: 'Key has expired', expiresAt: keySlot.expiresAt });
     }
 
+    // Return generic 403 — don't reveal whether the appId exists or is registered
     if (keySlot.appGrants.length === 0) {
-      return reply.status(403).send({ error: `App '${appId}' is not authorized to use this key. Grant access in the VaultProof dashboard.` });
+      return reply.status(403).send({ error: 'App is not authorized to use this key. Grant access in the VaultProof dashboard.' });
     }
 
-    // 3. Check tier rate limits (skip in test environment)
+    // 2. Check tier rate limits (skip in test environment)
     if (process.env.NODE_ENV !== 'test') {
       const slotOwner = await prisma.user.findUnique({ where: { id: keySlot.userId }, select: { tier: true, email: true } });
       const tier = (slotOwner?.tier as string) || 'free';
@@ -129,14 +112,9 @@ export async function proxyRoutes(app: FastifyInstance) {
       }
     }
 
-    // 4. Update the nullifier claim with proof details (nullifier was already inserted atomically above)
-    await prisma.accessLog.updateMany({
-      where: { nullifier },
-      data: { action: 'api_call', zkProof, metadata: JSON.stringify({ endpoint: targetPath, status: 'pending' }) },
-    });
-
-    // 4. Verify ZK proof (falls back to placeholder if Noir not loaded)
-    // Calculate tree depth from number of authorized apps (ceil(log2(n)), min 1)
+    // 3. Verify ZK proof BEFORE claiming the nullifier.
+    // This ensures an invalid proof never burns a nullifier — an attacker cannot lock
+    // a user's nullifier by racing with a forged/invalid proof.
     const allGrants = await prisma.appGrant.count({ where: { keySlotId, revokedAt: null } });
     const treeDepth = Math.max(1, Math.ceil(Math.log2(Math.max(2, allGrants))));
 
@@ -149,13 +127,26 @@ export async function proxyRoutes(app: FastifyInstance) {
     });
 
     if (!proofResult.valid) {
-      // Update log with rejection reason
-      await prisma.accessLog.updateMany({
-        where: { nullifier },
-        data: { metadata: JSON.stringify({ endpoint: targetPath, proofRejected: true, reason: proofResult.reason }) },
-      });
       request.log.warn(`Proof rejected for keySlot ${keySlotId}: ${proofResult.reason}`);
       return reply.status(403).send({ error: 'ZK proof verification failed. The proof may be expired or generated with incorrect parameters.' });
+    }
+
+    // 4. Claim nullifier atomically (replay prevention).
+    // Proof is valid — now write to DB. If another request already claimed this
+    // nullifier (concurrent replay), the unique constraint throws and we reject.
+    try {
+      await prisma.accessLog.create({
+        data: {
+          keySlotId,
+          appId,
+          action: 'api_call',
+          zkProof,
+          nullifier,
+          metadata: JSON.stringify({ endpoint: targetPath, status: 'pending' }),
+        },
+      });
+    } catch {
+      return reply.status(403).send({ error: 'Proof already used (replay detected)' });
     }
 
     // 5. Reconstruct API key ephemerally

@@ -169,7 +169,7 @@ function securityHeaders(): Record<string, string> {
 // --- Forward Headers ---
 function forwardHeaders(headers: Headers): Headers {
   const forwarded = new Headers();
-  const forwardList = ['authorization', 'content-type', 'content-length', 'accept', 'x-api-key', 'x-admin-key', 'stripe-signature', 'x-vaultproof-session'];
+  const forwardList = ['authorization', 'content-type', 'content-length', 'accept', 'x-api-key', 'stripe-signature', 'x-vaultproof-session'];
   for (const key of forwardList) {
     const value = headers.get(key);
     if (value) forwarded.set(key, value);

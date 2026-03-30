@@ -16,7 +16,7 @@ export interface TierLimits {
 const TIERS: Record<string, TierLimits> = {
   free: { maxCallsPerMonth: 10000, maxKeySlots: 3, maxAppGrantsPerKey: 1 },
   starter: { maxCallsPerMonth: 50000, maxKeySlots: 10, maxAppGrantsPerKey: 5 },
-  pro: { maxCallsPerMonth: 500000, maxKeySlots: 100, maxAppGrantsPerKey: 20 },
+  pro: { maxCallsPerMonth: 500000, maxKeySlots: 50, maxAppGrantsPerKey: 20 },
   // Legacy "max" tier maps to pro limits as a fallback
   max: { maxCallsPerMonth: 500000, maxKeySlots: 100, maxAppGrantsPerKey: 20 },
 };

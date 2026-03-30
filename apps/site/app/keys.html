@@ -1133,6 +1133,17 @@ STRIPE_SECRET_KEY=sk_live_..."></textarea>
 
         localStorage.setItem('vaultproof_share2_' + data.keySlotId, JSON.stringify({ share2: share2, provider: provider, label: label || provider + ' key' }));
 
+        // Show duplicate warning if backend detected one
+        if (data.warning) {
+          var warnEl = document.getElementById('addKeyError');
+          warnEl.textContent = '⚠ ' + data.warning;
+          warnEl.className = 'text-sm text-yellow-400';
+          warnEl.classList.remove('hidden');
+          // Auto-dismiss after 5 seconds then close
+          setTimeout(function() { closeAddModal(); loadKeys(); }, 5000);
+          return;
+        }
+
         closeAddModal();
         loadKeys();
       } catch (err) {
