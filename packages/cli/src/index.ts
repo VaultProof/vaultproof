@@ -25,7 +25,7 @@ program
       "  Store API keys without anyone seeing them. Even us.\n" +
       "  Keys are Shamir-split locally — the server never sees the full key."
   )
-  .version("1.7.0", "-v, --version")
+  .version("1.7.1", "-v, --version")
   .option("--json", "Output results as JSON")
   .option("--api-url <url>", "Override API URL")
   .addHelpText(
@@ -1966,7 +1966,7 @@ program
   .description("Scan project, store API keys in VaultProof, and rewrite configs (Pro only)")
   .option("-f, --file <path>", "Path to primary .env file", ".env")
   .option("--revert [timestamp]", "Revert to backup (latest or specific timestamp)")
-  .option("--dry-run", "Show what would be changed without modifying files")
+  .option("--scan-only", "Show what would be changed without modifying files")
   .option("--verify", "Verify keys are active by calling provider APIs")
   .option("--no-verify", "Skip key verification")
   .option("--git-history", "Also scan git commit history for deleted keys")
@@ -1993,11 +1993,11 @@ ${chalk.bold("Safety:")}
 ${chalk.bold("Example:")}
   $ vaultproof migrate
   $ vaultproof migrate -f .env.production
-  $ vaultproof migrate --dry-run
+  $ vaultproof migrate --scan-only
   $ vaultproof migrate --revert
 `
   )
-  .action(async (opts: { file: string; revert?: boolean | string; dryRun?: boolean; verify?: boolean; gitHistory?: boolean; output?: string }) => {
+  .action(async (opts: { file: string; revert?: boolean | string; scanOnly?: boolean; verify?: boolean; gitHistory?: boolean; output?: string }) => {
     const projectDir = process.cwd();
 
     // ─── Revert mode ──────────────────────────────────────────────────
@@ -2051,18 +2051,20 @@ ${chalk.bold("Example:")}
     // ─── Main migrate flow ─────────────────────────────────────────────
 
     console.log();
-    console.log(chalk.yellow.bold("  ⚠  WARNING: This command will modify files in your project."));
-    console.log(chalk.yellow("     Back up your project or commit your changes before proceeding."));
-    console.log(chalk.yellow("     VaultProof will also create a local backup in .vaultproof/backup/\n"));
+    if (!opts.scanOnly) {
+      console.log(chalk.yellow.bold("  ⚠  WARNING: This command will modify files in your project."));
+      console.log(chalk.yellow("     Back up your project or commit your changes before proceeding."));
+      console.log(chalk.yellow("     VaultProof will also create a local backup in .vaultproof/backup/\n"));
 
-    const proceed = await confirm("  Continue?");
-    if (!proceed) process.exit(0);
+      const proceed = await confirm("  Continue?");
+      if (!proceed) process.exit(0);
+    }
 
     // Test connection + check limits (skip for dry-run — scan locally only)
     let tierInfo: { tier: string; used: number; limit: number; available: number; migrateEnabled: boolean };
-    if (opts.dryRun) {
+    if (opts.scanOnly) {
       tierInfo = { tier: "pro", used: 0, limit: 100, available: 100, migrateEnabled: true };
-      console.log(chalk.dim("\n  --dry-run: skipping API connection check\n"));
+      console.log(chalk.dim("\n  --scan-only: skipping API connection check\n"));
     } else {
       console.log();
       const connected = await testConnection();
@@ -2388,7 +2390,7 @@ ${chalk.bold("Example:")}
 
     // ─── Rotation confirmation ──────────────────────────────────────────
 
-    if (activeKeys.length > 0 && !opts.dryRun) {
+    if (activeKeys.length > 0 && !opts.scanOnly) {
       console.log(chalk.bold("  Please rotate the active keys above before continuing.\n"));
 
       for (const key of activeKeys) {
@@ -2423,8 +2425,8 @@ ${chalk.bold("Example:")}
       }
     }
 
-    if (opts.dryRun) {
-      console.log(chalk.yellow("  --dry-run: No changes made.\n"));
+    if (opts.scanOnly) {
+      console.log(chalk.yellow("  --scan-only: No changes made.\n"));
       process.exit(0);
     }
 
@@ -2670,6 +2672,25 @@ ${chalk.bold("Example:")}
     console.log(chalk.white(`    vaultproof migrate --revert\n`));
 
     console.log(chalk.dim("  Run your app locally to test before pushing.\n"));
+  });
+
+// ─── scan (alias for migrate --scan-only) ────────────────────────────────────
+
+program
+  .command("scan")
+  .description("Scan project for exposed API keys (alias for migrate --scan-only)")
+  .option("-f, --file <path>", "Path to primary .env file", ".env")
+  .option("--verify", "Verify keys are active by calling provider APIs")
+  .option("--git-history", "Also scan git commit history for deleted keys")
+  .option("--output <format>", "Output format: terminal, json", "terminal")
+  .action(async (opts: { file: string; verify?: boolean; gitHistory?: boolean; output?: string }) => {
+    // Delegate to migrate with --scan-only
+    await program.parseAsync(["node", "vaultproof", "migrate", "--scan-only",
+      "-f", opts.file,
+      ...(opts.verify ? ["--verify"] : []),
+      ...(opts.gitHistory ? ["--git-history"] : []),
+      ...(opts.output ? ["--output", opts.output] : []),
+    ]);
   });
 
 // ─── Run ─────────────────────────────────────────────────────────────────────
