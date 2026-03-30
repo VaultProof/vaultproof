@@ -149,26 +149,26 @@
 <body class="text-gray-300 min-h-screen">
 
     <!-- Top Nav -->
-    <nav class="fixed top-0 left-0 right-0 z-50 border-b border-vp-border bg-vp-bg/90 backdrop-blur-xl">
-        <div class="flex items-center justify-between px-6 py-4 max-w-[1400px] mx-auto">
-            <div class="flex items-center gap-4">
-                <a href="/" class="flex items-center gap-2">
-                    <span class="text-xl font-bold text-white" style="font-family:'Space Grotesk',sans-serif">VaultProof</span>
-                </a>
-                <span class="text-vp-border hidden md:inline">|</span>
-                <span class="text-sm text-gray-500 font-medium hidden md:inline">Developer Documentation</span>
-            </div>
+    <nav class="relative z-50 border-b border-vp-border/50 backdrop-blur-sm bg-vp-bg/80 sticky top-0">
+        <div class="flex items-center justify-between px-6 py-4 max-w-6xl mx-auto">
+            <a href="/" class="flex items-center gap-2.5">
+                <span class="text-lg font-bold text-white tracking-tight" style="font-family:'Space Grotesk',sans-serif">VaultProof</span>
+            </a>
 
             <!-- Desktop links -->
             <div class="hidden md:flex items-center gap-8">
-                <a href="/docs" class="text-sm text-white font-medium transition">Documentation</a>
-                <a href="/guides" class="text-sm text-gray-400 hover:text-white transition">Guides</a>
-                <a href="/compare" class="text-sm text-gray-400 hover:text-white transition">Compare</a>
-                <a href="/agents" class="text-sm text-gray-400 hover:text-white transition">Agents</a>
-                <a href="/blog" class="text-sm text-gray-400 hover:text-white transition">Insights</a>
-                <a href="/#pricing" class="text-sm text-gray-400 hover:text-white transition">Pricing</a>
-                <a href="/app/login" class="nav-dashboard text-sm text-gray-400 hover:text-white transition" style="display:none">Dashboard</a>
-                <a href="/app/login" class="bg-vp-accent hover:bg-indigo-500 text-sm px-4 py-2 rounded-xl font-medium text-white transition">Get Started</a>
+                <a href="/docs" class="text-sm text-white font-medium transition-colors">Documentation</a>
+                <a href="/guides" class="text-sm text-gray-400 hover:text-white transition-colors">Guides</a>
+                <a href="/compare" class="text-sm text-gray-400 hover:text-white transition-colors">Compare</a>
+                <a href="/agents" class="text-sm text-gray-400 hover:text-white transition-colors">Agents</a>
+                <a href="/blog" class="text-sm text-gray-400 hover:text-white transition-colors">Insights</a>
+                <a href="/#pricing" class="text-sm text-gray-400 hover:text-white transition-colors">Pricing</a>
+                <a href="/demo" class="text-sm text-indigo-400 hover:text-indigo-300 transition-colors font-medium flex items-center gap-1.5">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><polygon points="5,3 19,12 5,21"/></svg>
+                    Demo
+                </a>
+                <a href="/app/login" class="nav-dashboard text-sm text-gray-400 hover:text-white transition-colors" style="display:none">Dashboard</a>
+                <a href="/app/login" class="bg-vp-accent hover:bg-indigo-500 text-sm px-5 py-2 rounded-btn font-semibold text-white transition-all btn-glow">Get Started</a>
             </div>
 
             <!-- Mobile hamburger -->
@@ -179,14 +179,15 @@
 
         <!-- Mobile menu -->
         <div id="mobileMenu" class="mobile-menu flex-col gap-4 px-6 pb-6 md:hidden bg-vp-bg/95 backdrop-blur-sm">
-            <a href="/docs" class="text-sm text-white font-medium transition py-1">Documentation</a>
-            <a href="/guides" class="text-sm text-gray-400 hover:text-white transition py-1">Guides</a>
-            <a href="/compare" class="text-sm text-gray-400 hover:text-white transition py-1">Compare</a>
-            <a href="/agents" class="text-sm text-gray-400 hover:text-white transition py-1">Agents</a>
-            <a href="/blog" class="text-sm text-gray-400 hover:text-white transition py-1">Insights</a>
-            <a href="/#pricing" class="text-sm text-gray-400 hover:text-white transition py-1">Pricing</a>
-            <a href="/app/login" class="nav-dashboard text-sm text-gray-400 hover:text-white transition py-1" style="display:none">Dashboard</a>
-            <a href="/app/login" class="bg-vp-accent hover:bg-indigo-500 text-sm px-5 py-2.5 rounded-xl font-medium text-white transition text-center mt-2">Get Started</a>
+            <a href="/docs" class="text-sm text-white font-medium transition-colors py-1">Documentation</a>
+            <a href="/guides" class="text-sm text-gray-400 hover:text-white transition-colors py-1">Guides</a>
+            <a href="/compare" class="text-sm text-gray-400 hover:text-white transition-colors py-1">Compare</a>
+            <a href="/agents" class="text-sm text-gray-400 hover:text-white transition-colors py-1">Agents</a>
+            <a href="/blog" class="text-sm text-gray-400 hover:text-white transition-colors py-1">Insights</a>
+            <a href="/#pricing" class="text-sm text-gray-400 hover:text-white transition-colors py-1">Pricing</a>
+            <a href="/demo" class="text-sm text-indigo-400 hover:text-indigo-300 transition-colors py-1 font-medium">Demo</a>
+            <a href="/app/login" class="nav-dashboard text-sm text-gray-400 hover:text-white transition-colors py-1" style="display:none">Dashboard</a>
+            <a href="/app/login" class="bg-vp-accent hover:bg-indigo-500 text-sm px-5 py-2.5 rounded-btn font-semibold text-white transition-all text-center btn-glow mt-2">Get Started</a>
         </div>
     </nav>
 
