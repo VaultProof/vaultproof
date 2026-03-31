@@ -817,7 +817,7 @@ export async function adminRoutes(app: FastifyInstance) {
     return { runs };
   });
 
-  // Submit test run result (called by the test runner script)
+  // Submit test run result (called by the test runner script or cron)
   app.post('/test-results', { preHandler: requireAdmin }, async (request) => {
     const body = request.body as {
       status: string; total: number; passed: number; failed: number;
@@ -837,6 +837,65 @@ export async function adminRoutes(app: FastifyInstance) {
       },
     });
     return run;
+  });
+
+  // Run tests on the server and record results
+  app.post('/run-tests', { preHandler: requireAdmin }, async (request, reply) => {
+    const { triggeredBy = 'manual' } = (request.body || {}) as { triggeredBy?: string };
+
+    // Create a "running" record
+    const run = await prisma.testRun.create({
+      data: { status: 'running', triggeredBy },
+    });
+
+    // Spawn tests in background — don't block the response
+    const { exec } = await import('child_process');
+    const startMs = Date.now();
+
+    exec(
+      'node --test --test-force-exit dist/tests/*.test.js 2>&1',
+      { cwd: process.cwd(), timeout: 300_000 },
+      async (error, stdout) => {
+        const durationMs = Date.now() - startMs;
+        const output = stdout || '';
+
+        // Parse summary lines
+        const totalMatch = output.match(/ℹ tests (\d+)/);
+        const passMatch = output.match(/ℹ pass (\d+)/);
+        const failMatch = output.match(/ℹ fail (\d+)/);
+
+        const total = totalMatch ? parseInt(totalMatch[1]) : 0;
+        const passed = passMatch ? parseInt(passMatch[1]) : 0;
+        const failed = failMatch ? parseInt(failMatch[1]) : 0;
+        const status = (failed === 0 && total > 0) ? 'passed' : 'failed';
+
+        // Extract failure names
+        const failures: { name: string; error: string }[] = [];
+        const failSection = output.split('✖ failing tests:')[1];
+        if (failSection) {
+          const failRegex = /✖ (.+?) \(\d/g;
+          let m;
+          while ((m = failRegex.exec(failSection)) !== null) {
+            failures.push({ name: m[1], error: '' });
+          }
+        }
+
+        await prisma.testRun.update({
+          where: { id: run.id },
+          data: {
+            status,
+            total,
+            passed,
+            failed,
+            durationMs,
+            failures: failures.length ? JSON.stringify(failures) : null,
+            completedAt: new Date(),
+          },
+        }).catch(() => {});
+      }
+    );
+
+    return { id: run.id, status: 'running' };
   });
 
   // Get test settings

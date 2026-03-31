@@ -1328,15 +1328,29 @@ function showFailures(failuresJson) {
 
 async function triggerTestRun() {
   try {
-    await apiFetch('/test-results', {
+    const { id } = await apiFetch('/run-tests', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ status: 'running', total: 0, passed: 0, failed: 0, triggeredBy: 'manual' }),
+      body: JSON.stringify({ triggeredBy: 'manual' }),
     });
     await loadTestResults();
+    // Poll until complete
+    if (id) pollTestRun(id);
   } catch (e) {
     console.error('Failed to trigger test run', e);
   }
+}
+
+function pollTestRun(runId) {
+  const interval = setInterval(async () => {
+    try {
+      const { runs } = await apiFetch('/test-results?limit=1');
+      if (runs[0] && runs[0].id === runId && runs[0].status !== 'running') {
+        clearInterval(interval);
+        await loadTestResults();
+      }
+    } catch { clearInterval(interval); }
+  }, 5000);
 }
 </script>
 </body>
