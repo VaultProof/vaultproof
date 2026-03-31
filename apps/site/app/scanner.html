@@ -550,25 +550,8 @@
       if (!res) return;
       var data = await res.json();
       if (!data.url) { showToast('Failed to get GitHub connect URL'); return; }
-
-      var w = 600, h = 700;
-      var left = (screen.width - w) / 2, top = (screen.height - h) / 2;
-      var popup = window.open(data.url, 'github_connect', 'width=' + w + ',height=' + h + ',left=' + left + ',top=' + top);
-
-      var timer = setInterval(function() {
-        try {
-          if (!popup || popup.closed) { clearInterval(timer); return; }
-          var loc = popup.location.href;
-          if (loc && loc.indexOf('github_callback=1') > -1) {
-            clearInterval(timer);
-            var url = new URL(loc);
-            var code = url.searchParams.get('code');
-            var state = url.searchParams.get('state');
-            popup.close();
-            handleGitHubCallback(code, state);
-          }
-        } catch (e) { /* cross-origin, ignore */ }
-      }, 500);
+      // Redirect instead of popup — avoids popup blocker issues
+      window.location.href = data.url;
     }
 
     async function handleGitHubCallback(code, state) {
