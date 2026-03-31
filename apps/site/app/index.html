@@ -105,6 +105,41 @@
 
     /* Quick actions */
     .quick-actions { backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); }
+
+    /* Guided Tour */
+    .guide-overlay {
+      position: fixed; inset: 0; z-index: 200;
+      background: rgba(0,0,0,0.5);
+      backdrop-filter: blur(2px);
+      pointer-events: none; opacity: 0;
+      transition: opacity 0.3s ease;
+    }
+    .guide-overlay.active { opacity: 1; pointer-events: auto; }
+    .guide-bubble {
+      position: absolute; z-index: 202;
+      background: #111118; border: 1px solid #2a2a3a;
+      border-radius: 16px; padding: 16px 20px;
+      max-width: 340px; width: max-content;
+      box-shadow: 0 20px 50px rgba(0,0,0,0.5);
+      opacity: 0; transform: translateY(8px);
+      transition: opacity 0.25s ease, transform 0.25s ease;
+      pointer-events: auto;
+    }
+    .guide-bubble.visible { opacity: 1; transform: translateY(0); }
+    .guide-bubble-arrow {
+      position: absolute; width: 12px; height: 12px;
+      background: #111118; border: 1px solid #2a2a3a;
+      transform: rotate(45deg);
+    }
+    .guide-bubble-arrow[data-pos="bottom"] { top: -7px; left: 24px; border-right: none; border-bottom: none; }
+    .guide-bubble-arrow[data-pos="top"] { bottom: -7px; left: 24px; border-left: none; border-top: none; }
+    .guide-bubble-arrow[data-pos="right"] { left: -7px; top: 16px; border-top: none; border-right: none; }
+    .guide-highlight {
+      position: relative; z-index: 201;
+      box-shadow: 0 0 0 4px rgba(99,102,241,0.3), 0 0 20px rgba(99,102,241,0.15);
+      border-radius: 12px;
+      transition: box-shadow 0.3s ease;
+    }
   </style>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
@@ -118,6 +153,7 @@
   <aside id="sidebar" class="fixed top-0 left-0 h-full bg-card border-r border-border z-50 flex flex-col transition-all duration-200 sidebar-expanded -translate-x-full lg:translate-x-0">
     <!-- Logo -->
     <div class="flex items-center gap-3 px-4 h-16 border-b border-border flex-shrink-0">
+      <img src="/logo-sm.png" alt="VaultProof" class="w-9 h-9 flex-shrink-0" />
       <span class="text-lg font-bold sidebar-logo-text tracking-tight" style="font-family:'Space Grotesk',sans-serif">VaultProof</span>
     </div>
 
@@ -129,31 +165,31 @@
         </svg>
         <span class="sidebar-label">Dashboard</span>
       </a>
-      <a href="/app/keys" class="sidebar-nav-item flex items-center gap-3 px-3 py-2.5 rounded-xl text-gray-400 hover:text-white hover:bg-white/5 text-sm transition">
+      <a id="nav-api-keys" href="/app/keys" class="sidebar-nav-item flex items-center gap-3 px-3 py-2.5 rounded-xl text-gray-400 hover:text-white hover:bg-white/5 text-sm transition">
         <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
           <path stroke-linecap="round" stroke-linejoin="round" d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z"/>
         </svg>
         <span class="sidebar-label">API Keys</span>
       </a>
-      <a href="/app/agents" class="sidebar-nav-item flex items-center gap-3 px-3 py-2.5 rounded-xl text-gray-400 hover:text-white hover:bg-white/5 text-sm transition">
+      <a id="nav-agents" href="/app/agents" class="sidebar-nav-item flex items-center gap-3 px-3 py-2.5 rounded-xl text-gray-400 hover:text-white hover:bg-white/5 text-sm transition">
         <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
           <path stroke-linecap="round" stroke-linejoin="round" d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17H3a2 2 0 01-2-2V5a2 2 0 012-2h14a2 2 0 012 2v10a2 2 0 01-2 2h-2"/>
         </svg>
         <span class="sidebar-label">Agents</span>
       </a>
-      <a href="/app/scanner" class="sidebar-nav-item flex items-center gap-3 px-3 py-2.5 rounded-xl text-gray-400 hover:text-white hover:bg-white/5 text-sm transition">
+      <a id="nav-scanner" href="/app/scanner" class="sidebar-nav-item flex items-center gap-3 px-3 py-2.5 rounded-xl text-gray-400 hover:text-white hover:bg-white/5 text-sm transition">
         <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
           <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
         </svg>
         <span class="sidebar-label">Scanner</span>
       </a>
-      <a href="/app/logs" class="sidebar-nav-item flex items-center gap-3 px-3 py-2.5 rounded-xl text-gray-400 hover:text-white hover:bg-white/5 text-sm transition">
+      <a id="nav-access-logs" href="/app/logs" class="sidebar-nav-item flex items-center gap-3 px-3 py-2.5 rounded-xl text-gray-400 hover:text-white hover:bg-white/5 text-sm transition">
         <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
           <path stroke-linecap="round" stroke-linejoin="round" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"/>
         </svg>
         <span class="sidebar-label">Access Logs</span>
       </a>
-      <a href="/app/settings" class="sidebar-nav-item flex items-center gap-3 px-3 py-2.5 rounded-xl text-gray-400 hover:text-white hover:bg-white/5 text-sm transition">
+      <a id="nav-settings" href="/app/settings" class="sidebar-nav-item flex items-center gap-3 px-3 py-2.5 rounded-xl text-gray-400 hover:text-white hover:bg-white/5 text-sm transition">
         <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
           <path stroke-linecap="round" stroke-linejoin="round" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.066 2.573c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.573 1.066c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.066-2.573c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/>
           <path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
@@ -265,9 +301,15 @@
         <div class="max-w-[1200px] space-y-8">
 
           <!-- Page Header -->
-          <div class="anim-fade-up">
-            <h1 class="text-2xl font-bold tracking-tight">Dashboard</h1>
-            <p class="text-gray-500 text-sm mt-1">Monitor your API key usage and activity</p>
+          <div class="anim-fade-up flex items-center justify-between">
+            <div>
+              <h1 class="text-2xl font-bold tracking-tight">Dashboard</h1>
+              <p class="text-gray-500 text-sm mt-1">Monitor your API key usage and activity</p>
+            </div>
+            <button id="onboardingBtn" onclick="startAppTour()" class="hidden items-center gap-2 px-4 py-2 bg-brand/10 hover:bg-brand/20 text-brand border border-brand/20 rounded-xl text-sm font-medium transition">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+              Getting Started
+            </button>
           </div>
 
           <!-- Onboarding Checklist -->
@@ -393,7 +435,7 @@
           </div>
 
           <!-- API Keys Table -->
-          <div class="bg-card border border-border rounded-2xl overflow-hidden anim-fade-up" style="animation-delay:500ms">
+          <div id="keys-table" class="bg-card border border-border rounded-2xl overflow-hidden anim-fade-up" style="animation-delay:500ms">
             <div class="flex items-center justify-between px-6 py-4 border-b border-border">
               <h2 class="text-lg font-semibold">API Keys</h2>
               <a href="/app/keys" class="text-sm text-brand hover:text-brand-light transition font-medium">Manage Keys &rarr;</a>
@@ -423,7 +465,7 @@
         </div>
 
         <!-- CLI Getting Started -->
-        <div class="bg-card border border-border rounded-2xl p-6 mt-6 anim-fade-up" style="animation-delay:450ms">
+        <div id="cli-card" class="bg-card border border-border rounded-2xl p-6 mt-6 anim-fade-up" style="animation-delay:450ms">
           <div class="flex items-center gap-3 mb-4">
             <div class="w-8 h-8 rounded-lg bg-brand/10 flex items-center justify-center">
               <svg class="w-4 h-4 text-brand" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M8 9l3 3-3 3m5 0h3M5 20h14a2 2 0 002-2V6a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
@@ -448,7 +490,7 @@
         </div>
 
         <!-- Quick Access -->
-        <div class="grid grid-cols-3 gap-4 mt-6 anim-fade-up" style="animation-delay:500ms">
+        <div id="quick-access" class="grid grid-cols-3 gap-4 mt-6 anim-fade-up" style="animation-delay:500ms">
           <a href="/app/keys" class="bg-card border border-border rounded-2xl p-5 hover:border-brand/40 transition group">
             <div class="flex items-center gap-3 mb-2">
               <svg class="w-5 h-5 text-indigo-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
@@ -1294,6 +1336,141 @@
     <button onclick="dismissFeedback()" class="px-4 py-2 text-gray-500 hover:text-gray-300 text-sm transition">Later</button>
   </div>
 </div>
+<!-- Guided Tour -->
+<div id="guide-overlay" class="guide-overlay"></div>
+<div id="guide-bubble" class="guide-bubble">
+  <div id="guide-arrow" class="guide-bubble-arrow" data-pos="bottom"></div>
+  <div id="guide-text" class="text-sm text-gray-200 mb-3"></div>
+  <div class="flex items-center justify-between">
+    <span id="guide-step-counter" class="text-xs text-gray-500">Step 1 of 8</span>
+    <div class="flex items-center gap-1">
+      <button id="guide-skip" onclick="endTour()" class="text-xs text-gray-500 hover:text-gray-300 px-2 py-1.5 transition">Skip</button>
+      <button id="guide-back" onclick="prevTourStep()" class="text-xs text-gray-400 hover:text-white px-3 py-1.5 transition">Back</button>
+      <button id="guide-next" onclick="nextTourStep()" class="text-xs bg-indigo-600 hover:bg-indigo-500 text-white px-4 py-1.5 rounded-lg font-medium transition">Next</button>
+    </div>
+  </div>
+</div>
+<script>
+(function() {
+  var tourSteps = [
+    { target: '#statsGrid', text: 'Welcome to VaultProof! These cards show your real-time usage — total keys stored, active providers, API calls, and error rate.', position: 'bottom' },
+    { target: '#keys-table', text: 'Your API keys live here. Each key is split using Shamir Secret Sharing — we never see your full key. You can add, rotate, or revoke keys.', position: 'bottom' },
+    { target: '#nav-api-keys', text: 'Go to API Keys to store your first key. Choose a provider (OpenAI, Anthropic, etc.), paste your key, and it\'s split instantly in your browser.', position: 'right' },
+    { target: '#nav-settings', text: 'After storing keys, create a Developer API Key (vp_live_) here. This is how your app authenticates with VaultProof.', position: 'right' },
+    { target: '#activityPanel', text: 'Every API call, key rotation, and access event shows up here in real time. Full audit trail for all your keys.', position: 'left' },
+    { target: '#nav-scanner', text: 'Scan your GitHub repos for accidentally exposed API keys. VaultProof catches them before anyone else does.', position: 'right' },
+    { target: '#cli-card', text: 'Prefer the terminal? Install the CLI to store keys, proxy calls, and inject env vars — all from the command line.', position: 'bottom' },
+    { target: '#quick-access', text: 'Quick links to jump to any section. Ready to secure your first key?', position: 'top', last: true }
+  ];
+
+  var currentStep = 0;
+  var tourActive = false;
+  var bubbleEl = document.getElementById('guide-bubble');
+  var arrowEl = document.getElementById('guide-arrow');
+  var textEl = document.getElementById('guide-text');
+  var counterEl = document.getElementById('guide-step-counter');
+  var backBtn = document.getElementById('guide-back');
+  var nextBtn = document.getElementById('guide-next');
+  var overlayEl = document.getElementById('guide-overlay');
+
+  function positionBubble(target, pos) {
+    var rect = target.getBoundingClientRect();
+    var scrollX = window.scrollX || window.pageXOffset;
+    var scrollY = window.scrollY || window.pageYOffset;
+    bubbleEl.classList.remove('visible');
+    var bw = 340, gap = 16;
+    var top, left;
+    if (pos === 'bottom') {
+      top = rect.bottom + scrollY + gap;
+      left = rect.left + scrollX;
+      arrowEl.setAttribute('data-pos', 'bottom');
+    } else if (pos === 'top') {
+      top = rect.top + scrollY - gap - 120;
+      left = rect.left + scrollX;
+      arrowEl.setAttribute('data-pos', 'top');
+    } else if (pos === 'right') {
+      top = rect.top + scrollY - 8;
+      left = rect.right + scrollX + gap;
+      arrowEl.setAttribute('data-pos', 'right');
+    } else if (pos === 'left') {
+      top = rect.top + scrollY - 8;
+      left = rect.left + scrollX - bw - gap;
+      arrowEl.setAttribute('data-pos', 'right');
+    }
+    if (left + bw > window.innerWidth + scrollX - 16) left = window.innerWidth + scrollX - bw - 16;
+    if (left < scrollX + 16) left = scrollX + 16;
+    bubbleEl.style.top = top + 'px';
+    bubbleEl.style.left = left + 'px';
+    requestAnimationFrame(function() { bubbleEl.classList.add('visible'); });
+  }
+
+  function showTourStep(step) {
+    document.querySelectorAll('.guide-highlight').forEach(function(el) { el.classList.remove('guide-highlight'); });
+    var s = tourSteps[step];
+    var target = document.querySelector(s.target);
+    if (!target) return;
+    target.classList.add('guide-highlight');
+    var rect = target.getBoundingClientRect();
+    if (rect.top < 0 || rect.bottom > window.innerHeight) window.scrollTo({ top: 0, behavior: 'smooth' });
+    setTimeout(function() { target.scrollIntoView({ behavior: 'smooth', block: 'nearest' }); }, 100);
+    textEl.textContent = s.text;
+    counterEl.textContent = 'Step ' + (step + 1) + ' of ' + tourSteps.length;
+    backBtn.style.display = step === 0 ? 'none' : '';
+    if (s.last) {
+      nextBtn.textContent = 'Get Started';
+      nextBtn.onclick = function() { endTour(); window.location.href = '/app/keys'; };
+    } else {
+      nextBtn.textContent = 'Next';
+      nextBtn.onclick = nextTourStep;
+    }
+    setTimeout(function() { positionBubble(target, s.position); }, 350);
+  }
+
+  window.nextTourStep = function() {
+    if (currentStep < tourSteps.length - 1) { currentStep++; showTourStep(currentStep); }
+  };
+  window.prevTourStep = function() {
+    if (currentStep > 0) { currentStep--; showTourStep(currentStep); }
+  };
+  window.endTour = function() {
+    tourActive = false;
+    bubbleEl.classList.remove('visible');
+    overlayEl.classList.remove('active');
+    document.querySelectorAll('.guide-highlight').forEach(function(el) { el.classList.remove('guide-highlight'); });
+    localStorage.setItem('vp_app_tour_done', '1');
+    // Show the Getting Started button after tour ends
+    var btn = document.getElementById('onboardingBtn');
+    if (btn) { btn.classList.remove('hidden'); btn.classList.add('inline-flex'); }
+  };
+  window.startAppTour = function() {
+    tourActive = true;
+    currentStep = 0;
+    overlayEl.classList.add('active');
+    var btn = document.getElementById('onboardingBtn');
+    if (btn) { btn.classList.add('hidden'); btn.classList.remove('inline-flex'); }
+    showTourStep(0);
+  };
+
+  overlayEl.addEventListener('click', endTour);
+
+  // Auto-start tour on first visit (after page animations settle)
+  if (!localStorage.getItem('vp_app_tour_done')) {
+    setTimeout(startAppTour, 1500);
+  } else {
+    var btn = document.getElementById('onboardingBtn');
+    if (btn) { btn.classList.remove('hidden'); btn.classList.add('inline-flex'); }
+  }
+
+  window.addEventListener('resize', function() {
+    if (tourActive) {
+      var s = tourSteps[currentStep];
+      var target = document.querySelector(s.target);
+      if (target) positionBubble(target, s.position);
+    }
+  });
+})();
+</script>
+
 <!-- Analytics -->
 <script>
 (function(){
