@@ -193,7 +193,10 @@ async function auditLog(userId: string, action: string, scanId?: string, metadat
 }
 
 function getGhToken(conn: { accessToken: string }): string {
-  return decrypt(Buffer.from(conn.accessToken, 'base64')).toString();
+  const decrypted = decrypt(Buffer.from(conn.accessToken, 'base64'));
+  const token = decrypted.toString();
+  if (!token || token.length < 10) throw new Error('Decrypted token is empty or too short');
+  return token;
 }
 
 // ─── Scannable file filters ─────────────────────────────────────────────────
@@ -320,8 +323,20 @@ export async function scannerRoutes(app: FastifyInstance) {
     const conn = await prisma.githubConnection.findFirst({ where: { userId, disconnectedAt: null } });
     if (!conn) return reply.status(400).send({ error: 'GitHub not connected' });
 
-    const ghToken = getGhToken(conn);
-    const repos = await githubApi(ghToken, '/user/repos?per_page=100&sort=updated&type=owner');
+    let ghToken: string;
+    try {
+      ghToken = getGhToken(conn);
+    } catch {
+      return reply.status(500).send({ error: 'Failed to decrypt GitHub token. Try disconnecting and reconnecting.' });
+    }
+
+    let repos: any[];
+    try {
+      repos = await githubApi(ghToken, '/user/repos?per_page=100&sort=updated&type=owner');
+    } catch {
+      return reply.status(502).send({ error: 'Failed to fetch repos from GitHub. Your token may have expired — try reconnecting.' });
+    }
+
     return {
       repos: (repos as any[]).map((r: any) => ({
         fullName: r.full_name,
@@ -484,23 +499,25 @@ export async function scannerRoutes(app: FastifyInstance) {
         }));
       }
 
-      // Store findings (no raw values)
-      const dbFindings = await Promise.all(findings.map((f) =>
-        prisma.scanFinding.create({
-          data: {
-            scanId: scan.id,
-            envName: f.envName,
-            provider: f.provider,
-            file: f.file,
-            line: f.line,
-            mode: f.mode,
-            verified: f.verified,
-            source: f.source,
-            action: 'pending',
-            maskedValue: f.maskedValue,
-          },
-        })
-      ));
+      // Store findings in a transaction (no raw values stored)
+      const dbFindings = await prisma.$transaction(
+        findings.map((f) =>
+          prisma.scanFinding.create({
+            data: {
+              scanId: scan.id,
+              envName: f.envName,
+              provider: f.provider,
+              file: f.file,
+              line: f.line,
+              mode: f.mode,
+              verified: f.verified,
+              source: f.source,
+              action: 'pending',
+              maskedValue: f.maskedValue,
+            },
+          })
+        )
+      );
 
       const keysActive = findings.filter((f) => f.verified === 'active').length;
       const keysRevoked = findings.filter((f) => f.verified === 'revoked').length;
@@ -530,7 +547,8 @@ export async function scannerRoutes(app: FastifyInstance) {
         data: { status: 'failed', completedAt: new Date(), errorMessage: message },
       });
       await auditLog(userId, 'failed_scan', scan.id, { error: message });
-      return reply.status(500).send({ error: 'Scan failed', details: message });
+      request.log.error({ msg: 'Scan failed', scanId: scan.id, error: message });
+      return reply.status(500).send({ error: 'Scan failed. Please try again or check your GitHub connection.' });
     }
   });
 

@@ -550,7 +550,11 @@
       if (!res) return;
       var data = await res.json();
       if (!data.url) { showToast('Failed to get GitHub connect URL'); return; }
-      // Redirect instead of popup — avoids popup blocker issues
+      // Validate URL — only allow GitHub OAuth URLs
+      try {
+        var parsed = new URL(data.url);
+        if (parsed.hostname !== 'github.com') { showToast('Invalid redirect URL'); return; }
+      } catch { showToast('Invalid redirect URL'); return; }
       window.location.href = data.url;
     }
 
@@ -619,17 +623,22 @@
       empty.classList.add('hidden');
       grid.innerHTML = repos.map(function(r, i) {
         var vis = r.private ? '<span class="px-2 py-0.5 bg-yellow-500/10 text-yellow-400 text-xs rounded-full">Private</span>' : '<span class="px-2 py-0.5 bg-green-500/10 text-green-400 text-xs rounded-full">Public</span>';
+        var repoName = r.fullName || r.full_name || r.name || '';
         return '<div class="bg-card border border-border rounded-xl p-4 flex items-center justify-between anim-card" style="animation-delay:' + (i * 0.03) + 's">' +
           '<div class="min-w-0 flex-1">' +
             '<div class="flex items-center gap-2 mb-1">' +
-              '<p class="text-sm font-semibold text-white truncate">' + escapeHtml(r.fullName || r.full_name || r.name) + '</p>' +
+              '<p class="text-sm font-semibold text-white truncate">' + escapeHtml(repoName) + '</p>' +
               vis +
             '</div>' +
-            '<p class="text-xs text-gray-500">Updated ' + timeAgo(r.updated_at) + '</p>' +
+            '<p class="text-xs text-gray-500">Updated ' + timeAgo(r.updatedAt || r.updated_at) + '</p>' +
           '</div>' +
-          '<button onclick="startScan(\'' + escapeHtml(r.fullName || r.fullName || r.full_name || r.name) + '\')" class="ml-3 px-4 py-2 bg-brand/10 hover:bg-brand/20 text-brand text-sm font-medium rounded-xl transition flex-shrink-0">Scan</button>' +
+          '<button data-repo="' + escapeHtml(repoName) + '" class="scan-repo-btn ml-3 px-4 py-2 bg-brand/10 hover:bg-brand/20 text-brand text-sm font-medium rounded-xl transition flex-shrink-0">Scan</button>' +
         '</div>';
       }).join('');
+      // Event delegation for scan buttons (avoids inline onclick XSS)
+      grid.querySelectorAll('.scan-repo-btn').forEach(function(btn) {
+        btn.addEventListener('click', function() { startScan(btn.getAttribute('data-repo')); });
+      });
     }
 
     function filterRepos() {
@@ -667,12 +676,16 @@
         var count = s.findings_count != null ? s.findings_count : (s.findings ? s.findings.length : '—');
         return '<tr class="border-b border-border hover:bg-white/[0.02] transition">' +
           '<td class="px-4 py-3 text-white font-medium">' + escapeHtml(s.repo_full_name || s.repoFullName || '') + '</td>' +
-          '<td class="px-4 py-3 text-gray-400">' + formatTime(s.created_at || s.createdAt) + '</td>' +
+          '<td class="px-4 py-3 text-gray-400">' + formatTime(s.startedAt || s.started_at || s.createdAt || s.created_at) + '</td>' +
           '<td class="px-4 py-3 text-gray-400">' + count + '</td>' +
           '<td class="px-4 py-3">' + statusBadge + '</td>' +
-          '<td class="px-4 py-3 text-right"><button onclick="viewScanResults(\'' + s.id + '\')" class="text-brand hover:underline text-xs">View</button></td>' +
+          '<td class="px-4 py-3 text-right"><button data-scan-id="' + escapeHtml(s.id) + '" class="view-scan-btn text-brand hover:underline text-xs">View</button></td>' +
         '</tr>';
       }).join('');
+      // Event delegation for view buttons
+      tbody.querySelectorAll('.view-scan-btn').forEach(function(btn) {
+        btn.addEventListener('click', function() { viewScanResults(btn.getAttribute('data-scan-id')); });
+      });
     }
 
     // --- Start Scan ---
@@ -690,6 +703,7 @@
 
       if (!res) {
         document.getElementById('scanSpinner').classList.add('hidden');
+        document.getElementById('summaryCards').style.opacity = '1';
         showToast('Failed to start scan');
         return;
       }
@@ -697,6 +711,7 @@
       var data = await res.json();
       if (!res.ok) {
         document.getElementById('scanSpinner').classList.add('hidden');
+        document.getElementById('summaryCards').style.opacity = '1';
         showToast(data.error || 'Scan failed');
         return;
       }
