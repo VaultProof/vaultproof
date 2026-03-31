@@ -27,20 +27,19 @@
         }
 
         @page {
-            size: 960px 540px;
+            size: letter landscape;
             margin: 0;
         }
 
         @media print {
             body { background: #ffffff !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
-            .slide { break-after: page; break-inside: avoid; }
+            .slide { break-after: page; break-inside: avoid; width: 100vw; height: 100vh; }
         }
 
         .slide {
-            width: 960px;
-            min-height: 540px;
-            height: 540px;
-            padding: 36px 48px;
+            width: 100vw;
+            height: 100vh;
+            padding: 5vh 6vw;
             display: flex;
             flex-direction: column;
             justify-content: center;
@@ -103,7 +102,7 @@
             align-items: center;
             justify-content: center;
             text-align: center;
-            padding: 36px;
+            padding: 5vh 6vw;
         }
         .cover img {
             width: 80px;
