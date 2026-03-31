@@ -24,6 +24,9 @@ model User {
   keySlots             KeySlot[]
   developerKeys        DeveloperKey[]
   promoFeedback        PromoFeedback[]
+  githubConnections    GithubConnection[]
+  scanResults          ScanResult[]
+  scanAuditLogs        ScanAuditLog[]
 
   @@map("users")
 }
@@ -146,3 +149,74 @@ model AnalyticsEvent {
 }
 
 // KeyStatus values: "ACTIVE", "ROTATED", "REVOKED" (stored as String for SQLite compat)
+
+// ─── Scanner ──────────────────────────────────────────────────────────────────
+
+model GithubConnection {
+  id              String    @id @default(uuid())
+  userId          String    @map("user_id")
+  user            User      @relation(fields: [userId], references: [id])
+  githubUsername  String    @map("github_username")
+  accessToken     String    @map("access_token") // AES-256-GCM encrypted
+  scopes          String    // Comma-separated OAuth scopes
+  connectedAt     DateTime  @default(now()) @map("connected_at")
+  disconnectedAt  DateTime? @map("disconnected_at")
+
+  @@index([userId, disconnectedAt])
+  @@map("github_connections")
+}
+
+model ScanResult {
+  id            String        @id @default(uuid())
+  userId        String        @map("user_id")
+  user          User          @relation(fields: [userId], references: [id])
+  repoFullName  String        @map("repo_full_name")
+  branch        String
+  keysFound     Int           @default(0) @map("keys_found")
+  keysActive    Int           @default(0) @map("keys_active")
+  keysRevoked   Int           @default(0) @map("keys_revoked")
+  status        String        @default("in_progress") // in_progress, completed, failed
+  startedAt     DateTime      @default(now()) @map("started_at")
+  completedAt   DateTime?     @map("completed_at")
+  errorMessage  String?       @map("error_message")
+  findings      ScanFinding[]
+  auditLogs     ScanAuditLog[]
+
+  @@index([userId, startedAt])
+  @@map("scan_results")
+}
+
+model ScanFinding {
+  id          String     @id @default(uuid())
+  scanId      String     @map("scan_id")
+  scan        ScanResult @relation(fields: [scanId], references: [id], onDelete: Cascade)
+  envName     String     @map("env_name")
+  provider    String
+  file        String
+  line        Int?
+  mode        String     // proxy, env-injection
+  verified    String     // active, revoked, unknown
+  source      String     // current, git-history
+  action      String     @default("pending") // pending, stored, pr-created, ignored
+  prUrl       String?    @map("pr_url")
+  maskedValue String     @map("masked_value")
+  createdAt   DateTime   @default(now()) @map("created_at")
+
+  @@index([scanId])
+  @@map("scan_findings")
+}
+
+model ScanAuditLog {
+  id        String      @id @default(uuid())
+  userId    String      @map("user_id")
+  user      User        @relation(fields: [userId], references: [id])
+  scanId    String?     @map("scan_id")
+  scan      ScanResult? @relation(fields: [scanId], references: [id], onDelete: SetNull)
+  action    String      // connected_github, started_scan, completed_scan, etc.
+  metadata  Json?
+  createdAt DateTime    @default(now()) @map("created_at")
+
+  @@index([userId, createdAt])
+  @@index([scanId])
+  @@map("scan_audit_logs")
+}

@@ -1,0 +1,978 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <link rel="icon" type="image/png" href="/favicon.png">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Scanner — VaultProof</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet" />
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['Inter', 'sans-serif'],
+            mono: ['JetBrains Mono', 'monospace']
+          },
+          colors: {
+            brand: '#6366f1',
+            'brand-hover': '#5558e6',
+            cyan: '#06b6d4',
+            surface: '#0a0a0f',
+            card: '#111118',
+            border: '#1e1e2e'
+          },
+          borderRadius: {
+            xl: '12px',
+            '2xl': '16px'
+          }
+        }
+      }
+    };
+  </script>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; }
+    body { font-family: 'Inter', sans-serif; background: #0a0a0f; margin: 0; }
+    ::-webkit-scrollbar { width: 6px; height: 6px; }
+    ::-webkit-scrollbar-track { background: #0a0a0f; }
+    ::-webkit-scrollbar-thumb { background: #2a2a3a; border-radius: 3px; }
+    ::-webkit-scrollbar-thumb:hover { background: #3a3a4a; }
+
+    @keyframes fadeInUp {
+      from { opacity: 0; transform: translateY(16px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+    .anim-card {
+      opacity: 0;
+      animation: fadeInUp 0.4s ease forwards;
+    }
+    .spinner {
+      animation: spin 1s linear infinite;
+    }
+
+    .sidebar-expanded { width: 240px; }
+    .sidebar-collapsed { width: 64px; }
+    .sidebar-collapsed .sidebar-label { display: none; }
+    .sidebar-collapsed .sidebar-logo-text { display: none; }
+    .sidebar-collapsed .sidebar-user-info { display: none; }
+    .sidebar-collapsed .sidebar-nav-item { justify-content: center; padding-left: 0; padding-right: 0; }
+    .sidebar-collapsed .sidebar-bottom { align-items: center; }
+    .sidebar-collapsed .sidebar-bottom .logout-text { display: none; }
+
+    .btn-glow {
+      box-shadow: 0 0 20px rgba(99,102,241,0.3);
+    }
+    .btn-glow:hover {
+      box-shadow: 0 0 30px rgba(99,102,241,0.4);
+    }
+  </style>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+</head>
+<body class="text-gray-100 min-h-screen flex">
+
+  <!-- Sidebar Overlay (mobile) -->
+  <div id="sidebarOverlay" class="fixed inset-0 bg-black/60 z-40 hidden lg:hidden" onclick="toggleMobileSidebar()"></div>
+
+  <!-- Left Sidebar -->
+  <aside id="sidebar" class="fixed top-0 left-0 h-full bg-card border-r border-border z-50 flex flex-col transition-all duration-200 sidebar-expanded -translate-x-full lg:translate-x-0">
+    <div class="flex items-center gap-3 px-4 h-16 border-b border-border flex-shrink-0">
+      <span class="text-lg font-bold sidebar-logo-text tracking-tight" style="font-family:'Space Grotesk',sans-serif">VaultProof</span>
+    </div>
+
+    <nav class="flex-1 p-3 space-y-1 overflow-y-auto">
+      <a href="/app/" class="sidebar-nav-item flex items-center gap-3 px-3 py-2.5 rounded-xl text-gray-400 hover:text-white hover:bg-white/5 text-sm transition">
+        <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zm10 0a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zm10 0a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z"/>
+        </svg>
+        <span class="sidebar-label">Dashboard</span>
+      </a>
+      <a href="/app/keys" class="sidebar-nav-item flex items-center gap-3 px-3 py-2.5 rounded-xl text-gray-400 hover:text-white hover:bg-white/5 text-sm transition">
+        <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z"/>
+        </svg>
+        <span class="sidebar-label">API Keys</span>
+      </a>
+      <a href="/app/agents" class="sidebar-nav-item flex items-center gap-3 px-3 py-2.5 rounded-xl text-gray-400 hover:text-white hover:bg-white/5 text-sm transition">
+        <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17H3a2 2 0 01-2-2V5a2 2 0 012-2h14a2 2 0 012 2v10a2 2 0 01-2 2h-2"/>
+        </svg>
+        <span class="sidebar-label">Agents</span>
+      </a>
+      <a href="/app/scanner" class="sidebar-nav-item flex items-center gap-3 px-3 py-2.5 rounded-xl bg-brand/15 text-brand font-medium text-sm transition">
+        <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
+        </svg>
+        <span class="sidebar-label">Scanner</span>
+      </a>
+      <a href="/app/logs" class="sidebar-nav-item flex items-center gap-3 px-3 py-2.5 rounded-xl text-gray-400 hover:text-white hover:bg-white/5 text-sm transition">
+        <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"/>
+        </svg>
+        <span class="sidebar-label">Access Logs</span>
+      </a>
+      <a href="/app/settings" class="sidebar-nav-item flex items-center gap-3 px-3 py-2.5 rounded-xl text-gray-400 hover:text-white hover:bg-white/5 text-sm transition">
+        <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.066 2.573c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.573 1.066c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.066-2.573c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/>
+          <path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
+        </svg>
+        <span class="sidebar-label">Settings</span>
+      </a>
+
+      <div class="mt-4 pt-4 border-t border-border">
+        <a href="/docs" class="sidebar-nav-item flex items-center gap-3 px-3 py-2.5 rounded-xl text-gray-400 hover:text-white hover:bg-white/5 text-sm transition">
+          <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"/>
+          </svg>
+          <span class="sidebar-label">Documentation</span>
+        </a>
+        <a href="mailto:hello@vaultproof.dev" class="sidebar-nav-item flex items-center gap-3 px-3 py-2.5 rounded-xl text-gray-400 hover:text-white hover:bg-white/5 text-sm transition mt-1">
+          <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/>
+          </svg>
+          <span class="sidebar-label">Questions? hello@vaultproof.dev</span>
+        </a>
+      </div>
+    </nav>
+
+    <div class="sidebar-bottom p-4 border-t border-border flex-shrink-0">
+      <div class="sidebar-user-info text-xs text-gray-500 truncate mb-2" id="sidebarEmail"></div>
+      <button onclick="logout()" class="flex items-center gap-2 text-sm text-gray-400 hover:text-red-400 transition">
+        <svg class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"/>
+        </svg>
+        <span class="logout-text sidebar-label">Logout</span>
+      </button>
+    </div>
+  </aside>
+
+  <!-- PR Creation Modal -->
+  <div id="prModal" class="fixed inset-0 z-[60] hidden items-center justify-center bg-black/60 backdrop-blur-sm">
+    <div class="bg-card border border-border rounded-2xl w-full max-w-lg mx-4 p-6 max-h-[80vh] overflow-y-auto">
+      <div class="flex items-center justify-between mb-5">
+        <h3 class="text-lg font-semibold">Create Pull Request</h3>
+        <button onclick="closePrModal()" class="text-gray-500 hover:text-white transition">&times;</button>
+      </div>
+      <div id="prModalBody" class="space-y-4">
+        <p class="text-sm text-gray-400">Select how to handle each finding:</p>
+        <div id="prFindings" class="space-y-3"></div>
+        <div id="prMsg" class="text-sm hidden"></div>
+        <div class="flex gap-3 pt-2">
+          <button type="button" onclick="closePrModal()" class="flex-1 px-4 py-2.5 bg-surface border border-border rounded-xl text-sm text-gray-400 hover:text-white transition">Cancel</button>
+          <button type="button" onclick="submitPr()" id="prSubmitBtn" class="flex-1 px-4 py-2.5 bg-brand hover:bg-brand-hover text-white rounded-xl text-sm font-medium transition btn-glow">Create PR</button>
+        </div>
+      </div>
+      <div id="prSuccess" class="hidden text-center py-4">
+        <div class="w-12 h-12 rounded-full bg-green-500/10 border border-green-500/20 flex items-center justify-center mx-auto mb-3">
+          <svg class="w-6 h-6 text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
+        </div>
+        <p class="text-sm text-gray-300 mb-3">Pull request created successfully!</p>
+        <a id="prUrl" href="#" target="_blank" class="text-brand hover:underline text-sm">View PR on GitHub</a>
+      </div>
+    </div>
+  </div>
+
+  <!-- Main wrapper -->
+  <div id="mainWrapper" class="flex-1 flex flex-col min-h-screen transition-all duration-200 lg:ml-[240px]">
+
+    <!-- Top Navbar -->
+    <header class="sticky top-0 z-30 bg-surface/80 backdrop-blur-xl border-b border-border h-16 flex items-center px-4 lg:px-8 gap-4">
+      <button id="menuBtn" class="lg:hidden text-gray-400 hover:text-white p-1.5 -ml-1.5">
+        <svg class="w-6 h-6" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M4 6h16M4 12h16M4 18h16"/>
+        </svg>
+      </button>
+      <h1 class="text-lg font-semibold">Scanner</h1>
+      <div class="flex-1"></div>
+      <p class="text-sm text-gray-500 hidden sm:block">Scan repos for exposed API keys</p>
+    </header>
+
+    <!-- Toast notification -->
+    <div id="toast" class="fixed top-4 right-4 z-50 hidden max-w-sm">
+      <div id="toastInner" class="flex items-center gap-3 px-4 py-3 rounded-xl border text-sm shadow-lg backdrop-blur-sm">
+        <span id="toastMsg"></span>
+        <button onclick="document.getElementById('toast').classList.add('hidden')" class="text-gray-400 hover:text-white ml-2">&times;</button>
+      </div>
+    </div>
+
+    <!-- Session expired overlay -->
+    <div id="sessionExpired" class="fixed inset-0 z-[100] bg-black/80 backdrop-blur-sm hidden flex items-center justify-center">
+      <div class="bg-[#111118] border border-[#1e1e2e] rounded-2xl p-8 max-w-sm text-center">
+        <div class="w-14 h-14 rounded-full bg-red-500/10 border border-red-500/20 flex items-center justify-center mx-auto mb-4">
+          <svg class="w-7 h-7 text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>
+        </div>
+        <h3 class="text-lg font-semibold text-white mb-2">Session Expired</h3>
+        <p class="text-sm text-gray-400 mb-6">Your session has expired. Please sign in again to continue.</p>
+        <a href="login" class="inline-block px-6 py-2.5 bg-[#6366f1] hover:bg-[#5558e6] text-white rounded-xl text-sm font-medium transition btn-glow">Sign In Again</a>
+      </div>
+    </div>
+
+    <!-- Content -->
+    <main class="flex-1 p-6 lg:p-8">
+      <div class="max-w-5xl mx-auto space-y-6">
+
+        <!-- State 1: Not Connected -->
+        <div id="stateNotConnected" class="anim-card">
+          <div class="bg-card border border-border rounded-2xl p-8 lg:p-12 text-center max-w-lg mx-auto">
+            <div class="w-16 h-16 rounded-full bg-brand/10 border border-brand/20 flex items-center justify-center mx-auto mb-6">
+              <svg class="w-8 h-8 text-brand" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
+              </svg>
+            </div>
+            <h2 class="text-xl font-bold mb-3">Scan your repos for exposed API keys</h2>
+            <p class="text-sm text-gray-400 mb-6 leading-relaxed">Connect your GitHub account to scan repositories for accidentally committed API keys, tokens, and secrets. VaultProof will find them and help you rotate and secure them.</p>
+            <p class="text-xs text-gray-500 mb-6 leading-relaxed">By connecting GitHub, you authorize VaultProof to read your repository contents and create pull requests on your behalf. VaultProof will never modify your default branch directly. You are responsible for reviewing and merging any changes. Only scan repositories you own or have permission to scan.</p>
+            <button onclick="connectGitHub()" class="inline-flex items-center gap-2 px-6 py-3 bg-brand hover:bg-brand-hover text-white rounded-xl text-sm font-medium transition btn-glow">
+              <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24"><path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0024 12c0-6.63-5.37-12-12-12z"/></svg>
+              Connect GitHub
+            </button>
+          </div>
+        </div>
+
+        <!-- State 2: Connected — Repo List -->
+        <div id="stateRepoList" class="hidden">
+          <!-- Header -->
+          <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6 anim-card">
+            <div class="flex items-center gap-3">
+              <h2 class="text-2xl font-bold">Scanner</h2>
+              <span id="ghUserBadge" class="inline-flex items-center gap-1.5 px-3 py-1 bg-[#111118] border border-[#1e1e2e] rounded-full text-xs text-gray-300">
+                <svg class="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 24 24"><path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0024 12c0-6.63-5.37-12-12-12z"/></svg>
+                <span id="ghUsername"></span>
+              </span>
+            </div>
+            <button onclick="disconnectGitHub()" class="px-4 py-2 bg-[#111118] border border-[#1e1e2e] rounded-xl text-sm text-gray-400 hover:text-red-400 hover:border-red-500/30 transition">Disconnect</button>
+          </div>
+
+          <!-- Search -->
+          <div class="mb-4">
+            <div class="relative">
+              <svg class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-500" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
+              </svg>
+              <input type="text" id="repoSearch" placeholder="Filter repositories..." oninput="filterRepos()" class="w-full bg-card border border-border rounded-xl pl-10 pr-4 py-2.5 text-sm text-gray-200 placeholder-gray-500 focus:outline-none focus:border-brand/50 focus:ring-1 focus:ring-brand/30 transition" />
+            </div>
+          </div>
+
+          <!-- Repo Grid -->
+          <div id="repoGrid" class="grid grid-cols-1 md:grid-cols-2 gap-3 mb-8"></div>
+          <div id="repoEmpty" class="hidden text-center py-8 text-sm text-gray-500">No repositories found</div>
+
+          <!-- Scan History -->
+          <div class="mt-8">
+            <h3 class="text-lg font-semibold mb-4">Scan History</h3>
+            <div id="scanHistoryTable" class="bg-card border border-border rounded-2xl overflow-hidden">
+              <div id="scanHistoryEmpty" class="px-6 py-8 text-center text-sm text-gray-500">No scans yet. Select a repository above to start scanning.</div>
+              <table id="scanHistoryRows" class="w-full text-sm hidden">
+                <thead>
+                  <tr class="border-b border-border text-gray-500 text-xs uppercase tracking-wider">
+                    <th class="text-left px-4 py-3 font-medium">Repository</th>
+                    <th class="text-left px-4 py-3 font-medium">Date</th>
+                    <th class="text-left px-4 py-3 font-medium">Findings</th>
+                    <th class="text-left px-4 py-3 font-medium">Status</th>
+                    <th class="text-right px-4 py-3 font-medium"></th>
+                  </tr>
+                </thead>
+                <tbody id="scanHistoryBody"></tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+
+        <!-- State 3: Scan Results -->
+        <div id="stateScanResults" class="hidden">
+          <!-- Back + Header -->
+          <div class="flex items-center gap-3 mb-6 anim-card">
+            <button onclick="showRepoList()" class="p-2 text-gray-400 hover:text-white hover:bg-white/5 rounded-lg transition">
+              <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7"/></svg>
+            </button>
+            <div>
+              <h2 class="text-xl font-bold">Scan Results</h2>
+              <p id="scanResultRepo" class="text-sm text-gray-500"></p>
+            </div>
+          </div>
+
+          <!-- Summary Cards -->
+          <div class="grid grid-cols-2 lg:grid-cols-4 gap-3 mb-6" id="summaryCards">
+            <div class="bg-card border border-border rounded-xl p-4 anim-card">
+              <p class="text-xs text-gray-500 mb-1">Total Found</p>
+              <p id="sumTotal" class="text-2xl font-bold">0</p>
+            </div>
+            <div class="bg-card border border-border rounded-xl p-4 anim-card" style="animation-delay:0.05s">
+              <p class="text-xs text-gray-500 mb-1">Active</p>
+              <p id="sumActive" class="text-2xl font-bold text-red-400">0</p>
+            </div>
+            <div class="bg-card border border-border rounded-xl p-4 anim-card" style="animation-delay:0.1s">
+              <p class="text-xs text-gray-500 mb-1">Revoked</p>
+              <p id="sumRevoked" class="text-2xl font-bold text-green-400">0</p>
+            </div>
+            <div class="bg-card border border-border rounded-xl p-4 anim-card" style="animation-delay:0.15s">
+              <p class="text-xs text-gray-500 mb-1">Unknown</p>
+              <p id="sumUnknown" class="text-2xl font-bold text-gray-400">0</p>
+            </div>
+          </div>
+
+          <!-- Scanning spinner -->
+          <div id="scanSpinner" class="hidden text-center py-12">
+            <svg class="w-8 h-8 text-brand spinner mx-auto mb-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
+            </svg>
+            <p class="text-sm text-gray-400">Scanning repository for exposed keys...</p>
+            <p class="text-xs text-gray-500 mt-1">This may take 10-30 seconds</p>
+          </div>
+
+          <!-- Findings Table -->
+          <div id="findingsSection" class="hidden">
+            <div class="bg-card border border-border rounded-2xl overflow-hidden mb-6">
+              <div class="px-4 py-3 border-b border-border flex items-center justify-between">
+                <h3 class="text-sm font-semibold">Code Findings</h3>
+                <span id="findingsCount" class="text-xs text-gray-500"></span>
+              </div>
+              <div id="findingsEmpty" class="hidden px-6 py-8 text-center text-sm text-green-400">No exposed keys found in current code. Your repo looks clean!</div>
+              <div class="overflow-x-auto">
+                <table id="findingsTable" class="w-full text-sm hidden">
+                  <thead>
+                    <tr class="border-b border-border text-gray-500 text-xs uppercase tracking-wider">
+                      <th class="text-left px-4 py-3 font-medium w-8">
+                        <input type="checkbox" id="selectAll" onchange="toggleSelectAll()" class="rounded border-gray-600">
+                      </th>
+                      <th class="text-left px-4 py-3 font-medium">Status</th>
+                      <th class="text-left px-4 py-3 font-medium">Key Name</th>
+                      <th class="text-left px-4 py-3 font-medium">Provider</th>
+                      <th class="text-left px-4 py-3 font-medium">File:Line</th>
+                      <th class="text-left px-4 py-3 font-medium">Source</th>
+                      <th class="text-left px-4 py-3 font-medium">Mode</th>
+                      <th class="text-right px-4 py-3 font-medium">Action</th>
+                    </tr>
+                  </thead>
+                  <tbody id="findingsBody"></tbody>
+                </table>
+              </div>
+            </div>
+
+            <!-- Git History Findings -->
+            <div id="gitHistorySection" class="hidden mb-6">
+              <div class="bg-yellow-900/20 border border-yellow-700/30 rounded-xl px-4 py-3 mb-4 flex items-start gap-3">
+                <svg class="w-5 h-5 text-yellow-400 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
+                </svg>
+                <div>
+                  <p class="text-sm text-yellow-200 font-medium">Keys found in git commit history</p>
+                  <p class="text-xs text-yellow-300/70 mt-1">These keys were found in git commit history. Even after removing from code, they're visible to anyone who clones this repo.</p>
+                </div>
+              </div>
+              <div class="bg-card border border-border rounded-2xl overflow-hidden">
+                <div class="overflow-x-auto">
+                  <table class="w-full text-sm">
+                    <thead>
+                      <tr class="border-b border-border text-gray-500 text-xs uppercase tracking-wider">
+                        <th class="text-left px-4 py-3 font-medium">Key Name</th>
+                        <th class="text-left px-4 py-3 font-medium">Provider</th>
+                        <th class="text-left px-4 py-3 font-medium">Commit</th>
+                        <th class="text-right px-4 py-3 font-medium">Action</th>
+                      </tr>
+                    </thead>
+                    <tbody id="gitHistoryBody"></tbody>
+                  </table>
+                </div>
+              </div>
+            </div>
+
+            <!-- Create PR button -->
+            <div id="prActions" class="flex items-center gap-3">
+              <button onclick="openPrModal()" id="createPrBtn" class="inline-flex items-center gap-2 px-5 py-2.5 bg-brand hover:bg-brand-hover text-white rounded-xl text-sm font-medium transition btn-glow disabled:opacity-50 disabled:cursor-not-allowed" disabled>
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/></svg>
+                Create PR for selected
+              </button>
+              <button onclick="showRepoList()" class="text-sm text-gray-400 hover:text-white transition">Back to repos</button>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </main>
+  </div>
+
+  </div>
+
+  <script>
+    const API = 'https://api.vaultproof.dev/api/v1';
+    let token = localStorage.getItem('vaultproof_token');
+    const user = JSON.parse(localStorage.getItem('vaultproof_user') || '{}');
+
+    if (!token) { window.location.href = 'login'; }
+
+    const _sb = window.supabase.createClient(
+      'https://gwzkjiomemjlhtrdrlan.supabase.co',
+      'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imd3emtqaW9tZW1qbGh0cmRybGFuIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQzNDM3ODIsImV4cCI6MjA4OTkxOTc4Mn0.tgHUvpBvFiojetuqIP0sKb0iBNbKDJHdeo9n3Tofa3o'
+    );
+
+    async function tryRefreshToken() {
+      try {
+        const { data, error } = await _sb.auth.refreshSession();
+        if (!error && data.session) {
+          token = data.session.access_token;
+          localStorage.setItem('vaultproof_token', token);
+          return true;
+        }
+        const { data: sd, error: se } = await _sb.auth.getSession();
+        if (!se && sd.session) {
+          token = sd.session.access_token;
+          localStorage.setItem('vaultproof_token', token);
+          return true;
+        }
+      } catch (e) {
+        console.error('Token refresh failed:', e);
+      }
+      return false;
+    }
+
+    function showToast(message, type = 'error') {
+      const toast = document.getElementById('toast');
+      const inner = document.getElementById('toastInner');
+      const msg = document.getElementById('toastMsg');
+      msg.textContent = message;
+      const styles = {
+        error: 'bg-red-900/80 border-red-800/50 text-red-200',
+        warning: 'bg-yellow-900/80 border-yellow-800/50 text-yellow-200',
+        info: 'bg-[#111118] border-[#1e1e2e] text-gray-300',
+        success: 'bg-green-900/80 border-green-800/50 text-green-200'
+      };
+      inner.className = `flex items-center gap-3 px-4 py-3 rounded-xl border text-sm shadow-lg backdrop-blur-sm ${styles[type] || styles.error}`;
+      toast.classList.remove('hidden');
+      clearTimeout(toast._timer);
+      toast._timer = setTimeout(() => toast.classList.add('hidden'), 5000);
+    }
+
+    function showSessionExpired() {
+      document.getElementById('sessionExpired').classList.remove('hidden');
+    }
+
+    const sidebarEl = document.getElementById('sidebar');
+    const overlayEl = document.getElementById('sidebarOverlay');
+    document.getElementById('sidebarEmail').textContent = user.email || '';
+    document.getElementById('menuBtn').addEventListener('click', toggleMobileSidebar);
+
+    function toggleMobileSidebar() {
+      sidebarEl.classList.toggle('-translate-x-full');
+      overlayEl.classList.toggle('hidden');
+    }
+
+    async function logout() {
+      try {
+        const sb = window.supabase.createClient(
+          'https://gwzkjiomemjlhtrdrlan.supabase.co',
+          'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imd3emtqaW9tZW1qbGh0cmRybGFuIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQzNDM3ODIsImV4cCI6MjA4OTkxOTc4Mn0.tgHUvpBvFiojetuqIP0sKb0iBNbKDJHdeo9n3Tofa3o'
+        );
+        await sb.auth.signOut();
+      } catch {}
+      localStorage.removeItem('vaultproof_token');
+      localStorage.removeItem('vaultproof_user');
+      window.location.href = 'login';
+    }
+
+    let _refreshAttempted = false;
+
+    async function apiFetch(url, options = {}) {
+      try {
+        const res = await fetch(url, {
+          ...options,
+          headers: {
+            'Authorization': 'Bearer ' + token,
+            'Content-Type': 'application/json',
+            ...(options.headers || {})
+          }
+        });
+        if (res.status === 401) {
+          if (!_refreshAttempted) {
+            _refreshAttempted = true;
+            const refreshed = await tryRefreshToken();
+            if (refreshed) return apiFetch(url, options);
+          }
+          showSessionExpired();
+          return null;
+        }
+        _refreshAttempted = false;
+        if (res.status === 429) {
+          showToast('Rate limited — try again in a moment', 'warning');
+          return null;
+        }
+        if (res.status >= 500) {
+          showToast('Something went wrong on our end', 'error');
+          return null;
+        }
+        return res;
+      } catch (e) {
+        showToast('Connection lost — check your internet', 'error');
+        return null;
+      }
+    }
+
+    function formatTime(ts) {
+      if (!ts) return '\u2014';
+      var d = new Date(ts);
+      return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) + ' ' +
+             d.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
+    }
+
+    function timeAgo(ts) {
+      if (!ts) return '';
+      var diff = Date.now() - new Date(ts).getTime();
+      var mins = Math.floor(diff / 60000);
+      if (mins < 1) return 'just now';
+      if (mins < 60) return mins + 'm ago';
+      var hrs = Math.floor(mins / 60);
+      if (hrs < 24) return hrs + 'h ago';
+      var days = Math.floor(hrs / 24);
+      if (days < 30) return days + 'd ago';
+      return Math.floor(days / 30) + 'mo ago';
+    }
+
+    // --- State management ---
+    let allRepos = [];
+    let currentScanId = null;
+    let currentScanData = null;
+    let ghConnected = false;
+
+    function showState(state) {
+      document.getElementById('stateNotConnected').classList.toggle('hidden', state !== 'not-connected');
+      document.getElementById('stateRepoList').classList.toggle('hidden', state !== 'repo-list');
+      document.getElementById('stateScanResults').classList.toggle('hidden', state !== 'scan-results');
+    }
+
+    // --- GitHub Connect ---
+    async function connectGitHub() {
+      var res = await apiFetch(API + '/scanner/github/connect');
+      if (!res) return;
+      var data = await res.json();
+      if (!data.url) { showToast('Failed to get GitHub connect URL'); return; }
+
+      var w = 600, h = 700;
+      var left = (screen.width - w) / 2, top = (screen.height - h) / 2;
+      var popup = window.open(data.url, 'github_connect', 'width=' + w + ',height=' + h + ',left=' + left + ',top=' + top);
+
+      var timer = setInterval(function() {
+        try {
+          if (!popup || popup.closed) { clearInterval(timer); return; }
+          var loc = popup.location.href;
+          if (loc && loc.indexOf('github_callback=1') > -1) {
+            clearInterval(timer);
+            var url = new URL(loc);
+            var code = url.searchParams.get('code');
+            var state = url.searchParams.get('state');
+            popup.close();
+            handleGitHubCallback(code, state);
+          }
+        } catch (e) { /* cross-origin, ignore */ }
+      }, 500);
+    }
+
+    async function handleGitHubCallback(code, state) {
+      if (!code || !state) { showToast('GitHub callback missing parameters'); return; }
+      var res = await apiFetch(API + '/scanner/github/callback', {
+        method: 'POST',
+        body: JSON.stringify({ code: code, state: state })
+      });
+      if (!res) return;
+      var data = await res.json();
+      if (res.ok) {
+        ghConnected = true;
+        showToast('GitHub connected successfully', 'success');
+        loadRepoList();
+      } else {
+        showToast(data.error || 'Failed to connect GitHub');
+      }
+    }
+
+    async function disconnectGitHub() {
+      var res = await apiFetch(API + '/scanner/github/disconnect', { method: 'POST' });
+      if (!res) return;
+      if (res.ok) {
+        ghConnected = false;
+        showState('not-connected');
+        showToast('GitHub disconnected', 'info');
+      } else {
+        var data = await res.json();
+        showToast(data.error || 'Failed to disconnect');
+      }
+    }
+
+    // --- Repo List ---
+    async function loadRepoList() {
+      var res = await apiFetch(API + '/scanner/repos');
+      if (!res) return;
+      var data = await res.json();
+      if (!res.ok) {
+        if (res.status === 404 || res.status === 403) {
+          showState('not-connected');
+          return;
+        }
+        showToast(data.error || 'Failed to load repos');
+        return;
+      }
+
+      allRepos = data.repos || data || [];
+      if (data.username) {
+        document.getElementById('ghUsername').textContent = data.username;
+      }
+      ghConnected = true;
+      renderRepos(allRepos);
+      showState('repo-list');
+      loadScanHistory();
+    }
+
+    function renderRepos(repos) {
+      var grid = document.getElementById('repoGrid');
+      var empty = document.getElementById('repoEmpty');
+      if (!repos.length) {
+        grid.innerHTML = '';
+        empty.classList.remove('hidden');
+        return;
+      }
+      empty.classList.add('hidden');
+      grid.innerHTML = repos.map(function(r, i) {
+        var vis = r.private ? '<span class="px-2 py-0.5 bg-yellow-500/10 text-yellow-400 text-xs rounded-full">Private</span>' : '<span class="px-2 py-0.5 bg-green-500/10 text-green-400 text-xs rounded-full">Public</span>';
+        return '<div class="bg-card border border-border rounded-xl p-4 flex items-center justify-between anim-card" style="animation-delay:' + (i * 0.03) + 's">' +
+          '<div class="min-w-0 flex-1">' +
+            '<div class="flex items-center gap-2 mb-1">' +
+              '<p class="text-sm font-semibold text-white truncate">' + escapeHtml(r.full_name || r.name) + '</p>' +
+              vis +
+            '</div>' +
+            '<p class="text-xs text-gray-500">Updated ' + timeAgo(r.updated_at) + '</p>' +
+          '</div>' +
+          '<button onclick="startScan(\'' + escapeHtml(r.full_name || r.name) + '\')" class="ml-3 px-4 py-2 bg-brand/10 hover:bg-brand/20 text-brand text-sm font-medium rounded-xl transition flex-shrink-0">Scan</button>' +
+        '</div>';
+      }).join('');
+    }
+
+    function filterRepos() {
+      var q = document.getElementById('repoSearch').value.toLowerCase();
+      if (!q) { renderRepos(allRepos); return; }
+      renderRepos(allRepos.filter(function(r) {
+        return (r.full_name || r.name || '').toLowerCase().indexOf(q) > -1;
+      }));
+    }
+
+    // --- Scan History ---
+    async function loadScanHistory() {
+      var res = await apiFetch(API + '/scanner/scans');
+      if (!res) return;
+      var data = await res.json();
+      var scans = data.scans || data || [];
+      var tbody = document.getElementById('scanHistoryBody');
+      var table = document.getElementById('scanHistoryRows');
+      var empty = document.getElementById('scanHistoryEmpty');
+
+      if (!scans.length) {
+        table.classList.add('hidden');
+        empty.classList.remove('hidden');
+        return;
+      }
+      empty.classList.add('hidden');
+      table.classList.remove('hidden');
+
+      tbody.innerHTML = scans.map(function(s) {
+        var statusBadge = s.status === 'completed'
+          ? '<span class="px-2 py-0.5 bg-green-500/10 text-green-400 text-xs rounded-full">Completed</span>'
+          : s.status === 'scanning'
+          ? '<span class="px-2 py-0.5 bg-yellow-500/10 text-yellow-400 text-xs rounded-full">Scanning</span>'
+          : '<span class="px-2 py-0.5 bg-red-500/10 text-red-400 text-xs rounded-full">' + escapeHtml(s.status || 'Unknown') + '</span>';
+        var count = s.findings_count != null ? s.findings_count : (s.findings ? s.findings.length : '—');
+        return '<tr class="border-b border-border hover:bg-white/[0.02] transition">' +
+          '<td class="px-4 py-3 text-white font-medium">' + escapeHtml(s.repo_full_name || s.repoFullName || '') + '</td>' +
+          '<td class="px-4 py-3 text-gray-400">' + formatTime(s.created_at || s.createdAt) + '</td>' +
+          '<td class="px-4 py-3 text-gray-400">' + count + '</td>' +
+          '<td class="px-4 py-3">' + statusBadge + '</td>' +
+          '<td class="px-4 py-3 text-right"><button onclick="viewScanResults(\'' + s.id + '\')" class="text-brand hover:underline text-xs">View</button></td>' +
+        '</tr>';
+      }).join('');
+    }
+
+    // --- Start Scan ---
+    async function startScan(repoFullName) {
+      showState('scan-results');
+      document.getElementById('scanResultRepo').textContent = repoFullName;
+      document.getElementById('scanSpinner').classList.remove('hidden');
+      document.getElementById('findingsSection').classList.add('hidden');
+      document.getElementById('summaryCards').style.opacity = '0.3';
+
+      var res = await apiFetch(API + '/scanner/scan', {
+        method: 'POST',
+        body: JSON.stringify({ repoFullName: repoFullName })
+      });
+
+      if (!res) {
+        document.getElementById('scanSpinner').classList.add('hidden');
+        showToast('Failed to start scan');
+        return;
+      }
+
+      var data = await res.json();
+      if (!res.ok) {
+        document.getElementById('scanSpinner').classList.add('hidden');
+        showToast(data.error || 'Scan failed');
+        return;
+      }
+
+      currentScanId = data.scanId || data.id;
+      if (data.status === 'completed' || data.findings) {
+        renderScanResults(data);
+      } else {
+        pollScanStatus(currentScanId);
+      }
+    }
+
+    async function pollScanStatus(scanId) {
+      var attempts = 0;
+      var maxAttempts = 60;
+      var interval = setInterval(async function() {
+        attempts++;
+        if (attempts > maxAttempts) {
+          clearInterval(interval);
+          document.getElementById('scanSpinner').classList.add('hidden');
+          showToast('Scan timed out. Please try again.');
+          return;
+        }
+        var res = await apiFetch(API + '/scanner/scans/' + scanId);
+        if (!res) { clearInterval(interval); return; }
+        var data = await res.json();
+        if (data.status === 'completed' || data.findings) {
+          clearInterval(interval);
+          renderScanResults(data);
+        } else if (data.status === 'failed') {
+          clearInterval(interval);
+          document.getElementById('scanSpinner').classList.add('hidden');
+          showToast(data.error || 'Scan failed');
+        }
+      }, 2000);
+    }
+
+    async function viewScanResults(scanId) {
+      showState('scan-results');
+      document.getElementById('scanSpinner').classList.remove('hidden');
+      document.getElementById('findingsSection').classList.add('hidden');
+      document.getElementById('summaryCards').style.opacity = '0.3';
+
+      var res = await apiFetch(API + '/scanner/scans/' + scanId);
+      if (!res) {
+        document.getElementById('scanSpinner').classList.add('hidden');
+        return;
+      }
+      var data = await res.json();
+      currentScanId = scanId;
+      document.getElementById('scanResultRepo').textContent = data.repo_full_name || data.repoFullName || '';
+      renderScanResults(data);
+    }
+
+    // --- Render Scan Results ---
+    function renderScanResults(data) {
+      currentScanData = data;
+      document.getElementById('scanSpinner').classList.add('hidden');
+      document.getElementById('summaryCards').style.opacity = '1';
+      document.getElementById('findingsSection').classList.remove('hidden');
+
+      var findings = data.findings || [];
+      var codeFindings = findings.filter(function(f) { return f.source !== 'git_history'; });
+      var historyFindings = findings.filter(function(f) { return f.source === 'git_history'; });
+
+      var active = findings.filter(function(f) { return f.status === 'active'; }).length;
+      var revoked = findings.filter(function(f) { return f.status === 'revoked'; }).length;
+      var unknown = findings.length - active - revoked;
+
+      document.getElementById('sumTotal').textContent = findings.length;
+      document.getElementById('sumActive').textContent = active;
+      document.getElementById('sumRevoked').textContent = revoked;
+      document.getElementById('sumUnknown').textContent = unknown;
+
+      // Code findings
+      var tbody = document.getElementById('findingsBody');
+      var table = document.getElementById('findingsTable');
+      var emptyEl = document.getElementById('findingsEmpty');
+      document.getElementById('findingsCount').textContent = codeFindings.length + ' finding' + (codeFindings.length !== 1 ? 's' : '');
+
+      if (!codeFindings.length) {
+        table.classList.add('hidden');
+        emptyEl.classList.remove('hidden');
+      } else {
+        emptyEl.classList.add('hidden');
+        table.classList.remove('hidden');
+        tbody.innerHTML = codeFindings.map(function(f, i) {
+          var statusIcon = f.status === 'active'
+            ? '<span class="w-5 h-5 rounded-full bg-red-500/10 border border-red-500/20 flex items-center justify-center" title="Active"><svg class="w-3 h-3 text-red-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg></span>'
+            : f.status === 'revoked'
+            ? '<span class="w-5 h-5 rounded-full bg-green-500/10 border border-green-500/20 flex items-center justify-center" title="Revoked"><svg class="w-3 h-3 text-green-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg></span>'
+            : '<span class="w-5 h-5 rounded-full bg-gray-500/10 border border-gray-500/20 flex items-center justify-center" title="Unknown"><span class="text-xs text-gray-400">?</span></span>';
+
+          return '<tr class="border-b border-border hover:bg-white/[0.02] transition">' +
+            '<td class="px-4 py-3"><input type="checkbox" class="finding-cb rounded border-gray-600" data-idx="' + i + '" onchange="updatePrButton()"></td>' +
+            '<td class="px-4 py-3">' + statusIcon + '</td>' +
+            '<td class="px-4 py-3 text-white font-medium text-xs font-mono">' + escapeHtml(f.key_name || f.keyName || '') + '</td>' +
+            '<td class="px-4 py-3 text-gray-400 text-xs">' + escapeHtml(f.provider || '') + '</td>' +
+            '<td class="px-4 py-3 text-gray-400 text-xs font-mono">' + escapeHtml((f.file || '') + (f.line ? ':' + f.line : '')) + '</td>' +
+            '<td class="px-4 py-3 text-gray-400 text-xs">' + escapeHtml(f.source || 'code') + '</td>' +
+            '<td class="px-4 py-3 text-gray-400 text-xs">' + escapeHtml(f.mode || '') + '</td>' +
+            '<td class="px-4 py-3 text-right">' +
+              '<select class="bg-[#111118] border border-[#1e1e2e] rounded-lg px-2 py-1 text-xs text-gray-300 focus:outline-none focus:border-brand/50" data-finding-idx="' + i + '">' +
+                '<option value="store">Store in VaultProof</option>' +
+                '<option value="pr">Create PR</option>' +
+                '<option value="ignore">Ignore</option>' +
+              '</select>' +
+            '</td>' +
+          '</tr>';
+        }).join('');
+      }
+
+      // Git history findings
+      var histSection = document.getElementById('gitHistorySection');
+      if (historyFindings.length) {
+        histSection.classList.remove('hidden');
+        document.getElementById('gitHistoryBody').innerHTML = historyFindings.map(function(f) {
+          return '<tr class="border-b border-border hover:bg-white/[0.02] transition">' +
+            '<td class="px-4 py-3 text-white font-medium text-xs font-mono">' + escapeHtml(f.key_name || f.keyName || '') + '</td>' +
+            '<td class="px-4 py-3 text-gray-400 text-xs">' + escapeHtml(f.provider || '') + '</td>' +
+            '<td class="px-4 py-3 text-gray-400 text-xs font-mono">' + escapeHtml(f.commit ? f.commit.substring(0, 7) : '') + '</td>' +
+            '<td class="px-4 py-3 text-right"><a href="https://docs.github.com/en/authentication/keeping-your-account-and-data-secure/removing-sensitive-data-from-a-repository" target="_blank" class="text-yellow-400 hover:underline text-xs">Rotate key</a></td>' +
+          '</tr>';
+        }).join('');
+      } else {
+        histSection.classList.add('hidden');
+      }
+
+      updatePrButton();
+    }
+
+    function toggleSelectAll() {
+      var checked = document.getElementById('selectAll').checked;
+      document.querySelectorAll('.finding-cb').forEach(function(cb) { cb.checked = checked; });
+      updatePrButton();
+    }
+
+    function updatePrButton() {
+      var selected = document.querySelectorAll('.finding-cb:checked').length;
+      var btn = document.getElementById('createPrBtn');
+      btn.disabled = selected === 0;
+      btn.textContent = selected ? 'Create PR for selected (' + selected + ')' : 'Create PR for selected';
+    }
+
+    // --- PR Modal ---
+    function openPrModal() {
+      var modal = document.getElementById('prModal');
+      modal.classList.remove('hidden');
+      modal.classList.add('flex');
+      document.getElementById('prModalBody').classList.remove('hidden');
+      document.getElementById('prSuccess').classList.add('hidden');
+
+      var container = document.getElementById('prFindings');
+      var codeFindings = (currentScanData.findings || []).filter(function(f) { return f.source !== 'git_history'; });
+      var selectedIdxs = [];
+      document.querySelectorAll('.finding-cb:checked').forEach(function(cb) {
+        selectedIdxs.push(parseInt(cb.dataset.idx));
+      });
+
+      container.innerHTML = selectedIdxs.map(function(idx) {
+        var f = codeFindings[idx];
+        if (!f) return '';
+        return '<div class="bg-surface border border-border rounded-xl p-3">' +
+          '<div class="flex items-center justify-between mb-2">' +
+            '<span class="text-xs font-mono text-white">' + escapeHtml(f.key_name || f.keyName || '') + '</span>' +
+            '<span class="text-xs text-gray-500">' + escapeHtml(f.file || '') + '</span>' +
+          '</div>' +
+          '<select class="w-full bg-[#111118] border border-[#1e1e2e] rounded-lg px-3 py-2 text-xs text-gray-300 focus:outline-none focus:border-brand/50" data-pr-idx="' + idx + '">' +
+            '<option value="vaultproof">Replace with VaultProof</option>' +
+            '<option value="todo">Replace with TODO</option>' +
+          '</select>' +
+        '</div>';
+      }).join('');
+    }
+
+    function closePrModal() {
+      var modal = document.getElementById('prModal');
+      modal.classList.add('hidden');
+      modal.classList.remove('flex');
+    }
+
+    async function submitPr() {
+      var btn = document.getElementById('prSubmitBtn');
+      btn.disabled = true;
+      btn.textContent = 'Creating PR...';
+
+      var replacements = [];
+      document.querySelectorAll('[data-pr-idx]').forEach(function(sel) {
+        replacements.push({
+          findingIndex: parseInt(sel.dataset.prIdx),
+          mode: sel.value
+        });
+      });
+
+      var res = await apiFetch(API + '/scanner/scans/' + currentScanId + '/create-pr', {
+        method: 'POST',
+        body: JSON.stringify({ replacements: replacements })
+      });
+
+      btn.disabled = false;
+      btn.textContent = 'Create PR';
+
+      if (!res) return;
+      var data = await res.json();
+      if (res.ok) {
+        document.getElementById('prModalBody').classList.add('hidden');
+        document.getElementById('prSuccess').classList.remove('hidden');
+        var link = document.getElementById('prUrl');
+        link.href = data.pr_url || data.prUrl || '#';
+        link.textContent = data.pr_url || data.prUrl || 'View PR';
+        showToast('Pull request created!', 'success');
+      } else {
+        showToast(data.error || 'Failed to create PR');
+      }
+    }
+
+    function showRepoList() {
+      showState('repo-list');
+      loadScanHistory();
+    }
+
+    // --- Utility ---
+    function escapeHtml(str) {
+      var div = document.createElement('div');
+      div.textContent = str;
+      return div.innerHTML;
+    }
+
+    // --- Init ---
+    (async function init() {
+      // Handle GitHub callback on page load
+      var params = new URLSearchParams(window.location.search);
+      if (params.get('github_callback') === '1') {
+        var code = params.get('code');
+        var state = params.get('state');
+        // Clean URL
+        window.history.replaceState({}, '', window.location.pathname);
+        if (code && state) {
+          await handleGitHubCallback(code, state);
+          return;
+        }
+      }
+
+      // Check if already connected by trying to load repos
+      var res = await apiFetch(API + '/scanner/repos');
+      if (res && res.ok) {
+        var data = await res.json();
+        allRepos = data.repos || data || [];
+        if (data.username) {
+          document.getElementById('ghUsername').textContent = data.username;
+        }
+        ghConnected = true;
+        renderRepos(allRepos);
+        showState('repo-list');
+        loadScanHistory();
+      } else {
+        showState('not-connected');
+      }
+    })();
+  </script>
+</body>
+</html>
