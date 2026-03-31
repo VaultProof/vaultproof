@@ -11,7 +11,9 @@ import { prisma } from '../lib/prisma.js';
 import { z } from 'zod';
 import { requireAuth } from '../middleware/auth.js';
 import { encrypt, decrypt } from '../crypto/encryption.js';
-import { randomBytes } from 'crypto';
+import { encryptShare2 } from '../crypto/share2-encryption.js';
+import { splitString, serializeShare } from '@vaultproof/shamir';
+import { randomBytes, createHash } from 'crypto';
 
 // ─── Config ──────────────────────────────────────────────────────────────────
 
@@ -1097,5 +1099,440 @@ ${[...new Set(processedFindings.map((pf) => pf.envName))].filter((n) => n !== 'V
     });
 
     return { prUrl: pr.html_url, prNumber: pr.number };
+  });
+
+  // ─── Migrate (guided migration: store keys + create dev key + create PR) ──
+
+  app.post('/scans/:scanId/migrate', async (request, reply) => {
+    const { scanId } = request.params as { scanId: string };
+    const userId = request.auth!.userId;
+
+    const schema = z.object({
+      findings: z.array(z.object({
+        findingId: z.string(),
+        action: z.enum(['store', 'rewrite', 'skip']),
+        rawKey: z.string().max(2048).optional(),
+      })),
+    });
+    const parsed = schema.safeParse(request.body);
+    if (!parsed.success) return reply.status(400).send({ error: 'Invalid input', details: parsed.error.issues });
+
+    // Validate: 'store' action requires rawKey
+    for (const f of parsed.data.findings) {
+      if (f.action === 'store' && !f.rawKey) {
+        return reply.status(400).send({ error: `Finding ${f.findingId} has action 'store' but no rawKey provided` });
+      }
+    }
+
+    // Validate scan ownership
+    const scan = await prisma.scanResult.findUnique({
+      where: { id: scanId },
+      include: { findings: true },
+    });
+    if (!scan || scan.userId !== userId) {
+      return reply.status(404).send({ error: 'Scan not found' });
+    }
+
+    const conn = await prisma.githubConnection.findFirst({ where: { userId, disconnectedAt: null } });
+    if (!conn) return reply.status(400).send({ error: 'GitHub not connected' });
+    const ghToken = getGhToken(conn);
+
+    // ── Step 1: Ensure user has a developer key ─────────────────────
+    let vpLiveKey: string | undefined;
+    let devKeyCreated = false;
+
+    const existingDevKeys = await prisma.developerKey.findMany({
+      where: { userId, revokedAt: null },
+      take: 1,
+    });
+
+    if (existingDevKeys.length > 0) {
+      // User has a key but we don't have the raw value (only hash stored).
+      // We need to create a new one for share2 encryption during migration.
+      // The frontend should pass the raw key, but for auto-migration we create a fresh one.
+      vpLiveKey = undefined; // Will create a new one below
+    }
+
+    if (!vpLiveKey) {
+      // Check rate limit: max 5 non-revoked keys
+      const keyCount = await prisma.developerKey.count({
+        where: { userId, revokedAt: null },
+      });
+      if (keyCount >= 5) {
+        return reply.status(429).send({
+          error: 'Maximum 5 developer keys per account. Revoke unused keys to proceed with migration.',
+        });
+      }
+
+      // Auto-create a developer key
+      const prefix = 'vp_live_';
+      const random = randomBytes(24).toString('base64url');
+      vpLiveKey = prefix + random;
+      const keyHash = createHash('sha256').update(vpLiveKey).digest('hex');
+      const maskedKey = vpLiveKey.slice(0, 12) + '...' + vpLiveKey.slice(-4);
+
+      await prisma.developerKey.create({
+        data: {
+          userId,
+          key: maskedKey,
+          keyHash,
+          label: 'Auto-created by Scanner Migration',
+          mode: 'live',
+        },
+      });
+      devKeyCreated = true;
+    }
+
+    // ── Step 2: Store keys for findings with action 'store' ─────────
+    const storedKeys: Array<{ keyId: string; provider: string; label: string }> = [];
+
+    for (const fa of parsed.data.findings) {
+      if (fa.action !== 'store' || !fa.rawKey) continue;
+
+      const finding = scan.findings.find((f) => f.id === fa.findingId);
+      if (!finding) continue;
+
+      try {
+        // Shamir split: 2-of-2
+        const shares = splitString(fa.rawKey, 2, 2);
+
+        // Encrypt share1 with server key (VAULT_ENCRYPTION_KEY)
+        const share1Encrypted = encrypt(Buffer.from(serializeShare(shares[0])));
+
+        // Encrypt share2 with user's vp_live_ key
+        const share2Encrypted = encryptShare2(serializeShare(shares[1]), vpLiveKey!);
+
+        const commitment = randomBytes(32).toString('hex');
+        const authAppsRoot = randomBytes(32).toString('hex');
+
+        const keySlot = await prisma.keySlot.create({
+          data: {
+            userId,
+            provider: finding.provider,
+            label: finding.envName || `${finding.provider} key`,
+            share1Encrypted: new Uint8Array(share1Encrypted),
+            share2Encrypted: new Uint8Array(share2Encrypted),
+            vaultCommitment: commitment,
+            authAppsRoot,
+          },
+        });
+
+        storedKeys.push({
+          keyId: keySlot.id,
+          provider: finding.provider,
+          label: keySlot.label,
+        });
+      } finally {
+        // Zero the raw key from the input object
+        if (fa.rawKey) {
+          (fa as any).rawKey = '';
+        }
+      }
+    }
+
+    // ── Step 3: Prepare PR changes (reuse create-pr rewriting logic) ─
+    const repo = await githubApi(ghToken, `/repos/${scan.repoFullName}`);
+    const defaultBranch = repo.default_branch;
+    const ref = await githubApi(ghToken, `/repos/${scan.repoFullName}/git/refs/heads/${defaultBranch}`);
+    const baseSha = ref.object.sha;
+
+    const branchName = `vaultproof/migrate-${Date.now()}`;
+    await githubApiRaw(ghToken, 'POST', `/repos/${scan.repoFullName}/git/refs`, {
+      ref: `refs/heads/${branchName}`,
+      sha: baseSha,
+    });
+
+    const changedFiles = new Map<string, string>();
+    const processedFindings: Array<{ envName: string; file: string; line: number | null; action: string }> = [];
+
+    const DOMAIN_TO_PROVIDER = PROVIDER_URLS;
+
+    for (const fa of parsed.data.findings) {
+      if (fa.action === 'skip') continue;
+
+      const finding = scan.findings.find((f) => f.id === fa.findingId);
+      if (!finding || finding.source === 'git-history') continue;
+
+      if (!changedFiles.has(finding.file)) {
+        try {
+          const fileData = await githubApi(ghToken, `/repos/${scan.repoFullName}/contents/${finding.file}?ref=${defaultBranch}`);
+          changedFiles.set(finding.file, Buffer.from(fileData.content, 'base64').toString('utf-8'));
+        } catch { continue; }
+      }
+
+      let content = changedFiles.get(finding.file)!;
+      const isEnvFile = finding.file.endsWith('.env') || finding.file.includes('.env.');
+
+      if (finding.mode === 'sdk-init') {
+        // SDK init rewriting — same logic as create-pr
+        const proxyBase = `https://api.vaultproof.dev/v1/${finding.provider}`;
+
+        if (finding.line) {
+          const lines = content.split('\n');
+          const lineIdx = finding.line - 1;
+
+          let blockStart = lineIdx;
+          let blockEnd = lineIdx;
+          let depth = 0;
+          let foundOpen = false;
+          for (let i = lineIdx; i < lines.length && i < lineIdx + 20; i++) {
+            for (const ch of lines[i]) {
+              if (ch === '(') { depth++; foundOpen = true; }
+              if (ch === ')') { depth--; }
+              if (foundOpen && depth === 0) { blockEnd = i; break; }
+            }
+            if (foundOpen && depth === 0) break;
+          }
+
+          const blockLines = lines.slice(blockStart, blockEnd + 1);
+          let block = blockLines.join('\n');
+
+          const providerEnvVars = [`${finding.provider.toUpperCase()}_API_KEY`];
+          for (const [envName, prov] of Object.entries(ENV_VAR_PATTERNS)) {
+            if (prov === finding.provider && !providerEnvVars.includes(envName)) {
+              providerEnvVars.push(envName);
+            }
+          }
+          for (const envVar of providerEnvVars) {
+            block = block.replace(
+              new RegExp(`process\\.env\\.${envVar}`, 'g'),
+              'process.env.VAULTPROOF_API_KEY'
+            );
+            block = block.replace(
+              new RegExp(`os\\.environ\\[["']${envVar}["']\\]`, 'g'),
+              'os.environ["VAULTPROOF_API_KEY"]'
+            );
+          }
+
+          if (!block.includes('baseURL') && !block.includes('base_url')) {
+            const braceMatch = block.match(/new\s+\w+\s*\(\s*\{/);
+            if (braceMatch && braceMatch.index !== undefined) {
+              const afterBrace = block.slice(braceMatch.index + braceMatch[0].length);
+              if (afterBrace.trim().startsWith('}')) {
+                block = block.replace(
+                  /new\s+(\w+)\s*\(\s*\{\s*\}/,
+                  `new $1({ baseURL: '${proxyBase}' }`
+                );
+              } else {
+                block = block.replace(
+                  /(new\s+\w+\s*\(\s*\{)/,
+                  `$1 baseURL: '${proxyBase}',`
+                );
+              }
+            } else {
+              const pyMatch = block.match(/\(\s*api_key\s*=/);
+              if (pyMatch && pyMatch.index !== undefined) {
+                block = block.replace(
+                  /\(\s*(api_key\s*=)/,
+                  `(base_url="${proxyBase}", $1`
+                );
+              }
+            }
+          }
+
+          const newBlockLines = block.split('\n');
+          lines.splice(blockStart, blockEnd - blockStart + 1, ...newBlockLines);
+          content = lines.join('\n');
+        }
+
+        changedFiles.set(finding.file, content);
+        processedFindings.push({ envName: finding.envName, file: finding.file, line: finding.line, action: 'sdk-init → proxy' });
+
+      } else if (finding.mode === 'http-url') {
+        // HTTP URL rewriting
+        if (finding.line) {
+          const lines = content.split('\n');
+          const lineIdx = finding.line - 1;
+          if (lineIdx < lines.length) {
+            for (const [domain, provider] of Object.entries(DOMAIN_TO_PROVIDER)) {
+              const domainRegex = new RegExp(`https?://${domain.replace(/\./g, '\\.')}`, 'g');
+              lines[lineIdx] = lines[lineIdx].replace(domainRegex, `https://api.vaultproof.dev/v1/${provider}`);
+            }
+            content = lines.join('\n');
+          }
+        }
+
+        changedFiles.set(finding.file, content);
+        processedFindings.push({ envName: finding.envName, file: finding.file, line: finding.line, action: 'url → proxy' });
+
+      } else if (finding.mode === 'env-ref') {
+        // Env var reference rewriting
+        if (finding.line) {
+          const lines = content.split('\n');
+          const lineIdx = finding.line - 1;
+          if (lineIdx < lines.length) {
+            lines[lineIdx] = lines[lineIdx].replace(
+              new RegExp(`process\\.env\\.${finding.envName}`, 'g'),
+              'process.env.VAULTPROOF_API_KEY'
+            );
+            lines[lineIdx] = lines[lineIdx].replace(
+              new RegExp(`os\\.environ\\[["']${finding.envName}["']\\]`, 'g'),
+              'os.environ["VAULTPROOF_API_KEY"]'
+            );
+            content = lines.join('\n');
+          }
+        }
+
+        changedFiles.set(finding.file, content);
+        processedFindings.push({ envName: finding.envName, file: finding.file, line: finding.line, action: 'env → VAULTPROOF_API_KEY' });
+
+      } else if (isEnvFile) {
+        // .env file rewriting
+        const lines = content.split('\n');
+        let alreadyHasVaultproof = lines.some((l) => l.trim().startsWith('VAULTPROOF_API_KEY='));
+
+        for (let i = 0; i < lines.length; i++) {
+          const trimmed = lines[i].trim();
+          if (!trimmed || trimmed.startsWith('#')) continue;
+          const eqIdx = trimmed.indexOf('=');
+          if (eqIdx === -1) continue;
+          const varName = trimmed.slice(0, eqIdx).trim();
+          if (varName === finding.envName) {
+            lines[i] = `# ${varName} — secured by VaultProof proxy`;
+            break;
+          }
+        }
+
+        if (!alreadyHasVaultproof) {
+          lines.push('VAULTPROOF_API_KEY=vp_live_xxx');
+        }
+
+        content = lines.join('\n');
+        changedFiles.set(finding.file, content);
+        processedFindings.push({ envName: finding.envName, file: finding.file, line: finding.line, action: 'env-file → proxy' });
+
+      } else {
+        // Hardcoded key replacement
+        const replacement = `process.env.${finding.envName}`;
+
+        if (finding.line) {
+          const lines = content.split('\n');
+          const lineIdx = finding.line - 1;
+          if (lineIdx < lines.length) {
+            lines[lineIdx] = lines[lineIdx].replace(/["'`][^"'`]{10,512}["'`]/g, replacement);
+            content = lines.join('\n');
+          }
+        }
+
+        changedFiles.set(finding.file, content);
+        processedFindings.push({ envName: finding.envName, file: finding.file, line: finding.line, action: 'vaultproof' });
+      }
+    }
+
+    if (changedFiles.size === 0 && storedKeys.length === 0) {
+      return reply.status(400).send({ error: 'No changes to apply — all findings were skipped' });
+    }
+
+    // ── Step 4: Create the PR if there are code changes ─────────────
+    let prUrl = '';
+    let prNumber = 0;
+
+    if (changedFiles.size > 0) {
+      const PROXY_ACTIONS = new Set(['sdk-init → proxy', 'url → proxy', 'env → VAULTPROOF_API_KEY', 'env-file → proxy']);
+      const hasProxyFindings = processedFindings.some((pf) => PROXY_ACTIONS.has(pf.action));
+
+      const treeItems = [];
+      for (const [path, content] of changedFiles) {
+        const blob = await githubApiRaw(ghToken, 'POST', `/repos/${scan.repoFullName}/git/blobs`, {
+          content,
+          encoding: 'utf-8',
+        });
+        treeItems.push({ path, mode: '100644', type: 'blob', sha: blob.sha });
+      }
+
+      const newTree = await githubApiRaw(ghToken, 'POST', `/repos/${scan.repoFullName}/git/trees`, {
+        base_tree: baseSha,
+        tree: treeItems,
+      });
+
+      const commit = await githubApiRaw(ghToken, 'POST', `/repos/${scan.repoFullName}/git/commits`, {
+        message: hasProxyFindings
+          ? 'fix: secure API keys via VaultProof proxy (VaultProof Migration)'
+          : 'fix: remove exposed API keys (VaultProof Migration)',
+        tree: newTree.sha,
+        parents: [baseSha],
+      });
+
+      await githubApiRaw(ghToken, 'PATCH', `/repos/${scan.repoFullName}/git/refs/heads/${branchName}`, {
+        sha: commit.sha,
+      });
+
+      // Build PR body
+      const historyFindings = scan.findings.filter((f) => f.source === 'git-history');
+      const historyWarning = historyFindings.length > 0
+        ? `\n## Git History Warning\n\nThe following keys were also found in git commit history. Removing them from source code does not remove them from history.\n\n**Action required — rotate these keys immediately:**\n${historyFindings.map((f) => `- \`${f.envName}\` (${f.maskedValue}) — [Rotate](${ROTATION_URLS[f.provider] || '#'})`).join('\n')}\n`
+        : '';
+
+      const storedKeysSection = storedKeys.length > 0
+        ? `\n## Keys Stored in VaultProof\n\n${storedKeys.map((k) => `- **${k.provider}** — \`${k.label}\` (ID: \`${k.keyId}\`)`).join('\n')}\n`
+        : '';
+
+      const prBody = `## Guided Migration with VaultProof
+
+This PR was created by [VaultProof's guided migration](https://vaultproof.dev). API keys have been secured and code has been rewritten to use the VaultProof transparent proxy.
+${storedKeysSection}
+| Key | File | Action |
+|-----|------|--------|
+${processedFindings.map((pf) => {
+        const desc = pf.action === 'sdk-init → proxy' ? 'Rewritten to use VaultProof proxy'
+          : pf.action === 'url → proxy' ? 'URL redirected through VaultProof proxy'
+          : pf.action === 'env → VAULTPROOF_API_KEY' ? 'Replaced with \`VAULTPROOF_API_KEY\`'
+          : pf.action === 'env-file → proxy' ? 'Commented out, added \`VAULTPROOF_API_KEY\`'
+          : `Replaced with \`process.env.${pf.envName}\``;
+        return `| \`${pf.envName}\` | ${pf.file}${pf.line ? `:${pf.line}` : ''} | ${desc} |`;
+      }).join('\n')}
+${historyWarning}
+## Setup
+
+1. Add your VaultProof API key to your hosting provider:
+   - \`VAULTPROOF_API_KEY\` — get this from [VaultProof Dashboard](https://vaultproof.dev/app/keys)
+
+---
+*This PR was created by VaultProof's guided migration with your approval.*
+*VaultProof is not responsible for code modifications you approve and merge.*`;
+
+      const pr = await githubApiRaw(ghToken, 'POST', `/repos/${scan.repoFullName}/pulls`, {
+        title: 'fix: secure API keys via VaultProof guided migration',
+        body: prBody,
+        head: branchName,
+        base: defaultBranch,
+      });
+
+      prUrl = pr.html_url;
+      prNumber = pr.number;
+    }
+
+    // ── Step 5: Update finding records ──────────────────────────────
+    for (const fa of parsed.data.findings) {
+      if (fa.action === 'skip') {
+        await prisma.scanFinding.update({
+          where: { id: fa.findingId },
+          data: { action: 'skipped' },
+        }).catch(() => {});
+      } else {
+        await prisma.scanFinding.update({
+          where: { id: fa.findingId },
+          data: {
+            action: fa.action === 'store' ? 'migrated' : 'pr-created',
+            prUrl: prUrl || undefined,
+          },
+        }).catch(() => {});
+      }
+    }
+
+    await auditLog(userId, 'migrated', scanId, {
+      prUrl,
+      prNumber,
+      storedKeys: storedKeys.length,
+      rewrittenFindings: processedFindings.length,
+    });
+
+    return {
+      prUrl,
+      prNumber,
+      devKey: devKeyCreated ? vpLiveKey : undefined,
+      storedKeys,
+      platforms: [], // Will be populated by Task 4
+    };
   });
 }
