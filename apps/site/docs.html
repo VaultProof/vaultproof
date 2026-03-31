@@ -287,9 +287,9 @@
                                 <td><code class="font-mono text-xs">npm i @vaultproof/sdk</code></td>
                             </tr>
                             <tr class="bg-cyan-500/[0.04]">
-                                <td><code class="font-mono text-xs text-vp-cyan">Env Injection</code> <span class="text-[0.625rem] font-bold text-cyan-400 ml-1">ANY SDK</span></td>
-                                <td><code class="font-mono text-xs">vaultproof env</code> / <code class="font-mono text-xs">vaultproof exec</code></td>
-                                <td>Any SDK (Stripe, AWS, Twilio, Sendgrid, anything that reads env vars)</td>
+                                <td><code class="font-mono text-xs text-vp-cyan">CLI Proxy</code> <span class="text-[0.625rem] font-bold text-cyan-400 ml-1">ANY SDK</span></td>
+                                <td><code class="font-mono text-xs">vaultproof proxy</code></td>
+                                <td>Any SDK (Stripe, AWS, Twilio, Sendgrid, anything) -- proxy calls through the server</td>
                                 <td><code class="font-mono text-xs">npm i -g @vaultproof/cli</code></td>
                             </tr>
                             <tr>
@@ -384,25 +384,24 @@ client = openai.<span class="fn">OpenAI</span>(
                     </div>
                 </div>
 
-                <!-- Path B: Env Injection -->
+                <!-- Path B: CLI Proxy -->
                 <div class="mb-8">
                     <div class="flex items-center gap-3 mb-4">
                         <span class="bg-cyan-500/15 text-cyan-400 text-xs font-bold px-2.5 py-1 rounded">FOR ANY SDK</span>
-                        <h3 class="text-lg font-semibold text-white">Environment Injection -- works with every SDK</h3>
+                        <h3 class="text-lg font-semibold text-white">CLI Proxy -- works with every SDK</h3>
                     </div>
-                    <p class="text-gray-500 text-sm mb-4">Use <code class="font-mono text-xs text-vp-cyan">vaultproof env</code> or <code class="font-mono text-xs text-vp-cyan">vaultproof exec</code> to inject stored API keys as environment variables. Works with Stripe, AWS, Twilio, Sendgrid -- anything that reads env vars.</p>
+                    <p class="text-gray-500 text-sm mb-4">Use <code class="font-mono text-xs text-vp-cyan">vaultproof proxy</code> to make API calls through the server. Your key is never exposed to the client. Works with Stripe, AWS, Twilio, Sendgrid -- anything.</p>
 
                     <div class="code-block">
                         <div class="code-header">bash</div>
 <pre class="text-gray-300"><span class="cmt"># Store your key once</span>
 vaultproof store -p stripe -l <span class="str">"Production"</span>
 
-<span class="cmt"># Option 1: Export to current shell</span>
-<span class="kw">eval</span> $(vaultproof env -p stripe)
-node app.js  <span class="cmt"># Stripe SDK reads STRIPE_SECRET_KEY automatically</span>
+<span class="cmt"># Make API calls through the proxy (key never leaves the server)</span>
+vaultproof proxy -k &lt;keyId&gt; --path /v1/charges -d <span class="str">'{"amount":2000,"currency":"usd"}'</span>
 
-<span class="cmt"># Option 2: Run with injection (auto-cleans)</span>
-vaultproof exec -p stripe -- node app.js</pre>
+<span class="cmt"># Or use the transparent proxy -- just change the base URL</span>
+<span class="cmt"># https://api.vaultproof.dev/v1/openai/v1/chat/completions</span></pre>
                     </div>
                 </div>
 
@@ -1059,83 +1058,8 @@ res = client.chat.completions.<span class="fn">create</span>(
                         </div>
                     </div>
 
-                    <!-- vault.retrieve -->
-                    <div class="endpoint-card mb-6">
-                        <h4 class="text-white font-mono text-sm font-semibold mb-3">vault.retrieve(keyId)</h4>
-                        <p class="text-gray-400 text-sm mb-4">Retrieves the raw API key by reconstructing it from both encrypted shares on the server. The key is returned over TLS. Use this for providers that aren't supported by the transparent proxy (e.g., Stripe, Supabase, SMTP, or any custom provider).</p>
-                        <div class="bg-vp-surface border border-vp-border rounded-xl overflow-hidden mb-4">
-                            <table class="doc-table">
-                                <thead><tr><th>Parameter</th><th>Type</th><th>Required</th><th>Description</th></tr></thead>
-                                <tbody>
-                                    <tr>
-                                        <td><code class="font-mono text-xs text-vp-accent">keyId</code></td>
-                                        <td><code class="font-mono text-xs">string</code></td>
-                                        <td>Yes</td>
-                                        <td>Key slot ID to retrieve</td>
-                                    </tr>
-                                </tbody>
-                            </table>
-                        </div>
-                        <p class="text-gray-500 text-xs mb-2">Returns:</p>
-                        <div class="code-block">
-<pre class="text-gray-300">{ apiKey: <span class="str">"sk-live-abc123..."</span>, provider: <span class="str">"stripe"</span> }</pre>
-                        </div>
-                        <div class="mt-4 code-block">
-                            <div class="code-header">Example: Stripe (non-proxy provider)</div>
-<pre class="text-gray-300"><span class="kw">import</span> Stripe <span class="kw">from</span> <span class="str">'stripe'</span>;
-<span class="kw">import</span> VaultProof <span class="kw">from</span> <span class="str">'@vaultproof/sdk'</span>;
-
-<span class="kw">const</span> vault = <span class="kw">new</span> VaultProof(process.env.VAULTPROOF_API_KEY);
-
-<span class="cmt">// Retrieve the key at request time — never hardcoded, never in .env</span>
-<span class="kw">const</span> { apiKey } = <span class="kw">await</span> vault.retrieve(<span class="str">'your-stripe-key-id'</span>);
-<span class="kw">const</span> stripe = <span class="kw">new</span> Stripe(apiKey);</pre>
-                        </div>
-                        <div class="mt-4 bg-indigo-500/5 border border-indigo-500/20 rounded-xl p-4">
-                            <p class="text-indigo-400 text-xs font-medium mb-1">When to use retrieve() vs proxy()</p>
-                            <p class="text-gray-400 text-xs"><strong class="text-white">proxy()</strong> routes your API call through VaultProof's transparent proxy — the key is never returned to your code. Use it for supported AI providers (OpenAI, Anthropic, etc.).</p>
-                            <p class="text-gray-400 text-xs mt-1"><strong class="text-white">retrieve()</strong> returns the raw key so you can pass it to the provider's own SDK. Use it for everything else (Stripe, Supabase, AWS, SMTP, etc.).</p>
-                        </div>
-                    </div>
-
-                    <!-- vault.retrieveBatch -->
-                    <div class="endpoint-card mb-6">
-                        <h4 class="text-white font-mono text-sm font-semibold mb-3">vault.retrieveBatch(keyIds)</h4>
-                        <p class="text-gray-400 text-sm mb-4">Retrieve multiple API keys in a single round trip. More efficient than calling <code class="font-mono text-xs text-vp-accent">retrieve()</code> in a loop. Maximum 20 keys per batch.</p>
-                        <div class="bg-vp-surface border border-vp-border rounded-xl overflow-hidden mb-4">
-                            <table class="doc-table">
-                                <thead><tr><th>Parameter</th><th>Type</th><th>Required</th><th>Description</th></tr></thead>
-                                <tbody>
-                                    <tr>
-                                        <td><code class="font-mono text-xs text-vp-accent">keyIds</code></td>
-                                        <td><code class="font-mono text-xs">string[]</code></td>
-                                        <td>Yes</td>
-                                        <td>Array of key slot IDs to retrieve (max 20)</td>
-                                    </tr>
-                                </tbody>
-                            </table>
-                        </div>
-                        <p class="text-gray-500 text-xs mb-2">Returns:</p>
-                        <div class="code-block">
-<pre class="text-gray-300">[
-  { keyId: <span class="str">"uuid-1"</span>, apiKey: <span class="str">"sk-live-abc..."</span>, provider: <span class="str">"stripe"</span> },
-  { keyId: <span class="str">"uuid-2"</span>, apiKey: <span class="str">"key-xyz..."</span>, provider: <span class="str">"openai"</span> },
-  { keyId: <span class="str">"uuid-3"</span>, error: <span class="str">"Key not found"</span> }
-]</pre>
-                        </div>
-                        <div class="mt-4 code-block">
-                            <div class="code-header">Example: Batch retrieve</div>
-<pre class="text-gray-300"><span class="kw">const</span> results = <span class="kw">await</span> vault.retrieveBatch([
-  <span class="str">'stripe-key-id'</span>,
-  <span class="str">'openai-key-id'</span>,
-  <span class="str">'twilio-key-id'</span>
-]);
-
-<span class="kw">for</span> (<span class="kw">const</span> { keyId, apiKey, error } <span class="kw">of</span> results) {
-  <span class="kw">if</span> (error) console.warn(<span class="str">`Failed to retrieve <span class="kw">${</span>keyId<span class="kw">}</span>: <span class="kw">${</span>error<span class="kw">}</span>`</span>);
-}</pre>
-                        </div>
-                    </div>
+                    <!-- vault.retrieve / vault.retrieveBatch — REMOVED (insecure: exposes raw keys to client) -->
+                    <!-- Use vault.proxy() or the transparent proxy instead -->
 
                     <!-- vault.setSessionToken -->
                     <div class="endpoint-card mb-6">
@@ -1336,7 +1260,7 @@ vault.setSessionToken(token);</pre>
                                 <tr>
                                     <td class="text-white font-medium">OAuth client secrets</td>
                                     <td><span class="text-green-400">Yes</span></td>
-                                    <td class="text-gray-400">Google OAuth, GitHub OAuth client secrets. Use <code class="font-mono text-xs text-vp-accent">vault.retrieve()</code> at runtime.</td>
+                                    <td class="text-gray-400">Google OAuth, GitHub OAuth client secrets. Use <code class="font-mono text-xs text-vp-accent">vault.proxy()</code> at runtime.</td>
                                 </tr>
                                 <tr>
                                     <td class="text-white font-medium">Service account JSON</td>
@@ -1373,8 +1297,8 @@ vault.setSessionToken(token);</pre>
                     <p class="text-amber-400 text-sm font-medium mb-2">Keys with IP restrictions</p>
                     <p class="text-gray-400 text-sm mb-2">Some providers let you restrict API keys to specific IP addresses. How this interacts with VaultProof depends on which method you use:</p>
                     <ul class="text-gray-400 text-sm space-y-1 ml-4 list-disc">
-                        <li><strong class="text-white">vault.retrieve()</strong> &mdash; No problem. Your server fetches the key and makes the API call from its own IP.</li>
-                        <li><strong class="text-white">Transparent proxy</strong> &mdash; The API call comes from VaultProof's server. Remove the IP restriction and rely on VaultProof's per-key rate limits and budget caps instead.</li>
+                        <li><strong class="text-white">vault.proxy()</strong> &mdash; The API call is routed through VaultProof's server. Remove the IP restriction on your provider key and rely on VaultProof's per-key rate limits and budget caps instead.</li>
+                        <li><strong class="text-white">Transparent proxy</strong> &mdash; Same as above. The call comes from VaultProof's server, not yours.</li>
                     </ul>
                 </div>
             </section>
@@ -1853,61 +1777,8 @@ $ vaultproof call -k vk_8f3a2b1c --path /v1/models -m GET</pre>
                     </div>
                 </div>
 
-                <!-- Environment Injection -->
-                <div class="mb-8">
-                    <h3 class="text-lg font-semibold text-white mb-4">Environment Injection</h3>
-                    <p class="text-gray-500 text-sm mb-4">Works with every SDK -- Stripe, AWS, Twilio, anything that reads environment variables.</p>
-                    <div class="space-y-4">
-                        <div class="endpoint-card">
-                            <div class="flex items-baseline gap-3 mb-2">
-                                <code class="font-mono text-sm text-white font-semibold">vaultproof env -p &lt;provider&gt;</code>
-                            </div>
-                            <p class="text-gray-500 text-sm mb-3">Output stored API keys as export statements. Use with <code class="font-mono text-xs text-vp-accent">eval</code> to set in your shell.</p>
-                            <div class="bg-vp-surface border border-vp-border rounded-xl overflow-hidden mb-3">
-                                <table class="doc-table">
-                                    <thead><tr><th>Flag</th><th>Description</th><th>Required</th></tr></thead>
-                                    <tbody>
-                                        <tr><td><code class="font-mono text-xs text-vp-accent">-p, --provider &lt;name&gt;</code></td><td>Specific provider to export</td><td>One of -p or -a</td></tr>
-                                        <tr><td><code class="font-mono text-xs text-vp-accent">-a, --all</code></td><td>Export all stored keys</td><td>One of -p or -a</td></tr>
-                                        <tr><td><code class="font-mono text-xs text-vp-accent">--var &lt;name&gt;</code></td><td>Custom environment variable name</td><td>No</td></tr>
-                                    </tbody>
-                                </table>
-                            </div>
-                            <div class="code-block">
-                                <div class="code-header">examples</div>
-<pre class="text-gray-300">$ <span class="kw">eval</span> $(vaultproof env -p stripe)         <span class="cmt"># Export Stripe key</span>
-$ <span class="kw">eval</span> $(vaultproof env -p openai)         <span class="cmt"># Export OpenAI key</span>
-$ <span class="kw">eval</span> $(vaultproof env -a)                <span class="cmt"># Export all stored keys</span>
-$ <span class="kw">eval</span> $(vaultproof env -p aws --var MY_AWS_KEY)  <span class="cmt"># Custom var name</span></pre>
-                            </div>
-                            <div class="callout-info mt-3">
-                                <p class="text-sm text-indigo-200">Works with every SDK -- Stripe, AWS, Twilio, anything that reads environment variables.</p>
-                            </div>
-                        </div>
-
-                        <div class="endpoint-card">
-                            <div class="flex items-baseline gap-3 mb-2">
-                                <code class="font-mono text-sm text-white font-semibold">vaultproof exec -p &lt;providers&gt; -- &lt;command&gt;</code>
-                            </div>
-                            <p class="text-gray-500 text-sm mb-3">Run a command with API keys injected as environment variables. Keys are cleared when the command exits.</p>
-                            <div class="bg-vp-surface border border-vp-border rounded-xl overflow-hidden mb-3">
-                                <table class="doc-table">
-                                    <thead><tr><th>Flag</th><th>Description</th><th>Required</th></tr></thead>
-                                    <tbody>
-                                        <tr><td><code class="font-mono text-xs text-vp-accent">-p, --provider &lt;names&gt;</code></td><td>Comma-separated providers to inject</td><td>One of -p or -a</td></tr>
-                                        <tr><td><code class="font-mono text-xs text-vp-accent">-a, --all</code></td><td>Inject all stored keys</td><td>One of -p or -a</td></tr>
-                                    </tbody>
-                                </table>
-                            </div>
-                            <div class="code-block">
-                                <div class="code-header">examples</div>
-<pre class="text-gray-300">$ vaultproof exec -p stripe -- node app.js
-$ vaultproof exec -p openai,anthropic -- python main.py
-$ vaultproof exec -a -- npm start
-$ vaultproof exec -p aws -- aws s3 ls</pre>
-                            </div>
-                        </div>
-                    </div>
+                <!-- vaultproof env / vaultproof exec — REMOVED (insecure: exposes raw keys to the client) -->
+                <!-- Use vaultproof proxy or the transparent proxy instead -->
 
                     <!-- Environment Variable Mapping -->
                     <div class="mt-6">
@@ -2465,39 +2336,8 @@ Authorization: Bearer &lt;jwt_token&gt;
                             </div>
                         </div>
 
-                        <div class="endpoint-card">
-                            <div class="flex items-center gap-3 mb-3">
-                                <span class="method-badge method-post">POST</span>
-                                <code class="font-mono text-sm text-white">/api/v1/sdk/retrieve</code>
-                            </div>
-                            <p class="text-gray-400 text-sm mb-3">Reconstruct and return the raw API key from its encrypted shares.</p>
-                            <div class="code-block">
-<pre class="text-gray-300"><span class="cmt">// Request</span>
-{ <span class="str">"keyId"</span>: <span class="str">"uuid"</span> }
-
-<span class="cmt">// Response (200)</span>
-{ <span class="str">"apiKey"</span>: <span class="str">"sk-live-abc123..."</span>, <span class="str">"provider"</span>: <span class="str">"stripe"</span> }</pre>
-                            </div>
-                        </div>
-
-                        <div class="endpoint-card">
-                            <div class="flex items-center gap-3 mb-3">
-                                <span class="method-badge method-post">POST</span>
-                                <code class="font-mono text-sm text-white">/api/v1/sdk/retrieve-batch</code>
-                            </div>
-                            <p class="text-gray-400 text-sm mb-3">Batch retrieve up to 20 keys in a single round trip.</p>
-                            <div class="code-block">
-<pre class="text-gray-300"><span class="cmt">// Request</span>
-{ <span class="str">"keyIds"</span>: [<span class="str">"uuid-1"</span>, <span class="str">"uuid-2"</span>, <span class="str">"uuid-3"</span>] }
-
-<span class="cmt">// Response (200)</span>
-[
-  { <span class="str">"keyId"</span>: <span class="str">"uuid-1"</span>, <span class="str">"apiKey"</span>: <span class="str">"sk-live-abc..."</span>, <span class="str">"provider"</span>: <span class="str">"stripe"</span> },
-  { <span class="str">"keyId"</span>: <span class="str">"uuid-2"</span>, <span class="str">"apiKey"</span>: <span class="str">"key-xyz..."</span>, <span class="str">"provider"</span>: <span class="str">"openai"</span> },
-  { <span class="str">"keyId"</span>: <span class="str">"uuid-3"</span>, <span class="str">"error"</span>: <span class="str">"Key not found"</span> }
-]</pre>
-                            </div>
-                        </div>
+                        <!-- /api/v1/sdk/retrieve and /api/v1/sdk/retrieve-batch — REMOVED (insecure: returns raw keys) -->
+                        <!-- Use /api/v1/sdk/proxy instead -->
 
                         <div class="endpoint-card">
                             <div class="flex items-center gap-3 mb-3">

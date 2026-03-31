@@ -318,7 +318,7 @@
                     <svg width="24" height="24" fill="none" stroke="#6366f1" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4"/></svg>
                 </div>
                 <h3 class="text-lg font-bold text-vp-navy mb-2 font-heading">Works with Any SDK</h3>
-                <p class="text-sm text-vp-body leading-relaxed">Use <code class="text-vp-accent bg-indigo-50 px-1.5 py-0.5 rounded text-xs font-mono">vaultproof exec</code> to inject keys as environment variables at runtime. Stripe, AWS, any SDK that reads from env vars.</p>
+                <p class="text-sm text-vp-body leading-relaxed">Use <code class="text-vp-accent bg-indigo-50 px-1.5 py-0.5 rounded text-xs font-mono">vaultproof proxy</code> to route API calls through the server. Stripe, AWS, any provider -- your key never leaves the server.</p>
             </div>
         </div>
     </section>
@@ -458,9 +458,9 @@
                     <div class="text-indigo-400 mb-1">export OPENAI_API_KEY=vp_live_...</div>
                     <div class="text-indigo-400 mb-1">export OPENAI_BASE_URL=https://api.vaultproof.dev/v1/openai</div>
                     <div class="text-indigo-400/50 text-xs mb-4">^ useless alone, real key is split + encrypted</div>
-                    <div class="text-gray-500 mb-2"># Or inject into any SDK (Stripe, AWS, anything)</div>
-                    <div class="text-indigo-400 mb-1">eval $(vaultproof env -p stripe)</div>
-                    <div class="text-indigo-400 mb-1">node app.js  <span class="text-indigo-400/50 text-xs"># STRIPE_SECRET_KEY set automatically</span></div>
+                    <div class="text-gray-500 mb-2"># Or proxy any SDK call through the server</div>
+                    <div class="text-indigo-400 mb-1">vaultproof proxy -k &lt;keyId&gt; --path /v1/charges \</div>
+                    <div class="text-indigo-400 mb-1">  -d '{"amount":2000}'  <span class="text-indigo-400/50 text-xs"># key never leaves the server</span></div>
                 </div>
             </div>
         </div>
@@ -620,7 +620,7 @@
                     <svg class="w-4 h-4 text-vp-body transition-transform" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7"/></svg>
                 </button>
                 <div class="hidden px-5 pb-5">
-                    <p class="text-sm text-vp-body leading-relaxed">Yes. Use <code class="text-vp-accent bg-indigo-50 px-1.5 py-0.5 rounded text-xs font-mono">vaultproof exec -p stripe -- node app.js</code> to inject your key as an environment variable at runtime. Works with every SDK that reads from env vars.</p>
+                    <p class="text-sm text-vp-body leading-relaxed">Yes. Use <code class="text-vp-accent bg-indigo-50 px-1.5 py-0.5 rounded text-xs font-mono">vault.proxy('key-id', '/v1/charges', { amount: 2000 })</code> to route any API call through VaultProof's server. Your key is never exposed to your code. Works with every provider.</p>
                 </div>
             </div>
             <div class="bg-white border border-gray-200 rounded-xl overflow-hidden reveal delay-3 shadow-sm">

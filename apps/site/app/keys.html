@@ -1781,7 +1781,7 @@ exampleBody + '\n' +
             };
             if (baseUrlMap[k.provider]) newEnvLines.push(baseUrlMap[k.provider]);
           } else {
-            newEnvLines.push('# ' + k.envName + ' — secured by VaultProof (use: vaultproof env -p ' + k.provider + ')');
+            newEnvLines.push('# ' + k.envName + ' — secured by VaultProof (use transparent proxy: https://api.vaultproof.dev/v1/' + k.provider + ')');
           }
           newEnvLines.push('');
         } catch (err) {

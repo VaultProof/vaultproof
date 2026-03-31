@@ -501,10 +501,10 @@
                 <span class="text-gray-500 select-none">$</span>
                 <span class="text-cyan-400">vaultproof store -p openai</span>
               </div>
-              <div class="mt-3 text-gray-500">// 3. Run with injected keys</div>
+              <div class="mt-3 text-gray-500">// 3. Proxy an API call through the server</div>
               <div class="flex items-center gap-2">
                 <span class="text-gray-500 select-none">$</span>
-                <span class="text-cyan-400">vaultproof exec -p openai -- node app.js</span>
+                <span class="text-cyan-400">vaultproof proxy -k &lt;keyId&gt; --path /v1/chat/completions -d '{...}'</span>
               </div>
             </div>
             <p class="text-xs text-gray-500 mt-3">Store keys, proxy API calls, and manage access from your terminal. <a href="/docs" class="text-indigo-400 hover:underline">Full CLI docs &rarr;</a></p>

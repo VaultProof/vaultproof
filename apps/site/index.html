@@ -439,9 +439,9 @@
                     <div class="text-indigo-400 mb-1">export OPENAI_API_KEY=vp_live_...</div>
                     <div class="text-indigo-400 mb-1">export OPENAI_BASE_URL=https://api.vaultproof.dev/v1/openai</div>
                     <div class="text-indigo-400/50 text-xs mb-4">^ useless alone, real key is split + encrypted</div>
-                    <div class="text-gray-500 mb-2"># Or inject into any SDK (Stripe, AWS, anything)</div>
-                    <div class="text-indigo-400 mb-1">eval $(vaultproof env -p stripe)</div>
-                    <div class="text-indigo-400 mb-1">node app.js  <span class="text-indigo-400/50 text-xs"># STRIPE_SECRET_KEY set automatically</span></div>
+                    <div class="text-gray-500 mb-2"># Or proxy any SDK call through the server</div>
+                    <div class="text-indigo-400 mb-1">vaultproof proxy -k &lt;keyId&gt; --path /v1/charges \</div>
+                    <div class="text-indigo-400 mb-1">  -d '{"amount":2000}'  <span class="text-indigo-400/50 text-xs"># key never leaves the server</span></div>
                 </div>
             </div>
         </div>
@@ -945,7 +945,7 @@ const res = await vault.proxy(key, '/v1/chat/completions', {
                     <svg class="w-4 h-4 text-gray-500 transition-transform" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7"/></svg>
                 </button>
                 <div class="hidden px-5 pb-5">
-                    <p class="text-sm text-gray-400 leading-relaxed">Yes. For local dev, use <code class="text-indigo-400 bg-vp-bg px-1.5 py-0.5 rounded text-xs">vaultproof exec -p stripe -- node app.js</code> to inject keys as env vars. For production, use <code class="text-indigo-400 bg-vp-bg px-1.5 py-0.5 rounded text-xs">vault.retrieve()</code> in your code to fetch keys at runtime. Works with every SDK.</p>
+                    <p class="text-sm text-gray-400 leading-relaxed">Yes. Use <code class="text-indigo-400 bg-vp-bg px-1.5 py-0.5 rounded text-xs">vault.proxy('key-id', '/v1/charges', { amount: 2000 })</code> to route any API call through VaultProof's server. Your key is never exposed to your code. Works with every provider.</p>
                 </div>
             </div>
             <div class="bg-vp-surface border border-vp-border rounded-xl overflow-hidden reveal delay-3">

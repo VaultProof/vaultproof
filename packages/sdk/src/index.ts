@@ -136,34 +136,9 @@ export class VaultProof {
     return { status: res.status, data, ok: res.ok };
   }
 
-  /**
-   * Retrieve the raw API key from VaultProof.
-   *
-   * The key is reconstructed server-side from both encrypted shares
-   * and returned over TLS. Use this for providers that aren't supported
-   * by the transparent proxy (e.g., Stripe, Supabase, SMTP).
-   */
-  async retrieve(keyId: string): Promise<{ apiKey: string; provider: string }> {
-    const res = await this.fetch('/api/v1/sdk/retrieve', {
-      method: 'POST',
-      body: { keyId },
-      direct: true,
-    });
-    return { apiKey: res.apiKey, provider: res.provider };
-  }
-
-  /**
-   * Retrieve multiple API keys in a single round trip.
-   * Much faster than calling retrieve() in a loop when you need several keys.
-   */
-  async retrieveBatch(keyIds: string[]): Promise<Array<{ keyId: string; apiKey?: string; provider?: string; error?: string }>> {
-    const res = await this.fetch('/api/v1/sdk/retrieve-batch', {
-      method: 'POST',
-      body: { keyIds },
-      direct: true,
-    });
-    return res.keys || [];
-  }
+  // REMOVED: retrieve() and retrieveBatch() methods
+  // These returned raw API keys to the client, defeating the security model.
+  // Use proxy() or the transparent proxy instead — keys never leave the server.
 
   /**
    * List all stored keys.

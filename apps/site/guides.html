@@ -213,7 +213,7 @@
                             </tr>
                             <tr class="border-t border-vp-border">
                                 <td class="py-2 text-white">Other SDKs</td>
-                                <td class="py-2"><code class="text-vp-accent">vault.retrieve()</code> in code or CLI env injection</td>
+                                <td class="py-2"><code class="text-vp-accent">vault.proxy()</code> in code or transparent proxy URL</td>
                                 <td class="py-2"><code class="text-red-400 line-through">STRIPE_SECRET_KEY=sk_live_...</code><br><span class="text-gray-500">Removed &mdash; key is fetched at runtime</span></td>
                             </tr>
                         </tbody>
@@ -297,7 +297,7 @@
 
                     <div class="bg-amber-500/5 border border-amber-500/20 rounded-xl p-4 mt-2">
                         <p class="text-amber-400 text-xs font-medium mb-1">Getting an IP restriction error?</p>
-                        <p class="text-gray-400 text-xs">If your API key has IP restrictions, the proxy call comes from VaultProof's server, not yours. Either remove the IP restriction on your key, or use <code class="font-mono text-vp-accent">vault.retrieve()</code> instead so your server makes the call directly.</p>
+                        <p class="text-gray-400 text-xs">If your API key has IP restrictions, the proxy call comes from VaultProof's server, not yours. Remove the IP restriction on your key and rely on VaultProof's per-key rate limits and budget caps instead.</p>
                     </div>
                 </div>
             </div>
@@ -310,37 +310,39 @@
                     <div class="tool-icon bg-[#06b6d4]/10 text-[#22d3ee]" style="font-family:'Space Grotesk',sans-serif">*</div>
                     <div>
                         <h3 class="font-semibold text-white text-lg">Other SDKs (Stripe, AWS, Supabase, etc.)</h3>
-                        <p class="text-gray-500 text-sm mt-0.5">For providers that don't use a base URL &mdash; retrieve the key at runtime</p>
+                        <p class="text-gray-500 text-sm mt-0.5">For providers that don't use a base URL &mdash; proxy calls through the server</p>
                     </div>
                 </div>
                 <svg class="guide-chevron text-gray-500" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg>
             </div>
             <div class="guide-body">
                 <div class="px-6 pb-6 space-y-4">
-                    <p class="text-gray-400 text-sm">For local development, use the CLI. For production, use <code class="text-vp-accent font-mono text-xs">vault.retrieve()</code> in your code.</p>
+                    <p class="text-gray-400 text-sm">Use <code class="text-vp-accent font-mono text-xs">vault.proxy()</code> to make API calls through VaultProof's server. Your key is never exposed to the client.</p>
 
-                    <p class="text-gray-500 text-xs font-medium mt-2 mb-2">Local development</p>
+                    <p class="text-gray-500 text-xs font-medium mt-2 mb-2">CLI</p>
                     <div>
                         <div class="code-header"><span>bash</span></div>
                         <div class="code-block">
 <pre><span class="cmt"># Store your key</span>
 vaultproof store -p stripe -l <span class="str">"secret"</span>
 
-<span class="cmt"># Run your app with the key injected as an env var</span>
-vaultproof exec -p stripe -- node app.js</pre>
+<span class="cmt"># Proxy the API call through the server (key never leaves the server)</span>
+vaultproof proxy -k &lt;keyId&gt; --path /v1/charges -d <span class="str">'{"amount":2000,"currency":"usd"}'</span></pre>
                         </div>
                     </div>
 
-                    <p class="text-gray-500 text-xs font-medium mt-4 mb-2">Production</p>
+                    <p class="text-gray-500 text-xs font-medium mt-4 mb-2">SDK</p>
                     <div>
                         <div class="code-header"><span>javascript</span></div>
                         <div class="code-block">
-<pre><span class="kw">import</span> Stripe <span class="kw">from</span> <span class="str">'stripe'</span>;
-<span class="kw">import</span> VaultProof <span class="kw">from</span> <span class="str">'@vaultproof/sdk'</span>;
+<pre><span class="kw">import</span> VaultProof <span class="kw">from</span> <span class="str">'@vaultproof/sdk'</span>;
 
 <span class="kw">const</span> vault = <span class="kw">new</span> VaultProof(process.env.VAULTPROOF_API_KEY);
-<span class="kw">const</span> { apiKey } = <span class="kw">await</span> vault.retrieve(<span class="str">'your-stripe-key-id'</span>);
-<span class="kw">const</span> stripe = <span class="kw">new</span> Stripe(apiKey);</pre>
+
+<span class="cmt">// Proxy the call through VaultProof -- key never reaches your code</span>
+<span class="kw">const</span> result = <span class="kw">await</span> vault.proxy(<span class="str">'your-stripe-key-id'</span>, <span class="str">'/v1/charges'</span>, {
+  amount: <span class="num">2000</span>, currency: <span class="str">'usd'</span>
+});</pre>
                         </div>
                     </div>
                 </div>

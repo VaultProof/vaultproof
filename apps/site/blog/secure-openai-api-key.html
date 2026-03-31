@@ -234,22 +234,22 @@
                 <p>This works with <strong class="text-white">every OpenAI SDK</strong> &mdash; Node, Python, Go, Rust, curl. Any tool that lets you set a base URL works instantly.</p>
             </section>
 
-            <!-- Option 2: Env Injection -->
+            <!-- Option 2: CLI Proxy -->
             <section>
-                <h2 class="text-2xl font-bold text-white mb-4">Option 2: VaultProof Env Injection</h2>
-                <p class="mb-4">Some tools don't support custom base URLs. For those, VaultProof's CLI can inject secrets as environment variables at runtime &mdash; without ever writing them to disk.</p>
+                <h2 class="text-2xl font-bold text-white mb-4">Option 2: VaultProof CLI Proxy</h2>
+                <p class="mb-4">For quick API calls from the terminal, VaultProof's CLI can proxy requests through the server &mdash; your key is never exposed locally.</p>
 
                 <div class="code-block my-6">
                     <div class="code-header">terminal</div>
-                    <pre class="text-gray-300"><span class="cmt"># Key is injected into the process env, never written to .env</span>
-<span class="fn">vaultproof exec</span> -p openai -- node app.js
+                    <pre class="text-gray-300"><span class="cmt"># Proxy an API call through VaultProof (key never leaves the server)</span>
+<span class="fn">vaultproof proxy</span> -k &lt;keyId&gt; --path /v1/chat/completions \
+  -d <span class="str">'{"model":"gpt-4","messages":[{"role":"user","content":"Hello"}]}'</span>
 
-<span class="cmt"># Works with any command</span>
-<span class="fn">vaultproof exec</span> -p openai -- python main.py
-<span class="fn">vaultproof exec</span> -p anthropic -- cargo run</pre>
+<span class="cmt"># Or just change the base URL in your code/config</span>
+<span class="cmt"># https://api.vaultproof.dev/v1/openai/v1/chat/completions</span></pre>
                 </div>
 
-                <p>The key exists only in the spawned process's memory. It's not in your shell history, not on disk, and not visible to other processes.</p>
+                <p>The key is reconstructed on the server, injected into the upstream request, and never returned to your machine. Nothing to leak.</p>
             </section>
 
             <!-- Option 3: If you must use .env -->
