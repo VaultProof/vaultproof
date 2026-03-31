@@ -166,6 +166,45 @@ All endpoints use Zod schema validation:
 
 ---
 
+---
+
+## Hardening (2026-03-30)
+
+### Fixes Applied
+
+| Fix | File | Description |
+|-----|------|-------------|
+| ZK proof ordering | `routes/proxy.ts` | Proof verified BEFORE nullifier claim. Invalid proofs never touch the database. |
+| Developer key storage | `routes/developer-keys.ts` | Full key never written to DB. Masked version stored on creation; raw key returned in response only. |
+| Promo code race | `routes/promo.ts` | Count check + update wrapped in `prisma.$transaction()` to prevent exceeding redemption limit. |
+| Webhook timeout | `services/webhook.ts` | 5-second AbortController prevents indefinite hangs on slow webhook endpoints. |
+| App ID enumeration | `routes/proxy.ts` | Removed `appId` from 403 error message. Generic "App is not authorized" prevents enumeration. |
+| Worker header forwarding | `packages/worker/src/index.ts` | Removed `x-admin-key` from forward allowlist (unused header, unnecessary surface). |
+| OAuth callback origin | MCP `oauth/callback.ts` | Explicit 403 for non-`https://vaultproof.dev` origins. CORS alone doesn't block server-to-server calls. |
+| OAuth callback rate limit | MCP `index.ts` | IP rate limiting applied to `/oauth/callback`. |
+| Duplicate auth code detection | MCP `oauth/token.ts` | `used_code:<hash>` tracking in KV. Second exchange revokes first session. |
+| Double token validation | MCP `transport-http.ts` | Pre-validated session passed from index.ts. One KV read per request, not two. |
+| Billing dedup cleanup | `routes/billing.ts` | Removed dead iterator loop in Set overflow cleanup. Added comment about restart limitation. |
+
+### Pentest Results
+
+| Endpoint | Result |
+|----------|--------|
+| `GET /admin/users` | 401 — auth enforced |
+| `GET /api/v1/keys/list` | 401 — auth enforced |
+| Path traversal `/../admin/users` | 404 — normalized |
+| All SDK routes | Require `vp_live_` key or HMAC signature |
+
+### Scanner Security
+
+The CLI scanner (`vaultproof scan`) and dashboard scanner detect 71 API key patterns with:
+- Shannon entropy filtering (rejects low-randomness false positives)
+- Live key verification (calls provider APIs to confirm active/revoked)
+- Git history scanning (finds keys in deleted commits)
+- No raw key values stored in database (masked only)
+
+---
+
 ## Recommendations
 
 ### Before Production
@@ -179,3 +218,6 @@ All endpoints use Zod schema validation:
 3. Add session refresh tokens (current 7-day expiry is acceptable for MVP)
 4. Add Playwright E2E tests for dashboard
 5. Add widget component tests (React Testing Library)
+6. Migrate Stripe webhook dedup from in-memory Set to database unique constraint
+7. Move CF Worker rate limiting to Cloudflare KV for cross-PoP consistency
+8. Add Cloudflare Access or IP allowlisting for `/admin/*` routes

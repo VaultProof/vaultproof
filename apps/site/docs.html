@@ -214,6 +214,7 @@
                 <a href="#sdk-reference" class="nav-link block text-sm text-gray-500 py-1.5 px-3 rounded-r">SDK Reference</a>
                 <a href="#connect-widget" class="nav-link block text-sm text-gray-500 py-1.5 px-3 rounded-r">Connect Widget</a>
                 <a href="#cli-reference" class="nav-link block text-sm text-gray-500 py-1.5 px-3 rounded-r">CLI Reference</a>
+                <a href="#scanner" class="nav-link block text-sm text-gray-500 py-1.5 px-3 rounded-r font-medium text-emerald-400/80">Scanner</a>
                 <a href="#dashboard" class="nav-link block text-sm text-gray-500 py-1.5 px-3 rounded-r">Dashboard</a>
                 <a href="#api-reference" class="nav-link block text-sm text-gray-500 py-1.5 px-3 rounded-r">API Reference</a>
 
@@ -1656,21 +1657,52 @@ $ vaultproof l</pre>
 
                         <div class="endpoint-card">
                             <div class="flex items-baseline gap-3 mb-2">
-                                <code class="font-mono text-sm text-white font-semibold">vaultproof migrate</code>
+                                <code class="font-mono text-sm text-white font-semibold">vaultproof scan</code>
                             </div>
-                            <p class="text-gray-500 text-sm mb-2">Scan your <code class="font-mono text-xs text-vp-accent">.env</code> file, store secrets in VaultProof, and print a ready-to-use <code class="font-mono text-xs text-vp-accent">lib/vault.ts</code> helper. Does not modify any files.</p>
+                            <p class="text-gray-500 text-sm mb-2">Scan your project for exposed API keys. Checks <code class="font-mono text-xs text-vp-accent">.env</code> files, source code, config files, and CI configs. Detects 71 provider key patterns with entropy filtering. Does not modify any files.</p>
                             <div class="bg-vp-surface border border-vp-border rounded-xl overflow-hidden mt-3">
                                 <table class="doc-table">
                                     <thead><tr><th>Flag</th><th>Description</th></tr></thead>
                                     <tbody>
-                                        <tr><td><code class="font-mono text-xs text-vp-accent">-f, --file &lt;path&gt;</code></td><td>Path to .env file (default: <code class="font-mono text-xs">.env</code>)</td></tr>
+                                        <tr><td><code class="font-mono text-xs text-vp-accent">--verify</code></td><td>Call provider APIs to check if found keys are still active</td></tr>
+                                        <tr><td><code class="font-mono text-xs text-vp-accent">--git-history</code></td><td>Also scan git commit history for deleted keys</td></tr>
+                                        <tr><td><code class="font-mono text-xs text-vp-accent">--output &lt;format&gt;</code></td><td>Output format: <code class="font-mono text-xs">terminal</code> (default) or <code class="font-mono text-xs">json</code></td></tr>
+                                        <tr><td><code class="font-mono text-xs text-vp-accent">-f, --file &lt;path&gt;</code></td><td>Path to primary .env file (default: <code class="font-mono text-xs">.env</code>)</td></tr>
                                     </tbody>
                                 </table>
                             </div>
                             <div class="code-block mt-3">
                                 <div class="code-header">examples</div>
-<pre class="text-gray-300">$ vaultproof migrate
-$ vaultproof migrate -f .env.production</pre>
+<pre class="text-gray-300">$ vaultproof scan                     <span class="cmt"># scan current project</span>
+$ vaultproof scan --verify            <span class="cmt"># also check if keys are still active</span>
+$ vaultproof scan --git-history       <span class="cmt"># include deleted commits</span>
+$ vaultproof scan --output json       <span class="cmt"># JSON for CI/CD pipelines</span></pre>
+                            </div>
+                        </div>
+
+                        <div class="endpoint-card">
+                            <div class="flex items-baseline gap-3 mb-2">
+                                <code class="font-mono text-sm text-white font-semibold">vaultproof migrate</code>
+                                <span class="text-xs font-medium text-yellow-400 bg-yellow-400/10 px-2 py-0.5 rounded-full">Pro</span>
+                            </div>
+                            <p class="text-gray-500 text-sm mb-2">Scan, store, and rewrite. Finds all API keys in your project, stores them in VaultProof (Shamir-split), and rewrites your <code class="font-mono text-xs text-vp-accent">.env</code> files and source code. Interactive — asks before each change. Creates a backup in <code class="font-mono text-xs text-vp-accent">.vaultproof/backup/</code>.</p>
+                            <div class="bg-vp-surface border border-vp-border rounded-xl overflow-hidden mt-3">
+                                <table class="doc-table">
+                                    <thead><tr><th>Flag</th><th>Description</th></tr></thead>
+                                    <tbody>
+                                        <tr><td><code class="font-mono text-xs text-vp-accent">--scan-only</code></td><td>Scan without storing or rewriting (same as <code class="font-mono text-xs">vaultproof scan</code>)</td></tr>
+                                        <tr><td><code class="font-mono text-xs text-vp-accent">--verify</code></td><td>Verify keys are active by calling provider APIs</td></tr>
+                                        <tr><td><code class="font-mono text-xs text-vp-accent">--git-history</code></td><td>Also scan git commit history for deleted keys</td></tr>
+                                        <tr><td><code class="font-mono text-xs text-vp-accent">--revert [timestamp]</code></td><td>Restore files from backup (latest or specific)</td></tr>
+                                        <tr><td><code class="font-mono text-xs text-vp-accent">-f, --file &lt;path&gt;</code></td><td>Path to primary .env file (default: <code class="font-mono text-xs">.env</code>)</td></tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                            <div class="code-block mt-3">
+                                <div class="code-header">examples</div>
+<pre class="text-gray-300">$ vaultproof migrate                  <span class="cmt"># interactive scan + store + rewrite</span>
+$ vaultproof migrate --verify         <span class="cmt"># skip revoked keys automatically</span>
+$ vaultproof migrate --revert         <span class="cmt"># undo all changes from last migrate</span></pre>
                             </div>
                         </div>
 
@@ -2941,6 +2973,80 @@ Authorization: Bearer &lt;jwt_token&gt;
                                 </tr>
                             </tbody>
                         </table>
+                    </div>
+                </div>
+            </section>
+
+
+            <!-- ============================================================ -->
+            <!-- SECTION: SCANNER -->
+            <!-- ============================================================ -->
+
+            <section id="scanner" class="mb-20">
+                <h2 class="text-3xl font-bold text-white mb-2">Scanner</h2>
+                <p class="text-gray-500 mb-8">Find exposed API keys in your projects. Available as a CLI command and a dashboard feature.</p>
+
+                <div class="space-y-8">
+                    <div>
+                        <h3 class="text-lg font-semibold text-white mb-4">CLI Scanner</h3>
+                        <p class="text-gray-400 text-sm mb-4">Run <code class="font-mono text-xs text-vp-accent">vaultproof scan</code> from any project directory. It checks:</p>
+                        <ul class="text-gray-400 text-sm space-y-2 mb-4">
+                            <li class="flex items-start gap-2"><span class="text-emerald-400 mt-0.5">&#10003;</span> <code class="font-mono text-xs text-vp-accent">.env</code> files (all variants: .env.production, .env.staging, etc.)</li>
+                            <li class="flex items-start gap-2"><span class="text-emerald-400 mt-0.5">&#10003;</span> Source code (TypeScript, JavaScript, Python, Go, Ruby, Java, PHP, Rust, Swift, C#)</li>
+                            <li class="flex items-start gap-2"><span class="text-emerald-400 mt-0.5">&#10003;</span> Config files (docker-compose.yml, vercel.json, railway.json, fly.toml, Dockerfile)</li>
+                            <li class="flex items-start gap-2"><span class="text-emerald-400 mt-0.5">&#10003;</span> CI configs (.github/workflows/*.yml, .gitlab-ci.yml, .circleci/config.yml)</li>
+                            <li class="flex items-start gap-2"><span class="text-emerald-400 mt-0.5">&#10003;</span> Git history (deleted commits where keys were removed but still visible)</li>
+                        </ul>
+                    </div>
+
+                    <div>
+                        <h3 class="text-lg font-semibold text-white mb-4">Detection</h3>
+                        <p class="text-gray-400 text-sm mb-4">71 known key patterns covering:</p>
+                        <div class="grid grid-cols-2 md:grid-cols-3 gap-2 text-sm text-gray-400 mb-4">
+                            <span>OpenAI, Anthropic, Groq</span>
+                            <span>Stripe (7 prefix types)</span>
+                            <span>AWS, Google, Firebase</span>
+                            <span>Supabase, Neon, Upstash</span>
+                            <span>GitHub, GitLab, npm</span>
+                            <span>Slack, Discord, Telegram</span>
+                            <span>SendGrid, Resend, Brevo</span>
+                            <span>Datadog, PostHog, Sentry</span>
+                            <span>Contentful, Fauna, Apollo</span>
+                        </div>
+                        <p class="text-gray-500 text-sm">Unknown keys are caught by Shannon entropy filtering — high-randomness values in <code class="font-mono text-xs text-vp-accent">_KEY</code>, <code class="font-mono text-xs text-vp-accent">_SECRET</code>, or <code class="font-mono text-xs text-vp-accent">_TOKEN</code> env vars are flagged even without a known prefix.</p>
+                    </div>
+
+                    <div>
+                        <h3 class="text-lg font-semibold text-white mb-4">Live Verification</h3>
+                        <p class="text-gray-400 text-sm mb-4">With <code class="font-mono text-xs text-vp-accent">--verify</code>, the scanner calls each provider's API to check if a found key is still active:</p>
+                        <ul class="text-gray-400 text-sm space-y-1">
+                            <li><span class="text-emerald-400">&#10003; active</span> — key works, rotate it immediately</li>
+                            <li><span class="text-red-400">&#10007; revoked</span> — key is dead, safe to ignore</li>
+                            <li><span class="text-gray-500">? unknown</span> — provider doesn't have a verification endpoint</li>
+                        </ul>
+                    </div>
+
+                    <div>
+                        <h3 class="text-lg font-semibold text-white mb-4">Dashboard Scanner</h3>
+                        <p class="text-gray-400 text-sm mb-4">Connect your GitHub account at <a href="https://vaultproof.dev/app/scanner" class="text-vp-accent hover:underline">vaultproof.dev/app/scanner</a> to scan your repos remotely. Pro plan only.</p>
+                        <ul class="text-gray-400 text-sm space-y-2">
+                            <li class="flex items-start gap-2"><span class="text-emerald-400 mt-0.5">&#10003;</span> Scans via GitHub API (no cloning, no code leaves GitHub)</li>
+                            <li class="flex items-start gap-2"><span class="text-emerald-400 mt-0.5">&#10003;</span> Scan history and findings saved in your dashboard</li>
+                            <li class="flex items-start gap-2"><span class="text-emerald-400 mt-0.5">&#10003;</span> One-click PR creation to remove exposed keys</li>
+                            <li class="flex items-start gap-2"><span class="text-emerald-400 mt-0.5">&#10003;</span> Git history warnings with rotation links per provider</li>
+                        </ul>
+                    </div>
+
+                    <div>
+                        <h3 class="text-lg font-semibold text-white mb-4">.vaultproofignore</h3>
+                        <p class="text-gray-400 text-sm mb-4">Create a <code class="font-mono text-xs text-vp-accent">.vaultproofignore</code> file to suppress known false positives:</p>
+                        <div class="code-block">
+                            <div class="code-header">.vaultproofignore</div>
+<pre class="text-gray-300"><span class="cmt"># Skip test fixtures</span>
+EXAMPLE_API_KEY
+test/fixtures/*
+*.test.ts</pre>
+                        </div>
                     </div>
                 </div>
             </section>
