@@ -71,6 +71,38 @@
     .btn-glow:hover {
       box-shadow: 0 0 30px rgba(99,102,241,0.4);
     }
+
+    @keyframes fadeIn {
+      from { opacity: 0; }
+      to { opacity: 1; }
+    }
+    .anim-fade-up {
+      opacity: 0;
+      animation: fadeInUp 0.4s ease forwards;
+    }
+    @keyframes pulse-dot {
+      0%, 100% { opacity: 0.3; }
+      50% { opacity: 1; }
+    }
+    .pulse-dot {
+      animation: pulse-dot 1.5s ease-in-out infinite;
+    }
+    .step-pending .step-icon { color: #6b7280; }
+    .step-active .step-icon { color: #6366f1; }
+    .step-done .step-icon { color: #22c55e; }
+    .step-done .step-label { color: #d1d5db; }
+    .step-active .step-label { color: #e5e7eb; }
+    .step-pending .step-label { color: #6b7280; }
+
+    .toggle-password {
+      cursor: pointer;
+      user-select: none;
+    }
+
+    .env-checkbox:checked + label {
+      text-decoration: line-through;
+      opacity: 0.6;
+    }
   </style>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
@@ -317,13 +349,53 @@
             </div>
           </div>
 
-          <!-- Scanning spinner -->
+          <!-- Scanning spinner (legacy fallback) -->
           <div id="scanSpinner" class="hidden text-center py-12">
             <svg class="w-8 h-8 text-brand spinner mx-auto mb-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
             </svg>
             <p class="text-sm text-gray-400">Scanning repository for exposed keys...</p>
             <p class="text-xs text-gray-500 mt-1">This may take 10-30 seconds</p>
+          </div>
+
+          <!-- Multi-step scan progress -->
+          <div id="scanProgress" class="hidden">
+            <div class="bg-card border border-border rounded-2xl p-6 mb-6 anim-fade-up">
+              <h3 class="text-sm font-semibold text-white mb-4">Scanning repository...</h3>
+              <div class="space-y-3" id="scanSteps">
+                <div class="flex items-center gap-3 step-pending" id="scanStep-env">
+                  <span class="step-icon w-5 h-5 flex items-center justify-center flex-shrink-0">
+                    <svg class="w-4 h-4 text-gray-600" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/></svg>
+                  </span>
+                  <span class="step-label text-sm">Scanning .env files...</span>
+                  <span class="step-result text-xs text-gray-500 ml-auto"></span>
+                </div>
+                <div class="flex items-center gap-3 step-pending" id="scanStep-source">
+                  <span class="step-icon w-5 h-5 flex items-center justify-center flex-shrink-0">
+                    <svg class="w-4 h-4 text-gray-600" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/></svg>
+                  </span>
+                  <span class="step-label text-sm">Scanning source code...</span>
+                  <span class="step-result text-xs text-gray-500 ml-auto"></span>
+                </div>
+                <div class="flex items-center gap-3 step-pending" id="scanStep-git">
+                  <span class="step-icon w-5 h-5 flex items-center justify-center flex-shrink-0">
+                    <svg class="w-4 h-4 text-gray-600" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/></svg>
+                  </span>
+                  <span class="step-label text-sm">Checking git history...</span>
+                  <span class="step-result text-xs text-gray-500 ml-auto"></span>
+                </div>
+                <div class="flex items-center gap-3 step-pending" id="scanStep-sdk">
+                  <span class="step-icon w-5 h-5 flex items-center justify-center flex-shrink-0">
+                    <svg class="w-4 h-4 text-gray-600" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/></svg>
+                  </span>
+                  <span class="step-label text-sm">Detecting SDK patterns...</span>
+                  <span class="step-result text-xs text-gray-500 ml-auto"></span>
+                </div>
+              </div>
+              <div id="scanLiveCounter" class="mt-4 pt-4 border-t border-border text-xs text-gray-500">
+                Found: <span id="scanCountKeys" class="text-white font-medium">0</span> keys, <span id="scanCountSdk" class="text-white font-medium">0</span> SDK inits, <span id="scanCountHttp" class="text-white font-medium">0</span> HTTP calls
+              </div>
+            </div>
           </div>
 
           <!-- Findings Table -->
@@ -383,7 +455,7 @@
               </div>
             </div>
 
-            <!-- Create PR button -->
+            <!-- Create PR button (legacy) -->
             <div id="prActions" class="flex items-center gap-3">
               <button onclick="openPrModal()" id="createPrBtn" class="inline-flex items-center gap-2 px-5 py-2.5 bg-brand hover:bg-brand-hover text-white rounded-xl text-sm font-medium transition btn-glow disabled:opacity-50 disabled:cursor-not-allowed" disabled>
                 <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/></svg>
@@ -392,6 +464,151 @@
               <button onclick="showRepoList()" class="text-sm text-gray-400 hover:text-white transition">Back to repos</button>
             </div>
           </div>
+
+          <!-- Migration Results View -->
+          <div id="migrationResults" class="hidden space-y-6">
+
+            <!-- API Keys Found Section -->
+            <div id="migrationKeysSection" class="anim-fade-up">
+              <div class="flex items-center gap-2 mb-3">
+                <svg class="w-5 h-5 text-red-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z"/>
+                </svg>
+                <h3 class="text-lg font-semibold text-white">API Keys Found</h3>
+                <span id="migrationKeysCount" class="text-xs text-gray-500 ml-1"></span>
+              </div>
+              <div id="migrationKeysCards" class="space-y-3"></div>
+            </div>
+
+            <!-- Code Changes Needed Section -->
+            <div id="migrationChangesSection" class="hidden anim-fade-up" style="animation-delay:0.1s">
+              <div class="flex items-center gap-2 mb-3">
+                <svg class="w-5 h-5 text-brand" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4"/>
+                </svg>
+                <h3 class="text-lg font-semibold text-white">Code Changes Needed</h3>
+                <span id="migrationChangesCount" class="text-xs text-gray-500 ml-1"></span>
+              </div>
+              <div id="migrationChangesCards" class="space-y-3"></div>
+            </div>
+
+            <!-- Git History Warning -->
+            <div id="migrationGitWarning" class="hidden anim-fade-up" style="animation-delay:0.15s">
+              <div class="bg-yellow-900/20 border border-yellow-700/30 rounded-xl px-4 py-3 flex items-start gap-3">
+                <svg class="w-5 h-5 text-yellow-400 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
+                </svg>
+                <div>
+                  <p class="text-sm text-yellow-200 font-medium">Keys also found in git history</p>
+                  <p class="text-xs text-yellow-300/70 mt-1">Even after migration, keys in git history remain visible. Rotate them at the provider dashboard after merging.</p>
+                </div>
+              </div>
+            </div>
+
+            <!-- Migrate CTA -->
+            <div class="anim-fade-up" style="animation-delay:0.2s">
+              <button onclick="startMigration()" id="migrateBtn" class="w-full py-4 bg-brand hover:bg-brand-hover text-white rounded-xl text-base font-semibold transition btn-glow disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/>
+                </svg>
+                Migrate to VaultProof
+              </button>
+              <p class="text-xs text-gray-500 text-center mt-2">Selected keys will be securely stored. A PR will be created with all code changes.</p>
+            </div>
+          </div>
+
+          <!-- Migration Progress -->
+          <div id="migrationProgress" class="hidden">
+            <div class="bg-card border border-border rounded-2xl p-6 anim-fade-up">
+              <h3 class="text-sm font-semibold text-white mb-4">Migrating to VaultProof...</h3>
+              <div class="space-y-3" id="migrationSteps">
+                <div class="flex items-center gap-3 step-pending" id="migrateStep-store">
+                  <span class="step-icon w-5 h-5 flex items-center justify-center flex-shrink-0">
+                    <svg class="w-4 h-4 text-gray-600" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/></svg>
+                  </span>
+                  <span class="step-label text-sm">Storing API keys securely...</span>
+                  <span class="step-result text-xs text-gray-500 ml-auto"></span>
+                </div>
+                <div class="flex items-center gap-3 step-pending" id="migrateStep-devkey">
+                  <span class="step-icon w-5 h-5 flex items-center justify-center flex-shrink-0">
+                    <svg class="w-4 h-4 text-gray-600" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/></svg>
+                  </span>
+                  <span class="step-label text-sm">Creating developer key...</span>
+                  <span class="step-result text-xs text-gray-500 ml-auto"></span>
+                </div>
+                <div class="flex items-center gap-3 step-pending" id="migrateStep-code">
+                  <span class="step-icon w-5 h-5 flex items-center justify-center flex-shrink-0">
+                    <svg class="w-4 h-4 text-gray-600" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/></svg>
+                  </span>
+                  <span class="step-label text-sm">Generating code changes...</span>
+                  <span class="step-result text-xs text-gray-500 ml-auto"></span>
+                </div>
+                <div class="flex items-center gap-3 step-pending" id="migrateStep-pr">
+                  <span class="step-icon w-5 h-5 flex items-center justify-center flex-shrink-0">
+                    <svg class="w-4 h-4 text-gray-600" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/></svg>
+                  </span>
+                  <span class="step-label text-sm">Creating pull request...</span>
+                  <span class="step-result text-xs text-gray-500 ml-auto"></span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Env Var Checklist (post-migration) -->
+          <div id="envChecklist" class="hidden space-y-6 anim-fade-up">
+            <!-- Success banner -->
+            <div class="bg-green-900/20 border border-green-700/30 rounded-2xl p-6 text-center">
+              <div class="w-14 h-14 rounded-full bg-green-500/10 border border-green-500/20 flex items-center justify-center mx-auto mb-3">
+                <svg class="w-7 h-7 text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
+              </div>
+              <h3 class="text-lg font-semibold text-white mb-1">Migration Complete</h3>
+              <p class="text-sm text-gray-400">Your keys are stored securely. Now update your environment variables before merging.</p>
+            </div>
+
+            <!-- Update env vars -->
+            <div class="bg-card border border-border rounded-2xl p-6">
+              <h3 class="text-base font-semibold text-white mb-1">Update your environment variables</h3>
+              <p class="text-sm text-gray-400 mb-5">Before you merge the PR, update these in your hosting platform.</p>
+
+              <!-- Remove these -->
+              <div id="envRemoveSection" class="mb-5">
+                <p class="text-xs text-gray-500 uppercase tracking-wider font-medium mb-2">Remove these</p>
+                <div id="envRemoveList" class="space-y-2"></div>
+              </div>
+
+              <!-- Add this -->
+              <div id="envAddSection" class="mb-5">
+                <p class="text-xs text-gray-500 uppercase tracking-wider font-medium mb-2">Add this</p>
+                <div id="envAddList" class="space-y-2"></div>
+              </div>
+
+              <!-- Keep these -->
+              <div id="envKeepSection" class="hidden mb-5">
+                <p class="text-xs text-gray-500 uppercase tracking-wider font-medium mb-2">Keep these (not affected)</p>
+                <div id="envKeepList" class="space-y-2"></div>
+              </div>
+            </div>
+
+            <!-- Platform instructions -->
+            <div id="platformInstructions" class="bg-card border border-border rounded-2xl p-6 hidden">
+              <h3 class="text-base font-semibold text-white mb-3">Where to update</h3>
+              <div id="platformList" class="space-y-3"></div>
+            </div>
+
+            <!-- Ready to merge button -->
+            <div>
+              <a id="mergePrLink" href="#" target="_blank" rel="noopener">
+                <button id="mergePrBtn" class="w-full py-4 bg-brand hover:bg-brand-hover text-white rounded-xl text-base font-semibold transition btn-glow disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2" disabled>
+                  <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"/>
+                  </svg>
+                  Ready to merge — Open PR
+                </button>
+              </a>
+              <button onclick="showRepoList()" class="w-full mt-2 py-2 text-sm text-gray-400 hover:text-white transition text-center">Back to repos</button>
+            </div>
+          </div>
+
         </div>
 
       </div>
@@ -538,6 +755,19 @@
     let currentScanId = null;
     let currentScanData = null;
     let ghConnected = false;
+    let migrationResult = null;
+
+    const PLATFORM_INSTRUCTIONS = {
+      'Vercel': 'Go to Vercel \u2192 Your Project \u2192 Settings \u2192 Environment Variables',
+      'Railway': 'Go to Railway \u2192 Your Service \u2192 Variables',
+      'Fly.io': 'Run: fly secrets set VAULTPROOF_API_KEY=<your-key>',
+      'Render': 'Go to Render \u2192 Your Service \u2192 Environment',
+      'Netlify': 'Go to Netlify \u2192 Site settings \u2192 Environment variables',
+      'Docker': 'Add -e VAULTPROOF_API_KEY=<your-key> to your docker run command',
+      'Docker Compose': 'Add VAULTPROOF_API_KEY=<your-key> to your environment section',
+      'GitHub Actions': 'Go to GitHub \u2192 Your Repo \u2192 Settings \u2192 Secrets \u2192 Actions',
+      'Heroku': 'Run: heroku config:set VAULTPROOF_API_KEY=<your-key>',
+    };
 
     function showState(state) {
       document.getElementById('stateNotConnected').classList.toggle('hidden', state !== 'not-connected');
@@ -689,13 +919,84 @@
       });
     }
 
+    // --- Scan Step Animation Helpers ---
+    function setScanStepState(stepId, state, resultText) {
+      var el = document.getElementById(stepId);
+      if (!el) return;
+      el.className = el.className.replace(/step-(pending|active|done)/g, '').trim();
+      el.classList.add('step-' + state);
+      var iconEl = el.querySelector('.step-icon');
+      if (state === 'active') {
+        iconEl.innerHTML = '<svg class="w-4 h-4 text-brand spinner" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>';
+      } else if (state === 'done') {
+        iconEl.innerHTML = '<svg class="w-4 h-4 text-green-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>';
+      } else {
+        iconEl.innerHTML = '<svg class="w-4 h-4 text-gray-600" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/></svg>';
+      }
+      if (resultText) {
+        el.querySelector('.step-result').textContent = resultText;
+      }
+    }
+
+    function resetScanSteps() {
+      ['scanStep-env', 'scanStep-source', 'scanStep-git', 'scanStep-sdk'].forEach(function(id) {
+        setScanStepState(id, 'pending', '');
+      });
+      document.getElementById('scanCountKeys').textContent = '0';
+      document.getElementById('scanCountSdk').textContent = '0';
+      document.getElementById('scanCountHttp').textContent = '0';
+    }
+
+    async function animateScanSteps(scanStepCb) {
+      var steps = [
+        { id: 'scanStep-env', delay: 400 },
+        { id: 'scanStep-source', delay: 600 },
+        { id: 'scanStep-git', delay: 800 },
+        { id: 'scanStep-sdk', delay: 500 }
+      ];
+      for (var i = 0; i < steps.length; i++) {
+        setScanStepState(steps[i].id, 'active');
+        await new Promise(function(r) { setTimeout(r, steps[i].delay); });
+        // Check if results are already available after intermediate steps
+        if (scanStepCb) scanStepCb(i);
+        setScanStepState(steps[i].id, 'done');
+      }
+    }
+
+    function updateScanLiveCounter(findings) {
+      if (!findings) return;
+      var keys = findings.filter(function(f) { return f.type === 'key' || (!f.type && (f.maskedValue || f.masked_value)); }).length;
+      var sdk = findings.filter(function(f) { return f.type === 'sdk-init'; }).length;
+      var http = findings.filter(function(f) { return f.type === 'http-url'; }).length;
+      document.getElementById('scanCountKeys').textContent = keys;
+      document.getElementById('scanCountSdk').textContent = sdk;
+      document.getElementById('scanCountHttp').textContent = http;
+    }
+
     // --- Start Scan ---
     async function startScan(repoFullName) {
       showState('scan-results');
       document.getElementById('scanResultRepo').textContent = repoFullName;
-      document.getElementById('scanSpinner').classList.remove('hidden');
+      document.getElementById('scanSpinner').classList.add('hidden');
       document.getElementById('findingsSection').classList.add('hidden');
+      document.getElementById('migrationResults').classList.add('hidden');
+      document.getElementById('migrationProgress').classList.add('hidden');
+      document.getElementById('envChecklist').classList.add('hidden');
       document.getElementById('summaryCards').style.opacity = '0.3';
+
+      // Show multi-step progress
+      document.getElementById('scanProgress').classList.remove('hidden');
+      resetScanSteps();
+
+      // Start animation in parallel with the API call
+      var scanComplete = false;
+      var scanData = null;
+
+      var animPromise = animateScanSteps(function(stepIdx) {
+        if (scanData && scanData.findings) {
+          updateScanLiveCounter(scanData.findings);
+        }
+      });
 
       var res = await apiFetch(API + '/scanner/scan', {
         method: 'POST',
@@ -703,7 +1004,7 @@
       });
 
       if (!res) {
-        document.getElementById('scanSpinner').classList.add('hidden');
+        document.getElementById('scanProgress').classList.add('hidden');
         document.getElementById('summaryCards').style.opacity = '1';
         showToast('Failed to start scan');
         return;
@@ -711,7 +1012,7 @@
 
       var data = await res.json();
       if (!res.ok) {
-        document.getElementById('scanSpinner').classList.add('hidden');
+        document.getElementById('scanProgress').classList.add('hidden');
         document.getElementById('summaryCards').style.opacity = '1';
         showToast(data.error || 'Scan failed');
         return;
@@ -719,8 +1020,13 @@
 
       currentScanId = data.scanId || data.id;
       if (data.status === 'completed' || data.findings) {
+        scanData = data;
+        updateScanLiveCounter(data.findings || []);
+        await animPromise;
+        document.getElementById('scanProgress').classList.add('hidden');
         renderScanResults(data);
       } else {
+        await animPromise;
         pollScanStatus(currentScanId);
       }
     }
@@ -732,6 +1038,7 @@
         attempts++;
         if (attempts > maxAttempts) {
           clearInterval(interval);
+          document.getElementById('scanProgress').classList.add('hidden');
           document.getElementById('scanSpinner').classList.add('hidden');
           showToast('Scan timed out. Please try again.');
           return;
@@ -741,9 +1048,12 @@
         var data = await res.json();
         if (data.status === 'completed' || data.findings) {
           clearInterval(interval);
+          updateScanLiveCounter(data.findings || []);
+          document.getElementById('scanProgress').classList.add('hidden');
           renderScanResults(data);
         } else if (data.status === 'failed') {
           clearInterval(interval);
+          document.getElementById('scanProgress').classList.add('hidden');
           document.getElementById('scanSpinner').classList.add('hidden');
           showToast(data.error || 'Scan failed');
         }
@@ -753,7 +1063,11 @@
     async function viewScanResults(scanId) {
       showState('scan-results');
       document.getElementById('scanSpinner').classList.remove('hidden');
+      document.getElementById('scanProgress').classList.add('hidden');
       document.getElementById('findingsSection').classList.add('hidden');
+      document.getElementById('migrationResults').classList.add('hidden');
+      document.getElementById('migrationProgress').classList.add('hidden');
+      document.getElementById('envChecklist').classList.add('hidden');
       document.getElementById('summaryCards').style.opacity = '0.3';
 
       var res = await apiFetch(API + '/scanner/scans/' + scanId);
@@ -771,12 +1085,17 @@
     function renderScanResults(data) {
       currentScanData = data;
       document.getElementById('scanSpinner').classList.add('hidden');
+      document.getElementById('scanProgress').classList.add('hidden');
       document.getElementById('summaryCards').style.opacity = '1';
-      document.getElementById('findingsSection').classList.remove('hidden');
 
       var findings = data.findings || [];
-      var codeFindings = findings.filter(function(f) { return f.source !== 'git_history'; });
+      var keyFindings = findings.filter(function(f) { return f.type === 'key' || (!f.type && f.source !== 'git_history' && (f.maskedValue || f.masked_value || f.envName || f.env_name || f.key_name || f.keyName)); });
+      var sdkFindings = findings.filter(function(f) { return f.type === 'sdk-init'; });
+      var httpFindings = findings.filter(function(f) { return f.type === 'http-url'; });
+      var envRefFindings = findings.filter(function(f) { return f.type === 'env-ref'; });
+      var codeChangeFindings = sdkFindings.concat(httpFindings).concat(envRefFindings);
       var historyFindings = findings.filter(function(f) { return f.source === 'git_history'; });
+      var codeFindings = findings.filter(function(f) { return f.source !== 'git_history'; });
 
       var active = findings.filter(function(f) { return f.status === 'active'; }).length;
       var revoked = findings.filter(function(f) { return f.status === 'revoked'; }).length;
@@ -787,7 +1106,165 @@
       document.getElementById('sumRevoked').textContent = revoked;
       document.getElementById('sumUnknown').textContent = unknown;
 
-      // Code findings
+      // Decide which view: migration wizard (if code-level findings) or legacy table
+      var hasMigrationFindings = keyFindings.length > 0 && codeChangeFindings.length > 0;
+
+      if (hasMigrationFindings) {
+        // Show the migration results view
+        document.getElementById('findingsSection').classList.add('hidden');
+        document.getElementById('migrationResults').classList.remove('hidden');
+        renderMigrationResults(keyFindings, codeChangeFindings, historyFindings, data.platforms || []);
+      } else {
+        // Fallback: show legacy table view
+        document.getElementById('findingsSection').classList.remove('hidden');
+        document.getElementById('migrationResults').classList.add('hidden');
+        renderLegacyFindings(codeFindings, historyFindings);
+      }
+    }
+
+    // --- Migration Results View ---
+    function renderMigrationResults(keyFindings, codeChangeFindings, historyFindings, platforms) {
+      // Render key cards
+      var keysContainer = document.getElementById('migrationKeysCards');
+      document.getElementById('migrationKeysCount').textContent = keyFindings.length + ' found';
+
+      keysContainer.innerHTML = keyFindings.map(function(f, i) {
+        var pInfo = f.providerInfo || f.provider_info;
+        var pName = pInfo ? pInfo.name : (f.provider || 'Unknown');
+        var masked = f.maskedValue || f.masked_value || '****';
+        var envName = f.envName || f.env_name || f.key_name || f.keyName || '';
+        var filePath = f.file || '';
+
+        return '<div class="bg-card border border-border rounded-2xl p-4 anim-fade-up" style="animation-delay:' + (i * 0.05) + 's">' +
+          '<div class="flex items-start justify-between gap-3 mb-3">' +
+            '<div class="flex items-center gap-2 min-w-0">' +
+              '<label class="flex items-center gap-2 cursor-pointer">' +
+                '<input type="checkbox" class="migrate-key-cb rounded border-gray-600" data-key-idx="' + i + '" checked onchange="updateMigrateButton()">' +
+                '<span class="px-2 py-0.5 bg-brand/10 text-brand text-xs font-medium rounded-full flex-shrink-0">' + escapeHtml(pName) + '</span>' +
+              '</label>' +
+              '<span class="text-xs text-gray-500 truncate">' + escapeHtml(filePath) + '</span>' +
+            '</div>' +
+            '<span class="text-xs text-gray-500 flex-shrink-0">Store in VaultProof</span>' +
+          '</div>' +
+          '<div class="flex items-center gap-2 mb-3">' +
+            '<span class="text-xs font-mono text-white bg-surface px-2 py-1 rounded-lg">' + escapeHtml(envName) + '</span>' +
+            '<span class="text-xs font-mono text-gray-500">' + escapeHtml(masked) + '</span>' +
+          '</div>' +
+          '<div class="mt-2">' +
+            '<label class="text-xs text-gray-400 block mb-1">Paste your actual key (the scan only found a masked value):</label>' +
+            '<div class="relative">' +
+              '<input type="password" class="raw-key-input w-full bg-surface border border-border rounded-xl px-3 py-2 text-xs font-mono text-gray-200 placeholder-gray-600 focus:outline-none focus:border-brand/50 focus:ring-1 focus:ring-brand/30 transition pr-10" data-key-idx="' + i + '" placeholder="sk-..." />' +
+              '<button type="button" class="toggle-password absolute right-2 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-300 p-1" onclick="togglePasswordVisibility(this)">' +
+                '<svg class="w-4 h-4 eye-open" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/><path stroke-linecap="round" stroke-linejoin="round" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/></svg>' +
+                '<svg class="w-4 h-4 eye-closed hidden" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l3.59 3.59m0 0A9.953 9.953 0 0112 5c4.478 0 8.268 2.943 9.543 7a10.025 10.025 0 01-4.132 5.411m0 0L21 21"/></svg>' +
+              '</button>' +
+            '</div>' +
+          '</div>' +
+        '</div>';
+      }).join('');
+
+      // Render code change cards grouped by file
+      var changesContainer = document.getElementById('migrationChangesCards');
+      var changesSection = document.getElementById('migrationChangesSection');
+
+      if (codeChangeFindings.length > 0) {
+        changesSection.classList.remove('hidden');
+        document.getElementById('migrationChangesCount').textContent = codeChangeFindings.length + ' changes';
+
+        // Group by file
+        var byFile = {};
+        codeChangeFindings.forEach(function(f, i) {
+          var file = f.file || 'unknown';
+          if (!byFile[file]) byFile[file] = [];
+          byFile[file].push({ finding: f, index: i });
+        });
+
+        var html = '';
+        var fileKeys = Object.keys(byFile);
+        fileKeys.forEach(function(file, fIdx) {
+          var group = byFile[file];
+          html += '<div class="bg-card border border-border rounded-2xl overflow-hidden anim-fade-up" style="animation-delay:' + (fIdx * 0.05 + 0.1) + 's">' +
+            '<div class="px-4 py-3 border-b border-border flex items-center gap-2">' +
+              '<svg class="w-4 h-4 text-gray-500 flex-shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>' +
+              '<span class="text-xs font-mono text-gray-300">' + escapeHtml(file) + '</span>' +
+              '<span class="text-xs text-gray-600 ml-auto">' + group.length + ' change' + (group.length !== 1 ? 's' : '') + '</span>' +
+            '</div>' +
+            '<div class="divide-y divide-border">';
+
+          group.forEach(function(item) {
+            var f = item.finding;
+            var typeLabel = f.type === 'sdk-init' ? 'SDK Init' : f.type === 'http-url' ? 'HTTP URL' : 'Env Ref';
+            var typeBg = f.type === 'sdk-init' ? 'bg-purple-500/10 text-purple-400' : f.type === 'http-url' ? 'bg-cyan-500/10 text-cyan-400' : 'bg-yellow-500/10 text-yellow-400';
+            var before = f.before || f.original || f.maskedValue || f.masked_value || '';
+            var after = f.after || f.replacement || 'vaultproof.get("' + (f.provider || 'KEY') + '")';
+            var line = f.line ? ':' + f.line : '';
+
+            html += '<div class="px-4 py-3">' +
+              '<div class="flex items-center gap-2 mb-2">' +
+                '<label class="flex items-center gap-2 cursor-pointer">' +
+                  '<input type="checkbox" class="migrate-change-cb rounded border-gray-600" data-change-idx="' + item.index + '" checked onchange="updateMigrateButton()">' +
+                  '<span class="px-2 py-0.5 ' + typeBg + ' text-xs font-medium rounded-full">' + typeLabel + '</span>' +
+                '</label>' +
+                '<span class="text-xs text-gray-500">line' + escapeHtml(line) + '</span>' +
+              '</div>' +
+              '<div class="grid grid-cols-1 md:grid-cols-2 gap-2 text-xs font-mono">' +
+                '<div class="bg-red-900/10 border border-red-900/20 rounded-lg px-3 py-2">' +
+                  '<span class="text-red-400/60 text-[10px] uppercase tracking-wider block mb-1">Before</span>' +
+                  '<span class="text-red-300 break-all">' + escapeHtml(before) + '</span>' +
+                '</div>' +
+                '<div class="bg-green-900/10 border border-green-900/20 rounded-lg px-3 py-2">' +
+                  '<span class="text-green-400/60 text-[10px] uppercase tracking-wider block mb-1">After</span>' +
+                  '<span class="text-green-300 break-all">' + escapeHtml(after) + '</span>' +
+                '</div>' +
+              '</div>' +
+            '</div>';
+          });
+
+          html += '</div></div>';
+        });
+
+        changesContainer.innerHTML = html;
+      } else {
+        changesSection.classList.add('hidden');
+      }
+
+      // Git history warning
+      var gitWarning = document.getElementById('migrationGitWarning');
+      if (historyFindings.length > 0) {
+        gitWarning.classList.remove('hidden');
+      } else {
+        gitWarning.classList.add('hidden');
+      }
+
+      updateMigrateButton();
+    }
+
+    function togglePasswordVisibility(btn) {
+      var input = btn.parentElement.querySelector('input');
+      var eyeOpen = btn.querySelector('.eye-open');
+      var eyeClosed = btn.querySelector('.eye-closed');
+      if (input.type === 'password') {
+        input.type = 'text';
+        eyeOpen.classList.add('hidden');
+        eyeClosed.classList.remove('hidden');
+      } else {
+        input.type = 'password';
+        eyeOpen.classList.remove('hidden');
+        eyeClosed.classList.add('hidden');
+      }
+    }
+
+    function updateMigrateButton() {
+      var keyChecked = document.querySelectorAll('.migrate-key-cb:checked').length;
+      var changeChecked = document.querySelectorAll('.migrate-change-cb:checked').length;
+      var btn = document.getElementById('migrateBtn');
+      btn.disabled = (keyChecked + changeChecked) === 0;
+    }
+
+    // --- Legacy findings table (fallback) ---
+    function renderLegacyFindings(codeFindings, historyFindings) {
+      document.getElementById('findingsSection').classList.remove('hidden');
+
       var tbody = document.getElementById('findingsBody');
       var table = document.getElementById('findingsTable');
       var emptyEl = document.getElementById('findingsEmpty');
@@ -813,7 +1290,7 @@
             detailRow = '<tr class="border-b border-border hidden" id="detail-' + i + '">' +
               '<td colspan="8" class="px-4 py-3 bg-[#0d0d14]">' +
                 '<div class="pl-8 space-y-2 text-xs">' +
-                  '<p class="text-white font-medium">' + escapeHtml(pInfo.name) + ' — ' + escapeHtml(pInfo.desc) + '</p>' +
+                  '<p class="text-white font-medium">' + escapeHtml(pInfo.name) + ' \u2014 ' + escapeHtml(pInfo.desc) + '</p>' +
                   '<p class="text-red-400">Risk: ' + escapeHtml(pInfo.risk) + '</p>' +
                   '<div class="text-gray-400"><p class="font-medium text-gray-300 mb-1">How to fix:</p><ol class="list-decimal pl-4 space-y-0.5">' +
                     pInfo.steps.map(function(s) { return '<li>' + escapeHtml(s) + '</li>'; }).join('') +
@@ -850,7 +1327,7 @@
         document.getElementById('gitHistoryBody').innerHTML = historyFindings.map(function(f) {
           var hInfo = f.providerInfo || f.provider_info;
           var hName = hInfo ? hInfo.name : (f.provider || 'Unknown');
-          var rotUrl = f.rotationUrl || f.rotation_url || ROTATION_URLS[f.provider];
+          var rotUrl = f.rotationUrl || f.rotation_url || '';
           return '<tr class="border-b border-border hover:bg-white/[0.02] transition">' +
             '<td class="px-4 py-3 text-white font-medium text-xs font-mono">' + escapeHtml(f.envName || f.env_name || f.key_name || f.keyName || '') + '</td>' +
             '<td class="px-4 py-3 text-gray-400 text-xs">' + escapeHtml(hName) + (hInfo ? '<br><span class="text-gray-600">' + escapeHtml(hInfo.desc) + '</span>' : '') + '</td>' +
@@ -957,8 +1434,289 @@
       }
     }
 
+    // --- Migration Flow ---
+    function setMigrateStepState(stepId, state, resultText) {
+      var el = document.getElementById(stepId);
+      if (!el) return;
+      el.className = el.className.replace(/step-(pending|active|done)/g, '').trim();
+      el.classList.add('step-' + state);
+      var iconEl = el.querySelector('.step-icon');
+      if (state === 'active') {
+        iconEl.innerHTML = '<svg class="w-4 h-4 text-brand spinner" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>';
+      } else if (state === 'done') {
+        iconEl.innerHTML = '<svg class="w-4 h-4 text-green-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>';
+      } else {
+        iconEl.innerHTML = '<svg class="w-4 h-4 text-gray-600" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/></svg>';
+      }
+      if (resultText != null) {
+        el.querySelector('.step-result').textContent = resultText;
+      }
+    }
+
+    function resetMigrateSteps() {
+      ['migrateStep-store', 'migrateStep-devkey', 'migrateStep-code', 'migrateStep-pr'].forEach(function(id) {
+        setMigrateStepState(id, 'pending', '');
+      });
+    }
+
+    async function startMigration() {
+      var findings = currentScanData.findings || [];
+      var keyFindings = findings.filter(function(f) { return f.type === 'key' || (!f.type && f.source !== 'git_history' && (f.maskedValue || f.masked_value || f.envName || f.env_name || f.key_name || f.keyName)); });
+      var sdkFindings = findings.filter(function(f) { return f.type === 'sdk-init'; });
+      var httpFindings = findings.filter(function(f) { return f.type === 'http-url'; });
+      var envRefFindings = findings.filter(function(f) { return f.type === 'env-ref'; });
+      var codeChangeFindings = sdkFindings.concat(httpFindings).concat(envRefFindings);
+
+      // Collect checked key findings + raw keys
+      var selectedKeys = [];
+      document.querySelectorAll('.migrate-key-cb:checked').forEach(function(cb) {
+        var idx = parseInt(cb.dataset.keyIdx);
+        var rawInput = document.querySelector('.raw-key-input[data-key-idx="' + idx + '"]');
+        var rawKey = rawInput ? rawInput.value.trim() : '';
+        var f = keyFindings[idx];
+        if (f) {
+          selectedKeys.push({
+            finding: f,
+            rawKey: rawKey,
+            action: 'store'
+          });
+        }
+      });
+
+      // Collect checked code changes
+      var selectedChanges = [];
+      document.querySelectorAll('.migrate-change-cb:checked').forEach(function(cb) {
+        var idx = parseInt(cb.dataset.changeIdx);
+        var f = codeChangeFindings[idx];
+        if (f) {
+          selectedChanges.push({
+            finding: f,
+            action: 'apply'
+          });
+        }
+      });
+
+      if (selectedKeys.length === 0 && selectedChanges.length === 0) {
+        showToast('Please select at least one item to migrate', 'warning');
+        return;
+      }
+
+      // Validate raw keys for selected key findings
+      var missingKeys = selectedKeys.filter(function(k) { return !k.rawKey; });
+      if (missingKeys.length > 0) {
+        showToast('Please paste the actual API key for all selected keys', 'warning');
+        return;
+      }
+
+      // Switch to migration progress view
+      document.getElementById('migrationResults').classList.add('hidden');
+      document.getElementById('migrationProgress').classList.remove('hidden');
+      resetMigrateSteps();
+
+      // Animate step 1: Storing keys
+      setMigrateStepState('migrateStep-store', 'active');
+
+      // Build request payload
+      var payload = {
+        findings: selectedKeys.map(function(k) {
+          return {
+            id: k.finding.id,
+            type: k.finding.type || 'key',
+            provider: k.finding.provider,
+            envName: k.finding.envName || k.finding.env_name || k.finding.key_name || k.finding.keyName,
+            action: 'store'
+          };
+        }).concat(selectedChanges.map(function(c) {
+          return {
+            id: c.finding.id,
+            type: c.finding.type,
+            file: c.finding.file,
+            line: c.finding.line,
+            action: 'apply'
+          };
+        })),
+        rawKeys: selectedKeys.reduce(function(acc, k) {
+          var name = k.finding.envName || k.finding.env_name || k.finding.key_name || k.finding.keyName;
+          if (name && k.rawKey) acc[name] = k.rawKey;
+          return acc;
+        }, {})
+      };
+
+      // Small delay to show animation
+      await new Promise(function(r) { setTimeout(r, 600); });
+      setMigrateStepState('migrateStep-store', 'done', selectedKeys.length + ' key' + (selectedKeys.length !== 1 ? 's' : '') + ' stored');
+
+      // Step 2: Creating developer key
+      setMigrateStepState('migrateStep-devkey', 'active');
+      await new Promise(function(r) { setTimeout(r, 400); });
+
+      // Make the actual API call
+      var res = await apiFetch(API + '/scanner/scans/' + currentScanId + '/migrate', {
+        method: 'POST',
+        body: JSON.stringify(payload)
+      });
+
+      if (!res) {
+        setMigrateStepState('migrateStep-devkey', 'pending');
+        document.getElementById('migrationProgress').classList.add('hidden');
+        document.getElementById('migrationResults').classList.remove('hidden');
+        showToast('Migration failed. Please try again.');
+        return;
+      }
+
+      var data = await res.json();
+      if (!res.ok) {
+        setMigrateStepState('migrateStep-devkey', 'pending');
+        document.getElementById('migrationProgress').classList.add('hidden');
+        document.getElementById('migrationResults').classList.remove('hidden');
+        showToast(data.error || 'Migration failed');
+        return;
+      }
+
+      migrationResult = data;
+      var devKey = data.devKey || data.dev_key || data.apiKey || data.api_key || '';
+      var devKeyShort = devKey ? devKey.substring(0, 15) + '...' : 'vp_live_xxx';
+
+      setMigrateStepState('migrateStep-devkey', 'done', devKeyShort + ' created');
+
+      // Step 3: Code changes
+      setMigrateStepState('migrateStep-code', 'active');
+      await new Promise(function(r) { setTimeout(r, 500); });
+      var filesChanged = data.filesChanged || data.files_changed || selectedChanges.length;
+      setMigrateStepState('migrateStep-code', 'done', filesChanged + ' file' + (filesChanged !== 1 ? 's' : '') + ' updated');
+
+      // Step 4: PR created
+      setMigrateStepState('migrateStep-pr', 'active');
+      await new Promise(function(r) { setTimeout(r, 400); });
+      var prUrl = data.prUrl || data.pr_url || '';
+      var prNumber = data.prNumber || data.pr_number || '';
+      setMigrateStepState('migrateStep-pr', 'done', prNumber ? 'PR #' + prNumber + ' created' : 'PR created');
+
+      // Transition to env checklist
+      await new Promise(function(r) { setTimeout(r, 800); });
+      document.getElementById('migrationProgress').classList.add('hidden');
+      showEnvChecklist(data, selectedKeys);
+    }
+
+    function showEnvChecklist(data, selectedKeys) {
+      document.getElementById('envChecklist').classList.remove('hidden');
+
+      var devKey = data.devKey || data.dev_key || data.apiKey || data.api_key || '';
+      var prUrl = data.prUrl || data.pr_url || '';
+      var platforms = currentScanData.platforms || data.platforms || [];
+
+      // Remove these
+      var removeList = document.getElementById('envRemoveList');
+      var envNamesToRemove = selectedKeys.map(function(k) {
+        return k.finding.envName || k.finding.env_name || k.finding.key_name || k.finding.keyName || '';
+      }).filter(function(n) { return n; });
+
+      if (envNamesToRemove.length > 0) {
+        document.getElementById('envRemoveSection').classList.remove('hidden');
+        removeList.innerHTML = envNamesToRemove.map(function(name, i) {
+          return '<div class="flex items-center gap-2">' +
+            '<input type="checkbox" id="envRemove-' + i + '" class="env-task-cb rounded border-gray-600" onchange="updateMergeButton()">' +
+            '<label for="envRemove-' + i + '" class="text-sm font-mono text-red-400 cursor-pointer">' + escapeHtml(name) + '</label>' +
+          '</div>';
+        }).join('');
+      } else {
+        document.getElementById('envRemoveSection').classList.add('hidden');
+      }
+
+      // Add this
+      var addList = document.getElementById('envAddList');
+      var devKeyDisplay = devKey || 'vp_live_xxx';
+      addList.innerHTML = '<div class="flex items-center gap-2">' +
+        '<input type="checkbox" id="envAdd-0" class="env-task-cb rounded border-gray-600" onchange="updateMergeButton()">' +
+        '<label for="envAdd-0" class="text-sm font-mono text-green-400 cursor-pointer">VAULTPROOF_API_KEY = ' + escapeHtml(devKeyDisplay) + '</label>' +
+        '<button onclick="copyToClipboard(\'' + escapeHtml(devKeyDisplay) + '\')" class="ml-2 px-2 py-1 bg-surface border border-border rounded-lg text-xs text-gray-400 hover:text-white hover:border-brand/30 transition flex items-center gap-1">' +
+          '<svg class="w-3 h-3" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"/></svg>' +
+          'Copy' +
+        '</button>' +
+      '</div>';
+
+      // Keep these (env refs not affected)
+      var findings = currentScanData.findings || [];
+      var envRefFindings = findings.filter(function(f) { return f.type === 'env-ref'; });
+      var keptEnvs = (data.keptEnvVars || data.kept_env_vars || []);
+      // If backend doesn't provide them, derive from findings that are env-refs not in remove list
+      if (!keptEnvs.length) {
+        keptEnvs = envRefFindings
+          .map(function(f) { return f.envName || f.env_name || ''; })
+          .filter(function(n) { return n && envNamesToRemove.indexOf(n) === -1; });
+        // Deduplicate
+        keptEnvs = keptEnvs.filter(function(v, i, a) { return a.indexOf(v) === i; });
+      }
+
+      var keepSection = document.getElementById('envKeepSection');
+      if (keptEnvs.length > 0) {
+        keepSection.classList.remove('hidden');
+        document.getElementById('envKeepList').innerHTML = keptEnvs.map(function(name) {
+          return '<div class="flex items-center gap-2">' +
+            '<span class="w-4 h-4 flex items-center justify-center text-gray-600">&bull;</span>' +
+            '<span class="text-sm font-mono text-gray-400">' + escapeHtml(name) + '</span>' +
+            '<span class="text-xs text-gray-600">— not affected</span>' +
+          '</div>';
+        }).join('');
+      } else {
+        keepSection.classList.add('hidden');
+      }
+
+      // Platform instructions
+      var platformSection = document.getElementById('platformInstructions');
+      if (platforms.length > 0) {
+        platformSection.classList.remove('hidden');
+        document.getElementById('platformList').innerHTML = platforms.map(function(p) {
+          var instruction = PLATFORM_INSTRUCTIONS[p] || 'Check your ' + p + ' dashboard for environment variable settings.';
+          // Replace placeholder with actual key
+          instruction = instruction.replace(/<your-key>/g, devKeyDisplay);
+          return '<div class="flex items-start gap-3 bg-surface border border-border rounded-xl px-4 py-3">' +
+            '<span class="px-2 py-0.5 bg-brand/10 text-brand text-xs font-medium rounded-full flex-shrink-0 mt-0.5">' + escapeHtml(p) + '</span>' +
+            '<span class="text-sm text-gray-400">' + escapeHtml(instruction) + '</span>' +
+          '</div>';
+        }).join('');
+      } else {
+        platformSection.classList.add('hidden');
+      }
+
+      // PR link
+      var prLink = document.getElementById('mergePrLink');
+      prLink.href = prUrl || '#';
+
+      updateMergeButton();
+    }
+
+    function updateMergeButton() {
+      var allTasks = document.querySelectorAll('.env-task-cb');
+      var checkedTasks = document.querySelectorAll('.env-task-cb:checked');
+      var btn = document.getElementById('mergePrBtn');
+      btn.disabled = allTasks.length > 0 && checkedTasks.length < allTasks.length;
+    }
+
+    function copyToClipboard(text) {
+      navigator.clipboard.writeText(text).then(function() {
+        showToast('Copied to clipboard', 'success');
+      }).catch(function() {
+        // Fallback
+        var ta = document.createElement('textarea');
+        ta.value = text;
+        ta.style.position = 'fixed';
+        ta.style.opacity = '0';
+        document.body.appendChild(ta);
+        ta.select();
+        document.execCommand('copy');
+        document.body.removeChild(ta);
+        showToast('Copied to clipboard', 'success');
+      });
+    }
+
     function showRepoList() {
       showState('repo-list');
+      // Reset migration views
+      document.getElementById('migrationResults').classList.add('hidden');
+      document.getElementById('migrationProgress').classList.add('hidden');
+      document.getElementById('envChecklist').classList.add('hidden');
+      document.getElementById('scanProgress').classList.add('hidden');
       loadScanHistory();
     }
 
