@@ -115,6 +115,7 @@
       <div class="tab" data-tab="users" onclick="switchTab('users')">Users</div>
       <div class="tab" data-tab="logs" onclick="switchTab('logs')">Logs</div>
       <div class="tab" data-tab="promo" onclick="switchTab('promo')">Promo</div>
+      <div class="tab" data-tab="tests" onclick="switchTab('tests')">Tests</div>
     </div>
 
     <!-- Overview tab -->
@@ -337,6 +338,69 @@
           <thead><tr><th>Email</th><th>Feedback</th><th>Date</th></tr></thead>
           <tbody id="promo-feedback-tbody"></tbody>
         </table>
+      </div>
+    </div>
+
+    <!-- Tests tab -->
+    <div id="tab-tests" class="hidden fade-in">
+      <!-- Settings -->
+      <div class="panel p-4 mb-6">
+        <div class="flex items-center justify-between">
+          <div>
+            <h3 class="text-sm font-semibold text-gray-400">Daily Test Schedule</h3>
+            <p class="text-xs text-gray-500 mt-1">Runs the full backend test suite automatically</p>
+          </div>
+          <div class="flex items-center gap-4">
+            <label class="flex items-center gap-2 text-sm text-gray-300">
+              <input type="checkbox" id="test-enabled" onchange="saveTestSettings()" class="accent-indigo-500 w-4 h-4" />
+              Enabled
+            </label>
+            <label class="flex items-center gap-2 text-sm text-gray-300">
+              Run at
+              <select id="test-cron-hour" onchange="saveTestSettings()" class="bg-[#111118] border border-[#1e1e2e] rounded-lg px-2 py-1 text-xs text-gray-300 outline-none">
+              </select>
+              UTC
+            </label>
+            <button class="btn btn-primary text-xs" onclick="triggerTestRun()">Run Now</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Stats -->
+      <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+        <div class="stat-card">
+          <div class="stat-value" id="test-last-status">-</div>
+          <div class="stat-label">Last Result</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-value" id="test-pass-rate">-</div>
+          <div class="stat-label">Pass Rate (30d)</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-value" id="test-total-runs">-</div>
+          <div class="stat-label">Total Runs (30d)</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-value" id="test-avg-duration">-</div>
+          <div class="stat-label">Avg Duration</div>
+        </div>
+      </div>
+
+      <!-- Recent runs -->
+      <h3 class="text-sm font-semibold text-gray-400 mb-3">Recent Runs</h3>
+      <div class="panel">
+        <table>
+          <thead><tr><th>Status</th><th>Tests</th><th>Passed</th><th>Failed</th><th>Duration</th><th>Trigger</th><th>Date</th></tr></thead>
+          <tbody id="test-runs-tbody"></tbody>
+        </table>
+      </div>
+
+      <!-- Failure details (shown when clicking a failed run) -->
+      <div id="test-failures" class="hidden mt-4">
+        <h3 class="text-sm font-semibold text-gray-400 mb-3">Failure Details</h3>
+        <div class="panel p-4">
+          <pre id="test-failure-output" class="text-xs text-red-400 font-mono whitespace-pre-wrap max-h-64 overflow-y-auto"></pre>
+        </div>
       </div>
     </div>
 
@@ -577,11 +641,12 @@ setInterval(() => {
 function switchTab(tab) {
   document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
   document.querySelector(`.tab[data-tab="${tab}"]`).classList.add('active');
-  ['overview', 'users', 'logs', 'promo'].forEach(t => {
+  ['overview', 'users', 'logs', 'promo', 'tests'].forEach(t => {
     document.getElementById(`tab-${t}`).classList.toggle('hidden', t !== tab);
   });
   document.getElementById('user-detail').classList.add('hidden');
   if (tab === 'promo') loadPromo();
+  if (tab === 'tests') loadTests();
 }
 
 // ─── Stats ───────────────────────────────────────────────────────
@@ -1157,6 +1222,121 @@ function fmtTime(d) {
 function truncate(s, len) {
   if (!s) return '';
   return s.length > len ? s.slice(0, len) + '...' : s;
+}
+
+// ─── Tests Tab ──────────────────────────────────────────────────
+
+async function loadTests() {
+  await loadTestSettings();
+  await loadTestResults();
+}
+
+async function loadTestSettings() {
+  try {
+    const s = await apiFetch('/test-settings');
+    document.getElementById('test-enabled').checked = s.enabled;
+    const sel = document.getElementById('test-cron-hour');
+    sel.innerHTML = '';
+    for (let h = 0; h < 24; h++) {
+      const opt = document.createElement('option');
+      opt.value = h;
+      opt.textContent = String(h).padStart(2, '0') + ':00';
+      if (h === s.cronHour) opt.selected = true;
+      sel.appendChild(opt);
+    }
+  } catch (e) {
+    console.error('Failed to load test settings', e);
+  }
+}
+
+async function saveTestSettings() {
+  try {
+    await apiFetch('/test-settings', {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        enabled: document.getElementById('test-enabled').checked,
+        cronHour: parseInt(document.getElementById('test-cron-hour').value),
+      }),
+    });
+  } catch (e) {
+    console.error('Failed to save test settings', e);
+  }
+}
+
+async function loadTestResults() {
+  try {
+    const { runs } = await apiFetch('/test-results?limit=50');
+    const tbody = document.getElementById('test-runs-tbody');
+    tbody.innerHTML = '';
+
+    if (!runs.length) {
+      tbody.innerHTML = '<tr><td colspan="7" class="text-center text-gray-500 py-6">No test runs yet</td></tr>';
+      return;
+    }
+
+    // Stats
+    const last30 = runs.filter(r => new Date(r.startedAt) > new Date(Date.now() - 30*86400000));
+    const passedRuns = last30.filter(r => r.status === 'passed');
+    const lastRun = runs[0];
+
+    document.getElementById('test-last-status').innerHTML =
+      lastRun.status === 'passed'
+        ? '<span style="color:#4ade80">PASSED</span>'
+        : '<span style="color:#f87171">FAILED</span>';
+    document.getElementById('test-pass-rate').textContent =
+      last30.length ? Math.round(passedRuns.length / last30.length * 100) + '%' : '-';
+    document.getElementById('test-total-runs').textContent = fmt(last30.length);
+    const avgMs = last30.filter(r => r.durationMs).reduce((a, r) => a + r.durationMs, 0) / (last30.filter(r => r.durationMs).length || 1);
+    document.getElementById('test-avg-duration').textContent = avgMs ? Math.round(avgMs / 1000) + 's' : '-';
+
+    // Table rows
+    runs.forEach(r => {
+      const statusBadge = r.status === 'passed'
+        ? '<span class="badge" style="background:rgba(74,222,128,0.15);color:#4ade80">PASSED</span>'
+        : r.status === 'running'
+        ? '<span class="badge" style="background:rgba(250,204,21,0.15);color:#facc15">RUNNING</span>'
+        : '<span class="badge" style="background:rgba(248,113,113,0.15);color:#f87171">FAILED</span>';
+      const dur = r.durationMs ? Math.round(r.durationMs / 1000) + 's' : '-';
+      const hasFails = r.failures && r.status === 'failed';
+      const rowClick = hasFails ? `onclick="showFailures('${esc(r.failures)}')" style="cursor:pointer"` : '';
+      tbody.innerHTML += `<tr ${rowClick}>
+        <td>${statusBadge}</td>
+        <td>${r.total}</td>
+        <td style="color:#4ade80">${r.passed}</td>
+        <td style="color:${r.failed > 0 ? '#f87171' : '#64748b'}">${r.failed}</td>
+        <td class="mono">${dur}</td>
+        <td>${esc(r.triggeredBy)}</td>
+        <td>${fmtTime(r.startedAt)}</td>
+      </tr>`;
+    });
+  } catch (e) {
+    console.error('Failed to load test results', e);
+  }
+}
+
+function showFailures(failuresJson) {
+  try {
+    const failures = JSON.parse(failuresJson);
+    const output = failures.map(f => `FAIL: ${f.name}\n  ${f.error}`).join('\n\n');
+    document.getElementById('test-failure-output').textContent = output;
+    document.getElementById('test-failures').classList.remove('hidden');
+  } catch {
+    document.getElementById('test-failures').classList.add('hidden');
+  }
+}
+
+async function triggerTestRun() {
+  try {
+    await apiFetch('/test-results', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ status: 'running', total: 0, passed: 0, failed: 0, triggeredBy: 'manual' }),
+    });
+    await loadTestResults();
+  } catch (e) {
+    console.error('Failed to trigger test run', e);
+  }
 }
 </script>
 </body>

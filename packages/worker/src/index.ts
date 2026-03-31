@@ -68,6 +68,23 @@ export default {
       );
     }
 
+    // Backend health check (proxied to avoid CORS issues with Railway CDN)
+    if (url.pathname === '/backend-health') {
+      try {
+        const resp = await fetch(`${backendUrl}/health`, { signal: AbortSignal.timeout(5000) });
+        const data = await resp.json() as Record<string, unknown>;
+        return Response.json(data, {
+          status: resp.status,
+          headers: { ...corsHeaders(origin, allowedOrigins), ...securityHeaders() },
+        });
+      } catch {
+        return Response.json(
+          { status: 'down', service: 'vaultproof' },
+          { status: 502, headers: { ...corsHeaders(origin, allowedOrigins), ...securityHeaders() } }
+        );
+      }
+    }
+
     // --- Forward /api/*, /v1/*, /admin/*, and /analytics/* to backend with signed request ---
     if (url.pathname.startsWith('/api/') || url.pathname.startsWith('/v1/') || url.pathname.startsWith('/admin/') || url.pathname.startsWith('/analytics/')) {
       try {

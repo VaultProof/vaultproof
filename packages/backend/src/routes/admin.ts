@@ -804,4 +804,63 @@ export async function adminRoutes(app: FastifyInstance) {
       daily,
     };
   });
+
+  // ─── Test Results ───────────────────────────────────────────────
+
+  // Get recent test runs
+  app.get('/test-results', { preHandler: requireAdmin }, async (request) => {
+    const { limit = '20' } = request.query as { limit?: string };
+    const runs = await prisma.testRun.findMany({
+      orderBy: { startedAt: 'desc' },
+      take: Math.min(parseInt(limit) || 20, 100),
+    });
+    return { runs };
+  });
+
+  // Submit test run result (called by the test runner script)
+  app.post('/test-results', { preHandler: requireAdmin }, async (request) => {
+    const body = request.body as {
+      status: string; total: number; passed: number; failed: number;
+      durationMs?: number; failures?: { name: string; error: string }[];
+      triggeredBy?: string;
+    };
+    const run = await prisma.testRun.create({
+      data: {
+        status: body.status,
+        total: body.total,
+        passed: body.passed,
+        failed: body.failed,
+        durationMs: body.durationMs,
+        failures: body.failures ? JSON.stringify(body.failures) : null,
+        triggeredBy: body.triggeredBy || 'manual',
+        completedAt: body.status !== 'running' ? new Date() : null,
+      },
+    });
+    return run;
+  });
+
+  // Get test settings
+  app.get('/test-settings', { preHandler: requireAdmin }, async () => {
+    let settings = await prisma.testSettings.findUnique({ where: { id: 'singleton' } });
+    if (!settings) {
+      settings = await prisma.testSettings.create({ data: { id: 'singleton' } });
+    }
+    return settings;
+  });
+
+  // Update test settings
+  app.put('/test-settings', { preHandler: requireAdmin }, async (request) => {
+    const body = request.body as { enabled?: boolean; cronHour?: number };
+    const data: { enabled?: boolean; cronHour?: number } = {};
+    if (typeof body.enabled === 'boolean') data.enabled = body.enabled;
+    if (typeof body.cronHour === 'number' && body.cronHour >= 0 && body.cronHour <= 23) {
+      data.cronHour = body.cronHour;
+    }
+    const settings = await prisma.testSettings.upsert({
+      where: { id: 'singleton' },
+      update: data,
+      create: { id: 'singleton', ...data },
+    });
+    return settings;
+  });
 }

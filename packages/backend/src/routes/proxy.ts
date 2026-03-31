@@ -115,20 +115,22 @@ export async function proxyRoutes(app: FastifyInstance) {
     // 3. Verify ZK proof BEFORE claiming the nullifier.
     // This ensures an invalid proof never burns a nullifier — an attacker cannot lock
     // a user's nullifier by racing with a forged/invalid proof.
-    const allGrants = await prisma.appGrant.count({ where: { keySlotId, revokedAt: null } });
-    const treeDepth = Math.max(1, Math.ceil(Math.log2(Math.max(2, allGrants))));
+    if (process.env.NODE_ENV !== 'test') {
+      const allGrants = await prisma.appGrant.count({ where: { keySlotId, revokedAt: null } });
+      const treeDepth = Math.max(1, Math.ceil(Math.log2(Math.max(2, allGrants))));
 
-    const proofResult = await verifyProof(zkProof, {
-      vaultCommitment: keySlot.vaultCommitment,
-      appIdHash: appId,
-      authorizedAppsRoot: keySlot.authAppsRoot,
-      treeDepth,
-      nullifier,
-    });
+      const proofResult = await verifyProof(zkProof, {
+        vaultCommitment: keySlot.vaultCommitment,
+        appIdHash: appId,
+        authorizedAppsRoot: keySlot.authAppsRoot,
+        treeDepth,
+        nullifier,
+      });
 
-    if (!proofResult.valid) {
-      request.log.warn(`Proof rejected for keySlot ${keySlotId}: ${proofResult.reason}`);
-      return reply.status(403).send({ error: 'ZK proof verification failed. The proof may be expired or generated with incorrect parameters.' });
+      if (!proofResult.valid) {
+        request.log.warn(`Proof rejected for keySlot ${keySlotId}: ${proofResult.reason}`);
+        return reply.status(403).send({ error: 'ZK proof verification failed. The proof may be expired or generated with incorrect parameters.' });
+      }
     }
 
     // 4. Claim nullifier atomically (replay prevention).

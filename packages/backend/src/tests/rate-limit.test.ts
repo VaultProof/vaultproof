@@ -26,6 +26,15 @@ describe('Rate Limit Tests', () => {
   const createdKeySlotIds: string[] = [];
 
   before(async () => {
+    // Clean up leftover data from previous runs
+    const oldSlots = await prisma.keySlot.findMany({ where: { userId: TEST_USER_ID }, select: { id: true } });
+    if (oldSlots.length > 0) {
+      const oldIds = oldSlots.map(s => s.id);
+      await prisma.accessLog.deleteMany({ where: { keySlotId: { in: oldIds } } });
+      await prisma.appGrant.deleteMany({ where: { keySlotId: { in: oldIds } } });
+      await prisma.keySlot.deleteMany({ where: { userId: TEST_USER_ID } });
+    }
+
     // Create test user
     await prisma.user.upsert({
       where: { email: TEST_USER_EMAIL },
@@ -49,10 +58,12 @@ describe('Rate Limit Tests', () => {
   });
 
   after(async () => {
-    // Clean up in reverse dependency order
-    if (createdKeySlotIds.length > 0) {
-      await prisma.accessLog.deleteMany({ where: { keySlotId: { in: createdKeySlotIds } } });
-      await prisma.appGrant.deleteMany({ where: { keySlotId: { in: createdKeySlotIds } } });
+    // Clean up ALL data for this test user (handles tracked + leftover slots)
+    const allSlots = await prisma.keySlot.findMany({ where: { userId: TEST_USER_ID }, select: { id: true } });
+    if (allSlots.length > 0) {
+      const allIds = allSlots.map(s => s.id);
+      await prisma.accessLog.deleteMany({ where: { keySlotId: { in: allIds } } });
+      await prisma.appGrant.deleteMany({ where: { keySlotId: { in: allIds } } });
       await prisma.keySlot.deleteMany({ where: { userId: TEST_USER_ID } });
     }
 
@@ -67,8 +78,8 @@ describe('Rate Limit Tests', () => {
 
     assert.equal(result.allowed, true);
     assert.equal(result.used, 0);
-    assert.equal(result.limit, 1000);
-    assert.equal(result.remaining, 1000);
+    assert.equal(result.limit, 10000);
+    assert.equal(result.remaining, 10000);
   });
 
   // --- Test 2: checkKeySlotLimit with 0 keys ---
@@ -121,13 +132,15 @@ describe('Rate Limit Tests', () => {
 
   // --- Test 4: checkRateLimit after 10000 calls ---
 
-  it('blocks requests after 10000 access logs (free tier limit)', async () => {
-    // Insert 10000 access logs for the test key slot
+  it('blocks requests after exceeding hard limit (free tier + 5% buffer)', async () => {
+    // Free tier advertised limit is 10,000 but hard limit is 10,500 (5% buffer).
+    // Insert 10,500 logs to hit the hard block.
+    const HARD_LIMIT = 10500;
     const logs = [];
-    for (let i = 0; i < 10000; i++) {
+    for (let i = 0; i < HARD_LIMIT; i++) {
       logs.push({
         keySlotId: testKeySlotId,
-        appId: 'test-ratelimit-app',
+        appId: 'ratelimit-internal-app',
         action: 'api_call',
         zkProof: 'test-proof',
         nullifier: `ratelimit-nullifier-${randomBytes(16).toString('hex')}-${i}`,
@@ -146,7 +159,7 @@ describe('Rate Limit Tests', () => {
     const result = await checkRateLimit(testKeySlotId, 'free');
 
     assert.equal(result.allowed, false);
-    assert.equal(result.used, 10000);
+    assert.equal(result.used, HARD_LIMIT);
     assert.equal(result.limit, 10000);
     assert.equal(result.remaining, 0);
   });

@@ -149,6 +149,32 @@ model AnalyticsEvent {
   @@map("analytics_events")
 }
 
+// ─── Test Results ─────────────────────────────────────────────────────────────
+
+model TestRun {
+  id          String    @id @default(uuid())
+  status      String    // "passed", "failed", "running"
+  total       Int       @default(0)
+  passed      Int       @default(0)
+  failed      Int       @default(0)
+  durationMs  Int?      @map("duration_ms")
+  failures    String?   // JSON array of { name, error } for failed tests
+  triggeredBy String    @default("manual") @map("triggered_by") // "manual", "cron", "deploy"
+  startedAt   DateTime  @default(now()) @map("started_at")
+  completedAt DateTime? @map("completed_at")
+
+  @@index([startedAt])
+  @@map("test_runs")
+}
+
+model TestSettings {
+  id        String  @id @default("singleton")
+  enabled   Boolean @default(true)
+  cronHour  Int     @default(6) @map("cron_hour") // 0-23, hour in UTC to run daily
+
+  @@map("test_settings")
+}
+
 // KeyStatus values: "ACTIVE", "ROTATED", "REVOKED" (stored as String for SQLite compat)
 
 // ─── Scanner ──────────────────────────────────────────────────────────────────

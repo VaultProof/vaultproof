@@ -36,6 +36,17 @@ describe('Developer Key Route Tests', () => {
   let app: Awaited<ReturnType<typeof buildApp>>;
 
   before(async () => {
+    // Clean up leftover data from previous runs
+    const oldKeys = await prisma.developerKey.findMany({
+      where: { userId: TEST_USER_ID },
+      select: { id: true },
+    });
+    if (oldKeys.length > 0) {
+      const oldIds = oldKeys.map(k => k.id);
+      await prisma.sessionToken.deleteMany({ where: { developerKeyId: { in: oldIds } } });
+      await prisma.developerKey.deleteMany({ where: { userId: TEST_USER_ID } });
+    }
+
     // Ensure test user exists
     await prisma.user.upsert({
       where: { email: TEST_USER_EMAIL },
@@ -330,6 +341,22 @@ describe('Developer Key Route Tests', () => {
 
     assert.equal(sdkRes.statusCode, 200);
     assert.ok(Array.isArray(sdkRes.json().keys));
+  });
+
+  // Clean up active keys before session edge-case tests to avoid hitting the 5-key limit
+  it('cleanup: revoke excess keys before session edge cases', async () => {
+    const active = await prisma.developerKey.findMany({
+      where: { userId: TEST_USER_ID, revokedAt: null },
+      select: { id: true },
+    });
+    for (const k of active) {
+      await prisma.$transaction([
+        prisma.sessionToken.deleteMany({ where: { developerKeyId: k.id } }),
+        prisma.developerKey.update({ where: { id: k.id }, data: { revokedAt: new Date() } }),
+      ]);
+    }
+    const remaining = await prisma.developerKey.count({ where: { userId: TEST_USER_ID, revokedAt: null } });
+    assert.equal(remaining, 0, 'All keys should be revoked for clean slate');
   });
 
   it('ST-5: SDK route rejects valid dev key + garbage session token', async () => {
