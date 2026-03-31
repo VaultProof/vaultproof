@@ -809,7 +809,10 @@ export async function scannerRoutes(app: FastifyInstance) {
 
     // Apply changes
     const changedFiles = new Map<string, string>();
-    const processedFindings: Array<{ envName: string; file: string; line: number | null }> = [];
+    const processedFindings: Array<{ envName: string; file: string; line: number | null; action: string }> = [];
+
+    // Build reverse map: provider domain → provider name (for URL rewriting)
+    const DOMAIN_TO_PROVIDER = PROVIDER_URLS; // already domain→provider
 
     for (const fa of parsed.data.findings) {
       const finding = scan.findings.find((f) => f.id === fa.findingId);
@@ -823,26 +826,195 @@ export async function scannerRoutes(app: FastifyInstance) {
       }
 
       let content = changedFiles.get(finding.file)!;
-      const replacement = fa.action === 'vaultproof'
-        ? `process.env.${finding.envName}`
-        : `process.env.${finding.envName} /* TODO: Set ${finding.envName} in your environment */`;
+      const isEnvFile = finding.file.endsWith('.env') || finding.file.includes('.env.');
 
-      if (finding.line) {
-        const lines = content.split('\n');
-        const lineIdx = finding.line - 1;
-        if (lineIdx < lines.length) {
-          lines[lineIdx] = lines[lineIdx].replace(/["'`][^"'`]{10,512}["'`]/g, replacement);
+      if (finding.mode === 'sdk-init' && fa.action === 'vaultproof') {
+        // ── SDK init rewriting ──────────────────────────────────────
+        // Inject baseURL and swap apiKey to VAULTPROOF_API_KEY
+        const proxyBase = `https://api.vaultproof.dev/v1/${finding.provider}`;
+
+        // Match the SDK constructor block on the target line(s)
+        // e.g. new OpenAI({ apiKey: process.env.OPENAI_API_KEY })
+        // →    new OpenAI({ apiKey: process.env.VAULTPROOF_API_KEY, baseURL: 'https://api.vaultproof.dev/v1/openai' })
+        if (finding.line) {
+          const lines = content.split('\n');
+          const lineIdx = finding.line - 1;
+
+          // Find the extent of the constructor call (may span multiple lines)
+          let blockStart = lineIdx;
+          let blockEnd = lineIdx;
+          let depth = 0;
+          let foundOpen = false;
+          for (let i = lineIdx; i < lines.length && i < lineIdx + 20; i++) {
+            for (const ch of lines[i]) {
+              if (ch === '(') { depth++; foundOpen = true; }
+              if (ch === ')') { depth--; }
+              if (foundOpen && depth === 0) { blockEnd = i; break; }
+            }
+            if (foundOpen && depth === 0) break;
+          }
+
+          // Extract the constructor block as a string
+          const blockLines = lines.slice(blockStart, blockEnd + 1);
+          let block = blockLines.join('\n');
+
+          // Replace provider-specific env vars with VAULTPROOF_API_KEY
+          // Check both standard _API_KEY and any known alternate names (e.g. REPLICATE_API_TOKEN)
+          const providerEnvVars = [`${finding.provider.toUpperCase()}_API_KEY`];
+          for (const [envName, prov] of Object.entries(ENV_VAR_PATTERNS)) {
+            if (prov === finding.provider && !providerEnvVars.includes(envName)) {
+              providerEnvVars.push(envName);
+            }
+          }
+          for (const envVar of providerEnvVars) {
+            block = block.replace(
+              new RegExp(`process\\.env\\.${envVar}`, 'g'),
+              'process.env.VAULTPROOF_API_KEY'
+            );
+            block = block.replace(
+              new RegExp(`os\\.environ\\[["']${envVar}["']\\]`, 'g'),
+              'os.environ["VAULTPROOF_API_KEY"]'
+            );
+          }
+
+          // Inject baseURL if not already present
+          if (!block.includes('baseURL') && !block.includes('base_url')) {
+            // JS/TS pattern: find the opening { of the constructor options
+            const braceMatch = block.match(/new\s+\w+\s*\(\s*\{/);
+            if (braceMatch && braceMatch.index !== undefined) {
+              // Check if the block has existing properties
+              const afterBrace = block.slice(braceMatch.index + braceMatch[0].length);
+              if (afterBrace.trim().startsWith('}')) {
+                // Empty options: new OpenAI({})
+                block = block.replace(
+                  /new\s+(\w+)\s*\(\s*\{\s*\}/,
+                  `new $1({ baseURL: '${proxyBase}' }`
+                );
+              } else {
+                // Has properties: inject baseURL after opening brace
+                block = block.replace(
+                  /(new\s+\w+\s*\(\s*\{)/,
+                  `$1 baseURL: '${proxyBase}',`
+                );
+              }
+            } else {
+              // Python pattern: Client(api_key=...) → inject base_url
+              const pyMatch = block.match(/\(\s*api_key\s*=/);
+              if (pyMatch && pyMatch.index !== undefined) {
+                block = block.replace(
+                  /\(\s*(api_key\s*=)/,
+                  `(base_url="${proxyBase}", $1`
+                );
+              }
+            }
+          }
+
+          // Replace block lines with the rewritten block
+          const newBlockLines = block.split('\n');
+          lines.splice(blockStart, blockEnd - blockStart + 1, ...newBlockLines);
           content = lines.join('\n');
         }
-      }
 
-      changedFiles.set(finding.file, content);
-      processedFindings.push({ envName: finding.envName, file: finding.file, line: finding.line });
+        changedFiles.set(finding.file, content);
+        processedFindings.push({ envName: finding.envName, file: finding.file, line: finding.line, action: 'sdk-init → proxy' });
+
+      } else if (finding.mode === 'http-url' && fa.action === 'vaultproof') {
+        // ── HTTP URL rewriting ──────────────────────────────────────
+        // Replace provider domains with VaultProof proxy
+        // e.g. https://api.openai.com/v1/chat/completions
+        //    → https://api.vaultproof.dev/v1/openai/v1/chat/completions
+        if (finding.line) {
+          const lines = content.split('\n');
+          const lineIdx = finding.line - 1;
+          if (lineIdx < lines.length) {
+            for (const [domain, provider] of Object.entries(DOMAIN_TO_PROVIDER)) {
+              const domainRegex = new RegExp(`https?://${domain.replace(/\./g, '\\.')}`, 'g');
+              lines[lineIdx] = lines[lineIdx].replace(domainRegex, `https://api.vaultproof.dev/v1/${provider}`);
+            }
+            content = lines.join('\n');
+          }
+        }
+
+        changedFiles.set(finding.file, content);
+        processedFindings.push({ envName: finding.envName, file: finding.file, line: finding.line, action: 'url → proxy' });
+
+      } else if (finding.mode === 'env-ref' && fa.action === 'vaultproof') {
+        // ── Env var reference rewriting ──────────────────────────────
+        // Replace provider env var names with VAULTPROOF_API_KEY
+        if (finding.line) {
+          const lines = content.split('\n');
+          const lineIdx = finding.line - 1;
+          if (lineIdx < lines.length) {
+            // process.env.OPENAI_API_KEY → process.env.VAULTPROOF_API_KEY
+            lines[lineIdx] = lines[lineIdx].replace(
+              new RegExp(`process\\.env\\.${finding.envName}`, 'g'),
+              'process.env.VAULTPROOF_API_KEY'
+            );
+            // os.environ["OPENAI_API_KEY"] → os.environ["VAULTPROOF_API_KEY"]
+            lines[lineIdx] = lines[lineIdx].replace(
+              new RegExp(`os\\.environ\\[["']${finding.envName}["']\\]`, 'g'),
+              'os.environ["VAULTPROOF_API_KEY"]'
+            );
+            content = lines.join('\n');
+          }
+        }
+
+        changedFiles.set(finding.file, content);
+        processedFindings.push({ envName: finding.envName, file: finding.file, line: finding.line, action: 'env → VAULTPROOF_API_KEY' });
+
+      } else if (isEnvFile && fa.action === 'vaultproof') {
+        // ── .env file rewriting ─────────────────────────────────────
+        // Comment out old key line and add VAULTPROOF_API_KEY placeholder
+        const lines = content.split('\n');
+        let alreadyHasVaultproof = lines.some((l) => l.trim().startsWith('VAULTPROOF_API_KEY='));
+
+        for (let i = 0; i < lines.length; i++) {
+          const trimmed = lines[i].trim();
+          if (!trimmed || trimmed.startsWith('#')) continue;
+          const eqIdx = trimmed.indexOf('=');
+          if (eqIdx === -1) continue;
+          const varName = trimmed.slice(0, eqIdx).trim();
+          if (varName === finding.envName) {
+            lines[i] = `# ${varName} — secured by VaultProof proxy`;
+            break;
+          }
+        }
+
+        if (!alreadyHasVaultproof) {
+          lines.push('VAULTPROOF_API_KEY=vp_live_xxx');
+        }
+
+        content = lines.join('\n');
+        changedFiles.set(finding.file, content);
+        processedFindings.push({ envName: finding.envName, file: finding.file, line: finding.line, action: 'env-file → proxy' });
+
+      } else {
+        // ── Original hardcoded key replacement (proxy / env-injection) ─
+        const replacement = fa.action === 'vaultproof'
+          ? `process.env.${finding.envName}`
+          : `process.env.${finding.envName} /* TODO: Set ${finding.envName} in your environment */`;
+
+        if (finding.line) {
+          const lines = content.split('\n');
+          const lineIdx = finding.line - 1;
+          if (lineIdx < lines.length) {
+            lines[lineIdx] = lines[lineIdx].replace(/["'`][^"'`]{10,512}["'`]/g, replacement);
+            content = lines.join('\n');
+          }
+        }
+
+        changedFiles.set(finding.file, content);
+        processedFindings.push({ envName: finding.envName, file: finding.file, line: finding.line, action: fa.action });
+      }
     }
 
     if (changedFiles.size === 0) {
       return reply.status(400).send({ error: 'No changes to apply' });
     }
+
+    // Determine if any proxy rewrites were applied (used for commit message + PR body)
+    const PROXY_ACTIONS = new Set(['sdk-init → proxy', 'url → proxy', 'env → VAULTPROOF_API_KEY', 'env-file → proxy']);
+    const hasProxyFindings = processedFindings.some((pf) => PROXY_ACTIONS.has(pf.action));
 
     // Create tree + commit
     const treeItems = [];
@@ -860,7 +1032,9 @@ export async function scannerRoutes(app: FastifyInstance) {
     });
 
     const commit = await githubApiRaw(ghToken, 'POST', `/repos/${scan.repoFullName}/git/commits`, {
-      message: 'fix: remove exposed API keys (VaultProof Scanner)',
+      message: hasProxyFindings
+        ? 'fix: secure API keys via VaultProof proxy (VaultProof Scanner)'
+        : 'fix: remove exposed API keys (VaultProof Scanner)',
       tree: newTree.sha,
       parents: [baseSha],
     });
@@ -875,25 +1049,34 @@ export async function scannerRoutes(app: FastifyInstance) {
       ? `\n## Git History Warning\n\nThe following keys were also found in git commit history. Removing them from source code does not remove them from history.\n\n**Action required — rotate these keys immediately:**\n${historyFindings.map((f) => `- \`${f.envName}\` (${f.maskedValue}) — [Rotate](${ROTATION_URLS[f.provider] || '#'})`).join('\n')}\n`
       : '';
 
-    const prBody = `## Removed Exposed Keys
+    const prBody = `## Secured API Keys with VaultProof
 
-This PR removes hardcoded API keys found by [VaultProof Scanner](https://vaultproof.dev).
+This PR secures API keys found by [VaultProof Scanner](https://vaultproof.dev).${hasProxyFindings ? ' SDK initializations, HTTP URLs, and environment variable references have been rewritten to use the VaultProof transparent proxy.' : ''}
 
 | Key | File | Action |
 |-----|------|--------|
-${processedFindings.map((pf) => `| \`${pf.envName}\` | ${pf.file}${pf.line ? `:${pf.line}` : ''} | Replaced with \`process.env.${pf.envName}\` |`).join('\n')}
+${processedFindings.map((pf) => {
+      const desc = pf.action === 'sdk-init → proxy' ? 'Rewritten to use VaultProof proxy'
+        : pf.action === 'url → proxy' ? 'URL redirected through VaultProof proxy'
+        : pf.action === 'env → VAULTPROOF_API_KEY' ? 'Replaced with `VAULTPROOF_API_KEY`'
+        : pf.action === 'env-file → proxy' ? 'Commented out, added `VAULTPROOF_API_KEY`'
+        : `Replaced with \`process.env.${pf.envName}\``;
+      return `| \`${pf.envName}\` | ${pf.file}${pf.line ? `:${pf.line}` : ''} | ${desc} |`;
+    }).join('\n')}
 ${historyWarning}
 ## Setup
 
-Set these environment variables in your hosting provider:
-${[...new Set(processedFindings.map((pf) => pf.envName))].map((name) => `- \`${name}\``).join('\n')}
+${hasProxyFindings ? `1. Add your VaultProof API key to your hosting provider:\n   - \`VAULTPROOF_API_KEY\` — get this from [VaultProof Dashboard](https://vaultproof.dev/app/keys)\n\n2. ` : ''}Set these environment variables in your hosting provider:
+${[...new Set(processedFindings.map((pf) => pf.envName))].filter((n) => n !== 'VAULTPROOF_API_KEY').map((name) => `- \`${name}\``).join('\n')}
 
 ---
 *This PR was created by VaultProof Scanner with your approval.*
 *VaultProof is not responsible for code modifications you approve and merge.*`;
 
     const pr = await githubApiRaw(ghToken, 'POST', `/repos/${scan.repoFullName}/pulls`, {
-      title: 'fix: remove exposed API keys (VaultProof Scanner)',
+      title: hasProxyFindings
+        ? 'fix: secure API keys via VaultProof proxy (VaultProof Scanner)'
+        : 'fix: remove exposed API keys (VaultProof Scanner)',
       body: prBody,
       head: branchName,
       base: defaultBranch,
