@@ -622,12 +622,12 @@
         return '<div class="bg-card border border-border rounded-xl p-4 flex items-center justify-between anim-card" style="animation-delay:' + (i * 0.03) + 's">' +
           '<div class="min-w-0 flex-1">' +
             '<div class="flex items-center gap-2 mb-1">' +
-              '<p class="text-sm font-semibold text-white truncate">' + escapeHtml(r.full_name || r.name) + '</p>' +
+              '<p class="text-sm font-semibold text-white truncate">' + escapeHtml(r.fullName || r.full_name || r.name) + '</p>' +
               vis +
             '</div>' +
             '<p class="text-xs text-gray-500">Updated ' + timeAgo(r.updated_at) + '</p>' +
           '</div>' +
-          '<button onclick="startScan(\'' + escapeHtml(r.full_name || r.name) + '\')" class="ml-3 px-4 py-2 bg-brand/10 hover:bg-brand/20 text-brand text-sm font-medium rounded-xl transition flex-shrink-0">Scan</button>' +
+          '<button onclick="startScan(\'' + escapeHtml(r.fullName || r.fullName || r.full_name || r.name) + '\')" class="ml-3 px-4 py-2 bg-brand/10 hover:bg-brand/20 text-brand text-sm font-medium rounded-xl transition flex-shrink-0">Scan</button>' +
         '</div>';
       }).join('');
     }
@@ -636,7 +636,7 @@
       var q = document.getElementById('repoSearch').value.toLowerCase();
       if (!q) { renderRepos(allRepos); return; }
       renderRepos(allRepos.filter(function(r) {
-        return (r.full_name || r.name || '').toLowerCase().indexOf(q) > -1;
+        return (r.fullName || r.full_name || r.name || '').toLowerCase().indexOf(q) > -1;
       }));
     }
 
