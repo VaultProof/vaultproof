@@ -839,6 +839,9 @@ export async function adminRoutes(app: FastifyInstance) {
     return run;
   });
 
+  // Track running test processes by run ID
+  const runningTests = new Map<string, import('child_process').ChildProcess>();
+
   // Run tests on the server and record results
   app.post('/run-tests', { preHandler: requireAdmin }, async (request, reply) => {
     const { triggeredBy = 'manual' } = (request.body || {}) as { triggeredBy?: string };
@@ -852,11 +855,17 @@ export async function adminRoutes(app: FastifyInstance) {
     const { exec } = await import('child_process');
     const startMs = Date.now();
 
-    exec(
+    const child = exec(
       'node --test --test-force-exit dist/tests/*.test.js 2>&1',
       { cwd: process.cwd(), timeout: 300_000 },
       async (error, stdout) => {
+        runningTests.delete(run.id);
         const durationMs = Date.now() - startMs;
+
+        // If killed by stop/cancel, the DB record is already updated
+        const current = await prisma.testRun.findUnique({ where: { id: run.id } });
+        if (current?.status !== 'running') return;
+
         const output = stdout || '';
 
         // Parse summary lines
@@ -895,7 +904,35 @@ export async function adminRoutes(app: FastifyInstance) {
       }
     );
 
+    runningTests.set(run.id, child);
     return { id: run.id, status: 'running' };
+  });
+
+  // Stop a running test (kills process, marks as failed)
+  app.post('/stop-tests/:runId', { preHandler: requireAdmin }, async (request, reply) => {
+    const { runId } = request.params as { runId: string };
+    const child = runningTests.get(runId);
+    if (child) {
+      child.kill('SIGTERM');
+      runningTests.delete(runId);
+    }
+    await prisma.testRun.update({
+      where: { id: runId },
+      data: { status: 'failed', completedAt: new Date(), failures: JSON.stringify([{ name: 'Manual stop', error: 'Test run was stopped by admin' }]) },
+    }).catch(() => {});
+    return { status: 'stopped' };
+  });
+
+  // Cancel a running test (kills process, deletes the record)
+  app.post('/cancel-tests/:runId', { preHandler: requireAdmin }, async (request, reply) => {
+    const { runId } = request.params as { runId: string };
+    const child = runningTests.get(runId);
+    if (child) {
+      child.kill('SIGTERM');
+      runningTests.delete(runId);
+    }
+    await prisma.testRun.delete({ where: { id: runId } }).catch(() => {});
+    return { status: 'cancelled' };
   });
 
   // Get test settings

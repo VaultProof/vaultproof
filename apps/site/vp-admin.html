@@ -361,7 +361,9 @@
               </select>
               UTC
             </label>
-            <button class="btn btn-primary text-xs" onclick="triggerTestRun()">Run Now</button>
+            <button class="btn btn-primary text-xs" id="test-start-btn" onclick="triggerTestRun()">Run Now</button>
+            <button class="btn btn-danger text-xs hidden" id="test-stop-btn" onclick="stopTestRun()">Stop</button>
+            <button class="btn btn-ghost text-xs hidden" id="test-cancel-btn" onclick="cancelTestRun()">Cancel</button>
           </div>
         </div>
       </div>
@@ -1341,30 +1343,78 @@ function showFailures(failuresJson) {
   }
 }
 
+var activeTestRunId = null;
+var testPollInterval = null;
+
+function setTestButtons(state) {
+  var startBtn = document.getElementById('test-start-btn');
+  var stopBtn = document.getElementById('test-stop-btn');
+  var cancelBtn = document.getElementById('test-cancel-btn');
+  if (state === 'running') {
+    startBtn.classList.add('hidden');
+    stopBtn.classList.remove('hidden');
+    cancelBtn.classList.remove('hidden');
+  } else {
+    startBtn.classList.remove('hidden');
+    stopBtn.classList.add('hidden');
+    cancelBtn.classList.add('hidden');
+  }
+}
+
 async function triggerTestRun() {
   try {
-    const { id } = await apiFetch('/run-tests', {
+    var { id } = await apiFetch('/run-tests', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ triggeredBy: 'manual' }),
     });
+    activeTestRunId = id;
+    setTestButtons('running');
     await loadTestResults();
-    // Poll until complete
     if (id) pollTestRun(id);
   } catch (e) {
     console.error('Failed to trigger test run', e);
   }
 }
 
+async function stopTestRun() {
+  if (!activeTestRunId) return;
+  try {
+    await apiFetch('/stop-tests/' + activeTestRunId, { method: 'POST' });
+  } catch (e) {
+    console.error('Failed to stop test run', e);
+  }
+  clearTestPoll();
+  await loadTestResults();
+}
+
+async function cancelTestRun() {
+  if (!activeTestRunId) return;
+  try {
+    await apiFetch('/cancel-tests/' + activeTestRunId, { method: 'POST' });
+  } catch (e) {
+    console.error('Failed to cancel test run', e);
+  }
+  clearTestPoll();
+  await loadTestResults();
+}
+
+function clearTestPoll() {
+  if (testPollInterval) clearInterval(testPollInterval);
+  testPollInterval = null;
+  activeTestRunId = null;
+  setTestButtons('idle');
+}
+
 function pollTestRun(runId) {
-  const interval = setInterval(async () => {
+  testPollInterval = setInterval(async function() {
     try {
-      const { runs } = await apiFetch('/test-results?limit=1');
+      var { runs } = await apiFetch('/test-results?limit=1');
       if (runs[0] && runs[0].id === runId && runs[0].status !== 'running') {
-        clearInterval(interval);
+        clearTestPoll();
         await loadTestResults();
       }
-    } catch { clearInterval(interval); }
+    } catch { clearTestPoll(); }
   }, 5000);
 }
 </script>
