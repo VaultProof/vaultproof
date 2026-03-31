@@ -237,19 +237,11 @@
         </svg>
       </button>
 
-      <!-- Search bar -->
-      <div class="flex-1 max-w-md">
-        <div class="relative">
-          <svg class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-500" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
-          </svg>
-          <input type="text" placeholder="Search keys, logs..." class="w-full bg-card border border-border rounded-xl pl-10 pr-4 py-2 text-sm text-gray-200 placeholder-gray-500 focus:outline-none focus:border-brand/50 focus:ring-1 focus:ring-brand/30 transition" />
-        </div>
-      </div>
+      <div class="flex-1"></div>
 
       <div class="flex items-center gap-3">
         <!-- Onboarding tour button -->
-        <button id="onboardingBtn" onclick="startAppTour()" class="hidden items-center gap-2 px-3 py-1.5 bg-brand/10 hover:bg-brand/20 text-brand border border-brand/20 rounded-lg text-xs font-medium transition">
+        <button id="onboardingBtn" onclick="startAppTour()" class="inline-flex items-center gap-2 px-3 py-1.5 bg-brand/10 hover:bg-brand/20 text-brand border border-brand/20 rounded-lg text-xs font-medium transition">
           <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
           Tour
         </button>
@@ -1445,16 +1437,11 @@
     overlayEl.classList.remove('active');
     document.querySelectorAll('.guide-highlight').forEach(function(el) { el.classList.remove('guide-highlight'); });
     localStorage.setItem('vp_app_tour_done', '1');
-    // Show the Getting Started button after tour ends
-    var btn = document.getElementById('onboardingBtn');
-    if (btn) { btn.classList.remove('hidden'); btn.classList.add('inline-flex'); }
   };
   window.startAppTour = function() {
     tourActive = true;
     currentStep = 0;
     overlayEl.classList.add('active');
-    var btn = document.getElementById('onboardingBtn');
-    if (btn) { btn.classList.add('hidden'); btn.classList.remove('inline-flex'); }
     showTourStep(0);
   };
 
@@ -1463,9 +1450,6 @@
   // Auto-start tour on first visit (after page animations settle)
   if (!localStorage.getItem('vp_app_tour_done')) {
     setTimeout(startAppTour, 1500);
-  } else {
-    var btn = document.getElementById('onboardingBtn');
-    if (btn) { btn.classList.remove('hidden'); btn.classList.add('inline-flex'); }
   }
 
   window.addEventListener('resize', function() {
