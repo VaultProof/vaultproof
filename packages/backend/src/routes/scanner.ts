@@ -74,6 +74,61 @@ const KEY_PREFIX_PATTERNS: Array<{ pattern: RegExp; provider: string }> = [
   { pattern: /^mongodb\+srv:\/\//, provider: 'mongodb' },
 ];
 
+// ─── Code-level detection (SDK inits, HTTP URLs, env var refs) ──────────────
+
+const PROVIDER_URLS: Record<string, string> = {
+  'api.openai.com': 'openai',
+  'api.anthropic.com': 'anthropic',
+  'generativelanguage.googleapis.com': 'google',
+  'api.together.xyz': 'together',
+  'api.mistral.ai': 'mistral',
+  'api.cohere.ai': 'cohere',
+  'api.groq.com': 'groq',
+  'api.perplexity.ai': 'perplexity',
+  'api.fireworks.ai': 'fireworks',
+  'api.deepseek.com': 'deepseek',
+  'api.replicate.com': 'replicate',
+};
+
+const SDK_INIT_PATTERNS: Array<{ regex: RegExp; provider: string }> = [
+  { regex: /new\s+OpenAI\s*\(/g, provider: 'openai' },
+  { regex: /new\s+Anthropic\s*\(/g, provider: 'anthropic' },
+  { regex: /new\s+GoogleGenerativeAI\s*\(/g, provider: 'google' },
+  { regex: /OpenAI\s*\(\s*(?:api_key|$)/g, provider: 'openai' },
+  { regex: /Anthropic\s*\(\s*(?:api_key|$)/g, provider: 'anthropic' },
+  { regex: /genai\.configure\s*\(/g, provider: 'google' },
+];
+
+const ENV_VAR_PATTERNS: Record<string, string> = {
+  'OPENAI_API_KEY': 'openai',
+  'ANTHROPIC_API_KEY': 'anthropic',
+  'GOOGLE_API_KEY': 'google',
+  'TOGETHER_API_KEY': 'together',
+  'MISTRAL_API_KEY': 'mistral',
+  'COHERE_API_KEY': 'cohere',
+  'GROQ_API_KEY': 'groq',
+  'PERPLEXITY_API_KEY': 'perplexity',
+  'FIREWORKS_API_KEY': 'fireworks',
+  'DEEPSEEK_API_KEY': 'deepseek',
+  'REPLICATE_API_TOKEN': 'replicate',
+};
+
+// Pre-built regexes for code-level detection
+const HTTP_URL_REGEX = new RegExp(
+  `https?://(${Object.keys(PROVIDER_URLS).map(u => u.replace(/\./g, '\\.')).join('|')})(/[^\\s"'\`]*)`,
+  'g'
+);
+
+const ENV_VAR_NAMES = Object.keys(ENV_VAR_PATTERNS);
+const PROCESS_ENV_REGEX = new RegExp(
+  `process\\.env\\.(${ENV_VAR_NAMES.join('|')})`,
+  'g'
+);
+const OS_ENVIRON_REGEX = new RegExp(
+  `os\\.environ\\[["'](${ENV_VAR_NAMES.join('|')})["']\\]`,
+  'g'
+);
+
 const PROXY_PROVIDERS = new Set([
   'openai', 'anthropic', 'google', 'together', 'mistral', 'cohere',
   'groq', 'perplexity', 'fireworks', 'deepseek', 'replicate',
@@ -469,6 +524,90 @@ export async function scannerRoutes(app: FastifyInstance) {
               });
             }
           }
+
+          // ── Code-level detection: SDK inits, HTTP URLs, env var refs ──
+          for (let i = 0; i < lines.length; i++) {
+            const ln = lines[i];
+
+            // SDK init detection
+            for (const { regex, provider } of SDK_INIT_PATTERNS) {
+              regex.lastIndex = 0;
+              let sdkMatch: RegExpExecArray | null;
+              while ((sdkMatch = regex.exec(ln)) !== null) {
+                const snippet = ln.slice(sdkMatch.index, sdkMatch.index + 40).trim();
+                findings.push({
+                  envName: `${provider.toUpperCase()}_API_KEY`,
+                  provider,
+                  file: file.path,
+                  line: i + 1,
+                  mode: 'sdk-init',
+                  verified: 'unknown',
+                  source: 'current',
+                  maskedValue: snippet.length > 36 ? snippet.slice(0, 36) + '...' : snippet,
+                  value: '',
+                });
+              }
+            }
+
+            // HTTP URL detection
+            HTTP_URL_REGEX.lastIndex = 0;
+            let urlMatch: RegExpExecArray | null;
+            while ((urlMatch = HTTP_URL_REGEX.exec(ln)) !== null) {
+              const host = urlMatch[1];
+              const provider = PROVIDER_URLS[host];
+              if (!provider) continue;
+              const url = urlMatch[0].length > 60 ? urlMatch[0].slice(0, 60) + '...' : urlMatch[0];
+              findings.push({
+                envName: `${provider.toUpperCase()}_API_KEY`,
+                provider,
+                file: file.path,
+                line: i + 1,
+                mode: 'http-url',
+                verified: 'unknown',
+                source: 'current',
+                maskedValue: url,
+                value: '',
+              });
+            }
+
+            // Env var reference detection (process.env.X / os.environ["X"])
+            PROCESS_ENV_REGEX.lastIndex = 0;
+            let envMatch: RegExpExecArray | null;
+            while ((envMatch = PROCESS_ENV_REGEX.exec(ln)) !== null) {
+              const varName = envMatch[1];
+              const provider = ENV_VAR_PATTERNS[varName];
+              if (!provider) continue;
+              findings.push({
+                envName: varName,
+                provider,
+                file: file.path,
+                line: i + 1,
+                mode: 'env-ref',
+                verified: 'unknown',
+                source: 'current',
+                maskedValue: `process.env.${varName}`,
+                value: '',
+              });
+            }
+
+            OS_ENVIRON_REGEX.lastIndex = 0;
+            while ((envMatch = OS_ENVIRON_REGEX.exec(ln)) !== null) {
+              const varName = envMatch[1];
+              const provider = ENV_VAR_PATTERNS[varName];
+              if (!provider) continue;
+              findings.push({
+                envName: varName,
+                provider,
+                file: file.path,
+                line: i + 1,
+                mode: 'env-ref',
+                verified: 'unknown',
+                source: 'current',
+                maskedValue: `os.environ["${varName}"]`,
+                value: '',
+              });
+            }
+          }
         }
       }
 
@@ -509,9 +648,11 @@ export async function scannerRoutes(app: FastifyInstance) {
         // Git history scan failed — continue
       }
 
-      // Verify keys (max 20)
-      for (let i = 0; i < Math.min(findings.length, 20); i += 5) {
-        const batch = findings.slice(i, i + 5);
+      // Verify keys (max 20) — skip code-level findings (no actual key value)
+      const CODE_LEVEL_MODES = new Set(['sdk-init', 'http-url', 'env-ref']);
+      const keyFindings = findings.filter((f) => !CODE_LEVEL_MODES.has(f.mode));
+      for (let i = 0; i < Math.min(keyFindings.length, 20); i += 5) {
+        const batch = keyFindings.slice(i, i + 5);
         await Promise.all(batch.map(async (f) => {
           f.verified = await verifyKey(f.provider, f.value);
         }));
@@ -537,19 +678,20 @@ export async function scannerRoutes(app: FastifyInstance) {
         )
       );
 
-      const keysActive = findings.filter((f) => f.verified === 'active').length;
-      const keysRevoked = findings.filter((f) => f.verified === 'revoked').length;
+      const keysActive = keyFindings.filter((f) => f.verified === 'active').length;
+      const keysRevoked = keyFindings.filter((f) => f.verified === 'revoked').length;
+      const keysFound = keyFindings.length;
 
       await prisma.scanResult.update({
         where: { id: scan.id },
-        data: { status: 'completed', completedAt: new Date(), keysFound: findings.length, keysActive, keysRevoked },
+        data: { status: 'completed', completedAt: new Date(), keysFound, keysActive, keysRevoked },
       });
-      await auditLog(userId, 'completed_scan', scan.id, { keysFound: findings.length, keysActive, keysRevoked });
+      await auditLog(userId, 'completed_scan', scan.id, { keysFound, keysActive, keysRevoked });
 
       return {
         scanId: scan.id,
         status: 'completed',
-        keysFound: findings.length,
+        keysFound,
         keysActive,
         keysRevoked,
         findings: dbFindings.map((f) => ({
