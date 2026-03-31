@@ -9,13 +9,13 @@
         *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
 
         :root {
-            --bg: #0a0a0f;
-            --surface: #111118;
-            --border: #1e1e2e;
+            --bg: #ffffff;
+            --surface: #f8f8fa;
+            --border: #e2e2e8;
             --accent: #6366f1;
             --cyan: #06b6d4;
-            --text: #ffffff;
-            --text-secondary: #a1a1aa;
+            --text: #111118;
+            --text-secondary: #52525b;
             --text-dim: #71717a;
         }
 
@@ -32,7 +32,7 @@
         }
 
         @media print {
-            body { background: var(--bg) !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+            body { background: #ffffff !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
             .slide { break-after: page; break-inside: avoid; }
         }
 
@@ -55,7 +55,7 @@
             right: -200px;
             width: 600px;
             height: 600px;
-            background: radial-gradient(circle, rgba(99,102,241,0.08) 0%, transparent 70%);
+            background: radial-gradient(circle, rgba(99,102,241,0.05) 0%, transparent 70%);
             pointer-events: none;
         }
 
@@ -162,7 +162,7 @@
         }
         .flow-box.highlight {
             border-color: var(--accent);
-            background: rgba(99,102,241,0.08);
+            background: rgba(99,102,241,0.06);
         }
         .flow-arrow {
             font-size: 28px;
@@ -336,7 +336,7 @@
             font-weight: 700;
         }
         .comp-highlight {
-            background: rgba(99,102,241,0.06);
+            background: rgba(99,102,241,0.04);
         }
         .checkmark { color: #22c55e; font-weight: 700; }
         .crossmark { color: #ef4444; font-weight: 700; }
@@ -423,9 +423,9 @@
 
 <!-- Slide 1: Cover -->
 <section class="slide cover">
-    <img src="logo-lg.png" alt="VaultProof">
+    <img src="og-image2.png" alt="VaultProof">
     <h1 class="gradient-text">VaultProof</h1>
-    <p class="tagline">The password manager for API keys.</p>
+    <p class="tagline">API keys that can't be stolen.<br>Because they're never exposed.</p>
     <span class="slide-number">1 / 9</span>
 </section>
 
@@ -513,27 +513,22 @@
         <div class="tier">
             <div class="tier-name">Free</div>
             <div class="tier-price"><span class="gradient-text">$0</span></div>
-            <div class="tier-detail">3 keys<br>100 proxy calls/day<br>Community support</div>
+            <div class="tier-detail">3 API keys<br>10,000 calls/month<br>1 developer key<br>7-day log retention</div>
         </div>
         <div class="tier">
             <div class="tier-name">Starter</div>
             <div class="tier-price"><span class="gradient-text">$5</span></div>
-            <div class="tier-detail">10 keys<br>1K proxy calls/day<br>Email support</div>
+            <div class="tier-detail">10 API keys<br>50,000 calls/month<br>3 developer keys<br>30-day log retention</div>
         </div>
         <div class="tier featured">
             <div class="tier-name">Pro</div>
-            <div class="tier-price"><span class="gradient-text">$15</span></div>
-            <div class="tier-detail">50 keys<br>10K proxy calls/day<br>Usage alerts &amp; webhooks</div>
-        </div>
-        <div class="tier">
-            <div class="tier-name">Team</div>
-            <div class="tier-price"><span class="gradient-text">$39</span></div>
-            <div class="tier-detail">Unlimited keys<br>50K proxy calls/day<br>Team management &amp; RBAC</div>
+            <div class="tier-price"><span class="gradient-text">$20</span></div>
+            <div class="tier-detail">100 API keys<br>500,000 calls/month<br>10 developer keys<br>IP allowlist, budget caps, alerts</div>
         </div>
         <div class="tier">
             <div class="tier-name">Enterprise</div>
             <div class="tier-price"><span class="gradient-text">Custom</span></div>
-            <div class="tier-detail">Unlimited everything<br>Dedicated proxy<br>SLA &amp; SOC 2</div>
+            <div class="tier-detail">Custom keys &amp; calls<br>Everything in Pro<br>Priority support<br>Custom limits &amp; retention</div>
         </div>
     </div>
     <span class="slide-number">6 / 9</span>
@@ -547,9 +542,9 @@
             <tr>
                 <th>Feature</th>
                 <th class="vp-col">VaultProof</th>
-                <th>AWS Secrets Manager</th>
-                <th>HashiCorp Vault</th>
                 <th>Doppler</th>
+                <th>Infisical</th>
+                <th>AWS SM</th>
             </tr>
         </thead>
         <tbody>
@@ -582,11 +577,39 @@
                 <td><span class="crossmark">&#10007;</span></td>
             </tr>
             <tr>
-                <td>AI-provider aware</td>
-                <td class="vp-col"><span class="checkmark">11+ providers</span></td>
-                <td>Generic</td>
-                <td>Generic</td>
-                <td>Generic</td>
+                <td>Per-key budget caps</td>
+                <td class="vp-col"><span class="checkmark">&#10003;</span></td>
+                <td><span class="crossmark">&#10007;</span></td>
+                <td><span class="crossmark">&#10007;</span></td>
+                <td><span class="crossmark">&#10007;</span></td>
+            </tr>
+            <tr>
+                <td>Kill switch (freeze all calls)</td>
+                <td class="vp-col"><span class="checkmark">&#10003;</span></td>
+                <td><span class="crossmark">&#10007;</span></td>
+                <td><span class="crossmark">&#10007;</span></td>
+                <td><span class="crossmark">&#10007;</span></td>
+            </tr>
+            <tr>
+                <td>Works with AI coding tools</td>
+                <td class="vp-col"><span class="checkmark">&#10003;</span></td>
+                <td>Partial</td>
+                <td>Partial</td>
+                <td><span class="crossmark">&#10007;</span></td>
+            </tr>
+            <tr>
+                <td>Free tier</td>
+                <td class="vp-col"><span class="checkmark">10K calls</span></td>
+                <td>5 users</td>
+                <td>5 users</td>
+                <td>Pay per use</td>
+            </tr>
+            <tr>
+                <td>Self-hosting required</td>
+                <td class="vp-col"><span class="checkmark">No</span></td>
+                <td><span class="checkmark">No</span></td>
+                <td>Optional</td>
+                <td><span class="checkmark">No</span></td>
             </tr>
         </tbody>
     </table>
