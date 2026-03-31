@@ -805,22 +805,40 @@
             ? '<span class="w-5 h-5 rounded-full bg-green-500/10 border border-green-500/20 flex items-center justify-center" title="Revoked"><svg class="w-3 h-3 text-green-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg></span>'
             : '<span class="w-5 h-5 rounded-full bg-gray-500/10 border border-gray-500/20 flex items-center justify-center" title="Unknown"><span class="text-xs text-gray-400">?</span></span>';
 
-          return '<tr class="border-b border-border hover:bg-white/[0.02] transition">' +
-            '<td class="px-4 py-3"><input type="checkbox" class="finding-cb rounded border-gray-600" data-idx="' + i + '" onchange="updatePrButton()"></td>' +
+          var pInfo = f.providerInfo || f.provider_info;
+          var pName = pInfo ? pInfo.name : (f.provider || 'Unknown');
+          var detailRow = '';
+          if (pInfo) {
+            detailRow = '<tr class="border-b border-border hidden" id="detail-' + i + '">' +
+              '<td colspan="8" class="px-4 py-3 bg-[#0d0d14]">' +
+                '<div class="pl-8 space-y-2 text-xs">' +
+                  '<p class="text-white font-medium">' + escapeHtml(pInfo.name) + ' — ' + escapeHtml(pInfo.desc) + '</p>' +
+                  '<p class="text-red-400">Risk: ' + escapeHtml(pInfo.risk) + '</p>' +
+                  '<div class="text-gray-400"><p class="font-medium text-gray-300 mb-1">How to fix:</p><ol class="list-decimal pl-4 space-y-0.5">' +
+                    pInfo.steps.map(function(s) { return '<li>' + escapeHtml(s) + '</li>'; }).join('') +
+                  '</ol></div>' +
+                  (f.rotationUrl || f.rotation_url ? '<a href="' + escapeHtml(f.rotationUrl || f.rotation_url) + '" target="_blank" rel="noopener" class="text-brand hover:underline inline-block mt-1">Open ' + escapeHtml(pInfo.name) + ' dashboard &rarr;</a>' : '') +
+                '</div>' +
+              '</td>' +
+            '</tr>';
+          }
+
+          return '<tr class="border-b border-border hover:bg-white/[0.02] transition cursor-pointer" onclick="toggleDetail(' + i + ')">' +
+            '<td class="px-4 py-3" onclick="event.stopPropagation()"><input type="checkbox" class="finding-cb rounded border-gray-600" data-idx="' + i + '" onchange="updatePrButton()"></td>' +
             '<td class="px-4 py-3">' + statusIcon + '</td>' +
-            '<td class="px-4 py-3 text-white font-medium text-xs font-mono">' + escapeHtml(f.key_name || f.keyName || '') + '</td>' +
-            '<td class="px-4 py-3 text-gray-400 text-xs">' + escapeHtml(f.provider || '') + '</td>' +
+            '<td class="px-4 py-3 text-white font-medium text-xs font-mono">' + escapeHtml(f.envName || f.env_name || f.key_name || f.keyName || '') + '</td>' +
+            '<td class="px-4 py-3 text-gray-400 text-xs">' + escapeHtml(pName) + '</td>' +
             '<td class="px-4 py-3 text-gray-400 text-xs font-mono">' + escapeHtml((f.file || '') + (f.line ? ':' + f.line : '')) + '</td>' +
             '<td class="px-4 py-3 text-gray-400 text-xs">' + escapeHtml(f.source || 'code') + '</td>' +
             '<td class="px-4 py-3 text-gray-400 text-xs">' + escapeHtml(f.mode || '') + '</td>' +
-            '<td class="px-4 py-3 text-right">' +
+            '<td class="px-4 py-3 text-right" onclick="event.stopPropagation()">' +
               '<select class="bg-[#111118] border border-[#1e1e2e] rounded-lg px-2 py-1 text-xs text-gray-300 focus:outline-none focus:border-brand/50" data-finding-idx="' + i + '">' +
                 '<option value="store">Store in VaultProof</option>' +
                 '<option value="pr">Create PR</option>' +
                 '<option value="ignore">Ignore</option>' +
               '</select>' +
             '</td>' +
-          '</tr>';
+          '</tr>' + detailRow;
         }).join('');
       }
 
@@ -829,11 +847,16 @@
       if (historyFindings.length) {
         histSection.classList.remove('hidden');
         document.getElementById('gitHistoryBody').innerHTML = historyFindings.map(function(f) {
+          var hInfo = f.providerInfo || f.provider_info;
+          var hName = hInfo ? hInfo.name : (f.provider || 'Unknown');
+          var rotUrl = f.rotationUrl || f.rotation_url || ROTATION_URLS[f.provider];
           return '<tr class="border-b border-border hover:bg-white/[0.02] transition">' +
-            '<td class="px-4 py-3 text-white font-medium text-xs font-mono">' + escapeHtml(f.key_name || f.keyName || '') + '</td>' +
-            '<td class="px-4 py-3 text-gray-400 text-xs">' + escapeHtml(f.provider || '') + '</td>' +
-            '<td class="px-4 py-3 text-gray-400 text-xs font-mono">' + escapeHtml(f.commit ? f.commit.substring(0, 7) : '') + '</td>' +
-            '<td class="px-4 py-3 text-right"><a href="https://docs.github.com/en/authentication/keeping-your-account-and-data-secure/removing-sensitive-data-from-a-repository" target="_blank" class="text-yellow-400 hover:underline text-xs">Rotate key</a></td>' +
+            '<td class="px-4 py-3 text-white font-medium text-xs font-mono">' + escapeHtml(f.envName || f.env_name || f.key_name || f.keyName || '') + '</td>' +
+            '<td class="px-4 py-3 text-gray-400 text-xs">' + escapeHtml(hName) + (hInfo ? '<br><span class="text-gray-600">' + escapeHtml(hInfo.desc) + '</span>' : '') + '</td>' +
+            '<td class="px-4 py-3 text-gray-400 text-xs font-mono">' + escapeHtml(f.maskedValue || f.masked_value || (f.commit ? f.commit.substring(0, 7) : '')) + '</td>' +
+            '<td class="px-4 py-3 text-right">' +
+              (rotUrl ? '<a href="' + escapeHtml(rotUrl) + '" target="_blank" rel="noopener" class="text-yellow-400 hover:underline text-xs">Rotate at ' + escapeHtml(hName) + '</a>' : '<span class="text-gray-500 text-xs">Rotate manually</span>') +
+            '</td>' +
           '</tr>';
         }).join('');
       } else {
@@ -847,6 +870,11 @@
       var checked = document.getElementById('selectAll').checked;
       document.querySelectorAll('.finding-cb').forEach(function(cb) { cb.checked = checked; });
       updatePrButton();
+    }
+
+    function toggleDetail(idx) {
+      var row = document.getElementById('detail-' + idx);
+      if (row) row.classList.toggle('hidden');
     }
 
     function updatePrButton() {

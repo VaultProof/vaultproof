@@ -97,6 +97,24 @@ const ROTATION_URLS: Record<string, string> = {
   posthog: 'https://app.posthog.com/project/settings',
 };
 
+const PROVIDER_INFO: Record<string, { name: string; desc: string; risk: string; steps: string[] }> = {
+  openai: { name: 'OpenAI', desc: 'AI language models (GPT-4, DALL-E, Whisper)', risk: 'Anyone with this key can make API calls charged to your account', steps: ['Go to https://platform.openai.com/api-keys', 'Create a new secret key', 'Delete the old key', 'Update your .env'] },
+  anthropic: { name: 'Anthropic', desc: 'Claude AI models', risk: 'Anyone with this key can make Claude API calls charged to your account', steps: ['Go to https://console.anthropic.com/settings/keys', 'Create a new API key', 'Delete the old key', 'Update your .env'] },
+  stripe: { name: 'Stripe', desc: 'Payment processing', risk: 'A live key can create charges, issue refunds, and access customer data', steps: ['Go to https://dashboard.stripe.com/apikeys', "Click 'Roll key' next to the compromised key", 'Update your .env and hosting env vars'] },
+  google: { name: 'Google / Firebase', desc: 'Google Cloud APIs, Firebase, Maps', risk: 'Could access cloud resources or incur charges depending on enabled APIs', steps: ['Go to https://console.cloud.google.com/apis/credentials', 'Delete the old key and create a new one', 'Update your .env'] },
+  aws: { name: 'AWS', desc: 'Amazon Web Services', risk: 'Full access depending on IAM permissions — can incur massive charges', steps: ['Go to https://console.aws.amazon.com/iam', 'Deactivate the old access key', 'Create a new access key pair', 'Update all environments'] },
+  github: { name: 'GitHub', desc: 'Code repos, Actions, Packages', risk: 'Can read/write repos, trigger workflows, access org data', steps: ['Go to https://github.com/settings/tokens', 'Delete the token', 'Generate a new one with minimal scopes', 'Update your .env and CI secrets'] },
+  supabase: { name: 'Supabase', desc: 'Database, Auth, Storage', risk: 'Service role key bypasses RLS and has full database access', steps: ['Go to Supabase Dashboard > Settings > API', 'Keys cannot be rotated without recreating the project', 'Restrict database access immediately if service key is exposed'] },
+  sendgrid: { name: 'SendGrid', desc: 'Email delivery', risk: 'Can send emails from your domain — potential for phishing', steps: ['Go to https://app.sendgrid.com/settings/api_keys', 'Delete the old key', 'Create a new one', 'Update your .env'] },
+  resend: { name: 'Resend', desc: 'Email API', risk: 'Can send emails from your verified domains', steps: ['Go to https://resend.com/api-keys', 'Delete the old key', 'Create a new one', 'Update your .env'] },
+  slack: { name: 'Slack', desc: 'Team messaging', risk: 'Can post messages, read channels, access workspace data', steps: ['Go to https://api.slack.com/apps', 'Reinstall the app to generate new tokens', 'Update your .env'] },
+  twilio: { name: 'Twilio', desc: 'SMS and voice', risk: 'Can send SMS/calls charged to your account', steps: ['Go to https://console.twilio.com', 'Rotate your Auth Token', 'Update your .env'] },
+  datadog: { name: 'Datadog', desc: 'Monitoring', risk: 'Can access metrics, logs, and traces', steps: ['Go to https://app.datadoghq.com/organization-settings/api-keys', 'Revoke and recreate', 'Update your .env'] },
+  contentful: { name: 'Contentful', desc: 'Headless CMS', risk: 'Can read/write content and manage spaces', steps: ['Go to https://app.contentful.com/account/profile/cma_tokens', 'Revoke and recreate', 'Update your .env'] },
+  fauna: { name: 'FaunaDB', desc: 'Serverless database', risk: 'Can read/write data depending on key permissions', steps: ['Go to https://dashboard.fauna.com > Security > Keys', 'Delete and recreate', 'Update your .env'] },
+  posthog: { name: 'PostHog', desc: 'Product analytics', risk: 'Can access analytics events and user data', steps: ['Go to https://app.posthog.com/project/settings', 'Rotate your project API key', 'Update your .env'] },
+};
+
 const VERIFY_ENDPOINTS: Record<string, { url: string; headers: (key: string) => Record<string, string> }> = {
   openai:    { url: 'https://api.openai.com/v1/models', headers: (k) => ({ Authorization: `Bearer ${k}` }) },
   anthropic: { url: 'https://api.anthropic.com/v1/models', headers: (k) => ({ 'x-api-key': k, 'anthropic-version': '2023-06-01' }) },
@@ -538,6 +556,7 @@ export async function scannerRoutes(app: FastifyInstance) {
           id: f.id, envName: f.envName, provider: f.provider, file: f.file, line: f.line,
           mode: f.mode, verified: f.verified, source: f.source, maskedValue: f.maskedValue,
           rotationUrl: ROTATION_URLS[f.provider] || null,
+          providerInfo: PROVIDER_INFO[f.provider] || null,
         })),
       };
     } catch (err) {
@@ -584,6 +603,7 @@ export async function scannerRoutes(app: FastifyInstance) {
       findings: scan.findings.map((f) => ({
         ...f,
         rotationUrl: ROTATION_URLS[f.provider] || null,
+          providerInfo: PROVIDER_INFO[f.provider] || null,
       })),
     };
   });

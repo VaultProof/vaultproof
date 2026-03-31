@@ -1619,6 +1619,130 @@ const ROTATION_URLS: Record<string, string> = {
   firebase: "https://console.firebase.google.com/project/_/settings/general",
 };
 
+// Provider info — descriptions, risk, and fix steps for scan output
+const PROVIDER_INFO: Record<string, { name: string; desc: string; risk: string; steps: string[] }> = {
+  openai: {
+    name: "OpenAI",
+    desc: "AI language models (GPT-4, DALL-E, Whisper)",
+    risk: "Anyone with this key can make API calls charged to your account",
+    steps: ["Go to https://platform.openai.com/api-keys", "Click 'Create new secret key'", "Delete or revoke the old key", "Update your .env with the new key"],
+  },
+  anthropic: {
+    name: "Anthropic",
+    desc: "Claude AI models",
+    risk: "Anyone with this key can make Claude API calls charged to your account",
+    steps: ["Go to https://console.anthropic.com/settings/keys", "Create a new API key", "Delete the old key", "Update your .env with the new key"],
+  },
+  stripe: {
+    name: "Stripe",
+    desc: "Payment processing (charges, subscriptions, refunds)",
+    risk: "A live key can create charges, issue refunds, and access customer data",
+    steps: ["Go to https://dashboard.stripe.com/apikeys", "Click 'Roll key' next to the compromised key", "Stripe generates a new key automatically", "Update your .env and hosting env vars"],
+  },
+  google: {
+    name: "Google / Firebase",
+    desc: "Google Cloud APIs, Firebase, Maps, Analytics",
+    risk: "Depending on enabled APIs, could access cloud resources or incur charges",
+    steps: ["Go to https://console.cloud.google.com/apis/credentials", "Delete the compromised key", "Create a new API key with appropriate restrictions", "Update your .env"],
+  },
+  aws: {
+    name: "AWS",
+    desc: "Amazon Web Services (S3, EC2, Lambda, etc.)",
+    risk: "Full access to your AWS account depending on IAM permissions. Can spin up resources and incur massive charges",
+    steps: ["Go to https://console.aws.amazon.com/iam/home#/security_credentials", "Deactivate the compromised access key", "Create a new access key pair", "Update all environments using the old key"],
+  },
+  github: {
+    name: "GitHub",
+    desc: "Code repositories, Actions, Packages",
+    risk: "Can read/write your repositories, trigger workflows, and access organization data",
+    steps: ["Go to https://github.com/settings/tokens", "Delete the compromised token", "Generate a new token with minimal scopes", "Update your .env and CI secrets"],
+  },
+  supabase: {
+    name: "Supabase",
+    desc: "Database, Auth, Storage, Realtime",
+    risk: "Anon key: limited to row-level security policies. Service role key: bypasses RLS and has full database access",
+    steps: ["Go to https://supabase.com/dashboard/project/_/settings/api", "Note: Supabase keys can't be rotated without recreating the project", "If service role key is exposed, restrict database access immediately"],
+  },
+  sendgrid: {
+    name: "SendGrid",
+    desc: "Transactional email delivery",
+    risk: "Can send emails from your domain, potentially for phishing or spam",
+    steps: ["Go to https://app.sendgrid.com/settings/api_keys", "Delete the compromised key", "Create a new API key with minimal permissions", "Update your .env"],
+  },
+  resend: {
+    name: "Resend",
+    desc: "Email API for developers",
+    risk: "Can send emails from your verified domains",
+    steps: ["Go to https://resend.com/api-keys", "Delete the compromised key", "Create a new API key", "Update your .env"],
+  },
+  twilio: {
+    name: "Twilio",
+    desc: "SMS, voice calls, messaging",
+    risk: "Can send SMS/calls charged to your account, access phone numbers",
+    steps: ["Go to https://console.twilio.com", "Rotate your Auth Token under Account Settings", "Update your .env with the new token"],
+  },
+  slack: {
+    name: "Slack",
+    desc: "Team messaging and workspace APIs",
+    risk: "Can post messages, read channels, and access workspace data",
+    steps: ["Go to https://api.slack.com/apps", "Select your app, go to OAuth & Permissions", "Reinstall the app to generate new tokens", "Update your .env"],
+  },
+  discord: {
+    name: "Discord",
+    desc: "Bot tokens and webhook URLs",
+    risk: "Full control of your Discord bot — can send messages, manage servers",
+    steps: ["Go to https://discord.com/developers/applications", "Select your app, go to Bot settings", "Click 'Reset Token'", "Update your .env"],
+  },
+  together: {
+    name: "Together AI",
+    desc: "Open-source AI model hosting",
+    risk: "Can make inference calls charged to your account",
+    steps: ["Go to https://api.together.xyz/settings/api-keys", "Delete the old key and create a new one", "Update your .env"],
+  },
+  groq: {
+    name: "Groq",
+    desc: "Fast AI inference (LPU)",
+    risk: "Can make API calls charged to your account",
+    steps: ["Go to https://console.groq.com/keys", "Delete the old key and create a new one", "Update your .env"],
+  },
+  datadog: {
+    name: "Datadog",
+    desc: "Monitoring and observability",
+    risk: "Can access metrics, logs, and traces from your infrastructure",
+    steps: ["Go to https://app.datadoghq.com/organization-settings/api-keys", "Revoke the compromised key", "Create a new API key", "Update your .env"],
+  },
+  contentful: {
+    name: "Contentful",
+    desc: "Headless CMS",
+    risk: "Can read/write your content, publish entries, and manage spaces",
+    steps: ["Go to https://app.contentful.com/account/profile/cma_tokens", "Revoke the compromised token", "Create a new personal access token", "Update your .env"],
+  },
+  fauna: {
+    name: "FaunaDB",
+    desc: "Serverless database",
+    risk: "Can read/write data in your databases depending on key permissions",
+    steps: ["Go to https://dashboard.fauna.com", "Navigate to Security > Keys", "Delete the compromised key and create a new one", "Update your .env"],
+  },
+  posthog: {
+    name: "PostHog",
+    desc: "Product analytics",
+    risk: "Can access analytics events, feature flags, and user data",
+    steps: ["Go to https://app.posthog.com/project/settings", "Rotate your project API key", "Update your .env"],
+  },
+  neon: {
+    name: "Neon",
+    desc: "Serverless Postgres",
+    risk: "Can access your database with the permissions assigned to the role",
+    steps: ["Go to https://console.neon.tech", "Reset the password for the database role", "Update your connection string"],
+  },
+  upstash: {
+    name: "Upstash",
+    desc: "Serverless Redis and Kafka",
+    risk: "Can read/write data in your Redis or Kafka instances",
+    steps: ["Go to https://console.upstash.com", "Regenerate the REST token for your database", "Update your .env"],
+  },
+};
+
 // Base URL env var names for proxy-mode providers
 const BASE_URL_MAP: Record<string, string> = {
   openai: "OPENAI_BASE_URL",
@@ -2307,6 +2431,8 @@ ${chalk.bold("Example:")}
           entropy: shannonEntropy(k.value),
           verified: verifyResults?.get(k.value) || null,
           masked: k.value.slice(0, 6) + "..." + k.value.slice(-4),
+          info: PROVIDER_INFO[k.provider] || null,
+          rotationUrl: ROTATION_URLS[k.provider] || null,
         })),
         configReminders: configReminders.map((r) => ({ file: r.file, envName: r.envName, type: r.type })),
         account: { tier: tierInfo.tier, slotsUsed: tierInfo.used, slotsLimit: tierInfo.limit, slotsAvailable: tierInfo.available },
@@ -2333,7 +2459,8 @@ ${chalk.bold("Example:")}
         const masked = key.value.slice(0, 6) + "..." + key.value.slice(-4);
         const modeTag = key.mode === "proxy" ? chalk.cyan("proxy") : chalk.magenta("env-injection");
         const lineTag = key.line ? chalk.dim(`:${key.line}`) : "";
-        const providerTag = key.provider ? chalk.dim(` (${key.provider})`) : chalk.yellow(" (unknown provider)");
+        const pInfo = PROVIDER_INFO[key.provider];
+        const providerTag = pInfo ? chalk.dim(` (${pInfo.name})`) : key.provider ? chalk.dim(` (${key.provider})`) : chalk.yellow(" (unknown provider)");
         const verifyTag = verifyResults?.get(key.value)
           ? (verifyResults.get(key.value) === "active" ? chalk.green(" ✓ active")
             : verifyResults.get(key.value) === "revoked" ? chalk.red(" ✗ revoked")
@@ -2377,11 +2504,19 @@ ${chalk.bold("Example:")}
       for (const key of activeKeys) {
         const masked = key.value.slice(0, 6) + "..." + key.value.slice(-4);
         const rotateUrl = ROTATION_URLS[key.provider];
+        const info = PROVIDER_INFO[key.provider];
         console.log(chalk.red(`    ${key.envName} (${masked})`));
-        if (rotateUrl) {
+        if (info) {
+          console.log(chalk.dim(`      ${info.name} — ${info.desc}`));
+          console.log(chalk.dim(`      Risk: ${info.risk}`));
+          console.log(chalk.dim(`      How to fix:`));
+          for (const step of info.steps) {
+            console.log(chalk.dim(`        ${step}`));
+          }
+        } else if (rotateUrl) {
           console.log(chalk.dim(`      Rotate at: ${rotateUrl}`));
+          console.log(chalk.dim(`      Then update your .env with the new key`));
         }
-        console.log(chalk.dim(`      Then update your .env with the new key`));
         console.log();
       }
     }
