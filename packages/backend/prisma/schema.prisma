@@ -206,6 +206,7 @@ model ScanResult {
   startedAt     DateTime      @default(now()) @map("started_at")
   completedAt   DateTime?     @map("completed_at")
   errorMessage  String?       @map("error_message")
+  platforms     Json?         @default("[]")
   findings      ScanFinding[]
   auditLogs     ScanAuditLog[]
 

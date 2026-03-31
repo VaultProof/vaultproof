@@ -172,6 +172,23 @@ const PROVIDER_INFO: Record<string, { name: string; desc: string; risk: string; 
   posthog: { name: 'PostHog', desc: 'Product analytics', risk: 'Can access analytics events and user data', steps: ['Go to https://app.posthog.com/project/settings', 'Rotate your project API key', 'Update your .env'] },
 };
 
+// ─── Hosting platform detection ─────────────────────────────────────────────
+
+const PLATFORM_FILES: Record<string, string> = {
+  'vercel.json': 'Vercel',
+  '.vercel/project.json': 'Vercel',
+  'railway.toml': 'Railway',
+  'railway.json': 'Railway',
+  'fly.toml': 'Fly.io',
+  'render.yaml': 'Render',
+  'netlify.toml': 'Netlify',
+  'Dockerfile': 'Docker',
+  'docker-compose.yml': 'Docker Compose',
+  'docker-compose.yaml': 'Docker Compose',
+  'heroku.yml': 'Heroku',
+  'Procfile': 'Heroku',
+};
+
 const VERIFY_ENDPOINTS: Record<string, { url: string; headers: (key: string) => Record<string, string> }> = {
   openai:    { url: 'https://api.openai.com/v1/models', headers: (k) => ({ Authorization: `Bearer ${k}` }) },
   anthropic: { url: 'https://api.anthropic.com/v1/models', headers: (k) => ({ 'x-api-key': k, 'anthropic-version': '2023-06-01' }) },
@@ -454,6 +471,16 @@ export async function scannerRoutes(app: FastifyInstance) {
       const tree = await githubApi(ghToken, `/repos/${repoFullName}/git/trees/${targetBranch}?recursive=1`);
       const files = (tree.tree as any[]).filter((f: any) => f.type === 'blob' && shouldScanFile(f.path));
 
+      // Detect hosting platforms from repo config files
+      const allPaths = (tree.tree as any[]).map((f: any) => f.path as string);
+      const platformSet = new Set<string>();
+      for (const filePath of allPaths) {
+        const platform = PLATFORM_FILES[filePath];
+        if (platform) platformSet.add(platform);
+        if (filePath.startsWith('.github/workflows/')) platformSet.add('GitHub Actions');
+      }
+      const platforms = [...platformSet];
+
       // Internal findings (value kept in memory, never stored)
       const findings: Array<{
         envName: string; provider: string; file: string; line: number | null;
@@ -686,7 +713,7 @@ export async function scannerRoutes(app: FastifyInstance) {
 
       await prisma.scanResult.update({
         where: { id: scan.id },
-        data: { status: 'completed', completedAt: new Date(), keysFound, keysActive, keysRevoked },
+        data: { status: 'completed', completedAt: new Date(), keysFound, keysActive, keysRevoked, platforms },
       });
       await auditLog(userId, 'completed_scan', scan.id, { keysFound, keysActive, keysRevoked });
 
@@ -696,6 +723,7 @@ export async function scannerRoutes(app: FastifyInstance) {
         keysFound,
         keysActive,
         keysRevoked,
+        platforms,
         findings: dbFindings.map((f) => ({
           id: f.id, envName: f.envName, provider: f.provider, file: f.file, line: f.line,
           mode: f.mode, verified: f.verified, source: f.source, maskedValue: f.maskedValue,
@@ -1532,7 +1560,7 @@ ${historyWarning}
       prNumber,
       devKey: devKeyCreated ? vpLiveKey : undefined,
       storedKeys,
-      platforms: [], // Will be populated by Task 4
+      platforms: (scan.platforms as string[]) || []
     };
   });
 }
