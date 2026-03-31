@@ -109,8 +109,7 @@
     /* Guided Tour */
     .guide-overlay {
       position: fixed; inset: 0; z-index: 200;
-      background: rgba(0,0,0,0.5);
-      backdrop-filter: blur(2px);
+      background: rgba(0,0,0,0.35);
       pointer-events: none; opacity: 0;
       transition: opacity 0.3s ease;
     }
@@ -136,9 +135,10 @@
     .guide-bubble-arrow[data-pos="right"] { left: -7px; top: 16px; border-top: none; border-right: none; }
     .guide-highlight {
       position: relative; z-index: 201;
-      box-shadow: 0 0 0 4px rgba(99,102,241,0.3), 0 0 20px rgba(99,102,241,0.15);
+      background: #111118;
+      box-shadow: 0 0 0 4px rgba(99,102,241,0.4), 0 0 30px rgba(99,102,241,0.2);
       border-radius: 12px;
-      transition: box-shadow 0.3s ease;
+      transition: box-shadow 0.3s ease, background 0.3s ease;
     }
   </style>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -248,6 +248,11 @@
       </div>
 
       <div class="flex items-center gap-3">
+        <!-- Onboarding tour button -->
+        <button id="onboardingBtn" onclick="startAppTour()" class="hidden items-center gap-2 px-3 py-1.5 bg-brand/10 hover:bg-brand/20 text-brand border border-brand/20 rounded-lg text-xs font-medium transition">
+          <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+          Tour
+        </button>
         <!-- Notification bell -->
         <div class="relative">
           <button id="notifBell" onclick="toggleNotifications()" class="relative p-2 text-gray-400 hover:text-white transition rounded-lg hover:bg-white/5">
@@ -301,15 +306,9 @@
         <div class="max-w-[1200px] space-y-8">
 
           <!-- Page Header -->
-          <div class="anim-fade-up flex items-center justify-between">
-            <div>
-              <h1 class="text-2xl font-bold tracking-tight">Dashboard</h1>
-              <p class="text-gray-500 text-sm mt-1">Monitor your API key usage and activity</p>
-            </div>
-            <button id="onboardingBtn" onclick="startAppTour()" class="hidden items-center gap-2 px-4 py-2 bg-brand/10 hover:bg-brand/20 text-brand border border-brand/20 rounded-xl text-sm font-medium transition">
-              <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
-              Getting Started
-            </button>
+          <div class="anim-fade-up">
+            <h1 class="text-2xl font-bold tracking-tight">Dashboard</h1>
+            <p class="text-gray-500 text-sm mt-1">Monitor your API key usage and activity</p>
           </div>
 
           <!-- Onboarding Checklist -->
