@@ -76,10 +76,7 @@
         }
 
         .gradient-text {
-            background: linear-gradient(135deg, var(--accent), var(--cyan));
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            background-clip: text;
+            color: #1e3a5f;
         }
 
         p, li {
@@ -425,26 +422,22 @@
 </head>
 <body>
 
-<!-- Slide 1: Cover -->
-<section class="slide cover">
-    <img src="og-image2.png" alt="VaultProof">
-    <h1 class="gradient-text">VaultProof</h1>
-    <p class="tagline">API keys that can't be stolen.<br>Because they're never exposed.</p>
-    <span class="slide-number">1 / 9</span>
-</section>
-
-<!-- Slide 2: Problem -->
+<!-- Slide 1: Problem -->
 <section class="slide">
+    <div style="display:flex;align-items:center;gap:18px;margin-bottom:20px;">
+        <img src="og-image2.png" alt="VaultProof" style="width:56px;height:56px;">
+        <span style="font-family:'Space Grotesk',sans-serif;font-size:36px;font-weight:700;color:#1e3a5f;letter-spacing:-0.5px;">VaultProof</span>
+    </div>
     <h1>Here's what no one<br>is <span class="gradient-text">talking about.</span></h1>
     <ul class="problem-list">
         <li>Every AI company stores API keys in .env files, config repos, and Slack threads. One copy-paste and they're gone.</li>
         <li>One leaked key. That's all it takes. Someone racks up a six-figure bill overnight. No rate limit saves you. No kill switch is fast enough.</li>
         <li>And here's the part that should make you uncomfortable: every secrets manager on the market — AWS, HashiCorp, Doppler — hands the raw key right back to your app. The key is still exposed. The "solution" doesn't actually solve anything.</li>
     </ul>
-    <span class="slide-number">2 / 9</span>
+    <span class="slide-number">1 / 9</span>
 </section>
 
-<!-- Slide 3: Solution -->
+<!-- Slide 2: Solution -->
 <section class="slide">
     <h1>We don't return the key.<br><span class="gradient-text">We use it for you.</span></h1>
     <div class="flow">
@@ -454,11 +447,10 @@
         <div class="flow-arrow">&#8594;</div>
         <div class="flow-box">AI Provider</div>
     </div>
-    <p class="solution-note">Your app talks to VaultProof. VaultProof talks to the AI provider. The key never leaves our server. Your code never touches the secret.</p>
-    <span class="slide-number">3 / 9</span>
+    <span class="slide-number">2 / 9</span>
 </section>
 
-<!-- Slide 4: How It Works -->
+<!-- Slide 3: How It Works -->
 <section class="slide">
     <h1>Three steps. <span class="gradient-text">That's it.</span></h1>
     <div class="steps">
@@ -476,6 +468,29 @@
             <div class="step-number">03</div>
             <div class="step-title">Zero</div>
             <p>The key exists in memory for about 100 milliseconds. Then it's wiped. Never sent to the client. Never logged. Never stored whole.</p>
+        </div>
+    </div>
+    <span class="slide-number">3 / 9</span>
+</section>
+
+<!-- Slide 4: User Experience -->
+<section class="slide">
+    <h1>What the developer <span class="gradient-text">actually does.</span></h1>
+    <div class="steps">
+        <div class="step">
+            <div class="step-number">01</div>
+            <div class="step-title">Connect</div>
+            <p>Link your repo. Our migration tool scans your codebase and finds every API key, SDK init, and raw HTTP call.</p>
+        </div>
+        <div class="step">
+            <div class="step-number">02</div>
+            <div class="step-title">Review</div>
+            <p>We generate the changes. You review them. Every base URL, auth header, and env var — rewritten to route through VaultProof.</p>
+        </div>
+        <div class="step">
+            <div class="step-number">03</div>
+            <div class="step-title">Merge</div>
+            <p>Add one environment variable. Merge the PR. Every API call in your codebase is now secured. Done.</p>
         </div>
     </div>
     <span class="slide-number">4 / 9</span>
@@ -654,7 +669,6 @@
     <h1>Here's what we <span class="gradient-text">build next.</span></h1>
     <div class="funds">
         <div class="fund">
-            <div class="fund-icon">&#9881;</div>
             <div class="fund-title">Engineering</div>
             <ul class="fund-items">
                 <li>Auto-migration tool</li>
@@ -664,7 +678,6 @@
             </ul>
         </div>
         <div class="fund">
-            <div class="fund-icon">&#9889;</div>
             <div class="fund-title">Go-to-Market</div>
             <ul class="fund-items">
                 <li>Developer community</li>
@@ -674,7 +687,6 @@
             </ul>
         </div>
         <div class="fund">
-            <div class="fund-icon">&#9878;</div>
             <div class="fund-title">Infrastructure</div>
             <ul class="fund-items">
                 <li>Edge proxy scaling</li>
@@ -684,7 +696,6 @@
             </ul>
         </div>
         <div class="fund">
-            <div class="fund-icon">&#128274;</div>
             <div class="fund-title">Security</div>
             <ul class="fund-items">
                 <li>SOC 2 certification</li>
