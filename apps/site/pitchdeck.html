@@ -11,7 +11,7 @@
         :root {
             --bg: #ffffff;
             --surface: #f8f8fa;
-            --border: #e2e2e8;
+            --border: #c4c4ce;
             --accent: #6366f1;
             --cyan: #06b6d4;
             --text: #111118;
@@ -431,18 +431,18 @@
 
 <!-- Slide 2: Problem -->
 <section class="slide">
-    <h1>Every AI company has the same<br>hidden <span class="gradient-text">vulnerability.</span></h1>
+    <h1>Here's what no one<br>is <span class="gradient-text">talking about.</span></h1>
     <ul class="problem-list">
-        <li>API keys live in .env files, config repos, and Slack messages. One copy-paste away from exposure.</li>
-        <li>One leaked key means unlimited spend on someone else's credit card. No rate limit. No kill switch fast enough.</li>
-        <li>Every secrets manager on the market — AWS, HashiCorp, Doppler — hands the raw key back to your app. The key is still exposed.</li>
+        <li>Every AI company stores API keys in .env files, config repos, and Slack threads. One copy-paste and they're gone.</li>
+        <li>One leaked key. That's all it takes. Someone racks up a six-figure bill overnight. No rate limit saves you. No kill switch is fast enough.</li>
+        <li>And here's the part that should make you uncomfortable: every secrets manager on the market — AWS, HashiCorp, Doppler — hands the raw key right back to your app. The key is still exposed. The "solution" doesn't actually solve anything.</li>
     </ul>
     <span class="slide-number">2 / 9</span>
 </section>
 
 <!-- Slide 3: Solution -->
 <section class="slide">
-    <h1>VaultProof never returns the key.<br><span class="gradient-text">It uses it for you.</span></h1>
+    <h1>We don't return the key.<br><span class="gradient-text">We use it for you.</span></h1>
     <div class="flow">
         <div class="flow-box">Your App</div>
         <div class="flow-arrow">&#8594;</div>
@@ -450,28 +450,28 @@
         <div class="flow-arrow">&#8594;</div>
         <div class="flow-box">AI Provider</div>
     </div>
-    <p class="solution-note">The key stays inside VaultProof. Your code never touches the secret. The response flows back.</p>
+    <p class="solution-note">Your app talks to VaultProof. VaultProof talks to the AI provider. The key never leaves our server. Your code never touches the secret.</p>
     <span class="slide-number">3 / 9</span>
 </section>
 
 <!-- Slide 4: How It Works -->
 <section class="slide">
-    <h1><span class="gradient-text">Split. Proxy. Zero.</span></h1>
+    <h1>Three steps. <span class="gradient-text">That's it.</span></h1>
     <div class="steps">
         <div class="step">
             <div class="step-number">01</div>
             <div class="step-title">Split</div>
-            <p>API key is Shamir-split into two encrypted shares the moment it's stored. The raw key is destroyed immediately.</p>
+            <p>You store a key. We split it into two encrypted pieces instantly. The original is destroyed. Gone. It doesn't exist anymore.</p>
         </div>
         <div class="step">
             <div class="step-number">02</div>
             <div class="step-title">Proxy</div>
-            <p>Your app calls VaultProof. The server reconstructs the key, forwards the request to the AI provider, and streams the response back.</p>
+            <p>Your app sends a request to VaultProof. We reconstruct the key on our server, make the API call for you, and stream the response back.</p>
         </div>
         <div class="step">
             <div class="step-number">03</div>
             <div class="step-title">Zero</div>
-            <p>The reconstructed key is wiped from memory in ~100ms. It is never sent to the client. Never logged. Never stored whole.</p>
+            <p>The key exists in memory for about 100 milliseconds. Then it's wiped. Never sent to the client. Never logged. Never stored whole.</p>
         </div>
     </div>
     <span class="slide-number">4 / 9</span>
@@ -479,7 +479,7 @@
 
 <!-- Slide 5: Market Size -->
 <section class="slide">
-    <h1>AI API spend is <span class="gradient-text">exploding.</span></h1>
+    <h1>The market isn't emerging.<br><span class="gradient-text">It's already here.</span></h1>
     <div class="market-circles">
         <div class="market-circle">
             <div class="market-ring tam">
@@ -508,7 +508,7 @@
 
 <!-- Slide 6: Business Model -->
 <section class="slide">
-    <h1>SaaS pricing that <span class="gradient-text">scales with usage.</span></h1>
+    <h1>More API calls.<br><span class="gradient-text">More revenue. Automatically.</span></h1>
     <div class="tiers">
         <div class="tier">
             <div class="tier-name">Free</div>
@@ -618,27 +618,27 @@
 
 <!-- Slide 8: Why Now -->
 <section class="slide">
-    <h1>Three forces <span class="gradient-text">converging.</span></h1>
+    <h1>This wasn't possible <span class="gradient-text">two years ago.</span></h1>
     <div class="forces">
         <div class="force">
             <div class="force-num">1</div>
             <div class="force-content">
-                <h3>AI API spend is growing exponentially</h3>
-                <p>Every new AI feature means another API key to protect. The attack surface grows with every deployment.</p>
+                <h3>AI API spend didn't exist at this scale</h3>
+                <p>Now every company is building with OpenAI, Anthropic, and Google. Every new feature ships with a new API key. The attack surface is growing faster than anyone can secure it.</p>
             </div>
         </div>
         <div class="force">
             <div class="force-num">2</div>
             <div class="force-content">
-                <h3>Key leaks are becoming front-page incidents</h3>
-                <p>Exposed keys lead to six-figure bills overnight. Companies are learning the hard way that .env files are not security.</p>
+                <h3>Key leaks went from embarrassing to catastrophic</h3>
+                <p>Six-figure bills. Overnight. From a single exposed key. This used to be a nuisance. Now it's a company-ending event.</p>
             </div>
         </div>
         <div class="force">
             <div class="force-num">3</div>
             <div class="force-content">
-                <h3>No one has built a proxy-first security layer</h3>
-                <p>Every secrets manager returns the raw key. VaultProof is the first product where the key never touches the customer's code.</p>
+                <h3>Nobody built the obvious thing</h3>
+                <p>Every secrets manager still returns the raw key to the app. We looked at the market and couldn't believe no one had built a proxy-first security layer. So we did.</p>
             </div>
         </div>
     </div>
@@ -647,7 +647,7 @@
 
 <!-- Slide 9: Use of Funds -->
 <section class="slide">
-    <h1>Where the <span class="gradient-text">capital goes.</span></h1>
+    <h1>Here's what we <span class="gradient-text">build next.</span></h1>
     <div class="funds">
         <div class="fund">
             <div class="fund-icon">&#9881;</div>
