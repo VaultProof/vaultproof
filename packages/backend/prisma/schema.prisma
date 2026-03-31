@@ -18,6 +18,7 @@ model User {
   globalDailyLimit     Int?           @map("global_daily_limit")    // max total calls/day across ALL keys
   globalMonthlyLimit   Int?           @map("global_monthly_limit")  // max total calls/month across ALL keys
   killSwitch           Boolean        @default(false) @map("kill_switch") // true = ALL proxy calls blocked
+  hasSeenTour          Boolean        @default(false) @map("has_seen_tour")
   promoCode            String?        @map("promo_code")
   tierExpiresAt        DateTime?      @map("tier_expires_at")
   createdAt            DateTime       @default(now()) @map("created_at")

@@ -61,10 +61,19 @@ export async function authRoutes(app: FastifyInstance) {
   app.get('/me', { preHandler: requireAuth }, async (request) => {
     const user = await prisma.user.findUnique({
       where: { id: request.auth!.userId },
-      select: { id: true, email: true, createdAt: true, tier: true, killSwitch: true, globalDailyLimit: true, globalMonthlyLimit: true, promoCode: true, tierExpiresAt: true },
+      select: { id: true, email: true, createdAt: true, tier: true, killSwitch: true, globalDailyLimit: true, globalMonthlyLimit: true, promoCode: true, tierExpiresAt: true, hasSeenTour: true },
     });
     if (!user) return { error: 'User not found' };
     return { user };
+  });
+
+  // POST /tour-complete — mark onboarding tour as seen
+  app.post('/tour-complete', { preHandler: requireAuth }, async (request) => {
+    await prisma.user.update({
+      where: { id: request.auth!.userId },
+      data: { hasSeenTour: true },
+    });
+    return { hasSeenTour: true };
   });
 
   // POST /kill-switch — toggle kill switch
