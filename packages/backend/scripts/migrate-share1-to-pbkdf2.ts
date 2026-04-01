@@ -9,6 +9,9 @@
  * can decrypt Share 1. Share 2 stays as scrypt — the Worker has a legacy fallback.
  */
 
+import { config } from 'dotenv';
+config();
+
 import { PrismaClient } from '@prisma/client';
 import {
   createCipheriv,
