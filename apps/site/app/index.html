@@ -84,7 +84,7 @@
     }
 
     /* Sidebar transitions */
-    .sidebar-expanded { width: 240px; }
+    .sidebar-expanded { width: 220px; }
     .sidebar-collapsed { width: 64px; }
     .sidebar-collapsed .sidebar-label { display: none; }
     .sidebar-collapsed .sidebar-logo-text { display: none; }
@@ -117,7 +117,7 @@
     .guide-bubble {
       position: absolute; z-index: 202;
       background: #111118; border: 1px solid #2a2a3a;
-      border-radius: 16px; padding: 16px 20px;
+      border-radius: 8px; padding: 14px 18px;
       max-width: 340px; width: max-content;
       box-shadow: 0 20px 50px rgba(0,0,0,0.5);
       opacity: 0; transform: translateY(8px);
@@ -137,7 +137,7 @@
       position: relative; z-index: 201;
       background: #111118;
       box-shadow: 0 0 0 4px rgba(99,102,241,0.4), 0 0 30px rgba(99,102,241,0.2);
-      border-radius: 12px;
+      border-radius: 8px;
       transition: box-shadow 0.3s ease, background 0.3s ease;
     }
   </style>
@@ -152,44 +152,44 @@
   <!-- Left Sidebar -->
   <aside id="sidebar" class="fixed top-0 left-0 h-full bg-card border-r border-border z-50 flex flex-col transition-all duration-200 sidebar-expanded -translate-x-full lg:translate-x-0">
     <!-- Logo -->
-    <div class="flex items-center gap-3 px-4 h-16 border-b border-border flex-shrink-0">
+    <div class="flex items-center gap-3 px-4 h-14 border-b border-border flex-shrink-0">
       <img src="/og-image2.png" alt="VaultProof" class="w-9 h-9 flex-shrink-0 rounded-lg" />
       <span class="text-lg font-bold sidebar-logo-text tracking-tight" style="font-family:'Space Grotesk',sans-serif">VaultProof</span>
     </div>
 
     <!-- Nav -->
-    <nav class="flex-1 p-3 space-y-1 overflow-y-auto">
-      <a href="/app/" class="sidebar-nav-item flex items-center gap-3 px-3 py-2.5 rounded-xl bg-brand/15 text-brand font-medium text-sm transition">
+    <nav class="flex-1 px-2 py-2 space-y-0.5 overflow-y-auto">
+      <a href="/app/" class="sidebar-nav-item flex items-center gap-3 px-3 py-2 rounded-md bg-white/[0.08] text-brand font-medium text-sm transition">
         <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
           <path stroke-linecap="round" stroke-linejoin="round" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zm10 0a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zm10 0a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z"/>
         </svg>
         <span class="sidebar-label">Dashboard</span>
       </a>
-      <a id="nav-api-keys" href="/app/keys" class="sidebar-nav-item flex items-center gap-3 px-3 py-2.5 rounded-xl text-gray-400 hover:text-white hover:bg-white/5 text-sm transition">
+      <a id="nav-api-keys" href="/app/keys" class="sidebar-nav-item flex items-center gap-3 px-3 py-2 rounded-md text-gray-400 hover:text-white hover:bg-white/[0.06] text-sm transition">
         <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
           <path stroke-linecap="round" stroke-linejoin="round" d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z"/>
         </svg>
         <span class="sidebar-label">API Keys</span>
       </a>
-      <a id="nav-agents" href="/app/agents" class="sidebar-nav-item flex items-center gap-3 px-3 py-2.5 rounded-xl text-gray-400 hover:text-white hover:bg-white/5 text-sm transition">
+      <a id="nav-agents" href="/app/agents" class="sidebar-nav-item flex items-center gap-3 px-3 py-2 rounded-md text-gray-400 hover:text-white hover:bg-white/[0.06] text-sm transition">
         <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
           <path stroke-linecap="round" stroke-linejoin="round" d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17H3a2 2 0 01-2-2V5a2 2 0 012-2h14a2 2 0 012 2v10a2 2 0 01-2 2h-2"/>
         </svg>
         <span class="sidebar-label">Agents</span>
       </a>
-      <a id="nav-scanner" href="/app/scanner" class="sidebar-nav-item flex items-center gap-3 px-3 py-2.5 rounded-xl text-gray-400 hover:text-white hover:bg-white/5 text-sm transition">
+      <a id="nav-scanner" href="/app/scanner" class="sidebar-nav-item flex items-center gap-3 px-3 py-2 rounded-md text-gray-400 hover:text-white hover:bg-white/[0.06] text-sm transition">
         <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
           <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
         </svg>
         <span class="sidebar-label">Scanner</span>
       </a>
-      <a id="nav-access-logs" href="/app/logs" class="sidebar-nav-item flex items-center gap-3 px-3 py-2.5 rounded-xl text-gray-400 hover:text-white hover:bg-white/5 text-sm transition">
+      <a id="nav-access-logs" href="/app/logs" class="sidebar-nav-item flex items-center gap-3 px-3 py-2 rounded-md text-gray-400 hover:text-white hover:bg-white/[0.06] text-sm transition">
         <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
           <path stroke-linecap="round" stroke-linejoin="round" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"/>
         </svg>
         <span class="sidebar-label">Access Logs</span>
       </a>
-      <a id="nav-settings" href="/app/settings" class="sidebar-nav-item flex items-center gap-3 px-3 py-2.5 rounded-xl text-gray-400 hover:text-white hover:bg-white/5 text-sm transition">
+      <a id="nav-settings" href="/app/settings" class="sidebar-nav-item flex items-center gap-3 px-3 py-2 rounded-md text-gray-400 hover:text-white hover:bg-white/[0.06] text-sm transition">
         <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
           <path stroke-linecap="round" stroke-linejoin="round" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.066 2.573c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.573 1.066c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.066-2.573c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/>
           <path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
@@ -198,13 +198,13 @@
       </a>
 
       <div class="mt-4 pt-4 border-t border-border">
-        <a href="/docs" class="sidebar-nav-item flex items-center gap-3 px-3 py-2.5 rounded-xl text-gray-400 hover:text-white hover:bg-white/5 text-sm transition">
+        <a href="/docs" class="sidebar-nav-item flex items-center gap-3 px-3 py-2 rounded-md text-gray-400 hover:text-white hover:bg-white/[0.06] text-sm transition">
           <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"/>
           </svg>
           <span class="sidebar-label">Documentation</span>
         </a>
-        <a href="mailto:hello@vaultproof.dev" class="sidebar-nav-item flex items-center gap-3 px-3 py-2.5 rounded-xl text-gray-400 hover:text-white hover:bg-white/5 text-sm transition mt-1">
+        <a href="mailto:hello@vaultproof.dev" class="sidebar-nav-item flex items-center gap-3 px-3 py-2 rounded-md text-gray-400 hover:text-white hover:bg-white/[0.06] text-sm transition">
           <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/>
           </svg>
@@ -214,7 +214,7 @@
     </nav>
 
     <!-- Sidebar Bottom -->
-    <div class="sidebar-bottom p-4 border-t border-border flex-shrink-0">
+    <div class="sidebar-bottom px-3 py-3 border-t border-border flex-shrink-0">
       <div class="sidebar-user-info text-xs text-gray-500 truncate mb-2" id="sidebarEmail"></div>
       <button onclick="logout()" class="flex items-center gap-2 text-sm text-gray-400 hover:text-red-400 transition">
         <svg class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
@@ -226,10 +226,10 @@
   </aside>
 
   <!-- Main wrapper -->
-  <div id="mainWrapper" class="flex-1 flex flex-col min-h-screen transition-all duration-200 lg:ml-[240px]">
+  <div id="mainWrapper" class="flex-1 flex flex-col min-h-screen transition-all duration-200 lg:ml-[220px]">
 
     <!-- Top Navbar -->
-    <header class="sticky top-0 z-30 bg-surface/80 backdrop-blur-xl border-b border-border h-16 flex items-center px-4 lg:px-8 gap-4">
+    <header class="sticky top-0 z-30 bg-surface/80 backdrop-blur-xl border-b border-border h-14 flex items-center px-4 lg:px-8 gap-4">
       <!-- Mobile hamburger -->
       <button id="menuBtn" class="lg:hidden text-gray-400 hover:text-white p-1.5 -ml-1.5">
         <svg class="w-6 h-6" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
@@ -255,7 +255,7 @@
           </button>
 
           <!-- Notification dropdown -->
-          <div id="notifDropdown" class="hidden absolute right-0 top-full mt-2 w-80 bg-card border border-border rounded-xl shadow-2xl z-50 overflow-hidden">
+          <div id="notifDropdown" class="hidden absolute right-0 top-full mt-2 w-80 bg-card border border-border rounded-lg shadow-2xl z-50 overflow-hidden">
             <div class="px-4 py-3 border-b border-border flex items-center justify-between">
               <span class="text-sm font-semibold text-white">Notifications</span>
               <button onclick="markAllRead()" class="text-xs text-brand hover:text-brand-hover transition">Mark all read</button>
@@ -274,10 +274,10 @@
     <!-- Page Content -->
     <div class="flex-1 flex">
       <!-- Main content area -->
-      <main class="flex-1 p-6 lg:p-8 overflow-y-auto">
+      <main class="flex-1 p-5 lg:p-6 overflow-y-auto">
         <!-- Toast notification -->
         <div id="toast" class="fixed top-4 right-4 z-50 hidden max-w-sm">
-          <div id="toastInner" class="flex items-center gap-3 px-4 py-3 rounded-xl border text-sm shadow-lg backdrop-blur-sm">
+          <div id="toastInner" class="flex items-center gap-3 px-4 py-3 rounded-lg border text-sm shadow-lg backdrop-blur-sm">
             <span id="toastMsg"></span>
             <button onclick="document.getElementById('toast').classList.add('hidden')" class="text-gray-400 hover:text-white ml-2">&times;</button>
           </div>
@@ -285,17 +285,17 @@
 
         <!-- Session expired overlay -->
         <div id="sessionExpired" class="fixed inset-0 z-[100] bg-black/80 backdrop-blur-sm hidden flex items-center justify-center">
-          <div class="bg-[#111118] border border-[#1e1e2e] rounded-2xl p-8 max-w-sm text-center">
+          <div class="bg-[#111118] border border-[#1e1e2e] rounded-lg p-8 max-w-sm text-center">
             <div class="w-14 h-14 rounded-full bg-red-500/10 border border-red-500/20 flex items-center justify-center mx-auto mb-4">
               <svg class="w-7 h-7 text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>
             </div>
             <h3 class="text-lg font-semibold text-white mb-2">Session Expired</h3>
             <p class="text-sm text-gray-400 mb-6">Your session has expired. Please sign in again to continue.</p>
-            <a href="login" class="inline-block px-6 py-2.5 bg-[#6366f1] hover:bg-[#5558e6] text-white rounded-xl text-sm font-medium transition btn-glow">Sign In Again</a>
+            <a href="login" class="inline-block px-6 py-2.5 bg-[#6366f1] hover:bg-[#5558e6] text-white rounded-lg text-sm font-medium transition btn-glow">Sign In Again</a>
           </div>
         </div>
 
-        <div class="max-w-[1200px] space-y-8">
+        <div class="max-w-[1200px] space-y-6">
 
           <!-- Page Header -->
           <div class="anim-fade-up">
@@ -304,7 +304,7 @@
           </div>
 
           <!-- Onboarding Checklist -->
-          <div id="onboardingChecklist" class="hidden bg-card border border-border rounded-2xl p-6 anim-fade-up" style="animation-delay:60ms">
+          <div id="onboardingChecklist" class="hidden bg-card border border-border rounded-lg p-5 anim-fade-up" style="animation-delay:60ms">
             <div class="flex items-start justify-between mb-4">
               <div>
                 <h2 class="text-lg font-semibold text-white">Welcome to VaultProof!</h2>
@@ -315,7 +315,7 @@
               </button>
             </div>
             <div class="space-y-3" id="onboardingSteps">
-              <div class="flex items-center gap-3 p-3 rounded-xl bg-surface border border-border" id="onb-step-devkey">
+              <div class="flex items-center gap-3 p-2.5 rounded-md bg-surface border border-border" id="onb-step-devkey">
                 <span id="onb-check-devkey" class="flex-shrink-0 w-6 h-6 rounded-full border-2 border-gray-600 flex items-center justify-center text-transparent">
                   <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>
                 </span>
@@ -323,7 +323,7 @@
                   <a href="/app/settings" class="text-sm font-medium text-white hover:text-indigo-400 transition">Create a developer API key</a>
                 </div>
               </div>
-              <div class="flex items-center gap-3 p-3 rounded-xl bg-surface border border-border" id="onb-step-sdk">
+              <div class="flex items-center gap-3 p-2.5 rounded-md bg-surface border border-border" id="onb-step-sdk">
                 <span id="onb-check-sdk" class="flex-shrink-0 w-6 h-6 rounded-full border-2 border-gray-600 flex items-center justify-center text-transparent">
                   <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>
                 </span>
@@ -332,7 +332,7 @@
                   <code class="ml-2 text-xs font-mono text-indigo-400 bg-indigo-500/10 px-2 py-0.5 rounded">npm i @vaultproof/sdk</code>
                 </div>
               </div>
-              <div class="flex items-center gap-3 p-3 rounded-xl bg-surface border border-border" id="onb-step-storekey">
+              <div class="flex items-center gap-3 p-2.5 rounded-md bg-surface border border-border" id="onb-step-storekey">
                 <span id="onb-check-storekey" class="flex-shrink-0 w-6 h-6 rounded-full border-2 border-gray-600 flex items-center justify-center text-transparent">
                   <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>
                 </span>
@@ -340,7 +340,7 @@
                   <a href="/app/keys" class="text-sm font-medium text-white hover:text-indigo-400 transition">Store your first API key</a>
                 </div>
               </div>
-              <div class="flex items-center gap-3 p-3 rounded-xl bg-surface border border-border" id="onb-step-proxy">
+              <div class="flex items-center gap-3 p-2.5 rounded-md bg-surface border border-border" id="onb-step-proxy">
                 <span id="onb-check-proxy" class="flex-shrink-0 w-6 h-6 rounded-full border-2 border-gray-600 flex items-center justify-center text-transparent">
                   <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>
                 </span>
@@ -358,12 +358,10 @@
           <!-- Stat Cards Row -->
           <div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4" id="statsGrid">
             <!-- Total Keys -->
-            <div class="bg-card border border-border rounded-2xl p-5 anim-fade-up" style="animation-delay:80ms">
-              <div class="flex items-center justify-between mb-3">
-                <span class="text-sm text-gray-500">Total Keys</span>
-                <div class="w-8 h-8 rounded-lg bg-brand/10 flex items-center justify-center">
-                  <svg class="w-4 h-4 text-brand" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z"/></svg>
-                </div>
+            <div class="bg-card border border-border rounded-lg p-4 anim-fade-up" style="animation-delay:80ms">
+              <div class="flex items-center justify-between mb-2">
+                <span class="text-xs text-gray-500">Total Keys</span>
+                <svg class="w-4 h-4 text-brand" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z"/></svg>
               </div>
               <div class="text-3xl font-bold tracking-tight" id="statKeys">
                 <div class="h-9 w-16 bg-white/5 rounded-lg animate-pulse"></div>
@@ -371,12 +369,10 @@
               <div class="mt-2"><canvas class="sparkline" data-stat="keys" width="60" height="20"></canvas></div>
             </div>
             <!-- Active Apps -->
-            <div class="bg-card border border-border rounded-2xl p-5 anim-fade-up" style="animation-delay:160ms">
-              <div class="flex items-center justify-between mb-3">
-                <span class="text-sm text-gray-500">Active Apps</span>
-                <div class="w-8 h-8 rounded-lg bg-brand/10 flex items-center justify-center">
-                  <svg class="w-4 h-4 text-brand" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 3v2m6-2v2M9 19v2m6-2v2M5 9H3m2 6H3m18-6h-2m2 6h-2M7 19h10a2 2 0 002-2V7a2 2 0 00-2-2H7a2 2 0 00-2 2v10a2 2 0 002 2zM9 9h6v6H9V9z"/></svg>
-                </div>
+            <div class="bg-card border border-border rounded-lg p-4 anim-fade-up" style="animation-delay:160ms">
+              <div class="flex items-center justify-between mb-2">
+                <span class="text-xs text-gray-500">Active Apps</span>
+                <svg class="w-4 h-4 text-brand" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 3v2m6-2v2M9 19v2m6-2v2M5 9H3m2 6H3m18-6h-2m2 6h-2M7 19h10a2 2 0 002-2V7a2 2 0 00-2-2H7a2 2 0 00-2 2v10a2 2 0 002 2zM9 9h6v6H9V9z"/></svg>
               </div>
               <div class="text-3xl font-bold tracking-tight" id="statApps">
                 <div class="h-9 w-16 bg-white/5 rounded-lg animate-pulse"></div>
@@ -384,12 +380,10 @@
               <div class="mt-2"><canvas class="sparkline" data-stat="apps" width="60" height="20"></canvas></div>
             </div>
             <!-- Requests This Month -->
-            <div class="bg-card border border-border rounded-2xl p-5 anim-fade-up" style="animation-delay:240ms">
-              <div class="flex items-center justify-between mb-3">
-                <span class="text-sm text-gray-500">Requests This Month</span>
-                <div class="w-8 h-8 rounded-lg bg-brand/10 flex items-center justify-center">
-                  <svg class="w-4 h-4 text-brand" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"/></svg>
-                </div>
+            <div class="bg-card border border-border rounded-lg p-4 anim-fade-up" style="animation-delay:240ms">
+              <div class="flex items-center justify-between mb-2">
+                <span class="text-xs text-gray-500">Requests This Month</span>
+                <svg class="w-4 h-4 text-brand" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"/></svg>
               </div>
               <div class="text-3xl font-bold tracking-tight" id="statCalls">
                 <div class="h-9 w-16 bg-white/5 rounded-lg animate-pulse"></div>
@@ -397,12 +391,10 @@
               <div class="mt-2"><canvas class="sparkline" data-stat="calls" width="60" height="20"></canvas></div>
             </div>
             <!-- Error Rate -->
-            <div class="bg-card border border-border rounded-2xl p-5 anim-fade-up" style="animation-delay:320ms">
-              <div class="flex items-center justify-between mb-3">
-                <span class="text-sm text-gray-500">Error Rate</span>
-                <div class="w-8 h-8 rounded-lg bg-red-500/10 flex items-center justify-center">
-                  <svg class="w-4 h-4 text-red-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4.5c-.77-.833-2.694-.833-3.464 0L3.34 16.5c-.77.833.192 2.5 1.732 2.5z"/></svg>
-                </div>
+            <div class="bg-card border border-border rounded-lg p-4 anim-fade-up" style="animation-delay:320ms">
+              <div class="flex items-center justify-between mb-2">
+                <span class="text-xs text-gray-500">Error Rate</span>
+                <svg class="w-4 h-4 text-red-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4.5c-.77-.833-2.694-.833-3.464 0L3.34 16.5c-.77.833.192 2.5 1.732 2.5z"/></svg>
               </div>
               <div class="text-3xl font-bold tracking-tight" id="statErrors">
                 <div class="h-9 w-16 bg-white/5 rounded-lg animate-pulse"></div>
@@ -412,7 +404,7 @@
           </div>
 
           <!-- Usage Chart -->
-          <div class="bg-card border border-border rounded-2xl p-6 anim-fade-up" style="animation-delay:400ms">
+          <div class="bg-card border border-border rounded-lg p-5 anim-fade-up" style="animation-delay:400ms">
             <div class="flex items-center justify-between mb-4">
               <h2 class="text-lg font-semibold">API Calls &mdash; Last 30 Days</h2>
               <span class="text-xs text-gray-500">Updated just now</span>
@@ -426,26 +418,26 @@
           </div>
 
           <!-- API Keys Table -->
-          <div id="keys-table" class="bg-card border border-border rounded-2xl overflow-hidden anim-fade-up" style="animation-delay:500ms">
-            <div class="flex items-center justify-between px-6 py-4 border-b border-border">
-              <h2 class="text-lg font-semibold">API Keys</h2>
+          <div id="keys-table" class="bg-card border border-border rounded-lg overflow-hidden anim-fade-up" style="animation-delay:500ms">
+            <div class="flex items-center justify-between px-5 py-3 border-b border-border">
+              <h2 class="text-sm font-semibold">API Keys</h2>
               <a href="/app/keys" class="text-sm text-brand hover:text-brand-light transition font-medium">Manage Keys &rarr;</a>
             </div>
             <div class="overflow-x-auto">
               <table class="w-full text-sm">
                 <thead>
                   <tr class="border-b border-border text-gray-500 text-left text-xs uppercase tracking-wider">
-                    <th class="px-6 py-3 font-medium">Key Name</th>
-                    <th class="px-6 py-3 font-medium">Provider</th>
-                    <th class="px-6 py-3 font-medium">Created</th>
-                    <th class="px-6 py-3 font-medium">Last Used</th>
-                    <th class="px-6 py-3 font-medium">Calls/mo</th>
-                    <th class="px-6 py-3 font-medium">Status</th>
-                    <th class="px-6 py-3 font-medium">Actions</th>
+                    <th class="px-4 py-2.5 font-medium">Key Name</th>
+                    <th class="px-4 py-2.5 font-medium">Provider</th>
+                    <th class="px-4 py-2.5 font-medium">Created</th>
+                    <th class="px-4 py-2.5 font-medium">Last Used</th>
+                    <th class="px-4 py-2.5 font-medium">Calls/mo</th>
+                    <th class="px-4 py-2.5 font-medium">Status</th>
+                    <th class="px-4 py-2.5 font-medium">Actions</th>
                   </tr>
                 </thead>
                 <tbody id="keysBody">
-                  <tr><td colspan="7" class="px-6 py-12 text-center text-gray-600">
+                  <tr><td colspan="7" class="px-4 py-10 text-center text-gray-600">
                     <div class="flex items-center justify-center gap-2"><div class="h-4 w-4 border-2 border-gray-600 border-t-transparent rounded-full animate-spin"></div> Loading keys...</div>
                   </td></tr>
                 </tbody>
@@ -458,14 +450,12 @@
         <!-- SDK & CLI Getting Started -->
         <div class="grid grid-cols-1 lg:grid-cols-2 gap-4 mt-6">
           <!-- SDK Quickstart -->
-          <div id="sdk-card" class="bg-card border border-border rounded-2xl p-6 anim-fade-up" style="animation-delay:420ms">
-            <div class="flex items-center gap-3 mb-4">
-              <div class="w-8 h-8 rounded-lg bg-brand/10 flex items-center justify-center">
-                <svg class="w-4 h-4 text-brand" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4"/></svg>
-              </div>
-              <h2 class="text-lg font-semibold">SDK Quickstart</h2>
+          <div id="sdk-card" class="bg-card border border-border rounded-lg p-5 anim-fade-up" style="animation-delay:420ms">
+            <div class="flex items-center gap-2.5 mb-3">
+              <svg class="w-4 h-4 text-brand" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4"/></svg>
+              <h2 class="text-sm font-semibold">SDK Quickstart</h2>
             </div>
-            <div class="bg-[#0a0a0f] border border-border rounded-xl p-4 font-mono text-xs space-y-1.5 overflow-x-auto">
+            <div class="bg-[#0a0a0f] border border-border rounded-md p-4 font-mono text-xs space-y-1.5 overflow-x-auto">
               <div class="text-gray-500">// 1. Install</div>
               <div class="text-cyan-400">npm install @vaultproof/sdk</div>
               <div class="mt-3 text-gray-500">// 2. Initialize</div>
@@ -483,14 +473,12 @@
           </div>
 
           <!-- CLI Getting Started -->
-          <div id="cli-card" class="bg-card border border-border rounded-2xl p-6 anim-fade-up" style="animation-delay:450ms">
-            <div class="flex items-center gap-3 mb-4">
-              <div class="w-8 h-8 rounded-lg bg-brand/10 flex items-center justify-center">
-                <svg class="w-4 h-4 text-brand" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M8 9l3 3-3 3m5 0h3M5 20h14a2 2 0 002-2V6a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
-              </div>
-              <h2 class="text-lg font-semibold">CLI Quickstart</h2>
+          <div id="cli-card" class="bg-card border border-border rounded-lg p-5 anim-fade-up" style="animation-delay:450ms">
+            <div class="flex items-center gap-2.5 mb-3">
+              <svg class="w-4 h-4 text-brand" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M8 9l3 3-3 3m5 0h3M5 20h14a2 2 0 002-2V6a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
+              <h2 class="text-sm font-semibold">CLI Quickstart</h2>
             </div>
-            <div class="bg-[#0a0a0f] border border-border rounded-xl p-4 font-mono text-xs space-y-1.5">
+            <div class="bg-[#0a0a0f] border border-border rounded-md p-4 font-mono text-xs space-y-1.5">
               <div class="text-gray-500">// 1. Install globally</div>
               <div class="flex items-center gap-2">
                 <span class="text-gray-500 select-none">$</span>
@@ -513,27 +501,27 @@
 
         <!-- Quick Access -->
         <div id="quick-access" class="grid grid-cols-3 gap-4 mt-6 anim-fade-up" style="animation-delay:500ms">
-          <a href="/app/keys" class="bg-card border border-border rounded-2xl p-5 hover:border-brand/40 transition group">
-            <div class="flex items-center gap-3 mb-2">
-              <svg class="w-5 h-5 text-indigo-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+          <a href="/app/keys" class="bg-card border border-border rounded-lg p-4 hover:border-brand/40 transition group">
+            <div class="flex items-center gap-3 mb-1.5">
+              <svg class="w-4 h-4 text-indigo-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z"/>
               </svg>
               <span class="text-sm font-semibold text-white group-hover:text-indigo-400 transition">API Keys</span>
             </div>
             <p class="text-xs text-gray-500">Store, split, and manage your API keys</p>
           </a>
-          <a href="/app/logs" class="bg-card border border-border rounded-2xl p-5 hover:border-brand/40 transition group">
-            <div class="flex items-center gap-3 mb-2">
-              <svg class="w-5 h-5 text-indigo-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+          <a href="/app/logs" class="bg-card border border-border rounded-lg p-4 hover:border-brand/40 transition group">
+            <div class="flex items-center gap-3 mb-1.5">
+              <svg class="w-4 h-4 text-indigo-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"/>
               </svg>
               <span class="text-sm font-semibold text-white group-hover:text-indigo-400 transition">Access Logs</span>
             </div>
             <p class="text-xs text-gray-500">View all API call activity and audit trails</p>
           </a>
-          <a href="/app/settings" class="bg-card border border-border rounded-2xl p-5 hover:border-brand/40 transition group">
-            <div class="flex items-center gap-3 mb-2">
-              <svg class="w-5 h-5 text-indigo-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+          <a href="/app/settings" class="bg-card border border-border rounded-lg p-4 hover:border-brand/40 transition group">
+            <div class="flex items-center gap-3 mb-1.5">
+              <svg class="w-4 h-4 text-indigo-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.066 2.573c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.573 1.066c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.066-2.573c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/>
                 <path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
               </svg>
@@ -559,15 +547,15 @@
 
   <!-- Quick Actions (floating, bottom right) -->
   <div class="quick-actions fixed bottom-6 right-6 z-30 flex flex-col gap-2 anim-slide-up" style="animation-delay:800ms">
-    <a href="/app/keys" class="flex items-center gap-2 px-4 py-2.5 bg-brand hover:bg-brand-light text-white text-sm font-medium rounded-xl shadow-lg shadow-brand/25 transition">
+    <a href="/app/keys" class="flex items-center gap-2 px-4 py-2.5 bg-brand hover:bg-brand-light text-white text-sm font-medium rounded-lg shadow-lg shadow-brand/25 transition">
       <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"/></svg>
       New Key
     </a>
-    <a href="/app/logs" class="flex items-center gap-2 px-4 py-2.5 bg-white/5 hover:bg-white/10 border border-border text-gray-300 text-sm font-medium rounded-xl backdrop-blur-lg transition">
+    <a href="/app/logs" class="flex items-center gap-2 px-4 py-2.5 bg-white/5 hover:bg-white/10 border border-border text-gray-300 text-sm font-medium rounded-lg backdrop-blur-lg transition">
       <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/><path stroke-linecap="round" stroke-linejoin="round" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/></svg>
       View Logs
     </a>
-    <a href="/app/logs" class="flex items-center gap-2 px-4 py-2.5 bg-white/5 hover:bg-white/10 border border-border text-gray-300 text-sm font-medium rounded-xl backdrop-blur-lg transition">
+    <a href="/app/logs" class="flex items-center gap-2 px-4 py-2.5 bg-white/5 hover:bg-white/10 border border-border text-gray-300 text-sm font-medium rounded-lg backdrop-blur-lg transition">
       <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 10v6m0 0l-3-3m3 3l3-3M3 17V7a2 2 0 012-2h6l2 2h6a2 2 0 012 2v8a2 2 0 01-2 2H5a2 2 0 01-2-2z"/></svg>
       Export Audit
     </a>
@@ -592,7 +580,7 @@
         warning: 'bg-yellow-900/80 border-yellow-800/50 text-yellow-200',
         info: 'bg-[#111118] border-[#1e1e2e] text-gray-300'
       };
-      inner.className = `flex items-center gap-3 px-4 py-3 rounded-xl border text-sm shadow-lg backdrop-blur-sm ${styles[type] || styles.error}`;
+      inner.className = `flex items-center gap-3 px-4 py-3 rounded-lg border text-sm shadow-lg backdrop-blur-sm ${styles[type] || styles.error}`;
       toast.classList.remove('hidden');
       clearTimeout(toast._timer);
       toast._timer = setTimeout(() => toast.classList.add('hidden'), 5000);
@@ -657,7 +645,7 @@
         sidebar.classList.remove('-translate-x-full');
         sidebar.classList.remove('sidebar-collapsed');
         sidebar.classList.add('sidebar-expanded');
-        mainWrapper.style.marginLeft = '240px';
+        mainWrapper.style.marginLeft = '220px';
       }
     }
     window.addEventListener('resize', handleResize);
@@ -883,7 +871,7 @@
         }
         description = escapeHtml(description || provider || ev.appId || '--');
         return `
-          <div class="flex gap-3 p-3 rounded-xl hover:bg-white/[0.03] transition anim-fade-up" style="animation-delay:${600 + i * 80}ms">
+          <div class="flex gap-3 p-2.5 rounded-md hover:bg-white/[0.03] transition anim-fade-up" style="animation-delay:${600 + i * 80}ms">
             <div class="flex-shrink-0 mt-0.5">
               <div class="w-2 h-2 rounded-full ${c.dot} mt-1.5"></div>
             </div>
@@ -1029,7 +1017,7 @@
       const tbody = document.getElementById('keysBody');
 
       if (!keys.length) {
-        tbody.innerHTML = `<tr><td colspan="7" class="px-6 py-12 text-center text-gray-600">
+        tbody.innerHTML = `<tr><td colspan="7" class="px-4 py-10 text-center text-gray-600">
           No keys found. <a href="/app/keys" class="text-brand hover:underline">Create your first key</a>
         </td></tr>`;
         return;
@@ -1042,26 +1030,26 @@
         const full = k.id || 'unknown';
         return `
           <tr class="key-row border-b border-border/50 table-row-anim" style="animation-delay:${500 + i * 50}ms">
-            <td class="px-6 py-4">
+            <td class="px-4 py-3">
               <div class="font-medium text-sm">${k.label || 'Unnamed Key'}</div>
               <div class="key-mask font-mono text-xs text-gray-500 mt-0.5 cursor-default">
                 <span class="key-masked">${masked}</span>
                 <span class="key-full">${full}</span>
               </div>
             </td>
-            <td class="px-6 py-4">
+            <td class="px-4 py-3">
               <span class="inline-flex items-center px-2 py-0.5 rounded-md text-xs font-medium border ${pc.bg} ${pc.text} ${pc.border}">${k.provider || 'Unknown'}</span>
             </td>
-            <td class="px-6 py-4 text-gray-400 text-sm whitespace-nowrap">${formatDate(k.createdAt || k.created)}</td>
-            <td class="px-6 py-4 text-gray-400 text-sm whitespace-nowrap">${k.lastUsed ? relativeTime(k.lastUsed) : 'Never'}</td>
-            <td class="px-6 py-4 text-sm font-medium">${formatNumber(k.callsThisMonth)}</td>
-            <td class="px-6 py-4">
+            <td class="px-4 py-3 text-gray-400 text-sm whitespace-nowrap">${formatDate(k.createdAt || k.created)}</td>
+            <td class="px-4 py-3 text-gray-400 text-sm whitespace-nowrap">${k.lastUsed ? relativeTime(k.lastUsed) : 'Never'}</td>
+            <td class="px-4 py-3 text-sm font-medium">${formatNumber(k.callsThisMonth)}</td>
+            <td class="px-4 py-3">
               ${isActive
                 ? '<span class="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-md text-xs font-medium bg-indigo-500/10 text-indigo-400 border border-indigo-500/20"><span class="w-1.5 h-1.5 rounded-full bg-indigo-400 pulse-active"></span>Active</span>'
                 : '<span class="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-md text-xs font-medium bg-red-500/10 text-red-400 border border-red-500/20"><span class="w-1.5 h-1.5 rounded-full bg-red-400"></span>Revoked</span>'
               }
             </td>
-            <td class="px-6 py-4">
+            <td class="px-4 py-3">
               <div class="flex items-center gap-1">
                 <button onclick="copyKeyId('${full}')" title="Copy key ID" class="p-1.5 text-gray-500 hover:text-white hover:bg-white/5 rounded-lg transition">
                   <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"/></svg>
@@ -1295,9 +1283,9 @@
   </div><!-- max-width wrapper -->
 <!-- Welcome Modal -->
 <div id="welcomeModal" class="hidden fixed inset-0 z-50 flex items-center justify-center p-4" style="background:rgba(0,0,0,0.7);backdrop-filter:blur(4px)">
-  <div class="bg-[#111118] border border-[#1e1e2e] rounded-2xl shadow-2xl shadow-black/60 w-full max-w-md p-8" style="animation:slideUp 0.3s ease">
+  <div class="bg-[#111118] border border-[#1e1e2e] rounded-lg shadow-2xl shadow-black/60 w-full max-w-md p-8" style="animation:slideUp 0.3s ease">
     <!-- Icon -->
-    <div class="w-12 h-12 rounded-2xl bg-indigo-500/15 border border-indigo-500/20 flex items-center justify-center mb-5">
+    <div class="w-12 h-12 rounded-lg bg-indigo-500/15 border border-indigo-500/20 flex items-center justify-center mb-5">
       <svg class="w-6 h-6 text-indigo-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
         <path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
       </svg>
@@ -1334,27 +1322,27 @@
       <p class="text-xs text-gray-500 mb-2">Have a promo code? Get 1 year of Pro free.</p>
       <div class="flex gap-2">
         <input id="welcomePromoInput" type="text" placeholder="PRODUCTHUNT" maxlength="50"
-          class="flex-1 bg-[#0a0a0f] border border-[#1e1e2e] rounded-xl px-3 py-2 text-sm text-gray-300 font-mono uppercase focus:border-indigo-500 focus:outline-none placeholder-gray-700"
+          class="flex-1 bg-[#0a0a0f] border border-[#1e1e2e] rounded-md px-3 py-2 text-sm text-gray-300 font-mono uppercase focus:border-indigo-500 focus:outline-none placeholder-gray-700"
           onkeydown="if(event.key==='Enter') redeemWelcomePromo()" />
         <button id="welcomePromoBtn" onclick="redeemWelcomePromo()"
-          class="px-4 py-2 bg-[#1e1e2e] hover:bg-[#2a2a3a] text-gray-300 hover:text-white rounded-xl text-sm font-medium transition">Apply</button>
+          class="px-4 py-2 bg-[#1e1e2e] hover:bg-[#2a2a3a] text-gray-300 hover:text-white rounded-md text-sm font-medium transition">Apply</button>
       </div>
       <p id="welcomePromoMsg" class="text-xs text-gray-500 mt-2"></p>
     </div>
     <!-- CTA -->
-    <button onclick="dismissWelcome()" class="w-full px-4 py-2.5 bg-[#6366f1] hover:bg-[#5558e6] text-white rounded-xl text-sm font-semibold transition">
+    <button onclick="dismissWelcome()" class="w-full px-4 py-2.5 bg-[#6366f1] hover:bg-[#5558e6] text-white rounded-lg text-sm font-semibold transition">
       Get started
     </button>
   </div>
 </div>
 
 <!-- Promo Feedback Nudge -->
-<div id="feedbackNudge" class="hidden fixed bottom-6 right-6 z-50 bg-[#111118] border border-[#6366f1]/30 rounded-2xl p-5 shadow-2xl shadow-black/50 max-w-sm" style="animation: fadeIn 0.3s ease">
+<div id="feedbackNudge" class="hidden fixed bottom-6 right-6 z-50 bg-[#111118] border border-[#6366f1]/30 rounded-lg p-4 shadow-2xl shadow-black/50 max-w-sm" style="animation: fadeIn 0.3s ease">
   <div class="text-sm font-semibold text-white mb-1">You're helping shape VaultProof!</div>
   <div class="text-xs text-gray-500 mb-3">As an early adopter, your feedback directly shapes what we build next.</div>
-  <textarea id="feedbackText" rows="3" class="w-full bg-[#0a0a0f] border border-[#1e1e2e] rounded-xl px-3 py-2 text-sm text-gray-300 focus:border-[#6366f1] focus:outline-none resize-none" placeholder="What would you improve?"></textarea>
+  <textarea id="feedbackText" rows="3" class="w-full bg-[#0a0a0f] border border-[#1e1e2e] rounded-md px-3 py-2 text-sm text-gray-300 focus:border-[#6366f1] focus:outline-none resize-none" placeholder="What would you improve?"></textarea>
   <div class="flex gap-2 mt-3">
-    <button onclick="submitFeedback()" class="flex-1 px-4 py-2 bg-[#6366f1] hover:bg-[#5558e6] text-white rounded-xl text-sm font-medium transition">Submit</button>
+    <button onclick="submitFeedback()" class="flex-1 px-4 py-2 bg-[#6366f1] hover:bg-[#5558e6] text-white rounded-lg text-sm font-medium transition">Submit</button>
     <button onclick="dismissFeedback()" class="px-4 py-2 text-gray-500 hover:text-gray-300 text-sm transition">Later</button>
   </div>
 </div>
