@@ -78,6 +78,15 @@ export async function handleTransparentProxy(
     return Response.json({ error: 'API key not recognized.' }, { status: 401 });
   }
 
+  // IP allowlist check
+  if (auth.devKey.allowed_ips) {
+    const clientIp = request.headers.get('cf-connecting-ip') || '';
+    const allowedIps = auth.devKey.allowed_ips.split(',').map(ip => ip.trim());
+    if (!allowedIps.includes(clientIp)) {
+      return Response.json({ error: 'IP not allowed for this API key' }, { status: 403 });
+    }
+  }
+
   // c. Per-key rate limit
   if (!checkKeyRateLimit(auth.keyId)) {
     return Response.json({ error: 'Rate limit exceeded (60 req/min).' }, { status: 429 });
