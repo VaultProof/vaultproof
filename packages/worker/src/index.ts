@@ -1,6 +1,27 @@
 import type { Env } from './types.js';
 import { handleTransparentProxy } from './routes/transparent-proxy.js';
 
+async function forwardToRailway(request: Request, url: URL, env: Env): Promise<Response> {
+  const timestamp = Date.now().toString();
+  const signPayload = `${request.method}:${url.pathname}:${timestamp}`;
+  const encoder = new TextEncoder();
+  const keyData = encoder.encode(env.PROXY_SECRET);
+  const cryptoKey = await crypto.subtle.importKey('raw', keyData, { name: 'HMAC', hash: 'SHA-256' }, false, ['sign']);
+  const sig = await crypto.subtle.sign('HMAC', cryptoKey, encoder.encode(signPayload));
+  const signature = Array.from(new Uint8Array(sig)).map(b => b.toString(16).padStart(2, '0')).join('');
+
+  const headers = new Headers(request.headers);
+  headers.set('X-Proxy-Signature', signature);
+  headers.set('X-Proxy-Timestamp', timestamp);
+  headers.set('X-Forwarded-For', request.headers.get('CF-Connecting-IP') || 'unknown');
+
+  return fetch(`${env.BACKEND_URL}${url.pathname}${url.search}`, {
+    method: request.method,
+    headers,
+    body: request.method !== 'GET' && request.method !== 'HEAD' ? request.body : undefined,
+  });
+}
+
 function corsHeaders(origin: string, allowedOrigins: string[]): Record<string, string> {
   const isAllowed = allowedOrigins.includes(origin);
   return {
@@ -67,44 +88,31 @@ export default {
       );
     }
 
-    // Transparent proxy: /v1/* — handled directly at the edge
+    // Transparent proxy: /v1/* — handled at the edge, falls back to Railway
     if (url.pathname.startsWith('/v1/')) {
       try {
         const path = url.pathname.slice(4);
         const response = await handleTransparentProxy(request, env, path);
         return addCors(response, origin, allowedOrigins);
-      } catch (e: any) {
-        return addCors(Response.json({ error: 'Worker error', detail: e?.message || String(e), stack: e?.stack?.split('\n').slice(0, 5) }, { status: 500 }), origin, allowedOrigins);
+      } catch {
+        // Fallback: forward to Railway transparent proxy
+        if (env.BACKEND_URL && env.PROXY_SECRET) {
+          try {
+            const fallbackResponse = await forwardToRailway(request, url, env);
+            return addCors(fallbackResponse, origin, allowedOrigins);
+          } catch {}
+        }
+        return addCors(Response.json({ error: 'Service temporarily unavailable' }, { status: 503 }), origin, allowedOrigins);
       }
     }
 
-    // All other routes: forward to Railway backend (temporary fallback)
+    // All other routes: forward to Railway backend
     if (url.pathname.startsWith('/api/') || url.pathname.startsWith('/admin/') || url.pathname.startsWith('/analytics/') || url.pathname.startsWith('/waitlist')) {
-      const backendUrl = env.BACKEND_URL;
-      if (!backendUrl) {
+      if (!env.BACKEND_URL || !env.PROXY_SECRET) {
         return addCors(Response.json({ error: 'Backend not configured' }, { status: 500 }), origin, allowedOrigins);
       }
 
-      // HMAC sign the request for Railway backend auth
-      const timestamp = Date.now().toString();
-      const signPayload = `${request.method}:${url.pathname}:${timestamp}`;
-      const encoder = new TextEncoder();
-      const keyData = encoder.encode(env.PROXY_SECRET);
-      const cryptoKey = await crypto.subtle.importKey('raw', keyData, { name: 'HMAC', hash: 'SHA-256' }, false, ['sign']);
-      const sig = await crypto.subtle.sign('HMAC', cryptoKey, encoder.encode(signPayload));
-      const signature = Array.from(new Uint8Array(sig)).map(b => b.toString(16).padStart(2, '0')).join('');
-
-      const headers = new Headers(request.headers);
-      headers.set('X-Proxy-Signature', signature);
-      headers.set('X-Proxy-Timestamp', timestamp);
-      headers.set('X-Forwarded-For', request.headers.get('CF-Connecting-IP') || 'unknown');
-
-      const backendResponse = await fetch(`${backendUrl}${url.pathname}${url.search}`, {
-        method: request.method,
-        headers,
-        body: request.method !== 'GET' && request.method !== 'HEAD' ? request.body : undefined,
-      });
-
+      const backendResponse = await forwardToRailway(request, url, env);
       return addCors(
         new Response(backendResponse.body, { status: backendResponse.status, headers: backendResponse.headers }),
         origin, allowedOrigins
