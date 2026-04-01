@@ -145,35 +145,29 @@ export async function handleTransparentProxy(
     return Response.json({ error: 'Monthly call limit exceeded.', used: rateCheck.used, limit: rateCheck.limit }, { status: 429 });
   }
 
-  // g. Reconstruct API key (cached in KV for 60s to skip crypto on repeat calls)
-  const apiKeyCacheKey = `apikey:${keySlot.id}:${auth.keyId}`;
-  let apiKey: string | null = await cacheGet<string>(env, apiKeyCacheKey);
+  // g. Reconstruct API key (in-memory only, never cached)
+  let apiKey: string | null = null;
 
-  if (!apiKey) {
+  try {
+    const share1Bytes = hexToBytes(keySlot.share1_encrypted);
+    const decryptedShare1 = decrypt(share1Bytes, env);
+    const share1Str = new TextDecoder().decode(decryptedShare1);
+    zeroUint8Array(decryptedShare1);
+
+    const share2Bytes = hexToBytes(keySlot.share2_encrypted!);
+    let share2Str: string;
     try {
-      const share1Bytes = hexToBytes(keySlot.share1_encrypted);
-      const decryptedShare1 = decrypt(share1Bytes, env);
-      const share1Str = new TextDecoder().decode(decryptedShare1);
-      zeroUint8Array(decryptedShare1);
-
-      const share2Bytes = hexToBytes(keySlot.share2_encrypted!);
-      let share2Str: string;
-      try {
-        share2Str = await decryptShare2(share2Bytes, auth.rawKey);
-      } catch {
-        share2Str = decryptShare2Legacy(share2Bytes, auth.rawKey);
-      }
-
-      const share1 = deserializeShare(share1Str);
-      const share2 = deserializeShare(share2Str);
-      const combined = combineShares([share1, share2]);
-      apiKey = new TextDecoder().decode(combined);
-
-      // Cache reconstructed key for 60s (KV minimum TTL)
-      await cacheSet(env, apiKeyCacheKey, apiKey, 60);
-    } catch (err: any) {
-      return Response.json({ error: 'Failed to reconstruct key.', detail: err?.message || String(err) }, { status: 500 });
+      share2Str = await decryptShare2(share2Bytes, auth.rawKey);
+    } catch {
+      share2Str = decryptShare2Legacy(share2Bytes, auth.rawKey);
     }
+
+    const share1 = deserializeShare(share1Str);
+    const share2 = deserializeShare(share2Str);
+    const combined = combineShares([share1, share2]);
+    apiKey = new TextDecoder().decode(combined);
+  } catch {
+    return Response.json({ error: 'Key reconstruction failed.' }, { status: 400 });
   }
 
   // h. Build upstream URL
