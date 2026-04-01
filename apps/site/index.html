@@ -4,17 +4,17 @@
     <link rel="icon" type="image/png" href="/favicon.png">
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>VaultProof | The password manager for API keys and secrets</title>
-    <meta name="description" content="The password manager for API keys and secrets. One line change. Every SDK works. Store, encrypt, and proxy your OpenAI, Anthropic, Mistral, and Groq API keys with zero-knowledge security.">
-    <meta name="keywords" content="API key security, API key management, Shamir secret sharing, zero knowledge proofs, OpenAI, Anthropic, Mistral, Groq, API proxy, key vault">
-    <meta property="og:title" content="VaultProof — The password manager for API keys">
-    <meta property="og:description" content="One line change. Every SDK works. Your keys are never exposed. Store API keys and secrets with Shamir splitting and zero-knowledge proofs.">
+    <title>VaultProof | API keys that can't be stolen. Because they're never exposed.</title>
+    <meta name="description" content="Your API key is sitting in a .env file right now. Anyone can read it. VaultProof is a secure proxy — we use your key for you, so it never touches your code.">
+    <meta name="keywords" content="API key security, API key management, API proxy, zero knowledge proofs, OpenAI, Anthropic, Mistral, Groq, key vault, AI agent security">
+    <meta property="og:title" content="VaultProof — API keys that can't be stolen">
+    <meta property="og:description" content="We don't return the key. We use it for you. VaultProof is a secure proxy — your API keys never touch your code.">
     <meta property="og:url" content="https://vaultproof.dev">
     <meta property="og:type" content="website">
     <meta property="og:image" content="https://vaultproof.dev/og-image.png">
     <meta name="twitter:card" content="summary">
-    <meta name="twitter:title" content="VaultProof — The password manager for API keys">
-    <meta name="twitter:description" content="One line change. Every SDK works. Your keys are never exposed.">
+    <meta name="twitter:title" content="VaultProof — API keys that can't be stolen">
+    <meta name="twitter:description" content="We don't return the key. We use it for you. Your API keys never touch your code.">
     <meta name="referrer" content="strict-origin-when-cross-origin">
 
 
@@ -234,10 +234,10 @@
         <div class="grid md:grid-cols-2 gap-12 items-center">
             <div>
                 <h1 class="text-4xl md:text-5xl lg:text-6xl font-black tracking-tight leading-[1.08] mb-6 text-white reveal" style="font-family:'Space Grotesk',sans-serif">
-                    Store API keys without anyone seeing them. <span class="bg-gradient-to-r from-vp-accent to-vp-cyan bg-clip-text text-transparent">Even us.</span>
+                    Your API keys can't be stolen <span class="bg-gradient-to-r from-vp-accent to-vp-cyan bg-clip-text text-transparent">if they're never exposed.</span>
                 </h1>
                 <p class="text-lg text-gray-400 max-w-lg mb-8 leading-relaxed reveal delay-1" style="font-family:'Space Grotesk',sans-serif">
-                    The password manager for API keys and secrets. One line change. Every SDK works. Your keys are never exposed.
+                    VaultProof is a secure proxy. Your app talks to us. We talk to the AI provider. The key never touches your code.
                 </p>
                 <div class="flex items-center gap-4 flex-wrap reveal delay-2">
                     <a href="/app/login" class="bg-vp-accent hover:bg-indigo-500 px-7 py-3.5 rounded-btn font-semibold text-white transition-all btn-glow text-base">Start Free</a>
@@ -272,7 +272,7 @@
     <!-- Providers -->
     <section class="relative z-10 border-y border-vp-border bg-vp-surface/30">
         <div class="max-w-5xl mx-auto px-6 py-10">
-            <p class="text-center text-xs font-semibold text-gray-500 uppercase tracking-widest mb-6 reveal">Works with every major AI provider</p>
+            <p class="text-center text-xs font-semibold text-gray-500 uppercase tracking-widest mb-6 reveal">Drop-in proxy for every provider you already use</p>
             <div class="flex flex-wrap items-center justify-center gap-x-10 gap-y-4 reveal delay-1">
                 <span class="text-sm font-semibold text-gray-300">OpenAI</span>
                 <span class="text-sm font-semibold text-gray-300">Anthropic</span>
@@ -296,19 +296,19 @@
             <div class="grid grid-cols-2 md:grid-cols-4 gap-8" id="statsBar">
                 <div class="text-center reveal">
                     <div class="text-3xl md:text-4xl font-extrabold text-white mb-1"><span class="counter" data-target="39" data-suffix="M">0</span></div>
-                    <div class="text-xs md:text-sm text-gray-500">Secrets leaked on GitHub (2024)</div>
+                    <div class="text-xs md:text-sm text-gray-500">secrets leaked on GitHub in 2024</div>
                 </div>
                 <div class="text-center reveal delay-1">
                     <div class="text-3xl md:text-4xl font-extrabold text-white mb-1"><span class="counter" data-target="81" data-suffix="%">0</span></div>
-                    <div class="text-xs md:text-sm text-gray-500">Surge in AI credential leaks</div>
+                    <div class="text-xs md:text-sm text-gray-500">spike in AI key leaks year-over-year</div>
                 </div>
                 <div class="text-center reveal delay-2">
                     <div class="text-3xl md:text-4xl font-extrabold text-white mb-1">$<span class="counter" data-target="4.88" data-suffix="M" data-decimals="2">0</span></div>
-                    <div class="text-xs md:text-sm text-gray-500">Avg cost of credential breach</div>
+                    <div class="text-xs md:text-sm text-gray-500">average cost per credential breach</div>
                 </div>
                 <div class="text-center reveal delay-3">
                     <div class="text-3xl md:text-4xl font-extrabold text-white mb-1"><span class="counter" data-target="64" data-suffix="%">0</span></div>
-                    <div class="text-xs md:text-sm text-gray-500">Leaked secrets never revoked</div>
+                    <div class="text-xs md:text-sm text-gray-500">of leaked keys are never revoked</div>
                 </div>
             </div>
         </div>
@@ -317,36 +317,36 @@
     <!-- Vibe Coding Pain Points -->
     <section class="relative z-10 max-w-5xl mx-auto px-6 py-24">
         <div class="text-center mb-14 reveal">
-            <h2 class="text-3xl md:text-4xl font-bold text-white mb-4" style="font-family:'Space Grotesk',sans-serif">Vibe coding is leaking your API keys</h2>
-            <p class="text-gray-400 text-lg max-w-2xl mx-auto">AI coding tools like Cursor, Windsurf, and Claude Code make building fast. But they also make leaking secrets easy.</p>
+            <h2 class="text-3xl md:text-4xl font-bold text-white mb-4" style="font-family:'Space Grotesk',sans-serif">Your API key is sitting in a .env file right now</h2>
+            <p class="text-gray-400 text-lg max-w-2xl mx-auto">Every process on your machine can read it. Every AI coding tool can see it. And if it leaks, attackers find it within 5 minutes.</p>
         </div>
 
         <!-- Problem stats row -->
         <div class="grid md:grid-cols-3 gap-6 mb-14">
             <div class="bg-vp-surface border border-vp-border rounded-2xl p-6 text-center reveal delay-1">
                 <div class="text-4xl font-extrabold text-red-400 mb-2">81%</div>
-                <div class="text-sm text-gray-400">surge in AI service credential leaks in 2025</div>
+                <div class="text-sm text-gray-400">spike in AI key leaks in one year</div>
                 <div class="text-xs text-gray-600 mt-2">Source: GitGuardian 2026</div>
             </div>
             <div class="bg-vp-surface border border-vp-border rounded-2xl p-6 text-center reveal delay-2">
                 <div class="text-4xl font-extrabold text-red-400 mb-2">1 in 5</div>
-                <div class="text-sm text-gray-400">vibe-coded sites expose at least one API key</div>
+                <div class="text-sm text-gray-400">AI-built apps expose at least one API key</div>
                 <div class="text-xs text-gray-600 mt-2">Source: RedHunt Labs 2026</div>
             </div>
             <div class="bg-vp-surface border border-vp-border rounded-2xl p-6 text-center reveal delay-3">
                 <div class="text-4xl font-extrabold text-red-400 mb-2">$82K</div>
-                <div class="text-sm text-gray-400">bill from a single stolen API key overnight</div>
+                <div class="text-sm text-gray-400">bill from one stolen API key, overnight</div>
                 <div class="text-xs text-gray-600 mt-2">Source: Developer report, Feb 2026</div>
             </div>
         </div>
 
         <div class="text-center mt-8 reveal delay-3">
-            <p class="text-lg text-gray-400"><span class="text-red-400 font-bold">$82K stolen overnight.</span> <span class="text-white font-bold">Or just use VaultProof.</span></p>
+            <p class="text-lg text-gray-400"><span class="text-red-400 font-bold">$82K gone in one night.</span> <span class="text-white font-bold">One developer. One leaked key.</span></p>
         </div>
 
         <!-- How it happens -->
         <div class="bg-vp-surface border border-vp-border rounded-2xl p-8 mb-10 reveal delay-1">
-            <h3 class="text-xl font-bold text-white mb-6" style="font-family:'Space Grotesk',sans-serif">How vibe coders lose their API keys</h3>
+            <h3 class="text-xl font-bold text-white mb-6" style="font-family:'Space Grotesk',sans-serif">How developers lose their API keys</h3>
             <div class="grid md:grid-cols-2 gap-6">
                 <div class="space-y-4">
                     <div class="flex gap-3">
@@ -411,24 +411,24 @@
 
         <!-- Solution -->
         <div class="bg-gradient-to-r from-vp-accent/10 to-transparent border border-vp-accent/20 rounded-2xl p-8 reveal delay-2">
-            <h3 class="text-xl font-bold text-white mb-4" style="font-family:'Space Grotesk',sans-serif">VaultProof fixes this with one line</h3>
+            <h3 class="text-xl font-bold text-white mb-4" style="font-family:'Space Grotesk',sans-serif">VaultProof is a proxy. Your key never leaves the vault.</h3>
             <div class="grid md:grid-cols-2 gap-8 items-center">
                 <div class="space-y-3">
                     <div class="flex items-start gap-3">
                         <svg class="w-5 h-5 text-vp-accent flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>
-                        <div class="text-sm text-gray-300"><strong class="text-white">Your API key never touches your code.</strong> It's split and encrypted before it leaves your machine.</div>
+                        <div class="text-sm text-gray-300"><strong class="text-white">Your app talks to us. We talk to OpenAI.</strong> The real API key never touches your code, your .env, or your shell history.</div>
                     </div>
                     <div class="flex items-start gap-3">
                         <svg class="w-5 h-5 text-vp-accent flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>
-                        <div class="text-sm text-gray-300"><strong class="text-white">AI agents only see your VaultProof key.</strong> If it leaks, it's useless alone — the real key stays encrypted.</div>
+                        <div class="text-sm text-gray-300"><strong class="text-white">AI agents can't steal what they never see.</strong> They only get a VaultProof key that's useless on its own. The real key stays split and encrypted.</div>
                     </div>
                     <div class="flex items-start gap-3">
                         <svg class="w-5 h-5 text-vp-accent flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>
-                        <div class="text-sm text-gray-300"><strong class="text-white">Works with every AI tool.</strong> Change your base URL — Cursor, Windsurf, Claude Code, any SDK.</div>
+                        <div class="text-sm text-gray-300"><strong class="text-white">Auto-migration from GitHub.</strong> Connect your repo. We scan your code and create a PR that migrates everything to VaultProof.</div>
                     </div>
                     <div class="flex items-start gap-3">
                         <svg class="w-5 h-5 text-vp-accent flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>
-                        <div class="text-sm text-gray-300"><strong class="text-white">Instant alerts if something's wrong.</strong> Get notified if your key is rejected, usage spikes, or it's about to expire.</div>
+                        <div class="text-sm text-gray-300"><strong class="text-white">Instant alerts when something looks wrong.</strong> Usage spikes, rejected keys, or suspicious patterns — you'll know before the bill arrives.</div>
                     </div>
                 </div>
                 <div class="bg-vp-bg border border-vp-border rounded-xl p-5 font-mono text-sm">
@@ -450,8 +450,8 @@
     <!-- Install -->
     <section class="relative z-10 max-w-4xl mx-auto px-6 py-20">
         <div class="text-center mb-10 reveal">
-            <h2 class="text-3xl font-bold text-white mb-3" style="font-family:'Space Grotesk',sans-serif">Get started in seconds</h2>
-            <p class="text-gray-500 max-w-lg mx-auto">Add VaultProof to your app with the SDK, or manage keys and secrets from your terminal with the CLI. Both are live on npm.</p>
+            <h2 class="text-3xl font-bold text-white mb-3" style="font-family:'Space Grotesk',sans-serif">Install and ship</h2>
+            <p class="text-gray-500 max-w-lg mx-auto">Use the SDK in your app or the CLI from your terminal. Both are live on npm.</p>
         </div>
         <div class="grid md:grid-cols-2 gap-6 reveal delay-1">
             <!-- SDK -->
@@ -462,7 +462,7 @@
                     </div>
                     <h3 class="text-white font-semibold">SDK</h3>
                 </div>
-                <p class="text-sm text-gray-500 mb-4">Import into your Node.js or TypeScript app. Handles Shamir splitting, encryption, and proxying automatically.</p>
+                <p class="text-sm text-gray-500 mb-4">Import into your Node.js or TypeScript app. Handles key splitting, encryption, and proxying for you.</p>
                 <div class="flex items-center gap-2 bg-black/30 border border-white/[0.06] rounded-xl px-4 py-3 cursor-pointer hover:bg-black/40 transition group" onclick="navigator.clipboard.writeText('npm install @vaultproof/sdk')">
                     <code class="text-sm font-mono text-gray-400 flex-1"><span class="text-gray-600">$</span> npm install <span class="text-indigo-400">@vaultproof/sdk</span></code>
                     <svg class="w-4 h-4 text-gray-600 group-hover:text-gray-400 transition flex-shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"/></svg>
@@ -489,8 +489,8 @@
     <!-- Features -->
     <section class="relative z-10 max-w-5xl mx-auto px-6 py-24">
         <div class="text-center mb-16">
-            <h2 class="text-3xl md:text-4xl font-bold text-white mb-4 reveal">Built on cryptographic guarantees</h2>
-            <p class="text-gray-500 text-lg reveal delay-1">Not policies. Not promises. Math.</p>
+            <h2 class="text-3xl md:text-4xl font-bold text-white mb-4 reveal">Your keys are protected by math, not promises</h2>
+            <p class="text-gray-500 text-lg reveal delay-1">Not access policies. Not pinky swears. Cryptographic guarantees.</p>
         </div>
         <div class="grid md:grid-cols-3 gap-6">
             <!-- Key Splitting -->
@@ -498,24 +498,24 @@
                 <div class="w-12 h-12 rounded-card bg-vp-accent/10 flex items-center justify-center mb-5">
                     <svg width="24" height="24" fill="none" stroke="#6366f1" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="6" cy="12" r="3"/><circle cx="18" cy="12" r="3"/><path d="M9 12h6"/><path d="M12 3v4M12 17v4"/></svg>
                 </div>
-                <h3 class="text-lg font-bold text-white mb-2">Key Splitting</h3>
-                <p class="text-sm text-gray-400 leading-relaxed">Your API key is split into shares using Shamir Secret Sharing the instant you paste it. The original is destroyed in-browser. Half a key is cryptographic garbage.</p>
+                <h3 class="text-lg font-bold text-white mb-2">Split on arrival</h3>
+                <p class="text-sm text-gray-400 leading-relaxed">The moment you paste your API key, it's split into encrypted pieces in your browser. The original is destroyed instantly. Half a key is useless to anyone.</p>
             </div>
             <!-- Zero-Knowledge Proofs -->
             <div class="bg-vp-surface border border-vp-border rounded-[16px] p-7 card-hover reveal delay-2">
                 <div class="w-12 h-12 rounded-card bg-vp-accent/10 flex items-center justify-center mb-5">
                     <svg width="24" height="24" fill="none" stroke="#6366f1" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><path d="M9 12l2 2 4-4"/></svg>
                 </div>
-                <h3 class="text-lg font-bold text-white mb-2">Zero-Knowledge Proofs</h3>
-                <p class="text-sm text-gray-400 leading-relaxed">App-to-app access is authorized by ZK proofs that verify ownership without revealing the key. SDK access is secured by split-key authentication — your developer key alone cannot reconstruct the secret.</p>
+                <h3 class="text-lg font-bold text-white mb-2">Prove you own it, without showing it</h3>
+                <p class="text-sm text-gray-400 leading-relaxed">Zero-knowledge proofs verify you're the owner without ever revealing the key. No shared secrets. No single point of compromise. Your developer key alone can't reconstruct anything.</p>
             </div>
             <!-- Ephemeral Reconstruction -->
             <div class="bg-vp-surface border border-vp-border rounded-[16px] p-7 card-hover reveal delay-3">
                 <div class="w-12 h-12 rounded-card bg-vp-accent/10 flex items-center justify-center mb-5">
                     <svg width="24" height="24" fill="none" stroke="#6366f1" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
                 </div>
-                <h3 class="text-lg font-bold text-white mb-2">Ephemeral Reconstruction</h3>
-                <p class="text-sm text-gray-400 leading-relaxed">Shares combine in an isolated memory for approximately 100ms. The API call is made, the response returns, and all key material is zeroed from memory.</p>
+                <h3 class="text-lg font-bold text-white mb-2">Gone in 100ms</h3>
+                <p class="text-sm text-gray-400 leading-relaxed">Your key exists in memory for about 100 milliseconds. The API call fires, the response comes back, and all key material is wiped. Nothing to steal.</p>
             </div>
         </div>
     </section>
@@ -523,8 +523,8 @@
     <!-- AI Agent Security -->
     <section class="relative z-10 max-w-5xl mx-auto px-6 py-24">
         <div class="text-center mb-14 reveal">
-            <h2 class="text-3xl md:text-4xl font-bold text-white mb-4" style="font-family:'Space Grotesk',sans-serif">Built for AI agents</h2>
-            <p class="text-gray-400 text-lg max-w-2xl mx-auto">Cursor, Claude Code, Windsurf, Copilot — every AI coding tool needs API keys. VaultProof keeps them secure without slowing you down.</p>
+            <h2 class="text-3xl md:text-4xl font-bold text-white mb-4" style="font-family:'Space Grotesk',sans-serif">AI agents can't steal what they never see</h2>
+            <p class="text-gray-400 text-lg max-w-2xl mx-auto">Cursor, Claude Code, Windsurf, Copilot -- they all read your .env files. With VaultProof, that's fine. There's nothing useful in there.</p>
         </div>
 
         <div class="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
@@ -532,56 +532,56 @@
                 <div class="w-10 h-10 rounded-xl bg-indigo-500/10 flex items-center justify-center mb-4">
                     <svg class="w-5 h-5 text-indigo-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M8 9l3 3-3 3m5 0h3M5 20h14a2 2 0 002-2V6a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
                 </div>
-                <h3 class="text-white font-semibold mb-2">Works with your AI tools</h3>
-                <p class="text-sm text-gray-400 leading-relaxed">Change one line — your base URL. Cursor, Claude Code, Windsurf, and any OpenAI-compatible tool works instantly. No plugins, no configuration files.</p>
+                <h3 class="text-white font-semibold mb-2">Drop-in for every AI tool</h3>
+                <p class="text-sm text-gray-400 leading-relaxed">Point your base URL at VaultProof. Cursor, Claude Code, Windsurf, and any OpenAI-compatible tool works instantly. No plugins needed.</p>
             </div>
 
             <div class="bg-vp-surface border border-vp-border rounded-2xl p-6 reveal delay-2">
                 <div class="w-10 h-10 rounded-xl bg-indigo-500/10 flex items-center justify-center mb-4">
                     <svg class="w-5 h-5 text-indigo-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/></svg>
                 </div>
-                <h3 class="text-white font-semibold mb-2">Agents never see your real key</h3>
-                <p class="text-sm text-gray-400 leading-relaxed">AI agents have access to your .env files, shell history, and environment variables. With VaultProof, they only see your vp_live_ key — which is useless without VaultProof.</p>
+                <h3 class="text-white font-semibold mb-2">Your real key stays hidden</h3>
+                <p class="text-sm text-gray-400 leading-relaxed">AI agents see your .env files, shell history, and environment variables. With VaultProof, all they find is a vp_live_ key -- useless on its own.</p>
             </div>
 
             <div class="bg-vp-surface border border-vp-border rounded-2xl p-6 reveal delay-3">
                 <div class="w-10 h-10 rounded-xl bg-indigo-500/10 flex items-center justify-center mb-4">
                     <svg class="w-5 h-5 text-indigo-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
                 </div>
-                <h3 class="text-white font-semibold mb-2">Auto-fallback if a provider is down</h3>
-                <p class="text-sm text-gray-400 leading-relaxed">Store keys for multiple providers. If a provider is unreachable, VaultProof automatically retries with Groq or Together. Your agent never stops working.</p>
+                <h3 class="text-white font-semibold mb-2">Auto-fallback when providers go down</h3>
+                <p class="text-sm text-gray-400 leading-relaxed">Store keys for multiple providers. If one is unreachable, VaultProof automatically retries with another. Your agents never stop working.</p>
             </div>
 
             <div class="bg-vp-surface border border-vp-border rounded-2xl p-6 reveal delay-4">
                 <div class="w-10 h-10 rounded-xl bg-indigo-500/10 flex items-center justify-center mb-4">
                     <svg class="w-5 h-5 text-indigo-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
                 </div>
-                <h3 class="text-white font-semibold mb-2">Rotate without touching code</h3>
-                <p class="text-sm text-gray-400 leading-relaxed">Store a new key in VaultProof — it replaces the old one instantly. No code changes, no deploys, no updating .env files across 15 environments.</p>
+                <h3 class="text-white font-semibold mb-2">Rotate keys without touching code</h3>
+                <p class="text-sm text-gray-400 leading-relaxed">Store a new key in VaultProof and the old one is replaced instantly. No code changes. No deploys. No updating .env files across 15 environments.</p>
             </div>
 
             <div class="bg-vp-surface border border-vp-border rounded-2xl p-6 reveal delay-5">
                 <div class="w-10 h-10 rounded-xl bg-indigo-500/10 flex items-center justify-center mb-4">
                     <svg class="w-5 h-5 text-indigo-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
                 </div>
-                <h3 class="text-white font-semibold mb-2">Budget caps per key</h3>
-                <p class="text-sm text-gray-400 leading-relaxed">Set daily and monthly call limits on each stored key. When the cap is hit, VaultProof blocks the call — so a bug or stolen key can't run up your bill.</p>
+                <h3 class="text-white font-semibold mb-2">Budget caps so leaks can't bankrupt you</h3>
+                <p class="text-sm text-gray-400 leading-relaxed">Set daily and monthly call limits on each key. When the cap is hit, VaultProof blocks the call. A bug or stolen key can't run up your bill.</p>
             </div>
 
             <div class="bg-vp-surface border border-red-500/20 rounded-2xl p-6 reveal delay-6">
                 <div class="w-10 h-10 rounded-xl bg-red-500/10 flex items-center justify-center mb-4">
                     <svg class="w-5 h-5 text-red-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636"/></svg>
                 </div>
-                <h3 class="text-white font-semibold mb-2">Kill switch</h3>
-                <p class="text-sm text-gray-400 leading-relaxed">Something wrong? One click to freeze ALL proxy calls instantly. Requires typing "STOP" + your password to prevent accidents. Resume when you're ready.</p>
+                <h3 class="text-white font-semibold mb-2">Kill switch -- freeze everything instantly</h3>
+                <p class="text-sm text-gray-400 leading-relaxed">Something wrong? One click freezes all proxy calls. Requires typing "STOP" + your password to prevent accidents. Resume when you're ready.</p>
             </div>
         </div>
 
         <div class="mt-10 bg-vp-surface border border-vp-border rounded-2xl p-6 reveal delay-4">
             <div class="flex flex-col md:flex-row items-center gap-6">
                 <div class="flex-1">
-                    <h3 class="text-white font-semibold mb-2">Quick setup</h3>
-                    <p class="text-sm text-gray-400 leading-relaxed mb-3">Store your key once, then add two lines to your AI tool config. Every prompt, every completion, every agent action goes through VaultProof's secure proxy.</p>
+                    <h3 class="text-white font-semibold mb-2">Set it up once. Every call is protected.</h3>
+                    <p class="text-sm text-gray-400 leading-relaxed mb-3">Store your key, update your config. Every prompt, every completion, every agent action goes through VaultProof's secure proxy from that point on.</p>
                     <a href="/guides" class="text-sm text-indigo-400 hover:underline">View setup guides for Claude Code, Cursor, and more →</a>
                 </div>
                 <div class="bg-[#0a0a0f] border border-[#1e1e2e] rounded-xl p-4 font-mono text-sm flex-shrink-0 w-full md:w-auto">
@@ -596,8 +596,8 @@
     <!-- How It Works -->
     <section id="how-it-works" class="relative z-10 max-w-5xl mx-auto px-6 py-24">
         <div class="text-center mb-16">
-            <h2 class="text-3xl md:text-4xl font-bold text-white mb-4 reveal">How It Works</h2>
-            <p class="text-gray-500 text-lg reveal delay-1">Three steps. Zero trust required.</p>
+            <h2 class="text-3xl md:text-4xl font-bold text-white mb-4 reveal">Split. Proxy. Zero.</h2>
+            <p class="text-gray-500 text-lg reveal delay-1">Three steps between you and keys that can't be stolen.</p>
         </div>
         <div class="relative">
             <!-- Dashed connector (desktop only) -->
@@ -612,24 +612,24 @@
                     <div class="w-[72px] h-[72px] rounded-full bg-vp-surface border-2 border-vp-accent/40 flex items-center justify-center mx-auto mb-6">
                         <span class="text-2xl font-bold text-vp-accent">1</span>
                     </div>
-                    <h3 class="text-lg font-bold text-white mb-2">Store</h3>
-                    <p class="text-sm text-gray-400 leading-relaxed">Paste your API key. Shamir Secret Sharing instantly splits it into encrypted shares in your browser. The original key is destroyed before it ever leaves your device.</p>
+                    <h3 class="text-lg font-bold text-white mb-2">Split</h3>
+                    <p class="text-sm text-gray-400 leading-relaxed">Paste your API key. It's instantly split into encrypted pieces right in your browser. The original key is destroyed before it ever leaves your device.</p>
                 </div>
                 <!-- Step 2 -->
                 <div class="text-center reveal delay-2">
                     <div class="w-[72px] h-[72px] rounded-full bg-vp-surface border-2 border-vp-accent/40 flex items-center justify-center mx-auto mb-6">
                         <span class="text-2xl font-bold text-vp-accent">2</span>
                     </div>
-                    <h3 class="text-lg font-bold text-white mb-2">Authorize</h3>
-                    <p class="text-sm text-gray-400 leading-relaxed">When you need to use a key, a zero-knowledge proof cryptographically verifies you are the rightful owner. No shared secrets, no single point of compromise.</p>
+                    <h3 class="text-lg font-bold text-white mb-2">Proxy</h3>
+                    <p class="text-sm text-gray-400 leading-relaxed">Your app calls VaultProof. We make the API call for you. The key is reassembled in memory for about 100ms, then wiped. You get the response. The key is gone.</p>
                 </div>
                 <!-- Step 3 -->
                 <div class="text-center reveal delay-3">
                     <div class="w-[72px] h-[72px] rounded-full bg-vp-surface border-2 border-vp-accent/40 flex items-center justify-center mx-auto mb-6">
                         <span class="text-2xl font-bold text-vp-accent">3</span>
                     </div>
-                    <h3 class="text-lg font-bold text-white mb-2">Proxy</h3>
-                    <p class="text-sm text-gray-400 leading-relaxed">Shares are reconstructed in an isolated memory for ~100ms. The API call is proxied, the response is returned, and all key material is zeroed from memory.</p>
+                    <h3 class="text-lg font-bold text-white mb-2">Zero</h3>
+                    <p class="text-sm text-gray-400 leading-relaxed">All key material is erased from memory the instant the call completes. Nothing is stored, cached, or logged. There's nothing left to steal.</p>
                 </div>
             </div>
         </div>
@@ -638,33 +638,47 @@
     <!-- Code Example -->
     <section class="relative z-10 max-w-5xl mx-auto px-6 py-24">
         <div class="text-center mb-16">
-            <h2 class="text-3xl md:text-4xl font-bold text-white mb-4 reveal">3 Lines. Zero Trust.</h2>
-            <p class="text-gray-500 text-lg reveal delay-1">Install the SDK and start making cryptographically secure API calls.</p>
+            <h2 class="text-3xl md:text-4xl font-bold text-white mb-4 reveal">Your code barely changes. Your security changes completely.</h2>
+            <p class="text-gray-500 text-lg reveal delay-1">Point your SDK at VaultProof. Everything else works exactly the same.</p>
         </div>
         <div class="max-w-2xl mx-auto reveal delay-2">
             <div class="bg-vp-surface border border-vp-border rounded-[16px] overflow-hidden">
                 <div class="flex items-center justify-between px-5 py-3 border-b border-vp-border">
-                    <span class="text-xs text-gray-600 font-mono">index.js</span>
+                    <span class="text-xs text-gray-600 font-mono">app.js</span>
                     <button onclick="copyCode()" class="text-xs text-gray-500 hover:text-white transition-colors flex items-center gap-1.5" id="copyBtn">
                         <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2"><rect x="5" y="5" width="8" height="8" rx="1.5"/><path d="M3 9V3a1.5 1.5 0 011.5-1.5H9"/></svg>
                         Copy
                     </button>
                 </div>
                 <div class="p-5 font-mono text-sm leading-7 overflow-x-auto">
-                    <div class="text-gray-500">// npm install @vaultproof/sdk</div>
-                    <div class="mt-3"></div>
-                    <div><span class="text-indigo-400">const</span> <span class="text-gray-300">vault</span> <span class="text-gray-500">=</span> <span class="text-indigo-400">new</span> <span class="text-yellow-300">VaultProof</span><span class="text-gray-500">(</span><span class="text-green-400">'vp_live_abc123...'</span><span class="text-gray-500">)</span></div>
-                    <div class="mt-1"><span class="text-indigo-400">const</span> <span class="text-gray-300">key</span> <span class="text-gray-500">=</span> <span class="text-indigo-400">await</span> <span class="text-gray-300">vault</span><span class="text-gray-500">.</span><span class="text-yellow-300">store</span><span class="text-gray-500">(</span><span class="text-green-400">'sk-openai-key'</span><span class="text-gray-500">,</span> <span class="text-green-400">'openai'</span><span class="text-gray-500">)</span></div>
-                    <div class="mt-1"><span class="text-indigo-400">const</span> <span class="text-gray-300">res</span> <span class="text-gray-500">=</span> <span class="text-indigo-400">await</span> <span class="text-gray-300">vault</span><span class="text-gray-500">.</span><span class="text-yellow-300">proxy</span><span class="text-gray-500">(</span><span class="text-gray-300">key</span><span class="text-gray-500">,</span> <span class="text-green-400">'/v1/chat/completions'</span><span class="text-gray-500">,</span> <span class="text-gray-500">{</span></div>
+                    <div class="text-gray-500">// Before: your real key is exposed everywhere</div>
+                    <div class="mt-1"><span class="text-indigo-400">const</span> <span class="text-gray-300">openai</span> <span class="text-gray-500">=</span> <span class="text-indigo-400">new</span> <span class="text-yellow-300">OpenAI</span><span class="text-gray-500">({</span></div>
+                    <div class="pl-6"><span class="text-gray-300">apiKey</span><span class="text-gray-500">:</span> <span class="text-red-400">'sk-proj-abc123...'</span> <span class="text-gray-600">// dangerous</span></div>
+                    <div><span class="text-gray-500">})</span></div>
+                    <div class="mt-4 text-gray-500">// After: same code, key never exposed</div>
+                    <div class="mt-1"><span class="text-indigo-400">const</span> <span class="text-gray-300">openai</span> <span class="text-gray-500">=</span> <span class="text-indigo-400">new</span> <span class="text-yellow-300">OpenAI</span><span class="text-gray-500">({</span></div>
+                    <div class="pl-6"><span class="text-gray-300">apiKey</span><span class="text-gray-500">:</span> <span class="text-green-400">'vp_live_...'</span><span class="text-gray-500">,</span></div>
+                    <div class="pl-6"><span class="text-gray-300">baseURL</span><span class="text-gray-500">:</span> <span class="text-green-400">'https://api.vaultproof.dev/v1/openai'</span></div>
+                    <div><span class="text-gray-500">})</span></div>
+                    <div class="mt-4 text-gray-500">// Everything else works exactly the same</div>
+                    <div class="mt-1"><span class="text-indigo-400">const</span> <span class="text-gray-300">res</span> <span class="text-gray-500">=</span> <span class="text-indigo-400">await</span> <span class="text-gray-300">openai</span><span class="text-gray-500">.</span><span class="text-gray-300">chat</span><span class="text-gray-500">.</span><span class="text-gray-300">completions</span><span class="text-gray-500">.</span><span class="text-yellow-300">create</span><span class="text-gray-500">({</span></div>
                     <div class="pl-6"><span class="text-gray-300">model</span><span class="text-gray-500">:</span> <span class="text-green-400">'gpt-4'</span><span class="text-gray-500">,</span> <span class="text-gray-300">messages</span><span class="text-gray-500">:</span> <span class="text-gray-500">[{</span> <span class="text-gray-300">role</span><span class="text-gray-500">:</span> <span class="text-green-400">'user'</span><span class="text-gray-500">,</span> <span class="text-gray-300">content</span><span class="text-gray-500">:</span> <span class="text-green-400">'Hello!'</span> <span class="text-gray-500">}]</span></div>
                     <div><span class="text-gray-500">})</span></div>
                 </div>
             </div>
-            <pre id="codeRaw" class="hidden">npm install @vaultproof/sdk
+            <pre id="codeRaw" class="hidden">// Before: your real key is exposed everywhere
+const openai = new OpenAI({
+  apiKey: 'sk-proj-abc123...' // dangerous
+})
 
-const vault = new VaultProof('vp_live_abc123...')
-const key = await vault.store('sk-openai-key', 'openai')
-const res = await vault.proxy(key, '/v1/chat/completions', {
+// After: same code, key never exposed
+const openai = new OpenAI({
+  apiKey: 'vp_live_...',
+  baseURL: 'https://api.vaultproof.dev/v1/openai'
+})
+
+// Everything else works exactly the same
+const res = await openai.chat.completions.create({
   model: 'gpt-4', messages: [{ role: 'user', content: 'Hello!' }]
 })</pre>
         </div>
@@ -673,8 +687,8 @@ const res = await vault.proxy(key, '/v1/chat/completions', {
     <!-- Comparison Table -->
     <section class="relative z-10 max-w-5xl mx-auto px-6 py-24">
         <div class="text-center mb-16">
-            <h2 class="text-3xl md:text-4xl font-bold text-white mb-4 reveal">vs Every Other Secrets Tool</h2>
-            <p class="text-gray-500 text-lg reveal delay-1">The features developers actually compare.</p>
+            <h2 class="text-3xl md:text-4xl font-bold text-white mb-4 reveal">You've seen other secrets tools. Here's the difference.</h2>
+            <p class="text-gray-500 text-lg reveal delay-1">They return the key. We never do.</p>
         </div>
         <div class="reveal delay-2 overflow-x-auto">
             <div class="bg-vp-surface border border-vp-border rounded-[16px] overflow-hidden">
@@ -763,8 +777,8 @@ const res = await vault.proxy(key, '/v1/chat/completions', {
     <!-- Live Demo -->
     <section class="relative z-10 max-w-3xl mx-auto px-6 py-24">
         <div class="text-center mb-10 reveal">
-            <h2 class="text-3xl font-bold text-white mb-4" style="font-family:'Space Grotesk',sans-serif">See it in action</h2>
-            <p class="text-gray-400">Paste any text below and watch it get split into two shares. Neither share alone reveals anything.</p>
+            <h2 class="text-3xl font-bold text-white mb-4" style="font-family:'Space Grotesk',sans-serif">Try it right here</h2>
+            <p class="text-gray-400">Paste any text and watch it get split into two pieces. Neither piece alone reveals anything.</p>
         </div>
         <div class="bg-vp-surface border border-vp-border rounded-2xl p-8 reveal delay-1">
             <div class="mb-4">
@@ -793,8 +807,8 @@ const res = await vault.proxy(key, '/v1/chat/completions', {
     <!-- Pricing -->
     <section id="pricing" class="relative z-10 max-w-6xl mx-auto px-6 py-24">
         <div class="text-center mb-16">
-            <h2 class="text-3xl md:text-4xl font-bold text-white mb-4 reveal" style="font-family:'Space Grotesk',sans-serif">Simple, transparent pricing</h2>
-            <p class="text-gray-500 text-lg reveal delay-1">Start free. Upgrade when you need more.</p>
+            <h2 class="text-3xl md:text-4xl font-bold text-white mb-4 reveal" style="font-family:'Space Grotesk',sans-serif">Free to start. Scales when you do.</h2>
+            <p class="text-gray-500 text-lg reveal delay-1">No credit card. No trial countdown. Upgrade only when you need more.</p>
         </div>
 
         <!-- Monthly / Annual toggle -->
@@ -894,8 +908,8 @@ const res = await vault.proxy(key, '/v1/chat/completions', {
         <div class="bg-vp-surface border border-vp-border rounded-[20px] p-12 md:p-16 text-center relative overflow-hidden reveal">
             <!-- Subtle accent glow -->
             <div class="absolute top-0 left-1/2 -translate-x-1/2 w-[400px] h-[200px] bg-vp-accent/10 blur-[100px] rounded-full pointer-events-none"></div>
-            <h2 class="text-3xl md:text-4xl font-bold text-white mb-4 relative">Stop trusting. Start proving.</h2>
-            <p class="text-gray-400 text-lg mb-10 max-w-xl mx-auto relative">Breaches are architecturally impossible, not just policy-prohibited.</p>
+            <h2 class="text-3xl md:text-4xl font-bold text-white mb-4 relative">Your keys deserve better than a .env file.</h2>
+            <p class="text-gray-400 text-lg mb-10 max-w-xl mx-auto relative">With VaultProof, breaches are architecturally impossible. Not just unlikely. Impossible.</p>
             <div class="flex flex-col sm:flex-row items-center justify-center gap-4 relative">
                 <div class="flex w-full sm:w-auto">
                     <input type="email" id="ctaEmail" placeholder="you@company.com" class="bg-vp-bg border border-vp-border rounded-l-btn px-5 py-3.5 text-sm text-white placeholder-gray-600 focus:outline-none focus:border-vp-accent/50 w-full sm:w-64 transition-colors">
@@ -918,7 +932,7 @@ const res = await vault.proxy(key, '/v1/chat/completions', {
                     <svg class="w-4 h-4 text-gray-500 transition-transform" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7"/></svg>
                 </button>
                 <div class="hidden px-5 pb-5">
-                    <p class="text-sm text-gray-400 leading-relaxed">No. Your key is split using Shamir Secret Sharing before it leaves your device. We store two encrypted shares — one encrypted with our server key, one encrypted with your developer key. Neither share alone reveals anything. We mathematically cannot see your full key.</p>
+                    <p class="text-sm text-gray-400 leading-relaxed">No. Your key is split into encrypted pieces before it leaves your device. We store two shares -- one encrypted with our server key, one encrypted with your developer key. Neither share alone reveals anything. We mathematically cannot see your full key.</p>
                 </div>
             </div>
             <div class="bg-vp-surface border border-vp-border rounded-xl overflow-hidden reveal delay-1">
@@ -945,7 +959,7 @@ const res = await vault.proxy(key, '/v1/chat/completions', {
                     <svg class="w-4 h-4 text-gray-500 transition-transform" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7"/></svg>
                 </button>
                 <div class="hidden px-5 pb-5">
-                    <p class="text-sm text-gray-400 leading-relaxed">Yes. Use <code class="text-indigo-400 bg-vp-bg px-1.5 py-0.5 rounded text-xs">vault.proxy('key-id', '/v1/charges', { amount: 2000 })</code> to route any API call through VaultProof's server. Your key is never exposed to your code. Works with every provider.</p>
+                    <p class="text-sm text-gray-400 leading-relaxed">Yes. Use <code class="text-indigo-400 bg-vp-bg px-1.5 py-0.5 rounded text-xs">vault.proxy(keyId, '/v1/charges', { amount: 2000 })</code> to route any API call through VaultProof's secure proxy. Your key never touches your code. Works with any provider that uses API keys.</p>
                 </div>
             </div>
             <div class="bg-vp-surface border border-vp-border rounded-xl overflow-hidden reveal delay-3">
@@ -954,7 +968,7 @@ const res = await vault.proxy(key, '/v1/chat/completions', {
                     <svg class="w-4 h-4 text-gray-500 transition-transform" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7"/></svg>
                 </button>
                 <div class="hidden px-5 pb-5">
-                    <p class="text-sm text-gray-400 leading-relaxed">The free tier gives you 3 keys and 10,000 proxy calls per month. No credit card. No trial period. It's free forever. Upgrade when you need more.</p>
+                    <p class="text-sm text-gray-400 leading-relaxed">Yes. The free tier gives you 3 keys and 10,000 proxy calls per month. No credit card. No trial countdown. It stays free. Upgrade only when you need more.</p>
                 </div>
             </div>
             <div class="bg-vp-surface border border-vp-border rounded-xl overflow-hidden reveal delay-3">
