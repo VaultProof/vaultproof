@@ -656,7 +656,7 @@
                 badge.textContent = 'Operational';
             } else if (status === 'down') {
                 dot.className = 'w-3 h-3 rounded-full bg-red-400 status-pulse';
-                badge.className = 'text-xs font-medium px-2.5 py-1 rounded-full bg-red-400/10 text-red-400';
+                badge.className = 'text-xs font-medium px-2.5 py-1 rounded-full bg-red-400/10 text-amber-400';
                 badge.textContent = 'Down';
             } else {
                 dot.className = 'w-3 h-3 rounded-full bg-yellow-400 status-pulse';
@@ -686,7 +686,7 @@
             } else if (upCount === 0) {
                 heroDot.className = 'w-4 h-4 rounded-full bg-red-400 hero-status-pulse-red';
                 heroLabel.textContent = 'Major outage';
-                heroLabel.className = 'text-sm font-medium text-red-400 tracking-wide uppercase';
+                heroLabel.className = 'text-sm font-medium text-amber-400 tracking-wide uppercase';
             } else {
                 heroDot.className = 'w-4 h-4 rounded-full bg-yellow-400 hero-status-pulse';
                 heroLabel.textContent = 'Partial outage';

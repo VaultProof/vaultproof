@@ -66,13 +66,13 @@
 
         <!-- Proof 1: Key Never Sent Whole -->
         <section class="mb-10">
-            <div class="bg-dark-blue-lighter border border-gray-800 rounded-2xl p-6">
+            <div class="bg-dark-blue-lighter border border-gray-800 rounded-lg p-6">
                 <div class="flex items-center gap-3 mb-4">
                     <span class="w-8 h-8 rounded-full bg-green-900/50 flex items-center justify-center text-green-400 text-sm font-bold">1</span>
                     <h2 class="text-xl font-bold text-white">The server never sees your full API key</h2>
                 </div>
                 <p class="text-gray-400 text-sm mb-4">The SDK splits your key into two Shamir shares <strong>locally in your browser</strong> before anything hits the network. Open DevTools (F12 > Network) before storing a key. You'll see:</p>
-                <div class="mono text-xs bg-gray-900/50 rounded-xl p-4 mb-4 overflow-x-auto">
+                <div class="mono text-xs bg-gray-900/50 rounded-md p-4 mb-4 overflow-x-auto">
 <pre class="text-gray-300"><span class="text-gray-500">// Step 1 — SDK splits the key locally (in your browser):</span>
 apiKey  =>  share1 + share2   <span class="text-green-400">// Shamir 2-of-2 split, client-side only</span>
 
@@ -88,9 +88,9 @@ POST /api/v1/keys/store
 }
 
 <span class="text-gray-500">// What is NOT in the request:</span>
-<span class="text-red-400">// Your actual API key — never leaves your browser.</span>
-<span class="text-red-400">// Share 2 — encrypted with your vp_live_ key, stays on your device.</span>
-<span class="text-red-400">// The plaintext of Share 1 — server only receives the encrypted blob.</span></pre>
+<span class="text-amber-400">// Your actual API key — never leaves your browser.</span>
+<span class="text-amber-400">// Share 2 — encrypted with your vp_live_ key, stays on your device.</span>
+<span class="text-amber-400">// The plaintext of Share 1 — server only receives the encrypted blob.</span></pre>
                 </div>
                 <p class="text-gray-500 text-sm"><strong>How to verify:</strong> Open DevTools > Network tab > store a key > inspect the POST request body. You'll see only an encrypted Share 1 blob and a hash commitment. The full API key and Share 2 never appear in network traffic.</p>
             </div>
@@ -98,13 +98,13 @@ POST /api/v1/keys/store
 
         <!-- Proof 2: Share 1 Is Encrypted -->
         <section class="mb-10">
-            <div class="bg-dark-blue-lighter border border-gray-800 rounded-2xl p-6">
+            <div class="bg-dark-blue-lighter border border-gray-800 rounded-lg p-6">
                 <div class="flex items-center gap-3 mb-4">
                     <span class="w-8 h-8 rounded-full bg-green-900/50 flex items-center justify-center text-green-400 text-sm font-bold">2</span>
                     <h2 class="text-xl font-bold text-white">Both shares are encrypted with different keys</h2>
                 </div>
                 <p class="text-gray-400 text-sm mb-4">Each share is encrypted with a key stored in a completely separate place. To breach a key, an attacker needs <strong>all three</strong>:</p>
-                <div class="mono text-xs bg-gray-900/50 rounded-xl p-4 mb-4 overflow-x-auto">
+                <div class="mono text-xs bg-gray-900/50 rounded-md p-4 mb-4 overflow-x-auto">
 <pre class="text-gray-300"><span class="text-gray-500">// Where each piece lives:</span>
 
 <span class="text-yellow-400">1. Database</span>           =>  share1_encrypted   <span class="text-gray-500">// AES-256-GCM ciphertext</span>
@@ -118,10 +118,10 @@ POST /api/v1/keys/store
                                                   <span class="text-gray-500">// (never sent to server)</span>
 
 <span class="text-gray-500">// To reconstruct a key, an attacker would need:</span>
-<span class="text-red-400">// 1. Breach the database           (get encrypted Share 1)</span>
-<span class="text-red-400">// 2. Steal VAULT_ENCRYPTION_KEY    (decrypt Share 1)</span>
-<span class="text-red-400">// 3. Steal the developer's vp_live_ key + their Share 2</span>
-<span class="text-red-400">// All three. From three separate places. Simultaneously.</span></pre>
+<span class="text-amber-400">// 1. Breach the database           (get encrypted Share 1)</span>
+<span class="text-amber-400">// 2. Steal VAULT_ENCRYPTION_KEY    (decrypt Share 1)</span>
+<span class="text-amber-400">// 3. Steal the developer's vp_live_ key + their Share 2</span>
+<span class="text-amber-400">// All three. From three separate places. Simultaneously.</span></pre>
                 </div>
                 <p class="text-gray-500 text-sm"><strong>How to verify:</strong> Both shares use AES-256-GCM with a random salt and IV per encryption — same plaintext produces different ciphertext every time. Tampered data is detected by the GCM auth tag. We have <a href="https://github.com/windsurftemplate/vaultproof" class="text-indigo-400 hover:underline">14 security tests</a> proving this.</p>
             </div>
@@ -129,13 +129,13 @@ POST /api/v1/keys/store
 
         <!-- Proof 3: Fake Proofs Rejected -->
         <section class="mb-10">
-            <div class="bg-dark-blue-lighter border border-gray-800 rounded-2xl p-6">
+            <div class="bg-dark-blue-lighter border border-gray-800 rounded-lg p-6">
                 <div class="flex items-center gap-3 mb-4">
                     <span class="w-8 h-8 rounded-full bg-green-900/50 flex items-center justify-center text-green-400 text-sm font-bold">3</span>
                     <h2 class="text-xl font-bold text-white">Key exists in memory for ~100ms, then it's gone</h2>
                 </div>
                 <p class="text-gray-400 text-sm mb-4">During a proxy call, the key is reconstructed just long enough to make the upstream API request, then immediately zeroed from memory:</p>
-                <div class="mono text-xs bg-gray-900/50 rounded-xl p-4 mb-4 overflow-x-auto">
+                <div class="mono text-xs bg-gray-900/50 rounded-md p-4 mb-4 overflow-x-auto">
 <pre class="text-gray-300"><span class="text-gray-500">// What happens during a proxy call:</span>
 
 <span class="text-green-400">t=0ms</span>    Verify ZK proof (Barretenberg + Noir circuit)
@@ -144,15 +144,15 @@ POST /api/v1/keys/store
 <span class="text-green-400">t=7ms</span>    Reconstruct full API key from Share 1 + Share 2
 <span class="text-green-400">t=8ms</span>    Make upstream API call (e.g., OpenAI /v1/chat/completions)
 <span class="text-green-400">~t=100ms</span> Response received
-<span class="text-red-400">t=101ms</span>  <strong>Key buffer zeroed.</strong> Overwritten with 0x00. Gone.
+<span class="text-amber-400">t=101ms</span>  <strong>Key buffer zeroed.</strong> Overwritten with 0x00. Gone.
 
 <span class="text-gray-500">// Send a fake proof and nothing happens:</span>
 curl https://api.vaultproof.dev/api/v1/proxy/call \
   -H "Content-Type: application/json" \
-  -d '{"keySlotId":"any-uuid","share2":"fake","zkProof":"<span class="text-red-400">fake-proof</span>","nullifier":"fake","appId":"test","targetPath":"/v1/models","method":"GET"}'
+  -d '{"keySlotId":"any-uuid","share2":"fake","zkProof":"<span class="text-amber-400">fake-proof</span>","nullifier":"fake","appId":"test","targetPath":"/v1/models","method":"GET"}'
 
 <span class="text-gray-500">// Response:</span>
-{ "error": "<span class="text-red-400">Invalid ZK proof</span>", "reason": "Proof verification failed" }</pre>
+{ "error": "<span class="text-amber-400">Invalid ZK proof</span>", "reason": "Proof verification failed" }</pre>
                 </div>
                 <p class="text-gray-500 text-sm"><strong>How to verify:</strong> Run the curl command above — fake proofs are rejected before reconstruction even begins. The server uses Barretenberg to verify every proof against the Noir circuit. No valid proof = no key reconstruction. After a valid call, the key buffer is explicitly zeroed (verified by our security tests).</p>
             </div>
@@ -160,18 +160,18 @@ curl https://api.vaultproof.dev/api/v1/proxy/call \
 
         <!-- Proof 4: Replays Blocked -->
         <section class="mb-10">
-            <div class="bg-dark-blue-lighter border border-gray-800 rounded-2xl p-6">
+            <div class="bg-dark-blue-lighter border border-gray-800 rounded-lg p-6">
                 <div class="flex items-center gap-3 mb-4">
                     <span class="w-8 h-8 rounded-full bg-green-900/50 flex items-center justify-center text-green-400 text-sm font-bold">4</span>
                     <h2 class="text-xl font-bold text-white">Replayed requests are detected instantly</h2>
                 </div>
                 <p class="text-gray-400 text-sm mb-4">Every proxy call requires a unique nullifier. Reusing one is immediately caught:</p>
-                <div class="mono text-xs bg-gray-900/50 rounded-xl p-4 mb-4">
+                <div class="mono text-xs bg-gray-900/50 rounded-md p-4 mb-4">
 <pre class="text-gray-300"><span class="text-gray-500">// First request with nullifier "abc123":</span>
 <span class="text-green-400">200 OK</span> — Call goes through
 
 <span class="text-gray-500">// Second request with same nullifier "abc123":</span>
-<span class="text-red-400">403 Forbidden</span> — "Proof already used (replay detected)"</pre>
+<span class="text-amber-400">403 Forbidden</span> — "Proof already used (replay detected)"</pre>
                 </div>
                 <p class="text-gray-500 text-sm"><strong>How to verify:</strong> Make two proxy calls with the same nullifier. The second one is rejected. Nullifiers are stored in a database with a unique constraint — duplicates are impossible.</p>
             </div>
@@ -179,20 +179,20 @@ curl https://api.vaultproof.dev/api/v1/proxy/call \
 
         <!-- Proof 5: Direct Access Blocked -->
         <section class="mb-10">
-            <div class="bg-dark-blue-lighter border border-gray-800 rounded-2xl p-6">
+            <div class="bg-dark-blue-lighter border border-gray-800 rounded-lg p-6">
                 <div class="flex items-center gap-3 mb-4">
                     <span class="w-8 h-8 rounded-full bg-green-900/50 flex items-center justify-center text-green-400 text-sm font-bold">5</span>
                     <h2 class="text-xl font-bold text-white">Backend is locked — edge proxy only</h2>
                 </div>
                 <p class="text-gray-400 text-sm mb-4">All requests must go through our Cloudflare edge proxy with HMAC signatures. Direct access returns 403:</p>
-                <div class="mono text-xs bg-gray-900/50 rounded-xl p-4 mb-4">
+                <div class="mono text-xs bg-gray-900/50 rounded-md p-4 mb-4">
 <pre class="text-gray-300"><span class="text-gray-500">// Through edge proxy (HMAC signed):</span>
 curl https://api.vaultproof.dev/health
 <span class="text-green-400">{"status":"ok","service":"vaultproof-edge","secured":true}</span>
 
 <span class="text-gray-500">// Direct to backend (no signature):</span>
 curl https://[backend-url]/api/v1/keys/list
-<span class="text-red-400">{"error":"Forbidden"}</span></pre>
+<span class="text-amber-400">{"error":"Forbidden"}</span></pre>
                 </div>
                 <p class="text-gray-500 text-sm"><strong>How to verify:</strong> Every request is HMAC-SHA256 signed with a 30-second timestamp. Expired or forged signatures are rejected. The shared secret never travels over the wire.</p>
             </div>
@@ -200,13 +200,13 @@ curl https://[backend-url]/api/v1/keys/list
 
         <!-- Proof 6: Open Source Circuit -->
         <section class="mb-10">
-            <div class="bg-dark-blue-lighter border border-gray-800 rounded-2xl p-6">
+            <div class="bg-dark-blue-lighter border border-gray-800 rounded-lg p-6">
                 <div class="flex items-center gap-3 mb-4">
                     <span class="w-8 h-8 rounded-full bg-green-900/50 flex items-center justify-center text-green-400 text-sm font-bold">6</span>
                     <h2 class="text-xl font-bold text-white">The ZK circuit is open source</h2>
                 </div>
                 <p class="text-gray-400 text-sm mb-4">Our Noir circuit is 70 lines. Here's exactly what it proves:</p>
-                <div class="mono text-xs bg-gray-900/50 rounded-xl p-4 mb-4 overflow-x-auto">
+                <div class="mono text-xs bg-gray-900/50 rounded-md p-4 mb-4 overflow-x-auto">
 <pre class="text-gray-300"><span class="text-gray-500">// key_auth.nr — The entire ZK circuit</span>
 
 fn main(
@@ -237,13 +237,13 @@ fn main(
 
         <!-- Test Suite -->
         <section class="mb-10">
-            <div class="bg-dark-blue-lighter border border-gray-800 rounded-2xl p-6">
+            <div class="bg-dark-blue-lighter border border-gray-800 rounded-lg p-6">
                 <div class="flex items-center gap-3 mb-4">
                     <span class="w-8 h-8 rounded-full bg-green-900/50 flex items-center justify-center text-green-400 text-sm font-bold">7</span>
                     <h2 class="text-xl font-bold text-white">40 automated tests prove every claim</h2>
                 </div>
                 <div class="grid md:grid-cols-2 gap-4 mt-4">
-                    <div class="bg-gray-900/50 rounded-xl p-4">
+                    <div class="bg-gray-900/50 rounded-md p-4">
                         <div class="text-green-400 font-bold text-sm mb-2">Shamir SSS (10 tests)</div>
                         <ul class="text-xs text-gray-500 space-y-1">
                             <li>2-of-2 split and reconstruct</li>
@@ -253,7 +253,7 @@ fn main(
                             <li>Wrong shares produce wrong output</li>
                         </ul>
                     </div>
-                    <div class="bg-gray-900/50 rounded-xl p-4">
+                    <div class="bg-gray-900/50 rounded-md p-4">
                         <div class="text-green-400 font-bold text-sm mb-2">Noir Circuit (4 tests)</div>
                         <ul class="text-xs text-gray-500 space-y-1">
                             <li>Valid authorization passes</li>
@@ -262,7 +262,7 @@ fn main(
                             <li>Replayed nullifier rejected</li>
                         </ul>
                     </div>
-                    <div class="bg-gray-900/50 rounded-xl p-4">
+                    <div class="bg-gray-900/50 rounded-md p-4">
                         <div class="text-green-400 font-bold text-sm mb-2">Integration (7 tests)</div>
                         <ul class="text-xs text-gray-500 space-y-1">
                             <li>Store + retrieve end-to-end</li>
@@ -272,7 +272,7 @@ fn main(
                             <li>Unauthorized apps blocked</li>
                         </ul>
                     </div>
-                    <div class="bg-gray-900/50 rounded-xl p-4">
+                    <div class="bg-gray-900/50 rounded-md p-4">
                         <div class="text-green-400 font-bold text-sm mb-2">Security (14 tests)</div>
                         <ul class="text-xs text-gray-500 space-y-1">
                             <li>AES-256-GCM tamper detection</li>
@@ -292,8 +292,8 @@ fn main(
             <h2 class="text-2xl font-bold text-white mb-3">Three breaches, three places, simultaneously.</h2>
             <p class="text-gray-500 mb-6">Database + VAULT_ENCRYPTION_KEY + developer's vp_live_ key. That's what it takes. Not policy — architecture.</p>
             <div class="flex items-center justify-center gap-4">
-                <a href="/app/login" class="bg-indigo-600 hover:bg-indigo-500 px-6 py-3 rounded-xl font-semibold text-white transition">Try It Free</a>
-                <a href="https://github.com/windsurftemplate/vaultproof" class="border border-gray-700 hover:border-gray-500 px-6 py-3 rounded-xl font-semibold text-gray-300 transition">View Source</a>
+                <a href="/app/login" class="bg-indigo-600 hover:bg-indigo-500 px-6 py-3 rounded-md font-semibold text-white transition">Try It Free</a>
+                <a href="https://github.com/windsurftemplate/vaultproof" class="border border-gray-700 hover:border-gray-500 px-6 py-3 rounded-md font-semibold text-gray-300 transition">View Source</a>
             </div>
         </section>
     </div>

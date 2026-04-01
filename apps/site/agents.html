@@ -242,19 +242,19 @@
 
     <!-- The problem -->
     <section class="relative z-10 max-w-5xl mx-auto px-6 pb-20">
-        <div class="bg-vp-surface border border-vp-border rounded-2xl p-8 reveal">
+        <div class="bg-vp-surface border border-vp-border rounded-lg p-8 reveal">
             <p class="text-xs font-semibold text-gray-500 uppercase tracking-widest mb-6">The problem today</p>
             <div class="grid md:grid-cols-3 gap-6">
                 <div>
-                    <div class="text-red-400 font-semibold text-sm mb-2">Unlimited spend</div>
+                    <div class="text-amber-400 font-semibold text-sm mb-2">Unlimited spend</div>
                     <p class="text-sm text-gray-500 leading-relaxed">Agents carry your full API key. One runaway loop and you're staring at a $500 OpenAI bill.</p>
                 </div>
                 <div>
-                    <div class="text-red-400 font-semibold text-sm mb-2">No expiry</div>
+                    <div class="text-amber-400 font-semibold text-sm mb-2">No expiry</div>
                     <p class="text-sm text-gray-500 leading-relaxed">CI keys live forever. A leaked key from a test run three months ago is still valid today.</p>
                 </div>
                 <div>
-                    <div class="text-red-400 font-semibold text-sm mb-2">No scope</div>
+                    <div class="text-amber-400 font-semibold text-sm mb-2">No scope</div>
                     <p class="text-sm text-gray-500 leading-relaxed">Your agent only needs to call <code class="font-mono text-xs text-gray-400">/v1/chat/completions</code>. But it has access to everything.</p>
                 </div>
             </div>
@@ -319,43 +319,43 @@
         <div class="max-w-5xl mx-auto px-6 py-20">
             <p class="text-center text-xs font-semibold text-gray-500 uppercase tracking-widest mb-12 reveal">What you control</p>
             <div class="grid md:grid-cols-3 gap-6">
-                <div class="bg-vp-surface border border-vp-border rounded-2xl p-6 reveal delay-1">
-                    <div class="w-10 h-10 rounded-xl bg-indigo-500/10 flex items-center justify-center mb-4">
+                <div class="bg-vp-surface border border-vp-border rounded-lg p-6 reveal delay-1">
+                    <div class="w-10 h-10 rounded-md bg-indigo-500/10 flex items-center justify-center mb-4">
                         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#6366f1" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>
                     </div>
                     <h3 class="font-semibold text-white mb-2">TTL</h3>
                     <p class="text-sm text-gray-500 leading-relaxed">Set a duration — 5 minutes, 1 hour, 24 hours. The key expires automatically. No manual revocation needed.</p>
                 </div>
-                <div class="bg-vp-surface border border-vp-border rounded-2xl p-6 reveal delay-2">
-                    <div class="w-10 h-10 rounded-xl bg-indigo-500/10 flex items-center justify-center mb-4">
+                <div class="bg-vp-surface border border-vp-border rounded-lg p-6 reveal delay-2">
+                    <div class="w-10 h-10 rounded-md bg-indigo-500/10 flex items-center justify-center mb-4">
                         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#6366f1" stroke-width="2"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
                     </div>
                     <h3 class="font-semibold text-white mb-2">Spend cap</h3>
                     <p class="text-sm text-gray-500 leading-relaxed">Set a dollar limit per run. Once hit, the key is blocked. No surprises on your OpenAI bill at the end of the month.</p>
                 </div>
-                <div class="bg-vp-surface border border-vp-border rounded-2xl p-6 reveal delay-3">
-                    <div class="w-10 h-10 rounded-xl bg-indigo-500/10 flex items-center justify-center mb-4">
+                <div class="bg-vp-surface border border-vp-border rounded-lg p-6 reveal delay-3">
+                    <div class="w-10 h-10 rounded-md bg-indigo-500/10 flex items-center justify-center mb-4">
                         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#6366f1" stroke-width="2"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>
                     </div>
                     <h3 class="font-semibold text-white mb-2">Endpoint restrictions</h3>
                     <p class="text-sm text-gray-500 leading-relaxed">Whitelist exactly which API endpoints the agent can call. Everything else is blocked at the proxy.</p>
                 </div>
-                <div class="bg-vp-surface border border-vp-border rounded-2xl p-6 reveal delay-1">
-                    <div class="w-10 h-10 rounded-xl bg-indigo-500/10 flex items-center justify-center mb-4">
+                <div class="bg-vp-surface border border-vp-border rounded-lg p-6 reveal delay-1">
+                    <div class="w-10 h-10 rounded-md bg-indigo-500/10 flex items-center justify-center mb-4">
                         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#6366f1" stroke-width="2"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 .49-3.51"/></svg>
                     </div>
                     <h3 class="font-semibold text-white mb-2">Auto-reset</h3>
                     <p class="text-sm text-gray-500 leading-relaxed">Each agent run gets a clean credential slate. Spent budget and state don't carry over between runs.</p>
                 </div>
-                <div class="bg-vp-surface border border-vp-border rounded-2xl p-6 reveal delay-2">
-                    <div class="w-10 h-10 rounded-xl bg-indigo-500/10 flex items-center justify-center mb-4">
+                <div class="bg-vp-surface border border-vp-border rounded-lg p-6 reveal delay-2">
+                    <div class="w-10 h-10 rounded-md bg-indigo-500/10 flex items-center justify-center mb-4">
                         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#6366f1" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
                     </div>
                     <h3 class="font-semibold text-white mb-2">Full audit log</h3>
                     <p class="text-sm text-gray-500 leading-relaxed">Every call the agent makes is logged — endpoint, tokens, latency, cost. Know exactly what your agent did.</p>
                 </div>
-                <div class="bg-vp-surface border border-vp-border rounded-2xl p-6 reveal delay-3">
-                    <div class="w-10 h-10 rounded-xl bg-indigo-500/10 flex items-center justify-center mb-4">
+                <div class="bg-vp-surface border border-vp-border rounded-lg p-6 reveal delay-3">
+                    <div class="w-10 h-10 rounded-md bg-indigo-500/10 flex items-center justify-center mb-4">
                         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#6366f1" stroke-width="2"><rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg>
                     </div>
                     <h3 class="font-semibold text-white mb-2">Works in CI</h3>
@@ -372,28 +372,28 @@
         </div>
 
         <div class="grid md:grid-cols-2 gap-6">
-            <div class="bg-vp-surface border border-vp-border rounded-2xl p-6 reveal delay-1">
+            <div class="bg-vp-surface border border-vp-border rounded-lg p-6 reveal delay-1">
                 <div class="flex items-center gap-3 mb-4">
                     <div class="constraint-pill">CI / CD</div>
                 </div>
                 <h3 class="font-semibold text-white mb-2">Pipeline runs</h3>
                 <p class="text-sm text-gray-500 leading-relaxed">Each CI run gets a fresh scoped key. It expires when the job finishes. No leftover credentials sitting in your repo secrets.</p>
             </div>
-            <div class="bg-vp-surface border border-vp-border rounded-2xl p-6 reveal delay-2">
+            <div class="bg-vp-surface border border-vp-border rounded-lg p-6 reveal delay-2">
                 <div class="flex items-center gap-3 mb-4">
                     <div class="constraint-pill">Eval harnesses</div>
                 </div>
                 <h3 class="font-semibold text-white mb-2">LLM evals</h3>
                 <p class="text-sm text-gray-500 leading-relaxed">Run hundreds of eval cases with a capped budget per suite. Know the eval can't spend more than you've budgeted, no matter what.</p>
             </div>
-            <div class="bg-vp-surface border border-vp-border rounded-2xl p-6 reveal delay-3">
+            <div class="bg-vp-surface border border-vp-border rounded-lg p-6 reveal delay-3">
                 <div class="flex items-center gap-3 mb-4">
                     <div class="constraint-pill">Multi-agent</div>
                 </div>
                 <h3 class="font-semibold text-white mb-2">Agent orchestration</h3>
                 <p class="text-sm text-gray-500 leading-relaxed">Give each sub-agent in your pipeline its own scoped key. The orchestrator controls the budget. Sub-agents can't exceed their allocation.</p>
             </div>
-            <div class="bg-vp-surface border border-vp-border rounded-2xl p-6 reveal delay-4">
+            <div class="bg-vp-surface border border-vp-border rounded-lg p-6 reveal delay-4">
                 <div class="flex items-center gap-3 mb-4">
                     <div class="constraint-pill">End users</div>
                 </div>
@@ -405,7 +405,7 @@
 
     <!-- CTA -->
     <section class="relative z-10 max-w-5xl mx-auto px-6 pb-24">
-        <div class="bg-gradient-to-br from-vp-surface to-vp-bg border border-vp-border rounded-2xl p-12 text-center reveal" style="box-shadow: 0 0 60px rgba(99,102,241,0.08), inset 0 0 40px rgba(99,102,241,0.03);">
+        <div class="bg-gradient-to-br from-vp-surface to-vp-bg border border-vp-border rounded-lg p-12 text-center reveal" style="box-shadow: 0 0 60px rgba(99,102,241,0.08), inset 0 0 40px rgba(99,102,241,0.03);">
             <div class="inline-flex items-center gap-2 bg-vp-bg border border-vp-border text-xs font-semibold text-indigo-400 px-4 py-1.5 rounded-full mb-6">
                 <span class="w-1.5 h-1.5 rounded-full bg-amber-400 animate-pulse"></span>
                 Early access

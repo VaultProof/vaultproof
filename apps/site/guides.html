@@ -174,7 +174,7 @@
 
     <!-- Prerequisites -->
     <section class="max-w-4xl mx-auto px-6 pb-12 space-y-5">
-        <div class="bg-vp-surface border border-vp-border rounded-2xl p-6">
+        <div class="bg-vp-surface border border-vp-border rounded-lg p-6">
             <div class="flex items-start gap-3">
                 <div class="text-vp-accent text-xl mt-0.5">
                     <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4"/><path d="M12 8h.01"/></svg>
@@ -191,7 +191,7 @@
         </div>
 
         <!-- What changes in your env -->
-        <div class="bg-vp-surface border border-vp-border rounded-2xl p-6">
+        <div class="bg-vp-surface border border-vp-border rounded-lg p-6">
             <div class="flex items-start gap-3">
                 <div class="text-emerald-400 text-xl mt-0.5">
                     <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
@@ -199,7 +199,7 @@
                 <div>
                     <h3 class="font-semibold text-white mb-2">What changes in your .env</h3>
                     <p class="text-gray-400 text-sm mb-3">The only VaultProof-specific env var you need is:</p>
-                    <div class="bg-vp-bg rounded-xl px-4 py-3 font-mono text-sm">
+                    <div class="bg-vp-bg rounded-md px-4 py-3 font-mono text-sm">
                         <span class="text-emerald-400">VAULTPROOF_API_KEY</span><span class="text-gray-500">=</span><span class="text-gray-300">vp_live_your_key_here</span>
                     </div>
                     <p class="text-gray-500 text-xs mt-3 mb-2">That's it. Your provider API keys are removed from .env entirely. Here's what happens depending on the provider:</p>
@@ -209,12 +209,12 @@
                             <tr class="border-t border-vp-border">
                                 <td class="py-2 text-white">AI providers</td>
                                 <td class="py-2">Transparent proxy &mdash; swap the base URL, use <code class="text-vp-accent">vp_live_</code> as the API key</td>
-                                <td class="py-2"><code class="text-red-400 line-through">OPENAI_API_KEY=sk-...</code><br><code class="text-emerald-400">OPENAI_API_KEY=vp_live_...</code><br><code class="text-emerald-400">OPENAI_BASE_URL=https://api.vaultproof.dev/v1/openai</code></td>
+                                <td class="py-2"><code class="text-amber-400 line-through">OPENAI_API_KEY=sk-...</code><br><code class="text-emerald-400">OPENAI_API_KEY=vp_live_...</code><br><code class="text-emerald-400">OPENAI_BASE_URL=https://api.vaultproof.dev/v1/openai</code></td>
                             </tr>
                             <tr class="border-t border-vp-border">
                                 <td class="py-2 text-white">Other SDKs</td>
                                 <td class="py-2"><code class="text-vp-accent">vault.proxy()</code> in code or transparent proxy URL</td>
-                                <td class="py-2"><code class="text-red-400 line-through">STRIPE_SECRET_KEY=sk_live_...</code><br><span class="text-gray-500">Removed &mdash; key is fetched at runtime</span></td>
+                                <td class="py-2"><code class="text-amber-400 line-through">STRIPE_SECRET_KEY=sk_live_...</code><br><span class="text-gray-500">Removed &mdash; key is fetched at runtime</span></td>
                             </tr>
                         </tbody>
                     </table>
@@ -290,12 +290,12 @@
                         </div>
                     </div>
 
-                    <div class="bg-vp-surface border border-vp-border rounded-xl p-4">
+                    <div class="bg-vp-surface border border-vp-border rounded-md p-4">
                         <p class="text-gray-500 text-xs font-medium mb-2">Supported providers</p>
                         <p class="text-gray-400 text-xs">OpenAI, Anthropic, Google AI, Mistral, Cohere, Groq, Perplexity, DeepSeek, Fireworks, Together.ai, Replicate. The URL pattern is always <code class="font-mono text-vp-accent">https://api.vaultproof.dev/v1/{provider}</code>.</p>
                     </div>
 
-                    <div class="bg-amber-500/5 border border-amber-500/20 rounded-xl p-4 mt-2">
+                    <div class="bg-amber-500/5 border border-amber-500/20 rounded-md p-4 mt-2">
                         <p class="text-amber-400 text-xs font-medium mb-1">Getting an IP restriction error?</p>
                         <p class="text-gray-400 text-xs">If your API key has IP restrictions, the proxy call comes from VaultProof's server, not yours. Remove the IP restriction on your key and rely on VaultProof's per-key rate limits and budget caps instead.</p>
                     </div>
@@ -406,7 +406,7 @@ npm install -g @vaultproof/cli</pre>
 <pre>vaultproof migrate</pre>
                         </div>
                     </div>
-                    <div class="bg-vp-surface border border-vp-border rounded-xl p-4 mt-2">
+                    <div class="bg-vp-surface border border-vp-border rounded-md p-4 mt-2">
                         <p class="text-gray-500 text-xs font-medium mb-2">What this does:</p>
                         <ul class="text-gray-400 text-xs space-y-1">
                             <li>&bull; Reads your .env (only key names and values &mdash; nothing else is scanned)</li>
@@ -493,7 +493,7 @@ VAULTPROOF_API_KEY=vp_live_... npm run dev
                         </div>
                     </div>
 
-                    <div class="bg-indigo-500/5 border border-indigo-500/20 rounded-xl p-4 mt-2">
+                    <div class="bg-indigo-500/5 border border-indigo-500/20 rounded-md p-4 mt-2">
                         <p class="text-indigo-400 text-xs font-medium mb-1">What about latency?</p>
                         <p class="text-gray-400 text-xs">Each <code class="font-mono text-vp-accent">getSecret()</code> call adds ~100&ndash;200ms for the round trip. This happens once per request, and the key is only in memory for the duration of that request. For most apps (payments, auth, emails) this is unnoticeable.</p>
                     </div>

@@ -192,15 +192,15 @@
                 </div>
 
                 <div class="grid md:grid-cols-3 gap-4">
-                    <div class="bg-vp-surface border border-vp-border rounded-xl p-5">
+                    <div class="bg-vp-surface border border-vp-border rounded-md p-5">
                         <div class="text-vp-accent font-semibold mb-2 text-sm">Split on your device</div>
                         <p class="text-sm text-gray-500">Keys are split before any data leaves your browser or CLI. We receive a piece, not the key.</p>
                     </div>
-                    <div class="bg-vp-surface border border-vp-border rounded-xl p-5">
+                    <div class="bg-vp-surface border border-vp-border rounded-md p-5">
                         <div class="text-vp-accent font-semibold mb-2 text-sm">Two independent systems</div>
                         <p class="text-sm text-gray-500">Reconstructing your key requires compromising both VaultProof and your device simultaneously.</p>
                     </div>
-                    <div class="bg-vp-surface border border-vp-border rounded-xl p-5">
+                    <div class="bg-vp-surface border border-vp-border rounded-md p-5">
                         <div class="text-vp-accent font-semibold mb-2 text-sm">Open source core</div>
                         <p class="text-sm text-gray-500">The splitting and authorization code that runs on your machine is fully open source. Verify it yourself.</p>
                     </div>
@@ -212,14 +212,14 @@
                 <h2 class="text-3xl font-bold text-white mb-2" style="font-family:'Space Grotesk',sans-serif">The Problem</h2>
                 <p class="text-gray-500 mb-8">Every API key manager faces the same fundamental problem.</p>
 
-                <div class="bg-vp-surface border border-vp-border rounded-xl p-6 mb-6">
+                <div class="bg-vp-surface border border-vp-border rounded-md p-6 mb-6">
                     <p class="text-gray-300 leading-relaxed mb-4">To be useful, a key vault has to store your key. And if it stores your key, it can see your key.</p>
                     <p class="text-gray-400 leading-relaxed mb-4">This creates a single point of failure. If the vault provider is hacked, your keys are exposed. If a rogue employee queries the database, your keys are exposed. If a server is misconfigured and logs requests, your keys are exposed.</p>
                     <p class="text-gray-400 leading-relaxed">Most "secure" key vaults encrypt keys at rest — but they hold the encryption key too. Encrypting data with a key you also control isn't security, it's just an extra step for an attacker.</p>
                 </div>
 
                 <div class="callout-danger">
-                    <p class="text-sm text-red-300"><strong class="text-red-200">The numbers:</strong> In 2024, GitHub detected 39 million leaked secrets in public repositories. A single leaked OpenAI key can generate thousands of dollars in charges within minutes. API keys are the most targeted credential type in modern breaches.</p>
+                    <p class="text-sm text-amber-300"><strong class="text-amber-200">The numbers:</strong> In 2024, GitHub detected 39 million leaked secrets in public repositories. A single leaked OpenAI key can generate thousands of dollars in charges within minutes. API keys are the most targeted credential type in modern breaches.</p>
                 </div>
             </section>
 
@@ -228,7 +228,7 @@
                 <h2 class="text-3xl font-bold text-white mb-2" style="font-family:'Space Grotesk',sans-serif">The Guarantee</h2>
                 <p class="text-gray-500 mb-8">What VaultProof promises — and why it's structural, not a policy.</p>
 
-                <div class="bg-vp-surface border border-vp-border rounded-xl p-6 mb-6">
+                <div class="bg-vp-surface border border-vp-border rounded-md p-6 mb-6">
                     <p class="text-2xl font-bold text-white mb-4 leading-snug" style="font-family:'Space Grotesk',sans-serif">"VaultProof's servers never see your full API key. Not when you store it. Not when you use it. Not ever."</p>
                     <p class="text-gray-400 leading-relaxed">This guarantee holds even if VaultProof's database is fully compromised, our servers are under an attacker's control, or an employee queries every table in the database. The reason is simple: your complete key doesn't exist anywhere on our infrastructure.</p>
                 </div>
@@ -244,7 +244,7 @@
                 <h2 class="text-3xl font-bold text-white mb-2" style="font-family:'Space Grotesk',sans-serif">Storing a Key</h2>
                 <p class="text-gray-500 mb-8">What happens when you add an API key to VaultProof.</p>
 
-                <div class="bg-vp-surface border border-vp-border rounded-xl p-6 mb-6">
+                <div class="bg-vp-surface border border-vp-border rounded-md p-6 mb-6">
                     <div class="flow-step" data-step="1">
                         <p class="text-sm font-semibold text-white mb-1">You paste your API key</p>
                         <p class="text-sm text-gray-500">The key enters your browser or CLI. It has not left your device yet.</p>
@@ -273,7 +273,7 @@
                 <h2 class="text-3xl font-bold text-white mb-2" style="font-family:'Space Grotesk',sans-serif">Using a Key</h2>
                 <p class="text-gray-500 mb-8">What happens when you make an API call through VaultProof.</p>
 
-                <div class="bg-vp-surface border border-vp-border rounded-xl p-6 mb-6">
+                <div class="bg-vp-surface border border-vp-border rounded-md p-6 mb-6">
                     <div class="flow-step" data-step="1">
                         <p class="text-sm font-semibold text-white mb-1">Your device sends Piece 2 and an authorization proof</p>
                         <p class="text-sm text-gray-500">Your device transmits its piece of the key along with a cryptographic proof that you are authorized to access Piece 1.</p>
@@ -298,7 +298,7 @@
                 <h2 class="text-3xl font-bold text-white mb-2" style="font-family:'Space Grotesk',sans-serif">Authorization</h2>
                 <p class="text-gray-500 mb-8">How VaultProof verifies you're authorized without exposing your credentials.</p>
 
-                <div class="bg-vp-surface border border-vp-border rounded-xl p-6 mb-6">
+                <div class="bg-vp-surface border border-vp-border rounded-md p-6 mb-6">
                     <p class="text-gray-400 leading-relaxed mb-4">To retrieve Piece 1, your device doesn't just send a password or token. It sends a <strong class="text-white">zero-knowledge proof</strong> — a mathematical statement that proves you are authorized without revealing the secret that proves it.</p>
                     <p class="text-gray-400 leading-relaxed">Each proof is valid for exactly one use. Even if someone intercepts an authorization request in transit, they cannot replay it to gain access. There is no credential to steal from the wire.</p>
                 </div>
@@ -315,19 +315,19 @@
                 <p class="text-gray-500 mb-8">To steal your key, an attacker needs both of the following simultaneously.</p>
 
                 <div class="grid md:grid-cols-2 gap-4 mb-6">
-                    <div class="bg-vp-surface border border-vp-border rounded-xl p-5">
-                        <div class="text-red-400 font-semibold text-sm mb-2">Piece 1</div>
+                    <div class="bg-vp-surface border border-vp-border rounded-md p-5">
+                        <div class="text-amber-400 font-semibold text-sm mb-2">Piece 1</div>
                         <p class="text-sm text-gray-400 mb-3">Encrypted, stored in VaultProof's vault.</p>
                         <p class="text-xs text-gray-600">Requires compromising VaultProof's infrastructure.</p>
                     </div>
-                    <div class="bg-vp-surface border border-vp-border rounded-xl p-5">
-                        <div class="text-red-400 font-semibold text-sm mb-2">Piece 2</div>
+                    <div class="bg-vp-surface border border-vp-border rounded-md p-5">
+                        <div class="text-amber-400 font-semibold text-sm mb-2">Piece 2</div>
                         <p class="text-sm text-gray-400 mb-3">Stored only on your device. Never transmitted to our servers.</p>
                         <p class="text-xs text-gray-600">Requires compromising your device.</p>
                     </div>
                 </div>
 
-                <div class="bg-vp-surface border border-vp-border rounded-xl p-6 mb-4">
+                <div class="bg-vp-surface border border-vp-border rounded-md p-6 mb-4">
                     <p class="text-gray-300 leading-relaxed">Compromising VaultProof's servers gives an attacker only Piece 1 — cryptographically useless without Piece 2. Compromising your device gives an attacker only Piece 2 — useless without Piece 1.</p>
                     <p class="text-gray-400 leading-relaxed mt-3">An attacker would need to simultaneously compromise both VaultProof's infrastructure <strong class="text-white">and</strong> your device. These are two independent systems. A breach of one does not enable a breach of the other.</p>
                 </div>
@@ -343,7 +343,7 @@
                 <h2 class="text-3xl font-bold text-white mb-2" style="font-family:'Space Grotesk',sans-serif">What We Can See</h2>
                 <p class="text-gray-500 mb-8">A precise breakdown of what VaultProof stores and what we can reconstruct.</p>
 
-                <div class="bg-vp-surface border border-vp-border rounded-xl overflow-hidden">
+                <div class="bg-vp-surface border border-vp-border rounded-md overflow-hidden">
                     <table class="doc-table">
                         <thead>
                             <tr>
@@ -385,19 +385,19 @@
                 <h2 class="text-3xl font-bold text-white mb-2" style="font-family:'Space Grotesk',sans-serif">Breach Scenario</h2>
                 <p class="text-gray-500 mb-8">What a full compromise of VaultProof's infrastructure would yield.</p>
 
-                <div class="bg-vp-surface border border-vp-border rounded-xl p-6 mb-6">
+                <div class="bg-vp-surface border border-vp-border rounded-md p-6 mb-6">
                     <p class="text-sm text-gray-500 uppercase tracking-wider font-semibold mb-4">An attacker with full database and server access would obtain:</p>
                     <div class="space-y-3 mb-6">
                         <div class="flex items-start gap-3">
-                            <span class="text-red-400 mt-0.5">✗</span>
+                            <span class="text-amber-400 mt-0.5">✗</span>
                             <p class="text-sm text-gray-400">Encrypted Piece 1 for every stored key</p>
                         </div>
                         <div class="flex items-start gap-3">
-                            <span class="text-red-400 mt-0.5">✗</span>
+                            <span class="text-amber-400 mt-0.5">✗</span>
                             <p class="text-sm text-gray-400">Request metadata (timestamps, providers, usage counts)</p>
                         </div>
                         <div class="flex items-start gap-3">
-                            <span class="text-red-400 mt-0.5">✗</span>
+                            <span class="text-amber-400 mt-0.5">✗</span>
                             <p class="text-sm text-gray-400">User account information (email, billing)</p>
                         </div>
                     </div>
@@ -428,23 +428,23 @@
                 <h2 class="text-3xl font-bold text-white mb-2" style="font-family:'Space Grotesk',sans-serif">Open Source Core</h2>
                 <p class="text-gray-500 mb-8">The code that runs on your machine is fully open source. You don't have to take our word for it.</p>
 
-                <div class="bg-vp-surface border border-vp-border rounded-xl p-6 mb-6">
+                <div class="bg-vp-surface border border-vp-border rounded-md p-6 mb-6">
                     <p class="text-gray-400 leading-relaxed mb-6">We have open sourced the four packages that implement the security guarantee — the key splitting library, the authorization circuit logic, the SDK, and the CLI. These are the packages that run on your device. You can read, audit, and build them yourself.</p>
 
                     <div class="grid md:grid-cols-2 gap-4">
-                        <div class="bg-vp-bg border border-vp-border rounded-xl p-4">
+                        <div class="bg-vp-bg border border-vp-border rounded-md p-4">
                             <div class="font-mono text-xs text-vp-accent mb-2">Key splitting library</div>
                             <p class="text-sm text-gray-500">The algorithm that splits your key into two pieces on your device before storage.</p>
                         </div>
-                        <div class="bg-vp-bg border border-vp-border rounded-xl p-4">
+                        <div class="bg-vp-bg border border-vp-border rounded-md p-4">
                             <div class="font-mono text-xs text-vp-accent mb-2">Authorization circuits</div>
                             <p class="text-sm text-gray-500">The zero-knowledge proof logic that authorizes key access without revealing credentials.</p>
                         </div>
-                        <div class="bg-vp-bg border border-vp-border rounded-xl p-4">
+                        <div class="bg-vp-bg border border-vp-border rounded-md p-4">
                             <div class="font-mono text-xs text-vp-accent mb-2">@vaultproof/sdk</div>
                             <p class="text-sm text-gray-500">The client SDK that handles splitting and proxied API calls.</p>
                         </div>
-                        <div class="bg-vp-bg border border-vp-border rounded-xl p-4">
+                        <div class="bg-vp-bg border border-vp-border rounded-md p-4">
                             <div class="font-mono text-xs text-vp-accent mb-2">@vaultproof/cli</div>
                             <p class="text-sm text-gray-500">The terminal client. Key management, env injection, session handling.</p>
                         </div>
@@ -456,7 +456,7 @@
                     <p class="text-sm text-gray-400 leading-relaxed">You don't need to trust the backend — by design, it never holds enough information to reconstruct your keys. The security guarantee comes from the client-side architecture, not from trusting our servers.</p>
                 </div>
 
-                <a href="https://github.com/vaultproof/vaultproof" target="_blank" rel="noopener" class="inline-flex items-center gap-2 bg-vp-surface border border-vp-border hover:border-gray-500 text-white text-sm font-medium px-5 py-2.5 rounded-xl transition">
+                <a href="https://github.com/vaultproof/vaultproof" target="_blank" rel="noopener" class="inline-flex items-center gap-2 bg-vp-surface border border-vp-border hover:border-gray-500 text-white text-sm font-medium px-5 py-2.5 rounded-md transition">
                     <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0 0 24 12c0-6.63-5.37-12-12-12z"/></svg>
                     View on GitHub
                 </a>
@@ -467,7 +467,7 @@
                 <h2 class="text-3xl font-bold text-white mb-2" style="font-family:'Space Grotesk',sans-serif">Security Audit</h2>
                 <p class="text-gray-500 mb-8">Independent review of the cryptographic core by external researchers.</p>
 
-                <div class="bg-vp-surface border border-vp-border rounded-xl p-6">
+                <div class="bg-vp-surface border border-vp-border rounded-md p-6">
                     <div class="flex items-center gap-3 mb-4">
                         <div class="w-2 h-2 rounded-full bg-amber-400"></div>
                         <span class="text-sm text-amber-300 font-medium">Audit in progress</span>
@@ -482,10 +482,10 @@
                 <h2 class="text-3xl font-bold text-white mb-2" style="font-family:'Space Grotesk',sans-serif">Responsible Disclosure</h2>
                 <p class="text-gray-500 mb-8">Found a security issue? We take all reports seriously.</p>
 
-                <div class="bg-vp-surface border border-vp-border rounded-xl p-6">
+                <div class="bg-vp-surface border border-vp-border rounded-md p-6">
                     <p class="text-gray-400 leading-relaxed mb-4">If you believe you've found a security vulnerability in VaultProof, please report it to us directly before public disclosure. We will acknowledge your report within 24 hours and aim to resolve confirmed issues within 14 days.</p>
                     <p class="text-gray-400 leading-relaxed mb-6">We do not pursue legal action against researchers who discover and responsibly disclose vulnerabilities.</p>
-                    <a href="mailto:security@vaultproof.dev" class="inline-flex items-center gap-2 bg-vp-accent hover:bg-indigo-500 text-white text-sm font-medium px-5 py-2.5 rounded-xl transition">
+                    <a href="mailto:security@vaultproof.dev" class="inline-flex items-center gap-2 bg-vp-accent hover:bg-indigo-500 text-white text-sm font-medium px-5 py-2.5 rounded-md transition">
                         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,12 2,6"/></svg>
                         security@vaultproof.dev
                     </a>
