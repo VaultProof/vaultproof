@@ -150,7 +150,7 @@ export async function handleTransparentProxy(
   try {
     // Supabase REST returns bytea as PostgreSQL hex format: \xABCD...
     const share1Bytes = hexToBytes(keySlot.share1_encrypted);
-    const decryptedShare1 = await decrypt(share1Bytes, env);
+    const decryptedShare1 = decrypt(share1Bytes, env);
     const share1Str = new TextDecoder().decode(decryptedShare1);
     zeroUint8Array(decryptedShare1);
 
@@ -166,8 +166,8 @@ export async function handleTransparentProxy(
     const share2 = deserializeShare(share2Str);
     const combined = combineShares([share1, share2]);
     apiKey = new TextDecoder().decode(combined);
-  } catch {
-    return Response.json({ error: 'Failed to reconstruct key.' }, { status: 500 });
+  } catch (err: any) {
+    return Response.json({ error: 'Failed to reconstruct key.', detail: err?.message || String(err) }, { status: 500 });
   }
 
   // h. Build upstream URL
