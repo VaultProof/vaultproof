@@ -1835,6 +1835,10 @@ $ vaultproof logs --json | jq '.[] | .endpoint'</pre>
                 <div class="mb-8">
                     <h3 class="text-lg font-semibold text-white mb-4">Developer API Keys</h3>
                     <p class="text-gray-500 text-sm mb-4">Developer keys (<code class="font-mono text-xs text-vp-accent">vp_live_</code> / <code class="font-mono text-xs text-vp-accent">vp_test_</code>) authenticate your SDK and CLI requests. They are different from the API keys you store in the vault.</p>
+                    <div class="bg-indigo-500/5 border border-indigo-500/20 rounded-xl p-4 mb-4">
+                        <p class="text-sm text-indigo-300 font-medium mb-1">Origin Locking</p>
+                        <p class="text-sm text-gray-400">Lock a developer key to specific domains with <code class="font-mono text-xs text-vp-accent">allowedOrigins</code>. When set, the key only works from those origins — browsers can't spoof the Origin header, so a stolen key is useless on another site. Set it via the dashboard or the <code class="font-mono text-xs text-white">PUT /api/v1/dev-keys/:keyId/settings</code> endpoint.</p>
+                    </div>
                     <div class="space-y-4">
                         <div class="endpoint-card">
                             <div class="flex items-baseline gap-3 mb-2">
@@ -2425,6 +2429,7 @@ Authorization: Bearer &lt;jwt_token&gt;
 {
   <span class="str">"allowedIps"</span>: [<span class="str">"203.0.113.0/24"</span>],
   <span class="str">"allowedProviders"</span>: [<span class="str">"openai"</span>, <span class="str">"anthropic"</span>],
+  <span class="str">"allowedOrigins"</span>: [<span class="str">"https://myapp.com"</span>, <span class="str">"https://staging.myapp.com"</span>],
   <span class="str">"webhookUrl"</span>: <span class="str">"https://example.com/webhook"</span>
 }
 

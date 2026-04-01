@@ -327,9 +327,14 @@
                     </div>
                 </div>
 
-                <div class="bg-vp-surface border border-vp-border rounded-xl p-6">
+                <div class="bg-vp-surface border border-vp-border rounded-xl p-6 mb-4">
                     <p class="text-gray-300 leading-relaxed">Compromising VaultProof's servers gives an attacker only Piece 1 — cryptographically useless without Piece 2. Compromising your device gives an attacker only Piece 2 — useless without Piece 1.</p>
                     <p class="text-gray-400 leading-relaxed mt-3">An attacker would need to simultaneously compromise both VaultProof's infrastructure <strong class="text-white">and</strong> your device. These are two independent systems. A breach of one does not enable a breach of the other.</p>
+                </div>
+
+                <div class="callout-info">
+                    <p class="text-sm text-indigo-200 font-medium mb-1">Origin Locking</p>
+                    <p class="text-sm text-gray-400 leading-relaxed">Even if someone steals your <code class="font-mono text-xs text-vp-accent">vp_live_</code> developer key, it won't work from another domain. Lock your key to specific origins (e.g. <code class="font-mono text-xs text-white">https://myapp.com</code>) and the proxy will reject requests from any other domain. Browsers cannot spoof the Origin header, making stolen keys useless outside your site. Combine with IP allowlisting and provider restrictions for full lockdown.</p>
                 </div>
             </section>
 

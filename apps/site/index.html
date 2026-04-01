@@ -64,19 +64,19 @@
         }
         .orb-1 {
             width: 600px; height: 600px;
-            background: radial-gradient(circle, rgba(99,102,241,0.25) 0%, transparent 70%);
+            background: radial-gradient(circle, rgba(99,102,241,0.4) 0%, transparent 70%);
             top: -10%; left: -5%;
             animation: drift1 25s ease-in-out infinite;
         }
         .orb-2 {
             width: 500px; height: 500px;
-            background: radial-gradient(circle, rgba(99,102,241,0.18) 0%, transparent 70%);
+            background: radial-gradient(circle, rgba(99,102,241,0.3) 0%, transparent 70%);
             top: 40%; right: -10%;
             animation: drift2 30s ease-in-out infinite;
         }
         .orb-3 {
             width: 450px; height: 450px;
-            background: radial-gradient(circle, rgba(99,102,241,0.15) 0%, transparent 70%);
+            background: radial-gradient(circle, rgba(99,102,241,0.25) 0%, transparent 70%);
             bottom: 5%; left: 20%;
             animation: drift3 22s ease-in-out infinite;
         }
@@ -110,7 +110,82 @@
             50% { opacity: 0; }
         }
 
-        /* Indigo glow button */
+        /* Hero button — primary (white, pops on dark) */
+        .btn-hero {
+            position: relative;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            border: none;
+            border-radius: 12px;
+            font-weight: 700;
+            font-size: 16px;
+            letter-spacing: 0.01em;
+            cursor: pointer;
+            color: #0a0a0f;
+            background: #fff;
+            overflow: hidden;
+            transition: transform 0.25s ease, box-shadow 0.25s ease;
+            box-shadow: 0 4px 15px rgba(255,255,255,0.08);
+        }
+        .btn-hero::before {
+            content: '';
+            position: absolute;
+            top: 0; left: -100%;
+            width: 60%; height: 100%;
+            background: linear-gradient(100deg, transparent, rgba(99,102,241,0.15), transparent);
+            transition: left 0.6s ease;
+        }
+        .btn-hero:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 30px rgba(255,255,255,0.12), 0 0 50px rgba(99,102,241,0.12);
+        }
+        .btn-hero:hover::before {
+            left: 120%;
+        }
+        .btn-hero:active {
+            transform: translateY(1px);
+        }
+
+        /* Hero button — ghost */
+        .btn-hero-ghost {
+            position: relative;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            border: 1px solid rgba(255,255,255,0.12);
+            border-radius: 12px;
+            font-weight: 600;
+            font-size: 16px;
+            cursor: pointer;
+            color: rgba(255,255,255,0.7);
+            background: rgba(255,255,255,0.03);
+            overflow: hidden;
+            transition: transform 0.25s ease, box-shadow 0.25s ease, color 0.25s ease, border-color 0.25s ease, background 0.25s ease;
+        }
+        .btn-hero-ghost::before {
+            content: '';
+            position: absolute;
+            top: 0; left: -100%;
+            width: 60%; height: 100%;
+            background: linear-gradient(100deg, transparent, rgba(255,255,255,0.06), transparent);
+            transition: left 0.6s ease;
+        }
+        .btn-hero-ghost:hover {
+            color: #fff;
+            border-color: rgba(255,255,255,0.25);
+            background: rgba(255,255,255,0.06);
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(0,0,0,0.2);
+        }
+        .btn-hero-ghost:hover::before {
+            left: 120%;
+        }
+        .btn-hero-ghost:active {
+            transform: translateY(1px);
+        }
+
+        /* Legacy glow for nav button */
         .btn-glow {
             box-shadow: 0 0 20px rgba(99,102,241,0.3), 0 0 60px rgba(99,102,241,0.1);
             transition: all 0.3s ease;
@@ -170,6 +245,143 @@
         ::-webkit-scrollbar-thumb { background: #1e1e2e; border-radius: 4px; }
         ::-webkit-scrollbar-thumb:hover { background: #2e2e3e; }
 
+        /* Chadzn-style icon containers */
+        .icon-chadzn {
+            width: 48px;
+            height: 48px;
+            border-radius: 14px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+        }
+        .icon-chadzn-indigo {
+            background: rgba(99,102,241,0.08);
+            border: 1px solid rgba(99,102,241,0.12);
+            box-shadow: 0 0 16px rgba(99,102,241,0.08);
+        }
+        .icon-chadzn-amber {
+            background: rgba(251,191,36,0.08);
+            border: 1px solid rgba(251,191,36,0.12);
+            box-shadow: 0 0 16px rgba(251,191,36,0.08);
+        }
+
+        /* Hero flow cards */
+        .flow-card {
+            border: 1px solid;
+            border-radius: 12px;
+            padding: 14px 16px;
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+        .flow-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 24px rgba(0,0,0,0.3);
+        }
+
+        /* Hero provider icon pills */
+        .hero-icon-pill {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 72px;
+            height: 72px;
+            border-radius: 18px;
+            background: #111118;
+            border: 1px solid #1e1e2e;
+            position: relative;
+            z-index: 1;
+            animation: iconFloat 3s ease-in-out infinite;
+            box-shadow: 0 4px 16px rgba(0,0,0,0.3);
+            transition: border-color 0.3s ease, box-shadow 0.3s ease;
+        }
+        .hero-icon-pill:hover {
+            border-color: #6366f1;
+            box-shadow: 0 4px 24px rgba(99,102,241,0.15);
+        }
+        .hero-icon-pill img {
+            width: 36px;
+            height: 36px;
+            object-fit: contain;
+        }
+        .hero-icon-pill svg {
+            width: 36px;
+            height: 36px;
+        }
+        @keyframes iconFloat {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-5px); }
+        }
+
+        /* Animated connector lines — curved paths */
+        .hero-line-left {
+            animation: dashFlow 2s linear infinite;
+        }
+        .hero-line-right {
+            animation: dashFlowRight 2s linear infinite;
+        }
+        @keyframes dashFlow {
+            0% { stroke-dashoffset: 0; }
+            100% { stroke-dashoffset: -20; }
+        }
+        @keyframes dashFlowRight {
+            0% { stroke-dashoffset: 0; }
+            100% { stroke-dashoffset: 20; }
+        }
+
+        /* shadcn-style FAQ accordion */
+        .faq-item {
+            border-color: #1e1e2e;
+        }
+        .faq-trigger {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            width: 100%;
+            padding: 18px 0;
+            background: none;
+            border: none;
+            cursor: pointer;
+            text-align: left;
+            font-size: 15px;
+            font-weight: 500;
+            color: #f0f0f5;
+            transition: color 0.2s ease;
+        }
+        .faq-trigger:hover {
+            color: #fff;
+        }
+        .faq-trigger:hover .faq-chevron {
+            color: #a5b4fc;
+        }
+        .faq-chevron {
+            color: #4b5563;
+            flex-shrink: 0;
+            transition: transform 0.25s cubic-bezier(0.4, 0, 0.2, 1), color 0.2s ease;
+        }
+        .faq-trigger[aria-expanded="true"] .faq-chevron {
+            transform: rotate(180deg);
+            color: #818cf8;
+        }
+        .faq-content {
+            display: grid;
+            grid-template-rows: 0fr;
+            transition: grid-template-rows 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        .faq-content[data-open="true"] {
+            grid-template-rows: 1fr;
+        }
+        .faq-content-inner {
+            overflow: hidden;
+            font-size: 14px;
+            line-height: 1.7;
+            color: #9ca3af;
+            padding-bottom: 0;
+            transition: padding-bottom 0.3s ease;
+        }
+        .faq-content[data-open="true"] .faq-content-inner {
+            padding-bottom: 18px;
+        }
+
         /* Mobile nav */
         .mobile-menu { display: none; }
         .mobile-menu.open { display: flex; }
@@ -207,7 +419,7 @@
                 <a href="/blog" class="text-sm text-gray-400 hover:text-white transition-colors">Insights</a>
                 <a href="#pricing" class="text-sm text-gray-400 hover:text-white transition-colors">Pricing</a>
                 <a href="/app/login" class="nav-dashboard text-sm text-gray-400 hover:text-white transition-colors" style="display:none">Dashboard</a>
-                <a href="/app/login" class="bg-vp-accent hover:bg-indigo-500 text-sm px-5 py-2 rounded-btn font-semibold text-white transition-all btn-glow">Get Started</a>
+                <a href="/app/login" class="bg-white hover:bg-gray-100 text-sm px-5 py-2 rounded-btn font-semibold text-[#0a0a0f] transition-all">Get Started</a>
             </div>
 
             <!-- Mobile hamburger -->
@@ -230,42 +442,80 @@
     </nav>
 
     <!-- Hero -->
-    <section class="relative z-10 max-w-6xl mx-auto px-6 pt-20 pb-24">
-        <div class="grid md:grid-cols-2 gap-12 items-center">
-            <div>
-                <h1 class="text-4xl md:text-5xl lg:text-6xl font-black tracking-tight leading-[1.08] mb-4 text-white reveal" style="font-family:'Space Grotesk',sans-serif">
-                    Your API keys can't be stolen <span class="bg-gradient-to-r from-vp-accent to-vp-cyan bg-clip-text text-transparent">if they're never exposed.</span>
-                </h1>
-                <p class="text-base text-gray-500 mb-6 reveal delay-1">Your secrets never leave VaultProof. They're split, encrypted, and only reconstructed for milliseconds — then destroyed.</p>
-                <p class="text-lg text-gray-300 max-w-lg mb-8 leading-relaxed reveal delay-1" style="font-family:'Space Grotesk',sans-serif">
-                    Your app talks to VaultProof. VaultProof talks to the AI provider. The real key never touches your code.
-                </p>
-                <div class="flex items-center gap-4 flex-wrap reveal delay-2">
-                    <a href="/app/login" class="bg-vp-accent hover:bg-indigo-500 px-7 py-3.5 rounded-btn font-semibold text-white transition-all btn-glow text-base">Start Free</a>
-                    <a href="/docs" class="border border-vp-border hover:border-gray-500 px-7 py-3.5 rounded-btn font-semibold text-gray-300 transition-all text-base hover:bg-white/[0.02]">View Docs</a>
-                    <a href="https://github.com/VaultProof/vaultproof" target="_blank" rel="noopener" class="flex items-center gap-2 text-sm text-gray-400 hover:text-white transition-colors">
-                        <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0024 12c0-6.63-5.37-12-12-12z"/></svg>
-                        GitHub
-                    </a>
-                </div>
-                <p class="text-xs text-gray-500 mt-4 reveal delay-2">No credit card required.</p>
+    <section class="relative z-10 overflow-hidden">
+        <!-- Warm radial glow behind hero -->
+        <div class="absolute top-[-180px] left-1/2 -translate-x-1/2 w-[1000px] h-[700px] rounded-full bg-gradient-to-b from-indigo-500/40 via-purple-500/25 to-transparent blur-[120px] pointer-events-none"></div>
 
+        <div class="relative max-w-4xl mx-auto px-6 pt-24 pb-8 text-center">
+            <h1 class="text-5xl md:text-6xl lg:text-7xl font-black tracking-tight leading-[1.05] mb-6 text-white reveal" style="font-family:'Space Grotesk',sans-serif">
+                Your API keys can't be stolen <span class="bg-gradient-to-r from-indigo-400 to-blue-500 bg-clip-text text-transparent">if they're never exposed.</span>
+            </h1>
+            <div class="flex items-center justify-center gap-5 flex-wrap reveal delay-2">
+                <a href="/app/login" class="btn-hero px-9 py-4">Start Free</a>
+                <a href="/docs" class="btn-hero-ghost px-9 py-4">View Docs</a>
+                <a href="https://github.com/VaultProof/vaultproof" target="_blank" rel="noopener" class="btn-hero-ghost px-7 py-4 gap-2">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0024 12c0-6.63-5.37-12-12-12z"/></svg>
+                    GitHub
+                </a>
             </div>
+            <p class="text-xs text-gray-500 mt-4 reveal delay-2">No credit card required.</p>
+        </div>
 
-            <!-- Live terminal -->
-            <div class="reveal delay-3">
-                <div class="bg-vp-surface border border-vp-border rounded-[16px] overflow-hidden shadow-2xl shadow-black/40">
-                    <div class="flex items-center gap-2 px-4 py-3 border-b border-vp-border bg-vp-bg/50">
-                        <div class="w-3 h-3 rounded-full bg-red-500/70"></div>
-                        <div class="w-3 h-3 rounded-full bg-yellow-500/70"></div>
-                        <div class="w-3 h-3 rounded-full bg-green-500/70"></div>
-                        <span class="text-xs text-gray-600 ml-2 font-mono">vaultproof-cli</span>
+        <!-- Visual flow diagram -->
+        <div class="relative max-w-6xl mx-auto px-6 pt-8 pb-20 reveal delay-3" id="heroFlow">
+            <!-- SVG overlay for connector lines -->
+            <svg id="heroLines" class="absolute inset-0 w-full h-full pointer-events-none" style="z-index:0"></svg>
+
+            <div class="relative flex items-center justify-center" style="z-index:1">
+
+                <!-- Left provider icons — organic stagger -->
+                <div class="hidden lg:flex flex-col gap-5 items-end relative" style="min-width:160px;margin-right:32px">
+                    <div class="hero-icon-pill hero-left-icon" style="animation-delay:0s;margin-right:60px" title="OpenAI">
+                        <svg viewBox="0 0 24 24" fill="#fff"><path d="M22.282 9.821a5.985 5.985 0 00-.516-4.91 6.046 6.046 0 00-6.51-2.9A6.065 6.065 0 0011.756.004a6.047 6.047 0 00-5.77 4.087 6.06 6.06 0 00-4.076 2.932 6.052 6.052 0 00.747 7.098 5.98 5.98 0 00.51 4.911 6.051 6.051 0 006.515 2.9A5.985 5.985 0 0013.18 23.997a6.043 6.043 0 005.77-4.089 6.045 6.045 0 004.078-2.931 6.045 6.045 0 00-.747-7.156zM13.18 22.178a4.507 4.507 0 01-2.89-1.05l.14-.08 4.8-2.77a.78.78 0 00.395-.678v-6.77l2.03 1.17a.07.07 0 01.038.052v5.6a4.52 4.52 0 01-4.513 4.526zm-9.7-4.15a4.5 4.5 0 01-.54-3.025l.14.084 4.8 2.77a.78.78 0 00.788 0l5.865-3.387v2.34a.07.07 0 01-.028.06l-4.857 2.806a4.52 4.52 0 01-6.168-1.648zM2.39 7.86a4.498 4.498 0 012.355-1.98V11.6a.78.78 0 00.392.676l5.865 3.387-2.03 1.172a.07.07 0 01-.066.006L4.047 14.03A4.52 4.52 0 012.39 7.872zm16.678 3.885l-5.865-3.387 2.03-1.172a.07.07 0 01.066-.006l4.857 2.806a4.517 4.517 0 01-.699 8.143V12.42a.78.78 0 00-.389-.676zm2.02-3.035l-.14-.085-4.8-2.77a.78.78 0 00-.788 0L9.496 9.242V6.9a.07.07 0 01.028-.06l4.857-2.805a4.516 4.516 0 016.707 4.675zm-12.7 4.18l-2.03-1.17a.07.07 0 01-.038-.052V6.07a4.517 4.517 0 017.402-3.467l-.14.08-4.8 2.77a.78.78 0 00-.393.677zm1.1-2.376l2.612-1.508 2.613 1.508v3.016l-2.613 1.508-2.612-1.508z"/></svg>
                     </div>
-                    <div class="p-5 font-mono text-sm leading-7 min-h-[200px]" id="terminal">
-                        <span class="text-gray-500">$</span> <span id="terminalText" class="text-green-400"></span><span class="cursor" id="terminalCursor"></span>
-                        <div id="terminalOutput" class="text-gray-500 mt-1"></div>
+                    <div class="hero-icon-pill hero-left-icon" style="animation-delay:0.15s;margin-right:12px" title="Anthropic">
+                        <svg viewBox="0 0 24 24" fill="#D4A574"><path d="M13.827 3.52h3.603L24 20.48h-3.603l-6.57-16.96zm-7.258 0h3.767L16.906 20.48h-3.674l-1.508-4.064H5.248l-1.508 4.064H.166L6.57 3.52zm1.04 4.87L5.32 14.15h4.578L7.61 8.39z"/></svg>
+                    </div>
+                    <div class="hero-icon-pill hero-left-icon" style="animation-delay:0.3s;margin-right:72px" title="Google AI">
+                        <svg viewBox="0 0 24 24"><path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92a5.06 5.06 0 01-2.2 3.32v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.1z"/><path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/><path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/><path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/></svg>
+                    </div>
+                    <div class="hero-icon-pill hero-left-icon" style="animation-delay:0.45s;margin-right:28px" title="Mistral">
+                        <svg viewBox="0 0 24 24" fill="#F7D046"><rect x="3" y="3" width="5" height="5"/><rect x="10" y="3" width="5" height="5" fill="#F2A73B"/><rect x="17" y="3" width="5" height="5" fill="#fff"/><rect x="3" y="10" width="5" height="5" fill="#fff"/><rect x="10" y="10" width="5" height="5"/><rect x="17" y="10" width="5" height="5" fill="#F2A73B"/><rect x="3" y="17" width="5" height="5" fill="#fff"/><rect x="10" y="17" width="5" height="5" fill="#F7D046"/><rect x="17" y="17" width="5" height="5"/></svg>
                     </div>
                 </div>
+
+                <!-- Center: Live terminal -->
+                <div class="relative w-full max-w-[540px] flex-shrink-0" id="heroTerminal">
+                    <div class="bg-vp-surface border border-vp-border rounded-2xl overflow-hidden shadow-2xl shadow-black/50">
+                        <div class="flex items-center gap-2 px-4 py-3 border-b border-vp-border bg-vp-bg/50">
+                            <div class="w-3 h-3 rounded-full bg-red-500/70"></div>
+                            <div class="w-3 h-3 rounded-full bg-yellow-500/70"></div>
+                            <div class="w-3 h-3 rounded-full bg-green-500/70"></div>
+                            <span class="text-xs text-gray-600 ml-2 font-mono">vaultproof-cli</span>
+                        </div>
+                        <div class="p-5 font-mono text-sm leading-7 min-h-[220px]" id="terminal">
+                            <span class="text-gray-500">$</span> <span id="terminalText" class="text-green-400"></span><span class="cursor" id="terminalCursor"></span>
+                            <div id="terminalOutput" class="text-gray-500 mt-1"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Right provider icons — organic stagger -->
+                <div class="hidden lg:flex flex-col gap-5 items-start relative" style="min-width:160px;margin-left:32px">
+                    <div class="hero-icon-pill hero-right-icon" style="animation-delay:0.1s;margin-left:48px" title="Groq">
+                        <svg viewBox="0 0 24 24" fill="#F55036"><circle cx="12" cy="12" r="10" fill="none" stroke="#F55036" stroke-width="2.5"/><circle cx="12" cy="12" r="3" fill="#F55036"/></svg>
+                    </div>
+                    <div class="hero-icon-pill hero-right-icon" style="animation-delay:0.25s;margin-left:8px" title="DeepSeek">
+                        <svg viewBox="0 0 24 24" fill="#4D6BFE"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 3a3 3 0 110 6 3 3 0 010-6zm0 14c-2.67 0-5.02-1.34-6.42-3.39C7.58 14.05 10.7 13 12 13s4.42 1.05 6.42 2.61C17.02 17.66 14.67 19 12 19z"/></svg>
+                    </div>
+                    <div class="hero-icon-pill hero-right-icon" style="animation-delay:0.4s;margin-left:64px" title="Cohere">
+                        <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9" fill="none" stroke="#39594D" stroke-width="2.5"/><path d="M8 12h8M12 8v8" stroke="#39594D" stroke-width="2" stroke-linecap="round"/></svg>
+                    </div>
+                    <div class="hero-icon-pill hero-right-icon" style="animation-delay:0.55s;margin-left:24px" title="Stripe">
+                        <svg viewBox="0 0 24 24" fill="#635BFF"><path d="M13.976 9.15c-2.172-.806-3.356-1.426-3.356-2.409 0-.831.683-1.305 1.901-1.305 2.227 0 4.515.858 6.09 1.631l.89-5.494C18.252.975 15.697 0 12.165 0 9.667 0 7.589.654 6.104 1.872 4.56 3.147 3.757 4.992 3.757 7.218c0 4.039 2.467 5.76 6.476 7.219 2.585.92 3.445 1.574 3.445 2.583 0 .98-.84 1.545-2.354 1.545-1.875 0-4.965-.921-6.99-2.109l-.9 5.555C5.175 22.99 8.385 24 11.714 24c2.641 0 4.843-.624 6.328-1.813 1.664-1.305 2.525-3.236 2.525-5.732 0-4.128-2.524-5.851-6.591-7.305z"/></svg>
+                    </div>
+                </div>
+
             </div>
         </div>
     </section>
@@ -325,24 +575,24 @@
         <!-- Problem stats row -->
         <div class="grid md:grid-cols-3 gap-6 mb-14">
             <div class="bg-vp-surface border border-vp-border rounded-2xl p-6 text-center reveal delay-1">
-                <div class="text-4xl font-extrabold text-red-400 mb-2">81%</div>
+                <div class="text-4xl font-extrabold text-amber-400 mb-2">81%</div>
                 <div class="text-sm text-gray-400">spike in AI key leaks in one year</div>
                 <div class="text-xs text-gray-600 mt-2">Source: GitGuardian 2026</div>
             </div>
             <div class="bg-vp-surface border border-vp-border rounded-2xl p-6 text-center reveal delay-2">
-                <div class="text-4xl font-extrabold text-red-400 mb-2">1 in 5</div>
+                <div class="text-4xl font-extrabold text-amber-400 mb-2">1 in 5</div>
                 <div class="text-sm text-gray-400">AI-built apps expose at least one API key</div>
                 <div class="text-xs text-gray-600 mt-2">Source: RedHunt Labs 2026</div>
             </div>
             <div class="bg-vp-surface border border-vp-border rounded-2xl p-6 text-center reveal delay-3">
-                <div class="text-4xl font-extrabold text-red-400 mb-2">$82K</div>
+                <div class="text-4xl font-extrabold text-amber-400 mb-2">$82K</div>
                 <div class="text-sm text-gray-400">bill from one stolen API key, overnight</div>
                 <div class="text-xs text-gray-600 mt-2">Source: Developer report, Feb 2026</div>
             </div>
         </div>
 
         <div class="text-center mt-8 reveal delay-3">
-            <p class="text-lg text-gray-400"><span class="text-red-400 font-bold">$82K gone in one night.</span> <span class="text-white font-bold">One developer. One leaked key.</span></p>
+            <p class="text-lg text-gray-400"><span class="text-amber-400 font-bold">$82K gone in one night.</span> <span class="text-white font-bold">One developer. One leaked key.</span></p>
         </div>
 
         <!-- How it happens -->
@@ -351,8 +601,8 @@
             <div class="grid md:grid-cols-2 gap-6">
                 <div class="space-y-4">
                     <div class="flex gap-3">
-                        <div class="w-8 h-8 rounded-lg bg-red-500/10 flex items-center justify-center flex-shrink-0 mt-0.5">
-                            <span class="text-red-400 text-sm font-bold">1</span>
+                        <div class="w-8 h-8 rounded-lg bg-amber-500/10 flex items-center justify-center flex-shrink-0 mt-0.5">
+                            <span class="text-amber-400 text-sm font-bold">1</span>
                         </div>
                         <div>
                             <div class="text-sm font-medium text-white">AI puts keys in your code</div>
@@ -360,8 +610,8 @@
                         </div>
                     </div>
                     <div class="flex gap-3">
-                        <div class="w-8 h-8 rounded-lg bg-red-500/10 flex items-center justify-center flex-shrink-0 mt-0.5">
-                            <span class="text-red-400 text-sm font-bold">2</span>
+                        <div class="w-8 h-8 rounded-lg bg-amber-500/10 flex items-center justify-center flex-shrink-0 mt-0.5">
+                            <span class="text-amber-400 text-sm font-bold">2</span>
                         </div>
                         <div>
                             <div class="text-sm font-medium text-white">You push to GitHub</div>
@@ -369,8 +619,8 @@
                         </div>
                     </div>
                     <div class="flex gap-3">
-                        <div class="w-8 h-8 rounded-lg bg-red-500/10 flex items-center justify-center flex-shrink-0 mt-0.5">
-                            <span class="text-red-400 text-sm font-bold">3</span>
+                        <div class="w-8 h-8 rounded-lg bg-amber-500/10 flex items-center justify-center flex-shrink-0 mt-0.5">
+                            <span class="text-amber-400 text-sm font-bold">3</span>
                         </div>
                         <div>
                             <div class="text-sm font-medium text-white">Someone runs up your bill</div>
@@ -380,8 +630,8 @@
                 </div>
                 <div class="space-y-4">
                     <div class="flex gap-3">
-                        <div class="w-8 h-8 rounded-lg bg-red-500/10 flex items-center justify-center flex-shrink-0 mt-0.5">
-                            <span class="text-red-400 text-sm font-bold">4</span>
+                        <div class="w-8 h-8 rounded-lg bg-amber-500/10 flex items-center justify-center flex-shrink-0 mt-0.5">
+                            <span class="text-amber-400 text-sm font-bold">4</span>
                         </div>
                         <div>
                             <div class="text-sm font-medium text-white">Malicious packages steal keys</div>
@@ -389,8 +639,8 @@
                         </div>
                     </div>
                     <div class="flex gap-3">
-                        <div class="w-8 h-8 rounded-lg bg-red-500/10 flex items-center justify-center flex-shrink-0 mt-0.5">
-                            <span class="text-red-400 text-sm font-bold">5</span>
+                        <div class="w-8 h-8 rounded-lg bg-amber-500/10 flex items-center justify-center flex-shrink-0 mt-0.5">
+                            <span class="text-amber-400 text-sm font-bold">5</span>
                         </div>
                         <div>
                             <div class="text-sm font-medium text-white">.env files are not enough</div>
@@ -398,8 +648,8 @@
                         </div>
                     </div>
                     <div class="flex gap-3">
-                        <div class="w-8 h-8 rounded-lg bg-red-500/10 flex items-center justify-center flex-shrink-0 mt-0.5">
-                            <span class="text-red-400 text-sm font-bold">6</span>
+                        <div class="w-8 h-8 rounded-lg bg-amber-500/10 flex items-center justify-center flex-shrink-0 mt-0.5">
+                            <span class="text-amber-400 text-sm font-bold">6</span>
                         </div>
                         <div>
                             <div class="text-sm font-medium text-white">45% of AI code has security flaws</div>
@@ -434,8 +684,8 @@
                 </div>
                 <div class="bg-vp-bg border border-vp-border rounded-xl p-5 font-mono text-sm">
                     <div class="text-gray-500 mb-2"># Before (dangerous)</div>
-                    <div class="text-red-400 mb-1">export OPENAI_API_KEY=sk-proj-abc123...</div>
-                    <div class="text-red-400/50 text-xs mb-4">^ exposed in .env, shell history, AI context</div>
+                    <div class="text-amber-400 mb-1">export OPENAI_API_KEY=sk-proj-abc123...</div>
+                    <div class="text-amber-400/50 text-xs mb-4">^ exposed in .env, shell history, AI context</div>
                     <div class="text-gray-500 mb-2"># After (secure)</div>
                     <div class="text-indigo-400 mb-1">export OPENAI_API_KEY=vp_live_...</div>
                     <div class="text-indigo-400 mb-1">export OPENAI_BASE_URL=https://api.vaultproof.dev/v1/openai</div>
@@ -496,24 +746,24 @@
         <div class="grid md:grid-cols-3 gap-6">
             <!-- Key Splitting -->
             <div class="bg-vp-surface border border-vp-border rounded-[16px] p-7 card-hover reveal delay-1">
-                <div class="w-12 h-12 rounded-card bg-vp-accent/10 flex items-center justify-center mb-5">
-                    <svg width="24" height="24" fill="none" stroke="#6366f1" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="6" cy="12" r="3"/><circle cx="18" cy="12" r="3"/><path d="M9 12h6"/><path d="M12 3v4M12 17v4"/></svg>
+                <div class="icon-chadzn icon-chadzn-indigo mb-5">
+                    <svg width="22" height="22" viewBox="0 0 24 24" fill="none"><path d="M7 10H3V14H7V10Z" fill="#818cf8"/><path d="M21 10H17V14H21V10Z" fill="#818cf8"/><path d="M14 10H10V14H14V10Z" fill="#818cf8" opacity="0.4"/><path d="M7 12H17" stroke="#818cf8" stroke-width="1.5" stroke-dasharray="2 2"/><path d="M12 4V8M12 16V20" stroke="#818cf8" stroke-width="1.5" stroke-linecap="round" opacity="0.5"/></svg>
                 </div>
                 <h3 class="text-lg font-bold text-white mb-2">Split on arrival</h3>
                 <p class="text-sm text-gray-400 leading-relaxed">The moment you paste your API key, it's split into encrypted pieces in your browser. The original is destroyed instantly. Half a key is useless to anyone.</p>
             </div>
             <!-- Zero-Knowledge Proofs -->
             <div class="bg-vp-surface border border-vp-border rounded-[16px] p-7 card-hover reveal delay-2">
-                <div class="w-12 h-12 rounded-card bg-vp-accent/10 flex items-center justify-center mb-5">
-                    <svg width="24" height="24" fill="none" stroke="#6366f1" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><path d="M9 12l2 2 4-4"/></svg>
+                <div class="icon-chadzn icon-chadzn-indigo mb-5">
+                    <svg width="22" height="22" viewBox="0 0 24 24" fill="none"><path d="M12 2L4 6V12C4 17.52 7.56 22.68 12 24C16.44 22.68 20 17.52 20 12V6L12 2Z" fill="#818cf8" opacity="0.15"/><path d="M12 2L4 6V12C4 17.52 7.56 22.68 12 24C16.44 22.68 20 17.52 20 12V6L12 2Z" stroke="#818cf8" stroke-width="1.5" stroke-linejoin="round"/><path d="M9 12L11 14L15 10" stroke="#818cf8" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
                 </div>
                 <h3 class="text-lg font-bold text-white mb-2">Prove you own it, without showing it</h3>
                 <p class="text-sm text-gray-400 leading-relaxed">Zero-knowledge proofs verify you're the owner without ever revealing the key. No shared secrets. No single point of compromise. Your developer key alone can't reconstruct anything.</p>
             </div>
             <!-- Ephemeral Reconstruction -->
             <div class="bg-vp-surface border border-vp-border rounded-[16px] p-7 card-hover reveal delay-3">
-                <div class="w-12 h-12 rounded-card bg-vp-accent/10 flex items-center justify-center mb-5">
-                    <svg width="24" height="24" fill="none" stroke="#6366f1" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
+                <div class="icon-chadzn icon-chadzn-indigo mb-5">
+                    <svg width="22" height="22" viewBox="0 0 24 24" fill="none"><path d="M13 2L3 14H12L11 22L21 10H12L13 2Z" fill="#818cf8" opacity="0.15"/><path d="M13 2L3 14H12L11 22L21 10H12L13 2Z" stroke="#818cf8" stroke-width="1.5" stroke-linejoin="round"/></svg>
                 </div>
                 <h3 class="text-lg font-bold text-white mb-2">Gone in 100ms</h3>
                 <p class="text-sm text-gray-400 leading-relaxed">Your key exists in memory for about 100 milliseconds. The API call fires, the response comes back, and all key material is wiped. Nothing to steal.</p>
@@ -530,48 +780,48 @@
 
         <div class="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
             <div class="bg-vp-surface border border-vp-border rounded-2xl p-6 reveal delay-1">
-                <div class="w-10 h-10 rounded-xl bg-indigo-500/10 flex items-center justify-center mb-4">
-                    <svg class="w-5 h-5 text-indigo-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M8 9l3 3-3 3m5 0h3M5 20h14a2 2 0 002-2V6a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
+                <div class="icon-chadzn icon-chadzn-indigo mb-4" style="width:40px;height:40px">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none"><rect x="3" y="3" width="18" height="18" rx="4" fill="#818cf8" opacity="0.15" stroke="#818cf8" stroke-width="1.5"/><path d="M8 9L11 12L8 15" stroke="#818cf8" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><path d="M13 15H16" stroke="#818cf8" stroke-width="2" stroke-linecap="round"/></svg>
                 </div>
                 <h3 class="text-white font-semibold mb-2">Drop-in for every AI tool</h3>
                 <p class="text-sm text-gray-400 leading-relaxed">Point your base URL at VaultProof. Cursor, Claude Code, Windsurf, and any OpenAI-compatible tool works instantly. No plugins needed.</p>
             </div>
 
             <div class="bg-vp-surface border border-vp-border rounded-2xl p-6 reveal delay-2">
-                <div class="w-10 h-10 rounded-xl bg-indigo-500/10 flex items-center justify-center mb-4">
-                    <svg class="w-5 h-5 text-indigo-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/></svg>
+                <div class="icon-chadzn icon-chadzn-indigo mb-4" style="width:40px;height:40px">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none"><rect x="5" y="11" width="14" height="11" rx="2" fill="#818cf8" opacity="0.15" stroke="#818cf8" stroke-width="1.5"/><path d="M8 11V7C8 4.79 9.79 3 12 3C14.21 3 16 4.79 16 7V11" stroke="#818cf8" stroke-width="1.5" stroke-linecap="round"/><circle cx="12" cy="16" r="1.5" fill="#818cf8"/></svg>
                 </div>
                 <h3 class="text-white font-semibold mb-2">Your real key stays hidden</h3>
                 <p class="text-sm text-gray-400 leading-relaxed">AI agents see your .env files, shell history, and environment variables. With VaultProof, all they find is a vp_live_ key -- useless on its own.</p>
             </div>
 
             <div class="bg-vp-surface border border-vp-border rounded-2xl p-6 reveal delay-3">
-                <div class="w-10 h-10 rounded-xl bg-indigo-500/10 flex items-center justify-center mb-4">
-                    <svg class="w-5 h-5 text-indigo-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
+                <div class="icon-chadzn icon-chadzn-indigo mb-4" style="width:40px;height:40px">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10" stroke="#818cf8" stroke-width="1.5" stroke-linecap="round"/><path d="M22 12C22 6.48 17.52 2 12 2" stroke="#818cf8" stroke-width="1.5" stroke-linecap="round" stroke-dasharray="3 3" opacity="0.4"/><path d="M17 8L21 4M21 4L21 8M21 4L17 4" stroke="#818cf8" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
                 </div>
                 <h3 class="text-white font-semibold mb-2">Auto-fallback when providers go down</h3>
                 <p class="text-sm text-gray-400 leading-relaxed">Store keys for multiple providers. If one is unreachable, VaultProof automatically retries with another. Your agents never stop working.</p>
             </div>
 
             <div class="bg-vp-surface border border-vp-border rounded-2xl p-6 reveal delay-4">
-                <div class="w-10 h-10 rounded-xl bg-indigo-500/10 flex items-center justify-center mb-4">
-                    <svg class="w-5 h-5 text-indigo-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
+                <div class="icon-chadzn icon-chadzn-indigo mb-4" style="width:40px;height:40px">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none"><path d="M4 4V9H9" stroke="#818cf8" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/><path d="M20 20V15H15" stroke="#818cf8" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/><path d="M4 9C5.33 5.56 8.42 3 12 3C16.42 3 20 6.58 20 11" stroke="#818cf8" stroke-width="1.5" stroke-linecap="round"/><path d="M20 15C18.67 18.44 15.58 21 12 21C7.58 21 4 17.42 4 13" stroke="#818cf8" stroke-width="1.5" stroke-linecap="round"/></svg>
                 </div>
                 <h3 class="text-white font-semibold mb-2">Rotate keys without touching code</h3>
                 <p class="text-sm text-gray-400 leading-relaxed">Store a new key in VaultProof and the old one is replaced instantly. No code changes. No deploys. No updating .env files across 15 environments.</p>
             </div>
 
             <div class="bg-vp-surface border border-vp-border rounded-2xl p-6 reveal delay-5">
-                <div class="w-10 h-10 rounded-xl bg-indigo-500/10 flex items-center justify-center mb-4">
-                    <svg class="w-5 h-5 text-indigo-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                <div class="icon-chadzn icon-chadzn-indigo mb-4" style="width:40px;height:40px">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="9" fill="#818cf8" opacity="0.1" stroke="#818cf8" stroke-width="1.5"/><path d="M12 7V12L15 15" stroke="#818cf8" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
                 </div>
                 <h3 class="text-white font-semibold mb-2">Budget caps so leaks can't bankrupt you</h3>
                 <p class="text-sm text-gray-400 leading-relaxed">Set daily and monthly call limits on each key. When the cap is hit, VaultProof blocks the call. A bug or stolen key can't run up your bill.</p>
             </div>
 
-            <div class="bg-vp-surface border border-red-500/20 rounded-2xl p-6 reveal delay-6">
-                <div class="w-10 h-10 rounded-xl bg-red-500/10 flex items-center justify-center mb-4">
-                    <svg class="w-5 h-5 text-red-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636"/></svg>
+            <div class="bg-vp-surface border border-amber-500/20 rounded-2xl p-6 reveal delay-6">
+                <div class="icon-chadzn icon-chadzn-amber mb-4" style="width:40px;height:40px">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="9" fill="#fbbf24" opacity="0.1" stroke="#fbbf24" stroke-width="1.5"/><path d="M15 9L9 15M9 9L15 15" stroke="#fbbf24" stroke-width="2" stroke-linecap="round"/></svg>
                 </div>
                 <h3 class="text-white font-semibold mb-2">Kill switch -- freeze everything instantly</h3>
                 <p class="text-sm text-gray-400 leading-relaxed">Something wrong? One click freezes all proxy calls. Requires typing "STOP" + your password to prevent accidents. Resume when you're ready.</p>
@@ -702,10 +952,10 @@ const res = await vault.proxy(key.id, '/v1/chat/completions', {
                         <tr class="border-b border-vp-border/50">
                             <td class="py-3.5 px-5 text-gray-300">Provider can't see your keys</td>
                             <td class="py-3.5 px-3 text-center text-green-400 font-medium">&#10003;</td>
-                            <td class="py-3.5 px-3 text-center text-red-400">&#10007;</td>
-                            <td class="py-3.5 px-3 text-center text-red-400">&#10007;</td>
-                            <td class="py-3.5 px-3 text-center text-red-400">&#10007;</td>
-                            <td class="py-3.5 px-3 text-center text-red-400">&#10007;</td>
+                            <td class="py-3.5 px-3 text-center text-amber-400">&#10007;</td>
+                            <td class="py-3.5 px-3 text-center text-amber-400">&#10007;</td>
+                            <td class="py-3.5 px-3 text-center text-amber-400">&#10007;</td>
+                            <td class="py-3.5 px-3 text-center text-amber-400">&#10007;</td>
                         </tr>
                         <tr class="border-b border-vp-border/50">
                             <td class="py-3.5 px-5 text-gray-300">Works with existing SDKs (no code change)</td>
@@ -720,7 +970,7 @@ const res = await vault.proxy(key.id, '/v1/chat/completions', {
                             <td class="py-3.5 px-3 text-center text-green-400 font-medium">10K calls</td>
                             <td class="py-3.5 px-3 text-center text-green-400">5 users</td>
                             <td class="py-3.5 px-3 text-center text-green-400">5 users</td>
-                            <td class="py-3.5 px-3 text-center text-red-400">Pay per use</td>
+                            <td class="py-3.5 px-3 text-center text-amber-400">Pay per use</td>
                             <td class="py-3.5 px-3 text-center text-green-400">Free</td>
                         </tr>
                         <tr class="border-b border-vp-border/50">
@@ -734,34 +984,34 @@ const res = await vault.proxy(key.id, '/v1/chat/completions', {
                         <tr class="border-b border-vp-border/50">
                             <td class="py-3.5 px-5 text-gray-300">Per-key budget caps</td>
                             <td class="py-3.5 px-3 text-center text-green-400 font-medium">&#10003;</td>
-                            <td class="py-3.5 px-3 text-center text-red-400">&#10007;</td>
-                            <td class="py-3.5 px-3 text-center text-red-400">&#10007;</td>
-                            <td class="py-3.5 px-3 text-center text-red-400">&#10007;</td>
-                            <td class="py-3.5 px-3 text-center text-red-400">&#10007;</td>
+                            <td class="py-3.5 px-3 text-center text-amber-400">&#10007;</td>
+                            <td class="py-3.5 px-3 text-center text-amber-400">&#10007;</td>
+                            <td class="py-3.5 px-3 text-center text-amber-400">&#10007;</td>
+                            <td class="py-3.5 px-3 text-center text-amber-400">&#10007;</td>
                         </tr>
                         <tr class="border-b border-vp-border/50">
                             <td class="py-3.5 px-5 text-gray-300">Kill switch (freeze all calls instantly)</td>
                             <td class="py-3.5 px-3 text-center text-green-400 font-medium">&#10003;</td>
-                            <td class="py-3.5 px-3 text-center text-red-400">&#10007;</td>
-                            <td class="py-3.5 px-3 text-center text-red-400">&#10007;</td>
-                            <td class="py-3.5 px-3 text-center text-red-400">&#10007;</td>
-                            <td class="py-3.5 px-3 text-center text-red-400">&#10007;</td>
+                            <td class="py-3.5 px-3 text-center text-amber-400">&#10007;</td>
+                            <td class="py-3.5 px-3 text-center text-amber-400">&#10007;</td>
+                            <td class="py-3.5 px-3 text-center text-amber-400">&#10007;</td>
+                            <td class="py-3.5 px-3 text-center text-amber-400">&#10007;</td>
                         </tr>
                         <tr class="border-b border-vp-border/50">
                             <td class="py-3.5 px-5 text-gray-300">Works with AI coding tools</td>
                             <td class="py-3.5 px-3 text-center text-green-400 font-medium">&#10003;</td>
                             <td class="py-3.5 px-3 text-center text-yellow-400">Partial</td>
                             <td class="py-3.5 px-3 text-center text-yellow-400">Partial</td>
-                            <td class="py-3.5 px-3 text-center text-red-400">&#10007;</td>
-                            <td class="py-3.5 px-3 text-center text-red-400">Exposed</td>
+                            <td class="py-3.5 px-3 text-center text-amber-400">&#10007;</td>
+                            <td class="py-3.5 px-3 text-center text-amber-400">Exposed</td>
                         </tr>
                         <tr>
                             <td class="py-3.5 px-5 text-gray-300">Safe if database is breached</td>
                             <td class="py-3.5 px-3 text-center text-green-400 font-medium">&#10003;</td>
-                            <td class="py-3.5 px-3 text-center text-red-400">&#10007;</td>
-                            <td class="py-3.5 px-3 text-center text-red-400">&#10007;</td>
-                            <td class="py-3.5 px-3 text-center text-red-400">&#10007;</td>
-                            <td class="py-3.5 px-3 text-center text-red-400">&#10007;</td>
+                            <td class="py-3.5 px-3 text-center text-amber-400">&#10007;</td>
+                            <td class="py-3.5 px-3 text-center text-amber-400">&#10007;</td>
+                            <td class="py-3.5 px-3 text-center text-amber-400">&#10007;</td>
+                            <td class="py-3.5 px-3 text-center text-amber-400">&#10007;</td>
                         </tr>
                     </tbody>
                 </table>
@@ -898,81 +1148,65 @@ const res = await vault.proxy(key.id, '/v1/chat/completions', {
 
     </section>
 
-    <!-- CTA -->
-    <section class="relative z-10 max-w-5xl mx-auto px-6 py-24">
-        <div class="bg-vp-surface border border-vp-border rounded-[20px] p-12 md:p-16 text-center relative overflow-hidden reveal">
-            <!-- Subtle accent glow -->
-            <div class="absolute top-0 left-1/2 -translate-x-1/2 w-[400px] h-[200px] bg-vp-accent/10 blur-[100px] rounded-full pointer-events-none"></div>
-            <h2 class="text-3xl md:text-4xl font-bold text-white mb-4 relative">Your keys deserve better than a .env file.</h2>
-            <p class="text-gray-400 text-lg mb-10 max-w-xl mx-auto relative">With VaultProof, breaches are architecturally impossible. Not just unlikely. Impossible.</p>
-            <div class="flex flex-col sm:flex-row items-center justify-center gap-4 relative">
-                <div class="flex w-full sm:w-auto">
-                    <input type="email" id="ctaEmail" placeholder="you@company.com" class="bg-vp-bg border border-vp-border rounded-l-btn px-5 py-3.5 text-sm text-white placeholder-gray-600 focus:outline-none focus:border-vp-accent/50 w-full sm:w-64 transition-colors">
-                    <button id="ctaBtn" onclick="handleCTA()" class="bg-vp-accent hover:bg-indigo-500 px-6 py-3.5 rounded-r-btn font-semibold text-white transition-all btn-glow text-sm whitespace-nowrap disabled:opacity-60">Get Started</button>
-                </div>
-            </div>
-            <p class="text-xs text-gray-600 mt-4 relative">Free tier includes 3 keys and 10,000 calls/month. No credit card required.</p>
-        </div>
-    </section>
 
     <!-- FAQ -->
     <section class="relative z-10 max-w-3xl mx-auto px-6 py-24">
         <div class="text-center mb-12 reveal">
             <h2 class="text-3xl font-bold text-white mb-4" style="font-family:'Space Grotesk',sans-serif">Frequently asked questions</h2>
         </div>
-        <div class="space-y-4">
-            <div class="bg-vp-surface border border-vp-border rounded-xl overflow-hidden reveal delay-1">
-                <button onclick="this.nextElementSibling.classList.toggle('hidden'); this.querySelector('svg').classList.toggle('rotate-180')" class="w-full flex items-center justify-between p-5 text-left">
-                    <span class="text-sm font-medium text-white">Can VaultProof see my API keys?</span>
-                    <svg class="w-4 h-4 text-gray-500 transition-transform" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7"/></svg>
+        <div class="faq-accordion reveal delay-1" data-type="single">
+            <div class="faq-item border-b border-vp-border">
+                <button class="faq-trigger" aria-expanded="false">
+                    <span>Can VaultProof see my API keys?</span>
+                    <svg class="faq-chevron" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg>
                 </button>
-                <div class="hidden px-5 pb-5">
-                    <p class="text-sm text-gray-400 leading-relaxed">No. Your key is split into encrypted pieces before it leaves your device. We store two shares -- one encrypted with our server key, one encrypted with your developer key. Neither share alone reveals anything. We mathematically cannot see your full key.</p>
+                <div class="faq-content">
+                    <div class="faq-content-inner">No. Your key is split into encrypted pieces before it leaves your device. We store two shares -- one encrypted with our server key, one encrypted with your developer key. Neither share alone reveals anything. We mathematically cannot see your full key.</div>
                 </div>
             </div>
-            <div class="bg-vp-surface border border-vp-border rounded-xl overflow-hidden reveal delay-1">
-                <button onclick="this.nextElementSibling.classList.toggle('hidden'); this.querySelector('svg').classList.toggle('rotate-180')" class="w-full flex items-center justify-between p-5 text-left">
-                    <span class="text-sm font-medium text-white">What if VaultProof goes down?</span>
-                    <svg class="w-4 h-4 text-gray-500 transition-transform" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7"/></svg>
+            <div class="faq-item border-b border-vp-border">
+                <button class="faq-trigger" aria-expanded="false">
+                    <span>What if VaultProof goes down?</span>
+                    <svg class="faq-chevron" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg>
                 </button>
-                <div class="hidden px-5 pb-5">
-                    <p class="text-sm text-gray-400 leading-relaxed">Your proxy calls won't work until we're back up, but your keys are safe. Both encrypted shares remain in the database. We use a global edge network with 330+ locations and monitor uptime continuously.</p>
+                <div class="faq-content">
+                    <div class="faq-content-inner">Your proxy calls won't work until we're back up, but your keys are safe. Both encrypted shares remain in the database. We use a global edge network with 330+ locations and monitor uptime continuously.</div>
                 </div>
             </div>
-            <div class="bg-vp-surface border border-vp-border rounded-xl overflow-hidden reveal delay-2">
-                <button onclick="this.nextElementSibling.classList.toggle('hidden'); this.querySelector('svg').classList.toggle('rotate-180')" class="w-full flex items-center justify-between p-5 text-left">
-                    <span class="text-sm font-medium text-white">What if someone steals my vp_live_ key?</span>
-                    <svg class="w-4 h-4 text-gray-500 transition-transform" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7"/></svg>
+            <div class="faq-item border-b border-vp-border">
+                <button class="faq-trigger" aria-expanded="false">
+                    <span>What if someone steals my vp_live_ key?</span>
+                    <svg class="faq-chevron" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg>
                 </button>
-                <div class="hidden px-5 pb-5">
-                    <p class="text-sm text-gray-400 leading-relaxed">They can make proxy calls using your stored keys (consuming your provider credits), but they cannot extract the raw API key. Revoke the key instantly from your dashboard. You can also restrict keys by IP address, provider, and endpoint.</p>
+                <div class="faq-content">
+                    <div class="faq-content-inner">They can't do much. If you've locked the key to your domain (origin locking), it won't work from anywhere else — browsers can't fake the Origin header. You can also restrict keys by provider, endpoint, and IP address. And even if someone somehow uses it, they can only make proxy calls — they can never extract the raw API key. Revoke it instantly from your dashboard.</div>
                 </div>
             </div>
-            <div class="bg-vp-surface border border-vp-border rounded-xl overflow-hidden reveal delay-2">
-                <button onclick="this.nextElementSibling.classList.toggle('hidden'); this.querySelector('svg').classList.toggle('rotate-180')" class="w-full flex items-center justify-between p-5 text-left">
-                    <span class="text-sm font-medium text-white">Does it work with Stripe / AWS / non-AI SDKs?</span>
-                    <svg class="w-4 h-4 text-gray-500 transition-transform" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7"/></svg>
+            <div class="faq-item border-b border-vp-border">
+                <button class="faq-trigger" aria-expanded="false">
+                    <span>Does it work with Stripe / AWS / non-AI SDKs?</span>
+                    <svg class="faq-chevron" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg>
                 </button>
-                <div class="hidden px-5 pb-5">
-                    <p class="text-sm text-gray-400 leading-relaxed">Yes. Use <code class="text-indigo-400 bg-vp-bg px-1.5 py-0.5 rounded text-xs">vault.proxy(keyId, '/v1/charges', { amount: 2000 })</code> to route any API call through VaultProof's secure proxy. Your key never touches your code. Works with any provider that uses API keys.</p>
+                <div class="faq-content">
+                    <div class="faq-content-inner">Yes. Use <code style="color:#818cf8;background:#0a0a0f;padding:2px 6px;border-radius:4px;font-size:13px">vault.proxy(keyId, '/v1/charges', { amount: 2000 })</code> to route any API call through VaultProof's secure proxy. Your key never touches your code. Works with any provider that uses API keys.</div>
                 </div>
             </div>
-            <div class="bg-vp-surface border border-vp-border rounded-xl overflow-hidden reveal delay-3">
-                <button onclick="this.nextElementSibling.classList.toggle('hidden'); this.querySelector('svg').classList.toggle('rotate-180')" class="w-full flex items-center justify-between p-5 text-left">
-                    <span class="text-sm font-medium text-white">Is it really free?</span>
-                    <svg class="w-4 h-4 text-gray-500 transition-transform" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7"/></svg>
+            <div class="faq-item border-b border-vp-border">
+                <button class="faq-trigger" aria-expanded="false">
+                    <span>Is it really free?</span>
+                    <svg class="faq-chevron" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg>
                 </button>
-                <div class="hidden px-5 pb-5">
-                    <p class="text-sm text-gray-400 leading-relaxed">Yes. The free tier gives you 3 keys and 10,000 proxy calls per month. No credit card. No trial countdown. It stays free. Upgrade only when you need more.</p>
+                <div class="faq-content">
+                    <div class="faq-content-inner">Yes. The free tier gives you 3 keys and 10,000 proxy calls per month. No credit card. No trial countdown. It stays free. Upgrade only when you need more.</div>
                 </div>
             </div>
-            <div class="bg-vp-surface border border-vp-border rounded-xl overflow-hidden reveal delay-3">
-                <button onclick="this.nextElementSibling.classList.toggle('hidden'); this.querySelector('svg').classList.toggle('rotate-180')" class="w-full flex items-center justify-between p-5 text-left">
-                    <span class="text-sm font-medium text-white">How much latency does the proxy add?</span>
-                    <svg class="w-4 h-4 text-gray-500 transition-transform" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7"/></svg>
+            <div class="faq-item">
+                <button class="faq-trigger" aria-expanded="false">
+                    <span>How much latency does the proxy add?</span>
+                    <svg class="faq-chevron" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg>
                 </button>
-                <div class="hidden px-5 pb-5">
-                    <p class="text-sm text-gray-400 leading-relaxed">Typically under 100ms. For a 2-10 second LLM response, it's imperceptible. SSE streaming is fully supported — chunks arrive as they're generated.</p>
+                <div class="faq-content">
+                    <div class="faq-content-inner">Typically under 100ms. For a 2-10 second LLM response, it's imperceptible. SSE streaming is fully supported — chunks arrive as they're generated.</div>
                 </div>
             </div>
         </div>
@@ -1151,8 +1385,123 @@ const res = await vault.proxy(key.id, '/v1/chat/completions', {
             });
         }
 
-        // Start terminal after a short delay
-        setTimeout(runTerminal, 800);
+        // Start terminal after a short delay (only if hero terminal exists)
+        if (termText) setTimeout(runTerminal, 800);
+
+        // Draw connector lines from icons to terminal
+        function drawHeroLines() {
+            var svg = document.getElementById('heroLines');
+            var container = document.getElementById('heroFlow');
+            var terminal = document.getElementById('heroTerminal');
+            if (!svg || !container || !terminal) return;
+
+            var cRect = container.getBoundingClientRect();
+            var tRect = terminal.getBoundingClientRect();
+            svg.innerHTML = '';
+
+            var ns = 'http://www.w3.org/2000/svg';
+            var tTop = tRect.top - cRect.top;
+            var tH = tRect.height;
+            // Padding from terminal top/bottom edges
+            var pad = tH * 0.15;
+
+            function makePath(x1, y1, x2, y2, cls) {
+                // Smooth bezier curve
+                var mx = (x1 + x2) / 2;
+                var d = 'M' + x1 + ',' + y1 + ' C' + mx + ',' + y1 + ' ' + mx + ',' + y2 + ' ' + x2 + ',' + y2;
+                var path = document.createElementNS(ns, 'path');
+                path.setAttribute('d', d);
+                path.setAttribute('fill', 'none');
+                path.setAttribute('stroke', 'url(#lineGrad)');
+                path.setAttribute('stroke-width', '1.5');
+                path.setAttribute('stroke-dasharray', '5 5');
+                path.setAttribute('filter', 'url(#lineGlow)');
+                path.classList.add(cls);
+                svg.appendChild(path);
+            }
+
+            // Gradient + glow filter
+            var defs = document.createElementNS(ns, 'defs');
+
+            var grad = document.createElementNS(ns, 'linearGradient');
+            grad.setAttribute('id', 'lineGrad');
+            grad.setAttribute('x1', '0%'); grad.setAttribute('y1', '0%');
+            grad.setAttribute('x2', '100%'); grad.setAttribute('y2', '0%');
+            var stop1 = document.createElementNS(ns, 'stop');
+            stop1.setAttribute('offset', '0%'); stop1.setAttribute('stop-color', '#a5b4fc'); stop1.setAttribute('stop-opacity', '0.1');
+            var stop2 = document.createElementNS(ns, 'stop');
+            stop2.setAttribute('offset', '50%'); stop2.setAttribute('stop-color', '#818cf8'); stop2.setAttribute('stop-opacity', '0.6');
+            var stop3 = document.createElementNS(ns, 'stop');
+            stop3.setAttribute('offset', '100%'); stop3.setAttribute('stop-color', '#a5b4fc'); stop3.setAttribute('stop-opacity', '0.1');
+            grad.appendChild(stop1); grad.appendChild(stop2); grad.appendChild(stop3);
+            defs.appendChild(grad);
+
+            // Soft glow filter
+            var filter = document.createElementNS(ns, 'filter');
+            filter.setAttribute('id', 'lineGlow');
+            filter.setAttribute('x', '-20%'); filter.setAttribute('y', '-20%');
+            filter.setAttribute('width', '140%'); filter.setAttribute('height', '140%');
+            var blur = document.createElementNS(ns, 'feGaussianBlur');
+            blur.setAttribute('stdDeviation', '4');
+            blur.setAttribute('result', 'glow');
+            var merge = document.createElementNS(ns, 'feMerge');
+            var mn1 = document.createElementNS(ns, 'feMergeNode'); mn1.setAttribute('in', 'glow');
+            var mn2 = document.createElementNS(ns, 'feMergeNode'); mn2.setAttribute('in', 'SourceGraphic');
+            merge.appendChild(mn1); merge.appendChild(mn2);
+            filter.appendChild(blur); filter.appendChild(merge);
+            defs.appendChild(filter);
+
+            svg.appendChild(defs);
+
+            // Left icons → spread along terminal left edge
+            var leftIcons = document.querySelectorAll('.hero-left-icon');
+            var lCount = leftIcons.length;
+            leftIcons.forEach(function(icon, i) {
+                var iRect = icon.getBoundingClientRect();
+                var x1 = iRect.right - cRect.left;
+                var y1 = iRect.top + iRect.height / 2 - cRect.top;
+                var x2 = tRect.left - cRect.left;
+                var y2 = tTop + pad + ((tH - pad * 2) / (lCount - 1)) * i;
+                makePath(x1, y1, x2, y2, 'hero-line-left');
+            });
+
+            // Right icons → spread along terminal right edge
+            var rightIcons = document.querySelectorAll('.hero-right-icon');
+            var rCount = rightIcons.length;
+            rightIcons.forEach(function(icon, i) {
+                var iRect = icon.getBoundingClientRect();
+                var x1 = tRect.right - cRect.left;
+                var y1 = tTop + pad + ((tH - pad * 2) / (rCount - 1)) * i;
+                var x2 = iRect.left - cRect.left;
+                var y2 = iRect.top + iRect.height / 2 - cRect.top;
+                makePath(x1, y1, x2, y2, 'hero-line-right');
+            });
+        }
+
+        drawHeroLines();
+        window.addEventListener('resize', drawHeroLines);
+
+        // FAQ accordion (shadcn-style, single open)
+        document.querySelectorAll('.faq-trigger').forEach(function(btn) {
+            btn.addEventListener('click', function() {
+                var isOpen = btn.getAttribute('aria-expanded') === 'true';
+                var content = btn.nextElementSibling;
+                var accordion = btn.closest('.faq-accordion');
+
+                // Close all others if single mode
+                if (accordion && accordion.dataset.type === 'single') {
+                    accordion.querySelectorAll('.faq-trigger').forEach(function(other) {
+                        if (other !== btn) {
+                            other.setAttribute('aria-expanded', 'false');
+                            other.nextElementSibling.setAttribute('data-open', 'false');
+                        }
+                    });
+                }
+
+                btn.setAttribute('aria-expanded', isOpen ? 'false' : 'true');
+                content.setAttribute('data-open', isOpen ? 'false' : 'true');
+            });
+        });
 
         // Copy code button
         function copyCode() {
