@@ -59,7 +59,7 @@
     }
 
     /* Sidebar */
-    .sidebar-expanded { width: 240px; }
+    .sidebar-expanded { width: 220px; }
     .sidebar-collapsed { width: 64px; }
     .sidebar-collapsed .sidebar-label { display: none; }
     .sidebar-collapsed .sidebar-logo-text { display: none; }
@@ -89,55 +89,63 @@
   <!-- Left Sidebar -->
   <aside id="sidebar" class="fixed top-0 left-0 h-full bg-card border-r border-border z-50 flex flex-col transition-all duration-200 sidebar-expanded -translate-x-full lg:translate-x-0">
     <!-- Logo -->
-    <div class="flex items-center gap-3 px-4 h-16 border-b border-border flex-shrink-0">
+    <div class="flex items-center gap-3 px-4 h-14 border-b border-border flex-shrink-0">
       <img src="/og-image2.png" alt="VaultProof" class="w-9 h-9 flex-shrink-0 rounded-lg" />
       <span class="text-lg font-bold sidebar-logo-text tracking-tight" style="font-family:'Space Grotesk',sans-serif">VaultProof</span>
     </div>
 
     <!-- Nav -->
-    <nav class="flex-1 p-3 space-y-1 overflow-y-auto">
-      <a href="/app/" class="sidebar-nav-item flex items-center gap-3 px-3 py-2.5 rounded-xl text-gray-400 hover:text-white hover:bg-white/5 text-sm transition">
-        <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zm10 0a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zm10 0a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z"/>
+    <nav class="flex-1 px-2 py-2 space-y-0.5 overflow-y-auto">
+      <a href="/app/" class="sidebar-nav-item flex items-center gap-3 px-3 py-2 rounded-md text-gray-400 hover:text-white hover:bg-white/[0.06] text-sm transition">
+        <svg class="w-5 h-5 flex-shrink-0" viewBox="0 0 24 24">
+          <path fill="#818cf8" opacity="0.15" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zm10 0a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zm10 0a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z"/>
+          <path fill="none" stroke="#818cf8" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zm10 0a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zm10 0a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z"/>
         </svg>
         <span class="sidebar-label">Dashboard</span>
       </a>
-      <a href="/app/keys" class="sidebar-nav-item flex items-center gap-3 px-3 py-2.5 rounded-xl bg-brand/15 text-brand font-medium text-sm transition">
-        <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z"/>
+      <a href="/app/keys" class="sidebar-nav-item flex items-center gap-3 px-3 py-2 rounded-md bg-white/[0.08] text-brand font-medium text-sm transition">
+        <svg class="w-5 h-5 flex-shrink-0" viewBox="0 0 24 24">
+          <path fill="#818cf8" opacity="0.15" d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z"/>
+          <path fill="none" stroke="#818cf8" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z"/>
         </svg>
         <span class="sidebar-label">API Keys</span>
       </a>
-      <a href="/app/agents" class="sidebar-nav-item flex items-center gap-3 px-3 py-2.5 rounded-xl text-gray-400 hover:text-white hover:bg-white/5 text-sm transition">
-        <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17H3a2 2 0 01-2-2V5a2 2 0 012-2h14a2 2 0 012 2v10a2 2 0 01-2 2h-2"/>
+      <a href="/app/agents" class="sidebar-nav-item flex items-center gap-3 px-3 py-2 rounded-md text-gray-400 hover:text-white hover:bg-white/[0.06] text-sm transition">
+        <svg class="w-5 h-5 flex-shrink-0" viewBox="0 0 24 24">
+          <path fill="#818cf8" opacity="0.15" d="M3 5a2 2 0 012-2h14a2 2 0 012 2v10a2 2 0 01-2 2H5a2 2 0 01-2-2V5z"/>
+          <path fill="none" stroke="#818cf8" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17H3a2 2 0 01-2-2V5a2 2 0 012-2h14a2 2 0 012 2v10a2 2 0 01-2 2h-2"/>
         </svg>
         <span class="sidebar-label">Agents</span>
       </a>
-      <a href="/app/scanner" class="sidebar-nav-item flex items-center gap-3 px-3 py-2.5 rounded-xl text-gray-400 hover:text-white hover:bg-white/5 text-sm transition">
-        <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
+      <a href="/app/scanner" class="sidebar-nav-item flex items-center gap-3 px-3 py-2 rounded-md text-gray-400 hover:text-white hover:bg-white/[0.06] text-sm transition">
+        <svg class="w-5 h-5 flex-shrink-0" viewBox="0 0 24 24">
+          <circle cx="11" cy="11" r="7" fill="#818cf8" opacity="0.15"/>
+          <path fill="none" stroke="#818cf8" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
         </svg>
         <span class="sidebar-label">Scanner</span>
       </a>
-      <a href="/app/logs" class="sidebar-nav-item flex items-center gap-3 px-3 py-2.5 rounded-xl text-gray-400 hover:text-white hover:bg-white/5 text-sm transition">
-        <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"/>
+      <a href="/app/logs" class="sidebar-nav-item flex items-center gap-3 px-3 py-2 rounded-md text-gray-400 hover:text-white hover:bg-white/[0.06] text-sm transition">
+        <svg class="w-5 h-5 flex-shrink-0" viewBox="0 0 24 24">
+          <path fill="#818cf8" opacity="0.15" d="M7 3a2 2 0 00-2 2v14a2 2 0 002 2h10a2 2 0 002-2V5a2 2 0 00-2-2H7z"/>
+          <path fill="none" stroke="#818cf8" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"/>
         </svg>
         <span class="sidebar-label">Access Logs</span>
       </a>
-      <a href="/app/settings" class="sidebar-nav-item flex items-center gap-3 px-3 py-2.5 rounded-xl text-gray-400 hover:text-white hover:bg-white/5 text-sm transition">
-        <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.066 2.573c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.573 1.066c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.066-2.573c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/>
-          <path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
+      <a href="/app/settings" class="sidebar-nav-item flex items-center gap-3 px-3 py-2 rounded-md text-gray-400 hover:text-white hover:bg-white/[0.06] text-sm transition">
+        <svg class="w-5 h-5 flex-shrink-0" viewBox="0 0 24 24">
+          <path fill="#818cf8" opacity="0.15" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.066 2.573c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.573 1.066c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.066-2.573c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/>
+          <circle cx="12" cy="12" r="3" fill="#818cf8" opacity="0.15"/>
+          <path fill="none" stroke="#818cf8" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.066 2.573c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.573 1.066c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.066-2.573c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/>
+          <path fill="none" stroke="#818cf8" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
         </svg>
         <span class="sidebar-label">Settings</span>
       </a>
 
       <div class="mt-4 pt-4 border-t border-border">
-        <a href="/docs" class="sidebar-nav-item flex items-center gap-3 px-3 py-2.5 rounded-xl text-gray-400 hover:text-white hover:bg-white/5 text-sm transition">
-          <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"/>
+        <a href="/docs" class="sidebar-nav-item flex items-center gap-3 px-3 py-2 rounded-md text-gray-400 hover:text-white hover:bg-white/[0.06] text-sm transition">
+          <svg class="w-5 h-5 flex-shrink-0" viewBox="0 0 24 24">
+            <path fill="#818cf8" opacity="0.15" d="M12 6.253C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"/>
+            <path fill="none" stroke="#818cf8" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"/>
           </svg>
           <span class="sidebar-label">Documentation</span>
         </a>
@@ -145,9 +153,9 @@
     </nav>
 
     <!-- Sidebar Bottom -->
-    <div class="sidebar-bottom p-4 border-t border-border flex-shrink-0">
+    <div class="sidebar-bottom px-3 py-3 border-t border-border flex-shrink-0">
       <div class="sidebar-user-info text-xs text-gray-500 truncate mb-2" id="sidebarEmail"></div>
-      <button onclick="logout()" class="flex items-center gap-2 text-sm text-gray-400 hover:text-red-400 transition">
+      <button onclick="logout()" class="flex items-center gap-2 text-sm text-gray-400 hover:text-amber-400 transition">
         <svg class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
           <path stroke-linecap="round" stroke-linejoin="round" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"/>
         </svg>
@@ -158,7 +166,7 @@
 
   <!-- Add Key Modal -->
   <div id="addKeyModal" class="fixed inset-0 z-[60] hidden items-center justify-center bg-black/60 backdrop-blur-sm">
-    <div class="bg-card border border-border rounded-2xl w-full max-w-md mx-4 p-6">
+    <div class="bg-card border border-border rounded-lg w-full max-w-md mx-4 p-5">
       <div class="flex items-center justify-between mb-5">
         <h3 class="text-lg font-semibold">Store New Key</h3>
         <button onclick="closeAddModal()" class="text-gray-500 hover:text-white transition">
@@ -168,7 +176,7 @@
       <form id="addKeyForm" class="space-y-4">
         <div>
           <label class="block text-sm text-gray-400 mb-1.5">Provider</label>
-          <select id="addProvider" required class="w-full px-4 py-2.5 bg-[#111118] border border-[#1e1e2e] rounded-xl text-sm text-white focus:outline-none focus:border-[#6366f1] transition">
+          <select id="addProvider" required class="w-full px-4 py-2.5 bg-[#111118] border border-[#1e1e2e] rounded-md text-sm text-white focus:outline-none focus:border-[#6366f1] transition">
             <option value="">Select provider</option>
             <optgroup label="AI Models">
               <option value="openai">OpenAI</option>
@@ -198,15 +206,15 @@
         </div>
         <div>
           <label class="block text-sm text-gray-400 mb-1.5">Label</label>
-          <input type="text" id="addLabel" required placeholder="e.g. Production GPT-4" class="w-full px-4 py-2.5 bg-[#111118] border border-[#1e1e2e] rounded-xl text-sm text-white placeholder-gray-600 focus:outline-none focus:border-[#6366f1] transition" />
+          <input type="text" id="addLabel" required placeholder="e.g. Production GPT-4" class="w-full px-4 py-2.5 bg-[#111118] border border-[#1e1e2e] rounded-md text-sm text-white placeholder-gray-600 focus:outline-none focus:border-[#6366f1] transition" />
         </div>
         <div>
           <label class="block text-sm text-gray-400 mb-1.5">API Key</label>
-          <input type="password" id="addApiKey" required placeholder="sk-..." class="w-full px-4 py-2.5 bg-[#111118] border border-[#1e1e2e] rounded-xl text-sm text-white placeholder-gray-600 font-mono focus:outline-none focus:border-[#6366f1] transition" autocomplete="off" />
+          <input type="password" id="addApiKey" required placeholder="sk-..." class="w-full px-4 py-2.5 bg-[#111118] border border-[#1e1e2e] rounded-md text-sm text-white placeholder-gray-600 font-mono focus:outline-none focus:border-[#6366f1] transition" autocomplete="off" />
         </div>
         <div>
           <label class="block text-sm text-gray-400 mb-1.5">Expiry Date (optional)</label>
-          <input type="date" id="addKeyExpiry" class="w-full px-4 py-2.5 bg-[#111118] border border-[#1e1e2e] rounded-xl text-sm text-white placeholder-gray-600 focus:outline-none focus:border-[#6366f1] transition" />
+          <input type="date" id="addKeyExpiry" class="w-full px-4 py-2.5 bg-[#111118] border border-[#1e1e2e] rounded-md text-sm text-white placeholder-gray-600 focus:outline-none focus:border-[#6366f1] transition" />
           <p class="text-xs text-gray-500 mt-1">Key will stop working after this date. Leave empty for no expiry.</p>
           <div class="flex gap-2 mt-2">
             <button type="button" onclick="setExpiry(30)" class="px-3 py-1 text-xs bg-[#111118] border border-[#1e1e2e] rounded-lg text-gray-400 hover:text-white transition">30 days</button>
@@ -221,8 +229,8 @@
         </p>
         <div id="addKeyMsg" class="text-sm hidden"></div>
         <div class="flex gap-3 pt-1">
-          <button type="button" onclick="closeAddModal()" class="flex-1 px-4 py-2.5 bg-surface border border-border rounded-xl text-sm text-gray-400 hover:text-white transition">Cancel</button>
-          <button type="submit" id="addKeyBtn" class="flex-1 px-4 py-2.5 bg-brand hover:bg-brand-hover text-white rounded-xl text-sm font-medium transition btn-glow">Split &amp; Store</button>
+          <button type="button" onclick="closeAddModal()" class="flex-1 px-4 py-2.5 bg-surface border border-border rounded-md text-sm text-gray-400 hover:text-white transition">Cancel</button>
+          <button type="submit" id="addKeyBtn" class="flex-1 px-4 py-2.5 bg-brand hover:bg-brand-hover text-white rounded-md text-sm font-medium transition btn-glow">Split &amp; Store</button>
         </div>
       </form>
     </div>
@@ -230,7 +238,7 @@
 
   <!-- Rotate Key Modal -->
   <div id="rotateModal" class="fixed inset-0 z-[60] hidden items-center justify-center bg-black/60 backdrop-blur-sm">
-    <div class="bg-card border border-border rounded-2xl w-full max-w-md mx-4 p-6">
+    <div class="bg-card border border-border rounded-lg w-full max-w-md mx-4 p-5">
       <div class="flex items-center justify-between mb-5">
         <h3 class="text-lg font-semibold">Rotate Key</h3>
         <button onclick="closeRotateModal()" class="text-gray-500 hover:text-white transition">
@@ -244,12 +252,12 @@
         <input type="hidden" id="rotateKeyLabel" />
         <div>
           <label class="block text-sm text-gray-400 mb-1.5">New API Key</label>
-          <input type="password" id="rotateNewKey" required placeholder="sk-..." class="w-full px-4 py-2.5 bg-[#111118] border border-[#1e1e2e] rounded-xl text-sm text-white placeholder-gray-600 font-mono focus:outline-none focus:border-[#6366f1] transition" />
+          <input type="password" id="rotateNewKey" required placeholder="sk-..." class="w-full px-4 py-2.5 bg-[#111118] border border-[#1e1e2e] rounded-md text-sm text-white placeholder-gray-600 font-mono focus:outline-none focus:border-[#6366f1] transition" />
         </div>
         <div id="rotateMsg" class="text-sm hidden"></div>
         <div class="flex gap-3 pt-1">
-          <button type="button" onclick="closeRotateModal()" class="flex-1 px-4 py-2.5 bg-surface border border-border rounded-xl text-sm text-gray-400 hover:text-white transition">Cancel</button>
-          <button type="submit" id="rotateBtn" class="flex-1 px-4 py-2.5 bg-brand hover:bg-brand-hover text-white rounded-xl text-sm font-medium transition btn-glow">Rotate Key</button>
+          <button type="button" onclick="closeRotateModal()" class="flex-1 px-4 py-2.5 bg-surface border border-border rounded-md text-sm text-gray-400 hover:text-white transition">Cancel</button>
+          <button type="submit" id="rotateBtn" class="flex-1 px-4 py-2.5 bg-brand hover:bg-brand-hover text-white rounded-md text-sm font-medium transition btn-glow">Rotate Key</button>
         </div>
       </form>
     </div>
@@ -257,7 +265,7 @@
 
   <!-- Import .env Modal -->
   <div id="importModal" class="hidden fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm">
-    <div class="bg-[#111118] border border-[#1e1e2e] rounded-2xl p-6 w-full max-w-lg mx-4">
+    <div class="bg-[#111118] border border-[#1e1e2e] rounded-lg p-5 w-full max-w-lg mx-4">
       <div class="flex items-center justify-between mb-4">
         <h3 class="text-lg font-semibold text-white">Import from .env</h3>
         <button onclick="closeImportModal()" class="text-gray-500 hover:text-white">&times;</button>
@@ -266,16 +274,16 @@
       <!-- Step 1: Paste/Upload -->
       <div id="importStep1">
         <p class="text-sm text-gray-400 mb-4">Paste your .env file contents or drag a file here. VaultProof will detect your API keys automatically.</p>
-        <textarea id="envInput" rows="8" class="w-full bg-[#0a0a0f] border border-[#1e1e2e] rounded-xl px-4 py-3 text-sm text-gray-300 font-mono placeholder-gray-600 focus:border-[#6366f1] focus:outline-none resize-none" placeholder="OPENAI_API_KEY=sk-proj-abc123...
+        <textarea id="envInput" rows="8" class="w-full bg-[#0a0a0f] border border-[#1e1e2e] rounded-md px-4 py-3 text-sm text-gray-300 font-mono placeholder-gray-600 focus:border-[#6366f1] focus:outline-none resize-none" placeholder="OPENAI_API_KEY=sk-proj-abc123...
 ANTHROPIC_API_KEY=sk-ant-xyz789...
 STRIPE_SECRET_KEY=sk_live_..."></textarea>
         <div class="flex items-center gap-3 mt-3">
-          <label class="flex-1 flex items-center justify-center gap-2 px-4 py-2.5 bg-[#0a0a0f] border border-dashed border-[#1e1e2e] rounded-xl text-sm text-gray-500 hover:text-gray-300 hover:border-gray-500 cursor-pointer transition">
+          <label class="flex-1 flex items-center justify-center gap-2 px-4 py-2.5 bg-[#0a0a0f] border border-dashed border-[#1e1e2e] rounded-md text-sm text-gray-500 hover:text-gray-300 hover:border-gray-500 cursor-pointer transition">
             <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13"/></svg>
             Upload .env file
             <input type="file" id="envFileInput" accept=".env,.env.local,.env.production" class="hidden" onchange="handleFileUpload(event)">
           </label>
-          <button onclick="parseEnvInput()" class="px-6 py-2.5 bg-[#6366f1] hover:bg-[#5558e6] text-white rounded-xl text-sm font-medium transition">Scan Keys</button>
+          <button onclick="parseEnvInput()" class="px-6 py-2.5 bg-[#6366f1] hover:bg-[#5558e6] text-white rounded-md text-sm font-medium transition">Scan Keys</button>
         </div>
       </div>
 
@@ -283,8 +291,8 @@ STRIPE_SECRET_KEY=sk_live_..."></textarea>
       <div id="importStep2" class="hidden">
         <div id="detectedKeysList" class="space-y-2 max-h-64 overflow-y-auto mb-4"></div>
         <div class="flex gap-3">
-          <button onclick="showImportStep(1)" class="flex-1 px-4 py-2.5 bg-[#111118] border border-[#1e1e2e] rounded-xl text-sm text-gray-400 hover:text-white transition">Back</button>
-          <button onclick="importAllKeys()" id="importAllBtn" class="flex-1 px-4 py-2.5 bg-[#6366f1] hover:bg-[#5558e6] text-white rounded-xl text-sm font-medium transition">Import All</button>
+          <button onclick="showImportStep(1)" class="flex-1 px-4 py-2.5 bg-[#111118] border border-[#1e1e2e] rounded-md text-sm text-gray-400 hover:text-white transition">Back</button>
+          <button onclick="importAllKeys()" id="importAllBtn" class="flex-1 px-4 py-2.5 bg-[#6366f1] hover:bg-[#5558e6] text-white rounded-md text-sm font-medium transition">Import All</button>
         </div>
         <div id="importStatus" class="text-sm mt-3 min-h-[20px]"></div>
       </div>
@@ -292,20 +300,20 @@ STRIPE_SECRET_KEY=sk_live_..."></textarea>
       <!-- Step 3: Done — show new .env -->
       <div id="importStep3" class="hidden">
         <p class="text-sm text-gray-400 mb-3">Keys imported! Replace your .env with this secure version:</p>
-        <textarea id="newEnvOutput" rows="8" readonly class="w-full bg-[#0a0a0f] border border-[#1e1e2e] rounded-xl px-4 py-3 text-sm text-indigo-400 font-mono resize-none"></textarea>
+        <textarea id="newEnvOutput" rows="8" readonly class="w-full bg-[#0a0a0f] border border-[#1e1e2e] rounded-md px-4 py-3 text-sm text-indigo-400 font-mono resize-none"></textarea>
         <div class="flex gap-3 mt-3">
-          <button onclick="copyNewEnv()" class="flex-1 px-4 py-2.5 bg-[#6366f1] hover:bg-[#5558e6] text-white rounded-xl text-sm font-medium transition">Copy New .env</button>
-          <button onclick="closeImportModal()" class="flex-1 px-4 py-2.5 bg-[#111118] border border-[#1e1e2e] rounded-xl text-sm text-gray-400 hover:text-white transition">Done</button>
+          <button onclick="copyNewEnv()" class="flex-1 px-4 py-2.5 bg-[#6366f1] hover:bg-[#5558e6] text-white rounded-md text-sm font-medium transition">Copy New .env</button>
+          <button onclick="closeImportModal()" class="flex-1 px-4 py-2.5 bg-[#111118] border border-[#1e1e2e] rounded-md text-sm text-gray-400 hover:text-white transition">Done</button>
         </div>
       </div>
     </div>
   </div>
 
   <!-- Main wrapper -->
-  <div id="mainWrapper" class="flex-1 flex flex-col min-h-screen transition-all duration-200 lg:ml-[240px]">
+  <div id="mainWrapper" class="flex-1 flex flex-col min-h-screen transition-all duration-200 lg:ml-[220px]">
 
     <!-- Top Navbar -->
-    <header class="sticky top-0 z-30 bg-surface/80 backdrop-blur-xl border-b border-border h-16 flex items-center px-4 lg:px-8 gap-4">
+    <header class="sticky top-0 z-30 bg-surface/80 backdrop-blur-xl border-b border-border h-14 flex items-center px-4 lg:px-8 gap-4">
       <!-- Mobile hamburger -->
       <button id="menuBtn" class="lg:hidden text-gray-400 hover:text-white p-1.5 -ml-1.5">
         <svg class="w-6 h-6" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
@@ -319,7 +327,7 @@ STRIPE_SECRET_KEY=sk_live_..."></textarea>
 
     <!-- Toast notification -->
     <div id="toast" class="fixed top-4 right-4 z-50 hidden max-w-sm">
-      <div id="toastInner" class="flex items-center gap-3 px-4 py-3 rounded-xl border text-sm shadow-lg backdrop-blur-sm">
+      <div id="toastInner" class="flex items-center gap-3 px-4 py-3 rounded-md border text-sm shadow-lg backdrop-blur-sm">
         <span id="toastMsg"></span>
         <button onclick="document.getElementById('toast').classList.add('hidden')" class="text-gray-400 hover:text-white ml-2">&times;</button>
       </div>
@@ -327,18 +335,18 @@ STRIPE_SECRET_KEY=sk_live_..."></textarea>
 
     <!-- Session expired overlay -->
     <div id="sessionExpired" class="fixed inset-0 z-[100] bg-black/80 backdrop-blur-sm hidden flex items-center justify-center">
-      <div class="bg-[#111118] border border-[#1e1e2e] rounded-2xl p-8 max-w-sm text-center">
-        <div class="w-14 h-14 rounded-full bg-red-500/10 border border-red-500/20 flex items-center justify-center mx-auto mb-4">
-          <svg class="w-7 h-7 text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>
+      <div class="bg-[#111118] border border-[#1e1e2e] rounded-lg p-8 max-w-sm text-center">
+        <div class="w-14 h-14 rounded-full bg-amber-500/10 border border-amber-500/20 flex items-center justify-center mx-auto mb-4">
+          <svg class="w-7 h-7 text-amber-400" viewBox="0 0 24 24"><path fill="#fbbf24" opacity="0.15" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/><path fill="none" stroke="#fbbf24" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>
         </div>
         <h3 class="text-lg font-semibold text-white mb-2">Session Expired</h3>
         <p class="text-sm text-gray-400 mb-6">Your session has expired. Please sign in again to continue.</p>
-        <a href="login" class="inline-block px-6 py-2.5 bg-[#6366f1] hover:bg-[#5558e6] text-white rounded-xl text-sm font-medium transition btn-glow">Sign In Again</a>
+        <a href="login" class="inline-block px-6 py-2.5 bg-[#6366f1] hover:bg-[#5558e6] text-white rounded-md text-sm font-medium transition btn-glow">Sign In Again</a>
       </div>
     </div>
 
     <!-- Content -->
-    <main class="flex-1 p-6 lg:p-8">
+    <main class="flex-1 p-5 lg:p-6">
       <div class="max-w-7xl mx-auto space-y-6">
 
         <!-- Header Row -->
@@ -348,11 +356,11 @@ STRIPE_SECRET_KEY=sk_live_..."></textarea>
             <p class="text-gray-500 text-sm mt-1" id="keySubtitle">Manage your stored API keys with zero-knowledge encryption</p>
           </div>
           <div class="flex items-center gap-2">
-            <button onclick="openImportModal()" class="px-4 py-2 bg-[#111118] border border-[#1e1e2e] rounded-xl text-sm text-gray-300 hover:text-white hover:border-gray-500 transition flex items-center gap-2">
+            <button onclick="openImportModal()" class="px-4 py-2 bg-[#111118] border border-[#1e1e2e] rounded-md text-sm text-gray-300 hover:text-white hover:border-gray-500 transition flex items-center gap-2">
               <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"/></svg>
               Import .env
             </button>
-            <button onclick="openAddModal()" class="inline-flex items-center gap-2 px-5 py-2.5 bg-brand hover:bg-brand-hover text-white rounded-xl text-sm font-medium transition btn-glow">
+            <button onclick="openAddModal()" class="inline-flex items-center gap-2 px-5 py-2.5 bg-brand hover:bg-brand-hover text-white rounded-md text-sm font-medium transition btn-glow">
               <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
               + New Key
             </button>
@@ -360,16 +368,16 @@ STRIPE_SECRET_KEY=sk_live_..."></textarea>
         </div>
 
         <!-- Developer API Keys -->
-        <section class="bg-[#111118] border border-[#1e1e2e] rounded-2xl p-6">
+        <section class="bg-[#111118] border border-[#1e1e2e] rounded-lg p-5">
           <div class="flex items-center justify-between mb-4">
             <div>
               <h2 class="text-lg font-semibold flex items-center gap-2">
-                <svg class="w-5 h-5 text-[#06b6d4]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4"/></svg>
+                <svg class="w-5 h-5" viewBox="0 0 24 24"><path fill="#06b6d4" opacity="0.15" d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4"/><path fill="none" stroke="#06b6d4" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4"/></svg>
                 Developer API Keys
               </h2>
               <p class="text-sm text-gray-500 mt-1">Create <code class="text-xs text-[#6366f1] font-mono">vp_live_</code> keys for SDK and CLI authentication.</p>
             </div>
-            <button onclick="showCreateForm()" id="createKeyBtn" class="px-4 py-2.5 bg-[#6366f1] hover:bg-[#5558e6] text-white rounded-xl text-sm font-medium transition btn-glow whitespace-nowrap flex items-center gap-2">
+            <button onclick="showCreateForm()" id="createKeyBtn" class="px-4 py-2.5 bg-[#6366f1] hover:bg-[#5558e6] text-white rounded-md text-sm font-medium transition btn-glow whitespace-nowrap flex items-center gap-2">
               <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
               Create API Key
             </button>
@@ -380,7 +388,7 @@ STRIPE_SECRET_KEY=sk_live_..."></textarea>
             <div class="flex flex-col sm:flex-row gap-3">
               <div class="flex-1">
                 <label class="block text-xs text-gray-500 mb-1">Label</label>
-                <input type="text" id="newKeyLabel" placeholder="e.g. Production SDK" class="w-full px-4 py-2.5 bg-[#111118] border border-[#1e1e2e] rounded-xl text-sm text-white placeholder-gray-600 focus:outline-none focus:border-[#6366f1] transition" />
+                <input type="text" id="newKeyLabel" placeholder="e.g. Production SDK" class="w-full px-4 py-2.5 bg-[#111118] border border-[#1e1e2e] rounded-md text-sm text-white placeholder-gray-600 focus:outline-none focus:border-[#6366f1] transition" />
               </div>
               <div>
                 <label class="block text-xs text-gray-500 mb-1">Mode</label>
@@ -391,7 +399,7 @@ STRIPE_SECRET_KEY=sk_live_..."></textarea>
               </div>
             </div>
             <div class="flex gap-2">
-              <button onclick="createDevKeyFull()" id="submitKeyBtn" class="px-4 py-2 bg-[#6366f1] hover:bg-[#5558e6] text-white rounded-xl text-sm font-medium transition btn-glow">Create</button>
+              <button onclick="createDevKeyFull()" id="submitKeyBtn" class="px-4 py-2 bg-[#6366f1] hover:bg-[#5558e6] text-white rounded-md text-sm font-medium transition btn-glow">Create</button>
               <button onclick="hideCreateForm()" class="px-4 py-2 bg-transparent border border-[#1e1e2e] text-gray-400 hover:text-white rounded-xl text-sm transition">Cancel</button>
             </div>
           </div>
@@ -467,7 +475,7 @@ STRIPE_SECRET_KEY=sk_live_..."></textarea>
 
         <!-- Keys Grid -->
         <div id="keysGrid" class="grid grid-cols-1 lg:grid-cols-2 gap-4">
-          <div class="bg-card border border-border rounded-2xl p-6 animate-pulse">
+          <div class="bg-card border border-border rounded-lg p-6 animate-pulse">
             <div class="h-5 w-40 bg-gray-800 rounded mb-3"></div>
             <div class="h-4 w-24 bg-gray-800 rounded"></div>
           </div>
@@ -475,7 +483,7 @@ STRIPE_SECRET_KEY=sk_live_..."></textarea>
 
         <!-- Empty State -->
         <div id="emptyState" class="hidden text-center py-16">
-          <div class="w-16 h-16 mx-auto mb-4 rounded-2xl bg-indigo-500/10 flex items-center justify-center">
+          <div class="w-16 h-16 mx-auto mb-4 rounded-lg bg-indigo-500/10 flex items-center justify-center">
             <svg class="w-8 h-8 text-indigo-400" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z"/>
             </svg>
@@ -664,7 +672,7 @@ STRIPE_SECRET_KEY=sk_live_..."></textarea>
       var diffDays = Math.ceil(diffMs / (1000 * 60 * 60 * 24));
 
       if (diffMs <= 0) {
-        return '<span class="inline-flex items-center gap-1 text-xs text-red-400 font-medium">' +
+        return '<span class="inline-flex items-center gap-1 text-xs text-amber-400 font-medium">' +
           '<svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>' +
           'Expired' +
         '</span>';
@@ -718,7 +726,7 @@ STRIPE_SECRET_KEY=sk_live_..."></textarea>
       if (s === 'success' || s === 'ok' || s === '200') {
         return '<span class="inline-flex items-center px-2 py-0.5 rounded-lg text-xs font-medium bg-indigo-500/10 text-indigo-400 border border-indigo-500/20">Success</span>';
       }
-      return '<span class="inline-flex items-center px-2 py-0.5 rounded-lg text-xs font-medium bg-red-500/10 text-red-400 border border-red-500/20">Error</span>';
+      return '<span class="inline-flex items-center px-2 py-0.5 rounded-lg text-xs font-medium bg-amber-500/10 text-amber-400 border border-amber-500/20">Error</span>';
     }
 
     function maskKey(key) {
@@ -803,7 +811,7 @@ STRIPE_SECRET_KEY=sk_live_..."></textarea>
         var appCount = (k.appGrants || []).length;
         var delay = Math.min(idx * 80, 400);
 
-        return '<div class="anim-card bg-card border border-border rounded-2xl overflow-hidden hover:border-gray-600 transition-all duration-200" style="animation-delay:' + delay + 'ms">' +
+        return '<div class="anim-card bg-card border border-border rounded-lg overflow-hidden hover:border-gray-600 transition-all duration-200" style="animation-delay:' + delay + 'ms">' +
 
           // Card header - clickable
           '<div class="p-5 cursor-pointer" onclick="toggleExpand(\'' + keyId + '\')">' +
@@ -813,7 +821,7 @@ STRIPE_SECRET_KEY=sk_live_..."></textarea>
               providerBadge(k.provider) +
               '<div class="flex items-center gap-2">' +
                 (isRevoked
-                  ? '<span class="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-lg text-xs font-medium bg-red-500/10 text-red-400 border border-red-500/20">Revoked</span>'
+                  ? '<span class="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-lg text-xs font-medium bg-amber-500/10 text-amber-400 border border-amber-500/20">Revoked</span>'
                   : '<span class="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-lg text-xs font-medium bg-indigo-500/10 text-indigo-400 border border-indigo-500/20"><span class="w-1.5 h-1.5 rounded-full bg-indigo-400 pulse-active"></span>Active</span>'
                 ) +
                 '<svg class="w-4 h-4 text-gray-500 transition-transform duration-200 ' + (isExpanded ? 'rotate-180' : '') + '" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>' +
@@ -832,7 +840,7 @@ STRIPE_SECRET_KEY=sk_live_..."></textarea>
                 '<svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"/></svg>' +
                 ((k.callsThisMonth || 0).toLocaleString()) + ' calls' +
               '</span>' +
-              '<span class="flex items-center gap-1 ' + ((k.errors || 0) > 0 ? 'text-red-400' : '') + '">' +
+              '<span class="flex items-center gap-1 ' + ((k.errors || 0) > 0 ? 'text-amber-400' : '') + '">' +
                 (k.errors || 0) + ' errors' +
               '</span>' +
               '<span>Last: ' + (k.lastUsed ? formatTime(k.lastUsed) : 'Never') + '</span>' +
@@ -878,7 +886,7 @@ STRIPE_SECRET_KEY=sk_live_..."></textarea>
                   '<div class="text-[10px] text-gray-500 mt-0.5">Calls This Month</div>' +
                 '</div>' +
                 '<div class="bg-surface rounded-xl p-3 text-center">' +
-                  '<div class="text-lg font-bold ' + ((k.errors || 0) > 0 ? 'text-red-400' : 'text-white') + '">' + (k.errors || 0) + '</div>' +
+                  '<div class="text-lg font-bold ' + ((k.errors || 0) > 0 ? 'text-amber-400' : 'text-white') + '">' + (k.errors || 0) + '</div>' +
                   '<div class="text-[10px] text-gray-500 mt-0.5">Errors</div>' +
                 '</div>' +
                 '<div class="bg-surface rounded-xl p-3 text-center">' +
@@ -932,7 +940,7 @@ STRIPE_SECRET_KEY=sk_live_..."></textarea>
                             '<span class="ml-2 text-[10px] text-gray-500 font-mono">' + escapeHtml(g.appId) + '</span>' +
                             (g.grantedAt ? '<span class="ml-2 text-[10px] text-gray-600">Granted ' + formatTime(g.grantedAt) + '</span>' : '') +
                           '</div>' +
-                          '<button onclick="event.stopPropagation(); revokeAppGrant(\'' + keyId + '\', \'' + escapeHtml(g.appId) + '\')" class="ml-3 px-2.5 py-1 bg-red-500/10 border border-red-500/20 rounded-lg text-[11px] text-red-400 hover:bg-red-500/20 transition flex-shrink-0">Revoke</button>' +
+                          '<button onclick="event.stopPropagation(); revokeAppGrant(\'' + keyId + '\', \'' + escapeHtml(g.appId) + '\')" class="ml-3 px-2.5 py-1 bg-amber-500/10 border border-amber-500/20 rounded-lg text-[11px] text-amber-400 hover:bg-amber-500/20 transition flex-shrink-0">Revoke</button>' +
                         '</div>';
                       }).join('')
                     : '<span class="text-xs text-gray-600">No authorized apps</span>'
@@ -1012,7 +1020,7 @@ STRIPE_SECRET_KEY=sk_live_..."></textarea>
                   '<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>' +
                   'Rotate' +
                 '</button>' +
-                '<button onclick="revokeKey(\'' + keyId + '\')" class="px-4 py-2 bg-red-500/10 border border-red-500/20 rounded-xl text-sm text-red-400 hover:bg-red-500/20 transition flex items-center gap-2 ' + (isRevoked ? 'opacity-30 cursor-not-allowed' : '') + '" ' + (isRevoked ? 'disabled' : '') + '>' +
+                '<button onclick="revokeKey(\'' + keyId + '\')" class="px-4 py-2 bg-amber-500/10 border border-amber-500/20 rounded-xl text-sm text-amber-400 hover:bg-amber-500/20 transition flex items-center gap-2 ' + (isRevoked ? 'opacity-30 cursor-not-allowed' : '') + '" ' + (isRevoked ? 'disabled' : '') + '>' +
                   '<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636"/></svg>' +
                   'Revoke' +
                 '</button>' +
@@ -1106,7 +1114,7 @@ STRIPE_SECRET_KEY=sk_live_..."></textarea>
       var errEl = document.getElementById('addKeyMsg');
       var btn = document.getElementById('addKeyBtn');
 
-      if (!apiKey) { errEl.textContent = 'Please enter an API key'; errEl.className = 'text-sm text-red-400'; errEl.classList.remove('hidden'); return; }
+      if (!apiKey) { errEl.textContent = 'Please enter an API key'; errEl.className = 'text-sm text-amber-400'; errEl.classList.remove('hidden'); return; }
       errEl.classList.add('hidden');
       btn.textContent = 'Splitting...';
       btn.disabled = true;
@@ -1155,7 +1163,7 @@ STRIPE_SECRET_KEY=sk_live_..."></textarea>
         loadKeys();
       } catch (err) {
         errEl.textContent = err.message;
-        errEl.className = 'text-sm text-red-400';
+        errEl.className = 'text-sm text-amber-400';
         errEl.classList.remove('hidden');
       } finally {
         btn.textContent = 'Split & Store';
@@ -1173,7 +1181,7 @@ STRIPE_SECRET_KEY=sk_live_..."></textarea>
       var label = document.getElementById('rotateKeyLabel').value;
       var newKey = document.getElementById('rotateNewKey').value.trim();
 
-      if (!newKey) { msg.textContent = 'Please enter the new API key'; msg.className = 'text-sm text-red-400'; msg.classList.remove('hidden'); return; }
+      if (!newKey) { msg.textContent = 'Please enter the new API key'; msg.className = 'text-sm text-amber-400'; msg.classList.remove('hidden'); return; }
       msg.classList.add('hidden');
       btn.textContent = 'Rotating...';
       btn.disabled = true;
@@ -1213,7 +1221,7 @@ STRIPE_SECRET_KEY=sk_live_..."></textarea>
         loadKeys();
       } catch (err) {
         msg.textContent = err.message;
-        msg.className = 'text-sm text-red-400';
+        msg.className = 'text-sm text-amber-400';
         msg.classList.remove('hidden');
       } finally {
         btn.textContent = 'Rotate Key';
@@ -1292,7 +1300,7 @@ STRIPE_SECRET_KEY=sk_live_..."></textarea>
       // Get Share 2 from localStorage
       var share2Data = localStorage.getItem('vaultproof_share2_' + keySlotId);
       if (!share2Data) {
-        resultEl.innerHTML = '<div class="bg-red-500/10 border border-red-500/20 rounded-xl p-3 text-sm text-red-400">Share 2 not found on this device. You may have stored this key from a different browser.</div>';
+        resultEl.innerHTML = '<div class="bg-amber-500/10 border border-amber-500/20 rounded-xl p-3 text-sm text-amber-400">Share 2 not found on this device. You may have stored this key from a different browser.</div>';
         btn.innerHTML = '<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>Test';
         btn.disabled = false;
         return;
@@ -1348,13 +1356,13 @@ STRIPE_SECRET_KEY=sk_live_..."></textarea>
             '<pre class="text-xs text-gray-400 overflow-x-auto max-h-40 overflow-y-auto font-mono">' + escapeHtml(JSON.stringify(data, null, 2).substring(0, 500)) + '</pre>' +
           '</div>';
         } else {
-          resultEl.innerHTML = '<div class="bg-red-500/10 border border-red-500/20 rounded-xl p-3">' +
-            '<div class="text-sm text-red-400 font-medium mb-1">Test failed: ' + escapeHtml(String(data.error || res.status)) + '</div>' +
+          resultEl.innerHTML = '<div class="bg-amber-500/10 border border-amber-500/20 rounded-xl p-3">' +
+            '<div class="text-sm text-amber-400 font-medium mb-1">Test failed: ' + escapeHtml(String(data.error || res.status)) + '</div>' +
             '<pre class="text-xs text-gray-500 overflow-x-auto font-mono">' + escapeHtml(JSON.stringify(data, null, 2).substring(0, 300)) + '</pre>' +
           '</div>';
         }
       } catch (err) {
-        resultEl.innerHTML = '<div class="bg-red-500/10 border border-red-500/20 rounded-xl p-3 text-sm text-red-400">Network error: ' + escapeHtml(err.message) + '</div>';
+        resultEl.innerHTML = '<div class="bg-amber-500/10 border border-amber-500/20 rounded-xl p-3 text-sm text-amber-400">Network error: ' + escapeHtml(err.message) + '</div>';
       }
 
       btn.innerHTML = '<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>Test';
@@ -1446,7 +1454,7 @@ exampleBody + '\n' +
 
       if (!appId || !appName) {
         msgEl.textContent = 'Both App ID and App Name are required';
-        msgEl.className = 'text-xs text-red-400';
+        msgEl.className = 'text-xs text-amber-400';
         msgEl.classList.remove('hidden');
         return;
       }
@@ -1463,7 +1471,7 @@ exampleBody + '\n' +
         loadKeys();
       } catch (err) {
         msgEl.textContent = err.message;
-        msgEl.className = 'text-xs text-red-400';
+        msgEl.className = 'text-xs text-amber-400';
         msgEl.classList.remove('hidden');
       }
     }
@@ -1518,7 +1526,7 @@ exampleBody + '\n' +
 
       if (!dateVal) {
         msgEl.textContent = 'Please select an expiry date';
-        msgEl.className = 'text-xs text-red-400';
+        msgEl.className = 'text-xs text-amber-400';
         msgEl.classList.remove('hidden');
         return;
       }
@@ -1537,7 +1545,7 @@ exampleBody + '\n' +
         loadKeys();
       } catch (err) {
         msgEl.textContent = err.message;
-        msgEl.className = 'text-xs text-red-400';
+        msgEl.className = 'text-xs text-amber-400';
         msgEl.classList.remove('hidden');
       }
     }
@@ -1573,7 +1581,7 @@ exampleBody + '\n' +
         loadKeys();
       } catch (err) {
         msgEl.textContent = err.message;
-        msgEl.className = 'text-xs text-red-400 mt-2';
+        msgEl.className = 'text-xs text-amber-400 mt-2';
         msgEl.classList.remove('hidden');
       }
     }
@@ -1938,7 +1946,7 @@ exampleBody + '\n' +
                   '<code class="text-sm font-mono text-gray-300">' + escapeHtml(masked) + '</code>' +
                   (k.label ? '<span class="text-xs text-gray-500 bg-[#0a0a0f] px-2 py-0.5 rounded-lg border border-[#1e1e2e]">' + escapeHtml(k.label) + '</span>' : '') +
                   modeBadge +
-                  (revoked ? '<span class="text-xs text-red-400">(revoked)</span>' : '') +
+                  (revoked ? '<span class="text-xs text-amber-400">(revoked)</span>' : '') +
                 '</div>' +
                 '<div class="flex items-center gap-2 mt-1.5">' +
                   '<span class="text-xs text-gray-600">Created ' + created + ' &middot; ' + lastUsedStr + '</span>' +
@@ -1948,7 +1956,7 @@ exampleBody + '\n' +
               '</div>' +
               (!revoked ? '<div class="flex items-center gap-2">' +
                 '<button onclick="toggleLinkedPanel(\'' + k.id + '\')" class="px-3 py-1.5 text-xs text-indigo-400 hover:text-indigo-300 border border-indigo-900/50 hover:border-indigo-800 hover:bg-indigo-900/20 rounded-xl transition whitespace-nowrap">Link Keys</button>' +
-                '<button onclick="revokeDevKey(\'' + k.id + '\')" class="px-3 py-1.5 text-xs text-red-400 hover:text-red-300 border border-red-900/50 hover:border-red-800 hover:bg-red-900/20 rounded-xl transition whitespace-nowrap">Revoke</button>' +
+                '<button onclick="revokeDevKey(\'' + k.id + '\')" class="px-3 py-1.5 text-xs text-amber-400 hover:text-red-300 border border-red-900/50 hover:border-red-800 hover:bg-red-900/20 rounded-xl transition whitespace-nowrap">Revoke</button>' +
               '</div>' : '') +
             '</div>' +
             '<div id="linkedPanel-' + k.id + '" class="hidden pb-4">' +
@@ -2003,7 +2011,7 @@ exampleBody + '\n' +
       var ids = Array.from(checkboxes).map(function(cb) { return cb.value; });
       var msg = document.getElementById('linkedMsg-' + keyId);
       msg.textContent = 'Saving\u2026';
-      msg.classList.remove('hidden', 'text-red-400');
+      msg.classList.remove('hidden', 'text-amber-400');
       msg.classList.add('text-gray-500');
       try {
         var res = await apiFetch(API + '/dev-keys/' + keyId + '/settings', {
@@ -2020,11 +2028,11 @@ exampleBody + '\n' +
         } else {
           var err = res ? await res.json().catch(function() { return {}; }) : {};
           msg.textContent = err.error || 'Failed to save';
-          msg.classList.replace('text-gray-500', 'text-red-400');
+          msg.classList.replace('text-gray-500', 'text-amber-400');
         }
       } catch (e) {
         msg.textContent = 'Network error';
-        msg.classList.replace('text-gray-500', 'text-red-400');
+        msg.classList.replace('text-gray-500', 'text-amber-400');
       }
     }
 
