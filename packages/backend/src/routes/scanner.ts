@@ -326,10 +326,6 @@ export async function scannerRoutes(app: FastifyInstance) {
 
   app.get('/github/connect', async (request, reply) => {
     const userId = request.auth!.userId;
-    const user = await prisma.user.findUnique({ where: { id: userId }, select: { tier: true } });
-    if (!user || !['pro', 'max', 'enterprise'].includes(user.tier)) {
-      return reply.status(403).send({ error: 'Scanner requires a Pro plan. Upgrade at https://vaultproof.dev/app/settings' });
-    }
     if (!GITHUB_CLIENT_ID) {
       return reply.status(503).send({ error: 'GitHub Scanner is not configured on this server' });
     }
