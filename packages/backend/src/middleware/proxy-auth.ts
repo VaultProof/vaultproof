@@ -58,10 +58,9 @@ export async function requireProxyAuth(request: FastifyRequest, reply: FastifyRe
     return reply.status(403).send({ error: 'Request expired' });
   }
 
-  // Verify HMAC signature
+  // Verify HMAC signature (includes full URL with query string)
   const method = request.method;
-  const path = request.url.split('?')[0];
-  const payload = `${method}:${path}:${timestamp}`;
+  const payload = `${method}:${request.url}:${timestamp}`;
   const expected = createHmac('sha256', PROXY_SECRET).update(payload).digest('hex');
 
   if (!safeCompare(signature, expected)) {

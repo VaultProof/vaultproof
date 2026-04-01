@@ -3,7 +3,7 @@ import { handleTransparentProxy } from './routes/transparent-proxy.js';
 
 async function forwardToRailway(request: Request, url: URL, env: Env): Promise<Response> {
   const timestamp = Date.now().toString();
-  const signPayload = `${request.method}:${url.pathname}:${timestamp}`;
+  const signPayload = `${request.method}:${url.pathname}${url.search}:${timestamp}`;
   const encoder = new TextEncoder();
   const keyData = encoder.encode(env.PROXY_SECRET);
   const cryptoKey = await crypto.subtle.importKey('raw', keyData, { name: 'HMAC', hash: 'SHA-256' }, false, ['sign']);
@@ -25,7 +25,7 @@ async function forwardToRailway(request: Request, url: URL, env: Env): Promise<R
 function corsHeaders(origin: string, allowedOrigins: string[]): Record<string, string> {
   const isAllowed = allowedOrigins.includes(origin);
   return {
-    'Access-Control-Allow-Origin': isAllowed ? origin : allowedOrigins[0],
+    ...(isAllowed ? { 'Access-Control-Allow-Origin': origin } : {}),
     'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
     'Access-Control-Allow-Headers': 'Content-Type, Authorization, X-API-Key, X-VaultProof-Session',
     'Access-Control-Allow-Credentials': 'true',

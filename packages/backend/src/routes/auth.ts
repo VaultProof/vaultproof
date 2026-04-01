@@ -110,9 +110,11 @@ export async function authRoutes(app: FastifyInstance) {
     return { globalDailyLimit: updated.globalDailyLimit, globalMonthlyLimit: updated.globalMonthlyLimit };
   });
 
-  // Delete account
+  // Delete account — cascade all child records before removing the user
   app.delete('/account', { preHandler: requireAuth }, async (request) => {
     const userId = request.auth!.userId;
+
+    // 1. Key-slot children (accessLogs, appGrants) → keySlots
     const keySlots = await prisma.keySlot.findMany({ where: { userId }, select: { id: true } });
     const keySlotIds = keySlots.map((k) => k.id);
 
@@ -121,7 +123,31 @@ export async function authRoutes(app: FastifyInstance) {
       await prisma.appGrant.deleteMany({ where: { keySlotId: { in: keySlotIds } } });
       await prisma.keySlot.deleteMany({ where: { userId } });
     }
+
+    // 2. Session tokens for developer keys → developerKeys
+    const devKeys = await prisma.developerKey.findMany({ where: { userId }, select: { id: true } });
+    const devKeyIds = devKeys.map((k) => k.id);
+    if (devKeyIds.length > 0) {
+      await prisma.sessionToken.deleteMany({ where: { developerKeyId: { in: devKeyIds } } });
+    }
     await prisma.developerKey.deleteMany({ where: { userId } });
+
+    // 3. Scan findings → scan results → scan audit logs
+    const scans = await prisma.scanResult.findMany({ where: { userId }, select: { id: true } });
+    const scanIds = scans.map((s) => s.id);
+    if (scanIds.length > 0) {
+      await prisma.scanFinding.deleteMany({ where: { scanId: { in: scanIds } } });
+    }
+    await prisma.scanAuditLog.deleteMany({ where: { userId } });
+    await prisma.scanResult.deleteMany({ where: { userId } });
+
+    // 4. GitHub connections (encrypted tokens — must be cleaned up)
+    await prisma.githubConnection.deleteMany({ where: { userId } });
+
+    // 5. Promo feedback
+    await prisma.promoFeedback.deleteMany({ where: { userId } });
+
+    // 6. Finally, delete the user
     await prisma.user.delete({ where: { id: userId } });
 
     return { status: 'account_deleted' };
