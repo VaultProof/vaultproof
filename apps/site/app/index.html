@@ -1019,19 +1019,19 @@
       tbody.innerHTML = keys.map((k, i) => {
         const pc = providerColor(k.provider);
         const isActive = (k.status || 'active').toLowerCase() === 'active';
-        const masked = `${k.keyPrefix || 'sk_live_'}${'••••'}${k.keySuffix || '****'}`;
-        const full = k.id || 'unknown';
+        const masked = `${escapeHtml(k.keyPrefix || 'sk_live_')}${'••••'}${escapeHtml(k.keySuffix || '****')}`;
+        const full = escapeHtml(k.id || 'unknown');
         return `
           <tr class="key-row border-b border-border/50 table-row-anim" style="animation-delay:${500 + i * 50}ms">
             <td class="px-4 py-3">
-              <div class="font-medium text-sm">${k.label || 'Unnamed Key'}</div>
+              <div class="font-medium text-sm">${escapeHtml(k.label || 'Unnamed Key')}</div>
               <div class="key-mask font-mono text-xs text-gray-500 mt-0.5 cursor-default">
                 <span class="key-masked">${masked}</span>
                 <span class="key-full">${full}</span>
               </div>
             </td>
             <td class="px-4 py-3">
-              <span class="inline-flex items-center px-2 py-0.5 rounded-md text-xs font-medium border ${pc.bg} ${pc.text} ${pc.border}">${k.provider || 'Unknown'}</span>
+              <span class="inline-flex items-center px-2 py-0.5 rounded-md text-xs font-medium border ${pc.bg} ${pc.text} ${pc.border}">${escapeHtml(k.provider || 'Unknown')}</span>
             </td>
             <td class="px-4 py-3 text-gray-400 text-sm whitespace-nowrap">${formatDate(k.createdAt || k.created)}</td>
             <td class="px-4 py-3 text-gray-400 text-sm whitespace-nowrap">${k.lastUsed ? relativeTime(k.lastUsed) : 'Never'}</td>
@@ -1101,18 +1101,19 @@
         list.innerHTML = notifs.map(n => {
           const isUnread = !readIds.includes(n.id);
           const colors = typeColors[n.type] || typeColors.info;
+          const safeLink = n.link && !String(n.link).trim().toLowerCase().startsWith('javascript:') ? n.link : '';
           return `
             <div class="px-4 py-3 border-b border-border/50 hover:bg-white/[0.02] transition ${isUnread ? '' : 'opacity-60'}">
               <div class="flex items-start gap-3">
                 ${isUnread ? '<span class="mt-1.5 w-2 h-2 rounded-full bg-brand flex-shrink-0"></span>' : '<span class="mt-1.5 w-2 h-2 flex-shrink-0"></span>'}
                 <div class="flex-1 min-w-0">
                   <div class="flex items-center gap-2 mb-0.5">
-                    <span class="text-xs font-medium px-1.5 py-0.5 rounded ${colors}">${n.type}</span>
-                    <span class="text-xs text-gray-600">${n.date}</span>
+                    <span class="text-xs font-medium px-1.5 py-0.5 rounded ${colors}">${escapeHtml(n.type)}</span>
+                    <span class="text-xs text-gray-600">${escapeHtml(n.date)}</span>
                   </div>
-                  <p class="text-sm font-medium text-white">${n.title}</p>
-                  <p class="text-xs text-gray-400 mt-0.5">${n.message}</p>
-                  ${n.link ? `<a href="${n.link}" class="text-xs text-brand hover:text-brand-hover mt-1 inline-block">Learn more &rarr;</a>` : ''}
+                  <p class="text-sm font-medium text-white">${escapeHtml(n.title)}</p>
+                  <p class="text-xs text-gray-400 mt-0.5">${escapeHtml(n.message)}</p>
+                  ${safeLink ? `<a href="${escapeHtml(safeLink)}" class="text-xs text-brand hover:text-brand-hover mt-1 inline-block">Learn more &rarr;</a>` : ''}
                 </div>
               </div>
             </div>`;

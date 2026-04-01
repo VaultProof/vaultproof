@@ -489,9 +489,15 @@
 
         safeRedirect('./');
       } catch (err) {
-        errEl.innerHTML = err.message;
+        errEl.textContent = err.message;
         if (err.message.toLowerCase().includes('not confirmed')) {
-          errEl.innerHTML += '<br><button onclick="resendConfirmation()" class="mt-2 text-indigo-400 hover:underline text-xs">Resend confirmation email</button>';
+          const br = document.createElement('br');
+          const btn = document.createElement('button');
+          btn.onclick = resendConfirmation;
+          btn.className = 'mt-2 text-indigo-400 hover:underline text-xs';
+          btn.textContent = 'Resend confirmation email';
+          errEl.appendChild(br);
+          errEl.appendChild(btn);
         }
         errEl.classList.remove('hidden');
       } finally {
