@@ -68,6 +68,11 @@ export async function requireProxyAuth(request: FastifyRequest, reply: FastifyRe
     request.log.warn('Proxy auth failed: invalid signature');
     return reply.status(403).send({ error: 'Forbidden' });
   }
+
+  // Mark request as verified by the Cloudflare Worker proxy.
+  // Routes check this flag instead of the mere presence of x-proxy-signature,
+  // which could be spoofed by an attacker to trick IP allowlist checks.
+  (request as any).proxyVerified = true;
 }
 
 function safeCompare(a: string, b: string): boolean {

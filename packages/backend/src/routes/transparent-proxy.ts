@@ -209,9 +209,11 @@ export async function transparentProxyRoutes(app: FastifyInstance) {
 
     // --- b3. Enforce IP allowlist ---
     if (auth.devKey.allowedIps) {
-      // Only trust cf-connecting-ip if the request came through the CF Worker (has proxy signature)
-      const hasProxySignature = !!request.headers['x-proxy-signature'];
-      const clientIp = hasProxySignature ? (request.headers['cf-connecting-ip'] as string) || request.ip : request.ip;
+      // Only trust cf-connecting-ip if the request passed HMAC validation in proxy-auth middleware.
+      // Checking proxyVerified (set after HMAC validation) instead of the mere presence of
+      // x-proxy-signature prevents attackers from spoofing the header to bypass IP restrictions.
+      const proxyVerified = !!(request as any).proxyVerified;
+      const clientIp = proxyVerified ? (request.headers['cf-connecting-ip'] as string) || request.ip : request.ip;
       const allowed = auth.devKey.allowedIps.split(',').map((s: string) => s.trim());
       if (!allowed.includes(clientIp)) {
         return reply.status(403).send({ error: 'IP not allowed for this API key' });
@@ -235,6 +237,15 @@ export async function transparentProxyRoutes(app: FastifyInstance) {
       }
     }
 
+    // --- b6. Build key slot filter (enforce allowedKeySlotIds if set) ---
+    const keySlotWhere: Record<string, unknown> = { userId: auth.userId, provider, status: 'ACTIVE' };
+    if (auth.devKey.allowedKeySlotIds) {
+      const allowedIds = auth.devKey.allowedKeySlotIds.split(',').map((s: string) => s.trim()).filter(Boolean);
+      if (allowedIds.length > 0) {
+        keySlotWhere.id = { in: allowedIds };
+      }
+    }
+
     // --- Parallel DB queries: user account + key slot in one round trip ---
     const [userAccount, keySlot] = await Promise.all([
       prisma.user.findUnique({
@@ -242,7 +253,7 @@ export async function transparentProxyRoutes(app: FastifyInstance) {
         select: { killSwitch: true, globalDailyLimit: true, globalMonthlyLimit: true, tier: true },
       }),
       prisma.keySlot.findFirst({
-        where: { userId: auth.userId, provider, status: 'ACTIVE' },
+        where: keySlotWhere,
         orderBy: { createdAt: 'desc' },
       }),
     ]);
@@ -436,8 +447,15 @@ export async function transparentProxyRoutes(app: FastifyInstance) {
 
       if (FALLBACK_MAP[provider]) {
         for (const candidate of FALLBACK_MAP[provider]) {
+          const fallbackWhere: Record<string, unknown> = { userId: auth.userId, provider: candidate, status: 'ACTIVE' };
+          if (auth.devKey.allowedKeySlotIds) {
+            const allowedIds = auth.devKey.allowedKeySlotIds.split(',').map((s: string) => s.trim()).filter(Boolean);
+            if (allowedIds.length > 0) {
+              fallbackWhere.id = { in: allowedIds };
+            }
+          }
           const candidateSlot = await prisma.keySlot.findFirst({
-            where: { userId: auth.userId, provider: candidate, status: 'ACTIVE' },
+            where: fallbackWhere,
             orderBy: { createdAt: 'desc' },
           });
 

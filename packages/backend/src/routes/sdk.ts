@@ -64,9 +64,11 @@ export async function sdkRoutes(app: FastifyInstance) {
     // Enforce IP allowlist
     const devKey = auth.devKey;
     if (devKey.allowedIps) {
-      // Only trust cf-connecting-ip if the request came through the CF Worker (has proxy signature)
-      const hasProxySignature = !!request.headers['x-proxy-signature'];
-      const clientIp = hasProxySignature ? (request.headers['cf-connecting-ip'] as string) || request.ip : request.ip;
+      // Only trust cf-connecting-ip if the request passed HMAC validation in proxy-auth middleware.
+      // Checking proxyVerified (set after HMAC validation) instead of the mere presence of
+      // x-proxy-signature prevents attackers from spoofing the header to bypass IP restrictions.
+      const proxyVerified = !!(request as any).proxyVerified;
+      const clientIp = proxyVerified ? (request.headers['cf-connecting-ip'] as string) || request.ip : request.ip;
       const allowed = devKey.allowedIps.split(',').map((s: string) => s.trim());
       if (!allowed.includes(clientIp)) {
         return reply.status(403).send({ error: 'IP not allowed for this API key' });
