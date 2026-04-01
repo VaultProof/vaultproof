@@ -31,6 +31,26 @@ export default {
       return new Response(null, { status: 204, headers: corsHeaders(origin, allowedOrigins) });
     }
 
+    // DEBUG: temporary endpoint to test Supabase connection + key lookup
+    if (url.pathname === '/debug-auth') {
+      try {
+        const { createClient } = await import('@supabase/supabase-js');
+        const sb = createClient(env.SUPABASE_URL, env.SUPABASE_SERVICE_ROLE_KEY, { auth: { autoRefreshToken: false, persistSession: false } });
+        const testHash = '42cd9061d8940cbb20228dc595902002b15e028734077f96a4bf3a2e8f0c3867';
+        const { data, error } = await sb.from('developer_keys').select('id, key_hash, user_id, revoked_at').eq('key_hash', testHash).single();
+        return Response.json({
+          supabaseUrl: env.SUPABASE_URL ? 'set (' + env.SUPABASE_URL.slice(0, 30) + '...)' : 'NOT SET',
+          serviceKeySet: !!env.SUPABASE_SERVICE_ROLE_KEY,
+          serviceKeyPrefix: env.SUPABASE_SERVICE_ROLE_KEY?.slice(0, 10) || 'NOT SET',
+          queryError: error?.message || null,
+          found: !!data,
+          data: data ? { id: data.id, user_id: data.user_id, revoked: data.revoked_at } : null,
+        });
+      } catch (e: any) {
+        return Response.json({ error: e.message }, { status: 500 });
+      }
+    }
+
     // Health check
     if (url.pathname === '/health') {
       return addCors(
@@ -49,9 +69,13 @@ export default {
 
     // Transparent proxy: /v1/* — handled directly at the edge
     if (url.pathname.startsWith('/v1/')) {
-      const path = url.pathname.slice(4);
-      const response = await handleTransparentProxy(request, env, path);
-      return addCors(response, origin, allowedOrigins);
+      try {
+        const path = url.pathname.slice(4);
+        const response = await handleTransparentProxy(request, env, path);
+        return addCors(response, origin, allowedOrigins);
+      } catch (e: any) {
+        return addCors(Response.json({ error: 'Worker error', detail: e?.message || String(e), stack: e?.stack?.split('\n').slice(0, 5) }, { status: 500 }), origin, allowedOrigins);
+      }
     }
 
     // All other routes: forward to Railway backend (temporary fallback)
