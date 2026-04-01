@@ -527,7 +527,7 @@
                   <span class="step-icon w-5 h-5 flex items-center justify-center flex-shrink-0">
                     <svg class="w-4 h-4 text-gray-600" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/></svg>
                   </span>
-                  <span class="step-label text-sm">Storing API keys securely...</span>
+                  <span class="step-label text-sm">Identifying API keys to store...</span>
                   <span class="step-result text-xs text-gray-500 ml-auto"></span>
                 </div>
                 <div class="flex items-center gap-3 step-pending" id="migrateStep-devkey">
@@ -563,7 +563,18 @@
                 <svg class="w-7 h-7 text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
               </div>
               <h3 class="text-lg font-semibold text-white mb-1">Migration Complete</h3>
-              <p class="text-sm text-gray-400">Your keys are stored securely. Now update your environment variables before merging.</p>
+              <p class="text-sm text-gray-400">Code changes are ready. Now store your keys and update your environment variables before merging.</p>
+            </div>
+
+            <!-- Store keys via Keys page -->
+            <div id="storeKeysSection" class="hidden bg-card border border-border rounded-2xl p-6">
+              <h3 class="text-base font-semibold text-white mb-1">Store your API keys</h3>
+              <p class="text-sm text-gray-400 mb-4">The following keys need to be stored securely in VaultProof. Use the Keys page to store each one.</p>
+              <div id="storeKeysList" class="space-y-2 mb-4"></div>
+              <a href="/app/keys" target="_blank" rel="noopener" class="inline-flex items-center gap-2 px-5 py-2.5 bg-brand hover:bg-brand-hover text-white rounded-xl text-sm font-medium transition">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z"/></svg>
+                Open Keys Page
+              </a>
             </div>
 
             <!-- Update env vars -->
@@ -1152,13 +1163,9 @@
             '<span class="text-xs font-mono text-gray-500">' + escapeHtml(masked) + '</span>' +
           '</div>' +
           '<div class="mt-2">' +
-            '<label class="text-xs text-gray-400 block mb-1">Paste your actual key (the scan only found a masked value):</label>' +
-            '<div class="relative">' +
-              '<input type="password" class="raw-key-input w-full bg-surface border border-border rounded-xl px-3 py-2 text-xs font-mono text-gray-200 placeholder-gray-600 focus:outline-none focus:border-brand/50 focus:ring-1 focus:ring-brand/30 transition pr-10" data-key-idx="' + i + '" placeholder="sk-..." />' +
-              '<button type="button" class="toggle-password absolute right-2 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-300 p-1" onclick="togglePasswordVisibility(this)">' +
-                '<svg class="w-4 h-4 eye-open" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/><path stroke-linecap="round" stroke-linejoin="round" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/></svg>' +
-                '<svg class="w-4 h-4 eye-closed hidden" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l3.59 3.59m0 0A9.953 9.953 0 0112 5c4.478 0 8.268 2.943 9.543 7a10.025 10.025 0 01-4.132 5.411m0 0L21 21"/></svg>' +
-              '</button>' +
+            '<div class="flex items-center gap-2 px-3 py-2 bg-surface border border-border rounded-xl">' +
+              '<svg class="w-4 h-4 text-brand flex-shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>' +
+              '<span class="text-xs text-gray-400">You will store this key securely via the <a href="/app/keys" class="text-brand hover:underline">Keys page</a> after migration.</span>' +
             '</div>' +
           '</div>' +
         '</div>';
@@ -1468,17 +1475,14 @@
       var envRefFindings = findings.filter(function(f) { return f.type === 'env-ref'; });
       var codeChangeFindings = sdkFindings.concat(httpFindings).concat(envRefFindings);
 
-      // Collect checked key findings + raw keys
+      // Collect checked key findings (no raw keys — users store keys via /app/keys after migration)
       var selectedKeys = [];
       document.querySelectorAll('.migrate-key-cb:checked').forEach(function(cb) {
         var idx = parseInt(cb.dataset.keyIdx);
-        var rawInput = document.querySelector('.raw-key-input[data-key-idx="' + idx + '"]');
-        var rawKey = rawInput ? rawInput.value.trim() : '';
         var f = keyFindings[idx];
         if (f) {
           selectedKeys.push({
             finding: f,
-            rawKey: rawKey,
             action: 'store'
           });
         }
@@ -1502,12 +1506,7 @@
         return;
       }
 
-      // Validate raw keys for selected key findings
-      var missingKeys = selectedKeys.filter(function(k) { return !k.rawKey; });
-      if (missingKeys.length > 0) {
-        showToast('Please paste the actual API key for all selected keys', 'warning');
-        return;
-      }
+      // No raw key validation needed — keys are stored separately via /app/keys
 
       // Switch to migration progress view
       document.getElementById('migrationResults').classList.add('hidden');
@@ -1517,7 +1516,7 @@
       // Animate step 1: Storing keys
       setMigrateStepState('migrateStep-store', 'active');
 
-      // Build request payload
+      // Build request payload (no rawKeys — keys are stored separately via /app/keys)
       var payload = {
         findings: selectedKeys.map(function(k) {
           return {
@@ -1535,17 +1534,12 @@
             line: c.finding.line,
             action: 'apply'
           };
-        })),
-        rawKeys: selectedKeys.reduce(function(acc, k) {
-          var name = k.finding.envName || k.finding.env_name || k.finding.key_name || k.finding.keyName;
-          if (name && k.rawKey) acc[name] = k.rawKey;
-          return acc;
-        }, {})
+        }))
       };
 
       // Small delay to show animation
       await new Promise(function(r) { setTimeout(r, 600); });
-      setMigrateStepState('migrateStep-store', 'done', selectedKeys.length + ' key' + (selectedKeys.length !== 1 ? 's' : '') + ' stored');
+      setMigrateStepState('migrateStep-store', 'done', selectedKeys.length + ' key' + (selectedKeys.length !== 1 ? 's' : '') + ' identified');
 
       // Step 2: Creating developer key
       setMigrateStepState('migrateStep-devkey', 'active');
@@ -1605,6 +1599,19 @@
       var devKey = data.devKey || data.dev_key || data.apiKey || data.api_key || '';
       var prUrl = data.prUrl || data.pr_url || '';
       var platforms = currentScanData.platforms || data.platforms || [];
+
+      // Populate "Store your keys" section
+      if (selectedKeys.length > 0) {
+        document.getElementById('storeKeysSection').classList.remove('hidden');
+        document.getElementById('storeKeysList').innerHTML = selectedKeys.map(function(k) {
+          var envName = k.finding.envName || k.finding.env_name || k.finding.key_name || k.finding.keyName || '';
+          var provider = k.finding.provider || 'unknown';
+          return '<div class="flex items-center gap-3 px-3 py-2 bg-surface border border-border rounded-xl">' +
+            '<span class="px-2 py-0.5 bg-brand/10 text-brand text-xs font-medium rounded-full">' + escapeHtml(provider) + '</span>' +
+            '<span class="text-sm font-mono text-white">' + escapeHtml(envName) + '</span>' +
+          '</div>';
+        }).join('');
+      }
 
       // Remove these
       var removeList = document.getElementById('envRemoveList');

@@ -1295,64 +1295,69 @@ STRIPE_SECRET_KEY=sk_live_..."></textarea>
     }
 
     // --- Test Key ---
+    // Uses the transparent proxy (/v1/{provider}/...) with a vp_live_ dev key
+    // instead of the ZK proxy, which would require generating a real proof.
     async function testKey(keySlotId, provider) {
       var btn = document.getElementById('testBtn-' + keySlotId);
       var resultEl = document.getElementById('testResult-' + keySlotId);
       btn.textContent = 'Testing...';
       btn.disabled = true;
       resultEl.classList.remove('hidden');
-      resultEl.innerHTML = '<div class="bg-surface border border-border rounded-xl p-3 text-sm text-gray-400">Sending test request through ZK proxy...</div>';
+      resultEl.innerHTML = '<div class="bg-surface border border-border rounded-xl p-3 text-sm text-gray-400">Sending test request through transparent proxy...</div>';
 
-      // Get Share 2 from localStorage
-      var share2Data = localStorage.getItem('vaultproof_share2_' + keySlotId);
-      if (!share2Data) {
-        resultEl.innerHTML = '<div class="bg-amber-500/10 border border-amber-500/20 rounded-xl p-3 text-sm text-amber-400">Share 2 not found on this device. You may have stored this key from a different browser.</div>';
+      // Fetch the user's vp_live_ dev key for auth
+      var devKey = '';
+      try {
+        var dkRes = await apiFetch(API + '/dev-keys/list');
+        if (dkRes && dkRes.ok) {
+          var dkData = await dkRes.json();
+          var dkList = dkData.keys || dkData || [];
+          var liveKeyObj = dkList.find(function(k) { return (k.mode || 'live') === 'live' && k.fullKey; });
+          if (liveKeyObj) devKey = liveKeyObj.fullKey;
+        }
+      } catch (e) { /* handled below */ }
+
+      if (!devKey) {
+        resultEl.innerHTML = '<div class="bg-amber-500/10 border border-amber-500/20 rounded-xl p-3 text-sm text-amber-400">No active developer key found. <a href="/app/keys#dev-keys" class="underline">Create a vp_live_ key</a> first, then try again.</div>';
         btn.innerHTML = '<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>Test';
         btn.disabled = false;
         return;
       }
 
-      var share2 = JSON.parse(share2Data).share2;
+      // Build test request based on provider using transparent proxy
+      var proxyBase = 'https://api.vaultproof.dev/v1/' + provider;
+      var testUrl, method, body, headers;
+      headers = {
+        'Authorization': 'Bearer ' + devKey,
+        'Content-Type': 'application/json'
+      };
 
-      // Build test request based on provider
-      var targetPath, method, body;
       switch (provider) {
         case 'openai':
-          targetPath = '/v1/models';
+          testUrl = proxyBase + '/v1/models';
           method = 'GET';
           body = undefined;
           break;
         case 'anthropic':
-          targetPath = '/v1/messages';
+          testUrl = proxyBase + '/v1/messages';
           method = 'POST';
-          body = { model: 'claude-sonnet-4-20250514', max_tokens: 10, messages: [{ role: 'user', content: 'Say hi' }] };
+          body = JSON.stringify({ model: 'claude-sonnet-4-20250514', max_tokens: 10, messages: [{ role: 'user', content: 'Say hi' }] });
           break;
         case 'google':
-          targetPath = '/v1beta/models';
+          testUrl = proxyBase + '/v1beta/models';
           method = 'GET';
           body = undefined;
           break;
         default:
-          targetPath = '/v1/models';
+          testUrl = proxyBase + '/v1/models';
           method = 'GET';
           body = undefined;
       }
 
       try {
-        var res = await fetch(API + '/proxy/call', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            keySlotId: keySlotId,
-            share2: share2,
-            zkProof: 'test-proof-' + Date.now(),
-            nullifier: 'test-' + crypto.randomUUID(),
-            appId: 'vaultproof-dashboard',
-            targetPath: targetPath,
-            method: method,
-            body: body,
-          }),
-        });
+        var fetchOpts = { method: method, headers: headers };
+        if (body) fetchOpts.body = body;
+        var res = await fetch(testUrl, fetchOpts);
 
         var data = await res.json();
 
@@ -1803,8 +1808,25 @@ exampleBody + '\n' +
         }
       }
 
-      // Build final .env output
-      var finalEnv = '# VaultProof \u2014 your API keys are now split and encrypted\nVAULTPROOF_API_KEY=' + token + '\n\n' + newEnvLines.join('\n');
+      // Build final .env output — use vp_live_ dev key instead of JWT session token
+      var vpApiKey = '';
+      try {
+        var dkRes = await apiFetch(API + '/dev-keys/list');
+        if (dkRes && dkRes.ok) {
+          var dkData = await dkRes.json();
+          var dkList = dkData.keys || dkData || [];
+          var liveKey = dkList.find(function(k) { return (k.mode || 'live') === 'live' && k.fullKey; });
+          if (liveKey) vpApiKey = liveKey.fullKey;
+        }
+      } catch (e) { /* ignore — will show message below */ }
+
+      var envHeader;
+      if (vpApiKey) {
+        envHeader = '# VaultProof \u2014 your API keys are now split and encrypted\nVAULTPROOF_API_KEY=' + vpApiKey;
+      } else {
+        envHeader = '# VaultProof \u2014 your API keys are now split and encrypted\n# Create a developer key at /app/keys, then paste it below:\nVAULTPROOF_API_KEY=<your vp_live_ key>';
+      }
+      var finalEnv = envHeader + '\n\n' + newEnvLines.join('\n');
       document.getElementById('newEnvOutput').value = finalEnv;
 
       statusEl.textContent = 'Imported ' + imported + ' key' + (imported === 1 ? '' : 's') + (failed > 0 ? ', ' + failed + ' failed' : '');
