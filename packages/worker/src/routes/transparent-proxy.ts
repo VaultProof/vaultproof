@@ -44,6 +44,17 @@ const SAFE_FORWARD_HEADERS = new Set([
   'stripe-version', 'idempotency-key', 'prefer',
 ]);
 
+// Supabase REST returns bytea columns as PostgreSQL hex: \xABCD...
+function hexToBytes(hex: string): Uint8Array {
+  // Strip leading \x if present
+  const clean = hex.startsWith('\\x') ? hex.slice(2) : hex;
+  const bytes = new Uint8Array(clean.length / 2);
+  for (let i = 0; i < clean.length; i += 2) {
+    bytes[i / 2] = parseInt(clean.substring(i, i + 2), 16);
+  }
+  return bytes;
+}
+
 export async function handleTransparentProxy(
   request: Request,
   env: Env,
@@ -137,12 +148,13 @@ export async function handleTransparentProxy(
   // g. Reconstruct API key
   let apiKey: string;
   try {
-    const share1Bytes = Uint8Array.from(atob(keySlot.share1_encrypted), c => c.charCodeAt(0));
-    const decryptedShare1 = await decrypt(share1Bytes, env);
+    // Supabase REST returns bytea as PostgreSQL hex format: \xABCD...
+    const share1Bytes = hexToBytes(keySlot.share1_encrypted);
+    const decryptedShare1 = decrypt(share1Bytes, env);
     const share1Str = new TextDecoder().decode(decryptedShare1);
     zeroUint8Array(decryptedShare1);
 
-    const share2Bytes = Uint8Array.from(atob(keySlot.share2_encrypted!), c => c.charCodeAt(0));
+    const share2Bytes = hexToBytes(keySlot.share2_encrypted!);
     let share2Str: string;
     try {
       share2Str = await decryptShare2(share2Bytes, auth.rawKey);
@@ -154,8 +166,8 @@ export async function handleTransparentProxy(
     const share2 = deserializeShare(share2Str);
     const combined = combineShares([share1, share2]);
     apiKey = new TextDecoder().decode(combined);
-  } catch {
-    return Response.json({ error: 'Failed to reconstruct key.' }, { status: 500 });
+  } catch (err: any) {
+    return Response.json({ error: 'Failed to reconstruct key.', detail: err?.message || String(err) }, { status: 500 });
   }
 
   // h. Build upstream URL
