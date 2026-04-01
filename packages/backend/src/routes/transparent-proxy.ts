@@ -493,7 +493,7 @@ export async function transparentProxyRoutes(app: FastifyInstance) {
                   status_code: retryResponse.status, latency_ms: Date.now() - startTime,
                 }),
               },
-            }).catch(() => {});
+            }).catch((err) => { request.log.error({ err }, 'Failed to write access log'); });
 
             break;
           } catch { fallbackKey = ''; continue; }
@@ -525,7 +525,7 @@ export async function transparentProxyRoutes(app: FastifyInstance) {
             ...(fallbackProvider ? { fallback_from: provider } : {}),
           }),
         },
-      }).catch(() => {});
+      }).catch((err) => { request.log.error({ err }, 'Failed to write access log'); });
 
       if (auth.devKey.webhookUrl && auth.devKey.webhookSecret) {
         sendWebhook(auth.devKey.webhookUrl, auth.devKey.webhookSecret, 'proxy.call', {

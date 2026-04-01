@@ -64,7 +64,7 @@ async function initVerifier() {
       }
     } else {
       console.warn('Could not initialize Noir verifier:', (err as Error).message);
-      console.warn('Falling back to placeholder verification');
+      console.warn('All ZK proof verifications will be rejected until verifier is available');
     }
   }
 }
@@ -89,7 +89,7 @@ export interface ProofPublicInputs {
  * Verify a ZK proof against public inputs.
  *
  * Returns true if the proof is valid, false otherwise.
- * Falls back to placeholder verification if Noir is not available.
+ * If Noir is not available, all proofs are rejected.
  */
 export async function verifyProof(
   proofHex: string,
@@ -118,17 +118,8 @@ export async function verifyProof(
     }
   }
 
-  // Placeholder fallback — controlled by env var
-  if (process.env.REQUIRE_REAL_PROOFS === 'true') {
-    return { valid: false, reason: 'Real proof required but Noir verifier not available' };
-  }
-
-  // MVP fallback: accept non-empty proof strings
-  if (!proofHex || proofHex.length < 10) {
-    return { valid: false, reason: 'Proof too short' };
-  }
-
-  return { valid: true, reason: 'placeholder-verification' };
+  // Noir verifier not available — reject all proofs
+  return { valid: false, reason: 'Verification failed' };
 }
 
 /**

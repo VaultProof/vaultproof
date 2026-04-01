@@ -13,7 +13,7 @@ import { requireAuth } from '../middleware/auth.js';
 import { encrypt, decrypt } from '../crypto/encryption.js';
 import { encryptShare2 } from '../crypto/share2-encryption.js';
 import { splitString, serializeShare } from '@vaultproof/shamir';
-import { randomBytes, createHash } from 'crypto';
+import { randomBytes, createHash, createHmac } from 'crypto';
 
 // ─── Config ──────────────────────────────────────────────────────────────────
 
@@ -331,7 +331,9 @@ export async function scannerRoutes(app: FastifyInstance) {
     }
 
     const nonce = randomBytes(32).toString('hex');
-    const statePayload = Buffer.from(JSON.stringify({ userId, nonce })).toString('base64url');
+    const stateJson = JSON.stringify({ userId, nonce, ts: Date.now() });
+    const stateHmac = createHmac('sha256', process.env.PROXY_SECRET || '').update(stateJson).digest('hex');
+    const statePayload = Buffer.from(stateJson).toString('base64url') + '.' + stateHmac;
     const url = `https://github.com/login/oauth/authorize?client_id=${GITHUB_CLIENT_ID}&redirect_uri=${encodeURIComponent(GITHUB_REDIRECT_URI)}&scope=repo&state=${statePayload}`;
     return { url };
   });
@@ -346,9 +348,18 @@ export async function scannerRoutes(app: FastifyInstance) {
 
     const { code, state } = parsed.data;
 
-    let stateData: { userId: string; nonce: string };
+    let stateData: { userId: string; nonce: string; ts: number };
     try {
-      stateData = JSON.parse(Buffer.from(state, 'base64url').toString());
+      const [payloadB64, hmac] = state.split('.');
+      if (!payloadB64 || !hmac) {
+        return reply.status(400).send({ error: 'Invalid state parameter' });
+      }
+      const payloadStr = Buffer.from(payloadB64, 'base64url').toString();
+      const expectedHmac = createHmac('sha256', process.env.PROXY_SECRET || '').update(payloadStr).digest('hex');
+      if (hmac !== expectedHmac) {
+        return reply.status(400).send({ error: 'Invalid state signature' });
+      }
+      stateData = JSON.parse(payloadStr);
     } catch {
       return reply.status(400).send({ error: 'Invalid state parameter' });
     }
@@ -681,6 +692,11 @@ export async function scannerRoutes(app: FastifyInstance) {
         await Promise.all(batch.map(async (f) => {
           f.verified = await verifyKey(f.provider, f.value);
         }));
+      }
+
+      // Zero raw key values — only maskedValue is needed from here on
+      for (const f of findings) {
+        f.value = '';
       }
 
       // Store findings in a transaction (no raw values stored)

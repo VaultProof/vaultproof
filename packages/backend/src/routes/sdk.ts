@@ -390,7 +390,7 @@ export async function sdkRoutes(app: FastifyInstance) {
           nullifier: `sdk-${randomBytes(16).toString('hex')}`,
           metadata: JSON.stringify({ endpoint: path, status_code: response.status, latency_ms: latencyMs }),
         },
-      }).catch(() => {});
+      }).catch((err) => { request.log.error({ err }, 'Failed to write access log'); });
 
       // Webhook notification (non-blocking)
       if (authDevKey.webhookUrl && authDevKey.webhookSecret) {
