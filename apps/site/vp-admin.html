@@ -364,6 +364,7 @@
             <button class="btn btn-primary text-xs" id="test-start-btn" onclick="triggerTestRun()">Run Now</button>
             <button class="btn btn-danger text-xs hidden" id="test-stop-btn" onclick="stopTestRun()">Stop</button>
             <button class="btn btn-ghost text-xs hidden" id="test-cancel-btn" onclick="cancelTestRun()">Cancel</button>
+            <button class="btn btn-ghost text-xs hidden" id="test-cleanup-btn" onclick="cleanupStaleRuns()" style="color:#f87171">Clean Stale Runs</button>
           </div>
         </div>
       </div>
@@ -1307,6 +1308,21 @@ async function loadTestResults() {
     const avgMs = last30.filter(r => r.durationMs).reduce((a, r) => a + r.durationMs, 0) / (last30.filter(r => r.durationMs).length || 1);
     document.getElementById('test-avg-duration').textContent = avgMs ? Math.round(avgMs / 1000) + 's' : '-';
 
+    // Check for stale running records (older than 10 min = stuck)
+    var staleRuns = runs.filter(r => r.status === 'running' && (Date.now() - new Date(r.startedAt).getTime()) > 600000);
+    if (staleRuns.length > 0) {
+      document.getElementById('test-cleanup-btn').classList.remove('hidden');
+    } else {
+      document.getElementById('test-cleanup-btn').classList.add('hidden');
+    }
+
+    // If there's an active (non-stale) running test, show stop/cancel
+    var activeRun = runs.find(r => r.status === 'running' && (Date.now() - new Date(r.startedAt).getTime()) <= 600000);
+    if (activeRun) {
+      activeTestRunId = activeRun.id;
+      setTestButtons('running');
+    }
+
     // Table rows
     runs.forEach(r => {
       const statusBadge = r.status === 'passed'
@@ -1404,6 +1420,16 @@ function clearTestPoll() {
   testPollInterval = null;
   activeTestRunId = null;
   setTestButtons('idle');
+}
+
+async function cleanupStaleRuns() {
+  try {
+    await apiFetch('/cleanup-test-runs', { method: 'POST' });
+    document.getElementById('test-cleanup-btn').classList.add('hidden');
+    await loadTestResults();
+  } catch (e) {
+    console.error('Failed to clean up stale runs', e);
+  }
 }
 
 function pollTestRun(runId) {

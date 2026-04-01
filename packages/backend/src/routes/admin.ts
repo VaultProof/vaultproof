@@ -935,6 +935,15 @@ export async function adminRoutes(app: FastifyInstance) {
     return { status: 'cancelled' };
   });
 
+  // Clean up stale "running" test records (older than 10 min with no process)
+  app.post('/cleanup-test-runs', { preHandler: requireAdmin }, async () => {
+    const tenMinAgo = new Date(Date.now() - 10 * 60 * 1000);
+    const { count } = await prisma.testRun.deleteMany({
+      where: { status: 'running', startedAt: { lt: tenMinAgo } },
+    });
+    return { deleted: count };
+  });
+
   // Get test settings
   app.get('/test-settings', { preHandler: requireAdmin }, async () => {
     let settings = await prisma.testSettings.findUnique({ where: { id: 'singleton' } });
