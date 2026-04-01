@@ -101,27 +101,27 @@
       <button type="button" onclick="document.getElementById('promoRow').classList.toggle('hidden')" class="text-xs text-indigo-400 hover:text-indigo-300 transition">Have a promo code?</button>
       <div id="promoRow" class="hidden mt-2 flex gap-2">
         <input id="promoCodeInput" type="text" placeholder="Enter code" maxlength="50"
-          class="flex-1 bg-[#111118] border border-[#1e1e2e] rounded-xl px-3 py-2 text-sm text-gray-300 font-mono uppercase focus:border-indigo-500 focus:outline-none placeholder-gray-600"
+          class="flex-1 bg-[#111118] border border-[#1e1e2e] rounded-md px-3 py-2 text-sm text-gray-300 font-mono uppercase focus:border-indigo-500 focus:outline-none placeholder-gray-600"
           onkeydown="if(event.key==='Enter') applyPromoCode()" />
-        <button type="button" onclick="applyPromoCode()" class="px-4 py-2 bg-[#1e1e2e] hover:bg-[#2a2a3a] text-gray-300 hover:text-white rounded-xl text-sm font-medium transition">Apply</button>
+        <button type="button" onclick="applyPromoCode()" class="px-4 py-2 bg-[#1e1e2e] hover:bg-[#2a2a3a] text-gray-300 hover:text-white rounded-md text-sm font-medium transition">Apply</button>
       </div>
       <p id="promoCodeMsg" class="text-xs mt-1.5 hidden"></p>
     </div>
 
     <!-- Card -->
-    <div class="bg-card border border-border rounded-2xl p-6">
+    <div class="bg-card border border-border rounded-lg p-6">
 
       <!-- Error display -->
-      <div id="authError" class="hidden p-3 bg-red-500/10 border border-red-500/30 rounded-xl text-sm text-red-400 mb-4"></div>
+      <div id="authError" class="hidden p-3 bg-amber-500/10 border border-amber-500/30 rounded-md text-sm text-amber-400 mb-4"></div>
 
       <!-- GitHub OAuth button (primary) -->
-      <button onclick="loginWithGitHub()" class="w-full flex items-center justify-center gap-3 bg-brand hover:bg-brand-hover text-white py-3 rounded-xl font-medium text-sm transition-all duration-200 btn-glow mb-3">
+      <button onclick="loginWithGitHub()" class="w-full flex items-center justify-center gap-3 bg-brand hover:bg-brand-hover text-white py-3 rounded-md font-medium text-sm transition-all duration-200 btn-glow mb-3">
         <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24"><path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z"/></svg>
         Continue with GitHub
       </button>
 
       <!-- Google OAuth button -->
-      <button onclick="loginWithGoogle()" class="w-full flex items-center justify-center gap-3 bg-transparent border border-[#1e1e2e] hover:border-gray-500 text-gray-300 py-3 rounded-xl font-medium text-sm transition-all duration-200 mb-6">
+      <button onclick="loginWithGoogle()" class="w-full flex items-center justify-center gap-3 bg-transparent border border-[#1e1e2e] hover:border-gray-500 text-gray-300 py-3 rounded-md font-medium text-sm transition-all duration-200 mb-6">
         <svg class="w-5 h-5" viewBox="0 0 24 24"><path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92a5.06 5.06 0 0 1-2.2 3.32v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.1z"/><path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/><path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/><path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/></svg>
         Continue with Google
       </button>
@@ -138,26 +138,26 @@
       <div id="emailSection">
 
         <!-- Tab Toggle -->
-        <div class="flex bg-[#0a0a0f] rounded-xl p-1 mb-6" style="position:relative;z-index:20;">
-          <button type="button" id="loginTab" onclick="showTab('login')" class="flex-1 py-2.5 text-sm font-medium rounded-xl bg-brand text-white transition-all duration-200 cursor-pointer">Login</button>
-          <button type="button" id="registerTab" onclick="showTab('register')" class="flex-1 py-2.5 text-sm font-medium rounded-xl text-gray-400 hover:text-gray-300 transition-all duration-200 cursor-pointer">Register</button>
+        <div class="flex bg-[#0a0a0f] rounded-md p-1 mb-6" style="position:relative;z-index:20;">
+          <button type="button" id="loginTab" onclick="showTab('login')" class="flex-1 py-2.5 text-sm font-medium rounded-md bg-brand text-white transition-all duration-200 cursor-pointer">Login</button>
+          <button type="button" id="registerTab" onclick="showTab('register')" class="flex-1 py-2.5 text-sm font-medium rounded-md text-gray-400 hover:text-gray-300 transition-all duration-200 cursor-pointer">Register</button>
         </div>
 
         <!-- Login Form -->
         <form id="loginForm" onsubmit="handleLogin(event)" class="space-y-4">
           <div>
             <label class="block text-sm text-gray-400 mb-1.5">Email</label>
-            <input type="email" id="loginEmail" required class="w-full bg-[#111118] border border-[#1e1e2e] rounded-xl px-4 py-2.5 text-sm text-white placeholder-gray-600 focus:border-[#6366f1] focus:outline-none transition" placeholder="you@example.com" />
+            <input type="email" id="loginEmail" required class="w-full bg-[#111118] border border-[#1e1e2e] rounded-md px-4 py-2.5 text-sm text-white placeholder-gray-600 focus:border-[#6366f1] focus:outline-none transition" placeholder="you@example.com" />
           </div>
           <div>
             <label class="block text-sm text-gray-400 mb-1.5">Password</label>
-            <input type="password" id="loginPassword" required class="w-full bg-[#111118] border border-[#1e1e2e] rounded-xl px-4 py-2.5 text-sm text-white placeholder-gray-600 focus:border-[#6366f1] focus:outline-none transition" placeholder="Enter your password" />
+            <input type="password" id="loginPassword" required class="w-full bg-[#111118] border border-[#1e1e2e] rounded-md px-4 py-2.5 text-sm text-white placeholder-gray-600 focus:border-[#6366f1] focus:outline-none transition" placeholder="Enter your password" />
           </div>
           <div class="text-right mt-1">
             <button type="button" onclick="showResetForm()" class="text-xs text-indigo-400 hover:underline">Forgot password?</button>
           </div>
-          <div id="loginError" class="hidden p-3 bg-red-500/10 border border-red-500/30 rounded-xl text-sm text-red-400"></div>
-          <button type="submit" id="loginBtn" class="w-full bg-brand hover:bg-brand-hover text-white py-2.5 rounded-xl font-medium text-sm transition-all duration-200 btn-glow">Login</button>
+          <div id="loginError" class="hidden p-3 bg-amber-500/10 border border-amber-500/30 rounded-md text-sm text-amber-400"></div>
+          <button type="submit" id="loginBtn" class="w-full bg-brand hover:bg-brand-hover text-white py-2.5 rounded-md font-medium text-sm transition-all duration-200 btn-glow">Login</button>
         </form>
 
         <!-- Password Reset Form -->
@@ -165,10 +165,10 @@
           <p class="text-sm text-gray-400">Enter your email and we'll send a reset link.</p>
           <div>
             <label class="block text-sm text-gray-400 mb-1.5">Email</label>
-            <input type="email" id="resetEmail" required class="w-full bg-[#111118] border border-[#1e1e2e] rounded-xl px-4 py-2.5 text-sm text-white placeholder-gray-600 focus:border-[#6366f1] focus:outline-none transition" placeholder="you@example.com" />
+            <input type="email" id="resetEmail" required class="w-full bg-[#111118] border border-[#1e1e2e] rounded-md px-4 py-2.5 text-sm text-white placeholder-gray-600 focus:border-[#6366f1] focus:outline-none transition" placeholder="you@example.com" />
           </div>
-          <div id="resetStatus" class="hidden p-3 rounded-xl text-sm"></div>
-          <button type="button" onclick="handleReset()" id="resetBtn" class="w-full bg-brand hover:bg-brand-hover text-white py-2.5 rounded-xl font-medium text-sm transition-all duration-200 btn-glow">Send Reset Link</button>
+          <div id="resetStatus" class="hidden p-3 rounded-md text-sm"></div>
+          <button type="button" onclick="handleReset()" id="resetBtn" class="w-full bg-brand hover:bg-brand-hover text-white py-2.5 rounded-md font-medium text-sm transition-all duration-200 btn-glow">Send Reset Link</button>
           <button type="button" onclick="hideResetForm()" class="w-full text-xs text-gray-500 hover:text-gray-400 mt-2">Back to login</button>
         </div>
 
@@ -176,14 +176,14 @@
         <form id="registerForm" class="hidden space-y-4" onsubmit="handleRegister(event)">
           <div>
             <label class="block text-sm text-gray-400 mb-1.5">Email</label>
-            <input type="email" id="regEmail" required class="w-full bg-[#111118] border border-[#1e1e2e] rounded-xl px-4 py-2.5 text-sm text-white placeholder-gray-600 focus:border-[#6366f1] focus:outline-none transition" placeholder="you@example.com" />
+            <input type="email" id="regEmail" required class="w-full bg-[#111118] border border-[#1e1e2e] rounded-md px-4 py-2.5 text-sm text-white placeholder-gray-600 focus:border-[#6366f1] focus:outline-none transition" placeholder="you@example.com" />
           </div>
           <div>
             <label class="block text-sm text-gray-400 mb-1.5">Password</label>
-            <input type="password" id="regPassword" required minlength="8" class="w-full bg-[#111118] border border-[#1e1e2e] rounded-xl px-4 py-2.5 text-sm text-white placeholder-gray-600 focus:border-[#6366f1] focus:outline-none transition" placeholder="Min 8 characters" />
+            <input type="password" id="regPassword" required minlength="8" class="w-full bg-[#111118] border border-[#1e1e2e] rounded-md px-4 py-2.5 text-sm text-white placeholder-gray-600 focus:border-[#6366f1] focus:outline-none transition" placeholder="Min 8 characters" />
           </div>
-          <div id="regError" class="hidden p-3 bg-red-500/10 border border-red-500/30 rounded-xl text-sm text-red-400"></div>
-          <button type="submit" id="regBtn" class="w-full bg-brand hover:bg-brand-hover text-white py-2.5 rounded-xl font-medium text-sm transition-all duration-200 btn-glow">Create Account</button>
+          <div id="regError" class="hidden p-3 bg-amber-500/10 border border-amber-500/30 rounded-md text-sm text-amber-400"></div>
+          <button type="submit" id="regBtn" class="w-full bg-brand hover:bg-brand-hover text-white py-2.5 rounded-md font-medium text-sm transition-all duration-200 btn-glow">Create Account</button>
         </form>
       </div>
 
@@ -303,15 +303,15 @@
       const msg = document.getElementById('promoCodeMsg');
       const code = input.value.trim().toUpperCase();
       msg.classList.remove('hidden');
-      if (!code) { msg.textContent = 'Enter a code first.'; msg.className = 'text-xs text-red-400 mt-1.5'; return; }
-      if (!/^[A-Z0-9_-]{1,50}$/.test(code)) { msg.textContent = 'Invalid code format.'; msg.className = 'text-xs text-red-400 mt-1.5'; return; }
+      if (!code) { msg.textContent = 'Enter a code first.'; msg.className = 'text-xs text-amber-400 mt-1.5'; return; }
+      if (!/^[A-Z0-9_-]{1,50}$/.test(code)) { msg.textContent = 'Invalid code format.'; msg.className = 'text-xs text-amber-400 mt-1.5'; return; }
       // Check availability before saving
       fetch('https://api.vaultproof.dev/api/v1/promo/check/' + encodeURIComponent(code))
         .then(function(r) { return r.json(); })
         .then(function(d) {
           if (!d.valid || d.spotsLeft <= 0) {
             msg.textContent = 'This promo has ended \u2014 all spots claimed.';
-            msg.className = 'text-xs text-red-400 mt-1.5';
+            msg.className = 'text-xs text-amber-400 mt-1.5';
           } else {
             localStorage.setItem('vp_promo', code);
             msg.textContent = 'Code saved \u2014 will be applied after you sign up.';
@@ -329,7 +329,7 @@
     // Show CLI banner if logging in from CLI
     if (cliCallback) {
       const banner = document.createElement('div');
-      banner.className = 'p-3 bg-indigo-500/10 border border-indigo-500/30 rounded-xl text-sm text-indigo-400 mb-4 text-center';
+      banner.className = 'p-3 bg-indigo-500/10 border border-indigo-500/30 rounded-md text-sm text-indigo-400 mb-4 text-center';
       banner.textContent = 'Signing in from VaultProof CLI \u2014 log in below to connect.';
       const target = document.querySelector('.bg-card');
       if (target) target.prepend(banner);
@@ -449,11 +449,11 @@
       document.getElementById('loginForm').classList.toggle('hidden', tab !== 'login');
       document.getElementById('registerForm').classList.toggle('hidden', tab !== 'register');
       document.getElementById('loginTab').className = tab === 'login'
-        ? 'flex-1 py-2.5 text-sm font-medium rounded-xl bg-brand text-white transition-all duration-200'
-        : 'flex-1 py-2.5 text-sm font-medium rounded-xl text-gray-400 hover:text-gray-300 transition-all duration-200';
+        ? 'flex-1 py-2.5 text-sm font-medium rounded-md bg-brand text-white transition-all duration-200'
+        : 'flex-1 py-2.5 text-sm font-medium rounded-md text-gray-400 hover:text-gray-300 transition-all duration-200';
       document.getElementById('registerTab').className = tab === 'register'
-        ? 'flex-1 py-2.5 text-sm font-medium rounded-xl bg-brand text-white transition-all duration-200'
-        : 'flex-1 py-2.5 text-sm font-medium rounded-xl text-gray-400 hover:text-gray-300 transition-all duration-200';
+        ? 'flex-1 py-2.5 text-sm font-medium rounded-md bg-brand text-white transition-all duration-200'
+        : 'flex-1 py-2.5 text-sm font-medium rounded-md text-gray-400 hover:text-gray-300 transition-all duration-200';
     }
 
     // ── Email/Password login via Supabase ──
@@ -509,7 +509,7 @@
         errEl.textContent = error.message;
       } else {
         errEl.innerHTML = 'Confirmation email resent! Check your inbox.';
-        errEl.classList.remove('text-red-400', 'bg-red-500/10', 'border-red-500/30');
+        errEl.classList.remove('text-amber-400', 'bg-amber-500/10', 'border-amber-500/30');
         errEl.classList.add('text-green-400', 'bg-green-500/10', 'border-green-500/30');
       }
     }
@@ -539,10 +539,10 @@
 
       status.classList.remove('hidden');
       if (error) {
-        status.className = 'p-3 rounded-xl text-sm bg-red-500/10 border border-red-500/30 text-red-400';
+        status.className = 'p-3 rounded-md text-sm bg-amber-500/10 border border-amber-500/30 text-amber-400';
         status.textContent = error.message;
       } else {
-        status.className = 'p-3 rounded-xl text-sm bg-indigo-500/10 border border-indigo-500/30 text-indigo-400';
+        status.className = 'p-3 rounded-md text-sm bg-indigo-500/10 border border-indigo-500/30 text-indigo-400';
         status.textContent = 'Reset link sent! Check your email.';
       }
 
@@ -588,7 +588,7 @@
           // Email confirmation required
           errEl.textContent = 'Check your email to confirm your account.';
           errEl.classList.remove('hidden');
-          errEl.classList.remove('text-red-400', 'bg-red-500/10', 'border-red-500/30');
+          errEl.classList.remove('text-amber-400', 'bg-amber-500/10', 'border-amber-500/30');
           errEl.classList.add('text-green-400', 'bg-green-500/10', 'border-green-500/30');
         }
       } catch (err) {
