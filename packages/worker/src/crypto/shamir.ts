@@ -1,0 +1,69 @@
+/**
+ * Shamir Secret Sharing — GF(256) combine.
+ *
+ * Compatible with @vaultproof/shamir share format:
+ * serializeShare encodes as: [x_byte, ...y_bytes] → base64
+ * deserializeShare decodes: base64 → { x, y }
+ */
+
+export interface Share {
+  x: number;
+  y: Uint8Array;
+}
+
+export function deserializeShare(base64: string): Share {
+  const binary = atob(base64);
+  const bytes = new Uint8Array(binary.length);
+  for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i);
+  return { x: bytes[0], y: bytes.slice(1) };
+}
+
+export function combineShares(shares: Share[]): Uint8Array {
+  if (shares.length < 2) throw new Error('Need at least 2 shares');
+  const len = shares[0].y.length;
+  const result = new Uint8Array(len);
+
+  for (let i = 0; i < len; i++) {
+    let value = 0;
+    for (let j = 0; j < shares.length; j++) {
+      let basis = 1;
+      for (let k = 0; k < shares.length; k++) {
+        if (j === k) continue;
+        const num = shares[k].x;
+        const den = shares[k].x ^ shares[j].x;
+        basis = gf256Mul(basis, gf256Mul(num, gf256Inv(den)));
+      }
+      value ^= gf256Mul(shares[j].y[i], basis);
+    }
+    result[i] = value;
+  }
+
+  return result;
+}
+
+// GF(256) with irreducible polynomial x^8 + x^4 + x^3 + x + 1 (0x11b)
+function gf256Mul(a: number, b: number): number {
+  let result = 0;
+  let aa = a;
+  let bb = b;
+  for (let i = 0; i < 8; i++) {
+    if (bb & 1) result ^= aa;
+    const hi = aa & 0x80;
+    aa = (aa << 1) & 0xff;
+    if (hi) aa ^= 0x1b;
+    bb >>= 1;
+  }
+  return result;
+}
+
+function gf256Inv(a: number): number {
+  if (a === 0) throw new Error('Cannot invert zero in GF(256)');
+  // Fermat's little theorem: a^254 = a^(-1) in GF(256)
+  let result = a;
+  for (let i = 0; i < 6; i++) {
+    result = gf256Mul(result, result);
+    result = gf256Mul(result, a);
+  }
+  result = gf256Mul(result, result);
+  return result;
+}
