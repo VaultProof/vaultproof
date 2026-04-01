@@ -70,6 +70,10 @@ const PROVIDERS: Record<string, { upstream: string; authHeader: (key: string) =>
     upstream: 'https://api.stripe.com',
     authHeader: (key) => ({ Authorization: `Bearer ${key}` }),
   },
+  minimax: {
+    upstream: 'https://api.minimax.io',
+    authHeader: (key) => ({ Authorization: `Bearer ${key}` }),
+  },
 };
 
 // Providers with per-project upstream URLs.
