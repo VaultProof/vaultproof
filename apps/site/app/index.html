@@ -5,9 +5,10 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Dashboard — VaultProof</title>
+  <!-- Tailwind CDN: SRI not applicable (dynamic response) -->
   <script src="https://cdn.tailwindcss.com"></script>
-  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-  <script src="https://browser.sentry-cdn.com/8.0.0/bundle.min.js" crossorigin="anonymous"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.5.1" integrity="sha384-jb8JQMbMoBUzgWatfe6COACi2ljcDdZQ2OxczGA3bGNeWe+6DChMTBJemed7ZnvJ" crossorigin="anonymous"></script>
+  <script src="https://browser.sentry-cdn.com/8.0.0/bundle.min.js" integrity="sha384-KgfNZ/yPJH4C25ELk249/OmtPWiqwJxTf/Z5CMlCvdas3BGPSktVyCyXMGXg8vg5" crossorigin="anonymous"></script>
   <script>
     if (window.Sentry) Sentry.init({ dsn: '', environment: 'production' });
   </script>
@@ -141,7 +142,7 @@
       transition: box-shadow 0.3s ease, background 0.3s ease;
     }
   </style>
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.101.1" integrity="sha384-0VpB0wAYDdhWCEv3+IjT0Z9Kgpvszkf70RFX3ro7l4QR5nywxsMaOpmvZKsfRF8I" crossorigin="anonymous"></script>
 </head>
 <body class="text-gray-100 min-h-screen flex justify-center">
   <div class="w-full max-w-[1600px] flex relative">

@@ -39,7 +39,11 @@ export async function requireAuth(request: FastifyRequest, reply: FastifyReply) 
   // start with 'test-token-' and resolve to an existing user in the database.
   // Never set NODE_ENV=test in production.
   if (process.env.NODE_ENV === 'test') {
-    if (token.startsWith('test-token-')) {
+    // Extra safety: refuse test mode if running on Railway/production
+    if (process.env.RAILWAY_ENVIRONMENT || process.env.RAILWAY_SERVICE_NAME) {
+      request.log.error('NODE_ENV=test detected on Railway — refusing test auth bypass');
+      // Don't use the test bypass, fall through to real auth
+    } else if (token.startsWith('test-token-')) {
       const userId = token.replace('test-token-', '');
       const user = await prisma.user.findUnique({ where: { id: userId } });
       if (user) {
@@ -51,6 +55,7 @@ export async function requireAuth(request: FastifyRequest, reply: FastifyReply) 
 
   const { data: { user }, error } = await supabase.auth.getUser(token);
   if (error || !user) {
+    request.log.warn({ ip: request.ip, reason: 'invalid_token' }, 'Authentication failed');
     return reply.status(401).send({ error: 'Invalid or expired token' });
   }
 

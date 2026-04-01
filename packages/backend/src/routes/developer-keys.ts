@@ -319,9 +319,13 @@ export async function authenticateDevKey(
     where: { keyHash },
   });
 
-  if (!devKey) return null;
+  if (!devKey) {
+    request.log.warn({ ip: request.ip, reason: 'unknown_key' }, 'Dev key authentication failed');
+    return null;
+  }
 
   if (devKey.revokedAt) {
+    request.log.warn({ ip: request.ip, reason: 'revoked_key', keyId: devKey.id }, 'Dev key authentication failed');
     // Signal revoked status so callers can return a specific message
     (request as any).__vpKeyRevoked = true;
     return null;

@@ -5,6 +5,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>API Keys — VaultProof</title>
+  <!-- Tailwind CDN: SRI not applicable (dynamic response) -->
   <script src="https://cdn.tailwindcss.com"></script>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
@@ -79,7 +80,7 @@
       box-shadow: 0 0 30px rgba(99,102,241,0.4);
     }
   </style>
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.101.1" integrity="sha384-0VpB0wAYDdhWCEv3+IjT0Z9Kgpvszkf70RFX3ro7l4QR5nywxsMaOpmvZKsfRF8I" crossorigin="anonymous"></script>
 </head>
 <body class="text-gray-100 min-h-screen flex">
 
@@ -803,6 +804,8 @@ STRIPE_SECRET_KEY=sk_live_..."></textarea>
 
       grid.innerHTML = keys.map(function(k, idx) {
         var keyId = k.id || k.keySlotId;
+        // Validate keyId is a safe UUID before interpolating into JS onclick handlers
+        keyId = /^[a-f0-9-]+$/i.test(keyId) ? keyId : '';
         var isExpanded = expandedKeyId === keyId;
         var isRevoked = k.status === 'revoked';
         var escapedProvider = escapeHtml(k.provider);
@@ -1177,10 +1180,13 @@ STRIPE_SECRET_KEY=sk_live_..."></textarea>
       var msg = document.getElementById('rotateMsg');
       var btn = document.getElementById('rotateBtn');
       var keyId = document.getElementById('rotateKeyId').value;
+      // Validate keyId is a safe UUID before using in URL/JS contexts
+      keyId = /^[a-f0-9-]+$/i.test(keyId) ? keyId : '';
       var provider = document.getElementById('rotateKeyProvider').value;
       var label = document.getElementById('rotateKeyLabel').value;
       var newKey = document.getElementById('rotateNewKey').value.trim();
 
+      if (!keyId) { msg.textContent = 'Invalid key ID'; msg.className = 'text-sm text-amber-400'; msg.classList.remove('hidden'); return; }
       if (!newKey) { msg.textContent = 'Please enter the new API key'; msg.className = 'text-sm text-amber-400'; msg.classList.remove('hidden'); return; }
       msg.classList.add('hidden');
       btn.textContent = 'Rotating...';
