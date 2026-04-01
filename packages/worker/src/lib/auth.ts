@@ -14,10 +14,13 @@ export async function authenticateDevKey(
 ): Promise<DevKeyAuth | null> {
   const authHeader = request.headers.get('authorization') || '';
   const apiKeyHeader = request.headers.get('x-api-key') || '';
+  const apikeyHeader = request.headers.get('apikey') || ''; // Supabase SDK sends this
 
   let rawKey: string | null = null;
   if (apiKeyHeader.startsWith('vp_')) {
     rawKey = apiKeyHeader;
+  } else if (apikeyHeader.startsWith('vp_')) {
+    rawKey = apikeyHeader;
   } else if (authHeader.startsWith('Bearer vp_')) {
     rawKey = authHeader.slice(7);
   }
