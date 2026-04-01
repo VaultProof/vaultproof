@@ -1,169 +1,10 @@
-/**
- * VaultProof — Secured Cloudflare Worker Edge Proxy
- *
- * Security layers:
- * 1. HMAC request signing (Worker -> Backend) — prevents direct backend access
- * 2. Timestamp validation — prevents replay of signed requests
- * 3. Rate limiting per IP — prevents brute force
- * 4. CORS restricted to allowed origins
- * 5. Security headers (no sniff, no frame, etc.)
- */
+import type { Env } from './types.js';
+import { handleTransparentProxy } from './routes/transparent-proxy.js';
 
-export interface Env {
-  BACKEND_URL: string;
-  PROXY_SECRET: string; // Shared secret between Worker and Backend
-  ALLOWED_ORIGINS: string;
-}
-
-// Rate limit: track requests per IP
-const ipRequestCounts = new Map<string, { count: number; resetAt: number }>();
-const RATE_LIMIT = 60; // requests per minute per IP
-const RATE_WINDOW = 60_000; // 1 minute
-
-export default {
-  async fetch(request: Request, env: Env): Promise<Response> {
-    if (!env.BACKEND_URL || !env.PROXY_SECRET) {
-      console.error('Worker misconfigured: BACKEND_URL and PROXY_SECRET are required');
-      return Response.json({ error: 'Service misconfigured' }, { status: 500 });
-    }
-    const backendUrl = env.BACKEND_URL;
-    const proxySecret = env.PROXY_SECRET;
-    const allowedOrigins = (env.ALLOWED_ORIGINS || 'https://vaultproof.dev,https://www.vaultproof.dev').split(',').map((s) => s.trim()).filter(Boolean);
-    const origin = request.headers.get('Origin') || '';
-    const clientIp = request.headers.get('CF-Connecting-IP') || 'unknown';
-
-    // --- Layer 3: Rate limiting per IP ---
-    const now = Date.now();
-    const ipEntry = ipRequestCounts.get(clientIp);
-    if (ipEntry && now < ipEntry.resetAt) {
-      if (ipEntry.count >= RATE_LIMIT) {
-        return Response.json(
-          { error: 'Rate limit exceeded. Try again later.' },
-          { status: 429, headers: { ...corsHeaders(origin, allowedOrigins), 'Retry-After': '60' } }
-        );
-      }
-      ipEntry.count++;
-    } else {
-      ipRequestCounts.set(clientIp, { count: 1, resetAt: now + RATE_WINDOW });
-    }
-
-    // Cleanup old entries periodically
-    if (ipRequestCounts.size > 10000) {
-      for (const [ip, entry] of ipRequestCounts) {
-        if (now > entry.resetAt) ipRequestCounts.delete(ip);
-      }
-    }
-
-    // --- Layer 4: CORS preflight ---
-    if (request.method === 'OPTIONS') {
-      return new Response(null, { status: 204, headers: corsHeaders(origin, allowedOrigins) });
-    }
-
-    // Health check
-    const url = new URL(request.url);
-    if (url.pathname === '/health') {
-      return Response.json(
-        { status: 'ok', service: 'vaultproof-edge', edge: true, secured: true },
-        { headers: { ...corsHeaders(origin, allowedOrigins), ...securityHeaders() } }
-      );
-    }
-
-    // Backend health check (proxied to avoid CORS issues with Railway CDN)
-    if (url.pathname === '/backend-health') {
-      try {
-        const resp = await fetch(`${backendUrl}/health`, { signal: AbortSignal.timeout(5000) });
-        const data = await resp.json() as Record<string, unknown>;
-        return Response.json(data, {
-          status: resp.status,
-          headers: { ...corsHeaders(origin, allowedOrigins), ...securityHeaders() },
-        });
-      } catch {
-        return Response.json(
-          { status: 'down', service: 'vaultproof' },
-          { status: 502, headers: { ...corsHeaders(origin, allowedOrigins), ...securityHeaders() } }
-        );
-      }
-    }
-
-    // --- Forward /api/*, /v1/*, /admin/*, and /analytics/* to backend with signed request ---
-    if (url.pathname.startsWith('/api/') || url.pathname.startsWith('/v1/') || url.pathname.startsWith('/admin/') || url.pathname.startsWith('/analytics/')) {
-      try {
-        // --- Layer 1 + 2: HMAC request signing with timestamp ---
-        const timestamp = Date.now().toString();
-        const signPayload = `${request.method}:${url.pathname}:${timestamp}`;
-        const signature = await hmacSign(signPayload, proxySecret);
-
-        const headers = forwardHeaders(request.headers);
-        headers.set('X-Proxy-Signature', signature);
-        headers.set('X-Proxy-Timestamp', timestamp);
-        headers.set('X-Forwarded-For', clientIp);
-
-        const backendRequest = new Request(`${backendUrl}${url.pathname}${url.search}`, {
-          method: request.method,
-          headers,
-          body: request.method !== 'GET' && request.method !== 'HEAD' ? request.body : undefined,
-        });
-
-        const response = await fetch(backendRequest);
-
-        const contentType = response.headers.get('content-type') || '';
-
-        // SSE streaming
-        if (contentType.includes('text/event-stream')) {
-          return new Response(response.body, {
-            status: response.status,
-            headers: {
-              ...Object.fromEntries(response.headers.entries()),
-              ...corsHeaders(origin, allowedOrigins),
-              ...securityHeaders(),
-            },
-          });
-        }
-
-        // Standard response
-        const data = await response.text();
-        return new Response(data, {
-          status: response.status,
-          headers: {
-            'Content-Type': contentType || 'application/json',
-            ...corsHeaders(origin, allowedOrigins),
-            ...securityHeaders(),
-          },
-        });
-      } catch {
-        return Response.json(
-          { error: 'Edge proxy error' },
-          { status: 502, headers: { ...corsHeaders(origin, allowedOrigins), ...securityHeaders() } }
-        );
-      }
-    }
-
-    // Pass through to origin (Cloudflare Pages) — prevents the Worker from
-    // eating static asset requests if it's ever routed on the main domain.
-    return fetch(request);
-  },
-};
-
-// --- HMAC Signing ---
-async function hmacSign(payload: string, secret: string): Promise<string> {
-  if (!secret) throw new Error('PROXY_SECRET not set');
-  const encoder = new TextEncoder();
-  const key = await crypto.subtle.importKey(
-    'raw',
-    encoder.encode(secret),
-    { name: 'HMAC', hash: 'SHA-256' },
-    false,
-    ['sign']
-  );
-  const sig = await crypto.subtle.sign('HMAC', key, encoder.encode(payload));
-  return Array.from(new Uint8Array(sig)).map((b) => b.toString(16).padStart(2, '0')).join('');
-}
-
-// --- CORS ---
-function corsHeaders(origin: string, allowed: string[]): Record<string, string> {
-  const isAllowed = allowed.length === 0 || allowed.includes(origin) || allowed.includes('*');
+function corsHeaders(origin: string, allowedOrigins: string[]): Record<string, string> {
+  const isAllowed = allowedOrigins.includes(origin);
   return {
-    'Access-Control-Allow-Origin': isAllowed ? origin || '*' : '',
+    'Access-Control-Allow-Origin': isAllowed ? origin : allowedOrigins[0],
     'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
     'Access-Control-Allow-Headers': 'Content-Type, Authorization, X-API-Key, X-VaultProof-Session',
     'Access-Control-Allow-Credentials': 'true',
@@ -171,25 +12,81 @@ function corsHeaders(origin: string, allowed: string[]): Record<string, string> 
   };
 }
 
-// --- Security Headers ---
-function securityHeaders(): Record<string, string> {
-  return {
-    'Strict-Transport-Security': 'max-age=31536000; includeSubDomains; preload',
-    'X-Content-Type-Options': 'nosniff',
-    'X-Frame-Options': 'DENY',
-    'X-XSS-Protection': '1; mode=block',
-    'Referrer-Policy': 'strict-origin-when-cross-origin',
-    'Permissions-Policy': 'camera=(), microphone=(), geolocation=()',
-  };
+function addCors(response: Response, origin: string, allowedOrigins: string[]): Response {
+  const headers = new Headers(response.headers);
+  for (const [k, v] of Object.entries(corsHeaders(origin, allowedOrigins))) {
+    headers.set(k, v);
+  }
+  return new Response(response.body, { status: response.status, headers });
 }
 
-// --- Forward Headers ---
-function forwardHeaders(headers: Headers): Headers {
-  const forwarded = new Headers();
-  const forwardList = ['authorization', 'content-type', 'content-length', 'accept', 'x-api-key', 'stripe-signature', 'x-vaultproof-session'];
-  for (const key of forwardList) {
-    const value = headers.get(key);
-    if (value) forwarded.set(key, value);
-  }
-  return forwarded;
-}
+export default {
+  async fetch(request: Request, env: Env): Promise<Response> {
+    const url = new URL(request.url);
+    const allowedOrigins = (env.ALLOWED_ORIGINS || 'https://vaultproof.dev').split(',').map(s => s.trim());
+    const origin = request.headers.get('Origin') || '';
+
+    // CORS preflight
+    if (request.method === 'OPTIONS') {
+      return new Response(null, { status: 204, headers: corsHeaders(origin, allowedOrigins) });
+    }
+
+    // Health check
+    if (url.pathname === '/health') {
+      return addCors(
+        Response.json({ status: 'ok', service: 'vaultproof-edge', edge: true }),
+        origin, allowedOrigins
+      );
+    }
+
+    // Backend health
+    if (url.pathname === '/backend-health') {
+      return addCors(
+        Response.json({ status: 'ok', service: 'vaultproof' }),
+        origin, allowedOrigins
+      );
+    }
+
+    // Transparent proxy: /v1/* — handled directly at the edge
+    if (url.pathname.startsWith('/v1/')) {
+      const path = url.pathname.slice(4);
+      const response = await handleTransparentProxy(request, env, path);
+      return addCors(response, origin, allowedOrigins);
+    }
+
+    // All other routes: forward to Railway backend (temporary fallback)
+    if (url.pathname.startsWith('/api/') || url.pathname.startsWith('/admin/') || url.pathname.startsWith('/analytics/') || url.pathname.startsWith('/waitlist')) {
+      const backendUrl = env.BACKEND_URL;
+      if (!backendUrl) {
+        return addCors(Response.json({ error: 'Backend not configured' }, { status: 500 }), origin, allowedOrigins);
+      }
+
+      // HMAC sign the request for Railway backend auth
+      const timestamp = Date.now().toString();
+      const signPayload = `${request.method}:${url.pathname}:${timestamp}`;
+      const encoder = new TextEncoder();
+      const keyData = encoder.encode(env.PROXY_SECRET);
+      const cryptoKey = await crypto.subtle.importKey('raw', keyData, { name: 'HMAC', hash: 'SHA-256' }, false, ['sign']);
+      const sig = await crypto.subtle.sign('HMAC', cryptoKey, encoder.encode(signPayload));
+      const signature = Array.from(new Uint8Array(sig)).map(b => b.toString(16).padStart(2, '0')).join('');
+
+      const headers = new Headers(request.headers);
+      headers.set('X-Proxy-Signature', signature);
+      headers.set('X-Proxy-Timestamp', timestamp);
+      headers.set('X-Forwarded-For', request.headers.get('CF-Connecting-IP') || 'unknown');
+
+      const backendResponse = await fetch(`${backendUrl}${url.pathname}${url.search}`, {
+        method: request.method,
+        headers,
+        body: request.method !== 'GET' && request.method !== 'HEAD' ? request.body : undefined,
+      });
+
+      return addCors(
+        new Response(backendResponse.body, { status: backendResponse.status, headers: backendResponse.headers }),
+        origin, allowedOrigins
+      );
+    }
+
+    return addCors(Response.json({ error: 'Not found' }, { status: 404 }), origin, allowedOrigins);
+  },
+};
