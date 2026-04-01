@@ -6,7 +6,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>API Keys — VaultProof</title>
   <!-- Tailwind CDN: SRI not applicable (dynamic response) -->
-  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdn.tailwindcss.com/3.4.17"></script>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet" />
@@ -610,6 +610,11 @@ STRIPE_SECRET_KEY=sk_live_..."></textarea>
         );
         await sb.auth.signOut();
       } catch {}
+      // Clear all share2 data
+      Object.keys(localStorage).forEach(function(key) {
+        if (key.startsWith('vaultproof_share2_')) localStorage.removeItem(key);
+      });
+      sessionStorage.clear();
       localStorage.removeItem('vaultproof_token');
       localStorage.removeItem('vaultproof_user');
       window.location.href = 'login';
@@ -1729,8 +1734,8 @@ exampleBody + '\n' +
         html += '<label class="flex items-center gap-3 p-3 bg-[#0a0a0f] border border-[#1e1e2e] rounded-xl cursor-pointer hover:border-gray-500 transition">' +
           '<input type="checkbox" ' + (k.selected ? 'checked' : '') + ' onchange="detectedKeys[' + i + '].selected = this.checked" class="rounded">' +
           '<div class="flex-1 min-w-0">' +
-          '<div class="text-sm text-white font-medium">' + k.envName + '</div>' +
-          '<div class="text-xs text-gray-500 font-mono truncate">' + masked + '</div>' +
+          '<div class="text-sm text-white font-medium">' + escapeHtml(k.envName) + '</div>' +
+          '<div class="text-xs text-gray-500 font-mono truncate">' + escapeHtml(masked) + '</div>' +
           '</div>' +
           '<span class="text-xs px-2 py-0.5 rounded-lg bg-indigo-500/10 text-indigo-400 border border-indigo-500/20">' + escapeHtml(k.provider) + '</span>' +
           '</label>';

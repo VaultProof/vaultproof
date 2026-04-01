@@ -6,7 +6,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Dashboard — VaultProof</title>
   <!-- Tailwind CDN: SRI not applicable (dynamic response) -->
-  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdn.tailwindcss.com/3.4.17"></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.5.1" integrity="sha384-jb8JQMbMoBUzgWatfe6COACi2ljcDdZQ2OxczGA3bGNeWe+6DChMTBJemed7ZnvJ" crossorigin="anonymous"></script>
   <script src="https://browser.sentry-cdn.com/8.0.0/bundle.min.js" integrity="sha384-KgfNZ/yPJH4C25ELk249/OmtPWiqwJxTf/Z5CMlCvdas3BGPSktVyCyXMGXg8vg5" crossorigin="anonymous"></script>
   <script>
@@ -653,6 +653,11 @@
         );
         await sb.auth.signOut();
       } catch {}
+      // Clear all share2 data
+      Object.keys(localStorage).forEach(function(key) {
+        if (key.startsWith('vaultproof_share2_')) localStorage.removeItem(key);
+      });
+      sessionStorage.clear();
       localStorage.removeItem('vaultproof_token');
       localStorage.removeItem('vaultproof_user');
       window.location.href = 'login';
@@ -1102,7 +1107,7 @@
         list.innerHTML = notifs.map(n => {
           const isUnread = !readIds.includes(n.id);
           const colors = typeColors[n.type] || typeColors.info;
-          const safeLink = n.link && !String(n.link).trim().toLowerCase().startsWith('javascript:') ? n.link : '';
+          const safeLink = n.link && /^(https:\/\/|\/[^\/])/.test(String(n.link).trim()) ? n.link : '';
           return `
             <div class="px-4 py-3 border-b border-border/50 hover:bg-white/[0.02] transition ${isUnread ? '' : 'opacity-60'}">
               <div class="flex items-start gap-3">

@@ -6,7 +6,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Scanner — VaultProof</title>
   <!-- Tailwind CDN: SRI not applicable (dynamic response) -->
-  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdn.tailwindcss.com/3.4.17"></script>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet" />
@@ -700,6 +700,11 @@
         );
         await sb.auth.signOut();
       } catch {}
+      // Clear all share2 data
+      Object.keys(localStorage).forEach(function(key) {
+        if (key.startsWith('vaultproof_share2_')) localStorage.removeItem(key);
+      });
+      sessionStorage.clear();
       localStorage.removeItem('vaultproof_token');
       localStorage.removeItem('vaultproof_user');
       window.location.href = 'login';

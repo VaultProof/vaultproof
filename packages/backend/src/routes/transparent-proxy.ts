@@ -177,9 +177,8 @@ export async function transparentProxyRoutes(app: FastifyInstance) {
           error: `"${provider}" doesn't support the transparent proxy yet. See https://vaultproof.dev/docs#sdk-reference`,
         });
       }
-      const supported = [...Object.keys(PROVIDERS), ...Object.keys(DYNAMIC_PROVIDERS)].join(', ');
       return reply.status(400).send({
-        error: `Unknown provider "${provider}". Supported: ${supported}.`,
+        error: `Unknown provider: '${provider}'`,
       });
     }
 
