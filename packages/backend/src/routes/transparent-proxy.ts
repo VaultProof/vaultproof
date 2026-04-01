@@ -19,7 +19,7 @@ import { randomBytes } from 'crypto';
 import { sendUsageAlert, sendInvalidKeyAlert } from '../services/email.js';
 import { sendWebhook } from '../services/webhook.js';
 
-const NON_PROXY_PROVIDERS = new Set(['stripe', 'aws', 'supabase', 'twilio', 'sendgrid', 'github', 'firebase', 'smtp', 'mailgun', 'postmark']);
+const NON_PROXY_PROVIDERS = new Set(['aws', 'twilio', 'sendgrid', 'github', 'firebase', 'smtp', 'mailgun', 'postmark']);
 
 const PROVIDERS: Record<string, { upstream: string; authHeader: (key: string) => Record<string, string> }> = {
   openai: {
@@ -65,6 +65,29 @@ const PROVIDERS: Record<string, { upstream: string; authHeader: (key: string) =>
   replicate: {
     upstream: 'https://api.replicate.com',
     authHeader: (key) => ({ Authorization: `Bearer ${key}` }),
+  },
+  stripe: {
+    upstream: 'https://api.stripe.com',
+    authHeader: (key) => ({ Authorization: `Bearer ${key}` }),
+  },
+};
+
+// Providers with per-project upstream URLs.
+// Format: /v1/supabase/<project-ref>/rest/v1/table
+const DYNAMIC_PROVIDERS: Record<string, {
+  buildUpstream: (segments: string[]) => { url: string; remainingPath: string } | null;
+  authHeader: (key: string) => Record<string, string>;
+}> = {
+  supabase: {
+    buildUpstream: (segments) => {
+      // segments[0] = project ref, rest = path
+      if (segments.length < 2) return null;
+      const projectRef = segments[0];
+      if (!/^[a-z0-9]+$/.test(projectRef)) return null;
+      const remainingPath = '/' + segments.slice(1).join('/');
+      return { url: `https://${projectRef}.supabase.co`, remainingPath };
+    },
+    authHeader: (key) => ({ apikey: key, Authorization: `Bearer ${key}` }),
   },
 };
 
@@ -143,14 +166,16 @@ export async function transparentProxyRoutes(app: FastifyInstance) {
     const wildcardPath = (request.params as any)['*'] as string;
 
     const providerConfig = PROVIDERS[provider];
-    if (!providerConfig) {
+    const dynamicConfig = !providerConfig ? DYNAMIC_PROVIDERS[provider] : null;
+    if (!providerConfig && !dynamicConfig) {
       if (NON_PROXY_PROVIDERS.has(provider)) {
         return reply.status(400).send({
-          error: `"${provider}" doesn't support the transparent proxy. Use vault.retrieve() in the SDK instead. See https://vaultproof.dev/docs#sdk-reference`,
+          error: `"${provider}" doesn't support the transparent proxy yet. See https://vaultproof.dev/docs#sdk-reference`,
         });
       }
+      const supported = [...Object.keys(PROVIDERS), ...Object.keys(DYNAMIC_PROVIDERS)].join(', ');
       return reply.status(400).send({
-        error: `Unknown provider "${provider}". Supported: openai, anthropic, google, together, mistral, cohere, groq, perplexity, fireworks, deepseek, replicate. For other providers, use vault.retrieve().`,
+        error: `Unknown provider "${provider}". Supported: ${supported}.`,
       });
     }
 
@@ -353,7 +378,18 @@ export async function transparentProxyRoutes(app: FastifyInstance) {
     // Preserve query string from the original request
     const queryIndex = request.url.indexOf('?');
     const queryString = queryIndex !== -1 ? request.url.slice(queryIndex) : '';
-    const upstreamUrl = `${providerConfig.upstream}/${wildcardPath}${queryString}`;
+    let upstreamUrl: string;
+    if (providerConfig) {
+      upstreamUrl = `${providerConfig.upstream}/${wildcardPath}${queryString}`;
+    } else {
+      // Dynamic provider — extract project ref from wildcard path
+      const segments = wildcardPath.split('/');
+      const resolved = dynamicConfig!.buildUpstream(segments);
+      if (!resolved) {
+        return reply.status(400).send({ error: `Invalid ${provider} URL. Expected: /v1/${provider}/<project-ref>/rest/v1/...` });
+      }
+      upstreamUrl = `${resolved.url}${resolved.remainingPath}${queryString}`;
+    }
 
     // --- g. Forward the exact request ---
     const baseForwardHeaders: Record<string, string> = {};
@@ -374,7 +410,8 @@ export async function transparentProxyRoutes(app: FastifyInstance) {
     const startTime = Date.now();
 
     // Inject real provider auth header for primary request
-    const forwardHeaders = { ...baseForwardHeaders, ...providerConfig.authHeader(apiKey) };
+    const authHeaders = providerConfig ? providerConfig.authHeader(apiKey) : dynamicConfig!.authHeader(apiKey);
+    const forwardHeaders = { ...baseForwardHeaders, ...authHeaders };
 
     // Only fallback if primary fetch throws (network unreachable), not on 5xx.
     let fallbackProvider: string | null = null;
