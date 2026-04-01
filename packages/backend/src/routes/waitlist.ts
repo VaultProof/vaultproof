@@ -7,7 +7,7 @@ const supabase = createClient(
 );
 
 export async function waitlistRoutes(fastify: FastifyInstance) {
-  fastify.post('/api/waitlist', async (request, reply) => {
+  fastify.post('/api/waitlist', { config: { rateLimit: { max: 5, timeWindow: '1 minute' } } }, async (request, reply) => {
     const { email } = request.body as { email?: string };
 
     if (!email || !email.includes('@')) {

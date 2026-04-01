@@ -44,7 +44,7 @@ export async function authenticateDevKey(
 
     if (error || !data) return null;
     devKey = data as DevKeyRecord;
-    await cacheSet(env, cacheKey, devKey, 30);
+    await cacheSet(env, cacheKey, devKey, 10);
   }
 
   if (devKey.revoked_at) return null;

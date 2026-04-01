@@ -13,7 +13,7 @@ import { requireAuth } from '../middleware/auth.js';
 import { encrypt, decrypt } from '../crypto/encryption.js';
 import { encryptShare2 } from '../crypto/share2-encryption.js';
 import { splitString, serializeShare } from '@vaultproof/shamir';
-import { randomBytes, createHash, createHmac } from 'crypto';
+import { randomBytes, createHash, createHmac, timingSafeEqual } from 'crypto';
 
 // ─── Config ──────────────────────────────────────────────────────────────────
 
@@ -356,7 +356,7 @@ export async function scannerRoutes(app: FastifyInstance) {
       }
       const payloadStr = Buffer.from(payloadB64, 'base64url').toString();
       const expectedHmac = createHmac('sha256', process.env.PROXY_SECRET || '').update(payloadStr).digest('hex');
-      if (hmac !== expectedHmac) {
+      if (!hmac || !expectedHmac || hmac.length !== expectedHmac.length || !timingSafeEqual(Buffer.from(hmac), Buffer.from(expectedHmac))) {
         return reply.status(400).send({ error: 'Invalid state signature' });
       }
       stateData = JSON.parse(payloadStr);

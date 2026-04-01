@@ -65,6 +65,9 @@ if (process.env.NODE_ENV !== 'test' && process.env.NODE_ENV !== 'development') {
     missing.forEach(s => console.error(`  - ${s}`));
     process.exit(1);
   }
+  if (!process.env.STRIPE_SECRET_KEY) {
+    console.warn('STRIPE_SECRET_KEY not set — billing features will fail');
+  }
   if (!process.env.REQUIRE_REAL_PROOFS) {
     console.error('FATAL: REQUIRE_REAL_PROOFS not set. ZK proof verification would use insecure placeholder.');
     console.error('  Set REQUIRE_REAL_PROOFS=true in your environment variables.');
@@ -73,7 +76,7 @@ if (process.env.NODE_ENV !== 'test' && process.env.NODE_ENV !== 'development') {
 }
 
 async function start() {
-  const app = Fastify({ logger: true });
+  const app = Fastify({ logger: true, trustProxy: true });
 
   // Security headers
   await app.register(helmet, {

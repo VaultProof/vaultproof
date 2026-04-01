@@ -1,6 +1,7 @@
 import type { FastifyInstance, FastifyRequest, FastifyReply } from 'fastify';
 import { prisma } from '../lib/prisma.js';
 import { createClient } from '@supabase/supabase-js';
+import { z } from 'zod';
 
 /**
  * Hidden admin routes — owner-only.
@@ -419,14 +420,15 @@ export async function adminRoutes(app: FastifyInstance) {
   });
 
   // ─── Change user tier ────────────────────────────────────────────
+  const tierSchema = z.object({ tier: z.enum(['free', 'starter', 'pro', 'team', 'enterprise', 'banned']) });
+
   app.put('/users/:userId/tier', async (request, reply) => {
     const { userId } = request.params as { userId: string };
-    const { tier } = request.body as { tier: string };
-    const validTiers = ['free', 'starter', 'pro', 'team', 'enterprise', 'banned'];
-
-    if (!tier || !validTiers.includes(tier)) {
-      return reply.status(400).send({ error: 'Invalid tier. Must be one of: ' + validTiers.join(', ') });
+    const parsed = tierSchema.safeParse(request.body);
+    if (!parsed.success) {
+      return reply.status(400).send({ error: 'Invalid tier. Must be one of: free, starter, pro, team, enterprise, banned' });
     }
+    const { tier } = parsed.data;
 
     const user = await prisma.user.findUnique({ where: { id: userId }, select: { id: true, email: true } });
     if (!user) return reply.status(404).send({ error: 'User not found' });

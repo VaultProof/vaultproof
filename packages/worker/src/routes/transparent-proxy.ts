@@ -123,8 +123,8 @@ export async function handleTransparentProxy(
   else fetchPromises.push(Promise.resolve(null));
 
   const [userRes, keyRes] = await Promise.all(fetchPromises);
-  if (userRes?.data && !userRes.error) { user = userRes.data; await cacheSet(env, userCacheKey, user, 60); }
-  if (keyRes?.data && !keyRes.error) { keySlot = keyRes.data; await cacheSet(env, keyCacheKey, keySlot, 30); }
+  if (userRes?.data && !userRes.error) { user = userRes.data; await cacheSet(env, userCacheKey, user, 10); }
+  if (keyRes?.data && !keyRes.error) { keySlot = keyRes.data; await cacheSet(env, keyCacheKey, keySlot, 10); }
 
   if (user?.kill_switch) {
     return Response.json({ error: 'All proxy calls are paused.' }, { status: 503 });

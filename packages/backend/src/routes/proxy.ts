@@ -49,6 +49,8 @@ const proxyCallSchema = z.object({
   body: z.unknown().optional(),
 });
 
+const proxyRateLimit = new Map<string, { count: number; resetAt: number }>();
+
 export async function proxyRoutes(app: FastifyInstance) {
   // NOTE: No requireAuth — widget flow authenticates via ZK proof + app grant + nullifier.
   // Users send Share 2 directly. JWT is not used in the widget flow.
@@ -59,6 +61,18 @@ export async function proxyRoutes(app: FastifyInstance) {
     }
 
     const { keySlotId, share2, zkProof, nullifier, appId, targetPath, method, stream, headers: clientHeaders, body: clientBody } = parsed.data;
+
+    // Per-appId burst rate limit (60 req/min)
+    const now = Date.now();
+    const record = proxyRateLimit.get(appId);
+    if (record && now < record.resetAt && record.count >= 60) {
+      return reply.status(429).send({ error: 'Rate limit exceeded (60 req/min)' });
+    }
+    if (!record || now >= record.resetAt) {
+      proxyRateLimit.set(appId, { count: 1, resetAt: now + 60000 });
+    } else {
+      record.count++;
+    }
 
     // 1. Load key slot + verify app authorization (read-only, no DB writes yet)
     const keySlot = await prisma.keySlot.findUnique({
