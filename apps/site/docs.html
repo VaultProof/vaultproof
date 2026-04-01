@@ -228,11 +228,11 @@
             <!-- ============================================================ -->
             <!-- SECTION 1: OVERVIEW -->
             <!-- ============================================================ -->
-            <section id="overview" class="mb-20">
+            <section id="overview" class="mb-16">
                 <h1 class="text-4xl font-extrabold text-white mb-3 tracking-tight">VaultProof Documentation</h1>
                 <p class="text-lg text-gray-400 mb-8 leading-relaxed max-w-2xl">Everything you need to store, protect, and proxy your API keys and secrets with zero-knowledge security.</p>
 
-                <div class="bg-vp-surface border border-vp-border rounded-xl p-6 mb-8">
+                <div class="bg-vp-surface border border-vp-border rounded-md p-6 mb-8">
                     <h2 class="text-xl font-bold text-white mb-3">What is VaultProof?</h2>
                     <p class="text-gray-400 leading-relaxed mb-4">
                         VaultProof is a security layer for API keys and secrets. It splits your keys using Shamir Secret Sharing, encrypts the shares separately, and reassembles them only for the milliseconds it takes to make a proxied API call. Your raw API key is never stored whole on any server.
@@ -246,15 +246,15 @@
                 </div>
 
                 <div class="grid md:grid-cols-3 gap-4">
-                    <div class="bg-vp-surface border border-vp-border rounded-xl p-5">
+                    <div class="bg-vp-surface border border-vp-border rounded-md p-5">
                         <div class="text-vp-accent font-semibold mb-2">Store</div>
                         <p class="text-sm text-gray-500">Split and encrypt API keys with Shamir Secret Sharing. No one -- including us -- can see the full key.</p>
                     </div>
-                    <div class="bg-vp-surface border border-vp-border rounded-xl p-5">
+                    <div class="bg-vp-surface border border-vp-border rounded-md p-5">
                         <div class="text-vp-accent font-semibold mb-2">Proxy</div>
                         <p class="text-sm text-gray-500">Make API calls through VaultProof. The key is reconstructed in memory for ~100ms, then destroyed.</p>
                     </div>
-                    <div class="bg-vp-surface border border-vp-border rounded-xl p-5">
+                    <div class="bg-vp-surface border border-vp-border rounded-md p-5">
                         <div class="text-vp-accent font-semibold mb-2">Audit</div>
                         <p class="text-sm text-gray-500">Every proxied call is logged with timestamp, endpoint, status code, and latency. Full audit trail.</p>
                     </div>
@@ -265,12 +265,12 @@
             <!-- ============================================================ -->
             <!-- SECTION 2: QUICK START -->
             <!-- ============================================================ -->
-            <section id="quick-start" class="mb-20">
+            <section id="quick-start" class="mb-16">
                 <h2 class="text-3xl font-bold text-white mb-2">Quick Start</h2>
                 <p class="text-gray-500 mb-8">Four ways to use VaultProof. The Proxy URL is the fastest -- one line change and every SDK works.</p>
 
                 <!-- Proxy URL vs SDK vs CLI vs Dashboard -->
-                <div class="bg-vp-surface border border-vp-border rounded-xl overflow-hidden mb-8">
+                <div class="bg-vp-surface border border-vp-border rounded-md overflow-hidden mb-8">
                     <table class="doc-table">
                         <thead><tr><th>Tool</th><th>What it is</th><th>Use when</th><th>Install</th></tr></thead>
                         <tbody>
@@ -490,7 +490,7 @@ $ vaultproof store -h</pre>
                         <h3 class="text-lg font-semibold text-white">Dashboard -- visual web interface</h3>
                     </div>
                     <p class="text-gray-500 text-sm mb-4">Use the dashboard to manage keys visually, monitor usage, view logs, and configure settings. No install needed.</p>
-                    <div class="bg-vp-surface border border-vp-border rounded-xl p-5">
+                    <div class="bg-vp-surface border border-vp-border rounded-md p-5">
                         <ol class="list-decimal list-inside space-y-2 text-sm text-gray-400">
                             <li>Go to <a href="/app/login" class="text-vp-accent hover:underline">vaultproof.dev/app</a> and create an account or log in</li>
                             <li>Navigate to <strong class="text-white">Keys</strong> and click <strong class="text-white">Add Key</strong></li>
@@ -506,7 +506,7 @@ $ vaultproof store -h</pre>
             <!-- ============================================================ -->
             <!-- SECTION 3: HOW IT WORKS -->
             <!-- ============================================================ -->
-            <section id="how-it-works" class="mb-20">
+            <section id="how-it-works" class="mb-16">
                 <h2 class="text-3xl font-bold text-white mb-2">How It Works</h2>
                 <p class="text-gray-500 mb-10">A deep dive into the cryptographic pipeline that protects your keys.</p>
 
@@ -597,7 +597,7 @@ $ vaultproof store -h</pre>
                     <h3 class="text-xl font-semibold text-white mb-6">3.3 What Happens in a Breach</h3>
                     <p class="text-gray-400 text-sm mb-6">VaultProof is designed so that compromising any single component does not expose your API keys. Here is what an attacker gets in each scenario:</p>
 
-                    <div class="bg-vp-surface border border-vp-border rounded-xl overflow-hidden">
+                    <div class="bg-vp-surface border border-vp-border rounded-md overflow-hidden">
                         <table class="doc-table breach-table">
                             <thead>
                                 <tr>
@@ -610,27 +610,27 @@ $ vaultproof store -h</pre>
                                 <tr>
                                     <td>Database breached</td>
                                     <td class="text-gray-400">Two encrypted blobs per key (AES-256-GCM ciphertext). Without either decryption key, this is indistinguishable from random data.</td>
-                                    <td><span class="text-red-400 font-semibold">No</span></td>
+                                    <td><span class="text-amber-400 font-semibold">No</span></td>
                                 </tr>
                                 <tr>
                                     <td>VAULT_ENCRYPTION_KEY leaked</td>
                                     <td class="text-gray-400">Can decrypt Share 1. But Share 2 is still encrypted with the user's <code class="font-mono text-xs text-vp-accent">vp_live_</code> key. One share alone reveals nothing (Shamir property).</td>
-                                    <td><span class="text-red-400 font-semibold">No</span></td>
+                                    <td><span class="text-amber-400 font-semibold">No</span></td>
                                 </tr>
                                 <tr>
                                     <td>vp_live_ key leaked</td>
                                     <td class="text-gray-400">Can decrypt Share 2. But Share 1 is still encrypted with <code class="font-mono text-xs">VAULT_ENCRYPTION_KEY</code>. One share alone reveals nothing.</td>
-                                    <td><span class="text-red-400 font-semibold">No</span></td>
+                                    <td><span class="text-amber-400 font-semibold">No</span></td>
                                 </tr>
                                 <tr>
                                     <td>Database + VAULT_ENCRYPTION_KEY</td>
                                     <td class="text-gray-400">Decrypted Share 1. Encrypted Share 2 (still locked).</td>
-                                    <td><span class="text-red-400 font-semibold">No</span></td>
+                                    <td><span class="text-amber-400 font-semibold">No</span></td>
                                 </tr>
                                 <tr>
                                     <td>Database + vp_live_ key</td>
                                     <td class="text-gray-400">Encrypted Share 1 (still locked). Decrypted Share 2.</td>
-                                    <td><span class="text-red-400 font-semibold">No</span></td>
+                                    <td><span class="text-amber-400 font-semibold">No</span></td>
                                 </tr>
                                 <tr>
                                     <td class="!text-amber-400">All three compromised</td>
@@ -642,7 +642,7 @@ $ vaultproof store -h</pre>
                     </div>
 
                     <div class="callout-danger mt-6">
-                        <p class="text-sm text-red-300"><strong>Three independent secrets</strong> must all be compromised simultaneously to reconstruct any API key: (1) the database contents, (2) the server-side <code class="font-mono text-xs">VAULT_ENCRYPTION_KEY</code>, and (3) the user's <code class="font-mono text-xs">vp_live_</code> developer key. These are stored in different systems with different access controls.</p>
+                        <p class="text-sm text-amber-300"><strong>Three independent secrets</strong> must all be compromised simultaneously to reconstruct any API key: (1) the database contents, (2) the server-side <code class="font-mono text-xs">VAULT_ENCRYPTION_KEY</code>, and (3) the user's <code class="font-mono text-xs">vp_live_</code> developer key. These are stored in different systems with different access controls.</p>
                     </div>
                 </div>
 
@@ -650,14 +650,14 @@ $ vaultproof store -h</pre>
                 <div id="shamir" class="mb-14">
                     <h3 class="text-xl font-semibold text-white mb-6">3.4 Shamir Secret Sharing Explained</h3>
 
-                    <div class="bg-vp-surface border border-vp-border rounded-xl p-6 mb-6">
+                    <div class="bg-vp-surface border border-vp-border rounded-md p-6 mb-6">
                         <h4 class="text-white font-medium mb-3">The simple version</h4>
                         <p class="text-gray-400 text-sm leading-relaxed">
                             Think of it like tearing a photo in half. Each half looks like random noise -- you cannot tell what the photo is from either piece alone. Only when you put both halves together do you see the picture. VaultProof tears your API key into two pieces of cryptographic noise. Each piece is then locked in a separate safe with a separate key. To see the photo again, you need to open both safes.
                         </p>
                     </div>
 
-                    <div class="bg-vp-surface border border-vp-border rounded-xl p-6">
+                    <div class="bg-vp-surface border border-vp-border rounded-md p-6">
                         <h4 class="text-white font-medium mb-3">The technical version</h4>
                         <p class="text-gray-400 text-sm leading-relaxed mb-4">
                             Shamir Secret Sharing (SSS) works over a finite field -- in VaultProof's case, <strong class="text-gray-300">GF(256)</strong> (the Galois Field with 256 elements, where each element fits in one byte).
@@ -680,15 +680,15 @@ $ vaultproof store -h</pre>
                     <p class="text-gray-400 text-sm mb-6">For advanced security, VaultProof uses zero-knowledge proofs (ZK proofs) written in <a href="https://noir-lang.org" class="text-vp-accent hover:underline" target="_blank" rel="noopener">Noir</a> and verified with Barretenberg. The ZK circuit proves three things without revealing any sensitive data:</p>
 
                     <div class="grid md:grid-cols-3 gap-4 mb-6">
-                        <div class="bg-vp-surface border border-vp-border rounded-xl p-5">
+                        <div class="bg-vp-surface border border-vp-border rounded-md p-5">
                             <div class="text-vp-accent font-semibold text-sm mb-2">1. Ownership</div>
                             <p class="text-gray-500 text-xs leading-relaxed">You own the key slot you are requesting access to. The proof verifies your vault commitment hash matches without revealing the key material.</p>
                         </div>
-                        <div class="bg-vp-surface border border-vp-border rounded-xl p-5">
+                        <div class="bg-vp-surface border border-vp-border rounded-md p-5">
                             <div class="text-vp-accent font-semibold text-sm mb-2">2. Authorization</div>
                             <p class="text-gray-500 text-xs leading-relaxed">The requesting application has been granted access to this key slot. The proof checks the app grant without exposing the grant chain.</p>
                         </div>
-                        <div class="bg-vp-surface border border-vp-border rounded-xl p-5">
+                        <div class="bg-vp-surface border border-vp-border rounded-md p-5">
                             <div class="text-vp-accent font-semibold text-sm mb-2">3. Freshness</div>
                             <p class="text-gray-500 text-xs leading-relaxed">The request is fresh and not replayed. Each proof includes a unique nullifier that is stored server-side. If the same nullifier appears twice, the request is rejected.</p>
                         </div>
@@ -704,7 +704,7 @@ $ vaultproof store -h</pre>
             <!-- ============================================================ -->
             <!-- PACKAGES OVERVIEW -->
             <!-- ============================================================ -->
-            <section id="packages" class="mb-20">
+            <section id="packages" class="mb-16">
                 <h2 class="text-3xl font-bold text-white mb-2">Packages</h2>
                 <p class="text-gray-500 mb-8">VaultProof ships 4 npm packages. Install only the one you need -- dependencies are bundled automatically.</p>
 
@@ -763,7 +763,7 @@ $ vaultproof store -h</pre>
             <!-- ============================================================ -->
             <!-- SECTION 3.5: PROXY URL REFERENCE -->
             <!-- ============================================================ -->
-            <section id="proxy-url-reference" class="mb-20">
+            <section id="proxy-url-reference" class="mb-16">
                 <h2 class="text-3xl font-bold text-white mb-2">Proxy URL Reference</h2>
                 <p class="text-gray-500 mb-8">The recommended way to use VaultProof. Route any AI SDK through VaultProof by changing one URL.</p>
 
@@ -780,7 +780,7 @@ $ vaultproof store -h</pre>
                 <!-- Supported Providers -->
                 <div class="mb-8">
                     <h3 class="text-lg font-semibold text-white mb-4">Supported Providers</h3>
-                    <div class="bg-vp-surface border border-vp-border rounded-xl overflow-hidden">
+                    <div class="bg-vp-surface border border-vp-border rounded-md overflow-hidden">
                         <table class="doc-table">
                             <thead><tr><th>Provider</th><th>Proxy Base URL</th><th>Upstream</th></tr></thead>
                             <tbody>
@@ -906,7 +906,7 @@ res = client.chat.completions.<span class="fn">create</span>(
             <!-- ============================================================ -->
             <!-- SECTION 4: SDK REFERENCE -->
             <!-- ============================================================ -->
-            <section id="sdk-reference" class="mb-20">
+            <section id="sdk-reference" class="mb-16">
                 <h2 class="text-3xl font-bold text-white mb-2">SDK Reference</h2>
                 <p class="text-gray-500 mb-8">The JavaScript/TypeScript SDK for storing keys and making proxied API calls.</p>
 
@@ -929,7 +929,7 @@ res = client.chat.completions.<span class="fn">create</span>(
                     <div class="code-block mb-4">
 <pre class="text-gray-300"><span class="kw">new</span> <span class="fn">VaultProof</span>(apiKey: <span class="typ">string</span>, apiUrl?: <span class="typ">string</span>)</pre>
                     </div>
-                    <div class="bg-vp-surface border border-vp-border rounded-xl overflow-hidden">
+                    <div class="bg-vp-surface border border-vp-border rounded-md overflow-hidden">
                         <table class="doc-table">
                             <thead><tr><th>Parameter</th><th>Type</th><th>Required</th><th>Description</th></tr></thead>
                             <tbody>
@@ -968,7 +968,7 @@ res = client.chat.completions.<span class="fn">create</span>(
                     <div class="endpoint-card mb-6">
                         <h4 class="text-white font-mono text-sm font-semibold mb-3">vault.store(apiKey, provider, label?)</h4>
                         <p class="text-gray-400 text-sm mb-4">Splits an API key using Shamir Secret Sharing, encrypts both shares, and stores them on the VaultProof server. The raw key is destroyed after splitting.</p>
-                        <div class="bg-vp-surface border border-vp-border rounded-xl overflow-hidden mb-4">
+                        <div class="bg-vp-surface border border-vp-border rounded-md overflow-hidden mb-4">
                             <table class="doc-table">
                                 <thead><tr><th>Parameter</th><th>Type</th><th>Required</th><th>Description</th></tr></thead>
                                 <tbody>
@@ -1021,7 +1021,7 @@ res = client.chat.completions.<span class="fn">create</span>(
                     <div class="endpoint-card mb-6">
                         <h4 class="text-white font-mono text-sm font-semibold mb-3">vault.proxy(keyId, path, body?, method?)</h4>
                         <p class="text-gray-400 text-sm mb-4">Makes a proxied API call through VaultProof. The key is reconstructed in server RAM for approximately 100ms, then zeroed. The provider's response is returned directly.</p>
-                        <div class="bg-vp-surface border border-vp-border rounded-xl overflow-hidden mb-4">
+                        <div class="bg-vp-surface border border-vp-border rounded-md overflow-hidden mb-4">
                             <table class="doc-table">
                                 <thead><tr><th>Parameter</th><th>Type</th><th>Required</th><th>Description</th></tr></thead>
                                 <tbody>
@@ -1065,7 +1065,7 @@ res = client.chat.completions.<span class="fn">create</span>(
                     <div class="endpoint-card mb-6">
                         <h4 class="text-white font-mono text-sm font-semibold mb-3">vault.setSessionToken(token)</h4>
                         <p class="text-gray-400 text-sm mb-4">Updates the session token used for authenticated requests. Call this after refreshing an expired token to avoid re-initializing the SDK.</p>
-                        <div class="bg-vp-surface border border-vp-border rounded-xl overflow-hidden mb-4">
+                        <div class="bg-vp-surface border border-vp-border rounded-md overflow-hidden mb-4">
                             <table class="doc-table">
                                 <thead><tr><th>Parameter</th><th>Type</th><th>Required</th><th>Description</th></tr></thead>
                                 <tbody>
@@ -1108,7 +1108,7 @@ vault.setSessionToken(token);</pre>
                     <div class="endpoint-card mb-6">
                         <h4 class="text-white font-mono text-sm font-semibold mb-3">vault.revoke(keyId)</h4>
                         <p class="text-gray-400 text-sm mb-4">Permanently destroys both encrypted shares on the server. This is irreversible. The key can never be reconstructed after revocation.</p>
-                        <div class="bg-vp-surface border border-vp-border rounded-xl overflow-hidden mb-4">
+                        <div class="bg-vp-surface border border-vp-border rounded-md overflow-hidden mb-4">
                             <table class="doc-table">
                                 <thead><tr><th>Parameter</th><th>Type</th><th>Required</th><th>Description</th></tr></thead>
                                 <tbody>
@@ -1128,7 +1128,7 @@ vault.setSessionToken(token);</pre>
                     <div class="endpoint-card">
                         <h4 class="text-white font-mono text-sm font-semibold mb-3">PUT /sdk/keys/:keyId/limits</h4>
                         <p class="text-gray-400 text-sm mb-4">Update per-key call limits. Set daily and monthly caps to control API usage. When a limit is reached, calls are either blocked (HTTP 429) or allowed with an alert email, depending on the <code class="font-mono text-xs text-vp-accent">blockOnLimit</code> setting.</p>
-                        <div class="bg-vp-surface border border-vp-border rounded-xl overflow-hidden mb-4">
+                        <div class="bg-vp-surface border border-vp-border rounded-md overflow-hidden mb-4">
                             <table class="doc-table">
                                 <thead><tr><th>Parameter</th><th>Type</th><th>Required</th><th>Description</th></tr></thead>
                                 <tbody>
@@ -1157,7 +1157,7 @@ vault.setSessionToken(token);</pre>
                         <div class="code-block">
 <pre class="text-gray-300">{ status: <span class="str">"updated"</span>, dailyLimit: <span class="num">500</span>, monthlyLimit: <span class="num">10000</span>, blockOnLimit: <span class="kw">true</span> }</pre>
                         </div>
-                        <div class="mt-4 bg-amber-500/5 border border-amber-500/20 rounded-xl p-4">
+                        <div class="mt-4 bg-amber-500/5 border border-amber-500/20 rounded-md p-4">
                             <p class="text-amber-400 text-xs font-medium mb-1">Rate limit response (HTTP 429)</p>
                             <div class="code-block mt-2">
 <pre class="text-gray-300">{ error: <span class="str">"Daily call limit reached"</span>, limit: <span class="num">500</span>, used: <span class="num">500</span>, resets: <span class="str">"midnight UTC"</span> }</pre>
@@ -1169,7 +1169,7 @@ vault.setSessionToken(token);</pre>
                 <!-- Supported Providers -->
                 <div>
                     <h3 class="text-lg font-semibold text-white mb-4">Supported Providers</h3>
-                    <div class="bg-vp-surface border border-vp-border rounded-xl overflow-hidden">
+                    <div class="bg-vp-surface border border-vp-border rounded-md overflow-hidden">
                         <table class="doc-table">
                             <thead><tr><th>Provider</th><th>Value</th><th>Base URL</th><th>Auth Header</th></tr></thead>
                             <tbody>
@@ -1248,7 +1248,7 @@ vault.setSessionToken(token);</pre>
                 <!-- Which Keys to Store -->
                 <div class="mt-10">
                     <h3 class="text-lg font-semibold text-white mb-4">Which keys to store</h3>
-                    <div class="bg-vp-surface border border-vp-border rounded-xl overflow-hidden">
+                    <div class="bg-vp-surface border border-vp-border rounded-md overflow-hidden">
                         <table class="doc-table">
                             <thead><tr><th>Key type</th><th>Store?</th><th>Notes</th></tr></thead>
                             <tbody>
@@ -1279,12 +1279,12 @@ vault.setSessionToken(token);</pre>
                                 </tr>
                                 <tr>
                                     <td class="text-white font-medium">Publishable / public keys</td>
-                                    <td><span class="text-red-400">No</span></td>
+                                    <td><span class="text-amber-400">No</span></td>
                                     <td class="text-gray-400">Stripe publishable key, Supabase anon key, Firebase API key. These are public by design.</td>
                                 </tr>
                                 <tr>
                                     <td class="text-white font-medium">Short-lived OAuth tokens</td>
-                                    <td><span class="text-red-400">No</span></td>
+                                    <td><span class="text-amber-400">No</span></td>
                                     <td class="text-gray-400">User access tokens, JWTs, STS temporary credentials. These expire too quickly.</td>
                                 </tr>
                             </tbody>
@@ -1293,7 +1293,7 @@ vault.setSessionToken(token);</pre>
                 </div>
 
                 <!-- IP Restrictions Note -->
-                <div class="mt-6 bg-amber-500/5 border border-amber-500/20 rounded-xl p-5">
+                <div class="mt-6 bg-amber-500/5 border border-amber-500/20 rounded-md p-5">
                     <p class="text-amber-400 text-sm font-medium mb-2">Keys with IP restrictions</p>
                     <p class="text-gray-400 text-sm mb-2">Some providers let you restrict API keys to specific IP addresses. How this interacts with VaultProof depends on which method you use:</p>
                     <ul class="text-gray-400 text-sm space-y-1 ml-4 list-disc">
@@ -1307,7 +1307,7 @@ vault.setSessionToken(token);</pre>
             <!-- ============================================================ -->
             <!-- CONNECT WIDGET -->
             <!-- ============================================================ -->
-            <section id="connect-widget" class="mb-20">
+            <section id="connect-widget" class="mb-16">
                 <h2 class="text-3xl font-bold text-white mb-2">Connect Widget</h2>
                 <p class="text-gray-500 mb-8">A drop-in React component for apps that need "Bring Your Own Key". Your users paste their API key, the widget handles everything else.</p>
 
@@ -1347,7 +1347,7 @@ vault.setSessionToken(token);</pre>
 
                 <div class="mb-8">
                     <h3 class="text-lg font-semibold text-white mb-4">Props</h3>
-                    <div class="bg-vp-surface border border-vp-border rounded-xl overflow-hidden">
+                    <div class="bg-vp-surface border border-vp-border rounded-md overflow-hidden">
                         <table class="doc-table">
                             <thead><tr><th>Prop</th><th>Type</th><th>Required</th><th>Description</th></tr></thead>
                             <tbody>
@@ -1406,7 +1406,7 @@ vault.setSessionToken(token);</pre>
 
                 <div class="mb-8">
                     <h3 class="text-lg font-semibold text-white mb-4">How It Works</h3>
-                    <div class="bg-vp-surface border border-vp-border rounded-xl p-6">
+                    <div class="bg-vp-surface border border-vp-border rounded-md p-6">
                         <ol class="list-decimal list-inside space-y-3 text-sm text-gray-400">
                             <li><strong class="text-white">User selects a provider</strong> (OpenAI, Anthropic, etc.) and pastes their API key</li>
                             <li><strong class="text-white">Widget splits the key</strong> using Shamir Secret Sharing (2-of-2) in the browser -- the raw key never leaves the page</li>
@@ -1420,7 +1420,7 @@ vault.setSessionToken(token);</pre>
 
                 <div>
                     <h3 class="text-lg font-semibold text-white mb-4">Supported Providers</h3>
-                    <div class="bg-vp-surface border border-vp-border rounded-xl overflow-hidden">
+                    <div class="bg-vp-surface border border-vp-border rounded-md overflow-hidden">
                         <table class="doc-table">
                             <thead><tr><th>Provider</th><th>Value</th><th>Key Prefix</th><th>Documentation</th></tr></thead>
                             <tbody>
@@ -1446,7 +1446,7 @@ vault.setSessionToken(token);</pre>
             <!-- ============================================================ -->
             <!-- SECTION 5: CLI REFERENCE -->
             <!-- ============================================================ -->
-            <section id="cli-reference" class="mb-20">
+            <section id="cli-reference" class="mb-16">
                 <h2 class="text-3xl font-bold text-white mb-2">CLI Reference</h2>
                 <p class="text-gray-500 mb-8">Command-line tool for managing keys from your terminal or CI/CD pipelines.</p>
 
@@ -1461,7 +1461,7 @@ vault.setSessionToken(token);</pre>
                 <!-- Global Flags -->
                 <div class="mb-8">
                     <h3 class="text-lg font-semibold text-white mb-4">Global Flags</h3>
-                    <div class="bg-vp-surface border border-vp-border rounded-xl overflow-hidden">
+                    <div class="bg-vp-surface border border-vp-border rounded-md overflow-hidden">
                         <table class="doc-table">
                             <thead><tr><th>Flag</th><th>Description</th></tr></thead>
                             <tbody>
@@ -1490,7 +1490,7 @@ $ vaultproof keys --json | jq    <span class="cmt"># pipe JSON output to jq</spa
                                 <span class="text-gray-600 text-xs font-mono">alias: l</span>
                             </div>
                             <p class="text-gray-500 text-sm mb-2">Log in to your VaultProof account. Stores JWT token at <code class="font-mono text-xs text-vp-accent">~/.vaultproof/config.json</code>. Token expires after 7 days.</p>
-                            <div class="bg-vp-surface border border-vp-border rounded-xl overflow-hidden mt-3">
+                            <div class="bg-vp-surface border border-vp-border rounded-md overflow-hidden mt-3">
                                 <table class="doc-table">
                                     <thead><tr><th>Flag</th><th>Description</th></tr></thead>
                                     <tbody>
@@ -1519,7 +1519,7 @@ $ vaultproof l</pre>
                                 <span class="text-gray-600 text-xs font-mono">alias: signup</span>
                             </div>
                             <p class="text-gray-500 text-sm mb-2">Create a new VaultProof account. Password must be at least 8 characters. Automatically logs you in after registration.</p>
-                            <div class="bg-vp-surface border border-vp-border rounded-xl overflow-hidden mt-3">
+                            <div class="bg-vp-surface border border-vp-border rounded-md overflow-hidden mt-3">
                                 <table class="doc-table">
                                     <thead><tr><th>Flag</th><th>Description</th></tr></thead>
                                     <tbody>
@@ -1579,7 +1579,7 @@ $ vaultproof l</pre>
                                 <code class="font-mono text-sm text-white font-semibold">vaultproof scan</code>
                             </div>
                             <p class="text-gray-500 text-sm mb-2">Scan your project for exposed API keys. Checks <code class="font-mono text-xs text-vp-accent">.env</code> files, source code, config files, and CI configs. Detects 71 provider key patterns with entropy filtering. Does not modify any files.</p>
-                            <div class="bg-vp-surface border border-vp-border rounded-xl overflow-hidden mt-3">
+                            <div class="bg-vp-surface border border-vp-border rounded-md overflow-hidden mt-3">
                                 <table class="doc-table">
                                     <thead><tr><th>Flag</th><th>Description</th></tr></thead>
                                     <tbody>
@@ -1605,7 +1605,7 @@ $ vaultproof scan --output json       <span class="cmt"># JSON for CI/CD pipelin
                                 <span class="text-xs font-medium text-yellow-400 bg-yellow-400/10 px-2 py-0.5 rounded-full">Pro</span>
                             </div>
                             <p class="text-gray-500 text-sm mb-2">Scan, store, and rewrite. Finds all API keys in your project, stores them in VaultProof (Shamir-split), and rewrites your <code class="font-mono text-xs text-vp-accent">.env</code> files and source code. Interactive — asks before each change. Creates a backup in <code class="font-mono text-xs text-vp-accent">.vaultproof/backup/</code>.</p>
-                            <div class="bg-vp-surface border border-vp-border rounded-xl overflow-hidden mt-3">
+                            <div class="bg-vp-surface border border-vp-border rounded-md overflow-hidden mt-3">
                                 <table class="doc-table">
                                     <thead><tr><th>Flag</th><th>Description</th></tr></thead>
                                     <tbody>
@@ -1663,7 +1663,7 @@ $ vaultproof config set api-url http://localhost:3333</pre>
                                 <span class="text-gray-600 text-xs font-mono">alias: add</span>
                             </div>
                             <p class="text-gray-500 text-sm mb-3">Store an API key with Shamir splitting. The key is split locally -- the server never sees the full key.</p>
-                            <div class="bg-vp-surface border border-vp-border rounded-xl overflow-hidden mb-3">
+                            <div class="bg-vp-surface border border-vp-border rounded-md overflow-hidden mb-3">
                                 <table class="doc-table">
                                     <thead><tr><th>Flag</th><th>Description</th><th>Required</th></tr></thead>
                                     <tbody>
@@ -1690,7 +1690,7 @@ $ vaultproof add -p google -l "Vertex AI"</pre>
                                 <span class="text-gray-600 text-xs font-mono">alias: ls</span>
                             </div>
                             <p class="text-gray-500 text-sm mb-2">List all stored API keys with provider, label, and creation date.</p>
-                            <div class="bg-vp-surface border border-vp-border rounded-xl overflow-hidden mb-3">
+                            <div class="bg-vp-surface border border-vp-border rounded-md overflow-hidden mb-3">
                                 <table class="doc-table">
                                     <thead><tr><th>Flag</th><th>Description</th></tr></thead>
                                     <tbody>
@@ -1718,7 +1718,7 @@ $ vaultproof keys --json | jq '.[].provider'</pre>
                                 <span class="text-gray-600 text-xs font-mono">alias: rm</span>
                             </div>
                             <p class="text-gray-500 text-sm mb-2">Permanently revoke a key. Both encrypted shares are zeroed on the server. This cannot be undone.</p>
-                            <div class="bg-vp-surface border border-vp-border rounded-xl overflow-hidden mb-3">
+                            <div class="bg-vp-surface border border-vp-border rounded-md overflow-hidden mb-3">
                                 <table class="doc-table">
                                     <thead><tr><th>Flag</th><th>Description</th></tr></thead>
                                     <tbody>
@@ -1747,7 +1747,7 @@ $ vaultproof rm vk_8f3a2b1c -y    <span class="cmt"># skip confirmation</span></
                             <span class="text-gray-600 text-xs font-mono">alias: call</span>
                         </div>
                         <p class="text-gray-500 text-sm mb-3">Make a proxied API call. The server decrypts both shares, reconstructs the key for ~100ms, makes the call, then zeros everything.</p>
-                        <div class="bg-vp-surface border border-vp-border rounded-xl overflow-hidden mb-3">
+                        <div class="bg-vp-surface border border-vp-border rounded-md overflow-hidden mb-3">
                             <table class="doc-table">
                                 <thead><tr><th>Flag</th><th>Description</th><th>Required</th></tr></thead>
                                 <tbody>
@@ -1783,7 +1783,7 @@ $ vaultproof call -k vk_8f3a2b1c --path /v1/models -m GET</pre>
                     <!-- Environment Variable Mapping -->
                     <div class="mt-6">
                         <h4 class="text-base font-semibold text-white mb-3">Environment Variable Mapping</h4>
-                        <div class="bg-vp-surface border border-vp-border rounded-xl overflow-hidden">
+                        <div class="bg-vp-surface border border-vp-border rounded-md overflow-hidden">
                             <table class="doc-table">
                                 <thead><tr><th>Provider</th><th>Env Variable</th></tr></thead>
                                 <tbody>
@@ -1811,7 +1811,7 @@ $ vaultproof call -k vk_8f3a2b1c --path /v1/models -m GET</pre>
                             <code class="font-mono text-sm text-white font-semibold">vaultproof logs</code>
                         </div>
                         <p class="text-gray-500 text-sm mb-3">View recent access logs for all proxied API calls.</p>
-                        <div class="bg-vp-surface border border-vp-border rounded-xl overflow-hidden mb-3">
+                        <div class="bg-vp-surface border border-vp-border rounded-md overflow-hidden mb-3">
                             <table class="doc-table">
                                 <thead><tr><th>Flag</th><th>Description</th><th>Default</th></tr></thead>
                                 <tbody>
@@ -1835,7 +1835,7 @@ $ vaultproof logs --json | jq '.[] | .endpoint'</pre>
                 <div class="mb-8">
                     <h3 class="text-lg font-semibold text-white mb-4">Developer API Keys</h3>
                     <p class="text-gray-500 text-sm mb-4">Developer keys (<code class="font-mono text-xs text-vp-accent">vp_live_</code> / <code class="font-mono text-xs text-vp-accent">vp_test_</code>) authenticate your SDK and CLI requests. They are different from the API keys you store in the vault.</p>
-                    <div class="bg-indigo-500/5 border border-indigo-500/20 rounded-xl p-4 mb-4">
+                    <div class="bg-indigo-500/5 border border-indigo-500/20 rounded-md p-4 mb-4">
                         <p class="text-sm text-indigo-300 font-medium mb-1">Origin Locking</p>
                         <p class="text-sm text-gray-400">Lock a developer key to specific domains with <code class="font-mono text-xs text-vp-accent">allowedOrigins</code>. When set, the key only works from those origins — browsers can't spoof the Origin header, so a stolen key is useless on another site. Set it via the dashboard or the <code class="font-mono text-xs text-white">PUT /api/v1/dev-keys/:keyId/settings</code> endpoint.</p>
                     </div>
@@ -1846,7 +1846,7 @@ $ vaultproof logs --json | jq '.[] | .endpoint'</pre>
                                 <span class="text-gray-600 text-xs font-mono">parent alias: dk</span>
                             </div>
                             <p class="text-gray-500 text-sm mb-2">Create a new developer API key. The full key is shown once -- save it immediately.</p>
-                            <div class="bg-vp-surface border border-vp-border rounded-xl overflow-hidden mb-3">
+                            <div class="bg-vp-surface border border-vp-border rounded-md overflow-hidden mb-3">
                                 <table class="doc-table">
                                     <thead><tr><th>Flag</th><th>Description</th><th>Default</th></tr></thead>
                                     <tbody>
@@ -1877,7 +1877,7 @@ $ vaultproof dk create -l "Production" -m live</pre>
                                 <span class="text-gray-600 text-xs font-mono">alias: dk ls</span>
                             </div>
                             <p class="text-gray-500 text-sm mb-2">List all developer API keys (masked).</p>
-                            <div class="bg-vp-surface border border-vp-border rounded-xl overflow-hidden mb-3">
+                            <div class="bg-vp-surface border border-vp-border rounded-md overflow-hidden mb-3">
                                 <table class="doc-table">
                                     <thead><tr><th>Flag</th><th>Description</th></tr></thead>
                                     <tbody>
@@ -1892,7 +1892,7 @@ $ vaultproof dk create -l "Production" -m live</pre>
                                 <code class="font-mono text-sm text-white font-semibold">vaultproof dev-key revoke &lt;id&gt;</code>
                             </div>
                             <p class="text-gray-500 text-sm mb-2">Revoke a developer API key. All SDK/CLI calls using this key will immediately stop working.</p>
-                            <div class="bg-vp-surface border border-vp-border rounded-xl overflow-hidden">
+                            <div class="bg-vp-surface border border-vp-border rounded-md overflow-hidden">
                                 <table class="doc-table">
                                     <thead><tr><th>Flag</th><th>Description</th></tr></thead>
                                     <tbody>
@@ -1907,7 +1907,7 @@ $ vaultproof dk create -l "Production" -m live</pre>
                 <!-- Environment Variables -->
                 <div>
                     <h3 class="text-lg font-semibold text-white mb-4">Environment Variables</h3>
-                    <div class="bg-vp-surface border border-vp-border rounded-xl overflow-hidden">
+                    <div class="bg-vp-surface border border-vp-border rounded-md overflow-hidden">
                         <table class="doc-table">
                             <thead><tr><th>Variable</th><th>Description</th><th>Default</th></tr></thead>
                             <tbody>
@@ -1953,7 +1953,7 @@ $ vaultproof status</pre>
             <!-- ============================================================ -->
             <!-- SECTION 6: DASHBOARD -->
             <!-- ============================================================ -->
-            <section id="dashboard" class="mb-20">
+            <section id="dashboard" class="mb-16">
                 <h2 class="text-3xl font-bold text-white mb-2">Dashboard</h2>
                 <p class="text-gray-500 mb-8">Web interface for managing keys, viewing logs, and monitoring usage at <a href="/app/login" class="text-vp-accent hover:underline">vaultproof.dev/app</a>.</p>
 
@@ -2009,7 +2009,7 @@ $ vaultproof status</pre>
             <!-- ============================================================ -->
             <!-- SECTION 7: API REFERENCE -->
             <!-- ============================================================ -->
-            <section id="api-reference" class="mb-20">
+            <section id="api-reference" class="mb-16">
                 <h2 class="text-3xl font-bold text-white mb-2">API Reference</h2>
                 <p class="text-gray-500 mb-4">Base URL: <code class="font-mono text-sm text-vp-accent">https://api.vaultproof.dev</code></p>
                 <p class="text-gray-500 text-sm mb-8">All requests go through Cloudflare's edge network (330+ cities). HMAC-signed and rate-limited. All request and response bodies are JSON (<code class="font-mono text-xs">Content-Type: application/json</code>).</p>
@@ -2634,7 +2634,7 @@ Authorization: Bearer &lt;jwt_token&gt;
                 <!-- Error Codes -->
                 <div>
                     <h3 class="text-xl font-semibold text-white mb-5">Error Codes</h3>
-                    <div class="bg-vp-surface border border-vp-border rounded-xl overflow-hidden">
+                    <div class="bg-vp-surface border border-vp-border rounded-md overflow-hidden">
                         <table class="doc-table">
                             <thead><tr><th>Code</th><th>Meaning</th><th>Common Cause</th></tr></thead>
                             <tbody>
@@ -2689,7 +2689,7 @@ Authorization: Bearer &lt;jwt_token&gt;
             <!-- ============================================================ -->
             <!-- SECTION 8: SECURITY ARCHITECTURE -->
             <!-- ============================================================ -->
-            <section id="security-architecture" class="mb-20">
+            <section id="security-architecture" class="mb-16">
                 <h2 class="text-3xl font-bold text-white mb-2">Security Architecture</h2>
                 <p class="text-gray-500 mb-8">Eight layers of defense between your API keys and an attacker.</p>
 
@@ -2775,7 +2775,7 @@ Authorization: Bearer &lt;jwt_token&gt;
                 <!-- Rate Limits Table -->
                 <div>
                     <h3 class="text-lg font-semibold text-white mb-4">Plan Limits</h3>
-                    <div class="bg-vp-surface border border-vp-border rounded-xl overflow-hidden">
+                    <div class="bg-vp-surface border border-vp-border rounded-md overflow-hidden">
                         <table class="doc-table">
                             <thead><tr><th>Tier</th><th>Price</th><th>Key Slots</th><th>Proxied Calls/mo</th><th>Dev Keys</th><th>Log Retention</th></tr></thead>
                             <tbody>
@@ -2822,11 +2822,11 @@ Authorization: Bearer &lt;jwt_token&gt;
             <!-- SECTION: SCANNER -->
             <!-- ============================================================ -->
 
-            <section id="scanner" class="mb-20">
+            <section id="scanner" class="mb-16">
                 <h2 class="text-3xl font-bold text-white mb-2">Scanner</h2>
                 <p class="text-gray-500 mb-8">Find exposed API keys in your projects. Available as a CLI command and a dashboard feature.</p>
 
-                <div class="space-y-8">
+                <div class="space-y-6">
                     <div>
                         <h3 class="text-lg font-semibold text-white mb-4">CLI Scanner</h3>
                         <p class="text-gray-400 text-sm mb-4">Run <code class="font-mono text-xs text-vp-accent">vaultproof scan</code> from any project directory. It checks:</p>
@@ -2861,7 +2861,7 @@ Authorization: Bearer &lt;jwt_token&gt;
                         <p class="text-gray-400 text-sm mb-4">With <code class="font-mono text-xs text-vp-accent">--verify</code>, the scanner calls each provider's API to check if a found key is still active:</p>
                         <ul class="text-gray-400 text-sm space-y-1">
                             <li><span class="text-emerald-400">&#10003; active</span> — key works, rotate it immediately</li>
-                            <li><span class="text-red-400">&#10007; revoked</span> — key is dead, safe to ignore</li>
+                            <li><span class="text-amber-400">&#10007; revoked</span> — key is dead, safe to ignore</li>
                             <li><span class="text-gray-500">? unknown</span> — provider doesn't have a verification endpoint</li>
                         </ul>
                     </div>
@@ -2895,7 +2895,7 @@ test/fixtures/*
             <!-- ============================================================ -->
             <!-- SECTION 9: FAQ -->
             <!-- ============================================================ -->
-            <section id="faq" class="mb-20">
+            <section id="faq" class="mb-16">
                 <h2 class="text-3xl font-bold text-white mb-2">Frequently Asked Questions</h2>
                 <p class="text-gray-500 mb-8">Common questions from developers evaluating VaultProof.</p>
 
