@@ -544,7 +544,7 @@ export async function transparentProxyRoutes(app: FastifyInstance) {
           if (lowerErr.includes('ip') || lowerErr.includes('address') || lowerErr.includes('origin') || lowerErr.includes('whitelist') || lowerErr.includes('allowlist')) {
             return reply.status(403).send({
               error: `The provider rejected the request due to IP restrictions. The proxy call came from VaultProof's server, not your IP. Fix: remove the IP restriction on your API key, or use vault.retrieve() instead of the proxy so your server makes the call directly.`,
-              provider_response: errText.slice(0, 500),
+              provider_response: errText.replace(/<[^>]*>/g, '').slice(0, 200),
             });
           }
         } catch {}

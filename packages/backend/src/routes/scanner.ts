@@ -539,7 +539,9 @@ export async function scannerRoutes(app: FastifyInstance) {
           }
         } else {
           const lines = content.split('\n');
+          if (lines.length > 10_000) continue; // Skip extremely large files
           for (let i = 0; i < lines.length; i++) {
+            if (lines[i].length > 2000) continue; // Skip minified/generated lines
             const stringMatches = lines[i].matchAll(/["'`]([^"'`]{10,512})["'`]/g);
             for (const m of stringMatches) {
               const val = m[1];
