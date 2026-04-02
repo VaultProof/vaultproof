@@ -706,42 +706,6 @@
             </div>
         </div>
 
-        <!-- Solution -->
-        <div class="bg-gradient-to-r from-vp-accent/10 to-transparent border border-vp-accent/20 rounded-2xl p-8 reveal delay-2">
-            <h3 class="text-xl font-bold text-white mb-4" style="font-family:'Space Grotesk',sans-serif">VaultProof is a proxy. Your key never leaves the vault.</h3>
-            <div class="grid md:grid-cols-2 gap-8 items-center">
-                <div class="space-y-3">
-                    <div class="flex items-start gap-3">
-                        <svg class="w-5 h-5 text-vp-accent flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>
-                        <div class="text-sm text-gray-300"><strong class="text-white">Your app talks to us. We talk to OpenAI.</strong> The real API key stays out of your code, your .env, and your shell history.</div>
-                    </div>
-                    <div class="flex items-start gap-3">
-                        <svg class="w-5 h-5 text-vp-accent flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>
-                        <div class="text-sm text-gray-300"><strong class="text-white">AI agents only get a scoped VaultProof key.</strong> The real key stays split and encrypted — agents work without direct access to your secrets.</div>
-                    </div>
-                    <div class="flex items-start gap-3">
-                        <svg class="w-5 h-5 text-vp-accent flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>
-                        <div class="text-sm text-gray-300"><strong class="text-white">Auto-migration from GitHub.</strong> Connect your repo. We scan your code and create a PR that migrates everything to VaultProof.</div>
-                    </div>
-                    <div class="flex items-start gap-3">
-                        <svg class="w-5 h-5 text-vp-accent flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>
-                        <div class="text-sm text-gray-300"><strong class="text-white">Instant alerts when something looks wrong.</strong> Usage spikes, rejected keys, or suspicious patterns — you'll know before the bill arrives.</div>
-                    </div>
-                </div>
-                <div class="bg-vp-bg border border-vp-border rounded-xl p-5 font-mono text-sm">
-                    <div class="text-gray-500 mb-2"># Before (dangerous)</div>
-                    <div class="text-amber-400 mb-1">export OPENAI_API_KEY=sk-proj-abc123...</div>
-                    <div class="text-amber-400/50 text-xs mb-4">^ exposed in .env, shell history, AI context</div>
-                    <div class="text-gray-500 mb-2"># After (secure)</div>
-                    <div class="text-indigo-400 mb-1">export OPENAI_API_KEY=vp_live_...</div>
-                    <div class="text-indigo-400 mb-1">export OPENAI_BASE_URL=https://api.vaultproof.dev/v1/openai</div>
-                    <div class="text-indigo-400/50 text-xs mb-4">^ useless alone, real key is split + encrypted</div>
-                    <div class="text-gray-500 mb-2"># Or proxy any SDK call through the server</div>
-                    <div class="text-indigo-400 mb-1">vaultproof proxy -k &lt;keyId&gt; --path /v1/charges \</div>
-                    <div class="text-indigo-400 mb-1">  -d '{"amount":2000}'  <span class="text-indigo-400/50 text-xs"># key never leaves the server</span></div>
-                </div>
-            </div>
-        </div>
     </section>
 
     <!-- Install -->
