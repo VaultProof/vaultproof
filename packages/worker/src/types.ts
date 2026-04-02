@@ -4,6 +4,7 @@ export interface Env {
   SUPABASE_URL: string;
   SUPABASE_SERVICE_ROLE_KEY: string;
   ADMIN_EMAILS: string;
+  STRIPE_SECRET_KEY: string;
   CACHE: KVNamespace;
 }
 

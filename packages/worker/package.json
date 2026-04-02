@@ -12,6 +12,7 @@
     "wrangler": "^4.0.0"
   },
   "dependencies": {
-    "@supabase/supabase-js": "^2.101.1"
+    "@supabase/supabase-js": "^2.101.1",
+    "stripe": "^20.4.1"
   }
 }
