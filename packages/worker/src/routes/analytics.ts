@@ -29,6 +29,7 @@ export async function handleAnalyticsEvent(request: Request, env: Env): Promise<
 
   const supabase = getSupabase(env);
   const { error } = await supabase.from('analytics_events').insert({
+    id: crypto.randomUUID(),
     type: 'pageview',
     page,
     referrer,
