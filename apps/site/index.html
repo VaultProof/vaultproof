@@ -788,53 +788,53 @@
             <p class="text-gray-400 text-lg max-w-2xl mx-auto">Cursor, Claude Code, Windsurf, Copilot -- they all read your .env files. With VaultProof, that's fine. There's nothing useful in there.</p>
         </div>
 
-        <div class="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
+        <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
             <div class="bg-vp-surface border border-vp-border rounded-2xl p-6 reveal delay-1">
                 <div class="icon-chadzn icon-chadzn-indigo mb-4" style="width:40px;height:40px">
                     <svg width="20" height="20" viewBox="0 0 24 24" fill="none"><rect x="3" y="3" width="18" height="18" rx="4" fill="#818cf8" opacity="0.15" stroke="#818cf8" stroke-width="1.5"/><path d="M8 9L11 12L8 15" stroke="#818cf8" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><path d="M13 15H16" stroke="#818cf8" stroke-width="2" stroke-linecap="round"/></svg>
                 </div>
-                <h3 class="text-white font-semibold mb-2">Drop-in for every AI tool</h3>
-                <p class="text-sm text-gray-400 leading-relaxed">Point your base URL at VaultProof. Cursor, Claude Code, Windsurf, and any OpenAI-compatible tool works instantly. No plugins needed.</p>
+                <h3 class="text-white font-semibold mb-1">Drop-in for any AI tool</h3>
+                <p class="text-sm text-gray-400">Works with Cursor, Claude Code, Windsurf, and any OpenAI-compatible SDK.</p>
             </div>
 
             <div class="bg-vp-surface border border-vp-border rounded-2xl p-6 reveal delay-2">
                 <div class="icon-chadzn icon-chadzn-indigo mb-4" style="width:40px;height:40px">
                     <svg width="20" height="20" viewBox="0 0 24 24" fill="none"><rect x="5" y="11" width="14" height="11" rx="2" fill="#818cf8" opacity="0.15" stroke="#818cf8" stroke-width="1.5"/><path d="M8 11V7C8 4.79 9.79 3 12 3C14.21 3 16 4.79 16 7V11" stroke="#818cf8" stroke-width="1.5" stroke-linecap="round"/><circle cx="12" cy="16" r="1.5" fill="#818cf8"/></svg>
                 </div>
-                <h3 class="text-white font-semibold mb-2">Your real key stays hidden</h3>
-                <p class="text-sm text-gray-400 leading-relaxed">AI agents see your .env files, shell history, and environment variables. With VaultProof, all they find is a vp_live_ key -- useless on its own.</p>
+                <h3 class="text-white font-semibold mb-1">Agents only see a scoped key</h3>
+                <p class="text-sm text-gray-400">Your real API key stays split and encrypted. Agents get a <code class="text-indigo-400">vp_live_</code> key instead.</p>
             </div>
 
             <div class="bg-vp-surface border border-vp-border rounded-2xl p-6 reveal delay-3">
                 <div class="icon-chadzn icon-chadzn-indigo mb-4" style="width:40px;height:40px">
-                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10" stroke="#818cf8" stroke-width="1.5" stroke-linecap="round"/><path d="M22 12C22 6.48 17.52 2 12 2" stroke="#818cf8" stroke-width="1.5" stroke-linecap="round" stroke-dasharray="3 3" opacity="0.4"/><path d="M17 8L21 4M21 4L21 8M21 4L17 4" stroke="#818cf8" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none"><path d="M4 4V9H9" stroke="#818cf8" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/><path d="M20 20V15H15" stroke="#818cf8" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/><path d="M4 9C5.33 5.56 8.42 3 12 3C16.42 3 20 6.58 20 11" stroke="#818cf8" stroke-width="1.5" stroke-linecap="round"/><path d="M20 15C18.67 18.44 15.58 21 12 21C7.58 21 4 17.42 4 13" stroke="#818cf8" stroke-width="1.5" stroke-linecap="round"/></svg>
                 </div>
-                <h3 class="text-white font-semibold mb-2">Auto-fallback when providers go down</h3>
-                <p class="text-sm text-gray-400 leading-relaxed">Store keys for multiple providers. If one is unreachable, VaultProof automatically retries with another. Your agents never stop working.</p>
+                <h3 class="text-white font-semibold mb-1">Rotate without redeploying</h3>
+                <p class="text-sm text-gray-400">Swap keys in the dashboard. No code changes, no .env updates.</p>
             </div>
 
             <div class="bg-vp-surface border border-vp-border rounded-2xl p-6 reveal delay-4">
                 <div class="icon-chadzn icon-chadzn-indigo mb-4" style="width:40px;height:40px">
-                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none"><path d="M4 4V9H9" stroke="#818cf8" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/><path d="M20 20V15H15" stroke="#818cf8" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/><path d="M4 9C5.33 5.56 8.42 3 12 3C16.42 3 20 6.58 20 11" stroke="#818cf8" stroke-width="1.5" stroke-linecap="round"/><path d="M20 15C18.67 18.44 15.58 21 12 21C7.58 21 4 17.42 4 13" stroke="#818cf8" stroke-width="1.5" stroke-linecap="round"/></svg>
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="9" fill="#818cf8" opacity="0.1" stroke="#818cf8" stroke-width="1.5"/><path d="M12 7V12L15 15" stroke="#818cf8" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
                 </div>
-                <h3 class="text-white font-semibold mb-2">Rotate keys without touching code</h3>
-                <p class="text-sm text-gray-400 leading-relaxed">Store a new key in VaultProof and the old one is replaced instantly. No code changes. No deploys. No updating .env files across 15 environments.</p>
+                <h3 class="text-white font-semibold mb-1">Budget caps per key</h3>
+                <p class="text-sm text-gray-400">Set daily and monthly limits. Calls stop when the cap is hit.</p>
             </div>
 
             <div class="bg-vp-surface border border-vp-border rounded-2xl p-6 reveal delay-5">
                 <div class="icon-chadzn icon-chadzn-indigo mb-4" style="width:40px;height:40px">
-                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="9" fill="#818cf8" opacity="0.1" stroke="#818cf8" stroke-width="1.5"/><path d="M12 7V12L15 15" stroke="#818cf8" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10" stroke="#818cf8" stroke-width="1.5" stroke-linecap="round"/><path d="M17 8L21 4M21 4L21 8M21 4L17 4" stroke="#818cf8" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
                 </div>
-                <h3 class="text-white font-semibold mb-2">Budget caps so leaks can't bankrupt you</h3>
-                <p class="text-sm text-gray-400 leading-relaxed">Set daily and monthly call limits on each key. When the cap is hit, VaultProof blocks the call. A bug or stolen key can't run up your bill.</p>
+                <h3 class="text-white font-semibold mb-1">Auto-fallback</h3>
+                <p class="text-sm text-gray-400">Provider down? VaultProof retries with another key automatically.</p>
             </div>
 
             <div class="bg-vp-surface border border-amber-500/20 rounded-2xl p-6 reveal delay-6">
                 <div class="icon-chadzn icon-chadzn-amber mb-4" style="width:40px;height:40px">
                     <svg width="20" height="20" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="9" fill="#fbbf24" opacity="0.1" stroke="#fbbf24" stroke-width="1.5"/><path d="M15 9L9 15M9 9L15 15" stroke="#fbbf24" stroke-width="2" stroke-linecap="round"/></svg>
                 </div>
-                <h3 class="text-white font-semibold mb-2">Kill switch -- freeze everything instantly</h3>
-                <p class="text-sm text-gray-400 leading-relaxed">Something wrong? One click freezes all proxy calls. Requires typing "STOP" + your password to prevent accidents. Resume when you're ready.</p>
+                <h3 class="text-white font-semibold mb-1">Kill switch</h3>
+                <p class="text-sm text-gray-400">One click freezes all proxy calls. Resume when you're ready.</p>
             </div>
         </div>
 
