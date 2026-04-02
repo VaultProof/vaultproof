@@ -143,13 +143,24 @@ async function handleUsage(userId: string, env: Env, request: Request): Promise<
     return Response.json({ usage: [] });
   }
 
-  // 2. Get logs since startDate
-  const { data: logs } = await supabase
-    .from('access_logs')
-    .select('timestamp, metadata')
-    .in('key_slot_id', keySlotIds)
-    .in('action', CALL_ACTIONS)
-    .gte('timestamp', startIso);
+  // 2. Get logs since startDate (paginate to avoid PostgREST 1000-row default limit)
+  let logs: any[] = [];
+  let offset = 0;
+  const pageSize = 1000;
+  while (true) {
+    const { data } = await supabase
+      .from('access_logs')
+      .select('timestamp, metadata')
+      .in('key_slot_id', keySlotIds)
+      .in('action', CALL_ACTIONS)
+      .gte('timestamp', startIso)
+      .order('timestamp', { ascending: true })
+      .range(offset, offset + pageSize - 1);
+    if (!data || data.length === 0) break;
+    logs = logs.concat(data);
+    if (data.length < pageSize) break;
+    offset += pageSize;
+  }
 
   // 3. Pre-populate all days in range
   const dayMap: Record<string, { calls: number; errors: number }> = {};
@@ -161,7 +172,7 @@ async function handleUsage(userId: string, env: Env, request: Request): Promise<
   }
 
   // 4. Group by day
-  for (const log of logs ?? []) {
+  for (const log of logs) {
     const day = log.timestamp?.slice(0, 10);
     if (!day || !dayMap[day]) continue;
     dayMap[day].calls++;
