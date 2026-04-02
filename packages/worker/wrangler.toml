@@ -17,7 +17,7 @@ preview_id = "fa6952ee46484691a16df77a8f15310b"
 
 # ── Staging environment ──
 [env.staging]
-name = "zkvault-staging"
+name = "vaultproof-staging"
 
 [env.staging.vars]
 ALLOWED_ORIGINS = "*"
