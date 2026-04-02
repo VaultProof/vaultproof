@@ -1,10 +1,9 @@
 export interface Env {
-  BACKEND_URL: string;
-  PROXY_SECRET: string;
   ALLOWED_ORIGINS: string;
   VAULT_ENCRYPTION_KEY: string;
   SUPABASE_URL: string;
   SUPABASE_SERVICE_ROLE_KEY: string;
+  ADMIN_EMAILS: string;
   CACHE: KVNamespace;
 }
 
