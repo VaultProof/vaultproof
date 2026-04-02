@@ -15,7 +15,7 @@ export default function LandingPage() {
           </Link>
           <Link
             href="/keys"
-            className="bg-gradient-to-r from-indigo-600 to-violet-600 hover:from-indigo-500 hover:to-violet-500 hover:shadow-[0_0_16px_rgba(99,102,241,0.4)] hover:-translate-y-px transition-all duration-200 px-4 py-2 rounded-lg text-sm font-medium text-white"
+            className="bg-gradient-to-r from-indigo-600 to-violet-600 hover:from-indigo-500 hover:to-violet-500 hover:shadow-[0_0_16px_rgba(99,102,241,0.4)] hover:-translate-y-px transition-all duration-200 px-4 py-2 rounded-lg text-sm font-medium text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2 focus-visible:ring-offset-gray-950"
           >
             Get Started
           </Link>
@@ -44,13 +44,13 @@ export default function LandingPage() {
         <div className="flex items-center justify-center gap-4">
           <Link
             href="/keys"
-            className="bg-gradient-to-r from-indigo-600 to-violet-600 hover:from-indigo-500 hover:to-violet-500 shadow-[0_0_0_0_rgba(99,102,241,0)] hover:shadow-[0_0_24px_rgba(99,102,241,0.45)] hover:-translate-y-px transition-all duration-200 px-6 py-3 rounded-xl font-semibold text-base text-white"
+            className="bg-gradient-to-r from-indigo-600 to-violet-600 hover:from-indigo-500 hover:to-violet-500 shadow-[0_0_0_0_rgba(99,102,241,0)] hover:shadow-[0_0_24px_rgba(99,102,241,0.45)] hover:-translate-y-px transition-all duration-200 px-6 py-3 rounded-xl font-semibold text-base text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2 focus-visible:ring-offset-gray-950"
           >
             Store Your First Key
           </Link>
           <a
             href="#how-it-works"
-            className="border border-gray-700 hover:border-gray-500 text-gray-300 hover:text-white hover:bg-white/5 transition-all duration-150 px-6 py-3 rounded-xl font-semibold text-base"
+            className="border border-gray-700 hover:border-gray-500 text-gray-300 hover:text-white hover:bg-white/5 transition-all duration-150 px-6 py-3 rounded-xl font-semibold text-base focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gray-500 focus-visible:ring-offset-2 focus-visible:ring-offset-gray-950"
           >
             How It Works
           </a>
@@ -236,7 +236,7 @@ export default function LandingPage() {
       <section className="max-w-4xl mx-auto px-6 py-20 text-center">
         <h2 className="text-3xl font-bold mb-4">Stop trusting. Start proving.</h2>
         <p className="text-gray-500 mb-8">Breaches are architecturally impossible, not just policy-prohibited.</p>
-        <Link href="/keys" className="inline-block bg-gradient-to-r from-indigo-600 to-violet-600 hover:from-indigo-500 hover:to-violet-500 shadow-[0_0_0_0_rgba(99,102,241,0)] hover:shadow-[0_0_24px_rgba(99,102,241,0.45)] hover:-translate-y-px transition-all duration-200 px-8 py-4 rounded-xl font-semibold text-lg text-white">
+        <Link href="/keys" className="inline-block bg-gradient-to-r from-indigo-600 to-violet-600 hover:from-indigo-500 hover:to-violet-500 shadow-[0_0_0_0_rgba(99,102,241,0)] hover:shadow-[0_0_24px_rgba(99,102,241,0.45)] hover:-translate-y-px transition-all duration-200 px-8 py-4 rounded-xl font-semibold text-lg text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2 focus-visible:ring-offset-gray-950">
           Get Started Free
         </Link>
       </section>
