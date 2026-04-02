@@ -1,26 +1,10 @@
 import type { Env } from './types.js';
 import { handleTransparentProxy } from './routes/transparent-proxy.js';
-
-async function forwardToRailway(request: Request, url: URL, env: Env): Promise<Response> {
-  const timestamp = Date.now().toString();
-  const signPayload = `${request.method}:${url.pathname}${url.search}:${timestamp}`;
-  const encoder = new TextEncoder();
-  const keyData = encoder.encode(env.PROXY_SECRET);
-  const cryptoKey = await crypto.subtle.importKey('raw', keyData, { name: 'HMAC', hash: 'SHA-256' }, false, ['sign']);
-  const sig = await crypto.subtle.sign('HMAC', cryptoKey, encoder.encode(signPayload));
-  const signature = Array.from(new Uint8Array(sig)).map(b => b.toString(16).padStart(2, '0')).join('');
-
-  const headers = new Headers(request.headers);
-  headers.set('X-Proxy-Signature', signature);
-  headers.set('X-Proxy-Timestamp', timestamp);
-  headers.set('X-Forwarded-For', request.headers.get('CF-Connecting-IP') || 'unknown');
-
-  return fetch(`${env.BACKEND_URL}${url.pathname}${url.search}`, {
-    method: request.method,
-    headers,
-    body: request.method !== 'GET' && request.method !== 'HEAD' ? request.body : undefined,
-  });
-}
+import { handleAnalyticsEvent } from './routes/analytics.js';
+import { handleStats } from './routes/stats.js';
+import { handleDevKeys } from './routes/dev-keys.js';
+import { handlePromo } from './routes/promo.js';
+import { handleAdmin } from './routes/admin.js';
 
 function corsHeaders(origin: string, allowedOrigins: string[]): Record<string, string> {
   const isAllowed = allowedOrigins.includes(origin);
@@ -68,35 +52,69 @@ export default {
       );
     }
 
-    // Transparent proxy: /v1/* — handled at the edge, falls back to Railway
+    // Analytics event (public, no auth)
+    if (url.pathname === '/analytics/event') {
+      try {
+        const response = await handleAnalyticsEvent(request, env);
+        return addCors(response, origin, allowedOrigins);
+      } catch {
+        return addCors(Response.json({ error: 'Service temporarily unavailable' }, { status: 503 }), origin, allowedOrigins);
+      }
+    }
+
+    // Stats routes
+    if (url.pathname.startsWith('/api/v1/stats/')) {
+      try {
+        const path = url.pathname.slice('/api/v1/stats/'.length);
+        const response = await handleStats(request, env, path);
+        return addCors(response, origin, allowedOrigins);
+      } catch {
+        return addCors(Response.json({ error: 'Service temporarily unavailable' }, { status: 503 }), origin, allowedOrigins);
+      }
+    }
+
+    // Dev keys routes
+    if (url.pathname.startsWith('/api/v1/dev-keys/')) {
+      try {
+        const path = url.pathname.slice('/api/v1/dev-keys/'.length);
+        const response = await handleDevKeys(request, env, path);
+        return addCors(response, origin, allowedOrigins);
+      } catch {
+        return addCors(Response.json({ error: 'Service temporarily unavailable' }, { status: 503 }), origin, allowedOrigins);
+      }
+    }
+
+    // Promo routes
+    if (url.pathname.startsWith('/api/v1/promo/')) {
+      try {
+        const path = url.pathname.slice('/api/v1/promo/'.length);
+        const response = await handlePromo(request, env, path);
+        return addCors(response, origin, allowedOrigins);
+      } catch {
+        return addCors(Response.json({ error: 'Service temporarily unavailable' }, { status: 503 }), origin, allowedOrigins);
+      }
+    }
+
+    // Admin routes
+    if (url.pathname.startsWith('/admin/')) {
+      try {
+        const path = url.pathname.slice('/admin/'.length);
+        const response = await handleAdmin(request, env, path);
+        return addCors(response, origin, allowedOrigins);
+      } catch {
+        return addCors(Response.json({ error: 'Service temporarily unavailable' }, { status: 503 }), origin, allowedOrigins);
+      }
+    }
+
+    // Transparent proxy: /v1/*
     if (url.pathname.startsWith('/v1/')) {
       try {
         const path = url.pathname.slice(4);
         const response = await handleTransparentProxy(request, env, path);
         return addCors(response, origin, allowedOrigins);
       } catch {
-        // Fallback: forward to Railway transparent proxy
-        if (env.BACKEND_URL && env.PROXY_SECRET) {
-          try {
-            const fallbackResponse = await forwardToRailway(request, url, env);
-            return addCors(fallbackResponse, origin, allowedOrigins);
-          } catch {}
-        }
         return addCors(Response.json({ error: 'Service temporarily unavailable' }, { status: 503 }), origin, allowedOrigins);
       }
-    }
-
-    // All other routes: forward to Railway backend
-    if (url.pathname.startsWith('/api/') || url.pathname.startsWith('/admin/') || url.pathname.startsWith('/analytics/') || url.pathname.startsWith('/waitlist')) {
-      if (!env.BACKEND_URL || !env.PROXY_SECRET) {
-        return addCors(Response.json({ error: 'Backend not configured' }, { status: 500 }), origin, allowedOrigins);
-      }
-
-      const backendResponse = await forwardToRailway(request, url, env);
-      return addCors(
-        new Response(backendResponse.body, { status: backendResponse.status, headers: backendResponse.headers }),
-        origin, allowedOrigins
-      );
     }
 
     return addCors(Response.json({ error: 'Not found' }, { status: 404 }), origin, allowedOrigins);
