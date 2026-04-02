@@ -29,6 +29,10 @@ function addCors(response: Response, origin: string, allowedOrigins: string[]): 
 export default {
   async fetch(request: Request, env: Env): Promise<Response> {
     const url = new URL(request.url);
+    // Normalize trailing slashes
+    if (url.pathname.length > 1 && url.pathname.endsWith('/')) {
+      url.pathname = url.pathname.slice(0, -1);
+    }
     const allowedOrigins = (env.ALLOWED_ORIGINS || 'https://vaultproof.dev').split(',').map(s => s.trim());
     const origin = request.headers.get('Origin') || '';
 
