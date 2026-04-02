@@ -286,8 +286,12 @@ async function auditLog(userId: string, action: string, scanId?: string, metadat
 
 function getGhToken(conn: { accessToken: string }): string {
   const decrypted = decrypt(Buffer.from(conn.accessToken, 'base64'));
-  const token = decrypted.toString();
+  const token = decrypted.toString('utf-8').trim();
   if (!token || token.length < 10) throw new Error('Decrypted token is empty or too short');
+  // GitHub tokens use gho_ (OAuth), github_pat_ (fine-grained PAT), or ghs_ (app install)
+  if (!token.startsWith('gho_') && !token.startsWith('github_pat_') && !token.startsWith('ghs_')) {
+    throw new Error('Decrypted token has unexpected format');
+  }
   return token;
 }
 
@@ -362,6 +366,10 @@ export async function scannerRoutes(app: FastifyInstance) {
       stateData = JSON.parse(payloadStr);
     } catch {
       return reply.status(400).send({ error: 'Invalid state parameter' });
+    }
+
+    if (!stateData.ts || Date.now() - stateData.ts > 15 * 60 * 1000) {
+      return reply.status(400).send({ error: 'OAuth state expired' });
     }
 
     if (stateData.userId !== request.auth!.userId) {

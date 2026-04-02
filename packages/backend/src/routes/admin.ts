@@ -40,15 +40,19 @@ export async function adminRoutes(app: FastifyInstance) {
   app.addHook('onRequest', requireAdmin);
 
   // ─── List all users ───────────────────────────────────────────────
-  app.get('/users', async (request) => {
-    const { page, limit, search } = request.query as {
-      page?: string;
-      limit?: string;
-      search?: string;
-    };
+  const listQuerySchema = z.object({
+    page: z.coerce.number().int().min(1).optional().default(1),
+    limit: z.coerce.number().int().min(1).max(200).optional().default(50),
+    search: z.string().max(200).optional(),
+  });
 
-    const pageNum = Math.max(1, parseInt(page || '1', 10) || 1);
-    const take = Math.min(200, Math.max(1, parseInt(limit || '50', 10) || 50));
+  app.get('/users', async (request, reply) => {
+    const parsed = listQuerySchema.safeParse(request.query);
+    if (!parsed.success) return reply.status(400).send({ error: 'Invalid query parameters' });
+    const { page, limit, search } = parsed.data;
+
+    const pageNum = page;
+    const take = limit;
     const skip = (pageNum - 1) * take;
 
     const where = search

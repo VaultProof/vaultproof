@@ -46,6 +46,8 @@ if (process.env.NODE_ENV !== 'test' && process.env.NODE_ENV !== 'development') {
   const missing: string[] = [];
   if (!process.env.JWT_SECRET || process.env.JWT_SECRET === 'vaultproof-dev-secret-change-in-production') {
     missing.push('JWT_SECRET (must be set to a unique production value)');
+  } else if (process.env.JWT_SECRET.length < 32) {
+    missing.push('JWT_SECRET must be at least 32 characters');
   }
   if (!process.env.VAULT_ENCRYPTION_KEY) {
     missing.push('VAULT_ENCRYPTION_KEY');

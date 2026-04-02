@@ -37,10 +37,10 @@ function isPublicUrl(url: string): boolean {
       if (/^(127\.|0\.|10\.|172\.(1[6-9]|2\d|3[01])\.|192\.168\.|169\.254\.|100\.(6[4-9]|[7-9]\d|1[0-2]\d))/.test(ip)) return false;
     }
 
-    // Block IPv6 private/reserved
+    // Block IPv6 private/reserved (loopback, link-local, ULA, multicast, IPv4-mapped private)
     if (h.startsWith('[') || isIP(h) === 6) {
       const v6 = h.replace(/^\[|\]$/g, '');
-      if (/^(::1|fe80:|fc00:|fd00:|::ffff:(127\.|10\.|192\.168\.|172\.(1[6-9]|2\d|3[01])\.))/.test(v6.toLowerCase())) return false;
+      if (/^(::1|fe80:|fc00:|fd00:|ff00:|::ffff:(127\.|10\.|192\.168\.|172\.(1[6-9]|2\d|3[01])\.))/.test(v6.toLowerCase())) return false;
     }
 
     // Block URL credentials (user:pass@host)

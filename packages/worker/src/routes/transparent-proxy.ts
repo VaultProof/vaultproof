@@ -68,8 +68,7 @@ export async function handleTransparentProxy(
   const providerConfig = PROVIDERS[provider];
   const dynamicConfig = !providerConfig ? DYNAMIC_PROVIDERS[provider] : null;
   if (!providerConfig && !dynamicConfig) {
-    const supported = [...Object.keys(PROVIDERS), ...Object.keys(DYNAMIC_PROVIDERS)].join(', ');
-    return Response.json({ error: `Unknown provider "${provider}". Supported: ${supported}.` }, { status: 400 });
+    return Response.json({ error: 'Unknown provider.' }, { status: 400 });
   }
 
   // b. Authenticate
@@ -101,7 +100,10 @@ export async function handleTransparentProxy(
   }
   if (auth.devKey.allowed_endpoints) {
     const allowed = auth.devKey.allowed_endpoints.split(',').map(s => s.trim());
-    if (!allowed.some(ep => ('/' + wildcardPath).startsWith(ep))) {
+    const reqPath = '/' + wildcardPath;
+    // Exact segment match: allowed endpoint must equal the path OR be a path prefix
+    // followed by '/' (not just any string prefix — prevents /models matching /models-admin)
+    if (!allowed.some(ep => reqPath === ep || reqPath.startsWith(ep + '/'))) {
       return Response.json({ error: 'Endpoint not allowed.' }, { status: 403 });
     }
   }

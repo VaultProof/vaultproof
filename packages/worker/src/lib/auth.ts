@@ -54,13 +54,13 @@ export async function authenticateDevKey(
   if (sessionHeader) {
     const sessionHash = await sha256hex(sessionHeader);
     const supabase = getSupabase(env);
-    const { data: session } = await supabase
+    const { data: session, error: sessionError } = await supabase
       .from('session_tokens')
       .select('*')
       .eq('token_hash', sessionHash)
       .single();
 
-    if (!session || session.developer_key_id !== devKey.id || new Date(session.expires_at) < new Date()) {
+    if (sessionError || !session || session.developer_key_id !== devKey.id || new Date(session.expires_at) < new Date()) {
       return null;
     }
   }

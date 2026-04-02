@@ -781,6 +781,13 @@ STRIPE_SECRET_KEY=sk_live_..."></textarea>
       return (str || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#039;');
     }
 
+    // For embedding values inside JS string literals within onclick attributes.
+    // escapeHtml() is WRONG in this context — HTML entities are decoded by the
+    // HTML parser before JS executes, so &#039; becomes ' and breaks out of the string.
+    function escapeJs(str) {
+      return (str || '').replace(/\\/g,'\\\\').replace(/'/g,"\\'").replace(/"/g,'\\"').replace(/</g,'\\x3c').replace(/>/g,'\\x3e').replace(/\r/g,'\\r').replace(/\n/g,'\\n');
+    }
+
     function renderKeys() {
       var keys = getFilteredKeys();
       var grid = document.getElementById('keysGrid');
@@ -948,7 +955,7 @@ STRIPE_SECRET_KEY=sk_live_..."></textarea>
                             '<span class="ml-2 text-[10px] text-gray-500 font-mono">' + escapeHtml(g.appId) + '</span>' +
                             (g.grantedAt ? '<span class="ml-2 text-[10px] text-gray-600">Granted ' + formatTime(g.grantedAt) + '</span>' : '') +
                           '</div>' +
-                          '<button onclick="event.stopPropagation(); revokeAppGrant(\'' + keyId + '\', \'' + escapeHtml(g.appId) + '\')" class="ml-3 px-2.5 py-1 bg-amber-500/10 border border-amber-500/20 rounded-lg text-[11px] text-amber-400 hover:bg-amber-500/20 transition flex-shrink-0">Revoke</button>' +
+                          '<button onclick="event.stopPropagation(); revokeAppGrant(\'' + escapeJs(keyId) + '\', \'' + escapeJs(g.appId) + '\')" class="ml-3 px-2.5 py-1 bg-amber-500/10 border border-amber-500/20 rounded-lg text-[11px] text-amber-400 hover:bg-amber-500/20 transition flex-shrink-0">Revoke</button>' +
                         '</div>';
                       }).join('')
                     : '<span class="text-xs text-gray-600">No authorized apps</span>'
@@ -1016,15 +1023,15 @@ STRIPE_SECRET_KEY=sk_live_..."></textarea>
 
               // Action buttons
               '<div class="flex flex-wrap gap-2 pt-2">' +
-                '<button onclick="testKey(\'' + keyId + '\', \'' + escapedProvider + '\')" id="testBtn-' + keyId + '" class="px-4 py-2 bg-indigo-500/10 border border-indigo-500/20 rounded-xl text-sm text-indigo-400 hover:bg-indigo-500/20 transition flex items-center gap-2">' +
+                '<button onclick="testKey(\'' + escapeJs(keyId) + '\', \'' + escapeJs(k.provider) + '\')" id="testBtn-' + escapeJs(keyId) + '" class="px-4 py-2 bg-indigo-500/10 border border-indigo-500/20 rounded-xl text-sm text-indigo-400 hover:bg-indigo-500/20 transition flex items-center gap-2">' +
                   '<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>' +
                   'Test' +
                 '</button>' +
-                '<button onclick="showSnippet(\'' + keyId + '\', \'' + escapedProvider + '\')" class="px-4 py-2 bg-card border border-border rounded-xl text-sm text-gray-300 hover:text-white hover:border-gray-600 transition flex items-center gap-2">' +
+                '<button onclick="showSnippet(\'' + escapeJs(keyId) + '\', \'' + escapeJs(k.provider) + '\')" class="px-4 py-2 bg-card border border-border rounded-xl text-sm text-gray-300 hover:text-white hover:border-gray-600 transition flex items-center gap-2">' +
                   '<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4"/></svg>' +
                   'Code Snippet' +
                 '</button>' +
-                '<button onclick="openRotateModal(\'' + keyId + '\', \'' + escapedProvider.replace(/'/g, "\\'") + '\', \'' + escapedLabel.replace(/'/g, "\\'") + '\')" class="px-4 py-2 bg-card border border-border rounded-xl text-sm text-gray-300 hover:text-white hover:border-gray-600 transition flex items-center gap-2">' +
+                '<button onclick="openRotateModal(\'' + escapeJs(keyId) + '\', \'' + escapeJs(k.provider) + '\', \'' + escapeJs(k.label) + '\')" class="px-4 py-2 bg-card border border-border rounded-xl text-sm text-gray-300 hover:text-white hover:border-gray-600 transition flex items-center gap-2">' +
                   '<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>' +
                   'Rotate' +
                 '</button>' +
