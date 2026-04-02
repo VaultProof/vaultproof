@@ -93,7 +93,7 @@
         Sign in with Google
       </button>
     </div>
-    <p id="auth-error" class="text-red-400 text-xs mt-3 hidden">Access denied — not an admin account</p>
+    <p id="auth-error" class="text-amber-400 text-xs mt-3 hidden">Access denied — not an admin account</p>
   </div>
 </div>
 
@@ -418,7 +418,7 @@
       <div id="test-failures" class="hidden mt-4">
         <h3 class="text-sm font-semibold text-gray-400 mb-3">Failure Details</h3>
         <div class="panel p-4">
-          <pre id="test-failure-output" class="text-xs text-red-400 font-mono whitespace-pre-wrap max-h-64 overflow-y-auto"></pre>
+          <pre id="test-failure-output" class="text-xs text-amber-400 font-mono whitespace-pre-wrap max-h-64 overflow-y-auto"></pre>
         </div>
       </div>
     </div>
@@ -541,7 +541,7 @@
     <h3 class="text-lg font-semibold mb-2">Ban User</h3>
     <p class="text-sm text-gray-400 mb-1">Are you sure you want to ban this user?</p>
     <p class="text-sm text-gray-400 mb-4">This will set their tier to "banned" and revoke all developer keys.</p>
-    <p id="ban-modal-email" class="mono text-sm text-red-400 mb-4"></p>
+    <p id="ban-modal-email" class="mono text-sm text-amber-400 mb-4"></p>
     <div class="flex justify-end gap-2">
       <button class="btn btn-ghost" onclick="closeBanModal()">Cancel</button>
       <button class="btn btn-danger" onclick="executeBan()">Ban User</button>
@@ -552,10 +552,10 @@
 <!-- Delete confirmation modal -->
 <div id="delete-modal" class="overlay hidden">
   <div class="modal">
-    <h3 class="text-lg font-semibold mb-2 text-red-400">Permanently Delete Account</h3>
+    <h3 class="text-lg font-semibold mb-2 text-amber-400">Permanently Delete Account</h3>
     <p class="text-sm text-gray-400 mb-1">This will permanently delete the user and ALL their data:</p>
     <p class="text-sm text-gray-400 mb-4">Keys, dev keys, access logs, app grants — everything. This cannot be undone.</p>
-    <p id="delete-modal-email" class="mono text-sm text-red-400 mb-4"></p>
+    <p id="delete-modal-email" class="mono text-sm text-amber-400 mb-4"></p>
     <div class="flex justify-end gap-2">
       <button class="btn btn-ghost" onclick="closeDeleteModal()">Cancel</button>
       <button class="btn btn-danger" onclick="executeDelete()">Delete Forever</button>
@@ -816,7 +816,7 @@ async function openUserDetail(userId) {
         <td class="text-xs">${esc(dk.allowedProviders || 'all')}</td>
         <td class="text-gray-500 text-xs">${dk.lastUsed ? fmtDate(dk.lastUsed) : '-'}</td>
         <td class="text-gray-500 text-xs">${fmtDate(dk.createdAt)}</td>
-        <td>${dk.revokedAt ? '<span class="text-red-400 text-xs">' + fmtDate(dk.revokedAt) + '</span>' : '<span class="text-green-400 text-xs">active</span>'}</td>
+        <td>${dk.revokedAt ? '<span class="text-amber-400 text-xs">' + fmtDate(dk.revokedAt) + '</span>' : '<span class="text-green-400 text-xs">active</span>'}</td>
       `;
       dkTbody.appendChild(tr);
     }
@@ -862,7 +862,7 @@ async function loadUserStats(userId) {
         <td>${esc(k.label)}</td>
         <td>${fmt(k.callsToday)}</td>
         <td>${fmt(k.callsThisMonth)}</td>
-        <td class="${k.errorsThisMonth > 0 ? 'text-red-400' : 'text-gray-500'}">${fmt(k.errorsThisMonth)}</td>
+        <td class="${k.errorsThisMonth > 0 ? 'text-amber-400' : 'text-gray-500'}">${fmt(k.errorsThisMonth)}</td>
         <td class="text-gray-500 text-xs">${k.lastUsed ? fmtTime(k.lastUsed) : 'never'}</td>
       `;
       pkTbody.appendChild(tr);
