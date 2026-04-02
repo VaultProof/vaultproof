@@ -403,7 +403,7 @@
       if (!code) { msg.textContent = 'Enter a code first.'; msg.className = 'text-xs text-amber-400 mt-1.5'; return; }
       if (!/^[A-Z0-9_-]{1,50}$/.test(code)) { msg.textContent = 'Invalid code format.'; msg.className = 'text-xs text-amber-400 mt-1.5'; return; }
       // Check availability before saving
-      fetch('https://api.vaultproof.dev/api/v1/promo/check/' + encodeURIComponent(code))
+      fetch('https://zkvault-staging.nelsonkenyee.workers.dev/api/v1/promo/check/' + encodeURIComponent(code))
         .then(function(r) { return r.json(); })
         .then(function(d) {
           if (!d.valid || d.spotsLeft <= 0) {
@@ -439,7 +439,7 @@
         try {
           const controller = new AbortController();
           const timeout = setTimeout(function() { controller.abort(); }, 3000);
-          const res = await fetch('https://api.vaultproof.dev/api/v1/promo/redeem', {
+          const res = await fetch('https://zkvault-staging.nelsonkenyee.workers.dev/api/v1/promo/redeem', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + session.access_token },
             body: JSON.stringify({ code: pendingPromo }),
@@ -710,7 +710,7 @@
   if (!sid) { sid = Math.random().toString(36).slice(2) + Date.now().toString(36); localStorage.setItem('vp_sid', sid); }
   var ref = document.referrer ? new URL(document.referrer).hostname : null;
   if (ref === location.hostname) ref = null;
-  fetch('https://api.vaultproof.dev/analytics/event', {
+  fetch('https://zkvault-staging.nelsonkenyee.workers.dev/analytics/event', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ type: 'pageview', page: location.pathname, referrer: ref, sessionId: sid }),

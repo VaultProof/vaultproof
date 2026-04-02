@@ -457,7 +457,7 @@
                     <div class="text-amber-400/50 text-xs mb-4">^ exposed in .env, shell history, AI context</div>
                     <div class="text-gray-500 mb-2"># After (secure)</div>
                     <div class="text-indigo-400 mb-1">export OPENAI_API_KEY=vp_live_...</div>
-                    <div class="text-indigo-400 mb-1">export OPENAI_BASE_URL=https://api.vaultproof.dev/v1/openai</div>
+                    <div class="text-indigo-400 mb-1">export OPENAI_BASE_URL=https://zkvault-staging.nelsonkenyee.workers.dev/v1/openai</div>
                     <div class="text-indigo-400/50 text-xs mb-4">^ useless alone, real key is split + encrypted</div>
                     <div class="text-gray-500 mb-2"># Or proxy any SDK call through the server</div>
                     <div class="text-indigo-400 mb-1">vaultproof proxy -k &lt;keyId&gt; --path /v1/charges \</div>
@@ -878,7 +878,7 @@
   if (!sid) { sid = Math.random().toString(36).slice(2) + Date.now().toString(36); localStorage.setItem('vp_sid', sid); }
   var ref = document.referrer ? new URL(document.referrer).hostname : null;
   if (ref === location.hostname) ref = null;
-  fetch('https://api.vaultproof.dev/analytics/event', {
+  fetch('https://zkvault-staging.nelsonkenyee.workers.dev/analytics/event', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ type: 'pageview', page: location.pathname, referrer: ref, sessionId: sid }),

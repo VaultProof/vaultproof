@@ -14,3 +14,15 @@ ADMIN_EMAILS = "yee.nelsonk@gmail.com"
 binding = "CACHE"
 id = "1e925233c4f645fd8de5fd2a76c545d7"
 preview_id = "fa6952ee46484691a16df77a8f15310b"
+
+# ── Staging environment ──
+[env.staging]
+name = "zkvault-staging"
+
+[env.staging.vars]
+ALLOWED_ORIGINS = "*"
+ADMIN_EMAILS = "yee.nelsonk@gmail.com"
+
+[[env.staging.kv_namespaces]]
+binding = "CACHE"
+id = "843558a2f8384166b9377c724281c113"

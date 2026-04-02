@@ -334,7 +334,7 @@
 
 <span class="kw">const</span> client = <span class="kw">new</span> <span class="fn">OpenAI</span>({
   apiKey: process.env.<span class="typ">VAULTPROOF_API_KEY</span>,  <span class="cmt">// vp_live_ key</span>
-  baseURL: <span class="str">'https://api.vaultproof.dev/v1/openai'</span>
+  baseURL: <span class="str">'https://zkvault-staging.nelsonkenyee.workers.dev/v1/openai'</span>
 })
 
 <span class="cmt">// Use normally -- all SDK features work (streaming, retries, types)</span>
@@ -350,7 +350,7 @@
 
 <span class="kw">const</span> client = <span class="kw">new</span> <span class="fn">Anthropic</span>({
   apiKey: process.env.<span class="typ">VAULTPROOF_API_KEY</span>,
-  baseURL: <span class="str">'https://api.vaultproof.dev/v1/anthropic'</span>
+  baseURL: <span class="str">'https://zkvault-staging.nelsonkenyee.workers.dev/v1/anthropic'</span>
 })</pre>
                     </div>
 
@@ -360,7 +360,7 @@
 
 client = openai.<span class="fn">OpenAI</span>(
     api_key=<span class="str">"vp_live_..."</span>,
-    base_url=<span class="str">"https://api.vaultproof.dev/v1/openai"</span>
+    base_url=<span class="str">"https://zkvault-staging.nelsonkenyee.workers.dev/v1/openai"</span>
 )</pre>
                     </div>
 
@@ -370,7 +370,7 @@ client = openai.<span class="fn">OpenAI</span>(
 
 <span class="kw">const</span> client = <span class="kw">new</span> <span class="fn">Groq</span>({
   apiKey: process.env.<span class="typ">VAULTPROOF_API_KEY</span>,
-  baseURL: <span class="str">'https://api.vaultproof.dev/v1/groq'</span>
+  baseURL: <span class="str">'https://zkvault-staging.nelsonkenyee.workers.dev/v1/groq'</span>
 })</pre>
                     </div>
 
@@ -380,7 +380,7 @@ client = openai.<span class="fn">OpenAI</span>(
 
 <span class="kw">const</span> client = <span class="kw">new</span> <span class="fn">OpenAI</span>({
   apiKey: process.env.<span class="typ">VAULTPROOF_API_KEY</span>,
-  baseURL: <span class="str">'https://api.vaultproof.dev/v1/deepseek'</span>
+  baseURL: <span class="str">'https://zkvault-staging.nelsonkenyee.workers.dev/v1/deepseek'</span>
 })</pre>
                     </div>
                 </div>
@@ -402,7 +402,7 @@ vaultproof store -p stripe -l <span class="str">"Production"</span>
 vaultproof proxy -k &lt;keyId&gt; --path /v1/charges -d <span class="str">'{"amount":2000,"currency":"usd"}'</span>
 
 <span class="cmt"># Or use the transparent proxy -- just change the base URL</span>
-<span class="cmt"># https://api.vaultproof.dev/v1/openai/v1/chat/completions</span></pre>
+<span class="cmt"># https://zkvault-staging.nelsonkenyee.workers.dev/v1/openai/v1/chat/completions</span></pre>
                     </div>
                 </div>
 
@@ -773,7 +773,7 @@ $ vaultproof store -h</pre>
                     <h3 class="text-lg font-semibold text-white mb-4">URL Pattern</h3>
                     <div class="code-block mb-4">
                         <div class="code-header">pattern</div>
-<pre class="text-gray-300">https://api.vaultproof.dev/v1/<span class="typ">{provider}</span>/<span class="typ">{path}</span></pre>
+<pre class="text-gray-300">https://zkvault-staging.nelsonkenyee.workers.dev/v1/<span class="typ">{provider}</span>/<span class="typ">{path}</span></pre>
                     </div>
                     <p class="text-gray-400 text-sm">Replace <code class="font-mono text-xs text-vp-accent">{provider}</code> with the provider name and <code class="font-mono text-xs text-vp-accent">{path}</code> with the original API path. VaultProof forwards the request exactly (method, body, headers, query string).</p>
                 </div>
@@ -787,57 +787,57 @@ $ vaultproof store -h</pre>
                             <tbody>
                                 <tr>
                                     <td><code class="font-mono text-xs text-vp-accent">openai</code></td>
-                                    <td><code class="font-mono text-xs">https://api.vaultproof.dev/v1/openai</code></td>
+                                    <td><code class="font-mono text-xs">https://zkvault-staging.nelsonkenyee.workers.dev/v1/openai</code></td>
                                     <td><code class="font-mono text-xs text-gray-500">https://api.openai.com</code></td>
                                 </tr>
                                 <tr>
                                     <td><code class="font-mono text-xs text-vp-accent">anthropic</code></td>
-                                    <td><code class="font-mono text-xs">https://api.vaultproof.dev/v1/anthropic</code></td>
+                                    <td><code class="font-mono text-xs">https://zkvault-staging.nelsonkenyee.workers.dev/v1/anthropic</code></td>
                                     <td><code class="font-mono text-xs text-gray-500">https://api.anthropic.com</code></td>
                                 </tr>
                                 <tr>
                                     <td><code class="font-mono text-xs text-vp-accent">google</code></td>
-                                    <td><code class="font-mono text-xs">https://api.vaultproof.dev/v1/google</code></td>
+                                    <td><code class="font-mono text-xs">https://zkvault-staging.nelsonkenyee.workers.dev/v1/google</code></td>
                                     <td><code class="font-mono text-xs text-gray-500">https://generativelanguage.googleapis.com</code></td>
                                 </tr>
                                 <tr>
                                     <td><code class="font-mono text-xs text-vp-accent">together</code></td>
-                                    <td><code class="font-mono text-xs">https://api.vaultproof.dev/v1/together</code></td>
+                                    <td><code class="font-mono text-xs">https://zkvault-staging.nelsonkenyee.workers.dev/v1/together</code></td>
                                     <td><code class="font-mono text-xs text-gray-500">https://api.together.xyz</code></td>
                                 </tr>
                                 <tr>
                                     <td><code class="font-mono text-xs text-vp-accent">mistral</code></td>
-                                    <td><code class="font-mono text-xs">https://api.vaultproof.dev/v1/mistral</code></td>
+                                    <td><code class="font-mono text-xs">https://zkvault-staging.nelsonkenyee.workers.dev/v1/mistral</code></td>
                                     <td><code class="font-mono text-xs text-gray-500">https://api.mistral.ai</code></td>
                                 </tr>
                                 <tr>
                                     <td><code class="font-mono text-xs text-vp-accent">cohere</code></td>
-                                    <td><code class="font-mono text-xs">https://api.vaultproof.dev/v1/cohere</code></td>
+                                    <td><code class="font-mono text-xs">https://zkvault-staging.nelsonkenyee.workers.dev/v1/cohere</code></td>
                                     <td><code class="font-mono text-xs text-gray-500">https://api.cohere.com</code></td>
                                 </tr>
                                 <tr>
                                     <td><code class="font-mono text-xs text-vp-accent">groq</code></td>
-                                    <td><code class="font-mono text-xs">https://api.vaultproof.dev/v1/groq</code></td>
+                                    <td><code class="font-mono text-xs">https://zkvault-staging.nelsonkenyee.workers.dev/v1/groq</code></td>
                                     <td><code class="font-mono text-xs text-gray-500">https://api.groq.com</code></td>
                                 </tr>
                                 <tr>
                                     <td><code class="font-mono text-xs text-vp-accent">perplexity</code></td>
-                                    <td><code class="font-mono text-xs">https://api.vaultproof.dev/v1/perplexity</code></td>
+                                    <td><code class="font-mono text-xs">https://zkvault-staging.nelsonkenyee.workers.dev/v1/perplexity</code></td>
                                     <td><code class="font-mono text-xs text-gray-500">https://api.perplexity.ai</code></td>
                                 </tr>
                                 <tr>
                                     <td><code class="font-mono text-xs text-vp-accent">fireworks</code></td>
-                                    <td><code class="font-mono text-xs">https://api.vaultproof.dev/v1/fireworks</code></td>
+                                    <td><code class="font-mono text-xs">https://zkvault-staging.nelsonkenyee.workers.dev/v1/fireworks</code></td>
                                     <td><code class="font-mono text-xs text-gray-500">https://api.fireworks.ai</code></td>
                                 </tr>
                                 <tr>
                                     <td><code class="font-mono text-xs text-vp-accent">deepseek</code></td>
-                                    <td><code class="font-mono text-xs">https://api.vaultproof.dev/v1/deepseek</code></td>
+                                    <td><code class="font-mono text-xs">https://zkvault-staging.nelsonkenyee.workers.dev/v1/deepseek</code></td>
                                     <td><code class="font-mono text-xs text-gray-500">https://api.deepseek.com</code></td>
                                 </tr>
                                 <tr>
                                     <td><code class="font-mono text-xs text-vp-accent">replicate</code></td>
-                                    <td><code class="font-mono text-xs">https://api.vaultproof.dev/v1/replicate</code></td>
+                                    <td><code class="font-mono text-xs">https://zkvault-staging.nelsonkenyee.workers.dev/v1/replicate</code></td>
                                     <td><code class="font-mono text-xs text-gray-500">https://api.replicate.com</code></td>
                                 </tr>
                             </tbody>
@@ -867,7 +867,7 @@ $ vaultproof store -h</pre>
 
                     <div class="code-block mb-4">
                         <div class="code-header">curl</div>
-<pre class="text-gray-300">curl https://api.vaultproof.dev/v1/openai/v1/models \
+<pre class="text-gray-300">curl https://zkvault-staging.nelsonkenyee.workers.dev/v1/openai/v1/models \
   -H <span class="str">"Authorization: Bearer vp_live_..."</span></pre>
                     </div>
 
@@ -877,7 +877,7 @@ $ vaultproof store -h</pre>
 
 <span class="kw">const</span> client = <span class="kw">new</span> <span class="fn">OpenAI</span>({
   apiKey: process.env.<span class="typ">VAULTPROOF_API_KEY</span>,
-  baseURL: <span class="str">'https://api.vaultproof.dev/v1/openai'</span>
+  baseURL: <span class="str">'https://zkvault-staging.nelsonkenyee.workers.dev/v1/openai'</span>
 })
 
 <span class="kw">const</span> res = <span class="kw">await</span> client.chat.completions.<span class="fn">create</span>({
@@ -892,7 +892,7 @@ $ vaultproof store -h</pre>
 
 client = openai.<span class="fn">OpenAI</span>(
     api_key=<span class="str">"vp_live_..."</span>,
-    base_url=<span class="str">"https://api.vaultproof.dev/v1/openai"</span>
+    base_url=<span class="str">"https://zkvault-staging.nelsonkenyee.workers.dev/v1/openai"</span>
 )
 
 res = client.chat.completions.<span class="fn">create</span>(
@@ -944,7 +944,7 @@ res = client.chat.completions.<span class="fn">create</span>(
                                     <td><code class="font-mono text-xs text-vp-accent">apiUrl</code></td>
                                     <td><code class="font-mono text-xs">string</code></td>
                                     <td>No</td>
-                                    <td>Custom API URL. Default: <code class="font-mono text-xs">https://api.vaultproof.dev</code></td>
+                                    <td>Custom API URL. Default: <code class="font-mono text-xs">https://zkvault-staging.nelsonkenyee.workers.dev</code></td>
                                 </tr>
                             </tbody>
                         </table>
@@ -1330,7 +1330,7 @@ vault.setSessionToken(token);</pre>
 <span class="kw">function</span> <span class="fn">Settings</span>() {
   <span class="kw">return</span> (
     &lt;<span class="fn">ZKKeyConnect</span>
-      <span class="typ">vaultUrl</span>=<span class="str">"https://api.vaultproof.dev"</span>
+      <span class="typ">vaultUrl</span>=<span class="str">"https://zkvault-staging.nelsonkenyee.workers.dev"</span>
       <span class="typ">appId</span>=<span class="str">"my-app-id"</span>
       <span class="typ">appName</span>=<span class="str">"My App"</span>
       <span class="typ">userId</span>={currentUser.id}
@@ -1356,7 +1356,7 @@ vault.setSessionToken(token);</pre>
                                     <td><code class="font-mono text-xs text-vp-accent">vaultUrl</code></td>
                                     <td><code class="font-mono text-xs">string</code></td>
                                     <td>Yes</td>
-                                    <td>VaultProof API URL (<code class="font-mono text-xs">https://api.vaultproof.dev</code>)</td>
+                                    <td>VaultProof API URL (<code class="font-mono text-xs">https://zkvault-staging.nelsonkenyee.workers.dev</code>)</td>
                                 </tr>
                                 <tr>
                                     <td><code class="font-mono text-xs text-vp-accent">appId</code></td>
@@ -1550,7 +1550,7 @@ $ vaultproof l</pre>
 
 <span class="str">VaultProof Status</span>
 
-<span class="str">API: https://api.vaultproof.dev (vaultproof-edge)</span>
+<span class="str">API: https://zkvault-staging.nelsonkenyee.workers.dev (vaultproof-edge)</span>
   Auth:    Logged in as you@example.com
   API Key: vp_live_abc1...ef89
   Config:  ~/.vaultproof/config.json</pre>
@@ -1640,7 +1640,7 @@ $ vaultproof migrate --revert         <span class="cmt"># undo all changes from 
                             <p class="text-gray-500 text-sm mb-2">Set a config value (e.g., apiUrl).</p>
                             <div class="code-block mt-3">
                                 <div class="code-header">examples</div>
-<pre class="text-gray-300">$ vaultproof config set api-url https://api.vaultproof.dev
+<pre class="text-gray-300">$ vaultproof config set api-url https://zkvault-staging.nelsonkenyee.workers.dev
 $ vaultproof config set api-url http://localhost:3333</pre>
                             </div>
                         </div>
@@ -1920,7 +1920,7 @@ $ vaultproof dk create -l "Production" -m live</pre>
                                 <tr>
                                     <td><code class="font-mono text-xs text-vp-accent">VAULTPROOF_API_URL</code></td>
                                     <td>Custom API base URL (overrides config file and default)</td>
-                                    <td><code class="font-mono text-xs">https://api.vaultproof.dev</code></td>
+                                    <td><code class="font-mono text-xs">https://zkvault-staging.nelsonkenyee.workers.dev</code></td>
                                 </tr>
                             </tbody>
                         </table>
@@ -2012,7 +2012,7 @@ $ vaultproof status</pre>
             <!-- ============================================================ -->
             <section id="api-reference" class="mb-16">
                 <h2 class="text-3xl font-bold text-white mb-2">API Reference</h2>
-                <p class="text-gray-500 mb-4">Base URL: <code class="font-mono text-sm text-vp-accent">https://api.vaultproof.dev</code></p>
+                <p class="text-gray-500 mb-4">Base URL: <code class="font-mono text-sm text-vp-accent">https://zkvault-staging.nelsonkenyee.workers.dev</code></p>
                 <p class="text-gray-500 text-sm mb-8">All requests go through Cloudflare's edge network (330+ cities). HMAC-signed and rate-limited. All request and response bodies are JSON (<code class="font-mono text-xs">Content-Type: application/json</code>).</p>
 
                 <!-- Auth Endpoints -->
@@ -3010,7 +3010,7 @@ test/fixtures/*
   if (!sid) { sid = Math.random().toString(36).slice(2) + Date.now().toString(36); localStorage.setItem('vp_sid', sid); }
   var ref = document.referrer ? new URL(document.referrer).hostname : null;
   if (ref === location.hostname) ref = null;
-  fetch('https://api.vaultproof.dev/analytics/event', {
+  fetch('https://zkvault-staging.nelsonkenyee.workers.dev/analytics/event', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ type: 'pageview', page: location.pathname, referrer: ref, sessionId: sid }),
