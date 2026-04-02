@@ -6,6 +6,7 @@ import { handleDevKeys } from './routes/dev-keys.js';
 import { handlePromo } from './routes/promo.js';
 import { handleAdmin } from './routes/admin.js';
 import { handleBilling } from './routes/billing.js';
+import { handleAuth } from './routes/auth.js';
 import { checkPublicIpRateLimit } from './lib/rate-limit.js';
 
 function corsHeaders(origin: string, allowedOrigins: string[]): Record<string, string> {
@@ -67,6 +68,17 @@ export default {
       }
       try {
         const response = await handleAnalyticsEvent(request, env);
+        return addCors(response, origin, allowedOrigins);
+      } catch {
+        return addCors(Response.json({ error: 'Service temporarily unavailable' }, { status: 503 }), origin, allowedOrigins);
+      }
+    }
+
+    // Auth routes
+    if (url.pathname.startsWith('/api/v1/auth/')) {
+      try {
+        const path = url.pathname.slice('/api/v1/auth/'.length);
+        const response = await handleAuth(request, env, path);
         return addCors(response, origin, allowedOrigins);
       } catch {
         return addCors(Response.json({ error: 'Service temporarily unavailable' }, { status: 503 }), origin, allowedOrigins);
