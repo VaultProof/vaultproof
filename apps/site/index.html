@@ -861,49 +861,6 @@
         </div>
     </section>
 
-    <!-- Code Example -->
-    <section class="relative z-10 max-w-5xl mx-auto px-4 sm:px-6 py-16 sm:py-24">
-        <div class="text-center mb-16">
-            <h2 class="text-2xl sm:text-3xl md:text-4xl font-bold text-white mb-4 reveal">Store a key. Proxy a call. That's it.</h2>
-            <p class="text-gray-500 text-lg reveal delay-1">Install the SDK, store your key, and proxy calls. The key never leaves VaultProof's server.</p>
-        </div>
-        <div class="max-w-2xl mx-auto reveal delay-2">
-            <div class="bg-vp-surface border border-vp-border rounded-[16px] overflow-hidden">
-                <div class="flex items-center justify-between px-5 py-3 border-b border-vp-border">
-                    <span class="text-xs text-gray-600 font-mono">app.js</span>
-                    <button onclick="copyCode()" class="text-xs text-gray-500 hover:text-white transition-colors flex items-center gap-1.5" id="copyBtn">
-                        <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2"><rect x="5" y="5" width="8" height="8" rx="1.5"/><path d="M3 9V3a1.5 1.5 0 011.5-1.5H9"/></svg>
-                        Copy
-                    </button>
-                </div>
-                <div class="p-5 font-mono text-sm leading-7 overflow-x-auto">
-                    <div class="text-gray-500">// Install: npm install @vaultproof/sdk</div>
-                    <div class="mt-2"><span class="text-indigo-400">import</span> <span class="text-yellow-300">VaultProof</span> <span class="text-indigo-400">from</span> <span class="text-green-400">'@vaultproof/sdk'</span></div>
-                    <div class="mt-2"><span class="text-indigo-400">const</span> <span class="text-gray-300">vault</span> <span class="text-gray-500">=</span> <span class="text-indigo-400">new</span> <span class="text-yellow-300">VaultProof</span><span class="text-gray-500">(</span><span class="text-green-400">'vp_live_...'</span><span class="text-gray-500">)</span></div>
-                    <div class="mt-4 text-gray-500">// Store your key — split and encrypted instantly</div>
-                    <div class="mt-1"><span class="text-indigo-400">const</span> <span class="text-gray-300">key</span> <span class="text-gray-500">=</span> <span class="text-indigo-400">await</span> <span class="text-gray-300">vault</span><span class="text-gray-500">.</span><span class="text-yellow-300">store</span><span class="text-gray-500">(</span><span class="text-green-400">'sk-proj-abc123...'</span><span class="text-gray-500">,</span> <span class="text-green-400">'openai'</span><span class="text-gray-500">)</span></div>
-                    <div class="mt-4 text-gray-500">// Proxy a call — key stays out of your app</div>
-                    <div class="mt-1"><span class="text-indigo-400">const</span> <span class="text-gray-300">res</span> <span class="text-gray-500">=</span> <span class="text-indigo-400">await</span> <span class="text-gray-300">vault</span><span class="text-gray-500">.</span><span class="text-yellow-300">proxy</span><span class="text-gray-500">(</span><span class="text-gray-300">key</span><span class="text-gray-500">.</span><span class="text-gray-300">id</span><span class="text-gray-500">,</span> <span class="text-green-400">'/v1/chat/completions'</span><span class="text-gray-500">,</span> <span class="text-gray-500">{</span></div>
-                    <div class="pl-6"><span class="text-gray-300">model</span><span class="text-gray-500">:</span> <span class="text-green-400">'gpt-4'</span><span class="text-gray-500">,</span></div>
-                    <div class="pl-6"><span class="text-gray-300">messages</span><span class="text-gray-500">:</span> <span class="text-gray-500">[{</span> <span class="text-gray-300">role</span><span class="text-gray-500">:</span> <span class="text-green-400">'user'</span><span class="text-gray-500">,</span> <span class="text-gray-300">content</span><span class="text-gray-500">:</span> <span class="text-green-400">'Hello!'</span> <span class="text-gray-500">}]</span></div>
-                    <div><span class="text-gray-500">})</span></div>
-                </div>
-            </div>
-            <pre id="codeRaw" class="hidden">import VaultProof from '@vaultproof/sdk'
-
-const vault = new VaultProof('vp_live_...')
-
-// Store your key — split and encrypted instantly
-const key = await vault.store('sk-proj-abc123...', 'openai')
-
-// Proxy a call — key stays out of your app
-const res = await vault.proxy(key.id, '/v1/chat/completions', {
-  model: 'gpt-4',
-  messages: [{ role: 'user', content: 'Hello!' }]
-})</pre>
-        </div>
-    </section>
-
     <!-- Comparison Table -->
     <section class="relative z-10 max-w-5xl mx-auto px-4 sm:px-6 py-16 sm:py-24">
         <div class="text-center mb-16">
