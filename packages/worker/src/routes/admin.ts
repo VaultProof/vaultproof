@@ -7,15 +7,16 @@ export async function handleAdmin(
   env: Env,
   path: string,
 ): Promise<Response> {
-  if (path === 'stats') {
-    return handleStats(request, env);
-  }
-  if (path === 'analytics/overview') {
-    return handleOverview(request, env);
-  }
-  if (path === 'analytics/referral-stats') {
-    return handleReferralStats(request, env);
-  }
+  if (path === 'stats') return handleStats(request, env);
+  if (path === 'analytics/overview') return handleOverview(request, env);
+  if (path === 'analytics/referral-stats') return handleReferralStats(request, env);
+  if (path === 'analytics/traffic') return handleTraffic(request, env);
+  if (path === 'analytics/pages') return handlePages(request, env);
+  if (path === 'analytics/referrers') return handleReferrers(request, env);
+  if (path === 'analytics/signups') return handleSignups(request, env);
+  if (path === 'promo/stats') return handlePromoStats(request, env);
+  if (path === 'promo/users') return handlePromoUsers(request, env);
+  if (path === 'promo/feedback') return handlePromoFeedback(request, env);
   return Response.json({ error: 'Not found' }, { status: 404 });
 }
 
@@ -294,4 +295,208 @@ async function handleReferralStats(request: Request, env: Env): Promise<Response
     byVariant,
     daily,
   });
+}
+
+function getDaysParam(request: Request): number {
+  const url = new URL(request.url);
+  const d = parseInt(url.searchParams.get('days') || '30', 10);
+  return Math.min(90, Math.max(1, isNaN(d) ? 30 : d));
+}
+
+async function handleTraffic(request: Request, env: Env): Promise<Response> {
+  const admin = await authenticateAdmin(request, env);
+  if (!admin) return Response.json({ error: 'Forbidden' }, { status: 403 });
+
+  const supabase = getSupabase(env);
+  const numDays = getDaysParam(request);
+  const since = new Date(Date.now() - numDays * 86400000).toISOString();
+
+  const { data: events } = await supabase.from('analytics_events')
+    .select('created_at, session_id')
+    .eq('type', 'pageview').gte('created_at', since)
+    .order('created_at', { ascending: true });
+
+  const dailyMap: Record<string, { views: number; visitors: Set<string> }> = {};
+  for (const e of events || []) {
+    const day = e.created_at.slice(0, 10);
+    if (!dailyMap[day]) dailyMap[day] = { views: 0, visitors: new Set() };
+    dailyMap[day].views++;
+    if (e.session_id) dailyMap[day].visitors.add(e.session_id);
+  }
+
+  const traffic = Object.entries(dailyMap).sort().map(([date, d]) => ({
+    date, views: d.views, visitors: d.visitors.size,
+  }));
+
+  return Response.json({ traffic });
+}
+
+async function handlePages(request: Request, env: Env): Promise<Response> {
+  const admin = await authenticateAdmin(request, env);
+  if (!admin) return Response.json({ error: 'Forbidden' }, { status: 403 });
+
+  const supabase = getSupabase(env);
+  const numDays = getDaysParam(request);
+  const since = new Date(Date.now() - numDays * 86400000).toISOString();
+
+  const { data: events } = await supabase.from('analytics_events')
+    .select('page')
+    .eq('type', 'pageview').gte('created_at', since);
+
+  const pageCounts: Record<string, number> = {};
+  for (const e of events || []) {
+    if (e.page) pageCounts[e.page] = (pageCounts[e.page] || 0) + 1;
+  }
+
+  const pages = Object.entries(pageCounts)
+    .map(([page, views]) => ({ page, views }))
+    .sort((a, b) => b.views - a.views)
+    .slice(0, 20);
+
+  return Response.json({ pages });
+}
+
+async function handleReferrers(request: Request, env: Env): Promise<Response> {
+  const admin = await authenticateAdmin(request, env);
+  if (!admin) return Response.json({ error: 'Forbidden' }, { status: 403 });
+
+  const supabase = getSupabase(env);
+  const numDays = getDaysParam(request);
+  const since = new Date(Date.now() - numDays * 86400000).toISOString();
+
+  const { data: events } = await supabase.from('analytics_events')
+    .select('referrer')
+    .eq('type', 'pageview').not('referrer', 'is', null).gte('created_at', since);
+
+  const refCounts: Record<string, number> = {};
+  for (const e of events || []) {
+    if (e.referrer) refCounts[e.referrer] = (refCounts[e.referrer] || 0) + 1;
+  }
+
+  const referrers = Object.entries(refCounts)
+    .map(([referrer, count]) => ({ referrer, count }))
+    .sort((a, b) => b.count - a.count)
+    .slice(0, 20);
+
+  return Response.json({ referrers });
+}
+
+async function handleSignups(request: Request, env: Env): Promise<Response> {
+  const admin = await authenticateAdmin(request, env);
+  if (!admin) return Response.json({ error: 'Forbidden' }, { status: 403 });
+
+  const supabase = getSupabase(env);
+  const numDays = getDaysParam(request);
+  const since = new Date(Date.now() - numDays * 86400000).toISOString();
+
+  const [usersRes, totalRes] = await Promise.all([
+    supabase.from('users').select('created_at').gte('created_at', since).order('created_at', { ascending: true }),
+    supabase.from('users').select('*', { count: 'exact', head: true }),
+  ]);
+
+  const dailyMap: Record<string, number> = {};
+  for (const u of usersRes.data || []) {
+    const day = u.created_at.slice(0, 10);
+    dailyMap[day] = (dailyMap[day] || 0) + 1;
+  }
+
+  const signups = Object.entries(dailyMap).sort().map(([date, count]) => ({ date, count }));
+
+  return Response.json({ signups, totalSignups: totalRes.count || 0 });
+}
+
+async function handlePromoStats(request: Request, env: Env): Promise<Response> {
+  const admin = await authenticateAdmin(request, env);
+  if (!admin) return Response.json({ error: 'Forbidden' }, { status: 403 });
+
+  const supabase = getSupabase(env);
+
+  const [redeemedRes, feedbackRes, usersRes] = await Promise.all([
+    supabase.from('users').select('*', { count: 'exact', head: true }).not('promo_code', 'is', null),
+    supabase.from('promo_feedback').select('*', { count: 'exact', head: true }),
+    supabase.from('users').select('promo_code').not('promo_code', 'is', null),
+  ]);
+
+  const byCode: Record<string, number> = {};
+  for (const u of usersRes.data || []) {
+    byCode[u.promo_code] = (byCode[u.promo_code] || 0) + 1;
+  }
+
+  return Response.json({
+    totalRedeemed: redeemedRes.count || 0,
+    totalFeedback: feedbackRes.count || 0,
+    byCode: Object.entries(byCode).map(([promoCode, count]) => ({ promoCode, _count: { id: count } })),
+  });
+}
+
+async function handlePromoUsers(request: Request, env: Env): Promise<Response> {
+  const admin = await authenticateAdmin(request, env);
+  if (!admin) return Response.json({ error: 'Forbidden' }, { status: 403 });
+
+  const supabase = getSupabase(env);
+  const url = new URL(request.url);
+  const page = Math.max(1, parseInt(url.searchParams.get('page') || '1', 10));
+  const limit = Math.min(200, Math.max(1, parseInt(url.searchParams.get('limit') || '50', 10)));
+  const offset = (page - 1) * limit;
+
+  const [usersRes, totalRes] = await Promise.all([
+    supabase.from('users')
+      .select('id, email, tier, promo_code, tier_expires_at, created_at')
+      .not('promo_code', 'is', null)
+      .order('created_at', { ascending: false })
+      .range(offset, offset + limit - 1),
+    supabase.from('users').select('*', { count: 'exact', head: true }).not('promo_code', 'is', null),
+  ]);
+
+  // Get feedback counts per user
+  const userIds = (usersRes.data || []).map((u: any) => u.id);
+  let feedbackCounts: Record<string, number> = {};
+  if (userIds.length > 0) {
+    const { data: fb } = await supabase.from('promo_feedback').select('user_id').in('user_id', userIds);
+    for (const f of fb || []) {
+      feedbackCounts[f.user_id] = (feedbackCounts[f.user_id] || 0) + 1;
+    }
+  }
+
+  const users = (usersRes.data || []).map((u: any) => ({
+    id: u.id, email: u.email, tier: u.tier, promoCode: u.promo_code,
+    tierExpiresAt: u.tier_expires_at, createdAt: u.created_at,
+    _count: { promoFeedback: feedbackCounts[u.id] || 0 },
+  }));
+
+  return Response.json({ users, total: totalRes.count || 0, page, limit });
+}
+
+async function handlePromoFeedback(request: Request, env: Env): Promise<Response> {
+  const admin = await authenticateAdmin(request, env);
+  if (!admin) return Response.json({ error: 'Forbidden' }, { status: 403 });
+
+  const supabase = getSupabase(env);
+  const url = new URL(request.url);
+  const page = Math.max(1, parseInt(url.searchParams.get('page') || '1', 10));
+  const limit = Math.min(200, Math.max(1, parseInt(url.searchParams.get('limit') || '50', 10)));
+  const offset = (page - 1) * limit;
+
+  const [fbRes, totalRes] = await Promise.all([
+    supabase.from('promo_feedback')
+      .select('id, feedback, created_at, user_id')
+      .order('created_at', { ascending: false })
+      .range(offset, offset + limit - 1),
+    supabase.from('promo_feedback').select('*', { count: 'exact', head: true }),
+  ]);
+
+  // Get user emails
+  const userIds = [...new Set((fbRes.data || []).map((f: any) => f.user_id))];
+  let userMap: Record<string, { email: string; promo_code: string }> = {};
+  if (userIds.length > 0) {
+    const { data: users } = await supabase.from('users').select('id, email, promo_code').in('id', userIds);
+    for (const u of users || []) userMap[u.id] = { email: u.email, promo_code: u.promo_code };
+  }
+
+  const feedback = (fbRes.data || []).map((f: any) => ({
+    id: f.id, feedback: f.feedback, createdAt: f.created_at,
+    user: userMap[f.user_id] || { email: 'unknown', promoCode: null },
+  }));
+
+  return Response.json({ feedback, total: totalRes.count || 0, page, limit });
 }
