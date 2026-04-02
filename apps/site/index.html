@@ -4,17 +4,17 @@
     <link rel="icon" type="image/png" href="/favicon.png">
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>VaultProof | API key security built for the age of AI agents. Because they're never exposed.</title>
-    <meta name="description" content="Your API key is sitting in a .env file right now. Anyone can read it. VaultProof is a secure proxy — we use your key for you, so it never touches your code.">
+    <title>VaultProof | API key security built for the age of AI agents.</title>
+    <meta name="description" content="VaultProof splits, encrypts, and proxies your API keys so they stay out of your code, .env files, and agent workflows.">
     <meta name="keywords" content="API key security, API key management, API proxy, zero knowledge proofs, OpenAI, Anthropic, Mistral, Groq, key vault, AI agent security">
     <meta property="og:title" content="VaultProof — API key security built for the age of AI agents">
-    <meta property="og:description" content="We don't return the key. We use it for you. VaultProof is a secure proxy — your API keys never touch your code.">
+    <meta property="og:description" content="VaultProof splits, encrypts, and proxies your API keys — designed for developers and AI agents.">
     <meta property="og:url" content="https://vaultproof.dev">
     <meta property="og:type" content="website">
     <meta property="og:image" content="https://vaultproof.dev/og-image.png">
     <meta name="twitter:card" content="summary">
     <meta name="twitter:title" content="VaultProof — API key security built for the age of AI agents">
-    <meta name="twitter:description" content="We don't return the key. We use it for you. Your API keys never touch your code.">
+    <meta name="twitter:description" content="VaultProof splits, encrypts, and proxies your API keys — designed for developers and AI agents.">
     <meta name="referrer" content="strict-origin-when-cross-origin">
 
 
@@ -713,11 +713,11 @@
                 <div class="space-y-3">
                     <div class="flex items-start gap-3">
                         <svg class="w-5 h-5 text-vp-accent flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>
-                        <div class="text-sm text-gray-300"><strong class="text-white">Your app talks to us. We talk to OpenAI.</strong> The real API key never touches your code, your .env, or your shell history.</div>
+                        <div class="text-sm text-gray-300"><strong class="text-white">Your app talks to us. We talk to OpenAI.</strong> The real API key stays out of your code, your .env, and your shell history.</div>
                     </div>
                     <div class="flex items-start gap-3">
                         <svg class="w-5 h-5 text-vp-accent flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>
-                        <div class="text-sm text-gray-300"><strong class="text-white">AI agents can't steal what they never see.</strong> They only get a VaultProof key that's useless on its own. The real key stays split and encrypted.</div>
+                        <div class="text-sm text-gray-300"><strong class="text-white">AI agents only get a scoped VaultProof key.</strong> The real key stays split and encrypted — agents work without direct access to your secrets.</div>
                     </div>
                     <div class="flex items-start gap-3">
                         <svg class="w-5 h-5 text-vp-accent flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>
@@ -787,7 +787,7 @@
     <section class="relative z-10 max-w-5xl mx-auto px-4 sm:px-6 py-16 sm:py-24">
         <div class="text-center mb-16">
             <h2 class="text-2xl sm:text-3xl md:text-4xl font-bold text-white mb-4 reveal">Your keys are protected by math, not promises</h2>
-            <p class="text-gray-500 text-lg reveal delay-1">Not access policies. Not pinky swears. Cryptographic guarantees.</p>
+            <p class="text-gray-500 text-lg reveal delay-1">Split encryption. Edge proxy. Scoped access. Defense in depth.</p>
         </div>
         <div class="grid md:grid-cols-3 gap-6">
             <!-- Key Splitting -->
@@ -820,7 +820,7 @@
     <!-- AI Agent Security -->
     <section class="relative z-10 max-w-5xl mx-auto px-4 sm:px-6 py-16 sm:py-24">
         <div class="text-center mb-14 reveal">
-            <h2 class="text-2xl sm:text-3xl md:text-4xl font-bold text-white mb-4" style="font-family:'Space Grotesk',sans-serif">AI agents can't steal what they never see</h2>
+            <h2 class="text-2xl sm:text-3xl md:text-4xl font-bold text-white mb-4" style="font-family:'Space Grotesk',sans-serif">Built for AI agents that need API access</h2>
             <p class="text-gray-400 text-lg max-w-2xl mx-auto">Cursor, Claude Code, Windsurf, Copilot -- they all read your .env files. With VaultProof, that's fine. There's nothing useful in there.</p>
         </div>
 
@@ -894,7 +894,7 @@
     <section id="how-it-works" class="relative z-10 max-w-5xl mx-auto px-4 sm:px-6 py-16 sm:py-24">
         <div class="text-center mb-16">
             <h2 class="text-2xl sm:text-3xl md:text-4xl font-bold text-white mb-4 reveal">Split. Proxy. Zero.</h2>
-            <p class="text-gray-500 text-lg reveal delay-1">Three steps between you and keys that can't be stolen.</p>
+            <p class="text-gray-500 text-lg reveal delay-1">Three steps to secure your API keys.</p>
         </div>
         <div class="relative">
             <!-- Dashed connector (desktop only) -->
@@ -953,7 +953,7 @@
                     <div class="mt-2"><span class="text-indigo-400">const</span> <span class="text-gray-300">vault</span> <span class="text-gray-500">=</span> <span class="text-indigo-400">new</span> <span class="text-yellow-300">VaultProof</span><span class="text-gray-500">(</span><span class="text-green-400">'vp_live_...'</span><span class="text-gray-500">)</span></div>
                     <div class="mt-4 text-gray-500">// Store your key — split and encrypted instantly</div>
                     <div class="mt-1"><span class="text-indigo-400">const</span> <span class="text-gray-300">key</span> <span class="text-gray-500">=</span> <span class="text-indigo-400">await</span> <span class="text-gray-300">vault</span><span class="text-gray-500">.</span><span class="text-yellow-300">store</span><span class="text-gray-500">(</span><span class="text-green-400">'sk-proj-abc123...'</span><span class="text-gray-500">,</span> <span class="text-green-400">'openai'</span><span class="text-gray-500">)</span></div>
-                    <div class="mt-4 text-gray-500">// Proxy a call — key never touches your app</div>
+                    <div class="mt-4 text-gray-500">// Proxy a call — key stays out of your app</div>
                     <div class="mt-1"><span class="text-indigo-400">const</span> <span class="text-gray-300">res</span> <span class="text-gray-500">=</span> <span class="text-indigo-400">await</span> <span class="text-gray-300">vault</span><span class="text-gray-500">.</span><span class="text-yellow-300">proxy</span><span class="text-gray-500">(</span><span class="text-gray-300">key</span><span class="text-gray-500">.</span><span class="text-gray-300">id</span><span class="text-gray-500">,</span> <span class="text-green-400">'/v1/chat/completions'</span><span class="text-gray-500">,</span> <span class="text-gray-500">{</span></div>
                     <div class="pl-6"><span class="text-gray-300">model</span><span class="text-gray-500">:</span> <span class="text-green-400">'gpt-4'</span><span class="text-gray-500">,</span></div>
                     <div class="pl-6"><span class="text-gray-300">messages</span><span class="text-gray-500">:</span> <span class="text-gray-500">[{</span> <span class="text-gray-300">role</span><span class="text-gray-500">:</span> <span class="text-green-400">'user'</span><span class="text-gray-500">,</span> <span class="text-gray-300">content</span><span class="text-gray-500">:</span> <span class="text-green-400">'Hello!'</span> <span class="text-gray-500">}]</span></div>
@@ -967,7 +967,7 @@ const vault = new VaultProof('vp_live_...')
 // Store your key — split and encrypted instantly
 const key = await vault.store('sk-proj-abc123...', 'openai')
 
-// Proxy a call — key never touches your app
+// Proxy a call — key stays out of your app
 const res = await vault.proxy(key.id, '/v1/chat/completions', {
   model: 'gpt-4',
   messages: [{ role: 'user', content: 'Hello!' }]
@@ -1234,7 +1234,7 @@ const res = await vault.proxy(key.id, '/v1/chat/completions', {
                     <svg class="faq-chevron" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg>
                 </button>
                 <div class="faq-content">
-                    <div class="faq-content-inner">Yes. Use <code style="color:#818cf8;background:#0a0a0f;padding:2px 6px;border-radius:4px;font-size:13px">vault.proxy(keyId, '/v1/charges', { amount: 2000 })</code> to route any API call through VaultProof's secure proxy. Your key never touches your code. Works with any provider that uses API keys.</div>
+                    <div class="faq-content-inner">Yes. Use <code style="color:#818cf8;background:#0a0a0f;padding:2px 6px;border-radius:4px;font-size:13px">vault.proxy(keyId, '/v1/charges', { amount: 2000 })</code> to route any API call through VaultProof's secure proxy. Your key stays out of your codebase. Works with any provider that uses API keys.</div>
                 </div>
             </div>
             <div class="faq-item border-b border-vp-border">
