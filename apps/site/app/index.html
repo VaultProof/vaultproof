@@ -407,8 +407,14 @@
           <!-- Usage Chart -->
           <div class="bg-card border border-border rounded-lg p-5 anim-fade-up" style="animation-delay:400ms">
             <div class="flex items-center justify-between mb-4">
-              <h2 class="text-lg font-semibold">API Calls &mdash; Last 30 Days</h2>
-              <span class="text-xs text-gray-500">Updated just now</span>
+              <h2 class="text-lg font-semibold">API Calls</h2>
+              <select id="chartDays" onchange="loadUsageChart()" class="bg-[#0a0a0f] border border-[#1e1e2e] text-gray-300 rounded-md px-3 py-1.5 text-sm focus:border-brand focus:outline-none">
+                <option value="7">Last 7 days</option>
+                <option value="14">Last 14 days</option>
+                <option value="30" selected>Last 30 days</option>
+                <option value="60">Last 60 days</option>
+                <option value="90">Last 90 days</option>
+              </select>
             </div>
             <div class="relative" style="height:300px;">
               <canvas id="usageChart"></canvas>
@@ -891,10 +897,13 @@
     }
 
     // ── Load Usage Chart ──
+    let _usageChart = null;
+
     async function loadUsageChart() {
+      const numDays = document.getElementById('chartDays')?.value || '30';
       let data;
       try {
-        data = await apiFetch('/stats/usage?days=30');
+        data = await apiFetch('/stats/usage?days=' + numDays);
         if (!data) return;
       } catch (e) {
         console.warn('Usage API failed, using mock data:', e);
@@ -913,8 +922,10 @@
       const callsData = days.map(d => d.calls || 0);
       const errorsData = days.map(d => d.errors || 0);
 
+      if (_usageChart) { _usageChart.destroy(); _usageChart = null; }
+
       const ctx = document.getElementById('usageChart').getContext('2d');
-      new Chart(ctx, {
+      _usageChart = new Chart(ctx, {
         type: 'line',
         data: {
           labels,
