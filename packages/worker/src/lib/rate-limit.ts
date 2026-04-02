@@ -2,6 +2,52 @@ import type { Env } from '../types.js';
 import { getSupabase } from './supabase.js';
 import { cacheGet, cacheSet } from './cache.js';
 
+// ── IP-based rate limiter (in-memory, per-isolate) ──
+const ipBuckets = new Map<string, { count: number; windowStart: number }>();
+
+const IP_LIMITS: Record<string, { rpm: number }> = {
+  free:       { rpm: 30 },
+  starter:    { rpm: 60 },
+  pro:        { rpm: 300 },
+  max:        { rpm: 300 },
+  enterprise: { rpm: 1000 },
+  banned:     { rpm: 0 },
+};
+const IP_WINDOW = 60_000;
+
+export function checkIpRateLimit(ip: string, tier: string = 'free'): { allowed: boolean; limit: number; remaining: number } {
+  const limits = IP_LIMITS[tier] || IP_LIMITS.free;
+  const now = Date.now();
+  const bucket = ipBuckets.get(ip);
+
+  if (!bucket || now - bucket.windowStart >= IP_WINDOW) {
+    ipBuckets.set(ip, { count: 1, windowStart: now });
+    return { allowed: true, limit: limits.rpm, remaining: limits.rpm - 1 };
+  }
+
+  bucket.count++;
+  const remaining = Math.max(0, limits.rpm - bucket.count);
+  return { allowed: bucket.count <= limits.rpm, limit: limits.rpm, remaining };
+}
+
+// Public endpoint rate limit (no auth, use IP only)
+const PUBLIC_RPM = 30;
+
+export function checkPublicIpRateLimit(ip: string): { allowed: boolean; limit: number; remaining: number } {
+  const key = `pub:${ip}`;
+  const now = Date.now();
+  const bucket = ipBuckets.get(key);
+
+  if (!bucket || now - bucket.windowStart >= IP_WINDOW) {
+    ipBuckets.set(key, { count: 1, windowStart: now });
+    return { allowed: true, limit: PUBLIC_RPM, remaining: PUBLIC_RPM - 1 };
+  }
+
+  bucket.count++;
+  const remaining = Math.max(0, PUBLIC_RPM - bucket.count);
+  return { allowed: bucket.count <= PUBLIC_RPM, limit: PUBLIC_RPM, remaining };
+}
+
 // Per-key burst limiter (in-memory, per-isolate)
 const keyBuckets = new Map<string, { tokens: number; windowStart: number }>();
 const KEY_RATE_LIMIT = 60;

@@ -5,6 +5,7 @@ import { handleStats } from './routes/stats.js';
 import { handleDevKeys } from './routes/dev-keys.js';
 import { handlePromo } from './routes/promo.js';
 import { handleAdmin } from './routes/admin.js';
+import { checkPublicIpRateLimit } from './lib/rate-limit.js';
 
 function corsHeaders(origin: string, allowedOrigins: string[]): Record<string, string> {
   const isAllowed = allowedOrigins.includes(origin);
@@ -52,8 +53,13 @@ export default {
       );
     }
 
-    // Analytics event (public, no auth)
+    // Analytics event (public, no auth — IP rate limited)
     if (url.pathname === '/analytics/event') {
+      const ip = request.headers.get('CF-Connecting-IP') || 'unknown';
+      const rl = checkPublicIpRateLimit(ip);
+      if (!rl.allowed) {
+        return addCors(Response.json({ error: 'Rate limited — try again in a moment' }, { status: 429 }), origin, allowedOrigins);
+      }
       try {
         const response = await handleAnalyticsEvent(request, env);
         return addCors(response, origin, allowedOrigins);
