@@ -56,7 +56,7 @@ export default {
     // Analytics event (public, no auth — IP rate limited)
     if (url.pathname === '/analytics/event') {
       const ip = request.headers.get('CF-Connecting-IP') || 'unknown';
-      const rl = checkPublicIpRateLimit(ip);
+      const rl = await checkPublicIpRateLimit(env, ip);
       if (!rl.allowed) {
         return addCors(Response.json({ error: 'Rate limited — try again in a moment' }, { status: 429 }), origin, allowedOrigins);
       }

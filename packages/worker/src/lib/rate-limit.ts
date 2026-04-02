@@ -2,50 +2,44 @@ import type { Env } from '../types.js';
 import { getSupabase } from './supabase.js';
 import { cacheGet, cacheSet } from './cache.js';
 
-// ── IP-based rate limiter (in-memory, per-isolate) ──
-const ipBuckets = new Map<string, { count: number; windowStart: number }>();
+// ── IP-based rate limiter (KV-backed, cross-isolate) ──
 
-const IP_LIMITS: Record<string, { rpm: number }> = {
-  free:       { rpm: 30 },
-  starter:    { rpm: 60 },
-  pro:        { rpm: 300 },
-  max:        { rpm: 300 },
-  enterprise: { rpm: 1000 },
-  banned:     { rpm: 0 },
+const IP_LIMITS: Record<string, number> = {
+  free: 30,
+  starter: 60,
+  pro: 300,
+  max: 300,
+  enterprise: 1000,
+  banned: 0,
 };
-const IP_WINDOW = 60_000;
 
-export function checkIpRateLimit(ip: string, tier: string = 'free'): { allowed: boolean; limit: number; remaining: number } {
-  const limits = IP_LIMITS[tier] || IP_LIMITS.free;
-  const now = Date.now();
-  const bucket = ipBuckets.get(ip);
+const PUBLIC_RPM = 30;
+const KV_TTL = 60; // seconds — matches 1-minute window
 
-  if (!bucket || now - bucket.windowStart >= IP_WINDOW) {
-    ipBuckets.set(ip, { count: 1, windowStart: now });
-    return { allowed: true, limit: limits.rpm, remaining: limits.rpm - 1 };
-  }
+export async function checkIpRateLimit(env: Env, ip: string, tier: string = 'free'): Promise<{ allowed: boolean; limit: number; remaining: number }> {
+  const limit = IP_LIMITS[tier] ?? IP_LIMITS.free;
+  const key = `rl:${tier}:${ip}`;
 
-  bucket.count++;
-  const remaining = Math.max(0, limits.rpm - bucket.count);
-  return { allowed: bucket.count <= limits.rpm, limit: limits.rpm, remaining };
+  const raw = await env.CACHE.get(key);
+  const count = raw ? parseInt(raw, 10) : 0;
+  const newCount = count + 1;
+
+  // Write back with TTL (auto-expires after 60s)
+  await env.CACHE.put(key, String(newCount), { expirationTtl: KV_TTL });
+
+  return { allowed: newCount <= limit, limit, remaining: Math.max(0, limit - newCount) };
 }
 
-// Public endpoint rate limit (no auth, use IP only)
-const PUBLIC_RPM = 30;
+export async function checkPublicIpRateLimit(env: Env, ip: string): Promise<{ allowed: boolean; limit: number; remaining: number }> {
+  const key = `rl:pub:${ip}`;
 
-export function checkPublicIpRateLimit(ip: string): { allowed: boolean; limit: number; remaining: number } {
-  const key = `pub:${ip}`;
-  const now = Date.now();
-  const bucket = ipBuckets.get(key);
+  const raw = await env.CACHE.get(key);
+  const count = raw ? parseInt(raw, 10) : 0;
+  const newCount = count + 1;
 
-  if (!bucket || now - bucket.windowStart >= IP_WINDOW) {
-    ipBuckets.set(key, { count: 1, windowStart: now });
-    return { allowed: true, limit: PUBLIC_RPM, remaining: PUBLIC_RPM - 1 };
-  }
+  await env.CACHE.put(key, String(newCount), { expirationTtl: KV_TTL });
 
-  bucket.count++;
-  const remaining = Math.max(0, PUBLIC_RPM - bucket.count);
-  return { allowed: bucket.count <= PUBLIC_RPM, limit: PUBLIC_RPM, remaining };
+  return { allowed: newCount <= PUBLIC_RPM, limit: PUBLIC_RPM, remaining: Math.max(0, PUBLIC_RPM - newCount) };
 }
 
 // Per-key burst limiter (in-memory, per-isolate)
