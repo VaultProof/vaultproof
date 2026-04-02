@@ -196,6 +196,8 @@
         </div>
       </div>
 
+      <p class="text-xs text-gray-500 text-center mb-6">Plan changes take effect at the start of your next billing cycle. No prorated charges.</p>
+
       <!-- Enterprise -->
       <div class="bg-[#111118] border border-[#1e1e2e] rounded-xl p-6 mb-8 fade-in">
         <div class="flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
@@ -285,6 +287,8 @@
       }
     }
 
+    var tierRank = { free: 0, starter: 1, pro: 2, enterprise: 3 };
+
     function showPlan(tier, hasSubscription) {
       var badge = document.getElementById('currentPlanBadge');
       var colors = {
@@ -297,22 +301,37 @@
       badge.className = 'inline-flex items-center px-4 py-1.5 rounded-xl text-sm font-semibold capitalize ' + c;
       badge.textContent = tier === 'free' ? 'Free Plan' : tier.charAt(0).toUpperCase() + tier.slice(1) + ' Plan';
 
-      // Update buttons
+      var currentRank = tierRank[tier] || 0;
+
+      // Update upgrade/downgrade buttons
       document.querySelectorAll('.billing-upgrade-btn').forEach(function(btn) {
         var btnTier = btn.getAttribute('data-tier');
+        var btnRank = tierRank[btnTier] || 0;
+
         if (btnTier === tier) {
           btn.textContent = 'Current Plan';
           btn.disabled = true;
           btn.className = 'w-full px-4 py-2.5 bg-[#1e1e2e] text-gray-500 rounded-xl text-sm font-medium cursor-default';
+        } else if (btnRank > currentRank) {
+          btn.textContent = 'Upgrade to ' + btnTier.charAt(0).toUpperCase() + btnTier.slice(1);
+          btn.disabled = false;
+          btn.className = 'billing-upgrade-btn w-full px-4 py-2.5 bg-brand hover:bg-brand-hover text-white rounded-xl text-sm font-medium transition btn-glow';
+        } else {
+          btn.textContent = 'Downgrade to ' + btnTier.charAt(0).toUpperCase() + btnTier.slice(1);
+          btn.disabled = false;
+          btn.className = 'billing-upgrade-btn w-full px-4 py-2.5 bg-[#1e1e2e] hover:bg-[#2a2a3a] text-gray-300 rounded-xl text-sm font-medium transition border border-[#1e1e2e]';
         }
       });
 
       var freeBtn = document.getElementById('freeBtn');
       if (tier === 'free') {
         freeBtn.textContent = 'Current Plan';
+        freeBtn.disabled = true;
       } else {
-        freeBtn.textContent = 'Free Plan';
-        freeBtn.className = 'w-full px-4 py-2.5 bg-[#1e1e2e] text-gray-400 rounded-xl text-sm font-medium cursor-default';
+        freeBtn.textContent = 'Downgrade to Free';
+        freeBtn.disabled = false;
+        freeBtn.className = 'w-full px-4 py-2.5 bg-[#1e1e2e] hover:bg-[#2a2a3a] text-gray-300 rounded-xl text-sm font-medium transition border border-[#1e1e2e] cursor-pointer';
+        freeBtn.onclick = function() { openBillingPortal(); };
       }
 
       if (hasSubscription) {
