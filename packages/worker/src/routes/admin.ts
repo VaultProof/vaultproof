@@ -17,6 +17,19 @@ export async function handleAdmin(
   if (path === 'promo/stats') return handlePromoStats(request, env);
   if (path === 'promo/users') return handlePromoUsers(request, env);
   if (path === 'promo/feedback') return handlePromoFeedback(request, env);
+  if (path === 'users') return handleUsers(request, env);
+  if (path === 'logs') return handleGlobalLogs(request, env);
+  // Dynamic user routes: users/:userId, users/:userId/stats, users/:userId/logs, users/:userId/ban, users/:userId/tier
+  const userMatch = path.match(/^users\/([^/]+)(?:\/(.+))?$/);
+  if (userMatch) {
+    const userId = userMatch[1];
+    const sub = userMatch[2] || '';
+    if (sub === '') return handleUserDetail(request, env, userId);
+    if (sub === 'stats') return handleUserStats(request, env, userId);
+    if (sub === 'logs') return handleUserLogs(request, env, userId);
+    if (sub === 'ban') return handleBanUser(request, env, userId);
+    if (sub === 'tier') return handleChangeTier(request, env, userId);
+  }
   return Response.json({ error: 'Not found' }, { status: 404 });
 }
 
@@ -499,4 +512,312 @@ async function handlePromoFeedback(request: Request, env: Env): Promise<Response
   }));
 
   return Response.json({ feedback, total: totalRes.count || 0, page, limit });
+}
+
+async function handleUsers(request: Request, env: Env): Promise<Response> {
+  const admin = await authenticateAdmin(request, env);
+  if (!admin) return Response.json({ error: 'Forbidden' }, { status: 403 });
+
+  const supabase = getSupabase(env);
+  const url = new URL(request.url);
+  const page = Math.max(1, parseInt(url.searchParams.get('page') || '1', 10));
+  const limit = Math.min(200, Math.max(1, parseInt(url.searchParams.get('limit') || '50', 10)));
+  const search = url.searchParams.get('search') || '';
+  const offset = (page - 1) * limit;
+
+  let query = supabase.from('users')
+    .select('id, email, tier, created_at, kill_switch', { count: 'exact' })
+    .order('created_at', { ascending: false })
+    .range(offset, offset + limit - 1);
+
+  if (search) query = query.ilike('email', `%${search}%`);
+
+  const { data: users, count: total } = await query;
+
+  // Enrich with key counts and total calls
+  const enriched = await Promise.all((users || []).map(async (user: any) => {
+    const [keysRes, devKeysRes, slotsRes] = await Promise.all([
+      supabase.from('key_slots').select('*', { count: 'exact', head: true }).eq('user_id', user.id),
+      supabase.from('developer_keys').select('*', { count: 'exact', head: true }).eq('user_id', user.id).is('revoked_at', null),
+      supabase.from('key_slots').select('id').eq('user_id', user.id),
+    ]);
+
+    const keySlotIds = (slotsRes.data || []).map((k: any) => k.id);
+    let totalCalls = 0;
+    if (keySlotIds.length > 0) {
+      const { count } = await supabase.from('access_logs').select('*', { count: 'exact', head: true }).in('key_slot_id', keySlotIds);
+      totalCalls = count || 0;
+    }
+
+    return {
+      id: user.id, email: user.email, tier: user.tier,
+      createdAt: user.created_at, killSwitch: user.kill_switch,
+      keyCount: keysRes.count || 0, devKeyCount: devKeysRes.count || 0, totalCalls,
+    };
+  }));
+
+  return Response.json({ users: enriched, total: total || 0, page, limit });
+}
+
+async function handleUserDetail(request: Request, env: Env, userId: string): Promise<Response> {
+  const admin = await authenticateAdmin(request, env);
+  if (!admin) return Response.json({ error: 'Forbidden' }, { status: 403 });
+
+  const supabase = getSupabase(env);
+  const { data: user } = await supabase.from('users').select('*').eq('id', userId).single();
+  if (!user) return Response.json({ error: 'User not found' }, { status: 404 });
+
+  const [keySlotsRes, devKeysRes] = await Promise.all([
+    supabase.from('key_slots')
+      .select('id, provider, label, status, daily_limit, monthly_limit, created_at, rotated_at, expires_at')
+      .eq('user_id', userId).order('created_at', { ascending: false }),
+    supabase.from('developer_keys')
+      .select('id, label, mode, allowed_ips, allowed_providers, allowed_endpoints, last_used, created_at, revoked_at')
+      .eq('user_id', userId).order('created_at', { ascending: false }),
+  ]);
+
+  const keySlotIds = (keySlotsRes.data || []).map((k: any) => k.id);
+  let totalCalls = 0;
+  let recentActivity: any[] = [];
+
+  if (keySlotIds.length > 0) {
+    const [callsRes, logsRes] = await Promise.all([
+      supabase.from('access_logs').select('*', { count: 'exact', head: true }).in('key_slot_id', keySlotIds),
+      supabase.from('access_logs')
+        .select('id, app_id, action, timestamp, metadata, key_slot_id')
+        .in('key_slot_id', keySlotIds).order('timestamp', { ascending: false }).limit(50),
+    ]);
+    totalCalls = callsRes.count || 0;
+
+    // Get key labels
+    const keyMap: Record<string, { provider: string; label: string }> = {};
+    for (const k of keySlotsRes.data || []) keyMap[k.id] = { provider: k.provider, label: k.label };
+
+    recentActivity = (logsRes.data || []).map((l: any) => ({
+      id: l.id, appId: l.app_id, action: l.action, timestamp: l.timestamp,
+      metadata: l.metadata, keySlot: keyMap[l.key_slot_id] || { provider: 'unknown', label: 'unknown' },
+    }));
+  }
+
+  return Response.json({
+    id: user.id, email: user.email, tier: user.tier,
+    stripeCustomerId: user.stripe_customer_id, stripeSubscriptionId: user.stripe_subscription_id,
+    globalDailyLimit: user.global_daily_limit, globalMonthlyLimit: user.global_monthly_limit,
+    killSwitch: user.kill_switch, createdAt: user.created_at,
+    keySlots: (keySlotsRes.data || []).map((k: any) => ({
+      id: k.id, provider: k.provider, label: k.label, status: k.status,
+      dailyLimit: k.daily_limit, monthlyLimit: k.monthly_limit,
+      createdAt: k.created_at, rotatedAt: k.rotated_at, expiresAt: k.expires_at,
+    })),
+    developerKeys: (devKeysRes.data || []).map((k: any) => ({
+      id: k.id, label: k.label, mode: k.mode, allowedIps: k.allowed_ips,
+      allowedProviders: k.allowed_providers, allowedEndpoints: k.allowed_endpoints,
+      lastUsed: k.last_used, createdAt: k.created_at, revokedAt: k.revoked_at,
+    })),
+    totalCalls, recentActivity,
+  });
+}
+
+async function handleUserStats(request: Request, env: Env, userId: string): Promise<Response> {
+  const admin = await authenticateAdmin(request, env);
+  if (!admin) return Response.json({ error: 'Forbidden' }, { status: 403 });
+
+  const supabase = getSupabase(env);
+  const numDays = getDaysParam(request);
+  const now = new Date();
+  const monthStart = new Date(now.getFullYear(), now.getMonth(), 1).toISOString();
+  const dayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate()).toISOString();
+  const startDate = new Date(now.getTime() - numDays * 86400000).toISOString();
+  const CALL_ACTIONS = ['api_call', 'transparent_proxy', 'key_retrieval', 'key_retrieval_batch'];
+
+  const { data: keySlots } = await supabase.from('key_slots')
+    .select('id, provider, label, created_at')
+    .eq('user_id', userId).eq('status', 'ACTIVE');
+
+  const keySlotIds = (keySlots || []).map((k: any) => k.id);
+
+  // Overview
+  let totalCalls = 0, errorCalls = 0, activeAppsCount = 0;
+  if (keySlotIds.length > 0) {
+    const [callsRes, errorsRes, appsRes] = await Promise.all([
+      supabase.from('access_logs').select('*', { count: 'exact', head: true }).in('key_slot_id', keySlotIds).in('action', CALL_ACTIONS).gte('timestamp', monthStart),
+      supabase.from('access_logs').select('*', { count: 'exact', head: true }).in('key_slot_id', keySlotIds).in('action', CALL_ACTIONS).gte('timestamp', monthStart).like('metadata', '%"error":true%'),
+      supabase.from('app_grants').select('app_id').in('key_slot_id', keySlotIds).is('revoked_at', null),
+    ]);
+    totalCalls = callsRes.count || 0;
+    errorCalls = errorsRes.count || 0;
+    activeAppsCount = new Set((appsRes.data || []).map((a: any) => a.app_id)).size;
+  }
+
+  // Usage chart
+  let logs: any[] = [];
+  if (keySlotIds.length > 0) {
+    const { data } = await supabase.from('access_logs')
+      .select('timestamp, metadata')
+      .in('key_slot_id', keySlotIds).in('action', CALL_ACTIONS)
+      .gte('timestamp', startDate).order('timestamp', { ascending: true });
+    logs = data || [];
+  }
+
+  const dailyMap: Record<string, { calls: number; errors: number }> = {};
+  for (let i = 0; i < numDays; i++) {
+    const d = new Date(now.getTime() - (numDays - 1 - i) * 86400000);
+    dailyMap[d.toISOString().slice(0, 10)] = { calls: 0, errors: 0 };
+  }
+  for (const log of logs) {
+    const day = log.timestamp?.slice(0, 10);
+    if (day && dailyMap[day]) {
+      dailyMap[day].calls++;
+      if (typeof log.metadata === 'string' && log.metadata.includes('"error":true')) dailyMap[day].errors++;
+    }
+  }
+
+  // Per-key breakdown
+  const keys = await Promise.all((keySlots || []).map(async (key: any) => {
+    const [monthlyRes, dailyRes, errorRes, lastRes] = await Promise.all([
+      supabase.from('access_logs').select('*', { count: 'exact', head: true }).eq('key_slot_id', key.id).in('action', CALL_ACTIONS).gte('timestamp', monthStart),
+      supabase.from('access_logs').select('*', { count: 'exact', head: true }).eq('key_slot_id', key.id).in('action', CALL_ACTIONS).gte('timestamp', dayStart),
+      supabase.from('access_logs').select('*', { count: 'exact', head: true }).eq('key_slot_id', key.id).in('action', CALL_ACTIONS).gte('timestamp', monthStart).like('metadata', '%"error":true%'),
+      supabase.from('access_logs').select('timestamp').eq('key_slot_id', key.id).order('timestamp', { ascending: false }).limit(1),
+    ]);
+    // Get app grants
+    const { data: grants } = await supabase.from('app_grants').select('app_id, app_name').eq('key_slot_id', key.id).is('revoked_at', null);
+    return {
+      id: key.id, provider: key.provider, label: key.label, createdAt: key.created_at,
+      apps: (grants || []).map((g: any) => ({ appId: g.app_id, appName: g.app_name })),
+      callsToday: dailyRes.count || 0, callsThisMonth: monthlyRes.count || 0,
+      errorsThisMonth: errorRes.count || 0, lastUsed: lastRes.data?.[0]?.timestamp || null,
+    };
+  }));
+
+  return Response.json({
+    overview: {
+      totalKeys: (keySlots || []).length, totalCalls, errorCalls,
+      errorRate: totalCalls > 0 ? Math.round((errorCalls / totalCalls) * 100) : 0,
+      activeApps: activeAppsCount,
+    },
+    usage: Object.entries(dailyMap).sort().map(([date, d]) => ({ date, ...d })),
+    keys,
+  });
+}
+
+async function handleUserLogs(request: Request, env: Env, userId: string): Promise<Response> {
+  const admin = await authenticateAdmin(request, env);
+  if (!admin) return Response.json({ error: 'Forbidden' }, { status: 403 });
+
+  const supabase = getSupabase(env);
+  const url = new URL(request.url);
+  const page = Math.max(1, parseInt(url.searchParams.get('page') || '1', 10));
+  const limit = Math.min(500, Math.max(1, parseInt(url.searchParams.get('limit') || '100', 10)));
+  const offset = (page - 1) * limit;
+
+  const { data: slots } = await supabase.from('key_slots').select('id, provider, label').eq('user_id', userId);
+  const keySlotIds = (slots || []).map((k: any) => k.id);
+
+  if (keySlotIds.length === 0) return Response.json({ logs: [], total: 0, page, limit });
+
+  const keyMap: Record<string, { provider: string; label: string }> = {};
+  for (const k of slots || []) keyMap[k.id] = { provider: k.provider, label: k.label };
+
+  const [logsRes, totalRes] = await Promise.all([
+    supabase.from('access_logs')
+      .select('id, app_id, action, timestamp, metadata, key_slot_id')
+      .in('key_slot_id', keySlotIds).order('timestamp', { ascending: false })
+      .range(offset, offset + limit - 1),
+    supabase.from('access_logs').select('*', { count: 'exact', head: true }).in('key_slot_id', keySlotIds),
+  ]);
+
+  const logs = (logsRes.data || []).map((l: any) => ({
+    id: l.id, appId: l.app_id, action: l.action, timestamp: l.timestamp,
+    metadata: l.metadata, keySlot: keyMap[l.key_slot_id] || { provider: 'unknown', label: 'unknown' },
+  }));
+
+  return Response.json({ logs, total: totalRes.count || 0, page, limit });
+}
+
+async function handleGlobalLogs(request: Request, env: Env): Promise<Response> {
+  const admin = await authenticateAdmin(request, env);
+  if (!admin) return Response.json({ error: 'Forbidden' }, { status: 403 });
+
+  const supabase = getSupabase(env);
+  const url = new URL(request.url);
+  const page = Math.max(1, parseInt(url.searchParams.get('page') || '1', 10));
+  const limit = Math.min(500, Math.max(1, parseInt(url.searchParams.get('limit') || '100', 10)));
+  const action = url.searchParams.get('action') || '';
+  const offset = (page - 1) * limit;
+
+  let query = supabase.from('access_logs')
+    .select('id, app_id, action, timestamp, metadata, key_slot_id', { count: 'exact' })
+    .order('timestamp', { ascending: false })
+    .range(offset, offset + limit - 1);
+
+  if (action) query = query.eq('action', action);
+
+  const { data: logs, count: total } = await query;
+
+  // Get key slot details
+  const keySlotIds = [...new Set((logs || []).map((l: any) => l.key_slot_id))];
+  let keyMap: Record<string, { provider: string; label: string; userId: string; email: string }> = {};
+  if (keySlotIds.length > 0) {
+    const { data: slots } = await supabase.from('key_slots').select('id, provider, label, user_id').in('id', keySlotIds);
+    const userIds = [...new Set((slots || []).map((s: any) => s.user_id))];
+    let userMap: Record<string, string> = {};
+    if (userIds.length > 0) {
+      const { data: users } = await supabase.from('users').select('id, email').in('id', userIds);
+      for (const u of users || []) userMap[u.id] = u.email;
+    }
+    for (const s of slots || []) {
+      keyMap[s.id] = { provider: s.provider, label: s.label, userId: s.user_id, email: userMap[s.user_id] || 'unknown' };
+    }
+  }
+
+  const enrichedLogs = (logs || []).map((l: any) => ({
+    id: l.id, appId: l.app_id, action: l.action, timestamp: l.timestamp, metadata: l.metadata,
+    keySlot: keyMap[l.key_slot_id] ? {
+      provider: keyMap[l.key_slot_id].provider, label: keyMap[l.key_slot_id].label,
+      userId: keyMap[l.key_slot_id].userId, user: { email: keyMap[l.key_slot_id].email },
+    } : null,
+  }));
+
+  return Response.json({ logs: enrichedLogs, total: total || 0, page, limit });
+}
+
+async function handleBanUser(request: Request, env: Env, userId: string): Promise<Response> {
+  if (request.method !== 'POST') return Response.json({ error: 'Method not allowed' }, { status: 405 });
+  const admin = await authenticateAdmin(request, env);
+  if (!admin) return Response.json({ error: 'Forbidden' }, { status: 403 });
+
+  const supabase = getSupabase(env);
+  const { data: user } = await supabase.from('users').select('id, email, tier').eq('id', userId).single();
+  if (!user) return Response.json({ error: 'User not found' }, { status: 404 });
+  if (user.tier === 'banned') return Response.json({ message: 'User is already banned', userId });
+
+  const now = new Date().toISOString();
+  await Promise.all([
+    supabase.from('users').update({ tier: 'banned', kill_switch: true }).eq('id', userId),
+    supabase.from('developer_keys').update({ revoked_at: now }).eq('user_id', userId).is('revoked_at', null),
+  ]);
+
+  return Response.json({ message: 'User banned and all developer keys revoked', userId, email: user.email });
+}
+
+async function handleChangeTier(request: Request, env: Env, userId: string): Promise<Response> {
+  if (request.method !== 'PUT') return Response.json({ error: 'Method not allowed' }, { status: 405 });
+  const admin = await authenticateAdmin(request, env);
+  if (!admin) return Response.json({ error: 'Forbidden' }, { status: 403 });
+
+  let body: any;
+  try { body = await request.json(); } catch { return Response.json({ error: 'Invalid JSON' }, { status: 400 }); }
+
+  const validTiers = ['free', 'starter', 'pro', 'max', 'enterprise', 'banned'];
+  if (!body.tier || !validTiers.includes(body.tier)) {
+    return Response.json({ error: 'Invalid tier' }, { status: 400 });
+  }
+
+  const supabase = getSupabase(env);
+  const { data: user } = await supabase.from('users').select('id, email').eq('id', userId).single();
+  if (!user) return Response.json({ error: 'User not found' }, { status: 404 });
+
+  await supabase.from('users').update({ tier: body.tier }).eq('id', userId);
+  return Response.json({ message: 'Tier updated', userId, email: user.email, tier: body.tier });
 }
