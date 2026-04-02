@@ -28,11 +28,16 @@ export async function promoRoutes(app: FastifyInstance) {
     const tierExpiresAt = new Date();
     tierExpiresAt.setDate(tierExpiresAt.getDate() + config.durationDays);
 
-    // Atomic check-and-apply: re-check the cap inside a transaction so two concurrent
-    // requests can't both slip through when the count is exactly at limit - 1.
+    // Atomic check-and-apply: re-check both the user's existing code AND the cap
+    // inside a transaction so two concurrent requests can't both slip through.
     let updated: { tier: string; tierExpiresAt: Date | null };
     try {
       updated = await prisma.$transaction(async (tx) => {
+        // Re-check inside transaction to close the race condition window
+        const currentUser = await tx.user.findUnique({ where: { id: user.id }, select: { promoCode: true } });
+        if (currentUser?.promoCode) {
+          throw Object.assign(new Error('already_redeemed'), { code: 'ALREADY_REDEEMED' });
+        }
         const redeemed = await tx.user.count({ where: { promoCode: code } });
         if (redeemed >= config.maxRedemptions) {
           throw Object.assign(new Error('limit_reached'), { code: 'LIMIT_REACHED' });
@@ -43,6 +48,9 @@ export async function promoRoutes(app: FastifyInstance) {
         });
       });
     } catch (err: unknown) {
+      if (err instanceof Error && (err as NodeJS.ErrnoException).code === 'ALREADY_REDEEMED') {
+        return reply.status(409).send({ error: 'You have already redeemed a promo code' });
+      }
       if (err instanceof Error && (err as NodeJS.ErrnoException).code === 'LIMIT_REACHED') {
         return reply.status(410).send({ error: 'This promo code has reached its redemption limit' });
       }
@@ -57,7 +65,7 @@ export async function promoRoutes(app: FastifyInstance) {
   });
 
   // GET /check/:code — Check if a promo code is valid (no auth)
-  app.get('/check/:code', async (request, reply) => {
+  app.get('/check/:code', { config: { rateLimit: { max: 5, timeWindow: '1 minute' } } }, async (request, reply) => {
     const { code } = request.params as { code: string };
     if (!/^[A-Z0-9_-]{1,50}$/i.test(code)) return reply.status(400).send({ error: 'Invalid promo code format' });
     const normalized = code.toUpperCase().trim();

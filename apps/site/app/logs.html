@@ -481,7 +481,7 @@
             <td class="px-5 py-3.5 text-gray-300 whitespace-nowrap text-sm">${escapeHtml(l.appName || '—')}</td>
             <td class="px-5 py-3.5 text-gray-400 whitespace-nowrap font-mono text-xs">${escapeHtml(l.endpoint || '—')}</td>
             <td class="px-5 py-3.5 whitespace-nowrap">${statusBadge(l.status)}</td>
-            <td class="px-5 py-3.5 text-gray-400 whitespace-nowrap text-sm font-mono">${l.latency != null ? l.latency + '<span class="text-gray-600 text-xs ml-0.5">ms</span>' : '—'}</td>
+            <td class="px-5 py-3.5 text-gray-400 whitespace-nowrap text-sm font-mono">${l.latency != null && isFinite(Number(l.latency)) ? String(Number(l.latency)) + '<span class="text-gray-600 text-xs ml-0.5">ms</span>' : '—'}</td>
             <td class="px-5 py-3.5 whitespace-nowrap">${zkBadge(l.zkProofVerified)}</td>
           </tr>
         `).join('');

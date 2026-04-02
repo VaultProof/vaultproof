@@ -31,7 +31,7 @@ const DYNAMIC_PROVIDERS: Record<string, {
     buildUpstream: (segments) => {
       if (segments.length < 2) return null;
       const projectRef = segments[0];
-      if (!/^[a-z0-9]+$/.test(projectRef)) return null;
+      if (!/^[a-z0-9]{20}$/.test(projectRef)) return null;
       return { url: `https://${projectRef}.supabase.co`, remainingPath: '/' + segments.slice(1).join('/') };
     },
     authHeader: (k) => ({ apikey: k, Authorization: `Bearer ${k}` }),
@@ -48,6 +48,9 @@ const SAFE_FORWARD_HEADERS = new Set([
 function hexToBytes(hex: string): Uint8Array {
   // Strip leading \x if present
   const clean = hex.startsWith('\\x') ? hex.slice(2) : hex;
+  if (clean.length % 2 !== 0) {
+    throw new Error('Invalid hex string: odd length');
+  }
   const bytes = new Uint8Array(clean.length / 2);
   for (let i = 0; i < clean.length; i += 2) {
     bytes[i / 2] = parseInt(clean.substring(i, i + 2), 16);
@@ -152,7 +155,7 @@ export async function handleTransparentProxy(
   // f. Tier rate limiting
   const tier = user?.tier || 'free';
   const rateCheck = await checkTierRateLimit(env, keySlot.id, tier);
-  if (!rateCheck.allowed && tier === 'free') {
+  if (!rateCheck.allowed) {
     return Response.json({ error: 'Monthly call limit exceeded.', used: rateCheck.used, limit: rateCheck.limit }, { status: 429 });
   }
 
@@ -177,6 +180,7 @@ export async function handleTransparentProxy(
     const share2 = deserializeShare(share2Str);
     const combined = combineShares([share1, share2]);
     apiKey = new TextDecoder().decode(combined);
+    zeroUint8Array(combined);
   } catch {
     return Response.json({ error: 'Key reconstruction failed.' }, { status: 400 });
   }

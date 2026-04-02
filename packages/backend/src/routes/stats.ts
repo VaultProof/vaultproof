@@ -115,8 +115,11 @@ export async function statsRoutes(app: FastifyInstance) {
       const key = log.timestamp.toISOString().split('T')[0];
       if (dailyMap[key]) {
         dailyMap[key].calls++;
-        if (log.metadata && typeof log.metadata === 'string' && log.metadata.includes('"error":true')) {
-          dailyMap[key].errors++;
+        if (log.metadata) {
+          try {
+            const meta = typeof log.metadata === 'string' ? JSON.parse(log.metadata) : log.metadata;
+            if (meta?.error === true) dailyMap[key].errors++;
+          } catch { /* ignore unparseable metadata */ }
         }
       }
     }

@@ -1,4 +1,5 @@
 import type { FastifyInstance } from 'fastify';
+import { z } from 'zod';
 import { createClient } from '@supabase/supabase-js';
 
 const supabase = createClient(
@@ -8,15 +9,16 @@ const supabase = createClient(
 
 export async function waitlistRoutes(fastify: FastifyInstance) {
   fastify.post('/api/waitlist', { config: { rateLimit: { max: 5, timeWindow: '1 minute' } } }, async (request, reply) => {
-    const { email } = request.body as { email?: string };
-
-    if (!email || !email.includes('@')) {
+    const schema = z.object({ email: z.string().email().max(254) });
+    const parsed = schema.safeParse(request.body);
+    if (!parsed.success) {
       return reply.status(400).send({ error: 'Valid email required' });
     }
+    const email = parsed.data.email.toLowerCase().trim();
 
     const { error } = await supabase
       .from('waitlist')
-      .insert({ email: email.toLowerCase().trim() });
+      .insert({ email });
 
     if (error) {
       // Unique violation — already signed up

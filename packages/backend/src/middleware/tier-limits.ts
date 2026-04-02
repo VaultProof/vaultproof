@@ -17,8 +17,12 @@ const TIERS: Record<string, TierLimits> = {
   free: { maxCallsPerMonth: 10000, maxKeySlots: 3, maxAppGrantsPerKey: 1 },
   starter: { maxCallsPerMonth: 50000, maxKeySlots: 10, maxAppGrantsPerKey: 5 },
   pro: { maxCallsPerMonth: 500000, maxKeySlots: 50, maxAppGrantsPerKey: 20 },
-  // Legacy "max" tier maps to pro limits as a fallback
+  // Legacy "max" tier maps to pro limits
   max: { maxCallsPerMonth: 500000, maxKeySlots: 100, maxAppGrantsPerKey: 20 },
+  // Enterprise: effectively unlimited (high cap to prevent accidental unbounded queries)
+  enterprise: { maxCallsPerMonth: 999_999_999, maxKeySlots: 1000, maxAppGrantsPerKey: 100 },
+  // Banned: zero calls allowed
+  banned: { maxCallsPerMonth: 0, maxKeySlots: 0, maxAppGrantsPerKey: 0 },
 };
 
 // Track which warnings have been sent this month (prevent spam)

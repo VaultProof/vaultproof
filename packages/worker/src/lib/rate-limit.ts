@@ -25,6 +25,8 @@ const TIERS: Record<string, { maxCallsPerMonth: number; maxKeySlots: number }> =
   starter: { maxCallsPerMonth: 50000, maxKeySlots: 10 },
   pro: { maxCallsPerMonth: 500000, maxKeySlots: 50 },
   max: { maxCallsPerMonth: 500000, maxKeySlots: 100 },
+  enterprise: { maxCallsPerMonth: 999_999_999, maxKeySlots: 1000 },
+  banned: { maxCallsPerMonth: 0, maxKeySlots: 0 },
 };
 
 const BUFFER_PERCENT = 1.05;

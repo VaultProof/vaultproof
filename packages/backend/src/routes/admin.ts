@@ -10,8 +10,10 @@ import { z } from 'zod';
  * against ADMIN_EMAILS (comma-separated) env var.
  */
 
-const ADMIN_EMAILS = (process.env.ADMIN_EMAILS || 'yee.nelsonk@gmail.com')
-  .split(',').map(e => e.trim().toLowerCase());
+if (!process.env.ADMIN_EMAILS) {
+  throw new Error('FATAL: ADMIN_EMAILS environment variable is required');
+}
+const ADMIN_EMAILS = process.env.ADMIN_EMAILS.split(',').map(e => e.trim().toLowerCase());
 
 const supabase = createClient(
   process.env.SUPABASE_URL || '',
@@ -424,13 +426,13 @@ export async function adminRoutes(app: FastifyInstance) {
   });
 
   // ─── Change user tier ────────────────────────────────────────────
-  const tierSchema = z.object({ tier: z.enum(['free', 'starter', 'pro', 'team', 'enterprise', 'banned']) });
+  const tierSchema = z.object({ tier: z.enum(['free', 'starter', 'pro', 'max', 'enterprise', 'banned']) });
 
   app.put('/users/:userId/tier', async (request, reply) => {
     const { userId } = request.params as { userId: string };
     const parsed = tierSchema.safeParse(request.body);
     if (!parsed.success) {
-      return reply.status(400).send({ error: 'Invalid tier. Must be one of: free, starter, pro, team, enterprise, banned' });
+      return reply.status(400).send({ error: 'Invalid tier. Must be one of: free, starter, pro, max, enterprise, banned' });
     }
     const { tier } = parsed.data;
 
