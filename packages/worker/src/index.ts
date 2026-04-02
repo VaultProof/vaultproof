@@ -5,6 +5,7 @@ import { handleStats } from './routes/stats.js';
 import { handleDevKeys } from './routes/dev-keys.js';
 import { handlePromo } from './routes/promo.js';
 import { handleAdmin } from './routes/admin.js';
+import { handleBilling } from './routes/billing.js';
 import { checkPublicIpRateLimit } from './lib/rate-limit.js';
 
 function corsHeaders(origin: string, allowedOrigins: string[]): Record<string, string> {
@@ -88,6 +89,17 @@ export default {
       try {
         const path = url.pathname.slice('/api/v1/dev-keys/'.length);
         const response = await handleDevKeys(request, env, path);
+        return addCors(response, origin, allowedOrigins);
+      } catch {
+        return addCors(Response.json({ error: 'Service temporarily unavailable' }, { status: 503 }), origin, allowedOrigins);
+      }
+    }
+
+    // Billing routes
+    if (url.pathname.startsWith('/api/v1/billing/')) {
+      try {
+        const path = url.pathname.slice('/api/v1/billing/'.length);
+        const response = await handleBilling(request, env, path);
         return addCors(response, origin, allowedOrigins);
       } catch {
         return addCors(Response.json({ error: 'Service temporarily unavailable' }, { status: 503 }), origin, allowedOrigins);
