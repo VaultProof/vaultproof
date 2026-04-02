@@ -7,6 +7,9 @@ export async function handleAdmin(
   env: Env,
   path: string,
 ): Promise<Response> {
+  if (path === 'stats') {
+    return handleStats(request, env);
+  }
   if (path === 'analytics/overview') {
     return handleOverview(request, env);
   }
@@ -15,6 +18,61 @@ export async function handleAdmin(
   }
   return Response.json({ error: 'Not found' }, { status: 404 });
 }
+
+async function handleStats(request: Request, env: Env): Promise<Response> {
+  const admin = await authenticateAdmin(request, env);
+  if (!admin) return Response.json({ error: 'Forbidden' }, { status: 403 });
+
+  const supabase = getSupabase(env);
+  const now = new Date();
+  const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate()).toISOString();
+  const monthStart = new Date(now.getFullYear(), now.getMonth(), 1).toISOString();
+  const weekAgo = new Date(now.getTime() - 7 * 86400000).toISOString();
+
+  const [totalUsers, totalKeys, totalDevKeys, callsToday, callsThisMonth, totalCallsAllTime] = await Promise.all([
+    supabase.from('users').select('*', { count: 'exact', head: true }),
+    supabase.from('key_slots').select('*', { count: 'exact', head: true }).eq('status', 'ACTIVE'),
+    supabase.from('developer_keys').select('*', { count: 'exact', head: true }).is('revoked_at', null),
+    supabase.from('access_logs').select('*', { count: 'exact', head: true }).gte('timestamp', todayStart),
+    supabase.from('access_logs').select('*', { count: 'exact', head: true }).gte('timestamp', monthStart),
+    supabase.from('access_logs').select('*', { count: 'exact', head: true }),
+  ]);
+
+  // Active users last 7 days
+  const { data: recentLogs } = await supabase
+    .from('access_logs')
+    .select('key_slot_id')
+    .gte('timestamp', weekAgo);
+
+  let activeUserCount = 0;
+  if (recentLogs && recentLogs.length > 0) {
+    const keySlotIds = [...new Set(recentLogs.map((l: any) => l.key_slot_id))];
+    const { data: slots } = await supabase
+      .from('key_slots')
+      .select('user_id')
+      .in('id', keySlotIds);
+    activeUserCount = new Set((slots || []).map((s: any) => s.user_id)).size;
+  }
+
+  // Tier breakdown
+  const { data: users } = await supabase.from('users').select('tier');
+  const tiers: Record<string, number> = {};
+  for (const u of users || []) {
+    tiers[u.tier] = (tiers[u.tier] || 0) + 1;
+  }
+
+  return Response.json({
+    totalUsers: totalUsers.count || 0,
+    totalKeys: totalKeys.count || 0,
+    totalDevKeys: totalDevKeys.count || 0,
+    callsToday: callsToday.count || 0,
+    callsThisMonth: callsThisMonth.count || 0,
+    totalCallsAllTime: totalCallsAllTime.count || 0,
+    activeUsersLast7Days: activeUserCount,
+    tiers,
+  });
+}
+
 
 async function handleOverview(request: Request, env: Env): Promise<Response> {
   const admin = await authenticateAdmin(request, env);
