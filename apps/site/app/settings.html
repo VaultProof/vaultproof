@@ -1114,7 +1114,12 @@
     async function loadBillingStatus() {
       try {
         const res = await apiFetch('/billing/status');
-        if (!res) return;
+        if (!res || !res.ok) {
+          // Fallback to free plan display
+          document.getElementById('billingTierBadge').textContent = 'Free Plan';
+          if (document.getElementById('planBadge')) document.getElementById('planBadge').textContent = 'Free Plan';
+          return;
+        }
         const data = await res.json();
         const currentTier = data.tier || 'free';
         window._currentTier = currentTier;
