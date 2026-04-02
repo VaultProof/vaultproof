@@ -849,6 +849,8 @@
       const empty = document.getElementById('devKeysEmpty');
       const table = document.getElementById('devKeysTable');
 
+      if (!loading || !empty || !table) return; // Elements not in DOM
+
       try {
         const res = await apiFetch('/dev-keys/list');
         if (!res) return;
