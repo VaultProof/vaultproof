@@ -91,39 +91,43 @@ async function handleCheckout(request: Request, env: Env, userId: string): Promi
     return Response.json({ error: 'Invalid tier. Must be starter or pro.' }, { status: 400 });
   }
 
-  const supabase = getSupabase(env);
-  const { data: userData } = await supabase.from('users').select('id, email, stripe_customer_id').eq('id', userId).single();
-  if (!userData) return Response.json({ error: 'User not found' }, { status: 404 });
+  try {
+    const supabase = getSupabase(env);
+    const { data: userData } = await supabase.from('users').select('id, email, stripe_customer_id').eq('id', userId).single();
+    if (!userData) return Response.json({ error: 'User not found' }, { status: 404 });
 
-  const stripe = getStripe(env);
-  const prices = await ensurePrices(stripe);
-  const priceKey = annual ? `${tier}_annual` : tier;
-  const priceId = prices.get(priceKey);
-  if (!priceId) return Response.json({ error: 'Price not found' }, { status: 500 });
+    const stripe = getStripe(env);
+    const prices = await ensurePrices(stripe);
+    const priceKey = annual ? `${tier}_annual` : tier;
+    const priceId = prices.get(priceKey);
+    if (!priceId) return Response.json({ error: 'Price not found' }, { status: 500 });
 
-  // Get or create Stripe customer
-  let customerId = userData.stripe_customer_id;
-  if (!customerId) {
-    const customers = await stripe.customers.list({ email: userData.email, limit: 1 });
-    if (customers.data.length > 0) {
-      customerId = customers.data[0].id;
-    } else {
-      const customer = await stripe.customers.create({ email: userData.email, metadata: { userId } });
-      customerId = customer.id;
+    // Get or create Stripe customer
+    let customerId = userData.stripe_customer_id;
+    if (!customerId) {
+      const customers = await stripe.customers.list({ email: userData.email, limit: 1 });
+      if (customers.data.length > 0) {
+        customerId = customers.data[0].id;
+      } else {
+        const customer = await stripe.customers.create({ email: userData.email, metadata: { userId } });
+        customerId = customer.id;
+      }
+      await supabase.from('users').update({ stripe_customer_id: customerId }).eq('id', userId);
     }
-    await supabase.from('users').update({ stripe_customer_id: customerId }).eq('id', userId);
+
+    const session = await stripe.checkout.sessions.create({
+      mode: 'subscription',
+      customer: customerId,
+      line_items: [{ price: priceId, quantity: 1 }],
+      success_url: 'https://vaultproof.dev/app/plans?billing=success',
+      cancel_url: 'https://vaultproof.dev/app/plans?billing=cancel',
+      metadata: { userId, tier, billingPeriod: annual ? 'annual' : 'monthly' },
+    });
+
+    return Response.json({ url: session.url });
+  } catch (e: any) {
+    return Response.json({ error: e.message || 'Checkout failed' }, { status: 500 });
   }
-
-  const session = await stripe.checkout.sessions.create({
-    mode: 'subscription',
-    customer: customerId,
-    line_items: [{ price: priceId, quantity: 1 }],
-    success_url: 'https://vaultproof.dev/app/settings?billing=success',
-    cancel_url: 'https://vaultproof.dev/app/settings?billing=cancel',
-    metadata: { userId, tier, billingPeriod: annual ? 'annual' : 'monthly' },
-  });
-
-  return Response.json({ url: session.url });
 }
 
 async function handlePortal(env: Env, userId: string): Promise<Response> {

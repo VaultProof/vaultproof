@@ -107,7 +107,7 @@
     <div class="max-w-4xl mx-auto">
 
       <!-- Header -->
-      <div class="mb-8 mt-4">
+      <div class="mb-8 mt-12">
         <h1 class="text-2xl font-bold" style="font-family:'Space Grotesk',sans-serif">Plans & Billing</h1>
         <p class="text-sm text-gray-500 mt-1">Upgrade, downgrade, or manage your subscription.</p>
       </div>
@@ -354,21 +354,19 @@
         });
         if (!res) { btn.disabled = false; btn.textContent = origText; alert('Please sign in again.'); return; }
 
-        if (res.ok) {
-          var data = await res.json();
-          if (data.url) {
-            try {
-              var u = new URL(data.url);
-              if (u.protocol === 'https:' && (u.hostname.endsWith('.stripe.com') || u.hostname === 'stripe.com')) {
-                window.location.href = data.url;
-                return;
-              }
-            } catch {}
-          }
+        var data = await res.json().catch(function() { return {}; });
+
+        if (res.ok && data.url) {
+          try {
+            var u = new URL(data.url);
+            if (u.protocol === 'https:' && (u.hostname.endsWith('.stripe.com') || u.hostname === 'stripe.com')) {
+              window.location.href = data.url;
+              return;
+            }
+          } catch {}
         }
 
-        var err = await res.json().catch(function() { return {}; });
-        alert(err.error || 'Failed to start checkout');
+        alert(data.error || 'Failed to start checkout. Please try again.');
       } catch (e) {
         alert('Network error. Please try again.');
       }
