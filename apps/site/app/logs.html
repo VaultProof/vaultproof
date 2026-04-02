@@ -299,7 +299,7 @@
     const sidebarEl = document.getElementById('sidebar');
     const overlayEl = document.getElementById('sidebarOverlay');
     document.getElementById('sidebarEmail').textContent = user.email || '—';
-    document.getElementById('menuBtn').addEventListener('click', toggleSidebar);
+    document.getElementById('menuBtn').addEventListener('click', toggleMobileSidebar);
 
     function toggleMobileSidebar() {
       sidebarEl.classList.toggle('-translate-x-full');
