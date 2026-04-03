@@ -220,7 +220,7 @@
                 <a href="#proxy-call-flow" class="nav-link block text-sm text-gray-500 py-1.5 px-3 rounded-r pl-6">Proxy Call Flow</a>
                 <a href="#breach-scenarios" class="nav-link block text-sm text-gray-500 py-1.5 px-3 rounded-r pl-6">Breach Scenarios</a>
                 <a href="#shamir" class="nav-link block text-sm text-gray-500 py-1.5 px-3 rounded-r pl-6">Shamir Secret Sharing</a>
-                <a href="#zk-proofs" class="nav-link block text-sm text-gray-500 py-1.5 px-3 rounded-r pl-6">Zero-Knowledge Proofs</a>
+                <a href="#zk-proofs" class="nav-link block text-sm text-gray-500 py-1.5 px-3 rounded-r pl-6">Cryptographic Proofs</a>
 
                 <div class="pt-4 pb-1 px-3 text-[0.6875rem] font-semibold text-gray-600 uppercase tracking-wider">Packages</div>
                 <a href="#packages" class="nav-link block text-sm text-gray-500 py-1.5 px-3 rounded-r">Package Overview</a>
@@ -249,12 +249,12 @@
             <!-- ============================================================ -->
             <section id="overview" class="mb-16">
                 <h1 class="text-4xl font-extrabold text-white mb-3 tracking-tight">VaultProof Documentation</h1>
-                <p class="text-lg text-gray-400 mb-8 leading-relaxed max-w-2xl">Everything you need to store, protect, and proxy your API keys and secrets with zero-knowledge security.</p>
+                <p class="text-lg text-gray-400 mb-8 leading-relaxed max-w-2xl">Everything you need to store, protect, and proxy your API keys and secrets with split-key security.</p>
 
                 <div class="bg-vp-surface border border-vp-border rounded-md p-6 mb-8">
                     <h2 class="text-xl font-bold text-white mb-3">What is VaultProof?</h2>
                     <p class="text-gray-400 leading-relaxed mb-4">
-                        VaultProof is a security layer for API keys and secrets. It splits your keys using Shamir Secret Sharing, encrypts the shares separately, and reassembles them only for the milliseconds it takes to make a proxied API call. Your raw API key is never stored whole on any server.
+                        VaultProof is a security layer for API keys and secrets. It splits your keys, encrypts the shares separately, and reassembles them only briefly in memory during a proxied API call. Your raw API key is never stored whole at rest on any server.
                     </p>
                     <p class="text-gray-400 leading-relaxed mb-4">
                         It is built for developers who work with third-party API keys -- OpenAI, Anthropic, Google AI, Together.ai, and more. If you have ever committed a key to GitHub, emailed a key to a teammate, or stored a key in plaintext in a .env file on a server, VaultProof solves that problem.
@@ -328,7 +328,7 @@
                 </div>
 
                 <div class="callout-warn mb-8">
-                    <p class="text-sm text-amber-200"><strong class="text-amber-300">All four tools do the same thing under the hood:</strong> Shamir-split your key, encrypt both shares with different keys, and proxy API calls without the server ever seeing the full key. The only difference is the interface.</p>
+                    <p class="text-sm text-amber-200"><strong class="text-amber-300">All four tools do the same thing under the hood:</strong> split your key, encrypt both shares with different keys, and proxy API calls so the full key is only assembled briefly in memory. The difference is the interface.</p>
                 </div>
 
                 <!-- Path A: Proxy URL (RECOMMENDED) -->
@@ -693,10 +693,10 @@ $ vaultproof store -h</pre>
                     </div>
                 </div>
 
-                <!-- 3.5 Zero-Knowledge Proofs -->
+                <!-- 3.5 Cryptographic Proofs -->
                 <div id="zk-proofs">
-                    <h3 class="text-xl font-semibold text-white mb-6">3.5 Zero-Knowledge Proofs</h3>
-                    <p class="text-gray-400 text-sm mb-6">For advanced security, VaultProof uses zero-knowledge proofs (ZK proofs) written in <a href="https://noir-lang.org" class="text-vp-accent hover:underline" target="_blank" rel="noopener">Noir</a> and verified with Barretenberg. The ZK circuit proves three things without revealing any sensitive data:</p>
+                    <h3 class="text-xl font-semibold text-white mb-6">3.5 Cryptographic Proofs</h3>
+                    <p class="text-gray-400 text-sm mb-6">For authorization, VaultProof uses cryptographic proofs that verify three things without revealing any sensitive data:</p>
 
                     <div class="grid md:grid-cols-3 gap-4 mb-6">
                         <div class="bg-vp-surface border border-vp-border rounded-md p-5">
@@ -1681,7 +1681,7 @@ $ vaultproof config set api-url http://localhost:3333</pre>
                                 <code class="font-mono text-sm text-white font-semibold">vaultproof store</code>
                                 <span class="text-gray-600 text-xs font-mono">alias: add</span>
                             </div>
-                            <p class="text-gray-500 text-sm mb-3">Store an API key with Shamir splitting. The key is split locally -- the server never sees the full key.</p>
+                            <p class="text-gray-500 text-sm mb-3">Store an API key with split-key encryption. The key is split locally before being sent to the server.</p>
                             <div class="bg-vp-surface border border-vp-border rounded-md overflow-hidden mb-3">
                                 <table class="doc-table">
                                     <thead><tr><th>Flag</th><th>Description</th><th>Required</th></tr></thead>
@@ -2719,7 +2719,7 @@ Authorization: Bearer &lt;jwt_token&gt;
                             <span class="text-green-400 font-mono text-xs font-bold bg-green-500/10 px-2 py-0.5 rounded">L1</span>
                             <h4 class="text-white font-semibold">Shamir Secret Sharing</h4>
                         </div>
-                        <p class="text-gray-400 text-sm">API keys are split into 2 shares using polynomial interpolation over GF(256). Each share alone is information-theoretically secure -- no amount of computation can extract the secret from a single share. This is not encryption (which can be brute-forced); it is mathematically impossible.</p>
+                        <p class="text-gray-400 text-sm">API keys are split into 2 shares. Each share alone reveals nothing about the original key -- no amount of computation can extract the secret from a single share. This is designed so that no single server holds your complete key at rest.</p>
                     </div>
 
                     <div class="endpoint-card border-l-2 border-l-green-500/50">
@@ -2773,9 +2773,9 @@ Authorization: Bearer &lt;jwt_token&gt;
                     <div class="endpoint-card border-l-2 border-l-indigo-500/50">
                         <div class="flex items-center gap-3 mb-2">
                             <span class="text-indigo-400 font-mono text-xs font-bold bg-indigo-500/10 px-2 py-0.5 rounded">L8</span>
-                            <h4 class="text-white font-semibold">Noir ZK Proofs</h4>
+                            <h4 class="text-white font-semibold">Cryptographic Proofs</h4>
                         </div>
-                        <p class="text-gray-400 text-sm">Zero-knowledge proofs (written in Noir, verified with Barretenberg) cryptographically prove key ownership, app authorization, and request freshness without revealing any sensitive data. Proof verification happens on every proxy call.</p>
+                        <p class="text-gray-400 text-sm">Cryptographic proofs verify key ownership, app authorization, and request freshness without revealing any sensitive data. Proof verification happens on every proxy call.</p>
                     </div>
                 </div>
 
@@ -2921,7 +2921,7 @@ test/fixtures/*
                 <div class="space-y-4">
                     <div class="endpoint-card">
                         <h4 class="text-white font-semibold mb-2">"Can VaultProof see my API keys?"</h4>
-                        <p class="text-gray-400 text-sm">No -- and this is by design, not by policy. Your API key is split into two shares using Shamir Secret Sharing before it is stored. Share 1 is encrypted with a server-side key. Share 2 is encrypted with your developer key. Neither share alone contains any information about the original key (this is an information-theoretic guarantee, not a computational one). The only time the full key exists is during a proxy call, when both shares are decrypted and combined in RAM for approximately 100ms, then immediately zeroed. There is no "admin mode" that can view stored keys.</p>
+                        <p class="text-gray-400 text-sm">No -- and this is by design, not by policy. Your API key is split into two shares before it is stored. Share 1 is encrypted with a server-side key. Share 2 is encrypted with your developer key. Neither share alone contains any information about the original key. The full key is only assembled briefly in memory during a proxy call, then immediately wiped. There is no "admin mode" that can view stored keys.</p>
                     </div>
 
                     <div class="endpoint-card">

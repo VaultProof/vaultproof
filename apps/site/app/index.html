@@ -1340,7 +1340,7 @@
     </div>
     <!-- Heading -->
     <h2 class="text-xl font-bold text-white mb-2" style="font-family:'Space Grotesk',sans-serif">Welcome to VaultProof</h2>
-    <p class="text-sm text-gray-400 mb-6 leading-relaxed">Secure your API keys with split-key encryption and a transparent proxy. Your keys are split before they reach us — we never see them in full.</p>
+    <p class="text-sm text-gray-400 mb-6 leading-relaxed">Secure your API keys with split-key encryption and a transparent proxy. Your keys are split before storage and only assembled briefly during API calls.</p>
     <!-- Steps -->
     <div class="space-y-3 mb-6">
       <div class="flex items-start gap-3">
@@ -1400,7 +1400,7 @@
 (function() {
   var tourSteps = [
     { target: '#statsGrid', text: 'Welcome to VaultProof! These cards show your real-time usage — total keys stored, active providers, API calls, and error rate.', position: 'bottom' },
-    { target: '#keys-table', text: 'Your API keys live here. Each key is split using Shamir Secret Sharing — we never see your full key. You can add, rotate, or revoke keys.', position: 'bottom' },
+    { target: '#keys-table', text: 'Your API keys live here. Each key is split before storage and only assembled briefly during API calls. You can add, rotate, or revoke keys.', position: 'bottom' },
     { target: '#nav-api-keys', text: 'Go to API Keys to store your first key. Choose a provider (OpenAI, Anthropic, etc.), paste your key, and it\'s split instantly in your browser.', position: 'right' },
     { target: '#nav-settings', text: 'After storing keys, create a Developer API Key (vp_live_) here. This is how your app authenticates with VaultProof.', position: 'right' },
     { target: '#activityPanel', text: 'Every API call, key rotation, and access event shows up here in real time. Full audit trail for all your keys.', position: 'left' },

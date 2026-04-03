@@ -5,10 +5,10 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>VaultProof | The password manager for API keys and secrets</title>
-    <meta name="description" content="The password manager for API keys and secrets. One line change. Every SDK works. Store, encrypt, and proxy your OpenAI, Anthropic, Mistral, and Groq API keys with zero-knowledge security.">
-    <meta name="keywords" content="API key security, API key management, Shamir secret sharing, zero knowledge proofs, OpenAI, Anthropic, Mistral, Groq, API proxy, key vault">
+    <meta name="description" content="The password manager for API keys and secrets. One line change. Every SDK works. Store, encrypt, and proxy your OpenAI, Anthropic, Mistral, and Groq API keys with split-key security.">
+    <meta name="keywords" content="API key security, API key management, split-key encryption, OpenAI, Anthropic, Mistral, Groq, API proxy, key vault">
     <meta property="og:title" content="VaultProof — The password manager for API keys">
-    <meta property="og:description" content="One line change. Every SDK works. Your keys are never exposed. Store API keys and secrets with Shamir splitting and zero-knowledge proofs.">
+    <meta property="og:description" content="One line change. Every SDK works. Your keys are never exposed. Store API keys and secrets with split-key encryption.">
     <meta property="og:url" content="https://vaultproof.dev">
     <meta property="og:type" content="website">
     <meta property="og:image" content="https://vaultproof.dev/og-image.png">
@@ -296,8 +296,8 @@
     <!-- Features Grid -->
     <section class="max-w-5xl mx-auto px-6 py-24">
         <div class="text-center mb-16">
-            <h2 class="text-3xl md:text-4xl font-bold text-vp-navy mb-4 reveal font-heading">Built on cryptographic guarantees</h2>
-            <p class="text-vp-body text-lg reveal delay-1">Not policies. Not promises. Math.</p>
+            <h2 class="text-3xl md:text-4xl font-bold text-vp-navy mb-4 reveal font-heading">Built on cryptographic architecture</h2>
+            <p class="text-vp-body text-lg reveal delay-1">Not policies. Not promises. Structural security.</p>
         </div>
         <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
             <!-- Key Splitting -->
@@ -525,7 +525,7 @@
                     <li class="flex items-center gap-2.5"><svg width="14" height="14" fill="none" stroke="#6366f1" stroke-width="2"><path d="M11.5 3.5L5.25 9.75 2.5 7"/></svg>1 developer key</li>
                     <li class="flex items-center gap-2.5"><svg width="14" height="14" fill="none" stroke="#6366f1" stroke-width="2"><path d="M11.5 3.5L5.25 9.75 2.5 7"/></svg>7 days log retention</li>
                     <li class="flex items-center gap-2.5"><svg width="14" height="14" fill="none" stroke="#6366f1" stroke-width="2"><path d="M11.5 3.5L5.25 9.75 2.5 7"/></svg>SSE streaming</li>
-                    <li class="flex items-center gap-2.5"><svg width="14" height="14" fill="none" stroke="#6366f1" stroke-width="2"><path d="M11.5 3.5L5.25 9.75 2.5 7"/></svg>Shamir + ZK proofs</li>
+                    <li class="flex items-center gap-2.5"><svg width="14" height="14" fill="none" stroke="#6366f1" stroke-width="2"><path d="M11.5 3.5L5.25 9.75 2.5 7"/></svg>Split-key + cryptographic proofs</li>
                     <li class="flex items-center gap-2.5 text-gray-400"><svg width="14" height="14" fill="none" stroke="#d1d5db" stroke-width="2"><path d="M3 7h8"/></svg>Hard cutoff at limit</li>
                     <li class="flex items-center gap-2.5 text-gray-400"><svg width="14" height="14" fill="none" stroke="#d1d5db" stroke-width="2"><path d="M3 7h8"/></svg>No IP allowlist or alerts</li>
                 </ul>
@@ -545,7 +545,7 @@
                     <li class="flex items-center gap-2.5"><svg width="14" height="14" fill="none" stroke="#6366f1" stroke-width="2"><path d="M11.5 3.5L5.25 9.75 2.5 7"/></svg>3 developer keys</li>
                     <li class="flex items-center gap-2.5"><svg width="14" height="14" fill="none" stroke="#6366f1" stroke-width="2"><path d="M11.5 3.5L5.25 9.75 2.5 7"/></svg>30 days log retention</li>
                     <li class="flex items-center gap-2.5"><svg width="14" height="14" fill="none" stroke="#6366f1" stroke-width="2"><path d="M11.5 3.5L5.25 9.75 2.5 7"/></svg>SSE streaming</li>
-                    <li class="flex items-center gap-2.5"><svg width="14" height="14" fill="none" stroke="#6366f1" stroke-width="2"><path d="M11.5 3.5L5.25 9.75 2.5 7"/></svg>Shamir + ZK proofs</li>
+                    <li class="flex items-center gap-2.5"><svg width="14" height="14" fill="none" stroke="#6366f1" stroke-width="2"><path d="M11.5 3.5L5.25 9.75 2.5 7"/></svg>Split-key + cryptographic proofs</li>
                     <li class="flex items-center gap-2.5"><svg width="14" height="14" fill="none" stroke="#6366f1" stroke-width="2"><path d="M11.5 3.5L5.25 9.75 2.5 7"/></svg>Overage $0.50 / 1K calls</li>
                     <li class="flex items-center gap-2.5 text-gray-400"><svg width="14" height="14" fill="none" stroke="#d1d5db" stroke-width="2"><path d="M3 7h8"/></svg>No IP allowlist or alerts</li>
                 </ul>
@@ -621,7 +621,7 @@
                     <svg class="w-4 h-4 text-vp-body transition-transform" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7"/></svg>
                 </button>
                 <div class="hidden px-5 pb-5">
-                    <p class="text-sm text-vp-body leading-relaxed">No. Your key is split using Shamir Secret Sharing before it leaves your device. We store two encrypted shares -- one encrypted with our server key, one encrypted with your developer key. Neither share alone reveals anything. We mathematically cannot see your full key.</p>
+                    <p class="text-sm text-vp-body leading-relaxed">No. Your key is split before it leaves your device. We store two encrypted shares -- one encrypted with our server key, one encrypted with your developer key. Neither share alone reveals anything. The architecture is designed so that no single server holds your complete key at rest.</p>
                 </div>
             </div>
             <div class="bg-white border border-gray-200 rounded-md overflow-hidden reveal delay-1 shadow-sm">
@@ -791,10 +791,10 @@
         var terminalLines = [
             { cmd: 'vaultproof store --provider openai', delay: 40, output: [
                 '<span class="text-gray-500">API Key: ••••••••••••••••••••••••</span>',
-                '<span class="text-gray-500">Splitting key with Shamir secret sharing...</span>',
+                '<span class="text-gray-500">Splitting key...</span>',
                 '<span class="text-gray-500">Storing encrypted shares...</span>',
                 '<span class="text-indigo-400">Key stored: vk_8f3a2b1c (openai)</span>',
-                '<span class="text-gray-600">  Key was Shamir-split locally. Server never saw the full key.</span>'
+                '<span class="text-gray-600">  Key was split locally. Full key is only assembled during API calls.</span>'
             ]},
             { cmd: 'vaultproof proxy --key vk_8f3a2b1c --path /v1/chat/completions --method POST --body \'{"model":"gpt-4","messages":[{"role":"user","content":"Hello"}]}\'', delay: 30, output: [
                 '<span class="text-gray-500">{"choices":[{"message":{"content":"Hello! How can I help you today?"}}]}</span>',
