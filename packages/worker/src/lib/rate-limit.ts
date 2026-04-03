@@ -1,8 +1,7 @@
 import type { Env } from '../types.js';
 import { getSupabase } from './supabase.js';
-import { cacheGet, cacheSet } from './cache.js';
 
-// ── IP-based rate limiter (KV-backed, cross-isolate) ──
+// ── IP-based rate limiter (in-memory burst + KV cross-isolate) ──
 
 const IP_LIMITS: Record<string, number> = {
   free: 30,
@@ -14,25 +13,53 @@ const IP_LIMITS: Record<string, number> = {
 };
 
 const PUBLIC_RPM = 30;
-const KV_TTL = 60; // seconds — matches 1-minute window
+const KV_TTL = 60;
+const WINDOW_MS = 60_000;
+
+// In-memory burst limiter — catches rapid requests within a single isolate
+const memBuckets = new Map<string, { count: number; windowStart: number }>();
+
+function checkMemLimit(key: string, limit: number): boolean {
+  const now = Date.now();
+  const bucket = memBuckets.get(key);
+  if (!bucket || now - bucket.windowStart >= WINDOW_MS) {
+    memBuckets.set(key, { count: 1, windowStart: now });
+    return true;
+  }
+  bucket.count++;
+  return bucket.count <= limit;
+}
 
 export async function checkIpRateLimit(env: Env, ip: string, tier: string = 'free'): Promise<{ allowed: boolean; limit: number; remaining: number }> {
   const limit = IP_LIMITS[tier] ?? IP_LIMITS.free;
-  const key = `rl:${tier}:${ip}`;
+  const memKey = `mem:${tier}:${ip}`;
 
+  // Layer 1: in-memory burst check (instant, no I/O)
+  if (!checkMemLimit(memKey, limit)) {
+    return { allowed: false, limit, remaining: 0 };
+  }
+
+  // Layer 2: KV cross-isolate check
+  const key = `rl:${tier}:${ip}`;
   const raw = await env.CACHE.get(key);
   const count = raw ? parseInt(raw, 10) : 0;
   const newCount = count + 1;
 
-  // Write back with TTL (auto-expires after 60s)
   await env.CACHE.put(key, String(newCount), { expirationTtl: KV_TTL });
 
   return { allowed: newCount <= limit, limit, remaining: Math.max(0, limit - newCount) };
 }
 
 export async function checkPublicIpRateLimit(env: Env, ip: string): Promise<{ allowed: boolean; limit: number; remaining: number }> {
-  const key = `rl:pub:${ip}`;
+  const memKey = `mem:pub:${ip}`;
 
+  // Layer 1: in-memory burst check
+  if (!checkMemLimit(memKey, PUBLIC_RPM)) {
+    return { allowed: false, limit: PUBLIC_RPM, remaining: 0 };
+  }
+
+  // Layer 2: KV cross-isolate check
+  const key = `rl:pub:${ip}`;
   const raw = await env.CACHE.get(key);
   const count = raw ? parseInt(raw, 10) : 0;
   const newCount = count + 1;
@@ -81,11 +108,13 @@ export async function checkTierRateLimit(
   const advertisedLimit = limits.maxCallsPerMonth;
   const hardLimit = Math.floor(advertisedLimit * BUFFER_PERCENT);
 
-  // Check KV cache for current count
-  const cacheKey = `ratelimit:${keySlotId}`;
-  let used = await cacheGet<number>(env, cacheKey);
+  // Layer 1: KV real-time counter (incremented on every call)
+  const kvKey = `monthly:${keySlotId}`;
+  const kvRaw = await env.CACHE.get(kvKey);
+  let kvCount = kvRaw ? parseInt(kvRaw, 10) : -1;
 
-  if (used === null) {
+  // Layer 2: If no KV counter, seed from Supabase (source of truth)
+  if (kvCount < 0) {
     const now = new Date();
     const monthStart = new Date(now.getFullYear(), now.getMonth(), 1).toISOString();
     const supabase = getSupabase(env);
@@ -96,13 +125,50 @@ export async function checkTierRateLimit(
       .in('action', CALL_ACTIONS)
       .gte('timestamp', monthStart);
 
-    used = count || 0;
-    await cacheSet(env, cacheKey, used, 60);
+    kvCount = count || 0;
   }
 
-  const remaining = Math.max(0, advertisedLimit - used);
-  const nearLimit = used >= advertisedLimit * 0.9;
-  const overBuffer = used >= hardLimit;
+  // Increment the counter
+  const newCount = kvCount + 1;
 
-  return { allowed: !overBuffer, used, limit: advertisedLimit, remaining, nearLimit };
+  // TTL = seconds until end of month (max 31 days)
+  const now = new Date();
+  const monthEnd = new Date(now.getFullYear(), now.getMonth() + 1, 1);
+  const ttl = Math.max(60, Math.floor((monthEnd.getTime() - now.getTime()) / 1000));
+
+  // Write incremented count back to KV
+  await env.CACHE.put(kvKey, String(newCount), { expirationTtl: ttl });
+
+  const remaining = Math.max(0, advertisedLimit - newCount);
+  const nearLimit = newCount >= advertisedLimit * 0.9;
+  const overBuffer = newCount >= hardLimit;
+
+  return { allowed: !overBuffer, used: newCount, limit: advertisedLimit, remaining, nearLimit };
+}
+
+/**
+ * Reconcile KV counter with Supabase (call periodically or after anomaly).
+ * Resets KV to match the actual DB count.
+ */
+export async function reconcileUsageCount(
+  env: Env,
+  keySlotId: string,
+): Promise<number> {
+  const now = new Date();
+  const monthStart = new Date(now.getFullYear(), now.getMonth(), 1).toISOString();
+  const monthEnd = new Date(now.getFullYear(), now.getMonth() + 1, 1);
+  const ttl = Math.max(60, Math.floor((monthEnd.getTime() - now.getTime()) / 1000));
+
+  const supabase = getSupabase(env);
+  const { count } = await supabase
+    .from('access_logs')
+    .select('*', { count: 'exact', head: true })
+    .eq('key_slot_id', keySlotId)
+    .in('action', CALL_ACTIONS)
+    .gte('timestamp', monthStart);
+
+  const actual = count || 0;
+  await env.CACHE.put(`monthly:${keySlotId}`, String(actual), { expirationTtl: ttl });
+
+  return actual;
 }
