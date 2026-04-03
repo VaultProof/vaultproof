@@ -16,16 +16,16 @@ VaultProof is designed so that we never hold your complete key. This isn't a pol
 
 ---
 
-## The Guarantee
+## The Architecture
 
-**VaultProof's servers never see your full API key. Not when you store it. Not when you use it. Not ever.**
+**VaultProof stores your API key in two encrypted pieces. The full key is only briefly reassembled during proxy calls, then immediately discarded.**
 
-This guarantee holds even if:
+This design means that even if:
 - VaultProof's database is fully compromised
 - VaultProof's servers are under an attacker's control
 - A VaultProof employee queries every table in the database
 
-The reason is simple: your complete key doesn't exist anywhere on our infrastructure. What we store is mathematically useless without a piece that only your device holds.
+...the stored data is cryptographically protected without the piece that only your device holds.
 
 ---
 

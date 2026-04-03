@@ -336,7 +336,7 @@
             </div>
             <div class="guide-body">
                 <div class="px-6 pb-6 space-y-4">
-                    <p class="text-gray-400 text-sm">Use <code class="text-vp-accent font-mono text-xs">vault.proxy()</code> to make API calls through VaultProof's server. Your key is never exposed to the client.</p>
+                    <p class="text-gray-400 text-sm">Use <code class="text-vp-accent font-mono text-xs">vault.proxy()</code> to make API calls through VaultProof's server. Your key is not exposed to the client code.</p>
 
                     <p class="text-gray-500 text-xs font-medium mt-2 mb-2">CLI</p>
                     <div>
@@ -345,7 +345,7 @@
 <pre><span class="cmt"># Store your key</span>
 vaultproof store -p stripe -l <span class="str">"secret"</span>
 
-<span class="cmt"># Proxy the API call through the server (key never leaves the server)</span>
+<span class="cmt"># Proxy the API call through VaultProof (key stays out of your code)</span>
 vaultproof proxy -k &lt;keyId&gt; --path /v1/charges -d <span class="str">'{"amount":2000,"currency":"usd"}'</span></pre>
                         </div>
                     </div>
@@ -358,7 +358,7 @@ vaultproof proxy -k &lt;keyId&gt; --path /v1/charges -d <span class="str">'{"amo
 
 <span class="kw">const</span> vault = <span class="kw">new</span> VaultProof(process.env.VAULTPROOF_API_KEY);
 
-<span class="cmt">// Proxy the call through VaultProof -- key never reaches your code</span>
+<span class="cmt">// Proxy through VaultProof -- key stays out of your codebase</span>
 <span class="kw">const</span> result = <span class="kw">await</span> vault.proxy(<span class="str">'your-stripe-key-id'</span>, <span class="str">'/v1/charges'</span>, {
   amount: <span class="num">2000</span>, currency: <span class="str">'usd'</span>
 });</pre>

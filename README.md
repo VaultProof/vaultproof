@@ -1,6 +1,6 @@
 # VaultProof
 
-**The only API key vault where even we can't see your keys.**
+**Secure API key storage with split-key encryption and a transparent proxy.**
 
 Shamir secret sharing splits your key the instant you enter it. Zero-knowledge proofs authorize every access. Your key never exists whole on any server.
 
