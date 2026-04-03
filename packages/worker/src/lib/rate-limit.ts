@@ -2,7 +2,7 @@ import type { Env } from '../types.js';
 import { getSupabase } from './supabase.js';
 import { cacheGet, cacheSet } from './cache.js';
 
-// ── IP-based rate limiter (KV-backed, cross-isolate) ──
+// ── IP-based rate limiter (in-memory burst + KV cross-isolate) ──
 
 const IP_LIMITS: Record<string, number> = {
   free: 30,
@@ -14,25 +14,53 @@ const IP_LIMITS: Record<string, number> = {
 };
 
 const PUBLIC_RPM = 30;
-const KV_TTL = 60; // seconds — matches 1-minute window
+const KV_TTL = 60;
+const WINDOW_MS = 60_000;
+
+// In-memory burst limiter — catches rapid requests within a single isolate
+const memBuckets = new Map<string, { count: number; windowStart: number }>();
+
+function checkMemLimit(key: string, limit: number): boolean {
+  const now = Date.now();
+  const bucket = memBuckets.get(key);
+  if (!bucket || now - bucket.windowStart >= WINDOW_MS) {
+    memBuckets.set(key, { count: 1, windowStart: now });
+    return true;
+  }
+  bucket.count++;
+  return bucket.count <= limit;
+}
 
 export async function checkIpRateLimit(env: Env, ip: string, tier: string = 'free'): Promise<{ allowed: boolean; limit: number; remaining: number }> {
   const limit = IP_LIMITS[tier] ?? IP_LIMITS.free;
-  const key = `rl:${tier}:${ip}`;
+  const memKey = `mem:${tier}:${ip}`;
 
+  // Layer 1: in-memory burst check (instant, no I/O)
+  if (!checkMemLimit(memKey, limit)) {
+    return { allowed: false, limit, remaining: 0 };
+  }
+
+  // Layer 2: KV cross-isolate check
+  const key = `rl:${tier}:${ip}`;
   const raw = await env.CACHE.get(key);
   const count = raw ? parseInt(raw, 10) : 0;
   const newCount = count + 1;
 
-  // Write back with TTL (auto-expires after 60s)
   await env.CACHE.put(key, String(newCount), { expirationTtl: KV_TTL });
 
   return { allowed: newCount <= limit, limit, remaining: Math.max(0, limit - newCount) };
 }
 
 export async function checkPublicIpRateLimit(env: Env, ip: string): Promise<{ allowed: boolean; limit: number; remaining: number }> {
-  const key = `rl:pub:${ip}`;
+  const memKey = `mem:pub:${ip}`;
 
+  // Layer 1: in-memory burst check
+  if (!checkMemLimit(memKey, PUBLIC_RPM)) {
+    return { allowed: false, limit: PUBLIC_RPM, remaining: 0 };
+  }
+
+  // Layer 2: KV cross-isolate check
+  const key = `rl:pub:${ip}`;
   const raw = await env.CACHE.get(key);
   const count = raw ? parseInt(raw, 10) : 0;
   const newCount = count + 1;
