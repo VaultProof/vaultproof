@@ -165,18 +165,6 @@
           <p class="text-xs text-gray-600 mt-1.5">Secure API key infrastructure</p>
         </div>
 
-        <!-- Promo code entry -->
-        <div class="mb-4 text-center">
-          <button type="button" onclick="document.getElementById('promoRow').classList.toggle('hidden')" class="text-xs text-indigo-400 hover:text-indigo-300 transition">Have a promo code?</button>
-          <div id="promoRow" class="hidden mt-2 flex gap-2">
-            <input id="promoCodeInput" type="text" placeholder="Enter code" maxlength="50"
-              class="flex-1 bg-[#111118] border border-[#1e1e2e] rounded-lg px-3 py-2 text-sm text-gray-300 font-mono uppercase focus:border-indigo-500 focus:outline-none placeholder-gray-600"
-              onkeydown="if(event.key==='Enter') applyPromoCode()" />
-            <button type="button" onclick="applyPromoCode()" class="px-4 py-2 bg-[#1e1e2e] hover:bg-[#2a2a3a] text-gray-300 hover:text-white rounded-lg text-sm font-medium transition">Apply</button>
-          </div>
-          <p id="promoCodeMsg" class="text-xs mt-1.5 hidden"></p>
-        </div>
-
         <!-- Card -->
         <div id="authCard" class="bg-[#111118] border border-[#1e1e2e] rounded-xl p-6 shadow-2xl shadow-black/40">
 
@@ -378,51 +366,6 @@
     const rawPromo = urlParams.get('promo');
     // Only accept alphanumeric + underscore/hyphen, max 50 chars
     const promoParam = rawPromo && /^[A-Z0-9_-]{1,50}$/i.test(rawPromo) ? rawPromo.toUpperCase() : null;
-    // Pre-fill promo input if ?promo= is in URL (backwards compat)
-    if (promoParam) {
-      localStorage.setItem('vp_promo', promoParam);
-      // Don't show promo UI during OAuth/email callback (?code= present) — avoids flash before redirect
-      if (!confirmCode) {
-        const input = document.getElementById('promoCodeInput');
-        if (input) {
-          input.value = promoParam;
-          document.getElementById('promoRow').classList.remove('hidden');
-          const msg = document.getElementById('promoCodeMsg');
-          msg.textContent = 'Code saved \u2014 will be applied after you sign up.';
-          msg.className = 'text-xs text-indigo-400 mt-1.5';
-          msg.classList.remove('hidden');
-        }
-      }
-    }
-
-    function applyPromoCode() {
-      const input = document.getElementById('promoCodeInput');
-      const msg = document.getElementById('promoCodeMsg');
-      const code = input.value.trim().toUpperCase();
-      msg.classList.remove('hidden');
-      if (!code) { msg.textContent = 'Enter a code first.'; msg.className = 'text-xs text-amber-400 mt-1.5'; return; }
-      if (!/^[A-Z0-9_-]{1,50}$/.test(code)) { msg.textContent = 'Invalid code format.'; msg.className = 'text-xs text-amber-400 mt-1.5'; return; }
-      // Check availability before saving
-      fetch('https://zkvault-staging.vaultproof.workers.dev/api/v1/promo/check/' + encodeURIComponent(code))
-        .then(function(r) { return r.json(); })
-        .then(function(d) {
-          if (!d.valid || d.spotsLeft <= 0) {
-            msg.textContent = 'This promo has ended \u2014 all spots claimed.';
-            msg.className = 'text-xs text-amber-400 mt-1.5';
-          } else {
-            localStorage.setItem('vp_promo', code);
-            msg.textContent = 'Code saved \u2014 will be applied after you sign up.';
-            msg.className = 'text-xs text-indigo-400 mt-1.5';
-          }
-        })
-        .catch(function() {
-          // Save anyway if network check fails; redeem will validate server-side
-          localStorage.setItem('vp_promo', code);
-          msg.textContent = 'Code saved \u2014 will be applied after you sign up.';
-          msg.className = 'text-xs text-indigo-400 mt-1.5';
-        });
-    }
-
     // Show CLI banner if logging in from CLI
     if (cliCallback) {
       const banner = document.createElement('div');
@@ -439,7 +382,7 @@
         try {
           const controller = new AbortController();
           const timeout = setTimeout(function() { controller.abort(); }, 3000);
-          const res = await fetch('https://zkvault-staging.vaultproof.workers.dev/api/v1/promo/redeem', {
+          const res = await fetch('https://api.vaultproof.dev/api/v1/promo/redeem', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + session.access_token },
             body: JSON.stringify({ code: pendingPromo }),
@@ -710,7 +653,7 @@
   if (!sid) { sid = Math.random().toString(36).slice(2) + Date.now().toString(36); localStorage.setItem('vp_sid', sid); }
   var ref = document.referrer ? new URL(document.referrer).hostname : null;
   if (ref === location.hostname) ref = null;
-  fetch('https://zkvault-staging.vaultproof.workers.dev/analytics/event', {
+  fetch('https://api.vaultproof.dev/analytics/event', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ type: 'pageview', page: location.pathname, referrer: ref, sessionId: sid }),

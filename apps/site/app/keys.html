@@ -531,7 +531,7 @@ STRIPE_SECRET_KEY=sk_live_..."></textarea>
       return btoa(String.fromCharCode.apply(null, buf));
     }
 
-    const API = 'https://zkvault-staging.vaultproof.workers.dev/api/v1';
+    const API = 'https://api.vaultproof.dev/api/v1';
     let token = localStorage.getItem('vaultproof_token');
     const user = JSON.parse(localStorage.getItem('vaultproof_user') || '{}');
 
@@ -1341,7 +1341,7 @@ STRIPE_SECRET_KEY=sk_live_..."></textarea>
       }
 
       // Build test request based on provider using transparent proxy
-      var proxyBase = 'https://zkvault-staging.vaultproof.workers.dev/v1/' + provider;
+      var proxyBase = 'https://api.vaultproof.dev/v1/' + provider;
       var testUrl, method, body, headers;
       headers = {
         'Authorization': 'Bearer ' + devKey,
@@ -1811,12 +1811,12 @@ exampleBody + '\n' +
             newEnvLines.push('# ' + k.envName + ' — secured by VaultProof (proxy)');
             newEnvLines.push(k.envName + '=${VAULTPROOF_API_KEY}');
             var baseUrlMap = {
-              openai: 'OPENAI_BASE_URL=https://zkvault-staging.vaultproof.workers.dev/v1/openai',
-              anthropic: 'ANTHROPIC_BASE_URL=https://zkvault-staging.vaultproof.workers.dev/v1/anthropic',
+              openai: 'OPENAI_BASE_URL=https://api.vaultproof.dev/v1/openai',
+              anthropic: 'ANTHROPIC_BASE_URL=https://api.vaultproof.dev/v1/anthropic',
             };
             if (baseUrlMap[k.provider]) newEnvLines.push(baseUrlMap[k.provider]);
           } else {
-            newEnvLines.push('# ' + k.envName + ' — secured by VaultProof (use transparent proxy: https://zkvault-staging.vaultproof.workers.dev/v1/' + k.provider + ')');
+            newEnvLines.push('# ' + k.envName + ' — secured by VaultProof (use transparent proxy: https://api.vaultproof.dev/v1/' + k.provider + ')');
           }
           newEnvLines.push('');
         } catch (err) {
@@ -2101,7 +2101,7 @@ exampleBody + '\n' +
   if (!sid) { sid = Math.random().toString(36).slice(2) + Date.now().toString(36); localStorage.setItem('vp_sid', sid); }
   var ref = document.referrer ? new URL(document.referrer).hostname : null;
   if (ref === location.hostname) ref = null;
-  fetch('https://zkvault-staging.vaultproof.workers.dev/analytics/event', {
+  fetch('https://api.vaultproof.dev/analytics/event', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ type: 'pageview', page: location.pathname, referrer: ref, sessionId: sid }),

@@ -247,7 +247,7 @@
   -d <span class="str">'{"model":"gpt-4","messages":[{"role":"user","content":"Hello"}]}'</span>
 
 <span class="cmt"># Or just change the base URL in your code/config</span>
-<span class="cmt"># https://zkvault-staging.vaultproof.workers.dev/v1/openai/v1/chat/completions</span></pre>
+<span class="cmt"># https://api.vaultproof.dev/v1/openai/v1/chat/completions</span></pre>
                 </div>
 
                 <p>The key is reconstructed on the server, injected into the upstream request, and never returned to your machine. Nothing to leak.</p>
@@ -350,7 +350,7 @@
   if (!sid) { sid = Math.random().toString(36).slice(2) + Date.now().toString(36); localStorage.setItem('vp_sid', sid); }
   var ref = document.referrer ? new URL(document.referrer).hostname : null;
   if (ref === location.hostname) ref = null;
-  fetch('https://zkvault-staging.vaultproof.workers.dev/analytics/event', {
+  fetch('https://api.vaultproof.dev/analytics/event', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ type: 'pageview', page: location.pathname, referrer: ref, sessionId: sid }),

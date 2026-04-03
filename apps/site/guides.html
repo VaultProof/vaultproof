@@ -228,7 +228,7 @@
                             <tr class="border-t border-vp-border">
                                 <td class="py-2 text-white">AI providers</td>
                                 <td class="py-2">Transparent proxy &mdash; swap the base URL, use <code class="text-vp-accent">vp_live_</code> as the API key</td>
-                                <td class="py-2"><code class="text-amber-400 line-through">OPENAI_API_KEY=sk-...</code><br><code class="text-emerald-400">OPENAI_API_KEY=vp_live_...</code><br><code class="text-emerald-400">OPENAI_BASE_URL=https://zkvault-staging.vaultproof.workers.dev/v1/openai</code></td>
+                                <td class="py-2"><code class="text-amber-400 line-through">OPENAI_API_KEY=sk-...</code><br><code class="text-emerald-400">OPENAI_API_KEY=vp_live_...</code><br><code class="text-emerald-400">OPENAI_BASE_URL=https://api.vaultproof.dev/v1/openai</code></td>
                             </tr>
                             <tr class="border-t border-vp-border">
                                 <td class="py-2 text-white">Other SDKs</td>
@@ -264,7 +264,7 @@
                     <div>
                         <div class="code-header"><span>bash &mdash; Claude Code, Windsurf, any CLI tool</span></div>
                         <div class="code-block">
-<pre><span class="kw">export</span> ANTHROPIC_BASE_URL=<span class="str">https://zkvault-staging.vaultproof.workers.dev/v1/anthropic</span>
+<pre><span class="kw">export</span> ANTHROPIC_BASE_URL=<span class="str">https://api.vaultproof.dev/v1/anthropic</span>
 <span class="kw">export</span> ANTHROPIC_API_KEY=<span class="str">vp_live_your_key_here</span></pre>
                         </div>
                     </div>
@@ -274,7 +274,7 @@
                         <div class="code-block">
 <pre>client = openai.<span class="fn">OpenAI</span>(
     api_key=<span class="str">"vp_live_your_key_here"</span>,
-    base_url=<span class="str">"https://zkvault-staging.vaultproof.workers.dev/v1/openai"</span>
+    base_url=<span class="str">"https://api.vaultproof.dev/v1/openai"</span>
 )</pre>
                         </div>
                     </div>
@@ -284,7 +284,7 @@
                         <div class="code-block">
 <pre>client = anthropic.<span class="fn">Anthropic</span>(
     api_key=<span class="str">"vp_live_your_key_here"</span>,
-    base_url=<span class="str">"https://zkvault-staging.vaultproof.workers.dev/v1/anthropic"</span>
+    base_url=<span class="str">"https://api.vaultproof.dev/v1/anthropic"</span>
 )</pre>
                         </div>
                     </div>
@@ -293,7 +293,7 @@
                         <div class="code-header"><span>json &mdash; Cursor, Continue.dev, or any OpenAI-compatible tool</span></div>
                         <div class="code-block">
 <pre>{
-  <span class="str">"apiBase"</span>: <span class="str">"https://zkvault-staging.vaultproof.workers.dev/v1/openai"</span>,
+  <span class="str">"apiBase"</span>: <span class="str">"https://api.vaultproof.dev/v1/openai"</span>,
   <span class="str">"apiKey"</span>: <span class="str">"vp_live_your_key_here"</span>
 }</pre>
                         </div>
@@ -302,7 +302,7 @@
                     <div>
                         <div class="code-header"><span>bash &mdash; cURL or any HTTP client</span></div>
                         <div class="code-block">
-<pre>curl https://zkvault-staging.vaultproof.workers.dev/v1/openai/v1/chat/completions \
+<pre>curl https://api.vaultproof.dev/v1/openai/v1/chat/completions \
   -H <span class="str">"Authorization: Bearer vp_live_your_key_here"</span> \
   -H <span class="str">"Content-Type: application/json"</span> \
   -d <span class="str">'{"model":"gpt-4","messages":[{"role":"user","content":"Hello"}]}'</span></pre>
@@ -311,7 +311,7 @@
 
                     <div class="bg-vp-surface border border-vp-border rounded-md p-4">
                         <p class="text-gray-500 text-xs font-medium mb-2">Supported providers</p>
-                        <p class="text-gray-400 text-xs">OpenAI, Anthropic, Google AI, Mistral, Cohere, Groq, Perplexity, DeepSeek, Fireworks, Together.ai, Replicate. The URL pattern is always <code class="font-mono text-vp-accent">https://zkvault-staging.vaultproof.workers.dev/v1/{provider}</code>.</p>
+                        <p class="text-gray-400 text-xs">OpenAI, Anthropic, Google AI, Mistral, Cohere, Groq, Perplexity, DeepSeek, Fireworks, Together.ai, Replicate. The URL pattern is always <code class="font-mono text-vp-accent">https://api.vaultproof.dev/v1/{provider}</code>.</p>
                     </div>
 
                     <div class="bg-amber-500/5 border border-amber-500/20 rounded-md p-4 mt-2">
@@ -572,7 +572,7 @@ VAULTPROOF_API_KEY=vp_live_... npm run dev
   if (!sid) { sid = Math.random().toString(36).slice(2) + Date.now().toString(36); localStorage.setItem('vp_sid', sid); }
   var ref = document.referrer ? new URL(document.referrer).hostname : null;
   if (ref === location.hostname) ref = null;
-  fetch('https://zkvault-staging.vaultproof.workers.dev/analytics/event', {
+  fetch('https://api.vaultproof.dev/analytics/event', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ type: 'pageview', page: location.pathname, referrer: ref, sessionId: sid }),

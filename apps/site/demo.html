@@ -1232,7 +1232,7 @@
     if (!sid) { sid = Math.random().toString(36).slice(2) + Date.now().toString(36); localStorage.setItem('vp_sid', sid); }
     var ref = document.referrer ? new URL(document.referrer).hostname : null;
     if (ref === location.hostname) ref = null;
-    fetch('https://zkvault-staging.vaultproof.workers.dev/analytics/event', {
+    fetch('https://api.vaultproof.dev/analytics/event', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ type: 'pageview', page: location.pathname, referrer: ref, sessionId: sid }),

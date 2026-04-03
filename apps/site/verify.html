@@ -167,7 +167,7 @@ POST /api/v1/keys/store
 <span class="text-amber-400">t=101ms</span>  <strong>Key buffer zeroed.</strong> Overwritten with 0x00. Gone.
 
 <span class="text-gray-500">// Send a fake proof and nothing happens:</span>
-curl https://zkvault-staging.vaultproof.workers.dev/api/v1/proxy/call \
+curl https://api.vaultproof.dev/api/v1/proxy/call \
   -H "Content-Type: application/json" \
   -d '{"keySlotId":"any-uuid","share2":"fake","zkProof":"<span class="text-amber-400">fake-proof</span>","nullifier":"fake","appId":"test","targetPath":"/v1/models","method":"GET"}'
 
@@ -207,7 +207,7 @@ curl https://zkvault-staging.vaultproof.workers.dev/api/v1/proxy/call \
                 <p class="text-gray-400 text-sm mb-4">All requests must go through our Cloudflare edge proxy with HMAC signatures. Direct access returns 403:</p>
                 <div class="mono text-xs bg-gray-900/50 rounded-md p-4 mb-4">
 <pre class="text-gray-300"><span class="text-gray-500">// Through edge proxy (HMAC signed):</span>
-curl https://zkvault-staging.vaultproof.workers.dev/health
+curl https://api.vaultproof.dev/health
 <span class="text-green-400">{"status":"ok","service":"vaultproof-edge","secured":true}</span>
 
 <span class="text-gray-500">// Direct to backend (no signature):</span>
@@ -334,7 +334,7 @@ fn main(
   if (!sid) { sid = Math.random().toString(36).slice(2) + Date.now().toString(36); localStorage.setItem('vp_sid', sid); }
   var ref = document.referrer ? new URL(document.referrer).hostname : null;
   if (ref === location.hostname) ref = null;
-  fetch('https://zkvault-staging.vaultproof.workers.dev/analytics/event', {
+  fetch('https://api.vaultproof.dev/analytics/event', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ type: 'pageview', page: location.pathname, referrer: ref, sessionId: sid }),
