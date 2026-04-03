@@ -9,22 +9,22 @@
 
 export const KEY_PATTERNS: Array<{ pattern: RegExp; provider: string }> = [
   // AI / LLM
-  { pattern: /^sk-proj-/, provider: 'openai' },
+  { pattern: /^sk-proj-[a-zA-Z0-9_-]{20,}$/, provider: 'openai' },
   { pattern: /^sk-[a-zA-Z0-9]{40,}$/, provider: 'openai' },
-  { pattern: /^sk-ant-/, provider: 'anthropic' },
-  { pattern: /^tog_/, provider: 'together' },
+  { pattern: /^sk-ant-[a-zA-Z0-9_-]{20,}$/, provider: 'anthropic' },
+  { pattern: /^tog_[a-zA-Z0-9]{20,}$/, provider: 'together' },
   { pattern: /^gsk_[a-zA-Z0-9]{40,}$/, provider: 'groq' },
   { pattern: /^pplx-[a-zA-Z0-9]{40,}$/, provider: 'perplexity' },
   { pattern: /^r8_[a-zA-Z0-9]{30,}$/, provider: 'replicate' },
-  { pattern: /^fw_[a-zA-Z0-9]{30,}$/, provider: 'fireworks' },
+  { pattern: /^fw_[a-zA-Z0-9_-]{30,}$/, provider: 'fireworks' },
   // Payments
-  { pattern: /^sk_live_/, provider: 'stripe' },
-  { pattern: /^sk_test_/, provider: 'stripe' },
-  { pattern: /^pk_live_/, provider: 'stripe' },
-  { pattern: /^pk_test_/, provider: 'stripe' },
-  { pattern: /^whsec_/, provider: 'stripe' },
-  { pattern: /^rk_live_/, provider: 'stripe' },
-  { pattern: /^rk_test_/, provider: 'stripe' },
+  { pattern: /^sk_live_[a-zA-Z0-9]{20,}$/, provider: 'stripe' },
+  { pattern: /^sk_test_[a-zA-Z0-9]{20,}$/, provider: 'stripe' },
+  { pattern: /^pk_live_[a-zA-Z0-9]{20,}$/, provider: 'stripe' },
+  { pattern: /^pk_test_[a-zA-Z0-9]{20,}$/, provider: 'stripe' },
+  { pattern: /^whsec_[a-zA-Z0-9]{20,}$/, provider: 'stripe' },
+  { pattern: /^rk_live_[a-zA-Z0-9]{20,}$/, provider: 'stripe' },
+  { pattern: /^rk_test_[a-zA-Z0-9]{20,}$/, provider: 'stripe' },
   // Google
   { pattern: /^AIza[0-9A-Za-z_-]{35}$/, provider: 'google' },
   // AWS
@@ -35,12 +35,12 @@ export const KEY_PATTERNS: Array<{ pattern: RegExp; provider: string }> = [
   { pattern: /^re_[a-zA-Z0-9]{20,}$/, provider: 'resend' },
   { pattern: /^xkeysib-[a-zA-Z0-9]{40,}$/, provider: 'brevo' },
   // Messaging
-  { pattern: /^xoxb-/, provider: 'slack' },
-  { pattern: /^xoxp-/, provider: 'slack' },
+  { pattern: /^xoxb-[0-9]+-[a-zA-Z0-9]+$/, provider: 'slack' },
+  { pattern: /^xoxp-[0-9]+-[a-zA-Z0-9]+$/, provider: 'slack' },
   // GitHub
   { pattern: /^ghp_[a-zA-Z0-9]{36}$/, provider: 'github' },
   { pattern: /^ghs_[a-zA-Z0-9]{36}$/, provider: 'github' },
-  { pattern: /^github_pat_/, provider: 'github' },
+  { pattern: /^github_pat_[a-zA-Z0-9_]{20,}$/, provider: 'github' },
   // Supabase
   { pattern: /^eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9\./, provider: 'supabase' },
   // Twilio
@@ -179,7 +179,24 @@ export const SKIP_DIRS = [
   'coverage',
   '.output',
   '.turbo',
+  '.git',
+  'test',
+  'tests',
+  '__tests__',
+  '__mocks__',
+  'fixtures',
 ];
+
+// Files to always skip (lock files, configs, generated)
+const SKIP_FILES = new Set([
+  'package-lock.json',
+  'yarn.lock',
+  'pnpm-lock.yaml',
+  'composer.lock',
+  'Gemfile.lock',
+  'Pipfile.lock',
+  'poetry.lock',
+]);
 const SKIP_DIRS_SET = new Set(SKIP_DIRS);
 
 export const MAX_FILES = 200;
@@ -215,6 +232,8 @@ export function detectProvider(value: string): string | null {
 export function shouldScanFile(path: string): boolean {
   const parts = path.split('/');
   const basename = parts[parts.length - 1] || '';
+  // Skip known non-scannable files
+  if (SKIP_FILES.has(basename)) return false;
   // .env files are always scannable
   if (basename === '.env' || basename.startsWith('.env.')) return true;
   // Check extension

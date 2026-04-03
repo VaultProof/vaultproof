@@ -171,13 +171,25 @@ export async function executeScan(
 
       // Phase B: Hardcoded strings — match quoted strings against KEY_PATTERNS
       for (let i = 0; i < lines.length; i++) {
-        if (lines[i].length > MAX_LINE_LENGTH) continue;
-        const stringMatches = lines[i].matchAll(
+        const line = lines[i];
+        if (line.length > MAX_LINE_LENGTH) continue;
+        // Skip comment lines
+        const trimmed = line.trim();
+        if (trimmed.startsWith('//') || trimmed.startsWith('#') || trimmed.startsWith('*') || trimmed.startsWith('/*')) continue;
+        // Skip lines that look like regex patterns, test fixtures, or pattern definitions
+        if (/\/(.*?)\//g.test(trimmed) && (trimmed.includes('pattern') || trimmed.includes('regex') || trimmed.includes('RegExp'))) continue;
+        const stringMatches = line.matchAll(
           /["'`]([^"'`]{10,512})["'`]/g,
         );
         for (const m of stringMatches) {
           const val = m[1];
           if (seenValues.has(val)) continue;
+          // Skip values that are too short to be real keys (just prefixes)
+          if (val.length < 20) continue;
+          // Skip values that contain regex metacharacters (likely a pattern, not a key)
+          if (/[\\^$.*+?{}()|[\]]/.test(val)) continue;
+          // Skip placeholder/example values
+          if (/^(sk-|sk_test_|sk_live_|pk_test_|pk_live_)\.{3,}|xxx|your[_-]|example|placeholder|TODO/i.test(val)) continue;
           const provider = detectProvider(val);
           if (!provider) continue;
           seenValues.add(val);
