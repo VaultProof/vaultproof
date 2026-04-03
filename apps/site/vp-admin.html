@@ -115,6 +115,7 @@
       <div class="tab active" data-tab="overview" onclick="switchTab('overview')">Overview</div>
       <div class="tab" data-tab="users" onclick="switchTab('users')">Users</div>
       <div class="tab" data-tab="logs" onclick="switchTab('logs')">Logs</div>
+      <div class="tab" data-tab="monitoring" onclick="switchTab('monitoring')">Monitoring</div>
       <div class="tab" data-tab="promo" onclick="switchTab('promo')">Promo</div>
       <div class="tab" data-tab="tests" onclick="switchTab('tests')">Tests</div>
     </div>
@@ -338,6 +339,98 @@
         <table>
           <thead><tr><th>Email</th><th>Feedback</th><th>Date</th></tr></thead>
           <tbody id="promo-feedback-tbody"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Monitoring tab -->
+    <div id="tab-monitoring" class="hidden fade-in">
+      <!-- Monitoring Dashboard -->
+      <h3 class="text-sm font-semibold text-gray-400 mb-3">API Monitoring Dashboard</h3>
+      <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+        <div class="stat-card">
+          <div class="stat-value" id="mon-active-24h">-</div>
+          <div class="stat-label">Active Users (24h)</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-value" id="mon-active-7d">-</div>
+          <div class="stat-label">Active Users (7d)</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-value" id="mon-active-30d">-</div>
+          <div class="stat-label">Active Users (30d)</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-value" id="mon-error-rate">-</div>
+          <div class="stat-label">Error Rate (Month)</div>
+        </div>
+      </div>
+      <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+        <div class="stat-card">
+          <div class="stat-value" id="mon-calls-today">-</div>
+          <div class="stat-label">Calls Today</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-value" id="mon-calls-week">-</div>
+          <div class="stat-label">Calls This Week</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-value" id="mon-calls-month">-</div>
+          <div class="stat-label">Calls This Month</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-value" id="mon-near-limit">-</div>
+          <div class="stat-label">Users Near Limit (90%+)</div>
+        </div>
+      </div>
+
+      <!-- Top Endpoints -->
+      <h3 class="text-sm font-semibold text-gray-400 mb-3 mt-6">Top Endpoints by Call Volume</h3>
+      <div class="panel mb-6">
+        <table>
+          <thead><tr><th>Provider</th><th>Endpoint</th><th>Calls</th></tr></thead>
+          <tbody id="mon-endpoints-tbody"></tbody>
+        </table>
+      </div>
+
+      <!-- Enhanced Access Logs -->
+      <h3 class="text-sm font-semibold text-gray-400 mb-3 mt-6">Access Logs</h3>
+      <div class="flex items-center gap-3 mb-4">
+        <input type="text" id="mon-log-search" placeholder="Search by email, endpoint, status..." class="w-72" oninput="debounceMonLogSearch()" />
+        <select id="mon-log-status" onchange="loadMonitoringLogs(1)" class="bg-[#111118] border border-[#1e1e2e] rounded-lg px-3 py-2 text-sm text-gray-300 outline-none">
+          <option value="">All statuses</option>
+          <option value="success">Success (2xx)</option>
+          <option value="error">Error (4xx/5xx)</option>
+        </select>
+        <span id="mon-log-count" class="text-xs text-gray-500"></span>
+      </div>
+      <div class="panel">
+        <table>
+          <thead>
+            <tr>
+              <th>Timestamp</th>
+              <th>User</th>
+              <th>Key Label</th>
+              <th>Endpoint</th>
+              <th>Status</th>
+              <th>Latency</th>
+            </tr>
+          </thead>
+          <tbody id="mon-logs-tbody"></tbody>
+        </table>
+      </div>
+      <div class="flex items-center justify-between mt-4">
+        <button class="btn btn-ghost text-xs" id="mon-logs-prev" onclick="monLogsPage(-1)" disabled>Previous</button>
+        <span id="mon-logs-page-info" class="text-xs text-gray-500"></span>
+        <button class="btn btn-ghost text-xs" id="mon-logs-next" onclick="monLogsPage(1)">Next</button>
+      </div>
+
+      <!-- Alert History -->
+      <h3 class="text-sm font-semibold text-gray-400 mb-3 mt-8">Alert History (Scheduled Scan Alerts)</h3>
+      <div class="panel mb-6">
+        <table>
+          <thead><tr><th>Time</th><th>Repo</th><th>Provider</th><th>File</th><th>Masked Value</th></tr></thead>
+          <tbody id="mon-alerts-tbody"></tbody>
         </table>
       </div>
     </div>
@@ -660,10 +753,11 @@ setInterval(() => {
 function switchTab(tab) {
   document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
   document.querySelector(`.tab[data-tab="${tab}"]`).classList.add('active');
-  ['overview', 'users', 'logs', 'promo', 'tests'].forEach(t => {
+  ['overview', 'users', 'logs', 'monitoring', 'promo', 'tests'].forEach(t => {
     document.getElementById(`tab-${t}`).classList.toggle('hidden', t !== tab);
   });
   document.getElementById('user-detail').classList.add('hidden');
+  if (tab === 'monitoring') loadMonitoring();
   if (tab === 'promo') loadPromo();
   if (tab === 'tests') loadTests();
 }
@@ -1241,6 +1335,135 @@ function fmtTime(d) {
 function truncate(s, len) {
   if (!s) return '';
   return s.length > len ? s.slice(0, len) + '...' : s;
+}
+
+// ─── Monitoring Tab ─────────────────────────────────────────────
+let monLogsCurrentPage = 1;
+let monLogSearchTerm = '';
+let monLogSearchTimeout = null;
+
+function debounceMonLogSearch() {
+  clearTimeout(monLogSearchTimeout);
+  monLogSearchTimeout = setTimeout(() => {
+    monLogSearchTerm = document.getElementById('mon-log-search').value.trim();
+    loadMonitoringLogs(1);
+  }, 300);
+}
+
+async function loadMonitoring() {
+  await Promise.all([
+    loadMonitoringDashboard(),
+    loadMonitoringLogs(1),
+    loadMonitoringAlerts(),
+  ]);
+}
+
+async function loadMonitoringDashboard() {
+  try {
+    const data = await apiFetch('/monitoring/dashboard');
+
+    document.getElementById('mon-active-24h').textContent = fmt(data.activeUsers24h);
+    document.getElementById('mon-active-7d').textContent = fmt(data.activeUsers7d);
+    document.getElementById('mon-active-30d').textContent = fmt(data.activeUsers30d);
+    document.getElementById('mon-error-rate').textContent = data.errorRate + '%';
+    document.getElementById('mon-calls-today').textContent = fmt(data.callsToday);
+    document.getElementById('mon-calls-week').textContent = fmt(data.callsWeek);
+    document.getElementById('mon-calls-month').textContent = fmt(data.callsMonth);
+    document.getElementById('mon-near-limit').textContent = fmt(data.usersNearLimit);
+
+    // Top endpoints
+    const eTbody = document.getElementById('mon-endpoints-tbody');
+    eTbody.innerHTML = '';
+    if (!data.topEndpoints || data.topEndpoints.length === 0) {
+      eTbody.innerHTML = '<tr><td colspan="3" class="text-gray-600 text-xs text-center py-4">No endpoint data yet</td></tr>';
+    } else {
+      for (const ep of data.topEndpoints) {
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+          <td>${esc(ep.provider)}</td>
+          <td class="mono text-xs">${esc(ep.endpoint)}</td>
+          <td>${fmt(ep.count)}</td>
+        `;
+        eTbody.appendChild(tr);
+      }
+    }
+  } catch (e) {
+    console.error('Failed to load monitoring dashboard', e);
+  }
+}
+
+async function loadMonitoringLogs(page) {
+  monLogsCurrentPage = page;
+  try {
+    const params = new URLSearchParams({ page: String(page), limit: '25', action: 'transparent_proxy' });
+    if (monLogSearchTerm) params.set('search', monLogSearchTerm);
+    const statusFilter = document.getElementById('mon-log-status').value;
+    if (statusFilter) params.set('status_filter', statusFilter);
+
+    const data = await apiFetch(`/logs?${params}`);
+    const tbody = document.getElementById('mon-logs-tbody');
+    tbody.innerHTML = '';
+
+    for (const log of data.logs) {
+      let meta = {};
+      try { meta = typeof log.metadata === 'string' ? JSON.parse(log.metadata) : (log.metadata || {}); } catch {}
+
+      const statusCode = meta.status_code || '-';
+      const latency = meta.latency_ms != null ? meta.latency_ms + 'ms' : '-';
+      const endpoint = meta.endpoint || '-';
+      const statusClass = statusCode >= 400 ? 'text-amber-400' : statusCode >= 200 && statusCode < 300 ? 'text-green-400' : 'text-gray-400';
+
+      const tr = document.createElement('tr');
+      tr.innerHTML = `
+        <td class="text-gray-500 text-xs">${fmtTime(log.timestamp)}</td>
+        <td class="mono text-xs">${esc(log.keySlot?.user?.email || '-')}</td>
+        <td class="text-xs">${esc(log.keySlot?.label || log.keySlot?.provider || '-')}</td>
+        <td class="mono text-xs">${esc(truncate(endpoint, 40))}</td>
+        <td class="${statusClass} text-xs font-semibold">${statusCode}</td>
+        <td class="text-xs text-gray-500">${latency}</td>
+      `;
+      tbody.appendChild(tr);
+    }
+
+    const totalPages = Math.ceil(data.total / 25) || 1;
+    document.getElementById('mon-log-count').textContent = `${data.total} logs`;
+    document.getElementById('mon-logs-page-info').textContent = `Page ${page} of ${totalPages}`;
+    document.getElementById('mon-logs-prev').disabled = page <= 1;
+    document.getElementById('mon-logs-next').disabled = page >= totalPages;
+  } catch (e) {
+    console.error('Failed to load monitoring logs', e);
+  }
+}
+
+function monLogsPage(delta) {
+  loadMonitoringLogs(monLogsCurrentPage + delta);
+}
+
+async function loadMonitoringAlerts() {
+  try {
+    const data = await apiFetch('/monitoring/alerts');
+    const tbody = document.getElementById('mon-alerts-tbody');
+    tbody.innerHTML = '';
+
+    if (!data.alerts || data.alerts.length === 0) {
+      tbody.innerHTML = '<tr><td colspan="5" class="text-gray-600 text-xs text-center py-4">No alerts yet</td></tr>';
+      return;
+    }
+
+    for (const a of data.alerts) {
+      const tr = document.createElement('tr');
+      tr.innerHTML = `
+        <td class="text-gray-500 text-xs">${fmtTime(a.created_at)}</td>
+        <td class="text-xs">${esc(a.repo_full_name)}</td>
+        <td>${esc(a.provider)}</td>
+        <td class="mono text-xs">${esc(truncate(a.file, 40))}</td>
+        <td class="mono text-xs text-gray-500">${esc(a.masked_value || '-')}</td>
+      `;
+      tbody.appendChild(tr);
+    }
+  } catch (e) {
+    console.error('Failed to load monitoring alerts', e);
+  }
 }
 
 // ─── Tests Tab ──────────────────────────────────────────────────

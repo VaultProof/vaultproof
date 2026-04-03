@@ -1,4 +1,4 @@
-import type { Env, KeySlotRecord, UserRecord } from '../types.js';
+import type { Env, KeySlotRecord, UserRecord, DevKeyRecord } from '../types.js';
 import { authenticateDevKey } from '../lib/auth.js';
 import { checkKeyRateLimit, checkTierRateLimit } from '../lib/rate-limit.js';
 import { getSupabase } from '../lib/supabase.js';
@@ -56,6 +56,85 @@ function hexToBytes(hex: string): Uint8Array {
     bytes[i / 2] = parseInt(clean.substring(i, i + 2), 16);
   }
   return bytes;
+}
+
+/**
+ * Fire threshold alerts (webhook + email log) when usage exceeds the
+ * configured alertThreshold on a developer key. Uses KV to ensure
+ * the alert fires only once per hour per key.
+ */
+async function fireThresholdAlerts(
+  env: Env,
+  devKey: DevKeyRecord,
+  currentCount: number,
+): Promise<void> {
+  const threshold = devKey.alert_threshold;
+  if (!threshold || currentCount < threshold) return;
+
+  // Check if alert already sent this hour (dedup via KV)
+  const hourKey = `alert:${devKey.id}:${new Date().toISOString().slice(0, 13)}`;
+  const alreadySent = await env.CACHE.get(hourKey);
+  if (alreadySent) return;
+
+  // Mark alert as sent for this hour (soft-expiry: 3600s)
+  await env.CACHE.put(hourKey, '1', { expirationTtl: 3600 });
+
+  const timestamp = new Date().toISOString();
+
+  // Webhook notification
+  if (devKey.webhook_url) {
+    const payload = JSON.stringify({
+      event: 'usage_threshold_exceeded',
+      key_id: devKey.id,
+      key_label: devKey.label,
+      threshold,
+      current_count: currentCount,
+      timestamp,
+    });
+
+    const headers: Record<string, string> = {
+      'Content-Type': 'application/json',
+    };
+
+    // Sign with HMAC-SHA256 if webhook_secret is set
+    if (devKey.webhook_secret) {
+      const encoder = new TextEncoder();
+      const key = await crypto.subtle.importKey(
+        'raw',
+        encoder.encode(devKey.webhook_secret),
+        { name: 'HMAC', hash: 'SHA-256' },
+        false,
+        ['sign'],
+      );
+      const sig = await crypto.subtle.sign('HMAC', key, encoder.encode(payload));
+      const sigHex = Array.from(new Uint8Array(sig)).map(b => b.toString(16).padStart(2, '0')).join('');
+      headers['X-VaultProof-Signature'] = sigHex;
+    }
+
+    // Fire non-blocking — do not slow down the proxy response
+    fetch(devKey.webhook_url, {
+      method: 'POST',
+      headers,
+      body: payload,
+    }).catch(() => { /* webhook delivery is best-effort */ });
+  }
+
+  // Email alert: log to scan_alerts table for now
+  // TODO: Integrate with Resend or SendGrid to actually send emails
+  if (devKey.alert_email) {
+    const supabase = getSupabase(env);
+    supabase.from('scan_alerts').insert({
+      id: crypto.randomUUID(),
+      user_id: devKey.user_id,
+      schedule_id: null,
+      scan_id: null,
+      repo_full_name: 'usage-alert',
+      provider: 'proxy',
+      file: `key:${devKey.label}`,
+      masked_value: `threshold=${threshold}, count=${currentCount}, email=${devKey.alert_email}`,
+      created_at: timestamp,
+    }).then(() => {});
+  }
 }
 
 export async function handleTransparentProxy(
@@ -232,6 +311,11 @@ export async function handleTransparentProxy(
       nullifier: crypto.randomUUID(),
       metadata: JSON.stringify({ provider, endpoint: wildcardPath, status_code: upstreamResponse.status, latency_ms: latencyMs }),
     }).then(() => {});
+
+    // Check threshold alerts non-blocking (webhook + email log)
+    if (auth.devKey.alert_threshold || auth.devKey.webhook_url || auth.devKey.alert_email) {
+      fireThresholdAlerts(env, auth.devKey, rateCheck.used).catch(() => {});
+    }
 
     const responseHeaders = new Headers(upstreamResponse.headers);
     if (rateCheck.nearLimit) {
