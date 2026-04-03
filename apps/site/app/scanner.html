@@ -1757,15 +1757,13 @@
     (async function init() {
       // Handle GitHub callback on page load
       var params = new URLSearchParams(window.location.search);
-      if (params.get('github_callback') === '1') {
-        var code = params.get('code');
-        var state = params.get('state');
+      var code = params.get('code');
+      var state = params.get('state');
+      if (code && state) {
         // Clean URL
         window.history.replaceState({}, '', window.location.pathname);
-        if (code && state) {
-          await handleGitHubCallback(code, state);
-          return;
-        }
+        await handleGitHubCallback(code, state);
+        return;
       }
 
       // Check if already connected by trying to load repos
