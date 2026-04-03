@@ -2381,7 +2381,7 @@
     (async function init() {
       // Fetch user tier for feature gating
       try {
-        var meRes = await apiFetch(API.replace('/scanner', '/auth') + '/me');
+        var meRes = await apiFetch(API + '/auth/me');
         if (meRes && meRes.ok) {
           var meData = await meRes.json();
           userTier = meData.tier || 'free';
