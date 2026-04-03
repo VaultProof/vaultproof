@@ -1,8 +1,28 @@
 import type { Env } from '../types.js';
 import { authenticateUser } from '../lib/jwt-auth.js';
 import { getSupabase } from '../lib/supabase.js';
-import { githubApi, auditLog } from '../lib/github.js';
+import { githubApi, getGhToken, auditLog } from '../lib/github.js';
 import { encrypt } from '../crypto/encryption.js';
+import {
+  KEY_PATTERNS,
+  SDK_INIT_PATTERNS,
+  HTTP_URL_REGEX,
+  PROVIDER_URLS,
+  PROCESS_ENV_REGEX,
+  OS_ENVIRON_REGEX,
+  ENV_VAR_MAP,
+  PLATFORM_FILES,
+  MAX_FILES,
+  MAX_FILE_LINES,
+  MAX_LINE_LENGTH,
+  MIN_ENTROPY,
+  shannonEntropy,
+  detectProvider,
+  shouldScanFile,
+  recommendMode,
+  verifyKey,
+  getProviderInfo,
+} from '../lib/secret-patterns.js';
 
 const notImplemented = () =>
   Response.json({ error: 'Not implemented' }, { status: 501 });
@@ -289,7 +309,7 @@ export async function handleScanner(
 
   // scans GET
   if (path === 'scans' && method === 'GET') {
-    return notImplemented();
+    return handleListScans(env, user);
   }
 
   // scan POST
@@ -300,13 +320,13 @@ export async function handleScanner(
   // scans/:scanId GET
   const scanIdMatch = path.match(/^scans\/([^/]+)$/);
   if (scanIdMatch && method === 'GET') {
-    return notImplemented();
+    return handleGetScan(env, user, scanIdMatch[1]);
   }
 
   // findings/:findingId/ignore POST
   const findingIgnoreMatch = path.match(/^findings\/([^/]+)\/ignore$/);
   if (findingIgnoreMatch && method === 'POST') {
-    return notImplemented();
+    return handleIgnoreFinding(env, user, findingIgnoreMatch[1]);
   }
 
   // scans/:scanId/create-pr POST
@@ -344,4 +364,153 @@ async function handleRepos(env: Env, user: { userId: string }): Promise<Response
   } catch (e: any) {
     return Response.json({ error: 'Failed to fetch repos from GitHub' }, { status: 502 });
   }
+}
+
+// ── Scan results ──
+
+async function handleListScans(
+  env: Env,
+  user: { userId: string },
+): Promise<Response> {
+  const supabase = getSupabase(env);
+
+  const { data, error } = await supabase
+    .from('scan_results')
+    .select('id, repo_full_name, branch, keys_found, keys_active, keys_revoked, status, started_at, completed_at')
+    .eq('user_id', user.userId)
+    .order('started_at', { ascending: false })
+    .limit(50);
+
+  if (error) {
+    console.error('handleListScans error:', error.message);
+    return Response.json({ error: 'Failed to fetch scans' }, { status: 500 });
+  }
+
+  return Response.json({
+    scans: (data || []).map((s: any) => ({
+      id: s.id,
+      repoFullName: s.repo_full_name,
+      branch: s.branch,
+      keysFound: s.keys_found,
+      keysActive: s.keys_active,
+      keysRevoked: s.keys_revoked,
+      status: s.status,
+      startedAt: s.started_at,
+      completedAt: s.completed_at,
+    })),
+  });
+}
+
+async function handleGetScan(
+  env: Env,
+  user: { userId: string },
+  scanId: string,
+): Promise<Response> {
+  const supabase = getSupabase(env);
+
+  // Fetch scan
+  const { data: scan, error: scanError } = await supabase
+    .from('scan_results')
+    .select('*')
+    .eq('id', scanId)
+    .single();
+
+  if (scanError || !scan) {
+    return Response.json({ error: 'Scan not found' }, { status: 404 });
+  }
+
+  // Verify ownership
+  if (scan.user_id !== user.userId) {
+    return Response.json({ error: 'Scan not found' }, { status: 404 });
+  }
+
+  // Fetch findings
+  const { data: findings, error: findingsError } = await supabase
+    .from('scan_findings')
+    .select('*')
+    .eq('scan_id', scanId);
+
+  if (findingsError) {
+    console.error('handleGetScan findings error:', findingsError.message);
+    return Response.json({ error: 'Failed to fetch findings' }, { status: 500 });
+  }
+
+  return Response.json({
+    id: scan.id,
+    repoFullName: scan.repo_full_name,
+    branch: scan.branch,
+    keysFound: scan.keys_found,
+    keysActive: scan.keys_active,
+    keysRevoked: scan.keys_revoked,
+    status: scan.status,
+    startedAt: scan.started_at,
+    completedAt: scan.completed_at,
+    errorMessage: scan.error_message,
+    platforms: scan.platforms,
+    findings: (findings || []).map((f: any) => {
+      const info = getProviderInfo(f.provider);
+      return {
+        id: f.id,
+        scanId: f.scan_id,
+        envName: f.env_name,
+        provider: f.provider,
+        file: f.file,
+        line: f.line,
+        mode: f.mode,
+        verified: f.verified,
+        source: f.source,
+        action: f.action,
+        prUrl: f.pr_url,
+        maskedValue: f.masked_value,
+        createdAt: f.created_at,
+        rotationUrl: info.rotationUrl,
+        providerInfo: info,
+      };
+    }),
+  });
+}
+
+async function handleIgnoreFinding(
+  env: Env,
+  user: { userId: string },
+  findingId: string,
+): Promise<Response> {
+  const supabase = getSupabase(env);
+
+  // Fetch finding
+  const { data: finding, error: findingError } = await supabase
+    .from('scan_findings')
+    .select('id, scan_id')
+    .eq('id', findingId)
+    .single();
+
+  if (findingError || !finding) {
+    return Response.json({ error: 'Finding not found' }, { status: 404 });
+  }
+
+  // Fetch parent scan to verify ownership
+  const { data: scan, error: scanError } = await supabase
+    .from('scan_results')
+    .select('user_id')
+    .eq('id', finding.scan_id)
+    .single();
+
+  if (scanError || !scan || scan.user_id !== user.userId) {
+    return Response.json({ error: 'Finding not found' }, { status: 404 });
+  }
+
+  // Update finding action
+  const { error: updateError } = await supabase
+    .from('scan_findings')
+    .update({ action: 'ignored' })
+    .eq('id', findingId);
+
+  if (updateError) {
+    console.error('handleIgnoreFinding update error:', updateError.message);
+    return Response.json({ error: 'Failed to ignore finding' }, { status: 500 });
+  }
+
+  auditLog(env, user.userId, finding.scan_id, 'finding_ignored', { findingId });
+
+  return Response.json({ success: true });
 }
