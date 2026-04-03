@@ -675,8 +675,9 @@
       window.location.href = 'login';
     }
 
-    // ── API helper ──
+    // ── API helper with retry + health check ──
     let _refreshPromise = null;
+    let _apiDown = false;
 
     async function _doRefresh() {
       const refreshed = await tryRefreshToken();
@@ -684,18 +685,19 @@
       return refreshed;
     }
 
-    async function apiFetch(path) {
+    async function apiFetch(path, _retryCount) {
+      _retryCount = _retryCount || 0;
       try {
         const res = await fetch(`${API}${path}`, {
           headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' }
         });
+        _apiDown = false;
         if (res.status === 401) {
-          // All concurrent 401s share the same refresh attempt
           if (!_refreshPromise) {
             _refreshPromise = _doRefresh();
           }
           const refreshed = await _refreshPromise;
-          if (refreshed) return apiFetch(path);
+          if (refreshed) return apiFetch(path, 0);
           showSessionExpired();
           return null;
         }
@@ -703,17 +705,40 @@
           showToast('Rate limited — try again in a moment', 'warning');
           return null;
         }
+        if (res.status >= 500 && _retryCount < 1) {
+          // Auto-retry once on server errors after 1s
+          await new Promise(function(r) { setTimeout(r, 1000); });
+          return apiFetch(path, _retryCount + 1);
+        }
         if (!res.ok) throw new Error(`HTTP ${res.status}`);
         return res.json();
       } catch (e) {
-        if (e.message && e.message.startsWith('HTTP')) {
-          showToast('Something went wrong on our end', 'error');
-        } else {
-          showToast('Connection lost — check your internet', 'error');
+        // Retry once on network errors
+        if (_retryCount < 1 && (!e.message || !e.message.startsWith('HTTP'))) {
+          await new Promise(function(r) { setTimeout(r, 1500); });
+          return apiFetch(path, _retryCount + 1);
+        }
+        if (!_apiDown) {
+          _apiDown = true;
+          showToast('Having trouble connecting — some data may be stale', 'warning');
         }
         return null;
       }
     }
+
+    // Health check on page load — show banner if API unreachable
+    (async function() {
+      try {
+        var res = await fetch(API.replace('/api/v1', '/health'), { signal: AbortSignal.timeout(5000) });
+        if (!res.ok) throw new Error();
+      } catch {
+        var banner = document.createElement('div');
+        banner.className = 'fixed top-0 left-0 right-0 z-[200] bg-amber-900/90 text-amber-200 text-sm text-center py-2 px-4';
+        banner.id = 'apiBanner';
+        banner.innerHTML = 'API is temporarily unreachable — dashboard may show cached data. <button onclick="this.parentElement.remove()" class="ml-3 underline">Dismiss</button>';
+        document.body.prepend(banner);
+      }
+    })();
 
     // ── Mock Data ──
     const MOCK = {
@@ -829,11 +854,13 @@
       let data;
       try {
         data = await apiFetch('/stats/overview');
-        if (!data) return;
+        if (!data) {
+          data = MOCK.overview;
+          document.querySelectorAll('.stat-card, [class*="stat"]').forEach(el => el.style.opacity = '0.6');
+        }
       } catch (e) {
         console.warn('Overview API failed, using mock data:', e);
         data = MOCK.overview;
-        showToast('Unable to load live data — showing cached values', 'warning');
         document.querySelectorAll('.stat-card, [class*="stat"]').forEach(el => el.style.opacity = '0.6');
       }
 
@@ -916,7 +943,7 @@
       let data;
       try {
         data = await apiFetch('/stats/usage?days=' + numDays);
-        if (!data) return;
+        if (!data) data = MOCK.usage;
       } catch (e) {
         console.warn('Usage API failed, using mock data:', e);
         data = MOCK.usage;
@@ -1028,11 +1055,10 @@
       let data;
       try {
         data = await apiFetch('/stats/by-key');
-        if (!data) return;
+        if (!data) data = { keys: MOCK.keys };
       } catch (e) {
         console.warn('Keys API failed, using mock data:', e);
         data = { keys: MOCK.keys };
-        showToast('Unable to load keys', 'warning');
       }
 
       const keys = data.keys || [];
