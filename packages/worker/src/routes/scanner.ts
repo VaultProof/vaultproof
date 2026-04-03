@@ -284,7 +284,7 @@ export async function handleScanner(
 
   // repos GET
   if (path === 'repos' && method === 'GET') {
-    return notImplemented();
+    return handleRepos(env, user);
   }
 
   // scans GET
@@ -322,4 +322,26 @@ export async function handleScanner(
   }
 
   return Response.json({ error: 'Not found' }, { status: 404 });
+}
+
+// ── Repos ──
+
+async function handleRepos(env: Env, user: { userId: string }): Promise<Response> {
+  const gh = await getGhToken(env, user.userId);
+  if (!gh) return Response.json({ error: 'No GitHub connection. Connect GitHub first.' }, { status: 400 });
+
+  try {
+    const repos = await githubApi(gh.token, '/user/repos?per_page=100&sort=updated&type=owner');
+    return Response.json({
+      repos: repos.map((r: any) => ({
+        fullName: r.full_name,
+        name: r.name,
+        private: r.private,
+        defaultBranch: r.default_branch,
+        updatedAt: r.updated_at,
+      })),
+    });
+  } catch (e: any) {
+    return Response.json({ error: 'Failed to fetch repos from GitHub' }, { status: 502 });
+  }
 }
