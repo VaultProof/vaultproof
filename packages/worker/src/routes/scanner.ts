@@ -26,6 +26,8 @@ import {
   verifyKey,
   getProviderInfo,
 } from '../lib/secret-patterns.js';
+import { executeScan } from '../lib/scheduled-scan.js';
+import { getUserTier } from '../lib/tier.js';
 
 const notImplemented = () =>
   Response.json({ error: 'Not implemented' }, { status: 501 });
@@ -371,6 +373,22 @@ export async function handleScanner(
     return handleDeleteAllowlist(env, user, allowlistDeleteMatch[1]);
   }
 
+  // schedules GET
+  if (path === 'schedules' && method === 'GET') {
+    return handleListSchedules(env, user);
+  }
+
+  // schedules POST
+  if (path === 'schedules' && method === 'POST') {
+    return handleCreateSchedule(request, env, user);
+  }
+
+  // schedules/:id DELETE
+  const scheduleDeleteMatch = path.match(/^schedules\/([^/]+)$/);
+  if (scheduleDeleteMatch && method === 'DELETE') {
+    return handleDeleteSchedule(env, user, scheduleDeleteMatch[1]);
+  }
+
   return Response.json({ error: 'Not found' }, { status: 404 });
 }
 
@@ -539,391 +557,18 @@ async function handleScan(
   auditLog(env, user.userId, scanId, 'started_scan', { repoFullName });
 
   try {
-    // 4. Fetch repo metadata
-    const repo = await githubApi(gh.token, `/repos/${repoFullName}`);
-    const targetBranch = branch || repo.default_branch;
-    await supabase
-      .from('scan_results')
-      .update({ branch: targetBranch })
-      .eq('id', scanId);
-
-    // 5. Fetch file tree
-    const tree = await githubApi(
-      gh.token,
-      `/repos/${repoFullName}/git/trees/${targetBranch}?recursive=1`,
-    );
-    const allTreeFiles = tree.tree as Array<{
-      path: string;
-      sha: string;
-      type: string;
-    }>;
-    const scannableFiles = allTreeFiles
-      .filter((f) => f.type === 'blob' && shouldScanFile(f.path))
-      .slice(0, MAX_FILES);
-
-    // 6. Detect platforms
-    const allPaths = allTreeFiles.map((f) => f.path);
-    const platformSet = new Set<string>();
-    for (const filePath of allPaths) {
-      const platform = PLATFORM_FILES[filePath];
-      if (platform) platformSet.add(platform);
-      if (filePath.startsWith('.github/workflows/'))
-        platformSet.add('GitHub Actions');
-    }
-    const platforms = [...platformSet];
-
-    // Internal findings array (raw values kept in memory only, never stored)
-    const findings: Array<{
-      envName: string;
-      provider: string;
-      file: string;
-      line: number | null;
-      mode: string;
-      verified: string;
-      source: string;
-      maskedValue: string;
-      value: string;
-    }> = [];
-    const seenValues = new Set<string>();
-
-    // 7. Fetch file contents in batches of 10
-    const BLOB_BATCH = 10;
-    const fileContents: Array<{ path: string; content: string }> = [];
-    for (let i = 0; i < scannableFiles.length; i += BLOB_BATCH) {
-      const batch = scannableFiles.slice(i, i + BLOB_BATCH);
-      const results = await Promise.all(
-        batch.map(async (file) => {
-          try {
-            const blob = await githubApi(
-              gh.token,
-              `/repos/${repoFullName}/git/blobs/${file.sha}`,
-            );
-            const raw = atob(blob.content.replace(/\n/g, ''));
-            if (raw.length > 500_000) return null;
-            return { path: file.path, content: raw };
-          } catch {
-            return null;
-          }
-        }),
-      );
-      for (const r of results) {
-        if (r) fileContents.push(r);
-      }
-    }
-
-    // 8–10. Scan each file
-    for (const file of fileContents) {
-      const basename = file.path.split('/').pop() || '';
-      const isEnvFile = basename === '.env' || basename.startsWith('.env.');
-
-      if (isEnvFile) {
-        // Phase A: .env files — parse KEY=VALUE pairs
-        for (const line of file.content.split('\n')) {
-          const trimmed = line.trim();
-          if (!trimmed || trimmed.startsWith('#')) continue;
-          const eqIdx = trimmed.indexOf('=');
-          if (eqIdx === -1) continue;
-          const name = trimmed.slice(0, eqIdx).trim();
-          let value = trimmed.slice(eqIdx + 1).trim();
-          if (
-            (value.startsWith('"') && value.endsWith('"')) ||
-            (value.startsWith("'") && value.endsWith("'"))
-          ) {
-            value = value.slice(1, -1);
-          }
-          if (!value || value.length < 10 || seenValues.has(value)) continue;
-
-          const provider = detectProvider(value);
-          if (!provider && shannonEntropy(value) < MIN_ENTROPY) continue;
-
-          seenValues.add(value);
-          findings.push({
-            envName: name,
-            provider: provider || 'unknown',
-            file: file.path,
-            line: null,
-            mode: provider ? recommendMode(provider) : 'env-injection',
-            verified: 'unknown',
-            source: 'current',
-            maskedValue: value.slice(0, 6) + '...' + value.slice(-4),
-            value,
-          });
-        }
-      } else {
-        const lines = file.content.split('\n');
-        if (lines.length > MAX_FILE_LINES) continue;
-
-        // Phase B: Hardcoded strings — match quoted strings against KEY_PATTERNS
-        for (let i = 0; i < lines.length; i++) {
-          if (lines[i].length > MAX_LINE_LENGTH) continue;
-          const stringMatches = lines[i].matchAll(
-            /["'`]([^"'`]{10,512})["'`]/g,
-          );
-          for (const m of stringMatches) {
-            const val = m[1];
-            if (seenValues.has(val)) continue;
-            const provider = detectProvider(val);
-            if (!provider) continue;
-            seenValues.add(val);
-            findings.push({
-              envName: `${provider.toUpperCase()}_API_KEY`,
-              provider,
-              file: file.path,
-              line: i + 1,
-              mode: recommendMode(provider),
-              verified: 'unknown',
-              source: 'current',
-              maskedValue: val.slice(0, 6) + '...' + val.slice(-4),
-              value: val,
-            });
-          }
-        }
-
-        // Phase C: Code-level — SDK inits, HTTP URLs, env var refs
-        for (let i = 0; i < lines.length; i++) {
-          const ln = lines[i];
-
-          // SDK init patterns
-          for (const { pattern, provider } of SDK_INIT_PATTERNS) {
-            pattern.lastIndex = 0;
-            let sdkMatch: RegExpExecArray | null;
-            while ((sdkMatch = pattern.exec(ln)) !== null) {
-              const snippet = ln
-                .slice(sdkMatch.index, sdkMatch.index + 40)
-                .trim();
-              findings.push({
-                envName: `${provider.toUpperCase()}_API_KEY`,
-                provider,
-                file: file.path,
-                line: i + 1,
-                mode: 'sdk-init',
-                verified: 'unknown',
-                source: 'current',
-                maskedValue:
-                  snippet.length > 36
-                    ? snippet.slice(0, 36) + '...'
-                    : snippet,
-                value: '',
-              });
-            }
-          }
-
-          // HTTP URL patterns
-          HTTP_URL_REGEX.lastIndex = 0;
-          let urlMatch: RegExpExecArray | null;
-          while ((urlMatch = HTTP_URL_REGEX.exec(ln)) !== null) {
-            const host = urlMatch[1];
-            const provider = PROVIDER_URLS[host];
-            if (!provider) continue;
-            const url =
-              urlMatch[0].length > 60
-                ? urlMatch[0].slice(0, 60) + '...'
-                : urlMatch[0];
-            findings.push({
-              envName: `${provider.toUpperCase()}_API_KEY`,
-              provider,
-              file: file.path,
-              line: i + 1,
-              mode: 'http-url',
-              verified: 'unknown',
-              source: 'current',
-              maskedValue: url,
-              value: '',
-            });
-          }
-
-          // Env var references (process.env.X / os.environ["X"])
-          PROCESS_ENV_REGEX.lastIndex = 0;
-          let envMatch: RegExpExecArray | null;
-          while ((envMatch = PROCESS_ENV_REGEX.exec(ln)) !== null) {
-            const varName = envMatch[1];
-            const provider = ENV_VAR_MAP[varName];
-            if (!provider) continue;
-            findings.push({
-              envName: varName,
-              provider,
-              file: file.path,
-              line: i + 1,
-              mode: 'env-ref',
-              verified: 'unknown',
-              source: 'current',
-              maskedValue: `process.env.${varName}`,
-              value: '',
-            });
-          }
-
-          OS_ENVIRON_REGEX.lastIndex = 0;
-          while ((envMatch = OS_ENVIRON_REGEX.exec(ln)) !== null) {
-            const varName = envMatch[1];
-            const provider = ENV_VAR_MAP[varName];
-            if (!provider) continue;
-            findings.push({
-              envName: varName,
-              provider,
-              file: file.path,
-              line: i + 1,
-              mode: 'env-ref',
-              verified: 'unknown',
-              source: 'current',
-              maskedValue: `os.environ["${varName}"]`,
-              value: '',
-            });
-          }
-        }
-      }
-    }
-
-    // 11. Scan git history (last 10 commits — reduced for Worker CPU limits)
-    try {
-      const commits = await githubApi(
-        gh.token,
-        `/repos/${repoFullName}/commits?sha=${targetBranch}&per_page=10`,
-      );
-      for (const commit of (commits as any[]).slice(0, 10)) {
-        let detail: any;
-        try {
-          detail = await githubApi(
-            gh.token,
-            `/repos/${repoFullName}/commits/${commit.sha}`,
-          );
-        } catch {
-          continue;
-        }
-        for (const file of detail.files || []) {
-          if (!file.patch) continue;
-          for (const line of (file.patch as string).split('\n')) {
-            if (!line.startsWith('-') || line.startsWith('---')) continue;
-            const content = line.slice(1);
-            const matches = content.matchAll(/["'`=]([^"'`\s]{10,512})/g);
-            for (const m of matches) {
-              const val = m[1];
-              if (seenValues.has(val)) continue;
-              const provider = detectProvider(val);
-              if (!provider) continue;
-              seenValues.add(val);
-              findings.push({
-                envName: `${provider.toUpperCase()}_API_KEY`,
-                provider,
-                file: `${file.filename} (deleted)`,
-                line: null,
-                mode: recommendMode(provider),
-                verified: 'unknown',
-                source: 'git-history',
-                maskedValue: val.slice(0, 6) + '...' + val.slice(-4),
-                value: val,
-              });
-            }
-          }
-        }
-      }
-    } catch {
-      // Git history scan failed — continue without it
-    }
-
-    // 12. Verify keys (max 20, batches of 5) — skip code-level findings
-    const CODE_LEVEL_MODES = new Set(['sdk-init', 'http-url', 'env-ref']);
-    const keyFindings = findings.filter((f) => !CODE_LEVEL_MODES.has(f.mode));
-    for (let i = 0; i < Math.min(keyFindings.length, 20); i += 5) {
-      const batch = keyFindings.slice(i, i + 5);
-      await Promise.all(
-        batch.map(async (f) => {
-          f.verified = await verifyKey(f.value, f.provider);
-        }),
-      );
-    }
-
-    // Zero raw key values — only maskedValue persists
-    for (const f of findings) {
-      f.value = '';
-    }
-
-    // 12b. Filter out allowlisted findings
-    const { data: allowlistEntries } = await supabase
-      .from('scan_allowlists')
-      .select('pattern_type, pattern')
-      .eq('user_id', user.userId)
-      .or(`repo_full_name.eq.${repoFullName},repo_full_name.is.null`);
-
-    if (allowlistEntries && allowlistEntries.length > 0) {
-      const beforeCount = findings.length;
-      for (let i = findings.length - 1; i >= 0; i--) {
-        const f = findings[i];
-        for (const entry of allowlistEntries) {
-          let matched = false;
-          if (entry.pattern_type === 'file_path') {
-            if (f.file && (f.file === entry.pattern || f.file.startsWith(entry.pattern))) {
-              matched = true;
-            }
-          } else if (entry.pattern_type === 'env_name') {
-            if (f.envName && f.envName === entry.pattern) {
-              matched = true;
-            }
-          }
-          if (matched) {
-            findings.splice(i, 1);
-            break;
-          }
-        }
-      }
-      const filtered = beforeCount - findings.length;
-      if (filtered > 0) {
-        auditLog(env, user.userId, scanId, 'allowlist_filtered', { filtered, total: beforeCount });
-      }
-    }
-
-    // 13. Store findings
-    for (const f of findings) {
-      await supabase.from('scan_findings').insert({
-        id: crypto.randomUUID(),
-        scan_id: scanId,
-        env_name: f.envName,
-        provider: f.provider,
-        file: f.file,
-        line: f.line,
-        mode: f.mode,
-        verified: f.verified,
-        source: f.source,
-        action: 'pending',
-        masked_value: f.maskedValue,
-        created_at: new Date().toISOString(),
-      });
-    }
-
-    // 14. Update scan result
-    const keysActive = keyFindings.filter(
-      (f) => f.verified === 'active',
-    ).length;
-    const keysRevoked = keyFindings.filter(
-      (f) => f.verified === 'revoked',
-    ).length;
-    const keysFound = keyFindings.length;
-
-    await supabase
-      .from('scan_results')
-      .update({
-        status: 'completed',
-        completed_at: new Date().toISOString(),
-        keys_found: keysFound,
-        keys_active: keysActive,
-        keys_revoked: keysRevoked,
-        platforms,
-      })
-      .eq('id', scanId);
-    auditLog(env, user.userId, scanId, 'completed_scan', {
-      keysFound,
-      keysActive,
-      keysRevoked,
-    });
+    // 4-14. Execute scan (fetch repo, scan files, verify, store findings)
+    const result = await executeScan(env, user.userId, gh.token, repoFullName, branch, scanId);
 
     // 15. Return response
     return Response.json({
       scanId,
       status: 'completed',
-      keysFound,
-      keysActive,
-      keysRevoked,
-      platforms,
-      findings: findings.map((f) => {
+      keysFound: result.keysFound,
+      keysActive: result.keysActive,
+      keysRevoked: result.keysRevoked,
+      platforms: result.platforms,
+      findings: result.findings.map((f) => {
         const info = getProviderInfo(f.provider);
         return {
           envName: f.envName,
@@ -2528,4 +2173,138 @@ ${historyWarning}
       { status: 500 },
     );
   }
+}
+
+// ── Scheduled Scan CRUD ──
+
+async function handleListSchedules(
+  env: Env,
+  user: { userId: string },
+): Promise<Response> {
+  const supabase = getSupabase(env);
+  const { data, error } = await supabase
+    .from('scan_schedules')
+    .select('*')
+    .eq('user_id', user.userId)
+    .order('created_at', { ascending: false });
+
+  if (error) {
+    console.error('handleListSchedules error:', error.message);
+    return Response.json({ error: 'Failed to fetch schedules' }, { status: 500 });
+  }
+
+  return Response.json({ schedules: data || [] });
+}
+
+async function handleCreateSchedule(
+  request: Request,
+  env: Env,
+  user: { userId: string },
+): Promise<Response> {
+  let body: any;
+  try {
+    body = await request.json();
+  } catch {
+    return Response.json({ error: 'Invalid JSON body' }, { status: 400 });
+  }
+
+  const { repoFullName, frequency } = body as {
+    repoFullName?: string;
+    frequency?: string;
+  };
+
+  if (!repoFullName || !/^[a-zA-Z0-9._-]+\/[a-zA-Z0-9._-]+$/.test(repoFullName)) {
+    return Response.json({ error: 'Invalid repo name' }, { status: 400 });
+  }
+  if (!frequency || !['daily', 'weekly'].includes(frequency)) {
+    return Response.json({ error: 'Frequency must be daily or weekly' }, { status: 400 });
+  }
+
+  // Tier-gate
+  const tier = await getUserTier(env, user.userId);
+  if (tier === 'free') {
+    return Response.json(
+      { error: 'Upgrade to Starter or above for scheduled scans' },
+      { status: 403 },
+    );
+  }
+  if (tier === 'starter' && frequency === 'daily') {
+    return Response.json(
+      { error: 'Daily scans require Pro or above' },
+      { status: 403 },
+    );
+  }
+
+  // Compute next_run_at
+  const now = new Date();
+  const nextRun = new Date(now);
+  if (frequency === 'daily') {
+    nextRun.setDate(nextRun.getDate() + 1);
+  } else {
+    nextRun.setDate(nextRun.getDate() + 7);
+  }
+
+  const supabase = getSupabase(env);
+  const { data, error } = await supabase
+    .from('scan_schedules')
+    .upsert(
+      {
+        id: crypto.randomUUID(),
+        user_id: user.userId,
+        repo_full_name: repoFullName,
+        frequency,
+        enabled: true,
+        next_run_at: nextRun.toISOString(),
+        created_at: now.toISOString(),
+        updated_at: now.toISOString(),
+      },
+      { onConflict: 'user_id,repo_full_name' },
+    )
+    .select()
+    .single();
+
+  if (error) {
+    console.error('handleCreateSchedule error:', error.message);
+    return Response.json({ error: 'Failed to save schedule' }, { status: 500 });
+  }
+
+  auditLog(env, user.userId, '', 'schedule.create', { repoFullName, frequency });
+
+  return Response.json(data, { status: 201 });
+}
+
+async function handleDeleteSchedule(
+  env: Env,
+  user: { userId: string },
+  id: string,
+): Promise<Response> {
+  const supabase = getSupabase(env);
+
+  // Verify ownership
+  const { data: existing, error: fetchError } = await supabase
+    .from('scan_schedules')
+    .select('id, user_id')
+    .eq('id', id)
+    .single();
+
+  if (fetchError || !existing) {
+    return Response.json({ error: 'Schedule not found' }, { status: 404 });
+  }
+  if (existing.user_id !== user.userId) {
+    return Response.json({ error: 'Forbidden' }, { status: 403 });
+  }
+
+  const { error } = await supabase
+    .from('scan_schedules')
+    .delete()
+    .eq('id', id);
+
+  if (error) {
+    console.error('handleDeleteSchedule error:', error.message);
+    return Response.json({ error: 'Failed to delete schedule' }, { status: 500 });
+  }
+
+  auditLog(env, user.userId, '', 'schedule.delete', { id });
+
+  return Response.json({ success: true });
 }

@@ -9,6 +9,9 @@ import { handleScanner } from './routes/scanner.js';
 import { handleBilling } from './routes/billing.js';
 import { handleAuth } from './routes/auth.js';
 import { checkPublicIpRateLimit } from './lib/rate-limit.js';
+import { getSupabase } from './lib/supabase.js';
+import { getGhToken } from './lib/github.js';
+import { executeScan } from './lib/scheduled-scan.js';
 
 function corsHeaders(origin: string, allowedOrigins: string[]): Record<string, string> {
   const isAllowed = allowedOrigins.includes(origin);
@@ -30,6 +33,123 @@ function addCors(response: Response, origin: string, allowedOrigins: string[]): 
 }
 
 export default {
+  async scheduled(event: ScheduledEvent, env: Env, ctx: ExecutionContext): Promise<void> {
+    ctx.waitUntil((async () => {
+      try {
+        const supabase = getSupabase(env);
+
+        // 1. Query schedules that are due
+        const now = new Date().toISOString();
+        const { data: schedules, error } = await supabase
+          .from('scan_schedules')
+          .select('*')
+          .eq('enabled', true)
+          .lte('next_run_at', now)
+          .order('next_run_at', { ascending: true })
+          .limit(10);
+
+        if (error || !schedules || schedules.length === 0) return;
+
+        for (const schedule of schedules) {
+          try {
+            // 2a. Get user's GitHub token
+            const gh = await getGhToken(env, schedule.user_id);
+            if (!gh) {
+              console.error(`Scheduled scan: no GitHub token for user ${schedule.user_id}`);
+              continue;
+            }
+
+            // 2b. Create scan record
+            const scanId = crypto.randomUUID();
+            const scanNow = new Date().toISOString();
+            await supabase.from('scan_results').insert({
+              id: scanId,
+              user_id: schedule.user_id,
+              repo_full_name: schedule.repo_full_name,
+              branch: 'default',
+              status: 'in_progress',
+              started_at: scanNow,
+              keys_found: 0,
+              keys_active: 0,
+              keys_revoked: 0,
+              platforms: [],
+            });
+
+            // 2c. Execute scan
+            const result = await executeScan(
+              env,
+              schedule.user_id,
+              gh.token,
+              schedule.repo_full_name,
+              undefined,
+              scanId,
+            );
+
+            // 2d. Compare findings with previous scan to detect new ones
+            if (schedule.last_scan_id) {
+              const { data: prevFindings } = await supabase
+                .from('scan_findings')
+                .select('masked_value, file, provider')
+                .eq('scan_id', schedule.last_scan_id);
+
+              const prevSet = new Set(
+                (prevFindings || []).map(
+                  (f: any) => `${f.masked_value}|${f.file}|${f.provider}`,
+                ),
+              );
+
+              const newFindings = result.findings.filter(
+                (f) => !prevSet.has(`${f.maskedValue}|${f.file}|${f.provider}`),
+              );
+
+              // 2e. Insert alerts for new findings
+              if (newFindings.length > 0) {
+                for (const f of newFindings) {
+                  await supabase.from('scan_alerts').insert({
+                    id: crypto.randomUUID(),
+                    user_id: schedule.user_id,
+                    schedule_id: schedule.id,
+                    scan_id: scanId,
+                    repo_full_name: schedule.repo_full_name,
+                    provider: f.provider,
+                    file: f.file,
+                    masked_value: f.maskedValue,
+                    created_at: new Date().toISOString(),
+                  });
+                }
+              }
+            }
+
+            // 2f. Update schedule: last_run_at, next_run_at, last_scan_id
+            const nextRun = new Date();
+            if (schedule.frequency === 'daily') {
+              nextRun.setDate(nextRun.getDate() + 1);
+            } else {
+              nextRun.setDate(nextRun.getDate() + 7);
+            }
+
+            await supabase
+              .from('scan_schedules')
+              .update({
+                last_run_at: new Date().toISOString(),
+                next_run_at: nextRun.toISOString(),
+                last_scan_id: scanId,
+                updated_at: new Date().toISOString(),
+              })
+              .eq('id', schedule.id);
+          } catch (err) {
+            console.error(
+              `Scheduled scan failed for ${schedule.repo_full_name}:`,
+              err instanceof Error ? err.message : err,
+            );
+          }
+        }
+      } catch (err) {
+        console.error('Cron handler error:', err instanceof Error ? err.message : err);
+      }
+    })());
+  },
+
   async fetch(request: Request, env: Env): Promise<Response> {
     const url = new URL(request.url);
     // Normalize trailing slashes
