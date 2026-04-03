@@ -676,7 +676,13 @@
     }
 
     // ── API helper ──
-    let _refreshAttempted = false;
+    let _refreshPromise = null;
+
+    async function _doRefresh() {
+      const refreshed = await tryRefreshToken();
+      _refreshPromise = null;
+      return refreshed;
+    }
 
     async function apiFetch(path) {
       try {
@@ -684,15 +690,15 @@
           headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' }
         });
         if (res.status === 401) {
-          if (!_refreshAttempted) {
-            _refreshAttempted = true;
-            const refreshed = await tryRefreshToken();
-            if (refreshed) return apiFetch(path);
+          // All concurrent 401s share the same refresh attempt
+          if (!_refreshPromise) {
+            _refreshPromise = _doRefresh();
           }
+          const refreshed = await _refreshPromise;
+          if (refreshed) return apiFetch(path);
           showSessionExpired();
           return null;
         }
-        _refreshAttempted = false;
         if (res.status === 429) {
           showToast('Rate limited — try again in a moment', 'warning');
           return null;
