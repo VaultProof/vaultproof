@@ -14,7 +14,7 @@ import { getGhToken } from './lib/github.js';
 import { executeScan } from './lib/scheduled-scan.js';
 
 function corsHeaders(origin: string, allowedOrigins: string[]): Record<string, string> {
-  const isAllowed = allowedOrigins.includes(origin);
+  const isAllowed = allowedOrigins.includes('*') || allowedOrigins.includes(origin);
   return {
     ...(isAllowed ? { 'Access-Control-Allow-Origin': origin } : {}),
     'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
