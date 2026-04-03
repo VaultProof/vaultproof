@@ -6,6 +6,7 @@ import { handleDevKeys } from './routes/dev-keys.js';
 import { handlePromo } from './routes/promo.js';
 import { handleAdmin } from './routes/admin.js';
 import { handleScanner } from './routes/scanner.js';
+import { handleKeys } from './routes/keys.js';
 import { handleBilling } from './routes/billing.js';
 import { handleAuth } from './routes/auth.js';
 import { checkPublicIpRateLimit } from './lib/rate-limit.js';
@@ -244,6 +245,17 @@ export default {
       try {
         const path = url.pathname.slice('/api/v1/promo/'.length);
         const response = await handlePromo(request, env, path);
+        return addCors(response, origin, allowedOrigins);
+      } catch {
+        return addCors(Response.json({ error: 'Service temporarily unavailable' }, { status: 503 }), origin, allowedOrigins);
+      }
+    }
+
+    // Keys routes
+    if (url.pathname.startsWith('/api/v1/keys/')) {
+      try {
+        const path = url.pathname.slice('/api/v1/keys/'.length);
+        const response = await handleKeys(request, env, path);
         return addCors(response, origin, allowedOrigins);
       } catch {
         return addCors(Response.json({ error: 'Service temporarily unavailable' }, { status: 503 }), origin, allowedOrigins);
