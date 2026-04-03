@@ -833,7 +833,7 @@
     }
 
     async function disconnectGitHub() {
-      var res = await apiFetch(API + '/scanner/github/disconnect', { method: 'POST' });
+      var res = await apiFetch(API + '/scanner/github/disconnect', { method: 'DELETE' });
       if (!res) return;
       if (res.ok) {
         ghConnected = false;
