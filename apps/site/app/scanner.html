@@ -423,11 +423,65 @@
                   <h3 class="text-sm font-semibold">Code Findings</h3>
                   <span id="findingsCount" class="text-xs text-gray-500"></span>
                 </div>
-                <button onclick="exportCsv()" class="relative px-3 py-1.5 text-xs font-medium rounded-lg bg-[#111118] border border-[#1e1e2e] text-gray-400 hover:text-white hover:border-brand/30 transition flex items-center gap-1.5">
-                  <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M4 16v2a2 2 0 002 2h12a2 2 0 002-2v-2M7 10l5 5 5-5M12 15V3"/></svg>
-                  Export CSV
-                  <span id="csvProBadge" class="hidden ml-1 px-1.5 py-0.5 text-[10px] font-bold rounded bg-brand/20 text-brand">PRO</span>
-                </button>
+                <div class="flex items-center gap-2">
+                  <button onclick="exportCsv()" class="relative px-3 py-1.5 text-xs font-medium rounded-lg bg-[#111118] border border-[#1e1e2e] text-gray-400 hover:text-white hover:border-brand/30 transition flex items-center gap-1.5">
+                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M4 16v2a2 2 0 002 2h12a2 2 0 002-2v-2M7 10l5 5 5-5M12 15V3"/></svg>
+                    Export CSV
+                    <span id="csvProBadge" class="hidden ml-1 px-1.5 py-0.5 text-[10px] font-bold rounded bg-brand/20 text-brand">PRO</span>
+                  </button>
+                  <button onclick="toggleAllowlistPanel()" title="Manage Allowlist" class="relative px-2 py-1.5 text-xs font-medium rounded-lg bg-[#111118] border border-[#1e1e2e] text-gray-400 hover:text-white hover:border-brand/30 transition flex items-center gap-1.5">
+                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.066 2.573c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.573 1.066c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.066-2.573c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/><circle cx="12" cy="12" r="3"/></svg>
+                  </button>
+                </div>
+              </div>
+              <!-- Allowlist Management Panel -->
+              <div id="allowlistPanel" class="hidden border-b border-border">
+                <div class="px-4 py-3 bg-surface">
+                  <div class="flex items-center justify-between mb-3">
+                    <h4 class="text-xs font-semibold text-gray-300 uppercase tracking-wider">Allowlist (False Positive Management)</h4>
+                    <span id="allowlistCount" class="text-xs text-gray-500"></span>
+                  </div>
+                  <div id="allowlistTableWrap" class="mb-4">
+                    <table id="allowlistTable" class="w-full text-sm hidden">
+                      <thead>
+                        <tr class="border-b border-border text-gray-500 text-xs uppercase tracking-wider">
+                          <th class="text-left px-3 py-2 font-medium">Pattern</th>
+                          <th class="text-left px-3 py-2 font-medium">Type</th>
+                          <th class="text-left px-3 py-2 font-medium">Scope</th>
+                          <th class="text-left px-3 py-2 font-medium">Reason</th>
+                          <th class="text-right px-3 py-2 font-medium w-16"></th>
+                        </tr>
+                      </thead>
+                      <tbody id="allowlistBody"></tbody>
+                    </table>
+                    <p id="allowlistEmpty" class="text-xs text-gray-500 py-2">No allowlist entries yet.</p>
+                  </div>
+                  <div class="flex flex-wrap items-end gap-2 border-t border-border pt-3">
+                    <div>
+                      <label class="text-xs text-gray-500 block mb-1">Type</label>
+                      <select id="alPatternType" class="bg-[#111118] border border-[#1e1e2e] rounded-lg px-2 py-1.5 text-xs text-gray-300 focus:outline-none focus:border-brand/50">
+                        <option value="env_name">Env Name</option>
+                        <option value="file_path">File Path</option>
+                      </select>
+                    </div>
+                    <div class="flex-1 min-w-[160px]">
+                      <label class="text-xs text-gray-500 block mb-1">Pattern</label>
+                      <input id="alPattern" type="text" placeholder="e.g. NEXT_PUBLIC_API_URL" class="w-full bg-[#111118] border border-[#1e1e2e] rounded-lg px-2 py-1.5 text-xs text-gray-300 focus:outline-none focus:border-brand/50" />
+                    </div>
+                    <div>
+                      <label class="text-xs text-gray-500 block mb-1">Scope</label>
+                      <select id="alScope" class="bg-[#111118] border border-[#1e1e2e] rounded-lg px-2 py-1.5 text-xs text-gray-300 focus:outline-none focus:border-brand/50">
+                        <option value="global">Global</option>
+                        <option value="repo">This Repo</option>
+                      </select>
+                    </div>
+                    <div class="flex-1 min-w-[120px]">
+                      <label class="text-xs text-gray-500 block mb-1">Reason (optional)</label>
+                      <input id="alReason" type="text" placeholder="e.g. public key, not secret" class="w-full bg-[#111118] border border-[#1e1e2e] rounded-lg px-2 py-1.5 text-xs text-gray-300 focus:outline-none focus:border-brand/50" />
+                    </div>
+                    <button onclick="addAllowlistEntry()" class="px-3 py-1.5 text-xs font-medium rounded-lg bg-brand hover:bg-brand-hover text-white transition">Add</button>
+                  </div>
+                </div>
               </div>
               <div id="findingsEmpty" class="hidden px-6 py-8 text-center text-sm text-green-400">No exposed keys found in current code. Your repo looks clean!</div>
               <div class="overflow-x-auto">
@@ -1171,6 +1225,9 @@
         document.getElementById('migrationResults').classList.add('hidden');
         renderLegacyFindings(codeFindings, historyFindings);
       }
+
+      // Pre-load allowlist data for this repo
+      loadAllowlists();
     }
 
     // --- Migration Results View ---
@@ -1357,10 +1414,11 @@
             '<td class="px-4 py-3 text-gray-400 text-xs">' + escapeHtml(f.source || 'code') + '</td>' +
             '<td class="px-4 py-3 text-gray-400 text-xs">' + escapeHtml(f.mode || '') + '</td>' +
             '<td class="px-4 py-3 text-right" onclick="event.stopPropagation()">' +
-              '<select class="bg-[#111118] border border-[#1e1e2e] rounded-lg px-2 py-1 text-xs text-gray-300 focus:outline-none focus:border-brand/50" data-finding-idx="' + i + '">' +
+              '<select class="bg-[#111118] border border-[#1e1e2e] rounded-lg px-2 py-1 text-xs text-gray-300 focus:outline-none focus:border-brand/50" data-finding-idx="' + i + '" onchange="if(this.value===\'allowlist\'){handleAllowlistFromFinding(this)}">' +
                 '<option value="store">Store in VaultProof</option>' +
                 '<option value="pr">Create PR</option>' +
                 '<option value="ignore">Ignore</option>' +
+                '<option value="allowlist">Add to Allowlist</option>' +
               '</select>' +
             '</td>' +
           '</tr>' + detailRow;
@@ -1583,6 +1641,133 @@
         btn.disabled = false;
         btn.textContent = 'Ignore Selected';
       }
+    }
+
+    // --- Allowlist Management ---
+    var allowlistData = [];
+
+    function toggleAllowlistPanel() {
+      var panel = document.getElementById('allowlistPanel');
+      if (panel.classList.contains('hidden')) {
+        panel.classList.remove('hidden');
+        loadAllowlists();
+      } else {
+        panel.classList.add('hidden');
+      }
+    }
+
+    async function loadAllowlists() {
+      var repo = currentScanData ? (currentScanData.repo_full_name || currentScanData.repoFullName || '') : '';
+      var url = API + '/scanner/allowlists';
+      if (repo) url += '?repo=' + encodeURIComponent(repo);
+      var res = await apiFetch(url);
+      if (!res) return;
+      var data = await res.json();
+      allowlistData = data.allowlists || [];
+      renderAllowlistTable();
+    }
+
+    function renderAllowlistTable() {
+      var tbody = document.getElementById('allowlistBody');
+      var table = document.getElementById('allowlistTable');
+      var empty = document.getElementById('allowlistEmpty');
+      var count = document.getElementById('allowlistCount');
+
+      if (!allowlistData.length) {
+        table.classList.add('hidden');
+        empty.classList.remove('hidden');
+        count.textContent = '';
+        return;
+      }
+
+      table.classList.remove('hidden');
+      empty.classList.add('hidden');
+      count.textContent = allowlistData.length + ' entries';
+
+      tbody.innerHTML = allowlistData.map(function(entry) {
+        var scope = entry.repo_full_name ? escapeHtml(entry.repo_full_name) : 'Global';
+        var typeLabel = entry.pattern_type === 'file_path' ? 'File Path' : 'Env Name';
+        return '<tr class="border-b border-border hover:bg-white/[0.02]">' +
+          '<td class="px-3 py-2 text-xs font-mono text-white">' + escapeHtml(entry.pattern) + '</td>' +
+          '<td class="px-3 py-2 text-xs text-gray-400">' + typeLabel + '</td>' +
+          '<td class="px-3 py-2 text-xs text-gray-400">' + scope + '</td>' +
+          '<td class="px-3 py-2 text-xs text-gray-500">' + escapeHtml(entry.reason || '') + '</td>' +
+          '<td class="px-3 py-2 text-right">' +
+            '<button onclick="deleteAllowlistEntry(\'' + entry.id + '\')" class="text-red-400 hover:text-red-300 text-xs">Delete</button>' +
+          '</td>' +
+        '</tr>';
+      }).join('');
+    }
+
+    async function addAllowlistEntry(patternType, pattern) {
+      // If called from a finding action, patternType and pattern are provided
+      if (!patternType) {
+        patternType = document.getElementById('alPatternType').value;
+        pattern = document.getElementById('alPattern').value.trim();
+      }
+      if (!pattern) {
+        showToast('Pattern is required', 'warning');
+        return;
+      }
+      var scopeEl = document.getElementById('alScope');
+      var scope = scopeEl ? scopeEl.value : 'global';
+      var repo = null;
+      if (scope === 'repo' && currentScanData) {
+        repo = currentScanData.repo_full_name || currentScanData.repoFullName || null;
+      }
+      var reason = '';
+      var reasonEl = document.getElementById('alReason');
+      if (reasonEl) reason = reasonEl.value.trim();
+
+      try {
+        var res = await apiFetch(API + '/scanner/allowlists', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ patternType: patternType, pattern: pattern, repo: repo, reason: reason }),
+        });
+        if (!res || !res.ok) throw new Error('Failed');
+        showToast('Added to allowlist', 'success');
+        // Clear form
+        var patternInput = document.getElementById('alPattern');
+        var reasonInput = document.getElementById('alReason');
+        if (patternInput) patternInput.value = '';
+        if (reasonInput) reasonInput.value = '';
+        loadAllowlists();
+      } catch (e) {
+        showToast('Failed to add allowlist entry', 'error');
+      }
+    }
+
+    async function deleteAllowlistEntry(id) {
+      try {
+        var res = await apiFetch(API + '/scanner/allowlists/' + id, { method: 'DELETE' });
+        if (!res || !res.ok) throw new Error('Failed');
+        showToast('Allowlist entry removed', 'success');
+        loadAllowlists();
+      } catch (e) {
+        showToast('Failed to delete allowlist entry', 'error');
+      }
+    }
+
+    function handleAllowlistFromFinding(select) {
+      var idx = parseInt(select.getAttribute('data-finding-idx'), 10);
+      var codeFindings = (currentScanData.findings || []).filter(function(f) { return f.source !== 'git_history'; });
+      var f = codeFindings[idx];
+      if (!f) return;
+
+      var envName = f.envName || f.env_name || f.key_name || f.keyName || '';
+      var filePath = f.file || '';
+
+      // Prefer env_name if available, otherwise file_path
+      if (envName) {
+        addAllowlistEntry('env_name', envName);
+      } else if (filePath) {
+        addAllowlistEntry('file_path', filePath);
+      } else {
+        showToast('No pattern available for this finding', 'warning');
+      }
+      // Reset select
+      select.value = 'store';
     }
 
     // --- CSV Export ---

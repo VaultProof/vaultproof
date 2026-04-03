@@ -355,7 +355,134 @@ export async function handleScanner(
     return handleHistoryAction(request, env, user, historyActionMatch[1]);
   }
 
+  // allowlists GET
+  if (path === 'allowlists' && method === 'GET') {
+    return handleGetAllowlists(request, env, user);
+  }
+
+  // allowlists POST
+  if (path === 'allowlists' && method === 'POST') {
+    return handleCreateAllowlist(request, env, user);
+  }
+
+  // allowlists/:id DELETE
+  const allowlistDeleteMatch = path.match(/^allowlists\/([^/]+)$/);
+  if (allowlistDeleteMatch && method === 'DELETE') {
+    return handleDeleteAllowlist(env, user, allowlistDeleteMatch[1]);
+  }
+
   return Response.json({ error: 'Not found' }, { status: 404 });
+}
+
+// ── Allowlists ──
+
+async function handleGetAllowlists(
+  request: Request,
+  env: Env,
+  user: { userId: string },
+): Promise<Response> {
+  const supabase = getSupabase(env);
+  const url = new URL(request.url);
+  const repo = url.searchParams.get('repo');
+
+  let query = supabase
+    .from('scan_allowlists')
+    .select('*')
+    .eq('user_id', user.userId)
+    .order('created_at', { ascending: false });
+
+  if (repo) {
+    // Return entries that match this repo OR are global (null repo)
+    query = query.or(`repo_full_name.eq.${repo},repo_full_name.is.null`);
+  }
+
+  const { data, error } = await query;
+  if (error) {
+    return Response.json({ error: 'Failed to fetch allowlists' }, { status: 500 });
+  }
+  return Response.json({ allowlists: data || [] });
+}
+
+async function handleCreateAllowlist(
+  request: Request,
+  env: Env,
+  user: { userId: string },
+): Promise<Response> {
+  let body: any;
+  try {
+    body = await request.json();
+  } catch {
+    return Response.json({ error: 'Invalid JSON body' }, { status: 400 });
+  }
+
+  const { patternType, pattern, repo, reason } = body as {
+    patternType?: string;
+    pattern?: string;
+    repo?: string;
+    reason?: string;
+  };
+
+  if (!pattern || !pattern.trim()) {
+    return Response.json({ error: 'Pattern is required' }, { status: 400 });
+  }
+  if (!patternType || !['file_path', 'env_name'].includes(patternType)) {
+    return Response.json({ error: 'patternType must be file_path or env_name' }, { status: 400 });
+  }
+
+  const supabase = getSupabase(env);
+  const id = crypto.randomUUID();
+  const { data, error } = await supabase.from('scan_allowlists').insert({
+    id,
+    user_id: user.userId,
+    repo_full_name: repo || null,
+    pattern_type: patternType,
+    pattern: pattern.trim(),
+    reason: reason || null,
+    created_at: new Date().toISOString(),
+  }).select().single();
+
+  if (error) {
+    return Response.json({ error: 'Failed to create allowlist entry' }, { status: 500 });
+  }
+
+  auditLog(env, user.userId, '', 'allowlist.create', { id, patternType, pattern: pattern.trim(), repo: repo || null });
+
+  return Response.json(data, { status: 201 });
+}
+
+async function handleDeleteAllowlist(
+  env: Env,
+  user: { userId: string },
+  id: string,
+): Promise<Response> {
+  const supabase = getSupabase(env);
+
+  // Verify ownership
+  const { data: existing, error: fetchError } = await supabase
+    .from('scan_allowlists')
+    .select('id, user_id')
+    .eq('id', id)
+    .single();
+
+  if (fetchError || !existing) {
+    return Response.json({ error: 'Allowlist entry not found' }, { status: 404 });
+  }
+  if (existing.user_id !== user.userId) {
+    return Response.json({ error: 'Forbidden' }, { status: 403 });
+  }
+
+  const { error } = await supabase
+    .from('scan_allowlists')
+    .delete()
+    .eq('id', id);
+
+  if (error) {
+    return Response.json({ error: 'Failed to delete allowlist entry' }, { status: 500 });
+  }
+
+  auditLog(env, user.userId, '', 'allowlist.delete', { id });
+
+  return Response.json({ success: true });
 }
 
 // ── Scan ──
@@ -708,6 +835,40 @@ async function handleScan(
     // Zero raw key values — only maskedValue persists
     for (const f of findings) {
       f.value = '';
+    }
+
+    // 12b. Filter out allowlisted findings
+    const { data: allowlistEntries } = await supabase
+      .from('scan_allowlists')
+      .select('pattern_type, pattern')
+      .eq('user_id', user.userId)
+      .or(`repo_full_name.eq.${repoFullName},repo_full_name.is.null`);
+
+    if (allowlistEntries && allowlistEntries.length > 0) {
+      const beforeCount = findings.length;
+      for (let i = findings.length - 1; i >= 0; i--) {
+        const f = findings[i];
+        for (const entry of allowlistEntries) {
+          let matched = false;
+          if (entry.pattern_type === 'file_path') {
+            if (f.file && (f.file === entry.pattern || f.file.startsWith(entry.pattern))) {
+              matched = true;
+            }
+          } else if (entry.pattern_type === 'env_name') {
+            if (f.envName && f.envName === entry.pattern) {
+              matched = true;
+            }
+          }
+          if (matched) {
+            findings.splice(i, 1);
+            break;
+          }
+        }
+      }
+      const filtered = beforeCount - findings.length;
+      if (filtered > 0) {
+        auditLog(env, user.userId, scanId, 'allowlist_filtered', { filtered, total: beforeCount });
+      }
     }
 
     // 13. Store findings
