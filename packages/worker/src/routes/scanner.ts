@@ -349,6 +349,12 @@ export async function handleScanner(
     return handleMigrate(request, env, user, migrateMatch[1]);
   }
 
+  // findings/:findingId/history-action POST
+  const historyActionMatch = path.match(/^findings\/([^/]+)\/history-action$/);
+  if (historyActionMatch && method === 'POST') {
+    return handleHistoryAction(request, env, user, historyActionMatch[1]);
+  }
+
   return Response.json({ error: 'Not found' }, { status: 404 });
 }
 
@@ -910,6 +916,7 @@ async function handleGetScan(
         verified: f.verified,
         source: f.source,
         action: f.action,
+        historyAction: f.history_action,
         prUrl: f.pr_url,
         maskedValue: f.masked_value,
         createdAt: f.created_at,
@@ -1056,6 +1063,80 @@ async function handleIgnoreFinding(
   return Response.json({ success: true });
 }
 
+// ── History Action (git-history findings) ──
+
+async function handleHistoryAction(
+  request: Request,
+  env: Env,
+  user: { userId: string },
+  findingId: string,
+): Promise<Response> {
+  let body: any;
+  try {
+    body = await request.json();
+  } catch {
+    return Response.json({ error: 'Invalid JSON body' }, { status: 400 });
+  }
+
+  const { action } = body as { action?: string };
+  const validActions = ['revoke-guided', 'store-rewrite', 'dismissed'];
+  if (!action || !validActions.includes(action)) {
+    return Response.json(
+      { error: 'action must be one of: revoke-guided, store-rewrite, dismissed' },
+      { status: 400 },
+    );
+  }
+
+  const supabase = getSupabase(env);
+
+  // Fetch finding and verify it is a git-history finding
+  const { data: finding, error: findingError } = await supabase
+    .from('scan_findings')
+    .select('id, scan_id, source')
+    .eq('id', findingId)
+    .single();
+
+  if (findingError || !finding) {
+    return Response.json({ error: 'Finding not found' }, { status: 404 });
+  }
+
+  if (finding.source !== 'git-history') {
+    return Response.json(
+      { error: 'Only git-history findings support history actions' },
+      { status: 400 },
+    );
+  }
+
+  // Verify ownership via parent scan
+  const { data: scan, error: scanError } = await supabase
+    .from('scan_results')
+    .select('user_id')
+    .eq('id', finding.scan_id)
+    .single();
+
+  if (scanError || !scan || scan.user_id !== user.userId) {
+    return Response.json({ error: 'Finding not found' }, { status: 404 });
+  }
+
+  // Update the history_action column
+  const { error: updateError } = await supabase
+    .from('scan_findings')
+    .update({ history_action: action })
+    .eq('id', findingId);
+
+  if (updateError) {
+    console.error('handleHistoryAction update error:', updateError.message);
+    return Response.json({ error: 'Failed to update finding' }, { status: 500 });
+  }
+
+  auditLog(env, user.userId, finding.scan_id, 'history_action', {
+    findingId,
+    action,
+  });
+
+  return Response.json({ success: true, action });
+}
+
 // ── Create PR ──
 
 async function handleCreatePr(
@@ -1157,9 +1238,29 @@ async function handleCreatePr(
       providerToEnvVars.set(provider, list);
     }
 
+    const envExampleEntries: string[] = [];
+
     for (const fa of findingActions) {
       const finding = allFindings.find((f: any) => f.id === fa.findingId);
-      if (!finding || finding.source === 'git-history') continue;
+      if (!finding) continue;
+
+      // For git-history findings, add a .env.example entry instead of modifying code
+      if (finding.source === 'git-history') {
+        const info = getProviderInfo(finding.provider);
+        envExampleEntries.push(
+          `# ${info.name} key found in git history — store in VaultProof instead`,
+        );
+        envExampleEntries.push(
+          `# ${finding.env_name || finding.provider.toUpperCase() + '_API_KEY'}=<store-in-vaultproof>`,
+        );
+        processedFindings.push({
+          envName: finding.env_name || finding.provider.toUpperCase() + '_API_KEY',
+          file: '.env.example',
+          line: null,
+          action: 'git-history → documented',
+        });
+        continue;
+      }
 
       // Fetch file content if not already cached
       if (!changedFiles.has(finding.file)) {
@@ -1376,7 +1477,25 @@ async function handleCreatePr(
       }
     }
 
-    if (changedFiles.size === 0) {
+    // Add .env.example entries for git-history findings
+    if (envExampleEntries.length > 0) {
+      let envExample = '';
+      // Try to fetch existing .env.example
+      try {
+        const fileData = await githubApi(
+          gh.token,
+          `/repos/${scan.repo_full_name}/contents/.env.example?ref=${defaultBranch}`,
+        );
+        envExample = atob(fileData.content.replace(/\n/g, ''));
+      } catch {
+        // File doesn't exist yet, start fresh
+        envExample = '# Environment Variables\n# See https://vaultproof.dev for secure key management\n';
+      }
+      envExample += '\n' + envExampleEntries.join('\n') + '\n';
+      changedFiles.set('.env.example', envExample);
+    }
+
+    if (changedFiles.size === 0 && processedFindings.length === 0) {
       return Response.json({ error: 'No changes to apply' }, { status: 400 });
     }
 
@@ -1795,11 +1914,31 @@ async function handleMigrate(
       providerToEnvVars.set(provider, list);
     }
 
+    const migrateEnvExampleEntries: string[] = [];
+
     for (const fa of findingActions) {
       if (fa.action === 'skip') continue;
 
       const finding = allFindings.find((f: any) => f.id === fa.findingId);
-      if (!finding || finding.source === 'git-history') continue;
+      if (!finding) continue;
+
+      // For git-history findings, add a .env.example entry documenting the key
+      if (finding.source === 'git-history') {
+        const info = getProviderInfo(finding.provider);
+        migrateEnvExampleEntries.push(
+          `# ${info.name} key found in git history — store in VaultProof instead`,
+        );
+        migrateEnvExampleEntries.push(
+          `# ${finding.env_name || finding.provider.toUpperCase() + '_API_KEY'}=<store-in-vaultproof>`,
+        );
+        processedFindings.push({
+          envName: finding.env_name || finding.provider.toUpperCase() + '_API_KEY',
+          file: '.env.example',
+          line: null,
+          action: 'git-history → documented',
+        });
+        continue;
+      }
 
       // For 'store' action without a rewrite target, skip file changes
       if (fa.action === 'store' && !finding.line && !finding.file.endsWith('.env') && !finding.file.includes('.env.')) {
@@ -2012,6 +2151,22 @@ async function handleMigrate(
           action: 'vaultproof',
         });
       }
+    }
+
+    // Add .env.example entries for git-history findings
+    if (migrateEnvExampleEntries.length > 0) {
+      let envExample = '';
+      try {
+        const fileData = await githubApi(
+          gh.token,
+          `/repos/${scan.repo_full_name}/contents/.env.example?ref=${defaultBranch}`,
+        );
+        envExample = atob(fileData.content.replace(/\n/g, ''));
+      } catch {
+        envExample = '# Environment Variables\n# See https://vaultproof.dev for secure key management\n';
+      }
+      envExample += '\n' + migrateEnvExampleEntries.join('\n') + '\n';
+      changedFiles.set('.env.example', envExample);
     }
 
     if (changedFiles.size === 0 && storedKeys.length === 0) {

@@ -332,10 +332,169 @@ const PROVIDER_NAMES: Record<string, string> = {
   mongodb: 'MongoDB',
 };
 
-/** Get display name and rotation URL for a provider. */
-export function getProviderInfo(provider: string): { name: string; rotationUrl: string } {
+// ─── Revocation instructions (per-provider) ──────────────────────────────────
+
+export const REVOCATION_INSTRUCTIONS: Record<string, { steps: string[]; url: string; note?: string }> = {
+  openai: {
+    steps: [
+      'Go to platform.openai.com/api-keys',
+      'Find the compromised key (matching the prefix shown)',
+      'Click the trash icon to revoke it',
+      'Create a new API key and store it securely',
+    ],
+    url: 'https://platform.openai.com/api-keys',
+    note: 'OpenAI keys cannot be un-revoked. Create a new one after revoking.',
+  },
+  anthropic: {
+    steps: [
+      'Go to console.anthropic.com/settings/keys',
+      'Find the compromised key',
+      'Click "Disable" or delete the key',
+      'Create a new API key and store it securely',
+    ],
+    url: 'https://console.anthropic.com/settings/keys',
+    note: 'Disabled keys stop working immediately.',
+  },
+  stripe: {
+    steps: [
+      'Go to dashboard.stripe.com/apikeys',
+      'Find the compromised key under "Standard keys"',
+      'Click the "..." menu and select "Roll key"',
+      'Confirm and update your integration with the new key',
+    ],
+    url: 'https://dashboard.stripe.com/apikeys',
+    note: 'Rolling a Stripe key creates a new one and revokes the old one after an optional expiry window.',
+  },
+  google: {
+    steps: [
+      'Go to console.cloud.google.com/apis/credentials',
+      'Find the compromised API key or service account key',
+      'Click the key name, then "Delete" or "Regenerate"',
+      'Update your application with the new credential',
+    ],
+    url: 'https://console.cloud.google.com/apis/credentials',
+    note: 'For service account keys, delete the JSON key file entry. For API keys, restrict or delete them.',
+  },
+  github: {
+    steps: [
+      'Go to github.com/settings/tokens',
+      'Find the compromised token',
+      'Click "Delete" to revoke it',
+      'Generate a new token with the minimum required scopes',
+    ],
+    url: 'https://github.com/settings/tokens',
+    note: 'GitHub may have already auto-revoked the token if it was detected in a public repo.',
+  },
+  aws: {
+    steps: [
+      'Go to the IAM console under Security Credentials',
+      'Find the compromised access key',
+      'Click "Make inactive" to disable it immediately',
+      'Create a new access key pair and update your application',
+      'Delete the old key once confirmed working',
+    ],
+    url: 'https://console.aws.amazon.com/iam/home#/security_credentials',
+    note: 'Deactivate first, then delete after verifying your app works with the new key.',
+  },
+  sendgrid: {
+    steps: [
+      'Go to app.sendgrid.com/settings/api_keys',
+      'Find the compromised key',
+      'Click the gear icon and select "Delete API Key"',
+      'Create a new API key with appropriate permissions',
+    ],
+    url: 'https://app.sendgrid.com/settings/api_keys',
+  },
+  resend: {
+    steps: [
+      'Go to resend.com/api-keys',
+      'Find the compromised key',
+      'Click "Delete" to revoke it',
+      'Create a new API key',
+    ],
+    url: 'https://resend.com/api-keys',
+  },
+  supabase: {
+    steps: [
+      'Go to your Supabase project settings > API',
+      'If this is the anon key, it is public by design (but check RLS)',
+      'If this is the service_role key, rotate it via "Generate new key"',
+      'Update your environment variables with the new key',
+    ],
+    url: 'https://supabase.com/dashboard/project/_/settings/api',
+    note: 'The anon key is safe if RLS is enabled. The service_role key should never be exposed.',
+  },
+  slack: {
+    steps: [
+      'Go to api.slack.com/apps and select your app',
+      'Navigate to "OAuth & Permissions"',
+      'Click "Rotate Token" to generate a new token',
+      'Update your application with the new token',
+    ],
+    url: 'https://api.slack.com/apps',
+    note: 'Bot tokens and user tokens must be rotated separately.',
+  },
+  twilio: {
+    steps: [
+      'Go to console.twilio.com',
+      'Navigate to Account > API keys & tokens',
+      'Find and revoke the compromised key',
+      'Create a new API key or rotate your Auth Token',
+    ],
+    url: 'https://console.twilio.com',
+    note: 'Rotating the Auth Token invalidates all existing sessions using it.',
+  },
+  datadog: {
+    steps: [
+      'Go to app.datadoghq.com/organization-settings/api-keys',
+      'Find the compromised key',
+      'Click "Revoke" to disable it',
+      'Create a new API key',
+    ],
+    url: 'https://app.datadoghq.com/organization-settings/api-keys',
+  },
+  contentful: {
+    steps: [
+      'Go to app.contentful.com/account/profile/cma_tokens',
+      'Find the compromised token',
+      'Click "Revoke" to disable it',
+      'Create a new personal access token',
+    ],
+    url: 'https://app.contentful.com/account/profile/cma_tokens',
+  },
+  fauna: {
+    steps: [
+      'Go to dashboard.fauna.com',
+      'Navigate to Security > Keys in your database',
+      'Find and revoke the compromised key',
+      'Create a new key with appropriate role',
+    ],
+    url: 'https://dashboard.fauna.com',
+  },
+  posthog: {
+    steps: [
+      'Go to app.posthog.com/project/settings',
+      'Find the compromised API key',
+      'Click "Regenerate" or delete and recreate',
+      'Update your application with the new key',
+    ],
+    url: 'https://app.posthog.com/project/settings',
+    note: 'Project API keys are typically public. Personal API keys should be rotated immediately.',
+  },
+};
+
+/** Get display name, rotation URL, and revocation info for a provider. */
+export function getProviderInfo(provider: string): {
+  name: string;
+  rotationUrl: string;
+  revocationSteps?: string[];
+  revocationNote?: string;
+} {
+  const revocation = REVOCATION_INSTRUCTIONS[provider];
   return {
     name: PROVIDER_NAMES[provider] || provider,
     rotationUrl: ROTATION_URLS[provider] || '',
+    revocationSteps: revocation?.steps,
+    revocationNote: revocation?.note,
   };
 }
