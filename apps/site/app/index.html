@@ -315,7 +315,7 @@
             <div class="flex items-start justify-between mb-4">
               <div>
                 <h2 class="text-lg font-semibold text-white">Welcome to VaultProof!</h2>
-                <p class="text-gray-500 text-sm mt-1">Complete these steps to secure your first API key:</p>
+                <p class="text-gray-500 text-sm mt-1">Get started in a few steps:</p>
               </div>
               <button onclick="dismissOnboarding()" class="text-gray-500 hover:text-white transition p-1 -mt-1 -mr-1" title="Dismiss">
                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
@@ -1314,28 +1314,28 @@
     </div>
     <!-- Heading -->
     <h2 class="text-xl font-bold text-white mb-2" style="font-family:'Space Grotesk',sans-serif">Welcome to VaultProof</h2>
-    <p class="text-sm text-gray-400 mb-6 leading-relaxed">Your API keys are now protected with zero-knowledge encryption. Store keys, proxy requests, and sleep easy knowing your credentials never touch our servers in plain text.</p>
+    <p class="text-sm text-gray-400 mb-6 leading-relaxed">Secure your API keys with split-key encryption and a transparent proxy. Your keys are split before they reach us — we never see them in full.</p>
     <!-- Steps -->
     <div class="space-y-3 mb-6">
       <div class="flex items-start gap-3">
         <span class="w-5 h-5 rounded-full bg-indigo-500/20 border border-indigo-500/40 flex items-center justify-center flex-shrink-0 mt-0.5 text-xs text-indigo-400 font-bold">1</span>
         <div>
-          <p class="text-sm font-medium text-white">Store your first API key</p>
-          <p class="text-xs text-gray-500">Head to <a href="/app/keys" class="text-indigo-400 hover:underline">Keys</a> and add any provider key — OpenAI, Anthropic, and more.</p>
+          <p class="text-sm font-medium text-white">Scan your repos</p>
+          <p class="text-xs text-gray-500">Head to <a href="/app/scanner" class="text-indigo-400 hover:underline">Scanner</a> to find exposed API keys in your code and git history.</p>
         </div>
       </div>
       <div class="flex items-start gap-3">
         <span class="w-5 h-5 rounded-full bg-indigo-500/20 border border-indigo-500/40 flex items-center justify-center flex-shrink-0 mt-0.5 text-xs text-indigo-400 font-bold">2</span>
         <div>
-          <p class="text-sm font-medium text-white">Create a developer key</p>
-          <p class="text-xs text-gray-500">Generate a <code class="text-indigo-400">vp_live_</code> key and drop it in your project's <code class="text-gray-400">.env</code> file.</p>
+          <p class="text-sm font-medium text-white">Store your API keys</p>
+          <p class="text-xs text-gray-500">Add keys in <a href="/app/keys" class="text-indigo-400 hover:underline">Keys</a> — they're split and encrypted before storage. Create a <code class="text-indigo-400">vp_live_</code> developer key for your project.</p>
         </div>
       </div>
       <div class="flex items-start gap-3">
         <span class="w-5 h-5 rounded-full bg-indigo-500/20 border border-indigo-500/40 flex items-center justify-center flex-shrink-0 mt-0.5 text-xs text-indigo-400 font-bold">3</span>
         <div>
-          <p class="text-sm font-medium text-white">Proxy your first request</p>
-          <p class="text-xs text-gray-500">Point your SDK at <code class="text-indigo-400">api.vaultproof.dev</code> — no other code changes needed.</p>
+          <p class="text-sm font-medium text-white">Proxy your requests</p>
+          <p class="text-xs text-gray-500">Point your SDK at <code class="text-indigo-400">api.vaultproof.dev</code> — your real keys stay hidden while requests flow through our proxy.</p>
         </div>
       </div>
     </div>
