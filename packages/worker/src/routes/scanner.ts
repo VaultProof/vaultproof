@@ -326,6 +326,11 @@ export async function handleScanner(
     return handleGetScan(env, user, scanIdMatch[1]);
   }
 
+  // findings/bulk-ignore POST
+  if (path === 'findings/bulk-ignore' && method === 'POST') {
+    return handleBulkIgnore(request, env, user);
+  }
+
   // findings/:findingId/ignore POST
   const findingIgnoreMatch = path.match(/^findings\/([^/]+)\/ignore$/);
   if (findingIgnoreMatch && method === 'POST') {
@@ -913,6 +918,97 @@ async function handleGetScan(
       };
     }),
   });
+}
+
+async function handleBulkIgnore(
+  request: Request,
+  env: Env,
+  user: { userId: string },
+): Promise<Response> {
+  let body: any;
+  try {
+    body = await request.json();
+  } catch {
+    return Response.json({ error: 'Invalid JSON body' }, { status: 400 });
+  }
+
+  const { findingIds } = body as { findingIds?: string[] };
+  if (
+    !findingIds ||
+    !Array.isArray(findingIds) ||
+    findingIds.length === 0 ||
+    findingIds.length > 100 ||
+    !findingIds.every((id: any) => typeof id === 'string')
+  ) {
+    return Response.json(
+      { error: 'findingIds must be a non-empty array of strings (max 100)' },
+      { status: 400 },
+    );
+  }
+
+  const supabase = getSupabase(env);
+
+  // Fetch all requested findings with their scan IDs
+  const { data: findings, error: findingsError } = await supabase
+    .from('scan_findings')
+    .select('id, scan_id')
+    .in('id', findingIds);
+
+  if (findingsError) {
+    console.error('handleBulkIgnore fetch error:', findingsError.message);
+    return Response.json({ error: 'Failed to fetch findings' }, { status: 500 });
+  }
+
+  if (!findings || findings.length === 0) {
+    return Response.json({ ignored: 0 });
+  }
+
+  // Get unique scan IDs and verify ownership for all of them
+  const scanIds = [...new Set(findings.map((f: any) => f.scan_id))];
+  const { data: scans, error: scansError } = await supabase
+    .from('scan_results')
+    .select('id, user_id')
+    .in('id', scanIds)
+    .eq('user_id', user.userId);
+
+  if (scansError) {
+    console.error('handleBulkIgnore scans error:', scansError.message);
+    return Response.json({ error: 'Failed to verify ownership' }, { status: 500 });
+  }
+
+  // Only include findings whose scans belong to this user
+  const ownedScanIds = new Set((scans || []).map((s: any) => s.id));
+  const ownedFindingIds = findings
+    .filter((f: any) => ownedScanIds.has(f.scan_id))
+    .map((f: any) => f.id);
+
+  if (ownedFindingIds.length === 0) {
+    return Response.json({ ignored: 0 });
+  }
+
+  // Bulk update
+  const { error: updateError } = await supabase
+    .from('scan_findings')
+    .update({ action: 'ignored' })
+    .in('id', ownedFindingIds);
+
+  if (updateError) {
+    console.error('handleBulkIgnore update error:', updateError.message);
+    return Response.json({ error: 'Failed to ignore findings' }, { status: 500 });
+  }
+
+  // Audit log for each scan involved
+  for (const scanId of ownedScanIds) {
+    const idsForScan = findings
+      .filter((f: any) => f.scan_id === scanId && ownedFindingIds.includes(f.id))
+      .map((f: any) => f.id);
+    auditLog(env, user.userId, scanId as string, 'findings_bulk_ignored', {
+      findingIds: idsForScan,
+      count: idsForScan.length,
+    });
+  }
+
+  return Response.json({ ignored: ownedFindingIds.length });
 }
 
 async function handleIgnoreFinding(

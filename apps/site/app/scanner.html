@@ -194,6 +194,13 @@
     </div>
   </aside>
 
+  <!-- Bulk Action Bar -->
+  <div id="bulkActionBar" class="hidden fixed bottom-6 left-1/2 -translate-x-1/2 z-50 bg-card border border-border rounded-2xl px-6 py-3 flex items-center gap-4 shadow-2xl shadow-black/40">
+    <span id="bulkCount" class="text-sm text-gray-300 font-medium whitespace-nowrap">0 findings selected</span>
+    <button id="bulkIgnoreBtn" onclick="bulkIgnore()" class="px-4 py-2 text-sm font-medium rounded-lg bg-gray-700 hover:bg-gray-600 text-white transition">Ignore Selected</button>
+    <button onclick="openPrModal()" class="px-4 py-2 text-sm font-medium rounded-lg bg-brand hover:bg-brand/80 text-white transition">Create PR for Selected</button>
+  </div>
+
   <!-- PR Creation Modal -->
   <div id="prModal" class="fixed inset-0 z-[60] hidden items-center justify-center bg-black/60 backdrop-blur-sm">
     <div class="bg-card border border-border rounded-2xl w-full max-w-lg mx-4 p-6 max-h-[80vh] overflow-y-auto">
@@ -1324,7 +1331,7 @@
           }
 
           return '<tr class="border-b border-border hover:bg-white/[0.02] transition cursor-pointer" onclick="toggleDetail(' + i + ')">' +
-            '<td class="px-4 py-3" onclick="event.stopPropagation()"><input type="checkbox" class="finding-cb rounded border-gray-600" data-idx="' + i + '" onchange="updatePrButton()"></td>' +
+            '<td class="px-4 py-3" onclick="event.stopPropagation()"><input type="checkbox" class="finding-cb rounded border-gray-600" data-idx="' + i + '" data-provider="' + escapeHtml(f.provider || '') + '" data-status="' + escapeHtml(f.status || '') + '" onchange="updateBulkBar()"></td>' +
             '<td class="px-4 py-3">' + statusIcon + '</td>' +
             '<td class="px-4 py-3 text-white font-medium text-xs font-mono">' + escapeHtml(f.envName || f.env_name || f.key_name || f.keyName || '') + '</td>' +
             '<td class="px-4 py-3 text-gray-400 text-xs">' + escapeHtml(pName) + '</td>' +
@@ -1363,13 +1370,13 @@
         histSection.classList.add('hidden');
       }
 
-      updatePrButton();
+      updateBulkBar();
     }
 
     function toggleSelectAll() {
       var checked = document.getElementById('selectAll').checked;
       document.querySelectorAll('.finding-cb').forEach(function(cb) { cb.checked = checked; });
-      updatePrButton();
+      updateBulkBar();
     }
 
     function toggleDetail(idx) {
@@ -1382,6 +1389,69 @@
       var btn = document.getElementById('createPrBtn');
       btn.disabled = selected === 0;
       btn.textContent = selected ? 'Create PR for selected (' + selected + ')' : 'Create PR for selected';
+    }
+
+    function updateBulkBar() {
+      updatePrButton();
+      var selected = document.querySelectorAll('.finding-cb:checked').length;
+      var bar = document.getElementById('bulkActionBar');
+      if (selected >= 2) {
+        bar.classList.remove('hidden');
+        document.getElementById('bulkCount').textContent = selected + ' findings selected';
+      } else {
+        bar.classList.add('hidden');
+      }
+    }
+
+    async function bulkIgnore() {
+      var codeFindings = (currentScanData.findings || []).filter(function(f) { return f.source !== 'git_history'; });
+      var findingIds = [];
+      document.querySelectorAll('.finding-cb:checked').forEach(function(cb) {
+        var idx = parseInt(cb.dataset.idx);
+        if (codeFindings[idx] && codeFindings[idx].id) {
+          findingIds.push(codeFindings[idx].id);
+        }
+      });
+
+      if (findingIds.length === 0) {
+        showToast('No findings selected', 'error');
+        return;
+      }
+
+      var btn = document.getElementById('bulkIgnoreBtn');
+      btn.disabled = true;
+      btn.textContent = 'Ignoring...';
+
+      try {
+        var resp = await apiFetch(API + '/scanner/findings/bulk-ignore', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ findingIds: findingIds }),
+        });
+
+        if (!resp.ok) {
+          var err = await resp.json().catch(function() { return { error: 'Unknown error' }; });
+          throw new Error(err.error || 'Failed to ignore findings');
+        }
+
+        var result = await resp.json();
+        showToast(result.ignored + ' finding' + (result.ignored !== 1 ? 's' : '') + ' ignored', 'success');
+
+        // Update local state and re-render
+        findingIds.forEach(function(id) {
+          var f = currentScanData.findings.find(function(f) { return f.id === id; });
+          if (f) f.action = 'ignored';
+        });
+
+        var code = currentScanData.findings.filter(function(f) { return f.source !== 'git_history'; });
+        var hist = currentScanData.findings.filter(function(f) { return f.source === 'git_history'; });
+        renderLegacyFindings(code, hist);
+      } catch (e) {
+        showToast(e.message || 'Failed to ignore findings', 'error');
+      } finally {
+        btn.disabled = false;
+        btn.textContent = 'Ignore Selected';
+      }
     }
 
     // --- PR Modal ---
