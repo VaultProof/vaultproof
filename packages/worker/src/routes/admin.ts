@@ -19,6 +19,8 @@ export async function handleAdmin(
   if (path === 'promo/feedback') return handlePromoFeedback(request, env);
   if (path === 'users') return handleUsers(request, env);
   if (path === 'logs') return handleGlobalLogs(request, env);
+  if (path === 'monitoring/dashboard') return handleMonitoringDashboard(request, env);
+  if (path === 'monitoring/alerts') return handleMonitoringAlerts(request, env);
   // Dynamic user routes: users/:userId, users/:userId/stats, users/:userId/logs, users/:userId/ban, users/:userId/tier
   const userMatch = path.match(/^users\/([^/]+)(?:\/(.+))?$/);
   if (userMatch) {
@@ -820,4 +822,140 @@ async function handleChangeTier(request: Request, env: Env, userId: string): Pro
 
   await supabase.from('users').update({ tier: body.tier }).eq('id', userId);
   return Response.json({ message: 'Tier updated', userId, email: user.email, tier: body.tier });
+}
+
+async function handleMonitoringDashboard(request: Request, env: Env): Promise<Response> {
+  const admin = await authenticateAdmin(request, env);
+  if (!admin) return Response.json({ error: 'Forbidden' }, { status: 403 });
+
+  const supabase = getSupabase(env);
+  const now = new Date();
+  const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate()).toISOString();
+  const weekAgo = new Date(now.getTime() - 7 * 86400000).toISOString();
+  const dayAgo = new Date(now.getTime() - 86400000).toISOString();
+  const monthStart = new Date(now.getFullYear(), now.getMonth(), 1).toISOString();
+  const monthAgo = new Date(now.getTime() - 30 * 86400000).toISOString();
+  const CALL_ACTIONS = ['api_call', 'transparent_proxy', 'key_retrieval', 'key_retrieval_batch'];
+
+  const [callsTodayRes, callsWeekRes, callsMonthRes, errorMonthRes, recentLogsDay, recentLogs7d, recentLogs30d] = await Promise.all([
+    supabase.from('access_logs').select('*', { count: 'exact', head: true }).in('action', CALL_ACTIONS).gte('timestamp', todayStart),
+    supabase.from('access_logs').select('*', { count: 'exact', head: true }).in('action', CALL_ACTIONS).gte('timestamp', weekAgo),
+    supabase.from('access_logs').select('*', { count: 'exact', head: true }).in('action', CALL_ACTIONS).gte('timestamp', monthStart),
+    supabase.from('access_logs').select('*', { count: 'exact', head: true }).in('action', CALL_ACTIONS).gte('timestamp', monthStart).like('metadata', '%"error":true%'),
+    supabase.from('access_logs').select('key_slot_id').in('action', CALL_ACTIONS).gte('timestamp', dayAgo),
+    supabase.from('access_logs').select('key_slot_id').in('action', CALL_ACTIONS).gte('timestamp', weekAgo),
+    supabase.from('access_logs').select('key_slot_id').in('action', CALL_ACTIONS).gte('timestamp', monthAgo),
+  ]);
+
+  // Count active users for each period
+  async function countActiveUsers(logs: any[]): Promise<number> {
+    if (!logs || logs.length === 0) return 0;
+    const keySlotIds = [...new Set(logs.map((l: any) => l.key_slot_id))];
+    const { data: slots } = await supabase.from('key_slots').select('user_id').in('id', keySlotIds.slice(0, 100));
+    return new Set((slots || []).map((s: any) => s.user_id)).size;
+  }
+
+  const [activeUsers24h, activeUsers7d, activeUsers30d] = await Promise.all([
+    countActiveUsers(recentLogsDay.data || []),
+    countActiveUsers(recentLogs7d.data || []),
+    countActiveUsers(recentLogs30d.data || []),
+  ]);
+
+  const callsMonth = callsMonthRes.count || 0;
+  const errorsMonth = errorMonthRes.count || 0;
+  const errorRate = callsMonth > 0 ? Math.round((errorsMonth / callsMonth) * 100) : 0;
+
+  // Top endpoints: parse metadata from recent proxy calls
+  const { data: recentProxyCalls } = await supabase
+    .from('access_logs')
+    .select('metadata')
+    .eq('action', 'transparent_proxy')
+    .gte('timestamp', monthStart)
+    .limit(2000);
+
+  const endpointCounts: Record<string, { provider: string; endpoint: string; count: number }> = {};
+  for (const log of recentProxyCalls || []) {
+    try {
+      const meta = typeof log.metadata === 'string' ? JSON.parse(log.metadata) : log.metadata;
+      if (meta?.provider && meta?.endpoint) {
+        const key = `${meta.provider}:${meta.endpoint}`;
+        if (!endpointCounts[key]) {
+          endpointCounts[key] = { provider: meta.provider, endpoint: meta.endpoint, count: 0 };
+        }
+        endpointCounts[key].count++;
+      }
+    } catch { /* skip malformed metadata */ }
+  }
+
+  const topEndpoints = Object.values(endpointCounts)
+    .sort((a, b) => b.count - a.count)
+    .slice(0, 15);
+
+  // Users near rate limit: check tier limits vs usage
+  const TIER_LIMITS: Record<string, number> = {
+    free: 10000, starter: 50000, pro: 500000, max: 500000, enterprise: 999999999,
+  };
+
+  const { data: allUsers } = await supabase.from('users').select('id, tier');
+  let usersNearLimit = 0;
+
+  if (allUsers && allUsers.length > 0) {
+    // Get all key slots and count monthly usage per user
+    const { data: allSlots } = await supabase.from('key_slots').select('id, user_id').eq('status', 'ACTIVE');
+    if (allSlots && allSlots.length > 0) {
+      const userSlotMap: Record<string, string[]> = {};
+      for (const s of allSlots) {
+        if (!userSlotMap[s.user_id]) userSlotMap[s.user_id] = [];
+        userSlotMap[s.user_id].push(s.id);
+      }
+
+      // Get monthly usage counts by key_slot_id
+      const slotIds = allSlots.map((s: any) => s.id);
+      const { data: monthlyLogs } = await supabase
+        .from('access_logs')
+        .select('key_slot_id')
+        .in('key_slot_id', slotIds.slice(0, 200))
+        .in('action', CALL_ACTIONS)
+        .gte('timestamp', monthStart);
+
+      const slotUsage: Record<string, number> = {};
+      for (const log of monthlyLogs || []) {
+        slotUsage[log.key_slot_id] = (slotUsage[log.key_slot_id] || 0) + 1;
+      }
+
+      for (const user of allUsers) {
+        const limit = TIER_LIMITS[user.tier] || TIER_LIMITS.free;
+        const userSlots = userSlotMap[user.id] || [];
+        let userTotal = 0;
+        for (const sid of userSlots) userTotal += slotUsage[sid] || 0;
+        if (userTotal >= limit * 0.9) usersNearLimit++;
+      }
+    }
+  }
+
+  return Response.json({
+    activeUsers24h,
+    activeUsers7d,
+    activeUsers30d,
+    callsToday: callsTodayRes.count || 0,
+    callsWeek: callsWeekRes.count || 0,
+    callsMonth,
+    errorRate,
+    usersNearLimit,
+    topEndpoints,
+  });
+}
+
+async function handleMonitoringAlerts(request: Request, env: Env): Promise<Response> {
+  const admin = await authenticateAdmin(request, env);
+  if (!admin) return Response.json({ error: 'Forbidden' }, { status: 403 });
+
+  const supabase = getSupabase(env);
+  const { data: alerts } = await supabase
+    .from('scan_alerts')
+    .select('id, repo_full_name, provider, file, masked_value, created_at, schedule_id, scan_id')
+    .order('created_at', { ascending: false })
+    .limit(50);
+
+  return Response.json({ alerts: alerts || [] });
 }
