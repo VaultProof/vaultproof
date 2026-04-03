@@ -5,6 +5,9 @@ export interface Env {
   SUPABASE_SERVICE_ROLE_KEY: string;
   ADMIN_EMAILS: string;
   STRIPE_SECRET_KEY: string;
+  GITHUB_CLIENT_ID: string;
+  GITHUB_CLIENT_SECRET: string;
+  GITHUB_REDIRECT_URI: string;
   CACHE: KVNamespace;
 }
 
