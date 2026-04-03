@@ -5,9 +5,9 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Terms of Service | VaultProof</title>
-    <meta name="description" content="VaultProof Terms of Service — rules and conditions for using our zero-knowledge API key infrastructure.">
+    <meta name="description" content="VaultProof Terms of Service — rules and conditions for using our split-key API key infrastructure.">
     <meta property="og:title" content="Terms of Service | VaultProof">
-    <meta property="og:description" content="VaultProof Terms of Service — rules and conditions for using our zero-knowledge API key infrastructure.">
+    <meta property="og:description" content="VaultProof Terms of Service — rules and conditions for using our split-key API key infrastructure.">
     <meta property="og:url" content="https://vaultproof.dev/terms">
     <meta http-equiv="X-Content-Type-Options" content="nosniff">
     <meta http-equiv="X-Frame-Options" content="DENY">
@@ -117,7 +117,7 @@
             <!-- 1 -->
             <section>
                 <h2 class="text-xl font-bold text-white mb-3">1. Service Description</h2>
-                <p>VaultProof ("the Service") is an API key storage and proxy platform operated by Rial Labs. We split your API keys using Shamir Secret Sharing, encrypt the resulting shares with AES-256-GCM, and reassemble them only for the milliseconds required to execute a proxied API call. Zero-knowledge proofs (Noir) allow you to verify that your key is stored correctly without ever revealing it. Your raw API key is never stored whole on any server.</p>
+                <p>VaultProof ("the Service") is an API key storage and proxy platform operated by Rial Labs. We split your API keys, encrypt the resulting shares with AES-256-GCM, and reassemble them only briefly in memory during a proxied API call. Cryptographic proofs allow you to verify that your key is stored correctly without revealing it. Your raw API key is never stored whole at rest on any server.</p>
             </section>
 
             <!-- 2 -->
@@ -135,7 +135,7 @@
             <!-- 4 -->
             <section>
                 <h2 class="text-xl font-bold text-white mb-3">4. API Key Responsibility</h2>
-                <p>You own your API keys. VaultProof never sees, stores, or logs your full plaintext API keys. Keys are split client-side using Shamir Secret Sharing before being transmitted to our servers. You are solely responsible for creating, rotating, and revoking your keys with the underlying API providers (e.g., OpenAI, Anthropic, Google).</p>
+                <p>You own your API keys. VaultProof splits your API keys before storage. Keys are split client-side before being transmitted to our servers, and are only assembled briefly in memory during proxied API calls. You are solely responsible for creating, rotating, and revoking your keys with the underlying API providers (e.g., OpenAI, Anthropic, Google).</p>
             </section>
 
             <!-- 5 -->
@@ -147,7 +147,7 @@
             <!-- 6 -->
             <section>
                 <h2 class="text-xl font-bold text-white mb-3">6. Data Handling</h2>
-                <p>We store encrypted Shamir shares of your API keys, never plaintext keys. Shares are encrypted with AES-256-GCM and stored in our database. For full details on what data we collect and how we handle it, please see our <a href="/privacy" class="text-vp-accent hover:underline">Privacy Policy</a>.</p>
+                <p>We store encrypted shares of your API keys, never plaintext keys. Shares are encrypted with AES-256-GCM and stored in our database. For full details on what data we collect and how we handle it, please see our <a href="/privacy" class="text-vp-accent hover:underline">Privacy Policy</a>.</p>
             </section>
 
             <!-- 7 -->

@@ -1058,7 +1058,7 @@
   var tourSteps = [
     { target: '#demo-banner', text: 'Welcome to VaultProof! This is a demo of your dashboard. Let\u2019s walk through how everything works.', position: 'bottom' },
     { target: '#stats-cards', text: 'These cards show your real-time usage \u2014 total keys stored, active providers, API calls today, and error rate.', position: 'bottom' },
-    { target: '#keys-table', text: 'This is where your API keys live. Each key is split using Shamir Secret Sharing \u2014 we never see your full key. You can add, rotate, or revoke keys here.', position: 'bottom' },
+    { target: '#keys-table', text: 'This is where your API keys live. Each key is split before storage \u2014 the full key is only assembled briefly during API calls. You can add, rotate, or revoke keys here.', position: 'bottom' },
     { target: '#keys-header', text: 'To store a key, click \u2018Add Key\u2019, choose your provider (OpenAI, Anthropic, etc.), and paste your key. It\u2019s split instantly in your browser.', position: 'bottom' },
     { target: '#dev-key-card', text: 'After adding your API keys, go to the API Keys page \u2192 Developer API Keys and create a \u2018vp_live_\u2019 key. This is how your app or CLI authenticates with VaultProof.', position: 'bottom' },
     { target: '#dev-key-card', text: 'Copy the \u2018vp_live_\u2019 key and paste it into your project\u2019s .env file as VAULTPROOF_API_KEY. Then use it as the Bearer token when calling the VaultProof proxy \u2014 your stored keys are now accessible from your app.', position: 'top' },

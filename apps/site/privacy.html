@@ -5,9 +5,9 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Privacy Policy | VaultProof</title>
-    <meta name="description" content="VaultProof Privacy Policy — how we handle your data with zero-knowledge security.">
+    <meta name="description" content="VaultProof Privacy Policy — how we handle your data with split-key security.">
     <meta property="og:title" content="Privacy Policy | VaultProof">
-    <meta property="og:description" content="VaultProof Privacy Policy — how we handle your data with zero-knowledge security.">
+    <meta property="og:description" content="VaultProof Privacy Policy — how we handle your data with split-key security.">
     <meta property="og:url" content="https://vaultproof.dev/privacy">
     <meta http-equiv="X-Content-Type-Options" content="nosniff">
     <meta http-equiv="X-Frame-Options" content="DENY">
@@ -120,7 +120,7 @@
                 <ul class="list-disc list-inside space-y-1.5 ml-1">
                     <li><strong class="text-gray-300">Email address</strong> -- used for authentication and account communication</li>
                     <li><strong class="text-gray-300">Hashed password</strong> -- bcrypt-hashed, never stored in plaintext</li>
-                    <li><strong class="text-gray-300">Encrypted key shares</strong> -- Shamir shares encrypted with AES-256-GCM; we never store or see your full plaintext API keys</li>
+                    <li><strong class="text-gray-300">Encrypted key shares</strong> -- split shares encrypted with AES-256-GCM; your full API key is never stored at rest</li>
                     <li><strong class="text-gray-300">Usage logs</strong> -- timestamps, endpoint paths, and HTTP status codes for proxy calls</li>
                     <li><strong class="text-gray-300">Stripe customer ID</strong> -- for processing billing on paid plans</li>
                 </ul>
@@ -130,7 +130,7 @@
             <section>
                 <h2 class="text-xl font-bold text-white mb-3">2. Data We Do NOT Collect</h2>
                 <ul class="list-disc list-inside space-y-1.5 ml-1">
-                    <li><strong class="text-gray-300">Full API keys</strong> -- keys are Shamir-split on the client before transmission; the server never receives the complete key</li>
+                    <li><strong class="text-gray-300">Full API keys</strong> -- keys are split on the client before transmission; the complete key is only assembled briefly during proxied API calls</li>
                     <li><strong class="text-gray-300">Browsing history</strong> -- we do not track pages you visit outside VaultProof</li>
                     <li><strong class="text-gray-300">IP addresses</strong> -- IPs are used in-memory for rate limiting only and are not persisted or logged</li>
                 </ul>
@@ -141,7 +141,7 @@
                 <h2 class="text-xl font-bold text-white mb-3">3. How We Use Your Data</h2>
                 <ul class="list-disc list-inside space-y-1.5 ml-1">
                     <li>Authenticate you and manage your account</li>
-                    <li>Store encrypted Shamir shares so your keys can be reassembled for proxied API calls</li>
+                    <li>Store encrypted key shares so your keys can be reassembled briefly for proxied API calls</li>
                     <li>Process billing through Stripe</li>
                     <li>Monitor and improve service reliability and performance</li>
                 </ul>
@@ -171,8 +171,8 @@
                 <p>We take security seriously. Our architecture includes:</p>
                 <ul class="list-disc list-inside space-y-1.5 ml-1 mt-3">
                     <li><strong class="text-gray-300">AES-256-GCM encryption</strong> for all stored key shares</li>
-                    <li><strong class="text-gray-300">Shamir Secret Sharing</strong> -- keys are split before leaving your device</li>
-                    <li><strong class="text-gray-300">Zero-knowledge proofs</strong> (Noir) for key verification without exposure</li>
+                    <li><strong class="text-gray-300">Split-key encryption</strong> -- keys are split before leaving your device</li>
+                    <li><strong class="text-gray-300">Cryptographic proofs</strong> for key authorization without exposure</li>
                     <li><strong class="text-gray-300">HMAC-based proxy authentication</strong> to prevent unauthorized API calls</li>
                 </ul>
             </section>

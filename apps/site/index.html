@@ -6,7 +6,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>VaultProof | API key security built for the age of AI agents.</title>
     <meta name="description" content="VaultProof splits, encrypts, and proxies your API keys so they stay out of your code, .env files, and agent workflows.">
-    <meta name="keywords" content="API key security, API key management, API proxy, zero knowledge proofs, OpenAI, Anthropic, Mistral, Groq, key vault, AI agent security">
+    <meta name="keywords" content="API key security, API key management, API proxy, split-key encryption, OpenAI, Anthropic, Mistral, Groq, key vault, AI agent security">
     <meta property="og:title" content="VaultProof — API key security built for the age of AI agents">
     <meta property="og:description" content="VaultProof splits, encrypts, and proxies your API keys — designed for developers and AI agents.">
     <meta property="og:url" content="https://vaultproof.dev">
@@ -1012,7 +1012,7 @@
                     <li class="flex items-center gap-2.5"><svg width="14" height="14" fill="none" stroke="#6366f1" stroke-width="2"><path d="M11.5 3.5L5.25 9.75 2.5 7"/></svg>1 developer key</li>
                     <li class="flex items-center gap-2.5"><svg width="14" height="14" fill="none" stroke="#6366f1" stroke-width="2"><path d="M11.5 3.5L5.25 9.75 2.5 7"/></svg>7 days log retention</li>
                     <li class="flex items-center gap-2.5"><svg width="14" height="14" fill="none" stroke="#6366f1" stroke-width="2"><path d="M11.5 3.5L5.25 9.75 2.5 7"/></svg>SSE streaming</li>
-                    <li class="flex items-center gap-2.5"><svg width="14" height="14" fill="none" stroke="#6366f1" stroke-width="2"><path d="M11.5 3.5L5.25 9.75 2.5 7"/></svg>Shamir + ZK proofs</li>
+                    <li class="flex items-center gap-2.5"><svg width="14" height="14" fill="none" stroke="#6366f1" stroke-width="2"><path d="M11.5 3.5L5.25 9.75 2.5 7"/></svg>Split-key + cryptographic proofs</li>
                     <li class="flex items-center gap-2.5 text-gray-600"><svg width="14" height="14" fill="none" stroke="#333" stroke-width="2"><path d="M3 7h8"/></svg>Hard cutoff at limit</li>
                     <li class="flex items-center gap-2.5 text-gray-600"><svg width="14" height="14" fill="none" stroke="#333" stroke-width="2"><path d="M3 7h8"/></svg>No IP allowlist or alerts</li>
                 </ul>
@@ -1032,7 +1032,7 @@
                     <li class="flex items-center gap-2.5"><svg width="14" height="14" fill="none" stroke="#6366f1" stroke-width="2"><path d="M11.5 3.5L5.25 9.75 2.5 7"/></svg>3 developer keys</li>
                     <li class="flex items-center gap-2.5"><svg width="14" height="14" fill="none" stroke="#6366f1" stroke-width="2"><path d="M11.5 3.5L5.25 9.75 2.5 7"/></svg>30 days log retention</li>
                     <li class="flex items-center gap-2.5"><svg width="14" height="14" fill="none" stroke="#6366f1" stroke-width="2"><path d="M11.5 3.5L5.25 9.75 2.5 7"/></svg>SSE streaming</li>
-                    <li class="flex items-center gap-2.5"><svg width="14" height="14" fill="none" stroke="#6366f1" stroke-width="2"><path d="M11.5 3.5L5.25 9.75 2.5 7"/></svg>Shamir + ZK proofs</li>
+                    <li class="flex items-center gap-2.5"><svg width="14" height="14" fill="none" stroke="#6366f1" stroke-width="2"><path d="M11.5 3.5L5.25 9.75 2.5 7"/></svg>Split-key + cryptographic proofs</li>
                     <li class="flex items-center gap-2.5"><svg width="14" height="14" fill="none" stroke="#6366f1" stroke-width="2"><path d="M11.5 3.5L5.25 9.75 2.5 7"/></svg>Hard limit at cap</li>
                     <li class="flex items-center gap-2.5 text-gray-600"><svg width="14" height="14" fill="none" stroke="#333" stroke-width="2"><path d="M3 7h8"/></svg>No IP allowlist or alerts</li>
                 </ul>
@@ -1093,7 +1093,7 @@
                     <svg class="faq-chevron" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg>
                 </button>
                 <div class="faq-content">
-                    <div class="faq-content-inner">No. Your key is split into encrypted pieces before it leaves your device. We store two shares -- one encrypted with our server key, one encrypted with your developer key. Neither share alone reveals anything. We mathematically cannot see your full key.</div>
+                    <div class="faq-content-inner">No. Your key is split into encrypted pieces before it leaves your device. We store two shares -- one encrypted with our server key, one encrypted with your developer key. Neither share alone reveals anything. The architecture is designed so that no single server holds your complete key.</div>
                 </div>
             </div>
             <div class="faq-item border-b border-vp-border">
@@ -1263,10 +1263,10 @@
         var terminalLines = [
             { cmd: 'vaultproof store --provider openai', delay: 40, output: [
                 '<span class="text-gray-500">API Key: ••••••••••••••••••••••••</span>',
-                '<span class="text-gray-500">Splitting key with Shamir secret sharing...</span>',
+                '<span class="text-gray-500">Splitting key...</span>',
                 '<span class="text-gray-500">Storing encrypted shares...</span>',
                 '<span class="text-indigo-400">Key stored: vk_8f3a2b1c (openai)</span>',
-                '<span class="text-gray-600">  Key was Shamir-split locally. Server never saw the full key.</span>'
+                '<span class="text-gray-600">  Key was split locally. Full key is only assembled during API calls.</span>'
             ]},
             { cmd: 'vaultproof proxy --key vk_8f3a2b1c --path /v1/chat/completions --method POST --body \'{"model":"gpt-4","messages":[{"role":"user","content":"Hello"}]}\'', delay: 30, output: [
                 '<span class="text-gray-500">{"choices":[{"message":{"content":"Hello! How can I help you today?"}}]}</span>',

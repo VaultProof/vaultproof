@@ -178,7 +178,7 @@
             <nav class="space-y-1" id="sidebar-nav">
                 <a href="#overview" class="nav-link block text-sm text-gray-500 py-1.5 px-3 rounded-r">Overview</a>
                 <a href="#the-problem" class="nav-link block text-sm text-gray-500 py-1.5 px-3 rounded-r">The Problem</a>
-                <a href="#the-guarantee" class="nav-link block text-sm text-gray-500 py-1.5 px-3 rounded-r">The Guarantee</a>
+                <a href="#the-guarantee" class="nav-link block text-sm text-gray-500 py-1.5 px-3 rounded-r">The Architecture</a>
 
                 <div class="pt-4 pb-1 px-3 text-[0.6875rem] font-semibold text-gray-600 uppercase tracking-wider">Architecture</div>
                 <a href="#storing-a-key" class="nav-link block text-sm text-gray-500 py-1.5 px-3 rounded-r pl-6">Storing a Key</a>
@@ -244,17 +244,17 @@
 
             <!-- The Guarantee -->
             <section id="the-guarantee" class="mb-20">
-                <h2 class="text-3xl font-bold text-white mb-2" style="font-family:'Space Grotesk',sans-serif">The Guarantee</h2>
-                <p class="text-gray-500 mb-8">What VaultProof promises — and why it's structural, not a policy.</p>
+                <h2 class="text-3xl font-bold text-white mb-2" style="font-family:'Space Grotesk',sans-serif">The Architecture</h2>
+                <p class="text-gray-500 mb-8">How VaultProof is designed — and why it's structural, not a policy.</p>
 
                 <div class="bg-vp-surface border border-vp-border rounded-md p-6 mb-6">
-                    <p class="text-2xl font-bold text-white mb-4 leading-snug" style="font-family:'Space Grotesk',sans-serif">"VaultProof's servers never see your full API key. Not when you store it. Not when you use it. Not ever."</p>
-                    <p class="text-gray-400 leading-relaxed">This guarantee holds even if VaultProof's database is fully compromised, our servers are under an attacker's control, or an employee queries every table in the database. The reason is simple: your complete key doesn't exist anywhere on our infrastructure.</p>
+                    <p class="text-2xl font-bold text-white mb-4 leading-snug" style="font-family:'Space Grotesk',sans-serif">"Your API keys are split before storage. They are only assembled briefly in memory during API calls, then immediately wiped."</p>
+                    <p class="text-gray-400 leading-relaxed">This design means that even if VaultProof's database is fully compromised, or an employee queries every table, no complete key is stored anywhere in our infrastructure at rest.</p>
                 </div>
 
                 <div class="callout-info">
                     <p class="text-sm text-indigo-200 font-medium mb-1">Why "structural, not a policy" matters</p>
-                    <p class="text-sm text-gray-400 leading-relaxed">A policy says "we promise not to look." A structural guarantee means there is nothing to look at. We don't store your complete key — so even if we wanted to expose it, we couldn't. The architecture enforces the guarantee without requiring you to trust us.</p>
+                    <p class="text-sm text-gray-400 leading-relaxed">A policy says "we promise not to look." A structural design means your complete key is never stored at rest — so a database breach alone cannot expose it. The architecture reduces the trust you need to place in us.</p>
                 </div>
             </section>
 
@@ -318,13 +318,13 @@
                 <p class="text-gray-500 mb-8">How VaultProof verifies you're authorized without exposing your credentials.</p>
 
                 <div class="bg-vp-surface border border-vp-border rounded-md p-6 mb-6">
-                    <p class="text-gray-400 leading-relaxed mb-4">To retrieve Piece 1, your device doesn't just send a password or token. It sends a <strong class="text-white">zero-knowledge proof</strong> — a mathematical statement that proves you are authorized without revealing the secret that proves it.</p>
+                    <p class="text-gray-400 leading-relaxed mb-4">To retrieve Piece 1, your device doesn't just send a password or token. It sends a <strong class="text-white">cryptographic proof</strong> — a mathematical statement that proves you are authorized without revealing the secret that proves it.</p>
                     <p class="text-gray-400 leading-relaxed">Each proof is valid for exactly one use. Even if someone intercepts an authorization request in transit, they cannot replay it to gain access. There is no credential to steal from the wire.</p>
                 </div>
 
                 <div class="callout-info">
-                    <p class="text-sm text-indigo-200 font-medium mb-1">What is a zero-knowledge proof?</p>
-                    <p class="text-sm text-gray-400 leading-relaxed">A zero-knowledge proof lets you prove you know something without revealing what it is. Think of it like proving you know the answer to a puzzle by solving a related challenge, without ever writing down the answer. The math guarantees the proof is sound — no trust required.</p>
+                    <p class="text-sm text-indigo-200 font-medium mb-1">What is a cryptographic proof?</p>
+                    <p class="text-sm text-gray-400 leading-relaxed">A cryptographic proof lets you prove you know something without revealing what it is. Think of it like proving you know the answer to a puzzle by solving a related challenge, without ever writing down the answer. The math is designed so that the proof is sound — no trust required.</p>
                 </div>
             </section>
 
@@ -448,7 +448,7 @@
                 <p class="text-gray-500 mb-8">The code that runs on your machine is fully open source. You don't have to take our word for it.</p>
 
                 <div class="bg-vp-surface border border-vp-border rounded-md p-6 mb-6">
-                    <p class="text-gray-400 leading-relaxed mb-6">We have open sourced the four packages that implement the security guarantee — the key splitting library, the authorization circuit logic, the SDK, and the CLI. These are the packages that run on your device. You can read, audit, and build them yourself.</p>
+                    <p class="text-gray-400 leading-relaxed mb-6">We have open sourced the four packages that implement the security architecture — the key splitting library, the authorization circuit logic, the SDK, and the CLI. These are the packages that run on your device. You can read, audit, and build them yourself.</p>
 
                     <div class="grid md:grid-cols-2 gap-4">
                         <div class="bg-vp-bg border border-vp-border rounded-md p-4">
@@ -457,7 +457,7 @@
                         </div>
                         <div class="bg-vp-bg border border-vp-border rounded-md p-4">
                             <div class="font-mono text-xs text-vp-accent mb-2">Authorization circuits</div>
-                            <p class="text-sm text-gray-500">The zero-knowledge proof logic that authorizes key access without revealing credentials.</p>
+                            <p class="text-sm text-gray-500">The cryptographic proof logic that authorizes key access without revealing credentials.</p>
                         </div>
                         <div class="bg-vp-bg border border-vp-border rounded-md p-4">
                             <div class="font-mono text-xs text-vp-accent mb-2">@vaultproof/sdk</div>
@@ -472,7 +472,7 @@
 
                 <div class="callout-info mb-4">
                     <p class="text-sm text-indigo-200 font-medium mb-1">Why not open source the backend?</p>
-                    <p class="text-sm text-gray-400 leading-relaxed">You don't need to trust the backend — by design, it never holds enough information to reconstruct your keys. The security guarantee comes from the client-side architecture, not from trusting our servers.</p>
+                    <p class="text-sm text-gray-400 leading-relaxed">You don't need to trust the backend — by design, it never holds enough information to reconstruct your keys at rest. The security design comes from the client-side architecture, not from trusting our servers.</p>
                 </div>
 
                 <a href="https://github.com/vaultproof/vaultproof" target="_blank" rel="noopener" class="inline-flex items-center gap-2 bg-vp-surface border border-vp-border hover:border-gray-500 text-white text-sm font-medium px-5 py-2.5 rounded-md transition">

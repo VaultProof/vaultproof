@@ -3,7 +3,7 @@
     "id": "welcome-001",
     "type": "update",
     "title": "Welcome to VaultProof",
-    "message": "Your API keys are now protected with Shamir secret sharing and zero-knowledge proofs.",
+    "message": "Your API keys are now protected with split-key encryption.",
     "date": "2026-03-25",
     "link": "/docs"
   }

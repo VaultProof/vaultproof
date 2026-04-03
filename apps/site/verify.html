@@ -5,9 +5,9 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Verify — Prove We Can't See Your Keys | VaultProof</title>
-    <meta name="description" content="Every security claim VaultProof makes is mathematically provable. Here's how to verify each one yourself.">
+    <meta name="description" content="Every security claim VaultProof makes is verifiable. Here's how to verify each one yourself.">
     <meta property="og:title" content="Verify — Prove We Can't See Your Keys | VaultProof">
-    <meta property="og:description" content="Every security claim VaultProof makes is mathematically provable. Here's how to verify each one yourself.">
+    <meta property="og:description" content="Every security claim VaultProof makes is verifiable. Here's how to verify each one yourself.">
     <meta property="og:url" content="https://vaultproof.dev/verify">
     <!-- Tailwind CDN: SRI not applicable (dynamic response) -->
     <script src="https://cdn.tailwindcss.com/3.4.17"></script>
@@ -82,14 +82,14 @@
 
     <div class="max-w-5xl mx-auto px-6 pt-24 pb-8">
         <h1 class="text-4xl font-extrabold text-white mb-2">Don't Trust Us. Verify.</h1>
-        <p class="text-gray-500 mb-10 max-w-2xl">Every security claim we make is mathematically provable. Here's how to verify each one yourself.</p>
+        <p class="text-gray-500 mb-10 max-w-2xl">Every security claim we make is verifiable. Here's how to check each one yourself.</p>
 
         <!-- Proof 1: Key Never Sent Whole -->
         <section class="mb-10">
             <div class="bg-dark-blue-lighter border border-gray-800 rounded-lg p-6">
                 <div class="flex items-center gap-3 mb-4">
                     <span class="w-8 h-8 rounded-full bg-green-900/50 flex items-center justify-center text-green-400 text-sm font-bold">1</span>
-                    <h2 class="text-xl font-bold text-white">The server never sees your full API key</h2>
+                    <h2 class="text-xl font-bold text-white">Your full API key is never stored at rest</h2>
                 </div>
                 <p class="text-gray-400 text-sm mb-4">The SDK splits your key into two Shamir shares <strong>locally in your browser</strong> before anything hits the network. Open DevTools (F12 > Network) before storing a key. You'll see:</p>
                 <div class="mono text-xs bg-gray-900/50 rounded-md p-4 mb-4 overflow-x-auto">
