@@ -27,7 +27,6 @@ import {
   getProviderInfo,
 } from '../lib/secret-patterns.js';
 import { executeScan } from '../lib/scheduled-scan.js';
-import { getUserTier } from '../lib/tier.js';
 
 const notImplemented = () =>
   Response.json({ error: 'Not implemented' }, { status: 501 });
@@ -371,22 +370,6 @@ export async function handleScanner(
   const allowlistDeleteMatch = path.match(/^allowlists\/([^/]+)$/);
   if (allowlistDeleteMatch && method === 'DELETE') {
     return handleDeleteAllowlist(env, user, allowlistDeleteMatch[1]);
-  }
-
-  // schedules GET
-  if (path === 'schedules' && method === 'GET') {
-    return handleListSchedules(env, user);
-  }
-
-  // schedules POST
-  if (path === 'schedules' && method === 'POST') {
-    return handleCreateSchedule(request, env, user);
-  }
-
-  // schedules/:id DELETE
-  const scheduleDeleteMatch = path.match(/^schedules\/([^/]+)$/);
-  if (scheduleDeleteMatch && method === 'DELETE') {
-    return handleDeleteSchedule(env, user, scheduleDeleteMatch[1]);
   }
 
   return Response.json({ error: 'Not found' }, { status: 404 });
@@ -2175,136 +2158,3 @@ ${historyWarning}
   }
 }
 
-// ── Scheduled Scan CRUD ──
-
-async function handleListSchedules(
-  env: Env,
-  user: { userId: string },
-): Promise<Response> {
-  const supabase = getSupabase(env);
-  const { data, error } = await supabase
-    .from('scan_schedules')
-    .select('*')
-    .eq('user_id', user.userId)
-    .order('created_at', { ascending: false });
-
-  if (error) {
-    console.error('handleListSchedules error:', error.message);
-    return Response.json({ error: 'Failed to fetch schedules' }, { status: 500 });
-  }
-
-  return Response.json({ schedules: data || [] });
-}
-
-async function handleCreateSchedule(
-  request: Request,
-  env: Env,
-  user: { userId: string },
-): Promise<Response> {
-  let body: any;
-  try {
-    body = await request.json();
-  } catch {
-    return Response.json({ error: 'Invalid JSON body' }, { status: 400 });
-  }
-
-  const { repoFullName, frequency } = body as {
-    repoFullName?: string;
-    frequency?: string;
-  };
-
-  if (!repoFullName || !/^[a-zA-Z0-9._-]+\/[a-zA-Z0-9._-]+$/.test(repoFullName)) {
-    return Response.json({ error: 'Invalid repo name' }, { status: 400 });
-  }
-  if (!frequency || !['daily', 'weekly'].includes(frequency)) {
-    return Response.json({ error: 'Frequency must be daily or weekly' }, { status: 400 });
-  }
-
-  // Tier-gate
-  const tier = await getUserTier(env, user.userId);
-  if (tier === 'free') {
-    return Response.json(
-      { error: 'Upgrade to Starter or above for scheduled scans' },
-      { status: 403 },
-    );
-  }
-  if (tier === 'starter' && frequency === 'daily') {
-    return Response.json(
-      { error: 'Daily scans require Pro or above' },
-      { status: 403 },
-    );
-  }
-
-  // Compute next_run_at
-  const now = new Date();
-  const nextRun = new Date(now);
-  if (frequency === 'daily') {
-    nextRun.setDate(nextRun.getDate() + 1);
-  } else {
-    nextRun.setDate(nextRun.getDate() + 7);
-  }
-
-  const supabase = getSupabase(env);
-  const { data, error } = await supabase
-    .from('scan_schedules')
-    .upsert(
-      {
-        id: crypto.randomUUID(),
-        user_id: user.userId,
-        repo_full_name: repoFullName,
-        frequency,
-        enabled: true,
-        next_run_at: nextRun.toISOString(),
-        created_at: now.toISOString(),
-        updated_at: now.toISOString(),
-      },
-      { onConflict: 'user_id,repo_full_name' },
-    )
-    .select()
-    .single();
-
-  if (error) {
-    console.error('handleCreateSchedule error:', error.message);
-    return Response.json({ error: 'Failed to save schedule' }, { status: 500 });
-  }
-
-  auditLog(env, user.userId, '', 'schedule.create', { repoFullName, frequency });
-
-  return Response.json(data, { status: 201 });
-}
-
-async function handleDeleteSchedule(
-  env: Env,
-  user: { userId: string },
-  id: string,
-): Promise<Response> {
-  const supabase = getSupabase(env);
-
-  // Verify ownership
-  const { data: existing, error: fetchError } = await supabase
-    .from('scan_schedules')
-    .select('id, user_id')
-    .eq('id', id)
-    .single();
-
-  if (fetchError || !existing) {
-    return Response.json({ error: 'Schedule not found' }, { status: 404 });
-  }
-  if (existing.user_id !== user.userId) {
-    return Response.json({ error: 'Forbidden' }, { status: 403 });
-  }
-
-  const { error } = await supabase
-    .from('scan_schedules')
-    .delete()
-    .eq('id', id);
-
-  if (error) {
-    console.error('handleDeleteSchedule error:', error.message);
-    return Response.json({ error: 'Failed to delete schedule' }, { status: 500 });
-  }
-
-  auditLog(env, user.userId, '', 'schedule.delete', { id });
-
-  return Response.json({ success: true });
-}
