@@ -7,6 +7,7 @@ export async function handleAuth(request: Request, env: Env, path: string): Prom
   if (!user) return Response.json({ error: 'Unauthorized' }, { status: 401 });
 
   if (path === 'me' && request.method === 'GET') return handleMe(env, user.userId);
+  if (path === 'tour-complete' && request.method === 'POST') return handleTourComplete(env, user.userId);
 
   return Response.json({ error: 'Not found' }, { status: 404 });
 }
@@ -35,4 +36,10 @@ async function handleMe(env: Env, userId: string): Promise<Response> {
       hasSeenTour: userData.has_seen_tour,
     },
   });
+}
+
+async function handleTourComplete(env: Env, userId: string): Promise<Response> {
+  const supabase = getSupabase(env);
+  await supabase.from('users').update({ has_seen_tour: true }).eq('id', userId);
+  return Response.json({ ok: true });
 }
