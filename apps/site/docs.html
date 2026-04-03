@@ -757,7 +757,7 @@ $ vaultproof store -h</pre>
                             <code class="font-mono text-sm text-vp-accent font-semibold">@vaultproof/connect</code>
                             <span class="text-xs text-gray-600">Embed in your app</span>
                         </div>
-                        <p class="text-gray-400 text-sm mb-3">Drop-in React component for apps that need "Bring Your Own Key" (BYOK). Users paste their API key into your app, the widget splits it with Shamir + generates a ZK proof, and sends encrypted shares to VaultProof. Your app never sees the raw key.</p>
+                        <p class="text-gray-400 text-sm mb-3">Drop-in React component for apps that need "Bring Your Own Key" (BYOK). Users paste their API key into your app, the widget splits it with Shamir + generates a ZK proof, and sends encrypted shares to VaultProof. Your app code doesn't handle the raw key directly.</p>
                         <div class="code-block">
                             <div class="code-header">install</div>
 <pre class="text-gray-300">npm install @vaultproof/connect</pre>
@@ -2951,7 +2951,7 @@ test/fixtures/*
 
                     <div class="endpoint-card">
                         <h4 class="text-white font-semibold mb-2">"What about HIPAA / SOC 2?"</h4>
-                        <p class="text-gray-400 text-sm">Compliance certifications are on the roadmap. The current architecture (encryption at rest, TLS in transit, audit logging, access controls) is designed with compliance in mind. Contact us at <span class="text-vp-accent">team@vaultproof.dev</span> for compliance inquiries.</p>
+                        <p class="text-gray-400 text-sm">Compliance certifications (SOC 2, HIPAA) are planned but not yet obtained. The current architecture (encryption at rest, TLS in transit, audit logging, access controls) is designed with compliance in mind. Contact us at <span class="text-vp-accent">team@vaultproof.dev</span> for compliance inquiries.</p>
                     </div>
 
                     <div class="endpoint-card">
