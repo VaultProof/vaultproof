@@ -419,8 +419,15 @@
           <div id="findingsSection" class="hidden">
             <div class="bg-card border border-border rounded-2xl overflow-hidden mb-6">
               <div class="px-4 py-3 border-b border-border flex items-center justify-between">
-                <h3 class="text-sm font-semibold">Code Findings</h3>
-                <span id="findingsCount" class="text-xs text-gray-500"></span>
+                <div class="flex items-center gap-3">
+                  <h3 class="text-sm font-semibold">Code Findings</h3>
+                  <span id="findingsCount" class="text-xs text-gray-500"></span>
+                </div>
+                <button onclick="exportCsv()" class="relative px-3 py-1.5 text-xs font-medium rounded-lg bg-[#111118] border border-[#1e1e2e] text-gray-400 hover:text-white hover:border-brand/30 transition flex items-center gap-1.5">
+                  <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M4 16v2a2 2 0 002 2h12a2 2 0 002-2v-2M7 10l5 5 5-5M12 15V3"/></svg>
+                  Export CSV
+                  <span id="csvProBadge" class="hidden ml-1 px-1.5 py-0.5 text-[10px] font-bold rounded bg-brand/20 text-brand">PRO</span>
+                </button>
               </div>
               <div id="findingsEmpty" class="hidden px-6 py-8 text-center text-sm text-green-400">No exposed keys found in current code. Your repo looks clean!</div>
               <div class="overflow-x-auto">
@@ -789,6 +796,7 @@
     let currentScanData = null;
     let ghConnected = false;
     let migrationResult = null;
+    let userTier = 'free';
 
     const PLATFORM_INSTRUCTIONS = {
       'Vercel': 'Go to Vercel \u2192 Your Project \u2192 Settings \u2192 Environment Variables',
@@ -1454,6 +1462,38 @@
       }
     }
 
+    // --- CSV Export ---
+    function exportCsv() {
+      if (userTier === 'free' || userTier === 'starter') {
+        showToast('CSV export is available on Pro and Enterprise plans', 'warning');
+        return;
+      }
+      var findings = (currentScanData && currentScanData.findings) || [];
+      if (!findings.length) { showToast('No findings to export'); return; }
+      var headers = ['Provider','Env Name','File','Line','Mode','Status','Source','Action','Masked Value'];
+      var rows = findings.map(function(f) {
+        return [
+          f.provider || '',
+          f.env_name || f.envName || '',
+          f.file || '',
+          f.line || '',
+          f.mode || '',
+          f.verified || f.status || '',
+          f.source || '',
+          f.action || '',
+          f.masked_value || f.maskedValue || ''
+        ].map(function(v) { return '"' + String(v).replace(/"/g, '""') + '"'; }).join(',');
+      });
+      var csv = headers.join(',') + '\n' + rows.join('\n');
+      var blob = new Blob([csv], { type: 'text/csv' });
+      var url = URL.createObjectURL(blob);
+      var a = document.createElement('a');
+      a.href = url;
+      a.download = ((currentScanData.repo_full_name || currentScanData.repoFullName || 'scan').replace('/', '-')) + '-' + new Date().toISOString().slice(0, 10) + '.csv';
+      a.click();
+      URL.revokeObjectURL(url);
+    }
+
     // --- PR Modal ---
     function openPrModal() {
       var modal = document.getElementById('prModal');
@@ -1825,6 +1865,19 @@
 
     // --- Init ---
     (async function init() {
+      // Fetch user tier for feature gating
+      try {
+        var meRes = await apiFetch(API.replace('/scanner', '/auth') + '/me');
+        if (meRes && meRes.ok) {
+          var meData = await meRes.json();
+          userTier = meData.tier || 'free';
+          if (userTier === 'free' || userTier === 'starter') {
+            var badge = document.getElementById('csvProBadge');
+            if (badge) badge.classList.remove('hidden');
+          }
+        }
+      } catch(e) {}
+
       // Handle GitHub callback on page load
       var params = new URLSearchParams(window.location.search);
       var code = params.get('code');
