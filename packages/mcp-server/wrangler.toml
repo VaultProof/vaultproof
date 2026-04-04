@@ -1,0 +1,24 @@
+name = "vaultproof-mcp"
+main = "src/index.ts"
+compatibility_date = "2024-09-23"
+compatibility_flags = ["nodejs_compat"]
+
+[vars]
+BACKEND_URL = "https://api.vaultproof.dev"
+MCP_ISSUER = "https://mcp.vaultproof.dev"
+
+[[kv_namespaces]]
+binding = "OAUTH_CODES"
+id = "9f46400199c24e2387f7a6ab23ddc4d7"
+
+[[kv_namespaces]]
+binding = "MCP_SESSIONS"
+id = "16a5f96e922f49048e2b3567f3b69bfd"
+
+[[kv_namespaces]]
+binding = "RATE_LIMIT"
+id = "8332039630004da9899de8279b8bafaf"
+
+[[routes]]
+pattern = "mcp.vaultproof.dev/*"
+zone_name = "vaultproof.dev"
