@@ -10,7 +10,7 @@ function getMonthStart(): string {
   return new Date(now.getFullYear(), now.getMonth(), 1).toISOString();
 }
 
-export async function handleStats(request: Request, env: Env, path: string): Promise<Response> {
+export async function handleStats(request: Request, env: Env, path: string, ctx?: ExecutionContext): Promise<Response> {
   if (request.method !== 'GET') {
     return Response.json({ error: 'Method not allowed' }, { status: 405 });
   }
@@ -21,7 +21,7 @@ export async function handleStats(request: Request, env: Env, path: string): Pro
   if (auth) {
     userId = auth.userId;
   } else {
-    const devAuth = await authenticateDevKey(request, env);
+    const devAuth = await authenticateDevKey(request, env, ctx);
     if (!devAuth) {
       return Response.json({ error: 'Unauthorized' }, { status: 401 });
     }

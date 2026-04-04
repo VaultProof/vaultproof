@@ -11,6 +11,7 @@ async function sha256hex(input: string): Promise<string> {
 export async function authenticateDevKey(
   request: Request,
   env: Env,
+  ctx?: ExecutionContext,
 ): Promise<DevKeyAuth | null> {
   const authHeader = request.headers.get('authorization') || '';
   const apiKeyHeader = request.headers.get('x-api-key') || '';
@@ -67,7 +68,8 @@ export async function authenticateDevKey(
 
   // Update lastUsed non-blocking
   const supabase = getSupabase(env);
-  supabase.from('developer_keys').update({ last_used: new Date().toISOString() }).eq('id', devKey.id).then(() => {});
+  const lastUsedPromise = supabase.from('developer_keys').update({ last_used: new Date().toISOString() }).eq('id', devKey.id).then(() => {});
+  if (ctx) ctx.waitUntil(Promise.resolve(lastUsedPromise));
 
   return { userId: devKey.user_id, keyId: devKey.id, rawKey, devKey };
 }

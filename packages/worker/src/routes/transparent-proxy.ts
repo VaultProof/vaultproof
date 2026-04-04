@@ -123,7 +123,7 @@ async function fireThresholdAlerts(
   // TODO: Integrate with Resend or SendGrid to actually send emails
   if (devKey.alert_email) {
     const supabase = getSupabase(env);
-    supabase.from('scan_alerts').insert({
+    await supabase.from('scan_alerts').insert({
       id: crypto.randomUUID(),
       user_id: devKey.user_id,
       schedule_id: null,
@@ -133,7 +133,7 @@ async function fireThresholdAlerts(
       file: `key:${devKey.label}`,
       masked_value: `threshold=${threshold}, count=${currentCount}, email=${devKey.alert_email}`,
       created_at: timestamp,
-    }).then(() => {});
+    });
   }
 }
 
@@ -141,6 +141,7 @@ export async function handleTransparentProxy(
   request: Request,
   env: Env,
   path: string,
+  ctx?: ExecutionContext,
 ): Promise<Response> {
   // a. Extract provider
   const slashIdx = path.indexOf('/');
@@ -154,7 +155,7 @@ export async function handleTransparentProxy(
   }
 
   // b. Authenticate
-  const auth = await authenticateDevKey(request, env);
+  const auth = await authenticateDevKey(request, env, ctx);
   if (!auth) {
     return Response.json({ error: 'API key not recognized.' }, { status: 401 });
   }
@@ -301,9 +302,9 @@ export async function handleTransparentProxy(
       body: request.method !== 'GET' && request.method !== 'HEAD' ? request.body : undefined,
     });
 
-    // Log access non-blocking
+    // Log access — must use waitUntil or CF Workers kills the promise after response
     const latencyMs = Date.now() - startTime;
-    supabase.from('access_logs').insert({
+    const logPromise = supabase.from('access_logs').insert({
       id: crypto.randomUUID(),
       key_slot_id: keySlot.id,
       app_id: 'transparent-proxy',
@@ -311,11 +312,15 @@ export async function handleTransparentProxy(
       zk_proof: 'n/a',
       nullifier: crypto.randomUUID(),
       metadata: JSON.stringify({ provider, endpoint: wildcardPath, status_code: upstreamResponse.status, latency_ms: latencyMs }),
-    }).then(() => {});
+    }).then(({ error: insertErr }) => {
+      if (insertErr) console.error('[access_log] insert failed:', insertErr.message, insertErr.details);
+    });
+    if (ctx) ctx.waitUntil(Promise.resolve(logPromise));
 
-    // Check threshold alerts non-blocking (webhook + email log)
+    // Check threshold alerts — also needs waitUntil
     if (auth.devKey.alert_threshold || auth.devKey.webhook_url || auth.devKey.alert_email) {
-      fireThresholdAlerts(env, auth.devKey, rateCheck.used).catch(() => {});
+      const alertPromise = fireThresholdAlerts(env, auth.devKey, rateCheck.used).catch(() => {});
+      if (ctx) ctx.waitUntil(alertPromise);
     }
 
     const responseHeaders = new Headers(upstreamResponse.headers);

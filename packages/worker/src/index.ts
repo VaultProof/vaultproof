@@ -32,7 +32,7 @@ function addCors(response: Response, origin: string, allowedOrigins: string[]): 
 }
 
 export default {
-  async fetch(request: Request, env: Env): Promise<Response> {
+  async fetch(request: Request, env: Env, ctx: ExecutionContext): Promise<Response> {
     const url = new URL(request.url);
     // Normalize trailing slashes
     if (url.pathname.length > 1 && url.pathname.endsWith('/')) {
@@ -92,7 +92,7 @@ export default {
     if (url.pathname.startsWith('/api/v1/stats/')) {
       try {
         const path = url.pathname.slice('/api/v1/stats/'.length);
-        const response = await handleStats(request, env, path);
+        const response = await handleStats(request, env, path, ctx);
         return addCors(response, origin, allowedOrigins);
       } catch {
         return addCors(Response.json({ error: 'Service temporarily unavailable' }, { status: 503 }), origin, allowedOrigins);
@@ -169,7 +169,7 @@ export default {
     if (url.pathname.startsWith('/api/v1/sdk/')) {
       try {
         const path = url.pathname.slice('/api/v1/sdk/'.length);
-        const response = await handleSdk(request, env, path);
+        const response = await handleSdk(request, env, path, ctx);
         return addCors(response, origin, allowedOrigins);
       } catch {
         return addCors(Response.json({ error: 'Service temporarily unavailable' }, { status: 503 }), origin, allowedOrigins);
@@ -180,7 +180,7 @@ export default {
     if (url.pathname.startsWith('/v1/')) {
       try {
         const path = url.pathname.slice(4);
-        const response = await handleTransparentProxy(request, env, path);
+        const response = await handleTransparentProxy(request, env, path, ctx);
         return addCors(response, origin, allowedOrigins);
       } catch {
         return addCors(Response.json({ error: 'Service temporarily unavailable' }, { status: 503 }), origin, allowedOrigins);

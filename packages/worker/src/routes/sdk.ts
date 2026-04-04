@@ -23,8 +23,9 @@ export async function handleSdk(
   request: Request,
   env: Env,
   path: string,
+  ctx?: ExecutionContext,
 ): Promise<Response> {
-  const auth = await authenticateDevKey(request, env);
+  const auth = await authenticateDevKey(request, env, ctx);
   if (!auth) return Response.json({ error: 'Invalid API key format. Keys start with vp_live_ or vp_test_. Get yours from the VaultProof dashboard.' }, { status: 401 });
 
   const method = request.method;
