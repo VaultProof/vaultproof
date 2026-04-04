@@ -127,6 +127,8 @@ export default {
         const token = authHeader.slice('Bearer '.length);
         const hash = await sha256Hex(token);
         await env.MCP_SESSIONS.delete(`session:${hash}`);
+        // Write revocation marker for cross-region consistency
+        await env.MCP_SESSIONS.put(`revoked:${hash}`, '1', { expirationTtl: 300 });
         response = jsonResponse({ revoked: true });
       }
     } else if (method === 'POST' && pathname === '/mcp') {
