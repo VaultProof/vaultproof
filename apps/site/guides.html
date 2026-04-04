@@ -195,7 +195,7 @@
     <section class="max-w-4xl mx-auto px-6 pb-8">
         <h2 class="text-lg font-semibold text-white mb-4" style="font-family:'Space Grotesk',sans-serif">Choose your path</h2>
         <div class="grid md:grid-cols-3 gap-4">
-            <a href="#guide-ai-providers" class="block bg-vp-surface border border-vp-border rounded-card p-5 hover:border-vp-accent transition-colors group">
+            <a href="#guide-claude-code" class="block bg-vp-surface border border-vp-border rounded-card p-5 hover:border-vp-accent transition-colors group">
                 <div class="text-vp-accent text-sm font-semibold mb-1 group-hover:text-indigo-400">Quick Start</div>
                 <p class="text-gray-400 text-sm">Store a key and proxy your first request in 2 minutes</p>
             </a>
@@ -283,6 +283,534 @@
 
     <!-- Guides -->
     <section class="max-w-4xl mx-auto px-6 pb-24 space-y-5">
+
+        <!-- Claude Code -->
+        <div id="guide-claude-code" class="guide-card">
+            <div class="guide-toggle flex items-center justify-between p-6" onclick="toggleGuide(this)">
+                <div class="flex items-center gap-4">
+                    <div class="tool-icon bg-[#7c3aed]/10 text-[#a78bfa]" style="font-family:'Space Grotesk',sans-serif">CC</div>
+                    <div>
+                        <h3 class="font-semibold text-white text-lg">Claude Code + VaultProof</h3>
+                        <p class="text-gray-500 text-sm mt-0.5">Claude Code reads your environment variables &mdash; including your real API keys. Two changes to your shell config and it only ever sees a proxy key.</p>
+                    </div>
+                </div>
+                <svg class="guide-chevron text-gray-500" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg>
+            </div>
+            <div class="guide-body">
+                <div class="px-6 pb-6 space-y-4">
+                    <div class="flex flex-wrap gap-3 text-xs text-gray-400">
+                        <span class="bg-vp-bg px-3 py-1 rounded-full border border-vp-border">2-minute setup</span>
+                        <span class="bg-vp-bg px-3 py-1 rounded-full border border-vp-border">No code changes required</span>
+                        <span class="bg-vp-bg px-3 py-1 rounded-full border border-vp-border">Works with any provider</span>
+                        <span class="bg-vp-bg px-3 py-1 rounded-full border border-vp-border">Free tier: 10K calls/month</span>
+                    </div>
+
+                    <div class="bg-cyan-500/5 border border-cyan-500/20 rounded-md p-4">
+                        <div class="flex items-start gap-2">
+                            <svg class="w-4 h-4 text-cyan-400 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                            <p class="text-gray-400 text-xs">Claude Code makes API calls using whatever <code class="font-mono text-vp-accent">ANTHROPIC_API_KEY</code> is set in your environment. With VaultProof, that value is a <code class="font-mono text-vp-accent">vp_live_</code> proxy key &mdash; not your real Anthropic key. The proxy call goes through VaultProof, your actual key is reassembled in memory for ~100ms, the call is made, and the key is wiped. Claude Code gets the response. Nothing is stored.</p>
+                        </div>
+                    </div>
+
+                    <div class="bg-vp-surface border border-vp-border rounded-md p-4">
+                        <p class="text-gray-500 text-xs font-medium mb-2">Prerequisites</p>
+                        <ul class="text-gray-400 text-xs space-y-1.5">
+                            <li><span class="text-emerald-400">&#10003;</span> A VaultProof account &mdash; free, no credit card</li>
+                            <li><span class="text-emerald-400">&#10003;</span> Node.js installed (for the CLI)</li>
+                            <li><span class="text-emerald-400">&#10003;</span> Claude Code installed and working</li>
+                            <li><span class="text-emerald-400">&#10003;</span> An Anthropic API key to protect</li>
+                        </ul>
+                    </div>
+
+                    <div class="flex items-start gap-3">
+                        <div class="step-num mt-0.5">1</div>
+                        <div class="text-gray-400 text-sm pt-1">
+                            <strong class="text-white">Install the VaultProof CLI</strong>
+                        </div>
+                    </div>
+                    <div>
+                        <div class="code-header"><span>bash</span></div>
+                        <div class="code-block">
+<pre>npm install -g @vaultproof/cli
+vaultproof --version</pre>
+                        </div>
+                    </div>
+
+                    <div class="flex items-start gap-3">
+                        <div class="step-num mt-0.5">2</div>
+                        <div class="text-gray-400 text-sm pt-1">
+                            <strong class="text-white">Connect to your account</strong>
+                        </div>
+                    </div>
+                    <div>
+                        <div class="code-header"><span>bash</span></div>
+                        <div class="code-block">
+<pre>vaultproof test
+<span class="cmt"># &#10004; Connected &mdash; 0 keys stored</span></pre>
+                        </div>
+                    </div>
+
+                    <div class="flex items-start gap-3">
+                        <div class="step-num mt-0.5">3</div>
+                        <div class="text-gray-400 text-sm pt-1">
+                            <strong class="text-white">Store your Anthropic API key</strong><br>
+                            The CLI will prompt you to paste your key.
+                        </div>
+                    </div>
+                    <div>
+                        <div class="code-header"><span>bash</span></div>
+                        <div class="code-block">
+<pre>vaultproof store -p anthropic
+<span class="cmt"># Paste your Anthropic key when prompted</span></pre>
+                        </div>
+                    </div>
+
+                    <div class="flex items-start gap-3">
+                        <div class="step-num mt-0.5">4</div>
+                        <div class="text-gray-400 text-sm pt-1">
+                            <strong class="text-white">Update your shell environment</strong><br>
+                            Remove any existing <code class="text-xs bg-vp-bg px-2 py-0.5 rounded font-mono text-gray-300">ANTHROPIC_API_KEY</code> line from your shell config and add these two lines.
+                        </div>
+                    </div>
+                    <div>
+                        <div class="code-header"><span>~/.zshrc (or ~/.bashrc)</span></div>
+                        <div class="code-block">
+<pre><span class="kw">export</span> ANTHROPIC_BASE_URL=<span class="str">https://api.vaultproof.dev/v1/anthropic</span>
+<span class="kw">export</span> ANTHROPIC_API_KEY=<span class="str">vp_live_your_key_here</span></pre>
+                        </div>
+                    </div>
+                    <div>
+                        <div class="code-header"><span>bash</span></div>
+                        <div class="code-block">
+<pre>source ~/.zshrc</pre>
+                        </div>
+                    </div>
+
+                    <div class="flex items-start gap-3">
+                        <div class="step-num mt-0.5">5</div>
+                        <div class="text-gray-400 text-sm pt-1">
+                            <strong class="text-white">Run Claude Code normally</strong><br>
+                            Nothing changes in your workflow. Claude Code works exactly as before.
+                        </div>
+                    </div>
+                    <div>
+                        <div class="code-header"><span>bash</span></div>
+                        <div class="code-block">
+<pre>claude</pre>
+                        </div>
+                    </div>
+
+                    <div class="bg-vp-surface border border-vp-border rounded-md p-4 mt-2">
+                        <p class="text-gray-500 text-xs font-medium mb-3">What happens on each call</p>
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs text-gray-400">
+                            <div class="flex items-start gap-2">
+                                <span class="text-vp-accent font-bold">1.</span>
+                                <span>Claude Code sends request using your <code class="font-mono text-vp-accent">vp_live_</code> key</span>
+                            </div>
+                            <div class="flex items-start gap-2">
+                                <span class="text-vp-accent font-bold">2.</span>
+                                <span>VaultProof reassembles your real key (~100ms, server-side)</span>
+                            </div>
+                            <div class="flex items-start gap-2">
+                                <span class="text-vp-accent font-bold">3.</span>
+                                <span>Real API call is made (SSE streaming supported)</span>
+                            </div>
+                            <div class="flex items-start gap-2">
+                                <span class="text-vp-accent font-bold">4.</span>
+                                <span>Key is wiped from memory</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="bg-vp-surface border border-vp-border rounded-md p-4 mt-2">
+                        <p class="text-gray-500 text-xs font-medium mb-3">What Claude Code can and can't do</p>
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs">
+                            <div>
+                                <p class="text-emerald-400 font-medium mb-2">Can do</p>
+                                <ul class="text-gray-400 space-y-1">
+                                    <li><span class="text-emerald-400">&#10003;</span> Make completions and embeddings</li>
+                                    <li><span class="text-emerald-400">&#10003;</span> Use streaming responses</li>
+                                    <li><span class="text-emerald-400">&#10003;</span> Read the <code class="font-mono text-vp-accent">vp_live_</code> key</li>
+                                </ul>
+                            </div>
+                            <div>
+                                <p class="text-red-400 font-medium mb-2">Can't do</p>
+                                <ul class="text-gray-400 space-y-1">
+                                    <li><span class="text-red-400">&#10007;</span> Read your real Anthropic key</li>
+                                    <li><span class="text-red-400">&#10007;</span> Exceed your budget cap</li>
+                                    <li><span class="text-red-400">&#10007;</span> Continue after kill switch</li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Cursor -->
+        <div id="guide-cursor" class="guide-card">
+            <div class="guide-toggle flex items-center justify-between p-6" onclick="toggleGuide(this)">
+                <div class="flex items-center gap-4">
+                    <div class="tool-icon bg-[#3b82f6]/10 text-[#60a5fa]" style="font-family:'Space Grotesk',sans-serif">&#9654;</div>
+                    <div>
+                        <h3 class="font-semibold text-white text-lg">Cursor + VaultProof</h3>
+                        <p class="text-gray-500 text-sm mt-0.5">Protect your API keys in Cursor without changing your workflow.</p>
+                    </div>
+                </div>
+                <svg class="guide-chevron text-gray-500" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg>
+            </div>
+            <div class="guide-body">
+                <div class="px-6 pb-6 space-y-4">
+                    <div class="flex items-start gap-3">
+                        <div class="step-num mt-0.5">1</div>
+                        <div class="text-gray-400 text-sm pt-1">
+                            <strong class="text-white">Install CLI and store your key</strong><br>
+                            Install the CLI and store your OpenAI key (same as steps 1&ndash;3 above).
+                        </div>
+                    </div>
+                    <div>
+                        <div class="code-header"><span>bash</span></div>
+                        <div class="code-block">
+<pre>npm install -g @vaultproof/cli
+vaultproof test
+vaultproof store -p openai</pre>
+                        </div>
+                    </div>
+
+                    <div class="flex items-start gap-3">
+                        <div class="step-num mt-0.5">2</div>
+                        <div class="text-gray-400 text-sm pt-1">
+                            <strong class="text-white">Open Cursor Settings</strong><br>
+                            Go to Settings &rarr; Models &rarr; OpenAI API Key and paste your <code class="text-xs bg-vp-bg px-2 py-0.5 rounded font-mono text-gray-300">vp_live_your_key_here</code> key.
+                        </div>
+                    </div>
+
+                    <div class="flex items-start gap-3">
+                        <div class="step-num mt-0.5">3</div>
+                        <div class="text-gray-400 text-sm pt-1">
+                            <strong class="text-white">Set API Base URL</strong>
+                        </div>
+                    </div>
+                    <div>
+                        <div class="code-header"><span>Cursor Settings</span></div>
+                        <div class="code-block">
+<pre>API Base URL: <span class="str">https://api.vaultproof.dev/v1/openai</span></pre>
+                        </div>
+                    </div>
+
+                    <div class="flex items-start gap-3">
+                        <div class="step-num mt-0.5">4</div>
+                        <div class="text-gray-400 text-sm pt-1">
+                            <strong class="text-white">Use Cursor normally</strong><br>
+                            All completions now route through VaultProof. Your real key stays out of your environment.
+                        </div>
+                    </div>
+
+                    <div class="bg-cyan-500/5 border border-cyan-500/20 rounded-md p-4 mt-2">
+                        <div class="flex items-start gap-2">
+                            <svg class="w-4 h-4 text-cyan-400 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                            <p class="text-gray-400 text-xs">Also works with Anthropic models in Cursor &mdash; use <code class="font-mono text-vp-accent">https://api.vaultproof.dev/v1/anthropic</code> as the base URL and your Anthropic <code class="font-mono text-vp-accent">vp_live_</code> key instead.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Windsurf -->
+        <div id="guide-windsurf" class="guide-card">
+            <div class="guide-toggle flex items-center justify-between p-6" onclick="toggleGuide(this)">
+                <div class="flex items-center gap-4">
+                    <div class="tool-icon bg-[#14b8a6]/10 text-[#2dd4bf]" style="font-family:'Space Grotesk',sans-serif">W</div>
+                    <div>
+                        <h3 class="font-semibold text-white text-lg">Windsurf + VaultProof</h3>
+                        <p class="text-gray-500 text-sm mt-0.5">Secure your API keys in Windsurf (Codeium) with two environment variables.</p>
+                    </div>
+                </div>
+                <svg class="guide-chevron text-gray-500" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg>
+            </div>
+            <div class="guide-body">
+                <div class="px-6 pb-6 space-y-4">
+                    <div class="flex items-start gap-3">
+                        <div class="step-num mt-0.5">1</div>
+                        <div class="text-gray-400 text-sm pt-1">
+                            <strong class="text-white">Install CLI and store your key</strong>
+                        </div>
+                    </div>
+                    <div>
+                        <div class="code-header"><span>bash</span></div>
+                        <div class="code-block">
+<pre>npm install -g @vaultproof/cli
+vaultproof test
+vaultproof store -p openai</pre>
+                        </div>
+                    </div>
+
+                    <div class="flex items-start gap-3">
+                        <div class="step-num mt-0.5">2</div>
+                        <div class="text-gray-400 text-sm pt-1">
+                            <strong class="text-white">Add to your shell config</strong>
+                        </div>
+                    </div>
+                    <div>
+                        <div class="code-header"><span>~/.zshrc (or ~/.bashrc)</span></div>
+                        <div class="code-block">
+<pre><span class="kw">export</span> OPENAI_BASE_URL=<span class="str">https://api.vaultproof.dev/v1/openai</span>
+<span class="kw">export</span> OPENAI_API_KEY=<span class="str">vp_live_your_key_here</span></pre>
+                        </div>
+                    </div>
+
+                    <div class="flex items-start gap-3">
+                        <div class="step-num mt-0.5">3</div>
+                        <div class="text-gray-400 text-sm pt-1">
+                            <strong class="text-white">Restart Windsurf</strong><br>
+                            Windsurf picks up environment variables automatically. No settings changes needed.
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Continue.dev -->
+        <div id="guide-continue" class="guide-card">
+            <div class="guide-toggle flex items-center justify-between p-6" onclick="toggleGuide(this)">
+                <div class="flex items-center gap-4">
+                    <div class="tool-icon bg-[#22c55e]/10 text-[#4ade80]" style="font-family:'Space Grotesk',sans-serif">&rarr;</div>
+                    <div>
+                        <h3 class="font-semibold text-white text-lg">Continue.dev + VaultProof</h3>
+                        <p class="text-gray-500 text-sm mt-0.5">Use VaultProof as your model provider in Continue.</p>
+                    </div>
+                </div>
+                <svg class="guide-chevron text-gray-500" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg>
+            </div>
+            <div class="guide-body">
+                <div class="px-6 pb-6 space-y-4">
+                    <div class="flex items-start gap-3">
+                        <div class="step-num mt-0.5">1</div>
+                        <div class="text-gray-400 text-sm pt-1">
+                            <strong class="text-white">Install CLI and store your key</strong>
+                        </div>
+                    </div>
+                    <div>
+                        <div class="code-header"><span>bash</span></div>
+                        <div class="code-block">
+<pre>npm install -g @vaultproof/cli
+vaultproof test
+vaultproof store -p openai</pre>
+                        </div>
+                    </div>
+
+                    <div class="flex items-start gap-3">
+                        <div class="step-num mt-0.5">2</div>
+                        <div class="text-gray-400 text-sm pt-1">
+                            <strong class="text-white">Open your Continue config</strong><br>
+                            Edit <code class="text-xs bg-vp-bg px-2 py-0.5 rounded font-mono text-gray-300">.continue/config.json</code> and add VaultProof as a model provider.
+                        </div>
+                    </div>
+                    <div>
+                        <div class="code-header"><span>.continue/config.json</span></div>
+                        <div class="code-block">
+<pre>{
+  <span class="str">"models"</span>: [{
+    <span class="str">"title"</span>: <span class="str">"GPT-4 via VaultProof"</span>,
+    <span class="str">"provider"</span>: <span class="str">"openai"</span>,
+    <span class="str">"model"</span>: <span class="str">"gpt-4"</span>,
+    <span class="str">"apiBase"</span>: <span class="str">"https://api.vaultproof.dev/v1/openai"</span>,
+    <span class="str">"apiKey"</span>: <span class="str">"vp_live_your_key_here"</span>
+  }]
+}</pre>
+                        </div>
+                    </div>
+
+                    <div class="flex items-start gap-3">
+                        <div class="step-num mt-0.5">3</div>
+                        <div class="text-gray-400 text-sm pt-1">
+                            <strong class="text-white">Reload Continue</strong><br>
+                            Select the model and start coding. All requests route through VaultProof.
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Cline / Roo Code -->
+        <div id="guide-cline" class="guide-card">
+            <div class="guide-toggle flex items-center justify-between p-6" onclick="toggleGuide(this)">
+                <div class="flex items-center gap-4">
+                    <div class="tool-icon bg-[#f97316]/10 text-[#fb923c]" style="font-family:'Space Grotesk',sans-serif">CL</div>
+                    <div>
+                        <h3 class="font-semibold text-white text-lg">Cline / Roo Code + VaultProof</h3>
+                        <p class="text-gray-500 text-sm mt-0.5">Route Cline's API calls through VaultProof for key protection.</p>
+                    </div>
+                </div>
+                <svg class="guide-chevron text-gray-500" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg>
+            </div>
+            <div class="guide-body">
+                <div class="px-6 pb-6 space-y-4">
+                    <div class="flex items-start gap-3">
+                        <div class="step-num mt-0.5">1</div>
+                        <div class="text-gray-400 text-sm pt-1">
+                            <strong class="text-white">Install CLI and store your key</strong>
+                        </div>
+                    </div>
+                    <div>
+                        <div class="code-header"><span>bash</span></div>
+                        <div class="code-block">
+<pre>npm install -g @vaultproof/cli
+vaultproof test
+vaultproof store -p anthropic</pre>
+                        </div>
+                    </div>
+
+                    <div class="flex items-start gap-3">
+                        <div class="step-num mt-0.5">2</div>
+                        <div class="text-gray-400 text-sm pt-1">
+                            <strong class="text-white">Open Cline settings in VS Code</strong><br>
+                            Set API Provider to "OpenAI Compatible".
+                        </div>
+                    </div>
+
+                    <div class="flex items-start gap-3">
+                        <div class="step-num mt-0.5">3</div>
+                        <div class="text-gray-400 text-sm pt-1">
+                            <strong class="text-white">Configure the connection</strong>
+                        </div>
+                    </div>
+                    <div>
+                        <div class="code-header"><span>Cline Settings</span></div>
+                        <div class="code-block">
+<pre>Base URL:  <span class="str">https://api.vaultproof.dev/v1/anthropic</span>
+API Key:   <span class="str">vp_live_your_key_here</span>
+Model:     <span class="str">claude-sonnet-4-20250514</span></pre>
+                        </div>
+                    </div>
+
+                    <div class="flex items-start gap-3">
+                        <div class="step-num mt-0.5">4</div>
+                        <div class="text-gray-400 text-sm pt-1">
+                            <strong class="text-white">Start using Cline</strong><br>
+                            All requests route through VaultProof. Your real key stays out of your environment.
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Aider -->
+        <div id="guide-aider" class="guide-card">
+            <div class="guide-toggle flex items-center justify-between p-6" onclick="toggleGuide(this)">
+                <div class="flex items-center gap-4">
+                    <div class="tool-icon bg-[#ef4444]/10 text-[#f87171]" style="font-family:'Space Grotesk',sans-serif">A</div>
+                    <div>
+                        <h3 class="font-semibold text-white text-lg">Aider + VaultProof</h3>
+                        <p class="text-gray-500 text-sm mt-0.5">Protect your keys when using Aider for AI pair programming.</p>
+                    </div>
+                </div>
+                <svg class="guide-chevron text-gray-500" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg>
+            </div>
+            <div class="guide-body">
+                <div class="px-6 pb-6 space-y-4">
+                    <div class="flex items-start gap-3">
+                        <div class="step-num mt-0.5">1</div>
+                        <div class="text-gray-400 text-sm pt-1">
+                            <strong class="text-white">Install CLI and store your key</strong>
+                        </div>
+                    </div>
+                    <div>
+                        <div class="code-header"><span>bash</span></div>
+                        <div class="code-block">
+<pre>npm install -g @vaultproof/cli
+vaultproof test
+vaultproof store -p anthropic</pre>
+                        </div>
+                    </div>
+
+                    <div class="flex items-start gap-3">
+                        <div class="step-num mt-0.5">2</div>
+                        <div class="text-gray-400 text-sm pt-1">
+                            <strong class="text-white">Add to your shell config</strong>
+                        </div>
+                    </div>
+                    <div>
+                        <div class="code-header"><span>~/.zshrc (or ~/.bashrc)</span></div>
+                        <div class="code-block">
+<pre><span class="kw">export</span> ANTHROPIC_BASE_URL=<span class="str">https://api.vaultproof.dev/v1/anthropic</span>
+<span class="kw">export</span> ANTHROPIC_API_KEY=<span class="str">vp_live_your_key_here</span></pre>
+                        </div>
+                    </div>
+
+                    <div class="flex items-start gap-3">
+                        <div class="step-num mt-0.5">3</div>
+                        <div class="text-gray-400 text-sm pt-1">
+                            <strong class="text-white">Run Aider normally</strong>
+                        </div>
+                    </div>
+                    <div>
+                        <div class="code-header"><span>bash</span></div>
+                        <div class="code-block">
+<pre>aider --model claude-sonnet-4-20250514</pre>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- OpenAI Agents SDK -->
+        <div id="guide-openai-agents" class="guide-card">
+            <div class="guide-toggle flex items-center justify-between p-6" onclick="toggleGuide(this)">
+                <div class="flex items-center gap-4">
+                    <div class="tool-icon bg-[#7c3aed]/10 text-[#a78bfa]" style="font-family:'Space Grotesk',sans-serif">AG</div>
+                    <div>
+                        <h3 class="font-semibold text-white text-lg">OpenAI Agents SDK + VaultProof</h3>
+                        <p class="text-gray-500 text-sm mt-0.5">Secure agent API keys with VaultProof's proxy.</p>
+                    </div>
+                </div>
+                <svg class="guide-chevron text-gray-500" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg>
+            </div>
+            <div class="guide-body">
+                <div class="px-6 pb-6 space-y-4">
+                    <div class="flex items-start gap-3">
+                        <div class="step-num mt-0.5">1</div>
+                        <div class="text-gray-400 text-sm pt-1">
+                            <strong class="text-white">Install CLI and store your OpenAI key</strong>
+                        </div>
+                    </div>
+                    <div>
+                        <div class="code-header"><span>bash</span></div>
+                        <div class="code-block">
+<pre>npm install -g @vaultproof/cli
+vaultproof test
+vaultproof store -p openai</pre>
+                        </div>
+                    </div>
+
+                    <div class="flex items-start gap-3">
+                        <div class="step-num mt-0.5">2</div>
+                        <div class="text-gray-400 text-sm pt-1">
+                            <strong class="text-white">Configure the client in your agent code</strong>
+                        </div>
+                    </div>
+                    <div>
+                        <div class="code-header"><span>python</span></div>
+                        <div class="code-block">
+<pre><span class="kw">from</span> openai <span class="kw">import</span> OpenAI
+
+client = OpenAI(
+    api_key=<span class="str">"vp_live_your_key_here"</span>,
+    base_url=<span class="str">"https://api.vaultproof.dev/v1/openai"</span>
+)</pre>
+                        </div>
+                    </div>
+
+                    <div class="flex items-start gap-3">
+                        <div class="step-num mt-0.5">3</div>
+                        <div class="text-gray-400 text-sm pt-1">
+                            <strong class="text-white">Run your agents</strong><br>
+                            All agent tool calls route through VaultProof. Your real key stays out of your codebase.
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
 
         <!-- 1. AI Providers (proxy URL) -->
         <div id="guide-ai-providers" class="guide-card">
