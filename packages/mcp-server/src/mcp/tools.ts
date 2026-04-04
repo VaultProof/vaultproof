@@ -11,6 +11,13 @@ export interface McpTool {
   description: string;
   inputSchema: { type: 'object'; properties: Record<string, unknown>; required?: string[] };
   requiredScope: string;
+  annotations?: {
+    title?: string;
+    readOnlyHint?: boolean;
+    destructiveHint?: boolean;
+    idempotentHint?: boolean;
+    openWorldHint?: boolean;
+  };
 }
 
 export const TOOLS: McpTool[] = [
@@ -20,6 +27,7 @@ export const TOOLS: McpTool[] = [
       'List all API keys stored in your VaultProof vault. Returns key labels and providers only — never the raw key values.',
     inputSchema: { type: 'object', properties: {}, required: [] },
     requiredScope: 'keys:read',
+    annotations: { readOnlyHint: true, title: 'List stored keys' },
   },
   {
     name: 'get_proxy_url',
@@ -39,6 +47,7 @@ export const TOOLS: McpTool[] = [
       required: ['label'],
     },
     requiredScope: 'keys:read',
+    annotations: { readOnlyHint: true, title: 'Get proxy URL' },
   },
   {
     name: 'add_key',
@@ -82,6 +91,7 @@ export const TOOLS: McpTool[] = [
       required: ['provider', 'label', 'value'],
     },
     requiredScope: 'keys:write',
+    annotations: { destructiveHint: true, title: 'Store new API key' },
   },
   {
     name: 'revoke_key',
@@ -101,6 +111,7 @@ export const TOOLS: McpTool[] = [
       required: ['label'],
     },
     requiredScope: 'keys:write',
+    annotations: { destructiveHint: true, title: 'Revoke API key' },
   },
   {
     name: 'get_usage',
@@ -118,6 +129,7 @@ export const TOOLS: McpTool[] = [
       required: [],
     },
     requiredScope: 'usage:read',
+    annotations: { readOnlyHint: true, title: 'Get usage statistics' },
   },
 ];
 
@@ -125,12 +137,32 @@ export const TOOLS: McpTool[] = [
  * Returns the MCP tools/list result payload (the inner result object,
  * not the full JSON-RPC envelope — the transport layer wraps it).
  */
-export function getToolsListResponse(): object {
+export async function getToolsListResponse(): Promise<object> {
+  const hash = await getToolsHash();
   return {
     tools: TOOLS.map((tool) => ({
       name: tool.name,
       description: tool.description,
       inputSchema: tool.inputSchema,
+      ...(tool.annotations ? { annotations: tool.annotations } : {}),
     })),
+    _meta: { toolsHash: hash },
   };
+}
+
+/**
+ * Compute a SHA-256 hash of all tool definitions for integrity verification.
+ * Clients can pin this hash and verify tools haven't been tampered with.
+ * Defends against MCP tool poisoning / rug pull attacks.
+ */
+let cachedToolsHash: string | null = null;
+
+export async function getToolsHash(): Promise<string> {
+  if (cachedToolsHash) return cachedToolsHash;
+  const serialized = JSON.stringify(TOOLS);
+  const digest = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(serialized));
+  cachedToolsHash = Array.from(new Uint8Array(digest))
+    .map((b) => b.toString(16).padStart(2, '0'))
+    .join('');
+  return cachedToolsHash;
 }
