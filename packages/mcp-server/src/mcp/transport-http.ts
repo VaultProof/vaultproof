@@ -62,6 +62,12 @@ export async function handleStreamableHttp(
     session = sessionOrResponse;
   }
 
+  // 1b. Validate session binding — Mcp-Session-Id header must match boundSessionId
+  const mcpSessionId = request.headers.get('Mcp-Session-Id') || request.headers.get('X-MCP-Session-Id');
+  if (mcpSessionId && mcpSessionId !== session.boundSessionId) {
+    return errorResponse(403, 'forbidden', 'Session ID mismatch');
+  }
+
   // 2. Parse JSON-RPC body
   let rpc: JsonRpcRequest;
   try {

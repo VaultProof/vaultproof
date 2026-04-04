@@ -1,5 +1,6 @@
 import { z } from 'zod';
 import { errorResponse } from '../lib/security-headers.js';
+import { hmacSign } from '../lib/crypto.js';
 import { REGISTERED_CLIENTS, VALID_SCOPES } from './types.js';
 import type { Env } from '../types.js';
 
@@ -20,7 +21,7 @@ const authorizeSchema = z.object({
  * Validates the authorization request and redirects the user to the
  * VaultProof dashboard consent page at https://vaultproof.dev/mcp-auth.
  */
-export async function handleAuthorize(request: Request, _env: Env): Promise<Response> {
+export async function handleAuthorize(request: Request, env: Env): Promise<Response> {
   const url = new URL(request.url);
   const params = Object.fromEntries(url.searchParams.entries());
 
@@ -71,6 +72,10 @@ export async function handleAuthorize(request: Request, _env: Env): Promise<Resp
     const value = url.searchParams.get(key);
     if (value !== null) consentUrl.searchParams.set(key, value);
   }
+
+  // 8. HMAC-sign the state parameter to detect tampering in callback
+  const stateSignature = await hmacSign(data.state, env.MCP_SESSION_ENCRYPTION_KEY);
+  consentUrl.searchParams.set('state_sig', stateSignature);
 
   return Response.redirect(consentUrl.toString(), 302);
 }

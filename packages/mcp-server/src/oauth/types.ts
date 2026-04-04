@@ -6,6 +6,7 @@ export interface OAuthCode {
   userId: string;
   expiresAt: number;         // Unix ms
   encryptedDevKey: string;   // AES-256-GCM encrypted vp_live_ key (base64)
+  audience?: string;         // Target audience — must match MCP_ISSUER when present
 }
 
 export interface McpSession {
@@ -13,6 +14,7 @@ export interface McpSession {
   scope: string;
   clientId: string;
   sessionId: string;         // UUID, for SSE binding
+  boundSessionId: string;    // UUID, bound to bearer token — prevents session hijacking
   audience: string;          // Must equal 'https://mcp.vaultproof.dev'
   encryptedDevKey: string;   // AES-256-GCM encrypted vp_live_ key (base64)
   issuedAt: number;          // Unix ms

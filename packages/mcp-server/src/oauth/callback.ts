@@ -1,6 +1,6 @@
 import { z } from 'zod';
 import { errorResponse, jsonResponse } from '../lib/security-headers.js';
-import { generateToken, encryptAesGcm } from '../lib/crypto.js';
+import { generateToken, encryptAesGcm, hmacSign } from '../lib/crypto.js';
 import { REGISTERED_CLIENTS, type OAuthCode } from './types.js';
 import type { Env } from '../types.js';
 
@@ -12,6 +12,8 @@ const callbackSchema = z.object({
   code_challenge: z.string().min(43).max(128),
   scope:          z.string().min(1),
   state:          z.string().min(16).max(256),
+  resource:       z.string().optional(),
+  state_sig:      z.string().optional(),
 });
 
 /**
@@ -71,6 +73,21 @@ export async function handleCallback(request: Request, env: Env): Promise<Respon
 
   const data = parsed.data;
 
+  // Validate resource parameter against MCP issuer (prevents audience confusion attacks)
+  if (data.resource && data.resource !== env.MCP_ISSUER) {
+    return errorResponse(400, 'invalid_target', 'Resource mismatch');
+  }
+
+  // Validate state signature (Fix 5: prevents state tampering)
+  const url = new URL(request.url);
+  const stateSig = data.state_sig || url.searchParams.get('state_sig');
+  if (stateSig) {
+    const expected = await hmacSign(data.state, env.MCP_SESSION_ENCRYPTION_KEY);
+    if (stateSig !== expected) {
+      return errorResponse(400, 'invalid_state', 'State signature verification failed');
+    }
+  }
+
   // Validate client_id and redirect_uri against the hardcoded registry
   // (prevents attackers from bypassing consent by calling this endpoint directly)
   const client = REGISTERED_CLIENTS[data.client_id];
@@ -93,6 +110,7 @@ export async function handleCallback(request: Request, env: Env): Promise<Respon
     userId:         data.user_id,
     expiresAt:      Date.now() + 60_000,   // 60 s — tight window limits concurrent-exchange race
     encryptedDevKey,
+    audience:       env.MCP_ISSUER || 'https://mcp.vaultproof.dev',
   };
 
   await env.OAUTH_CODES.put(`code:${authCode}`, JSON.stringify(oauthCode), {

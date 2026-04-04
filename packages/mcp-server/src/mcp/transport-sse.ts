@@ -15,6 +15,7 @@
 
 import { validateToken } from '../auth/validate-token.js';
 import type { ValidatedSession } from '../auth/validate-token.js';
+import { errorResponse } from '../lib/security-headers.js';
 import { handleStreamableHttp } from './transport-http.js';
 import type { Env } from '../types.js';
 
@@ -31,6 +32,12 @@ export async function handleSse(request: Request, env: Env): Promise<Response> {
   const sessionOrResponse = await validateToken(request, env);
   if (sessionOrResponse instanceof Response) {
     return sessionOrResponse;
+  }
+
+  // Validate session binding — Mcp-Session-Id header must match boundSessionId
+  const mcpSessionId = request.headers.get('Mcp-Session-Id') || request.headers.get('X-MCP-Session-Id');
+  if (mcpSessionId && mcpSessionId !== sessionOrResponse.boundSessionId) {
+    return errorResponse(403, 'forbidden', 'Session ID mismatch');
   }
 
   // Token is valid — session data not needed for SSE redirect transport

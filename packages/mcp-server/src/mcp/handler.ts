@@ -90,6 +90,29 @@ function mcpError(message: string): object {
   return { content: [{ type: 'text', text: message }], isError: true };
 }
 
+// ─── Response sanitization ───────────────────────────────────────────────────
+
+/**
+ * Sanitize a string field from a backend response.
+ * Removes control characters and null bytes, enforces max length.
+ * Returns null if the input is not a string.
+ */
+function sanitizeString(s: unknown, maxLen = 256): string | null {
+  if (typeof s !== 'string') return null;
+  // Remove control characters and null bytes
+  const clean = s.replace(/[\x00-\x1f\x7f]/g, '');
+  if (clean.length > maxLen) return clean.slice(0, maxLen);
+  return clean;
+}
+
+// ─── Valid providers whitelist (Fix 6) ───────────────────────────────────────
+
+const VALID_PROVIDERS = new Set([
+  'openai', 'anthropic', 'google', 'together', 'mistral',
+  'cohere', 'groq', 'perplexity', 'fireworks', 'deepseek', 'replicate',
+  'stripe', 'minimax',
+]);
+
 // ─── Allowlist response fields ────────────────────────────────────────────────
 
 /**
@@ -98,10 +121,10 @@ function mcpError(message: string): object {
  */
 function toSafeKeyRecord(raw: Record<string, unknown>): SafeKeyRecord {
   return {
-    provider: String(raw['provider'] ?? ''),
-    label: String(raw['label'] ?? ''),
-    createdAt: String(raw['createdAt'] ?? ''),
-    status: String(raw['status'] ?? 'active'),
+    provider: sanitizeString(raw['provider'], 64) ?? '',
+    label: sanitizeString(raw['label'], 128) ?? '',
+    createdAt: sanitizeString(raw['createdAt'], 64) ?? '',
+    status: sanitizeString(raw['status'], 32) ?? 'active',
   };
 }
 
@@ -172,8 +195,11 @@ export async function handleToolCall(
         if (!found) {
           return mcpError(`Key not found: ${label}`);
         }
-        // URL is constructed from the provider enum value — NEVER from user input
+        // Validate provider against whitelist — prevents path traversal via compromised backend
         const provider = String(found['provider'] ?? '');
+        if (!VALID_PROVIDERS.has(provider)) {
+          return mcpError(`Unsupported provider: ${provider}`);
+        }
         const proxyUrl = `https://api.vaultproof.dev/v1/${provider}`;
         return mcpResult({ proxyUrl });
       }
@@ -198,7 +224,7 @@ export async function handleToolCall(
         );
         if (!resp.ok) {
           const body = (await resp.json().catch(() => ({}))) as Record<string, unknown>;
-          return mcpError(String(body['error'] ?? `Backend error: ${resp.status}`));
+          return mcpError(sanitizeString(body['error'], 256) ?? `Backend error: ${resp.status}`);
         }
         return mcpResult({ success: true, message: 'Key stored successfully' });
       }
@@ -229,7 +255,7 @@ export async function handleToolCall(
         );
         if (!revokeResp.ok) {
           const body = (await revokeResp.json().catch(() => ({}))) as Record<string, unknown>;
-          return mcpError(String(body['error'] ?? `Backend error: ${revokeResp.status}`));
+          return mcpError(sanitizeString(body['error'], 256) ?? `Backend error: ${revokeResp.status}`);
         }
         return mcpResult({ success: true, message: 'Key revoked successfully' });
       }
@@ -252,7 +278,7 @@ export async function handleToolCall(
         const safe = {
           requests: typeof raw['requests'] === 'number' ? raw['requests'] : null,
           tokens:   typeof raw['tokens']   === 'number' ? raw['tokens']   : null,
-          period:   typeof raw['period']   === 'string' ? raw['period']   : null,
+          period:   sanitizeString(raw['period'], 64),
           days:     typeof raw['days']     === 'number' ? raw['days']     : null,
         };
         return mcpResult(safe);

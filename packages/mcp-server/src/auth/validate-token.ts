@@ -22,6 +22,7 @@ export interface ValidatedSession {
   userId: string;
   scope: string;
   sessionId: string;
+  boundSessionId: string;
   encryptedDevKey: string;
 }
 
@@ -96,6 +97,7 @@ export async function validateToken(
     userId: session.userId,
     scope: session.scope,
     sessionId: session.sessionId,
+    boundSessionId: session.boundSessionId,
     encryptedDevKey: session.encryptedDevKey,
   };
 }

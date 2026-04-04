@@ -101,11 +101,13 @@ export async function handleToken(request: Request, env: Env): Promise<Response>
   const accessToken = generateToken();
   const tokenHash = await sha256Hex(accessToken);
 
+  const sessionId = crypto.randomUUID();
   const session: McpSession = {
     userId: storedCode.userId,
     scope: storedCode.scope,
     clientId: params.client_id,
-    sessionId: crypto.randomUUID(),
+    sessionId,
+    boundSessionId: sessionId,
     audience: 'https://mcp.vaultproof.dev',
     encryptedDevKey: storedCode.encryptedDevKey,
     issuedAt: Date.now(),
@@ -123,11 +125,12 @@ export async function handleToken(request: Request, env: Env): Promise<Response>
   // TTL = session TTL + 60 s buffer so the marker outlives any racing requests.
   await env.OAUTH_CODES.put(usedCodeKey, tokenHash, { expirationTtl: 3660 });
 
-  // 7. Return token response
+  // 7. Return token response (includes mcp_session_id for session binding)
   return jsonResponse({
     access_token: accessToken,
     token_type: 'Bearer',
     expires_in: 3600,
     scope: storedCode.scope,
+    mcp_session_id: sessionId,
   });
 }

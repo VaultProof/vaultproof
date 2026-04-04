@@ -24,6 +24,7 @@ import { handleStreamableHttp } from './mcp/transport-http.js';
 import { handleSse, handleSseMessage } from './mcp/transport-sse.js';
 import { securityHeaders, jsonResponse, errorResponse } from './lib/security-headers.js';
 import { validateToken } from './auth/validate-token.js';
+import { sha256Hex } from './lib/crypto.js';
 import { checkUserRateLimit, checkIpRateLimit } from './lib/rate-limit.js';
 import type { Env } from './types.js';
 
@@ -106,6 +107,18 @@ export default {
         response = errorResponse(429, 'rate_limit_exceeded', 'Too many requests', { 'Retry-After': '60' });
       } else {
         response = await handleCallback(request, env);
+      }
+    } else if (method === 'POST' && pathname === '/oauth/revoke') {
+      // Token revocation — allows clients to invalidate a compromised token before expiry
+      const sessionOrResp = await validateToken(request, env);
+      if (sessionOrResp instanceof Response) {
+        response = sessionOrResp;
+      } else {
+        const authHeader = request.headers.get('Authorization') || '';
+        const token = authHeader.slice('Bearer '.length);
+        const hash = await sha256Hex(token);
+        await env.MCP_SESSIONS.delete(`session:${hash}`);
+        response = jsonResponse({ revoked: true });
       }
     } else if (method === 'POST' && pathname === '/mcp') {
       // Validate token once — pass pre-validated session to the handler to avoid a

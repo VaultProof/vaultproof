@@ -130,6 +130,7 @@ describe('key leak detection: list_keys strips sensitive fields', () => {
       userId: 'user-123',
       scope: 'keys:read keys:write usage:read',
       sessionId: 'sess-abc',
+      boundSessionId: 'sess-abc',
       encryptedDevKey: 'ZW5jcnlwdGVk', // placeholder, won't actually decrypt in this test
     };
 
@@ -167,6 +168,7 @@ describe('key leak detection: get_proxy_url strips sensitive fields', () => {
       userId: 'user-123',
       scope: 'keys:read keys:write usage:read',
       sessionId: 'sess-abc',
+      boundSessionId: 'sess-abc',
       encryptedDevKey: 'ZW5jcnlwdGVk',
     };
 
