@@ -194,6 +194,7 @@
     <!-- Quick jump links -->
     <section class="max-w-4xl mx-auto px-6 pb-6">
         <div class="flex flex-wrap justify-center gap-2">
+            <a href="#guide-mcp" class="px-3 py-1.5 text-xs font-medium rounded-full bg-vp-surface border border-vp-border text-gray-400 hover:text-white hover:border-vp-accent transition">MCP Server</a>
             <a href="#guide-claude-code" class="px-3 py-1.5 text-xs font-medium rounded-full bg-vp-surface border border-vp-border text-gray-400 hover:text-white hover:border-vp-accent transition">Claude Code</a>
             <a href="#guide-cursor" class="px-3 py-1.5 text-xs font-medium rounded-full bg-vp-surface border border-vp-border text-gray-400 hover:text-white hover:border-vp-accent transition">Cursor</a>
             <a href="#guide-windsurf" class="px-3 py-1.5 text-xs font-medium rounded-full bg-vp-surface border border-vp-border text-gray-400 hover:text-white hover:border-vp-accent transition">Windsurf</a>
@@ -201,7 +202,6 @@
             <a href="#guide-cline" class="px-3 py-1.5 text-xs font-medium rounded-full bg-vp-surface border border-vp-border text-gray-400 hover:text-white hover:border-vp-accent transition">Cline</a>
             <a href="#guide-aider" class="px-3 py-1.5 text-xs font-medium rounded-full bg-vp-surface border border-vp-border text-gray-400 hover:text-white hover:border-vp-accent transition">Aider</a>
             <a href="#guide-openai-agents" class="px-3 py-1.5 text-xs font-medium rounded-full bg-vp-surface border border-vp-border text-gray-400 hover:text-white hover:border-vp-accent transition">OpenAI Agents</a>
-            <a href="#guide-mcp" class="px-3 py-1.5 text-xs font-medium rounded-full bg-vp-surface border border-vp-border text-gray-400 hover:text-white hover:border-vp-accent transition">MCP Server</a>
             <a href="#guide-ai-providers" class="px-3 py-1.5 text-xs font-medium rounded-full bg-vp-surface border border-vp-border text-gray-400 hover:text-white hover:border-vp-accent transition">All Providers</a>
             <a href="#guide-other-sdks" class="px-3 py-1.5 text-xs font-medium rounded-full bg-vp-surface border border-vp-border text-gray-400 hover:text-white hover:border-vp-accent transition">Other SDKs</a>
             <a href="#guide-migration" class="px-3 py-1.5 text-xs font-medium rounded-full bg-vp-surface border border-vp-border text-gray-400 hover:text-white hover:border-vp-accent transition">Migration</a>
@@ -314,6 +314,112 @@
 
     <!-- Guides -->
     <section class="max-w-4xl mx-auto px-6 pb-24 space-y-5">
+
+        <!-- MCP Server -->
+        <div id="guide-mcp" class="guide-card">
+            <div class="guide-toggle flex items-center justify-between p-6" onclick="toggleGuide(this)">
+                <div class="flex items-center gap-4">
+                    <div class="tool-icon bg-[#06b6d4]/10 text-[#22d3ee]" style="font-family:'Space Grotesk',sans-serif">MCP</div>
+                    <div>
+                        <h3 class="font-semibold text-white text-lg">MCP Server</h3>
+                        <p class="text-gray-500 text-sm mt-0.5">Connect any MCP-compatible AI assistant to VaultProof &mdash; manage keys and proxy calls via the Model Context Protocol.</p>
+                    </div>
+                </div>
+                <svg class="guide-chevron text-gray-500" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg>
+            </div>
+            <div class="guide-body">
+                <div class="px-6 pb-6 space-y-4">
+
+                    <div class="bg-cyan-500/5 border border-cyan-500/20 rounded-md p-4">
+                        <p class="text-cyan-400 text-xs font-medium mb-1">What is MCP?</p>
+                        <p class="text-gray-400 text-xs">The Model Context Protocol lets AI assistants connect to external tools and services. VaultProof's MCP server lets any compatible AI assistant store keys, check usage, and make proxied API calls &mdash; all authenticated via OAuth.</p>
+                    </div>
+
+                    <p class="text-gray-400 text-sm font-medium pt-2">Available tools:</p>
+                    <div class="grid grid-cols-2 gap-3">
+                        <div class="bg-vp-surface border border-vp-border rounded-md p-3">
+                            <p class="text-white text-xs font-medium">list-keys</p>
+                            <p class="text-gray-500 text-xs mt-0.5">List your stored API keys</p>
+                        </div>
+                        <div class="bg-vp-surface border border-vp-border rounded-md p-3">
+                            <p class="text-white text-xs font-medium">store-key</p>
+                            <p class="text-gray-500 text-xs mt-0.5">Store a new key with split encryption</p>
+                        </div>
+                        <div class="bg-vp-surface border border-vp-border rounded-md p-3">
+                            <p class="text-white text-xs font-medium">get-usage</p>
+                            <p class="text-gray-500 text-xs mt-0.5">Check usage stats and limits</p>
+                        </div>
+                        <div class="bg-vp-surface border border-vp-border rounded-md p-3">
+                            <p class="text-white text-xs font-medium">proxy-request</p>
+                            <p class="text-gray-500 text-xs mt-0.5">Proxy an API call through VaultProof</p>
+                        </div>
+                    </div>
+
+                    <p class="text-gray-400 text-sm font-medium pt-2">Setup</p>
+
+                    <div class="flex items-start gap-3">
+                        <div class="step-num mt-0.5">1</div>
+                        <div class="text-gray-400 text-sm pt-1">
+                            <strong class="text-white">Add VaultProof to your MCP client config</strong>
+                        </div>
+                    </div>
+
+                    <div>
+                        <div class="code-header"><span>Claude Desktop &mdash; claude_desktop_config.json</span></div>
+                        <div class="code-block">
+<pre>{
+  <span class="str">"mcpServers"</span>: {
+    <span class="str">"vaultproof"</span>: {
+      <span class="str">"url"</span>: <span class="str">"https://mcp.vaultproof.dev/mcp"</span>
+    }
+  }
+}</pre>
+                        </div>
+                    </div>
+
+                    <div>
+                        <div class="code-header"><span>Claude Code &mdash; settings or .mcp.json</span></div>
+                        <div class="code-block">
+<pre>{
+  <span class="str">"mcpServers"</span>: {
+    <span class="str">"vaultproof"</span>: {
+      <span class="str">"type"</span>: <span class="str">"url"</span>,
+      <span class="str">"url"</span>: <span class="str">"https://mcp.vaultproof.dev/mcp"</span>
+    }
+  }
+}</pre>
+                        </div>
+                    </div>
+
+                    <div class="flex items-start gap-3">
+                        <div class="step-num mt-0.5">2</div>
+                        <div class="text-gray-400 text-sm pt-1">
+                            <strong class="text-white">Authenticate</strong><br>
+                            On first use, your AI assistant will open a browser window for you to log in with your VaultProof account. This uses OAuth 2.1 with PKCE &mdash; your password is never shared with the AI assistant.
+                        </div>
+                    </div>
+
+                    <div class="flex items-start gap-3">
+                        <div class="step-num mt-0.5">3</div>
+                        <div class="text-gray-400 text-sm pt-1">
+                            <strong class="text-white">Use VaultProof tools</strong><br>
+                            Once connected, your AI assistant can store keys, check usage, and proxy API calls through VaultProof. Ask it to "store my OpenAI key in VaultProof" or "check my VaultProof usage."
+                        </div>
+                    </div>
+
+                    <div class="bg-vp-surface border border-vp-border rounded-md p-4 mt-2">
+                        <p class="text-gray-500 text-xs font-medium mb-2">Server URL</p>
+                        <p class="text-gray-400 text-xs font-mono">https://mcp.vaultproof.dev/mcp</p>
+                        <p class="text-gray-600 text-xs mt-2">OAuth metadata: <span class="font-mono">https://mcp.vaultproof.dev/.well-known/oauth-authorization-server</span></p>
+                    </div>
+
+                    <div class="bg-emerald-500/5 border border-emerald-500/20 rounded-md p-4 mt-2">
+                        <p class="text-emerald-400 text-xs font-medium mb-1">Works with any MCP client</p>
+                        <p class="text-gray-400 text-xs">Any application that supports the Model Context Protocol can connect to VaultProof &mdash; Claude Desktop, Claude Code, Cursor, and more as MCP adoption grows.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
 
         <!-- Claude Code -->
         <div id="guide-claude-code" class="guide-card">
@@ -838,112 +944,6 @@ client = OpenAI(
                             <strong class="text-white">Run your agents</strong><br>
                             All agent tool calls route through VaultProof. Your real key stays out of your codebase.
                         </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <!-- MCP Server -->
-        <div id="guide-mcp" class="guide-card">
-            <div class="guide-toggle flex items-center justify-between p-6" onclick="toggleGuide(this)">
-                <div class="flex items-center gap-4">
-                    <div class="tool-icon bg-[#06b6d4]/10 text-[#22d3ee]" style="font-family:'Space Grotesk',sans-serif">MCP</div>
-                    <div>
-                        <h3 class="font-semibold text-white text-lg">MCP Server</h3>
-                        <p class="text-gray-500 text-sm mt-0.5">Connect any MCP-compatible AI assistant to VaultProof &mdash; manage keys and proxy calls via the Model Context Protocol.</p>
-                    </div>
-                </div>
-                <svg class="guide-chevron text-gray-500" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg>
-            </div>
-            <div class="guide-body">
-                <div class="px-6 pb-6 space-y-4">
-
-                    <div class="bg-cyan-500/5 border border-cyan-500/20 rounded-md p-4">
-                        <p class="text-cyan-400 text-xs font-medium mb-1">What is MCP?</p>
-                        <p class="text-gray-400 text-xs">The Model Context Protocol lets AI assistants connect to external tools and services. VaultProof's MCP server lets any compatible AI assistant store keys, check usage, and make proxied API calls &mdash; all authenticated via OAuth.</p>
-                    </div>
-
-                    <p class="text-gray-400 text-sm font-medium pt-2">Available tools:</p>
-                    <div class="grid grid-cols-2 gap-3">
-                        <div class="bg-vp-surface border border-vp-border rounded-md p-3">
-                            <p class="text-white text-xs font-medium">list-keys</p>
-                            <p class="text-gray-500 text-xs mt-0.5">List your stored API keys</p>
-                        </div>
-                        <div class="bg-vp-surface border border-vp-border rounded-md p-3">
-                            <p class="text-white text-xs font-medium">store-key</p>
-                            <p class="text-gray-500 text-xs mt-0.5">Store a new key with split encryption</p>
-                        </div>
-                        <div class="bg-vp-surface border border-vp-border rounded-md p-3">
-                            <p class="text-white text-xs font-medium">get-usage</p>
-                            <p class="text-gray-500 text-xs mt-0.5">Check usage stats and limits</p>
-                        </div>
-                        <div class="bg-vp-surface border border-vp-border rounded-md p-3">
-                            <p class="text-white text-xs font-medium">proxy-request</p>
-                            <p class="text-gray-500 text-xs mt-0.5">Proxy an API call through VaultProof</p>
-                        </div>
-                    </div>
-
-                    <p class="text-gray-400 text-sm font-medium pt-2">Setup</p>
-
-                    <div class="flex items-start gap-3">
-                        <div class="step-num mt-0.5">1</div>
-                        <div class="text-gray-400 text-sm pt-1">
-                            <strong class="text-white">Add VaultProof to your MCP client config</strong>
-                        </div>
-                    </div>
-
-                    <div>
-                        <div class="code-header"><span>Claude Desktop &mdash; claude_desktop_config.json</span></div>
-                        <div class="code-block">
-<pre>{
-  <span class="str">"mcpServers"</span>: {
-    <span class="str">"vaultproof"</span>: {
-      <span class="str">"url"</span>: <span class="str">"https://mcp.vaultproof.dev/mcp"</span>
-    }
-  }
-}</pre>
-                        </div>
-                    </div>
-
-                    <div>
-                        <div class="code-header"><span>Claude Code &mdash; settings or .mcp.json</span></div>
-                        <div class="code-block">
-<pre>{
-  <span class="str">"mcpServers"</span>: {
-    <span class="str">"vaultproof"</span>: {
-      <span class="str">"type"</span>: <span class="str">"url"</span>,
-      <span class="str">"url"</span>: <span class="str">"https://mcp.vaultproof.dev/mcp"</span>
-    }
-  }
-}</pre>
-                        </div>
-                    </div>
-
-                    <div class="flex items-start gap-3">
-                        <div class="step-num mt-0.5">2</div>
-                        <div class="text-gray-400 text-sm pt-1">
-                            <strong class="text-white">Authenticate</strong><br>
-                            On first use, your AI assistant will open a browser window for you to log in with your VaultProof account. This uses OAuth 2.1 with PKCE &mdash; your password is never shared with the AI assistant.
-                        </div>
-                    </div>
-
-                    <div class="flex items-start gap-3">
-                        <div class="step-num mt-0.5">3</div>
-                        <div class="text-gray-400 text-sm pt-1">
-                            <strong class="text-white">Use VaultProof tools</strong><br>
-                            Once connected, your AI assistant can store keys, check usage, and proxy API calls through VaultProof. Ask it to "store my OpenAI key in VaultProof" or "check my VaultProof usage."
-                        </div>
-                    </div>
-
-                    <div class="bg-vp-surface border border-vp-border rounded-md p-4 mt-2">
-                        <p class="text-gray-500 text-xs font-medium mb-2">Server URL</p>
-                        <p class="text-gray-400 text-xs font-mono">https://mcp.vaultproof.dev/mcp</p>
-                        <p class="text-gray-600 text-xs mt-2">OAuth metadata: <span class="font-mono">https://mcp.vaultproof.dev/.well-known/oauth-authorization-server</span></p>
-                    </div>
-
-                    <div class="bg-emerald-500/5 border border-emerald-500/20 rounded-md p-4 mt-2">
-                        <p class="text-emerald-400 text-xs font-medium mb-1">Works with any MCP client</p>
-                        <p class="text-gray-400 text-xs">Any application that supports the Model Context Protocol can connect to VaultProof &mdash; Claude Desktop, Claude Code, Cursor, and more as MCP adoption grows.</p>
                     </div>
                 </div>
             </div>
