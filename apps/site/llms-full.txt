@@ -1,0 +1,192 @@
+# VaultProof — Full Documentation for LLMs
+
+> Secure API key storage with split-key encryption and a transparent proxy.
+
+## Overview
+
+VaultProof helps developers protect API keys by:
+1. Splitting keys into two shares before storage (neither share reveals the key alone)
+2. Proxying API requests at the edge so real keys stay out of your codebase
+3. Scanning GitHub repos to find exposed secrets
+
+## Quick Start
+
+### 1. Install the CLI
+```bash
+npm install -g @vaultproof/cli
+```
+
+### 2. Store a key
+```bash
+vaultproof store --provider openai
+```
+You'll be prompted for your API key. It's split and encrypted before leaving your machine.
+
+### 3. Create a developer key
+```bash
+vaultproof keys create --label "my-app"
+```
+This generates a `vp_live_` key. Add it to your `.env`:
+```
+VAULTPROOF_API_KEY=vp_live_abc123...
+```
+
+### 4. Use the proxy
+Point your SDK at VaultProof's proxy:
+```javascript
+import OpenAI from 'openai';
+
+const client = new OpenAI({
+  apiKey: process.env.VAULTPROOF_API_KEY,
+  baseURL: 'https://api.vaultproof.dev/v1/openai',
+});
+
+const response = await client.chat.completions.create({
+  model: 'gpt-4',
+  messages: [{ role: 'user', content: 'Hello' }],
+});
+```
+
+## Architecture
+
+### Split-Key Storage
+- User's API key is split into Share 1 and Share 2 using secret sharing
+- Share 1 is encrypted with AES-256-GCM and stored server-side
+- Share 2 is encrypted with the user's developer key
+- A vault commitment (SHA-256 hash) verifies integrity
+- Neither share alone reveals the original key
+
+### Transparent Proxy
+- Requests hit VaultProof's Cloudflare Workers edge proxy
+- The proxy assembles the key from both shares in memory
+- The API call is forwarded to the provider (e.g., OpenAI)
+- The key is wiped from memory immediately after the call
+- The full key exists in memory for approximately 100ms
+
+### What VaultProof Protects Against
+- API keys in source code, .env files, git history
+- Keys in CI/CD logs and shell history
+- Keys exposed in AI agent context windows
+- Database breach (attacker only gets one encrypted share)
+
+### What VaultProof Does NOT Protect Against
+- Both shares being compromised simultaneously
+- The API provider always sees the full key during proxied calls
+- Compromised client devices
+- In-memory attacks during the ~100ms assembly window
+
+## API Reference
+
+### Base URL
+```
+https://api.vaultproof.dev
+```
+
+### Authentication
+All API calls require a `vp_live_` developer key in the Authorization header:
+```
+Authorization: Bearer vp_live_your_key_here
+```
+
+### Proxy Endpoints
+Route requests through VaultProof by prepending the provider path:
+
+| Provider | Base URL |
+|----------|----------|
+| OpenAI | `https://api.vaultproof.dev/v1/openai` |
+| Anthropic | `https://api.vaultproof.dev/v1/anthropic` |
+| Google AI | `https://api.vaultproof.dev/v1/google` |
+| Mistral | `https://api.vaultproof.dev/v1/mistral` |
+| Groq | `https://api.vaultproof.dev/v1/groq` |
+| Together | `https://api.vaultproof.dev/v1/together` |
+| Perplexity | `https://api.vaultproof.dev/v1/perplexity` |
+| DeepSeek | `https://api.vaultproof.dev/v1/deepseek` |
+| Cohere | `https://api.vaultproof.dev/v1/cohere` |
+| Replicate | `https://api.vaultproof.dev/v1/replicate` |
+| Fireworks | `https://api.vaultproof.dev/v1/fireworks` |
+
+### SDK Examples
+
+**Python (OpenAI)**:
+```python
+from openai import OpenAI
+
+client = OpenAI(
+    api_key="vp_live_your_key",
+    base_url="https://api.vaultproof.dev/v1/openai"
+)
+```
+
+**Python (Anthropic)**:
+```python
+from anthropic import Anthropic
+
+client = Anthropic(
+    api_key="vp_live_your_key",
+    base_url="https://api.vaultproof.dev/v1/anthropic"
+)
+```
+
+**Node.js (OpenAI)**:
+```javascript
+const client = new OpenAI({
+  apiKey: process.env.VAULTPROOF_API_KEY,
+  baseURL: 'https://api.vaultproof.dev/v1/openai',
+});
+```
+
+**cURL**:
+```bash
+curl https://api.vaultproof.dev/v1/openai/chat/completions \
+  -H "Authorization: Bearer vp_live_your_key" \
+  -H "Content-Type: application/json" \
+  -d '{"model":"gpt-4","messages":[{"role":"user","content":"Hello"}]}'
+```
+
+## Scanner
+
+The repo scanner finds exposed API keys in GitHub repositories.
+
+### What It Detects
+- Hardcoded API keys (33+ provider patterns)
+- SDK initialization with inline keys
+- Hardcoded API URLs
+- Environment variable references
+- Keys deleted from git history (last 10 commits)
+
+### Supported Key Formats
+- OpenAI: `sk-proj-*`, `sk-*` (40+ chars)
+- Anthropic: `sk-ant-*` (20+ chars)
+- Stripe: `sk_live_*`, `sk_test_*`, `pk_*` (20+ chars)
+- AWS: `AKIA*`, `ASIA*` (20 chars)
+- GitHub: `ghp_*`, `ghs_*`, `github_pat_*`
+- And 25+ more providers
+
+### Actions on Findings
+- **Store in VaultProof**: Split the key and store it securely
+- **Create PR**: Auto-generate a pull request that rewrites code to use VaultProof's proxy
+- **Ignore**: Mark as false positive
+- **Add to Allowlist**: Prevent future scans from flagging the same pattern
+
+## Pricing
+
+| Plan | Monthly Calls | Key Slots | Price |
+|------|--------------|-----------|-------|
+| Free | 10,000 | 3 | $0/mo |
+| Starter | 50,000 | 10 | $5/mo |
+| Pro | 500,000 | 50 | $20/mo |
+| Enterprise | Unlimited | 1,000 | Custom |
+
+## Infrastructure
+- **Compute**: Cloudflare Workers (edge, global)
+- **Database**: Supabase (PostgreSQL)
+- **Payments**: Stripe
+- **All data encrypted at rest and in transit**
+
+## Links
+- Website: https://vaultproof.dev
+- Docs: https://vaultproof.dev/docs
+- Guides: https://vaultproof.dev/guides
+- Security: https://vaultproof.dev/security
+- GitHub: https://github.com/VaultProof/vaultproof
+- Status: https://vaultproof.dev/status
