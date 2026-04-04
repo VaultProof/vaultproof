@@ -156,3 +156,22 @@ Failed step: wizard stays on that step with error + retry button.
 Anthropic, Google Cloud, Together, Groq, Perplexity, Replicate, Fireworks, DeepSeek, Mistral, Cohere, Discord, MongoDB, Neon, Upstash, FaunaDB, npm, Datadog, Apollo, Contentful, PostHog, Brevo
 
 Same wizard UI but all steps are `type: "manual"` with direct links to key management pages and step-by-step instructions. Can be upgraded to Tier 1/2 as provider APIs allow.
+
+## Implementation Files
+
+| File | Purpose |
+|------|---------|
+| `packages/worker/src/lib/provider-adapters/types.ts` | Shared adapter interfaces |
+| `packages/worker/src/lib/provider-adapters/index.ts` | Adapter registry + `getAdapter()` |
+| `packages/worker/src/lib/provider-adapters/openai.ts` | OpenAI adapter (Tier 1) |
+| `packages/worker/src/lib/provider-adapters/stripe.ts` | Stripe adapter (Tier 1) |
+| `packages/worker/src/lib/provider-adapters/github.ts` | GitHub adapter (Tier 1) |
+| `packages/worker/src/lib/provider-adapters/sendgrid.ts` | SendGrid adapter (Tier 1) |
+| `packages/worker/src/lib/provider-adapters/resend.ts` | Resend adapter (Tier 1) |
+| `packages/worker/src/lib/provider-adapters/aws.ts` | AWS adapter (Tier 2, multi-step) |
+| `packages/worker/src/lib/provider-adapters/slack.ts` | Slack adapter (Tier 2) |
+| `packages/worker/src/lib/provider-adapters/twilio.ts` | Twilio adapter (Tier 2) |
+| `packages/worker/src/lib/provider-adapters/supabase-provider.ts` | Supabase adapter (Tier 2) |
+| `packages/worker/src/lib/provider-adapters/manual.ts` | Generic manual adapter factory (Tier 3) |
+| `packages/worker/src/lib/revoke-session.ts` | In-memory session manager |
+| `packages/worker/src/routes/scanner.ts` | Revocation route handlers |
