@@ -174,3 +174,4 @@ export default {
 };
 
 export { RateLimiterDO } from './durable-objects/rate-limiter.js';
+export { OAuthCodeDO } from './durable-objects/oauth-code.js';

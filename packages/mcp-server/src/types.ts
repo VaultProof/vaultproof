@@ -7,4 +7,5 @@ export interface Env {
   MCP_SESSIONS: KVNamespace;
   RATE_LIMIT: KVNamespace;
   RATE_LIMITER?: DurableObjectNamespace;
+  OAUTH_CODE_DO?: DurableObjectNamespace;
 }

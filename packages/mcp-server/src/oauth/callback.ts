@@ -132,6 +132,20 @@ export async function handleCallback(request: Request, env: Env): Promise<Respon
     expirationTtl: 60,
   });
 
+  // Also store in Durable Object for atomic exchange (if available)
+  if (env.OAUTH_CODE_DO) {
+    const id = env.OAUTH_CODE_DO.idFromName('codes');
+    const stub = env.OAUTH_CODE_DO.get(id);
+    await stub.fetch('https://oauth-code/store', {
+      method: 'POST',
+      body: JSON.stringify({
+        code: authCode,
+        data: JSON.stringify(oauthCode),
+        ttlSeconds: 60,
+      }),
+    });
+  }
+
   // Return the code to the dashboard — the dashboard redirects the browser.
   // The dev_key never appears in any URL.
   return jsonResponse(

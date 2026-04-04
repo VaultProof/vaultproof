@@ -38,15 +38,33 @@ export async function handleToken(request: Request, env: Env): Promise<Response>
 
   const params = parsed.data;
 
-  // 2. Look up the auth code in KV
-  const stored = await env.OAUTH_CODES.get(`code:${params.code}`);
-  if (!stored) {
+  // 2. Look up the auth code — try atomic Durable Object exchange first
+  let codeDataRaw: string | null = null;
+  if (env.OAUTH_CODE_DO) {
+    const id = env.OAUTH_CODE_DO.idFromName('codes');
+    const stub = env.OAUTH_CODE_DO.get(id);
+    const doResp = await stub.fetch('https://oauth-code/exchange', {
+      method: 'POST',
+      body: JSON.stringify({ code: params.code }),
+    });
+    const doResult = (await doResp.json()) as { found: boolean; data?: string };
+    if (doResult.found && doResult.data) {
+      codeDataRaw = doResult.data;
+    }
+  }
+
+  // Fallback to KV if DO not available or code not found in DO
+  if (!codeDataRaw) {
+    codeDataRaw = await env.OAUTH_CODES.get(`code:${params.code}`);
+  }
+
+  if (!codeDataRaw) {
     return errorResponse(400, 'invalid_grant', 'Authorization code not found or expired');
   }
 
   let storedCode: OAuthCode;
   try {
-    storedCode = JSON.parse(stored) as OAuthCode;
+    storedCode = JSON.parse(codeDataRaw) as OAuthCode;
   } catch {
     return errorResponse(400, 'invalid_grant', 'Malformed authorization code');
   }

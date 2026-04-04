@@ -27,6 +27,10 @@ zone_name = "vaultproof.dev"
 name = "RATE_LIMITER"
 class_name = "RateLimiterDO"
 
+[[durable_objects.bindings]]
+name = "OAUTH_CODE_DO"
+class_name = "OAuthCodeDO"
+
 [[migrations]]
 tag = "v1"
-new_classes = ["RateLimiterDO"]
+new_classes = ["RateLimiterDO", "OAuthCodeDO"]
