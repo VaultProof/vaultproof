@@ -62,6 +62,7 @@ async function handleCreate(request: Request, env: Env): Promise<Response> {
   const { data, error } = await supabase
     .from('developer_keys')
     .insert({
+      id: crypto.randomUUID(),
       user_id: auth.userId,
       key,
       key_hash: keyHash,
@@ -157,6 +158,7 @@ async function handleRotate(request: Request, env: Env, id: string): Promise<Res
   const { data: newData, error: createError } = await supabase
     .from('developer_keys')
     .insert({
+      id: crypto.randomUUID(),
       user_id: auth.userId,
       key: newKey,
       key_hash: keyHash,

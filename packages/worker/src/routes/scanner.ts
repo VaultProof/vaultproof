@@ -26,6 +26,7 @@ import {
   verifyKey,
   getProviderInfo,
 } from '../lib/secret-patterns.js';
+import { executeScan } from '../lib/scheduled-scan.js';
 
 const notImplemented = () =>
   Response.json({ error: 'Not implemented' }, { status: 501 });
@@ -326,6 +327,11 @@ export async function handleScanner(
     return handleGetScan(env, user, scanIdMatch[1]);
   }
 
+  // findings/bulk-ignore POST
+  if (path === 'findings/bulk-ignore' && method === 'POST') {
+    return handleBulkIgnore(request, env, user);
+  }
+
   // findings/:findingId/ignore POST
   const findingIgnoreMatch = path.match(/^findings\/([^/]+)\/ignore$/);
   if (findingIgnoreMatch && method === 'POST') {
@@ -344,7 +350,140 @@ export async function handleScanner(
     return handleMigrate(request, env, user, migrateMatch[1]);
   }
 
+  // findings/:findingId/history-action POST
+  const historyActionMatch = path.match(/^findings\/([^/]+)\/history-action$/);
+  if (historyActionMatch && method === 'POST') {
+    return handleHistoryAction(request, env, user, historyActionMatch[1]);
+  }
+
+  // allowlists GET
+  if (path === 'allowlists' && method === 'GET') {
+    return handleGetAllowlists(request, env, user);
+  }
+
+  // allowlists POST
+  if (path === 'allowlists' && method === 'POST') {
+    return handleCreateAllowlist(request, env, user);
+  }
+
+  // allowlists/:id DELETE
+  const allowlistDeleteMatch = path.match(/^allowlists\/([^/]+)$/);
+  if (allowlistDeleteMatch && method === 'DELETE') {
+    return handleDeleteAllowlist(env, user, allowlistDeleteMatch[1]);
+  }
+
   return Response.json({ error: 'Not found' }, { status: 404 });
+}
+
+// ── Allowlists ──
+
+async function handleGetAllowlists(
+  request: Request,
+  env: Env,
+  user: { userId: string },
+): Promise<Response> {
+  const supabase = getSupabase(env);
+  const url = new URL(request.url);
+  const repo = url.searchParams.get('repo');
+
+  let query = supabase
+    .from('scan_allowlists')
+    .select('*')
+    .eq('user_id', user.userId)
+    .order('created_at', { ascending: false });
+
+  if (repo) {
+    // Return entries that match this repo OR are global (null repo)
+    query = query.or(`repo_full_name.eq.${repo},repo_full_name.is.null`);
+  }
+
+  const { data, error } = await query;
+  if (error) {
+    return Response.json({ error: 'Failed to fetch allowlists' }, { status: 500 });
+  }
+  return Response.json({ allowlists: data || [] });
+}
+
+async function handleCreateAllowlist(
+  request: Request,
+  env: Env,
+  user: { userId: string },
+): Promise<Response> {
+  let body: any;
+  try {
+    body = await request.json();
+  } catch {
+    return Response.json({ error: 'Invalid JSON body' }, { status: 400 });
+  }
+
+  const { patternType, pattern, repo, reason } = body as {
+    patternType?: string;
+    pattern?: string;
+    repo?: string;
+    reason?: string;
+  };
+
+  if (!pattern || !pattern.trim()) {
+    return Response.json({ error: 'Pattern is required' }, { status: 400 });
+  }
+  if (!patternType || !['file_path', 'env_name'].includes(patternType)) {
+    return Response.json({ error: 'patternType must be file_path or env_name' }, { status: 400 });
+  }
+
+  const supabase = getSupabase(env);
+  const id = crypto.randomUUID();
+  const { data, error } = await supabase.from('scan_allowlists').insert({
+    id,
+    user_id: user.userId,
+    repo_full_name: repo || null,
+    pattern_type: patternType,
+    pattern: pattern.trim(),
+    reason: reason || null,
+    created_at: new Date().toISOString(),
+  }).select().single();
+
+  if (error) {
+    return Response.json({ error: 'Failed to create allowlist entry' }, { status: 500 });
+  }
+
+  auditLog(env, user.userId, '', 'allowlist.create', { id, patternType, pattern: pattern.trim(), repo: repo || null });
+
+  return Response.json(data, { status: 201 });
+}
+
+async function handleDeleteAllowlist(
+  env: Env,
+  user: { userId: string },
+  id: string,
+): Promise<Response> {
+  const supabase = getSupabase(env);
+
+  // Verify ownership
+  const { data: existing, error: fetchError } = await supabase
+    .from('scan_allowlists')
+    .select('id, user_id')
+    .eq('id', id)
+    .single();
+
+  if (fetchError || !existing) {
+    return Response.json({ error: 'Allowlist entry not found' }, { status: 404 });
+  }
+  if (existing.user_id !== user.userId) {
+    return Response.json({ error: 'Forbidden' }, { status: 403 });
+  }
+
+  const { error } = await supabase
+    .from('scan_allowlists')
+    .delete()
+    .eq('id', id);
+
+  if (error) {
+    return Response.json({ error: 'Failed to delete allowlist entry' }, { status: 500 });
+  }
+
+  auditLog(env, user.userId, '', 'allowlist.delete', { id });
+
+  return Response.json({ success: true });
 }
 
 // ── Scan ──
@@ -401,357 +540,18 @@ async function handleScan(
   auditLog(env, user.userId, scanId, 'started_scan', { repoFullName });
 
   try {
-    // 4. Fetch repo metadata
-    const repo = await githubApi(gh.token, `/repos/${repoFullName}`);
-    const targetBranch = branch || repo.default_branch;
-    await supabase
-      .from('scan_results')
-      .update({ branch: targetBranch })
-      .eq('id', scanId);
-
-    // 5. Fetch file tree
-    const tree = await githubApi(
-      gh.token,
-      `/repos/${repoFullName}/git/trees/${targetBranch}?recursive=1`,
-    );
-    const allTreeFiles = tree.tree as Array<{
-      path: string;
-      sha: string;
-      type: string;
-    }>;
-    const scannableFiles = allTreeFiles
-      .filter((f) => f.type === 'blob' && shouldScanFile(f.path))
-      .slice(0, MAX_FILES);
-
-    // 6. Detect platforms
-    const allPaths = allTreeFiles.map((f) => f.path);
-    const platformSet = new Set<string>();
-    for (const filePath of allPaths) {
-      const platform = PLATFORM_FILES[filePath];
-      if (platform) platformSet.add(platform);
-      if (filePath.startsWith('.github/workflows/'))
-        platformSet.add('GitHub Actions');
-    }
-    const platforms = [...platformSet];
-
-    // Internal findings array (raw values kept in memory only, never stored)
-    const findings: Array<{
-      envName: string;
-      provider: string;
-      file: string;
-      line: number | null;
-      mode: string;
-      verified: string;
-      source: string;
-      maskedValue: string;
-      value: string;
-    }> = [];
-    const seenValues = new Set<string>();
-
-    // 7. Fetch file contents in batches of 10
-    const BLOB_BATCH = 10;
-    const fileContents: Array<{ path: string; content: string }> = [];
-    for (let i = 0; i < scannableFiles.length; i += BLOB_BATCH) {
-      const batch = scannableFiles.slice(i, i + BLOB_BATCH);
-      const results = await Promise.all(
-        batch.map(async (file) => {
-          try {
-            const blob = await githubApi(
-              gh.token,
-              `/repos/${repoFullName}/git/blobs/${file.sha}`,
-            );
-            const raw = atob(blob.content.replace(/\n/g, ''));
-            if (raw.length > 500_000) return null;
-            return { path: file.path, content: raw };
-          } catch {
-            return null;
-          }
-        }),
-      );
-      for (const r of results) {
-        if (r) fileContents.push(r);
-      }
-    }
-
-    // 8–10. Scan each file
-    for (const file of fileContents) {
-      const basename = file.path.split('/').pop() || '';
-      const isEnvFile = basename === '.env' || basename.startsWith('.env.');
-
-      if (isEnvFile) {
-        // Phase A: .env files — parse KEY=VALUE pairs
-        for (const line of file.content.split('\n')) {
-          const trimmed = line.trim();
-          if (!trimmed || trimmed.startsWith('#')) continue;
-          const eqIdx = trimmed.indexOf('=');
-          if (eqIdx === -1) continue;
-          const name = trimmed.slice(0, eqIdx).trim();
-          let value = trimmed.slice(eqIdx + 1).trim();
-          if (
-            (value.startsWith('"') && value.endsWith('"')) ||
-            (value.startsWith("'") && value.endsWith("'"))
-          ) {
-            value = value.slice(1, -1);
-          }
-          if (!value || value.length < 10 || seenValues.has(value)) continue;
-
-          const provider = detectProvider(value);
-          if (!provider && shannonEntropy(value) < MIN_ENTROPY) continue;
-
-          seenValues.add(value);
-          findings.push({
-            envName: name,
-            provider: provider || 'unknown',
-            file: file.path,
-            line: null,
-            mode: provider ? recommendMode(provider) : 'env-injection',
-            verified: 'unknown',
-            source: 'current',
-            maskedValue: value.slice(0, 6) + '...' + value.slice(-4),
-            value,
-          });
-        }
-      } else {
-        const lines = file.content.split('\n');
-        if (lines.length > MAX_FILE_LINES) continue;
-
-        // Phase B: Hardcoded strings — match quoted strings against KEY_PATTERNS
-        for (let i = 0; i < lines.length; i++) {
-          if (lines[i].length > MAX_LINE_LENGTH) continue;
-          const stringMatches = lines[i].matchAll(
-            /["'`]([^"'`]{10,512})["'`]/g,
-          );
-          for (const m of stringMatches) {
-            const val = m[1];
-            if (seenValues.has(val)) continue;
-            const provider = detectProvider(val);
-            if (!provider) continue;
-            seenValues.add(val);
-            findings.push({
-              envName: `${provider.toUpperCase()}_API_KEY`,
-              provider,
-              file: file.path,
-              line: i + 1,
-              mode: recommendMode(provider),
-              verified: 'unknown',
-              source: 'current',
-              maskedValue: val.slice(0, 6) + '...' + val.slice(-4),
-              value: val,
-            });
-          }
-        }
-
-        // Phase C: Code-level — SDK inits, HTTP URLs, env var refs
-        for (let i = 0; i < lines.length; i++) {
-          const ln = lines[i];
-
-          // SDK init patterns
-          for (const { pattern, provider } of SDK_INIT_PATTERNS) {
-            pattern.lastIndex = 0;
-            let sdkMatch: RegExpExecArray | null;
-            while ((sdkMatch = pattern.exec(ln)) !== null) {
-              const snippet = ln
-                .slice(sdkMatch.index, sdkMatch.index + 40)
-                .trim();
-              findings.push({
-                envName: `${provider.toUpperCase()}_API_KEY`,
-                provider,
-                file: file.path,
-                line: i + 1,
-                mode: 'sdk-init',
-                verified: 'unknown',
-                source: 'current',
-                maskedValue:
-                  snippet.length > 36
-                    ? snippet.slice(0, 36) + '...'
-                    : snippet,
-                value: '',
-              });
-            }
-          }
-
-          // HTTP URL patterns
-          HTTP_URL_REGEX.lastIndex = 0;
-          let urlMatch: RegExpExecArray | null;
-          while ((urlMatch = HTTP_URL_REGEX.exec(ln)) !== null) {
-            const host = urlMatch[1];
-            const provider = PROVIDER_URLS[host];
-            if (!provider) continue;
-            const url =
-              urlMatch[0].length > 60
-                ? urlMatch[0].slice(0, 60) + '...'
-                : urlMatch[0];
-            findings.push({
-              envName: `${provider.toUpperCase()}_API_KEY`,
-              provider,
-              file: file.path,
-              line: i + 1,
-              mode: 'http-url',
-              verified: 'unknown',
-              source: 'current',
-              maskedValue: url,
-              value: '',
-            });
-          }
-
-          // Env var references (process.env.X / os.environ["X"])
-          PROCESS_ENV_REGEX.lastIndex = 0;
-          let envMatch: RegExpExecArray | null;
-          while ((envMatch = PROCESS_ENV_REGEX.exec(ln)) !== null) {
-            const varName = envMatch[1];
-            const provider = ENV_VAR_MAP[varName];
-            if (!provider) continue;
-            findings.push({
-              envName: varName,
-              provider,
-              file: file.path,
-              line: i + 1,
-              mode: 'env-ref',
-              verified: 'unknown',
-              source: 'current',
-              maskedValue: `process.env.${varName}`,
-              value: '',
-            });
-          }
-
-          OS_ENVIRON_REGEX.lastIndex = 0;
-          while ((envMatch = OS_ENVIRON_REGEX.exec(ln)) !== null) {
-            const varName = envMatch[1];
-            const provider = ENV_VAR_MAP[varName];
-            if (!provider) continue;
-            findings.push({
-              envName: varName,
-              provider,
-              file: file.path,
-              line: i + 1,
-              mode: 'env-ref',
-              verified: 'unknown',
-              source: 'current',
-              maskedValue: `os.environ["${varName}"]`,
-              value: '',
-            });
-          }
-        }
-      }
-    }
-
-    // 11. Scan git history (last 10 commits — reduced for Worker CPU limits)
-    try {
-      const commits = await githubApi(
-        gh.token,
-        `/repos/${repoFullName}/commits?sha=${targetBranch}&per_page=10`,
-      );
-      for (const commit of (commits as any[]).slice(0, 10)) {
-        let detail: any;
-        try {
-          detail = await githubApi(
-            gh.token,
-            `/repos/${repoFullName}/commits/${commit.sha}`,
-          );
-        } catch {
-          continue;
-        }
-        for (const file of detail.files || []) {
-          if (!file.patch) continue;
-          for (const line of (file.patch as string).split('\n')) {
-            if (!line.startsWith('-') || line.startsWith('---')) continue;
-            const content = line.slice(1);
-            const matches = content.matchAll(/["'`=]([^"'`\s]{10,512})/g);
-            for (const m of matches) {
-              const val = m[1];
-              if (seenValues.has(val)) continue;
-              const provider = detectProvider(val);
-              if (!provider) continue;
-              seenValues.add(val);
-              findings.push({
-                envName: `${provider.toUpperCase()}_API_KEY`,
-                provider,
-                file: `${file.filename} (deleted)`,
-                line: null,
-                mode: recommendMode(provider),
-                verified: 'unknown',
-                source: 'git-history',
-                maskedValue: val.slice(0, 6) + '...' + val.slice(-4),
-                value: val,
-              });
-            }
-          }
-        }
-      }
-    } catch {
-      // Git history scan failed — continue without it
-    }
-
-    // 12. Verify keys (max 20, batches of 5) — skip code-level findings
-    const CODE_LEVEL_MODES = new Set(['sdk-init', 'http-url', 'env-ref']);
-    const keyFindings = findings.filter((f) => !CODE_LEVEL_MODES.has(f.mode));
-    for (let i = 0; i < Math.min(keyFindings.length, 20); i += 5) {
-      const batch = keyFindings.slice(i, i + 5);
-      await Promise.all(
-        batch.map(async (f) => {
-          f.verified = await verifyKey(f.value, f.provider);
-        }),
-      );
-    }
-
-    // Zero raw key values — only maskedValue persists
-    for (const f of findings) {
-      f.value = '';
-    }
-
-    // 13. Store findings
-    for (const f of findings) {
-      await supabase.from('scan_findings').insert({
-        id: crypto.randomUUID(),
-        scan_id: scanId,
-        env_name: f.envName,
-        provider: f.provider,
-        file: f.file,
-        line: f.line,
-        mode: f.mode,
-        verified: f.verified,
-        source: f.source,
-        action: 'pending',
-        masked_value: f.maskedValue,
-        created_at: new Date().toISOString(),
-      });
-    }
-
-    // 14. Update scan result
-    const keysActive = keyFindings.filter(
-      (f) => f.verified === 'active',
-    ).length;
-    const keysRevoked = keyFindings.filter(
-      (f) => f.verified === 'revoked',
-    ).length;
-    const keysFound = keyFindings.length;
-
-    await supabase
-      .from('scan_results')
-      .update({
-        status: 'completed',
-        completed_at: new Date().toISOString(),
-        keys_found: keysFound,
-        keys_active: keysActive,
-        keys_revoked: keysRevoked,
-        platforms,
-      })
-      .eq('id', scanId);
-    auditLog(env, user.userId, scanId, 'completed_scan', {
-      keysFound,
-      keysActive,
-      keysRevoked,
-    });
+    // 4-14. Execute scan (fetch repo, scan files, verify, store findings)
+    const result = await executeScan(env, user.userId, gh.token, repoFullName, branch, scanId);
 
     // 15. Return response
     return Response.json({
       scanId,
       status: 'completed',
-      keysFound,
-      keysActive,
-      keysRevoked,
-      platforms,
-      findings: findings.map((f) => {
+      keysFound: result.keysFound,
+      keysActive: result.keysActive,
+      keysRevoked: result.keysRevoked,
+      platforms: result.platforms,
+      findings: result.findings.map((f) => {
         const info = getProviderInfo(f.provider);
         return {
           envName: f.envName,
@@ -905,6 +705,7 @@ async function handleGetScan(
         verified: f.verified,
         source: f.source,
         action: f.action,
+        historyAction: f.history_action,
         prUrl: f.pr_url,
         maskedValue: f.masked_value,
         createdAt: f.created_at,
@@ -913,6 +714,97 @@ async function handleGetScan(
       };
     }),
   });
+}
+
+async function handleBulkIgnore(
+  request: Request,
+  env: Env,
+  user: { userId: string },
+): Promise<Response> {
+  let body: any;
+  try {
+    body = await request.json();
+  } catch {
+    return Response.json({ error: 'Invalid JSON body' }, { status: 400 });
+  }
+
+  const { findingIds } = body as { findingIds?: string[] };
+  if (
+    !findingIds ||
+    !Array.isArray(findingIds) ||
+    findingIds.length === 0 ||
+    findingIds.length > 100 ||
+    !findingIds.every((id: any) => typeof id === 'string')
+  ) {
+    return Response.json(
+      { error: 'findingIds must be a non-empty array of strings (max 100)' },
+      { status: 400 },
+    );
+  }
+
+  const supabase = getSupabase(env);
+
+  // Fetch all requested findings with their scan IDs
+  const { data: findings, error: findingsError } = await supabase
+    .from('scan_findings')
+    .select('id, scan_id')
+    .in('id', findingIds);
+
+  if (findingsError) {
+    console.error('handleBulkIgnore fetch error:', findingsError.message);
+    return Response.json({ error: 'Failed to fetch findings' }, { status: 500 });
+  }
+
+  if (!findings || findings.length === 0) {
+    return Response.json({ ignored: 0 });
+  }
+
+  // Get unique scan IDs and verify ownership for all of them
+  const scanIds = [...new Set(findings.map((f: any) => f.scan_id))];
+  const { data: scans, error: scansError } = await supabase
+    .from('scan_results')
+    .select('id, user_id')
+    .in('id', scanIds)
+    .eq('user_id', user.userId);
+
+  if (scansError) {
+    console.error('handleBulkIgnore scans error:', scansError.message);
+    return Response.json({ error: 'Failed to verify ownership' }, { status: 500 });
+  }
+
+  // Only include findings whose scans belong to this user
+  const ownedScanIds = new Set((scans || []).map((s: any) => s.id));
+  const ownedFindingIds = findings
+    .filter((f: any) => ownedScanIds.has(f.scan_id))
+    .map((f: any) => f.id);
+
+  if (ownedFindingIds.length === 0) {
+    return Response.json({ ignored: 0 });
+  }
+
+  // Bulk update
+  const { error: updateError } = await supabase
+    .from('scan_findings')
+    .update({ action: 'ignored' })
+    .in('id', ownedFindingIds);
+
+  if (updateError) {
+    console.error('handleBulkIgnore update error:', updateError.message);
+    return Response.json({ error: 'Failed to ignore findings' }, { status: 500 });
+  }
+
+  // Audit log for each scan involved
+  for (const scanId of ownedScanIds) {
+    const idsForScan = findings
+      .filter((f: any) => f.scan_id === scanId && ownedFindingIds.includes(f.id))
+      .map((f: any) => f.id);
+    auditLog(env, user.userId, scanId as string, 'findings_bulk_ignored', {
+      findingIds: idsForScan,
+      count: idsForScan.length,
+    });
+  }
+
+  return Response.json({ ignored: ownedFindingIds.length });
 }
 
 async function handleIgnoreFinding(
@@ -958,6 +850,80 @@ async function handleIgnoreFinding(
   auditLog(env, user.userId, finding.scan_id, 'finding_ignored', { findingId });
 
   return Response.json({ success: true });
+}
+
+// ── History Action (git-history findings) ──
+
+async function handleHistoryAction(
+  request: Request,
+  env: Env,
+  user: { userId: string },
+  findingId: string,
+): Promise<Response> {
+  let body: any;
+  try {
+    body = await request.json();
+  } catch {
+    return Response.json({ error: 'Invalid JSON body' }, { status: 400 });
+  }
+
+  const { action } = body as { action?: string };
+  const validActions = ['revoke-guided', 'store-rewrite', 'dismissed'];
+  if (!action || !validActions.includes(action)) {
+    return Response.json(
+      { error: 'action must be one of: revoke-guided, store-rewrite, dismissed' },
+      { status: 400 },
+    );
+  }
+
+  const supabase = getSupabase(env);
+
+  // Fetch finding and verify it is a git-history finding
+  const { data: finding, error: findingError } = await supabase
+    .from('scan_findings')
+    .select('id, scan_id, source')
+    .eq('id', findingId)
+    .single();
+
+  if (findingError || !finding) {
+    return Response.json({ error: 'Finding not found' }, { status: 404 });
+  }
+
+  if (finding.source !== 'git-history') {
+    return Response.json(
+      { error: 'Only git-history findings support history actions' },
+      { status: 400 },
+    );
+  }
+
+  // Verify ownership via parent scan
+  const { data: scan, error: scanError } = await supabase
+    .from('scan_results')
+    .select('user_id')
+    .eq('id', finding.scan_id)
+    .single();
+
+  if (scanError || !scan || scan.user_id !== user.userId) {
+    return Response.json({ error: 'Finding not found' }, { status: 404 });
+  }
+
+  // Update the history_action column
+  const { error: updateError } = await supabase
+    .from('scan_findings')
+    .update({ history_action: action })
+    .eq('id', findingId);
+
+  if (updateError) {
+    console.error('handleHistoryAction update error:', updateError.message);
+    return Response.json({ error: 'Failed to update finding' }, { status: 500 });
+  }
+
+  auditLog(env, user.userId, finding.scan_id, 'history_action', {
+    findingId,
+    action,
+  });
+
+  return Response.json({ success: true, action });
 }
 
 // ── Create PR ──
@@ -1061,9 +1027,29 @@ async function handleCreatePr(
       providerToEnvVars.set(provider, list);
     }
 
+    const envExampleEntries: string[] = [];
+
     for (const fa of findingActions) {
       const finding = allFindings.find((f: any) => f.id === fa.findingId);
-      if (!finding || finding.source === 'git-history') continue;
+      if (!finding) continue;
+
+      // For git-history findings, add a .env.example entry instead of modifying code
+      if (finding.source === 'git-history') {
+        const info = getProviderInfo(finding.provider);
+        envExampleEntries.push(
+          `# ${info.name} key found in git history — store in VaultProof instead`,
+        );
+        envExampleEntries.push(
+          `# ${finding.env_name || finding.provider.toUpperCase() + '_API_KEY'}=<store-in-vaultproof>`,
+        );
+        processedFindings.push({
+          envName: finding.env_name || finding.provider.toUpperCase() + '_API_KEY',
+          file: '.env.example',
+          line: null,
+          action: 'git-history → documented',
+        });
+        continue;
+      }
 
       // Fetch file content if not already cached
       if (!changedFiles.has(finding.file)) {
@@ -1280,7 +1266,25 @@ async function handleCreatePr(
       }
     }
 
-    if (changedFiles.size === 0) {
+    // Add .env.example entries for git-history findings
+    if (envExampleEntries.length > 0) {
+      let envExample = '';
+      // Try to fetch existing .env.example
+      try {
+        const fileData = await githubApi(
+          gh.token,
+          `/repos/${scan.repo_full_name}/contents/.env.example?ref=${defaultBranch}`,
+        );
+        envExample = atob(fileData.content.replace(/\n/g, ''));
+      } catch {
+        // File doesn't exist yet, start fresh
+        envExample = '# Environment Variables\n# See https://vaultproof.dev for secure key management\n';
+      }
+      envExample += '\n' + envExampleEntries.join('\n') + '\n';
+      changedFiles.set('.env.example', envExample);
+    }
+
+    if (changedFiles.size === 0 && processedFindings.length === 0) {
       return Response.json({ error: 'No changes to apply' }, { status: 400 });
     }
 
@@ -1699,11 +1703,31 @@ async function handleMigrate(
       providerToEnvVars.set(provider, list);
     }
 
+    const migrateEnvExampleEntries: string[] = [];
+
     for (const fa of findingActions) {
       if (fa.action === 'skip') continue;
 
       const finding = allFindings.find((f: any) => f.id === fa.findingId);
-      if (!finding || finding.source === 'git-history') continue;
+      if (!finding) continue;
+
+      // For git-history findings, add a .env.example entry documenting the key
+      if (finding.source === 'git-history') {
+        const info = getProviderInfo(finding.provider);
+        migrateEnvExampleEntries.push(
+          `# ${info.name} key found in git history — store in VaultProof instead`,
+        );
+        migrateEnvExampleEntries.push(
+          `# ${finding.env_name || finding.provider.toUpperCase() + '_API_KEY'}=<store-in-vaultproof>`,
+        );
+        processedFindings.push({
+          envName: finding.env_name || finding.provider.toUpperCase() + '_API_KEY',
+          file: '.env.example',
+          line: null,
+          action: 'git-history → documented',
+        });
+        continue;
+      }
 
       // For 'store' action without a rewrite target, skip file changes
       if (fa.action === 'store' && !finding.line && !finding.file.endsWith('.env') && !finding.file.includes('.env.')) {
@@ -1918,6 +1942,22 @@ async function handleMigrate(
       }
     }
 
+    // Add .env.example entries for git-history findings
+    if (migrateEnvExampleEntries.length > 0) {
+      let envExample = '';
+      try {
+        const fileData = await githubApi(
+          gh.token,
+          `/repos/${scan.repo_full_name}/contents/.env.example?ref=${defaultBranch}`,
+        );
+        envExample = atob(fileData.content.replace(/\n/g, ''));
+      } catch {
+        envExample = '# Environment Variables\n# See https://vaultproof.dev for secure key management\n';
+      }
+      envExample += '\n' + migrateEnvExampleEntries.join('\n') + '\n';
+      changedFiles.set('.env.example', envExample);
+    }
+
     if (changedFiles.size === 0 && storedKeys.length === 0) {
       return Response.json(
         { error: 'No changes to apply — all findings were skipped' },
@@ -2117,3 +2157,4 @@ ${historyWarning}
     );
   }
 }
+
