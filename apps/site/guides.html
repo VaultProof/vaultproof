@@ -186,9 +186,38 @@
     </nav>
 
     <!-- Hero -->
-    <section class="max-w-4xl mx-auto px-6 pt-20 pb-14 text-center">
+    <section class="max-w-4xl mx-auto px-6 pt-20 pb-8 text-center">
         <h1 class="text-4xl md:text-5xl font-bold mb-5 tracking-tight" style="font-family:'Space Grotesk',sans-serif">Setup Guides</h1>
         <p class="text-gray-400 text-lg max-w-2xl mx-auto">Use VaultProof with your favorite AI tools. One line change.</p>
+    </section>
+
+    <!-- Quick jump links -->
+    <section class="max-w-4xl mx-auto px-6 pb-6">
+        <div class="flex flex-wrap justify-center gap-2">
+            <a href="#guide-claude-code" class="px-3 py-1.5 text-xs font-medium rounded-full bg-vp-surface border border-vp-border text-gray-400 hover:text-white hover:border-vp-accent transition">Claude Code</a>
+            <a href="#guide-cursor" class="px-3 py-1.5 text-xs font-medium rounded-full bg-vp-surface border border-vp-border text-gray-400 hover:text-white hover:border-vp-accent transition">Cursor</a>
+            <a href="#guide-windsurf" class="px-3 py-1.5 text-xs font-medium rounded-full bg-vp-surface border border-vp-border text-gray-400 hover:text-white hover:border-vp-accent transition">Windsurf</a>
+            <a href="#guide-continue" class="px-3 py-1.5 text-xs font-medium rounded-full bg-vp-surface border border-vp-border text-gray-400 hover:text-white hover:border-vp-accent transition">Continue.dev</a>
+            <a href="#guide-cline" class="px-3 py-1.5 text-xs font-medium rounded-full bg-vp-surface border border-vp-border text-gray-400 hover:text-white hover:border-vp-accent transition">Cline</a>
+            <a href="#guide-aider" class="px-3 py-1.5 text-xs font-medium rounded-full bg-vp-surface border border-vp-border text-gray-400 hover:text-white hover:border-vp-accent transition">Aider</a>
+            <a href="#guide-openai-agents" class="px-3 py-1.5 text-xs font-medium rounded-full bg-vp-surface border border-vp-border text-gray-400 hover:text-white hover:border-vp-accent transition">OpenAI Agents</a>
+            <a href="#guide-ai-providers" class="px-3 py-1.5 text-xs font-medium rounded-full bg-vp-surface border border-vp-border text-gray-400 hover:text-white hover:border-vp-accent transition">All Providers</a>
+            <a href="#guide-other-sdks" class="px-3 py-1.5 text-xs font-medium rounded-full bg-vp-surface border border-vp-border text-gray-400 hover:text-white hover:border-vp-accent transition">Other SDKs</a>
+            <a href="#guide-migration" class="px-3 py-1.5 text-xs font-medium rounded-full bg-vp-surface border border-vp-border text-gray-400 hover:text-white hover:border-vp-accent transition">Migration</a>
+        </div>
+    </section>
+
+    <!-- Safety note about vp_live_ keys -->
+    <section class="max-w-4xl mx-auto px-6 pb-8">
+        <div class="bg-emerald-500/5 border border-emerald-500/20 rounded-card p-5">
+            <div class="flex items-start gap-3">
+                <svg class="w-5 h-5 text-emerald-400 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/></svg>
+                <div>
+                    <p class="text-emerald-400 text-sm font-semibold mb-1">Your <code class="font-mono">vp_live_</code> key is safe to share in prompts and configs</p>
+                    <p class="text-gray-400 text-sm">A <code class="font-mono text-emerald-300">vp_live_</code> key is a proxy key, not your real API key. Even if it appears in your code, prompts, chat history, or AI agent context, your actual provider keys (OpenAI, Anthropic, etc.) remain protected. The proxy key can only be used to make API calls through VaultProof — and you can revoke it, set budget caps, or hit the kill switch from your dashboard at any time.</p>
+                </div>
+            </div>
+        </div>
     </section>
 
     <!-- Choose Your Path -->
