@@ -304,6 +304,7 @@ export async function handleTransparentProxy(
     // Log access non-blocking
     const latencyMs = Date.now() - startTime;
     supabase.from('access_logs').insert({
+      id: crypto.randomUUID(),
       key_slot_id: keySlot.id,
       app_id: 'transparent-proxy',
       action: 'transparent_proxy',
