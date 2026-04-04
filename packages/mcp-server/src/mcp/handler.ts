@@ -12,6 +12,8 @@ import type { ValidatedSession } from '../auth/validate-token.js';
 import type { Env } from '../types.js';
 import { TOOLS } from './tools.js';
 import { checkAddKeyRateLimit } from '../lib/rate-limit.js';
+import { splitString, serializeShare } from '../lib/shamir.js';
+import { encryptShare2 } from '../lib/share2-encrypt.js';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -205,7 +207,6 @@ export async function handleToolCall(
       }
 
       case 'add_key': {
-        // Enforce the tighter per-hour add_key rate limit
         const addKeyAllowed = await checkAddKeyRateLimit(userId, env);
         if (!addKeyAllowed) {
           return mcpError('Rate limit exceeded: too many add_key calls. Try again later.');
@@ -215,10 +216,19 @@ export async function handleToolCall(
           label: string;
           value: string;
         };
+
+        // Split the raw key into 2 Shamir shares (threshold=2)
+        const shares = splitString(value, 2, 2);
+        const share1 = serializeShare(shares[0]!);
+        const share2Raw = serializeShare(shares[1]!);
+
+        // Encrypt share2 with the developer's vp_live_ key
+        const share2Encrypted = await encryptShare2(share2Raw, devKey);
+
         const resp = await callBackend(
           '/api/v1/sdk/store',
           'POST',
-          { provider, label, value },
+          { share1, share2: share2Encrypted, provider, label },
           devKey,
           env,
         );
