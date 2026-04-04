@@ -172,3 +172,5 @@ export default {
     return withSecurityHeaders(response);
   },
 };
+
+export { RateLimiterDO } from './durable-objects/rate-limiter.js';
