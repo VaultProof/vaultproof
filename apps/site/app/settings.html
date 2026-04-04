@@ -457,7 +457,7 @@
   </div>
 
   <script>
-    const API = 'https://staging-api.vaultproof.dev/api/v1';
+    const API = window.location.hostname.includes('dev.vaultproof') ? 'https://staging-api.vaultproof.dev/api/v1' : 'https://api.vaultproof.dev/api/v1';
     let token = localStorage.getItem('vaultproof_token');
 
     function escapeHtml(str) {
