@@ -2843,7 +2843,10 @@ Authorization: Bearer &lt;jwt_token&gt;
 
             <section id="scanner" class="mb-16">
                 <h2 class="text-3xl font-bold text-white mb-2">Scanner</h2>
-                <p class="text-gray-500 mb-8">Find exposed API keys in your projects. Available as a CLI command and a dashboard feature.</p>
+                <p class="text-gray-500 mb-4">Find exposed API keys in your projects. Available as a CLI command and a dashboard feature.</p>
+                <div class="bg-cyan-500/5 border border-cyan-500/20 rounded-md px-4 py-3 mb-8">
+                    <p class="text-gray-400 text-xs"><span class="text-cyan-400 font-medium">Privacy:</span> The CLI scanner runs locally on your machine &mdash; no source code leaves your device. The dashboard scanner processes code in VaultProof's secure edge environment. In both cases, no code is stored &mdash; only detected key patterns and file locations are saved as findings.</p>
+                </div>
 
                 <div class="space-y-6">
                     <div>
