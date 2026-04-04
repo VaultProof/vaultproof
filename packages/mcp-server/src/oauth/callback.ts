@@ -74,7 +74,7 @@ export async function handleCallback(request: Request, env: Env): Promise<Respon
   const data = parsed.data;
 
   // Validate resource parameter against MCP issuer (prevents audience confusion attacks)
-  if (data.resource && data.resource !== env.MCP_ISSUER) {
+  if (data.resource && !data.resource.startsWith(env.MCP_ISSUER)) {
     return errorResponse(400, 'invalid_target', 'Resource mismatch');
   }
 
