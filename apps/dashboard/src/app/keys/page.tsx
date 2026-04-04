@@ -60,6 +60,9 @@ export default function KeysDashboard() {
         setError("Not logged in. Sign in at vaultproof.dev first.");
         setLoading(false);
       }
+    }).catch(() => {
+      setError("Unable to check login status. Try refreshing.");
+      setLoading(false);
     });
   }, []);
 
@@ -137,12 +140,14 @@ export default function KeysDashboard() {
         )}
 
         {/* Error state */}
-        {error && (
+        {error && !loading && (
           <div className="bg-red-500/10 border border-red-500/20 rounded-2xl p-6 text-center">
             <div className="text-red-400 mb-2">{error}</div>
-            <button onClick={fetchData} className="text-sm text-indigo-400 hover:text-indigo-300 transition">
-              Retry
-            </button>
+            {token && (
+              <button onClick={fetchData} className="text-sm text-indigo-400 hover:text-indigo-300 transition">
+                Retry
+              </button>
+            )}
           </div>
         )}
 
