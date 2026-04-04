@@ -84,8 +84,17 @@ function buildZodSchema(inputSchema: {
 
 // ─── MCP content helpers ──────────────────────────────────────────────────────
 
+/** Marker tokens for tool output boundaries — stripped from backend data before wrapping */
+const OUTPUT_START = '[TOOL_OUTPUT]';
+const OUTPUT_END = '[/TOOL_OUTPUT]';
+
 function mcpResult(data: unknown): object {
-  return { content: [{ type: 'text', text: JSON.stringify(data, null, 2) }] };
+  let text = JSON.stringify(data, null, 2);
+  // Strip any injection of our markers from the data itself
+  text = text.replaceAll(OUTPUT_START, '').replaceAll(OUTPUT_END, '');
+  return {
+    content: [{ type: 'text', text: `${OUTPUT_START}\n${text}\n${OUTPUT_END}` }],
+  };
 }
 
 function mcpError(message: string): object {
