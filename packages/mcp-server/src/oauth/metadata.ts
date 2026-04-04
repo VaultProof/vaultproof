@@ -27,6 +27,7 @@ export function handleAuthorizationServerMetadata(_env: Env): Response {
     grant_types_supported: ['authorization_code'],
     code_challenge_methods_supported: ['S256'],
     scopes_supported: ['keys:read', 'keys:write', 'usage:read'],
+    registration_endpoint: 'https://mcp.vaultproof.dev/oauth/register',
     token_endpoint_auth_methods_supported: ['none'],
   });
 }

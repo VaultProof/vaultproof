@@ -34,15 +34,24 @@ export async function handleAuthorize(request: Request, env: Env): Promise<Respo
 
   const data = parsed.data;
 
-  // 2. Validate client_id
+  // 2. Validate client_id — check hardcoded registry first, then KV for dynamic clients
   const client = REGISTERED_CLIENTS[data.client_id];
   if (!client) {
-    return errorResponse(400, 'invalid_client', 'Unknown client_id');
-  }
-
-  // 3. Validate redirect_uri (exact string match)
-  if (!client.redirectUris.includes(data.redirect_uri)) {
-    return errorResponse(400, 'invalid_redirect_uri', 'redirect_uri not registered for this client');
+    // Check KV for dynamically registered client (RFC 7591)
+    const dynRecord = await env.MCP_SESSIONS.get(`client:${data.client_id}`);
+    if (!dynRecord) {
+      return errorResponse(400, 'invalid_client', 'Unknown client_id');
+    }
+    const dynClient = JSON.parse(dynRecord) as { clientId: string; clientName: string; redirectUris: string[] };
+    if (!dynClient.redirectUris.includes(data.redirect_uri)) {
+      return errorResponse(400, 'invalid_redirect_uri', 'redirect_uri not registered for this client');
+    }
+    // Dynamic client validated — continue with the rest of the flow
+  } else {
+    // 3. Validate redirect_uri (exact string match) for hardcoded clients
+    if (!client.redirectUris.includes(data.redirect_uri)) {
+      return errorResponse(400, 'invalid_redirect_uri', 'redirect_uri not registered for this client');
+    }
   }
 
   // 4. Validate resource if present

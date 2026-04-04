@@ -6,6 +6,7 @@
  *   GET  /.well-known/oauth-protected-resource    → Protected resource metadata
  *   GET  /oauth/authorize                          → Authorization endpoint
  *   POST /oauth/token                             → Token endpoint
+ *   POST /oauth/register                           → Dynamic client registration (RFC 7591)
  *   POST /oauth/callback                          → Consent callback (from dashboard)
  *   OPTIONS /oauth/callback                        → CORS preflight
  *   POST /mcp                                     → Streamable HTTP transport
@@ -20,6 +21,7 @@ import { handleAuthorizationServerMetadata, handleProtectedResourceMetadata } fr
 import { handleAuthorize } from './oauth/authorize.js';
 import { handleToken } from './oauth/token.js';
 import { handleCallback } from './oauth/callback.js';
+import { handleRegister } from './oauth/register.js';
 import { handleStreamableHttp } from './mcp/transport-http.js';
 import { handleSse, handleSseMessage } from './mcp/transport-sse.js';
 import { securityHeaders, jsonResponse, errorResponse } from './lib/security-headers.js';
@@ -107,6 +109,13 @@ export default {
         response = errorResponse(429, 'rate_limit_exceeded', 'Too many requests', { 'Retry-After': '60' });
       } else {
         response = await handleCallback(request, env);
+      }
+    } else if (method === 'POST' && pathname === '/oauth/register') {
+      const ip = request.headers.get('CF-Connecting-IP') ?? 'unknown';
+      if (!await checkIpRateLimit(ip, env)) {
+        response = errorResponse(429, 'rate_limit_exceeded', 'Too many requests', { 'Retry-After': '60' });
+      } else {
+        response = await handleRegister(request, env);
       }
     } else if (method === 'POST' && pathname === '/oauth/revoke') {
       // Token revocation — allows clients to invalidate a compromised token before expiry
