@@ -191,6 +191,45 @@
         <p class="text-gray-400 text-lg max-w-2xl mx-auto">Use VaultProof with your favorite AI tools. One line change.</p>
     </section>
 
+    <!-- Choose Your Path -->
+    <section class="max-w-4xl mx-auto px-6 pb-8">
+        <h2 class="text-lg font-semibold text-white mb-4" style="font-family:'Space Grotesk',sans-serif">Choose your path</h2>
+        <div class="grid md:grid-cols-3 gap-4">
+            <a href="#guide-ai-providers" class="block bg-vp-surface border border-vp-border rounded-card p-5 hover:border-vp-accent transition-colors group">
+                <div class="text-vp-accent text-sm font-semibold mb-1 group-hover:text-indigo-400">Quick Start</div>
+                <p class="text-gray-400 text-sm">Store a key and proxy your first request in 2 minutes</p>
+            </a>
+            <a href="#guide-migration" class="block bg-vp-surface border border-vp-border rounded-card p-5 hover:border-vp-accent transition-colors group">
+                <div class="text-emerald-400 text-sm font-semibold mb-1 group-hover:text-emerald-300">Migrate Existing Project</div>
+                <p class="text-gray-400 text-sm">Move hardcoded keys to VaultProof with the scanner</p>
+            </a>
+            <a href="#guide-other-sdks" class="block bg-vp-surface border border-vp-border rounded-card p-5 hover:border-vp-accent transition-colors group">
+                <div class="text-cyan-400 text-sm font-semibold mb-1 group-hover:text-cyan-300">AI Agent Setup</div>
+                <p class="text-gray-400 text-sm">Set up VaultProof for AI agents and automated workflows</p>
+            </a>
+        </div>
+    </section>
+
+    <!-- Step 0: Install CLI -->
+    <section class="max-w-4xl mx-auto px-6 pb-8">
+        <div class="bg-indigo-500/5 border border-indigo-500/20 rounded-card p-6">
+            <h3 class="font-semibold text-white mb-3" style="font-family:'Space Grotesk',sans-serif">Step 0 &mdash; Install the VaultProof CLI</h3>
+            <div>
+                <div class="code-header"><span>bash</span></div>
+                <div class="code-block">
+<pre>npm install -g @vaultproof/cli</pre>
+                </div>
+            </div>
+            <p class="text-gray-500 text-sm mt-3">Or use npx without installing:</p>
+            <div class="mt-2">
+                <div class="code-header"><span>bash</span></div>
+                <div class="code-block">
+<pre>npx @vaultproof/cli store --provider openai</pre>
+                </div>
+            </div>
+        </div>
+    </section>
+
     <!-- Prerequisites -->
     <section class="max-w-4xl mx-auto px-6 pb-12 space-y-5">
         <div class="bg-vp-surface border border-vp-border rounded-lg p-6">
@@ -246,7 +285,7 @@
     <section class="max-w-4xl mx-auto px-6 pb-24 space-y-5">
 
         <!-- 1. AI Providers (proxy URL) -->
-        <div class="guide-card">
+        <div id="guide-ai-providers" class="guide-card">
             <div class="guide-toggle flex items-center justify-between p-6" onclick="toggleGuide(this)">
                 <div class="flex items-center gap-4">
                     <div class="tool-icon bg-[#6366f1]/10 text-[#818cf8]" style="font-family:'Space Grotesk',sans-serif">AI</div>
@@ -323,7 +362,7 @@
         </div>
 
         <!-- 2. Other SDKs (Stripe, AWS, Supabase, etc.) -->
-        <div class="guide-card">
+        <div id="guide-other-sdks" class="guide-card">
             <div class="guide-toggle flex items-center justify-between p-6" onclick="toggleGuide(this)">
                 <div class="flex items-center gap-4">
                     <div class="tool-icon bg-[#06b6d4]/10 text-[#22d3ee]" style="font-family:'Space Grotesk',sans-serif">*</div>
@@ -369,7 +408,7 @@ vaultproof proxy -k &lt;keyId&gt; --path /v1/charges -d <span class="str">'{"amo
         </div>
 
         <!-- 3. Full Migration -->
-        <div class="guide-card">
+        <div id="guide-migration" class="guide-card">
             <div class="guide-toggle flex items-center justify-between p-6" onclick="toggleGuide(this)">
                 <div class="flex items-center gap-4">
                     <div class="tool-icon bg-[#10b981]/10 text-[#34d399]" style="font-family:'Space Grotesk',sans-serif">VP</div>
@@ -436,6 +475,13 @@ npm install -g @vaultproof/cli</pre>
                             <li>&bull; Prints which env vars to remove from your hosting</li>
                         </ul>
                         <p class="text-gray-500 text-xs mt-2"><strong class="text-gray-400">Does NOT modify any files.</strong> Everything is printed to your terminal for you to copy.</p>
+                    </div>
+
+                    <div class="bg-cyan-500/5 border border-cyan-500/20 rounded-md p-4 mt-2">
+                        <div class="flex items-start gap-2">
+                            <svg class="w-4 h-4 text-cyan-400 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                            <p class="text-gray-400 text-xs">Your code is scanned locally on your machine by the CLI. No source code leaves your device. Only the key values you choose to store are sent to VaultProof for split-key encryption.</p>
+                        </div>
                     </div>
 
                     <div class="flex items-start gap-3 mt-2">
