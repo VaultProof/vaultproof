@@ -25,7 +25,7 @@ export async function handleSdk(
   path: string,
 ): Promise<Response> {
   const auth = await authenticateDevKey(request, env);
-  if (!auth) return Response.json({ error: 'Unauthorized' }, { status: 401 });
+  if (!auth) return Response.json({ error: 'Invalid API key format. Keys start with vp_live_ or vp_test_. Get yours from the VaultProof dashboard.' }, { status: 401 });
 
   const method = request.method;
   const supabase = getSupabase(env);
@@ -55,12 +55,17 @@ export async function handleSdk(
 
   // ── POST /sdk/store ──────────────────────────────────────────────────
   if (path === 'store' && method === 'POST') {
-    const body = await request.json<any>();
+    let body: any;
+    try {
+      body = await request.json<any>();
+    } catch {
+      return Response.json({ error: 'Invalid JSON' }, { status: 400 });
+    }
     const { share1, share2, provider, label } = body;
 
-    if (!share1 || !share2 || !provider) {
+    if (!share1 || !provider) {
       return Response.json(
-        { error: 'Missing required fields: share1, share2, provider' },
+        { error: 'Missing required fields: share1, provider' },
         { status: 400 },
       );
     }
@@ -80,16 +85,22 @@ export async function handleSdk(
     const keyId = crypto.randomUUID();
     const now = new Date().toISOString();
 
-    const { error: insertError } = await supabase.from('key_slots').insert({
+    const insertData: Record<string, any> = {
       id: keyId,
       user_id: auth.userId,
       provider,
       label: label || null,
       share1_encrypted: share1Encrypted,
-      share2_encrypted: share2,
+      vault_commitment: crypto.randomUUID(),
+      auth_apps_root: '',
       status: 'ACTIVE',
       created_at: now,
-    });
+    };
+    if (share2) {
+      insertData.share2_encrypted = share2;
+    }
+
+    const { error: insertError } = await supabase.from('key_slots').insert(insertData);
 
     if (insertError) {
       return Response.json({ error: 'Failed to store key' }, { status: 500 });
@@ -101,7 +112,7 @@ export async function handleSdk(
       id: grantId,
       key_slot_id: keyId,
       app_id: auth.keyId,
-      app_name: auth.devKey.label || null,
+      app_name: 'SDK',
       granted_at: now,
     });
 
@@ -110,7 +121,12 @@ export async function handleSdk(
 
   // ── POST /sdk/revoke ─────────────────────────────────────────────────
   if (path === 'revoke' && method === 'POST') {
-    const body = await request.json<any>();
+    let body: any;
+    try {
+      body = await request.json<any>();
+    } catch {
+      return Response.json({ error: 'Invalid JSON' }, { status: 400 });
+    }
     const { keyId } = body;
 
     if (!keyId) {
