@@ -257,7 +257,27 @@
 
     <!-- Content -->
     <main class="flex-1 p-6 lg:p-8">
-      <div class="max-w-5xl mx-auto space-y-6">
+
+      <!-- Under Construction Banner -->
+      <div id="underConstruction" class="max-w-2xl mx-auto text-center py-24 anim-fade-up">
+        <div class="w-20 h-20 mx-auto mb-6 rounded-2xl bg-brand/10 flex items-center justify-center">
+          <svg class="w-10 h-10 text-brand" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
+          </svg>
+        </div>
+        <h2 class="text-2xl font-bold mb-3" style="font-family:'Space Grotesk',sans-serif">Under Construction</h2>
+        <p class="text-gray-400 text-base mb-2">Repo Scanner is coming soon.</p>
+        <p class="text-gray-500 text-sm max-w-md mx-auto mb-8">
+          Scan your GitHub repos for exposed API keys, hardcoded secrets, and leaked credentials in git history.
+          Automatically create PRs to migrate to VaultProof's proxy.
+        </p>
+        <div class="flex items-center justify-center gap-4">
+          <a href="/app/" class="px-5 py-2.5 bg-card border border-border rounded-xl text-sm text-gray-300 hover:text-white hover:border-gray-600 transition">Back to Dashboard</a>
+        </div>
+      </div>
+
+      <!-- Scanner (hidden until ready) -->
+      <div id="scannerContent" class="hidden max-w-5xl mx-auto space-y-6">
 
         <!-- State 1: Not Connected -->
         <div id="stateNotConnected" class="anim-card">
@@ -636,6 +656,7 @@
         </div>
 
       </div>
+      </div><!-- end scannerContent hidden div -->
     </main>
   </div>
 
