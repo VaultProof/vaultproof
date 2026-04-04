@@ -206,7 +206,7 @@
 
                 <div class="callout-info mb-8">
                     <p class="text-sm text-indigo-200 font-semibold mb-1">The short version</p>
-                    <p class="text-sm text-gray-300 leading-relaxed">Your API key is split into two shares on your device before it leaves your browser or CLI. Share 1 is encrypted with AES-256-GCM and stored on our servers. Share 2 is encrypted with your developer key and stays on your device. Neither share alone reveals the original key. When you make a proxied API call, both shares are temporarily assembled in server memory (~100ms), used, then wiped. The key is never logged, never written to disk, and never stored whole at rest.</p>
+                    <p class="text-sm text-gray-300 leading-relaxed">Your API key is split into two shares on your device before it leaves your browser or CLI. Share 1 is encrypted with authenticated encryption and stored on our servers. Share 2 is encrypted with your developer key and stays on your device. Neither share alone reveals the original key. When you make a proxied API call, both shares are temporarily assembled in server memory, used, then wiped. The key is never logged, never written to disk, and never stored whole at rest.</p>
                 </div>
             </section>
 
@@ -216,7 +216,7 @@
                 <p class="text-gray-500 mb-8">How your API keys are split and stored.</p>
 
                 <div class="bg-vp-surface border border-vp-border rounded-md p-6 mb-6">
-                    <p class="text-gray-400 leading-relaxed mb-4">VaultProof uses 2-of-2 secret sharing to split every API key into two shares. Both shares are required to reconstruct the original key. This splitting happens entirely on your device (in the browser or CLI) before any data is sent to our servers.</p>
+                    <p class="text-gray-400 leading-relaxed mb-4">VaultProof splits every API key into two encrypted shares. Both shares are required to reconstruct the original key. This splitting happens entirely on your device (in the browser or CLI) before any data is sent to our servers.</p>
 
                     <div class="flow-step" data-step="1">
                         <p class="text-sm font-semibold text-white mb-1">You paste your API key</p>
@@ -227,7 +227,7 @@
                         <p class="text-sm text-gray-500">A secret sharing algorithm produces two shares. Neither share contains enough information to derive the original key. This runs client-side before any network request.</p>
                     </div>
                     <div class="flow-step" data-step="3">
-                        <p class="text-sm font-semibold text-white mb-1">Share 1 is encrypted with AES-256-GCM and sent to VaultProof</p>
+                        <p class="text-sm font-semibold text-white mb-1">Share 1 is encrypted and sent to VaultProof</p>
                         <p class="text-sm text-gray-500">This encrypted share is stored in our database. It is all we receive and all we hold.</p>
                     </div>
                     <div class="flow-step" data-step="4">
@@ -336,7 +336,7 @@
                         </div>
                         <div class="flex items-start gap-3">
                             <span class="text-amber-400 mt-0.5 flex-shrink-0">--</span>
-                            <p class="text-sm text-gray-300"><strong class="text-white">In-memory attacks during proxy assembly.</strong> During the ~100ms window when both shares are assembled, a sophisticated memory-level attack on our server could theoretically extract the key. We mitigate this with Cloudflare Workers' isolate model (no shared memory between requests), but we do not claim this is impossible.</p>
+                            <p class="text-sm text-gray-300"><strong class="text-white">In-memory attacks during proxy assembly.</strong> During the brief window when both shares are assembled in memory, a sophisticated memory-level attack on our server could theoretically extract the key. We mitigate this with per-request memory isolation, but we do not claim this is impossible.</p>
                         </div>
                     </div>
                 </div>
@@ -402,14 +402,14 @@
                         </thead>
                         <tbody>
                             <tr>
-                                <td class="text-white font-medium">Cloudflare Workers</td>
+                                <td class="text-white font-medium">Edge Network</td>
                                 <td class="text-gray-400">Edge compute and proxy</td>
-                                <td class="text-gray-500">Runs the proxy logic at the edge. V8 isolate model provides per-request memory isolation. DDoS protection included.</td>
+                                <td class="text-gray-500">Runs the proxy logic at the edge with per-request memory isolation. DDoS protection included.</td>
                             </tr>
                             <tr>
-                                <td class="text-white font-medium">Supabase</td>
-                                <td class="text-gray-400">Database and auth</td>
-                                <td class="text-gray-500">Stores encrypted shares, user accounts, and usage data. PostgreSQL with row-level security. All data encrypted at rest.</td>
+                                <td class="text-white font-medium">Database</td>
+                                <td class="text-gray-400">Storage and auth</td>
+                                <td class="text-gray-500">Stores encrypted shares, user accounts, and usage data. Row-level security enforced. All data encrypted at rest.</td>
                             </tr>
                             <tr>
                                 <td class="text-white font-medium">Stripe</td>
@@ -507,7 +507,7 @@
                         </div>
                         <div class="flex items-start gap-3">
                             <span class="text-vp-accent mt-0.5 flex-shrink-0">--</span>
-                            <p class="text-sm text-gray-300"><strong class="text-white">Per-key webhook notifications.</strong> You can configure a webhook URL on each developer key. When your usage exceeds a threshold you set, VaultProof POSTs a signed payload to your webhook endpoint. The payload is signed with HMAC-SHA256 using a secret you provide, included in the <code class="font-mono text-xs text-vp-accent">X-VaultProof-Signature</code> header.</p>
+                            <p class="text-sm text-gray-300"><strong class="text-white">Per-key webhook notifications.</strong> You can configure a webhook URL on each developer key. When your usage exceeds a threshold you set, VaultProof POSTs a signed payload to your webhook endpoint. The payload is cryptographically signed using a secret you provide, included in the <code class="font-mono text-xs text-vp-accent">X-VaultProof-Signature</code> header.</p>
                         </div>
                         <div class="flex items-start gap-3">
                             <span class="text-vp-accent mt-0.5 flex-shrink-0">--</span>

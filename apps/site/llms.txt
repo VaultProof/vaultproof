@@ -18,7 +18,7 @@ VaultProof helps developers protect API keys by splitting them before storage an
 1. Store an API key — it's split into two encrypted shares before storage
 2. Create a developer key (`vp_live_`) and add it to your `.env`
 3. Point your SDK at `api.vaultproof.dev` — VaultProof proxies the request using your stored key
-4. The full key is only assembled briefly in server memory during the API call, then immediately wiped
+4. The full key is only assembled briefly in server memory during the API call, then immediately discarded
 
 ## Supported Providers
 

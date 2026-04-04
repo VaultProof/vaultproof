@@ -531,7 +531,7 @@ STRIPE_SECRET_KEY=sk_live_..."></textarea>
   </div>
 
   <script>
-    // --- Shamir Secret Sharing over GF(256) (matches @vaultproof/shamir) ---
+    // --- Split-key encryption engine ---
     var _EXP = new Uint8Array(512), _LOG = new Uint8Array(256);
     (function() {
       var x = 1;
@@ -1152,7 +1152,7 @@ STRIPE_SECRET_KEY=sk_live_..."></textarea>
       document.getElementById('rotateMsg').classList.add('hidden');
     }
 
-    // Store key with Shamir split
+    // Store key with split-key encryption
     document.getElementById('addKeyForm').addEventListener('submit', async function(e) {
       e.preventDefault();
       var apiKey = document.getElementById('addApiKey').value.trim();
@@ -1167,7 +1167,7 @@ STRIPE_SECRET_KEY=sk_live_..."></textarea>
       btn.disabled = true;
 
       try {
-        // Real Shamir Secret Sharing over GF(256) -- matches @vaultproof/shamir
+        // Split-key encryption -- matches @vaultproof/shamir
         var shares = shamirSplit(new TextEncoder().encode(apiKey), 2, 2);
         var share1 = shamirSerialize(shares[0]);
         var share2 = shamirSerialize(shares[1]);
@@ -1245,7 +1245,7 @@ STRIPE_SECRET_KEY=sk_live_..."></textarea>
         if (revokeRes.status === 401) { window.location.href = 'login'; return; }
         localStorage.removeItem('vaultproof_share2_' + keyId);
 
-        // Split new key using real Shamir SSS
+        // Split new key
         var rotateShares = shamirSplit(new TextEncoder().encode(newKey), 2, 2);
         var share1 = shamirSerialize(rotateShares[0]);
         var share2 = shamirSerialize(rotateShares[1]);
@@ -1480,7 +1480,7 @@ exampleBody + '\n' +
         '</div>' +
         '<div class="mt-2 flex items-start gap-2">' +
           '<svg class="w-4 h-4 text-brand mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>' +
-          '<p class="text-xs text-gray-500">Your API key never appears in this code. The proxy reconstructs it ephemerally from both Shamir shares, makes the API call, and zeros it from memory immediately.</p>' +
+          '<p class="text-xs text-gray-500">Your API key never appears in this code. The proxy reconstructs it ephemerally from both encrypted shares, makes the API call, and zeros it from memory immediately.</p>' +
         '</div>';
     }
 
@@ -1801,7 +1801,7 @@ exampleBody + '\n' +
           statusEl.textContent = 'Importing ' + k.envName + ' (' + (imported + 1) + '/' + toImport.length + ')...';
           statusEl.className = 'text-sm mt-3 text-gray-400';
 
-          // Shamir split (reusing existing inline implementation)
+          // Split key (reusing existing inline implementation)
           var shares = shamirSplit(new TextEncoder().encode(k.value), 2, 2);
           var share1 = shamirSerialize(shares[0]);
           var share2 = shamirSerialize(shares[1]);

@@ -219,7 +219,7 @@
                 <a href="#key-storage-flow" class="nav-link block text-sm text-gray-500 py-1.5 px-3 rounded-r pl-6">Key Storage Flow</a>
                 <a href="#proxy-call-flow" class="nav-link block text-sm text-gray-500 py-1.5 px-3 rounded-r pl-6">Proxy Call Flow</a>
                 <a href="#breach-scenarios" class="nav-link block text-sm text-gray-500 py-1.5 px-3 rounded-r pl-6">Breach Scenarios</a>
-                <a href="#shamir" class="nav-link block text-sm text-gray-500 py-1.5 px-3 rounded-r pl-6">Shamir Secret Sharing</a>
+                <a href="#shamir" class="nav-link block text-sm text-gray-500 py-1.5 px-3 rounded-r pl-6">Split-Key Encryption</a>
                 <a href="#zk-proofs" class="nav-link block text-sm text-gray-500 py-1.5 px-3 rounded-r pl-6">Cryptographic Proofs</a>
 
                 <div class="pt-4 pb-1 px-3 text-[0.6875rem] font-semibold text-gray-600 uppercase tracking-wider">Packages</div>
@@ -267,11 +267,11 @@
                 <div class="grid md:grid-cols-3 gap-4">
                     <div class="bg-vp-surface border border-vp-border rounded-md p-5">
                         <div class="text-vp-accent font-semibold mb-2">Store</div>
-                        <p class="text-sm text-gray-500">Split and encrypt API keys with Shamir Secret Sharing. No one -- including us -- can see the full key.</p>
+                        <p class="text-sm text-gray-500">Split and encrypt API keys with split-key encryption. No one -- including us -- can see the full key.</p>
                     </div>
                     <div class="bg-vp-surface border border-vp-border rounded-md p-5">
                         <div class="text-vp-accent font-semibold mb-2">Proxy</div>
-                        <p class="text-sm text-gray-500">Make API calls through VaultProof. The key is reconstructed in memory for ~100ms, then destroyed.</p>
+                        <p class="text-sm text-gray-500">Make API calls through VaultProof. The key is reconstructed briefly in memory, then destroyed.</p>
                     </div>
                     <div class="bg-vp-surface border border-vp-border rounded-md p-5">
                         <div class="text-vp-accent font-semibold mb-2">Audit</div>
@@ -430,7 +430,7 @@ vaultproof proxy -k &lt;keyId&gt; --path /v1/charges -d <span class="str">'{"amo
                         <span class="bg-vp-accent/15 text-vp-accent text-xs font-bold px-2.5 py-1 rounded">FOR PROGRAMMATIC KEY MANAGEMENT</span>
                         <h3 class="text-lg font-semibold text-white">SDK -- import into your code</h3>
                     </div>
-                    <p class="text-gray-500 text-sm mb-4">Use the SDK when your application needs to programmatically store, rotate, and revoke API keys. The SDK handles Shamir splitting, encryption, and proxying automatically inside your Node.js/TypeScript app.</p>
+                    <p class="text-gray-500 text-sm mb-4">Use the SDK when your application needs to programmatically store, rotate, and revoke API keys. The SDK handles key splitting, encryption, and proxying automatically inside your Node.js/TypeScript app.</p>
 
                     <div class="code-block mb-4">
                         <div class="code-header">terminal</div>
@@ -447,7 +447,7 @@ vaultproof proxy -k &lt;keyId&gt; --path /v1/charges -d <span class="str">'{"amo
 <span class="cmt">// Store an API key (split + encrypted automatically)</span>
 <span class="kw">const</span> key = <span class="kw">await</span> vault.<span class="fn">store</span>(<span class="str">'sk-openai-key-here'</span>, <span class="str">'openai'</span>, <span class="str">'Production'</span>)
 
-<span class="cmt">// Make a proxied API call (key reconstructed for ~100ms, then zeroed)</span>
+<span class="cmt">// Make a proxied API call (key reconstructed briefly, then zeroed)</span>
 <span class="kw">const</span> res = <span class="kw">await</span> vault.<span class="fn">proxy</span>(key.id, <span class="str">'/v1/chat/completions'</span>, {
   model: <span class="str">'gpt-4'</span>,
   messages: [{ role: <span class="str">'user'</span>, content: <span class="str">'Hello!'</span> }]
@@ -540,16 +540,16 @@ $ vaultproof store -h</pre>
                             <p class="text-gray-500 text-sm">You call <code class="font-mono text-xs text-vp-accent">vault.store('sk-openai-key', 'openai', 'Production')</code>. The SDK receives the raw key in local memory.</p>
                         </div>
                         <div class="flow-step" data-step="2">
-                            <div class="text-white font-medium text-sm mb-1">Shamir Secret Sharing splits the key</div>
-                            <p class="text-gray-500 text-sm">The SDK uses Shamir Secret Sharing over GF(256) with polynomial interpolation to split the key into exactly 2 shares. Each share alone is cryptographic garbage -- indistinguishable from random bytes. Neither share reveals any information about the original key.</p>
+                            <div class="text-white font-medium text-sm mb-1">Split-key encryption splits the key</div>
+                            <p class="text-gray-500 text-sm">The SDK splits the key into exactly 2 shares using a cryptographic splitting algorithm. Each share alone is indistinguishable from random bytes. Neither share reveals any information about the original key.</p>
                         </div>
                         <div class="flow-step" data-step="3">
                             <div class="text-white font-medium text-sm mb-1">Share 1 is encrypted with the server key</div>
-                            <p class="text-gray-500 text-sm">Share 1 is sent to the VaultProof server, where it is encrypted with <strong class="text-gray-300">AES-256-GCM</strong> using the server-side <code class="font-mono text-xs text-vp-accent">VAULT_ENCRYPTION_KEY</code>. A unique IV and salt are generated per encryption. The ciphertext and auth tag are stored in PostgreSQL.</p>
+                            <p class="text-gray-500 text-sm">Share 1 is sent to the VaultProof server, where it is encrypted with <strong class="text-gray-300">authenticated encryption</strong>. A unique IV and salt are generated per encryption. The ciphertext and auth tag are stored securely.</p>
                         </div>
                         <div class="flow-step" data-step="4">
                             <div class="text-white font-medium text-sm mb-1">Share 2 is encrypted with your developer key</div>
-                            <p class="text-gray-500 text-sm">Share 2 is encrypted with <strong class="text-gray-300">AES-256-GCM</strong> using a key derived from your <code class="font-mono text-xs text-vp-accent">vp_live_</code> developer API key. This encrypted share is also stored server-side, but it cannot be decrypted without your developer key.</p>
+                            <p class="text-gray-500 text-sm">Share 2 is encrypted with <strong class="text-gray-300">authenticated encryption</strong> using a key derived from your <code class="font-mono text-xs text-vp-accent">vp_live_</code> developer API key. This encrypted share is also stored server-side, but it cannot be decrypted without your developer key.</p>
                         </div>
                         <div class="flow-step" data-step="5">
                             <div class="text-white font-medium text-sm mb-1">Raw key is destroyed</div>
@@ -578,19 +578,19 @@ $ vaultproof store -h</pre>
                         </div>
                         <div class="flow-step" data-step="2">
                             <div class="text-white font-medium text-sm mb-1">Edge proxy validates and forwards</div>
-                            <p class="text-gray-500 text-sm">The request hits Cloudflare's edge network. The edge worker HMAC-signs the request with <code class="font-mono text-xs text-vp-accent">HMAC-SHA256</code> and forwards it to the backend. Unsigned or rate-limited requests are rejected at the edge.</p>
+                            <p class="text-gray-500 text-sm">The request hits the edge network. The edge proxy signs the request cryptographically and forwards it to the backend. Unsigned or rate-limited requests are rejected at the edge.</p>
                         </div>
                         <div class="flow-step" data-step="3">
                             <div class="text-white font-medium text-sm mb-1">Server decrypts Share 1</div>
-                            <p class="text-gray-500 text-sm">The backend retrieves the encrypted Share 1 from PostgreSQL and decrypts it using <code class="font-mono text-xs text-vp-accent">VAULT_ENCRYPTION_KEY</code> with AES-256-GCM. The auth tag is verified to detect tampering.</p>
+                            <p class="text-gray-500 text-sm">The backend retrieves the encrypted Share 1 and decrypts it using the server-side encryption key. The auth tag is verified to detect tampering.</p>
                         </div>
                         <div class="flow-step" data-step="4">
                             <div class="text-white font-medium text-sm mb-1">Server decrypts Share 2</div>
                             <p class="text-gray-500 text-sm">The backend decrypts Share 2 using a key derived from your <code class="font-mono text-xs text-vp-accent">vp_live_</code> developer key (sent in the request header). Both shares are now in plaintext in server RAM.</p>
                         </div>
                         <div class="flow-step" data-step="5">
-                            <div class="text-white font-medium text-sm mb-1">Shamir reconstruction</div>
-                            <p class="text-gray-500 text-sm">The two shares are combined via Shamir polynomial interpolation to reconstruct the original API key. The full key now exists in RAM.</p>
+                            <div class="text-white font-medium text-sm mb-1">Key reconstruction</div>
+                            <p class="text-gray-500 text-sm">The two shares are combined to reconstruct the original API key. The full key now exists in RAM.</p>
                         </div>
                         <div class="flow-step" data-step="6">
                             <div class="text-white font-medium text-sm mb-1">API call made to provider</div>
@@ -598,7 +598,7 @@ $ vaultproof store -h</pre>
                         </div>
                         <div class="flow-step" data-step="7">
                             <div class="text-white font-medium text-sm mb-1">Key zeroed from memory</div>
-                            <p class="text-gray-500 text-sm">Immediately after the API call completes, the reconstructed key and both plaintext shares are overwritten with zeros in memory. The key existed in RAM for approximately 100ms. It never touches disk, logs, or persistent storage.</p>
+                            <p class="text-gray-500 text-sm">Immediately after the API call completes, the reconstructed key and both plaintext shares are overwritten with zeros in memory. The key existed in RAM only briefly during the API call. It never touches disk, logs, or persistent storage.</p>
                         </div>
                         <div class="flow-step" data-step="8">
                             <div class="text-white font-medium text-sm mb-1">Response forwarded to you</div>
@@ -628,21 +628,21 @@ $ vaultproof store -h</pre>
                             <tbody>
                                 <tr>
                                     <td>Database breached</td>
-                                    <td class="text-gray-400">Two encrypted blobs per key (AES-256-GCM ciphertext). Without either decryption key, this is indistinguishable from random data.</td>
+                                    <td class="text-gray-400">Two encrypted blobs per key. Without either decryption key, this is indistinguishable from random data.</td>
                                     <td><span class="text-amber-400 font-semibold">No</span></td>
                                 </tr>
                                 <tr>
-                                    <td>VAULT_ENCRYPTION_KEY leaked</td>
-                                    <td class="text-gray-400">Can decrypt Share 1. But Share 2 is still encrypted with the user's <code class="font-mono text-xs text-vp-accent">vp_live_</code> key. One share alone reveals nothing (Shamir property).</td>
+                                    <td>server encryption key leaked</td>
+                                    <td class="text-gray-400">Can decrypt Share 1. But Share 2 is still encrypted with the user's <code class="font-mono text-xs text-vp-accent">vp_live_</code> key. One share alone reveals nothing.</td>
                                     <td><span class="text-amber-400 font-semibold">No</span></td>
                                 </tr>
                                 <tr>
                                     <td>vp_live_ key leaked</td>
-                                    <td class="text-gray-400">Can decrypt Share 2. But Share 1 is still encrypted with <code class="font-mono text-xs">VAULT_ENCRYPTION_KEY</code>. One share alone reveals nothing.</td>
+                                    <td class="text-gray-400">Can decrypt Share 2. But Share 1 is still encrypted with <code class="font-mono text-xs">server encryption key</code>. One share alone reveals nothing.</td>
                                     <td><span class="text-amber-400 font-semibold">No</span></td>
                                 </tr>
                                 <tr>
-                                    <td>Database + VAULT_ENCRYPTION_KEY</td>
+                                    <td>Database + server encryption key</td>
                                     <td class="text-gray-400">Decrypted Share 1. Encrypted Share 2 (still locked).</td>
                                     <td><span class="text-amber-400 font-semibold">No</span></td>
                                 </tr>
@@ -653,7 +653,7 @@ $ vaultproof store -h</pre>
                                 </tr>
                                 <tr>
                                     <td class="!text-amber-400">All three compromised</td>
-                                    <td class="text-gray-400">Both shares decrypted. Shamir reconstruction possible.</td>
+                                    <td class="text-gray-400">Both shares decrypted. Key reconstruction possible.</td>
                                     <td><span class="text-amber-400 font-semibold">Yes</span> -- requires all three</td>
                                 </tr>
                             </tbody>
@@ -661,13 +661,13 @@ $ vaultproof store -h</pre>
                     </div>
 
                     <div class="callout-danger mt-6">
-                        <p class="text-sm text-amber-300"><strong>Three independent secrets</strong> must all be compromised simultaneously to reconstruct any API key: (1) the database contents, (2) the server-side <code class="font-mono text-xs">VAULT_ENCRYPTION_KEY</code>, and (3) the user's <code class="font-mono text-xs">vp_live_</code> developer key. These are stored in different systems with different access controls.</p>
+                        <p class="text-sm text-amber-300"><strong>Three independent secrets</strong> must all be compromised simultaneously to reconstruct any API key: (1) the database contents, (2) the server-side <code class="font-mono text-xs">server encryption key</code>, and (3) the user's <code class="font-mono text-xs">vp_live_</code> developer key. These are stored in different systems with different access controls.</p>
                     </div>
                 </div>
 
-                <!-- 3.4 Shamir Secret Sharing -->
+                <!-- 3.4 Split-Key Encryption -->
                 <div id="shamir" class="mb-14">
-                    <h3 class="text-xl font-semibold text-white mb-6">3.4 Shamir Secret Sharing Explained</h3>
+                    <h3 class="text-xl font-semibold text-white mb-6">3.4 Split-Key Encryption Explained</h3>
 
                     <div class="bg-vp-surface border border-vp-border rounded-md p-6 mb-6">
                         <h4 class="text-white font-medium mb-3">The simple version</h4>
@@ -679,16 +679,10 @@ $ vaultproof store -h</pre>
                     <div class="bg-vp-surface border border-vp-border rounded-md p-6">
                         <h4 class="text-white font-medium mb-3">The technical version</h4>
                         <p class="text-gray-400 text-sm leading-relaxed mb-4">
-                            Shamir Secret Sharing (SSS) works over a finite field -- in VaultProof's case, <strong class="text-gray-300">GF(256)</strong> (the Galois Field with 256 elements, where each element fits in one byte).
-                        </p>
-                        <p class="text-gray-400 text-sm leading-relaxed mb-4">
-                            For each byte of the secret, the algorithm constructs a random polynomial of degree <code class="font-mono text-xs text-vp-accent">k-1</code> (where <code class="font-mono text-xs text-vp-accent">k=2</code> is the threshold). The constant term of the polynomial is the secret byte. The shares are evaluations of this polynomial at distinct non-zero points in GF(256).
-                        </p>
-                        <p class="text-gray-400 text-sm leading-relaxed mb-4">
-                            With a 2-of-2 threshold scheme, this means: a random polynomial <code class="font-mono text-xs text-vp-accent">f(x) = a1*x + s</code> is constructed for each byte <code class="font-mono text-xs text-vp-accent">s</code> of the key, where <code class="font-mono text-xs text-vp-accent">a1</code> is a random coefficient. Share 1 = <code class="font-mono text-xs text-vp-accent">f(1)</code>, Share 2 = <code class="font-mono text-xs text-vp-accent">f(2)</code>. Given only one share, the attacker has one equation with two unknowns -- every possible value of the secret is equally likely.
+                            VaultProof uses a cryptographic secret sharing scheme to split each API key into two shares. Each share is independently indistinguishable from random data -- possessing only one share gives an attacker zero information about the original key.
                         </p>
                         <p class="text-gray-400 text-sm leading-relaxed">
-                            Reconstruction uses <strong class="text-gray-300">Lagrange interpolation</strong> over GF(256) to recover the original polynomial from 2 evaluation points, then reads the constant term (the secret byte).
+                            Reconstruction requires both shares. Without both, every possible value of the original key is equally likely. The splitting and reconstruction algorithms are implemented in the open-source <code class="font-mono text-xs text-vp-accent">@vaultproof/shamir</code> package, which you can audit independently.
                         </p>
                     </div>
                 </div>
@@ -714,7 +708,7 @@ $ vaultproof store -h</pre>
                     </div>
 
                     <div class="callout-info">
-                        <p class="text-sm text-indigo-300"><strong>Note:</strong> When using the SDK, ZK proof generation is handled automatically. You do not need to interact with the Noir circuit directly. The SDK generates proofs client-side before each proxy call.</p>
+                        <p class="text-sm text-indigo-300"><strong>Note:</strong> When using the SDK, ZK proof generation is handled automatically. The SDK generates proofs client-side before each proxy call.</p>
                     </div>
                 </div>
             </section>
@@ -733,7 +727,7 @@ $ vaultproof store -h</pre>
                             <code class="font-mono text-sm text-vp-accent font-semibold">@vaultproof/sdk</code>
                             <span class="text-xs text-gray-600">Most developers use this</span>
                         </div>
-                        <p class="text-gray-400 text-sm mb-3">JavaScript/TypeScript library you <code class="font-mono text-xs text-vp-accent">import</code> in your app. Handles Shamir splitting, encryption, and proxied API calls. Includes <code class="font-mono text-xs">@vaultproof/shamir</code> as a dependency.</p>
+                        <p class="text-gray-400 text-sm mb-3">JavaScript/TypeScript library you <code class="font-mono text-xs text-vp-accent">import</code> in your app. Handles key splitting, encryption, and proxied API calls. Includes <code class="font-mono text-xs">@vaultproof/shamir</code> as a dependency.</p>
                         <div class="code-block">
                             <div class="code-header">install</div>
 <pre class="text-gray-300">npm install @vaultproof/sdk</pre>
@@ -757,7 +751,7 @@ $ vaultproof store -h</pre>
                             <code class="font-mono text-sm text-vp-accent font-semibold">@vaultproof/connect</code>
                             <span class="text-xs text-gray-600">Embed in your app</span>
                         </div>
-                        <p class="text-gray-400 text-sm mb-3">Drop-in React component for apps that need "Bring Your Own Key" (BYOK). Users paste their API key into your app, the widget splits it with Shamir + generates a ZK proof, and sends encrypted shares to VaultProof. Your app code doesn't handle the raw key directly.</p>
+                        <p class="text-gray-400 text-sm mb-3">Drop-in React component for apps that need "Bring Your Own Key" (BYOK). Users paste their API key into your app, the widget splits it securely, generates a cryptographic proof, and sends encrypted shares to VaultProof. Your app code doesn't handle the raw key directly.</p>
                         <div class="code-block">
                             <div class="code-header">install</div>
 <pre class="text-gray-300">npm install @vaultproof/connect</pre>
@@ -769,7 +763,7 @@ $ vaultproof store -h</pre>
                             <code class="font-mono text-sm text-vp-accent font-semibold">@vaultproof/shamir</code>
                             <span class="text-xs text-gray-600">Internal -- rarely needed directly</span>
                         </div>
-                        <p class="text-gray-400 text-sm">The Shamir Secret Sharing engine over GF(256). Bundled inside the SDK, CLI, and Connect widget. Only install this directly if you want raw splitting without VaultProof infrastructure.</p>
+                        <p class="text-gray-400 text-sm">The split-key encryption engine. Bundled inside the SDK, CLI, and Connect widget. Only install this directly if you want raw splitting without VaultProof infrastructure.</p>
                     </div>
                 </div>
 
@@ -870,7 +864,7 @@ $ vaultproof store -h</pre>
                     <ol class="list-decimal list-inside space-y-2 text-sm text-gray-400">
                         <li>Send your <code class="font-mono text-xs text-vp-accent">vp_live_</code> key as the <code class="font-mono text-xs">Authorization: Bearer</code> header (this is the same field SDKs use for <code class="font-mono text-xs">apiKey</code>)</li>
                         <li>VaultProof identifies your account and finds your most recent <strong class="text-white">ACTIVE</strong> key for that provider</li>
-                        <li>The key is reconstructed from Shamir shares for ~100ms, used to call the upstream API, then zeroed from memory</li>
+                        <li>The key is reconstructed from encrypted shares briefly in memory, used to call the upstream API, then zeroed</li>
                         <li>The response (including SSE streaming) is forwarded back to you transparently</li>
                     </ol>
                 </div>
@@ -986,7 +980,7 @@ res = client.chat.completions.<span class="fn">create</span>(
                     <!-- vault.store -->
                     <div class="endpoint-card mb-6">
                         <h4 class="text-white font-mono text-sm font-semibold mb-3">vault.store(apiKey, provider, label?)</h4>
-                        <p class="text-gray-400 text-sm mb-4">Splits an API key using Shamir Secret Sharing, encrypts both shares, and stores them on the VaultProof server. The raw key is destroyed after splitting.</p>
+                        <p class="text-gray-400 text-sm mb-4">Splits an API key using split-key encryption, encrypts both shares, and stores them on the VaultProof server. The raw key is destroyed after splitting.</p>
                         <div class="bg-vp-surface border border-vp-border rounded-md overflow-hidden mb-4">
                             <table class="doc-table">
                                 <thead><tr><th>Parameter</th><th>Type</th><th>Required</th><th>Description</th></tr></thead>
@@ -1039,7 +1033,7 @@ res = client.chat.completions.<span class="fn">create</span>(
                     <!-- vault.proxy -->
                     <div class="endpoint-card mb-6">
                         <h4 class="text-white font-mono text-sm font-semibold mb-3">vault.proxy(keyId, path, body?, method?)</h4>
-                        <p class="text-gray-400 text-sm mb-4">Makes a proxied API call through VaultProof. The key is reconstructed in server RAM for approximately 100ms, then zeroed. The provider's response is returned directly.</p>
+                        <p class="text-gray-400 text-sm mb-4">Makes a proxied API call through VaultProof. The key is reconstructed briefly in server memory, then zeroed. The provider's response is returned directly.</p>
                         <div class="bg-vp-surface border border-vp-border rounded-md overflow-hidden mb-4">
                             <table class="doc-table">
                                 <thead><tr><th>Parameter</th><th>Type</th><th>Required</th><th>Description</th></tr></thead>
@@ -1294,7 +1288,7 @@ vault.setSessionToken(token);</pre>
                                 <tr>
                                     <td class="text-white font-medium">PEM / SSH private keys</td>
                                     <td><span class="text-green-400">Yes</span></td>
-                                    <td class="text-gray-400">Multi-line keys work. Shamir handles newlines and special characters.</td>
+                                    <td class="text-gray-400">Multi-line keys work. The splitting algorithm handles newlines and special characters.</td>
                                 </tr>
                                 <tr>
                                     <td class="text-white font-medium">Publishable / public keys</td>
@@ -1428,10 +1422,10 @@ vault.setSessionToken(token);</pre>
                     <div class="bg-vp-surface border border-vp-border rounded-md p-6">
                         <ol class="list-decimal list-inside space-y-3 text-sm text-gray-400">
                             <li><strong class="text-white">User selects a provider</strong> (OpenAI, Anthropic, etc.) and pastes their API key</li>
-                            <li><strong class="text-white">Widget splits the key</strong> using Shamir Secret Sharing (2-of-2) in the browser -- the raw key never leaves the page</li>
-                            <li><strong class="text-white">Share 1 is sent to VaultProof</strong> encrypted with the server's key (AES-256-GCM)</li>
+                            <li><strong class="text-white">Widget splits the key</strong> into two encrypted shares in the browser -- the raw key never leaves the page</li>
+                            <li><strong class="text-white">Share 1 is sent to VaultProof</strong> encrypted with the server's key</li>
                             <li><strong class="text-white">Share 2 is stored in localStorage</strong> on the user's device</li>
-                            <li><strong class="text-white">A ZK proof is generated</strong> (Noir circuit via Barretenberg WASM) proving ownership without revealing the key</li>
+                            <li><strong class="text-white">A ZK proof is generated</strong> client-side, proving ownership without revealing the key</li>
                             <li><strong class="text-white">Your app receives a keyId</strong> via the <code class="font-mono text-xs text-vp-accent">onSuccess</code> callback -- use this to make proxied API calls</li>
                         </ol>
                     </div>
@@ -1623,7 +1617,7 @@ $ vaultproof scan --output json       <span class="cmt"># JSON for CI/CD pipelin
                                 <code class="font-mono text-sm text-white font-semibold">vaultproof migrate</code>
                                 <span class="text-xs font-medium text-yellow-400 bg-yellow-400/10 px-2 py-0.5 rounded-full">Pro</span>
                             </div>
-                            <p class="text-gray-500 text-sm mb-2">Scan, store, and rewrite. Finds all API keys in your project, stores them in VaultProof (Shamir-split), and rewrites your <code class="font-mono text-xs text-vp-accent">.env</code> files and source code. Interactive — asks before each change. Creates a backup in <code class="font-mono text-xs text-vp-accent">.vaultproof/backup/</code>.</p>
+                            <p class="text-gray-500 text-sm mb-2">Scan, store, and rewrite. Finds all API keys in your project, stores them in VaultProof (split-key encrypted), and rewrites your <code class="font-mono text-xs text-vp-accent">.env</code> files and source code. Interactive — asks before each change. Creates a backup in <code class="font-mono text-xs text-vp-accent">.vaultproof/backup/</code>.</p>
                             <div class="bg-vp-surface border border-vp-border rounded-md overflow-hidden mt-3">
                                 <table class="doc-table">
                                     <thead><tr><th>Flag</th><th>Description</th></tr></thead>
@@ -1696,7 +1690,7 @@ $ vaultproof config set api-url http://localhost:3333</pre>
 <pre class="text-gray-300">$ vaultproof store -p openai
 <span class="cmt">API Key: ************************</span>
 <span class="str">Key stored: vk_8f3a2b1c (openai)</span>
-<span class="cmt">  Key was Shamir-split locally. Server never saw the full key.</span>
+<span class="cmt">  Key was split locally. Server never saw the full key.</span>
 
 $ vaultproof store -p anthropic -l "Production Claude"
 $ vaultproof add -p google -l "Vertex AI"</pre>
@@ -1765,7 +1759,7 @@ $ vaultproof rm vk_8f3a2b1c -y    <span class="cmt"># skip confirmation</span></
                             <code class="font-mono text-sm text-white font-semibold">vaultproof proxy</code>
                             <span class="text-gray-600 text-xs font-mono">alias: call</span>
                         </div>
-                        <p class="text-gray-500 text-sm mb-3">Make a proxied API call. The server decrypts both shares, reconstructs the key for ~100ms, makes the call, then zeros everything.</p>
+                        <p class="text-gray-500 text-sm mb-3">Make a proxied API call. The server decrypts both shares, reconstructs the key briefly in memory, makes the call, then zeros everything.</p>
                         <div class="bg-vp-surface border border-vp-border rounded-md overflow-hidden mb-3">
                             <table class="doc-table">
                                 <thead><tr><th>Flag</th><th>Description</th><th>Required</th></tr></thead>
@@ -1993,7 +1987,7 @@ $ vaultproof status</pre>
                         <h3 class="text-white font-semibold mb-3">Keys Page</h3>
                         <p class="text-gray-400 text-sm mb-3">Full key management interface:</p>
                         <ul class="space-y-1.5 text-sm text-gray-500">
-                            <li class="flex items-start gap-2"><span class="text-vp-accent mt-0.5">&#8226;</span> <span><strong class="text-gray-300">Add Key</strong> -- paste a key, select provider, add a label. Shamir splitting happens in-browser.</span></li>
+                            <li class="flex items-start gap-2"><span class="text-vp-accent mt-0.5">&#8226;</span> <span><strong class="text-gray-300">Add Key</strong> -- paste a key, select provider, add a label. Key splitting happens in-browser.</span></li>
                             <li class="flex items-start gap-2"><span class="text-vp-accent mt-0.5">&#8226;</span> <span><strong class="text-gray-300">Test Key</strong> -- one-click test that makes a lightweight proxy call to verify the key works.</span></li>
                             <li class="flex items-start gap-2"><span class="text-vp-accent mt-0.5">&#8226;</span> <span><strong class="text-gray-300">Rotate</strong> -- replace the stored shares with a new API key without changing the key slot ID.</span></li>
                             <li class="flex items-start gap-2"><span class="text-vp-accent mt-0.5">&#8226;</span> <span><strong class="text-gray-300">Revoke</strong> -- permanently destroy both shares. Irreversible.</span></li>
@@ -2031,7 +2025,7 @@ $ vaultproof status</pre>
             <section id="api-reference" class="mb-16">
                 <h2 class="text-3xl font-bold text-white mb-2">API Reference</h2>
                 <p class="text-gray-500 mb-4">Base URL: <code class="font-mono text-sm text-vp-accent">https://staging-api.vaultproof.dev</code></p>
-                <p class="text-gray-500 text-sm mb-8">All requests go through Cloudflare's edge network (330+ cities). HMAC-signed and rate-limited. All request and response bodies are JSON (<code class="font-mono text-xs">Content-Type: application/json</code>).</p>
+                <p class="text-gray-500 text-sm mb-8">All requests go through our global edge network. Cryptographically signed and rate-limited. All request and response bodies are JSON (<code class="font-mono text-xs">Content-Type: application/json</code>).</p>
 
                 <!-- Auth Endpoints -->
                 <div class="mb-10">
@@ -2162,13 +2156,13 @@ Authorization: Bearer &lt;jwt_token&gt;
                                 <span class="method-badge method-post">POST</span>
                                 <code class="font-mono text-sm text-white">/api/v1/keys/store</code>
                             </div>
-                            <p class="text-gray-400 text-sm mb-3">Store a Shamir-split API key.</p>
+                            <p class="text-gray-400 text-sm mb-3">Store a split-key encrypted API key.</p>
                             <div class="code-block">
 <pre class="text-gray-300"><span class="cmt">// Request</span>
 {
   <span class="str">"provider"</span>: <span class="str">"openai"</span>,
   <span class="str">"label"</span>: <span class="str">"Production GPT-4"</span>,
-  <span class="str">"share1"</span>: <span class="str">"base64..."</span>,            <span class="cmt">// Shamir Share 1</span>
+  <span class="str">"share1"</span>: <span class="str">"base64..."</span>,            <span class="cmt">// Encrypted Share 1</span>
   <span class="str">"vaultCommitment"</span>: <span class="str">"hex..."</span>,    <span class="cmt">// Hash commitment for ZK</span>
   <span class="str">"appId"</span>: <span class="str">"my-app"</span>,               <span class="cmt">// optional</span>
   <span class="str">"appName"</span>: <span class="str">"My App"</span>              <span class="cmt">// optional</span>
@@ -2272,7 +2266,7 @@ Authorization: Bearer &lt;jwt_token&gt;
                             <div class="code-block">
 <pre class="text-gray-300"><span class="cmt">// Request</span>
 {
-  <span class="str">"share1"</span>: <span class="str">"base64..."</span>,           <span class="cmt">// new Shamir Share 1</span>
+  <span class="str">"share1"</span>: <span class="str">"base64..."</span>,           <span class="cmt">// new encrypted Share 1</span>
   <span class="str">"vaultCommitment"</span>: <span class="str">"hex..."</span>   <span class="cmt">// new commitment</span>
 }
 
@@ -2302,7 +2296,7 @@ Authorization: Bearer &lt;jwt_token&gt;
                                 <span class="method-badge method-post">POST</span>
                                 <code class="font-mono text-sm text-white">/api/v1/sdk/store</code>
                             </div>
-                            <p class="text-gray-400 text-sm mb-3">Store an API key via the SDK. The server handles Shamir splitting and encryption.</p>
+                            <p class="text-gray-400 text-sm mb-3">Store an API key via the SDK. The server handles key splitting and encryption.</p>
                             <div class="code-block">
 <pre class="text-gray-300"><span class="cmt">// Request</span>
 {
@@ -2717,7 +2711,7 @@ Authorization: Bearer &lt;jwt_token&gt;
                     <div class="endpoint-card border-l-2 border-l-green-500/50">
                         <div class="flex items-center gap-3 mb-2">
                             <span class="text-green-400 font-mono text-xs font-bold bg-green-500/10 px-2 py-0.5 rounded">L1</span>
-                            <h4 class="text-white font-semibold">Shamir Secret Sharing</h4>
+                            <h4 class="text-white font-semibold">Split-Key Encryption</h4>
                         </div>
                         <p class="text-gray-400 text-sm">API keys are split into 2 shares. Each share alone reveals nothing about the original key -- no amount of computation can extract the secret from a single share. This is designed so that no single server holds your complete key at rest.</p>
                     </div>
@@ -2725,25 +2719,25 @@ Authorization: Bearer &lt;jwt_token&gt;
                     <div class="endpoint-card border-l-2 border-l-green-500/50">
                         <div class="flex items-center gap-3 mb-2">
                             <span class="text-green-400 font-mono text-xs font-bold bg-green-500/10 px-2 py-0.5 rounded">L2</span>
-                            <h4 class="text-white font-semibold">AES-256-GCM -- Share 1 Encryption</h4>
+                            <h4 class="text-white font-semibold">Authenticated Encryption -- Share 1</h4>
                         </div>
-                        <p class="text-gray-400 text-sm">Share 1 is encrypted at rest with AES-256-GCM using the server-side <code class="font-mono text-xs text-vp-accent">VAULT_ENCRYPTION_KEY</code>. Each encryption uses a unique random IV and salt. The GCM auth tag detects any tampering with the ciphertext.</p>
+                        <p class="text-gray-400 text-sm">Share 1 is encrypted at rest using authenticated encryption with a server-side key. Each encryption uses a unique random IV and salt. An auth tag detects any tampering with the ciphertext.</p>
                     </div>
 
                     <div class="endpoint-card border-l-2 border-l-green-500/50">
                         <div class="flex items-center gap-3 mb-2">
                             <span class="text-green-400 font-mono text-xs font-bold bg-green-500/10 px-2 py-0.5 rounded">L3</span>
-                            <h4 class="text-white font-semibold">AES-256-GCM -- Share 2 Encryption</h4>
+                            <h4 class="text-white font-semibold">Authenticated Encryption -- Share 2</h4>
                         </div>
-                        <p class="text-gray-400 text-sm">Share 2 is encrypted with AES-256-GCM using a key derived from the user's <code class="font-mono text-xs text-vp-accent">vp_live_</code> developer key. This means even with full server access, Share 2 cannot be decrypted without the user's key.</p>
+                        <p class="text-gray-400 text-sm">Share 2 is encrypted using authenticated encryption with a key derived from the user's <code class="font-mono text-xs text-vp-accent">vp_live_</code> developer key. This means even with full server access, Share 2 cannot be decrypted without the user's key.</p>
                     </div>
 
                     <div class="endpoint-card border-l-2 border-l-blue-500/50">
                         <div class="flex items-center gap-3 mb-2">
                             <span class="text-blue-400 font-mono text-xs font-bold bg-blue-500/10 px-2 py-0.5 rounded">L4</span>
-                            <h4 class="text-white font-semibold">HMAC-SHA256 Edge Signing</h4>
+                            <h4 class="text-white font-semibold">Edge Request Signing</h4>
                         </div>
-                        <p class="text-gray-400 text-sm">All requests are HMAC-SHA256 signed at Cloudflare's edge network before reaching the backend. The backend rejects any request without a valid HMAC signature. Direct access to the backend is blocked -- all traffic must flow through the edge.</p>
+                        <p class="text-gray-400 text-sm">All requests are cryptographically signed at the edge network before reaching the backend. The backend rejects any request without a valid signature. Direct access to the backend is blocked -- all traffic must flow through the edge.</p>
                     </div>
 
                     <div class="endpoint-card border-l-2 border-l-blue-500/50">
@@ -2757,9 +2751,9 @@ Authorization: Bearer &lt;jwt_token&gt;
                     <div class="endpoint-card border-l-2 border-l-indigo-500/50">
                         <div class="flex items-center gap-3 mb-2">
                             <span class="text-indigo-400 font-mono text-xs font-bold bg-indigo-500/10 px-2 py-0.5 rounded">L6</span>
-                            <h4 class="text-white font-semibold">Nullifier Replay Prevention</h4>
+                            <h4 class="text-white font-semibold">Replay Prevention</h4>
                         </div>
-                        <p class="text-gray-400 text-sm">Every proxy call requires a unique nullifier (a random hex string). Used nullifiers are stored in the database. If an attacker intercepts a request and tries to replay it, the server rejects it because the nullifier has already been consumed.</p>
+                        <p class="text-gray-400 text-sm">Every proxy call includes a unique token to prevent replay attacks. Used tokens are stored server-side. If an attacker intercepts a request and tries to replay it, the server rejects it because the token has already been consumed.</p>
                     </div>
 
                     <div class="endpoint-card border-l-2 border-l-indigo-500/50">
@@ -2767,7 +2761,7 @@ Authorization: Bearer &lt;jwt_token&gt;
                             <span class="text-indigo-400 font-mono text-xs font-bold bg-indigo-500/10 px-2 py-0.5 rounded">L7</span>
                             <h4 class="text-white font-semibold">Rate Limiting</h4>
                         </div>
-                        <p class="text-gray-400 text-sm">Two layers of rate limiting: 60 requests/minute per IP at the Cloudflare edge, and 100 requests/minute per user at the backend. Brute-force and DDoS attempts are throttled before they reach the application.</p>
+                        <p class="text-gray-400 text-sm">Two layers of rate limiting: 60 requests/minute per IP at the edge, and 100 requests/minute per user at the backend. Brute-force and DDoS attempts are throttled before they reach the application.</p>
                     </div>
 
                     <div class="endpoint-card border-l-2 border-l-indigo-500/50">
@@ -2783,11 +2777,11 @@ Authorization: Bearer &lt;jwt_token&gt;
                 <div class="grid md:grid-cols-2 gap-4 mb-8">
                     <div class="endpoint-card">
                         <h4 class="text-white font-semibold mb-2">Memory Zeroing</h4>
-                        <p class="text-gray-500 text-sm">After every proxy call, the reconstructed API key and both plaintext shares are explicitly overwritten with zero bytes in memory. The key exists in server RAM for approximately 100ms. It is never written to disk, swap, or logs.</p>
+                        <p class="text-gray-500 text-sm">After every proxy call, the reconstructed API key and both plaintext shares are explicitly overwritten with zero bytes in memory. The key exists in server RAM only briefly during the API call. It is never written to disk, swap, or logs.</p>
                     </div>
                     <div class="endpoint-card">
                         <h4 class="text-white font-semibold mb-2">TLS Everywhere</h4>
-                        <p class="text-gray-500 text-sm">All traffic between the client, Cloudflare edge, and backend uses TLS 1.3. All traffic between the backend and API providers uses TLS. No plaintext transmission anywhere in the pipeline.</p>
+                        <p class="text-gray-500 text-sm">All traffic between the client, edge, and backend uses TLS 1.3. All traffic between the backend and API providers uses TLS. No plaintext transmission anywhere in the pipeline.</p>
                     </div>
                 </div>
 
@@ -2939,7 +2933,7 @@ test/fixtures/*
 
                     <div class="endpoint-card">
                         <h4 class="text-white font-semibold mb-2">"Is this open source?"</h4>
-                        <p class="text-gray-400 text-sm">The Noir ZK circuit is open source so the cryptographic proofs can be independently audited and verified. The SDK and CLI are distributed as npm packages. The backend server and edge proxy are proprietary.</p>
+                        <p class="text-gray-400 text-sm">The ZK proof circuit is open source so the cryptographic proofs can be independently audited and verified. The SDK and CLI are distributed as npm packages. The backend server and edge proxy are proprietary.</p>
                     </div>
 
                     <div class="endpoint-card">
@@ -2949,7 +2943,7 @@ test/fixtures/*
 
                     <div class="endpoint-card">
                         <h4 class="text-white font-semibold mb-2">"How is this different from 1Password or HashiCorp Vault?"</h4>
-                        <p class="text-gray-400 text-sm">1Password and HashiCorp Vault store secrets and give them back to you in plaintext when you need them. Your application then uses the key directly, meaning it exists in your app's memory, potentially in logs, and definitely in network traffic. VaultProof never gives you the key back. Instead, it makes the API call for you using the reconstructed key, which only exists in VaultProof's RAM for ~100ms. Your application never touches the raw key after initial storage.</p>
+                        <p class="text-gray-400 text-sm">1Password and HashiCorp Vault store secrets and give them back to you in plaintext when you need them. Your application then uses the key directly, meaning it exists in your app's memory, potentially in logs, and definitely in network traffic. VaultProof never gives you the key back. Instead, it makes the API call for you using the reconstructed key, which only exists briefly in VaultProof's memory during the call. Your application never touches the raw key after initial storage.</p>
                     </div>
 
                     <div class="endpoint-card">
@@ -2959,12 +2953,12 @@ test/fixtures/*
 
                     <div class="endpoint-card">
                         <h4 class="text-white font-semibold mb-2">"Does VaultProof add latency to my API calls?"</h4>
-                        <p class="text-gray-400 text-sm">Yes, but it is minimal. The overhead is the time to decrypt both shares and reconstruct the key (a few milliseconds) plus one additional network hop (Cloudflare edge to backend). For most LLM API calls, which take 500ms-5s to complete, VaultProof adds less than 50ms of overhead -- typically under 2% of the total request time.</p>
+                        <p class="text-gray-400 text-sm">Yes, but it is minimal. The overhead is the time to decrypt both shares and reconstruct the key (a few milliseconds) plus one additional network hop (edge to backend). For most LLM API calls, which take 500ms-5s to complete, VaultProof adds less than 50ms of overhead -- typically under 2% of the total request time.</p>
                     </div>
 
                     <div class="endpoint-card">
                         <h4 class="text-white font-semibold mb-2">"Can I use VaultProof in production?"</h4>
-                        <p class="text-gray-400 text-sm">Yes. VaultProof runs on Cloudflare's edge network (330+ cities worldwide) with multi-region database replication. The SDK uses <code class="font-mono text-xs text-vp-accent">vp_live_</code> keys for production and <code class="font-mono text-xs text-vp-accent">vp_test_</code> keys for development/staging environments.</p>
+                        <p class="text-gray-400 text-sm">Yes. VaultProof runs on a global edge network (330+ cities worldwide) with multi-region database replication. The SDK uses <code class="font-mono text-xs text-vp-accent">vp_live_</code> keys for production and <code class="font-mono text-xs text-vp-accent">vp_test_</code> keys for development/staging environments.</p>
                     </div>
                 </div>
             </section>

@@ -117,7 +117,7 @@
             <!-- 1 -->
             <section>
                 <h2 class="text-xl font-bold text-white mb-3">1. Service Description</h2>
-                <p>VaultProof ("the Service") is an API key storage and proxy platform operated by Rial Labs. We split your API keys, encrypt the resulting shares with AES-256-GCM, and reassemble them only briefly in memory during a proxied API call. Cryptographic proofs allow you to verify that your key is stored correctly without revealing it. Your raw API key is never stored whole at rest on any server.</p>
+                <p>VaultProof ("the Service") is an API key storage and proxy platform operated by Rial Labs. We split your API keys, encrypt the resulting shares with authenticated encryption, and reassemble them only briefly in memory during a proxied API call. Cryptographic proofs allow you to verify that your key is stored correctly without revealing it. Your raw API key is never stored whole at rest on any server.</p>
             </section>
 
             <!-- 2 -->
@@ -147,7 +147,7 @@
             <!-- 6 -->
             <section>
                 <h2 class="text-xl font-bold text-white mb-3">6. Data Handling</h2>
-                <p>We store encrypted shares of your API keys, never plaintext keys. Shares are encrypted with AES-256-GCM and stored in our database. For full details on what data we collect and how we handle it, please see our <a href="/privacy" class="text-vp-accent hover:underline">Privacy Policy</a>.</p>
+                <p>We store encrypted shares of your API keys, never plaintext keys. Shares are encrypted with authenticated encryption and stored in our database. For full details on what data we collect and how we handle it, please see our <a href="/privacy" class="text-vp-accent hover:underline">Privacy Policy</a>.</p>
             </section>
 
             <!-- 7 -->

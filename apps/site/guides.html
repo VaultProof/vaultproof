@@ -445,7 +445,7 @@
                     <div class="bg-cyan-500/5 border border-cyan-500/20 rounded-md p-4">
                         <div class="flex items-start gap-2">
                             <svg class="w-4 h-4 text-cyan-400 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
-                            <p class="text-gray-400 text-xs">Claude Code makes API calls using whatever <code class="font-mono text-vp-accent">ANTHROPIC_API_KEY</code> is set in your environment. With VaultProof, that value is a <code class="font-mono text-vp-accent">vp_live_</code> proxy key &mdash; not your real Anthropic key. The proxy call goes through VaultProof, your actual key is reassembled in memory for ~100ms, the call is made, and the key is wiped. Claude Code gets the response. Nothing is stored.</p>
+                            <p class="text-gray-400 text-xs">Claude Code makes API calls using whatever <code class="font-mono text-vp-accent">ANTHROPIC_API_KEY</code> is set in your environment. With VaultProof, that value is a <code class="font-mono text-vp-accent">vp_live_</code> proxy key &mdash; not your real Anthropic key. The proxy call goes through VaultProof, your actual key is reassembled briefly in memory, the call is made, and the key is wiped. Claude Code gets the response. Nothing is stored.</p>
                         </div>
                     </div>
 
@@ -546,7 +546,7 @@ vaultproof --version</pre>
                             </div>
                             <div class="flex items-start gap-2">
                                 <span class="text-vp-accent font-bold">2.</span>
-                                <span>VaultProof reassembles your real key (~100ms, server-side)</span>
+                                <span>VaultProof reassembles your real key briefly in memory</span>
                             </div>
                             <div class="flex items-start gap-2">
                                 <span class="text-vp-accent font-bold">3.</span>
@@ -1135,7 +1135,7 @@ npm install -g @vaultproof/cli</pre>
                             <li>&bull; Reads your .env (only key names and values &mdash; nothing else is scanned)</li>
                             <li>&bull; Separates secrets from config (e.g. STRIPE_SECRET_KEY vs NEXT_PUBLIC_APP_URL)</li>
                             <li>&bull; Asks you one-by-one which secrets to store</li>
-                            <li>&bull; Stores them in VaultProof via Shamir split</li>
+                            <li>&bull; Stores them in VaultProof via split-key encryption</li>
                             <li>&bull; Prints a ready-to-use <code class="font-mono text-vp-accent">lib/vault.ts</code> helper</li>
                             <li>&bull; Prints which env vars to remove from your hosting</li>
                         </ul>
