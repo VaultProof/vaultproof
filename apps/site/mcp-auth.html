@@ -458,11 +458,21 @@
 
         var result = await res.json();
 
-        // Redirect to client with auth code
+        // Show success, redirect to client, then try to close tab
+        btn.textContent = 'Authorized! Redirecting...';
+        btn.classList.remove('bg-emerald-600', 'hover:bg-emerald-500');
+        btn.classList.add('bg-gray-700');
+
         var redirectUrl = new URL(result.redirect_uri || oauthParams.redirect_uri);
         redirectUrl.searchParams.set('code', result.code);
         redirectUrl.searchParams.set('state', result.state || oauthParams.state);
+
+        // Brief delay so user sees success, then redirect
+        await new Promise(function(r) { setTimeout(r, 500); });
         window.location.replace(redirectUrl.toString());
+
+        // Try to close the tab after redirect (works if opened by script)
+        setTimeout(function() { window.close(); }, 2000);
 
       } catch (err) {
         errEl.textContent = err.message;
