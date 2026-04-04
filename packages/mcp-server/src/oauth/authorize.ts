@@ -55,8 +55,15 @@ export async function handleAuthorize(request: Request, env: Env): Promise<Respo
   }
 
   // 4. Validate resource if present — accept with or without path
-  if (data.resource !== undefined && !data.resource.startsWith('https://mcp.vaultproof.dev')) {
-    return errorResponse(400, 'invalid_target', 'resource must be https://mcp.vaultproof.dev');
+  if (data.resource !== undefined) {
+    try {
+      const resourceOrigin = new URL(data.resource).origin;
+      if (resourceOrigin !== 'https://mcp.vaultproof.dev') {
+        return errorResponse(400, 'invalid_target', 'Invalid resource');
+      }
+    } catch {
+      return errorResponse(400, 'invalid_target', 'Invalid resource');
+    }
   }
 
   // 5. Validate scopes
@@ -64,7 +71,7 @@ export async function handleAuthorize(request: Request, env: Env): Promise<Respo
   const validScopeSet = new Set<string>(VALID_SCOPES);
   for (const s of requestedScopes) {
     if (!validScopeSet.has(s)) {
-      return errorResponse(400, 'invalid_scope', `Unknown scope: ${s}`);
+      return errorResponse(400, 'invalid_scope', 'Invalid scope requested');
     }
   }
 
