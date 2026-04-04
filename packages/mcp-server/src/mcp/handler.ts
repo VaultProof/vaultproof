@@ -283,13 +283,20 @@ export async function handleToolCall(
           return mcpError(`Backend error: ${resp.status}`);
         }
         const raw = await resp.json() as Record<string, unknown>;
-        // Allowlist fields — never forward internal billing or user metadata.
-        // Coerce types explicitly so a compromised backend can't inject arbitrary values.
+        // Backend returns { usage: [{ date, calls, errors }] }
+        // Summarize into a safe response — never forward internal metadata.
+        const usageArr = Array.isArray(raw['usage']) ? raw['usage'] as Record<string, unknown>[] : [];
+        const totalCalls = usageArr.reduce((sum, d) => sum + (typeof d['calls'] === 'number' ? d['calls'] : 0), 0);
+        const totalErrors = usageArr.reduce((sum, d) => sum + (typeof d['errors'] === 'number' ? d['errors'] : 0), 0);
         const safe = {
-          requests: typeof raw['requests'] === 'number' ? raw['requests'] : null,
-          tokens:   typeof raw['tokens']   === 'number' ? raw['tokens']   : null,
-          period:   sanitizeString(raw['period'], 64),
-          days:     typeof raw['days']     === 'number' ? raw['days']     : null,
+          days,
+          totalCalls,
+          totalErrors,
+          dailyBreakdown: usageArr.map((d) => ({
+            date: sanitizeString(d['date'], 16),
+            calls: typeof d['calls'] === 'number' ? d['calls'] : 0,
+            errors: typeof d['errors'] === 'number' ? d['errors'] : 0,
+          })),
         };
         return mcpResult(safe);
       }
