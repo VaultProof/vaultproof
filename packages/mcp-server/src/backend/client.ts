@@ -10,6 +10,7 @@
  */
 
 import { hmacSign } from '../lib/crypto.js';
+import { isPublicUrl } from '../lib/ssrf.js';
 import type { Env } from '../types.js';
 
 /** Build the signed headers required by the backend proxy-auth middleware. */
@@ -51,6 +52,9 @@ export async function callBackend(
   // Guard against operator misconfiguration routing user credentials to non-HTTPS targets
   if (!env.BACKEND_URL.startsWith('https://')) {
     throw new Error('BACKEND_URL must be an HTTPS URL');
+  }
+  if (!isPublicUrl(env.BACKEND_URL)) {
+    throw new Error('BACKEND_URL must be a public HTTPS URL');
   }
   const url = new URL(path, env.BACKEND_URL);
   const proxyHeaders = await buildProxyHeaders(method, url.pathname, env);
