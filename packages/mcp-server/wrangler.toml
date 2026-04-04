@@ -22,3 +22,15 @@ id = "8332039630004da9899de8279b8bafaf"
 [[routes]]
 pattern = "mcp.vaultproof.dev/*"
 zone_name = "vaultproof.dev"
+
+[[durable_objects.bindings]]
+name = "RATE_LIMITER"
+class_name = "RateLimiterDO"
+
+[[durable_objects.bindings]]
+name = "OAUTH_CODE_DO"
+class_name = "OAuthCodeDO"
+
+[[migrations]]
+tag = "v1"
+new_classes = ["RateLimiterDO", "OAuthCodeDO"]

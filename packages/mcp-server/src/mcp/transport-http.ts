@@ -94,7 +94,7 @@ export async function handleStreamableHttp(
     }
 
     case 'tools/list': {
-      return jsonResponse(jsonRpcResult(id, getToolsListResponse()));
+      return jsonResponse(jsonRpcResult(id, await getToolsListResponse()));
     }
 
     case 'tools/call': {

@@ -27,6 +27,8 @@ import {
   getProviderInfo,
 } from '../lib/secret-patterns.js';
 import { executeScan } from '../lib/scheduled-scan.js';
+import { getAdapter } from '../lib/provider-adapters/index.js';
+import { createSession, getSession, deleteSession } from '../lib/revoke-session.js';
 
 const notImplemented = () =>
   Response.json({ error: 'Not implemented' }, { status: 501 });
@@ -271,6 +273,239 @@ async function handleGithubDisconnect(
 }
 
 /* ------------------------------------------------------------------ */
+/*  Key Revocation handlers                                            */
+/* ------------------------------------------------------------------ */
+
+async function handleRevokeAuthenticate(
+  request: Request,
+  env: Env,
+  user: { userId: string },
+): Promise<Response> {
+  const body = await request.json() as { provider?: string; credentials?: { apiKey?: string } };
+  if (!body.provider || !body.credentials) {
+    return Response.json({ error: 'provider and credentials required' }, { status: 400 });
+  }
+  const adapter = getAdapter(body.provider);
+  if (!adapter) {
+    return Response.json({ error: `Unknown provider: ${body.provider}` }, { status: 400 });
+  }
+  const result = await adapter.authenticate(body.credentials);
+  if (!result.authenticated) {
+    return Response.json({ error: result.error || 'Authentication failed' }, { status: 401 });
+  }
+  const sessionToken = createSession(user.userId, body.provider, result.sessionData);
+  auditLog(env, user.userId, '', 'revoke_authenticated', { provider: body.provider });
+  return Response.json({ authenticated: true, sessionToken });
+}
+
+async function handleRevokeSingle(
+  request: Request,
+  env: Env,
+  user: { userId: string },
+): Promise<Response> {
+  const body = await request.json() as { findingId?: string; sessionToken?: string };
+  if (!body.findingId || !body.sessionToken) {
+    return Response.json({ error: 'findingId and sessionToken required' }, { status: 400 });
+  }
+  const supabase = getSupabase(env);
+  const { data: finding, error } = await supabase
+    .from('scan_findings')
+    .select('id, env_name, provider, masked_value, file, line, scan_id')
+    .eq('id', body.findingId)
+    .single();
+  if (error || !finding) {
+    return Response.json({ error: 'Finding not found' }, { status: 404 });
+  }
+  const { data: scan } = await supabase
+    .from('scan_results')
+    .select('user_id')
+    .eq('id', finding.scan_id)
+    .single();
+  if (!scan || scan.user_id !== user.userId) {
+    return Response.json({ error: 'Not authorized' }, { status: 403 });
+  }
+  const session = getSession(body.sessionToken, user.userId);
+  if (!session) {
+    return Response.json({ error: 'Session expired. Please re-authenticate.' }, { status: 401 });
+  }
+  const adapter = getAdapter(session.provider);
+  if (!adapter) {
+    return Response.json({ error: 'Provider not found' }, { status: 400 });
+  }
+  const findingRef = {
+    id: finding.id,
+    envName: finding.env_name,
+    provider: finding.provider,
+    maskedValue: finding.masked_value,
+    file: finding.file,
+    line: finding.line,
+  };
+  const steps = adapter.getSteps(findingRef);
+  return Response.json({ findingId: finding.id, steps, currentStep: 0 });
+}
+
+async function handleRevokeBatch(
+  request: Request,
+  env: Env,
+  user: { userId: string },
+): Promise<Response> {
+  const body = await request.json() as { findingIds?: string[]; sessionToken?: string };
+  if (!body.findingIds?.length || !body.sessionToken) {
+    return Response.json({ error: 'findingIds and sessionToken required' }, { status: 400 });
+  }
+  if (body.findingIds.length > 50) {
+    return Response.json({ error: 'Maximum 50 findings per batch' }, { status: 400 });
+  }
+  const session = getSession(body.sessionToken, user.userId);
+  if (!session) {
+    return Response.json({ error: 'Session expired. Please re-authenticate.' }, { status: 401 });
+  }
+  const supabase = getSupabase(env);
+  const { data: findings, error } = await supabase
+    .from('scan_findings')
+    .select('id, env_name, provider, masked_value, file, line, scan_id')
+    .in('id', body.findingIds);
+  if (error || !findings?.length) {
+    return Response.json({ error: 'No findings found' }, { status: 404 });
+  }
+  const scanIds = [...new Set(findings.map(f => f.scan_id))];
+  const { data: scans } = await supabase
+    .from('scan_results')
+    .select('id, user_id')
+    .in('id', scanIds);
+  const ownedScanIds = new Set((scans || []).filter(s => s.user_id === user.userId).map(s => s.id));
+  const ownedFindings = findings.filter(f => ownedScanIds.has(f.scan_id));
+  if (!ownedFindings.length) {
+    return Response.json({ error: 'Not authorized' }, { status: 403 });
+  }
+  const adapter = getAdapter(session.provider);
+  if (!adapter) {
+    return Response.json({ error: 'Provider not found' }, { status: 400 });
+  }
+  const results = ownedFindings.map(f => {
+    const ref = { id: f.id, envName: f.env_name, provider: f.provider, maskedValue: f.masked_value, file: f.file, line: f.line };
+    return { findingId: f.id, steps: adapter.getSteps(ref), currentStep: 0 };
+  });
+  return Response.json({ results });
+}
+
+async function handleRevokeExecuteStep(
+  request: Request,
+  env: Env,
+  user: { userId: string },
+): Promise<Response> {
+  const body = await request.json() as { findingId?: string; stepId?: string; sessionToken?: string };
+  if (!body.findingId || !body.stepId || !body.sessionToken) {
+    return Response.json({ error: 'findingId, stepId, and sessionToken required' }, { status: 400 });
+  }
+  const session = getSession(body.sessionToken, user.userId);
+  if (!session) {
+    return Response.json({ error: 'Session expired. Please re-authenticate.' }, { status: 401 });
+  }
+  const supabase = getSupabase(env);
+  const { data: finding } = await supabase
+    .from('scan_findings')
+    .select('id, env_name, provider, masked_value, file, line, scan_id')
+    .eq('id', body.findingId)
+    .single();
+  if (!finding) {
+    return Response.json({ error: 'Finding not found' }, { status: 404 });
+  }
+  const adapter = getAdapter(session.provider);
+  if (!adapter) {
+    return Response.json({ error: 'Provider not found' }, { status: 400 });
+  }
+  const findingRef = {
+    id: finding.id,
+    envName: finding.env_name,
+    provider: finding.provider,
+    maskedValue: finding.masked_value,
+    file: finding.file,
+    line: finding.line,
+  };
+  const steps = adapter.getSteps(findingRef);
+  const stepIndex = steps.findIndex(s => s.id === body.stepId);
+  if (stepIndex === -1) {
+    return Response.json({ error: 'Step not found' }, { status: 400 });
+  }
+  const step = steps[stepIndex];
+
+  // Manual steps are confirmed by the client — just advance
+  if (step.type === 'manual') {
+    const nextStep = stepIndex + 1 < steps.length ? stepIndex + 1 : undefined;
+    return Response.json({ success: true, nextStep });
+  }
+
+  // Automated step: execute via adapter
+  let result;
+  if (step.id === 'revoke' || step.id === 'deactivate') {
+    result = await adapter.revokeKey(
+      { authenticated: true, sessionData: session.sessionData },
+      findingRef,
+    );
+  } else if (step.id === 'create' && adapter.createKey) {
+    result = await adapter.createKey(
+      { authenticated: true, sessionData: session.sessionData },
+      finding.env_name,
+    );
+  } else {
+    result = { success: true };
+  }
+
+  if (!result.success) {
+    auditLog(env, user.userId, finding.scan_id, 'revoke_step_failed', {
+      findingId: finding.id, stepId: body.stepId, error: result.error,
+    });
+    return Response.json({ success: false, error: result.error });
+  }
+
+  auditLog(env, user.userId, finding.scan_id, 'revoke_step_completed', {
+    findingId: finding.id, stepId: body.stepId,
+  });
+  const nextStep = stepIndex + 1 < steps.length ? stepIndex + 1 : undefined;
+  return Response.json({
+    success: true,
+    nextStep,
+    newKeyId: result.newKeyId,
+    newKeyHint: result.newKeyHint,
+  });
+}
+
+async function handleRevokeComplete(
+  request: Request,
+  env: Env,
+  user: { userId: string },
+): Promise<Response> {
+  const body = await request.json() as { findingId?: string; sessionToken?: string };
+  if (!body.findingId || !body.sessionToken) {
+    return Response.json({ error: 'findingId and sessionToken required' }, { status: 400 });
+  }
+  const session = getSession(body.sessionToken, user.userId);
+  if (!session) {
+    return Response.json({ error: 'Session expired' }, { status: 401 });
+  }
+  const supabase = getSupabase(env);
+  const { error } = await supabase
+    .from('scan_findings')
+    .update({ action: 'revoked' })
+    .eq('id', body.findingId);
+  if (error) {
+    return Response.json({ error: 'Failed to update finding' }, { status: 500 });
+  }
+  const { data: finding } = await supabase
+    .from('scan_findings')
+    .select('scan_id, provider')
+    .eq('id', body.findingId)
+    .single();
+  if (finding) {
+    auditLog(env, user.userId, finding.scan_id, 'key_revoked', {
+      findingId: body.findingId, provider: finding.provider,
+    });
+  }
+  return Response.json({ revoked: true, offerMigration: true });
+}
+
+/* ------------------------------------------------------------------ */
 /*  Main router                                                        */
 /* ------------------------------------------------------------------ */
 
@@ -370,6 +605,31 @@ export async function handleScanner(
   const allowlistDeleteMatch = path.match(/^allowlists\/([^/]+)$/);
   if (allowlistDeleteMatch && method === 'DELETE') {
     return handleDeleteAllowlist(env, user, allowlistDeleteMatch[1]);
+  }
+
+  // revoke/authenticate POST
+  if (path === 'revoke/authenticate' && method === 'POST') {
+    return handleRevokeAuthenticate(request, env, user);
+  }
+
+  // revoke/single POST
+  if (path === 'revoke/single' && method === 'POST') {
+    return handleRevokeSingle(request, env, user);
+  }
+
+  // revoke/batch POST
+  if (path === 'revoke/batch' && method === 'POST') {
+    return handleRevokeBatch(request, env, user);
+  }
+
+  // revoke/execute-step POST
+  if (path === 'revoke/execute-step' && method === 'POST') {
+    return handleRevokeExecuteStep(request, env, user);
+  }
+
+  // revoke/complete POST
+  if (path === 'revoke/complete' && method === 'POST') {
+    return handleRevokeComplete(request, env, user);
   }
 
   return Response.json({ error: 'Not found' }, { status: 404 });

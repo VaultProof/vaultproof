@@ -6,6 +6,7 @@ import { handleDevKeys } from './routes/dev-keys.js';
 import { handlePromo } from './routes/promo.js';
 import { handleAdmin } from './routes/admin.js';
 import { handleScanner } from './routes/scanner.js';
+import { handleSdk } from './routes/sdk.js';
 import { handleKeys } from './routes/keys.js';
 import { handleBilling } from './routes/billing.js';
 import { handleAuth } from './routes/auth.js';
@@ -158,6 +159,17 @@ export default {
       try {
         const path = url.pathname.slice('/admin/'.length);
         const response = await handleAdmin(request, env, path);
+        return addCors(response, origin, allowedOrigins);
+      } catch {
+        return addCors(Response.json({ error: 'Service temporarily unavailable' }, { status: 503 }), origin, allowedOrigins);
+      }
+    }
+
+    // SDK routes (dev-key auth)
+    if (url.pathname.startsWith('/api/v1/sdk/')) {
+      try {
+        const path = url.pathname.slice('/api/v1/sdk/'.length);
+        const response = await handleSdk(request, env, path);
         return addCors(response, origin, allowedOrigins);
       } catch {
         return addCors(Response.json({ error: 'Service temporarily unavailable' }, { status: 503 }), origin, allowedOrigins);

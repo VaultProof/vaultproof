@@ -12,6 +12,8 @@ import type { ValidatedSession } from '../auth/validate-token.js';
 import type { Env } from '../types.js';
 import { TOOLS } from './tools.js';
 import { checkAddKeyRateLimit } from '../lib/rate-limit.js';
+import { splitString, serializeShare } from '../lib/shamir.js';
+import { encryptShare2 } from '../lib/share2-encrypt.js';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -82,8 +84,17 @@ function buildZodSchema(inputSchema: {
 
 // ─── MCP content helpers ──────────────────────────────────────────────────────
 
+/** Marker tokens for tool output boundaries — stripped from backend data before wrapping */
+const OUTPUT_START = '[TOOL_OUTPUT]';
+const OUTPUT_END = '[/TOOL_OUTPUT]';
+
 function mcpResult(data: unknown): object {
-  return { content: [{ type: 'text', text: JSON.stringify(data, null, 2) }] };
+  let text = JSON.stringify(data, null, 2);
+  // Strip any injection of our markers from the data itself
+  text = text.replaceAll(OUTPUT_START, '').replaceAll(OUTPUT_END, '');
+  return {
+    content: [{ type: 'text', text: `${OUTPUT_START}\n${text}\n${OUTPUT_END}` }],
+  };
 }
 
 function mcpError(message: string): object {
@@ -205,7 +216,6 @@ export async function handleToolCall(
       }
 
       case 'add_key': {
-        // Enforce the tighter per-hour add_key rate limit
         const addKeyAllowed = await checkAddKeyRateLimit(userId, env);
         if (!addKeyAllowed) {
           return mcpError('Rate limit exceeded: too many add_key calls. Try again later.');
@@ -215,10 +225,19 @@ export async function handleToolCall(
           label: string;
           value: string;
         };
+
+        // Split the raw key into 2 Shamir shares (threshold=2)
+        const shares = splitString(value, 2, 2);
+        const share1 = serializeShare(shares[0]!);
+        const share2Raw = serializeShare(shares[1]!);
+
+        // Encrypt share2 with the developer's vp_live_ key
+        const share2Encrypted = await encryptShare2(share2Raw, devKey);
+
         const resp = await callBackend(
           '/api/v1/sdk/store',
           'POST',
-          { provider, label, value },
+          { share1, share2: share2Encrypted, provider, label },
           devKey,
           env,
         );
@@ -273,13 +292,20 @@ export async function handleToolCall(
           return mcpError(`Backend error: ${resp.status}`);
         }
         const raw = await resp.json() as Record<string, unknown>;
-        // Allowlist fields — never forward internal billing or user metadata.
-        // Coerce types explicitly so a compromised backend can't inject arbitrary values.
+        // Backend returns { usage: [{ date, calls, errors }] }
+        // Summarize into a safe response — never forward internal metadata.
+        const usageArr = Array.isArray(raw['usage']) ? raw['usage'] as Record<string, unknown>[] : [];
+        const totalCalls = usageArr.reduce((sum, d) => sum + (typeof d['calls'] === 'number' ? d['calls'] : 0), 0);
+        const totalErrors = usageArr.reduce((sum, d) => sum + (typeof d['errors'] === 'number' ? d['errors'] : 0), 0);
         const safe = {
-          requests: typeof raw['requests'] === 'number' ? raw['requests'] : null,
-          tokens:   typeof raw['tokens']   === 'number' ? raw['tokens']   : null,
-          period:   sanitizeString(raw['period'], 64),
-          days:     typeof raw['days']     === 'number' ? raw['days']     : null,
+          days,
+          totalCalls,
+          totalErrors,
+          dailyBreakdown: usageArr.map((d) => ({
+            date: sanitizeString(d['date'], 16),
+            calls: typeof d['calls'] === 'number' ? d['calls'] : 0,
+            errors: typeof d['errors'] === 'number' ? d['errors'] : 0,
+          })),
         };
         return mcpResult(safe);
       }

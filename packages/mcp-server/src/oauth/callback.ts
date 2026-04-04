@@ -1,6 +1,6 @@
 import { z } from 'zod';
 import { errorResponse, jsonResponse } from '../lib/security-headers.js';
-import { generateToken, encryptAesGcm, hmacSign } from '../lib/crypto.js';
+import { generateToken, encryptAesGcm, hmacSign, timingSafeEqual } from '../lib/crypto.js';
 import { REGISTERED_CLIENTS, type OAuthCode } from './types.js';
 import type { Env } from '../types.js';
 
@@ -74,8 +74,16 @@ export async function handleCallback(request: Request, env: Env): Promise<Respon
   const data = parsed.data;
 
   // Validate resource parameter against MCP issuer (prevents audience confusion attacks)
-  if (data.resource && data.resource !== env.MCP_ISSUER) {
-    return errorResponse(400, 'invalid_target', 'Resource mismatch');
+  if (data.resource) {
+    try {
+      const resourceOrigin = new URL(data.resource).origin;
+      const issuerOrigin = new URL(env.MCP_ISSUER).origin;
+      if (resourceOrigin !== issuerOrigin) {
+        return errorResponse(400, 'invalid_target', 'Resource mismatch');
+      }
+    } catch {
+      return errorResponse(400, 'invalid_target', 'Resource mismatch');
+    }
   }
 
   // Validate state signature (Fix 5: prevents state tampering)
@@ -83,7 +91,7 @@ export async function handleCallback(request: Request, env: Env): Promise<Respon
   const stateSig = data.state_sig || url.searchParams.get('state_sig');
   if (stateSig) {
     const expected = await hmacSign(data.state, env.MCP_SESSION_ENCRYPTION_KEY);
-    if (stateSig !== expected) {
+    if (!timingSafeEqual(stateSig, expected)) {
       return errorResponse(400, 'invalid_state', 'State signature verification failed');
     }
   }
@@ -123,6 +131,20 @@ export async function handleCallback(request: Request, env: Env): Promise<Respon
   await env.OAUTH_CODES.put(`code:${authCode}`, JSON.stringify(oauthCode), {
     expirationTtl: 60,
   });
+
+  // Also store in Durable Object for atomic exchange (if available)
+  if (env.OAUTH_CODE_DO) {
+    const id = env.OAUTH_CODE_DO.idFromName('codes');
+    const stub = env.OAUTH_CODE_DO.get(id);
+    await stub.fetch('https://oauth-code/store', {
+      method: 'POST',
+      body: JSON.stringify({
+        code: authCode,
+        data: JSON.stringify(oauthCode),
+        ttlSeconds: 60,
+      }),
+    });
+  }
 
   // Return the code to the dashboard — the dashboard redirects the browser.
   // The dev_key never appears in any URL.

@@ -66,13 +66,19 @@ export async function validateToken(
   // 4. Hash the token
   const hash = await sha256Hex(token);
 
-  // 5. Look up session in KV
+  // 5. Check for revocation marker (cross-region consistency)
+  const revoked = await env.MCP_SESSIONS.get(`revoked:${hash}`);
+  if (revoked) {
+    return tokenError('invalid_token', 'Token has been revoked');
+  }
+
+  // 6. Look up session in KV
   const stored = await env.MCP_SESSIONS.get(`session:${hash}`);
   if (!stored) {
     return tokenError('invalid_token', 'Session not found or expired');
   }
 
-  // 6. Decrypt and parse
+  // 7. Decrypt and parse
   let session: McpSession;
   try {
     const plaintext = await decryptAesGcm(stored, env.MCP_SESSION_ENCRYPTION_KEY);
@@ -81,12 +87,12 @@ export async function validateToken(
     return tokenError('invalid_token', 'Malformed session data');
   }
 
-  // 7. Verify audience
+  // 8. Verify audience
   if (session.audience !== 'https://mcp.vaultproof.dev') {
     return tokenError('invalid_token', 'Invalid token audience');
   }
 
-  // 8. Refresh sliding TTL (re-encrypt on write — new IV each time)
+  // 9. Refresh sliding TTL (re-encrypt on write — new IV each time)
   const encryptedSession = await encryptAesGcm(JSON.stringify(session), env.MCP_SESSION_ENCRYPTION_KEY);
   await env.MCP_SESSIONS.put(`session:${hash}`, encryptedSession, {
     expirationTtl: 3600,

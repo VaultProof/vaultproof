@@ -1,6 +1,7 @@
 import type { Env } from '../types.js';
 import { getSupabase } from '../lib/supabase.js';
 import { authenticateUser } from '../lib/jwt-auth.js';
+import { authenticateDevKey } from '../lib/auth.js';
 
 const CALL_ACTIONS = ['api_call', 'transparent_proxy', 'key_retrieval', 'key_retrieval_batch'];
 
@@ -14,18 +15,26 @@ export async function handleStats(request: Request, env: Env, path: string): Pro
     return Response.json({ error: 'Method not allowed' }, { status: 405 });
   }
 
+  // Try JWT auth first, fall back to dev-key auth (for MCP server)
+  let userId: string;
   const auth = await authenticateUser(request, env);
-  if (!auth) {
-    return Response.json({ error: 'Unauthorized' }, { status: 401 });
+  if (auth) {
+    userId = auth.userId;
+  } else {
+    const devAuth = await authenticateDevKey(request, env);
+    if (!devAuth) {
+      return Response.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+    userId = devAuth.userId;
   }
 
   switch (path) {
     case 'overview':
-      return handleOverview(auth.userId, env);
+      return handleOverview(userId, env);
     case 'usage':
-      return handleUsage(auth.userId, env, request);
+      return handleUsage(userId, env, request);
     case 'by-key':
-      return handleByKey(auth.userId, env);
+      return handleByKey(userId, env);
     default:
       return Response.json({ error: 'Not found' }, { status: 404 });
   }
