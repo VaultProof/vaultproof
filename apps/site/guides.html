@@ -204,6 +204,7 @@
             <a href="#guide-ai-providers" class="px-3 py-1.5 text-xs font-medium rounded-full bg-vp-surface border border-vp-border text-gray-400 hover:text-white hover:border-vp-accent transition">All Providers</a>
             <a href="#guide-other-sdks" class="px-3 py-1.5 text-xs font-medium rounded-full bg-vp-surface border border-vp-border text-gray-400 hover:text-white hover:border-vp-accent transition">Other SDKs</a>
             <a href="#guide-migration" class="px-3 py-1.5 text-xs font-medium rounded-full bg-vp-surface border border-vp-border text-gray-400 hover:text-white hover:border-vp-accent transition">Migration</a>
+            <a href="#guide-rotation" class="px-3 py-1.5 text-xs font-medium rounded-full bg-vp-surface border border-vp-border text-gray-400 hover:text-white hover:border-vp-accent transition">Key Rotation</a>
         </div>
     </section>
 
@@ -1123,6 +1124,116 @@ VAULTPROOF_API_KEY=vp_live_... npm run dev
             </div>
         </div>
 
+
+        <div id="guide-rotation" class="guide-card">
+            <div class="guide-toggle flex items-center justify-between p-6" onclick="toggleGuide(this)">
+                <div class="flex items-center gap-4">
+                    <div class="tool-icon bg-[#6366f1]/10 text-[#818cf8]">
+                        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
+                    </div>
+                    <div>
+                        <h3 class="font-semibold text-white text-lg">Key Rotation</h3>
+                        <p class="text-gray-500 text-sm mt-0.5">Rotate your keys with zero downtime &mdash; one click, no code changes.</p>
+                    </div>
+                </div>
+                <svg class="guide-chevron text-gray-500" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg>
+            </div>
+            <div class="guide-body">
+                <div class="px-6 pb-6 space-y-5">
+
+                    <div>
+                        <h4 class="text-white font-medium mb-2">Why rotate?</h4>
+                        <ul class="text-gray-400 text-sm space-y-1.5">
+                            <li class="flex items-start gap-2">
+                                <span class="text-indigo-400 mt-0.5">&bull;</span>
+                                <span>Your key was exposed in a commit, log, or AI chat</span>
+                            </li>
+                            <li class="flex items-start gap-2">
+                                <span class="text-indigo-400 mt-0.5">&bull;</span>
+                                <span>An employee or contractor with access left</span>
+                            </li>
+                            <li class="flex items-start gap-2">
+                                <span class="text-indigo-400 mt-0.5">&bull;</span>
+                                <span>Regular security hygiene (rotate every 90 days)</span>
+                            </li>
+                            <li class="flex items-start gap-2">
+                                <span class="text-indigo-400 mt-0.5">&bull;</span>
+                                <span>You hit a suspicious spike in usage</span>
+                            </li>
+                        </ul>
+                    </div>
+
+                    <div>
+                        <h4 class="text-white font-medium mb-3">Rotating your real API key (e.g., OpenAI)</h4>
+                        <div class="space-y-3">
+                            <div class="flex items-start gap-3">
+                                <div class="step-num mt-0.5">1</div>
+                                <div class="text-gray-400 text-sm pt-1">
+                                    <strong class="text-white">Generate a new key at your provider's dashboard</strong><br>
+                                    Go to OpenAI, Anthropic, Google, Stripe, etc. and create a fresh key.
+                                </div>
+                            </div>
+                            <div class="flex items-start gap-3">
+                                <div class="step-num mt-0.5">2</div>
+                                <div class="text-gray-400 text-sm pt-1">
+                                    <strong class="text-white">Go to VaultProof &rarr; Keys &rarr; click "Rotate" on the key</strong>
+                                </div>
+                            </div>
+                            <div class="flex items-start gap-3">
+                                <div class="step-num mt-0.5">3</div>
+                                <div class="text-gray-400 text-sm pt-1">
+                                    <strong class="text-white">Paste the new key</strong><br>
+                                    It is split and encrypted instantly.
+                                </div>
+                            </div>
+                            <div class="flex items-start gap-3">
+                                <div class="step-num mt-0.5">4</div>
+                                <div class="text-gray-400 text-sm pt-1">
+                                    <strong class="text-white">Done.</strong> Every app using your <code class="text-xs bg-vp-bg px-2 py-0.5 rounded font-mono text-indigo-400">vp_live_</code> key automatically uses the new provider key. No code changes, no redeployments.
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div>
+                        <h4 class="text-white font-medium mb-3">Rotating your vp_live_ developer key</h4>
+                        <div class="space-y-3">
+                            <div class="flex items-start gap-3">
+                                <div class="step-num mt-0.5">1</div>
+                                <div class="text-gray-400 text-sm pt-1">
+                                    <strong class="text-white">Go to VaultProof &rarr; Keys &rarr; Developer Keys section</strong>
+                                </div>
+                            </div>
+                            <div class="flex items-start gap-3">
+                                <div class="step-num mt-0.5">2</div>
+                                <div class="text-gray-400 text-sm pt-1">
+                                    <strong class="text-white">Click "Rotate" on the key you want to change</strong>
+                                </div>
+                            </div>
+                            <div class="flex items-start gap-3">
+                                <div class="step-num mt-0.5">3</div>
+                                <div class="text-gray-400 text-sm pt-1">
+                                    <strong class="text-white">Copy the new <code class="text-xs bg-vp-bg px-2 py-0.5 rounded font-mono text-indigo-400">vp_live_</code> key</strong><br>
+                                    Update it in your <code class="text-xs bg-vp-bg px-2 py-0.5 rounded font-mono text-gray-300">.env</code> file.
+                                </div>
+                            </div>
+                            <div class="flex items-start gap-3">
+                                <div class="step-num mt-0.5">4</div>
+                                <div class="text-gray-400 text-sm pt-1">
+                                    <strong class="text-white">The old key stops working immediately</strong>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="bg-indigo-500/5 border border-indigo-500/20 rounded-md p-4 mt-2">
+                        <p class="text-indigo-400 text-xs font-medium mb-1">The key advantage</p>
+                        <p class="text-gray-400 text-xs">Since your apps only use <code class="font-mono text-vp-accent">vp_live_</code> keys, rotating the underlying provider key requires zero code changes. This is the whole point of the proxy.</p>
+                    </div>
+
+                </div>
+            </div>
+        </div>
 
     </section>
 

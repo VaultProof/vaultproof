@@ -268,6 +268,34 @@
     </div>
   </div>
 
+  <!-- Rotated Dev Key Modal -->
+  <div id="rotatedDevKeyModal" class="fixed inset-0 z-[60] hidden items-center justify-center bg-black/60 backdrop-blur-sm">
+    <div class="bg-card border border-border rounded-lg w-full max-w-md mx-4 p-5">
+      <div class="flex items-center justify-between mb-5">
+        <h3 class="text-lg font-semibold">New Developer Key</h3>
+        <button onclick="closeRotatedDevKeyModal()" class="text-gray-500 hover:text-white transition">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+        </button>
+      </div>
+      <div class="bg-amber-500/10 border border-amber-500/20 rounded-md p-3 mb-4">
+        <p class="text-sm text-amber-400 flex items-center gap-2">
+          <svg class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L4.082 16.5c-.77.833.192 2.5 1.732 2.5z"/></svg>
+          This is the only time you will see this key. Copy it now.
+        </p>
+      </div>
+      <div class="bg-[#0a0a0f] border border-[#1e1e2e] rounded-md p-3 mb-4">
+        <code id="rotatedDevKeyValue" class="text-sm font-mono text-green-400 break-all select-all"></code>
+      </div>
+      <div class="flex gap-3">
+        <button onclick="closeRotatedDevKeyModal()" class="flex-1 px-4 py-2.5 bg-surface border border-border rounded-md text-sm text-gray-400 hover:text-white transition">Close</button>
+        <button onclick="copyRotatedDevKey()" class="flex-1 px-4 py-2.5 bg-brand hover:bg-brand-hover text-white rounded-md text-sm font-medium transition btn-glow flex items-center justify-center gap-2">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 5H6a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2v-1M8 5a2 2 0 002 2h2a2 2 0 002-2M8 5a2 2 0 012-2h2a2 2 0 012 2m0 0h2a2 2 0 012 2v3m2 4H10m0 0l3-3m-3 3l3 3"/></svg>
+          Copy Key
+        </button>
+      </div>
+    </div>
+  </div>
+
   <!-- Import .env Modal -->
   <div id="importModal" class="hidden fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm">
     <div class="bg-[#111118] border border-[#1e1e2e] rounded-lg p-5 w-full max-w-lg mx-4">
@@ -2000,6 +2028,7 @@ exampleBody + '\n' +
               '</div>' +
               (!revoked ? '<div class="flex items-center gap-2">' +
                 '<button onclick="toggleLinkedPanel(\'' + k.id + '\')" class="px-3 py-1.5 text-xs text-indigo-400 hover:text-indigo-300 border border-indigo-900/50 hover:border-indigo-800 hover:bg-indigo-900/20 rounded-xl transition whitespace-nowrap">Link Keys</button>' +
+                '<button onclick="rotateDevKey(\'' + k.id + '\')" class="px-3 py-1.5 text-xs text-cyan-400 hover:text-cyan-300 border border-cyan-900/50 hover:border-cyan-800 hover:bg-cyan-900/20 rounded-xl transition whitespace-nowrap">Rotate</button>' +
                 '<button onclick="revokeDevKey(\'' + k.id + '\')" class="px-3 py-1.5 text-xs text-amber-400 hover:text-red-300 border border-red-900/50 hover:border-red-800 hover:bg-red-900/20 rounded-xl transition whitespace-nowrap">Revoke</button>' +
               '</div>' : '') +
             '</div>' +
@@ -2078,6 +2107,43 @@ exampleBody + '\n' +
         msg.textContent = 'Network error';
         msg.classList.replace('text-gray-500', 'text-amber-400');
       }
+    }
+
+    async function rotateDevKey(id) {
+      if (!confirm('Rotate this developer key? The old key will stop working immediately. You will get a new key to copy.')) return;
+      try {
+        var res = await apiFetch(API + '/dev-keys/' + id + '/rotate', { method: 'POST' });
+        if (res && res.ok) {
+          var data = await res.json();
+          // Show the new key in the rotated key modal
+          document.getElementById('rotatedDevKeyValue').textContent = data.key;
+          document.getElementById('rotatedDevKeyModal').classList.remove('hidden');
+          document.getElementById('rotatedDevKeyModal').classList.add('flex');
+          // Store for copy
+          window._rotatedDevKey = data.key;
+          loadDevKeys();
+        } else if (res) {
+          var err = await res.json().catch(function() { return {}; });
+          alert(err.error || 'Failed to rotate key');
+        }
+      } catch (e) {
+        alert('Network error');
+      }
+    }
+
+    function copyRotatedDevKey() {
+      navigator.clipboard.writeText(window._rotatedDevKey || '').then(function() {
+        var btn = event.currentTarget;
+        var orig = btn.innerHTML;
+        btn.innerHTML = '<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg> Copied!';
+        setTimeout(function() { btn.innerHTML = orig; }, 2000);
+      });
+    }
+
+    function closeRotatedDevKeyModal() {
+      document.getElementById('rotatedDevKeyModal').classList.add('hidden');
+      document.getElementById('rotatedDevKeyModal').classList.remove('flex');
+      window._rotatedDevKey = null;
     }
 
     async function revokeDevKey(id) {
