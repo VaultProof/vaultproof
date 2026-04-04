@@ -41,6 +41,9 @@ function evalPoly(coeffs: Uint8Array, x: number): number {
  * Split a secret into n shares requiring k to reconstruct.
  */
 export function split(secret: Uint8Array, n: number, k: number): Share[] {
+  if (typeof crypto === 'undefined' || !crypto.getRandomValues) {
+    throw new Error('CSPRNG required: crypto.getRandomValues not available');
+  }
   if (k < 2) throw new Error('Threshold k must be >= 2');
   if (n < k) throw new Error('Total shares n must be >= threshold k');
   if (n > 255) throw new Error('Maximum 255 shares');
@@ -98,6 +101,7 @@ export function combineShares(shares: Share[]): Uint8Array {
 }
 
 // GF(256) with irreducible polynomial x^8 + x^4 + x^3 + x + 1 (0x11b)
+// Constant-time: loop-based multiplication avoids lookup tables (CVE-2023-25000 mitigation)
 function gf256Mul(a: number, b: number): number {
   let result = 0;
   let aa = a;
