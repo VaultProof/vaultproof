@@ -319,7 +319,7 @@ const ROTATION_URLS: Record<string, string> = {
   posthog: 'https://app.posthog.com/project/settings',
 };
 
-const PROVIDER_NAMES: Record<string, string> = {
+export const PROVIDER_NAMES: Record<string, string> = {
   openai: 'OpenAI',
   anthropic: 'Anthropic',
   stripe: 'Stripe',
