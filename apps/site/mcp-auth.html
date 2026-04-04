@@ -290,7 +290,10 @@
 
     // ── Resolve client display name ──
     function getClientName(clientId) {
-      return CLIENT_NAMES[clientId] || clientId;
+      if (CLIENT_NAMES[clientId]) return CLIENT_NAMES[clientId];
+      // Dynamic clients (dyn_...) — show generic name rather than raw ID
+      if (clientId && clientId.startsWith('dyn_')) return 'MCP Client';
+      return clientId;
     }
 
     // ── Render scope list ──
