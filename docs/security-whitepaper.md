@@ -47,7 +47,7 @@ The vault receives an encrypted half of a key. That's all.
 When you make an API call through VaultProof:
 
 1. Your device sends Piece 2 to the vault, along with a zero-knowledge proof that you are authorized to access Piece 1.
-2. The vault combines both pieces to reconstruct the full key — for less than 100 milliseconds.
+2. The vault combines both pieces to reconstruct the full key — briefly in memory.
 3. The reconstructed key is used to make the API call.
 4. The key is immediately zeroed from memory. It is never written to disk, never logged, never stored.
 

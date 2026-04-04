@@ -211,12 +211,12 @@
                         <tbody>
                             <tr>
                                 <td>Can see your key?</td>
-                                <td class="vp-col"><span class="text-emerald-400 font-medium">Never (Shamir split)</span></td>
+                                <td class="vp-col"><span class="text-emerald-400 font-medium">Never (split-key)</span></td>
                                 <td><span class="text-amber-400">Yes (plaintext)</span></td>
                                 <td><span class="text-amber-400">Yes (plaintext)</span></td>
                             </tr>
                             <tr>
-                                <td>Key splitting (Shamir)</td>
+                                <td>Split-key encryption</td>
                                 <td class="vp-col"><span class="text-emerald-400">Yes</span></td>
                                 <td><span class="text-gray-600">No</span></td>
                                 <td><span class="text-gray-600">No</span></td>
@@ -320,7 +320,7 @@
             <!-- VaultProof -->
             <section>
                 <h2 class="text-2xl font-bold text-white mb-4">VaultProof: keys are split &mdash; we can't see them</h2>
-                <p class="mb-4">VaultProof takes a fundamentally different approach. Instead of storing your key and promising not to look at it, we split it using <strong class="text-white">Shamir's Secret Sharing</strong> so that no single party ever has the complete key.</p>
+                <p class="mb-4">VaultProof takes a fundamentally different approach. Instead of storing your key and promising not to look at it, we split it using <strong class="text-white">split-key encryption</strong> so that no single party ever has the complete key.</p>
                 <p class="mb-4"><strong class="text-white">How it works:</strong></p>
                 <ul class="list-disc list-inside space-y-2 text-gray-400 ml-2 mb-4">
                     <li>When you store a key, it's split into 3 shares in your browser (client-side)</li>
@@ -454,7 +454,7 @@
   if (!sid) { sid = Math.random().toString(36).slice(2) + Date.now().toString(36); localStorage.setItem('vp_sid', sid); }
   var ref = document.referrer ? new URL(document.referrer).hostname : null;
   if (ref === location.hostname) ref = null;
-  fetch('https://api.vaultproof.dev/analytics/event', {
+  fetch('https://staging-api.vaultproof.dev/analytics/event', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ type: 'pageview', page: location.pathname, referrer: ref, sessionId: sid }),

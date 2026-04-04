@@ -91,6 +91,13 @@
     .step-pending .step-icon { color: #6b7280; }
     .step-active .step-icon { color: #6366f1; }
     .step-done .step-icon { color: #22c55e; }
+    @keyframes shimmer {
+      0% { transform: translateX(-100%); }
+      100% { transform: translateX(200%); }
+    }
+    .scan-shimmer {
+      animation: shimmer 1.5s ease-in-out infinite;
+    }
     .step-done .step-label { color: #d1d5db; }
     .step-active .step-label { color: #e5e7eb; }
     .step-pending .step-label { color: #6b7280; }
@@ -193,6 +200,13 @@
       </button>
     </div>
   </aside>
+
+  <!-- Bulk Action Bar -->
+  <div id="bulkActionBar" class="hidden fixed bottom-6 left-1/2 -translate-x-1/2 z-50 bg-card border border-border rounded-2xl px-6 py-3 flex items-center gap-4 shadow-2xl shadow-black/40">
+    <span id="bulkCount" class="text-sm text-gray-300 font-medium whitespace-nowrap">0 findings selected</span>
+    <button id="bulkIgnoreBtn" onclick="bulkIgnore()" class="px-4 py-2 text-sm font-medium rounded-lg bg-gray-700 hover:bg-gray-600 text-white transition">Ignore Selected</button>
+    <button onclick="openPrModal()" class="px-4 py-2 text-sm font-medium rounded-lg bg-brand hover:bg-brand/80 text-white transition">Create PR for Selected</button>
+  </div>
 
   <!-- PR Creation Modal -->
   <div id="prModal" class="fixed inset-0 z-[60] hidden items-center justify-center bg-black/60 backdrop-blur-sm">
@@ -347,6 +361,7 @@
               </table>
             </div>
           </div>
+
         </div>
 
         <!-- State 3: Scan Results -->
@@ -391,42 +406,26 @@
             <p class="text-xs text-gray-500 mt-1">This may take 10-30 seconds</p>
           </div>
 
-          <!-- Multi-step scan progress -->
+          <!-- Scan progress -->
           <div id="scanProgress" class="hidden">
             <div class="bg-card border border-border rounded-2xl p-6 mb-6 anim-fade-up">
-              <h3 class="text-sm font-semibold text-white mb-4">Scanning repository...</h3>
-              <div class="space-y-3" id="scanSteps">
-                <div class="flex items-center gap-3 step-pending" id="scanStep-env">
-                  <span class="step-icon w-5 h-5 flex items-center justify-center flex-shrink-0">
-                    <svg class="w-4 h-4 text-gray-600" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/></svg>
-                  </span>
-                  <span class="step-label text-sm">Scanning .env files...</span>
-                  <span class="step-result text-xs text-gray-500 ml-auto"></span>
-                </div>
-                <div class="flex items-center gap-3 step-pending" id="scanStep-source">
-                  <span class="step-icon w-5 h-5 flex items-center justify-center flex-shrink-0">
-                    <svg class="w-4 h-4 text-gray-600" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/></svg>
-                  </span>
-                  <span class="step-label text-sm">Scanning source code...</span>
-                  <span class="step-result text-xs text-gray-500 ml-auto"></span>
-                </div>
-                <div class="flex items-center gap-3 step-pending" id="scanStep-git">
-                  <span class="step-icon w-5 h-5 flex items-center justify-center flex-shrink-0">
-                    <svg class="w-4 h-4 text-gray-600" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/></svg>
-                  </span>
-                  <span class="step-label text-sm">Checking git history...</span>
-                  <span class="step-result text-xs text-gray-500 ml-auto"></span>
-                </div>
-                <div class="flex items-center gap-3 step-pending" id="scanStep-sdk">
-                  <span class="step-icon w-5 h-5 flex items-center justify-center flex-shrink-0">
-                    <svg class="w-4 h-4 text-gray-600" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/></svg>
-                  </span>
-                  <span class="step-label text-sm">Detecting SDK patterns...</span>
-                  <span class="step-result text-xs text-gray-500 ml-auto"></span>
-                </div>
+              <div class="flex items-center justify-between mb-5">
+                <h3 class="text-sm font-semibold text-white">Scanning repository...</h3>
+                <button id="cancelScanBtn" onclick="cancelScan()" class="px-3 py-1.5 text-xs font-medium rounded-lg bg-red-500/10 border border-red-500/20 text-red-400 hover:bg-red-500/20 hover:border-red-500/30 transition">Cancel</button>
               </div>
-              <div id="scanLiveCounter" class="mt-4 pt-4 border-t border-border text-xs text-gray-500">
-                Found: <span id="scanCountKeys" class="text-white font-medium">0</span> keys, <span id="scanCountSdk" class="text-white font-medium">0</span> SDK inits, <span id="scanCountHttp" class="text-white font-medium">0</span> HTTP calls
+              <!-- Progress bar -->
+              <div class="relative w-full h-2 bg-[#1e1e2e] rounded-full overflow-hidden mb-5">
+                <div id="scanProgressBar" class="absolute inset-y-0 left-0 bg-gradient-to-r from-brand to-cyan-400 rounded-full transition-all duration-700 ease-out" style="width: 0%"></div>
+                <div id="scanProgressShimmer" class="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent scan-shimmer rounded-full"></div>
+              </div>
+              <!-- Status text -->
+              <p id="scanStatusText" class="text-sm text-gray-400 mb-4">Connecting to repository...</p>
+              <!-- Elapsed time -->
+              <div class="flex items-center justify-between text-xs text-gray-600">
+                <span id="scanElapsed">0s elapsed</span>
+                <span id="scanLiveCounter">
+                  Found: <span id="scanCountKeys" class="text-white font-medium">0</span> keys, <span id="scanCountSdk" class="text-white font-medium">0</span> SDK inits, <span id="scanCountHttp" class="text-white font-medium">0</span> HTTP calls
+                </span>
               </div>
             </div>
           </div>
@@ -435,8 +434,69 @@
           <div id="findingsSection" class="hidden">
             <div class="bg-card border border-border rounded-2xl overflow-hidden mb-6">
               <div class="px-4 py-3 border-b border-border flex items-center justify-between">
-                <h3 class="text-sm font-semibold">Code Findings</h3>
-                <span id="findingsCount" class="text-xs text-gray-500"></span>
+                <div class="flex items-center gap-3">
+                  <h3 class="text-sm font-semibold">Code Findings</h3>
+                  <span id="findingsCount" class="text-xs text-gray-500"></span>
+                </div>
+                <div class="flex items-center gap-2">
+                  <button onclick="exportCsv()" class="relative px-3 py-1.5 text-xs font-medium rounded-lg bg-[#111118] border border-[#1e1e2e] text-gray-400 hover:text-white hover:border-brand/30 transition flex items-center gap-1.5">
+                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M4 16v2a2 2 0 002 2h12a2 2 0 002-2v-2M7 10l5 5 5-5M12 15V3"/></svg>
+                    Export CSV
+                    <span id="csvProBadge" class="hidden ml-1 px-1.5 py-0.5 text-[10px] font-bold rounded bg-brand/20 text-brand">PRO</span>
+                  </button>
+                  <button onclick="toggleAllowlistPanel()" title="Manage Allowlist" class="relative px-2 py-1.5 text-xs font-medium rounded-lg bg-[#111118] border border-[#1e1e2e] text-gray-400 hover:text-white hover:border-brand/30 transition flex items-center gap-1.5">
+                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.066 2.573c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.573 1.066c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.066-2.573c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/><circle cx="12" cy="12" r="3"/></svg>
+                  </button>
+                </div>
+              </div>
+              <!-- Allowlist Management Panel -->
+              <div id="allowlistPanel" class="hidden border-b border-border">
+                <div class="px-4 py-3 bg-surface">
+                  <div class="flex items-center justify-between mb-3">
+                    <h4 class="text-xs font-semibold text-gray-300 uppercase tracking-wider">Allowlist (False Positive Management)</h4>
+                    <span id="allowlistCount" class="text-xs text-gray-500"></span>
+                  </div>
+                  <div id="allowlistTableWrap" class="mb-4">
+                    <table id="allowlistTable" class="w-full text-sm hidden">
+                      <thead>
+                        <tr class="border-b border-border text-gray-500 text-xs uppercase tracking-wider">
+                          <th class="text-left px-3 py-2 font-medium">Pattern</th>
+                          <th class="text-left px-3 py-2 font-medium">Type</th>
+                          <th class="text-left px-3 py-2 font-medium">Scope</th>
+                          <th class="text-left px-3 py-2 font-medium">Reason</th>
+                          <th class="text-right px-3 py-2 font-medium w-16"></th>
+                        </tr>
+                      </thead>
+                      <tbody id="allowlistBody"></tbody>
+                    </table>
+                    <p id="allowlistEmpty" class="text-xs text-gray-500 py-2">No allowlist entries yet.</p>
+                  </div>
+                  <div class="flex flex-wrap items-end gap-2 border-t border-border pt-3">
+                    <div>
+                      <label class="text-xs text-gray-500 block mb-1">Type</label>
+                      <select id="alPatternType" class="bg-[#111118] border border-[#1e1e2e] rounded-lg px-2 py-1.5 text-xs text-gray-300 focus:outline-none focus:border-brand/50">
+                        <option value="env_name">Env Name</option>
+                        <option value="file_path">File Path</option>
+                      </select>
+                    </div>
+                    <div class="flex-1 min-w-[160px]">
+                      <label class="text-xs text-gray-500 block mb-1">Pattern</label>
+                      <input id="alPattern" type="text" placeholder="e.g. NEXT_PUBLIC_API_URL" class="w-full bg-[#111118] border border-[#1e1e2e] rounded-lg px-2 py-1.5 text-xs text-gray-300 focus:outline-none focus:border-brand/50" />
+                    </div>
+                    <div>
+                      <label class="text-xs text-gray-500 block mb-1">Scope</label>
+                      <select id="alScope" class="bg-[#111118] border border-[#1e1e2e] rounded-lg px-2 py-1.5 text-xs text-gray-300 focus:outline-none focus:border-brand/50">
+                        <option value="global">Global</option>
+                        <option value="repo">This Repo</option>
+                      </select>
+                    </div>
+                    <div class="flex-1 min-w-[120px]">
+                      <label class="text-xs text-gray-500 block mb-1">Reason (optional)</label>
+                      <input id="alReason" type="text" placeholder="e.g. public key, not secret" class="w-full bg-[#111118] border border-[#1e1e2e] rounded-lg px-2 py-1.5 text-xs text-gray-300 focus:outline-none focus:border-brand/50" />
+                    </div>
+                    <button onclick="addAllowlistEntry()" class="px-3 py-1.5 text-xs font-medium rounded-lg bg-brand hover:bg-brand-hover text-white transition">Add</button>
+                  </div>
+                </div>
               </div>
               <div id="findingsEmpty" class="hidden px-6 py-8 text-center text-sm text-green-400">No exposed keys found in current code. Your repo looks clean!</div>
               <div class="overflow-x-auto">
@@ -468,22 +528,32 @@
                 </svg>
                 <div>
                   <p class="text-sm text-yellow-200 font-medium">Keys found in git commit history</p>
-                  <p class="text-xs text-yellow-300/70 mt-1">These keys were found in git commit history. Even after removing from code, they're visible to anyone who clones this repo.</p>
+                  <p class="text-xs text-yellow-300/70 mt-1">These keys were found in git commit history. Even after removing from code, they remain visible to anyone who clones this repo. Take action below for each key.</p>
                 </div>
               </div>
-              <div class="bg-card border border-border rounded-2xl overflow-hidden">
-                <div class="overflow-x-auto">
-                  <table class="w-full text-sm">
-                    <thead>
-                      <tr class="border-b border-border text-gray-500 text-xs uppercase tracking-wider">
-                        <th class="text-left px-4 py-3 font-medium">Key Name</th>
-                        <th class="text-left px-4 py-3 font-medium">Provider</th>
-                        <th class="text-left px-4 py-3 font-medium">Commit</th>
-                        <th class="text-right px-4 py-3 font-medium">Action</th>
-                      </tr>
-                    </thead>
-                    <tbody id="gitHistoryBody"></tbody>
-                  </table>
+              <div id="gitHistoryCards" class="grid gap-3"></div>
+            </div>
+
+            <!-- Revoke Guide Modal -->
+            <div id="revokeGuideModal" class="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 hidden items-center justify-center" style="display:none;">
+              <div class="bg-[#0d0d14] border border-border rounded-2xl max-w-lg w-full mx-4 p-6 shadow-2xl">
+                <div class="flex items-center justify-between mb-4">
+                  <h3 class="text-lg font-semibold text-white" id="revokeModalTitle">Revoke Key</h3>
+                  <button onclick="closeRevokeModal()" class="text-gray-400 hover:text-white transition">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg>
+                  </button>
+                </div>
+                <p class="text-sm text-gray-400 mb-3">Follow these steps to revoke the compromised key:</p>
+                <ol id="revokeModalSteps" class="list-decimal list-inside space-y-2 text-sm text-gray-300 mb-4"></ol>
+                <div id="revokeModalNote" class="hidden bg-yellow-900/20 border border-yellow-700/30 rounded-lg px-3 py-2 text-xs text-yellow-300 mb-4"></div>
+                <div class="flex items-center gap-3">
+                  <a id="revokeModalLink" href="#" target="_blank" rel="noopener" class="inline-flex items-center gap-2 px-4 py-2 bg-brand hover:bg-brand-hover text-white rounded-xl text-sm font-medium transition">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"/></svg>
+                    Open provider dashboard
+                  </a>
+                  <button id="revokeConfirmBtn" onclick="confirmRevoked()" class="px-4 py-2 bg-green-600 hover:bg-green-500 text-white rounded-xl text-sm font-medium transition">
+                    I've revoked this key
+                  </button>
                 </div>
               </div>
             </div>
@@ -663,7 +733,7 @@
   </div>
 
   <script>
-    const API = 'https://api.vaultproof.dev/api/v1';
+    const API = 'https://staging-api.vaultproof.dev/api/v1';
     let token = localStorage.getItem('vaultproof_token');
     const user = JSON.parse(localStorage.getItem('vaultproof_user') || '{}');
 
@@ -806,6 +876,7 @@
     let currentScanData = null;
     let ghConnected = false;
     let migrationResult = null;
+    let userTier = 'free';
 
     const PLATFORM_INSTRUCTIONS = {
       'Vercel': 'Go to Vercel \u2192 Your Project \u2192 Settings \u2192 Environment Variables',
@@ -913,10 +984,12 @@
             '</div>' +
             '<p class="text-xs text-gray-500">Updated ' + timeAgo(r.updatedAt || r.updated_at) + '</p>' +
           '</div>' +
-          '<button data-repo="' + escapeHtml(repoName) + '" class="scan-repo-btn ml-3 px-4 py-2 bg-brand/10 hover:bg-brand/20 text-brand text-sm font-medium rounded-xl transition flex-shrink-0">Scan</button>' +
+          '<div class="flex items-center">' +
+            '<button data-repo="' + escapeHtml(repoName) + '" class="scan-repo-btn ml-3 px-4 py-2 bg-brand/10 hover:bg-brand/20 text-brand text-sm font-medium rounded-xl transition flex-shrink-0">Scan</button>' +
+          '</div>' +
         '</div>';
       }).join('');
-      // Event delegation for scan buttons (avoids inline onclick XSS)
+      // Event delegation for scan buttons
       grid.querySelectorAll('.scan-repo-btn').forEach(function(btn) {
         btn.addEventListener('click', function() { startScan(btn.getAttribute('data-repo')); });
       });
@@ -970,54 +1043,59 @@
     }
 
     // --- Scan Step Animation Helpers ---
-    function setScanStepState(stepId, state, resultText) {
-      var el = document.getElementById(stepId);
-      if (!el) return;
-      el.className = el.className.replace(/step-(pending|active|done)/g, '').trim();
-      el.classList.add('step-' + state);
-      var iconEl = el.querySelector('.step-icon');
-      if (state === 'active') {
-        iconEl.innerHTML = '<svg class="w-4 h-4 text-brand spinner" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>';
-      } else if (state === 'done') {
-        iconEl.innerHTML = '<svg class="w-4 h-4 text-green-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>';
-      } else {
-        iconEl.innerHTML = '<svg class="w-4 h-4 text-gray-600" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/></svg>';
-      }
-      if (resultText) {
-        el.querySelector('.step-result').textContent = resultText;
-      }
-    }
+    var scanCancelled = false;
+    var scanElapsedTimer = null;
+    var scanPollInterval = null;
 
-    function resetScanSteps() {
-      ['scanStep-env', 'scanStep-source', 'scanStep-git', 'scanStep-sdk'].forEach(function(id) {
-        setScanStepState(id, 'pending', '');
-      });
+    function resetScanProgress() {
+      scanCancelled = false;
+      document.getElementById('scanProgressBar').style.width = '0%';
+      document.getElementById('scanStatusText').textContent = 'Connecting to repository...';
+      document.getElementById('scanElapsed').textContent = '0s elapsed';
       document.getElementById('scanCountKeys').textContent = '0';
       document.getElementById('scanCountSdk').textContent = '0';
       document.getElementById('scanCountHttp').textContent = '0';
     }
 
-    async function animateScanSteps(scanStepCb) {
-      var steps = [
-        { id: 'scanStep-env', delay: 400 },
-        { id: 'scanStep-source', delay: 600 },
-        { id: 'scanStep-git', delay: 800 },
-        { id: 'scanStep-sdk', delay: 500 }
-      ];
-      for (var i = 0; i < steps.length; i++) {
-        setScanStepState(steps[i].id, 'active');
-        await new Promise(function(r) { setTimeout(r, steps[i].delay); });
-        // Check if results are already available after intermediate steps
-        if (scanStepCb) scanStepCb(i);
-        setScanStepState(steps[i].id, 'done');
-      }
+    function startElapsedTimer() {
+      var start = Date.now();
+      if (scanElapsedTimer) clearInterval(scanElapsedTimer);
+      scanElapsedTimer = setInterval(function() {
+        var secs = Math.floor((Date.now() - start) / 1000);
+        document.getElementById('scanElapsed').textContent = secs + 's elapsed';
+      }, 1000);
+    }
+
+    function stopElapsedTimer() {
+      if (scanElapsedTimer) { clearInterval(scanElapsedTimer); scanElapsedTimer = null; }
+    }
+
+    function setScanProgress(pct, status) {
+      document.getElementById('scanProgressBar').style.width = Math.min(pct, 95) + '%';
+      if (status) document.getElementById('scanStatusText').textContent = status;
+    }
+
+    function completeScanProgress() {
+      document.getElementById('scanProgressBar').style.width = '100%';
+      document.getElementById('scanProgressShimmer').style.display = 'none';
+      document.getElementById('scanStatusText').textContent = 'Scan complete!';
+      stopElapsedTimer();
+    }
+
+    function cancelScan() {
+      scanCancelled = true;
+      if (scanPollInterval) { clearInterval(scanPollInterval); scanPollInterval = null; }
+      stopElapsedTimer();
+      document.getElementById('scanProgress').classList.add('hidden');
+      document.getElementById('summaryCards').style.opacity = '1';
+      showToast('Scan cancelled', 'info');
     }
 
     function updateScanLiveCounter(findings) {
       if (!findings) return;
-      var keys = findings.filter(function(f) { return f.type === 'key' || (!f.type && (f.maskedValue || f.masked_value)); }).length;
-      var sdk = findings.filter(function(f) { return f.type === 'sdk-init'; }).length;
-      var http = findings.filter(function(f) { return f.type === 'http-url'; }).length;
+      var keys = findings.filter(function(f) { return f.mode !== 'sdk-init' && f.mode !== 'http-url' && (f.maskedValue || f.masked_value); }).length;
+      var sdk = findings.filter(function(f) { return f.mode === 'sdk-init'; }).length;
+      var http = findings.filter(function(f) { return f.mode === 'http-url'; }).length;
       document.getElementById('scanCountKeys').textContent = keys;
       document.getElementById('scanCountSdk').textContent = sdk;
       document.getElementById('scanCountHttp').textContent = http;
@@ -1034,26 +1112,21 @@
       document.getElementById('envChecklist').classList.add('hidden');
       document.getElementById('summaryCards').style.opacity = '0.3';
 
-      // Show multi-step progress
+      // Show progress UI
       document.getElementById('scanProgress').classList.remove('hidden');
-      resetScanSteps();
-
-      // Start animation in parallel with the API call
-      var scanComplete = false;
-      var scanData = null;
-
-      var animPromise = animateScanSteps(function(stepIdx) {
-        if (scanData && scanData.findings) {
-          updateScanLiveCounter(scanData.findings);
-        }
-      });
+      resetScanProgress();
+      startElapsedTimer();
+      setScanProgress(5, 'Connecting to repository...');
 
       var res = await apiFetch(API + '/scanner/scan', {
         method: 'POST',
         body: JSON.stringify({ repoFullName: repoFullName })
       });
 
+      if (scanCancelled) return;
+
       if (!res) {
+        stopElapsedTimer();
         document.getElementById('scanProgress').classList.add('hidden');
         document.getElementById('summaryCards').style.opacity = '1';
         showToast('Failed to start scan');
@@ -1062,49 +1135,72 @@
 
       var data = await res.json();
       if (!res.ok) {
+        stopElapsedTimer();
         document.getElementById('scanProgress').classList.add('hidden');
         document.getElementById('summaryCards').style.opacity = '1';
         showToast(data.error || 'Scan failed');
         return;
       }
 
+      setScanProgress(15, 'Scan started, fetching files...');
       currentScanId = data.scanId || data.id;
+
       if (data.status === 'completed' || data.findings) {
-        scanData = data;
         updateScanLiveCounter(data.findings || []);
-        await animPromise;
-        document.getElementById('scanProgress').classList.add('hidden');
-        renderScanResults(data);
+        completeScanProgress();
+        setTimeout(function() {
+          document.getElementById('scanProgress').classList.add('hidden');
+          renderScanResults(data);
+        }, 600);
       } else {
-        await animPromise;
         pollScanStatus(currentScanId);
       }
     }
 
-    async function pollScanStatus(scanId) {
+    function pollScanStatus(scanId) {
       var attempts = 0;
-      var maxAttempts = 60;
-      var interval = setInterval(async function() {
+      var maxAttempts = 90;
+      var statusMessages = [
+        { pct: 20, msg: 'Scanning .env files...' },
+        { pct: 35, msg: 'Scanning source code for hardcoded keys...' },
+        { pct: 50, msg: 'Checking git history for leaked keys...' },
+        { pct: 65, msg: 'Detecting SDK patterns and API URLs...' },
+        { pct: 78, msg: 'Verifying detected keys...' },
+        { pct: 88, msg: 'Finalizing results...' },
+      ];
+
+      scanPollInterval = setInterval(async function() {
+        if (scanCancelled) { clearInterval(scanPollInterval); scanPollInterval = null; return; }
         attempts++;
+
+        // Gradually advance progress bar
+        var msgIdx = Math.min(Math.floor(attempts / 3), statusMessages.length - 1);
+        setScanProgress(statusMessages[msgIdx].pct, statusMessages[msgIdx].msg);
+
         if (attempts > maxAttempts) {
-          clearInterval(interval);
+          clearInterval(scanPollInterval); scanPollInterval = null;
+          stopElapsedTimer();
           document.getElementById('scanProgress').classList.add('hidden');
-          document.getElementById('scanSpinner').classList.add('hidden');
+          document.getElementById('summaryCards').style.opacity = '1';
           showToast('Scan timed out. Please try again.');
           return;
         }
         var res = await apiFetch(API + '/scanner/scans/' + scanId);
-        if (!res) { clearInterval(interval); return; }
+        if (!res) { clearInterval(scanPollInterval); scanPollInterval = null; stopElapsedTimer(); return; }
         var data = await res.json();
         if (data.status === 'completed' || data.findings) {
-          clearInterval(interval);
+          clearInterval(scanPollInterval); scanPollInterval = null;
           updateScanLiveCounter(data.findings || []);
-          document.getElementById('scanProgress').classList.add('hidden');
-          renderScanResults(data);
+          completeScanProgress();
+          setTimeout(function() {
+            document.getElementById('scanProgress').classList.add('hidden');
+            renderScanResults(data);
+          }, 600);
         } else if (data.status === 'failed') {
-          clearInterval(interval);
+          clearInterval(scanPollInterval); scanPollInterval = null;
+          stopElapsedTimer();
           document.getElementById('scanProgress').classList.add('hidden');
-          document.getElementById('scanSpinner').classList.add('hidden');
+          document.getElementById('summaryCards').style.opacity = '1';
           showToast(data.error || 'Scan failed');
         }
       }, 2000);
@@ -1170,6 +1266,9 @@
         document.getElementById('migrationResults').classList.add('hidden');
         renderLegacyFindings(codeFindings, historyFindings);
       }
+
+      // Pre-load allowlist data for this repo
+      loadAllowlists();
     }
 
     // --- Migration Results View ---
@@ -1348,7 +1447,7 @@
           }
 
           return '<tr class="border-b border-border hover:bg-white/[0.02] transition cursor-pointer" onclick="toggleDetail(' + i + ')">' +
-            '<td class="px-4 py-3" onclick="event.stopPropagation()"><input type="checkbox" class="finding-cb rounded border-gray-600" data-idx="' + i + '" onchange="updatePrButton()"></td>' +
+            '<td class="px-4 py-3" onclick="event.stopPropagation()"><input type="checkbox" class="finding-cb rounded border-gray-600" data-idx="' + i + '" data-provider="' + escapeHtml(f.provider || '') + '" data-status="' + escapeHtml(f.status || '') + '" onchange="updateBulkBar()"></td>' +
             '<td class="px-4 py-3">' + statusIcon + '</td>' +
             '<td class="px-4 py-3 text-white font-medium text-xs font-mono">' + escapeHtml(f.envName || f.env_name || f.key_name || f.keyName || '') + '</td>' +
             '<td class="px-4 py-3 text-gray-400 text-xs">' + escapeHtml(pName) + '</td>' +
@@ -1356,44 +1455,63 @@
             '<td class="px-4 py-3 text-gray-400 text-xs">' + escapeHtml(f.source || 'code') + '</td>' +
             '<td class="px-4 py-3 text-gray-400 text-xs">' + escapeHtml(f.mode || '') + '</td>' +
             '<td class="px-4 py-3 text-right" onclick="event.stopPropagation()">' +
-              '<select class="bg-[#111118] border border-[#1e1e2e] rounded-lg px-2 py-1 text-xs text-gray-300 focus:outline-none focus:border-brand/50" data-finding-idx="' + i + '">' +
+              '<select class="bg-[#111118] border border-[#1e1e2e] rounded-lg px-2 py-1 text-xs text-gray-300 focus:outline-none focus:border-brand/50" data-finding-idx="' + i + '" onchange="if(this.value===\'allowlist\'){handleAllowlistFromFinding(this)}">' +
                 '<option value="store">Store in VaultProof</option>' +
                 '<option value="pr">Create PR</option>' +
                 '<option value="ignore">Ignore</option>' +
+                '<option value="allowlist">Add to Allowlist</option>' +
               '</select>' +
             '</td>' +
           '</tr>' + detailRow;
         }).join('');
       }
 
-      // Git history findings
+      // Git history findings — actionable cards
       var histSection = document.getElementById('gitHistorySection');
       if (historyFindings.length) {
         histSection.classList.remove('hidden');
-        document.getElementById('gitHistoryBody').innerHTML = historyFindings.map(function(f) {
-          var hInfo = f.providerInfo || f.provider_info;
-          var hName = hInfo ? hInfo.name : (f.provider || 'Unknown');
-          var rotUrl = f.rotationUrl || f.rotation_url || '';
-          return '<tr class="border-b border-border hover:bg-white/[0.02] transition">' +
-            '<td class="px-4 py-3 text-white font-medium text-xs font-mono">' + escapeHtml(f.envName || f.env_name || f.key_name || f.keyName || '') + '</td>' +
-            '<td class="px-4 py-3 text-gray-400 text-xs">' + escapeHtml(hName) + (hInfo ? '<br><span class="text-gray-600">' + escapeHtml(hInfo.desc) + '</span>' : '') + '</td>' +
-            '<td class="px-4 py-3 text-gray-400 text-xs font-mono">' + escapeHtml(f.maskedValue || f.masked_value || (f.commit ? f.commit.substring(0, 7) : '')) + '</td>' +
-            '<td class="px-4 py-3 text-right">' +
-              (rotUrl ? '<a href="' + escapeHtml(rotUrl) + '" target="_blank" rel="noopener" class="text-yellow-400 hover:underline text-xs">Rotate at ' + escapeHtml(hName) + '</a>' : '<span class="text-gray-500 text-xs">Rotate manually</span>') +
-            '</td>' +
-          '</tr>';
+        document.getElementById('gitHistoryCards').innerHTML = historyFindings.map(function(f, idx) {
+          var hInfo = f.providerInfo || f.provider_info || {};
+          var hName = hInfo.name || f.provider || 'Unknown';
+          var masked = f.maskedValue || f.masked_value || '';
+          var ha = f.historyAction || f.history_action || '';
+          var badge = '';
+          if (ha === 'revoke-guided') badge = '<span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-green-900/40 text-green-400 border border-green-700/30">Revoked</span>';
+          else if (ha === 'store-rewrite') badge = '<span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-blue-900/40 text-blue-400 border border-blue-700/30">Stored</span>';
+          else if (ha === 'dismissed') badge = '<span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-gray-800 text-gray-400 border border-gray-700/30">Dismissed</span>';
+
+          var stepsJson = escapeHtml(JSON.stringify(hInfo.revocationSteps || []));
+          var noteText = escapeHtml(hInfo.revocationNote || '');
+          var rotUrl = escapeHtml(f.rotationUrl || hInfo.rotationUrl || '');
+
+          return '<div class="bg-card border border-border rounded-xl p-4 flex flex-col sm:flex-row sm:items-center gap-3" data-history-idx="' + idx + '">' +
+            '<div class="flex-1 min-w-0">' +
+              '<div class="flex items-center gap-2 mb-1">' +
+                '<span class="text-sm font-medium text-white">' + escapeHtml(hName) + '</span>' +
+                badge +
+              '</div>' +
+              '<p class="text-xs font-mono text-gray-400 truncate">' + escapeHtml(f.envName || f.env_name || '') + (masked ? ' &mdash; ' + escapeHtml(masked) : '') + '</p>' +
+            '</div>' +
+            '<div class="flex items-center gap-2 flex-shrink-0">' +
+              (ha === 'dismissed' ? '' :
+                '<button onclick="openRevokeModal(\'' + escapeJs(f.id) + '\', \'' + escapeJs(hName) + '\', ' + stepsJson + ', \'' + noteText + '\', \'' + rotUrl + '\')" class="px-3 py-1.5 bg-yellow-600 hover:bg-yellow-500 text-white rounded-lg text-xs font-medium transition whitespace-nowrap">Revoke + Rotate</button>' +
+                '<button onclick="storeHistoryFinding(\'' + escapeJs(f.id) + '\')" class="px-3 py-1.5 bg-brand hover:bg-brand-hover text-white rounded-lg text-xs font-medium transition whitespace-nowrap">Store in VaultProof</button>'
+              ) +
+              (ha ? '' : '<button onclick="dismissHistoryFinding(\'' + escapeJs(f.id) + '\', this)" class="px-3 py-1.5 bg-gray-700 hover:bg-gray-600 text-gray-300 rounded-lg text-xs font-medium transition whitespace-nowrap">Dismiss</button>') +
+            '</div>' +
+          '</div>';
         }).join('');
       } else {
         histSection.classList.add('hidden');
       }
 
-      updatePrButton();
+      updateBulkBar();
     }
 
     function toggleSelectAll() {
       var checked = document.getElementById('selectAll').checked;
       document.querySelectorAll('.finding-cb').forEach(function(cb) { cb.checked = checked; });
-      updatePrButton();
+      updateBulkBar();
     }
 
     function toggleDetail(idx) {
@@ -1401,11 +1519,328 @@
       if (row) row.classList.toggle('hidden');
     }
 
+    // ── Git History Finding Actions ──
+
+    var _revokeModalFindingId = null;
+
+    function openRevokeModal(findingId, providerName, steps, note, url) {
+      _revokeModalFindingId = findingId;
+      document.getElementById('revokeModalTitle').textContent = 'Revoke ' + providerName + ' Key';
+      var stepsEl = document.getElementById('revokeModalSteps');
+      var stepsArr = typeof steps === 'string' ? JSON.parse(steps) : (steps || []);
+      stepsEl.innerHTML = stepsArr.map(function(s) {
+        return '<li>' + escapeHtml(s) + '</li>';
+      }).join('');
+      var noteEl = document.getElementById('revokeModalNote');
+      if (note) {
+        noteEl.textContent = note;
+        noteEl.classList.remove('hidden');
+      } else {
+        noteEl.classList.add('hidden');
+      }
+      var linkEl = document.getElementById('revokeModalLink');
+      if (url) {
+        linkEl.href = url;
+        linkEl.classList.remove('hidden');
+      } else {
+        linkEl.classList.add('hidden');
+      }
+      var modal = document.getElementById('revokeGuideModal');
+      modal.style.display = 'flex';
+      modal.classList.remove('hidden');
+    }
+
+    function closeRevokeModal() {
+      var modal = document.getElementById('revokeGuideModal');
+      modal.style.display = 'none';
+      modal.classList.add('hidden');
+      _revokeModalFindingId = null;
+    }
+
+    async function confirmRevoked() {
+      if (!_revokeModalFindingId) return;
+      var findingId = _revokeModalFindingId;
+      try {
+        var res = await apiFetch('/api/scanner/findings/' + findingId + '/history-action', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ action: 'revoke-guided' }),
+        });
+        if (!res.ok) throw new Error('Failed');
+        showToast('Key marked as revoked', 'success');
+        closeRevokeModal();
+        // Refresh scan data to update badges
+        if (currentScanData && currentScanData.id) {
+          loadScan(currentScanData.id);
+        }
+      } catch (e) {
+        showToast('Failed to update finding', 'error');
+      }
+    }
+
+    async function storeHistoryFinding(findingId) {
+      try {
+        var res = await apiFetch('/api/scanner/findings/' + findingId + '/history-action', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ action: 'store-rewrite' }),
+        });
+        if (!res.ok) throw new Error('Failed');
+        showToast('Finding marked for storage in VaultProof', 'success');
+        if (currentScanData && currentScanData.id) {
+          loadScan(currentScanData.id);
+        }
+      } catch (e) {
+        showToast('Failed to update finding', 'error');
+      }
+    }
+
+    async function dismissHistoryFinding(findingId, btn) {
+      if (btn) btn.disabled = true;
+      try {
+        var res = await apiFetch('/api/scanner/findings/' + findingId + '/history-action', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ action: 'dismissed' }),
+        });
+        if (!res.ok) throw new Error('Failed');
+        showToast('Finding dismissed', 'success');
+        if (currentScanData && currentScanData.id) {
+          loadScan(currentScanData.id);
+        }
+      } catch (e) {
+        showToast('Failed to dismiss finding', 'error');
+        if (btn) btn.disabled = false;
+      }
+    }
+
     function updatePrButton() {
       var selected = document.querySelectorAll('.finding-cb:checked').length;
       var btn = document.getElementById('createPrBtn');
       btn.disabled = selected === 0;
       btn.textContent = selected ? 'Create PR for selected (' + selected + ')' : 'Create PR for selected';
+    }
+
+    function updateBulkBar() {
+      updatePrButton();
+      var selected = document.querySelectorAll('.finding-cb:checked').length;
+      var bar = document.getElementById('bulkActionBar');
+      if (selected >= 2) {
+        bar.classList.remove('hidden');
+        document.getElementById('bulkCount').textContent = selected + ' findings selected';
+      } else {
+        bar.classList.add('hidden');
+      }
+    }
+
+    async function bulkIgnore() {
+      var codeFindings = (currentScanData.findings || []).filter(function(f) { return f.source !== 'git_history'; });
+      var findingIds = [];
+      document.querySelectorAll('.finding-cb:checked').forEach(function(cb) {
+        var idx = parseInt(cb.dataset.idx);
+        if (codeFindings[idx] && codeFindings[idx].id) {
+          findingIds.push(codeFindings[idx].id);
+        }
+      });
+
+      if (findingIds.length === 0) {
+        showToast('No findings selected', 'error');
+        return;
+      }
+
+      var btn = document.getElementById('bulkIgnoreBtn');
+      btn.disabled = true;
+      btn.textContent = 'Ignoring...';
+
+      try {
+        var resp = await apiFetch(API + '/scanner/findings/bulk-ignore', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ findingIds: findingIds }),
+        });
+
+        if (!resp.ok) {
+          var err = await resp.json().catch(function() { return { error: 'Unknown error' }; });
+          throw new Error(err.error || 'Failed to ignore findings');
+        }
+
+        var result = await resp.json();
+        showToast(result.ignored + ' finding' + (result.ignored !== 1 ? 's' : '') + ' ignored', 'success');
+
+        // Update local state and re-render
+        findingIds.forEach(function(id) {
+          var f = currentScanData.findings.find(function(f) { return f.id === id; });
+          if (f) f.action = 'ignored';
+        });
+
+        var code = currentScanData.findings.filter(function(f) { return f.source !== 'git_history'; });
+        var hist = currentScanData.findings.filter(function(f) { return f.source === 'git_history'; });
+        renderLegacyFindings(code, hist);
+      } catch (e) {
+        showToast(e.message || 'Failed to ignore findings', 'error');
+      } finally {
+        btn.disabled = false;
+        btn.textContent = 'Ignore Selected';
+      }
+    }
+
+    // --- Allowlist Management ---
+    var allowlistData = [];
+
+    function toggleAllowlistPanel() {
+      var panel = document.getElementById('allowlistPanel');
+      if (panel.classList.contains('hidden')) {
+        panel.classList.remove('hidden');
+        loadAllowlists();
+      } else {
+        panel.classList.add('hidden');
+      }
+    }
+
+    async function loadAllowlists() {
+      var repo = currentScanData ? (currentScanData.repo_full_name || currentScanData.repoFullName || '') : '';
+      var url = API + '/scanner/allowlists';
+      if (repo) url += '?repo=' + encodeURIComponent(repo);
+      var res = await apiFetch(url);
+      if (!res) return;
+      var data = await res.json();
+      allowlistData = data.allowlists || [];
+      renderAllowlistTable();
+    }
+
+    function renderAllowlistTable() {
+      var tbody = document.getElementById('allowlistBody');
+      var table = document.getElementById('allowlistTable');
+      var empty = document.getElementById('allowlistEmpty');
+      var count = document.getElementById('allowlistCount');
+
+      if (!allowlistData.length) {
+        table.classList.add('hidden');
+        empty.classList.remove('hidden');
+        count.textContent = '';
+        return;
+      }
+
+      table.classList.remove('hidden');
+      empty.classList.add('hidden');
+      count.textContent = allowlistData.length + ' entries';
+
+      tbody.innerHTML = allowlistData.map(function(entry) {
+        var scope = entry.repo_full_name ? escapeHtml(entry.repo_full_name) : 'Global';
+        var typeLabel = entry.pattern_type === 'file_path' ? 'File Path' : 'Env Name';
+        return '<tr class="border-b border-border hover:bg-white/[0.02]">' +
+          '<td class="px-3 py-2 text-xs font-mono text-white">' + escapeHtml(entry.pattern) + '</td>' +
+          '<td class="px-3 py-2 text-xs text-gray-400">' + typeLabel + '</td>' +
+          '<td class="px-3 py-2 text-xs text-gray-400">' + scope + '</td>' +
+          '<td class="px-3 py-2 text-xs text-gray-500">' + escapeHtml(entry.reason || '') + '</td>' +
+          '<td class="px-3 py-2 text-right">' +
+            '<button onclick="deleteAllowlistEntry(\'' + entry.id + '\')" class="text-red-400 hover:text-red-300 text-xs">Delete</button>' +
+          '</td>' +
+        '</tr>';
+      }).join('');
+    }
+
+    async function addAllowlistEntry(patternType, pattern) {
+      // If called from a finding action, patternType and pattern are provided
+      if (!patternType) {
+        patternType = document.getElementById('alPatternType').value;
+        pattern = document.getElementById('alPattern').value.trim();
+      }
+      if (!pattern) {
+        showToast('Pattern is required', 'warning');
+        return;
+      }
+      var scopeEl = document.getElementById('alScope');
+      var scope = scopeEl ? scopeEl.value : 'global';
+      var repo = null;
+      if (scope === 'repo' && currentScanData) {
+        repo = currentScanData.repo_full_name || currentScanData.repoFullName || null;
+      }
+      var reason = '';
+      var reasonEl = document.getElementById('alReason');
+      if (reasonEl) reason = reasonEl.value.trim();
+
+      try {
+        var res = await apiFetch(API + '/scanner/allowlists', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ patternType: patternType, pattern: pattern, repo: repo, reason: reason }),
+        });
+        if (!res || !res.ok) throw new Error('Failed');
+        showToast('Added to allowlist', 'success');
+        // Clear form
+        var patternInput = document.getElementById('alPattern');
+        var reasonInput = document.getElementById('alReason');
+        if (patternInput) patternInput.value = '';
+        if (reasonInput) reasonInput.value = '';
+        loadAllowlists();
+      } catch (e) {
+        showToast('Failed to add allowlist entry', 'error');
+      }
+    }
+
+    async function deleteAllowlistEntry(id) {
+      try {
+        var res = await apiFetch(API + '/scanner/allowlists/' + id, { method: 'DELETE' });
+        if (!res || !res.ok) throw new Error('Failed');
+        showToast('Allowlist entry removed', 'success');
+        loadAllowlists();
+      } catch (e) {
+        showToast('Failed to delete allowlist entry', 'error');
+      }
+    }
+
+    function handleAllowlistFromFinding(select) {
+      var idx = parseInt(select.getAttribute('data-finding-idx'), 10);
+      var codeFindings = (currentScanData.findings || []).filter(function(f) { return f.source !== 'git_history'; });
+      var f = codeFindings[idx];
+      if (!f) return;
+
+      var envName = f.envName || f.env_name || f.key_name || f.keyName || '';
+      var filePath = f.file || '';
+
+      // Prefer env_name if available, otherwise file_path
+      if (envName) {
+        addAllowlistEntry('env_name', envName);
+      } else if (filePath) {
+        addAllowlistEntry('file_path', filePath);
+      } else {
+        showToast('No pattern available for this finding', 'warning');
+      }
+      // Reset select
+      select.value = 'store';
+    }
+
+    // --- CSV Export ---
+    function exportCsv() {
+      if (userTier === 'free' || userTier === 'starter') {
+        showToast('CSV export is available on Pro and Enterprise plans', 'warning');
+        return;
+      }
+      var findings = (currentScanData && currentScanData.findings) || [];
+      if (!findings.length) { showToast('No findings to export'); return; }
+      var headers = ['Provider','Env Name','File','Line','Mode','Status','Source','Action','Masked Value'];
+      var rows = findings.map(function(f) {
+        return [
+          f.provider || '',
+          f.env_name || f.envName || '',
+          f.file || '',
+          f.line || '',
+          f.mode || '',
+          f.verified || f.status || '',
+          f.source || '',
+          f.action || '',
+          f.masked_value || f.maskedValue || ''
+        ].map(function(v) { return '"' + String(v).replace(/"/g, '""') + '"'; }).join(',');
+      });
+      var csv = headers.join(',') + '\n' + rows.join('\n');
+      var blob = new Blob([csv], { type: 'text/csv' });
+      var url = URL.createObjectURL(blob);
+      var a = document.createElement('a');
+      a.href = url;
+      a.download = ((currentScanData.repo_full_name || currentScanData.repoFullName || 'scan').replace('/', '-')) + '-' + new Date().toISOString().slice(0, 10) + '.csv';
+      a.click();
+      URL.revokeObjectURL(url);
     }
 
     // --- PR Modal ---
@@ -1779,6 +2214,19 @@
 
     // --- Init ---
     (async function init() {
+      // Fetch user tier for feature gating
+      try {
+        var meRes = await apiFetch(API + '/auth/me');
+        if (meRes && meRes.ok) {
+          var meData = await meRes.json();
+          userTier = meData.tier || 'free';
+          if (userTier === 'free' || userTier === 'starter') {
+            var badge = document.getElementById('csvProBadge');
+            if (badge) badge.classList.remove('hidden');
+          }
+        }
+      } catch(e) {}
+
       // Handle GitHub callback on page load
       var params = new URLSearchParams(window.location.search);
       var code = params.get('code');

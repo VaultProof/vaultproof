@@ -120,7 +120,7 @@
                 <ul class="list-disc list-inside space-y-1.5 ml-1">
                     <li><strong class="text-gray-300">Email address</strong> -- used for authentication and account communication</li>
                     <li><strong class="text-gray-300">Hashed password</strong> -- bcrypt-hashed, never stored in plaintext</li>
-                    <li><strong class="text-gray-300">Encrypted key shares</strong> -- split shares encrypted with AES-256-GCM; your full API key is never stored at rest</li>
+                    <li><strong class="text-gray-300">Encrypted key shares</strong> -- split shares encrypted with authenticated encryption; your full API key is never stored at rest</li>
                     <li><strong class="text-gray-300">Usage logs</strong> -- timestamps, endpoint paths, and HTTP status codes for proxy calls</li>
                     <li><strong class="text-gray-300">Stripe customer ID</strong> -- for processing billing on paid plans</li>
                 </ul>
@@ -153,8 +153,8 @@
                 <p class="mb-3">We use the following third-party services to operate VaultProof:</p>
                 <ul class="list-disc list-inside space-y-1.5 ml-1">
                     <li><strong class="text-gray-300">Stripe</strong> -- payment processing and subscription management</li>
-                    <li><strong class="text-gray-300">Supabase</strong> -- PostgreSQL database hosting and authentication infrastructure</li>
-                    <li><strong class="text-gray-300">Cloudflare</strong> -- CDN, DDoS protection, and edge proxy workers</li>
+                    <li><strong class="text-gray-300">Supabase</strong> -- database hosting and authentication infrastructure</li>
+                    <li><strong class="text-gray-300">Cloudflare</strong> -- CDN, DDoS protection, and edge compute</li>
                     <li><strong class="text-gray-300">Sentry</strong> -- error tracking and performance monitoring (no PII is sent to Sentry)</li>
                 </ul>
             </section>
@@ -170,7 +170,7 @@
                 <h2 class="text-xl font-bold text-white mb-3">6. Security</h2>
                 <p>We take security seriously. Our architecture includes:</p>
                 <ul class="list-disc list-inside space-y-1.5 ml-1 mt-3">
-                    <li><strong class="text-gray-300">AES-256-GCM encryption</strong> for all stored key shares</li>
+                    <li><strong class="text-gray-300">Authenticated encryption</strong> for all stored key shares</li>
                     <li><strong class="text-gray-300">Split-key encryption</strong> -- keys are split before leaving your device</li>
                     <li><strong class="text-gray-300">Cryptographic proofs</strong> for key authorization without exposure</li>
                     <li><strong class="text-gray-300">HMAC-based proxy authentication</strong> to prevent unauthorized API calls</li>
@@ -256,7 +256,7 @@
   if (!sid) { sid = Math.random().toString(36).slice(2) + Date.now().toString(36); localStorage.setItem('vp_sid', sid); }
   var ref = document.referrer ? new URL(document.referrer).hostname : null;
   if (ref === location.hostname) ref = null;
-  fetch('https://api.vaultproof.dev/analytics/event', {
+  fetch('https://staging-api.vaultproof.dev/analytics/event', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ type: 'pageview', page: location.pathname, referrer: ref, sessionId: sid }),

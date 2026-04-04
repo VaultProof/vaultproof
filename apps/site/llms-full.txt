@@ -51,17 +51,17 @@ const response = await client.chat.completions.create({
 
 ### Split-Key Storage
 - User's API key is split into Share 1 and Share 2 using secret sharing
-- Share 1 is encrypted with AES-256-GCM and stored server-side
+- Share 1 is encrypted with authenticated encryption and stored server-side
 - Share 2 is encrypted with the user's developer key
-- A vault commitment (SHA-256 hash) verifies integrity
+- A cryptographic commitment verifies integrity
 - Neither share alone reveals the original key
 
 ### Transparent Proxy
-- Requests hit VaultProof's Cloudflare Workers edge proxy
+- Requests hit VaultProof's edge proxy
 - The proxy assembles the key from both shares in memory
 - The API call is forwarded to the provider (e.g., OpenAI)
 - The key is wiped from memory immediately after the call
-- The full key exists in memory for approximately 100ms
+- The full key exists in memory only briefly during the API call
 
 ### What VaultProof Protects Against
 - API keys in source code, .env files, git history
@@ -73,7 +73,7 @@ const response = await client.chat.completions.create({
 - Both shares being compromised simultaneously
 - The API provider always sees the full key during proxied calls
 - Compromised client devices
-- In-memory attacks during the ~100ms assembly window
+- In-memory attacks during the brief assembly window
 
 ## API Reference
 
@@ -155,12 +155,8 @@ The repo scanner finds exposed API keys in GitHub repositories.
 - Keys deleted from git history (last 10 commits)
 
 ### Supported Key Formats
-- OpenAI: `sk-proj-*`, `sk-*` (40+ chars)
-- Anthropic: `sk-ant-*` (20+ chars)
-- Stripe: `sk_live_*`, `sk_test_*`, `pk_*` (20+ chars)
-- AWS: `AKIA*`, `ASIA*` (20 chars)
-- GitHub: `ghp_*`, `ghs_*`, `github_pat_*`
-- And 25+ more providers
+- 33+ provider key patterns detected automatically
+- Covers all major AI, cloud, and SaaS providers
 
 ### Actions on Findings
 - **Store in VaultProof**: Split the key and store it securely
@@ -178,8 +174,7 @@ The repo scanner finds exposed API keys in GitHub repositories.
 | Enterprise | Unlimited | 1,000 | Custom |
 
 ## Infrastructure
-- **Compute**: Cloudflare Workers (edge, global)
-- **Database**: Supabase (PostgreSQL)
+- **Compute**: Edge network (global)
 - **Payments**: Stripe
 - **All data encrypted at rest and in transit**
 
