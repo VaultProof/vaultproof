@@ -47,6 +47,7 @@ export default function KeysDashboard() {
   const [keys, setKeys] = useState<KeySlot[]>([]);
   const [stats, setStats] = useState<Record<string, KeyStats>>({});
   const [token, setToken] = useState<string | null>(null);
+  const [userEmail, setUserEmail] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [showAddKey, setShowAddKey] = useState(false);
@@ -56,6 +57,7 @@ export default function KeysDashboard() {
     supabase.auth.getSession().then(({ data }) => {
       if (data.session?.access_token) {
         setToken(data.session.access_token);
+        setUserEmail(data.session.user?.email ?? null);
       } else {
         setError("Not logged in. Sign in at vaultproof.dev first.");
         setLoading(false);
@@ -124,10 +126,14 @@ export default function KeysDashboard() {
           <Image src="/logo2.png" alt="VaultProof" width={40} height={40} />
         </Link>
         <div className="flex items-center gap-4">
-          <span className="text-sm text-gray-500">demo@vaultproof.dev</span>
-          <div className="w-8 h-8 rounded-full bg-indigo-600 flex items-center justify-center text-sm font-bold">
-            N
-          </div>
+          {userEmail && (
+            <>
+              <span className="text-sm text-gray-500">{userEmail}</span>
+              <div className="w-8 h-8 rounded-full bg-indigo-600 flex items-center justify-center text-sm font-bold">
+                {userEmail[0].toUpperCase()}
+              </div>
+            </>
+          )}
         </div>
       </nav>
 
