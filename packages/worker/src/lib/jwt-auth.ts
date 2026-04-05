@@ -6,6 +6,9 @@ export interface JwtAuth {
   email: string;
 }
 
+// Cache user existence checks to avoid a DB query on every request
+const knownUsers = new Set<string>();
+
 /**
  * Authenticate a dashboard user via Supabase JWT token.
  * Skips tokens that start with `vp_` (those are dev keys, handled by auth.ts).
@@ -30,24 +33,26 @@ export async function authenticateUser(
   const email = data.user.email;
   if (!userId || !email) return null;
 
-  // Auto-create user row if missing (Supabase auth user may not exist in public.users yet)
-  const supabaseDb = getSupabase(env);
-  const { data: existingUser } = await supabaseDb
-    .from('users')
-    .select('id')
-    .eq('id', userId)
-    .single();
-  if (!existingUser) {
-    await supabaseDb.from('users').insert({
-      id: userId,
-      email,
-      tier: 'free',
-      created_at: new Date().toISOString(),
-      kill_switch: false,
-      has_seen_tour: false,
-      global_daily_limit: 1000,
-      global_monthly_limit: 30000,
-    });
+  // Auto-create user row if missing (only check once per isolate lifetime)
+  if (!knownUsers.has(userId)) {
+    const { data: existing } = await supabase
+      .from('users')
+      .select('id')
+      .eq('id', userId)
+      .single();
+    if (!existing) {
+      await supabase.from('users').insert({
+        id: userId,
+        email,
+        tier: 'free',
+        created_at: new Date().toISOString(),
+        kill_switch: false,
+        has_seen_tour: false,
+        global_daily_limit: 1000,
+        global_monthly_limit: 30000,
+      });
+    }
+    knownUsers.add(userId);
   }
 
   return { userId, email };

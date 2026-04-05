@@ -1,37 +1,18 @@
 import type { Env } from '../types.js';
 import { authenticateUser } from '../lib/jwt-auth.js';
 import { getSupabase } from '../lib/supabase.js';
-import { githubApi, githubApiRaw, getGhToken, auditLog } from '../lib/github.js';
+import { githubApi, getGhToken, auditLog } from '../lib/github.js';
 import { encrypt } from '../crypto/encryption.js';
 import { encryptShare2 } from '../crypto/share2.js';
 import { splitString, serializeShare } from '../crypto/shamir.js';
 import {
-  KEY_PATTERNS,
-  SDK_INIT_PATTERNS,
-  HTTP_URL_REGEX,
-  PROVIDER_URLS,
-  PROCESS_ENV_REGEX,
-  OS_ENVIRON_REGEX,
   ENV_VAR_MAP,
-  ENV_VAR_PATTERNS,
-  PLATFORM_FILES,
-  MAX_FILES,
-  MAX_FILE_LINES,
-  MAX_LINE_LENGTH,
-  MIN_ENTROPY,
-  shannonEntropy,
-  detectProvider,
-  shouldScanFile,
-  recommendMode,
-  verifyKey,
+  PROVIDER_URLS,
   getProviderInfo,
 } from '../lib/secret-patterns.js';
 import { executeScan } from '../lib/scheduled-scan.js';
 import { getAdapter } from '../lib/provider-adapters/index.js';
-import { createSession, getSession, deleteSession } from '../lib/revoke-session.js';
-
-const notImplemented = () =>
-  Response.json({ error: 'Not implemented' }, { status: 501 });
+import { createSession, getSession } from '../lib/revoke-session.js';
 
 /* ------------------------------------------------------------------ */
 /*  GitHub OAuth helpers                                               */
@@ -245,7 +226,7 @@ async function handleGithubCallback(
     if (insertError) {
       console.error('github_connections insert failed:', insertError.message);
       return Response.json(
-        { error: 'Failed to save connection: ' + insertError.message },
+        { error: 'Failed to save connection' },
         { status: 500 },
       );
     }
