@@ -610,6 +610,94 @@
         </div>
     </section>
 
+    <!-- Stats Carousel -->
+    <section class="relative z-10 max-w-5xl mx-auto px-4 sm:px-6 py-12">
+      <div class="overflow-hidden" id="statsCarousel">
+        <div class="flex transition-transform duration-500 ease-in-out" id="statsTrack">
+          <div class="flex-shrink-0 w-full sm:w-1/2 lg:w-1/3 px-3">
+            <div class="bg-vp-surface border border-vp-border rounded-2xl p-6 text-center h-full">
+              <div class="text-3xl font-extrabold text-amber-400 mb-2">39M</div>
+              <div class="text-sm text-gray-300 mb-1">secrets leaked on GitHub in 2024</div>
+              <div class="text-[10px] text-gray-600">GitGuardian 2025</div>
+            </div>
+          </div>
+          <div class="flex-shrink-0 w-full sm:w-1/2 lg:w-1/3 px-3">
+            <div class="bg-vp-surface border border-vp-border rounded-2xl p-6 text-center h-full">
+              <div class="text-3xl font-extrabold text-amber-400 mb-2">81%</div>
+              <div class="text-sm text-gray-300 mb-1">spike in AI key leaks year-over-year</div>
+              <div class="text-[10px] text-gray-600">GitGuardian 2025</div>
+            </div>
+          </div>
+          <div class="flex-shrink-0 w-full sm:w-1/2 lg:w-1/3 px-3">
+            <div class="bg-vp-surface border border-indigo-500/20 rounded-2xl p-6 text-center h-full">
+              <div class="text-3xl font-extrabold text-indigo-400 mb-2">Full Access</div>
+              <div class="text-sm text-gray-300 mb-1">AI agents can read every file on your machine — including .env</div>
+              <div class="text-[10px] text-gray-600">Cursor, Claude Code, Windsurf</div>
+            </div>
+          </div>
+          <div class="flex-shrink-0 w-full sm:w-1/2 lg:w-1/3 px-3">
+            <div class="bg-vp-surface border border-vp-border rounded-2xl p-6 text-center h-full">
+              <div class="text-3xl font-extrabold text-amber-400 mb-2">$4.88M</div>
+              <div class="text-sm text-gray-300 mb-1">average cost per credential breach</div>
+              <div class="text-[10px] text-gray-600">IBM Cost of a Data Breach 2024</div>
+            </div>
+          </div>
+          <div class="flex-shrink-0 w-full sm:w-1/2 lg:w-1/3 px-3">
+            <div class="bg-vp-surface border border-indigo-500/20 rounded-2xl p-6 text-center h-full">
+              <div class="text-3xl font-extrabold text-indigo-400 mb-2">19</div>
+              <div class="text-sm text-gray-300 mb-1">malicious npm packages hijacked AI agents to steal API keys</div>
+              <div class="text-[10px] text-gray-600">SANDWORM_MODE attack, Feb 2026</div>
+            </div>
+          </div>
+          <div class="flex-shrink-0 w-full sm:w-1/2 lg:w-1/3 px-3">
+            <div class="bg-vp-surface border border-vp-border rounded-2xl p-6 text-center h-full">
+              <div class="text-3xl font-extrabold text-amber-400 mb-2">64%</div>
+              <div class="text-sm text-gray-300 mb-1">of leaked keys are never revoked</div>
+              <div class="text-[10px] text-gray-600">GitGuardian 2025</div>
+            </div>
+          </div>
+          <div class="flex-shrink-0 w-full sm:w-1/2 lg:w-1/3 px-3">
+            <div class="bg-vp-surface border border-indigo-500/20 rounded-2xl p-6 text-center h-full">
+              <div class="text-3xl font-extrabold text-indigo-400 mb-2">Logged</div>
+              <div class="text-sm text-gray-300 mb-1">AI agents log your API keys in prompts, tool calls, and context windows</div>
+              <div class="text-[10px] text-gray-600">Claude Code, Cursor, Copilot</div>
+            </div>
+          </div>
+          <div class="flex-shrink-0 w-full sm:w-1/2 lg:w-1/3 px-3">
+            <div class="bg-vp-surface border border-vp-border rounded-2xl p-6 text-center h-full">
+              <div class="text-3xl font-extrabold text-amber-400 mb-2">5 min</div>
+              <div class="text-sm text-gray-300 mb-1">how fast attackers find exposed keys on GitHub</div>
+              <div class="text-[10px] text-gray-600">Truffle Security</div>
+            </div>
+          </div>
+          <div class="flex-shrink-0 w-full sm:w-1/2 lg:w-1/3 px-3">
+            <div class="bg-vp-surface border border-vp-border rounded-2xl p-6 text-center h-full">
+              <div class="text-3xl font-extrabold text-amber-400 mb-2">6.4%</div>
+              <div class="text-sm text-gray-300 mb-1">of Copilot-assisted repos leak secrets — 40% above average</div>
+              <div class="text-[10px] text-gray-600">GitGuardian 2025</div>
+            </div>
+          </div>
+          <div class="flex-shrink-0 w-full sm:w-1/2 lg:w-1/3 px-3">
+            <div class="bg-vp-surface border border-indigo-500/20 rounded-2xl p-6 text-center h-full">
+              <div class="text-3xl font-extrabold text-indigo-400 mb-2">MCP</div>
+              <div class="text-sm text-gray-300 mb-1">MCP servers can request your API keys and forward them anywhere</div>
+              <div class="text-[10px] text-gray-600">Invariant Labs, 2026</div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <!-- Carousel controls -->
+      <div class="flex items-center justify-center gap-4 mt-6">
+        <button onclick="carouselPrev()" class="w-8 h-8 rounded-full bg-vp-surface border border-vp-border flex items-center justify-center text-gray-400 hover:text-white hover:border-indigo-500/40 transition">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7"/></svg>
+        </button>
+        <div class="flex gap-1.5" id="carouselDots"></div>
+        <button onclick="carouselNext()" class="w-8 h-8 rounded-full bg-vp-surface border border-vp-border flex items-center justify-center text-gray-400 hover:text-white hover:border-indigo-500/40 transition">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"/></svg>
+        </button>
+      </div>
+    </section>
+
     <!-- Why You Need This -->
     <section class="relative z-10 max-w-5xl mx-auto px-4 sm:px-6 py-16 sm:py-24">
         <div class="text-center mb-14 reveal">
@@ -1558,6 +1646,63 @@
     }
     pricingLinks.forEach(function(link) { link.addEventListener('click', activatePricing); });
     if (window.location.hash === '#pricing') activatePricing();
+})();
+
+// Stats carousel
+(function() {
+  const track = document.getElementById('statsTrack');
+  const dotsContainer = document.getElementById('carouselDots');
+  if (!track || !dotsContainer) return;
+
+  const slides = track.children;
+  const totalSlides = slides.length;
+  let currentIndex = 0;
+  let autoplayTimer;
+
+  function getVisibleCount() {
+    if (window.innerWidth >= 1024) return 3;
+    if (window.innerWidth >= 640) return 2;
+    return 1;
+  }
+
+  function getMaxIndex() {
+    return Math.max(0, totalSlides - getVisibleCount());
+  }
+
+  function buildDots() {
+    dotsContainer.innerHTML = '';
+    const maxIdx = getMaxIndex();
+    for (let i = 0; i <= maxIdx; i++) {
+      const dot = document.createElement('button');
+      dot.className = 'w-1.5 h-1.5 rounded-full transition-all ' + (i === currentIndex ? 'bg-indigo-400 w-3' : 'bg-gray-600');
+      dot.onclick = function() { goTo(i); };
+      dotsContainer.appendChild(dot);
+    }
+  }
+
+  function goTo(index) {
+    const maxIdx = getMaxIndex();
+    currentIndex = Math.max(0, Math.min(index, maxIdx));
+    const slideWidth = 100 / getVisibleCount();
+    track.style.transform = 'translateX(-' + (currentIndex * slideWidth) + '%)';
+    buildDots();
+    resetAutoplay();
+  }
+
+  window.carouselPrev = function() { goTo(currentIndex - 1); };
+  window.carouselNext = function() { goTo(currentIndex + 1); };
+
+  function resetAutoplay() {
+    clearInterval(autoplayTimer);
+    autoplayTimer = setInterval(function() {
+      if (currentIndex >= getMaxIndex()) { goTo(0); }
+      else { goTo(currentIndex + 1); }
+    }, 4000);
+  }
+
+  window.addEventListener('resize', function() { goTo(Math.min(currentIndex, getMaxIndex())); });
+  buildDots();
+  resetAutoplay();
 })();
 </script>
 </body>
