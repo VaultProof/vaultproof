@@ -116,7 +116,6 @@
       <div class="tab" data-tab="users" onclick="switchTab('users')">Users</div>
       <div class="tab" data-tab="logs" onclick="switchTab('logs')">Logs</div>
       <div class="tab" data-tab="monitoring" onclick="switchTab('monitoring')">Monitoring</div>
-      <div class="tab" data-tab="promo" onclick="switchTab('promo')">Promo</div>
       <div class="tab" data-tab="tests" onclick="switchTab('tests')">Tests</div>
     </div>
 
@@ -160,23 +159,6 @@
         <div class="stat-card">
           <div class="stat-value" id="stat-tiers">-</div>
           <div class="stat-label">Tier Breakdown</div>
-        </div>
-      </div>
-
-      <!-- Promo section -->
-      <h3 class="text-sm font-semibold text-gray-400 mb-3 mt-6">Product Hunt Promo</h3>
-      <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
-        <div class="stat-card">
-          <div class="stat-value" id="ov-promo-redeemed">-</div>
-          <div class="stat-label">Redeemed / 200</div>
-        </div>
-        <div class="stat-card">
-          <div class="stat-value" id="ov-promo-spots">-</div>
-          <div class="stat-label">Spots Left</div>
-        </div>
-        <div class="stat-card">
-          <div class="stat-value" id="ov-promo-feedback">-</div>
-          <div class="stat-label">Feedback Received</div>
         </div>
       </div>
 
@@ -310,40 +292,6 @@
         <button class="btn btn-ghost text-xs" id="logs-prev" onclick="globalLogsPage(-1)" disabled>Previous</button>
         <span id="logs-page-info" class="text-xs text-gray-500"></span>
         <button class="btn btn-ghost text-xs" id="logs-next" onclick="globalLogsPage(1)">Next</button>
-      </div>
-    </div>
-
-    <!-- Promo tab -->
-    <div id="tab-promo" class="hidden fade-in">
-      <div class="grid grid-cols-2 md:grid-cols-3 gap-4 mb-6">
-        <div class="stat-card">
-          <div class="stat-value" id="promo-redeemed">-</div>
-          <div class="stat-label">Redeemed / 200</div>
-        </div>
-        <div class="stat-card">
-          <div class="stat-value" id="promo-spots">-</div>
-          <div class="stat-label">Spots Left</div>
-        </div>
-        <div class="stat-card">
-          <div class="stat-value" id="promo-feedback-count">-</div>
-          <div class="stat-label">Total Feedback</div>
-        </div>
-      </div>
-
-      <h3 class="text-sm font-semibold text-gray-400 mb-3">Promo Users</h3>
-      <div class="panel mb-6">
-        <table>
-          <thead><tr><th>Email</th><th>Code</th><th>Tier</th><th>Expires</th><th>Feedback Count</th><th>Joined</th></tr></thead>
-          <tbody id="promo-users-tbody"></tbody>
-        </table>
-      </div>
-
-      <h3 class="text-sm font-semibold text-gray-400 mb-3">Feedback</h3>
-      <div class="panel">
-        <table>
-          <thead><tr><th>Email</th><th>Feedback</th><th>Date</th></tr></thead>
-          <tbody id="promo-feedback-tbody"></tbody>
-        </table>
       </div>
     </div>
 
@@ -757,12 +705,12 @@ setInterval(() => {
 function switchTab(tab) {
   document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
   document.querySelector(`.tab[data-tab="${tab}"]`).classList.add('active');
-  ['overview', 'users', 'logs', 'monitoring', 'promo', 'tests'].forEach(t => {
+  ['overview', 'users', 'logs', 'monitoring', 'tests'].forEach(t => {
     document.getElementById(`tab-${t}`).classList.toggle('hidden', t !== tab);
   });
   document.getElementById('user-detail').classList.add('hidden');
   if (tab === 'monitoring') loadMonitoring();
-  if (tab === 'promo') loadPromo();
+
   if (tab === 'tests') loadTests();
 }
 
@@ -786,15 +734,6 @@ async function loadStats() {
     console.error('Failed to load stats', e);
   }
 
-  // Promo stats on overview
-  try {
-    const p = await apiFetch('/promo/stats');
-    document.getElementById('ov-promo-redeemed').textContent = p.totalRedeemed;
-    document.getElementById('ov-promo-spots').textContent = Math.max(0, 200 - p.totalRedeemed);
-    document.getElementById('ov-promo-feedback').textContent = p.totalFeedback;
-  } catch (e) {
-    console.error('Failed to load promo stats', e);
-  }
 }
 
 // ─── Users ───────────────────────────────────────────────────────
@@ -1151,54 +1090,6 @@ async function changeTier() {
   } catch (e) {
     console.error('Tier change failed', e);
     alert('Tier change failed. Check console.');
-  }
-}
-
-// ─── Promo ──────────────────────────────────────────────────────
-async function loadPromo() {
-  try {
-    const [stats, users, feedback] = await Promise.all([
-      apiFetch('/promo/stats'),
-      apiFetch('/promo/users?limit=200'),
-      apiFetch('/promo/feedback?limit=100'),
-    ]);
-
-    document.getElementById('promo-redeemed').textContent = stats.totalRedeemed;
-    document.getElementById('promo-spots').textContent = Math.max(0, 200 - stats.totalRedeemed);
-    document.getElementById('promo-feedback-count').textContent = stats.totalFeedback;
-
-    // Users table
-    const uTbody = document.getElementById('promo-users-tbody');
-    uTbody.innerHTML = '';
-    for (const u of users.users) {
-      const tr = document.createElement('tr');
-      tr.style.cursor = 'pointer';
-      tr.onclick = () => openUserDetail(u.id);
-      tr.innerHTML = `
-        <td class="mono text-xs">${esc(u.email)}</td>
-        <td><span class="badge badge-pro">${esc(u.promoCode)}</span></td>
-        <td><span class="badge badge-${u.tier}">${esc(u.tier)}</span></td>
-        <td class="text-gray-500 text-xs">${u.tierExpiresAt ? fmtDate(u.tierExpiresAt) : '-'}</td>
-        <td>${u._count?.promoFeedback || 0}</td>
-        <td class="text-gray-500 text-xs">${fmtDate(u.createdAt)}</td>
-      `;
-      uTbody.appendChild(tr);
-    }
-
-    // Feedback table
-    const fTbody = document.getElementById('promo-feedback-tbody');
-    fTbody.innerHTML = '';
-    for (const f of feedback.feedback) {
-      const tr = document.createElement('tr');
-      tr.innerHTML = `
-        <td class="mono text-xs">${esc(f.user?.email || '-')}</td>
-        <td class="text-sm">${esc(f.feedback)}</td>
-        <td class="text-gray-500 text-xs">${fmtDate(f.createdAt)}</td>
-      `;
-      fTbody.appendChild(tr);
-    }
-  } catch (e) {
-    console.error('Failed to load promo data', e);
   }
 }
 

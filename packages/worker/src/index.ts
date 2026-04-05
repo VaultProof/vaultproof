@@ -3,7 +3,6 @@ import { handleTransparentProxy } from './routes/transparent-proxy.js';
 import { handleAnalyticsEvent } from './routes/analytics.js';
 import { handleStats } from './routes/stats.js';
 import { handleDevKeys } from './routes/dev-keys.js';
-import { handlePromo } from './routes/promo.js';
 import { handleAdmin } from './routes/admin.js';
 import { handleScanner } from './routes/scanner.js';
 import { handleSdk } from './routes/sdk.js';
@@ -115,17 +114,6 @@ export default {
       try {
         const path = url.pathname.slice('/api/v1/billing/'.length);
         const response = await handleBilling(request, env, path);
-        return addCors(response, origin, allowedOrigins);
-      } catch {
-        return addCors(Response.json({ error: 'Service temporarily unavailable' }, { status: 503 }), origin, allowedOrigins);
-      }
-    }
-
-    // Promo routes
-    if (url.pathname.startsWith('/api/v1/promo/')) {
-      try {
-        const path = url.pathname.slice('/api/v1/promo/'.length);
-        const response = await handlePromo(request, env, path);
         return addCors(response, origin, allowedOrigins);
       } catch {
         return addCors(Response.json({ error: 'Service temporarily unavailable' }, { status: 503 }), origin, allowedOrigins);
