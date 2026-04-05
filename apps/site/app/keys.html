@@ -577,6 +577,19 @@ STRIPE_SECRET_KEY=sk_live_..."></textarea>
       if (el) el.setAttribute('min', tomorrow.toISOString().split('T')[0]);
     })();
 
+
+    // Sync token from Supabase SDK session if vaultproof_token is missing or stale
+    try {
+      var sbSession = JSON.parse(localStorage.getItem('sb-gwzkjiomemjlhtrdrlan-auth-token') || '{}');
+      if (sbSession.access_token) {
+        token = sbSession.access_token;
+        localStorage.setItem('vaultproof_token', token);
+        if (sbSession.user && sbSession.user.id) {
+          localStorage.setItem('vaultproof_user', JSON.stringify({ id: sbSession.user.id, email: sbSession.user.email }));
+        }
+      }
+    } catch (e) {}
+
     if (!token) { window.location.href = 'login'; }
 
     const _sb = window.supabase.createClient(

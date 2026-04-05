@@ -573,6 +573,19 @@
     let token = localStorage.getItem('vaultproof_token');
     const user = JSON.parse(localStorage.getItem('vaultproof_user') || '{}');
 
+
+    // Sync token from Supabase SDK session if vaultproof_token is missing or stale
+    try {
+      var sbSession = JSON.parse(localStorage.getItem('sb-gwzkjiomemjlhtrdrlan-auth-token') || '{}');
+      if (sbSession.access_token) {
+        token = sbSession.access_token;
+        localStorage.setItem('vaultproof_token', token);
+        if (sbSession.user && sbSession.user.id) {
+          localStorage.setItem('vaultproof_user', JSON.stringify({ id: sbSession.user.id, email: sbSession.user.email }));
+        }
+      }
+    } catch (e) {}
+
     if (!token) { window.location.href = 'login'; }
 
     // Shared UI helpers
