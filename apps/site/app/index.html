@@ -613,7 +613,7 @@
     const _sb = window.supabase.createClient(
       'https://gwzkjiomemjlhtrdrlan.supabase.co',
       'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imd3emtqaW9tZW1qbGh0cmRybGFuIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQzNDM3ODIsImV4cCI6MjA4OTkxOTc4Mn0.tgHUvpBvFiojetuqIP0sKb0iBNbKDJHdeo9n3Tofa3o'
-    );
+    , { auth: { detectSessionInUrl: false, autoRefreshToken: false, persistSession: false } });
 
     async function tryRefreshToken() {
       try {
