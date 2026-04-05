@@ -524,19 +524,35 @@ async function handleUsers(request: Request, env: Env): Promise<Response> {
   const page = Math.max(1, parseInt(url.searchParams.get('page') || '1', 10));
   const limit = Math.min(200, Math.max(1, parseInt(url.searchParams.get('limit') || '50', 10)));
   const search = url.searchParams.get('search') || '';
+
+  // Get users from Supabase Auth (source of truth)
+  const { data: authData } = await supabase.auth.admin.listUsers({ perPage: 1000, page: 1 });
+  let authUsers = authData?.users || [];
+
+  // Filter by search
+  if (search) {
+    const s = search.toLowerCase();
+    authUsers = authUsers.filter((u: any) => u.email?.toLowerCase().includes(s));
+  }
+
+  // Sort by created_at descending
+  authUsers.sort((a: any, b: any) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
+
+  const total = authUsers.length;
   const offset = (page - 1) * limit;
+  const pageUsers = authUsers.slice(offset, offset + limit);
 
-  let query = supabase.from('users')
-    .select('id, email, tier, created_at, kill_switch', { count: 'exact' })
-    .order('created_at', { ascending: false })
-    .range(offset, offset + limit - 1);
-
-  if (search) query = query.ilike('email', `%${search}%`);
-
-  const { data: users, count: total } = await query;
+  // Get tier info from public.users for these IDs
+  const userIds = pageUsers.map((u: any) => u.id);
+  const { data: publicUsers } = await supabase
+    .from('users')
+    .select('id, tier, kill_switch')
+    .in('id', userIds);
+  const publicMap = new Map((publicUsers || []).map((u: any) => [u.id, u]));
 
   // Enrich with key counts and total calls
-  const enriched = await Promise.all((users || []).map(async (user: any) => {
+  const enriched = await Promise.all(pageUsers.map(async (user: any) => {
+    const pub = publicMap.get(user.id);
     const [keysRes, devKeysRes, slotsRes] = await Promise.all([
       supabase.from('key_slots').select('*', { count: 'exact', head: true }).eq('user_id', user.id),
       supabase.from('developer_keys').select('*', { count: 'exact', head: true }).eq('user_id', user.id).is('revoked_at', null),
@@ -551,13 +567,13 @@ async function handleUsers(request: Request, env: Env): Promise<Response> {
     }
 
     return {
-      id: user.id, email: user.email, tier: user.tier,
-      createdAt: user.created_at, killSwitch: user.kill_switch,
+      id: user.id, email: user.email, tier: pub?.tier || 'free',
+      createdAt: user.created_at, killSwitch: pub?.kill_switch || false,
       keyCount: keysRes.count || 0, devKeyCount: devKeysRes.count || 0, totalCalls,
     };
   }));
 
-  return Response.json({ users: enriched, total: total || 0, page, limit });
+  return Response.json({ users: enriched, total, page, limit });
 }
 
 async function handleUserDetail(request: Request, env: Env, userId: string): Promise<Response> {
@@ -565,8 +581,12 @@ async function handleUserDetail(request: Request, env: Env, userId: string): Pro
   if (!admin) return Response.json({ error: 'Forbidden' }, { status: 403 });
 
   const supabase = getSupabase(env);
-  const { data: user } = await supabase.from('users').select('*').eq('id', userId).single();
-  if (!user) return Response.json({ error: 'User not found' }, { status: 404 });
+  // Get user from Supabase Auth
+  const { data: authUser } = await supabase.auth.admin.getUserById(userId);
+  if (!authUser?.user) return Response.json({ error: 'User not found' }, { status: 404 });
+  // Get extra fields from public.users
+  const { data: pubUser } = await supabase.from('users').select('*').eq('id', userId).single();
+  const user = { ...pubUser, id: authUser.user.id, email: authUser.user.email, created_at: authUser.user.created_at };
 
   const [keySlotsRes, devKeysRes] = await Promise.all([
     supabase.from('key_slots')
