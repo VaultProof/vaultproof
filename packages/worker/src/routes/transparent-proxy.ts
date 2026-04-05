@@ -177,6 +177,18 @@ export async function handleTransparentProxy(
     }
   }
 
+  // Origin allowlist check
+  if (auth.devKey.allowed_origins) {
+    const origin = request.headers.get('origin') || '';
+    const allowed = auth.devKey.allowed_origins.split(',').map(o => o.trim().toLowerCase());
+    if (!origin && auth.devKey.strict_origin) {
+      return Response.json({ error: 'Origin header required for this API key' }, { status: 403 });
+    }
+    if (origin && !allowed.includes(origin.toLowerCase())) {
+      return Response.json({ error: 'Origin not allowed for this API key' }, { status: 403 });
+    }
+  }
+
   // c. Per-key rate limit
   if (!checkKeyRateLimit(auth.keyId)) {
     return Response.json({ error: 'Rate limit exceeded (60 req/min).' }, { status: 429 });

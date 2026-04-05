@@ -26,6 +26,8 @@ export interface DevKeyRecord {
   label: string;
   mode: string;
   allowed_ips: string | null;
+  allowed_origins: string | null;
+  strict_origin: boolean;
   allowed_providers: string | null;
   allowed_endpoints: string | null;
   allowed_key_slot_ids: string | null;

@@ -11,6 +11,11 @@ export async function handleDevKeys(request: Request, env: Env, path: string): P
     return handleCreate(request, env);
   }
 
+  const settingsMatch = path.match(/^(.+)\/settings$/);
+  if (settingsMatch) {
+    return handleSettings(request, env, settingsMatch[1]);
+  }
+
   const revokeMatch = path.match(/^(.+)\/revoke$/);
   if (revokeMatch) {
     return handleRevoke(request, env, revokeMatch[1]);
@@ -175,6 +180,61 @@ async function handleRotate(request: Request, env: Env, id: string): Promise<Res
   return Response.json({ key: newKey, id: newData.id });
 }
 
+async function handleSettings(request: Request, env: Env, id: string): Promise<Response> {
+  if (request.method !== 'PUT') {
+    return Response.json({ error: 'Method not allowed' }, { status: 405 });
+  }
+
+  const auth = await authenticateUser(request, env);
+  if (!auth) {
+    return Response.json({ error: 'Unauthorized' }, { status: 401 });
+  }
+
+  const supabase = getSupabase(env);
+
+  const { data: existing } = await supabase
+    .from('developer_keys')
+    .select('id')
+    .eq('id', id)
+    .eq('user_id', auth.userId)
+    .is('revoked_at', null)
+    .single();
+
+  if (!existing) {
+    return Response.json({ error: 'Key not found' }, { status: 404 });
+  }
+
+  let body: any;
+  try { body = await request.json(); } catch { return Response.json({ error: 'Invalid JSON' }, { status: 400 }); }
+
+  const updates: Record<string, unknown> = {};
+  if ('allowedIps' in body) updates.allowed_ips = body.allowedIps || null;
+  if ('allowedOrigins' in body) updates.allowed_origins = body.allowedOrigins || null;
+  if ('strictOrigin' in body) updates.strict_origin = !!body.strictOrigin;
+  if ('allowedProviders' in body) updates.allowed_providers = body.allowedProviders || null;
+  if ('allowedEndpoints' in body) updates.allowed_endpoints = body.allowedEndpoints || null;
+  if ('allowedKeySlotIds' in body) updates.allowed_key_slot_ids = body.allowedKeySlotIds || null;
+  if ('label' in body) updates.label = body.label;
+  if ('webhookUrl' in body) updates.webhook_url = body.webhookUrl || null;
+  if ('alertEmail' in body) updates.alert_email = body.alertEmail || null;
+  if ('alertThreshold' in body) updates.alert_threshold = body.alertThreshold || null;
+
+  if (Object.keys(updates).length === 0) {
+    return Response.json({ error: 'No fields to update' }, { status: 400 });
+  }
+
+  const { error } = await supabase
+    .from('developer_keys')
+    .update(updates)
+    .eq('id', id);
+
+  if (error) {
+    return Response.json({ error: 'Failed to update settings' }, { status: 500 });
+  }
+
+  return Response.json({ ok: true });
+}
+
 async function handleList(request: Request, env: Env): Promise<Response> {
   if (request.method !== 'GET') {
     return Response.json({ error: 'Method not allowed' }, { status: 405 });
@@ -188,7 +248,7 @@ async function handleList(request: Request, env: Env): Promise<Response> {
   const supabase = getSupabase(env);
   const { data, error } = await supabase
     .from('developer_keys')
-    .select('id, key, label, mode, last_used, created_at, webhook_url, allowed_key_slot_ids')
+    .select('id, key, label, mode, last_used, created_at, webhook_url, allowed_key_slot_ids, allowed_ips, allowed_origins, strict_origin, allowed_providers, allowed_endpoints')
     .eq('user_id', auth.userId)
     .is('revoked_at', null);
 
@@ -204,6 +264,11 @@ async function handleList(request: Request, env: Env): Promise<Response> {
     lastUsed: row.last_used,
     createdAt: row.created_at,
     webhookUrl: row.webhook_url,
+    allowedIps: row.allowed_ips,
+    allowedOrigins: row.allowed_origins,
+    strictOrigin: row.strict_origin,
+    allowedProviders: row.allowed_providers,
+    allowedEndpoints: row.allowed_endpoints,
   }));
 
   return Response.json({ keys });
