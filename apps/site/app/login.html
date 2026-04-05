@@ -312,8 +312,8 @@
       localStorage.removeItem('vaultproof_token');
       localStorage.removeItem('vaultproof_user');
       localStorage.removeItem('vp_promo');
-      sbClient.auth.signOut().catch(function() {});
-      console.warn('Login loop detected — cleared auth state');
+      // Don't call signOut() — it kills the server-side session
+      console.warn('Login loop detected — cleared local auth state');
     }
 
     function safeRedirect(url) {
