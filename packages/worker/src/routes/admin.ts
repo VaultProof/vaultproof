@@ -18,6 +18,7 @@ export async function handleAdmin(
   if (path === 'logs') return handleGlobalLogs(request, env);
   if (path === 'monitoring/dashboard') return handleMonitoringDashboard(request, env);
   if (path === 'monitoring/alerts') return handleMonitoringAlerts(request, env);
+  if (path === 'security/probes') return handleSecurityProbes(request, env);
   // Dynamic user routes: users/:userId, users/:userId/stats, users/:userId/logs, users/:userId/ban, users/:userId/tier
   const userMatch = path.match(/^users\/([^/]+)(?:\/(.+))?$/);
   if (userMatch) {
@@ -903,4 +904,33 @@ async function handleMonitoringAlerts(request: Request, env: Env): Promise<Respo
     .limit(50);
 
   return Response.json({ alerts: alerts || [] });
+}
+
+async function handleSecurityProbes(request: Request, env: Env): Promise<Response> {
+  const admin = await authenticateAdmin(request, env);
+  if (!admin) return Response.json({ error: 'Forbidden' }, { status: 403 });
+
+  const supabase = getSupabase(env);
+  const { data: probes } = await supabase
+    .from('analytics_events')
+    .select('id, referrer, page, metadata, created_at')
+    .eq('type', 'security_probe')
+    .order('created_at', { ascending: false })
+    .limit(100);
+
+  const formatted = (probes || []).map((p: any) => {
+    let meta: any = {};
+    try { meta = typeof p.metadata === 'string' ? JSON.parse(p.metadata) : p.metadata; } catch {}
+    return {
+      id: p.id,
+      referrer: p.referrer,
+      page: p.page,
+      ip: meta.ip || '-',
+      userAgent: meta.ua || '-',
+      probeType: meta.probe_type || 'unknown',
+      createdAt: p.created_at,
+    };
+  });
+
+  return Response.json({ probes: formatted });
 }

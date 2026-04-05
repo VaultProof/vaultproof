@@ -257,6 +257,19 @@
           </table>
         </div>
       </div>
+
+      <!-- Security Probes -->
+      <div class="panel mt-6">
+        <div class="flex items-center justify-between mb-3">
+          <h3 class="text-sm font-semibold text-amber-400">Security Probes</h3>
+          <span class="text-[10px] text-gray-600" id="a-probes-count"></span>
+        </div>
+        <table>
+          <thead><tr><th>Time</th><th>Type</th><th>IP</th><th>Payload</th><th>Page</th><th>User Agent</th></tr></thead>
+          <tbody id="a-probes-tbody"></tbody>
+        </table>
+        <p class="text-xs text-gray-600 mt-2" id="a-probes-empty" style="display:none">No probes detected. Good.</p>
+      </div>
     </div>
 
     <!-- Users tab -->
@@ -1272,6 +1285,35 @@ async function loadAnalytics() {
         rTbody.appendChild(tr);
       }
     }
+    // Security probes
+    try {
+      const probeData = await apiFetch('/security/probes');
+      const tbody = document.getElementById('a-probes-tbody');
+      const emptyMsg = document.getElementById('a-probes-empty');
+      const countEl = document.getElementById('a-probes-count');
+      tbody.innerHTML = '';
+      if (probeData.probes && probeData.probes.length > 0) {
+        emptyMsg.style.display = 'none';
+        countEl.textContent = probeData.probes.length + ' detected';
+        for (const p of probeData.probes) {
+          const tr = document.createElement('tr');
+          const typeColor = p.probeType === 'xss' ? 'text-red-400' : p.probeType === 'ssrf' ? 'text-amber-400' : 'text-gray-400';
+          tr.innerHTML = `
+            <td class="text-gray-500 text-xs">${fmtDate(p.createdAt)}</td>
+            <td><span class="${typeColor} text-xs font-bold uppercase">${esc(p.probeType)}</span></td>
+            <td class="mono text-xs">${esc(p.ip)}</td>
+            <td class="text-xs text-red-300 max-w-[200px] truncate" title="${esc(p.referrer)}">${esc(p.referrer || '-')}</td>
+            <td class="text-xs text-gray-500">${esc(p.page || '-')}</td>
+            <td class="text-xs text-gray-600 max-w-[150px] truncate" title="${esc(p.userAgent)}">${esc(p.userAgent || '-')}</td>
+          `;
+          tbody.appendChild(tr);
+        }
+      } else {
+        emptyMsg.style.display = '';
+        countEl.textContent = '';
+      }
+    } catch {}
+
   } catch (e) {
     console.error('Failed to load analytics', e);
   }

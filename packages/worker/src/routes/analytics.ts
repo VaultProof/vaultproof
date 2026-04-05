@@ -58,11 +58,34 @@ export async function handleAnalyticsEvent(request: Request, env: Env): Promise<
 
   // Sanitize referrer — drop XSS probes, SSRF attempts, and non-HTTP URLs
   let referrer: string | null = null;
+  let isMalicious = false;
   if (typeof data.referrer === 'string' && data.referrer.length > 0) {
     const raw = data.referrer.slice(0, 200);
     if (/^https?:\/\/[a-zA-Z0-9]/.test(raw) && !/<|>|javascript:|data:|onerror|onclick|169\.254/i.test(raw)) {
       referrer = raw;
+    } else {
+      isMalicious = true;
     }
+  }
+
+  // Log security probes for admin visibility
+  if (isMalicious) {
+    const clientIp = request.headers.get('cf-connecting-ip') || 'unknown';
+    const probeLog = supabase.from('analytics_events').insert({
+      id: crypto.randomUUID(),
+      type: 'security_probe',
+      page,
+      referrer: (typeof data.referrer === 'string' ? data.referrer : '').slice(0, 500),
+      session_id,
+      metadata: JSON.stringify({
+        ip: clientIp,
+        ua: userAgent.slice(0, 200),
+        probe_type: /<|>/i.test(String(data.referrer)) ? 'xss' : /169\.254/i.test(String(data.referrer)) ? 'ssrf' : 'other',
+      }),
+    });
+    // Fire and forget — don't block the response
+    probeLog.then(() => {}).catch(() => {});
+    return Response.json({ ok: true });
   }
 
   // IP-based visitor dedup — hash IP + date for privacy
