@@ -83,8 +83,12 @@ async function handleStats(request: Request, env: Env): Promise<Response> {
     tiers[tier] = (tiers[tier] || 0) + 1;
   }
 
+  const paidTiers = ['starter', 'pro', 'max', 'enterprise'];
+  const paidUsers = authIds.filter(id => paidTiers.includes(tierMap.get(id) || '')).length;
+
   return Response.json({
     totalUsers: totalUserCount,
+    paidUsers,
     totalKeys: totalKeys.count || 0,
     totalDevKeys: totalDevKeys.count || 0,
     callsToday: callsToday.count || 0,

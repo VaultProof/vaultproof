@@ -122,10 +122,14 @@
 
     <!-- Overview tab -->
     <div id="tab-overview" class="fade-in">
-      <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+      <div class="grid grid-cols-2 md:grid-cols-5 gap-4 mb-6">
         <div class="stat-card">
           <div class="stat-value" id="stat-users">-</div>
           <div class="stat-label">Total Users</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-value" id="stat-paid">-</div>
+          <div class="stat-label">Paid Users</div>
         </div>
         <div class="stat-card">
           <div class="stat-value" id="stat-keys">-</div>
@@ -767,6 +771,7 @@ async function loadStats() {
   try {
     const s = await apiFetch('/stats');
     document.getElementById('stat-users').textContent = fmt(s.totalUsers);
+    document.getElementById('stat-paid').textContent = fmt(s.paidUsers);
     document.getElementById('stat-keys').textContent = fmt(s.totalKeys);
     document.getElementById('stat-calls-today').textContent = fmt(s.callsToday);
     document.getElementById('stat-calls-month').textContent = fmt(s.callsThisMonth);
