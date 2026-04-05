@@ -610,59 +610,43 @@
         </div>
     </section>
 
-    <!-- Honest Q&A -->
+    <!-- Why You Need This -->
     <section class="relative z-10 max-w-5xl mx-auto px-4 sm:px-6 py-16 sm:py-24">
         <div class="text-center mb-14 reveal">
-            <h2 class="text-2xl sm:text-3xl md:text-4xl font-bold text-white mb-4" style="font-family:'Space Grotesk',sans-serif">Is this really safer...or just different?</h2>
-            <p class="text-gray-400 text-lg max-w-2xl mx-auto">Fair question. Here's what VaultProof actually changes and what it doesn't.</p>
+            <h2 class="text-2xl sm:text-3xl md:text-4xl font-bold text-white mb-4" style="font-family:'Space Grotesk',sans-serif">One leaked key. That's all it takes.</h2>
+            <p class="text-gray-400 text-lg max-w-2xl mx-auto">It happens every day. A key gets committed, an agent logs it, a package exfiltrates it. Then the bill shows up.</p>
         </div>
 
-        <div class="grid md:grid-cols-2 gap-6 mb-10">
+        <div class="grid md:grid-cols-3 gap-6">
             <div class="bg-vp-surface border border-vp-border rounded-2xl p-6 reveal delay-1">
-                <h3 class="text-base font-semibold text-white mb-3">What you're protected from</h3>
-                <div class="space-y-3">
-                    <div class="flex gap-3">
-                        <span class="text-brand mt-0.5">+</span>
-                        <p class="text-sm text-gray-400">Accidentally committing a key to GitHub — there's nothing to commit</p>
-                    </div>
-                    <div class="flex gap-3">
-                        <span class="text-brand mt-0.5">+</span>
-                        <p class="text-sm text-gray-400">AI tools reading your .env and leaking keys into prompts, logs, or generated code</p>
-                    </div>
-                    <div class="flex gap-3">
-                        <span class="text-brand mt-0.5">+</span>
-                        <p class="text-sm text-gray-400">Someone cloning your repo and using your API key to run up your bill</p>
-                    </div>
-                    <div class="flex gap-3">
-                        <span class="text-brand mt-0.5">+</span>
-                        <p class="text-sm text-gray-400">Malicious packages that scan your environment for API keys</p>
-                    </div>
-                    <div class="flex gap-3">
-                        <span class="text-brand mt-0.5">+</span>
-                        <p class="text-sm text-gray-400">Unlimited spend from a stolen key — you set the caps</p>
-                    </div>
-                </div>
+                <div class="text-2xl mb-3">&#128176;</div>
+                <h3 class="text-white font-semibold mb-2">Surprise bills</h3>
+                <p class="text-sm text-gray-400">A stolen OpenAI key can rack up thousands overnight. With VaultProof, you set spend caps. When the limit hits, calls stop.</p>
             </div>
             <div class="bg-vp-surface border border-vp-border rounded-2xl p-6 reveal delay-2">
-                <h3 class="text-base font-semibold text-white mb-3">The trade-offs</h3>
-                <div class="space-y-3">
-                    <div class="flex gap-3">
-                        <span class="text-gray-600 mt-0.5">=</span>
-                        <p class="text-sm text-gray-400">You're trusting VaultProof to hold your key instead of your own .env file</p>
-                    </div>
-                    <div class="flex gap-3">
-                        <span class="text-gray-600 mt-0.5">=</span>
-                        <p class="text-sm text-gray-400">If VaultProof goes down, your API calls go down too</p>
-                    </div>
-                    <div class="flex gap-3">
-                        <span class="text-gray-600 mt-0.5">=</span>
-                        <p class="text-sm text-gray-400">Migration means updating base URLs and environment variables across your app</p>
-                    </div>
-                    <div class="flex gap-3">
-                        <span class="text-gray-600 mt-0.5">=</span>
-                        <p class="text-sm text-gray-400">The proxy adds a small amount of latency to each request</p>
-                    </div>
-                </div>
+                <div class="text-2xl mb-3">&#128373;</div>
+                <h3 class="text-white font-semibold mb-2">Leaked repos</h3>
+                <p class="text-sm text-gray-400">Your .env is in your git history right now. With VaultProof, there's no key in your code to leak. Nothing in git, nothing in your files.</p>
+            </div>
+            <div class="bg-vp-surface border border-vp-border rounded-2xl p-6 reveal delay-3">
+                <div class="text-2xl mb-3">&#129302;</div>
+                <h3 class="text-white font-semibold mb-2">AI agents gone wrong</h3>
+                <p class="text-sm text-gray-400">Your coding agent reads your .env, installs packages, runs commands. If it gets compromised, your keys go with it. Unless they're not there.</p>
+            </div>
+            <div class="bg-vp-surface border border-vp-border rounded-2xl p-6 reveal delay-4">
+                <div class="text-2xl mb-3">&#128230;</div>
+                <h3 class="text-white font-semibold mb-2">Supply chain attacks</h3>
+                <p class="text-sm text-gray-400">Malicious npm packages scan your environment for API keys. If the key lives on VaultProof's server, there's nothing on your machine to find.</p>
+            </div>
+            <div class="bg-vp-surface border border-vp-border rounded-2xl p-6 reveal delay-5">
+                <div class="text-2xl mb-3">&#128260;</div>
+                <h3 class="text-white font-semibold mb-2">Painful rotations</h3>
+                <p class="text-sm text-gray-400">Key compromised? Usually that means updating every .env, every deploy, every CI pipeline. With VaultProof, swap it in the dashboard. Done.</p>
+            </div>
+            <div class="bg-vp-surface border border-vp-border rounded-2xl p-6 reveal delay-6">
+                <div class="text-2xl mb-3">&#127919;</div>
+                <h3 class="text-white font-semibold mb-2">No visibility</h3>
+                <p class="text-sm text-gray-400">Right now you have no idea who's using your key or how much. VaultProof logs every call so you can see exactly what's happening.</p>
             </div>
         </div>
 
