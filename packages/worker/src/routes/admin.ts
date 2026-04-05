@@ -71,11 +71,16 @@ async function handleStats(request: Request, env: Env): Promise<Response> {
     activeUserCount = new Set((slots || []).map((s: any) => s.user_id)).size;
   }
 
-  // Tier breakdown
-  const { data: users } = await supabase.from('users').select('tier');
+  // Tier breakdown — use auth user IDs, look up tiers from public.users
+  const authIds = (authUsers.data?.users || []).map((u: any) => u.id);
+  const { data: tierUsers } = authIds.length > 0
+    ? await supabase.from('users').select('id, tier').in('id', authIds)
+    : { data: [] };
+  const tierMap = new Map((tierUsers || []).map((u: any) => [u.id, u.tier]));
   const tiers: Record<string, number> = {};
-  for (const u of users || []) {
-    tiers[u.tier] = (tiers[u.tier] || 0) + 1;
+  for (const id of authIds) {
+    const tier = tierMap.get(id) || 'free';
+    tiers[tier] = (tiers[tier] || 0) + 1;
   }
 
   return Response.json({
@@ -915,7 +920,13 @@ async function handleMonitoringDashboard(request: Request, env: Env): Promise<Re
     free: 10000, starter: 50000, pro: 500000, max: 500000, enterprise: 999999999,
   };
 
-  const { data: allUsers } = await supabase.from('users').select('id, tier');
+  // Get users from auth + tier from public.users
+  const { data: authListData } = await supabase.auth.admin.listUsers({ perPage: 1000, page: 1 });
+  const authUserIds = (authListData?.users || []).map((u: any) => u.id);
+  const { data: pubUsers } = authUserIds.length > 0
+    ? await supabase.from('users').select('id, tier').in('id', authUserIds)
+    : { data: [] };
+  const allUsers = (pubUsers || []).length > 0 ? pubUsers : authUserIds.map((id: string) => ({ id, tier: 'free' }));
   let usersNearLimit = 0;
 
   if (allUsers && allUsers.length > 0) {
