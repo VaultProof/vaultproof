@@ -31,7 +31,6 @@
     @keyframes fadeIn { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: translateY(0); } }
     .fade-in { animation: fadeIn 0.3s ease forwards; }
   </style>
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.101.1" integrity="sha384-0VpB0wAYDdhWCEv3+IjT0Z9Kgpvszkf70RFX3ro7l4QR5nywxsMaOpmvZKsfRF8I" crossorigin="anonymous"></script>
 </head>
 <body class="text-gray-100 min-h-screen">
 
@@ -491,32 +490,6 @@
       document.getElementById('sessionExpired').classList.remove('hidden');
     }
 
-    // Supabase client for token refresh (only used when API returns 401)
-    const _sb = window.supabase.createClient(
-      'https://gwzkjiomemjlhtrdrlan.supabase.co',
-      'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imd3emtqaW9tZW1qbGh0cmRybGFuIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQzNDM3ODIsImV4cCI6MjA4OTkxOTc4Mn0.tgHUvpBvFiojetuqIP0sKb0iBNbKDJHdeo9n3Tofa3o'
-    , { auth: { detectSessionInUrl: false } });
-
-    // Try to get a fresh token from Supabase (called on 401, not on page load)
-    async function tryRefreshToken() {
-      try {
-        const { data, error } = await _sb.auth.refreshSession();
-        if (!error && data.session) {
-          token = data.session.access_token;
-          localStorage.setItem('vaultproof_token', token);
-          return true;
-        }
-        const { data: sd, error: se } = await _sb.auth.getSession();
-        if (!se && sd.session) {
-          token = sd.session.access_token;
-          localStorage.setItem('vaultproof_token', token);
-          return true;
-        }
-      } catch (e) {
-        console.error('Token refresh failed:', e);
-      }
-      return false;
-    }
 
     const sidebarEl = document.getElementById('sidebar');
     const overlayEl = document.getElementById('sidebarOverlay');
@@ -529,24 +502,13 @@
     }
 
     async function logout() {
-      try {
-        const sb = window.supabase.createClient(
-          'https://gwzkjiomemjlhtrdrlan.supabase.co',
-          'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imd3emtqaW9tZW1qbGh0cmRybGFuIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQzNDM3ODIsImV4cCI6MjA4OTkxOTc4Mn0.tgHUvpBvFiojetuqIP0sKb0iBNbKDJHdeo9n3Tofa3o'
-        );
-        await sb.auth.signOut();
-      } catch {}
-      // Clear all share2 data
       Object.keys(localStorage).forEach(function(key) {
-        if (key.startsWith('vaultproof_share2_')) localStorage.removeItem(key);
+        if (key.startsWith('vaultproof_') || key.startsWith('sb-')) localStorage.removeItem(key);
       });
       sessionStorage.clear();
-      localStorage.removeItem('vaultproof_token');
-      localStorage.removeItem('vaultproof_user');
       window.location.href = 'login';
     }
 
-    let _refreshAttempted = false;
 
     async function apiFetch(path, options = {}) {
       try {

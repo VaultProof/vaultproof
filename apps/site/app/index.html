@@ -142,7 +142,6 @@
       transition: box-shadow 0.3s ease, background 0.3s ease;
     }
   </style>
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.101.1" integrity="sha384-0VpB0wAYDdhWCEv3+IjT0Z9Kgpvszkf70RFX3ro7l4QR5nywxsMaOpmvZKsfRF8I" crossorigin="anonymous"></script>
 </head>
 <body class="text-gray-100 min-h-screen flex justify-center">
   <div class="w-full max-w-[1600px] flex relative">
@@ -597,31 +596,6 @@
       document.getElementById('sessionExpired').classList.remove('hidden');
     }
 
-    // Supabase client for token refresh (only used when API returns 401)
-    const _sb = window.supabase.createClient(
-      'https://gwzkjiomemjlhtrdrlan.supabase.co',
-      'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imd3emtqaW9tZW1qbGh0cmRybGFuIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQzNDM3ODIsImV4cCI6MjA4OTkxOTc4Mn0.tgHUvpBvFiojetuqIP0sKb0iBNbKDJHdeo9n3Tofa3o'
-    , { auth: { detectSessionInUrl: false } });
-
-    async function tryRefreshToken() {
-      try {
-        const { data, error } = await _sb.auth.refreshSession();
-        if (!error && data.session) {
-          token = data.session.access_token;
-          localStorage.setItem('vaultproof_token', token);
-          return true;
-        }
-        const { data: sd, error: se } = await _sb.auth.getSession();
-        if (!se && sd.session) {
-          token = sd.session.access_token;
-          localStorage.setItem('vaultproof_token', token);
-          return true;
-        }
-      } catch (e) {
-        console.error('Token refresh failed:', e);
-      }
-      return false;
-    }
 
     // ── User info ──
     const email = user.email || '';
@@ -659,31 +633,14 @@
     handleResize();
 
     async function logout() {
-      try {
-        const sb = window.supabase.createClient(
-          'https://gwzkjiomemjlhtrdrlan.supabase.co',
-          'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imd3emtqaW9tZW1qbGh0cmRybGFuIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQzNDM3ODIsImV4cCI6MjA4OTkxOTc4Mn0.tgHUvpBvFiojetuqIP0sKb0iBNbKDJHdeo9n3Tofa3o'
-        );
-        await sb.auth.signOut();
-      } catch {}
-      // Clear all share2 data
       Object.keys(localStorage).forEach(function(key) {
-        if (key.startsWith('vaultproof_share2_')) localStorage.removeItem(key);
+        if (key.startsWith('vaultproof_') || key.startsWith('sb-')) localStorage.removeItem(key);
       });
       sessionStorage.clear();
-      localStorage.removeItem('vaultproof_token');
-      localStorage.removeItem('vaultproof_user');
       window.location.href = 'login';
     }
 
     // ── API helper ──
-    let _refreshPromise = null;
-
-    async function _doRefresh() {
-      const refreshed = await tryRefreshToken();
-      _refreshPromise = null;
-      return refreshed;
-    }
 
     async function apiFetch(path) {
       try {
@@ -691,12 +648,6 @@
           headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' }
         });
         if (res.status === 401) {
-          // All concurrent 401s share the same refresh attempt
-          if (!_refreshPromise) {
-            _refreshPromise = _doRefresh();
-          }
-          const refreshed = await _refreshPromise;
-          if (refreshed) return apiFetch(path);
           showSessionExpired();
           return null;
         }
