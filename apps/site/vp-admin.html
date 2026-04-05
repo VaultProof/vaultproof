@@ -164,7 +164,15 @@
       </div>
 
       <!-- Analytics section -->
-      <h3 class="text-sm font-semibold text-gray-400 mb-3 mt-6">Site Analytics</h3>
+      <div class="flex items-center justify-between mb-3 mt-6">
+        <h3 class="text-sm font-semibold text-gray-400">Site Analytics</h3>
+        <div class="flex gap-1">
+          <button onclick="setAnalyticsDays(7)" class="analytics-range-btn px-2.5 py-1 text-[10px] rounded-md border border-[#1e1e2e] text-gray-500 hover:text-white hover:border-indigo-500/40 transition" data-days="7">7d</button>
+          <button onclick="setAnalyticsDays(14)" class="analytics-range-btn px-2.5 py-1 text-[10px] rounded-md border border-[#1e1e2e] text-gray-500 hover:text-white hover:border-indigo-500/40 transition" data-days="14">14d</button>
+          <button onclick="setAnalyticsDays(30)" class="analytics-range-btn px-2.5 py-1 text-[10px] rounded-md border border-indigo-500/40 text-indigo-400 transition" data-days="30">30d</button>
+          <button onclick="setAnalyticsDays(90)" class="analytics-range-btn px-2.5 py-1 text-[10px] rounded-md border border-[#1e1e2e] text-gray-500 hover:text-white hover:border-indigo-500/40 transition" data-days="90">90d</button>
+        </div>
+      </div>
       <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
         <div class="stat-card">
           <div class="stat-value" id="a-views-today">-</div>
@@ -175,12 +183,12 @@
           <div class="stat-label">Visitors Today</div>
         </div>
         <div class="stat-card">
-          <div class="stat-value" id="a-views-month">-</div>
-          <div class="stat-label">Views (30d)</div>
+          <div class="stat-value" id="a-views-range">-</div>
+          <div class="stat-label" id="a-views-range-label">Views (30d)</div>
         </div>
         <div class="stat-card">
-          <div class="stat-value" id="a-signups-month">-</div>
-          <div class="stat-label">Signups (30d)</div>
+          <div class="stat-value" id="a-signups-range">-</div>
+          <div class="stat-label" id="a-signups-range-label">Signups (30d)</div>
         </div>
         <div class="stat-card">
           <div class="stat-value" id="a-views-week">-</div>
@@ -200,15 +208,35 @@
         </div>
       </div>
 
+      <!-- Conversion rate -->
+      <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+        <div class="stat-card">
+          <div class="stat-value" id="a-conversion">-</div>
+          <div class="stat-label">Visitor → Signup</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-value" id="a-avg-views">-</div>
+          <div class="stat-label">Avg Views/Day</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-value" id="a-avg-signups">-</div>
+          <div class="stat-label">Avg Signups/Day</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-value" id="a-bounce-est">-</div>
+          <div class="stat-label">Pages/Visitor</div>
+        </div>
+      </div>
+
       <!-- Traffic chart -->
       <div class="panel mb-6">
-        <h3 class="text-sm font-semibold text-gray-400 mb-3">Traffic (30 days)</h3>
+        <h3 class="text-sm font-semibold text-gray-400 mb-3" id="a-traffic-title">Traffic (30 days)</h3>
         <div style="height:300px"><canvas id="trafficChart"></canvas></div>
       </div>
 
       <!-- Signups chart -->
       <div class="panel mb-6">
-        <h3 class="text-sm font-semibold text-gray-400 mb-3">Signups (30 days)</h3>
+        <h3 class="text-sm font-semibold text-gray-400 mb-3" id="a-signups-title">Signups (30 days)</h3>
         <div style="height:250px"><canvas id="signupsChart"></canvas></div>
       </div>
 
@@ -1108,26 +1136,58 @@ async function changeTier() {
 // ─── Analytics ──────────────────────────────────────────────────
 let trafficChartInstance = null;
 let signupsChartInstance = null;
+let analyticsDays = 30;
+
+function setAnalyticsDays(days) {
+  analyticsDays = days;
+  document.querySelectorAll('.analytics-range-btn').forEach(btn => {
+    const isActive = parseInt(btn.dataset.days) === days;
+    btn.className = `analytics-range-btn px-2.5 py-1 text-[10px] rounded-md border transition ${isActive ? 'border-indigo-500/40 text-indigo-400' : 'border-[#1e1e2e] text-gray-500 hover:text-white hover:border-indigo-500/40'}`;
+  });
+  loadAnalytics();
+}
 
 async function loadAnalytics() {
   try {
+    const days = analyticsDays;
     const [overview, traffic, signups, pages, referrers] = await Promise.all([
       apiFetch('/analytics/overview'),
-      apiFetch('/analytics/traffic?days=30'),
-      apiFetch('/analytics/signups?days=30'),
-      apiFetch('/analytics/pages?days=30'),
-      apiFetch('/analytics/referrers?days=30'),
+      apiFetch(`/analytics/traffic?days=${days}`),
+      apiFetch(`/analytics/signups?days=${days}`),
+      apiFetch(`/analytics/pages?days=${days}`),
+      apiFetch(`/analytics/referrers?days=${days}`),
     ]);
 
     // Overview cards
     document.getElementById('a-views-today').textContent = overview.viewsToday.toLocaleString();
     document.getElementById('a-visitors-today').textContent = overview.visitorsToday.toLocaleString();
     document.getElementById('a-views-week').textContent = overview.viewsWeek.toLocaleString();
-    document.getElementById('a-views-month').textContent = overview.viewsMonth.toLocaleString();
-    document.getElementById('a-signups-today').textContent = overview.signupsToday.toLocaleString();
     document.getElementById('a-signups-week').textContent = overview.signupsWeek.toLocaleString();
-    document.getElementById('a-signups-month').textContent = overview.signupsMonth.toLocaleString();
+    document.getElementById('a-signups-today').textContent = overview.signupsToday.toLocaleString();
     document.getElementById('a-total-users').textContent = overview.totalUsers.toLocaleString();
+
+    // Range-specific stats
+    const totalViews = traffic.traffic.reduce((sum, d) => sum + d.views, 0);
+    const totalSignups = signups.signups.reduce((sum, d) => sum + d.count, 0);
+    const totalVisitors = traffic.traffic.reduce((sum, d) => sum + d.visitors, 0);
+    document.getElementById('a-views-range').textContent = totalViews.toLocaleString();
+    document.getElementById('a-views-range-label').textContent = `Views (${days}d)`;
+    document.getElementById('a-signups-range').textContent = totalSignups.toLocaleString();
+    document.getElementById('a-signups-range-label').textContent = `Signups (${days}d)`;
+
+    // Computed metrics
+    const convRate = totalVisitors > 0 ? ((totalSignups / totalVisitors) * 100).toFixed(1) + '%' : '-';
+    const avgViews = days > 0 ? Math.round(totalViews / days).toLocaleString() : '-';
+    const avgSignups = days > 0 ? (totalSignups / days).toFixed(1) : '-';
+    const pagesPerVisitor = totalVisitors > 0 ? (totalViews / totalVisitors).toFixed(1) : '-';
+    document.getElementById('a-conversion').textContent = convRate;
+    document.getElementById('a-avg-views').textContent = avgViews;
+    document.getElementById('a-avg-signups').textContent = avgSignups;
+    document.getElementById('a-bounce-est').textContent = pagesPerVisitor;
+
+    // Chart titles
+    document.getElementById('a-traffic-title').textContent = `Traffic (${days} days)`;
+    document.getElementById('a-signups-title').textContent = `Signups (${days} days)`;
 
     // Traffic chart
     if (trafficChartInstance) trafficChartInstance.destroy();
