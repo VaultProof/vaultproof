@@ -658,7 +658,7 @@
 
 <script>
 // ─── Config ──────────────────────────────────────────────────────
-const API = 'https://staging-api.vaultproof.dev/admin';
+const API = window.location.hostname.includes('dev.vaultproof') ? 'https://staging-api.vaultproof.dev/admin' : 'https://api.vaultproof.dev/admin';
 
 // ─── Supabase ────────────────────────────────────────────────────
 const sbClient = window.supabase.createClient(
