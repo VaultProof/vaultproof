@@ -106,6 +106,7 @@
       <span class="text-sm font-bold text-white tracking-wide" style="font-family:'JetBrains Mono',monospace">VAULTPROOF COMMAND CENTER</span>
       <span class="text-[10px] text-gray-600 ml-2" id="live-clock"></span>
     </div>
+    <button onclick="refreshAll()" class="btn btn-ghost text-xs" id="refreshBtn" title="Refresh all data">&#8635; Refresh</button>
     <button onclick="logout()" class="btn btn-ghost text-xs">Logout</button>
   </div>
 
@@ -692,6 +693,18 @@ async function init() {
   await loadUsers(1);
   await loadGlobalLogs(1);
   loadAnalytics();
+}
+
+async function refreshAll() {
+  const btn = document.getElementById('refreshBtn');
+  btn.disabled = true;
+  btn.textContent = '↻ Loading...';
+  try {
+    await init();
+  } finally {
+    btn.disabled = false;
+    btn.textContent = '↻ Refresh';
+  }
 }
 
 // Live clock
