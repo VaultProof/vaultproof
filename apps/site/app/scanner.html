@@ -296,6 +296,19 @@
           </div>
         </div>
 
+        <!-- Connecting overlay -->
+        <div id="stateConnecting" class="hidden">
+          <div class="bg-card border border-border rounded-2xl p-8 lg:p-12 text-center max-w-lg mx-auto">
+            <div class="w-16 h-16 rounded-full bg-brand/10 border border-brand/20 flex items-center justify-center mx-auto mb-6 animate-pulse">
+              <svg class="w-8 h-8 text-brand animate-spin" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
+              </svg>
+            </div>
+            <h2 class="text-xl font-bold mb-3">Connecting to GitHub...</h2>
+            <p class="text-sm text-gray-400">Exchanging credentials and encrypting your token. This takes a few seconds.</p>
+          </div>
+        </div>
+
         <!-- State 2: Connected — Repo List -->
         <div id="stateRepoList" class="hidden">
           <!-- Header -->
@@ -907,6 +920,7 @@
 
     function showState(state) {
       document.getElementById('stateNotConnected').classList.toggle('hidden', state !== 'not-connected');
+      document.getElementById('stateConnecting').classList.toggle('hidden', state !== 'connecting');
       document.getElementById('stateRepoList').classList.toggle('hidden', state !== 'repo-list');
       document.getElementById('stateScanResults').classList.toggle('hidden', state !== 'scan-results');
     }
@@ -927,17 +941,19 @@
 
     async function handleGitHubCallback(code, state) {
       if (!code || !state) { showToast('GitHub callback missing parameters'); return; }
+      showState('connecting');
       var res = await apiFetch(API + '/scanner/github/callback', {
         method: 'POST',
         body: JSON.stringify({ code: code, state: state })
       });
-      if (!res) return;
+      if (!res) { showState('not-connected'); return; }
       var data = await res.json();
       if (res.ok) {
         ghConnected = true;
         showToast('GitHub connected successfully', 'success');
         loadRepoList();
       } else {
+        showState('not-connected');
         showToast(data.error || 'Failed to connect GitHub');
       }
     }
