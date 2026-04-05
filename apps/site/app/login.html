@@ -345,10 +345,7 @@
     } else if (confirmCode) {
       sbClient.auth.exchangeCodeForSession(confirmCode).then(async ({ data, error }) => {
         if (!error && data.session) {
-          localStorage.setItem('vaultproof_token', data.session.access_token);
-          localStorage.setItem('vaultproof_user', JSON.stringify({
-            id: data.user.id, email: data.user.email
-          }));
+          storeLocalSession(data.session, data.user);
           await redeemPendingPromo(data.session);
           safeRedirect('./');
         } else if (error && !isRedirecting) {
@@ -463,16 +460,24 @@
       }
     }
 
+    function storeLocalSession(session, user) {
+      if (!session) return;
+      localStorage.setItem('vaultproof_token', session.access_token);
+      if (session.refresh_token) {
+        localStorage.setItem('vaultproof_refresh_token', session.refresh_token);
+      }
+      localStorage.setItem('vaultproof_user', JSON.stringify({
+        id: (user && user.id) || (session.user && session.user.id) || '',
+        email: (user && user.email) || (session.user && session.user.email) || ''
+      }));
+    }
+
     // ── Check if already logged in (skip if handling code exchange or loop detected) ──
     if (!confirmCode && loopHistory.length < 3) {
       (async () => {
         const { data: { session } } = await sbClient.auth.getSession();
         if (session && !isRedirecting) {
-          localStorage.setItem('vaultproof_token', session.access_token);
-          localStorage.setItem('vaultproof_user', JSON.stringify({
-            id: session.user.id,
-            email: session.user.email
-          }));
+          storeLocalSession(session, session.user);
 
           // Auto-redeem promo before redirect
           await redeemPendingPromo(session);
@@ -491,11 +496,7 @@
     // ── Listen for auth state changes (handles OAuth callback) ──
     sbClient.auth.onAuthStateChange(async (event, session) => {
       if (event === 'SIGNED_IN' && session && !isRedirecting) {
-        localStorage.setItem('vaultproof_token', session.access_token);
-        localStorage.setItem('vaultproof_user', JSON.stringify({
-          id: session.user.id,
-          email: session.user.email
-        }));
+        storeLocalSession(session, session.user);
 
         // Auto-redeem promo before redirect
         await redeemPendingPromo(session);
@@ -581,11 +582,7 @@
         });
         if (error) throw error;
 
-        localStorage.setItem('vaultproof_token', data.session.access_token);
-        localStorage.setItem('vaultproof_user', JSON.stringify({
-          id: data.user.id,
-          email: data.user.email
-        }));
+        storeLocalSession(data.session, data.user);
 
         // Auto-redeem promo before redirect
         await redeemPendingPromo(data.session);
@@ -683,11 +680,7 @@
         if (error) throw error;
 
         if (data.session) {
-          localStorage.setItem('vaultproof_token', data.session.access_token);
-          localStorage.setItem('vaultproof_user', JSON.stringify({
-            id: data.user.id,
-            email: data.user.email
-          }));
+          storeLocalSession(data.session, data.user);
 
           // Auto-redeem promo before redirect
           await redeemPendingPromo(data.session);

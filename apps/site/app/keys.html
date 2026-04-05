@@ -561,6 +561,8 @@ STRIPE_SECRET_KEY=sk_live_..."></textarea>
     const API = window.location.hostname.includes('dev.vaultproof') ? 'https://staging-api.vaultproof.dev/api/v1' : 'https://api.vaultproof.dev/api/v1';
     let token = localStorage.getItem('vaultproof_token');
     const user = JSON.parse(localStorage.getItem('vaultproof_user') || '{}');
+    let _refreshAttempted = false;
+    let _refreshPromise = null;
 
     function setExpiry(days) {
       var date = new Date();
@@ -578,6 +580,71 @@ STRIPE_SECRET_KEY=sk_live_..."></textarea>
 
 
     if (!token) { window.location.href = 'login'; }
+
+    function extractRefreshToken(value) {
+      if (!value) return null;
+      if (typeof value === 'string') {
+        try { return extractRefreshToken(JSON.parse(value)); } catch { return null; }
+      }
+      if (Array.isArray(value)) {
+        for (const item of value) {
+          const found = extractRefreshToken(item);
+          if (found) return found;
+        }
+        return null;
+      }
+      if (typeof value === 'object') {
+        if (typeof value.refresh_token === 'string' && value.refresh_token) return value.refresh_token;
+        for (const key in value) {
+          const found = extractRefreshToken(value[key]);
+          if (found) return found;
+        }
+      }
+      return null;
+    }
+
+    function getStoredRefreshToken() {
+      const explicit = localStorage.getItem('vaultproof_refresh_token');
+      if (explicit) return explicit;
+      for (let i = 0; i < localStorage.length; i++) {
+        const key = localStorage.key(i);
+        if (!key || !key.startsWith('sb-') || !key.endsWith('-auth-token')) continue;
+        const found = extractRefreshToken(localStorage.getItem(key));
+        if (found) return found;
+      }
+      return null;
+    }
+
+    async function tryRefreshToken() {
+      if (_refreshPromise) return _refreshPromise;
+      const refreshToken = getStoredRefreshToken();
+      if (!refreshToken) return false;
+
+      _refreshPromise = (async function() {
+        try {
+          const res = await fetch(`${API}/auth/refresh`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ refreshToken })
+          });
+          if (!res.ok) return false;
+          const data = await res.json().catch(() => null);
+          if (!data || !data.token) return false;
+          token = data.token;
+          localStorage.setItem('vaultproof_token', data.token);
+          if (data.refreshToken) {
+            localStorage.setItem('vaultproof_refresh_token', data.refreshToken);
+          }
+          return true;
+        } catch {
+          return false;
+        } finally {
+          _refreshPromise = null;
+        }
+      })();
+
+      return _refreshPromise;
+    }
 
 
     function showToast(message, type = 'error') {
@@ -630,6 +697,12 @@ STRIPE_SECRET_KEY=sk_live_..."></textarea>
           }
         });
         if (res.status === 401) {
+          if (!_refreshAttempted) {
+            _refreshAttempted = true;
+            const refreshed = await tryRefreshToken();
+            if (refreshed) return apiFetch(url, options);
+          }
+          _refreshAttempted = false;
           showSessionExpired();
           return null;
         }
