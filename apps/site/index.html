@@ -619,28 +619,32 @@
 
         <div class="grid md:grid-cols-2 gap-6 mb-10">
             <div class="bg-vp-surface border border-vp-border rounded-2xl p-6 reveal delay-1">
-                <h3 class="text-base font-semibold text-white mb-3">What it changes</h3>
+                <h3 class="text-base font-semibold text-white mb-3">What you're protected from</h3>
                 <div class="space-y-3">
                     <div class="flex gap-3">
                         <span class="text-brand mt-0.5">+</span>
-                        <p class="text-sm text-gray-400">Your API key is stored on VaultProof's server, not in your .env file or repo</p>
+                        <p class="text-sm text-gray-400">Accidentally committing a key to GitHub — there's nothing to commit</p>
                     </div>
                     <div class="flex gap-3">
                         <span class="text-brand mt-0.5">+</span>
-                        <p class="text-sm text-gray-400">Your app sends requests through a proxy URL. The proxy attaches the real key and forwards to the provider</p>
+                        <p class="text-sm text-gray-400">AI tools reading your .env and leaking keys into prompts, logs, or generated code</p>
                     </div>
                     <div class="flex gap-3">
                         <span class="text-brand mt-0.5">+</span>
-                        <p class="text-sm text-gray-400">If your code leaks, the attacker gets a VaultProof key — not your OpenAI or Stripe key</p>
+                        <p class="text-sm text-gray-400">Someone cloning your repo and using your API key to run up your bill</p>
                     </div>
                     <div class="flex gap-3">
                         <span class="text-brand mt-0.5">+</span>
-                        <p class="text-sm text-gray-400">You can set spend caps, lock keys to specific domains, and revoke access instantly</p>
+                        <p class="text-sm text-gray-400">Malicious packages that scan your environment for API keys</p>
+                    </div>
+                    <div class="flex gap-3">
+                        <span class="text-brand mt-0.5">+</span>
+                        <p class="text-sm text-gray-400">Unlimited spend from a stolen key — you set the caps</p>
                     </div>
                 </div>
             </div>
             <div class="bg-vp-surface border border-vp-border rounded-2xl p-6 reveal delay-2">
-                <h3 class="text-base font-semibold text-white mb-3">What it doesn't change</h3>
+                <h3 class="text-base font-semibold text-white mb-3">The trade-offs</h3>
                 <div class="space-y-3">
                     <div class="flex gap-3">
                         <span class="text-gray-600 mt-0.5">=</span>
@@ -660,10 +664,6 @@
                     </div>
                 </div>
             </div>
-        </div>
-
-        <div class="bg-vp-surface border border-vp-border rounded-2xl p-6 text-center reveal delay-3">
-            <p class="text-sm text-gray-400">The trade-off: you move the risk from "anyone who sees your code" to "a service built specifically to hold keys." Whether that's worth it depends on your situation. We think it is for most developers shipping with AI tools.</p>
         </div>
 
     </section>
