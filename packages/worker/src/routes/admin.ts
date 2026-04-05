@@ -45,14 +45,15 @@ async function handleStats(request: Request, env: Env): Promise<Response> {
   const monthStart = new Date(now.getFullYear(), now.getMonth(), 1).toISOString();
   const weekAgo = new Date(now.getTime() - 7 * 86400000).toISOString();
 
-  const [totalUsers, totalKeys, totalDevKeys, callsToday, callsThisMonth, totalCallsAllTime] = await Promise.all([
-    supabase.from('users').select('*', { count: 'exact', head: true }),
+  const [authUsers, totalKeys, totalDevKeys, callsToday, callsThisMonth, totalCallsAllTime] = await Promise.all([
+    supabase.auth.admin.listUsers({ perPage: 1, page: 1 }),
     supabase.from('key_slots').select('*', { count: 'exact', head: true }).eq('status', 'ACTIVE'),
     supabase.from('developer_keys').select('*', { count: 'exact', head: true }).is('revoked_at', null),
     supabase.from('access_logs').select('*', { count: 'exact', head: true }).gte('timestamp', todayStart),
     supabase.from('access_logs').select('*', { count: 'exact', head: true }).gte('timestamp', monthStart),
     supabase.from('access_logs').select('*', { count: 'exact', head: true }),
   ]);
+  const totalUserCount = authUsers.data?.users ? (await supabase.auth.admin.listUsers({ perPage: 1000, page: 1 })).data?.users?.length || 0 : 0;
 
   // Active users last 7 days
   const { data: recentLogs } = await supabase
@@ -78,7 +79,7 @@ async function handleStats(request: Request, env: Env): Promise<Response> {
   }
 
   return Response.json({
-    totalUsers: totalUsers.count || 0,
+    totalUsers: totalUserCount,
     totalKeys: totalKeys.count || 0,
     totalDevKeys: totalDevKeys.count || 0,
     callsToday: callsToday.count || 0,
@@ -150,10 +151,8 @@ async function handleOverview(request: Request, env: Env): Promise<Response> {
       .from('users')
       .select('*', { count: 'exact', head: true })
       .gte('created_at', monthAgo),
-    // 7. Total users
-    supabase
-      .from('users')
-      .select('*', { count: 'exact', head: true }),
+    // 7. Total users (from Supabase Auth)
+    supabase.auth.admin.listUsers({ perPage: 1000, page: 1 }),
     // 8. Visitors today (need session_id for dedup)
     supabase
       .from('analytics_events')
@@ -176,7 +175,7 @@ async function handleOverview(request: Request, env: Env): Promise<Response> {
     signupsToday: signupsTodayRes.count ?? 0,
     signupsWeek: signupsWeekRes.count ?? 0,
     signupsMonth: signupsMonthRes.count ?? 0,
-    totalUsers: totalUsersRes.count ?? 0,
+    totalUsers: totalUsersRes.data?.users?.length ?? 0,
   });
 }
 
