@@ -3,6 +3,7 @@ import { authenticateDevKey } from '../lib/auth.js';
 import { checkKeyRateLimit, checkTierRateLimit } from '../lib/rate-limit.js';
 import { getSupabase } from '../lib/supabase.js';
 import { cacheGet, cacheSet } from '../lib/cache.js';
+import { memGet, memSet } from '../lib/mem-cache.js';
 import { decrypt, zeroUint8Array } from '../crypto/encryption.js';
 import { decryptShare2, decryptShare2Legacy } from '../crypto/share2.js';
 import { deserializeShare, combineShares } from '../crypto/shamir.js';
@@ -143,6 +144,9 @@ export async function handleTransparentProxy(
   path: string,
   ctx?: ExecutionContext,
 ): Promise<Response> {
+  const t0 = performance.now();
+  const timings: Record<string, number> = {};
+
   // a. Extract provider
   const slashIdx = path.indexOf('/');
   const provider = slashIdx === -1 ? path : path.substring(0, slashIdx);
@@ -155,10 +159,14 @@ export async function handleTransparentProxy(
   }
 
   // b. Authenticate
+  timings.provider = performance.now() - t0;
+  let tStep = performance.now();
   const auth = await authenticateDevKey(request, env, ctx);
   if (!auth) {
     return Response.json({ error: 'API key not recognized.' }, { status: 401 });
   }
+
+  timings.auth = performance.now() - tStep;
 
   // IP allowlist check
   if (auth.devKey.allowed_ips) {
@@ -191,16 +199,27 @@ export async function handleTransparentProxy(
     }
   }
 
-  // e. Fetch user + key slot (parallel, with KV cache)
+  // e. Fetch user + key slot (L1: memory, L2: KV, L3: Supabase)
+  tStep = performance.now();
   const supabase = getSupabase(env);
   const userCacheKey = `user:${auth.userId}`;
   const keyCacheKey = `keyslot:${auth.userId}:${provider}`;
 
-  let [user, keySlot] = await Promise.all([
-    cacheGet<UserRecord>(env, userCacheKey),
-    cacheGet<KeySlotRecord>(env, keyCacheKey),
-  ]);
+  // L1: isolate memory (no I/O)
+  let user = memGet<UserRecord>(userCacheKey);
+  let keySlot = memGet<KeySlotRecord>(keyCacheKey);
 
+  // L2: KV (if memory miss)
+  if (!user || !keySlot) {
+    const [kvUser, kvKey] = await Promise.all([
+      user ? Promise.resolve(null) : cacheGet<UserRecord>(env, userCacheKey),
+      keySlot ? Promise.resolve(null) : cacheGet<KeySlotRecord>(env, keyCacheKey),
+    ]);
+    if (kvUser) { user = kvUser; memSet(userCacheKey, user, 10); }
+    if (kvKey) { keySlot = kvKey; memSet(keyCacheKey, keySlot, 10); }
+  }
+
+  // L3: Supabase (if KV miss)
   const fetchPromises: Promise<any>[] = [];
   if (!user) fetchPromises.push(supabase.from('users').select('id, email, tier, kill_switch, global_daily_limit, global_monthly_limit').eq('id', auth.userId).single());
   else fetchPromises.push(Promise.resolve(null));
@@ -208,8 +227,8 @@ export async function handleTransparentProxy(
   else fetchPromises.push(Promise.resolve(null));
 
   const [userRes, keyRes] = await Promise.all(fetchPromises);
-  if (userRes?.data && !userRes.error) { user = userRes.data; await cacheSet(env, userCacheKey, user, 10); }
-  if (keyRes?.data && !keyRes.error) { keySlot = keyRes.data; await cacheSet(env, keyCacheKey, keySlot, 10); }
+  if (userRes?.data && !userRes.error) { user = userRes.data; memSet(userCacheKey, user, 10); await cacheSet(env, userCacheKey, user, 10); }
+  if (keyRes?.data && !keyRes.error) { keySlot = keyRes.data; memSet(keyCacheKey, keySlot, 10); await cacheSet(env, keyCacheKey, keySlot, 10); }
 
   if (user?.kill_switch) {
     return Response.json({ error: 'All proxy calls are paused.' }, { status: 503 });
@@ -232,21 +251,34 @@ export async function handleTransparentProxy(
     }
   }
 
+  timings.fetch = performance.now() - tStep;
+
   // f. Tier rate limiting
+  tStep = performance.now();
   const tier = user?.tier || 'free';
   const rateCheck = await checkTierRateLimit(env, keySlot.id, tier);
   if (!rateCheck.allowed) {
     return Response.json({ error: 'Monthly call limit exceeded.', used: rateCheck.used, limit: rateCheck.limit }, { status: 429 });
   }
 
-  // g. Reconstruct API key (in-memory only, never cached)
+  timings.rateLimit = performance.now() - tStep;
+
+  // g. Reconstruct API key
+  tStep = performance.now();
+  // Cache decrypted Share 1 in isolate memory (5s TTL) to skip scrypt on warm requests.
+  // Share 1 alone is useless without Share 2 + the user's vp_ key, so this is safe.
   let apiKey: string | null = null;
 
   try {
-    const share1Bytes = hexToBytes(keySlot.share1_encrypted);
-    const decryptedShare1 = decrypt(share1Bytes, env);
-    const share1Str = new TextDecoder().decode(decryptedShare1);
-    zeroUint8Array(decryptedShare1);
+    const share1CacheKey = `s1:${keySlot.id}`;
+    let share1Str = memGet<string>(share1CacheKey);
+    if (!share1Str) {
+      const share1Bytes = hexToBytes(keySlot.share1_encrypted);
+      const decryptedShare1 = decrypt(share1Bytes, env);
+      share1Str = new TextDecoder().decode(decryptedShare1);
+      zeroUint8Array(decryptedShare1);
+      memSet(share1CacheKey, share1Str, 5);
+    }
 
     const share2Bytes = hexToBytes(keySlot.share2_encrypted!);
     let share2Str: string;
@@ -264,6 +296,8 @@ export async function handleTransparentProxy(
   } catch {
     return Response.json({ error: 'Key reconstruction failed.' }, { status: 400 });
   }
+
+  timings.crypto = performance.now() - tStep;
 
   // h. Build upstream URL
   let upstreamUrl: string;
@@ -294,6 +328,7 @@ export async function handleTransparentProxy(
   apiKey = '';
 
   // j. Proxy the request
+  tStep = performance.now();
   const startTime = Date.now();
   try {
     const upstreamResponse = await fetch(upstreamUrl, {
@@ -323,10 +358,18 @@ export async function handleTransparentProxy(
       if (ctx) ctx.waitUntil(alertPromise);
     }
 
+    timings.upstream = performance.now() - tStep;
+    timings.total = performance.now() - t0;
+
     const responseHeaders = new Headers(upstreamResponse.headers);
     if (rateCheck.nearLimit) {
       responseHeaders.set('X-VaultProof-Usage-Warning', `${rateCheck.used}/${rateCheck.limit} calls used this month`);
     }
+    // Server-Timing header for latency visibility (visible in DevTools Network tab)
+    const serverTiming = Object.entries(timings)
+      .map(([k, v]) => `${k};dur=${v.toFixed(1)}`)
+      .join(', ');
+    responseHeaders.set('Server-Timing', serverTiming);
 
     return new Response(upstreamResponse.body, {
       status: upstreamResponse.status,
