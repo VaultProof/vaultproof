@@ -578,24 +578,12 @@ STRIPE_SECRET_KEY=sk_live_..."></textarea>
     })();
 
 
-    // Sync token from Supabase SDK session if vaultproof_token is missing or stale
-    try {
-      var sbSession = JSON.parse(localStorage.getItem('sb-gwzkjiomemjlhtrdrlan-auth-token') || '{}');
-      if (sbSession.access_token) {
-        token = sbSession.access_token;
-        localStorage.setItem('vaultproof_token', token);
-        if (sbSession.user && sbSession.user.id) {
-          localStorage.setItem('vaultproof_user', JSON.stringify({ id: sbSession.user.id, email: sbSession.user.email }));
-        }
-      }
-    } catch (e) {}
-
     if (!token) { window.location.href = 'login'; }
 
     const _sb = window.supabase.createClient(
       'https://gwzkjiomemjlhtrdrlan.supabase.co',
       'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imd3emtqaW9tZW1qbGh0cmRybGFuIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQzNDM3ODIsImV4cCI6MjA4OTkxOTc4Mn0.tgHUvpBvFiojetuqIP0sKb0iBNbKDJHdeo9n3Tofa3o'
-    , { auth: { detectSessionInUrl: false, autoRefreshToken: false, persistSession: false } });
+    , { auth: { detectSessionInUrl: false } });
 
     async function tryRefreshToken() {
       try {
