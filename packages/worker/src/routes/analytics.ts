@@ -54,8 +54,16 @@ export async function handleAnalyticsEvent(request: Request, env: Env): Promise<
   }
 
   const page = typeof data.page === 'string' ? data.page.slice(0, 500) : null;
-  const referrer = typeof data.referrer === 'string' ? data.referrer.slice(0, 200) : null;
   const session_id = typeof data.sessionId === 'string' ? data.sessionId.slice(0, 100) : null;
+
+  // Sanitize referrer — drop XSS probes, SSRF attempts, and non-HTTP URLs
+  let referrer: string | null = null;
+  if (typeof data.referrer === 'string' && data.referrer.length > 0) {
+    const raw = data.referrer.slice(0, 200);
+    if (/^https?:\/\/[a-zA-Z0-9]/.test(raw) && !/<|>|javascript:|data:|onerror|onclick|169\.254/i.test(raw)) {
+      referrer = raw;
+    }
+  }
 
   // IP-based visitor dedup — hash IP + date for privacy
   const clientIp = request.headers.get('cf-connecting-ip') || 'unknown';
