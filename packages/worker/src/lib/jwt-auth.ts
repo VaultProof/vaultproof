@@ -30,6 +30,26 @@ export async function authenticateUser(
   const email = data.user.email;
   if (!userId || !email) return null;
 
+  // Auto-create user row if missing (Supabase auth user may not exist in public.users yet)
+  const supabaseDb = getSupabase(env);
+  const { data: existingUser } = await supabaseDb
+    .from('users')
+    .select('id')
+    .eq('id', userId)
+    .single();
+  if (!existingUser) {
+    await supabaseDb.from('users').insert({
+      id: userId,
+      email,
+      tier: 'free',
+      created_at: new Date().toISOString(),
+      kill_switch: false,
+      has_seen_tour: false,
+      global_daily_limit: 1000,
+      global_monthly_limit: 30000,
+    });
+  }
+
   return { userId, email };
 }
 

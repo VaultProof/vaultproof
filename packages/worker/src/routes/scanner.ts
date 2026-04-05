@@ -206,52 +206,58 @@ async function handleGithubCallback(
 
   const accessToken = tokenData.access_token;
 
-  // --- Get GitHub username ---
-  const ghUser = (await githubApi(accessToken, '/user')) as {
-    login: string;
-  };
-  const githubUsername = ghUser.login;
+  try {
+    // --- Get GitHub username ---
+    const ghUser = (await githubApi(accessToken, '/user')) as {
+      login: string;
+    };
+    const githubUsername = ghUser.login;
 
-  // --- Encrypt token ---
-  const tokenBytes = new TextEncoder().encode(accessToken);
-  const encryptedBytes = encrypt(tokenBytes, env);
-  const encryptedB64 = Buffer.from(encryptedBytes).toString('base64');
+    // --- Encrypt token ---
+    const tokenBytes = new TextEncoder().encode(accessToken);
+    const encryptedBytes = encrypt(tokenBytes, env);
+    const encryptedB64 = Buffer.from(encryptedBytes).toString('base64');
 
-  // --- Upsert connection ---
-  const supabase = getSupabase(env);
-  const now = new Date().toISOString();
+    // --- Upsert connection ---
+    const supabase = getSupabase(env);
+    const now = new Date().toISOString();
 
-  // Disconnect any existing connections
-  await supabase
-    .from('github_connections')
-    .update({ disconnected_at: now })
-    .eq('user_id', user.userId)
-    .is('disconnected_at', null);
+    // Disconnect any existing connections
+    await supabase
+      .from('github_connections')
+      .update({ disconnected_at: now })
+      .eq('user_id', user.userId)
+      .is('disconnected_at', null);
 
-  // Create new connection
-  const connId = crypto.randomUUID();
-  const { error: insertError } = await supabase
-    .from('github_connections')
-    .insert({
-      id: connId,
-      user_id: user.userId,
-      access_token: encryptedB64,
-      github_username: githubUsername,
-      connected_at: now,
-      scopes: 'repo',
-    });
+    // Create new connection
+    const connId = crypto.randomUUID();
+    const { error: insertError } = await supabase
+      .from('github_connections')
+      .insert({
+        id: connId,
+        user_id: user.userId,
+        access_token: encryptedB64,
+        github_username: githubUsername,
+        connected_at: now,
+        scopes: 'repo',
+      });
 
-  if (insertError) {
-    console.error('github_connections insert failed:', insertError.message);
-    return Response.json(
-      { error: 'Failed to save connection' },
-      { status: 500 },
-    );
+    if (insertError) {
+      console.error('github_connections insert failed:', insertError.message);
+      return Response.json(
+        { error: 'Failed to save connection: ' + insertError.message },
+        { status: 500 },
+      );
+    }
+
+    auditLog(env, user.userId, connId, 'github_connected', { githubUsername });
+
+    return Response.json({ connected: true, githubUsername });
+  } catch (e: unknown) {
+    const msg = e instanceof Error ? e.message : String(e);
+    console.error('GitHub callback error:', msg);
+    return Response.json({ error: 'GitHub callback failed: ' + msg }, { status: 500 });
   }
-
-  auditLog(env, user.userId, connId, 'github_connected', { githubUsername });
-
-  return Response.json({ connected: true, githubUsername });
 }
 
 async function handleGithubDisconnect(
