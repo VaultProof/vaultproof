@@ -2170,9 +2170,10 @@
 
       // Handle GitHub callback on page load
       var params = new URLSearchParams(window.location.search);
+      var isGithubCallback = params.get('github_callback') === '1';
       var code = params.get('code');
       var state = params.get('state');
-      if (code && state) {
+      if (isGithubCallback && code && state) {
         // Clean URL
         window.history.replaceState({}, '', window.location.pathname);
         await handleGitHubCallback(code, state);

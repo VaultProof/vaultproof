@@ -330,7 +330,19 @@
     // error — we silently ignore it to avoid a false "Email confirmation failed" flash.
     const urlSearchParams = new URLSearchParams(window.location.search);
     const confirmCode = urlSearchParams.get('code');
-    if (confirmCode) {
+    const callbackState = urlSearchParams.get('state');
+    const isScannerGitHubCallback = urlSearchParams.get('github_callback') === '1';
+
+    // Scanner GitHub OAuth reuses ?code= and ?state=. If that callback ever lands on the
+    // login page, forward it to the scanner page instead of asking Supabase to exchange it.
+    if (isScannerGitHubCallback && confirmCode && callbackState) {
+      const scannerParams = new URLSearchParams({
+        github_callback: '1',
+        code: confirmCode,
+        state: callbackState,
+      });
+      window.location.replace('/app/scanner?' + scannerParams.toString());
+    } else if (confirmCode) {
       sbClient.auth.exchangeCodeForSession(confirmCode).then(async ({ data, error }) => {
         if (!error && data.session) {
           localStorage.setItem('vaultproof_token', data.session.access_token);
