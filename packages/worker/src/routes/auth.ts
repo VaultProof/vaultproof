@@ -3,6 +3,9 @@ import { getSupabase } from '../lib/supabase.js';
 import { authenticateUser } from '../lib/jwt-auth.js';
 
 export async function handleAuth(request: Request, env: Env, path: string): Promise<Response> {
+  // Refresh doesn't require an active session — it uses the refresh token
+  if (path === 'refresh' && request.method === 'POST') return handleRefresh(request, env);
+
   const user = await authenticateUser(request, env);
   if (!user) return Response.json({ error: 'Unauthorized' }, { status: 401 });
 
@@ -10,6 +13,24 @@ export async function handleAuth(request: Request, env: Env, path: string): Prom
   if (path === 'tour-complete' && request.method === 'POST') return handleTourComplete(env, user.userId);
 
   return Response.json({ error: 'Not found' }, { status: 404 });
+}
+
+async function handleRefresh(request: Request, env: Env): Promise<Response> {
+  const body = await request.json() as { refresh_token?: string; refreshToken?: string };
+  const refreshToken = body.refresh_token || body.refreshToken;
+  if (!refreshToken) {
+    return Response.json({ error: 'refresh_token required' }, { status: 400 });
+  }
+  const supabase = getSupabase(env);
+  const { data, error } = await supabase.auth.refreshSession({ refresh_token: refreshToken });
+  if (error || !data.session) {
+    return Response.json({ error: 'Refresh failed' }, { status: 401 });
+  }
+  return Response.json({
+    token: data.session.access_token,
+    refreshToken: data.session.refresh_token,
+    expiresIn: data.session.expires_in,
+  });
 }
 
 async function handleMe(env: Env, userId: string): Promise<Response> {
