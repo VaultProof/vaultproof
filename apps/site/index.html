@@ -710,8 +710,8 @@
     <!-- AI Agent Security -->
     <section class="relative z-10 max-w-5xl mx-auto px-4 sm:px-6 py-16 sm:py-24">
         <div class="text-center mb-14 reveal">
-            <h2 class="text-2xl sm:text-3xl md:text-4xl font-bold text-white mb-4" style="font-family:'Space Grotesk',sans-serif">Built for AI agents that need API access</h2>
-            <p class="text-gray-400 text-lg max-w-2xl mx-auto">Cursor, Claude Code, Windsurf, Copilot -- they all read your .env files. With VaultProof, that's fine. There's nothing useful in there.</p>
+            <h2 class="text-2xl sm:text-3xl md:text-4xl font-bold text-white mb-4" style="font-family:'Space Grotesk',sans-serif">Your AI agent can read every secret on your machine</h2>
+            <p class="text-gray-400 text-lg max-w-2xl mx-auto">Cursor, Claude Code, Windsurf — they have full access to your files, your .env, your terminal history. So does every package they install. Your API key is one <code class="text-amber-400">cat .env</code> away from being exposed.</p>
         </div>
 
         <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -719,63 +719,48 @@
                 <div class="icon-chadzn icon-chadzn-indigo mb-4" style="width:40px;height:40px">
                     <svg width="20" height="20" viewBox="0 0 24 24" fill="none"><rect x="3" y="3" width="18" height="18" rx="4" fill="#818cf8" opacity="0.15" stroke="#818cf8" stroke-width="1.5"/><path d="M8 9L11 12L8 15" stroke="#818cf8" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><path d="M13 15H16" stroke="#818cf8" stroke-width="2" stroke-linecap="round"/></svg>
                 </div>
-                <h3 class="text-white font-semibold mb-1">Drop-in for any AI tool</h3>
-                <p class="text-sm text-gray-400">Works with Cursor, Claude Code, Windsurf, and any OpenAI-compatible SDK.</p>
+                <h3 class="text-white font-semibold mb-1">Agents can't leak what they don't have</h3>
+                <p class="text-sm text-gray-400">Your real key is on VaultProof's server. The agent only has a proxy key that's useless outside your app.</p>
             </div>
 
             <div class="bg-vp-surface border border-vp-border rounded-2xl p-6 reveal delay-2">
                 <div class="icon-chadzn icon-chadzn-indigo mb-4" style="width:40px;height:40px">
                     <svg width="20" height="20" viewBox="0 0 24 24" fill="none"><rect x="5" y="11" width="14" height="11" rx="2" fill="#818cf8" opacity="0.15" stroke="#818cf8" stroke-width="1.5"/><path d="M8 11V7C8 4.79 9.79 3 12 3C14.21 3 16 4.79 16 7V11" stroke="#818cf8" stroke-width="1.5" stroke-linecap="round"/><circle cx="12" cy="16" r="1.5" fill="#818cf8"/></svg>
                 </div>
-                <h3 class="text-white font-semibold mb-1">Agents only see a scoped key</h3>
-                <p class="text-sm text-gray-400">Your real API key stays split and encrypted. Agents get a <code class="text-indigo-400">vp_live_</code> key instead.</p>
+                <h3 class="text-white font-semibold mb-1">Malicious packages can't steal it</h3>
+                <p class="text-sm text-gray-400">Rogue npm packages scan your environment for API keys. If the key isn't there, there's nothing to steal.</p>
             </div>
 
             <div class="bg-vp-surface border border-vp-border rounded-2xl p-6 reveal delay-3">
                 <div class="icon-chadzn icon-chadzn-indigo mb-4" style="width:40px;height:40px">
-                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none"><path d="M4 4V9H9" stroke="#818cf8" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/><path d="M20 20V15H15" stroke="#818cf8" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/><path d="M4 9C5.33 5.56 8.42 3 12 3C16.42 3 20 6.58 20 11" stroke="#818cf8" stroke-width="1.5" stroke-linecap="round"/><path d="M20 15C18.67 18.44 15.58 21 12 21C7.58 21 4 17.42 4 13" stroke="#818cf8" stroke-width="1.5" stroke-linecap="round"/></svg>
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="9" fill="#818cf8" opacity="0.1" stroke="#818cf8" stroke-width="1.5"/><path d="M12 7V12L15 15" stroke="#818cf8" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
                 </div>
-                <h3 class="text-white font-semibold mb-1">Rotate without redeploying</h3>
-                <p class="text-sm text-gray-400">Swap keys in the dashboard. No code changes, no .env updates.</p>
+                <h3 class="text-white font-semibold mb-1">A rogue agent can't run up your bill</h3>
+                <p class="text-sm text-gray-400">Set daily and monthly spend caps. If an agent goes haywire, the calls stop at your limit.</p>
             </div>
 
             <div class="bg-vp-surface border border-vp-border rounded-2xl p-6 reveal delay-4">
                 <div class="icon-chadzn icon-chadzn-indigo mb-4" style="width:40px;height:40px">
-                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="9" fill="#818cf8" opacity="0.1" stroke="#818cf8" stroke-width="1.5"/><path d="M12 7V12L15 15" stroke="#818cf8" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none"><path d="M4 4V9H9" stroke="#818cf8" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/><path d="M20 20V15H15" stroke="#818cf8" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/><path d="M4 9C5.33 5.56 8.42 3 12 3C16.42 3 20 6.58 20 11" stroke="#818cf8" stroke-width="1.5" stroke-linecap="round"/><path d="M20 15C18.67 18.44 15.58 21 12 21C7.58 21 4 17.42 4 13" stroke="#818cf8" stroke-width="1.5" stroke-linecap="round"/></svg>
                 </div>
-                <h3 class="text-white font-semibold mb-1">Budget caps per key</h3>
-                <p class="text-sm text-gray-400">Set daily and monthly limits. Calls stop when the cap is hit.</p>
+                <h3 class="text-white font-semibold mb-1">Compromised key? Rotate it without touching code</h3>
+                <p class="text-sm text-gray-400">Swap keys in the dashboard. Your app keeps running. No redeploy, no .env changes.</p>
             </div>
 
             <div class="bg-vp-surface border border-vp-border rounded-2xl p-6 reveal delay-5">
                 <div class="icon-chadzn icon-chadzn-indigo mb-4" style="width:40px;height:40px">
                     <svg width="20" height="20" viewBox="0 0 24 24" fill="none"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10" stroke="#818cf8" stroke-width="1.5" stroke-linecap="round"/><path d="M17 8L21 4M21 4L21 8M21 4L17 4" stroke="#818cf8" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
                 </div>
-                <h3 class="text-white font-semibold mb-1">Auto-fallback</h3>
-                <p class="text-sm text-gray-400">Provider down? VaultProof retries with another key automatically.</p>
+                <h3 class="text-white font-semibold mb-1">Key only works from your domain</h3>
+                <p class="text-sm text-gray-400">Lock a key to specific origins. Even if someone gets your proxy key, it won't work from their machine.</p>
             </div>
 
             <div class="bg-vp-surface border border-amber-500/20 rounded-2xl p-6 reveal delay-6">
                 <div class="icon-chadzn icon-chadzn-amber mb-4" style="width:40px;height:40px">
                     <svg width="20" height="20" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="9" fill="#fbbf24" opacity="0.1" stroke="#fbbf24" stroke-width="1.5"/><path d="M15 9L9 15M9 9L15 15" stroke="#fbbf24" stroke-width="2" stroke-linecap="round"/></svg>
                 </div>
-                <h3 class="text-white font-semibold mb-1">Kill switch</h3>
-                <p class="text-sm text-gray-400">One click freezes all proxy calls. Resume when you're ready.</p>
-            </div>
-        </div>
-
-        <div class="mt-10 bg-vp-surface border border-vp-border rounded-2xl p-6 reveal delay-4">
-            <div class="flex flex-col md:flex-row items-center gap-6">
-                <div class="flex-1">
-                    <h3 class="text-white font-semibold mb-2">Set it up once. Every call is protected.</h3>
-                    <p class="text-sm text-gray-400 leading-relaxed mb-3">Store your key, update your config. Every prompt, every completion, every agent action goes through VaultProof's secure proxy from that point on.</p>
-                    <a href="/guides" class="text-sm text-indigo-400 hover:underline">View setup guides for Claude Code, Cursor, and more →</a>
-                </div>
-                <div class="bg-[#0a0a0f] border border-[#1e1e2e] rounded-xl p-4 font-mono text-sm flex-shrink-0 w-full md:w-auto">
-                    <div class="text-gray-500 mb-1"># Claude Code</div>
-                    <div class="text-indigo-400">export ANTHROPIC_BASE_URL=https://staging-api.vaultproof.dev/v1/anthropic</div>
-                    <div class="text-indigo-400">export ANTHROPIC_API_KEY=vp_live_...</div>
-                </div>
+                <h3 class="text-white font-semibold mb-1">Something wrong? Kill it instantly</h3>
+                <p class="text-sm text-gray-400">One click freezes all proxy calls. No waiting, no support ticket. Resume when you're ready.</p>
             </div>
         </div>
     </section>
