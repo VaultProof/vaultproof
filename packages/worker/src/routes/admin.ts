@@ -159,25 +159,28 @@ async function handleOverview(request: Request, env: Env): Promise<Response> {
       .gte('created_at', monthAgo),
     // 7. Total users (from Supabase Auth)
     supabase.auth.admin.listUsers({ perPage: 1000, page: 1 }),
-    // 8. Visitors today (need session_id for dedup)
+    // 8. Visitors today (use metadata.ip_hash for dedup, fall back to session_id)
     supabase
       .from('analytics_events')
-      .select('session_id')
+      .select('session_id, metadata')
       .eq('type', 'pageview')
       .gte('created_at', todayStart),
   ]);
 
-  const uniqueSessionIds = new Set(
-    (visitorsTodayRes.data || [])
-      .map((row: { session_id: string | null }) => row.session_id)
-      .filter(Boolean),
-  );
+  const uniqueVisitors = new Set<string>();
+  for (const row of visitorsTodayRes.data || []) {
+    try {
+      const meta = typeof row.metadata === 'string' ? JSON.parse(row.metadata) : row.metadata;
+      if (meta?.ip_hash) { uniqueVisitors.add(meta.ip_hash); continue; }
+    } catch {}
+    if (row.session_id) uniqueVisitors.add(row.session_id);
+  }
 
   return Response.json({
     viewsToday: viewsTodayRes.count ?? 0,
     viewsWeek: viewsWeekRes.count ?? 0,
     viewsMonth: viewsMonthRes.count ?? 0,
-    visitorsToday: uniqueSessionIds.size,
+    visitorsToday: uniqueVisitors.size,
     signupsToday: signupsTodayRes.count ?? 0,
     signupsWeek: signupsWeekRes.count ?? 0,
     signupsMonth: signupsMonthRes.count ?? 0,
@@ -332,7 +335,7 @@ async function handleTraffic(request: Request, env: Env): Promise<Response> {
   const since = new Date(Date.now() - numDays * 86400000).toISOString();
 
   const { data: events } = await supabase.from('analytics_events')
-    .select('created_at, session_id')
+    .select('created_at, session_id, metadata')
     .eq('type', 'pageview').gte('created_at', since)
     .order('created_at', { ascending: true });
 
@@ -341,7 +344,14 @@ async function handleTraffic(request: Request, env: Env): Promise<Response> {
     const day = e.created_at.slice(0, 10);
     if (!dailyMap[day]) dailyMap[day] = { views: 0, visitors: new Set() };
     dailyMap[day].views++;
-    if (e.session_id) dailyMap[day].visitors.add(e.session_id);
+    // Prefer ip_hash for dedup, fall back to session_id
+    let visitorId: string | null = null;
+    try {
+      const meta = typeof e.metadata === 'string' ? JSON.parse(e.metadata) : e.metadata;
+      if (meta?.ip_hash) visitorId = meta.ip_hash;
+    } catch {}
+    if (!visitorId) visitorId = e.session_id;
+    if (visitorId) dailyMap[day].visitors.add(visitorId);
   }
 
   const traffic = Object.entries(dailyMap).sort().map(([date, d]) => ({
