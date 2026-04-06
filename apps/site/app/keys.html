@@ -810,6 +810,32 @@ STRIPE_SECRET_KEY=sk_live_..."></textarea>
       return key.substring(0, 7) + '\u2022\u2022\u2022\u2022' + key.substring(key.length - 4);
     }
 
+    function toggleStoredKeyVisibility(id) {
+      var el = document.getElementById('storedkey-' + id);
+      if (!el) return;
+      var isHidden = el.textContent === el.dataset.masked;
+      el.textContent = isHidden ? el.dataset.full : el.dataset.masked;
+      var eye = document.getElementById('seye-' + id);
+      if (eye) {
+        eye.innerHTML = isHidden
+          ? '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l3.59 3.59m0 0A9.953 9.953 0 0112 5c4.478 0 8.268 2.943 9.543 7a10.025 10.025 0 01-4.132 5.411m0 0L21 21"/>'
+          : '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/>';
+      }
+    }
+
+    function copyStoredKey(id) {
+      var el = document.getElementById('storedkey-' + id);
+      if (!el || !el.dataset.full) return;
+      navigator.clipboard.writeText(el.dataset.full).then(function() {
+        var btn = el.nextElementSibling && el.nextElementSibling.nextElementSibling;
+        if (btn) {
+          var orig = btn.innerHTML;
+          btn.innerHTML = '<svg class="w-3.5 h-3.5 text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>';
+          setTimeout(function() { btn.innerHTML = orig; }, 1500);
+        }
+      });
+    }
+
     let allKeys = [];
     let expandedKeyId = null;
     let activeProvider = '';
@@ -891,7 +917,8 @@ STRIPE_SECRET_KEY=sk_live_..."></textarea>
         var isRevoked = k.status === 'revoked';
         var escapedProvider = escapeHtml(k.provider);
         var escapedLabel = escapeHtml(k.label);
-        var masked = maskKey(k.keyPrefix || k.maskedKey || '');
+        var keyRaw = k.keyPrefix || k.maskedKey || '';
+        var masked = maskKey(keyRaw);
         var appCount = (k.appGrants || []).length;
         var delay = Math.min(idx * 80, 400);
 
@@ -915,8 +942,12 @@ STRIPE_SECRET_KEY=sk_live_..."></textarea>
             // Label
             '<h3 class="font-semibold text-white text-base mb-1">' + escapedLabel + '</h3>' +
 
-            // Masked key
-            '<p class="font-mono text-xs text-gray-500 mb-3">' + masked + '</p>' +
+            // Masked key with show/hide + copy
+            '<div class="flex items-center gap-2 mb-3">' +
+              '<code id="storedkey-' + keyId + '" class="font-mono text-xs text-gray-500" data-full="' + escapeHtml(keyRaw) + '" data-masked="' + escapeHtml(masked) + '">' + escapeHtml(masked) + '</code>' +
+              (keyRaw ? '<button onclick="event.stopPropagation();toggleStoredKeyVisibility(\'' + keyId + '\')" class="text-gray-500 hover:text-gray-300 transition p-0.5" title="Show/hide key"><svg id="seye-' + keyId + '" class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/></svg></button>' : '') +
+              (keyRaw ? '<button onclick="event.stopPropagation();copyStoredKey(\'' + keyId + '\')" class="text-gray-500 hover:text-gray-300 transition p-0.5" title="Copy key"><svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"/></svg></button>' : '') +
+            '</div>' +
 
             // Stats row
             '<div class="flex items-center gap-4 text-xs text-gray-500">' +
