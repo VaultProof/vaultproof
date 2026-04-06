@@ -724,7 +724,7 @@
                             <td class="py-3.5 px-3 text-center text-green-400">Free</td>
                         </tr>
                         <tr class="border-b border-vp-border/50">
-                            <td class="py-3.5 px-5 text-gray-300">Per-key budget caps</td>
+                            <td class="py-3.5 px-5 text-gray-300">Per-key usage limits</td>
                             <td class="py-3.5 px-3 text-center text-green-400 font-medium">&#10003;</td>
                             <td class="py-3.5 px-3 text-center text-amber-400">&#10007;</td>
                             <td class="py-3.5 px-3 text-center text-amber-400">&#10007;</td>
@@ -747,6 +747,14 @@
                             <td class="py-3.5 px-3 text-center text-amber-400">&#10007;</td>
                             <td class="py-3.5 px-3 text-center text-amber-400">Exposed</td>
                         </tr>
+                        <tr class="border-b border-vp-border/50">
+                            <td class="py-3.5 px-5 text-gray-300">See who used your key and when</td>
+                            <td class="py-3.5 px-3 text-center text-green-400 font-medium">&#10003;</td>
+                            <td class="py-3.5 px-3 text-center text-green-400">&#10003;</td>
+                            <td class="py-3.5 px-3 text-center text-green-400">&#10003;</td>
+                            <td class="py-3.5 px-3 text-center text-green-400">&#10003;</td>
+                            <td class="py-3.5 px-3 text-center text-amber-400">&#10007;</td>
+                        </tr>
                         <tr>
                             <td class="py-3.5 px-5 text-gray-300">Safe if database is breached</td>
                             <td class="py-3.5 px-3 text-center text-green-400 font-medium">&#10003;</td>
@@ -760,6 +768,156 @@
             </div>
         </div>
 
+    </section>
+
+    <!-- Key Split Animation -->
+    <section class="relative z-10 max-w-4xl mx-auto px-4 sm:px-6 py-16 sm:py-24">
+        <div class="text-center mb-12 reveal">
+            <h2 class="text-2xl sm:text-3xl md:text-4xl font-bold text-white mb-4" style="font-family:'Space Grotesk',sans-serif">How your key stays safe</h2>
+            <p class="text-gray-400 text-lg">Your key is split the moment you paste it. No one — including us — ever sees the whole thing.</p>
+        </div>
+
+        <style>
+            .split-anim { position: relative; height: 340px; overflow: hidden; }
+            .split-key { position: absolute; font-family: 'JetBrains Mono', monospace; font-size: 14px; white-space: nowrap; transition: all 1.2s cubic-bezier(.4,0,.2,1); }
+            .split-label { position: absolute; font-size: 13px; color: #94a3b8; text-align: center; opacity: 0; transition: opacity 0.6s ease; }
+            .split-icon { position: absolute; width: 56px; height: 56px; border-radius: 14px; display: flex; align-items: center; justify-content: center; opacity: 0; transition: all 1s ease; }
+            .split-flash { position: absolute; width: 80px; height: 80px; border-radius: 50%; background: radial-gradient(circle, rgba(99,102,241,0.6) 0%, transparent 70%); opacity: 0; filter: blur(20px); transition: opacity 0.4s ease; }
+            .split-arrow { position: absolute; opacity: 0; transition: all 0.8s ease; }
+
+            /* Frame 1: full key centered */
+            .split-anim[data-frame="1"] .key-full { top: 50%; left: 50%; transform: translate(-50%, -50%); color: #e2e8f0; }
+            .split-anim[data-frame="1"] .lbl-full { top: calc(50% - 36px); left: 50%; transform: translateX(-50%); opacity: 1; }
+
+            /* Frame 2: split */
+            .split-anim[data-frame="2"] .key-left { top: 50%; left: 25%; transform: translate(-50%, -50%); color: #818cf8; text-shadow: 0 0 20px rgba(99,102,241,0.5); }
+            .split-anim[data-frame="2"] .key-right { top: 50%; left: 75%; transform: translate(-50%, -50%); color: #22d3ee; text-shadow: 0 0 20px rgba(6,182,212,0.5); }
+            .split-anim[data-frame="2"] .key-full { top: 50%; left: 50%; transform: translate(-50%, -50%); opacity: 0; }
+            .split-anim[data-frame="2"] .lbl-split { top: calc(50% - 36px); left: 50%; transform: translateX(-50%); opacity: 1; }
+
+            /* Frame 3: stored separately */
+            .split-anim[data-frame="3"] .key-left { top: 70%; left: 25%; transform: translate(-50%, -50%); color: #818cf8; font-size: 12px; }
+            .split-anim[data-frame="3"] .key-right { top: 70%; left: 75%; transform: translate(-50%, -50%); color: #22d3ee; font-size: 12px; }
+            .split-anim[data-frame="3"] .key-full { opacity: 0; }
+            .split-anim[data-frame="3"] .icon-vault { top: 30%; left: 25%; transform: translate(-50%, -50%); opacity: 1; background: rgba(99,102,241,0.15); border: 1px solid rgba(99,102,241,0.3); }
+            .split-anim[data-frame="3"] .icon-device { top: 30%; left: 75%; transform: translate(-50%, -50%); opacity: 1; background: rgba(6,182,212,0.15); border: 1px solid rgba(6,182,212,0.3); }
+            .split-anim[data-frame="3"] .lbl-vault { top: calc(30% + 44px); left: 25%; transform: translateX(-50%); opacity: 1; color: #818cf8; }
+            .split-anim[data-frame="3"] .lbl-device { top: calc(30% + 44px); left: 75%; transform: translateX(-50%); opacity: 1; color: #22d3ee; }
+            .split-anim[data-frame="3"] .lbl-stored { top: 12%; left: 50%; transform: translateX(-50%); opacity: 1; }
+
+            /* Frame 4: reunite and destroy */
+            .split-anim[data-frame="4"] .key-left { top: 50%; left: 50%; transform: translate(-60%, -50%); color: #818cf8; opacity: 0.7; }
+            .split-anim[data-frame="4"] .key-right { top: 50%; left: 50%; transform: translate(-40%, -50%); color: #22d3ee; opacity: 0.7; }
+            .split-anim[data-frame="4"] .key-full { opacity: 0; }
+            .split-anim[data-frame="4"] .icon-vault, .split-anim[data-frame="4"] .icon-device { opacity: 0; }
+            .split-anim[data-frame="4"] .split-flash { top: 50%; left: 50%; transform: translate(-50%, -50%); opacity: 1; }
+            .split-anim[data-frame="4"] .arrow-out { top: 50%; left: calc(50% + 80px); transform: translateY(-50%); opacity: 1; }
+            .split-anim[data-frame="4"] .lbl-request { top: calc(50% - 50px); left: 50%; transform: translateX(-50%); opacity: 1; }
+            .split-anim[data-frame="4"] .lbl-destroy { top: calc(50% + 50px); left: 50%; transform: translateX(-50%); opacity: 1; color: #f87171; }
+
+            /* Fade all keys in frame transitions */
+            .split-anim .key-left, .split-anim .key-right { opacity: 0; transition: all 1.2s cubic-bezier(.4,0,.2,1); }
+            .split-anim[data-frame="2"] .key-left, .split-anim[data-frame="2"] .key-right,
+            .split-anim[data-frame="3"] .key-left, .split-anim[data-frame="3"] .key-right,
+            .split-anim[data-frame="4"] .key-left, .split-anim[data-frame="4"] .key-right { opacity: 1; }
+
+            /* Step indicators */
+            .split-steps { display: flex; justify-content: center; gap: 8px; margin-top: 16px; }
+            .split-step { width: 8px; height: 8px; border-radius: 50%; background: #1e1e2e; transition: background 0.3s; cursor: pointer; }
+            .split-step.active { background: #6366f1; }
+        </style>
+
+        <div class="reveal delay-2">
+            <div class="bg-vp-surface border border-vp-border rounded-[16px] p-6 sm:p-8">
+                <div class="split-anim" id="splitAnim" data-frame="1">
+                    <!-- Full key -->
+                    <div class="split-key key-full">sk-proj-a8Kx...mN9zR4</div>
+                    <div class="split-label lbl-full">Your API key</div>
+
+                    <!-- Split halves -->
+                    <div class="split-key key-left">sk-proj-a8Kx...</div>
+                    <div class="split-key key-right">...mN9zR4</div>
+
+                    <!-- Icons -->
+                    <div class="split-icon icon-vault">
+                        <svg class="w-6 h-6 text-indigo-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M5 12h14M5 12a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v4a2 2 0 01-2 2M5 12a2 2 0 00-2 2v4a2 2 0 002 2h14a2 2 0 002-2v-4a2 2 0 00-2-2"/></svg>
+                    </div>
+                    <div class="split-icon icon-device">
+                        <svg class="w-6 h-6 text-cyan-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 18h.01M8 21h8a2 2 0 002-2V5a2 2 0 00-2-2H8a2 2 0 00-2 2v14a2 2 0 002 2z"/></svg>
+                    </div>
+
+                    <!-- Flash effect -->
+                    <div class="split-flash"></div>
+
+                    <!-- Arrow -->
+                    <div class="split-arrow arrow-out">
+                        <svg class="w-10 h-6 text-green-400" fill="none" stroke="currentColor" viewBox="0 0 40 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2 12h30m0 0l-6-6m6 6l-6 6"/></svg>
+                    </div>
+
+                    <!-- Labels -->
+                    <div class="split-label lbl-split">Split into two halves</div>
+                    <div class="split-label lbl-vault">VaultProof</div>
+                    <div class="split-label lbl-device">Your device</div>
+                    <div class="split-label lbl-stored">Stored separately — no one has both</div>
+                    <div class="split-label lbl-request">Rebuilt for one request</div>
+                    <div class="split-label lbl-destroy">Then destroyed</div>
+                </div>
+
+                <div class="split-steps" id="splitSteps">
+                    <div class="split-step active" data-step="1"></div>
+                    <div class="split-step" data-step="2"></div>
+                    <div class="split-step" data-step="3"></div>
+                    <div class="split-step" data-step="4"></div>
+                </div>
+            </div>
+
+            <!-- Tagline -->
+            <div class="text-center mt-10">
+                <p class="text-xl sm:text-2xl font-bold text-white mb-2" style="font-family:'Space Grotesk',sans-serif">"$82,000 in 48 hours."</p>
+                <p class="text-gray-400">That's what one developer lost from a single leaked API key. VaultProof makes sure that can't happen to you.</p>
+            </div>
+        </div>
+
+        <script>
+        (function() {
+            var anim = document.getElementById('splitAnim');
+            var steps = document.querySelectorAll('#splitSteps .split-step');
+            if (!anim) return;
+            var frame = 1;
+            var total = 4;
+            var interval = 3000;
+            var timer;
+
+            function setFrame(n) {
+                frame = n;
+                anim.setAttribute('data-frame', frame);
+                steps.forEach(function(s) {
+                    s.classList.toggle('active', parseInt(s.dataset.step) === frame);
+                });
+            }
+
+            function next() {
+                setFrame(frame >= total ? 1 : frame + 1);
+            }
+
+            steps.forEach(function(s) {
+                s.addEventListener('click', function() {
+                    clearInterval(timer);
+                    setFrame(parseInt(s.dataset.step));
+                    timer = setInterval(next, interval);
+                });
+            });
+
+            // Start when in view
+            var observer = new IntersectionObserver(function(entries) {
+                if (entries[0].isIntersecting) {
+                    timer = setInterval(next, interval);
+                    observer.disconnect();
+                }
+            }, { threshold: 0.3 });
+            observer.observe(anim);
+        })();
+        </script>
     </section>
 
     <!-- Install -->
