@@ -2088,7 +2088,8 @@ exampleBody + '\n' +
           var modeBadge = mode === 'test'
             ? '<span class="inline-flex items-center px-2 py-0.5 rounded-lg text-xs font-medium bg-gray-800/50 text-gray-400 border border-gray-700/50">test</span>'
             : '<span class="inline-flex items-center px-2 py-0.5 rounded-lg text-xs font-medium bg-indigo-900/30 text-indigo-400 border border-indigo-800/50">live</span>';
-          var masked = k.key || k.maskedKey || 'vp_live_****';
+          var fullKey = k.key || '';
+          var masked = fullKey ? fullKey.substring(0, 10) + '\u2022\u2022\u2022\u2022' + fullKey.substring(fullKey.length - 4) : 'vp_live_****';
           var created = new Date(k.createdAt || k.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
           var lastUsed = k.lastUsed || k.last_used;
           var lastUsedStr = lastUsed ? 'Last used ' + new Date(lastUsed).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) : 'Never used';
@@ -2102,7 +2103,9 @@ exampleBody + '\n' +
             '<div class="flex items-center justify-between py-4 gap-4">' +
               '<div class="min-w-0 flex-1">' +
                 '<div class="flex items-center gap-2 flex-wrap">' +
-                  '<code class="text-sm font-mono text-gray-300">' + escapeHtml(masked) + '</code>' +
+                  '<code id="devkey-' + k.id + '" class="text-sm font-mono text-gray-300" data-full="' + escapeHtml(fullKey) + '" data-masked="' + escapeHtml(masked) + '">' + escapeHtml(masked) + '</code>' +
+                  (fullKey ? '<button onclick="toggleDevKeyVisibility(\'' + k.id + '\')" class="text-gray-500 hover:text-gray-300 transition p-1" title="Show/hide key"><svg id="eye-' + k.id + '" class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/></svg></button>' : '') +
+                  (fullKey ? '<button onclick="copyDevKey(\'' + k.id + '\')" class="text-gray-500 hover:text-gray-300 transition p-1" title="Copy key"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"/></svg></button>' : '') +
                   (k.label ? '<span class="text-xs text-gray-500 bg-[#0a0a0f] px-2 py-0.5 rounded-lg border border-[#1e1e2e]">' + escapeHtml(k.label) + '</span>' : '') +
                   modeBadge +
                   (revoked ? '<span class="text-xs text-amber-400">(revoked)</span>' : '') +
@@ -2136,6 +2139,32 @@ exampleBody + '\n' +
         loading.classList.add('hidden');
         empty.classList.remove('hidden');
       }
+    }
+
+    function toggleDevKeyVisibility(id) {
+      var el = document.getElementById('devkey-' + id);
+      if (!el) return;
+      var isHidden = el.textContent === el.dataset.masked;
+      el.textContent = isHidden ? el.dataset.full : el.dataset.masked;
+      var eye = document.getElementById('eye-' + id);
+      if (eye) {
+        eye.innerHTML = isHidden
+          ? '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l3.59 3.59m0 0A9.953 9.953 0 0112 5c4.478 0 8.268 2.943 9.543 7a10.025 10.025 0 01-4.132 5.411m0 0L21 21"/>'
+          : '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/>';
+      }
+    }
+
+    function copyDevKey(id) {
+      var el = document.getElementById('devkey-' + id);
+      if (!el || !el.dataset.full) return;
+      navigator.clipboard.writeText(el.dataset.full).then(function() {
+        var btn = el.nextElementSibling && el.nextElementSibling.nextElementSibling;
+        if (btn) {
+          var orig = btn.innerHTML;
+          btn.innerHTML = '<svg class="w-4 h-4 text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>';
+          setTimeout(function() { btn.innerHTML = orig; }, 1500);
+        }
+      });
     }
 
     // Map of devKeyId -> array of currently linked key slot IDs (populated when table renders)
