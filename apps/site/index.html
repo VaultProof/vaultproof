@@ -19,7 +19,109 @@
     <meta name="twitter:title" content="VaultProof — API key security built for the age of AI agents">
     <meta name="twitter:description" content="VaultProof splits, encrypts, and proxies your API keys — designed for developers and AI agents.">
     <meta name="referrer" content="strict-origin-when-cross-origin">
-
+    <link rel="canonical" href="https://vaultproof.dev">
+    <meta name="twitter:image" content="https://vaultproof.dev/og-image.png">
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@graph": [
+        {
+          "@type": "Organization",
+          "@id": "https://vaultproof.dev/#organization",
+          "name": "VaultProof",
+          "url": "https://vaultproof.dev",
+          "logo": {
+            "@type": "ImageObject",
+            "url": "https://vaultproof.dev/og-image2.png"
+          },
+          "description": "API key security built for the age of AI agents."
+        },
+        {
+          "@type": "WebSite",
+          "@id": "https://vaultproof.dev/#website",
+          "name": "VaultProof",
+          "url": "https://vaultproof.dev",
+          "description": "VaultProof splits, encrypts, and proxies your API keys so they stay out of your code, .env files, and agent workflows.",
+          "publisher": { "@id": "https://vaultproof.dev/#organization" }
+        },
+        {
+          "@type": "SoftwareApplication",
+          "name": "VaultProof",
+          "url": "https://vaultproof.dev",
+          "applicationCategory": "SecurityApplication",
+          "operatingSystem": "Web",
+          "description": "VaultProof splits, encrypts, and proxies your API keys so they stay out of your code, .env files, and agent workflows. Designed for developers and AI agents.",
+          "offers": {
+            "@type": "Offer",
+            "price": "0",
+            "priceCurrency": "USD"
+          },
+          "publisher": { "@id": "https://vaultproof.dev/#organization" },
+          "featureList": [
+            "Split-key encryption",
+            "Secure API proxy",
+            "Origin/domain locking",
+            "Provider restrictions",
+            "Usage monitoring dashboard",
+            "SSE streaming support"
+          ]
+        },
+        {
+          "@type": "FAQPage",
+          "mainEntity": [
+            {
+              "@type": "Question",
+              "name": "Can VaultProof see my API keys?",
+              "acceptedAnswer": {
+                "@type": "Answer",
+                "text": "No. Your key is split into encrypted pieces before it leaves your device. We store two shares — one encrypted with our server key, one encrypted with your developer key. Neither share alone reveals anything. The architecture is designed so that no single server holds your complete key."
+              }
+            },
+            {
+              "@type": "Question",
+              "name": "What if VaultProof goes down?",
+              "acceptedAnswer": {
+                "@type": "Answer",
+                "text": "Your proxy calls won't work until we're back up, but your keys are safe. Both encrypted shares remain in the database. We use a global edge network with 330+ locations and monitor uptime continuously."
+              }
+            },
+            {
+              "@type": "Question",
+              "name": "What if someone steals my vp_live_ key?",
+              "acceptedAnswer": {
+                "@type": "Answer",
+                "text": "They can't do much. If you've locked the key to your domain (origin locking), it won't work from anywhere else. You can also restrict keys by provider, endpoint, and IP address. Even if someone uses it, they can only make proxy calls — they can never extract the raw API key. Revoke it instantly from your dashboard."
+              }
+            },
+            {
+              "@type": "Question",
+              "name": "Does it work with Stripe, AWS, or non-AI SDKs?",
+              "acceptedAnswer": {
+                "@type": "Answer",
+                "text": "Yes. Use vault.proxy() to route any API call through VaultProof's secure proxy. Your key stays out of your codebase. Works with any provider that uses API keys."
+              }
+            },
+            {
+              "@type": "Question",
+              "name": "Is VaultProof really free?",
+              "acceptedAnswer": {
+                "@type": "Answer",
+                "text": "Yes. The free tier gives you 3 keys and 10,000 proxy calls per month. No credit card. No trial countdown. It stays free. Upgrade only when you need more."
+              }
+            },
+            {
+              "@type": "Question",
+              "name": "How much latency does the proxy add?",
+              "acceptedAnswer": {
+                "@type": "Answer",
+                "text": "Typically under 100ms. For a 2-10 second LLM response, it's imperceptible. SSE streaming is fully supported — chunks arrive as they're generated."
+              }
+            }
+          ]
+        }
+      ]
+    }
+    </script>
 
     <!-- Tailwind CDN: SRI not applicable (dynamic response) -->
     <script src="https://cdn.tailwindcss.com/3.4.17"></script>

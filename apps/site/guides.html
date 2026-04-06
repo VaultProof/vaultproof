@@ -21,6 +21,43 @@
     <meta http-equiv="X-Content-Type-Options" content="nosniff">
     <meta http-equiv="X-Frame-Options" content="DENY">
     <meta name="referrer" content="strict-origin-when-cross-origin">
+    <link rel="canonical" href="https://vaultproof.dev/guides">
+    <meta name="twitter:image" content="https://vaultproof.dev/og-image.png">
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "HowTo",
+      "name": "How to secure your API keys with VaultProof",
+      "description": "Use VaultProof to split-encrypt and proxy your API keys so they never appear in code, .env files, or agent workflows.",
+      "step": [
+        {
+          "@type": "HowToStep",
+          "position": 1,
+          "name": "Install the VaultProof CLI",
+          "text": "Run 'npm install -g @vaultproof/cli' to install the VaultProof command-line tool."
+        },
+        {
+          "@type": "HowToStep",
+          "position": 2,
+          "name": "Log in and store your API key",
+          "text": "Run 'vaultproof login' to authenticate, then 'vaultproof store' to split-encrypt and store your API key securely."
+        },
+        {
+          "@type": "HowToStep",
+          "position": 3,
+          "name": "Get your VaultProof proxy key",
+          "text": "After storing, you receive a vp_live_ proxy key. This replaces your real API key in all your code and configuration."
+        },
+        {
+          "@type": "HowToStep",
+          "position": 4,
+          "name": "Update your SDK or tool configuration",
+          "text": "Point your SDK's base URL to the VaultProof proxy and use your vp_live_ key instead of the raw API key. Works with OpenAI, Anthropic, Claude Code, Cursor, and more."
+        }
+      ],
+      "totalTime": "PT5M"
+    }
+    </script>
 
     <!-- Tailwind CDN: SRI not applicable (dynamic response) -->
     <script src="https://cdn.tailwindcss.com/3.4.17"></script>
