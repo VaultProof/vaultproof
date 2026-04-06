@@ -258,7 +258,7 @@ async function handleList(request: Request, env: Env): Promise<Response> {
 
   const keys = (data ?? []).map((row) => ({
     id: row.id,
-    key: row.key.slice(0, 12) + '...' + row.key.slice(-4),
+    key: row.key,
     label: row.label,
     mode: row.mode,
     lastUsed: row.last_used,
