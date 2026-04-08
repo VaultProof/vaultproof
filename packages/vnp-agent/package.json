@@ -1,0 +1,20 @@
+{
+  "name": "@vaultproof/vnp-agent",
+  "version": "0.1.0",
+  "description": "VNP edge agent — parse syslog, detect anomalies, emit VNP events",
+  "type": "module",
+  "main": "dist/index.js",
+  "scripts": {
+    "build": "tsc",
+    "start": "node dist/index.js",
+    "test": "tsc && node --test dist/detector.test.js dist/syslog.test.js",
+    "dev": "node --watch dist/index.js"
+  },
+  "dependencies": {
+    "@vaultproof/vnp-sdk": "*"
+  },
+  "devDependencies": {
+    "typescript": "^5.7.0",
+    "@types/node": "^22.0.0"
+  }
+}
