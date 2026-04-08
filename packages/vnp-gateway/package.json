@@ -1,0 +1,23 @@
+{
+  "name": "@vaultproof/vnp-gateway",
+  "version": "0.1.0",
+  "description": "VNP gateway — receive events, route to LLM, enforce policy",
+  "type": "module",
+  "main": "dist/index.js",
+  "scripts": {
+    "build": "tsc",
+    "start": "node dist/index.js",
+    "test": "tsc && node --test dist/policy.test.js dist/storage.test.js",
+    "dev": "node --watch dist/index.js"
+  },
+  "dependencies": {
+    "@vaultproof/vnp-sdk": "*",
+    "@anthropic-ai/sdk": "^0.86.0",
+    "hono": "^4.0.0",
+    "@hono/node-server": "^1.0.0"
+  },
+  "devDependencies": {
+    "typescript": "^5.7.0",
+    "@types/node": "^22.0.0"
+  }
+}
