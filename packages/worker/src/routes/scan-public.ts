@@ -203,6 +203,15 @@ export async function handlePublicScan(request: Request, env: Env): Promise<Resp
     return Response.json({ error: 'Repo not found. Is it public?' }, { status: 404 });
   }
   if (treeRes.status === 403 || treeRes.status === 401) {
+    // GitHub returns 403 (not 429) when the unauthenticated rate limit is hit.
+    // Distinguish by checking X-RateLimit-Remaining header.
+    const remaining = treeRes.headers.get('X-RateLimit-Remaining');
+    if (remaining === '0') {
+      return Response.json(
+        { error: 'GitHub API rate limit reached. Try again in a few minutes.' },
+        { status: 429 }
+      );
+    }
     return Response.json(
       { error: 'This repo is private. Only public repos can be scanned.' },
       { status: 403 }
