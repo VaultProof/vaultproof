@@ -25,7 +25,21 @@
 <link rel="canonical" href="https://vaultproof.dev/blog/trivy-supply-chain-attack">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:ital,wght@0,400;0,500;0,600;1,400&family=Barlow+Condensed:wght@400;600;700;800;900&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:ital,wght@0,400;0,500;0,600;1,400&family=Barlow+Condensed:wght@400;600;700;800;900&family=Inter:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
+<!-- Tailwind CDN -->
+<script src="https://cdn.tailwindcss.com/3.4.17"></script>
+<script>
+  tailwind.config = {
+    theme: {
+      extend: {
+        colors: {
+          'vp-surface': '#111118',
+          'vp-border': '#1e1e2e',
+        }
+      }
+    }
+  }
+</script>
 <style>
   *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
@@ -97,61 +111,161 @@
     letter-spacing: 2px;
   }
 
-  /* NAV */
-  nav {
+  /* NAV — pill nav */
+  .pill-nav {
+    position: fixed;
+    z-index: 9999;
+    top: 0; left: 0; right: 0;
+    padding: 12px 16px;
+  }
+  .pill-nav-inner {
+    max-width: 80rem;
+    margin: 0 auto;
+    background: rgba(17,17,24,0.8);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border: 1px solid rgba(30,30,46,0.6);
+    border-radius: 9999px;
+    padding: 10px 24px;
     display: flex;
     align-items: center;
     justify-content: space-between;
-    padding: 24px clamp(24px, 5vw, 80px);
-    border-bottom: 1px solid var(--border);
+    box-shadow: 0 0 15px rgba(99,102,241,0.15), 0 0 40px rgba(99,102,241,0.08), 0 4px 12px rgba(0,0,0,0.3);
   }
-
-  .logo {
-    font-family: var(--display);
-    font-weight: 900;
-    font-size: 20px;
-    letter-spacing: 1px;
-    color: var(--text);
-    text-decoration: none;
-    text-transform: uppercase;
-  }
-
-  .logo span { color: var(--amber); }
-
-  .nav-links {
+  .pill-logo {
     display: flex;
     align-items: center;
-    gap: 32px;
-    list-style: none;
-  }
-
-  .nav-links a {
-    color: var(--text-dim);
+    gap: 10px;
     text-decoration: none;
-    font-size: 12px;
-    letter-spacing: 1px;
-    transition: color 0.2s;
+    flex-shrink: 0;
   }
-  .nav-links a:hover { color: var(--text); }
-
-  .nav-cta {
-    background: transparent;
-    color: var(--amber);
-    border: 1px solid var(--amber);
-    padding: 10px 24px;
-    font-family: var(--mono);
-    font-size: 12px;
-    font-weight: 600;
+  .pill-logo img { width: 40px; height: 40px; }
+  .pill-logo-text {
+    font-family: 'Space Grotesk', sans-serif;
+    font-size: 1rem;
+    font-weight: 700;
+    color: #fff;
+    letter-spacing: -0.025em;
+  }
+  .pill-links {
+    display: flex;
+    align-items: center;
+    gap: 20px;
+  }
+  @media (max-width: 768px) { .pill-links { display: none; } }
+  .pill-actions {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+  @media (max-width: 768px) { .pill-actions { display: none; } }
+  .pill-link {
+    font-size: 0.875rem;
+    color: #9ca3af;
+    text-decoration: none;
+    transition: color 0.15s;
+    font-family: 'Inter', sans-serif;
+  }
+  .pill-link:hover { color: #fff; }
+  .pill-link.active { color: #fff; font-weight: 500; }
+  .pill-mobile-btn {
+    display: none;
+    background: none;
+    border: none;
+    color: #9ca3af;
     cursor: pointer;
-    text-decoration: none;
-    letter-spacing: 1px;
-    transition: all 0.2s;
+    padding: 4px;
   }
-  .nav-cta:hover { background: var(--amber); color: #000; }
+  .pill-mobile-btn:hover { color: #fff; }
+  @media (max-width: 768px) { .pill-mobile-btn { display: block; } }
+  .pill-mobile-menu {
+    display: none;
+    flex-direction: column;
+    gap: 4px;
+    margin-top: 8px;
+    max-width: 80rem;
+    margin-left: auto;
+    margin-right: auto;
+    background: rgba(17,17,24,0.95);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border: 1px solid rgba(30,30,46,0.6);
+    border-radius: 16px;
+    padding: 16px;
+  }
+  .pill-mobile-menu.open { display: flex; }
+  .pill-mobile-link {
+    font-size: 0.875rem;
+    color: #9ca3af;
+    text-decoration: none;
+    padding: 8px;
+    border-radius: 8px;
+    transition: color 0.15s, background 0.15s;
+    font-family: 'Inter', sans-serif;
+  }
+  .pill-mobile-link:hover { color: #fff; background: rgba(255,255,255,0.05); }
+  .pill-mobile-link.active { color: #fff; font-weight: 500; }
+  .btn-nav-scanner {
+    display: inline-flex; align-items: center; gap: 6px;
+    padding: 6px 16px; border-radius: 9999px;
+    font-size: 0.8125rem; font-weight: 500; cursor: pointer;
+    border: 1px solid rgba(6,182,212,0.35);
+    color: #22d3ee; background: rgba(6,182,212,0.06);
+    transition: background 0.2s, border-color 0.2s, color 0.2s;
+    text-decoration: none; white-space: nowrap;
+    font-family: 'Inter', sans-serif;
+  }
+  .btn-nav-scanner:hover {
+    background: rgba(6,182,212,0.12); border-color: rgba(6,182,212,0.55); color: #67e8f9;
+  }
+  .btn-nav-signup {
+    display: inline-block; padding: 6px 20px;
+    background: #111; color: white;
+    border: 1px solid rgba(255,255,255,0.1);
+    cursor: pointer; font-size: 0.875rem; font-weight: 500;
+    border-radius: 9999px; transition: background 0.3s, color 0.3s;
+    text-decoration: none;
+    font-family: 'Inter', sans-serif;
+  }
+  .btn-nav-signup:hover { color: #000; background: #fff; }
+  .nav-group { position: relative; }
+  .nav-group-btn {
+    display: inline-flex; align-items: center; gap: 4px;
+    font-size: 0.875rem; color: #9ca3af; background: none;
+    border: none; cursor: pointer; padding: 4px 2px;
+    transition: color 0.15s; font-family: 'Inter', sans-serif; user-select: none;
+  }
+  .nav-group-btn:hover, .nav-group.open .nav-group-btn { color: #fff; }
+  .nav-group-btn svg { transition: transform 0.2s; flex-shrink: 0; }
+  .nav-group.open .nav-group-btn svg { transform: rotate(180deg); }
+  .nav-dropdown {
+    position: absolute; top: calc(100% + 10px); left: 50%;
+    transform: translateX(-50%) translateY(-4px);
+    background: rgba(13,13,20,0.96);
+    backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
+    border: 1px solid rgba(99,102,241,0.15);
+    border-radius: 14px; padding: 6px; min-width: 176px;
+    opacity: 0; visibility: hidden; pointer-events: none;
+    transition: opacity 0.15s ease, transform 0.15s ease, visibility 0.15s;
+    box-shadow: 0 0 0 1px rgba(99,102,241,0.06), 0 8px 32px rgba(0,0,0,0.6), 0 0 24px rgba(99,102,241,0.08);
+    z-index: 100;
+  }
+  .nav-group.open .nav-dropdown {
+    opacity: 1; visibility: visible; pointer-events: auto;
+    transform: translateX(-50%) translateY(0);
+  }
+  .nav-dropdown a {
+    display: flex; align-items: center;
+    padding: 8px 12px; border-radius: 9px; font-size: 0.8125rem;
+    color: #9ca3af; text-decoration: none;
+    transition: color 0.12s, background 0.12s;
+    white-space: nowrap; font-weight: 450; font-family: 'Inter', sans-serif;
+  }
+  .nav-dropdown a:hover { color: #fff; background: rgba(99,102,241,0.08); }
 
   /* HERO */
   .hero {
-    padding: 80px clamp(24px, 5vw, 80px);
+    padding: 120px clamp(24px, 5vw, 80px) 80px;
     border-bottom: 1px solid var(--border);
     display: grid;
     grid-template-columns: 1fr 1fr;
@@ -670,19 +784,66 @@
 <body>
 
 <!-- INCIDENT BAR -->
-<div class="incident-bar">
+<div class="incident-bar" style="position:relative;z-index:1">
   <span class="tag">INCIDENT REPORT</span>
   March 19, 2026 — Trivy v0.69.4 supply chain attack. Credential harvesting confirmed.
 </div>
 
 <!-- NAV -->
-<nav>
-  <a href="https://vaultproof.dev" class="logo">Vault<span>Proof</span></a>
-  <ul class="nav-links">
-    <li><a href="#what-happened">What Happened</a></li>
-    <li><a href="#the-fix">The Fix</a></li>
-  </ul>
-  <a href="https://vaultproof.dev/app/login" class="nav-cta">Free signup</a>
+<nav class="pill-nav">
+    <div class="pill-nav-inner">
+        <a href="/" class="pill-logo">
+            <img src="/og-image2.png" alt="VaultProof">
+            <span class="pill-logo-text">VaultProof</span>
+        </a>
+
+        <!-- Desktop links -->
+        <div class="pill-links">
+            <div class="nav-group">
+                <button class="nav-group-btn" aria-haspopup="true" aria-expanded="false">
+                    Product
+                    <svg width="11" height="11" viewBox="0 0 12 12" fill="currentColor"><path d="M6 8L2 4h8z"/></svg>
+                </button>
+                <div class="nav-dropdown" role="menu">
+                    <a href="/agents" role="menuitem">AI Agents</a>
+                    <a href="/compare" role="menuitem">Compare</a>
+                    <a href="/changelog" role="menuitem">Changelog</a>
+                </div>
+            </div>
+            <a href="/docs" class="pill-link">Docs</a>
+            <a href="/guides" class="pill-link">Guides</a>
+            <a href="/blog" class="pill-link active">Blog</a>
+            <a href="/#pricing" class="pill-link">Pricing</a>
+        </div>
+
+        <div class="pill-actions">
+            <a href="/scan" class="btn-nav-scanner">
+                <svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+                Free Scanner
+            </a>
+            <a href="/app/login" class="btn-nav-signup">Sign Up</a>
+        </div>
+
+        <button id="mobileToggle" class="pill-mobile-btn" aria-label="Toggle menu">
+            <svg width="22" height="22" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 6h14M4 12h14M4 18h14"/></svg>
+        </button>
+    </div>
+
+    <!-- Mobile menu -->
+    <div id="mobileMenu" class="pill-mobile-menu">
+        <a href="/agents" class="pill-mobile-link">AI Agents</a>
+        <a href="/compare" class="pill-mobile-link">Compare</a>
+        <a href="/changelog" class="pill-mobile-link">Changelog</a>
+        <a href="/docs" class="pill-mobile-link">Docs</a>
+        <a href="/guides" class="pill-mobile-link">Guides</a>
+        <a href="/blog" class="pill-mobile-link active">Blog</a>
+        <a href="/#pricing" class="pill-mobile-link">Pricing</a>
+        <a href="/app/login" class="pill-mobile-link">Dashboard</a>
+        <div style="margin-top:8px;display:flex;flex-direction:column;gap:8px;">
+            <a href="/scan" class="btn-nav-scanner" style="justify-content:center;padding:10px 16px;">Free Scanner</a>
+            <a href="/app/login" class="btn-nav-signup" style="text-align:center;padding:10px 20px;">Sign Up</a>
+        </div>
+    </div>
 </nav>
 
 <!-- HERO -->
@@ -927,5 +1088,39 @@
   <p>© 2026 VaultProof</p>
 </footer>
 
+<script>
+    // Mobile menu toggle
+    document.getElementById('mobileToggle').addEventListener('click', function() {
+        document.getElementById('mobileMenu').classList.toggle('open');
+    });
+
+    // Nav dropdowns — click to open, click outside to close
+    (function() {
+        var groups = document.querySelectorAll('.nav-group');
+        function closeAll() {
+            groups.forEach(function(g) {
+                g.classList.remove('open');
+                var btn = g.querySelector('.nav-group-btn');
+                if (btn) btn.setAttribute('aria-expanded', 'false');
+            });
+        }
+        groups.forEach(function(group) {
+            var btn = group.querySelector('.nav-group-btn');
+            btn.addEventListener('click', function(e) {
+                e.stopPropagation();
+                var isOpen = group.classList.contains('open');
+                closeAll();
+                if (!isOpen) {
+                    group.classList.add('open');
+                    btn.setAttribute('aria-expanded', 'true');
+                }
+            });
+        });
+        document.addEventListener('click', closeAll);
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'Escape') closeAll();
+        });
+    })();
+</script>
 </body>
 </html>
