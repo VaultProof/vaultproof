@@ -242,7 +242,7 @@
       </div>
 
       <!-- Two column: Top Pages + Referrers -->
-      <div class="grid md:grid-cols-2 gap-6">
+      <div class="grid md:grid-cols-3 gap-6">
         <div class="panel">
           <h3 class="text-sm font-semibold text-gray-400 mb-3">Top Pages</h3>
           <table>
@@ -253,8 +253,15 @@
         <div class="panel">
           <h3 class="text-sm font-semibold text-gray-400 mb-3">Top Referrers</h3>
           <table>
-            <thead><tr><th>Referrer</th><th>Visits</th></tr></thead>
+            <thead><tr><th>Source</th><th>Visits</th></tr></thead>
             <tbody id="a-referrers-tbody"></tbody>
+          </table>
+        </div>
+        <div class="panel">
+          <h3 class="text-sm font-semibold text-gray-400 mb-3">Top Countries</h3>
+          <table>
+            <thead><tr><th>Country</th><th>Visits</th></tr></thead>
+            <tbody id="a-countries-tbody"></tbody>
           </table>
         </div>
       </div>
@@ -1164,12 +1171,13 @@ function setAnalyticsDays(days) {
 async function loadAnalytics() {
   try {
     const days = analyticsDays;
-    const [overview, traffic, signups, pages, referrers] = await Promise.all([
+    const [overview, traffic, signups, pages, referrers, countries] = await Promise.all([
       apiFetch('/analytics/overview'),
       apiFetch(`/analytics/traffic?days=${days}`),
       apiFetch(`/analytics/signups?days=${days}`),
       apiFetch(`/analytics/pages?days=${days}`),
       apiFetch(`/analytics/referrers?days=${days}`),
+      apiFetch(`/analytics/countries?days=${days}`),
     ]);
 
     // Overview cards
@@ -1274,16 +1282,34 @@ async function loadAnalytics() {
       pTbody.appendChild(tr);
     }
 
-    // Referrers table
+    // Referrers table (grouped by domain)
     const rTbody = document.getElementById('a-referrers-tbody');
     rTbody.innerHTML = '';
-    if (referrers.referrers.length === 0) {
+    if (!referrers.referrers || referrers.referrers.length === 0) {
       rTbody.innerHTML = '<tr><td colspan="2" class="text-gray-600 text-xs">No referrer data yet</td></tr>';
     } else {
       for (const r of referrers.referrers) {
         const tr = document.createElement('tr');
-        tr.innerHTML = `<td class="text-xs">${esc(r.referrer)}</td><td>${r.count}</td>`;
+        const label = r.referrer === '(direct)' ? '<span class="text-gray-500">(direct)</span>' : esc(r.referrer);
+        tr.innerHTML = `<td class="text-xs">${label}</td><td>${r.count}</td>`;
         rTbody.appendChild(tr);
+      }
+    }
+
+    // Countries table
+    const cTbody = document.getElementById('a-countries-tbody');
+    cTbody.innerHTML = '';
+    const countryNames = { US:'United States', GB:'United Kingdom', CA:'Canada', AU:'Australia', DE:'Germany', FR:'France', IN:'India', BR:'Brazil', NL:'Netherlands', JP:'Japan', SG:'Singapore', PL:'Poland', SE:'Sweden', ES:'Spain', MX:'Mexico', IT:'Italy', CH:'Switzerland', KR:'South Korea', PT:'Portugal', RU:'Russia', PK:'Pakistan', NG:'Nigeria', ZA:'South Africa', AR:'Argentina', ID:'Indonesia', TR:'Turkey', UA:'Ukraine', GH:'Ghana', CN:'China', TW:'Taiwan', HK:'Hong Kong', NZ:'New Zealand', IE:'Ireland', FI:'Finland', NO:'Norway', DK:'Denmark', BE:'Belgium', AT:'Austria', CZ:'Czech Republic', RO:'Romania', PH:'Philippines', VN:'Vietnam', TH:'Thailand', MY:'Malaysia', IL:'Israel', SA:'Saudi Arabia', AE:'UAE', EG:'Egypt', KE:'Kenya', CO:'Colombia', CL:'Chile', PE:'Peru' };
+    const flagEmoji = c => c.toUpperCase().replace(/./g, ch => String.fromCodePoint(127397 + ch.charCodeAt()));
+    if (!countries.countries || countries.countries.length === 0) {
+      cTbody.innerHTML = '<tr><td colspan="2" class="text-gray-600 text-xs">No country data yet</td></tr>';
+    } else {
+      for (const c of countries.countries) {
+        const tr = document.createElement('tr');
+        const name = countryNames[c.country] || c.country;
+        const flag = flagEmoji(c.country);
+        tr.innerHTML = `<td class="text-xs">${flag} ${esc(name)}</td><td>${c.count}</td>`;
+        cTbody.appendChild(tr);
       }
     }
     // Security probes

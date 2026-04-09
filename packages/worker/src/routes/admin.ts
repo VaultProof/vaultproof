@@ -13,6 +13,7 @@ export async function handleAdmin(
   if (path === 'analytics/traffic') return handleTraffic(request, env);
   if (path === 'analytics/pages') return handlePages(request, env);
   if (path === 'analytics/referrers') return handleReferrers(request, env);
+  if (path === 'analytics/countries') return handleCountries(request, env);
   if (path === 'analytics/signups') return handleSignups(request, env);
   if (path === 'users') return handleUsers(request, env);
   if (path === 'logs') return handleGlobalLogs(request, env);
@@ -401,7 +402,12 @@ async function handleReferrers(request: Request, env: Env): Promise<Response> {
 
   const refCounts: Record<string, number> = {};
   for (const e of events || []) {
-    if (e.referrer) refCounts[e.referrer] = (refCounts[e.referrer] || 0) + 1;
+    if (e.referrer) {
+      // Group by domain only — strip path so "reddit.com/r/foo" and "reddit.com/r/bar" merge
+      let domain = e.referrer;
+      try { domain = new URL(e.referrer).hostname.replace(/^www\./, ''); } catch {}
+      refCounts[domain] = (refCounts[domain] || 0) + 1;
+    }
   }
 
   const referrers = Object.entries(refCounts)
@@ -410,6 +416,38 @@ async function handleReferrers(request: Request, env: Env): Promise<Response> {
     .slice(0, 20);
 
   return Response.json({ referrers });
+}
+
+async function handleCountries(request: Request, env: Env): Promise<Response> {
+  const admin = await authenticateAdmin(request, env);
+  if (!admin) return Response.json({ error: 'Forbidden' }, { status: 403 });
+
+  const supabase = getSupabase(env);
+  const numDays = getDaysParam(request);
+  const since = new Date(Date.now() - numDays * 86400000).toISOString();
+
+  const { data: events } = await supabase.from('analytics_events')
+    .select('metadata')
+    .eq('type', 'pageview')
+    .gte('created_at', since);
+
+  const countryCounts: Record<string, number> = {};
+  for (const e of events || []) {
+    try {
+      const meta = JSON.parse(e.metadata || '{}');
+      const country = meta.country;
+      if (country && country !== 'XX' && country !== 'T1') {
+        countryCounts[country] = (countryCounts[country] || 0) + 1;
+      }
+    } catch {}
+  }
+
+  const countries = Object.entries(countryCounts)
+    .map(([country, count]) => ({ country, count }))
+    .sort((a, b) => b.count - a.count)
+    .slice(0, 20);
+
+  return Response.json({ countries });
 }
 
 async function handleSignups(request: Request, env: Env): Promise<Response> {

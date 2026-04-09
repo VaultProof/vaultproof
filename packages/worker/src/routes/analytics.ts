@@ -93,6 +93,8 @@ export async function handleAnalyticsEvent(request: Request, env: Env): Promise<
   const today = new Date().toISOString().slice(0, 10);
   const ip_hash = await hashIp(clientIp, today);
 
+  const country = request.headers.get('cf-ipcountry') || null;
+
   const supabase = getSupabase(env);
   const { error } = await supabase.from('analytics_events').insert({
     id: crypto.randomUUID(),
@@ -100,7 +102,7 @@ export async function handleAnalyticsEvent(request: Request, env: Env): Promise<
     page,
     referrer,
     session_id,
-    metadata: JSON.stringify({ ip_hash, ua: userAgent.slice(0, 200) }),
+    metadata: JSON.stringify({ ip_hash, ua: userAgent.slice(0, 200), country }),
   });
 
   if (error) {
