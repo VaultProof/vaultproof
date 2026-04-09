@@ -114,44 +114,61 @@ function scanPatch(patch: string, filePath: string, commitSha: string, commitMes
   return scanLines(addedLines, filePath, ctx);
 }
 
+const GITHUB_API_PREFIX = 'https://api.github.com/';
+
 async function scanHistory(repo: string, env: Env): Promise<{ findings: Finding[]; commitsScanned: number }> {
   const findings: Finding[] = [];
   const headers = ghHeaders(env);
 
-  // Fetch commit list
-  const commitsRes = await fetch(
-    `https://api.github.com/repos/${repo}/commits?per_page=${MAX_COMMITS}`,
-    { headers }
-  );
-  if (!commitsRes.ok) return { findings, commitsScanned: 0 };
+  // 15-second hard budget for the entire history scan
+  const abort = new AbortController();
+  const timer = setTimeout(() => abort.abort(), 15_000);
 
-  const commits: Array<{ sha: string; commit: { message: string; author?: { date?: string } } }> = await commitsRes.json();
-  if (!Array.isArray(commits) || commits.length === 0) return { findings, commitsScanned: 0 };
+  try {
+    // Fetch commit list
+    const commitsRes = await fetch(
+      `https://api.github.com/repos/${repo}/commits?per_page=${MAX_COMMITS}`,
+      { headers, signal: abort.signal }
+    );
+    if (!commitsRes.ok) return { findings, commitsScanned: 0 };
 
-  // Fetch each commit's detail (contains file patches) in parallel batches of 10
-  for (let i = 0; i < commits.length; i += 10) {
-    const batch = commits.slice(i, i + 10);
-    const details = await Promise.all(batch.map(async (c) => {
-      const res = await fetch(
-        `https://api.github.com/repos/${repo}/commits/${c.sha}`,
-        { headers }
-      );
-      if (!res.ok) return null;
-      const data = await res.json() as { files?: Array<{ filename: string; patch?: string }> };
-      return { sha: c.sha, message: c.commit.message.split('\n')[0].slice(0, 72), date: c.commit.author?.date || '', files: data.files || [] };
-    }));
+    const commits: Array<{ sha: string; commit: { message: string; author?: { date?: string } } }> = await commitsRes.json();
+    if (!Array.isArray(commits) || commits.length === 0) return { findings, commitsScanned: 0 };
 
-    for (const detail of details) {
-      if (!detail) continue;
-      for (const file of detail.files) {
-        if (!file.patch || !shouldScanFile(file.filename)) continue;
-        const patchFindings = scanPatch(file.patch, file.filename, detail.sha, detail.message, detail.date);
-        findings.push(...patchFindings);
+    // Fetch each commit's detail (contains file patches) in parallel batches of 10
+    for (let i = 0; i < commits.length; i += 10) {
+      if (abort.signal.aborted) break;
+      const batch = commits.slice(i, i + 10);
+      const details = await Promise.all(batch.map(async (c) => {
+        try {
+          const res = await fetch(
+            `https://api.github.com/repos/${repo}/commits/${c.sha}`,
+            { headers, signal: abort.signal }
+          );
+          if (!res.ok) return null;
+          const data = await res.json() as { files?: Array<{ filename: string; patch?: string }> };
+          return { sha: c.sha, message: c.commit.message.split('\n')[0].slice(0, 72), date: c.commit.author?.date || '', files: data.files || [] };
+        } catch {
+          return null;
+        }
+      }));
+
+      for (const detail of details) {
+        if (!detail) continue;
+        for (const file of detail.files) {
+          if (!file.patch || !shouldScanFile(file.filename)) continue;
+          const patchFindings = scanPatch(file.patch, file.filename, detail.sha, detail.message, detail.date);
+          findings.push(...patchFindings);
+        }
       }
     }
-  }
 
-  return { findings, commitsScanned: commits.length };
+    return { findings, commitsScanned: commits.length };
+  } catch {
+    return { findings, commitsScanned: 0 };
+  } finally {
+    clearTimeout(timer);
+  }
 }
 
 function ghHeaders(env: Env): Record<string, string> {
@@ -165,15 +182,16 @@ export async function handlePublicScan(request: Request, env: Env): Promise<Resp
     return Response.json({ error: 'Method not allowed' }, { status: 405 });
   }
 
-  const ip = request.headers.get('CF-Connecting-IP');
-  if (ip) {
-    const allowed = await checkScanRateLimit(env, ip);
-    if (!allowed) {
-      return Response.json(
-        { error: '10 free scans per hour — try again soon.' },
-        { status: 429 }
-      );
-    }
+  // Always rate-limit. Use 'unknown' as sentinel when CF-Connecting-IP is absent
+  // (non-CF path, local dev) so all such traffic shares one bucket rather than
+  // bypassing the limit entirely.
+  const ip = request.headers.get('CF-Connecting-IP') ?? 'unknown';
+  const allowed = await checkScanRateLimit(env, ip);
+  if (!allowed) {
+    return Response.json(
+      { error: '10 free scans per hour — try again soon.' },
+      { status: 429, headers: { 'Retry-After': String(RATE_LIMIT_TTL) } }
+    );
   }
 
   let body: { repo?: string };
@@ -242,6 +260,8 @@ export async function handlePublicScan(request: Request, env: Env): Promise<Resp
       const batch = filesToScan.slice(i, i + MAX_CONCURRENT_FETCHES);
       const results = await Promise.all(
         batch.map(async (file) => {
+          // Validate URL is a GitHub API URL before fetching with GITHUB_TOKEN
+          if (!file.url.startsWith(GITHUB_API_PREFIX)) return null;
           const res = await fetch(file.url, {
             headers: { ...ghHeaders(env), Accept: 'application/vnd.github.raw+json' },
           });

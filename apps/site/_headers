@@ -9,6 +9,9 @@
 /mcp-auth
   Content-Security-Policy: default-src 'self'; script-src 'self' 'unsafe-inline' https://cdn.tailwindcss.com https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' data: https://fonts.gstatic.com; connect-src * https://api.vaultproof.dev https://mcp.vaultproof.dev https://gwzkjiomemjlhtrdrlan.supabase.co wss://gwzkjiomemjlhtrdrlan.supabase.co; img-src 'self' data: https:; frame-src 'none'; object-src 'none';
 
+/scan
+  Content-Security-Policy: default-src 'self'; script-src 'self' 'unsafe-inline' https://cdn.tailwindcss.com https://www.googletagmanager.com https://www.google-analytics.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' data: https://fonts.gstatic.com; connect-src 'self' https://api.vaultproof.dev https://www.google-analytics.com https://cloudflareinsights.com; img-src 'self' data: https:; frame-src 'none'; object-src 'none'; base-uri 'self'; form-action 'self';
+
 /sitemap.xml
   Content-Type: application/xml
 

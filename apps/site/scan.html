@@ -578,14 +578,19 @@
             menu.classList.toggle('open');
         });
 
-        // ── URL param: ?repo=owner/repo → pre-fill + auto-submit ────────────────
+        // ── URL param: ?repo=owner/repo → pre-fill only (no auto-submit) ─────────
+        // Auto-submitting allowed scan-bombing and phishing via crafted links.
         (function() {
             const params = new URLSearchParams(window.location.search);
             const repoParam = params.get('repo');
             if (repoParam) {
-                document.getElementById('repoInput').value = repoParam;
-                // auto-submit after paint
-                requestAnimationFrame(() => runScan(repoParam));
+                const input = document.getElementById('repoInput');
+                // Validate format before pre-filling to avoid injecting garbage into the input
+                const safe = repoParam.match(/^[a-zA-Z0-9_.\-]{1,100}\/[a-zA-Z0-9_.\-]{1,100}$/);
+                if (safe) {
+                    input.value = repoParam;
+                    input.focus();
+                }
             }
         })();
     </script>
