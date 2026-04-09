@@ -6,6 +6,7 @@ import {
   shouldScanFile,
   MIN_ENTROPY,
   PROVIDER_NAMES,
+  stripKeyPrefix,
 } from '../lib/secret-patterns.js';
 
 // Pre-build non-global versions of KEY_PATTERNS for use in scanFileContent.
@@ -18,6 +19,7 @@ const KEY_PATTERNS_LOCAL = KEY_PATTERNS.map(({ pattern, provider }) => ({
 const MAX_FILES = 50;            // reduced to leave headroom for commit fetches
 const MAX_CONCURRENT_FETCHES = 20;
 const MAX_COMMITS = 20;          // last N commits to scan for history leaks
+const MAX_FINDINGS = 200;
 const RATE_LIMIT = 10;
 const RATE_LIMIT_TTL = 3600;
 
@@ -41,8 +43,10 @@ function normalizeRepo(input: string): string | null {
 }
 
 function maskKey(value: string): string {
-  if (value.length <= 8) return '...XXXX';
-  return value.slice(0, 8) + '...XXXX';
+  if (value.length <= 4) return '...XXXX';
+  // Show up to 12 chars: enough to identify provider prefix but not expose entropy
+  const prefix = value.slice(0, Math.min(12, Math.floor(value.length / 2)));
+  return prefix + '...XXXX';
 }
 
 interface Finding {
@@ -89,7 +93,7 @@ function scanLines(lines: string[], filePath: string, ctx: ScanContext): Finding
       const match = line.match(pattern);
       if (match) {
         const value = match[0];
-        if (shannonEntropy(value) >= MIN_ENTROPY) {
+        if (shannonEntropy(stripKeyPrefix(value)) >= MIN_ENTROPY) {
           findings.push({ provider, providerName: PROVIDER_NAMES[provider] || provider, file: filePath, line: i + 1, maskedValue: maskKey(value), severity: 'CRITICAL', ...ctx });
         }
       }
@@ -262,9 +266,19 @@ export async function handlePublicScan(request: Request, env: Env): Promise<Resp
         batch.map(async (file) => {
           // Validate URL is a GitHub API URL before fetching with GITHUB_TOKEN
           if (!file.url.startsWith(GITHUB_API_PREFIX)) return null;
-          const res = await fetch(file.url, {
-            headers: { ...ghHeaders(env), Accept: 'application/vnd.github.raw+json' },
-          });
+          const fileAbort = new AbortController();
+          const fileTimer = setTimeout(() => fileAbort.abort(), 5000);
+          let res: Response;
+          try {
+            res = await fetch(file.url, {
+              headers: { ...ghHeaders(env), Accept: 'application/vnd.github.raw+json' },
+              signal: fileAbort.signal,
+            });
+          } catch {
+            clearTimeout(fileTimer);
+            return null;
+          }
+          clearTimeout(fileTimer);
           if (!res.ok) return null;
           const contentLength = parseInt(res.headers.get('content-length') || '0', 10);
           if (contentLength > 512 * 1024) return null;
@@ -288,19 +302,30 @@ export async function handlePublicScan(request: Request, env: Env): Promise<Resp
 
   const allFindings = [...currentResult.findings, ...historyResult.findings];
 
-  // Deduplicate: same provider + masked value + file is one finding regardless of source
+  // Pass 1: deduplicate exact duplicates (same source + commit + file + line + provider)
   const seen = new Set<string>();
-  const dedupedFindings = allFindings.filter((f) => {
+  const pass1 = allFindings.filter((f) => {
     const key = `${f.source}:${f.commitSha || ''}:${f.file}:${f.line}:${f.provider}`;
     if (seen.has(key)) return false;
     seen.add(key);
     return true;
   });
 
+  // Pass 2: if a key exists in current files, suppress duplicate from history
+  const currentKeys = new Set(
+    pass1.filter(f => f.source === 'current').map(f => `${f.file}:${f.provider}:${f.maskedValue}`)
+  );
+  const dedupedFindings = pass1.filter(f =>
+    f.source === 'current' || !currentKeys.has(`${f.file}:${f.provider}:${f.maskedValue}`)
+  );
+
+  const cappedFindings = dedupedFindings.slice(0, MAX_FINDINGS);
+
   return Response.json({
     repo,
     filesScanned: currentResult.filesScanned,
     commitsScanned: historyResult.commitsScanned,
-    findings: dedupedFindings,
+    findings: cappedFindings,
+    truncated: dedupedFindings.length > MAX_FINDINGS,
   });
 }
