@@ -114,13 +114,14 @@ function scanPatch(patch: string, filePath: string, commitSha: string, commitMes
   return scanLines(addedLines, filePath, ctx);
 }
 
-async function scanHistory(repo: string): Promise<{ findings: Finding[]; commitsScanned: number }> {
+async function scanHistory(repo: string, env: Env): Promise<{ findings: Finding[]; commitsScanned: number }> {
   const findings: Finding[] = [];
+  const headers = ghHeaders(env);
 
   // Fetch commit list
   const commitsRes = await fetch(
     `https://api.github.com/repos/${repo}/commits?per_page=${MAX_COMMITS}`,
-    { headers: { 'User-Agent': 'VaultProof-Scanner/1.0', Accept: 'application/vnd.github+json' } }
+    { headers }
   );
   if (!commitsRes.ok) return { findings, commitsScanned: 0 };
 
@@ -133,7 +134,7 @@ async function scanHistory(repo: string): Promise<{ findings: Finding[]; commits
     const details = await Promise.all(batch.map(async (c) => {
       const res = await fetch(
         `https://api.github.com/repos/${repo}/commits/${c.sha}`,
-        { headers: { 'User-Agent': 'VaultProof-Scanner/1.0', Accept: 'application/vnd.github+json' } }
+        { headers }
       );
       if (!res.ok) return null;
       const data = await res.json() as { files?: Array<{ filename: string; patch?: string }> };
@@ -151,6 +152,12 @@ async function scanHistory(repo: string): Promise<{ findings: Finding[]; commits
   }
 
   return { findings, commitsScanned: commits.length };
+}
+
+function ghHeaders(env: Env): Record<string, string> {
+  const h: Record<string, string> = { 'User-Agent': 'VaultProof-Scanner/1.0', Accept: 'application/vnd.github+json' };
+  if (env.GITHUB_TOKEN) h['Authorization'] = `Bearer ${env.GITHUB_TOKEN}`;
+  return h;
 }
 
 export async function handlePublicScan(request: Request, env: Env): Promise<Response> {
@@ -190,7 +197,7 @@ export async function handlePublicScan(request: Request, env: Env): Promise<Resp
   let treeRes: Response;
   try {
     treeRes = await fetch(treeUrl, {
-      headers: { 'User-Agent': 'VaultProof-Scanner/1.0', Accept: 'application/vnd.github+json' },
+      headers: ghHeaders(env),
       signal: treeController.signal,
     });
   } catch {
@@ -236,7 +243,7 @@ export async function handlePublicScan(request: Request, env: Env): Promise<Resp
       const results = await Promise.all(
         batch.map(async (file) => {
           const res = await fetch(file.url, {
-            headers: { 'User-Agent': 'VaultProof-Scanner/1.0', Accept: 'application/vnd.github.raw+json' },
+            headers: { ...ghHeaders(env), Accept: 'application/vnd.github.raw+json' },
           });
           if (!res.ok) return null;
           const contentLength = parseInt(res.headers.get('content-length') || '0', 10);
@@ -256,7 +263,7 @@ export async function handlePublicScan(request: Request, env: Env): Promise<Resp
 
   const [currentResult, historyResult] = await Promise.all([
     currentScanPromise,
-    scanHistory(repo),
+    scanHistory(repo, env),
   ]);
 
   const allFindings = [...currentResult.findings, ...historyResult.findings];

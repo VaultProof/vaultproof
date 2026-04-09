@@ -9,6 +9,7 @@ export interface Env {
   GITHUB_CLIENT_SECRET: string;
   GITHUB_REDIRECT_URI: string;
   RESEND_API_KEY?: string;
+  GITHUB_TOKEN?: string;
   CACHE: KVNamespace;
 }
 
