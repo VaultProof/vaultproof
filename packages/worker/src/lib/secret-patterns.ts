@@ -17,6 +17,10 @@ export const KEY_PATTERNS: Array<{ pattern: RegExp; provider: string }> = [
   { pattern: /^pplx-[a-zA-Z0-9]{40,}$/, provider: 'perplexity' },
   { pattern: /^r8_[a-zA-Z0-9]{30,}$/, provider: 'replicate' },
   { pattern: /^fw_[a-zA-Z0-9_-]{30,}$/, provider: 'fireworks' },
+  { pattern: /^sk-or-v1-[a-f0-9]{64}$/, provider: 'openrouter' },
+  { pattern: /^xai-[a-zA-Z0-9_-]{30,}$/, provider: 'xai' },
+  { pattern: /^hf_[a-zA-Z0-9]{30,}$/, provider: 'huggingface' },
+  { pattern: /^csk-[a-zA-Z0-9]{30,}$/, provider: 'cerebras' },
   // Payments
   { pattern: /^sk_live_[a-zA-Z0-9]{20,}$/, provider: 'stripe' },
   { pattern: /^sk_test_[a-zA-Z0-9]{20,}$/, provider: 'stripe' },
@@ -85,6 +89,11 @@ export const PROVIDER_URLS: Record<string, string> = {
   'api.fireworks.ai': 'fireworks',
   'api.deepseek.com': 'deepseek',
   'api.replicate.com': 'replicate',
+  'openrouter.ai': 'openrouter',
+  'api.x.ai': 'xai',
+  'api-inference.huggingface.co': 'huggingface',
+  'api.ai21.com': 'ai21',
+  'api.cerebras.ai': 'cerebras',
 };
 
 export const HTTP_URL_PATTERNS: Array<{ pattern: RegExp; provider: string }> = Object.entries(PROVIDER_URLS).map(
@@ -114,6 +123,11 @@ export const ENV_VAR_MAP: Record<string, string> = {
   FIREWORKS_API_KEY: 'fireworks',
   DEEPSEEK_API_KEY: 'deepseek',
   REPLICATE_API_TOKEN: 'replicate',
+  OPENROUTER_API_KEY: 'openrouter',
+  XAI_API_KEY: 'xai',
+  HUGGINGFACE_API_KEY: 'huggingface',
+  AI21_API_KEY: 'ai21',
+  CEREBRAS_API_KEY: 'cerebras',
 };
 
 const ENV_VAR_NAMES = Object.keys(ENV_VAR_MAP);
@@ -144,6 +158,11 @@ export const PROXY_PROVIDERS = new Set([
   'fireworks',
   'deepseek',
   'replicate',
+  'openrouter',
+  'xai',
+  'huggingface',
+  'ai21',
+  'cerebras',
 ]);
 
 // ─── Platform detection ────────────────────────────────────────────────────
@@ -349,6 +368,11 @@ export const PROVIDER_NAMES: Record<string, string> = {
   fireworks: 'Fireworks AI',
   deepseek: 'DeepSeek',
   replicate: 'Replicate',
+  openrouter: 'OpenRouter',
+  xai: 'xAI (Grok)',
+  huggingface: 'Hugging Face',
+  ai21: 'AI21 Labs',
+  cerebras: 'Cerebras',
   brevo: 'Brevo',
   npm: 'npm',
   apollo: 'Apollo',

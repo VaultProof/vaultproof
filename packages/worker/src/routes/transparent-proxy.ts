@@ -22,6 +22,11 @@ const PROVIDERS: Record<string, { upstream: string; authHeader: (key: string) =>
   replicate: { upstream: 'https://api.replicate.com', authHeader: (k) => ({ Authorization: `Bearer ${k}` }) },
   stripe: { upstream: 'https://api.stripe.com', authHeader: (k) => ({ Authorization: `Bearer ${k}` }) },
   minimax: { upstream: 'https://api.minimax.io', authHeader: (k) => ({ Authorization: `Bearer ${k}` }) },
+  openrouter: { upstream: 'https://openrouter.ai/api', authHeader: (k) => ({ Authorization: `Bearer ${k}` }) },
+  xai: { upstream: 'https://api.x.ai', authHeader: (k) => ({ Authorization: `Bearer ${k}` }) },
+  huggingface: { upstream: 'https://api-inference.huggingface.co', authHeader: (k) => ({ Authorization: `Bearer ${k}` }) },
+  ai21: { upstream: 'https://api.ai21.com', authHeader: (k) => ({ Authorization: `Bearer ${k}` }) },
+  cerebras: { upstream: 'https://api.cerebras.ai', authHeader: (k) => ({ Authorization: `Bearer ${k}` }) },
 };
 
 const DYNAMIC_PROVIDERS: Record<string, {
