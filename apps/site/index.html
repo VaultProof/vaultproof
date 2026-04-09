@@ -1064,58 +1064,6 @@
         </div>
     </section>
 
-    <!-- What You're Protected From -->
-    <section class="relative z-10 max-w-5xl mx-auto px-4 sm:px-6 py-16 sm:py-24">
-        <div class="text-center mb-16">
-            <h2 class="text-2xl sm:text-3xl md:text-4xl font-bold text-white mb-4 reveal">You've seen other secrets tools. Here's the difference.</h2>
-            <p class="text-gray-500 text-lg reveal delay-1">They return the key. We never do.</p>
-        </div>
-        <div class="grid md:grid-cols-3 gap-6">
-            <div class="bg-vp-surface border border-vp-border rounded-2xl p-6 reveal delay-1">
-                <div class="w-10 h-10 rounded-xl bg-amber-500/10 border border-amber-500/20 flex items-center justify-center mb-4">
-                    <svg class="w-5 h-5 text-amber-400" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 6v12m-3-2.818l.879.659c1.171.879 3.07.879 4.242 0 1.172-.879 1.172-2.303 0-3.182C13.536 12.219 12.768 12 12 12c-.725 0-1.45-.22-2.003-.659-1.106-.879-1.106-2.303 0-3.182s2.9-.879 4.006 0l.415.33M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
-                </div>
-                <h3 class="text-white font-semibold mb-2">Surprise bills</h3>
-                <p class="text-sm text-gray-400">A stolen OpenAI key can rack up thousands overnight. With VaultProof, you set spend caps. When the limit hits, calls stop.</p>
-            </div>
-            <div class="bg-vp-surface border border-vp-border rounded-2xl p-6 reveal delay-2">
-                <div class="w-10 h-10 rounded-xl bg-indigo-500/10 border border-indigo-500/20 flex items-center justify-center mb-4">
-                    <svg class="w-5 h-5 text-indigo-400" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M17.25 6.75L22.5 12l-5.25 5.25m-10.5 0L1.5 12l5.25-5.25m7.5-3l-4.5 16.5"/></svg>
-                </div>
-                <h3 class="text-white font-semibold mb-2">Leaked repos</h3>
-                <p class="text-sm text-gray-400">Your .env is in your git history right now. With VaultProof, there's no key in your code to leak. Nothing in git, nothing in your files.</p>
-            </div>
-            <div class="bg-vp-surface border border-vp-border rounded-2xl p-6 reveal delay-3">
-                <div class="w-10 h-10 rounded-xl bg-indigo-500/10 border border-indigo-500/20 flex items-center justify-center mb-4">
-                    <svg class="w-5 h-5 text-indigo-400" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9.75 3.104v5.714a2.25 2.25 0 01-.659 1.591L5 14.5M9.75 3.104c-.251.023-.501.05-.75.082m.75-.082a24.301 24.301 0 014.5 0m0 0v5.714c0 .597.237 1.17.659 1.591L19.8 15.3M14.25 3.104c.251.023.501.05.75.082M19.8 15.3l-1.57.393A9.065 9.065 0 0112 15a9.065 9.065 0 00-6.23.693L5 14.5m14.8.8l1.402 1.402c1.232 1.232.65 3.318-1.067 3.611A48.309 48.309 0 0112 21c-2.773 0-5.491-.235-8.135-.687-1.718-.293-2.3-2.379-1.067-3.61L5 14.5"/></svg>
-                </div>
-                <h3 class="text-white font-semibold mb-2">AI agents gone wrong</h3>
-                <p class="text-sm text-gray-400">Your coding agent reads your .env, installs packages, runs commands. If it gets compromised, your keys go with it. Unless they're not there.</p>
-            </div>
-            <div class="bg-vp-surface border border-vp-border rounded-2xl p-6 reveal delay-4">
-                <div class="w-10 h-10 rounded-xl bg-amber-500/10 border border-amber-500/20 flex items-center justify-center mb-4">
-                    <svg class="w-5 h-5 text-amber-400" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126zM12 15.75h.007v.008H12v-.008z"/></svg>
-                </div>
-                <h3 class="text-white font-semibold mb-2">Supply chain attacks</h3>
-                <p class="text-sm text-gray-400">Malicious npm packages scan your environment for API keys. If the key lives on VaultProof's server, there's nothing on your machine to find.</p>
-            </div>
-            <div class="bg-vp-surface border border-vp-border rounded-2xl p-6 reveal delay-5">
-                <div class="w-10 h-10 rounded-xl bg-indigo-500/10 border border-indigo-500/20 flex items-center justify-center mb-4">
-                    <svg class="w-5 h-5 text-indigo-400" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.993 0l3.181 3.183a8.25 8.25 0 0013.803-3.7M4.031 9.865a8.25 8.25 0 0113.803-3.7l3.181 3.182"/></svg>
-                </div>
-                <h3 class="text-white font-semibold mb-2">Painful rotations</h3>
-                <p class="text-sm text-gray-400">Key compromised? Usually that means updating every .env, every deploy, every CI pipeline. With VaultProof, swap it in the dashboard. Done.</p>
-            </div>
-            <div class="bg-vp-surface border border-vp-border rounded-2xl p-6 reveal delay-6">
-                <div class="w-10 h-10 rounded-xl bg-indigo-500/10 border border-indigo-500/20 flex items-center justify-center mb-4">
-                    <svg class="w-5 h-5 text-indigo-400" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M3.75 3v11.25A2.25 2.25 0 006 16.5h2.25M3.75 3h-1.5m1.5 0h16.5m0 0h1.5m-1.5 0v11.25A2.25 2.25 0 0118 16.5h-2.25m-7.5 0h7.5m-7.5 0l-1 3m8.5-3l1 3m0 0l.5 1.5m-.5-1.5h-9.5m0 0l-.5 1.5"/></svg>
-                </div>
-                <h3 class="text-white font-semibold mb-2">No visibility</h3>
-                <p class="text-sm text-gray-400">Right now you have no idea who's using your key or how much. VaultProof logs every call so you can see exactly what's happening.</p>
-            </div>
-        </div>
-    </section>
-
     <!-- Live Demo -->
     <section class="relative z-10 max-w-3xl mx-auto px-4 sm:px-6 py-16 sm:py-24">
         <div class="text-center mb-10 reveal">
