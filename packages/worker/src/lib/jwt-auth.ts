@@ -1,5 +1,6 @@
 import type { Env } from '../types.js';
 import { getSupabase } from './supabase.js';
+import { sendWelcomeEmail, addToAudience } from './email.js';
 
 export interface JwtAuth {
   userId: string;
@@ -51,6 +52,8 @@ export async function authenticateUser(
         global_daily_limit: 1000,
         global_monthly_limit: 30000,
       });
+      sendWelcomeEmail(email, env.RESEND_API_KEY);
+      addToAudience(email, env.RESEND_API_KEY);
     }
     knownUsers.add(userId);
   }
