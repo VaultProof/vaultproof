@@ -31,7 +31,7 @@ export const KEY_PATTERNS: Array<{ pattern: RegExp; provider: string }> = [
   { pattern: /^AKIA[0-9A-Z]{16}$/, provider: 'aws' },
   { pattern: /^ASIA[0-9A-Z]{16}$/, provider: 'aws' },
   // Email
-  { pattern: /^SG\.[a-zA-Z0-9_-]+\.[a-zA-Z0-9_-]+$/, provider: 'sendgrid' },
+  { pattern: /^SG\.[a-zA-Z0-9_-]{10,80}\.[a-zA-Z0-9_-]{5,80}$/, provider: 'sendgrid' },
   { pattern: /^re_[a-zA-Z0-9]{20,}$/, provider: 'resend' },
   { pattern: /^xkeysib-[a-zA-Z0-9]{40,}$/, provider: 'brevo' },
   // Messaging
@@ -50,7 +50,7 @@ export const KEY_PATTERNS: Array<{ pattern: RegExp; provider: string }> = [
   // Datadog
   { pattern: /^dd[a-z]_[a-zA-Z0-9]{32,}$/, provider: 'datadog' },
   // GraphQL / CMS / BaaS
-  { pattern: /^service:[a-zA-Z0-9_-]+:[a-zA-Z0-9_-]+$/, provider: 'apollo' },
+  { pattern: /^service:[a-zA-Z0-9_-]{3,60}:[a-zA-Z0-9_-]{10,80}$/, provider: 'apollo' },
   { pattern: /^CFPAT-[a-zA-Z0-9_-]{40,}$/, provider: 'contentful' },
   { pattern: /^fnA[a-zA-Z0-9_-]{20,}$/, provider: 'fauna' },
   { pattern: /^phc_[a-zA-Z0-9]{30,}$/, provider: 'posthog' },
@@ -180,9 +180,6 @@ export const SKIP_DIRS = [
   '.output',
   '.turbo',
   '.git',
-  'test',
-  'tests',
-  '__tests__',
   '__mocks__',
   'fixtures',
 ];
@@ -218,6 +215,15 @@ export function shannonEntropy(str: string): number {
     entropy -= p * Math.log2(p);
   }
   return entropy;
+}
+
+/** Strip known fixed vendor prefix before entropy scoring.
+ *  e.g. "sk-proj-AbCd..." → "AbCd..."
+ *  This avoids the fixed prefix diluting the entropy measurement. */
+export function stripKeyPrefix(value: string): string {
+  // Strip leading lowercase letters, digits, underscores, hyphens, and dots
+  // that form the fixed vendor prefix (e.g. "sk-proj-", "SG.", "re_", "AKIA")
+  return value.replace(/^[A-Za-z][A-Za-z0-9_.-]*[-_.]/, '');
 }
 
 /** Match a value against known key prefix patterns to identify the provider. */
