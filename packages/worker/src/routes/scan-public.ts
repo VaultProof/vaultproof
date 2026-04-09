@@ -8,6 +8,13 @@ import {
   PROVIDER_NAMES,
 } from '../lib/secret-patterns.js';
 
+// Pre-build non-global versions of KEY_PATTERNS for use in scanFileContent.
+// Creating RegExp objects in a hot inner loop is expensive in CF Worker CPU budget.
+const KEY_PATTERNS_LOCAL = KEY_PATTERNS.map(({ pattern, provider }) => ({
+  pattern: new RegExp(pattern.source, pattern.flags.replace('g', '')),
+  provider,
+}));
+
 const MAX_FILES = 100;
 const MAX_CONCURRENT_FETCHES = 20;
 const RATE_LIMIT = 10;
@@ -74,9 +81,8 @@ function scanFileContent(content: string, filePath: string): Finding[] {
       }
     }
 
-    for (const { pattern, provider } of KEY_PATTERNS) {
-      const localPattern = new RegExp(pattern.source, pattern.flags.replace('g', ''));
-      const match = line.match(localPattern);
+    for (const { pattern, provider } of KEY_PATTERNS_LOCAL) {
+      const match = line.match(pattern);
       if (match) {
         const value = match[0];
         if (shannonEntropy(value) >= MIN_ENTROPY) {
@@ -101,13 +107,15 @@ export async function handlePublicScan(request: Request, env: Env): Promise<Resp
     return Response.json({ error: 'Method not allowed' }, { status: 405 });
   }
 
-  const ip = request.headers.get('CF-Connecting-IP') || 'unknown';
-  const allowed = await checkScanRateLimit(env, ip);
-  if (!allowed) {
-    return Response.json(
-      { error: '10 free scans per hour — try again soon.' },
-      { status: 429 }
-    );
+  const ip = request.headers.get('CF-Connecting-IP');
+  if (ip) {
+    const allowed = await checkScanRateLimit(env, ip);
+    if (!allowed) {
+      return Response.json(
+        { error: '10 free scans per hour — try again soon.' },
+        { status: 429 }
+      );
+    }
   }
 
   let body: { repo?: string };
@@ -117,7 +125,7 @@ export async function handlePublicScan(request: Request, env: Env): Promise<Resp
     return Response.json({ error: 'Invalid JSON body' }, { status: 400 });
   }
 
-  const repo = normalizeRepo(body.repo || '');
+  const repo = normalizeRepo(typeof body.repo === 'string' ? body.repo : '');
   if (!repo) {
     return Response.json(
       { error: 'Invalid repo. Use "owner/repo" or a full GitHub URL.' },
@@ -126,9 +134,19 @@ export async function handlePublicScan(request: Request, env: Env): Promise<Resp
   }
 
   const treeUrl = `https://api.github.com/repos/${repo}/git/trees/HEAD?recursive=1`;
-  const treeRes = await fetch(treeUrl, {
-    headers: { 'User-Agent': 'VaultProof-Scanner/1.0', Accept: 'application/vnd.github+json' },
-  });
+  const treeController = new AbortController();
+  const treeTimer = setTimeout(() => treeController.abort(), 8000);
+  let treeRes: Response;
+  try {
+    treeRes = await fetch(treeUrl, {
+      headers: { 'User-Agent': 'VaultProof-Scanner/1.0', Accept: 'application/vnd.github+json' },
+      signal: treeController.signal,
+    });
+  } catch {
+    clearTimeout(treeTimer);
+    return Response.json({ error: 'GitHub API timed out. Try again in a moment.' }, { status: 504 });
+  }
+  clearTimeout(treeTimer);
 
   if (treeRes.status === 404) {
     return Response.json({ error: 'Repo not found. Is it public?' }, { status: 404 });
@@ -163,6 +181,8 @@ export async function handlePublicScan(request: Request, env: Env): Promise<Resp
           },
         });
         if (!res.ok) return null;
+        const contentLength = parseInt(res.headers.get('content-length') || '0', 10);
+        if (contentLength > 512 * 1024) return null; // skip files > 512 KB
         const text = await res.text();
         return { path: file.path, content: text };
       })
