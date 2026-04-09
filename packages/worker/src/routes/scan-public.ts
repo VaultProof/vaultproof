@@ -15,8 +15,9 @@ const KEY_PATTERNS_LOCAL = KEY_PATTERNS.map(({ pattern, provider }) => ({
   provider,
 }));
 
-const MAX_FILES = 100;
+const MAX_FILES = 50;            // reduced to leave headroom for commit fetches
 const MAX_CONCURRENT_FETCHES = 20;
+const MAX_COMMITS = 20;          // last N commits to scan for history leaks
 const RATE_LIMIT = 10;
 const RATE_LIMIT_TTL = 3600;
 
@@ -51,11 +52,21 @@ interface Finding {
   line: number;
   maskedValue: string;
   severity: 'CRITICAL' | 'HIGH';
+  source: 'current' | 'history';
+  commitSha?: string;
+  commitMessage?: string;
+  commitDate?: string;
 }
 
-function scanFileContent(content: string, filePath: string): Finding[] {
+interface ScanContext {
+  source: 'current' | 'history';
+  commitSha?: string;
+  commitMessage?: string;
+  commitDate?: string;
+}
+
+function scanLines(lines: string[], filePath: string, ctx: ScanContext): Finding[] {
   const findings: Finding[] = [];
-  const lines = content.split('\n');
   const isEnvFile = filePath.endsWith('.env') || filePath.includes('.env.');
 
   for (let i = 0; i < lines.length; i++) {
@@ -69,14 +80,7 @@ function scanFileContent(content: string, filePath: string): Finding[] {
         const value = rawValue.replace(/^["']|["']$/g, '').trim();
         const provider = ENV_VAR_MAP[varName];
         if (provider && shannonEntropy(value) >= MIN_ENTROPY) {
-          findings.push({
-            provider,
-            providerName: PROVIDER_NAMES[provider] || provider,
-            file: filePath,
-            line: i + 1,
-            maskedValue: maskKey(value),
-            severity: 'CRITICAL',
-          });
+          findings.push({ provider, providerName: PROVIDER_NAMES[provider] || provider, file: filePath, line: i + 1, maskedValue: maskKey(value), severity: 'CRITICAL', ...ctx });
         }
       }
     }
@@ -86,20 +90,67 @@ function scanFileContent(content: string, filePath: string): Finding[] {
       if (match) {
         const value = match[0];
         if (shannonEntropy(value) >= MIN_ENTROPY) {
-          findings.push({
-            provider,
-            providerName: PROVIDER_NAMES[provider] || provider,
-            file: filePath,
-            line: i + 1,
-            maskedValue: maskKey(value),
-            severity: 'CRITICAL',
-          });
+          findings.push({ provider, providerName: PROVIDER_NAMES[provider] || provider, file: filePath, line: i + 1, maskedValue: maskKey(value), severity: 'CRITICAL', ...ctx });
         }
       }
     }
   }
 
   return findings;
+}
+
+function scanFileContent(content: string, filePath: string): Finding[] {
+  return scanLines(content.split('\n'), filePath, { source: 'current' });
+}
+
+// Scan the `+` lines (additions) in a git patch for a single file.
+function scanPatch(patch: string, filePath: string, commitSha: string, commitMessage: string, commitDate: string): Finding[] {
+  const ctx: ScanContext = { source: 'history', commitSha, commitMessage, commitDate };
+  // Extract only added lines (start with `+` but not `+++` file header)
+  const addedLines = patch
+    .split('\n')
+    .filter(l => l.startsWith('+') && !l.startsWith('+++'))
+    .map(l => l.slice(1)); // strip leading `+`
+  return scanLines(addedLines, filePath, ctx);
+}
+
+async function scanHistory(repo: string): Promise<{ findings: Finding[]; commitsScanned: number }> {
+  const findings: Finding[] = [];
+
+  // Fetch commit list
+  const commitsRes = await fetch(
+    `https://api.github.com/repos/${repo}/commits?per_page=${MAX_COMMITS}`,
+    { headers: { 'User-Agent': 'VaultProof-Scanner/1.0', Accept: 'application/vnd.github+json' } }
+  );
+  if (!commitsRes.ok) return { findings, commitsScanned: 0 };
+
+  const commits: Array<{ sha: string; commit: { message: string; author?: { date?: string } } }> = await commitsRes.json();
+  if (!Array.isArray(commits) || commits.length === 0) return { findings, commitsScanned: 0 };
+
+  // Fetch each commit's detail (contains file patches) in parallel batches of 10
+  for (let i = 0; i < commits.length; i += 10) {
+    const batch = commits.slice(i, i + 10);
+    const details = await Promise.all(batch.map(async (c) => {
+      const res = await fetch(
+        `https://api.github.com/repos/${repo}/commits/${c.sha}`,
+        { headers: { 'User-Agent': 'VaultProof-Scanner/1.0', Accept: 'application/vnd.github+json' } }
+      );
+      if (!res.ok) return null;
+      const data = await res.json() as { files?: Array<{ filename: string; patch?: string }> };
+      return { sha: c.sha, message: c.commit.message.split('\n')[0].slice(0, 72), date: c.commit.author?.date || '', files: data.files || [] };
+    }));
+
+    for (const detail of details) {
+      if (!detail) continue;
+      for (const file of detail.files) {
+        if (!file.patch || !shouldScanFile(file.filename)) continue;
+        const patchFindings = scanPatch(file.patch, file.filename, detail.sha, detail.message, detail.date);
+        findings.push(...patchFindings);
+      }
+    }
+  }
+
+  return { findings, commitsScanned: commits.length };
 }
 
 export async function handlePublicScan(request: Request, env: Env): Promise<Response> {
@@ -167,38 +218,44 @@ export async function handlePublicScan(request: Request, env: Env): Promise<Resp
   );
   const filesToScan = allFiles.slice(0, MAX_FILES);
 
-  const findings: Finding[] = [];
-  let filesScanned = 0;
-
-  for (let i = 0; i < filesToScan.length; i += MAX_CONCURRENT_FETCHES) {
-    const batch = filesToScan.slice(i, i + MAX_CONCURRENT_FETCHES);
-    const results = await Promise.all(
-      batch.map(async (file) => {
-        const res = await fetch(file.url, {
-          headers: {
-            'User-Agent': 'VaultProof-Scanner/1.0',
-            Accept: 'application/vnd.github.raw+json',
-          },
-        });
-        if (!res.ok) return null;
-        const contentLength = parseInt(res.headers.get('content-length') || '0', 10);
-        if (contentLength > 512 * 1024) return null; // skip files > 512 KB
-        const text = await res.text();
-        return { path: file.path, content: text };
-      })
-    );
-
-    for (const result of results) {
-      if (!result) continue;
-      filesScanned++;
-      const fileFindings = scanFileContent(result.content, result.path);
-      findings.push(...fileFindings);
+  // Run current-file scan + git history scan in parallel
+  const currentScanPromise = (async () => {
+    const findings: Finding[] = [];
+    let filesScanned = 0;
+    for (let i = 0; i < filesToScan.length; i += MAX_CONCURRENT_FETCHES) {
+      const batch = filesToScan.slice(i, i + MAX_CONCURRENT_FETCHES);
+      const results = await Promise.all(
+        batch.map(async (file) => {
+          const res = await fetch(file.url, {
+            headers: { 'User-Agent': 'VaultProof-Scanner/1.0', Accept: 'application/vnd.github.raw+json' },
+          });
+          if (!res.ok) return null;
+          const contentLength = parseInt(res.headers.get('content-length') || '0', 10);
+          if (contentLength > 512 * 1024) return null;
+          const text = await res.text();
+          return { path: file.path, content: text };
+        })
+      );
+      for (const result of results) {
+        if (!result) continue;
+        filesScanned++;
+        findings.push(...scanFileContent(result.content, result.path));
+      }
     }
-  }
+    return { findings, filesScanned };
+  })();
 
+  const [currentResult, historyResult] = await Promise.all([
+    currentScanPromise,
+    scanHistory(repo),
+  ]);
+
+  const allFindings = [...currentResult.findings, ...historyResult.findings];
+
+  // Deduplicate: same provider + masked value + file is one finding regardless of source
   const seen = new Set<string>();
-  const dedupedFindings = findings.filter((f) => {
-    const key = `${f.file}:${f.line}:${f.provider}`;
+  const dedupedFindings = allFindings.filter((f) => {
+    const key = `${f.source}:${f.commitSha || ''}:${f.file}:${f.line}:${f.provider}`;
     if (seen.has(key)) return false;
     seen.add(key);
     return true;
@@ -206,7 +263,8 @@ export async function handlePublicScan(request: Request, env: Env): Promise<Resp
 
   return Response.json({
     repo,
-    filesScanned,
+    filesScanned: currentResult.filesScanned,
+    commitsScanned: historyResult.commitsScanned,
     findings: dedupedFindings,
   });
 }

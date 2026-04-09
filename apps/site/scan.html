@@ -405,31 +405,46 @@
 
                 const sevClass = severityClass(f.severity);
                 const icon = providerIcon(f.provider || '');
+                const isHistory = f.source === 'history';
 
                 // Safe escaped values for all user-derived fields
-                const provider  = escapeHtml(f.provider || 'Unknown');
-                const severity  = escapeHtml(f.severity || 'LOW');
-                const filePath  = escapeHtml(f.file || f.path || '');
-                const lineNum   = escapeHtml(String(f.line || f.line_number || ''));
-                const maskedVal = escapeHtml(f.masked_value || f.value || '');
+                const provider     = escapeHtml(f.providerName || f.provider || 'Unknown');
+                const severity     = escapeHtml(f.severity || 'LOW');
+                const filePath     = escapeHtml(f.file || f.path || '');
+                const lineNum      = escapeHtml(String(f.line || f.line_number || ''));
+                const maskedVal    = escapeHtml(f.maskedValue || f.masked_value || f.value || '');
+                const commitSha    = f.commitSha ? escapeHtml(f.commitSha.slice(0, 7)) : '';
+                const commitMsg    = f.commitMessage ? escapeHtml(f.commitMessage.slice(0, 60)) : '';
+                const commitUrl    = commitSha ? `https://github.com/${escapeHtml(repo)}/commit/${escapeHtml(f.commitSha)}` : '';
+
+                const historyBadge = isHistory
+                    ? `<span class="text-xs font-medium px-2 py-0.5 rounded-full bg-purple-500/10 border border-purple-500/30 text-purple-400">📜 git history</span>`
+                    : '';
+
+                const commitLine = isHistory && commitSha
+                    ? `<p class="text-xs text-gray-600 mt-1 font-mono">
+                          <a href="${commitUrl}" target="_blank" rel="noopener" class="text-purple-500 hover:text-purple-400 underline underline-offset-2">${commitSha}</a>
+                          ${commitMsg ? `<span class="text-gray-700"> — ${commitMsg}</span>` : ''}
+                       </p>`
+                    : '';
 
                 card.innerHTML = `
                     <div class="finding-card-inner bg-vp-surface border border-vp-border rounded-xl px-4 py-4">
                         <div class="flex items-start gap-3">
-                            <!-- Provider icon -->
                             <div class="w-9 h-9 rounded-lg bg-card border border-vp-border flex items-center justify-center flex-shrink-0">
                                 ${icon}
                             </div>
-                            <!-- Details -->
                             <div class="flex-1 min-w-0">
                                 <div class="flex items-center gap-2 flex-wrap mb-1.5">
                                     <span class="text-sm font-semibold text-white">${provider}</span>
                                     <span class="text-xs font-medium px-2 py-0.5 rounded-full ${sevClass}">${severity}</span>
+                                    ${historyBadge}
                                 </div>
-                                ${filePath ? `<p class="text-xs text-gray-500 font-mono truncate mb-1">
+                                ${filePath ? `<p class="text-xs text-gray-500 font-mono truncate mb-0.5">
                                     <span class="text-gray-400">${filePath}</span>${lineNum ? `<span class="text-gray-600">:${lineNum}</span>` : ''}
                                 </p>` : ''}
-                                ${maskedVal ? `<p class="text-xs font-mono text-gray-600 truncate">${maskedVal}</p>` : ''}
+                                ${commitLine}
+                                ${maskedVal ? `<p class="text-xs font-mono text-gray-600 truncate mt-1">${maskedVal}</p>` : ''}
                             </div>
                         </div>
                     </div>`;
@@ -452,7 +467,7 @@
             }
 
             setScanning(true);
-            showProgress('Scanning ' + repo + '…');
+            showProgress('Scanning ' + repo + ' — files + git history…');
             hide('errorBox');
             hide('resultsContainer');
             hide('stickyBar');
@@ -486,15 +501,17 @@
                 hideProgress();
                 setScanning(false);
 
-                const findings    = Array.isArray(data.findings) ? data.findings : [];
-                const filesScanned = typeof data.files_scanned === 'number' ? data.files_scanned : null;
+                const findings       = Array.isArray(data.findings) ? data.findings : [];
+                const filesScanned   = typeof data.filesScanned === 'number' ? data.filesScanned : null;
+                const commitsScanned = typeof data.commitsScanned === 'number' ? data.commitsScanned : null;
 
                 // GA event
                 if (typeof gtag !== 'undefined') {
                     gtag('event', 'public_scan_completed', {
                         repo,
                         findings_count: findings.length,
-                        files_scanned: filesScanned
+                        files_scanned: filesScanned,
+                        commits_scanned: commitsScanned
                     });
                 }
 
@@ -507,15 +524,23 @@
                 repoLabel.textContent = repo;
 
                 if (findings.length === 0) {
-                    summaryEl.textContent = 'No exposed keys found';
+                    const parts = [];
+                    if (filesScanned) parts.push(`${filesScanned} file${filesScanned !== 1 ? 's' : ''}`);
+                    if (commitsScanned) parts.push(`${commitsScanned} commit${commitsScanned !== 1 ? 's' : ''}`);
+                    summaryEl.textContent = 'No exposed keys found' + (parts.length ? ` — scanned ${parts.join(' + ')}` : '');
                     hide('findingsList');
                     hide('stickyBar');
                     show('emptyState');
                 } else {
                     const n = findings.length;
                     const noun = n === 1 ? 'exposed key' : 'exposed keys';
-                    const filePart = filesScanned != null ? ` across ${filesScanned} file${filesScanned !== 1 ? 's' : ''}` : '';
-                    summaryEl.textContent = `${n} ${noun} found${filePart}`;
+                    const histCount = findings.filter(f => f.source === 'history').length;
+                    const parts = [];
+                    if (filesScanned) parts.push(`${filesScanned} file${filesScanned !== 1 ? 's' : ''}`);
+                    if (commitsScanned) parts.push(`${commitsScanned} commit${commitsScanned !== 1 ? 's' : ''}`);
+                    const scanPart = parts.length ? ` — scanned ${parts.join(' + ')}` : '';
+                    const histPart = histCount > 0 ? ` (${histCount} in git history)` : '';
+                    summaryEl.textContent = `${n} ${noun} found${histPart}${scanPart}`;
 
                     hide('emptyState');
                     show('findingsList');
