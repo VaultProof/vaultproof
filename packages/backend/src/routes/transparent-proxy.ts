@@ -268,6 +268,23 @@ export async function transparentProxyRoutes(app: FastifyInstance) {
       });
     }
 
+    // --- Defence-in-depth: verify fetched slot belongs to the authenticated user.
+    // The WHERE clause already enforces this, but an explicit check catches any
+    // future query refactor that accidentally drops the userId filter.
+    if (keySlot.userId !== auth.userId) {
+      request.log.error({ msg: 'SECURITY: fetched key slot userId mismatch', slotId: keySlot.id, slotUserId: keySlot.userId, authUserId: auth.userId });
+      return reply.status(403).send({ error: 'Key slot access denied.' });
+    }
+
+    // --- Defence-in-depth: re-verify allowedKeySlotIds after the fetch.
+    // Catches any scenario where the query filter was bypassed (e.g. caching).
+    if (auth.devKey.allowedKeySlotIds) {
+      const allowedIds = auth.devKey.allowedKeySlotIds.split(',').map((s: string) => s.trim()).filter(Boolean);
+      if (allowedIds.length > 0 && !allowedIds.includes(keySlot.id)) {
+        return reply.status(403).send({ error: 'Key slot not allowed for this API key.' });
+      }
+    }
+
     // --- d. Check expiry ---
     if (keySlot.expiresAt && new Date(keySlot.expiresAt) < new Date()) {
       return reply.status(410).send({ error: 'Key has expired', expiresAt: keySlot.expiresAt });

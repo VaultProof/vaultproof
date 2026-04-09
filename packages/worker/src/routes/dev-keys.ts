@@ -213,7 +213,30 @@ async function handleSettings(request: Request, env: Env, id: string): Promise<R
   if ('strictOrigin' in body) updates.strict_origin = !!body.strictOrigin;
   if ('allowedProviders' in body) updates.allowed_providers = body.allowedProviders || null;
   if ('allowedEndpoints' in body) updates.allowed_endpoints = body.allowedEndpoints || null;
-  if ('allowedKeySlotIds' in body) updates.allowed_key_slot_ids = body.allowedKeySlotIds || null;
+  if ('allowedKeySlotIds' in body) {
+    const raw: string | null | undefined = body.allowedKeySlotIds;
+    if (!raw) {
+      updates.allowed_key_slot_ids = null; // clear restriction
+    } else {
+      const ids = raw.split(',').map((s: string) => s.trim()).filter(Boolean);
+      if (ids.length > 0) {
+        // Validate that all provided slot IDs belong to this user
+        const { data: owned } = await supabase
+          .from('key_slots')
+          .select('id')
+          .in('id', ids)
+          .eq('user_id', auth.userId);
+        const ownedIds = (owned || []).map((k: any) => k.id);
+        const invalid = ids.filter((i: string) => !ownedIds.includes(i));
+        if (invalid.length > 0) {
+          return Response.json({ error: 'Some key slot IDs do not belong to your account' }, { status: 400 });
+        }
+        updates.allowed_key_slot_ids = ownedIds.join(',');
+      } else {
+        updates.allowed_key_slot_ids = null;
+      }
+    }
+  }
   if ('label' in body) updates.label = body.label;
   if ('webhookUrl' in body) updates.webhook_url = body.webhookUrl || null;
   if ('alertEmail' in body) updates.alert_email = body.alertEmail || null;
@@ -269,6 +292,7 @@ async function handleList(request: Request, env: Env): Promise<Response> {
     strictOrigin: row.strict_origin,
     allowedProviders: row.allowed_providers,
     allowedEndpoints: row.allowed_endpoints,
+    allowedKeySlotIds: row.allowed_key_slot_ids,
   }));
 
   return Response.json({ keys });

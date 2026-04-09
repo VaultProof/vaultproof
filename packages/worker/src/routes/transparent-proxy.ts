@@ -215,7 +215,15 @@ export async function handleTransparentProxy(
   tStep = performance.now();
   const supabase = getSupabase(env);
   const userCacheKey = `user:${auth.userId}`;
-  const keyCacheKey = `keyslot:${auth.userId}:${provider}`;
+
+  // When allowed_key_slot_ids is set, the cache key must include the restriction so
+  // that a dev key scoped to slot-A never reads slot-B out of a shared cache entry.
+  const allowedSlotIds = auth.devKey.allowed_key_slot_ids
+    ? auth.devKey.allowed_key_slot_ids.split(',').map((s: string) => s.trim()).filter(Boolean)
+    : null;
+  const keyCacheKey = allowedSlotIds
+    ? `keyslot:${auth.userId}:${provider}:${allowedSlotIds.sort().join('|')}`
+    : `keyslot:${auth.userId}:${provider}`;
 
   // L1: isolate memory (no I/O)
   let user = memGet<UserRecord>(userCacheKey);
@@ -232,11 +240,18 @@ export async function handleTransparentProxy(
   }
 
   // L3: Supabase (if KV miss)
+  // When allowedSlotIds is set, filter by those IDs so the correct slot is selected
+  // even if a newer slot for the same provider exists.
   const fetchPromises: Promise<any>[] = [];
   if (!user) fetchPromises.push(supabase.from('users').select('id, email, tier, kill_switch, global_daily_limit, global_monthly_limit').eq('id', auth.userId).single());
   else fetchPromises.push(Promise.resolve(null));
-  if (!keySlot) fetchPromises.push(supabase.from('key_slots').select('*').eq('user_id', auth.userId).eq('provider', provider).eq('status', 'ACTIVE').order('created_at', { ascending: false }).limit(1).single());
-  else fetchPromises.push(Promise.resolve(null));
+  if (!keySlot) {
+    let slotQuery = supabase.from('key_slots').select('*').eq('user_id', auth.userId).eq('provider', provider).eq('status', 'ACTIVE');
+    if (allowedSlotIds) slotQuery = slotQuery.in('id', allowedSlotIds);
+    fetchPromises.push(slotQuery.order('created_at', { ascending: false }).limit(1).single());
+  } else {
+    fetchPromises.push(Promise.resolve(null));
+  }
 
   const [userRes, keyRes] = await Promise.all(fetchPromises);
   if (userRes?.data && !userRes.error) { user = userRes.data; memSet(userCacheKey, user, 10); await cacheSet(env, userCacheKey, user, 10); }
@@ -255,12 +270,20 @@ export async function handleTransparentProxy(
     return Response.json({ error: 'Key cannot be reconstructed.' }, { status: 400 });
   }
 
-  // Key slot restriction
-  if (auth.devKey.allowed_key_slot_ids) {
-    const allowed = auth.devKey.allowed_key_slot_ids.split(',').map(s => s.trim());
-    if (!allowed.includes(keySlot.id)) {
-      return Response.json({ error: 'Key slot not allowed for this API key.' }, { status: 403 });
-    }
+  // Defence-in-depth: verify the fetched slot belongs to the authenticated user.
+  // The query already filters by user_id, but an explicit check catches any cache
+  // inconsistency where another user's slot was incorrectly stored under this cache key.
+  if (keySlot.user_id !== auth.userId) {
+    console.error('SECURITY: fetched key slot userId mismatch', { slotId: keySlot.id, slotUserId: keySlot.user_id, authUserId: auth.userId });
+    return Response.json({ error: 'Key slot access denied.' }, { status: 403 });
+  }
+
+  // Defence-in-depth: re-verify allowedKeySlotIds against the fetched slot.
+  // Catches any cache inconsistency where an unrestricted cache entry was served
+  // for a restricted key (different cache key scoping should prevent this, but
+  // an explicit check is cheap insurance).
+  if (allowedSlotIds && !allowedSlotIds.includes(keySlot.id)) {
+    return Response.json({ error: 'Key slot not allowed for this API key.' }, { status: 403 });
   }
 
   timings.fetch = performance.now() - tStep;
