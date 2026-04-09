@@ -203,6 +203,44 @@
             66% { transform: translate(-30px, 40px) scale(0.92); }
         }
 
+        /* Nav dropdowns */
+        .nav-group { position: relative; }
+        .nav-group-btn {
+            display: inline-flex; align-items: center; gap: 4px;
+            font-size: 0.875rem; color: #9ca3af; background: none;
+            border: none; cursor: pointer; padding: 0;
+            transition: color 0.15s; font-family: inherit;
+        }
+        .nav-group-btn:hover { color: #fff; }
+        .nav-group-btn svg { transition: transform 0.2s; }
+        .nav-group:hover .nav-group-btn svg,
+        .nav-group:focus-within .nav-group-btn svg { transform: rotate(180deg); }
+        .nav-dropdown {
+            position: absolute; top: calc(100% + 14px); left: 50%;
+            transform: translateX(-50%) translateY(-6px);
+            background: #111118; border: 1px solid rgba(30,30,46,0.9);
+            border-radius: 12px; padding: 6px; min-width: 180px;
+            opacity: 0; visibility: hidden; pointer-events: none;
+            transition: opacity 0.15s ease, transform 0.15s ease, visibility 0.15s;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.5), 0 0 0 1px rgba(99,102,241,0.08);
+            z-index: 100;
+        }
+        .nav-group:hover .nav-dropdown,
+        .nav-group:focus-within .nav-dropdown {
+            opacity: 1; visibility: visible; pointer-events: auto;
+            transform: translateX(-50%) translateY(0);
+        }
+        .nav-dropdown a {
+            display: flex; align-items: center; gap: 8px;
+            padding: 8px 12px; border-radius: 8px; font-size: 0.8125rem;
+            color: #9ca3af; text-decoration: none;
+            transition: color 0.15s, background 0.15s;
+            white-space: nowrap;
+        }
+        .nav-dropdown a:hover { color: #fff; background: rgba(255,255,255,0.05); }
+        .nav-dropdown a .nav-icon { font-size: 0.9em; opacity: 0.8; }
+        .nav-dropdown-divider { height: 1px; background: rgba(30,30,46,1); margin: 4px 0; }
+
         /* Terminal cursor blink */
         .cursor {
             display: inline-block;
@@ -556,14 +594,33 @@
             </a>
 
             <!-- Desktop links -->
-            <div class="hidden md:flex items-center gap-6">
-                <a href="/docs" class="text-sm text-gray-400 hover:text-white transition-colors">Docs</a>
-                <a href="/guides" class="text-sm text-gray-400 hover:text-white transition-colors">Guides</a>
-                <a href="/compare" class="text-sm text-gray-400 hover:text-white transition-colors">Compare</a>
-                <a href="/agents" class="text-sm text-gray-400 hover:text-white transition-colors">Agents</a>
-                <a href="/blog" class="text-sm text-gray-400 hover:text-white transition-colors">Insights</a>
+            <div class="hidden md:flex items-center gap-5">
+                <!-- Product dropdown -->
+                <div class="nav-group">
+                    <button class="nav-group-btn">
+                        Product
+                        <svg width="11" height="11" viewBox="0 0 12 12" fill="currentColor"><path d="M6 8L2 4h8z"/></svg>
+                    </button>
+                    <div class="nav-dropdown" role="menu">
+                        <a href="/agents" role="menuitem"><span class="nav-icon">🤖</span> AI Agents</a>
+                        <a href="/compare" role="menuitem"><span class="nav-icon">⚖️</span> Compare</a>
+                        <div class="nav-dropdown-divider"></div>
+                        <a href="/scan" role="menuitem" style="color:#22d3ee"><span class="nav-icon">🔍</span> Free Scanner</a>
+                    </div>
+                </div>
+                <!-- Learn dropdown -->
+                <div class="nav-group">
+                    <button class="nav-group-btn">
+                        Learn
+                        <svg width="11" height="11" viewBox="0 0 12 12" fill="currentColor"><path d="M6 8L2 4h8z"/></svg>
+                    </button>
+                    <div class="nav-dropdown" role="menu">
+                        <a href="/docs" role="menuitem"><span class="nav-icon">📖</span> Docs</a>
+                        <a href="/guides" role="menuitem"><span class="nav-icon">🗺️</span> Guides</a>
+                        <a href="/blog" role="menuitem"><span class="nav-icon">✍️</span> Insights</a>
+                    </div>
+                </div>
                 <a href="#pricing" class="text-sm text-gray-400 hover:text-white transition-colors">Pricing</a>
-                <a href="/scan" class="text-sm font-medium text-cyan-400 hover:text-cyan-300 transition-colors border border-cyan-500/30 hover:border-cyan-400/50 rounded-full px-3 py-1">🔍 Free Scanner</a>
                 <a href="/app/login" class="nav-dashboard text-sm text-gray-400 hover:text-white transition-colors" style="display:none">Dashboard</a>
             </div>
 
@@ -578,15 +635,19 @@
         </div>
 
         <!-- Mobile menu -->
-        <div id="mobileMenu" class="mobile-menu flex-col gap-3 mt-2 max-w-5xl mx-auto bg-vp-surface/95 backdrop-blur-xl border border-vp-border/60 rounded-2xl px-5 py-4 md:hidden shadow-lg shadow-black/20">
-            <a href="/docs" class="text-sm text-gray-400 hover:text-white transition-colors py-1">Docs</a>
-            <a href="/guides" class="text-sm text-gray-400 hover:text-white transition-colors py-1">Guides</a>
-            <a href="/compare" class="text-sm text-gray-400 hover:text-white transition-colors py-1">Compare</a>
-            <a href="/agents" class="text-sm text-gray-400 hover:text-white transition-colors py-1">Agents</a>
-            <a href="/blog" class="text-sm text-gray-400 hover:text-white transition-colors py-1">Insights</a>
-            <a href="#pricing" class="text-sm text-gray-400 hover:text-white transition-colors py-1">Pricing</a>
-            <a href="/scan" class="text-sm font-medium text-cyan-400 hover:text-cyan-300 transition-colors py-1">🔍 Free Scanner</a>
-            <a href="/app/login" class="nav-dashboard text-sm text-gray-400 hover:text-white transition-colors py-1" style="display:none">Dashboard</a>
+        <div id="mobileMenu" class="mobile-menu flex-col gap-1 mt-2 max-w-5xl mx-auto bg-vp-surface/95 backdrop-blur-xl border border-vp-border/60 rounded-2xl px-4 py-4 md:hidden shadow-lg shadow-black/20">
+            <p class="text-xs font-semibold text-gray-600 uppercase tracking-wider px-2 pb-1">Product</p>
+            <a href="/agents" class="text-sm text-gray-400 hover:text-white transition-colors py-2 px-2 rounded-lg hover:bg-white/5 flex items-center gap-2">🤖 AI Agents</a>
+            <a href="/compare" class="text-sm text-gray-400 hover:text-white transition-colors py-2 px-2 rounded-lg hover:bg-white/5 flex items-center gap-2">⚖️ Compare</a>
+            <a href="/scan" class="text-sm font-medium py-2 px-2 rounded-lg hover:bg-white/5 flex items-center gap-2" style="color:#22d3ee">🔍 Free Scanner</a>
+            <div class="my-2 border-t border-vp-border/40"></div>
+            <p class="text-xs font-semibold text-gray-600 uppercase tracking-wider px-2 pb-1">Learn</p>
+            <a href="/docs" class="text-sm text-gray-400 hover:text-white transition-colors py-2 px-2 rounded-lg hover:bg-white/5 flex items-center gap-2">📖 Docs</a>
+            <a href="/guides" class="text-sm text-gray-400 hover:text-white transition-colors py-2 px-2 rounded-lg hover:bg-white/5 flex items-center gap-2">🗺️ Guides</a>
+            <a href="/blog" class="text-sm text-gray-400 hover:text-white transition-colors py-2 px-2 rounded-lg hover:bg-white/5 flex items-center gap-2">✍️ Insights</a>
+            <div class="my-2 border-t border-vp-border/40"></div>
+            <a href="#pricing" class="text-sm text-gray-400 hover:text-white transition-colors py-2 px-2 rounded-lg hover:bg-white/5">Pricing</a>
+            <a href="/app/login" class="nav-dashboard text-sm text-gray-400 hover:text-white transition-colors py-2 px-2 rounded-lg hover:bg-white/5" style="display:none">Dashboard</a>
             <a href="/app/login" class="btn-creative text-center mt-2 py-2.5 px-5">Sign Up</a>
         </div>
     </nav>
