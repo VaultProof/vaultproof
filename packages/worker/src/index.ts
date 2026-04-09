@@ -10,6 +10,7 @@ import { handleKeys } from './routes/keys.js';
 import { handleBilling } from './routes/billing.js';
 import { handleAuth } from './routes/auth.js';
 import { checkPublicIpRateLimit } from './lib/rate-limit.js';
+import { handlePublicScan } from './routes/scan-public.js';
 
 function corsHeaders(origin: string, allowedOrigins: string[]): Record<string, string> {
   const isAllowed = allowedOrigins.includes('*') || allowedOrigins.includes(origin);
@@ -158,6 +159,16 @@ export default {
       try {
         const path = url.pathname.slice('/api/v1/sdk/'.length);
         const response = await handleSdk(request, env, path, ctx);
+        return addCors(response, origin, allowedOrigins);
+      } catch {
+        return addCors(Response.json({ error: 'Service temporarily unavailable' }, { status: 503 }), origin, allowedOrigins);
+      }
+    }
+
+    // Public scan (no auth, IP rate limited)
+    if (url.pathname === '/api/scan/public') {
+      try {
+        const response = await handlePublicScan(request, env);
         return addCors(response, origin, allowedOrigins);
       } catch {
         return addCors(Response.json({ error: 'Service temporarily unavailable' }, { status: 503 }), origin, allowedOrigins);
