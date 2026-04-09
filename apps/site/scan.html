@@ -404,7 +404,6 @@
                 card.style.animationDelay = (i * 60) + 'ms';
 
                 const sevClass = severityClass(f.severity);
-                const icon = providerIcon(f.provider || '');
                 const isHistory = f.source === 'history';
 
                 // Safe escaped values for all user-derived fields
@@ -431,9 +430,7 @@
                 card.innerHTML = `
                     <div class="finding-card-inner bg-vp-surface border border-vp-border rounded-xl px-4 py-4">
                         <div class="flex items-start gap-3">
-                            <div class="w-9 h-9 rounded-lg bg-card border border-vp-border flex items-center justify-center flex-shrink-0">
-                                ${icon}
-                            </div>
+                            <div class="w-9 h-9 rounded-lg bg-card border border-vp-border flex items-center justify-center flex-shrink-0 icon-slot"></div>
                             <div class="flex-1 min-w-0">
                                 <div class="flex items-center gap-2 flex-wrap mb-1.5">
                                     <span class="text-sm font-semibold text-white">${provider}</span>
@@ -448,6 +445,15 @@
                             </div>
                         </div>
                     </div>`;
+
+                // Inject provider icon into its isolated slot — kept separate from
+                // user-derived data so future changes to providerIcon() cannot
+                // accidentally introduce XSS via API-derived field interpolation.
+                const iconSlot = card.querySelector('.icon-slot');
+                if (iconSlot) {
+                    // providerIcon() returns only hardcoded static SVG strings — safe
+                    iconSlot.innerHTML = providerIcon(f.provider || '');
+                }
 
                 list.appendChild(card);
             });
