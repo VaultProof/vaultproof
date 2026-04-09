@@ -383,7 +383,14 @@ export const PROVIDER_NAMES: Record<string, string> = {
 
 // ─── Revocation instructions (per-provider) ──────────────────────────────────
 
-export const REVOCATION_INSTRUCTIONS: Record<string, { steps: string[]; url: string; note?: string }> = {
+export const REVOCATION_INSTRUCTIONS: Record<string, {
+  steps: string[];
+  url: string;
+  note?: string;
+  cliSteps?: string;
+  usageCheckUrl?: string;
+  usageCheckNote?: string;
+}> = {
   openai: {
     steps: [
       'Go to platform.openai.com/api-keys',
@@ -393,6 +400,8 @@ export const REVOCATION_INSTRUCTIONS: Record<string, { steps: string[]; url: str
     ],
     url: 'https://platform.openai.com/api-keys',
     note: 'OpenAI keys cannot be un-revoked. Create a new one after revoking.',
+    usageCheckUrl: 'https://platform.openai.com/usage',
+    usageCheckNote: 'Check for unexplained spikes in token usage or requests, especially at unusual times or from models you don\'t use.',
   },
   anthropic: {
     steps: [
@@ -403,6 +412,8 @@ export const REVOCATION_INSTRUCTIONS: Record<string, { steps: string[]; url: str
     ],
     url: 'https://console.anthropic.com/settings/keys',
     note: 'Disabled keys stop working immediately.',
+    usageCheckUrl: 'https://console.anthropic.com/settings/usage',
+    usageCheckNote: 'Check for unexpected token usage spikes or requests to models you don\'t use.',
   },
   stripe: {
     steps: [
@@ -413,6 +424,8 @@ export const REVOCATION_INSTRUCTIONS: Record<string, { steps: string[]; url: str
     ],
     url: 'https://dashboard.stripe.com/apikeys',
     note: 'Rolling a Stripe key creates a new one and revokes the old one after an optional expiry window.',
+    usageCheckUrl: 'https://dashboard.stripe.com/logs',
+    usageCheckNote: 'Filter logs by the compromised API key. Look for unknown charges, payouts, refunds, or customer creation you didn\'t initiate.',
   },
   google: {
     steps: [
@@ -423,6 +436,8 @@ export const REVOCATION_INSTRUCTIONS: Record<string, { steps: string[]; url: str
     ],
     url: 'https://console.cloud.google.com/apis/credentials',
     note: 'For service account keys, delete the JSON key file entry. For API keys, restrict or delete them.',
+    usageCheckUrl: 'https://console.cloud.google.com/logs',
+    usageCheckNote: 'Use Cloud Audit Logs and filter by the service account or API key. Look for API calls you didn\'t make, especially to compute or storage services.',
   },
   github: {
     steps: [
@@ -433,6 +448,8 @@ export const REVOCATION_INSTRUCTIONS: Record<string, { steps: string[]; url: str
     ],
     url: 'https://github.com/settings/tokens',
     note: 'GitHub may have already auto-revoked the token if it was detected in a public repo.',
+    usageCheckUrl: 'https://github.com/settings/security-log',
+    usageCheckNote: 'Check the security log for authentication events from unknown IPs or locations. Look for repo clones, forks, or pushes you didn\'t make.',
   },
   aws: {
     steps: [
@@ -444,6 +461,9 @@ export const REVOCATION_INSTRUCTIONS: Record<string, { steps: string[]; url: str
     ],
     url: 'https://console.aws.amazon.com/iam/home#/security_credentials',
     note: 'Deactivate first, then delete after verifying your app works with the new key.',
+    cliSteps: 'aws iam update-access-key --access-key-id AKIAIOSFODNN7EXAMPLE --status Inactive\naws iam create-access-key --user-name your-user',
+    usageCheckUrl: 'https://console.aws.amazon.com/cloudtrail',
+    usageCheckNote: 'Filter CloudTrail by the compromised Access Key ID. Look for EC2 launches, S3 access, IAM changes, or Lambda invocations you didn\'t make.',
   },
   sendgrid: {
     steps: [
@@ -453,6 +473,8 @@ export const REVOCATION_INSTRUCTIONS: Record<string, { steps: string[]; url: str
       'Create a new API key with appropriate permissions',
     ],
     url: 'https://app.sendgrid.com/settings/api_keys',
+    usageCheckUrl: 'https://app.sendgrid.com/email_activity',
+    usageCheckNote: 'Check Email Activity for emails sent using this key that you didn\'t send. Look for spam campaigns or phishing emails.',
   },
   resend: {
     steps: [
@@ -462,6 +484,8 @@ export const REVOCATION_INSTRUCTIONS: Record<string, { steps: string[]; url: str
       'Create a new API key',
     ],
     url: 'https://resend.com/api-keys',
+    usageCheckUrl: 'https://resend.com/emails',
+    usageCheckNote: 'Check sent emails for any messages you didn\'t initiate, especially to unknown recipients.',
   },
   supabase: {
     steps: [
@@ -472,6 +496,8 @@ export const REVOCATION_INSTRUCTIONS: Record<string, { steps: string[]; url: str
     ],
     url: 'https://supabase.com/dashboard/project/_/settings/api',
     note: 'The anon key is safe if RLS is enabled. The service_role key should never be exposed.',
+    usageCheckUrl: 'https://supabase.com/dashboard/project/_/logs/edge-functions',
+    usageCheckNote: 'Check API logs for unauthorized queries — especially reads of sensitive tables or bulk data exports using the service_role key.',
   },
   slack: {
     steps: [
@@ -482,6 +508,8 @@ export const REVOCATION_INSTRUCTIONS: Record<string, { steps: string[]; url: str
     ],
     url: 'https://api.slack.com/apps',
     note: 'Bot tokens and user tokens must be rotated separately.',
+    usageCheckUrl: 'https://api.slack.com/apps',
+    usageCheckNote: 'Check your Slack audit logs for messages sent, channels joined, or files accessed by your app that you didn\'t initiate.',
   },
   twilio: {
     steps: [
@@ -492,6 +520,8 @@ export const REVOCATION_INSTRUCTIONS: Record<string, { steps: string[]; url: str
     ],
     url: 'https://console.twilio.com',
     note: 'Rotating the Auth Token invalidates all existing sessions using it.',
+    usageCheckUrl: 'https://console.twilio.com/us1/monitor/logs/sms',
+    usageCheckNote: 'Check SMS/voice logs for calls or messages sent using your account that you didn\'t make. Attackers often use Twilio keys for SMS spam or fraud.',
   },
   datadog: {
     steps: [
@@ -501,6 +531,8 @@ export const REVOCATION_INSTRUCTIONS: Record<string, { steps: string[]; url: str
       'Create a new API key',
     ],
     url: 'https://app.datadoghq.com/organization-settings/api-keys',
+    usageCheckUrl: 'https://app.datadoghq.com/audit-trail',
+    usageCheckNote: 'Check the Audit Trail for API calls made with this key that you didn\'t initiate.',
   },
   contentful: {
     steps: [
@@ -510,6 +542,8 @@ export const REVOCATION_INSTRUCTIONS: Record<string, { steps: string[]; url: str
       'Create a new personal access token',
     ],
     url: 'https://app.contentful.com/account/profile/cma_tokens',
+    usageCheckUrl: 'https://app.contentful.com',
+    usageCheckNote: 'Check Contentful audit logs for content changes, deletions, or exports you didn\'t make.',
   },
   fauna: {
     steps: [
@@ -519,6 +553,8 @@ export const REVOCATION_INSTRUCTIONS: Record<string, { steps: string[]; url: str
       'Create a new key with appropriate role',
     ],
     url: 'https://dashboard.fauna.com',
+    usageCheckUrl: 'https://dashboard.fauna.com',
+    usageCheckNote: 'Review recent queries in your Fauna dashboard for unauthorized data reads or writes.',
   },
   posthog: {
     steps: [
@@ -529,6 +565,8 @@ export const REVOCATION_INSTRUCTIONS: Record<string, { steps: string[]; url: str
     ],
     url: 'https://app.posthog.com/project/settings',
     note: 'Project API keys are typically public. Personal API keys should be rotated immediately.',
+    usageCheckUrl: 'https://app.posthog.com/activity',
+    usageCheckNote: 'Check the Activity log for events or feature flag changes you didn\'t make.',
   },
 };
 
@@ -538,6 +576,9 @@ export function getProviderInfo(provider: string): {
   rotationUrl: string;
   revocationSteps?: string[];
   revocationNote?: string;
+  cliSteps?: string;
+  usageCheckUrl?: string;
+  usageCheckNote?: string;
 } {
   const revocation = REVOCATION_INSTRUCTIONS[provider];
   return {
@@ -545,5 +586,8 @@ export function getProviderInfo(provider: string): {
     rotationUrl: ROTATION_URLS[provider] || '',
     revocationSteps: revocation?.steps,
     revocationNote: revocation?.note,
+    cliSteps: revocation?.cliSteps,
+    usageCheckUrl: revocation?.usageCheckUrl,
+    usageCheckNote: revocation?.usageCheckNote,
   };
 }

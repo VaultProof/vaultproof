@@ -536,22 +536,119 @@
 
             <!-- Revoke Guide Modal -->
             <div id="revokeGuideModal" class="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 hidden items-center justify-center" style="display:none;">
-              <div class="bg-[#0d0d14] border border-border rounded-2xl max-w-lg w-full mx-4 p-6 shadow-2xl">
-                <div class="flex items-center justify-between mb-4">
-                  <h3 class="text-lg font-semibold text-white" id="revokeModalTitle">Revoke Key</h3>
-                  <button onclick="closeRevokeModal()" class="text-gray-400 hover:text-white transition">
+              <div class="bg-[#0d0d14] border border-border rounded-2xl max-w-2xl w-full mx-4 shadow-2xl flex flex-col max-h-[90vh]">
+                <!-- Header -->
+                <div class="flex items-center justify-between px-6 pt-5 pb-4 border-b border-border shrink-0">
+                  <div>
+                    <div class="flex items-center gap-2 mb-0.5">
+                      <svg class="w-4 h-4 text-red-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 9v2m0 4h.01M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/></svg>
+                      <span class="text-xs font-semibold text-red-400 uppercase tracking-wider">Exposed Key — Incident Response</span>
+                    </div>
+                    <h3 class="text-lg font-semibold text-white" id="revokeModalTitle">Revoke Key</h3>
+                  </div>
+                  <button onclick="closeRevokeModal()" class="text-gray-400 hover:text-white transition ml-4 shrink-0">
                     <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg>
                   </button>
                 </div>
-                <p class="text-sm text-gray-400 mb-3">Follow these steps to revoke the compromised key:</p>
-                <ol id="revokeModalSteps" class="list-decimal list-inside space-y-2 text-sm text-gray-300 mb-4"></ol>
-                <div id="revokeModalNote" class="hidden bg-yellow-900/20 border border-yellow-700/30 rounded-lg px-3 py-2 text-xs text-yellow-300 mb-4"></div>
-                <div class="flex items-center gap-3">
-                  <a id="revokeModalLink" href="#" target="_blank" rel="noopener" class="inline-flex items-center gap-2 px-4 py-2 bg-brand hover:bg-brand-hover text-white rounded-xl text-sm font-medium transition">
-                    <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"/></svg>
-                    Open provider dashboard
-                  </a>
-                  <button id="revokeConfirmBtn" onclick="confirmRevoked()" class="px-4 py-2 bg-green-600 hover:bg-green-500 text-white rounded-xl text-sm font-medium transition">
+
+                <!-- Scrollable timeline body -->
+                <div class="overflow-y-auto px-6 py-5 space-y-5 flex-1">
+
+                  <!-- Phase 1: Revoke NOW -->
+                  <div class="rounded-xl border border-red-800/40 bg-red-950/20 p-4">
+                    <div class="flex items-center gap-2 mb-3">
+                      <span class="text-xs font-bold text-red-300 bg-red-900/40 rounded-full px-2 py-0.5 shrink-0">0–2 min</span>
+                      <span class="text-xs font-semibold text-red-200 uppercase tracking-wide">Critical</span>
+                      <span class="text-sm font-semibold text-white ml-1">Revoke the key. Right now.</span>
+                    </div>
+                    <p class="text-xs text-gray-400 mb-3">Before you do anything else — even before you finish reading this — go revoke the exposed key. Don't wait to understand the full scope. Assume it was found. Assume it's being used.</p>
+                    <ol id="revokeModalSteps" class="space-y-1.5 text-sm text-gray-200 mb-3 list-decimal list-inside"></ol>
+                    <div id="revokeModalNote" class="hidden bg-yellow-900/20 border border-yellow-700/30 rounded-lg px-3 py-2 text-xs text-yellow-300 mb-3"></div>
+                    <div id="revokeModalCliBlock" class="hidden mb-3">
+                      <p class="text-xs text-gray-400 mb-1.5">Or revoke via CLI:</p>
+                      <pre id="revokeModalCliCode" class="bg-black/40 border border-border rounded-lg px-3 py-2 text-xs text-green-300 font-mono overflow-x-auto whitespace-pre"></pre>
+                    </div>
+                    <a id="revokeModalLink" href="#" target="_blank" rel="noopener" class="inline-flex items-center gap-2 px-4 py-2 bg-red-600 hover:bg-red-500 text-white rounded-xl text-sm font-medium transition">
+                      <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"/></svg>
+                      Open provider dashboard
+                    </a>
+                  </div>
+
+                  <!-- Phase 2: Check usage -->
+                  <div class="rounded-xl border border-orange-800/40 bg-orange-950/20 p-4">
+                    <div class="flex items-center gap-2 mb-3">
+                      <span class="text-xs font-bold text-orange-300 bg-orange-900/40 rounded-full px-2 py-0.5 shrink-0">2–15 min</span>
+                      <span class="text-xs font-semibold text-orange-200 uppercase tracking-wide">Urgent</span>
+                      <span class="text-sm font-semibold text-white ml-1">Check for active usage</span>
+                    </div>
+                    <p class="text-xs text-gray-400 mb-2">With the key revoked, check whether it was already used. Look at logs for requests you didn't make — especially at unusual times or from unknown IPs.</p>
+                    <p id="revokeUsageNote" class="text-xs text-gray-300 mb-3"></p>
+                    <a id="revokeUsageLink" href="#" target="_blank" rel="noopener" class="hidden inline-flex items-center gap-2 px-3 py-1.5 border border-orange-700/40 hover:border-orange-500/60 text-orange-300 hover:text-orange-200 rounded-lg text-xs font-medium transition">
+                      <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"/></svg>
+                      Open usage logs
+                    </a>
+                    <p class="text-xs text-gray-500 mt-2">If you see unauthorized usage: note the timestamps, IPs, and actions taken. Screenshot everything — you'll need this for any incident report or dispute.</p>
+                  </div>
+
+                  <!-- Phase 3: Remove from git history -->
+                  <div class="rounded-xl border border-yellow-800/40 bg-yellow-950/20 p-4">
+                    <div class="flex items-center gap-2 mb-3">
+                      <span class="text-xs font-bold text-yellow-300 bg-yellow-900/40 rounded-full px-2 py-0.5 shrink-0">15–30 min</span>
+                      <span class="text-xs font-semibold text-yellow-200 uppercase tracking-wide">Important</span>
+                      <span class="text-sm font-semibold text-white ml-1">Remove the key from git history</span>
+                    </div>
+                    <p class="text-xs text-gray-400 mb-3">Revoking the key doesn't remove it from your git history. If your repo is public, bots have already indexed it — but remove it anyway.</p>
+                    <pre class="bg-black/40 border border-border rounded-lg px-3 py-2 text-xs text-green-300 font-mono overflow-x-auto whitespace-pre mb-2">pip install git-filter-repo
+# Create replacements.txt with: EXPOSED_KEY==&gt;REDACTED
+git filter-repo --replace-text replacements.txt
+git reflog expire --expire=now --all
+git gc --prune=now --aggressive
+git push --force</pre>
+                    <p class="text-xs text-yellow-300/70">⚠ Force-pushing rewrites history. Everyone with a clone needs to re-clone after this.</p>
+                  </div>
+
+                  <!-- Phase 4: Prevention -->
+                  <div class="rounded-xl border border-blue-800/40 bg-blue-950/20 p-4">
+                    <div class="flex items-center gap-2 mb-3">
+                      <span class="text-xs font-bold text-blue-300 bg-blue-900/40 rounded-full px-2 py-0.5 shrink-0">30–60 min</span>
+                      <span class="text-xs font-semibold text-blue-200 uppercase tracking-wide">Important</span>
+                      <span class="text-sm font-semibold text-white ml-1">Add prevention — before writing another line of code</span>
+                    </div>
+                    <p class="text-xs text-gray-400 mb-3">Put guardrails in place so this can't happen again. A pre-commit hook catches secrets before they hit git.</p>
+                    <pre class="bg-black/40 border border-border rounded-lg px-3 py-2 text-xs text-green-300 font-mono overflow-x-auto whitespace-pre mb-2">pip install detect-secrets pre-commit
+# .pre-commit-config.yaml:
+repos:
+  - repo: https://github.com/Yelp/detect-secrets
+    rev: v1.4.0
+    hooks:
+      - id: detect-secrets
+pre-commit install</pre>
+                    <p class="text-xs text-gray-500">Pre-commit hooks block the next accidental commit. For runtime protection of keys your app uses, store them in VaultProof.</p>
+                  </div>
+
+                  <!-- Phase 5: Document -->
+                  <div class="rounded-xl border border-gray-700/40 bg-gray-900/20 p-4">
+                    <div class="flex items-center gap-2 mb-3">
+                      <span class="text-xs font-bold text-gray-300 bg-gray-800/60 rounded-full px-2 py-0.5 shrink-0">Done</span>
+                      <span class="text-sm font-semibold text-white ml-1">Document and report if needed</span>
+                    </div>
+                    <p class="text-xs text-gray-400 mb-2">If there was unauthorized usage involving customer data, payments, or internal systems, you may have notification obligations.</p>
+                    <ul class="text-xs text-gray-300 space-y-1 list-disc list-inside">
+                      <li>Note: what was exposed, when, and for how long</li>
+                      <li>Note: what unauthorized activity occurred (if any)</li>
+                      <li>Note: what data or systems were accessible via this key</li>
+                      <li>Notify: team members who may have downstream exposure</li>
+                      <li>Notify: affected customers if required by your terms or jurisdiction</li>
+                      <li>File: a dispute with the provider if fraudulent charges occurred</li>
+                    </ul>
+                  </div>
+
+                </div>
+
+                <!-- Sticky footer -->
+                <div class="px-6 py-4 border-t border-border shrink-0 flex items-center justify-between gap-3">
+                  <p class="text-xs text-gray-500">Mark as resolved once you've revoked the key above.</p>
+                  <button id="revokeConfirmBtn" onclick="confirmRevoked()" class="px-4 py-2 bg-green-600 hover:bg-green-500 text-white rounded-xl text-sm font-medium transition whitespace-nowrap">
                     I've revoked this key
                   </button>
                 </div>
@@ -1518,6 +1615,9 @@
           var stepsJson = escapeHtml(JSON.stringify(hInfo.revocationSteps || []));
           var noteText = escapeHtml(hInfo.revocationNote || '');
           var rotUrl = escapeHtml(f.rotationUrl || hInfo.rotationUrl || '');
+          var cliSteps = escapeHtml(hInfo.cliSteps || '');
+          var usageCheckUrl = escapeHtml(hInfo.usageCheckUrl || '');
+          var usageCheckNote = escapeHtml(hInfo.usageCheckNote || '');
 
           return '<div class="bg-card border border-border rounded-xl p-4 flex flex-col sm:flex-row sm:items-center gap-3" data-history-idx="' + idx + '">' +
             '<div class="flex-1 min-w-0">' +
@@ -1529,7 +1629,7 @@
             '</div>' +
             '<div class="flex items-center gap-2 flex-shrink-0">' +
               (ha === 'dismissed' ? '' :
-                '<button onclick="openRevokeModal(\'' + escapeJs(f.id) + '\', \'' + escapeJs(hName) + '\', ' + stepsJson + ', \'' + noteText + '\', \'' + rotUrl + '\')" class="px-3 py-1.5 bg-yellow-600 hover:bg-yellow-500 text-white rounded-lg text-xs font-medium transition whitespace-nowrap">Revoke + Rotate</button>' +
+                '<button onclick="openRevokeModal(\'' + escapeJs(f.id) + '\', \'' + escapeJs(hName) + '\', ' + stepsJson + ', \'' + noteText + '\', \'' + rotUrl + '\', \'' + cliSteps + '\', \'' + usageCheckUrl + '\', \'' + usageCheckNote + '\')" class="px-3 py-1.5 bg-red-600 hover:bg-red-500 text-white rounded-lg text-xs font-medium transition whitespace-nowrap">Revoke + Rotate</button>' +
                 '<button onclick="storeHistoryFinding(\'' + escapeJs(f.id) + '\')" class="px-3 py-1.5 bg-brand hover:bg-brand-hover text-white rounded-lg text-xs font-medium transition whitespace-nowrap">Store in VaultProof</button>'
               ) +
               (ha ? '' : '<button onclick="dismissHistoryFinding(\'' + escapeJs(f.id) + '\', this)" class="px-3 py-1.5 bg-gray-700 hover:bg-gray-600 text-gray-300 rounded-lg text-xs font-medium transition whitespace-nowrap">Dismiss</button>') +
@@ -1558,14 +1658,18 @@
 
     var _revokeModalFindingId = null;
 
-    function openRevokeModal(findingId, providerName, steps, note, url) {
+    function openRevokeModal(findingId, providerName, steps, note, url, cliSteps, usageCheckUrl, usageCheckNote) {
       _revokeModalFindingId = findingId;
-      document.getElementById('revokeModalTitle').textContent = 'Revoke ' + providerName + ' Key';
+      document.getElementById('revokeModalTitle').textContent = providerName + ' Key';
+
+      // Phase 1: revoke steps
       var stepsEl = document.getElementById('revokeModalSteps');
       var stepsArr = typeof steps === 'string' ? JSON.parse(steps) : (steps || []);
       stepsEl.innerHTML = stepsArr.map(function(s) {
         return '<li>' + escapeHtml(s) + '</li>';
       }).join('');
+
+      // Note
       var noteEl = document.getElementById('revokeModalNote');
       if (note) {
         noteEl.textContent = note;
@@ -1573,6 +1677,18 @@
       } else {
         noteEl.classList.add('hidden');
       }
+
+      // CLI block (AWS etc.)
+      var cliBlock = document.getElementById('revokeModalCliBlock');
+      var cliCode = document.getElementById('revokeModalCliCode');
+      if (cliSteps) {
+        cliCode.textContent = cliSteps;
+        cliBlock.classList.remove('hidden');
+      } else {
+        cliBlock.classList.add('hidden');
+      }
+
+      // Provider dashboard link
       var linkEl = document.getElementById('revokeModalLink');
       if (url) {
         linkEl.href = url;
@@ -1580,6 +1696,19 @@
       } else {
         linkEl.classList.add('hidden');
       }
+
+      // Phase 2: usage check
+      var usageNoteEl = document.getElementById('revokeUsageNote');
+      usageNoteEl.textContent = usageCheckNote || 'Check the provider\'s logs for requests you didn\'t make — especially at unusual times or from unknown IPs.';
+
+      var usageLinkEl = document.getElementById('revokeUsageLink');
+      if (usageCheckUrl) {
+        usageLinkEl.href = usageCheckUrl;
+        usageLinkEl.classList.remove('hidden');
+      } else {
+        usageLinkEl.classList.add('hidden');
+      }
+
       var modal = document.getElementById('revokeGuideModal');
       modal.style.display = 'flex';
       modal.classList.remove('hidden');

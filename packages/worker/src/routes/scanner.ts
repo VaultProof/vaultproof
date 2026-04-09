@@ -398,6 +398,14 @@ async function handleRevokeExecuteStep(
   if (!finding) {
     return Response.json({ error: 'Finding not found' }, { status: 404 });
   }
+  const { data: scan } = await supabase
+    .from('scan_results')
+    .select('user_id')
+    .eq('id', finding.scan_id)
+    .single();
+  if (!scan || scan.user_id !== user.userId) {
+    return Response.json({ error: 'Not authorized' }, { status: 403 });
+  }
   const adapter = getAdapter(session.provider);
   if (!adapter) {
     return Response.json({ error: 'Provider not found' }, { status: 400 });
@@ -472,6 +480,22 @@ async function handleRevokeComplete(
     return Response.json({ error: 'Session expired' }, { status: 401 });
   }
   const supabase = getSupabase(env);
+  const { data: finding } = await supabase
+    .from('scan_findings')
+    .select('scan_id, provider')
+    .eq('id', body.findingId)
+    .single();
+  if (!finding) {
+    return Response.json({ error: 'Finding not found' }, { status: 404 });
+  }
+  const { data: scan } = await supabase
+    .from('scan_results')
+    .select('user_id')
+    .eq('id', finding.scan_id)
+    .single();
+  if (!scan || scan.user_id !== user.userId) {
+    return Response.json({ error: 'Not authorized' }, { status: 403 });
+  }
   const { error } = await supabase
     .from('scan_findings')
     .update({ action: 'revoked' })
@@ -479,16 +503,9 @@ async function handleRevokeComplete(
   if (error) {
     return Response.json({ error: 'Failed to update finding' }, { status: 500 });
   }
-  const { data: finding } = await supabase
-    .from('scan_findings')
-    .select('scan_id, provider')
-    .eq('id', body.findingId)
-    .single();
-  if (finding) {
-    auditLog(env, user.userId, finding.scan_id, 'key_revoked', {
-      findingId: body.findingId, provider: finding.provider,
-    });
-  }
+  auditLog(env, user.userId, finding.scan_id, 'key_revoked', {
+    findingId: body.findingId, provider: finding.provider,
+  });
   return Response.json({ revoked: true, offerMigration: true });
 }
 

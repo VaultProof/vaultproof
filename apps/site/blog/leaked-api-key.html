@@ -1,0 +1,809 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<!-- Google Analytics -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-NE5RYX1WTF"></script>
+<script>window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments);}gtag('js',new Date());gtag('config','G-NE5RYX1WTF');</script>
+<link rel="icon" type="image/png" href="/favicon.png">
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>I Leaked My API Key. Now What? | VaultProof</title>
+<meta name="description" content="Step-by-step: what to do in the first 60 minutes after leaking an API key. Triage, revoke, assess damage — then make sure it never happens again.">
+<meta name="keywords" content="leaked API key, api key exposed, api key in github, what to do leaked api key, revoke api key, aws key leaked">
+<meta property="og:title" content="I Leaked My API Key. Now What? The 60-Minute Triage Guide.">
+<meta property="og:description" content="Bots find exposed API keys in under 11 minutes. Here's exactly what to do — and how to make sure it can't happen again.">
+<meta property="og:url" content="https://vaultproof.dev/blog/leaked-api-key">
+<meta property="og:type" content="article">
+<meta property="og:image" content="https://vaultproof.dev/ogimage.png">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="I Leaked My API Key. Now What? The 60-Minute Triage Guide.">
+<meta name="twitter:description" content="Bots find exposed API keys in under 11 minutes. Here's exactly what to do — and how to make sure it can't happen again.">
+<meta name="twitter:image" content="https://vaultproof.dev/ogimage.png">
+<link rel="canonical" href="https://vaultproof.dev/blog/leaked-api-key">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=Space+Grotesk:wght@400;500;600;700&family=Bebas+Neue&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg: #0a0a0a;
+    --surface: #111111;
+    --surface2: #181818;
+    --border: #222222;
+    --border2: #2e2e2e;
+    --red: #ff1744;
+    --red-dim: rgba(255,23,68,0.1);
+    --red-glow: rgba(255,23,68,0.04);
+    --orange: #ff6d00;
+    --orange-dim: rgba(255,109,0,0.1);
+    --yellow: #ffd600;
+    --green: #00e676;
+    --green-dim: rgba(0,230,118,0.1);
+    --text: #eeeeee;
+    --text-dim: #777777;
+    --text-muted: #333333;
+    --display: 'Bebas Neue', sans-serif;
+    --sans: 'Space Grotesk', sans-serif;
+    --mono: 'IBM Plex Mono', monospace;
+  }
+
+  html { scroll-behavior: smooth; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--sans);
+    line-height: 1.6;
+    overflow-x: hidden;
+  }
+
+  /* EMERGENCY TICKER */
+  .ticker-wrap {
+    background: var(--red);
+    overflow: hidden;
+    padding: 8px 0;
+  }
+
+  .ticker {
+    display: flex;
+    gap: 0;
+    white-space: nowrap;
+    animation: ticker 20s linear infinite;
+  }
+
+  .ticker-item {
+    font-family: var(--mono);
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 2px;
+    color: #000;
+    padding: 0 40px;
+  }
+
+  @keyframes ticker {
+    from { transform: translateX(0); }
+    to { transform: translateX(-50%); }
+  }
+
+  /* NAV */
+  nav {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 20px clamp(24px, 5vw, 80px);
+    border-bottom: 1px solid var(--border);
+  }
+
+  .logo {
+    font-family: var(--display);
+    font-size: 24px;
+    letter-spacing: 2px;
+    color: var(--text);
+    text-decoration: none;
+  }
+  .logo span { color: var(--red); }
+
+  .nav-cta {
+    background: var(--red);
+    color: #fff;
+    padding: 10px 24px;
+    font-family: var(--mono);
+    font-size: 12px;
+    font-weight: 600;
+    text-decoration: none;
+    letter-spacing: 1px;
+    transition: opacity 0.2s;
+  }
+  .nav-cta:hover { opacity: 0.85; }
+
+  /* HERO */
+  .hero {
+    padding: 80px clamp(24px, 5vw, 80px) 60px;
+    border-bottom: 1px solid var(--border);
+    position: relative;
+  }
+
+  .hero-time {
+    font-family: var(--mono);
+    font-size: 11px;
+    letter-spacing: 2px;
+    color: var(--red);
+    margin-bottom: 24px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .live-dot {
+    width: 8px; height: 8px;
+    background: var(--red);
+    border-radius: 50%;
+    animation: pulse 1s ease-in-out infinite;
+  }
+
+  @keyframes pulse {
+    0%, 100% { transform: scale(1); opacity: 1; }
+    50% { transform: scale(1.4); opacity: 0.6; }
+  }
+
+  h1 {
+    font-family: var(--display);
+    font-size: clamp(72px, 12vw, 160px);
+    line-height: 0.88;
+    letter-spacing: 2px;
+    margin-bottom: 8px;
+    text-transform: uppercase;
+  }
+
+  h1 .line-red { color: var(--red); }
+  h1 .line-dim { color: var(--text-muted); }
+
+  .hero-sub {
+    font-family: var(--display);
+    font-size: clamp(20px, 3vw, 36px);
+    letter-spacing: 3px;
+    color: var(--text-dim);
+    margin-bottom: 48px;
+    text-transform: uppercase;
+  }
+
+  .urgency-cards {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 1px;
+    background: var(--border);
+    border: 1px solid var(--border);
+    margin-bottom: 48px;
+  }
+
+  @media (max-width: 700px) {
+    .urgency-cards { grid-template-columns: 1fr; }
+  }
+
+  .urgency-card {
+    background: var(--surface);
+    padding: 28px 24px;
+    text-align: center;
+  }
+
+  .urgency-card .u-num {
+    font-family: var(--display);
+    font-size: 48px;
+    letter-spacing: 1px;
+    line-height: 1;
+    margin-bottom: 6px;
+  }
+
+  .urgency-card:nth-child(1) .u-num { color: var(--red); }
+  .urgency-card:nth-child(2) .u-num { color: var(--orange); }
+  .urgency-card:nth-child(3) .u-num { color: var(--yellow); }
+
+  .urgency-card .u-label {
+    font-family: var(--mono);
+    font-size: 11px;
+    color: var(--text-dim);
+    letter-spacing: 1px;
+    line-height: 1.4;
+  }
+
+  .hero-cta {
+    display: flex;
+    gap: 16px;
+    flex-wrap: wrap;
+    align-items: center;
+  }
+
+  .cta-emergency {
+    background: var(--red);
+    color: #fff;
+    padding: 16px 40px;
+    font-family: var(--sans);
+    font-size: 14px;
+    font-weight: 700;
+    text-decoration: none;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    transition: opacity 0.2s;
+  }
+  .cta-emergency:hover { opacity: 0.85; }
+
+  .cta-guide {
+    font-family: var(--mono);
+    font-size: 13px;
+    color: var(--text-dim);
+    text-decoration: none;
+    transition: color 0.2s;
+  }
+  .cta-guide:hover { color: var(--text); }
+
+  /* TRIAGE SECTION */
+  .triage {
+    padding: 80px clamp(24px, 5vw, 80px);
+    border-bottom: 1px solid var(--border);
+  }
+
+  .section-label {
+    font-family: var(--display);
+    font-size: 13px;
+    letter-spacing: 4px;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    margin-bottom: 16px;
+  }
+
+  h2 {
+    font-family: var(--display);
+    font-size: clamp(40px, 5vw, 64px);
+    letter-spacing: 2px;
+    line-height: 1;
+    margin-bottom: 48px;
+    text-transform: uppercase;
+  }
+
+  h2 span { color: var(--red); }
+
+  /* TRIAGE STEPS */
+  .triage-step {
+    display: grid;
+    grid-template-columns: 120px 1fr;
+    gap: 40px;
+    padding: 40px 0;
+    border-bottom: 1px solid var(--border);
+    align-items: start;
+  }
+
+  .triage-step:last-child { border-bottom: none; }
+
+  @media (max-width: 600px) {
+    .triage-step { grid-template-columns: 1fr; gap: 20px; }
+  }
+
+  .step-timer {
+    text-align: center;
+  }
+
+  .timer-ring {
+    width: 80px;
+    height: 80px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-direction: column;
+    margin: 0 auto 8px;
+    border: 2px solid;
+  }
+
+  .timer-ring.critical { border-color: var(--red); background: var(--red-dim); }
+  .timer-ring.urgent { border-color: var(--orange); background: var(--orange-dim); }
+  .timer-ring.important { border-color: var(--yellow); background: rgba(255,214,0,0.08); }
+  .timer-ring.complete { border-color: var(--green); background: var(--green-dim); }
+
+  .timer-num {
+    font-family: var(--display);
+    font-size: 22px;
+    letter-spacing: 0;
+    line-height: 1;
+  }
+
+  .timer-ring.critical .timer-num { color: var(--red); }
+  .timer-ring.urgent .timer-num { color: var(--orange); }
+  .timer-ring.important .timer-num { color: var(--yellow); }
+  .timer-ring.complete .timer-num { color: var(--green); }
+
+  .timer-unit {
+    font-family: var(--mono);
+    font-size: 9px;
+    letter-spacing: 1px;
+    color: var(--text-dim);
+  }
+
+  .timer-label {
+    font-family: var(--mono);
+    font-size: 9px;
+    letter-spacing: 1.5px;
+    color: var(--text-muted);
+    text-align: center;
+    text-transform: uppercase;
+  }
+
+  .step-content h3 {
+    font-family: var(--display);
+    font-size: 28px;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    margin-bottom: 12px;
+  }
+
+  .step-content p {
+    font-size: 15px;
+    color: var(--text-dim);
+    line-height: 1.65;
+    margin-bottom: 20px;
+  }
+
+  .step-content p strong { color: var(--text); }
+
+  .checklist {
+    list-style: none;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    margin-bottom: 20px;
+  }
+
+  .checklist li {
+    display: flex;
+    gap: 12px;
+    font-family: var(--mono);
+    font-size: 13px;
+    color: var(--text-dim);
+    align-items: flex-start;
+  }
+
+  .checklist li::before {
+    content: '□';
+    color: var(--red);
+    flex-shrink: 0;
+    font-size: 14px;
+  }
+
+  .checklist li span { color: var(--text); }
+
+  /* CODE SNIPPET */
+  .snippet {
+    background: #000;
+    border: 1px solid var(--border2);
+    padding: 20px 24px;
+    font-family: var(--mono);
+    font-size: 12px;
+    line-height: 1.7;
+    color: var(--text-dim);
+    overflow-x: auto;
+    margin-bottom: 20px;
+  }
+
+  .s-comment { color: var(--text-muted); }
+  .s-cmd { color: var(--text); }
+  .s-flag { color: var(--orange); }
+  .s-val { color: var(--green); }
+  .s-warn { color: var(--red); }
+
+  /* PREVENTION */
+  .prevention {
+    padding: 80px clamp(24px, 5vw, 80px);
+    border-bottom: 1px solid var(--border);
+    background: var(--surface);
+  }
+
+  .prevention-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 32px;
+    margin-top: 48px;
+  }
+
+  @media (max-width: 700px) {
+    .prevention-grid { grid-template-columns: 1fr; }
+  }
+
+  .prev-card {
+    background: var(--bg);
+    border: 1px solid var(--border);
+    padding: 32px;
+  }
+
+  .prev-card.highlight {
+    border-top: 2px solid var(--green);
+    background: rgba(0,230,118,0.02);
+  }
+
+  .prev-icon {
+    font-size: 28px;
+    margin-bottom: 16px;
+  }
+
+  .prev-card h3 {
+    font-family: var(--display);
+    font-size: 22px;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    margin-bottom: 10px;
+  }
+
+  .prev-card p {
+    font-size: 14px;
+    color: var(--text-dim);
+    line-height: 1.6;
+    margin-bottom: 16px;
+  }
+
+  .prev-card .verdict {
+    font-family: var(--mono);
+    font-size: 11px;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    padding: 4px 10px;
+    display: inline-block;
+  }
+
+  .verdict.partial { background: var(--orange-dim); color: var(--orange); }
+  .verdict.complete { background: var(--green-dim); color: var(--green); }
+
+  /* FINAL CTA */
+  .final {
+    padding: 100px clamp(24px, 5vw, 80px);
+    text-align: center;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .final::before {
+    content: '!';
+    position: absolute;
+    font-family: var(--display);
+    font-size: 80vw;
+    color: var(--red);
+    opacity: 0.02;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    pointer-events: none;
+    line-height: 1;
+  }
+
+  .final h2 {
+    font-size: clamp(36px, 6vw, 80px);
+    letter-spacing: 2px;
+    margin-bottom: 16px;
+    position: relative;
+  }
+
+  .final p {
+    font-size: 16px;
+    color: var(--text-dim);
+    margin-bottom: 40px;
+    position: relative;
+  }
+
+  .final .cta-emergency { font-size: 15px; padding: 18px 52px; position: relative; }
+
+  .final .sub-note {
+    font-family: var(--mono);
+    font-size: 12px;
+    color: var(--text-muted);
+    margin-top: 16px;
+    position: relative;
+  }
+
+  footer {
+    padding: 28px clamp(24px, 5vw, 80px);
+    border-top: 1px solid var(--border);
+    display: flex;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 16px;
+    font-family: var(--mono);
+    font-size: 12px;
+    color: var(--text-muted);
+  }
+
+  .footer-logo {
+    font-family: var(--display);
+    font-size: 18px;
+    letter-spacing: 2px;
+    color: var(--text);
+  }
+  .footer-logo span { color: var(--red); }
+
+  /* ENTRY ANIMATION */
+  @keyframes slam {
+    from { opacity: 0; transform: scale(1.05); }
+    to { opacity: 1; transform: scale(1); }
+  }
+
+  h1 { animation: slam 0.4s ease both 0.1s; }
+  .hero-sub { animation: slam 0.4s ease both 0.2s; }
+  .urgency-cards { animation: slam 0.4s ease both 0.3s; }
+</style>
+</head>
+<body>
+
+<!-- EMERGENCY TICKER -->
+<div class="ticker-wrap">
+  <div class="ticker">
+    <span class="ticker-item">⚠ BOTS SCAN GITHUB EVERY 11 MINUTES FOR EXPOSED KEYS</span>
+    <span class="ticker-item">⚠ IF YOUR KEY IS EXPOSED, ASSUME IT'S ALREADY BEEN USED</span>
+    <span class="ticker-item">⚠ ROTATE FIRST. INVESTIGATE SECOND.</span>
+    <span class="ticker-item">⚠ BOTS SCAN GITHUB EVERY 11 MINUTES FOR EXPOSED KEYS</span>
+    <span class="ticker-item">⚠ IF YOUR KEY IS EXPOSED, ASSUME IT'S ALREADY BEEN USED</span>
+    <span class="ticker-item">⚠ ROTATE FIRST. INVESTIGATE SECOND.</span>
+  </div>
+</div>
+
+<!-- NAV -->
+<nav>
+  <a href="https://vaultproof.dev" class="logo">VAULT<span>PROOF</span></a>
+  <a href="https://vaultproof.dev/app/login" class="nav-cta">Prevent the next one →</a>
+</nav>
+
+<!-- HERO -->
+<div class="hero">
+  <div class="hero-time">
+    <div class="live-dot"></div>
+    EMERGENCY TRIAGE GUIDE — LAST UPDATED APRIL 2026
+  </div>
+
+  <h1>
+    <div>I leaked</div>
+    <div class="line-red">my API</div>
+    <div class="line-dim">key.</div>
+  </h1>
+  <div class="hero-sub">The 60-minute response guide.</div>
+
+  <div class="urgency-cards">
+    <div class="urgency-card">
+      <div class="u-num">&lt;11</div>
+      <div class="u-label">minutes before bots<br>find your exposed key</div>
+    </div>
+    <div class="urgency-card">
+      <div class="u-num">277</div>
+      <div class="u-label">avg days to detect<br>a breach after exposure</div>
+    </div>
+    <div class="urgency-card">
+      <div class="u-num">$4.88M</div>
+      <div class="u-label">avg cost of a data<br>breach (IBM 2025)</div>
+    </div>
+  </div>
+
+  <div class="hero-cta">
+    <a href="#triage" class="cta-emergency">Go to the triage guide</a>
+    <a href="https://vaultproof.dev/app/login" class="cta-guide">// prevent this from happening again</a>
+  </div>
+</div>
+
+<!-- TRIAGE GUIDE -->
+<div class="triage" id="triage">
+  <div class="section-label">The 60-minute response</div>
+  <h2>Do this. <span>Right now.</span></h2>
+
+  <!-- STEP 1 -->
+  <div class="triage-step">
+    <div class="step-timer">
+      <div class="timer-ring critical">
+        <div class="timer-num">0–2</div>
+        <div class="timer-unit">min</div>
+      </div>
+      <div class="timer-label">Critical</div>
+    </div>
+    <div class="step-content">
+      <h3>Revoke the key. Right now.</h3>
+      <p>
+        <strong>Before you do anything else</strong> — even before you finish reading this — go revoke the exposed key.
+        Don't wait until you understand the full scope. Don't wait to see if it was actually used.
+        Assume it was found. Assume it's being used. Revoke it.
+      </p>
+      <ul class="checklist">
+        <li><span>OpenAI:</span> platform.openai.com → API Keys → Revoke</li>
+        <li><span>AWS:</span> IAM Console → Security credentials → Deactivate access key</li>
+        <li><span>Stripe:</span> Dashboard → Developers → API Keys → Roll key</li>
+        <li><span>Anthropic:</span> console.anthropic.com → API Keys → Revoke</li>
+        <li><span>GitHub PAT:</span> Settings → Developer Settings → Personal access tokens → Delete</li>
+      </ul>
+
+      <div class="snippet">
+<span class="s-comment"># AWS — revoke via CLI if you can't access console</span>
+<span class="s-cmd">aws iam update-access-key</span> \
+  <span class="s-flag">--access-key-id</span> <span class="s-val">AKIAIOSFODNN7EXAMPLE</span> \
+  <span class="s-flag">--status</span> <span class="s-warn">Inactive</span>
+
+<span class="s-comment"># Immediately create a replacement key</span>
+<span class="s-cmd">aws iam create-access-key</span> <span class="s-flag">--user-name</span> <span class="s-val">your-user</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- STEP 2 -->
+  <div class="triage-step">
+    <div class="step-timer">
+      <div class="timer-ring urgent">
+        <div class="timer-num">2–15</div>
+        <div class="timer-unit">min</div>
+      </div>
+      <div class="timer-label">Urgent</div>
+    </div>
+    <div class="step-content">
+      <h3>Check for active usage</h3>
+      <p>
+        With the key revoked, check whether it was already used.
+        Look at the logs for the service the key belonged to.
+        You're looking for requests you didn't make — especially at unusual times or from unusual IPs.
+      </p>
+      <ul class="checklist">
+        <li><span>OpenAI:</span> Check usage dashboard for unexplained spikes in tokens or requests</li>
+        <li><span>AWS:</span> CloudTrail → filter by Access Key ID → look for unauthorized API calls</li>
+        <li><span>Stripe:</span> Dashboard → Logs → filter by API key → look for unknown charges or payouts</li>
+        <li><span>GitHub:</span> Settings → Security log — look for auth events from unknown IPs</li>
+      </ul>
+      <p>
+        <strong>If you see unauthorized usage:</strong> note the timestamps, IPs, and actions taken.
+        You'll need this for any incident report or dispute. Screenshot everything now.
+      </p>
+    </div>
+  </div>
+
+  <!-- STEP 3 -->
+  <div class="triage-step">
+    <div class="step-timer">
+      <div class="timer-ring important">
+        <div class="timer-num">15–30</div>
+        <div class="timer-unit">min</div>
+      </div>
+      <div class="timer-label">Important</div>
+    </div>
+    <div class="step-content">
+      <h3>Remove the key from git history</h3>
+      <p>
+        Revoking the key doesn't remove it from your git history.
+        If your repo is public, bots have already indexed it — but remove it anyway.
+        If it's private, remove it before anyone else gains access.
+      </p>
+
+      <div class="snippet">
+<span class="s-comment"># Option 1: Use git-filter-repo (recommended)</span>
+<span class="s-cmd">pip install git-filter-repo</span>
+<span class="s-cmd">git filter-repo</span> <span class="s-flag">--replace-text</span> <span class="s-val">replacements.txt</span>
+
+<span class="s-comment"># In replacements.txt:</span>
+<span class="s-warn">sk-proj-Ab3xK9mNpQ...</span><span class="s-val">==>REDACTED_KEY</span>
+
+<span class="s-comment"># Option 2: BFG Repo-Cleaner (faster for large repos)</span>
+<span class="s-cmd">java -jar bfg.jar</span> <span class="s-flag">--replace-text</span> <span class="s-val">replacements.txt</span>
+<span class="s-cmd">git reflog expire</span> <span class="s-flag">--expire=now --all</span>
+<span class="s-cmd">git gc</span> <span class="s-flag">--prune=now --aggressive</span>
+<span class="s-cmd">git push</span> <span class="s-flag">--force</span>
+      </div>
+
+      <p><strong>Important:</strong> Force-pushing rewrites history. Everyone with a clone needs to re-clone after this. Tell your team.</p>
+    </div>
+  </div>
+
+  <!-- STEP 4 -->
+  <div class="triage-step">
+    <div class="step-timer">
+      <div class="timer-ring important">
+        <div class="timer-num">30–60</div>
+        <div class="timer-unit">min</div>
+      </div>
+      <div class="timer-label">Important</div>
+    </div>
+    <div class="step-content">
+      <h3>Add prevention — before you do anything else</h3>
+      <p>
+        Before you write another line of code, put the guardrails in place.
+        Add a pre-commit hook that catches secrets before they hit git.
+      </p>
+
+      <div class="snippet">
+<span class="s-comment"># Install detect-secrets pre-commit hook</span>
+<span class="s-cmd">pip install detect-secrets pre-commit</span>
+
+<span class="s-comment"># Create .pre-commit-config.yaml</span>
+<span class="s-val">repos:</span>
+<span class="s-val">  - repo: https://github.com/Yelp/detect-secrets</span>
+<span class="s-val">    rev: v1.4.0</span>
+<span class="s-val">    hooks:</span>
+<span class="s-val">      - id: detect-secrets</span>
+
+<span class="s-cmd">pre-commit install</span>
+
+<span class="s-comment"># Now a commit with a secret will be blocked</span>
+      </div>
+
+      <p>
+        Pre-commit hooks prevent the next accidental commit.
+        But they <strong>don't protect the key once your app is running.</strong>
+        That's a different problem — see below.
+      </p>
+    </div>
+  </div>
+
+  <!-- STEP 5 -->
+  <div class="triage-step">
+    <div class="step-timer">
+      <div class="timer-ring complete">
+        <div class="timer-num">Done</div>
+      </div>
+      <div class="timer-label">Recovery</div>
+    </div>
+    <div class="step-content">
+      <h3>Document and report if needed</h3>
+      <p>
+        If there was unauthorized usage — especially involving customer data, payments, or internal systems — you may have notification obligations depending on your jurisdiction and any customer contracts.
+      </p>
+      <ul class="checklist">
+        <li>Note: what was exposed, when, for how long</li>
+        <li>Note: what unauthorized activity occurred (if any)</li>
+        <li>Note: what data or systems were accessible via this key</li>
+        <li>Notify: team members who may have downstream exposure</li>
+        <li>Notify: affected customers if required under your terms or regulations</li>
+        <li>File: dispute with the service provider if fraudulent charges occurred</li>
+      </ul>
+    </div>
+  </div>
+</div>
+
+<!-- PREVENTION -->
+<div class="prevention">
+  <div class="section-label">After the triage</div>
+  <h2>Make sure this <span>never happens again.</span></h2>
+
+  <div class="prevention-grid">
+    <div class="prev-card">
+      <div class="prev-icon">🔒</div>
+      <h3>Pre-commit hooks</h3>
+      <p>Catch secrets before they're committed. detect-secrets, gitleaks, and trufflehog all work well. Stops the most common cause of leaks.</p>
+      <p>Doesn't help once the app is running. The key still exists as plaintext in your environment.</p>
+      <span class="verdict partial">Partial — prevents commits</span>
+    </div>
+    <div class="prev-card">
+      <div class="prev-icon">🗄️</div>
+      <h3>Secrets managers (Vault, Doppler)</h3>
+      <p>Encrypts keys at rest. Centralized access control. Audit logging. A real improvement over .env files.</p>
+      <p>Once your app retrieves the key, it becomes a plaintext string in memory. That's still vulnerable.</p>
+      <span class="verdict partial">Partial — protects at rest</span>
+    </div>
+    <div class="prev-card">
+      <div class="prev-icon">🔄</div>
+      <h3>Key rotation</h3>
+      <p>Regular rotation limits the window of exposure if a key is compromised. Combine with automatic rotation tooling.</p>
+      <p>The average enterprise rotates every 180 days. Breaches take 277 days to detect. The math still doesn't work.</p>
+      <span class="verdict partial">Partial — reduces window</span>
+    </div>
+    <div class="prev-card highlight">
+      <div class="prev-icon">🛡️</div>
+      <h3>Runtime protection (VaultProof)</h3>
+      <p>Splits the key before storage. A proxy reconstructs it only for the API call — milliseconds — then zeros it from memory. The full key never exists in your app, environment, or config.</p>
+      <p>A compromised dependency, a pushed .env, a supply chain attack — none of them can steal what doesn't exist.</p>
+      <span class="verdict complete">Complete — protects in use</span>
+    </div>
+  </div>
+</div>
+
+<!-- FINAL CTA -->
+<div class="final">
+  <h2>STOP THE NEXT<br><span style="color:var(--red)">LEAK.</span></h2>
+  <p>Protect your API keys at the moment they're used — not just at rest.<br>Free to start. 15 minutes. Works alongside what you already have.</p>
+  <a href="https://vaultproof.dev/app/login" class="cta-emergency">Protect your keys — free</a>
+  <p class="sub-note">// npm install @vaultproof/sdk &nbsp;·&nbsp; pip install vaultproof</p>
+</div>
+
+<footer>
+  <div class="footer-logo">VAULT<span>PROOF</span></div>
+  <p>The key never exists as plaintext in your app.</p>
+  <p>© 2026 VaultProof · <a href="https://vaultproof.dev" style="color:inherit">vaultproof.dev</a></p>
+</footer>
+
+</body>
+</html>
