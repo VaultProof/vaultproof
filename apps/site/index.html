@@ -203,43 +203,55 @@
             66% { transform: translate(-30px, 40px) scale(0.92); }
         }
 
-        /* Nav dropdowns */
+        /* Nav dropdowns — JS-controlled (.open class), no CSS hover */
         .nav-group { position: relative; }
         .nav-group-btn {
             display: inline-flex; align-items: center; gap: 4px;
             font-size: 0.875rem; color: #9ca3af; background: none;
-            border: none; cursor: pointer; padding: 0;
-            transition: color 0.15s; font-family: inherit;
+            border: none; cursor: pointer; padding: 4px 2px;
+            transition: color 0.15s; font-family: inherit; user-select: none;
         }
-        .nav-group-btn:hover { color: #fff; }
-        .nav-group-btn svg { transition: transform 0.2s; }
-        .nav-group:hover .nav-group-btn svg,
-        .nav-group:focus-within .nav-group-btn svg { transform: rotate(180deg); }
+        .nav-group-btn:hover, .nav-group.open .nav-group-btn { color: #fff; }
+        .nav-group-btn svg { transition: transform 0.2s; flex-shrink: 0; }
+        .nav-group.open .nav-group-btn svg { transform: rotate(180deg); }
         .nav-dropdown {
-            position: absolute; top: calc(100% + 14px); left: 50%;
-            transform: translateX(-50%) translateY(-6px);
-            background: #111118; border: 1px solid rgba(30,30,46,0.9);
-            border-radius: 12px; padding: 6px; min-width: 180px;
+            position: absolute; top: calc(100% + 10px); left: 50%;
+            transform: translateX(-50%) translateY(-4px);
+            background: rgba(13,13,20,0.96);
+            backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
+            border: 1px solid rgba(99,102,241,0.15);
+            border-radius: 14px; padding: 6px; min-width: 176px;
             opacity: 0; visibility: hidden; pointer-events: none;
             transition: opacity 0.15s ease, transform 0.15s ease, visibility 0.15s;
-            box-shadow: 0 8px 32px rgba(0,0,0,0.5), 0 0 0 1px rgba(99,102,241,0.08);
+            box-shadow: 0 0 0 1px rgba(99,102,241,0.06), 0 8px 32px rgba(0,0,0,0.6), 0 0 24px rgba(99,102,241,0.08);
             z-index: 100;
         }
-        .nav-group:hover .nav-dropdown,
-        .nav-group:focus-within .nav-dropdown {
+        .nav-group.open .nav-dropdown {
             opacity: 1; visibility: visible; pointer-events: auto;
             transform: translateX(-50%) translateY(0);
         }
         .nav-dropdown a {
-            display: flex; align-items: center; gap: 8px;
-            padding: 8px 12px; border-radius: 8px; font-size: 0.8125rem;
+            display: flex; align-items: center;
+            padding: 8px 12px; border-radius: 9px; font-size: 0.8125rem;
             color: #9ca3af; text-decoration: none;
-            transition: color 0.15s, background 0.15s;
-            white-space: nowrap;
+            transition: color 0.12s, background 0.12s;
+            white-space: nowrap; font-weight: 450;
         }
-        .nav-dropdown a:hover { color: #fff; background: rgba(255,255,255,0.05); }
-        .nav-dropdown a .nav-icon { font-size: 0.9em; opacity: 0.8; }
-        .nav-dropdown-divider { height: 1px; background: rgba(30,30,46,1); margin: 4px 0; }
+        .nav-dropdown a:hover { color: #fff; background: rgba(99,102,241,0.08); }
+        .nav-dropdown-divider { height: 1px; background: rgba(30,30,46,0.8); margin: 4px 0; }
+        /* Scanner button in nav */
+        .btn-nav-scanner {
+            display: inline-flex; align-items: center; gap: 6px;
+            padding: 0.35rem 1rem; border-radius: 9999px;
+            font-size: 0.8125rem; font-weight: 500; cursor: pointer;
+            border: 1px solid rgba(6,182,212,0.35);
+            color: #22d3ee; background: rgba(6,182,212,0.06);
+            transition: background 0.2s, border-color 0.2s, color 0.2s;
+            text-decoration: none; white-space: nowrap;
+        }
+        .btn-nav-scanner:hover {
+            background: rgba(6,182,212,0.12); border-color: rgba(6,182,212,0.55); color: #67e8f9;
+        }
 
         /* Terminal cursor blink */
         .cursor {
@@ -597,34 +609,28 @@
             <div class="hidden md:flex items-center gap-5">
                 <!-- Product dropdown -->
                 <div class="nav-group">
-                    <button class="nav-group-btn">
+                    <button class="nav-group-btn" aria-haspopup="true" aria-expanded="false">
                         Product
                         <svg width="11" height="11" viewBox="0 0 12 12" fill="currentColor"><path d="M6 8L2 4h8z"/></svg>
                     </button>
                     <div class="nav-dropdown" role="menu">
-                        <a href="/agents" role="menuitem"><span class="nav-icon">🤖</span> AI Agents</a>
-                        <a href="/compare" role="menuitem"><span class="nav-icon">⚖️</span> Compare</a>
-                        <div class="nav-dropdown-divider"></div>
-                        <a href="/scan" role="menuitem" style="color:#22d3ee"><span class="nav-icon">🔍</span> Free Scanner</a>
+                        <a href="/agents" role="menuitem">AI Agents</a>
+                        <a href="/compare" role="menuitem">Compare</a>
+                        <a href="/changelog" role="menuitem">Changelog</a>
                     </div>
                 </div>
-                <!-- Learn dropdown -->
-                <div class="nav-group">
-                    <button class="nav-group-btn">
-                        Learn
-                        <svg width="11" height="11" viewBox="0 0 12 12" fill="currentColor"><path d="M6 8L2 4h8z"/></svg>
-                    </button>
-                    <div class="nav-dropdown" role="menu">
-                        <a href="/docs" role="menuitem"><span class="nav-icon">📖</span> Docs</a>
-                        <a href="/guides" role="menuitem"><span class="nav-icon">🗺️</span> Guides</a>
-                        <a href="/blog" role="menuitem"><span class="nav-icon">✍️</span> Insights</a>
-                    </div>
-                </div>
+                <a href="/docs" class="text-sm text-gray-400 hover:text-white transition-colors">Docs</a>
+                <a href="/guides" class="text-sm text-gray-400 hover:text-white transition-colors">Guides</a>
+                <a href="/blog" class="text-sm text-gray-400 hover:text-white transition-colors">Blog</a>
                 <a href="#pricing" class="text-sm text-gray-400 hover:text-white transition-colors">Pricing</a>
                 <a href="/app/login" class="nav-dashboard text-sm text-gray-400 hover:text-white transition-colors" style="display:none">Dashboard</a>
             </div>
 
-            <div class="hidden md:flex items-center">
+            <div class="hidden md:flex items-center gap-3">
+                <a href="/scan" class="btn-nav-scanner">
+                    <svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+                    Free Scanner
+                </a>
                 <a href="/app/login" class="btn-creative">Sign Up</a>
             </div>
 
@@ -636,19 +642,18 @@
 
         <!-- Mobile menu -->
         <div id="mobileMenu" class="mobile-menu flex-col gap-1 mt-2 max-w-5xl mx-auto bg-vp-surface/95 backdrop-blur-xl border border-vp-border/60 rounded-2xl px-4 py-4 md:hidden shadow-lg shadow-black/20">
-            <p class="text-xs font-semibold text-gray-600 uppercase tracking-wider px-2 pb-1">Product</p>
-            <a href="/agents" class="text-sm text-gray-400 hover:text-white transition-colors py-2 px-2 rounded-lg hover:bg-white/5 flex items-center gap-2">🤖 AI Agents</a>
-            <a href="/compare" class="text-sm text-gray-400 hover:text-white transition-colors py-2 px-2 rounded-lg hover:bg-white/5 flex items-center gap-2">⚖️ Compare</a>
-            <a href="/scan" class="text-sm font-medium py-2 px-2 rounded-lg hover:bg-white/5 flex items-center gap-2" style="color:#22d3ee">🔍 Free Scanner</a>
-            <div class="my-2 border-t border-vp-border/40"></div>
-            <p class="text-xs font-semibold text-gray-600 uppercase tracking-wider px-2 pb-1">Learn</p>
-            <a href="/docs" class="text-sm text-gray-400 hover:text-white transition-colors py-2 px-2 rounded-lg hover:bg-white/5 flex items-center gap-2">📖 Docs</a>
-            <a href="/guides" class="text-sm text-gray-400 hover:text-white transition-colors py-2 px-2 rounded-lg hover:bg-white/5 flex items-center gap-2">🗺️ Guides</a>
-            <a href="/blog" class="text-sm text-gray-400 hover:text-white transition-colors py-2 px-2 rounded-lg hover:bg-white/5 flex items-center gap-2">✍️ Insights</a>
-            <div class="my-2 border-t border-vp-border/40"></div>
+            <a href="/agents" class="text-sm text-gray-400 hover:text-white transition-colors py-2 px-2 rounded-lg hover:bg-white/5">AI Agents</a>
+            <a href="/compare" class="text-sm text-gray-400 hover:text-white transition-colors py-2 px-2 rounded-lg hover:bg-white/5">Compare</a>
+            <a href="/changelog" class="text-sm text-gray-400 hover:text-white transition-colors py-2 px-2 rounded-lg hover:bg-white/5">Changelog</a>
+            <a href="/docs" class="text-sm text-gray-400 hover:text-white transition-colors py-2 px-2 rounded-lg hover:bg-white/5">Docs</a>
+            <a href="/guides" class="text-sm text-gray-400 hover:text-white transition-colors py-2 px-2 rounded-lg hover:bg-white/5">Guides</a>
+            <a href="/blog" class="text-sm text-gray-400 hover:text-white transition-colors py-2 px-2 rounded-lg hover:bg-white/5">Blog</a>
             <a href="#pricing" class="text-sm text-gray-400 hover:text-white transition-colors py-2 px-2 rounded-lg hover:bg-white/5">Pricing</a>
             <a href="/app/login" class="nav-dashboard text-sm text-gray-400 hover:text-white transition-colors py-2 px-2 rounded-lg hover:bg-white/5" style="display:none">Dashboard</a>
-            <a href="/app/login" class="btn-creative text-center mt-2 py-2.5 px-5">Sign Up</a>
+            <div class="mt-2 flex flex-col gap-2">
+                <a href="/scan" class="btn-nav-scanner justify-center py-2.5">Free Scanner</a>
+                <a href="/app/login" class="btn-creative text-center py-2.5 px-5">Sign Up</a>
+            </div>
         </div>
     </nav>
 
@@ -671,12 +676,6 @@
                 <a href="https://github.com/VaultProof/vaultproof" target="_blank" rel="noopener" class="btn-hero-ghost px-5 sm:px-7 py-3 sm:py-4 gap-2 text-sm sm:text-base">
                     <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0024 12c0-6.63-5.37-12-12-12z"/></svg>
                     GitHub
-                </a>
-            </div>
-            <div class="w-full flex justify-center mt-4 reveal delay-3">
-                <a href="/scan" class="btn-hero-ghost px-6 sm:px-8 py-3 text-sm sm:text-base gap-2 flex items-center">
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
-                    Free API key scanner
                 </a>
             </div>
         </div>
@@ -1439,6 +1438,40 @@
         document.getElementById('mobileToggle').addEventListener('click', function() {
             document.getElementById('mobileMenu').classList.toggle('open');
         });
+
+        // Nav dropdowns — click to open, click outside to close
+        (function() {
+            var groups = document.querySelectorAll('.nav-group');
+
+            function closeAll() {
+                groups.forEach(function(g) {
+                    g.classList.remove('open');
+                    var btn = g.querySelector('.nav-group-btn');
+                    if (btn) btn.setAttribute('aria-expanded', 'false');
+                });
+            }
+
+            groups.forEach(function(group) {
+                var btn = group.querySelector('.nav-group-btn');
+                btn.addEventListener('click', function(e) {
+                    e.stopPropagation();
+                    var isOpen = group.classList.contains('open');
+                    closeAll();
+                    if (!isOpen) {
+                        group.classList.add('open');
+                        btn.setAttribute('aria-expanded', 'true');
+                    }
+                });
+            });
+
+            // Close on click outside
+            document.addEventListener('click', closeAll);
+
+            // Close on Escape
+            document.addEventListener('keydown', function(e) {
+                if (e.key === 'Escape') closeAll();
+            });
+        })();
 
         // Scroll reveal with IntersectionObserver
         const revealObserver = new IntersectionObserver(function(entries) {
