@@ -184,6 +184,10 @@
           <div class="stat-label">Visitors Today</div>
         </div>
         <div class="stat-card">
+          <div class="stat-value" id="a-ips-today">-</div>
+          <div class="stat-label">Unique IPs Today</div>
+        </div>
+        <div class="stat-card">
           <div class="stat-value" id="a-views-range">-</div>
           <div class="stat-label" id="a-views-range-label">Views (30d)</div>
         </div>
@@ -1183,6 +1187,7 @@ async function loadAnalytics() {
     // Overview cards
     document.getElementById('a-views-today').textContent = overview.viewsToday.toLocaleString();
     document.getElementById('a-visitors-today').textContent = overview.visitorsToday.toLocaleString();
+    document.getElementById('a-ips-today').textContent = (overview.uniqueIpsToday ?? 0).toLocaleString();
     document.getElementById('a-views-week').textContent = overview.viewsWeek.toLocaleString();
     document.getElementById('a-signups-week').textContent = overview.signupsWeek.toLocaleString();
     document.getElementById('a-signups-today').textContent = overview.signupsToday.toLocaleString();

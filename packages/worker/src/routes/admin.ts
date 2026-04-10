@@ -170,12 +170,17 @@ async function handleOverview(request: Request, env: Env): Promise<Response> {
   ]);
 
   const uniqueVisitors = new Set<string>();
+  const uniqueIps = new Set<string>();
   for (const row of visitorsTodayRes.data || []) {
+    let ipHash: string | null = null;
     try {
       const meta = typeof row.metadata === 'string' ? JSON.parse(row.metadata) : row.metadata;
-      if (meta?.ip_hash) { uniqueVisitors.add(meta.ip_hash); continue; }
+      if (meta?.ip_hash) ipHash = meta.ip_hash;
     } catch {}
+    if (ipHash) uniqueIps.add(ipHash);
+    // Prefer session_id for visitor dedup (per-browser, matches GA methodology)
     if (row.session_id) uniqueVisitors.add(row.session_id);
+    else if (ipHash) uniqueVisitors.add(ipHash);
   }
 
   return Response.json({
@@ -183,6 +188,7 @@ async function handleOverview(request: Request, env: Env): Promise<Response> {
     viewsWeek: viewsWeekRes.count ?? 0,
     viewsMonth: viewsMonthRes.count ?? 0,
     visitorsToday: uniqueVisitors.size,
+    uniqueIpsToday: uniqueIps.size,
     signupsToday: signupsTodayRes.count ?? 0,
     signupsWeek: signupsWeekRes.count ?? 0,
     signupsMonth: signupsMonthRes.count ?? 0,
@@ -346,13 +352,14 @@ async function handleTraffic(request: Request, env: Env): Promise<Response> {
     const day = e.created_at.slice(0, 10);
     if (!dailyMap[day]) dailyMap[day] = { views: 0, visitors: new Set() };
     dailyMap[day].views++;
-    // Prefer ip_hash for dedup, fall back to session_id
-    let visitorId: string | null = null;
-    try {
-      const meta = typeof e.metadata === 'string' ? JSON.parse(e.metadata) : e.metadata;
-      if (meta?.ip_hash) visitorId = meta.ip_hash;
-    } catch {}
-    if (!visitorId) visitorId = e.session_id;
+    // Prefer session_id for visitor dedup (per-browser, matches GA methodology)
+    let visitorId: string | null = e.session_id || null;
+    if (!visitorId) {
+      try {
+        const meta = typeof e.metadata === 'string' ? JSON.parse(e.metadata) : e.metadata;
+        if (meta?.ip_hash) visitorId = meta.ip_hash;
+      } catch {}
+    }
     if (visitorId) dailyMap[day].visitors.add(visitorId);
   }
 
