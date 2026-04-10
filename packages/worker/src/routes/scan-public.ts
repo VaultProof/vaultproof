@@ -16,12 +16,245 @@ const KEY_PATTERNS_LOCAL = KEY_PATTERNS.map(({ pattern, provider }) => ({
   provider,
 }));
 
-const MAX_FILES = 50;            // reduced to leave headroom for commit fetches
+const MAX_FILES = 500;
 const MAX_CONCURRENT_FETCHES = 20;
-const MAX_COMMITS = 20;          // last N commits to scan for history leaks
-const MAX_FINDINGS = 200;
+const MAX_COMMITS = 50;
+const MAX_FINDINGS = 500;
 const RATE_LIMIT = 10;
 const RATE_LIMIT_TTL = 3600;
+const HISTORY_SCAN_TIMEOUT_MS = 25_000;
+
+function createNdjsonStream(): { stream: ReadableStream<Uint8Array>; write: (obj: unknown) => void; close: () => void } {
+  let controller!: ReadableStreamDefaultController<Uint8Array>;
+  const encoder = new TextEncoder();
+  const stream = new ReadableStream<Uint8Array>({
+    start(c) { controller = c; },
+  });
+  let closed = false;
+  return {
+    stream,
+    write(obj: unknown) {
+      if (closed) return;
+      try { controller.enqueue(encoder.encode(JSON.stringify(obj) + '\n')); } catch { /* controller errored */ }
+    },
+    close() {
+      if (closed) return;
+      closed = true;
+      try { controller.close(); } catch { /* already closed */ }
+    },
+  };
+}
+
+interface RiskyFilePattern {
+  pattern: RegExp;
+  title: string;
+  description: string;
+  severity: 'HIGH' | 'MEDIUM';
+}
+
+const RISKY_FILE_PATTERNS: RiskyFilePattern[] = [
+  {
+    pattern: /(^|\/)\.env(\.(?!example$|sample$|template$|dist$)[a-zA-Z0-9_-]+)?$/,
+    title: 'Committed .env file',
+    description: 'Environment files often contain live credentials. Add to .gitignore and rotate any leaked values.',
+    severity: 'HIGH',
+  },
+  {
+    // Private keys only — exclude .pub (public keys are safe to commit)
+    pattern: /(^|\/)(id_rsa|id_dsa|id_ecdsa|id_ed25519)$/,
+    title: 'Committed SSH private key',
+    description: 'SSH private keys grant server access. Rotate immediately and remove from git history.',
+    severity: 'HIGH',
+  },
+  {
+    pattern: /\.(pem|key|p12|pfx|asc|gpg)$/i,
+    title: 'Committed cryptographic key file',
+    description: 'Key files are rarely safe to commit. Rotate and remove from history.',
+    severity: 'HIGH',
+  },
+  {
+    pattern: /(^|\/)\.aws\/(credentials|config)$/,
+    title: 'Committed AWS credentials',
+    description: 'AWS credentials grant cloud access. Rotate immediately and remove from history.',
+    severity: 'HIGH',
+  },
+  {
+    pattern: /(gcp-key|gcloud-service-key|service-account|firebase-adminsdk-[^/]+)\.json$/,
+    title: 'Committed cloud service account',
+    description: 'Service account JSONs grant cloud access. Rotate and remove from history.',
+    severity: 'HIGH',
+  },
+  {
+    // *.dump and *.bak are binary dumps — almost always unintentional
+    pattern: /\.(dump|bak)$/i,
+    title: 'Committed database dump',
+    description: 'Database dumps often contain PII, secrets, or live data. Remove from the repo.',
+    severity: 'HIGH',
+  },
+  {
+    // *.sql files are often migrations/fixtures — flag as MEDIUM, not HIGH
+    pattern: /\.sql$/i,
+    title: 'Committed SQL file',
+    description: 'SQL files may contain sensitive schema or seed data. Verify no credentials are hardcoded.',
+    severity: 'MEDIUM',
+  },
+];
+
+function detectRiskyFiles(filePaths: string[]): Finding[] {
+  const findings: Finding[] = [];
+  for (const path of filePaths) {
+    for (const { pattern, title, description, severity } of RISKY_FILE_PATTERNS) {
+      if (pattern.test(path)) {
+        findings.push({
+          category: 'file',
+          provider: 'risky-file',
+          providerName: title,
+          file: path,
+          line: 1,
+          maskedValue: '',
+          severity,
+          source: 'current',
+          title,
+          description,
+        });
+        break; // one finding per file; don't double-match
+      }
+    }
+  }
+  return findings;
+}
+
+interface CodeSmellPattern {
+  pattern: RegExp;
+  title: string;
+  description: string;
+  fileMatcher?: RegExp; // if present, only apply to files matching this regex
+}
+
+const CODE_SMELL_PATTERNS: CodeSmellPattern[] = [
+  {
+    pattern: /\beval\s*\(/,
+    title: 'Use of eval()',
+    description: 'eval() executes arbitrary strings as code. Use JSON.parse or a safer alternative.',
+    fileMatcher: /\.(js|jsx|ts|tsx|py)$/i,
+  },
+  {
+    pattern: /new\s+Function\s*\(/,
+    title: 'Dynamic code via Function()',
+    description: 'The Function constructor evaluates strings as code — same risk as eval().',
+    fileMatcher: /\.(js|jsx|ts|tsx)$/i,
+  },
+  {
+    pattern: /\.innerHTML\s*=/,
+    title: 'Unsafe innerHTML assignment',
+    description: 'Assigning unescaped strings to innerHTML enables XSS. Use textContent or a sanitizer.',
+    fileMatcher: /\.(js|jsx|ts|tsx|html)$/i,
+  },
+  {
+    pattern: /dangerouslySetInnerHTML/,
+    title: 'dangerouslySetInnerHTML in React',
+    description: 'Bypasses React escaping. Only use with strictly sanitized input.',
+    fileMatcher: /\.(js|jsx|ts|tsx)$/i,
+  },
+  {
+    pattern: /\b(md5|MD5|sha1|SHA1)\s*\(/,
+    title: 'Weak hash function',
+    description: 'MD5 and SHA1 are broken for security. Use SHA-256 or better.',
+  },
+  {
+    pattern: /\b(DES|RC4)\b/,
+    title: 'Weak cipher',
+    description: 'DES and RC4 are broken. Use AES-256-GCM or ChaCha20-Poly1305.',
+  },
+  {
+    pattern: /Access-Control-Allow-Origin[^\n]{0,50}(["']\*["']|\*\s*$)/,
+    title: 'CORS wildcard',
+    description: 'Allowing all origins defeats CORS protection for authenticated endpoints.',
+  },
+  {
+    pattern: /(['"])\s*SELECT\b[^'"]*\1\s*\+/,
+    title: 'SQL string concatenation',
+    description: 'Concatenating user input into SQL strings enables injection. Use parameterized queries.',
+    fileMatcher: /\.(js|jsx|ts|tsx|py|java|go|rb|php)$/i,
+  },
+];
+
+function scanCodeSmells(lines: string[], filePath: string): Finding[] {
+  const findings: Finding[] = [];
+  for (let i = 0; i < lines.length; i++) {
+    const line = lines[i];
+    if (line.length > 2000) continue;
+    for (const { pattern, title, description, fileMatcher } of CODE_SMELL_PATTERNS) {
+      if (fileMatcher && !fileMatcher.test(filePath)) continue;
+      if (pattern.test(line)) {
+        findings.push({
+          category: 'code',
+          provider: 'code-smell',
+          providerName: title,
+          file: filePath,
+          line: i + 1,
+          maskedValue: '',
+          severity: 'MEDIUM',
+          source: 'current',
+          title,
+          description,
+        });
+      }
+    }
+  }
+  return findings;
+}
+
+interface HygieneCheck {
+  matchers: RegExp[];       // any of these matching a tree path means the file exists
+  title: string;
+  description: string;
+}
+
+const HYGIENE_CHECKS: HygieneCheck[] = [
+  {
+    matchers: [/^\.gitignore$/],
+    title: 'No .gitignore file',
+    description: "Without .gitignore, secrets accidentally committed can't be excluded from future commits.",
+  },
+  {
+    matchers: [/^LICENSE(\.md|\.txt)?$/i, /^COPYING$/i],
+    title: 'No LICENSE file',
+    description: 'Unclear licensing blocks commercial and open-source reuse of this project.',
+  },
+  {
+    matchers: [/^SECURITY\.md$/i, /^\.github\/SECURITY\.md$/i, /^docs\/SECURITY\.md$/i],
+    title: 'No security policy',
+    description: 'SECURITY.md gives users a clear way to report vulnerabilities.',
+  },
+  {
+    matchers: [/^README(\.md|\.rst|\.txt|\.org)?$/i],
+    title: 'No README',
+    description: 'Hurts discoverability and user trust.',
+  },
+];
+
+function detectHygieneIssues(allTreePaths: string[]): Finding[] {
+  const findings: Finding[] = [];
+  for (const check of HYGIENE_CHECKS) {
+    const exists = allTreePaths.some((path) => check.matchers.some((m) => m.test(path)));
+    if (!exists) {
+      findings.push({
+        category: 'hygiene',
+        provider: 'hygiene',
+        providerName: check.title,
+        file: '',
+        line: 0,
+        maskedValue: '',
+        severity: 'INFO',
+        source: 'current',
+        title: check.title,
+        description: check.description,
+      });
+    }
+  }
+  return findings;
+}
 
 async function checkScanRateLimit(env: Env, ip: string): Promise<boolean> {
   const key = `rl:scan:pub:${ip}`;
@@ -49,17 +282,22 @@ function maskKey(value: string): string {
   return prefix + '...XXXX';
 }
 
+type FindingCategory = 'secret' | 'file' | 'code' | 'hygiene';
+
 interface Finding {
+  category: FindingCategory;
   provider: string;
   providerName: string;
   file: string;
   line: number;
   maskedValue: string;
-  severity: 'CRITICAL' | 'HIGH';
+  severity: 'CRITICAL' | 'HIGH' | 'MEDIUM' | 'INFO';
   source: 'current' | 'history';
   commitSha?: string;
   commitMessage?: string;
   commitDate?: string;
+  title?: string;
+  description?: string;
 }
 
 interface ScanContext {
@@ -84,7 +322,7 @@ function scanLines(lines: string[], filePath: string, ctx: ScanContext): Finding
         const value = rawValue.replace(/^["']|["']$/g, '').trim();
         const provider = ENV_VAR_MAP[varName];
         if (provider && shannonEntropy(value) >= MIN_ENTROPY) {
-          findings.push({ provider, providerName: PROVIDER_NAMES[provider] || provider, file: filePath, line: i + 1, maskedValue: maskKey(value), severity: 'CRITICAL', ...ctx });
+          findings.push({ category: 'secret', provider, providerName: PROVIDER_NAMES[provider] || provider, file: filePath, line: i + 1, maskedValue: maskKey(value), severity: 'CRITICAL', ...ctx });
         }
       }
     }
@@ -94,7 +332,7 @@ function scanLines(lines: string[], filePath: string, ctx: ScanContext): Finding
       if (match) {
         const value = match[0];
         if (shannonEntropy(stripKeyPrefix(value)) >= MIN_ENTROPY) {
-          findings.push({ provider, providerName: PROVIDER_NAMES[provider] || provider, file: filePath, line: i + 1, maskedValue: maskKey(value), severity: 'CRITICAL', ...ctx });
+          findings.push({ category: 'secret', provider, providerName: PROVIDER_NAMES[provider] || provider, file: filePath, line: i + 1, maskedValue: maskKey(value), severity: 'CRITICAL', ...ctx });
         }
       }
     }
@@ -104,7 +342,11 @@ function scanLines(lines: string[], filePath: string, ctx: ScanContext): Finding
 }
 
 function scanFileContent(content: string, filePath: string): Finding[] {
-  return scanLines(content.split('\n'), filePath, { source: 'current' });
+  const lines = content.split('\n');
+  return [
+    ...scanLines(lines, filePath, { source: 'current' }),
+    ...scanCodeSmells(lines, filePath),
+  ];
 }
 
 // Scan the `+` lines (additions) in a git patch for a single file.
@@ -120,13 +362,13 @@ function scanPatch(patch: string, filePath: string, commitSha: string, commitMes
 
 const GITHUB_API_PREFIX = 'https://api.github.com/';
 
-async function scanHistory(repo: string, env: Env): Promise<{ findings: Finding[]; commitsScanned: number }> {
+async function scanHistory(repo: string, env: Env, onProgress?: (done: number, total: number) => void): Promise<{ findings: Finding[]; commitsScanned: number }> {
   const findings: Finding[] = [];
   const headers = ghHeaders(env);
 
-  // 15-second hard budget for the entire history scan
+  // 25-second hard budget for the entire history scan
   const abort = new AbortController();
-  const timer = setTimeout(() => abort.abort(), 15_000);
+  const timer = setTimeout(() => abort.abort(), HISTORY_SCAN_TIMEOUT_MS);
 
   try {
     // Fetch commit list
@@ -140,6 +382,8 @@ async function scanHistory(repo: string, env: Env): Promise<{ findings: Finding[
     if (!Array.isArray(commits) || commits.length === 0) return { findings, commitsScanned: 0 };
 
     // Fetch each commit's detail (contains file patches) in parallel batches of 10
+    let done = 0;
+    const total = commits.length;
     for (let i = 0; i < commits.length; i += 10) {
       if (abort.signal.aborted) break;
       const batch = commits.slice(i, i + 10);
@@ -165,6 +409,8 @@ async function scanHistory(repo: string, env: Env): Promise<{ findings: Finding[
           findings.push(...patchFindings);
         }
       }
+      done += batch.length;
+      if (onProgress) onProgress(Math.min(done, total), total);
     }
 
     return { findings, commitsScanned: commits.length };
@@ -179,6 +425,50 @@ function ghHeaders(env: Env): Record<string, string> {
   const h: Record<string, string> = { 'User-Agent': 'VaultProof-Scanner/1.0', Accept: 'application/vnd.github+json' };
   if (env.GITHUB_TOKEN) h['Authorization'] = `Bearer ${env.GITHUB_TOKEN}`;
   return h;
+}
+
+async function scanCurrentFiles(
+  filesToScan: Array<{ path: string; url: string }>,
+  env: Env,
+  onProgress: (done: number, total: number) => void,
+): Promise<{ findings: Finding[]; filesScanned: number }> {
+  const findings: Finding[] = [];
+  let filesScanned = 0;
+  const total = filesToScan.length;
+
+  for (let i = 0; i < filesToScan.length; i += MAX_CONCURRENT_FETCHES) {
+    const batch = filesToScan.slice(i, i + MAX_CONCURRENT_FETCHES);
+    const results = await Promise.all(
+      batch.map(async (file) => {
+        if (!file.url.startsWith(GITHUB_API_PREFIX)) return null;
+        const fileAbort = new AbortController();
+        const fileTimer = setTimeout(() => fileAbort.abort(), 5000);
+        let res: Response;
+        try {
+          res = await fetch(file.url, {
+            headers: { ...ghHeaders(env), Accept: 'application/vnd.github.raw+json' },
+            signal: fileAbort.signal,
+          });
+        } catch {
+          clearTimeout(fileTimer);
+          return null;
+        }
+        clearTimeout(fileTimer);
+        if (!res.ok) return null;
+        const contentLength = parseInt(res.headers.get('content-length') || '0', 10);
+        if (contentLength > 512 * 1024) return null;
+        const text = await res.text();
+        return { path: file.path, content: text };
+      }),
+    );
+    for (const result of results) {
+      if (!result) continue;
+      filesScanned++;
+      findings.push(...scanFileContent(result.content, result.path));
+    }
+    onProgress(Math.min(i + MAX_CONCURRENT_FETCHES, total), total);
+  }
+  return { findings, filesScanned };
 }
 
 export async function handlePublicScan(request: Request, env: Env): Promise<Response> {
@@ -256,76 +546,85 @@ export async function handlePublicScan(request: Request, env: Env): Promise<Resp
   );
   const filesToScan = allFiles.slice(0, MAX_FILES);
 
-  // Run current-file scan + git history scan in parallel
-  const currentScanPromise = (async () => {
-    const findings: Finding[] = [];
-    let filesScanned = 0;
-    for (let i = 0; i < filesToScan.length; i += MAX_CONCURRENT_FETCHES) {
-      const batch = filesToScan.slice(i, i + MAX_CONCURRENT_FETCHES);
-      const results = await Promise.all(
-        batch.map(async (file) => {
-          // Validate URL is a GitHub API URL before fetching with GITHUB_TOKEN
-          if (!file.url.startsWith(GITHUB_API_PREFIX)) return null;
-          const fileAbort = new AbortController();
-          const fileTimer = setTimeout(() => fileAbort.abort(), 5000);
-          let res: Response;
-          try {
-            res = await fetch(file.url, {
-              headers: { ...ghHeaders(env), Accept: 'application/vnd.github.raw+json' },
-              signal: fileAbort.signal,
-            });
-          } catch {
-            clearTimeout(fileTimer);
-            return null;
-          }
-          clearTimeout(fileTimer);
-          if (!res.ok) return null;
-          const contentLength = parseInt(res.headers.get('content-length') || '0', 10);
-          if (contentLength > 512 * 1024) return null;
-          const text = await res.text();
-          return { path: file.path, content: text };
-        })
+  // Check ALL tree entries (not just scannable files) for risky filenames
+  const allTreePaths = (treeData.tree || []).filter((f) => f.type === 'blob').map((f) => f.path);
+  const riskyFileFindings = detectRiskyFiles(allTreePaths);
+  const hygieneFindings = detectHygieneIssues(allTreePaths);
+
+  // Build the NDJSON stream
+  const { stream, write, close } = createNdjsonStream();
+
+  // Background task: run the actual scan
+  (async () => {
+    try {
+      write({ phase: 'tree' });
+
+      const [currentResult, historyResult] = await Promise.all([
+        scanCurrentFiles(filesToScan, env, (done, total) => {
+          write({ phase: 'files', done, total });
+        }),
+        scanHistory(repo, env, (done, total) => {
+          write({ phase: 'commits', done, total });
+        }),
+      ]);
+
+      const allFindings = [
+        ...currentResult.findings,
+        ...historyResult.findings,
+        ...riskyFileFindings,
+        ...hygieneFindings,
+      ];
+
+      // Pass 1: deduplicate exact duplicates
+      const seen = new Set<string>();
+      const pass1 = allFindings.filter((f) => {
+        const key = `${f.source}:${f.commitSha || ''}:${f.file}:${f.line}:${f.provider}:${f.title ?? ''}`;
+        if (seen.has(key)) return false;
+        seen.add(key);
+        return true;
+      });
+
+      // Pass 2: suppress history duplicates of current-file secrets
+      const currentKeys = new Set(
+        pass1
+          .filter((f) => f.category === 'secret' && f.source === 'current')
+          .map((f) => `${f.file}:${f.provider}:${f.maskedValue}`),
       );
-      for (const result of results) {
-        if (!result) continue;
-        filesScanned++;
-        findings.push(...scanFileContent(result.content, result.path));
-      }
+      const dedupedFindings = pass1.filter(
+        (f) =>
+          f.category !== 'secret' ||
+          f.source === 'current' ||
+          !currentKeys.has(`${f.file}:${f.provider}:${f.maskedValue}`),
+      );
+
+      // Hygiene findings are always-shown — exclude from the MAX_FINDINGS cap
+      const hygieneOnly = dedupedFindings.filter((f) => f.category === 'hygiene');
+      const nonHygiene = dedupedFindings.filter((f) => f.category !== 'hygiene');
+      const cappedFindings = [...nonHygiene.slice(0, MAX_FINDINGS), ...hygieneOnly];
+
+      write({
+        phase: 'done',
+        result: {
+          repo,
+          filesScanned: currentResult.filesScanned,
+          commitsScanned: historyResult.commitsScanned,
+          findings: cappedFindings,
+          truncated: nonHygiene.length > MAX_FINDINGS,
+        },
+      });
+    } catch (err) {
+      write({ phase: 'error', message: err instanceof Error ? err.message : 'Scan failed' });
+    } finally {
+      close();
     }
-    return { findings, filesScanned };
   })();
 
-  const [currentResult, historyResult] = await Promise.all([
-    currentScanPromise,
-    scanHistory(repo, env),
-  ]);
-
-  const allFindings = [...currentResult.findings, ...historyResult.findings];
-
-  // Pass 1: deduplicate exact duplicates (same source + commit + file + line + provider)
-  const seen = new Set<string>();
-  const pass1 = allFindings.filter((f) => {
-    const key = `${f.source}:${f.commitSha || ''}:${f.file}:${f.line}:${f.provider}`;
-    if (seen.has(key)) return false;
-    seen.add(key);
-    return true;
-  });
-
-  // Pass 2: if a key exists in current files, suppress duplicate from history
-  const currentKeys = new Set(
-    pass1.filter(f => f.source === 'current').map(f => `${f.file}:${f.provider}:${f.maskedValue}`)
-  );
-  const dedupedFindings = pass1.filter(f =>
-    f.source === 'current' || !currentKeys.has(`${f.file}:${f.provider}:${f.maskedValue}`)
-  );
-
-  const cappedFindings = dedupedFindings.slice(0, MAX_FINDINGS);
-
-  return Response.json({
-    repo,
-    filesScanned: currentResult.filesScanned,
-    commitsScanned: historyResult.commitsScanned,
-    findings: cappedFindings,
-    truncated: dedupedFindings.length > MAX_FINDINGS,
+  return new Response(stream, {
+    status: 200,
+    headers: {
+      'Content-Type': 'application/x-ndjson',
+      'X-Content-Type-Options': 'nosniff',
+      'Cache-Control': 'no-store',
+    },
   });
 }

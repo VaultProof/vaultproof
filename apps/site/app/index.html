@@ -1281,6 +1281,7 @@
     function dismissWelcome() {
       localStorage.setItem('vp_welcomed', '1');
       document.getElementById('welcomeModal').classList.add('hidden');
+      if (window.maybeStartAppTour) window.maybeStartAppTour();
     }
 
     async function redeemWelcomePromo() {
@@ -1511,18 +1512,27 @@
 
   overlayEl.addEventListener('click', endTour);
 
-  // Auto-start tour on first login — check localStorage first, then server
-  (async function() {
+  // Tour eligibility check. Exposed so dismissWelcome() can call it after the
+  // user closes the welcome modal. Only marks the tour "done" when the server
+  // confirms hasSeenTour=true — transient /auth/me failures don't suppress it.
+  window.maybeStartAppTour = async function() {
     if (localStorage.getItem('vp_app_tour_done') === '1') return;
     try {
       var data = await apiFetch('/auth/me');
-      if (data && data.user && !data.user.hasSeenTour) {
-        setTimeout(startAppTour, 1500);
-      } else {
+      if (!data || !data.user) return;
+      if (data.user.hasSeenTour) {
         localStorage.setItem('vp_app_tour_done', '1');
+        return;
       }
+      setTimeout(window.startAppTour, 1500);
     } catch(e) {}
-  })();
+  };
+
+  // Auto-start only if the welcome modal won't show first. On a fresh account
+  // with no vp_welcomed flag, dismissWelcome() triggers the tour instead.
+  if (localStorage.getItem('vp_welcomed')) {
+    window.maybeStartAppTour();
+  }
 
   window.addEventListener('resize', function() {
     if (tourActive) {
