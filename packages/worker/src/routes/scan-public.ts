@@ -16,12 +16,13 @@ const KEY_PATTERNS_LOCAL = KEY_PATTERNS.map(({ pattern, provider }) => ({
   provider,
 }));
 
-const MAX_FILES = 50;            // reduced to leave headroom for commit fetches
+const MAX_FILES = 500;
 const MAX_CONCURRENT_FETCHES = 20;
-const MAX_COMMITS = 20;          // last N commits to scan for history leaks
-const MAX_FINDINGS = 200;
+const MAX_COMMITS = 50;
+const MAX_FINDINGS = 500;
 const RATE_LIMIT = 10;
 const RATE_LIMIT_TTL = 3600;
+const HISTORY_SCAN_TIMEOUT_MS = 25_000;
 
 async function checkScanRateLimit(env: Env, ip: string): Promise<boolean> {
   const key = `rl:scan:pub:${ip}`;
@@ -49,17 +50,22 @@ function maskKey(value: string): string {
   return prefix + '...XXXX';
 }
 
+type FindingCategory = 'secret' | 'file' | 'code' | 'hygiene';
+
 interface Finding {
+  category: FindingCategory;
   provider: string;
   providerName: string;
   file: string;
   line: number;
   maskedValue: string;
-  severity: 'CRITICAL' | 'HIGH';
+  severity: 'CRITICAL' | 'HIGH' | 'MEDIUM' | 'INFO';
   source: 'current' | 'history';
   commitSha?: string;
   commitMessage?: string;
   commitDate?: string;
+  title?: string;
+  description?: string;
 }
 
 interface ScanContext {
@@ -84,7 +90,7 @@ function scanLines(lines: string[], filePath: string, ctx: ScanContext): Finding
         const value = rawValue.replace(/^["']|["']$/g, '').trim();
         const provider = ENV_VAR_MAP[varName];
         if (provider && shannonEntropy(value) >= MIN_ENTROPY) {
-          findings.push({ provider, providerName: PROVIDER_NAMES[provider] || provider, file: filePath, line: i + 1, maskedValue: maskKey(value), severity: 'CRITICAL', ...ctx });
+          findings.push({ category: 'secret', provider, providerName: PROVIDER_NAMES[provider] || provider, file: filePath, line: i + 1, maskedValue: maskKey(value), severity: 'CRITICAL', ...ctx });
         }
       }
     }
@@ -94,7 +100,7 @@ function scanLines(lines: string[], filePath: string, ctx: ScanContext): Finding
       if (match) {
         const value = match[0];
         if (shannonEntropy(stripKeyPrefix(value)) >= MIN_ENTROPY) {
-          findings.push({ provider, providerName: PROVIDER_NAMES[provider] || provider, file: filePath, line: i + 1, maskedValue: maskKey(value), severity: 'CRITICAL', ...ctx });
+          findings.push({ category: 'secret', provider, providerName: PROVIDER_NAMES[provider] || provider, file: filePath, line: i + 1, maskedValue: maskKey(value), severity: 'CRITICAL', ...ctx });
         }
       }
     }
@@ -126,7 +132,7 @@ async function scanHistory(repo: string, env: Env): Promise<{ findings: Finding[
 
   // 15-second hard budget for the entire history scan
   const abort = new AbortController();
-  const timer = setTimeout(() => abort.abort(), 15_000);
+  const timer = setTimeout(() => abort.abort(), HISTORY_SCAN_TIMEOUT_MS);
 
   try {
     // Fetch commit list
