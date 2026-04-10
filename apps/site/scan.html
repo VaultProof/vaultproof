@@ -234,20 +234,70 @@
                 </button>
             </form>
             <p class="text-xs text-gray-600 mt-3">Example: <button type="button" onclick="prefillExample()" class="text-gray-500 hover:text-gray-300 underline underline-offset-2 transition-colors">github.com/trufflesecurity/trufflehog</button></p>
+            <p class="text-xs text-gray-600 mt-2">Scans up to 500 files · 50 commits of history · secrets, risky files, code smells, hygiene</p>
         </div>
     </section>
 
     <!-- Main content area -->
     <main class="max-w-2xl mx-auto px-4 sm:px-6 pb-32">
 
+        <!-- What we scan -->
+        <div id="whatWeScan" class="mt-12 mb-8 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+          <div class="bg-vp-surface border border-vp-border rounded-xl p-5">
+            <div class="text-sm font-semibold text-gray-200 mb-2">🔑 Leaked API keys</div>
+            <p class="text-xs text-gray-500 mb-2">Both current files AND git history</p>
+            <ul class="text-xs text-gray-500 space-y-1">
+              <li>OpenAI, Anthropic, Google AI</li>
+              <li>AWS, Google Cloud</li>
+              <li>Stripe, SendGrid, Resend, Brevo</li>
+              <li>GitHub, npm, Slack, Datadog</li>
+              <li>Supabase, MongoDB, Neon, Upstash</li>
+              <li>PostHog, Contentful, Twilio</li>
+              <li class="text-gray-600">and 13 more providers</li>
+            </ul>
+          </div>
+          <div class="bg-vp-surface border border-vp-border rounded-xl p-5">
+            <div class="text-sm font-semibold text-gray-200 mb-2">📁 Risky files committed</div>
+            <ul class="text-xs text-gray-500 space-y-1 mt-2">
+              <li>.env files</li>
+              <li>Private keys (id_rsa, *.pem, *.key)</li>
+              <li>Cloud credentials (.aws/credentials)</li>
+              <li>Service account JSONs</li>
+              <li>Database dumps (*.sql, *.dump, *.bak)</li>
+            </ul>
+          </div>
+          <div class="bg-vp-surface border border-vp-border rounded-xl p-5">
+            <div class="text-sm font-semibold text-gray-200 mb-2">⚠️ Code smells</div>
+            <ul class="text-xs text-gray-500 space-y-1 mt-2">
+              <li>eval() and Function() constructors</li>
+              <li>Unsafe HTML (innerHTML, dangerouslySetInnerHTML)</li>
+              <li>Weak crypto (MD5, SHA1, DES, RC4)</li>
+              <li>CORS wildcards</li>
+              <li>SQL string concatenation</li>
+            </ul>
+          </div>
+          <div class="bg-vp-surface border border-vp-border rounded-xl p-5">
+            <div class="text-sm font-semibold text-gray-200 mb-2">✅ Repo hygiene</div>
+            <ul class="text-xs text-gray-500 space-y-1 mt-2">
+              <li>.gitignore</li>
+              <li>LICENSE</li>
+              <li>SECURITY.md</li>
+              <li>README.md</li>
+            </ul>
+          </div>
+        </div>
+
         <!-- Progress indicator -->
         <div id="progressBox" class="hidden">
-            <div class="flex items-center gap-3 bg-vp-surface border border-vp-border rounded-xl px-5 py-4">
-                <div class="spinner"></div>
-                <div>
-                    <p id="progressText" class="text-sm font-medium text-gray-200">Scanning repository…</p>
-                    <p class="text-xs text-gray-500 mt-0.5">This may take a few seconds for larger repos.</p>
+            <div class="bg-vp-surface border border-vp-border rounded-xl px-5 py-4">
+                <div class="flex items-center justify-between mb-2">
+                    <p id="progressPhase" class="text-sm font-medium text-gray-200">Starting scan…</p>
+                    <span id="progressPct" class="text-xs text-gray-500 font-mono">0%</span>
                 </div>
+                <div class="w-full h-2 bg-vp-border rounded-full overflow-hidden">
+                    <div id="progressFill" class="h-full bg-brand transition-all duration-300 ease-out" style="width:0%"></div>
+                </div>
+                <p class="text-xs text-gray-500 mt-2">Large repos can take 20–30 seconds.</p>
             </div>
         </div>
 
@@ -459,106 +509,253 @@
             });
         }
 
+        // ── Render risky files, code smells, recommendations ─────────────────────
+        function renderExtraFindings(fileFindings, codeFindings, hygieneFindings) {
+            // Remove any previous extra sections
+            ['vpExtraFileSec','vpExtraCodeSec','vpExtraHygieneSec'].forEach(function(id) {
+                var el = document.getElementById(id);
+                if (el) el.remove();
+            });
+
+            var container = document.getElementById('resultsContainer');
+
+            // Risky files section (HIGH)
+            if (fileFindings.length > 0) {
+                var fileHtml = '<div id="vpExtraFileSec" class="mt-6">' +
+                    '<h2 class="text-sm font-semibold text-gray-300 mb-3 flex items-center gap-2">' +
+                    '<span class="inline-flex items-center justify-center w-5 h-5 rounded-full bg-orange-500/20 text-orange-400 text-xs font-bold">!</span>' +
+                    'Risky files committed (' + fileFindings.length + ')</h2>' +
+                    '<div class="space-y-2">' +
+                    fileFindings.map(function(f) {
+                        return '<div class="bg-vp-surface border border-orange-900/40 rounded-xl px-5 py-4">' +
+                            '<div class="flex items-center gap-2 mb-1">' +
+                            '<span class="text-xs font-medium px-2 py-0.5 rounded-full bg-orange-500/10 border border-orange-500/30 text-orange-400">HIGH</span>' +
+                            '<span class="text-sm font-medium text-gray-200">' + escapeHtml(f.title || f.providerName || '') + '</span></div>' +
+                            (f.file ? '<p class="text-xs text-gray-500 font-mono mb-1">' + escapeHtml(f.file) + '</p>' : '') +
+                            '<p class="text-xs text-gray-400">' + escapeHtml(f.description || '') + '</p></div>';
+                    }).join('') +
+                    '</div></div>';
+                container.insertAdjacentHTML('beforeend', fileHtml);
+            }
+
+            // Code smells section (MEDIUM)
+            if (codeFindings.length > 0) {
+                var shown = codeFindings.slice(0, 30);
+                var codeHtml = '<div id="vpExtraCodeSec" class="mt-6">' +
+                    '<h2 class="text-sm font-semibold text-gray-300 mb-3 flex items-center gap-2">' +
+                    '<span class="inline-flex items-center justify-center w-5 h-5 rounded-full bg-amber-500/20 text-amber-400 text-xs font-bold">?</span>' +
+                    'Code smells (' + codeFindings.length + ')</h2>' +
+                    '<div class="space-y-2">' +
+                    shown.map(function(f) {
+                        return '<div class="bg-vp-surface border border-amber-900/30 rounded-xl px-4 py-3">' +
+                            '<div class="flex items-center gap-2 mb-1">' +
+                            '<span class="text-xs font-medium px-2 py-0.5 rounded-full bg-amber-500/10 border border-amber-500/30 text-amber-400">MEDIUM</span>' +
+                            '<span class="text-sm font-medium text-gray-300">' + escapeHtml(f.title || f.providerName || '') + '</span></div>' +
+                            '<p class="text-xs text-gray-500 font-mono">' + escapeHtml(f.file || '') + ':' + (f.line || '') + '</p>' +
+                            '<p class="text-xs text-gray-500 mt-1">' + escapeHtml(f.description || '') + '</p></div>';
+                    }).join('') +
+                    (codeFindings.length > 30 ? '<p class="text-xs text-gray-600 text-center mt-2">+ ' + (codeFindings.length - 30) + ' more — showing top 30</p>' : '') +
+                    '</div></div>';
+                container.insertAdjacentHTML('beforeend', codeHtml);
+            }
+
+            // Recommendations section (INFO) — always shown
+            var hygieneHtml = '<div id="vpExtraHygieneSec" class="mt-6 mb-4">' +
+                '<h2 class="text-sm font-semibold text-gray-300 mb-3 flex items-center gap-2">' +
+                '<span class="inline-flex items-center justify-center w-5 h-5 rounded-full bg-blue-500/20 text-blue-400 text-xs font-bold">i</span>' +
+                'Recommendations</h2>' +
+                '<div class="bg-vp-surface border border-vp-border rounded-xl px-5 py-4">';
+            if (hygieneFindings.length === 0) {
+                hygieneHtml += '<p class="text-sm text-gray-400">Looks great — all hygiene checks passed.</p>';
+            } else {
+                hygieneHtml += '<ul class="space-y-3">' +
+                    hygieneFindings.map(function(f) {
+                        return '<li class="text-sm"><div class="text-gray-300 font-medium">' + escapeHtml(f.title || f.providerName || '') + '</div>' +
+                            '<div class="text-xs text-gray-500 mt-0.5">' + escapeHtml(f.description || '') + '</div></li>';
+                    }).join('') +
+                    '</ul>';
+            }
+            hygieneHtml += '</div></div>';
+            container.insertAdjacentHTML('beforeend', hygieneHtml);
+        }
+
+        // ── Progress bar ─────────────────────────────────────────────────────────
+        function updateProgressBar(state) {
+            var phaseEl = document.getElementById('progressPhase');
+            var pctEl   = document.getElementById('progressPct');
+            var fillEl  = document.getElementById('progressFill');
+            if (!phaseEl) return;
+
+            // Weighted progress: tree 5%, files 5→60%, commits 60→95%, done 100%
+            var pct = 5;
+            if (state.filesTotal > 0) pct += (state.filesDone / state.filesTotal) * 55;
+            if (state.commitsTotal > 0) pct += (state.commitsDone / state.commitsTotal) * 35;
+            pct = Math.min(pct, state.done ? 100 : 99);
+
+            var phaseLabel = 'Starting scan…';
+            if (state.done) {
+                phaseLabel = 'Done';
+            } else if (state.filesTotal > 0 && state.filesDone < state.filesTotal) {
+                phaseLabel = 'Scanning files (' + state.filesDone + '/' + state.filesTotal + ')';
+            } else if (state.commitsTotal > 0 && state.commitsDone < state.commitsTotal) {
+                phaseLabel = 'Scanning git history (' + state.commitsDone + '/' + state.commitsTotal + ')';
+            } else if (state.treeStarted) {
+                phaseLabel = 'Fetching repo tree…';
+            }
+
+            phaseEl.textContent = phaseLabel;
+            pctEl.textContent   = Math.round(pct) + '%';
+            fillEl.style.width  = pct + '%';
+        }
+
         // ── Main scan function ───────────────────────────────────────────────────
         async function runScan(rawRepo) {
-            const repo = parseRepo(rawRepo);
+            var repo = parseRepo(rawRepo);
             if (!repo) {
                 showError('Please enter a valid GitHub repo (e.g. owner/repo or github.com/owner/repo).');
                 return;
             }
 
-            // GA event
             if (typeof gtag !== 'undefined') {
-                gtag('event', 'public_scan_started', { repo });
+                gtag('event', 'public_scan_started', { repo: repo });
             }
 
             setScanning(true);
-            showProgress('Scanning ' + repo + ' — files + git history…');
             hide('errorBox');
             hide('resultsContainer');
             hide('stickyBar');
+            show('progressBox');
+
+            var progressState = {
+                treeStarted: false,
+                filesDone: 0, filesTotal: 0,
+                commitsDone: 0, commitsTotal: 0,
+                done: false,
+            };
+            updateProgressBar(progressState);
 
             try {
-                const res = await fetch('https://api.vaultproof.dev/api/scan/public', {
+                var res = await fetch('https://api.vaultproof.dev/api/scan/public', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ repo })
+                    body: JSON.stringify({ repo: repo })
                 });
 
-                const data = await res.json().catch(() => ({}));
-
                 if (!res.ok) {
-                    const errMsg = (() => {
-                        switch (res.status) {
-                            case 400: return 'Invalid repo — make sure it exists and is public.';
-                            case 403: return 'Access denied. The repo may be private or rate limited.';
-                            case 404: return 'Repo not found. Check the owner/repo slug and try again.';
-                            case 429: return 'Too many requests. Please wait a moment and try again.';
-                            case 500: return 'GitHub API error. Please try again in a moment.';
-                            default:  return (data && data.error) ? escapeHtml(String(data.error)) : 'Something went wrong. Please try again.';
-                        }
-                    })();
-                    hideProgress();
+                    var errData = {};
+                    try { errData = await res.json(); } catch(e) {}
+                    var errMsg;
+                    switch (res.status) {
+                        case 400: errMsg = 'Invalid repo — make sure it exists and is public.'; break;
+                        case 403: errMsg = 'Access denied. The repo may be private or rate limited.'; break;
+                        case 404: errMsg = 'Repo not found. Check the owner/repo slug and try again.'; break;
+                        case 429: errMsg = 'Too many requests. Please wait a moment and try again.'; break;
+                        case 500: errMsg = 'GitHub API error. Please try again in a moment.'; break;
+                        default:  errMsg = (errData && errData.error) ? escapeHtml(String(errData.error)) : 'Something went wrong. Please try again.';
+                    }
+                    hide('progressBox');
                     showError(errMsg);
                     setScanning(false);
                     return;
                 }
 
-                hideProgress();
+                // Stream NDJSON line by line
+                var reader = res.body.getReader();
+                var decoder = new TextDecoder();
+                var buf = '';
+                var finalResult = null;
+
+                while (true) {
+                    var chunk = await reader.read();
+                    if (chunk.done) break;
+                    buf += decoder.decode(chunk.value, { stream: true });
+                    var lines = buf.split('\n');
+                    buf = lines.pop(); // keep incomplete last chunk
+                    for (var i = 0; i < lines.length; i++) {
+                        var line = lines[i].trim();
+                        if (!line) continue;
+                        var evt;
+                        try { evt = JSON.parse(line); } catch(e) { continue; }
+                        if (evt.phase === 'tree') {
+                            progressState.treeStarted = true;
+                        } else if (evt.phase === 'files') {
+                            progressState.filesDone = evt.done;
+                            progressState.filesTotal = evt.total;
+                        } else if (evt.phase === 'commits') {
+                            progressState.commitsDone = evt.done;
+                            progressState.commitsTotal = evt.total;
+                        } else if (evt.phase === 'done') {
+                            progressState.done = true;
+                            finalResult = evt.result;
+                        } else if (evt.phase === 'error') {
+                            throw new Error(evt.message || 'Scan failed');
+                        }
+                        updateProgressBar(progressState);
+                    }
+                }
+
+                if (!finalResult) throw new Error('Scan ended without a result');
+
+                // Brief pause so user sees 100% before results appear
+                await new Promise(function(r) { setTimeout(r, 300); });
+
+                hide('progressBox');
                 setScanning(false);
 
-                const findings       = Array.isArray(data.findings) ? data.findings : [];
-                const filesScanned   = typeof data.filesScanned === 'number' ? data.filesScanned : null;
-                const commitsScanned = typeof data.commitsScanned === 'number' ? data.commitsScanned : null;
+                var data = finalResult;
+                var findings       = Array.isArray(data.findings) ? data.findings : [];
+                var filesScanned   = typeof data.filesScanned === 'number' ? data.filesScanned : null;
+                var commitsScanned = typeof data.commitsScanned === 'number' ? data.commitsScanned : null;
 
-                // GA event
                 if (typeof gtag !== 'undefined') {
                     gtag('event', 'public_scan_completed', {
-                        repo,
+                        repo: repo,
                         findings_count: findings.length,
                         files_scanned: filesScanned,
                         commits_scanned: commitsScanned
                     });
                 }
 
-                // Show results container
                 show('resultsContainer');
 
-                const summaryEl = document.getElementById('resultsSummary');
-                const repoLabel = document.getElementById('repoLabel');
-
+                var summaryEl = document.getElementById('resultsSummary');
+                var repoLabel = document.getElementById('repoLabel');
                 repoLabel.textContent = repo;
 
-                if (findings.length === 0) {
-                    const parts = [];
-                    if (filesScanned) parts.push(`${filesScanned} file${filesScanned !== 1 ? 's' : ''}`);
-                    if (commitsScanned) parts.push(`${commitsScanned} commit${commitsScanned !== 1 ? 's' : ''}`);
-                    summaryEl.textContent = 'No exposed keys found' + (parts.length ? ` — scanned ${parts.join(' + ')}` : '');
+                // Partition by category
+                var secretFindings  = findings.filter(function(f) { return f.category === 'secret' || !f.category; });
+                var fileFindings    = findings.filter(function(f) { return f.category === 'file'; });
+                var codeFindings    = findings.filter(function(f) { return f.category === 'code'; });
+                var hygieneFindings = findings.filter(function(f) { return f.category === 'hygiene'; });
+                var criticalCount   = secretFindings.length + fileFindings.length + codeFindings.length;
+
+                var parts = [];
+                if (filesScanned) parts.push(filesScanned + ' file' + (filesScanned !== 1 ? 's' : ''));
+                if (commitsScanned) parts.push(commitsScanned + ' commit' + (commitsScanned !== 1 ? 's' : ''));
+                var scanPart = parts.length ? ' — scanned ' + parts.join(' + ') : '';
+
+                if (criticalCount === 0) {
+                    summaryEl.textContent = 'No issues found' + scanPart;
                     hide('findingsList');
                     hide('stickyBar');
                     show('emptyState');
+                    renderExtraFindings([], [], hygieneFindings);
                 } else {
-                    const n = findings.length;
-                    const noun = n === 1 ? 'exposed key' : 'exposed keys';
-                    const histCount = findings.filter(f => f.source === 'history').length;
-                    const parts = [];
-                    if (filesScanned) parts.push(`${filesScanned} file${filesScanned !== 1 ? 's' : ''}`);
-                    if (commitsScanned) parts.push(`${commitsScanned} commit${commitsScanned !== 1 ? 's' : ''}`);
-                    const scanPart = parts.length ? ` — scanned ${parts.join(' + ')}` : '';
-                    const histPart = histCount > 0 ? ` (${histCount} in git history)` : '';
-                    summaryEl.textContent = `${n} ${noun} found${histPart}${scanPart}`;
-
+                    var histCount = secretFindings.filter(function(f) { return f.source === 'history'; }).length;
+                    var histPart  = histCount > 0 ? ' (' + histCount + ' in git history)' : '';
+                    summaryEl.textContent = criticalCount + ' issue' + (criticalCount !== 1 ? 's' : '') + ' found' + histPart + scanPart;
                     hide('emptyState');
                     show('findingsList');
-                    renderFindings(findings, repo);
-
-                    // Sticky bar
-                    document.getElementById('stickyCount').textContent = `${n} exposed ${noun}`;
+                    renderFindings(secretFindings, repo);
+                    document.getElementById('stickyCount').textContent = criticalCount + ' issue' + (criticalCount !== 1 ? 's' : '') + ' found';
                     show('stickyBar');
                 }
 
+                // Render new category sections
+                renderExtraFindings(fileFindings, codeFindings, hygieneFindings);
+
             } catch (err) {
-                hideProgress();
+                hide('progressBox');
                 setScanning(false);
                 showError('Network error — check your connection and try again.');
             }
