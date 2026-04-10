@@ -184,6 +184,57 @@ function scanCodeSmells(lines: string[], filePath: string): Finding[] {
   return findings;
 }
 
+interface HygieneCheck {
+  matchers: RegExp[];       // any of these matching a tree path means the file exists
+  title: string;
+  description: string;
+}
+
+const HYGIENE_CHECKS: HygieneCheck[] = [
+  {
+    matchers: [/^\.gitignore$/],
+    title: 'No .gitignore file',
+    description: "Without .gitignore, secrets accidentally committed can't be excluded from future commits.",
+  },
+  {
+    matchers: [/^LICENSE(\.md|\.txt)?$/, /^COPYING$/],
+    title: 'No LICENSE file',
+    description: 'Unclear licensing blocks commercial and open-source reuse of this project.',
+  },
+  {
+    matchers: [/^SECURITY\.md$/, /^\.github\/SECURITY\.md$/, /^docs\/SECURITY\.md$/],
+    title: 'No security policy',
+    description: 'SECURITY.md gives users a clear way to report vulnerabilities.',
+  },
+  {
+    matchers: [/^README(\.md|\.rst|\.txt)?$/],
+    title: 'No README',
+    description: 'Hurts discoverability and user trust.',
+  },
+];
+
+function detectHygieneIssues(allTreePaths: string[]): Finding[] {
+  const findings: Finding[] = [];
+  for (const check of HYGIENE_CHECKS) {
+    const exists = allTreePaths.some((path) => check.matchers.some((m) => m.test(path)));
+    if (!exists) {
+      findings.push({
+        category: 'hygiene',
+        provider: 'hygiene',
+        providerName: check.title,
+        file: '',
+        line: 0,
+        maskedValue: '',
+        severity: 'INFO',
+        source: 'current',
+        title: check.title,
+        description: check.description,
+      });
+    }
+  }
+  return findings;
+}
+
 async function checkScanRateLimit(env: Env, ip: string): Promise<boolean> {
   const key = `rl:scan:pub:${ip}`;
   const raw = await env.CACHE.get(key);
@@ -429,6 +480,7 @@ export async function handlePublicScan(request: Request, env: Env): Promise<Resp
   // Check ALL tree entries (not just scannable files) for risky filenames
   const allTreePaths = (treeData.tree || []).filter((f) => f.type === 'blob').map((f) => f.path);
   const riskyFileFindings = detectRiskyFiles(allTreePaths);
+  const hygieneFindings = detectHygieneIssues(allTreePaths);
 
   // Run current-file scan + git history scan in parallel
   const currentScanPromise = (async () => {
@@ -474,7 +526,12 @@ export async function handlePublicScan(request: Request, env: Env): Promise<Resp
     scanHistory(repo, env),
   ]);
 
-  const allFindings = [...currentResult.findings, ...historyResult.findings, ...riskyFileFindings];
+  const allFindings = [
+    ...currentResult.findings,
+    ...historyResult.findings,
+    ...riskyFileFindings,
+    ...hygieneFindings,
+  ];
 
   // Pass 1: deduplicate exact duplicates (same source + commit + file + line + provider)
   const seen = new Set<string>();
@@ -493,7 +550,10 @@ export async function handlePublicScan(request: Request, env: Env): Promise<Resp
     f.source === 'current' || !currentKeys.has(`${f.file}:${f.provider}:${f.maskedValue}`)
   );
 
-  const cappedFindings = dedupedFindings.slice(0, MAX_FINDINGS);
+  // Hygiene findings are always-shown — exclude from the MAX_FINDINGS cap
+  const hygieneOnly = dedupedFindings.filter((f) => f.category === 'hygiene');
+  const nonHygiene = dedupedFindings.filter((f) => f.category !== 'hygiene');
+  const cappedFindings = [...nonHygiene.slice(0, MAX_FINDINGS), ...hygieneOnly];
 
   return Response.json({
     repo,
