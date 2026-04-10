@@ -146,12 +146,12 @@ const CODE_SMELL_PATTERNS: CodeSmellPattern[] = [
     description: 'DES and RC4 are broken. Use AES-256-GCM or ChaCha20-Poly1305.',
   },
   {
-    pattern: /Access-Control-Allow-Origin[^\n]{0,50}["']\*["']/,
+    pattern: /Access-Control-Allow-Origin[^\n]{0,50}(["']\*["']|\*\s*$)/,
     title: 'CORS wildcard',
     description: 'Allowing all origins defeats CORS protection for authenticated endpoints.',
   },
   {
-    pattern: /"\s*SELECT\b[^"]*"\s*\+/,
+    pattern: /(['"])\s*SELECT\b[^'"]*\1\s*\+/,
     title: 'SQL string concatenation',
     description: 'Concatenating user input into SQL strings enables injection. Use parameterized queries.',
     fileMatcher: /\.(js|jsx|ts|tsx|py|java|go|rb|php)$/i,
@@ -479,7 +479,7 @@ export async function handlePublicScan(request: Request, env: Env): Promise<Resp
   // Pass 1: deduplicate exact duplicates (same source + commit + file + line + provider)
   const seen = new Set<string>();
   const pass1 = allFindings.filter((f) => {
-    const key = `${f.source}:${f.commitSha || ''}:${f.file}:${f.line}:${f.provider}`;
+    const key = `${f.source}:${f.commitSha || ''}:${f.file}:${f.line}:${f.provider}:${f.title ?? ''}`;
     if (seen.has(key)) return false;
     seen.add(key);
     return true;
