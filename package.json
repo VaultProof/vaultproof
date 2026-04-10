@@ -24,6 +24,8 @@
     "prisma": "^6.4.0"
   },
   "devDependencies": {
+    "@tailwindcss/cli": "^4.2.2",
+    "tailwindcss": "^4.2.2",
     "turbo": "^2.4.0",
     "typescript": "^5.7.0"
   }
