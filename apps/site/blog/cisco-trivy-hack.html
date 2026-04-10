@@ -1,0 +1,1426 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<!-- Google Analytics -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-NE5RYX1WTF"></script>
+<script>window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments);}gtag('js',new Date());gtag('config','G-NE5RYX1WTF');</script>
+<link rel="icon" type="image/png" href="/favicon.png">
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>How Cisco Got Hacked Through a Security Scanner | VaultProof</title>
+<meta name="description" content="TeamPCP compromised Trivy v0.69.4 and used harvested credentials to breach Cisco's development environment. 300+ GitHub repos stolen. Here's the full attack chain — and the one architectural decision that would have stopped it.">
+<meta name="keywords" content="Cisco hack Trivy 2026, Trivy supply chain attack Cisco, TeamPCP credential theft, CI/CD credentials stolen, AWS keys stolen Cisco, supply chain attack developer credentials">
+<meta property="og:title" content="How Cisco Got Hacked Through a Security Scanner">
+<meta property="og:description" content="TeamPCP compromised Trivy, harvested AWS keys and CI/CD credentials from thousands of pipelines, then used them to breach Cisco. 300+ repos stolen. Here is the full attack chain.">
+<meta property="og:url" content="https://vaultproof.dev/blog/cisco-trivy-hack">
+<meta property="og:type" content="article">
+<meta property="og:image" content="https://vaultproof.dev/ogimage.png">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="How Cisco Got Hacked Through a Security Scanner">
+<meta name="twitter:description" content="TeamPCP compromised Trivy, harvested AWS keys and CI/CD credentials from thousands of pipelines, then used them to breach Cisco. 300+ repos stolen.">
+<meta name="twitter:image" content="https://vaultproof.dev/ogimage.png">
+<meta http-equiv="X-Content-Type-Options" content="nosniff">
+<meta http-equiv="X-Frame-Options" content="DENY">
+<meta name="referrer" content="strict-origin-when-cross-origin">
+<link rel="canonical" href="https://vaultproof.dev/blog/cisco-trivy-hack">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:ital,wght@0,400;0,500;0,600;1,400&family=Playfair+Display:ital,wght@0,400;0,700;0,900;1,400;1,700&family=Source+Serif+4:ital,opsz,wght@0,8..60,400;0,8..60,600;1,8..60,400&family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg: #0c0c0e;
+    --bg2: #111114;
+    --surface: #16161a;
+    --surface2: #1c1c22;
+    --border: #222228;
+    --border2: #2c2c36;
+    --red: #e8362a;
+    --red-dim: rgba(232,54,42,0.1);
+    --red-pale: rgba(232,54,42,0.05);
+    --amber: #e8910a;
+    --amber-dim: rgba(232,145,10,0.1);
+    --green: #2ab84a;
+    --green-dim: rgba(42,184,74,0.1);
+    --text: #dddde8;
+    --text-dim: #7070a0;
+    --text-muted: #303048;
+    --display: 'Playfair Display', serif;
+    --body: 'Source Serif 4', serif;
+    --mono: 'IBM Plex Mono', monospace;
+  }
+
+  html { scroll-behavior: smooth; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--body);
+    font-size: 17px;
+    line-height: 1.75;
+    overflow-x: hidden;
+  }
+
+  /* GRAIN */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 512 512' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='g'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.75' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23g)' opacity='0.035'/%3E%3C/svg%3E");
+    pointer-events: none;
+    z-index: 1000;
+  }
+
+  /* ───────────── PILL NAV (matches site) ───────────── */
+  .pill-nav {
+    position: fixed;
+    z-index: 9999;
+    top: 0; left: 0; right: 0;
+    padding: 12px 16px;
+  }
+  .pill-nav-inner {
+    max-width: 80rem;
+    margin: 0 auto;
+    background: rgba(17,17,24,0.85);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border: 1px solid rgba(30,30,46,0.6);
+    border-radius: 9999px;
+    padding: 10px 24px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    box-shadow: 0 0 15px rgba(232,54,42,0.08), 0 0 40px rgba(232,54,42,0.04), 0 4px 12px rgba(0,0,0,0.4);
+  }
+  .pill-logo {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    text-decoration: none;
+    flex-shrink: 0;
+  }
+  .pill-logo img { width: 36px; height: 36px; border-radius: 6px; }
+  .pill-logo-text {
+    font-family: 'Space Grotesk', sans-serif;
+    font-size: 1rem;
+    font-weight: 700;
+    color: #fff;
+    letter-spacing: -0.025em;
+  }
+  .pill-links {
+    display: flex;
+    align-items: center;
+    gap: 20px;
+  }
+  @media (max-width: 768px) { .pill-links { display: none; } }
+  .pill-actions {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+  @media (max-width: 768px) { .pill-actions { display: none; } }
+  .pill-link {
+    font-size: 0.875rem;
+    color: #9ca3af;
+    text-decoration: none;
+    transition: color 0.15s;
+    font-family: 'Inter', sans-serif;
+  }
+  .pill-link:hover { color: #fff; }
+  .pill-link.active { color: #fff; font-weight: 500; }
+  .pill-mobile-btn {
+    display: none;
+    background: none;
+    border: none;
+    color: #9ca3af;
+    cursor: pointer;
+    padding: 4px;
+  }
+  .pill-mobile-btn:hover { color: #fff; }
+  @media (max-width: 768px) { .pill-mobile-btn { display: block; } }
+  .pill-mobile-menu {
+    display: none;
+    flex-direction: column;
+    gap: 4px;
+    margin-top: 8px;
+    max-width: 80rem;
+    margin-left: auto;
+    margin-right: auto;
+    background: rgba(17,17,24,0.95);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border: 1px solid rgba(30,30,46,0.6);
+    border-radius: 16px;
+    padding: 16px;
+  }
+  .pill-mobile-menu.open { display: flex; }
+  .pill-mobile-link {
+    font-size: 0.875rem;
+    color: #9ca3af;
+    text-decoration: none;
+    padding: 8px;
+    border-radius: 8px;
+    transition: color 0.15s, background 0.15s;
+    font-family: 'Inter', sans-serif;
+  }
+  .pill-mobile-link:hover { color: #fff; background: rgba(255,255,255,0.05); }
+  .pill-mobile-link.active { color: #fff; font-weight: 500; }
+  .btn-nav-scanner {
+    display: inline-flex; align-items: center; gap: 6px;
+    padding: 6px 16px; border-radius: 9999px;
+    font-size: 0.8125rem; font-weight: 500; cursor: pointer;
+    border: 1px solid rgba(232,54,42,0.35);
+    color: var(--red); background: rgba(232,54,42,0.06);
+    transition: background 0.2s, border-color 0.2s, color 0.2s;
+    text-decoration: none; white-space: nowrap;
+    font-family: 'Inter', sans-serif;
+  }
+  .btn-nav-scanner:hover {
+    background: rgba(232,54,42,0.12); border-color: rgba(232,54,42,0.55);
+  }
+  .btn-nav-signup {
+    display: inline-block; padding: 6px 20px;
+    background: var(--red); color: #fff;
+    border: 1px solid transparent;
+    cursor: pointer; font-size: 0.875rem; font-weight: 500;
+    border-radius: 9999px; transition: opacity 0.2s;
+    text-decoration: none;
+    font-family: 'Inter', sans-serif;
+  }
+  .btn-nav-signup:hover { opacity: 0.85; }
+  .nav-group { position: relative; }
+  .nav-group-btn {
+    display: inline-flex; align-items: center; gap: 4px;
+    font-size: 0.875rem; color: #9ca3af; background: none;
+    border: none; cursor: pointer; padding: 4px 2px;
+    transition: color 0.15s; font-family: 'Inter', sans-serif; user-select: none;
+  }
+  .nav-group-btn:hover, .nav-group.open .nav-group-btn { color: #fff; }
+  .nav-group-btn svg { transition: transform 0.2s; flex-shrink: 0; }
+  .nav-group.open .nav-group-btn svg { transform: rotate(180deg); }
+  .nav-dropdown {
+    position: absolute; top: calc(100% + 10px); left: 50%;
+    transform: translateX(-50%) translateY(-4px);
+    background: rgba(13,13,20,0.96);
+    backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
+    border: 1px solid rgba(232,54,42,0.15);
+    border-radius: 14px; padding: 6px; min-width: 176px;
+    opacity: 0; visibility: hidden; pointer-events: none;
+    transition: opacity 0.15s ease, transform 0.15s ease, visibility 0.15s;
+    box-shadow: 0 0 0 1px rgba(232,54,42,0.06), 0 8px 32px rgba(0,0,0,0.6);
+    z-index: 100;
+  }
+  .nav-group.open .nav-dropdown {
+    opacity: 1; visibility: visible; pointer-events: auto;
+    transform: translateX(-50%) translateY(0);
+  }
+  .nav-dropdown a {
+    display: flex; align-items: center;
+    padding: 8px 12px; border-radius: 9px; font-size: 0.8125rem;
+    color: #9ca3af; text-decoration: none;
+    transition: color 0.12s, background 0.12s;
+    white-space: nowrap; font-family: 'Inter', sans-serif;
+  }
+  .nav-dropdown a:hover { color: #fff; background: rgba(232,54,42,0.08); }
+
+  /* ───────────── HERO ───────────── */
+  .hero {
+    padding: 100px clamp(24px, 6vw, 100px) 64px;
+    border-bottom: 1px solid var(--border);
+    max-width: 1400px;
+    margin: 0 auto;
+  }
+
+  .hero-meta {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    margin-bottom: 32px;
+    flex-wrap: wrap;
+  }
+
+  .back-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-family: var(--mono);
+    font-size: 12px;
+    color: var(--text-dim);
+    text-decoration: none;
+    border: 1px solid var(--border2);
+    padding: 5px 14px;
+    border-radius: 9999px;
+    transition: all 0.2s;
+    letter-spacing: 0.3px;
+  }
+  .back-btn:hover {
+    color: var(--text);
+    border-color: var(--red);
+    background: var(--red-pale);
+  }
+  .back-btn svg { flex-shrink: 0; }
+
+  .badge {
+    font-family: var(--mono);
+    font-size: 11px;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    padding: 4px 10px;
+    border-radius: 2px;
+  }
+
+  .badge-incident { background: var(--red-dim); color: var(--red); border: 1px solid rgba(232,54,42,0.3); }
+  .badge-date { color: var(--text-dim); font-size: 12px; padding: 0; background: none; border: none; letter-spacing: 0.5px; }
+  .badge-read { color: var(--text-muted); font-size: 12px; padding: 0; background: none; border: none; letter-spacing: 0.5px; }
+
+  h1 {
+    font-family: var(--display);
+    font-size: clamp(40px, 6vw, 80px);
+    font-weight: 900;
+    line-height: 1.0;
+    letter-spacing: -2px;
+    margin-bottom: 28px;
+    max-width: 900px;
+  }
+
+  h1 em {
+    font-style: italic;
+    color: var(--red);
+    font-weight: 400;
+  }
+
+  .hero-lede {
+    font-size: 20px;
+    color: var(--text-dim);
+    max-width: 700px;
+    line-height: 1.65;
+    margin-bottom: 40px;
+    font-family: var(--body);
+  }
+
+  .hero-lede strong { color: var(--text); }
+
+  /* IMPACT STRIP */
+  .impact-strip {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 1px;
+    background: var(--border);
+    border: 1px solid var(--border);
+    margin-bottom: 0;
+  }
+
+  @media (max-width: 700px) {
+    .impact-strip { grid-template-columns: 1fr 1fr; }
+  }
+
+  .impact-item {
+    background: var(--surface);
+    padding: 24px 28px;
+  }
+
+  .impact-item:first-child { background: var(--red-pale); border-top: 2px solid var(--red); }
+
+  .impact-num {
+    font-family: var(--display);
+    font-size: clamp(28px, 3.5vw, 44px);
+    font-weight: 900;
+    letter-spacing: -1.5px;
+    line-height: 1;
+    margin-bottom: 6px;
+  }
+
+  .impact-item:first-child .impact-num { color: var(--red); }
+  .impact-item:nth-child(2) .impact-num { color: var(--amber); }
+  .impact-item:nth-child(3) .impact-num { color: var(--text); }
+  .impact-item:nth-child(4) .impact-num { color: var(--text); }
+
+  .impact-label {
+    font-family: var(--mono);
+    font-size: 11px;
+    color: var(--text-dim);
+    letter-spacing: 0.5px;
+    line-height: 1.4;
+  }
+
+  /* LAYOUT */
+  .page-layout {
+    display: grid;
+    grid-template-columns: 1fr 320px;
+    max-width: 1400px;
+    margin: 0 auto;
+    gap: 0;
+    border-bottom: 1px solid var(--border);
+  }
+
+  @media (max-width: 1100px) {
+    .page-layout { grid-template-columns: 1fr; }
+    .article-sidebar { display: none; }
+  }
+
+  .article-body {
+    border-right: 1px solid var(--border);
+    padding: 0 clamp(24px, 5vw, 80px) 80px;
+  }
+
+  /* ARTICLE CONTENT */
+  .article-section {
+    padding-top: 56px;
+    border-top: 1px solid var(--border);
+    margin-top: 56px;
+  }
+
+  .article-section:first-of-type {
+    border-top: none;
+    margin-top: 0;
+    padding-top: 56px;
+  }
+
+  .section-label {
+    font-family: var(--mono);
+    font-size: 10px;
+    letter-spacing: 3px;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    margin-bottom: 16px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .section-label::before {
+    content: '';
+    width: 20px;
+    height: 1px;
+    background: var(--text-muted);
+  }
+
+  h2 {
+    font-family: var(--display);
+    font-size: clamp(28px, 3.5vw, 44px);
+    font-weight: 700;
+    letter-spacing: -1px;
+    line-height: 1.1;
+    margin-bottom: 24px;
+    color: var(--text);
+  }
+
+  h2 em { font-style: italic; color: var(--red); font-weight: 400; }
+
+  h3 {
+    font-family: var(--display);
+    font-size: 22px;
+    font-weight: 700;
+    letter-spacing: -0.5px;
+    margin: 36px 0 14px;
+    color: var(--text);
+  }
+
+  .article-body p {
+    color: var(--text-dim);
+    margin-bottom: 22px;
+    max-width: 680px;
+    line-height: 1.8;
+  }
+
+  .article-body p:last-child { margin-bottom: 0; }
+  .article-body p strong { color: var(--text); }
+  .article-body p code {
+    font-family: var(--mono);
+    font-size: 14px;
+    background: var(--surface2);
+    padding: 2px 7px;
+    border-radius: 2px;
+    color: var(--amber);
+  }
+
+  /* ATTACK CHAIN */
+  .attack-chain {
+    margin: 36px 0;
+    border: 1px solid var(--border);
+    background: var(--surface);
+    overflow: hidden;
+  }
+
+  .chain-header {
+    padding: 14px 24px;
+    border-bottom: 1px solid var(--border);
+    font-family: var(--mono);
+    font-size: 11px;
+    letter-spacing: 2px;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+
+  .chain-items { padding: 8px 0; }
+
+  .chain-item {
+    display: grid;
+    grid-template-columns: 48px 100px 1fr;
+    align-items: start;
+    padding: 16px 24px;
+    border-bottom: 1px solid var(--border);
+    gap: 16px;
+  }
+
+  .chain-item:last-child { border-bottom: none; }
+
+  .chain-date {
+    font-family: var(--mono);
+    font-size: 11px;
+    color: var(--red);
+    padding-top: 2px;
+    white-space: nowrap;
+  }
+
+  .chain-actor {
+    font-family: var(--mono);
+    font-size: 11px;
+    color: var(--amber);
+    padding-top: 2px;
+  }
+
+  .chain-desc h4 {
+    font-family: var(--display);
+    font-size: 16px;
+    font-weight: 700;
+    margin-bottom: 4px;
+    color: var(--text);
+  }
+
+  .chain-desc p {
+    font-size: 13px;
+    color: var(--text-dim);
+    line-height: 1.5;
+    margin: 0;
+    max-width: 100%;
+  }
+
+  /* CALLOUTS */
+  .callout {
+    border-left: 3px solid;
+    padding: 20px 24px;
+    margin: 28px 0;
+    border-radius: 0 2px 2px 0;
+  }
+
+  .callout-danger { background: var(--red-pale); border-color: var(--red); }
+  .callout-insight { background: var(--amber-dim); border-color: var(--amber); }
+  .callout-solution { background: var(--green-dim); border-color: var(--green); }
+
+  .callout-label {
+    font-family: var(--mono);
+    font-size: 10px;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    margin-bottom: 8px;
+  }
+
+  .callout-danger .callout-label { color: var(--red); }
+  .callout-insight .callout-label { color: var(--amber); }
+  .callout-solution .callout-label { color: var(--green); }
+
+  .callout p {
+    font-size: 15px;
+    color: var(--text);
+    line-height: 1.65;
+    margin: 0 !important;
+    max-width: 100% !important;
+  }
+
+  /* CODE BLOCK */
+  .code-block {
+    background: #000;
+    border: 1px solid var(--border2);
+    margin: 24px 0;
+    overflow: hidden;
+  }
+
+  .code-block-header {
+    background: var(--surface2);
+    padding: 10px 18px;
+    border-bottom: 1px solid var(--border);
+    font-family: var(--mono);
+    font-size: 11px;
+    color: var(--text-dim);
+    display: flex;
+    justify-content: space-between;
+  }
+
+  .code-block pre {
+    padding: 22px;
+    font-family: var(--mono);
+    font-size: 13px;
+    line-height: 1.7;
+    color: var(--text-dim);
+    overflow-x: auto;
+    background: none;
+  }
+
+  .c-k { color: #c678dd; }
+  .c-s { color: var(--green); }
+  .c-c { color: var(--text-muted); }
+  .c-d { color: var(--red); }
+  .c-ok { color: var(--green); font-weight: 600; }
+  .c-w { color: var(--amber); }
+
+  /* STOLEN GRID */
+  .stolen-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1px;
+    background: var(--border);
+    border: 1px solid var(--border);
+    margin: 28px 0;
+  }
+
+  @media (max-width: 600px) { .stolen-grid { grid-template-columns: 1fr; } }
+
+  .stolen-cell { background: var(--surface); padding: 24px; }
+  .stolen-cell.highlight { background: var(--red-pale); border-top: 2px solid var(--red); }
+
+  .stolen-cell h4 {
+    font-family: var(--mono);
+    font-size: 11px;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    margin-bottom: 12px;
+    color: var(--text-dim);
+  }
+
+  .stolen-cell.highlight h4 { color: var(--red); }
+
+  .stolen-cell ul { list-style: none; display: flex; flex-direction: column; gap: 6px; }
+
+  .stolen-cell li {
+    font-size: 14px;
+    color: var(--text-dim);
+    display: flex;
+    align-items: flex-start;
+    gap: 8px;
+    line-height: 1.4;
+    font-family: var(--mono);
+  }
+
+  .stolen-cell li::before {
+    content: '→';
+    color: var(--red);
+    flex-shrink: 0;
+    font-size: 12px;
+    margin-top: 1px;
+  }
+
+  /* PULL QUOTE */
+  .pull-quote {
+    font-family: var(--display);
+    font-size: clamp(20px, 2.5vw, 28px);
+    font-style: italic;
+    font-weight: 400;
+    color: var(--text);
+    line-height: 1.35;
+    border-left: 3px solid var(--red);
+    padding: 20px 28px;
+    margin: 36px 0;
+    background: var(--red-pale);
+  }
+
+  /* SIDEBAR */
+  .article-sidebar {
+    padding: 48px 36px;
+    background: var(--bg2);
+  }
+
+  .sidebar-sticky { position: sticky; top: 80px; }
+
+  .sb-section { margin-bottom: 40px; }
+
+  .sb-title {
+    font-family: var(--mono);
+    font-size: 10px;
+    letter-spacing: 2.5px;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    margin-bottom: 16px;
+  }
+
+  .sb-nav { list-style: none; display: flex; flex-direction: column; gap: 4px; }
+
+  .sb-nav a {
+    font-size: 14px;
+    color: var(--text-dim);
+    text-decoration: none;
+    padding: 6px 10px;
+    display: block;
+    border-radius: 2px;
+    transition: all 0.15s;
+    font-family: var(--body);
+    line-height: 1.4;
+  }
+
+  .sb-nav a:hover { background: var(--surface); color: var(--text); }
+
+  .sb-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-top: 2px solid var(--red);
+    padding: 20px;
+  }
+
+  .sb-card h4 {
+    font-family: var(--display);
+    font-size: 16px;
+    font-weight: 700;
+    margin-bottom: 8px;
+    color: var(--text);
+  }
+
+  .sb-card p {
+    font-size: 13px;
+    color: var(--text-dim);
+    line-height: 1.55;
+    margin-bottom: 16px;
+  }
+
+  .sb-btn {
+    display: block;
+    text-align: center;
+    background: var(--red);
+    color: #fff;
+    padding: 11px;
+    font-family: var(--mono);
+    font-size: 12px;
+    font-weight: 600;
+    text-decoration: none;
+    letter-spacing: 0.5px;
+    transition: opacity 0.2s;
+  }
+  .sb-btn:hover { opacity: 0.85; }
+
+  .sb-timeline { display: flex; flex-direction: column; gap: 0; }
+
+  .sb-event {
+    display: flex;
+    gap: 12px;
+    padding: 10px 0;
+    border-bottom: 1px solid var(--border);
+    align-items: flex-start;
+  }
+
+  .sb-event:last-child { border-bottom: none; }
+
+  .sb-event-date {
+    font-family: var(--mono);
+    font-size: 11px;
+    color: var(--red);
+    white-space: nowrap;
+    padding-top: 2px;
+    min-width: 52px;
+  }
+
+  .sb-event-text {
+    font-size: 13px;
+    color: var(--text-dim);
+    line-height: 1.4;
+    font-family: var(--body);
+  }
+
+  /* FINAL CTA */
+  .final-cta {
+    padding: 80px clamp(24px, 6vw, 100px);
+    text-align: center;
+    border-top: 1px solid var(--border);
+    max-width: 1400px;
+    margin: 0 auto;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .final-cta::before {
+    content: 'CISCO';
+    position: absolute;
+    font-family: var(--display);
+    font-size: 30vw;
+    font-weight: 900;
+    color: var(--red);
+    opacity: 0.025;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    pointer-events: none;
+    letter-spacing: -10px;
+    white-space: nowrap;
+  }
+
+  .final-cta h2 { font-size: clamp(32px, 5vw, 64px); margin-bottom: 20px; position: relative; }
+
+  .final-cta p {
+    font-size: 18px;
+    color: var(--text-dim);
+    margin-bottom: 40px;
+    position: relative;
+    max-width: 600px;
+    margin-left: auto;
+    margin-right: auto;
+  }
+
+  .cta-btn {
+    display: inline-block;
+    background: var(--red);
+    color: #fff;
+    padding: 16px 48px;
+    font-family: var(--mono);
+    font-size: 14px;
+    font-weight: 600;
+    text-decoration: none;
+    letter-spacing: 0.5px;
+    position: relative;
+    transition: opacity 0.2s;
+  }
+  .cta-btn:hover { opacity: 0.85; }
+
+  .cta-note {
+    font-family: var(--mono);
+    font-size: 12px;
+    color: var(--text-muted);
+    margin-top: 14px;
+    position: relative;
+  }
+
+  /* FOOTER */
+  footer {
+    padding: 32px clamp(24px, 6vw, 100px);
+    border-top: 1px solid var(--border);
+    display: flex;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 16px;
+    font-family: var(--mono);
+    font-size: 12px;
+    color: var(--text-muted);
+    max-width: 1400px;
+    margin: 0 auto;
+  }
+
+  .footer-logo { font-family: var(--display); font-size: 18px; font-weight: 700; color: var(--text); }
+  .footer-logo em { font-style: italic; color: var(--red); }
+
+  /* ANIMATIONS */
+  @keyframes fade-up {
+    from { opacity: 0; transform: translateY(20px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  .hero > * { animation: fade-up 0.5s ease both; }
+  .hero > *:nth-child(1) { animation-delay: 0.05s; }
+  .hero > *:nth-child(2) { animation-delay: 0.12s; }
+  .hero > *:nth-child(3) { animation-delay: 0.19s; }
+  .hero > *:nth-child(4) { animation-delay: 0.26s; }
+  .hero > *:nth-child(5) { animation-delay: 0.33s; }
+
+  @media (max-width: 600px) {
+    h1 { letter-spacing: -1.5px; }
+    .chain-item { grid-template-columns: 1fr; gap: 6px; }
+  }
+</style>
+</head>
+<body>
+
+<!-- PILL NAV -->
+<nav class="pill-nav">
+  <div class="pill-nav-inner">
+    <a href="/" class="pill-logo">
+      <img src="/og-image2.png" alt="VaultProof">
+      <span class="pill-logo-text">VaultProof</span>
+    </a>
+
+    <div class="pill-links">
+      <div class="nav-group">
+        <button class="nav-group-btn" aria-haspopup="true" aria-expanded="false">
+          Product
+          <svg width="11" height="11" viewBox="0 0 12 12" fill="currentColor"><path d="M6 8L2 4h8z"/></svg>
+        </button>
+        <div class="nav-dropdown" role="menu">
+          <a href="/agents" role="menuitem">AI Agents</a>
+          <a href="/compare" role="menuitem">Compare</a>
+          <a href="/changelog" role="menuitem">Changelog</a>
+        </div>
+      </div>
+      <a href="/docs" class="pill-link">Docs</a>
+      <a href="/guides" class="pill-link">Guides</a>
+      <a href="/blog" class="pill-link active">Blog</a>
+      <a href="/#pricing" class="pill-link">Pricing</a>
+    </div>
+
+    <div class="pill-actions">
+      <a href="/scan" class="btn-nav-scanner">
+        <svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+        Free Scanner
+      </a>
+      <a href="/app/login" class="btn-nav-signup">Sign Up</a>
+    </div>
+
+    <button id="mobileToggle" class="pill-mobile-btn" aria-label="Toggle menu">
+      <svg width="22" height="22" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 6h14M4 12h14M4 18h14"/></svg>
+    </button>
+  </div>
+
+  <div id="mobileMenu" class="pill-mobile-menu">
+    <a href="/agents" class="pill-mobile-link">AI Agents</a>
+    <a href="/compare" class="pill-mobile-link">Compare</a>
+    <a href="/changelog" class="pill-mobile-link">Changelog</a>
+    <a href="/docs" class="pill-mobile-link">Docs</a>
+    <a href="/guides" class="pill-mobile-link">Guides</a>
+    <a href="/blog" class="pill-mobile-link active">Blog</a>
+    <a href="/#pricing" class="pill-mobile-link">Pricing</a>
+    <a href="/app/login" class="pill-mobile-link">Dashboard</a>
+    <div style="margin-top:8px;display:flex;flex-direction:column;gap:8px;">
+      <a href="/scan" class="btn-nav-scanner" style="justify-content:center;padding:10px 16px;">Free Scanner</a>
+      <a href="/app/login" class="btn-nav-signup" style="text-align:center;padding:10px 20px;">Sign Up</a>
+    </div>
+  </div>
+</nav>
+
+<!-- HERO -->
+<div class="hero">
+  <div class="hero-meta">
+    <a href="/" class="back-btn">
+      <svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path d="M19 12H5M12 5l-7 7 7 7"/></svg>
+      vaultproof.dev
+    </a>
+    <span class="badge badge-incident">Incident Analysis</span>
+    <span class="badge badge-date">April 2026</span>
+    <span class="badge badge-read">18 min read</span>
+  </div>
+
+  <h1>How Cisco got hacked through<br>a <em>security scanner.</em></h1>
+
+  <p class="hero-lede">
+    TeamPCP compromised Trivy v0.69.4, injected credential-harvesting malware into its
+    GitHub Actions, and let every CI/CD pipeline in the world run it.
+    <strong>Cisco ran Trivy. Cisco got breached.</strong>
+    300 GitHub repositories stolen. AWS keys exfiltrated. AI product source code, bank code,
+    government agency code — gone.
+    Here is the full attack chain, and the one architectural decision that would have stopped the credential theft.
+  </p>
+
+  <!-- IMPACT STRIP -->
+  <div class="impact-strip">
+    <div class="impact-item">
+      <div class="impact-num">300+</div>
+      <div class="impact-label">GitHub repos stolen from Cisco including AI product source code</div>
+    </div>
+    <div class="impact-item">
+      <div class="impact-num">9.4</div>
+      <div class="impact-label">CVE-2026-33634 CVSS score — near-maximum severity</div>
+    </div>
+    <div class="impact-item">
+      <div class="impact-num">75/76</div>
+      <div class="impact-label">Trivy-action version tags overwritten with malicious code</div>
+    </div>
+    <div class="impact-item">
+      <div class="impact-num">72 hrs</div>
+      <div class="impact-label">Time attackers maintained persistent access before detection</div>
+    </div>
+  </div>
+</div>
+
+<!-- CONTENT LAYOUT -->
+<div class="page-layout">
+
+  <!-- ARTICLE -->
+  <article class="article-body">
+
+    <!-- SECTION 1 -->
+    <div class="article-section" id="what-happened">
+      <div class="section-label">What happened</div>
+      <h2>The breach that started with<br>a <em>trusted tool.</em></h2>
+
+      <p>
+        On March 30, 2026, Cisco confirmed what security researchers had been warning about for weeks:
+        attackers had used credentials harvested during the Trivy supply chain compromise to breach
+        Cisco's internal development environment. <strong>More than 300 GitHub repositories were cloned.</strong>
+        Source code for Cisco's AI Assistant and AI Defense products was stolen, along with code belonging
+        to corporate customers at banks, business process outsourcing firms, and US government agencies.
+      </p>
+
+      <p>
+        The Cisco breach was not the result of a vulnerability in Cisco's own code. It was not a
+        phishing attack. It was not an insider threat. It happened because Cisco trusted Trivy —
+        a widely used open-source security scanner — and Trivy had already been turned into a weapon.
+      </p>
+
+      <p>
+        To understand how a company of Cisco's size and security sophistication ended up with its
+        source code on an extortion site, you need to understand the full attack chain. It did not
+        start on March 30. It started on March 1.
+      </p>
+
+      <!-- ATTACK CHAIN -->
+      <div class="attack-chain">
+        <div class="chain-header">
+          <span>Full attack timeline — TeamPCP campaign</span>
+          <span style="color:var(--red)">CVE-2026-33634 · CVSS 9.4</span>
+        </div>
+        <div class="chain-items">
+          <div class="chain-item">
+            <div class="chain-date">Mar 1</div>
+            <div class="chain-actor">TeamPCP</div>
+            <div class="chain-desc">
+              <h4>Initial credential theft via misconfigured GitHub Action</h4>
+              <p>Attackers exploited a misconfigured pull_request_target workflow in Trivy's GitHub repository — present since October 2025 — to steal a Personal Access Token with write permissions. Aqua Security discovered the breach and rotated credentials, but the rotation was incomplete.</p>
+            </div>
+          </div>
+          <div class="chain-item">
+            <div class="chain-date">Mar 19</div>
+            <div class="chain-actor">TeamPCP</div>
+            <div class="chain-desc">
+              <h4>Trivy v0.69.4 backdoored — 75 of 76 version tags poisoned</h4>
+              <p>Using credentials that survived the incomplete rotation, TeamPCP force-pushed malicious code to 75 of 76 version tags in trivy-action and all seven tags in setup-trivy. The Trivy binary itself was backdoored across GitHub releases, Docker Hub, GitHub Container Registry, and Amazon ECR. CVE-2026-33634 assigned, CVSS 9.4.</p>
+            </div>
+          </div>
+          <div class="chain-item">
+            <div class="chain-date">Mar 19</div>
+            <div class="chain-actor">Every affected pipeline</div>
+            <div class="chain-desc">
+              <h4>Credential harvesting begins at scale across thousands of CI/CD pipelines</h4>
+              <p>The malicious payload read directly from GitHub Actions Runner memory at /proc/&lt;pid&gt;/mem — bypassing log-masking entirely. AWS keys, GCP credentials, Azure tokens, Kubernetes secrets, Docker registry credentials, SSH keys, database passwords, and TLS private keys were harvested, AES-256-CBC encrypted, and exfiltrated. Any organization running Trivy that day lost their pipeline credentials.</p>
+            </div>
+          </div>
+          <div class="chain-item">
+            <div class="chain-date">Mar 23</div>
+            <div class="chain-actor">TeamPCP</div>
+            <div class="chain-desc">
+              <h4>Checkmarx KICS and AST GitHub Actions compromised</h4>
+              <p>Using credentials from the Trivy phase, TeamPCP moved to Checkmarx's KICS and AST repositories. The same credential harvesting payload was deployed. Malicious VSCode extensions were published simultaneously.</p>
+            </div>
+          </div>
+          <div class="chain-item">
+            <div class="chain-date">Mar 24</div>
+            <div class="chain-actor">TeamPCP</div>
+            <div class="chain-desc">
+              <h4>LiteLLM PyPI compromised — 95 million monthly downloads affected</h4>
+              <p>LiteLLM, an open-source AI gateway with approximately 95 million monthly PyPI downloads, was compromised through poisoned package versions 1.82.7 and 1.82.8. Every developer environment that auto-updated received the credential harvesting payload.</p>
+            </div>
+          </div>
+          <div class="chain-item">
+            <div class="chain-date">Mar 27</div>
+            <div class="chain-actor">TeamPCP</div>
+            <div class="chain-desc">
+              <h4>Telnyx Python SDK compromised</h4>
+              <p>The cascade continued with the Telnyx communications library on PyPI. The same infostealer payload. More credentials harvested from more developer environments.</p>
+            </div>
+          </div>
+          <div class="chain-item">
+            <div class="chain-date">Mar 30</div>
+            <div class="chain-actor">TeamPCP using stolen Cisco credentials</div>
+            <div class="chain-desc">
+              <h4>Cisco development environment breached — 300+ repos cloned</h4>
+              <p>Attackers used credentials harvested from Cisco's Trivy-enabled CI/CD pipeline to access Cisco's internal development environment. 300+ GitHub repositories were cloned including AI Assistant, AI Defense, and unreleased AI products. Source code belonging to banks, BPOs, and US government agencies was also stolen. Multiple AWS access keys were exfiltrated and used for unauthorized activities.</p>
+            </div>
+          </div>
+          <div class="chain-item">
+            <div class="chain-date">Mar 31</div>
+            <div class="chain-actor">ShinyHunters</div>
+            <div class="chain-desc">
+              <h4>Extortion campaign launched — $13M demanded</h4>
+              <p>ShinyHunters published an extortion post with an April 3 deadline claiming theft of 3+ million Salesforce records alongside the GitHub repositories and AWS assets. Cisco reportedly declined to pay. The group warned they would publish all data and contact every employee and client.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- SECTION 2: HOW THE MALWARE WORKED -->
+    <div class="article-section" id="how-it-worked">
+      <div class="section-label">Technical analysis</div>
+      <h2>How the malware actually<br><em>read the credentials.</em></h2>
+
+      <p>
+        Most developers assume that GitHub Actions masks sensitive values in logs.
+        If you add a secret to your repository's secrets store and use it in a workflow,
+        GitHub replaces its value with asterisks in the log output. The assumption is that
+        the secret is therefore safe even if logs are exposed.
+      </p>
+
+      <p>
+        <strong>The Trivy payload bypassed log-masking entirely.</strong>
+      </p>
+
+      <p>
+        Instead of reading from environment variables or workflow outputs, the malicious GitHub Action
+        read directly from the GitHub Actions Runner process memory — specifically from
+        <code>/proc/&lt;pid&gt;/mem</code> on Linux runners. This file provides direct access to a
+        process's virtual memory space. The runner process holds all environment variables, including
+        secrets, in memory. The masking in logs does not affect what lives in the process's memory space.
+      </p>
+
+      <div class="callout callout-danger">
+        <div class="callout-label">The attack mechanism</div>
+        <p>The runner process holds your secrets in memory whether or not they appear masked in logs. Any code with access to the runner's process memory — including a compromised GitHub Action — can read them directly. Log masking is a display feature. It is not a security boundary.</p>
+      </div>
+
+      <p>
+        Once collected, the harvested credentials were encrypted with AES-256-CBC and wrapped
+        with RSA-4096, making network-layer inspection ineffective. The payload then exfiltrated
+        the encrypted bundle to TeamPCP's C2 infrastructure. The encryption was not to protect the
+        data in transit — it was to prevent security tools from detecting the stolen credential
+        patterns in network traffic.
+      </p>
+
+      <h3>What was stolen from every affected pipeline</h3>
+
+      <div class="stolen-grid">
+        <div class="stolen-cell highlight">
+          <h4>Cloud credentials</h4>
+          <ul>
+            <li>AWS access keys and secret keys</li>
+            <li>GCP service account credentials</li>
+            <li>Azure service principal credentials</li>
+            <li>AWS STS session tokens</li>
+          </ul>
+        </div>
+        <div class="stolen-cell">
+          <h4>Infrastructure secrets</h4>
+          <ul>
+            <li>SSH private keys</li>
+            <li>Kubernetes service account tokens</li>
+            <li>Docker registry credentials</li>
+            <li>TLS private keys and certificates</li>
+          </ul>
+        </div>
+        <div class="stolen-cell">
+          <h4>Developer credentials</h4>
+          <ul>
+            <li>GitHub Personal Access Tokens</li>
+            <li>npm authentication tokens</li>
+            <li>PyPI API tokens</li>
+            <li>Database connection strings</li>
+          </ul>
+        </div>
+        <div class="stolen-cell">
+          <h4>Application secrets</h4>
+          <ul>
+            <li>API keys for third-party services</li>
+            <li>Webhook secrets</li>
+            <li>Signing keys</li>
+            <li>OAuth client secrets</li>
+          </ul>
+        </div>
+      </div>
+
+      <p>
+        For Cisco specifically, the stolen AWS keys were confirmed to have been used for unauthorized
+        activities across a small number of Cisco AWS accounts. The breach impacted dozens of developer
+        and lab workstations. The company's CSIRT, Unified Intelligence Center, and Emergency Operations
+        Center teams were all engaged in the response.
+      </p>
+
+      <p>
+        Cisco expects continued fallout. The same Trivy credentials that opened Cisco's environment
+        were also used to compromise LiteLLM and Checkmarx. Each wave of the campaign used credentials
+        stolen in the previous phase to reach further into the ecosystem.
+      </p>
+    </div>
+
+    <!-- SECTION 3: WHY SECRETS MANAGERS FAILED -->
+    <div class="article-section" id="why-secrets-managers-failed">
+      <div class="section-label">The fundamental gap</div>
+      <h2>Why Cisco's secrets manager<br><em>did not help.</em></h2>
+
+      <p>
+        This is the question worth sitting with. Cisco is one of the world's largest cybersecurity
+        companies. They make security products. They have a dedicated CSIRT team. They were not
+        storing secrets in plaintext files or pushing them to public GitHub repositories.
+        They had secrets management. It did not help.
+      </p>
+
+      <p>
+        Here is why. Every secrets manager — HashiCorp Vault, AWS Secrets Manager, GitHub Secrets,
+        Doppler, Infisical — follows the same model. Encrypt the secret at rest. Retrieve it via API
+        when the pipeline needs it. The secret becomes an environment variable or an in-memory string
+        in the running process.
+      </p>
+
+      <p>
+        <strong>Step three is the blind spot.</strong> The moment the secret is retrieved and placed
+        into the runner's environment, it exists as a plaintext string in process memory. That is exactly
+        where the Trivy malware looked. Not in the vault. Not in the encrypted storage. In the memory
+        of the running process that had just retrieved the secret to use it.
+      </p>
+
+      <div class="code-block">
+        <div class="code-block-header">
+          <span>How every CI/CD pipeline works — and why it failed</span>
+          <span style="color:var(--red)">VULNERABLE</span>
+        </div>
+        <pre><span class="c-c"># Standard GitHub Actions workflow — Cisco's setup looked similar</span>
+<span class="c-c"># Step 1: Vault or GitHub Secrets retrieves the key (encrypted)</span>
+<span class="c-c"># Step 2: Key is decrypted and injected as environment variable</span>
+<span class="c-c"># Step 3: Runner process holds it in memory</span>
+
+<span class="c-w">env:</span>
+  AWS_ACCESS_KEY_ID: <span class="c-d">${{ secrets.AWS_ACCESS_KEY_ID }}</span>
+  AWS_SECRET_ACCESS_KEY: <span class="c-d">${{ secrets.AWS_SECRET_ACCESS_KEY }}</span>
+  OPENAI_API_KEY: <span class="c-d">${{ secrets.OPENAI_API_KEY }}</span>
+
+<span class="c-k">steps:</span>
+  - name: Run security scan
+    uses: aquasecurity/trivy-action@v0.28.0  <span class="c-c"># ← reads /proc/&lt;pid&gt;/mem</span>
+    <span class="c-c"># Secrets are now in runner memory. Malicious action reads them.</span>
+    <span class="c-c"># Log masking is irrelevant. Memory access bypasses it entirely.</span>
+    <span class="c-c"># Stolen. Encrypted. Exfiltrated. Done.</span></pre>
+      </div>
+
+      <div class="pull-quote">
+        "The Cisco breach did not happen because of a flaw in Cisco's own security practices in isolation. It happened because a widely trusted open-source security tool was turned into a weapon."
+      </div>
+
+      <p>
+        This is not unique to Cisco. Any organization that ran Trivy between March 19 and March 24, 2026,
+        with secrets present in the runner environment is a potential victim of this credential harvest.
+        The tooling that was supposed to protect the pipeline became the attack vector into the pipeline.
+      </p>
+    </div>
+
+    <!-- SECTION 4: WHAT WOULD HAVE STOPPED IT -->
+    <div class="article-section" id="the-fix">
+      <div class="section-label">The architectural answer</div>
+      <h2>What would have stopped<br>the <em>credential theft.</em></h2>
+
+      <p>
+        Clear distinction before this section: VaultProof does not prevent supply chain attacks.
+        The Trivy compromise would still have happened. TeamPCP would still have injected malware
+        into the GitHub Action. The malicious code would still have run in every affected pipeline.
+      </p>
+
+      <p>
+        What VaultProof addresses is the consequence — the credential theft.
+      </p>
+
+      <p>
+        If the secrets in Cisco's CI/CD pipeline had been protected using split-key architecture and
+        a proxy approach, the Trivy payload would have found nothing to steal. Here is why.
+      </p>
+
+      <p>
+        VaultProof splits API keys and credentials into cryptographic shares. Individual shares are
+        mathematically useless — knowing any subset below the threshold reveals zero information about
+        the complete key. The shares are distributed across separate storage. Your application, your
+        CI/CD runner, your developer workstation — none of them hold the full credential. Only the
+        VaultProof proxy does, and only for milliseconds.
+      </p>
+
+      <div class="code-block">
+        <div class="code-block-header">
+          <span>With VaultProof — what the malicious Trivy action would have found</span>
+          <span style="color:var(--green)">PROTECTED</span>
+        </div>
+        <pre><span class="c-c"># Pipeline environment with VaultProof</span>
+<span class="c-c"># The runner holds shares, not complete credentials</span>
+
+<span class="c-w">env:</span>
+  VAULTPROOF_PROJECT_ID: <span class="c-ok">vp-proj-abc123</span>  <span class="c-c"># non-secret identifier</span>
+  <span class="c-c"># No AWS keys. No API keys. No secrets.</span>
+  <span class="c-c"># Shares are distributed. No single location holds the complete key.</span>
+
+<span class="c-k">steps:</span>
+  - name: Run security scan
+    uses: aquasecurity/trivy-action@v0.28.0  <span class="c-c"># runs malicious payload</span>
+    <span class="c-c"># Payload reads /proc/&lt;pid&gt;/mem</span>
+    <span class="c-c"># Finds: project ID (not a secret) and cryptographic shares</span>
+    <span class="c-c"># Shares alone are useless without the other share</span>
+    <span class="c-c"># Credential theft consequence: eliminated</span>
+
+  - name: Make API calls via VaultProof proxy
+    <span class="c-c"># SDK sends request to proxy</span>
+    <span class="c-c"># Proxy collects shares, reconstructs key for ~200ms</span>
+    <span class="c-c"># API call made. Key zeroed from proxy memory.</span>
+    <span class="c-c"># The complete credential never existed in the runner.</span></pre>
+      </div>
+
+      <div class="callout callout-solution">
+        <div class="callout-label">The principle</div>
+        <p>You cannot steal what does not exist. The Trivy malware read from runner memory and found complete credentials — because those credentials had been retrieved from the vault and placed into memory as plaintext strings. If the complete credential never existed in the runner's memory space, the attack harvests nothing of value.</p>
+      </div>
+
+      <h3>What about the AWS keys specifically?</h3>
+
+      <p>
+        The AWS keys stolen from Cisco's pipelines were the credentials that gave attackers access to
+        Cisco's AWS accounts — enabling the unauthorized activity confirmed in the breach disclosure.
+        AWS credentials in CI/CD pipelines are among the highest-value targets in any supply chain attack.
+      </p>
+
+      <p>
+        AWS supports OIDC authentication for GitHub Actions — a mechanism that issues short-lived tokens
+        rather than static keys. If Cisco had used OIDC for AWS authentication, the stolen credentials
+        would have been ephemeral tokens with limited validity windows, significantly reducing the blast radius.
+      </p>
+
+      <p>
+        But OIDC only works for cloud provider credentials. AWS, GCP, and Azure support it.
+        Third-party API keys — OpenAI, Anthropic, Stripe, database connection strings,
+        webhook secrets — do not support OIDC. Those static keys still need to exist somewhere
+        in the environment. That is the gap split-key architecture addresses.
+      </p>
+    </div>
+
+    <!-- SECTION 5: WHAT TO DO NOW -->
+    <div class="article-section" id="what-to-do">
+      <div class="section-label">Immediate actions</div>
+      <h2>If you ran Trivy between<br>March 19 and 24, <em>do this.</em></h2>
+
+      <p>
+        The safe versions of Trivy are <code>v0.69.3</code> or earlier, <code>trivy-action@v0.35.0</code>,
+        and <code>setup-trivy@v0.2.6</code>. If your pipelines ran any other version during the
+        window, treat all pipeline credentials as compromised.
+      </p>
+
+      <p><strong>Immediate triage checklist:</strong></p>
+
+      <div class="callout callout-danger">
+        <div class="callout-label">If you ran affected Trivy versions</div>
+        <p>
+          Rotate all AWS access keys immediately. Rotate all GitHub Personal Access Tokens.
+          Rotate all Kubernetes service account tokens. Rotate all Docker registry credentials.
+          Check your GitHub organization for any repositories named tpcp-docs — this indicates
+          successful exfiltration. Block scan.aquasecurtiy[.]org and 45.148.10.212 at network level.
+          Check developer machines for sysmon.py or pgmon systemd services.
+          Treat all secrets that were present in affected pipeline environment variables as fully compromised.
+        </p>
+      </div>
+
+      <p>
+        Going forward: pin all GitHub Actions to full commit SHA hashes, not version tags.
+        Version tags like <code>@v0.28.0</code> are mutable pointers. The commit hash they point to
+        can be silently changed by anyone with repository access. A SHA hash cannot be moved.
+        This single change would have prevented the tag-poisoning phase of this attack from
+        affecting pinned pipelines.
+      </p>
+
+      <p>
+        The broader lesson from the Cisco breach is not that organizations need better secret rotation
+        policies, though they do. It is that the entire paradigm of secrets-as-environment-variables
+        in CI/CD pipelines is structurally vulnerable to the supply chain attack class.
+        As long as the complete credential must exist as a plaintext string somewhere in the runner's
+        memory, a sufficiently motivated attacker with code execution in that environment will find it.
+      </p>
+    </div>
+
+  </article>
+
+  <!-- SIDEBAR -->
+  <aside class="article-sidebar">
+    <div class="sidebar-sticky">
+      <div class="sb-section">
+        <div class="sb-title">In this article</div>
+        <ul class="sb-nav">
+          <li><a href="#what-happened">What happened</a></li>
+          <li><a href="#how-it-worked">How the malware worked</a></li>
+          <li><a href="#why-secrets-managers-failed">Why secrets managers failed</a></li>
+          <li><a href="#the-fix">What would have stopped it</a></li>
+          <li><a href="#what-to-do">What to do now</a></li>
+        </ul>
+      </div>
+
+      <div class="sb-section">
+        <div class="sb-title">Attack timeline</div>
+        <div class="sb-timeline">
+          <div class="sb-event">
+            <div class="sb-event-date">Mar 1</div>
+            <div class="sb-event-text">Initial Trivy PAT stolen</div>
+          </div>
+          <div class="sb-event">
+            <div class="sb-event-date">Mar 19</div>
+            <div class="sb-event-text">Trivy v0.69.4 backdoored</div>
+          </div>
+          <div class="sb-event">
+            <div class="sb-event-date">Mar 23</div>
+            <div class="sb-event-text">Checkmarx KICS compromised</div>
+          </div>
+          <div class="sb-event">
+            <div class="sb-event-date">Mar 24</div>
+            <div class="sb-event-text">LiteLLM PyPI poisoned</div>
+          </div>
+          <div class="sb-event">
+            <div class="sb-event-date">Mar 27</div>
+            <div class="sb-event-text">Telnyx SDK compromised</div>
+          </div>
+          <div class="sb-event">
+            <div class="sb-event-date">Mar 30</div>
+            <div class="sb-event-text">Cisco dev environment breached</div>
+          </div>
+          <div class="sb-event">
+            <div class="sb-event-date">Mar 31</div>
+            <div class="sb-event-text">ShinyHunters extortion demand</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="sb-section">
+        <div class="sb-card">
+          <h4>Protect your pipeline credentials</h4>
+          <p>VaultProof ensures credentials never exist as plaintext strings in your CI/CD environment. No plaintext means nothing to steal — even if your pipeline is compromised.</p>
+          <a href="/app/login" class="sb-btn">Free signup →</a>
+        </div>
+      </div>
+    </div>
+  </aside>
+
+</div>
+
+<!-- FINAL CTA -->
+<div class="final-cta">
+  <h2>The next Trivy is coming.<br><em>Be ready.</em></h2>
+  <p>Supply chain attacks targeting CI/CD credentials are accelerating. VaultProof ensures there is nothing to find — even when your pipeline runs compromised code.</p>
+  <a href="/app/login" class="cta-btn">Protect your pipeline — free</a>
+  <p class="cta-note">// npm install @vaultproof/sdk &nbsp;·&nbsp; pip install vaultproof &nbsp;·&nbsp; 15 minutes to integrate</p>
+</div>
+
+<footer>
+  <div class="footer-logo">Vault<em>Proof</em></div>
+  <p>Sources: BleepingComputer, Palo Alto Networks, Aqua Security, SafeState, SC Media, CSO Online</p>
+  <p>© 2026 VaultProof · vaultproof.dev</p>
+</footer>
+
+<script>
+  // Mobile menu toggle
+  document.getElementById('mobileToggle').addEventListener('click', function() {
+    document.getElementById('mobileMenu').classList.toggle('open');
+  });
+
+  // Nav dropdowns — click to open, click outside to close
+  (function() {
+    var groups = document.querySelectorAll('.nav-group');
+    function closeAll() {
+      groups.forEach(function(g) {
+        g.classList.remove('open');
+        var btn = g.querySelector('.nav-group-btn');
+        if (btn) btn.setAttribute('aria-expanded', 'false');
+      });
+    }
+    groups.forEach(function(group) {
+      var btn = group.querySelector('.nav-group-btn');
+      btn.addEventListener('click', function(e) {
+        e.stopPropagation();
+        var isOpen = group.classList.contains('open');
+        closeAll();
+        if (!isOpen) {
+          group.classList.add('open');
+          btn.setAttribute('aria-expanded', 'true');
+        }
+      });
+    });
+    document.addEventListener('click', closeAll);
+    document.addEventListener('keydown', function(e) {
+      if (e.key === 'Escape') closeAll();
+    });
+  })();
+</script>
+<script src="/js/analytics.js" defer></script>
+</body>
+</html>
