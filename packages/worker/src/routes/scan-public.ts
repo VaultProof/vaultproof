@@ -197,17 +197,17 @@ const HYGIENE_CHECKS: HygieneCheck[] = [
     description: "Without .gitignore, secrets accidentally committed can't be excluded from future commits.",
   },
   {
-    matchers: [/^LICENSE(\.md|\.txt)?$/, /^COPYING$/],
+    matchers: [/^LICENSE(\.md|\.txt)?$/i, /^COPYING$/i],
     title: 'No LICENSE file',
     description: 'Unclear licensing blocks commercial and open-source reuse of this project.',
   },
   {
-    matchers: [/^SECURITY\.md$/, /^\.github\/SECURITY\.md$/, /^docs\/SECURITY\.md$/],
+    matchers: [/^SECURITY\.md$/i, /^\.github\/SECURITY\.md$/i, /^docs\/SECURITY\.md$/i],
     title: 'No security policy',
     description: 'SECURITY.md gives users a clear way to report vulnerabilities.',
   },
   {
-    matchers: [/^README(\.md|\.rst|\.txt)?$/],
+    matchers: [/^README(\.md|\.rst|\.txt|\.org)?$/i],
     title: 'No README',
     description: 'Hurts discoverability and user trust.',
   },
@@ -560,6 +560,6 @@ export async function handlePublicScan(request: Request, env: Env): Promise<Resp
     filesScanned: currentResult.filesScanned,
     commitsScanned: historyResult.commitsScanned,
     findings: cappedFindings,
-    truncated: dedupedFindings.length > MAX_FINDINGS,
+    truncated: nonHygiene.length > MAX_FINDINGS,
   });
 }
