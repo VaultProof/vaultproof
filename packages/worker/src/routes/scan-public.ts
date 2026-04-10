@@ -103,6 +103,87 @@ function detectRiskyFiles(filePaths: string[]): Finding[] {
   return findings;
 }
 
+interface CodeSmellPattern {
+  pattern: RegExp;
+  title: string;
+  description: string;
+  fileMatcher?: RegExp; // if present, only apply to files matching this regex
+}
+
+const CODE_SMELL_PATTERNS: CodeSmellPattern[] = [
+  {
+    pattern: /\beval\s*\(/,
+    title: 'Use of eval()',
+    description: 'eval() executes arbitrary strings as code. Use JSON.parse or a safer alternative.',
+    fileMatcher: /\.(js|jsx|ts|tsx|py)$/i,
+  },
+  {
+    pattern: /new\s+Function\s*\(/,
+    title: 'Dynamic code via Function()',
+    description: 'The Function constructor evaluates strings as code — same risk as eval().',
+    fileMatcher: /\.(js|jsx|ts|tsx)$/i,
+  },
+  {
+    pattern: /\.innerHTML\s*=/,
+    title: 'Unsafe innerHTML assignment',
+    description: 'Assigning unescaped strings to innerHTML enables XSS. Use textContent or a sanitizer.',
+    fileMatcher: /\.(js|jsx|ts|tsx|html)$/i,
+  },
+  {
+    pattern: /dangerouslySetInnerHTML/,
+    title: 'dangerouslySetInnerHTML in React',
+    description: 'Bypasses React escaping. Only use with strictly sanitized input.',
+    fileMatcher: /\.(js|jsx|ts|tsx)$/i,
+  },
+  {
+    pattern: /\b(md5|MD5|sha1|SHA1)\s*\(/,
+    title: 'Weak hash function',
+    description: 'MD5 and SHA1 are broken for security. Use SHA-256 or better.',
+  },
+  {
+    pattern: /\b(DES|RC4)\b/,
+    title: 'Weak cipher',
+    description: 'DES and RC4 are broken. Use AES-256-GCM or ChaCha20-Poly1305.',
+  },
+  {
+    pattern: /Access-Control-Allow-Origin[^\n]{0,50}["']\*["']/,
+    title: 'CORS wildcard',
+    description: 'Allowing all origins defeats CORS protection for authenticated endpoints.',
+  },
+  {
+    pattern: /"\s*SELECT\b[^"]*"\s*\+/,
+    title: 'SQL string concatenation',
+    description: 'Concatenating user input into SQL strings enables injection. Use parameterized queries.',
+    fileMatcher: /\.(js|jsx|ts|tsx|py|java|go|rb|php)$/i,
+  },
+];
+
+function scanCodeSmells(lines: string[], filePath: string): Finding[] {
+  const findings: Finding[] = [];
+  for (let i = 0; i < lines.length; i++) {
+    const line = lines[i];
+    if (line.length > 2000) continue;
+    for (const { pattern, title, description, fileMatcher } of CODE_SMELL_PATTERNS) {
+      if (fileMatcher && !fileMatcher.test(filePath)) continue;
+      if (pattern.test(line)) {
+        findings.push({
+          category: 'code',
+          provider: 'code-smell',
+          providerName: title,
+          file: filePath,
+          line: i + 1,
+          maskedValue: '',
+          severity: 'MEDIUM',
+          source: 'current',
+          title,
+          description,
+        });
+      }
+    }
+  }
+  return findings;
+}
+
 async function checkScanRateLimit(env: Env, ip: string): Promise<boolean> {
   const key = `rl:scan:pub:${ip}`;
   const raw = await env.CACHE.get(key);
@@ -189,7 +270,11 @@ function scanLines(lines: string[], filePath: string, ctx: ScanContext): Finding
 }
 
 function scanFileContent(content: string, filePath: string): Finding[] {
-  return scanLines(content.split('\n'), filePath, { source: 'current' });
+  const lines = content.split('\n');
+  return [
+    ...scanLines(lines, filePath, { source: 'current' }),
+    ...scanCodeSmells(lines, filePath),
+  ];
 }
 
 // Scan the `+` lines (additions) in a git patch for a single file.
