@@ -3,6 +3,7 @@ import { authenticateUser } from '../lib/jwt-auth.js';
 import { getSupabase } from '../lib/supabase.js';
 import { getUserTier } from '../lib/tier.js';
 import { encrypt } from '../crypto/encryption.js';
+import { recordEvent } from '../lib/analytics.js';
 
 const TIER_KEY_LIMITS: Record<string, number> = {
   free: 3,
@@ -109,6 +110,13 @@ export async function handleKeys(
     if (insertError) {
       return Response.json({ error: 'Failed to store key slot' }, { status: 500 });
     }
+
+    // Analytics event: key_store (fire-and-forget)
+    recordEvent(env, {
+      userId: user.userId,
+      type: 'key_store',
+      properties: { provider },
+    }).then(() => {}, () => {});
 
     let grantId: string | undefined;
     if (appId) {

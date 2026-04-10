@@ -7,6 +7,7 @@ import { memGet, memSet } from '../lib/mem-cache.js';
 import { decrypt, zeroUint8Array } from '../crypto/encryption.js';
 import { decryptShare2, decryptShare2Legacy } from '../crypto/share2.js';
 import { deserializeShare, combineShares } from '../crypto/shamir.js';
+import { recordEvent } from '../lib/analytics.js';
 
 const PROVIDERS: Record<string, { upstream: string; authHeader: (key: string) => Record<string, string> }> = {
   openai: { upstream: 'https://api.openai.com', authHeader: (k) => ({ Authorization: `Bearer ${k}` }) },
@@ -391,6 +392,14 @@ export async function handleTransparentProxy(
       if (insertErr) console.error('[access_log] insert failed:', insertErr.message, insertErr.details);
     });
     if (ctx) ctx.waitUntil(Promise.resolve(logPromise));
+
+    // Analytics event: proxy_call
+    const analyticsPromise = recordEvent(env, {
+      userId: auth.userId,
+      type: 'proxy_call',
+      properties: { provider, status: upstreamResponse.status },
+    }).catch(() => {});
+    if (ctx) ctx.waitUntil(analyticsPromise);
 
     // Check threshold alerts — also needs waitUntil
     if (auth.devKey.alert_threshold || auth.devKey.webhook_url || auth.devKey.alert_email) {

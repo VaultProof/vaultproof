@@ -1,6 +1,7 @@
 import type { Env } from '../types.js';
 import { getSupabase } from '../lib/supabase.js';
 import { authenticateUser } from '../lib/jwt-auth.js';
+import { recordEvent } from '../lib/analytics.js';
 
 export async function handleDevKeys(request: Request, env: Env, path: string): Promise<Response> {
   if (path === 'list') {
@@ -80,6 +81,12 @@ async function handleCreate(request: Request, env: Env): Promise<Response> {
   if (error) {
     return Response.json({ error: 'Failed to create key' }, { status: 500 });
   }
+
+  // Analytics event: dev_key_create (fire-and-forget)
+  recordEvent(env, {
+    userId: auth.userId,
+    type: 'dev_key_create',
+  }).then(() => {}, () => {});
 
   return Response.json({ key, id: data.id });
 }
