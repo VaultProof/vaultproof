@@ -829,58 +829,12 @@
 </head>
 <body>
 
-<!-- PILL NAV -->
-<nav class="pill-nav">
-  <div class="pill-nav-inner">
-    <a href="/" class="pill-logo">
-      <img src="/og-image2.png" alt="VaultProof">
-      <span class="pill-logo-text">VaultProof</span>
-    </a>
-
-    <div class="pill-links">
-      <div class="nav-group">
-        <button class="nav-group-btn" aria-haspopup="true" aria-expanded="false">
-          Product
-          <svg width="11" height="11" viewBox="0 0 12 12" fill="currentColor"><path d="M6 8L2 4h8z"/></svg>
-        </button>
-        <div class="nav-dropdown" role="menu">
-          <a href="/agents" role="menuitem">AI Agents</a>
-          <a href="/compare" role="menuitem">Compare</a>
-          <a href="/changelog" role="menuitem">Changelog</a>
-        </div>
-      </div>
-      <a href="/docs" class="pill-link">Docs</a>
-      <a href="/guides" class="pill-link">Guides</a>
-      <a href="/blog" class="pill-link active">Blog</a>
-      <a href="/#pricing" class="pill-link">Pricing</a>
-    </div>
-
-    <div class="pill-actions">
-      <a href="/scan" class="btn-nav-scanner">
-        <svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
-        Free Scanner
-      </a>
-      <a href="/app/login" class="btn-nav-signup">Sign Up</a>
-    </div>
-
-    <button id="mobileToggle" class="pill-mobile-btn" aria-label="Toggle menu">
-      <svg width="22" height="22" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 6h14M4 12h14M4 18h14"/></svg>
-    </button>
-  </div>
-
-  <div id="mobileMenu" class="pill-mobile-menu">
-    <a href="/agents" class="pill-mobile-link">AI Agents</a>
-    <a href="/compare" class="pill-mobile-link">Compare</a>
-    <a href="/changelog" class="pill-mobile-link">Changelog</a>
-    <a href="/docs" class="pill-mobile-link">Docs</a>
-    <a href="/guides" class="pill-mobile-link">Guides</a>
-    <a href="/blog" class="pill-mobile-link active">Blog</a>
-    <a href="/#pricing" class="pill-mobile-link">Pricing</a>
-    <a href="/app/login" class="pill-mobile-link">Dashboard</a>
-    <div style="margin-top:8px;display:flex;flex-direction:column;gap:8px;">
-      <a href="/scan" class="btn-nav-scanner" style="justify-content:center;padding:10px 16px;">Free Scanner</a>
-      <a href="/app/login" class="btn-nav-signup" style="text-align:center;padding:10px 20px;">Sign Up</a>
-    </div>
+<!-- TOPBAR -->
+<nav style="position:sticky;top:0;z-index:9999;display:flex;align-items:center;justify-content:space-between;padding:14px clamp(20px,4vw,48px);background:rgba(10,10,14,0.96);backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);border-bottom:1px solid rgba(255,255,255,0.06);">
+  <a href="/" style="font-family:'Space Grotesk','IBM Plex Mono',system-ui,sans-serif;font-size:17px;font-weight:700;color:#fff;text-decoration:none;letter-spacing:-0.03em;">VaultProof</a>
+  <div style="display:flex;align-items:center;gap:10px;">
+    <a href="/scan" style="display:inline-flex;align-items:center;gap:6px;padding:7px 16px;border-radius:9999px;font-size:13px;font-weight:500;border:1px solid rgba(6,182,212,0.4);color:#22d3ee;background:rgba(6,182,212,0.07);text-decoration:none;white-space:nowrap;font-family:'Space Grotesk',system-ui,sans-serif;"><svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg> Free Scanner</a>
+    <a href="/app/login" style="display:inline-block;padding:7px 20px;border-radius:9999px;font-size:13px;font-weight:600;background:#fff;color:#000;text-decoration:none;white-space:nowrap;font-family:'Space Grotesk',system-ui,sans-serif;">Sign Up</a>
   </div>
 </nav>
 
