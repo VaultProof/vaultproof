@@ -28,6 +28,7 @@ interface RiskyFilePattern {
   pattern: RegExp;
   title: string;
   description: string;
+  severity: 'HIGH' | 'MEDIUM';
 }
 
 const RISKY_FILE_PATTERNS: RiskyFilePattern[] = [
@@ -35,38 +36,53 @@ const RISKY_FILE_PATTERNS: RiskyFilePattern[] = [
     pattern: /(^|\/)\.env(\.(?!example$|sample$|template$|dist$)[a-zA-Z0-9_-]+)?$/,
     title: 'Committed .env file',
     description: 'Environment files often contain live credentials. Add to .gitignore and rotate any leaked values.',
+    severity: 'HIGH',
   },
   {
-    pattern: /(^|\/)(id_rsa|id_dsa|id_ecdsa|id_ed25519)(\.pub)?$/,
-    title: 'Committed SSH key',
+    // Private keys only — exclude .pub (public keys are safe to commit)
+    pattern: /(^|\/)(id_rsa|id_dsa|id_ecdsa|id_ed25519)$/,
+    title: 'Committed SSH private key',
     description: 'SSH private keys grant server access. Rotate immediately and remove from git history.',
+    severity: 'HIGH',
   },
   {
     pattern: /\.(pem|key|p12|pfx|asc|gpg)$/i,
     title: 'Committed cryptographic key file',
     description: 'Key files are rarely safe to commit. Rotate and remove from history.',
+    severity: 'HIGH',
   },
   {
     pattern: /(^|\/)\.aws\/(credentials|config)$/,
     title: 'Committed AWS credentials',
     description: 'AWS credentials grant cloud access. Rotate immediately and remove from history.',
+    severity: 'HIGH',
   },
   {
     pattern: /(gcp-key|gcloud-service-key|service-account|firebase-adminsdk-[^/]+)\.json$/,
     title: 'Committed cloud service account',
     description: 'Service account JSONs grant cloud access. Rotate and remove from history.',
+    severity: 'HIGH',
   },
   {
-    pattern: /\.(sql|dump|bak)$/i,
+    // *.dump and *.bak are binary dumps — almost always unintentional
+    pattern: /\.(dump|bak)$/i,
     title: 'Committed database dump',
     description: 'Database dumps often contain PII, secrets, or live data. Remove from the repo.',
+    severity: 'HIGH',
+  },
+  {
+    // *.sql files are often migrations/fixtures — flag as MEDIUM, not HIGH
+    pattern: /\.sql$/i,
+    title: 'Committed SQL file',
+    description: 'SQL files may contain sensitive schema or seed data. Verify no credentials are hardcoded.',
+    severity: 'MEDIUM',
   },
 ];
 
 function detectRiskyFiles(filePaths: string[]): Finding[] {
   const findings: Finding[] = [];
   for (const path of filePaths) {
-    for (const { pattern, title, description } of RISKY_FILE_PATTERNS) {
+    for (const { pattern, title, description, severity } of RISKY_FILE_PATTERNS) {
       if (pattern.test(path)) {
         findings.push({
           category: 'file',
@@ -75,7 +91,7 @@ function detectRiskyFiles(filePaths: string[]): Finding[] {
           file: path,
           line: 1,
           maskedValue: '',
-          severity: 'HIGH',
+          severity,
           source: 'current',
           title,
           description,
