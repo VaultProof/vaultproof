@@ -11,6 +11,7 @@ import { handleBilling } from './routes/billing.js';
 import { handleAuth } from './routes/auth.js';
 import { checkPublicIpRateLimit } from './lib/rate-limit.js';
 import { handlePublicScan } from './routes/scan-public.js';
+import { aggregateDaily } from './cron/aggregate.js';
 
 function corsHeaders(origin: string, allowedOrigins: string[]): Record<string, string> {
   const isAllowed = allowedOrigins.includes('*') || allowedOrigins.includes(origin);
@@ -187,5 +188,9 @@ export default {
     }
 
     return addCors(Response.json({ error: 'Not found' }, { status: 404 }), origin, allowedOrigins);
+  },
+
+  async scheduled(_event: ScheduledEvent, env: Env, ctx: ExecutionContext): Promise<void> {
+    ctx.waitUntil(aggregateDaily(env));
   },
 };
