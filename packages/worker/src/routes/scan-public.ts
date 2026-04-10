@@ -24,6 +24,27 @@ const RATE_LIMIT = 10;
 const RATE_LIMIT_TTL = 3600;
 const HISTORY_SCAN_TIMEOUT_MS = 25_000;
 
+function createNdjsonStream(): { stream: ReadableStream<Uint8Array>; write: (obj: unknown) => void; close: () => void } {
+  let controller!: ReadableStreamDefaultController<Uint8Array>;
+  const encoder = new TextEncoder();
+  const stream = new ReadableStream<Uint8Array>({
+    start(c) { controller = c; },
+  });
+  let closed = false;
+  return {
+    stream,
+    write(obj: unknown) {
+      if (closed) return;
+      try { controller.enqueue(encoder.encode(JSON.stringify(obj) + '\n')); } catch { /* controller errored */ }
+    },
+    close() {
+      if (closed) return;
+      closed = true;
+      try { controller.close(); } catch { /* already closed */ }
+    },
+  };
+}
+
 interface RiskyFilePattern {
   pattern: RegExp;
   title: string;
@@ -341,7 +362,7 @@ function scanPatch(patch: string, filePath: string, commitSha: string, commitMes
 
 const GITHUB_API_PREFIX = 'https://api.github.com/';
 
-async function scanHistory(repo: string, env: Env): Promise<{ findings: Finding[]; commitsScanned: number }> {
+async function scanHistory(repo: string, env: Env, onProgress?: (done: number, total: number) => void): Promise<{ findings: Finding[]; commitsScanned: number }> {
   const findings: Finding[] = [];
   const headers = ghHeaders(env);
 
@@ -361,6 +382,8 @@ async function scanHistory(repo: string, env: Env): Promise<{ findings: Finding[
     if (!Array.isArray(commits) || commits.length === 0) return { findings, commitsScanned: 0 };
 
     // Fetch each commit's detail (contains file patches) in parallel batches of 10
+    let done = 0;
+    const total = commits.length;
     for (let i = 0; i < commits.length; i += 10) {
       if (abort.signal.aborted) break;
       const batch = commits.slice(i, i + 10);
@@ -386,6 +409,8 @@ async function scanHistory(repo: string, env: Env): Promise<{ findings: Finding[
           findings.push(...patchFindings);
         }
       }
+      done += batch.length;
+      if (onProgress) onProgress(Math.min(done, total), total);
     }
 
     return { findings, commitsScanned: commits.length };
@@ -400,6 +425,50 @@ function ghHeaders(env: Env): Record<string, string> {
   const h: Record<string, string> = { 'User-Agent': 'VaultProof-Scanner/1.0', Accept: 'application/vnd.github+json' };
   if (env.GITHUB_TOKEN) h['Authorization'] = `Bearer ${env.GITHUB_TOKEN}`;
   return h;
+}
+
+async function scanCurrentFiles(
+  filesToScan: Array<{ path: string; url: string }>,
+  env: Env,
+  onProgress: (done: number, total: number) => void,
+): Promise<{ findings: Finding[]; filesScanned: number }> {
+  const findings: Finding[] = [];
+  let filesScanned = 0;
+  const total = filesToScan.length;
+
+  for (let i = 0; i < filesToScan.length; i += MAX_CONCURRENT_FETCHES) {
+    const batch = filesToScan.slice(i, i + MAX_CONCURRENT_FETCHES);
+    const results = await Promise.all(
+      batch.map(async (file) => {
+        if (!file.url.startsWith(GITHUB_API_PREFIX)) return null;
+        const fileAbort = new AbortController();
+        const fileTimer = setTimeout(() => fileAbort.abort(), 5000);
+        let res: Response;
+        try {
+          res = await fetch(file.url, {
+            headers: { ...ghHeaders(env), Accept: 'application/vnd.github.raw+json' },
+            signal: fileAbort.signal,
+          });
+        } catch {
+          clearTimeout(fileTimer);
+          return null;
+        }
+        clearTimeout(fileTimer);
+        if (!res.ok) return null;
+        const contentLength = parseInt(res.headers.get('content-length') || '0', 10);
+        if (contentLength > 512 * 1024) return null;
+        const text = await res.text();
+        return { path: file.path, content: text };
+      }),
+    );
+    for (const result of results) {
+      if (!result) continue;
+      filesScanned++;
+      findings.push(...scanFileContent(result.content, result.path));
+    }
+    onProgress(Math.min(i + MAX_CONCURRENT_FETCHES, total), total);
+  }
+  return { findings, filesScanned };
 }
 
 export async function handlePublicScan(request: Request, env: Env): Promise<Response> {
@@ -482,84 +551,80 @@ export async function handlePublicScan(request: Request, env: Env): Promise<Resp
   const riskyFileFindings = detectRiskyFiles(allTreePaths);
   const hygieneFindings = detectHygieneIssues(allTreePaths);
 
-  // Run current-file scan + git history scan in parallel
-  const currentScanPromise = (async () => {
-    const findings: Finding[] = [];
-    let filesScanned = 0;
-    for (let i = 0; i < filesToScan.length; i += MAX_CONCURRENT_FETCHES) {
-      const batch = filesToScan.slice(i, i + MAX_CONCURRENT_FETCHES);
-      const results = await Promise.all(
-        batch.map(async (file) => {
-          // Validate URL is a GitHub API URL before fetching with GITHUB_TOKEN
-          if (!file.url.startsWith(GITHUB_API_PREFIX)) return null;
-          const fileAbort = new AbortController();
-          const fileTimer = setTimeout(() => fileAbort.abort(), 5000);
-          let res: Response;
-          try {
-            res = await fetch(file.url, {
-              headers: { ...ghHeaders(env), Accept: 'application/vnd.github.raw+json' },
-              signal: fileAbort.signal,
-            });
-          } catch {
-            clearTimeout(fileTimer);
-            return null;
-          }
-          clearTimeout(fileTimer);
-          if (!res.ok) return null;
-          const contentLength = parseInt(res.headers.get('content-length') || '0', 10);
-          if (contentLength > 512 * 1024) return null;
-          const text = await res.text();
-          return { path: file.path, content: text };
-        })
+  // Build the NDJSON stream
+  const { stream, write, close } = createNdjsonStream();
+
+  // Background task: run the actual scan
+  (async () => {
+    try {
+      write({ phase: 'tree' });
+
+      const [currentResult, historyResult] = await Promise.all([
+        scanCurrentFiles(filesToScan, env, (done, total) => {
+          write({ phase: 'files', done, total });
+        }),
+        scanHistory(repo, env, (done, total) => {
+          write({ phase: 'commits', done, total });
+        }),
+      ]);
+
+      const allFindings = [
+        ...currentResult.findings,
+        ...historyResult.findings,
+        ...riskyFileFindings,
+        ...hygieneFindings,
+      ];
+
+      // Pass 1: deduplicate exact duplicates
+      const seen = new Set<string>();
+      const pass1 = allFindings.filter((f) => {
+        const key = `${f.source}:${f.commitSha || ''}:${f.file}:${f.line}:${f.provider}:${f.title ?? ''}`;
+        if (seen.has(key)) return false;
+        seen.add(key);
+        return true;
+      });
+
+      // Pass 2: suppress history duplicates of current-file secrets
+      const currentKeys = new Set(
+        pass1
+          .filter((f) => f.category === 'secret' && f.source === 'current')
+          .map((f) => `${f.file}:${f.provider}:${f.maskedValue}`),
       );
-      for (const result of results) {
-        if (!result) continue;
-        filesScanned++;
-        findings.push(...scanFileContent(result.content, result.path));
-      }
+      const dedupedFindings = pass1.filter(
+        (f) =>
+          f.category !== 'secret' ||
+          f.source === 'current' ||
+          !currentKeys.has(`${f.file}:${f.provider}:${f.maskedValue}`),
+      );
+
+      // Hygiene findings are always-shown — exclude from the MAX_FINDINGS cap
+      const hygieneOnly = dedupedFindings.filter((f) => f.category === 'hygiene');
+      const nonHygiene = dedupedFindings.filter((f) => f.category !== 'hygiene');
+      const cappedFindings = [...nonHygiene.slice(0, MAX_FINDINGS), ...hygieneOnly];
+
+      write({
+        phase: 'done',
+        result: {
+          repo,
+          filesScanned: currentResult.filesScanned,
+          commitsScanned: historyResult.commitsScanned,
+          findings: cappedFindings,
+          truncated: nonHygiene.length > MAX_FINDINGS,
+        },
+      });
+    } catch (err) {
+      write({ phase: 'error', message: err instanceof Error ? err.message : 'Scan failed' });
+    } finally {
+      close();
     }
-    return { findings, filesScanned };
   })();
 
-  const [currentResult, historyResult] = await Promise.all([
-    currentScanPromise,
-    scanHistory(repo, env),
-  ]);
-
-  const allFindings = [
-    ...currentResult.findings,
-    ...historyResult.findings,
-    ...riskyFileFindings,
-    ...hygieneFindings,
-  ];
-
-  // Pass 1: deduplicate exact duplicates (same source + commit + file + line + provider)
-  const seen = new Set<string>();
-  const pass1 = allFindings.filter((f) => {
-    const key = `${f.source}:${f.commitSha || ''}:${f.file}:${f.line}:${f.provider}:${f.title ?? ''}`;
-    if (seen.has(key)) return false;
-    seen.add(key);
-    return true;
-  });
-
-  // Pass 2: if a key exists in current files, suppress duplicate from history
-  const currentKeys = new Set(
-    pass1.filter(f => f.source === 'current').map(f => `${f.file}:${f.provider}:${f.maskedValue}`)
-  );
-  const dedupedFindings = pass1.filter(f =>
-    f.source === 'current' || !currentKeys.has(`${f.file}:${f.provider}:${f.maskedValue}`)
-  );
-
-  // Hygiene findings are always-shown — exclude from the MAX_FINDINGS cap
-  const hygieneOnly = dedupedFindings.filter((f) => f.category === 'hygiene');
-  const nonHygiene = dedupedFindings.filter((f) => f.category !== 'hygiene');
-  const cappedFindings = [...nonHygiene.slice(0, MAX_FINDINGS), ...hygieneOnly];
-
-  return Response.json({
-    repo,
-    filesScanned: currentResult.filesScanned,
-    commitsScanned: historyResult.commitsScanned,
-    findings: cappedFindings,
-    truncated: nonHygiene.length > MAX_FINDINGS,
+  return new Response(stream, {
+    status: 200,
+    headers: {
+      'Content-Type': 'application/x-ndjson',
+      'X-Content-Type-Options': 'nosniff',
+      'Cache-Control': 'no-store',
+    },
   });
 }
