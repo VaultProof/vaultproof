@@ -1,5 +1,6 @@
 import type { Env } from '../types.js';
 import { getSupabase } from '../lib/supabase.js';
+import { parseUserAgent, hashIp, upsertSession, recordEvent } from '../lib/analytics.js';
 
 // Known bot user-agent patterns
 const BOT_PATTERNS = [
@@ -18,45 +19,37 @@ function isBot(userAgent: string): boolean {
   return BOT_PATTERNS.some(p => p.test(userAgent));
 }
 
-async function hashIp(ip: string, date: string): Promise<string> {
-  // Hash IP + date so we can dedup daily visitors without storing raw IPs
-  const data = new TextEncoder().encode(`${ip}:${date}`);
-  const hash = await crypto.subtle.digest('SHA-256', data);
-  return Array.from(new Uint8Array(hash)).map(b => b.toString(16).padStart(2, '0')).join('').slice(0, 16);
-}
-
 export async function handleAnalyticsEvent(request: Request, env: Env): Promise<Response> {
   if (request.method !== 'POST') {
     return Response.json({ error: 'Method not allowed' }, { status: 405 });
   }
 
-  // Bot filtering
   const userAgent = request.headers.get('user-agent') || '';
   if (isBot(userAgent)) {
-    return Response.json({ ok: true }); // Silent drop — don't tell bots they're filtered
+    return Response.json({ ok: true }); // Silent drop
   }
 
   let body: unknown;
-  try {
-    body = await request.json();
-  } catch {
+  try { body = await request.json(); } catch {
     return Response.json({ error: 'Invalid JSON' }, { status: 400 });
   }
-
   if (!body || typeof body !== 'object') {
     return Response.json({ error: 'Invalid JSON' }, { status: 400 });
   }
 
   const data = body as Record<string, unknown>;
-
-  if (data.type !== 'pageview') {
-    return Response.json({ error: 'Invalid event type' }, { status: 400 });
+  const eventType = typeof data.type === 'string' ? data.type : null;
+  if (!eventType) {
+    return Response.json({ error: 'Missing event type' }, { status: 400 });
   }
 
-  const page = typeof data.page === 'string' ? data.page.slice(0, 500) : null;
-  const session_id = typeof data.sessionId === 'string' ? data.sessionId.slice(0, 100) : null;
+  const supabase = getSupabase(env);
 
-  // Sanitize referrer — drop XSS probes, SSRF attempts, and non-HTTP URLs
+  const page = typeof data.page === 'string' ? data.page.slice(0, 500) : null;
+  const sessionId = typeof data.sessionId === 'string' ? data.sessionId.slice(0, 100) : crypto.randomUUID();
+  const visitorId = typeof data.visitorId === 'string' ? data.visitorId.slice(0, 100) : sessionId;
+
+  // Sanitize referrer
   let referrer: string | null = null;
   let isMalicious = false;
   if (typeof data.referrer === 'string' && data.referrer.length > 0) {
@@ -68,46 +61,72 @@ export async function handleAnalyticsEvent(request: Request, env: Env): Promise<
     }
   }
 
-  // Log security probes for admin visibility
+  // Log security probes (fire and forget)
   if (isMalicious) {
     const clientIp = request.headers.get('cf-connecting-ip') || 'unknown';
-    const probeLog = supabase.from('analytics_events').insert({
+    supabase.from('analytics_events').insert({
       id: crypto.randomUUID(),
       type: 'security_probe',
       page,
       referrer: (typeof data.referrer === 'string' ? data.referrer : '').slice(0, 500),
-      session_id,
+      session_id: sessionId,
       metadata: JSON.stringify({
         ip: clientIp,
         ua: userAgent.slice(0, 200),
         probe_type: /<|>/i.test(String(data.referrer)) ? 'xss' : /169\.254/i.test(String(data.referrer)) ? 'ssrf' : 'other',
       }),
-    });
-    // Fire and forget — don't block the response
-    probeLog.then(() => {}).catch(() => {});
+    }).then(() => {}, () => {});
     return Response.json({ ok: true });
   }
 
-  // IP-based visitor dedup — hash IP + date for privacy
+  // Compute IP hash and parse UA
   const clientIp = request.headers.get('cf-connecting-ip') || 'unknown';
   const today = new Date().toISOString().slice(0, 10);
-  const ip_hash = await hashIp(clientIp, today);
-
+  const ipHash = await hashIp(clientIp, today);
   const country = request.headers.get('cf-ipcountry') || null;
+  const ua = parseUserAgent(userAgent);
 
-  const supabase = getSupabase(env);
-  const { error } = await supabase.from('analytics_events').insert({
-    id: crypto.randomUUID(),
-    type: 'pageview',
-    page,
+  // UTM params
+  const utmSource = typeof data.utmSource === 'string' ? data.utmSource.slice(0, 200) : null;
+  const utmMedium = typeof data.utmMedium === 'string' ? data.utmMedium.slice(0, 200) : null;
+  const utmCampaign = typeof data.utmCampaign === 'string' ? data.utmCampaign.slice(0, 200) : null;
+
+  // Event properties
+  const properties = (data.properties && typeof data.properties === 'object')
+    ? data.properties as Record<string, unknown>
+    : null;
+
+  // Upsert session + record event
+  const activeSessionId = await upsertSession(env, {
+    sessionId,
+    visitorId,
+    ipHash,
+    ua,
+    country,
+    utmSource,
+    utmMedium,
+    utmCampaign,
     referrer,
-    session_id,
-    metadata: JSON.stringify({ ip_hash, ua: userAgent.slice(0, 200), country }),
+    page,
   });
 
-  if (error) {
-    return Response.json({ error: 'Failed to record event' }, { status: 500 });
-  }
+  await recordEvent(env, {
+    sessionId: activeSessionId,
+    type: eventType,
+    page,
+    referrer,
+    properties,
+  });
+
+  // Dual-write to legacy analytics_events (remove after migration validated)
+  supabase.from('analytics_events').insert({
+    id: crypto.randomUUID(),
+    type: eventType,
+    page,
+    referrer,
+    session_id: sessionId,
+    metadata: JSON.stringify({ ip_hash: ipHash, ua: userAgent.slice(0, 200), country }),
+  }).then(() => {}, () => {});
 
   return Response.json({ ok: true });
 }
