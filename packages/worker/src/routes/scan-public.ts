@@ -24,6 +24,69 @@ const RATE_LIMIT = 10;
 const RATE_LIMIT_TTL = 3600;
 const HISTORY_SCAN_TIMEOUT_MS = 25_000;
 
+interface RiskyFilePattern {
+  pattern: RegExp;
+  title: string;
+  description: string;
+}
+
+const RISKY_FILE_PATTERNS: RiskyFilePattern[] = [
+  {
+    pattern: /(^|\/)\.env(\.(?!example$|sample$|template$|dist$)[a-zA-Z0-9_-]+)?$/,
+    title: 'Committed .env file',
+    description: 'Environment files often contain live credentials. Add to .gitignore and rotate any leaked values.',
+  },
+  {
+    pattern: /(^|\/)(id_rsa|id_dsa|id_ecdsa|id_ed25519)(\.pub)?$/,
+    title: 'Committed SSH key',
+    description: 'SSH private keys grant server access. Rotate immediately and remove from git history.',
+  },
+  {
+    pattern: /\.(pem|key|p12|pfx|asc|gpg)$/i,
+    title: 'Committed cryptographic key file',
+    description: 'Key files are rarely safe to commit. Rotate and remove from history.',
+  },
+  {
+    pattern: /(^|\/)\.aws\/(credentials|config)$/,
+    title: 'Committed AWS credentials',
+    description: 'AWS credentials grant cloud access. Rotate immediately and remove from history.',
+  },
+  {
+    pattern: /(gcp-key|gcloud-service-key|service-account|firebase-adminsdk-[^/]+)\.json$/,
+    title: 'Committed cloud service account',
+    description: 'Service account JSONs grant cloud access. Rotate and remove from history.',
+  },
+  {
+    pattern: /\.(sql|dump|bak)$/i,
+    title: 'Committed database dump',
+    description: 'Database dumps often contain PII, secrets, or live data. Remove from the repo.',
+  },
+];
+
+function detectRiskyFiles(filePaths: string[]): Finding[] {
+  const findings: Finding[] = [];
+  for (const path of filePaths) {
+    for (const { pattern, title, description } of RISKY_FILE_PATTERNS) {
+      if (pattern.test(path)) {
+        findings.push({
+          category: 'file',
+          provider: 'risky-file',
+          providerName: title,
+          file: path,
+          line: 1,
+          maskedValue: '',
+          severity: 'HIGH',
+          source: 'current',
+          title,
+          description,
+        });
+        break; // one finding per file; don't double-match
+      }
+    }
+  }
+  return findings;
+}
+
 async function checkScanRateLimit(env: Env, ip: string): Promise<boolean> {
   const key = `rl:scan:pub:${ip}`;
   const raw = await env.CACHE.get(key);
@@ -262,6 +325,10 @@ export async function handlePublicScan(request: Request, env: Env): Promise<Resp
   );
   const filesToScan = allFiles.slice(0, MAX_FILES);
 
+  // Check ALL tree entries (not just scannable files) for risky filenames
+  const allTreePaths = (treeData.tree || []).filter((f) => f.type === 'blob').map((f) => f.path);
+  const riskyFileFindings = detectRiskyFiles(allTreePaths);
+
   // Run current-file scan + git history scan in parallel
   const currentScanPromise = (async () => {
     const findings: Finding[] = [];
@@ -306,7 +373,7 @@ export async function handlePublicScan(request: Request, env: Env): Promise<Resp
     scanHistory(repo, env),
   ]);
 
-  const allFindings = [...currentResult.findings, ...historyResult.findings];
+  const allFindings = [...currentResult.findings, ...historyResult.findings, ...riskyFileFindings];
 
   // Pass 1: deduplicate exact duplicates (same source + commit + file + line + provider)
   const seen = new Set<string>();
