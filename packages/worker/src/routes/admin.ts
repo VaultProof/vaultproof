@@ -15,6 +15,12 @@ export async function handleAdmin(
   if (path === 'analytics/referrers') return handleReferrers(request, env);
   if (path === 'analytics/countries') return handleCountries(request, env);
   if (path === 'analytics/signups') return handleSignups(request, env);
+  if (path === 'analytics/overview-v2') return handleOverviewV2(request, env);
+  if (path === 'analytics/funnel') return handleFunnel(request, env);
+  if (path === 'analytics/investor') return handleInvestor(request, env);
+  if (path === 'analytics/retention') return handleRetention(request, env);
+  if (path === 'analytics/traffic-v2') return handleTrafficV2(request, env);
+  if (path === 'analytics/devices') return handleDevices(request, env);
   if (path === 'users') return handleUsers(request, env);
   if (path === 'logs') return handleGlobalLogs(request, env);
   if (path === 'monitoring/dashboard') return handleMonitoringDashboard(request, env);
@@ -978,4 +984,279 @@ async function handleSecurityProbes(request: Request, env: Env): Promise<Respons
   });
 
   return Response.json({ probes: formatted });
+}
+
+async function handleOverviewV2(request: Request, env: Env): Promise<Response> {
+  const admin = await authenticateAdmin(request, env);
+  if (!admin) return Response.json({ error: 'Forbidden' }, { status: 403 });
+
+  const supabase = getSupabase(env);
+  const todayStart = new Date(new Date().setUTCHours(0, 0, 0, 0)).toISOString();
+  const fiveMinAgo = new Date(Date.now() - 5 * 60 * 1000).toISOString();
+
+  const [sessionsToday, eventsToday, activeNow] = await Promise.all([
+    supabase.from('sessions')
+      .select('visitor_id, ip_hash, is_bounce, started_at, ended_at, event_count')
+      .gte('started_at', todayStart),
+    supabase.from('events')
+      .select('type')
+      .gte('created_at', todayStart),
+    supabase.from('sessions')
+      .select('id', { count: 'exact', head: true })
+      .gte('ended_at', fiveMinAgo),
+  ]);
+
+  const sessions = (sessionsToday.data || []) as Array<{
+    visitor_id: string;
+    ip_hash: string | null;
+    is_bounce: boolean;
+    started_at: string;
+    ended_at: string;
+    event_count: number;
+  }>;
+  const events = (eventsToday.data || []) as Array<{ type: string }>;
+
+  const visitors = new Set(sessions.map(s => s.visitor_id)).size;
+  const uniqueIps = new Set(sessions.filter(s => s.ip_hash).map(s => s.ip_hash as string)).size;
+  const bounces = sessions.filter(s => s.is_bounce).length;
+  const bounceRate = sessions.length > 0 ? bounces / sessions.length : 0;
+
+  const durations = sessions
+    .filter(s => !s.is_bounce && s.ended_at && s.started_at)
+    .map(s => (new Date(s.ended_at).getTime() - new Date(s.started_at).getTime()) / 1000);
+  const avgDuration = durations.length > 0 ? durations.reduce((a, b) => a + b, 0) / durations.length : 0;
+
+  const typeCounts: Record<string, number> = {};
+  for (const e of events) typeCounts[e.type] = (typeCounts[e.type] || 0) + 1;
+
+  return Response.json({
+    visitors,
+    uniqueIps,
+    sessions: sessions.length,
+    pageviews: typeCounts['pageview'] || 0,
+    signups: typeCounts['signup'] || 0,
+    bounceRate: Math.round(bounceRate * 1000) / 10,
+    avgSessionDurationS: Math.round(avgDuration),
+    activeNow: activeNow.count || 0,
+    proxyCallsToday: typeCounts['proxy_call'] || 0,
+    keysStoredToday: typeCounts['key_store'] || 0,
+  });
+}
+
+async function handleFunnel(request: Request, env: Env): Promise<Response> {
+  const admin = await authenticateAdmin(request, env);
+  if (!admin) return Response.json({ error: 'Forbidden' }, { status: 403 });
+
+  const supabase = getSupabase(env);
+  const numDays = getDaysParam(request);
+  const since = new Date(Date.now() - numDays * 86400000).toISOString();
+
+  const { data: sessionData } = await supabase.from('sessions')
+    .select('visitor_id')
+    .gte('started_at', since);
+  const totalVisitors = new Set(((sessionData || []) as Array<{ visitor_id: string }>).map(s => s.visitor_id)).size;
+
+  const steps = ['signup', 'key_store', 'dev_key_create', 'proxy_call', 'plan_upgrade'];
+  const counts: Record<string, number> = { visit: totalVisitors };
+
+  for (const step of steps) {
+    const { data } = await supabase.from('events')
+      .select('user_id')
+      .eq('type', step)
+      .gte('created_at', since);
+    counts[step] = new Set(((data || []) as Array<{ user_id: string | null }>)
+      .filter(e => e.user_id)
+      .map(e => e.user_id as string)).size;
+  }
+
+  const funnel = [
+    { step: 'Visit', count: counts.visit },
+    { step: 'Signup', count: counts.signup },
+    { step: 'Store Key', count: counts.key_store },
+    { step: 'Create Dev Key', count: counts.dev_key_create },
+    { step: 'Proxy Call', count: counts.proxy_call },
+    { step: 'Upgrade', count: counts.plan_upgrade },
+  ];
+
+  return Response.json({ funnel });
+}
+
+async function handleInvestor(request: Request, env: Env): Promise<Response> {
+  const admin = await authenticateAdmin(request, env);
+  if (!admin) return Response.json({ error: 'Forbidden' }, { status: 403 });
+
+  const supabase = getSupabase(env);
+  const now = Date.now();
+  const day7 = new Date(now - 7 * 86400000).toISOString();
+  const day30 = new Date(now - 30 * 86400000).toISOString();
+  const day60 = new Date(now - 60 * 86400000).toISOString();
+
+  const { data: authData } = await supabase.auth.admin.listUsers({ perPage: 1000, page: 1 });
+  const authUsers = authData?.users || [];
+  const totalUsers = authUsers.length;
+
+  const { data: activatedData } = await supabase.from('events')
+    .select('user_id')
+    .eq('type', 'key_store');
+  const activatedUsers = new Set(((activatedData || []) as Array<{ user_id: string | null }>)
+    .filter(e => e.user_id).map(e => e.user_id as string)).size;
+  const activationRate = totalUsers > 0 ? activatedUsers / totalUsers : 0;
+
+  const { data: wauData } = await supabase.from('events')
+    .select('user_id')
+    .gte('created_at', day7);
+  const wau = new Set(((wauData || []) as Array<{ user_id: string | null }>)
+    .filter(e => e.user_id).map(e => e.user_id as string)).size;
+
+  const { data: mauData } = await supabase.from('events')
+    .select('user_id')
+    .gte('created_at', day30);
+  const mau = new Set(((mauData || []) as Array<{ user_id: string | null }>)
+    .filter(e => e.user_id).map(e => e.user_id as string)).size;
+
+  const todayStart = new Date(new Date().setUTCHours(0,0,0,0)).toISOString();
+  const { data: dauData } = await supabase.from('events')
+    .select('user_id')
+    .gte('created_at', todayStart);
+  const dau = new Set(((dauData || []) as Array<{ user_id: string | null }>)
+    .filter(e => e.user_id).map(e => e.user_id as string)).size;
+
+  const dauMauRatio = mau > 0 ? dau / mau : 0;
+
+  const { count: proxyTotal } = await supabase.from('events')
+    .select('*', { count: 'exact', head: true })
+    .eq('type', 'proxy_call');
+  const { count: proxy30d } = await supabase.from('events')
+    .select('*', { count: 'exact', head: true })
+    .eq('type', 'proxy_call')
+    .gte('created_at', day30);
+
+  const { data: upgradeData } = await supabase.from('events')
+    .select('user_id')
+    .eq('type', 'plan_upgrade');
+  const paidConversions = new Set(((upgradeData || []) as Array<{ user_id: string | null }>)
+    .filter(e => e.user_id).map(e => e.user_id as string)).size;
+  const conversionRate = totalUsers > 0 ? paidConversions / totalUsers : 0;
+
+  const TIER_PRICES: Record<string, number> = { starter: 5, pro: 20, max: 50, enterprise: 200 };
+  const { data: tierData } = await supabase.from('users').select('tier');
+  let mrr = 0;
+  for (const u of (tierData || []) as Array<{ tier: string }>) {
+    mrr += TIER_PRICES[u.tier] || 0;
+  }
+
+  const { data: activationTimes } = await supabase.from('events')
+    .select('user_id, created_at')
+    .eq('type', 'key_store')
+    .order('created_at', { ascending: true });
+
+  const userFirstActivation = new Map<string, string>();
+  for (const e of (activationTimes || []) as Array<{ user_id: string | null; created_at: string }>) {
+    if (e.user_id && !userFirstActivation.has(e.user_id)) {
+      userFirstActivation.set(e.user_id, e.created_at);
+    }
+  }
+
+  const activationDelays: number[] = [];
+  for (const user of authUsers) {
+    if (!user.created_at) continue;
+    const firstKey = userFirstActivation.get(user.id);
+    if (firstKey) {
+      activationDelays.push(
+        (new Date(firstKey).getTime() - new Date(user.created_at).getTime()) / 3600000
+      );
+    }
+  }
+  activationDelays.sort((a, b) => a - b);
+  const medianActivationHrs = activationDelays.length > 0
+    ? activationDelays[Math.floor(activationDelays.length / 2)]
+    : null;
+
+  const { data: prevMonthData } = await supabase.from('events')
+    .select('user_id')
+    .gte('created_at', day60)
+    .lt('created_at', day30);
+  const prevMonthUsers = new Set(((prevMonthData || []) as Array<{ user_id: string | null }>)
+    .filter(e => e.user_id).map(e => e.user_id as string));
+  const currentMonthUsers = new Set(((mauData || []) as Array<{ user_id: string | null }>)
+    .filter(e => e.user_id).map(e => e.user_id as string));
+  const churned = [...prevMonthUsers].filter(u => !currentMonthUsers.has(u)).length;
+  const churnRate = prevMonthUsers.size > 0 ? churned / prevMonthUsers.size : 0;
+
+  const { data: growthData } = await supabase.from('daily_metrics')
+    .select('date, visitors, signups, proxy_calls')
+    .gte('date', day30.slice(0, 10))
+    .order('date', { ascending: true });
+
+  return Response.json({
+    totalUsers,
+    activatedUsers,
+    activationRate: Math.round(activationRate * 1000) / 10,
+    dau, wau, mau,
+    dauMauRatio: Math.round(dauMauRatio * 1000) / 10,
+    proxyCallsTotal: proxyTotal || 0,
+    proxyCalls30d: proxy30d || 0,
+    apiCallsPerActiveUser: mau > 0 ? Math.round((proxy30d || 0) / mau) : 0,
+    conversionRate: Math.round(conversionRate * 1000) / 10,
+    mrr,
+    medianActivationHrs: medianActivationHrs !== null ? Math.round(medianActivationHrs * 10) / 10 : null,
+    churnRate: Math.round(churnRate * 1000) / 10,
+    growth: growthData || [],
+  });
+}
+
+async function handleRetention(request: Request, env: Env): Promise<Response> {
+  const admin = await authenticateAdmin(request, env);
+  if (!admin) return Response.json({ error: 'Forbidden' }, { status: 403 });
+
+  const supabase = getSupabase(env);
+  const { data } = await supabase.from('weekly_cohorts')
+    .select('*')
+    .order('cohort_week', { ascending: true })
+    .order('week_number', { ascending: true });
+
+  return Response.json({ cohorts: data || [] });
+}
+
+async function handleTrafficV2(request: Request, env: Env): Promise<Response> {
+  const admin = await authenticateAdmin(request, env);
+  if (!admin) return Response.json({ error: 'Forbidden' }, { status: 403 });
+
+  const supabase = getSupabase(env);
+  const numDays = getDaysParam(request);
+  const { data } = await supabase.from('daily_metrics')
+    .select('*')
+    .gte('date', new Date(Date.now() - numDays * 86400000).toISOString().slice(0, 10))
+    .order('date', { ascending: true });
+
+  return Response.json({ metrics: data || [] });
+}
+
+async function handleDevices(request: Request, env: Env): Promise<Response> {
+  const admin = await authenticateAdmin(request, env);
+  if (!admin) return Response.json({ error: 'Forbidden' }, { status: 403 });
+
+  const supabase = getSupabase(env);
+  const numDays = getDaysParam(request);
+  const since = new Date(Date.now() - numDays * 86400000).toISOString();
+
+  const { data } = await supabase.from('sessions')
+    .select('device_type, browser, os')
+    .gte('started_at', since);
+
+  const devices: Record<string, number> = {};
+  const browsers: Record<string, number> = {};
+  const oses: Record<string, number> = {};
+
+  for (const s of (data || []) as Array<{ device_type: string | null; browser: string | null; os: string | null }>) {
+    if (s.device_type) devices[s.device_type] = (devices[s.device_type] || 0) + 1;
+    if (s.browser) browsers[s.browser] = (browsers[s.browser] || 0) + 1;
+    if (s.os) oses[s.os] = (oses[s.os] || 0) + 1;
+  }
+
+  return Response.json({
+    devices: Object.entries(devices).map(([name, count]) => ({ name, count })).sort((a, b) => b.count - a.count),
+    browsers: Object.entries(browsers).map(([name, count]) => ({ name, count })).sort((a, b) => b.count - a.count),
+    oses: Object.entries(oses).map(([name, count]) => ({ name, count })).sort((a, b) => b.count - a.count),
+  });
 }
