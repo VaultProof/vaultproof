@@ -242,7 +242,7 @@
     <main class="max-w-2xl mx-auto px-4 sm:px-6 pb-32">
 
         <!-- What we scan -->
-        <div id="whatWeScan" class="mt-12 mb-8 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        <div id="whatWeScan" class="mt-12 mb-8 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
           <div class="bg-vp-surface border border-vp-border rounded-xl p-5">
             <div class="text-sm font-semibold text-gray-200 mb-2">🔑 Leaked API keys</div>
             <p class="text-xs text-gray-500 mb-2">Both current files AND git history</p>
@@ -414,10 +414,9 @@
         }
 
         // ── UI state helpers ─────────────────────────────────────────────────────
-        function showProgress(msg) {
+        function showProgress() {
             hide('errorBox');
             hide('resultsContainer');
-            document.getElementById('progressText').textContent = msg || 'Scanning repository…';
             show('progressBox');
         }
 
@@ -624,6 +623,7 @@
             hide('errorBox');
             hide('resultsContainer');
             hide('stickyBar');
+            hide('whatWeScan');
             show('progressBox');
 
             var progressState = {
@@ -651,6 +651,7 @@
                         case 404: errMsg = 'Repo not found. Check the owner/repo slug and try again.'; break;
                         case 429: errMsg = 'Too many requests. Please wait a moment and try again.'; break;
                         case 500: errMsg = 'GitHub API error. Please try again in a moment.'; break;
+                        case 504: errMsg = 'GitHub API timed out. Try again in a moment.'; break;
                         default:  errMsg = (errData && errData.error) ? escapeHtml(String(errData.error)) : 'Something went wrong. Please try again.';
                     }
                     hide('progressBox');
@@ -749,10 +750,8 @@
                     renderFindings(secretFindings, repo);
                     document.getElementById('stickyCount').textContent = criticalCount + ' issue' + (criticalCount !== 1 ? 's' : '') + ' found';
                     show('stickyBar');
+                    renderExtraFindings(fileFindings, codeFindings, hygieneFindings);
                 }
-
-                // Render new category sections
-                renderExtraFindings(fileFindings, codeFindings, hygieneFindings);
 
             } catch (err) {
                 hide('progressBox');
