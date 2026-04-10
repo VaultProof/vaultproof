@@ -130,7 +130,7 @@ async function scanHistory(repo: string, env: Env): Promise<{ findings: Finding[
   const findings: Finding[] = [];
   const headers = ghHeaders(env);
 
-  // 15-second hard budget for the entire history scan
+  // 25-second hard budget for the entire history scan
   const abort = new AbortController();
   const timer = setTimeout(() => abort.abort(), HISTORY_SCAN_TIMEOUT_MS);
 
