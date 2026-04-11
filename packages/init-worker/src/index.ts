@@ -10,14 +10,26 @@
 import type { Env } from './types.js';
 import { handleProjects } from './routes/projects.js';
 import { handleProxy } from './routes/proxy.js';
+import { checkFailedAuthRateLimit, rateLimitResponse } from './lib/rate-limit.js';
 
 function corsHeaders(origin: string, allowedOrigins: string[]): Record<string, string> {
-  const isAllowed = allowedOrigins.includes('*') || allowedOrigins.includes(origin);
+  // The init-worker uses Authorization: Bearer ... only. No cookies, no
+  // credentialed requests. We deliberately do NOT send
+  // Access-Control-Allow-Credentials, so the staging wildcard
+  // (ALLOWED_ORIGINS="*") is safe: browsers will not attach credentials.
+  const wildcard = allowedOrigins.includes('*');
+  const isAllowed = wildcard || allowedOrigins.includes(origin);
+
+  // When the allowlist is the wildcard we return "*" (not the echoed origin)
+  // so that credentialed mode is impossible for any caller that misconfigures
+  // their client. When the allowlist is explicit, we echo the specific origin.
+  const allowOrigin = wildcard ? '*' : isAllowed ? origin : '';
+
   return {
-    ...(isAllowed ? { 'Access-Control-Allow-Origin': origin } : {}),
+    ...(allowOrigin ? { 'Access-Control-Allow-Origin': allowOrigin } : {}),
+    ...(wildcard ? {} : { Vary: 'Origin' }),
     'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
     'Access-Control-Allow-Headers': 'Content-Type, Authorization',
-    'Access-Control-Allow-Credentials': 'true',
     'Access-Control-Max-Age': '86400',
   };
 }
@@ -57,16 +69,26 @@ export default {
       const rest = url.pathname.replace('/api/v1/init/projects', '');
       const segments = rest.split('/').filter(Boolean);
       const res = await handleProjects(request, env, segments);
+      if (res.status === 401) {
+        // Enumeration defense: per-IP rate limit for failed auth.
+        const ip = request.headers.get('cf-connecting-ip') || '';
+        const rl = await checkFailedAuthRateLimit(env, ip);
+        if (!rl.ok) return addCors(rateLimitResponse(rl.retryAfter!), origin, allowedOrigins);
+      }
       return addCors(res, origin, allowedOrigins);
     }
 
     // ── /p/:slug/* (universal proxy) ──────────────────────────────────
-    // Slug is validated at registration time (see ssrf-guard.validateSlug).
     const proxyMatch = url.pathname.match(/^\/p\/([a-z0-9][a-z0-9-]{0,31})(\/.*)?$/);
     if (proxyMatch) {
       const slug = proxyMatch[1];
       const upstreamPath = proxyMatch[2] || '/';
       const res = await handleProxy(request, env, slug, upstreamPath + url.search);
+      if (res.status === 401 || res.status === 404) {
+        const ip = request.headers.get('cf-connecting-ip') || '';
+        const rl = await checkFailedAuthRateLimit(env, ip);
+        if (!rl.ok) return addCors(rateLimitResponse(rl.retryAfter!), origin, allowedOrigins);
+      }
       return addCors(res, origin, allowedOrigins);
     }
 

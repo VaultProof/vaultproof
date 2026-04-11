@@ -23,6 +23,11 @@ import {
   validateExtraHeaders,
   validateSlug,
 } from '../lib/ssrf-guard.js';
+import {
+  checkProjectCreateRateLimit,
+  checkKeyUploadRateLimit,
+  rateLimitResponse,
+} from '../lib/rate-limit.js';
 
 function generateProjectId(): string {
   const bytes = new Uint8Array(12);
@@ -61,6 +66,9 @@ export async function handleProjects(
 
   // POST /api/v1/init/projects — create a project
   if (method === 'POST' && pathSegments.length === 0) {
+    const rl = await checkProjectCreateRateLimit(env, auth.userId);
+    if (!rl.ok) return rateLimitResponse(rl.retryAfter!);
+
     let body: { name?: string; allowed_origins?: string } = {};
     try {
       body = (await request.json()) as typeof body;
@@ -118,6 +126,9 @@ export async function handleProjects(
   if (method === 'POST' && pathSegments.length === 2 && pathSegments[1] === 'keys') {
     const projectId = pathSegments[0];
 
+    const rl = await checkKeyUploadRateLimit(env, auth.userId);
+    if (!rl.ok) return rateLimitResponse(rl.retryAfter!);
+
     const { data: proj, error: projErr } = await supabase
       .from('projects')
       .select('id')
@@ -142,6 +153,17 @@ export async function handleProjects(
     if (!provider || !share1 || !share2 || !upstream_base_url || !auth_header_name || !auth_header_template) {
       return Response.json(
         { error: 'Missing required fields: provider, share1, share2, upstream_base_url, auth_header_name, auth_header_template' },
+        { status: 400 },
+      );
+    }
+
+    // Share size cap — a real API key + Shamir overhead is ~300 bytes.
+    // 4 KB gives 10x headroom for pathological keys and blocks memory/CPU
+    // exhaustion via oversized share ciphertext.
+    const MAX_SHARE_LENGTH = 4096;
+    if (share1.length > MAX_SHARE_LENGTH || share2.length > MAX_SHARE_LENGTH) {
+      return Response.json(
+        { error: `share1/share2 exceed ${MAX_SHARE_LENGTH} chars` },
         { status: 400 },
       );
     }

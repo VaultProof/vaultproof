@@ -21,6 +21,7 @@ import { authenticateProject } from '../lib/project-auth.js';
 import { getSupabase } from '../lib/supabase.js';
 import { decrypt, zeroUint8Array } from '../crypto/encryption.js';
 import { deserializeShare, combineShares } from '../crypto/shamir.js';
+import { checkProxyRateLimit, rateLimitResponse } from '../lib/rate-limit.js';
 
 const SAFE_FORWARD_HEADERS = new Set([
   'content-type',
@@ -47,6 +48,12 @@ export async function handleProxy(
   if ('error' in auth) {
     return Response.json({ error: auth.error }, { status: auth.status });
   }
+
+  // Rate limit: keyed on the authenticated project ID (NOT the caller IP)
+  // so leaked project IDs cannot burn through their owner's quota from
+  // many addresses. 60 requests per 60s per project.
+  const rl = await checkProxyRateLimit(env, auth.project.id);
+  if (!rl.ok) return rateLimitResponse(rl.retryAfter!);
 
   const supabase = getSupabase(env);
   const { data: keyRow, error } = await supabase
@@ -122,11 +129,33 @@ export async function handleProxy(
     realKey = '';
   }
 
+  // Explicit allowlist of response headers we pass back to the client.
+  // Stripping unknown headers prevents a malicious upstream from setting
+  // cookies for our domain, injecting HSTS, or pivoting via Clear-Site-Data.
+  // SDK clients need content-type and standard cache/CORS headers; provider
+  // metadata (openai-*, stripe-*, x-request-id) is whitelisted for debugging.
+  const SAFE_RESPONSE_HEADERS = new Set([
+    'content-type',
+    'cache-control',
+    'etag',
+    'last-modified',
+    'retry-after',
+    'www-authenticate',
+    'x-ratelimit-limit',
+    'x-ratelimit-remaining',
+    'x-ratelimit-reset',
+    'x-request-id',
+    'openai-version',
+    'openai-processing-ms',
+    'openai-organization',
+    'anthropic-ratelimit-requests-remaining',
+    'anthropic-ratelimit-tokens-remaining',
+    'stripe-version',
+    'request-id',
+  ]);
   const resHeaders = new Headers();
   for (const [k, v] of upstreamRes.headers) {
-    const lk = k.toLowerCase();
-    if (lk === 'content-encoding' || lk === 'content-length' || lk === 'transfer-encoding') continue;
-    resHeaders.set(k, v);
+    if (SAFE_RESPONSE_HEADERS.has(k.toLowerCase())) resHeaders.set(k, v);
   }
   return new Response(upstreamRes.body, { status: upstreamRes.status, headers: resHeaders });
 }

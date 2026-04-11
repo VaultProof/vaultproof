@@ -3,6 +3,7 @@ export interface Env {
   VAULT_ENCRYPTION_KEY: string;
   SUPABASE_URL: string;
   SUPABASE_SERVICE_ROLE_KEY: string;
+  INIT_RATE_LIMIT: KVNamespace;
 }
 
 export interface ProjectRecord {

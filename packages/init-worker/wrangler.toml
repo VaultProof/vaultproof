@@ -9,9 +9,19 @@ mode = "smart"
 [vars]
 ALLOWED_ORIGINS = "https://vaultproof.dev,https://www.vaultproof.dev"
 
+[[kv_namespaces]]
+binding = "INIT_RATE_LIMIT"
+id = "6f443a2976444e6cb105974a0e66b544"
+preview_id = "815d506931084b438bc2f97286bd7069"
+
 # ── Staging environment ──
 [env.staging]
 name = "vaultproof-init-staging"
 
 [env.staging.vars]
 ALLOWED_ORIGINS = "*"
+
+[[env.staging.kv_namespaces]]
+binding = "INIT_RATE_LIMIT"
+id = "6f443a2976444e6cb105974a0e66b544"
+preview_id = "815d506931084b438bc2f97286bd7069"
