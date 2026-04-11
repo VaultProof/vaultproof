@@ -37,11 +37,10 @@ We commit to:
 
 ### Out of scope
 
-- The legacy VaultProof worker (`packages/worker`) — separate track, separate policy
 - Third-party providers we proxy to (OpenAI, Stripe, Anthropic, etc.) — report to them directly
 - Cloudflare Workers runtime issues — report to Cloudflare
 - Supabase platform issues — report to Supabase
-- Physical / social engineering against Nelson or contributors
+- Physical / social engineering against VaultProof contributors
 - DoS that requires more than $100/month in resources to execute
 
 ## Security Model

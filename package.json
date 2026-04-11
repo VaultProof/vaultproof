@@ -6,27 +6,18 @@
     "apps/*"
   ],
   "scripts": {
-    "build": "turbo run build --filter=@vaultproof/shamir --filter=@vaultproof/backend --force",
-    "start": "node packages/backend/dist/index.js",
-    "deploy:worker": "cd packages/worker && npx wrangler deploy",
+    "build": "turbo run build --force",
     "dev": "turbo run dev",
     "test": "turbo run test",
     "lint": "turbo run lint",
-    "postinstall": "prisma generate --schema=packages/backend/prisma/schema.prisma"
+    "deploy:init-worker": "cd packages/init-worker && npx wrangler deploy",
+    "deploy:init-worker:staging": "cd packages/init-worker && npx wrangler deploy --env staging"
   },
   "packageManager": "npm@10.9.2",
   "engines": {
-    "node": ">=22"
-  },
-  "dependencies": {
-    "@noir-lang/noir_js": "^0.36.0",
-    "@prisma/client": "^6.4.0",
-    "esbuild": "^0.28.0",
-    "prisma": "^6.4.0"
+    "node": ">=18"
   },
   "devDependencies": {
-    "@tailwindcss/cli": "^4.2.2",
-    "tailwindcss": "^4.2.2",
     "turbo": "^2.4.0",
     "typescript": "^5.7.0"
   }
