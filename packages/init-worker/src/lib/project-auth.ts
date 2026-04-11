@@ -12,6 +12,7 @@
  */
 import type { Env, ProjectRecord } from '../types.js';
 import { getSupabase } from './supabase.js';
+import { cacheGet, cacheSet } from './project-cache.js';
 
 export interface ProjectAuth {
   project: ProjectRecord;
@@ -93,10 +94,29 @@ export async function authenticateAndFetchKey(
   if ('error' in parsed) return parsed;
   const token = parsed.token;
 
+  // ── Fast path: in-memory cache hit ──
+  // Origin lock is ALWAYS re-checked against the current request headers
+  // (see checkOriginLock below) — the cache only stores the allowlist
+  // string, not any authorization decision.
+  const cached = cacheGet(token, slug);
+  if (cached) {
+    const originErr = checkOriginLock(request, cached.allowedOrigins, cached.strictOrigin);
+    if (originErr) return originErr;
+    return {
+      projectId: cached.projectId,
+      projectVpId: cached.projectVpId,
+      share1Encrypted: cached.share1Encrypted,
+      share2Encrypted: cached.share2Encrypted,
+      upstreamBaseUrl: cached.upstreamBaseUrl,
+      authHeaderName: cached.authHeaderName,
+      authHeaderTemplate: cached.authHeaderTemplate,
+      extraHeaders: cached.extraHeaders,
+    };
+  }
+
   const supabase = getSupabase(env);
 
   // Single round trip: fetch the key row plus its parent project.
-  // PostgREST embed syntax: `projects!inner(...)` joins + requires the parent row.
   const { data, error } = await supabase
     .from('project_keys')
     .select(`
@@ -122,19 +142,11 @@ export async function authenticateAndFetchKey(
     .maybeSingle();
 
   if (error || !data) {
-    // We can't distinguish "project not found" from "key not found" at
-    // the DB level because the inner join collapses both cases. The
-    // caller decides which status to return based on context:
-    //  - 401 if the project doesn't exist (enumeration defense)
-    //  - 404 if the project exists but the slug doesn't
-    // For the fast path we choose 401 by default to match the prior
-    // behaviour when the project id itself is bogus. A follow-up query
-    // could disambiguate, but that defeats the whole point of this
-    // optimization.
+    // Do NOT cache failures — we want rotation and first-time registration
+    // to take effect immediately, not after the TTL.
     return { error: 'Project or key not found', status: 401 };
   }
 
-  // Typescript's inference for embedded selects is weak; cast explicitly.
   const row = data as unknown as {
     project_id: string;
     share1_encrypted: string;
@@ -152,14 +164,28 @@ export async function authenticateAndFetchKey(
     };
   };
 
-  // Origin check, same as before.
+  // Origin check against the JUST-FETCHED row. On subsequent cached hits
+  // we'll re-check with the cached allowlist value.
   const originErr = checkOriginLock(request, row.projects.allowed_origins, row.projects.strict_origin);
   if (originErr) return originErr;
 
-  // Upstream config must be present (set at registration time).
   if (!row.upstream_base_url || !row.auth_header_name || !row.auth_header_template) {
     return { error: 'Key is missing upstream configuration', status: 500 };
   }
+
+  // ── Store in cache for the next 30s ──
+  cacheSet(token, slug, {
+    projectId: row.projects.id,
+    projectVpId: row.projects.vp_proj_id,
+    share1Encrypted: row.share1_encrypted,
+    share2Encrypted: row.share2_encrypted,
+    upstreamBaseUrl: row.upstream_base_url,
+    authHeaderName: row.auth_header_name,
+    authHeaderTemplate: row.auth_header_template,
+    extraHeaders: row.extra_headers,
+    allowedOrigins: row.projects.allowed_origins,
+    strictOrigin: row.projects.strict_origin,
+  });
 
   return {
     projectId: row.projects.id,
