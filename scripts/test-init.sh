@@ -85,6 +85,7 @@ run_test "Fast crypto (22 cases)"      "cd packages/init-worker && npx tsx src/c
 run_test "Provider regex (51 cases)"   "cd packages/init-cli && npx tsx src/providers.test.ts"
 run_test "Legacy API client (25 cases)" "cd packages/init-cli && npx tsx src/legacy.test.ts"
 run_test "Rewrite migration (33 cases)" "cd packages/init-cli && npx tsx src/rewrite.test.ts"
+run_test "Publish invariants (39 cases)" "cd packages/init-cli && npm run build && npx tsx src/publish.test.ts"
 run_test "Shamir cross-pkg round-trip" "cd packages/init-worker && npx tsx test/shamir-roundtrip.ts"
 
 # ── Network: staging ──────────────────────────────────────────────────────

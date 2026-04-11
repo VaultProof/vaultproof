@@ -7,10 +7,16 @@
     "vaultproof-init": "dist/index.js"
   },
   "main": "dist/index.js",
-  "files": ["dist", "providers.json"],
+  "files": [
+    "dist",
+    "providers.json",
+    "README.md",
+    "LICENSE"
+  ],
   "scripts": {
     "build": "tsc",
-    "dev": "tsx src/index.ts"
+    "dev": "tsx src/index.ts",
+    "prepublishOnly": "npm run build"
   },
   "dependencies": {
     "@vaultproof/shamir": "1.0.0",
@@ -22,6 +28,36 @@
     "typescript": "^5.7.0",
     "tsx": "^4.19.0"
   },
-  "keywords": ["vaultproof", "api-keys", "secrets", "shamir", "security"],
-  "license": "MIT"
+  "engines": {
+    "node": ">=18"
+  },
+  "keywords": [
+    "vaultproof",
+    "api-keys",
+    "secrets",
+    "shamir",
+    "security",
+    "openai",
+    "stripe",
+    "anthropic",
+    "env",
+    "dotenv",
+    "proxy",
+    "key-management"
+  ],
+  "license": "MIT",
+  "author": "VaultProof <hello@vaultproof.dev>",
+  "homepage": "https://vaultproof.dev",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/windsurftemplate/vaultproof.git",
+    "directory": "packages/init-cli"
+  },
+  "bugs": {
+    "url": "https://github.com/windsurftemplate/vaultproof/issues",
+    "email": "support@vaultproof.dev"
+  },
+  "publishConfig": {
+    "access": "public"
+  }
 }
