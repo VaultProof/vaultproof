@@ -1,0 +1,27 @@
+{
+  "name": "@vaultproof/init",
+  "version": "0.1.0",
+  "description": "One command to protect every API key in your .env — zero code changes.",
+  "type": "module",
+  "bin": {
+    "vaultproof-init": "dist/index.js"
+  },
+  "main": "dist/index.js",
+  "files": ["dist", "providers.json"],
+  "scripts": {
+    "build": "tsc",
+    "dev": "tsx src/index.ts"
+  },
+  "dependencies": {
+    "@vaultproof/shamir": "1.0.0",
+    "chalk": "^5.3.0",
+    "ora": "^8.1.0"
+  },
+  "devDependencies": {
+    "@types/node": "^22.0.0",
+    "typescript": "^5.7.0",
+    "tsx": "^4.19.0"
+  },
+  "keywords": ["vaultproof", "api-keys", "secrets", "shamir", "security"],
+  "license": "MIT"
+}

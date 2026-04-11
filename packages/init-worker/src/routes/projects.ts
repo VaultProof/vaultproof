@@ -1,0 +1,206 @@
+/**
+ * Project management routes.
+ *
+ *   POST /api/v1/init/projects             — create a project, return vp-proj-xxx
+ *   POST /api/v1/init/projects/:id/keys    — store a Shamir-split key under a project
+ *   GET  /api/v1/init/projects/:id         — fetch project metadata
+ *
+ * All routes require a Supabase JWT. Project identifiers are never accepted here.
+ *
+ * Universal upstream support (2026-04-11): the `/keys` route accepts a full
+ * upstream config (upstream_base_url, auth_header_name, auth_header_template,
+ * extra_headers, slug) so any Tier 1 Bearer-token REST API can be proxied.
+ * All user-declared URLs and headers are validated against the SSRF guard.
+ */
+import type { Env, ProjectRecord } from '../types.js';
+import { authenticateUser } from '../lib/user-auth.js';
+import { getSupabase } from '../lib/supabase.js';
+import { encrypt } from '../crypto/encryption.js';
+import {
+  validateUpstreamUrl,
+  validateHeaderName,
+  validateHeaderTemplate,
+  validateExtraHeaders,
+  validateSlug,
+} from '../lib/ssrf-guard.js';
+
+function generateProjectId(): string {
+  const bytes = new Uint8Array(12);
+  crypto.getRandomValues(bytes);
+  const hex = Array.from(bytes).map((b) => b.toString(16).padStart(2, '0')).join('');
+  return `vp-proj-${hex}`;
+}
+
+interface KeyUploadBody {
+  provider?: string;
+  slug?: string;
+  share1?: string;
+  share2?: string;
+  env_var?: string;
+  upstream_base_url?: string;
+  auth_header_name?: string;
+  auth_header_template?: string;
+  extra_headers?: Record<string, string> | null;
+}
+
+export async function handleProjects(
+  request: Request,
+  env: Env,
+  pathSegments: string[],
+): Promise<Response> {
+  const auth = await authenticateUser(request, env);
+  if (!auth) {
+    return Response.json(
+      { error: 'Not authenticated. Pass Authorization: Bearer <supabase jwt>' },
+      { status: 401 },
+    );
+  }
+
+  const supabase = getSupabase(env);
+  const method = request.method;
+
+  // POST /api/v1/init/projects — create a project
+  if (method === 'POST' && pathSegments.length === 0) {
+    let body: { name?: string; allowed_origins?: string } = {};
+    try {
+      body = (await request.json()) as typeof body;
+    } catch {
+      // empty body is fine
+    }
+
+    const vpProjId = generateProjectId();
+    const { data, error } = await supabase
+      .from('projects')
+      .insert({
+        user_id: auth.userId,
+        vp_proj_id: vpProjId,
+        name: body.name || null,
+        allowed_origins: body.allowed_origins || null,
+        strict_origin: false,
+      })
+      .select('*')
+      .single();
+
+    if (error || !data) {
+      return Response.json({ error: 'Failed to create project', detail: error?.message }, { status: 500 });
+    }
+
+    const project = data as ProjectRecord;
+    return Response.json(
+      {
+        id: project.id,
+        vp_proj_id: project.vp_proj_id,
+        name: project.name,
+        created_at: project.created_at,
+      },
+      { status: 201 },
+    );
+  }
+
+  // GET /api/v1/init/projects/:id
+  if (method === 'GET' && pathSegments.length === 1) {
+    const projectId = pathSegments[0];
+    const { data, error } = await supabase
+      .from('projects')
+      .select('*')
+      .eq('id', projectId)
+      .eq('user_id', auth.userId)
+      .is('revoked_at', null)
+      .maybeSingle();
+
+    if (error || !data) {
+      return Response.json({ error: 'Project not found' }, { status: 404 });
+    }
+    return Response.json(data);
+  }
+
+  // POST /api/v1/init/projects/:id/keys
+  if (method === 'POST' && pathSegments.length === 2 && pathSegments[1] === 'keys') {
+    const projectId = pathSegments[0];
+
+    const { data: proj, error: projErr } = await supabase
+      .from('projects')
+      .select('id')
+      .eq('id', projectId)
+      .eq('user_id', auth.userId)
+      .is('revoked_at', null)
+      .maybeSingle();
+
+    if (projErr || !proj) {
+      return Response.json({ error: 'Project not found' }, { status: 404 });
+    }
+
+    let body: KeyUploadBody;
+    try {
+      body = (await request.json()) as KeyUploadBody;
+    } catch {
+      return Response.json({ error: 'Invalid JSON' }, { status: 400 });
+    }
+
+    const { provider, slug, share1, share2, env_var, upstream_base_url, auth_header_name, auth_header_template, extra_headers } = body;
+
+    if (!provider || !share1 || !share2 || !upstream_base_url || !auth_header_name || !auth_header_template) {
+      return Response.json(
+        { error: 'Missing required fields: provider, share1, share2, upstream_base_url, auth_header_name, auth_header_template' },
+        { status: 400 },
+      );
+    }
+
+    // ── SSRF + header validation ──
+    const urlCheck = validateUpstreamUrl(upstream_base_url);
+    if (!urlCheck.ok) {
+      return Response.json({ error: `upstream_base_url rejected: ${urlCheck.error}` }, { status: 400 });
+    }
+    const nameCheck = validateHeaderName(auth_header_name);
+    if (!nameCheck.ok) {
+      return Response.json({ error: `auth_header_name rejected: ${nameCheck.error}` }, { status: 400 });
+    }
+    const templateCheck = validateHeaderTemplate(auth_header_template);
+    if (!templateCheck.ok) {
+      return Response.json({ error: `auth_header_template rejected: ${templateCheck.error}` }, { status: 400 });
+    }
+    const extrasCheck = validateExtraHeaders(extra_headers);
+    if (!extrasCheck.ok) {
+      return Response.json({ error: `extra_headers rejected: ${extrasCheck.error}` }, { status: 400 });
+    }
+
+    // Slug defaults to provider id if not supplied.
+    const finalSlug = slug || provider;
+    const slugCheck = validateSlug(finalSlug);
+    if (!slugCheck.ok) {
+      return Response.json({ error: `slug rejected: ${slugCheck.error}` }, { status: 400 });
+    }
+
+    // Encrypt Share 1. Share 2 stored as-is.
+    const share1Bytes = Uint8Array.from(atob(share1), (c) => c.charCodeAt(0));
+    const encrypted = encrypt(share1Bytes, env);
+    const share1Encrypted = btoa(String.fromCharCode(...encrypted));
+
+    const { error: upsertErr } = await supabase
+      .from('project_keys')
+      .upsert(
+        {
+          project_id: projectId,
+          provider,
+          slug: finalSlug,
+          env_var: env_var || null,
+          upstream_base_url: urlCheck.normalizedUrl,
+          auth_header_name,
+          auth_header_template,
+          extra_headers: extra_headers ?? null,
+          share1_encrypted: share1Encrypted,
+          share2_encrypted: share2,
+          revoked_at: null,
+        },
+        { onConflict: 'project_id,provider' },
+      );
+
+    if (upsertErr) {
+      return Response.json({ error: 'Failed to store key', detail: upsertErr.message }, { status: 500 });
+    }
+
+    return Response.json({ ok: true, provider, slug: finalSlug }, { status: 201 });
+  }
+
+  return Response.json({ error: 'Not found' }, { status: 404 });
+}

@@ -1,0 +1,132 @@
+/**
+ * Universal provider proxy.
+ *
+ *   /p/:slug/*   → looks up (project, slug) → decrypt shares → forward upstream
+ *
+ * The slug can be any registered provider on the project. The upstream base
+ * URL, auth header, and extra headers are all stored per-key and validated at
+ * registration time via the SSRF guard, so at request time we only need to
+ * build the outgoing fetch.
+ *
+ * Security properties:
+ *   - `redirect: 'manual'` — upstream 3xx responses are passed through raw,
+ *     preventing redirect-based SSRF pivots.
+ *   - `Host` header is not forwarded (fetch derives it from the URL).
+ *   - `X-Forwarded-*` headers are dropped.
+ *   - Reconstructed key lives in memory only for the duration of fetch() and
+ *     is zeroed immediately after.
+ */
+import type { Env } from '../types.js';
+import { authenticateProject } from '../lib/project-auth.js';
+import { getSupabase } from '../lib/supabase.js';
+import { decrypt, zeroUint8Array } from '../crypto/encryption.js';
+import { deserializeShare, combineShares } from '../crypto/shamir.js';
+
+const SAFE_FORWARD_HEADERS = new Set([
+  'content-type',
+  'accept',
+  'accept-encoding',
+  'accept-language',
+  'cache-control',
+  'user-agent',
+  'openai-beta',
+  'stripe-version',
+  'idempotency-key',
+  'prefer',
+  'anthropic-version',
+  'anthropic-beta',
+]);
+
+export async function handleProxy(
+  request: Request,
+  env: Env,
+  slug: string,
+  upstreamPath: string,
+): Promise<Response> {
+  const auth = await authenticateProject(request, env);
+  if ('error' in auth) {
+    return Response.json({ error: auth.error }, { status: auth.status });
+  }
+
+  const supabase = getSupabase(env);
+  const { data: keyRow, error } = await supabase
+    .from('project_keys')
+    .select('share1_encrypted, share2_encrypted, upstream_base_url, auth_header_name, auth_header_template, extra_headers')
+    .eq('project_id', auth.project.id)
+    .eq('slug', slug)
+    .is('revoked_at', null)
+    .maybeSingle();
+
+  if (error || !keyRow) {
+    return Response.json(
+      { error: `No key registered for slug "${slug}" on this project. Run \`npx @vaultproof/init\` again.` },
+      { status: 404 },
+    );
+  }
+
+  if (!keyRow.upstream_base_url || !keyRow.auth_header_name || !keyRow.auth_header_template) {
+    return Response.json(
+      { error: 'Key is missing upstream configuration. Re-register via `npx @vaultproof/init`.' },
+      { status: 500 },
+    );
+  }
+
+  // ── Reconstruct the key ──
+  let reconstructed: Uint8Array | null = null;
+  let realKey: string;
+  try {
+    const share1CipherBytes = Uint8Array.from(atob(keyRow.share1_encrypted), (c) => c.charCodeAt(0));
+    const share1Plain = decrypt(share1CipherBytes, env);
+    const share1 = deserializeShare(btoa(String.fromCharCode(...share1Plain)));
+    const share2 = deserializeShare(keyRow.share2_encrypted);
+    reconstructed = combineShares([share1, share2]);
+    realKey = new TextDecoder().decode(reconstructed);
+  } catch {
+    return Response.json({ error: 'Failed to reconstruct key' }, { status: 500 });
+  }
+
+  // ── Build upstream request ──
+  // Normalize: base URL has no trailing slash; upstream path starts with /.
+  const base = keyRow.upstream_base_url.replace(/\/+$/, '');
+  const path = upstreamPath.startsWith('/') ? upstreamPath : `/${upstreamPath}`;
+  const upstreamUrl = `${base}${path}`;
+
+  // Rebuild the auth header from the template. Template validation in
+  // ssrf-guard guarantees no control chars and that {key} is present.
+  const authHeaderValue = keyRow.auth_header_template.replace('{key}', realKey);
+
+  const forwardHeaders = new Headers();
+  for (const [k, v] of request.headers) {
+    if (SAFE_FORWARD_HEADERS.has(k.toLowerCase())) forwardHeaders.set(k, v);
+  }
+  forwardHeaders.set(keyRow.auth_header_name, authHeaderValue);
+
+  if (keyRow.extra_headers) {
+    for (const [k, v] of Object.entries(keyRow.extra_headers as Record<string, string>)) {
+      forwardHeaders.set(k, v);
+    }
+  }
+
+  const upstreamReq = new Request(upstreamUrl, {
+    method: request.method,
+    headers: forwardHeaders,
+    body: ['GET', 'HEAD'].includes(request.method) ? undefined : request.body,
+    redirect: 'manual',
+  });
+
+  let upstreamRes: Response;
+  try {
+    upstreamRes = await fetch(upstreamReq);
+  } finally {
+    if (reconstructed) zeroUint8Array(reconstructed);
+    realKey = '';
+  }
+
+  const resHeaders = new Headers();
+  for (const [k, v] of upstreamRes.headers) {
+    const lk = k.toLowerCase();
+    if (lk === 'content-encoding' || lk === 'content-length' || lk === 'transfer-encoding') continue;
+    resHeaders.set(k, v);
+  }
+  return new Response(upstreamRes.body, { status: upstreamRes.status, headers: resHeaders });
+}

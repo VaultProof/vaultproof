@@ -21,6 +21,7 @@
   "dependencies": {
     "@noir-lang/noir_js": "^0.36.0",
     "@prisma/client": "^6.4.0",
+    "esbuild": "^0.28.0",
     "prisma": "^6.4.0"
   },
   "devDependencies": {
