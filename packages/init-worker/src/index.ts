@@ -12,6 +12,9 @@ import { handleProjects } from './routes/projects.js';
 import { handleProxy } from './routes/proxy.js';
 import { checkFailedAuthRateLimit, rateLimitResponse } from './lib/rate-limit.js';
 
+// Re-export the Durable Object class so wrangler can bind it.
+export { RateLimiter } from './do/rate-limiter.js';
+
 function corsHeaders(origin: string, allowedOrigins: string[]): Record<string, string> {
   // The init-worker uses Authorization: Bearer ... only. No cookies, no
   // credentialed requests. We deliberately do NOT send
