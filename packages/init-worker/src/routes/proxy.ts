@@ -17,8 +17,7 @@
  *     is zeroed immediately after.
  */
 import type { Env } from '../types.js';
-import { authenticateProject } from '../lib/project-auth.js';
-import { getSupabase } from '../lib/supabase.js';
+import { authenticateAndFetchKey } from '../lib/project-auth.js';
 import { decrypt, zeroUint8Array } from '../crypto/encryption.js';
 import { deserializeShare, combineShares } from '../crypto/shamir.js';
 import { checkProxyRateLimit, rateLimitResponse } from '../lib/rate-limit.js';
@@ -44,7 +43,9 @@ export async function handleProxy(
   slug: string,
   upstreamPath: string,
 ): Promise<Response> {
-  const auth = await authenticateProject(request, env);
+  // Single round trip: auth + origin lock + key fetch + upstream config.
+  // Replaces two sequential Supabase queries with one JOIN.
+  const auth = await authenticateAndFetchKey(request, env, slug);
   if ('error' in auth) {
     return Response.json({ error: auth.error }, { status: auth.status });
   }
@@ -52,40 +53,17 @@ export async function handleProxy(
   // Rate limit: keyed on the authenticated project ID (NOT the caller IP)
   // so leaked project IDs cannot burn through their owner's quota from
   // many addresses. 60 requests per 60s per project.
-  const rl = await checkProxyRateLimit(env, auth.project.id);
+  const rl = await checkProxyRateLimit(env, auth.projectId);
   if (!rl.ok) return rateLimitResponse(rl.retryAfter!);
-
-  const supabase = getSupabase(env);
-  const { data: keyRow, error } = await supabase
-    .from('project_keys')
-    .select('share1_encrypted, share2_encrypted, upstream_base_url, auth_header_name, auth_header_template, extra_headers')
-    .eq('project_id', auth.project.id)
-    .eq('slug', slug)
-    .is('revoked_at', null)
-    .maybeSingle();
-
-  if (error || !keyRow) {
-    return Response.json(
-      { error: `No key registered for slug "${slug}" on this project. Run \`npx @vaultproof/init\` again.` },
-      { status: 404 },
-    );
-  }
-
-  if (!keyRow.upstream_base_url || !keyRow.auth_header_name || !keyRow.auth_header_template) {
-    return Response.json(
-      { error: 'Key is missing upstream configuration. Re-register via `npx @vaultproof/init`.' },
-      { status: 500 },
-    );
-  }
 
   // ── Reconstruct the key ──
   let reconstructed: Uint8Array | null = null;
   let realKey: string;
   try {
-    const share1CipherBytes = Uint8Array.from(atob(keyRow.share1_encrypted), (c) => c.charCodeAt(0));
+    const share1CipherBytes = Uint8Array.from(atob(auth.share1Encrypted), (c) => c.charCodeAt(0));
     const share1Plain = decrypt(share1CipherBytes, env);
     const share1 = deserializeShare(btoa(String.fromCharCode(...share1Plain)));
-    const share2 = deserializeShare(keyRow.share2_encrypted);
+    const share2 = deserializeShare(auth.share2Encrypted);
     reconstructed = combineShares([share1, share2]);
     realKey = new TextDecoder().decode(reconstructed);
   } catch {
@@ -93,23 +71,22 @@ export async function handleProxy(
   }
 
   // ── Build upstream request ──
-  // Normalize: base URL has no trailing slash; upstream path starts with /.
-  const base = keyRow.upstream_base_url.replace(/\/+$/, '');
+  const base = auth.upstreamBaseUrl.replace(/\/+$/, '');
   const path = upstreamPath.startsWith('/') ? upstreamPath : `/${upstreamPath}`;
   const upstreamUrl = `${base}${path}`;
 
   // Rebuild the auth header from the template. Template validation in
   // ssrf-guard guarantees no control chars and that {key} is present.
-  const authHeaderValue = keyRow.auth_header_template.replace('{key}', realKey);
+  const authHeaderValue = auth.authHeaderTemplate.replace('{key}', realKey);
 
   const forwardHeaders = new Headers();
   for (const [k, v] of request.headers) {
     if (SAFE_FORWARD_HEADERS.has(k.toLowerCase())) forwardHeaders.set(k, v);
   }
-  forwardHeaders.set(keyRow.auth_header_name, authHeaderValue);
+  forwardHeaders.set(auth.authHeaderName, authHeaderValue);
 
-  if (keyRow.extra_headers) {
-    for (const [k, v] of Object.entries(keyRow.extra_headers as Record<string, string>)) {
+  if (auth.extraHeaders) {
+    for (const [k, v] of Object.entries(auth.extraHeaders)) {
       forwardHeaders.set(k, v);
     }
   }

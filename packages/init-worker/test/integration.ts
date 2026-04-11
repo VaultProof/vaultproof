@@ -128,9 +128,12 @@ async function run(): Promise<void> {
     anProxy.status === 405 || anProxy.status === 401,
     `status=${anProxy.status}`);
 
-  // ── Wrong slug = 404 ──
+  // ── Wrong slug returns 401 (collapsed with "unknown project id")
+  //    The single-query join cannot distinguish "project exists but no
+  //    key for this slug" from "project does not exist", and returning
+  //    the same error for both is an enumeration-defense improvement.
   const wrongSlug = await head('/p/nonexistent-slug/anything', vpProjId);
-  check('wrong slug returns 404', wrongSlug.status === 404);
+  check('wrong slug returns 401', wrongSlug.status === 401);
 
   // ── Bad project id = 401 ──
   const badProj = await head('/p/openai/v1/models', 'vp-proj-not-a-real-project');

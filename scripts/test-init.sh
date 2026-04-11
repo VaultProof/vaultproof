@@ -81,6 +81,7 @@ run_test "init-cli tsc --noEmit"       "cd packages/init-cli && npx tsc --noEmit
 header "Unit tests"
 run_test "SSRF guard (85 cases)"       "cd packages/init-worker && npx tsx src/lib/ssrf-guard.test.ts"
 run_test "Rate limiter (22 cases)"     "cd packages/init-worker && npx tsx src/lib/rate-limit.test.ts"
+run_test "Project auth helpers (19)"   "cd packages/init-worker && npx tsx src/lib/project-auth.test.ts"
 run_test "Fast crypto (22 cases)"      "cd packages/init-worker && npx tsx src/crypto/fast-crypt.test.ts"
 run_test "Provider regex (51 cases)"   "cd packages/init-cli && npx tsx src/providers.test.ts"
 run_test "Legacy API client (25 cases)" "cd packages/init-cli && npx tsx src/legacy.test.ts"
