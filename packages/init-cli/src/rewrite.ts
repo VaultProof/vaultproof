@@ -22,9 +22,38 @@ function backupPath(envPath: string): string {
   return `${envPath}.backup.${ts}`;
 }
 
-export function backupEnvFile(envPath: string): string {
+/**
+ * Create a backup of the .env file with all detected key VALUES redacted.
+ * The backup preserves variable names, comments, and structure so the
+ * user can see what was there — but plaintext API keys are replaced with
+ * a redaction marker. VaultProof must never write plaintext keys to disk.
+ */
+export function backupEnvFile(envPath: string, findings?: Finding[]): string {
   const dest = backupPath(envPath);
-  fs.copyFileSync(envPath, dest);
+  const original = fs.readFileSync(envPath, 'utf-8');
+
+  if (!findings || findings.length === 0) {
+    fs.writeFileSync(dest, original);
+    return dest;
+  }
+
+  // Build a set of values to redact (the plaintext keys we detected).
+  const secretValues = new Set(
+    findings.filter((f) => f.file === envPath).map((f) => f.value),
+  );
+
+  // Replace each secret value in every line.
+  const lines = original.split('\n');
+  const redacted = lines.map((line) => {
+    for (const secret of secretValues) {
+      if (line.includes(secret)) {
+        return line.replace(secret, '[REDACTED — protected by VaultProof]');
+      }
+    }
+    return line;
+  });
+
+  fs.writeFileSync(dest, redacted.join('\n'));
   return dest;
 }
 
@@ -38,7 +67,7 @@ export function rewriteEnvFile(
   const relevant = findings.filter((f) => f.file === envPath);
   if (relevant.length === 0) return { rewritten: 0, backupPath: '', manualNotes: [] };
 
-  const backup = backupEnvFile(envPath);
+  const backup = backupEnvFile(envPath, findings);
   const original = fs.readFileSync(envPath, 'utf-8');
   const lines = original.split('\n');
 

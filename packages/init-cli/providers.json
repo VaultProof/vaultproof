@@ -90,7 +90,7 @@
       "auth_header_template": "Bearer {key}",
       "env_var_default": "STRIPE_SECRET_KEY",
       "base_url_env_var": "STRIPE_BASE_URL",
-      "base_url_path_suffix": "/p/stripe/v1",
+      "base_url_path_suffix": "/p/stripe",
       "detect": {
         "regex": "^sk_(?:live|test)_[A-Za-z0-9]{20,}$"
       }

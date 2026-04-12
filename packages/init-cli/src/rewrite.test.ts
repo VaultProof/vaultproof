@@ -217,6 +217,47 @@ console.log('── empty entries ──');
   ok('file unchanged', content === 'X=y\n');
 }
 
+// ── Backup NEVER contains plaintext keys ────────────────────────────────
+console.log('── backup redacts plaintext keys ──');
+{
+  // Import the scan-based rewrite + backupEnvFile
+  const { rewriteEnvFile, backupEnvFile } = await import('./rewrite.js');
+  const { scanEnvFile } = await import('./scan.js');
+
+  const envPath = resetEnv(`# My app
+OPENAI_API_KEY=sk-proj-realSecretKeyThatShouldNeverAppearInBackup123456
+STRIPE_SECRET_KEY=sk_live_anotherSecretKeyNeverInBackup12345
+DATABASE_URL=postgres://safe
+`);
+
+  // Scan to get findings (same as what init does)
+  const catalog = [OPENAI, STRIPE];
+  const findings = scanEnvFile(envPath, catalog);
+  ok('scan found 2 keys', findings.length === 2, `got ${findings.length}`);
+
+  // Create a backup with redaction
+  const backupDest = backupEnvFile(envPath, findings);
+  ok('backup created', fs.existsSync(backupDest));
+
+  const backupContent = fs.readFileSync(backupDest, 'utf-8');
+
+  // The backup must NOT contain the plaintext keys
+  ok('backup does NOT contain OpenAI key',
+    !backupContent.includes('sk-proj-realSecretKeyThatShouldNeverAppearInBackup123456'));
+  ok('backup does NOT contain Stripe key',
+    !backupContent.includes('sk_live_anotherSecretKeyNeverInBackup12345'));
+
+  // The backup DOES contain the redaction marker
+  ok('backup has redaction marker for OpenAI',
+    backupContent.includes('OPENAI_API_KEY=[REDACTED'));
+  ok('backup has redaction marker for Stripe',
+    backupContent.includes('STRIPE_SECRET_KEY=[REDACTED'));
+
+  // The backup preserves non-secret values
+  ok('backup keeps DATABASE_URL', backupContent.includes('DATABASE_URL=postgres://safe'));
+  ok('backup keeps comments', backupContent.includes('# My app'));
+}
+
 // ── Cleanup ──────────────────────────────────────────────────────────────
 fs.rmSync(tmp, { recursive: true, force: true });
 
