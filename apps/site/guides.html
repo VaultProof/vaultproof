@@ -261,14 +261,14 @@
         </div>
     </section>
 
-    <!-- Safety note about vp_live_ keys -->
+    <!-- Safety note about vp-proj- project IDs -->
     <section class="max-w-4xl mx-auto px-6 pb-8">
         <div class="bg-emerald-500/5 border border-emerald-500/20 rounded-card p-5">
             <div class="flex items-start gap-3">
                 <svg class="w-5 h-5 text-emerald-400 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/></svg>
                 <div>
-                    <p class="text-emerald-400 text-sm font-semibold mb-1">Your <code class="font-mono">vp_live_</code> key is safe to share in prompts and configs</p>
-                    <p class="text-gray-400 text-sm">A <code class="font-mono text-emerald-300">vp_live_</code> key is a proxy key, not your real API key. Even if it appears in your code, prompts, chat history, or AI agent context, your actual provider keys (OpenAI, Anthropic, etc.) remain protected. The proxy key can only be used to make API calls through VaultProof — and you can revoke it, set budget caps, or hit the kill switch from your dashboard at any time.</p>
+                    <p class="text-emerald-400 text-sm font-semibold mb-1">Your <code class="font-mono">vp-proj-</code> project ID is safe to share</p>
+                    <p class="text-gray-400 text-sm"><code class="font-mono text-emerald-300">vp-proj-</code> project IDs are safe to share &mdash; they're public identifiers, not secrets. Even if a project ID appears in code, commit history, or logs, your actual provider keys remain protected as Shamir shares that only the VaultProof proxy can reconstruct.</p>
                 </div>
             </div>
         </div>
@@ -349,7 +349,7 @@
                         <tbody class="text-gray-400">
                             <tr class="border-t border-vp-border">
                                 <td class="py-2 text-white">AI providers</td>
-                                <td class="py-2">Transparent proxy &mdash; swap the base URL, use <code class="text-vp-accent">vp_live_</code> as the API key</td>
+                                <td class="py-2">Transparent proxy &mdash; <code class="text-vp-accent">npx @vaultproof/init</code> rewrites your .env with proxy URLs and one project ID</td>
                                 <td class="py-2"><code class="text-amber-400 line-through">OPENAI_API_KEY=sk-...</code><br><code class="text-emerald-400">OPENAI_API_KEY=vp-proj-...</code><br><code class="text-emerald-400">OPENAI_BASE_URL=https://init.vaultproof.dev/p/openai/v1</code></td>
                             </tr>
                             <tr class="border-t border-vp-border">
@@ -497,7 +497,7 @@
                     <div class="bg-cyan-500/5 border border-cyan-500/20 rounded-md p-4">
                         <div class="flex items-start gap-2">
                             <svg class="w-4 h-4 text-cyan-400 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
-                            <p class="text-gray-400 text-xs">Claude Code makes API calls using whatever <code class="font-mono text-vp-accent">ANTHROPIC_API_KEY</code> is set in your environment. With VaultProof, that value is a <code class="font-mono text-vp-accent">vp_live_</code> proxy key &mdash; not your real Anthropic key. The proxy call goes through VaultProof, your actual key is reassembled briefly in memory, the call is made, and the key is wiped. Claude Code gets the response. Nothing is stored.</p>
+                            <p class="text-gray-400 text-xs">Claude Code makes API calls using whatever <code class="font-mono text-vp-accent">ANTHROPIC_API_KEY</code> is set in your environment. With VaultProof, that value is your <code class="font-mono text-vp-accent">vp-proj-</code> project ID &mdash; not your real Anthropic key. The proxy call goes through VaultProof, your actual key is reassembled briefly in memory, the call is made, and the key is wiped. Claude Code gets the response. Nothing is stored.</p>
                         </div>
                     </div>
 
@@ -594,7 +594,7 @@ vaultproof --version</pre>
                         <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs text-gray-400">
                             <div class="flex items-start gap-2">
                                 <span class="text-vp-accent font-bold">1.</span>
-                                <span>Claude Code sends request using your <code class="font-mono text-vp-accent">vp_live_</code> key</span>
+                                <span>Claude Code sends request using your <code class="font-mono text-vp-accent">vp-proj-</code> project ID</span>
                             </div>
                             <div class="flex items-start gap-2">
                                 <span class="text-vp-accent font-bold">2.</span>
@@ -619,7 +619,7 @@ vaultproof --version</pre>
                                 <ul class="text-gray-400 space-y-1">
                                     <li><span class="text-emerald-400">&#10003;</span> Make completions and embeddings</li>
                                     <li><span class="text-emerald-400">&#10003;</span> Use streaming responses</li>
-                                    <li><span class="text-emerald-400">&#10003;</span> Read the <code class="font-mono text-vp-accent">vp_live_</code> key</li>
+                                    <li><span class="text-emerald-400">&#10003;</span> Read the <code class="font-mono text-vp-accent">vp-proj-</code> project ID</li>
                                 </ul>
                             </div>
                             <div>
@@ -698,7 +698,7 @@ npx @vaultproof/init</pre>
                     <div class="bg-cyan-500/5 border border-cyan-500/20 rounded-md p-4 mt-2">
                         <div class="flex items-start gap-2">
                             <svg class="w-4 h-4 text-cyan-400 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
-                            <p class="text-gray-400 text-xs">Also works with Anthropic models in Cursor &mdash; use <code class="font-mono text-vp-accent">https://init.vaultproof.dev/p/anthropic</code> as the base URL and your Anthropic <code class="font-mono text-vp-accent">vp_live_</code> key instead.</p>
+                            <p class="text-gray-400 text-xs">Also works with Anthropic models in Cursor &mdash; use <code class="font-mono text-vp-accent">https://init.vaultproof.dev/p/anthropic</code> as the base URL and your <code class="font-mono text-vp-accent">vp-proj-</code> project ID instead.</p>
                         </div>
                     </div>
                 </div>
@@ -1008,14 +1008,14 @@ client = OpenAI(
                     <div class="tool-icon bg-[#6366f1]/10 text-[#818cf8]" style="font-family:'Space Grotesk',sans-serif">AI</div>
                     <div>
                         <h3 class="font-semibold text-white text-lg">AI Providers (OpenAI, Anthropic, etc.)</h3>
-                        <p class="text-gray-500 text-sm mt-0.5">Same setup for every AI tool &mdash; change the base URL and use your vp_live_ key</p>
+                        <p class="text-gray-500 text-sm mt-0.5">Same setup for every AI tool &mdash; one command, one project ID</p>
                     </div>
                 </div>
                 <svg class="guide-chevron text-gray-500" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg>
             </div>
             <div class="guide-body">
                 <div class="px-6 pb-6 space-y-4">
-                    <p class="text-gray-400 text-sm">Every AI provider works the same way. Two changes: swap the base URL, use your <code class="text-vp-accent font-mono text-xs">vp_live_</code> key as the API key.</p>
+                    <p class="text-gray-400 text-sm">Run <code class="text-vp-accent font-mono text-xs">npx @vaultproof/init</code> in your project. It rewrites your .env with proxy URLs and one project ID. Your code doesn't change.</p>
 
                     <div>
                         <div class="code-header"><span>bash &mdash; Claude Code, Windsurf, any CLI tool</span></div>
@@ -1322,63 +1322,26 @@ VAULTPROOF_PROJECT_ID=vp-proj-... npm run dev
                     </div>
 
                     <div>
-                        <h4 class="text-white font-medium mb-3">Rotating your real API key (e.g., OpenAI)</h4>
+                        <h4 class="text-white font-medium mb-3">Rotating your API keys</h4>
                         <div class="space-y-3">
                             <div class="flex items-start gap-3">
                                 <div class="step-num mt-0.5">1</div>
                                 <div class="text-gray-400 text-sm pt-1">
-                                    <strong class="text-white">Generate a new key at your provider's dashboard</strong><br>
+                                    <strong class="text-white">Rotate the key in the provider's dashboard</strong><br>
                                     Go to OpenAI, Anthropic, Google, Stripe, etc. and create a fresh key.
                                 </div>
                             </div>
                             <div class="flex items-start gap-3">
                                 <div class="step-num mt-0.5">2</div>
                                 <div class="text-gray-400 text-sm pt-1">
-                                    <strong class="text-white">Go to VaultProof &rarr; Keys &rarr; click "Rotate" on the key</strong>
+                                    <strong class="text-white">Put the new key in your <code class="text-xs bg-vp-bg px-2 py-0.5 rounded font-mono text-gray-300">.env</code></strong>
                                 </div>
                             </div>
                             <div class="flex items-start gap-3">
                                 <div class="step-num mt-0.5">3</div>
                                 <div class="text-gray-400 text-sm pt-1">
-                                    <strong class="text-white">Paste the new key</strong><br>
-                                    It is split and encrypted instantly.
-                                </div>
-                            </div>
-                            <div class="flex items-start gap-3">
-                                <div class="step-num mt-0.5">4</div>
-                                <div class="text-gray-400 text-sm pt-1">
-                                    <strong class="text-white">Done.</strong> Every app using your <code class="text-xs bg-vp-bg px-2 py-0.5 rounded font-mono text-indigo-400">vp_live_</code> key automatically uses the new provider key. No code changes, no redeployments.
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div>
-                        <h4 class="text-white font-medium mb-3">Rotating your vp_live_ developer key</h4>
-                        <div class="space-y-3">
-                            <div class="flex items-start gap-3">
-                                <div class="step-num mt-0.5">1</div>
-                                <div class="text-gray-400 text-sm pt-1">
-                                    <strong class="text-white">Go to VaultProof &rarr; Keys &rarr; Developer Keys section</strong>
-                                </div>
-                            </div>
-                            <div class="flex items-start gap-3">
-                                <div class="step-num mt-0.5">2</div>
-                                <div class="text-gray-400 text-sm pt-1">
-                                    <strong class="text-white">Click "Rotate" on the key you want to change</strong>
-                                </div>
-                            </div>
-                            <div class="flex items-start gap-3">
-                                <div class="step-num mt-0.5">3</div>
-                                <div class="text-gray-400 text-sm pt-1">
-                                    <strong class="text-white">Copy the new <code class="text-xs bg-vp-bg px-2 py-0.5 rounded font-mono text-indigo-400">vp_live_</code> key</strong><br>
-                                    Update it in your <code class="text-xs bg-vp-bg px-2 py-0.5 rounded font-mono text-gray-300">.env</code> file.
-                                </div>
-                            </div>
-                            <div class="flex items-start gap-3">
-                                <div class="step-num mt-0.5">4</div>
-                                <div class="text-gray-400 text-sm pt-1">
-                                    <strong class="text-white">The old key stops working immediately</strong>
+                                    <strong class="text-white">Run <code class="text-xs bg-vp-bg px-2 py-0.5 rounded font-mono text-indigo-400">npx @vaultproof/init</code></strong><br>
+                                    It detects the new key, re-splits it, and uploads the shares. Done.
                                 </div>
                             </div>
                         </div>
@@ -1386,7 +1349,7 @@ VAULTPROOF_PROJECT_ID=vp-proj-... npm run dev
 
                     <div class="bg-indigo-500/5 border border-indigo-500/20 rounded-md p-4 mt-2">
                         <p class="text-indigo-400 text-xs font-medium mb-1">The key advantage</p>
-                        <p class="text-gray-400 text-xs">Since your apps only use <code class="font-mono text-vp-accent">vp_live_</code> keys, rotating the underlying provider key requires zero code changes. This is the whole point of the proxy.</p>
+                        <p class="text-gray-400 text-xs">Since your apps only use the project ID, rotating the underlying provider key requires zero code changes. Your <code class="font-mono text-vp-accent">vp-proj-</code> project ID stays the same &mdash; no redeployments needed.</p>
                     </div>
 
                 </div>
