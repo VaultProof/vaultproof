@@ -23,6 +23,7 @@ import { loadProviders, type ProviderSpec } from './providers.js';
 import { listLegacyKeys, type LegacyKey } from './legacy.js';
 import { confirm, promptHidden } from './prompts.js';
 import { browserLogin } from './login.js';
+import { findStripeConstructors } from './stripe-helper.js';
 
 function parseArgs(argv: string[]): { cmd: string; flags: Set<string> } {
   const args = argv.slice(2);
@@ -178,9 +179,43 @@ async function runInit(opts: { autoYes: boolean; dryRun: boolean }): Promise<voi
   console.log(`\n${chalk.bold.green('Done.')} Your .env uses one project ID for everything:`);
   console.log(`  ${chalk.bold(projectId)}\n`);
 
-  if (allManualNotes.length > 0) {
+  // ── Stripe SDK helper ──
+  const hasStripe = findings.some((f) => f.provider.id === 'stripe');
+  if (hasStripe) {
+    const stripeFindings = findStripeConstructors(process.cwd());
+    if (stripeFindings.length > 0) {
+      const unpatched = stripeFindings.filter((f) => !f.alreadyPatched);
+      if (unpatched.length > 0) {
+        console.log(chalk.bold('\n⚠ Stripe needs one line of code:'));
+        for (const sf of unpatched) {
+          console.log(chalk.dim(`\n  ${sf.file}:${sf.line}`));
+          console.log(chalk.red(`  - ${sf.content}`));
+          // Build the suggested replacement
+          if (sf.content.includes('{')) {
+            // Has options object: new Stripe(key, { apiVersion: '...' })
+            const patched = sf.content.replace('{', `{ host: 'init.vaultproof.dev',`);
+            console.log(chalk.green(`  + ${patched}`));
+          } else if (sf.content.includes(')')) {
+            // No options: new Stripe(key)
+            const patched = sf.content.replace(')', `, { host: 'init.vaultproof.dev' })`);
+            console.log(chalk.green(`  + ${patched}`));
+          } else {
+            console.log(chalk.green(`  + Add: { host: 'init.vaultproof.dev' } to the Stripe constructor`));
+          }
+        }
+        console.log(chalk.dim('\n  This tells the Stripe SDK to route through VaultProof.'));
+        console.log(chalk.dim('  Every other provider works without code changes.\n'));
+      } else {
+        console.log(chalk.green('\n✓ Stripe constructor already configured for VaultProof.'));
+      }
+    }
+  }
+
+  // ── Other manual notes (non-Stripe providers without BASE_URL env var) ──
+  const nonStripeNotes = allManualNotes.filter((n) => !n.startsWith('Stripe:'));
+  if (nonStripeNotes.length > 0) {
     console.log(chalk.bold('A few providers need a one-line client change:'));
-    for (const note of allManualNotes) console.log(`  ${chalk.yellow('•')} ${note}`);
+    for (const note of nonStripeNotes) console.log(`  ${chalk.yellow('•')} ${note}`);
     console.log();
   }
 
