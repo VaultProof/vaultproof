@@ -928,38 +928,45 @@
     <!-- Install -->
     <section class="relative z-10 max-w-4xl mx-auto px-6 py-20">
         <div class="text-center mb-10 reveal">
-            <h2 class="text-3xl font-bold text-white mb-3" style="font-family:'Space Grotesk',sans-serif">Install and ship</h2>
-            <p class="text-gray-500 max-w-lg mx-auto">Use the SDK in your app or the CLI from your terminal. Both are live on npm.</p>
+            <h2 class="text-3xl font-bold text-white mb-3" style="font-family:'Space Grotesk',sans-serif">One command. No SDK.</h2>
+            <p class="text-gray-500 max-w-lg mx-auto">Your existing OpenAI, Stripe, and Anthropic SDKs already work. Just run init — your code doesn't change.</p>
         </div>
-        <div class="grid md:grid-cols-2 gap-6 reveal delay-1">
-            <!-- SDK -->
-            <div class="bg-vp-surface border border-vp-border rounded-2xl p-6">
-                <div class="flex items-center gap-3 mb-3">
-                    <div class="w-8 h-8 rounded-lg bg-indigo-500/10 flex items-center justify-center">
-                        <svg class="w-4 h-4 text-indigo-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4"/></svg>
-                    </div>
-                    <h3 class="text-white font-semibold">SDK</h3>
+
+        <!-- Before / After -->
+        <div class="grid md:grid-cols-2 gap-4 reveal delay-1 mb-8">
+            <div class="bg-vp-surface border border-red-500/20 rounded-2xl overflow-hidden">
+                <div class="px-5 py-3 border-b border-red-500/10 flex items-center gap-2">
+                    <span class="w-2 h-2 rounded-full bg-red-500/60"></span>
+                    <span class="text-xs font-semibold text-red-400 uppercase tracking-wider">Before</span>
                 </div>
-                <p class="text-sm text-gray-500 mb-4">Import into your Node.js or TypeScript app. Handles key splitting, encryption, and proxying for you.</p>
-                <div class="flex items-center gap-2 bg-black/30 border border-white/[0.06] rounded-xl px-4 py-3 cursor-pointer hover:bg-black/40 transition group" onclick="navigator.clipboard.writeText('npx @vaultproof/init')">
-                    <code class="text-sm font-mono text-gray-400 flex-1"><span class="text-gray-600">$</span> npx <span class="text-indigo-400">@vaultproof/init</span></code>
-                    <svg class="w-4 h-4 text-gray-600 group-hover:text-gray-400 transition flex-shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"/></svg>
-                </div>
-            </div>
-            <!-- CLI -->
-            <div class="bg-vp-surface border border-vp-border rounded-2xl p-6">
-                <div class="flex items-center gap-3 mb-3">
-                    <div class="w-8 h-8 rounded-lg bg-indigo-500/10 flex items-center justify-center">
-                        <svg class="w-4 h-4 text-indigo-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M8 9l3 3-3 3m5 0h3M5 20h14a2 2 0 002-2V6a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
-                    </div>
-                    <h3 class="text-white font-semibold">CLI</h3>
-                </div>
-                <p class="text-sm text-gray-500 mb-4">Manage keys from your terminal. Store, proxy, revoke, and monitor from the command line or CI/CD pipelines.</p>
-                <div class="flex items-center gap-2 bg-black/30 border border-white/[0.06] rounded-xl px-4 py-3 cursor-pointer hover:bg-black/40 transition group" onclick="navigator.clipboard.writeText('npx @vaultproof/init --dry-run')">
-                    <code class="text-sm font-mono text-gray-400 flex-1"><span class="text-gray-600">$</span> npx <span class="text-indigo-400">@vaultproof/init</span> --dry-run</code>
-                    <svg class="w-4 h-4 text-gray-600 group-hover:text-gray-400 transition flex-shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"/></svg>
+                <div class="p-5 font-mono text-xs space-y-1.5">
+                    <div><span class="text-red-400">OPENAI_API_KEY</span><span class="text-gray-600">=</span><span class="text-red-300">sk-proj-abc123...</span></div>
+                    <div><span class="text-red-400">STRIPE_SECRET_KEY</span><span class="text-gray-600">=</span><span class="text-red-300">sk_live_xyz789...</span></div>
+                    <div><span class="text-red-400">ANTHROPIC_API_KEY</span><span class="text-gray-600">=</span><span class="text-red-300">sk-ant-api03-...</span></div>
+                    <div class="text-gray-600 mt-3 text-[10px]">↑ plaintext secrets sitting in your .env</div>
                 </div>
             </div>
+            <div class="bg-vp-surface border border-emerald-500/20 rounded-2xl overflow-hidden">
+                <div class="px-5 py-3 border-b border-emerald-500/10 flex items-center gap-2">
+                    <span class="w-2 h-2 rounded-full bg-emerald-500/60"></span>
+                    <span class="text-xs font-semibold text-emerald-400 uppercase tracking-wider">After</span>
+                </div>
+                <div class="p-5 font-mono text-xs space-y-1.5">
+                    <div><span class="text-emerald-400">VAULTPROOF_PROJECT_ID</span><span class="text-gray-600">=</span><span class="text-gray-300">vp-proj-abc123</span></div>
+                    <div><span class="text-emerald-400">OPENAI_BASE_URL</span><span class="text-gray-600">=</span><span class="text-gray-400">https://init.vaultproof.dev/p/openai/v1</span></div>
+                    <div><span class="text-emerald-400">OPENAI_API_KEY</span><span class="text-gray-600">=</span><span class="text-gray-300">vp-proj-abc123</span></div>
+                    <div class="text-gray-600 mt-3 text-[10px]">↑ no secrets. safe to commit.</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- The command -->
+        <div class="max-w-md mx-auto reveal delay-2">
+            <div class="flex items-center gap-2 bg-black/40 border border-indigo-500/20 rounded-xl px-5 py-4 cursor-pointer hover:border-indigo-500/40 transition group" onclick="navigator.clipboard.writeText('npx @vaultproof/init'); var s=this.querySelector('.copy-label'); s.textContent='Copied!'; setTimeout(function(){s.textContent='Click to copy'},1500)">
+                <code class="text-base font-mono text-indigo-300 flex-1"><span class="text-gray-600">$</span> npx <span class="text-indigo-400">@vaultproof/init</span></code>
+                <span class="copy-label text-xs text-gray-600 group-hover:text-gray-400 transition">Click to copy</span>
+            </div>
+            <p class="text-center text-xs text-gray-600 mt-3">No install. No SDK. No code changes. Runs via npx.</p>
         </div>
     </section>
 
