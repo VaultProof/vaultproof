@@ -87,10 +87,10 @@
             },
             {
               "@type": "Question",
-              "name": "What if someone steals my vp_live_ key?",
+              "name": "What if someone finds my project ID?",
               "acceptedAnswer": {
                 "@type": "Answer",
-                "text": "They can't do much. If you've locked the key to your domain (origin locking), it won't work from anywhere else. You can also restrict keys by provider, endpoint, and IP address. Even if someone uses it, they can only make proxy calls — they can never extract the raw API key. Revoke it instantly from your dashboard."
+                "text": "Project IDs are public identifiers, not secrets. Someone with your project ID could make proxy calls against your rate limit, but they can never retrieve your actual API keys. You can restrict access by domain (origin locking), provider, endpoint, and IP address. Revoke access instantly from your dashboard."
               }
             },
             {
@@ -98,7 +98,7 @@
               "name": "Does it work with Stripe, AWS, or non-AI SDKs?",
               "acceptedAnswer": {
                 "@type": "Answer",
-                "text": "Yes. Use vault.proxy() to route any API call through VaultProof's secure proxy. Your key stays out of your codebase. Works with any provider that uses API keys."
+                "text": "Yes. Run npx @vaultproof/init to protect your keys. Your SDKs route through the VaultProof proxy automatically — zero code changes. Works with any provider that uses API keys."
               }
             },
             {
@@ -710,7 +710,7 @@
                             <div class="w-3 h-3 rounded-full bg-red-500/70"></div>
                             <div class="w-3 h-3 rounded-full bg-yellow-500/70"></div>
                             <div class="w-3 h-3 rounded-full bg-green-500/70"></div>
-                            <span class="text-xs text-gray-600 ml-2 font-mono">vaultproof-cli</span>
+                            <span class="text-xs text-gray-600 ml-2 font-mono">@vaultproof/init</span>
                         </div>
                         <div class="p-4 sm:p-5 font-mono text-xs sm:text-sm leading-6 sm:leading-7 min-h-[180px] sm:min-h-[220px] overflow-x-auto" id="terminal">
                             <span class="text-gray-500">$</span> <span id="terminalText" class="text-green-400"></span><span class="cursor" id="terminalCursor"></span>
@@ -941,8 +941,8 @@
                     <h3 class="text-white font-semibold">SDK</h3>
                 </div>
                 <p class="text-sm text-gray-500 mb-4">Import into your Node.js or TypeScript app. Handles key splitting, encryption, and proxying for you.</p>
-                <div class="flex items-center gap-2 bg-black/30 border border-white/[0.06] rounded-xl px-4 py-3 cursor-pointer hover:bg-black/40 transition group" onclick="navigator.clipboard.writeText('npm install @vaultproof/sdk')">
-                    <code class="text-sm font-mono text-gray-400 flex-1"><span class="text-gray-600">$</span> npm install <span class="text-indigo-400">@vaultproof/sdk</span></code>
+                <div class="flex items-center gap-2 bg-black/30 border border-white/[0.06] rounded-xl px-4 py-3 cursor-pointer hover:bg-black/40 transition group" onclick="navigator.clipboard.writeText('npx @vaultproof/init')">
+                    <code class="text-sm font-mono text-gray-400 flex-1"><span class="text-gray-600">$</span> npx <span class="text-indigo-400">@vaultproof/init</span></code>
                     <svg class="w-4 h-4 text-gray-600 group-hover:text-gray-400 transition flex-shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"/></svg>
                 </div>
             </div>
@@ -955,8 +955,8 @@
                     <h3 class="text-white font-semibold">CLI</h3>
                 </div>
                 <p class="text-sm text-gray-500 mb-4">Manage keys from your terminal. Store, proxy, revoke, and monitor from the command line or CI/CD pipelines.</p>
-                <div class="flex items-center gap-2 bg-black/30 border border-white/[0.06] rounded-xl px-4 py-3 cursor-pointer hover:bg-black/40 transition group" onclick="navigator.clipboard.writeText('npm install -g @vaultproof/cli')">
-                    <code class="text-sm font-mono text-gray-400 flex-1"><span class="text-gray-600">$</span> npm install -g <span class="text-indigo-400">@vaultproof/cli</span></code>
+                <div class="flex items-center gap-2 bg-black/30 border border-white/[0.06] rounded-xl px-4 py-3 cursor-pointer hover:bg-black/40 transition group" onclick="navigator.clipboard.writeText('npx @vaultproof/init --dry-run')">
+                    <code class="text-sm font-mono text-gray-400 flex-1"><span class="text-gray-600">$</span> npx <span class="text-indigo-400">@vaultproof/init</span> --dry-run</code>
                     <svg class="w-4 h-4 text-gray-600 group-hover:text-gray-400 transition flex-shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"/></svg>
                 </div>
             </div>
@@ -1208,7 +1208,7 @@
                 </li>
                 <li class="flex items-start gap-3">
                     <span class="flex items-center justify-center w-6 h-6 rounded-full bg-vp-accent/15 text-vp-accent text-xs font-bold flex-shrink-0 mt-0.5">3</span>
-                    <span>Point your SDK at the proxy URL and use your <code class="font-mono text-xs text-vp-accent">vp_live_</code> key</span>
+                    <span>Your .env is rewritten with proxy URLs and one project ID. Your code doesn't change.</span>
                 </li>
                 <li class="flex items-start gap-3">
                     <span class="flex items-center justify-center w-6 h-6 rounded-full bg-vp-accent/15 text-vp-accent text-xs font-bold flex-shrink-0 mt-0.5">4</span>
@@ -1244,11 +1244,11 @@
             </div>
             <div class="faq-item border-b border-vp-border">
                 <button class="faq-trigger" aria-expanded="false">
-                    <span>What if someone steals my vp_live_ key?</span>
+                    <span>What if someone finds my project ID?</span>
                     <svg class="faq-chevron" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg>
                 </button>
                 <div class="faq-content">
-                    <div class="faq-content-inner">They can't do much. If you've locked the key to your domain (origin locking), it won't work from anywhere else — browsers can't fake the Origin header. You can also restrict keys by provider, endpoint, and IP address. And even if someone somehow uses it, they can only make proxy calls — they can never extract the raw API key. Revoke it instantly from your dashboard.</div>
+                    <div class="faq-content-inner">Project IDs are public identifiers, not secrets. Someone with your project ID could make proxy calls against your rate limit, but they can never retrieve your actual API keys. You can restrict access by domain (origin locking), provider, endpoint, and IP address. Revoke access instantly from your dashboard.</div>
                 </div>
             </div>
             <div class="faq-item border-b border-vp-border">
@@ -1257,7 +1257,7 @@
                     <svg class="faq-chevron" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg>
                 </button>
                 <div class="faq-content">
-                    <div class="faq-content-inner">Yes. Use <code style="color:#818cf8;background:#0a0a0f;padding:2px 6px;border-radius:4px;font-size:13px">vault.proxy(keyId, '/v1/charges', { amount: 2000 })</code> to route any API call through VaultProof's secure proxy. Your key stays out of your codebase. Works with any provider that uses API keys.</div>
+                    <div class="faq-content-inner">Yes. Run <code style="color:#818cf8;background:#0a0a0f;padding:2px 6px;border-radius:4px;font-size:13px">npx @vaultproof/init</code> to protect your keys. Your SDKs read the proxy URL from the environment. Zero code changes needed. Works with any provider.</div>
                 </div>
             </div>
             <div class="faq-item border-b border-vp-border">
@@ -1433,19 +1433,18 @@
 
         // Terminal typing animation
         var terminalLines = [
-            { cmd: 'vaultproof store --provider openai', delay: 40, output: [
-                '<span class="text-gray-500">API Key: ••••••••••••••••••••••••</span>',
-                '<span class="text-gray-500">Splitting key...</span>',
-                '<span class="text-gray-500">Storing encrypted shares...</span>',
-                '<span class="text-indigo-400">Key stored: vk_8f3a2b1c (openai)</span>',
-                '<span class="text-gray-600">  Key was split locally. Full key is only assembled during API calls.</span>'
+            { cmd: 'npx @vaultproof/init', delay: 40, output: [
+                '<span class="text-gray-500">Scanning .env...</span>',
+                '<span class="text-gray-500">Found OPENAI_API_KEY, STRIPE_SECRET_KEY</span>',
+                '<span class="text-gray-500">Storing and splitting keys...</span>',
+                '<span class="text-indigo-400">Done. Your .env now uses one project ID.</span>',
+                '<span class="text-gray-600">  VAULTPROOF_PROJECT_ID=vp_proj_8f3a2b1c</span>'
             ]},
-            { cmd: 'vaultproof proxy --key vk_8f3a2b1c --path /v1/chat/completions --method POST --body \'{"model":"gpt-4","messages":[{"role":"user","content":"Hello"}]}\'', delay: 30, output: [
-                '<span class="text-gray-500">{"choices":[{"message":{"content":"Hello! How can I help you today?"}}]}</span>',
-            ]},
-            { cmd: 'vaultproof revoke vk_8f3a2b1c', delay: 40, output: [
-                '<span class="text-gray-500">Are you sure you want to revoke key vk_8f3a2b1c? (y/N) y</span>',
-                '<span class="text-indigo-400">Key vk_8f3a2b1c revoked.</span>'
+            { cmd: 'npx @vaultproof/init --dry-run', delay: 40, output: [
+                '<span class="text-gray-500">Scanning .env...</span>',
+                '<span class="text-gray-500">Would replace OPENAI_API_KEY → proxy URL</span>',
+                '<span class="text-gray-500">Would replace STRIPE_SECRET_KEY → proxy URL</span>',
+                '<span class="text-indigo-400">Dry run complete. No files changed.</span>'
             ]}
         ];
 
