@@ -17,7 +17,7 @@
     <meta property="og:image" content="https://vaultproof.dev/ogimage.png">
     <meta name="twitter:card" content="summary">
     <meta name="twitter:title" content="Setup Guides | VaultProof">
-    <meta name="twitter:description" content="Use VaultProof with your favorite AI tools. One line change.">
+    <meta name="twitter:description" content="Use VaultProof with your favorite AI tools. One command to protect your API keys.">
     <meta http-equiv="X-Content-Type-Options" content="nosniff">
     <meta http-equiv="X-Frame-Options" content="DENY">
     <meta name="referrer" content="strict-origin-when-cross-origin">
@@ -122,49 +122,8 @@
         .fn { color: #fbbf24; }
         .typ { color: #60a5fa; }
 
-        .guide-card {
-            background: #111118;
-            border: 1px solid #1e1e2e;
-            border-radius: 16px;
-            overflow: hidden;
-            transition: border-color 0.2s ease;
-        }
-        .guide-card:hover { border-color: #6366f1; }
-
-        .guide-toggle { cursor: pointer; }
-        .guide-body { display: none; }
-        .guide-body.open { display: block; }
-        .guide-chevron { transition: transform 0.2s ease; }
-        .guide-chevron.open { transform: rotate(180deg); }
-
-        .step-num {
-            width: 28px;
-            height: 28px;
-            border-radius: 50%;
-            background: rgba(99, 102, 241, 0.15);
-            color: #6366f1;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 0.75rem;
-            font-weight: 700;
-            flex-shrink: 0;
-        }
-
         .mobile-menu { display: none; }
         .mobile-menu.open { display: flex; }
-
-        .tool-icon {
-            width: 44px;
-            height: 44px;
-            border-radius: 10px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 1.25rem;
-            font-weight: 700;
-            flex-shrink: 0;
-        }
     .btn-creative {
     display: inline-block;
     padding: 0.375rem 1.25rem;
@@ -393,21 +352,6 @@
         </div>
     </footer>
 
-    <script>
-        // Guide expand/collapse
-        function toggleGuide(header) {
-            var body = header.nextElementSibling;
-            var chevron = header.querySelector('.guide-chevron');
-            body.classList.toggle('open');
-            chevron.classList.toggle('open');
-        }
-
-        // Open first guide by default
-        document.addEventListener('DOMContentLoaded', function() {
-            var first = document.querySelector('.guide-toggle');
-            if (first) toggleGuide(first);
-        });
-    </script>
 
 <script src="/js/analytics.js" defer></script>
 <script>
