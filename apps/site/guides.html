@@ -9,9 +9,9 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Setup Guides | VaultProof</title>
-    <meta name="description" content="Use VaultProof with Claude Code, Cursor, Continue.dev, OpenAI SDK, Anthropic SDK, and cURL. One line change to secure your API keys.">
+    <meta name="description" content="Use VaultProof with Claude Code, Cursor, Continue.dev, OpenAI SDK, Anthropic SDK, and cURL. One command to protect your API keys.">
     <meta property="og:title" content="Setup Guides | VaultProof">
-    <meta property="og:description" content="Use VaultProof with your favorite AI tools. One line change to secure your API keys with split-key encryption.">
+    <meta property="og:description" content="Use VaultProof with your favorite AI tools. One command to protect your API keys with split-key encryption.">
     <meta property="og:url" content="https://vaultproof.dev/guides">
     <meta property="og:type" content="website">
     <meta property="og:image" content="https://vaultproof.dev/ogimage.png">
@@ -33,29 +33,29 @@
         {
           "@type": "HowToStep",
           "position": 1,
-          "name": "Install the VaultProof CLI",
-          "text": "Run 'npm install -g @vaultproof/cli' to install the VaultProof command-line tool."
+          "name": "Run npx @vaultproof/init",
+          "text": "Run 'npx @vaultproof/init' in your project directory. It scans your .env for API keys automatically."
         },
         {
           "@type": "HowToStep",
           "position": 2,
-          "name": "Log in and store your API key",
-          "text": "Run 'vaultproof login' to authenticate, then 'vaultproof store' to split-encrypt and store your API key securely."
+          "name": "Confirm the detected keys",
+          "text": "The CLI shows every API key it found (OpenAI, Anthropic, Stripe, etc.) and asks you to confirm. Each key is Shamir-split locally — the plaintext never leaves your machine."
         },
         {
           "@type": "HowToStep",
           "position": 3,
-          "name": "Get your VaultProof proxy key",
-          "text": "After storing, you receive a vp_live_ proxy key. This replaces your real API key in all your code and configuration."
+          "name": "Get your project ID",
+          "text": "VaultProof gives you one project ID (vp-proj-...) that replaces every API key in your .env. The project ID is not a secret — it is safe to commit."
         },
         {
           "@type": "HowToStep",
           "position": 4,
-          "name": "Update your SDK or tool configuration",
-          "text": "Point your SDK's base URL to the VaultProof proxy and use your vp_live_ key instead of the raw API key. Works with OpenAI, Anthropic, Claude Code, Cursor, and more."
+          "name": "Your code does not change",
+          "text": "Your .env is automatically rewritten with the project ID and per-provider proxy URLs. Your OpenAI, Anthropic, and Stripe SDKs read the new base URL from the environment. Zero code changes needed."
         }
       ],
-      "totalTime": "PT5M"
+      "totalTime": "PT2M"
     }
     </script>
 
@@ -229,7 +229,18 @@
     <!-- Hero -->
     <section class="max-w-4xl mx-auto px-6 pt-20 pb-8 text-center">
         <h1 class="text-4xl md:text-5xl font-bold mb-5 tracking-tight" style="font-family:'Space Grotesk',sans-serif">Setup Guides</h1>
-        <p class="text-gray-400 text-lg max-w-2xl mx-auto">Use VaultProof with your favorite AI tools. One line change.</p>
+        <p class="text-gray-400 text-lg max-w-2xl mx-auto">Use VaultProof with your favorite AI tools. One command.</p>
+
+        <div class="bg-indigo-950/50 border border-indigo-500/30 rounded-lg p-5 mt-8 text-left max-w-2xl mx-auto">
+            <div class="flex items-start gap-3">
+                <span class="text-indigo-400 text-xl mt-0.5">&#9889;</span>
+                <div>
+                    <h3 class="text-white font-bold text-sm mb-1">New: one command for every provider</h3>
+                    <pre class="bg-black/40 rounded px-4 py-2 text-sm font-mono text-indigo-300 mb-2 inline-block">npx @vaultproof/init</pre>
+                    <p class="text-gray-500 text-xs leading-relaxed">Scans your <code class="text-gray-400">.env</code>, splits each key locally, rewrites with one project ID. Zero code changes. Some guides below still show the earlier setup steps and are being updated.</p>
+                </div>
+            </div>
+        </div>
     </section>
 
     <!-- Quick jump links -->
@@ -289,14 +300,14 @@
             <div>
                 <div class="code-header"><span>bash</span></div>
                 <div class="code-block">
-<pre>npm install -g @vaultproof/cli</pre>
+<pre>npx @vaultproof/init</pre>
                 </div>
             </div>
             <p class="text-gray-500 text-sm mt-3">Or use npx without installing:</p>
             <div class="mt-2">
                 <div class="code-header"><span>bash</span></div>
                 <div class="code-block">
-<pre>npx @vaultproof/cli store --provider openai</pre>
+<pre>npx @vaultproof/init</pre>
                 </div>
             </div>
         </div>
@@ -313,8 +324,8 @@
                     <h3 class="font-semibold text-white mb-2">Prerequisites</h3>
                     <ul class="text-gray-400 text-sm space-y-1.5">
                         <li>1. Create a <a href="/app/login" class="text-vp-accent hover:underline">VaultProof account</a></li>
-                        <li>2. Store your API key: <code class="text-xs bg-vp-bg px-2 py-0.5 rounded font-mono text-gray-300">vaultproof store -p openai</code></li>
-                        <li>3. Get your VaultProof developer key (<code class="text-xs bg-vp-bg px-2 py-0.5 rounded font-mono text-gray-300">vp_live_...</code>) from the dashboard</li>
+                        <li>2. Store your API key: <code class="text-xs bg-vp-bg px-2 py-0.5 rounded font-mono text-gray-300">npx @vaultproof/init</code></li>
+                        <li>3. Get your VaultProof developer key (<code class="text-xs bg-vp-bg px-2 py-0.5 rounded font-mono text-gray-300">vp-proj-...</code>) from the dashboard</li>
                     </ul>
                 </div>
             </div>
@@ -330,7 +341,7 @@
                     <h3 class="font-semibold text-white mb-2">What changes in your .env</h3>
                     <p class="text-gray-400 text-sm mb-3">The only VaultProof-specific env var you need is:</p>
                     <div class="bg-vp-bg rounded-md px-4 py-3 font-mono text-sm">
-                        <span class="text-emerald-400">VAULTPROOF_API_KEY</span><span class="text-gray-500">=</span><span class="text-gray-300">vp_live_your_key_here</span>
+                        <span class="text-emerald-400">VAULTPROOF_PROJECT_ID</span><span class="text-gray-500">=</span><span class="text-gray-300">vp-proj-your-project-id</span>
                     </div>
                     <p class="text-gray-500 text-xs mt-3 mb-2">That's it. Your provider API keys are removed from .env entirely. Here's what happens depending on the provider:</p>
                     <table class="w-full text-xs mt-2">
@@ -339,7 +350,7 @@
                             <tr class="border-t border-vp-border">
                                 <td class="py-2 text-white">AI providers</td>
                                 <td class="py-2">Transparent proxy &mdash; swap the base URL, use <code class="text-vp-accent">vp_live_</code> as the API key</td>
-                                <td class="py-2"><code class="text-amber-400 line-through">OPENAI_API_KEY=sk-...</code><br><code class="text-emerald-400">OPENAI_API_KEY=vp_live_...</code><br><code class="text-emerald-400">OPENAI_BASE_URL=https://api.vaultproof.dev/v1/openai</code></td>
+                                <td class="py-2"><code class="text-amber-400 line-through">OPENAI_API_KEY=sk-...</code><br><code class="text-emerald-400">OPENAI_API_KEY=vp-proj-...</code><br><code class="text-emerald-400">OPENAI_BASE_URL=https://init.vaultproof.dev/p/openai/v1</code></td>
                             </tr>
                             <tr class="border-t border-vp-border">
                                 <td class="py-2 text-white">Other SDKs</td>
@@ -509,7 +520,7 @@
                     <div>
                         <div class="code-header"><span>bash</span></div>
                         <div class="code-block">
-<pre>npm install -g @vaultproof/cli
+<pre>npx @vaultproof/init
 vaultproof --version</pre>
                         </div>
                     </div>
@@ -538,7 +549,7 @@ vaultproof --version</pre>
                     <div>
                         <div class="code-header"><span>bash</span></div>
                         <div class="code-block">
-<pre>vaultproof store -p anthropic
+<pre>npx @vaultproof/init
 <span class="cmt"># Paste your Anthropic key when prompted</span></pre>
                         </div>
                     </div>
@@ -553,8 +564,8 @@ vaultproof --version</pre>
                     <div>
                         <div class="code-header"><span>~/.zshrc (or ~/.bashrc)</span></div>
                         <div class="code-block">
-<pre><span class="kw">export</span> ANTHROPIC_BASE_URL=<span class="str">https://api.vaultproof.dev/v1/anthropic</span>
-<span class="kw">export</span> ANTHROPIC_API_KEY=<span class="str">vp_live_your_key_here</span></pre>
+<pre><span class="kw">export</span> ANTHROPIC_BASE_URL=<span class="str">https://init.vaultproof.dev/p/anthropic</span>
+<span class="kw">export</span> ANTHROPIC_API_KEY=<span class="str">vp-proj-your-project-id</span></pre>
                         </div>
                     </div>
                     <div>
@@ -649,9 +660,9 @@ vaultproof --version</pre>
                     <div>
                         <div class="code-header"><span>bash</span></div>
                         <div class="code-block">
-<pre>npm install -g @vaultproof/cli
+<pre>npx @vaultproof/init
 vaultproof test
-vaultproof store -p openai</pre>
+npx @vaultproof/init</pre>
                         </div>
                     </div>
 
@@ -659,7 +670,7 @@ vaultproof store -p openai</pre>
                         <div class="step-num mt-0.5">2</div>
                         <div class="text-gray-400 text-sm pt-1">
                             <strong class="text-white">Open Cursor Settings</strong><br>
-                            Go to Settings &rarr; Models &rarr; OpenAI API Key and paste your <code class="text-xs bg-vp-bg px-2 py-0.5 rounded font-mono text-gray-300">vp_live_your_key_here</code> key.
+                            Go to Settings &rarr; Models &rarr; OpenAI API Key and paste your <code class="text-xs bg-vp-bg px-2 py-0.5 rounded font-mono text-gray-300">vp-proj-your-project-id</code> key.
                         </div>
                     </div>
 
@@ -672,7 +683,7 @@ vaultproof store -p openai</pre>
                     <div>
                         <div class="code-header"><span>Cursor Settings</span></div>
                         <div class="code-block">
-<pre>API Base URL: <span class="str">https://api.vaultproof.dev/v1/openai</span></pre>
+<pre>API Base URL: <span class="str">https://init.vaultproof.dev/p/openai/v1</span></pre>
                         </div>
                     </div>
 
@@ -687,7 +698,7 @@ vaultproof store -p openai</pre>
                     <div class="bg-cyan-500/5 border border-cyan-500/20 rounded-md p-4 mt-2">
                         <div class="flex items-start gap-2">
                             <svg class="w-4 h-4 text-cyan-400 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
-                            <p class="text-gray-400 text-xs">Also works with Anthropic models in Cursor &mdash; use <code class="font-mono text-vp-accent">https://api.vaultproof.dev/v1/anthropic</code> as the base URL and your Anthropic <code class="font-mono text-vp-accent">vp_live_</code> key instead.</p>
+                            <p class="text-gray-400 text-xs">Also works with Anthropic models in Cursor &mdash; use <code class="font-mono text-vp-accent">https://init.vaultproof.dev/p/anthropic</code> as the base URL and your Anthropic <code class="font-mono text-vp-accent">vp_live_</code> key instead.</p>
                         </div>
                     </div>
                 </div>
@@ -717,9 +728,9 @@ vaultproof store -p openai</pre>
                     <div>
                         <div class="code-header"><span>bash</span></div>
                         <div class="code-block">
-<pre>npm install -g @vaultproof/cli
+<pre>npx @vaultproof/init
 vaultproof test
-vaultproof store -p openai</pre>
+npx @vaultproof/init</pre>
                         </div>
                     </div>
 
@@ -732,8 +743,8 @@ vaultproof store -p openai</pre>
                     <div>
                         <div class="code-header"><span>~/.zshrc (or ~/.bashrc)</span></div>
                         <div class="code-block">
-<pre><span class="kw">export</span> OPENAI_BASE_URL=<span class="str">https://api.vaultproof.dev/v1/openai</span>
-<span class="kw">export</span> OPENAI_API_KEY=<span class="str">vp_live_your_key_here</span></pre>
+<pre><span class="kw">export</span> OPENAI_BASE_URL=<span class="str">https://init.vaultproof.dev/p/openai/v1</span>
+<span class="kw">export</span> OPENAI_API_KEY=<span class="str">vp-proj-your-project-id</span></pre>
                         </div>
                     </div>
 
@@ -771,9 +782,9 @@ vaultproof store -p openai</pre>
                     <div>
                         <div class="code-header"><span>bash</span></div>
                         <div class="code-block">
-<pre>npm install -g @vaultproof/cli
+<pre>npx @vaultproof/init
 vaultproof test
-vaultproof store -p openai</pre>
+npx @vaultproof/init</pre>
                         </div>
                     </div>
 
@@ -792,8 +803,8 @@ vaultproof store -p openai</pre>
     <span class="str">"title"</span>: <span class="str">"GPT-4 via VaultProof"</span>,
     <span class="str">"provider"</span>: <span class="str">"openai"</span>,
     <span class="str">"model"</span>: <span class="str">"gpt-4"</span>,
-    <span class="str">"apiBase"</span>: <span class="str">"https://api.vaultproof.dev/v1/openai"</span>,
-    <span class="str">"apiKey"</span>: <span class="str">"vp_live_your_key_here"</span>
+    <span class="str">"apiBase"</span>: <span class="str">"https://init.vaultproof.dev/p/openai/v1"</span>,
+    <span class="str">"apiKey"</span>: <span class="str">"vp-proj-your-project-id"</span>
   }]
 }</pre>
                         </div>
@@ -833,9 +844,9 @@ vaultproof store -p openai</pre>
                     <div>
                         <div class="code-header"><span>bash</span></div>
                         <div class="code-block">
-<pre>npm install -g @vaultproof/cli
+<pre>npx @vaultproof/init
 vaultproof test
-vaultproof store -p anthropic</pre>
+npx @vaultproof/init</pre>
                         </div>
                     </div>
 
@@ -856,8 +867,8 @@ vaultproof store -p anthropic</pre>
                     <div>
                         <div class="code-header"><span>Cline Settings</span></div>
                         <div class="code-block">
-<pre>Base URL:  <span class="str">https://api.vaultproof.dev/v1/anthropic</span>
-API Key:   <span class="str">vp_live_your_key_here</span>
+<pre>Base URL:  <span class="str">https://init.vaultproof.dev/p/anthropic</span>
+API Key:   <span class="str">vp-proj-your-project-id</span>
 Model:     <span class="str">claude-sonnet-4-20250514</span></pre>
                         </div>
                     </div>
@@ -896,9 +907,9 @@ Model:     <span class="str">claude-sonnet-4-20250514</span></pre>
                     <div>
                         <div class="code-header"><span>bash</span></div>
                         <div class="code-block">
-<pre>npm install -g @vaultproof/cli
+<pre>npx @vaultproof/init
 vaultproof test
-vaultproof store -p anthropic</pre>
+npx @vaultproof/init</pre>
                         </div>
                     </div>
 
@@ -911,8 +922,8 @@ vaultproof store -p anthropic</pre>
                     <div>
                         <div class="code-header"><span>~/.zshrc (or ~/.bashrc)</span></div>
                         <div class="code-block">
-<pre><span class="kw">export</span> ANTHROPIC_BASE_URL=<span class="str">https://api.vaultproof.dev/v1/anthropic</span>
-<span class="kw">export</span> ANTHROPIC_API_KEY=<span class="str">vp_live_your_key_here</span></pre>
+<pre><span class="kw">export</span> ANTHROPIC_BASE_URL=<span class="str">https://init.vaultproof.dev/p/anthropic</span>
+<span class="kw">export</span> ANTHROPIC_API_KEY=<span class="str">vp-proj-your-project-id</span></pre>
                         </div>
                     </div>
 
@@ -955,9 +966,9 @@ vaultproof store -p anthropic</pre>
                     <div>
                         <div class="code-header"><span>bash</span></div>
                         <div class="code-block">
-<pre>npm install -g @vaultproof/cli
+<pre>npx @vaultproof/init
 vaultproof test
-vaultproof store -p openai</pre>
+npx @vaultproof/init</pre>
                         </div>
                     </div>
 
@@ -973,8 +984,8 @@ vaultproof store -p openai</pre>
 <pre><span class="kw">from</span> openai <span class="kw">import</span> OpenAI
 
 client = OpenAI(
-    api_key=<span class="str">"vp_live_your_key_here"</span>,
-    base_url=<span class="str">"https://api.vaultproof.dev/v1/openai"</span>
+    api_key=<span class="str">"vp-proj-your-project-id"</span>,
+    base_url=<span class="str">"https://init.vaultproof.dev/p/openai/v1"</span>
 )</pre>
                         </div>
                     </div>
@@ -1009,8 +1020,8 @@ client = OpenAI(
                     <div>
                         <div class="code-header"><span>bash &mdash; Claude Code, Windsurf, any CLI tool</span></div>
                         <div class="code-block">
-<pre><span class="kw">export</span> ANTHROPIC_BASE_URL=<span class="str">https://api.vaultproof.dev/v1/anthropic</span>
-<span class="kw">export</span> ANTHROPIC_API_KEY=<span class="str">vp_live_your_key_here</span></pre>
+<pre><span class="kw">export</span> ANTHROPIC_BASE_URL=<span class="str">https://init.vaultproof.dev/p/anthropic</span>
+<span class="kw">export</span> ANTHROPIC_API_KEY=<span class="str">vp-proj-your-project-id</span></pre>
                         </div>
                     </div>
 
@@ -1018,8 +1029,8 @@ client = OpenAI(
                         <div class="code-header"><span>python &mdash; OpenAI SDK</span></div>
                         <div class="code-block">
 <pre>client = openai.<span class="fn">OpenAI</span>(
-    api_key=<span class="str">"vp_live_your_key_here"</span>,
-    base_url=<span class="str">"https://api.vaultproof.dev/v1/openai"</span>
+    api_key=<span class="str">"vp-proj-your-project-id"</span>,
+    base_url=<span class="str">"https://init.vaultproof.dev/p/openai/v1"</span>
 )</pre>
                         </div>
                     </div>
@@ -1028,8 +1039,8 @@ client = OpenAI(
                         <div class="code-header"><span>python &mdash; Anthropic SDK</span></div>
                         <div class="code-block">
 <pre>client = anthropic.<span class="fn">Anthropic</span>(
-    api_key=<span class="str">"vp_live_your_key_here"</span>,
-    base_url=<span class="str">"https://api.vaultproof.dev/v1/anthropic"</span>
+    api_key=<span class="str">"vp-proj-your-project-id"</span>,
+    base_url=<span class="str">"https://init.vaultproof.dev/p/anthropic"</span>
 )</pre>
                         </div>
                     </div>
@@ -1038,8 +1049,8 @@ client = OpenAI(
                         <div class="code-header"><span>json &mdash; Cursor, Continue.dev, or any OpenAI-compatible tool</span></div>
                         <div class="code-block">
 <pre>{
-  <span class="str">"apiBase"</span>: <span class="str">"https://api.vaultproof.dev/v1/openai"</span>,
-  <span class="str">"apiKey"</span>: <span class="str">"vp_live_your_key_here"</span>
+  <span class="str">"apiBase"</span>: <span class="str">"https://init.vaultproof.dev/p/openai/v1"</span>,
+  <span class="str">"apiKey"</span>: <span class="str">"vp-proj-your-project-id"</span>
 }</pre>
                         </div>
                     </div>
@@ -1047,8 +1058,8 @@ client = OpenAI(
                     <div>
                         <div class="code-header"><span>bash &mdash; cURL or any HTTP client</span></div>
                         <div class="code-block">
-<pre>curl https://api.vaultproof.dev/v1/openai/v1/chat/completions \
-  -H <span class="str">"Authorization: Bearer vp_live_your_key_here"</span> \
+<pre>curl https://init.vaultproof.dev/p/openai/v1/chat/completions \
+  -H <span class="str">"Authorization: Bearer vp-proj-your-project-id"</span> \
   -H <span class="str">"Content-Type: application/json"</span> \
   -d <span class="str">'{"model":"gpt-4","messages":[{"role":"user","content":"Hello"}]}'</span></pre>
                         </div>
@@ -1056,7 +1067,7 @@ client = OpenAI(
 
                     <div class="bg-vp-surface border border-vp-border rounded-md p-4">
                         <p class="text-gray-500 text-xs font-medium mb-2">Supported providers</p>
-                        <p class="text-gray-400 text-xs">OpenAI, Anthropic, Google AI, Mistral, Cohere, Groq, Perplexity, DeepSeek, Fireworks, Together.ai, Replicate. The URL pattern is always <code class="font-mono text-vp-accent">https://api.vaultproof.dev/v1/{provider}</code>.</p>
+                        <p class="text-gray-400 text-xs">OpenAI, Anthropic, Google AI, Mistral, Cohere, Groq, Perplexity, DeepSeek, Fireworks, Together.ai, Replicate. The URL pattern is always <code class="font-mono text-vp-accent">https://init.vaultproof.dev/p/{provider}</code>.</p>
                     </div>
 
                     <div class="bg-amber-500/5 border border-amber-500/20 rounded-md p-4 mt-2">
@@ -1088,25 +1099,24 @@ client = OpenAI(
                         <div class="code-header"><span>bash</span></div>
                         <div class="code-block">
 <pre><span class="cmt"># Store your key</span>
-vaultproof store -p stripe -l <span class="str">"secret"</span>
+npx @vaultproof/init
 
 <span class="cmt"># Proxy the API call through VaultProof (key stays out of your code)</span>
-vaultproof proxy -k &lt;keyId&gt; --path /v1/charges -d <span class="str">'{"amount":2000,"currency":"usd"}'</span></pre>
+npx @vaultproof/init</pre>
                         </div>
                     </div>
 
-                    <p class="text-gray-500 text-xs font-medium mt-4 mb-2">SDK</p>
+                    <p class="text-gray-500 text-xs font-medium mt-4 mb-2">.env (after running npx @vaultproof/init)</p>
                     <div>
-                        <div class="code-header"><span>javascript</span></div>
+                        <div class="code-header"><span>bash</span></div>
                         <div class="code-block">
-<pre><span class="kw">import</span> VaultProof <span class="kw">from</span> <span class="str">'@vaultproof/sdk'</span>;
+<pre><span class="cmt"># VaultProof rewrites your .env automatically</span>
+VAULTPROOF_PROJECT_ID=vp-proj-your-project-id
+STRIPE_BASE_URL=https://init.vaultproof.dev/p/stripe/v1
+STRIPE_SECRET_KEY=vp-proj-your-project-id
 
-<span class="kw">const</span> vault = <span class="kw">new</span> VaultProof(process.env.VAULTPROOF_API_KEY);
-
-<span class="cmt">// Proxy through VaultProof -- key stays out of your codebase</span>
-<span class="kw">const</span> result = <span class="kw">await</span> vault.proxy(<span class="str">'your-stripe-key-id'</span>, <span class="str">'/v1/charges'</span>, {
-  amount: <span class="num">2000</span>, currency: <span class="str">'usd'</span>
-});</pre>
+<span class="cmt"># Your Stripe SDK reads these from the environment</span>
+<span class="cmt"># Zero code changes needed</span></pre>
                         </div>
                     </div>
                 </div>
@@ -1120,7 +1130,7 @@ vaultproof proxy -k &lt;keyId&gt; --path /v1/charges -d <span class="str">'{"amo
                     <div class="tool-icon bg-[#10b981]/10 text-[#34d399]" style="font-family:'Space Grotesk',sans-serif">VP</div>
                     <div>
                         <h3 class="font-semibold text-white text-lg">Production App (Vercel, Netlify, etc.)</h3>
-                        <p class="text-gray-500 text-sm mt-0.5">Remove all secrets from your hosting &mdash; only keep VAULTPROOF_API_KEY</p>
+                        <p class="text-gray-500 text-sm mt-0.5">Remove all secrets from your hosting &mdash; only keep VAULTPROOF_PROJECT_ID</p>
                     </div>
                 </div>
                 <svg class="guide-chevron text-gray-500" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg>
@@ -1137,8 +1147,8 @@ vaultproof proxy -k &lt;keyId&gt; --path /v1/charges -d <span class="str">'{"amo
                     <div>
                         <div class="code-header"><span>bash</span></div>
                         <div class="code-block">
-<pre>npm install @vaultproof/sdk
-npm install -g @vaultproof/cli</pre>
+<pre>npx @vaultproof/init
+npx @vaultproof/init</pre>
                         </div>
                     </div>
 
@@ -1167,7 +1177,7 @@ npm install -g @vaultproof/cli</pre>
                     <div>
                         <div class="code-header"><span>bash</span></div>
                         <div class="code-block">
-<pre>vaultproof migrate</pre>
+<pre>npx @vaultproof/init</pre>
                         </div>
                     </div>
                     <div class="bg-vp-surface border border-vp-border rounded-md p-4 mt-2">
@@ -1233,7 +1243,7 @@ npm install -g @vaultproof/cli</pre>
                         <div class="code-header"><span>Vercel / Netlify / .env</span></div>
                         <div class="code-block">
 <pre><span class="cmt"># Keep &mdash; this is your only secret</span>
-VAULTPROOF_API_KEY=vp_live_your_key_here
+VAULTPROOF_PROJECT_ID=vp-proj-your-project-id
 
 <span class="cmt"># Keep &mdash; these are config, not secrets</span>
 NEXT_PUBLIC_SUPABASE_URL=https://your-project.supabase.co
@@ -1256,8 +1266,8 @@ NEXT_PUBLIC_APP_URL=https://yourapp.com
                     <div>
                         <div class="code-header"><span>bash</span></div>
                         <div class="code-block">
-<pre><span class="cmt"># Test locally with only VAULTPROOF_API_KEY set</span>
-VAULTPROOF_API_KEY=vp_live_... npm run dev
+<pre><span class="cmt"># Test locally with only VAULTPROOF_PROJECT_ID set</span>
+VAULTPROOF_PROJECT_ID=vp-proj-... npm run dev
 
 <span class="cmt"># Check: payments work? auth works? emails send?</span>
 <span class="cmt"># Then deploy as normal</span></pre>

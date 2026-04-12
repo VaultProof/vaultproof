@@ -9,9 +9,9 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Developer Documentation | VaultProof</title>
-    <meta name="description" content="Complete developer documentation for VaultProof — the password manager for API keys and secrets. SDK, CLI, API reference, security architecture, and integration guides.">
+    <meta name="description" content="Complete developer documentation for VaultProof — protect every API key in your .env with one command. Setup guides, API reference, security architecture.">
     <meta property="og:title" content="Developer Documentation | VaultProof">
-    <meta property="og:description" content="Complete developer documentation for VaultProof — SDK, CLI, API reference, security architecture, and integration guides.">
+    <meta property="og:description" content="Complete developer documentation for VaultProof — one command to protect every API key. Setup guides, API reference, security architecture.">
     <meta property="og:url" content="https://vaultproof.dev/docs">
     <meta http-equiv="X-Content-Type-Options" content="nosniff">
     <meta http-equiv="X-Frame-Options" content="DENY">
@@ -251,6 +251,18 @@
         <!-- Main Content -->
         <main class="flex-1 lg:ml-[260px] px-6 md:px-12 py-10 max-w-4xl">
 
+            <!-- NEW SYSTEM BANNER -->
+            <div class="bg-indigo-950/50 border border-indigo-500/30 rounded-lg p-5 mb-10">
+                <div class="flex items-start gap-3">
+                    <span class="text-indigo-400 text-xl mt-0.5">&#9889;</span>
+                    <div>
+                        <h3 class="text-white font-bold text-base mb-1">New: one command to protect every key</h3>
+                        <p class="text-gray-400 text-sm leading-relaxed mb-3">The fastest way to get started is now:</p>
+                        <pre class="bg-black/40 rounded px-4 py-2 text-sm font-mono text-indigo-300 mb-3 inline-block">npx @vaultproof/init</pre>
+                        <p class="text-gray-500 text-xs leading-relaxed">This scans your <code class="text-gray-400">.env</code>, Shamir-splits each key locally, and rewrites your environment with one <code class="text-gray-400">vp-proj-</code> project ID. Zero code changes. Some sections below still describe the earlier <code class="text-gray-400">vp_live_</code> system and are being rewritten.</p>
+                    </div>
+                </div>
+            </div>
 
             <!-- ============================================================ -->
             <!-- SECTION 1: OVERVIEW -->
@@ -311,19 +323,19 @@
                                 <td><code class="font-mono text-xs text-vp-accent">@vaultproof/sdk</code></td>
                                 <td>JavaScript/TypeScript library you <code class="font-mono text-xs">import</code> in your app code</td>
                                 <td>Programmatic key management (store, rotate, revoke)</td>
-                                <td><code class="font-mono text-xs">npm i @vaultproof/sdk</code></td>
+                                <td><code class="font-mono text-xs">npx @vaultproof/init</code></td>
                             </tr>
                             <tr class="bg-cyan-500/[0.04]">
                                 <td><code class="font-mono text-xs text-vp-cyan">CLI Proxy</code> <span class="text-[0.625rem] font-bold text-cyan-400 ml-1">ANY SDK</span></td>
                                 <td><code class="font-mono text-xs">vaultproof proxy</code></td>
                                 <td>Any SDK (Stripe, AWS, Twilio, Sendgrid, anything) -- proxy calls through the server</td>
-                                <td><code class="font-mono text-xs">npm i -g @vaultproof/cli</code></td>
+                                <td><code class="font-mono text-xs">npx @vaultproof/init</code></td>
                             </tr>
                             <tr>
                                 <td><code class="font-mono text-xs text-vp-accent">@vaultproof/cli</code></td>
                                 <td>Terminal command you run in your shell</td>
                                 <td>Managing keys manually, CI/CD pipelines, scripting, testing</td>
-                                <td><code class="font-mono text-xs">npm i -g @vaultproof/cli</code></td>
+                                <td><code class="font-mono text-xs">npx @vaultproof/init</code></td>
                             </tr>
                             <tr>
                                 <td><a href="/app" class="text-vp-accent hover:underline">Dashboard</a></td>
@@ -359,8 +371,8 @@
 <pre class="text-gray-300"><span class="kw">import</span> OpenAI <span class="kw">from</span> <span class="str">'openai'</span>
 
 <span class="kw">const</span> client = <span class="kw">new</span> <span class="fn">OpenAI</span>({
-  apiKey: process.env.<span class="typ">VAULTPROOF_API_KEY</span>,  <span class="cmt">// vp_live_ key</span>
-  baseURL: <span class="str">'https://staging-api.vaultproof.dev/v1/openai'</span>
+  apiKey: process.env.<span class="typ">VAULTPROOF_PROJECT_ID</span>,  <span class="cmt">// vp-proj- project ID</span>
+  baseURL: <span class="str">'https://init.vaultproof.dev/p/openai/v1'</span>
 })
 
 <span class="cmt">// Use normally -- all SDK features work (streaming, retries, types)</span>
@@ -375,8 +387,8 @@
 <pre class="text-gray-300"><span class="kw">import</span> Anthropic <span class="kw">from</span> <span class="str">'@anthropic-ai/sdk'</span>
 
 <span class="kw">const</span> client = <span class="kw">new</span> <span class="fn">Anthropic</span>({
-  apiKey: process.env.<span class="typ">VAULTPROOF_API_KEY</span>,
-  baseURL: <span class="str">'https://staging-api.vaultproof.dev/v1/anthropic'</span>
+  apiKey: process.env.<span class="typ">VAULTPROOF_PROJECT_ID</span>,
+  baseURL: <span class="str">'https://init.vaultproof.dev/p/anthropic'</span>
 })</pre>
                     </div>
 
@@ -385,8 +397,8 @@
 <pre class="text-gray-300"><span class="kw">import</span> openai
 
 client = openai.<span class="fn">OpenAI</span>(
-    api_key=<span class="str">"vp_live_..."</span>,
-    base_url=<span class="str">"https://staging-api.vaultproof.dev/v1/openai"</span>
+    api_key=<span class="str">"vp-proj-..."</span>,
+    base_url=<span class="str">"https://init.vaultproof.dev/p/openai/v1"</span>
 )</pre>
                     </div>
 
@@ -395,8 +407,8 @@ client = openai.<span class="fn">OpenAI</span>(
 <pre class="text-gray-300"><span class="kw">import</span> Groq <span class="kw">from</span> <span class="str">'groq-sdk'</span>
 
 <span class="kw">const</span> client = <span class="kw">new</span> <span class="fn">Groq</span>({
-  apiKey: process.env.<span class="typ">VAULTPROOF_API_KEY</span>,
-  baseURL: <span class="str">'https://staging-api.vaultproof.dev/v1/groq'</span>
+  apiKey: process.env.<span class="typ">VAULTPROOF_PROJECT_ID</span>,
+  baseURL: <span class="str">'https://init.vaultproof.dev/p/groq/openai/v1'</span>
 })</pre>
                     </div>
 
@@ -405,8 +417,8 @@ client = openai.<span class="fn">OpenAI</span>(
 <pre class="text-gray-300"><span class="kw">import</span> OpenAI <span class="kw">from</span> <span class="str">'openai'</span>
 
 <span class="kw">const</span> client = <span class="kw">new</span> <span class="fn">OpenAI</span>({
-  apiKey: process.env.<span class="typ">VAULTPROOF_API_KEY</span>,
-  baseURL: <span class="str">'https://staging-api.vaultproof.dev/v1/deepseek'</span>
+  apiKey: process.env.<span class="typ">VAULTPROOF_PROJECT_ID</span>,
+  baseURL: <span class="str">'https://init.vaultproof.dev/p/deepseek/v1'</span>
 })</pre>
                     </div>
                 </div>
@@ -428,7 +440,7 @@ vaultproof store -p stripe -l <span class="str">"Production"</span>
 vaultproof proxy -k &lt;keyId&gt; --path /v1/charges -d <span class="str">'{"amount":2000,"currency":"usd"}'</span>
 
 <span class="cmt"># Or use the transparent proxy -- just change the base URL</span>
-<span class="cmt"># https://staging-api.vaultproof.dev/v1/openai/v1/chat/completions</span></pre>
+<span class="cmt"># https://init.vaultproof.dev/p/openai/v1/chat/completions</span></pre>
                     </div>
                 </div>
 
@@ -442,7 +454,7 @@ vaultproof proxy -k &lt;keyId&gt; --path /v1/charges -d <span class="str">'{"amo
 
                     <div class="code-block mb-4">
                         <div class="code-header">terminal</div>
-<pre class="text-gray-300"><span class="str">npm install @vaultproof/sdk</span></pre>
+<pre class="text-gray-300"><span class="str">npx @vaultproof/init</span></pre>
                     </div>
 
                     <div class="code-block">
@@ -450,7 +462,7 @@ vaultproof proxy -k &lt;keyId&gt; --path /v1/charges -d <span class="str">'{"amo
 <pre class="text-gray-300"><span class="kw">import</span> VaultProof <span class="kw">from</span> <span class="str">'@vaultproof/sdk'</span>
 
 <span class="cmt">// Initialize with your developer API key</span>
-<span class="kw">const</span> vault = <span class="kw">new</span> <span class="fn">VaultProof</span>(process.env.<span class="typ">VAULTPROOF_API_KEY</span>)
+<span class="kw">const</span> vault = <span class="kw">new</span> <span class="fn">VaultProof</span>(process.env.<span class="typ">VAULTPROOF_PROJECT_ID</span>)
 
 <span class="cmt">// Store an API key (split + encrypted automatically)</span>
 <span class="kw">const</span> key = <span class="kw">await</span> vault.<span class="fn">store</span>(<span class="str">'sk-openai-key-here'</span>, <span class="str">'openai'</span>, <span class="str">'Production'</span>)
@@ -479,7 +491,7 @@ vaultproof proxy -k &lt;keyId&gt; --path /v1/charges -d <span class="str">'{"amo
 
                     <div class="code-block mb-4">
                         <div class="code-header">terminal</div>
-<pre class="text-gray-300"><span class="str">npm install -g @vaultproof/cli</span></pre>
+<pre class="text-gray-300"><span class="str">npx @vaultproof/init</span></pre>
                     </div>
 
                     <div class="code-block">
@@ -490,7 +502,7 @@ $ vaultproof login
 
 <span class="cmt"># Create a developer API key (writes to .env)</span>
 $ vaultproof dev-key create
-$ export VAULTPROOF_API_KEY=vp_live_...
+$ export VAULTPROOF_PROJECT_ID=vp-proj-...
 
 <span class="cmt"># Store a key (prompted securely, never visible)</span>
 $ vaultproof store -p openai -l "Production"
@@ -738,7 +750,7 @@ $ vaultproof store -h</pre>
                         <p class="text-gray-400 text-sm mb-3">JavaScript/TypeScript library you <code class="font-mono text-xs text-vp-accent">import</code> in your app. Handles key splitting, encryption, and proxied API calls. Includes <code class="font-mono text-xs">@vaultproof/shamir</code> as a dependency.</p>
                         <div class="code-block">
                             <div class="code-header">install</div>
-<pre class="text-gray-300">npm install @vaultproof/sdk</pre>
+<pre class="text-gray-300">npx @vaultproof/init</pre>
                         </div>
                     </div>
 
@@ -750,7 +762,7 @@ $ vaultproof store -h</pre>
                         <p class="text-gray-400 text-sm mb-3">Command-line tool for managing keys from your terminal, shell scripts, or CI/CD pipelines. Same backend, different interface. Includes <code class="font-mono text-xs">@vaultproof/shamir</code> as a dependency.</p>
                         <div class="code-block">
                             <div class="code-header">install</div>
-<pre class="text-gray-300">npm install -g @vaultproof/cli</pre>
+<pre class="text-gray-300">npx @vaultproof/init</pre>
                         </div>
                     </div>
 
@@ -793,7 +805,7 @@ $ vaultproof store -h</pre>
                     <h3 class="text-lg font-semibold text-white mb-4">URL Pattern</h3>
                     <div class="code-block mb-4">
                         <div class="code-header">pattern</div>
-<pre class="text-gray-300">https://staging-api.vaultproof.dev/v1/<span class="typ">{provider}</span>/<span class="typ">{path}</span></pre>
+<pre class="text-gray-300">https://init.vaultproof.dev/p/<span class="typ">{provider}</span>/<span class="typ">{path}</span></pre>
                     </div>
                     <p class="text-gray-400 text-sm">Replace <code class="font-mono text-xs text-vp-accent">{provider}</code> with the provider name and <code class="font-mono text-xs text-vp-accent">{path}</code> with the original API path. VaultProof forwards the request exactly (method, body, headers, query string).</p>
                 </div>
@@ -807,57 +819,57 @@ $ vaultproof store -h</pre>
                             <tbody>
                                 <tr>
                                     <td><code class="font-mono text-xs text-vp-accent">openai</code></td>
-                                    <td><code class="font-mono text-xs">https://staging-api.vaultproof.dev/v1/openai</code></td>
+                                    <td><code class="font-mono text-xs">https://init.vaultproof.dev/p/openai/v1</code></td>
                                     <td><code class="font-mono text-xs text-gray-500">https://api.openai.com</code></td>
                                 </tr>
                                 <tr>
                                     <td><code class="font-mono text-xs text-vp-accent">anthropic</code></td>
-                                    <td><code class="font-mono text-xs">https://staging-api.vaultproof.dev/v1/anthropic</code></td>
+                                    <td><code class="font-mono text-xs">https://init.vaultproof.dev/p/anthropic</code></td>
                                     <td><code class="font-mono text-xs text-gray-500">https://api.anthropic.com</code></td>
                                 </tr>
                                 <tr>
                                     <td><code class="font-mono text-xs text-vp-accent">google</code></td>
-                                    <td><code class="font-mono text-xs">https://staging-api.vaultproof.dev/v1/google</code></td>
+                                    <td><code class="font-mono text-xs">https://init.vaultproof.dev/p/google</code></td>
                                     <td><code class="font-mono text-xs text-gray-500">https://generativelanguage.googleapis.com</code></td>
                                 </tr>
                                 <tr>
                                     <td><code class="font-mono text-xs text-vp-accent">together</code></td>
-                                    <td><code class="font-mono text-xs">https://staging-api.vaultproof.dev/v1/together</code></td>
+                                    <td><code class="font-mono text-xs">https://init.vaultproof.dev/p/together/v1</code></td>
                                     <td><code class="font-mono text-xs text-gray-500">https://api.together.xyz</code></td>
                                 </tr>
                                 <tr>
                                     <td><code class="font-mono text-xs text-vp-accent">mistral</code></td>
-                                    <td><code class="font-mono text-xs">https://staging-api.vaultproof.dev/v1/mistral</code></td>
+                                    <td><code class="font-mono text-xs">https://init.vaultproof.dev/p/mistral/v1</code></td>
                                     <td><code class="font-mono text-xs text-gray-500">https://api.mistral.ai</code></td>
                                 </tr>
                                 <tr>
                                     <td><code class="font-mono text-xs text-vp-accent">cohere</code></td>
-                                    <td><code class="font-mono text-xs">https://staging-api.vaultproof.dev/v1/cohere</code></td>
+                                    <td><code class="font-mono text-xs">https://init.vaultproof.dev/p/cohere</code></td>
                                     <td><code class="font-mono text-xs text-gray-500">https://api.cohere.com</code></td>
                                 </tr>
                                 <tr>
                                     <td><code class="font-mono text-xs text-vp-accent">groq</code></td>
-                                    <td><code class="font-mono text-xs">https://staging-api.vaultproof.dev/v1/groq</code></td>
+                                    <td><code class="font-mono text-xs">https://init.vaultproof.dev/p/groq/openai/v1</code></td>
                                     <td><code class="font-mono text-xs text-gray-500">https://api.groq.com</code></td>
                                 </tr>
                                 <tr>
                                     <td><code class="font-mono text-xs text-vp-accent">perplexity</code></td>
-                                    <td><code class="font-mono text-xs">https://staging-api.vaultproof.dev/v1/perplexity</code></td>
+                                    <td><code class="font-mono text-xs">https://init.vaultproof.dev/p/perplexity</code></td>
                                     <td><code class="font-mono text-xs text-gray-500">https://api.perplexity.ai</code></td>
                                 </tr>
                                 <tr>
                                     <td><code class="font-mono text-xs text-vp-accent">fireworks</code></td>
-                                    <td><code class="font-mono text-xs">https://staging-api.vaultproof.dev/v1/fireworks</code></td>
+                                    <td><code class="font-mono text-xs">https://init.vaultproof.dev/p/fireworks/inference/v1</code></td>
                                     <td><code class="font-mono text-xs text-gray-500">https://api.fireworks.ai</code></td>
                                 </tr>
                                 <tr>
                                     <td><code class="font-mono text-xs text-vp-accent">deepseek</code></td>
-                                    <td><code class="font-mono text-xs">https://staging-api.vaultproof.dev/v1/deepseek</code></td>
+                                    <td><code class="font-mono text-xs">https://init.vaultproof.dev/p/deepseek/v1</code></td>
                                     <td><code class="font-mono text-xs text-gray-500">https://api.deepseek.com</code></td>
                                 </tr>
                                 <tr>
                                     <td><code class="font-mono text-xs text-vp-accent">replicate</code></td>
-                                    <td><code class="font-mono text-xs">https://staging-api.vaultproof.dev/v1/replicate</code></td>
+                                    <td><code class="font-mono text-xs">https://init.vaultproof.dev/p/replicate</code></td>
                                     <td><code class="font-mono text-xs text-gray-500">https://api.replicate.com</code></td>
                                 </tr>
                             </tbody>
@@ -887,8 +899,8 @@ $ vaultproof store -h</pre>
 
                     <div class="code-block mb-4">
                         <div class="code-header">curl</div>
-<pre class="text-gray-300">curl https://staging-api.vaultproof.dev/v1/openai/v1/models \
-  -H <span class="str">"Authorization: Bearer vp_live_..."</span></pre>
+<pre class="text-gray-300">curl https://init.vaultproof.dev/p/openai/v1/models \
+  -H <span class="str">"Authorization: Bearer vp-proj-..."</span></pre>
                     </div>
 
                     <div class="code-block mb-4">
@@ -896,8 +908,8 @@ $ vaultproof store -h</pre>
 <pre class="text-gray-300"><span class="kw">import</span> OpenAI <span class="kw">from</span> <span class="str">'openai'</span>
 
 <span class="kw">const</span> client = <span class="kw">new</span> <span class="fn">OpenAI</span>({
-  apiKey: process.env.<span class="typ">VAULTPROOF_API_KEY</span>,
-  baseURL: <span class="str">'https://staging-api.vaultproof.dev/v1/openai'</span>
+  apiKey: process.env.<span class="typ">VAULTPROOF_PROJECT_ID</span>,
+  baseURL: <span class="str">'https://init.vaultproof.dev/p/openai/v1'</span>
 })
 
 <span class="kw">const</span> res = <span class="kw">await</span> client.chat.completions.<span class="fn">create</span>({
@@ -911,8 +923,8 @@ $ vaultproof store -h</pre>
 <pre class="text-gray-300"><span class="kw">import</span> openai
 
 client = openai.<span class="fn">OpenAI</span>(
-    api_key=<span class="str">"vp_live_..."</span>,
-    base_url=<span class="str">"https://staging-api.vaultproof.dev/v1/openai"</span>
+    api_key=<span class="str">"vp-proj-..."</span>,
+    base_url=<span class="str">"https://init.vaultproof.dev/p/openai/v1"</span>
 )
 
 res = client.chat.completions.<span class="fn">create</span>(
@@ -936,7 +948,7 @@ res = client.chat.completions.<span class="fn">create</span>(
                     <h3 class="text-lg font-semibold text-white mb-4">Installation</h3>
                     <div class="code-block">
                         <div class="code-header">terminal</div>
-<pre class="text-gray-300"><span class="str">npm install @vaultproof/sdk</span>
+<pre class="text-gray-300"><span class="str">npx @vaultproof/init</span>
 <span class="cmt"># or</span>
 <span class="str">yarn add @vaultproof/sdk</span>
 <span class="cmt"># or</span>
@@ -964,7 +976,7 @@ res = client.chat.completions.<span class="fn">create</span>(
                                     <td><code class="font-mono text-xs text-vp-accent">apiUrl</code></td>
                                     <td><code class="font-mono text-xs">string</code></td>
                                     <td>No</td>
-                                    <td>Custom API URL. Default: <code class="font-mono text-xs">https://staging-api.vaultproof.dev</code></td>
+                                    <td>Custom API URL. Default: <code class="font-mono text-xs">https://init.vaultproof.dev</code></td>
                                 </tr>
                             </tbody>
                         </table>
@@ -974,10 +986,10 @@ res = client.chat.completions.<span class="fn">create</span>(
 <pre class="text-gray-300"><span class="kw">import</span> VaultProof <span class="kw">from</span> <span class="str">'@vaultproof/sdk'</span>
 
 <span class="cmt">// Production</span>
-<span class="kw">const</span> vault = <span class="kw">new</span> <span class="fn">VaultProof</span>(process.env.<span class="typ">VAULTPROOF_API_KEY</span>)
+<span class="kw">const</span> vault = <span class="kw">new</span> <span class="fn">VaultProof</span>(process.env.<span class="typ">VAULTPROOF_PROJECT_ID</span>)
 
 <span class="cmt">// Custom API URL (self-hosted or staging)</span>
-<span class="kw">const</span> vault = <span class="kw">new</span> <span class="fn">VaultProof</span>(<span class="str">'vp_test_...'</span>, <span class="str">'https://staging-api.vaultproof.dev'</span>)</pre>
+<span class="kw">const</span> vault = <span class="kw">new</span> <span class="fn">VaultProof</span>(<span class="str">'vp_test_...'</span>, <span class="str">'https://init.vaultproof.dev'</span>)</pre>
                     </div>
                 </div>
 
@@ -1350,7 +1362,7 @@ vault.setSessionToken(token);</pre>
 <span class="kw">function</span> <span class="fn">Settings</span>() {
   <span class="kw">return</span> (
     &lt;<span class="fn">ZKKeyConnect</span>
-      <span class="typ">vaultUrl</span>=<span class="str">"https://staging-api.vaultproof.dev"</span>
+      <span class="typ">vaultUrl</span>=<span class="str">"https://init.vaultproof.dev"</span>
       <span class="typ">appId</span>=<span class="str">"my-app-id"</span>
       <span class="typ">appName</span>=<span class="str">"My App"</span>
       <span class="typ">userId</span>={currentUser.id}
@@ -1376,7 +1388,7 @@ vault.setSessionToken(token);</pre>
                                     <td><code class="font-mono text-xs text-vp-accent">vaultUrl</code></td>
                                     <td><code class="font-mono text-xs">string</code></td>
                                     <td>Yes</td>
-                                    <td>VaultProof API URL (<code class="font-mono text-xs">https://staging-api.vaultproof.dev</code>)</td>
+                                    <td>VaultProof API URL (<code class="font-mono text-xs">https://init.vaultproof.dev</code>)</td>
                                 </tr>
                                 <tr>
                                     <td><code class="font-mono text-xs text-vp-accent">appId</code></td>
@@ -1475,7 +1487,7 @@ vault.setSessionToken(token);</pre>
                     <h3 class="text-lg font-semibold text-white mb-4">Installation</h3>
                     <div class="code-block">
                         <div class="code-header">terminal</div>
-<pre class="text-gray-300"><span class="str">npm install -g @vaultproof/cli</span></pre>
+<pre class="text-gray-300"><span class="str">npx @vaultproof/init</span></pre>
                     </div>
                 </div>
 
@@ -1531,7 +1543,7 @@ $ vaultproof l</pre>
                             <div class="flex items-baseline gap-3 mb-2">
                                 <code class="font-mono text-sm text-white font-semibold">vaultproof logout</code>
                             </div>
-                            <p class="text-gray-500 text-sm">Log out and clear stored credentials from <code class="font-mono text-xs text-vp-accent">~/.vaultproof/config.json</code>. Does not affect your <code class="font-mono text-xs text-vp-accent">VAULTPROOF_API_KEY</code> env var.</p>
+                            <p class="text-gray-500 text-sm">Log out and clear stored credentials from <code class="font-mono text-xs text-vp-accent">~/.vaultproof/config.json</code>. Does not affect your <code class="font-mono text-xs text-vp-accent">VAULTPROOF_PROJECT_ID</code> env var.</p>
                         </div>
 
                         <div class="endpoint-card">
@@ -1570,9 +1582,9 @@ $ vaultproof l</pre>
 
 <span class="str">VaultProof Status</span>
 
-<span class="str">API: https://staging-api.vaultproof.dev (vaultproof-edge)</span>
+<span class="str">API: https://init.vaultproof.dev (vaultproof-edge)</span>
   Auth:    Logged in as you@example.com
-  API Key: vp_live_abc1...ef89
+  API Key: vp-proj-abc1...ef89
   Config:  ~/.vaultproof/config.json</pre>
                             </div>
                         </div>
@@ -1660,7 +1672,7 @@ $ vaultproof migrate --revert         <span class="cmt"># undo all changes from 
                             <p class="text-gray-500 text-sm mb-2">Set a config value (e.g., apiUrl).</p>
                             <div class="code-block mt-3">
                                 <div class="code-header">examples</div>
-<pre class="text-gray-300">$ vaultproof config set api-url https://staging-api.vaultproof.dev
+<pre class="text-gray-300">$ vaultproof config set api-url https://init.vaultproof.dev
 $ vaultproof config set api-url http://localhost:3333</pre>
                             </div>
                         </div>
@@ -1880,7 +1892,7 @@ $ vaultproof logs --json | jq '.[] | .endpoint'</pre>
                                 <div class="code-header">examples</div>
 <pre class="text-gray-300">$ vaultproof dev-key create
 <span class="str">Developer API key created:</span>
-  <span class="str">vp_live_a8Kj3mNp9xRt2wQz7vBc...</span>
+  <span class="str">vp-proj-a8Kj3mNp9xRt2wQz...</span>
 
   Save this key -- you won't see it again!
 
@@ -1933,14 +1945,14 @@ $ vaultproof dk create -l "Production" -m live</pre>
                             <thead><tr><th>Variable</th><th>Description</th><th>Default</th></tr></thead>
                             <tbody>
                                 <tr>
-                                    <td><code class="font-mono text-xs text-vp-accent">VAULTPROOF_API_KEY</code></td>
+                                    <td><code class="font-mono text-xs text-vp-accent">VAULTPROOF_PROJECT_ID</code></td>
                                     <td>Developer API key -- required for store, keys, proxy, revoke, and logs commands</td>
                                     <td>--</td>
                                 </tr>
                                 <tr>
                                     <td><code class="font-mono text-xs text-vp-accent">VAULTPROOF_API_URL</code></td>
                                     <td>Custom API base URL (overrides config file and default)</td>
-                                    <td><code class="font-mono text-xs">https://staging-api.vaultproof.dev</code></td>
+                                    <td><code class="font-mono text-xs">https://init.vaultproof.dev</code></td>
                                 </tr>
                             </tbody>
                         </table>
@@ -1953,10 +1965,10 @@ $ vaultproof login
 
 <span class="cmt"># 2. Create a developer API key</span>
 $ vaultproof dev-key create
-<span class="cmt"># writes VAULTPROOF_API_KEY to .env</span>
+<span class="cmt"># writes VAULTPROOF_PROJECT_ID to .env</span>
 
 <span class="cmt"># 3. Load the env var</span>
-$ export VAULTPROOF_API_KEY=vp_live_...
+$ export VAULTPROOF_PROJECT_ID=vp-proj-...
 
 <span class="cmt"># 4. Store an API key</span>
 $ vaultproof store -p openai -l "GPT-4 Production"
@@ -2032,7 +2044,7 @@ $ vaultproof status</pre>
             <!-- ============================================================ -->
             <section id="api-reference" class="mb-16">
                 <h2 class="text-3xl font-bold text-white mb-2">API Reference</h2>
-                <p class="text-gray-500 mb-4">Base URL: <code class="font-mono text-sm text-vp-accent">https://staging-api.vaultproof.dev</code></p>
+                <p class="text-gray-500 mb-4">Base URL: <code class="font-mono text-sm text-vp-accent">https://init.vaultproof.dev</code></p>
                 <p class="text-gray-500 text-sm mb-8">All requests go through our global edge network. Cryptographically signed and rate-limited. All request and response bodies are JSON (<code class="font-mono text-xs">Content-Type: application/json</code>).</p>
 
                 <!-- Auth Endpoints -->
@@ -2296,7 +2308,7 @@ Authorization: Bearer &lt;jwt_token&gt;
                 <!-- SDK Endpoints -->
                 <div class="mb-10">
                     <h3 class="text-xl font-semibold text-white mb-5">SDK Endpoints</h3>
-                    <p class="text-gray-500 text-sm mb-4">Authenticated with <code class="font-mono text-xs text-vp-accent">X-API-Key: vp_live_...</code> header.</p>
+                    <p class="text-gray-500 text-sm mb-4">Authenticated with <code class="font-mono text-xs text-vp-accent">X-API-Key: vp-proj-...</code> header.</p>
                     <div class="space-y-4">
 
                         <div class="endpoint-card">
@@ -2403,7 +2415,7 @@ Authorization: Bearer &lt;jwt_token&gt;
 <span class="cmt">// Response (201) -- key shown ONCE</span>
 {
   <span class="str">"id"</span>: <span class="str">"uuid"</span>,
-  <span class="str">"key"</span>: <span class="str">"vp_live_abc123..."</span>,
+  <span class="str">"key"</span>: <span class="str">"vp-proj-abc123..."</span>,
   <span class="str">"label"</span>: <span class="str">"Production"</span>,
   <span class="str">"createdAt"</span>: <span class="str">"2026-03-24T..."</span>
 }</pre>
