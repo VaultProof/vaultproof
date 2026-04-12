@@ -1211,6 +1211,10 @@
     async function checkOnboarding() {
       if (localStorage.getItem('vaultproof_onboarding_dismissed') === 'true') return;
 
+      // Check against both legacy and init-worker APIs.
+      // Step 1 (ran init): user has a project OR dev keys
+      // Step 2 (keys stored): project has keys OR legacy keys exist
+      // Step 3 (first proxy call): any usage logged
       let overview, keys, devKeys;
       try { overview = await apiFetch('/stats/overview'); } catch { overview = null; }
       try { keys = await apiFetch('/stats/by-key'); } catch { keys = null; }
@@ -1218,17 +1222,16 @@
 
       const totalKeys = overview?.totalKeys || (keys?.keys || []).length || 0;
       const totalCalls = overview?.totalCalls || 0;
-      const hasDevKeys = (devKeys?.keys || devKeys || []).length > 0;
+      const hasProject = (devKeys?.keys || devKeys || []).length > 0;
       const hasKeys = totalKeys > 0;
-      const hasLogs = totalCalls > 0;
+      const hasProxyCalls = totalCalls > 0;
 
-      // Mark completed steps
-      markOnboardingStep('onb-check-devkey', hasDevKeys);
+      markOnboardingStep('onb-check-devkey', hasProject);
       markOnboardingStep('onb-check-storekey', hasKeys);
-      markOnboardingStep('onb-check-proxy', hasLogs);
+      markOnboardingStep('onb-check-proxy', hasProxyCalls);
 
-      const allDone = hasDevKeys && hasKeys && hasLogs;
-      if (allDone) return; // All steps complete, don't show
+      const allDone = hasProject && hasKeys && hasProxyCalls;
+      if (allDone) return;
 
       document.getElementById('onboardingChecklist').classList.remove('hidden');
     }
