@@ -330,16 +330,7 @@
                   <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>
                 </span>
                 <div class="flex-1">
-                  <a href="/app/settings" class="text-sm font-medium text-white hover:text-indigo-400 transition">Create a developer API key</a>
-                </div>
-              </div>
-              <div class="flex items-center gap-3 p-2.5 rounded-md bg-surface border border-border" id="onb-step-sdk">
-                <span id="onb-check-sdk" class="flex-shrink-0 w-6 h-6 rounded-full border-2 border-gray-600 flex items-center justify-center text-transparent">
-                  <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>
-                </span>
-                <div class="flex-1">
-                  <span class="text-sm font-medium text-white">Install the SDK or CLI</span>
-                  <code class="ml-2 text-xs font-mono text-indigo-400 bg-indigo-500/10 px-2 py-0.5 rounded">npm i @vaultproof/sdk</code>
+                  <span class="text-sm font-medium text-white">Run <code class="text-xs font-mono text-indigo-400 bg-indigo-500/10 px-2 py-0.5 rounded">npx @vaultproof/init</code> in your project</span>
                 </div>
               </div>
               <div class="flex items-center gap-3 p-2.5 rounded-md bg-surface border border-border" id="onb-step-storekey">
@@ -347,7 +338,8 @@
                   <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>
                 </span>
                 <div class="flex-1">
-                  <a href="/app/keys" class="text-sm font-medium text-white hover:text-indigo-400 transition">Store your first API key</a>
+                  <span class="text-sm font-medium text-white">Keys detected and protected</span>
+                  <span class="ml-2 text-xs text-gray-500">auto-checked when your keys are split and stored</span>
                 </div>
               </div>
               <div class="flex items-center gap-3 p-2.5 rounded-md bg-surface border border-border" id="onb-step-proxy">
@@ -355,8 +347,8 @@
                   <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>
                 </span>
                 <div class="flex-1">
-                  <span class="text-sm font-medium text-white">Make a proxied API call</span>
-                  <code class="ml-2 text-xs font-mono text-gray-500 bg-surface px-2 py-0.5 rounded border border-border">vault.proxy('openai', '/v1/chat/completions', { ... })</code>
+                  <span class="text-sm font-medium text-white">First proxied API call</span>
+                  <span class="ml-2 text-xs text-gray-500">auto-checked when your app makes its first call through VaultProof</span>
                 </div>
               </div>
             </div>
@@ -469,49 +461,46 @@
           <div id="sdk-card" class="bg-card border border-border rounded-lg p-5 anim-fade-up" style="animation-delay:420ms">
             <div class="flex items-center gap-2.5 mb-3">
               <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none"><path d="M10 20L14 4" stroke="#818cf8" stroke-width="1.5" stroke-linecap="round" opacity="0.4"/><path d="M18 8L22 12L18 16" stroke="#818cf8" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/><path d="M6 16L2 12L6 8" stroke="#818cf8" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
-              <h2 class="text-sm font-semibold">SDK Quickstart</h2>
+              <h2 class="text-sm font-semibold">Quick Start</h2>
             </div>
             <div class="bg-[#0a0a0f] border border-border rounded-md p-4 font-mono text-xs space-y-1.5 overflow-x-auto">
-              <div class="text-gray-500">// 1. Install</div>
-              <div class="text-cyan-400">npm install @vaultproof/sdk</div>
-              <div class="mt-3 text-gray-500">// 2. Initialize</div>
-              <div><span class="text-purple-400">import</span> <span class="text-white">VaultProof</span> <span class="text-purple-400">from</span> <span class="text-green-400">'@vaultproof/sdk'</span></div>
-              <div><span class="text-purple-400">const</span> <span class="text-white">vault</span> = <span class="text-purple-400">new</span> <span class="text-cyan-400">VaultProof</span>(process.env.<span class="text-orange-300">VAULTPROOF_API_KEY</span>)</div>
-              <div class="mt-3 text-gray-500">// 3. Store a key</div>
-              <div><span class="text-purple-400">await</span> vault.<span class="text-cyan-400">store</span>(<span class="text-green-400">'sk-proj-...'</span>, <span class="text-green-400">'openai'</span>)</div>
-              <div class="mt-3 text-gray-500">// 4. Proxy an API call</div>
-              <div><span class="text-purple-400">const</span> <span class="text-white">res</span> = <span class="text-purple-400">await</span> vault.<span class="text-cyan-400">proxy</span>(<span class="text-green-400">'openai'</span>, <span class="text-green-400">'/v1/chat/completions'</span>, {</div>
-              <div class="pl-4">model: <span class="text-green-400">'gpt-4'</span>,</div>
-              <div class="pl-4">messages: [{ role: <span class="text-green-400">'user'</span>, content: <span class="text-green-400">'Hello'</span> }]</div>
-              <div>})</div>
+              <div class="text-gray-500"># Before — real keys in .env</div>
+              <div><span class="text-orange-300">OPENAI_API_KEY</span>=<span class="text-red-400">sk-proj-abc123...</span></div>
+              <div><span class="text-orange-300">STRIPE_SECRET_KEY</span>=<span class="text-red-400">sk_live_xyz789...</span></div>
+              <div class="mt-3 text-gray-500"># Run one command</div>
+              <div class="text-cyan-400">npx @vaultproof/init</div>
+              <div class="mt-3 text-gray-500"># After — one project ID, zero secrets</div>
+              <div><span class="text-orange-300">VAULTPROOF_PROJECT_ID</span>=<span class="text-green-400">vp-proj-abc123</span></div>
+              <div><span class="text-orange-300">OPENAI_BASE_URL</span>=<span class="text-green-400">https://init.vaultproof.dev/p/openai/v1</span></div>
+              <div><span class="text-orange-300">OPENAI_API_KEY</span>=<span class="text-green-400">vp-proj-abc123</span></div>
             </div>
-            <p class="text-xs text-gray-500 mt-3">Store keys, proxy calls, and manage access from your app. <a href="/docs#sdk" class="text-indigo-400 hover:underline">Full SDK reference &rarr;</a></p>
+            <p class="text-xs text-gray-500 mt-3">One command. One project ID. Zero code changes. <a href="/docs" class="text-indigo-400 hover:underline">Full docs &rarr;</a></p>
           </div>
 
           <!-- CLI Getting Started -->
           <div id="cli-card" class="bg-card border border-border rounded-lg p-5 anim-fade-up" style="animation-delay:450ms">
             <div class="flex items-center gap-2.5 mb-3">
               <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none"><rect x="3" y="3" width="18" height="18" rx="3" fill="#818cf8" opacity="0.1" stroke="#818cf8" stroke-width="1.5"/><path d="M8 9L11 12L8 15" stroke="#818cf8" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/><path d="M13 15H16" stroke="#818cf8" stroke-width="1.5" stroke-linecap="round"/></svg>
-              <h2 class="text-sm font-semibold">CLI Quickstart</h2>
+              <h2 class="text-sm font-semibold">Terminal</h2>
             </div>
             <div class="bg-[#0a0a0f] border border-border rounded-md p-4 font-mono text-xs space-y-1.5">
-              <div class="text-gray-500">// 1. Install globally</div>
+              <div class="text-gray-500"># Scan and protect (interactive)</div>
               <div class="flex items-center gap-2">
                 <span class="text-gray-500 select-none">$</span>
-                <span class="text-cyan-400">npm install -g @vaultproof/cli</span>
+                <span class="text-cyan-400">npx @vaultproof/init</span>
               </div>
-              <div class="mt-3 text-gray-500">// 2. Store an API key</div>
+              <div class="mt-3 text-gray-500"># Scan only, no changes</div>
               <div class="flex items-center gap-2">
                 <span class="text-gray-500 select-none">$</span>
-                <span class="text-cyan-400">vaultproof store -p openai</span>
+                <span class="text-cyan-400">npx @vaultproof/init --dry-run</span>
               </div>
-              <div class="mt-3 text-gray-500">// 3. Proxy an API call through the server</div>
+              <div class="mt-3 text-gray-500"># Migrate from legacy vp_live_ system</div>
               <div class="flex items-center gap-2">
                 <span class="text-gray-500 select-none">$</span>
-                <span class="text-cyan-400">vaultproof proxy -k &lt;keyId&gt; --path /v1/chat/completions -d '{...}'</span>
+                <span class="text-cyan-400">npx @vaultproof/init --check-legacy</span>
               </div>
             </div>
-            <p class="text-xs text-gray-500 mt-3">Store keys, proxy API calls, and manage access from your terminal. <a href="/docs" class="text-indigo-400 hover:underline">Full CLI docs &rarr;</a></p>
+            <p class="text-xs text-gray-500 mt-3">No install needed — runs via npx. <a href="/docs" class="text-indigo-400 hover:underline">Full docs &rarr;</a></p>
           </div>
         </div>
 
@@ -1345,28 +1334,28 @@
     </div>
     <!-- Heading -->
     <h2 class="text-xl font-bold text-white mb-2" style="font-family:'Space Grotesk',sans-serif">Welcome to VaultProof</h2>
-    <p class="text-sm text-gray-400 mb-6 leading-relaxed">Secure your API keys with split-key encryption and a transparent proxy. Your keys are split before storage and only assembled briefly during API calls.</p>
+    <p class="text-sm text-gray-400 mb-6 leading-relaxed">One command protects every API key in your project. Your keys are split with Shamir Secret Sharing and only assembled briefly during each API call.</p>
     <!-- Steps -->
     <div class="space-y-3 mb-6">
       <div class="flex items-start gap-3">
         <span class="w-5 h-5 rounded-full bg-indigo-500/20 border border-indigo-500/40 flex items-center justify-center flex-shrink-0 mt-0.5 text-xs text-indigo-400 font-bold">1</span>
         <div>
-          <p class="text-sm font-medium text-white">Scan your repos</p>
-          <p class="text-xs text-gray-500">Head to <a href="/app/scanner" class="text-indigo-400 hover:underline">Scanner</a> to find exposed API keys in your code and git history.</p>
+          <p class="text-sm font-medium text-white">Run one command</p>
+          <p class="text-xs text-gray-500">In your project directory, run <code class="text-indigo-400 bg-indigo-500/10 px-1.5 py-0.5 rounded">npx @vaultproof/init</code>. It scans your <code class="text-indigo-400">.env</code> and finds every API key automatically.</p>
         </div>
       </div>
       <div class="flex items-start gap-3">
         <span class="w-5 h-5 rounded-full bg-indigo-500/20 border border-indigo-500/40 flex items-center justify-center flex-shrink-0 mt-0.5 text-xs text-indigo-400 font-bold">2</span>
         <div>
-          <p class="text-sm font-medium text-white">Store your API keys</p>
-          <p class="text-xs text-gray-500">Add keys in <a href="/app/keys" class="text-indigo-400 hover:underline">Keys</a> — they're split and encrypted before storage. Create a <code class="text-indigo-400">vp_live_</code> developer key for your project.</p>
+          <p class="text-sm font-medium text-white">Your keys are protected</p>
+          <p class="text-xs text-gray-500">Each key is Shamir-split locally and uploaded as encrypted shares. Your <code class="text-indigo-400">.env</code> is rewritten with one <code class="text-indigo-400">vp-proj-</code> project ID for everything.</p>
         </div>
       </div>
       <div class="flex items-start gap-3">
         <span class="w-5 h-5 rounded-full bg-indigo-500/20 border border-indigo-500/40 flex items-center justify-center flex-shrink-0 mt-0.5 text-xs text-indigo-400 font-bold">3</span>
         <div>
-          <p class="text-sm font-medium text-white">Proxy your requests</p>
-          <p class="text-xs text-gray-500">Point your SDK at <code class="text-indigo-400">api.vaultproof.dev</code> — your real keys stay hidden while requests flow through our proxy.</p>
+          <p class="text-sm font-medium text-white">Your code doesn't change</p>
+          <p class="text-xs text-gray-500">Your SDKs read the proxy URLs from the environment automatically. Requests flow through <code class="text-indigo-400">init.vaultproof.dev</code> — your real keys stay hidden.</p>
         </div>
       </div>
     </div>
@@ -1407,10 +1396,10 @@
     { target: '#statsGrid', text: 'Welcome to VaultProof! These cards show your real-time usage — total keys stored, active providers, API calls, and error rate.', position: 'bottom' },
     { target: '#keys-table', text: 'Your API keys live here. Each key is split before storage and only assembled briefly during API calls. You can add, rotate, or revoke keys.', position: 'bottom' },
     { target: '#nav-api-keys', text: 'Go to API Keys to store your first key. Choose a provider (OpenAI, Anthropic, etc.), paste your key, and it\'s split instantly in your browser.', position: 'right' },
-    { target: '#nav-settings', text: 'After storing keys, create a Developer API Key (vp_live_) here. This is how your app authenticates with VaultProof.', position: 'right' },
+    { target: '#nav-settings', text: 'View your project ID and proxy settings here. Your vp-proj- project ID is how your app routes through VaultProof.', position: 'right' },
     { target: '#activityPanel', text: 'Every API call, key rotation, and access event shows up here in real time. Full audit trail for all your keys.', position: 'left' },
     { target: '#nav-scanner', text: 'Scan your GitHub repos for accidentally exposed API keys. VaultProof catches them before anyone else does.', position: 'right' },
-    { target: '#cli-card', text: 'Prefer the terminal? Install the CLI to store keys, proxy calls, and inject env vars — all from the command line.', position: 'bottom' },
+    { target: '#cli-card', text: 'One command to protect every key: npx @vaultproof/init — scans your .env, splits each key, rewrites with one project ID.', position: 'bottom' },
     { target: '#quick-access', text: 'Quick links to jump to any section. Ready to secure your first key?', position: 'top', last: true }
   ];
 
