@@ -199,8 +199,9 @@
       "auth_header_template": "{key}",
       "extra_headers": { "Authorization": "Bearer {key}" },
       "env_var_default": "SUPABASE_SERVICE_ROLE_KEY",
+      "base_url_env_var": "SUPABASE_PROXY_URL",
+      "base_url_path_suffix": "/p/supabase",
       "upstream_from_env": "NEXT_PUBLIC_SUPABASE_URL",
-      "note": "Upstream URL is read from NEXT_PUBLIC_SUPABASE_URL in your .env",
       "detect": {
         "regex": "^eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9\\.",
         "var_hint": "SUPABASE_SERVICE_ROLE"
