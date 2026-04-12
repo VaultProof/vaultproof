@@ -22,6 +22,7 @@ import { getJwt, getInitWorkerUrl, getProxyBaseUrl } from './config.js';
 import { loadProviders, type ProviderSpec } from './providers.js';
 import { listLegacyKeys, type LegacyKey } from './legacy.js';
 import { confirm, promptHidden } from './prompts.js';
+import { browserLogin } from './login.js';
 
 function parseArgs(argv: string[]): { cmd: string; flags: Set<string> } {
   const args = argv.slice(2);
@@ -81,16 +82,21 @@ async function runInit(opts: { autoYes: boolean; dryRun: boolean }): Promise<voi
     }
   }
 
-  const jwt = getJwt();
+  let jwt = getJwt();
   if (!jwt) {
-    console.log(chalk.red('\nNot authenticated.\n'));
-    console.log(chalk.dim('1. Log in at ') + chalk.white('https://vaultproof.dev/app/login'));
-    console.log(chalk.dim('2. Open DevTools → Application → Local Storage'));
-    console.log(chalk.dim('3. Copy the access_token from the sb-* key'));
-    console.log(chalk.dim('4. Run: ') + chalk.white('export VAULTPROOF_JWT="<paste token>"'));
-    console.log(chalk.dim('5. Then re-run: ') + chalk.white('npx @vaultproof/init'));
-    console.log(chalk.dim('\nBrowser-based login is coming soon.'));
-    process.exit(1);
+    console.log(chalk.dim('\nOpening browser to log in...\n'));
+    const loginSpinner = ora('Waiting for login...').start();
+    const result = await browserLogin();
+    if (!result) {
+      loginSpinner.fail('Login timed out or was cancelled.');
+      console.log(chalk.dim('\nAlternatively, set VAULTPROOF_JWT manually:'));
+      console.log(chalk.dim('  1. Log in at ') + chalk.white('https://vaultproof.dev/app/login'));
+      console.log(chalk.dim('  2. Copy access_token from DevTools → Application → Local Storage'));
+      console.log(chalk.dim('  3. Run: ') + chalk.white('export VAULTPROOF_JWT="<token>"'));
+      process.exit(1);
+    }
+    loginSpinner.succeed(`Logged in as ${chalk.bold(result.email)}`);
+    jwt = result.token;
   }
 
   const apiUrl = getInitWorkerUrl();
@@ -203,13 +209,17 @@ async function runCheckLegacy(): Promise<void> {
     process.exit(0);
   }
 
-  const jwt = getJwt();
+  let jwt = getJwt();
   if (!jwt) {
-    console.log(chalk.red('\nNot authenticated.\n'));
-    console.log(chalk.dim('1. Log in at ') + chalk.white('https://vaultproof.dev/app/login'));
-    console.log(chalk.dim('2. Copy access_token from DevTools → Application → Local Storage'));
-    console.log(chalk.dim('3. Run: ') + chalk.white('export VAULTPROOF_JWT="<paste token>"'));
-    process.exit(1);
+    console.log(chalk.dim('\nOpening browser to log in...\n'));
+    const loginSpinner = ora('Waiting for login...').start();
+    const result = await browserLogin();
+    if (!result) {
+      loginSpinner.fail('Login timed out or was cancelled.');
+      process.exit(1);
+    }
+    loginSpinner.succeed(`Logged in as ${chalk.bold(result.email)}`);
+    jwt = result.token;
   }
 
   // ── List legacy keys ──

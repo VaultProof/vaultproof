@@ -85,6 +85,7 @@ run_test "Project auth helpers (19)"   "cd packages/init-worker && npx tsx src/l
 run_test "Project cache (33 cases)"    "cd packages/init-worker && npx tsx src/lib/project-cache.test.ts"
 run_test "Fast crypto (22 cases)"      "cd packages/init-worker && npx tsx src/crypto/fast-crypt.test.ts"
 run_test "Provider regex (51 cases)"   "cd packages/init-cli && npx tsx src/providers.test.ts"
+run_test "Browser login (6 cases)"      "cd packages/init-cli && npx tsx src/login.test.ts"
 run_test "Legacy API client (25 cases)" "cd packages/init-cli && npx tsx src/legacy.test.ts"
 run_test "Rewrite migration (33 cases)" "cd packages/init-cli && npx tsx src/rewrite.test.ts"
 run_test "Publish invariants (39 cases)" "cd packages/init-cli && npm run build && npx tsx src/publish.test.ts"
