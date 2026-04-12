@@ -87,7 +87,7 @@ export async function handleProxy(
 
   if (auth.extraHeaders) {
     for (const [k, v] of Object.entries(auth.extraHeaders)) {
-      forwardHeaders.set(k, v);
+      forwardHeaders.set(k, v.includes('{key}') ? v.replace('{key}', realKey) : v);
     }
   }
 

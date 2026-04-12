@@ -190,6 +190,21 @@
       "detect": {
         "regex": "^(?:ghp_|github_pat_|ghs_|gho_|ghu_)[A-Za-z0-9_]{36,}$"
       }
+    },
+    {
+      "id": "supabase",
+      "label": "Supabase (service role)",
+      "upstream_base_url": "dynamic",
+      "auth_header_name": "apikey",
+      "auth_header_template": "{key}",
+      "extra_headers": { "Authorization": "Bearer {key}" },
+      "env_var_default": "SUPABASE_SERVICE_ROLE_KEY",
+      "upstream_from_env": "NEXT_PUBLIC_SUPABASE_URL",
+      "note": "Upstream URL is read from NEXT_PUBLIC_SUPABASE_URL in your .env",
+      "detect": {
+        "regex": "^eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9\\.",
+        "var_hint": "SUPABASE_SERVICE_ROLE"
+      }
     }
   ]
 }
