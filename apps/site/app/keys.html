@@ -411,7 +411,7 @@ STRIPE_SECRET_KEY=sk_live_..."></textarea>
                 <svg class="w-5 h-5" viewBox="0 0 24 24"><path fill="#06b6d4" opacity="0.15" d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4"/><path fill="none" stroke="#06b6d4" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4"/></svg>
                 Developer API Keys
               </h2>
-              <p class="text-sm text-gray-500 mt-1">Create <code class="text-xs text-[#6366f1] font-mono">vp_live_</code> keys for SDK and CLI authentication.</p>
+              <p class="text-sm text-gray-500 mt-1">Your <code class="text-xs text-[#6366f1] font-mono">vp-proj-</code> project IDs for proxy authentication.</p>
             </div>
             <button onclick="showCreateForm()" id="createKeyBtn" class="px-4 py-2.5 bg-[#6366f1] hover:bg-[#5558e6] text-white rounded-md text-sm font-medium transition btn-glow whitespace-nowrap flex items-center gap-2">
               <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
@@ -526,6 +526,7 @@ STRIPE_SECRET_KEY=sk_live_..."></textarea>
           </div>
           <h3 class="text-lg font-semibold text-white mb-2">No API keys stored yet</h3>
           <p class="text-gray-500 text-sm mb-6 max-w-md mx-auto">Store your first API key to get started. Keys are split before storage and only assembled briefly during API calls.</p>
+          <p class="text-gray-500 text-sm mb-6 max-w-md mx-auto">Run <code class="text-indigo-400 text-xs font-mono">npx @vaultproof/init</code> in your project to protect your keys.</p>
           <button onclick="openAddModal()" class="bg-indigo-500 hover:bg-indigo-600 text-white px-6 py-2.5 rounded-xl font-medium text-sm transition">Store Your First Key</button>
         </div>
 
@@ -1448,14 +1449,14 @@ STRIPE_SECRET_KEY=sk_live_..."></textarea>
       } catch (e) { /* handled below */ }
 
       if (!devKey) {
-        resultEl.innerHTML = '<div class="bg-amber-500/10 border border-amber-500/20 rounded-xl p-3 text-sm text-amber-400">No active developer key found. <a href="/app/keys#dev-keys" class="underline">Create a vp_live_ key</a> first, then try again.</div>';
+        resultEl.innerHTML = '<div class="bg-amber-500/10 border border-amber-500/20 rounded-xl p-3 text-sm text-amber-400">No active project found. Run <code>npx @vaultproof/init</code> to create one.</div>';
         btn.innerHTML = '<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>Test';
         btn.disabled = false;
         return;
       }
 
       // Build test request based on provider using transparent proxy
-      var proxyBase = 'https://staging-api.vaultproof.dev/v1/' + provider;
+      var proxyBase = 'https://init.vaultproof.dev/p/' + provider;
       var testUrl, method, body, headers;
       headers = {
         'Authorization': 'Bearer ' + devKey,
@@ -1957,12 +1958,12 @@ exampleBody + '\n' +
             newEnvLines.push('# ' + k.envName + ' — secured by VaultProof (proxy)');
             newEnvLines.push(k.envName + '=${VAULTPROOF_API_KEY}');
             var baseUrlMap = {
-              openai: 'OPENAI_BASE_URL=https://staging-api.vaultproof.dev/v1/openai',
-              anthropic: 'ANTHROPIC_BASE_URL=https://staging-api.vaultproof.dev/v1/anthropic',
+              openai: 'OPENAI_BASE_URL=https://init.vaultproof.dev/p/openai/v1',
+              anthropic: 'ANTHROPIC_BASE_URL=https://init.vaultproof.dev/p/anthropic',
             };
             if (baseUrlMap[k.provider]) newEnvLines.push(baseUrlMap[k.provider]);
           } else {
-            newEnvLines.push('# ' + k.envName + ' — secured by VaultProof (use transparent proxy: https://staging-api.vaultproof.dev/v1/' + k.provider + ')');
+            newEnvLines.push('# ' + k.envName + ' — secured by VaultProof (use transparent proxy: https://init.vaultproof.dev/p/' + k.provider + ')');
           }
           newEnvLines.push('');
         } catch (err) {
@@ -1970,7 +1971,7 @@ exampleBody + '\n' +
         }
       }
 
-      // Build final .env output — use vp_live_ dev key instead of JWT session token
+      // Build final .env output — use vp-proj- project ID
       var vpApiKey = '';
       try {
         var dkRes = await apiFetch(API + '/dev-keys/list');
@@ -1986,7 +1987,7 @@ exampleBody + '\n' +
       if (vpApiKey) {
         envHeader = '# VaultProof \u2014 your API keys are now split and encrypted\nVAULTPROOF_API_KEY=' + vpApiKey;
       } else {
-        envHeader = '# VaultProof \u2014 your API keys are now split and encrypted\n# Create a developer key at /app/keys, then paste it below:\nVAULTPROOF_API_KEY=<your vp_live_ key>';
+        envHeader = '# VaultProof \u2014 your API keys are now split and encrypted\n# Run npx @vaultproof/init to protect your keys\nVAULTPROOF_PROJECT_ID=<your vp-proj- project ID>';
       }
       var finalEnv = envHeader + '\n\n' + newEnvLines.join('\n');
       document.getElementById('newEnvOutput').value = finalEnv;
@@ -2120,7 +2121,7 @@ exampleBody + '\n' +
             ? '<span class="inline-flex items-center px-2 py-0.5 rounded-lg text-xs font-medium bg-gray-800/50 text-gray-400 border border-gray-700/50">test</span>'
             : '<span class="inline-flex items-center px-2 py-0.5 rounded-lg text-xs font-medium bg-indigo-900/30 text-indigo-400 border border-indigo-800/50">live</span>';
           var fullKey = k.key || '';
-          var masked = fullKey ? fullKey.substring(0, 10) + '\u2022\u2022\u2022\u2022' + fullKey.substring(fullKey.length - 4) : 'vp_live_****';
+          var masked = fullKey ? fullKey.substring(0, 10) + '\u2022\u2022\u2022\u2022' + fullKey.substring(fullKey.length - 4) : 'vp-proj-****';
           var created = new Date(k.createdAt || k.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
           var lastUsed = k.lastUsed || k.last_used;
           var lastUsedStr = lastUsed ? 'Last used ' + new Date(lastUsed).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) : 'Never used';
@@ -2155,7 +2156,7 @@ exampleBody + '\n' +
             '</div>' +
             '<div id="linkedPanel-' + k.id + '" class="hidden pb-4">' +
               '<div class="p-4 bg-[#0a0a0f] border border-[#1e1e2e] rounded-xl">' +
-                '<p class="text-xs text-gray-400 mb-3">Choose which stored API keys this <code class="text-indigo-400">vp_live_</code> key can access. Leave all unchecked to allow all keys.</p>' +
+                '<p class="text-xs text-gray-400 mb-3">Choose which stored API keys this project ID can access. Leave all unchecked to allow all keys.</p>' +
                 '<div id="linkedChecks-' + k.id + '" class="space-y-2 mb-3"></div>' +
                 '<div class="flex items-center gap-2">' +
                   '<button onclick="saveLinkedKeys(\'' + k.id + '\')" class="px-3 py-1.5 bg-[#6366f1] hover:bg-[#5558e6] text-white rounded-xl text-xs font-medium transition">Save</button>' +
@@ -2257,7 +2258,7 @@ exampleBody + '\n' +
     }
 
     async function rotateDevKey(id) {
-      if (!confirm('Rotate this developer key? The old key will stop working immediately. You will get a new key to copy.')) return;
+      if (!confirm('Rotate this project ID? The old one will stop working immediately. You will get a new project ID to copy.')) return;
       try {
         var res = await apiFetch(API + '/dev-keys/' + id + '/rotate', { method: 'POST' });
         if (res && res.ok) {
@@ -2294,7 +2295,7 @@ exampleBody + '\n' +
     }
 
     async function revokeDevKey(id) {
-      if (!confirm('Revoke this developer key? All SDK/CLI calls using it will stop immediately.')) return;
+      if (!confirm('Revoke this project ID? All proxy calls using this project ID will stop immediately.')) return;
       try {
         var res = await apiFetch(API + '/dev-keys/' + id + '/revoke', { method: 'POST' });
         if (res && res.ok) loadDevKeys();
