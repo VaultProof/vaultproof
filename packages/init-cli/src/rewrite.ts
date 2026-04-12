@@ -209,6 +209,8 @@ function buildHeader(
   for (const p of providers.values()) {
     if (p.base_url_env_var && p.base_url_path_suffix) {
       out.push(`${p.base_url_env_var}=${opts.proxyBaseUrl}${p.base_url_path_suffix}`);
+    } else if (p.note) {
+      manualNotes.push(`${p.label}: ${p.note}`);
     } else {
       manualNotes.push(
         `${p.label}: set your client's base URL to ${opts.proxyBaseUrl}/p/${p.id}`,
