@@ -83,8 +83,13 @@ async function runInit(opts: { autoYes: boolean; dryRun: boolean }): Promise<voi
 
   const jwt = getJwt();
   if (!jwt) {
-    console.log(chalk.red('\nNot authenticated.'));
-    console.log(chalk.dim('Run `vaultproof login` first (from the legacy CLI) — or set VAULTPROOF_JWT.'));
+    console.log(chalk.red('\nNot authenticated.\n'));
+    console.log(chalk.dim('1. Log in at ') + chalk.white('https://vaultproof.dev/app/login'));
+    console.log(chalk.dim('2. Open DevTools → Application → Local Storage'));
+    console.log(chalk.dim('3. Copy the access_token from the sb-* key'));
+    console.log(chalk.dim('4. Run: ') + chalk.white('export VAULTPROOF_JWT="<paste token>"'));
+    console.log(chalk.dim('5. Then re-run: ') + chalk.white('npx @vaultproof/init'));
+    console.log(chalk.dim('\nBrowser-based login is coming soon.'));
     process.exit(1);
   }
 
@@ -173,7 +178,10 @@ async function runInit(opts: { autoYes: boolean; dryRun: boolean }): Promise<voi
     console.log();
   }
 
-  console.log(chalk.dim('Run: ') + chalk.white('source .env'));
+  console.log(chalk.bold('What\'s next:'));
+  console.log(`  ${chalk.green('•')} Run your app normally — your code doesn't change`);
+  console.log(`  ${chalk.green('•')} Dashboard: ${chalk.white('https://vaultproof.dev/app')}`);
+  console.log(`  ${chalk.green('•')} Docs: ${chalk.white('https://vaultproof.dev/docs')}`);
 }
 
 /**
@@ -197,8 +205,10 @@ async function runCheckLegacy(): Promise<void> {
 
   const jwt = getJwt();
   if (!jwt) {
-    console.log(chalk.red('Not authenticated to the new system.'));
-    console.log(chalk.dim('Run `vaultproof login` first (legacy CLI) or set VAULTPROOF_JWT.'));
+    console.log(chalk.red('\nNot authenticated.\n'));
+    console.log(chalk.dim('1. Log in at ') + chalk.white('https://vaultproof.dev/app/login'));
+    console.log(chalk.dim('2. Copy access_token from DevTools → Application → Local Storage'));
+    console.log(chalk.dim('3. Run: ') + chalk.white('export VAULTPROOF_JWT="<paste token>"'));
     process.exit(1);
   }
 
