@@ -105,8 +105,8 @@ export async function handleProjects(
     );
   }
 
-  // GET /api/v1/init/projects/:id
-  if (method === 'GET' && pathSegments.length === 1) {
+  // GET /api/v1/init/projects/:id (skip if segment is 'stats' — handled below)
+  if (method === 'GET' && pathSegments.length === 1 && pathSegments[0] !== 'stats') {
     const projectId = pathSegments[0];
     const { data, error } = await supabase
       .from('projects')
@@ -222,6 +222,214 @@ export async function handleProjects(
     }
 
     return Response.json({ ok: true, provider, slug: finalSlug }, { status: 201 });
+  }
+
+  // GET /api/v1/init/projects — list all projects for this user
+  if (method === 'GET' && pathSegments.length === 0) {
+    const { data, error } = await supabase
+      .from('projects')
+      .select('id, vp_proj_id, name, allowed_origins, strict_origin, created_at')
+      .eq('user_id', auth.userId)
+      .is('revoked_at', null)
+      .order('created_at', { ascending: false });
+
+    if (error) {
+      return Response.json({ error: 'Failed to list projects' }, { status: 500 });
+    }
+    return Response.json({ projects: data || [] });
+  }
+
+  // DELETE /api/v1/init/projects/:id — revoke a project (soft delete)
+  if (method === 'DELETE' && pathSegments.length === 1) {
+    const projectId = pathSegments[0];
+    const { data, error } = await supabase
+      .from('projects')
+      .update({ revoked_at: new Date().toISOString() })
+      .eq('id', projectId)
+      .eq('user_id', auth.userId)
+      .is('revoked_at', null)
+      .select('id, vp_proj_id')
+      .single();
+
+    if (error || !data) {
+      return Response.json({ error: 'Project not found' }, { status: 404 });
+    }
+
+    // Also revoke all keys under this project
+    await supabase
+      .from('project_keys')
+      .update({ revoked_at: new Date().toISOString() })
+      .eq('project_id', projectId)
+      .is('revoked_at', null);
+
+    return Response.json({ ok: true, revoked: data });
+  }
+
+  // GET /api/v1/init/projects/:id/keys — list keys under a project
+  if (method === 'GET' && pathSegments.length === 2 && pathSegments[1] === 'keys') {
+    const projectId = pathSegments[0];
+
+    // Verify ownership
+    const { data: proj } = await supabase
+      .from('projects')
+      .select('id')
+      .eq('id', projectId)
+      .eq('user_id', auth.userId)
+      .is('revoked_at', null)
+      .maybeSingle();
+
+    if (!proj) {
+      return Response.json({ error: 'Project not found' }, { status: 404 });
+    }
+
+    const { data: keys, error } = await supabase
+      .from('project_keys')
+      .select('id, provider, slug, env_var, upstream_base_url, created_at, revoked_at')
+      .eq('project_id', projectId)
+      .is('revoked_at', null)
+      .order('created_at', { ascending: false });
+
+    if (error) {
+      return Response.json({ error: 'Failed to list keys' }, { status: 500 });
+    }
+    return Response.json({ keys: keys || [] });
+  }
+
+  // DELETE /api/v1/init/projects/:id/keys/:keyId — revoke a specific key
+  if (method === 'DELETE' && pathSegments.length === 3 && pathSegments[1] === 'keys') {
+    const projectId = pathSegments[0];
+    const keyId = pathSegments[2];
+
+    // Verify project ownership
+    const { data: proj } = await supabase
+      .from('projects')
+      .select('id')
+      .eq('id', projectId)
+      .eq('user_id', auth.userId)
+      .is('revoked_at', null)
+      .maybeSingle();
+
+    if (!proj) {
+      return Response.json({ error: 'Project not found' }, { status: 404 });
+    }
+
+    const { data, error } = await supabase
+      .from('project_keys')
+      .update({
+        revoked_at: new Date().toISOString(),
+        share1_encrypted: null,
+        share2_encrypted: null,
+      })
+      .eq('id', keyId)
+      .eq('project_id', projectId)
+      .is('revoked_at', null)
+      .select('id, provider')
+      .single();
+
+    if (error || !data) {
+      return Response.json({ error: 'Key not found' }, { status: 404 });
+    }
+    return Response.json({ ok: true, revoked: data });
+  }
+
+  // PUT /api/v1/init/projects/:id/keys/:keyId/rotate — rotate a key (new shares)
+  if (method === 'PUT' && pathSegments.length === 4 && pathSegments[1] === 'keys' && pathSegments[3] === 'rotate') {
+    const projectId = pathSegments[0];
+    const keyId = pathSegments[2];
+
+    const rl = await checkKeyUploadRateLimit(env, auth.userId);
+    if (!rl.ok) return rateLimitResponse(rl.retryAfter!);
+
+    // Verify project ownership
+    const { data: proj } = await supabase
+      .from('projects')
+      .select('id')
+      .eq('id', projectId)
+      .eq('user_id', auth.userId)
+      .is('revoked_at', null)
+      .maybeSingle();
+
+    if (!proj) {
+      return Response.json({ error: 'Project not found' }, { status: 404 });
+    }
+
+    let body: { share1?: string; share2?: string };
+    try {
+      body = (await request.json()) as typeof body;
+    } catch {
+      return Response.json({ error: 'Invalid JSON' }, { status: 400 });
+    }
+
+    const { share1, share2 } = body;
+    if (!share1 || !share2) {
+      return Response.json({ error: 'Missing required fields: share1, share2' }, { status: 400 });
+    }
+
+    const MAX_SHARE_LENGTH = 4096;
+    if (share1.length > MAX_SHARE_LENGTH || share2.length > MAX_SHARE_LENGTH) {
+      return Response.json({ error: `share1/share2 exceed ${MAX_SHARE_LENGTH} chars` }, { status: 400 });
+    }
+
+    // Encrypt the new Share 1
+    const share1Bytes = Uint8Array.from(atob(share1), (c) => c.charCodeAt(0));
+    const encrypted = encrypt(share1Bytes, env);
+    const share1Encrypted = btoa(String.fromCharCode(...encrypted));
+
+    const { data, error } = await supabase
+      .from('project_keys')
+      .update({
+        share1_encrypted: share1Encrypted,
+        share2_encrypted: share2,
+      })
+      .eq('id', keyId)
+      .eq('project_id', projectId)
+      .is('revoked_at', null)
+      .select('id, provider')
+      .single();
+
+    if (error || !data) {
+      return Response.json({ error: 'Key not found' }, { status: 404 });
+    }
+    return Response.json({ ok: true, rotated: data });
+  }
+
+  // GET /api/v1/init/stats — dashboard overview stats
+  if (method === 'GET' && pathSegments.length === 1 && pathSegments[0] === 'stats') {
+    const { data: projects } = await supabase
+      .from('projects')
+      .select('id')
+      .eq('user_id', auth.userId)
+      .is('revoked_at', null);
+
+    const projectIds = (projects || []).map((p: { id: string }) => p.id);
+
+    let totalKeys = 0;
+    if (projectIds.length > 0) {
+      const { count } = await supabase
+        .from('project_keys')
+        .select('id', { count: 'exact', head: true })
+        .in('project_id', projectIds)
+        .is('revoked_at', null);
+      totalKeys = count || 0;
+    }
+
+    // Unique providers across all projects
+    let providers: string[] = [];
+    if (projectIds.length > 0) {
+      const { data: providerRows } = await supabase
+        .from('project_keys')
+        .select('provider')
+        .in('project_id', projectIds)
+        .is('revoked_at', null);
+      providers = [...new Set((providerRows || []).map((r: { provider: string }) => r.provider))];
+    }
+
+    return Response.json({
+      totalProjects: projectIds.length,
+      totalKeys,
+      providers,
+      providerCount: providers.length,
+    });
   }
 
   return Response.json({ error: 'Not found' }, { status: 404 });
