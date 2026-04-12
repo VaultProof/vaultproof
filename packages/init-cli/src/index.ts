@@ -135,6 +135,25 @@ async function runInit(opts: { autoYes: boolean; dryRun: boolean }): Promise<voi
     const share1 = serializeShare(shares[0]);
     const share2 = serializeShare(shares[1]);
 
+    // Resolve dynamic upstream URLs (e.g. Supabase reads URL from another env var)
+    let upstreamUrl = f.provider.upstream_base_url;
+    if (upstreamUrl === 'dynamic' && f.provider.upstream_from_env) {
+      // Read from process.env (dotenv may have loaded it) or parse the .env file directly
+      upstreamUrl = process.env[f.provider.upstream_from_env] || '';
+      if (!upstreamUrl) {
+        // Parse from the same .env file where we found the key
+        try {
+          const envContent = fs.readFileSync(f.file, 'utf-8');
+          const match = envContent.match(new RegExp(`^${f.provider.upstream_from_env}\\s*=\\s*(.+)$`, 'm'));
+          if (match) upstreamUrl = match[1].trim().replace(/^["']|["']$/g, '');
+        } catch { /* ignore */ }
+      }
+      if (!upstreamUrl) {
+        s.fail(`${f.provider.label}: could not find ${f.provider.upstream_from_env} in your environment. Set it in your .env and try again.`);
+        continue;
+      }
+    }
+
     try {
       const res = await fetch(`${apiUrl}/api/v1/init/projects/${projectRowId}/keys`, {
         method: 'POST',
@@ -145,7 +164,7 @@ async function runInit(opts: { autoYes: boolean; dryRun: boolean }): Promise<voi
           share1,
           share2,
           env_var: f.varName,
-          upstream_base_url: f.provider.upstream_base_url,
+          upstream_base_url: upstreamUrl,
           auth_header_name: f.provider.auth_header_name,
           auth_header_template: f.provider.auth_header_template,
           extra_headers: f.provider.extra_headers ?? null,
