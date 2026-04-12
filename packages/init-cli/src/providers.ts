@@ -21,6 +21,7 @@ export interface ProviderSpec {
   env_var_default: string;
   base_url_env_var?: string;
   base_url_path_suffix?: string;
+  note?: string;
   detect: {
     regex: string;
     var_hint?: string;

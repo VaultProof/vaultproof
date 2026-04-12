@@ -95,6 +95,22 @@ export default {
       return addCors(res, origin, allowedOrigins);
     }
 
+    // ── /v1/* — Stripe-native path compatibility ────────────────────
+    // Stripe SDK v14+ only accepts `host` in the constructor, so it
+    // sends requests to init.vaultproof.dev/v1/... (not /p/stripe/...).
+    // We catch these and route them through the same proxy as /p/stripe/*.
+    // Auth is still via Authorization: Bearer vp-proj-xxx.
+    if (url.pathname.startsWith('/v1/')) {
+      const upstreamPath = url.pathname + url.search; // /v1/checkout/sessions?...
+      const res = await handleProxy(request, env, 'stripe', upstreamPath);
+      if (res.status === 401 || res.status === 404) {
+        const ip = request.headers.get('cf-connecting-ip') || '';
+        const rl = await checkFailedAuthRateLimit(env, ip);
+        if (!rl.ok) return addCors(rateLimitResponse(rl.retryAfter!), origin, allowedOrigins);
+      }
+      return addCors(res, origin, allowedOrigins);
+    }
+
     return addCors(Response.json({ error: 'Not found' }, { status: 404 }), origin, allowedOrigins);
   },
 };
