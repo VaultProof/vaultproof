@@ -197,13 +197,21 @@
         <h3 class="text-lg font-semibold">Add API Key</h3>
         <button onclick="closeAddKeyModal()" class="text-gray-500 hover:text-white transition">&times;</button>
       </div>
-      <p class="text-sm text-gray-400 mb-4">Paste an API key to protect it. The key is split in your browser — the plaintext never leaves your device.</p>
+      <p class="text-sm text-gray-400 mb-4">Paste an API key — the provider is detected automatically. The key is split in your browser and never leaves your device.</p>
       <form id="addKeyForm" class="space-y-4">
         <input type="hidden" id="addKeyProjectId" />
         <div>
-          <label class="block text-sm text-gray-400 mb-1.5">Provider</label>
+          <label class="block text-sm text-gray-400 mb-1.5">API Key</label>
+          <input type="password" id="addKeyValue" required placeholder="Paste your API key..." class="w-full px-4 py-2.5 bg-surface border border-border rounded-md text-sm text-white placeholder-gray-600 font-mono focus:outline-none focus:border-brand transition" autocomplete="off" />
+          <div id="addKeyDetected" class="hidden mt-2 flex items-center gap-2 text-sm">
+            <span class="text-green-400">✓</span>
+            <span id="addKeyDetectedLabel" class="text-green-400"></span>
+          </div>
+        </div>
+        <div>
+          <label class="block text-sm text-gray-400 mb-1.5">Provider <span class="text-gray-600">(auto-detected, or select manually)</span></label>
           <select id="addKeyProvider" required class="w-full px-4 py-2.5 bg-surface border border-border rounded-md text-sm text-white focus:outline-none focus:border-brand transition appearance-none">
-            <option value="">Select provider...</option>
+            <option value="">Paste a key above to auto-detect...</option>
             <option value="openai">OpenAI</option>
             <option value="anthropic">Anthropic</option>
             <option value="stripe">Stripe</option>
@@ -223,11 +231,7 @@
         </div>
         <div>
           <label class="block text-sm text-gray-400 mb-1.5">Environment Variable Name</label>
-          <input type="text" id="addKeyEnvVar" placeholder="e.g. OPENAI_API_KEY" class="w-full px-4 py-2.5 bg-surface border border-border rounded-md text-sm text-white placeholder-gray-600 font-mono focus:outline-none focus:border-brand transition" />
-        </div>
-        <div>
-          <label class="block text-sm text-gray-400 mb-1.5">API Key</label>
-          <input type="password" id="addKeyValue" required placeholder="Paste your API key..." class="w-full px-4 py-2.5 bg-surface border border-border rounded-md text-sm text-white placeholder-gray-600 font-mono focus:outline-none focus:border-brand transition" autocomplete="off" />
+          <input type="text" id="addKeyEnvVar" placeholder="auto-filled from provider" class="w-full px-4 py-2.5 bg-surface border border-border rounded-md text-sm text-white placeholder-gray-600 font-mono focus:outline-none focus:border-brand transition" />
         </div>
         <p class="text-xs text-gray-500 flex items-center gap-1.5">
           <svg class="w-3.5 h-3.5 text-brand" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/></svg>
@@ -996,7 +1000,55 @@
       linear: 'LINEAR_API_KEY', notion: 'NOTION_API_KEY', github: 'GITHUB_TOKEN'
     };
 
-    // Auto-fill env var name when provider is selected
+    // Detection patterns — ordered most-specific-first (same as providers.json)
+    var KEY_PATTERNS = [
+      { id: 'anthropic', label: 'Anthropic', re: /^sk-ant-api\d{2}-[A-Za-z0-9_-]{80,}$/ },
+      { id: 'groq', label: 'Groq', re: /^gsk_[A-Za-z0-9]{40,}$/ },
+      { id: 'xai', label: 'xAI (Grok)', re: /^xai-[A-Za-z0-9]{40,}$/ },
+      { id: 'openrouter', label: 'OpenRouter', re: /^sk-or-v1-[A-Za-z0-9]{40,}$/ },
+      { id: 'fireworks', label: 'Fireworks AI', re: /^fw_[A-Za-z0-9]{24,}$/ },
+      { id: 'resend', label: 'Resend', re: /^re_[A-Za-z0-9_]{24,}$/ },
+      { id: 'sendgrid', label: 'SendGrid', re: /^SG\.[A-Za-z0-9_-]{20,}\.[A-Za-z0-9_-]{40,}$/ },
+      { id: 'linear', label: 'Linear', re: /^lin_api_[A-Za-z0-9]{32,}$/ },
+      { id: 'notion', label: 'Notion', re: /^(?:secret_|ntn_)[A-Za-z0-9]{40,}$/ },
+      { id: 'github', label: 'GitHub', re: /^(?:ghp_|github_pat_|ghs_|gho_|ghu_)[A-Za-z0-9_]{36,}$/ },
+      { id: 'stripe', label: 'Stripe', re: /^sk_(?:live|test)_[A-Za-z0-9]{20,}$/ },
+      { id: 'openai', label: 'OpenAI', re: /^sk-(?:proj-[A-Za-z0-9_-]{20,}|[A-Za-z0-9]{48,})$/ },
+    ];
+
+    function detectProvider(value) {
+      for (var i = 0; i < KEY_PATTERNS.length; i++) {
+        if (KEY_PATTERNS[i].re.test(value)) return KEY_PATTERNS[i];
+      }
+      return null;
+    }
+
+    // Auto-detect provider when key is pasted
+    document.getElementById('addKeyValue').addEventListener('input', function() {
+      var value = this.value.trim();
+      var detected = detectProvider(value);
+      var detectedEl = document.getElementById('addKeyDetected');
+      var labelEl = document.getElementById('addKeyDetectedLabel');
+      var providerSelect = document.getElementById('addKeyProvider');
+      var envInput = document.getElementById('addKeyEnvVar');
+
+      if (detected) {
+        detectedEl.classList.remove('hidden');
+        labelEl.textContent = 'Detected: ' + detected.label;
+        providerSelect.value = detected.id;
+        if (!envInput.value || Object.values(DEFAULT_ENV_VARS).includes(envInput.value)) {
+          envInput.value = DEFAULT_ENV_VARS[detected.id] || '';
+        }
+      } else if (value.length > 10) {
+        detectedEl.classList.remove('hidden');
+        labelEl.textContent = 'Provider not recognized — select manually below';
+        labelEl.className = 'text-amber-400';
+      } else {
+        detectedEl.classList.add('hidden');
+      }
+    });
+
+    // Also auto-fill env var when provider is manually selected
     document.getElementById('addKeyProvider').addEventListener('change', function() {
       var envInput = document.getElementById('addKeyEnvVar');
       if (!envInput.value || Object.values(DEFAULT_ENV_VARS).includes(envInput.value)) {
