@@ -753,7 +753,8 @@
           if (keys.length === 0) {
             keysHtml = '<div class="px-5 py-6 border-t border-border text-center">' +
               '<p class="text-sm text-gray-500">No keys in this project yet.</p>' +
-              '<p class="text-xs text-gray-600 mt-1">Run <code class="text-indigo-400 font-mono">npx @vaultproof/init</code> in your project directory to add keys.</p>' +
+              '<p class="text-xs text-gray-600 mt-2">Run <code class="text-indigo-400 font-mono">npx @vaultproof/init</code> to scan and protect all keys at once, or</p>' +
+              '<button onclick="openAddKeyModal(\'' + escapeJs(projId) + '\')" class="mt-2 px-4 py-2 bg-brand/10 border border-brand/20 text-brand text-sm rounded-lg hover:bg-brand/20 transition">Add a key manually</button>' +
             '</div>';
           } else {
             keysHtml = '<div class="border-t border-border">' +
