@@ -46,7 +46,7 @@ function printBanner(): void {
   const topBar    = border('╔' + '═'.repeat(width) + '╗');
   const emptyRow  = border('║') + ' '.repeat(width) + border('║');
   const bottomBar = border('╚' + '═'.repeat(width) + '╝');
-  const version   = chalk.dim('  v0.1.0');
+  const version   = chalk.dim('  v0.1.1');
 
   console.log('\n' + topBar);
   console.log(emptyRow);
