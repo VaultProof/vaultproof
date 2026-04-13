@@ -71,42 +71,26 @@
           "mainEntity": [
             {
               "@type": "Question",
-              "name": "Can VaultProof see my API keys?",
+              "name": "Does this work with the SDKs I already use?",
               "acceptedAnswer": {
                 "@type": "Answer",
-                "text": "No. Your key is split into encrypted pieces before it leaves your device. We store two shares — one encrypted with our server key, one encrypted with your developer key. Neither share alone reveals anything. The architecture is designed so that no single server holds your complete key."
+                "text": "Yes. For AI providers (OpenAI, Anthropic, Google, Mistral, Cohere, Groq, Perplexity, DeepSeek, Fireworks, Together.ai, Replicate) you change two lines: the base URL and the API key. Your SDK calls don't change. For Stripe, AWS, Supabase, and other non-AI APIs, you call vault.proxy() or fetch the secret with getSecret(). The CLI handles the migration — vaultproof migrate reads your .env and prints exactly what to change."
               }
             },
             {
               "@type": "Question",
-              "name": "What if VaultProof goes down?",
+              "name": "How is this different from Vault, Doppler, or AWS Secrets Manager?",
               "acceptedAnswer": {
                 "@type": "Answer",
-                "text": "Your proxy calls won't work until we're back up, but your keys are safe. Both encrypted shares remain in the database. We use a global edge network with 330+ locations and monitor uptime continuously."
+                "text": "Those tools protect your keys at rest. They encrypt the key in storage and hand it to your app when you ask for it. The moment your app holds that plaintext key, every supply chain attack from Trivy to the recent npm hijacks becomes a direct risk. VaultProof keeps the key out of your app entirely. Your code never holds the real key. We're a layer on top of your existing vault, not a replacement."
               }
             },
             {
               "@type": "Question",
-              "name": "What if someone finds my project ID?",
+              "name": "Do I need to change my code?",
               "acceptedAnswer": {
                 "@type": "Answer",
-                "text": "Project IDs are public identifiers, not secrets. Someone with your project ID could make proxy calls against your rate limit, but they can never retrieve your actual API keys. You can restrict access by domain (origin locking), provider, endpoint, and IP address. Revoke access instantly from your dashboard."
-              }
-            },
-            {
-              "@type": "Question",
-              "name": "Does it work with Stripe, AWS, or non-AI SDKs?",
-              "acceptedAnswer": {
-                "@type": "Answer",
-                "text": "Yes. Run npx @vaultproof/init to protect your keys. Your SDKs route through the VaultProof proxy automatically — zero code changes. Works with any provider that uses API keys."
-              }
-            },
-            {
-              "@type": "Question",
-              "name": "Is VaultProof really free?",
-              "acceptedAnswer": {
-                "@type": "Answer",
-                "text": "Yes. The free tier gives you 3 keys and 10,000 proxy calls per month. No credit card. No trial countdown. It stays free. Upgrade only when you need more."
+                "text": "For AI providers, no — your SDK calls stay the same. You change two environment variables and you're done. For other providers, you swap process.env.STRIPE_SECRET_KEY for await getSecret('STRIPE_SECRET_KEY'). That's the bulk of the work for a typical app and it's done in an afternoon. The CLI walks you through it."
               }
             },
             {
@@ -114,7 +98,47 @@
               "name": "How much latency does the proxy add?",
               "acceptedAnswer": {
                 "@type": "Answer",
-                "text": "Typically under 100ms. For a 2-10 second LLM response, it's imperceptible. SSE streaming is fully supported — chunks arrive as they're generated."
+                "text": "Typically under 100ms. For a 2-10 second LLM response, you won't notice. SSE streaming is fully supported — chunks arrive as they're generated. For non-AI calls (Stripe, AWS) the round trip adds 100-200ms once per request, which is unnoticeable for payment, auth, and email flows."
+              }
+            },
+            {
+              "@type": "Question",
+              "name": "What happens if I want to leave?",
+              "acceptedAnswer": {
+                "@type": "Answer",
+                "text": "Your keys are yours. Run vaultproof export and you get every secret back in a standard .env file. No proprietary format. No lock-in. The proxy is a layer on top of your existing infrastructure, not a replacement for it — when you leave, you go back to exactly what you had before."
+              }
+            },
+            {
+              "@type": "Question",
+              "name": "Can VaultProof see my API keys?",
+              "acceptedAnswer": {
+                "@type": "Answer",
+                "text": "No. Your key is split into two encrypted shares before it leaves your device. We hold one share encrypted with our server key. The other is encrypted with your developer key. Neither share alone reveals anything. The architecture is designed so no single server — including ours — holds your complete key."
+              }
+            },
+            {
+              "@type": "Question",
+              "name": "What if someone finds my project ID?",
+              "acceptedAnswer": {
+                "@type": "Answer",
+                "text": "Project IDs are public identifiers, not secrets. Someone with your project ID can make proxy calls against your rate limit, but they can never retrieve your actual API keys. Lock access by domain (origin locking), provider, endpoint, or IP. Revoke instantly from your dashboard."
+              }
+            },
+            {
+              "@type": "Question",
+              "name": "What if VaultProof goes down?",
+              "acceptedAnswer": {
+                "@type": "Answer",
+                "text": "Your encrypted shares stay safe in the database. Proxy calls pause until we're back. We run on a 330+ location edge network with continuous monitoring — see live status at vaultproof.dev/status. For mission-critical workloads, the Enterprise tier supports failover configurations."
+              }
+            },
+            {
+              "@type": "Question",
+              "name": "How do you make money if the free tier is real?",
+              "acceptedAnswer": {
+                "@type": "Answer",
+                "text": "The free tier is genuinely free — 3 keys, 10,000 calls a month, no credit card, no expiry. We make money when teams scale past it. Most solo projects stay on free forever. Production apps and teams move to Starter ($5) or Pro ($20) for more keys, more calls, and features like IP allowlists, budget caps, and longer log retention. That's the entire model."
               }
             }
           ]
@@ -1233,20 +1257,56 @@
         <div class="faq-accordion reveal delay-1" data-type="single">
             <div class="faq-item border-b border-vp-border">
                 <button class="faq-trigger" aria-expanded="false">
-                    <span>Can VaultProof see my API keys?</span>
+                    <span>Does this work with the SDKs I already use?</span>
                     <svg class="faq-chevron" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg>
                 </button>
                 <div class="faq-content">
-                    <div class="faq-content-inner">No. Your key is split into encrypted pieces before it leaves your device. We store two shares -- one encrypted with our server key, one encrypted with your developer key. Neither share alone reveals anything. The architecture is designed so that no single server holds your complete key.</div>
+                    <div class="faq-content-inner">Yes. For AI providers (OpenAI, Anthropic, Google, Mistral, Cohere, Groq, Perplexity, DeepSeek, Fireworks, Together.ai, Replicate) you change two lines: the base URL and the API key. Your SDK calls don't change. For Stripe, AWS, Supabase, and other non-AI APIs, you call <code style="color:#818cf8;background:#0a0a0f;padding:2px 6px;border-radius:4px;font-size:13px">vault.proxy()</code> or fetch the secret with <code style="color:#818cf8;background:#0a0a0f;padding:2px 6px;border-radius:4px;font-size:13px">getSecret()</code>. The CLI handles the migration — <code style="color:#818cf8;background:#0a0a0f;padding:2px 6px;border-radius:4px;font-size:13px">vaultproof migrate</code> reads your .env and prints exactly what to change.</div>
                 </div>
             </div>
             <div class="faq-item border-b border-vp-border">
                 <button class="faq-trigger" aria-expanded="false">
-                    <span>What if VaultProof goes down?</span>
+                    <span>How is this different from Vault, Doppler, or AWS Secrets Manager?</span>
                     <svg class="faq-chevron" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg>
                 </button>
                 <div class="faq-content">
-                    <div class="faq-content-inner">Your proxy calls won't work until we're back up, but your keys are safe. Both encrypted shares remain in the database. We use a global edge network with 330+ locations and monitor uptime continuously.</div>
+                    <div class="faq-content-inner">Those tools protect your keys at rest. They encrypt the key in storage and hand it to your app when you ask for it. The moment your app holds that plaintext key, every supply chain attack from Trivy to the recent npm hijacks becomes a direct risk. VaultProof keeps the key out of your app entirely. Your code never holds the real key. We're a layer on top of your existing vault, not a replacement.</div>
+                </div>
+            </div>
+            <div class="faq-item border-b border-vp-border">
+                <button class="faq-trigger" aria-expanded="false">
+                    <span>Do I need to change my code?</span>
+                    <svg class="faq-chevron" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg>
+                </button>
+                <div class="faq-content">
+                    <div class="faq-content-inner">For AI providers, no — your SDK calls stay the same. You change two environment variables and you're done. For other providers, you swap <code style="color:#818cf8;background:#0a0a0f;padding:2px 6px;border-radius:4px;font-size:13px">process.env.STRIPE_SECRET_KEY</code> for <code style="color:#818cf8;background:#0a0a0f;padding:2px 6px;border-radius:4px;font-size:13px">await getSecret('STRIPE_SECRET_KEY')</code>. That's the bulk of the work for a typical app and it's done in an afternoon. The CLI walks you through it.</div>
+                </div>
+            </div>
+            <div class="faq-item border-b border-vp-border">
+                <button class="faq-trigger" aria-expanded="false">
+                    <span>How much latency does the proxy add?</span>
+                    <svg class="faq-chevron" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg>
+                </button>
+                <div class="faq-content">
+                    <div class="faq-content-inner">Typically under 100ms. For a 2-10 second LLM response, you won't notice. SSE streaming is fully supported — chunks arrive as they're generated. For non-AI calls (Stripe, AWS) the round trip adds 100-200ms once per request, which is unnoticeable for payment, auth, and email flows.</div>
+                </div>
+            </div>
+            <div class="faq-item border-b border-vp-border">
+                <button class="faq-trigger" aria-expanded="false">
+                    <span>What happens if I want to leave?</span>
+                    <svg class="faq-chevron" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg>
+                </button>
+                <div class="faq-content">
+                    <div class="faq-content-inner">Your keys are yours. Run <code style="color:#818cf8;background:#0a0a0f;padding:2px 6px;border-radius:4px;font-size:13px">vaultproof export</code> and you get every secret back in a standard .env file. No proprietary format. No lock-in. The proxy is a layer on top of your existing infrastructure, not a replacement for it — when you leave, you go back to exactly what you had before.</div>
+                </div>
+            </div>
+            <div class="faq-item border-b border-vp-border">
+                <button class="faq-trigger" aria-expanded="false">
+                    <span>Can VaultProof see my API keys?</span>
+                    <svg class="faq-chevron" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg>
+                </button>
+                <div class="faq-content">
+                    <div class="faq-content-inner">No. Your key is split into two encrypted shares before it leaves your device. We hold one share encrypted with our server key. The other is encrypted with your developer key. Neither share alone reveals anything. The architecture is designed so no single server — including ours — holds your complete key.</div>
                 </div>
             </div>
             <div class="faq-item border-b border-vp-border">
@@ -1255,34 +1315,25 @@
                     <svg class="faq-chevron" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg>
                 </button>
                 <div class="faq-content">
-                    <div class="faq-content-inner">Project IDs are public identifiers, not secrets. Someone with your project ID could make proxy calls against your rate limit, but they can never retrieve your actual API keys. You can restrict access by domain (origin locking), provider, endpoint, and IP address. Revoke access instantly from your dashboard.</div>
+                    <div class="faq-content-inner">Project IDs are public identifiers, not secrets. Someone with your project ID can make proxy calls against your rate limit, but they can never retrieve your actual API keys. Lock access by domain (origin locking), provider, endpoint, or IP. Revoke instantly from your dashboard.</div>
                 </div>
             </div>
             <div class="faq-item border-b border-vp-border">
                 <button class="faq-trigger" aria-expanded="false">
-                    <span>Does it work with Stripe / AWS / non-AI SDKs?</span>
+                    <span>What if VaultProof goes down?</span>
                     <svg class="faq-chevron" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg>
                 </button>
                 <div class="faq-content">
-                    <div class="faq-content-inner">Yes. Run <code style="color:#818cf8;background:#0a0a0f;padding:2px 6px;border-radius:4px;font-size:13px">npx @vaultproof/init</code> to protect your keys. Your SDKs read the proxy URL from the environment. Zero code changes needed. Works with any provider.</div>
-                </div>
-            </div>
-            <div class="faq-item border-b border-vp-border">
-                <button class="faq-trigger" aria-expanded="false">
-                    <span>Is it really free?</span>
-                    <svg class="faq-chevron" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg>
-                </button>
-                <div class="faq-content">
-                    <div class="faq-content-inner">Yes. The free tier gives you 3 keys and 10,000 proxy calls per month. No credit card. No trial countdown. It stays free. Upgrade only when you need more.</div>
+                    <div class="faq-content-inner">Your encrypted shares stay safe in the database. Proxy calls pause until we're back. We run on a 330+ location edge network with continuous monitoring — see live status at vaultproof.dev/status. For mission-critical workloads, the Enterprise tier supports failover configurations.</div>
                 </div>
             </div>
             <div class="faq-item">
                 <button class="faq-trigger" aria-expanded="false">
-                    <span>How much latency does the proxy add?</span>
+                    <span>How do you make money if the free tier is real?</span>
                     <svg class="faq-chevron" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg>
                 </button>
                 <div class="faq-content">
-                    <div class="faq-content-inner">Typically under 100ms. For a 2-10 second LLM response, it's imperceptible. SSE streaming is fully supported — chunks arrive as they're generated.</div>
+                    <div class="faq-content-inner">The free tier is genuinely free — 3 keys, 10,000 calls a month, no credit card, no expiry. We make money when teams scale past it. Most solo projects stay on free forever. Production apps and teams move to Starter ($5) or Pro ($20) for more keys, more calls, and features like IP allowlists, budget caps, and longer log retention. That's the entire model.</div>
                 </div>
             </div>
         </div>
