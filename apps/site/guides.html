@@ -33,24 +33,30 @@
         {
           "@type": "HowToStep",
           "position": 1,
+          "name": "Sign up",
+          "text": "Create a free VaultProof account at vaultproof.dev/app/login. No credit card required. Free tier includes 3 keys and 10,000 proxy calls per month."
+        },
+        {
+          "@type": "HowToStep",
+          "position": 2,
           "name": "Run npx @vaultproof/init",
           "text": "Run 'npx @vaultproof/init' in your project directory. It scans your .env for API keys automatically."
         },
         {
           "@type": "HowToStep",
-          "position": 2,
+          "position": 3,
           "name": "Confirm the detected keys",
           "text": "The CLI shows every API key it found (OpenAI, Anthropic, Stripe, etc.) and asks you to confirm. Each key is Shamir-split locally — the plaintext never leaves your machine."
         },
         {
           "@type": "HowToStep",
-          "position": 3,
+          "position": 4,
           "name": "Get your project ID",
           "text": "VaultProof gives you one project ID (vp-proj-...) that replaces every API key in your .env. The project ID is not a secret — it is safe to commit."
         },
         {
           "@type": "HowToStep",
-          "position": 4,
+          "position": 5,
           "name": "Your code does not change",
           "text": "Your .env is automatically rewritten with the project ID and per-provider proxy URLs. Your OpenAI, Anthropic, and Stripe SDKs read the new base URL from the environment. Zero code changes needed."
         }
@@ -207,11 +213,34 @@
     <!-- ═══════════════════════════════════════════════════════ -->
     <h2 id="getting-started" class="text-xs font-bold text-gray-600 uppercase tracking-widest mb-6" style="letter-spacing:3px">Getting Started</h2>
 
-    <!-- Step 1: Run init -->
+    <!-- Step 1: Sign up -->
     <section class="bg-vp-surface border border-vp-border rounded-2xl overflow-hidden">
         <div class="p-6 border-b border-vp-border">
             <div class="flex items-center gap-3 mb-2">
-                <span class="w-8 h-8 rounded-lg bg-indigo-500/15 flex items-center justify-center text-sm font-bold text-indigo-400">1</span>
+                <span class="w-8 h-8 rounded-lg bg-violet-500/15 flex items-center justify-center text-sm font-bold text-violet-400">1</span>
+                <h3 class="text-xl font-bold text-white" style="font-family:'Space Grotesk',sans-serif">Sign up</h3>
+            </div>
+            <p class="text-gray-500 text-sm">Create a free account — no credit card required.</p>
+        </div>
+        <div class="p-6 space-y-5">
+            <div class="flex flex-col sm:flex-row gap-3">
+                <a href="/app/login" class="flex-1 flex items-center justify-center gap-2 px-5 py-3 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white text-sm font-semibold transition-colors">
+                    <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M16 21v-2a4 4 0 00-4-4H6a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 00-3-3.87M16 3.13a4 4 0 010 7.75"/></svg>
+                    Create free account
+                </a>
+                <a href="/app/login?tab=login" class="flex-1 flex items-center justify-center gap-2 px-5 py-3 rounded-xl bg-vp-surface border border-vp-border hover:border-gray-500 text-gray-300 hover:text-white text-sm font-semibold transition-colors">
+                    Sign in
+                </a>
+            </div>
+            <p class="text-sm text-gray-500">Free tier includes 3 keys and 10,000 proxy calls per month. No expiry.</p>
+        </div>
+    </section>
+
+    <!-- Step 2: Run init -->
+    <section class="bg-vp-surface border border-vp-border rounded-2xl overflow-hidden">
+        <div class="p-6 border-b border-vp-border">
+            <div class="flex items-center gap-3 mb-2">
+                <span class="w-8 h-8 rounded-lg bg-indigo-500/15 flex items-center justify-center text-sm font-bold text-indigo-400">2</span>
                 <h3 class="text-xl font-bold text-white" style="font-family:'Space Grotesk',sans-serif">Protect your keys</h3>
             </div>
             <p class="text-gray-500 text-sm">Run one command in your project directory.</p>
@@ -237,11 +266,11 @@
         </div>
     </section>
 
-    <!-- Step 2: Deploy -->
+    <!-- Step 3: Deploy -->
     <section class="bg-vp-surface border border-vp-border rounded-2xl overflow-hidden">
         <div class="p-6 border-b border-vp-border">
             <div class="flex items-center gap-3 mb-2">
-                <span class="w-8 h-8 rounded-lg bg-emerald-500/15 flex items-center justify-center text-sm font-bold text-emerald-400">2</span>
+                <span class="w-8 h-8 rounded-lg bg-emerald-500/15 flex items-center justify-center text-sm font-bold text-emerald-400">3</span>
                 <h3 class="text-xl font-bold text-white" style="font-family:'Space Grotesk',sans-serif">Deploy</h3>
             </div>
             <p class="text-gray-500 text-sm">Copy your new env vars to your hosting platform. None of them are secrets.</p>
