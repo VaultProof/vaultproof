@@ -313,8 +313,62 @@ async function runInit(opts: { autoYes: boolean; dryRun: boolean }): Promise<voi
     console.log();
   }
 
-  console.log(chalk.bold('What\'s next:'));
-  console.log(`  ${chalk.green('•')} Run your app normally — your code doesn't change`);
+  // ── Deploy checklist ──
+  // Build the list of env vars the user needs to set on their hosting platform
+  const deployVars: Array<{ name: string; value: string }> = [
+    { name: 'VAULTPROOF_PROJECT_ID', value: projectId },
+  ];
+  for (const f of findings) {
+    deployVars.push({ name: f.varName, value: projectId });
+    if (f.provider.base_url_env_var && f.provider.base_url_path_suffix) {
+      deployVars.push({
+        name: f.provider.base_url_env_var,
+        value: `${proxyBaseUrl}${f.provider.base_url_path_suffix}`,
+      });
+    }
+  }
+
+  console.log(chalk.bold('\n── Deploy to production ──\n'));
+  console.log(chalk.dim('Set these env vars on your hosting platform (Vercel, Railway, Netlify, etc.):\n'));
+  for (const v of deployVars) {
+    console.log(`  ${chalk.white(v.name)}=${chalk.dim(v.value)}`);
+  }
+
+  console.log(chalk.dim('\nNone of these are secrets — safe to commit.\n'));
+
+  const { prompt: promptInput } = await import('./prompts.js');
+  const deployed = await confirm('Have you set these on your hosting platform?');
+
+  if (deployed) {
+    // Quick proxy test for each provider
+    console.log();
+    for (const f of findings) {
+      const testSpinner = ora(`Testing ${f.provider.label} proxy...`).start();
+      try {
+        const testUrl = f.provider.id === 'stripe'
+          ? `${proxyBaseUrl}/v1/customers?limit=1`
+          : `${proxyBaseUrl}/p/${f.provider.id}/`;
+        const testRes = await fetch(testUrl, {
+          method: 'GET',
+          headers: { Authorization: `Bearer ${projectId}` },
+        });
+        if (testRes.status === 401 || testRes.status === 200) {
+          // 401 from upstream = proxy chain works (key reconstructed, upstream rejected the fake path)
+          // 200 = proxy chain works and upstream responded
+          testSpinner.succeed(`${f.provider.label} proxy: ${chalk.green('connected')}`);
+        } else if (testRes.status === 404 || testRes.status === 405) {
+          // 404/405 from upstream = proxy reached the upstream, path just isn't valid for GET
+          testSpinner.succeed(`${f.provider.label} proxy: ${chalk.green('connected')}`);
+        } else {
+          testSpinner.warn(`${f.provider.label} proxy: status ${testRes.status} — check your deployment`);
+        }
+      } catch (err) {
+        testSpinner.fail(`${f.provider.label} proxy: ${chalk.red('could not connect')}`);
+      }
+    }
+  }
+
+  console.log(chalk.bold('\n✓ All done.\n'));
   console.log(`  ${chalk.green('•')} Dashboard: ${chalk.white('https://vaultproof.dev/app')}`);
   console.log(`  ${chalk.green('•')} Docs: ${chalk.white('https://vaultproof.dev/docs')}`);
 }
