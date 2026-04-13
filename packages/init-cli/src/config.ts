@@ -43,7 +43,21 @@ export function getProxyBaseUrl(): string {
   );
 }
 
+function isJwtExpired(token: string): boolean {
+  try {
+    const payload = JSON.parse(Buffer.from(token.split('.')[1], 'base64').toString());
+    return typeof payload.exp === 'number' && payload.exp * 1000 < Date.now();
+  } catch {
+    return true;
+  }
+}
+
 export function getJwt(): string | undefined {
-  if (process.env.VAULTPROOF_JWT) return process.env.VAULTPROOF_JWT;
-  return readConfig().token;
+  const envJwt = process.env.VAULTPROOF_JWT;
+  if (envJwt) return isJwtExpired(envJwt) ? undefined : envJwt;
+
+  const token = readConfig().token;
+  if (token && !isJwtExpired(token)) return token;
+
+  return undefined;
 }
