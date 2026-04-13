@@ -17,57 +17,18 @@ export interface RewriteOptions {
   proxyBaseUrl: string;
 }
 
-function backupPath(envPath: string): string {
-  const ts = new Date().toISOString().replace(/[:.]/g, '-');
-  return `${envPath}.backup.${ts}`;
-}
-
-/**
- * Create a backup of the .env file with all detected key VALUES redacted.
- * The backup preserves variable names, comments, and structure so the
- * user can see what was there — but plaintext API keys are replaced with
- * a redaction marker. VaultProof must never write plaintext keys to disk.
- */
-export function backupEnvFile(envPath: string, findings?: Finding[]): string {
-  const dest = backupPath(envPath);
-  const original = fs.readFileSync(envPath, 'utf-8');
-
-  if (!findings || findings.length === 0) {
-    fs.writeFileSync(dest, original);
-    return dest;
-  }
-
-  // Build a set of values to redact (the plaintext keys we detected).
-  const secretValues = new Set(
-    findings.filter((f) => f.file === envPath).map((f) => f.value),
-  );
-
-  // Replace each secret value in every line.
-  const lines = original.split('\n');
-  const redacted = lines.map((line) => {
-    for (const secret of secretValues) {
-      if (line.includes(secret)) {
-        return line.replace(secret, '[REDACTED — protected by VaultProof]');
-      }
-    }
-    return line;
-  });
-
-  fs.writeFileSync(dest, redacted.join('\n'));
-  return dest;
-}
+// No backup files are created. VaultProof never writes keys to disk.
 
 export function rewriteEnvFile(
   envPath: string,
   findings: Finding[],
   opts: RewriteOptions,
-): { rewritten: number; backupPath: string; manualNotes: string[] } {
-  if (!fs.existsSync(envPath)) return { rewritten: 0, backupPath: '', manualNotes: [] };
+): { rewritten: number; manualNotes: string[] } {
+  if (!fs.existsSync(envPath)) return { rewritten: 0, manualNotes: [] };
 
   const relevant = findings.filter((f) => f.file === envPath);
-  if (relevant.length === 0) return { rewritten: 0, backupPath: '', manualNotes: [] };
+  if (relevant.length === 0) return { rewritten: 0, manualNotes: [] };
 
-  const backup = backupEnvFile(envPath, findings);
   const original = fs.readFileSync(envPath, 'utf-8');
   const lines = original.split('\n');
 
@@ -116,7 +77,7 @@ export function rewriteEnvFile(
   const result = header + '\n' + cleaned.join('\n');
 
   fs.writeFileSync(envPath, result);
-  return { rewritten: relevant.length, backupPath: backup, manualNotes };
+  return { rewritten: relevant.length, manualNotes };
 }
 
 /**
@@ -136,13 +97,11 @@ export function rewriteEnvFileForMigration(
   envPath: string,
   entries: MigrationEntry[],
   opts: RewriteOptions,
-): { written: number; backupPath: string; manualNotes: string[] } {
-  if (entries.length === 0) return { written: 0, backupPath: '', manualNotes: [] };
+): { written: number; manualNotes: string[] } {
+  if (entries.length === 0) return { written: 0, manualNotes: [] };
 
   let original = '';
-  let backup = '';
   if (fs.existsSync(envPath)) {
-    backup = backupEnvFile(envPath);
     original = fs.readFileSync(envPath, 'utf-8');
   }
   const lines = original.split('\n');
@@ -192,7 +151,7 @@ export function rewriteEnvFileForMigration(
 
   const result = header + '\n' + migrated.join('\n') + '\n' + cleaned.join('\n');
   fs.writeFileSync(envPath, result);
-  return { written: entries.length, backupPath: backup, manualNotes };
+  return { written: entries.length, manualNotes };
 }
 
 function buildHeader(

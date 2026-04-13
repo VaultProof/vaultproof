@@ -186,10 +186,9 @@ async function runInit(opts: { autoYes: boolean; dryRun: boolean }): Promise<voi
   const filesToRewrite = Array.from(new Set(findings.map((f) => f.file)));
   const allManualNotes: string[] = [];
   for (const file of filesToRewrite) {
-    const { rewritten, backupPath, manualNotes } = rewriteEnvFile(file, findings, { projectId, proxyBaseUrl });
+    const { rewritten, manualNotes } = rewriteEnvFile(file, findings, { projectId, proxyBaseUrl });
     if (rewritten > 0) {
       console.log(`\n${chalk.green('✓')} Rewrote ${chalk.bold(file)} (${rewritten} key${rewritten === 1 ? '' : 's'})`);
-      console.log(chalk.dim(`  Backup: ${backupPath}`));
     }
     allManualNotes.push(...manualNotes);
   }
@@ -424,9 +423,8 @@ async function runCheckLegacy(): Promise<void> {
   // ── Rewrite .env if anything was migrated ──
   if (migrated.length > 0) {
     const envPath = path.join(process.cwd(), '.env');
-    const { written, backupPath, manualNotes } = rewriteEnvFileForMigration(envPath, migrated, { projectId, proxyBaseUrl });
+    const { written, manualNotes } = rewriteEnvFileForMigration(envPath, migrated, { projectId, proxyBaseUrl });
     console.log(`\n${chalk.green('✓')} Wrote ${written} entries to ${chalk.bold(envPath)}`);
-    if (backupPath) console.log(chalk.dim(`  Backup: ${backupPath}`));
     if (manualNotes.length > 0) {
       console.log(chalk.bold('\nA few providers need a one-line client change:'));
       for (const n of manualNotes) console.log(`  ${chalk.yellow('•')} ${n}`);

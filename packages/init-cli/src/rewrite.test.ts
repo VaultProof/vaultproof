@@ -53,10 +53,6 @@ const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'vp-rewrite-test-'));
 function resetEnv(content: string): string {
   const p = path.join(tmp, '.env');
   if (fs.existsSync(p)) fs.unlinkSync(p);
-  // Clear backups
-  for (const f of fs.readdirSync(tmp)) {
-    if (f.startsWith('.env.backup.')) fs.unlinkSync(path.join(tmp, f));
-  }
   fs.writeFileSync(p, content);
   return p;
 }
@@ -74,7 +70,7 @@ console.log('── creates .env when missing ──');
   });
 
   ok('written count = 1', result.written === 1);
-  ok('no backup (new file)', result.backupPath === '');
+  // No backup files created (VaultProof never writes keys to disk)
   ok('file exists', fs.existsSync(envPath));
 
   const written = fs.readFileSync(envPath, 'utf-8');
@@ -125,21 +121,17 @@ NODE_ENV=prod
   ok('NODE_ENV preserved', content.includes('NODE_ENV=prod'));
 }
 
-// ── Creates a backup when file exists ────────────────────────────────────
-console.log('── backup created for existing file ──');
+// ── No backup files created ──────────────────────────────────────────────
+console.log('── no backup files ──');
 {
   const envPath = resetEnv(`SOMETHING=yes\n`);
-
-  const result = rewriteEnvFileForMigration(
+  rewriteEnvFileForMigration(
     envPath,
     [{ envVar: 'OPENAI_API_KEY', provider: OPENAI }],
     { projectId: 'vp-proj-a', proxyBaseUrl: 'https://init.vaultproof.dev' },
   );
-
-  ok('backup path returned', result.backupPath.length > 0);
-  ok('backup file exists', fs.existsSync(result.backupPath));
-  const backupContent = fs.readFileSync(result.backupPath, 'utf-8');
-  ok('backup preserves original', backupContent === 'SOMETHING=yes\n');
+  const files = fs.readdirSync(tmp).filter(f => f.includes('backup'));
+  ok('no backup files created', files.length === 0);
 }
 
 // ── Multiple providers → multiple BASE_URL lines ─────────────────────────
@@ -212,50 +204,28 @@ console.log('── empty entries ──');
     { projectId: 'vp-proj-noop', proxyBaseUrl: 'https://init.vaultproof.dev' },
   );
   ok('written = 0', result.written === 0);
-  ok('no backup', result.backupPath === '');
+  // no backup files
   const content = fs.readFileSync(envPath, 'utf-8');
   ok('file unchanged', content === 'X=y\n');
 }
 
-// ── Backup NEVER contains plaintext keys ────────────────────────────────
-console.log('── backup redacts plaintext keys ──');
+// ── VaultProof never writes key files to disk ───────────────────────────
+console.log('── no key files written to disk ──');
 {
-  // Import the scan-based rewrite + backupEnvFile
-  const { rewriteEnvFile, backupEnvFile } = await import('./rewrite.js');
-  const { scanEnvFile } = await import('./scan.js');
-
-  const envPath = resetEnv(`# My app
-OPENAI_API_KEY=sk-proj-realSecretKeyThatShouldNeverAppearInBackup123456
-STRIPE_SECRET_KEY=sk_live_anotherSecretKeyNeverInBackup12345
+  const envPath = resetEnv(`OPENAI_API_KEY=sk-proj-test123
 DATABASE_URL=postgres://safe
 `);
 
-  // Scan to get findings (same as what init does)
+  const { rewriteEnvFile } = await import('./rewrite.js');
+  const { scanEnvFile } = await import('./scan.js');
   const catalog = [OPENAI, STRIPE];
   const findings = scanEnvFile(envPath, catalog);
-  ok('scan found 2 keys', findings.length === 2, `got ${findings.length}`);
 
-  // Create a backup with redaction
-  const backupDest = backupEnvFile(envPath, findings);
-  ok('backup created', fs.existsSync(backupDest));
+  rewriteEnvFile(envPath, findings, { projectId: 'vp-proj-test', proxyBaseUrl: 'https://init.vaultproof.dev' });
 
-  const backupContent = fs.readFileSync(backupDest, 'utf-8');
-
-  // The backup must NOT contain the plaintext keys
-  ok('backup does NOT contain OpenAI key',
-    !backupContent.includes('sk-proj-realSecretKeyThatShouldNeverAppearInBackup123456'));
-  ok('backup does NOT contain Stripe key',
-    !backupContent.includes('sk_live_anotherSecretKeyNeverInBackup12345'));
-
-  // The backup DOES contain the redaction marker
-  ok('backup has redaction marker for OpenAI',
-    backupContent.includes('OPENAI_API_KEY=[REDACTED'));
-  ok('backup has redaction marker for Stripe',
-    backupContent.includes('STRIPE_SECRET_KEY=[REDACTED'));
-
-  // The backup preserves non-secret values
-  ok('backup keeps DATABASE_URL', backupContent.includes('DATABASE_URL=postgres://safe'));
-  ok('backup keeps comments', backupContent.includes('# My app'));
+  const allFiles = fs.readdirSync(tmp);
+  const backupFiles = allFiles.filter(f => f.includes('backup'));
+  ok('zero backup files after rewrite', backupFiles.length === 0);
 }
 
 // ── Cleanup ──────────────────────────────────────────────────────────────
