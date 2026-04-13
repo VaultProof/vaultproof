@@ -25,6 +25,42 @@ import { confirm, promptHidden } from './prompts.js';
 import { browserLogin } from './login.js';
 import { findStripeConstructors } from './stripe-helper.js';
 
+function printBanner(): void {
+  const lines = [
+    '██╗   ██╗ █████╗ ██╗   ██╗██╗  ████████╗██████╗ ██████╗  ██████╗  ██████╗ ███████╗',
+    '██║   ██║██╔══██╗██║   ██║██║  ╚══██╔══╝██╔══██╗██╔══██╗██╔═══██╗██╔═══██╗██╔════╝',
+    '██║   ██║███████║██║   ██║██║     ██║   ██████╔╝██████╔╝██║   ██║██║   ██║█████╗  ',
+    '╚██╗ ██╔╝██╔══██║██║   ██║██║     ██║   ██╔═══╝ ██╔══██╗██║   ██║██║   ██║██╔══╝  ',
+    ' ╚████╔╝ ██║  ██║╚██████╔╝███████╗██║   ██║     ██║  ██║╚██████╔╝╚██████╔╝██║     ',
+    '  ╚═══╝  ╚═╝  ╚═╝ ╚═════╝ ╚══════╝╚═╝   ╚═╝     ╚═╝  ╚═╝ ╚═════╝  ╚═════╝ ╚═╝     ',
+  ];
+
+  // "VAULT" ends ~col 50, "PROOF" runs from ~col 50 onward
+  // Gradient: steel grey → cyan
+  const SPLIT = 50;
+  const grey = chalk.rgb(180, 180, 190);
+  const cyan = chalk.rgb(0, 210, 210);
+  const border = chalk.rgb(80, 120, 200);
+  const width = lines[0].length + 4; // padding
+
+  const topBar    = border('╔' + '═'.repeat(width) + '╗');
+  const emptyRow  = border('║') + ' '.repeat(width) + border('║');
+  const bottomBar = border('╚' + '═'.repeat(width) + '╝');
+  const version   = chalk.dim('  v0.1.0');
+
+  console.log('\n' + topBar);
+  console.log(emptyRow);
+  for (const line of lines) {
+    const left  = grey.bold(line.slice(0, SPLIT));
+    const right = cyan.bold(line.slice(SPLIT));
+    const padded = left + right;
+    console.log(border('║') + '  ' + padded + '  ' + border('║'));
+  }
+  console.log(emptyRow);
+  console.log(bottomBar);
+  console.log(version + '\n');
+}
+
 function parseArgs(argv: string[]): { cmd: string; flags: Set<string> } {
   const args = argv.slice(2);
   const flags = new Set<string>();
@@ -51,7 +87,7 @@ function readLegacyVpLiveKey(): string | null {
 }
 
 async function runInit(opts: { autoYes: boolean; dryRun: boolean }): Promise<void> {
-  console.log(chalk.bold('\nVaultProof — scanning .env...\n'));
+  printBanner();
 
   const catalog = await loadProviders();
   const findings: Finding[] = scanDirectory(process.cwd(), catalog.providers);
