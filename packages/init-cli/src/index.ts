@@ -68,6 +68,31 @@ async function runInit(opts: { autoYes: boolean; dryRun: boolean }): Promise<voi
       `  ${chalk.green('✓')} ${f.varName.padEnd(26)} ${chalk.dim(truncateKey(f.value).padEnd(22))} ${chalk.dim('(' + f.provider.label + ')')}`,
     );
   }
+
+  // Detect skipped keys and explain why
+  const skippedNotes: string[] = [];
+  const envFiles = ['.env', '.env.local', '.env.production', '.env.development'];
+  for (const name of envFiles) {
+    const filePath = path.join(process.cwd(), name);
+    if (!fs.existsSync(filePath)) continue;
+    const lines = fs.readFileSync(filePath, 'utf-8').split('\n');
+    for (const line of lines) {
+      const m = line.match(/^\s*([A-Za-z_][A-Za-z0-9_]*)\s*=\s*(.+?)\s*$/);
+      if (!m) continue;
+      const [, varName, rawValue] = m;
+      const value = rawValue.replace(/^["']|["']$/g, '');
+      if (findings.some((f) => f.varName === varName)) continue;
+      if (varName.match(/WEBHOOK_SECRET|_WEBHOOK/) && value.startsWith('whsec_')) {
+        skippedNotes.push(`${varName} — webhook secret (used locally for signature verification, not sent to Stripe)`);
+      } else if (varName.match(/PRICE_ID|_PRICE_/) && value.startsWith('price_')) {
+        skippedNotes.push(`${varName} — public price ID (not a secret)`);
+      }
+    }
+  }
+  if (skippedNotes.length > 0) {
+    console.log(chalk.dim('\n  Skipped (no proxy protection needed):'));
+    for (const note of skippedNotes) console.log(chalk.dim(`  ⊘ ${note}`));
+  }
   console.log();
 
   if (opts.dryRun) {
