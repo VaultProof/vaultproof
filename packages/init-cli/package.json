@@ -1,6 +1,6 @@
 {
   "name": "@vaultproof/init",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "One command to protect every API key in your .env — zero code changes.",
   "type": "module",
   "bin": {
