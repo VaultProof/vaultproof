@@ -128,30 +128,81 @@ async function runInit(opts: { autoYes: boolean; dryRun: boolean }): Promise<voi
   const apiUrl = getInitWorkerUrl();
   const proxyBaseUrl = getProxyBaseUrl();
 
-  // ── Create a project ──
-  const createSpinner = ora('Creating VaultProof project...').start();
+  // ── Check for existing projects ──
   let projectRowId: string;
   let projectId: string;
+
   try {
-    const res = await fetch(`${apiUrl}/api/v1/init/projects`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${jwt}` },
-      body: JSON.stringify({}),
+    const listRes = await fetch(`${apiUrl}/api/v1/init/projects`, {
+      method: 'GET',
+      headers: { Authorization: `Bearer ${jwt}` },
     });
-    if (!res.ok) {
-      const text = await res.text();
-      createSpinner.fail(`Project creation failed: ${res.status} ${text}`);
-      process.exit(1);
+
+    const existingProjects: Array<{ id: string; vp_proj_id: string; name: string | null }> =
+      listRes.ok ? ((await listRes.json()) as { projects: any[] }).projects || [] : [];
+
+    if (existingProjects.length > 0) {
+      // Show existing projects and let user choose
+      console.log(chalk.bold('You have existing projects:\n'));
+      for (let i = 0; i < existingProjects.length; i++) {
+        const p = existingProjects[i];
+        const label = p.name ? `${p.vp_proj_id} (${p.name})` : p.vp_proj_id;
+        console.log(`  ${chalk.bold(String(i + 1))}. ${chalk.white(label)}`);
+      }
+      console.log(`  ${chalk.bold(String(existingProjects.length + 1))}. ${chalk.dim('Create a new project')}`);
+      console.log();
+
+      const { prompt: promptInput } = await import('./prompts.js');
+      const choice = await promptInput(`Add keys to which project? (1-${existingProjects.length + 1}) `);
+      const choiceNum = parseInt(choice, 10);
+
+      if (choiceNum >= 1 && choiceNum <= existingProjects.length) {
+        // Use existing project
+        const selected = existingProjects[choiceNum - 1];
+        projectRowId = selected.id;
+        projectId = selected.vp_proj_id;
+        console.log(chalk.green(`\n✓ Using project: ${chalk.bold(projectId)}`));
+      } else {
+        // Create new
+        const createSpinner = ora('Creating new project...').start();
+        const res = await fetch(`${apiUrl}/api/v1/init/projects`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${jwt}` },
+          body: JSON.stringify({}),
+        });
+        if (!res.ok) {
+          const text = await res.text();
+          createSpinner.fail(`Project creation failed: ${res.status} ${text}`);
+          process.exit(1);
+        }
+        const data = (await res.json()) as { vp_proj_id: string; id: string };
+        projectRowId = data.id;
+        projectId = data.vp_proj_id;
+        createSpinner.succeed(`Project created: ${chalk.bold(projectId)}`);
+      }
+    } else {
+      // No existing projects — create first one
+      const createSpinner = ora('Creating VaultProof project...').start();
+      const res = await fetch(`${apiUrl}/api/v1/init/projects`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${jwt}` },
+        body: JSON.stringify({}),
+      });
+      if (!res.ok) {
+        const text = await res.text();
+        createSpinner.fail(`Project creation failed: ${res.status} ${text}`);
+        process.exit(1);
+      }
+      const data = (await res.json()) as { vp_proj_id: string; id: string };
+      projectRowId = data.id;
+      projectId = data.vp_proj_id;
+      createSpinner.succeed(`Project created: ${chalk.bold(projectId)}`);
     }
-    const data = (await res.json()) as { vp_proj_id: string; id: string };
-    projectRowId = data.id;
-    projectId = data.vp_proj_id;
   } catch (err) {
-    createSpinner.fail(`Could not reach VaultProof API at ${apiUrl}`);
+    console.error(chalk.red(`Could not reach VaultProof API at ${apiUrl}`));
     console.error(chalk.dim(String(err)));
     process.exit(1);
   }
-  createSpinner.succeed(`Project created: ${chalk.bold(projectId)}`);
 
   // ── Split and upload each key ──
   for (const f of findings) {
