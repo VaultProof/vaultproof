@@ -23,6 +23,9 @@ export interface ProviderSpec {
   base_url_path_suffix?: string;
   note?: string;
   upstream_from_env?: string;
+  combine_with_env?: string;
+  combine_format?: string;
+  combine_encoding?: string;
   detect: {
     regex: string;
     var_hint?: string;

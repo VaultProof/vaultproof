@@ -477,9 +477,11 @@
       "upstream_base_url": "dynamic",
       "auth_header_name": "X-Algolia-API-Key",
       "auth_header_template": "{key}",
+      "extra_headers": { "X-Algolia-Application-Id": "{env:ALGOLIA_APP_ID}" },
       "env_var_default": "ALGOLIA_API_KEY",
+      "base_url_env_var": "ALGOLIA_BASE_URL",
+      "base_url_path_suffix": "/p/algolia",
       "upstream_from_env": "ALGOLIA_APP_ID",
-      "note": "Upstream URL is https://{APP_ID}.algolia.net. Set ALGOLIA_APP_ID in your .env.",
       "detect": { "regex": "^[a-f0-9]{32}$", "var_hint": "ALGOLIA" }
     },
     {
@@ -557,6 +559,9 @@
       "env_var_default": "LANGFUSE_SECRET_KEY",
       "base_url_env_var": "LANGFUSE_BASE_URL",
       "base_url_path_suffix": "/p/langfuse",
+      "combine_with_env": "LANGFUSE_PUBLIC_KEY",
+      "combine_format": "{env}:{key}",
+      "combine_encoding": "base64",
       "detect": { "regex": "^sk-lf-[A-Za-z0-9_-]{20,}$" }
     },
     {
