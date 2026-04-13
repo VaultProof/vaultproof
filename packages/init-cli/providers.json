@@ -206,6 +206,259 @@
         "regex": "^eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9\\.",
         "var_hint": "SUPABASE_SERVICE_ROLE"
       }
+    },
+    {
+      "id": "cohere",
+      "label": "Cohere",
+      "upstream_base_url": "https://api.cohere.com",
+      "auth_header_name": "Authorization",
+      "auth_header_template": "Bearer {key}",
+      "env_var_default": "COHERE_API_KEY",
+      "base_url_env_var": "COHERE_BASE_URL",
+      "base_url_path_suffix": "/p/cohere",
+      "detect": { "regex": "^[a-zA-Z0-9]{40}$", "var_hint": "COHERE" }
+    },
+    {
+      "id": "replicate",
+      "label": "Replicate",
+      "upstream_base_url": "https://api.replicate.com",
+      "auth_header_name": "Authorization",
+      "auth_header_template": "Bearer {key}",
+      "env_var_default": "REPLICATE_API_TOKEN",
+      "base_url_env_var": "REPLICATE_BASE_URL",
+      "base_url_path_suffix": "/p/replicate",
+      "detect": { "regex": "^r8_[A-Za-z0-9]{37}$" }
+    },
+    {
+      "id": "huggingface",
+      "label": "Hugging Face",
+      "upstream_base_url": "https://api-inference.huggingface.co",
+      "auth_header_name": "Authorization",
+      "auth_header_template": "Bearer {key}",
+      "env_var_default": "HUGGINGFACE_API_KEY",
+      "base_url_env_var": "HUGGINGFACE_BASE_URL",
+      "base_url_path_suffix": "/p/huggingface",
+      "detect": { "regex": "^hf_[A-Za-z0-9]{34}$" }
+    },
+    {
+      "id": "perplexity",
+      "label": "Perplexity",
+      "upstream_base_url": "https://api.perplexity.ai",
+      "auth_header_name": "Authorization",
+      "auth_header_template": "Bearer {key}",
+      "env_var_default": "PERPLEXITY_API_KEY",
+      "base_url_env_var": "PERPLEXITY_BASE_URL",
+      "base_url_path_suffix": "/p/perplexity",
+      "detect": { "regex": "^pplx-[a-f0-9]{48}$" }
+    },
+    {
+      "id": "cerebras",
+      "label": "Cerebras",
+      "upstream_base_url": "https://api.cerebras.ai",
+      "auth_header_name": "Authorization",
+      "auth_header_template": "Bearer {key}",
+      "env_var_default": "CEREBRAS_API_KEY",
+      "base_url_env_var": "CEREBRAS_BASE_URL",
+      "base_url_path_suffix": "/p/cerebras/v1",
+      "detect": { "regex": "^csk-[A-Za-z0-9]{40,}$" }
+    },
+    {
+      "id": "elevenlabs",
+      "label": "ElevenLabs",
+      "upstream_base_url": "https://api.elevenlabs.io",
+      "auth_header_name": "xi-api-key",
+      "auth_header_template": "{key}",
+      "env_var_default": "ELEVENLABS_API_KEY",
+      "base_url_env_var": "ELEVENLABS_BASE_URL",
+      "base_url_path_suffix": "/p/elevenlabs",
+      "detect": { "regex": "^sk_[a-f0-9]{32,}$", "var_hint": "ELEVENLABS" }
+    },
+    {
+      "id": "pinecone",
+      "label": "Pinecone",
+      "upstream_base_url": "https://api.pinecone.io",
+      "auth_header_name": "Api-Key",
+      "auth_header_template": "{key}",
+      "env_var_default": "PINECONE_API_KEY",
+      "base_url_env_var": "PINECONE_BASE_URL",
+      "base_url_path_suffix": "/p/pinecone",
+      "detect": { "regex": "^pcsk_[A-Za-z0-9_]{50,}$" }
+    },
+    {
+      "id": "stability",
+      "label": "Stability AI",
+      "upstream_base_url": "https://api.stability.ai",
+      "auth_header_name": "Authorization",
+      "auth_header_template": "Bearer {key}",
+      "env_var_default": "STABILITY_API_KEY",
+      "base_url_env_var": "STABILITY_BASE_URL",
+      "base_url_path_suffix": "/p/stability",
+      "detect": { "regex": "^sk-[A-Za-z0-9]{40,}$", "var_hint": "STABILITY" }
+    },
+    {
+      "id": "clerk",
+      "label": "Clerk",
+      "upstream_base_url": "https://api.clerk.com",
+      "auth_header_name": "Authorization",
+      "auth_header_template": "Bearer {key}",
+      "env_var_default": "CLERK_SECRET_KEY",
+      "base_url_env_var": "CLERK_BASE_URL",
+      "base_url_path_suffix": "/p/clerk",
+      "detect": { "regex": "^sk_(live|test)_[A-Za-z0-9]{20,}$", "var_hint": "CLERK" }
+    },
+    {
+      "id": "postmark",
+      "label": "Postmark",
+      "upstream_base_url": "https://api.postmarkapp.com",
+      "auth_header_name": "X-Postmark-Server-Token",
+      "auth_header_template": "{key}",
+      "env_var_default": "POSTMARK_SERVER_TOKEN",
+      "base_url_env_var": "POSTMARK_BASE_URL",
+      "base_url_path_suffix": "/p/postmark",
+      "detect": { "regex": "^[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}$", "var_hint": "POSTMARK" }
+    },
+    {
+      "id": "mailgun",
+      "label": "Mailgun",
+      "upstream_base_url": "https://api.mailgun.net",
+      "auth_header_name": "Authorization",
+      "auth_header_template": "Basic {key}",
+      "env_var_default": "MAILGUN_API_KEY",
+      "base_url_env_var": "MAILGUN_BASE_URL",
+      "base_url_path_suffix": "/p/mailgun",
+      "detect": { "regex": "^key-[a-f0-9]{32}$" }
+    },
+    {
+      "id": "newrelic",
+      "label": "New Relic",
+      "upstream_base_url": "https://api.newrelic.com",
+      "auth_header_name": "Api-Key",
+      "auth_header_template": "{key}",
+      "env_var_default": "NEW_RELIC_API_KEY",
+      "base_url_env_var": "NEWRELIC_BASE_URL",
+      "base_url_path_suffix": "/p/newrelic",
+      "detect": { "regex": "^NRAK-[A-Z0-9]{27}$" }
+    },
+    {
+      "id": "sentry",
+      "label": "Sentry",
+      "upstream_base_url": "https://sentry.io/api",
+      "auth_header_name": "Authorization",
+      "auth_header_template": "Bearer {key}",
+      "env_var_default": "SENTRY_AUTH_TOKEN",
+      "base_url_env_var": "SENTRY_BASE_URL",
+      "base_url_path_suffix": "/p/sentry",
+      "detect": { "regex": "^sntrys_[A-Za-z0-9]{60,}$" }
+    },
+    {
+      "id": "planetscale",
+      "label": "PlanetScale",
+      "upstream_base_url": "https://api.planetscale.com",
+      "auth_header_name": "Authorization",
+      "auth_header_template": "{key}",
+      "env_var_default": "PLANETSCALE_SERVICE_TOKEN",
+      "base_url_env_var": "PLANETSCALE_BASE_URL",
+      "base_url_path_suffix": "/p/planetscale",
+      "detect": { "regex": "^pscale_tkn_[A-Za-z0-9_]{30,}$" }
+    },
+    {
+      "id": "neon",
+      "label": "Neon",
+      "upstream_base_url": "https://console.neon.tech/api",
+      "auth_header_name": "Authorization",
+      "auth_header_template": "Bearer {key}",
+      "env_var_default": "NEON_API_KEY",
+      "base_url_env_var": "NEON_BASE_URL",
+      "base_url_path_suffix": "/p/neon",
+      "detect": { "regex": "^napi_[A-Za-z0-9_]{30,}$" }
+    },
+    {
+      "id": "upstash",
+      "label": "Upstash",
+      "upstream_base_url": "https://api.upstash.com",
+      "auth_header_name": "Authorization",
+      "auth_header_template": "Bearer {key}",
+      "env_var_default": "UPSTASH_API_KEY",
+      "base_url_env_var": "UPSTASH_BASE_URL",
+      "base_url_path_suffix": "/p/upstash",
+      "detect": { "regex": "^[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}$", "var_hint": "UPSTASH" }
+    },
+    {
+      "id": "vercel",
+      "label": "Vercel",
+      "upstream_base_url": "https://api.vercel.com",
+      "auth_header_name": "Authorization",
+      "auth_header_template": "Bearer {key}",
+      "env_var_default": "VERCEL_TOKEN",
+      "base_url_env_var": "VERCEL_BASE_URL",
+      "base_url_path_suffix": "/p/vercel",
+      "detect": { "regex": "^[A-Za-z0-9]{24}$", "var_hint": "VERCEL" }
+    },
+    {
+      "id": "cloudflare",
+      "label": "Cloudflare",
+      "upstream_base_url": "https://api.cloudflare.com",
+      "auth_header_name": "Authorization",
+      "auth_header_template": "Bearer {key}",
+      "env_var_default": "CLOUDFLARE_API_TOKEN",
+      "base_url_env_var": "CLOUDFLARE_BASE_URL",
+      "base_url_path_suffix": "/p/cloudflare",
+      "detect": { "regex": "^[A-Za-z0-9_-]{40}$", "var_hint": "CLOUDFLARE" }
+    },
+    {
+      "id": "mapbox",
+      "label": "Mapbox",
+      "upstream_base_url": "https://api.mapbox.com",
+      "auth_header_name": "Authorization",
+      "auth_header_template": "Bearer {key}",
+      "env_var_default": "MAPBOX_ACCESS_TOKEN",
+      "base_url_env_var": "MAPBOX_BASE_URL",
+      "base_url_path_suffix": "/p/mapbox",
+      "detect": { "regex": "^sk\\.[A-Za-z0-9_-]{60,}$" }
+    },
+    {
+      "id": "paddle",
+      "label": "Paddle",
+      "upstream_base_url": "https://api.paddle.com",
+      "auth_header_name": "Authorization",
+      "auth_header_template": "Bearer {key}",
+      "env_var_default": "PADDLE_API_KEY",
+      "base_url_env_var": "PADDLE_BASE_URL",
+      "base_url_path_suffix": "/p/paddle",
+      "detect": { "regex": "^pdl_(live|sbox)_[A-Za-z0-9]{30,}$" }
+    },
+    {
+      "id": "square",
+      "label": "Square",
+      "upstream_base_url": "https://connect.squareup.com",
+      "auth_header_name": "Authorization",
+      "auth_header_template": "Bearer {key}",
+      "env_var_default": "SQUARE_ACCESS_TOKEN",
+      "base_url_env_var": "SQUARE_BASE_URL",
+      "base_url_path_suffix": "/p/square",
+      "detect": { "regex": "^(?:sq0atp|EAAAl)[A-Za-z0-9_-]{20,}$" }
+    },
+    {
+      "id": "discord",
+      "label": "Discord",
+      "upstream_base_url": "https://discord.com/api",
+      "auth_header_name": "Authorization",
+      "auth_header_template": "Bot {key}",
+      "env_var_default": "DISCORD_BOT_TOKEN",
+      "base_url_env_var": "DISCORD_BASE_URL",
+      "base_url_path_suffix": "/p/discord",
+      "detect": { "regex": "^[A-Za-z0-9_-]{24}\\.[A-Za-z0-9_-]{6}\\.[A-Za-z0-9_-]{27,}$" }
+    },
+    {
+      "id": "slack",
+      "label": "Slack",
+      "upstream_base_url": "https://slack.com/api",
+      "auth_header_name": "Authorization",
+      "auth_header_template": "Bearer {key}",
+      "env_var_default": "SLACK_BOT_TOKEN",
+      "base_url_env_var": "SLACK_BASE_URL",
+      "base_url_path_suffix": "/p/slack",
+      "detect": { "regex": "^xoxb-[0-9]+-[0-9]+-[A-Za-z0-9]+$" }
     }
   ]
 }
