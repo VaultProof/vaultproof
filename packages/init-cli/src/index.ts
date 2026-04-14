@@ -343,10 +343,11 @@ async function runInit(opts: { autoYes: boolean; dryRun: boolean }): Promise<voi
     }
     s.succeed(`${chalk.bold(f.varName)} ${chalk.dim('(' + f.provider.label + ')')}`);
     console.log(chalk.dim(`    Split locally on your machine`));
-    console.log(chalk.dim(`    Share 1 → VaultProof (encrypted at rest, useless alone)`));
-    console.log(chalk.dim(`    Share 2 → VaultProof (encrypted at rest, useless alone)`));
-    console.log(chalk.dim(`    A breach of VaultProof cannot expose this key\n`));
+    console.log(chalk.dim(`    Share 1 → VaultProof (encrypted with VaultProof's key)`));
+    console.log(chalk.dim(`    Share 2 → VaultProof (encrypted with a different key)`));
+    console.log(chalk.dim(`    A breach of VaultProof cannot expose this key`));
   }
+  console.log();
 
   // ── Rewrite .env files ──
   const filesToRewrite = Array.from(new Set(findings.map((f) => f.file)));
