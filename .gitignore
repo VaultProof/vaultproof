@@ -25,3 +25,13 @@ packages/init-worker/.wrangler/
 !README.md
 !docs/**/*.md
 !packages/**/README.md
+
+# Block additional text-like files by default.
+*.txt
+*.log
+*.sql
+
+# Keep intentional tracked files unblocked.
+!apps/site/llms.txt
+!apps/site/llms-full.txt
+!supabase/migrations/*.sql
