@@ -129,5 +129,18 @@ console.log('── no accidentally-committed secrets ──');
   ok('no secret-like strings in dist files', leaks === 0);
 }
 
+// ── doctor command ──────────────────────────────────────────────────────
+console.log('\n── doctor command presence in dist ──');
+import { readFileSync as readFS } from 'node:fs';
+import { fileURLToPath as fURL } from 'node:url';
+import { join as joinPath, dirname as dirPath } from 'node:path';
+const __doctorDir = dirPath(fURL(import.meta.url));
+const distSrc = readFS(joinPath(__doctorDir, '..', 'dist', 'index.js'), 'utf-8');
+ok('doctor command branch present', distSrc.includes("cmd === 'doctor'"));
+ok('runDoctor function present', distSrc.includes('runDoctor'));
+ok('doctor in usage string', distSrc.includes("npx @vaultproof/init doctor"));
+ok('legacy migration command branch present', distSrc.includes("cmd === 'migrate-from-legacy'"));
+ok('short -y flag supported', distSrc.includes("flags.has('-y')"));
+
 console.log(`\n${passed} passed, ${failed} failed`);
 process.exit(failed > 0 ? 1 : 0);

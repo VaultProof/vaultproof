@@ -74,7 +74,7 @@
               "name": "Does this work with the SDKs I already use?",
               "acceptedAnswer": {
                 "@type": "Answer",
-                "text": "Yes. For AI providers (OpenAI, Anthropic, Google, Mistral, Cohere, Groq, Perplexity, DeepSeek, Fireworks, Together.ai, Replicate) you change two lines: the base URL and the API key. Your SDK calls don't change. For Stripe, AWS, Supabase, and other non-AI APIs, you call vault.proxy() or fetch the secret with getSecret(). The CLI handles the migration — vaultproof migrate reads your .env and prints exactly what to change."
+                "text": "Yes. For providers supported by the init flow, you usually update the env values your SDK already reads: the API key becomes a public vp-proj identifier and the base URL points at VaultProof. Your SDK calls stay the same. The migration flow is npx @vaultproof/init, which scans your .env files and rewrites them for you."
               }
             },
             {
@@ -90,7 +90,7 @@
               "name": "Do I need to change my code?",
               "acceptedAnswer": {
                 "@type": "Answer",
-                "text": "For AI providers, no — your SDK calls stay the same. You change two environment variables and you're done. For other providers, you swap process.env.STRIPE_SECRET_KEY for await getSecret('STRIPE_SECRET_KEY'). That's the bulk of the work for a typical app and it's done in an afternoon. The CLI walks you through it."
+                "text": "Usually, no. For providers supported by the init flow, your SDK calls stay the same and VaultProof rewrites the env vars your app already reads. The main migration step is running npx @vaultproof/init and letting it update your local .env files."
               }
             },
             {
@@ -976,7 +976,7 @@
                     <svg class="faq-chevron" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg>
                 </button>
                 <div class="faq-content">
-                    <div class="faq-content-inner">Yes. For AI providers (OpenAI, Anthropic, Google, Mistral, Cohere, Groq, Perplexity, DeepSeek, Fireworks, Together.ai, Replicate) you change two lines: the base URL and the API key. Your SDK calls don't change. For Stripe, AWS, Supabase, and other non-AI APIs, you call <code style="color:#818cf8;background:#0a0a0f;padding:2px 6px;border-radius:4px;font-size:13px">vault.proxy()</code> or fetch the secret with <code style="color:#818cf8;background:#0a0a0f;padding:2px 6px;border-radius:4px;font-size:13px">getSecret()</code>. The CLI handles the migration — <code style="color:#818cf8;background:#0a0a0f;padding:2px 6px;border-radius:4px;font-size:13px">vaultproof migrate</code> reads your .env and prints exactly what to change.</div>
+                    <div class="faq-content-inner">Yes. For providers supported by the init flow, you usually update the env values your SDK already reads: the API key becomes a public <code style="color:#818cf8;background:#0a0a0f;padding:2px 6px;border-radius:4px;font-size:13px">vp-proj-...</code> identifier and the base URL points at VaultProof. Your SDK calls stay the same. The migration flow is <code style="color:#818cf8;background:#0a0a0f;padding:2px 6px;border-radius:4px;font-size:13px">npx @vaultproof/init</code>, which scans your .env files and rewrites them for you.</div>
                 </div>
             </div>
             <div class="faq-item border-b border-vp-border">
@@ -994,7 +994,7 @@
                     <svg class="faq-chevron" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg>
                 </button>
                 <div class="faq-content">
-                    <div class="faq-content-inner">For AI providers, no — your SDK calls stay the same. You change two environment variables and you're done. For other providers, you swap <code style="color:#818cf8;background:#0a0a0f;padding:2px 6px;border-radius:4px;font-size:13px">process.env.STRIPE_SECRET_KEY</code> for <code style="color:#818cf8;background:#0a0a0f;padding:2px 6px;border-radius:4px;font-size:13px">await getSecret('STRIPE_SECRET_KEY')</code>. That's the bulk of the work for a typical app and it's done in an afternoon. The CLI walks you through it.</div>
+                    <div class="faq-content-inner">Usually, no. For providers supported by the init flow, your SDK calls stay the same and VaultProof rewrites the env vars your app already reads. The main migration step is running <code style="color:#818cf8;background:#0a0a0f;padding:2px 6px;border-radius:4px;font-size:13px">npx @vaultproof/init</code> and letting it update your local <code style="color:#818cf8;background:#0a0a0f;padding:2px 6px;border-radius:4px;font-size:13px">.env</code> files.</div>
                 </div>
             </div>
             <div class="faq-item border-b border-vp-border">

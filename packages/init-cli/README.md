@@ -71,6 +71,9 @@ npx @vaultproof/init --dry-run
 
 # Audit and migrate from the legacy vp_live_ system
 npx @vaultproof/init --check-legacy
+
+# Verify auth, worker, and proxy connectivity
+npx @vaultproof/init doctor
 ```
 
 ---
@@ -83,7 +86,7 @@ npx @vaultproof/init --check-legacy
 
 ## Authentication
 
-The CLI reads your Supabase session from `~/.vaultproof/config.json` or the `VAULTPROOF_JWT` environment variable. Today you need the legacy CLI's `vaultproof login` to populate the session; browser-based login inside `@vaultproof/init` itself is coming in the next release.
+The CLI reads your Supabase session from `~/.vaultproof/config.json` or the `VAULTPROOF_JWT` environment variable. If no valid JWT is present, `@vaultproof/init` opens a browser-based login flow automatically and saves the session for later runs.
 
 ---
 

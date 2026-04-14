@@ -71,7 +71,7 @@ console.log('── checkOriginLock ──');
     'https://app.example.com',
     true,
   );
-  ok('prefix match → pass', r4 === null);
+  ok('same-origin string with path normalizes', r4 === null);
 
   const r5 = checkOriginLock(
     req({ Origin: 'https://evil.com' }),
@@ -86,7 +86,7 @@ console.log('── checkOriginLock ──');
     'https://app.example.com',
     false,
   );
-  ok('mismatch + non-strict → pass', r6 === null);
+  ok('mismatch + non-strict still blocks', r6?.status === 403);
 
   const r7 = checkOriginLock(
     req({ Referer: 'https://app.example.com/page' }),
@@ -111,6 +111,23 @@ console.log('── checkOriginLock ──');
     true,
   );
   ok('empty entries do not match any origin', r10?.status === 403);
+
+  const r11 = checkOriginLock(
+    req({ Origin: 'https://app.example.com.evil.test' }),
+    'https://app.example.com',
+    true,
+  );
+  ok('spoofed prefix origin is rejected', r11?.status === 403);
+
+  const r12 = checkOriginLock(
+    req({ Referer: 'https://app.example.com.evil.test/path' }),
+    'https://app.example.com',
+    true,
+  );
+  ok('spoofed prefix referer is rejected', r12?.status === 403);
+
+  const r13 = checkOriginLock(req({}), 'https://app.example.com', false);
+  ok('no origin + non-strict → pass', r13 === null);
 }
 
 console.log(`\n${passed} passed, ${failed} failed`);

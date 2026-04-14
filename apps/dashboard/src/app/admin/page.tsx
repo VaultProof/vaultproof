@@ -5,11 +5,12 @@ import Link from "next/link";
 import { createClient } from "@supabase/supabase-js";
 
 const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL || "https://api.vaultproof.dev";
+const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL;
+const SUPABASE_ANON_KEY = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
 
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL || "",
-  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || ""
-);
+const supabase = SUPABASE_URL && SUPABASE_ANON_KEY
+  ? createClient(SUPABASE_URL, SUPABASE_ANON_KEY)
+  : null;
 
 interface ReferralStats {
   source: string;
@@ -47,6 +48,12 @@ export default function AdminPage() {
 
   // Auth
   useEffect(() => {
+    if (!supabase) {
+      setError("Dashboard auth is not configured.");
+      setLoading(false);
+      return;
+    }
+
     supabase.auth.getSession().then(({ data }) => {
       if (data.session?.access_token) {
         setToken(data.session.access_token);
@@ -79,8 +86,8 @@ export default function AdminPage() {
 
       setReferralStats(await refRes.json());
       setOverview(await overRes.json());
-    } catch (err: any) {
-      setError(err.message || "Network error");
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : "Network error");
     } finally {
       setLoading(false);
     }
@@ -222,7 +229,7 @@ export default function AdminPage() {
                               {referralStats.daily.reduce((s, r) => s + r.visits, 0)}
                             </td>
                             <td className="px-4 py-3 text-right">
-                              {referralStats.summary.uniqueAdClickers + referralStats.summary.uniqueLandingVisitors}
+                              {referralStats.daily.reduce((s, r) => s + r.uniqueVisitors, 0)}
                             </td>
                           </tr>
                         </tfoot>

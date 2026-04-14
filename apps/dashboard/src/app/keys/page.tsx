@@ -6,11 +6,12 @@ import Link from "next/link";
 import { createClient } from "@supabase/supabase-js";
 
 const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL || "https://api.vaultproof.dev";
+const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL;
+const SUPABASE_ANON_KEY = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
 
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL || "",
-  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || ""
-);
+const supabase = SUPABASE_URL && SUPABASE_ANON_KEY
+  ? createClient(SUPABASE_URL, SUPABASE_ANON_KEY)
+  : null;
 
 interface AppGrant {
   id: string;
@@ -54,6 +55,12 @@ export default function KeysDashboard() {
 
   // Auth
   useEffect(() => {
+    if (!supabase) {
+      setError("Dashboard auth is not configured.");
+      setLoading(false);
+      return;
+    }
+
     supabase.auth.getSession().then(({ data }) => {
       if (data.session?.access_token) {
         setToken(data.session.access_token);

@@ -48,6 +48,36 @@ interface KeyUploadBody {
   extra_headers?: Record<string, string> | null;
 }
 
+interface ProjectWriteBody {
+  name?: string | null;
+  allowed_origins?: string | null;
+  strict_origin?: boolean;
+}
+
+function normalizeAllowedOrigins(raw: string | null | undefined): { ok: true; value: string | null } | { ok: false; error: string } {
+  if (raw === undefined || raw === null || raw.trim() === '') {
+    return { ok: true, value: null };
+  }
+
+  const normalized = raw
+    .split(',')
+    .map((origin) => origin.trim())
+    .filter(Boolean)
+    .map((origin) => {
+      try {
+        return new URL(origin).origin.toLowerCase();
+      } catch {
+        return null;
+      }
+    });
+
+  if (normalized.some((origin) => origin === null)) {
+    return { ok: false, error: 'allowed_origins must be a comma-separated list of valid origins' };
+  }
+
+  return { ok: true, value: [...new Set(normalized)].join(',') };
+}
+
 export async function handleProjects(
   request: Request,
   env: Env,
@@ -69,11 +99,23 @@ export async function handleProjects(
     const rl = await checkProjectCreateRateLimit(env, auth.userId);
     if (!rl.ok) return rateLimitResponse(rl.retryAfter!);
 
-    let body: { name?: string; allowed_origins?: string } = {};
+    let body: ProjectWriteBody = {};
     try {
       body = (await request.json()) as typeof body;
     } catch {
       // empty body is fine
+    }
+
+    if (body.strict_origin !== undefined && typeof body.strict_origin !== 'boolean') {
+      return Response.json({ error: 'strict_origin must be a boolean' }, { status: 400 });
+    }
+
+    const allowedOrigins = normalizeAllowedOrigins(body.allowed_origins);
+    if (!allowedOrigins.ok) {
+      return Response.json({ error: allowedOrigins.error }, { status: 400 });
+    }
+    if (body.strict_origin && !allowedOrigins.value) {
+      return Response.json({ error: 'strict_origin requires allowed_origins' }, { status: 400 });
     }
 
     const vpProjId = generateProjectId();
@@ -83,8 +125,8 @@ export async function handleProjects(
         user_id: auth.userId,
         vp_proj_id: vpProjId,
         name: body.name || null,
-        allowed_origins: body.allowed_origins || null,
-        strict_origin: false,
+        allowed_origins: allowedOrigins.value,
+        strict_origin: body.strict_origin ?? false,
       })
       .select('*')
       .single();
@@ -103,6 +145,71 @@ export async function handleProjects(
       },
       { status: 201 },
     );
+  }
+
+  // PUT /api/v1/init/projects/:id — update project metadata / origin lock
+  if (method === 'PUT' && pathSegments.length === 1) {
+    const projectId = pathSegments[0];
+
+    const { data: existingProject, error: existingError } = await supabase
+      .from('projects')
+      .select('id, allowed_origins, strict_origin')
+      .eq('id', projectId)
+      .eq('user_id', auth.userId)
+      .is('revoked_at', null)
+      .maybeSingle();
+
+    if (existingError || !existingProject) {
+      return Response.json({ error: 'Project not found' }, { status: 404 });
+    }
+
+    let body: ProjectWriteBody;
+    try {
+      body = (await request.json()) as ProjectWriteBody;
+    } catch {
+      return Response.json({ error: 'Invalid JSON' }, { status: 400 });
+    }
+
+    if (body.strict_origin !== undefined && typeof body.strict_origin !== 'boolean') {
+      return Response.json({ error: 'strict_origin must be a boolean' }, { status: 400 });
+    }
+
+    const effectiveAllowedOrigins = body.allowed_origins !== undefined
+      ? body.allowed_origins
+      : existingProject.allowed_origins;
+    const allowedOrigins = normalizeAllowedOrigins(effectiveAllowedOrigins);
+    if (!allowedOrigins.ok) {
+      return Response.json({ error: allowedOrigins.error }, { status: 400 });
+    }
+    const effectiveStrictOrigin = body.strict_origin ?? existingProject.strict_origin;
+    if (effectiveStrictOrigin && !allowedOrigins.value) {
+      return Response.json({ error: 'strict_origin requires allowed_origins' }, { status: 400 });
+    }
+
+    const updates: {
+      name?: string | null;
+      allowed_origins?: string | null;
+      strict_origin?: boolean;
+    } = {};
+
+    if (body.name !== undefined) updates.name = body.name || null;
+    if (body.allowed_origins !== undefined) updates.allowed_origins = allowedOrigins.value;
+    if (body.strict_origin !== undefined) updates.strict_origin = body.strict_origin;
+
+    const { data, error } = await supabase
+      .from('projects')
+      .update(updates)
+      .eq('id', projectId)
+      .eq('user_id', auth.userId)
+      .is('revoked_at', null)
+      .select('id, vp_proj_id, name, allowed_origins, strict_origin, created_at')
+      .single();
+
+    if (error || !data) {
+      return Response.json({ error: 'Project not found' }, { status: 404 });
+    }
+
+    return Response.json(data);
   }
 
   // GET /api/v1/init/projects/:id (skip if segment is 'stats' — handled below)

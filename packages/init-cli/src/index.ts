@@ -9,6 +9,7 @@
  *   npx @vaultproof/init --yes      # auto-confirm
  *   npx @vaultproof/init --dry-run  # scan only, no upload, no rewrite
  *   npx @vaultproof/init migrate-from-legacy
+ *   npx @vaultproof/init doctor
  */
 import chalk from 'chalk';
 import ora from 'ora';
@@ -66,10 +67,17 @@ function parseArgs(argv: string[]): { cmd: string; flags: Set<string> } {
   const flags = new Set<string>();
   let cmd = 'init';
   for (const a of args) {
-    if (a.startsWith('--')) flags.add(a);
+    if (a.startsWith('-')) flags.add(a);
     else if (!a.startsWith('-')) cmd = a;
   }
   return { cmd, flags };
+}
+
+function printUsage(): void {
+  console.log(chalk.dim('Usage:'));
+  console.log(chalk.dim('  npx @vaultproof/init [--yes|-y] [--dry-run] [--check-legacy]'));
+  console.log(chalk.dim('  npx @vaultproof/init migrate-from-legacy'));
+  console.log(chalk.dim('  npx @vaultproof/init doctor'));
 }
 
 function readLegacyVpLiveKey(): string | null {
@@ -710,15 +718,135 @@ async function runCheckLegacy(): Promise<void> {
   process.exit(0);
 }
 
+async function runDoctor(): Promise<void> {
+  printBanner();
+  console.log(chalk.bold('VaultProof — health check\n'));
+
+  const apiUrl = getInitWorkerUrl();
+  const proxyBaseUrl = getProxyBaseUrl();
+  const TIMEOUT_MS = 5_000;
+
+  let issues = 0;
+
+  async function check(
+    label: string,
+    fn: () => Promise<{ ok: boolean; detail: string }>,
+  ): Promise<void> {
+    const spinner = ora(label).start();
+    try {
+      const start = Date.now();
+      const result = await Promise.race([
+        fn(),
+        new Promise<{ ok: boolean; detail: string }>((_, reject) =>
+          setTimeout(() => reject(new Error('timeout')), TIMEOUT_MS),
+        ),
+      ]);
+      const ms = Date.now() - start;
+      if (result.ok) {
+        spinner.succeed(`${label.padEnd(30)} ${chalk.dim(result.detail)} ${chalk.dim(`(${ms}ms)`)}`);
+      } else {
+        spinner.fail(`${label.padEnd(30)} ${chalk.red(result.detail)}`);
+        issues++;
+      }
+    } catch (err: any) {
+      spinner.fail(`${label.padEnd(30)} ${chalk.red(err?.message === 'timeout' ? 'timeout (5s)' : String(err))}`);
+      issues++;
+    }
+  }
+
+  // Check 1: Worker reachability
+  await check('Worker reachability', async () => {
+    const res = await fetch(`${apiUrl}/health`);
+    return res.ok
+      ? { ok: true, detail: 'connected' }
+      : { ok: false, detail: `HTTP ${res.status}` };
+  });
+
+  // Check 2: Auth validity
+  const jwt = getJwt();
+  await check('Auth validity', async () => {
+    if (!jwt) return { ok: false, detail: 'not logged in — run npx @vaultproof/init first' };
+    const res = await fetch(`${apiUrl}/api/v1/init/projects`, {
+      headers: { Authorization: `Bearer ${jwt}` },
+    });
+    if (!res.ok) return { ok: false, detail: `HTTP ${res.status}` };
+    const email = (() => {
+      try { return JSON.parse(Buffer.from(jwt.split('.')[1], 'base64').toString()).email || ''; } catch { return ''; }
+    })();
+    return { ok: true, detail: email || 'valid' };
+  });
+
+  // Check 3: Share integrity
+  let projectId: string | null = null;
+  await check('Share integrity', async () => {
+    if (!jwt) return { ok: false, detail: 'skipped (not logged in)' };
+    const res = await fetch(`${apiUrl}/api/v1/init/projects`, {
+      headers: { Authorization: `Bearer ${jwt}` },
+    });
+    if (!res.ok) return { ok: false, detail: `HTTP ${res.status}` };
+    const data = (await res.json()) as { projects: Array<{ id: string; vp_proj_id: string; name: string | null }> };
+    const projects = data.projects || [];
+    if (projects.length === 0) return { ok: false, detail: 'no projects found' };
+    projectId = projects[0].vp_proj_id;
+    return { ok: true, detail: `${projects.length} project${projects.length === 1 ? '' : 's'} found` };
+  });
+
+  // Check 4: Proxy reachability
+  if (projectId) {
+    await check('Proxy reachability', async () => {
+      const testUrl = `${proxyBaseUrl}/p/openai/`;
+      const res = await fetch(testUrl, {
+        method: 'GET',
+        headers: { Authorization: `Bearer ${projectId}` },
+      });
+      if ([200, 401, 404, 405].includes(res.status)) {
+        return { ok: true, detail: 'proxy chain connected' };
+      }
+      return { ok: false, detail: `HTTP ${res.status}` };
+    });
+  } else {
+    console.log(chalk.dim('  Proxy test skipped — no projects found'));
+  }
+
+  // Summary
+  console.log();
+  if (issues === 0) {
+    console.log(chalk.bold.green('✓ All checks passed.'));
+  } else {
+    console.log(chalk.bold.red(`✗ ${issues} issue${issues === 1 ? '' : 's'} found.`));
+    console.log(chalk.dim('  See https://vaultproof.dev/status for live uptime data.'));
+  }
+  console.log();
+
+  process.exit(issues > 0 ? 1 : 0);
+}
+
 async function main(): Promise<void> {
   const { cmd, flags } = parseArgs(process.argv);
   const autoYes = flags.has('--yes') || flags.has('-y');
   const dryRun = flags.has('--dry-run');
   const checkLegacy = flags.has('--check-legacy');
+  const showHelp = flags.has('--help') || flags.has('-h') || cmd === 'help';
+
+  if (showHelp) {
+    printBanner();
+    printUsage();
+    return;
+  }
+
+  if (cmd === 'doctor') {
+    await runDoctor();
+    return;
+  }
+
+  if (cmd === 'migrate-from-legacy') {
+    await runCheckLegacy();
+    return;
+  }
 
   if (cmd !== 'init') {
     console.error(chalk.red(`Unknown command: ${cmd}`));
-    console.error(chalk.dim('Usage: npx @vaultproof/init [--yes] [--dry-run] [--check-legacy]'));
+    printUsage();
     process.exit(1);
   }
 

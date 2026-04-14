@@ -18,6 +18,14 @@ export interface ProjectAuth {
   project: ProjectRecord;
 }
 
+function normalizeOrigin(value: string): string | null {
+  try {
+    return new URL(value).origin.toLowerCase();
+  } catch {
+    return null;
+  }
+}
+
 /**
  * Result of the combined "auth + key fetch" round trip. This is the
  * fast path used by the proxy hot path — it does a single join query
@@ -63,11 +71,40 @@ export function checkOriginLock(
   strictOrigin: boolean,
 ): { error: string; status: number } | null {
   if (!allowedOrigins) return null;
-  const origin = request.headers.get('Origin') || request.headers.get('Referer') || '';
-  const allowed = allowedOrigins.split(',').map((s) => s.trim()).filter(Boolean);
-  const matched = allowed.some((a) => origin.startsWith(a));
-  if (!matched && strictOrigin) {
-    return { error: 'Origin not in project allowlist', status: 403 };
+
+  const allowed = allowedOrigins
+    .split(',')
+    .map((s) => s.trim())
+    .filter(Boolean)
+    .map(normalizeOrigin)
+    .filter((origin): origin is string => origin !== null);
+
+  const originHeader = request.headers.get('Origin');
+  if (originHeader) {
+    const requestOrigin = normalizeOrigin(originHeader);
+    if (!requestOrigin) {
+      return { error: 'Malformed Origin header', status: 403 };
+    }
+    if (!allowed.includes(requestOrigin)) {
+      return { error: 'Origin not in project allowlist', status: 403 };
+    }
+    return null;
+  }
+
+  const refererHeader = request.headers.get('Referer');
+  if (refererHeader) {
+    const requestOrigin = normalizeOrigin(refererHeader);
+    if (!requestOrigin) {
+      return { error: 'Malformed Referer header', status: 403 };
+    }
+    if (!allowed.includes(requestOrigin)) {
+      return { error: 'Origin not in project allowlist', status: 403 };
+    }
+    return null;
+  }
+
+  if (strictOrigin) {
+    return { error: 'Origin header required for this project', status: 403 };
   }
   return null;
 }
