@@ -18,3 +18,10 @@ dist/
 deploy.log
 output/
 packages/init-worker/.wrangler/
+
+# Block new markdown files from accidental commits by default.
+# Keep intentional project docs unblocked.
+*.md
+!README.md
+!docs/**/*.md
+!packages/**/README.md
