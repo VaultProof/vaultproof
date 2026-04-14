@@ -241,6 +241,13 @@ async function runInit(opts: { autoYes: boolean; dryRun: boolean }): Promise<voi
   }
 
   // ── Split and upload each key ──
+  console.log(chalk.dim('─'.repeat(60)));
+  console.log(chalk.bold('How VaultProof protects your keys:'));
+  console.log(`  ${chalk.cyan('→')} Your key is split into 2 shares ${chalk.bold('on this machine')}`);
+  console.log(`  ${chalk.cyan('→')} Each share is useless without the other`);
+  console.log(`  ${chalk.cyan('→')} VaultProof never receives your full key`);
+  console.log(chalk.dim('─'.repeat(60)) + '\n');
+
   for (const f of findings) {
     const s = ora(`Splitting ${f.varName} (${f.provider.label})...`).start();
 
@@ -334,7 +341,11 @@ async function runInit(opts: { autoYes: boolean; dryRun: boolean }): Promise<voi
       s.fail(`Network error uploading ${f.varName}: ${String(err)}`);
       process.exit(1);
     }
-    s.succeed(`Protected ${chalk.bold(f.varName)} ${chalk.dim('(' + f.provider.label + ')')}`);
+    s.succeed(`${chalk.bold(f.varName)} ${chalk.dim('(' + f.provider.label + ')')}`);
+    console.log(chalk.dim(`    Split locally on your machine`));
+    console.log(chalk.dim(`    Share 1 → VaultProof (encrypted at rest, useless alone)`));
+    console.log(chalk.dim(`    Share 2 → VaultProof (encrypted at rest, useless alone)`));
+    console.log(chalk.dim(`    A breach of VaultProof cannot expose this key\n`));
   }
 
   // ── Rewrite .env files ──
