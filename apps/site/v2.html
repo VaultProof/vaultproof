@@ -3,7 +3,7 @@
 <head>
     <!-- Google Analytics -->
     <script async src="https://www.googletagmanager.com/gtag/js?id=G-NE5RYX1WTF"></script>
-    <script>window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments);}gtag('js',new Date());gtag('config','G-NE5RYX1WTF');</script>
+    <script src="/js/v2-1.js" defer></script>
     <link rel="icon" type="image/png" href="/favicon.png">
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -22,32 +22,7 @@
 
     <!-- Tailwind CDN: SRI not applicable (dynamic response) -->
     <script src="https://cdn.tailwindcss.com/3.4.17"></script>
-    <script>
-        tailwind.config = {
-            theme: {
-                extend: {
-                    colors: {
-                        'vp-bg': '#ffffff',
-                        'vp-surface': '#f8f9fa',
-                        'vp-border': '#e5e7eb',
-                        'vp-accent': '#6366f1',
-                        'vp-cyan': '#06b6d4',
-                        'vp-navy': '#1a1a2e',
-                        'vp-body': '#4b5563',
-                    },
-                    fontFamily: {
-                        heading: ['Space Grotesk', 'system-ui', 'sans-serif'],
-                        sans: ['Inter', 'system-ui', 'sans-serif'],
-                        mono: ['JetBrains Mono', 'monospace'],
-                    },
-                    borderRadius: {
-                        'card': '12px',
-                        'btn': '10px',
-                    }
-                }
-            }
-        }
-    </script>
+    <script src="/js/v2-2.js" defer></script>
 
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -147,17 +122,31 @@
             </a>
 
             <!-- Desktop links -->
-            <div class="hidden md:flex items-center gap-6">
+            <div class="hidden md:flex items-center gap-5">
+                <!-- Product dropdown -->
+                <div class="nav-group">
+                    <button class="nav-group-btn" aria-haspopup="true" aria-expanded="false">
+                        Product
+                        <svg width="11" height="11" viewBox="0 0 12 12" fill="currentColor"><path d="M6 8L2 4h8z"/></svg>
+                    </button>
+                    <div class="nav-dropdown" role="menu">
+                        <a href="/agents" role="menuitem">AI Agents</a>
+                        <a href="/compare" role="menuitem">Compare</a>
+                        <a href="/changelog" role="menuitem">Changelog</a>
+                    </div>
+                </div>
                 <a href="/docs" class="text-sm text-gray-400 hover:text-white transition-colors">Docs</a>
                 <a href="/guides" class="text-sm text-gray-400 hover:text-white transition-colors">Guides</a>
-                <a href="/compare" class="text-sm text-gray-400 hover:text-white transition-colors">Compare</a>
-                <a href="/agents" class="text-sm text-gray-400 hover:text-white transition-colors">Agents</a>
-                <a href="/blog" class="text-sm text-gray-400 hover:text-white transition-colors">Insights</a>
-                <a href="/#pricing" class="text-sm text-gray-400 hover:text-white transition-colors">Pricing</a>
+                <a href="/blog" class="text-sm text-gray-400 hover:text-white transition-colors">Blog</a>
+                <a href="#pricing" class="text-sm text-gray-400 hover:text-white transition-colors">Pricing</a>
                 <a href="/app/login" class="nav-dashboard text-sm text-gray-400 hover:text-white transition-colors" style="display:none">Dashboard</a>
             </div>
 
-            <div class="hidden md:flex items-center">
+            <div class="hidden md:flex items-center gap-3">
+                <a href="/scan" class="btn-nav-scanner">
+                    <svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+                    Free Scanner
+                </a>
                 <a href="/app/login" class="btn-creative">Sign Up</a>
             </div>
 
@@ -168,15 +157,19 @@
         </div>
 
         <!-- Mobile menu -->
-        <div id="mobileMenu" class="mobile-menu flex-col gap-3 mt-2 max-w-5xl mx-auto bg-vp-surface/95 backdrop-blur-xl border border-vp-border/60 rounded-2xl px-5 py-4 md:hidden shadow-lg shadow-black/20" style="display:none">
-            <a href="/docs" class="text-sm text-gray-400 hover:text-white transition-colors py-1">Docs</a>
-            <a href="/guides" class="text-sm text-gray-400 hover:text-white transition-colors py-1">Guides</a>
-            <a href="/compare" class="text-sm text-gray-400 hover:text-white transition-colors py-1">Compare</a>
-            <a href="/agents" class="text-sm text-gray-400 hover:text-white transition-colors py-1">Agents</a>
-            <a href="/blog" class="text-sm text-gray-400 hover:text-white transition-colors py-1">Insights</a>
-            <a href="/#pricing" class="text-sm text-gray-400 hover:text-white transition-colors py-1">Pricing</a>
-            <a href="/app/login" class="nav-dashboard text-sm text-gray-400 hover:text-white transition-colors py-1" style="display:none">Dashboard</a>
-            <a href="/app/login" class="btn-creative text-center mt-2 py-2.5 px-5">Sign Up</a>
+        <div id="mobileMenu" class="mobile-menu flex-col gap-1 mt-2 max-w-5xl mx-auto bg-vp-surface/95 backdrop-blur-xl border border-vp-border/60 rounded-2xl px-4 py-4 md:hidden shadow-lg shadow-black/20">
+            <a href="/agents" class="text-sm text-gray-400 hover:text-white transition-colors py-2 px-2 rounded-lg hover:bg-white/5">AI Agents</a>
+            <a href="/compare" class="text-sm text-gray-400 hover:text-white transition-colors py-2 px-2 rounded-lg hover:bg-white/5">Compare</a>
+            <a href="/changelog" class="text-sm text-gray-400 hover:text-white transition-colors py-2 px-2 rounded-lg hover:bg-white/5">Changelog</a>
+            <a href="/docs" class="text-sm text-gray-400 hover:text-white transition-colors py-2 px-2 rounded-lg hover:bg-white/5">Docs</a>
+            <a href="/guides" class="text-sm text-gray-400 hover:text-white transition-colors py-2 px-2 rounded-lg hover:bg-white/5">Guides</a>
+            <a href="/blog" class="text-sm text-gray-400 hover:text-white transition-colors py-2 px-2 rounded-lg hover:bg-white/5">Blog</a>
+            <a href="#pricing" class="text-sm text-gray-400 hover:text-white transition-colors py-2 px-2 rounded-lg hover:bg-white/5">Pricing</a>
+            <a href="/app/login" class="nav-dashboard text-sm text-gray-400 hover:text-white transition-colors py-2 px-2 rounded-lg hover:bg-white/5" style="display:none">Dashboard</a>
+            <div class="mt-2 flex flex-col gap-2">
+                <a href="/scan" class="btn-nav-scanner justify-center py-2.5">Free Scanner</a>
+                <a href="/app/login" class="btn-creative text-center py-2.5 px-5">Sign Up</a>
+            </div>
         </div>
     </nav>
 
@@ -709,200 +702,8 @@
         </div>
     </footer>
 
-    <script>
-        // Nav shadow on scroll
-        var mainNav = document.getElementById('mainNav');
-        window.addEventListener('scroll', function() {
-            if (window.scrollY > 10) {
-                mainNav.classList.add('nav-scrolled');
-            } else {
-                mainNav.classList.remove('nav-scrolled');
-            }
-        });
-
-        // Annual / Monthly pricing toggle
-        var isAnnual = false;
-        function toggleAnnual() {
-            isAnnual = !isAnnual;
-            var dot = document.getElementById('annualDot');
-            var toggle = document.getElementById('annualToggle');
-            if (isAnnual) {
-                dot.style.left = '26px';
-                dot.className = 'absolute top-0.5 w-5 h-5 bg-white rounded-full transition-all shadow-sm';
-                toggle.className = 'relative w-12 h-6 bg-vp-accent rounded-full transition-colors';
-            } else {
-                dot.style.left = '2px';
-                dot.className = 'absolute top-0.5 left-0.5 w-5 h-5 bg-white rounded-full transition-all shadow-sm';
-                toggle.className = 'relative w-12 h-6 bg-gray-200 rounded-full transition-colors';
-            }
-            document.querySelectorAll('[data-monthly]').forEach(function(el) {
-                el.textContent = isAnnual ? el.getAttribute('data-annual') : el.getAttribute('data-monthly');
-            });
-            document.querySelectorAll('[data-period]').forEach(function(el) {
-                el.textContent = isAnnual ? '/yr' : '/mo';
-            });
-        }
-
-        // Scroll reveal with IntersectionObserver
-        var revealObserver = new IntersectionObserver(function(entries) {
-            entries.forEach(function(entry) {
-                if (entry.isIntersecting) {
-                    entry.target.classList.add('visible');
-                    revealObserver.unobserve(entry.target);
-                }
-            });
-        }, { threshold: 0.1, rootMargin: '0px 0px -40px 0px' });
-
-        document.querySelectorAll('.reveal').forEach(function(el) {
-            revealObserver.observe(el);
-        });
-
-        // Count-up animation for stats
-        var countStarted = false;
-        var statsObserver = new IntersectionObserver(function(entries) {
-            entries.forEach(function(entry) {
-                if (entry.isIntersecting && !countStarted) {
-                    countStarted = true;
-                    document.querySelectorAll('.counter').forEach(function(counter) {
-                        var target = parseFloat(counter.getAttribute('data-target'));
-                        var suffix = counter.getAttribute('data-suffix') || '';
-                        var decimals = parseInt(counter.getAttribute('data-decimals') || '0');
-                        var duration = 2000;
-                        var startTime = null;
-
-                        function step(timestamp) {
-                            if (!startTime) startTime = timestamp;
-                            var progress = Math.min((timestamp - startTime) / duration, 1);
-                            var eased = 1 - Math.pow(1 - progress, 3);
-                            var current = (target * eased).toFixed(decimals);
-                            counter.textContent = current + suffix;
-                            if (progress < 1) {
-                                requestAnimationFrame(step);
-                            } else {
-                                counter.textContent = (decimals > 0 ? target.toFixed(decimals) : target) + suffix;
-                            }
-                        }
-                        requestAnimationFrame(step);
-                    });
-                }
-            });
-        }, { threshold: 0.3 });
-
-        var statsBar = document.getElementById('statsBar');
-        if (statsBar) statsObserver.observe(statsBar);
-
-        // Terminal typing animation
-        var terminalLines = [
-            { cmd: 'vaultproof store --provider openai', delay: 40, output: [
-                '<span class="text-gray-500">API Key: ••••••••••••••••••••••••</span>',
-                '<span class="text-gray-500">Splitting key...</span>',
-                '<span class="text-gray-500">Storing encrypted shares...</span>',
-                '<span class="text-indigo-400">Key stored: vk_8f3a2b1c (openai)</span>',
-                '<span class="text-gray-600">  Key was split locally. Full key is only assembled during API calls.</span>'
-            ]},
-            { cmd: 'vaultproof proxy --key vk_8f3a2b1c --path /v1/chat/completions --method POST --body \'{"model":"gpt-4","messages":[{"role":"user","content":"Hello"}]}\'', delay: 30, output: [
-                '<span class="text-gray-500">{"choices":[{"message":{"content":"Hello! How can I help you today?"}}]}</span>',
-            ]},
-            { cmd: 'vaultproof revoke vk_8f3a2b1c', delay: 40, output: [
-                '<span class="text-gray-500">Are you sure you want to revoke key vk_8f3a2b1c? (y/N) y</span>',
-                '<span class="text-indigo-400">Key vk_8f3a2b1c revoked.</span>'
-            ]}
-        ];
-
-        var termText = document.getElementById('terminalText');
-        var termOutput = document.getElementById('terminalOutput');
-        var termCursor = document.getElementById('terminalCursor');
-        var currentLine = 0;
-
-        function typeCommand(line, charIndex, callback) {
-            if (charIndex < line.cmd.length) {
-                termText.textContent += line.cmd[charIndex];
-                setTimeout(function() { typeCommand(line, charIndex + 1, callback); }, line.delay);
-            } else {
-                setTimeout(callback, 400);
-            }
-        }
-
-        function showOutput(lines, lineIndex, callback) {
-            if (lineIndex < lines.length) {
-                var div = document.createElement('div');
-                div.innerHTML = lines[lineIndex];
-                div.style.opacity = '0';
-                termOutput.appendChild(div);
-                requestAnimationFrame(function() {
-                    div.style.transition = 'opacity 0.3s ease';
-                    div.style.opacity = '1';
-                });
-                setTimeout(function() { showOutput(lines, lineIndex + 1, callback); }, 350);
-            } else {
-                setTimeout(callback, 2000);
-            }
-        }
-
-        function runTerminal() {
-            var line = terminalLines[currentLine];
-            termText.textContent = '';
-            termOutput.innerHTML = '';
-
-            typeCommand(line, 0, function() {
-                showOutput(line.output, 0, function() {
-                    currentLine = (currentLine + 1) % terminalLines.length;
-                    runTerminal();
-                });
-            });
-        }
-
-        setTimeout(runTerminal, 800);
-
-        // CTA email handler
-        function handleCTA() {
-            var email = document.getElementById('ctaEmail').value;
-            if (email) {
-                window.location.href = '/app/login?email=' + encodeURIComponent(email);
-            } else {
-                window.location.href = '/app/login';
-            }
-        }
-
-        document.getElementById('ctaEmail').addEventListener('keydown', function(e) {
-            if (e.key === 'Enter') handleCTA();
-        });
-
-        // Demo split-key animation
-        function runDemo() {
-            var input = document.getElementById('demoInput').value;
-            var output = document.getElementById('demoOutput');
-            if (!input || input.length < 3) { output.classList.add('hidden'); return; }
-            output.classList.remove('hidden');
-
-            var encoder = new TextEncoder();
-            var bytes = encoder.encode(input);
-            var share1 = [];
-            var share2 = [];
-
-            for (var i = 0; i < bytes.length; i++) {
-                var rand = crypto.getRandomValues(new Uint8Array(1))[0];
-                share1.push(rand);
-                share2.push(bytes[i] ^ rand);
-            }
-
-            document.getElementById('demoShare1').textContent = btoa(String.fromCharCode.apply(null, share1));
-            document.getElementById('demoShare2').textContent = btoa(String.fromCharCode.apply(null, share2));
-        }
-
-        // Close mobile menu on anchor click
-        document.querySelectorAll('#mobileMenu a').forEach(function(link) {
-            link.addEventListener('click', function() {
-                document.getElementById('mobileMenu').classList.remove('open');
-            });
-        });
-    </script>
+    <script src="/js/v2-3.js" defer></script>
 <script src="/js/analytics.js" defer></script>
-<script>
-document.getElementById('mobileToggle').addEventListener('click', function() {
-    var menu = document.getElementById('mobileMenu');
-    menu.style.display = menu.style.display === 'none' ? 'flex' : 'none';
-});
-</script>
+<script src="/js/v2-4.js" defer></script>
 </body>
 </html>

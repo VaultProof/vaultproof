@@ -28,7 +28,7 @@ export interface ProjectKeyRecord {
   auth_header_template: string | null;
   extra_headers: Record<string, string> | null;
   share1_encrypted: string;
-  share2_encrypted: string;
+  share2_b64: string;
   created_at: string;
   revoked_at: string | null;
 }

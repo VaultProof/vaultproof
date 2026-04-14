@@ -56,18 +56,30 @@ export async function handleProxy(
   const rl = await checkProxyRateLimit(env, auth.projectId);
   if (!rl.ok) return rateLimitResponse(rl.retryAfter!);
 
+  // ── Body size limit — reject non-GET/HEAD requests exceeding 10 MB ──
+  const BODY_SIZE_LIMIT = 10 * 1024 * 1024; // 10 MB
+  if (!['GET', 'HEAD'].includes(request.method)) {
+    const contentLength = request.headers.get('content-length');
+    if (contentLength !== null && parseInt(contentLength, 10) > BODY_SIZE_LIMIT) {
+      return Response.json({ error: 'Request body too large' }, { status: 413 });
+    }
+  }
+
   // ── Reconstruct the key ──
   let reconstructed: Uint8Array | null = null;
+  let share1Plain: Uint8Array | null = null;
   let realKey: string;
   try {
     const share1CipherBytes = Uint8Array.from(atob(auth.share1Encrypted), (c) => c.charCodeAt(0));
-    const share1Plain = decrypt(share1CipherBytes, env);
+    share1Plain = decrypt(share1CipherBytes, env);
     const share1 = deserializeShare(btoa(String.fromCharCode(...share1Plain)));
     const share2 = deserializeShare(auth.share2Encrypted);
     reconstructed = combineShares([share1, share2]);
     realKey = new TextDecoder().decode(reconstructed);
   } catch {
     return Response.json({ error: 'Failed to reconstruct key' }, { status: 500 });
+  } finally {
+    if (share1Plain) share1Plain.fill(0);
   }
 
   // ── Build upstream request ──
@@ -103,6 +115,11 @@ export async function handleProxy(
     upstreamRes = await fetch(upstreamReq);
   } finally {
     if (reconstructed) zeroUint8Array(reconstructed);
+    // JS strings are immutable — setting realKey = '' drops the reference but
+    // does NOT overwrite the underlying V8 heap allocation. The string copy
+    // will persist until GC collects it. This is a known JS limitation: only
+    // the Uint8Array above can be cryptographically zeroed. Minimise the
+    // window by keeping realKey scoped tightly and avoiding string copies.
     realKey = '';
   }
 

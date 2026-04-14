@@ -3,7 +3,7 @@
 <head>
     <!-- Google Analytics -->
     <script async src="https://www.googletagmanager.com/gtag/js?id=G-NE5RYX1WTF"></script>
-    <script>window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments);}gtag('js',new Date());gtag('config','G-NE5RYX1WTF');</script>
+    <script src="/js/changelog-1.js" defer></script>
     <link rel="icon" type="image/png" href="/favicon.png">
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -26,29 +26,7 @@
 
     <!-- Tailwind CDN: SRI not applicable (dynamic response) -->
     <script src="https://cdn.tailwindcss.com/3.4.17"></script>
-    <script>
-        tailwind.config = {
-            theme: {
-                extend: {
-                    colors: {
-                        'vp-bg': '#0a0a0f',
-                        'vp-surface': '#111118',
-                        'vp-border': '#1e1e2e',
-                        'vp-accent': '#6366f1',
-                        'vp-cyan': '#06b6d4',
-                    },
-                    fontFamily: {
-                        sans: ['Inter', 'system-ui', 'sans-serif'],
-                        mono: ['JetBrains Mono', 'monospace'],
-                    },
-                    borderRadius: {
-                        'card': '12px',
-                        'btn': '12px',
-                    }
-                }
-            }
-        }
-    </script>
+    <script src="/js/changelog-2.js" defer></script>
 
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -165,17 +143,31 @@
             </a>
 
             <!-- Desktop links -->
-            <div class="hidden md:flex items-center gap-6">
+            <div class="hidden md:flex items-center gap-5">
+                <!-- Product dropdown -->
+                <div class="nav-group">
+                    <button class="nav-group-btn" aria-haspopup="true" aria-expanded="false">
+                        Product
+                        <svg width="11" height="11" viewBox="0 0 12 12" fill="currentColor"><path d="M6 8L2 4h8z"/></svg>
+                    </button>
+                    <div class="nav-dropdown" role="menu">
+                        <a href="/agents" role="menuitem">AI Agents</a>
+                        <a href="/compare" role="menuitem">Compare</a>
+                        <a href="/changelog" role="menuitem">Changelog</a>
+                    </div>
+                </div>
                 <a href="/docs" class="text-sm text-gray-400 hover:text-white transition-colors">Docs</a>
                 <a href="/guides" class="text-sm text-gray-400 hover:text-white transition-colors">Guides</a>
-                <a href="/compare" class="text-sm text-gray-400 hover:text-white transition-colors">Compare</a>
-                <a href="/agents" class="text-sm text-gray-400 hover:text-white transition-colors">Agents</a>
-                <a href="/blog" class="text-sm text-gray-400 hover:text-white transition-colors">Insights</a>
-                <a href="/#pricing" class="text-sm text-gray-400 hover:text-white transition-colors">Pricing</a>
+                <a href="/blog" class="text-sm text-gray-400 hover:text-white transition-colors">Blog</a>
+                <a href="#pricing" class="text-sm text-gray-400 hover:text-white transition-colors">Pricing</a>
                 <a href="/app/login" class="nav-dashboard text-sm text-gray-400 hover:text-white transition-colors" style="display:none">Dashboard</a>
             </div>
 
-            <div class="hidden md:flex items-center">
+            <div class="hidden md:flex items-center gap-3">
+                <a href="/scan" class="btn-nav-scanner">
+                    <svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+                    Free Scanner
+                </a>
                 <a href="/app/login" class="btn-creative">Sign Up</a>
             </div>
 
@@ -186,15 +178,19 @@
         </div>
 
         <!-- Mobile menu -->
-        <div id="mobileMenu" class="mobile-menu flex-col gap-3 mt-2 max-w-5xl mx-auto bg-vp-surface/95 backdrop-blur-xl border border-vp-border/60 rounded-2xl px-5 py-4 md:hidden shadow-lg shadow-black/20" style="display:none">
-            <a href="/docs" class="text-sm text-gray-400 hover:text-white transition-colors py-1">Docs</a>
-            <a href="/guides" class="text-sm text-gray-400 hover:text-white transition-colors py-1">Guides</a>
-            <a href="/compare" class="text-sm text-gray-400 hover:text-white transition-colors py-1">Compare</a>
-            <a href="/agents" class="text-sm text-gray-400 hover:text-white transition-colors py-1">Agents</a>
-            <a href="/blog" class="text-sm text-gray-400 hover:text-white transition-colors py-1">Insights</a>
-            <a href="/#pricing" class="text-sm text-gray-400 hover:text-white transition-colors py-1">Pricing</a>
-            <a href="/app/login" class="nav-dashboard text-sm text-gray-400 hover:text-white transition-colors py-1" style="display:none">Dashboard</a>
-            <a href="/app/login" class="btn-creative text-center mt-2 py-2.5 px-5">Sign Up</a>
+        <div id="mobileMenu" class="mobile-menu flex-col gap-1 mt-2 max-w-5xl mx-auto bg-vp-surface/95 backdrop-blur-xl border border-vp-border/60 rounded-2xl px-4 py-4 md:hidden shadow-lg shadow-black/20">
+            <a href="/agents" class="text-sm text-gray-400 hover:text-white transition-colors py-2 px-2 rounded-lg hover:bg-white/5">AI Agents</a>
+            <a href="/compare" class="text-sm text-gray-400 hover:text-white transition-colors py-2 px-2 rounded-lg hover:bg-white/5">Compare</a>
+            <a href="/changelog" class="text-sm text-gray-400 hover:text-white transition-colors py-2 px-2 rounded-lg hover:bg-white/5">Changelog</a>
+            <a href="/docs" class="text-sm text-gray-400 hover:text-white transition-colors py-2 px-2 rounded-lg hover:bg-white/5">Docs</a>
+            <a href="/guides" class="text-sm text-gray-400 hover:text-white transition-colors py-2 px-2 rounded-lg hover:bg-white/5">Guides</a>
+            <a href="/blog" class="text-sm text-gray-400 hover:text-white transition-colors py-2 px-2 rounded-lg hover:bg-white/5">Blog</a>
+            <a href="#pricing" class="text-sm text-gray-400 hover:text-white transition-colors py-2 px-2 rounded-lg hover:bg-white/5">Pricing</a>
+            <a href="/app/login" class="nav-dashboard text-sm text-gray-400 hover:text-white transition-colors py-2 px-2 rounded-lg hover:bg-white/5" style="display:none">Dashboard</a>
+            <div class="mt-2 flex flex-col gap-2">
+                <a href="/scan" class="btn-nav-scanner justify-center py-2.5">Free Scanner</a>
+                <a href="/app/login" class="btn-creative text-center py-2.5 px-5">Sign Up</a>
+            </div>
         </div>
     </nav>
 
@@ -488,55 +484,9 @@
         </div>
     </footer>
 
-    <script>
-        // Scroll reveal with IntersectionObserver
-        var revealObserver = new IntersectionObserver(function(entries) {
-            entries.forEach(function(entry) {
-                if (entry.isIntersecting) {
-                    entry.target.classList.add('visible');
-                    revealObserver.unobserve(entry.target);
-                }
-            });
-        }, { threshold: 0.1 });
-
-        document.querySelectorAll('.reveal').forEach(function(el) {
-            revealObserver.observe(el);
-        });
-
-        // Close mobile menu on link click
-        document.querySelectorAll('#mobileMenu a').forEach(function(link) {
-            link.addEventListener('click', function() {
-                document.getElementById('mobileMenu').classList.remove('open');
-            });
-        });
-    </script>
+    <script src="/js/changelog-3.js" defer></script>
 <script src="/js/analytics.js" defer></script>
-<script>
-(function() {
-    function isLoggedIn() {
-        for (var i = 0; i < localStorage.length; i++) {
-            var key = localStorage.key(i);
-            if (key && key.startsWith('sb-') && key.endsWith('-auth-token')) {
-                try {
-                    var d = JSON.parse(localStorage.getItem(key));
-                    if (d && d.access_token && d.expires_at > Date.now() / 1000) return true;
-                } catch(e) {}
-            }
-        }
-        return false;
-    }
-    if (isLoggedIn()) {
-        document.querySelectorAll('.nav-dashboard').forEach(function(el) {
-            el.style.display = '';
-        });
-    }
-})();
-</script>
-<script>
-document.getElementById('mobileToggle').addEventListener('click', function() {
-    var menu = document.getElementById('mobileMenu');
-    menu.style.display = menu.style.display === 'none' ? 'flex' : 'none';
-});
-</script>
+<script src="/js/changelog-4.js" defer></script>
+<script src="/js/changelog-5.js" defer></script>
 </body>
 </html>

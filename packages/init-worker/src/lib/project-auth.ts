@@ -64,7 +64,10 @@ export function checkOriginLock(
 ): { error: string; status: number } | null {
   if (!allowedOrigins) return null;
   const origin = request.headers.get('Origin') || request.headers.get('Referer') || '';
-  const allowed = allowedOrigins.split(',').map((s) => s.trim()).filter(Boolean);
+  const allowed = allowedOrigins.split(',').map((s) => s.trim()).filter((s) => s.length > 0);
+  if (allowed.length === 0 && strictOrigin) {
+    return { error: 'Origin not in project allowlist', status: 403 };
+  }
   const matched = allowed.some((a) => origin.startsWith(a));
   if (!matched && strictOrigin) {
     return { error: 'Origin not in project allowlist', status: 403 };
@@ -73,17 +76,20 @@ export function checkOriginLock(
 }
 
 /**
- * Combined auth + key fetch in ONE Supabase round trip.
+ * Combined auth + key fetch.
  *
- * Uses the Supabase JS client's embedded select to join project_keys
- * with its parent `projects` row. The `projects!inner` filter enforces
- * that the project exists (because of the !inner, rows without a valid
- * parent are excluded).
+ * On a cache MISS: one Supabase round trip — joins project_keys with its
+ * parent `projects` row, populates the cache with routing/origin metadata
+ * (shares excluded), and returns everything the caller needs.
  *
- * Replaces the older pattern of:
- *   1. authenticateProject()  → SELECT from projects
- *   2. fetch project_keys row → SELECT from project_keys
- * with a single network call. Saves ~100-150ms per proxy request.
+ * On a cache HIT: origin is re-checked against the live request headers,
+ * then a second targeted Supabase query fetches only the encrypted shares
+ * for this slug. Shares are intentionally excluded from the cache so that
+ * both ciphertexts are never held together in long-lived isolate memory —
+ * they exist only for the duration of a single proxy call.
+ *
+ * Net effect: cache hits still save the heavier project JOIN query (~100ms),
+ * while a smaller shares-only query runs on every request regardless.
  */
 export async function authenticateAndFetchKey(
   request: Request,
@@ -94,19 +100,36 @@ export async function authenticateAndFetchKey(
   if ('error' in parsed) return parsed;
   const token = parsed.token;
 
-  // ── Fast path: in-memory cache hit ──
-  // Origin lock is ALWAYS re-checked against the current request headers
-  // (see checkOriginLock below) — the cache only stores the allowlist
-  // string, not any authorization decision.
+  const supabase = getSupabase(env);
+
+  // ── Fast path: routing/origin metadata cached; shares still fetched fresh ──
+  // Encrypted shares are NOT cached — see CachedKey in project-cache.ts.
+  // Origin lock is ALWAYS re-checked against the current request headers —
+  // the cache stores the allowlist string, not an authorization decision.
   const cached = cacheGet(token, slug);
   if (cached) {
     const originErr = checkOriginLock(request, cached.allowedOrigins, cached.strictOrigin);
     if (originErr) return originErr;
+
+    // Fetch only the encrypted shares — a lightweight query with no project JOIN.
+    const { data: sharesData, error: sharesError } = await supabase
+      .from('project_keys')
+      .select('share1_encrypted, share2_b64')
+      .eq('slug', slug)
+      .is('revoked_at', null)
+      .maybeSingle();
+
+    if (sharesError || !sharesData) {
+      // Key was revoked or deleted since the metadata was cached; fail immediately.
+      return { error: 'Project or key not found', status: 401 };
+    }
+
+    const shares = sharesData as unknown as { share1_encrypted: string; share2_b64: string };
     return {
       projectId: cached.projectId,
       projectVpId: cached.projectVpId,
-      share1Encrypted: cached.share1Encrypted,
-      share2Encrypted: cached.share2Encrypted,
+      share1Encrypted: shares.share1_encrypted,
+      share2Encrypted: shares.share2_b64,
       upstreamBaseUrl: cached.upstreamBaseUrl,
       authHeaderName: cached.authHeaderName,
       authHeaderTemplate: cached.authHeaderTemplate,
@@ -114,15 +137,14 @@ export async function authenticateAndFetchKey(
     };
   }
 
-  const supabase = getSupabase(env);
-
+  // ── Slow path: full JOIN query ──
   // Single round trip: fetch the key row plus its parent project.
   const { data, error } = await supabase
     .from('project_keys')
     .select(`
       project_id,
       share1_encrypted,
-      share2_encrypted,
+      share2_b64,
       upstream_base_url,
       auth_header_name,
       auth_header_template,
@@ -150,7 +172,7 @@ export async function authenticateAndFetchKey(
   const row = data as unknown as {
     project_id: string;
     share1_encrypted: string;
-    share2_encrypted: string;
+    share2_b64: string;
     upstream_base_url: string | null;
     auth_header_name: string | null;
     auth_header_template: string | null;
@@ -173,12 +195,11 @@ export async function authenticateAndFetchKey(
     return { error: 'Key is missing upstream configuration', status: 500 };
   }
 
-  // ── Store in cache for the next 30s ──
+  // ── Store routing/origin metadata in cache for the next 30s ──
+  // Encrypted shares are deliberately excluded — see CachedKey in project-cache.ts.
   cacheSet(token, slug, {
     projectId: row.projects.id,
     projectVpId: row.projects.vp_proj_id,
-    share1Encrypted: row.share1_encrypted,
-    share2Encrypted: row.share2_encrypted,
     upstreamBaseUrl: row.upstream_base_url,
     authHeaderName: row.auth_header_name,
     authHeaderTemplate: row.auth_header_template,
@@ -191,7 +212,7 @@ export async function authenticateAndFetchKey(
     projectId: row.projects.id,
     projectVpId: row.projects.vp_proj_id,
     share1Encrypted: row.share1_encrypted,
-    share2Encrypted: row.share2_encrypted,
+    share2Encrypted: row.share2_b64,
     upstreamBaseUrl: row.upstream_base_url,
     authHeaderName: row.auth_header_name,
     authHeaderTemplate: row.auth_header_template,

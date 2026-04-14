@@ -1,6 +1,11 @@
 node_modules/
 dist/
 .env
+.env.local
+.env.production
+.env.development
+.env.staging
+.env.*.local
 .turbo/
 *.tsbuildinfo
 *.db

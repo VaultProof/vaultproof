@@ -3,7 +3,7 @@
 <head>
     <!-- Google Analytics -->
     <script async src="https://www.googletagmanager.com/gtag/js?id=G-NE5RYX1WTF"></script>
-    <script>window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments);}gtag('js',new Date());gtag('config','G-NE5RYX1WTF');</script>
+    <script src="/js/app-agents-1.js" defer></script>
     <link rel="icon" type="image/png" href="/favicon.png">
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -13,30 +13,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet" />
-  <script>
-    tailwind.config = {
-      theme: {
-        extend: {
-          fontFamily: {
-            sans: ['Inter', 'sans-serif'],
-            mono: ['JetBrains Mono', 'monospace']
-          },
-          colors: {
-            brand: '#6366f1',
-            'brand-hover': '#5558e6',
-            cyan: '#06b6d4',
-            surface: '#0a0a0f',
-            card: '#111118',
-            border: '#1e1e2e'
-          },
-          borderRadius: {
-            xl: '12px',
-            '2xl': '16px'
-          }
-        }
-      }
-    };
-  </script>
+  <script src="/js/app-agents-2.js" defer></script>
   <style>
     body { background: #0a0a0f; font-family: 'Inter', sans-serif; }
     ::-webkit-scrollbar { width: 6px; height: 6px; }
@@ -185,26 +162,7 @@
   </div>
   </div>
 
-  <script>
-    const token = localStorage.getItem('vaultproof_token');
-    const user = JSON.parse(localStorage.getItem('vaultproof_user') || '{}');
-    if (!token) { window.location.href = 'login'; }
-    document.getElementById('sidebarEmail').textContent = user.email || '';
-    document.getElementById('menuBtn').addEventListener('click', toggleMobileSidebar);
-
-    function toggleMobileSidebar() {
-      document.getElementById('sidebar').classList.toggle('-translate-x-full');
-      document.getElementById('sidebarOverlay').classList.toggle('hidden');
-    }
-
-    async function logout() {
-      Object.keys(localStorage).forEach(function(key) {
-        if (key.startsWith('vaultproof_') || key.startsWith('sb-')) localStorage.removeItem(key);
-      });
-      sessionStorage.clear();
-      window.location.href = 'login';
-    }
-  </script>
+  <script src="/js/app-agents-3.js" defer></script>
   <script src="/js/analytics.js" defer></script>
 </body>
 </html>

@@ -90,7 +90,8 @@ export async function handleProjects(
       .single();
 
     if (error || !data) {
-      return Response.json({ error: 'Failed to create project', detail: error?.message }, { status: 500 });
+      console.error('Failed to create project:', error?.message);
+      return Response.json({ error: 'Failed to create project', detail: 'Internal server error' }, { status: 500 });
     }
 
     const project = data as ProjectRecord;
@@ -211,14 +212,15 @@ export async function handleProjects(
           auth_header_template,
           extra_headers: extra_headers ?? null,
           share1_encrypted: share1Encrypted,
-          share2_encrypted: share2,
+          share2_b64: share2,
           revoked_at: null,
         },
         { onConflict: 'project_id,provider' },
       );
 
     if (upsertErr) {
-      return Response.json({ error: 'Failed to store key', detail: upsertErr.message }, { status: 500 });
+      console.error('Failed to store key:', upsertErr.message);
+      return Response.json({ error: 'Failed to store key', detail: 'Internal server error' }, { status: 500 });
     }
 
     return Response.json({ ok: true, provider, slug: finalSlug }, { status: 201 });
@@ -318,7 +320,7 @@ export async function handleProjects(
       .update({
         revoked_at: new Date().toISOString(),
         share1_encrypted: null,
-        share2_encrypted: null,
+        share2_b64: null,
       })
       .eq('id', keyId)
       .eq('project_id', projectId)
@@ -379,7 +381,7 @@ export async function handleProjects(
       .from('project_keys')
       .update({
         share1_encrypted: share1Encrypted,
-        share2_encrypted: share2,
+        share2_b64: share2,
       })
       .eq('id', keyId)
       .eq('project_id', projectId)

@@ -96,6 +96,11 @@ export function split(secret: Uint8Array, n: number, k: number): Share[] {
     for (let i = 0; i < n; i++) {
       shares[i].y[byteIdx] = evalPoly(coeffs, shares[i].x);
     }
+
+    // Zero out key material so polynomial coefficients and random bytes
+    // do not linger in memory after this byte's shares are computed.
+    coeffs.fill(0);
+    rand.fill(0);
   }
 
   return shares;
@@ -113,6 +118,19 @@ export function combine(shares: Share[]): Uint8Array {
   const secretLen = shares[0].y.length;
   if (!shares.every((s) => s.y.length === secretLen)) {
     throw new Error('All shares must have the same length');
+  }
+
+  // Reject x=0: the polynomial is evaluated at x=0 to recover the secret,
+  // so a share with x=0 would be the secret itself and must never be accepted.
+  if (shares.some((s) => s.x === 0)) {
+    throw new Error('Invalid share: x must not be 0');
+  }
+
+  // Reject duplicate x values: Lagrange interpolation requires distinct x points;
+  // duplicates would cause division by zero (gf256Add(x_i, x_j) = 0 when x_i === x_j).
+  const xValues = new Set(shares.map((s) => s.x));
+  if (xValues.size !== shares.length) {
+    throw new Error('Invalid shares: duplicate x values');
   }
 
   const secret = new Uint8Array(secretLen);

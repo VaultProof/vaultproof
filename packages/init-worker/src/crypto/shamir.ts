@@ -23,7 +23,24 @@ export function deserializeShare(base64: string): Share {
 
 export function combineShares(shares: Share[]): Uint8Array {
   if (shares.length < 2) throw new Error('Need at least 2 shares');
+
+  // Validate: no x=0 (reserved/degenerate) and no duplicate x values
+  const xSeen = new Set<number>();
+  for (const share of shares) {
+    if (share.x === 0) throw new Error('Invalid share: x=0 is not a valid share index');
+    if (xSeen.has(share.x)) throw new Error(`Invalid share: duplicate x value ${share.x}`);
+    xSeen.add(share.x);
+  }
+
   const len = shares[0].y.length;
+
+  // Validate: all shares must have the same y length
+  for (let i = 1; i < shares.length; i++) {
+    if (shares[i].y.length !== len) {
+      throw new Error(`Invalid share: y length mismatch (expected ${len}, got ${shares[i].y.length})`);
+    }
+  }
+
   const result = new Uint8Array(len);
 
   for (let i = 0; i < len; i++) {
