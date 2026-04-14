@@ -15,7 +15,6 @@
     <changefreq>weekly</changefreq>
     <priority>0.8</priority>
   </url>
-  <url><loc>https://vaultproof.dev/changelog</loc><priority>0.5</priority><changefreq>weekly</changefreq></url>
   <url><loc>https://vaultproof.dev/verify</loc><priority>0.6</priority><changefreq>monthly</changefreq></url>
   <url><loc>https://vaultproof.dev/terms</loc><priority>0.3</priority><changefreq>monthly</changefreq></url>
   <url><loc>https://vaultproof.dev/privacy</loc><priority>0.3</priority><changefreq>monthly</changefreq></url>
