@@ -3,7 +3,7 @@
 <head>
     <!-- Google Analytics -->
     <script async src="https://www.googletagmanager.com/gtag/js?id=G-NE5RYX1WTF"></script>
-    <script>window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments);}gtag('js',new Date());gtag('config','G-NE5RYX1WTF');</script>
+    <script src="/js/demo-1.js" defer></script>
     <link rel="icon" type="image/png" href="/favicon.png">
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -21,32 +21,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet" />
-  <script>
-    tailwind.config = {
-      theme: {
-        extend: {
-          fontFamily: {
-            sans: ['Inter', 'sans-serif'],
-            mono: ['JetBrains Mono', 'monospace']
-          },
-          colors: {
-            brand: '#6366f1',
-            'brand-light': '#818cf8',
-            cyan: '#06b6d4',
-            surface: '#0a0a0f',
-            card: '#111118',
-            border: '#1e1e2e',
-            'vp-surface': '#111118',
-            'vp-border': '#1e1e2e',
-          },
-          borderRadius: {
-            xl: '12px',
-            '2xl': '16px'
-          }
-        }
-      }
-    };
-  </script>
+  <script src="/js/demo-2.js" defer></script>
   <style>
     *, *::before, *::after { box-sizing: border-box; }
     body { font-family: 'Inter', sans-serif; background: #0a0a0f; margin: 0; }
@@ -258,17 +233,31 @@
             </a>
 
             <!-- Desktop links -->
-            <div class="hidden md:flex items-center gap-6">
+            <div class="hidden md:flex items-center gap-5">
+                <!-- Product dropdown -->
+                <div class="nav-group">
+                    <button class="nav-group-btn" aria-haspopup="true" aria-expanded="false">
+                        Product
+                        <svg width="11" height="11" viewBox="0 0 12 12" fill="currentColor"><path d="M6 8L2 4h8z"/></svg>
+                    </button>
+                    <div class="nav-dropdown" role="menu">
+                        <a href="/agents" role="menuitem">AI Agents</a>
+                        <a href="/compare" role="menuitem">Compare</a>
+                        <a href="/changelog" role="menuitem">Changelog</a>
+                    </div>
+                </div>
                 <a href="/docs" class="text-sm text-gray-400 hover:text-white transition-colors">Docs</a>
                 <a href="/guides" class="text-sm text-gray-400 hover:text-white transition-colors">Guides</a>
-                <a href="/compare" class="text-sm text-gray-400 hover:text-white transition-colors">Compare</a>
-                <a href="/agents" class="text-sm text-gray-400 hover:text-white transition-colors">Agents</a>
-                <a href="/blog" class="text-sm text-gray-400 hover:text-white transition-colors">Insights</a>
-                <a href="/#pricing" class="text-sm text-gray-400 hover:text-white transition-colors">Pricing</a>
+                <a href="/blog" class="text-sm text-gray-400 hover:text-white transition-colors">Blog</a>
+                <a href="#pricing" class="text-sm text-gray-400 hover:text-white transition-colors">Pricing</a>
                 <a href="/app/login" class="nav-dashboard text-sm text-gray-400 hover:text-white transition-colors" style="display:none">Dashboard</a>
             </div>
 
-            <div class="hidden md:flex items-center">
+            <div class="hidden md:flex items-center gap-3">
+                <a href="/scan" class="btn-nav-scanner">
+                    <svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+                    Free Scanner
+                </a>
                 <a href="/app/login" class="btn-creative">Sign Up</a>
             </div>
 
@@ -279,15 +268,19 @@
         </div>
 
         <!-- Mobile menu -->
-        <div id="mobileMenu" class="mobile-menu flex-col gap-3 mt-2 max-w-5xl mx-auto bg-vp-surface/95 backdrop-blur-xl border border-vp-border/60 rounded-2xl px-5 py-4 md:hidden shadow-lg shadow-black/20" style="display:none">
-            <a href="/docs" class="text-sm text-gray-400 hover:text-white transition-colors py-1">Docs</a>
-            <a href="/guides" class="text-sm text-gray-400 hover:text-white transition-colors py-1">Guides</a>
-            <a href="/compare" class="text-sm text-gray-400 hover:text-white transition-colors py-1">Compare</a>
-            <a href="/agents" class="text-sm text-gray-400 hover:text-white transition-colors py-1">Agents</a>
-            <a href="/blog" class="text-sm text-gray-400 hover:text-white transition-colors py-1">Insights</a>
-            <a href="/#pricing" class="text-sm text-gray-400 hover:text-white transition-colors py-1">Pricing</a>
-            <a href="/app/login" class="nav-dashboard text-sm text-gray-400 hover:text-white transition-colors py-1" style="display:none">Dashboard</a>
-            <a href="/app/login" class="btn-creative text-center mt-2 py-2.5 px-5">Sign Up</a>
+        <div id="mobileMenu" class="mobile-menu flex-col gap-1 mt-2 max-w-5xl mx-auto bg-vp-surface/95 backdrop-blur-xl border border-vp-border/60 rounded-2xl px-4 py-4 md:hidden shadow-lg shadow-black/20">
+            <a href="/agents" class="text-sm text-gray-400 hover:text-white transition-colors py-2 px-2 rounded-lg hover:bg-white/5">AI Agents</a>
+            <a href="/compare" class="text-sm text-gray-400 hover:text-white transition-colors py-2 px-2 rounded-lg hover:bg-white/5">Compare</a>
+            <a href="/changelog" class="text-sm text-gray-400 hover:text-white transition-colors py-2 px-2 rounded-lg hover:bg-white/5">Changelog</a>
+            <a href="/docs" class="text-sm text-gray-400 hover:text-white transition-colors py-2 px-2 rounded-lg hover:bg-white/5">Docs</a>
+            <a href="/guides" class="text-sm text-gray-400 hover:text-white transition-colors py-2 px-2 rounded-lg hover:bg-white/5">Guides</a>
+            <a href="/blog" class="text-sm text-gray-400 hover:text-white transition-colors py-2 px-2 rounded-lg hover:bg-white/5">Blog</a>
+            <a href="#pricing" class="text-sm text-gray-400 hover:text-white transition-colors py-2 px-2 rounded-lg hover:bg-white/5">Pricing</a>
+            <a href="/app/login" class="nav-dashboard text-sm text-gray-400 hover:text-white transition-colors py-2 px-2 rounded-lg hover:bg-white/5" style="display:none">Dashboard</a>
+            <div class="mt-2 flex flex-col gap-2">
+                <a href="/scan" class="btn-nav-scanner justify-center py-2.5">Free Scanner</a>
+                <a href="/app/login" class="btn-creative text-center py-2.5 px-5">Sign Up</a>
+            </div>
         </div>
     </nav>
 
@@ -863,187 +856,7 @@
     </a>
   </div>
 
-  <script>
-    // ── Sidebar (mobile toggle only, no auth) ──
-    var sidebar = document.getElementById('sidebar');
-    var overlay = document.getElementById('sidebarOverlay');
-    var mainWrapper = document.getElementById('mainWrapper');
-
-    document.getElementById('menuBtn').addEventListener('click', toggleMobileSidebar);
-
-    function toggleMobileSidebar() {
-      sidebar.classList.toggle('-translate-x-full');
-      overlay.classList.toggle('hidden');
-    }
-
-    function handleResize() {
-      if (window.innerWidth < 1024) {
-        sidebar.classList.add('-translate-x-full');
-        sidebar.classList.remove('sidebar-collapsed');
-        sidebar.classList.add('sidebar-expanded');
-        mainWrapper.style.marginLeft = '0';
-        overlay.classList.add('hidden');
-      } else {
-        sidebar.classList.remove('-translate-x-full');
-        sidebar.classList.remove('sidebar-collapsed');
-        sidebar.classList.add('sidebar-expanded');
-        mainWrapper.style.marginLeft = '240px';
-      }
-    }
-    window.addEventListener('resize', handleResize);
-    handleResize();
-
-    // ── Sparklines ──
-    function drawSparkline(canvas, data, color) {
-      var ctx = canvas.getContext('2d');
-      var dpr = window.devicePixelRatio || 1;
-      var w = canvas.width;
-      var h = canvas.height;
-      canvas.width = w * dpr;
-      canvas.height = h * dpr;
-      canvas.style.width = w + 'px';
-      canvas.style.height = h + 'px';
-      ctx.scale(dpr, dpr);
-
-      if (!data || data.length < 2) return;
-      var max = Math.max.apply(null, data);
-      var min = Math.min.apply(null, data);
-      var range = max - min || 1;
-      var step = w / (data.length - 1);
-
-      ctx.beginPath();
-      ctx.strokeStyle = color;
-      ctx.lineWidth = 1.5;
-      ctx.lineJoin = 'round';
-      data.forEach(function(v, i) {
-        var x = i * step;
-        var y = h - ((v - min) / range) * (h - 2) - 1;
-        if (i === 0) ctx.moveTo(x, y);
-        else ctx.lineTo(x, y);
-      });
-      ctx.stroke();
-    }
-
-    var sparkData = {
-      keys: [2, 2, 3, 3, 3, 4, 4, 4, 4, 4],
-      apps: [1, 2, 2, 2, 3, 3, 3, 3, 3, 3],
-      calls: [80, 95, 110, 105, 120, 115, 130, 125, 127, 127],
-      errors: [1.2, 0.9, 1.1, 0.7, 0.8, 1.0, 0.6, 0.9, 0.8, 0.8]
-    };
-    document.querySelectorAll('.sparkline').forEach(function(c) {
-      var stat = c.dataset.stat;
-      var colors = { keys: '#6366f1', apps: '#10b981', calls: '#06b6d4', errors: '#ef4444' };
-      drawSparkline(c, sparkData[stat] || [], colors[stat] || '#6366f1');
-    });
-
-    // ── Usage Chart (static fake data) ──
-    (function() {
-      var days = [];
-      for (var i = 0; i < 30; i++) {
-        var d = new Date();
-        d.setDate(d.getDate() - (29 - i));
-        var base = 100 + Math.sin(i * 0.4) * 40;
-        days.push({
-          date: d.toISOString().split('T')[0],
-          calls: Math.max(0, Math.round(base + (Math.random() - 0.5) * 30)),
-          errors: Math.round(Math.random() * 4)
-        });
-      }
-
-      var labels = days.map(function(d) {
-        var dt = new Date(d.date);
-        return dt.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
-      });
-      var callsData = days.map(function(d) { return d.calls; });
-      var errorsData = days.map(function(d) { return d.errors; });
-
-      var ctx = document.getElementById('usageChart').getContext('2d');
-      new Chart(ctx, {
-        type: 'line',
-        data: {
-          labels: labels,
-          datasets: [
-            {
-              label: 'API Calls',
-              data: callsData,
-              borderColor: '#06b6d4',
-              backgroundColor: 'rgba(6, 182, 212, 0.08)',
-              fill: true,
-              tension: 0.4,
-              pointRadius: 0,
-              pointHoverRadius: 5,
-              pointHoverBackgroundColor: '#06b6d4',
-              borderWidth: 2
-            },
-            {
-              label: 'Errors',
-              data: errorsData,
-              borderColor: '#ef4444',
-              backgroundColor: 'rgba(239, 68, 68, 0.05)',
-              fill: false,
-              tension: 0.4,
-              pointRadius: 3,
-              pointBackgroundColor: '#ef4444',
-              pointBorderColor: '#ef4444',
-              borderWidth: 1.5,
-              pointHoverRadius: 6
-            }
-          ]
-        },
-        options: {
-          responsive: true,
-          maintainAspectRatio: false,
-          animation: { duration: 1000, easing: 'easeOutQuart' },
-          interaction: { mode: 'index', intersect: false },
-          plugins: {
-            legend: {
-              display: true,
-              position: 'top',
-              align: 'end',
-              labels: {
-                color: '#6b7280',
-                font: { family: 'Inter', size: 12 },
-                boxWidth: 12,
-                boxHeight: 2,
-                padding: 16
-              }
-            },
-            tooltip: {
-              backgroundColor: '#1e1e2e',
-              titleColor: '#e5e7eb',
-              bodyColor: '#9ca3af',
-              borderColor: '#2a2a3a',
-              borderWidth: 1,
-              cornerRadius: 8,
-              padding: 12,
-              titleFont: { family: 'Inter', size: 13, weight: '600' },
-              bodyFont: { family: 'Inter', size: 12 }
-            }
-          },
-          scales: {
-            x: {
-              grid: { color: '#1e1e2e', drawBorder: false },
-              ticks: {
-                color: '#6b7280',
-                font: { family: 'Inter', size: 11 },
-                maxTicksLimit: 10
-              },
-              border: { display: false }
-            },
-            y: {
-              grid: { color: '#1e1e2e', drawBorder: false },
-              ticks: {
-                color: '#6b7280',
-                font: { family: 'Inter', size: 11 }
-              },
-              border: { display: false },
-              beginAtZero: true
-            }
-          }
-        }
-      });
-    })();
-  </script>
+  <script src="/js/demo-3.js" defer></script>
 
   <!-- Guided Tour Overlay & Bubble -->
   <div id="guide-overlay" class="guide-overlay"></div>
@@ -1060,177 +873,7 @@
     </div>
   </div>
 
-  <script>
-  // ── Guided Tour ──
-  var tourSteps = [
-    { target: '#demo-banner', text: 'Welcome to VaultProof! This is a demo of your dashboard. Let\u2019s walk through how everything works.', position: 'bottom' },
-    { target: '#stats-cards', text: 'These cards show your real-time usage \u2014 total keys stored, active providers, API calls today, and error rate.', position: 'bottom' },
-    { target: '#keys-table', text: 'This is where your API keys live. Each key is split before storage \u2014 the full key is only assembled briefly during API calls. You can add, rotate, or revoke keys here.', position: 'bottom' },
-    { target: '#keys-header', text: 'To store a key, click \u2018Add Key\u2019, choose your provider (OpenAI, Anthropic, etc.), and paste your key. It\u2019s split instantly in your browser.', position: 'bottom' },
-    { target: '#dev-key-card', text: 'After adding your API keys, go to the API Keys page \u2192 Developer API Keys and create a \u2018vp_live_\u2019 key. This is how your app or CLI authenticates with VaultProof.', position: 'bottom' },
-    { target: '#dev-key-card', text: 'Copy the \u2018vp_live_\u2019 key and paste it into your project\u2019s .env file as VAULTPROOF_API_KEY. Then use it as the Bearer token when calling the VaultProof proxy \u2014 your stored keys are now accessible from your app.', position: 'top' },
-    { target: '#activity-feed', text: 'Every API call, key rotation, and access event shows up here in real time. Full audit trail for your keys.', position: 'left' },
-    { target: '#nav-api-keys', text: 'Manage all your stored keys from the API Keys page.', position: 'right' },
-    { target: '#nav-access-logs', text: 'View detailed logs of every proxied API call \u2014 who made it, when, and which key was used.', position: 'right' },
-    { target: '#nav-settings', text: 'Manage your plan, billing, and account settings here.', position: 'right' },
-    { target: '#cli-card', text: 'Prefer the terminal? Install our CLI to store keys, proxy calls, and inject env vars \u2014 all from the command line.', position: 'bottom' },
-    { target: '#quick-access', text: 'Quick links to jump to any section. Ready to try it for real?', position: 'top', last: true }
-  ];
-
-  var currentStep = 0;
-  var tourActive = false;
-
-  var bubbleEl = document.getElementById('guide-bubble');
-  var arrowEl = document.getElementById('guide-arrow');
-  var textEl = document.getElementById('guide-text');
-  var counterEl = document.getElementById('guide-step-counter');
-  var backBtn = document.getElementById('guide-back');
-  var nextBtn = document.getElementById('guide-next');
-  var overlayEl = document.getElementById('guide-overlay');
-  var restartBtn = document.getElementById('restart-tour');
-
-  function showStep(step) {
-    // Remove previous highlights
-    document.querySelectorAll('.guide-highlight').forEach(function(el) {
-      el.classList.remove('guide-highlight');
-    });
-
-    var s = tourSteps[step];
-    var target = document.querySelector(s.target);
-    if (!target) return;
-
-    // Add highlight
-    target.classList.add('guide-highlight');
-
-    // Scroll target into view — for fixed/sidebar elements, scroll to top first
-    var rect = target.getBoundingClientRect();
-    if (rect.top < 0 || rect.bottom > window.innerHeight) {
-      window.scrollTo({ top: 0, behavior: 'smooth' });
-    }
-    setTimeout(function() {
-      target.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-    }, 100);
-
-    // Update bubble content
-    textEl.textContent = s.text;
-    counterEl.textContent = 'Step ' + (step + 1) + ' of ' + tourSteps.length;
-
-    // Back button visibility
-    backBtn.style.display = step === 0 ? 'none' : '';
-
-    // Last step: change Next to Get Started
-    if (s.last) {
-      nextBtn.textContent = 'Get Started';
-      nextBtn.onclick = function() { window.location.href = '/app/login'; };
-    } else {
-      nextBtn.textContent = 'Next';
-      nextBtn.onclick = nextStep;
-    }
-
-    // Position the bubble after scroll settles
-    setTimeout(function() { positionBubble(target, s.position); }, 350);
-  }
-
-  function positionBubble(target, pos) {
-    var rect = target.getBoundingClientRect();
-    var scrollX = window.scrollX || window.pageXOffset;
-    var scrollY = window.scrollY || window.pageYOffset;
-
-    bubbleEl.classList.remove('visible');
-    bubbleEl.style.transform = '';
-
-    var bw = 320; // max-width of bubble
-    var gap = 16;
-
-    var top, left;
-
-    if (pos === 'bottom') {
-      top = rect.bottom + scrollY + gap;
-      left = rect.left + scrollX;
-      arrowEl.setAttribute('data-pos', 'bottom');
-    } else if (pos === 'top') {
-      top = rect.top + scrollY - gap - 120; // approximate bubble height
-      left = rect.left + scrollX;
-      arrowEl.setAttribute('data-pos', 'top');
-    } else if (pos === 'right') {
-      top = rect.top + scrollY - 8;
-      left = rect.right + scrollX + gap;
-      arrowEl.setAttribute('data-pos', 'right');
-    } else if (pos === 'left') {
-      top = rect.top + scrollY - 8;
-      left = rect.left + scrollX - bw - gap;
-      arrowEl.setAttribute('data-pos', 'right');
-    }
-
-    // Clamp to viewport
-    if (left + bw > window.innerWidth + scrollX - 16) {
-      left = window.innerWidth + scrollX - bw - 16;
-    }
-    if (left < scrollX + 16) {
-      left = scrollX + 16;
-    }
-
-    bubbleEl.style.top = top + 'px';
-    bubbleEl.style.left = left + 'px';
-
-    // Show bubble with animation
-    requestAnimationFrame(function() {
-      bubbleEl.classList.add('visible');
-    });
-  }
-
-  function nextStep() {
-    if (currentStep < tourSteps.length - 1) {
-      currentStep++;
-      showStep(currentStep);
-    }
-  }
-
-  function prevStep() {
-    if (currentStep > 0) {
-      currentStep--;
-      showStep(currentStep);
-    }
-  }
-
-  function endTour() {
-    tourActive = false;
-    bubbleEl.classList.remove('visible');
-    overlayEl.classList.remove('active');
-    document.querySelectorAll('.guide-highlight').forEach(function(el) {
-      el.classList.remove('guide-highlight');
-    });
-    restartBtn.classList.remove('hidden');
-    localStorage.setItem('vp_tour_done', '1');
-  }
-
-  function startTour() {
-    tourActive = true;
-    currentStep = 0;
-    overlayEl.classList.add('active');
-    restartBtn.classList.add('hidden');
-    showStep(0);
-  }
-
-  // Click overlay to dismiss tour
-  overlayEl.addEventListener('click', endTour);
-
-  // Auto-start tour on first visit (after page animations settle)
-  if (!localStorage.getItem('vp_tour_done')) {
-    setTimeout(startTour, 1200);
-  } else {
-    restartBtn.classList.remove('hidden');
-  }
-
-  // Reposition bubble on resize
-  window.addEventListener('resize', function() {
-    if (tourActive) {
-      var s = tourSteps[currentStep];
-      var target = document.querySelector(s.target);
-      if (target) positionBubble(target, s.position);
-    }
-  });
-  </script>
+  <script src="/js/demo-4.js" defer></script>
 
   <script src="/js/analytics.js" defer></script>
   <footer class="text-center py-8 text-gray-600 text-sm border-t border-vp-border mt-12">
@@ -1240,11 +883,6 @@
         <a href="/security" class="text-sm text-gray-500 hover:text-white transition-colors">Security</a>
     </div>
   </footer>
-<script>
-document.getElementById('mobileToggle').addEventListener('click', function() {
-    var menu = document.getElementById('mobileMenu');
-    menu.style.display = menu.style.display === 'none' ? 'flex' : 'none';
-});
-</script>
+<script src="/js/demo-5.js" defer></script>
 </body>
 </html>

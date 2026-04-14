@@ -30,12 +30,12 @@ function ok(name: string, cond: boolean, detail?: string): void {
   else { failed++; console.log(`  FAIL: ${name}${detail ? ' — ' + detail : ''}`); }
 }
 
-function makeValue(projectId: string, slug: string): CachedKey {
+function makeValue(projectId: string, _slug: string): CachedKey {
   return {
     projectId,
     projectVpId: `vp-proj-${projectId}`,
-    share1Encrypted: `share1-for-${projectId}-${slug}`,
-    share2Encrypted: `share2-for-${projectId}-${slug}`,
+    // Shares are intentionally absent from CachedKey — they are always
+    // fetched fresh from Supabase and never stored in the cache.
     upstreamBaseUrl: 'https://api.openai.com',
     authHeaderName: 'Authorization',
     authHeaderTemplate: 'Bearer {key}',
@@ -60,7 +60,7 @@ console.log('── basic hit/miss ──');
   const hit = cacheGet('vp-proj-xxx', 'openai');
   ok('hit returns value', hit !== null);
   ok('hit has correct projectId', hit?.projectId === 'xxx');
-  ok('hit has encrypted share (ciphertext)', hit?.share1Encrypted.startsWith('share1-') === true);
+  ok('hit has correct upstreamBaseUrl', hit?.upstreamBaseUrl === 'https://api.openai.com');
 }
 
 cacheClear();
@@ -75,8 +75,8 @@ console.log('── key scoping ──');
   ok('project A openai hits A', cacheGet('vp-proj-a', 'openai')?.projectId === 'a');
   ok('project B openai hits B', cacheGet('vp-proj-b', 'openai')?.projectId === 'b');
   ok('project A stripe different row', cacheGet('vp-proj-a', 'stripe')?.projectId === 'a');
-  ok('project A stripe uses its own share',
-    cacheGet('vp-proj-a', 'stripe')?.share1Encrypted === 'share1-for-a-stripe');
+  ok('project A stripe has correct upstreamBaseUrl',
+    cacheGet('vp-proj-a', 'stripe')?.upstreamBaseUrl === 'https://api.openai.com');
   ok('three entries', cacheSize() === 3);
 
   ok('missing slug on real project → null', cacheGet('vp-proj-a', 'ghost') === null);
@@ -159,15 +159,15 @@ cacheClear();
 // ── Security invariants ──────────────────────────────────────────────
 console.log('── security invariants ──');
 {
-  // 1. The cache stores the encrypted share, never plaintext.
+  // 1. The cache never stores encrypted shares — they are always fetched
+  //    fresh from Supabase. Verify that the cached value carries no share fields.
   cacheSet('vp-proj-sec', 'openai', makeValue('sec', 'openai'));
   const entry = cacheGet('vp-proj-sec', 'openai');
-  ok('cached share1 contains "share1-" prefix (still ciphertext)',
-    entry?.share1Encrypted.startsWith('share1-') === true);
-  // The test value isn't actually encrypted; the real crypto path
-  // passes base64-encoded ciphertext here. What this assertion
-  // *means* is: whatever the caller put in cache, the cache gives
-  // back verbatim. No decryption happens inside the cache.
+  ok('cached entry has no share1Encrypted field',
+    !('share1Encrypted' in (entry as object)));
+  ok('cached entry has no share2Encrypted field',
+    !('share2Encrypted' in (entry as object)));
+  ok('cached entry carries routing metadata', entry?.upstreamBaseUrl === 'https://api.openai.com');
 
   // 2. Different tokens don't collide via coincidence or string quirks.
   cacheSet('vp-proj-a|openai', 'x', makeValue('collide', 'x'));

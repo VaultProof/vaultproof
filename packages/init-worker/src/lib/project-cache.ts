@@ -1,9 +1,9 @@
 /**
- * In-memory cache for the result of authenticateAndFetchKey.
+ * In-memory cache for project routing metadata used by authenticateAndFetchKey.
  *
  * One entry per (vp-proj-token, slug) pair. Hits let the proxy skip
- * the Supabase round trip entirely, cutting p50 overhead from ~300ms
- * to ~80-100ms for workloads that hammer the same project.
+ * the Supabase round trip for origin and routing checks, cutting p50
+ * overhead for workloads that hammer the same project.
  *
  * Security constraints — read these before editing:
  *
@@ -16,10 +16,11 @@
  *      result is never cached, so rotation and first-time registration
  *      both work immediately without a 30s delay.
  *
- *   3. Ciphertext is cached. Plaintext keys are NEVER cached — the
- *      shares in the cache are still encrypted; decrypt+combine still
- *      happens on every call in a new memory buffer that is zeroed
- *      after use.
+ *   3. Encrypted shares are NOT cached. Both share1_encrypted and
+ *      share2_b64 are intentionally excluded from the cached
+ *      type so that both ciphertexts never sit together in long-lived
+ *      memory. Shares are always fetched fresh from Supabase on every
+ *      proxy call — only routing and origin metadata is cached.
  *
  *   4. Origin-lock enforcement is fresh on every request. The cache
  *      stores the allowlist STRING but checkOriginLock() runs against
@@ -38,8 +39,7 @@
 export interface CachedKey {
   projectId: string;
   projectVpId: string;
-  share1Encrypted: string;
-  share2Encrypted: string;
+  // share1Encrypted and share2Encrypted are intentionally absent — see constraint 3 above.
   upstreamBaseUrl: string;
   authHeaderName: string;
   authHeaderTemplate: string;

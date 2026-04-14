@@ -97,12 +97,35 @@ export default function AdminPage() {
     if (token) fetchStats();
   }, [token, fetchStats]);
 
+  // Do not render any admin UI until the backend auth check has completed.
+  // Rendering before the 403 check would expose the page shell to non-admins
+  // for the duration of the in-flight request.
+  if (loading && !overview && !referralStats) {
+    return (
+      <div className="min-h-screen bg-zinc-950 flex items-center justify-center">
+        <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-violet-500" />
+      </div>
+    );
+  }
+
   if (error && !token) {
     return (
       <div className="min-h-screen bg-zinc-950 flex items-center justify-center">
         <div className="text-center">
           <p className="text-red-400 mb-4">{error}</p>
           <Link href="/" className="text-violet-400 hover:underline">Go to login</Link>
+        </div>
+      </div>
+    );
+  }
+
+  // Show access-denied screen if the backend returned 403.
+  if (error && !overview && !referralStats) {
+    return (
+      <div className="min-h-screen bg-zinc-950 flex items-center justify-center">
+        <div className="text-center">
+          <p className="text-red-400 mb-4">{error}</p>
+          <Link href="/" className="text-violet-400 hover:underline">Go to dashboard</Link>
         </div>
       </div>
     );

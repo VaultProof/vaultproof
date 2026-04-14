@@ -1,0 +1,492 @@
+<!DOCTYPE html>
+<html lang="en" class="scroll-smooth">
+<head>
+    <!-- Google Analytics -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-NE5RYX1WTF"></script>
+    <script src="/js/changelog-1.js" defer></script>
+    <link rel="icon" type="image/png" href="/favicon.png">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Changelog | VaultProof</title>
+    <meta name="description" content="What's new in VaultProof. See the latest features, improvements, and updates to the split-key API key vault.">
+    <meta name="keywords" content="VaultProof changelog, VaultProof updates, API key security updates, new features, release notes">
+    <meta property="og:title" content="Changelog — VaultProof">
+    <meta property="og:description" content="What's new in VaultProof. See the latest features, improvements, and updates.">
+    <meta property="og:url" content="https://vaultproof.dev/changelog">
+    <meta property="og:type" content="website">
+    <meta property="og:image" content="https://vaultproof.dev/ogimage.png">
+    <meta name="twitter:card" content="summary">
+    <meta name="twitter:title" content="Changelog — VaultProof">
+    <meta name="twitter:description" content="What's new in VaultProof. See the latest features and updates.">
+    <meta http-equiv="X-Content-Type-Options" content="nosniff">
+    <meta http-equiv="X-Frame-Options" content="DENY">
+    <meta name="referrer" content="strict-origin-when-cross-origin">
+    <link rel="canonical" href="https://vaultproof.dev/changelog">
+    <meta name="twitter:image" content="https://vaultproof.dev/ogimage.png">
+
+    <!-- Tailwind CDN: SRI not applicable (dynamic response) -->
+    <script src="https://cdn.tailwindcss.com/3.4.17"></script>
+    <script src="/js/changelog-2.js" defer></script>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
+
+    <style>
+        * { font-family: 'Inter', system-ui, sans-serif; }
+        ::selection { background: #6366f1; color: #fff; }
+        body { background: #0a0a0f; }
+
+        /* Animated gradient orbs */
+        .orb {
+            position: fixed;
+            border-radius: 50%;
+            filter: blur(120px);
+            pointer-events: none;
+            z-index: 0;
+            will-change: transform;
+        }
+        .orb-1 {
+            width: 600px; height: 600px;
+            background: radial-gradient(circle, rgba(99,102,241,0.25) 0%, transparent 70%);
+            top: -10%; left: -5%;
+            animation: drift1 25s ease-in-out infinite;
+        }
+        .orb-2 {
+            width: 500px; height: 500px;
+            background: radial-gradient(circle, rgba(99,102,241,0.18) 0%, transparent 70%);
+            top: 40%; right: -10%;
+            animation: drift2 30s ease-in-out infinite;
+        }
+        @keyframes drift1 {
+            0%, 100% { transform: translate(0, 0) scale(1); }
+            33% { transform: translate(80px, 60px) scale(1.1); }
+            66% { transform: translate(-40px, 30px) scale(0.95); }
+        }
+        @keyframes drift2 {
+            0%, 100% { transform: translate(0, 0) scale(1); }
+            33% { transform: translate(-60px, -40px) scale(1.05); }
+            66% { transform: translate(50px, -80px) scale(0.9); }
+        }
+
+        /* Indigo glow button */
+        .btn-glow {
+            box-shadow: 0 0 20px rgba(99,102,241,0.3), 0 0 60px rgba(99,102,241,0.1);
+            transition: all 0.3s ease;
+        }
+        .btn-glow:hover {
+            box-shadow: 0 0 30px rgba(99,102,241,0.5), 0 0 80px rgba(99,102,241,0.2);
+            transform: translateY(-1px);
+        }
+
+        /* Card hover lift */
+        .card-hover {
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+        .card-hover:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 12px 40px rgba(0,0,0,0.3);
+        }
+
+        /* Scroll animations */
+        .reveal {
+            opacity: 0;
+            transform: translateY(30px);
+            transition: opacity 0.7s ease, transform 0.7s ease;
+        }
+        .reveal.visible {
+            opacity: 1;
+            transform: translateY(0);
+        }
+        .reveal.delay-1 { transition-delay: 0.1s; }
+        .reveal.delay-2 { transition-delay: 0.2s; }
+        .reveal.delay-3 { transition-delay: 0.3s; }
+
+        /* Mobile nav */
+        .mobile-menu { display: none; }
+        .mobile-menu.open { display: flex; }
+
+        /* Scrollbar */
+        ::-webkit-scrollbar { width: 8px; }
+        ::-webkit-scrollbar-track { background: #0a0a0f; }
+        ::-webkit-scrollbar-thumb { background: #1e1e2e; border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: #2e2e3e; }
+    .btn-creative {
+    display: inline-block;
+    padding: 0.375rem 1.25rem;
+    background: #111;
+    color: white;
+    border: 1px solid rgba(255,255,255,0.1);
+    cursor: pointer;
+    font-size: 0.875rem;
+    font-weight: 500;
+    border-radius: 9999px;
+    transition: background 0.3s, color 0.3s;
+}
+.btn-creative:hover {
+    color: #000;
+    background: #fff;
+}
+    </style>
+</head>
+<body class="text-gray-300 min-h-screen relative overflow-x-hidden">
+
+    <!-- Animated background orbs -->
+    <div class="orb orb-1"></div>
+    <div class="orb orb-2"></div>
+
+    <nav class="fixed z-50 top-0 left-0 right-0 py-3 px-4 sm:px-6">
+        <div class="max-w-5xl mx-auto bg-vp-surface/80 backdrop-blur-xl border border-vp-border/60 rounded-full px-4 sm:px-6 py-2.5 flex items-center justify-between shadow-lg shadow-black/20" style="box-shadow: 0 0 15px rgba(99,102,241,0.15), 0 0 40px rgba(99,102,241,0.08), 0 4px 12px rgba(0,0,0,0.3)">
+            <a href="/" class="flex items-center gap-2.5 flex-shrink-0">
+                <img src="/og-image2.png" alt="VaultProof" class="w-10 h-10">
+                <span class="text-base font-bold text-white tracking-tight" style="font-family:'Space Grotesk',sans-serif">VaultProof</span>
+            </a>
+
+            <!-- Desktop links -->
+            <div class="hidden md:flex items-center gap-5">
+                <!-- Product dropdown -->
+                <div class="nav-group">
+                    <button class="nav-group-btn" aria-haspopup="true" aria-expanded="false">
+                        Product
+                        <svg width="11" height="11" viewBox="0 0 12 12" fill="currentColor"><path d="M6 8L2 4h8z"/></svg>
+                    </button>
+                    <div class="nav-dropdown" role="menu">
+                        <a href="/agents" role="menuitem">AI Agents</a>
+                        <a href="/compare" role="menuitem">Compare</a>
+                        <a href="/changelog" role="menuitem">Changelog</a>
+                    </div>
+                </div>
+                <a href="/docs" class="text-sm text-gray-400 hover:text-white transition-colors">Docs</a>
+                <a href="/guides" class="text-sm text-gray-400 hover:text-white transition-colors">Guides</a>
+                <a href="/blog" class="text-sm text-gray-400 hover:text-white transition-colors">Blog</a>
+                <a href="#pricing" class="text-sm text-gray-400 hover:text-white transition-colors">Pricing</a>
+                <a href="/app/login" class="nav-dashboard text-sm text-gray-400 hover:text-white transition-colors" style="display:none">Dashboard</a>
+            </div>
+
+            <div class="hidden md:flex items-center gap-3">
+                <a href="/scan" class="btn-nav-scanner">
+                    <svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+                    Free Scanner
+                </a>
+                <a href="/app/login" class="btn-creative">Sign Up</a>
+            </div>
+
+            <!-- Mobile hamburger -->
+            <button id="mobileToggle" class="md:hidden text-gray-400 hover:text-white" aria-label="Toggle menu">
+                <svg width="22" height="22" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 6h14M4 12h14M4 18h14"/></svg>
+            </button>
+        </div>
+
+        <!-- Mobile menu -->
+        <div id="mobileMenu" class="mobile-menu flex-col gap-1 mt-2 max-w-5xl mx-auto bg-vp-surface/95 backdrop-blur-xl border border-vp-border/60 rounded-2xl px-4 py-4 md:hidden shadow-lg shadow-black/20">
+            <a href="/agents" class="text-sm text-gray-400 hover:text-white transition-colors py-2 px-2 rounded-lg hover:bg-white/5">AI Agents</a>
+            <a href="/compare" class="text-sm text-gray-400 hover:text-white transition-colors py-2 px-2 rounded-lg hover:bg-white/5">Compare</a>
+            <a href="/changelog" class="text-sm text-gray-400 hover:text-white transition-colors py-2 px-2 rounded-lg hover:bg-white/5">Changelog</a>
+            <a href="/docs" class="text-sm text-gray-400 hover:text-white transition-colors py-2 px-2 rounded-lg hover:bg-white/5">Docs</a>
+            <a href="/guides" class="text-sm text-gray-400 hover:text-white transition-colors py-2 px-2 rounded-lg hover:bg-white/5">Guides</a>
+            <a href="/blog" class="text-sm text-gray-400 hover:text-white transition-colors py-2 px-2 rounded-lg hover:bg-white/5">Blog</a>
+            <a href="#pricing" class="text-sm text-gray-400 hover:text-white transition-colors py-2 px-2 rounded-lg hover:bg-white/5">Pricing</a>
+            <a href="/app/login" class="nav-dashboard text-sm text-gray-400 hover:text-white transition-colors py-2 px-2 rounded-lg hover:bg-white/5" style="display:none">Dashboard</a>
+            <div class="mt-2 flex flex-col gap-2">
+                <a href="/scan" class="btn-nav-scanner justify-center py-2.5">Free Scanner</a>
+                <a href="/app/login" class="btn-creative text-center py-2.5 px-5">Sign Up</a>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Header -->
+    <section class="relative z-10 max-w-3xl mx-auto px-6 pt-24 pb-12">
+        <div class="text-center reveal">
+            <h1 class="text-4xl md:text-5xl font-bold text-white mb-4" style="font-family:'Space Grotesk',sans-serif">Changelog</h1>
+            <p class="text-lg text-gray-400">What's new in VaultProof</p>
+        </div>
+    </section>
+
+    <!-- Changelog Entries -->
+    <section class="relative z-10 max-w-3xl mx-auto px-6 pb-24">
+
+        <!-- Month heading -->
+        <div class="mb-8 reveal delay-1">
+            <h2 class="text-xl font-bold text-white mb-6" style="font-family:'Space Grotesk',sans-serif">March 2026</h2>
+            <div class="space-y-4">
+
+                <div class="bg-vp-surface border border-vp-accent/30 rounded-lg p-6 card-hover reveal delay-1">
+                    <div class="flex items-start gap-4">
+                        <span class="shrink-0 text-xs font-bold text-white bg-vp-accent px-3 py-1 rounded-full mt-0.5">Mar 30</span>
+                        <div>
+                            <h3 class="text-base font-semibold text-white mb-1">Dashboard Scanner</h3>
+                            <p class="text-sm text-gray-400 leading-relaxed">Connect GitHub and scan your repos for exposed API keys. Auto-detect 71 key patterns, verify if keys are active, scan git history, and create PRs to fix them. Pro plan.</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="bg-vp-surface border border-vp-border rounded-lg p-6 card-hover reveal delay-1">
+                    <div class="flex items-start gap-4">
+                        <span class="shrink-0 text-xs font-medium text-vp-accent bg-vp-accent/10 px-3 py-1 rounded-full mt-0.5">Mar 30</span>
+                        <div>
+                            <h3 class="text-base font-semibold text-white mb-1"><code class="text-indigo-400 bg-vp-bg px-1.5 py-0.5 rounded text-xs">vaultproof scan</code> + <code class="text-indigo-400 bg-vp-bg px-1.5 py-0.5 rounded text-xs">vaultproof migrate</code></h3>
+                            <p class="text-sm text-gray-400 leading-relaxed">CLI scanner finds exposed keys in .env files, source code, and git history. Migrate stores them in VaultProof and rewrites your configs. Backup + revert included.</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="bg-vp-surface border border-vp-border rounded-lg p-6 card-hover reveal delay-1">
+                    <div class="flex items-start gap-4">
+                        <span class="shrink-0 text-xs font-medium text-vp-accent bg-vp-accent/10 px-3 py-1 rounded-full mt-0.5">Mar 30</span>
+                        <div>
+                            <h3 class="text-base font-semibold text-white mb-1">Live key verification</h3>
+                            <p class="text-sm text-gray-400 leading-relaxed">Scanner calls provider APIs to check if found keys are still active or already revoked. Covers OpenAI, Anthropic, Stripe, GitHub, SendGrid, Resend, and more.</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="bg-vp-surface border border-vp-border rounded-lg p-6 card-hover reveal delay-1">
+                    <div class="flex items-start gap-4">
+                        <span class="shrink-0 text-xs font-medium text-vp-accent bg-vp-accent/10 px-3 py-1 rounded-full mt-0.5">Mar 30</span>
+                        <div>
+                            <h3 class="text-base font-semibold text-white mb-1">Security hardening</h3>
+                            <p class="text-sm text-gray-400 leading-relaxed">ZK proof verified before nullifier claim, developer keys never stored in plaintext, promo code race condition fixed, webhook timeout added, origin enforcement on OAuth callback.</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="bg-vp-surface border border-vp-border rounded-lg p-6 card-hover reveal delay-1">
+                    <div class="flex items-start gap-4">
+                        <span class="shrink-0 text-xs font-medium text-vp-accent bg-vp-accent/10 px-3 py-1 rounded-full mt-0.5">Mar 30</span>
+                        <div>
+                            <h3 class="text-base font-semibold text-white mb-1">71 provider patterns</h3>
+                            <p class="text-sm text-gray-400 leading-relaxed">Scanner detects keys from OpenAI, Anthropic, Stripe, AWS, Google, Supabase, GitHub, Twilio, SendGrid, Slack, Discord, Datadog, Contentful, FaunaDB, Apollo, Clerk, PostHog, Neon, Upstash, Brevo, and more.</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="bg-vp-surface border border-vp-border rounded-lg p-6 card-hover reveal delay-1">
+                    <div class="flex items-start gap-4">
+                        <span class="shrink-0 text-xs font-medium text-vp-accent bg-vp-accent/10 px-3 py-1 rounded-full mt-0.5">Mar 29</span>
+                        <div>
+                            <h3 class="text-base font-semibold text-white mb-1">Waitlist + open source links</h3>
+                            <p class="text-sm text-gray-400 leading-relaxed">Early access email capture. GitHub link added to landing page.</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="bg-vp-surface border border-vp-border rounded-lg p-6 card-hover reveal delay-1">
+                    <div class="flex items-start gap-4">
+                        <span class="shrink-0 text-xs font-medium text-vp-accent bg-vp-accent/10 px-3 py-1 rounded-full mt-0.5">Mar 26</span>
+                        <div>
+                            <h3 class="text-base font-semibold text-white mb-1">Per-key budget caps</h3>
+                            <p class="text-sm text-gray-400 leading-relaxed">Set daily and monthly call limits on each stored key. Protect against runaway costs.</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="bg-vp-surface border border-vp-border rounded-lg p-6 card-hover reveal delay-1">
+                    <div class="flex items-start gap-4">
+                        <span class="shrink-0 text-xs font-medium text-vp-accent bg-vp-accent/10 px-3 py-1 rounded-full mt-0.5">Mar 24</span>
+                        <div>
+                            <h3 class="text-base font-semibold text-white mb-1">Provider fallback</h3>
+                            <p class="text-sm text-gray-400 leading-relaxed">If OpenAI returns 500, VaultProof auto-retries with Groq or Together.</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="bg-vp-surface border border-vp-border rounded-lg p-6 card-hover reveal delay-1">
+                    <div class="flex items-start gap-4">
+                        <span class="shrink-0 text-xs font-medium text-vp-accent bg-vp-accent/10 px-3 py-1 rounded-full mt-0.5">Mar 22</span>
+                        <div>
+                            <h3 class="text-base font-semibold text-white mb-1">.env import</h3>
+                            <p class="text-sm text-gray-400 leading-relaxed">Drag and drop your .env file. VaultProof detects all API keys and imports them in one click.</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="bg-vp-surface border border-vp-border rounded-lg p-6 card-hover reveal delay-2">
+                    <div class="flex items-start gap-4">
+                        <span class="shrink-0 text-xs font-medium text-vp-accent bg-vp-accent/10 px-3 py-1 rounded-full mt-0.5">Mar 20</span>
+                        <div>
+                            <h3 class="text-base font-semibold text-white mb-1">Annual pricing</h3>
+                            <p class="text-sm text-gray-400 leading-relaxed">Save 17% with annual billing. Monthly/annual toggle on pricing page.</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="bg-vp-surface border border-vp-border rounded-lg p-6 card-hover reveal delay-2">
+                    <div class="flex items-start gap-4">
+                        <span class="shrink-0 text-xs font-medium text-vp-accent bg-vp-accent/10 px-3 py-1 rounded-full mt-0.5">Mar 19</span>
+                        <div>
+                            <h3 class="text-base font-semibold text-white mb-1">Overage billing</h3>
+                            <p class="text-sm text-gray-400 leading-relaxed">Paid tiers continue working past limits. Free tier blocks at limit.</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="bg-vp-surface border border-vp-border rounded-lg p-6 card-hover reveal delay-2">
+                    <div class="flex items-start gap-4">
+                        <span class="shrink-0 text-xs font-medium text-vp-accent bg-vp-accent/10 px-3 py-1 rounded-full mt-0.5">Mar 18</span>
+                        <div>
+                            <h3 class="text-base font-semibold text-white mb-1">11 providers</h3>
+                            <p class="text-sm text-gray-400 leading-relaxed">OpenAI, Anthropic, Google, Groq, Mistral, Together, Cohere, Perplexity, Fireworks, DeepSeek, Replicate.</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="bg-vp-surface border border-vp-border rounded-lg p-6 card-hover reveal delay-2">
+                    <div class="flex items-start gap-4">
+                        <span class="shrink-0 text-xs font-medium text-vp-accent bg-vp-accent/10 px-3 py-1 rounded-full mt-0.5">Mar 16</span>
+                        <div>
+                            <h3 class="text-base font-semibold text-white mb-1">CLI proxy</h3>
+                            <p class="text-sm text-gray-400 leading-relaxed"><code class="text-indigo-400 bg-vp-bg px-1.5 py-0.5 rounded text-xs">vaultproof proxy</code> routes API calls through the server. Works with ANY provider (Stripe, AWS, Twilio).</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="bg-vp-surface border border-vp-border rounded-lg p-6 card-hover reveal delay-3">
+                    <div class="flex items-start gap-4">
+                        <span class="shrink-0 text-xs font-medium text-vp-accent bg-vp-accent/10 px-3 py-1 rounded-full mt-0.5">Mar 14</span>
+                        <div>
+                            <h3 class="text-base font-semibold text-white mb-1">Transparent proxy</h3>
+                            <p class="text-sm text-gray-400 leading-relaxed">Change your base URL, keep your SDK. One line change.</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="bg-vp-surface border border-vp-border rounded-lg p-6 card-hover reveal delay-3">
+                    <div class="flex items-start gap-4">
+                        <span class="shrink-0 text-xs font-medium text-vp-accent bg-vp-accent/10 px-3 py-1 rounded-full mt-0.5">Mar 12</span>
+                        <div>
+                            <h3 class="text-base font-semibold text-white mb-1">Chrome + Safari extensions</h3>
+                            <p class="text-sm text-gray-400 leading-relaxed">Auto-detect API keys on provider pages, store with one click.</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="bg-vp-surface border border-vp-border rounded-lg p-6 card-hover reveal delay-3">
+                    <div class="flex items-start gap-4">
+                        <span class="shrink-0 text-xs font-medium text-vp-accent bg-vp-accent/10 px-3 py-1 rounded-full mt-0.5">Mar 10</span>
+                        <div>
+                            <h3 class="text-base font-semibold text-white mb-1">GitHub + Google OAuth</h3>
+                            <p class="text-sm text-gray-400 leading-relaxed">Sign in with GitHub or Google. No password needed.</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="bg-vp-surface border border-vp-border rounded-lg p-6 card-hover reveal delay-3">
+                    <div class="flex items-start gap-4">
+                        <span class="shrink-0 text-xs font-medium text-vp-accent bg-vp-accent/10 px-3 py-1 rounded-full mt-0.5">Mar 8</span>
+                        <div>
+                            <h3 class="text-base font-semibold text-white mb-1">Developer webhooks</h3>
+                            <p class="text-sm text-gray-400 leading-relaxed">HMAC-signed POST notifications for key events.</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="bg-vp-surface border border-vp-border rounded-lg p-6 card-hover reveal delay-3">
+                    <div class="flex items-start gap-4">
+                        <span class="shrink-0 text-xs font-medium text-vp-accent bg-vp-accent/10 px-3 py-1 rounded-full mt-0.5">Mar 7</span>
+                        <div>
+                            <h3 class="text-base font-semibold text-white mb-1">IP allowlist + usage alerts</h3>
+                            <p class="text-sm text-gray-400 leading-relaxed">Restrict keys by IP, get notified on unusual usage (Pro+).</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="bg-vp-surface border border-vp-border rounded-lg p-6 card-hover reveal delay-3">
+                    <div class="flex items-start gap-4">
+                        <span class="shrink-0 text-xs font-medium text-vp-accent bg-vp-accent/10 px-3 py-1 rounded-full mt-0.5">Mar 6</span>
+                        <div>
+                            <h3 class="text-base font-semibold text-white mb-1">Email notifications</h3>
+                            <p class="text-sm text-gray-400 leading-relaxed">Welcome emails, usage alerts, key expiry warnings, invalid key alerts.</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="bg-vp-surface border border-vp-border rounded-lg p-6 card-hover reveal delay-3">
+                    <div class="flex items-start gap-4">
+                        <span class="shrink-0 text-xs font-medium text-vp-accent bg-vp-accent/10 px-3 py-1 rounded-full mt-0.5">Mar 5</span>
+                        <div>
+                            <h3 class="text-base font-semibold text-white mb-1">Stripe billing</h3>
+                            <p class="text-sm text-gray-400 leading-relaxed">4 tiers: Free, Starter $5, Pro $20, Enterprise (contact us).</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="bg-vp-surface border border-vp-border rounded-lg p-6 card-hover reveal delay-3">
+                    <div class="flex items-start gap-4">
+                        <span class="shrink-0 text-xs font-medium text-vp-accent bg-vp-accent/10 px-3 py-1 rounded-full mt-0.5">Mar 4</span>
+                        <div>
+                            <h3 class="text-base font-semibold text-white mb-1">Insights</h3>
+                            <p class="text-sm text-gray-400 leading-relaxed">SEO articles on API key security and vibe coding.</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="bg-vp-surface border border-vp-border rounded-lg p-6 card-hover reveal delay-3">
+                    <div class="flex items-start gap-4">
+                        <span class="shrink-0 text-xs font-medium text-vp-accent bg-vp-accent/10 px-3 py-1 rounded-full mt-0.5">Mar 3</span>
+                        <div>
+                            <h3 class="text-base font-semibold text-white mb-1">Comparison page</h3>
+                            <p class="text-sm text-gray-400 leading-relaxed">VaultProof vs HashiCorp Vault, 1Password, AWS, Doppler, Infisical.</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="bg-vp-surface border border-vp-border rounded-lg p-6 card-hover reveal delay-3">
+                    <div class="flex items-start gap-4">
+                        <span class="shrink-0 text-xs font-medium text-vp-accent bg-vp-accent/10 px-3 py-1 rounded-full mt-0.5">Mar 2</span>
+                        <div>
+                            <h3 class="text-base font-semibold text-white mb-1">Security audits</h3>
+                            <p class="text-sm text-gray-400 leading-relaxed">3 audits completed, 62+ tests passing.</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="bg-vp-surface border border-vp-accent/30 rounded-lg p-6 card-hover reveal delay-3">
+                    <div class="flex items-start gap-4">
+                        <span class="shrink-0 text-xs font-bold text-white bg-vp-accent px-3 py-1 rounded-full mt-0.5">Mar 1</span>
+                        <div>
+                            <h3 class="text-base font-semibold text-white mb-1">Launch</h3>
+                            <p class="text-sm text-gray-400 leading-relaxed">VaultProof goes live at vaultproof.dev.</p>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="relative z-10 border-t border-vp-border">
+        <div class="max-w-5xl mx-auto px-6 py-12">
+            <div class="flex flex-col md:flex-row items-center justify-between gap-6">
+                <div class="flex flex-col items-center md:items-start gap-2">
+                    <div class="flex items-center gap-2.5">
+                        <svg width="22" height="22" viewBox="0 0 28 28" fill="none"><rect width="28" height="28" rx="6" fill="#6366f1" fill-opacity="0.15"/><path d="M8 8L14 4L20 8V16L14 20L8 16V8Z" stroke="#6366f1" stroke-width="1.5" fill="none"/><path d="M14 10V15" stroke="#6366f1" stroke-width="1.5" stroke-linecap="round"/><circle cx="14" cy="17" r="1" fill="#6366f1"/></svg>
+                        <span class="text-sm font-bold text-white">VaultProof</span>
+                        <span class="text-xs text-gray-600">by Rial Labs</span>
+                    </div>
+                    <p class="text-xs text-gray-600">Built for developers who refuse to trust blindly.</p>
+                </div>
+                <div class="flex items-center gap-8 flex-wrap justify-center">
+                    <a href="/docs" class="text-sm text-gray-500 hover:text-white transition-colors">Documentation</a>
+                    <a href="/guides" class="text-sm text-gray-500 hover:text-white transition-colors">Guides</a>
+                    <a href="/compare" class="text-sm text-gray-500 hover:text-white transition-colors">Compare</a>
+                    <a href="/changelog" class="text-sm text-gray-500 hover:text-white transition-colors">Changelog</a>
+                    <a href="/verify" class="text-sm text-gray-500 hover:text-white transition-colors">Verify</a>
+                    <a href="/status" class="text-sm text-gray-500 hover:text-white transition-colors">Status</a>
+                    <a href="/app/login" class="nav-dashboard text-sm text-gray-500 hover:text-white transition-colors" style="display:none">Dashboard</a>
+                    <a href="https://github.com/windsurftemplate/vaultproof" target="_blank" rel="noopener" class="text-sm text-gray-500 hover:text-white transition-colors">GitHub</a>
+                    <a href="/terms" class="text-sm text-gray-500 hover:text-white transition-colors">Terms</a>
+                    <a href="/privacy" class="text-sm text-gray-500 hover:text-white transition-colors">Privacy</a>
+                    <a href="/security" class="text-sm text-gray-500 hover:text-white transition-colors">Security</a>
+                    <a href="/abuse" class="text-sm text-gray-500 hover:text-white transition-colors">Abuse</a>
+                </div>
+            </div>
+        </div>
+    </footer>
+
+    <script src="/js/changelog-3.js" defer></script>
+<script src="/js/analytics.js" defer></script>
+<script src="/js/changelog-4.js" defer></script>
+<script src="/js/changelog-5.js" defer></script>
+</body>
+</html>
