@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="en" class="scroll-smooth">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>VaultProof for CI/CD and Kubernetes</title>
+  <meta name="description" content="How VaultProof fits into CI/CD and Kubernetes: before vs after integration, coverage boundaries, and threat classes.">
+  <link rel="icon" type="image/png" href="/favicon.png">
+  <link rel="canonical" href="https://vaultproof.dev/cicd-kubernetes">
+  <meta property="og:title" content="VaultProof for CI/CD and Kubernetes">
+  <meta property="og:description" content="Before/after integration and threat coverage for teams running CI/CD pipelines and Kubernetes.">
+  <meta property="og:url" content="https://vaultproof.dev/cicd-kubernetes">
+  <meta property="og:type" content="website">
+  <meta property="og:image" content="https://vaultproof.dev/ogimage.png">
+
+  <script>
+    tailwind = {
+      config: {
+        theme: {
+          extend: {
+            colors: {
+              'vp-bg': '#0a0a0f',
+              'vp-surface': '#111118',
+              'vp-border': '#1e1e2e',
+              'vp-accent': '#6366f1',
+              'vp-cyan': '#06b6d4'
+            }
+          }
+        }
+      }
+    };
+  </script>
+  <script src="https://cdn.tailwindcss.com/3.4.17"></script>
+  <style>
+    body { background: #0a0a0f; color: #cbd5e1; }
+    .code-block { background:#0d0d14; border:1px solid #1e1e2e; border-radius:12px; overflow-x:auto; }
+    .code-block pre { padding:1rem 1.25rem; font-size:0.8125rem; line-height:1.65; }
+    .chip { border:1px solid rgba(99,102,241,.25); background: rgba(99,102,241,.08); color:#a5b4fc; }
+  </style>
+</head>
+<body>
+  <main class="max-w-4xl mx-auto px-6 py-12 md:py-16">
+    <a href="/docs" class="text-sm text-vp-accent hover:underline">← Back to Docs</a>
+    <h1 class="text-3xl md:text-4xl font-bold text-white mt-4 mb-3">VaultProof in CI/CD and Kubernetes</h1>
+    <p class="text-gray-400 mb-8">A short positioning guide for teams already running pipelines, clusters, and a standard secrets stack.</p>
+
+    <section class="mb-10">
+      <h2 class="text-xl font-semibold text-white mb-3">What VaultProof Does</h2>
+      <p class="text-gray-300 mb-4">VaultProof is a proxy-based credential protection layer for third-party API keys (OpenAI, Anthropic, Stripe, and similar providers).</p>
+      <div class="code-block">
+<pre>Setup (npx @vaultproof/init):
+1. Find provider keys in .env
+2. Split each key into 2 shares locally
+3. Store encrypted shares server-side
+4. Rewrite runtime config to use vp-proj-... + proxy URLs
+
+Request time:
+Proxy reconstructs key briefly in memory → forwards upstream → zeroes buffer</pre>
+      </div>
+    </section>
+
+    <section class="mb-10">
+      <h2 class="text-xl font-semibold text-white mb-3">Before vs After</h2>
+      <div class="grid md:grid-cols-2 gap-4">
+        <div class="bg-vp-surface border border-vp-border rounded-lg p-5">
+          <div class="chip inline-flex text-xs px-2 py-1 rounded-full mb-3">Before</div>
+          <p class="text-gray-400 text-sm mb-3">Apps, jobs, and pods carry raw provider secrets.</p>
+          <div class="code-block"><pre>OPENAI_API_KEY=sk-proj-...
+ANTHROPIC_API_KEY=sk-ant-...</pre></div>
+        </div>
+        <div class="bg-vp-surface border border-vp-border rounded-lg p-5">
+          <div class="chip inline-flex text-xs px-2 py-1 rounded-full mb-3">After</div>
+          <p class="text-gray-400 text-sm mb-3">Runtime keeps a public project ID and proxy base URLs.</p>
+          <div class="code-block"><pre>VAULTPROOF_PROJECT_ID=vp-proj-...
+OPENAI_API_KEY=vp-proj-...
+OPENAI_BASE_URL=https://init.vaultproof.dev/p/openai/v1</pre></div>
+        </div>
+      </div>
+    </section>
+
+    <section class="mb-10">
+      <h2 class="text-xl font-semibold text-white mb-3">Integration Examples</h2>
+      <p class="text-gray-400 text-sm mb-3">GitHub Actions</p>
+      <div class="code-block mb-4"><pre>env:
+  VAULTPROOF_PROJECT_ID: ${{ secrets.VAULTPROOF_PROJECT_ID }}
+  OPENAI_API_KEY: ${{ secrets.VAULTPROOF_PROJECT_ID }}
+  OPENAI_BASE_URL: https://init.vaultproof.dev/p/openai/v1</pre></div>
+
+      <p class="text-gray-400 text-sm mb-3">Kubernetes</p>
+      <div class="code-block"><pre>kubectl create secret generic app-env \
+  --from-literal=VAULTPROOF_PROJECT_ID=vp-proj-... \
+  --from-literal=OPENAI_API_KEY=vp-proj-... \
+  --from-literal=OPENAI_BASE_URL=https://init.vaultproof.dev/p/openai/v1</pre></div>
+      <p class="text-xs text-gray-500 mt-3">If workloads do not send browser Origin headers, keep strict origin enforcement disabled for that project.</p>
+    </section>
+
+    <section class="mb-10">
+      <h2 class="text-xl font-semibold text-white mb-3">Threat Classes Covered</h2>
+      <div class="space-y-4">
+        <div class="bg-vp-surface border border-vp-border rounded-lg p-4">
+          <h3 class="text-sm font-semibold text-emerald-400 mb-1">Strongly Reduced</h3>
+          <p class="text-sm text-gray-400">Plaintext provider key leaks from env files and CI variables, accidental commit/copy/paste exposure, and broad lateral spread of raw keys across services.</p>
+        </div>
+        <div class="bg-vp-surface border border-vp-border rounded-lg p-4">
+          <h3 class="text-sm font-semibold text-amber-400 mb-1">Mitigated (not eliminated)</h3>
+          <p class="text-sm text-gray-400">Leaked <code>vp-proj-...</code> identifiers can still be abused for proxy traffic, but do not directly reveal raw provider keys. Rate limits and origin controls reduce blast radius.</p>
+        </div>
+        <div class="bg-vp-surface border border-vp-border rounded-lg p-4">
+          <h3 class="text-sm font-semibold text-rose-400 mb-1">Out of Scope</h3>
+          <p class="text-sm text-gray-400">Full compromise of both share storage and encryption control plane, compromised workload identity that can already call external APIs, non-HTTP secret types, and business-logic abuse.</p>
+        </div>
+      </div>
+    </section>
+
+    <section class="bg-vp-surface border border-vp-border rounded-lg p-5">
+      <h2 class="text-xl font-semibold text-white mb-2">Where It Sits in Your Stack</h2>
+      <p class="text-gray-400 text-sm">VaultProof is not a full replacement for Vault/Secrets Manager/KMS. It is an additional control plane for outbound third-party API credentials, while your existing secrets system continues to handle broader infrastructure secrets.</p>
+    </section>
+  </main>
+</body>
+</html>
