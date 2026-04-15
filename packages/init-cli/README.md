@@ -90,38 +90,6 @@ The CLI reads your Supabase session from `~/.vaultproof/config.json` or the `VAU
 
 ---
 
-## CI/CD and Kubernetes
-
-After running `npx @vaultproof/init`, your deployment systems should store only the generated project identifier and proxy URLs.
-
-```bash
-VAULTPROOF_PROJECT_ID=vp-proj-...
-OPENAI_API_KEY=vp-proj-...
-OPENAI_BASE_URL=https://init.vaultproof.dev/p/openai/v1
-```
-
-GitHub Actions:
-
-```yaml
-env:
-  VAULTPROOF_PROJECT_ID: ${{ secrets.VAULTPROOF_PROJECT_ID }}
-  OPENAI_API_KEY: ${{ secrets.VAULTPROOF_PROJECT_ID }}
-  OPENAI_BASE_URL: https://init.vaultproof.dev/p/openai/v1
-```
-
-Kubernetes:
-
-```bash
-kubectl create secret generic app-env \
-  --from-literal=VAULTPROOF_PROJECT_ID=vp-proj-... \
-  --from-literal=OPENAI_API_KEY=vp-proj-... \
-  --from-literal=OPENAI_BASE_URL=https://init.vaultproof.dev/p/openai/v1
-```
-
-For server-to-server jobs and pods, avoid strict browser-origin enforcement (`strict_origin=true`) unless your callers actually send stable `Origin` headers.
-
----
-
 ## How the security works
 
 VaultProof uses [Shamir's Secret Sharing](https://en.wikipedia.org/wiki/Shamir%27s_secret_sharing) to split each API key into two mathematically independent shares. Individual shares are useless — knowing one share reveals **zero information** about the key. Both shares must be combined to reconstruct the original.

@@ -27,7 +27,7 @@ The scanner processes common source code file types (`.ts`, `.js`, `.py`, `.go`,
 
 ## Platform Detection
 
-The scanner detects deployment platforms (Vercel, Railway, Fly.io, Render, Netlify, Docker, Kubernetes, Heroku, GitHub Actions, GitLab CI, CircleCI) from config files to provide platform-specific remediation guidance.
+The scanner detects deployment platforms (Vercel, Railway, Fly.io, Render, Netlify, Docker, Heroku, GitHub Actions) from config files to provide platform-specific remediation guidance.
 
 ## Reducing False Positives
 

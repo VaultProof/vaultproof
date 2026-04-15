@@ -69,38 +69,6 @@ const openai = new OpenAI({
 });
 ```
 
-## CI/CD And Kubernetes
-
-VaultProof is designed for pipeline and cluster environments where you do not want plaintext provider keys in runtime config.
-
-Set only your public project identifier and provider proxy base URLs:
-
-```bash
-VAULTPROOF_PROJECT_ID=vp-proj-...
-OPENAI_API_KEY=vp-proj-...
-OPENAI_BASE_URL=https://init.vaultproof.dev/p/openai/v1
-```
-
-Example (GitHub Actions):
-
-```yaml
-env:
-  VAULTPROOF_PROJECT_ID: ${{ secrets.VAULTPROOF_PROJECT_ID }}
-  OPENAI_API_KEY: ${{ secrets.VAULTPROOF_PROJECT_ID }}
-  OPENAI_BASE_URL: https://init.vaultproof.dev/p/openai/v1
-```
-
-Example (Kubernetes):
-
-```bash
-kubectl create secret generic app-env \
-  --from-literal=VAULTPROOF_PROJECT_ID=vp-proj-... \
-  --from-literal=OPENAI_API_KEY=vp-proj-... \
-  --from-literal=OPENAI_BASE_URL=https://init.vaultproof.dev/p/openai/v1
-```
-
-If your workloads are server-to-server (no browser `Origin` header), keep `strict_origin=false` for those projects or requests will be rejected by origin lock.
-
 ## Scanner — Find Exposed Keys
 
 The init flow scans `.env`, `.env.local`, `.env.production`, and `.env.development` for supported providers before rewriting them.
