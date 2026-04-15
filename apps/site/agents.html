@@ -88,6 +88,52 @@
 
         .mobile-menu { display: none; }
         .mobile-menu.open { display: flex; }
+        .nav-group { position: relative; }
+        .nav-group-btn {
+            display: inline-flex; align-items: center; gap: 4px;
+            font-size: 0.875rem; color: #9ca3af; background: none;
+            border: none; cursor: pointer; padding: 4px 2px;
+            transition: color 0.15s; font-family: inherit; user-select: none;
+        }
+        .nav-group-btn:hover, .nav-group.open .nav-group-btn { color: #fff; }
+        .nav-group-btn svg { transition: transform 0.2s; flex-shrink: 0; }
+        .nav-group.open .nav-group-btn svg { transform: rotate(180deg); }
+        .nav-dropdown {
+            position: absolute; top: calc(100% + 10px); left: 50%;
+            transform: translateX(-50%) translateY(-4px);
+            background: rgba(13,13,20,0.96);
+            backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
+            border: 1px solid rgba(99,102,241,0.15);
+            border-radius: 14px; padding: 6px; min-width: 176px;
+            opacity: 0; visibility: hidden; pointer-events: none;
+            transition: opacity 0.15s ease, transform 0.15s ease, visibility 0.15s;
+            box-shadow: 0 0 0 1px rgba(99,102,241,0.06), 0 8px 32px rgba(0,0,0,0.6), 0 0 24px rgba(99,102,241,0.08);
+            z-index: 100;
+        }
+        .nav-group.open .nav-dropdown {
+            opacity: 1; visibility: visible; pointer-events: auto;
+            transform: translateX(-50%) translateY(0);
+        }
+        .nav-dropdown a {
+            display: flex; align-items: center;
+            padding: 8px 12px; border-radius: 9px; font-size: 0.8125rem;
+            color: #9ca3af; text-decoration: none;
+            transition: color 0.12s, background 0.12s;
+            white-space: nowrap; font-weight: 450;
+        }
+        .nav-dropdown a:hover { color: #fff; background: rgba(99,102,241,0.08); }
+        .btn-nav-scanner {
+            display: inline-flex; align-items: center; gap: 6px;
+            padding: 0.35rem 1rem; border-radius: 9999px;
+            font-size: 0.8125rem; font-weight: 500; cursor: pointer;
+            border: 1px solid rgba(6,182,212,0.35);
+            color: #22d3ee; background: rgba(6,182,212,0.06);
+            transition: background 0.2s, border-color 0.2s, color 0.2s;
+            text-decoration: none; white-space: nowrap;
+        }
+        .btn-nav-scanner:hover {
+            background: rgba(6,182,212,0.12); border-color: rgba(6,182,212,0.55); color: #67e8f9;
+        }
 
         ::-webkit-scrollbar { width: 8px; }
         ::-webkit-scrollbar-track { background: #0a0a0f; }
@@ -467,6 +513,34 @@
 
     <script src="/js/agents-3.js" defer></script>
 
+    <script>
+      (() => {
+        const groups = Array.from(document.querySelectorAll('.nav-group'));
+        const closeAll = () => groups.forEach((g) => {
+          g.classList.remove('open');
+          const btn = g.querySelector('.nav-group-btn');
+          if (btn) btn.setAttribute('aria-expanded', 'false');
+        });
+
+        groups.forEach((group) => {
+          const btn = group.querySelector('.nav-group-btn');
+          if (!btn) return;
+          btn.addEventListener('click', (event) => {
+            event.stopPropagation();
+            const isOpen = group.classList.contains('open');
+            closeAll();
+            if (!isOpen) {
+              group.classList.add('open');
+              btn.setAttribute('aria-expanded', 'true');
+            }
+          });
+        });
+
+        document.addEventListener('click', (event) => {
+          if (!groups.some((g) => g.contains(event.target))) closeAll();
+        });
+      })();
+    </script>
     <script src="/js/analytics.js" defer></script>
 
     <script src="/js/agents-4.js" defer></script>

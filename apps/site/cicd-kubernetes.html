@@ -31,15 +31,136 @@
     };
   </script>
   <script src="https://cdn.tailwindcss.com/3.4.17"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
   <style>
+    * { font-family: 'Inter', system-ui, sans-serif; }
     body { background: #0a0a0f; color: #cbd5e1; }
+    .mobile-menu { display: none; }
+    .mobile-menu.open { display: flex; }
     .code-block { background:#0d0d14; border:1px solid #1e1e2e; border-radius:12px; overflow-x:auto; }
     .code-block pre { padding:1rem 1.25rem; font-size:0.8125rem; line-height:1.65; }
     .chip { border:1px solid rgba(99,102,241,.25); background: rgba(99,102,241,.08); color:#a5b4fc; }
+    .nav-group { position: relative; }
+    .nav-group-btn {
+      display: inline-flex; align-items: center; gap: 4px;
+      font-size: 0.875rem; color: #9ca3af; background: none;
+      border: none; cursor: pointer; padding: 4px 2px;
+      transition: color 0.15s; font-family: inherit; user-select: none;
+    }
+    .nav-group-btn:hover, .nav-group.open .nav-group-btn { color: #fff; }
+    .nav-group-btn svg { transition: transform 0.2s; flex-shrink: 0; }
+    .nav-group.open .nav-group-btn svg { transform: rotate(180deg); }
+    .nav-dropdown {
+      position: absolute; top: calc(100% + 10px); left: 50%;
+      transform: translateX(-50%) translateY(-4px);
+      background: rgba(13,13,20,0.96);
+      backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
+      border: 1px solid rgba(99,102,241,0.15);
+      border-radius: 14px; padding: 6px; min-width: 176px;
+      opacity: 0; visibility: hidden; pointer-events: none;
+      transition: opacity 0.15s ease, transform 0.15s ease, visibility 0.15s;
+      box-shadow: 0 0 0 1px rgba(99,102,241,0.06), 0 8px 32px rgba(0,0,0,0.6), 0 0 24px rgba(99,102,241,0.08);
+      z-index: 100;
+    }
+    .nav-group.open .nav-dropdown {
+      opacity: 1; visibility: visible; pointer-events: auto;
+      transform: translateX(-50%) translateY(0);
+    }
+    .nav-dropdown a {
+      display: flex; align-items: center;
+      padding: 8px 12px; border-radius: 9px; font-size: 0.8125rem;
+      color: #9ca3af; text-decoration: none;
+      transition: color 0.12s, background 0.12s;
+      white-space: nowrap; font-weight: 450;
+    }
+    .nav-dropdown a:hover { color: #fff; background: rgba(99,102,241,0.08); }
+    .btn-nav-scanner {
+      display: inline-flex; align-items: center; gap: 6px;
+      padding: 0.35rem 1rem; border-radius: 9999px;
+      font-size: 0.8125rem; font-weight: 500; cursor: pointer;
+      border: 1px solid rgba(6,182,212,0.35);
+      color: #22d3ee; background: rgba(6,182,212,0.06);
+      transition: background 0.2s, border-color 0.2s, color 0.2s;
+      text-decoration: none; white-space: nowrap;
+    }
+    .btn-nav-scanner:hover {
+      background: rgba(6,182,212,0.12); border-color: rgba(6,182,212,0.55); color: #67e8f9;
+    }
+    .btn-creative {
+      display: inline-block;
+      padding: 0.375rem 1.25rem;
+      background: #111;
+      color: white;
+      border: 1px solid rgba(255,255,255,0.1);
+      cursor: pointer;
+      font-size: 0.875rem;
+      font-weight: 500;
+      border-radius: 9999px;
+      transition: background 0.3s, color 0.3s;
+    }
+    .btn-creative:hover {
+      color: #000;
+      background: #fff;
+    }
   </style>
 </head>
 <body>
-  <main class="max-w-4xl mx-auto px-6 py-12 md:py-16">
+  <nav class="fixed z-50 top-0 left-0 right-0 py-3 px-4 sm:px-6">
+    <div class="max-w-5xl mx-auto bg-vp-surface/80 backdrop-blur-xl border border-vp-border/60 rounded-full px-4 sm:px-6 py-2.5 flex items-center justify-between shadow-lg shadow-black/20" style="box-shadow: 0 0 15px rgba(99,102,241,0.15), 0 0 40px rgba(99,102,241,0.08), 0 4px 12px rgba(0,0,0,0.3)">
+      <a href="/" class="flex items-center gap-2.5 flex-shrink-0">
+        <img src="/og-image2.png" alt="VaultProof" class="w-10 h-10">
+        <span class="text-base font-bold text-white tracking-tight" style="font-family:'Space Grotesk',sans-serif">VaultProof</span>
+      </a>
+
+      <div class="hidden md:flex items-center gap-5">
+        <div class="nav-group">
+          <button class="nav-group-btn" aria-haspopup="true" aria-expanded="false">
+            Product
+            <svg width="11" height="11" viewBox="0 0 12 12" fill="currentColor"><path d="M6 8L2 4h8z"/></svg>
+          </button>
+          <div class="nav-dropdown" role="menu">
+            <a href="/agents" role="menuitem">AI Agents</a>
+            <a href="/compare" role="menuitem">Compare</a>
+          </div>
+        </div>
+        <a href="/docs" class="text-sm text-white font-medium transition-colors">Docs</a>
+        <a href="/guides" class="text-sm text-gray-400 hover:text-white transition-colors">Guides</a>
+        <a href="/blog" class="text-sm text-gray-400 hover:text-white transition-colors">Blog</a>
+        <a href="/#pricing" class="text-sm text-gray-400 hover:text-white transition-colors">Pricing</a>
+        <a href="/app/login" class="nav-dashboard text-sm text-gray-400 hover:text-white transition-colors" style="display:none">Dashboard</a>
+      </div>
+
+      <div class="hidden md:flex items-center gap-3">
+        <a href="/scan" class="btn-nav-scanner">
+          <svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+          Free Scanner
+        </a>
+        <a href="/app/login" class="btn-creative">Sign Up</a>
+      </div>
+
+      <button id="mobileToggle" class="md:hidden text-gray-400 hover:text-white" aria-label="Toggle menu">
+        <svg width="22" height="22" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 6h14M4 12h14M4 18h14"/></svg>
+      </button>
+    </div>
+
+    <div id="mobileMenu" class="mobile-menu flex-col gap-1 mt-2 max-w-5xl mx-auto bg-vp-surface/95 backdrop-blur-xl border border-vp-border/60 rounded-2xl px-4 py-4 md:hidden shadow-lg shadow-black/20">
+      <a href="/agents" class="text-sm text-gray-400 hover:text-white transition-colors py-2 px-2 rounded-lg hover:bg-white/5">AI Agents</a>
+      <a href="/compare" class="text-sm text-gray-400 hover:text-white transition-colors py-2 px-2 rounded-lg hover:bg-white/5">Compare</a>
+      <a href="/docs" class="text-sm text-white font-medium py-2 px-2 rounded-lg hover:bg-white/5">Docs</a>
+      <a href="/guides" class="text-sm text-gray-400 hover:text-white transition-colors py-2 px-2 rounded-lg hover:bg-white/5">Guides</a>
+      <a href="/blog" class="text-sm text-gray-400 hover:text-white transition-colors py-2 px-2 rounded-lg hover:bg-white/5">Blog</a>
+      <a href="/#pricing" class="text-sm text-gray-400 hover:text-white transition-colors py-2 px-2 rounded-lg hover:bg-white/5">Pricing</a>
+      <a href="/app/login" class="nav-dashboard text-sm text-gray-400 hover:text-white transition-colors py-2 px-2 rounded-lg hover:bg-white/5" style="display:none">Dashboard</a>
+      <div class="mt-2 flex flex-col gap-2">
+        <a href="/scan" class="btn-nav-scanner justify-center py-2.5">Free Scanner</a>
+        <a href="/app/login" class="btn-creative text-center py-2.5 px-5">Sign Up</a>
+      </div>
+    </div>
+  </nav>
+
+  <main class="max-w-4xl mx-auto px-6 pt-24 pb-12 md:pt-28 md:pb-16">
     <a href="/docs" class="text-sm text-vp-accent hover:underline">← Back to Docs</a>
     <h1 class="text-3xl md:text-4xl font-bold text-white mt-4 mb-3">VaultProof in CI/CD and Kubernetes</h1>
     <p class="text-gray-400 mb-4">A short positioning guide for teams already running pipelines, clusters, and a standard secrets stack.</p>
@@ -118,5 +239,39 @@ OPENAI_BASE_URL=https://init.vaultproof.dev/p/openai/v1</pre></div>
       <p class="text-gray-400 text-sm">VaultProof is not a full replacement for Vault/Secrets Manager/KMS. It is an additional control plane for outbound third-party API credentials, while your existing secrets system continues to handle broader infrastructure secrets.</p>
     </section>
   </main>
+  <script>
+    (() => {
+      const mobileToggle = document.getElementById('mobileToggle');
+      const mobileMenu = document.getElementById('mobileMenu');
+      if (mobileToggle && mobileMenu) {
+        mobileToggle.addEventListener('click', () => mobileMenu.classList.toggle('open'));
+      }
+
+      const groups = Array.from(document.querySelectorAll('.nav-group'));
+      const closeAll = () => groups.forEach((g) => {
+        g.classList.remove('open');
+        const btn = g.querySelector('.nav-group-btn');
+        if (btn) btn.setAttribute('aria-expanded', 'false');
+      });
+
+      groups.forEach((group) => {
+        const btn = group.querySelector('.nav-group-btn');
+        if (!btn) return;
+        btn.addEventListener('click', (event) => {
+          event.stopPropagation();
+          const isOpen = group.classList.contains('open');
+          closeAll();
+          if (!isOpen) {
+            group.classList.add('open');
+            btn.setAttribute('aria-expanded', 'true');
+          }
+        });
+      });
+
+      document.addEventListener('click', (event) => {
+        if (!groups.some((g) => g.contains(event.target))) closeAll();
+      });
+    })();
+  </script>
 </body>
 </html>
