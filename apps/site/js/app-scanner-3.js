@@ -183,7 +183,11 @@ const API = window.location.hostname.includes('dev.vaultproof') ? 'https://stagi
       'Netlify': 'Go to Netlify \u2192 Site settings \u2192 Environment variables',
       'Docker': 'Add -e VAULTPROOF_PROJECT_ID=<your-project-id> to your docker run command',
       'Docker Compose': 'Add VAULTPROOF_PROJECT_ID=<your-project-id> to your environment section',
+      'Kubernetes': 'Create/update a Secret and map VAULTPROOF_PROJECT_ID + *_BASE_URL env vars in your Deployment',
+      'Helm': 'Set VAULTPROOF_PROJECT_ID and *_BASE_URL in values.yaml, then template into env or Secret',
       'GitHub Actions': 'Go to GitHub \u2192 Your Repo \u2192 Settings \u2192 Secrets \u2192 Actions',
+      'GitLab CI': 'Go to GitLab \u2192 Settings \u2192 CI/CD \u2192 Variables and add VAULTPROOF_PROJECT_ID + *_BASE_URL',
+      'CircleCI': 'Go to Project Settings \u2192 Environment Variables and add VAULTPROOF_PROJECT_ID + *_BASE_URL',
       'Heroku': 'Run: heroku config:set VAULTPROOF_PROJECT_ID=<your-project-id>',
     };
 

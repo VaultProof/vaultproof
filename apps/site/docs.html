@@ -219,6 +219,7 @@
             <nav class="space-y-1" id="sidebar-nav">
                 <a href="#overview" class="nav-link block text-sm text-gray-500 py-1.5 px-3 rounded-r">Overview</a>
                 <a href="#quick-start" class="nav-link block text-sm text-gray-500 py-1.5 px-3 rounded-r">Quick Start</a>
+                <a href="#cicd-kubernetes" class="nav-link block text-sm text-gray-500 py-1.5 px-3 rounded-r pl-6">CI/CD + Kubernetes</a>
 
                 <div class="pt-4 pb-1 px-3 text-[0.6875rem] font-semibold text-gray-600 uppercase tracking-wider">Architecture</div>
                 <a href="#how-it-works" class="nav-link block text-sm text-gray-500 py-1.5 px-3 rounded-r">How It Works</a>
@@ -499,6 +500,41 @@ $ npx @vaultproof/init --check-legacy</pre>
                             <li>Your <code class="font-mono text-xs text-vp-accent">vp-proj-</code> project ID and protected keys appear in the dashboard</li>
                             <li>Monitor proxy call logs, per-provider usage, and rate limit status</li>
                         </ol>
+                    </div>
+                </div>
+
+                <div id="cicd-kubernetes" class="mt-10">
+                    <div class="flex items-center gap-3 mb-4">
+                        <span class="bg-emerald-500/15 text-emerald-400 text-xs font-bold px-2.5 py-1 rounded">PRODUCTION SETUPS</span>
+                        <h3 class="text-lg font-semibold text-white">CI/CD + Kubernetes</h3>
+                    </div>
+                    <p class="text-gray-500 text-sm mb-4">VaultProof works well in pipelines and clusters because the runtime only needs a public <code class="font-mono text-xs text-vp-accent">vp-proj-</code> identifier plus per-provider proxy URLs.</p>
+
+                    <div class="code-block mb-4">
+                        <div class="code-header">Required runtime env vars</div>
+<pre class="text-gray-300"><span class="typ">VAULTPROOF_PROJECT_ID</span>=<span class="str">vp-proj-...</span>
+<span class="typ">OPENAI_API_KEY</span>=<span class="str">vp-proj-...</span>
+<span class="typ">OPENAI_BASE_URL</span>=<span class="str">https://init.vaultproof.dev/p/openai/v1</span></pre>
+                    </div>
+
+                    <div class="code-block mb-4">
+                        <div class="code-header">GitHub Actions</div>
+<pre class="text-gray-300"><span class="kw">env</span>:
+  <span class="typ">VAULTPROOF_PROJECT_ID</span>: <span class="str">${{ secrets.VAULTPROOF_PROJECT_ID }}</span>
+  <span class="typ">OPENAI_API_KEY</span>: <span class="str">${{ secrets.VAULTPROOF_PROJECT_ID }}</span>
+  <span class="typ">OPENAI_BASE_URL</span>: <span class="str">https://init.vaultproof.dev/p/openai/v1</span></pre>
+                    </div>
+
+                    <div class="code-block mb-4">
+                        <div class="code-header">Kubernetes</div>
+<pre class="text-gray-300">kubectl create secret generic app-env \
+  --from-literal=VAULTPROOF_PROJECT_ID=vp-proj-... \
+  --from-literal=OPENAI_API_KEY=vp-proj-... \
+  --from-literal=OPENAI_BASE_URL=https://init.vaultproof.dev/p/openai/v1</pre>
+                    </div>
+
+                    <div class="callout-info">
+                        <p class="text-sm text-indigo-300"><strong>Server-side callers:</strong> if your jobs/pods do not send browser <code class="font-mono text-xs">Origin</code> headers, do not enable strict origin enforcement for that project.</p>
                     </div>
                 </div>
             </section>
