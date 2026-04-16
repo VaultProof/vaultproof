@@ -61,7 +61,7 @@
 <body class="text-gray-100 min-h-screen flex">
 
   <!-- Sidebar Overlay (mobile) -->
-  <div id="sidebarOverlay" class="fixed inset-0 bg-black/60 z-40 hidden lg:hidden" onclick="toggleMobileSidebar()"></div>
+  <div id="sidebarOverlay" data-action="toggle-mobile-sidebar" class="fixed inset-0 bg-black/60 z-40 hidden lg:hidden"></div>
 
   <!-- Left Sidebar -->
   <aside id="sidebar" class="fixed top-0 left-0 h-full bg-card border-r border-border z-50 flex flex-col transition-all duration-200 sidebar-expanded -translate-x-full lg:translate-x-0">
@@ -150,7 +150,7 @@
     <div class="bg-card border border-border rounded-lg w-full max-w-md mx-4 p-5">
       <div class="flex items-center justify-between mb-5">
         <h3 class="text-lg font-semibold">New Project</h3>
-        <button onclick="closeCreateProjectModal()" class="text-gray-500 hover:text-white transition">&times;</button>
+        <button type="button" data-action="close-create-project-modal" class="text-gray-500 hover:text-white transition">&times;</button>
       </div>
       <p class="text-sm text-gray-400 mb-4">Create a project to organize and protect your API keys. You can also run <code class="text-indigo-400 bg-indigo-500/10 px-1.5 py-0.5 rounded text-xs">npx @vaultproof/init</code> to do this automatically.</p>
       <form id="createProjectForm" class="space-y-4">
@@ -160,7 +160,7 @@
         </div>
         <div id="createProjectMsg" class="text-sm hidden"></div>
         <div class="flex gap-3">
-          <button type="button" onclick="closeCreateProjectModal()" class="flex-1 px-4 py-2.5 bg-surface border border-border rounded-md text-sm text-gray-400 hover:text-white transition">Cancel</button>
+          <button type="button" data-action="close-create-project-modal" class="flex-1 px-4 py-2.5 bg-surface border border-border rounded-md text-sm text-gray-400 hover:text-white transition">Cancel</button>
           <button type="submit" id="createProjectBtn" class="flex-1 px-4 py-2.5 bg-brand hover:bg-brand-hover text-white rounded-md text-sm font-medium transition btn-glow">Create Project</button>
         </div>
       </form>
@@ -172,7 +172,7 @@
     <div class="bg-card border border-border rounded-lg w-full max-w-md mx-4 p-5">
       <div class="flex items-center justify-between mb-5">
         <h3 class="text-lg font-semibold">Add API Key</h3>
-        <button onclick="closeAddKeyModal()" class="text-gray-500 hover:text-white transition">&times;</button>
+        <button type="button" data-action="close-add-key-modal" class="text-gray-500 hover:text-white transition">&times;</button>
       </div>
       <p class="text-sm text-gray-400 mb-4">Paste an API key — the provider is detected automatically. The key is split in your browser and never leaves your device.</p>
       <form id="addKeyForm" class="space-y-4">
@@ -216,7 +216,7 @@
         </p>
         <div id="addKeyMsg" class="text-sm hidden"></div>
         <div class="flex gap-3">
-          <button type="button" onclick="closeAddKeyModal()" class="flex-1 px-4 py-2.5 bg-surface border border-border rounded-md text-sm text-gray-400 hover:text-white transition">Cancel</button>
+          <button type="button" data-action="close-add-key-modal" class="flex-1 px-4 py-2.5 bg-surface border border-border rounded-md text-sm text-gray-400 hover:text-white transition">Cancel</button>
           <button type="submit" id="addKeyBtn" class="flex-1 px-4 py-2.5 bg-brand hover:bg-brand-hover text-white rounded-md text-sm font-medium transition btn-glow">Split &amp; Protect</button>
         </div>
       </form>
@@ -228,7 +228,7 @@
     <div class="bg-card border border-border rounded-lg w-full max-w-md mx-4 p-5">
       <div class="flex items-center justify-between mb-5">
         <h3 class="text-lg font-semibold">Rotate Key</h3>
-        <button onclick="closeRotateModal()" class="text-gray-500 hover:text-white transition">
+        <button type="button" data-action="close-rotate-modal" class="text-gray-500 hover:text-white transition">
           <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
         </button>
       </div>
@@ -247,7 +247,7 @@
         </p>
         <div id="rotateMsg" class="text-sm hidden"></div>
         <div class="flex gap-3 pt-1">
-          <button type="button" onclick="closeRotateModal()" class="flex-1 px-4 py-2.5 bg-surface border border-border rounded-md text-sm text-gray-400 hover:text-white transition">Cancel</button>
+          <button type="button" data-action="close-rotate-modal" class="flex-1 px-4 py-2.5 bg-surface border border-border rounded-md text-sm text-gray-400 hover:text-white transition">Cancel</button>
           <button type="submit" id="rotateBtn" class="flex-1 px-4 py-2.5 bg-brand hover:bg-brand-hover text-white rounded-md text-sm font-medium transition btn-glow">Split &amp; Rotate</button>
         </div>
       </form>
@@ -259,14 +259,14 @@
     <div class="bg-card border border-border rounded-lg w-full max-w-sm mx-4 p-5">
       <div class="flex items-center justify-between mb-4">
         <h3 class="text-lg font-semibold" id="confirmTitle">Confirm</h3>
-        <button onclick="closeConfirmModal()" class="text-gray-500 hover:text-white transition">
+        <button type="button" data-action="close-confirm-modal" class="text-gray-500 hover:text-white transition">
           <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
         </button>
       </div>
       <p class="text-sm text-gray-400 mb-5" id="confirmMessage"></p>
       <div class="flex gap-3">
-        <button onclick="closeConfirmModal()" class="flex-1 px-4 py-2.5 bg-surface border border-border rounded-md text-sm text-gray-400 hover:text-white transition">Cancel</button>
-        <button onclick="executeConfirm()" id="confirmActionBtn" class="flex-1 px-4 py-2.5 bg-red-600 hover:bg-red-700 text-white rounded-md text-sm font-medium transition">Delete</button>
+        <button type="button" data-action="close-confirm-modal" class="flex-1 px-4 py-2.5 bg-surface border border-border rounded-md text-sm text-gray-400 hover:text-white transition">Cancel</button>
+        <button type="button" data-action="execute-confirm" id="confirmActionBtn" class="flex-1 px-4 py-2.5 bg-red-600 hover:bg-red-700 text-white rounded-md text-sm font-medium transition">Delete</button>
       </div>
     </div>
   </div>
@@ -291,7 +291,7 @@
     <div id="toast" class="fixed top-4 right-4 z-50 hidden max-w-sm">
       <div id="toastInner" class="flex items-center gap-3 px-4 py-3 rounded-md border text-sm shadow-lg backdrop-blur-sm">
         <span id="toastMsg"></span>
-        <button onclick="document.getElementById('toast').classList.add('hidden')" class="text-gray-400 hover:text-white ml-2">&times;</button>
+        <button type="button" data-action="close-toast" class="text-gray-400 hover:text-white ml-2">&times;</button>
       </div>
     </div>
 
@@ -333,7 +333,7 @@
             <span class="text-indigo-400">&#9889;</span>
             <p class="text-sm text-gray-400">Quick start: run <code class="text-indigo-400 bg-indigo-500/10 px-1.5 py-0.5 rounded text-xs font-mono">npx @vaultproof/init</code> in your project to scan and protect all keys at once.</p>
           </div>
-          <button onclick="this.parentElement.remove()" class="text-gray-600 hover:text-white transition flex-shrink-0">&times;</button>
+          <button type="button" data-action="dismiss-init-tip" class="text-gray-600 hover:text-white transition flex-shrink-0">&times;</button>
         </div>
 
         <!-- Header Row -->
@@ -342,7 +342,7 @@
             <h2 class="text-2xl font-bold" style="font-family:'Space Grotesk',sans-serif">Projects</h2>
             <p class="text-gray-500 text-sm mt-1" id="projectSubtitle">Manage your projects and their protected API keys</p>
           </div>
-          <button onclick="openCreateProjectModal()" class="px-4 py-2.5 bg-brand hover:bg-brand-hover text-white rounded-lg text-sm font-medium transition btn-glow flex items-center gap-2">
+          <button type="button" data-action="open-create-project-modal" class="px-4 py-2.5 bg-brand hover:bg-brand-hover text-white rounded-lg text-sm font-medium transition btn-glow flex items-center gap-2">
             <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"/></svg>
             New Project
           </button>
@@ -370,11 +370,11 @@
           <p class="text-gray-500 text-sm mb-6 max-w-md mx-auto">Run the init command in your project directory to create one and protect your API keys.</p>
           <div class="flex items-center justify-center gap-2 bg-[#111118] border border-[#1e1e2e] rounded-lg px-4 py-3 max-w-sm mx-auto">
             <code class="text-sm font-mono text-indigo-400">npx @vaultproof/init</code>
-            <button onclick="copyText('npx @vaultproof/init')" class="text-gray-500 hover:text-white transition p-1" title="Copy command">
+            <button type="button" data-action="copy-text" data-text="npx @vaultproof/init" class="text-gray-500 hover:text-white transition p-1" title="Copy command">
               <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"/></svg>
             </button>
           </div>
-          <p class="text-gray-600 text-xs mt-4">or <button onclick="openCreateProjectModal()" class="text-indigo-400 hover:underline">create a project manually</button></p>
+          <p class="text-gray-600 text-xs mt-4">or <button type="button" data-action="open-create-project-modal" class="text-indigo-400 hover:underline">create a project manually</button></p>
         </div>
 
       </div>

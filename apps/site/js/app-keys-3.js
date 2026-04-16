@@ -312,7 +312,7 @@
         }
       } catch (err) {
         if (loading) loading.remove();
-        container.innerHTML = '<div class="text-center py-12"><div class="text-gray-400 mb-3">Unable to load projects</div><button onclick="loadProjects()" class="px-4 py-2 bg-[#6366f1]/20 border border-[#6366f1]/30 text-[#6366f1] rounded-xl text-sm hover:bg-[#6366f1]/30 transition">Retry</button></div>';
+        container.innerHTML = '<div class="text-center py-12"><div class="text-gray-400 mb-3">Unable to load projects</div><button type="button" data-action="retry-load-projects" class="px-4 py-2 bg-[#6366f1]/20 border border-[#6366f1]/30 text-[#6366f1] rounded-xl text-sm hover:bg-[#6366f1]/30 transition">Retry</button></div>';
       }
     }
 
@@ -356,7 +356,7 @@
             keysHtml = '<div class="px-5 py-6 border-t border-border text-center">' +
               '<p class="text-sm text-gray-500">No keys in this project yet.</p>' +
               '<p class="text-xs text-gray-600 mt-2">Run <code class="text-indigo-400 font-mono">npx @vaultproof/init</code> to scan and protect all keys at once, or</p>' +
-              '<button onclick="openAddKeyModal(\'' + escapeJs(projId) + '\')" class="mt-2 px-4 py-2 bg-brand/10 border border-brand/20 text-brand text-sm rounded-lg hover:bg-brand/20 transition">Add a key manually</button>' +
+              '<button type="button" data-action="open-add-key-modal" data-project-id="' + escapeHtml(projId) + '" class="mt-2 px-4 py-2 bg-brand/10 border border-brand/20 text-brand text-sm rounded-lg hover:bg-brand/20 transition">Add a key manually</button>' +
             '</div>';
           } else {
             keysHtml = '<div class="border-t border-border">' +
@@ -374,11 +374,11 @@
                   '</div>' +
                   '<div class="flex items-center gap-2 flex-shrink-0 ml-4">' +
                     '<span class="text-xs text-gray-600 hidden sm:inline">' + formatDate(key.created_at) + '</span>' +
-                    '<button onclick="event.stopPropagation(); openRotateKeyModal(\'' + escapeJs(projId) + '\', \'' + escapeJs(keyId) + '\', \'' + escapeJs(key.provider || '') + '\')" class="px-2.5 py-1.5 text-xs text-indigo-400 hover:text-indigo-300 border border-indigo-900/50 hover:border-indigo-800 hover:bg-indigo-900/20 rounded-lg transition whitespace-nowrap flex items-center gap-1">' +
+                    '<button type="button" data-action="open-rotate-key-modal" data-project-id="' + escapeHtml(projId) + '" data-key-id="' + escapeHtml(keyId) + '" data-provider="' + escapeHtml(key.provider || '') + '" class="px-2.5 py-1.5 text-xs text-indigo-400 hover:text-indigo-300 border border-indigo-900/50 hover:border-indigo-800 hover:bg-indigo-900/20 rounded-lg transition whitespace-nowrap flex items-center gap-1">' +
                       '<svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>' +
                       'Rotate' +
                     '</button>' +
-                    '<button onclick="event.stopPropagation(); confirmDeleteKey(\'' + escapeJs(projId) + '\', \'' + escapeJs(keyId) + '\', \'' + escapeJs(key.provider || '') + '\')" class="px-2.5 py-1.5 text-xs text-red-400 hover:text-red-300 border border-red-900/50 hover:border-red-800 hover:bg-red-900/20 rounded-lg transition whitespace-nowrap flex items-center gap-1">' +
+                    '<button type="button" data-action="confirm-delete-key" data-project-id="' + escapeHtml(projId) + '" data-key-id="' + escapeHtml(keyId) + '" data-provider="' + escapeHtml(key.provider || '') + '" class="px-2.5 py-1.5 text-xs text-red-400 hover:text-red-300 border border-red-900/50 hover:border-red-800 hover:bg-red-900/20 rounded-lg transition whitespace-nowrap flex items-center gap-1">' +
                       '<svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>' +
                       'Delete' +
                     '</button>' +
@@ -391,7 +391,7 @@
 
         return '<div class="anim-card bg-card border border-border rounded-lg overflow-hidden hover:border-gray-600 transition-all duration-200 mb-4" style="animation-delay:' + delay + 'ms">' +
           // Project header
-          '<div class="p-5 cursor-pointer" onclick="toggleProject(\'' + projId + '\')">' +
+          '<div class="p-5 cursor-pointer" data-action="toggle-project" data-project-id="' + escapeHtml(projId) + '">' +
             '<div class="flex items-center justify-between">' +
               '<div class="flex items-center gap-3 min-w-0">' +
                 '<div class="w-10 h-10 rounded-lg bg-indigo-500/10 border border-indigo-500/20 flex items-center justify-center flex-shrink-0">' +
@@ -401,7 +401,7 @@
                   (name ? '<h3 class="font-semibold text-white text-base truncate">' + escapeHtml(name) + '</h3>' : '') +
                   '<div class="flex items-center gap-2 mt-0.5">' +
                     '<code class="text-xs font-mono text-indigo-400">' + escapeHtml(vpProjId) + '</code>' +
-                    '<button onclick="event.stopPropagation(); copyText(\'' + escapeJs(vpProjId) + '\')" class="text-gray-500 hover:text-gray-300 transition p-0.5" title="Copy project ID">' +
+                    '<button type="button" data-action="copy-text" data-text="' + escapeHtml(vpProjId) + '" class="text-gray-500 hover:text-gray-300 transition p-0.5" title="Copy project ID">' +
                       '<svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"/></svg>' +
                     '</button>' +
                   '</div>' +
@@ -410,10 +410,10 @@
               '<div class="flex items-center gap-3 flex-shrink-0">' +
                 '<span class="text-xs text-gray-500">' + keys.length + ' key' + (keys.length !== 1 ? 's' : '') + '</span>' +
                 '<span class="text-xs text-gray-600">Created ' + created + '</span>' +
-                '<button onclick="event.stopPropagation(); openAddKeyModal(\'' + escapeJs(projId) + '\')" class="p-1.5 text-gray-600 hover:text-indigo-400 transition rounded" title="Add key">' +
+                '<button type="button" data-action="open-add-key-modal" data-project-id="' + escapeHtml(projId) + '" class="p-1.5 text-gray-600 hover:text-indigo-400 transition rounded" title="Add key">' +
                   '<svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"/></svg>' +
                 '</button>' +
-                '<button onclick="event.stopPropagation(); confirmDeleteProject(\'' + escapeJs(projId) + '\', \'' + escapeJs(vpProjId) + '\')" class="p-1.5 text-gray-600 hover:text-red-400 transition rounded" title="Delete project">' +
+                '<button type="button" data-action="confirm-delete-project" data-project-id="' + escapeHtml(projId) + '" data-vp-proj-id="' + escapeHtml(vpProjId) + '" class="p-1.5 text-gray-600 hover:text-red-400 transition rounded" title="Delete project">' +
                   '<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>' +
                 '</button>' +
                 '<svg class="w-4 h-4 text-gray-500 transition-transform duration-200 ' + (isExpanded ? 'rotate-180' : '') + '" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>' +
@@ -757,6 +757,90 @@
         document.getElementById('addKeyMsg').classList.remove('hidden');
       } finally {
         btn.disabled = false; btn.textContent = 'Split & Protect';
+      }
+    });
+
+    // --- CSP-safe click handlers (replace inline onclick attributes) ---
+    document.addEventListener('click', function(event) {
+      var actionEl = event.target.closest('[data-action]');
+      if (!actionEl) return;
+
+      var action = actionEl.getAttribute('data-action');
+      if (!action) return;
+
+      if (action === 'toggle-mobile-sidebar') {
+        toggleMobileSidebar();
+        return;
+      }
+      if (action === 'close-create-project-modal') {
+        closeCreateProjectModal();
+        return;
+      }
+      if (action === 'close-add-key-modal') {
+        closeAddKeyModal();
+        return;
+      }
+      if (action === 'close-rotate-modal') {
+        closeRotateModal();
+        return;
+      }
+      if (action === 'close-confirm-modal') {
+        closeConfirmModal();
+        return;
+      }
+      if (action === 'execute-confirm') {
+        executeConfirm();
+        return;
+      }
+      if (action === 'close-toast') {
+        document.getElementById('toast').classList.add('hidden');
+        return;
+      }
+      if (action === 'dismiss-init-tip') {
+        var tip = document.getElementById('initTip');
+        if (tip) tip.remove();
+        return;
+      }
+      if (action === 'open-create-project-modal') {
+        openCreateProjectModal();
+        return;
+      }
+      if (action === 'copy-text') {
+        copyText(actionEl.getAttribute('data-text') || '');
+        return;
+      }
+      if (action === 'retry-load-projects') {
+        loadProjects();
+        return;
+      }
+      if (action === 'toggle-project') {
+        var toggleProjectId = actionEl.getAttribute('data-project-id') || '';
+        if (toggleProjectId) toggleProject(toggleProjectId);
+        return;
+      }
+      if (action === 'open-add-key-modal') {
+        var addProjectId = actionEl.getAttribute('data-project-id') || '';
+        if (addProjectId) openAddKeyModal(addProjectId);
+        return;
+      }
+      if (action === 'open-rotate-key-modal') {
+        var rotateProjectId = actionEl.getAttribute('data-project-id') || '';
+        var rotateKeyId = actionEl.getAttribute('data-key-id') || '';
+        var rotateProvider = actionEl.getAttribute('data-provider') || '';
+        if (rotateProjectId && rotateKeyId) openRotateKeyModal(rotateProjectId, rotateKeyId, rotateProvider);
+        return;
+      }
+      if (action === 'confirm-delete-key') {
+        var deleteKeyProjectId = actionEl.getAttribute('data-project-id') || '';
+        var deleteKeyId = actionEl.getAttribute('data-key-id') || '';
+        var deleteProvider = actionEl.getAttribute('data-provider') || '';
+        if (deleteKeyProjectId && deleteKeyId) confirmDeleteKey(deleteKeyProjectId, deleteKeyId, deleteProvider);
+        return;
+      }
+      if (action === 'confirm-delete-project') {
+        var deleteProjectId = actionEl.getAttribute('data-project-id') || '';
+        var deleteVpProjId = actionEl.getAttribute('data-vp-proj-id') || '';
+        if (deleteProjectId) confirmDeleteProject(deleteProjectId, deleteVpProjId);
       }
     });
 
