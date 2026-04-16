@@ -66,8 +66,23 @@
 
     // ── Check for CLI callback param ──
     const urlParams = new URLSearchParams(window.location.search);
+    const forceLogout = urlParams.get('logout') === '1';
     const rawCliCallback = urlParams.get('cli_callback');
     const cliState = urlParams.get('state');
+
+    if (forceLogout) {
+      // Defensive cleanup for any persisted auth state before rendering login.
+      Object.keys(localStorage).forEach(function(key) {
+        if (key.startsWith('vaultproof_') || key.startsWith('sb-') || key.includes('auth-token')) {
+          localStorage.removeItem(key);
+        }
+      });
+      sessionStorage.clear();
+      sbClient.auth.signOut({ scope: 'global' }).catch(function() {});
+      if (!confirmCode) {
+        window.history.replaceState({}, '', '/app/login');
+      }
+    }
 
     // Validate cli_callback: must be http/https on localhost/127.0.0.1 only
     let cliCallback = null;
@@ -176,7 +191,7 @@
     }
 
     // ── Check if already logged in (skip if handling code exchange or loop detected) ──
-    if (!confirmCode && loopHistory.length < 3) {
+    if (!forceLogout && !confirmCode && loopHistory.length < 3) {
       (async () => {
         const { data: { session } } = await sbClient.auth.getSession();
         if (session && !isRedirecting) {
@@ -198,7 +213,7 @@
 
     // ── Listen for auth state changes (handles OAuth callback) ──
     sbClient.auth.onAuthStateChange(async (event, session) => {
-      if (event === 'SIGNED_IN' && session && !isRedirecting) {
+      if (event === 'SIGNED_IN' && session && !isRedirecting && !forceLogout) {
         storeLocalSession(session, session.user);
 
         // Auto-redeem promo before redirect

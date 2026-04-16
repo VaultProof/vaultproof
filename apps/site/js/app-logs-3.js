@@ -107,10 +107,13 @@ const API = window.location.hostname.includes('dev.vaultproof') ? 'https://stagi
 
     async function logout() {
       Object.keys(localStorage).forEach(function(key) {
+        if (key.includes('auth-token')) localStorage.removeItem(key);
+      });
+      Object.keys(localStorage).forEach(function(key) {
         if (key.startsWith('vaultproof_') || key.startsWith('sb-')) localStorage.removeItem(key);
       });
       sessionStorage.clear();
-      window.location.href = 'login';
+      window.location.replace('/app/login?logout=1');
     }
 
 
