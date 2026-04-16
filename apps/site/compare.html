@@ -533,34 +533,6 @@
     </footer>
 
     <script src="/js/compare-3.js" defer></script>
-<script>
-(() => {
-  const groups = Array.from(document.querySelectorAll('.nav-group'));
-  const closeAll = () => groups.forEach((g) => {
-    g.classList.remove('open');
-    const btn = g.querySelector('.nav-group-btn');
-    if (btn) btn.setAttribute('aria-expanded', 'false');
-  });
-
-  groups.forEach((group) => {
-    const btn = group.querySelector('.nav-group-btn');
-    if (!btn) return;
-    btn.addEventListener('click', (event) => {
-      event.stopPropagation();
-      const isOpen = group.classList.contains('open');
-      closeAll();
-      if (!isOpen) {
-        group.classList.add('open');
-        btn.setAttribute('aria-expanded', 'true');
-      }
-    });
-  });
-
-  document.addEventListener('click', (event) => {
-    if (!groups.some((g) => g.contains(event.target))) closeAll();
-  });
-})();
-</script>
 <script src="/js/analytics.js" defer></script>
 <script src="/js/compare-4.js" defer></script>
 <script src="/js/compare-5.js" defer></script>

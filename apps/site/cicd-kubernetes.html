@@ -13,23 +13,7 @@
   <meta property="og:type" content="website">
   <meta property="og:image" content="https://vaultproof.dev/ogimage.png">
 
-  <script>
-    tailwind = {
-      config: {
-        theme: {
-          extend: {
-            colors: {
-              'vp-bg': '#0a0a0f',
-              'vp-surface': '#111118',
-              'vp-border': '#1e1e2e',
-              'vp-accent': '#6366f1',
-              'vp-cyan': '#06b6d4'
-            }
-          }
-        }
-      }
-    };
-  </script>
+  <script src="/js/cicd-kubernetes-1.js"></script>
   <script src="https://cdn.tailwindcss.com/3.4.17"></script>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -239,39 +223,6 @@ OPENAI_BASE_URL=https://init.vaultproof.dev/p/openai/v1</pre></div>
       <p class="text-gray-400 text-sm">VaultProof is not a full replacement for Vault/Secrets Manager/KMS. It is an additional control plane for outbound third-party API credentials, while your existing secrets system continues to handle broader infrastructure secrets.</p>
     </section>
   </main>
-  <script>
-    (() => {
-      const mobileToggle = document.getElementById('mobileToggle');
-      const mobileMenu = document.getElementById('mobileMenu');
-      if (mobileToggle && mobileMenu) {
-        mobileToggle.addEventListener('click', () => mobileMenu.classList.toggle('open'));
-      }
-
-      const groups = Array.from(document.querySelectorAll('.nav-group'));
-      const closeAll = () => groups.forEach((g) => {
-        g.classList.remove('open');
-        const btn = g.querySelector('.nav-group-btn');
-        if (btn) btn.setAttribute('aria-expanded', 'false');
-      });
-
-      groups.forEach((group) => {
-        const btn = group.querySelector('.nav-group-btn');
-        if (!btn) return;
-        btn.addEventListener('click', (event) => {
-          event.stopPropagation();
-          const isOpen = group.classList.contains('open');
-          closeAll();
-          if (!isOpen) {
-            group.classList.add('open');
-            btn.setAttribute('aria-expanded', 'true');
-          }
-        });
-      });
-
-      document.addEventListener('click', (event) => {
-        if (!groups.some((g) => g.contains(event.target))) closeAll();
-      });
-    })();
-  </script>
+  <script src="/js/cicd-kubernetes-2.js" defer></script>
 </body>
 </html>
