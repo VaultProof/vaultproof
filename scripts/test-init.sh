@@ -102,8 +102,11 @@ run_test "staging /health"             "curl -sf '$WORKER_URL/health' -o /dev/nu
 if [ -n "${VP_JWT:-}" ]; then
   run_test "integration suite" \
     "cd packages/init-worker && VP_JWT='$VP_JWT' VP_WORKER_URL='$WORKER_URL' npx tsx test/integration.ts"
+  run_test "proxy route speed (p50/p95/p99)" \
+    "cd packages/init-worker && VP_JWT='$VP_JWT' VP_WORKER_URL='$WORKER_URL' npx tsx test/route-speed.ts"
 else
   skip_test "integration suite" "VP_JWT not set (see docs for how to get one)"
+  skip_test "proxy route speed (p50/p95/p99)" "VP_JWT not set (speed test needs authenticated staging project)"
 fi
 
 # ── Summary ──────────────────────────────────────────────────────────────

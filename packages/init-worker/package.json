@@ -6,7 +6,9 @@
   "scripts": {
     "dev": "wrangler dev",
     "deploy": "wrangler deploy",
-    "deploy:staging": "wrangler deploy --env staging"
+    "deploy:staging": "wrangler deploy --env staging",
+    "test:integration": "npx tsx test/integration.ts",
+    "test:speed": "npx tsx test/route-speed.ts"
   },
   "devDependencies": {
     "@cloudflare/workers-types": "^4.0.0",
