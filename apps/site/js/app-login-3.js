@@ -410,3 +410,54 @@
         btn.disabled = false;
       }
     }
+
+    // ── DOM event bindings (CSP-safe: no inline handlers) ──
+    (function bindUiEvents() {
+      var promoToggleBtn = document.getElementById('promoToggleBtn');
+      var promoRow = document.getElementById('promoRow');
+      if (promoToggleBtn && promoRow) {
+        promoToggleBtn.addEventListener('click', function () {
+          promoRow.classList.toggle('hidden');
+        });
+      }
+
+      var promoInput = document.getElementById('promoCodeInput');
+      if (promoInput) {
+        promoInput.addEventListener('keydown', function (event) {
+          if (event.key === 'Enter') {
+            event.preventDefault();
+            applyPromoCode();
+          }
+        });
+      }
+
+      var promoApplyBtn = document.getElementById('promoApplyBtn');
+      if (promoApplyBtn) promoApplyBtn.addEventListener('click', applyPromoCode);
+
+      var githubBtn = document.getElementById('loginWithGitHubBtn');
+      if (githubBtn) githubBtn.addEventListener('click', loginWithGitHub);
+
+      var googleBtn = document.getElementById('loginWithGoogleBtn');
+      if (googleBtn) googleBtn.addEventListener('click', loginWithGoogle);
+
+      var loginTab = document.getElementById('loginTab');
+      if (loginTab) loginTab.addEventListener('click', function () { showTab('login'); });
+
+      var registerTab = document.getElementById('registerTab');
+      if (registerTab) registerTab.addEventListener('click', function () { showTab('register'); });
+
+      var loginForm = document.getElementById('loginForm');
+      if (loginForm) loginForm.addEventListener('submit', handleLogin);
+
+      var showResetBtn = document.getElementById('showResetBtn');
+      if (showResetBtn) showResetBtn.addEventListener('click', showResetForm);
+
+      var resetBtn = document.getElementById('resetBtn');
+      if (resetBtn) resetBtn.addEventListener('click', handleReset);
+
+      var backToSigninBtn = document.getElementById('backToSigninBtn');
+      if (backToSigninBtn) backToSigninBtn.addEventListener('click', hideResetForm);
+
+      var registerForm = document.getElementById('registerForm');
+      if (registerForm) registerForm.addEventListener('submit', handleRegister);
+    })();

@@ -106,6 +106,8 @@
     const mainWrapper = document.getElementById('mainWrapper');
 
     document.getElementById('menuBtn').addEventListener('click', toggleMobileSidebar);
+    const logoutBtn = document.getElementById('logoutBtn');
+    if (logoutBtn) logoutBtn.addEventListener('click', logout);
 
     function toggleMobileSidebar() {
       sidebar.classList.toggle('-translate-x-full');

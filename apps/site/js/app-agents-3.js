@@ -1,8 +1,10 @@
-const token = localStorage.getItem('vaultproof_token');
+    const token = localStorage.getItem('vaultproof_token');
     const user = JSON.parse(localStorage.getItem('vaultproof_user') || '{}');
     if (!token) { window.location.href = 'login'; }
     document.getElementById('sidebarEmail').textContent = user.email || '';
     document.getElementById('menuBtn').addEventListener('click', toggleMobileSidebar);
+    const logoutBtn = document.getElementById('logoutBtn');
+    if (logoutBtn) logoutBtn.addEventListener('click', logout);
 
     function toggleMobileSidebar() {
       document.getElementById('sidebar').classList.toggle('-translate-x-full');

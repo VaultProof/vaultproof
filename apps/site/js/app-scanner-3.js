@@ -96,6 +96,8 @@ const API = window.location.hostname.includes('dev.vaultproof') ? 'https://stagi
     const overlayEl = document.getElementById('sidebarOverlay');
     document.getElementById('sidebarEmail').textContent = user.email || '';
     document.getElementById('menuBtn').addEventListener('click', toggleMobileSidebar);
+    const logoutBtn = document.getElementById('logoutBtn');
+    if (logoutBtn) logoutBtn.addEventListener('click', logout);
 
     function toggleMobileSidebar() {
       sidebarEl.classList.toggle('-translate-x-full');
