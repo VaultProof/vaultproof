@@ -80,7 +80,7 @@ function printUsage(): void {
   console.log(chalk.dim('  npx @vaultproof/init doctor'));
 }
 
-function readLegacyVpLiveKey(): string | null {
+function readLegacyVpLiveKeyFromConfig(): string | null {
   const configPath = path.join(os.homedir(), '.vaultproof', 'config.json');
   try {
     if (!fs.existsSync(configPath)) return null;
@@ -89,19 +89,199 @@ function readLegacyVpLiveKey(): string | null {
   } catch {
     // unreadable config
   }
+  return null;
+}
+
+function readLegacyVpLiveKey(): string | null {
+  const fromConfig = readLegacyVpLiveKeyFromConfig();
+  if (fromConfig) return fromConfig;
+
   // Also check env
   if (process.env.VAULTPROOF_API_KEY?.startsWith('vp_live_')) return process.env.VAULTPROOF_API_KEY;
   return null;
+}
+
+const ENV_SCAN_FILES = ['.env', '.env.local', '.env.production', '.env.development'];
+
+interface EnvFileStatus {
+  file: string;
+  exists: boolean;
+  absolutePath: string;
+}
+
+interface EnvEntry {
+  file: string;
+  line: number;
+  name: string;
+  value: string;
+}
+
+interface VaultProofMarker {
+  source: 'file' | 'process-env' | 'legacy-config';
+  name: string;
+  value: string;
+  reason: string;
+  file?: string;
+  line?: number;
+}
+
+function getEnvFileStatuses(cwd: string): EnvFileStatus[] {
+  return ENV_SCAN_FILES.map((name) => {
+    const absolutePath = path.join(cwd, name);
+    return {
+      file: name,
+      absolutePath,
+      exists: fs.existsSync(absolutePath),
+    };
+  });
+}
+
+function parseEnvEntries(filePath: string): EnvEntry[] {
+  if (!fs.existsSync(filePath)) return [];
+  const lines = fs.readFileSync(filePath, 'utf-8').split('\n');
+  const out: EnvEntry[] = [];
+  for (let i = 0; i < lines.length; i++) {
+    const line = lines[i];
+    if (!line || line.trim().startsWith('#')) continue;
+    const m = line.match(/^\s*([A-Za-z_][A-Za-z0-9_]*)\s*=\s*(.+?)\s*$/);
+    if (!m) continue;
+    const [, name, rawValue] = m;
+    const value = rawValue.trim().replace(/^["']|["']$/g, '');
+    out.push({ file: filePath, line: i + 1, name, value });
+  }
+  return out;
+}
+
+function classifyVaultProofMarker(name: string, value: string): string | null {
+  if (name === 'VAULTPROOF_PROJECT_ID' && value.startsWith('vp-proj-')) {
+    return 'project ID already configured';
+  }
+  if (name === 'VAULTPROOF_API_KEY' && (value.startsWith('vp_live_') || value.startsWith('vp_test_'))) {
+    return 'legacy VaultProof API key configured';
+  }
+  if (name === 'VAULTPROOF_JWT' && value.length > 20) {
+    return 'JWT auth token present';
+  }
+  if (name.endsWith('_BASE_URL') && /(?:^https:\/\/)?(?:init|api)\.vaultproof\.dev/i.test(value)) {
+    return 'provider base URL already routed through VaultProof';
+  }
+  if ((name.endsWith('_API_KEY') || name.endsWith('_SECRET_KEY') || name.endsWith('_TOKEN')) && value.startsWith('vp-proj-')) {
+    return 'provider key already replaced with project ID';
+  }
+  return null;
+}
+
+function collectVaultProofMarkers(cwd: string, statuses: EnvFileStatus[]): VaultProofMarker[] {
+  const markers: VaultProofMarker[] = [];
+
+  for (const status of statuses) {
+    if (!status.exists) continue;
+    const entries = parseEnvEntries(status.absolutePath);
+    for (const e of entries) {
+      const reason = classifyVaultProofMarker(e.name, e.value);
+      if (!reason) continue;
+      markers.push({
+        source: 'file',
+        name: e.name,
+        value: e.value,
+        reason,
+        file: status.file,
+        line: e.line,
+      });
+    }
+  }
+
+  const processEnvCandidates = ['VAULTPROOF_PROJECT_ID', 'VAULTPROOF_API_KEY', 'VAULTPROOF_JWT'];
+  for (const key of processEnvCandidates) {
+    const value = process.env[key];
+    if (!value) continue;
+    const reason = classifyVaultProofMarker(key, value);
+    if (!reason) continue;
+    markers.push({
+      source: 'process-env',
+      name: key,
+      value,
+      reason,
+    });
+  }
+
+  const legacyVpLive = readLegacyVpLiveKeyFromConfig();
+  if (legacyVpLive) {
+    markers.push({
+      source: 'legacy-config',
+      name: 'VAULTPROOF_API_KEY',
+      value: legacyVpLive,
+      reason: 'legacy VaultProof API key found in ~/.vaultproof/config.json',
+      file: '~/.vaultproof/config.json',
+    });
+  }
+
+  return markers;
+}
+
+function displayMarkerValue(name: string, value: string): string {
+  if (name === 'VAULTPROOF_JWT') return '<present>';
+  if (name.endsWith('_BASE_URL')) return value;
+  return truncateKey(value);
+}
+
+function printScanReport(statuses: EnvFileStatus[], providerCount: number, markers: VaultProofMarker[]): void {
+  console.log(chalk.bold('Scan checks:\n'));
+  console.log(chalk.dim('  Files checked for env keys:'));
+  for (const s of statuses) {
+    const icon = s.exists ? chalk.green('✓') : chalk.dim('•');
+    const state = s.exists ? chalk.white('found') : chalk.dim('not found');
+    console.log(`  ${icon} ${s.file.padEnd(18)} ${state}`);
+  }
+
+  console.log(chalk.dim('\n  Detection performed:'));
+  console.log(chalk.dim(`  • API key pattern matching against ${providerCount} provider signatures`));
+  console.log(chalk.dim('  • Existing VaultProof markers (project ID, legacy key, routed base URLs)'));
+
+  if (markers.length === 0) {
+    console.log(chalk.dim('\n  Existing VaultProof config: none detected\n'));
+    return;
+  }
+
+  console.log(chalk.yellow('\n  Existing VaultProof config detected:'));
+  for (const m of markers) {
+    if (m.source === 'file') {
+      console.log(
+        `  ${chalk.yellow('•')} ${m.name}=${chalk.white(displayMarkerValue(m.name, m.value))} ` +
+        chalk.dim(`(${m.reason}; ${m.file}:${m.line})`),
+      );
+    } else if (m.source === 'process-env') {
+      console.log(
+        `  ${chalk.yellow('•')} ${m.name}=${chalk.white(displayMarkerValue(m.name, m.value))} ` +
+        chalk.dim(`(${m.reason}; process env)`),
+      );
+    } else {
+      console.log(
+        `  ${chalk.yellow('•')} ${m.name}=${chalk.white(displayMarkerValue(m.name, m.value))} ` +
+        chalk.dim(`(${m.reason}; ${m.file})`),
+      );
+    }
+  }
+  console.log();
 }
 
 async function runInit(opts: { autoYes: boolean; dryRun: boolean }): Promise<void> {
   printBanner();
 
   const catalog = await loadProviders();
+  const envStatuses = getEnvFileStatuses(process.cwd());
+  const vaultProofMarkers = collectVaultProofMarkers(process.cwd(), envStatuses);
+  printScanReport(envStatuses, catalog.providers.length, vaultProofMarkers);
+
   const findings: Finding[] = scanDirectory(process.cwd(), catalog.providers);
 
   if (findings.length === 0) {
-    console.log(chalk.yellow('No API keys detected.'));
+    console.log(chalk.yellow('No plaintext API keys detected.'));
+    if (vaultProofMarkers.length > 0) {
+      console.log(chalk.dim('This environment already appears to be configured for VaultProof.'));
+    } else {
+      console.log(chalk.dim('No provider key patterns were found in checked .env files.'));
+    }
     console.log(chalk.dim(`Provider catalog: ${catalog.providers.length} providers, version ${catalog.version}`));
     process.exit(0);
   }
