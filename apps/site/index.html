@@ -1,1332 +1,948 @@
 <!DOCTYPE html>
-<html lang="en" class="scroll-smooth overflow-x-hidden">
+<html lang="en">
 <head>
-    <!-- Google Analytics -->
-    <script async src="https://www.googletagmanager.com/gtag/js?id=G-NE5RYX1WTF"></script>
-    <script src="/js/index-1.js" defer></script>
-    <link rel="icon" type="image/png" href="/favicon.png">
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>VaultProof | API key security built for the age of AI agents.</title>
-    <meta name="description" content="VaultProof splits, encrypts, and proxies your API keys so they stay out of your code, .env files, and agent workflows.">
-    <meta name="keywords" content="API key security, API key management, API proxy, split-key encryption, OpenAI, Anthropic, Mistral, Groq, key vault, AI agent security">
-    <meta property="og:title" content="VaultProof — API key security built for the age of AI agents">
-    <meta property="og:description" content="VaultProof splits, encrypts, and proxies your API keys — designed for developers and AI agents.">
-    <meta property="og:url" content="https://vaultproof.dev">
-    <meta property="og:type" content="website">
-    <meta property="og:image" content="https://vaultproof.dev/ogimage.png">
-    <meta name="twitter:card" content="summary">
-    <meta name="twitter:title" content="VaultProof — API key security built for the age of AI agents">
-    <meta name="twitter:description" content="VaultProof splits, encrypts, and proxies your API keys — designed for developers and AI agents.">
-    <meta name="referrer" content="strict-origin-when-cross-origin">
-    <link rel="canonical" href="https://vaultproof.dev">
-    <meta name="twitter:image" content="https://vaultproof.dev/ogimage.png">
-    <script type="application/ld+json">
-    {
-      "@context": "https://schema.org",
-      "@graph": [
-        {
-          "@type": "Organization",
-          "@id": "https://vaultproof.dev/#organization",
-          "name": "VaultProof",
-          "url": "https://vaultproof.dev",
-          "logo": {
-            "@type": "ImageObject",
-            "url": "https://vaultproof.dev/og-image2.png"
-          },
-          "description": "API key security built for the age of AI agents."
-        },
-        {
-          "@type": "WebSite",
-          "@id": "https://vaultproof.dev/#website",
-          "name": "VaultProof",
-          "url": "https://vaultproof.dev",
-          "description": "VaultProof splits, encrypts, and proxies your API keys so they stay out of your code, .env files, and agent workflows.",
-          "publisher": { "@id": "https://vaultproof.dev/#organization" }
-        },
-        {
-          "@type": "SoftwareApplication",
-          "name": "VaultProof",
-          "url": "https://vaultproof.dev",
-          "applicationCategory": "SecurityApplication",
-          "operatingSystem": "Web",
-          "description": "VaultProof splits, encrypts, and proxies your API keys so they stay out of your code, .env files, and agent workflows. Designed for developers and AI agents.",
-          "offers": {
-            "@type": "Offer",
-            "price": "0",
-            "priceCurrency": "USD"
-          },
-          "publisher": { "@id": "https://vaultproof.dev/#organization" },
-          "featureList": [
-            "Split-key encryption",
-            "Secure API proxy",
-            "Origin/domain locking",
-            "Provider restrictions",
-            "Usage monitoring dashboard",
-            "SSE streaming support"
-          ]
-        },
-        {
-          "@type": "FAQPage",
-          "mainEntity": [
-            {
-              "@type": "Question",
-              "name": "Does this work with the SDKs I already use?",
-              "acceptedAnswer": {
-                "@type": "Answer",
-                "text": "Yes. For providers supported by the init flow, you usually update the env values your SDK already reads: the API key becomes a public vp-proj identifier and the base URL points at VaultProof. Your SDK calls stay the same. The migration flow is npx @vaultproof/init, which scans your .env files and rewrites them for you."
-              }
-            },
-            {
-              "@type": "Question",
-              "name": "How is this different from Vault, Doppler, or AWS Secrets Manager?",
-              "acceptedAnswer": {
-                "@type": "Answer",
-                "text": "Those tools protect your keys at rest. They encrypt the key in storage and hand it to your app when you ask for it. The moment your app holds that plaintext key, every supply chain attack from Trivy to the recent npm hijacks becomes a direct risk. VaultProof keeps the key out of your app entirely. Your code never holds the real key. We're a layer on top of your existing vault, not a replacement."
-              }
-            },
-            {
-              "@type": "Question",
-              "name": "Do I need to change my code?",
-              "acceptedAnswer": {
-                "@type": "Answer",
-                "text": "Usually, no. For providers supported by the init flow, your SDK calls stay the same and VaultProof rewrites the env vars your app already reads. The main migration step is running npx @vaultproof/init and letting it update your local .env files."
-              }
-            },
-            {
-              "@type": "Question",
-              "name": "How much latency does the proxy add?",
-              "acceptedAnswer": {
-                "@type": "Answer",
-                "text": "Typically under 100ms. For a 2-10 second LLM response, you won't notice. SSE streaming is fully supported — chunks arrive as they're generated. For non-AI calls (Stripe, AWS) the round trip adds 100-200ms once per request, which is unnoticeable for payment, auth, and email flows."
-              }
-            },
-            {
-              "@type": "Question",
-              "name": "What happens if I want to leave?",
-              "acceptedAnswer": {
-                "@type": "Answer",
-                "text": "Your keys are yours. Run vaultproof export and you get every secret back in a standard .env file. No proprietary format. No lock-in. The proxy is a layer on top of your existing infrastructure, not a replacement for it — when you leave, you go back to exactly what you had before."
-              }
-            },
-            {
-              "@type": "Question",
-              "name": "Can VaultProof see my API keys?",
-              "acceptedAnswer": {
-                "@type": "Answer",
-                "text": "No. Your key is split into two encrypted shares before it leaves your device. We hold one share encrypted with our server key. The other is encrypted with your developer key. Neither share alone reveals anything. The architecture is designed so no single server — including ours — holds your complete key."
-              }
-            },
-            {
-              "@type": "Question",
-              "name": "What if someone finds my project ID?",
-              "acceptedAnswer": {
-                "@type": "Answer",
-                "text": "Project IDs are public identifiers, not secrets. Someone with your project ID can make proxy calls against your rate limit, but they can never retrieve your actual API keys. Lock access by domain (origin locking), provider, endpoint, or IP. Revoke instantly from your dashboard."
-              }
-            },
-            {
-              "@type": "Question",
-              "name": "What if VaultProof goes down?",
-              "acceptedAnswer": {
-                "@type": "Answer",
-                "text": "Your encrypted shares stay safe in the database. Proxy calls pause until we're back. We run on a 330+ location edge network with continuous monitoring — see live status at vaultproof.dev/status. For mission-critical workloads, the Enterprise tier supports failover configurations."
-              }
-            },
-            {
-              "@type": "Question",
-              "name": "How do you make money if the free tier is real?",
-              "acceptedAnswer": {
-                "@type": "Answer",
-                "text": "The free tier is genuinely free — 3 keys, 10,000 calls a month, no credit card, no expiry. We make money when teams scale past it. Most solo projects stay on free forever. Production apps and teams move to Starter ($5) or Pro ($20) for more keys, more calls, and features like IP allowlists, budget caps, and longer log retention. That's the entire model."
-              }
+  <!-- Google Analytics -->
+  <script async src="https://www.googletagmanager.com/gtag/js?id=G-NE5RYX1WTF"></script>
+  <script src="/js/index-1.js" defer></script>
+
+  <link rel="icon" type="image/png" href="/favicon.png">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>VaultProof | API key security built for the age of AI agents.</title>
+  <meta name="description" content="VaultProof splits, encrypts, and proxies your API keys so they stay out of your code, .env files, and agent workflows.">
+  <meta name="keywords" content="API key security, API key management, API proxy, split-key encryption, OpenAI, Anthropic, Mistral, Groq, key vault, AI agent security">
+  <meta property="og:title" content="VaultProof — API key security built for the age of AI agents">
+  <meta property="og:description" content="VaultProof splits, encrypts, and proxies your API keys — designed for developers and AI agents.">
+  <meta property="og:url" content="https://vaultproof.dev">
+  <meta property="og:type" content="website">
+  <meta property="og:image" content="https://vaultproof.dev/ogimage.png">
+  <meta name="twitter:card" content="summary">
+  <meta name="twitter:title" content="VaultProof — API key security built for the age of AI agents">
+  <meta name="twitter:description" content="VaultProof splits, encrypts, and proxies your API keys — designed for developers and AI agents.">
+  <meta name="referrer" content="strict-origin-when-cross-origin">
+  <link rel="canonical" href="https://vaultproof.dev">
+  <meta name="twitter:image" content="https://vaultproof.dev/ogimage.png">
+
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@graph": [
+      {
+        "@type": "Organization",
+        "@id": "https://vaultproof.dev/#organization",
+        "name": "VaultProof",
+        "url": "https://vaultproof.dev",
+        "logo": { "@type": "ImageObject", "url": "https://vaultproof.dev/og-image2.png" },
+        "description": "API key security built for the age of AI agents."
+      },
+      {
+        "@type": "WebSite",
+        "@id": "https://vaultproof.dev/#website",
+        "name": "VaultProof",
+        "url": "https://vaultproof.dev",
+        "description": "VaultProof splits, encrypts, and proxies your API keys so they stay out of your code, .env files, and agent workflows.",
+        "publisher": { "@id": "https://vaultproof.dev/#organization" }
+      },
+      {
+        "@type": "SoftwareApplication",
+        "name": "VaultProof",
+        "url": "https://vaultproof.dev",
+        "applicationCategory": "SecurityApplication",
+        "operatingSystem": "Web",
+        "description": "VaultProof splits, encrypts, and proxies your API keys so they stay out of your code, .env files, and agent workflows. Designed for developers and AI agents.",
+        "offers": { "@type": "Offer", "price": "0", "priceCurrency": "USD" },
+        "publisher": { "@id": "https://vaultproof.dev/#organization" },
+        "featureList": [
+          "Split-key encryption",
+          "Secure API proxy",
+          "Origin/domain locking",
+          "Provider restrictions",
+          "Usage monitoring dashboard",
+          "SSE streaming support"
+        ]
+      },
+      {
+        "@type": "FAQPage",
+        "mainEntity": [
+          {
+            "@type": "Question",
+            "name": "Does this work with the SDKs I already use?",
+            "acceptedAnswer": {
+              "@type": "Answer",
+              "text": "Yes. For providers supported by the init flow, you usually update the env values your SDK already reads: the API key becomes a public vp-proj identifier and the base URL points at VaultProof. Your SDK calls stay the same. The migration flow is npx @vaultproof/init, which scans your .env files and rewrites them for you."
             }
-          ]
-        }
-      ]
+          },
+          {
+            "@type": "Question",
+            "name": "How is this different from Vault, Doppler, or AWS Secrets Manager?",
+            "acceptedAnswer": {
+              "@type": "Answer",
+              "text": "Those tools protect your keys at rest. They encrypt the key in storage and hand it to your app when you ask for it. VaultProof keeps the key out of your app entirely. Your code never holds the real key. We're a layer on top of your existing vault, not a replacement."
+            }
+          },
+          {
+            "@type": "Question",
+            "name": "How much latency does the proxy add?",
+            "acceptedAnswer": {
+              "@type": "Answer",
+              "text": "Typically under 100ms. For a 2-10 second LLM response, you won't notice. SSE streaming is fully supported."
+            }
+          },
+          {
+            "@type": "Question",
+            "name": "Can VaultProof see my API keys?",
+            "acceptedAnswer": {
+              "@type": "Answer",
+              "text": "No. Your key is split into two encrypted shares before it leaves your device. We hold one share encrypted with our server key. The other is encrypted with your developer key. Neither share alone reveals anything."
+            }
+          }
+        ]
+      }
+    ]
+  }
+  </script>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter+Tight:wght@500;600;700;800&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --accent: #d97706;
+      --bg: #fafaf7;
+      --bg-mid: #f3f3ee;
+      --bg-card: #fff;
+      --rule: 1px solid #e7e5de;
+      --text: #171717;
+      --text-mid: #3f3f37;
+      --text-muted: #525252;
+      --text-faint: #8a8a82;
+      --font-display: "Inter Tight", "Inter", system-ui, sans-serif;
+      --font-body: "Inter", system-ui, sans-serif;
+      --font-mono: "JetBrains Mono", "IBM Plex Mono", ui-monospace, monospace;
     }
-    </script>
 
-    <!-- Tailwind CDN: SRI not applicable (dynamic response) -->
-    <script src="https://cdn.tailwindcss.com/3.4.17"></script>
-    <script src="/js/index-2.js" defer></script>
+    html, body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: var(--font-body);
+      font-size: 15px;
+      line-height: 1.5;
+      -webkit-font-smoothing: antialiased;
+    }
 
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600&family=DM+Serif+Display:ital@0;1&family=Inter:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600&family=Marvel:wght@400;700&family=Poppins:wght@600;700;800;900&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
+    a { color: inherit; text-decoration: none; }
 
-    <style>
-        * { font-family: 'Inter', system-ui, sans-serif; }
-        ::selection { background: #6366f1; color: #fff; }
-        html { scroll-padding-top: 80px; }
-        body { background: #0a0a0f; }
+    @keyframes blink { 50% { opacity: 0; } }
+    .cursor {
+      display: inline-block; width: 8px; height: 14px;
+      background: var(--accent); vertical-align: -3px;
+      animation: blink 1.1s steps(1) infinite;
+    }
 
-        /* Animated gradient orbs */
-        .orb {
-            position: fixed;
-            border-radius: 50%;
-            filter: blur(120px);
-            pointer-events: none;
-            z-index: 0;
-            will-change: transform;
-            max-width: 90vw;
-        }
-        .orb-1 {
-            width: 600px; height: 600px;
-            background: radial-gradient(circle, rgba(99,102,241,0.4) 0%, transparent 70%);
-            top: -10%; left: -5%;
-            animation: drift1 25s ease-in-out infinite;
-        }
-        .orb-2 {
-            width: 500px; height: 500px;
-            background: radial-gradient(circle, rgba(99,102,241,0.3) 0%, transparent 70%);
-            top: 40%; right: -10%;
-            animation: drift2 30s ease-in-out infinite;
-        }
-        .orb-3 {
-            width: 450px; height: 450px;
-            background: radial-gradient(circle, rgba(99,102,241,0.25) 0%, transparent 70%);
-            bottom: 5%; left: 20%;
-            animation: drift3 22s ease-in-out infinite;
-        }
-        @keyframes drift1 {
-            0%, 100% { transform: translate(0, 0) scale(1); }
-            33% { transform: translate(80px, 60px) scale(1.1); }
-            66% { transform: translate(-40px, 30px) scale(0.95); }
-        }
-        @keyframes drift2 {
-            0%, 100% { transform: translate(0, 0) scale(1); }
-            33% { transform: translate(-60px, -40px) scale(1.05); }
-            66% { transform: translate(50px, -80px) scale(0.9); }
-        }
-        @keyframes drift3 {
-            0%, 100% { transform: translate(0, 0) scale(1); }
-            33% { transform: translate(70px, -50px) scale(1.08); }
-            66% { transform: translate(-30px, 40px) scale(0.92); }
-        }
+    /* ── NAV ── */
+    .nav {
+      display: flex; align-items: center;
+      padding: 14px 40px;
+      border-bottom: var(--rule);
+      font-family: var(--font-mono); font-size: 12px;
+      background: var(--bg);
+      position: sticky; top: 0; z-index: 100;
+    }
+    .nav-logo { display: flex; align-items: center; gap: 8px; }
+    .nav-logo-diamond { color: var(--accent); font-size: 14px; }
+    .nav-logo-name { font-weight: 600; letter-spacing: 0.5px; }
+    .nav-logo-version { color: var(--text-faint); margin-left: 6px; }
+    .nav-spacer { flex: 1; }
+    .nav-links { display: flex; gap: 24px; color: var(--text-muted); }
+    .nav-links a:hover { color: var(--text); }
+    .nav-sign-in { color: var(--text-faint); margin-left: 24px; margin-right: 12px; }
+    .nav-cta {
+      padding: 6px 12px;
+      background: var(--text); color: var(--bg);
+      border-radius: 3px; font-size: 12px;
+      cursor: pointer;
+    }
+    .nav-cta:hover { background: #333; }
 
-        /* Nav dropdowns — JS-controlled (.open class), no CSS hover */
-        .nav-group { position: relative; }
-        .nav-group-btn {
-            display: inline-flex; align-items: center; gap: 4px;
-            font-size: 0.875rem; color: #9ca3af; background: none;
-            border: none; cursor: pointer; padding: 4px 2px;
-            transition: color 0.15s; font-family: inherit; user-select: none;
-        }
-        .nav-group-btn:hover, .nav-group.open .nav-group-btn { color: #fff; }
-        .nav-group-btn svg { transition: transform 0.2s; flex-shrink: 0; }
-        .nav-group.open .nav-group-btn svg { transform: rotate(180deg); }
-        .nav-dropdown {
-            position: absolute; top: calc(100% + 10px); left: 50%;
-            transform: translateX(-50%) translateY(-4px);
-            background: rgba(13,13,20,0.96);
-            backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
-            border: 1px solid rgba(99,102,241,0.15);
-            border-radius: 14px; padding: 6px; min-width: 176px;
-            opacity: 0; visibility: hidden; pointer-events: none;
-            transition: opacity 0.15s ease, transform 0.15s ease, visibility 0.15s;
-            box-shadow: 0 0 0 1px rgba(99,102,241,0.06), 0 8px 32px rgba(0,0,0,0.6), 0 0 24px rgba(99,102,241,0.08);
-            z-index: 100;
-        }
-        .nav-group.open .nav-dropdown {
-            opacity: 1; visibility: visible; pointer-events: auto;
-            transform: translateX(-50%) translateY(0);
-        }
-        .nav-dropdown a {
-            display: flex; align-items: center;
-            padding: 8px 12px; border-radius: 9px; font-size: 0.8125rem;
-            color: #9ca3af; text-decoration: none;
-            transition: color 0.12s, background 0.12s;
-            white-space: nowrap; font-weight: 450;
-        }
-        .nav-dropdown a:hover { color: #fff; background: rgba(99,102,241,0.08); }
-        .nav-dropdown-divider { height: 1px; background: rgba(30,30,46,0.8); margin: 4px 0; }
-        /* Scanner button in nav */
-        .btn-nav-scanner {
-            display: inline-flex; align-items: center; gap: 6px;
-            padding: 0.35rem 1rem; border-radius: 9999px;
-            font-size: 0.8125rem; font-weight: 500; cursor: pointer;
-            border: 1px solid rgba(6,182,212,0.35);
-            color: #22d3ee; background: rgba(6,182,212,0.06);
-            transition: background 0.2s, border-color 0.2s, color 0.2s;
-            text-decoration: none; white-space: nowrap;
-        }
-        .btn-nav-scanner:hover {
-            background: rgba(6,182,212,0.12); border-color: rgba(6,182,212,0.55); color: #67e8f9;
-        }
+    /* ── HERO ── */
+    .hero {
+      display: grid;
+      grid-template-columns: 1fr 1.3fr;
+      border-bottom: var(--rule);
+      min-height: 480px;
+    }
+    .hero-left {
+      padding: 56px 40px 48px;
+      border-right: var(--rule);
+      display: flex; flex-direction: column;
+      justify-content: space-between;
+    }
+    .hero-eyebrow {
+      font-family: var(--font-mono); font-size: 11px;
+      color: var(--accent); letter-spacing: 0.8px;
+      margin-bottom: 28px;
+    }
+    .hero-h1 {
+      font-family: var(--font-display);
+      font-weight: 600;
+      font-size: 44px; line-height: 1.08;
+      letter-spacing: -1.2px;
+    }
+    .hero-sub {
+      margin-top: 24px;
+      font-size: 15px; line-height: 1.55;
+      color: var(--text-mid); max-width: 440px;
+    }
+    .hero-cta-group { margin-top: 40px; }
+    .hero-cta-cmd {
+      font-family: var(--font-mono); font-size: 13px;
+      border: var(--rule); border-radius: 4px;
+      background: var(--bg-card); padding: 12px 14px;
+      display: flex; align-items: center; gap: 10px;
+      cursor: pointer;
+    }
+    .hero-cta-cmd-prompt { color: var(--accent); }
+    .hero-cta-cmd-text { flex: 1; }
+    .hero-cta-cmd-hint { color: var(--text-faint); font-size: 11px; }
+    .hero-cta-link {
+      margin-top: 12px;
+      font-family: var(--font-mono); font-size: 12px;
+      color: var(--text-muted);
+    }
+    .hero-cta-link a:hover { color: var(--text); }
+    .hero-right {
+      padding: 28px;
+      background: var(--bg-mid);
+    }
 
-        /* Terminal cursor blink */
-        .cursor {
-            display: inline-block;
-            width: 8px;
-            height: 18px;
-            background: #22c55e;
-            vertical-align: text-bottom;
-            animation: blink 1s step-end infinite;
-        }
-        @keyframes blink {
-            0%, 100% { opacity: 1; }
-            50% { opacity: 0; }
-        }
+    /* ── SCANNER FEED ── */
+    .scanner {
+      font-family: var(--font-mono); font-size: 12px;
+      line-height: 22px;
+      background: var(--bg);
+      border: 1px solid #e5e5de;
+      border-radius: 6px;
+      overflow: hidden;
+      height: 100%;
+    }
+    .scanner-chrome {
+      display: flex; align-items: center; gap: 10px;
+      padding: 8px 12px; border-bottom: 1px solid #e5e5de;
+      background: var(--bg-mid); font-size: 11px; color: #6b6b64;
+    }
+    .scanner-dots { display: flex; gap: 5px; }
+    .scanner-dot {
+      width: 9px; height: 9px; border-radius: 50%;
+      background: #e5e5de;
+    }
+    .scanner-chrome-title { flex: 1; text-align: center; letter-spacing: 0.2px; }
+    .scanner-chrome-live { color: var(--accent); }
+    .scanner-body { padding: 10px 14px; }
+    .scanner-cmd { color: #8a8a82; margin-bottom: 8px; }
+    .scanner-cmd .prompt { color: var(--accent); }
+    .scanner-stat { color: var(--text-muted); }
+    .scanner-stat .num { color: var(--text); }
+    .scanner-stat .acc { color: var(--accent); }
+    .scanner-stat .err { color: #b91c1c; font-weight: 600; }
+    .scanner-divider {
+      margin: 10px 0;
+      border-top: 1px dashed #e5e5de;
+      padding-top: 10px;
+    }
+    .scanner-row {
+      display: grid;
+      grid-template-columns: 28px 1fr 110px 180px 80px;
+      align-items: center; gap: 10px;
+      padding: 2px 6px; border-radius: 3px;
+    }
+    .scanner-row:nth-child(odd) { background: rgba(0,0,0,0.015); }
+    .scanner-glyph { font-weight: 700; }
+    .scanner-file { color: #262626; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .scanner-line { color: #8a8a82; }
+    .scanner-badge {
+      padding: 1px 7px; border-radius: 3px;
+      font-size: 10px; text-transform: uppercase; letter-spacing: 0.4px;
+      text-align: center;
+    }
+    .scanner-key { color: var(--text-muted); font-size: 11px; }
+    .scanner-status { color: #8a8a82; font-size: 10px; text-transform: uppercase; letter-spacing: 0.4px; }
+    .scanner-tail { color: var(--text-muted); }
+    .scanner-tail .ok { color: var(--accent); }
+    .scanner-tail .num { color: var(--text); }
 
-        /* Hero button — shiny primary */
-        .btn-hero {
-            position: relative;
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-            border: 3px solid transparent;
-            border-radius: 60px;
-            font-weight: 700;
-            font-size: 16px;
-            letter-spacing: 0.01em;
-            cursor: pointer;
-            color: #1a1a1a;
-            background-color: #b8960c;
-            background-image: linear-gradient(to bottom right, #fbbf24, #a16207), linear-gradient(125deg, rgba(255,255,255,0) 45%, rgba(255,255,255,0.6) 50%, rgba(255,255,255,0) 53%);
-            background-origin: border-box;
-            background-clip: padding-box, border-box;
-            background-size: 100%, 200%;
-            background-position: 0px, -250px;
-            animation: 4s border-glint linear backwards infinite;
-            animation-delay: 1s;
-            box-shadow: rgba(0,0,0,0.6) 8px 8px 8px;
-            text-shadow: 0px 0px 4px rgba(255,255,255,0.1);
-            transition: box-shadow 0.25s, text-shadow 0.25s, background-image 0.25s;
-            overflow: hidden;
-            text-decoration: none;
-        }
-        .btn-hero:hover {
-            background-image: linear-gradient(to bottom right, #fcd34d, #b8960c), linear-gradient(125deg, rgba(255,255,255,0) 45%, rgba(255,255,255,0.6) 50%, rgba(255,255,255,0) 53%);
-            color: #000;
-            box-shadow: rgba(0,0,0,0.7) 5px 5px 5px;
-            text-shadow: 0px 0px 3px rgba(255,255,255,0.7);
-        }
-        .btn-hero::after {
-            content: '';
-            position: absolute;
-            top: -50%; left: -120%;
-            width: 200%; height: 200%;
-            background-image: linear-gradient(125deg, rgba(255,255,255,0) 30%, rgba(255,255,255,0.4) 50%, rgba(255,255,255,0) 52%);
-            animation: 4s glint linear backwards infinite;
-            animation-delay: -3s;
-        }
-        .btn-hero:active {
-            transform: translateY(1px);
-        }
-        @keyframes glint {
-            0% { left: -120%; }
-            8% { left: 50%; }
-            100% { left: 50%; }
-        }
-        @keyframes border-glint {
-            0% { background-position: 0px, -250px; }
-            25% { background-position: 0px, -200px; }
-            75% { background-position: 0px, 50px; }
-            100% { background-position: 0px, 50px; }
-        }
+    .sev-critical { background: rgba(220,38,38,0.08); color: #b91c1c; }
+    .sev-high     { background: rgba(234,88,12,0.08);  color: #c2410c; }
+    .sev-medium   { background: rgba(202,138,4,0.08);  color: #a16207; }
+    .sev-low      { background: rgba(100,116,139,0.08); color: #475569; }
 
-        /* Hero button — ghost */
-        .btn-hero-ghost {
-            position: relative;
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-            border: 1px solid rgba(255,255,255,0.12);
-            border-radius: 60px;
-            font-weight: 600;
-            font-size: 16px;
-            cursor: pointer;
-            color: rgba(255,255,255,0.7);
-            background: rgba(255,255,255,0.03);
-            overflow: hidden;
-            transition: transform 0.25s ease, box-shadow 0.25s ease, color 0.25s ease, border-color 0.25s ease, background 0.25s ease;
-        }
-        .btn-hero-ghost::before {
-            content: '';
-            position: absolute;
-            top: 0; left: -100%;
-            width: 60%; height: 100%;
-            background: linear-gradient(100deg, transparent, rgba(255,255,255,0.06), transparent);
-            transition: left 0.6s ease;
-        }
-        .btn-hero-ghost:hover {
-            color: #fff;
-            border-color: rgba(255,255,255,0.25);
-            background: rgba(255,255,255,0.06);
-            transform: translateY(-2px);
-            box-shadow: 0 6px 20px rgba(0,0,0,0.2);
-        }
-        .btn-hero-ghost:hover::before {
-            left: 120%;
-        }
-        .btn-hero-ghost:active {
-            transform: translateY(1px);
-        }
+    /* ── SECTIONS ── */
+    section { padding: 64px 40px; border-bottom: var(--rule); }
+    .section-label {
+      font-family: var(--font-mono); font-size: 11px;
+      color: var(--text-faint); letter-spacing: 0.8px;
+      margin-bottom: 8px;
+    }
+    .section-h2 {
+      font-family: var(--font-display); font-weight: 600;
+      font-size: 28px; letter-spacing: -0.5px;
+    }
+    .section-sub {
+      font-size: 14px; line-height: 1.55; color: var(--text-mid);
+      max-width: 540px; margin-top: 10px;
+    }
 
-        /* Nav sign-up button */
-        .btn-creative {
-            display: inline-block;
-            padding: 0.375rem 1.25rem;
-            background: #111;
-            color: white;
-            border: 1px solid rgba(255,255,255,0.1);
-            cursor: pointer;
-            font-size: 0.875rem;
-            font-weight: 500;
-            border-radius: 9999px;
-            transition: background 0.3s, color 0.3s;
-        }
-        .btn-creative:hover {
-            color: #000;
-            background: #fff;
-        }
+    /* ── HOW IT WORKS ── */
+    .steps-grid {
+      margin-top: 40px;
+      display: grid; grid-template-columns: repeat(3, 1fr);
+      border: var(--rule); border-radius: 4px;
+      overflow: hidden; background: var(--bg-card);
+    }
+    .step { padding: 28px; }
+    .step + .step { border-left: var(--rule); }
+    .step-header {
+      display: flex; align-items: baseline; gap: 10px;
+      margin-bottom: 16px;
+    }
+    .step-num { font-family: var(--font-mono); font-size: 11px; color: var(--accent); }
+    .step-name { font-family: var(--font-display); font-weight: 600; font-size: 20px; }
+    .step-desc { font-size: 13.5px; line-height: 1.55; color: var(--text-mid); }
+    .step-code {
+      margin-top: 18px; padding: 8px 10px;
+      font-family: var(--font-mono); font-size: 11px;
+      background: var(--bg); border: var(--rule);
+      border-radius: 3px; color: var(--text-muted);
+    }
 
-        /* Legacy glow for nav button */
-        .btn-glow {
-            box-shadow: 0 0 20px rgba(99,102,241,0.3), 0 0 60px rgba(99,102,241,0.1);
-            transition: all 0.3s ease;
-        }
-        .btn-glow:hover {
-            box-shadow: 0 0 30px rgba(99,102,241,0.5), 0 0 80px rgba(99,102,241,0.2);
-            transform: translateY(-1px);
-        }
+    /* ── COMPARISON ── */
+    .compare-header-row {
+      display: flex; align-items: baseline;
+      justify-content: space-between; margin-bottom: 24px;
+    }
+    .compare-date {
+      font-family: var(--font-mono); font-size: 11px;
+      color: var(--text-faint);
+    }
+    .compare-table {
+      border: var(--rule); border-radius: 4px;
+      overflow: hidden; background: var(--bg-card);
+    }
+    .compare-row {
+      display: grid;
+      grid-template-columns: 1.6fr repeat(4, 1fr);
+    }
+    .compare-row + .compare-row { border-top: var(--rule); }
+    .compare-row.header-row { background: var(--bg); }
+    .compare-row.stripe { background: rgba(0,0,0,0.015); }
+    .compare-cell {
+      padding: 14px 18px;
+    }
+    .compare-cell + .compare-cell { border-left: var(--rule); }
+    .compare-cell-label { font-size: 13.5px; color: #262626; }
+    .compare-col-name {
+      font-family: var(--font-display); font-weight: 600;
+      font-size: 16px; letter-spacing: -0.2px;
+      display: flex; align-items: center; gap: 8px;
+    }
+    .compare-col-mono {
+      font-family: var(--font-mono); font-size: 10.5px;
+      color: var(--text-faint); margin-top: 3px;
+    }
+    .compare-val {
+      font-family: var(--font-mono); font-size: 12.5px;
+      display: flex; align-items: center; gap: 6px;
+    }
+    .compare-yes { color: #16a34a; }
+    .compare-no  { color: var(--text-faint); text-decoration: line-through; }
+    .compare-us-yes { color: var(--accent); }
+    .compare-us-no  { color: var(--text-faint); text-decoration: line-through; }
+    .compare-cap-cell { font-family: var(--font-mono); font-size: 11px; color: var(--text-faint); letter-spacing: 0.8px; text-transform: uppercase; }
+    .compare-us-bg { background: var(--bg); }
 
-        /* Card hover lift */
-        .card-hover {
-            transition: transform 0.3s ease, box-shadow 0.3s ease;
-        }
-        .card-hover:hover {
-            transform: translateY(-4px);
-            box-shadow: 0 12px 40px rgba(0,0,0,0.3);
-        }
+    /* ── PROVIDERS ── */
+    .providers-header {
+      display: flex; align-items: baseline;
+      justify-content: space-between; margin-bottom: 24px;
+    }
+    .providers-request {
+      font-family: var(--font-mono); font-size: 12px;
+      color: var(--accent);
+    }
+    .providers-grid {
+      display: grid; grid-template-columns: repeat(6, 1fr);
+      border: var(--rule); border-radius: 4px;
+      overflow: hidden; background: var(--bg-card);
+    }
+    .provider-cell {
+      padding: 20px 16px;
+      font-family: var(--font-mono); font-size: 12px;
+      display: flex; align-items: center;
+      justify-content: space-between;
+    }
+    .provider-cell:nth-child(n+7) { border-top: var(--rule); }
+    .provider-cell:not(:nth-child(6n+1)) { border-left: var(--rule); }
+    .provider-dot { color: var(--accent); font-size: 10px; }
 
-        /* Scroll animations */
-        .reveal {
-            opacity: 0;
-            transform: translateY(30px);
-            transition: opacity 0.7s ease, transform 0.7s ease;
-        }
-        .reveal.visible {
-            opacity: 1;
-            transform: translateY(0);
-        }
-        .reveal.delay-1 { transition-delay: 0.1s; }
-        .reveal.delay-2 { transition-delay: 0.2s; }
-        .reveal.delay-3 { transition-delay: 0.3s; }
-        .reveal.delay-4 { transition-delay: 0.4s; }
+    /* ── PRICING ── */
+    .pricing-grid {
+      margin-top: 36px;
+      display: grid; grid-template-columns: repeat(4, 1fr);
+      border: var(--rule); border-radius: 4px;
+      overflow: hidden; background: var(--bg-card);
+    }
+    .pricing-card { padding: 24px; position: relative; }
+    .pricing-card + .pricing-card { border-left: var(--rule); }
+    .pricing-card.featured { background: var(--bg); }
+    .pricing-recommended {
+      position: absolute; top: 12px; right: 12px;
+      font-family: var(--font-mono); font-size: 10px;
+      color: var(--accent); letter-spacing: 0.6px;
+    }
+    .pricing-tier { font-family: var(--font-mono); font-size: 12px; color: var(--text-faint); letter-spacing: 0.4px; }
+    .pricing-price-row { margin-top: 16px; display: flex; align-items: baseline; gap: 6px; }
+    .pricing-price { font-family: var(--font-display); font-size: 32px; font-weight: 600; }
+    .pricing-period { font-size: 12px; color: var(--text-faint); }
+    .pricing-tagline { font-size: 12.5px; color: var(--text-muted); margin-top: 4px; margin-bottom: 20px; }
+    .pricing-details {
+      border-top: var(--rule); padding-top: 14px;
+      font-family: var(--font-mono); font-size: 11.5px;
+      color: var(--text-muted);
+    }
+    .pricing-row { display: flex; justify-content: space-between; padding: 4px 0; }
+    .pricing-row-val { color: var(--text); }
+    .pricing-cta {
+      margin-top: 20px;
+      display: block; text-align: center;
+      padding: 9px 14px; border-radius: 3px;
+      font-family: var(--font-mono); font-size: 11.5px;
+      background: var(--text); color: var(--bg);
+      cursor: pointer; border: var(--rule);
+    }
+    .pricing-cta:hover { background: #333; }
+    .pricing-cta.outline {
+      background: transparent; color: var(--text-muted);
+    }
+    .pricing-cta.outline:hover { background: rgba(0,0,0,0.04); color: var(--text); }
 
-        /* Dashed connector line for how-it-works */
-        .step-connector {
-            border-top: 2px dashed #1e1e2e;
-            position: absolute;
-            top: 50%;
-            width: 100%;
-            left: 0;
-            z-index: 0;
-            animation: dashMove 2s linear infinite;
-        }
-        @keyframes dashMove {
-            0% { stroke-dashoffset: 0; }
-            100% { stroke-dashoffset: -20; }
-        }
-
-        /* Pro card glow */
-        .pro-glow {
-            box-shadow: 0 0 30px rgba(99,102,241,0.15), inset 0 0 30px rgba(99,102,241,0.03);
-        }
-
-        /* Scrollbar */
-        ::-webkit-scrollbar { width: 8px; }
-        ::-webkit-scrollbar-track { background: #0a0a0f; }
-        ::-webkit-scrollbar-thumb { background: #1e1e2e; border-radius: 4px; }
-        ::-webkit-scrollbar-thumb:hover { background: #2e2e3e; }
-
-        /* Chadzn-style icon containers */
-        .icon-chadzn {
-            width: 48px;
-            height: 48px;
-            border-radius: 14px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            position: relative;
-        }
-        .icon-chadzn-indigo {
-            background: rgba(99,102,241,0.08);
-            border: 1px solid rgba(99,102,241,0.12);
-            box-shadow: 0 0 16px rgba(99,102,241,0.08);
-        }
-        .icon-chadzn-amber {
-            background: rgba(251,191,36,0.08);
-            border: 1px solid rgba(251,191,36,0.12);
-            box-shadow: 0 0 16px rgba(251,191,36,0.08);
-        }
-
-        /* Hero flow cards */
-        .flow-card {
-            border: 1px solid;
-            border-radius: 12px;
-            padding: 14px 16px;
-            transition: transform 0.3s ease, box-shadow 0.3s ease;
-        }
-        .flow-card:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 8px 24px rgba(0,0,0,0.3);
-        }
-
-        /* Hero provider icon pills */
-        .hero-icon-pill {
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            width: 72px;
-            height: 72px;
-            border-radius: 18px;
-            background: #111118;
-            border: 1px solid #1e1e2e;
-            position: relative;
-            z-index: 1;
-            animation: iconFloat 3s ease-in-out infinite;
-            box-shadow: 0 4px 16px rgba(0,0,0,0.3);
-            transition: border-color 0.3s ease, box-shadow 0.3s ease;
-        }
-        .hero-icon-pill:hover {
-            border-color: #6366f1;
-            box-shadow: 0 4px 24px rgba(99,102,241,0.15);
-        }
-        .hero-icon-pill img {
-            width: 36px;
-            height: 36px;
-            object-fit: contain;
-        }
-        .hero-icon-pill svg {
-            width: 36px;
-            height: 36px;
-        }
-        @keyframes iconFloat {
-            0%, 100% { transform: translateY(0); }
-            50% { transform: translateY(-5px); }
-        }
-
-        /* Animated connector lines — curved paths */
-        .hero-line-left {
-            animation: dashFlow 2s linear infinite;
-        }
-        .hero-line-right {
-            animation: dashFlowRight 2s linear infinite;
-        }
-        @keyframes dashFlow {
-            0% { stroke-dashoffset: 0; }
-            100% { stroke-dashoffset: -20; }
-        }
-        @keyframes dashFlowRight {
-            0% { stroke-dashoffset: 0; }
-            100% { stroke-dashoffset: 20; }
-        }
-
-        /* shadcn-style FAQ accordion */
-        .faq-item {
-            border-color: #1e1e2e;
-        }
-        .faq-trigger {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            width: 100%;
-            padding: 18px 0;
-            background: none;
-            border: none;
-            cursor: pointer;
-            text-align: left;
-            font-size: 15px;
-            font-weight: 500;
-            color: #f0f0f5;
-            transition: color 0.2s ease;
-        }
-        .faq-trigger:hover {
-            color: #fff;
-        }
-        .faq-trigger:hover .faq-chevron {
-            color: #a5b4fc;
-        }
-        .faq-chevron {
-            color: #4b5563;
-            flex-shrink: 0;
-            transition: transform 0.25s cubic-bezier(0.4, 0, 0.2, 1), color 0.2s ease;
-        }
-        .faq-trigger[aria-expanded="true"] .faq-chevron {
-            transform: rotate(180deg);
-            color: #818cf8;
-        }
-        .faq-content {
-            display: grid;
-            grid-template-rows: 0fr;
-            transition: grid-template-rows 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-        }
-        .faq-content[data-open="true"] {
-            grid-template-rows: 1fr;
-        }
-        .faq-content-inner {
-            overflow: hidden;
-            font-size: 14px;
-            line-height: 1.7;
-            color: #9ca3af;
-            padding-bottom: 0;
-            transition: padding-bottom 0.3s ease;
-        }
-        .faq-content[data-open="true"] .faq-content-inner {
-            padding-bottom: 18px;
-        }
-
-        /* Mobile nav */
-        .mobile-menu { display: none; }
-        .mobile-menu.open { display: flex; }
-
-        @font-face {
-            font-family: '23SecToMidnight';
-            src: url('/fonts/23-seconds-to-midnight.ttf') format('truetype');
-            font-weight: normal;
-            font-style: normal;
-            font-display: swap;
-        }
-    </style>
+    /* ── FOOTER ── */
+    footer {
+      padding: 48px 40px 24px;
+      background: var(--bg);
+      border-top: var(--rule);
+    }
+    .footer-grid {
+      display: grid;
+      grid-template-columns: 1.2fr repeat(4, 1fr);
+      gap: 32px; margin-bottom: 40px;
+    }
+    .footer-brand-name {
+      font-family: var(--font-mono); font-size: 14px;
+      font-weight: 600; letter-spacing: 0.5px;
+      margin-bottom: 12px;
+      display: flex; align-items: center; gap: 6px;
+    }
+    .footer-brand-diamond { color: var(--accent); }
+    .footer-brand-desc {
+      font-size: 12.5px; line-height: 1.55;
+      color: var(--text-muted); max-width: 260px;
+    }
+    .footer-status {
+      margin-top: 16px;
+      font-family: var(--font-mono); font-size: 11px;
+      color: var(--text-faint);
+    }
+    .footer-col-head {
+      font-family: var(--font-mono); font-size: 10.5px;
+      letter-spacing: 0.8px; text-transform: uppercase;
+      color: var(--text-faint); margin-bottom: 14px;
+    }
+    .footer-links { list-style: none; }
+    .footer-links li { margin-bottom: 8px; }
+    .footer-links a {
+      font-family: var(--font-mono); font-size: 12px;
+      color: #262626;
+    }
+    .footer-links a:hover { color: var(--accent); }
+    .footer-bottom {
+      border-top: var(--rule); padding-top: 16px;
+      font-family: var(--font-mono); font-size: 11px;
+      color: var(--text-faint);
+      display: flex; justify-content: space-between;
+    }
+  </style>
 </head>
-<body class="text-gray-300 min-h-screen relative overflow-x-hidden" style="max-width:100vw">
+<body>
 
-    <!-- Animated background orbs -->
-    <div class="orb orb-1"></div>
-    <div class="orb orb-2"></div>
-    <div class="orb orb-3"></div>
+<!-- NAV -->
+<nav class="nav">
+  <div class="nav-logo">
+    <span class="nav-logo-diamond">◆</span>
+    <span class="nav-logo-name">VaultProof</span>
+    <span class="nav-logo-version">v0.4.2</span>
+  </div>
+  <div class="nav-spacer"></div>
+  <div class="nav-links">
+    <a href="/scan">scanner</a>
+    <a href="/docs#proxy">proxy</a>
+    <a href="/agents">agents</a>
+    <a href="/docs">docs</a>
+    <a href="/blog">blog</a>
+    <a href="/#pricing">pricing</a>
+  </div>
+  <a href="/app/login" class="nav-sign-in">sign in</a>
+  <a href="/app/login" class="nav-cta">get started</a>
+</nav>
 
-    <!-- Nav -->
-    <nav class="fixed z-50 top-0 left-0 right-0 py-3 px-4 sm:px-6">
-        <div class="max-w-5xl mx-auto bg-vp-surface/80 backdrop-blur-xl border border-vp-border/60 rounded-full px-4 sm:px-6 py-2.5 flex items-center justify-between shadow-lg shadow-black/20" style="box-shadow: 0 0 15px rgba(99,102,241,0.15), 0 0 40px rgba(99,102,241,0.08), 0 4px 12px rgba(0,0,0,0.3)">
-            <a href="/" class="flex items-center gap-2.5 flex-shrink-0">
-                <img src="/og-image2.png" alt="VaultProof" class="w-10 h-10">
-                <span class="text-base font-bold text-white tracking-tight" style="font-family:'Space Grotesk',sans-serif">VaultProof</span>
-            </a>
+<!-- HERO -->
+<section class="hero" style="padding:0; border-bottom: var(--rule);">
+  <!-- left -->
+  <div class="hero-left">
+    <div>
+      <div class="hero-eyebrow">A safer home for your API keys</div>
+      <h1 class="hero-h1">Stop shipping secrets<br>in plain text.</h1>
+      <p class="hero-sub">We find the keys scattered across your repo, split them so no single database holds a whole one, and quietly proxy your API calls. Your SDK doesn't know the difference.</p>
+    </div>
+    <div class="hero-cta-group">
+      <div class="hero-cta-cmd" onclick="copyCmd(this)">
+        <span class="hero-cta-cmd-prompt">❯</span>
+        <span class="hero-cta-cmd-text">npx @vaultproof/init</span>
+        <span class="hero-cta-cmd-hint">⌘ C</span>
+      </div>
+      <div class="hero-cta-link">
+        <a href="#how-it-works">How it works →</a>
+      </div>
+    </div>
+  </div>
 
-            <!-- Desktop links -->
-            <div class="hidden md:flex items-center gap-5">
-                <!-- Product dropdown -->
-                <div class="nav-group">
-                    <button class="nav-group-btn" aria-haspopup="true" aria-expanded="false">
-                        Product
-                        <svg width="11" height="11" viewBox="0 0 12 12" fill="currentColor"><path d="M6 8L2 4h8z"/></svg>
-                    </button>
-                    <div class="nav-dropdown" role="menu">
-                        <a href="/agents" role="menuitem">AI Agents</a>
-                        <a href="/compare" role="menuitem">Compare</a>
-                        <a href="/enterprise-demo" role="menuitem">Enterprise Demo</a>
-                    </div>
-                </div>
-                <a href="/docs" class="text-sm text-gray-400 hover:text-white transition-colors">Docs</a>
-                <a href="/guides" class="text-sm text-gray-400 hover:text-white transition-colors">Guides</a>
-                <a href="/blog" class="text-sm text-gray-400 hover:text-white transition-colors">Blog</a>
-                <a href="#pricing" class="text-sm text-gray-400 hover:text-white transition-colors">Pricing</a>
-                <a href="/app/login" class="nav-dashboard text-sm text-gray-400 hover:text-white transition-colors" style="display:none">Dashboard</a>
-            </div>
-
-            <div class="hidden md:flex items-center gap-3">
-                <a href="/scan" class="btn-nav-scanner">
-                    <svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
-                    Free Scanner
-                </a>
-                <a href="/app/login" class="btn-creative">Sign Up</a>
-            </div>
-
-            <!-- Mobile hamburger -->
-            <button id="mobileToggle" class="md:hidden text-gray-400 hover:text-white" aria-label="Toggle menu">
-                <svg width="22" height="22" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 6h14M4 12h14M4 18h14"/></svg>
-            </button>
+  <!-- right — scanner -->
+  <div class="hero-right">
+    <div class="scanner">
+      <div class="scanner-chrome">
+        <div class="scanner-dots">
+          <div class="scanner-dot"></div>
+          <div class="scanner-dot"></div>
+          <div class="scanner-dot"></div>
+        </div>
+        <span class="scanner-chrome-title">~/scan.log</span>
+        <span class="scanner-chrome-live">● live</span>
+      </div>
+      <div class="scanner-body">
+        <div class="scanner-cmd"><span class="prompt">❯</span> npx @vaultproof/init scan .</div>
+        <div class="scanner-stat">
+          <span style="color:var(--text-faint)">→</span>
+          walking tree <span class="num">1,247</span> files
+          · <span class="num">318,402</span> lines
+          · <span class="acc">812ms</span>
+        </div>
+        <div class="scanner-stat" style="margin-bottom:10px">
+          <span style="color:var(--text-faint)">→</span>
+          <span class="num">9</span> providers matched
+          · <span class="err">8 exposed</span>
         </div>
 
-        <!-- Mobile menu -->
-        <div id="mobileMenu" class="mobile-menu flex-col gap-1 mt-2 max-w-5xl mx-auto bg-vp-surface/95 backdrop-blur-xl border border-vp-border/60 rounded-2xl px-4 py-4 md:hidden shadow-lg shadow-black/20">
-            <a href="/agents" class="text-sm text-gray-400 hover:text-white transition-colors py-2 px-2 rounded-lg hover:bg-white/5">AI Agents</a>
-            <a href="/compare" class="text-sm text-gray-400 hover:text-white transition-colors py-2 px-2 rounded-lg hover:bg-white/5">Compare</a>
-            <a href="/enterprise-demo" class="text-sm text-gray-400 hover:text-white transition-colors py-2 px-2 rounded-lg hover:bg-white/5">Enterprise Demo</a>
-            <a href="/docs" class="text-sm text-gray-400 hover:text-white transition-colors py-2 px-2 rounded-lg hover:bg-white/5">Docs</a>
-            <a href="/guides" class="text-sm text-gray-400 hover:text-white transition-colors py-2 px-2 rounded-lg hover:bg-white/5">Guides</a>
-            <a href="/blog" class="text-sm text-gray-400 hover:text-white transition-colors py-2 px-2 rounded-lg hover:bg-white/5">Blog</a>
-            <a href="#pricing" class="text-sm text-gray-400 hover:text-white transition-colors py-2 px-2 rounded-lg hover:bg-white/5">Pricing</a>
-            <a href="/app/login" class="nav-dashboard text-sm text-gray-400 hover:text-white transition-colors py-2 px-2 rounded-lg hover:bg-white/5" style="display:none">Dashboard</a>
-            <div class="mt-2 flex flex-col gap-2">
-                <a href="/scan" class="btn-nav-scanner justify-center py-2.5">Free Scanner</a>
-                <a href="/app/login" class="btn-creative text-center py-2.5 px-5">Sign Up</a>
-            </div>
-        </div>
-    </nav>
-
-    <!-- Hero -->
-    <section class="relative z-10 overflow-hidden">
-        <!-- Warm radial glow behind hero -->
-        <div class="absolute top-[-180px] left-1/2 -translate-x-1/2 w-[min(1000px,200vw)] h-[700px] rounded-full bg-gradient-to-b from-indigo-500/40 via-purple-500/25 to-transparent blur-[120px] pointer-events-none"></div>
-
-        <div class="relative max-w-7xl mx-auto px-8 sm:px-12 lg:px-20 pt-28 sm:pt-36 pb-8 sm:pb-12 text-center">
-            <h1 class="text-4xl sm:text-6xl md:text-7xl lg:text-8xl tracking-tight leading-[1.05] mb-6 text-white reveal" style="font-family:'DM Serif Display',serif;font-weight:400">
-                Your secrets manager<br/>has a <em style="font-style:italic;font-weight:700;color:#d4380d">blind spot.</em>
-            </h1>
-            <p class="text-xl sm:text-2xl text-gray-300 max-w-2xl mx-auto mb-8 reveal delay-1" style="font-family:'DM Sans',sans-serif;font-weight:500">Every secrets manager protects keys at rest. None protect them at the moment of use. That's where 70% of breaches happen. VaultProof closes that gap.</p>
-            <div class="flex items-start justify-center gap-3 sm:gap-5 flex-wrap reveal delay-2">
-                <div class="flex flex-col items-center">
-                    <a href="/app/login" class="btn-hero px-6 sm:px-9 py-3 sm:py-4 text-sm sm:text-base">Get Started</a>
-                    <p class="text-xs text-gray-500 mt-2">No credit card required.</p>
-                </div>
-                <a href="/docs" class="btn-hero-ghost px-6 sm:px-9 py-3 sm:py-4 text-sm sm:text-base">View Docs</a>
-                <a href="https://github.com/VaultProof/vaultproof" target="_blank" rel="noopener" class="btn-hero-ghost px-5 sm:px-7 py-3 sm:py-4 gap-2 text-sm sm:text-base">
-                    <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0024 12c0-6.63-5.37-12-12-12z"/></svg>
-                    GitHub
-                </a>
-            </div>
-        </div>
-
-        <!-- Visual flow diagram -->
-        <div class="relative max-w-6xl mx-auto px-4 sm:px-6 pt-8 pb-12 sm:pb-20 reveal delay-3 overflow-hidden" id="heroFlow">
-            <!-- SVG overlay for connector lines -->
-            <svg id="heroLines" class="absolute inset-0 w-full h-full pointer-events-none" style="z-index:0"></svg>
-
-            <div class="relative flex items-center justify-center" style="z-index:1">
-
-                <!-- Left provider icons — organic stagger -->
-                <div class="hidden lg:flex flex-col gap-5 items-end relative" style="min-width:160px;margin-right:32px">
-                    <div class="hero-icon-pill hero-left-icon" style="animation-delay:0s;margin-right:60px" title="OpenAI">
-                        <svg viewBox="0 0 24 24" fill="#fff"><path d="M22.282 9.821a5.985 5.985 0 00-.516-4.91 6.046 6.046 0 00-6.51-2.9A6.065 6.065 0 0011.756.004a6.047 6.047 0 00-5.77 4.087 6.06 6.06 0 00-4.076 2.932 6.052 6.052 0 00.747 7.098 5.98 5.98 0 00.51 4.911 6.051 6.051 0 006.515 2.9A5.985 5.985 0 0013.18 23.997a6.043 6.043 0 005.77-4.089 6.045 6.045 0 004.078-2.931 6.045 6.045 0 00-.747-7.156zM13.18 22.178a4.507 4.507 0 01-2.89-1.05l.14-.08 4.8-2.77a.78.78 0 00.395-.678v-6.77l2.03 1.17a.07.07 0 01.038.052v5.6a4.52 4.52 0 01-4.513 4.526zm-9.7-4.15a4.5 4.5 0 01-.54-3.025l.14.084 4.8 2.77a.78.78 0 00.788 0l5.865-3.387v2.34a.07.07 0 01-.028.06l-4.857 2.806a4.52 4.52 0 01-6.168-1.648zM2.39 7.86a4.498 4.498 0 012.355-1.98V11.6a.78.78 0 00.392.676l5.865 3.387-2.03 1.172a.07.07 0 01-.066.006L4.047 14.03A4.52 4.52 0 012.39 7.872zm16.678 3.885l-5.865-3.387 2.03-1.172a.07.07 0 01.066-.006l4.857 2.806a4.517 4.517 0 01-.699 8.143V12.42a.78.78 0 00-.389-.676zm2.02-3.035l-.14-.085-4.8-2.77a.78.78 0 00-.788 0L9.496 9.242V6.9a.07.07 0 01.028-.06l4.857-2.805a4.516 4.516 0 016.707 4.675zm-12.7 4.18l-2.03-1.17a.07.07 0 01-.038-.052V6.07a4.517 4.517 0 017.402-3.467l-.14.08-4.8 2.77a.78.78 0 00-.393.677zm1.1-2.376l2.612-1.508 2.613 1.508v3.016l-2.613 1.508-2.612-1.508z"/></svg>
-                    </div>
-                    <div class="hero-icon-pill hero-left-icon" style="animation-delay:0.15s;margin-right:12px" title="Anthropic">
-                        <svg viewBox="0 0 24 24" fill="#D4A574"><path d="M13.827 3.52h3.603L24 20.48h-3.603l-6.57-16.96zm-7.258 0h3.767L16.906 20.48h-3.674l-1.508-4.064H5.248l-1.508 4.064H.166L6.57 3.52zm1.04 4.87L5.32 14.15h4.578L7.61 8.39z"/></svg>
-                    </div>
-                    <div class="hero-icon-pill hero-left-icon" style="animation-delay:0.3s;margin-right:72px" title="Google AI">
-                        <svg viewBox="0 0 24 24"><path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92a5.06 5.06 0 01-2.2 3.32v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.1z"/><path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/><path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/><path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/></svg>
-                    </div>
-                    <div class="hero-icon-pill hero-left-icon" style="animation-delay:0.45s;margin-right:28px" title="Mistral">
-                        <svg viewBox="0 0 24 24" fill="#F7D046"><rect x="3" y="3" width="5" height="5"/><rect x="10" y="3" width="5" height="5" fill="#F2A73B"/><rect x="17" y="3" width="5" height="5" fill="#fff"/><rect x="3" y="10" width="5" height="5" fill="#fff"/><rect x="10" y="10" width="5" height="5"/><rect x="17" y="10" width="5" height="5" fill="#F2A73B"/><rect x="3" y="17" width="5" height="5" fill="#fff"/><rect x="10" y="17" width="5" height="5" fill="#F7D046"/><rect x="17" y="17" width="5" height="5"/></svg>
-                    </div>
-                </div>
-
-                <!-- Center: Live terminal -->
-                <div class="relative w-full max-w-full sm:max-w-[540px] flex-shrink-0" id="heroTerminal">
-                    <div class="bg-vp-surface border border-vp-border rounded-2xl overflow-hidden shadow-2xl shadow-black/50">
-                        <div class="flex items-center gap-2 px-4 py-3 border-b border-vp-border bg-vp-bg/50">
-                            <div class="w-3 h-3 rounded-full bg-red-500/70"></div>
-                            <div class="w-3 h-3 rounded-full bg-yellow-500/70"></div>
-                            <div class="w-3 h-3 rounded-full bg-green-500/70"></div>
-                            <span class="text-xs text-gray-600 ml-2 font-mono">@vaultproof/init</span>
-                        </div>
-                        <div class="p-4 sm:p-5 font-mono text-xs sm:text-sm leading-6 sm:leading-7 min-h-[180px] sm:min-h-[220px] overflow-x-auto" id="terminal">
-                            <span class="text-gray-500">$</span> <span id="terminalText" class="text-green-400"></span><span class="cursor" id="terminalCursor"></span>
-                            <div id="terminalOutput" class="text-gray-500 mt-1"></div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Right provider icons — organic stagger -->
-                <div class="hidden lg:flex flex-col gap-5 items-start relative" style="min-width:160px;margin-left:32px">
-                    <div class="hero-icon-pill hero-right-icon" style="animation-delay:0.1s;margin-left:48px" title="Groq">
-                        <svg viewBox="0 0 24 24" fill="#F55036"><circle cx="12" cy="12" r="10" fill="none" stroke="#F55036" stroke-width="2.5"/><circle cx="12" cy="12" r="3" fill="#F55036"/></svg>
-                    </div>
-                    <div class="hero-icon-pill hero-right-icon" style="animation-delay:0.25s;margin-left:8px" title="DeepSeek">
-                        <svg viewBox="0 0 24 24" fill="#4D6BFE"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 3a3 3 0 110 6 3 3 0 010-6zm0 14c-2.67 0-5.02-1.34-6.42-3.39C7.58 14.05 10.7 13 12 13s4.42 1.05 6.42 2.61C17.02 17.66 14.67 19 12 19z"/></svg>
-                    </div>
-                    <div class="hero-icon-pill hero-right-icon" style="animation-delay:0.4s;margin-left:64px" title="Cohere">
-                        <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9" fill="none" stroke="#39594D" stroke-width="2.5"/><path d="M8 12h8M12 8v8" stroke="#39594D" stroke-width="2" stroke-linecap="round"/></svg>
-                    </div>
-                    <div class="hero-icon-pill hero-right-icon" style="animation-delay:0.55s;margin-left:24px" title="Stripe">
-                        <svg viewBox="0 0 24 24" fill="#635BFF"><path d="M13.976 9.15c-2.172-.806-3.356-1.426-3.356-2.409 0-.831.683-1.305 1.901-1.305 2.227 0 4.515.858 6.09 1.631l.89-5.494C18.252.975 15.697 0 12.165 0 9.667 0 7.589.654 6.104 1.872 4.56 3.147 3.757 4.992 3.757 7.218c0 4.039 2.467 5.76 6.476 7.219 2.585.92 3.445 1.574 3.445 2.583 0 .98-.84 1.545-2.354 1.545-1.875 0-4.965-.921-6.99-2.109l-.9 5.555C5.175 22.99 8.385 24 11.714 24c2.641 0 4.843-.624 6.328-1.813 1.664-1.305 2.525-3.236 2.525-5.732 0-4.128-2.524-5.851-6.591-7.305z"/></svg>
-                    </div>
-                </div>
-
-            </div>
-        </div>
-    </section>
-
-    <!-- Providers -->
-    <section class="relative z-10 border-y border-vp-border bg-vp-surface/30">
-        <div class="max-w-5xl mx-auto px-4 sm:px-6 py-8 sm:py-10">
-            <div class="flex flex-wrap items-center justify-center gap-x-10 gap-y-4 reveal delay-1">
-                <span class="text-sm font-semibold text-gray-300">OpenAI</span>
-                <span class="text-sm font-semibold text-gray-300">Anthropic</span>
-                <span class="text-sm font-semibold text-gray-300">Google AI</span>
-                <span class="text-sm font-semibold text-gray-300">Mistral</span>
-                <span class="text-sm font-semibold text-gray-300">Cohere</span>
-                <span class="text-sm font-semibold text-gray-300">Groq</span>
-                <span class="text-sm font-semibold text-gray-300">Perplexity</span>
-                <span class="text-sm font-semibold text-gray-300">DeepSeek</span>
-                <span class="text-sm font-semibold text-gray-300">Fireworks</span>
-                <span class="text-sm font-semibold text-gray-300">Together.ai</span>
-                <span class="text-sm font-semibold text-gray-300">Replicate</span>
-                <span class="text-sm font-semibold text-indigo-400">+ any custom API</span>
-            </div>
-        </div>
-    </section>
-
-    <!-- Stats Carousel -->
-    <section class="relative z-10 border-y border-vp-border/50 bg-vp-surface/30 backdrop-blur-sm">
-      <div class="max-w-5xl mx-auto px-4 sm:px-6 py-10">
-        <div class="overflow-hidden" id="statsCarousel">
-          <div class="flex transition-transform duration-500 ease-in-out" id="statsTrack">
-            <div class="flex-shrink-0 w-full sm:w-1/2 lg:w-1/3 px-3">
-              <div class="text-center py-2">
-                <div class="text-3xl font-extrabold text-white mb-1">39M</div>
-                <div class="text-sm text-gray-400">secrets leaked on GitHub in 2024</div>
-                <div class="text-[10px] text-gray-600 mt-1">GitGuardian 2025</div>
-              </div>
-            </div>
-            <div class="flex-shrink-0 w-full sm:w-1/2 lg:w-1/3 px-3">
-              <div class="text-center py-2">
-                <div class="text-3xl font-extrabold text-white mb-1">81%</div>
-                <div class="text-sm text-gray-400">spike in AI key leaks year-over-year</div>
-                <div class="text-[10px] text-gray-600 mt-1">GitGuardian 2025</div>
-              </div>
-            </div>
-            <div class="flex-shrink-0 w-full sm:w-1/2 lg:w-1/3 px-3">
-              <div class="text-center py-2">
-                <div class="text-3xl font-extrabold text-indigo-400 mb-1">Full Access</div>
-                <div class="text-sm text-gray-400">AI agents can read every file on your machine</div>
-                <div class="text-[10px] text-gray-600 mt-1">Cursor, Claude Code, Windsurf</div>
-              </div>
-            </div>
-            <div class="flex-shrink-0 w-full sm:w-1/2 lg:w-1/3 px-3">
-              <div class="text-center py-2">
-                <div class="text-3xl font-extrabold text-white mb-1">$4.88M</div>
-                <div class="text-sm text-gray-400">average cost per credential breach</div>
-                <div class="text-[10px] text-gray-600 mt-1">IBM 2024</div>
-              </div>
-            </div>
-            <div class="flex-shrink-0 w-full sm:w-1/2 lg:w-1/3 px-3">
-              <div class="text-center py-2">
-                <div class="text-3xl font-extrabold text-indigo-400 mb-1">19</div>
-                <div class="text-sm text-gray-400">npm packages hijacked AI agents to steal keys</div>
-                <div class="text-[10px] text-gray-600 mt-1">SANDWORM_MODE, 2026</div>
-              </div>
-            </div>
-            <div class="flex-shrink-0 w-full sm:w-1/2 lg:w-1/3 px-3">
-              <div class="text-center py-2">
-                <div class="text-3xl font-extrabold text-white mb-1">64%</div>
-                <div class="text-sm text-gray-400">of leaked keys are never revoked</div>
-                <div class="text-[10px] text-gray-600 mt-1">GitGuardian 2025</div>
-              </div>
-            </div>
-            <div class="flex-shrink-0 w-full sm:w-1/2 lg:w-1/3 px-3">
-              <div class="text-center py-2">
-                <div class="text-3xl font-extrabold text-indigo-400 mb-1">Logged</div>
-                <div class="text-sm text-gray-400">AI agents log keys in prompts and tool calls</div>
-                <div class="text-[10px] text-gray-600 mt-1">Claude Code, Cursor, Copilot</div>
-              </div>
-            </div>
-            <div class="flex-shrink-0 w-full sm:w-1/2 lg:w-1/3 px-3">
-              <div class="text-center py-2">
-                <div class="text-3xl font-extrabold text-white mb-1">5 min</div>
-                <div class="text-sm text-gray-400">how fast attackers find exposed keys</div>
-                <div class="text-[10px] text-gray-600 mt-1">Truffle Security</div>
-              </div>
-            </div>
-            <div class="flex-shrink-0 w-full sm:w-1/2 lg:w-1/3 px-3">
-              <div class="text-center py-2">
-                <div class="text-3xl font-extrabold text-white mb-1">6.4%</div>
-                <div class="text-sm text-gray-400">of Copilot repos leak secrets — 40% above avg</div>
-                <div class="text-[10px] text-gray-600 mt-1">GitGuardian 2025</div>
-              </div>
-            </div>
-            <div class="flex-shrink-0 w-full sm:w-1/2 lg:w-1/3 px-3">
-              <div class="text-center py-2">
-                <div class="text-3xl font-extrabold text-indigo-400 mb-1">MCP</div>
-                <div class="text-sm text-gray-400">MCP servers can request your keys and forward them</div>
-                <div class="text-[10px] text-gray-600 mt-1">Invariant Labs, 2026</div>
-              </div>
-            </div>
+        <div class="scanner-divider">
+          <div class="scanner-row">
+            <span class="scanner-glyph sev-critical" style="color:#b91c1c">!!</span>
+            <span class="scanner-file">apps/web/.env.production<span class="scanner-line">:4</span></span>
+            <span class="scanner-badge sev-critical">openai</span>
+            <span class="scanner-key">sk-proj-7Yx9qL2v…M3nQpK</span>
+            <span class="scanner-status">unsplit</span>
+          </div>
+          <div class="scanner-row">
+            <span class="scanner-glyph sev-critical" style="color:#b91c1c">!!</span>
+            <span class="scanner-file">apps/web/.env.production<span class="scanner-line">:12</span></span>
+            <span class="scanner-badge sev-critical">stripe</span>
+            <span class="scanner-key">sk_live_51Nx…Hq2P</span>
+            <span class="scanner-status">unsplit</span>
+          </div>
+          <div class="scanner-row">
+            <span class="scanner-glyph sev-critical" style="color:#b91c1c">!!</span>
+            <span class="scanner-file">services/worker/src/client.ts<span class="scanner-line">:8</span></span>
+            <span class="scanner-badge sev-critical">anthropic</span>
+            <span class="scanner-key">sk-ant-api03-kR9…xT4</span>
+            <span class="scanner-status">hardcoded</span>
+          </div>
+          <div class="scanner-row">
+            <span class="scanner-glyph sev-critical" style="color:#b91c1c">!!</span>
+            <span class="scanner-file">.env.local<span class="scanner-line">:2</span></span>
+            <span class="scanner-badge sev-critical">openai</span>
+            <span class="scanner-key">sk-proj-7Yx9qL2v…M3nQpK</span>
+            <span class="scanner-status">duplicate</span>
+          </div>
+          <div class="scanner-row">
+            <span class="scanner-glyph sev-high" style="color:#c2410c">! </span>
+            <span class="scanner-file">README.md<span class="scanner-line">:41</span></span>
+            <span class="scanner-badge sev-high">groq</span>
+            <span class="scanner-key">gsk_LHp8…eM3f</span>
+            <span class="scanner-status">docs</span>
+          </div>
+          <div class="scanner-row">
+            <span class="scanner-glyph sev-high" style="color:#c2410c">! </span>
+            <span class="scanner-file">packages/ai/lib/mistral.ts<span class="scanner-line">:17</span></span>
+            <span class="scanner-badge sev-high">mistral</span>
+            <span class="scanner-key">sk-ant…REDACTED</span>
+            <span class="scanner-status">inline</span>
+          </div>
+          <div class="scanner-row">
+            <span class="scanner-glyph sev-medium" style="color:#a16207">. </span>
+            <span class="scanner-file">scripts/seed.ts<span class="scanner-line">:22</span></span>
+            <span class="scanner-badge sev-medium">replicate</span>
+            <span class="scanner-key">r8_8Hq2P…xM3f</span>
+            <span class="scanner-status">inline</span>
+          </div>
+          <div class="scanner-row">
+            <span class="scanner-glyph sev-critical" style="color:#b91c1c">!!</span>
+            <span class="scanner-file">.git/objects/pack/HEAD~4<span class="scanner-line">:0</span></span>
+            <span class="scanner-badge sev-critical">openai</span>
+            <span class="scanner-key">sk-proj-kZ4p…REDACTED</span>
+            <span class="scanner-status">history</span>
+          </div>
+          <div class="scanner-row">
+            <span class="scanner-glyph sev-high" style="color:#c2410c">! </span>
+            <span class="scanner-file">apps/dashboard/.env<span class="scanner-line">:3</span></span>
+            <span class="scanner-badge sev-high">supabase</span>
+            <span class="scanner-key">eyJhbGciOi…cGciOi</span>
+            <span class="scanner-status">unsplit</span>
+          </div>
+          <div class="scanner-row">
+            <span class="scanner-glyph sev-low" style="color:#475569">- </span>
+            <span class="scanner-file">docs/examples/openai.ts<span class="scanner-line">:5</span></span>
+            <span class="scanner-badge sev-low">openai</span>
+            <span class="scanner-key">sk-proj-demo</span>
+            <span class="scanner-status">allowlisted</span>
           </div>
         </div>
-        <div class="flex items-center justify-center gap-3 mt-5">
-          <button onclick="carouselPrev()" class="text-gray-600 hover:text-white transition">
-            <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7"/></svg>
-          </button>
-          <div class="flex gap-1" id="carouselDots"></div>
-          <button onclick="carouselNext()" class="text-gray-600 hover:text-white transition">
-            <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"/></svg>
-          </button>
+
+        <div class="scanner-tail" style="margin-top:10px; border-top:1px dashed #e5e5de; padding-top:10px">
+          <span class="ok">✓</span> proposed: split <span class="num">7</span> live keys · rewrite <span class="num">4</span> files
+        </div>
+        <div style="color:var(--text-faint)">
+          <span style="color:var(--accent)">❯</span>
+          <span class="cursor"></span>
         </div>
       </div>
-    </section>
+    </div>
+  </div>
+</section>
 
-    <!-- How We Compare — Comparison Table -->
-    <section class="relative z-10 max-w-5xl mx-auto px-4 sm:px-6 py-16 sm:py-24">
-        <div class="mb-14 reveal">
-            <p class="text-xs font-mono tracking-widest text-gray-500 uppercase mb-5">How we compare</p>
-            <h2 class="font-bold text-white mb-6 leading-none" style="font-family:'Space Grotesk',sans-serif;font-size:clamp(36px,5vw,64px);letter-spacing:-2px">The complete<br>protection layer.</h2>
-            <p class="text-gray-400 text-lg max-w-2xl">VaultProof doesn't replace your secrets manager. It protects the layer that every existing tool leaves exposed.</p>
+<!-- HOW IT WORKS -->
+<section id="how-it-works">
+  <div class="section-label">01 / FLOW</div>
+  <h2 class="section-h2">Three moves. No key ever lives whole.</h2>
+  <div class="steps-grid">
+    <div class="step">
+      <div class="step-header">
+        <span class="step-num">01</span>
+        <span class="step-name">scan</span>
+      </div>
+      <p class="step-desc">The init CLI walks your repo, parses .env files, and matches 33 provider patterns. Git history gets the last 10 commits.</p>
+      <div class="step-code">npx @vaultproof/init scan .</div>
+    </div>
+    <div class="step">
+      <div class="step-header">
+        <span class="step-num">02</span>
+        <span class="step-name">split</span>
+      </div>
+      <p class="step-desc">Each live key is split locally into two encrypted shares. Share 1 is sealed at rest on our servers. Share 2 is bound to your developer key.</p>
+      <div class="step-code">key = share_1 ⊕ share_2</div>
+    </div>
+    <div class="step">
+      <div class="step-header">
+        <span class="step-num">03</span>
+        <span class="step-name">proxy</span>
+      </div>
+      <p class="step-desc">Your SDK keeps its existing interface. Requests hit api.vaultproof.dev, the worker reconstructs the key in RAM for ≈100ms, forwards, zeroes.</p>
+      <div class="step-code">OPENAI_BASE_URL=vaultproof.dev</div>
+    </div>
+  </div>
+</section>
+
+<!-- COMPARISON -->
+<section id="compare">
+  <div class="compare-header-row">
+    <div>
+      <div class="section-label">02 / COMPARISON</div>
+      <h2 class="section-h2">How we differ from the usual suspects.</h2>
+      <p class="section-sub">Other tools secure where the key lives. We change the fact that a whole key ever has to live anywhere.</p>
+    </div>
+    <span class="compare-date">last updated · 2026-04-18</span>
+  </div>
+
+  <div class="compare-table">
+    <!-- header -->
+    <div class="compare-row header-row">
+      <div class="compare-cell compare-cap-cell">capability</div>
+      <div class="compare-cell compare-us-bg">
+        <div class="compare-col-name" style="color:var(--accent)">
+          <span style="font-size:9px">●</span> VaultProof
         </div>
+        <div class="compare-col-mono">vp-proj-…</div>
+      </div>
+      <div class="compare-cell">
+        <div class="compare-col-name">Doppler</div>
+        <div class="compare-col-mono">env sync</div>
+      </div>
+      <div class="compare-cell">
+        <div class="compare-col-name">Infisical</div>
+        <div class="compare-col-mono">vault + api</div>
+      </div>
+      <div class="compare-cell">
+        <div class="compare-col-name">.env</div>
+        <div class="compare-col-mono">plain file</div>
+      </div>
+    </div>
 
-        <div class="reveal delay-2 overflow-x-auto">
-            <div class="bg-vp-surface border border-vp-border rounded-[16px] overflow-hidden">
-                <table class="w-full text-sm">
-                    <thead>
-                        <tr class="border-b border-vp-border bg-vp-bg/50">
-                            <th class="text-left py-4 px-5 text-gray-400 font-semibold">Capability</th>
-                            <th class="text-center py-4 px-4 text-gray-400 font-semibold">Vault / Doppler / AWS</th>
-                            <th class="text-center py-4 px-4 text-gray-400 font-semibold">GitGuardian</th>
-                            <th class="text-center py-4 px-4 text-indigo-400 font-semibold">VaultProof</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <tr class="border-b border-vp-border/50">
-                            <td class="py-3.5 px-5 text-gray-300">Protects keys at rest</td>
-                            <td class="py-3.5 px-4 text-center text-green-400">&#10003;</td>
-                            <td class="py-3.5 px-4 text-center text-red-400">&#10007;</td>
-                            <td class="py-3.5 px-4 text-center text-green-400 font-medium">&#10003;</td>
-                        </tr>
-                        <tr class="border-b border-vp-border/50">
-                            <td class="py-3.5 px-5 text-gray-300">Protects keys in transit</td>
-                            <td class="py-3.5 px-4 text-center text-green-400">&#10003;</td>
-                            <td class="py-3.5 px-4 text-center text-red-400">&#10007;</td>
-                            <td class="py-3.5 px-4 text-center text-green-400 font-medium">&#10003;</td>
-                        </tr>
-                        <tr class="border-b border-vp-border/50 bg-indigo-500/5">
-                            <td class="py-3.5 px-5 text-gray-300">Protects keys <strong class="text-white">in use</strong></td>
-                            <td class="py-3.5 px-4 text-center text-red-400">&#10007;</td>
-                            <td class="py-3.5 px-4 text-center text-red-400">&#10007;</td>
-                            <td class="py-3.5 px-4 text-center text-green-400 font-medium">&#10003;</td>
-                        </tr>
-                        <tr class="border-b border-vp-border/50">
-                            <td class="py-3.5 px-5 text-gray-300">Detects leaked keys</td>
-                            <td class="py-3.5 px-4 text-center text-red-400">&#10007;</td>
-                            <td class="py-3.5 px-4 text-center text-green-400">&#10003;</td>
-                            <td class="py-3.5 px-4 text-center text-yellow-400 font-medium">prevents leaks</td>
-                        </tr>
-                        <tr class="border-b border-vp-border/50">
-                            <td class="py-3.5 px-5 text-gray-300">Supply chain attack protection</td>
-                            <td class="py-3.5 px-4 text-center text-red-400">&#10007;</td>
-                            <td class="py-3.5 px-4 text-center text-red-400">&#10007;</td>
-                            <td class="py-3.5 px-4 text-center text-green-400 font-medium">&#10003;</td>
-                        </tr>
-                        <tr class="border-b border-vp-border/50">
-                            <td class="py-3.5 px-5 text-gray-300">Key never in app environment</td>
-                            <td class="py-3.5 px-4 text-center text-red-400">&#10007;</td>
-                            <td class="py-3.5 px-4 text-center text-red-400">&#10007;</td>
-                            <td class="py-3.5 px-4 text-center text-green-400 font-medium">&#10003;</td>
-                        </tr>
-                        <tr class="border-b border-vp-border/50">
-                            <td class="py-3.5 px-5 text-gray-300">ZK proof verification</td>
-                            <td class="py-3.5 px-4 text-center text-red-400">&#10007;</td>
-                            <td class="py-3.5 px-4 text-center text-red-400">&#10007;</td>
-                            <td class="py-3.5 px-4 text-center text-yellow-400 font-medium">roadmap</td>
-                        </tr>
-                        <tr>
-                            <td class="py-3.5 px-5 text-gray-300">Works alongside existing vault</td>
-                            <td class="py-3.5 px-4 text-center text-gray-500">—</td>
-                            <td class="py-3.5 px-4 text-center text-green-400">&#10003;</td>
-                            <td class="py-3.5 px-4 text-center text-green-400 font-medium">&#10003;</td>
-                        </tr>
-                    </tbody>
-                </table>
-            </div>
-        </div>
+    <!-- rows -->
+    <div class="compare-row">
+      <div class="compare-cell compare-cell-label">Key never exists whole on disk</div>
+      <div class="compare-cell compare-us-bg"><span class="compare-val compare-us-yes"><span>✓</span> yes</span></div>
+      <div class="compare-cell"><span class="compare-val compare-no"><span>✕</span> no</span></div>
+      <div class="compare-cell"><span class="compare-val compare-no"><span>✕</span> no</span></div>
+      <div class="compare-cell"><span class="compare-val compare-no"><span>✕</span> no</span></div>
+    </div>
+    <div class="compare-row stripe">
+      <div class="compare-cell compare-cell-label">Client-side encrypted split</div>
+      <div class="compare-cell compare-us-bg"><span class="compare-val compare-us-yes"><span>✓</span> 2-of-2</span></div>
+      <div class="compare-cell"><span class="compare-val" style="color:var(--text-faint);opacity:0.5">—</span></div>
+      <div class="compare-cell"><span class="compare-val" style="color:var(--text-faint);opacity:0.5">—</span></div>
+      <div class="compare-cell"><span class="compare-val" style="color:var(--text-faint);opacity:0.5">—</span></div>
+    </div>
+    <div class="compare-row">
+      <div class="compare-cell compare-cell-label">Transparent provider proxy</div>
+      <div class="compare-cell compare-us-bg"><span class="compare-val compare-us-yes"><span>✓</span> yes</span></div>
+      <div class="compare-cell"><span class="compare-val compare-no"><span>✕</span> no</span></div>
+      <div class="compare-cell"><span class="compare-val compare-no"><span>✕</span> no</span></div>
+      <div class="compare-cell"><span class="compare-val compare-no"><span>✕</span> no</span></div>
+    </div>
+    <div class="compare-row stripe">
+      <div class="compare-cell compare-cell-label">Works with unmodified SDKs</div>
+      <div class="compare-cell compare-us-bg"><span class="compare-val compare-us-yes"><span>✓</span> yes</span></div>
+      <div class="compare-cell"><span class="compare-val compare-yes"><span>✓</span> yes</span></div>
+      <div class="compare-cell"><span class="compare-val compare-yes"><span>✓</span> yes</span></div>
+      <div class="compare-cell"><span class="compare-val compare-yes"><span>✓</span> yes</span></div>
+    </div>
+    <div class="compare-row">
+      <div class="compare-cell compare-cell-label">Exposed-key scanner (33+ providers)</div>
+      <div class="compare-cell compare-us-bg"><span class="compare-val compare-us-yes">built-in</span></div>
+      <div class="compare-cell"><span class="compare-val" style="color:var(--text-muted)">add-on</span></div>
+      <div class="compare-cell"><span class="compare-val" style="color:var(--text-muted)">partial</span></div>
+      <div class="compare-cell"><span class="compare-val compare-no"><span>✕</span> no</span></div>
+    </div>
+    <div class="compare-row stripe">
+      <div class="compare-cell compare-cell-label">Origin-locked tokens</div>
+      <div class="compare-cell compare-us-bg"><span class="compare-val compare-us-yes"><span>✓</span> yes</span></div>
+      <div class="compare-cell"><span class="compare-val compare-no"><span>✕</span> no</span></div>
+      <div class="compare-cell"><span class="compare-val compare-no"><span>✕</span> no</span></div>
+      <div class="compare-cell"><span class="compare-val compare-no"><span>✕</span> no</span></div>
+    </div>
+    <div class="compare-row">
+      <div class="compare-cell compare-cell-label">Zero plaintext at rest (single store)</div>
+      <div class="compare-cell compare-us-bg"><span class="compare-val compare-us-yes"><span>✓</span> yes</span></div>
+      <div class="compare-cell"><span class="compare-val compare-no"><span>✕</span> no</span></div>
+      <div class="compare-cell"><span class="compare-val compare-no"><span>✕</span> no</span></div>
+      <div class="compare-cell"><span class="compare-val compare-no"><span>✕</span> no</span></div>
+    </div>
+    <div class="compare-row stripe">
+      <div class="compare-cell compare-cell-label">Edge latency (p50)</div>
+      <div class="compare-cell compare-us-bg"><span class="compare-val compare-us-yes">41ms</span></div>
+      <div class="compare-cell"><span class="compare-val" style="color:var(--text-faint);opacity:0.5">—</span></div>
+      <div class="compare-cell"><span class="compare-val" style="color:var(--text-faint);opacity:0.5">—</span></div>
+      <div class="compare-cell"><span class="compare-val" style="color:var(--text-faint);opacity:0.5">—</span></div>
+    </div>
+    <div class="compare-row">
+      <div class="compare-cell compare-cell-label">Free tier</div>
+      <div class="compare-cell compare-us-bg"><span class="compare-val compare-us-yes">10k/mo</span></div>
+      <div class="compare-cell"><span class="compare-val compare-yes"><span>✓</span> yes</span></div>
+      <div class="compare-cell"><span class="compare-val compare-yes"><span>✓</span> yes</span></div>
+      <div class="compare-cell"><span class="compare-val" style="color:var(--text-muted)">∞</span></div>
+    </div>
+    <div class="compare-row stripe" style="border-bottom:none">
+      <div class="compare-cell compare-cell-label">Open source core</div>
+      <div class="compare-cell compare-us-bg"><span class="compare-val compare-us-yes"><span>✓</span> yes</span></div>
+      <div class="compare-cell"><span class="compare-val compare-no"><span>✕</span> no</span></div>
+      <div class="compare-cell"><span class="compare-val compare-yes"><span>✓</span> yes</span></div>
+      <div class="compare-cell"><span class="compare-val compare-yes"><span>✓</span> yes</span></div>
+    </div>
+  </div>
+</section>
 
-    </section>
+<!-- PROVIDERS -->
+<section id="providers" style="padding: 56px 40px;">
+  <div class="providers-header">
+    <div>
+      <div class="section-label">03 / PROVIDERS</div>
+      <h2 class="section-h2" style="font-size:22px; letter-spacing:-0.3px">33 providers · header-based auth · drop-in baseURL</h2>
+    </div>
+    <a href="mailto:hello@vaultproof.dev" class="providers-request">+ request a provider →</a>
+  </div>
+  <div class="providers-grid">
+    <div class="provider-cell">openai <span class="provider-dot">●</span></div>
+    <div class="provider-cell">anthropic <span class="provider-dot">●</span></div>
+    <div class="provider-cell">stripe <span class="provider-dot">●</span></div>
+    <div class="provider-cell">google <span class="provider-dot">●</span></div>
+    <div class="provider-cell">mistral <span class="provider-dot">●</span></div>
+    <div class="provider-cell">groq <span class="provider-dot">●</span></div>
+    <div class="provider-cell">together <span class="provider-dot">●</span></div>
+    <div class="provider-cell">perplexity <span class="provider-dot">●</span></div>
+    <div class="provider-cell">deepseek <span class="provider-dot">●</span></div>
+    <div class="provider-cell">cohere <span class="provider-dot">●</span></div>
+    <div class="provider-cell">replicate <span class="provider-dot">●</span></div>
+    <div class="provider-cell">fireworks <span class="provider-dot">●</span></div>
+  </div>
+</section>
 
+<!-- PRICING -->
+<section id="pricing">
+  <div class="section-label">04 / PRICING</div>
+  <h2 class="section-h2">Scan is free. Proxy is metered.</h2>
+  <div class="pricing-grid">
+    <!-- Free -->
+    <div class="pricing-card">
+      <div class="pricing-tier">free</div>
+      <div class="pricing-price-row">
+        <span class="pricing-price">$0</span>
+        <span class="pricing-period">/mo</span>
+      </div>
+      <div class="pricing-tagline">Scan + try the proxy</div>
+      <div class="pricing-details">
+        <div class="pricing-row"><span>calls/mo</span><span class="pricing-row-val">10,000</span></div>
+        <div class="pricing-row"><span>key slots</span><span class="pricing-row-val">3</span></div>
+        <div class="pricing-row"><span>audit log</span><span class="pricing-row-val">7d</span></div>
+      </div>
+      <a href="/app/login" class="pricing-cta outline">get started →</a>
+    </div>
+    <!-- Starter -->
+    <div class="pricing-card">
+      <div class="pricing-tier">starter</div>
+      <div class="pricing-price-row">
+        <span class="pricing-price">$5</span>
+        <span class="pricing-period">/mo</span>
+      </div>
+      <div class="pricing-tagline">Side projects</div>
+      <div class="pricing-details">
+        <div class="pricing-row"><span>calls/mo</span><span class="pricing-row-val">50,000</span></div>
+        <div class="pricing-row"><span>key slots</span><span class="pricing-row-val">10</span></div>
+        <div class="pricing-row"><span>audit log</span><span class="pricing-row-val">30d</span></div>
+      </div>
+      <a href="/app/login" class="pricing-cta outline">start starter →</a>
+    </div>
+    <!-- Pro -->
+    <div class="pricing-card featured">
+      <div class="pricing-recommended">● recommended</div>
+      <div class="pricing-tier">pro</div>
+      <div class="pricing-price-row">
+        <span class="pricing-price">$20</span>
+        <span class="pricing-period">/mo</span>
+      </div>
+      <div class="pricing-tagline">Small teams</div>
+      <div class="pricing-details">
+        <div class="pricing-row"><span>calls/mo</span><span class="pricing-row-val">500,000</span></div>
+        <div class="pricing-row"><span>key slots</span><span class="pricing-row-val">50</span></div>
+        <div class="pricing-row"><span>audit log</span><span class="pricing-row-val">1y</span></div>
+      </div>
+      <a href="/app/login" class="pricing-cta">start pro →</a>
+    </div>
+    <!-- Enterprise -->
+    <div class="pricing-card">
+      <div class="pricing-tier">enterprise</div>
+      <div class="pricing-price-row">
+        <span class="pricing-price">talk</span>
+      </div>
+      <div class="pricing-tagline">Custom SLA &amp; audit</div>
+      <div class="pricing-details">
+        <div class="pricing-row"><span>calls/mo</span><span class="pricing-row-val">∞</span></div>
+        <div class="pricing-row"><span>key slots</span><span class="pricing-row-val">1,000</span></div>
+        <div class="pricing-row"><span>audit log</span><span class="pricing-row-val">custom</span></div>
+      </div>
+      <a href="/enterprise-demo" class="pricing-cta outline">contact us →</a>
+    </div>
+  </div>
+</section>
 
+<!-- FOOTER -->
+<footer>
+  <div class="footer-grid">
+    <div>
+      <div class="footer-brand-name">
+        <span class="footer-brand-diamond">◆</span> VaultProof
+      </div>
+      <p class="footer-brand-desc">Split-key secrets and a transparent edge proxy. Your API keys never exist whole on a server.</p>
+      <div class="footer-status">● operational · p50 41ms</div>
+    </div>
 
-    <!-- Install -->
-    <section class="relative z-10 max-w-4xl mx-auto px-6 py-20">
-        <div class="text-center mb-10 reveal">
-            <h2 class="text-3xl font-bold text-white mb-3" style="font-family:'Space Grotesk',sans-serif">One command. No SDK.</h2>
-            <p class="text-gray-500 max-w-lg mx-auto">Your existing OpenAI, Stripe, and Anthropic SDKs already work. Just run init — your code doesn't change.</p>
-        </div>
+    <div>
+      <div class="footer-col-head">product</div>
+      <ul class="footer-links">
+        <li><a href="/scan">scanner</a></li>
+        <li><a href="/docs#proxy">proxy</a></li>
+        <li><a href="/agents">agents</a></li>
+        <li><a href="/verify">verify</a></li>
+        <li><a href="/cicd-kubernetes">cicd + kubernetes</a></li>
+        <li><a href="/compare">compare</a></li>
+        <li><a href="/#pricing">pricing</a></li>
+      </ul>
+    </div>
 
-        <!-- The command -->
-        <div class="max-w-md mx-auto reveal delay-2">
-            <div class="flex items-center gap-2 bg-black/40 border border-indigo-500/20 rounded-xl px-5 py-4 cursor-pointer hover:border-indigo-500/40 transition group" onclick="navigator.clipboard.writeText('npx @vaultproof/init'); var s=this.querySelector('.copy-label'); s.textContent='Copied!'; setTimeout(function(){s.textContent='Click to copy'},1500)">
-                <code class="text-base font-mono text-indigo-300 flex-1"><span class="text-gray-600">$</span> npx <span class="text-indigo-400">@vaultproof/init</span></code>
-                <span class="copy-label text-xs text-gray-600 group-hover:text-gray-400 transition">Click to copy</span>
-            </div>
-            <p class="text-center text-xs text-gray-600 mt-3">No install. No SDK. No code changes. Runs via npx.</p>
-        </div>
-    </section>
+    <div>
+      <div class="footer-col-head">developers</div>
+      <ul class="footer-links">
+        <li><a href="/docs">docs</a></li>
+        <li><a href="/guides">guides</a></li>
+        <li><a href="/mcp-auth">mcp auth</a></li>
+        <li><a href="/status">status</a></li>
+        <li><a href="https://github.com/VaultProof/vaultproof" target="_blank" rel="noopener">github</a></li>
+        <li><a href="/llms.txt">llms.txt</a></li>
+        <li><a href="/llms-full.txt">llms-full.txt</a></li>
+      </ul>
+    </div>
 
-    <!-- FAQ -->
-    <section class="relative z-10 max-w-3xl mx-auto px-4 sm:px-6 py-16 sm:py-24">
-        <div class="text-center mb-12 reveal">
-            <h2 class="text-3xl font-bold text-white mb-4" style="font-family:'Space Grotesk',sans-serif">Frequently asked questions</h2>
-        </div>
-        <div class="faq-accordion reveal delay-1" data-type="single">
-            <div class="faq-item border-b border-vp-border">
-                <button class="faq-trigger" aria-expanded="false">
-                    <span>Does this work with the SDKs I already use?</span>
-                    <svg class="faq-chevron" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg>
-                </button>
-                <div class="faq-content">
-                    <div class="faq-content-inner">Yes. For providers supported by the init flow, you usually update the env values your SDK already reads: the API key becomes a public <code style="color:#818cf8;background:#0a0a0f;padding:2px 6px;border-radius:4px;font-size:13px">vp-proj-...</code> identifier and the base URL points at VaultProof. Your SDK calls stay the same. The migration flow is <code style="color:#818cf8;background:#0a0a0f;padding:2px 6px;border-radius:4px;font-size:13px">npx @vaultproof/init</code>, which scans your .env files and rewrites them for you.</div>
-                </div>
-            </div>
-            <div class="faq-item border-b border-vp-border">
-                <button class="faq-trigger" aria-expanded="false">
-                    <span>How is this different from Vault, Doppler, or AWS Secrets Manager?</span>
-                    <svg class="faq-chevron" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg>
-                </button>
-                <div class="faq-content">
-                    <div class="faq-content-inner">Those tools protect your keys at rest. They encrypt the key in storage and hand it to your app when you ask for it. The moment your app holds that plaintext key, every supply chain attack from Trivy to the recent npm hijacks becomes a direct risk. VaultProof keeps the key out of your app entirely. Your code never holds the real key. We're a layer on top of your existing vault, not a replacement.</div>
-                </div>
-            </div>
-            <div class="faq-item border-b border-vp-border">
-                <button class="faq-trigger" aria-expanded="false">
-                    <span>Do I need to change my code?</span>
-                    <svg class="faq-chevron" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg>
-                </button>
-                <div class="faq-content">
-                    <div class="faq-content-inner">Usually, no. For providers supported by the init flow, your SDK calls stay the same and VaultProof rewrites the env vars your app already reads. The main migration step is running <code style="color:#818cf8;background:#0a0a0f;padding:2px 6px;border-radius:4px;font-size:13px">npx @vaultproof/init</code> and letting it update your local <code style="color:#818cf8;background:#0a0a0f;padding:2px 6px;border-radius:4px;font-size:13px">.env</code> files.</div>
-                </div>
-            </div>
-            <div class="faq-item border-b border-vp-border">
-                <button class="faq-trigger" aria-expanded="false">
-                    <span>How much latency does the proxy add?</span>
-                    <svg class="faq-chevron" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg>
-                </button>
-                <div class="faq-content">
-                    <div class="faq-content-inner">Typically under 100ms. For a 2-10 second LLM response, you won't notice. SSE streaming is fully supported — chunks arrive as they're generated. For non-AI calls (Stripe, AWS) the round trip adds 100-200ms once per request, which is unnoticeable for payment, auth, and email flows.</div>
-                </div>
-            </div>
-            <div class="faq-item border-b border-vp-border">
-                <button class="faq-trigger" aria-expanded="false">
-                    <span>What happens if I want to leave?</span>
-                    <svg class="faq-chevron" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg>
-                </button>
-                <div class="faq-content">
-                    <div class="faq-content-inner">Your keys are yours. Run <code style="color:#818cf8;background:#0a0a0f;padding:2px 6px;border-radius:4px;font-size:13px">vaultproof export</code> and you get every secret back in a standard .env file. No proprietary format. No lock-in. The proxy is a layer on top of your existing infrastructure, not a replacement for it — when you leave, you go back to exactly what you had before.</div>
-                </div>
-            </div>
-            <div class="faq-item border-b border-vp-border">
-                <button class="faq-trigger" aria-expanded="false">
-                    <span>Can VaultProof see my API keys?</span>
-                    <svg class="faq-chevron" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg>
-                </button>
-                <div class="faq-content">
-                    <div class="faq-content-inner">No. Your key is split into two encrypted shares before it leaves your device. We hold one share encrypted with our server key. The other is encrypted with your developer key. Neither share alone reveals anything. The architecture is designed so no single server — including ours — holds your complete key.</div>
-                </div>
-            </div>
-            <div class="faq-item border-b border-vp-border">
-                <button class="faq-trigger" aria-expanded="false">
-                    <span>What if someone finds my project ID?</span>
-                    <svg class="faq-chevron" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg>
-                </button>
-                <div class="faq-content">
-                    <div class="faq-content-inner">Project IDs are public identifiers, not secrets. Someone with your project ID can make proxy calls against your rate limit, but they can never retrieve your actual API keys. Lock access by domain (origin locking), provider, endpoint, or IP. Revoke instantly from your dashboard.</div>
-                </div>
-            </div>
-            <div class="faq-item border-b border-vp-border">
-                <button class="faq-trigger" aria-expanded="false">
-                    <span>What if VaultProof goes down?</span>
-                    <svg class="faq-chevron" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg>
-                </button>
-                <div class="faq-content">
-                    <div class="faq-content-inner">Your encrypted shares stay safe in the database. Proxy calls pause until we're back. We run on a 330+ location edge network with continuous monitoring — see live status at vaultproof.dev/status. For mission-critical workloads, the Enterprise tier supports failover configurations.</div>
-                </div>
-            </div>
-            <div class="faq-item">
-                <button class="faq-trigger" aria-expanded="false">
-                    <span>How do you make money if the free tier is real?</span>
-                    <svg class="faq-chevron" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg>
-                </button>
-                <div class="faq-content">
-                    <div class="faq-content-inner">The free tier is genuinely free — 3 keys, 10,000 calls a month, no credit card, no expiry. We make money when teams scale past it. Most solo projects stay on free forever. Production apps and teams move to Starter ($5) or Pro ($20) for more keys, more calls, and features like IP allowlists, budget caps, and longer log retention. That's the entire model.</div>
-                </div>
-            </div>
-        </div>
-    </section>
+    <div>
+      <div class="footer-col-head">resources</div>
+      <ul class="footer-links">
+        <li><a href="/blog">blog</a></li>
+        <li><a href="/blog/vaultproof-vs-doppler-vault">vaultproof vs doppler</a></li>
+        <li><a href="/blog/secure-openai-api-key">securing openai keys</a></li>
+        <li><a href="/blog/vibe-coding-leaking-secrets">vibe coding &amp; secrets</a></li>
+        <li><a href="/blog/mcp-config-secrets-leak">mcp config leaks</a></li>
+        <li><a href="/blog/trivy-supply-chain-attack">trivy supply chain</a></li>
+        <li><a href="/blog/cisco-trivy-hack">cisco/trivy hack</a></li>
+        <li><a href="/blog/leaked-api-key">leaked api key</a></li>
+      </ul>
+    </div>
 
-    <!-- AI Agent Security -->
-    <section class="relative z-10 max-w-5xl mx-auto px-4 sm:px-6 py-16 sm:py-24">
-        <div class="text-center mb-14 reveal">
-            <h2 class="text-2xl sm:text-3xl md:text-4xl font-bold text-white mb-4" style="font-family:'Space Grotesk',sans-serif">Your AI agent can read every secret on your machine</h2>
-            <p class="text-gray-400 text-lg max-w-2xl mx-auto">Cursor, Claude Code, Windsurf — they have full access to your files, your .env, your terminal history. So does every package they install. Your API key is one <code class="text-amber-400">cat .env</code> away from being exposed.</p>
-        </div>
+    <div>
+      <div class="footer-col-head">company</div>
+      <ul class="footer-links">
+        <li><a href="/security">security</a></li>
+        <li><a href="/abuse">abuse</a></li>
+        <li><a href="/terms">terms</a></li>
+        <li><a href="/privacy">privacy</a></li>
+        <li><a href="/enterprise-demo">enterprise demo</a></li>
+        <li><a href="/app/login">sign in</a></li>
+        <li><a href="mailto:hello@vaultproof.dev">contact</a></li>
+      </ul>
+    </div>
+  </div>
 
-        <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-            <div class="bg-vp-surface border border-vp-border rounded-2xl p-6 reveal delay-1">
-                <div class="icon-chadzn icon-chadzn-indigo mb-4" style="width:40px;height:40px">
-                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none"><rect x="3" y="3" width="18" height="18" rx="4" fill="#818cf8" opacity="0.15" stroke="#818cf8" stroke-width="1.5"/><path d="M8 9L11 12L8 15" stroke="#818cf8" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><path d="M13 15H16" stroke="#818cf8" stroke-width="2" stroke-linecap="round"/></svg>
-                </div>
-                <h3 class="text-white font-semibold mb-1">Agents can't leak what they don't have</h3>
-                <p class="text-sm text-gray-400">Your real key is on VaultProof's server. The agent only has a proxy key that's useless outside your app.</p>
-            </div>
+  <div class="footer-bottom">
+    <span>© 2026 VaultProof · all shares are encrypted at rest</span>
+    <span>status ● operational · 99.98% uptime · us-east · eu-west · ap-east</span>
+  </div>
+</footer>
 
-            <div class="bg-vp-surface border border-vp-border rounded-2xl p-6 reveal delay-2">
-                <div class="icon-chadzn icon-chadzn-indigo mb-4" style="width:40px;height:40px">
-                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none"><rect x="5" y="11" width="14" height="11" rx="2" fill="#818cf8" opacity="0.15" stroke="#818cf8" stroke-width="1.5"/><path d="M8 11V7C8 4.79 9.79 3 12 3C14.21 3 16 4.79 16 7V11" stroke="#818cf8" stroke-width="1.5" stroke-linecap="round"/><circle cx="12" cy="16" r="1.5" fill="#818cf8"/></svg>
-                </div>
-                <h3 class="text-white font-semibold mb-1">Malicious packages can't steal it</h3>
-                <p class="text-sm text-gray-400">Rogue npm packages scan your environment for API keys. If the key isn't there, there's nothing to steal.</p>
-            </div>
-
-            <div class="bg-vp-surface border border-vp-border rounded-2xl p-6 reveal delay-3">
-                <div class="icon-chadzn icon-chadzn-indigo mb-4" style="width:40px;height:40px">
-                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="9" fill="#818cf8" opacity="0.1" stroke="#818cf8" stroke-width="1.5"/><path d="M12 7V12L15 15" stroke="#818cf8" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
-                </div>
-                <h3 class="text-white font-semibold mb-1">A rogue agent can't run up your bill</h3>
-                <p class="text-sm text-gray-400">Set daily and monthly spend caps. If an agent goes haywire, the calls stop at your limit.</p>
-            </div>
-
-            <div class="bg-vp-surface border border-vp-border rounded-2xl p-6 reveal delay-4">
-                <div class="icon-chadzn icon-chadzn-indigo mb-4" style="width:40px;height:40px">
-                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none"><path d="M4 4V9H9" stroke="#818cf8" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/><path d="M20 20V15H15" stroke="#818cf8" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/><path d="M4 9C5.33 5.56 8.42 3 12 3C16.42 3 20 6.58 20 11" stroke="#818cf8" stroke-width="1.5" stroke-linecap="round"/><path d="M20 15C18.67 18.44 15.58 21 12 21C7.58 21 4 17.42 4 13" stroke="#818cf8" stroke-width="1.5" stroke-linecap="round"/></svg>
-                </div>
-                <h3 class="text-white font-semibold mb-1">Compromised key? Rotate it without touching code</h3>
-                <p class="text-sm text-gray-400">Swap keys in the dashboard. Your app keeps running. No redeploy, no .env changes.</p>
-            </div>
-
-            <div class="bg-vp-surface border border-vp-border rounded-2xl p-6 reveal delay-5">
-                <div class="icon-chadzn icon-chadzn-indigo mb-4" style="width:40px;height:40px">
-                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10" stroke="#818cf8" stroke-width="1.5" stroke-linecap="round"/><path d="M17 8L21 4M21 4L21 8M21 4L17 4" stroke="#818cf8" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
-                </div>
-                <h3 class="text-white font-semibold mb-1">Key only works from your domain</h3>
-                <p class="text-sm text-gray-400">Lock a key to specific origins. Even if someone gets your proxy key, it won't work from their machine.</p>
-            </div>
-
-            <div class="bg-vp-surface border border-amber-500/20 rounded-2xl p-6 reveal delay-6">
-                <div class="icon-chadzn icon-chadzn-amber mb-4" style="width:40px;height:40px">
-                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="9" fill="#fbbf24" opacity="0.1" stroke="#fbbf24" stroke-width="1.5"/><path d="M15 9L9 15M9 9L15 15" stroke="#fbbf24" stroke-width="2" stroke-linecap="round"/></svg>
-                </div>
-                <h3 class="text-white font-semibold mb-1">Something wrong? Kill it instantly</h3>
-                <p class="text-sm text-gray-400">One click freezes all proxy calls. No waiting, no support ticket. Resume when you're ready.</p>
-            </div>
-        </div>
-    </section>
-
-    <!-- How It Works -->
-    <section id="how-it-works" class="relative z-10 max-w-5xl mx-auto px-4 sm:px-6 py-16 sm:py-24">
-        <div class="text-center mb-16">
-            <h2 class="text-2xl sm:text-3xl md:text-4xl font-bold text-white mb-4 reveal">Split. Proxy. Zero.</h2>
-            <p class="text-gray-500 text-lg reveal delay-1">Three steps to secure your API keys.</p>
-        </div>
-        <div class="relative">
-            <!-- Dashed connector (desktop only) -->
-            <svg class="hidden md:block absolute top-[72px] left-0 w-full h-4 z-0" preserveAspectRatio="none">
-                <line x1="20%" y1="8" x2="80%" y2="8" stroke="#1e1e2e" stroke-width="2" stroke-dasharray="8 6">
-                    <animate attributeName="stroke-dashoffset" from="0" to="-28" dur="2s" repeatCount="indefinite"/>
-                </line>
-            </svg>
-            <div class="grid md:grid-cols-3 gap-8 relative z-10">
-                <!-- Step 1 -->
-                <div class="text-center reveal delay-1">
-                    <div class="w-[72px] h-[72px] rounded-full bg-vp-surface border-2 border-vp-accent/40 flex items-center justify-center mx-auto mb-6">
-                        <span class="text-2xl font-bold text-vp-accent">1</span>
-                    </div>
-                    <h3 class="text-lg font-bold text-white mb-2">Split</h3>
-                    <p class="text-sm text-gray-400 leading-relaxed">Paste your API key. It's instantly split into encrypted pieces right in your browser. The original key is destroyed before it ever leaves your device.</p>
-                </div>
-                <!-- Step 2 -->
-                <div class="text-center reveal delay-2">
-                    <div class="w-[72px] h-[72px] rounded-full bg-vp-surface border-2 border-vp-accent/40 flex items-center justify-center mx-auto mb-6">
-                        <span class="text-2xl font-bold text-vp-accent">2</span>
-                    </div>
-                    <h3 class="text-lg font-bold text-white mb-2">Proxy</h3>
-                    <p class="text-sm text-gray-400 leading-relaxed">Your app calls VaultProof. We make the API call for you. The key is reassembled in memory for about 100ms, then wiped. You get the response. The key is gone.</p>
-                </div>
-                <!-- Step 3 -->
-                <div class="text-center reveal delay-3">
-                    <div class="w-[72px] h-[72px] rounded-full bg-vp-surface border-2 border-vp-accent/40 flex items-center justify-center mx-auto mb-6">
-                        <span class="text-2xl font-bold text-vp-accent">3</span>
-                    </div>
-                    <h3 class="text-lg font-bold text-white mb-2">Zero</h3>
-                    <p class="text-sm text-gray-400 leading-relaxed">All key material is erased from memory the instant the call completes. Nothing is stored, cached, or logged. There's nothing left to steal.</p>
-                </div>
-            </div>
-        </div>
-    </section>
-
-    <!-- Live Demo -->
-    <section class="relative z-10 max-w-3xl mx-auto px-4 sm:px-6 py-16 sm:py-24">
-        <div class="text-center mb-10 reveal">
-            <h2 class="text-3xl font-bold text-white mb-4" style="font-family:'Space Grotesk',sans-serif">Try it right here</h2>
-            <p class="text-gray-400">Paste any text and watch it get split into two pieces. Neither piece alone reveals anything.</p>
-        </div>
-        <div class="bg-vp-surface border border-vp-border rounded-2xl p-8 reveal delay-1">
-            <div class="mb-4">
-                <label class="text-sm text-gray-400 mb-2 block">Your secret (try an API key):</label>
-                <input type="text" id="demoInput" placeholder="sk-proj-abc123xyz789..." class="w-full bg-[#0a0a0f] border border-[#1e1e2e] rounded-xl px-4 py-3 text-sm text-white font-mono placeholder-gray-600 focus:border-[#6366f1] focus:outline-none" oninput="runDemo()">
-            </div>
-            <div id="demoOutput" class="hidden">
-                <div class="grid md:grid-cols-2 gap-4 mb-4">
-                    <div>
-                        <div class="text-xs text-gray-500 mb-1">Share 1 (stored on server)</div>
-                        <div id="demoShare1" class="bg-[#0a0a0f] border border-[#1e1e2e] rounded-xl px-4 py-3 text-xs text-indigo-400 font-mono break-all min-h-[60px]"></div>
-                    </div>
-                    <div>
-                        <div class="text-xs text-gray-500 mb-1">Share 2 (encrypted with your key)</div>
-                        <div id="demoShare2" class="bg-[#0a0a0f] border border-[#1e1e2e] rounded-xl px-4 py-3 text-xs text-indigo-400 font-mono break-all min-h-[60px]"></div>
-                    </div>
-                </div>
-                <div class="text-center">
-                    <p class="text-xs text-gray-500">Each share alone is random garbage. Both are needed to reconstruct your secret.</p>
-                    <p class="text-xs text-gray-600 mt-1">This runs entirely in your browser — nothing is sent to any server.</p>
-                </div>
-            </div>
-        </div>
-    </section>
-
-    <!-- Pricing -->
-    <section id="pricing" class="relative z-10 max-w-6xl mx-auto px-6 py-24">
-        <div class="text-center mb-16">
-            <h2 class="text-2xl sm:text-3xl md:text-4xl font-bold text-white mb-4 reveal" style="font-family:'Space Grotesk',sans-serif">Free to start. Scales when you do.</h2>
-            <p class="text-gray-500 text-lg reveal delay-1">No credit card. No trial countdown. Upgrade only when you need more.</p>
-        </div>
-
-        <!-- Monthly / Annual toggle -->
-        <div class="flex items-center justify-center gap-3 mb-8 reveal delay-1">
-            <span class="text-sm text-gray-400" id="monthlyLabel">Monthly</span>
-            <button onclick="toggleAnnual()" id="annualToggle" class="relative w-12 h-6 bg-[#1e1e2e] rounded-full transition-colors">
-                <div id="annualDot" class="absolute top-0.5 left-0.5 w-5 h-5 bg-gray-500 rounded-full transition-all"></div>
-            </button>
-            <span class="text-sm text-gray-400" id="annualLabel">Annual <span class="text-indigo-400 text-xs font-medium">Save 17%</span></span>
-        </div>
-
-        <!-- Tier cards -->
-        <div class="grid md:grid-cols-2 lg:grid-cols-4 gap-5 mb-12">
-            <!-- Free -->
-            <div class="bg-vp-surface border border-vp-border rounded-[16px] p-6 card-hover reveal delay-1 flex flex-col">
-                <div class="text-sm font-semibold text-gray-400 mb-2 uppercase tracking-wide">Free</div>
-                <div class="flex items-baseline gap-1 mb-5">
-                    <span class="text-4xl font-extrabold text-white">$0</span>
-                    <span class="text-gray-500 text-sm">/mo</span>
-                </div>
-                <ul class="space-y-2.5 text-sm text-gray-400 mb-6 flex-1">
-                    <li class="flex items-center gap-2.5"><svg width="14" height="14" fill="none" stroke="#6366f1" stroke-width="2"><path d="M11.5 3.5L5.25 9.75 2.5 7"/></svg>3 API keys</li>
-                    <li class="flex items-center gap-2.5"><svg width="14" height="14" fill="none" stroke="#6366f1" stroke-width="2"><path d="M11.5 3.5L5.25 9.75 2.5 7"/></svg>10,000 calls / month</li>
-                    <li class="flex items-center gap-2.5"><svg width="14" height="14" fill="none" stroke="#6366f1" stroke-width="2"><path d="M11.5 3.5L5.25 9.75 2.5 7"/></svg>1 developer key</li>
-                    <li class="flex items-center gap-2.5"><svg width="14" height="14" fill="none" stroke="#6366f1" stroke-width="2"><path d="M11.5 3.5L5.25 9.75 2.5 7"/></svg>7 days log retention</li>
-                    <li class="flex items-center gap-2.5"><svg width="14" height="14" fill="none" stroke="#6366f1" stroke-width="2"><path d="M11.5 3.5L5.25 9.75 2.5 7"/></svg>SSE streaming</li>
-                    <li class="flex items-center gap-2.5"><svg width="14" height="14" fill="none" stroke="#6366f1" stroke-width="2"><path d="M11.5 3.5L5.25 9.75 2.5 7"/></svg>Split-key + cryptographic proofs</li>
-                    <li class="flex items-center gap-2.5 text-gray-600"><svg width="14" height="14" fill="none" stroke="#333" stroke-width="2"><path d="M3 7h8"/></svg>Hard cutoff at limit</li>
-                    <li class="flex items-center gap-2.5 text-gray-600"><svg width="14" height="14" fill="none" stroke="#333" stroke-width="2"><path d="M3 7h8"/></svg>No IP allowlist or alerts</li>
-                </ul>
-                <a href="/app/login" class="block text-center border border-vp-border hover:border-gray-500 px-5 py-2.5 rounded-btn font-semibold text-gray-300 transition-all hover:bg-white/[0.02] text-sm">Get Started</a>
-            </div>
-
-            <!-- Starter -->
-            <div class="bg-vp-surface border border-vp-border rounded-[16px] p-6 card-hover reveal delay-2 flex flex-col">
-                <div class="text-sm font-semibold text-gray-400 mb-2 uppercase tracking-wide">Starter</div>
-                <div class="flex items-baseline gap-1 mb-5">
-                    <span class="text-4xl font-extrabold text-white" data-monthly="$5" data-annual="$50">$5</span>
-                    <span class="text-gray-500 text-sm" data-period>/mo</span>
-                </div>
-                <ul class="space-y-2.5 text-sm text-gray-400 mb-6 flex-1">
-                    <li class="flex items-center gap-2.5"><svg width="14" height="14" fill="none" stroke="#6366f1" stroke-width="2"><path d="M11.5 3.5L5.25 9.75 2.5 7"/></svg>10 API keys</li>
-                    <li class="flex items-center gap-2.5"><svg width="14" height="14" fill="none" stroke="#6366f1" stroke-width="2"><path d="M11.5 3.5L5.25 9.75 2.5 7"/></svg>50,000 calls / month</li>
-                    <li class="flex items-center gap-2.5"><svg width="14" height="14" fill="none" stroke="#6366f1" stroke-width="2"><path d="M11.5 3.5L5.25 9.75 2.5 7"/></svg>3 developer keys</li>
-                    <li class="flex items-center gap-2.5"><svg width="14" height="14" fill="none" stroke="#6366f1" stroke-width="2"><path d="M11.5 3.5L5.25 9.75 2.5 7"/></svg>30 days log retention</li>
-                    <li class="flex items-center gap-2.5"><svg width="14" height="14" fill="none" stroke="#6366f1" stroke-width="2"><path d="M11.5 3.5L5.25 9.75 2.5 7"/></svg>SSE streaming</li>
-                    <li class="flex items-center gap-2.5"><svg width="14" height="14" fill="none" stroke="#6366f1" stroke-width="2"><path d="M11.5 3.5L5.25 9.75 2.5 7"/></svg>Split-key + cryptographic proofs</li>
-                    <li class="flex items-center gap-2.5"><svg width="14" height="14" fill="none" stroke="#6366f1" stroke-width="2"><path d="M11.5 3.5L5.25 9.75 2.5 7"/></svg>Hard limit at cap</li>
-                    <li class="flex items-center gap-2.5 text-gray-600"><svg width="14" height="14" fill="none" stroke="#333" stroke-width="2"><path d="M3 7h8"/></svg>No IP allowlist or alerts</li>
-                </ul>
-                <a href="/app/login" class="block text-center border border-vp-border hover:border-gray-500 px-5 py-2.5 rounded-btn font-semibold text-gray-300 transition-all hover:bg-white/[0.02] text-sm">Start Starter</a>
-            </div>
-
-            <!-- Pro -->
-            <div class="bg-vp-surface border-2 border-vp-accent rounded-[16px] p-6 card-hover pro-glow relative reveal delay-3 flex flex-col">
-                <div class="absolute -top-3 left-1/2 -translate-x-1/2 bg-vp-accent text-xs font-bold px-3.5 py-1 rounded-full text-white shadow-lg shadow-vp-accent/20">Most Popular</div>
-                <div class="text-sm font-semibold text-vp-accent mb-2 uppercase tracking-wide">Pro</div>
-                <div class="flex items-baseline gap-1 mb-5">
-                    <span class="text-4xl font-extrabold text-white" data-monthly="$20" data-annual="$200">$20</span>
-                    <span class="text-gray-500 text-sm" data-period>/mo</span>
-                </div>
-                <ul class="space-y-2.5 text-sm text-gray-400 mb-6 flex-1">
-                    <li class="flex items-center gap-2.5"><svg width="14" height="14" fill="none" stroke="#6366f1" stroke-width="2"><path d="M11.5 3.5L5.25 9.75 2.5 7"/></svg>100 API keys</li>
-                    <li class="flex items-center gap-2.5"><svg width="14" height="14" fill="none" stroke="#6366f1" stroke-width="2"><path d="M11.5 3.5L5.25 9.75 2.5 7"/></svg>500,000 calls / month</li>
-                    <li class="flex items-center gap-2.5"><svg width="14" height="14" fill="none" stroke="#6366f1" stroke-width="2"><path d="M11.5 3.5L5.25 9.75 2.5 7"/></svg>10 developer keys</li>
-                    <li class="flex items-center gap-2.5"><svg width="14" height="14" fill="none" stroke="#6366f1" stroke-width="2"><path d="M11.5 3.5L5.25 9.75 2.5 7"/></svg>90 days log retention</li>
-                    <li class="flex items-center gap-2.5"><svg width="14" height="14" fill="none" stroke="#6366f1" stroke-width="2"><path d="M11.5 3.5L5.25 9.75 2.5 7"/></svg>IP allowlist + usage alerts</li>
-                    <li class="flex items-center gap-2.5"><svg width="14" height="14" fill="none" stroke="#6366f1" stroke-width="2"><path d="M11.5 3.5L5.25 9.75 2.5 7"/></svg>Budget caps</li>
-                    <li class="flex items-center gap-2.5"><svg width="14" height="14" fill="none" stroke="#6366f1" stroke-width="2"><path d="M11.5 3.5L5.25 9.75 2.5 7"/></svg>CSV log export</li>
-                    <li class="flex items-center gap-2.5"><svg width="14" height="14" fill="none" stroke="#6366f1" stroke-width="2"><path d="M11.5 3.5L5.25 9.75 2.5 7"/></svg>Hard limit at cap</li>
-                </ul>
-                <a href="/app/login" class="block text-center bg-vp-accent hover:bg-indigo-500 px-5 py-2.5 rounded-btn font-semibold text-white transition-all btn-glow text-sm">Start Pro</a>
-            </div>
-
-            <!-- Enterprise -->
-            <div class="bg-vp-surface border border-vp-border rounded-[16px] p-6 card-hover reveal delay-4 flex flex-col">
-                <div class="text-sm font-semibold text-gray-400 mb-2 uppercase tracking-wide">Enterprise</div>
-                <div class="flex items-baseline gap-1 mb-5">
-                    <span class="text-4xl font-extrabold text-white">Custom</span>
-                </div>
-                <ul class="space-y-2.5 text-sm text-gray-400 mb-6 flex-1">
-                    <li class="flex items-center gap-2.5"><svg width="14" height="14" fill="none" stroke="#6366f1" stroke-width="2"><path d="M11.5 3.5L5.25 9.75 2.5 7"/></svg>Custom keys &amp; calls</li>
-                    <li class="flex items-center gap-2.5"><svg width="14" height="14" fill="none" stroke="#6366f1" stroke-width="2"><path d="M11.5 3.5L5.25 9.75 2.5 7"/></svg>Custom developer keys</li>
-                    <li class="flex items-center gap-2.5"><svg width="14" height="14" fill="none" stroke="#6366f1" stroke-width="2"><path d="M11.5 3.5L5.25 9.75 2.5 7"/></svg>Everything in Pro</li>
-                    <li class="flex items-center gap-2.5"><svg width="14" height="14" fill="none" stroke="#6366f1" stroke-width="2"><path d="M11.5 3.5L5.25 9.75 2.5 7"/></svg>Priority support</li>
-                    <li class="flex items-center gap-2.5"><svg width="14" height="14" fill="none" stroke="#6366f1" stroke-width="2"><path d="M11.5 3.5L5.25 9.75 2.5 7"/></svg>Custom log retention</li>
-                    <li class="flex items-center gap-2.5"><svg width="14" height="14" fill="none" stroke="#6366f1" stroke-width="2"><path d="M11.5 3.5L5.25 9.75 2.5 7"/></svg>Custom limits</li>
-                </ul>
-                <a href="mailto:hello@vaultproof.dev" class="block text-center border border-vp-border hover:border-gray-500 px-5 py-2.5 rounded-btn font-semibold text-gray-300 transition-all hover:bg-white/[0.02] text-sm">Contact Us</a>
-            </div>
-        </div>
-
-    </section>
-
-    <!-- What happens after sign up -->
-    <section class="relative z-10 max-w-2xl mx-auto px-6 pb-8">
-        <div class="bg-vp-surface border border-vp-border rounded-[16px] p-6 reveal">
-            <h3 class="text-sm font-semibold text-gray-400 uppercase tracking-wide mb-4">What happens after you sign up</h3>
-            <ol class="space-y-3 text-sm text-gray-400">
-                <li class="flex items-start gap-3">
-                    <span class="flex items-center justify-center w-6 h-6 rounded-full bg-vp-accent/15 text-vp-accent text-xs font-bold flex-shrink-0 mt-0.5">1</span>
-                    <span>Create your free account (no credit card required)</span>
-                </li>
-                <li class="flex items-start gap-3">
-                    <span class="flex items-center justify-center w-6 h-6 rounded-full bg-vp-accent/15 text-vp-accent text-xs font-bold flex-shrink-0 mt-0.5">2</span>
-                    <span>Store your first API key &mdash; it's split and encrypted instantly</span>
-                </li>
-                <li class="flex items-start gap-3">
-                    <span class="flex items-center justify-center w-6 h-6 rounded-full bg-vp-accent/15 text-vp-accent text-xs font-bold flex-shrink-0 mt-0.5">3</span>
-                    <span>Your .env is rewritten with proxy URLs and one project ID. Your code doesn't change.</span>
-                </li>
-                <li class="flex items-start gap-3">
-                    <span class="flex items-center justify-center w-6 h-6 rounded-full bg-vp-accent/15 text-vp-accent text-xs font-bold flex-shrink-0 mt-0.5">4</span>
-                    <span>Monitor usage in your dashboard</span>
-                </li>
-            </ol>
-        </div>
-    </section>
-
-    <!-- Footer -->
-    <footer class="relative z-10 border-t border-vp-border">
-        <div class="max-w-5xl mx-auto px-4 sm:px-6 py-10 sm:py-12">
-            <div class="flex flex-col md:flex-row items-center justify-between gap-6">
-                <div class="flex flex-col items-center md:items-start gap-2">
-                    <div class="flex items-center gap-2.5">
-                        <img src="/og-image2.png" alt="VaultProof" class="w-6 h-6">
-                        <span class="text-sm font-bold text-white">VaultProof</span>
-                        <span class="text-xs text-gray-600">by Rial Labs</span>
-                    </div>
-                    <p class="text-xs text-gray-600">Built for developers who refuse to trust blindly.</p>
-                </div>
-                <div class="flex flex-col gap-3 items-center md:items-end">
-                    <div class="flex flex-wrap justify-center md:justify-end gap-6">
-                        <a href="/docs" class="text-sm text-gray-500 hover:text-white transition-colors">Documentation</a>
-                        <a href="/guides" class="text-sm text-gray-500 hover:text-white transition-colors">Guides</a>
-                        <a href="/compare" class="text-sm text-gray-500 hover:text-white transition-colors">Compare</a>
-                        <a href="/verify" class="text-sm text-gray-500 hover:text-white transition-colors">Verify</a>
-                        <a href="https://github.com/VaultProof/vaultproof" target="_blank" rel="noopener" class="text-sm text-gray-500 hover:text-white transition-colors">GitHub</a>
-                        <a href="/app/login" class="nav-dashboard text-sm text-gray-500 hover:text-white transition-colors" style="display:none">Dashboard</a>
-                    </div>
-                    <div class="flex flex-wrap justify-center md:justify-end gap-6">
-                        <a href="/terms" class="text-sm text-gray-500 hover:text-white transition-colors">Terms</a>
-                        <a href="/privacy" class="text-sm text-gray-500 hover:text-white transition-colors">Privacy</a>
-                        <a href="/security" class="text-sm text-gray-500 hover:text-white transition-colors">Security</a>
-                        <a href="/abuse" class="text-sm text-gray-500 hover:text-white transition-colors">Abuse</a>
-                        <a href="/status" class="text-sm text-gray-500 hover:text-white transition-colors">Status</a>
-                        <a href="mailto:hello@vaultproof.dev" class="text-sm text-gray-500 hover:text-white transition-colors">Contact</a>
-                    </div>
-                </div>
-            </div>
-            <div class="mt-8 pt-6 border-t border-vp-border text-center">
-                <p class="text-xs text-gray-600">&copy; 2026 VaultProof. All rights reserved.</p>
-            </div>
-        </div>
-    </footer>
-
-    <script src="/js/index-3.js" defer></script>
+<script>
+function copyCmd(el) {
+  const text = el.querySelector('.hero-cta-cmd-text').textContent.trim();
+  navigator.clipboard.writeText(text).catch(() => {});
+  const hint = el.querySelector('.hero-cta-cmd-hint');
+  const orig = hint.textContent;
+  hint.textContent = 'copied!';
+  setTimeout(() => { hint.textContent = orig; }, 1500);
+}
+</script>
 <script src="/js/analytics.js" defer></script>
-<script src="/js/index-4.js" defer></script>
 </body>
 </html>
