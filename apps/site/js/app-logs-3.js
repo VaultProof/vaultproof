@@ -1,7 +1,7 @@
 const API = window.location.hostname.includes('dev.vaultproof') ? 'https://staging-api.vaultproof.dev/api/v1' : 'https://api.vaultproof.dev/api/v1';
-    const INIT_API = window.location.hostname.includes('dev.vaultproof')
-      ? 'https://vaultproof-init-staging.vaultproof.workers.dev/api/v1/init/projects'
-      : 'https://init.vaultproof.dev/api/v1/init/projects';
+    // Route stats through the main API worker so browser code doesn't call init
+    // routes directly across origins.
+    const INIT_API = API;
     let token = localStorage.getItem('vaultproof_token');
     const user = JSON.parse(localStorage.getItem('vaultproof_user') || '{}');
     const SUPABASE_AUTH_STORAGE_KEY = 'sb-gwzkjiomemjlhtrdrlan-auth-token';
