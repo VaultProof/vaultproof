@@ -30,18 +30,38 @@ function corsHeaders(origin: string, allowedOrigins: string[]): Record<string, s
 
   return {
     ...(allowOrigin ? { 'Access-Control-Allow-Origin': allowOrigin } : {}),
-    ...(wildcard ? {} : { Vary: 'Origin' }),
     'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
     'Access-Control-Allow-Headers': 'Content-Type, Authorization',
     'Access-Control-Max-Age': '86400',
   };
 }
 
+function mergeVary(headers: Headers, value: string): void {
+  const existing = (headers.get('Vary') || '')
+    .split(',')
+    .map((part) => part.trim())
+    .filter(Boolean);
+  const next = new Set(existing);
+  next.add(value);
+  headers.set('Vary', Array.from(next).join(', '));
+}
+
+function setNoStore(headers: Headers): void {
+  // Prevent shared caches from serving authenticated responses across users.
+  headers.set('Cache-Control', 'private, no-store, max-age=0');
+  headers.set('Pragma', 'no-cache');
+  headers.set('Expires', '0');
+}
+
 function addCors(response: Response, origin: string, allowedOrigins: string[]): Response {
+  const wildcard = allowedOrigins.includes('*');
   const headers = new Headers(response.headers);
   for (const [k, v] of Object.entries(corsHeaders(origin, allowedOrigins))) {
     headers.set(k, v);
   }
+  mergeVary(headers, 'Authorization');
+  if (!wildcard) mergeVary(headers, 'Origin');
+  setNoStore(headers);
   return new Response(response.body, { status: response.status, headers });
 }
 

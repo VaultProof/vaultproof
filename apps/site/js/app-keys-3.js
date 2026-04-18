@@ -31,6 +31,7 @@
       : 'https://init.vaultproof.dev/api/v1/init';
     let token = localStorage.getItem('vaultproof_token');
     const user = JSON.parse(localStorage.getItem('vaultproof_user') || '{}');
+    const SUPABASE_AUTH_STORAGE_KEY = 'sb-gwzkjiomemjlhtrdrlan-auth-token';
     let _refreshAttempted = false;
     let _refreshPromise = null;
 
@@ -85,13 +86,7 @@
     function getStoredRefreshToken() {
       const explicit = localStorage.getItem('vaultproof_refresh_token');
       if (explicit) return explicit;
-      for (let i = 0; i < localStorage.length; i++) {
-        const key = localStorage.key(i);
-        if (!key || !key.startsWith('sb-') || !key.endsWith('-auth-token')) continue;
-        const found = extractRefreshToken(localStorage.getItem(key));
-        if (found) return found;
-      }
-      return null;
+      return extractRefreshToken(localStorage.getItem(SUPABASE_AUTH_STORAGE_KEY));
     }
 
     async function tryRefreshToken() {
