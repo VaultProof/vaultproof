@@ -32,7 +32,8 @@
       --body: "Inter", system-ui, sans-serif;
     }
 
-    html, body { background: var(--bg); color: var(--text); font-family: var(--body); font-size: 14px; line-height: 1.5; -webkit-font-smoothing: antialiased; height: 100%; }
+    html, body { background: #e8e6e0; color: var(--text); font-family: var(--body); font-size: 14px; line-height: 1.5; -webkit-font-smoothing: antialiased; height: 100%; }
+    .page { max-width: 1280px; margin: 0 auto; background: var(--bg); border-left: var(--rule); border-right: var(--rule); min-height: 100vh; }
     a { color: inherit; text-decoration: none; }
 
     /* TOP BAR */
@@ -190,6 +191,8 @@
   </style>
 </head>
 <body>
+
+<div class="page">
 
 <!-- TOP BAR -->
 <div class="topbar">
@@ -438,5 +441,7 @@ document.querySelectorAll(".filter-chip").forEach(chip => {
 </script>
 
 <script src="/js/app-index-1.js" defer></script>
+
+</div><!-- /.page -->
 </body>
 </html>
