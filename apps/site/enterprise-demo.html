@@ -1,0 +1,703 @@
+<!DOCTYPE html>
+<html lang="en" class="scroll-smooth overflow-x-hidden">
+<head>
+  <script async src="https://www.googletagmanager.com/gtag/js?id=G-NE5RYX1WTF"></script>
+  <script src="/js/index-1.js" defer></script>
+  <script src="/js/index-2.js" defer></script>
+  <script src="/js/enterprise-demo-1.js" defer></script>
+  <link rel="icon" type="image/png" href="/favicon.png">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>VaultProof Enterprise Demo</title>
+  <meta name="description" content="A buyer-ready enterprise demo of VaultProof for security, platform, AI, CI/CD, and connected device teams.">
+  <meta property="og:title" content="VaultProof Enterprise Demo">
+  <meta property="og:description" content="See how VaultProof keeps third-party API keys out of apps, agents, CI/CD, and device fleets.">
+  <meta property="og:type" content="website">
+  <meta property="og:url" content="https://vaultproof.dev/enterprise-demo">
+  <meta property="og:image" content="https://vaultproof.dev/ogimage.png">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="VaultProof Enterprise Demo">
+  <meta name="twitter:description" content="Enterprise-ready API key security for apps, AI agents, CI/CD, and connected devices.">
+  <meta name="twitter:image" content="https://vaultproof.dev/ogimage.png">
+  <meta name="referrer" content="strict-origin-when-cross-origin">
+  <link rel="canonical" href="https://vaultproof.dev/enterprise-demo">
+
+  <script src="https://cdn.tailwindcss.com/3.4.17"></script>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600&family=Space+Grotesk:wght@500;600;700;800&display=swap" rel="stylesheet">
+
+  <style>
+    * { font-family: 'Inter', system-ui, sans-serif; }
+    html { scroll-padding-top: 88px; }
+    body { background: #07111f; color: #e5edf8; }
+    ::selection { background: #16a34a; color: #f8fafc; }
+    ::-webkit-scrollbar { width: 8px; height: 8px; }
+    ::-webkit-scrollbar-track { background: #07111f; }
+    ::-webkit-scrollbar-thumb { background: #22324a; border-radius: 999px; }
+    ::-webkit-scrollbar-thumb:hover { background: #334a6a; }
+
+    .bg-grid {
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      background-image:
+        linear-gradient(rgba(148, 163, 184, 0.05) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(148, 163, 184, 0.05) 1px, transparent 1px);
+      background-size: 44px 44px;
+      mask-image: radial-gradient(circle at center, rgba(0, 0, 0, 0.75) 0%, transparent 78%);
+      z-index: 0;
+    }
+
+    .orb {
+      position: fixed;
+      border-radius: 999px;
+      filter: blur(100px);
+      pointer-events: none;
+      opacity: 0.45;
+      z-index: 0;
+      animation: floatOrb 20s ease-in-out infinite;
+    }
+    .orb-a {
+      width: 420px;
+      height: 420px;
+      top: -80px;
+      left: -110px;
+      background: rgba(34, 197, 94, 0.18);
+    }
+    .orb-b {
+      width: 360px;
+      height: 360px;
+      top: 18%;
+      right: -100px;
+      background: rgba(14, 165, 233, 0.16);
+      animation-delay: -7s;
+    }
+    .orb-c {
+      width: 320px;
+      height: 320px;
+      bottom: 0;
+      left: 28%;
+      background: rgba(99, 102, 241, 0.14);
+      animation-delay: -11s;
+    }
+    @keyframes floatOrb {
+      0%, 100% { transform: translate3d(0, 0, 0) scale(1); }
+      50% { transform: translate3d(30px, -24px, 0) scale(1.08); }
+    }
+
+    .nav-group { position: relative; }
+    .nav-group-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      color: #94a3b8;
+      font-size: 0.875rem;
+      border: none;
+      background: transparent;
+      cursor: pointer;
+      padding: 4px 2px;
+      transition: color 0.15s ease;
+    }
+    .nav-group-btn:hover,
+    .nav-group.open .nav-group-btn {
+      color: #f8fafc;
+    }
+    .nav-group-btn svg {
+      transition: transform 0.2s ease;
+    }
+    .nav-group.open .nav-group-btn svg {
+      transform: rotate(180deg);
+    }
+    .nav-dropdown {
+      position: absolute;
+      top: calc(100% + 10px);
+      left: 50%;
+      transform: translateX(-50%) translateY(-6px);
+      min-width: 180px;
+      padding: 8px;
+      border-radius: 16px;
+      background: rgba(8, 15, 28, 0.96);
+      border: 1px solid rgba(148, 163, 184, 0.14);
+      box-shadow: 0 24px 80px rgba(0, 0, 0, 0.45);
+      opacity: 0;
+      visibility: hidden;
+      pointer-events: none;
+      transition: opacity 0.15s ease, transform 0.15s ease, visibility 0.15s ease;
+      z-index: 80;
+      backdrop-filter: blur(18px);
+    }
+    .nav-group.open .nav-dropdown {
+      opacity: 1;
+      visibility: visible;
+      pointer-events: auto;
+      transform: translateX(-50%) translateY(0);
+    }
+    .nav-dropdown a {
+      display: block;
+      padding: 9px 12px;
+      border-radius: 10px;
+      color: #cbd5e1;
+      font-size: 0.8125rem;
+      text-decoration: none;
+      transition: background 0.15s ease, color 0.15s ease;
+    }
+    .nav-dropdown a:hover {
+      background: rgba(148, 163, 184, 0.08);
+      color: #fff;
+    }
+
+    .mobile-menu { display: none; }
+    .mobile-menu.open { display: flex; }
+    .btn-ghost {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      padding: 0.65rem 1.1rem;
+      border-radius: 999px;
+      border: 1px solid rgba(56, 189, 248, 0.25);
+      color: #7dd3fc;
+      background: rgba(8, 47, 73, 0.2);
+      transition: background 0.2s ease, border-color 0.2s ease, color 0.2s ease;
+      text-decoration: none;
+      white-space: nowrap;
+    }
+    .btn-ghost:hover {
+      color: #bae6fd;
+      background: rgba(8, 47, 73, 0.32);
+      border-color: rgba(56, 189, 248, 0.42);
+    }
+    .btn-solid {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      padding: 0.8rem 1.25rem;
+      border-radius: 999px;
+      color: #07111f;
+      background: linear-gradient(135deg, #34d399 0%, #22c55e 100%);
+      font-weight: 700;
+      text-decoration: none;
+      box-shadow: 0 16px 40px rgba(34, 197, 94, 0.25);
+      transition: transform 0.2s ease, box-shadow 0.2s ease;
+    }
+    .btn-solid:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 22px 50px rgba(34, 197, 94, 0.32);
+    }
+
+    .reveal {
+      opacity: 0;
+      transform: translateY(26px);
+      transition: opacity 0.65s ease, transform 0.65s ease;
+    }
+    .reveal.visible {
+      opacity: 1;
+      transform: translateY(0);
+    }
+    .reveal.delay-1 { transition-delay: 0.08s; }
+    .reveal.delay-2 { transition-delay: 0.16s; }
+    .reveal.delay-3 { transition-delay: 0.24s; }
+    .reveal.delay-4 { transition-delay: 0.32s; }
+
+    .glass-card {
+      background: linear-gradient(180deg, rgba(15, 23, 42, 0.9), rgba(8, 15, 28, 0.84));
+      border: 1px solid rgba(148, 163, 184, 0.12);
+      box-shadow: 0 20px 80px rgba(2, 6, 23, 0.42);
+      backdrop-filter: blur(14px);
+    }
+    .feature-card {
+      transition: transform 0.22s ease, border-color 0.22s ease, box-shadow 0.22s ease;
+    }
+    .feature-card:hover {
+      transform: translateY(-4px);
+      border-color: rgba(52, 211, 153, 0.28);
+      box-shadow: 0 20px 50px rgba(2, 6, 23, 0.4);
+    }
+
+    .tab-button {
+      border: 1px solid rgba(148, 163, 184, 0.12);
+      color: #94a3b8;
+      background: rgba(15, 23, 42, 0.46);
+      transition: all 0.18s ease;
+    }
+    .tab-button:hover {
+      color: #e2e8f0;
+      border-color: rgba(148, 163, 184, 0.24);
+    }
+    .tab-button.active {
+      color: #07111f;
+      background: linear-gradient(135deg, #34d399 0%, #38bdf8 100%);
+      border-color: transparent;
+      box-shadow: 0 12px 32px rgba(20, 184, 166, 0.28);
+    }
+
+    .scenario-button {
+      border: 1px solid rgba(148, 163, 184, 0.12);
+      background: rgba(9, 18, 33, 0.72);
+      color: #cbd5e1;
+      transition: all 0.18s ease;
+    }
+    .scenario-button.active {
+      background: rgba(20, 184, 166, 0.18);
+      border-color: rgba(45, 212, 191, 0.35);
+      color: #f8fafc;
+    }
+
+    .metric-chip {
+      border: 1px solid rgba(148, 163, 184, 0.12);
+      background: rgba(8, 15, 28, 0.66);
+    }
+
+    .pipeline-line {
+      position: relative;
+      overflow: hidden;
+    }
+    .pipeline-line::after {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(90deg, transparent, rgba(56, 189, 248, 0.35), transparent);
+      transform: translateX(-100%);
+      animation: flowLine 4.8s linear infinite;
+    }
+    @keyframes flowLine {
+      to { transform: translateX(100%); }
+    }
+
+    .dot-status {
+      width: 8px;
+      height: 8px;
+      border-radius: 999px;
+      display: inline-block;
+      background: #22c55e;
+      box-shadow: 0 0 0 0 rgba(34, 197, 94, 0.45);
+      animation: pulseDot 1.8s ease-in-out infinite;
+    }
+    @keyframes pulseDot {
+      0%, 100% { box-shadow: 0 0 0 0 rgba(34, 197, 94, 0.45); }
+      50% { box-shadow: 0 0 0 8px rgba(34, 197, 94, 0); }
+    }
+
+    .timeline-step {
+      position: relative;
+      padding-left: 30px;
+    }
+    .timeline-step::before {
+      content: '';
+      position: absolute;
+      left: 0;
+      top: 8px;
+      width: 12px;
+      height: 12px;
+      border-radius: 999px;
+      background: linear-gradient(135deg, #34d399 0%, #38bdf8 100%);
+      box-shadow: 0 0 0 6px rgba(20, 184, 166, 0.08);
+    }
+    .timeline-step::after {
+      content: '';
+      position: absolute;
+      left: 5px;
+      top: 28px;
+      bottom: -32px;
+      width: 2px;
+      background: linear-gradient(180deg, rgba(52, 211, 153, 0.35), rgba(56, 189, 248, 0.02));
+    }
+    .timeline-step:last-child::after {
+      display: none;
+    }
+
+    .section-title {
+      font-family: 'Space Grotesk', sans-serif;
+      letter-spacing: -0.03em;
+    }
+    .mono {
+      font-family: 'JetBrains Mono', monospace;
+    }
+  </style>
+</head>
+<body class="min-h-screen">
+  <div class="bg-grid"></div>
+  <div class="orb orb-a"></div>
+  <div class="orb orb-b"></div>
+  <div class="orb orb-c"></div>
+
+  <nav class="fixed top-0 left-0 right-0 z-50 px-4 py-4 sm:px-6">
+    <div class="mx-auto flex max-w-6xl items-center justify-between rounded-full border border-slate-700/50 bg-slate-950/70 px-4 py-3 shadow-2xl backdrop-blur-xl sm:px-6">
+      <a href="/" class="flex items-center gap-2.5">
+        <img src="/og-image2.png" alt="VaultProof" class="h-10 w-10">
+        <span class="section-title text-base font-bold tracking-tight text-white">VaultProof</span>
+      </a>
+
+      <div class="hidden items-center gap-5 md:flex">
+        <div class="nav-group">
+          <button class="nav-group-btn" aria-haspopup="true" aria-expanded="false">
+            Product
+            <svg width="11" height="11" viewBox="0 0 12 12" fill="currentColor"><path d="M6 8L2 4h8z"/></svg>
+          </button>
+          <div class="nav-dropdown" role="menu">
+            <a href="/agents" role="menuitem">AI Agents</a>
+            <a href="/compare" role="menuitem">Compare</a>
+                        <a href="/enterprise-demo" role="menuitem">Enterprise Demo</a>
+            <a href="/demo" role="menuitem">Interactive Demo</a>
+          </div>
+        </div>
+        <a href="/security" class="text-sm text-slate-400 transition-colors hover:text-white">Security</a>
+        <a href="/docs" class="text-sm text-slate-400 transition-colors hover:text-white">Docs</a>
+        <a href="/guides" class="text-sm text-slate-400 transition-colors hover:text-white">Guides</a>
+        <a href="/app/login" class="nav-dashboard text-sm text-slate-400 transition-colors hover:text-white" style="display:none">Dashboard</a>
+      </div>
+
+      <div class="hidden items-center gap-3 md:flex">
+        <a href="/scan" class="btn-ghost">
+          <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+          Free Scanner
+        </a>
+        <a href="mailto:hello@vaultproof.dev?subject=Enterprise%20Demo" class="btn-solid">Book Enterprise Demo</a>
+      </div>
+
+      <button id="mobileToggle" class="text-slate-300 md:hidden" aria-label="Toggle menu">
+        <svg width="22" height="22" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 6h14M4 12h14M4 18h14"/></svg>
+      </button>
+    </div>
+
+    <div id="mobileMenu" class="mobile-menu mx-auto mt-2 max-w-6xl flex-col gap-2 rounded-3xl border border-slate-700/50 bg-slate-950/92 px-4 py-4 shadow-2xl backdrop-blur-xl md:hidden">
+      <a href="/agents" class="rounded-xl px-3 py-2 text-sm text-slate-300 hover:bg-white/5 hover:text-white">AI Agents</a>
+      <a href="/compare" class="rounded-xl px-3 py-2 text-sm text-slate-300 hover:bg-white/5 hover:text-white">Compare</a>
+      <a href="/demo" class="rounded-xl px-3 py-2 text-sm text-slate-300 hover:bg-white/5 hover:text-white">Interactive Demo</a>
+      <a href="/security" class="rounded-xl px-3 py-2 text-sm text-slate-300 hover:bg-white/5 hover:text-white">Security</a>
+      <a href="/docs" class="rounded-xl px-3 py-2 text-sm text-slate-300 hover:bg-white/5 hover:text-white">Docs</a>
+      <a href="/guides" class="rounded-xl px-3 py-2 text-sm text-slate-300 hover:bg-white/5 hover:text-white">Guides</a>
+      <a href="/scan" class="btn-ghost mt-2 justify-center">Free Scanner</a>
+      <a href="mailto:hello@vaultproof.dev?subject=Enterprise%20Demo" class="btn-solid mt-1">Book Enterprise Demo</a>
+    </div>
+  </nav>
+
+  <main class="relative z-10">
+    <section class="mx-auto max-w-6xl px-6 pb-20 pt-32 md:pt-36">
+      <div class="grid items-center gap-10 lg:grid-cols-[1.1fr_0.9fr]">
+        <div>
+          <div class="reveal inline-flex items-center gap-2 rounded-full border border-emerald-400/20 bg-emerald-400/10 px-3 py-1 text-xs font-semibold uppercase tracking-[0.24em] text-emerald-300">
+            <span class="dot-status"></span>
+            Enterprise Demo
+          </div>
+          <h1 class="section-title reveal delay-1 mt-6 max-w-4xl text-5xl font-bold leading-[1] text-white sm:text-6xl">
+            API key security your security team can approve and your platform team can ship.
+          </h1>
+          <p class="reveal delay-2 mt-6 max-w-2xl text-lg leading-8 text-slate-300">
+            This is what an enterprise VaultProof rollout looks like: no raw third-party keys in apps, agents, CI/CD, or device fleets. One control plane for origin locks, IP policy, audit trails, spend controls, and fast incident response.
+          </p>
+
+          <div class="reveal delay-3 mt-8 flex flex-wrap gap-3">
+            <a href="mailto:hello@vaultproof.dev?subject=Enterprise%20Pilot" class="btn-solid">Start a Pilot</a>
+            <a href="#architecture" class="btn-ghost">See Architecture</a>
+          </div>
+
+          <div class="reveal delay-4 mt-10 grid gap-3 sm:grid-cols-3">
+            <div class="metric-chip rounded-2xl p-4">
+              <div class="text-xs uppercase tracking-[0.2em] text-slate-400">What changes</div>
+              <div class="mt-2 text-lg font-semibold text-white">Base URL and project ID</div>
+            </div>
+            <div class="metric-chip rounded-2xl p-4">
+              <div class="text-xs uppercase tracking-[0.2em] text-slate-400">What disappears</div>
+              <div class="mt-2 text-lg font-semibold text-white">Plaintext provider keys</div>
+            </div>
+            <div class="metric-chip rounded-2xl p-4">
+              <div class="text-xs uppercase tracking-[0.2em] text-slate-400">Who this helps</div>
+              <div class="mt-2 text-lg font-semibold text-white">CISO, Platform, AI Ops</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="reveal delay-2">
+          <div class="glass-card rounded-[28px] p-5 sm:p-6">
+            <div class="flex items-center justify-between border-b border-slate-800 pb-4">
+              <div>
+                <div class="text-xs uppercase tracking-[0.18em] text-sky-300">Live Enterprise View</div>
+                <div class="mt-1 text-xl font-semibold text-white">Policy Gateway</div>
+              </div>
+              <div class="rounded-full border border-emerald-400/20 bg-emerald-400/10 px-3 py-1 text-xs font-medium text-emerald-300">
+                Traffic Healthy
+              </div>
+            </div>
+
+            <div class="mt-6 grid gap-4">
+              <div class="rounded-2xl border border-slate-800 bg-slate-950/70 p-4">
+                <div class="flex items-center justify-between">
+                  <div>
+                    <div class="text-xs uppercase tracking-[0.2em] text-slate-500">Inputs</div>
+                    <div class="mt-2 text-base font-semibold text-white">Apps, agents, CI jobs, device gateways</div>
+                  </div>
+                  <div class="rounded-full bg-sky-400/10 px-3 py-1 text-xs font-medium text-sky-300">4 sources</div>
+                </div>
+                <div class="pipeline-line mt-4 h-2 rounded-full bg-slate-800"></div>
+              </div>
+
+              <div class="rounded-2xl border border-emerald-400/18 bg-emerald-400/8 p-4">
+                <div class="flex items-center justify-between">
+                  <div>
+                    <div class="text-xs uppercase tracking-[0.2em] text-emerald-300">VaultProof Layer</div>
+                    <div class="mt-2 text-base font-semibold text-white">Origin lock, IP policy, provider routing, caps, logs</div>
+                  </div>
+                  <div class="mono rounded-full bg-black/20 px-3 py-1 text-xs text-emerald-200">vp-proj-enterprise</div>
+                </div>
+                <div class="mt-4 grid grid-cols-2 gap-3 text-sm text-slate-200">
+                  <div class="rounded-xl border border-white/8 bg-slate-950/50 p-3">Policy decision in one hop</div>
+                  <div class="rounded-xl border border-white/8 bg-slate-950/50 p-3">Per-key audit trail</div>
+                  <div class="rounded-xl border border-white/8 bg-slate-950/50 p-3">Emergency revoke in dashboard</div>
+                  <div class="rounded-xl border border-white/8 bg-slate-950/50 p-3">Budget and abuse controls</div>
+                </div>
+              </div>
+
+              <div class="rounded-2xl border border-slate-800 bg-slate-950/70 p-4">
+                <div class="text-xs uppercase tracking-[0.2em] text-slate-500">Upstream Providers</div>
+                <div class="mt-3 flex flex-wrap gap-2 text-sm text-slate-200">
+                  <span class="rounded-full border border-white/10 bg-white/5 px-3 py-1">OpenAI</span>
+                  <span class="rounded-full border border-white/10 bg-white/5 px-3 py-1">Anthropic</span>
+                  <span class="rounded-full border border-white/10 bg-white/5 px-3 py-1">Stripe</span>
+                  <span class="rounded-full border border-white/10 bg-white/5 px-3 py-1">Resend</span>
+                  <span class="rounded-full border border-white/10 bg-white/5 px-3 py-1">GitHub</span>
+                  <span class="rounded-full border border-white/10 bg-white/5 px-3 py-1">Custom API</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="mx-auto max-w-6xl px-6 pb-20">
+      <div class="glass-card reveal rounded-[28px] p-6 sm:p-8">
+        <div class="flex flex-col gap-6 lg:flex-row lg:items-start lg:justify-between">
+          <div class="max-w-2xl">
+            <div class="text-xs uppercase tracking-[0.2em] text-sky-300">Stakeholder Views</div>
+            <h2 class="section-title mt-3 text-3xl font-bold text-white">Same platform, different buyer language.</h2>
+            <p class="mt-3 text-slate-300">Enterprise demos land better when each stakeholder sees their risk reduced in their own words. These tabs show how the story should shift in the room.</p>
+          </div>
+          <div class="flex flex-wrap gap-2" id="stakeholderTabs">
+            <button class="tab-button active rounded-full px-4 py-2 text-sm font-semibold" data-tab="ciso">CISO</button>
+            <button class="tab-button rounded-full px-4 py-2 text-sm font-semibold" data-tab="platform">Platform</button>
+            <button class="tab-button rounded-full px-4 py-2 text-sm font-semibold" data-tab="product">Product / AI</button>
+          </div>
+        </div>
+
+        <div class="mt-8 grid gap-6 lg:grid-cols-[1.2fr_0.8fr]">
+          <div class="rounded-[24px] border border-slate-800 bg-slate-950/70 p-6">
+            <div class="text-xs uppercase tracking-[0.18em] text-slate-500" id="stakeholderLabel">CISO View</div>
+            <h3 class="mt-3 text-2xl font-semibold text-white" id="stakeholderTitle">Remove raw third-party keys from the highest-risk surfaces.</h3>
+            <p class="mt-4 text-base leading-7 text-slate-300" id="stakeholderBody">
+              The pitch for security leaders is simple: secrets managers still hand plaintext keys to apps and pipelines. VaultProof keeps the key out of those environments entirely, then adds enforceable runtime policy on the calls that remain.
+            </p>
+            <div class="mt-6 grid gap-3 sm:grid-cols-2" id="stakeholderBullets">
+              <div class="rounded-2xl border border-white/8 bg-white/5 p-4 text-sm text-slate-200">Origin lock and IP policy reduce misuse when identifiers leak.</div>
+              <div class="rounded-2xl border border-white/8 bg-white/5 p-4 text-sm text-slate-200">Per-key logs and revoke controls compress incident response time.</div>
+              <div class="rounded-2xl border border-white/8 bg-white/5 p-4 text-sm text-slate-200">Budget caps and provider restrictions shrink blast radius.</div>
+              <div class="rounded-2xl border border-white/8 bg-white/5 p-4 text-sm text-slate-200">Works alongside existing vaults rather than replacing them.</div>
+            </div>
+          </div>
+
+          <div class="rounded-[24px] border border-slate-800 bg-slate-950/70 p-6">
+            <div class="text-xs uppercase tracking-[0.18em] text-slate-500">Demo Metrics</div>
+            <div class="mt-4 space-y-4" id="stakeholderMetrics">
+              <div class="rounded-2xl border border-emerald-400/18 bg-emerald-400/8 p-4">
+                <div class="text-xs uppercase tracking-[0.18em] text-emerald-300">Primary Outcome</div>
+                <div class="mt-2 text-lg font-semibold text-white">Plaintext key exposure reduced across runtime surfaces</div>
+              </div>
+              <div class="rounded-2xl border border-white/8 bg-white/5 p-4">
+                <div class="text-xs uppercase tracking-[0.18em] text-slate-500">Buying Trigger</div>
+                <div class="mt-2 text-base font-semibold text-white">Security review after leaked `.env`, repo scan finding, or AI rollout</div>
+              </div>
+              <div class="rounded-2xl border border-white/8 bg-white/5 p-4">
+                <div class="text-xs uppercase tracking-[0.18em] text-slate-500">Fastest Pilot</div>
+                <div class="mt-2 text-base font-semibold text-white">One app, one provider, one project ID, 2-week proof</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section id="architecture" class="mx-auto max-w-6xl px-6 pb-20">
+      <div class="mb-10 max-w-2xl reveal">
+        <div class="text-xs uppercase tracking-[0.2em] text-emerald-300">Architecture</div>
+        <h2 class="section-title mt-3 text-3xl font-bold text-white">Show the security boundary in one screen.</h2>
+        <p class="mt-3 text-slate-300">Enterprise buyers want to know where the raw key can exist, who can call it, and how quickly misuse can be stopped. This section makes that visible immediately.</p>
+      </div>
+
+      <div class="grid gap-6 lg:grid-cols-[0.95fr_1.05fr]">
+        <div class="glass-card reveal delay-1 rounded-[28px] p-6">
+          <div class="text-xs uppercase tracking-[0.18em] text-slate-500">Before</div>
+          <div class="mt-4 space-y-4">
+            <div class="rounded-2xl border border-red-400/20 bg-red-400/8 p-4">
+              <div class="mono text-sm text-red-200">OPENAI_API_KEY=sk-proj-...</div>
+              <div class="mt-2 text-sm text-slate-300">Lives in `.env`, CI variables, shell history, agent context, or config screens.</div>
+            </div>
+            <div class="rounded-2xl border border-white/8 bg-white/5 p-4 text-sm text-slate-300">Any compromised app server, repo leak, browser bundle mistake, or pipeline compromise can use the raw credential immediately.</div>
+            <div class="rounded-2xl border border-white/8 bg-white/5 p-4 text-sm text-slate-300">Incident response is usually “rotate everything and hope you found all copies.”</div>
+          </div>
+        </div>
+
+        <div class="glass-card reveal delay-2 rounded-[28px] p-6">
+          <div class="text-xs uppercase tracking-[0.18em] text-emerald-300">After VaultProof</div>
+          <div class="mt-4 grid gap-4">
+            <div class="rounded-2xl border border-emerald-400/20 bg-emerald-400/8 p-4">
+              <div class="mono text-sm text-emerald-200">VAULTPROOF_PROJECT_ID=vp-proj-enterprise</div>
+              <div class="mono mt-2 text-sm text-sky-200">OPENAI_BASE_URL=https://init.vaultproof.dev/p/openai/v1</div>
+            </div>
+            <div class="grid gap-3 sm:grid-cols-3">
+              <div class="rounded-2xl border border-white/8 bg-white/5 p-4 text-sm text-slate-200">
+                <div class="mb-2 text-xs uppercase tracking-[0.18em] text-slate-500">Policy</div>
+                Enforce origin lock, IP rules, provider restrictions, and caps before forwarding upstream.
+              </div>
+              <div class="rounded-2xl border border-white/8 bg-white/5 p-4 text-sm text-slate-200">
+                <div class="mb-2 text-xs uppercase tracking-[0.18em] text-slate-500">Audit</div>
+                Log which project, which route, which provider, and when each call happened.
+              </div>
+              <div class="rounded-2xl border border-white/8 bg-white/5 p-4 text-sm text-slate-200">
+                <div class="mb-2 text-xs uppercase tracking-[0.18em] text-slate-500">Response</div>
+                Revoke instantly without searching every codebase, repo, or device config.
+              </div>
+            </div>
+            <div class="rounded-2xl border border-slate-800 bg-slate-950/70 p-4">
+              <div class="text-xs uppercase tracking-[0.18em] text-slate-500">Talk Track</div>
+              <p class="mt-2 text-sm leading-7 text-slate-300">VaultProof does not replace your vault. It changes what your app receives at runtime. Instead of pulling the raw third-party secret into the app, pipeline, or device-facing service, you route calls through a policy layer that keeps the provider key off those surfaces.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="mx-auto max-w-6xl px-6 pb-20">
+      <div class="glass-card reveal rounded-[28px] p-6 sm:p-8">
+        <div class="flex flex-col gap-5 lg:flex-row lg:items-end lg:justify-between">
+          <div class="max-w-2xl">
+            <div class="text-xs uppercase tracking-[0.18em] text-sky-300">Use Cases</div>
+            <h2 class="section-title mt-3 text-3xl font-bold text-white">Show where the same model works.</h2>
+            <p class="mt-3 text-slate-300">This is the strongest part of the enterprise story: once you sell the runtime boundary, the same control model can cover web apps, internal agents, CI/CD, and connected systems.</p>
+          </div>
+          <div class="flex flex-wrap gap-2" id="scenarioTabs">
+            <button class="scenario-button active rounded-full px-4 py-2 text-sm font-semibold" data-scenario="apps">Web Apps</button>
+            <button class="scenario-button rounded-full px-4 py-2 text-sm font-semibold" data-scenario="cicd">CI/CD</button>
+            <button class="scenario-button rounded-full px-4 py-2 text-sm font-semibold" data-scenario="devices">IoT / Robots</button>
+            <button class="scenario-button rounded-full px-4 py-2 text-sm font-semibold" data-scenario="vehicles">Connected Cars</button>
+          </div>
+        </div>
+
+        <div class="mt-8 grid gap-6 lg:grid-cols-[1fr_1fr]">
+          <div class="rounded-[24px] border border-slate-800 bg-slate-950/70 p-6">
+            <div class="text-xs uppercase tracking-[0.18em] text-slate-500" id="scenarioLabel">Web App Pattern</div>
+            <h3 class="mt-3 text-2xl font-semibold text-white" id="scenarioTitle">Browser and backend share one policy-controlled path.</h3>
+            <p class="mt-4 text-base leading-7 text-slate-300" id="scenarioBody">For SaaS teams, the cleanest motion is to replace raw provider secrets in the backend and origin-lock browser traffic. That makes leaked front-end identifiers much less dangerous and gives the security team a visible boundary around outbound API usage.</p>
+            <div class="mt-6 grid gap-3" id="scenarioChecklist">
+              <div class="rounded-2xl border border-white/8 bg-white/5 p-4 text-sm text-slate-200">Lock calls to your production origin and selected API routes.</div>
+              <div class="rounded-2xl border border-white/8 bg-white/5 p-4 text-sm text-slate-200">Use the same provider SDK with a rewritten base URL.</div>
+              <div class="rounded-2xl border border-white/8 bg-white/5 p-4 text-sm text-slate-200">Track usage, errors, and revoke events in a shared dashboard.</div>
+            </div>
+          </div>
+
+          <div class="rounded-[24px] border border-slate-800 bg-slate-950/70 p-6">
+            <div class="text-xs uppercase tracking-[0.18em] text-slate-500">What the buyer hears</div>
+            <div class="mt-4 space-y-4" id="scenarioMetrics">
+              <div class="rounded-2xl border border-white/8 bg-white/5 p-4">
+                <div class="text-xs uppercase tracking-[0.18em] text-slate-500">Champion</div>
+                <div class="mt-2 text-base font-semibold text-white" id="scenarioChampion">Security + platform engineering</div>
+              </div>
+              <div class="rounded-2xl border border-white/8 bg-white/5 p-4">
+                <div class="text-xs uppercase tracking-[0.18em] text-slate-500">Fast Pilot</div>
+                <div class="mt-2 text-base font-semibold text-white" id="scenarioPilot">One production API integration and one staging environment</div>
+              </div>
+              <div class="rounded-2xl border border-emerald-400/18 bg-emerald-400/8 p-4">
+                <div class="text-xs uppercase tracking-[0.18em] text-emerald-300">Why it wins</div>
+                <div class="mt-2 text-base font-semibold text-white" id="scenarioWin">Removes `.env` exposure without a full secret-manager migration.</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="mx-auto max-w-6xl px-6 pb-20">
+      <div class="mb-10 max-w-2xl reveal">
+        <div class="text-xs uppercase tracking-[0.2em] text-emerald-300">Enterprise Features</div>
+        <h2 class="section-title mt-3 text-3xl font-bold text-white">What the page should visibly promise.</h2>
+        <p class="mt-3 text-slate-300">These are the features enterprise prospects need to believe are real within the first scroll.</p>
+      </div>
+
+      <div class="grid gap-5 md:grid-cols-2 xl:grid-cols-4">
+        <div class="feature-card glass-card reveal delay-1 rounded-[24px] p-6">
+          <div class="text-xs uppercase tracking-[0.18em] text-sky-300">Control</div>
+          <h3 class="mt-3 text-xl font-semibold text-white">Origin and IP policy</h3>
+          <p class="mt-3 text-sm leading-7 text-slate-300">Lock traffic by domain, route, provider, or IP range so a leaked identifier does not become a free pass.</p>
+        </div>
+        <div class="feature-card glass-card reveal delay-2 rounded-[24px] p-6">
+          <div class="text-xs uppercase tracking-[0.18em] text-sky-300">Governance</div>
+          <h3 class="mt-3 text-xl font-semibold text-white">Audit trail and revoke</h3>
+          <p class="mt-3 text-sm leading-7 text-slate-300">See who called what, when it failed, and how to shut it off without chasing raw keys across teams.</p>
+        </div>
+        <div class="feature-card glass-card reveal delay-3 rounded-[24px] p-6">
+          <div class="text-xs uppercase tracking-[0.18em] text-sky-300">Safety</div>
+          <h3 class="mt-3 text-xl font-semibold text-white">Spend and abuse controls</h3>
+          <p class="mt-3 text-sm leading-7 text-slate-300">Budget caps, per-provider routing, and policy checks help stop runaway costs and misuse before they compound.</p>
+        </div>
+        <div class="feature-card glass-card reveal delay-4 rounded-[24px] p-6">
+          <div class="text-xs uppercase tracking-[0.18em] text-sky-300">Adoption</div>
+          <h3 class="mt-3 text-xl font-semibold text-white">Rollout without SDK rewrite</h3>
+          <p class="mt-3 text-sm leading-7 text-slate-300">The shortest path is still the best one: keep the SDK, change the env values, and pilot in an existing stack.</p>
+        </div>
+      </div>
+    </section>
+
+    <section class="mx-auto max-w-6xl px-6 pb-24">
+      <div class="grid gap-6 lg:grid-cols-[0.95fr_1.05fr]">
+        <div class="glass-card reveal rounded-[28px] p-6 sm:p-8">
+          <div class="text-xs uppercase tracking-[0.18em] text-sky-300">Pilot Plan</div>
+          <h2 class="section-title mt-3 text-3xl font-bold text-white">A realistic enterprise rollout in 30 days.</h2>
+          <div class="mt-8 space-y-8">
+            <div class="timeline-step">
+              <div class="text-sm font-semibold text-white">Week 1: pick one high-risk integration</div>
+              <p class="mt-2 text-sm leading-7 text-slate-300">Choose the AI provider, payment flow, or CI job that currently depends on a plaintext third-party key.</p>
+            </div>
+            <div class="timeline-step">
+              <div class="text-sm font-semibold text-white">Week 2: route through VaultProof</div>
+              <p class="mt-2 text-sm leading-7 text-slate-300">Run the init flow, replace the provider secret with a project ID, and apply origin or IP policy for that path.</p>
+            </div>
+            <div class="timeline-step">
+              <div class="text-sm font-semibold text-white">Week 3: validate logs, alerts, and revoke flow</div>
+              <p class="mt-2 text-sm leading-7 text-slate-300">Walk security through the audit view, rate controls, spend caps, and incident response story.</p>
+            </div>
+            <div class="timeline-step">
+              <div class="text-sm font-semibold text-white">Week 4: expand to the next environment</div>
+              <p class="mt-2 text-sm leading-7 text-slate-300">Move from one app to the next, or from staging into CI/CD, browser-origin traffic, or edge gateway traffic.</p>
+            </div>
+          </div>
+        </div>
+
+        <div class="glass-card reveal delay-1 rounded-[28px] p-6 sm:p-8">
+          <div class="text-xs uppercase tracking-[0.18em] text-emerald-300">Enterprise CTA</div>
+          <h2 class="section-title mt-3 text-3xl font-bold text-white">The page should end with a pilot motion, not a vague contact form.</h2>
+          <div class="mt-6 grid gap-4">
+            <div class="rounded-2xl border border-white/8 bg-white/5 p-5">
+              <div class="text-sm font-semibold text-white">Recommended CTA copy</div>
+              <p class="mt-2 text-sm leading-7 text-slate-300">Bring one app, one provider, or one pipeline. We will map the current plaintext secret path, route it through VaultProof, and show your team the policy and audit boundary in a live session.</p>
+            </div>
+            <div class="rounded-2xl border border-white/8 bg-white/5 p-5">
+              <div class="text-sm font-semibold text-white">Best enterprise proof points</div>
+              <p class="mt-2 text-sm leading-7 text-slate-300">No raw third-party key in runtime, no SDK rewrite, revocation in one place, and a path from web apps to CI/CD to connected systems.</p>
+            </div>
+            <div class="rounded-2xl border border-emerald-400/18 bg-emerald-400/8 p-5">
+              <div class="text-sm font-semibold text-white">Demo outcome</div>
+              <p class="mt-2 text-sm leading-7 text-slate-100">A buyer should leave saying: “This is not another vault. This changes what our apps and agents can actually touch.”</p>
+            </div>
+          </div>
+
+          <div class="mt-8 flex flex-wrap gap-3">
+            <a href="mailto:hello@vaultproof.dev?subject=Enterprise%20Demo%20Request" class="btn-solid">Request Live Demo</a>
+            <a href="/demo" class="btn-ghost">Open Product Demo</a>
+          </div>
+        </div>
+      </div>
+    </section>
+  </main>
+</body>
+</html>
