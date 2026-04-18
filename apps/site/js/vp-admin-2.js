@@ -135,7 +135,8 @@ async function loadStats() {
     document.getElementById('stat-calls-month').textContent = fmt(s.callsThisMonth);
     document.getElementById('stat-calls-all').textContent = fmt(s.totalCallsAllTime);
     document.getElementById('stat-active').textContent = fmt(s.activeUsersLast7Days);
-    document.getElementById('stat-dev-keys').textContent = fmt(s.totalDevKeys);
+    const totalProjects = Number(s.totalProjects ?? s.totalDevKeys ?? 0);
+    document.getElementById('stat-projects').textContent = fmt(totalProjects);
 
     const tierStr = Object.entries(s.tiers || {}).map(([k,v]) => `${k}: ${v}`).join(', ');
     document.getElementById('stat-tiers').textContent = tierStr || '-';
@@ -176,7 +177,7 @@ async function loadUsers(page) {
         <td class="mono text-xs">${esc(u.email)}</td>
         <td><span class="badge badge-${u.tier}">${esc(u.tier)}</span></td>
         <td>${u.keyCount}</td>
-        <td>${u.devKeyCount}</td>
+        <td>${u.projectCount ?? u.devKeyCount ?? 0}</td>
         <td>${fmt(u.totalCalls)}</td>
         <td class="text-gray-500 text-xs">${fmtDate(u.createdAt)}</td>
       `;
@@ -218,7 +219,10 @@ async function openUserDetail(userId) {
     document.getElementById('detail-tier-select').value = u.tier;
 
     document.getElementById('detail-keys').textContent = u.keySlots.length;
-    document.getElementById('detail-devkeys').textContent = u.developerKeys.length;
+    const developerKeys = Array.isArray(u.developerKeys) ? u.developerKeys : [];
+    const projects = Array.isArray(u.projects) ? u.projects : [];
+    const projectCount = projects.length > 0 ? projects.length : developerKeys.length;
+    document.getElementById('detail-devkeys').textContent = projectCount;
     document.getElementById('detail-calls').textContent = fmt(u.totalCalls);
     document.getElementById('detail-created').textContent = fmtDate(u.createdAt);
 
@@ -256,7 +260,7 @@ async function openUserDetail(userId) {
     // Dev keys
     const dkTbody = document.getElementById('detail-devkeys-tbody');
     dkTbody.innerHTML = '';
-    for (const dk of u.developerKeys) {
+    for (const dk of developerKeys) {
       const tr = document.createElement('tr');
       tr.innerHTML = `
         <td>${esc(dk.label)}</td>

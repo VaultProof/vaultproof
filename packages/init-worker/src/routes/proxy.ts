@@ -18,6 +18,7 @@
  */
 import type { Env } from '../types.js';
 import { authenticateAndFetchKey } from '../lib/project-auth.js';
+import { getSupabase } from '../lib/supabase.js';
 import { decrypt, zeroUint8Array } from '../crypto/encryption.js';
 import { deserializeShare, combineShares } from '../crypto/shamir.js';
 import { checkProxyRateLimit, rateLimitResponse } from '../lib/rate-limit.js';
@@ -37,11 +38,52 @@ const SAFE_FORWARD_HEADERS = new Set([
   'anthropic-beta',
 ]);
 
+function getLoggedPath(upstreamPath: string): string {
+  const basePath = upstreamPath.split('?')[0] || '/';
+  return basePath.length > 2048 ? basePath.slice(0, 2048) : basePath;
+}
+
+function queueProjectProxyLog(
+  env: Env,
+  log: {
+    project_id: string;
+    project_key_id: string;
+    slug: string;
+    provider: string;
+    method: string;
+    upstream_path: string;
+    status_code: number;
+    latency_ms: number;
+    error?: string | null;
+    metadata?: Record<string, unknown>;
+  },
+  ctx?: ExecutionContext,
+): void {
+  const write = async () => {
+    try {
+      const supabase = getSupabase(env);
+      const { error } = await supabase.from('project_access_logs').insert(log);
+      if (error) {
+        console.error('Failed to insert project proxy log:', error.message);
+      }
+    } catch (e) {
+      console.error('Failed to insert project proxy log:', e);
+    }
+  };
+
+  if (ctx && typeof ctx.waitUntil === 'function') {
+    ctx.waitUntil(write());
+    return;
+  }
+  void write();
+}
+
 export async function handleProxy(
   request: Request,
   env: Env,
   slug: string,
   upstreamPath: string,
+  ctx?: ExecutionContext,
 ): Promise<Response> {
   // Single round trip: auth + origin lock + key fetch + upstream config.
   // Replaces two sequential Supabase queries with one JOIN.
@@ -110,9 +152,13 @@ export async function handleProxy(
     redirect: 'manual',
   });
 
-  let upstreamRes: Response;
+  const startedAt = Date.now();
+  let upstreamRes: Response | null = null;
+  let upstreamError: string | null = null;
   try {
     upstreamRes = await fetch(upstreamReq);
+  } catch (e) {
+    upstreamError = e instanceof Error ? e.message : 'upstream_fetch_failed';
   } finally {
     if (reconstructed) zeroUint8Array(reconstructed);
     // JS strings are immutable — setting realKey = '' drops the reference but
@@ -122,6 +168,45 @@ export async function handleProxy(
     // window by keeping realKey scoped tightly and avoiding string copies.
     realKey = '';
   }
+
+  const latencyMs = Date.now() - startedAt;
+  const loggedPath = getLoggedPath(upstreamPath);
+  if (!upstreamRes) {
+    queueProjectProxyLog(
+      env,
+      {
+        project_id: auth.projectId,
+        project_key_id: auth.keyId,
+        slug,
+        provider: auth.provider,
+        method: request.method,
+        upstream_path: loggedPath,
+        status_code: 0,
+        latency_ms: latencyMs,
+        error: upstreamError || 'upstream_fetch_failed',
+      },
+      ctx,
+    );
+    return Response.json({ error: 'Upstream request failed' }, { status: 502 });
+  }
+
+  queueProjectProxyLog(
+    env,
+    {
+      project_id: auth.projectId,
+      project_key_id: auth.keyId,
+      slug,
+      provider: auth.provider,
+      method: request.method,
+      upstream_path: loggedPath,
+      status_code: upstreamRes.status,
+      latency_ms: latencyMs,
+      metadata: {
+        upstream_request_id: upstreamRes.headers.get('x-request-id') || upstreamRes.headers.get('request-id'),
+      },
+    },
+    ctx,
+  );
 
   // Explicit allowlist of response headers we pass back to the client.
   // Stripping unknown headers prevents a malicious upstream from setting

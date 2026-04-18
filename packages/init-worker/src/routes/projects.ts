@@ -78,6 +78,390 @@ function normalizeAllowedOrigins(raw: string | null | undefined): { ok: true; va
   return { ok: true, value: [...new Set(normalized)].join(',') };
 }
 
+function parseStatsDays(request: Request, fallback = 30): number {
+  const url = new URL(request.url);
+  const raw = Number(url.searchParams.get('days'));
+  if (!Number.isFinite(raw)) return fallback;
+  const days = Math.floor(raw);
+  if (days < 1) return 1;
+  if (days > 90) return 90;
+  return days;
+}
+
+function parseStatsLimit(request: Request, fallback = 5000): number {
+  const url = new URL(request.url);
+  const raw = Number(url.searchParams.get('limit'));
+  if (!Number.isFinite(raw)) return fallback;
+  const limit = Math.floor(raw);
+  if (limit < 1) return 1;
+  if (limit > 10000) return 10000;
+  return limit;
+}
+
+function toIsoDate(d: Date): string {
+  return d.toISOString().slice(0, 10);
+}
+
+async function listActiveProjects(supabase: any, userId: string): Promise<Array<{ id: string; vp_proj_id: string; name: string | null }>> {
+  const { data, error } = await supabase
+    .from('projects')
+    .select('id, vp_proj_id, name')
+    .eq('user_id', userId)
+    .is('revoked_at', null);
+
+  if (error || !data) return [];
+  return data as Array<{ id: string; vp_proj_id: string; name: string | null }>;
+}
+
+async function getInitOverviewStats(supabase: any, userId: string): Promise<{
+  totalProjects: number;
+  totalKeys: number;
+  providers: string[];
+  providerCount: number;
+  activeApps: number;
+  totalCalls: number;
+  errorRate: number;
+  recentActivity: Array<Record<string, unknown>>;
+}> {
+  const projects = await listActiveProjects(supabase, userId);
+  const projectIds = projects.map((p) => p.id);
+
+  if (projectIds.length === 0) {
+    return {
+      totalProjects: 0,
+      totalKeys: 0,
+      providers: [],
+      providerCount: 0,
+      activeApps: 0,
+      totalCalls: 0,
+      errorRate: 0,
+      recentActivity: [],
+    };
+  }
+
+  const [{ data: keyRows }, totalCallsRes, errorCallsRes, recentLogsRes] = await Promise.all([
+    supabase
+      .from('project_keys')
+      .select('id, project_id, provider, slug')
+      .in('project_id', projectIds)
+      .is('revoked_at', null),
+    supabase
+      .from('project_access_logs')
+      .select('id', { count: 'exact', head: true })
+      .in('project_id', projectIds),
+    supabase
+      .from('project_access_logs')
+      .select('id', { count: 'exact', head: true })
+      .in('project_id', projectIds)
+      .gte('status_code', 400),
+    supabase
+      .from('project_access_logs')
+      .select('id, project_key_id, provider, slug, method, upstream_path, status_code, latency_ms, timestamp, metadata')
+      .in('project_id', projectIds)
+      .order('timestamp', { ascending: false })
+      .limit(20),
+  ]);
+
+  const keys = (keyRows || []) as Array<{ id: string; provider: string; slug: string | null }>;
+  const providers = [...new Set(keys.map((k) => k.provider).filter(Boolean))];
+  const keyMap = new Map<string, { provider: string; label: string }>();
+  for (const key of keys) {
+    keyMap.set(key.id, {
+      provider: key.provider,
+      label: key.slug || key.provider,
+    });
+  }
+
+  const totalCalls = totalCallsRes?.count || 0;
+  const errorCalls = errorCallsRes?.count || 0;
+  const errorRate = totalCalls > 0 ? (errorCalls / totalCalls) * 100 : 0;
+
+  const recentLogs = (recentLogsRes?.data || []) as Array<{
+    project_key_id: string | null;
+    provider: string | null;
+    slug: string | null;
+    method: string | null;
+    upstream_path: string | null;
+    status_code: number | null;
+    latency_ms: number | null;
+    timestamp: string;
+    metadata: unknown;
+  }>;
+
+  const recentActivity = recentLogs.map((log) => {
+    const keyInfo = log.project_key_id ? keyMap.get(log.project_key_id) : null;
+    const endpoint = log.upstream_path || '';
+    const method = (log.method || '').toUpperCase();
+    const description = [method, endpoint].filter(Boolean).join(' ').trim() || (log.provider || log.slug || 'Proxy request');
+    return {
+      action: 'transparent_proxy',
+      timestamp: log.timestamp,
+      description,
+      keySlot: {
+        provider: keyInfo?.provider || log.provider || 'unknown',
+        label: keyInfo?.label || log.slug || log.provider || 'unknown',
+      },
+      metadata: {
+        status_code: log.status_code,
+        endpoint,
+        latency_ms: log.latency_ms,
+      },
+    };
+  });
+
+  return {
+    totalProjects: projectIds.length,
+    totalKeys: keys.length,
+    providers,
+    providerCount: providers.length,
+    activeApps: providers.length,
+    totalCalls,
+    errorRate,
+    recentActivity,
+  };
+}
+
+async function getInitUsageStats(
+  supabase: any,
+  userId: string,
+  days: number,
+): Promise<{ usage: Array<{ date: string; calls: number; errors: number }> }> {
+  const projects = await listActiveProjects(supabase, userId);
+  const projectIds = projects.map((p) => p.id);
+
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  const start = new Date(today);
+  start.setDate(start.getDate() - (days - 1));
+
+  const usage = Array.from({ length: days }, (_, idx) => {
+    const date = new Date(start);
+    date.setDate(start.getDate() + idx);
+    return { date: toIsoDate(date), calls: 0, errors: 0 };
+  });
+
+  if (projectIds.length === 0) {
+    return { usage };
+  }
+
+  const { data: logs } = await supabase
+    .from('project_access_logs')
+    .select('timestamp, status_code')
+    .in('project_id', projectIds)
+    .gte('timestamp', start.toISOString());
+
+  const byDate = new Map<string, { date: string; calls: number; errors: number }>();
+  for (const row of usage) byDate.set(row.date, row);
+
+  for (const log of (logs || []) as Array<{ timestamp: string; status_code: number | null }>) {
+    const date = String(log.timestamp).slice(0, 10);
+    const bucket = byDate.get(date);
+    if (!bucket) continue;
+    bucket.calls += 1;
+    if ((log.status_code || 0) >= 400) bucket.errors += 1;
+  }
+
+  return { usage };
+}
+
+async function getInitByKeyStats(
+  supabase: any,
+  userId: string,
+): Promise<{
+  keys: Array<{
+    id: string;
+    label: string;
+    provider: string;
+    keyPrefix: string;
+    keySuffix: string;
+    createdAt: string;
+    created: string;
+    lastUsed: string | null;
+    callsThisMonth: number;
+    dailyUsed: number;
+    errorsThisMonth: number;
+    status: string;
+  }>;
+}> {
+  const projects = await listActiveProjects(supabase, userId);
+  const projectIds = projects.map((p) => p.id);
+
+  if (projectIds.length === 0) {
+    return { keys: [] };
+  }
+
+  const { data: keyRows } = await supabase
+    .from('project_keys')
+    .select('id, project_id, provider, slug, created_at')
+    .in('project_id', projectIds)
+    .is('revoked_at', null);
+
+  const keys = (keyRows || []) as Array<{
+    id: string;
+    project_id: string;
+    provider: string;
+    slug: string | null;
+    created_at: string;
+  }>;
+  if (!keys.length) return { keys: [] };
+
+  const keyIds = keys.map((k) => k.id);
+  const now = Date.now();
+  const monthStart = new Date();
+  monthStart.setDate(1);
+  monthStart.setHours(0, 0, 0, 0);
+  const dayAgoIso = new Date(now - 24 * 60 * 60 * 1000).toISOString();
+
+  const [{ data: monthlyLogs }, { data: latestLogs }] = await Promise.all([
+    supabase
+      .from('project_access_logs')
+      .select('project_key_id, status_code, timestamp')
+      .in('project_key_id', keyIds)
+      .gte('timestamp', monthStart.toISOString()),
+    supabase
+      .from('project_access_logs')
+      .select('project_key_id, timestamp')
+      .in('project_key_id', keyIds)
+      .order('timestamp', { ascending: false })
+      .limit(5000),
+  ]);
+
+  const statsMap = new Map<string, { calls: number; errors: number; daily: number; lastUsed: string | null }>();
+  for (const key of keys) {
+    statsMap.set(key.id, { calls: 0, errors: 0, daily: 0, lastUsed: null });
+  }
+
+  for (const log of (monthlyLogs || []) as Array<{ project_key_id: string; status_code: number | null; timestamp: string }>) {
+    const stat = statsMap.get(log.project_key_id);
+    if (!stat) continue;
+    stat.calls += 1;
+    if ((log.status_code || 0) >= 400) stat.errors += 1;
+    if (log.timestamp >= dayAgoIso) stat.daily += 1;
+    if (!stat.lastUsed || log.timestamp > stat.lastUsed) stat.lastUsed = log.timestamp;
+  }
+
+  for (const log of (latestLogs || []) as Array<{ project_key_id: string; timestamp: string }>) {
+    const stat = statsMap.get(log.project_key_id);
+    if (!stat || stat.lastUsed) continue;
+    stat.lastUsed = log.timestamp;
+  }
+
+  const output = keys.map((key) => {
+    const stat = statsMap.get(key.id) || { calls: 0, errors: 0, daily: 0, lastUsed: null };
+    return {
+      id: key.id,
+      label: key.slug || key.provider,
+      provider: key.provider,
+      keyPrefix: 'vp_key_',
+      keySuffix: key.id.slice(-4),
+      createdAt: key.created_at,
+      created: key.created_at,
+      lastUsed: stat.lastUsed,
+      callsThisMonth: stat.calls,
+      dailyUsed: stat.daily,
+      errorsThisMonth: stat.errors,
+      status: 'active',
+    };
+  });
+
+  output.sort((a, b) => b.callsThisMonth - a.callsThisMonth);
+  return { keys: output };
+}
+
+async function getInitLogsStats(
+  supabase: any,
+  userId: string,
+  days: number,
+  limit: number,
+): Promise<{
+  logs: Array<{
+    id: string;
+    timestamp: string;
+    action: string;
+    keySlotId: string | null;
+    keyLabel: string;
+    provider: string;
+    appName: string;
+    endpoint: string;
+    status: string;
+    latency: number | null;
+    zkProofVerified: null;
+    metadata: Record<string, unknown>;
+  }>;
+}> {
+  const projects = await listActiveProjects(supabase, userId);
+  const projectIds = projects.map((p) => p.id);
+  if (!projectIds.length) return { logs: [] };
+
+  const { data: keyRows } = await supabase
+    .from('project_keys')
+    .select('id, provider, slug')
+    .in('project_id', projectIds)
+    .is('revoked_at', null);
+
+  const keyMap = new Map<string, { provider: string; label: string }>();
+  for (const row of (keyRows || []) as Array<{ id: string; provider: string; slug: string | null }>) {
+    keyMap.set(row.id, {
+      provider: row.provider,
+      label: row.slug || row.provider,
+    });
+  }
+
+  const since = new Date(Date.now() - (days * 24 * 60 * 60 * 1000)).toISOString();
+  const { data: logRows } = await supabase
+    .from('project_access_logs')
+    .select('id, project_key_id, provider, slug, method, upstream_path, status_code, latency_ms, error, metadata, timestamp')
+    .in('project_id', projectIds)
+    .gte('timestamp', since)
+    .order('timestamp', { ascending: false })
+    .limit(limit);
+
+  const logs = ((logRows || []) as Array<{
+    id: string;
+    project_key_id: string | null;
+    provider: string | null;
+    slug: string | null;
+    method: string | null;
+    upstream_path: string | null;
+    status_code: number | null;
+    latency_ms: number | null;
+    error: string | null;
+    metadata: Record<string, unknown> | null;
+    timestamp: string;
+  }>).map((row) => {
+    const keyInfo = row.project_key_id ? keyMap.get(row.project_key_id) : null;
+    const provider = keyInfo?.provider || row.provider || 'unknown';
+    const keyLabel = keyInfo?.label || row.slug || provider;
+    const endpoint = row.upstream_path || '/';
+    const method = (row.method || '').toUpperCase();
+    const statusCode = row.status_code ?? (row.error ? 0 : 200);
+
+    return {
+      id: row.id,
+      timestamp: row.timestamp,
+      action: 'transparent_proxy',
+      keySlotId: row.project_key_id || null,
+      keyLabel,
+      provider,
+      appName: 'Init Proxy',
+      endpoint: [method, endpoint].filter(Boolean).join(' ').trim(),
+      status: statusCode >= 400 || statusCode === 0 ? 'error' : 'ok',
+      latency: row.latency_ms ?? null,
+      zkProofVerified: null,
+      metadata: {
+        status_code: statusCode,
+        endpoint,
+        method,
+        latency_ms: row.latency_ms,
+        error: row.error || null,
+        ...(row.metadata || {}),
+      },
+    };
+  });
+
+  return { logs };
+}
+
 export async function handleProjects(
   request: Request,
   env: Env,
@@ -502,43 +886,42 @@ export async function handleProjects(
     return Response.json({ ok: true, rotated: data });
   }
 
-  // GET /api/v1/init/stats — dashboard overview stats
-  if (method === 'GET' && pathSegments.length === 1 && pathSegments[0] === 'stats') {
-    const { data: projects } = await supabase
-      .from('projects')
-      .select('id')
-      .eq('user_id', auth.userId)
-      .is('revoked_at', null);
-
-    const projectIds = (projects || []).map((p: { id: string }) => p.id);
-
-    let totalKeys = 0;
-    if (projectIds.length > 0) {
-      const { count } = await supabase
-        .from('project_keys')
-        .select('id', { count: 'exact', head: true })
-        .in('project_id', projectIds)
-        .is('revoked_at', null);
-      totalKeys = count || 0;
+  // GET /api/v1/init/projects/stats/*
+  if (method === 'GET' && pathSegments.length >= 1 && pathSegments[0] === 'stats') {
+    // Legacy shape kept for compatibility with existing callers.
+    if (pathSegments.length === 1) {
+      const overview = await getInitOverviewStats(supabase, auth.userId);
+      return Response.json({
+        totalProjects: overview.totalProjects,
+        totalKeys: overview.totalKeys,
+        providers: overview.providers,
+        providerCount: overview.providerCount,
+        totalCalls: overview.totalCalls,
+        errorRate: overview.errorRate,
+      });
     }
 
-    // Unique providers across all projects
-    let providers: string[] = [];
-    if (projectIds.length > 0) {
-      const { data: providerRows } = await supabase
-        .from('project_keys')
-        .select('provider')
-        .in('project_id', projectIds)
-        .is('revoked_at', null);
-      providers = [...new Set((providerRows || []).map((r: { provider: string }) => r.provider))];
+    if (pathSegments.length === 2 && pathSegments[1] === 'overview') {
+      const overview = await getInitOverviewStats(supabase, auth.userId);
+      return Response.json(overview);
     }
 
-    return Response.json({
-      totalProjects: projectIds.length,
-      totalKeys,
-      providers,
-      providerCount: providers.length,
-    });
+    if (pathSegments.length === 2 && pathSegments[1] === 'usage') {
+      const days = parseStatsDays(request, 30);
+      return Response.json(await getInitUsageStats(supabase, auth.userId, days));
+    }
+
+    if (pathSegments.length === 2 && pathSegments[1] === 'by-key') {
+      return Response.json(await getInitByKeyStats(supabase, auth.userId));
+    }
+
+    if (pathSegments.length === 2 && pathSegments[1] === 'logs') {
+      const days = parseStatsDays(request, 90);
+      const limit = parseStatsLimit(request, 5000);
+      return Response.json(await getInitLogsStats(supabase, auth.userId, days, limit));
+    }
+
+    return Response.json({ error: 'Not found' }, { status: 404 });
   }
 
   return Response.json({ error: 'Not found' }, { status: 404 });

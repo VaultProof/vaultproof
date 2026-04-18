@@ -1,4 +1,7 @@
 const API = window.location.hostname.includes('dev.vaultproof') ? 'https://staging-api.vaultproof.dev/api/v1' : 'https://api.vaultproof.dev/api/v1';
+    const INIT_API = window.location.hostname.includes('dev.vaultproof')
+      ? 'https://vaultproof-init-staging.vaultproof.workers.dev/api/v1/init/projects'
+      : 'https://init.vaultproof.dev/api/v1/init/projects';
     let token = localStorage.getItem('vaultproof_token');
     const user = JSON.parse(localStorage.getItem('vaultproof_user') || '{}');
     let _refreshAttempted = false;
@@ -145,6 +148,30 @@ const API = window.location.hostname.includes('dev.vaultproof') ? 'https://stagi
         } else {
           showToast('Connection lost — check your internet', 'error');
         }
+        return null;
+      }
+    }
+
+    async function apiFetchInit(path) {
+      try {
+        const res = await fetch(`${INIT_API}${path}`, {
+          headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' }
+        });
+        if (res.status === 401) {
+          if (!_refreshAttempted) {
+            _refreshAttempted = true;
+            const refreshed = await tryRefreshToken();
+            if (refreshed) return apiFetchInit(path);
+          }
+          _refreshAttempted = false;
+          showSessionExpired();
+          return null;
+        }
+        _refreshAttempted = false;
+        if (res.status === 429) return null;
+        if (!res.ok) return null;
+        return res.json();
+      } catch {
         return null;
       }
     }
@@ -331,17 +358,24 @@ const API = window.location.hostname.includes('dev.vaultproof') ? 'https://stagi
 
     async function loadLogs() {
       try {
-        const keysData = await apiFetch('/stats/by-key');
-        if (!keysData || !keysData.keys) {
-          allLogs = [];
-          renderLogs();
-          return;
-        }
+        const [keysData, initLogsData] = await Promise.all([
+          apiFetchInit('/stats/by-key'),
+          apiFetchInit('/stats/logs?days=90&limit=5000')
+        ]);
 
-        allKeys = keysData.keys;
+        const initKeys = (keysData && Array.isArray(keysData.keys)) ? keysData.keys : [];
+
+        const keyMap = new Map();
+        initKeys.forEach(k => {
+          const keyId = k.id || k.keySlotId;
+          if (!keyId || keyMap.has(keyId)) return;
+          keyMap.set(keyId, { ...k, id: keyId });
+        });
+        allKeys = Array.from(keyMap.values());
 
         // Populate key filter dropdown
         const filterKey = document.getElementById('filterKey');
+        filterKey.innerHTML = '<option value="">All Keys</option>';
         allKeys.forEach(k => {
           const opt = document.createElement('option');
           opt.value = k.id || k.keySlotId || k.label;
@@ -349,36 +383,28 @@ const API = window.location.hostname.includes('dev.vaultproof') ? 'https://stagi
           filterKey.appendChild(opt);
         });
 
-        // Fetch logs for each key in parallel
-        const logPromises = allKeys.map(async (k) => {
-          const keyId = k.id || k.keySlotId;
-          if (!keyId) return [];
-          try {
-            const data = await apiFetch(`/keys/${keyId}/logs`);
-            const logs = Array.isArray(data) ? data : (data && data.logs ? data.logs : []);
-            return logs.map(l => {
-              let meta = {};
-              try { meta = typeof l.metadata === 'string' ? JSON.parse(l.metadata) : (l.metadata || {}); } catch {}
-              return {
-                ...l,
-                keyLabel: l.keyLabel || k.label,
-                provider: l.provider || meta.provider || k.provider,
-                keySlotId: keyId,
-                appName: l.appName || l.appId || '—',
-                endpoint: l.endpoint || meta.endpoint || l.action || '—',
-                status: l.status || meta.status_code || meta.status || (l.action === 'api_call' || l.action === 'transparent_proxy' ? 'ok' : '—'),
-                latency: l.latency ?? meta.latency_ms ?? meta.latencyMs ?? null,
-                zkProofVerified: l.zkProofVerified ?? (l.action === 'nullifier_claim' || meta.zkProof ? true : null),
-              };
-            });
-          } catch (e) {
-            console.warn(`Failed to fetch logs for key ${keyId}:`, e);
-            return [];
-          }
+        const initLogsRaw = (initLogsData && Array.isArray(initLogsData.logs)) ? initLogsData.logs : [];
+        const initLogs = initLogsRaw.map(l => {
+          let meta = {};
+          try { meta = typeof l.metadata === 'string' ? JSON.parse(l.metadata) : (l.metadata || {}); } catch {}
+          const keyId = l.keySlotId || l.project_key_id || l.projectKeyId || null;
+          const keyInfo = keyId ? keyMap.get(keyId) : null;
+          const statusCode = Number(l.status_code || meta.status_code || 0);
+          return {
+            ...l,
+            keySlotId: keyId,
+            keyLabel: l.keyLabel || (keyInfo && keyInfo.label) || l.slug || '—',
+            provider: l.provider || (keyInfo && keyInfo.provider) || meta.provider || 'unknown',
+            appName: l.appName || 'Init Proxy',
+            endpoint: l.endpoint || meta.endpoint || l.upstream_path || l.action || '—',
+            status: l.status || meta.status || ((statusCode >= 400 || statusCode === 0) ? 'error' : 'ok'),
+            latency: l.latency ?? l.latency_ms ?? meta.latency_ms ?? null,
+            zkProofVerified: l.zkProofVerified ?? (l.action === 'nullifier_claim' || meta.zkProof ? true : null),
+            timestamp: l.timestamp || new Date().toISOString(),
+          };
         });
 
-        const results = await Promise.all(logPromises);
-        allLogs = results.flat().sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
+        allLogs = initLogs.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
         currentPage = 1;
         renderLogs();
       } catch (e) {

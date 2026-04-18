@@ -34,6 +34,8 @@ function makeValue(projectId: string, _slug: string): CachedKey {
   return {
     projectId,
     projectVpId: `vp-proj-${projectId}`,
+    keyId: `key-${projectId}`,
+    provider: 'openai',
     // Shares are intentionally absent from CachedKey — they are always
     // fetched fresh from Supabase and never stored in the cache.
     upstreamBaseUrl: 'https://api.openai.com',

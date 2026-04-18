@@ -32,6 +32,8 @@ function normalizeOrigin(value: string): string | null {
  * instead of the old two-query (project lookup, then key lookup) pattern.
  */
 export interface AuthenticatedKey {
+  keyId: string;
+  provider: string;
   projectId: string;
   projectVpId: string;
   share1Encrypted: string;
@@ -148,8 +150,9 @@ export async function authenticateAndFetchKey(
     // Fetch only the encrypted shares — a lightweight query with no project JOIN.
     const { data: sharesData, error: sharesError } = await supabase
       .from('project_keys')
-      .select('share1_encrypted, share2_b64')
+      .select('id, provider, share1_encrypted, share2_b64')
       .eq('slug', slug)
+      .eq('project_id', cached.projectId)
       .is('revoked_at', null)
       .maybeSingle();
 
@@ -158,8 +161,15 @@ export async function authenticateAndFetchKey(
       return { error: 'Project or key not found', status: 401 };
     }
 
-    const shares = sharesData as unknown as { share1_encrypted: string; share2_b64: string };
+    const shares = sharesData as unknown as {
+      id: string;
+      provider: string;
+      share1_encrypted: string;
+      share2_b64: string;
+    };
     return {
+      keyId: shares.id || cached.keyId,
+      provider: shares.provider || cached.provider,
       projectId: cached.projectId,
       projectVpId: cached.projectVpId,
       share1Encrypted: shares.share1_encrypted,
@@ -176,6 +186,8 @@ export async function authenticateAndFetchKey(
   const { data, error } = await supabase
     .from('project_keys')
     .select(`
+      id,
+      provider,
       project_id,
       share1_encrypted,
       share2_b64,
@@ -204,6 +216,8 @@ export async function authenticateAndFetchKey(
   }
 
   const row = data as unknown as {
+    id: string;
+    provider: string;
     project_id: string;
     share1_encrypted: string;
     share2_b64: string;
@@ -234,6 +248,8 @@ export async function authenticateAndFetchKey(
   cacheSet(token, slug, {
     projectId: row.projects.id,
     projectVpId: row.projects.vp_proj_id,
+    keyId: row.id,
+    provider: row.provider,
     upstreamBaseUrl: row.upstream_base_url,
     authHeaderName: row.auth_header_name,
     authHeaderTemplate: row.auth_header_template,
@@ -243,6 +259,8 @@ export async function authenticateAndFetchKey(
   });
 
   return {
+    keyId: row.id,
+    provider: row.provider,
     projectId: row.projects.id,
     projectVpId: row.projects.vp_proj_id,
     share1Encrypted: row.share1_encrypted,

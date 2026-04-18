@@ -46,7 +46,7 @@ function addCors(response: Response, origin: string, allowedOrigins: string[]): 
 }
 
 export default {
-  async fetch(request: Request, env: Env): Promise<Response> {
+  async fetch(request: Request, env: Env, ctx: ExecutionContext): Promise<Response> {
     const url = new URL(request.url);
     if (url.pathname.length > 1 && url.pathname.endsWith('/')) {
       url.pathname = url.pathname.slice(0, -1);
@@ -86,7 +86,7 @@ export default {
     if (proxyMatch) {
       const slug = proxyMatch[1];
       const upstreamPath = proxyMatch[2] || '/';
-      const res = await handleProxy(request, env, slug, upstreamPath + url.search);
+      const res = await handleProxy(request, env, slug, upstreamPath + url.search, ctx);
       if (res.status === 401 || res.status === 404) {
         const ip = request.headers.get('cf-connecting-ip') || '';
         const rl = await checkFailedAuthRateLimit(env, ip);
@@ -102,7 +102,7 @@ export default {
     // Auth is still via Authorization: Bearer vp-proj-xxx.
     if (url.pathname.startsWith('/v1/')) {
       const upstreamPath = url.pathname + url.search; // /v1/checkout/sessions?...
-      const res = await handleProxy(request, env, 'stripe', upstreamPath);
+      const res = await handleProxy(request, env, 'stripe', upstreamPath, ctx);
       if (res.status === 401 || res.status === 404) {
         const ip = request.headers.get('cf-connecting-ip') || '';
         const rl = await checkFailedAuthRateLimit(env, ip);

@@ -1,13 +1,11 @@
 const API = window.location.hostname.includes('dev.vaultproof') ? 'https://staging-api.vaultproof.dev/api/v1' : 'https://api.vaultproof.dev/api/v1';
+    const INIT_API = window.location.hostname.includes('dev.vaultproof')
+      ? 'https://vaultproof-init-staging.vaultproof.workers.dev/api/v1/init/projects'
+      : 'https://init.vaultproof.dev/api/v1/init/projects';
     let token = localStorage.getItem('vaultproof_token');
     let _refreshAttempted = false;
     let _refreshPromise = null;
 
-    function escapeHtml(str) {
-      return (str == null ? '' : String(str))
-        .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
-        .replace(/"/g, '&quot;').replace(/'/g, '&#039;');
-    }
     const user = JSON.parse(localStorage.getItem('vaultproof_user') || '{}');
 
 
@@ -161,6 +159,31 @@ const API = window.location.hostname.includes('dev.vaultproof') ? 'https://stagi
       }
     }
 
+    async function apiFetchInit(path) {
+      try {
+        const res = await fetch(`${INIT_API}${path}`, {
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json',
+          }
+        });
+        if (res.status === 401) {
+          if (!_refreshAttempted) {
+            _refreshAttempted = true;
+            const refreshed = await tryRefreshToken();
+            if (refreshed) return apiFetchInit(path);
+          }
+          showSessionExpired();
+          return null;
+        }
+        _refreshAttempted = false;
+        if (!res.ok) return null;
+        return res.json();
+      } catch {
+        return null;
+      }
+    }
+
     // Token display
     const tokenDisplayEl = document.getElementById('tokenDisplay');
     if (tokenDisplayEl) tokenDisplayEl.value = token || '';
@@ -208,11 +231,10 @@ const API = window.location.hostname.includes('dev.vaultproof') ? 'https://stagi
     // Load usage
     async function loadUsage() {
       try {
-        const res = await apiFetch('/stats/overview');
-        if (!res) return;
-        const data = await res.json();
-        const keysUsed = data.totalKeys || 0;
-        const callsUsed = data.totalCalls || 0;
+        const data = await apiFetchInit('/stats/overview');
+        if (!data) throw new Error('Failed to load init usage stats');
+        const keysUsed = Number(data.totalKeys || 0);
+        const callsUsed = Number(data.totalCalls || 0);
 
         // Store for later tier-based update
         window._usageData = { keysUsed, callsUsed };
@@ -363,319 +385,6 @@ const API = window.location.hostname.includes('dev.vaultproof') ? 'https://stagi
         msg.className = 'text-sm text-amber-400';
         msg.classList.remove('hidden');
       }
-    }
-
-    // Developer API Keys
-    let newlyCreatedKey = '';
-
-    function showCreateForm() {
-      document.getElementById('createKeyForm').classList.remove('hidden');
-      document.getElementById('newKeyLabel').focus();
-    }
-
-    function hideCreateForm() {
-      document.getElementById('createKeyForm').classList.add('hidden');
-      document.getElementById('newKeyLabel').value = '';
-      document.getElementById('newKeyMode').value = 'live';
-    }
-
-    async function createDevKey() {
-      const btn = document.getElementById('submitKeyBtn');
-      const label = document.getElementById('newKeyLabel').value.trim() || 'SDK Key';
-      const mode = document.getElementById('newKeyMode').value;
-      btn.disabled = true;
-      btn.textContent = 'Creating...';
-
-      try {
-        const res = await apiFetch('/dev-keys/create', {
-          method: 'POST',
-          body: JSON.stringify({ label, mode })
-        });
-        if (!res) { btn.disabled = false; btn.textContent = 'Create'; return; }
-
-        if (res.ok) {
-          const data = await res.json();
-          newlyCreatedKey = data.key;
-          document.getElementById('newKeyValue').textContent = data.key;
-          document.getElementById('newKeyBox').classList.remove('hidden');
-          hideCreateForm();
-          loadDevKeys();
-        } else {
-          const err = await res.json().catch(() => ({}));
-          alert(err.message || 'Failed to create key');
-        }
-      } catch (e) {
-        alert('Network error. Please try again.');
-      }
-
-      btn.disabled = false;
-      btn.textContent = 'Create';
-    }
-
-    function copyNewKey() {
-      navigator.clipboard.writeText(newlyCreatedKey).then(() => {
-        const btn = event.currentTarget;
-        const orig = btn.innerHTML;
-        btn.innerHTML = '<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg> Copied!';
-        setTimeout(() => { btn.innerHTML = orig; }, 2000);
-      });
-    }
-
-    async function loadDevKeys() {
-      const loading = document.getElementById('devKeysLoading');
-      const empty = document.getElementById('devKeysEmpty');
-      const table = document.getElementById('devKeysTable');
-
-      if (!loading || !empty || !table) return; // Elements not in DOM
-
-      try {
-        const res = await apiFetch('/dev-keys/list');
-        if (!res) return;
-
-        const data = await res.json();
-        const keys = data.keys || [];
-
-        loading.classList.add('hidden');
-
-        if (keys.length === 0) {
-          empty.classList.remove('hidden');
-          table.classList.add('hidden');
-          return;
-        }
-
-        empty.classList.add('hidden');
-        table.classList.remove('hidden');
-        table.innerHTML = keys.map(k => {
-          const mode = k.mode || 'live';
-          const modeBadge = mode === 'test'
-            ? '<span class="inline-flex items-center px-2 py-0.5 rounded-lg text-xs font-medium bg-gray-800/50 text-gray-400 border border-gray-700/50">test</span>'
-            : '<span class="inline-flex items-center px-2 py-0.5 rounded-lg text-xs font-medium bg-indigo-900/30 text-indigo-400 border border-indigo-800/50">live</span>';
-          return `
-            <div class="dev-key-entry" data-key-id="${k.id}">
-              <div class="flex items-center justify-between py-4 gap-4">
-                <div class="min-w-0 flex-1">
-                  <div class="flex items-center gap-2 flex-wrap">
-                    <code class="text-sm font-mono text-gray-300">${escapeHtml(k.key || k.maskedKey || k.masked_key || 'vp-proj-****')}</code>
-                    ${k.label ? `<span class="text-xs text-gray-500 bg-[#0a0a0f] px-2 py-0.5 rounded-lg border border-[#1e1e2e]">${escapeHtml(k.label)}</span>` : ''}
-                    ${modeBadge}
-                  </div>
-                  <div class="text-xs text-gray-600 mt-1.5">
-                    Created ${new Date(k.createdAt || k.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}${k.lastUsed || k.lastUsedAt || k.last_used_at ? ' &middot; Last used ' + new Date(k.lastUsed || k.lastUsedAt || k.last_used_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) : ' &middot; Never used'}
-                  </div>
-                </div>
-                <div class="flex items-center gap-2">
-                  <button onclick="toggleKeySettings('${k.id}')" class="px-3 py-1.5 text-xs text-gray-400 hover:text-indigo-400 border border-[#1e1e2e] hover:border-indigo-800 hover:bg-indigo-900/20 rounded-xl transition whitespace-nowrap flex items-center gap-1.5" title="Security Settings">
-                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.066 2.573c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.573 1.066c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.066-2.573c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
-                    Settings
-                  </button>
-                  <button onclick="revokeDevKey('${k.id}')" class="px-3 py-1.5 text-xs text-amber-400 hover:text-red-300 border border-red-900/50 hover:border-red-800 hover:bg-red-900/20 rounded-xl transition whitespace-nowrap">
-                    Revoke
-                  </button>
-                </div>
-              </div>
-              <div id="keySettings-${k.id}" class="hidden fade-in mb-4">
-                <div class="p-5 bg-[#0a0a0f] border border-[#1e1e2e] rounded-xl space-y-5">
-                  <div class="flex items-center gap-2 mb-1">
-                    <svg class="w-4 h-4 text-indigo-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/></svg>
-                    <span class="text-sm font-semibold text-indigo-400">Security Settings</span>
-                  </div>
-
-                  <!-- IP Allowlist -->
-                  <div>
-                    <label class="block text-sm text-gray-300 mb-1 font-medium">Allowed IPs</label>
-                    <p class="text-xs text-gray-500 mb-2">Restrict this key to specific IP addresses. Leave empty to allow all.</p>
-                    <textarea id="keyIps-${k.id}" rows="2" placeholder="e.g., 203.0.113.1, 10.0.0.5" class="w-full px-4 py-2.5 bg-[#111118] border border-[#1e1e2e] rounded-xl text-sm text-white placeholder-gray-600 focus:outline-none focus:border-[#6366f1] transition font-mono resize-none">${escapeHtml(k.allowedIps || '')}</textarea>
-                  </div>
-
-                  <!-- Provider Restrictions -->
-                  <div>
-                    <label class="block text-sm text-gray-300 mb-1 font-medium">Allowed Providers</label>
-                    <p class="text-xs text-gray-500 mb-2">Only allow this key to access specific providers.</p>
-                    <div class="flex flex-wrap gap-3">
-                      ${['openai', 'anthropic', 'google', 'together'].map(p => {
-                        const checked = !k.allowedProviders || k.allowedProviders.includes(p) ? 'checked' : '';
-                        const label = p.charAt(0).toUpperCase() + p.slice(1);
-                        return `<label class="flex items-center gap-2 text-sm text-gray-300 cursor-pointer select-none">
-                          <input type="checkbox" value="${p}" class="key-provider-${k.id} w-4 h-4 rounded bg-[#111118] border-[#1e1e2e] text-[#6366f1] focus:ring-[#6366f1] focus:ring-offset-0 accent-[#6366f1]" ${checked} />
-                          ${label}
-                        </label>`;
-                      }).join('')}
-                    </div>
-                  </div>
-
-                  <!-- Endpoint Restrictions -->
-                  <div>
-                    <label class="block text-sm text-gray-300 mb-1 font-medium">Allowed Endpoints</label>
-                    <p class="text-xs text-gray-500 mb-2">Only allow specific API endpoints. Leave empty to allow all.</p>
-                    <textarea id="keyEndpoints-${k.id}" rows="2" placeholder="e.g., /v1/chat/completions, /v1/models" class="w-full px-4 py-2.5 bg-[#111118] border border-[#1e1e2e] rounded-xl text-sm text-white placeholder-gray-600 focus:outline-none focus:border-[#6366f1] transition font-mono resize-none">${escapeHtml(k.allowedEndpoints || '')}</textarea>
-                  </div>
-
-                  <!-- Usage Alerts -->
-                  <div>
-                    <label class="block text-sm text-gray-300 mb-1 font-medium">Usage Alerts</label>
-                    <p class="text-xs text-gray-500 mb-2">Get notified when usage exceeds threshold.</p>
-                    <div class="flex flex-col sm:flex-row gap-3">
-                      <div class="flex-1">
-                        <label class="block text-xs text-gray-500 mb-1">Alert Email</label>
-                        <input type="email" id="keyAlertEmail-${k.id}" placeholder="you@example.com" value="${escapeHtml(k.alertEmail || '')}" class="w-full px-4 py-2.5 bg-[#111118] border border-[#1e1e2e] rounded-xl text-sm text-white placeholder-gray-600 focus:outline-none focus:border-[#6366f1] transition" />
-                      </div>
-                      <div class="w-full sm:w-40">
-                        <label class="block text-xs text-gray-500 mb-1">Threshold (calls/hr)</label>
-                        <input type="number" id="keyAlertThreshold-${k.id}" placeholder="100" value="${k.alertThreshold || ''}" min="1" class="w-full px-4 py-2.5 bg-[#111118] border border-[#1e1e2e] rounded-xl text-sm text-white placeholder-gray-600 focus:outline-none focus:border-[#6366f1] transition" />
-                      </div>
-                    </div>
-                  </div>
-
-                  <!-- Webhook URL -->
-                  <div>
-                    <label class="block text-sm text-gray-300 mb-1 font-medium">Webhook URL</label>
-                    <p class="text-xs text-gray-500 mb-2">Receive POST notifications when keys are used or revoked.</p>
-                    <input type="url" id="keyWebhookUrl-${k.id}" placeholder="https://your-app.com/webhook" value="${escapeHtml(k.webhookUrl || '')}" class="w-full px-4 py-2.5 bg-[#111118] border border-[#1e1e2e] rounded-xl text-sm text-white placeholder-gray-600 focus:outline-none focus:border-[#6366f1] transition" />
-                  </div>
-
-                  <!-- Webhook Secret -->
-                  <div>
-                    <label class="block text-sm text-gray-300 mb-1 font-medium">Webhook Secret</label>
-                    <p class="text-xs text-gray-500 mb-2">Used to sign webhook payloads. Save to generate.</p>
-                    <input type="password" id="keyWebhookSecret-${k.id}" placeholder="Auto-generated on save" class="w-full px-4 py-2.5 bg-[#111118] border border-[#1e1e2e] rounded-xl text-sm text-white placeholder-gray-600 focus:outline-none focus:border-[#6366f1] transition font-mono" />
-                    <div id="keyWebhookSecretReveal-${k.id}" class="hidden mt-2 p-2 bg-indigo-900/20 border border-indigo-800/40 rounded-lg">
-                      <p class="text-xs text-indigo-400 mb-1">Save this secret — it won't be shown again:</p>
-                      <code id="keyWebhookSecretValue-${k.id}" class="text-xs font-mono text-indigo-300 break-all"></code>
-                    </div>
-                  </div>
-
-                  <!-- Save / Status -->
-                  <div class="flex items-center gap-3 pt-1">
-                    <button onclick="saveKeySettings('${k.id}')" id="saveKeySettingsBtn-${k.id}" class="px-4 py-2 bg-[#6366f1] hover:bg-[#5558e6] text-white rounded-xl text-sm font-medium transition btn-glow flex items-center gap-2">
-                      <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
-                      Save Settings
-                    </button>
-                    <span id="keySettingsMsg-${k.id}" class="text-xs hidden"></span>
-                  </div>
-                </div>
-              </div>
-            </div>
-          `;
-        }).join('');
-      } catch (e) {
-        console.error('Failed to load dev keys:', e);
-        loading.innerHTML = '<div class="flex flex-col items-center gap-3"><span class="text-gray-400">Unable to load keys</span><button onclick="loadDevKeys()" class="px-4 py-2 bg-[#6366f1]/20 border border-[#6366f1]/30 text-[#6366f1] rounded-xl text-xs hover:bg-[#6366f1]/30 transition">Retry</button></div>';
-      }
-    }
-
-    async function revokeDevKey(keyId) {
-      if (!confirm('Revoke this API key? All SDK calls using it will stop working.')) return;
-
-      try {
-        const res = await apiFetch(`/dev-keys/${keyId}/revoke`, { method: 'POST' });
-        if (!res) return;
-
-        if (res.ok) {
-          loadDevKeys();
-        } else {
-          const err = await res.json().catch(() => ({}));
-          alert(err.message || 'Failed to revoke key');
-        }
-      } catch (e) {
-        alert('Network error. Please try again.');
-      }
-    }
-
-    // Security Settings per key
-    function toggleKeySettings(keyId) {
-      const panel = document.getElementById(`keySettings-${keyId}`);
-      if (!panel) return;
-      if (panel.classList.contains('hidden')) {
-        // Close any other open panels
-        document.querySelectorAll('[id^="keySettings-"]').forEach(el => {
-          if (el.id !== `keySettings-${keyId}`) el.classList.add('hidden');
-        });
-        panel.classList.remove('hidden');
-      } else {
-        panel.classList.add('hidden');
-      }
-    }
-
-    async function saveKeySettings(keyId) {
-      const btn = document.getElementById(`saveKeySettingsBtn-${keyId}`);
-      const msg = document.getElementById(`keySettingsMsg-${keyId}`);
-      const origHTML = btn.innerHTML;
-      btn.disabled = true;
-      btn.innerHTML = '<div class="h-4 w-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div> Saving...';
-      msg.classList.add('hidden');
-
-      const allowedIps = (document.getElementById(`keyIps-${keyId}`)?.value || '').trim();
-      const allowedEndpoints = (document.getElementById(`keyEndpoints-${keyId}`)?.value || '').trim();
-      const alertEmail = (document.getElementById(`keyAlertEmail-${keyId}`)?.value || '').trim();
-      const alertThreshold = parseInt(document.getElementById(`keyAlertThreshold-${keyId}`)?.value, 10) || null;
-
-      const providerCheckboxes = document.querySelectorAll(`.key-provider-${keyId}:checked`);
-      const allowedProviders = Array.from(providerCheckboxes).map(cb => cb.value).join(',');
-
-      const webhookUrl = (document.getElementById(`keyWebhookUrl-${keyId}`)?.value || '').trim();
-      let webhookSecret = (document.getElementById(`keyWebhookSecret-${keyId}`)?.value || '').trim();
-
-      // Auto-generate webhook secret if URL is set but secret is empty
-      let generatedSecret = null;
-      if (webhookUrl && !webhookSecret) {
-        const arr = new Uint8Array(16);
-        crypto.getRandomValues(arr);
-        webhookSecret = Array.from(arr).map(b => b.toString(16).padStart(2, '0')).join('');
-        generatedSecret = webhookSecret;
-      }
-
-      const payload = {
-        allowedIps: allowedIps.replace(/\s+/g, ''),
-        allowedProviders,
-        allowedEndpoints: allowedEndpoints.replace(/\s+/g, ''),
-        alertEmail,
-        alertThreshold
-      };
-      if (webhookUrl) payload.webhookUrl = webhookUrl;
-      if (webhookSecret) payload.webhookSecret = webhookSecret;
-
-      try {
-        const res = await apiFetch(`/dev-keys/${keyId}/settings`, {
-          method: 'PUT',
-          body: JSON.stringify(payload)
-        });
-
-        if (!res) {
-          btn.disabled = false;
-          btn.innerHTML = origHTML;
-          return;
-        }
-
-        if (res.ok) {
-          msg.textContent = 'Settings saved';
-          msg.className = 'text-xs text-emerald-400';
-          msg.classList.remove('hidden');
-          setTimeout(() => msg.classList.add('hidden'), 3000);
-
-          // Show auto-generated webhook secret once
-          if (generatedSecret) {
-            const revealEl = document.getElementById(`keyWebhookSecretReveal-${keyId}`);
-            const valueEl = document.getElementById(`keyWebhookSecretValue-${keyId}`);
-            if (revealEl && valueEl) {
-              valueEl.textContent = generatedSecret;
-              revealEl.classList.remove('hidden');
-              document.getElementById(`keyWebhookSecret-${keyId}`).value = generatedSecret;
-            }
-          }
-        } else {
-          const err = await res.json().catch(() => ({}));
-          msg.textContent = err.message || 'Failed to save settings';
-          msg.className = 'text-xs text-amber-400';
-          msg.classList.remove('hidden');
-        }
-      } catch (e) {
-        msg.textContent = 'Network error. Please try again.';
-        msg.className = 'text-xs text-amber-400';
-        msg.classList.remove('hidden');
-      }
-
-      btn.disabled = false;
-      btn.innerHTML = origHTML;
     }
 
     // Billing
@@ -1017,5 +726,4 @@ const API = window.location.hostname.includes('dev.vaultproof') ? 'https://stagi
     loadProfile();
     loadUsage();
     loadBillingStatus();
-    loadDevKeys();
     loadSafetyControls();

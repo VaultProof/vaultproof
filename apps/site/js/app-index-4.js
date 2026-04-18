@@ -1,5 +1,8 @@
 // ── Auth ──
     const API = window.location.hostname.includes('dev.vaultproof') ? 'https://staging-api.vaultproof.dev/api/v1' : 'https://api.vaultproof.dev/api/v1';
+    const INIT_API = window.location.hostname.includes('dev.vaultproof')
+      ? 'https://vaultproof-init-staging.vaultproof.workers.dev/api/v1/init/projects'
+      : 'https://init.vaultproof.dev/api/v1/init/projects';
     let token = localStorage.getItem('vaultproof_token');
     const user = JSON.parse(localStorage.getItem('vaultproof_user') || '{}');
     let _refreshAttempted = false;
@@ -177,6 +180,56 @@
       }
     }
 
+    async function apiFetchInit(path) {
+      try {
+        const res = await fetch(`${INIT_API}${path}`, {
+          headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' }
+        });
+        if (res.status === 401) {
+          if (!_refreshAttempted) {
+            _refreshAttempted = true;
+            const refreshed = await tryRefreshToken();
+            if (refreshed) return apiFetchInit(path);
+          }
+          _refreshAttempted = false;
+          showSessionExpired();
+          return null;
+        }
+        _refreshAttempted = false;
+        if (!res.ok) return null;
+        return res.json();
+      } catch {
+        return null;
+      }
+    }
+
+    function normalizeOverviewData(data) {
+      const safe = data || {};
+      return {
+        totalKeys: Number(safe.totalKeys || 0),
+        activeApps: Number(safe.activeApps || safe.providerCount || 0),
+        totalCalls: Number(safe.totalCalls || 0),
+        errorRate: Number(safe.errorRate || 0),
+        recentActivity: Array.isArray(safe.recentActivity) ? safe.recentActivity : [],
+      };
+    }
+
+    function normalizeUsageData(data) {
+      const rows = (data && (data.usage || data.days)) || [];
+      return rows
+        .filter((row) => row && row.date)
+        .map((row) => ({
+          date: row.date,
+          calls: Number(row.calls || 0),
+          errors: Number(row.errors || 0),
+        }));
+    }
+
+    function normalizeKeyData(data) {
+      const rows = (data && data.keys) || [];
+      return rows.filter((key) => key && key.id);
+    }
+
     // ── Mock Data ──
     const MOCK = {
       overview: {
@@ -188,7 +241,7 @@
           { type: 'api_call', description: 'API call to GPT-4 endpoint', timestamp: new Date(Date.now() - 2 * 60000).toISOString(), keyLabel: 'prod-openai' },
           { type: 'api_call', description: 'API call to Claude 3.5 Sonnet', timestamp: new Date(Date.now() - 14 * 60000).toISOString(), keyLabel: 'prod-anthropic' },
           { type: 'key_rotation', description: 'Key rotated automatically', timestamp: new Date(Date.now() - 47 * 60000).toISOString(), keyLabel: 'staging-google' },
-          { type: 'revoke', description: 'Key revoked by admin', timestamp: new Date(Date.now() - 3 * 3600000).toISOString(), keyLabel: 'legacy-openai' },
+          { type: 'revoke', description: 'Key revoked by admin', timestamp: new Date(Date.now() - 3 * 3600000).toISOString(), keyLabel: 'sandbox-openai' },
           { type: 'api_call', description: 'API call to Gemini Pro', timestamp: new Date(Date.now() - 5 * 3600000).toISOString(), keyLabel: 'prod-google' }
         ]
       },
@@ -207,7 +260,7 @@
       keys: [
         { id: 'key_1a2b3c', label: 'Production OpenAI', provider: 'OpenAI', keyPrefix: 'sk_live_', keySuffix: '3f9a', created: new Date(Date.now() - 45 * 86400000).toISOString(), lastUsed: new Date(Date.now() - 120000).toISOString(), callsThisMonth: 2341, status: 'active' },
         { id: 'key_4d5e6f', label: 'Staging Anthropic', provider: 'Anthropic', keyPrefix: 'sk_test_', keySuffix: '8b2c', created: new Date(Date.now() - 22 * 86400000).toISOString(), lastUsed: new Date(Date.now() - 840000).toISOString(), callsThisMonth: 1856, status: 'active' },
-        { id: 'key_7g8h9i', label: 'Legacy Google', provider: 'Google', keyPrefix: 'sk_live_', keySuffix: 'e71d', created: new Date(Date.now() - 90 * 86400000).toISOString(), lastUsed: new Date(Date.now() - 86400000 * 12).toISOString(), callsThisMonth: 624, status: 'revoked' }
+        { id: 'key_7g8h9i', label: 'Sandbox Google', provider: 'Google', keyPrefix: 'sk_live_', keySuffix: 'e71d', created: new Date(Date.now() - 90 * 86400000).toISOString(), lastUsed: new Date(Date.now() - 86400000 * 12).toISOString(), callsThisMonth: 624, status: 'revoked' }
       ]
     };
 
@@ -288,15 +341,14 @@
 
     // ── Load Overview Stats ──
     async function loadOverview() {
-      let data;
-      try {
-        data = await apiFetch('/stats/overview');
-        if (!data) return;
-      } catch (e) {
-        console.warn('Overview API failed, using mock data:', e);
-        data = MOCK.overview;
+      const dataRaw = await apiFetchInit('/stats/overview');
+      let data = normalizeOverviewData(dataRaw);
+      if (!dataRaw) {
+        data = normalizeOverviewData(MOCK.overview);
         showToast('Unable to load live data — showing cached values', 'warning');
         document.querySelectorAll('.stat-card, [class*="stat"]').forEach(el => el.style.opacity = '0.6');
+      } else {
+        document.querySelectorAll('.stat-card, [class*="stat"]').forEach(el => el.style.opacity = '1');
       }
 
       document.getElementById('statKeys').textContent = formatNumber(data.totalKeys);
@@ -375,18 +427,14 @@
 
     async function loadUsageChart() {
       const numDays = document.getElementById('chartDays')?.value || '30';
-      let data;
-      try {
-        data = await apiFetch('/stats/usage?days=' + numDays);
-        if (!data) return;
-      } catch (e) {
-        console.warn('Usage API failed, using mock data:', e);
-        data = MOCK.usage;
+      const dataRaw = await apiFetchInit('/stats/usage?days=' + numDays);
+      let days = normalizeUsageData(dataRaw);
+      if (!days.length) {
+        days = normalizeUsageData(MOCK.usage);
       }
 
       document.getElementById('chartLoading').classList.add('hidden');
 
-      const days = data.usage || data.days || [];
       if (!days.length) return;
 
       const labels = days.map(d => {
@@ -487,17 +535,12 @@
 
     // ── Load API Keys Table ──
     async function loadKeys() {
-      let data;
-      try {
-        data = await apiFetch('/stats/by-key');
-        if (!data) return;
-      } catch (e) {
-        console.warn('Keys API failed, using mock data:', e);
-        data = { keys: MOCK.keys };
-        showToast('Unable to load keys', 'warning');
+      const dataRaw = await apiFetchInit('/stats/by-key');
+      let keys = normalizeKeyData(dataRaw);
+      if (!keys.length) {
+        keys = normalizeKeyData({ keys: MOCK.keys });
+        if (!dataRaw) showToast('Unable to load keys', 'warning');
       }
-
-      const keys = data.keys || [];
       const tbody = document.getElementById('keysBody');
 
       if (!keys.length) {
@@ -654,22 +697,20 @@
     async function checkOnboarding() {
       if (localStorage.getItem('vaultproof_onboarding_dismissed') === 'true') return;
 
-      // Check against both legacy and init-worker APIs.
-      // Step 1 (ran init): user has a project OR dev keys
-      // Step 2 (keys stored): project has keys OR legacy keys exist
-      // Step 3 (first proxy call): any usage logged
-      let overview, keys, devKeys;
-      try { overview = await apiFetch('/stats/overview'); } catch { overview = null; }
-      try { keys = await apiFetch('/stats/by-key'); } catch { keys = null; }
-      try { devKeys = await apiFetch('/dev-keys/list'); } catch { devKeys = null; }
+      // Step 1 (ran init): user has at least one project
+      // Step 2 (keys stored): project has at least one protected key
+      // Step 3 (first proxy call): usage has started
+      let initOverview, initKeys;
+      try { initOverview = await apiFetchInit('/stats/overview'); } catch { initOverview = null; }
+      try { initKeys = await apiFetchInit('/stats/by-key'); } catch { initKeys = null; }
 
-      const totalKeys = overview?.totalKeys || (keys?.keys || []).length || 0;
-      const totalCalls = overview?.totalCalls || 0;
-      const hasProject = (devKeys?.keys || devKeys || []).length > 0;
+      const totalKeys = Number(initOverview?.totalKeys || (initKeys?.keys || []).length || 0);
+      const totalCalls = Number(initOverview?.totalCalls || 0);
+      const hasProject = Number(initOverview?.totalProjects || 0) > 0;
       const hasKeys = totalKeys > 0;
       const hasProxyCalls = totalCalls > 0;
 
-      markOnboardingStep('onb-check-devkey', hasProject);
+      markOnboardingStep('onb-check-project', hasProject);
       markOnboardingStep('onb-check-storekey', hasKeys);
       markOnboardingStep('onb-check-proxy', hasProxyCalls);
 

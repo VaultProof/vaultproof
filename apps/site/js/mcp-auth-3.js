@@ -4,7 +4,9 @@
       'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imd3emtqaW9tZW1qbGh0cmRybGFuIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQzNDM3ODIsImV4cCI6MjA4OTkxOTc4Mn0.tgHUvpBvFiojetuqIP0sKb0iBNbKDJHdeo9n3Tofa3o'
     );
 
-    const API_BASE = 'https://api.vaultproof.dev/api/v1';
+    const INIT_API = window.location.hostname.includes('dev.vaultproof')
+      ? 'https://vaultproof-init-staging.vaultproof.workers.dev/api/v1/init/projects'
+      : 'https://init.vaultproof.dev/api/v1/init/projects';
     const MCP_CALLBACK = 'https://mcp.vaultproof.dev/oauth/callback';
 
     // ── Client ID → display name mapping ──
@@ -158,25 +160,46 @@
       });
     }
 
-    // ── Create MCP dev key ──
-    async function createMcpDevKey(session, clientName) {
-      var res = await fetch(API_BASE + '/dev-keys/create', {
+    // ── Ensure MCP project token ──
+    async function getOrCreateMcpProjectToken(session, clientName) {
+      var label = 'MCP: ' + clientName;
+
+      // 1) Reuse existing MCP-specific project if present
+      var listRes = await fetch(INIT_API, {
+        method: 'GET',
+        headers: {
+          'Authorization': 'Bearer ' + session.access_token,
+          'Content-Type': 'application/json'
+        }
+      });
+      if (!listRes.ok) {
+        var listErr = await listRes.json().catch(function() { return {}; });
+        throw new Error(listErr.error || 'Failed to list projects');
+      }
+
+      var listData = await listRes.json().catch(function() { return {}; });
+      var projects = Array.isArray(listData.projects) ? listData.projects : [];
+      var existing = projects.find(function(p) { return p && p.name === label; });
+      if (existing && (existing.vp_proj_id || existing.vpProjId)) {
+        return existing.vp_proj_id || existing.vpProjId;
+      }
+
+      // 2) Create one if missing
+      var createRes = await fetch(INIT_API, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
           'Authorization': 'Bearer ' + session.access_token
         },
-        body: JSON.stringify({ label: 'MCP: ' + clientName })
+        body: JSON.stringify({ name: label })
       });
-
-      if (!res.ok) {
-        var errBody = await res.json().catch(function() { return {}; });
-        throw new Error(errBody.error || 'Failed to create dev key');
+      if (!createRes.ok) {
+        var createErr = await createRes.json().catch(function() { return {}; });
+        throw new Error(createErr.error || 'Failed to create project token');
       }
 
-      var data = await res.json();
-      // The create endpoint returns the full key
-      return data.key || data.dev_key || data.apiKey;
+      var createData = await createRes.json().catch(function() { return {}; });
+      return createData.vp_proj_id || createData.vpProjId || createData.project_id || null;
     }
 
     // ── Authorize ──
@@ -194,14 +217,16 @@
         var session = sessionData.session;
         var clientName = getClientName(oauthParams.client_id);
 
-        // Create a temporary MCP-specific dev key
-        var devKey = await createMcpDevKey(session, clientName);
-        if (!devKey) throw new Error('Could not create a dev key. Please try again.');
+        // Reuse or create a project token dedicated to this MCP client
+        var projectToken = await getOrCreateMcpProjectToken(session, clientName);
+        if (!projectToken) throw new Error('Could not create a project token. Please try again.');
 
         // POST to MCP callback
         var body = {
           user_id: session.user.id,
-          dev_key: devKey,
+          project_id: projectToken,
+          // Backward-compatible field name expected by older callback handlers
+          dev_key: projectToken,
           client_id: oauthParams.client_id,
           redirect_uri: oauthParams.redirect_uri,
           code_challenge: oauthParams.code_challenge,

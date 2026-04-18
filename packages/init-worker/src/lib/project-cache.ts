@@ -39,6 +39,8 @@
 export interface CachedKey {
   projectId: string;
   projectVpId: string;
+  keyId: string;
+  provider: string;
   // share1Encrypted and share2Encrypted are intentionally absent — see constraint 3 above.
   upstreamBaseUrl: string;
   authHeaderName: string;

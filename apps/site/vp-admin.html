@@ -137,8 +137,8 @@
           <div class="stat-label">Total Calls (All Time)</div>
         </div>
         <div class="stat-card">
-          <div class="stat-value" id="stat-dev-keys">-</div>
-          <div class="stat-label">Dev Keys</div>
+          <div class="stat-value" id="stat-projects">-</div>
+          <div class="stat-label">Projects</div>
         </div>
         <div class="stat-card">
           <div class="stat-value" id="stat-tiers">-</div>
@@ -355,7 +355,7 @@
               <th>Email</th>
               <th>Tier</th>
               <th>Keys</th>
-              <th>Dev Keys</th>
+              <th>Projects</th>
               <th>Total Calls</th>
               <th>Joined</th>
             </tr>
@@ -533,7 +533,7 @@
         <div class="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-1 text-xs text-gray-400">
           <div><span class="text-gray-300 font-medium">Auth</span> — login, token validation, kill switch, global limits</div>
           <div><span class="text-gray-300 font-medium">Bootstrap</span> — env var loading, secret fallbacks, startup guards</div>
-          <div><span class="text-gray-300 font-medium">Developer Keys</span> — create, list, revoke, session tokens, SDK auth</div>
+          <div><span class="text-gray-300 font-medium">Project Tokens</span> — create, list, revoke, session tokens, SDK auth</div>
           <div><span class="text-gray-300 font-medium">Integration</span> — store key, proxy call, replay prevention, access logs</div>
           <div><span class="text-gray-300 font-medium">Rate Limits</span> — tier enforcement, key slot limits, overage blocking</div>
           <div><span class="text-gray-300 font-medium">SDK Routes</span> — key storage, listing, revocation, proxy via SDK</div>
@@ -604,7 +604,7 @@
         </div>
         <div class="stat-card">
           <div class="stat-value" id="detail-devkeys">-</div>
-          <div class="stat-label">Dev Keys</div>
+          <div class="stat-label">Projects</div>
         </div>
         <div class="stat-card">
           <div class="stat-value" id="detail-calls">-</div>
@@ -653,7 +653,7 @@
       <!-- Dev keys -->
       <div class="panel mb-4">
         <div class="p-4 border-b border-[#1e1e2e]">
-          <h3 class="text-sm font-semibold text-gray-400">Developer Keys</h3>
+          <h3 class="text-sm font-semibold text-gray-400">Project Tokens (Legacy)</h3>
         </div>
         <table>
           <thead><tr><th>Label</th><th>Mode</th><th>Allowed Providers</th><th>Last Used</th><th>Created</th><th>Revoked</th></tr></thead>
@@ -711,7 +711,7 @@
   <div class="modal">
     <h3 class="text-lg font-semibold mb-2 text-amber-400">Permanently Delete Account</h3>
     <p class="text-sm text-gray-400 mb-1">This will permanently delete the user and ALL their data:</p>
-    <p class="text-sm text-gray-400 mb-4">Keys, dev keys, access logs, app grants — everything. This cannot be undone.</p>
+    <p class="text-sm text-gray-400 mb-4">Keys, project tokens, access logs, app grants — everything. This cannot be undone.</p>
     <p id="delete-modal-email" class="mono text-sm text-amber-400 mb-4"></p>
     <div class="flex justify-end gap-2">
       <button class="btn btn-ghost" onclick="closeDeleteModal()">Cancel</button>
