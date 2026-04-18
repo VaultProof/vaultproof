@@ -73,11 +73,8 @@
     .sidebar-collapsed .sidebar-bottom { align-items: center; }
     .sidebar-collapsed .sidebar-bottom .logout-text { display: none; }
 
-    /* Key mask hover reveal */
-    .key-mask .key-full { display: none; }
+    /* Key mask display (no hover reveal) */
     .key-mask .key-masked { display: inline; }
-    .key-mask:hover .key-full { display: inline; }
-    .key-mask:hover .key-masked { display: none; }
 
     /* Row hover effect */
     .key-row { border-left: 3px solid transparent; transition: border-color 0.15s ease, background-color 0.15s ease; }
@@ -439,9 +436,6 @@
               <h2 class="text-sm font-semibold">Quick Start</h2>
             </div>
             <div class="bg-[#0a0a0f] border border-border rounded-md p-4 font-mono text-xs space-y-1.5 overflow-x-auto">
-              <div class="text-gray-500"># Before — real keys in .env</div>
-              <div><span class="text-orange-300">OPENAI_API_KEY</span>=<span class="text-red-400">sk-proj-abc123...</span></div>
-              <div><span class="text-orange-300">STRIPE_SECRET_KEY</span>=<span class="text-red-400">sk_live_xyz789...</span></div>
               <div class="mt-3 text-gray-500"># Run one command</div>
               <div class="text-cyan-400">npx @vaultproof/init</div>
               <div class="mt-3 text-gray-500"># After — one project ID, zero secrets</div>

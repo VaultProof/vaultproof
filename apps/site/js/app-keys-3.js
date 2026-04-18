@@ -512,6 +512,8 @@
       var projId = document.getElementById('rotateProjectId').value;
       var keyId = document.getElementById('rotateKeyId').value;
       var newKey = document.getElementById('rotateNewKey').value.trim();
+      var share1 = '';
+      var share2 = '';
 
       // Validate IDs
       projId = /^[a-f0-9-]+$/i.test(projId) ? projId : '';
@@ -536,8 +538,8 @@
       try {
         // Split the new key client-side
         var shares = shamirSplit(new TextEncoder().encode(newKey), 2, 2);
-        var share1 = shamirSerialize(shares[0]);
-        var share2 = shamirSerialize(shares[1]);
+        share1 = shamirSerialize(shares[0]);
+        share2 = shamirSerialize(shares[1]);
 
         btn.textContent = 'Uploading...';
 
@@ -561,6 +563,10 @@
         msg.className = 'text-sm text-amber-400';
         msg.classList.remove('hidden');
       } finally {
+        newKey = '';
+        share1 = '';
+        share2 = '';
+        document.getElementById('rotateNewKey').value = '';
         btn.textContent = 'Split & Rotate';
         btn.disabled = false;
       }
@@ -711,19 +717,22 @@
       e.preventDefault();
       var btn = document.getElementById('addKeyBtn');
       btn.disabled = true; btn.textContent = 'Splitting...';
+      var keyValue = '';
+      var share1 = '';
+      var share2 = '';
       try {
         var projectId = document.getElementById('addKeyProjectId').value;
         var provider = document.getElementById('addKeyProvider').value;
         var envVar = document.getElementById('addKeyEnvVar').value.trim();
-        var keyValue = document.getElementById('addKeyValue').value;
+        keyValue = document.getElementById('addKeyValue').value;
         if (!provider) throw new Error('Select a provider');
         if (!keyValue) throw new Error('Paste an API key');
         var config = PROVIDER_CONFIG[provider];
         if (!config) throw new Error('Unknown provider');
         // Shamir split
         var shares = shamirSplit(new TextEncoder().encode(keyValue), 2, 2);
-        var share1 = shamirSerialize(shares[0]);
-        var share2 = shamirSerialize(shares[1]);
+        share1 = shamirSerialize(shares[0]);
+        share2 = shamirSerialize(shares[1]);
         var body = {
           provider: provider,
           slug: provider,
@@ -751,6 +760,10 @@
         document.getElementById('addKeyMsg').className = 'text-sm text-red-400';
         document.getElementById('addKeyMsg').classList.remove('hidden');
       } finally {
+        keyValue = '';
+        share1 = '';
+        share2 = '';
+        document.getElementById('addKeyValue').value = '';
         btn.disabled = false; btn.textContent = 'Split & Protect';
       }
     });

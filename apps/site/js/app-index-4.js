@@ -516,14 +516,12 @@
         const pc = providerColor(k.provider);
         const isActive = (k.status || 'active').toLowerCase() === 'active';
         const masked = `${escapeHtml(k.keyPrefix || 'sk_live_')}${'••••'}${escapeHtml(k.keySuffix || '****')}`;
-        const full = escapeHtml(k.id || 'unknown');
         return `
           <tr class="key-row border-b border-border/50 table-row-anim" style="animation-delay:${500 + i * 50}ms">
             <td class="px-4 py-3">
               <div class="font-medium text-sm">${escapeHtml(k.label || 'Unnamed Key')}</div>
               <div class="key-mask font-mono text-xs text-gray-500 mt-0.5 cursor-default">
                 <span class="key-masked">${masked}</span>
-                <span class="key-full">${full}</span>
               </div>
             </td>
             <td class="px-4 py-3">
@@ -540,9 +538,6 @@
             </td>
             <td class="px-4 py-3">
               <div class="flex items-center gap-1">
-                <button onclick="copyKeyId('${full}')" title="Copy key ID" class="p-1.5 text-gray-500 hover:text-white hover:bg-white/5 rounded-lg transition">
-                  <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"/></svg>
-                </button>
                 <button title="Rotate key" class="p-1.5 text-gray-500 hover:text-indigo-400 hover:bg-indigo-400/5 rounded-lg transition">
                   <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
                 </button>
@@ -554,12 +549,6 @@
           </tr>
         `;
       }).join('');
-    }
-
-    function copyKeyId(id) {
-      navigator.clipboard.writeText(id).then(() => {
-        // Brief visual feedback could be added here
-      }).catch(() => {});
     }
 
     // ── Notifications ──
