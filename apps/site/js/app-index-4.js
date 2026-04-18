@@ -225,40 +225,6 @@
       return rows.filter((key) => key && key.id);
     }
 
-    // ── Mock Data ──
-    const MOCK = {
-      overview: {
-        totalKeys: 12,
-        activeApps: 5,
-        totalCalls: 4821,
-        errorRate: 2.1,
-        recentActivity: [
-          { type: 'api_call', description: 'API call to GPT-4 endpoint', timestamp: new Date(Date.now() - 2 * 60000).toISOString(), keyLabel: 'prod-openai' },
-          { type: 'api_call', description: 'API call to Claude 3.5 Sonnet', timestamp: new Date(Date.now() - 14 * 60000).toISOString(), keyLabel: 'prod-anthropic' },
-          { type: 'key_rotation', description: 'Key rotated automatically', timestamp: new Date(Date.now() - 47 * 60000).toISOString(), keyLabel: 'staging-google' },
-          { type: 'revoke', description: 'Key revoked by admin', timestamp: new Date(Date.now() - 3 * 3600000).toISOString(), keyLabel: 'sandbox-openai' },
-          { type: 'api_call', description: 'API call to Gemini Pro', timestamp: new Date(Date.now() - 5 * 3600000).toISOString(), keyLabel: 'prod-google' }
-        ]
-      },
-      usage: {
-        days: Array.from({ length: 30 }, (_, i) => {
-          const d = new Date();
-          d.setDate(d.getDate() - (29 - i));
-          const base = 120 + Math.sin(i * 0.4) * 60;
-          return {
-            date: d.toISOString().split('T')[0],
-            calls: Math.max(0, Math.round(base + (Math.random() - 0.5) * 40)),
-            errors: Math.round(Math.random() * 6)
-          };
-        })
-      },
-      keys: [
-        { id: 'key_1a2b3c', label: 'Production OpenAI', provider: 'OpenAI', keyPrefix: 'sk_live_', keySuffix: '3f9a', created: new Date(Date.now() - 45 * 86400000).toISOString(), lastUsed: new Date(Date.now() - 120000).toISOString(), callsThisMonth: 2341, status: 'active' },
-        { id: 'key_4d5e6f', label: 'Staging Anthropic', provider: 'Anthropic', keyPrefix: 'sk_test_', keySuffix: '8b2c', created: new Date(Date.now() - 22 * 86400000).toISOString(), lastUsed: new Date(Date.now() - 840000).toISOString(), callsThisMonth: 1856, status: 'active' },
-        { id: 'key_7g8h9i', label: 'Sandbox Google', provider: 'Google', keyPrefix: 'sk_live_', keySuffix: 'e71d', created: new Date(Date.now() - 90 * 86400000).toISOString(), lastUsed: new Date(Date.now() - 86400000 * 12).toISOString(), callsThisMonth: 624, status: 'revoked' }
-      ]
-    };
-
     // ── Utilities ──
     function escapeHtml(str) {
       return (str == null ? '' : String(str))
@@ -336,14 +302,13 @@
 
     // ── Load Overview Stats ──
     async function loadOverview() {
-      const dataRaw = await apiFetchInit('/stats/overview');
-      let data = normalizeOverviewData(dataRaw);
+      const [dataRaw, usageRaw] = await Promise.all([
+        apiFetchInit('/stats/overview'),
+        apiFetchInit('/stats/usage?days=10'),
+      ]);
+      const data = normalizeOverviewData(dataRaw);
       if (!dataRaw) {
-        data = normalizeOverviewData(MOCK.overview);
-        showToast('Unable to load live data — showing cached values', 'warning');
-        document.querySelectorAll('.stat-card, [class*="stat"]').forEach(el => el.style.opacity = '0.6');
-      } else {
-        document.querySelectorAll('.stat-card, [class*="stat"]').forEach(el => el.style.opacity = '1');
+        showToast('Unable to load live dashboard stats', 'warning');
       }
 
       document.getElementById('statKeys').textContent = formatNumber(data.totalKeys);
@@ -351,12 +316,12 @@
       document.getElementById('statCalls').textContent = formatNumber(data.totalCalls);
       document.getElementById('statErrors').textContent = (data.errorRate ?? 0).toFixed(1) + '%';
 
-      // Draw sparklines with small mock trends
+      const usageRows = normalizeUsageData(usageRaw);
       const sparkData = {
-        keys: [6, 7, 8, 8, 9, 10, 10, 11, 12, 12],
-        apps: [3, 3, 4, 4, 4, 5, 5, 5, 5, 5],
-        calls: [320, 380, 410, 440, 390, 510, 480, 520, 490, 530],
-        errors: [3.2, 2.8, 3.1, 2.4, 2.0, 2.6, 2.3, 1.9, 2.2, 2.1]
+        keys: [],
+        apps: [],
+        calls: usageRows.map((d) => d.calls || 0),
+        errors: usageRows.map((d) => d.errors || 0),
       };
       document.querySelectorAll('.sparkline').forEach(c => {
         const stat = c.dataset.stat;
@@ -421,16 +386,20 @@
     let _usageChart = null;
 
     async function loadUsageChart() {
+      const chartLoading = document.getElementById('chartLoading');
+      chartLoading.classList.remove('hidden');
+      chartLoading.innerHTML = '<div class="h-6 w-6 border-2 border-brand border-t-transparent rounded-full animate-spin"></div>';
+
       const numDays = document.getElementById('chartDays')?.value || '30';
       const dataRaw = await apiFetchInit('/stats/usage?days=' + numDays);
-      let days = normalizeUsageData(dataRaw);
+      const days = normalizeUsageData(dataRaw);
+
       if (!days.length) {
-        days = normalizeUsageData(MOCK.usage);
+        if (_usageChart) { _usageChart.destroy(); _usageChart = null; }
+        chartLoading.classList.remove('hidden');
+        chartLoading.innerHTML = '<div class="text-sm text-gray-500">No usage data yet</div>';
+        return;
       }
-
-      document.getElementById('chartLoading').classList.add('hidden');
-
-      if (!days.length) return;
 
       const labels = days.map(d => {
         const dt = new Date(d.date);
@@ -526,16 +495,14 @@
           }
         }
       });
+      chartLoading.classList.add('hidden');
     }
 
     // ── Load API Keys Table ──
     async function loadKeys() {
       const dataRaw = await apiFetchInit('/stats/by-key');
-      let keys = normalizeKeyData(dataRaw);
-      if (!keys.length) {
-        keys = normalizeKeyData({ keys: MOCK.keys });
-        if (!dataRaw) showToast('Unable to load keys', 'warning');
-      }
+      const keys = normalizeKeyData(dataRaw);
+      if (!dataRaw) showToast('Unable to load keys', 'warning');
       const tbody = document.getElementById('keysBody');
 
       if (!keys.length) {
