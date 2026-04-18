@@ -13,6 +13,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter+Tight:wght@500;600;700&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.5.1/dist/chart.umd.min.js" integrity="sha384-jb8JQMbMoBUzgWatfe6COACi2ljcDdZQ2OxczGA3bGNeWe+6DChMTBJemed7ZnvJ" crossorigin="anonymous"></script>
 
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
@@ -292,6 +293,20 @@
       </div>
     </div>
 
+    <!-- USAGE CHART -->
+    <div style="border:var(--rule);border-radius:4px;overflow:hidden;background:var(--bg-card);margin-bottom:28px;">
+      <div style="display:flex;align-items:center;padding:12px 18px;border-bottom:var(--rule);">
+        <span style="font-family:var(--mono);font-size:11px;letter-spacing:0.6px;text-transform:uppercase;color:var(--text-faint)">proxy calls · 30d</span>
+        <div style="margin-left:auto;display:flex;gap:16px;font-family:var(--mono);font-size:11px;color:var(--text-faint)">
+          <span style="display:flex;align-items:center;gap:5px"><span style="display:inline-block;width:20px;height:2px;background:var(--accent);border-radius:1px"></span>calls</span>
+          <span style="display:flex;align-items:center;gap:5px"><span style="display:inline-block;width:20px;height:2px;background:#b91c1c;border-radius:1px"></span>errors</span>
+        </div>
+      </div>
+      <div style="padding:16px 18px;height:180px;position:relative;">
+        <canvas id="usageChart"></canvas>
+      </div>
+    </div>
+
     <!-- FILTER BAR -->
     <div class="filter-bar">
       <span class="filter-chip active">all</span>
@@ -430,6 +445,96 @@ function renderRows() {
 }
 
 renderRows();
+
+// Usage chart
+(function() {
+  const mono = "'JetBrains Mono', ui-monospace, monospace";
+  const accent = "#d97706";
+  const rule = "#e7e5de";
+
+  // Generate 30 days of demo data
+  const labels = [];
+  const calls = [];
+  const errors = [];
+  const now = new Date();
+  for (let i = 29; i >= 0; i--) {
+    const d = new Date(now);
+    d.setDate(d.getDate() - i);
+    labels.push(d.toLocaleDateString("en-US", { month: "short", day: "numeric" }));
+    const base = 60000 + Math.sin(i * 0.4) * 20000 + Math.random() * 15000;
+    calls.push(Math.round(base));
+    errors.push(Math.round(base * (0.005 + Math.random() * 0.01)));
+  }
+
+  const ctx = document.getElementById("usageChart").getContext("2d");
+  new Chart(ctx, {
+    type: "line",
+    data: {
+      labels,
+      datasets: [
+        {
+          label: "calls",
+          data: calls,
+          borderColor: accent,
+          backgroundColor: "rgba(217,119,6,0.06)",
+          fill: true,
+          tension: 0.4,
+          pointRadius: 0,
+          pointHoverRadius: 4,
+          pointHoverBackgroundColor: accent,
+          borderWidth: 2,
+        },
+        {
+          label: "errors",
+          data: errors,
+          borderColor: "#b91c1c",
+          backgroundColor: "transparent",
+          fill: false,
+          tension: 0.4,
+          pointRadius: 0,
+          pointHoverRadius: 4,
+          pointHoverBackgroundColor: "#b91c1c",
+          borderWidth: 1.5,
+        },
+      ],
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      interaction: { mode: "index", intersect: false },
+      plugins: {
+        legend: { display: false },
+        tooltip: {
+          backgroundColor: "#fff",
+          titleColor: "#171717",
+          bodyColor: "#525252",
+          borderColor: rule,
+          borderWidth: 1,
+          cornerRadius: 4,
+          padding: 10,
+          titleFont: { family: mono, size: 11 },
+          bodyFont: { family: mono, size: 11 },
+        },
+      },
+      scales: {
+        x: {
+          grid: { color: rule, drawBorder: false },
+          ticks: { color: "#8a8a82", font: { family: mono, size: 10 }, maxTicksLimit: 8 },
+          border: { display: false },
+        },
+        y: {
+          grid: { color: rule, drawBorder: false },
+          ticks: {
+            color: "#8a8a82", font: { family: mono, size: 10 },
+            callback: v => v >= 1000 ? (v/1000).toFixed(0)+"k" : v,
+          },
+          border: { display: false },
+          beginAtZero: true,
+        },
+      },
+    },
+  });
+})();
 
 // filter chips
 document.querySelectorAll(".filter-chip").forEach(chip => {
