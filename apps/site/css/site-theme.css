@@ -516,20 +516,59 @@ tr:hover td {
 .sidebar,
 #sidebar,
 aside[id="sidebar"] {
-  background: var(--vp-bg-mid) !important;
+  background: var(--vp-bg) !important;
   border-color: var(--vp-rule) !important;
   color: var(--vp-text-muted) !important;
 }
 
 .sidebar-nav-item {
   color: var(--vp-text-muted) !important;
+  border: 1px solid transparent !important;
+  border-radius: 3px !important;
 }
 
-.sidebar-nav-item:hover,
+.sidebar-nav-item:hover {
+  background: transparent !important;
+  color: var(--vp-text) !important;
+}
+
+.sidebar-nav-item.active,
 .sidebar-nav-item.bg-white\/\[0\.08\],
-.sidebar-nav-item.text-brand {
-  background: rgba(217, 119, 6, 0.07) !important;
+.sidebar-nav-item.text-brand,
+.sidebar-nav-item.active-nav {
+  background: var(--vp-card) !important;
+  color: var(--vp-text) !important;
+  border-color: var(--vp-rule) !important;
+}
+
+.sidebar-dot {
+  color: #c4c4bd !important;
+}
+
+.sidebar-nav-item.active .sidebar-dot,
+.sidebar-nav-item.text-brand .sidebar-dot,
+.sidebar-nav-item.active-nav .sidebar-dot {
   color: var(--vp-accent) !important;
+}
+
+.sidebar-bottom {
+  border-top-color: var(--vp-rule) !important;
+}
+
+.logout-btn {
+  border: 1px solid var(--vp-rule) !important;
+  background: var(--vp-card) !important;
+  border-radius: 3px !important;
+  padding: 8px 10px !important;
+  color: var(--vp-text-muted) !important;
+  font-family: var(--vp-mono) !important;
+  font-size: 12px !important;
+  text-align: left !important;
+}
+
+.logout-btn:hover {
+  color: var(--vp-danger) !important;
+  background: #fdfdfa !important;
 }
 
 .stat-value,

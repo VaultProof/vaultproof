@@ -118,7 +118,7 @@
       color: #171717 !important;
       background: transparent !important;
     }
-    body.scanner-app .sidebar-nav-item.active-nav {
+    body.scanner-app .sidebar-nav-item.active {
       color: #171717 !important;
       background: #fff !important;
       border-color: #e7e5de;
@@ -139,19 +139,8 @@
       font-size: 8px;
       color: #c4c4bd;
     }
-    body.scanner-app .sidebar-nav-item.active-nav .sidebar-dot {
+    body.scanner-app .sidebar-nav-item.active .sidebar-dot {
       color: #d97706;
-    }
-    body.scanner-app .sidebar-brand {
-      display: flex;
-      align-items: center;
-      padding: 20px 16px 10px;
-      font-family: "JetBrains Mono", ui-monospace, monospace;
-      font-size: 12px;
-      font-weight: 600;
-      letter-spacing: 0.5px;
-      text-transform: lowercase;
-      color: #171717;
     }
     body.scanner-app .sidebar-bottom {
       border-top-color: #e7e5de !important;
@@ -161,30 +150,33 @@
       font-family: "JetBrains Mono", ui-monospace, monospace;
       color: #8a8a82 !important;
     }
-    body.scanner-app #logoutBtn:hover {
+    body.scanner-app #logoutBtn.logout-btn {
+      color: #525252 !important;
+    }
+    body.scanner-app #logoutBtn.logout-btn:hover {
       color: #b91c1c !important;
     }
-    body.scanner-app .sidebar-usage {
+    body.scanner-app .usage-box {
       margin-top: 28px;
       padding: 14px;
       border: 1px solid #e7e5de;
       border-radius: 4px;
       background: #fff;
     }
-    body.scanner-app .sidebar-usage-label,
-    body.scanner-app .sidebar-usage-note,
+    body.scanner-app .usage-label,
+    body.scanner-app .usage-reset,
     body.scanner-app .scanner-meta {
       font-family: "JetBrains Mono", ui-monospace, monospace;
       font-size: 11px;
       color: #8a8a82;
     }
-    body.scanner-app .sidebar-usage-label {
+    body.scanner-app .usage-label {
       font-size: 10px;
       letter-spacing: 0.8px;
       text-transform: uppercase;
       margin-bottom: 8px;
     }
-    body.scanner-app .sidebar-usage-row {
+    body.scanner-app .usage-row {
       display: flex;
       justify-content: space-between;
       gap: 16px;
@@ -192,14 +184,14 @@
       font-size: 12px;
       color: #171717;
     }
-    body.scanner-app .sidebar-usage-track {
+    body.scanner-app .usage-bar-track {
       height: 4px;
       background: #eeece5;
       border-radius: 999px;
       margin-top: 8px;
       overflow: hidden;
     }
-    body.scanner-app .sidebar-usage-fill {
+    body.scanner-app .usage-bar-fill {
       height: 100%;
       background: #d97706;
       border-radius: 999px;
@@ -312,12 +304,7 @@
 
   <!-- Left Sidebar -->
   <aside id="sidebar" class="fixed top-0 left-0 h-full bg-card border-r border-border z-50 flex flex-col transition-all duration-200 sidebar-expanded -translate-x-full lg:translate-x-0">
-    <div class="sidebar-brand">
-      <span class="sidebar-logo-text">vaultproof</span>
-    </div>
-
-    <!-- Nav -->
-    <nav class="flex-1 px-2 py-2 space-y-0.5 overflow-y-auto">
+    <nav class="flex-1 px-2 py-5 space-y-0.5 overflow-y-auto">
       <div class="sidebar-group">
         <div class="sidebar-head">overview</div>
         <a href="/app/" class="sidebar-nav-item"><span class="sidebar-dot">●</span><span class="sidebar-label">projects</span></a>
@@ -332,30 +319,24 @@
       </div>
       <div class="sidebar-group">
         <div class="sidebar-head">scanner</div>
-        <a href="/app/scanner" class="sidebar-nav-item active-nav"><span class="sidebar-dot">●</span><span class="sidebar-label">repos</span></a>
+        <a href="/app/scanner" class="sidebar-nav-item active"><span class="sidebar-dot">●</span><span class="sidebar-label">repos</span></a>
       </div>
       <div class="sidebar-group">
         <div class="sidebar-head">help</div>
         <a href="/docs" class="sidebar-nav-item"><span class="sidebar-dot">●</span><span class="sidebar-label">docs</span></a>
         <a href="mailto:hello@vaultproof.dev" class="sidebar-nav-item"><span class="sidebar-dot">●</span><span class="sidebar-label">support</span></a>
       </div>
-      <div class="sidebar-usage">
-        <div class="sidebar-usage-label">plan loading</div>
-        <div class="sidebar-usage-row"><span>all calls</span><span>—</span></div>
-        <div class="sidebar-usage-track"><div class="sidebar-usage-fill"></div></div>
-        <div class="sidebar-usage-note">scanner usage refreshes after each run</div>
+      <div class="usage-box">
+        <div class="usage-label">plan loading</div>
+        <div class="usage-row"><span>all calls</span><span>—</span></div>
+        <div class="usage-bar-track"><div class="usage-bar-fill"></div></div>
+        <div class="usage-reset">scanner usage refreshes after each run</div>
       </div>
     </nav>
 
-    <!-- Sidebar Bottom -->
     <div class="sidebar-bottom px-3 py-3 border-t border-border flex-shrink-0">
       <div class="sidebar-user-info text-xs text-gray-500 truncate mb-2" id="sidebarEmail"></div>
-      <button id="logoutBtn" type="button" class="flex items-center gap-2 text-sm text-gray-400 hover:text-red-400 transition">
-        <svg class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"/>
-        </svg>
-        <span class="logout-text sidebar-label">sign out</span>
-      </button>
+      <button id="logoutBtn" type="button" class="logout-btn">sign out</button>
     </div>
   </aside>
 
