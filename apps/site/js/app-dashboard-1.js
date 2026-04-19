@@ -2,6 +2,9 @@
   const API = window.location.hostname.includes('dev.vaultproof')
     ? 'https://staging-api.vaultproof.dev/api/v1'
     : 'https://api.vaultproof.dev/api/v1';
+  const INIT_API = window.location.hostname.includes('dev.vaultproof')
+    ? 'https://vaultproof-init-staging.vaultproof.workers.dev/api/v1/init'
+    : 'https://init.vaultproof.dev/api/v1/init';
   const SUPABASE_AUTH_STORAGE_KEY = 'sb-gwzkjiomemjlhtrdrlan-auth-token';
   const ACCENT = '#d97706';
   const ACTION_LABELS = {
@@ -123,6 +126,7 @@
   async function apiFetch(path) {
     try {
       const res = await fetch(`${API}${path}`, {
+        cache: 'no-store',
         headers: {
           Authorization: `Bearer ${token}`,
           'Content-Type': 'application/json',
@@ -132,6 +136,31 @@
         if (!refreshAttempted) {
           refreshAttempted = true;
           if (await tryRefreshToken()) return apiFetch(path);
+        }
+        refreshAttempted = false;
+        window.location.href = 'login';
+        return null;
+      }
+      refreshAttempted = false;
+      return res.ok ? res.json() : null;
+    } catch {
+      return null;
+    }
+  }
+
+  async function apiFetchInit(path) {
+    try {
+      const res = await fetch(`${INIT_API}${path}`, {
+        cache: 'no-store',
+        headers: {
+          Authorization: `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        },
+      });
+      if (res.status === 401) {
+        if (!refreshAttempted) {
+          refreshAttempted = true;
+          if (await tryRefreshToken()) return apiFetchInit(path);
         }
         refreshAttempted = false;
         window.location.href = 'login';
@@ -309,7 +338,7 @@
   async function buildProjectRows(projects, keyStats) {
     const rows = await Promise.all(projects.map(async (project) => {
       if (!project?.id) return null;
-      const res = await apiFetch(`/projects/${project.id}/keys`);
+      const res = await apiFetchInit(`/projects/${project.id}/keys`);
       const keys = Array.isArray(res?.keys) ? res.keys : [];
       const matchedStats = keys.map((key) => keyStats.get(String(key.id)) || key);
       const calls30d = matchedStats.reduce(
@@ -613,13 +642,13 @@
 
   async function loadDashboard() {
     const [overviewRaw, usageRaw, billingRaw, projectsRaw, keyStatsRaw, scansRaw, logsRaw] = await Promise.all([
-      apiFetch('/stats/overview'),
-      apiFetch('/stats/usage?days=30'),
+      apiFetchInit('/projects/stats/overview'),
+      apiFetchInit('/projects/stats/usage?days=30'),
       apiFetch('/billing/status'),
-      apiFetch('/projects'),
-      apiFetch('/stats/by-key'),
+      apiFetchInit('/projects'),
+      apiFetchInit('/projects/stats/by-key'),
       apiFetch('/scanner/scans'),
-      apiFetch('/stats/logs?days=30&limit=8'),
+      apiFetchInit('/projects/stats/logs?days=30&limit=8'),
     ]);
 
     const projects = normalizeProjects(projectsRaw);
