@@ -490,24 +490,64 @@ function relTime(ts) {
 }
 
 function normalizeUsage(data) {
-  return ((data && (data.usage || data.days)) || [])
+  const payload = unwrapPayload(data);
+  return ((payload && (payload.usage || payload.days)) || [])
     .filter(r => r && r.date)
     .map(r => ({ date: r.date, calls: Number(r.calls||0), errors: Number(r.errors||0) }));
 }
 
 function normalizeProjects(data) {
-  if (Array.isArray(data?.projects)) return data.projects;
-  return Array.isArray(data) ? data : [];
+  const payload = unwrapPayload(data);
+  if (Array.isArray(payload?.projects)) return payload.projects;
+  if (Array.isArray(payload?.items)) return payload.items;
+  return Array.isArray(payload) ? payload : [];
 }
 
 function normalizeKeyStats(data) {
   const stats = new Map();
-  const rows = Array.isArray(data?.keys) ? data.keys : [];
+  const payload = unwrapPayload(data);
+  const rows = Array.isArray(payload?.keys) ? payload.keys : Array.isArray(payload?.items) ? payload.items : [];
   rows.forEach((row) => {
     const id = row?.id || row?.keyId;
     if (id) stats.set(String(id), row);
   });
   return stats;
+}
+
+function unwrapPayload(data) {
+  if (!data || typeof data !== 'object' || Array.isArray(data)) return data;
+  if (data.data && typeof data.data === 'object') return unwrapPayload(data.data);
+  if (data.result && typeof data.result === 'object') return unwrapPayload(data.result);
+  if (data.overview && typeof data.overview === 'object') return unwrapPayload(data.overview);
+  return data;
+}
+
+function resolveTier(billing) {
+  const payload = unwrapPayload(billing) || {};
+  return normalizeTier(
+    payload?.tier ||
+    payload?.plan ||
+    payload?.subscriptionTier ||
+    payload?.subscription?.tier ||
+    payload?.subscription?.plan ||
+    payload?.customer?.tier ||
+    user?.tier ||
+    user?.plan
+  );
+}
+
+function normalizeScans(data) {
+  const payload = unwrapPayload(data);
+  if (Array.isArray(payload?.scans)) return payload.scans;
+  if (Array.isArray(payload?.items)) return payload.items;
+  return Array.isArray(payload) ? payload : [];
+}
+
+function normalizeLogs(data) {
+  const payload = unwrapPayload(data);
+  if (Array.isArray(payload?.logs)) return payload.logs;
+  if (Array.isArray(payload?.items)) return payload.items;
+  return Array.isArray(payload) ? payload : [];
 }
 
 function normalizeEnv(value) {
@@ -548,6 +588,7 @@ function buildDistributionBars(values, color) {
 
 function buildProjectRows(projects, keyStats) {
   return Promise.all(projects.map(async (project) => {
+    if (!project?.id) return null;
     const res = await apiFetch('/projects/' + project.id + '/keys');
     const keys = Array.isArray(res?.keys) ? res.keys : [];
     const matchedStats = keys.map((key) => keyStats.get(String(key.id)) || key);
@@ -569,7 +610,7 @@ function buildProjectRows(projects, keyStats) {
       sparkValues: matchedStats.map((stat) => Number(stat?.callsThisMonth || stat?.calls_this_month || 0)),
       status: keys.length === 0 ? 'idle' : calls30d > 0 ? 'healthy' : 'ready',
     };
-  }));
+  })).then((rows) => rows.filter(Boolean));
 }
 
 let currentProjectRows = [];
@@ -751,7 +792,7 @@ function renderActivity(events) {
 }
 
 function normalizeOverview(data) {
-  const safe = data || {};
+  const safe = unwrapPayload(data) || {};
   return {
     totalKeys: Number(safe.totalKeys || safe.total_keys || 0),
     totalCalls: Number(safe.totalCalls || safe.total_calls || 0),
@@ -763,33 +804,43 @@ function normalizeOverview(data) {
 
 // ── Load everything ──
 async function loadDashboard() {
-  const [overviewRaw, usageRaw, billing, projectsRaw, keyStatsRaw, scansRaw] = await Promise.all([
+  const [overviewRaw, usageRaw, billingRaw, projectsRaw, keyStatsRaw, scansRaw, logsRaw] = await Promise.all([
     apiFetch('/stats/overview'),
     apiFetch('/stats/usage?days=30'),
     apiFetch('/billing/status'),
     apiFetch('/projects'),
     apiFetch('/stats/by-key'),
     apiFetch('/scanner/scans'),
+    apiFetch('/stats/logs?days=30&limit=8'),
   ]);
   const projects = normalizeProjects(projectsRaw);
   const keyStats = normalizeKeyStats(keyStatsRaw);
-  const scans = Array.isArray(scansRaw?.scans) ? scansRaw.scans : Array.isArray(scansRaw) ? scansRaw : [];
+  const scans = normalizeScans(scansRaw);
+  const logs = normalizeLogs(logsRaw);
   const overview = normalizeOverview(overviewRaw);
-  const tier = normalizeTier(
-    billing?.tier ||
-    billing?.plan ||
-    billing?.subscriptionTier ||
-    billing?.subscription?.tier ||
-    billing?.subscription?.plan ||
-    billing?.customer?.tier
-  );
+  const tier = resolveTier(billingRaw);
   const rows = normalizeUsage(usageRaw);
-  renderUsageSummary(overview, rows, tier);
+  const providersFromKeys = new Set(Array.from(keyStats.values()).map((row) => row?.provider).filter(Boolean));
+  const fallbackOverview = {
+    totalKeys: overview.totalKeys || keyStats.size,
+    totalCalls: overview.totalCalls || rows.reduce((sum, row) => sum + Number(row.calls || 0), 0),
+    activeApps: overview.activeApps || providersFromKeys.size,
+    errorRate: overview.totalCalls || rows.length
+      ? overview.errorRate || (() => {
+          const calls = rows.reduce((sum, row) => sum + Number(row.calls || 0), 0);
+          const errors = rows.reduce((sum, row) => sum + Number(row.errors || 0), 0);
+          return calls > 0 ? (errors / calls) * 100 : 0;
+        })()
+      : 0,
+    recentActivity: overview.recentActivity.length ? overview.recentActivity : logs,
+  };
+
+  renderUsageSummary(fallbackOverview, rows, tier);
   renderAlerts(scans);
 
   // KPIs
-  if (overviewRaw) {
-    const d = overview;
+  if (overviewRaw || keyStats.size || rows.length || logs.length || projects.length) {
+    const d = fallbackOverview;
     document.getElementById('kpi-keys').textContent = formatNum(d.totalKeys||0);
     document.getElementById('kpi-keys-sub').textContent = 'encrypted at rest';
     document.getElementById('kpi-calls').textContent = formatNum(d.totalCalls||0);
@@ -821,7 +872,13 @@ async function loadDashboard() {
   renderProjectRows();
 }
 
-loadDashboard();
+loadDashboard().catch(() => {
+  ['kpi-keys','kpi-calls','kpi-providers','kpi-errors'].forEach(id => { document.getElementById(id).textContent = '—'; });
+  ['kpi-keys-sub','kpi-calls-sub','kpi-providers-sub','kpi-errors-sub'].forEach(id => { document.getElementById(id).textContent = 'unavailable'; });
+  document.getElementById('usageMetricNote').textContent = 'unable to load usage';
+  document.getElementById('alertsStatus').textContent = 'unavailable';
+  renderActivity([]);
+});
 
 const ACCENT = "#d97706";
 
