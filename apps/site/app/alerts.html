@@ -3,12 +3,12 @@
 <head>
   <script async src="https://www.googletagmanager.com/gtag/js?id=G-NE5RYX1WTF"></script>
   <script src="/js/app-index-1.js" defer></script>
-  <script src="/js/app-activity-1.js" defer></script>
+  <script src="/js/app-alerts-1.js" defer></script>
 
   <link rel="icon" type="image/png" href="/favicon.png">
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Activity — VaultProof</title>
+  <title>Alerts — VaultProof</title>
 
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -56,7 +56,7 @@
     .topbar-search {
       display: flex; align-items: center; gap: 8px;
       border: var(--rule); border-radius: 4px;
-      padding: 6px 10px; background: var(--bg-card); width: 240px;
+      padding: 6px 10px; background: var(--bg-card); width: 250px;
       margin: 0 20px 0 auto;
     }
     .topbar-search-slash { color: #a3a39a; }
@@ -116,14 +116,14 @@
     .page-title { font-family: var(--display); font-weight: 600; font-size: 30px; letter-spacing: -0.8px; }
     .page-meta { font-family: var(--mono); font-size: 12px; color: var(--text-faint); }
     .page-actions { margin-left: auto; display: flex; gap: 8px; }
-    .btn-outline, .btn-primary, .btn-icon {
+    .btn-outline, .btn-primary {
       font-family: var(--mono); font-size: 12px; border-radius: 3px; cursor: pointer; border: var(--rule);
     }
     .btn-outline { padding: 7px 12px; background: var(--bg-card); }
     .btn-outline:hover { background: var(--bg-mid); }
     .btn-primary { padding: 7px 12px; background: var(--text); color: var(--bg); border-color: var(--text); }
     .btn-primary:hover { background: #333; }
-    .page-desc { font-size: 13px; color: var(--text-muted); margin: 4px 0 24px; max-width: 760px; }
+    .page-desc { font-size: 13px; color: var(--text-muted); margin: 4px 0 24px; max-width: 780px; }
 
     .kpi-grid { display: grid; grid-template-columns: repeat(4, 1fr); border: var(--rule); border-radius: 4px; overflow: hidden; background: var(--bg-card); margin-bottom: 24px; }
     .kpi-cell { padding: 18px 20px; }
@@ -169,11 +169,11 @@
 
     .chart-wrap { padding: 16px 18px; height: 188px; position: relative; }
 
-    .activity-grid { display: grid; grid-template-columns: 1.65fr 1fr; gap: 20px; }
+    .alerts-grid { display: grid; grid-template-columns: 1.65fr 1fr; gap: 20px; }
     .table-wrap { overflow: hidden; }
     .table-scroll { overflow-x: auto; }
     .table {
-      width: 100%; min-width: 980px; border-collapse: collapse;
+      width: 100%; min-width: 1080px; border-collapse: collapse;
       font-size: 12px;
     }
     .table thead th {
@@ -187,20 +187,18 @@
     .table tbody tr:hover { background: #fdfdfa; }
     .table tbody tr:last-child td { border-bottom: none; }
     .mono { font-family: var(--mono); }
-    .project-name { font-weight: 600; color: var(--text); }
-    .project-id { font-family: var(--mono); font-size: 11px; color: var(--text-faint); margin-top: 2px; }
-    .status-badge, .provider-badge {
+    .alert-title { font-weight: 600; color: var(--text); }
+    .alert-sub { font-family: var(--mono); font-size: 11px; color: var(--text-faint); margin-top: 2px; }
+    .surface-name { font-weight: 600; color: var(--text); }
+    .surface-sub { font-family: var(--mono); font-size: 11px; color: var(--text-faint); margin-top: 2px; }
+    .source-badge, .severity-badge {
       display: inline-flex; align-items: center; gap: 6px;
       padding: 3px 8px; border-radius: 999px; font-family: var(--mono); font-size: 10px; letter-spacing: 0.3px;
       border: var(--rule);
     }
-    .status-ok { background: rgba(21, 128, 61, 0.08); color: var(--ok); }
-    .status-error { background: rgba(185, 28, 28, 0.08); color: var(--danger); }
-    .provider-badge { background: #fbfaf6; color: var(--text-muted); }
-    .endpoint { color: var(--text-muted); font-family: var(--mono); font-size: 11px; }
-    .request-id { color: var(--text-faint); font-family: var(--mono); font-size: 11px; }
-    .latency-hot { color: var(--danger); }
-    .latency-warm { color: var(--warn); }
+    .source-badge { background: #fbfaf6; color: var(--text-muted); }
+    .signal-note { color: var(--text-muted); font-family: var(--mono); font-size: 11px; }
+    .next-step { color: var(--text-muted); font-size: 12px; min-width: 200px; }
 
     .stack-list { padding: 8px 18px 12px; }
     .stack-row {
@@ -227,7 +225,7 @@
       .kpi-grid { grid-template-columns: repeat(2, 1fr); }
       .kpi-cell:nth-child(3), .kpi-cell:nth-child(4) { border-top: var(--rule); }
       .kpi-cell:nth-child(3) { border-left: none; }
-      .activity-grid { grid-template-columns: 1fr; }
+      .alerts-grid { grid-template-columns: 1fr; }
     }
 
     @media (max-width: 680px) {
@@ -257,11 +255,11 @@
       <span class="topbar-sep">/</span>
       <span>dashboard</span>
       <span class="topbar-sep">/</span>
-      <span class="topbar-crumb">activity</span>
+      <span class="topbar-crumb">alerts</span>
 
       <div class="topbar-search">
         <span class="topbar-search-slash">/</span>
-        <span class="topbar-search-hint">trace requests, errors, and hot paths</span>
+        <span class="topbar-search-hint">watch leaked keys and failing routes</span>
         <span class="topbar-search-kbd">live</span>
       </div>
 
@@ -281,8 +279,8 @@
         <div class="sidebar-group">
           <div class="sidebar-head">overview</div>
           <a class="sidebar-item" href="/app/"><span class="sidebar-dot">●</span> projects</a>
-          <a class="sidebar-item active" href="/app/activity"><span class="sidebar-dot">●</span> activity</a>
-          <a class="sidebar-item" href="/app/alerts"><span class="sidebar-dot">●</span> alerts</a>
+          <a class="sidebar-item" href="/app/activity"><span class="sidebar-dot">●</span> activity</a>
+          <a class="sidebar-item active" href="/app/alerts"><span class="sidebar-dot">●</span> alerts</a>
         </div>
         <div class="sidebar-group">
           <div class="sidebar-head">vault</div>
@@ -309,45 +307,45 @@
 
       <main class="main">
         <div class="page-header">
-          <h1 class="page-title">Activity</h1>
+          <h1 class="page-title">Alerts</h1>
           <span class="page-meta" id="pageMeta">/ loading…</span>
           <div class="page-actions">
             <button type="button" class="btn-outline" id="refreshBtn">refresh</button>
             <button type="button" class="btn-primary" id="exportBtn">export csv</button>
           </div>
         </div>
-        <p class="page-desc">Review proxied traffic across every project: successful requests, failures, hot endpoints, provider mix, and the exact calls that need attention.</p>
+        <p class="page-desc">Keep one queue for leaked-secret findings, failing proxy routes, and recurring trouble spots. Triage by severity, source, project, and latest detection without bouncing between scanner and runtime views.</p>
 
         <div class="kpi-grid">
           <div class="kpi-cell">
-            <div class="kpi-label">events · 30d</div>
-            <div class="kpi-value" id="kpi-events">—</div>
-            <div class="kpi-sub" id="kpi-events-sub">loading…</div>
+            <div class="kpi-label">open alerts</div>
+            <div class="kpi-value" id="kpi-open">—</div>
+            <div class="kpi-sub" id="kpi-open-sub">loading…</div>
           </div>
           <div class="kpi-cell">
-            <div class="kpi-label">success rate</div>
-            <div class="kpi-value ok" id="kpi-success">—</div>
-            <div class="kpi-sub" id="kpi-success-sub">loading…</div>
+            <div class="kpi-label">critical alerts</div>
+            <div class="kpi-value danger" id="kpi-critical">—</div>
+            <div class="kpi-sub" id="kpi-critical-sub">loading…</div>
           </div>
           <div class="kpi-cell">
-            <div class="kpi-label">avg latency</div>
-            <div class="kpi-value" id="kpi-latency">—</div>
-            <div class="kpi-sub" id="kpi-latency-sub">loading…</div>
-          </div>
-          <div class="kpi-cell">
-            <div class="kpi-label">active projects</div>
+            <div class="kpi-label">affected projects</div>
             <div class="kpi-value" id="kpi-projects">—</div>
             <div class="kpi-sub" id="kpi-projects-sub">loading…</div>
+          </div>
+          <div class="kpi-cell">
+            <div class="kpi-label">repos with findings</div>
+            <div class="kpi-value" id="kpi-repos">—</div>
+            <div class="kpi-sub" id="kpi-repos-sub">loading…</div>
           </div>
         </div>
 
         <div class="chart-panel">
           <div class="panel-head">
-            request volume · 30d
-            <span class="panel-head-right" id="chartNote">calls vs errors</span>
+            alert volume · 30d
+            <span class="panel-head-right" id="chartNote">scanner vs runtime</span>
           </div>
           <div class="chart-wrap">
-            <canvas id="activityChart"></canvas>
+            <canvas id="alertsChart"></canvas>
           </div>
         </div>
 
@@ -355,18 +353,22 @@
           <div class="filters-row">
             <div class="search-wrap">
               <span class="search-icon">/</span>
-              <input id="searchInput" class="search-input" type="text" placeholder="Search by project, provider, endpoint, key, or request id">
+              <input id="searchInput" class="search-input" type="text" placeholder="Search by repo, project, endpoint, provider, or alert text">
             </div>
+            <select id="sourceFilter" class="select-input">
+              <option value="">all sources</option>
+              <option value="scanner">scanner</option>
+              <option value="runtime">runtime</option>
+            </select>
+            <select id="severityFilter" class="select-input">
+              <option value="">all severity</option>
+              <option value="critical">critical</option>
+              <option value="high">high</option>
+              <option value="medium">medium</option>
+              <option value="low">low</option>
+            </select>
             <select id="projectFilter" class="select-input">
-              <option value="">all projects</option>
-            </select>
-            <select id="providerFilter" class="select-input">
-              <option value="">all providers</option>
-            </select>
-            <select id="statusFilter" class="select-input">
-              <option value="">all status</option>
-              <option value="ok">success</option>
-              <option value="error">error</option>
+              <option value="">all surfaces</option>
             </select>
           </div>
           <div class="filters-row">
@@ -375,31 +377,31 @@
             <button type="button" class="filter-chip" data-days="30">30d</button>
             <button type="button" class="filter-chip" data-days="90">90d</button>
             <button type="button" class="filter-chip" data-days="all">all</button>
-            <span class="filter-note" id="filterNote">loading activity…</span>
+            <span class="filter-note" id="filterNote">loading alerts…</span>
           </div>
         </div>
 
-        <div class="activity-grid">
+        <div class="alerts-grid">
           <div class="table-wrap">
             <div class="panel-head">
-              request stream
-              <span class="panel-head-right" id="streamStatus">loading…</span>
+              alert queue
+              <span class="panel-head-right" id="queueStatus">loading…</span>
             </div>
             <div class="table-scroll">
               <table class="table">
                 <thead>
                   <tr>
-                    <th>timestamp</th>
-                    <th>project</th>
-                    <th>provider / key</th>
-                    <th>endpoint</th>
-                    <th>status</th>
-                    <th>latency</th>
-                    <th>request</th>
+                    <th>detected</th>
+                    <th>source</th>
+                    <th>severity</th>
+                    <th>alert</th>
+                    <th>affected</th>
+                    <th>signal</th>
+                    <th>next step</th>
                   </tr>
                 </thead>
-                <tbody id="activityRows">
-                  <tr><td colspan="7" class="empty-state">Loading activity…</td></tr>
+                <tbody id="alertsRows">
+                  <tr><td colspan="7" class="empty-state">Loading alerts…</td></tr>
                 </tbody>
               </table>
             </div>
@@ -408,21 +410,31 @@
           <div style="display:grid;gap:20px;">
             <div class="panel">
               <div class="panel-head">
-                busiest endpoints
-                <span class="panel-head-right" id="endpointCount">—</span>
+                severity mix
+                <span class="panel-head-right" id="severityCount">—</span>
               </div>
-              <div class="stack-list" id="endpointList">
-                <div class="empty-state">Loading endpoints…</div>
+              <div class="stack-list" id="severityList">
+                <div class="empty-state">Loading severity mix…</div>
               </div>
             </div>
 
             <div class="panel">
               <div class="panel-head">
-                recent errors
-                <span class="panel-head-right" id="errorCount">—</span>
+                affected surfaces
+                <span class="panel-head-right" id="surfaceCount">—</span>
               </div>
-              <div class="stack-list" id="errorList">
-                <div class="empty-state">Loading errors…</div>
+              <div class="stack-list" id="surfaceList">
+                <div class="empty-state">Loading surfaces…</div>
+              </div>
+            </div>
+
+            <div class="panel">
+              <div class="panel-head">
+                latest detections
+                <span class="panel-head-right" id="recentCount">—</span>
+              </div>
+              <div class="stack-list" id="recentList">
+                <div class="empty-state">Loading latest detections…</div>
               </div>
             </div>
           </div>
