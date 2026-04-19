@@ -29,6 +29,36 @@ import {
   rateLimitResponse,
 } from '../lib/rate-limit.js';
 
+const DASHBOARD_CACHE_TTL_MS = 8000;
+const dashboardStatsCache = new Map<string, { expiresAt: number; value: unknown }>();
+
+function getDashboardCacheKey(userId: string, days: number, logLimit: number): string {
+  return `${userId}:${days}:${logLimit}`;
+}
+
+function readDashboardCache(key: string): unknown | null {
+  const cached = dashboardStatsCache.get(key);
+  if (!cached) return null;
+  if (cached.expiresAt <= Date.now()) {
+    dashboardStatsCache.delete(key);
+    return null;
+  }
+  return structuredClone(cached.value);
+}
+
+function writeDashboardCache(key: string, value: unknown): void {
+  dashboardStatsCache.set(key, {
+    expiresAt: Date.now() + DASHBOARD_CACHE_TTL_MS,
+    value: structuredClone(value),
+  });
+}
+
+function clearDashboardCacheForUser(userId: string): void {
+  for (const key of dashboardStatsCache.keys()) {
+    if (key.startsWith(`${userId}:`)) dashboardStatsCache.delete(key);
+  }
+}
+
 function generateProjectId(): string {
   const bytes = new Uint8Array(12);
   crypto.getRandomValues(bytes);
@@ -479,7 +509,7 @@ async function getInitLogsStats(
   return { logs };
 }
 
-async function getInitDashboardStats(
+async function computeInitDashboardStats(
   supabase: any,
   userId: string,
   days: number,
@@ -781,6 +811,23 @@ async function getInitDashboardStats(
   };
 }
 
+async function getInitDashboardStats(
+  supabase: any,
+  userId: string,
+  days: number,
+  logLimit: number,
+): Promise<Awaited<ReturnType<typeof computeInitDashboardStats>>> {
+  const cacheKey = getDashboardCacheKey(userId, days, logLimit);
+  const cached = readDashboardCache(cacheKey);
+  if (cached) {
+    return cached as Awaited<ReturnType<typeof computeInitDashboardStats>>;
+  }
+
+  const stats = await computeInitDashboardStats(supabase, userId, days, logLimit);
+  writeDashboardCache(cacheKey, stats);
+  return stats;
+}
+
 export async function handleProjects(
   request: Request,
   env: Env,
@@ -839,6 +886,7 @@ export async function handleProjects(
       return Response.json({ error: 'Failed to create project', detail: 'Internal server error' }, { status: 500 });
     }
 
+    clearDashboardCacheForUser(auth.userId);
     const project = data as ProjectRecord;
     return Response.json(
       {
@@ -913,6 +961,7 @@ export async function handleProjects(
       return Response.json({ error: 'Project not found' }, { status: 404 });
     }
 
+    clearDashboardCacheForUser(auth.userId);
     return Response.json(data);
   }
 
@@ -1033,6 +1082,7 @@ export async function handleProjects(
       return Response.json({ error: 'Failed to store key', detail: 'Internal server error' }, { status: 500 });
     }
 
+    clearDashboardCacheForUser(auth.userId);
     return Response.json({ ok: true, provider, slug: finalSlug }, { status: 201 });
   }
 
@@ -1074,6 +1124,7 @@ export async function handleProjects(
       .eq('project_id', projectId)
       .is('revoked_at', null);
 
+    clearDashboardCacheForUser(auth.userId);
     return Response.json({ ok: true, revoked: data });
   }
 
@@ -1141,6 +1192,7 @@ export async function handleProjects(
     if (error || !data) {
       return Response.json({ error: 'Key not found' }, { status: 404 });
     }
+    clearDashboardCacheForUser(auth.userId);
     return Response.json({ ok: true, revoked: data });
   }
 
@@ -1202,6 +1254,7 @@ export async function handleProjects(
     if (error || !data) {
       return Response.json({ error: 'Key not found' }, { status: 404 });
     }
+    clearDashboardCacheForUser(auth.userId);
     return Response.json({ ok: true, rotated: data });
   }
 

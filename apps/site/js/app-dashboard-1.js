@@ -672,11 +672,11 @@
   }
 
   async function loadDashboard() {
-    const [dashboardSummaryRaw, billingRaw, scansRaw] = await Promise.all([
-      apiFetchInit('/projects/stats/dashboard?days=30&limit=8'),
-      apiFetch('/billing/status'),
-      apiFetch('/scanner/scans'),
-    ]);
+    const dashboardSummaryPromise = apiFetchInit('/projects/stats/dashboard?days=30&limit=8');
+    const billingPromise = apiFetch('/billing/status');
+    const scansPromise = apiFetch('/scanner/scans');
+
+    const dashboardSummaryRaw = await dashboardSummaryPromise;
     const dashboardSummary = normalizeDashboardSummary(dashboardSummaryRaw);
     const hasDashboardSummary = Boolean(
       dashboardSummaryRaw &&
@@ -684,11 +684,7 @@
     );
 
     if (hasDashboardSummary) {
-      const scans = normalizeScans(scansRaw);
-      const tier = resolveTier(billingRaw);
-
-      renderUsageSummary(dashboardSummary.overview, dashboardSummary.usage, tier);
-      renderAlerts(scans);
+      renderUsageSummary(dashboardSummary.overview, dashboardSummary.usage, resolveTier(null));
       renderKpis(
         dashboardSummary.overview,
         Boolean(
@@ -704,15 +700,29 @@
       currentProjectRows = normalizeProjectRows(dashboardSummary.projects);
       updatePageMeta(currentProjectRows);
       renderProjectRows();
+
+      billingPromise
+        .then((billingRaw) => {
+          renderUsageSummary(dashboardSummary.overview, dashboardSummary.usage, resolveTier(billingRaw));
+        })
+        .catch(() => {});
+
+      scansPromise
+        .then((scansRaw) => {
+          renderAlerts(normalizeScans(scansRaw));
+        })
+        .catch(() => {});
       return;
     }
 
-    const [overviewRaw, usageRaw, projectsRaw, keyStatsRaw, logsRaw] = await Promise.all([
+    const [overviewRaw, usageRaw, projectsRaw, keyStatsRaw, logsRaw, billingRaw, scansRaw] = await Promise.all([
       apiFetchInit('/projects/stats/overview'),
       apiFetchInit('/projects/stats/usage?days=30'),
       apiFetchInit('/projects'),
       apiFetchInit('/projects/stats/by-key'),
       apiFetchInit('/projects/stats/logs?days=30&limit=8'),
+      billingPromise,
+      scansPromise,
     ]);
 
     const projects = normalizeProjects(projectsRaw);
