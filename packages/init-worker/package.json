@@ -7,6 +7,7 @@
     "dev": "wrangler dev",
     "deploy": "wrangler deploy",
     "deploy:staging": "wrangler deploy --env staging",
+    "test:dashboard-diagnose": "npx tsx test/dashboard-diagnose.ts",
     "test:integration": "npx tsx test/integration.ts",
     "test:speed": "npx tsx test/route-speed.ts"
   },
