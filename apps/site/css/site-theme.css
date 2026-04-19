@@ -583,6 +583,57 @@ aside[id="sidebar"] {
   box-shadow: 0 0 0 3px rgba(217, 119, 6, 0.12);
 }
 
+[dir="rtl"] .vp-locale-shell {
+  margin-right: 0;
+  margin-left: 12px;
+}
+
+[dir="rtl"] .nav,
+[dir="rtl"] .site-nav,
+[dir="rtl"] .topbar,
+[dir="rtl"] .page-header,
+[dir="rtl"] .filter-bar,
+[dir="rtl"] .usage-row,
+[dir="rtl"] .sidebar-item,
+[dir="rtl"] .sidebar-nav-item,
+[dir="rtl"] .topbar-session,
+[dir="rtl"] .nav-links,
+[dir="rtl"] .topbar-links {
+  direction: rtl;
+}
+
+[dir="rtl"] .nav-links,
+[dir="rtl"] .topbar-links,
+[dir="rtl"] .topbar-session,
+[dir="rtl"] .page-actions {
+  margin-left: 0 !important;
+}
+
+[dir="rtl"] .nav-sign-in {
+  margin-left: 12px !important;
+  margin-right: 24px !important;
+}
+
+[dir="rtl"] .topbar-links {
+  margin-right: auto !important;
+  margin-left: 20px !important;
+}
+
+[dir="rtl"] .topbar-email,
+[dir="rtl"] .sidebar-user-info,
+[dir="rtl"] .logout-btn {
+  text-align: right !important;
+}
+
+[dir="rtl"] .sidebar {
+  border-right: 0 !important;
+  border-left: 1px solid var(--vp-rule) !important;
+}
+
+[dir="rtl"] .topbar-sep {
+  margin: 0 14px !important;
+}
+
 .sidebar-bottom {
   border-top-color: var(--vp-rule) !important;
 }
