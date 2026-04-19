@@ -933,7 +933,7 @@ $ npx @vaultproof/init --check-legacy</pre>
                     <div class="space-y-0">
                         <div class="flow-step" data-step="1">
                             <div class="text-white font-medium text-sm mb-1">The CLI scans your .env</div>
-                            <p class="text-gray-500 text-sm">The CLI reads <code class="font-mono text-xs">.env</code>, <code class="font-mono text-xs">.env.local</code>, <code class="font-mono text-xs">.env.production</code>, and <code class="font-mono text-xs">.env.development</code>. It identifies API keys by shape (prefix and length) against a catalog of 15+ providers.</p>
+                            <p class="text-gray-500 text-sm">The CLI reads <code class="font-mono text-xs">.env</code>, <code class="font-mono text-xs">.env.local</code>, <code class="font-mono text-xs">.env.production</code>, and <code class="font-mono text-xs">.env.development</code>. It identifies API keys by shape (prefix and length) against a growing provider catalog.</p>
                         </div>
                         <div class="flow-step" data-step="2">
                             <div class="text-white font-medium text-sm mb-1">Shamir Secret Sharing splits the key locally</div>
@@ -1507,7 +1507,7 @@ res = client.chat.completions.<span class="fn">create</span>(
                                 <code class="font-mono text-sm text-white font-semibold">npx @vaultproof/init</code>
                                 <span class="text-[0.625rem] font-bold text-emerald-400 ml-1">PRIMARY</span>
                             </div>
-                            <p class="text-gray-500 text-sm mb-3">Scans your <code class="font-mono text-xs text-vp-accent">.env</code> (and <code class="font-mono text-xs">.env.local</code>, <code class="font-mono text-xs">.env.production</code>, <code class="font-mono text-xs">.env.development</code>), identifies API keys by prefix and length against a catalog of 15+ providers, splits each key locally using split-key encryption, uploads encrypted shares, and rewrites your environment with a <code class="font-mono text-xs text-vp-accent">vp-proj-</code> project ID and per-provider <code class="font-mono text-xs">*_BASE_URL</code> entries. A timestamped backup of your original <code class="font-mono text-xs">.env</code> is created first.</p>
+                            <p class="text-gray-500 text-sm mb-3">Scans your <code class="font-mono text-xs text-vp-accent">.env</code> (and <code class="font-mono text-xs">.env.local</code>, <code class="font-mono text-xs">.env.production</code>, <code class="font-mono text-xs">.env.development</code>), identifies API keys by prefix and length against a growing provider catalog, splits each key locally using split-key encryption, uploads encrypted shares, and rewrites your environment with a <code class="font-mono text-xs text-vp-accent">vp-proj-</code> project ID and per-provider <code class="font-mono text-xs">*_BASE_URL</code> entries. A timestamped backup of your original <code class="font-mono text-xs">.env</code> is created first.</p>
                             <div class="code-block">
                                 <div class="code-header">terminal</div>
 <pre class="text-gray-300">$ npx @vaultproof/init
