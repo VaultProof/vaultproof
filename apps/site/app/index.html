@@ -261,7 +261,7 @@
       <div class="sidebar-item"><span class="sidebar-dot">●</span> api tokens</div>
     </div>
     <div class="usage-box">
-      <div class="usage-label">pro plan</div>
+      <div class="usage-label" id="usagePlanLabel">plan loading</div>
       <div class="usage-row"><span>calls</span><span>352k / 500k</span></div>
       <div class="usage-bar-track"><div class="usage-bar-fill" style="width:70%"></div></div>
       <div class="usage-reset">resets in 12d</div>
@@ -417,6 +417,21 @@ const email = user.email || '';
 const avatarEl = document.getElementById('user-avatar');
 if (avatarEl) avatarEl.textContent = (email || 'U').charAt(0).toUpperCase();
 
+function normalizeTier(value) {
+  const tier = String(value || '').trim().toLowerCase();
+  if (!tier) return 'free';
+  if (tier.includes('enterprise')) return 'enterprise';
+  if (tier.includes('team')) return 'team';
+  if (tier.includes('pro')) return 'pro';
+  if (tier.includes('starter')) return 'starter';
+  if (tier.includes('free')) return 'free';
+  return 'free';
+}
+
+function formatTierLabel(tier) {
+  return tier === 'free' ? 'free plan' : `${tier} plan`;
+}
+
 function extractRefreshToken(v) {
   if (!v) return null;
   if (typeof v === 'string') { try { return extractRefreshToken(JSON.parse(v)); } catch { return null; } }
@@ -469,6 +484,20 @@ async function apiFetch(path) {
   } catch { return null; }
 }
 
+function logout() {
+  Object.keys(localStorage).forEach(function(key) {
+    if (key.includes('auth-token')) localStorage.removeItem(key);
+  });
+  Object.keys(localStorage).forEach(function(key) {
+    if (key.startsWith('vaultproof_') || key.startsWith('sb-')) localStorage.removeItem(key);
+  });
+  sessionStorage.clear();
+  window.location.replace('/app/login?logout=1');
+}
+
+const signOutBtn = document.getElementById('signOutBtn');
+if (signOutBtn) signOutBtn.addEventListener('click', logout);
+
 function formatNum(n) {
   if (n == null) return '0';
   if (n >= 1e6) return (n/1e6).toFixed(2) + 'M';
@@ -489,6 +518,20 @@ function normalizeUsage(data) {
   return ((data && (data.usage || data.days)) || [])
     .filter(r => r && r.date)
     .map(r => ({ date: r.date, calls: Number(r.calls||0), errors: Number(r.errors||0) }));
+}
+
+async function loadPlanSummary() {
+  const billing = await apiFetch('/billing/status');
+  const tier = normalizeTier(
+    billing?.tier ||
+    billing?.plan ||
+    billing?.subscriptionTier ||
+    billing?.subscription?.tier ||
+    billing?.subscription?.plan ||
+    billing?.customer?.tier
+  );
+  const usagePlanLabel = document.getElementById('usagePlanLabel');
+  if (usagePlanLabel) usagePlanLabel.textContent = formatTierLabel(tier);
 }
 
 // ── Chart ──
@@ -595,6 +638,7 @@ async function loadDashboard() {
 }
 
 loadDashboard();
+loadPlanSummary();
 
 // ── Project table (demo data) ──
 const PROJECTS = [

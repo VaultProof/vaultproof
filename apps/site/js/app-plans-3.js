@@ -69,6 +69,23 @@ const API = window.location.hostname.includes('dev.vaultproof') ? 'https://stagi
     let isAnnual = false;
     let currentTier = 'free';
 
+    function normalizeTier(value) {
+      var tier = String(value || '').trim().toLowerCase();
+      if (!tier) return 'free';
+      if (tier.indexOf('enterprise') !== -1) return 'enterprise';
+      if (tier.indexOf('team') !== -1) return 'team';
+      if (tier.indexOf('pro') !== -1) return 'pro';
+      if (tier.indexOf('starter') !== -1) return 'starter';
+      if (tier.indexOf('free') !== -1) return 'free';
+      return 'free';
+    }
+
+    function formatTierLabel(tier) {
+      return tier === 'free'
+        ? 'Free Plan'
+        : tier.charAt(0).toUpperCase() + tier.slice(1) + ' Plan';
+    }
+
     // Sidebar
     const sidebarEl = document.getElementById('sidebar');
     const overlayEl = document.getElementById('sidebarOverlay');
@@ -139,26 +156,34 @@ const API = window.location.hostname.includes('dev.vaultproof') ? 'https://stagi
         var res = await apiFetch('/billing/status');
         if (!res || !res.ok) { showPlan('free', false); return; }
         var data = await res.json();
-        currentTier = data.tier || 'free';
+        currentTier = normalizeTier(
+          data.tier ||
+          data.plan ||
+          data.subscriptionTier ||
+          (data.subscription && (data.subscription.tier || data.subscription.plan)) ||
+          (data.customer && data.customer.tier)
+        );
         showPlan(currentTier, data.hasSubscription);
       } catch {
         showPlan('free', false);
       }
     }
 
-    var tierRank = { free: 0, starter: 1, pro: 2, enterprise: 3 };
+    var tierRank = { free: 0, starter: 1, pro: 2, team: 3, enterprise: 4 };
 
     function showPlan(tier, hasSubscription) {
+      tier = normalizeTier(tier);
       var badge = document.getElementById('currentPlanBadge');
       var colors = {
         free: 'bg-gray-700/30 text-gray-400 border-gray-600/30',
         starter: 'bg-cyan-900/30 text-cyan-400 border-cyan-700/30',
         pro: 'bg-brand/15 text-brand border-brand/30',
+        team: 'bg-purple-900/30 text-purple-400 border-purple-700/30',
         enterprise: 'bg-amber-900/30 text-amber-400 border-amber-700/30',
       };
       var c = colors[tier] || colors.free;
       badge.className = 'inline-flex items-center px-4 py-1.5 rounded-xl text-sm font-semibold capitalize ' + c;
-      badge.textContent = tier === 'free' ? 'Free Plan' : tier.charAt(0).toUpperCase() + tier.slice(1) + ' Plan';
+      badge.textContent = formatTierLabel(tier);
 
       var currentRank = tierRank[tier] || 0;
 

@@ -87,6 +87,17 @@ const API = window.location.hostname.includes('dev.vaultproof') ? 'https://stagi
       document.getElementById('sessionExpired').classList.remove('hidden');
     }
 
+    function normalizeTier(value) {
+      var tier = String(value || '').trim().toLowerCase();
+      if (!tier) return 'free';
+      if (tier.indexOf('enterprise') !== -1) return 'enterprise';
+      if (tier.indexOf('team') !== -1) return 'team';
+      if (tier.indexOf('pro') !== -1) return 'pro';
+      if (tier.indexOf('starter') !== -1) return 'starter';
+      if (tier.indexOf('free') !== -1) return 'free';
+      return 'free';
+    }
+
     const sidebarEl = document.getElementById('sidebar');
     const overlayEl = document.getElementById('sidebarOverlay');
     document.getElementById('sidebarEmail').textContent = user.email || '';
@@ -1554,7 +1565,7 @@ const API = window.location.hostname.includes('dev.vaultproof') ? 'https://stagi
         var meRes = await apiFetch(API + '/auth/me');
         if (meRes && meRes.ok) {
           var meData = await meRes.json();
-          userTier = meData.tier || 'free';
+          userTier = normalizeTier(meData.tier || (meData.user && meData.user.tier));
           if (userTier === 'free' || userTier === 'starter') {
             var badge = document.getElementById('csvProBadge');
             if (badge) badge.classList.remove('hidden');

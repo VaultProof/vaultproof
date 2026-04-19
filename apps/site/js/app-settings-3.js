@@ -9,6 +9,23 @@ const API = window.location.hostname.includes('dev.vaultproof') ? 'https://stagi
 
     const user = JSON.parse(localStorage.getItem('vaultproof_user') || '{}');
 
+    function normalizeTier(value) {
+      const tier = String(value || '').trim().toLowerCase();
+      if (!tier) return 'free';
+      if (tier.includes('enterprise')) return 'enterprise';
+      if (tier.includes('team')) return 'team';
+      if (tier.includes('pro')) return 'pro';
+      if (tier.includes('starter')) return 'starter';
+      if (tier.includes('free')) return 'free';
+      return 'free';
+    }
+
+    function formatTierLabel(tier) {
+      return tier === 'free'
+        ? 'Free Plan'
+        : tier.charAt(0).toUpperCase() + tier.slice(1) + ' Plan';
+    }
+
 
     if (!token) { window.location.href = 'login'; }
 
@@ -410,7 +427,14 @@ const API = window.location.hostname.includes('dev.vaultproof') ? 'https://stagi
           return;
         }
         const data = await res.json();
-        const currentTier = data.tier || 'free';
+        const currentTier = normalizeTier(
+          data.tier ||
+          data.plan ||
+          data.subscriptionTier ||
+          data.subscription?.tier ||
+          data.subscription?.plan ||
+          data.customer?.tier
+        );
         window._currentTier = currentTier;
         const isSubscribed = data.hasSubscription || data.subscribed || false;
 
@@ -425,14 +449,14 @@ const API = window.location.hostname.includes('dev.vaultproof') ? 'https://stagi
         };
         const colorClass = tierColors[currentTier] || tierColors.free;
         badge.className = `inline-flex items-center px-3 py-1 rounded-xl text-sm font-medium capitalize ${colorClass}`;
-        badge.textContent = currentTier === 'free' ? 'Free Plan' : currentTier.charAt(0).toUpperCase() + currentTier.slice(1) + ' Plan';
+        badge.textContent = formatTierLabel(currentTier);
 
         // Update Plan & Usage section
         const planBadge = document.getElementById('planBadge');
         if (planBadge) {
           const planColor = tierColors[currentTier] || tierColors.free;
           planBadge.className = `inline-flex items-center px-3 py-1 rounded-xl text-sm font-medium capitalize ${planColor}`;
-          planBadge.textContent = currentTier === 'free' ? 'Free Plan' : currentTier.charAt(0).toUpperCase() + currentTier.slice(1) + ' Plan';
+          planBadge.textContent = formatTierLabel(currentTier);
         }
         const tierLimits = {
           free: { keys: 3, calls: 10000 },
@@ -510,7 +534,7 @@ const API = window.location.hostname.includes('dev.vaultproof') ? 'https://stagi
         }
 
         // Hide upgrade cards entirely for top tier
-        if (currentTier === 'pro') {
+        if (currentIdx >= tierOrder.indexOf('pro')) {
           document.getElementById('billingUpgradeCards').classList.add('hidden');
         }
 
