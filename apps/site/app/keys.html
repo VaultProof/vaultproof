@@ -1,387 +1,1028 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <!-- Google Analytics -->
-    <script async src="https://www.googletagmanager.com/gtag/js?id=G-NE5RYX1WTF"></script>
-    <script src="/js/app-keys-1.js" defer></script>
+  <!-- Google Analytics -->
+  <script async src="https://www.googletagmanager.com/gtag/js?id=G-NE5RYX1WTF"></script>
+  <script src="/js/app-keys-1.js" defer></script>
 
-    <link rel="icon" type="image/png" href="/favicon.png">
+  <link rel="icon" type="image/png" href="/favicon.png">
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>API Keys — VaultProof</title>
-  <!-- Tailwind CDN: SRI not applicable (dynamic response) -->
+  <title>API Keys - VaultProof</title>
+  <!-- Tailwind CDN: SRI not applicable (dynamic response). Existing keys JS still emits utility classes. -->
   <script src="https://cdn.tailwindcss.com/3.4.17"></script>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter+Tight:wght@500;600;700;800&amp;family=Inter:wght@400;500;600;700&amp;family=JetBrains+Mono:wght@400;500;600&amp;display=swap" rel="stylesheet" />
   <script src="/js/app-keys-2.js" defer></script>
   <style>
-    *, *::before, *::after { box-sizing: border-box; }
-    body { font-family: 'Inter', sans-serif; background: #0a0a0f; margin: 0; }
-    ::-webkit-scrollbar { width: 6px; height: 6px; }
-    ::-webkit-scrollbar-track { background: #0a0a0f; }
-    ::-webkit-scrollbar-thumb { background: #2a2a3a; border-radius: 3px; }
-    ::-webkit-scrollbar-thumb:hover { background: #3a3a4a; }
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
-    /* Animations */
+    :root {
+      --accent: #d97706;
+      --accent-hover: #b45309;
+      --bg: #fafaf7;
+      --bg-mid: #f3f3ee;
+      --bg-card: #fff;
+      --rule-color: #e7e5de;
+      --hair-color: #eeece5;
+      --text: #171717;
+      --text-mid: #3f3f37;
+      --text-muted: #525252;
+      --text-faint: #8a8a82;
+      --danger: #b91c1c;
+      --success: #15803d;
+      --mono: "JetBrains Mono", ui-monospace, monospace;
+      --display: "Inter Tight", "Inter", system-ui, sans-serif;
+      --body: "Inter", system-ui, sans-serif;
+      --rule: 1px solid var(--rule-color);
+      --hair: 1px solid var(--hair-color);
+    }
+
+    html, body {
+      min-height: 100%;
+      background: #e8e6e0;
+      color: var(--text);
+      font-family: var(--body);
+      font-size: 14px;
+      line-height: 1.5;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    body { min-height: 100vh; }
+    a { color: inherit; text-decoration: none; }
+    button, input, select { font: inherit; }
+    button { cursor: pointer; }
+    .hidden { display: none !important; }
+    .flex { display: flex !important; }
+
+    ::selection { background: var(--accent); color: #fff; }
+    ::-webkit-scrollbar { width: 8px; height: 8px; }
+    ::-webkit-scrollbar-track { background: var(--bg-mid); }
+    ::-webkit-scrollbar-thumb { background: #d8d5cc; border-radius: 999px; }
+    ::-webkit-scrollbar-thumb:hover { background: #c7c3b8; }
+
+    .page {
+      max-width: 1280px;
+      min-height: 100vh;
+      margin: 0 auto;
+      background: var(--bg);
+      border-left: var(--rule);
+      border-right: var(--rule);
+      position: relative;
+    }
+
     @keyframes fadeInUp {
-      from { opacity: 0; transform: translateY(16px); }
+      from { opacity: 0; transform: translateY(10px); }
       to { opacity: 1; transform: translateY(0); }
     }
-    @keyframes pulse-status {
-      0%, 100% { opacity: 1; }
-      50% { opacity: 0.5; }
-    }
+
     .anim-card {
       opacity: 0;
-      animation: fadeInUp 0.4s ease forwards;
-    }
-    .pulse-active {
-      animation: pulse-status 2s ease-in-out infinite;
+      animation: fadeInUp 0.28s ease forwards;
     }
 
-    /* Sidebar */
-    .sidebar-expanded { width: 220px; }
-    .sidebar-collapsed { width: 64px; }
-    .sidebar-collapsed .sidebar-label { display: none; }
-    .sidebar-collapsed .sidebar-logo-text { display: none; }
-    .sidebar-collapsed .sidebar-user-info { display: none; }
-    .sidebar-collapsed .sidebar-nav-item { justify-content: center; padding-left: 0; padding-right: 0; }
-    .sidebar-collapsed .sidebar-bottom { align-items: center; }
-    .sidebar-collapsed .sidebar-bottom .logout-text { display: none; }
+    /* Light-theme shims for classes emitted by app-keys-3.js. */
+    .bg-card { background: var(--bg-card) !important; }
+    .bg-surface { background: var(--bg) !important; }
+    .bg-brand { background: var(--text) !important; }
+    .hover\:bg-brand-hover:hover { background: #333 !important; }
+    .border-border { border-color: var(--rule-color) !important; }
+    .text-white, .text-gray-100 { color: var(--text) !important; }
+    .text-gray-300, .text-gray-400 { color: var(--text-muted) !important; }
+    .text-gray-500, .text-gray-600 { color: var(--text-faint) !important; }
+    .text-brand, .text-indigo-400 { color: var(--accent) !important; }
+    .text-amber-400 { color: var(--accent-hover) !important; }
+    .hover\:text-indigo-400:hover, .hover\:text-indigo-300:hover { color: var(--accent-hover) !important; }
+    .focus\:border-brand:focus, .focus\:border-\[\#6366f1\]:focus { border-color: rgba(217,119,6,0.65) !important; }
+    .bg-indigo-500\/10, .bg-brand\/10 { background: rgba(217,119,6,0.08) !important; }
+    .bg-indigo-950\/30, .bg-indigo-900\/20 { background: rgba(217,119,6,0.06) !important; }
+    .border-indigo-500\/20, .border-brand\/20, .border-indigo-900\/50 { border-color: rgba(217,119,6,0.2) !important; }
+    .hover\:bg-brand\/20:hover, .hover\:bg-indigo-900\/20:hover { background: rgba(217,119,6,0.12) !important; }
+    .btn-glow, .btn-glow:hover { box-shadow: none !important; }
 
-    .btn-glow {
-      box-shadow: 0 0 20px rgba(99,102,241,0.3);
+    .-translate-x-full { transform: translateX(-100%); }
+
+    .sidebar-overlay {
+      position: fixed;
+      inset: 0;
+      z-index: 80;
+      background: rgba(23, 23, 23, 0.42);
     }
-    .btn-glow:hover {
-      box-shadow: 0 0 30px rgba(99,102,241,0.4);
+
+    .topbar {
+      height: 53px;
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      padding: 13px 28px;
+      border-bottom: var(--rule);
+      background: var(--bg);
+      font-family: var(--mono);
+      font-size: 12px;
+      position: sticky;
+      top: 0;
+      z-index: 60;
+    }
+
+    .topbar-logo {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-weight: 600;
+      letter-spacing: 0.5px;
+      white-space: nowrap;
+    }
+
+    .topbar-logo img {
+      width: 22px;
+      height: 22px;
+      object-fit: contain;
+    }
+
+    .topbar-sep { color: #a3a39a; }
+    .topbar-crumb { color: var(--text-muted); }
+    .topbar-spacer { flex: 1; }
+
+    .topbar-link {
+      color: var(--text-muted);
+    }
+
+    .topbar-link:hover { color: var(--text); }
+
+    .menu-btn {
+      display: none;
+      width: 32px;
+      height: 32px;
+      border: var(--rule);
+      border-radius: 4px;
+      background: var(--bg-card);
+      color: var(--text-muted);
+      align-items: center;
+      justify-content: center;
+    }
+
+    .menu-btn:hover { color: var(--text); background: var(--bg-mid); }
+
+    .app-layout {
+      display: grid;
+      grid-template-columns: 220px minmax(0, 1fr);
+      min-height: calc(100vh - 53px);
+    }
+
+    .sidebar {
+      border-right: var(--rule);
+      padding: 20px 16px;
+      background: var(--bg);
+      display: flex;
+      flex-direction: column;
+      gap: 22px;
+      transition: transform 0.18s ease;
+      z-index: 90;
+    }
+
+    .sidebar-group { display: grid; gap: 2px; }
+
+    .sidebar-head {
+      font-family: var(--mono);
+      font-size: 10px;
+      letter-spacing: 0.8px;
+      text-transform: uppercase;
+      color: var(--text-faint);
+      padding: 6px 8px;
+    }
+
+    .sidebar-nav-item {
+      font-family: var(--mono);
+      font-size: 12.5px;
+      color: var(--text-muted);
+      padding: 7px 10px;
+      border-radius: 3px;
+      border: 1px solid transparent;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .sidebar-nav-item:hover { color: var(--text); }
+    .sidebar-nav-item.active { color: var(--text); background: var(--bg-card); border: var(--rule); }
+
+    .sidebar-dot {
+      font-size: 8px;
+      color: #c4c4bd;
+      line-height: 1;
+    }
+
+    .sidebar-nav-item.active .sidebar-dot { color: var(--accent); }
+
+    .sidebar-bottom {
+      margin-top: auto;
+      border-top: var(--rule);
+      padding-top: 14px;
+      display: grid;
+      gap: 10px;
+    }
+
+    .sidebar-user-info {
+      font-family: var(--mono);
+      font-size: 11px;
+      color: var(--text-faint);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .logout-btn {
+      border: var(--rule);
+      background: var(--bg-card);
+      border-radius: 3px;
+      padding: 8px 10px;
+      font-family: var(--mono);
+      font-size: 12px;
+      color: var(--text-muted);
+      text-align: left;
+    }
+
+    .logout-btn:hover { color: var(--danger); background: #fdfdfa; }
+
+    .main-shell {
+      min-width: 0;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .subbar {
+      min-height: 56px;
+      border-bottom: var(--rule);
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      padding: 0 32px;
+      background: var(--bg);
+    }
+
+    .subbar-title {
+      font-family: var(--display);
+      font-size: 20px;
+      letter-spacing: -0.3px;
+      font-weight: 600;
+    }
+
+    .subbar-caption {
+      margin-left: auto;
+      color: var(--text-faint);
+      font-family: var(--mono);
+      font-size: 11px;
+    }
+
+    .main {
+      padding: 28px 32px 40px;
+      flex: 1;
+    }
+
+    .content {
+      display: grid;
+      gap: 24px;
+    }
+
+    .page-header {
+      display: flex;
+      align-items: flex-start;
+      gap: 18px;
+    }
+
+    .page-title-row {
+      display: flex;
+      align-items: baseline;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+
+    .page-title {
+      font-family: var(--display);
+      font-size: 30px;
+      line-height: 1.15;
+      letter-spacing: -0.8px;
+      font-weight: 600;
+    }
+
+    .page-meta {
+      font-family: var(--mono);
+      font-size: 12px;
+      color: var(--text-faint);
+    }
+
+    .page-desc {
+      max-width: 720px;
+      margin-top: 6px;
+      color: var(--text-muted);
+      font-size: 13px;
+    }
+
+    .page-actions {
+      margin-left: auto;
+      display: flex;
+      gap: 8px;
+      flex-shrink: 0;
+    }
+
+    .btn {
+      min-height: 36px;
+      border-radius: 3px;
+      border: var(--rule);
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      padding: 0 12px;
+      font-family: var(--mono);
+      font-size: 12px;
+      transition: background 0.15s, color 0.15s, border-color 0.15s, opacity 0.15s;
+    }
+
+    .btn:disabled { opacity: 0.55; cursor: wait; }
+    .btn-primary { background: var(--text); border-color: var(--text); color: var(--bg); }
+    .btn-primary:hover { background: #333; }
+    .btn-outline { background: var(--bg-card); color: var(--text-muted); }
+    .btn-outline:hover { background: var(--bg-mid); color: var(--text); }
+    .btn-danger { background: var(--danger); border-color: var(--danger); color: #fff; }
+    .btn-danger:hover { background: #991b1b; }
+
+    .kpi-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      border: var(--rule);
+      border-radius: 4px;
+      overflow: hidden;
+      background: var(--bg-card);
+    }
+
+    .kpi-cell {
+      padding: 20px;
+      text-align: left;
+    }
+
+    .kpi-cell + .kpi-cell { border-left: var(--rule); }
+
+    .kpi-label {
+      font-family: var(--mono);
+      font-size: 10.5px;
+      letter-spacing: 0.8px;
+      text-transform: uppercase;
+      color: var(--text-faint);
+    }
+
+    .kpi-value {
+      font-family: var(--display);
+      font-weight: 600;
+      font-size: 30px;
+      letter-spacing: -0.5px;
+      margin-top: 6px;
+      color: var(--text);
+    }
+
+    .kpi-sub {
+      font-family: var(--mono);
+      font-size: 11px;
+      color: var(--text-muted);
+      margin-top: 4px;
+    }
+
+    .tip {
+      border: var(--rule);
+      border-radius: 4px;
+      background: var(--bg-card);
+      padding: 13px 16px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      color: var(--text-muted);
+    }
+
+    .tip-glyph {
+      color: var(--accent);
+      font-family: var(--mono);
+      font-weight: 700;
+    }
+
+    .tip code,
+    .code-pill {
+      font-family: var(--mono);
+      font-size: 11px;
+      color: var(--accent);
+      background: rgba(217,119,6,0.08);
+      border: 1px solid rgba(217,119,6,0.18);
+      border-radius: 3px;
+      padding: 2px 6px;
+    }
+
+    .tip-close {
+      margin-left: auto;
+      width: 28px;
+      height: 28px;
+      border: 0;
+      background: transparent;
+      color: var(--text-faint);
+      font-size: 20px;
+      line-height: 1;
+    }
+
+    .tip-close:hover { color: var(--text); }
+
+    #projectsContainer {
+      display: grid;
+      gap: 14px;
+    }
+
+    #projectsLoading,
+    .load-error,
+    .empty-state {
+      border: var(--rule);
+      border-radius: 4px;
+      background: var(--bg-card);
+      padding: 34px 20px;
+      text-align: center;
+      color: var(--text-muted);
+      font-family: var(--mono);
+      font-size: 12px;
+    }
+
+    #projectsContainer .anim-card {
+      border-radius: 4px !important;
+      box-shadow: none !important;
+      margin-bottom: 0 !important;
+      background: var(--bg-card) !important;
+      border: var(--rule) !important;
+    }
+
+    #projectsContainer .anim-card:hover {
+      border-color: #d8d5cc !important;
+      background: #fdfdfa !important;
+    }
+
+    #projectsContainer .border-t,
+    #projectsContainer .border-b {
+      border-color: var(--hair-color) !important;
+    }
+
+    #projectsContainer code {
+      color: var(--accent) !important;
+      font-family: var(--mono);
+    }
+
+    .project-section-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+    }
+
+    .project-section-title {
+      font-family: var(--display);
+      font-size: 20px;
+      letter-spacing: -0.3px;
+      font-weight: 600;
+    }
+
+    .project-section-sub {
+      color: var(--text-faint);
+      font-family: var(--mono);
+      font-size: 11px;
+      margin-top: 2px;
+    }
+
+    .toast {
+      position: fixed;
+      top: 18px;
+      right: 18px;
+      z-index: 120;
+      max-width: 360px;
+    }
+
+    .toast-card {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      border-radius: 4px;
+      border: var(--rule);
+      background: var(--bg-card);
+      color: var(--text);
+      padding: 11px 13px;
+      font-size: 13px;
+      box-shadow: 0 18px 45px rgba(23, 23, 23, 0.12);
+    }
+
+    .toast-success { border-color: rgba(21,128,61,0.28); color: var(--success); }
+    .toast-error { border-color: rgba(185,28,28,0.28); color: var(--danger); }
+    .toast-warning { border-color: rgba(217,119,6,0.32); color: var(--accent-hover); }
+    .toast-info { color: var(--text-muted); }
+    .toast-close {
+      border: 0;
+      background: transparent;
+      color: var(--text-faint);
+      margin-left: auto;
+      font-size: 18px;
+    }
+    .toast-close:hover { color: var(--text); }
+
+    .modal-shell {
+      position: fixed;
+      inset: 0;
+      z-index: 110;
+      align-items: center;
+      justify-content: center;
+      padding: 18px;
+      background: rgba(23, 23, 23, 0.42);
+      backdrop-filter: blur(4px);
+    }
+
+    .modal-card {
+      width: 100%;
+      max-width: 460px;
+      max-height: calc(100vh - 36px);
+      overflow: auto;
+      background: var(--bg-card);
+      border: var(--rule);
+      border-radius: 4px;
+      box-shadow: 0 24px 70px rgba(23, 23, 23, 0.2);
+    }
+
+    .modal-head {
+      border-bottom: var(--rule);
+      padding: 14px 18px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+    }
+
+    .modal-title {
+      font-family: var(--display);
+      font-size: 20px;
+      letter-spacing: -0.3px;
+      font-weight: 600;
+    }
+
+    .modal-close {
+      width: 28px;
+      height: 28px;
+      border: var(--rule);
+      background: var(--bg);
+      border-radius: 3px;
+      color: var(--text-faint);
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 18px;
+    }
+
+    .modal-close:hover { color: var(--text); background: var(--bg-mid); }
+
+    .modal-body {
+      padding: 18px;
+    }
+
+    .modal-copy {
+      color: var(--text-muted);
+      font-size: 13px;
+      line-height: 1.55;
+      margin-bottom: 16px;
+    }
+
+    .form-stack {
+      display: grid;
+      gap: 14px;
+    }
+
+    .field-label {
+      display: block;
+      color: var(--text-muted);
+      font-family: var(--mono);
+      font-size: 11px;
+      margin-bottom: 6px;
+      letter-spacing: 0.2px;
+    }
+
+    .field-hint {
+      color: var(--text-faint);
+      font-weight: 400;
+    }
+
+    .form-control {
+      width: 100%;
+      min-height: 42px;
+      background: var(--bg);
+      border: var(--rule);
+      border-radius: 3px;
+      color: var(--text);
+      padding: 0 12px;
+      outline: none;
+      font-size: 13px;
+      transition: border-color 0.15s, box-shadow 0.15s, background 0.15s;
+    }
+
+    .form-control.mono { font-family: var(--mono); font-size: 12px; }
+    .form-control::placeholder { color: var(--text-faint); }
+
+    .form-control:focus {
+      background: #fff;
+      border-color: rgba(217,119,6,0.62);
+      box-shadow: 0 0 0 3px rgba(217,119,6,0.11);
+    }
+
+    select.form-control {
+      appearance: none;
+      background-image: linear-gradient(45deg, transparent 50%, var(--text-faint) 50%), linear-gradient(135deg, var(--text-faint) 50%, transparent 50%);
+      background-position: calc(100% - 16px) 18px, calc(100% - 11px) 18px;
+      background-size: 5px 5px, 5px 5px;
+      background-repeat: no-repeat;
+      padding-right: 34px;
+    }
+
+    .modal-actions {
+      display: flex;
+      gap: 8px;
+      padding-top: 2px;
+    }
+
+    .modal-actions .btn { flex: 1; }
+
+    .security-note {
+      display: flex;
+      align-items: flex-start;
+      gap: 8px;
+      color: var(--text-faint);
+      font-size: 12px;
+      line-height: 1.45;
+    }
+
+    .security-note span { color: var(--accent); font-family: var(--mono); }
+
+    .form-msg {
+      font-size: 13px;
+      color: var(--danger);
+    }
+
+    .detected {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      color: var(--success);
+      font-size: 13px;
+      margin-top: 8px;
+    }
+
+    .session-expired {
+      position: fixed;
+      inset: 0;
+      z-index: 130;
+      background: rgba(23, 23, 23, 0.62);
+      align-items: center;
+      justify-content: center;
+      padding: 18px;
+      backdrop-filter: blur(4px);
+    }
+
+    .session-expired-card {
+      width: 100%;
+      max-width: 360px;
+      border: var(--rule);
+      background: var(--bg-card);
+      border-radius: 4px;
+      padding: 26px;
+      text-align: center;
+    }
+
+    .session-expired-icon {
+      width: 46px;
+      height: 46px;
+      border-radius: 999px;
+      background: rgba(217,119,6,0.08);
+      border: 1px solid rgba(217,119,6,0.2);
+      color: var(--accent);
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      font-family: var(--mono);
+      font-weight: 700;
+      margin-bottom: 14px;
+    }
+
+    .session-expired h3 {
+      font-family: var(--display);
+      font-size: 20px;
+      letter-spacing: -0.3px;
+      margin-bottom: 6px;
+    }
+
+    .session-expired p {
+      color: var(--text-muted);
+      font-size: 13px;
+      margin-bottom: 18px;
+    }
+
+    @media (min-width: 1024px) {
+      .lg\:hidden { display: none !important; }
+      .lg\:translate-x-0 { transform: translateX(0) !important; }
+    }
+
+    @media (max-width: 1023px) {
+      .page { border-left: none; border-right: none; }
+      .topbar { padding: 12px 16px; }
+      .menu-btn { display: inline-flex; }
+      .topbar-link, .topbar .topbar-sep:nth-of-type(2), .topbar-crumb { display: none; }
+      .app-layout { display: block; }
+      .sidebar {
+        position: fixed;
+        top: 0;
+        left: 0;
+        height: 100vh;
+        width: 240px;
+        border-right: var(--rule);
+        box-shadow: 16px 0 44px rgba(23,23,23,0.14);
+      }
+      .subbar { padding: 0 20px; }
+      .subbar-caption { display: none; }
+      .main { padding: 24px 20px 36px; }
+      .page-header { flex-direction: column; }
+      .page-actions { margin-left: 0; width: 100%; }
+      .page-actions .btn { flex: 1; }
+    }
+
+    @media (max-width: 680px) {
+      .kpi-grid { grid-template-columns: 1fr; }
+      .kpi-cell + .kpi-cell { border-left: 0; border-top: var(--rule); }
+      .project-section-head { flex-direction: column; align-items: stretch; }
+      .modal-actions { flex-direction: column; }
+      .tip { align-items: flex-start; }
     }
   </style>
 </head>
-<body class="text-gray-100 min-h-screen flex">
+<body>
+  <div class="page">
+    <div id="sidebarOverlay" data-action="toggle-mobile-sidebar" class="sidebar-overlay hidden lg:hidden"></div>
 
-  <!-- Sidebar Overlay (mobile) -->
-  <div id="sidebarOverlay" data-action="toggle-mobile-sidebar" class="fixed inset-0 bg-black/60 z-40 hidden lg:hidden"></div>
-
-  <!-- Left Sidebar -->
-  <aside id="sidebar" class="fixed top-0 left-0 h-full bg-card border-r border-border z-50 flex flex-col transition-all duration-200 sidebar-expanded -translate-x-full lg:translate-x-0">
-    <!-- Logo -->
-    <div class="flex items-center gap-3 px-4 h-14 border-b border-border flex-shrink-0">
-      <img src="/og-image2.png" alt="VaultProof" class="w-9 h-9 flex-shrink-0 rounded-lg" />
-      <span class="text-lg font-bold sidebar-logo-text tracking-tight" style="font-family:'Space Grotesk',sans-serif">VaultProof</span>
-    </div>
-
-    <!-- Nav -->
-    <nav class="flex-1 px-2 py-2 space-y-0.5 overflow-y-auto">
-      <a href="/app/" class="sidebar-nav-item flex items-center gap-3 px-3 py-2 rounded-md text-gray-400 hover:text-white hover:bg-white/[0.06] text-sm transition">
-        <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zm10 0a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zm10 0a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z"/>
-        </svg>
-        <span class="sidebar-label">Dashboard</span>
-      </a>
-      <a href="/app/keys" class="sidebar-nav-item flex items-center gap-3 px-3 py-2 rounded-md bg-white/[0.08] text-brand font-medium text-sm transition">
-        <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z"/>
-        </svg>
-        <span class="sidebar-label">API Keys</span>
-      </a>
-      <a href="/app/agents" class="sidebar-nav-item flex items-center gap-3 px-3 py-2 rounded-md text-gray-400 hover:text-white hover:bg-white/[0.06] text-sm transition">
-        <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17H3a2 2 0 01-2-2V5a2 2 0 012-2h14a2 2 0 012 2v10a2 2 0 01-2 2h-2"/>
-        </svg>
-        <span class="sidebar-label">Agents</span>
-      </a>
-      <a href="/app/scanner" class="sidebar-nav-item flex items-center gap-3 px-3 py-2 rounded-md text-gray-400 hover:text-white hover:bg-white/[0.06] text-sm transition">
-        <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
-        </svg>
-        <span class="sidebar-label">Scanner</span>
-      </a>
-      <a href="/app/logs" class="sidebar-nav-item flex items-center gap-3 px-3 py-2 rounded-md text-gray-400 hover:text-white hover:bg-white/[0.06] text-sm transition">
-        <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"/>
-        </svg>
-        <span class="sidebar-label">Access Logs</span>
-      </a>
-      <a href="/app/settings" class="sidebar-nav-item flex items-center gap-3 px-3 py-2 rounded-md text-gray-400 hover:text-white hover:bg-white/[0.06] text-sm transition">
-        <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.066 2.573c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.573 1.066c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.066-2.573c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/>
-          <path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
-        </svg>
-        <span class="sidebar-label">Settings</span>
-      </a>
-      <a href="/app/plans" class="sidebar-nav-item flex items-center gap-3 px-3 py-2 rounded-md text-gray-400 hover:text-white hover:bg-white/[0.06] text-sm transition">
-        <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z"/>
-        </svg>
-        <span class="sidebar-label">Plans</span>
-      </a>
-
-      <div class="mt-4 pt-4 border-t border-border">
-        <a href="/docs" class="sidebar-nav-item flex items-center gap-3 px-3 py-2 rounded-md text-gray-400 hover:text-white hover:bg-white/[0.06] text-sm transition">
-          <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"/>
-          </svg>
-          <span class="sidebar-label">Documentation</span>
-        </a>
-        <a href="mailto:hello@vaultproof.dev" class="sidebar-nav-item flex items-center gap-3 px-3 py-2 rounded-md text-gray-400 hover:text-white hover:bg-white/[0.06] text-sm transition">
-          <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/>
-          </svg>
-          <span class="sidebar-label">Questions? hello@vaultproof.dev</span>
-        </a>
-      </div>
-    </nav>
-
-    <!-- Sidebar Bottom -->
-    <div class="sidebar-bottom px-3 py-3 border-t border-border flex-shrink-0">
-      <div class="sidebar-user-info text-xs text-gray-500 truncate mb-2" id="sidebarEmail"></div>
-      <button id="logoutBtn" type="button" class="flex items-center gap-2 text-sm text-gray-400 hover:text-red-400 transition">
-        <svg class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"/>
-        </svg>
-        <span class="logout-text sidebar-label">Logout</span>
-      </button>
-    </div>
-  </aside>
-
-  <!-- Create Project Modal -->
-  <div id="createProjectModal" class="fixed inset-0 z-[60] hidden items-center justify-center bg-black/60 backdrop-blur-sm">
-    <div class="bg-card border border-border rounded-lg w-full max-w-md mx-4 p-5">
-      <div class="flex items-center justify-between mb-5">
-        <h3 class="text-lg font-semibold">New Project</h3>
-        <button type="button" data-action="close-create-project-modal" class="text-gray-500 hover:text-white transition">&times;</button>
-      </div>
-      <p class="text-sm text-gray-400 mb-4">Create a project to organize and protect your API keys. You can also run <code class="text-indigo-400 bg-indigo-500/10 px-1.5 py-0.5 rounded text-xs">npx @vaultproof/init</code> to do this automatically.</p>
-      <form id="createProjectForm" class="space-y-4">
-        <div>
-          <label class="block text-sm text-gray-400 mb-1.5">Project Name <span class="text-gray-600">(optional)</span></label>
-          <input type="text" id="newProjectName" placeholder="My App" class="w-full px-4 py-2.5 bg-surface border border-border rounded-md text-sm text-white placeholder-gray-600 focus:outline-none focus:border-brand transition" />
-        </div>
-        <div id="createProjectMsg" class="text-sm hidden"></div>
-        <div class="flex gap-3">
-          <button type="button" data-action="close-create-project-modal" class="flex-1 px-4 py-2.5 bg-surface border border-border rounded-md text-sm text-gray-400 hover:text-white transition">Cancel</button>
-          <button type="submit" id="createProjectBtn" class="flex-1 px-4 py-2.5 bg-brand hover:bg-brand-hover text-white rounded-md text-sm font-medium transition btn-glow">Create Project</button>
-        </div>
-      </form>
-    </div>
-  </div>
-
-  <!-- Add Key Modal -->
-  <div id="addKeyModal" class="fixed inset-0 z-[60] hidden items-center justify-center bg-black/60 backdrop-blur-sm">
-    <div class="bg-card border border-border rounded-lg w-full max-w-md mx-4 p-5">
-      <div class="flex items-center justify-between mb-5">
-        <h3 class="text-lg font-semibold">Add API Key</h3>
-        <button type="button" data-action="close-add-key-modal" class="text-gray-500 hover:text-white transition">&times;</button>
-      </div>
-      <p class="text-sm text-gray-400 mb-4">Paste an API key — the provider is detected automatically. The key is split in your browser and never leaves your device.</p>
-      <form id="addKeyForm" class="space-y-4">
-        <input type="hidden" id="addKeyProjectId" />
-        <div>
-          <label class="block text-sm text-gray-400 mb-1.5">API Key</label>
-          <input type="password" id="addKeyValue" required placeholder="Paste your API key..." class="w-full px-4 py-2.5 bg-surface border border-border rounded-md text-sm text-white placeholder-gray-600 font-mono focus:outline-none focus:border-brand transition" autocomplete="off" />
-          <div id="addKeyDetected" class="hidden mt-2 flex items-center gap-2 text-sm">
-            <span class="text-green-400">✓</span>
-            <span id="addKeyDetectedLabel" class="text-green-400"></span>
-          </div>
-        </div>
-        <div>
-          <label class="block text-sm text-gray-400 mb-1.5">Provider <span class="text-gray-600">(auto-detected, or select manually)</span></label>
-          <select id="addKeyProvider" required class="w-full px-4 py-2.5 bg-surface border border-border rounded-md text-sm text-white focus:outline-none focus:border-brand transition appearance-none">
-            <option value="">Paste a key above to auto-detect...</option>
-            <option value="openai">OpenAI</option>
-            <option value="anthropic">Anthropic</option>
-            <option value="stripe">Stripe</option>
-            <option value="groq">Groq</option>
-            <option value="mistral">Mistral</option>
-            <option value="together">Together AI</option>
-            <option value="fireworks">Fireworks AI</option>
-            <option value="deepseek">DeepSeek</option>
-            <option value="xai">xAI (Grok)</option>
-            <option value="openrouter">OpenRouter</option>
-            <option value="resend">Resend</option>
-            <option value="sendgrid">SendGrid</option>
-            <option value="linear">Linear</option>
-            <option value="notion">Notion</option>
-            <option value="github">GitHub</option>
-          </select>
-        </div>
-        <div>
-          <label class="block text-sm text-gray-400 mb-1.5">Environment Variable Name</label>
-          <input type="text" id="addKeyEnvVar" placeholder="auto-filled from provider" class="w-full px-4 py-2.5 bg-surface border border-border rounded-md text-sm text-white placeholder-gray-600 font-mono focus:outline-none focus:border-brand transition" />
-        </div>
-        <p class="text-xs text-gray-500 flex items-center gap-1.5">
-          <svg class="w-3.5 h-3.5 text-brand" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/></svg>
-          Key is split in your browser using Shamir Secret Sharing. The plaintext never leaves your device.
-        </p>
-        <div id="addKeyMsg" class="text-sm hidden"></div>
-        <div class="flex gap-3">
-          <button type="button" data-action="close-add-key-modal" class="flex-1 px-4 py-2.5 bg-surface border border-border rounded-md text-sm text-gray-400 hover:text-white transition">Cancel</button>
-          <button type="submit" id="addKeyBtn" class="flex-1 px-4 py-2.5 bg-brand hover:bg-brand-hover text-white rounded-md text-sm font-medium transition btn-glow">Split &amp; Protect</button>
-        </div>
-      </form>
-    </div>
-  </div>
-
-  <!-- Rotate Key Modal -->
-  <div id="rotateModal" class="fixed inset-0 z-[60] hidden items-center justify-center bg-black/60 backdrop-blur-sm">
-    <div class="bg-card border border-border rounded-lg w-full max-w-md mx-4 p-5">
-      <div class="flex items-center justify-between mb-5">
-        <h3 class="text-lg font-semibold">Rotate Key</h3>
-        <button type="button" data-action="close-rotate-modal" class="text-gray-500 hover:text-white transition">
-          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
-        </button>
-      </div>
-      <p class="text-sm text-gray-400 mb-4">Paste the new API key value. It will be split in your browser and the encrypted shares will replace the old ones. Your project ID stays the same -- no code changes needed.</p>
-      <form id="rotateForm" class="space-y-4">
-        <input type="hidden" id="rotateProjectId" />
-        <input type="hidden" id="rotateKeyId" />
-        <input type="hidden" id="rotateKeyProvider" />
-        <div>
-          <label class="block text-sm text-gray-400 mb-1.5">New API Key</label>
-          <input type="password" id="rotateNewKey" required placeholder="Paste new key value..." class="w-full px-4 py-2.5 bg-[#111118] border border-[#1e1e2e] rounded-md text-sm text-white placeholder-gray-600 font-mono focus:outline-none focus:border-[#6366f1] transition" autocomplete="off" />
-        </div>
-        <p class="text-xs text-gray-500 flex items-center gap-1.5">
-          <svg class="w-3.5 h-3.5 text-brand" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/></svg>
-          Key will be split in your browser before storage.
-        </p>
-        <div id="rotateMsg" class="text-sm hidden"></div>
-        <div class="flex gap-3 pt-1">
-          <button type="button" data-action="close-rotate-modal" class="flex-1 px-4 py-2.5 bg-surface border border-border rounded-md text-sm text-gray-400 hover:text-white transition">Cancel</button>
-          <button type="submit" id="rotateBtn" class="flex-1 px-4 py-2.5 bg-brand hover:bg-brand-hover text-white rounded-md text-sm font-medium transition btn-glow">Split &amp; Rotate</button>
-        </div>
-      </form>
-    </div>
-  </div>
-
-  <!-- Delete Confirmation Modal -->
-  <div id="confirmModal" class="fixed inset-0 z-[60] hidden items-center justify-center bg-black/60 backdrop-blur-sm">
-    <div class="bg-card border border-border rounded-lg w-full max-w-sm mx-4 p-5">
-      <div class="flex items-center justify-between mb-4">
-        <h3 class="text-lg font-semibold" id="confirmTitle">Confirm</h3>
-        <button type="button" data-action="close-confirm-modal" class="text-gray-500 hover:text-white transition">
-          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
-        </button>
-      </div>
-      <p class="text-sm text-gray-400 mb-5" id="confirmMessage"></p>
-      <div class="flex gap-3">
-        <button type="button" data-action="close-confirm-modal" class="flex-1 px-4 py-2.5 bg-surface border border-border rounded-md text-sm text-gray-400 hover:text-white transition">Cancel</button>
-        <button type="button" data-action="execute-confirm" id="confirmActionBtn" class="flex-1 px-4 py-2.5 bg-red-600 hover:bg-red-700 text-white rounded-md text-sm font-medium transition">Delete</button>
-      </div>
-    </div>
-  </div>
-
-  <!-- Main wrapper -->
-  <div id="mainWrapper" class="flex-1 flex flex-col min-h-screen transition-all duration-200 lg:ml-[220px]">
-
-    <!-- Top Navbar -->
-    <header class="sticky top-0 z-30 bg-surface/80 backdrop-blur-xl border-b border-border h-14 flex items-center px-4 lg:px-8 gap-4">
-      <!-- Mobile hamburger -->
-      <button id="menuBtn" class="lg:hidden text-gray-400 hover:text-white p-1.5 -ml-1.5">
-        <svg class="w-6 h-6" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" d="M4 6h16M4 12h16M4 18h16"/>
+    <div class="topbar">
+      <button id="menuBtn" type="button" class="menu-btn" aria-label="Open navigation">
+        <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24" aria-hidden="true">
+          <path stroke-linecap="round" d="M4 7h16M4 12h16M4 17h16"/>
         </svg>
       </button>
-      <h1 class="text-lg font-semibold">Projects &amp; Keys</h1>
-      <div class="flex-1"></div>
-      <p class="text-sm text-gray-500 hidden sm:block" id="headerSubtitle">Manage your projects and protected API keys</p>
-    </header>
-
-    <!-- Toast notification -->
-    <div id="toast" class="fixed top-4 right-4 z-50 hidden max-w-sm">
-      <div id="toastInner" class="flex items-center gap-3 px-4 py-3 rounded-md border text-sm shadow-lg backdrop-blur-sm">
-        <span id="toastMsg"></span>
-        <button type="button" data-action="close-toast" class="text-gray-400 hover:text-white ml-2">&times;</button>
-      </div>
+      <a href="/" class="topbar-logo">
+        <img src="/og-image2.png" alt="VaultProof">
+        <span>vaultproof</span>
+      </a>
+      <span class="topbar-sep">/</span>
+      <a href="/app/" class="topbar-link">dashboard</a>
+      <span class="topbar-sep">/</span>
+      <span class="topbar-crumb">keys</span>
+      <div class="topbar-spacer"></div>
+      <a href="/docs" class="topbar-link">docs</a>
+      <a href="/app/logs" class="topbar-link">audit log</a>
     </div>
 
-    <!-- Session expired overlay -->
-    <div id="sessionExpired" class="fixed inset-0 z-[100] bg-black/80 backdrop-blur-sm hidden flex items-center justify-center">
-      <div class="bg-[#111118] border border-[#1e1e2e] rounded-lg p-8 max-w-sm text-center">
-        <div class="w-14 h-14 rounded-full bg-amber-500/10 border border-amber-500/20 flex items-center justify-center mx-auto mb-4">
-          <svg class="w-7 h-7 text-amber-400" viewBox="0 0 24 24"><path fill="#fbbf24" opacity="0.15" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/><path fill="none" stroke="#fbbf24" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>
+    <div class="app-layout">
+      <aside id="sidebar" class="sidebar -translate-x-full lg:translate-x-0">
+        <div class="sidebar-group">
+          <div class="sidebar-head">overview</div>
+          <a href="/app/" class="sidebar-nav-item"><span class="sidebar-dot">&#9679;</span><span class="sidebar-label">projects</span></a>
+          <a href="/app/logs" class="sidebar-nav-item"><span class="sidebar-dot">&#9679;</span><span class="sidebar-label">activity</span></a>
+          <a href="/app/scanner" class="sidebar-nav-item"><span class="sidebar-dot">&#9679;</span><span class="sidebar-label">scanner</span></a>
         </div>
-        <h3 class="text-lg font-semibold text-white mb-2">Session Expired</h3>
-        <p class="text-sm text-gray-400 mb-6">Your session has expired. Please sign in again to continue.</p>
-        <a href="login" class="inline-block px-6 py-2.5 bg-[#6366f1] hover:bg-[#5558e6] text-white rounded-md text-sm font-medium transition btn-glow">Sign In Again</a>
-      </div>
-    </div>
-
-    <!-- Content -->
-    <main class="flex-1 p-5 lg:p-6">
-      <div class="max-w-7xl mx-auto space-y-6">
-
-        <!-- Stats Row -->
-        <div id="statsRow" class="grid grid-cols-3 gap-4">
-          <div class="anim-card bg-card border border-border rounded-lg p-4 text-center" style="animation-delay:0ms">
-            <div class="text-2xl font-bold text-white" id="statProjects">--</div>
-            <div class="text-xs text-gray-500 mt-1">Projects</div>
-          </div>
-          <div class="anim-card bg-card border border-border rounded-lg p-4 text-center" style="animation-delay:80ms">
-            <div class="text-2xl font-bold text-white" id="statKeys">--</div>
-            <div class="text-xs text-gray-500 mt-1">Protected Keys</div>
-          </div>
-          <div class="anim-card bg-card border border-border rounded-lg p-4 text-center" style="animation-delay:160ms">
-            <div class="text-2xl font-bold text-white" id="statProviders">--</div>
-            <div class="text-xs text-gray-500 mt-1">Active Providers</div>
-          </div>
+        <div class="sidebar-group">
+          <div class="sidebar-head">vault</div>
+          <a href="/app/keys" class="sidebar-nav-item active"><span class="sidebar-dot">&#9679;</span><span class="sidebar-label">api keys</span></a>
+          <a href="/app/agents" class="sidebar-nav-item"><span class="sidebar-dot">&#9679;</span><span class="sidebar-label">agents</span></a>
+          <a href="/app/settings" class="sidebar-nav-item"><span class="sidebar-dot">&#9679;</span><span class="sidebar-label">settings</span></a>
         </div>
-
-        <!-- Init Tip -->
-        <div id="initTip" class="bg-indigo-950/30 border border-indigo-500/20 rounded-lg px-4 py-3 flex items-center justify-between gap-4">
-          <div class="flex items-center gap-3 min-w-0">
-            <span class="text-indigo-400">&#9889;</span>
-            <p class="text-sm text-gray-400">Quick start: run <code class="text-indigo-400 bg-indigo-500/10 px-1.5 py-0.5 rounded text-xs font-mono">npx @vaultproof/init</code> in your project to scan and protect all keys at once.</p>
-          </div>
-          <button type="button" data-action="dismiss-init-tip" class="text-gray-600 hover:text-white transition flex-shrink-0">&times;</button>
+        <div class="sidebar-group">
+          <div class="sidebar-head">account</div>
+          <a href="/app/plans" class="sidebar-nav-item"><span class="sidebar-dot">&#9679;</span><span class="sidebar-label">plans</span></a>
+          <a href="/docs" class="sidebar-nav-item"><span class="sidebar-dot">&#9679;</span><span class="sidebar-label">docs</span></a>
+          <a href="mailto:hello@vaultproof.dev" class="sidebar-nav-item"><span class="sidebar-dot">&#9679;</span><span class="sidebar-label">support</span></a>
         </div>
-
-        <!-- Header Row -->
-        <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-          <div>
-            <h2 class="text-2xl font-bold" style="font-family:'Space Grotesk',sans-serif">Projects</h2>
-            <p class="text-gray-500 text-sm mt-1" id="projectSubtitle">Manage your projects and their protected API keys</p>
-          </div>
-          <button type="button" data-action="open-create-project-modal" class="px-4 py-2.5 bg-brand hover:bg-brand-hover text-white rounded-lg text-sm font-medium transition btn-glow flex items-center gap-2">
-            <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"/></svg>
-            New Project
+        <div class="sidebar-bottom">
+          <div class="sidebar-user-info" id="sidebarEmail"></div>
+          <button id="logoutBtn" type="button" class="logout-btn">
+            <span class="logout-text sidebar-label">logout</span>
           </button>
         </div>
+      </aside>
 
-        <!-- Projects Container -->
-        <div id="projectsContainer">
-          <!-- Loading state -->
-          <div id="projectsLoading" class="text-sm text-gray-500 py-8 text-center">
-            <div class="flex items-center justify-center gap-2">
-              <div class="h-4 w-4 border-2 border-[#6366f1] border-t-transparent rounded-full animate-spin"></div>
-              Loading projects...
+      <div id="mainWrapper" class="main-shell">
+        <header class="subbar">
+          <h1 class="subbar-title">Projects &amp; Keys</h1>
+          <p class="subbar-caption" id="headerSubtitle">manage split keys and provider routes</p>
+        </header>
+
+        <div id="toast" class="toast hidden">
+          <div id="toastInner" class="toast-card">
+            <span id="toastMsg"></span>
+            <button type="button" data-action="close-toast" class="toast-close" aria-label="Close toast">&times;</button>
+          </div>
+        </div>
+
+        <div id="sessionExpired" class="session-expired hidden">
+          <div class="session-expired-card">
+            <div class="session-expired-icon">!</div>
+            <h3>Session expired</h3>
+            <p>Your session has expired. Please sign in again to continue.</p>
+            <a href="login" class="btn btn-primary">sign in again</a>
+          </div>
+        </div>
+
+        <main class="main">
+          <div class="content">
+            <section class="page-header">
+              <div>
+                <div class="page-title-row">
+                  <h2 class="page-title">API Keys</h2>
+                  <span class="page-meta">/ split shares - proxy routes</span>
+                </div>
+                <p class="page-desc">Create projects, split provider keys in-browser, rotate encrypted shares, and copy project IDs for your SDK configuration.</p>
+              </div>
+              <div class="page-actions">
+                <button type="button" data-action="copy-text" data-text="npx @vaultproof/init" class="btn btn-outline">copy init</button>
+                <button type="button" data-action="open-create-project-modal" class="btn btn-primary">+ new project</button>
+              </div>
+            </section>
+
+            <section id="statsRow" class="kpi-grid">
+              <div class="kpi-cell anim-card" style="animation-delay:0ms">
+                <div class="kpi-label">projects</div>
+                <div class="kpi-value" id="statProjects">--</div>
+                <div class="kpi-sub">vault workspaces</div>
+              </div>
+              <div class="kpi-cell anim-card" style="animation-delay:80ms">
+                <div class="kpi-label">protected keys</div>
+                <div class="kpi-value" id="statKeys">--</div>
+                <div class="kpi-sub">split before upload</div>
+              </div>
+              <div class="kpi-cell anim-card" style="animation-delay:160ms">
+                <div class="kpi-label">active providers</div>
+                <div class="kpi-value" id="statProviders">--</div>
+                <div class="kpi-sub">proxied routes</div>
+              </div>
+            </section>
+
+            <section id="initTip" class="tip">
+              <span class="tip-glyph">&gt;</span>
+              <p>Quick start: run <code>npx @vaultproof/init</code> in your project to scan and protect all keys at once.</p>
+              <button type="button" data-action="dismiss-init-tip" class="tip-close" aria-label="Dismiss">&times;</button>
+            </section>
+
+            <section>
+              <div class="project-section-head">
+                <div>
+                  <h2 class="project-section-title">Projects</h2>
+                  <p class="project-section-sub" id="projectSubtitle">expand a project to inspect, rotate, or delete protected keys</p>
+                </div>
+                <button type="button" data-action="open-create-project-modal" class="btn btn-outline">create manually</button>
+              </div>
+            </section>
+
+            <section id="projectsContainer">
+              <div id="projectsLoading">
+                loading projects...
+              </div>
+            </section>
+
+            <section id="emptyState" class="empty-state hidden">
+              <h3 style="font-family:var(--display);font-size:20px;color:var(--text);margin-bottom:6px">No projects yet</h3>
+              <p style="margin-bottom:16px">Run the init command in your project directory to create one and protect your API keys.</p>
+              <div style="display:inline-flex;align-items:center;gap:8px">
+                <code class="code-pill">npx @vaultproof/init</code>
+                <button type="button" data-action="copy-text" data-text="npx @vaultproof/init" class="btn btn-outline">copy</button>
+              </div>
+              <p style="margin-top:14px">or <button type="button" data-action="open-create-project-modal" style="border:0;background:transparent;color:var(--accent);font-family:var(--mono)">create a project manually</button></p>
+            </section>
+          </div>
+        </main>
+      </div>
+    </div>
+  </div>
+
+  <div id="createProjectModal" class="modal-shell hidden">
+    <div class="modal-card">
+      <div class="modal-head">
+        <h3 class="modal-title">New Project</h3>
+        <button type="button" data-action="close-create-project-modal" class="modal-close" aria-label="Close">&times;</button>
+      </div>
+      <div class="modal-body">
+        <p class="modal-copy">Create a project to organize and protect your API keys. You can also run <code class="code-pill">npx @vaultproof/init</code> to do this automatically.</p>
+        <form id="createProjectForm" class="form-stack">
+          <div>
+            <label class="field-label">project name <span class="field-hint">(optional)</span></label>
+            <input type="text" id="newProjectName" placeholder="My App" class="form-control" />
+          </div>
+          <div id="createProjectMsg" class="form-msg hidden"></div>
+          <div class="modal-actions">
+            <button type="button" data-action="close-create-project-modal" class="btn btn-outline">cancel</button>
+            <button type="submit" id="createProjectBtn" class="btn btn-primary">create project</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <div id="addKeyModal" class="modal-shell hidden">
+    <div class="modal-card">
+      <div class="modal-head">
+        <h3 class="modal-title">Add API Key</h3>
+        <button type="button" data-action="close-add-key-modal" class="modal-close" aria-label="Close">&times;</button>
+      </div>
+      <div class="modal-body">
+        <p class="modal-copy">Paste an API key. The provider is detected automatically, and the key is split in your browser before storage.</p>
+        <form id="addKeyForm" class="form-stack">
+          <input type="hidden" id="addKeyProjectId" />
+          <div>
+            <label class="field-label">api key</label>
+            <input type="password" id="addKeyValue" required placeholder="paste your API key..." class="form-control mono" autocomplete="off" />
+            <div id="addKeyDetected" class="detected hidden">
+              <span>&#10003;</span>
+              <span id="addKeyDetectedLabel"></span>
             </div>
           </div>
-        </div>
-
-        <!-- Empty State -->
-        <div id="emptyState" class="hidden text-center py-16">
-          <div class="w-16 h-16 mx-auto mb-4 rounded-lg bg-indigo-500/10 flex items-center justify-center">
-            <svg class="w-8 h-8 text-indigo-400" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" d="M2 9.1371C2 14 6.01943 16.5914 8.96173 18.9109C10 19.7294 11 20.5 12 20.5C13 20.5 14 19.7294 15.0383 18.9109C17.9806 16.5914 22 14 22 9.1371C22 4.27416 16.4998 0.825464 12 5.50063C7.50016 0.825464 2 4.27416 2 9.1371Z"/>
-            </svg>
+          <div>
+            <label class="field-label">provider <span class="field-hint">(auto-detected, or select manually)</span></label>
+            <select id="addKeyProvider" required class="form-control">
+              <option value="">Paste a key above to auto-detect...</option>
+              <option value="openai">OpenAI</option>
+              <option value="anthropic">Anthropic</option>
+              <option value="stripe">Stripe</option>
+              <option value="groq">Groq</option>
+              <option value="mistral">Mistral</option>
+              <option value="together">Together AI</option>
+              <option value="fireworks">Fireworks AI</option>
+              <option value="deepseek">DeepSeek</option>
+              <option value="xai">xAI (Grok)</option>
+              <option value="openrouter">OpenRouter</option>
+              <option value="resend">Resend</option>
+              <option value="sendgrid">SendGrid</option>
+              <option value="linear">Linear</option>
+              <option value="notion">Notion</option>
+              <option value="github">GitHub</option>
+            </select>
           </div>
-          <h3 class="text-lg font-semibold text-white mb-2">No projects yet</h3>
-          <p class="text-gray-500 text-sm mb-6 max-w-md mx-auto">Run the init command in your project directory to create one and protect your API keys.</p>
-          <div class="flex items-center justify-center gap-2 bg-[#111118] border border-[#1e1e2e] rounded-lg px-4 py-3 max-w-sm mx-auto">
-            <code class="text-sm font-mono text-indigo-400">npx @vaultproof/init</code>
-            <button type="button" data-action="copy-text" data-text="npx @vaultproof/init" class="text-gray-500 hover:text-white transition p-1" title="Copy command">
-              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"/></svg>
-            </button>
+          <div>
+            <label class="field-label">environment variable name</label>
+            <input type="text" id="addKeyEnvVar" placeholder="auto-filled from provider" class="form-control mono" />
           </div>
-          <p class="text-gray-600 text-xs mt-4">or <button type="button" data-action="open-create-project-modal" class="text-indigo-400 hover:underline">create a project manually</button></p>
-        </div>
-
+          <p class="security-note"><span>&#9679;</span> Key is split in your browser using Shamir Secret Sharing. The plaintext never leaves your device.</p>
+          <div id="addKeyMsg" class="form-msg hidden"></div>
+          <div class="modal-actions">
+            <button type="button" data-action="close-add-key-modal" class="btn btn-outline">cancel</button>
+            <button type="submit" id="addKeyBtn" class="btn btn-primary">split &amp; protect</button>
+          </div>
+        </form>
       </div>
-    </main>
+    </div>
+  </div>
+
+  <div id="rotateModal" class="modal-shell hidden">
+    <div class="modal-card">
+      <div class="modal-head">
+        <h3 class="modal-title">Rotate Key</h3>
+        <button type="button" data-action="close-rotate-modal" class="modal-close" aria-label="Close">&times;</button>
+      </div>
+      <div class="modal-body">
+        <p class="modal-copy">Paste the new API key value. Your project ID stays the same, so your app configuration does not need to change.</p>
+        <form id="rotateForm" class="form-stack">
+          <input type="hidden" id="rotateProjectId" />
+          <input type="hidden" id="rotateKeyId" />
+          <input type="hidden" id="rotateKeyProvider" />
+          <div>
+            <label class="field-label">new api key</label>
+            <input type="password" id="rotateNewKey" required placeholder="paste new key value..." class="form-control mono" autocomplete="off" />
+          </div>
+          <p class="security-note"><span>&#9679;</span> Key will be split in your browser before storage.</p>
+          <div id="rotateMsg" class="form-msg hidden"></div>
+          <div class="modal-actions">
+            <button type="button" data-action="close-rotate-modal" class="btn btn-outline">cancel</button>
+            <button type="submit" id="rotateBtn" class="btn btn-primary">split &amp; rotate</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <div id="confirmModal" class="modal-shell hidden">
+    <div class="modal-card" style="max-width:390px">
+      <div class="modal-head">
+        <h3 class="modal-title" id="confirmTitle">Confirm</h3>
+        <button type="button" data-action="close-confirm-modal" class="modal-close" aria-label="Close">&times;</button>
+      </div>
+      <div class="modal-body">
+        <p class="modal-copy" id="confirmMessage"></p>
+        <div class="modal-actions">
+          <button type="button" data-action="close-confirm-modal" class="btn btn-outline">cancel</button>
+          <button type="button" data-action="execute-confirm" id="confirmActionBtn" class="btn btn-danger">delete</button>
+        </div>
+      </div>
+    </div>
   </div>
 
   <script src="/js/app-keys-3.js" defer></script>
-<script src="/js/analytics.js" defer></script>
+  <script src="/js/analytics.js" defer></script>
 </body>
 </html>

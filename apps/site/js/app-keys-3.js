@@ -127,12 +127,12 @@
       const msg = document.getElementById('toastMsg');
       msg.textContent = message;
       const styles = {
-        success: 'bg-green-900/80 border-green-800/50 text-green-200',
-        error: 'bg-red-900/80 border-red-800/50 text-red-200',
-        warning: 'bg-yellow-900/80 border-yellow-800/50 text-yellow-200',
-        info: 'bg-[#111118] border-[#1e1e2e] text-gray-300'
+        success: 'toast-success',
+        error: 'toast-error',
+        warning: 'toast-warning',
+        info: 'toast-info'
       };
-      inner.className = 'flex items-center gap-3 px-4 py-3 rounded-xl border text-sm shadow-lg backdrop-blur-sm ' + (styles[type] || styles.error);
+      inner.className = 'toast-card ' + (styles[type] || styles.error);
       toast.classList.remove('hidden');
       clearTimeout(toast._timer);
       toast._timer = setTimeout(() => toast.classList.add('hidden'), 5000);
@@ -599,7 +599,7 @@
       linear: 'LINEAR_API_KEY', notion: 'NOTION_API_KEY', github: 'GITHUB_TOKEN'
     };
 
-    // Detection patterns — ordered most-specific-first (same as providers.json)
+    // Detection patterns, ordered most-specific-first (same as providers.json)
     var KEY_PATTERNS = [
       { id: 'anthropic', label: 'Anthropic', re: /^sk-ant-api\d{2}-[A-Za-z0-9_-]{80,}$/ },
       { id: 'groq', label: 'Groq', re: /^gsk_[A-Za-z0-9]{40,}$/ },
@@ -633,6 +633,7 @@
 
       if (detected) {
         detectedEl.classList.remove('hidden');
+        labelEl.className = '';
         labelEl.textContent = 'Detected: ' + detected.label;
         providerSelect.value = detected.id;
         if (!envInput.value || Object.values(DEFAULT_ENV_VARS).includes(envInput.value)) {
@@ -640,7 +641,7 @@
         }
       } else if (value.length > 10) {
         detectedEl.classList.remove('hidden');
-        labelEl.textContent = 'Provider not recognized — select manually below';
+        labelEl.textContent = 'Provider not recognized - select manually below';
         labelEl.className = 'text-amber-400';
       } else {
         detectedEl.classList.add('hidden');
