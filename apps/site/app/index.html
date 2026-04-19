@@ -63,6 +63,15 @@
     .topbar-links { display: flex; gap: 20px; color: var(--text-muted); margin-right: 20px; }
     .topbar-links a:hover { color: var(--text); }
     .topbar-session { display: flex; align-items: center; gap: 8px; }
+    .topbar-email {
+      max-width: 220px;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      color: var(--text-muted);
+      font-family: var(--mono);
+      font-size: 11px;
+    }
     .topbar-avatar {
       width: 28px; height: 28px; border-radius: 50%;
       background: var(--accent); color: #fafaf7;
@@ -248,6 +257,7 @@
     <a href="#">changelog</a>
   </div>
   <div class="topbar-session">
+    <span class="topbar-email" id="user-email">loading...</span>
     <div class="topbar-avatar" id="user-avatar">NY</div>
     <button type="button" class="topbar-signout" id="signOutBtn">sign out</button>
   </div>
