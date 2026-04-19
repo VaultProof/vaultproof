@@ -267,7 +267,7 @@
     // --- Stats ---
     async function loadStats() {
       try {
-        var res = await apiFetch(API + '/projects/stats');
+        var res = await apiFetch(API + '/projects/stats/overview');
         if (!res || !res.ok) return;
         var data = await res.json();
         document.getElementById('statProjects').textContent = data.totalProjects || 0;

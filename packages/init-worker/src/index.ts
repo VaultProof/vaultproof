@@ -1,11 +1,9 @@
 /**
  * VaultProof Init Worker
  *
- * Isolated from the legacy `zkvault` worker. Handles:
+ * Handles:
  *   • Project management for `@vaultproof/init` (JWT-authed)
  *   • Proxy routes for vp-proj-xxx tokens (public identifiers)
- *
- * Scoped intentionally: OpenAI and Stripe only for the first slice.
  */
 import type { Env } from './types.js';
 import { handleProjects } from './routes/projects.js';
@@ -115,11 +113,7 @@ export default {
       return addCors(res, origin, allowedOrigins);
     }
 
-    // ── /v1/* — Stripe-native path compatibility ────────────────────
-    // Stripe SDK v14+ only accepts `host` in the constructor, so it
-    // sends requests to init.vaultproof.dev/v1/... (not /p/stripe/...).
-    // We catch these and route them through the same proxy as /p/stripe/*.
-    // Auth is still via Authorization: Bearer vp-proj-xxx.
+    // ── /v1/* — Stripe-native path support ───────────────────────────
     if (url.pathname.startsWith('/v1/')) {
       const upstreamPath = url.pathname + url.search; // /v1/checkout/sessions?...
       const res = await handleProxy(request, env, 'stripe', upstreamPath, ctx);

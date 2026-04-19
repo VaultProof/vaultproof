@@ -888,19 +888,6 @@ export async function handleProjects(
 
   // GET /api/v1/init/projects/stats/*
   if (method === 'GET' && pathSegments.length >= 1 && pathSegments[0] === 'stats') {
-    // Legacy shape kept for compatibility with existing callers.
-    if (pathSegments.length === 1) {
-      const overview = await getInitOverviewStats(supabase, auth.userId);
-      return Response.json({
-        totalProjects: overview.totalProjects,
-        totalKeys: overview.totalKeys,
-        providers: overview.providers,
-        providerCount: overview.providerCount,
-        totalCalls: overview.totalCalls,
-        errorRate: overview.errorRate,
-      });
-    }
-
     if (pathSegments.length === 2 && pathSegments[1] === 'overview') {
       const overview = await getInitOverviewStats(supabase, auth.userId);
       return Response.json(overview);

@@ -1,12 +1,10 @@
 #!/usr/bin/env tsx
 /**
- * Unit tests for project-auth.ts — specifically the pure helpers that
- * I extracted when refactoring authenticateProject() into
- * authenticateAndFetchKey() (single-query path).
+ * Unit tests for project-auth.ts pure helpers.
  *
- * The Supabase network path (authenticateAndFetchKey) is tested
- * end-to-end by the staging integration suite; here we cover the
- * pure logic that handles token parsing and origin-lock enforcement.
+ * The Supabase-backed path (authenticateAndFetchKey) is covered by the
+ * staging integration suite; this file covers token parsing and
+ * origin-lock enforcement in isolation.
  */
 import { parseProjectToken, checkOriginLock } from './project-auth.js';
 
