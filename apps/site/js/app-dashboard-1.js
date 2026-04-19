@@ -226,6 +226,16 @@
     return Array.isArray(payload) ? payload : [];
   }
 
+  function normalizeDashboardSummary(data) {
+    const payload = unwrapPayload(data) || {};
+    return {
+      overview: normalizeOverview(payload.overview || payload),
+      usage: normalizeUsage(payload.usage || payload),
+      logs: normalizeLogs(payload.logs || payload),
+      projects: normalizeProjects(payload.projects || payload),
+    };
+  }
+
   function normalizeKeyStats(data) {
     const stats = new Map();
     const payload = unwrapPayload(data);
@@ -363,6 +373,27 @@
       };
     }));
     return rows.filter(Boolean);
+  }
+
+  function normalizeProjectRows(projects) {
+    return projects
+      .filter((project) => project && project.id)
+      .map((project) => ({
+        id: project.id,
+        vpProjId: project.vpProjId || project.vp_proj_id || project.project_id || project.id,
+        name: project.name || project.vp_proj_id || project.id,
+        env: normalizeEnv(project.environment || project.env || project.stage || project.mode),
+        keysCount: Number(project.keysCount || project.keys_count || 0),
+        calls30d: Number(project.calls30d || project.calls_30d || 0),
+        lastUsedAt: extractTimestamp(project.lastUsedAt, project.last_used_at, project.lastUsed, project.last_used),
+        createdAt: extractTimestamp(project.createdAt, project.created_at),
+        sparkValues: Array.isArray(project.sparkValues)
+          ? project.sparkValues.map((value) => Number(value || 0))
+          : Array.isArray(project.spark_values)
+            ? project.spark_values.map((value) => Number(value || 0))
+            : [],
+        status: project.status || (Number(project.keysCount || project.keys_count || 0) === 0 ? 'idle' : 'ready'),
+      }));
   }
 
   function renderUsageSummary(overview, usageRows, tier) {
@@ -641,13 +672,46 @@
   }
 
   async function loadDashboard() {
-    const [overviewRaw, usageRaw, billingRaw, projectsRaw, keyStatsRaw, scansRaw, logsRaw] = await Promise.all([
+    const [dashboardSummaryRaw, billingRaw, scansRaw] = await Promise.all([
+      apiFetchInit('/projects/stats/dashboard?days=30&limit=8'),
+      apiFetch('/billing/status'),
+      apiFetch('/scanner/scans'),
+    ]);
+    const dashboardSummary = normalizeDashboardSummary(dashboardSummaryRaw);
+    const hasDashboardSummary = Boolean(
+      dashboardSummaryRaw &&
+      (dashboardSummary.projects.length || dashboardSummary.usage.length || dashboardSummary.logs.length || dashboardSummary.overview.totalCalls)
+    );
+
+    if (hasDashboardSummary) {
+      const scans = normalizeScans(scansRaw);
+      const tier = resolveTier(billingRaw);
+
+      renderUsageSummary(dashboardSummary.overview, dashboardSummary.usage, tier);
+      renderAlerts(scans);
+      renderKpis(
+        dashboardSummary.overview,
+        Boolean(
+          dashboardSummary.overview.totalCalls ||
+          dashboardSummary.overview.totalKeys ||
+          dashboardSummary.usage.length ||
+          dashboardSummary.logs.length ||
+          dashboardSummary.projects.length
+        )
+      );
+      renderChart(dashboardSummary.usage);
+
+      currentProjectRows = normalizeProjectRows(dashboardSummary.projects);
+      updatePageMeta(currentProjectRows);
+      renderProjectRows();
+      return;
+    }
+
+    const [overviewRaw, usageRaw, projectsRaw, keyStatsRaw, logsRaw] = await Promise.all([
       apiFetchInit('/projects/stats/overview'),
       apiFetchInit('/projects/stats/usage?days=30'),
-      apiFetch('/billing/status'),
       apiFetchInit('/projects'),
       apiFetchInit('/projects/stats/by-key'),
-      apiFetch('/scanner/scans'),
       apiFetchInit('/projects/stats/logs?days=30&limit=8'),
     ]);
 
