@@ -118,6 +118,86 @@ body > nav.fixed button:hover,
   color: var(--vp-text) !important;
 }
 
+.nav {
+  display: flex;
+  align-items: center;
+  padding: 14px 40px;
+  border-bottom: 1px solid var(--vp-rule);
+  font-family: var(--vp-mono);
+  font-size: 12px;
+  background: var(--vp-bg);
+  position: sticky;
+  top: 0;
+  z-index: 100;
+}
+
+.nav-logo {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.nav-logo-name {
+  font-weight: 600;
+  letter-spacing: 0.5px;
+}
+
+.nav-logo-version {
+  color: var(--vp-text-faint);
+  margin-left: 6px;
+}
+
+.nav-spacer {
+  flex: 1;
+}
+
+.nav-links {
+  display: flex;
+  gap: 24px;
+  color: var(--vp-text-muted);
+}
+
+.nav-links a:hover {
+  color: var(--vp-text);
+}
+
+.nav-sign-in {
+  color: var(--vp-text-faint);
+  margin-left: 24px;
+  margin-right: 12px;
+}
+
+.nav-cta {
+  padding: 6px 12px;
+  background: var(--vp-text);
+  color: var(--vp-bg);
+  border-radius: 3px;
+  font-size: 12px;
+  cursor: pointer;
+}
+
+.nav-cta:hover {
+  background: #333;
+  color: var(--vp-bg);
+}
+
+.mobile-toggle {
+  display: none;
+  margin-left: 12px;
+  border: 1px solid var(--vp-rule);
+  background: var(--vp-card);
+  color: var(--vp-text-muted);
+  padding: 6px 10px;
+  font-family: var(--vp-mono);
+  font-size: 12px;
+  border-radius: 3px;
+  cursor: pointer;
+}
+
+.mobile-toggle:hover {
+  color: var(--vp-text);
+}
+
 .nav-dropdown,
 .mobile-menu {
   background: var(--vp-bg-card, var(--vp-card)) !important;
@@ -129,6 +209,26 @@ body > nav.fixed button:hover,
 
 .mobile-menu.open {
   display: flex;
+}
+
+.mobile-menu {
+  display: none;
+  flex-direction: column;
+  gap: 0;
+  width: min(1280px, 100vw);
+  margin: 0 auto;
+  padding: 12px 40px;
+}
+
+.mobile-menu a {
+  color: var(--vp-text-muted);
+  font-family: var(--vp-mono);
+  font-size: 12px;
+  padding: 8px 0;
+}
+
+.mobile-menu a:hover {
+  color: var(--vp-text);
 }
 
 .btn-creative,
@@ -448,6 +548,25 @@ svg [fill="#818cf8"] {
   body::before {
     border-left: 0;
     border-right: 0;
+  }
+
+  .nav {
+    padding: 12px 16px;
+  }
+
+  .nav-links,
+  .nav-sign-in {
+    display: none;
+  }
+
+  .mobile-toggle {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .mobile-menu {
+    padding: 12px 16px;
   }
 
   body > nav.fixed > div:first-child {
