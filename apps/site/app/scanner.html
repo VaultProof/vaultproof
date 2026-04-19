@@ -17,11 +17,11 @@
   <script src="/js/app-scanner-2.js" defer></script>
   <style>
     *, *::before, *::after { box-sizing: border-box; }
-    body { font-family: 'Inter', sans-serif; background: #0a0a0f; margin: 0; }
+    body { font-family: 'Inter', sans-serif; background: #e8e6e0; margin: 0; color: #171717; min-height: 100vh; }
     ::-webkit-scrollbar { width: 6px; height: 6px; }
-    ::-webkit-scrollbar-track { background: #0a0a0f; }
-    ::-webkit-scrollbar-thumb { background: #2a2a3a; border-radius: 3px; }
-    ::-webkit-scrollbar-thumb:hover { background: #3a3a4a; }
+    ::-webkit-scrollbar-track { background: #f3f1ea; }
+    ::-webkit-scrollbar-thumb { background: #d6d2c7; border-radius: 3px; }
+    ::-webkit-scrollbar-thumb:hover { background: #c7c2b5; }
 
     @keyframes fadeInUp {
       from { opacity: 0; transform: translateY(16px); }
@@ -38,7 +38,7 @@
       animation: spin 1s linear infinite;
     }
 
-    .sidebar-expanded { width: 240px; }
+    .sidebar-expanded { width: 220px; }
     .sidebar-collapsed { width: 64px; }
     .sidebar-collapsed .sidebar-label { display: none; }
     .sidebar-collapsed .sidebar-logo-text { display: none; }
@@ -92,87 +92,258 @@
       text-decoration: line-through;
       opacity: 0.6;
     }
+
+    body.scanner-app {
+      background: #fafaf7;
+    }
+    body.scanner-app #sidebar {
+      background: #fafaf7;
+      border-right-color: #e7e5de !important;
+    }
+    body.scanner-app #mainWrapper {
+      background: #fafaf7;
+      margin-left: 220px !important;
+    }
+    body.scanner-app #sidebarOverlay { background: rgba(0, 0, 0, 0.28); }
+    body.scanner-app .sidebar-nav-item {
+      font-family: "JetBrains Mono", ui-monospace, monospace;
+      font-size: 12.5px;
+      color: #525252 !important;
+      padding: 7px 10px !important;
+      border-radius: 3px !important;
+      border: 1px solid transparent;
+      gap: 8px;
+    }
+    body.scanner-app .sidebar-nav-item:hover {
+      color: #171717 !important;
+      background: transparent !important;
+    }
+    body.scanner-app .sidebar-nav-item.active-nav {
+      color: #171717 !important;
+      background: #fff !important;
+      border-color: #e7e5de;
+      font-weight: 500;
+    }
+    body.scanner-app .sidebar-group {
+      margin-bottom: 22px;
+    }
+    body.scanner-app .sidebar-head {
+      font-family: "JetBrains Mono", ui-monospace, monospace;
+      font-size: 10px;
+      letter-spacing: 0.8px;
+      text-transform: uppercase;
+      color: #8a8a82;
+      padding: 6px 8px;
+    }
+    body.scanner-app .sidebar-dot {
+      font-size: 8px;
+      color: #c4c4bd;
+    }
+    body.scanner-app .sidebar-nav-item.active-nav .sidebar-dot {
+      color: #d97706;
+    }
+    body.scanner-app .sidebar-brand {
+      display: flex;
+      align-items: center;
+      padding: 20px 16px 10px;
+      font-family: "JetBrains Mono", ui-monospace, monospace;
+      font-size: 12px;
+      font-weight: 600;
+      letter-spacing: 0.5px;
+      text-transform: lowercase;
+      color: #171717;
+    }
+    body.scanner-app .sidebar-bottom {
+      border-top-color: #e7e5de !important;
+    }
+    body.scanner-app .sidebar-user-info,
+    body.scanner-app #logoutBtn {
+      font-family: "JetBrains Mono", ui-monospace, monospace;
+      color: #8a8a82 !important;
+    }
+    body.scanner-app #logoutBtn:hover {
+      color: #b91c1c !important;
+    }
+    body.scanner-app .sidebar-usage {
+      margin-top: 28px;
+      padding: 14px;
+      border: 1px solid #e7e5de;
+      border-radius: 4px;
+      background: #fff;
+    }
+    body.scanner-app .sidebar-usage-label,
+    body.scanner-app .sidebar-usage-note,
+    body.scanner-app .scanner-meta {
+      font-family: "JetBrains Mono", ui-monospace, monospace;
+      font-size: 11px;
+      color: #8a8a82;
+    }
+    body.scanner-app .sidebar-usage-label {
+      font-size: 10px;
+      letter-spacing: 0.8px;
+      text-transform: uppercase;
+      margin-bottom: 8px;
+    }
+    body.scanner-app .sidebar-usage-row {
+      display: flex;
+      justify-content: space-between;
+      gap: 16px;
+      font-family: "JetBrains Mono", ui-monospace, monospace;
+      font-size: 12px;
+      color: #171717;
+    }
+    body.scanner-app .sidebar-usage-track {
+      height: 4px;
+      background: #eeece5;
+      border-radius: 999px;
+      margin-top: 8px;
+      overflow: hidden;
+    }
+    body.scanner-app .sidebar-usage-fill {
+      height: 100%;
+      background: #d97706;
+      border-radius: 999px;
+      width: 0%;
+    }
+    body.scanner-app header {
+      border-bottom-color: #e7e5de !important;
+      background: rgba(250, 250, 247, 0.92) !important;
+      color: #171717;
+      backdrop-filter: blur(12px);
+    }
+    body.scanner-app header h1 {
+      font-family: "Space Grotesk", "Inter", system-ui, sans-serif;
+      font-size: 28px;
+      font-weight: 600;
+      letter-spacing: -0.6px;
+    }
+    body.scanner-app #menuBtn,
+    body.scanner-app header p {
+      color: #525252 !important;
+    }
+    body.scanner-app .bg-card { background: #fff !important; }
+    body.scanner-app .bg-surface { background: #f3f3ee !important; }
+    body.scanner-app .border-border { border-color: #e7e5de !important; }
+    body.scanner-app .bg-\[\#111118\] { background: #fcfbf8 !important; }
+    body.scanner-app .bg-\[\#0d0d14\] { background: #fff !important; }
+    body.scanner-app .border-\[\#1e1e2e\] { border-color: #e7e5de !important; }
+    body.scanner-app .text-white { color: #171717 !important; }
+    body.scanner-app .text-gray-200,
+    body.scanner-app .text-gray-300,
+    body.scanner-app .text-gray-400 { color: #525252 !important; }
+    body.scanner-app .text-gray-500,
+    body.scanner-app .text-gray-600 { color: #8a8a82 !important; }
+    body.scanner-app .hover\:text-white:hover { color: #171717 !important; }
+    body.scanner-app .bg-brand,
+    body.scanner-app .bg-\[\#6366f1\] { background: #d97706 !important; }
+    body.scanner-app .hover\:bg-brand-hover:hover,
+    body.scanner-app .hover\:bg-\[\#5558e6\]:hover,
+    body.scanner-app .hover\:bg-brand\/80:hover { background: #b45309 !important; }
+    body.scanner-app .text-brand,
+    body.scanner-app .text-\[\#22d3ee\] { color: #d97706 !important; }
+    body.scanner-app .bg-brand\/10,
+    body.scanner-app .bg-brand\/20 { background: rgba(217, 119, 6, 0.1) !important; }
+    body.scanner-app .border-brand\/20,
+    body.scanner-app .hover\:border-brand\/30:hover,
+    body.scanner-app .focus\:border-brand\/50:focus { border-color: rgba(217, 119, 6, 0.25) !important; }
+    body.scanner-app .bg-green-500\/10 { background: rgba(21, 128, 61, 0.08) !important; }
+    body.scanner-app .border-green-500\/20,
+    body.scanner-app .border-green-700\/30 { border-color: rgba(21, 128, 61, 0.18) !important; }
+    body.scanner-app .text-green-400 { color: #15803d !important; }
+    body.scanner-app .bg-red-500\/10,
+    body.scanner-app .bg-red-900\/20,
+    body.scanner-app .bg-red-950\/20 { background: rgba(185, 28, 28, 0.08) !important; }
+    body.scanner-app .border-red-500\/20,
+    body.scanner-app .border-red-500\/30,
+    body.scanner-app .border-red-700\/30,
+    body.scanner-app .border-red-800\/40 { border-color: rgba(185, 28, 28, 0.18) !important; }
+    body.scanner-app .text-red-400,
+    body.scanner-app .text-red-300,
+    body.scanner-app .text-red-200 { color: #b91c1c !important; }
+    body.scanner-app .bg-yellow-500\/10,
+    body.scanner-app .bg-yellow-900\/20,
+    body.scanner-app .bg-yellow-950\/20,
+    body.scanner-app .bg-amber-500\/15,
+    body.scanner-app .bg-orange-950\/20,
+    body.scanner-app .bg-orange-900\/40,
+    body.scanner-app .bg-blue-950\/20,
+    body.scanner-app .bg-blue-900\/40,
+    body.scanner-app .bg-gray-900\/20,
+    body.scanner-app .bg-gray-800\/60 { background: rgba(180, 83, 9, 0.08) !important; }
+    body.scanner-app .border-yellow-700\/30,
+    body.scanner-app .border-yellow-800\/40,
+    body.scanner-app .border-orange-700\/40,
+    body.scanner-app .border-orange-500\/60,
+    body.scanner-app .border-orange-800\/40,
+    body.scanner-app .border-blue-800\/40,
+    body.scanner-app .border-gray-700\/40 { border-color: rgba(180, 83, 9, 0.18) !important; }
+    body.scanner-app .text-yellow-400,
+    body.scanner-app .text-yellow-300,
+    body.scanner-app .text-yellow-200,
+    body.scanner-app .text-amber-400,
+    body.scanner-app .text-orange-300,
+    body.scanner-app .text-orange-200,
+    body.scanner-app .text-blue-300,
+    body.scanner-app .text-blue-200 { color: #b45309 !important; }
+    body.scanner-app .text-yellow-300\/70,
+    body.scanner-app .text-orange-300\/70 { color: #8a5a24 !important; }
+    body.scanner-app .rounded-2xl,
+    body.scanner-app .rounded-xl { border-radius: 4px !important; }
+    body.scanner-app .shadow-2xl,
+    body.scanner-app .shadow-lg { box-shadow: none !important; }
+    body.scanner-app #scannerContent { max-width: 1120px; }
+
+    @media (max-width: 1024px) {
+      body.scanner-app #mainWrapper {
+        margin-left: 0 !important;
+      }
+      body.scanner-app #sidebar {
+        width: min(86vw, 280px);
+      }
+    }
   </style>
   <!-- No Supabase SDK needed — scanner uses localStorage token only -->
   <link rel="stylesheet" href="/css/site-theme.css">
 </head>
-<body class="text-gray-100 min-h-screen flex">
+<body class="scanner-app text-gray-100 min-h-screen flex">
 
   <!-- Sidebar Overlay (mobile) -->
   <div id="sidebarOverlay" class="fixed inset-0 bg-black/60 z-40 hidden lg:hidden"></div>
 
   <!-- Left Sidebar -->
   <aside id="sidebar" class="fixed top-0 left-0 h-full bg-card border-r border-border z-50 flex flex-col transition-all duration-200 sidebar-expanded -translate-x-full lg:translate-x-0">
-    <!-- Logo -->
-    <div class="flex items-center gap-3 px-4 h-14 border-b border-border flex-shrink-0">
-      <img src="/og-image2.png" alt="VaultProof" class="w-9 h-9 flex-shrink-0 rounded-lg" />
-      <span class="text-lg font-bold sidebar-logo-text tracking-tight" style="font-family:'Space Grotesk',sans-serif">VaultProof</span>
+    <div class="sidebar-brand">
+      <span class="sidebar-logo-text">vaultproof</span>
     </div>
 
     <!-- Nav -->
     <nav class="flex-1 px-2 py-2 space-y-0.5 overflow-y-auto">
-      <a href="/app/" class="sidebar-nav-item flex items-center gap-3 px-3 py-2 rounded-md text-gray-400 hover:text-white hover:bg-white/[0.06] text-sm transition">
-        <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zm10 0a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zm10 0a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z"/>
-        </svg>
-        <span class="sidebar-label">Dashboard</span>
-      </a>
-      <a href="/app/keys" class="sidebar-nav-item flex items-center gap-3 px-3 py-2 rounded-md text-gray-400 hover:text-white hover:bg-white/[0.06] text-sm transition">
-        <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z"/>
-        </svg>
-        <span class="sidebar-label">API Keys</span>
-      </a>
-        <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17H3a2 2 0 01-2-2V5a2 2 0 012-2h14a2 2 0 012 2v10a2 2 0 01-2 2h-2"/>
-        </svg>
-        <span class="sidebar-label">Agents</span>
-      </a>
-      <a href="/app/scanner" class="sidebar-nav-item flex items-center gap-3 px-3 py-2 rounded-md bg-white/[0.08] text-brand font-medium text-sm transition">
-        <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
-        </svg>
-        <span class="sidebar-label">Scanner</span>
-      </a>
-      <a href="/app/activity" class="sidebar-nav-item flex items-center gap-3 px-3 py-2 rounded-md text-gray-400 hover:text-white hover:bg-white/[0.06] text-sm transition">
-        <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"/>
-        </svg>
-        <span class="sidebar-label">Activity</span>
-      </a>
-      <a href="/app/alerts" class="sidebar-nav-item flex items-center gap-3 px-3 py-2 rounded-md text-gray-400 hover:text-white hover:bg-white/[0.06] text-sm transition">
-        <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v3.75m0 3.75h.008v.008H12v-.008zm8.25-.75a8.25 8.25 0 10-16.5 0 8.25 8.25 0 0016.5 0z"/>
-        </svg>
-        <span class="sidebar-label">Alerts</span>
-      </a>
-      <a href="/app/settings" class="sidebar-nav-item flex items-center gap-3 px-3 py-2 rounded-md text-gray-400 hover:text-white hover:bg-white/[0.06] text-sm transition">
-        <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.066 2.573c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.573 1.066c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.066-2.573c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/>
-          <path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
-        </svg>
-        <span class="sidebar-label">Settings</span>
-      </a>
-      <a href="/app/plans" class="sidebar-nav-item flex items-center gap-3 px-3 py-2 rounded-md text-gray-400 hover:text-white hover:bg-white/[0.06] text-sm transition">
-        <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z"/>
-        </svg>
-        <span class="sidebar-label">Plans</span>
-      </a>
-
-      <div class="mt-4 pt-4 border-t border-border">
-        <a href="/docs" class="sidebar-nav-item flex items-center gap-3 px-3 py-2 rounded-md text-gray-400 hover:text-white hover:bg-white/[0.06] text-sm transition">
-          <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"/>
-          </svg>
-          <span class="sidebar-label">Documentation</span>
-        </a>
-        <a href="mailto:hello@vaultproof.dev" class="sidebar-nav-item flex items-center gap-3 px-3 py-2 rounded-md text-gray-400 hover:text-white hover:bg-white/[0.06] text-sm transition">
-          <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/>
-          </svg>
-          <span class="sidebar-label">Questions? hello@vaultproof.dev</span>
-        </a>
+      <div class="sidebar-group">
+        <div class="sidebar-head">overview</div>
+        <a href="/app/" class="sidebar-nav-item"><span class="sidebar-dot">●</span><span class="sidebar-label">projects</span></a>
+        <a href="/app/activity" class="sidebar-nav-item"><span class="sidebar-dot">●</span><span class="sidebar-label">activity</span></a>
+        <a href="/app/alerts" class="sidebar-nav-item"><span class="sidebar-dot">●</span><span class="sidebar-label">alerts</span></a>
+      </div>
+      <div class="sidebar-group">
+        <div class="sidebar-head">vault</div>
+        <a href="/app/keys" class="sidebar-nav-item"><span class="sidebar-dot">●</span><span class="sidebar-label">keys</span></a>
+        <a href="/app/settings" class="sidebar-nav-item"><span class="sidebar-dot">●</span><span class="sidebar-label">settings</span></a>
+        <a href="/app/plans" class="sidebar-nav-item"><span class="sidebar-dot">●</span><span class="sidebar-label">plans</span></a>
+      </div>
+      <div class="sidebar-group">
+        <div class="sidebar-head">scanner</div>
+        <a href="/app/scanner" class="sidebar-nav-item active-nav"><span class="sidebar-dot">●</span><span class="sidebar-label">repos</span></a>
+      </div>
+      <div class="sidebar-group">
+        <div class="sidebar-head">help</div>
+        <a href="/docs" class="sidebar-nav-item"><span class="sidebar-dot">●</span><span class="sidebar-label">docs</span></a>
+        <a href="mailto:hello@vaultproof.dev" class="sidebar-nav-item"><span class="sidebar-dot">●</span><span class="sidebar-label">support</span></a>
+      </div>
+      <div class="sidebar-usage">
+        <div class="sidebar-usage-label">plan loading</div>
+        <div class="sidebar-usage-row"><span>all calls</span><span>—</span></div>
+        <div class="sidebar-usage-track"><div class="sidebar-usage-fill"></div></div>
+        <div class="sidebar-usage-note">scanner usage refreshes after each run</div>
       </div>
     </nav>
 
@@ -183,7 +354,7 @@
         <svg class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
           <path stroke-linecap="round" stroke-linejoin="round" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"/>
         </svg>
-        <span class="logout-text sidebar-label">Logout</span>
+        <span class="logout-text sidebar-label">sign out</span>
       </button>
     </div>
   </aside>
