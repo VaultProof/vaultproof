@@ -381,6 +381,8 @@ async function getInitLogsStats(
     id: string;
     timestamp: string;
     action: string;
+    projectId: string | null;
+    projectName: string;
     keySlotId: string | null;
     keyLabel: string;
     provider: string;
@@ -395,6 +397,14 @@ async function getInitLogsStats(
   const projects = await listActiveProjects(supabase, userId);
   const projectIds = projects.map((p) => p.id);
   if (!projectIds.length) return { logs: [] };
+
+  const projectMap = new Map<string, { name: string; vpProjId: string }>();
+  for (const project of projects) {
+    projectMap.set(project.id, {
+      name: project.name || project.vp_proj_id || project.id,
+      vpProjId: project.vp_proj_id,
+    });
+  }
 
   const { data: keyRows } = await supabase
     .from('project_keys')
@@ -413,7 +423,7 @@ async function getInitLogsStats(
   const since = new Date(Date.now() - (days * 24 * 60 * 60 * 1000)).toISOString();
   const { data: logRows } = await supabase
     .from('project_access_logs')
-    .select('id, project_key_id, provider, slug, method, upstream_path, status_code, latency_ms, error, metadata, timestamp')
+    .select('id, project_id, project_key_id, provider, slug, method, upstream_path, status_code, latency_ms, error, metadata, timestamp')
     .in('project_id', projectIds)
     .gte('timestamp', since)
     .order('timestamp', { ascending: false })
@@ -421,6 +431,7 @@ async function getInitLogsStats(
 
   const logs = ((logRows || []) as Array<{
     id: string;
+    project_id: string | null;
     project_key_id: string | null;
     provider: string | null;
     slug: string | null;
@@ -433,6 +444,7 @@ async function getInitLogsStats(
     timestamp: string;
   }>).map((row) => {
     const keyInfo = row.project_key_id ? keyMap.get(row.project_key_id) : null;
+    const projectInfo = row.project_id ? projectMap.get(row.project_id) : null;
     const provider = keyInfo?.provider || row.provider || 'unknown';
     const keyLabel = keyInfo?.label || row.slug || provider;
     const endpoint = row.upstream_path || '/';
@@ -443,10 +455,12 @@ async function getInitLogsStats(
       id: row.id,
       timestamp: row.timestamp,
       action: 'transparent_proxy',
+      projectId: row.project_id || null,
+      projectName: projectInfo?.name || projectInfo?.vpProjId || 'unknown project',
       keySlotId: row.project_key_id || null,
       keyLabel,
       provider,
-      appName: 'Init Proxy',
+      appName: projectInfo?.name || projectInfo?.vpProjId || 'Init Proxy',
       endpoint: [method, endpoint].filter(Boolean).join(' ').trim(),
       status: statusCode >= 400 || statusCode === 0 ? 'error' : 'ok',
       latency: row.latency_ms ?? null,
@@ -601,6 +615,13 @@ async function getInitDashboardStats(
     created_at: string;
   }>;
   const providers = [...new Set(keys.map((key) => key.provider).filter(Boolean))];
+  const projectMap = new Map<string, { name: string; vpProjId: string }>();
+  for (const project of projects) {
+    projectMap.set(project.id, {
+      name: project.name || project.vp_proj_id || project.id,
+      vpProjId: project.vp_proj_id,
+    });
+  }
   const keyMap = new Map<string, { provider: string; label: string; projectId: string }>();
   const keysByProject = new Map<string, typeof keys>();
   for (const key of keys) {
@@ -660,6 +681,7 @@ async function getInitDashboardStats(
 
   const recentActivity = recentLogs.slice(0, 20).map((log) => {
     const keyInfo = log.project_key_id ? keyMap.get(log.project_key_id) : null;
+    const projectInfo = log.project_id ? projectMap.get(log.project_id) : null;
     const endpoint = log.upstream_path || '';
     const method = (log.method || '').toUpperCase();
     const description = [method, endpoint].filter(Boolean).join(' ').trim() || (log.provider || log.slug || 'Proxy request');
@@ -667,6 +689,8 @@ async function getInitDashboardStats(
       action: 'transparent_proxy',
       timestamp: log.timestamp,
       description,
+      projectId: log.project_id || null,
+      projectName: projectInfo?.name || projectInfo?.vpProjId || 'unknown project',
       keySlot: {
         provider: keyInfo?.provider || log.provider || 'unknown',
         label: keyInfo?.label || log.slug || log.provider || 'unknown',
@@ -681,6 +705,7 @@ async function getInitDashboardStats(
 
   const logs = recentLogs.slice(0, logLimit).map((log) => {
     const keyInfo = log.project_key_id ? keyMap.get(log.project_key_id) : null;
+    const projectInfo = log.project_id ? projectMap.get(log.project_id) : null;
     const provider = keyInfo?.provider || log.provider || 'unknown';
     const keyLabel = keyInfo?.label || log.slug || provider;
     const endpoint = log.upstream_path || '/';
@@ -691,10 +716,12 @@ async function getInitDashboardStats(
       id: log.id,
       timestamp: log.timestamp,
       action: 'transparent_proxy',
+      projectId: log.project_id || null,
+      projectName: projectInfo?.name || projectInfo?.vpProjId || 'unknown project',
       keySlotId: log.project_key_id || null,
       keyLabel,
       provider,
-      appName: 'Init Proxy',
+      appName: projectInfo?.name || projectInfo?.vpProjId || 'Init Proxy',
       endpoint: [method, endpoint].filter(Boolean).join(' ').trim(),
       status: statusCode >= 400 || statusCode === 0 ? 'error' : 'ok',
       latency: log.latency_ms ?? null,
