@@ -157,6 +157,14 @@ const API = window.location.hostname.includes('dev.vaultproof') ? 'https://stagi
       }
     }
 
+    async function safeJson(res) {
+      try {
+        return await res.json();
+      } catch {
+        return {};
+      }
+    }
+
     function formatTime(ts) {
       if (!ts) return '\u2014';
       var d = new Date(ts);
@@ -212,7 +220,7 @@ const API = window.location.hostname.includes('dev.vaultproof') ? 'https://stagi
     async function connectGitHub() {
       var res = await apiFetch(API + '/scanner/github/connect');
       if (!res) return;
-      var data = await res.json();
+      var data = await safeJson(res);
       if (!data.url) { showToast('Failed to get GitHub connect URL'); return; }
       // Validate URL — only allow GitHub OAuth URLs
       try {
@@ -230,7 +238,7 @@ const API = window.location.hostname.includes('dev.vaultproof') ? 'https://stagi
         body: JSON.stringify({ code: code, state: state })
       });
       if (!res) { showState('not-connected'); return; }
-      var data = await res.json();
+      var data = await safeJson(res);
       if (res.ok) {
         ghConnected = true;
         showToast('GitHub connected successfully', 'success');
@@ -249,7 +257,7 @@ const API = window.location.hostname.includes('dev.vaultproof') ? 'https://stagi
         showState('not-connected');
         showToast('GitHub disconnected', 'info');
       } else {
-        var data = await res.json();
+        var data = await safeJson(res);
         showToast(data.error || 'Failed to disconnect');
       }
     }
@@ -258,7 +266,7 @@ const API = window.location.hostname.includes('dev.vaultproof') ? 'https://stagi
     async function loadRepoList() {
       var res = await apiFetch(API + '/scanner/repos');
       if (!res) return;
-      var data = await res.json();
+      var data = await safeJson(res);
       if (!res.ok) {
         if (res.status === 404 || res.status === 403) {
           showState('not-connected');
@@ -602,7 +610,7 @@ const API = window.location.hostname.includes('dev.vaultproof') ? 'https://stagi
           '<div class="flex items-start justify-between gap-3 mb-3">' +
             '<div class="flex items-center gap-2 min-w-0">' +
               '<label class="flex items-center gap-2 cursor-pointer">' +
-                '<input type="checkbox" class="migrate-key-cb rounded border-gray-600" data-key-idx="' + i + '" checked onchange="updateMigrateButton()">' +
+                '<input type="checkbox" class="migrate-key-cb rounded border-gray-600" data-key-idx="' + i + '" checked>' +
                 '<span class="px-2 py-0.5 bg-brand/10 text-brand text-xs font-medium rounded-full flex-shrink-0">' + escapeHtml(pName) + '</span>' +
               '</label>' +
               '<span class="text-xs text-gray-500 truncate">' + escapeHtml(filePath) + '</span>' +
@@ -661,7 +669,7 @@ const API = window.location.hostname.includes('dev.vaultproof') ? 'https://stagi
             html += '<div class="px-4 py-3">' +
               '<div class="flex items-center gap-2 mb-2">' +
                 '<label class="flex items-center gap-2 cursor-pointer">' +
-                  '<input type="checkbox" class="migrate-change-cb rounded border-gray-600" data-change-idx="' + item.index + '" checked onchange="updateMigrateButton()">' +
+                  '<input type="checkbox" class="migrate-change-cb rounded border-gray-600" data-change-idx="' + item.index + '" checked>' +
                   '<span class="px-2 py-0.5 ' + typeBg + ' text-xs font-medium rounded-full">' + typeLabel + '</span>' +
                 '</label>' +
                 '<span class="text-xs text-gray-500">line' + escapeHtml(line) + '</span>' +
@@ -760,16 +768,16 @@ const API = window.location.hostname.includes('dev.vaultproof') ? 'https://stagi
             '</tr>';
           }
 
-          return '<tr class="border-b border-border hover:bg-white/[0.02] transition cursor-pointer" onclick="toggleDetail(' + i + ')">' +
-            '<td class="px-4 py-3" onclick="event.stopPropagation()"><input type="checkbox" class="finding-cb rounded border-gray-600" data-idx="' + i + '" data-provider="' + escapeHtml(f.provider || '') + '" data-status="' + escapeHtml(f.status || '') + '" onchange="updateBulkBar()"></td>' +
+          return '<tr class="border-b border-border hover:bg-white/[0.02] transition cursor-pointer" data-toggle-detail="' + i + '">' +
+            '<td class="px-4 py-3" data-stop-row-toggle="1"><input type="checkbox" class="finding-cb rounded border-gray-600" data-idx="' + i + '" data-provider="' + escapeHtml(f.provider || '') + '" data-status="' + escapeHtml(f.status || '') + '"></td>' +
             '<td class="px-4 py-3">' + statusIcon + '</td>' +
             '<td class="px-4 py-3 text-white font-medium text-xs font-mono">' + escapeHtml(f.envName || f.env_name || f.key_name || f.keyName || '') + '</td>' +
             '<td class="px-4 py-3 text-gray-400 text-xs">' + escapeHtml(pName) + '</td>' +
             '<td class="px-4 py-3 text-gray-400 text-xs font-mono">' + escapeHtml((f.file || '') + (f.line ? ':' + f.line : '')) + '</td>' +
             '<td class="px-4 py-3 text-gray-400 text-xs">' + escapeHtml(f.source || 'code') + '</td>' +
             '<td class="px-4 py-3 text-gray-400 text-xs">' + escapeHtml(f.mode || '') + '</td>' +
-            '<td class="px-4 py-3 text-right" onclick="event.stopPropagation()">' +
-              '<select class="bg-[#111118] border border-[#1e1e2e] rounded-lg px-2 py-1 text-xs text-gray-300 focus:outline-none focus:border-brand/50" data-finding-idx="' + i + '" onchange="if(this.value===\'allowlist\'){handleAllowlistFromFinding(this)}">' +
+            '<td class="px-4 py-3 text-right" data-stop-row-toggle="1">' +
+              '<select class="bg-[#111118] border border-[#1e1e2e] rounded-lg px-2 py-1 text-xs text-gray-300 focus:outline-none focus:border-brand/50" data-finding-idx="' + i + '">' +
                 '<option value="store">Store in VaultProof</option>' +
                 '<option value="pr">Create PR</option>' +
                 '<option value="ignore">Ignore</option>' +
@@ -811,10 +819,10 @@ const API = window.location.hostname.includes('dev.vaultproof') ? 'https://stagi
             '</div>' +
             '<div class="flex items-center gap-2 flex-shrink-0">' +
               (ha === 'dismissed' ? '' :
-                '<button onclick="openRevokeModal(\'' + escapeJs(f.id) + '\', \'' + escapeJs(hName) + '\', ' + stepsJson + ', \'' + noteText + '\', \'' + rotUrl + '\', \'' + cliSteps + '\', \'' + usageCheckUrl + '\', \'' + usageCheckNote + '\')" class="px-3 py-1.5 bg-red-600 hover:bg-red-500 text-white rounded-lg text-xs font-medium transition whitespace-nowrap">Revoke + Rotate</button>' +
-                '<button onclick="storeHistoryFinding(\'' + escapeJs(f.id) + '\')" class="px-3 py-1.5 bg-brand hover:bg-brand-hover text-white rounded-lg text-xs font-medium transition whitespace-nowrap">Store in VaultProof</button>'
+                '<button data-history-action="revoke" data-finding-id="' + escapeHtml(f.id) + '" data-provider-name="' + escapeHtml(hName) + '" data-steps="' + stepsJson + '" data-note="' + noteText + '" data-url="' + rotUrl + '" data-cli-steps="' + cliSteps + '" data-usage-check-url="' + usageCheckUrl + '" data-usage-check-note="' + usageCheckNote + '" class="px-3 py-1.5 bg-red-600 hover:bg-red-500 text-white rounded-lg text-xs font-medium transition whitespace-nowrap">Revoke + Rotate</button>' +
+                '<button data-history-action="store" data-finding-id="' + escapeHtml(f.id) + '" class="px-3 py-1.5 bg-brand hover:bg-brand-hover text-white rounded-lg text-xs font-medium transition whitespace-nowrap">Store in VaultProof</button>'
               ) +
-              (ha ? '' : '<button onclick="dismissHistoryFinding(\'' + escapeJs(f.id) + '\', this)" class="px-3 py-1.5 bg-gray-700 hover:bg-gray-600 text-gray-300 rounded-lg text-xs font-medium transition whitespace-nowrap">Dismiss</button>') +
+              (ha ? '' : '<button data-history-action="dismiss" data-finding-id="' + escapeHtml(f.id) + '" class="px-3 py-1.5 bg-gray-700 hover:bg-gray-600 text-gray-300 rounded-lg text-xs font-medium transition whitespace-nowrap">Dismiss</button>') +
             '</div>' +
           '</div>';
         }).join('');
@@ -1080,7 +1088,7 @@ const API = window.location.hostname.includes('dev.vaultproof') ? 'https://stagi
           '<td class="px-3 py-2 text-xs text-gray-400">' + scope + '</td>' +
           '<td class="px-3 py-2 text-xs text-gray-500">' + escapeHtml(entry.reason || '') + '</td>' +
           '<td class="px-3 py-2 text-right">' +
-            '<button onclick="deleteAllowlistEntry(\'' + entry.id + '\')" class="text-red-400 hover:text-red-300 text-xs">Delete</button>' +
+            '<button data-allowlist-delete="' + escapeHtml(entry.id) + '" class="text-red-400 hover:text-red-300 text-xs">Delete</button>' +
           '</td>' +
         '</tr>';
       }).join('');
@@ -1442,7 +1450,7 @@ const API = window.location.hostname.includes('dev.vaultproof') ? 'https://stagi
         document.getElementById('envRemoveSection').classList.remove('hidden');
         removeList.innerHTML = envNamesToRemove.map(function(name, i) {
           return '<div class="flex items-center gap-2">' +
-            '<input type="checkbox" id="envRemove-' + i + '" class="env-task-cb rounded border-gray-600" onchange="updateMergeButton()">' +
+            '<input type="checkbox" id="envRemove-' + i + '" class="env-task-cb rounded border-gray-600">' +
             '<label for="envRemove-' + i + '" class="text-sm font-mono text-red-400 cursor-pointer">' + escapeHtml(name) + '</label>' +
           '</div>';
         }).join('');
@@ -1454,9 +1462,9 @@ const API = window.location.hostname.includes('dev.vaultproof') ? 'https://stagi
       var addList = document.getElementById('envAddList');
       var devKeyDisplay = devKey || 'vp-proj-xxx';
       addList.innerHTML = '<div class="flex items-center gap-2">' +
-        '<input type="checkbox" id="envAdd-0" class="env-task-cb rounded border-gray-600" onchange="updateMergeButton()">' +
+        '<input type="checkbox" id="envAdd-0" class="env-task-cb rounded border-gray-600">' +
         '<label for="envAdd-0" class="text-sm font-mono text-green-400 cursor-pointer">VAULTPROOF_PROJECT_ID = ' + escapeHtml(devKeyDisplay) + '</label>' +
-        '<button onclick="copyToClipboard(\'' + escapeJs(devKeyDisplay) + '\')" class="ml-2 px-2 py-1 bg-surface border border-border rounded-lg text-xs text-gray-400 hover:text-white hover:border-brand/30 transition flex items-center gap-1">' +
+        '<button data-copy-text="' + escapeHtml(devKeyDisplay) + '" class="ml-2 px-2 py-1 bg-surface border border-border rounded-lg text-xs text-gray-400 hover:text-white hover:border-brand/30 transition flex items-center gap-1">' +
           '<svg class="w-3 h-3" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"/></svg>' +
           'Copy' +
         '</button>' +
@@ -1558,18 +1566,129 @@ const API = window.location.hostname.includes('dev.vaultproof') ? 'https://stagi
       return (str || '').replace(/\\/g,'\\\\').replace(/'/g,"\\'").replace(/"/g,'\\"').replace(/</g,'\\x3c').replace(/>/g,'\\x3e').replace(/\r/g,'\\r').replace(/\n/g,'\\n');
     }
 
+    function bindUiEvents() {
+      function bindClick(id, handler) {
+        var el = document.getElementById(id);
+        if (el) el.addEventListener('click', handler);
+      }
+
+      bindClick('sidebarOverlay', toggleMobileSidebar);
+      bindClick('bulkIgnoreBtn', bulkIgnore);
+      bindClick('bulkCreatePrBtn', openPrModal);
+      bindClick('prCloseBtn', closePrModal);
+      bindClick('prCancelBtn', closePrModal);
+      bindClick('prSubmitBtn', submitPr);
+      bindClick('toastCloseBtn', function() { document.getElementById('toast').classList.add('hidden'); });
+      bindClick('connectGitHubBtn', connectGitHub);
+      bindClick('disconnectGitHubBtn', disconnectGitHub);
+      bindClick('scanResultBackBtn', showRepoList);
+      bindClick('cancelScanBtn', cancelScan);
+      bindClick('exportCsvBtn', exportCsv);
+      bindClick('toggleAllowlistBtn', toggleAllowlistPanel);
+      bindClick('addAllowlistBtn', function() { addAllowlistEntry(); });
+      bindClick('revokeCloseBtn', closeRevokeModal);
+      bindClick('revokeConfirmBtn', confirmRevoked);
+      bindClick('createPrBtn', openPrModal);
+      bindClick('legacyBackToReposBtn', showRepoList);
+      bindClick('migrationBackToReposBtn', showRepoList);
+      bindClick('migrateBtn', startMigration);
+
+      var repoSearch = document.getElementById('repoSearch');
+      if (repoSearch) repoSearch.addEventListener('input', filterRepos);
+      var selectAll = document.getElementById('selectAll');
+      if (selectAll) selectAll.addEventListener('change', toggleSelectAll);
+
+      document.addEventListener('change', function(event) {
+        var target = event.target;
+        if (!target) return;
+        if (target.classList && target.classList.contains('finding-cb')) {
+          updateBulkBar();
+          return;
+        }
+        if (target.classList && (target.classList.contains('migrate-key-cb') || target.classList.contains('migrate-change-cb'))) {
+          updateMigrateButton();
+          return;
+        }
+        if (target.classList && target.classList.contains('env-task-cb')) {
+          updateMergeButton();
+          return;
+        }
+        if (target.matches && target.matches('[data-finding-idx]') && target.value === 'allowlist') {
+          handleAllowlistFromFinding(target);
+        }
+      });
+
+      document.addEventListener('click', function(event) {
+        var target = event.target;
+        if (!target) return;
+        if (target.closest('[data-stop-row-toggle]')) return;
+
+        var detailTrigger = target.closest('[data-toggle-detail]');
+        if (detailTrigger) {
+          toggleDetail(detailTrigger.getAttribute('data-toggle-detail'));
+          return;
+        }
+
+        var historyAction = target.closest('[data-history-action]');
+        if (historyAction) {
+          var action = historyAction.getAttribute('data-history-action');
+          var findingId = historyAction.getAttribute('data-finding-id');
+          if (action === 'revoke') {
+            openRevokeModal(
+              findingId,
+              historyAction.getAttribute('data-provider-name'),
+              historyAction.getAttribute('data-steps'),
+              historyAction.getAttribute('data-note'),
+              historyAction.getAttribute('data-url'),
+              historyAction.getAttribute('data-cli-steps'),
+              historyAction.getAttribute('data-usage-check-url'),
+              historyAction.getAttribute('data-usage-check-note')
+            );
+            return;
+          }
+          if (action === 'store') {
+            storeHistoryFinding(findingId);
+            return;
+          }
+          if (action === 'dismiss') {
+            dismissHistoryFinding(findingId, historyAction);
+            return;
+          }
+        }
+
+        var allowlistDelete = target.closest('[data-allowlist-delete]');
+        if (allowlistDelete) {
+          deleteAllowlistEntry(allowlistDelete.getAttribute('data-allowlist-delete'));
+          return;
+        }
+
+        var copyBtn = target.closest('[data-copy-text]');
+        if (copyBtn) {
+          copyToClipboard(copyBtn.getAttribute('data-copy-text'));
+        }
+      });
+    }
+
     // --- Init ---
     (async function init() {
+      bindUiEvents();
       // Fetch user tier for feature gating
       try {
-        var meRes = await apiFetch(API + '/auth/me');
-        if (meRes && meRes.ok) {
-          var meData = await meRes.json();
-          userTier = normalizeTier(meData.tier || (meData.user && meData.user.tier));
-          if (userTier === 'free' || userTier === 'starter') {
-            var badge = document.getElementById('csvProBadge');
-            if (badge) badge.classList.remove('hidden');
-          }
+        userTier = normalizeTier(user.tier || user.plan);
+        var billingRes = await apiFetch(API + '/billing/status');
+        if (billingRes && billingRes.ok) {
+          var billingData = await safeJson(billingRes);
+          userTier = normalizeTier(
+            billingData.tier ||
+            billingData.plan ||
+            (billingData.subscription && billingData.subscription.tier) ||
+            (billingData.customer && billingData.customer.tier) ||
+            userTier
+          );
+        }
+        if (userTier === 'free' || userTier === 'starter') {
+          var badge = document.getElementById('csvProBadge');
+          if (badge) badge.classList.remove('hidden');
         }
       } catch(e) {}
 
@@ -1587,7 +1706,7 @@ const API = window.location.hostname.includes('dev.vaultproof') ? 'https://stagi
       // Check if already connected by trying to load repos
       var res = await apiFetch(API + '/scanner/repos');
       if (res && res.ok) {
-        var data = await res.json();
+        var data = await safeJson(res);
         allRepos = data.repos || data || [];
         if (data.username) {
           document.getElementById('ghUsername').textContent = data.username;
