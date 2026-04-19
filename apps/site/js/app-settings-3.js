@@ -238,32 +238,6 @@ const API = window.location.hostname.includes('dev.vaultproof') ? 'https://stagi
       }
     }
 
-    // Token display
-    const tokenDisplayEl = document.getElementById('tokenDisplay');
-    if (tokenDisplayEl) tokenDisplayEl.value = token || '';
-    let tokenVisible = false;
-
-    function toggleTokenVisibility() {
-      tokenVisible = !tokenVisible;
-      if (tokenDisplayEl) tokenDisplayEl.type = tokenVisible ? 'text' : 'password';
-      const eyeIcon = document.getElementById('eyeIcon');
-      if (!eyeIcon) return;
-      if (tokenVisible) {
-        eyeIcon.innerHTML = '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.878 9.878L3 3m6.878 6.878L21 21"/>';
-      } else {
-        eyeIcon.innerHTML = '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/>';
-      }
-    }
-
-    function copyToken() {
-      navigator.clipboard.writeText(token).then(() => {
-        const msg = document.getElementById('copyMsg');
-        if (!msg) return;
-        msg.classList.remove('hidden');
-        setTimeout(() => msg.classList.add('hidden'), 2000);
-      });
-    }
-
     // Load profile
     async function loadProfile() {
       try {
@@ -532,7 +506,7 @@ const API = window.location.hostname.includes('dev.vaultproof') ? 'https://stagi
           if (btnIdx <= currentIdx) {
             btn.disabled = true;
             btn.textContent = btnTier === currentTier ? 'Current' : 'Included';
-            btn.className = btn.className.replace('bg-[#6366f1] hover:bg-[#5558e6]', 'bg-gray-800 cursor-not-allowed').replace('btn-glow', '');
+            btn.className = btn.className.replace('bg-[#6366f1] hover:bg-[#5558e6]', 'bg-gray-800 cursor-not-allowed');
             btn.classList.add('opacity-50');
           }
         });
@@ -628,6 +602,58 @@ const API = window.location.hostname.includes('dev.vaultproof') ? 'https://stagi
       document.querySelectorAll('[data-period]').forEach(function(el) {
         el.textContent = isSettingsAnnual ? '/yr' : '/mo';
       });
+    }
+
+    function bindPageActions() {
+      const toastCloseBtn = document.getElementById('toastCloseBtn');
+      if (toastCloseBtn) {
+        toastCloseBtn.addEventListener('click', () => {
+          document.getElementById('toast').classList.add('hidden');
+        });
+      }
+
+      const killSwitchBtn = document.getElementById('killSwitchBtn');
+      if (killSwitchBtn) killSwitchBtn.addEventListener('click', showKillSwitchModal);
+
+      const closeKillSwitchBtn = document.getElementById('closeKillSwitchBtn');
+      if (closeKillSwitchBtn) closeKillSwitchBtn.addEventListener('click', closeKillSwitchModal);
+
+      const confirmKillBtn = document.getElementById('confirmKillBtn');
+      if (confirmKillBtn) confirmKillBtn.addEventListener('click', confirmKillSwitch);
+
+      const resumeAllBtn = document.getElementById('resumeAllBtn');
+      if (resumeAllBtn) resumeAllBtn.addEventListener('click', deactivateKillSwitch);
+
+      const saveGlobalLimitsBtn = document.getElementById('saveGlobalLimitsBtn');
+      if (saveGlobalLimitsBtn) saveGlobalLimitsBtn.addEventListener('click', saveGlobalLimits);
+
+      const annualToggleBtn = document.getElementById('settingsAnnualToggle');
+      if (annualToggleBtn) annualToggleBtn.addEventListener('click', toggleSettingsAnnual);
+
+      document.querySelectorAll('.billing-upgrade-btn').forEach((btn) => {
+        btn.addEventListener('click', () => {
+          const tier = btn.getAttribute('data-tier');
+          if (tier) upgradeTier(tier);
+        });
+      });
+
+      const billingManageBtn = document.getElementById('billingManageBtn');
+      if (billingManageBtn) billingManageBtn.addEventListener('click', openBillingPortal);
+
+      const deleteBtn = document.getElementById('deleteBtn');
+      if (deleteBtn) deleteBtn.addEventListener('click', deleteAccountStep1);
+
+      const deleteConfirmStep1Btn = document.getElementById('deleteConfirmStep1Btn');
+      if (deleteConfirmStep1Btn) deleteConfirmStep1Btn.addEventListener('click', deleteAccountStep2);
+
+      const deleteCancel1Btn = document.getElementById('deleteCancel1Btn');
+      if (deleteCancel1Btn) deleteCancel1Btn.addEventListener('click', cancelDelete);
+
+      const deleteConfirmFinalBtn = document.getElementById('deleteConfirmFinalBtn');
+      if (deleteConfirmFinalBtn) deleteConfirmFinalBtn.addEventListener('click', confirmDelete);
+
+      const deleteCancel2Btn = document.getElementById('deleteCancel2Btn');
+      if (deleteCancel2Btn) deleteCancel2Btn.addEventListener('click', cancelDelete);
     }
 
     async function upgradeTier(tier) {
@@ -793,6 +819,7 @@ const API = window.location.hostname.includes('dev.vaultproof') ? 'https://stagi
 
     // Init — refresh token first, then load data in parallel
     // Load everything immediately — apiFetch handles 401 with auto-refresh
+    bindPageActions();
     checkBillingParams();
     loadProfile();
     loadUsage();

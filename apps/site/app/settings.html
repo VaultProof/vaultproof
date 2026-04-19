@@ -13,7 +13,7 @@
   <script src="https://cdn.tailwindcss.com/3.4.17"></script>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
   <script src="/js/app-settings-2.js" defer></script>
   <style>
     *, *::before, *::after { box-sizing: border-box; }
@@ -48,8 +48,6 @@
     ::-webkit-scrollbar { width: 6px; height: 6px; }
     ::-webkit-scrollbar-track { background: var(--bg); }
     ::-webkit-scrollbar-thumb { background: #d8d5cc; border-radius: 3px; }
-    .btn-glow { box-shadow: none; }
-    .btn-glow:hover { box-shadow: none; }
 
     .page {
       max-width: 1280px;
@@ -363,7 +361,7 @@
     <div id="toast" class="fixed top-4 right-4 z-50 hidden max-w-sm">
       <div id="toastInner" class="flex items-center gap-3 px-4 py-3 rounded-xl border text-sm shadow-lg backdrop-blur-sm">
         <span id="toastMsg"></span>
-        <button onclick="document.getElementById('toast').classList.add('hidden')" class="text-gray-400 hover:text-white ml-2">&times;</button>
+        <button id="toastCloseBtn" type="button" class="text-gray-400 hover:text-white ml-2">&times;</button>
       </div>
     </div>
 
@@ -375,7 +373,7 @@
         </div>
         <h3 class="text-lg font-semibold text-white mb-2">Session Expired</h3>
         <p class="text-sm text-gray-400 mb-6">Your session has expired. Please sign in again to continue.</p>
-        <a href="login" class="inline-block px-6 py-2.5 bg-[#6366f1] hover:bg-[#5558e6] text-white rounded-xl text-sm font-medium transition btn-glow">Sign In Again</a>
+        <a href="login" class="inline-block px-6 py-2.5 bg-[#6366f1] hover:bg-[#5558e6] text-white rounded-xl text-sm font-medium transition">Sign In Again</a>
       </div>
     </div>
 
@@ -425,7 +423,7 @@
             <input type="password" id="confirmPassword" required class="w-full px-4 py-2.5 bg-[#111118] border border-[#1e1e2e] rounded-xl text-sm text-white placeholder-gray-600 focus:outline-none focus:border-[#6366f1] transition" placeholder="Confirm new password" />
           </div>
           <div id="passwordMsg" class="text-sm hidden"></div>
-          <button type="submit" class="px-5 py-2.5 bg-[#6366f1] hover:bg-[#5558e6] text-white rounded-xl text-sm font-medium transition btn-glow">
+          <button type="submit" class="px-5 py-2.5 bg-[#6366f1] hover:bg-[#5558e6] text-white rounded-xl text-sm font-medium transition">
             Update Password
           </button>
         </form>
@@ -445,7 +443,7 @@
               <div class="text-sm font-medium text-white">Emergency Stop</div>
               <div class="text-xs text-gray-500">Instantly block ALL proxy calls across all your stored keys</div>
             </div>
-            <button id="killSwitchBtn" onclick="showKillSwitchModal()" class="px-4 py-2 bg-amber-500/10 border border-amber-500/20 text-amber-400 rounded-xl text-sm font-medium hover:bg-amber-500/20 transition">
+            <button id="killSwitchBtn" type="button" class="px-4 py-2 bg-amber-500/10 border border-amber-500/20 text-amber-400 rounded-xl text-sm font-medium hover:bg-amber-500/20 transition">
               Activate
             </button>
           </div>
@@ -455,7 +453,7 @@
                 <span class="w-2 h-2 rounded-full bg-amber-500 animate-pulse"></span>
                 <span class="text-sm text-amber-400 font-medium">Kill switch is active — all proxy calls are blocked</span>
               </div>
-              <button onclick="deactivateKillSwitch()" class="px-3 py-1.5 bg-[#111118] border border-[#1e1e2e] rounded-lg text-xs text-gray-400 hover:text-white transition">Resume All</button>
+              <button id="resumeAllBtn" type="button" class="px-3 py-1.5 bg-[#111118] border border-[#1e1e2e] rounded-lg text-xs text-gray-400 hover:text-white transition">Resume All</button>
             </div>
           </div>
         </div>
@@ -474,7 +472,7 @@
               <input type="number" id="globalMonthlyLimit" placeholder="No limit" min="1" class="w-full px-3 py-2 bg-[#0a0a0f] border border-[#1e1e2e] rounded-lg text-sm text-gray-300 focus:border-[#6366f1] focus:outline-none">
             </div>
           </div>
-          <button onclick="saveGlobalLimits()" class="px-4 py-2 bg-[#6366f1] hover:bg-[#5558e6] text-white rounded-lg text-xs font-medium transition">Save Limits</button>
+          <button id="saveGlobalLimitsBtn" type="button" class="px-4 py-2 bg-[#6366f1] hover:bg-[#5558e6] text-white rounded-lg text-xs font-medium transition">Save Limits</button>
           <span id="globalLimitStatus" class="text-xs ml-3"></span>
         </div>
       </section>
@@ -514,7 +512,7 @@
               <div class="text-sm font-medium text-white">Need more?</div>
               <div class="text-xs text-gray-400 mt-0.5">Upgrade for more keys, calls, and priority support.</div>
             </div>
-            <a href="#billing" class="px-4 py-2 bg-[#6366f1] hover:bg-[#5558e6] text-white rounded-xl text-sm font-medium transition btn-glow whitespace-nowrap">
+            <a href="#billing" class="px-4 py-2 bg-[#6366f1] hover:bg-[#5558e6] text-white rounded-xl text-sm font-medium transition whitespace-nowrap">
               View Plans
             </a>
           </div>
@@ -543,7 +541,7 @@
         <!-- Monthly / Annual toggle -->
         <div class="flex items-center justify-center gap-3 mb-4">
             <span class="text-sm text-gray-400" id="settingsMonthlyLabel">Monthly</span>
-            <button onclick="toggleSettingsAnnual()" id="settingsAnnualToggle" class="relative w-12 h-6 bg-[#1e1e2e] rounded-full transition-colors">
+            <button type="button" id="settingsAnnualToggle" class="relative w-12 h-6 bg-[#1e1e2e] rounded-full transition-colors">
                 <div id="settingsAnnualDot" class="absolute top-0.5 left-0.5 w-5 h-5 bg-gray-500 rounded-full transition-all"></div>
             </button>
             <span class="text-sm text-gray-400" id="settingsAnnualLabel">Annual <span class="text-indigo-400 text-xs font-medium">Save 17%</span></span>
@@ -561,7 +559,7 @@
               <li>30 days log retention</li>
               <li>Overage $0.50/1K calls</li>
             </ul>
-            <button onclick="upgradeTier('starter')" data-tier="starter" class="billing-upgrade-btn w-full px-4 py-2 bg-[#6366f1] hover:bg-[#5558e6] text-white rounded-xl text-sm font-medium transition btn-glow">
+            <button type="button" data-tier="starter" class="billing-upgrade-btn w-full px-4 py-2 bg-[#6366f1] hover:bg-[#5558e6] text-white rounded-xl text-sm font-medium transition">
               Upgrade
             </button>
           </div>
@@ -577,7 +575,7 @@
               <li>CSV export</li>
               <li>Overage $0.30/1K calls</li>
             </ul>
-            <button onclick="upgradeTier('pro')" data-tier="pro" class="billing-upgrade-btn w-full px-4 py-2 bg-[#6366f1] hover:bg-[#5558e6] text-white rounded-xl text-sm font-medium transition btn-glow">
+            <button type="button" data-tier="pro" class="billing-upgrade-btn w-full px-4 py-2 bg-[#6366f1] hover:bg-[#5558e6] text-white rounded-xl text-sm font-medium transition">
               Upgrade
             </button>
           </div>
@@ -601,7 +599,7 @@
         <!-- Manage billing (shown when subscribed) -->
         <div id="billingManage" class="hidden">
           <div class="flex items-center gap-4">
-            <button onclick="openBillingPortal()" class="px-5 py-2.5 bg-[#111118] border border-[#1e1e2e] hover:border-[#6366f1]/50 text-gray-300 hover:text-white rounded-xl text-sm font-medium transition flex items-center gap-2">
+            <button id="billingManageBtn" type="button" class="px-5 py-2.5 bg-[#111118] border border-[#1e1e2e] hover:border-[#6366f1]/50 text-gray-300 hover:text-white rounded-xl text-sm font-medium transition flex items-center gap-2">
               <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.066 2.573c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.573 1.066c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.066-2.573c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
               Manage Billing
             </button>
@@ -620,7 +618,7 @@
             </h2>
             <p class="text-sm text-gray-500 mt-1">Manage your <code class="text-xs text-[#6366f1] font-mono">vp-proj-</code> projects and protected keys.</p>
           </div>
-          <a href="/app/keys" class="px-4 py-2.5 bg-[#6366f1] hover:bg-[#5558e6] text-white rounded-xl text-sm font-medium transition btn-glow whitespace-nowrap flex items-center gap-2">
+          <a href="/app/keys" class="px-4 py-2.5 bg-[#6366f1] hover:bg-[#5558e6] text-white rounded-xl text-sm font-medium transition whitespace-nowrap flex items-center gap-2">
             Go to API Keys &rarr;
           </a>
         </div>
@@ -634,16 +632,16 @@
           Danger Zone
         </h2>
         <p class="text-sm text-gray-500 mb-4">Permanently delete your account and all associated data. This action cannot be undone.</p>
-        <button onclick="deleteAccountStep1()" id="deleteBtn" class="px-5 py-2.5 bg-red-900/30 hover:bg-red-900/50 text-amber-400 border border-red-800 rounded-xl text-sm font-medium transition">
+        <button type="button" id="deleteBtn" class="px-5 py-2.5 bg-red-900/30 hover:bg-red-900/50 text-amber-400 border border-red-800 rounded-xl text-sm font-medium transition">
           Delete Account
         </button>
         <div id="deleteConfirm1" class="hidden mt-4 p-4 bg-red-950/30 border border-red-900/50 rounded-xl space-y-3">
           <p class="text-sm text-red-300">Are you sure? This will permanently delete your account, all keys, and all logs.</p>
           <div class="flex gap-3">
-            <button onclick="deleteAccountStep2()" class="px-4 py-2 bg-red-600 hover:bg-amber-500 text-white rounded-xl text-sm font-medium transition">
+            <button type="button" id="deleteConfirmStep1Btn" class="px-4 py-2 bg-red-600 hover:bg-amber-500 text-white rounded-xl text-sm font-medium transition">
               Yes, I'm sure
             </button>
-            <button onclick="cancelDelete()" class="px-4 py-2 bg-[#0a0a0f] border border-[#1e1e2e] rounded-xl text-sm text-gray-400 hover:text-white transition">
+            <button type="button" id="deleteCancel1Btn" class="px-4 py-2 bg-[#0a0a0f] border border-[#1e1e2e] rounded-xl text-sm text-gray-400 hover:text-white transition">
               Cancel
             </button>
           </div>
@@ -652,10 +650,10 @@
           <p class="text-sm text-red-300 font-medium">Final confirmation: Type "DELETE" to confirm.</p>
           <div class="flex gap-3">
             <input type="text" id="deleteInput" placeholder='Type DELETE' class="px-4 py-2 bg-[#111118] border border-red-800 rounded-xl text-sm text-white placeholder-gray-600 focus:outline-none focus:border-red-600 transition" />
-            <button onclick="confirmDelete()" class="px-4 py-2 bg-red-600 hover:bg-amber-500 text-white rounded-xl text-sm font-medium transition">
+            <button type="button" id="deleteConfirmFinalBtn" class="px-4 py-2 bg-red-600 hover:bg-amber-500 text-white rounded-xl text-sm font-medium transition">
               Confirm Delete
             </button>
-            <button onclick="cancelDelete()" class="px-4 py-2 bg-[#0a0a0f] border border-[#1e1e2e] rounded-xl text-sm text-gray-400 hover:text-white transition">
+            <button type="button" id="deleteCancel2Btn" class="px-4 py-2 bg-[#0a0a0f] border border-[#1e1e2e] rounded-xl text-sm text-gray-400 hover:text-white transition">
               Cancel
             </button>
           </div>
@@ -680,8 +678,8 @@
       <input type="password" id="killSwitchPassword" placeholder="Your password" class="w-full px-4 py-2.5 bg-[#0a0a0f] border border-amber-500/30 rounded-xl text-sm text-white text-center focus:outline-none focus:border-amber-500 mb-2">
       <div id="killSwitchError" class="hidden text-xs text-amber-400 mb-3"></div>
       <div class="flex gap-3">
-        <button onclick="closeKillSwitchModal()" class="flex-1 px-4 py-2.5 bg-[#111118] border border-[#1e1e2e] rounded-xl text-sm text-gray-400 hover:text-white transition">Cancel</button>
-        <button onclick="confirmKillSwitch()" id="confirmKillBtn" class="flex-1 px-4 py-2.5 bg-amber-500 hover:bg-red-600 text-white rounded-xl text-sm font-medium transition disabled:opacity-50 disabled:cursor-not-allowed" disabled>Activate Kill Switch</button>
+        <button id="closeKillSwitchBtn" type="button" class="flex-1 px-4 py-2.5 bg-[#111118] border border-[#1e1e2e] rounded-xl text-sm text-gray-400 hover:text-white transition">Cancel</button>
+        <button type="button" id="confirmKillBtn" class="flex-1 px-4 py-2.5 bg-amber-500 hover:bg-red-600 text-white rounded-xl text-sm font-medium transition disabled:opacity-50 disabled:cursor-not-allowed" disabled>Activate Kill Switch</button>
       </div>
     </div>
   </div>
