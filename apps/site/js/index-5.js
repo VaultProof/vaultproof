@@ -1,4 +1,24 @@
 (function() {
+  function bindMobileMenu() {
+    var toggle = document.getElementById('mobileToggle');
+    var menu = document.getElementById('mobileMenu');
+    if (!toggle || !menu) return;
+
+    toggle.addEventListener('click', function() {
+      var open = menu.classList.toggle('open');
+      toggle.setAttribute('aria-expanded', open ? 'true' : 'false');
+      toggle.textContent = open ? 'close' : 'menu';
+    });
+
+    menu.querySelectorAll('a').forEach(function(link) {
+      link.addEventListener('click', function() {
+        menu.classList.remove('open');
+        toggle.setAttribute('aria-expanded', 'false');
+        toggle.textContent = 'menu';
+      });
+    });
+  }
+
   function bindCopyCommandButtons() {
     document.querySelectorAll('[data-copy-command]').forEach(function(button) {
       button.addEventListener('click', function() {
@@ -17,8 +37,12 @@
   }
 
   if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', bindCopyCommandButtons);
+    document.addEventListener('DOMContentLoaded', function() {
+      bindMobileMenu();
+      bindCopyCommandButtons();
+    });
   } else {
+    bindMobileMenu();
     bindCopyCommandButtons();
   }
 })();

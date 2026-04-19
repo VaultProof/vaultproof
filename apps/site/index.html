@@ -487,6 +487,8 @@
       .nav { padding: 12px 16px; }
       .nav-links { display: none; }
       .nav-sign-in { display: none; }
+      .nav-cta { display: none; }
+      .mobile-toggle { display: inline-flex; }
 
       .hero { grid-template-columns: 1fr; }
       .hero-left { padding: 36px 20px 32px; border-right: none; border-bottom: var(--rule); }
@@ -543,7 +545,17 @@
   </div>
   <a href="/app/login" class="nav-sign-in">sign in</a>
   <a href="/app/login" class="nav-cta">get started</a>
+  <button id="mobileToggle" type="button" class="mobile-toggle" aria-label="Toggle menu" aria-expanded="false">menu</button>
 </nav>
+
+<div id="mobileMenu" class="mobile-menu">
+  <a href="/scan">scanner</a>
+  <a href="/docs">docs</a>
+  <a href="/blog">insights</a>
+  <a href="/#pricing">pricing</a>
+  <a href="/app/login">sign in</a>
+  <a href="/app/login">get started</a>
+</div>
 
 <!-- HERO -->
 <section class="hero" style="padding:0; border-bottom: var(--rule);">
