@@ -115,14 +115,18 @@
     .topbar-signout {
       font-family: var(--mono);
       font-size: 11px;
-      color: var(--text-faint);
-      background: var(--bg-card);
-      border: var(--rule);
+      color: var(--text);
+      background: #fff;
+      border: 1px solid #d8d5cc;
       border-radius: 3px;
       padding: 6px 10px;
       cursor: pointer;
     }
-    .topbar-signout:hover { color: #b91c1c; background: #fdfdfa; }
+    .topbar-signout:hover {
+      color: #b91c1c;
+      background: var(--bg-mid);
+      border-color: #cfcabf;
+    }
 
     .layout {
       display: grid;
@@ -237,15 +241,19 @@
       width: 100%;
       font-family: var(--mono);
       font-size: 11px;
-      color: var(--text-faint);
-      background: var(--bg-card);
-      border: var(--rule);
+      color: var(--text);
+      background: #fff;
+      border: 1px solid #d8d5cc;
       border-radius: 3px;
       padding: 8px 10px;
       cursor: pointer;
       text-transform: lowercase;
     }
-    .logout-btn:hover { color: #b91c1c; background: #fdfdfa; }
+    .logout-btn:hover {
+      color: #b91c1c;
+      background: var(--bg-mid);
+      border-color: #cfcabf;
+    }
 
     .main {
       padding: 28px 32px 40px;
@@ -390,17 +398,31 @@
       gap: 8px;
     }
     .btn-primary {
-      border: 1px solid var(--text);
-      background: var(--text);
-      color: var(--bg);
+      border: 1px solid var(--accent);
+      background: var(--accent);
+      color: #fff;
     }
-    .btn-primary:hover { background: #333; }
+    .btn-primary:hover {
+      background: #b45309;
+      border-color: #b45309;
+    }
     .btn-outline {
-      border: var(--rule);
-      background: var(--bg-card);
-      color: var(--text-muted);
+      border: 1px solid #d8d5cc;
+      background: #fff;
+      color: var(--text);
     }
-    .btn-outline:hover { color: var(--text); background: var(--bg-mid); }
+    .btn-outline:hover {
+      color: var(--text);
+      background: var(--bg-mid);
+      border-color: #cfcabf;
+    }
+    .btn-outline:disabled,
+    .btn-primary:disabled {
+      background: var(--bg-mid);
+      border-color: var(--rule);
+      color: var(--text-muted);
+      cursor: default;
+    }
 
     .billing-msg {
       display: none;
