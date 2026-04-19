@@ -161,18 +161,31 @@ body > nav.fixed button:hover,
   color: var(--vp-text);
 }
 
+.nav-links a,
 .nav-sign-in {
+  display: inline-flex;
+  align-items: center;
+  line-height: 1;
   color: var(--vp-text-faint);
+}
+
+.nav-sign-in {
   margin-left: 24px;
   margin-right: 12px;
 }
 
 .nav-cta {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 30px;
   padding: 6px 12px;
   background: var(--vp-text);
   color: var(--vp-bg);
   border-radius: 3px;
   font-size: 12px;
+  line-height: 1;
+  white-space: nowrap;
   cursor: pointer;
 }
 
