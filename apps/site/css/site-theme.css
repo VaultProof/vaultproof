@@ -23,6 +23,7 @@ body {
   color: var(--vp-text) !important;
   font-family: var(--vp-body) !important;
   -webkit-font-smoothing: antialiased;
+  overflow-x: hidden;
 }
 
 html {
@@ -68,6 +69,20 @@ body > * {
 
 a {
   color: inherit;
+}
+
+img,
+video,
+canvas,
+svg {
+  max-width: 100%;
+}
+
+input,
+select,
+textarea,
+button {
+  max-width: 100%;
 }
 
 h1,
@@ -563,8 +578,24 @@ svg [fill="#818cf8"] {
     border-right: 0;
   }
 
+  .page,
+  body > nav.fixed > div:first-child,
+  .mobile-menu {
+    width: 100% !important;
+    max-width: 100% !important;
+  }
+
   .nav {
     padding: 12px 16px;
+    gap: 10px;
+  }
+
+  .nav-logo {
+    min-width: 0;
+  }
+
+  .nav-logo-version {
+    display: none;
   }
 
   .nav-links,
@@ -584,5 +615,109 @@ svg [fill="#818cf8"] {
 
   body > nav.fixed > div:first-child {
     padding: 12px 16px !important;
+  }
+
+  .hero,
+  .login-layout,
+  .bottom-grid,
+  .steps-grid,
+  .scan-grid,
+  .pricing-grid,
+  .providers-grid,
+  .trust-grid {
+    grid-template-columns: 1fr !important;
+  }
+
+  .hero-left,
+  .hero-right,
+  .intro-panel,
+  .auth-panel,
+  section {
+    padding-left: 20px !important;
+    padding-right: 20px !important;
+  }
+
+  .hero-left,
+  .intro-panel {
+    border-right: 0 !important;
+    border-bottom: 1px solid var(--vp-rule) !important;
+  }
+
+  .hero-h1,
+  .intro-h1,
+  .scan-title,
+  .section-h2,
+  .page-title,
+  .auth-title {
+    font-size: clamp(28px, 8vw, 36px) !important;
+    line-height: 1.1 !important;
+  }
+
+  .footer-grid {
+    grid-template-columns: 1fr 1fr !important;
+    gap: 24px !important;
+  }
+
+  .providers-grid,
+  .pricing-grid,
+  .trust-grid,
+  .steps-grid,
+  .compare-table,
+  .table-wrap {
+    overflow: hidden;
+  }
+
+  .compare-table,
+  .table-wrap,
+  .doc-table {
+    display: block;
+    width: 100%;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .compare-row,
+  .table-head,
+  .table-row {
+    min-width: 640px;
+  }
+
+  .doc-table {
+    min-width: 620px !important;
+  }
+
+  .footer-bottom {
+    flex-direction: column !important;
+    gap: 6px !important;
+  }
+}
+
+@media (max-width: 560px) {
+  .hero-left,
+  .hero-right,
+  .intro-panel,
+  .auth-panel,
+  section {
+    padding-left: 16px !important;
+    padding-right: 16px !important;
+  }
+
+  .footer-grid {
+    grid-template-columns: 1fr !important;
+  }
+
+  .providers-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+  }
+
+  .provider-cell {
+    min-width: 0;
+  }
+
+  .hero-sub,
+  .intro-sub,
+  .section-sub,
+  .page-desc {
+    font-size: 14px !important;
   }
 }
