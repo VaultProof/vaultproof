@@ -843,24 +843,36 @@
       if (!container || container.querySelector('.vp-locale-shell')) return;
       var target = container.querySelector(anchorSelector);
       if (!target) return;
-      var shell = document.createElement('label');
+      var shell = document.createElement('div');
       shell.className = 'vp-locale-shell';
       shell.innerHTML =
-        '<span class="vp-locale-label"></span>' +
-        '<select class="vp-locale-select" aria-label=""></select>';
-      var label = shell.querySelector('.vp-locale-label');
-      var select = shell.querySelector('.vp-locale-select');
-      label.textContent = t('label.language');
-      select.setAttribute('aria-label', t('label.language'));
+        '<button type="button" class="vp-locale-trigger" aria-haspopup="true" aria-expanded="false">' +
+          '<span class="vp-locale-icon" aria-hidden="true">A</span>' +
+          '<span class="vp-locale-current"></span>' +
+        '</button>' +
+        '<div class="vp-locale-menu" hidden></div>';
+      var menu = shell.querySelector('.vp-locale-menu');
       SUPPORTED_LOCALES.forEach(function (locale) {
-        var option = document.createElement('option');
-        option.value = locale;
+        var option = document.createElement('button');
+        option.type = 'button';
+        option.className = 'vp-locale-option';
+        option.setAttribute('data-locale', locale);
         option.textContent = LOCALE_LABELS[locale] || locale;
-        if (locale === currentLocale) option.selected = true;
-        select.appendChild(option);
+        option.addEventListener('click', function () {
+          setLocale(locale);
+          closeLocaleMenus();
+        });
+        menu.appendChild(option);
       });
-      select.addEventListener('change', function () {
-        setLocale(select.value);
+      shell.querySelector('.vp-locale-trigger').addEventListener('click', function (event) {
+        event.stopPropagation();
+        var isOpen = shell.classList.contains('open');
+        closeLocaleMenus();
+        if (!isOpen) {
+          shell.classList.add('open');
+          menu.hidden = false;
+          event.currentTarget.setAttribute('aria-expanded', 'true');
+        }
       });
       container.insertBefore(shell, target);
     });
@@ -868,13 +880,25 @@
 
   function syncLocaleControls() {
     Array.prototype.forEach.call(document.querySelectorAll('.vp-locale-shell'), function (shell) {
-      var label = shell.querySelector('.vp-locale-label');
-      var select = shell.querySelector('.vp-locale-select');
-      if (label) label.textContent = t('label.language');
-      if (select) {
-        select.value = currentLocale;
-        select.setAttribute('aria-label', t('label.language'));
-      }
+      var trigger = shell.querySelector('.vp-locale-trigger');
+      var current = shell.querySelector('.vp-locale-current');
+      if (current) current.textContent = LOCALE_LABELS[currentLocale] || currentLocale;
+      if (trigger) trigger.setAttribute('aria-label', t('label.language') + ': ' + (LOCALE_LABELS[currentLocale] || currentLocale));
+      Array.prototype.forEach.call(shell.querySelectorAll('.vp-locale-option'), function (option) {
+        var active = option.getAttribute('data-locale') === currentLocale;
+        option.classList.toggle('active', active);
+        option.setAttribute('aria-pressed', active ? 'true' : 'false');
+      });
+    });
+  }
+
+  function closeLocaleMenus() {
+    Array.prototype.forEach.call(document.querySelectorAll('.vp-locale-shell.open'), function (shell) {
+      shell.classList.remove('open');
+      var trigger = shell.querySelector('.vp-locale-trigger');
+      var menu = shell.querySelector('.vp-locale-menu');
+      if (trigger) trigger.setAttribute('aria-expanded', 'false');
+      if (menu) menu.hidden = true;
     });
   }
 
@@ -1145,6 +1169,9 @@
       childList: true,
       subtree: true,
       characterData: true
+    });
+    document.addEventListener('click', function (event) {
+      if (!event.target.closest('.vp-locale-shell')) closeLocaleMenus();
     });
     document.addEventListener('click', function (event) {
       if (event.target && event.target.closest('#mobileToggle')) {

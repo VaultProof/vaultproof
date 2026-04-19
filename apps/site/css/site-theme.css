@@ -552,20 +552,13 @@ aside[id="sidebar"] {
 }
 
 .vp-locale-shell {
+  position: relative;
   display: inline-flex;
   align-items: center;
-  gap: 6px;
   margin-right: 12px;
 }
 
-.vp-locale-label {
-  font-family: var(--vp-mono) !important;
-  font-size: 11px !important;
-  color: var(--vp-text-faint) !important;
-  white-space: nowrap;
-}
-
-.vp-locale-select {
+.vp-locale-trigger {
   min-height: 28px;
   padding: 4px 10px;
   border: 1px solid var(--vp-rule) !important;
@@ -575,17 +568,80 @@ aside[id="sidebar"] {
   font-family: var(--vp-mono) !important;
   font-size: 11px !important;
   line-height: 1.2;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  cursor: pointer;
 }
 
-.vp-locale-select:focus {
+.vp-locale-trigger:hover {
+  background: var(--vp-bg-mid) !important;
+}
+
+.vp-locale-trigger:focus {
   outline: none;
   border-color: rgba(217, 119, 6, 0.55) !important;
   box-shadow: 0 0 0 3px rgba(217, 119, 6, 0.12);
 }
 
+.vp-locale-icon {
+  font-family: var(--vp-mono) !important;
+  font-size: 11px !important;
+  color: var(--vp-text-faint) !important;
+}
+
+.vp-locale-current {
+  white-space: nowrap;
+}
+
+.vp-locale-menu {
+  position: absolute;
+  top: calc(100% + 6px);
+  left: 0;
+  min-width: 150px;
+  padding: 6px;
+  background: var(--vp-card) !important;
+  border: 1px solid var(--vp-rule) !important;
+  border-radius: 4px !important;
+  box-shadow: 0 12px 28px rgba(23, 23, 23, 0.08) !important;
+  z-index: 120;
+}
+
+.vp-locale-option {
+  width: 100%;
+  padding: 7px 8px;
+  border: 0;
+  border-radius: 3px;
+  background: transparent;
+  color: var(--vp-text-muted);
+  font-family: var(--vp-mono) !important;
+  font-size: 11px !important;
+  text-align: left;
+  cursor: pointer;
+}
+
+.vp-locale-option:hover {
+  background: var(--vp-bg-mid);
+  color: var(--vp-text);
+}
+
+.vp-locale-option.active {
+  background: rgba(217, 119, 6, 0.08);
+  color: var(--vp-accent);
+}
+
 [dir="rtl"] .vp-locale-shell {
   margin-right: 0;
   margin-left: 12px;
+}
+
+[dir="rtl"] .vp-locale-menu {
+  left: auto;
+  right: 0;
+}
+
+[dir="rtl"] .vp-locale-option {
+  text-align: right;
 }
 
 [dir="rtl"] .nav,
@@ -815,10 +871,6 @@ svg [fill="#818cf8"] {
 }
 
 @media (max-width: 560px) {
-  .vp-locale-label {
-    display: none;
-  }
-
   .hero-left,
   .hero-right,
   .intro-panel,
