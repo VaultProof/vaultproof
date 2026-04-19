@@ -777,7 +777,7 @@ const API = window.location.hostname.includes('dev.vaultproof') ? 'https://stagi
             '<td class="px-4 py-3 text-gray-400 text-xs">' + escapeHtml(f.source || 'code') + '</td>' +
             '<td class="px-4 py-3 text-gray-400 text-xs">' + escapeHtml(f.mode || '') + '</td>' +
             '<td class="px-4 py-3 text-right" data-stop-row-toggle="1">' +
-              '<select class="bg-[#111118] border border-[#1e1e2e] rounded-lg px-2 py-1 text-xs text-gray-300 focus:outline-none focus:border-brand/50" data-finding-idx="' + i + '">' +
+              '<select class="bg-[#111118] border border-[#1e1e2e] rounded-lg px-2 py-1 text-xs text-gray-100 focus:outline-none focus:border-brand/50" data-finding-idx="' + i + '">' +
                 '<option value="store">Store in VaultProof</option>' +
                 '<option value="pr">Create PR</option>' +
                 '<option value="ignore">Ignore</option>' +
@@ -822,7 +822,7 @@ const API = window.location.hostname.includes('dev.vaultproof') ? 'https://stagi
                 '<button data-history-action="revoke" data-finding-id="' + escapeHtml(f.id) + '" data-provider-name="' + escapeHtml(hName) + '" data-steps="' + stepsJson + '" data-note="' + noteText + '" data-url="' + rotUrl + '" data-cli-steps="' + cliSteps + '" data-usage-check-url="' + usageCheckUrl + '" data-usage-check-note="' + usageCheckNote + '" class="px-3 py-1.5 bg-red-600 hover:bg-red-500 text-white rounded-lg text-xs font-medium transition whitespace-nowrap">Revoke + Rotate</button>' +
                 '<button data-history-action="store" data-finding-id="' + escapeHtml(f.id) + '" class="px-3 py-1.5 bg-brand hover:bg-brand-hover text-white rounded-lg text-xs font-medium transition whitespace-nowrap">Store in VaultProof</button>'
               ) +
-              (ha ? '' : '<button data-history-action="dismiss" data-finding-id="' + escapeHtml(f.id) + '" class="px-3 py-1.5 bg-gray-700 hover:bg-gray-600 text-gray-300 rounded-lg text-xs font-medium transition whitespace-nowrap">Dismiss</button>') +
+              (ha ? '' : '<button data-history-action="dismiss" data-finding-id="' + escapeHtml(f.id) + '" class="px-3 py-1.5 bg-gray-700 hover:bg-gray-600 text-gray-100 rounded-lg text-xs font-medium transition whitespace-nowrap">Dismiss</button>') +
             '</div>' +
           '</div>';
         }).join('');
@@ -1088,7 +1088,7 @@ const API = window.location.hostname.includes('dev.vaultproof') ? 'https://stagi
           '<td class="px-3 py-2 text-xs text-gray-400">' + scope + '</td>' +
           '<td class="px-3 py-2 text-xs text-gray-500">' + escapeHtml(entry.reason || '') + '</td>' +
           '<td class="px-3 py-2 text-right">' +
-            '<button data-allowlist-delete="' + escapeHtml(entry.id) + '" class="text-red-400 hover:text-red-300 text-xs">Delete</button>' +
+            '<button data-allowlist-delete="' + escapeHtml(entry.id) + '" class="text-red-300 hover:text-red-200 text-xs">Delete</button>' +
           '</td>' +
         '</tr>';
       }).join('');
@@ -1220,7 +1220,7 @@ const API = window.location.hostname.includes('dev.vaultproof') ? 'https://stagi
             '<span class="text-xs font-mono text-white">' + escapeHtml(f.key_name || f.keyName || '') + '</span>' +
             '<span class="text-xs text-gray-500">' + escapeHtml(f.file || '') + '</span>' +
           '</div>' +
-          '<select class="w-full bg-[#111118] border border-[#1e1e2e] rounded-lg px-3 py-2 text-xs text-gray-300 focus:outline-none focus:border-brand/50" data-pr-idx="' + idx + '">' +
+          '<select class="w-full bg-[#111118] border border-[#1e1e2e] rounded-lg px-3 py-2 text-xs text-gray-100 focus:outline-none focus:border-brand/50" data-pr-idx="' + idx + '">' +
             '<option value="vaultproof">Replace with VaultProof</option>' +
             '<option value="todo">Replace with TODO</option>' +
           '</select>' +
@@ -1464,7 +1464,7 @@ const API = window.location.hostname.includes('dev.vaultproof') ? 'https://stagi
       addList.innerHTML = '<div class="flex items-center gap-2">' +
         '<input type="checkbox" id="envAdd-0" class="env-task-cb rounded border-gray-600">' +
         '<label for="envAdd-0" class="text-sm font-mono text-green-400 cursor-pointer">VAULTPROOF_PROJECT_ID = ' + escapeHtml(devKeyDisplay) + '</label>' +
-        '<button data-copy-text="' + escapeHtml(devKeyDisplay) + '" class="ml-2 px-2 py-1 bg-surface border border-border rounded-lg text-xs text-gray-400 hover:text-white hover:border-brand/30 transition flex items-center gap-1">' +
+        '<button data-copy-text="' + escapeHtml(devKeyDisplay) + '" class="ml-2 px-2 py-1 bg-surface border border-border rounded-lg text-xs text-gray-200 hover:text-white hover:border-brand/30 transition flex items-center gap-1">' +
           '<svg class="w-3 h-3" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"/></svg>' +
           'Copy' +
         '</button>' +
