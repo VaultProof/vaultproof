@@ -61,12 +61,20 @@
     .topbar-search-kbd { color: #a3a39a; font-size: 10px; }
     .topbar-links { display: flex; gap: 20px; color: var(--text-muted); margin-right: 20px; }
     .topbar-links a:hover { color: var(--text); }
+    .topbar-session { display: flex; align-items: center; gap: 8px; }
     .topbar-avatar {
       width: 28px; height: 28px; border-radius: 50%;
       background: var(--accent); color: #fafaf7;
       display: flex; align-items: center; justify-content: center;
       font-family: var(--mono); font-size: 11px; font-weight: 700;
     }
+    .topbar-signout {
+      font-family: var(--mono); font-size: 11px;
+      color: var(--text-faint); background: var(--bg-card);
+      border: var(--rule); border-radius: 3px;
+      padding: 6px 10px; cursor: pointer;
+    }
+    .topbar-signout:hover { color: #b91c1c; background: #fdfdfa; }
 
     /* LAYOUT */
     .layout { display: grid; grid-template-columns: 220px 1fr; min-height: calc(100vh - 53px); }
@@ -216,7 +224,10 @@
     <a href="/docs">docs</a>
     <a href="#">changelog</a>
   </div>
-  <div class="topbar-avatar" id="user-avatar">NY</div>
+  <div class="topbar-session">
+    <div class="topbar-avatar" id="user-avatar">NY</div>
+    <button type="button" class="topbar-signout" id="signOutBtn">sign out</button>
+  </div>
 </div>
 
 <!-- LAYOUT -->
@@ -405,6 +416,18 @@ if (!token) { window.location.href = 'login'; }
 const email = user.email || '';
 const avatarEl = document.getElementById('user-avatar');
 if (avatarEl) avatarEl.textContent = (email || 'U').charAt(0).toUpperCase();
+const signOutBtn = document.getElementById('signOutBtn');
+if (signOutBtn) signOutBtn.addEventListener('click', signOut);
+
+function signOut() {
+  Object.keys(localStorage).forEach(function(key) {
+    if (key.startsWith('vaultproof_') || key.startsWith('sb-') || key.includes('auth-token')) {
+      localStorage.removeItem(key);
+    }
+  });
+  sessionStorage.clear();
+  window.location.replace('/app/login?logout=1');
+}
 
 function extractRefreshToken(v) {
   if (!v) return null;
