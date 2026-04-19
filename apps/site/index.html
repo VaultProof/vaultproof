@@ -4,6 +4,7 @@
   <!-- Google Analytics -->
   <script async src="https://www.googletagmanager.com/gtag/js?id=G-NE5RYX1WTF"></script>
   <script src="/js/index-1.js" defer></script>
+  <script src="/js/index-5.js" defer></script>
 
   <link rel="icon" type="image/png" href="/favicon.png">
   <meta charset="UTF-8">
@@ -554,7 +555,7 @@
       <p class="hero-sub">We find the keys scattered across your repo, split them so no single database holds a whole one, and quietly proxy your API calls. Your SDK doesn't know the difference.</p>
     </div>
     <div class="hero-cta-group">
-      <div class="hero-cta-cmd" onclick="copyCmd(this)">
+      <div class="hero-cta-cmd" data-copy-command="npx @vaultproof/init">
         <span class="hero-cta-cmd-prompt">❯</span>
         <span class="hero-cta-cmd-text">npx @vaultproof/init</span>
         <span class="hero-cta-cmd-hint">⌘ C</span>
@@ -981,16 +982,6 @@
 
 </div><!-- /.page -->
 
-<script>
-function copyCmd(el) {
-  const text = el.querySelector('.hero-cta-cmd-text').textContent.trim();
-  navigator.clipboard.writeText(text).catch(() => {});
-  const hint = el.querySelector('.hero-cta-cmd-hint');
-  const orig = hint.textContent;
-  hint.textContent = 'copied!';
-  setTimeout(() => { hint.textContent = orig; }, 1500);
-}
-</script>
 <script src="/js/analytics.js" defer></script>
 </body>
 </html>
