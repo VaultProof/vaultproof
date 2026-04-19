@@ -54,16 +54,7 @@
     .topbar-logo-name { font-weight: 600; letter-spacing: 0.5px; }
     .topbar-sep { color: #a3a39a; margin: 0 14px; }
     .topbar-crumb { color: var(--text-muted); }
-    .topbar-search {
-      display: flex; align-items: center; gap: 8px;
-      border: var(--rule); border-radius: 4px;
-      padding: 6px 10px; background: var(--bg-card); width: 240px;
-      margin: 0 20px 0 auto;
-    }
-    .topbar-search-slash { color: #a3a39a; }
-    .topbar-search-hint { color: var(--text-faint); flex: 1; font-size: 11px; }
-    .topbar-search-kbd { color: #a3a39a; font-size: 10px; }
-    .topbar-links { display: flex; gap: 20px; color: var(--text-muted); margin-right: 20px; }
+    .topbar-links { display: flex; gap: 20px; color: var(--text-muted); margin-left: auto; margin-right: 20px; }
     .topbar-links a:hover { color: var(--text); }
     .topbar-session { display: flex; align-items: center; gap: 8px; }
     .topbar-email {
@@ -234,7 +225,7 @@
     @media (max-width: 680px) {
       .page { border-left: none; border-right: none; }
       .topbar { padding: 12px 16px; gap: 10px; flex-wrap: wrap; }
-      .topbar-sep, .topbar-crumb, .topbar-search, .topbar-links { display: none; }
+      .topbar-sep, .topbar-crumb, .topbar-links { display: none; }
       .topbar-session { margin-left: auto; }
       .main { padding: 20px 16px 28px; }
       .page-header { flex-direction: column; align-items: flex-start; }
@@ -259,12 +250,6 @@
       <span>dashboard</span>
       <span class="topbar-sep">/</span>
       <span class="topbar-crumb">activity</span>
-
-      <div class="topbar-search">
-        <span class="topbar-search-slash">/</span>
-        <span class="topbar-search-hint">trace requests, errors, and hot paths</span>
-        <span class="topbar-search-kbd">live</span>
-      </div>
 
       <div class="topbar-links">
         <a href="/docs">docs</a>
