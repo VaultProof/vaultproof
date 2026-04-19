@@ -272,24 +272,24 @@
     <!-- KPI GRID -->
     <div class="kpi-grid">
       <div class="kpi-cell">
-        <div class="kpi-label">active projects</div>
-        <div class="kpi-value">6</div>
-        <div class="kpi-sub">+1 this week</div>
-      </div>
-      <div class="kpi-cell">
-        <div class="kpi-label">proxied calls · 24h</div>
-        <div class="kpi-value">2.41M</div>
-        <div class="kpi-sub">p50 41ms · p95 96ms</div>
-      </div>
-      <div class="kpi-cell">
         <div class="kpi-label">keys under vault</div>
-        <div class="kpi-value">38</div>
-        <div class="kpi-sub">across 9 providers</div>
+        <div class="kpi-value" id="kpi-keys">—</div>
+        <div class="kpi-sub" id="kpi-keys-sub">loading…</div>
       </div>
       <div class="kpi-cell">
-        <div class="kpi-label">open alerts</div>
-        <div class="kpi-value alert">4</div>
-        <div class="kpi-sub">3 scanner · 1 anomaly</div>
+        <div class="kpi-label">proxied calls · total</div>
+        <div class="kpi-value" id="kpi-calls">—</div>
+        <div class="kpi-sub" id="kpi-calls-sub">loading…</div>
+      </div>
+      <div class="kpi-cell">
+        <div class="kpi-label">active providers</div>
+        <div class="kpi-value" id="kpi-providers">—</div>
+        <div class="kpi-sub" id="kpi-providers-sub">loading…</div>
+      </div>
+      <div class="kpi-cell">
+        <div class="kpi-label">error rate</div>
+        <div class="kpi-value" id="kpi-errors">—</div>
+        <div class="kpi-sub" id="kpi-errors-sub">loading…</div>
       </div>
     </div>
 
@@ -340,15 +340,8 @@
           recent activity
           <span class="panel-head-right" style="color:var(--accent)">● live</span>
         </div>
-        <div class="activity-list">
-          <div class="activity-row"><span class="act-time">00:14:02</span><span class="act-tag">proxy</span><span>acme-ml-infer → openai/chat · 200 · 612ms</span></div>
-          <div class="activity-row"><span class="act-time">00:14:01</span><span class="act-tag">proxy</span><span>acme-web → stripe/charge · 200 · 244ms</span></div>
-          <div class="activity-row"><span class="act-time">00:13:58</span><span class="act-tag">scanner</span><span style="color:#b91c1c">acme-worker · found 1 exposed anthropic key in .env.production</span></div>
-          <div class="activity-row"><span class="act-time">00:13:55</span><span class="act-tag">vault</span><span style="color:#15803d">key rotated · openai/sk-proj-7Yx9 → sk-proj-K4nZ</span></div>
-          <div class="activity-row"><span class="act-time">00:13:40</span><span class="act-tag">proxy</span><span>acme-dashboard → supabase/query · 200 · 81ms</span></div>
-          <div class="activity-row"><span class="act-time">00:13:31</span><span class="act-tag">auth</span><span style="color:#15803d">new developer key issued for acme-mobile</span></div>
-          <div class="activity-row"><span class="act-time">00:13:12</span><span class="act-tag">proxy</span><span>acme-ml-infer → anthropic/messages · 200 · 488ms</span></div>
-          <div class="activity-row"><span class="act-time">00:13:08</span><span class="act-tag">alert</span><span style="color:#d97706">acme-ml-infer proxy p95 > 2× baseline for 5m</span></div>
+        <div class="activity-list" id="activity-feed">
+          <div class="activity-row" style="color:var(--text-faint)"><span class="act-time">—</span><span class="act-tag">—</span><span>loading…</span></div>
         </div>
       </div>
 
@@ -399,6 +392,200 @@
 </div>
 
 <script>
+// ── Auth ──
+const API = window.location.hostname.includes('dev.vaultproof') ? 'https://staging-api.vaultproof.dev/api/v1' : 'https://api.vaultproof.dev/api/v1';
+let token = localStorage.getItem('vaultproof_token');
+const user = JSON.parse(localStorage.getItem('vaultproof_user') || '{}');
+const SUPABASE_AUTH_STORAGE_KEY = 'sb-gwzkjiomemjlhtrdrlan-auth-token';
+let _refreshAttempted = false, _refreshPromise = null;
+
+if (!token) { window.location.href = 'login'; }
+
+// Set avatar from real user
+const email = user.email || '';
+const avatarEl = document.getElementById('user-avatar');
+if (avatarEl) avatarEl.textContent = (email || 'U').charAt(0).toUpperCase();
+
+function extractRefreshToken(v) {
+  if (!v) return null;
+  if (typeof v === 'string') { try { return extractRefreshToken(JSON.parse(v)); } catch { return null; } }
+  if (Array.isArray(v)) { for (const i of v) { const f = extractRefreshToken(i); if (f) return f; } return null; }
+  if (typeof v === 'object') {
+    if (typeof v.refresh_token === 'string' && v.refresh_token) return v.refresh_token;
+    for (const k in v) { const f = extractRefreshToken(v[k]); if (f) return f; }
+  }
+  return null;
+}
+
+function getStoredRefreshToken() {
+  return localStorage.getItem('vaultproof_refresh_token') ||
+         extractRefreshToken(localStorage.getItem(SUPABASE_AUTH_STORAGE_KEY));
+}
+
+async function tryRefreshToken() {
+  if (_refreshPromise) return _refreshPromise;
+  const rt = getStoredRefreshToken();
+  if (!rt) return false;
+  _refreshPromise = (async () => {
+    try {
+      const res = await fetch(`${API}/auth/refresh`, { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ refreshToken: rt }) });
+      if (!res.ok) return false;
+      const data = await res.json().catch(() => null);
+      if (!data?.token) return false;
+      token = data.token;
+      localStorage.setItem('vaultproof_token', data.token);
+      if (data.refreshToken) localStorage.setItem('vaultproof_refresh_token', data.refreshToken);
+      return true;
+    } catch { return false; } finally { _refreshPromise = null; }
+  })();
+  return _refreshPromise;
+}
+
+async function apiFetch(path) {
+  try {
+    const res = await fetch(`${API}${path}`, { headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' } });
+    if (res.status === 401) {
+      if (!_refreshAttempted) {
+        _refreshAttempted = true;
+        if (await tryRefreshToken()) return apiFetch(path);
+      }
+      _refreshAttempted = false;
+      window.location.href = 'login';
+      return null;
+    }
+    _refreshAttempted = false;
+    return res.ok ? res.json() : null;
+  } catch { return null; }
+}
+
+function formatNum(n) {
+  if (n == null) return '0';
+  if (n >= 1e6) return (n/1e6).toFixed(2) + 'M';
+  if (n >= 1e3) return (n/1e3).toFixed(1) + 'k';
+  return Number(n).toLocaleString();
+}
+
+function relTime(ts) {
+  if (!ts) return '—';
+  const s = Math.floor((Date.now() - new Date(ts)) / 1000);
+  if (s < 60) return s + 's ago';
+  if (s < 3600) return Math.floor(s/60) + 'm ago';
+  if (s < 86400) return Math.floor(s/3600) + 'h ago';
+  return Math.floor(s/86400) + 'd ago';
+}
+
+function normalizeUsage(data) {
+  return ((data && (data.usage || data.days)) || [])
+    .filter(r => r && r.date)
+    .map(r => ({ date: r.date, calls: Number(r.calls||0), errors: Number(r.errors||0) }));
+}
+
+// ── Chart ──
+let usageChart = null;
+
+function buildChart(labels, calls, errors) {
+  const mono = "'JetBrains Mono', ui-monospace, monospace";
+  const accent = "#d97706", rule = "#e7e5de";
+  const ctx = document.getElementById('usageChart').getContext('2d');
+  if (usageChart) { usageChart.destroy(); }
+  usageChart = new Chart(ctx, {
+    type: 'line',
+    data: {
+      labels,
+      datasets: [
+        { label:'calls', data:calls, borderColor:accent, backgroundColor:'rgba(217,119,6,0.06)', fill:true, tension:0.4, pointRadius:0, pointHoverRadius:4, pointHoverBackgroundColor:accent, borderWidth:2 },
+        { label:'errors', data:errors, borderColor:'#b91c1c', backgroundColor:'transparent', fill:false, tension:0.4, pointRadius:0, pointHoverRadius:4, pointHoverBackgroundColor:'#b91c1c', borderWidth:1.5 },
+      ],
+    },
+    options: {
+      responsive:true, maintainAspectRatio:false,
+      interaction:{ mode:'index', intersect:false },
+      plugins: {
+        legend:{ display:false },
+        tooltip:{ backgroundColor:'#fff', titleColor:'#171717', bodyColor:'#525252', borderColor:rule, borderWidth:1, cornerRadius:4, padding:10, titleFont:{family:mono,size:11}, bodyFont:{family:mono,size:11} },
+      },
+      scales: {
+        x:{ grid:{color:rule}, ticks:{color:'#8a8a82',font:{family:mono,size:10},maxTicksLimit:8}, border:{display:false} },
+        y:{ grid:{color:rule}, ticks:{color:'#8a8a82',font:{family:mono,size:10}, callback:v=>v>=1000?(v/1000).toFixed(0)+'k':v}, border:{display:false}, beginAtZero:true },
+      },
+    },
+  });
+}
+
+function demoChart() {
+  const labels = [], calls = [], errors = [];
+  for (let i=29;i>=0;i--) {
+    const d = new Date(); d.setDate(d.getDate()-i);
+    labels.push(d.toLocaleDateString('en-US',{month:'short',day:'numeric'}));
+    const base = 60000 + Math.sin(i*0.4)*20000;
+    calls.push(Math.round(base)); errors.push(Math.round(base*0.008));
+  }
+  buildChart(labels, calls, errors);
+}
+
+// ── Activity feed ──
+const ACTION_LABELS = { api_call:'API Call', transparent_proxy:'Proxy', key_retrieval:'Key Retrieved', key_rotation:'Key Rotated', nullifier_claim:'ZK Proof', revoke:'Revoked' };
+const ACTION_COLORS = { api_call:'#525252', transparent_proxy:'#525252', key_retrieval:'#15803d', key_rotation:'#d97706', revoke:'#b91c1c' };
+
+function renderActivity(events) {
+  const feed = document.getElementById('activity-feed');
+  if (!events.length) {
+    feed.innerHTML = '<div class="activity-row" style="color:var(--text-faint)"><span class="act-time">—</span><span class="act-tag">—</span><span>no recent activity</span></div>';
+    return;
+  }
+  feed.innerHTML = events.slice(0,8).map(ev => {
+    const type = ev.action || ev.type || 'unknown';
+    const label = ACTION_LABELS[type] || type;
+    const color = ACTION_COLORS[type] || '#525252';
+    let desc = ev.description || '';
+    if (!desc && ev.metadata) { try { const m = typeof ev.metadata==='string'?JSON.parse(ev.metadata):ev.metadata; desc = m.endpoint||m.provider||''; } catch {} }
+    desc = desc || (ev.keySlot&&ev.keySlot.provider) || ev.appId || '—';
+    const ts = relTime(ev.timestamp);
+    return `<div class="activity-row"><span class="act-time">${ts}</span><span class="act-tag">${label}</span><span style="color:${color}">${desc}</span></div>`;
+  }).join('');
+}
+
+// ── Load everything ──
+async function loadDashboard() {
+  const [overviewRaw, usageRaw] = await Promise.all([
+    apiFetch('/stats/overview'),
+    apiFetch('/stats/usage?days=30'),
+  ]);
+
+  // KPIs
+  if (overviewRaw) {
+    const d = overviewRaw;
+    document.getElementById('kpi-keys').textContent = formatNum(d.totalKeys||0);
+    document.getElementById('kpi-keys-sub').textContent = 'encrypted at rest';
+    document.getElementById('kpi-calls').textContent = formatNum(d.totalCalls||0);
+    document.getElementById('kpi-calls-sub').textContent = 'all time';
+    document.getElementById('kpi-providers').textContent = formatNum(d.activeApps||d.providerCount||0);
+    document.getElementById('kpi-providers-sub').textContent = 'connected';
+    const errRate = Number(d.errorRate||0).toFixed(1);
+    const errEl = document.getElementById('kpi-errors');
+    errEl.textContent = errRate + '%';
+    if (parseFloat(errRate) > 1) errEl.classList.add('alert');
+    document.getElementById('kpi-errors-sub').textContent = 'of proxied calls';
+    renderActivity(d.recentActivity||[]);
+  } else {
+    ['kpi-keys','kpi-calls','kpi-providers','kpi-errors'].forEach(id => { document.getElementById(id).textContent = '—'; });
+    ['kpi-keys-sub','kpi-calls-sub','kpi-providers-sub','kpi-errors-sub'].forEach(id => { document.getElementById(id).textContent = 'unavailable'; });
+    renderActivity([]);
+  }
+
+  // Chart
+  const rows = normalizeUsage(usageRaw);
+  if (rows.length) {
+    const labels = rows.map(r => new Date(r.date).toLocaleDateString('en-US',{month:'short',day:'numeric'}));
+    buildChart(labels, rows.map(r=>r.calls), rows.map(r=>r.errors));
+  } else {
+    demoChart();
+  }
+}
+
+loadDashboard();
+
+// ── Project table (demo data) ──
 const PROJECTS = [
   { id:"vp-proj-7Yx9qL", name:"acme-web",       env:"production",  keys:7,  calls:"412,908", last:"2s ago",  status:"healthy", exposed:0 },
   { id:"vp-proj-K4nZpR", name:"acme-dashboard",  env:"production",  keys:4,  calls:"84,220",  last:"14s ago", status:"healthy", exposed:0 },
