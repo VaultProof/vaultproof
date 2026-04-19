@@ -589,8 +589,6 @@ const API = window.location.hostname.includes('dev.vaultproof') ? 'https://stagi
         renderLegacyFindings(codeFindings, historyFindings);
       }
 
-      // Pre-load allowlist data for this repo
-      loadAllowlists();
     }
 
     // --- Migration Results View ---
@@ -1053,11 +1051,18 @@ const API = window.location.hostname.includes('dev.vaultproof') ? 'https://stagi
 
     async function loadAllowlists() {
       var repo = currentScanData ? (currentScanData.repo_full_name || currentScanData.repoFullName || '') : '';
-      var url = API + '/scanner/allowlists';
-      if (repo) url += '?repo=' + encodeURIComponent(repo);
+      if (!repo) {
+        allowlistData = [];
+        renderAllowlistTable();
+        return;
+      }
+      var query = new URLSearchParams();
+      query.set('repo', repo);
+      query.set('repo_full_name', repo);
+      var url = API + '/scanner/allowlists?' + query.toString();
       var res = await apiFetch(url);
       if (!res) return;
-      var data = await res.json();
+      var data = await safeJson(res);
       allowlistData = data.allowlists || [];
       renderAllowlistTable();
     }
@@ -1118,7 +1123,15 @@ const API = window.location.hostname.includes('dev.vaultproof') ? 'https://stagi
         var res = await apiFetch(API + '/scanner/allowlists', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ patternType: patternType, pattern: pattern, repo: repo, reason: reason }),
+          body: JSON.stringify({
+            patternType: patternType,
+            pattern_type: patternType,
+            pattern: pattern,
+            repo: repo,
+            repoFullName: repo,
+            repo_full_name: repo,
+            reason: reason
+          }),
         });
         if (!res || !res.ok) throw new Error('Failed');
         showToast('Added to allowlist', 'success');
