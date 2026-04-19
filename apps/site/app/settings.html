@@ -16,94 +16,349 @@
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet" />
   <script src="/js/app-settings-2.js" defer></script>
   <style>
-    body { font-family: 'Inter', sans-serif; background: #0a0a0f; }
-    .font-mono, code, .monospace { font-family: 'JetBrains Mono', monospace; }
-    ::-webkit-scrollbar { width: 6px; }
-    ::-webkit-scrollbar-track { background: #0a0a0f; }
-    ::-webkit-scrollbar-thumb { background: #1e1e2e; border-radius: 3px; }
-    .btn-glow { box-shadow: 0 0 20px rgba(99, 102, 241, 0.15); }
-    .btn-glow:hover { box-shadow: 0 0 25px rgba(99, 102, 241, 0.25); }
-    .sidebar-expanded { width: 220px; }
+    *, *::before, *::after { box-sizing: border-box; }
+
+    :root {
+      --accent: #d97706;
+      --bg: #fafaf7;
+      --bg-mid: #f3f3ee;
+      --bg-card: #fff;
+      --rule: 1px solid #e7e5de;
+      --hair: 1px solid #eeece5;
+      --text: #171717;
+      --text-muted: #525252;
+      --text-faint: #8a8a82;
+      --mono: "JetBrains Mono", ui-monospace, monospace;
+      --display: "Inter Tight", "Inter", system-ui, sans-serif;
+      --body: "Inter", system-ui, sans-serif;
+    }
+
+    html, body {
+      background: #e8e6e0;
+      color: var(--text);
+      font-family: var(--body);
+      font-size: 14px;
+      line-height: 1.5;
+      -webkit-font-smoothing: antialiased;
+      min-height: 100%;
+      margin: 0;
+    }
+
+    .font-mono, code, .monospace { font-family: var(--mono); }
+    ::-webkit-scrollbar { width: 6px; height: 6px; }
+    ::-webkit-scrollbar-track { background: var(--bg); }
+    ::-webkit-scrollbar-thumb { background: #d8d5cc; border-radius: 3px; }
+    .btn-glow { box-shadow: none; }
+    .btn-glow:hover { box-shadow: none; }
+
+    .page {
+      max-width: 1280px;
+      margin: 0 auto;
+      background: var(--bg);
+      border-left: var(--rule);
+      border-right: var(--rule);
+      min-height: 100vh;
+    }
+
+    .topbar {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 13px 28px;
+      border-bottom: var(--rule);
+      font-family: var(--mono);
+      font-size: 12px;
+      background: var(--bg);
+      position: sticky;
+      top: 0;
+      z-index: 100;
+    }
+
+    .topbar-menu {
+      display: none;
+      align-items: center;
+      justify-content: center;
+      width: 30px;
+      height: 30px;
+      border: var(--rule);
+      border-radius: 3px;
+      background: var(--bg-card);
+      color: var(--text-muted);
+      cursor: pointer;
+    }
+
+    .topbar-menu:hover { color: var(--text); }
+    .topbar-logo { display: flex; align-items: center; gap: 8px; }
+    .topbar-logo-name { font-weight: 600; letter-spacing: 0.5px; }
+    .topbar-sep { color: #a3a39a; }
+    .topbar-crumb { color: var(--text-muted); }
+    .topbar-links { display: flex; gap: 20px; color: var(--text-muted); margin-left: auto; margin-right: 20px; }
+    .topbar-links a:hover { color: var(--text); }
+    .topbar-session { display: flex; align-items: center; gap: 8px; }
+    .topbar-email {
+      max-width: 220px;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      color: var(--text-muted);
+      font-family: var(--mono);
+      font-size: 11px;
+    }
+    .topbar-avatar {
+      width: 28px;
+      height: 28px;
+      border-radius: 50%;
+      background: var(--accent);
+      color: #fafaf7;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-family: var(--mono);
+      font-size: 11px;
+      font-weight: 700;
+    }
+    .topbar-signout {
+      font-family: var(--mono);
+      font-size: 11px;
+      color: var(--text-faint);
+      background: var(--bg-card);
+      border: var(--rule);
+      border-radius: 3px;
+      padding: 6px 10px;
+      cursor: pointer;
+    }
+    .topbar-signout:hover { color: #b91c1c; background: #fdfdfa; }
+
+    .layout {
+      display: grid;
+      grid-template-columns: 220px 1fr;
+      min-height: calc(100vh - 53px);
+      position: relative;
+    }
+
+    .sidebar-overlay {
+      position: fixed;
+      inset: 53px 0 0;
+      background: rgba(23, 23, 23, 0.42);
+      z-index: 80;
+    }
+
+    .sidebar {
+      border-right: var(--rule);
+      padding: 20px 16px;
+      background: var(--bg);
+      position: relative;
+      z-index: 90;
+    }
+
     .sidebar-group { margin-bottom: 22px; }
     .sidebar-head {
-      font-family: 'JetBrains Mono', monospace;
+      font-family: var(--mono);
       font-size: 10px;
       letter-spacing: 0.8px;
       text-transform: uppercase;
-      color: #8a8a82;
+      color: var(--text-faint);
       padding: 6px 8px;
     }
-    .sidebar-nav-item {
+    .sidebar-item {
+      font-family: var(--mono);
+      font-size: 12.5px;
+      color: var(--text-muted);
+      padding: 7px 10px;
+      border-radius: 3px;
+      border: 1px solid transparent;
       display: flex;
       align-items: center;
       gap: 8px;
-      min-height: 36px;
-      padding: 7px 10px;
-      font-family: 'JetBrains Mono', monospace;
-      font-size: 12.5px;
+      cursor: pointer;
+      text-decoration: none;
+    }
+    .sidebar-item:hover { color: var(--text); }
+    .sidebar-item.active {
+      color: var(--text);
+      background: var(--bg-card);
+      border: var(--rule);
+    }
+    .sidebar-dot { font-size: 8px; }
+    .sidebar-item.active .sidebar-dot { color: var(--accent); }
+    .sidebar-item:not(.active) .sidebar-dot { color: #c4c4bd; }
+    .usage-box {
+      margin-top: 40px;
+      padding: 14px;
+      border: var(--rule);
+      border-radius: 4px;
+      background: var(--bg-card);
+    }
+    .usage-label {
+      font-family: var(--mono);
+      font-size: 10px;
+      letter-spacing: 0.8px;
+      text-transform: uppercase;
+      color: var(--text-faint);
+      margin-bottom: 8px;
+    }
+    .usage-row {
+      font-family: var(--mono);
+      font-size: 12px;
+      color: var(--text);
+      display: flex;
+      justify-content: space-between;
+      gap: 12px;
+    }
+    .usage-bar-track {
+      height: 4px;
+      background: #eeece5;
+      border-radius: 99px;
+      margin-top: 8px;
+    }
+    .usage-bar-fill {
+      height: 100%;
+      width: 0;
+      background: var(--accent);
+      border-radius: 99px;
+      transition: width 0.25s ease;
+    }
+    .usage-reset {
+      font-family: var(--mono);
+      font-size: 11px;
+      color: var(--text-faint);
+      margin-top: 8px;
+    }
+    .sidebar-bottom {
+      padding: 16px;
+      border-top: var(--rule);
+      background: var(--bg);
     }
     .sidebar-user-info {
-      font-family: 'JetBrains Mono', monospace;
+      font-family: var(--mono);
       font-size: 11px;
-      color: #8a8a82;
+      color: var(--text-faint);
       white-space: nowrap;
       overflow: hidden;
       text-overflow: ellipsis;
+      margin-bottom: 10px;
     }
-    .logout-btn { width: 100%; }
+    .logout-btn {
+      width: 100%;
+      font-family: var(--mono);
+      font-size: 11px;
+      color: var(--text-faint);
+      background: var(--bg-card);
+      border: var(--rule);
+      border-radius: 3px;
+      padding: 8px 10px;
+      cursor: pointer;
+      text-transform: lowercase;
+    }
+    .logout-btn:hover { color: #b91c1c; background: #fdfdfa; }
+
+    .main {
+      padding: 28px 32px;
+      min-width: 0;
+    }
+    .settings-wrap {
+      max-width: 900px;
+      margin: 0 auto;
+    }
+
     @keyframes fadeIn { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: translateY(0); } }
     .fade-in { animation: fadeIn 0.3s ease forwards; }
+
+    @media (max-width: 900px) {
+      .page { border-left: none; border-right: none; }
+      .topbar { padding: 12px 16px; }
+      .topbar-menu { display: inline-flex; }
+      .topbar-links, .topbar-sep, .topbar-crumb { display: none; }
+      .topbar-session { margin-left: auto; }
+      .layout { grid-template-columns: 1fr; }
+      .sidebar {
+        position: fixed;
+        top: 53px;
+        left: 0;
+        bottom: 0;
+        width: 220px;
+        border-right: var(--rule);
+        border-bottom: var(--rule);
+        transform: translateX(-100%);
+        transition: transform 0.2s ease;
+        overflow-y: auto;
+      }
+      .sidebar.is-open { transform: translateX(0); }
+      .main { padding: 20px 16px 28px; }
+    }
+
+    @media (max-width: 680px) {
+      .topbar-session { width: 100%; justify-content: flex-end; }
+      .topbar-email { max-width: 140px; }
+    }
   </style>
   <link rel="stylesheet" href="/css/site-theme.css">
 </head>
-<body class="text-gray-100 min-h-screen">
+<body>
+  <div class="page">
 
-  <!-- Mobile Header -->
-  <div class="lg:hidden fixed top-0 left-0 right-0 z-50 bg-[#fafaf7] border-b border-[#e7e5de] px-4 py-3 flex items-center justify-between">
-    <button id="menuBtn" class="text-[#525252] hover:text-[#171717]">
-      <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/></svg>
+  <div class="topbar">
+    <button id="menuBtn" class="topbar-menu" type="button" aria-label="Open sidebar">
+      <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/></svg>
     </button>
-    <span class="text-sm font-semibold tracking-[0.08em] uppercase text-[#171717]" style="font-family:'JetBrains Mono',monospace">vaultproof</span>
-    <div class="w-6"></div>
+    <div class="topbar-logo">
+      <span class="topbar-logo-name">vaultproof</span>
+    </div>
+    <span class="topbar-sep">/</span>
+    <span>dashboard</span>
+    <span class="topbar-sep">/</span>
+    <span class="topbar-crumb">settings</span>
+
+    <div class="topbar-links">
+      <a href="/docs">docs</a>
+      <a href="/app/activity">activity</a>
+    </div>
+    <div class="topbar-session">
+      <span class="topbar-email" id="user-email">loading...</span>
+      <div class="topbar-avatar" id="user-avatar">V</div>
+      <button type="button" class="topbar-signout" id="signOutBtn">sign out</button>
+    </div>
   </div>
 
-  <!-- Sidebar Overlay -->
-  <div id="sidebarOverlay" class="fixed inset-0 bg-black/60 z-40 hidden lg:hidden" onclick="toggleMobileSidebar()"></div>
+  <div id="sidebarOverlay" class="sidebar-overlay hidden"></div>
 
-  <!-- Left Sidebar -->
-  <aside id="sidebar" class="fixed top-0 left-0 h-full bg-card border-r border-border z-50 flex flex-col transition-all duration-200 sidebar-expanded -translate-x-full lg:translate-x-0">
-    <nav class="flex-1 px-2 py-5 space-y-0.5 overflow-y-auto">
+  <div class="layout">
+    <aside id="sidebar" class="sidebar">
       <div class="sidebar-group">
         <div class="sidebar-head">overview</div>
-        <a href="/app/" class="sidebar-nav-item"><span class="sidebar-dot">●</span><span class="sidebar-label">projects</span></a>
-        <a href="/app/activity" class="sidebar-nav-item"><span class="sidebar-dot">●</span><span class="sidebar-label">activity</span></a>
-        <a href="/app/alerts" class="sidebar-nav-item"><span class="sidebar-dot">●</span><span class="sidebar-label">alerts</span></a>
+        <a href="/app/" class="sidebar-item"><span class="sidebar-dot">●</span> projects</a>
+        <a href="/app/activity" class="sidebar-item"><span class="sidebar-dot">●</span> activity</a>
+        <a href="/app/alerts" class="sidebar-item"><span class="sidebar-dot">●</span> alerts</a>
       </div>
       <div class="sidebar-group">
         <div class="sidebar-head">vault</div>
-        <a href="/app/keys" class="sidebar-nav-item"><span class="sidebar-dot">●</span><span class="sidebar-label">keys</span></a>
-        <a href="/app/settings" class="sidebar-nav-item active"><span class="sidebar-dot">●</span><span class="sidebar-label">settings</span></a>
-        <a href="/app/plans" class="sidebar-nav-item"><span class="sidebar-dot">●</span><span class="sidebar-label">plans</span></a>
+        <a href="/app/keys" class="sidebar-item"><span class="sidebar-dot">●</span> keys</a>
+        <a href="/app/settings" class="sidebar-item active"><span class="sidebar-dot">●</span> settings</a>
+        <a href="/app/plans" class="sidebar-item"><span class="sidebar-dot">●</span> plans</a>
       </div>
       <div class="sidebar-group">
         <div class="sidebar-head">scanner</div>
-        <a href="/app/scanner" class="sidebar-nav-item"><span class="sidebar-dot">●</span><span class="sidebar-label">repos</span></a>
+        <a href="/app/scanner" class="sidebar-item"><span class="sidebar-dot">●</span> repos</a>
       </div>
       <div class="sidebar-group">
         <div class="sidebar-head">help</div>
-        <a href="/docs" class="sidebar-nav-item"><span class="sidebar-dot">●</span><span class="sidebar-label">docs</span></a>
-        <a href="mailto:hello@vaultproof.dev" class="sidebar-nav-item"><span class="sidebar-dot">●</span><span class="sidebar-label">support</span></a>
+        <a href="/docs" class="sidebar-item"><span class="sidebar-dot">●</span> docs</a>
+        <a href="mailto:hello@vaultproof.dev" class="sidebar-item"><span class="sidebar-dot">●</span> support</a>
       </div>
-    </nav>
+      <div class="usage-box">
+        <div class="usage-label" id="usagePlanLabel">plan loading</div>
+        <div class="usage-row"><span id="usageMetricLabel">all calls</span><span id="usageMetricValue">—</span></div>
+        <div class="usage-bar-track"><div class="usage-bar-fill" id="usageBarFill"></div></div>
+        <div class="usage-reset" id="usageMetricNote">loading…</div>
+      </div>
 
-    <div class="sidebar-bottom px-3 py-3 border-t border-border flex-shrink-0">
-      <div class="sidebar-user-info" id="sidebarEmail"></div>
-      <button id="logoutBtn" type="button" class="logout-btn">sign out</button>
-    </div>
-  </aside>
+      <div class="sidebar-bottom">
+        <div class="sidebar-user-info" id="sidebarEmail"></div>
+        <button id="logoutBtn" type="button" class="logout-btn">sign out</button>
+      </div>
+    </aside>
 
-  <!-- Main Content -->
-  <main class="lg:ml-[220px] pt-16 lg:pt-0 min-h-screen">
+    <main class="main settings-main">
     <!-- Toast notification -->
     <div id="toast" class="fixed top-4 right-4 z-50 hidden max-w-sm">
       <div id="toastInner" class="flex items-center gap-3 px-4 py-3 rounded-xl border text-sm shadow-lg backdrop-blur-sm">
@@ -124,7 +379,7 @@
       </div>
     </div>
 
-    <div class="max-w-3xl mx-auto p-5 lg:p-6 space-y-6">
+    <div class="settings-wrap space-y-6">
 
       <!-- Header -->
       <div>
@@ -410,6 +665,8 @@
 
     </div>
   </main>
+  </div>
+  </div>
 
   <!-- Kill Switch Confirmation Modal -->
   <div id="killSwitchModal" class="hidden fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm">

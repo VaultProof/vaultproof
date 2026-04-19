@@ -9,6 +9,44 @@ const API = window.location.hostname.includes('dev.vaultproof') ? 'https://stagi
 
     const user = JSON.parse(localStorage.getItem('vaultproof_user') || '{}');
 
+    function syncUserChrome(emailValue) {
+      const email = emailValue || user.email || '';
+      const sidebarEmail = document.getElementById('sidebarEmail');
+      if (sidebarEmail) sidebarEmail.textContent = email || '—';
+
+      const emailLabel = document.getElementById('user-email');
+      if (emailLabel) emailLabel.textContent = email || 'unknown user';
+
+      const avatar = document.getElementById('user-avatar');
+      if (avatar) avatar.textContent = (email || 'V').charAt(0).toUpperCase();
+    }
+
+    function syncSidebarUsage() {
+      const metricValue = document.getElementById('usageMetricValue');
+      const metricFill = document.getElementById('usageBarFill');
+      const planLabel = document.getElementById('usagePlanLabel');
+      const metricNote = document.getElementById('usageMetricNote');
+      if (!metricValue || !metricFill || !planLabel || !metricNote) return;
+
+      const tier = window._currentTier || 'free';
+      const callsUsed = Number(window._usageData?.callsUsed || 0);
+      const limits = {
+        free: 10000,
+        starter: 50000,
+        pro: 500000,
+        team: 2000000,
+        enterprise: Infinity,
+      };
+      const limit = limits[tier] ?? limits.free;
+
+      planLabel.textContent = formatTierLabel(tier).toLowerCase();
+      metricValue.textContent = callsUsed.toLocaleString();
+      metricNote.textContent = limit === Infinity
+        ? 'unmetered call volume'
+        : `${Math.max(limit - callsUsed, 0).toLocaleString()} calls left this month`;
+      metricFill.style.width = limit === Infinity ? '12%' : `${Math.min(100, (callsUsed / limit) * 100)}%`;
+    }
+
     function normalizeTier(value) {
       const tier = String(value || '').trim().toLowerCase();
       if (!tier) return 'free';
@@ -112,13 +150,17 @@ const API = window.location.hostname.includes('dev.vaultproof') ? 'https://stagi
 
     const sidebarEl = document.getElementById('sidebar');
     const overlayEl = document.getElementById('sidebarOverlay');
-    document.getElementById('sidebarEmail').textContent = user.email || '—';
+    syncUserChrome();
     document.getElementById('menuBtn').addEventListener('click', toggleMobileSidebar);
+    if (overlayEl) overlayEl.addEventListener('click', toggleMobileSidebar);
     const logoutBtn = document.getElementById('logoutBtn');
     if (logoutBtn) logoutBtn.addEventListener('click', logout);
+    const signOutBtn = document.getElementById('signOutBtn');
+    if (signOutBtn) signOutBtn.addEventListener('click', logout);
 
     function toggleMobileSidebar() {
-      sidebarEl.classList.toggle('-translate-x-full');
+      if (window.innerWidth > 900) return;
+      sidebarEl.classList.toggle('is-open');
       overlayEl.classList.toggle('hidden');
     }
 
@@ -229,13 +271,16 @@ const API = window.location.hostname.includes('dev.vaultproof') ? 'https://stagi
         if (!res) return;
         const data = await res.json();
         const profile = data.user || data;
-        document.getElementById('profileEmail').textContent = profile.email || user.email || '—';
+        const email = profile.email || user.email || '—';
+        document.getElementById('profileEmail').textContent = email;
+        syncUserChrome(email);
         document.getElementById('profileCreated').textContent = profile.createdAt
           ? new Date(profile.createdAt).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })
           : '—';
       } catch (e) {
         console.error('Failed to load profile:', e);
         document.getElementById('profileEmail').textContent = user.email || '—';
+        syncUserChrome();
         showToast('Couldn\'t load profile — showing cached data', 'warning');
       }
     }
@@ -251,10 +296,12 @@ const API = window.location.hostname.includes('dev.vaultproof') ? 'https://stagi
         // Store for later tier-based update
         window._usageData = { keysUsed, callsUsed };
         updateUsageBars(keysUsed, callsUsed);
+        syncSidebarUsage();
       } catch (e) {
         console.error('Failed to load usage:', e);
         document.getElementById('keysUsed').textContent = '—';
         document.getElementById('callsUsed').textContent = '—';
+        syncSidebarUsage();
         showToast('Unable to load usage data', 'warning');
       }
     }
@@ -422,8 +469,10 @@ const API = window.location.hostname.includes('dev.vaultproof') ? 'https://stagi
         const res = await apiFetch('/billing/status');
         if (!res || !res.ok) {
           // Fallback to free plan display
+          window._currentTier = 'free';
           document.getElementById('billingTierBadge').textContent = 'Free Plan';
           if (document.getElementById('planBadge')) document.getElementById('planBadge').textContent = 'Free Plan';
+          syncSidebarUsage();
           return;
         }
         const data = await res.json();
@@ -436,6 +485,7 @@ const API = window.location.hostname.includes('dev.vaultproof') ? 'https://stagi
           data.customer?.tier
         );
         window._currentTier = currentTier;
+        syncSidebarUsage();
         const isSubscribed = data.hasSubscription || data.subscribed || false;
 
         // Update badge
@@ -544,6 +594,7 @@ const API = window.location.hostname.includes('dev.vaultproof') ? 'https://stagi
         }
       } catch (e) {
         console.error('Failed to load billing status:', e);
+        window._currentTier = 'free';
         const badge = document.getElementById('billingTierBadge');
         badge.textContent = 'Free Plan';
         badge.className = 'inline-flex items-center px-3 py-1 rounded-xl bg-gray-700/30 text-gray-400 text-sm font-medium border border-gray-600/30 capitalize';
@@ -552,6 +603,7 @@ const API = window.location.hostname.includes('dev.vaultproof') ? 'https://stagi
           planBadge.textContent = 'Free Plan';
           planBadge.className = 'inline-flex items-center px-3 py-1 rounded-xl bg-gray-700/30 text-gray-400 text-sm font-medium border border-gray-600/30';
         }
+        syncSidebarUsage();
       }
     }
 
