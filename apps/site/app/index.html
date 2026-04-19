@@ -154,11 +154,13 @@
     .env-production  { background: rgba(22,163,74,0.08);  color: #15803d; }
     .env-staging     { background: rgba(217,119,6,0.08);  color: #b45309; }
     .env-development { background: rgba(100,116,139,0.1); color: #475569; }
+    .env-unknown     { background: rgba(100,116,139,0.1); color: #64748b; }
     .cell-mono { font-family: var(--mono); font-size: 13px; color: var(--text); }
     .sparkline { display: flex; align-items: flex-end; gap: 2px; height: 36px; }
     .spark-bar { width: 3px; border-radius: 1px; }
     .last-call { font-family: var(--mono); font-size: 12px; color: var(--text-muted); }
     .status-cell { text-align: right; font-family: var(--mono); font-size: 11px; letter-spacing: 0.5px; text-transform: uppercase; }
+    .status-empty { color: var(--text-faint); }
 
     /* BOTTOM PANELS */
     .bottom-grid { display: grid; grid-template-columns: 1.4fr 1fr; gap: 20px; }
@@ -239,7 +241,7 @@
       <div class="sidebar-head">overview</div>
       <div class="sidebar-item active"><span class="sidebar-dot">●</span> projects</div>
       <div class="sidebar-item"><span class="sidebar-dot">●</span> activity</div>
-      <div class="sidebar-item"><span class="sidebar-dot">●</span> alerts · 4</div>
+      <div class="sidebar-item"><span class="sidebar-dot">●</span> alerts · <span id="sidebarAlertsCount">—</span></div>
     </div>
     <div class="sidebar-group">
       <div class="sidebar-head">vault</div>
@@ -262,9 +264,9 @@
     </div>
     <div class="usage-box">
       <div class="usage-label" id="usagePlanLabel">plan loading</div>
-      <div class="usage-row"><span>calls</span><span>352k / 500k</span></div>
-      <div class="usage-bar-track"><div class="usage-bar-fill" style="width:70%"></div></div>
-      <div class="usage-reset">resets in 12d</div>
+      <div class="usage-row"><span id="usageMetricLabel">all calls</span><span id="usageMetricValue">—</span></div>
+      <div class="usage-bar-track"><div class="usage-bar-fill" id="usageBarFill" style="width:0%"></div></div>
+      <div class="usage-reset" id="usageMetricNote">loading…</div>
     </div>
   </aside>
 
@@ -272,7 +274,7 @@
   <main class="main">
     <div class="page-header">
       <h1 class="page-title">Projects</h1>
-      <span class="page-meta">/ 7 total · 5 active</span>
+      <span class="page-meta" id="pageMeta">/ loading…</span>
       <div class="page-actions">
         <button class="btn-outline">import .env</button>
         <button class="btn-primary">+ new project</button>
@@ -320,11 +322,11 @@
 
     <!-- FILTER BAR -->
     <div class="filter-bar">
-      <span class="filter-chip active">all</span>
-      <span class="filter-chip">production</span>
-      <span class="filter-chip">staging</span>
-      <span class="filter-chip">development</span>
-      <span class="filter-chip">idle</span>
+      <span class="filter-chip active" data-filter="all">all</span>
+      <span class="filter-chip" data-filter="production">production</span>
+      <span class="filter-chip" data-filter="staging">staging</span>
+      <span class="filter-chip" data-filter="development">development</span>
+      <span class="filter-chip" data-filter="idle">idle</span>
       <span class="filter-sort">sort · last activity ↓</span>
     </div>
 
@@ -358,44 +360,17 @@
 
       <div class="panel">
         <div class="panel-head">
-          open alerts · 4
-          <span class="panel-head-right" style="color:#b91c1c">needs review</span>
+          open alerts · <span id="alertsCount">—</span>
+          <span class="panel-head-right" id="alertsStatus" style="color:#b91c1c">loading…</span>
         </div>
-        <div class="alert-item">
-          <span class="alert-glyph" style="color:#b91c1c">!!</span>
-          <div class="alert-text">
-            <div class="alert-title">exposed openai key</div>
-            <div class="alert-meta">acme-ml-infer · 12m ago</div>
+        <div id="alertsList">
+          <div class="alert-item">
+            <span class="alert-glyph" style="color:#8a8a82">—</span>
+            <div class="alert-text">
+              <div class="alert-title">Loading alerts…</div>
+              <div class="alert-meta">scanner history</div>
+            </div>
           </div>
-          <span class="alert-badge" style="color:#b91c1c;background:rgba(185,28,28,0.08)">critical</span>
-          <span class="alert-review">review →</span>
-        </div>
-        <div class="alert-item">
-          <span class="alert-glyph" style="color:#b91c1c">!!</span>
-          <div class="alert-text">
-            <div class="alert-title">exposed stripe key</div>
-            <div class="alert-meta">acme-ml-infer · 12m ago</div>
-          </div>
-          <span class="alert-badge" style="color:#b91c1c;background:rgba(185,28,28,0.08)">critical</span>
-          <span class="alert-review">review →</span>
-        </div>
-        <div class="alert-item">
-          <span class="alert-glyph" style="color:#c2410c">!!</span>
-          <div class="alert-text">
-            <div class="alert-title">anthropic key in README</div>
-            <div class="alert-meta">acme-ml-infer · 2h ago</div>
-          </div>
-          <span class="alert-badge" style="color:#c2410c;background:rgba(194,65,12,0.08)">high</span>
-          <span class="alert-review">review →</span>
-        </div>
-        <div class="alert-item">
-          <span class="alert-glyph" style="color:#a16207">!!</span>
-          <div class="alert-text">
-            <div class="alert-title">proxy p95 anomaly</div>
-            <div class="alert-meta">acme-worker · 18m ago</div>
-          </div>
-          <span class="alert-badge" style="color:#a16207;background:rgba(161,98,7,0.08)">medium</span>
-          <span class="alert-review">review →</span>
         </div>
       </div>
     </div>
@@ -520,18 +495,194 @@ function normalizeUsage(data) {
     .map(r => ({ date: r.date, calls: Number(r.calls||0), errors: Number(r.errors||0) }));
 }
 
-async function loadPlanSummary() {
-  const billing = await apiFetch('/billing/status');
-  const tier = normalizeTier(
-    billing?.tier ||
-    billing?.plan ||
-    billing?.subscriptionTier ||
-    billing?.subscription?.tier ||
-    billing?.subscription?.plan ||
-    billing?.customer?.tier
-  );
-  const usagePlanLabel = document.getElementById('usagePlanLabel');
-  if (usagePlanLabel) usagePlanLabel.textContent = formatTierLabel(tier);
+function normalizeProjects(data) {
+  if (Array.isArray(data?.projects)) return data.projects;
+  return Array.isArray(data) ? data : [];
+}
+
+function normalizeKeyStats(data) {
+  const stats = new Map();
+  const rows = Array.isArray(data?.keys) ? data.keys : [];
+  rows.forEach((row) => {
+    const id = row?.id || row?.keyId;
+    if (id) stats.set(String(id), row);
+  });
+  return stats;
+}
+
+function normalizeEnv(value) {
+  const env = String(value || '').trim().toLowerCase();
+  if (env.includes('prod')) return 'production';
+  if (env.includes('stag')) return 'staging';
+  if (env.includes('dev')) return 'development';
+  return 'unknown';
+}
+
+function extractTimestamp() {
+  for (let i = 0; i < arguments.length; i += 1) {
+    const value = arguments[i];
+    if (!value) continue;
+    const ts = new Date(value).getTime();
+    if (!Number.isNaN(ts)) return ts;
+  }
+  return null;
+}
+
+function formatAlertSeverity(count) {
+  if (count >= 5) return { label: 'critical', color: '#b91c1c', bg: 'rgba(185,28,28,0.08)' };
+  if (count >= 2) return { label: 'high', color: '#c2410c', bg: 'rgba(194,65,12,0.08)' };
+  return { label: 'medium', color: '#a16207', bg: 'rgba(161,98,7,0.08)' };
+}
+
+function buildDistributionBars(values, color) {
+  const nonZero = values.filter((value) => value > 0);
+  if (!nonZero.length) {
+    return '<span class="status-empty">—</span>';
+  }
+  const max = Math.max.apply(null, nonZero);
+  return values.slice(0, 12).map((value) => {
+    const height = Math.max(6, Math.round((value / max) * 30));
+    return `<div class="spark-bar" style="height:${height}px;background:${color};opacity:${value > 0 ? 1 : 0.25}"></div>`;
+  }).join('');
+}
+
+function buildProjectRows(projects, keyStats) {
+  return Promise.all(projects.map(async (project) => {
+    const res = await apiFetch('/projects/' + project.id + '/keys');
+    const keys = Array.isArray(res?.keys) ? res.keys : [];
+    const matchedStats = keys.map((key) => keyStats.get(String(key.id)) || key);
+    const calls30d = matchedStats.reduce((sum, stat) => sum + Number(stat?.callsThisMonth || stat?.calls_this_month || 0), 0);
+    const lastUsedAt = matchedStats.reduce((latest, stat) => {
+      const ts = extractTimestamp(stat?.lastUsed, stat?.last_used, stat?.lastUsedAt, stat?.last_used_at);
+      return ts && (!latest || ts > latest) ? ts : latest;
+    }, null);
+    const env = normalizeEnv(project.environment || project.env || project.stage || project.mode);
+    return {
+      id: project.id,
+      vpProjId: project.vp_proj_id || project.vpProjId || project.project_id || project.id,
+      name: project.name || project.vp_proj_id || project.id,
+      env,
+      keysCount: keys.length,
+      calls30d,
+      lastUsedAt,
+      createdAt: extractTimestamp(project.created_at, project.createdAt),
+      sparkValues: matchedStats.map((stat) => Number(stat?.callsThisMonth || stat?.calls_this_month || 0)),
+      status: keys.length === 0 ? 'idle' : calls30d > 0 ? 'healthy' : 'ready',
+    };
+  }));
+}
+
+let currentProjectRows = [];
+let currentProjectFilter = 'all';
+
+function renderUsageSummary(overview, usageRows, tier) {
+  const totalCalls = Number(overview?.totalCalls || 0);
+  const calls30d = usageRows.reduce((sum, row) => sum + Number(row.calls || 0), 0);
+  const callLimits = {
+    free: 10000,
+    starter: 50000,
+    pro: 500000,
+    team: 2000000,
+    enterprise: Infinity,
+  };
+  const limit = callLimits[tier] || callLimits.free;
+  document.getElementById('usagePlanLabel').textContent = formatTierLabel(tier);
+  document.getElementById('usageMetricLabel').textContent = 'all calls';
+  document.getElementById('usageMetricValue').textContent = formatNum(totalCalls);
+  document.getElementById('usageMetricNote').textContent = limit === Infinity
+    ? `last 30d ${formatNum(calls30d)}`
+    : `last 30d ${formatNum(calls30d)} of ${formatNum(limit)} included`;
+  const fill = document.getElementById('usageBarFill');
+  const ratio = limit === Infinity ? 100 : Math.min(100, limit > 0 ? (calls30d / limit) * 100 : 0);
+  fill.style.width = ratio + '%';
+  fill.style.background = ratio >= 90 ? '#b91c1c' : 'var(--accent)';
+}
+
+function renderProjectRows() {
+  const rows = currentProjectRows.filter((project) => {
+    if (currentProjectFilter === 'all') return true;
+    if (currentProjectFilter === 'idle') return project.status === 'idle';
+    return project.env === currentProjectFilter;
+  });
+  const container = document.getElementById('project-rows');
+  if (!rows.length) {
+    container.innerHTML = '<div class="table-row"><div class="status-empty">No projects match this filter.</div><div></div><div></div><div></div><div></div><div></div><div></div></div>';
+    return;
+  }
+
+  container.innerHTML = rows.map((project) => {
+    const sparkColor = project.status === 'alert'
+      ? '#b91c1c'
+      : project.status === 'ready'
+      ? '#d97706'
+      : project.status === 'idle'
+      ? '#c4c4bd'
+      : ACCENT;
+    const bars = buildDistributionBars(project.sparkValues, sparkColor);
+    const statusLabel = project.status === 'ready' ? 'ready' : project.status;
+    const lastUsedLabel = project.lastUsedAt ? relTime(project.lastUsedAt) : (project.createdAt ? 'created ' + relTime(project.createdAt) : '—');
+    return `
+      <div class="table-row ${project.status === 'alert' ? 'alert-row' : ''}">
+        <div>
+          <div class="proj-name">${project.name}</div>
+          <div class="proj-id">${project.vpProjId}</div>
+        </div>
+        <div><span class="env-badge env-${project.env}">${project.env}</span></div>
+        <div class="cell-mono">${project.keysCount}</div>
+        <div class="cell-mono">${formatNum(project.calls30d)}</div>
+        <div class="sparkline">${bars}</div>
+        <div class="last-call">${lastUsedLabel}</div>
+        <div class="status-cell ${project.status === 'idle' && project.keysCount === 0 ? 'status-empty' : ''}" style="color:${project.status === 'idle' && project.keysCount === 0 ? 'var(--text-faint)' : sparkColor}">● ${statusLabel}</div>
+      </div>`;
+  }).join('');
+}
+
+function renderAlerts(scans) {
+  const alertsList = document.getElementById('alertsList');
+  const alertsCount = document.getElementById('alertsCount');
+  const sidebarAlertsCount = document.getElementById('sidebarAlertsCount');
+  const alertsStatus = document.getElementById('alertsStatus');
+  const alertScans = scans
+    .filter((scan) => Number(scan.findings_count != null ? scan.findings_count : scan.findings?.length || 0) > 0)
+    .sort((a, b) => {
+      const aTs = extractTimestamp(a.startedAt, a.started_at, a.createdAt, a.created_at) || 0;
+      const bTs = extractTimestamp(b.startedAt, b.started_at, b.createdAt, b.created_at) || 0;
+      return bTs - aTs;
+    });
+
+  alertsCount.textContent = String(alertScans.length);
+  sidebarAlertsCount.textContent = String(alertScans.length);
+
+  if (!alertScans.length) {
+    alertsStatus.textContent = 'clear';
+    alertsStatus.style.color = '#15803d';
+    alertsList.innerHTML = '<div class="alert-item"><span class="alert-glyph" style="color:#15803d">OK</span><div class="alert-text"><div class="alert-title">No open scanner alerts</div><div class="alert-meta">run a repo scan to surface findings here</div></div></div>';
+    return;
+  }
+
+  alertsStatus.textContent = 'needs review';
+  alertsStatus.style.color = '#b91c1c';
+  alertsList.innerHTML = alertScans.slice(0, 4).map((scan) => {
+    const findingsCount = Number(scan.findings_count != null ? scan.findings_count : scan.findings?.length || 0);
+    const severity = formatAlertSeverity(findingsCount);
+    const repoName = scan.repo_full_name || scan.repoFullName || 'repository';
+    const scanTime = extractTimestamp(scan.startedAt, scan.started_at, scan.createdAt, scan.created_at);
+    return `
+      <div class="alert-item">
+        <span class="alert-glyph" style="color:${severity.color}">!!</span>
+        <div class="alert-text">
+          <div class="alert-title">${findingsCount} scanner finding${findingsCount === 1 ? '' : 's'}</div>
+          <div class="alert-meta">${repoName} · ${scanTime ? relTime(scanTime) : 'recently scanned'}</div>
+        </div>
+        <span class="alert-badge" style="color:${severity.color};background:${severity.bg}">${severity.label}</span>
+        <a class="alert-review" href="/app/scanner">review →</a>
+      </div>`;
+  }).join('');
+}
+
+function updatePageMeta(projectRows) {
+  const activeProjects = projectRows.filter((project) => project.keysCount > 0 || project.calls30d > 0).length;
+  document.getElementById('pageMeta').textContent = `/ ${projectRows.length} total · ${activeProjects} active`;
 }
 
 // ── Chart ──
@@ -594,21 +745,51 @@ function renderActivity(events) {
     let desc = ev.description || '';
     if (!desc && ev.metadata) { try { const m = typeof ev.metadata==='string'?JSON.parse(ev.metadata):ev.metadata; desc = m.endpoint||m.provider||''; } catch {} }
     desc = desc || (ev.keySlot&&ev.keySlot.provider) || ev.appId || '—';
-    const ts = relTime(ev.timestamp);
+    const ts = relTime(extractTimestamp(ev.timestamp, ev.created_at, ev.createdAt, ev.started_at, ev.startedAt));
     return `<div class="activity-row"><span class="act-time">${ts}</span><span class="act-tag">${label}</span><span style="color:${color}">${desc}</span></div>`;
   }).join('');
 }
 
+function normalizeOverview(data) {
+  const safe = data || {};
+  return {
+    totalKeys: Number(safe.totalKeys || safe.total_keys || 0),
+    totalCalls: Number(safe.totalCalls || safe.total_calls || 0),
+    activeApps: Number(safe.activeApps || safe.active_apps || safe.providerCount || safe.provider_count || 0),
+    errorRate: Number(safe.errorRate || safe.error_rate || 0),
+    recentActivity: Array.isArray(safe.recentActivity) ? safe.recentActivity : (Array.isArray(safe.recent_activity) ? safe.recent_activity : []),
+  };
+}
+
 // ── Load everything ──
 async function loadDashboard() {
-  const [overviewRaw, usageRaw] = await Promise.all([
+  const [overviewRaw, usageRaw, billing, projectsRaw, keyStatsRaw, scansRaw] = await Promise.all([
     apiFetch('/stats/overview'),
     apiFetch('/stats/usage?days=30'),
+    apiFetch('/billing/status'),
+    apiFetch('/projects'),
+    apiFetch('/stats/by-key'),
+    apiFetch('/scanner/scans'),
   ]);
+  const projects = normalizeProjects(projectsRaw);
+  const keyStats = normalizeKeyStats(keyStatsRaw);
+  const scans = Array.isArray(scansRaw?.scans) ? scansRaw.scans : Array.isArray(scansRaw) ? scansRaw : [];
+  const overview = normalizeOverview(overviewRaw);
+  const tier = normalizeTier(
+    billing?.tier ||
+    billing?.plan ||
+    billing?.subscriptionTier ||
+    billing?.subscription?.tier ||
+    billing?.subscription?.plan ||
+    billing?.customer?.tier
+  );
+  const rows = normalizeUsage(usageRaw);
+  renderUsageSummary(overview, rows, tier);
+  renderAlerts(scans);
 
   // KPIs
   if (overviewRaw) {
-    const d = overviewRaw;
+    const d = overview;
     document.getElementById('kpi-keys').textContent = formatNum(d.totalKeys||0);
     document.getElementById('kpi-keys-sub').textContent = 'encrypted at rest';
     document.getElementById('kpi-calls').textContent = formatNum(d.totalCalls||0);
@@ -628,161 +809,29 @@ async function loadDashboard() {
   }
 
   // Chart
-  const rows = normalizeUsage(usageRaw);
   if (rows.length) {
     const labels = rows.map(r => new Date(r.date).toLocaleDateString('en-US',{month:'short',day:'numeric'}));
     buildChart(labels, rows.map(r=>r.calls), rows.map(r=>r.errors));
   } else {
     demoChart();
   }
+
+  currentProjectRows = await buildProjectRows(projects, keyStats);
+  updatePageMeta(currentProjectRows);
+  renderProjectRows();
 }
 
 loadDashboard();
-loadPlanSummary();
 
-// ── Project table (demo data) ──
-const PROJECTS = [
-  { id:"vp-proj-7Yx9qL", name:"acme-web",       env:"production",  keys:7,  calls:"412,908", last:"2s ago",  status:"healthy", exposed:0 },
-  { id:"vp-proj-K4nZpR", name:"acme-dashboard",  env:"production",  keys:4,  calls:"84,220",  last:"14s ago", status:"healthy", exposed:0 },
-  { id:"vp-proj-m9hQx2", name:"acme-worker",     env:"production",  keys:9,  calls:"1.2M",    last:"1s ago",  status:"warning", exposed:1 },
-  { id:"vp-proj-Lp03Rn", name:"acme-mobile",     env:"staging",     keys:3,  calls:"18,402",  last:"2m ago",  status:"healthy", exposed:0 },
-  { id:"vp-proj-bT5eVc", name:"acme-ml-infer",   env:"production",  keys:12, calls:"3.8M",    last:"0s ago",  status:"alert",   exposed:3 },
-  { id:"vp-proj-q2NfYh", name:"acme-analytics",  env:"production",  keys:2,  calls:"2,104",   last:"4h ago",  status:"idle",    exposed:0 },
-  { id:"vp-proj-u8MnBd", name:"acme-internal",   env:"development", keys:1,  calls:"0",       last:"—",       status:"idle",    exposed:0 },
-];
-
-const STATUS_COLOR = { healthy:"#16a34a", warning:"#d97706", alert:"#b91c1c", idle:"#8a8a82" };
 const ACCENT = "#d97706";
-
-function spark(id) {
-  const seed = [...id].reduce((a,c) => a + c.charCodeAt(0), 0);
-  return Array.from({length:24}, (_,i) => Math.round(8 + ((Math.sin(seed + i*0.8)+1)*0.5)*26));
-}
-
-function renderRows() {
-  const container = document.getElementById("project-rows");
-  container.innerHTML = PROJECTS.map((p, i) => {
-    const sc = STATUS_COLOR[p.status];
-    const sparkColor = p.status==="alert" ? "#b91c1c" : p.status==="warning" ? "#d97706" : p.status==="idle" ? "#c4c4bd" : ACCENT;
-    const values = spark(p.id);
-    const bars = values.map((v,vi) =>
-      `<div class="spark-bar" style="height:${v}px;background:${sparkColor};opacity:${vi>18?1:0.5}"></div>`
-    ).join("");
-    const exposed = p.exposed > 0
-      ? `<span class="proj-exposed">● ${p.exposed} exposed in last scan</span>` : "";
-    return `
-      <div class="table-row ${p.status==="alert"?"alert-row":""}">
-        <div>
-          <div class="proj-name">${p.name}</div>
-          <div class="proj-id">${p.id}${exposed}</div>
-        </div>
-        <div><span class="env-badge env-${p.env}">${p.env}</span></div>
-        <div class="cell-mono">${p.keys}</div>
-        <div class="cell-mono">${p.calls}</div>
-        <div class="sparkline">${bars}</div>
-        <div class="last-call">${p.last}</div>
-        <div class="status-cell" style="color:${sc}">● ${p.status}</div>
-      </div>`;
-  }).join("");
-}
-
-renderRows();
-
-// Usage chart
-(function() {
-  const mono = "'JetBrains Mono', ui-monospace, monospace";
-  const accent = "#d97706";
-  const rule = "#e7e5de";
-
-  // Generate 30 days of demo data
-  const labels = [];
-  const calls = [];
-  const errors = [];
-  const now = new Date();
-  for (let i = 29; i >= 0; i--) {
-    const d = new Date(now);
-    d.setDate(d.getDate() - i);
-    labels.push(d.toLocaleDateString("en-US", { month: "short", day: "numeric" }));
-    const base = 60000 + Math.sin(i * 0.4) * 20000 + Math.random() * 15000;
-    calls.push(Math.round(base));
-    errors.push(Math.round(base * (0.005 + Math.random() * 0.01)));
-  }
-
-  const ctx = document.getElementById("usageChart").getContext("2d");
-  new Chart(ctx, {
-    type: "line",
-    data: {
-      labels,
-      datasets: [
-        {
-          label: "calls",
-          data: calls,
-          borderColor: accent,
-          backgroundColor: "rgba(217,119,6,0.06)",
-          fill: true,
-          tension: 0.4,
-          pointRadius: 0,
-          pointHoverRadius: 4,
-          pointHoverBackgroundColor: accent,
-          borderWidth: 2,
-        },
-        {
-          label: "errors",
-          data: errors,
-          borderColor: "#b91c1c",
-          backgroundColor: "transparent",
-          fill: false,
-          tension: 0.4,
-          pointRadius: 0,
-          pointHoverRadius: 4,
-          pointHoverBackgroundColor: "#b91c1c",
-          borderWidth: 1.5,
-        },
-      ],
-    },
-    options: {
-      responsive: true,
-      maintainAspectRatio: false,
-      interaction: { mode: "index", intersect: false },
-      plugins: {
-        legend: { display: false },
-        tooltip: {
-          backgroundColor: "#fff",
-          titleColor: "#171717",
-          bodyColor: "#525252",
-          borderColor: rule,
-          borderWidth: 1,
-          cornerRadius: 4,
-          padding: 10,
-          titleFont: { family: mono, size: 11 },
-          bodyFont: { family: mono, size: 11 },
-        },
-      },
-      scales: {
-        x: {
-          grid: { color: rule, drawBorder: false },
-          ticks: { color: "#8a8a82", font: { family: mono, size: 10 }, maxTicksLimit: 8 },
-          border: { display: false },
-        },
-        y: {
-          grid: { color: rule, drawBorder: false },
-          ticks: {
-            color: "#8a8a82", font: { family: mono, size: 10 },
-            callback: v => v >= 1000 ? (v/1000).toFixed(0)+"k" : v,
-          },
-          border: { display: false },
-          beginAtZero: true,
-        },
-      },
-    },
-  });
-})();
 
 // filter chips
 document.querySelectorAll(".filter-chip").forEach(chip => {
   chip.addEventListener("click", () => {
     document.querySelectorAll(".filter-chip").forEach(c => c.classList.remove("active"));
     chip.classList.add("active");
+    currentProjectFilter = chip.getAttribute("data-filter") || "all";
+    renderProjectRows();
   });
 });
 </script>
