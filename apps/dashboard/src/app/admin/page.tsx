@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback } from "react";
 import Link from "next/link";
 import { createClient } from "@supabase/supabase-js";
+import { AppShell } from "../../components/app-shell";
 
 const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL || "https://api.vaultproof.dev";
 const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL;
@@ -132,33 +133,36 @@ export default function AdminPage() {
   }
 
   return (
-    <div className="min-h-screen bg-zinc-950 text-zinc-100">
-      <div className="max-w-6xl mx-auto px-6 py-12">
+    <AppShell
+      eyebrow="Internal Admin"
+      title="Admin"
+      description="This remains the internal analytics surface for now. It sits inside the new dashboard shell so the eventual enterprise admin experience can grow from one navigation model."
+      actions={
+        <div className="flex items-center gap-3">
+          <select
+            value={days}
+            onChange={e => setDays(Number(e.target.value))}
+            className="rounded-full border border-white/10 bg-white/[0.04] px-3 py-2 text-sm text-slate-300"
+          >
+            <option value={7}>Last 7 days</option>
+            <option value={14}>Last 14 days</option>
+            <option value={30}>Last 30 days</option>
+            <option value={60}>Last 60 days</option>
+            <option value={90}>Last 90 days</option>
+          </select>
+          <button
+            onClick={fetchStats}
+            className="rounded-full bg-sky-400 px-4 py-2 text-sm font-semibold text-slate-950 transition hover:bg-sky-300"
+          >
+            Refresh
+          </button>
+        </div>
+      }
+    >
+      <div className="mx-auto max-w-6xl">
         {/* Header */}
-        <div className="flex items-center justify-between mb-10">
-          <div>
-            <Link href="/keys" className="text-zinc-500 hover:text-zinc-300 text-sm mb-2 inline-block">&larr; Dashboard</Link>
-            <h1 className="text-3xl font-bold text-white">Admin</h1>
-          </div>
-          <div className="flex items-center gap-3">
-            <select
-              value={days}
-              onChange={e => setDays(Number(e.target.value))}
-              className="bg-zinc-900 border border-zinc-800 text-zinc-300 rounded-lg px-3 py-2 text-sm"
-            >
-              <option value={7}>Last 7 days</option>
-              <option value={14}>Last 14 days</option>
-              <option value={30}>Last 30 days</option>
-              <option value={60}>Last 60 days</option>
-              <option value={90}>Last 90 days</option>
-            </select>
-            <button
-              onClick={fetchStats}
-              className="px-4 py-2 bg-violet-600 hover:bg-violet-500 text-white text-sm font-medium rounded-lg transition-colors"
-            >
-              Refresh
-            </button>
-          </div>
+        <div className="mb-10">
+          <h2 className="text-sm uppercase tracking-[0.18em] text-slate-500">Referral and growth analytics</h2>
         </div>
 
         {error && <p className="text-red-400 mb-6">{error}</p>}
@@ -272,7 +276,7 @@ export default function AdminPage() {
           </>
         )}
       </div>
-    </div>
+    </AppShell>
   );
 }
 

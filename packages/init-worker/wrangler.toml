@@ -20,6 +20,9 @@ class_name = "RateLimiter"
 tag = "v1"
 new_sqlite_classes = ["RateLimiter"]
 
+[triggers]
+crons = ["*/30 * * * *"]
+
 # ── Staging environment ──
 [env.staging]
 name = "vaultproof-init-staging"
@@ -34,3 +37,6 @@ class_name = "RateLimiter"
 [[env.staging.migrations]]
 tag = "v1"
 new_sqlite_classes = ["RateLimiter"]
+
+[env.staging.triggers]
+crons = ["*/30 * * * *"]

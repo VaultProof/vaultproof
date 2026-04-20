@@ -8,9 +8,15 @@
  * Scoped intentionally: OpenAI and Stripe only for the first slice.
  */
 import type { Env } from './types.js';
+import { handleAlerts } from './routes/alerts.js';
+import { dispatchPolicyAlertsForOrganization } from './routes/alerts.js';
+import { handleAudit } from './routes/audit.js';
+import { handleMembers } from './routes/members.js';
+import { handleOrganizations } from './routes/orgs.js';
 import { handleProjects } from './routes/projects.js';
 import { handleProxy } from './routes/proxy.js';
 import { checkFailedAuthRateLimit, rateLimitResponse } from './lib/rate-limit.js';
+import { getSupabase } from './lib/supabase.js';
 
 // Re-export the Durable Object class so wrangler can bind it.
 export { RateLimiter } from './do/rate-limiter.js';
@@ -101,6 +107,56 @@ export default {
       return addCors(res, origin, allowedOrigins);
     }
 
+    // ── /api/v1/init/members/* ────────────────────────────────────────
+    if (url.pathname.startsWith('/api/v1/init/members')) {
+      const rest = url.pathname.replace('/api/v1/init/members', '');
+      const segments = rest.split('/').filter(Boolean);
+      const res = await handleMembers(request, env, segments);
+      if (res.status === 401) {
+        const ip = request.headers.get('cf-connecting-ip') || '';
+        const rl = await checkFailedAuthRateLimit(env, ip);
+        if (!rl.ok) return addCors(rateLimitResponse(rl.retryAfter!), origin, allowedOrigins);
+      }
+      return addCors(res, origin, allowedOrigins);
+    }
+
+    // ── /api/v1/init/orgs ─────────────────────────────────────────────
+    if (url.pathname.startsWith('/api/v1/init/orgs')) {
+      const rest = url.pathname.replace('/api/v1/init/orgs', '');
+      const segments = rest.split('/').filter(Boolean);
+      const res = await handleOrganizations(request, env, segments);
+      if (res.status === 401) {
+        const ip = request.headers.get('cf-connecting-ip') || '';
+        const rl = await checkFailedAuthRateLimit(env, ip);
+        if (!rl.ok) return addCors(rateLimitResponse(rl.retryAfter!), origin, allowedOrigins);
+      }
+      return addCors(res, origin, allowedOrigins);
+    }
+
+    // ── /api/v1/init/audit ────────────────────────────────────────────
+    if (url.pathname === '/api/v1/init/audit') {
+      const res = await handleAudit(request, env);
+      if (res.status === 401) {
+        const ip = request.headers.get('cf-connecting-ip') || '';
+        const rl = await checkFailedAuthRateLimit(env, ip);
+        if (!rl.ok) return addCors(rateLimitResponse(rl.retryAfter!), origin, allowedOrigins);
+      }
+      return addCors(res, origin, allowedOrigins);
+    }
+
+    // ── /api/v1/init/alerts/* ─────────────────────────────────────────
+    if (url.pathname.startsWith('/api/v1/init/alerts')) {
+      const rest = url.pathname.replace('/api/v1/init/alerts', '');
+      const segments = rest.split('/').filter(Boolean);
+      const res = await handleAlerts(request, env, segments);
+      if (res.status === 401) {
+        const ip = request.headers.get('cf-connecting-ip') || '';
+        const rl = await checkFailedAuthRateLimit(env, ip);
+        if (!rl.ok) return addCors(rateLimitResponse(rl.retryAfter!), origin, allowedOrigins);
+      }
+      return addCors(res, origin, allowedOrigins);
+    }
+
     // ── /p/:slug/* (universal proxy) ──────────────────────────────────
     const proxyMatch = url.pathname.match(/^\/p\/([a-z0-9][a-z0-9-]{0,31})(\/.*)?$/);
     if (proxyMatch) {
@@ -132,5 +188,27 @@ export default {
     }
 
     return addCors(Response.json({ error: 'Not found' }, { status: 404 }), origin, allowedOrigins);
+  },
+
+  async scheduled(_controller: ScheduledController, env: Env, ctx: ExecutionContext): Promise<void> {
+    const supabase = getSupabase(env);
+    const { data } = await supabase
+      .from('organization_alert_policies')
+      .select('organization_id')
+      .eq('dispatch_enabled', true);
+
+    const organizationIds = [...new Set(((data || []) as Array<{ organization_id: string }>).map((row) => row.organization_id).filter(Boolean))];
+    if (organizationIds.length === 0) {
+      console.log('scheduled alert dispatch: no enabled organizations');
+      return;
+    }
+
+    ctx.waitUntil((async () => {
+      const results = await Promise.all(organizationIds.map((organizationId) => dispatchPolicyAlertsForOrganization(env, organizationId, 'scheduled')));
+      const dispatched = results.filter((result) => result.ok && !result.skipped).length;
+      const skipped = results.filter((result) => result.skipped).length;
+      const failed = results.filter((result) => !result.ok && !result.skipped).length;
+      console.log(`scheduled alert dispatch: ${organizationIds.length} orgs checked, ${dispatched} dispatched, ${skipped} skipped, ${failed} failed`);
+    })());
   },
 };

@@ -9,12 +9,39 @@ export interface Env {
 export interface ProjectRecord {
   id: string;
   user_id: string;
+  organization_id: string | null;
   vp_proj_id: string;
   name: string | null;
   allowed_origins: string | null;
   strict_origin: boolean;
   created_at: string;
   revoked_at: string | null;
+}
+
+export type AccessRole = 'owner' | 'admin' | 'member' | 'viewer';
+export type ProjectRole = AccessRole;
+export type OrganizationRole = AccessRole;
+
+export interface AccessibleProjectSummary {
+  id: string;
+  organization_id: string | null;
+  vp_proj_id: string;
+  name: string | null;
+  allowed_origins: string | null;
+  strict_origin: boolean;
+  created_at: string;
+  revoked_at: string | null;
+  project_role: ProjectRole;
+  access_via: 'project' | 'organization';
+}
+
+export interface OrganizationMembershipContext {
+  organization_id: string;
+  organization_name: string;
+  organization_kind: 'personal' | 'team';
+  organization_owner_user_id: string;
+  organization_role: OrganizationRole;
+  membership_created_at: string;
 }
 
 export interface ProjectKeyRecord {
