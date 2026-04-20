@@ -145,9 +145,15 @@
     const sidebarEl = document.getElementById('sidebar');
     const overlayEl = document.getElementById('sidebarOverlay');
     document.getElementById('sidebarEmail').textContent = user.email || '';
+    const userEmail = document.getElementById('user-email');
+    if (userEmail) userEmail.textContent = user.email || 'unknown user';
+    const userAvatar = document.getElementById('user-avatar');
+    if (userAvatar) userAvatar.textContent = (user.email || 'V').charAt(0).toUpperCase();
     document.getElementById('menuBtn').addEventListener('click', toggleMobileSidebar);
     const logoutBtn = document.getElementById('logoutBtn');
     if (logoutBtn) logoutBtn.addEventListener('click', logout);
+    const signOutBtn = document.getElementById('signOutBtn');
+    if (signOutBtn) signOutBtn.addEventListener('click', logout);
 
     function toggleMobileSidebar() {
       sidebarEl.classList.toggle('-translate-x-full');

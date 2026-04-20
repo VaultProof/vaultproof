@@ -44,8 +44,6 @@
     .topbar-logo-name { font-weight: 600; letter-spacing: 0.5px; }
     .topbar-sep { color: #a3a39a; margin: 0 14px; }
     .topbar-crumb { color: var(--text-muted); }
-    .topbar-links { display: flex; gap: 20px; color: var(--text-muted); margin-left: auto; margin-right: 20px; }
-    .topbar-links a:hover { color: var(--text); }
     .topbar-session { display: flex; align-items: center; gap: 8px; }
     .topbar-email { max-width: 220px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--text-muted); font-family: var(--mono); font-size: 11px; }
     .topbar-avatar { width: 28px; height: 28px; border-radius: 50%; background: var(--accent); color: #fafaf7; display: flex; align-items: center; justify-content: center; font-family: var(--mono); font-size: 11px; font-weight: 700; }
@@ -171,7 +169,7 @@
     @media (max-width: 680px) {
       .page { border-left: none; border-right: none; }
       .topbar { padding: 12px 16px; gap: 10px; flex-wrap: wrap; }
-      .topbar-sep, .topbar-crumb, .topbar-links { display: none; }
+      .topbar-sep, .topbar-crumb { display: none; }
       .topbar-session { margin-left: auto; }
       .main { padding: 20px 16px 28px; }
       .page-header { flex-direction: column; align-items: stretch; }
@@ -191,7 +189,6 @@
       <span>dashboard</span>
       <span class="topbar-sep">/</span>
       <span class="topbar-crumb">alerts</span>
-      <div class="topbar-links"><a href="/scan">scanner</a></div>
       <div class="topbar-session">
         <span class="topbar-email" id="user-email">loading...</span>
         <div class="topbar-avatar" id="user-avatar">VP</div>

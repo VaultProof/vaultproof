@@ -835,7 +835,6 @@
 
   function injectLocaleControls() {
     mountLocaleControl('.nav, .site-nav', '.nav-sign-in, .nav-cta, .mobile-toggle');
-    mountLocaleControl('.topbar', '.topbar-session');
   }
 
   function mountLocaleControl(containerSelector, anchorSelector) {
