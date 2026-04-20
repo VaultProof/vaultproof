@@ -428,6 +428,22 @@
                     <div class="callout">Use <strong>requested</strong> while collecting customer settings. Switch to <strong>configured</strong> only after the Supabase SAML connection is live for this workspace.</div>
                   </div>
                 </div>
+                <div class="form-grid">
+                  <div class="form-field">
+                    <span class="form-label">provider health</span>
+                    <div class="callout" id="ssoProviderStatusCard">Loading SSO status…</div>
+                  </div>
+                  <div class="form-field">
+                    <span class="form-label">last successful sso login</span>
+                    <div class="callout" id="ssoLastLoginCard">No SSO login recorded yet.</div>
+                  </div>
+                </div>
+                <div class="form-grid">
+                  <div class="form-field">
+                    <span class="form-label">last membership resolution</span>
+                    <div class="callout" id="ssoResolutionCard">No SSO membership resolution recorded yet.</div>
+                  </div>
+                </div>
                 <div class="form-inline">
                   <button type="button" class="btn-outline" id="saveSsoPrepBtn">save sso prep</button>
                   <button type="button" class="btn-outline" id="copySsoPrepBriefBtn">copy sso brief</button>

@@ -139,6 +139,7 @@ Implementation checklist when we start:
 - [x] add an admin-facing rollout prep section in org settings
 - [x] persist org SSO rollout prep in backend state instead of browser-only state
 - [x] make rollout status match the real backend state model (`requested` / `configured`)
+- [x] surface provider health and recent successful SSO activity to org admins
 - [ ] add an admin-facing org settings section for:
   - company domain
   - provider status

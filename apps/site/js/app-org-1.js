@@ -20,6 +20,7 @@
   let currentMembersPayload = null;
   let currentOrgsPayload = null;
   let currentSsoPrep = {};
+  let currentSsoStatus = null;
 
   if (!token) {
     window.location.href = 'login';
@@ -77,6 +78,13 @@
       hour: 'numeric',
       minute: '2-digit',
     });
+  }
+  function titleCaseWords(value) {
+    return String(value || '')
+      .split(/[_\s-]+/)
+      .filter(Boolean)
+      .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
+      .join(' ');
   }
   function relTime(value) {
     if (!value) return '—';
@@ -577,6 +585,9 @@
       `SSO domain: ${ssoDomain || 'not captured'}`,
       `SSO provider: ${ssoProvider || 'not captured'}`,
       `SSO status: ${ssoStatus || 'not captured'}`,
+      `Provider health: ${currentSsoStatus?.provider_status || 'not_started'}`,
+      `Last successful SSO login: ${currentSsoStatus?.last_successful_sso_login_at ? `${formatTimestamp(currentSsoStatus.last_successful_sso_login_at)}${currentSsoStatus?.last_successful_sso_login_email ? ` by ${currentSsoStatus.last_successful_sso_login_email}` : ''}` : 'not recorded'}`,
+      `Last membership resolution: ${currentSsoStatus?.last_membership_resolution_at ? `${formatTimestamp(currentSsoStatus.last_membership_resolution_at)}${currentSsoStatus?.last_membership_resolution ? ` · ${titleCaseWords(currentSsoStatus.last_membership_resolution)}` : ''}${currentSsoStatus?.last_membership_resolution_email ? ` · ${currentSsoStatus.last_membership_resolution_email}` : ''}` : 'not recorded'}`,
       `Supabase metadata URL: ${getSupabaseSsoMetadataUrl()}`,
       `Supabase ACS URL: ${getSupabaseSsoAcsUrl()}`,
       `Generated: ${formatTimestamp(new Date().toISOString())}`,
@@ -606,6 +617,7 @@
     const organization = orgPayload?.organization || null;
     const canManage = Boolean(organization && organization.kind === 'team' && (organization.role === 'owner' || organization.role === 'admin'));
     currentSsoPrep = orgPayload?.sso_settings || {};
+    currentSsoStatus = orgPayload?.sso_status || null;
     const domainInput = $('ssoPrepDomainInput');
     const providerSelect = $('ssoPrepProviderSelect');
     const statusSelect = $('ssoPrepStatusSelect');
@@ -635,6 +647,18 @@
             : 'Capture the company domain and IdP here before turning on SAML in Supabase.')
         : 'Only team-org admins and owners can manage Supabase SSO rollout prep here.',
     );
+    const providerHealth = currentSsoStatus?.provider_status || 'not_started';
+    setText('ssoProviderStatusCard', providerHealth === 'configured'
+      ? `Configured and ready for live shared-workspace sign-in${domain ? ` for ${domain}` : ''}.`
+      : providerHealth === 'requested'
+        ? `Requested / staging${domain ? ` for ${domain}` : ''}. Keep this in setup mode until the Supabase SAML connection is live.`
+        : 'No Supabase SSO rollout is active for this workspace yet.');
+    setText('ssoLastLoginCard', currentSsoStatus?.last_successful_sso_login_at
+      ? `${formatTimestamp(currentSsoStatus.last_successful_sso_login_at)}${currentSsoStatus?.last_successful_sso_login_email ? ` · ${currentSsoStatus.last_successful_sso_login_email}` : ''}`
+      : 'No successful SSO login recorded yet.');
+    setText('ssoResolutionCard', currentSsoStatus?.last_membership_resolution_at
+      ? `${formatTimestamp(currentSsoStatus.last_membership_resolution_at)}${currentSsoStatus?.last_membership_resolution ? ` · ${titleCaseWords(currentSsoStatus.last_membership_resolution)}` : ''}${currentSsoStatus?.last_membership_resolution_email ? ` · ${currentSsoStatus.last_membership_resolution_email}` : ''}`
+      : 'No SSO membership resolution recorded yet.');
   }
   function buildSsoPrepBrief() {
     const organization = currentOrgPayload?.organization || {};
@@ -715,7 +739,8 @@
       return;
     }
     currentSsoPrep = payload?.sso_settings || {};
-    currentOrgPayload = { ...(currentOrgPayload || {}), sso_settings: currentSsoPrep };
+    currentSsoStatus = payload?.sso_status || currentSsoStatus;
+    currentOrgPayload = { ...(currentOrgPayload || {}), sso_settings: currentSsoPrep, sso_status: currentSsoStatus };
     renderSsoPrep(currentOrgPayload);
     renderPilotKit();
     setMessage('ssoPrepMsg', status === 'configured'

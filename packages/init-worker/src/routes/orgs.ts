@@ -99,6 +99,64 @@ async function findConfiguredSsoOrganizationByDomain(
   return data || null;
 }
 
+async function fetchOrganizationSsoStatus(
+  env: Env,
+  organizationId: string,
+  ssoSettings: {
+    company_domain: string;
+    sso_provider: string | null;
+    status: string;
+    created_at: string;
+    updated_at: string;
+  } | null,
+): Promise<{
+  provider_status: 'not_started' | 'requested' | 'configured';
+  company_domain: string | null;
+  sso_provider: string | null;
+  last_successful_sso_login_at: string | null;
+  last_successful_sso_login_email: string | null;
+  last_membership_resolution_at: string | null;
+  last_membership_resolution: string | null;
+  last_membership_resolution_email: string | null;
+}> {
+  const supabase = getSupabase(env);
+  const { data } = await supabase
+    .from('organization_audit_events')
+    .select('event_type, actor_email, metadata, created_at')
+    .eq('organization_id', organizationId)
+    .in('event_type', ['organization_sso_login_completed', 'organization_sso_membership_resolved'])
+    .order('created_at', { ascending: false })
+    .limit(20);
+
+  const events = (data || []) as Array<{
+    event_type: string;
+    actor_email: string | null;
+    metadata: Record<string, unknown> | null;
+    created_at: string;
+  }>;
+
+  const latestSuccessfulLogin = events.find((event) => {
+    if (event.event_type !== 'organization_sso_login_completed') return false;
+    const resolution = String(event.metadata?.resolution || '');
+    return resolution === 'existing_membership' || resolution === 'accepted_invitation';
+  }) || null;
+
+  const latestMembershipResolution = events.find((event) => event.event_type === 'organization_sso_membership_resolved') || null;
+
+  return {
+    provider_status: ssoSettings
+      ? (ssoSettings.status === 'configured' ? 'configured' : 'requested')
+      : 'not_started',
+    company_domain: ssoSettings?.company_domain || null,
+    sso_provider: ssoSettings?.sso_provider || null,
+    last_successful_sso_login_at: latestSuccessfulLogin?.created_at || null,
+    last_successful_sso_login_email: latestSuccessfulLogin?.actor_email || null,
+    last_membership_resolution_at: latestMembershipResolution?.created_at || null,
+    last_membership_resolution: String(latestMembershipResolution?.metadata?.resolution || '') || null,
+    last_membership_resolution_email: latestMembershipResolution?.actor_email || null,
+  };
+}
+
 
 export async function handleOrganizations(
   request: Request,
@@ -179,6 +237,10 @@ export async function handleOrganizations(
       ? await fetchOrganizationSsoSettings(env, activeMembership.organization_id)
       : null;
 
+    const ssoStatus = organization.kind === 'team'
+      ? await fetchOrganizationSsoStatus(env, activeMembership.organization_id, ssoSettings)
+      : null;
+
     return Response.json({
       organization: {
         ...organization,
@@ -189,6 +251,7 @@ export async function handleOrganizations(
         can_transfer_ownership: activeMembership.organization_role === 'owner' && organization.kind === 'team',
       },
       sso_settings: ssoSettings,
+      sso_status: ssoStatus,
     });
   }
 
@@ -563,7 +626,8 @@ export async function handleOrganizations(
 
     if (method === 'GET') {
       const ssoSettings = await fetchOrganizationSsoSettings(env, activeMembership.organization_id);
-      return Response.json({ sso_settings: ssoSettings });
+      const ssoStatus = await fetchOrganizationSsoStatus(env, activeMembership.organization_id, ssoSettings);
+      return Response.json({ sso_settings: ssoSettings, sso_status: ssoStatus });
     }
 
     if (method === 'PUT') {
