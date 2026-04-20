@@ -354,6 +354,51 @@
       margin-bottom: 14px;
     }
 
+    .enterprise-setup {
+      border: var(--rule);
+      border-radius: 4px;
+      background: #fcfcf9;
+      padding: 12px;
+      margin-bottom: 14px;
+    }
+
+    .enterprise-kicker {
+      font-family: var(--font-mono);
+      font-size: 10.5px;
+      letter-spacing: 0.7px;
+      text-transform: uppercase;
+      color: var(--accent);
+    }
+
+    .enterprise-title {
+      font-family: var(--font-display);
+      font-size: 18px;
+      font-weight: 600;
+      letter-spacing: -0.3px;
+      margin-top: 6px;
+    }
+
+    .enterprise-copy {
+      margin-top: 6px;
+      color: var(--text-muted);
+      font-size: 12.5px;
+      line-height: 1.5;
+    }
+
+    .enterprise-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+      margin-top: 12px;
+    }
+
+    .enterprise-actions {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 8px;
+      margin-top: 10px;
+    }
+
     .promo-toggle {
       width: 100%;
       border: 0;
@@ -677,6 +722,8 @@
 
       .auth-title { font-size: 26px; }
       .entry-split { grid-template-columns: 1fr; }
+      .enterprise-grid,
+      .enterprise-actions { grid-template-columns: 1fr; }
     }
 
     @media (max-width: 480px) {
@@ -801,6 +848,22 @@
                 <button type="button" id="promoApplyBtn" class="btn btn-small">apply</button>
               </div>
               <p id="promoCodeMsg" class="hidden"></p>
+            </div>
+
+            <div class="enterprise-setup">
+              <div class="enterprise-kicker">enterprise path</div>
+              <div class="enterprise-title">Provision a shared workspace</div>
+              <p class="enterprise-copy">Capture your company context first, then continue with OAuth or email. If there is no team org yet, we will route you into org setup instead of the solo dashboard.</p>
+              <div class="enterprise-grid">
+                <input id="enterpriseOrgNameInput" type="text" class="form-input" placeholder="Acme Platform" />
+                <input id="enterpriseDomainInput" type="text" class="form-input" placeholder="acme.com" />
+              </div>
+              <div class="enterprise-actions">
+                <button id="enterpriseGoogleBtn" type="button" class="btn btn-secondary">google setup</button>
+                <button id="enterpriseGitHubBtn" type="button" class="btn btn-secondary">github setup</button>
+                <button id="enterpriseEmailModeBtn" type="button" class="btn btn-secondary">email setup</button>
+              </div>
+              <div id="enterpriseSetupMsg" class="hidden"></div>
             </div>
 
             <div class="oauth-stack">

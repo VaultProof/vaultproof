@@ -348,6 +348,28 @@
 
           <div class="stack">
             <section class="panel">
+              <div class="panel-head">create team org<span class="panel-head-right" id="createOrgStatus">ready</span></div>
+              <div class="form-card">
+                <div class="callout">Create a shared organization here when you want to move from the solo workspace into invites, policy, audit, and business-facing controls.</div>
+                <div class="form-grid">
+                  <label class="form-field">
+                    <span class="form-label">team org name</span>
+                    <input id="createOrgNameInput" class="form-input" type="text" placeholder="Acme Platform" maxlength="120">
+                  </label>
+                  <label class="form-field">
+                    <span class="form-label">team slug</span>
+                    <input id="createOrgSlugInput" class="form-input" type="text" placeholder="acme-platform" maxlength="63">
+                  </label>
+                </div>
+                <div class="form-inline">
+                  <button type="button" class="btn-primary" id="createOrgBtn">create team org</button>
+                  <span class="form-hint" id="createOrgHint">This creates a shared team workspace and makes you the owner.</span>
+                </div>
+                <div class="form-msg" id="createOrgMsg"></div>
+              </div>
+            </section>
+
+            <section class="panel">
               <div class="panel-head">workspace posture<span class="panel-head-right" id="postureStatus">loading…</span></div>
               <div class="list" id="postureList">
                 <div class="empty">Loading workspace posture…</div>

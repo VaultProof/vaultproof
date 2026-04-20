@@ -7,6 +7,7 @@
     : 'https://init.vaultproof.dev/api/v1/init';
   const SUPABASE_AUTH_STORAGE_KEY = 'sb-gwzkjiomemjlhtrdrlan-auth-token';
   const ACTIVE_ORG_STORAGE_KEY = 'vaultproof_active_org';
+  const ENTERPRISE_CONTEXT_KEY = 'vp_enterprise_context';
 
   let token = localStorage.getItem('vaultproof_token');
   const user = JSON.parse(localStorage.getItem('vaultproof_user') || '{}');
@@ -359,6 +360,18 @@
     setText('archiveHint', canArchive ? 'Archive preserves projects, members, alerts, and audit history for later restore.' : 'Only team-org owners can archive from this page.');
   }
 
+  function renderCreateOrg(orgPayload) {
+    const organization = orgPayload?.organization || null;
+    const currentKind = organization?.kind || null;
+    setText('createOrgStatus', currentKind === 'team' ? 'ready for another org' : 'ready');
+    setText(
+      'createOrgHint',
+      currentKind === 'team'
+        ? 'Create another shared org if you need a separate customer, workspace, or business unit.'
+        : 'This creates a shared team workspace and makes you the owner.',
+    );
+  }
+
   function renderPosture(orgPayload, membersPayload) {
     const organization = orgPayload?.organization || null;
     const owner = (membersPayload?.members || []).find((member) => member.role === 'owner') || null;
@@ -434,6 +447,26 @@
   function getOrgExportBaseName() {
     return `${slugify(currentOrgPayload?.organization?.name || 'vaultproof')}-org`;
   }
+  function getEnterpriseContext() {
+    try {
+      return JSON.parse(sessionStorage.getItem(ENTERPRISE_CONTEXT_KEY) || 'null');
+    } catch {
+      return null;
+    }
+  }
+  function clearEnterpriseContext() {
+    sessionStorage.removeItem(ENTERPRISE_CONTEXT_KEY);
+  }
+  function applyEnterpriseProvisioningHints() {
+    const context = getEnterpriseContext();
+    const params = new URLSearchParams(window.location.search);
+    if (!context || !params.get('provision')) return;
+    const nameInput = $('createOrgNameInput');
+    const slugInput = $('createOrgSlugInput');
+    if (nameInput && !nameInput.value) nameInput.value = context.company_name || '';
+    if (slugInput && !slugInput.value) slugInput.value = context.suggested_slug || '';
+    setMessage('createOrgMsg', 'Enterprise setup is ready. Create the shared org to move into the Control workspace.', 'ok');
+  }
   async function copyOrgReport() {
     try {
       const copied = await copyText(buildOrgReport());
@@ -448,6 +481,46 @@
     downloadTextFile(`${getOrgExportBaseName()}-snapshot.json`, buildOrgJson(), 'application/json;charset=utf-8');
     setExportMessage('Org JSON downloaded.', 'ok');
     toast('Org JSON downloaded.', 'ok');
+  }
+
+  async function createOrganization() {
+    const name = $('createOrgNameInput')?.value?.trim() || '';
+    const slug = $('createOrgSlugInput')?.value?.trim() || '';
+    if (name.length < 2) {
+      setMessage('createOrgMsg', 'Organization name must be at least 2 characters.', 'warn');
+      toast('Organization name must be at least 2 characters.', 'warn');
+      return;
+    }
+
+    setButtonState($('createOrgBtn'), true, 'creating…');
+    const res = await apiFetch(INIT_API, '/orgs', {
+      method: 'POST',
+      includeOrganization: false,
+      body: {
+        name,
+        slug: slug || null,
+      },
+    });
+    const payload = unwrapPayload(res?.data) || {};
+    if (!res?.ok) {
+      setButtonState($('createOrgBtn'), false, 'create team org');
+      setMessage('createOrgMsg', payload?.error || 'Failed to create team organization.', 'danger');
+      toast(payload?.error || 'Failed to create team organization.', 'danger');
+      return;
+    }
+
+    const organization = payload?.organization || null;
+    if ($('createOrgNameInput')) $('createOrgNameInput').value = '';
+    if ($('createOrgSlugInput')) $('createOrgSlugInput').value = '';
+    setMessage('createOrgMsg', 'Team organization created. Switching now…', 'ok');
+    toast('Team organization created.', 'ok');
+    clearEnterpriseContext();
+    if (organization?.id) {
+      persistOrganizationSelection(organization.id);
+      syncOrganizationUrl(organization.id);
+    }
+    await load({ preferFreshSelection: false });
+    setButtonState($('createOrgBtn'), false, 'create team org');
   }
 
   async function saveOrganizationProfile() {
@@ -566,6 +639,7 @@
       renderProfile(null);
       renderTransfer(null, null);
       renderArchive(null);
+      renderCreateOrg(null);
       renderPosture(null, null);
       renderArchivedOrganizations();
       setText('profileStatus', 'unavailable');
@@ -575,6 +649,8 @@
       setText('bannerCopy', archivedOrganizations.length ? 'No active org is selected. Restore an archived workspace below or switch back to the solo dashboard.' : 'No active organization is available for this session.');
       setText('bannerTitle', 'Organization controls unavailable');
       setText('profileHint', 'Create or join an organization to manage org settings here.');
+      setText('createOrgStatus', 'ready');
+      applyEnterpriseProvisioningHints();
       renderUsageBox(null);
       if (opts.redirectOnMissingOrg) {
         window.location.href = '/app/';
@@ -595,9 +671,11 @@
     renderProfile(currentOrgPayload);
     renderTransfer(currentOrgPayload, currentMembersPayload);
     renderArchive(currentOrgPayload);
+    renderCreateOrg(currentOrgPayload);
     renderPosture(currentOrgPayload, currentMembersPayload);
     renderArchivedOrganizations();
     renderUsageBox(currentOrgPayload);
+    applyEnterpriseProvisioningHints();
   }
 
   function bind() {
@@ -607,6 +685,7 @@
     $('copyOrgReportInlineBtn')?.addEventListener('click', copyOrgReport);
     $('downloadOrgJsonBtn')?.addEventListener('click', downloadOrgJson);
     $('downloadOrgJsonInlineBtn')?.addEventListener('click', downloadOrgJson);
+    $('createOrgBtn')?.addEventListener('click', createOrganization);
     $('saveOrgBtn')?.addEventListener('click', saveOrganizationProfile);
     $('transferOwnershipBtn')?.addEventListener('click', transferOwnership);
     $('archiveOrgBtn')?.addEventListener('click', archiveOrganization);

@@ -238,11 +238,10 @@ Definition of done:
 
 Immediate next engineering slice after this file:
 
-1. add live team-org creation in the static dashboard so the full B2B path works without relying on `apps/dashboard`
-2. wire an SSO-first enterprise login and org provisioning path
-3. wire a real email provider for email alert destinations
-4. add enterprise docs and pilot checklist links from the live product
-5. decide when to converge the live static dashboard and `apps/dashboard` into one primary surface
+1. wire an SSO-first enterprise login and org provisioning path
+2. wire a real email provider for email alert destinations
+3. add enterprise docs and pilot checklist links from the live product
+4. decide when to converge the live static dashboard and `apps/dashboard` into one primary surface
 
 ## Completed
 
@@ -309,6 +308,8 @@ Immediate next engineering slice after this file:
 - live static `alerts` page now supports alert policy editing, destination management, test send, manual dispatch, exports, filters, and load-more paging
 - shared toast feedback now exists across the live static team/business pages
 - live static dashboard now includes a dedicated `org` page for rename/slug edit, ownership transfer, archive, restore, and org-level handoff export
+- live static dashboard now supports team-org creation directly from `/app/org`, so a solo user can create a shared workspace without relying on the separate Next.js app
+- login now supports an enterprise provisioning lane that captures company context and routes new team/business users into `/app/org?provision=1` instead of dropping them straight into the solo dashboard
 - projects page now supports in-app project creation and a first-team-project onboarding empty state
 
 ## Decisions

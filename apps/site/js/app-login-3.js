@@ -8,6 +8,7 @@
     ? 'https://vaultproof-init-staging.vaultproof.workers.dev/api/v1/init'
     : 'https://init.vaultproof.dev/api/v1/init';
   const ACTIVE_ORG_STORAGE_KEY = 'vaultproof_active_org';
+  const ENTERPRISE_CONTEXT_KEY = 'vp_enterprise_context';
   const LOOP_KEY = 'vp_login_ts';
   const PROMO_KEY = 'vp_promo';
   const LOCAL_AUTH_PREFIXES = ['vaultproof_', 'sb-'];
@@ -52,6 +53,73 @@
 
   function getSavedPromoCode() {
     return localStorage.getItem(PROMO_KEY);
+  }
+
+  function setEnterpriseMessage(text, type) {
+    const el = $('enterpriseSetupMsg');
+    if (!el) return;
+    el.textContent = text;
+    el.className = 'notice';
+    if (!text) {
+      el.classList.add('hidden');
+      return;
+    }
+    el.classList.remove('hidden');
+    if (type === 'success' || type === 'info') {
+      el.style.borderColor = 'rgba(22, 163, 74, 0.2)';
+      el.style.background = 'rgba(22, 163, 74, 0.05)';
+      el.style.color = 'var(--success)';
+    } else {
+      el.style.borderColor = 'rgba(185, 28, 28, 0.2)';
+      el.style.background = 'rgba(185, 28, 28, 0.05)';
+      el.style.color = 'var(--danger)';
+    }
+  }
+
+  function getEnterpriseContext() {
+    try {
+      return JSON.parse(sessionStorage.getItem(ENTERPRISE_CONTEXT_KEY) || 'null');
+    } catch {
+      return null;
+    }
+  }
+
+  function clearEnterpriseContext() {
+    sessionStorage.removeItem(ENTERPRISE_CONTEXT_KEY);
+  }
+
+  function normalizeDomain(value) {
+    const trimmed = String(value || '').trim().toLowerCase().replace(/^https?:\/\//, '').replace(/\/.*$/, '');
+    if (!trimmed) return '';
+    return /^[a-z0-9.-]+\.[a-z]{2,}$/i.test(trimmed) ? trimmed : '';
+  }
+
+  function buildEnterpriseSlug(name, domain) {
+    const source = domain ? domain.split('.')[0] : name;
+    return String(source || '')
+      .trim()
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, '-')
+      .replace(/^-+|-+$/g, '')
+      .slice(0, 63);
+  }
+
+  function prepareEnterpriseContext() {
+    const name = ($('enterpriseOrgNameInput')?.value || '').trim();
+    const domain = normalizeDomain($('enterpriseDomainInput')?.value || '');
+    if (name.length < 2) {
+      setEnterpriseMessage('Add a company or workspace name before using the enterprise path.', 'error');
+      return null;
+    }
+    const context = {
+      company_name: name,
+      company_domain: domain,
+      suggested_slug: buildEnterpriseSlug(name, domain),
+      created_at: new Date().toISOString(),
+    };
+    sessionStorage.setItem(ENTERPRISE_CONTEXT_KEY, JSON.stringify(context));
+    setEnterpriseMessage('Enterprise setup saved. Continue with OAuth or email and we will route you into org provisioning.', 'success');
+    return context;
   }
 
   function setPromoMessage(text, tone) {
@@ -191,6 +259,11 @@
         if (pendingInvites.length) {
           return './control';
         }
+      }
+
+      const enterpriseContext = getEnterpriseContext();
+      if (enterpriseContext && enterpriseContext.company_name) {
+        return './org?provision=1';
       }
 
       return './';
@@ -512,6 +585,25 @@
 
     const googleBtn = $('loginWithGoogleBtn');
     if (googleBtn) googleBtn.addEventListener('click', function() { loginWithProvider('google', cliContext); });
+
+    const enterpriseGitHubBtn = $('enterpriseGitHubBtn');
+    if (enterpriseGitHubBtn) enterpriseGitHubBtn.addEventListener('click', function() {
+      if (!prepareEnterpriseContext()) return;
+      loginWithProvider('github', cliContext);
+    });
+
+    const enterpriseGoogleBtn = $('enterpriseGoogleBtn');
+    if (enterpriseGoogleBtn) enterpriseGoogleBtn.addEventListener('click', function() {
+      if (!prepareEnterpriseContext()) return;
+      loginWithProvider('google', cliContext);
+    });
+
+    const enterpriseEmailModeBtn = $('enterpriseEmailModeBtn');
+    if (enterpriseEmailModeBtn) enterpriseEmailModeBtn.addEventListener('click', function() {
+      const context = prepareEnterpriseContext();
+      if (!context) return;
+      showTab('register');
+    });
 
     const loginTab = $('loginTab');
     if (loginTab) loginTab.addEventListener('click', function() { showTab('login'); });
