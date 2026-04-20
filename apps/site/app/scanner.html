@@ -203,15 +203,69 @@
       color: #171717;
       backdrop-filter: blur(12px);
     }
-    body.scanner-app header h1 {
-      font-family: "Space Grotesk", "Inter", system-ui, sans-serif;
-      font-size: 28px;
+    body.scanner-app .scanner-topbar-logo {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-family: "JetBrains Mono", monospace;
+      font-size: 12px;
       font-weight: 600;
-      letter-spacing: -0.6px;
+      letter-spacing: 0.5px;
+      white-space: nowrap;
     }
-    body.scanner-app #menuBtn,
-    body.scanner-app header p {
+    body.scanner-app .scanner-topbar-sep {
+      color: #a3a39a;
+      font-family: "JetBrains Mono", monospace;
+      font-size: 12px;
+    }
+    body.scanner-app .scanner-topbar-crumb,
+    body.scanner-app .scanner-topbar-copy,
+    body.scanner-app #menuBtn {
       color: #525252 !important;
+    }
+    body.scanner-app .scanner-topbar-copy,
+    body.scanner-app .scanner-topbar-session,
+    body.scanner-app .scanner-topbar-signout,
+    body.scanner-app .scanner-topbar-email {
+      font-family: "JetBrains Mono", monospace;
+      font-size: 12px;
+    }
+    body.scanner-app .scanner-topbar-session {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-left: auto;
+    }
+    body.scanner-app .scanner-topbar-email {
+      max-width: 220px;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      font-size: 11px;
+    }
+    body.scanner-app .scanner-topbar-avatar {
+      width: 28px;
+      height: 28px;
+      border-radius: 999px;
+      background: #d97706;
+      color: #fafaf7;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      font-family: "JetBrains Mono", monospace;
+      font-size: 11px;
+      font-weight: 700;
+    }
+    body.scanner-app .scanner-topbar-signout {
+      border: 1px solid #e7e5de;
+      border-radius: 3px;
+      background: #fff;
+      color: #8a8a82;
+      padding: 6px 10px;
+    }
+    body.scanner-app .scanner-topbar-signout:hover {
+      color: #b91c1c;
+      background: #f3f3ee;
     }
     body.scanner-app .bg-card { background: #fff !important; }
     body.scanner-app .bg-surface { background: #f3f3ee !important; }
@@ -291,6 +345,20 @@
       }
       body.scanner-app #sidebar {
         width: min(86vw, 280px);
+      }
+      body.scanner-app .scanner-topbar-sep:nth-of-type(2),
+      body.scanner-app .scanner-topbar-crumb {
+        display: none;
+      }
+    }
+
+    @media (max-width: 680px) {
+      body.scanner-app .scanner-topbar-session {
+        width: 100%;
+        justify-content: flex-end;
+      }
+      body.scanner-app .scanner-topbar-email {
+        max-width: 140px;
       }
     }
   </style>
@@ -384,9 +452,16 @@
           <path stroke-linecap="round" stroke-linejoin="round" d="M4 6h16M4 12h16M4 18h16"/>
         </svg>
       </button>
-      <h1 class="text-lg font-semibold">Scanner</h1>
-      <div class="flex-1"></div>
-      <p class="text-sm text-gray-500 hidden sm:block">Scan repos for exposed API keys</p>
+      <div class="scanner-topbar-logo">vaultproof</div>
+      <span class="scanner-topbar-sep">/</span>
+      <span class="scanner-topbar-copy">dashboard</span>
+      <span class="scanner-topbar-sep">/</span>
+      <span class="scanner-topbar-crumb">repos</span>
+      <div class="scanner-topbar-session">
+        <span class="scanner-topbar-email" id="user-email">loading...</span>
+        <div class="scanner-topbar-avatar" id="user-avatar">V</div>
+        <button type="button" class="scanner-topbar-signout" id="signOutBtn">sign out</button>
+      </div>
     </header>
 
     <!-- Toast notification -->

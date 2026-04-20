@@ -137,12 +137,45 @@
     .topbar-sep { color: #a3a39a; }
     .topbar-crumb { color: var(--text-muted); }
     .topbar-spacer { flex: 1; }
-
-    .topbar-link {
-      color: var(--text-muted);
+    .topbar-session {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-left: auto;
     }
-
-    .topbar-link:hover { color: var(--text); }
+    .topbar-email {
+      max-width: 220px;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      color: var(--text-muted);
+      font-family: var(--mono);
+      font-size: 11px;
+    }
+    .topbar-avatar {
+      width: 28px;
+      height: 28px;
+      border-radius: 50%;
+      background: var(--accent);
+      color: #fafaf7;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-family: var(--mono);
+      font-size: 11px;
+      font-weight: 700;
+    }
+    .topbar-signout {
+      font-family: var(--mono);
+      font-size: 11px;
+      color: var(--text-faint);
+      background: var(--bg-card);
+      border: var(--rule);
+      border-radius: 3px;
+      padding: 6px 10px;
+      cursor: pointer;
+    }
+    .topbar-signout:hover { color: var(--danger); background: #fdfdfa; }
 
     .menu-btn {
       display: none;
@@ -724,7 +757,8 @@
       .page { border-left: none; border-right: none; }
       .topbar { padding: 12px 16px; }
       .menu-btn { display: inline-flex; }
-      .topbar-link, .topbar .topbar-sep:nth-of-type(2), .topbar-crumb { display: none; }
+      .topbar .topbar-sep:nth-of-type(2), .topbar-crumb { display: none; }
+      .topbar-session { margin-left: auto; }
       .app-layout { display: block; }
       .sidebar {
         position: fixed;
@@ -744,6 +778,8 @@
     }
 
     @media (max-width: 680px) {
+      .topbar-session { width: 100%; justify-content: flex-end; }
+      .topbar-email { max-width: 140px; }
       .kpi-grid { grid-template-columns: 1fr; }
       .kpi-cell + .kpi-cell { border-left: 0; border-top: var(--rule); }
       .project-section-head { flex-direction: column; align-items: stretch; }
@@ -767,11 +803,14 @@
         <span>vaultproof</span>
       </a>
       <span class="topbar-sep">/</span>
-      <a href="/app/" class="topbar-link">dashboard</a>
+      <span>dashboard</span>
       <span class="topbar-sep">/</span>
       <span class="topbar-crumb">keys</span>
-      <div class="topbar-spacer"></div>
-      <a href="/app/activity" class="topbar-link">activity</a>
+      <div class="topbar-session">
+        <span class="topbar-email" id="user-email">loading...</span>
+        <div class="topbar-avatar" id="user-avatar">V</div>
+        <button type="button" class="topbar-signout" id="signOutBtn">sign out</button>
+      </div>
     </div>
 
     <div class="app-layout">
