@@ -126,6 +126,19 @@
     .pill.warn { background: rgba(180,83,9,0.08); color: var(--warn); }
     .pill.danger { background: rgba(185,28,28,0.08); color: var(--danger); }
     .pill.neutral { background: #fbfaf6; color: var(--text-muted); }
+    .resource-grid { padding: 14px 18px 18px; display: grid; gap: 12px; }
+    .resource-card { border: var(--rule); border-radius: 4px; background: #fcfcf9; padding: 12px; display: grid; gap: 8px; }
+    .resource-title { font-size: 13px; font-weight: 600; color: var(--text); }
+    .resource-copy { color: var(--text-muted); font-size: 12px; }
+    .resource-link { font-family: var(--mono); font-size: 11px; color: var(--accent); }
+    .resource-link:hover { text-decoration: underline; }
+    .checklist-box { margin: 0 18px 18px; padding: 12px 14px; border: var(--rule); border-radius: 4px; background: #fcfcf9; display: grid; gap: 8px; }
+    .checklist-title { font-family: var(--mono); font-size: 10px; letter-spacing: 0.7px; text-transform: uppercase; color: var(--text-faint); }
+    .checklist-list { list-style: none; display: grid; gap: 8px; }
+    .checklist-item { display: grid; grid-template-columns: auto 1fr; gap: 8px; align-items: start; font-size: 12px; color: var(--text-muted); }
+    .checklist-mark { font-family: var(--mono); font-size: 11px; color: var(--text-faint); }
+    .checklist-mark.done { color: var(--ok); }
+    .checklist-mark.todo { color: var(--warn); }
     .form-card { padding: 16px 18px 18px; display: grid; gap: 12px; }
     .form-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
     .form-field { display: grid; gap: 6px; }
@@ -252,6 +265,7 @@
         <div class="action-strip">
           <span class="action-strip-label">handoff exports</span>
           <button type="button" class="btn-outline" id="copyReportBtn">copy report</button>
+          <button type="button" class="btn-outline" id="copyOpsChecklistBtn">copy ops checklist</button>
           <button type="button" class="btn-outline" id="downloadReportBtn">download report</button>
           <button type="button" class="btn-outline" id="downloadRunsBtn">download runs csv</button>
           <button type="button" class="btn-outline" id="downloadDeliveriesBtn">download deliveries csv</button>
@@ -360,6 +374,15 @@
           </div>
 
           <div class="stack">
+            <section class="panel">
+              <div class="panel-head">ops kit<span class="panel-head-right" id="opsKitStatus">loading…</span></div>
+              <div class="resource-grid" id="opsKitResources"><div class="empty">Loading ops resources…</div></div>
+              <div class="checklist-box">
+                <div class="checklist-title">alert rollout checklist</div>
+                <div class="checklist-list" id="opsChecklistList"><div class="empty">Loading alert checklist…</div></div>
+              </div>
+            </section>
+
             <section class="panel">
               <div class="panel-head">dispatch runs<span class="panel-head-right" id="runsStatus">loading…</span></div>
               <div class="filters">

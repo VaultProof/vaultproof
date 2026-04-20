@@ -134,6 +134,19 @@
     .pill.warn { background: rgba(180,83,9,0.08); color: var(--warn); }
     .pill.danger { background: rgba(185,28,28,0.08); color: var(--danger); }
     .pill.neutral { background: #fbfaf6; color: var(--text-muted); }
+    .resource-grid { padding: 14px 18px 18px; display: grid; gap: 12px; }
+    .resource-card { border: var(--rule); border-radius: 4px; background: #fcfcf9; padding: 12px; display: grid; gap: 8px; }
+    .resource-title { font-size: 13px; font-weight: 600; color: var(--text); }
+    .resource-copy { color: var(--text-muted); font-size: 12px; }
+    .resource-link { font-family: var(--mono); font-size: 11px; color: var(--accent); }
+    .resource-link:hover { text-decoration: underline; }
+    .checklist-box { margin: 0 18px 18px; padding: 12px 14px; border: var(--rule); border-radius: 4px; background: #fcfcf9; display: grid; gap: 8px; }
+    .checklist-title { font-family: var(--mono); font-size: 10px; letter-spacing: 0.7px; text-transform: uppercase; color: var(--text-faint); }
+    .checklist-list { list-style: none; display: grid; gap: 8px; }
+    .checklist-item { display: grid; grid-template-columns: auto 1fr; gap: 8px; align-items: start; font-size: 12px; color: var(--text-muted); }
+    .checklist-mark { font-family: var(--mono); font-size: 11px; color: var(--text-faint); }
+    .checklist-mark.done { color: var(--ok); }
+    .checklist-mark.todo { color: var(--warn); }
     .empty { padding: 26px 18px; text-align: center; font-family: var(--mono); font-size: 12px; color: var(--text-faint); }
     .callout { padding: 12px 14px; border-radius: 4px; border: var(--rule); background: #fcfcf9; font-size: 13px; color: var(--text-muted); }
     @media (max-width: 960px) {
@@ -245,6 +258,7 @@
           <span class="action-strip-label">governance handoff</span>
           <button type="button" class="btn-outline" id="copyOrgReportInlineBtn">copy report</button>
           <button type="button" class="btn-outline" id="downloadOrgJsonInlineBtn">download json</button>
+          <button type="button" class="btn-outline" id="copyOrgPilotBriefBtn">copy setup brief</button>
           <span class="action-msg" id="orgExportMsg"></span>
         </div>
 
@@ -395,6 +409,15 @@
                   <span class="form-hint" id="ssoSetupHint">Use this while the full SAML / SSO backend flow is still being wired.</span>
                 </div>
                 <div class="form-msg" id="ssoSetupMsg"></div>
+              </div>
+            </section>
+
+            <section class="panel">
+              <div class="panel-head">pilot kit<span class="panel-head-right" id="pilotKitStatus">loading…</span></div>
+              <div class="resource-grid" id="pilotKitResources"><div class="empty">Loading rollout resources…</div></div>
+              <div class="checklist-box">
+                <div class="checklist-title">org rollout checklist</div>
+                <div class="checklist-list" id="pilotChecklistList"><div class="empty">Loading org checklist…</div></div>
               </div>
             </section>
 

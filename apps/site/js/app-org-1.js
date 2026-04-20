@@ -396,6 +396,113 @@
     setText('postureStatus', organization ? 'live' : 'unavailable');
   }
 
+  function buildOrgChecklistItems() {
+    const organization = currentOrgPayload?.organization || {};
+    const members = currentMembersPayload?.members || [];
+    const owner = members.find((member) => member.role === 'owner') || null;
+    const context = getEnterpriseContext() || {};
+    const selectedProvider = $('ssoProviderSelect')?.value || context.sso_provider || '';
+    const adminEmail = $('ssoAdminEmailInput')?.value || context.admin_email || '';
+
+    return [
+      {
+        done: organization.kind === 'team',
+        label: organization.kind === 'team'
+          ? `Shared org ${organization.name || 'workspace'} is active.`
+          : 'Create or switch into a shared org before starting enterprise rollout.',
+      },
+      {
+        done: Boolean(organization.slug),
+        label: organization.slug
+          ? `Workspace slug is set to ${organization.slug}.`
+          : 'Set a stable workspace slug before sharing setup docs with the customer team.',
+      },
+      {
+        done: members.length >= 2,
+        label: members.length >= 2
+          ? `${members.length} joined members are in the org.`
+          : 'Invite at least one additional admin or teammate into the org.',
+      },
+      {
+        done: Boolean(owner),
+        label: owner
+          ? `Owner is set to ${owner.email || owner.user_id}.`
+          : 'Confirm the intended owner before handing the org to a customer team.',
+      },
+      {
+        done: Boolean(selectedProvider),
+        label: selectedProvider
+          ? `SSO handoff is staged for ${selectedProvider}.`
+          : 'Capture the identity provider so the SSO request can move forward.',
+      },
+      {
+        done: Boolean(adminEmail),
+        label: adminEmail
+          ? `SSO admin contact is ${adminEmail}.`
+          : 'Record the admin contact who will complete the SSO configuration.',
+      },
+    ];
+  }
+
+  function renderPilotKit() {
+    const organization = currentOrgPayload?.organization || null;
+    const resourcesEl = $('pilotKitResources');
+    const checklistEl = $('pilotChecklistList');
+    const items = buildOrgChecklistItems();
+    const completed = items.filter((item) => item.done).length;
+    const resources = [
+      {
+        title: 'Enterprise demo',
+        copy: 'Use the enterprise demo for buyer walkthroughs while the org is being provisioned.',
+        href: '/enterprise-demo',
+        label: 'open enterprise demo',
+      },
+      {
+        title: 'Docs',
+        copy: 'Share the product docs while the customer team is wiring their first protected project.',
+        href: '/docs',
+        label: 'open docs',
+      },
+      {
+        title: 'Security',
+        copy: 'Send the security page during vendor review and SSO/security conversations.',
+        href: '/security',
+        label: 'open security',
+      },
+      {
+        title: 'Control dashboard',
+        copy: 'Return to Control for pilot review, project policy, and runtime health after org setup.',
+        href: currentOrganizationId ? `/app/control?org=${encodeURIComponent(currentOrganizationId)}` : '/app/control',
+        label: 'open control',
+      },
+    ];
+
+    setText('pilotKitStatus', `${completed}/${items.length} org checks done`);
+
+    if (resourcesEl) {
+      resourcesEl.innerHTML = resources.map((resource) => `
+        <div class="resource-card">
+          <div class="resource-title">${escapeHtml(resource.title)}</div>
+          <div class="resource-copy">${escapeHtml(resource.copy)}</div>
+          <a class="resource-link" href="${escapeHtml(resource.href)}">${escapeHtml(resource.label)}</a>
+        </div>
+      `).join('');
+    }
+
+    if (checklistEl) {
+      checklistEl.innerHTML = items.map((item) => `
+        <div class="checklist-item">
+          <span class="checklist-mark ${item.done ? 'done' : 'todo'}">${item.done ? '[x]' : '[ ]'}</span>
+          <span>${escapeHtml(item.label)}</span>
+        </div>
+      `).join('');
+    }
+
+    if (organization) {
+      setText('pageMeta', `/ ${organization.name} · org`);
+    }
+  }
+
   function renderArchivedOrganizations() {
     const list = $('archivedList');
     setText('archivedStatus', `${archivedOrganizations.length} archived`);
@@ -434,6 +541,30 @@
       `Ownership transfer enabled: ${organization.can_transfer_ownership ? 'yes' : 'no'}`,
       `Archived workspaces available: ${archivedOrganizations.length}`,
       `Generated: ${formatTimestamp(new Date().toISOString())}`,
+    ].join('\n');
+  }
+  function buildOrgPilotBrief() {
+    const organization = currentOrgPayload?.organization || {};
+    const context = getEnterpriseContext() || {};
+    const checklistItems = buildOrgChecklistItems();
+    return [
+      'VaultProof Org Setup Brief',
+      `Organization: ${organization.name || context.company_name || 'Unknown org'}`,
+      `Workspace type: ${organization.kind || 'unknown'}`,
+      `Role: ${organization.role || 'unknown'}`,
+      `Slug: ${organization.slug || context.suggested_slug || 'unset'}`,
+      `SSO provider: ${$('ssoProviderSelect')?.value || context.sso_provider || 'not captured'}`,
+      `SSO admin: ${$('ssoAdminEmailInput')?.value || context.admin_email || 'not captured'}`,
+      `Generated: ${formatTimestamp(new Date().toISOString())}`,
+      '',
+      'Org rollout checklist',
+      ...checklistItems.map((item) => `- ${item.done ? '[x]' : '[ ]'} ${item.label}`),
+      '',
+      'Reference links',
+      '- Enterprise demo: /enterprise-demo',
+      '- Docs: /docs',
+      '- Security: /security',
+      `- Control dashboard: ${currentOrganizationId ? `/app/control?org=${currentOrganizationId}` : '/app/control'}`,
     ].join('\n');
   }
   function buildOrgJson() {
@@ -511,6 +642,16 @@
     } catch {
       setExportMessage('Could not copy org report.', 'danger');
       toast('Could not copy org report.', 'danger');
+    }
+  }
+  async function copyOrgPilotBrief() {
+    try {
+      const copied = await copyText(buildOrgPilotBrief());
+      setExportMessage(copied ? 'Org setup brief copied.' : 'Could not copy org setup brief.', copied ? 'ok' : 'danger');
+      toast(copied ? 'Org setup brief copied.' : 'Could not copy org setup brief.', copied ? 'ok' : 'danger');
+    } catch {
+      setExportMessage('Could not copy org setup brief.', 'danger');
+      toast('Could not copy org setup brief.', 'danger');
     }
   }
   function downloadOrgJson() {
@@ -694,6 +835,7 @@
       renderArchive(null);
       renderCreateOrg(null);
       renderSsoSetup(null);
+      renderPilotKit();
       renderPosture(null, null);
       renderArchivedOrganizations();
       setText('profileStatus', 'unavailable');
@@ -727,6 +869,7 @@
     renderArchive(currentOrgPayload);
     renderCreateOrg(currentOrgPayload);
     renderSsoSetup(currentOrgPayload);
+    renderPilotKit();
     renderPosture(currentOrgPayload, currentMembersPayload);
     renderArchivedOrganizations();
     renderUsageBox(currentOrgPayload);
@@ -740,6 +883,7 @@
     $('copyOrgReportInlineBtn')?.addEventListener('click', copyOrgReport);
     $('downloadOrgJsonBtn')?.addEventListener('click', downloadOrgJson);
     $('downloadOrgJsonInlineBtn')?.addEventListener('click', downloadOrgJson);
+    $('copyOrgPilotBriefBtn')?.addEventListener('click', copyOrgPilotBrief);
     $('createOrgBtn')?.addEventListener('click', createOrganization);
     $('copySsoBriefBtn')?.addEventListener('click', copySsoBrief);
     $('emailSsoSetupBtn')?.addEventListener('click', emailSsoSetup);

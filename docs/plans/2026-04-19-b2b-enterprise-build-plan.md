@@ -239,7 +239,7 @@ Definition of done:
 Immediate next engineering slice after this file:
 
 1. wire an SSO-first enterprise login and org provisioning path
-2. extend the pilot kit and enterprise docs links from `control` into the rest of the live shared-org surfaces
+2. extend the pilot kit and enterprise docs links from `control` into `members` and `audit`
 3. decide when to converge the live static dashboard and `apps/dashboard` into one primary surface
 
 ## Completed
@@ -312,6 +312,7 @@ Immediate next engineering slice after this file:
 - login and org setup now support an enterprise SSO request handoff, including captured IdP/admin context plus copy/email setup briefs, while the full backend SSO flow remains a separate checklist item
 - email alert destinations in `init-worker` now deliver through Resend when `RESEND_API_KEY` and `ALERTS_FROM_EMAIL` are configured, while keeping webhook delivery unchanged
 - live static `control` page now links enterprise demo/docs/security resources and generates a copyable/downloadable pilot checklist from the current org state
+- live static `org` and `alerts` pages now carry rollout resources plus copyable setup/ops checklists so enterprise handoff is not isolated to `control`
 - projects page now supports in-app project creation and a first-team-project onboarding empty state
 
 ## Decisions

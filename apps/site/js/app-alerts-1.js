@@ -327,6 +327,78 @@
       ...(deliveries.length ? deliveries.slice(0, 8).map((delivery) => `- ${formatTimestamp(delivery.delivered_at)} · ${delivery.channel_type} · ${delivery.delivery_kind} · ${delivery.status} · ${delivery.detail || 'delivery event'}`) : ['- none']),
     ].join('\n');
   }
+  function buildOpsChecklistItems() {
+    const alertsPayload = currentAlertsPayload || {};
+    const overviewPayload = currentOverviewPayload || {};
+    const org = alertsPayload.organization || {};
+    const policy = alertsPayload.policy || {};
+    const destinations = alertsPayload.destinations || [];
+    const activeAlerts = overviewPayload.alerts || [];
+    const deliveryLogs = alertsPayload.delivery_logs || [];
+    const dispatchRuns = alertsPayload.dispatch_runs || [];
+
+    return [
+      {
+        done: org.kind && org.kind !== 'personal',
+        label: org.kind && org.kind !== 'personal'
+          ? `Shared alert workspace is active for ${org.name || 'the org'}.`
+          : 'Move alert operations into a shared org before presenting the business rollout.',
+      },
+      {
+        done: Boolean(policy.dispatch_enabled),
+        label: policy.dispatch_enabled
+          ? `Policy dispatch is enabled at the ${policy.minimum_severity || 'warning'} threshold.`
+          : 'Enable policy dispatch once severity and cooldown are set for the customer team.',
+      },
+      {
+        done: destinations.some((destination) => destination.enabled),
+        label: destinations.some((destination) => destination.enabled)
+          ? `${destinations.filter((destination) => destination.enabled).length} alert destination${destinations.filter((destination) => destination.enabled).length === 1 ? '' : 's'} enabled.`
+          : 'Enable at least one destination so alert traffic leaves the dashboard.',
+      },
+      {
+        done: dispatchRuns.length > 0,
+        label: dispatchRuns.length > 0
+          ? `${dispatchRuns.length} dispatch run${dispatchRuns.length === 1 ? '' : 's'} captured in the current window.`
+          : 'Run a manual or scheduled dispatch so the customer can review delivery behavior.',
+      },
+      {
+        done: deliveryLogs.some((delivery) => delivery.status === 'delivered'),
+        label: deliveryLogs.some((delivery) => delivery.status === 'delivered')
+          ? 'At least one delivery completed successfully.'
+          : 'Send a test alert and confirm at least one successful delivery.',
+      },
+      {
+        done: activeAlerts.length > 0,
+        label: activeAlerts.length > 0
+          ? `${activeAlerts.length} live alert signal${activeAlerts.length === 1 ? '' : 's'} are visible.`
+          : 'Route some real traffic or trigger a signal so the alert review is grounded in actual usage.',
+      },
+    ];
+  }
+  function buildOpsChecklist() {
+    const alertsPayload = currentAlertsPayload || {};
+    const org = alertsPayload.organization || {};
+    const policy = alertsPayload.policy || {};
+    const checklistItems = buildOpsChecklistItems();
+    return [
+      'VaultProof Alert Ops Checklist',
+      `Organization: ${org.name || 'Unknown org'}`,
+      `Workspace type: ${org.kind || 'unknown'} · role ${org.current_role || 'unknown'}`,
+      `Dispatch policy: ${policy.dispatch_enabled ? 'enabled' : 'disabled'} · ${policy.minimum_severity || 'warning'} · ${policy.min_interval_minutes || 60}m cooldown`,
+      `Generated: ${formatTimestamp(new Date().toISOString())}`,
+      '',
+      'Alert rollout checklist',
+      ...checklistItems.map((item) => `- ${item.done ? '[x]' : '[ ]'} ${item.label}`),
+      '',
+      'Reference links',
+      '- Control dashboard: /app/control',
+      '- Org settings: /app/org',
+      '- Docs: /docs',
+      '- Security: /security',
+      '- Enterprise demo: /enterprise-demo',
+    ].join('\n');
+  }
   function buildDispatchRunsCsv() {
     const rows = [
       ['checked_at', 'trigger_source', 'status', 'reason', 'dispatched_alert_count', 'destination_count', 'delivered_count', 'failed_count', 'skipped_count', 'next_eligible_at'],
@@ -384,6 +456,59 @@
     setText('segmentNote', dispatchEnabled
       ? 'Scheduled and manual dispatch share the same backend path, cooldown rules, and delivery logs.'
       : 'Enable dispatch once the destination list and severity threshold look right for this organization.');
+  }
+  function renderOpsKit() {
+    const resourcesEl = $('opsKitResources');
+    const checklistEl = $('opsChecklistList');
+    const items = buildOpsChecklistItems();
+    const completed = items.filter((item) => item.done).length;
+    const resources = [
+      {
+        title: 'Control dashboard',
+        copy: 'Use Control for pilot posture, project policy, and the broader rollout summary.',
+        href: currentOrganizationId ? `/app/control?org=${encodeURIComponent(currentOrganizationId)}` : '/app/control',
+        label: 'open control',
+      },
+      {
+        title: 'Org settings',
+        copy: 'Return to Org when you need ownership transfer, provisioning context, or SSO handoff details.',
+        href: currentOrganizationId ? `/app/org?org=${encodeURIComponent(currentOrganizationId)}` : '/app/org',
+        label: 'open org',
+      },
+      {
+        title: 'Security',
+        copy: 'Share the security page when customers ask how alert routing and delivery are controlled.',
+        href: '/security',
+        label: 'open security',
+      },
+      {
+        title: 'Docs',
+        copy: 'Use the docs when the customer team is wiring their destinations or dispatch policy.',
+        href: '/docs',
+        label: 'open docs',
+      },
+    ];
+
+    setText('opsKitStatus', `${completed}/${items.length} alert checks done`);
+
+    if (resourcesEl) {
+      resourcesEl.innerHTML = resources.map((resource) => `
+        <div class="resource-card">
+          <div class="resource-title">${escapeHtml(resource.title)}</div>
+          <div class="resource-copy">${escapeHtml(resource.copy)}</div>
+          <a class="resource-link" href="${escapeHtml(resource.href)}">${escapeHtml(resource.label)}</a>
+        </div>
+      `).join('');
+    }
+
+    if (checklistEl) {
+      checklistEl.innerHTML = items.map((item) => `
+        <div class="checklist-item">
+          <span class="checklist-mark ${item.done ? 'done' : 'todo'}">${item.done ? '[x]' : '[ ]'}</span>
+          <span>${escapeHtml(item.label)}</span>
+        </div>
+      `).join('');
+    }
   }
   function renderUsageBox(alertsPayload) {
     const destinations = alertsPayload?.destinations || [];
@@ -626,6 +751,7 @@
     renderBanner(currentAlertsPayload, overviewData);
     renderUsageBox(currentAlertsPayload);
     renderKpis(currentAlertsPayload, overviewData);
+    renderOpsKit();
     renderPolicy(currentAlertsPayload);
     renderDestinations(currentAlertsPayload);
     renderSignals(overviewData);
@@ -760,6 +886,16 @@
       toast('Could not copy report.', 'danger');
     }
   }
+  async function copyOpsChecklist() {
+    try {
+      const copied = await copyText(buildOpsChecklist());
+      setExportMessage(copied ? 'Alert ops checklist copied.' : 'Could not copy alert ops checklist.', copied ? 'ok' : 'danger');
+      toast(copied ? 'Alert ops checklist copied.' : 'Could not copy alert ops checklist.', copied ? 'ok' : 'danger');
+    } catch {
+      setExportMessage('Could not copy alert ops checklist.', 'danger');
+      toast('Could not copy alert ops checklist.', 'danger');
+    }
+  }
   function downloadReport() {
     downloadTextFile(`${getExportBaseName()}-report.txt`, buildOperationsReport(), 'text/plain;charset=utf-8');
     setExportMessage('Operations report downloaded.', 'ok');
@@ -788,6 +924,7 @@
     if ($('testAllBtn')) $('testAllBtn').addEventListener('click', function(event) { testSend(null, event.currentTarget); });
     if ($('dispatchCurrentBtn')) $('dispatchCurrentBtn').addEventListener('click', function(event) { dispatchCurrent(event.currentTarget); });
     if ($('copyReportBtn')) $('copyReportBtn').addEventListener('click', copyReport);
+    if ($('copyOpsChecklistBtn')) $('copyOpsChecklistBtn').addEventListener('click', copyOpsChecklist);
     if ($('downloadReportBtn')) $('downloadReportBtn').addEventListener('click', downloadReport);
     if ($('downloadRunsBtn')) $('downloadRunsBtn').addEventListener('click', downloadRunsCsv);
     if ($('downloadDeliveriesBtn')) $('downloadDeliveriesBtn').addEventListener('click', downloadDeliveriesCsv);
