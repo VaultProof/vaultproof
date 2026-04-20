@@ -612,6 +612,163 @@
     list.innerHTML = rows.join('');
   }
 
+  function buildPilotChecklistItems() {
+    const membersPayload = currentMembersPayload || {};
+    const projectsPayload = currentProjectsPayload || {};
+    const overviewPayload = currentOverviewPayload || {};
+    const alertsPayload = currentAlertsPayload || {};
+    const org = membersPayload.organization || {};
+    const members = membersPayload.members || [];
+    const pendingInvites = (membersPayload.invitations || []).filter((invite) => invite.status === 'pending');
+    const projects = projectsPayload.projects || [];
+    const projectHealth = overviewPayload.projectHealth || [];
+    const destinations = alertsPayload.destinations || [];
+    const posture = overviewPayload.pilotReview || {};
+
+    return [
+      {
+        done: org.kind && org.kind !== 'personal',
+        label: org.kind && org.kind !== 'personal'
+          ? `Shared org is active as ${org.name || 'team org'}.`
+          : 'Create or switch into a shared org before starting an enterprise pilot.',
+      },
+      {
+        done: members.length >= 2,
+        label: members.length >= 2
+          ? `${members.length} members are already in the workspace.`
+          : 'Invite at least one teammate so the pilot reflects shared access instead of solo setup.',
+      },
+      {
+        done: projects.length >= 1,
+        label: projects.length >= 1
+          ? `${projects.length} project${projects.length === 1 ? '' : 's'} connected for the pilot.`
+          : 'Create the first shared project for the customer workflow you want to protect.',
+      },
+      {
+        done: projects.some((project) => Boolean(project.allowed_origins) || project.strict_origin),
+        label: projects.some((project) => Boolean(project.allowed_origins) || project.strict_origin)
+          ? 'Origin policy is configured on at least one shared project.'
+          : 'Set origin policy on the pilot project so the rollout includes real runtime controls.',
+      },
+      {
+        done: projectHealth.some((project) => Number(project.calls || 0) > 0),
+        label: projectHealth.some((project) => Number(project.calls || 0) > 0)
+          ? 'Pilot traffic is reaching VaultProof and producing runtime health data.'
+          : 'Send real pilot traffic through the project so runtime posture and denied-request data appear.',
+      },
+      {
+        done: destinations.some((destination) => destination.enabled),
+        label: destinations.some((destination) => destination.enabled)
+          ? `${destinations.filter((destination) => destination.enabled).length} alert destination${destinations.filter((destination) => destination.enabled).length === 1 ? '' : 's'} enabled.`
+          : 'Enable at least one alert destination so pilot issues reach the customer team outside the dashboard.',
+      },
+      {
+        done: pendingInvites.length === 0 && posture.status && posture.status !== 'setup',
+        label: pendingInvites.length === 0 && posture.status && posture.status !== 'setup'
+          ? `Pilot review is ${String(posture.status).replace(/_/g, ' ')} with no pending invites blocking rollout.`
+          : 'Clear pending invites and review the pilot status before presenting rollout results.',
+      },
+    ];
+  }
+
+  function renderPilotKit() {
+    const resourcesEl = $('pilotKitResources');
+    const checklistEl = $('pilotChecklistList');
+    const org = currentMembersPayload?.organization || null;
+    const workspace = classifyWorkspace(currentMembersPayload || {}, currentOverviewPayload || {}, currentAlertsPayload || {});
+    const items = buildPilotChecklistItems();
+    const completed = items.filter((item) => item.done).length;
+    const resourceCards = [
+      {
+        title: 'Enterprise demo',
+        copy: 'Use the enterprise demo for buyer walkthroughs and architecture framing before a pilot review.',
+        href: '/enterprise-demo',
+        label: 'open enterprise demo',
+      },
+      {
+        title: 'Docs',
+        copy: 'Share setup and implementation docs when the customer team is wiring the first protected project.',
+        href: '/docs',
+        label: 'open docs',
+      },
+      {
+        title: 'Security',
+        copy: 'Send the security page when buyers ask how VaultProof handles proxying, origin lock, and operational controls.',
+        href: '/security',
+        label: 'open security',
+      },
+      {
+        title: 'Org setup',
+        copy: 'Use the org page for ownership transfer, provisioning context, and team-admin setup before rollout starts.',
+        href: currentOrganizationId ? `/app/org?org=${encodeURIComponent(currentOrganizationId)}` : '/app/org',
+        label: 'open org settings',
+      },
+    ];
+
+    setText('pilotKitStatus', `${completed}/${items.length} rollout checks done`);
+
+    if (resourcesEl) {
+      resourcesEl.innerHTML = resourceCards.map((card) => `
+        <div class="resource-card">
+          <div class="resource-title">${escapeHtml(card.title)}</div>
+          <div class="resource-copy">${escapeHtml(card.copy)}</div>
+          <a class="resource-link" href="${escapeHtml(card.href)}">${escapeHtml(card.label)}</a>
+        </div>
+      `).join('');
+    }
+
+    if (checklistEl) {
+      checklistEl.innerHTML = items.map((item) => `
+        <div class="checklist-item">
+          <span class="checklist-mark ${item.done ? 'done' : 'todo'}">${item.done ? '[x]' : '[ ]'}</span>
+          <span>${escapeHtml(item.label)}</span>
+        </div>
+      `).join('');
+    }
+
+    const pageMeta = $('pageMeta');
+    if (pageMeta && org?.name) {
+      pageMeta.textContent = `/ ${org.name} · ${workspace.label}`;
+    }
+  }
+
+  function buildPilotBrief() {
+    const org = currentMembersPayload?.organization || {};
+    const members = currentMembersPayload?.members || [];
+    const pendingInvites = (currentMembersPayload?.invitations || []).filter((invite) => invite.status === 'pending');
+    const projects = currentProjectsPayload?.projects || [];
+    const posture = currentOverviewPayload?.pilotReview || {};
+    const projectHealth = currentOverviewPayload?.projectHealth || [];
+    const destinations = currentAlertsPayload?.destinations || [];
+    const checklistItems = buildPilotChecklistItems();
+
+    return [
+      'VaultProof Pilot Checklist',
+      `Organization: ${org.name || 'Unknown org'}`,
+      `Workspace type: ${org.kind || 'unknown'} · role ${org.current_role || 'unknown'}`,
+      `Generated: ${formatTimestamp(new Date().toISOString())}`,
+      '',
+      'Current state',
+      `- Members: ${members.length}`,
+      `- Pending invites: ${pendingInvites.length}`,
+      `- Projects: ${projects.length}`,
+      `- Projects with traffic: ${projectHealth.filter((project) => Number(project.calls || 0) > 0).length}`,
+      `- Enabled alert destinations: ${destinations.filter((destination) => destination.enabled).length}`,
+      `- Pilot status: ${posture.status || 'setup'}`,
+      `- Pilot headline: ${posture.headline || 'No pilot headline yet'}`,
+      `- Recommendation: ${posture.recommendation || 'Complete the checklist below before the customer review.'}`,
+      '',
+      'Pilot checklist',
+      ...checklistItems.map((item) => `- ${item.done ? '[x]' : '[ ]'} ${item.label}`),
+      '',
+      'Useful links',
+      '- Enterprise demo: /enterprise-demo',
+      '- Docs: /docs',
+      '- Security: /security',
+      `- Org settings: ${currentOrganizationId ? `/app/org?org=${currentOrganizationId}` : '/app/org'}`,
+    ].join('\n');
+  }
+
   function buildControlReport() {
     const membersPayload = currentMembersPayload || {};
     const overviewPayload = currentOverviewPayload || {};
@@ -687,6 +844,23 @@
     downloadTextFile(`${getControlExportBaseName()}-snapshot.json`, buildControlJson(), 'application/json;charset=utf-8');
     setExportMessage('Control JSON downloaded.', 'ok');
     toast('Control JSON downloaded.', 'ok');
+  }
+
+  async function copyPilotChecklist() {
+    try {
+      const copied = await copyText(buildPilotBrief());
+      setExportMessage(copied ? 'Pilot checklist copied.' : 'Could not copy pilot checklist.', copied ? 'ok' : 'danger');
+      toast(copied ? 'Pilot checklist copied.' : 'Could not copy pilot checklist.', copied ? 'ok' : 'danger');
+    } catch {
+      setExportMessage('Could not copy pilot checklist.', 'danger');
+      toast('Could not copy pilot checklist.', 'danger');
+    }
+  }
+
+  function downloadPilotChecklist() {
+    downloadTextFile(`${getControlExportBaseName()}-pilot-brief.txt`, buildPilotBrief(), 'text/plain;charset=utf-8');
+    setExportMessage('Pilot brief downloaded.', 'ok');
+    toast('Pilot brief downloaded.', 'ok');
   }
 
   async function saveProjectPolicy(projectId, trigger) {
@@ -768,6 +942,7 @@
     renderKpis(membersData, overviewData);
     renderMembers(membersData);
     renderProjectPolicies(projectsData);
+    renderPilotKit();
     renderHealth(overviewData);
     renderAudit(auditData);
     renderDispatch(alertsData, overviewData);
@@ -780,11 +955,15 @@
     const copyControlReportBtn = $('copyControlReportBtn');
     const downloadControlReportBtn = $('downloadControlReportBtn');
     const downloadControlJsonBtn = $('downloadControlJsonBtn');
+    const copyPilotChecklistBtn = $('copyPilotChecklistBtn');
+    const downloadPilotChecklistBtn = $('downloadPilotChecklistBtn');
     if (signOutBtn) signOutBtn.addEventListener('click', logout);
     if (refreshBtn) refreshBtn.addEventListener('click', function() { load(); });
     if (copyControlReportBtn) copyControlReportBtn.addEventListener('click', function() { copyControlReport(); });
     if (downloadControlReportBtn) downloadControlReportBtn.addEventListener('click', function() { downloadControlReport(); });
     if (downloadControlJsonBtn) downloadControlJsonBtn.addEventListener('click', function() { downloadControlJson(); });
+    if (copyPilotChecklistBtn) copyPilotChecklistBtn.addEventListener('click', function() { copyPilotChecklist(); });
+    if (downloadPilotChecklistBtn) downloadPilotChecklistBtn.addEventListener('click', function() { downloadPilotChecklist(); });
     if (orgSelect) {
       orgSelect.addEventListener('change', function(event) {
         const nextOrgId = event.target.value || '';

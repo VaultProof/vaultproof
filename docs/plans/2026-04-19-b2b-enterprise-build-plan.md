@@ -168,7 +168,7 @@ Milestones:
 - [x] first-run "create org / invite team / create project" flow
 - [x] connect project creation directly into provider key setup
 - [x] usage summaries and alerting for pilot reviews
-- [ ] enterprise docs and pilot checklist linked from product
+- [x] enterprise docs and pilot checklist linked from product
 - [ ] SSO-first enterprise login and provisioning path
 
 Exit criteria:
@@ -239,7 +239,7 @@ Definition of done:
 Immediate next engineering slice after this file:
 
 1. wire an SSO-first enterprise login and org provisioning path
-2. add enterprise docs and pilot checklist links from the live product
+2. extend the pilot kit and enterprise docs links from `control` into the rest of the live shared-org surfaces
 3. decide when to converge the live static dashboard and `apps/dashboard` into one primary surface
 
 ## Completed
@@ -311,6 +311,7 @@ Immediate next engineering slice after this file:
 - login now supports an enterprise provisioning lane that captures company context and routes new team/business users into `/app/org?provision=1` instead of dropping them straight into the solo dashboard
 - login and org setup now support an enterprise SSO request handoff, including captured IdP/admin context plus copy/email setup briefs, while the full backend SSO flow remains a separate checklist item
 - email alert destinations in `init-worker` now deliver through Resend when `RESEND_API_KEY` and `ALERTS_FROM_EMAIL` are configured, while keeping webhook delivery unchanged
+- live static `control` page now links enterprise demo/docs/security resources and generates a copyable/downloadable pilot checklist from the current org state
 - projects page now supports in-app project creation and a first-team-project onboarding empty state
 
 ## Decisions

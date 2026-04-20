@@ -155,6 +155,19 @@
     .policy-message.ok { color: var(--ok); }
     .policy-message.warn { color: var(--warn); }
     .policy-message.danger { color: var(--danger); }
+    .resource-grid { padding: 14px 18px 18px; display: grid; gap: 12px; }
+    .resource-card { border: var(--rule); border-radius: 4px; background: #fcfcf9; padding: 12px; display: grid; gap: 8px; }
+    .resource-title { font-size: 13px; font-weight: 600; color: var(--text); }
+    .resource-copy { color: var(--text-muted); font-size: 12px; }
+    .resource-link { font-family: var(--mono); font-size: 11px; color: var(--accent); }
+    .resource-link:hover { text-decoration: underline; }
+    .checklist-box { margin: 0 18px 18px; padding: 12px 14px; border: var(--rule); border-radius: 4px; background: #fcfcf9; display: grid; gap: 8px; }
+    .checklist-title { font-family: var(--mono); font-size: 10px; letter-spacing: 0.7px; text-transform: uppercase; color: var(--text-faint); }
+    .checklist-list { list-style: none; display: grid; gap: 8px; }
+    .checklist-item { display: grid; grid-template-columns: auto 1fr; gap: 8px; align-items: start; font-size: 12px; color: var(--text-muted); }
+    .checklist-mark { font-family: var(--mono); font-size: 11px; color: var(--text-faint); }
+    .checklist-mark.done { color: var(--ok); }
+    .checklist-mark.todo { color: var(--warn); }
     .empty { padding: 26px 18px; text-align: center; font-family: var(--mono); font-size: 12px; color: var(--text-faint); }
     @media (max-width: 960px) {
       .layout { grid-template-columns: 1fr; }
@@ -268,6 +281,8 @@
           <button type="button" class="btn-outline" id="copyControlReportBtn">copy report</button>
           <button type="button" class="btn-outline" id="downloadControlReportBtn">download report</button>
           <button type="button" class="btn-outline" id="downloadControlJsonBtn">download json</button>
+          <button type="button" class="btn-outline" id="copyPilotChecklistBtn">copy pilot checklist</button>
+          <button type="button" class="btn-outline" id="downloadPilotChecklistBtn">download pilot brief</button>
           <span class="action-msg" id="controlExportMsg"></span>
         </div>
 
@@ -330,6 +345,15 @@
           </div>
 
           <div class="stack">
+            <section class="panel">
+              <div class="panel-head">pilot kit<span class="panel-head-right" id="pilotKitStatus">loading…</span></div>
+              <div class="resource-grid" id="pilotKitResources"><div class="empty">Loading pilot resources…</div></div>
+              <div class="checklist-box">
+                <div class="checklist-title">pilot checklist</div>
+                <div class="checklist-list" id="pilotChecklistList"><div class="empty">Loading pilot checklist…</div></div>
+              </div>
+            </section>
+
             <section class="panel">
               <div class="panel-head">runtime posture<span class="panel-head-right" id="healthStatus">loading…</span></div>
               <div class="list" id="healthList"><div class="empty">Loading project health…</div></div>
