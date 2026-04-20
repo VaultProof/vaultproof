@@ -68,11 +68,12 @@
     .usage-bar-fill { height: 100%; background: var(--accent); border-radius: 99px; width: 0%; }
     .usage-reset { font-family: var(--mono); font-size: 11px; color: var(--text-faint); margin-top: 8px; }
     .main { padding: 28px 32px; }
-    .page-header { display: flex; align-items: baseline; gap: 12px; margin-bottom: 4px; }
+    .page-header { display: flex; align-items: flex-start; justify-content: space-between; gap: 18px 24px; flex-wrap: wrap; margin-bottom: 8px; }
+    .page-heading { display: grid; gap: 6px; min-width: 0; }
     .page-title { font-family: var(--display); font-weight: 600; font-size: 30px; letter-spacing: -0.8px; }
     .page-meta { font-family: var(--mono); font-size: 12px; color: var(--text-faint); }
-    .page-actions { margin-left: auto; display: flex; gap: 8px; }
-    .org-switcher { display: flex; flex-direction: column; gap: 4px; min-width: 220px; }
+    .page-actions { margin-left: auto; display: flex; gap: 10px; flex-wrap: wrap; justify-content: flex-end; align-items: flex-start; flex: 1 1 360px; }
+    .org-switcher { display: flex; flex-direction: column; gap: 4px; min-width: 240px; flex: 1 1 240px; }
     .org-switcher-label { font-family: var(--mono); font-size: 10px; letter-spacing: 0.7px; text-transform: uppercase; color: var(--text-faint); }
     .org-select, .form-input, .form-select, .form-textarea { min-height: 36px; border-radius: 3px; border: var(--rule); background: var(--bg-card); color: var(--text); padding: 0 10px; }
     .org-select:disabled, .form-input:disabled, .form-select:disabled, .form-textarea:disabled { color: var(--text-faint); background: var(--bg-mid); }
@@ -173,9 +174,10 @@
       .topbar-sep, .topbar-crumb, .topbar-links { display: none; }
       .topbar-session { margin-left: auto; }
       .main { padding: 20px 16px 28px; }
-      .page-header { flex-direction: column; align-items: flex-start; }
-      .page-actions { margin-left: 0; width: 100%; flex-wrap: wrap; }
+      .page-header { flex-direction: column; align-items: stretch; }
+      .page-actions { margin-left: 0; width: 100%; flex-wrap: wrap; justify-content: stretch; }
       .page-actions button { flex: 1 1 140px; }
+      .org-switcher { min-width: 100%; }
       .topbar-email { max-width: 140px; }
     }
   </style>
@@ -238,8 +240,10 @@
 
       <main class="main">
         <div class="page-header">
-          <h1 class="page-title">Alerts</h1>
-          <span class="page-meta" id="pageMeta">/ loading…</span>
+          <div class="page-heading">
+            <h1 class="page-title">Alerts</h1>
+            <span class="page-meta" id="pageMeta">/ loading…</span>
+          </div>
           <div class="page-actions">
             <div class="org-switcher">
               <span class="org-switcher-label">organization</span>

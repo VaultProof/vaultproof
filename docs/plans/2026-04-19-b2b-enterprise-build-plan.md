@@ -210,6 +210,8 @@ Scope:
 - persist shared-org SSO rollout prep through the worker with governance audit coverage
 - resolve configured SSO logins into existing org membership or matching invited access
 - surface provider health and last successful SSO activity in the live org page
+- let org admins choose `assisted` vs `sso-first` login mode without enabling hard enforcement yet
+- capture and surface `SSO started` activity in the rollout status view
 - keep broad domain-based auto-join out of scope until we decide the enforcement model
 - route SSO callbacks back through the existing login/session resolution flow
 - do not turn on org auto-join or SSO enforcement yet
@@ -234,6 +236,8 @@ Definition of done:
 - configured Supabase SSO logins can resolve into the correct shared workspace when the user already has membership or a matching invite
 - unmatched but configured SSO workspaces fail safely without broad auto-join
 - org admins can see rollout health plus the last successful SSO login and membership resolution
+- org admins can set whether the workspace stays in `assisted` mode or moves to `sso-first`
+- org admins can see the last recorded SSO attempt before a successful login is completed
 - the callback path returns to the existing login/session resolution flow without breaking OAuth or email sign-in
 - solo users still land in the simpler `/app/` surface
 
@@ -242,8 +246,8 @@ Definition of done:
 Immediate next engineering slice after this file:
 
 1. test the `Supabase Auth` flow end-to-end with a real provider like Google Workspace or Okta
-2. add an explicit SSO-started audit event if we want the full login funnel captured
-3. decide whether matching-domain SSO should ever auto-join or stay invite-only until enforcement exists
+2. test the `Supabase Auth` flow end-to-end with a real provider like Google Workspace or Okta
+3. decide whether matching-domain SSO should ever auto-join or stay invite-only until hard enforcement exists
 
 ## Third-Party Acceleration Checklist
 
@@ -346,6 +350,8 @@ Rules:
 - shared-org `Supabase Auth` rollout prep is now persisted through the worker and written into governance audit events instead of living only in browser state
 - shared-workspace `Supabase Auth` logins can now resolve into an existing org membership or accept a matching pending invite after SSO login, while unmatched users fail closed instead of broad auto-join
 - live org settings now surface provider health plus the last successful SSO login and membership resolution derived from the governance audit stream
+- live org settings now let admins choose `assisted` or `sso-first` login mode using the existing Supabase rollout settings model
+- live login now records `organization_sso_login_started`, and org admins can see the latest SSO attempt alongside successful login/resolution activity
 - projects page now supports in-app project creation and a first-team-project onboarding empty state
 
 ## Decisions

@@ -30,10 +30,16 @@ interface UpdateOrganizationSsoSettingsBody {
   company_domain?: string | null;
   sso_provider?: string | null;
   status?: 'requested' | 'configured' | null;
+  login_mode?: 'sso-first' | 'assisted' | null;
 }
 
 interface ResolveOrganizationSsoBody {
   company_domain?: string | null;
+}
+
+interface StartedOrganizationSsoBody {
+  company_domain?: string | null;
+  email?: string | null;
 }
 
 function normalizeSlug(slug: string): string {
@@ -67,6 +73,7 @@ async function fetchOrganizationSsoSettings(
 ): Promise<{
   company_domain: string;
   sso_provider: string | null;
+  login_mode: string;
   status: string;
   created_at: string;
   updated_at: string;
@@ -74,7 +81,7 @@ async function fetchOrganizationSsoSettings(
   const supabase = getSupabase(env);
   const { data } = await supabase
     .from('organization_sso_settings')
-    .select('company_domain, sso_provider, status, created_at, updated_at')
+    .select('company_domain, sso_provider, login_mode, status, created_at, updated_at')
     .eq('organization_id', organizationId)
     .maybeSingle();
   return data || null;
@@ -87,12 +94,13 @@ async function findConfiguredSsoOrganizationByDomain(
   organization_id: string;
   company_domain: string;
   sso_provider: string | null;
+  login_mode: string | null;
   status: string;
 } | null> {
   const supabase = getSupabase(env);
   const { data } = await supabase
     .from('organization_sso_settings')
-    .select('organization_id, company_domain, sso_provider, status')
+    .select('organization_id, company_domain, sso_provider, login_mode, status')
     .eq('company_domain', companyDomain)
     .eq('status', 'configured')
     .maybeSingle();
@@ -105,6 +113,7 @@ async function fetchOrganizationSsoStatus(
   ssoSettings: {
     company_domain: string;
     sso_provider: string | null;
+    login_mode: string;
     status: string;
     created_at: string;
     updated_at: string;
@@ -113,6 +122,9 @@ async function fetchOrganizationSsoStatus(
   provider_status: 'not_started' | 'requested' | 'configured';
   company_domain: string | null;
   sso_provider: string | null;
+  login_mode: 'sso-first' | 'assisted' | null;
+  last_started_sso_login_at: string | null;
+  last_started_sso_login_email: string | null;
   last_successful_sso_login_at: string | null;
   last_successful_sso_login_email: string | null;
   last_membership_resolution_at: string | null;
@@ -124,7 +136,7 @@ async function fetchOrganizationSsoStatus(
     .from('organization_audit_events')
     .select('event_type, actor_email, metadata, created_at')
     .eq('organization_id', organizationId)
-    .in('event_type', ['organization_sso_login_completed', 'organization_sso_membership_resolved'])
+    .in('event_type', ['organization_sso_login_started', 'organization_sso_login_completed', 'organization_sso_membership_resolved'])
     .order('created_at', { ascending: false })
     .limit(20);
 
@@ -141,6 +153,7 @@ async function fetchOrganizationSsoStatus(
     return resolution === 'existing_membership' || resolution === 'accepted_invitation';
   }) || null;
 
+  const latestStartedLogin = events.find((event) => event.event_type === 'organization_sso_login_started') || null;
   const latestMembershipResolution = events.find((event) => event.event_type === 'organization_sso_membership_resolved') || null;
 
   return {
@@ -149,6 +162,11 @@ async function fetchOrganizationSsoStatus(
       : 'not_started',
     company_domain: ssoSettings?.company_domain || null,
     sso_provider: ssoSettings?.sso_provider || null,
+    login_mode: (ssoSettings?.login_mode === 'assisted' || ssoSettings?.login_mode === 'sso-first')
+      ? ssoSettings.login_mode
+      : null,
+    last_started_sso_login_at: latestStartedLogin?.created_at || null,
+    last_started_sso_login_email: latestStartedLogin?.actor_email || null,
     last_successful_sso_login_at: latestSuccessfulLogin?.created_at || null,
     last_successful_sso_login_email: latestSuccessfulLogin?.actor_email || null,
     last_membership_resolution_at: latestMembershipResolution?.created_at || null,
@@ -164,6 +182,76 @@ export async function handleOrganizations(
   pathSegments: string[],
 ): Promise<Response> {
   const supabase = getSupabase(env);
+  const method = request.method;
+
+  if (method === 'POST' && pathSegments.length === 1 && pathSegments[0] === 'sso-started') {
+    let body: StartedOrganizationSsoBody = {};
+    try {
+      body = (await request.json()) as StartedOrganizationSsoBody;
+    } catch {
+      return Response.json({ error: 'Invalid JSON' }, { status: 400 });
+    }
+
+    const companyDomain = normalizeDomain(body.company_domain || '');
+    const email = (body.email || '').trim().toLowerCase();
+    const emailDomain = email && email.includes('@') ? getEmailDomain(email) : '';
+    const effectiveDomain = companyDomain || emailDomain;
+
+    if (!effectiveDomain || !isValidDomain(effectiveDomain)) {
+      return Response.json({ error: 'company_domain must be a valid domain' }, { status: 400 });
+    }
+    if (email && emailDomain && emailDomain !== effectiveDomain) {
+      return Response.json({ error: 'email must match company_domain when provided' }, { status: 400 });
+    }
+
+    const configuredSso = await findConfiguredSsoOrganizationByDomain(env, effectiveDomain);
+    if (!configuredSso) {
+      return Response.json({
+        accepted: true,
+        matched: false,
+        company_domain: effectiveDomain,
+      });
+    }
+
+    const { data: organization } = await supabase
+      .from('organizations')
+      .select('id, kind')
+      .eq('id', configuredSso.organization_id)
+      .eq('kind', 'team')
+      .is('archived_at', null)
+      .maybeSingle();
+
+    if (!organization) {
+      return Response.json({
+        accepted: true,
+        matched: false,
+        company_domain: effectiveDomain,
+      });
+    }
+
+    await writeGovernanceAuditEvent(env, {
+      organization_id: organization.id,
+      actor_user_id: null,
+      actor_email: email || null,
+      event_type: 'organization_sso_login_started',
+      target_type: 'organization',
+      target_id: organization.id,
+      description: `Started SSO login for ${effectiveDomain}`,
+      metadata: {
+        company_domain: effectiveDomain,
+        sso_provider: configuredSso.sso_provider,
+        login_mode: configuredSso.login_mode,
+        started_via: 'login_page',
+      },
+    });
+
+    return Response.json({
+      accepted: true,
+      matched: true,
+      company_domain: effectiveDomain,
+      login_mode: configuredSso.login_mode || null,
+    });
+  }
 
   const auth = await authenticateUser(request, env);
   if (!auth) {
@@ -172,8 +260,6 @@ export async function handleOrganizations(
       { status: 401 },
     );
   }
-
-  const method = request.method;
 
   if (method === 'GET' && pathSegments.length === 0) {
     const memberships = await listOrganizationMemberships(env, auth.userId);
@@ -645,6 +731,7 @@ export async function handleOrganizations(
       const companyDomain = normalizeDomain(body.company_domain || '');
       const ssoProvider = body.sso_provider?.trim() || null;
       const status = body.status || 'requested';
+      const loginMode = body.login_mode === 'assisted' ? 'assisted' : 'sso-first';
 
       if (!companyDomain) {
         const { error } = await supabase
@@ -674,6 +761,9 @@ export async function handleOrganizations(
       if (status !== 'requested' && status !== 'configured') {
         return Response.json({ error: 'status must be requested or configured' }, { status: 400 });
       }
+      if (body.login_mode && body.login_mode !== 'sso-first' && body.login_mode !== 'assisted') {
+        return Response.json({ error: 'login_mode must be assisted or sso-first' }, { status: 400 });
+      }
 
       const now = new Date().toISOString();
       const { data, error } = await supabase
@@ -684,10 +774,10 @@ export async function handleOrganizations(
           sso_provider: ssoProvider,
           admin_email: null,
           status,
-          login_mode: 'sso-first',
+          login_mode: loginMode,
           updated_at: now,
         }, { onConflict: 'organization_id' })
-        .select('company_domain, sso_provider, status, created_at, updated_at')
+        .select('company_domain, sso_provider, login_mode, status, created_at, updated_at')
         .single();
 
       if (error || !data) {
@@ -708,11 +798,14 @@ export async function handleOrganizations(
         metadata: {
           company_domain: companyDomain,
           sso_provider: ssoProvider,
+          login_mode: loginMode,
           status,
         },
       });
 
-      return Response.json({ sso_settings: data });
+      const ssoStatus = await fetchOrganizationSsoStatus(env, activeMembership.organization_id, data);
+
+      return Response.json({ sso_settings: data, sso_status: ssoStatus });
     }
   }
 

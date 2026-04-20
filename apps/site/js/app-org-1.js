@@ -422,6 +422,7 @@
     const ssoDomain = normalizeDomain(currentSsoPrep?.company_domain || '');
     const ssoProvider = String(currentSsoPrep?.sso_provider || '').trim();
     const ssoStatus = String(currentSsoPrep?.status || '').trim();
+    const ssoLoginMode = String(currentSsoPrep?.login_mode || '').trim();
 
     return [
       {
@@ -585,7 +586,9 @@
       `SSO domain: ${ssoDomain || 'not captured'}`,
       `SSO provider: ${ssoProvider || 'not captured'}`,
       `SSO status: ${ssoStatus || 'not captured'}`,
+      `SSO login mode: ${ssoLoginMode || 'not captured'}`,
       `Provider health: ${currentSsoStatus?.provider_status || 'not_started'}`,
+      `Last SSO attempt: ${currentSsoStatus?.last_started_sso_login_at ? `${formatTimestamp(currentSsoStatus.last_started_sso_login_at)}${currentSsoStatus?.last_started_sso_login_email ? ` by ${currentSsoStatus.last_started_sso_login_email}` : ''}` : 'not recorded'}`,
       `Last successful SSO login: ${currentSsoStatus?.last_successful_sso_login_at ? `${formatTimestamp(currentSsoStatus.last_successful_sso_login_at)}${currentSsoStatus?.last_successful_sso_login_email ? ` by ${currentSsoStatus.last_successful_sso_login_email}` : ''}` : 'not recorded'}`,
       `Last membership resolution: ${currentSsoStatus?.last_membership_resolution_at ? `${formatTimestamp(currentSsoStatus.last_membership_resolution_at)}${currentSsoStatus?.last_membership_resolution ? ` · ${titleCaseWords(currentSsoStatus.last_membership_resolution)}` : ''}${currentSsoStatus?.last_membership_resolution_email ? ` · ${currentSsoStatus.last_membership_resolution_email}` : ''}` : 'not recorded'}`,
       `Supabase metadata URL: ${getSupabaseSsoMetadataUrl()}`,
@@ -621,12 +624,15 @@
     const domainInput = $('ssoPrepDomainInput');
     const providerSelect = $('ssoPrepProviderSelect');
     const statusSelect = $('ssoPrepStatusSelect');
+    const loginModeSelect = $('ssoPrepLoginModeSelect');
     if (domainInput && document.activeElement !== domainInput) domainInput.value = currentSsoPrep?.company_domain || '';
     if (providerSelect && document.activeElement !== providerSelect) providerSelect.value = currentSsoPrep?.sso_provider || '';
     if (statusSelect && document.activeElement !== statusSelect) statusSelect.value = currentSsoPrep?.status || 'requested';
+    if (loginModeSelect && document.activeElement !== loginModeSelect) loginModeSelect.value = currentSsoPrep?.login_mode || 'sso-first';
     if (domainInput) domainInput.disabled = !canManage;
     if (providerSelect) providerSelect.disabled = !canManage;
     if (statusSelect) statusSelect.disabled = !canManage;
+    if (loginModeSelect) loginModeSelect.disabled = !canManage;
     setButtonState($('saveSsoPrepBtn'), !canManage, 'save sso prep');
     setButtonState($('copySsoPrepBriefBtn'), !organization, 'copy sso brief');
     setButtonState($('copySsoMetadataBtn'), !organization, 'copy metadata url');
@@ -636,13 +642,14 @@
     const domain = normalizeDomain(currentSsoPrep?.company_domain || '');
     const provider = String(currentSsoPrep?.sso_provider || '').trim();
     const status = String(currentSsoPrep?.status || '').trim();
+    const loginMode = String(currentSsoPrep?.login_mode || '').trim() || 'sso-first';
     setText('ssoPrepStatus', status || (domain && provider ? 'requested' : 'prep needed'));
     setText(
       'ssoPrepHint',
       canManage
         ? (domain && provider
             ? (status === 'configured'
-                ? `Supabase SSO is configured for ${domain} via ${provider}. Matching SSO logins can resolve into existing org access.`
+                ? `Supabase SSO is configured for ${domain} via ${provider} with ${loginMode} mode. Matching SSO logins can resolve into existing org access.`
                 : `Supabase SSO rollout is staged for ${domain} via ${provider}. Keep this in requested mode until the SAML connection is live in Supabase.`)
             : 'Capture the company domain and IdP here before turning on SAML in Supabase.')
         : 'Only team-org admins and owners can manage Supabase SSO rollout prep here.',
@@ -653,6 +660,9 @@
       : providerHealth === 'requested'
         ? `Requested / staging${domain ? ` for ${domain}` : ''}. Keep this in setup mode until the Supabase SAML connection is live.`
         : 'No Supabase SSO rollout is active for this workspace yet.');
+    setText('ssoLastStartedCard', currentSsoStatus?.last_started_sso_login_at
+      ? `${formatTimestamp(currentSsoStatus.last_started_sso_login_at)}${currentSsoStatus?.last_started_sso_login_email ? ` · ${currentSsoStatus.last_started_sso_login_email}` : ''}`
+      : 'No SSO attempt recorded yet.');
     setText('ssoLastLoginCard', currentSsoStatus?.last_successful_sso_login_at
       ? `${formatTimestamp(currentSsoStatus.last_successful_sso_login_at)}${currentSsoStatus?.last_successful_sso_login_email ? ` · ${currentSsoStatus.last_successful_sso_login_email}` : ''}`
       : 'No successful SSO login recorded yet.');
@@ -665,6 +675,7 @@
     const domain = normalizeDomain(currentSsoPrep?.company_domain || '');
     const provider = String(currentSsoPrep?.sso_provider || '').trim();
     const status = String(currentSsoPrep?.status || '').trim();
+    const loginMode = String(currentSsoPrep?.login_mode || '').trim();
     return [
       'VaultProof Supabase SSO Setup Brief',
       `Organization: ${organization.name || 'Unknown org'}`,
@@ -672,6 +683,7 @@
       `Company domain: ${domain || 'not captured'}`,
       `Identity provider: ${provider || 'not captured'}`,
       `Rollout status: ${status || 'not captured'}`,
+      `Login mode: ${loginMode || 'not captured'}`,
       `Supabase metadata URL: ${getSupabaseSsoMetadataUrl()}`,
       `Supabase ACS URL: ${getSupabaseSsoAcsUrl()}`,
       '',
@@ -712,6 +724,7 @@
     const domain = normalizeDomain($('ssoPrepDomainInput')?.value || '');
     const provider = String($('ssoPrepProviderSelect')?.value || '').trim();
     const status = String($('ssoPrepStatusSelect')?.value || '').trim() || 'requested';
+    const loginMode = String($('ssoPrepLoginModeSelect')?.value || '').trim() || 'sso-first';
     if (!domain) {
       setMessage('ssoPrepMsg', 'Enter a valid company domain before saving SSO prep.', 'warn');
       toast('Enter a valid company domain before saving SSO prep.', 'warn');
@@ -729,6 +742,7 @@
         company_domain: domain,
         sso_provider: provider,
         status: status === 'configured' ? 'configured' : 'requested',
+        login_mode: loginMode === 'assisted' ? 'assisted' : 'sso-first',
       },
     });
     const payload = unwrapPayload(res?.data) || {};
@@ -744,10 +758,10 @@
     renderSsoPrep(currentOrgPayload);
     renderPilotKit();
     setMessage('ssoPrepMsg', status === 'configured'
-      ? 'Supabase SSO is marked configured for this workspace.'
+      ? `Supabase SSO is marked configured for this workspace with ${loginMode}.`
       : 'Supabase SSO rollout info saved for this workspace.', 'ok');
     toast(status === 'configured'
-      ? 'Supabase SSO marked configured.'
+      ? `Supabase SSO marked configured (${loginMode}).`
       : 'Supabase SSO rollout info saved.', 'ok');
     setButtonState($('saveSsoPrepBtn'), false, 'save sso prep');
   }

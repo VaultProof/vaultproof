@@ -140,6 +140,24 @@
     }));
   }
 
+  async function recordSsoStart(domain) {
+    const emailHint = String($('loginEmail')?.value || $('regEmail')?.value || '').trim().toLowerCase();
+    try {
+      await fetch(`${INIT_API}/orgs/sso-started`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          company_domain: domain,
+          email: emailHint || null,
+        }),
+      });
+    } catch {
+      // Best-effort only. Do not block SSO if audit preflight fails.
+    }
+  }
+
   async function redeemPendingPromo(session) {
     const pendingPromo = getSavedPromoCode();
     if (!pendingPromo || !session) return;
@@ -355,6 +373,7 @@
 
     try {
       localStorage.setItem(SSO_DOMAIN_KEY, domain);
+      await recordSsoStart(domain);
       const { data, error } = await sbClient.auth.signInWithSSO({
         domain,
         options: {

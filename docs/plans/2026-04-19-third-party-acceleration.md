@@ -131,7 +131,7 @@ Implementation checklist when we start:
   - no matching org
   - invited but not auto-joined user
   - SSO user with multiple org memberships
-- [ ] add audit event for:
+- [x] add audit event for:
   - SSO login started
 - [x] add audit events for:
   - SSO login completed
@@ -140,11 +140,13 @@ Implementation checklist when we start:
 - [x] persist org SSO rollout prep in backend state instead of browser-only state
 - [x] make rollout status match the real backend state model (`requested` / `configured`)
 - [x] surface provider health and recent successful SSO activity to org admins
-- [ ] add an admin-facing org settings section for:
+- [x] surface the latest SSO attempt to org admins
+- [x] add an admin-facing org settings section for:
   - company domain
   - provider status
   - last successful SSO login
-  - enable/disable SSO enforcement
+  - login mode (`assisted` vs `sso-first`)
+- [ ] decide whether hard SSO enforcement belongs on top of `sso-first` or should stay out of scope for now
 - [ ] test at least one real provider end-to-end:
   - Google Workspace or Okta
 - [ ] document the customer setup steps and rollout checklist in the live product
