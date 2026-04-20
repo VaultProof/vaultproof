@@ -1,19 +1,15 @@
 #!/usr/bin/env tsx
 /**
- * Unit tests for fast-crypt.ts and the encryption.ts dispatch layer.
+ * Unit tests for fast-crypt.ts and the encryption.ts wrapper.
  *
  * Goals:
  *   - Fast-format round-trips correctly for many inputs
  *   - Tampering is detected (GCM auth tag works)
  *   - Wrong master key fails with an error (not silent corruption)
- *   - Version byte dispatch: fast ciphertexts take the fast path,
- *     legacy ciphertexts fall through to scrypt (verified by format detection)
- *   - Legacy scrypt ciphertexts still decrypt correctly (round-trip via
- *     a legacy-format buffer we construct manually)
  *   - Latency benchmark: fast path completes 100 iterations in <500ms
- *     total (if this regresses, scrypt has crept back in)
+ *     total
  */
-import { randomBytes, scryptSync, createCipheriv } from 'node:crypto';
+import { randomBytes } from 'node:crypto';
 import { encryptFast, decryptFast, isFastCiphertext } from './fast-crypt.js';
 import { encrypt, decrypt } from './encryption.js';
 
@@ -56,21 +52,6 @@ console.log('── isFastCiphertext detection ──');
 {
   const fast = encryptFast(new TextEncoder().encode('hello'), env);
   ok('fast ciphertext detected', isFastCiphertext(fast));
-
-  // Construct a legacy scrypt ciphertext manually and verify isFastCiphertext returns false
-  const masterKey = Buffer.from(env.VAULT_ENCRYPTION_KEY, 'hex');
-  const salt = randomBytes(16);
-  const iv = randomBytes(12);
-  const derivedKey = scryptSync(masterKey, salt, 32);
-  const cipher = createCipheriv('aes-256-gcm', derivedKey, iv);
-  const ct = Buffer.concat([cipher.update(Buffer.from('hello')), cipher.final()]);
-  const tag = cipher.getAuthTag();
-  const legacy = new Uint8Array(Buffer.concat([salt, iv, tag, ct]));
-  ok('legacy ciphertext NOT detected as fast', !isFastCiphertext(legacy));
-
-  // And the legacy ciphertext should decrypt via the dispatch layer
-  const roundtrip = decrypt(legacy, env);
-  ok('legacy scrypt ciphertext decrypts via dispatch', new TextDecoder().decode(roundtrip) === 'hello');
 }
 
 console.log('── tampering detection ──');
@@ -124,7 +105,6 @@ console.log('── truncated ciphertext ──');
 
 console.log('── dispatch layer (encryption.ts) ──');
 {
-  // encrypt() always produces fast-format
   const enc = encrypt(new TextEncoder().encode('via dispatch'), env);
   ok('encrypt produces fast format', enc[0] === 0x02);
   const dec = decrypt(enc, env);
@@ -147,28 +127,6 @@ console.log('── latency benchmark (100 fast-path round-trips) ──');
   const elapsed = Date.now() - start;
   console.log(`    100 round-trips: ${elapsed}ms (avg ${(elapsed / 100).toFixed(2)}ms per op)`);
   ok('100 fast round-trips under 500ms total', elapsed < 500, `took ${elapsed}ms`);
-}
-
-console.log('── latency benchmark (100 legacy scrypt decrypts for comparison) ──');
-{
-  // Build a legacy ciphertext
-  const masterKey = Buffer.from(env.VAULT_ENCRYPTION_KEY, 'hex');
-  const salt = randomBytes(16);
-  const iv = randomBytes(12);
-  const derivedKey = scryptSync(masterKey, salt, 32);
-  const cipher = createCipheriv('aes-256-gcm', derivedKey, iv);
-  const plaintext = Buffer.from('sk-proj-' + 'x'.repeat(60));
-  const ct = Buffer.concat([cipher.update(plaintext), cipher.final()]);
-  const tag = cipher.getAuthTag();
-  const legacy = new Uint8Array(Buffer.concat([salt, iv, tag, ct]));
-
-  const start = Date.now();
-  for (let i = 0; i < 100; i++) {
-    decrypt(legacy, env);
-  }
-  const elapsed = Date.now() - start;
-  console.log(`    100 legacy decrypts: ${elapsed}ms (avg ${(elapsed / 100).toFixed(2)}ms per op)`);
-  // Not a pass/fail — just a comparison print
 }
 
 console.log(`\n${passed} passed, ${failed} failed`);

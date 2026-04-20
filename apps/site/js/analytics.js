@@ -1,6 +1,14 @@
 (function () {
   'use strict';
 
+  if (!window.__vpI18nLoaderAdded) {
+    window.__vpI18nLoaderAdded = true;
+    var i18nScript = document.createElement('script');
+    i18nScript.src = '/js/site-i18n.js';
+    i18nScript.defer = true;
+    document.head.appendChild(i18nScript);
+  }
+
   var API = 'https://api.vaultproof.dev/analytics/event';
 
   // ── Visitor ID (persists forever in localStorage) ───────────────

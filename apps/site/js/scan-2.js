@@ -6,13 +6,13 @@ tailwind.config = {
                         mono: ['JetBrains Mono', 'monospace']
                     },
                     colors: {
-                        brand: '#6366f1',
-                        'brand-light': '#818cf8',
-                        surface: '#0a0a0f',
-                        card: '#111118',
-                        border: '#1e1e2e',
-                        'vp-surface': '#111118',
-                        'vp-border': '#1e1e2e',
+                        brand: '#171717',
+                        'brand-light': '#333333',
+                        surface: '#fafaf7',
+                        card: '#ffffff',
+                        border: '#e7e5de',
+                        'vp-surface': '#ffffff',
+                        'vp-border': '#e7e5de',
                     },
                     borderRadius: {
                         xl: '12px',

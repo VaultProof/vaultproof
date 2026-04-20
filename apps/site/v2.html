@@ -110,68 +110,35 @@
     background: #fff;
 }
     </style>
+  <link rel="stylesheet" href="/css/site-theme.css">
 </head>
 <body class="min-h-screen relative overflow-x-hidden">
 
     <!-- Nav -->
-    <nav class="fixed z-50 top-0 left-0 right-0 py-3 px-4 sm:px-6">
-        <div class="max-w-5xl mx-auto bg-vp-surface/80 backdrop-blur-xl border border-vp-border/60 rounded-full px-4 sm:px-6 py-2.5 flex items-center justify-between shadow-lg shadow-black/20" style="box-shadow: 0 0 15px rgba(99,102,241,0.15), 0 0 40px rgba(99,102,241,0.08), 0 4px 12px rgba(0,0,0,0.3)">
-            <a href="/" class="flex items-center gap-2.5 flex-shrink-0">
-                <img src="/og-image2.png" alt="VaultProof" class="w-10 h-10">
-                <span class="text-base font-bold text-white tracking-tight" style="font-family:'Space Grotesk',sans-serif">VaultProof</span>
-            </a>
-
-            <!-- Desktop links -->
-            <div class="hidden md:flex items-center gap-5">
-                <!-- Product dropdown -->
-                <div class="nav-group">
-                    <button class="nav-group-btn" aria-haspopup="true" aria-expanded="false">
-                        Product
-                        <svg width="11" height="11" viewBox="0 0 12 12" fill="currentColor"><path d="M6 8L2 4h8z"/></svg>
-                    </button>
-                    <div class="nav-dropdown" role="menu">
-                        <a href="/agents" role="menuitem">AI Agents</a>
-                        <a href="/compare" role="menuitem">Compare</a>
-                        <a href="/enterprise-demo" role="menuitem">Enterprise Demo</a>
-                    </div>
-                </div>
-                <a href="/docs" class="text-sm text-gray-400 hover:text-white transition-colors">Docs</a>
-                <a href="/guides" class="text-sm text-gray-400 hover:text-white transition-colors">Guides</a>
-                <a href="/blog" class="text-sm text-gray-400 hover:text-white transition-colors">Blog</a>
-                <a href="#pricing" class="text-sm text-gray-400 hover:text-white transition-colors">Pricing</a>
-                <a href="/app/login" class="nav-dashboard text-sm text-gray-400 hover:text-white transition-colors" style="display:none">Dashboard</a>
-            </div>
-
-            <div class="hidden md:flex items-center gap-3">
-                <a href="/scan" class="btn-nav-scanner">
-                    <svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
-                    Free Scanner
-                </a>
-                <a href="/app/login" class="btn-creative">Sign Up</a>
-            </div>
-
-            <!-- Mobile hamburger -->
-            <button id="mobileToggle" class="md:hidden text-gray-400 hover:text-white" aria-label="Toggle menu">
-                <svg width="22" height="22" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 6h14M4 12h14M4 18h14"/></svg>
-            </button>
-        </div>
-
-        <!-- Mobile menu -->
-        <div id="mobileMenu" class="mobile-menu flex-col gap-1 mt-2 max-w-5xl mx-auto bg-vp-surface/95 backdrop-blur-xl border border-vp-border/60 rounded-2xl px-4 py-4 md:hidden shadow-lg shadow-black/20">
-            <a href="/agents" class="text-sm text-gray-400 hover:text-white transition-colors py-2 px-2 rounded-lg hover:bg-white/5">AI Agents</a>
-            <a href="/compare" class="text-sm text-gray-400 hover:text-white transition-colors py-2 px-2 rounded-lg hover:bg-white/5">Compare</a>
-            <a href="/enterprise-demo" class="text-sm text-gray-400 hover:text-white transition-colors py-2 px-2 rounded-lg hover:bg-white/5">Enterprise Demo</a>
-            <a href="/docs" class="text-sm text-gray-400 hover:text-white transition-colors py-2 px-2 rounded-lg hover:bg-white/5">Docs</a>
-            <a href="/guides" class="text-sm text-gray-400 hover:text-white transition-colors py-2 px-2 rounded-lg hover:bg-white/5">Guides</a>
-            <a href="/blog" class="text-sm text-gray-400 hover:text-white transition-colors py-2 px-2 rounded-lg hover:bg-white/5">Blog</a>
-            <a href="#pricing" class="text-sm text-gray-400 hover:text-white transition-colors py-2 px-2 rounded-lg hover:bg-white/5">Pricing</a>
-            <a href="/app/login" class="nav-dashboard text-sm text-gray-400 hover:text-white transition-colors py-2 px-2 rounded-lg hover:bg-white/5" style="display:none">Dashboard</a>
-            <div class="mt-2 flex flex-col gap-2">
-                <a href="/scan" class="btn-nav-scanner justify-center py-2.5">Free Scanner</a>
-                <a href="/app/login" class="btn-creative text-center py-2.5 px-5">Sign Up</a>
-            </div>
-        </div>
+        <nav class="nav">
+      <a href="/" class="nav-logo">
+        <span class="nav-logo-name">VaultProof</span>
+        <span class="nav-logo-version">v0.4.2</span>
+      </a>
+      <div class="nav-spacer"></div>
+      <div class="nav-links">
+        <a href="/scan">scanner</a>
+        <a href="/docs">docs</a>
+        <a href="/blog">insights</a>
+        <a href="/#pricing">pricing</a>
+      </div>
+      <a href="/app/login" class="nav-sign-in">sign in</a>
+      <a href="/app/login" class="nav-cta">get started</a>
+      <button id="mobileToggle" type="button" class="mobile-toggle">menu</button>
     </nav>
+
+    <div id="mobileMenu" class="mobile-menu">
+      <a href="/scan">scanner</a>
+      <a href="/docs">docs</a>
+      <a href="/blog">insights</a>
+      <a href="/#pricing">pricing</a>
+      <a href="/app/login">sign in</a>
+    </div>
 
     <!-- Hero -->
     <section class="max-w-6xl mx-auto px-6 pt-20 pb-24">
@@ -684,7 +651,6 @@
                     <a href="/docs" class="text-sm text-gray-400 hover:text-white transition-colors">Docs</a>
                     <a href="/guides" class="text-sm text-gray-400 hover:text-white transition-colors">Guides</a>
                     <a href="/compare" class="text-sm text-gray-400 hover:text-white transition-colors">Compare</a>
-                <a href="/agents" class="text-sm text-gray-400 hover:text-white transition-colors">Agents</a>
                     <a href="/verify" class="text-sm text-gray-400 hover:text-white transition-colors">Verify</a>
                     <a href="/app/login" class="text-sm text-gray-400 hover:text-white transition-colors">Dashboard</a>
                     <a href="https://github.com/windsurftemplate/vaultproof" target="_blank" rel="noopener" class="text-sm text-gray-400 hover:text-white transition-colors">GitHub</a>

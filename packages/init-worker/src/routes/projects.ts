@@ -36,6 +36,36 @@ import {
 } from '../lib/rate-limit.js';
 import { writeGovernanceAuditEvent } from '../lib/audit.js';
 
+const DASHBOARD_CACHE_TTL_MS = 8000;
+const dashboardStatsCache = new Map<string, { expiresAt: number; value: unknown }>();
+
+function getDashboardCacheKey(userId: string, days: number, logLimit: number): string {
+  return `${userId}:${days}:${logLimit}`;
+}
+
+function readDashboardCache(key: string): unknown | null {
+  const cached = dashboardStatsCache.get(key);
+  if (!cached) return null;
+  if (cached.expiresAt <= Date.now()) {
+    dashboardStatsCache.delete(key);
+    return null;
+  }
+  return structuredClone(cached.value);
+}
+
+function writeDashboardCache(key: string, value: unknown): void {
+  dashboardStatsCache.set(key, {
+    expiresAt: Date.now() + DASHBOARD_CACHE_TTL_MS,
+    value: structuredClone(value),
+  });
+}
+
+function clearDashboardCacheForUser(userId: string): void {
+  for (const key of dashboardStatsCache.keys()) {
+    if (key.startsWith(`${userId}:`)) dashboardStatsCache.delete(key);
+  }
+}
+
 function generateProjectId(): string {
   const bytes = new Uint8Array(12);
   crypto.getRandomValues(bytes);
@@ -118,6 +148,20 @@ function toIsoDate(d: Date): string {
 
 function isDeniedStatus(statusCode: number | null | undefined): boolean {
   return statusCode === 401 || statusCode === 403 || statusCode === 429;
+}
+
+async function listOwnedActiveProjects(
+  supabase: any,
+  userId: string,
+): Promise<Array<{ id: string; vp_proj_id: string; name: string | null; created_at: string | null }>> {
+  const { data, error } = await supabase
+    .from('projects')
+    .select('id, vp_proj_id, name, created_at')
+    .eq('user_id', userId)
+    .is('revoked_at', null);
+
+  if (error || !data) return [];
+  return data as Array<{ id: string; vp_proj_id: string; name: string | null; created_at: string | null }>;
 }
 
 async function listActiveProjects(
@@ -833,6 +877,8 @@ async function getInitLogsStats(
     id: string;
     timestamp: string;
     action: string;
+    projectId: string | null;
+    projectName: string;
     keySlotId: string | null;
     keyLabel: string;
     provider: string;
@@ -847,6 +893,14 @@ async function getInitLogsStats(
   const projects = await listActiveProjects(env, userId, organizationId);
   const projectIds = projects.map((p) => p.id);
   if (!projectIds.length) return { logs: [] };
+
+  const projectMap = new Map<string, { name: string; vpProjId: string }>();
+  for (const project of projects) {
+    projectMap.set(project.id, {
+      name: project.name || project.vp_proj_id || project.id,
+      vpProjId: project.vp_proj_id,
+    });
+  }
 
   const { data: keyRows } = await supabase
     .from('project_keys')
@@ -865,7 +919,7 @@ async function getInitLogsStats(
   const since = new Date(Date.now() - (days * 24 * 60 * 60 * 1000)).toISOString();
   const { data: logRows } = await supabase
     .from('project_access_logs')
-    .select('id, project_key_id, provider, slug, method, upstream_path, status_code, latency_ms, error, metadata, timestamp')
+    .select('id, project_id, project_key_id, provider, slug, method, upstream_path, status_code, latency_ms, error, metadata, timestamp')
     .in('project_id', projectIds)
     .gte('timestamp', since)
     .order('timestamp', { ascending: false })
@@ -873,6 +927,7 @@ async function getInitLogsStats(
 
   const logs = ((logRows || []) as Array<{
     id: string;
+    project_id: string | null;
     project_key_id: string | null;
     provider: string | null;
     slug: string | null;
@@ -885,6 +940,7 @@ async function getInitLogsStats(
     timestamp: string;
   }>).map((row) => {
     const keyInfo = row.project_key_id ? keyMap.get(row.project_key_id) : null;
+    const projectInfo = row.project_id ? projectMap.get(row.project_id) : null;
     const provider = keyInfo?.provider || row.provider || 'unknown';
     const keyLabel = keyInfo?.label || row.slug || provider;
     const endpoint = row.upstream_path || '/';
@@ -895,10 +951,12 @@ async function getInitLogsStats(
       id: row.id,
       timestamp: row.timestamp,
       action: 'transparent_proxy',
+      projectId: row.project_id || null,
+      projectName: projectInfo?.name || projectInfo?.vpProjId || 'unknown project',
       keySlotId: row.project_key_id || null,
       keyLabel,
       provider,
-      appName: 'Init Proxy',
+      appName: projectInfo?.name || projectInfo?.vpProjId || 'Init Proxy',
       endpoint: [method, endpoint].filter(Boolean).join(' ').trim(),
       status: statusCode >= 400 || statusCode === 0 ? 'error' : 'ok',
       latency: row.latency_ms ?? null,
@@ -915,6 +973,325 @@ async function getInitLogsStats(
   });
 
   return { logs };
+}
+
+async function computeInitDashboardStats(
+  supabase: any,
+  userId: string,
+  days: number,
+  logLimit: number,
+): Promise<{
+  overview: {
+    totalProjects: number;
+    totalKeys: number;
+    providers: string[];
+    providerCount: number;
+    activeApps: number;
+    totalCalls: number;
+    errorRate: number;
+    recentActivity: Array<Record<string, unknown>>;
+  };
+  usage: Array<{ date: string; calls: number; errors: number }>;
+  logs: Array<{
+    id: string;
+    timestamp: string;
+    action: string;
+    keySlotId: string | null;
+    keyLabel: string;
+    provider: string;
+    appName: string;
+    endpoint: string;
+    status: string;
+    latency: number | null;
+    zkProofVerified: null;
+    metadata: Record<string, unknown>;
+  }>;
+  projects: Array<{
+    id: string;
+    vp_proj_id: string;
+    name: string;
+    created_at: string | null;
+    env: string;
+    keysCount: number;
+    calls30d: number;
+    lastUsedAt: string | null;
+    sparkValues: number[];
+    status: string;
+  }>;
+}> {
+  const projects = await listOwnedActiveProjects(supabase, userId);
+  const projectIds = projects.map((project) => project.id);
+
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  const usageStart = new Date(today);
+  usageStart.setDate(usageStart.getDate() - (days - 1));
+  const monthStart = new Date();
+  monthStart.setDate(1);
+  monthStart.setHours(0, 0, 0, 0);
+  const dayAgoIso = new Date(Date.now() - (24 * 60 * 60 * 1000)).toISOString();
+
+  const usage = Array.from({ length: days }, (_, idx) => {
+    const date = new Date(usageStart);
+    date.setDate(usageStart.getDate() + idx);
+    return { date: toIsoDate(date), calls: 0, errors: 0 };
+  });
+
+  if (!projectIds.length) {
+    return {
+      overview: {
+        totalProjects: 0,
+        totalKeys: 0,
+        providers: [],
+        providerCount: 0,
+        activeApps: 0,
+        totalCalls: 0,
+        errorRate: 0,
+        recentActivity: [],
+      },
+      usage,
+      logs: [],
+      projects: [],
+    };
+  }
+
+  const recentLimit = Math.max(20, logLimit);
+  const [
+    { data: keyRows },
+    totalCallsRes,
+    errorCallsRes,
+    { data: recentLogsRaw },
+    { data: usageLogs },
+    { data: monthlyLogs },
+    { data: latestLogs },
+  ] = await Promise.all([
+    supabase
+      .from('project_keys')
+      .select('id, project_id, provider, slug, created_at')
+      .in('project_id', projectIds)
+      .is('revoked_at', null),
+    supabase
+      .from('project_access_logs')
+      .select('id', { count: 'exact', head: true })
+      .in('project_id', projectIds),
+    supabase
+      .from('project_access_logs')
+      .select('id', { count: 'exact', head: true })
+      .in('project_id', projectIds)
+      .gte('status_code', 400),
+    supabase
+      .from('project_access_logs')
+      .select('id, project_id, project_key_id, provider, slug, method, upstream_path, status_code, latency_ms, error, metadata, timestamp')
+      .in('project_id', projectIds)
+      .order('timestamp', { ascending: false })
+      .limit(recentLimit),
+    supabase
+      .from('project_access_logs')
+      .select('timestamp, status_code')
+      .in('project_id', projectIds)
+      .gte('timestamp', usageStart.toISOString()),
+    supabase
+      .from('project_access_logs')
+      .select('project_key_id, status_code, timestamp')
+      .in('project_id', projectIds)
+      .gte('timestamp', monthStart.toISOString()),
+    supabase
+      .from('project_access_logs')
+      .select('project_key_id, timestamp')
+      .in('project_id', projectIds)
+      .order('timestamp', { ascending: false })
+      .limit(5000),
+  ]);
+
+  const keys = (keyRows || []) as Array<{
+    id: string;
+    project_id: string;
+    provider: string;
+    slug: string | null;
+    created_at: string;
+  }>;
+  const providers = [...new Set(keys.map((key) => key.provider).filter(Boolean))];
+  const projectMap = new Map<string, { name: string; vpProjId: string }>();
+  for (const project of projects) {
+    projectMap.set(project.id, {
+      name: project.name || project.vp_proj_id || project.id,
+      vpProjId: project.vp_proj_id,
+    });
+  }
+  const keyMap = new Map<string, { provider: string; label: string; projectId: string }>();
+  const keysByProject = new Map<string, typeof keys>();
+  for (const key of keys) {
+    keyMap.set(key.id, {
+      provider: key.provider,
+      label: key.slug || key.provider,
+      projectId: key.project_id,
+    });
+    const existing = keysByProject.get(key.project_id) || [];
+    existing.push(key);
+    keysByProject.set(key.project_id, existing);
+  }
+
+  const usageByDate = new Map<string, { date: string; calls: number; errors: number }>();
+  for (const row of usage) usageByDate.set(row.date, row);
+  for (const log of (usageLogs || []) as Array<{ timestamp: string; status_code: number | null }>) {
+    const bucket = usageByDate.get(String(log.timestamp).slice(0, 10));
+    if (!bucket) continue;
+    bucket.calls += 1;
+    if ((log.status_code || 0) >= 400) bucket.errors += 1;
+  }
+
+  const keyStats = new Map<string, { calls: number; errors: number; daily: number; lastUsed: string | null }>();
+  for (const key of keys) {
+    keyStats.set(key.id, { calls: 0, errors: 0, daily: 0, lastUsed: null });
+  }
+
+  for (const log of (monthlyLogs || []) as Array<{ project_key_id: string; status_code: number | null; timestamp: string }>) {
+    const stat = keyStats.get(log.project_key_id);
+    if (!stat) continue;
+    stat.calls += 1;
+    if ((log.status_code || 0) >= 400) stat.errors += 1;
+    if (log.timestamp >= dayAgoIso) stat.daily += 1;
+    if (!stat.lastUsed || log.timestamp > stat.lastUsed) stat.lastUsed = log.timestamp;
+  }
+
+  for (const log of (latestLogs || []) as Array<{ project_key_id: string; timestamp: string }>) {
+    const stat = keyStats.get(log.project_key_id);
+    if (!stat || stat.lastUsed) continue;
+    stat.lastUsed = log.timestamp;
+  }
+
+  const recentLogs = (recentLogsRaw || []) as Array<{
+    id: string;
+    project_id: string | null;
+    project_key_id: string | null;
+    provider: string | null;
+    slug: string | null;
+    method: string | null;
+    upstream_path: string | null;
+    status_code: number | null;
+    latency_ms: number | null;
+    error: string | null;
+    metadata: Record<string, unknown> | null;
+    timestamp: string;
+  }>;
+
+  const recentActivity = recentLogs.slice(0, 20).map((log) => {
+    const keyInfo = log.project_key_id ? keyMap.get(log.project_key_id) : null;
+    const projectInfo = log.project_id ? projectMap.get(log.project_id) : null;
+    const endpoint = log.upstream_path || '';
+    const method = (log.method || '').toUpperCase();
+    const description = [method, endpoint].filter(Boolean).join(' ').trim() || (log.provider || log.slug || 'Proxy request');
+    return {
+      action: 'transparent_proxy',
+      timestamp: log.timestamp,
+      description,
+      projectId: log.project_id || null,
+      projectName: projectInfo?.name || projectInfo?.vpProjId || 'unknown project',
+      keySlot: {
+        provider: keyInfo?.provider || log.provider || 'unknown',
+        label: keyInfo?.label || log.slug || log.provider || 'unknown',
+      },
+      metadata: {
+        status_code: log.status_code,
+        endpoint,
+        latency_ms: log.latency_ms,
+      },
+    };
+  });
+
+  const logs = recentLogs.slice(0, logLimit).map((log) => {
+    const keyInfo = log.project_key_id ? keyMap.get(log.project_key_id) : null;
+    const projectInfo = log.project_id ? projectMap.get(log.project_id) : null;
+    const provider = keyInfo?.provider || log.provider || 'unknown';
+    const keyLabel = keyInfo?.label || log.slug || provider;
+    const endpoint = log.upstream_path || '/';
+    const method = (log.method || '').toUpperCase();
+    const statusCode = log.status_code ?? (log.error ? 0 : 200);
+
+    return {
+      id: log.id,
+      timestamp: log.timestamp,
+      action: 'transparent_proxy',
+      projectId: log.project_id || null,
+      projectName: projectInfo?.name || projectInfo?.vpProjId || 'unknown project',
+      keySlotId: log.project_key_id || null,
+      keyLabel,
+      provider,
+      appName: projectInfo?.name || projectInfo?.vpProjId || 'Init Proxy',
+      endpoint: [method, endpoint].filter(Boolean).join(' ').trim(),
+      status: statusCode >= 400 || statusCode === 0 ? 'error' : 'ok',
+      latency: log.latency_ms ?? null,
+      zkProofVerified: null,
+      metadata: {
+        status_code: statusCode,
+        endpoint,
+        method,
+        latency_ms: log.latency_ms,
+        error: log.error || null,
+        ...(log.metadata || {}),
+      },
+    };
+  });
+
+  const projectSummaries = projects.map((project) => {
+    const projectKeys = keysByProject.get(project.id) || [];
+    const sparkValues = projectKeys.map((key) => keyStats.get(key.id)?.calls || 0);
+    const calls30d = sparkValues.reduce((sum, value) => sum + value, 0);
+    const lastUsedAt = projectKeys.reduce((latest, key) => {
+      const value = keyStats.get(key.id)?.lastUsed || null;
+      return value && (!latest || value > latest) ? value : latest;
+    }, null as string | null);
+
+    return {
+      id: project.id,
+      vp_proj_id: project.vp_proj_id,
+      name: project.name || project.vp_proj_id || project.id,
+      created_at: project.created_at,
+      env: 'unknown',
+      keysCount: projectKeys.length,
+      calls30d,
+      lastUsedAt,
+      sparkValues,
+      status: projectKeys.length === 0 ? 'idle' : calls30d > 0 ? 'healthy' : 'ready',
+    };
+  });
+
+  const totalCalls = totalCallsRes?.count || 0;
+  const errorCalls = errorCallsRes?.count || 0;
+  const errorRate = totalCalls > 0 ? (errorCalls / totalCalls) * 100 : 0;
+
+  return {
+    overview: {
+      totalProjects: projects.length,
+      totalKeys: keys.length,
+      providers,
+      providerCount: providers.length,
+      activeApps: providers.length,
+      totalCalls,
+      errorRate,
+      recentActivity,
+    },
+    usage,
+    logs,
+    projects: projectSummaries,
+  };
+}
+
+async function getInitDashboardStats(
+  supabase: any,
+  userId: string,
+  days: number,
+  logLimit: number,
+): Promise<Awaited<ReturnType<typeof computeInitDashboardStats>>> {
+  const cacheKey = getDashboardCacheKey(userId, days, logLimit);
+  const cached = readDashboardCache(cacheKey);
+  if (cached) {
+    return cached as Awaited<ReturnType<typeof computeInitDashboardStats>>;
+  }
+
+  const stats = await computeInitDashboardStats(supabase, userId, days, logLimit);
+  writeDashboardCache(cacheKey, stats);
+  return stats;
 }
 
 export async function handleProjects(
@@ -982,6 +1359,7 @@ export async function handleProjects(
       return Response.json({ error: 'Failed to create project', detail: 'Internal server error' }, { status: 500 });
     }
 
+    clearDashboardCacheForUser(auth.userId);
     const project = data as ProjectRecord;
     const { error: memberError } = await supabase
       .from('project_members')
@@ -1102,7 +1480,7 @@ export async function handleProjects(
         strict_origin: data.strict_origin,
       },
     });
-
+    clearDashboardCacheForUser(auth.userId);
     return Response.json(data);
   }
 
@@ -1378,6 +1756,7 @@ export async function handleProjects(
       return Response.json({ error: 'Failed to store key', detail: 'Internal server error' }, { status: 500 });
     }
 
+    clearDashboardCacheForUser(auth.userId);
     return Response.json({ ok: true, provider, slug: finalSlug }, { status: 201 });
   }
 
@@ -1446,7 +1825,7 @@ export async function handleProjects(
         vp_proj_id: data.vp_proj_id,
       },
     });
-
+    clearDashboardCacheForUser(auth.userId);
     return Response.json({ ok: true, revoked: data });
   }
 
@@ -1511,6 +1890,7 @@ export async function handleProjects(
         provider: data.provider,
       },
     });
+    clearDashboardCacheForUser(auth.userId);
     return Response.json({ ok: true, revoked: data });
   }
 
@@ -1579,6 +1959,7 @@ export async function handleProjects(
         provider: data.provider,
       },
     });
+    clearDashboardCacheForUser(auth.userId);
     return Response.json({ ok: true, rotated: data });
   }
 
@@ -1599,7 +1980,6 @@ export async function handleProjects(
         errorRate: overview.errorRate,
       });
     }
-
     if (pathSegments.length === 2 && pathSegments[1] === 'overview') {
       const overview = await getInitOverviewStats(env, supabase, auth.userId, organizationId);
       return Response.json(overview);
@@ -1618,6 +1998,12 @@ export async function handleProjects(
       const days = parseStatsDays(request, 90);
       const limit = parseStatsLimit(request, 5000);
       return Response.json(await getInitLogsStats(env, supabase, auth.userId, days, limit, organizationId));
+    }
+
+    if (pathSegments.length === 2 && pathSegments[1] === 'dashboard') {
+      const days = parseStatsDays(request, 30);
+      const limit = parseStatsLimit(request, 8);
+      return Response.json(await getInitDashboardStats(supabase, auth.userId, days, limit));
     }
 
     return Response.json({ error: 'Not found' }, { status: 404 });

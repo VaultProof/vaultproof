@@ -1,361 +1,989 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <!-- Google Analytics -->
-    <script async src="https://www.googletagmanager.com/gtag/js?id=G-NE5RYX1WTF"></script>
-    <script src="/js/scan-1.js" defer></script>
-    <link rel="icon" type="image/png" href="/favicon.png">
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Public Repo Scanner — VaultProof</title>
-    <meta name="description" content="Scan any public GitHub repo for exposed API keys. No signup required. Instant results.">
-    <meta property="og:title" content="VaultProof — Free API Key Scanner">
-    <meta property="og:description" content="Find exposed API keys in any public GitHub repo. Free, instant, no login required.">
-    <meta property="og:type" content="website">
-    <meta property="og:image" content="https://vaultproof.dev/ogimage.png">
-    <meta name="twitter:card" content="summary">
-    <meta name="twitter:image" content="https://vaultproof.dev/ogimage.png">
-    <link rel="canonical" href="https://vaultproof.dev/scan">
-    <!-- Tailwind CDN: SRI not applicable (dynamic response) -->
-    <script src="https://cdn.tailwindcss.com/3.4.17"></script>
-    <link rel="preconnect" href="https://fonts.googleapis.com" />
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet" />
-    <script src="/js/scan-2.js" defer></script>
-    <style>
-        *, *::before, *::after { box-sizing: border-box; }
-        body { font-family: 'Inter', sans-serif; background: #0a0a0f; margin: 0; }
-        ::-webkit-scrollbar { width: 6px; height: 6px; }
-        ::-webkit-scrollbar-track { background: #0a0a0f; }
-        ::-webkit-scrollbar-thumb { background: #2a2a3a; border-radius: 3px; }
-        ::-webkit-scrollbar-thumb:hover { background: #3a3a4a; }
+  <!-- Google Analytics -->
+  <script async src="https://www.googletagmanager.com/gtag/js?id=G-NE5RYX1WTF"></script>
+  <script src="/js/scan-1.js" defer></script>
 
-        @keyframes fadeInUp {
-            from { opacity: 0; transform: translateY(16px); }
-            to { opacity: 1; transform: translateY(0); }
-        }
-        @keyframes slideUpBar {
-            from { transform: translateY(100%); opacity: 0; }
-            to { transform: translateY(0); opacity: 1; }
-        }
-        @keyframes spin {
-            to { transform: rotate(360deg); }
-        }
+  <link rel="icon" type="image/png" href="/favicon.png">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Public Repo Scanner — VaultProof</title>
+  <meta name="description" content="Scan any public GitHub repo for exposed API keys. No signup required. Instant results.">
+  <meta property="og:title" content="VaultProof — Free API Key Scanner">
+  <meta property="og:description" content="Find exposed API keys in any public GitHub repo. Free, instant, no login required.">
+  <meta property="og:type" content="website">
+  <meta property="og:image" content="https://vaultproof.dev/ogimage.png">
+  <meta name="twitter:card" content="summary">
+  <meta name="twitter:image" content="https://vaultproof.dev/ogimage.png">
+  <link rel="canonical" href="https://vaultproof.dev/scan">
 
-        .anim-fade-up {
-            opacity: 0;
-            animation: fadeInUp 0.5s ease forwards;
-        }
+  <script src="/js/scan-2.js"></script>
+  <!-- Tailwind CDN: SRI not applicable (dynamic response). Used by scan JS for utility classes. -->
+  <script src="https://cdn.tailwindcss.com/3.4.17"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter+Tight:wght@500;600;700;800&amp;family=Inter:wght@400;500;600;700&amp;family=JetBrains+Mono:wght@400;500;600&amp;display=swap" rel="stylesheet" />
 
-        .finding-card {
-            opacity: 0;
-            animation: fadeInUp 0.35s ease forwards;
-        }
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
-        .spinner {
-            width: 20px;
-            height: 20px;
-            border: 2px solid rgba(99,102,241,0.3);
-            border-top-color: #6366f1;
-            border-radius: 50%;
-            animation: spin 0.8s linear infinite;
-            flex-shrink: 0;
-        }
+    :root {
+      --accent: #d97706;
+      --bg: #fafaf7;
+      --bg-mid: #f3f3ee;
+      --bg-card: #fff;
+      --rule: 1px solid #e7e5de;
+      --rule-strong: 1px solid #d8d5cc;
+      --text: #171717;
+      --text-mid: #3f3f37;
+      --text-muted: #525252;
+      --text-faint: #8a8a82;
+      --danger: #b91c1c;
+      --success: #16a34a;
+      --warn: #d97706;
+      --font-display: "Inter Tight", "Inter", system-ui, sans-serif;
+      --font-body: "Inter", system-ui, sans-serif;
+      --font-mono: "JetBrains Mono", "IBM Plex Mono", ui-monospace, monospace;
+    }
 
-        .sticky-bar {
-            animation: slideUpBar 0.4s ease forwards;
-        }
+    html, body {
+      min-height: 100%;
+      background: #e8e6e0;
+      color: var(--text);
+      font-family: var(--font-body);
+      font-size: 15px;
+      line-height: 1.5;
+      -webkit-font-smoothing: antialiased;
+    }
 
-        /* Nav */
-        .mobile-menu { display: none; }
-        .mobile-menu.open { display: flex; }
+    body { min-height: 100vh; }
+    a { color: inherit; text-decoration: none; }
+    button, input { font: inherit; }
+    button { cursor: pointer; }
+    .hidden { display: none !important; }
 
-        .btn-creative {
-            display: inline-block;
-            padding: 0.375rem 1.25rem;
-            background: #111;
-            color: white;
-            border: 1px solid rgba(255,255,255,0.1);
-            cursor: pointer;
-            font-size: 0.875rem;
-            font-weight: 500;
-            border-radius: 9999px;
-            transition: background 0.3s, color 0.3s;
-            text-decoration: none;
-        }
-        .btn-creative:hover {
-            color: #000;
-            background: #fff;
-        }
+    @keyframes fadeInUp {
+      from { opacity: 0; transform: translateY(14px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
 
-        /* Input focus ring */
-        .scan-input:focus {
-            outline: none;
-            border-color: #6366f1;
-            box-shadow: 0 0 0 3px rgba(99,102,241,0.15);
-        }
+    @keyframes slideUpBar {
+      from { transform: translateY(100%); opacity: 0; }
+      to { transform: translateY(0); opacity: 1; }
+    }
 
-        /* Severity badges */
-        .badge-critical { background: rgba(239,68,68,0.15); color: #f87171; border: 1px solid rgba(239,68,68,0.25); }
-        .badge-high     { background: rgba(249,115,22,0.15); color: #fb923c; border: 1px solid rgba(249,115,22,0.25); }
-        .badge-medium   { background: rgba(234,179,8,0.15);  color: #facc15; border: 1px solid rgba(234,179,8,0.25); }
-        .badge-low      { background: rgba(99,102,241,0.15); color: #818cf8; border: 1px solid rgba(99,102,241,0.25); }
+    .page {
+      max-width: 1280px;
+      min-height: 100vh;
+      margin: 0 auto;
+      background: var(--bg);
+      border-left: var(--rule);
+      border-right: var(--rule);
+    }
 
-        /* Finding card hover */
-        .finding-card-inner {
-            border-left: 3px solid transparent;
-            transition: border-color 0.15s ease, background-color 0.15s ease;
-        }
-        .finding-card-inner:hover {
-            border-left-color: #6366f1;
-            background-color: rgba(99,102,241,0.04);
-        }
+    .nav {
+      display: flex;
+      align-items: center;
+      padding: 14px 40px;
+      border-bottom: var(--rule);
+      font-family: var(--font-mono);
+      font-size: 12px;
+      background: var(--bg);
+      position: sticky;
+      top: 0;
+      z-index: 100;
+    }
 
-        /* Gradient hero glow */
-        .hero-glow {
-            position: absolute;
-            top: -120px;
-            left: 50%;
-            transform: translateX(-50%);
-            width: min(900px, 200vw);
-            height: 600px;
-            border-radius: 50%;
-            background: radial-gradient(ellipse, rgba(99,102,241,0.22) 0%, transparent 70%);
-            filter: blur(40px);
-            pointer-events: none;
-            z-index: 0;
-        }
-    </style>
+    .nav-logo {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      min-width: 0;
+    }
+
+    .nav-logo-name { font-weight: 600; letter-spacing: 0.5px; }
+    .nav-logo-version { color: var(--text-faint); margin-left: 6px; }
+    .nav-spacer { flex: 1; }
+    .nav-links { display: flex; gap: 24px; color: var(--text-muted); }
+    .nav-links a:hover,
+    .nav-sign-in:hover { color: var(--text); }
+    .nav-sign-in { color: var(--text-faint); margin-left: 24px; margin-right: 12px; }
+    .nav-cta {
+      padding: 6px 12px;
+      background: var(--text);
+      color: var(--bg);
+      border-radius: 3px;
+      font-size: 12px;
+    }
+    .nav-cta:hover { background: #333; }
+
+    .mobile-toggle,
+    .mobile-menu { display: none; }
+
+    .scan-hero {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) 470px;
+      border-bottom: var(--rule);
+      min-height: 520px;
+    }
+
+    .scan-copy {
+      padding: 56px 40px 44px;
+      border-right: var(--rule);
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      gap: 40px;
+    }
+
+    .eyebrow {
+      font-family: var(--font-mono);
+      font-size: 11px;
+      color: var(--accent);
+      letter-spacing: 0.8px;
+      text-transform: uppercase;
+      margin-bottom: 28px;
+    }
+
+    .scan-title {
+      font-family: var(--font-display);
+      font-weight: 600;
+      font-size: 44px;
+      line-height: 1.08;
+      letter-spacing: -1.2px;
+      max-width: 640px;
+    }
+
+    .scan-subtitle {
+      margin-top: 24px;
+      color: var(--text-mid);
+      max-width: 530px;
+      line-height: 1.58;
+    }
+
+    .scan-proof {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      border: var(--rule);
+      border-radius: 4px;
+      background: var(--bg-card);
+      overflow: hidden;
+      max-width: 680px;
+    }
+
+    .proof-item { padding: 18px 16px; min-height: 118px; }
+    .proof-item + .proof-item { border-left: var(--rule); }
+    .proof-num {
+      font-family: var(--font-mono);
+      font-size: 11px;
+      color: var(--accent);
+      margin-bottom: 10px;
+    }
+    .proof-title {
+      font-family: var(--font-display);
+      font-size: 18px;
+      font-weight: 600;
+      letter-spacing: -0.2px;
+      margin-bottom: 6px;
+    }
+    .proof-copy {
+      color: var(--text-muted);
+      font-size: 12px;
+      line-height: 1.45;
+    }
+
+    .scan-panel {
+      background: var(--bg-mid);
+      padding: 48px 40px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .scanner-card {
+      width: 100%;
+      background: var(--bg-card);
+      border: var(--rule);
+      border-radius: 4px;
+      padding: 22px;
+      box-shadow: 0 18px 45px rgba(23, 23, 23, 0.08);
+    }
+
+    .scanner-card-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 14px;
+      margin-bottom: 18px;
+    }
+
+    .scanner-kicker {
+      font-family: var(--font-mono);
+      font-size: 11px;
+      color: var(--accent);
+      letter-spacing: 0.8px;
+      text-transform: uppercase;
+      margin-bottom: 6px;
+    }
+
+    .scanner-title {
+      font-family: var(--font-display);
+      font-size: 28px;
+      line-height: 1.1;
+      letter-spacing: -0.5px;
+      font-weight: 600;
+    }
+
+    .scanner-status {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      flex: 0 0 auto;
+      padding: 6px 8px;
+      border: var(--rule);
+      border-radius: 4px;
+      background: var(--bg);
+      color: var(--text-faint);
+      font-family: var(--font-mono);
+      font-size: 10.5px;
+    }
+
+    .scanner-status-dot {
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      background: var(--success);
+    }
+
+    .scan-form {
+      display: grid;
+      gap: 10px;
+    }
+
+    .scan-input {
+      width: 100%;
+      height: 44px;
+      background: var(--bg);
+      border: var(--rule);
+      border-radius: 3px;
+      color: var(--text);
+      padding: 0 12px;
+      font-family: var(--font-mono);
+      font-size: 12px;
+      outline: none;
+      transition: border-color 0.15s, box-shadow 0.15s, background 0.15s;
+    }
+
+    .scan-input::placeholder { color: var(--text-faint); }
+    .scan-input:focus {
+      border-color: rgba(217, 119, 6, 0.6);
+      box-shadow: 0 0 0 3px rgba(217, 119, 6, 0.11);
+      background: #fff;
+    }
+
+    .scan-button {
+      min-height: 44px;
+      border: 1px solid var(--text);
+      border-radius: 3px;
+      background: var(--text);
+      color: var(--bg);
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 9px;
+      padding: 0 14px;
+      font-family: var(--font-mono);
+      font-size: 12px;
+      transition: background 0.15s, border-color 0.15s, opacity 0.15s;
+    }
+
+    .scan-button:hover { background: #333; border-color: #333; }
+    .scan-button:disabled { opacity: 0.62; cursor: wait; }
+
+    .example-row,
+    .scan-limits {
+      margin-top: 12px;
+      color: var(--text-faint);
+      font-family: var(--font-mono);
+      font-size: 11px;
+      line-height: 1.55;
+    }
+
+    .example-row button {
+      border: 0;
+      background: transparent;
+      color: var(--accent);
+      text-decoration: underline;
+      text-underline-offset: 3px;
+      padding: 0;
+    }
+
+    .terminal-box {
+      margin-top: 18px;
+      border: var(--rule);
+      border-radius: 4px;
+      background: var(--bg);
+      overflow: hidden;
+      font-family: var(--font-mono);
+      font-size: 12px;
+    }
+
+    .terminal-chrome {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 8px 10px;
+      border-bottom: var(--rule);
+      color: var(--text-faint);
+      font-size: 10.5px;
+      background: var(--bg-mid);
+    }
+
+    .terminal-dots { display: flex; gap: 5px; }
+    .terminal-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: #d8d5cc;
+    }
+
+    .terminal-body {
+      padding: 12px;
+      display: grid;
+      gap: 7px;
+    }
+
+    .terminal-line {
+      display: grid;
+      grid-template-columns: 16px 1fr auto;
+      gap: 8px;
+      color: var(--text-muted);
+      align-items: center;
+    }
+
+    .terminal-mark { color: var(--accent); font-weight: 700; }
+    .terminal-meta { color: var(--text-faint); }
+
+    .scanner-main {
+      padding: 0 40px 96px;
+    }
+
+    .scan-section {
+      padding: 56px 0;
+      border-bottom: var(--rule);
+    }
+
+    .section-label {
+      font-family: var(--font-mono);
+      font-size: 11px;
+      color: var(--accent);
+      letter-spacing: 0.8px;
+      text-transform: uppercase;
+      margin-bottom: 12px;
+    }
+
+    .section-h2 {
+      font-family: var(--font-display);
+      font-size: 28px;
+      line-height: 1.15;
+      letter-spacing: -0.6px;
+      font-weight: 600;
+      max-width: 620px;
+    }
+
+    .scan-grid {
+      margin-top: 26px;
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      border: var(--rule);
+      border-radius: 4px;
+      background: var(--bg-card);
+      overflow: hidden;
+    }
+
+    .scan-kind {
+      padding: 20px;
+      min-height: 246px;
+    }
+
+    .scan-kind + .scan-kind { border-left: var(--rule); }
+
+    .kind-topline {
+      font-family: var(--font-mono);
+      color: var(--accent);
+      font-size: 11px;
+      margin-bottom: 12px;
+    }
+
+    .kind-title {
+      font-family: var(--font-display);
+      font-size: 19px;
+      font-weight: 600;
+      letter-spacing: -0.2px;
+      margin-bottom: 10px;
+    }
+
+    .kind-copy {
+      color: var(--text-muted);
+      font-size: 12.5px;
+      line-height: 1.55;
+      margin-bottom: 14px;
+    }
+
+    .kind-list {
+      list-style: none;
+      display: grid;
+      gap: 7px;
+      color: #262626;
+      font-family: var(--font-mono);
+      font-size: 11px;
+      line-height: 1.35;
+    }
+
+    .kind-list li::before {
+      content: ">";
+      color: var(--accent);
+      margin-right: 7px;
+    }
+
+    .scan-output {
+      max-width: 760px;
+      margin: 0 auto;
+      padding-top: 34px;
+    }
+
+    .state-card,
+    #progressBox > div,
+    #errorBox > div,
+    #emptyState,
+    #vpExtraHygieneSec > div {
+      background: var(--bg-card) !important;
+      border: var(--rule) !important;
+      border-radius: 4px !important;
+      box-shadow: 0 12px 34px rgba(23, 23, 23, 0.06);
+    }
+
+    #progressBox > div,
+    #errorBox > div { padding: 18px; }
+
+    #progressPhase,
+    #resultsSummary {
+      color: var(--text) !important;
+      font-family: var(--font-display);
+      font-weight: 600;
+      letter-spacing: -0.1px;
+    }
+
+    #progressPct,
+    #repoLabel {
+      color: var(--text-faint) !important;
+      font-family: var(--font-mono);
+    }
+
+    #progressFill {
+      background: var(--accent) !important;
+    }
+
+    #resultsHeader {
+      border: var(--rule);
+      border-radius: 4px;
+      background: var(--bg-mid);
+      padding: 12px 14px;
+      margin-bottom: 14px;
+    }
+
+    .finding-card {
+      opacity: 0;
+      animation: fadeInUp 0.35s ease forwards;
+    }
+
+    .finding-card-inner {
+      background: var(--bg-card) !important;
+      border: var(--rule) !important;
+      border-left: 3px solid transparent !important;
+      border-radius: 4px !important;
+      transition: border-color 0.15s ease, background-color 0.15s ease;
+    }
+
+    .finding-card-inner:hover {
+      border-left-color: var(--accent) !important;
+      background: #fff !important;
+    }
+
+    .icon-slot {
+      background: var(--bg-mid) !important;
+      border: var(--rule) !important;
+      border-radius: 4px !important;
+    }
+
+    .badge-critical,
+    .badge-high,
+    .badge-medium,
+    .badge-low {
+      border-radius: 3px !important;
+      font-family: var(--font-mono);
+      text-transform: uppercase;
+      letter-spacing: 0.3px;
+    }
+
+    .badge-critical { background: rgba(185, 28, 28, 0.08) !important; color: #b91c1c !important; border: 1px solid rgba(185, 28, 28, 0.24) !important; }
+    .badge-high { background: rgba(217, 119, 6, 0.08) !important; color: #b45309 !important; border: 1px solid rgba(217, 119, 6, 0.25) !important; }
+    .badge-medium { background: rgba(202, 138, 4, 0.08) !important; color: #a16207 !important; border: 1px solid rgba(202, 138, 4, 0.24) !important; }
+    .badge-low { background: rgba(82, 82, 82, 0.07) !important; color: var(--text-muted) !important; border: var(--rule) !important; }
+
+    #emptyState {
+      padding: 48px 24px !important;
+      text-align: center;
+      color: var(--text-muted);
+    }
+
+    #stickyBar { animation: slideUpBar 0.4s ease forwards; }
+    #stickyBar > div {
+      background: rgba(250, 250, 247, 0.96) !important;
+      backdrop-filter: blur(14px);
+      border-top: var(--rule) !important;
+      padding: 12px 18px !important;
+    }
+
+    /* Light-theme compatibility for Tailwind classes emitted by scan-3.js. */
+    .bg-vp-surface,
+    .bg-card { background: var(--bg-card) !important; }
+    .border-vp-border { border-color: #e7e5de !important; }
+    .bg-brand { background: var(--text) !important; }
+    .hover\:bg-brand-light:hover { background: #333 !important; }
+    .text-white,
+    .text-gray-100,
+    .text-gray-200,
+    .text-gray-300 { color: var(--text) !important; }
+    .text-gray-400,
+    .text-gray-500 { color: var(--text-muted) !important; }
+    .text-gray-600,
+    .text-gray-700 { color: var(--text-faint) !important; }
+    .rounded-xl,
+    .rounded-2xl,
+    .rounded-lg,
+    .rounded-full { border-radius: 4px !important; }
+    .w-5 { width: 1.25rem; }
+    .h-5 { height: 1.25rem; }
+    .w-4 { width: 1rem; }
+    .h-4 { height: 1rem; }
+
+    footer {
+      padding: 48px 40px 24px;
+      background: var(--bg);
+      border-top: var(--rule);
+    }
+
+    .footer-grid {
+      display: grid;
+      grid-template-columns: 1.2fr repeat(4, 1fr);
+      gap: 32px;
+      margin-bottom: 40px;
+    }
+
+    .footer-brand-name {
+      font-family: var(--font-mono);
+      font-size: 14px;
+      font-weight: 600;
+      letter-spacing: 0.5px;
+      margin-bottom: 12px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .footer-brand-desc {
+      color: var(--text-muted);
+      font-size: 12.5px;
+      line-height: 1.55;
+      max-width: 260px;
+    }
+
+    .footer-status {
+      margin-top: 16px;
+      font-family: var(--font-mono);
+      font-size: 11px;
+      color: var(--text-faint);
+    }
+
+    .footer-col-head {
+      font-family: var(--font-mono);
+      font-size: 10.5px;
+      letter-spacing: 0.8px;
+      text-transform: uppercase;
+      color: var(--text-faint);
+      margin-bottom: 14px;
+    }
+
+    .footer-links { list-style: none; }
+    .footer-links li { margin-bottom: 8px; }
+    .footer-links a {
+      font-family: var(--font-mono);
+      font-size: 12px;
+      color: #262626;
+    }
+    .footer-links a:hover { color: var(--accent); }
+
+    .footer-bottom {
+      border-top: var(--rule);
+      padding-top: 16px;
+      font-family: var(--font-mono);
+      font-size: 11px;
+      color: var(--text-faint);
+      display: flex;
+      justify-content: space-between;
+      gap: 12px;
+    }
+
+    @media (max-width: 900px) {
+      .scan-hero {
+        grid-template-columns: 1fr;
+      }
+
+      .scan-copy {
+        border-right: none;
+        border-bottom: var(--rule);
+        padding: 40px 24px;
+        justify-content: flex-start;
+      }
+
+      .scan-title { font-size: 36px; }
+      .scan-panel { padding: 36px 20px 44px; }
+      .scan-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+      .scan-kind:nth-child(3) { border-left: none; border-top: var(--rule); }
+      .scan-kind:nth-child(4) { border-top: var(--rule); }
+      .footer-grid { grid-template-columns: 1fr 1fr; gap: 24px; }
+    }
+
+    @media (max-width: 768px) {
+      .page { border-left: none; border-right: none; }
+      .nav { padding: 12px 16px; }
+      .nav-links,
+      .nav-sign-in,
+      .nav-logo-version { display: none; }
+      .mobile-toggle {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: 34px;
+        height: 34px;
+        border: var(--rule);
+        border-radius: 3px;
+        background: var(--bg);
+        color: var(--text-muted);
+      }
+      .mobile-menu.open {
+        display: grid;
+        gap: 10px;
+        padding: 16px;
+        border-bottom: var(--rule);
+        background: var(--bg-mid);
+        font-family: var(--font-mono);
+        font-size: 12px;
+        color: var(--text-muted);
+      }
+      .mobile-menu a:hover { color: var(--text); }
+      .scanner-main { padding: 0 20px 86px; }
+      .scan-section { padding: 44px 0; }
+      .scan-proof { grid-template-columns: 1fr; }
+      .proof-item + .proof-item { border-left: none; border-top: var(--rule); }
+    }
+
+    @media (max-width: 560px) {
+      .scan-title { font-size: 32px; }
+      .scanner-card { padding: 18px; }
+      .scanner-card-head { align-items: flex-start; flex-direction: column; }
+      .scan-grid { grid-template-columns: 1fr; }
+      .scan-kind + .scan-kind,
+      .scan-kind:nth-child(3),
+      .scan-kind:nth-child(4) { border-left: none; border-top: var(--rule); }
+      .footer-grid { grid-template-columns: 1fr 1fr; }
+      .footer-bottom { flex-direction: column; }
+    }
+  </style>
+  <link rel="stylesheet" href="/css/site-theme.css">
 </head>
-<body class="text-gray-100 min-h-screen">
-
-    <!-- Nav -->
-    <nav class="fixed z-50 top-0 left-0 right-0 py-3 px-4 sm:px-6">
-        <div class="max-w-5xl mx-auto bg-vp-surface/80 backdrop-blur-xl border border-vp-border/60 rounded-full px-4 sm:px-6 py-2.5 flex items-center justify-between shadow-lg shadow-black/20" style="box-shadow: 0 0 15px rgba(99,102,241,0.15), 0 0 40px rgba(99,102,241,0.08), 0 4px 12px rgba(0,0,0,0.3)">
-            <a href="/" class="flex items-center gap-2.5 flex-shrink-0">
-                <img src="/og-image2.png" alt="VaultProof" class="w-10 h-10">
-                <span class="text-base font-bold text-white tracking-tight" style="font-family:'Space Grotesk',sans-serif">VaultProof</span>
-            </a>
-
-            <!-- Desktop links -->
-            <div class="hidden md:flex items-center gap-5">
-                <!-- Product dropdown -->
-                <div class="nav-group">
-                    <button class="nav-group-btn" aria-haspopup="true" aria-expanded="false">
-                        Product
-                        <svg width="11" height="11" viewBox="0 0 12 12" fill="currentColor"><path d="M6 8L2 4h8z"/></svg>
-                    </button>
-                    <div class="nav-dropdown" role="menu">
-                        <a href="/agents" role="menuitem">AI Agents</a>
-                        <a href="/compare" role="menuitem">Compare</a>
-                        <a href="/enterprise-demo" role="menuitem">Enterprise Demo</a>
-                    </div>
-                </div>
-                <a href="/docs" class="text-sm text-gray-400 hover:text-white transition-colors">Docs</a>
-                <a href="/guides" class="text-sm text-gray-400 hover:text-white transition-colors">Guides</a>
-                <a href="/blog" class="text-sm text-gray-400 hover:text-white transition-colors">Blog</a>
-                <a href="#pricing" class="text-sm text-gray-400 hover:text-white transition-colors">Pricing</a>
-                <a href="/app/login" class="nav-dashboard text-sm text-gray-400 hover:text-white transition-colors" style="display:none">Dashboard</a>
-            </div>
-
-            <div class="hidden md:flex items-center gap-3">
-                <a href="/scan" class="btn-nav-scanner">
-                    <svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
-                    Free Scanner
-                </a>
-                <a href="/app/login" class="btn-creative">Sign Up</a>
-            </div>
-
-            <!-- Mobile hamburger -->
-            <button id="mobileToggle" class="md:hidden text-gray-400 hover:text-white" aria-label="Toggle menu">
-                <svg width="22" height="22" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 6h14M4 12h14M4 18h14"/></svg>
-            </button>
-        </div>
-
-        <!-- Mobile menu -->
-        <div id="mobileMenu" class="mobile-menu flex-col gap-1 mt-2 max-w-5xl mx-auto bg-vp-surface/95 backdrop-blur-xl border border-vp-border/60 rounded-2xl px-4 py-4 md:hidden shadow-lg shadow-black/20">
-            <a href="/agents" class="text-sm text-gray-400 hover:text-white transition-colors py-2 px-2 rounded-lg hover:bg-white/5">AI Agents</a>
-            <a href="/compare" class="text-sm text-gray-400 hover:text-white transition-colors py-2 px-2 rounded-lg hover:bg-white/5">Compare</a>
-            <a href="/enterprise-demo" class="text-sm text-gray-400 hover:text-white transition-colors py-2 px-2 rounded-lg hover:bg-white/5">Enterprise Demo</a>
-            <a href="/docs" class="text-sm text-gray-400 hover:text-white transition-colors py-2 px-2 rounded-lg hover:bg-white/5">Docs</a>
-            <a href="/guides" class="text-sm text-gray-400 hover:text-white transition-colors py-2 px-2 rounded-lg hover:bg-white/5">Guides</a>
-            <a href="/blog" class="text-sm text-gray-400 hover:text-white transition-colors py-2 px-2 rounded-lg hover:bg-white/5">Blog</a>
-            <a href="#pricing" class="text-sm text-gray-400 hover:text-white transition-colors py-2 px-2 rounded-lg hover:bg-white/5">Pricing</a>
-            <a href="/app/login" class="nav-dashboard text-sm text-gray-400 hover:text-white transition-colors py-2 px-2 rounded-lg hover:bg-white/5" style="display:none">Dashboard</a>
-            <div class="mt-2 flex flex-col gap-2">
-                <a href="/scan" class="btn-nav-scanner justify-center py-2.5">Free Scanner</a>
-                <a href="/app/login" class="btn-creative text-center py-2.5 px-5">Sign Up</a>
-            </div>
-        </div>
+<body>
+  <div class="page">
+    <nav class="nav">
+      <a href="/" class="nav-logo">
+        <span class="nav-logo-name">VaultProof</span>
+        <span class="nav-logo-version">v0.4.2</span>
+      </a>
+      <div class="nav-spacer"></div>
+      <div class="nav-links">
+        <a href="/scan">scanner</a>
+        <a href="/docs">docs</a>
+        <a href="/blog">insights</a>
+        <a href="/#pricing">pricing</a>
+      </div>
+      <a href="/app/login" class="nav-sign-in">sign in</a>
+      <a href="/app/login" class="nav-cta">get started</a>
+      <button id="mobileToggle" class="mobile-toggle" type="button" aria-label="Toggle menu">
+        <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16"/></svg>
+      </button>
     </nav>
 
-    <!-- Hero -->
-    <section class="relative overflow-hidden pt-28 pb-12 px-4 sm:px-6">
-        <div class="hero-glow"></div>
-        <div class="relative z-10 max-w-2xl mx-auto text-center anim-fade-up">
-            <!-- Badge -->
-            <div class="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-vp-surface border border-vp-border text-xs font-medium text-gray-400 mb-6">
-                <span class="w-2 h-2 rounded-full bg-green-400 inline-block" style="box-shadow:0 0 6px rgba(74,222,128,0.6)"></span>
-                Free · No login required
-            </div>
+    <div id="mobileMenu" class="mobile-menu">
+      <a href="/scan">scanner</a>
+      <a href="/docs">docs</a>
+      <a href="/blog">insights</a>
+      <a href="/#pricing">pricing</a>
+      <a href="/app/login">sign in</a>
+    </div>
 
-            <h1 class="text-3xl sm:text-5xl font-black text-white tracking-tight leading-tight mb-4" style="font-family:'Space Grotesk',sans-serif">
-                Find exposed API keys<br class="hidden sm:block"> in any public GitHub repo
-            </h1>
-            <p class="text-base sm:text-lg text-gray-400 mb-10 max-w-lg mx-auto">
-                Paste a GitHub repo URL below. We'll scan it for leaked secrets and show you exactly where they are.
-            </p>
-
-            <!-- Scan form -->
-            <form id="scanForm" class="flex flex-col sm:flex-row gap-3 max-w-xl mx-auto">
-                <input
-                    id="repoInput"
-                    type="text"
-                    class="scan-input flex-1 bg-vp-surface border border-vp-border rounded-xl px-4 py-3 text-sm text-gray-100 placeholder-gray-600 transition-all"
-                    placeholder="github.com/owner/repo or owner/repo"
-                    autocomplete="off"
-                    spellcheck="false"
-                />
-                <button
-                    id="scanBtn"
-                    type="submit"
-                    class="px-6 py-3 rounded-xl bg-brand hover:bg-brand-light text-white text-sm font-semibold transition-colors flex items-center justify-center gap-2 whitespace-nowrap"
-                >
-                    <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
-                        <circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/>
-                    </svg>
-                    Scan repo
-                </button>
-            </form>
-            <p class="text-xs text-gray-600 mt-3">Example: <button type="button" onclick="prefillExample()" class="text-gray-500 hover:text-gray-300 underline underline-offset-2 transition-colors">github.com/trufflesecurity/trufflehog</button></p>
-            <p class="text-xs text-gray-600 mt-2">Scans up to 500 files · 50 commits of history · secrets, risky files, code smells, hygiene</p>
+    <section class="scan-hero">
+      <div class="scan-copy">
+        <div>
+          <div class="eyebrow">00 / Public repo scanner</div>
+          <h1 class="scan-title">Find exposed API keys before they become incidents.</h1>
+          <p class="scan-subtitle">Paste a public GitHub repo and VaultProof checks current files, recent history, risky config, and security hygiene in the same restrained system as the main dashboard.</p>
         </div>
+
+        <div class="scan-proof" aria-label="Scanner coverage summary">
+          <div class="proof-item">
+            <div class="proof-num">01</div>
+            <div class="proof-title">secrets</div>
+            <p class="proof-copy">Detect API keys across LLM, cloud, payment, email, database, and observability providers.</p>
+          </div>
+          <div class="proof-item">
+            <div class="proof-num">02</div>
+            <div class="proof-title">history</div>
+            <p class="proof-copy">Search recent commits so leaked values do not hide in old snapshots.</p>
+          </div>
+          <div class="proof-item">
+            <div class="proof-num">03</div>
+            <div class="proof-title">hygiene</div>
+            <p class="proof-copy">Flag risky files, weak patterns, and missing project guardrails.</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="scan-panel">
+        <div class="scanner-card">
+          <div class="scanner-card-head">
+            <div>
+              <div class="scanner-kicker">free / no login</div>
+              <h2 class="scanner-title">Scan a repo</h2>
+            </div>
+            <div class="scanner-status"><span class="scanner-status-dot"></span> live</div>
+          </div>
+
+          <form id="scanForm" class="scan-form">
+            <input
+              id="repoInput"
+              type="text"
+              class="scan-input"
+              placeholder="github.com/owner/repo or owner/repo"
+              autocomplete="off"
+              spellcheck="false"
+            />
+            <button id="scanBtn" type="submit" class="scan-button">
+              <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+              Scan repo
+            </button>
+          </form>
+
+          <p class="example-row">Example: <button type="button" id="exampleRepoBtn">github.com/trufflesecurity/trufflehog</button></p>
+          <p class="scan-limits">Scans up to 500 files and 50 commits of history.</p>
+
+          <div class="terminal-box" aria-label="Scanner activity preview">
+            <div class="terminal-chrome">
+              <div class="terminal-dots">
+                <span class="terminal-dot"></span>
+                <span class="terminal-dot"></span>
+                <span class="terminal-dot"></span>
+              </div>
+              <span>~/scan.public</span>
+            </div>
+            <div class="terminal-body">
+              <div class="terminal-line"><span class="terminal-mark">&gt;</span><span>fetch repo tree</span><span class="terminal-meta">ready</span></div>
+              <div class="terminal-line"><span class="terminal-mark">&gt;</span><span>match provider patterns</span><span class="terminal-meta">auto</span></div>
+              <div class="terminal-line"><span class="terminal-mark">&gt;</span><span>review recent history</span><span class="terminal-meta">50</span></div>
+            </div>
+          </div>
+        </div>
+      </div>
     </section>
 
-    <!-- Main content area -->
-    <main class="max-w-2xl mx-auto px-4 sm:px-6 pb-32">
+    <main class="scanner-main">
+      <section id="whatWeScan" class="scan-section">
+        <div class="section-label">01 / What gets checked</div>
+        <h2 class="section-h2">A quick public pass across secrets, risky files, code smells, and repo hygiene.</h2>
 
-        <!-- What we scan -->
-        <div id="whatWeScan" class="mt-12 mb-8 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
-          <div class="bg-vp-surface border border-vp-border rounded-xl p-5">
-            <div class="text-sm font-semibold text-gray-200 mb-2">🔑 Leaked API keys</div>
-            <p class="text-xs text-gray-500 mb-2">Both current files AND git history</p>
-            <ul class="text-xs text-gray-500 space-y-1">
+        <div class="scan-grid">
+          <article class="scan-kind">
+            <div class="kind-topline">keys</div>
+            <h3 class="kind-title">Leaked API keys</h3>
+            <p class="kind-copy">Current files and history are checked for common production tokens.</p>
+            <ul class="kind-list">
               <li>OpenAI, Anthropic, Google AI</li>
               <li>AWS, Google Cloud</li>
-              <li>Stripe, SendGrid, Resend, Brevo</li>
+              <li>Stripe, SendGrid, Resend</li>
               <li>GitHub, npm, Slack, Datadog</li>
-              <li>Supabase, MongoDB, Neon, Upstash</li>
-              <li>PostHog, Contentful, Twilio</li>
-              <li class="text-gray-600">and 13 more providers</li>
+              <li>Supabase, MongoDB, Neon</li>
             </ul>
-          </div>
-          <div class="bg-vp-surface border border-vp-border rounded-xl p-5">
-            <div class="text-sm font-semibold text-gray-200 mb-2">📁 Risky files committed</div>
-            <ul class="text-xs text-gray-500 space-y-1 mt-2">
+          </article>
+
+          <article class="scan-kind">
+            <div class="kind-topline">files</div>
+            <h3 class="kind-title">Risky commits</h3>
+            <p class="kind-copy">Sensitive project files are called out even when values are not parsed as provider keys.</p>
+            <ul class="kind-list">
               <li>.env files</li>
-              <li>Private keys (id_rsa, *.pem, *.key)</li>
-              <li>Cloud credentials (.aws/credentials)</li>
-              <li>Service account JSONs</li>
-              <li>Database dumps (*.sql, *.dump, *.bak)</li>
+              <li>Private keys and pem files</li>
+              <li>Cloud credential folders</li>
+              <li>Service account JSON</li>
+              <li>Database dumps and backups</li>
             </ul>
-          </div>
-          <div class="bg-vp-surface border border-vp-border rounded-xl p-5">
-            <div class="text-sm font-semibold text-gray-200 mb-2">⚠️ Code smells</div>
-            <ul class="text-xs text-gray-500 space-y-1 mt-2">
-              <li>eval() and Function() constructors</li>
-              <li>Unsafe HTML (innerHTML, dangerouslySetInnerHTML)</li>
-              <li>Weak crypto (MD5, SHA1, DES, RC4)</li>
+          </article>
+
+          <article class="scan-kind">
+            <div class="kind-topline">code</div>
+            <h3 class="kind-title">Code smells</h3>
+            <p class="kind-copy">The scanner looks for high-signal patterns that often deserve a second review.</p>
+            <ul class="kind-list">
+              <li>eval and Function constructors</li>
+              <li>Unsafe HTML writes</li>
+              <li>Weak crypto choices</li>
               <li>CORS wildcards</li>
               <li>SQL string concatenation</li>
             </ul>
-          </div>
-          <div class="bg-vp-surface border border-vp-border rounded-xl p-5">
-            <div class="text-sm font-semibold text-gray-200 mb-2">✅ Repo hygiene</div>
-            <ul class="text-xs text-gray-500 space-y-1 mt-2">
+          </article>
+
+          <article class="scan-kind">
+            <div class="kind-topline">repo</div>
+            <h3 class="kind-title">Hygiene checks</h3>
+            <p class="kind-copy">Basic repository guardrails are checked alongside the secret scan.</p>
+            <ul class="kind-list">
               <li>.gitignore</li>
               <li>LICENSE</li>
               <li>SECURITY.md</li>
               <li>README.md</li>
             </ul>
+          </article>
+        </div>
+      </section>
+
+      <section class="scan-output" aria-label="Scanner results">
+        <div id="progressBox" class="hidden">
+          <div>
+            <div class="flex items-center justify-between mb-2">
+              <p id="progressPhase" class="text-sm font-medium">Starting scan...</p>
+              <span id="progressPct" class="text-xs font-mono">0%</span>
+            </div>
+            <div class="w-full h-2 bg-vp-border rounded-full overflow-hidden">
+              <div id="progressFill" class="h-full bg-brand transition-all duration-300 ease-out" style="width:0%"></div>
+            </div>
+            <p class="text-xs text-gray-500 mt-2">Large repos can take 20-30 seconds.</p>
           </div>
         </div>
 
-        <!-- Progress indicator -->
-        <div id="progressBox" class="hidden">
-            <div class="bg-vp-surface border border-vp-border rounded-xl px-5 py-4">
-                <div class="flex items-center justify-between mb-2">
-                    <p id="progressPhase" class="text-sm font-medium text-gray-200">Starting scan…</p>
-                    <span id="progressPct" class="text-xs text-gray-500 font-mono">0%</span>
-                </div>
-                <div class="w-full h-2 bg-vp-border rounded-full overflow-hidden">
-                    <div id="progressFill" class="h-full bg-brand transition-all duration-300 ease-out" style="width:0%"></div>
-                </div>
-                <p class="text-xs text-gray-500 mt-2">Large repos can take 20–30 seconds.</p>
-            </div>
-        </div>
-
-        <!-- Error box -->
         <div id="errorBox" class="hidden">
-            <div class="flex items-start gap-3 bg-red-950/40 border border-red-900/50 rounded-xl px-5 py-4">
-                <svg class="w-5 h-5 text-red-400 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-                    <circle cx="12" cy="12" r="10"/><path d="M12 8v4m0 4h.01"/>
-                </svg>
-                <div>
-                    <p class="text-sm font-medium text-red-300">Scan failed</p>
-                    <p id="errorMsg" class="text-xs text-red-400/80 mt-1"></p>
-                </div>
+          <div class="flex items-start gap-3">
+            <svg class="w-5 h-5 text-red-400 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" aria-hidden="true">
+              <circle cx="12" cy="12" r="10"/><path d="M12 8v4m0 4h.01"/>
+            </svg>
+            <div>
+              <p class="text-sm font-medium text-red-300">Scan failed</p>
+              <p id="errorMsg" class="text-xs text-red-400/80 mt-1"></p>
             </div>
+          </div>
         </div>
 
-        <!-- Results container -->
         <div id="resultsContainer" class="hidden space-y-3">
+          <div id="resultsHeader" class="flex items-center justify-between py-2">
+            <p id="resultsSummary" class="text-sm"></p>
+            <span id="repoLabel" class="text-xs font-mono"></span>
+          </div>
 
-            <!-- Results header -->
-            <div id="resultsHeader" class="flex items-center justify-between py-2">
-                <p id="resultsSummary" class="text-sm text-gray-400"></p>
-                <span id="repoLabel" class="text-xs font-mono text-gray-600"></span>
+          <div id="findingsList" class="space-y-3"></div>
+
+          <div id="emptyState" class="hidden">
+            <div class="w-14 h-14 mx-auto mb-4 rounded-2xl bg-green-950/40 border border-green-900/40 flex items-center justify-center">
+              <svg class="w-7 h-7 text-green-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" aria-hidden="true">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/>
+              </svg>
             </div>
-
-            <!-- Findings list -->
-            <div id="findingsList" class="space-y-3"></div>
-
-            <!-- Empty state -->
-            <div id="emptyState" class="hidden text-center py-16">
-                <div class="w-14 h-14 mx-auto mb-4 rounded-2xl bg-green-950/40 border border-green-900/40 flex items-center justify-center">
-                    <svg class="w-7 h-7 text-green-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/>
-                    </svg>
-                </div>
-                <p class="text-lg font-semibold text-gray-200 mb-1">No exposed keys found. Nice work.</p>
-                <p class="text-sm text-gray-500 mb-6">This repo looks clean. Keep your secrets safe in production too.</p>
-                <a href="/app/login.html" class="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-vp-surface border border-vp-border text-sm text-gray-300 hover:text-white hover:border-gray-500 transition-colors">
-                    Protect your production keys with VaultProof
-                    <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M5 12h14m-7-7 7 7-7 7"/></svg>
-                </a>
-            </div>
-
+            <p class="text-lg font-semibold text-gray-200 mb-1">No exposed keys found. Nice work.</p>
+            <p class="text-sm text-gray-500 mb-6">This repo looks clean. Keep your secrets safe in production too.</p>
+            <a href="/app/login" class="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-vp-surface border border-vp-border text-sm text-gray-300 hover:text-white hover:border-gray-500 transition-colors">
+              Protect your production keys with VaultProof
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14m-7-7 7 7-7 7"/></svg>
+            </a>
+          </div>
         </div>
-
+      </section>
     </main>
 
-    <!-- Sticky bottom CTA bar (hidden until findings shown) -->
-    <div id="stickyBar" class="hidden fixed bottom-0 left-0 right-0 z-40 sticky-bar">
-        <div class="bg-vp-surface/95 backdrop-blur-xl border-t border-vp-border px-4 sm:px-6 py-3">
-            <div class="max-w-2xl mx-auto flex items-center justify-between gap-4 flex-wrap">
-                <p class="text-sm text-gray-300">
-                    <span id="stickyCount" class="font-semibold text-white"></span>
-                    found. VaultProof protects these in production.
-                </p>
-                <a href="/app/login.html" class="inline-flex items-center gap-1.5 px-5 py-2 rounded-xl bg-brand hover:bg-brand-light text-white text-sm font-semibold transition-colors whitespace-nowrap">
-                    Free signup
-                    <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M5 12h14m-7-7 7 7-7 7"/></svg>
-                </a>
-            </div>
+    <footer>
+      <div class="footer-grid">
+        <div>
+          <div class="footer-brand-name">VaultProof</div>
+          <p class="footer-brand-desc">Split-key secrets and a transparent edge proxy. Your API keys never exist whole on a server.</p>
+          <div class="footer-status">● operational · p50 41ms</div>
         </div>
-    </div>
 
-    <script src="/js/scan-3.js" defer></script>
+        <div>
+          <div class="footer-col-head">product</div>
+          <ul class="footer-links">
+            <li><a href="/scan">scanner</a></li>
+            <li><a href="/#pricing">pricing</a></li>
+          </ul>
+        </div>
+
+        <div>
+          <div class="footer-col-head">developers</div>
+          <ul class="footer-links">
+            <li><a href="/docs">docs</a></li>
+            <li><a href="/guides">guides</a></li>
+            <li><a href="/status">status</a></li>
+          </ul>
+        </div>
+
+        <div>
+          <div class="footer-col-head">resources</div>
+          <ul class="footer-links">
+            <li><a href="/blog">insights</a></li>
+            <li><a href="/compare">compare</a></li>
+            <li><a href="/security">security</a></li>
+          </ul>
+        </div>
+
+        <div>
+          <div class="footer-col-head">company</div>
+          <ul class="footer-links">
+            <li><a href="/privacy">privacy</a></li>
+            <li><a href="/terms">terms</a></li>
+            <li><a href="/enterprise-demo">enterprise</a></li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="footer-bottom">
+        <span>© 2026 VaultProof</span>
+        <span>Free public scanning. Production proxy when you are ready.</span>
+      </div>
+    </footer>
+  </div>
+
+  <div id="stickyBar" class="hidden fixed bottom-0 left-0 right-0 z-40">
+    <div>
+      <div class="max-w-2xl mx-auto flex items-center justify-between gap-4 flex-wrap">
+        <p class="text-sm text-gray-300">
+          <span id="stickyCount" class="font-semibold text-white"></span>
+          found. VaultProof protects these in production.
+        </p>
+        <a href="/app/login" class="inline-flex items-center gap-1.5 px-5 py-2 rounded-xl bg-brand hover:bg-brand-light text-white text-sm font-semibold transition-colors whitespace-nowrap">
+          Free signup
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14m-7-7 7 7-7 7"/></svg>
+        </a>
+      </div>
+    </div>
+  </div>
+
+  <script src="/js/scan-3.js" defer></script>
   <script src="/js/analytics.js" defer></script>
 </body>
 </html>

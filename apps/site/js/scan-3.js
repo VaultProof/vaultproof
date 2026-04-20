@@ -410,6 +410,11 @@
             document.getElementById('repoInput').focus();
         }
 
+        var exampleRepoBtn = document.getElementById('exampleRepoBtn');
+        if (exampleRepoBtn) {
+            exampleRepoBtn.addEventListener('click', prefillExample);
+        }
+
         // ── Mobile nav toggle ────────────────────────────────────────────────────
         document.getElementById('mobileToggle').addEventListener('click', function() {
             const menu = document.getElementById('mobileMenu');

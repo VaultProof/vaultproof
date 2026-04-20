@@ -6,17 +6,12 @@
  *   1. Origin locking (allowed_origins registered at init time)
  *   2. Rate limiting (per-project, enforced elsewhere)
  *
- * This is distinct from the legacy `vp_live_` developer keys, which are
- * secret and can access the management API. `vp-proj-` can only hit the
- * proxy routes on this worker.
+ * `vp-proj-` tokens are scoped to proxy access only. They can never
+ * access the management routes on this worker.
  */
-import type { Env, ProjectRecord } from '../types.js';
+import type { Env } from '../types.js';
 import { getSupabase } from './supabase.js';
 import { cacheGet, cacheSet } from './project-cache.js';
-
-export interface ProjectAuth {
-  project: ProjectRecord;
-}
 
 function normalizeOrigin(value: string): string | null {
   try {
@@ -27,9 +22,7 @@ function normalizeOrigin(value: string): string | null {
 }
 
 /**
- * Result of the combined "auth + key fetch" round trip. This is the
- * fast path used by the proxy hot path — it does a single join query
- * instead of the old two-query (project lookup, then key lookup) pattern.
+ * Result of the combined "auth + key fetch" round trip.
  */
 export interface AuthenticatedKey {
   keyId: string;
@@ -113,19 +106,6 @@ export function checkOriginLock(
 
 /**
  * Combined auth + key fetch.
- *
- * On a cache MISS: one Supabase round trip — joins project_keys with its
- * parent `projects` row, populates the cache with routing/origin metadata
- * (shares excluded), and returns everything the caller needs.
- *
- * On a cache HIT: origin is re-checked against the live request headers,
- * then a second targeted Supabase query fetches only the encrypted shares
- * for this slug. Shares are intentionally excluded from the cache so that
- * both ciphertexts are never held together in long-lived isolate memory —
- * they exist only for the duration of a single proxy call.
- *
- * Net effect: cache hits still save the heavier project JOIN query (~100ms),
- * while a smaller shares-only query runs on every request regardless.
  */
 export async function authenticateAndFetchKey(
   request: Request,
@@ -270,37 +250,4 @@ export async function authenticateAndFetchKey(
     authHeaderTemplate: row.auth_header_template,
     extraHeaders: row.extra_headers,
   };
-}
-
-/**
- * Legacy two-query path. Kept only for the (currently unused) case where
- * a caller needs the full project record without fetching a key. If
- * nothing uses it by the end of the perf work, we delete it.
- *
- * @deprecated Use authenticateAndFetchKey() on the proxy path.
- */
-export async function authenticateProject(
-  request: Request,
-  env: Env,
-): Promise<ProjectAuth | { error: string; status: number }> {
-  const parsed = parseProjectToken(request);
-  if ('error' in parsed) return parsed;
-
-  const supabase = getSupabase(env);
-  const { data, error } = await supabase
-    .from('projects')
-    .select('*')
-    .eq('vp_proj_id', parsed.token)
-    .is('revoked_at', null)
-    .maybeSingle();
-
-  if (error || !data) {
-    return { error: 'Project not found or revoked', status: 401 };
-  }
-
-  const project = data as ProjectRecord;
-  const originErr = checkOriginLock(request, project.allowed_origins, project.strict_origin);
-  if (originErr) return originErr;
-
-  return { project };
 }

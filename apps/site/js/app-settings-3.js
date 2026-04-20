@@ -9,6 +9,61 @@ const API = window.location.hostname.includes('dev.vaultproof') ? 'https://stagi
 
     const user = JSON.parse(localStorage.getItem('vaultproof_user') || '{}');
 
+    function syncUserChrome(emailValue) {
+      const email = emailValue || user.email || '';
+      const sidebarEmail = document.getElementById('sidebarEmail');
+      if (sidebarEmail) sidebarEmail.textContent = email || '—';
+
+      const emailLabel = document.getElementById('user-email');
+      if (emailLabel) emailLabel.textContent = email || 'unknown user';
+
+      const avatar = document.getElementById('user-avatar');
+      if (avatar) avatar.textContent = (email || 'V').charAt(0).toUpperCase();
+    }
+
+    function syncSidebarUsage() {
+      const metricValue = document.getElementById('usageMetricValue');
+      const metricFill = document.getElementById('usageBarFill');
+      const planLabel = document.getElementById('usagePlanLabel');
+      const metricNote = document.getElementById('usageMetricNote');
+      if (!metricValue || !metricFill || !planLabel || !metricNote) return;
+
+      const tier = window._currentTier || 'free';
+      const callsUsed = Number(window._usageData?.callsUsed || 0);
+      const limits = {
+        free: 10000,
+        starter: 50000,
+        pro: 500000,
+        team: 2000000,
+        enterprise: Infinity,
+      };
+      const limit = limits[tier] ?? limits.free;
+
+      planLabel.textContent = formatTierLabel(tier).toLowerCase();
+      metricValue.textContent = callsUsed.toLocaleString();
+      metricNote.textContent = limit === Infinity
+        ? 'unmetered call volume'
+        : `${Math.max(limit - callsUsed, 0).toLocaleString()} calls left this month`;
+      metricFill.style.width = limit === Infinity ? '12%' : `${Math.min(100, (callsUsed / limit) * 100)}%`;
+    }
+
+    function normalizeTier(value) {
+      const tier = String(value || '').trim().toLowerCase();
+      if (!tier) return 'free';
+      if (tier.includes('enterprise')) return 'enterprise';
+      if (tier.includes('team')) return 'team';
+      if (tier.includes('pro')) return 'pro';
+      if (tier.includes('starter')) return 'starter';
+      if (tier.includes('free')) return 'free';
+      return 'free';
+    }
+
+    function formatTierLabel(tier) {
+      return tier === 'free'
+        ? 'Free Plan'
+        : tier.charAt(0).toUpperCase() + tier.slice(1) + ' Plan';
+    }
+
 
     if (!token) { window.location.href = 'login'; }
 
@@ -95,13 +150,17 @@ const API = window.location.hostname.includes('dev.vaultproof') ? 'https://stagi
 
     const sidebarEl = document.getElementById('sidebar');
     const overlayEl = document.getElementById('sidebarOverlay');
-    document.getElementById('sidebarEmail').textContent = user.email || '—';
+    syncUserChrome();
     document.getElementById('menuBtn').addEventListener('click', toggleMobileSidebar);
+    if (overlayEl) overlayEl.addEventListener('click', toggleMobileSidebar);
     const logoutBtn = document.getElementById('logoutBtn');
     if (logoutBtn) logoutBtn.addEventListener('click', logout);
+    const signOutBtn = document.getElementById('signOutBtn');
+    if (signOutBtn) signOutBtn.addEventListener('click', logout);
 
     function toggleMobileSidebar() {
-      sidebarEl.classList.toggle('-translate-x-full');
+      if (window.innerWidth > 900) return;
+      sidebarEl.classList.toggle('is-open');
       overlayEl.classList.toggle('hidden');
     }
 
@@ -179,32 +238,6 @@ const API = window.location.hostname.includes('dev.vaultproof') ? 'https://stagi
       }
     }
 
-    // Token display
-    const tokenDisplayEl = document.getElementById('tokenDisplay');
-    if (tokenDisplayEl) tokenDisplayEl.value = token || '';
-    let tokenVisible = false;
-
-    function toggleTokenVisibility() {
-      tokenVisible = !tokenVisible;
-      if (tokenDisplayEl) tokenDisplayEl.type = tokenVisible ? 'text' : 'password';
-      const eyeIcon = document.getElementById('eyeIcon');
-      if (!eyeIcon) return;
-      if (tokenVisible) {
-        eyeIcon.innerHTML = '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.878 9.878L3 3m6.878 6.878L21 21"/>';
-      } else {
-        eyeIcon.innerHTML = '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/>';
-      }
-    }
-
-    function copyToken() {
-      navigator.clipboard.writeText(token).then(() => {
-        const msg = document.getElementById('copyMsg');
-        if (!msg) return;
-        msg.classList.remove('hidden');
-        setTimeout(() => msg.classList.add('hidden'), 2000);
-      });
-    }
-
     // Load profile
     async function loadProfile() {
       try {
@@ -212,13 +245,16 @@ const API = window.location.hostname.includes('dev.vaultproof') ? 'https://stagi
         if (!res) return;
         const data = await res.json();
         const profile = data.user || data;
-        document.getElementById('profileEmail').textContent = profile.email || user.email || '—';
+        const email = profile.email || user.email || '—';
+        document.getElementById('profileEmail').textContent = email;
+        syncUserChrome(email);
         document.getElementById('profileCreated').textContent = profile.createdAt
           ? new Date(profile.createdAt).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })
           : '—';
       } catch (e) {
         console.error('Failed to load profile:', e);
         document.getElementById('profileEmail').textContent = user.email || '—';
+        syncUserChrome();
         showToast('Couldn\'t load profile — showing cached data', 'warning');
       }
     }
@@ -234,10 +270,12 @@ const API = window.location.hostname.includes('dev.vaultproof') ? 'https://stagi
         // Store for later tier-based update
         window._usageData = { keysUsed, callsUsed };
         updateUsageBars(keysUsed, callsUsed);
+        syncSidebarUsage();
       } catch (e) {
         console.error('Failed to load usage:', e);
         document.getElementById('keysUsed').textContent = '—';
         document.getElementById('callsUsed').textContent = '—';
+        syncSidebarUsage();
         showToast('Unable to load usage data', 'warning');
       }
     }
@@ -405,13 +443,23 @@ const API = window.location.hostname.includes('dev.vaultproof') ? 'https://stagi
         const res = await apiFetch('/billing/status');
         if (!res || !res.ok) {
           // Fallback to free plan display
+          window._currentTier = 'free';
           document.getElementById('billingTierBadge').textContent = 'Free Plan';
           if (document.getElementById('planBadge')) document.getElementById('planBadge').textContent = 'Free Plan';
+          syncSidebarUsage();
           return;
         }
         const data = await res.json();
-        const currentTier = data.tier || 'free';
+        const currentTier = normalizeTier(
+          data.tier ||
+          data.plan ||
+          data.subscriptionTier ||
+          data.subscription?.tier ||
+          data.subscription?.plan ||
+          data.customer?.tier
+        );
         window._currentTier = currentTier;
+        syncSidebarUsage();
         const isSubscribed = data.hasSubscription || data.subscribed || false;
 
         // Update badge
@@ -425,14 +473,14 @@ const API = window.location.hostname.includes('dev.vaultproof') ? 'https://stagi
         };
         const colorClass = tierColors[currentTier] || tierColors.free;
         badge.className = `inline-flex items-center px-3 py-1 rounded-xl text-sm font-medium capitalize ${colorClass}`;
-        badge.textContent = currentTier === 'free' ? 'Free Plan' : currentTier.charAt(0).toUpperCase() + currentTier.slice(1) + ' Plan';
+        badge.textContent = formatTierLabel(currentTier);
 
         // Update Plan & Usage section
         const planBadge = document.getElementById('planBadge');
         if (planBadge) {
           const planColor = tierColors[currentTier] || tierColors.free;
           planBadge.className = `inline-flex items-center px-3 py-1 rounded-xl text-sm font-medium capitalize ${planColor}`;
-          planBadge.textContent = currentTier === 'free' ? 'Free Plan' : currentTier.charAt(0).toUpperCase() + currentTier.slice(1) + ' Plan';
+          planBadge.textContent = formatTierLabel(currentTier);
         }
         const tierLimits = {
           free: { keys: 3, calls: 10000 },
@@ -458,7 +506,7 @@ const API = window.location.hostname.includes('dev.vaultproof') ? 'https://stagi
           if (btnIdx <= currentIdx) {
             btn.disabled = true;
             btn.textContent = btnTier === currentTier ? 'Current' : 'Included';
-            btn.className = btn.className.replace('bg-[#6366f1] hover:bg-[#5558e6]', 'bg-gray-800 cursor-not-allowed').replace('btn-glow', '');
+            btn.className = btn.className.replace('bg-[#6366f1] hover:bg-[#5558e6]', 'bg-gray-800 cursor-not-allowed');
             btn.classList.add('opacity-50');
           }
         });
@@ -510,7 +558,7 @@ const API = window.location.hostname.includes('dev.vaultproof') ? 'https://stagi
         }
 
         // Hide upgrade cards entirely for top tier
-        if (currentTier === 'pro') {
+        if (currentIdx >= tierOrder.indexOf('pro')) {
           document.getElementById('billingUpgradeCards').classList.add('hidden');
         }
 
@@ -520,6 +568,7 @@ const API = window.location.hostname.includes('dev.vaultproof') ? 'https://stagi
         }
       } catch (e) {
         console.error('Failed to load billing status:', e);
+        window._currentTier = 'free';
         const badge = document.getElementById('billingTierBadge');
         badge.textContent = 'Free Plan';
         badge.className = 'inline-flex items-center px-3 py-1 rounded-xl bg-gray-700/30 text-gray-400 text-sm font-medium border border-gray-600/30 capitalize';
@@ -528,6 +577,7 @@ const API = window.location.hostname.includes('dev.vaultproof') ? 'https://stagi
           planBadge.textContent = 'Free Plan';
           planBadge.className = 'inline-flex items-center px-3 py-1 rounded-xl bg-gray-700/30 text-gray-400 text-sm font-medium border border-gray-600/30';
         }
+        syncSidebarUsage();
       }
     }
 
@@ -552,6 +602,58 @@ const API = window.location.hostname.includes('dev.vaultproof') ? 'https://stagi
       document.querySelectorAll('[data-period]').forEach(function(el) {
         el.textContent = isSettingsAnnual ? '/yr' : '/mo';
       });
+    }
+
+    function bindPageActions() {
+      const toastCloseBtn = document.getElementById('toastCloseBtn');
+      if (toastCloseBtn) {
+        toastCloseBtn.addEventListener('click', () => {
+          document.getElementById('toast').classList.add('hidden');
+        });
+      }
+
+      const killSwitchBtn = document.getElementById('killSwitchBtn');
+      if (killSwitchBtn) killSwitchBtn.addEventListener('click', showKillSwitchModal);
+
+      const closeKillSwitchBtn = document.getElementById('closeKillSwitchBtn');
+      if (closeKillSwitchBtn) closeKillSwitchBtn.addEventListener('click', closeKillSwitchModal);
+
+      const confirmKillBtn = document.getElementById('confirmKillBtn');
+      if (confirmKillBtn) confirmKillBtn.addEventListener('click', confirmKillSwitch);
+
+      const resumeAllBtn = document.getElementById('resumeAllBtn');
+      if (resumeAllBtn) resumeAllBtn.addEventListener('click', deactivateKillSwitch);
+
+      const saveGlobalLimitsBtn = document.getElementById('saveGlobalLimitsBtn');
+      if (saveGlobalLimitsBtn) saveGlobalLimitsBtn.addEventListener('click', saveGlobalLimits);
+
+      const annualToggleBtn = document.getElementById('settingsAnnualToggle');
+      if (annualToggleBtn) annualToggleBtn.addEventListener('click', toggleSettingsAnnual);
+
+      document.querySelectorAll('.billing-upgrade-btn').forEach((btn) => {
+        btn.addEventListener('click', () => {
+          const tier = btn.getAttribute('data-tier');
+          if (tier) upgradeTier(tier);
+        });
+      });
+
+      const billingManageBtn = document.getElementById('billingManageBtn');
+      if (billingManageBtn) billingManageBtn.addEventListener('click', openBillingPortal);
+
+      const deleteBtn = document.getElementById('deleteBtn');
+      if (deleteBtn) deleteBtn.addEventListener('click', deleteAccountStep1);
+
+      const deleteConfirmStep1Btn = document.getElementById('deleteConfirmStep1Btn');
+      if (deleteConfirmStep1Btn) deleteConfirmStep1Btn.addEventListener('click', deleteAccountStep2);
+
+      const deleteCancel1Btn = document.getElementById('deleteCancel1Btn');
+      if (deleteCancel1Btn) deleteCancel1Btn.addEventListener('click', cancelDelete);
+
+      const deleteConfirmFinalBtn = document.getElementById('deleteConfirmFinalBtn');
+      if (deleteConfirmFinalBtn) deleteConfirmFinalBtn.addEventListener('click', confirmDelete);
+
+      const deleteCancel2Btn = document.getElementById('deleteCancel2Btn');
+      if (deleteCancel2Btn) deleteCancel2Btn.addEventListener('click', cancelDelete);
     }
 
     async function upgradeTier(tier) {
@@ -717,6 +819,7 @@ const API = window.location.hostname.includes('dev.vaultproof') ? 'https://stagi
 
     // Init — refresh token first, then load data in parallel
     // Load everything immediately — apiFetch handles 401 with auto-refresh
+    bindPageActions();
     checkBillingParams();
     loadProfile();
     loadUsage();

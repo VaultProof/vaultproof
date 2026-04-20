@@ -282,3 +282,21 @@
       redirectUrl.searchParams.set('state', oauthParams.state);
       window.location.replace(redirectUrl.toString());
     }
+
+    // ── DOM bindings ──
+    (function bindUiEvents() {
+      var githubBtn = document.getElementById('loginWithGitHubBtn');
+      if (githubBtn) githubBtn.addEventListener('click', loginWithGitHub);
+
+      var googleBtn = document.getElementById('loginWithGoogleBtn');
+      if (googleBtn) googleBtn.addEventListener('click', loginWithGoogle);
+
+      var loginForm = document.getElementById('loginForm');
+      if (loginForm) loginForm.addEventListener('submit', handleLogin);
+
+      var denyBtn = document.getElementById('denyBtn');
+      if (denyBtn) denyBtn.addEventListener('click', handleDeny);
+
+      var authorizeBtn = document.getElementById('authorizeBtn');
+      if (authorizeBtn) authorizeBtn.addEventListener('click', handleAuthorize);
+    })();

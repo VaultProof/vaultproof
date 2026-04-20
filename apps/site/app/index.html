@@ -1,605 +1,392 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <!-- Google Analytics -->
-    <script async src="https://www.googletagmanager.com/gtag/js?id=G-NE5RYX1WTF"></script>
-    <script src="/js/app-index-1.js" defer></script>
+  <!-- Google Analytics -->
+  <script async src="https://www.googletagmanager.com/gtag/js?id=G-NE5RYX1WTF"></script>
+  <script src="/js/app-index-1.js" defer></script>
+  <script src="/js/app-index-7.js" defer></script>
+  <script src="/js/site-i18n.js" defer></script>
+  <script src="/js/app-dashboard-1.js" defer data-app-shell-page-script></script>
+  <script src="/js/app-shell-router-1.js" defer></script>
 
-    <link rel="icon" type="image/png" href="/favicon.png">
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Dashboard — VaultProof</title>
-  <!-- Tailwind CDN: SRI not applicable (dynamic response) -->
-  <script src="https://cdn.tailwindcss.com/3.4.17"></script>
-  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.5.1" integrity="sha384-jb8JQMbMoBUzgWatfe6COACi2ljcDdZQ2OxczGA3bGNeWe+6DChMTBJemed7ZnvJ" crossorigin="anonymous"></script>
-  <script src="https://browser.sentry-cdn.com/8.0.0/bundle.min.js" integrity="sha384-KgfNZ/yPJH4C25ELk249/OmtPWiqwJxTf/Z5CMlCvdas3BGPSktVyCyXMGXg8vg5" crossorigin="anonymous"></script>
-  <script src="/js/app-index-2.js" defer></script>
-  <link rel="preconnect" href="https://fonts.googleapis.com" />
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet" />
-  <script src="/js/app-index-3.js" defer></script>
-  <style>
-    *, *::before, *::after { box-sizing: border-box; }
-    body { font-family: 'Inter', sans-serif; background: #0a0a0f; margin: 0; }
-    ::-webkit-scrollbar { width: 6px; height: 6px; }
-    ::-webkit-scrollbar-track { background: #0a0a0f; }
-    ::-webkit-scrollbar-thumb { background: #2a2a3a; border-radius: 3px; }
-    ::-webkit-scrollbar-thumb:hover { background: #3a3a4a; }
+  <link rel="icon" type="image/png" href="/favicon.png">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Projects — VaultProof</title>
 
-    /* Animations */
-    @keyframes fadeInUp {
-      from { opacity: 0; transform: translateY(16px); }
-      to { opacity: 1; transform: translateY(0); }
-    }
-    @keyframes slideUp {
-      from { opacity: 0; transform: translateY(24px); }
-      to { opacity: 1; transform: translateY(0); }
-    }
-    @keyframes fadeIn {
-      from { opacity: 0; }
-      to { opacity: 1; }
-    }
-    @keyframes pulse-status {
-      0%, 100% { opacity: 1; }
-      50% { opacity: 0.5; }
-    }
-    .anim-fade-up {
-      opacity: 0;
-      animation: fadeInUp 0.5s ease forwards;
-    }
-    .anim-slide-up {
-      opacity: 0;
-      animation: slideUp 0.4s ease forwards;
-    }
-    .anim-fade {
-      opacity: 0;
-      animation: fadeIn 0.4s ease forwards;
-    }
-    .pulse-active {
-      animation: pulse-status 2s ease-in-out infinite;
-    }
-    .table-row-anim {
-      opacity: 0;
-      animation: fadeInUp 0.35s ease forwards;
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter+Tight:wght@500;600;700&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.5.1/dist/chart.umd.min.js" integrity="sha384-jb8JQMbMoBUzgWatfe6COACi2ljcDdZQ2OxczGA3bGNeWe+6DChMTBJemed7ZnvJ" crossorigin="anonymous"></script>
+
+  <style data-app-shell-style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --accent: #d97706;
+      --bg: #fafaf7;
+      --bg-mid: #f3f3ee;
+      --bg-card: #fff;
+      --rule: 1px solid #e7e5de;
+      --hair: 1px solid #eeece5;
+      --text: #171717;
+      --text-muted: #525252;
+      --text-faint: #8a8a82;
+      --mono: "JetBrains Mono", ui-monospace, monospace;
+      --display: "Inter Tight", "Inter", system-ui, sans-serif;
+      --body: "Inter", system-ui, sans-serif;
     }
 
-    /* Sidebar transitions */
-    .sidebar-expanded { width: 220px; }
-    .sidebar-collapsed { width: 64px; }
-    .sidebar-collapsed .sidebar-label { display: none; }
-    .sidebar-collapsed .sidebar-logo-text { display: none; }
-    .sidebar-collapsed .sidebar-user-info { display: none; }
-    .sidebar-collapsed .sidebar-nav-item { justify-content: center; padding-left: 0; padding-right: 0; }
-    .sidebar-collapsed .sidebar-bottom { align-items: center; }
-    .sidebar-collapsed .sidebar-bottom .logout-text { display: none; }
+    html, body { background: #e8e6e0; color: var(--text); font-family: var(--body); font-size: 14px; line-height: 1.5; -webkit-font-smoothing: antialiased; height: 100%; }
+    .page { max-width: 1280px; margin: 0 auto; background: var(--bg); border-left: var(--rule); border-right: var(--rule); min-height: 100vh; }
+    a { color: inherit; text-decoration: none; }
 
-    /* Key mask display (no hover reveal) */
-    .key-mask .key-masked { display: inline; }
-
-    /* Row hover effect */
-    .key-row { border-left: 3px solid transparent; transition: border-color 0.15s ease, background-color 0.15s ease; }
-    .key-row:hover { border-left-color: #6366f1; background-color: rgba(99, 102, 241, 0.04); }
-
-    /* Quick actions */
-    .quick-actions { backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); }
-
-    /* Guided Tour */
-    .guide-overlay {
-      position: fixed; inset: 0; z-index: 200;
-      background: rgba(0,0,0,0.35);
-      pointer-events: none; opacity: 0;
-      transition: opacity 0.3s ease;
+    /* TOP BAR */
+    .topbar {
+      display: flex; align-items: center;
+      padding: 13px 28px; border-bottom: var(--rule);
+      font-family: var(--mono); font-size: 12px;
+      background: var(--bg);
+      position: sticky; top: 0; z-index: 100;
     }
-    .guide-overlay.active { opacity: 1; pointer-events: auto; }
-    .guide-bubble {
-      position: absolute; z-index: 202;
-      background: #111118; border: 1px solid #2a2a3a;
-      border-radius: 8px; padding: 14px 18px;
-      max-width: 340px; width: max-content;
-      box-shadow: 0 20px 50px rgba(0,0,0,0.5);
-      opacity: 0; transform: translateY(8px);
-      transition: opacity 0.25s ease, transform 0.25s ease;
-      pointer-events: auto;
+    .topbar-logo { display: flex; align-items: center; gap: 8px; }
+    .topbar-logo-name { font-weight: 600; letter-spacing: 0.5px; }
+    .topbar-sep { color: #a3a39a; margin: 0 14px; }
+    .topbar-crumb { color: var(--text-muted); }
+    .topbar-links { display: flex; gap: 20px; color: var(--text-muted); margin-left: auto; margin-right: 20px; }
+    .topbar-links a:hover { color: var(--text); }
+    .topbar-session { display: flex; align-items: center; gap: 8px; }
+    .topbar-email {
+      max-width: 220px;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      color: var(--text-muted);
+      font-family: var(--mono);
+      font-size: 11px;
     }
-    .guide-bubble.visible { opacity: 1; transform: translateY(0); }
-    .guide-bubble-arrow {
-      position: absolute; width: 12px; height: 12px;
-      background: #111118; border: 1px solid #2a2a3a;
-      transform: rotate(45deg);
+    .topbar-avatar {
+      width: 28px; height: 28px; border-radius: 50%;
+      background: var(--accent); color: #fafaf7;
+      display: flex; align-items: center; justify-content: center;
+      font-family: var(--mono); font-size: 11px; font-weight: 700;
     }
-    .guide-bubble-arrow[data-pos="bottom"] { top: -7px; left: 24px; border-right: none; border-bottom: none; }
-    .guide-bubble-arrow[data-pos="top"] { bottom: -7px; left: 24px; border-left: none; border-top: none; }
-    .guide-bubble-arrow[data-pos="right"] { left: -7px; top: 16px; border-top: none; border-right: none; }
-    .guide-highlight {
-      position: relative; z-index: 201;
-      background: #111118;
-      box-shadow: 0 0 0 4px rgba(99,102,241,0.4), 0 0 30px rgba(99,102,241,0.2);
-      border-radius: 8px;
-      transition: box-shadow 0.3s ease, background 0.3s ease;
+    .topbar-signout {
+      font-family: var(--mono); font-size: 11px;
+      color: var(--text-faint); background: var(--bg-card);
+      border: var(--rule); border-radius: 3px;
+      padding: 6px 10px; cursor: pointer;
+    }
+    .topbar-signout:hover { color: #b91c1c; background: #fdfdfa; }
+
+    /* LAYOUT */
+    .layout { display: grid; grid-template-columns: 220px 1fr; min-height: calc(100vh - 53px); }
+
+    /* SIDEBAR */
+    .sidebar { border-right: var(--rule); padding: 20px 16px; background: var(--bg); }
+    .sidebar-group { margin-bottom: 22px; }
+    .sidebar-head { font-family: var(--mono); font-size: 10px; letter-spacing: 0.8px; text-transform: uppercase; color: var(--text-faint); padding: 6px 8px; }
+    .sidebar-item {
+      font-family: var(--mono); font-size: 12.5px; color: var(--text-muted);
+      padding: 7px 10px; border-radius: 3px;
+      border: 1px solid transparent;
+      display: flex; align-items: center; gap: 8px;
+      cursor: pointer;
+    }
+    .sidebar-item:hover { color: var(--text); }
+    .sidebar-item.active { color: var(--text); background: var(--bg-card); border: var(--rule); }
+    .sidebar-dot { font-size: 8px; }
+    .sidebar-item.active .sidebar-dot { color: var(--accent); }
+    .sidebar-item:not(.active) .sidebar-dot { color: #c4c4bd; }
+    .usage-box { margin-top: 40px; padding: 14px; border: var(--rule); border-radius: 4px; background: var(--bg-card); }
+    .usage-label { font-family: var(--mono); font-size: 10px; letter-spacing: 0.8px; text-transform: uppercase; color: var(--text-faint); margin-bottom: 8px; }
+    .usage-row { font-family: var(--mono); font-size: 12px; color: var(--text); display: flex; justify-content: space-between; }
+    .usage-bar-track { height: 4px; background: #eeece5; border-radius: 99px; margin-top: 8px; }
+    .usage-bar-fill { height: 100%; background: var(--accent); border-radius: 99px; }
+    .usage-reset { font-family: var(--mono); font-size: 11px; color: var(--text-faint); margin-top: 8px; }
+
+    /* MAIN */
+    .main { padding: 28px 32px; }
+    .page-header { display: flex; align-items: baseline; margin-bottom: 4px; }
+    .page-title { font-family: var(--display); font-weight: 600; font-size: 30px; letter-spacing: -0.8px; }
+    .page-meta { font-family: var(--mono); font-size: 12px; color: var(--text-faint); margin-left: 10px; }
+    .page-actions { margin-left: auto; display: flex; gap: 8px; }
+    .btn-outline { font-family: var(--mono); font-size: 12px; padding: 7px 12px; border: var(--rule); border-radius: 3px; background: var(--bg-card); cursor: pointer; }
+    .btn-outline:hover { background: var(--bg-mid); }
+    .btn-primary { font-family: var(--mono); font-size: 12px; padding: 7px 12px; background: var(--text); color: var(--bg); border-radius: 3px; cursor: pointer; }
+    .btn-primary:hover { background: #333; }
+    .page-desc { font-size: 13px; color: var(--text-muted); margin: 4px 0 24px; max-width: 720px; }
+
+    /* KPI GRID */
+    .kpi-grid { display: grid; grid-template-columns: repeat(4,1fr); border: var(--rule); border-radius: 4px; overflow: hidden; background: var(--bg-card); margin-bottom: 28px; }
+    .kpi-cell { padding: 20px; }
+    .kpi-cell + .kpi-cell { border-left: var(--rule); }
+    .kpi-label { font-family: var(--mono); font-size: 10.5px; letter-spacing: 0.8px; text-transform: uppercase; color: var(--text-faint); }
+    .kpi-value { font-family: var(--display); font-weight: 600; font-size: 30px; letter-spacing: -0.5px; margin-top: 6px; color: var(--text); }
+    .kpi-value.alert { color: #b91c1c; }
+    .kpi-sub { font-family: var(--mono); font-size: 11px; color: var(--text-muted); margin-top: 4px; }
+
+    /* FILTER BAR */
+    .filter-bar { display: flex; align-items: center; gap: 8px; margin-bottom: 12px; }
+    .filter-chip { font-family: var(--mono); font-size: 12px; padding: 5px 10px; border-radius: 3px; border: var(--rule); background: var(--bg-card); color: #262626; cursor: pointer; }
+    .filter-chip.active { background: var(--text); color: var(--bg); border-color: var(--text); }
+    .filter-sort { font-family: var(--mono); font-size: 11px; color: var(--text-faint); margin-left: auto; }
+
+    /* PROJECT TABLE */
+    .table-wrap { border: var(--rule); border-radius: 4px; overflow: hidden; background: var(--bg-card); margin-bottom: 28px; }
+    .table-head {
+      display: grid; grid-template-columns: 2fr 1fr 60px 1fr 100px 1fr 110px;
+      padding: 11px 18px; background: var(--bg-mid); border-bottom: var(--rule);
+      font-family: var(--mono); font-size: 10px; letter-spacing: 0.8px; text-transform: uppercase; color: var(--text-faint);
+    }
+    .table-head span:last-child { text-align: right; }
+    .table-row {
+      display: grid; grid-template-columns: 2fr 1fr 60px 1fr 100px 1fr 110px;
+      padding: 16px 18px; align-items: center;
+      border-bottom: var(--hair); background: var(--bg-card);
+      cursor: pointer;
+    }
+    .table-row:last-child { border-bottom: none; }
+    .table-row:hover { background: #fdfdfa; }
+    .table-row.alert-row { background: rgba(185,28,28,0.025); }
+    .table-row.alert-row:hover { background: rgba(185,28,28,0.04); }
+    .proj-name { font-family: var(--display); font-weight: 600; font-size: 15px; letter-spacing: -0.2px; }
+    .proj-id { font-family: var(--mono); font-size: 11px; color: var(--text-faint); margin-top: 2px; }
+    .proj-exposed { color: #b91c1c; margin-left: 10px; }
+    .env-badge { font-family: var(--mono); font-size: 11px; padding: 2px 8px; border-radius: 3px; text-transform: uppercase; letter-spacing: 0.5px; display: inline-block; }
+    .env-production  { background: rgba(22,163,74,0.08);  color: #15803d; }
+    .env-staging     { background: rgba(217,119,6,0.08);  color: #b45309; }
+    .env-development { background: rgba(100,116,139,0.1); color: #475569; }
+    .env-unknown     { background: rgba(100,116,139,0.1); color: #64748b; }
+    .cell-mono { font-family: var(--mono); font-size: 13px; color: var(--text); }
+    .sparkline { display: flex; align-items: flex-end; gap: 2px; height: 36px; }
+    .spark-bar { width: 3px; border-radius: 1px; }
+    .last-call { font-family: var(--mono); font-size: 12px; color: var(--text-muted); }
+    .status-cell { text-align: right; font-family: var(--mono); font-size: 11px; letter-spacing: 0.5px; text-transform: uppercase; }
+    .status-empty { color: var(--text-faint); }
+
+    /* BOTTOM PANELS */
+    .bottom-grid { display: grid; grid-template-columns: 1.4fr 1fr; gap: 20px; }
+    .panel { border: var(--rule); border-radius: 4px; background: var(--bg-card); }
+    .panel-head {
+      padding: 12px 18px; border-bottom: var(--rule);
+      display: flex; align-items: center;
+      font-family: var(--mono); font-size: 11px; letter-spacing: 0.6px; text-transform: uppercase; color: var(--text-faint);
+    }
+    .panel-head-right { margin-left: auto; text-transform: none; letter-spacing: 0; }
+    .activity-list { padding: 8px 18px; }
+    .activity-row {
+      display: grid; grid-template-columns: 72px 80px 1fr;
+      padding: 6px 0; font-family: var(--mono); font-size: 12px;
+      border-top: 1px dashed #eeece5; align-items: baseline;
+    }
+    .activity-row:first-child { border-top: none; }
+    .act-time { color: var(--text-faint); }
+    .act-tag { color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.4px; font-size: 10px; }
+    .alert-item { padding: 14px 18px; border-top: var(--hair); display: flex; align-items: center; gap: 12px; }
+    .alert-item:first-child { border-top: none; }
+    .alert-glyph { font-family: var(--mono); font-size: 11px; font-weight: 700; width: 16px; flex-shrink: 0; }
+    .alert-text { flex: 1; }
+    .alert-title { font-size: 13px; color: var(--text); }
+    .alert-meta { font-family: var(--mono); font-size: 11px; color: var(--text-faint); margin-top: 2px; }
+    .alert-badge { font-family: var(--mono); font-size: 10px; letter-spacing: 0.5px; text-transform: uppercase; padding: 2px 7px; border-radius: 3px; }
+    .alert-review { font-family: var(--mono); font-size: 11px; color: var(--accent); cursor: pointer; flex-shrink: 0; }
+
+    @media (max-width: 900px) {
+      .layout { grid-template-columns: 1fr; }
+      .sidebar { display: none; }
+      .table-head, .table-row { grid-template-columns: 2fr 1fr 60px 1fr 110px; }
+      .table-head span:nth-child(5), .table-row > *:nth-child(5) { display: none; }
+      .bottom-grid { grid-template-columns: 1fr; }
+      .kpi-grid { grid-template-columns: repeat(2,1fr); }
+      .kpi-cell:nth-child(3) { border-left: none; border-top: var(--rule); }
+      .kpi-cell:nth-child(4) { border-top: var(--rule); }
+    }
+
+    @media (max-width: 680px) {
+      .page { border-left: none; border-right: none; }
+      .topbar { padding: 12px 16px; gap: 10px; flex-wrap: wrap; }
+      .topbar-sep,
+      .topbar-crumb,
+      .topbar-links { display: none; }
+      .topbar-session { margin-left: auto; }
+      .main { padding: 20px 16px 28px; }
+      .page-header { flex-direction: column; align-items: flex-start; gap: 12px; }
+      .page-meta { margin-left: 0; }
+      .page-actions { margin-left: 0; width: 100%; flex-wrap: wrap; }
+      .page-actions button { flex: 1 1 140px; }
+      .filter-bar { flex-wrap: wrap; }
+      .filter-sort { width: 100%; margin-left: 0; }
+      .table-wrap { overflow-x: auto; }
+      .table-head,
+      .table-row { min-width: 640px; }
     }
   </style>
+  <link rel="stylesheet" href="/css/site-theme.css">
 </head>
-<body class="text-gray-100 min-h-screen flex justify-center">
-  <div class="w-full max-w-[1600px] flex relative">
+<body>
 
-  <!-- Sidebar Overlay (mobile) -->
-  <div id="sidebarOverlay" class="fixed inset-0 bg-black/60 z-40 hidden lg:hidden" onclick="toggleMobileSidebar()"></div>
+<div class="page">
 
-  <!-- Left Sidebar -->
-  <aside id="sidebar" class="fixed top-0 left-0 h-full bg-card border-r border-border z-50 flex flex-col transition-all duration-200 sidebar-expanded -translate-x-full lg:translate-x-0">
-    <!-- Logo -->
-    <div class="flex items-center gap-3 px-4 h-14 border-b border-border flex-shrink-0">
-      <img src="/og-image2.png" alt="VaultProof" class="w-9 h-9 flex-shrink-0 rounded-lg" />
-      <span class="text-lg font-bold sidebar-logo-text tracking-tight" style="font-family:'Space Grotesk',sans-serif">VaultProof</span>
+<!-- TOP BAR -->
+<div class="topbar">
+  <div class="topbar-logo">
+    <span class="topbar-logo-name">vaultproof</span>
+  </div>
+  <span class="topbar-sep">/</span>
+  <span>dashboard</span>
+  <span class="topbar-sep">/</span>
+  <span class="topbar-crumb" id="org-name">acme-inc</span>
+
+  <div class="topbar-session">
+    <span class="topbar-email" id="user-email">loading...</span>
+    <div class="topbar-avatar" id="user-avatar">NY</div>
+    <button type="button" class="topbar-signout" id="signOutBtn">sign out</button>
+  </div>
+</div>
+
+<!-- LAYOUT -->
+<div class="layout">
+
+  <!-- SIDEBAR -->
+  <aside class="sidebar">
+    <div class="sidebar-group">
+      <div class="sidebar-head">overview</div>
+      <a href="/app/" class="sidebar-item active"><span class="sidebar-dot">●</span> projects</a>
+      <a href="/app/activity" class="sidebar-item"><span class="sidebar-dot">●</span> activity</a>
+      <a href="/app/alerts" class="sidebar-item"><span class="sidebar-dot">●</span> alerts</a>
     </div>
-
-    <!-- Nav -->
-    <nav class="flex-1 px-2 py-2 space-y-0.5 overflow-y-auto">
-      <a href="/app/" class="sidebar-nav-item flex items-center gap-3 px-3 py-2 rounded-md bg-white/[0.08] text-brand font-medium text-sm transition">
-        <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zm10 0a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zm10 0a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z"/>
-        </svg>
-        <span class="sidebar-label">Dashboard</span>
-      </a>
-      <a id="nav-api-keys" href="/app/keys" class="sidebar-nav-item flex items-center gap-3 px-3 py-2 rounded-md text-gray-400 hover:text-white hover:bg-white/[0.06] text-sm transition">
-        <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z"/>
-        </svg>
-        <span class="sidebar-label">API Keys</span>
-      </a>
-      <a id="nav-agents" href="/app/agents" class="sidebar-nav-item flex items-center gap-3 px-3 py-2 rounded-md text-gray-400 hover:text-white hover:bg-white/[0.06] text-sm transition">
-        <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17H3a2 2 0 01-2-2V5a2 2 0 012-2h14a2 2 0 012 2v10a2 2 0 01-2 2h-2"/>
-        </svg>
-        <span class="sidebar-label">Agents</span>
-      </a>
-      <a id="nav-scanner" href="/app/scanner" class="sidebar-nav-item flex items-center gap-3 px-3 py-2 rounded-md text-gray-400 hover:text-white hover:bg-white/[0.06] text-sm transition">
-        <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
-        </svg>
-        <span class="sidebar-label">Scanner</span>
-      </a>
-      <a id="nav-access-logs" href="/app/logs" class="sidebar-nav-item flex items-center gap-3 px-3 py-2 rounded-md text-gray-400 hover:text-white hover:bg-white/[0.06] text-sm transition">
-        <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"/>
-        </svg>
-        <span class="sidebar-label">Access Logs</span>
-      </a>
-      <a id="nav-settings" href="/app/settings" class="sidebar-nav-item flex items-center gap-3 px-3 py-2 rounded-md text-gray-400 hover:text-white hover:bg-white/[0.06] text-sm transition">
-        <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.066 2.573c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.573 1.066c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.066-2.573c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/>
-          <path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
-        </svg>
-        <span class="sidebar-label">Settings</span>
-      </a>
-      <a href="/app/plans" class="sidebar-nav-item flex items-center gap-3 px-3 py-2 rounded-md text-gray-400 hover:text-white hover:bg-white/[0.06] text-sm transition">
-        <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z"/>
-        </svg>
-        <span class="sidebar-label">Plans</span>
-      </a>
-
-      <div class="mt-4 pt-4 border-t border-border">
-        <a href="/docs" class="sidebar-nav-item flex items-center gap-3 px-3 py-2 rounded-md text-gray-400 hover:text-white hover:bg-white/[0.06] text-sm transition">
-          <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"/>
-          </svg>
-          <span class="sidebar-label">Documentation</span>
-        </a>
-        <a href="mailto:hello@vaultproof.dev" class="sidebar-nav-item flex items-center gap-3 px-3 py-2 rounded-md text-gray-400 hover:text-white hover:bg-white/[0.06] text-sm transition">
-          <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/>
-          </svg>
-          <span class="sidebar-label">Questions? hello@vaultproof.dev</span>
-        </a>
-      </div>
-    </nav>
-
-    <!-- Sidebar Bottom -->
-    <div class="sidebar-bottom px-3 py-3 border-t border-border flex-shrink-0">
-      <div class="sidebar-user-info text-xs text-gray-500 truncate mb-2" id="sidebarEmail"></div>
-      <button id="logoutBtn" type="button" class="flex items-center gap-2 text-sm text-gray-400 hover:text-red-400 transition">
-        <svg class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"/>
-        </svg>
-        <span class="logout-text sidebar-label">Logout</span>
-      </button>
+    <div class="sidebar-group">
+      <div class="sidebar-head">vault</div>
+      <a href="/app/keys" class="sidebar-item"><span class="sidebar-dot">●</span> keys</a>
+      <a href="/app/settings" class="sidebar-item"><span class="sidebar-dot">●</span> settings</a>
+      <a href="/app/plans" class="sidebar-item"><span class="sidebar-dot">●</span> plans</a>
+    </div>
+    <div class="sidebar-group">
+      <div class="sidebar-head">scanner</div>
+      <a href="/app/scanner" class="sidebar-item"><span class="sidebar-dot">●</span> repos</a>
+    </div>
+    <div class="sidebar-group">
+      <div class="sidebar-head">help</div>
+      <a href="/docs" class="sidebar-item"><span class="sidebar-dot">●</span> docs</a>
+      <a href="#" class="sidebar-item"><span class="sidebar-dot">●</span> changelog</a>
+      <a href="mailto:hello@vaultproof.dev" class="sidebar-item"><span class="sidebar-dot">●</span> support</a>
+    </div>
+    <div class="usage-box">
+      <div class="usage-label" id="usagePlanLabel">plan loading</div>
+      <div class="usage-row"><span id="usageMetricLabel">all calls</span><span id="usageMetricValue">—</span></div>
+      <div class="usage-bar-track"><div class="usage-bar-fill" id="usageBarFill" style="width:0%"></div></div>
+      <div class="usage-reset" id="usageMetricNote">loading…</div>
     </div>
   </aside>
 
-  <!-- Main wrapper -->
-  <div id="mainWrapper" class="flex-1 flex flex-col min-h-screen transition-all duration-200 lg:ml-[220px]">
-
-    <!-- Top Navbar -->
-    <header class="sticky top-0 z-30 bg-surface/80 backdrop-blur-xl border-b border-border h-14 flex items-center px-4 lg:px-8 gap-4">
-      <!-- Mobile hamburger -->
-      <button id="menuBtn" class="lg:hidden text-gray-400 hover:text-white p-1.5 -ml-1.5">
-        <svg class="w-6 h-6" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" d="M4 6h16M4 12h16M4 18h16"/>
-        </svg>
-      </button>
-
-      <div class="flex-1"></div>
-
-      <div class="flex items-center gap-3">
-        <!-- Onboarding tour button -->
-        <button id="onboardingBtn" onclick="startAppTour()" class="inline-flex items-center gap-2 px-3 py-1.5 bg-brand/10 hover:bg-brand/20 text-brand border border-brand/20 rounded-lg text-xs font-medium transition">
-          <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
-          Tour
-        </button>
-        <!-- Notification bell -->
-        <div class="relative">
-          <button id="notifBell" onclick="toggleNotifications()" class="relative p-2 text-gray-400 hover:text-white transition rounded-lg hover:bg-white/5">
-            <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"/>
-            </svg>
-            <span id="notifDot" class="absolute top-1.5 right-1.5 w-2 h-2 bg-red-500 rounded-full hidden"></span>
-          </button>
-
-          <!-- Notification dropdown -->
-          <div id="notifDropdown" class="hidden absolute right-0 top-full mt-2 w-80 bg-card border border-border rounded-lg shadow-2xl z-50 overflow-hidden">
-            <div class="px-4 py-3 border-b border-border flex items-center justify-between">
-              <span class="text-sm font-semibold text-white">Notifications</span>
-              <button onclick="markAllRead()" class="text-xs text-brand hover:text-brand-hover transition">Mark all read</button>
-            </div>
-            <div id="notifList" class="max-h-80 overflow-y-auto">
-              <div class="px-4 py-6 text-center text-sm text-gray-500">No notifications</div>
-            </div>
-          </div>
-        </div>
-
-        <!-- User avatar -->
-        <div id="userAvatar" class="w-8 h-8 rounded-full bg-gradient-to-br from-brand to-cyan flex items-center justify-center text-sm font-semibold text-white cursor-default select-none"></div>
+  <!-- MAIN -->
+  <main class="main">
+    <div class="page-header">
+      <h1 class="page-title">Projects</h1>
+      <span class="page-meta" id="pageMeta">/ loading…</span>
+      <div class="page-actions">
+        <button class="btn-outline">import .env</button>
+        <button class="btn-primary">+ new project</button>
       </div>
-    </header>
-
-    <!-- Page Content -->
-    <div class="flex-1 flex">
-      <!-- Main content area -->
-      <main class="flex-1 p-5 lg:p-6 overflow-y-auto">
-        <!-- Toast notification -->
-        <div id="toast" class="fixed top-4 right-4 z-50 hidden max-w-sm">
-          <div id="toastInner" class="flex items-center gap-3 px-4 py-3 rounded-lg border text-sm shadow-lg backdrop-blur-sm">
-            <span id="toastMsg"></span>
-            <button onclick="document.getElementById('toast').classList.add('hidden')" class="text-gray-400 hover:text-white ml-2">&times;</button>
-          </div>
-        </div>
-
-        <!-- Session expired overlay -->
-        <div id="sessionExpired" class="fixed inset-0 z-[100] bg-black/80 backdrop-blur-sm hidden flex items-center justify-center">
-          <div class="bg-[#111118] border border-[#1e1e2e] rounded-lg p-8 max-w-sm text-center">
-            <div class="w-14 h-14 rounded-full bg-red-500/10 border border-red-500/20 flex items-center justify-center mx-auto mb-4">
-              <svg class="w-7 h-7 text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>
-            </div>
-            <h3 class="text-lg font-semibold text-white mb-2">Session Expired</h3>
-            <p class="text-sm text-gray-400 mb-6">Your session has expired. Please sign in again to continue.</p>
-            <a href="login" class="inline-block px-6 py-2.5 bg-[#6366f1] hover:bg-[#5558e6] text-white rounded-lg text-sm font-medium transition btn-glow">Sign In Again</a>
-          </div>
-        </div>
-
-        <div class="max-w-[1200px] space-y-6">
-
-          <!-- Page Header -->
-          <div class="anim-fade-up">
-            <h1 class="text-2xl font-bold tracking-tight">Dashboard</h1>
-            <p class="text-gray-500 text-sm mt-1">Monitor your API key usage and activity</p>
-          </div>
-
-          <!-- Onboarding Checklist -->
-          <div id="onboardingChecklist" class="hidden bg-card border border-border rounded-lg p-5 anim-fade-up" style="animation-delay:60ms">
-            <div class="flex items-start justify-between mb-4">
-              <div>
-                <h2 class="text-lg font-semibold text-white">Welcome to VaultProof!</h2>
-                <p class="text-gray-500 text-sm mt-1">Get started in a few steps:</p>
-              </div>
-              <button onclick="dismissOnboarding()" class="text-gray-500 hover:text-white transition p-1 -mt-1 -mr-1" title="Dismiss">
-                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
-              </button>
-            </div>
-            <div class="space-y-3" id="onboardingSteps">
-              <div class="flex items-center gap-3 p-2.5 rounded-md bg-surface border border-border" id="onb-step-project">
-                <span id="onb-check-project" class="flex-shrink-0 w-6 h-6 rounded-full border-2 border-gray-600 flex items-center justify-center text-transparent">
-                  <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>
-                </span>
-                <div class="flex-1">
-                  <span class="text-sm font-medium text-white">Run <code class="text-xs font-mono text-indigo-400 bg-indigo-500/10 px-2 py-0.5 rounded">npx @vaultproof/init</code> in your project</span>
-                </div>
-              </div>
-              <div class="flex items-center gap-3 p-2.5 rounded-md bg-surface border border-border" id="onb-step-storekey">
-                <span id="onb-check-storekey" class="flex-shrink-0 w-6 h-6 rounded-full border-2 border-gray-600 flex items-center justify-center text-transparent">
-                  <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>
-                </span>
-                <div class="flex-1">
-                  <span class="text-sm font-medium text-white">Keys detected and protected</span>
-                  <span class="ml-2 text-xs text-gray-500">auto-checked when your keys are split and stored</span>
-                </div>
-              </div>
-              <div class="flex items-center gap-3 p-2.5 rounded-md bg-surface border border-border" id="onb-step-proxy">
-                <span id="onb-check-proxy" class="flex-shrink-0 w-6 h-6 rounded-full border-2 border-gray-600 flex items-center justify-center text-transparent">
-                  <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>
-                </span>
-                <div class="flex-1">
-                  <span class="text-sm font-medium text-white">First proxied API call</span>
-                  <span class="ml-2 text-xs text-gray-500">auto-checked when your app makes its first call through VaultProof</span>
-                </div>
-              </div>
-            </div>
-            <div class="mt-4 flex justify-end">
-              <button onclick="dismissOnboarding()" class="text-sm text-gray-500 hover:text-white transition">Dismiss</button>
-            </div>
-          </div>
-
-          <!-- Stat Cards Row -->
-          <div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4" id="statsGrid">
-            <!-- Total Keys -->
-            <div class="bg-card border border-border rounded-lg p-4 anim-fade-up" style="animation-delay:80ms">
-              <div class="flex items-center justify-between mb-2">
-                <span class="text-xs text-gray-500">Total Keys</span>
-                <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none"><path d="M15 7a2 2 0 012 2 6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z" fill="#818cf8" opacity="0.15" stroke="#818cf8" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
-              </div>
-              <div class="text-3xl font-bold tracking-tight" id="statKeys">
-                <div class="h-9 w-16 bg-white/5 rounded-lg animate-pulse"></div>
-              </div>
-              <div class="mt-2"><canvas class="sparkline" data-stat="keys" width="60" height="20"></canvas></div>
-            </div>
-            <!-- Active Apps -->
-            <div class="bg-card border border-border rounded-lg p-4 anim-fade-up" style="animation-delay:160ms">
-              <div class="flex items-center justify-between mb-2">
-                <span class="text-xs text-gray-500">Active Apps</span>
-                <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none"><rect x="5" y="5" width="14" height="14" rx="3" fill="#818cf8" opacity="0.15" stroke="#818cf8" stroke-width="1.5"/><rect x="9" y="9" width="6" height="6" rx="1" fill="#818cf8" opacity="0.3"/></svg>
-              </div>
-              <div class="text-3xl font-bold tracking-tight" id="statApps">
-                <div class="h-9 w-16 bg-white/5 rounded-lg animate-pulse"></div>
-              </div>
-              <div class="mt-2"><canvas class="sparkline" data-stat="apps" width="60" height="20"></canvas></div>
-            </div>
-            <!-- Requests This Month -->
-            <div class="bg-card border border-border rounded-lg p-4 anim-fade-up" style="animation-delay:240ms">
-              <div class="flex items-center justify-between mb-2">
-                <span class="text-xs text-gray-500">Requests This Month</span>
-                <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none"><path d="M3 17L9 11L13 15L21 7" stroke="#818cf8" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/><path d="M15 7H21V13" stroke="#818cf8" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" opacity="0.5"/></svg>
-              </div>
-              <div class="text-3xl font-bold tracking-tight" id="statCalls">
-                <div class="h-9 w-16 bg-white/5 rounded-lg animate-pulse"></div>
-              </div>
-              <div class="mt-2"><canvas class="sparkline" data-stat="calls" width="60" height="20"></canvas></div>
-            </div>
-            <!-- Error Rate -->
-            <div class="bg-card border border-border rounded-lg p-4 anim-fade-up" style="animation-delay:320ms">
-              <div class="flex items-center justify-between mb-2">
-                <span class="text-xs text-gray-500">Error Rate</span>
-                <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none"><path d="M12 2L2 20H22L12 2Z" fill="#fbbf24" opacity="0.1" stroke="#fbbf24" stroke-width="1.5" stroke-linejoin="round"/><path d="M12 10V14" stroke="#fbbf24" stroke-width="1.5" stroke-linecap="round"/><circle cx="12" cy="17" r="0.5" fill="#fbbf24"/></svg>
-              </div>
-              <div class="text-3xl font-bold tracking-tight" id="statErrors">
-                <div class="h-9 w-16 bg-white/5 rounded-lg animate-pulse"></div>
-              </div>
-              <div class="mt-2"><canvas class="sparkline" data-stat="errors" width="60" height="20"></canvas></div>
-            </div>
-          </div>
-
-          <!-- Usage Chart -->
-          <div class="bg-card border border-border rounded-lg p-5 anim-fade-up" style="animation-delay:400ms">
-            <div class="flex items-center justify-between mb-4">
-              <h2 class="text-lg font-semibold">API Calls</h2>
-              <select id="chartDays" onchange="loadUsageChart()" class="bg-[#0a0a0f] border border-[#1e1e2e] text-gray-300 rounded-md px-3 py-1.5 text-sm focus:border-brand focus:outline-none">
-                <option value="7">Last 7 days</option>
-                <option value="14">Last 14 days</option>
-                <option value="30" selected>Last 30 days</option>
-                <option value="60">Last 60 days</option>
-                <option value="90">Last 90 days</option>
-              </select>
-            </div>
-            <div class="relative" style="height:300px;">
-              <canvas id="usageChart"></canvas>
-              <div id="chartLoading" class="absolute inset-0 flex items-center justify-center">
-                <div class="h-6 w-6 border-2 border-brand border-t-transparent rounded-full animate-spin"></div>
-              </div>
-            </div>
-          </div>
-
-          <!-- API Keys Table -->
-          <div id="keys-table" class="bg-card border border-border rounded-lg overflow-hidden anim-fade-up" style="animation-delay:500ms">
-            <div class="flex items-center justify-between px-5 py-3 border-b border-border">
-              <h2 class="text-sm font-semibold">API Keys</h2>
-              <a href="/app/keys" class="text-sm text-brand hover:text-brand-light transition font-medium">Manage Keys &rarr;</a>
-            </div>
-            <div class="overflow-x-auto">
-              <table class="w-full text-sm">
-                <thead>
-                  <tr class="border-b border-border text-gray-500 text-left text-xs uppercase tracking-wider">
-                    <th class="px-4 py-2.5 font-medium">Key Name</th>
-                    <th class="px-4 py-2.5 font-medium">Provider</th>
-                    <th class="px-4 py-2.5 font-medium">Created</th>
-                    <th class="px-4 py-2.5 font-medium">Last Used</th>
-                    <th class="px-4 py-2.5 font-medium">Calls/mo</th>
-                    <th class="px-4 py-2.5 font-medium">Status</th>
-                    <th class="px-4 py-2.5 font-medium">Actions</th>
-                  </tr>
-                </thead>
-                <tbody id="keysBody">
-                  <tr><td colspan="7" class="px-4 py-10 text-center text-gray-600">
-                    <div class="flex items-center justify-center gap-2"><div class="h-4 w-4 border-2 border-gray-600 border-t-transparent rounded-full animate-spin"></div> Loading keys...</div>
-                  </td></tr>
-                </tbody>
-              </table>
-            </div>
-          </div>
-
-        </div>
-
-        <!-- SDK & CLI Getting Started -->
-        <div class="grid grid-cols-1 lg:grid-cols-2 gap-4 mt-6">
-          <!-- SDK Quickstart -->
-          <div id="sdk-card" class="bg-card border border-border rounded-lg p-5 anim-fade-up" style="animation-delay:420ms">
-            <div class="flex items-center gap-2.5 mb-3">
-              <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none"><path d="M10 20L14 4" stroke="#818cf8" stroke-width="1.5" stroke-linecap="round" opacity="0.4"/><path d="M18 8L22 12L18 16" stroke="#818cf8" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/><path d="M6 16L2 12L6 8" stroke="#818cf8" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
-              <h2 class="text-sm font-semibold">Quick Start</h2>
-            </div>
-            <div class="bg-[#0a0a0f] border border-border rounded-md p-4 font-mono text-xs space-y-1.5 overflow-x-auto">
-              <div class="mt-3 text-gray-500"># Run one command</div>
-              <div class="text-cyan-400">npx @vaultproof/init</div>
-              <div class="mt-3 text-gray-500"># After — one project ID, zero secrets</div>
-              <div><span class="text-orange-300">VAULTPROOF_PROJECT_ID</span>=<span class="text-green-400">vp-proj-abc123</span></div>
-              <div><span class="text-orange-300">OPENAI_BASE_URL</span>=<span class="text-green-400">https://init.vaultproof.dev/p/openai/v1</span></div>
-              <div><span class="text-orange-300">OPENAI_API_KEY</span>=<span class="text-green-400">vp-proj-abc123</span></div>
-            </div>
-            <p class="text-xs text-gray-500 mt-3">One command. One project ID. Zero code changes. <a href="/docs" class="text-indigo-400 hover:underline">Full docs &rarr;</a></p>
-          </div>
-
-          <!-- CLI Getting Started -->
-          <div id="cli-card" class="bg-card border border-border rounded-lg p-5 anim-fade-up" style="animation-delay:450ms">
-            <div class="flex items-center gap-2.5 mb-3">
-              <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none"><rect x="3" y="3" width="18" height="18" rx="3" fill="#818cf8" opacity="0.1" stroke="#818cf8" stroke-width="1.5"/><path d="M8 9L11 12L8 15" stroke="#818cf8" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/><path d="M13 15H16" stroke="#818cf8" stroke-width="1.5" stroke-linecap="round"/></svg>
-              <h2 class="text-sm font-semibold">Terminal</h2>
-            </div>
-            <div class="bg-[#0a0a0f] border border-border rounded-md p-4 font-mono text-xs space-y-1.5">
-              <div class="text-gray-500"># Scan and protect (interactive)</div>
-              <div class="flex items-center gap-2">
-                <span class="text-gray-500 select-none">$</span>
-                <span class="text-cyan-400">npx @vaultproof/init</span>
-              </div>
-              <div class="mt-3 text-gray-500"># Scan only, no changes</div>
-              <div class="flex items-center gap-2">
-                <span class="text-gray-500 select-none">$</span>
-                <span class="text-cyan-400">npx @vaultproof/init --dry-run</span>
-              </div>
-              <div class="mt-3 text-gray-500"># CI-friendly non-interactive mode</div>
-              <div class="flex items-center gap-2">
-                <span class="text-gray-500 select-none">$</span>
-                <span class="text-cyan-400">npx @vaultproof/init --yes</span>
-              </div>
-            </div>
-            <p class="text-xs text-gray-500 mt-3">No install needed — runs via npx. <a href="/docs" class="text-indigo-400 hover:underline">Full docs &rarr;</a></p>
-          </div>
-        </div>
-
-        <!-- Quick Access -->
-        <div id="quick-access" class="grid grid-cols-3 gap-4 mt-6 anim-fade-up" style="animation-delay:500ms">
-          <a href="/app/keys" class="bg-card border border-border rounded-lg p-4 hover:border-brand/40 transition group">
-            <div class="flex items-center gap-3 mb-1.5">
-              <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none"><path d="M15 7a2 2 0 012 2 6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z" fill="#818cf8" opacity="0.15" stroke="#818cf8" stroke-width="1.5"/></svg>
-              <span class="text-sm font-semibold text-white group-hover:text-indigo-400 transition">API Keys</span>
-            </div>
-            <p class="text-xs text-gray-500">Store, split, and manage your API keys</p>
-          </a>
-          <a href="/app/logs" class="bg-card border border-border rounded-lg p-4 hover:border-brand/40 transition group">
-            <div class="flex items-center gap-3 mb-1.5">
-              <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none"><rect x="5" y="3" width="14" height="18" rx="2" fill="#818cf8" opacity="0.1" stroke="#818cf8" stroke-width="1.5"/><path d="M9 10L11 12L15 8" stroke="#818cf8" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/><path d="M9 15H15" stroke="#818cf8" stroke-width="1.5" stroke-linecap="round" opacity="0.4"/></svg>
-              <span class="text-sm font-semibold text-white group-hover:text-indigo-400 transition">Access Logs</span>
-            </div>
-            <p class="text-xs text-gray-500">View all API call activity and audit trails</p>
-          </a>
-          <a href="/app/settings" class="bg-card border border-border rounded-lg p-4 hover:border-brand/40 transition group">
-            <div class="flex items-center gap-3 mb-1.5">
-              <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="3" fill="#818cf8" opacity="0.2" stroke="#818cf8" stroke-width="1.5"/><path d="M12 1V3M12 21V23M4.22 4.22L5.64 5.64M18.36 18.36L19.78 19.78M1 12H3M21 12H23M4.22 19.78L5.64 18.36M18.36 5.64L19.78 4.22" stroke="#818cf8" stroke-width="1.5" stroke-linecap="round" opacity="0.4"/></svg>
-              <span class="text-sm font-semibold text-white group-hover:text-indigo-400 transition">Settings</span>
-            </div>
-            <p class="text-xs text-gray-500">Manage your plan, billing, and account</p>
-          </a>
-        </div>
-
-      </main>
-
-      <!-- Activity Feed (right sidebar) -->
-      <aside id="activityPanel" class="hidden xl:block w-80 border-l border-border bg-card/50 flex-shrink-0 overflow-y-auto anim-fade" style="animation-delay:600ms">
-        <div class="p-6">
-          <h3 class="text-sm font-semibold text-gray-400 uppercase tracking-wider mb-4">Recent Activity</h3>
-          <div id="activityFeed" class="space-y-3">
-            <div class="text-center text-gray-600 text-sm py-8">Loading...</div>
-          </div>
-        </div>
-      </aside>
     </div>
-  </div>
+    <p class="page-desc">Every project holds split keys, proxy routes, and a scan history. Alerts fire when a key re-surfaces in a new commit.</p>
 
-  <!-- Quick Actions (floating, bottom right) -->
-  <div class="quick-actions fixed bottom-6 right-6 z-30 flex flex-col gap-2 anim-slide-up" style="animation-delay:800ms">
-    <a href="/app/keys" class="flex items-center gap-2 px-4 py-2.5 bg-brand hover:bg-brand-light text-white text-sm font-medium rounded-lg shadow-lg shadow-brand/25 transition">
-      <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"/></svg>
-      New Key
-    </a>
-    <a href="/app/logs" class="flex items-center gap-2 px-4 py-2.5 bg-white/5 hover:bg-white/10 border border-border text-gray-300 text-sm font-medium rounded-lg backdrop-blur-lg transition">
-      <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/><path stroke-linecap="round" stroke-linejoin="round" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/></svg>
-      View Logs
-    </a>
-    <a href="/app/logs" class="flex items-center gap-2 px-4 py-2.5 bg-white/5 hover:bg-white/10 border border-border text-gray-300 text-sm font-medium rounded-lg backdrop-blur-lg transition">
-      <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 10v6m0 0l-3-3m3 3l3-3M3 17V7a2 2 0 012-2h6l2 2h6a2 2 0 012 2v8a2 2 0 01-2 2H5a2 2 0 01-2-2z"/></svg>
-      Export Audit
-    </a>
-  </div>
-
-  <script src="/js/app-index-4.js" defer></script>
-  </div><!-- max-width wrapper -->
-<!-- Welcome Modal -->
-<div id="welcomeModal" class="hidden fixed inset-0 z-50 flex items-center justify-center p-4" style="background:rgba(0,0,0,0.7);backdrop-filter:blur(4px)">
-  <div class="bg-[#111118] border border-[#1e1e2e] rounded-lg shadow-2xl shadow-black/60 w-full max-w-md p-8" style="animation:slideUp 0.3s ease">
-    <!-- Icon -->
-    <div class="w-12 h-12 rounded-lg bg-indigo-500/15 border border-indigo-500/20 flex items-center justify-center mb-5">
-      <svg class="w-6 h-6 text-indigo-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-        <path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
-      </svg>
+    <!-- KPI GRID -->
+    <div class="kpi-grid">
+      <div class="kpi-cell">
+        <div class="kpi-label">keys under vault</div>
+        <div class="kpi-value" id="kpi-keys">—</div>
+        <div class="kpi-sub" id="kpi-keys-sub">loading…</div>
+      </div>
+      <div class="kpi-cell">
+        <div class="kpi-label">proxied calls · total</div>
+        <div class="kpi-value" id="kpi-calls">—</div>
+        <div class="kpi-sub" id="kpi-calls-sub">loading…</div>
+      </div>
+      <div class="kpi-cell">
+        <div class="kpi-label">active providers</div>
+        <div class="kpi-value" id="kpi-providers">—</div>
+        <div class="kpi-sub" id="kpi-providers-sub">loading…</div>
+      </div>
+      <div class="kpi-cell">
+        <div class="kpi-label">error rate</div>
+        <div class="kpi-value" id="kpi-errors">—</div>
+        <div class="kpi-sub" id="kpi-errors-sub">loading…</div>
+      </div>
     </div>
-    <!-- Heading -->
-    <h2 class="text-xl font-bold text-white mb-2" style="font-family:'Space Grotesk',sans-serif">Welcome to VaultProof</h2>
-    <p class="text-sm text-gray-400 mb-6 leading-relaxed">One command protects every API key in your project. Your keys are split with Shamir Secret Sharing and only assembled briefly during each API call.</p>
-    <!-- Steps -->
-    <div class="space-y-3 mb-6">
-      <div class="flex items-start gap-3">
-        <span class="w-5 h-5 rounded-full bg-indigo-500/20 border border-indigo-500/40 flex items-center justify-center flex-shrink-0 mt-0.5 text-xs text-indigo-400 font-bold">1</span>
-        <div>
-          <p class="text-sm font-medium text-white">Run one command</p>
-          <p class="text-xs text-gray-500">In your project directory, run <code class="text-indigo-400 bg-indigo-500/10 px-1.5 py-0.5 rounded">npx @vaultproof/init</code>. It scans your <code class="text-indigo-400">.env</code> and finds every API key automatically.</p>
+
+    <!-- USAGE CHART -->
+    <div style="border:var(--rule);border-radius:4px;overflow:hidden;background:var(--bg-card);margin-bottom:28px;">
+      <div style="display:flex;align-items:center;padding:12px 18px;border-bottom:var(--rule);">
+        <span style="font-family:var(--mono);font-size:11px;letter-spacing:0.6px;text-transform:uppercase;color:var(--text-faint)">proxy calls · 30d</span>
+        <div style="margin-left:auto;display:flex;gap:16px;font-family:var(--mono);font-size:11px;color:var(--text-faint)">
+          <span style="display:flex;align-items:center;gap:5px"><span style="display:inline-block;width:20px;height:2px;background:var(--accent);border-radius:1px"></span>calls</span>
+          <span style="display:flex;align-items:center;gap:5px"><span style="display:inline-block;width:20px;height:2px;background:#b91c1c;border-radius:1px"></span>errors</span>
         </div>
       </div>
-      <div class="flex items-start gap-3">
-        <span class="w-5 h-5 rounded-full bg-indigo-500/20 border border-indigo-500/40 flex items-center justify-center flex-shrink-0 mt-0.5 text-xs text-indigo-400 font-bold">2</span>
-        <div>
-          <p class="text-sm font-medium text-white">Your keys are protected</p>
-          <p class="text-xs text-gray-500">Each key is Shamir-split locally and uploaded as encrypted shares. Your <code class="text-indigo-400">.env</code> is rewritten with one <code class="text-indigo-400">vp-proj-</code> project ID for everything.</p>
+      <div style="padding:16px 18px;height:180px;position:relative;">
+        <canvas id="usageChart"></canvas>
+      </div>
+    </div>
+
+    <!-- FILTER BAR -->
+    <div class="filter-bar">
+      <span class="filter-chip active" data-filter="all">all</span>
+      <span class="filter-chip" data-filter="production">production</span>
+      <span class="filter-chip" data-filter="staging">staging</span>
+      <span class="filter-chip" data-filter="development">development</span>
+      <span class="filter-chip" data-filter="idle">idle</span>
+      <span class="filter-sort">sort · last activity ↓</span>
+    </div>
+
+    <!-- PROJECT TABLE -->
+    <div class="table-wrap">
+      <div class="table-head">
+        <span>project</span>
+        <span>env</span>
+        <span>keys</span>
+        <span>calls · 30d</span>
+        <span>trend</span>
+        <span>last call</span>
+        <span>status</span>
+      </div>
+
+      <!-- rows injected by JS -->
+      <div id="project-rows"></div>
+    </div>
+
+    <!-- BOTTOM PANELS -->
+    <div class="bottom-grid">
+      <div class="panel">
+        <div class="panel-head">
+          recent activity
+          <span class="panel-head-right" style="color:var(--accent)">● live</span>
+        </div>
+        <div class="activity-list" id="activity-feed">
+          <div class="activity-row" style="color:var(--text-faint)"><span class="act-time">—</span><span class="act-tag">—</span><span>loading…</span></div>
         </div>
       </div>
-      <div class="flex items-start gap-3">
-        <span class="w-5 h-5 rounded-full bg-indigo-500/20 border border-indigo-500/40 flex items-center justify-center flex-shrink-0 mt-0.5 text-xs text-indigo-400 font-bold">3</span>
-        <div>
-          <p class="text-sm font-medium text-white">Your code doesn't change</p>
-          <p class="text-xs text-gray-500">Your SDKs read the proxy URLs from the environment automatically. Requests flow through <code class="text-indigo-400">init.vaultproof.dev</code> — your real keys stay hidden.</p>
+
+      <div class="panel">
+        <div class="panel-head">
+          open alerts · <span id="alertsCount">—</span>
+          <span class="panel-head-right" id="alertsStatus" style="color:#b91c1c">loading…</span>
+        </div>
+        <div id="alertsList">
+          <div class="alert-item">
+            <span class="alert-glyph" style="color:#8a8a82">—</span>
+            <div class="alert-text">
+              <div class="alert-title">Loading alerts…</div>
+              <div class="alert-meta">scanner history</div>
+            </div>
+          </div>
         </div>
       </div>
     </div>
-    <!-- CTA -->
-    <button onclick="dismissWelcome()" class="w-full px-4 py-2.5 bg-[#6366f1] hover:bg-[#5558e6] text-white rounded-lg text-sm font-semibold transition">
-      Get started
-    </button>
-  </div>
+  </main>
 </div>
 
-<!-- Promo Feedback Nudge -->
-<div id="feedbackNudge" class="hidden fixed bottom-6 right-6 z-50 bg-[#111118] border border-[#6366f1]/30 rounded-lg p-4 shadow-2xl shadow-black/50 max-w-sm" style="animation: fadeIn 0.3s ease">
-  <div class="text-sm font-semibold text-white mb-1">You're helping shape VaultProof!</div>
-  <div class="text-xs text-gray-500 mb-3">As an early adopter, your feedback directly shapes what we build next.</div>
-  <textarea id="feedbackText" rows="3" class="w-full bg-[#0a0a0f] border border-[#1e1e2e] rounded-md px-3 py-2 text-sm text-gray-300 focus:border-[#6366f1] focus:outline-none resize-none" placeholder="What would you improve?"></textarea>
-  <div class="flex gap-2 mt-3">
-    <button onclick="submitFeedback()" class="flex-1 px-4 py-2 bg-[#6366f1] hover:bg-[#5558e6] text-white rounded-lg text-sm font-medium transition">Submit</button>
-    <button onclick="dismissFeedback()" class="px-4 py-2 text-gray-500 hover:text-gray-300 text-sm transition">Later</button>
-  </div>
-</div>
-<!-- Guided Tour -->
-<div id="guide-overlay" class="guide-overlay"></div>
-<div id="guide-bubble" class="guide-bubble">
-  <div id="guide-arrow" class="guide-bubble-arrow" data-pos="bottom"></div>
-  <div id="guide-text" class="text-sm text-gray-200 mb-3"></div>
-  <div class="flex items-center justify-between">
-    <span id="guide-step-counter" class="text-xs text-gray-500">Step 1 of 8</span>
-    <div class="flex items-center gap-1">
-      <button id="guide-skip" onclick="endTour()" class="text-xs text-gray-500 hover:text-gray-300 px-2 py-1.5 transition">Skip</button>
-      <button id="guide-back" onclick="prevTourStep()" class="text-xs text-gray-400 hover:text-white px-3 py-1.5 transition">Back</button>
-      <button id="guide-next" onclick="nextTourStep()" class="text-xs bg-indigo-600 hover:bg-indigo-500 text-white px-4 py-1.5 rounded-lg font-medium transition">Next</button>
-    </div>
-  </div>
-</div>
-<script src="/js/app-index-5.js" defer></script>
-
-<script src="/js/analytics.js" defer></script>
-<script src="/js/app-index-6.js" defer></script>
+</div><!-- /.page -->
 </body>
 </html>

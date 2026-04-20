@@ -1,250 +1,60 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <!-- Google Analytics -->
-    <script async src="https://www.googletagmanager.com/gtag/js?id=G-NE5RYX1WTF"></script>
-    <script src="/js/app-logs-1.js" defer></script>
-
-    <link rel="icon" type="image/png" href="/favicon.png">
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Logs — VaultProof</title>
-  <!-- Tailwind CDN: SRI not applicable (dynamic response) -->
-  <script src="https://cdn.tailwindcss.com/3.4.17"></script>
-  <link rel="preconnect" href="https://fonts.googleapis.com" />
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet" />
-  <script src="/js/app-logs-2.js" defer></script>
+  <meta charset="UTF-8">
+  <meta http-equiv="refresh" content="0; url=/app/activity">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Redirecting to Activity — VaultProof</title>
+  <link rel="icon" type="image/png" href="/favicon.png">
+  <link rel="stylesheet" href="/css/site-theme.css">
   <style>
-    body { font-family: 'Inter', sans-serif; background: #0a0a0f; }
-    .font-mono, code, .monospace { font-family: 'JetBrains Mono', monospace; }
-    ::-webkit-scrollbar { width: 6px; }
-    ::-webkit-scrollbar-track { background: #0a0a0f; }
-    ::-webkit-scrollbar-thumb { background: #1e1e2e; border-radius: 3px; }
-    .btn-glow { box-shadow: 0 0 20px rgba(99, 102, 241, 0.15); }
-    .btn-glow:hover { box-shadow: 0 0 25px rgba(99, 102, 241, 0.25); }
-    @keyframes fadeSlideIn {
-      from { opacity: 0; transform: translateY(8px); }
-      to { opacity: 1; transform: translateY(0); }
+    body {
+      margin: 0;
+      min-height: 100vh;
+      display: grid;
+      place-items: center;
+      background: #e8e6e0;
+      color: #171717;
+      font: 14px/1.5 "Inter", system-ui, sans-serif;
     }
-    .row-animate { animation: fadeSlideIn 0.3s ease forwards; opacity: 0; }
-    .row-hover:hover { border-left: 3px solid #6366f1; }
-    .date-pill { transition: all 0.15s ease; }
-    .date-pill.active { background: #6366f1; color: white; }
-    .date-pill:not(.active) { background: transparent; color: #9ca3af; }
-    .date-pill:not(.active):hover { background: rgba(99, 102, 241, 0.1); color: #c7d2fe; }
-    @keyframes pulse-green { 0%, 100% { box-shadow: 0 0 0 0 rgba(34, 197, 94, 0.4); } 50% { box-shadow: 0 0 0 4px rgba(34, 197, 94, 0); } }
-    .pulse-green { animation: pulse-green 2s infinite; }
+    .card {
+      width: min(480px, calc(100vw - 32px));
+      border: 1px solid #e7e5de;
+      background: #fafaf7;
+      padding: 24px;
+    }
+    .eyebrow,
+    .link {
+      font: 12px/1.4 "JetBrains Mono", ui-monospace, monospace;
+    }
+    .eyebrow {
+      color: #8a8a82;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      margin-bottom: 8px;
+    }
+    h1 {
+      margin: 0 0 8px;
+      font: 600 28px/1.1 "Inter Tight", "Inter", system-ui, sans-serif;
+    }
+    p {
+      margin: 0;
+      color: #525252;
+    }
+    .link {
+      display: inline-block;
+      margin-top: 16px;
+      color: #171717;
+      text-decoration: none;
+    }
   </style>
 </head>
-<body class="text-gray-100 min-h-screen">
-
-  <!-- Mobile Header -->
-  <div class="lg:hidden fixed top-0 left-0 right-0 z-50 bg-[#0a0a0f] border-b border-[#1e1e2e] px-4 py-3 flex items-center justify-between">
-    <button id="menuBtn" class="text-gray-400 hover:text-white">
-      <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/></svg>
-    </button>
-    <span class="text-lg font-bold" style="font-family:'Space Grotesk',sans-serif">VaultProof</span>
-    <div class="w-6"></div>
-  </div>
-
-  <!-- Sidebar Overlay -->
-  <div id="sidebarOverlay" class="fixed inset-0 bg-black/60 z-40 hidden lg:hidden" onclick="toggleMobileSidebar()"></div>
-
-  <!-- Left Sidebar -->
-  <aside id="sidebar" class="fixed top-0 left-0 h-full bg-card border-r border-border z-50 flex flex-col transition-all duration-200 sidebar-expanded -translate-x-full lg:translate-x-0">
-    <!-- Logo -->
-    <div class="flex items-center gap-3 px-4 h-14 border-b border-border flex-shrink-0">
-      <img src="/og-image2.png" alt="VaultProof" class="w-9 h-9 flex-shrink-0 rounded-lg" />
-      <span class="text-lg font-bold sidebar-logo-text tracking-tight" style="font-family:'Space Grotesk',sans-serif">VaultProof</span>
-    </div>
-
-    <!-- Nav -->
-    <nav class="flex-1 px-2 py-2 space-y-0.5 overflow-y-auto">
-      <a href="/app/" class="sidebar-nav-item flex items-center gap-3 px-3 py-2 rounded-md text-gray-400 hover:text-white hover:bg-white/[0.06] text-sm transition">
-        <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zm10 0a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zm10 0a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z"/>
-        </svg>
-        <span class="sidebar-label">Dashboard</span>
-      </a>
-      <a href="/app/keys" class="sidebar-nav-item flex items-center gap-3 px-3 py-2 rounded-md text-gray-400 hover:text-white hover:bg-white/[0.06] text-sm transition">
-        <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z"/>
-        </svg>
-        <span class="sidebar-label">API Keys</span>
-      </a>
-      <a href="/app/agents" class="sidebar-nav-item flex items-center gap-3 px-3 py-2 rounded-md text-gray-400 hover:text-white hover:bg-white/[0.06] text-sm transition">
-        <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17H3a2 2 0 01-2-2V5a2 2 0 012-2h14a2 2 0 012 2v10a2 2 0 01-2 2h-2"/>
-        </svg>
-        <span class="sidebar-label">Agents</span>
-      </a>
-      <a href="/app/scanner" class="sidebar-nav-item flex items-center gap-3 px-3 py-2 rounded-md text-gray-400 hover:text-white hover:bg-white/[0.06] text-sm transition">
-        <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
-        </svg>
-        <span class="sidebar-label">Scanner</span>
-      </a>
-      <a href="/app/logs" class="sidebar-nav-item flex items-center gap-3 px-3 py-2 rounded-md bg-white/[0.08] text-brand font-medium text-sm transition">
-        <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"/>
-        </svg>
-        <span class="sidebar-label">Access Logs</span>
-      </a>
-      <a href="/app/settings" class="sidebar-nav-item flex items-center gap-3 px-3 py-2 rounded-md text-gray-400 hover:text-white hover:bg-white/[0.06] text-sm transition">
-        <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.066 2.573c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.573 1.066c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.066-2.573c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/>
-          <path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
-        </svg>
-        <span class="sidebar-label">Settings</span>
-      </a>
-      <a href="/app/plans" class="sidebar-nav-item flex items-center gap-3 px-3 py-2 rounded-md text-gray-400 hover:text-white hover:bg-white/[0.06] text-sm transition">
-        <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z"/>
-        </svg>
-        <span class="sidebar-label">Plans</span>
-      </a>
-
-      <div class="mt-4 pt-4 border-t border-border">
-        <a href="/docs" class="sidebar-nav-item flex items-center gap-3 px-3 py-2 rounded-md text-gray-400 hover:text-white hover:bg-white/[0.06] text-sm transition">
-          <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"/>
-          </svg>
-          <span class="sidebar-label">Documentation</span>
-        </a>
-        <a href="mailto:hello@vaultproof.dev" class="sidebar-nav-item flex items-center gap-3 px-3 py-2 rounded-md text-gray-400 hover:text-white hover:bg-white/[0.06] text-sm transition">
-          <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/>
-          </svg>
-          <span class="sidebar-label">Questions? hello@vaultproof.dev</span>
-        </a>
-      </div>
-    </nav>
-
-    <!-- Sidebar Bottom -->
-    <div class="sidebar-bottom px-3 py-3 border-t border-border flex-shrink-0">
-      <div class="sidebar-user-info text-xs text-gray-500 truncate mb-2" id="sidebarEmail"></div>
-      <button id="logoutBtn" type="button" class="flex items-center gap-2 text-sm text-gray-400 hover:text-red-400 transition">
-        <svg class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"/>
-        </svg>
-        <span class="logout-text sidebar-label">Logout</span>
-      </button>
-    </div>
-  </aside>
-
-  <!-- Toast notification -->
-  <div id="toast" class="fixed top-4 right-4 z-50 hidden max-w-sm">
-    <div id="toastInner" class="flex items-center gap-3 px-4 py-3 rounded-xl border text-sm shadow-lg backdrop-blur-sm">
-      <span id="toastMsg"></span>
-      <button onclick="document.getElementById('toast').classList.add('hidden')" class="text-gray-400 hover:text-white ml-2">&times;</button>
-    </div>
-  </div>
-
-  <!-- Session expired overlay -->
-  <div id="sessionExpired" class="fixed inset-0 z-[100] bg-black/80 backdrop-blur-sm hidden flex items-center justify-center">
-    <div class="bg-[#111118] border border-[#1e1e2e] rounded-2xl p-8 max-w-sm text-center">
-      <div class="w-14 h-14 rounded-full bg-red-500/10 border border-red-500/20 flex items-center justify-center mx-auto mb-4">
-        <svg class="w-7 h-7 text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>
-      </div>
-      <h3 class="text-lg font-semibold text-white mb-2">Session Expired</h3>
-      <p class="text-sm text-gray-400 mb-6">Your session has expired. Please sign in again to continue.</p>
-      <a href="login" class="inline-block px-6 py-2.5 bg-[#6366f1] hover:bg-[#5558e6] text-white rounded-xl text-sm font-medium transition btn-glow">Sign In Again</a>
-    </div>
-  </div>
-
-  <!-- Main Content -->
-  <main class="lg:ml-60 pt-16 lg:pt-0 min-h-screen">
-    <div class="max-w-7xl mx-auto p-6 lg:p-8 space-y-6">
-
-      <!-- Header -->
-      <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-        <div>
-          <h1 class="text-2xl font-bold">Access Logs</h1>
-          <p class="text-gray-500 text-sm mt-1">Track every API call routed through VaultProof</p>
-        </div>
-        <button onclick="exportCSV()" class="inline-flex items-center gap-2 px-4 py-2.5 bg-transparent border border-[#1e1e2e] rounded-xl text-sm text-gray-300 hover:text-white hover:border-[#6366f1]/50 transition">
-          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
-          Export CSV
-        </button>
-      </div>
-
-      <!-- Search & Filters -->
-      <div class="bg-[#111118] border border-[#1e1e2e] rounded-xl p-4 space-y-3">
-        <div class="flex flex-col sm:flex-row gap-3">
-          <div class="flex-1 relative">
-            <svg class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
-            <input id="searchInput" type="text" placeholder="Search by app name or endpoint..." class="w-full pl-10 pr-4 py-2.5 bg-[#111118] border border-[#1e1e2e] rounded-xl text-sm text-white placeholder-gray-500 focus:outline-none focus:border-[#6366f1] transition" />
-          </div>
-        </div>
-        <div class="flex flex-wrap items-center gap-3">
-          <select id="filterKey" class="bg-[#111118] border border-[#1e1e2e] rounded-xl px-3 py-2 text-sm text-gray-300 focus:outline-none focus:border-[#6366f1]">
-            <option value="">All Keys</option>
-          </select>
-          <select id="filterStatus" class="bg-[#111118] border border-[#1e1e2e] rounded-xl px-3 py-2 text-sm text-gray-300 focus:outline-none focus:border-[#6366f1]">
-            <option value="">All Status</option>
-            <option value="success">Success</option>
-            <option value="error">Error</option>
-          </select>
-          <div class="flex items-center bg-[#0a0a0f] rounded-xl p-1 border border-[#1e1e2e]">
-            <button onclick="setDateFilter('7')" class="date-pill px-3 py-1.5 rounded-lg text-xs font-medium" data-days="7">7d</button>
-            <button onclick="setDateFilter('30')" class="date-pill active px-3 py-1.5 rounded-lg text-xs font-medium" data-days="30">30d</button>
-            <button onclick="setDateFilter('all')" class="date-pill px-3 py-1.5 rounded-lg text-xs font-medium" data-days="all">All</button>
-          </div>
-        </div>
-      </div>
-
-      <!-- Table -->
-      <div class="bg-[#111118] border border-[#1e1e2e] rounded-xl overflow-hidden">
-        <div class="overflow-x-auto">
-          <table class="w-full text-sm">
-            <thead>
-              <tr class="border-b border-[#1e1e2e] text-gray-500 text-left text-xs uppercase tracking-wider">
-                <th class="px-5 py-3.5 font-medium">Timestamp</th>
-                <th class="px-5 py-3.5 font-medium">Key</th>
-                <th class="px-5 py-3.5 font-medium">App</th>
-                <th class="px-5 py-3.5 font-medium">Endpoint</th>
-                <th class="px-5 py-3.5 font-medium">Status</th>
-                <th class="px-5 py-3.5 font-medium">Latency</th>
-                <th class="px-5 py-3.5 font-medium">ZK Proof</th>
-              </tr>
-            </thead>
-            <tbody id="logsBody">
-              <tr><td colspan="7" class="px-5 py-16 text-center text-gray-600">
-                <div class="flex flex-col items-center gap-3">
-                  <div class="h-6 w-6 border-2 border-[#6366f1] border-t-transparent rounded-full animate-spin"></div>
-                  <span>Loading logs...</span>
-                </div>
-              </td></tr>
-            </tbody>
-          </table>
-        </div>
-      </div>
-
-      <!-- Empty state (hidden by default) -->
-      <div id="emptyState" class="hidden bg-[#111118] border border-[#1e1e2e] rounded-xl py-16 text-center">
-        <div class="flex flex-col items-center gap-3">
-          <div class="w-12 h-12 rounded-xl bg-[#1e1e2e] flex items-center justify-center">
-            <svg class="w-6 h-6 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/></svg>
-          </div>
-          <div class="text-gray-500 text-sm">No logs yet</div>
-          <div class="text-gray-600 text-xs">API call logs will appear here once you start making requests</div>
-        </div>
-      </div>
-
-      <!-- Pagination -->
-      <div class="flex items-center justify-between" id="paginationWrap" style="display: none;">
-        <div class="text-sm text-gray-500" id="paginationInfo">—</div>
-        <div class="flex gap-2">
-          <button id="prevBtn" onclick="changePage(-1)" class="px-4 py-2 bg-[#111118] border border-[#1e1e2e] rounded-xl text-sm text-gray-400 hover:text-white hover:border-[#6366f1]/50 transition disabled:opacity-30 disabled:cursor-not-allowed">Previous</button>
-          <button id="nextBtn" onclick="changePage(1)" class="px-4 py-2 bg-[#111118] border border-[#1e1e2e] rounded-xl text-sm text-gray-400 hover:text-white hover:border-[#6366f1]/50 transition disabled:opacity-30 disabled:cursor-not-allowed">Next</button>
-        </div>
-      </div>
-
-    </div>
+<body>
+  <main class="card">
+    <div class="eyebrow">vaultproof / app</div>
+    <h1>Moving to Activity…</h1>
+    <p>The request stream lives on the new activity page now.</p>
+    <a class="link" href="/app/activity">Open activity</a>
   </main>
-
-  <script src="/js/app-logs-3.js" defer></script>
-<script src="/js/analytics.js" defer></script>
 </body>
 </html>

@@ -9,19 +9,19 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Scanner — VaultProof</title>
+  <script src="/js/app-scanner-2.js"></script>
   <!-- Tailwind CDN: SRI not applicable (dynamic response) -->
   <script src="https://cdn.tailwindcss.com/3.4.17"></script>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet" />
-  <script src="/js/app-scanner-2.js" defer></script>
   <style>
     *, *::before, *::after { box-sizing: border-box; }
-    body { font-family: 'Inter', sans-serif; background: #0a0a0f; margin: 0; }
+    body { font-family: 'Inter', sans-serif; background: #e8e6e0; margin: 0; color: #171717; min-height: 100vh; }
     ::-webkit-scrollbar { width: 6px; height: 6px; }
-    ::-webkit-scrollbar-track { background: #0a0a0f; }
-    ::-webkit-scrollbar-thumb { background: #2a2a3a; border-radius: 3px; }
-    ::-webkit-scrollbar-thumb:hover { background: #3a3a4a; }
+    ::-webkit-scrollbar-track { background: #f3f1ea; }
+    ::-webkit-scrollbar-thumb { background: #d6d2c7; border-radius: 3px; }
+    ::-webkit-scrollbar-thumb:hover { background: #c7c2b5; }
 
     @keyframes fadeInUp {
       from { opacity: 0; transform: translateY(16px); }
@@ -38,7 +38,7 @@
       animation: spin 1s linear infinite;
     }
 
-    .sidebar-expanded { width: 240px; }
+    .sidebar-expanded { width: 220px; }
     .sidebar-collapsed { width: 64px; }
     .sidebar-collapsed .sidebar-label { display: none; }
     .sidebar-collapsed .sidebar-logo-text { display: none; }
@@ -92,101 +92,260 @@
       text-decoration: line-through;
       opacity: 0.6;
     }
+
+    body.scanner-app {
+      background: #fafaf7;
+    }
+    body.scanner-app #sidebar {
+      background: #fafaf7;
+      border-right-color: #e7e5de !important;
+    }
+    body.scanner-app #mainWrapper {
+      background: #fafaf7;
+      margin-left: 220px !important;
+    }
+    body.scanner-app #sidebarOverlay { background: rgba(0, 0, 0, 0.28); }
+    body.scanner-app .sidebar-nav-item {
+      font-family: "JetBrains Mono", ui-monospace, monospace;
+      font-size: 12.5px;
+      color: #525252 !important;
+      padding: 7px 10px !important;
+      border-radius: 3px !important;
+      border: 1px solid transparent;
+      gap: 8px;
+    }
+    body.scanner-app .sidebar-nav-item:hover {
+      color: #171717 !important;
+      background: transparent !important;
+    }
+    body.scanner-app .sidebar-nav-item.active {
+      color: #171717 !important;
+      background: #fff !important;
+      border-color: #e7e5de;
+      font-weight: 500;
+    }
+    body.scanner-app .sidebar-group {
+      margin-bottom: 22px;
+    }
+    body.scanner-app .sidebar-head {
+      font-family: "JetBrains Mono", ui-monospace, monospace;
+      font-size: 10px;
+      letter-spacing: 0.8px;
+      text-transform: uppercase;
+      color: #8a8a82;
+      padding: 6px 8px;
+    }
+    body.scanner-app .sidebar-dot {
+      font-size: 8px;
+      color: #c4c4bd;
+    }
+    body.scanner-app .sidebar-nav-item.active .sidebar-dot {
+      color: #d97706;
+    }
+    body.scanner-app .sidebar-bottom {
+      border-top-color: #e7e5de !important;
+    }
+    body.scanner-app .sidebar-user-info,
+    body.scanner-app #logoutBtn {
+      font-family: "JetBrains Mono", ui-monospace, monospace;
+      color: #8a8a82 !important;
+    }
+    body.scanner-app #logoutBtn.logout-btn {
+      color: #525252 !important;
+    }
+    body.scanner-app #logoutBtn.logout-btn:hover {
+      color: #b91c1c !important;
+    }
+    body.scanner-app .usage-box {
+      margin-top: 28px;
+      padding: 14px;
+      border: 1px solid #e7e5de;
+      border-radius: 4px;
+      background: #fff;
+    }
+    body.scanner-app .usage-label,
+    body.scanner-app .usage-reset,
+    body.scanner-app .scanner-meta {
+      font-family: "JetBrains Mono", ui-monospace, monospace;
+      font-size: 11px;
+      color: #8a8a82;
+    }
+    body.scanner-app .usage-label {
+      font-size: 10px;
+      letter-spacing: 0.8px;
+      text-transform: uppercase;
+      margin-bottom: 8px;
+    }
+    body.scanner-app .usage-row {
+      display: flex;
+      justify-content: space-between;
+      gap: 16px;
+      font-family: "JetBrains Mono", ui-monospace, monospace;
+      font-size: 12px;
+      color: #171717;
+    }
+    body.scanner-app .usage-bar-track {
+      height: 4px;
+      background: #eeece5;
+      border-radius: 999px;
+      margin-top: 8px;
+      overflow: hidden;
+    }
+    body.scanner-app .usage-bar-fill {
+      height: 100%;
+      background: #d97706;
+      border-radius: 999px;
+      width: 0%;
+    }
+    body.scanner-app header {
+      border-bottom-color: #e7e5de !important;
+      background: rgba(250, 250, 247, 0.92) !important;
+      color: #171717;
+      backdrop-filter: blur(12px);
+    }
+    body.scanner-app header h1 {
+      font-family: "Space Grotesk", "Inter", system-ui, sans-serif;
+      font-size: 28px;
+      font-weight: 600;
+      letter-spacing: -0.6px;
+    }
+    body.scanner-app #menuBtn,
+    body.scanner-app header p {
+      color: #525252 !important;
+    }
+    body.scanner-app .bg-card { background: #fff !important; }
+    body.scanner-app .bg-surface { background: #f3f3ee !important; }
+    body.scanner-app .border-border { border-color: #e7e5de !important; }
+    body.scanner-app .bg-\[\#111118\] { background: #fcfbf8 !important; }
+    body.scanner-app .bg-\[\#0d0d14\] { background: #fff !important; }
+    body.scanner-app .border-\[\#1e1e2e\] { border-color: #e7e5de !important; }
+    body.scanner-app .text-white { color: #171717 !important; }
+    body.scanner-app .text-gray-200,
+    body.scanner-app .text-gray-300,
+    body.scanner-app .text-gray-400 { color: #525252 !important; }
+    body.scanner-app .text-gray-500,
+    body.scanner-app .text-gray-600 { color: #8a8a82 !important; }
+    body.scanner-app .hover\:text-white:hover { color: #171717 !important; }
+    body.scanner-app .bg-brand,
+    body.scanner-app .bg-\[\#6366f1\] { background: #d97706 !important; }
+    body.scanner-app .hover\:bg-brand-hover:hover,
+    body.scanner-app .hover\:bg-\[\#5558e6\]:hover,
+    body.scanner-app .hover\:bg-brand\/80:hover { background: #b45309 !important; }
+    body.scanner-app .text-brand,
+    body.scanner-app .text-\[\#22d3ee\] { color: #d97706 !important; }
+    body.scanner-app .bg-brand\/10,
+    body.scanner-app .bg-brand\/20 { background: rgba(217, 119, 6, 0.1) !important; }
+    body.scanner-app .border-brand\/20,
+    body.scanner-app .hover\:border-brand\/30:hover,
+    body.scanner-app .focus\:border-brand\/50:focus { border-color: rgba(217, 119, 6, 0.25) !important; }
+    body.scanner-app .bg-green-500\/10 { background: rgba(21, 128, 61, 0.08) !important; }
+    body.scanner-app .border-green-500\/20,
+    body.scanner-app .border-green-700\/30 { border-color: rgba(21, 128, 61, 0.18) !important; }
+    body.scanner-app .text-green-400 { color: #15803d !important; }
+    body.scanner-app .bg-red-500\/10,
+    body.scanner-app .bg-red-900\/20,
+    body.scanner-app .bg-red-950\/20 { background: rgba(185, 28, 28, 0.08) !important; }
+    body.scanner-app .border-red-500\/20,
+    body.scanner-app .border-red-500\/30,
+    body.scanner-app .border-red-700\/30,
+    body.scanner-app .border-red-800\/40 { border-color: rgba(185, 28, 28, 0.18) !important; }
+    body.scanner-app .text-red-400,
+    body.scanner-app .text-red-300,
+    body.scanner-app .text-red-200 { color: #b91c1c !important; }
+    body.scanner-app .bg-yellow-500\/10,
+    body.scanner-app .bg-yellow-900\/20,
+    body.scanner-app .bg-yellow-950\/20,
+    body.scanner-app .bg-amber-500\/15,
+    body.scanner-app .bg-orange-950\/20,
+    body.scanner-app .bg-orange-900\/40,
+    body.scanner-app .bg-blue-950\/20,
+    body.scanner-app .bg-blue-900\/40,
+    body.scanner-app .bg-gray-900\/20,
+    body.scanner-app .bg-gray-800\/60 { background: rgba(180, 83, 9, 0.08) !important; }
+    body.scanner-app .border-yellow-700\/30,
+    body.scanner-app .border-yellow-800\/40,
+    body.scanner-app .border-orange-700\/40,
+    body.scanner-app .border-orange-500\/60,
+    body.scanner-app .border-orange-800\/40,
+    body.scanner-app .border-blue-800\/40,
+    body.scanner-app .border-gray-700\/40 { border-color: rgba(180, 83, 9, 0.18) !important; }
+    body.scanner-app .text-yellow-400,
+    body.scanner-app .text-yellow-300,
+    body.scanner-app .text-yellow-200,
+    body.scanner-app .text-amber-400,
+    body.scanner-app .text-orange-300,
+    body.scanner-app .text-orange-200,
+    body.scanner-app .text-blue-300,
+    body.scanner-app .text-blue-200 { color: #b45309 !important; }
+    body.scanner-app .text-yellow-300\/70,
+    body.scanner-app .text-orange-300\/70 { color: #8a5a24 !important; }
+    body.scanner-app .rounded-2xl,
+    body.scanner-app .rounded-xl { border-radius: 4px !important; }
+    body.scanner-app .shadow-2xl,
+    body.scanner-app .shadow-lg { box-shadow: none !important; }
+    body.scanner-app #scannerContent { max-width: 1120px; }
+
+    @media (max-width: 1024px) {
+      body.scanner-app #mainWrapper {
+        margin-left: 0 !important;
+      }
+      body.scanner-app #sidebar {
+        width: min(86vw, 280px);
+      }
+    }
   </style>
   <!-- No Supabase SDK needed — scanner uses localStorage token only -->
+  <link rel="stylesheet" href="/css/site-theme.css">
 </head>
-<body class="text-gray-100 min-h-screen flex">
+<body class="scanner-app text-gray-100 min-h-screen flex">
 
   <!-- Sidebar Overlay (mobile) -->
-  <div id="sidebarOverlay" class="fixed inset-0 bg-black/60 z-40 hidden lg:hidden" onclick="toggleMobileSidebar()"></div>
+  <div id="sidebarOverlay" class="fixed inset-0 bg-black/60 z-40 hidden lg:hidden"></div>
 
   <!-- Left Sidebar -->
   <aside id="sidebar" class="fixed top-0 left-0 h-full bg-card border-r border-border z-50 flex flex-col transition-all duration-200 sidebar-expanded -translate-x-full lg:translate-x-0">
-    <!-- Logo -->
-    <div class="flex items-center gap-3 px-4 h-14 border-b border-border flex-shrink-0">
-      <img src="/og-image2.png" alt="VaultProof" class="w-9 h-9 flex-shrink-0 rounded-lg" />
-      <span class="text-lg font-bold sidebar-logo-text tracking-tight" style="font-family:'Space Grotesk',sans-serif">VaultProof</span>
-    </div>
-
-    <!-- Nav -->
-    <nav class="flex-1 px-2 py-2 space-y-0.5 overflow-y-auto">
-      <a href="/app/" class="sidebar-nav-item flex items-center gap-3 px-3 py-2 rounded-md text-gray-400 hover:text-white hover:bg-white/[0.06] text-sm transition">
-        <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zm10 0a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zm10 0a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z"/>
-        </svg>
-        <span class="sidebar-label">Dashboard</span>
-      </a>
-      <a href="/app/keys" class="sidebar-nav-item flex items-center gap-3 px-3 py-2 rounded-md text-gray-400 hover:text-white hover:bg-white/[0.06] text-sm transition">
-        <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z"/>
-        </svg>
-        <span class="sidebar-label">API Keys</span>
-      </a>
-      <a href="/app/agents" class="sidebar-nav-item flex items-center gap-3 px-3 py-2 rounded-md text-gray-400 hover:text-white hover:bg-white/[0.06] text-sm transition">
-        <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17H3a2 2 0 01-2-2V5a2 2 0 012-2h14a2 2 0 012 2v10a2 2 0 01-2 2h-2"/>
-        </svg>
-        <span class="sidebar-label">Agents</span>
-      </a>
-      <a href="/app/scanner" class="sidebar-nav-item flex items-center gap-3 px-3 py-2 rounded-md bg-white/[0.08] text-brand font-medium text-sm transition">
-        <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
-        </svg>
-        <span class="sidebar-label">Scanner</span>
-      </a>
-      <a href="/app/logs" class="sidebar-nav-item flex items-center gap-3 px-3 py-2 rounded-md text-gray-400 hover:text-white hover:bg-white/[0.06] text-sm transition">
-        <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"/>
-        </svg>
-        <span class="sidebar-label">Access Logs</span>
-      </a>
-      <a href="/app/settings" class="sidebar-nav-item flex items-center gap-3 px-3 py-2 rounded-md text-gray-400 hover:text-white hover:bg-white/[0.06] text-sm transition">
-        <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.066 2.573c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.573 1.066c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.066-2.573c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/>
-          <path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
-        </svg>
-        <span class="sidebar-label">Settings</span>
-      </a>
-      <a href="/app/plans" class="sidebar-nav-item flex items-center gap-3 px-3 py-2 rounded-md text-gray-400 hover:text-white hover:bg-white/[0.06] text-sm transition">
-        <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z"/>
-        </svg>
-        <span class="sidebar-label">Plans</span>
-      </a>
-
-      <div class="mt-4 pt-4 border-t border-border">
-        <a href="/docs" class="sidebar-nav-item flex items-center gap-3 px-3 py-2 rounded-md text-gray-400 hover:text-white hover:bg-white/[0.06] text-sm transition">
-          <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"/>
-          </svg>
-          <span class="sidebar-label">Documentation</span>
-        </a>
-        <a href="mailto:hello@vaultproof.dev" class="sidebar-nav-item flex items-center gap-3 px-3 py-2 rounded-md text-gray-400 hover:text-white hover:bg-white/[0.06] text-sm transition">
-          <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/>
-          </svg>
-          <span class="sidebar-label">Questions? hello@vaultproof.dev</span>
-        </a>
+    <nav class="flex-1 px-2 py-5 space-y-0.5 overflow-y-auto">
+      <div class="sidebar-group">
+        <div class="sidebar-head">overview</div>
+        <a href="/app/" class="sidebar-nav-item"><span class="sidebar-dot">●</span><span class="sidebar-label">projects</span></a>
+        <a href="/app/activity" class="sidebar-nav-item"><span class="sidebar-dot">●</span><span class="sidebar-label">activity</span></a>
+        <a href="/app/alerts" class="sidebar-nav-item"><span class="sidebar-dot">●</span><span class="sidebar-label">alerts</span></a>
+      </div>
+      <div class="sidebar-group">
+        <div class="sidebar-head">vault</div>
+        <a href="/app/keys" class="sidebar-nav-item"><span class="sidebar-dot">●</span><span class="sidebar-label">keys</span></a>
+        <a href="/app/settings" class="sidebar-nav-item"><span class="sidebar-dot">●</span><span class="sidebar-label">settings</span></a>
+        <a href="/app/plans" class="sidebar-nav-item"><span class="sidebar-dot">●</span><span class="sidebar-label">plans</span></a>
+      </div>
+      <div class="sidebar-group">
+        <div class="sidebar-head">scanner</div>
+        <a href="/app/scanner" class="sidebar-nav-item active"><span class="sidebar-dot">●</span><span class="sidebar-label">repos</span></a>
+      </div>
+      <div class="sidebar-group">
+        <div class="sidebar-head">help</div>
+        <a href="/docs" class="sidebar-nav-item"><span class="sidebar-dot">●</span><span class="sidebar-label">docs</span></a>
+        <a href="#" class="sidebar-nav-item"><span class="sidebar-dot">●</span><span class="sidebar-label">changelog</span></a>
+        <a href="mailto:hello@vaultproof.dev" class="sidebar-nav-item"><span class="sidebar-dot">●</span><span class="sidebar-label">support</span></a>
+      </div>
+      <div class="usage-box">
+        <div class="usage-label">plan loading</div>
+        <div class="usage-row"><span>all calls</span><span>—</span></div>
+        <div class="usage-bar-track"><div class="usage-bar-fill"></div></div>
+        <div class="usage-reset">scanner usage refreshes after each run</div>
       </div>
     </nav>
 
-    <!-- Sidebar Bottom -->
     <div class="sidebar-bottom px-3 py-3 border-t border-border flex-shrink-0">
       <div class="sidebar-user-info text-xs text-gray-500 truncate mb-2" id="sidebarEmail"></div>
-      <button id="logoutBtn" type="button" class="flex items-center gap-2 text-sm text-gray-400 hover:text-red-400 transition">
-        <svg class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"/>
-        </svg>
-        <span class="logout-text sidebar-label">Logout</span>
-      </button>
+      <button id="logoutBtn" type="button" class="logout-btn">sign out</button>
     </div>
   </aside>
 
   <!-- Bulk Action Bar -->
   <div id="bulkActionBar" class="hidden fixed bottom-6 left-1/2 -translate-x-1/2 z-50 bg-card border border-border rounded-2xl px-6 py-3 flex items-center gap-4 shadow-2xl shadow-black/40">
     <span id="bulkCount" class="text-sm text-gray-300 font-medium whitespace-nowrap">0 findings selected</span>
-    <button id="bulkIgnoreBtn" onclick="bulkIgnore()" class="px-4 py-2 text-sm font-medium rounded-lg bg-gray-700 hover:bg-gray-600 text-white transition">Ignore Selected</button>
-    <button onclick="openPrModal()" class="px-4 py-2 text-sm font-medium rounded-lg bg-brand hover:bg-brand/80 text-white transition">Create PR for Selected</button>
+    <button id="bulkIgnoreBtn" class="px-4 py-2 text-sm font-medium rounded-lg bg-gray-700 hover:bg-gray-600 text-white transition">Ignore Selected</button>
+    <button id="bulkCreatePrBtn" class="px-4 py-2 text-sm font-medium rounded-lg bg-brand hover:bg-brand/80 text-white transition">Create PR for Selected</button>
   </div>
 
   <!-- PR Creation Modal -->
@@ -194,15 +353,15 @@
     <div class="bg-card border border-border rounded-2xl w-full max-w-lg mx-4 p-6 max-h-[80vh] overflow-y-auto">
       <div class="flex items-center justify-between mb-5">
         <h3 class="text-lg font-semibold">Create Pull Request</h3>
-        <button onclick="closePrModal()" class="text-gray-500 hover:text-white transition">&times;</button>
+        <button id="prCloseBtn" class="text-gray-500 hover:text-white transition">&times;</button>
       </div>
       <div id="prModalBody" class="space-y-4">
         <p class="text-sm text-gray-400">Select how to handle each finding:</p>
         <div id="prFindings" class="space-y-3"></div>
         <div id="prMsg" class="text-sm hidden"></div>
         <div class="flex gap-3 pt-2">
-          <button type="button" onclick="closePrModal()" class="flex-1 px-4 py-2.5 bg-surface border border-border rounded-xl text-sm text-gray-400 hover:text-white transition">Cancel</button>
-          <button type="button" onclick="submitPr()" id="prSubmitBtn" class="flex-1 px-4 py-2.5 bg-brand hover:bg-brand-hover text-white rounded-xl text-sm font-medium transition btn-glow">Create PR</button>
+          <button type="button" id="prCancelBtn" class="flex-1 px-4 py-2.5 bg-surface border border-border rounded-xl text-sm text-gray-200 hover:text-white transition">Cancel</button>
+          <button type="button" id="prSubmitBtn" class="flex-1 px-4 py-2.5 bg-brand hover:bg-brand-hover text-white rounded-xl text-sm font-medium transition btn-glow">Create PR</button>
         </div>
       </div>
       <div id="prSuccess" class="hidden text-center py-4">
@@ -234,7 +393,7 @@
     <div id="toast" class="fixed top-4 right-4 z-50 hidden max-w-sm">
       <div id="toastInner" class="flex items-center gap-3 px-4 py-3 rounded-xl border text-sm shadow-lg backdrop-blur-sm">
         <span id="toastMsg"></span>
-        <button onclick="document.getElementById('toast').classList.add('hidden')" class="text-gray-400 hover:text-white ml-2">&times;</button>
+        <button id="toastCloseBtn" class="text-gray-400 hover:text-white ml-2">&times;</button>
       </div>
     </div>
 
@@ -270,7 +429,7 @@
             <div class="bg-[#06b6d4]/5 border border-[#06b6d4]/20 rounded-xl px-4 py-3 mb-6">
                 <p class="text-xs text-gray-400 leading-relaxed"><span class="text-[#22d3ee] font-medium">Privacy:</span> Your code is scanned in VaultProof's secure edge environment. No code is stored &mdash; only detected key patterns and file locations are saved as findings.</p>
             </div>
-            <button onclick="connectGitHub()" class="inline-flex items-center gap-2 px-6 py-3 bg-brand hover:bg-brand-hover text-white rounded-xl text-sm font-medium transition btn-glow">
+            <button id="connectGitHubBtn" class="inline-flex items-center gap-2 px-6 py-3 bg-brand hover:bg-brand-hover text-white rounded-xl text-sm font-medium transition btn-glow">
               <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24"><path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0024 12c0-6.63-5.37-12-12-12z"/></svg>
               Connect GitHub
             </button>
@@ -302,7 +461,7 @@
                 <span id="ghUsername"></span>
               </span>
             </div>
-            <button onclick="disconnectGitHub()" class="px-4 py-2 bg-[#111118] border border-[#1e1e2e] rounded-xl text-sm text-gray-400 hover:text-red-400 hover:border-red-500/30 transition">Disconnect</button>
+            <button id="disconnectGitHubBtn" class="px-4 py-2 bg-[#111118] border border-[#1e1e2e] rounded-xl text-sm text-gray-200 hover:text-white hover:border-red-500/30 transition">Disconnect</button>
           </div>
 
           <!-- Search -->
@@ -311,7 +470,7 @@
               <svg class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-500" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
               </svg>
-              <input type="text" id="repoSearch" placeholder="Filter repositories..." oninput="filterRepos()" class="w-full bg-card border border-border rounded-xl pl-10 pr-4 py-2.5 text-sm text-gray-200 placeholder-gray-500 focus:outline-none focus:border-brand/50 focus:ring-1 focus:ring-brand/30 transition" />
+              <input type="text" id="repoSearch" placeholder="Filter repositories..." class="w-full bg-card border border-border rounded-xl pl-10 pr-4 py-2.5 text-sm text-gray-200 placeholder-gray-500 focus:outline-none focus:border-brand/50 focus:ring-1 focus:ring-brand/30 transition" />
             </div>
           </div>
 
@@ -345,7 +504,7 @@
         <div id="stateScanResults" class="hidden">
           <!-- Back + Header -->
           <div class="flex items-center gap-3 mb-6 anim-card">
-            <button onclick="showRepoList()" class="p-2 text-gray-400 hover:text-white hover:bg-white/5 rounded-lg transition">
+            <button id="scanResultBackBtn" class="p-2 text-gray-400 hover:text-white hover:bg-white/5 rounded-lg transition">
               <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7"/></svg>
             </button>
             <div>
@@ -388,7 +547,7 @@
             <div class="bg-card border border-border rounded-2xl p-6 mb-6 anim-fade-up">
               <div class="flex items-center justify-between mb-5">
                 <h3 class="text-sm font-semibold text-white">Scanning repository...</h3>
-                <button id="cancelScanBtn" onclick="cancelScan()" class="px-3 py-1.5 text-xs font-medium rounded-lg bg-red-500/10 border border-red-500/20 text-red-400 hover:bg-red-500/20 hover:border-red-500/30 transition">Cancel</button>
+                <button id="cancelScanBtn" class="px-3 py-1.5 text-xs font-medium rounded-lg bg-red-500/10 border border-red-500/20 text-red-400 hover:bg-red-500/20 hover:border-red-500/30 transition">Cancel</button>
               </div>
               <!-- Progress bar -->
               <div class="relative w-full h-2 bg-[#1e1e2e] rounded-full overflow-hidden mb-5">
@@ -416,12 +575,12 @@
                   <span id="findingsCount" class="text-xs text-gray-500"></span>
                 </div>
                 <div class="flex items-center gap-2">
-                  <button onclick="exportCsv()" class="relative px-3 py-1.5 text-xs font-medium rounded-lg bg-[#111118] border border-[#1e1e2e] text-gray-400 hover:text-white hover:border-brand/30 transition flex items-center gap-1.5">
+                  <button id="exportCsvBtn" class="relative px-3 py-1.5 text-xs font-medium rounded-lg bg-[#111118] border border-[#1e1e2e] text-gray-200 hover:text-white hover:border-brand/30 transition flex items-center gap-1.5">
                     <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M4 16v2a2 2 0 002 2h12a2 2 0 002-2v-2M7 10l5 5 5-5M12 15V3"/></svg>
                     Export CSV
                     <span id="csvProBadge" class="hidden ml-1 px-1.5 py-0.5 text-[10px] font-bold rounded bg-brand/20 text-brand">PRO</span>
                   </button>
-                  <button onclick="toggleAllowlistPanel()" title="Manage Allowlist" class="relative px-2 py-1.5 text-xs font-medium rounded-lg bg-[#111118] border border-[#1e1e2e] text-gray-400 hover:text-white hover:border-brand/30 transition flex items-center gap-1.5">
+                  <button id="toggleAllowlistBtn" title="Manage Allowlist" class="relative px-2 py-1.5 text-xs font-medium rounded-lg bg-[#111118] border border-[#1e1e2e] text-gray-200 hover:text-white hover:border-brand/30 transition flex items-center gap-1.5">
                     <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.066 2.573c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.573 1.066c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.066-2.573c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/><circle cx="12" cy="12" r="3"/></svg>
                   </button>
                 </div>
@@ -471,7 +630,7 @@
                       <label class="text-xs text-gray-500 block mb-1">Reason (optional)</label>
                       <input id="alReason" type="text" placeholder="e.g. public key, not secret" class="w-full bg-[#111118] border border-[#1e1e2e] rounded-lg px-2 py-1.5 text-xs text-gray-300 focus:outline-none focus:border-brand/50" />
                     </div>
-                    <button onclick="addAllowlistEntry()" class="px-3 py-1.5 text-xs font-medium rounded-lg bg-brand hover:bg-brand-hover text-white transition">Add</button>
+                    <button id="addAllowlistBtn" class="px-3 py-1.5 text-xs font-medium rounded-lg bg-brand hover:bg-brand-hover text-white transition">Add</button>
                   </div>
                 </div>
               </div>
@@ -481,7 +640,7 @@
                   <thead>
                     <tr class="border-b border-border text-gray-500 text-xs uppercase tracking-wider">
                       <th class="text-left px-4 py-3 font-medium w-8">
-                        <input type="checkbox" id="selectAll" onchange="toggleSelectAll()" class="rounded border-gray-600">
+                        <input type="checkbox" id="selectAll" class="rounded border-gray-600">
                       </th>
                       <th class="text-left px-4 py-3 font-medium">Status</th>
                       <th class="text-left px-4 py-3 font-medium">Key Name</th>
@@ -523,7 +682,7 @@
                     </div>
                     <h3 class="text-lg font-semibold text-white" id="revokeModalTitle">Revoke Key</h3>
                   </div>
-                  <button onclick="closeRevokeModal()" class="text-gray-400 hover:text-white transition ml-4 shrink-0">
+                  <button id="revokeCloseBtn" class="text-gray-400 hover:text-white transition ml-4 shrink-0">
                     <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg>
                   </button>
                 </div>
@@ -625,7 +784,7 @@ pre-commit install</pre>
                 <!-- Sticky footer -->
                 <div class="px-6 py-4 border-t border-border shrink-0 flex items-center justify-between gap-3">
                   <p class="text-xs text-gray-500">Mark as resolved once you've revoked the key above.</p>
-                  <button id="revokeConfirmBtn" onclick="confirmRevoked()" class="px-4 py-2 bg-green-600 hover:bg-green-500 text-white rounded-xl text-sm font-medium transition whitespace-nowrap">
+                  <button id="revokeConfirmBtn" class="px-4 py-2 bg-green-600 hover:bg-green-500 text-white rounded-xl text-sm font-medium transition whitespace-nowrap">
                     I've revoked this key
                   </button>
                 </div>
@@ -634,11 +793,11 @@ pre-commit install</pre>
 
             <!-- Create PR button (legacy) -->
             <div id="prActions" class="flex items-center gap-3">
-              <button onclick="openPrModal()" id="createPrBtn" class="inline-flex items-center gap-2 px-5 py-2.5 bg-brand hover:bg-brand-hover text-white rounded-xl text-sm font-medium transition btn-glow disabled:opacity-50 disabled:cursor-not-allowed" disabled>
+              <button id="createPrBtn" class="inline-flex items-center gap-2 px-5 py-2.5 bg-brand hover:bg-brand-hover text-white rounded-xl text-sm font-medium transition btn-glow disabled:opacity-50 disabled:cursor-not-allowed" disabled>
                 <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/></svg>
                 Create PR for selected
               </button>
-              <button onclick="showRepoList()" class="text-sm text-gray-400 hover:text-white transition">Back to repos</button>
+              <button id="legacyBackToReposBtn" class="text-sm text-gray-400 hover:text-white transition">Back to repos</button>
             </div>
           </div>
 
@@ -684,7 +843,7 @@ pre-commit install</pre>
 
             <!-- Migrate CTA -->
             <div class="anim-fade-up" style="animation-delay:0.2s">
-              <button onclick="startMigration()" id="migrateBtn" class="w-full py-4 bg-brand hover:bg-brand-hover text-white rounded-xl text-base font-semibold transition btn-glow disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2">
+              <button id="migrateBtn" class="w-full py-4 bg-brand hover:bg-brand-hover text-white rounded-xl text-base font-semibold transition btn-glow disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2">
                 <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
                   <path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/>
                 </svg>
@@ -793,7 +952,7 @@ pre-commit install</pre>
                   Ready to merge — Open PR
                 </button>
               </a>
-              <button onclick="showRepoList()" class="w-full mt-2 py-2 text-sm text-gray-400 hover:text-white transition text-center">Back to repos</button>
+              <button id="migrationBackToReposBtn" class="w-full mt-2 py-2 text-sm text-gray-400 hover:text-white transition text-center">Back to repos</button>
             </div>
           </div>
 

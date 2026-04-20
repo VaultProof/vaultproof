@@ -1,0 +1,421 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <script async src="https://www.googletagmanager.com/gtag/js?id=G-NE5RYX1WTF"></script>
+  <script src="/js/app-index-1.js" defer></script>
+  <script src="/js/app-activity-1.js" defer data-app-shell-page-script></script>
+  <script src="/js/app-shell-router-1.js" defer></script>
+
+  <link rel="icon" type="image/png" href="/favicon.png">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Activity — VaultProof</title>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter+Tight:wght@500;600;700&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.5.1/dist/chart.umd.min.js" crossorigin="anonymous"></script>
+
+  <style data-app-shell-style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --accent: #d97706;
+      --bg: #fafaf7;
+      --bg-mid: #f3f3ee;
+      --bg-card: #fff;
+      --rule: 1px solid #e7e5de;
+      --hair: 1px solid #eeece5;
+      --text: #171717;
+      --text-muted: #525252;
+      --text-faint: #8a8a82;
+      --ok: #15803d;
+      --warn: #b45309;
+      --danger: #b91c1c;
+      --mono: "JetBrains Mono", ui-monospace, monospace;
+      --display: "Inter Tight", "Inter", system-ui, sans-serif;
+      --body: "Inter", system-ui, sans-serif;
+    }
+
+    html, body { background: #e8e6e0; color: var(--text); font-family: var(--body); font-size: 14px; line-height: 1.5; -webkit-font-smoothing: antialiased; min-height: 100%; }
+    body { min-height: 100vh; }
+    .page { max-width: 1280px; margin: 0 auto; background: var(--bg); border-left: var(--rule); border-right: var(--rule); min-height: 100vh; }
+    a { color: inherit; text-decoration: none; }
+    button, input, select { font: inherit; }
+
+    .topbar {
+      display: flex; align-items: center; gap: 0;
+      padding: 13px 28px; border-bottom: var(--rule);
+      font-family: var(--mono); font-size: 12px;
+      background: var(--bg);
+      position: sticky; top: 0; z-index: 100;
+    }
+    .topbar-logo { display: flex; align-items: center; gap: 8px; }
+    .topbar-logo-name { font-weight: 600; letter-spacing: 0.5px; }
+    .topbar-sep { color: #a3a39a; margin: 0 14px; }
+    .topbar-crumb { color: var(--text-muted); }
+    .topbar-links { display: flex; gap: 20px; color: var(--text-muted); margin-left: auto; margin-right: 20px; }
+    .topbar-links a:hover { color: var(--text); }
+    .topbar-session { display: flex; align-items: center; gap: 8px; }
+    .topbar-email {
+      max-width: 220px;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      color: var(--text-muted);
+      font-family: var(--mono);
+      font-size: 11px;
+    }
+    .topbar-avatar {
+      width: 28px; height: 28px; border-radius: 50%;
+      background: var(--accent); color: #fafaf7;
+      display: flex; align-items: center; justify-content: center;
+      font-family: var(--mono); font-size: 11px; font-weight: 700;
+    }
+    .topbar-signout {
+      font-family: var(--mono); font-size: 11px;
+      color: var(--text-faint); background: var(--bg-card);
+      border: var(--rule); border-radius: 3px;
+      padding: 6px 10px; cursor: pointer;
+    }
+    .topbar-signout:hover { color: var(--danger); background: #fdfdfa; }
+
+    .layout { display: grid; grid-template-columns: 220px 1fr; min-height: calc(100vh - 53px); }
+    .sidebar { border-right: var(--rule); padding: 20px 16px; background: var(--bg); }
+    .sidebar-group { margin-bottom: 22px; }
+    .sidebar-head { font-family: var(--mono); font-size: 10px; letter-spacing: 0.8px; text-transform: uppercase; color: var(--text-faint); padding: 6px 8px; }
+    .sidebar-item {
+      font-family: var(--mono); font-size: 12.5px; color: var(--text-muted);
+      padding: 7px 10px; border-radius: 3px;
+      border: 1px solid transparent;
+      display: flex; align-items: center; gap: 8px;
+      cursor: pointer;
+    }
+    .sidebar-item:hover { color: var(--text); }
+    .sidebar-item.active { color: var(--text); background: var(--bg-card); border: var(--rule); }
+    .sidebar-dot { font-size: 8px; }
+    .sidebar-item.active .sidebar-dot { color: var(--accent); }
+    .sidebar-item:not(.active) .sidebar-dot { color: #c4c4bd; }
+    .usage-box { margin-top: 40px; padding: 14px; border: var(--rule); border-radius: 4px; background: var(--bg-card); }
+    .usage-label { font-family: var(--mono); font-size: 10px; letter-spacing: 0.8px; text-transform: uppercase; color: var(--text-faint); margin-bottom: 8px; }
+    .usage-row { font-family: var(--mono); font-size: 12px; color: var(--text); display: flex; justify-content: space-between; gap: 16px; }
+    .usage-bar-track { height: 4px; background: #eeece5; border-radius: 99px; margin-top: 8px; overflow: hidden; }
+    .usage-bar-fill { height: 100%; background: var(--accent); border-radius: 99px; width: 0%; }
+    .usage-reset { font-family: var(--mono); font-size: 11px; color: var(--text-faint); margin-top: 8px; }
+
+    .main { padding: 28px 32px; }
+    .page-header { display: flex; align-items: baseline; gap: 12px; margin-bottom: 4px; }
+    .page-title { font-family: var(--display); font-weight: 600; font-size: 30px; letter-spacing: -0.8px; }
+    .page-meta { font-family: var(--mono); font-size: 12px; color: var(--text-faint); }
+    .page-actions { margin-left: auto; display: flex; gap: 8px; }
+    .btn-outline, .btn-primary, .btn-icon {
+      font-family: var(--mono); font-size: 12px; border-radius: 3px; cursor: pointer; border: var(--rule);
+    }
+    .btn-outline { padding: 7px 12px; background: var(--bg-card); }
+    .btn-outline:hover { background: var(--bg-mid); }
+    .btn-primary { padding: 7px 12px; background: var(--text); color: var(--bg); border-color: var(--text); }
+    .btn-primary:hover { background: #333; }
+    .page-desc { font-size: 13px; color: var(--text-muted); margin: 4px 0 24px; max-width: 760px; }
+
+    .kpi-grid { display: grid; grid-template-columns: repeat(4, 1fr); border: var(--rule); border-radius: 4px; overflow: hidden; background: var(--bg-card); margin-bottom: 24px; }
+    .kpi-cell { padding: 18px 20px; }
+    .kpi-cell + .kpi-cell { border-left: var(--rule); }
+    .kpi-label { font-family: var(--mono); font-size: 10.5px; letter-spacing: 0.8px; text-transform: uppercase; color: var(--text-faint); }
+    .kpi-value { font-family: var(--display); font-size: 28px; font-weight: 600; letter-spacing: -0.5px; margin-top: 6px; }
+    .kpi-sub { font-family: var(--mono); font-size: 11px; color: var(--text-muted); margin-top: 4px; }
+    .kpi-value.danger { color: var(--danger); }
+    .kpi-value.ok { color: var(--ok); }
+
+    .chart-panel, .panel, .table-wrap, .filters {
+      border: var(--rule); border-radius: 4px; background: var(--bg-card);
+    }
+    .chart-panel { margin-bottom: 24px; overflow: hidden; }
+    .panel-head {
+      padding: 12px 18px; border-bottom: var(--rule);
+      display: flex; align-items: center; gap: 10px;
+      font-family: var(--mono); font-size: 11px; letter-spacing: 0.6px; text-transform: uppercase; color: var(--text-faint);
+    }
+    .panel-head-right { margin-left: auto; text-transform: none; letter-spacing: 0; }
+
+    .filters { padding: 14px 16px; margin-bottom: 16px; }
+    .filters-row { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+    .filters-row + .filters-row { margin-top: 10px; }
+    .search-input, .select-input {
+      background: var(--bg-card); border: var(--rule); border-radius: 3px;
+      padding: 9px 11px; color: var(--text); min-height: 36px;
+    }
+    .search-wrap { position: relative; flex: 1 1 280px; }
+    .search-icon {
+      position: absolute; left: 10px; top: 50%; transform: translateY(-50%);
+      color: var(--text-faint); font-family: var(--mono); font-size: 11px;
+    }
+    .search-input { width: 100%; padding-left: 28px; }
+    .select-input { min-width: 140px; }
+    .filter-chip {
+      font-family: var(--mono); font-size: 12px; padding: 6px 10px;
+      border-radius: 3px; border: var(--rule); background: var(--bg-card);
+      color: var(--text-muted); cursor: pointer;
+    }
+    .filter-chip.active { background: var(--text); color: var(--bg); border-color: var(--text); }
+    .filter-note { margin-left: auto; font-family: var(--mono); font-size: 11px; color: var(--text-faint); }
+
+    .chart-wrap { padding: 16px 18px; height: 188px; position: relative; }
+
+    .activity-grid { display: grid; grid-template-columns: 1.65fr 1fr; gap: 20px; }
+    .table-wrap { overflow: hidden; }
+    .table-scroll { overflow-x: auto; }
+    .table {
+      width: 100%; min-width: 980px; border-collapse: collapse;
+      font-size: 12px;
+    }
+    .table thead th {
+      text-align: left; padding: 12px 16px; background: var(--bg-mid);
+      border-bottom: var(--rule); font-family: var(--mono); font-size: 10px;
+      letter-spacing: 0.8px; text-transform: uppercase; color: var(--text-faint); font-weight: 500;
+    }
+    .table tbody td {
+      padding: 13px 16px; border-bottom: var(--hair); vertical-align: middle;
+    }
+    .table tbody tr:hover { background: #fdfdfa; }
+    .table tbody tr:last-child td { border-bottom: none; }
+    .mono { font-family: var(--mono); }
+    .project-name { font-weight: 600; color: var(--text); }
+    .project-id { font-family: var(--mono); font-size: 11px; color: var(--text-faint); margin-top: 2px; }
+    .status-badge, .provider-badge {
+      display: inline-flex; align-items: center; gap: 6px;
+      padding: 3px 8px; border-radius: 999px; font-family: var(--mono); font-size: 10px; letter-spacing: 0.3px;
+      border: var(--rule);
+    }
+    .status-ok { background: rgba(21, 128, 61, 0.08); color: var(--ok); }
+    .status-error { background: rgba(185, 28, 28, 0.08); color: var(--danger); }
+    .provider-badge { background: #fbfaf6; color: var(--text-muted); }
+    .endpoint { color: var(--text-muted); font-family: var(--mono); font-size: 11px; }
+    .request-id { color: var(--text-faint); font-family: var(--mono); font-size: 11px; }
+    .latency-hot { color: var(--danger); }
+    .latency-warm { color: var(--warn); }
+
+    .stack-list { padding: 8px 18px 12px; }
+    .stack-row {
+      display: flex; align-items: baseline; gap: 12px;
+      padding: 10px 0; border-bottom: 1px dashed #eeece5;
+    }
+    .stack-row:last-child { border-bottom: none; }
+    .stack-rank {
+      width: 20px; flex-shrink: 0;
+      font-family: var(--mono); font-size: 11px; color: var(--text-faint);
+    }
+    .stack-main { min-width: 0; flex: 1; }
+    .stack-title { font-size: 13px; color: var(--text); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .stack-sub { font-family: var(--mono); font-size: 11px; color: var(--text-faint); margin-top: 2px; }
+    .stack-value { font-family: var(--mono); font-size: 12px; color: var(--text); }
+
+    .empty-state {
+      padding: 32px 18px; color: var(--text-faint); text-align: center; font-family: var(--mono); font-size: 12px;
+    }
+
+    @media (max-width: 960px) {
+      .layout { grid-template-columns: 1fr; }
+      .sidebar { display: none; }
+      .kpi-grid { grid-template-columns: repeat(2, 1fr); }
+      .kpi-cell:nth-child(3), .kpi-cell:nth-child(4) { border-top: var(--rule); }
+      .kpi-cell:nth-child(3) { border-left: none; }
+      .activity-grid { grid-template-columns: 1fr; }
+    }
+
+    @media (max-width: 680px) {
+      .page { border-left: none; border-right: none; }
+      .topbar { padding: 12px 16px; gap: 10px; flex-wrap: wrap; }
+      .topbar-sep, .topbar-crumb, .topbar-links { display: none; }
+      .topbar-session { margin-left: auto; }
+      .main { padding: 20px 16px 28px; }
+      .page-header { flex-direction: column; align-items: flex-start; }
+      .page-actions { margin-left: 0; width: 100%; flex-wrap: wrap; }
+      .page-actions button { flex: 1 1 140px; }
+      .filters { padding: 12px; }
+      .filters-row { align-items: stretch; }
+      .filter-note { width: 100%; margin-left: 0; }
+      .select-input { flex: 1 1 140px; min-width: 0; }
+      .topbar-email { max-width: 140px; }
+    }
+  </style>
+  <link rel="stylesheet" href="/css/site-theme.css">
+</head>
+<body>
+  <div class="page">
+    <div class="topbar">
+      <div class="topbar-logo">
+        <span class="topbar-logo-name">vaultproof</span>
+      </div>
+      <span class="topbar-sep">/</span>
+      <span>dashboard</span>
+      <span class="topbar-sep">/</span>
+      <span class="topbar-crumb">activity</span>
+
+      <div class="topbar-links">
+        <a href="/scan">scanner</a>
+      </div>
+      <div class="topbar-session">
+        <span class="topbar-email" id="user-email">loading...</span>
+        <div class="topbar-avatar" id="user-avatar">VP</div>
+        <button type="button" class="topbar-signout" id="signOutBtn">sign out</button>
+      </div>
+    </div>
+
+    <div class="layout">
+      <aside class="sidebar">
+        <div class="sidebar-group">
+          <div class="sidebar-head">overview</div>
+          <a class="sidebar-item" href="/app/"><span class="sidebar-dot">●</span> projects</a>
+          <a class="sidebar-item active" href="/app/activity"><span class="sidebar-dot">●</span> activity</a>
+          <a class="sidebar-item" href="/app/alerts"><span class="sidebar-dot">●</span> alerts</a>
+        </div>
+        <div class="sidebar-group">
+          <div class="sidebar-head">vault</div>
+          <a class="sidebar-item" href="/app/keys"><span class="sidebar-dot">●</span> keys</a>
+          <a class="sidebar-item" href="/app/settings"><span class="sidebar-dot">●</span> settings</a>
+          <a class="sidebar-item" href="/app/plans"><span class="sidebar-dot">●</span> plans</a>
+        </div>
+        <div class="sidebar-group">
+          <div class="sidebar-head">scanner</div>
+          <a class="sidebar-item" href="/app/scanner"><span class="sidebar-dot">●</span> repos</a>
+        </div>
+        <div class="sidebar-group">
+          <div class="sidebar-head">help</div>
+          <a class="sidebar-item" href="/docs"><span class="sidebar-dot">●</span> docs</a>
+          <a class="sidebar-item" href="#"><span class="sidebar-dot">●</span> changelog</a>
+          <a class="sidebar-item" href="mailto:hello@vaultproof.dev"><span class="sidebar-dot">●</span> support</a>
+        </div>
+        <div class="usage-box">
+          <div class="usage-label" id="usagePlanLabel">plan loading</div>
+          <div class="usage-row"><span id="usageMetricLabel">all calls</span><span id="usageMetricValue">—</span></div>
+          <div class="usage-bar-track"><div class="usage-bar-fill" id="usageBarFill"></div></div>
+          <div class="usage-reset" id="usageMetricNote">loading…</div>
+        </div>
+      </aside>
+
+      <main class="main">
+        <div class="page-header">
+          <h1 class="page-title">Activity</h1>
+          <span class="page-meta" id="pageMeta">/ loading…</span>
+          <div class="page-actions">
+            <button type="button" class="btn-outline" id="refreshBtn">refresh</button>
+            <button type="button" class="btn-primary" id="exportBtn">export csv</button>
+          </div>
+        </div>
+        <p class="page-desc">Review proxied traffic across every project: successful requests, failures, hot endpoints, provider mix, and the exact calls that need attention.</p>
+
+        <div class="kpi-grid">
+          <div class="kpi-cell">
+            <div class="kpi-label">events · 30d</div>
+            <div class="kpi-value" id="kpi-events">—</div>
+            <div class="kpi-sub" id="kpi-events-sub">loading…</div>
+          </div>
+          <div class="kpi-cell">
+            <div class="kpi-label">success rate</div>
+            <div class="kpi-value ok" id="kpi-success">—</div>
+            <div class="kpi-sub" id="kpi-success-sub">loading…</div>
+          </div>
+          <div class="kpi-cell">
+            <div class="kpi-label">avg latency</div>
+            <div class="kpi-value" id="kpi-latency">—</div>
+            <div class="kpi-sub" id="kpi-latency-sub">loading…</div>
+          </div>
+          <div class="kpi-cell">
+            <div class="kpi-label">active projects</div>
+            <div class="kpi-value" id="kpi-projects">—</div>
+            <div class="kpi-sub" id="kpi-projects-sub">loading…</div>
+          </div>
+        </div>
+
+        <div class="chart-panel">
+          <div class="panel-head">
+            request volume · 30d
+            <span class="panel-head-right" id="chartNote">calls vs errors</span>
+          </div>
+          <div class="chart-wrap">
+            <canvas id="activityChart"></canvas>
+          </div>
+        </div>
+
+        <div class="filters">
+          <div class="filters-row">
+            <div class="search-wrap">
+              <span class="search-icon">/</span>
+              <input id="searchInput" class="search-input" type="text" placeholder="Search by project, provider, endpoint, key, or request id">
+            </div>
+            <select id="projectFilter" class="select-input">
+              <option value="">all projects</option>
+            </select>
+            <select id="providerFilter" class="select-input">
+              <option value="">all providers</option>
+            </select>
+            <select id="statusFilter" class="select-input">
+              <option value="">all status</option>
+              <option value="ok">success</option>
+              <option value="error">error</option>
+            </select>
+          </div>
+          <div class="filters-row">
+            <button type="button" class="filter-chip active" data-days="1">24h</button>
+            <button type="button" class="filter-chip" data-days="7">7d</button>
+            <button type="button" class="filter-chip" data-days="30">30d</button>
+            <button type="button" class="filter-chip" data-days="90">90d</button>
+            <button type="button" class="filter-chip" data-days="all">all</button>
+            <span class="filter-note" id="filterNote">loading activity…</span>
+          </div>
+        </div>
+
+        <div class="activity-grid">
+          <div class="table-wrap">
+            <div class="panel-head">
+              request stream
+              <span class="panel-head-right" id="streamStatus">loading…</span>
+            </div>
+            <div class="table-scroll">
+              <table class="table">
+                <thead>
+                  <tr>
+                    <th>timestamp</th>
+                    <th>project</th>
+                    <th>provider / key</th>
+                    <th>endpoint</th>
+                    <th>status</th>
+                    <th>latency</th>
+                    <th>request</th>
+                  </tr>
+                </thead>
+                <tbody id="activityRows">
+                  <tr><td colspan="7" class="empty-state">Loading activity…</td></tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          <div style="display:grid;gap:20px;">
+            <div class="panel">
+              <div class="panel-head">
+                busiest endpoints
+                <span class="panel-head-right" id="endpointCount">—</span>
+              </div>
+              <div class="stack-list" id="endpointList">
+                <div class="empty-state">Loading endpoints…</div>
+              </div>
+            </div>
+
+            <div class="panel">
+              <div class="panel-head">
+                recent errors
+                <span class="panel-head-right" id="errorCount">—</span>
+              </div>
+              <div class="stack-list" id="errorList">
+                <div class="empty-state">Loading errors…</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </main>
+    </div>
+  </div>
+  <script src="/js/analytics.js" defer></script>
+</body>
+</html>

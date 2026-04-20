@@ -316,6 +316,7 @@
       font-family: 'JetBrains Mono', monospace;
     }
   </style>
+  <link rel="stylesheet" href="/css/site-theme.css">
 </head>
 <body class="min-h-screen">
   <div class="bg-grid"></div>
@@ -323,56 +324,30 @@
   <div class="orb orb-b"></div>
   <div class="orb orb-c"></div>
 
-  <nav class="fixed top-0 left-0 right-0 z-50 px-4 py-4 sm:px-6">
-    <div class="mx-auto flex max-w-6xl items-center justify-between rounded-full border border-slate-700/50 bg-slate-950/70 px-4 py-3 shadow-2xl backdrop-blur-xl sm:px-6">
-      <a href="/" class="flex items-center gap-2.5">
-        <img src="/og-image2.png" alt="VaultProof" class="h-10 w-10">
-        <span class="section-title text-base font-bold tracking-tight text-white">VaultProof</span>
+      <nav class="nav">
+      <a href="/" class="nav-logo">
+        <span class="nav-logo-name">VaultProof</span>
+        <span class="nav-logo-version">v0.4.2</span>
       </a>
-
-      <div class="hidden items-center gap-5 md:flex">
-        <div class="nav-group">
-          <button class="nav-group-btn" aria-haspopup="true" aria-expanded="false">
-            Product
-            <svg width="11" height="11" viewBox="0 0 12 12" fill="currentColor"><path d="M6 8L2 4h8z"/></svg>
-          </button>
-          <div class="nav-dropdown" role="menu">
-            <a href="/agents" role="menuitem">AI Agents</a>
-            <a href="/compare" role="menuitem">Compare</a>
-                        <a href="/enterprise-demo" role="menuitem">Enterprise Demo</a>
-            <a href="/demo" role="menuitem">Interactive Demo</a>
-          </div>
-        </div>
-        <a href="/security" class="text-sm text-slate-400 transition-colors hover:text-white">Security</a>
-        <a href="/docs" class="text-sm text-slate-400 transition-colors hover:text-white">Docs</a>
-        <a href="/guides" class="text-sm text-slate-400 transition-colors hover:text-white">Guides</a>
-        <a href="/app/login" class="nav-dashboard text-sm text-slate-400 transition-colors hover:text-white" style="display:none">Dashboard</a>
+      <div class="nav-spacer"></div>
+      <div class="nav-links">
+        <a href="/scan">scanner</a>
+        <a href="/docs">docs</a>
+        <a href="/blog">insights</a>
+        <a href="/#pricing">pricing</a>
       </div>
+      <a href="/app/login" class="nav-sign-in">sign in</a>
+      <a href="/app/login" class="nav-cta">get started</a>
+      <button id="mobileToggle" type="button" class="mobile-toggle">menu</button>
+    </nav>
 
-      <div class="hidden items-center gap-3 md:flex">
-        <a href="/scan" class="btn-ghost">
-          <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
-          Free Scanner
-        </a>
-        <a href="mailto:hello@vaultproof.dev?subject=Enterprise%20Demo" class="btn-solid">Book Enterprise Demo</a>
-      </div>
-
-      <button id="mobileToggle" class="text-slate-300 md:hidden" aria-label="Toggle menu">
-        <svg width="22" height="22" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 6h14M4 12h14M4 18h14"/></svg>
-      </button>
+    <div id="mobileMenu" class="mobile-menu">
+      <a href="/scan">scanner</a>
+      <a href="/docs">docs</a>
+      <a href="/blog">insights</a>
+      <a href="/#pricing">pricing</a>
+      <a href="/app/login">sign in</a>
     </div>
-
-    <div id="mobileMenu" class="mobile-menu mx-auto mt-2 max-w-6xl flex-col gap-2 rounded-3xl border border-slate-700/50 bg-slate-950/92 px-4 py-4 shadow-2xl backdrop-blur-xl md:hidden">
-      <a href="/agents" class="rounded-xl px-3 py-2 text-sm text-slate-300 hover:bg-white/5 hover:text-white">AI Agents</a>
-      <a href="/compare" class="rounded-xl px-3 py-2 text-sm text-slate-300 hover:bg-white/5 hover:text-white">Compare</a>
-      <a href="/demo" class="rounded-xl px-3 py-2 text-sm text-slate-300 hover:bg-white/5 hover:text-white">Interactive Demo</a>
-      <a href="/security" class="rounded-xl px-3 py-2 text-sm text-slate-300 hover:bg-white/5 hover:text-white">Security</a>
-      <a href="/docs" class="rounded-xl px-3 py-2 text-sm text-slate-300 hover:bg-white/5 hover:text-white">Docs</a>
-      <a href="/guides" class="rounded-xl px-3 py-2 text-sm text-slate-300 hover:bg-white/5 hover:text-white">Guides</a>
-      <a href="/scan" class="btn-ghost mt-2 justify-center">Free Scanner</a>
-      <a href="mailto:hello@vaultproof.dev?subject=Enterprise%20Demo" class="btn-solid mt-1">Book Enterprise Demo</a>
-    </div>
-  </nav>
 
   <main class="relative z-10">
     <section class="mx-auto max-w-6xl px-6 pb-20 pt-32 md:pt-36">
