@@ -315,7 +315,7 @@
       return {
         label: 'unknown workspace',
         title: 'No active organization found',
-        copy: 'This control surface appears after an organization is available. Solo users can stay in Projects, while SSO users can land here later.',
+        copy: 'This control surface appears after an organization is available. Solo users can stay in Projects, while shared-workspace users land here for governance and operations.',
         note: 'No org resolved from the current session.',
       };
     }
@@ -325,7 +325,7 @@
         label: 'solo dev workspace',
         title: `${org.name} is still in solo mode`,
         copy: 'You can keep using the regular Projects dashboard, but this control surface is ready for the moment you add a team org, invite members, or route business traffic through shared policy and audit flows.',
-        note: 'SSO can route team/business users here later without replacing the solo dashboard.',
+        note: 'Team and business users can land here without replacing the solo dashboard.',
       };
     }
 
@@ -335,7 +335,7 @@
         label: 'business workspace',
         title: `${org.name} is operating in business mode`,
         copy: 'This dashboard keeps member access, delivery policy, audit review, and runtime posture together so admins can operate the account like a real control plane instead of a personal key vault.',
-        note: 'Best future SSO destination for owners, admins, and security reviewers.',
+        note: 'Best operator destination for owners, admins, and security reviewers.',
       };
     }
 
@@ -343,7 +343,7 @@
       label: 'team workspace',
       title: `${org.name} is operating in team mode`,
       copy: 'This route separates shared team controls from the solo project surface. It is meant for invites, audit review, policy oversight, and the next step toward business-grade rollout.',
-      note: 'A clean home for team SSO once you enable it.',
+      note: 'A clean home for shared-workspace governance once the org is active.',
     };
   }
 
@@ -699,7 +699,7 @@
       },
       {
         title: 'Org setup',
-        copy: 'Use the org page for ownership transfer, provisioning context, and team-admin setup before rollout starts.',
+        copy: 'Use the org page for ownership transfer, archive controls, and team-admin setup before rollout starts.',
         href: currentOrganizationId ? `/app/org?org=${encodeURIComponent(currentOrganizationId)}` : '/app/org',
         label: 'open org settings',
       },

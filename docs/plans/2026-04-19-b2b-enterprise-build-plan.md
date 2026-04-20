@@ -45,7 +45,7 @@ Core promise:
 
 - the schema and worker now support orgs, memberships, project roles, invitations, audit, and alerts, but the product is still dual-running across two dashboard surfaces
 - `apps/dashboard` is richer structurally, while `apps/site/app/*` is the live deployed shell
-- SSO/SAML is not wired yet, so enterprise login is still using the existing auth path with org-aware routing
+- SSO/SAML is intentionally not in the live product right now; shared-workspace users still use the existing auth path with org-aware routing
 - contract/billing/admin packaging is still behind the governance surface we have built
 
 ## Repo surfaces we will touch
@@ -169,7 +169,7 @@ Milestones:
 - [x] connect project creation directly into provider key setup
 - [x] usage summaries and alerting for pilot reviews
 - [x] enterprise docs and pilot checklist linked from product
-- [x] SSO-first enterprise login and provisioning path
+- [x] shared-workspace login and provisioning path
 
 Exit criteria:
 
@@ -185,7 +185,7 @@ Goal:
 
 Milestones:
 
-- [ ] SSO / SAML
+- [ ] `Supabase Auth` SSO / SAML integration
 - [ ] SCIM or basic provisioning sync
 - [ ] webhook / SIEM export
 - [ ] contract/billing admin controls
@@ -240,7 +240,29 @@ Immediate next engineering slice after this file:
 
 1. decide when to converge the live static dashboard and `apps/dashboard` into one primary surface
 2. keep rollout helpers coherent as new live shared-org pages are added
-3. tighten the eventual SAML/SCIM backend work on top of the new discovery/settings foundation
+3. work through the third-party acceleration checklist before rebuilding more identity plumbing or delivery plumbing in-house
+
+## Third-Party Acceleration Checklist
+
+Goal:
+
+- move faster by buying narrow infrastructure where it clearly reduces build effort without giving up the core VaultProof control plane
+
+Checklist:
+
+- [x] keep `Supabase Auth` as the current user/session system while the shared-org model stabilizes
+- [x] use `Resend` for product email delivery in the worker instead of building a mail pipeline
+- [ ] decide whether outbound webhooks stay in-house or move to a delivery platform like `Svix`
+- [x] use `Supabase Auth` as the default SSO path for now
+- [ ] decide whether future SCIM / directory sync should use `WorkOS`, `Stytch`, or stay out of scope until customers demand it
+- [ ] decide whether SIEM / audit export should stay as CSV/JSON first or move to a managed stream/export product
+
+Rules:
+
+- do not outsource the core VaultProof policy, proxy, audit, or org/project authorization model
+- only buy third-party infrastructure for commodity layers like auth federation, email delivery, webhook delivery, and directory sync
+- prefer narrow integrations that can be removed later without rewriting the product
+- add a repo doc for each third-party decision before implementation if the choice affects pricing or enterprise packaging
 
 ## Completed
 
@@ -308,14 +330,14 @@ Immediate next engineering slice after this file:
 - shared toast feedback now exists across the live static team/business pages
 - live static dashboard now includes a dedicated `org` page for rename/slug edit, ownership transfer, archive, restore, and org-level handoff export
 - live static dashboard now supports team-org creation directly from `/app/org`, so a solo user can create a shared workspace without relying on the separate Next.js app
-- login now supports an enterprise provisioning lane that captures company context and routes new team/business users into `/app/org?provision=1` instead of dropping them straight into the solo dashboard
-- login and org setup now support an enterprise SSO request handoff, including captured IdP/admin context plus copy/email setup briefs, while the full backend SSO flow remains a separate checklist item
+- login now routes shared-org users and invited users into the live team/business dashboard without disrupting the solo flow
 - email alert destinations in `init-worker` now deliver through Resend when `RESEND_API_KEY` and `ALERTS_FROM_EMAIL` are configured, while keeping webhook delivery unchanged
 - live static `control` page now links enterprise demo/docs/security resources and generates a copyable/downloadable pilot checklist from the current org state
 - live static `org` and `alerts` pages now carry rollout resources plus copyable setup/ops checklists so enterprise handoff is not isolated to `control`
 - live static `members` and `audit` pages now carry rollout/review resources plus copyable access/audit checklists so the shared-org admin flow has consistent enterprise handoff support
-- worker now stores organization SSO/domain settings, login can discover existing enterprise workspaces by domain, and org setup can save real SSO-first provisioning metadata instead of only local form state
-- org setup now includes real provisioning-token management in the worker and live dashboard, giving future SCIM/basic directory sync a concrete org-scoped credential foundation
+- live product SSO/provisioning scaffolding was intentionally removed from the worker and live static dashboard so the shipped B2B surface stays focused on orgs, members, audit, alerts, and governance
+- third-party acceleration is now tracked explicitly in-repo so auth, sync, webhook, and email decisions can be made against a checklist instead of ad hoc chat history
+- `Supabase Auth` is now the explicit chosen SSO path for the near-term roadmap; alternate vendors are fallback options, not the default plan
 - projects page now supports in-app project creation and a first-team-project onboarding empty state
 
 ## Decisions
@@ -323,5 +345,6 @@ Immediate next engineering slice after this file:
 - Use one product, not a completely separate enterprise UI.
 - Use `apps/dashboard` as the long-term B2B application surface, but continue shipping meaningful B2B functionality in `apps/site/app/*` until production no longer depends on it.
 - Keep schema changes additive until worker and both dashboard surfaces fully adopt org scope.
-- Do not start with SSO, SCIM, or private deployment.
+- Do not rebuild identity plumbing too early; defer SSO, SCIM, and private deployment until a third-party path or direct customer pull justifies it.
+- If SSO is needed in the near term, use `Supabase Auth` first rather than introducing a second auth vendor.
 - First real B2B wedge remains software teams using shared third-party API keys across apps, AI, and CI/CD.

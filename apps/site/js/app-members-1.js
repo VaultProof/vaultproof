@@ -461,7 +461,7 @@
     const completed = items.filter((item) => item.done).length;
     const resources = [
       { title: 'Control dashboard', copy: 'Use Control for rollout summary, project policy, and pilot posture.', href: currentOrganizationId ? `/app/control?org=${encodeURIComponent(currentOrganizationId)}` : '/app/control', label: 'open control' },
-      { title: 'Org settings', copy: 'Return to Org for ownership, SSO handoff, and workspace-level setup.', href: currentOrganizationId ? `/app/org?org=${encodeURIComponent(currentOrganizationId)}` : '/app/org', label: 'open org' },
+      { title: 'Org settings', copy: 'Return to Org for ownership, archive controls, and workspace-level setup.', href: currentOrganizationId ? `/app/org?org=${encodeURIComponent(currentOrganizationId)}` : '/app/org', label: 'open org' },
       { title: 'Docs', copy: 'Share docs while teammates are connecting their first protected workflows.', href: '/docs', label: 'open docs' },
       { title: 'Security', copy: 'Use the security page when buyers ask how shared access and policy work.', href: '/security', label: 'open security' },
     ];

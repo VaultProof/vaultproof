@@ -7,7 +7,6 @@
     : 'https://init.vaultproof.dev/api/v1/init';
   const SUPABASE_AUTH_STORAGE_KEY = 'sb-gwzkjiomemjlhtrdrlan-auth-token';
   const ACTIVE_ORG_STORAGE_KEY = 'vaultproof_active_org';
-  const ENTERPRISE_CONTEXT_KEY = 'vp_enterprise_context';
 
   let token = localStorage.getItem('vaultproof_token');
   const user = JSON.parse(localStorage.getItem('vaultproof_user') || '{}');
@@ -19,8 +18,6 @@
   let currentOrgPayload = null;
   let currentMembersPayload = null;
   let currentOrgsPayload = null;
-  let currentProvisioningTokens = [];
-  let lastProvisioningSecret = '';
 
   if (!token) {
     window.location.href = 'login';
@@ -398,56 +395,10 @@
     setText('postureStatus', organization ? 'live' : 'unavailable');
   }
 
-  function renderProvisioningTokens() {
-    const list = $('provisioningList');
-    const organization = currentOrgPayload?.organization || null;
-    const canManage = Boolean(organization && (organization.role === 'owner' || organization.role === 'admin'));
-    const createBtn = $('createProvisioningTokenBtn');
-    const copyBtn = $('copyProvisioningSecretBtn');
-    if (createBtn) createBtn.disabled = !canManage;
-    if (copyBtn) copyBtn.disabled = !lastProvisioningSecret;
-    setText('provisioningStatus', `${currentProvisioningTokens.filter((token) => !token.revoked_at).length} active`);
-    setText(
-      'provisioningHint',
-      canManage
-        ? 'Secret is shown once after creation. Revoke and rotate if it is lost.'
-        : 'Only admins and owners can create or revoke provisioning tokens.',
-    );
-
-    const secretCard = $('provisioningSecretCard');
-    if (secretCard) {
-      secretCard.textContent = lastProvisioningSecret
-        ? `Provisioning secret: ${lastProvisioningSecret}`
-        : 'No provisioning token created in this session yet.';
-    }
-
-    if (!list) return;
-    if (!currentProvisioningTokens.length) {
-      list.innerHTML = '<div class="empty">No provisioning tokens yet.</div>';
-      return;
-    }
-    list.innerHTML = currentProvisioningTokens.map((token, index) => `
-      <div class="list-row">
-        <div class="list-rank">0${index + 1}</div>
-        <div class="list-main">
-          <div class="list-title">${escapeHtml(token.label)}</div>
-          <div class="list-sub">${escapeHtml(token.token_prefix)}... · created ${relTime(token.created_at)}${token.last_used_at ? ` · last used ${relTime(token.last_used_at)}` : ''}</div>
-        </div>
-        <div class="list-meta">
-          <span class="pill ${token.revoked_at ? 'warn' : 'ok'}">${token.revoked_at ? 'revoked' : 'active'}</span>
-          ${!token.revoked_at && canManage ? `<button type="button" class="btn-outline" data-revoke-provisioning-token="${escapeHtml(token.id)}">revoke</button>` : ''}
-        </div>
-      </div>
-    `).join('');
-  }
-
   function buildOrgChecklistItems() {
     const organization = currentOrgPayload?.organization || {};
     const members = currentMembersPayload?.members || [];
     const owner = members.find((member) => member.role === 'owner') || null;
-    const context = getEnterpriseContext() || {};
-    const selectedProvider = $('ssoProviderSelect')?.value || context.sso_provider || '';
-    const adminEmail = $('ssoAdminEmailInput')?.value || context.admin_email || '';
 
     return [
       {
@@ -475,16 +426,16 @@
           : 'Confirm the intended owner before handing the org to a customer team.',
       },
       {
-        done: Boolean(selectedProvider),
-        label: selectedProvider
-          ? `SSO handoff is staged for ${selectedProvider}.`
-          : 'Capture the identity provider so the SSO request can move forward.',
+        done: Number(organization.project_count || 0) > 0,
+        label: Number(organization.project_count || 0) > 0
+          ? `${organization.project_count} active projects are attached to the org.`
+          : 'Create the first shared project before handing the workspace to a team.',
       },
       {
-        done: Boolean(adminEmail),
-        label: adminEmail
-          ? `SSO admin contact is ${adminEmail}.`
-          : 'Record the admin contact who will complete the SSO configuration.',
+        done: organization.role === 'owner' || organization.role === 'admin',
+        label: organization.role === 'owner' || organization.role === 'admin'
+          ? `An admin-capable user is active in the workspace as ${organization.role}.`
+          : 'Confirm an owner or admin is driving rollout before sharing the org broadly.',
       },
     ];
   }
@@ -510,7 +461,7 @@
       },
       {
         title: 'Security',
-        copy: 'Send the security page during vendor review and SSO/security conversations.',
+        copy: 'Send the security page during vendor review and governance conversations.',
         href: '/security',
         label: 'open security',
       },
@@ -590,16 +541,13 @@
   }
   function buildOrgPilotBrief() {
     const organization = currentOrgPayload?.organization || {};
-    const context = getEnterpriseContext() || {};
     const checklistItems = buildOrgChecklistItems();
     return [
       'VaultProof Org Setup Brief',
-      `Organization: ${organization.name || context.company_name || 'Unknown org'}`,
+      `Organization: ${organization.name || 'Unknown org'}`,
       `Workspace type: ${organization.kind || 'unknown'}`,
       `Role: ${organization.role || 'unknown'}`,
-      `Slug: ${organization.slug || context.suggested_slug || 'unset'}`,
-      `SSO provider: ${$('ssoProviderSelect')?.value || context.sso_provider || 'not captured'}`,
-      `SSO admin: ${$('ssoAdminEmailInput')?.value || context.admin_email || 'not captured'}`,
+      `Slug: ${organization.slug || 'unset'}`,
       `Generated: ${formatTimestamp(new Date().toISOString())}`,
       '',
       'Org rollout checklist',
@@ -622,99 +570,6 @@
   }
   function getOrgExportBaseName() {
     return `${slugify(currentOrgPayload?.organization?.name || 'vaultproof')}-org`;
-  }
-  function getEnterpriseContext() {
-    try {
-      return JSON.parse(sessionStorage.getItem(ENTERPRISE_CONTEXT_KEY) || 'null');
-    } catch {
-      return null;
-    }
-  }
-  function clearEnterpriseContext() {
-    sessionStorage.removeItem(ENTERPRISE_CONTEXT_KEY);
-  }
-  function applyEnterpriseProvisioningHints() {
-    const context = getEnterpriseContext();
-    const params = new URLSearchParams(window.location.search);
-    if (!context || !params.get('provision')) return;
-    const nameInput = $('createOrgNameInput');
-    const slugInput = $('createOrgSlugInput');
-    if (nameInput && !nameInput.value) nameInput.value = context.company_name || '';
-    if (slugInput && !slugInput.value) slugInput.value = context.suggested_slug || '';
-    if (context.discovered_organization_name) {
-      setMessage('createOrgMsg', `Enterprise workspace ${context.discovered_organization_name} was found for ${context.company_domain || 'this domain'}. If you still need access, use the SSO setup panel or ask the owner to invite you.`, 'ok');
-      return;
-    }
-    setMessage('createOrgMsg', 'Enterprise setup is ready. Create the shared org to move into the Control workspace.', 'ok');
-  }
-  function buildSsoSetupBrief() {
-    const organization = currentOrgPayload?.organization || {};
-    const context = getEnterpriseContext() || {};
-    const domain = ($('ssoDomainInput')?.value || currentOrgPayload?.sso_settings?.company_domain || context.company_domain || '').trim();
-    const provider = ($('ssoProviderSelect')?.value || currentOrgPayload?.sso_settings?.sso_provider || context.sso_provider || '').trim();
-    const adminEmail = ($('ssoAdminEmailInput')?.value || context.admin_email || '').trim();
-    return [
-      'VaultProof enterprise SSO setup request',
-      '',
-      `Organization: ${organization.name || context.company_name || 'Unknown org'}`,
-      `Workspace slug: ${organization.slug || context.suggested_slug || ''}`,
-      `Domain: ${domain || ''}`,
-      `Identity provider: ${provider || 'not specified'}`,
-      `Admin contact: ${adminEmail || 'not specified'}`,
-      `Current role: ${organization.role || 'unknown'}`,
-      '',
-      'Requested outcome:',
-      '- Enable SSO-first login for this shared workspace',
-      '- Confirm org provisioning / domain ownership flow',
-      '- Share redirect URLs, metadata, and any required setup steps',
-    ].join('\n');
-  }
-  function renderSsoSetup(orgPayload) {
-    const organization = orgPayload?.organization || null;
-    const context = getEnterpriseContext() || {};
-    const ssoSettings = orgPayload?.sso_settings || null;
-    const domainInput = $('ssoDomainInput');
-    const providerSelect = $('ssoProviderSelect');
-    const adminInput = $('ssoAdminEmailInput');
-    if (domainInput && !domainInput.value) domainInput.value = ssoSettings?.company_domain || context.company_domain || '';
-    if (providerSelect && !providerSelect.value) providerSelect.value = ssoSettings?.sso_provider || context.sso_provider || '';
-    if (adminInput && !adminInput.value) adminInput.value = ssoSettings?.admin_email || context.admin_email || '';
-    setText('ssoSetupStatus', ssoSettings?.status || (organization?.kind === 'team' ? 'shared org ready' : 'provisioning'));
-    setText(
-      'ssoSetupHint',
-      organization?.kind === 'team'
-        ? (ssoSettings?.company_domain
-            ? `Discovery is active for ${ssoSettings.company_domain}. Save updates here, then use the brief for the remaining SSO handoff.`
-            : 'Save the SSO domain/provider here so enterprise login can discover this workspace before the full SAML path is finished.')
-        : 'Capture the SSO contact now and finish org creation if you still need a shared workspace.',
-    );
-  }
-  async function saveSsoSettings() {
-    const domain = ($('ssoDomainInput')?.value || '').trim();
-    const provider = ($('ssoProviderSelect')?.value || '').trim();
-    const adminEmail = ($('ssoAdminEmailInput')?.value || '').trim().toLowerCase();
-    setButtonState($('saveSsoSettingsBtn'), true, 'saving…');
-    const res = await apiFetch(INIT_API, '/orgs/current/sso-settings', {
-      method: 'PUT',
-      body: {
-        company_domain: domain || null,
-        sso_provider: provider || null,
-        admin_email: adminEmail || null,
-        login_mode: 'sso-first',
-        status: domain ? 'requested' : null,
-      },
-    });
-    const payload = unwrapPayload(res?.data) || {};
-    if (!res?.ok) {
-      setButtonState($('saveSsoSettingsBtn'), false, 'save sso settings');
-      setMessage('ssoSetupMsg', payload?.error || 'Could not save SSO settings.', 'danger');
-      toast(payload?.error || 'Could not save SSO settings.', 'danger');
-      return;
-    }
-    setMessage('ssoSetupMsg', payload?.sso_settings ? 'SSO settings saved. Enterprise login can now discover this workspace by domain.' : 'SSO settings cleared.', 'ok');
-    toast(payload?.sso_settings ? 'SSO settings saved.' : 'SSO settings cleared.', 'ok');
-    await load();
-    setButtonState($('saveSsoSettingsBtn'), false, 'save sso settings');
   }
   async function copyOrgReport() {
     try {
@@ -740,76 +595,6 @@
     downloadTextFile(`${getOrgExportBaseName()}-snapshot.json`, buildOrgJson(), 'application/json;charset=utf-8');
     setExportMessage('Org JSON downloaded.', 'ok');
     toast('Org JSON downloaded.', 'ok');
-  }
-  async function copySsoBrief() {
-    try {
-      const copied = await copyText(buildSsoSetupBrief());
-      setMessage('ssoSetupMsg', copied ? 'SSO setup brief copied.' : 'Could not copy the SSO setup brief.', copied ? 'ok' : 'danger');
-      toast(copied ? 'SSO setup brief copied.' : 'Could not copy the SSO setup brief.', copied ? 'ok' : 'danger');
-    } catch {
-      setMessage('ssoSetupMsg', 'Could not copy the SSO setup brief.', 'danger');
-      toast('Could not copy the SSO setup brief.', 'danger');
-    }
-  }
-  async function createProvisioningToken() {
-    const label = ($('provisioningLabelInput')?.value || '').trim() || 'Default provisioning token';
-    setButtonState($('createProvisioningTokenBtn'), true, 'creating…');
-    const res = await apiFetch(INIT_API, '/orgs/current/provisioning-tokens', {
-      method: 'POST',
-      body: { label },
-    });
-    const payload = unwrapPayload(res?.data) || {};
-    if (!res?.ok) {
-      setButtonState($('createProvisioningTokenBtn'), false, 'create token');
-      setMessage('provisioningMsg', payload?.error || 'Could not create provisioning token.', 'danger');
-      toast(payload?.error || 'Could not create provisioning token.', 'danger');
-      return;
-    }
-    lastProvisioningSecret = payload?.token_secret || '';
-    if ($('provisioningLabelInput')) $('provisioningLabelInput').value = '';
-    setMessage('provisioningMsg', 'Provisioning token created. Copy the secret now.', 'ok');
-    toast('Provisioning token created.', 'ok');
-    await load();
-    setButtonState($('createProvisioningTokenBtn'), false, 'create token');
-  }
-  async function copyProvisioningSecret() {
-    if (!lastProvisioningSecret) {
-      setMessage('provisioningMsg', 'No new provisioning secret to copy.', 'warn');
-      toast('No new provisioning secret to copy.', 'warn');
-      return;
-    }
-    try {
-      const copied = await copyText(lastProvisioningSecret);
-      setMessage('provisioningMsg', copied ? 'Provisioning secret copied.' : 'Could not copy provisioning secret.', copied ? 'ok' : 'danger');
-      toast(copied ? 'Provisioning secret copied.' : 'Could not copy provisioning secret.', copied ? 'ok' : 'danger');
-    } catch {
-      setMessage('provisioningMsg', 'Could not copy provisioning secret.', 'danger');
-      toast('Could not copy provisioning secret.', 'danger');
-    }
-  }
-  async function revokeProvisioningToken(tokenId) {
-    const button = document.querySelector(`[data-revoke-provisioning-token="${CSS.escape(tokenId)}"]`);
-    setButtonState(button, true, 'revoking…');
-    const res = await apiFetch(INIT_API, `/orgs/current/provisioning-tokens/${encodeURIComponent(tokenId)}`, {
-      method: 'DELETE',
-    });
-    const payload = unwrapPayload(res?.data) || {};
-    if (!res?.ok) {
-      setButtonState(button, false, 'revoke');
-      setMessage('provisioningMsg', payload?.error || 'Could not revoke provisioning token.', 'danger');
-      toast(payload?.error || 'Could not revoke provisioning token.', 'danger');
-      return;
-    }
-    setMessage('provisioningMsg', 'Provisioning token revoked.', 'ok');
-    toast('Provisioning token revoked.', 'ok');
-    await load();
-  }
-  function emailSsoSetup() {
-    const subject = encodeURIComponent(`VaultProof SSO setup for ${currentOrgPayload?.organization?.name || getEnterpriseContext()?.company_name || 'enterprise workspace'}`);
-    const body = encodeURIComponent(buildSsoSetupBrief());
-    window.location.href = `mailto:hello@vaultproof.dev?subject=${subject}&body=${body}`;
-    setMessage('ssoSetupMsg', 'Opened your email app with the SSO setup brief.', 'ok');
-    toast('Opened your email app with the SSO setup brief.', 'ok');
   }
 
   async function createOrganization() {
@@ -843,7 +628,6 @@
     if ($('createOrgSlugInput')) $('createOrgSlugInput').value = '';
     setMessage('createOrgMsg', 'Team organization created. Switching now…', 'ok');
     toast('Team organization created.', 'ok');
-    clearEnterpriseContext();
     if (organization?.id) {
       persistOrganizationSelection(organization.id);
       syncOrganizationUrl(organization.id);
@@ -969,7 +753,6 @@
       renderTransfer(null, null);
       renderArchive(null);
       renderCreateOrg(null);
-      renderSsoSetup(null);
       renderPilotKit();
       renderPosture(null, null);
       renderArchivedOrganizations();
@@ -981,7 +764,6 @@
       setText('bannerTitle', 'Organization controls unavailable');
       setText('profileHint', 'Create or join an organization to manage org settings here.');
       setText('createOrgStatus', 'ready');
-      applyEnterpriseProvisioningHints();
       renderUsageBox(null);
       if (opts.redirectOnMissingOrg) {
         window.location.href = '/app/';
@@ -989,15 +771,13 @@
       return;
     }
 
-    const [currentRes, membersRes, provisioningRes] = await Promise.all([
+    const [currentRes, membersRes] = await Promise.all([
       apiFetch(INIT_API, '/orgs/current'),
       apiFetch(INIT_API, '/members'),
-      apiFetch(INIT_API, '/orgs/current/provisioning-tokens'),
     ]);
 
     currentOrgPayload = unwrapPayload(currentRes?.data) || {};
     currentMembersPayload = unwrapPayload(membersRes?.data) || {};
-    currentProvisioningTokens = unwrapPayload(provisioningRes?.data)?.provisioning_tokens || [];
 
     renderBanner(currentOrgPayload, currentMembersPayload);
     renderKpis(currentOrgPayload);
@@ -1005,13 +785,10 @@
     renderTransfer(currentOrgPayload, currentMembersPayload);
     renderArchive(currentOrgPayload);
     renderCreateOrg(currentOrgPayload);
-    renderSsoSetup(currentOrgPayload);
-    renderProvisioningTokens();
     renderPilotKit();
     renderPosture(currentOrgPayload, currentMembersPayload);
     renderArchivedOrganizations();
     renderUsageBox(currentOrgPayload);
-    applyEnterpriseProvisioningHints();
   }
 
   function bind() {
@@ -1023,11 +800,6 @@
     $('downloadOrgJsonInlineBtn')?.addEventListener('click', downloadOrgJson);
     $('copyOrgPilotBriefBtn')?.addEventListener('click', copyOrgPilotBrief);
     $('createOrgBtn')?.addEventListener('click', createOrganization);
-    $('saveSsoSettingsBtn')?.addEventListener('click', saveSsoSettings);
-    $('copySsoBriefBtn')?.addEventListener('click', copySsoBrief);
-    $('emailSsoSetupBtn')?.addEventListener('click', emailSsoSetup);
-    $('createProvisioningTokenBtn')?.addEventListener('click', createProvisioningToken);
-    $('copyProvisioningSecretBtn')?.addEventListener('click', copyProvisioningSecret);
     $('saveOrgBtn')?.addEventListener('click', saveOrganizationProfile);
     $('transferOwnershipBtn')?.addEventListener('click', transferOwnership);
     $('archiveOrgBtn')?.addEventListener('click', archiveOrganization);
@@ -1042,12 +814,6 @@
       if (restoreButton) {
         const orgId = restoreButton.getAttribute('data-restore-org');
         if (orgId) await restoreArchivedOrganization(orgId);
-        return;
-      }
-      const revokeProvisioningTokenBtn = event.target.closest('[data-revoke-provisioning-token]');
-      if (revokeProvisioningTokenBtn) {
-        const tokenId = revokeProvisioningTokenBtn.getAttribute('data-revoke-provisioning-token');
-        if (tokenId) await revokeProvisioningToken(tokenId);
       }
     });
   }

@@ -384,63 +384,6 @@
             </section>
 
             <section class="panel">
-              <div class="panel-head">sso setup<span class="panel-head-right" id="ssoSetupStatus">ready</span></div>
-              <div class="form-card">
-                <div class="callout">This is the enterprise handoff while full SSO wiring is still in progress. Capture the IdP and contact details, then send the setup request with the current org context attached.</div>
-                <div class="form-grid">
-                  <label class="form-field">
-                    <span class="form-label">company domain</span>
-                    <input id="ssoDomainInput" class="form-input" type="text" placeholder="acme.com">
-                  </label>
-                  <label class="form-field">
-                    <span class="form-label">identity provider</span>
-                    <select id="ssoProviderSelect" class="form-select">
-                      <option value="">identity provider</option>
-                      <option value="okta">okta</option>
-                      <option value="google-workspace">google workspace</option>
-                      <option value="microsoft-entra">microsoft entra</option>
-                      <option value="other">other / custom</option>
-                    </select>
-                  </label>
-                  <label class="form-field">
-                    <span class="form-label">admin contact</span>
-                    <input id="ssoAdminEmailInput" class="form-input" type="email" placeholder="admin@acme.com">
-                  </label>
-                </div>
-                <div class="form-inline">
-                  <button type="button" class="btn-outline" id="saveSsoSettingsBtn">save sso settings</button>
-                  <button type="button" class="btn-outline" id="copySsoBriefBtn">copy sso brief</button>
-                  <button type="button" class="btn-primary" id="emailSsoSetupBtn">email sso setup</button>
-                  <span class="form-hint" id="ssoSetupHint">Use this while the full SAML / SSO backend flow is still being wired.</span>
-                </div>
-                <div class="form-msg" id="ssoSetupMsg"></div>
-              </div>
-            </section>
-
-            <section class="panel">
-              <div class="panel-head">provisioning token<span class="panel-head-right" id="provisioningStatus">loading…</span></div>
-              <div class="form-card">
-                <div class="callout">Create a provisioning token now so future SCIM or basic directory sync can use a real org-scoped credential instead of ad hoc admin access.</div>
-                <div class="form-grid">
-                  <label class="form-field">
-                    <span class="form-label">token label</span>
-                    <input id="provisioningLabelInput" class="form-input" type="text" placeholder="Okta sync token">
-                  </label>
-                </div>
-                <div class="form-inline">
-                  <button type="button" class="btn-outline" id="createProvisioningTokenBtn">create token</button>
-                  <button type="button" class="btn-outline" id="copyProvisioningSecretBtn" disabled>copy secret</button>
-                  <span class="form-hint" id="provisioningHint">Secret is shown once after creation. Revoke and rotate if it is lost.</span>
-                </div>
-                <div class="callout" id="provisioningSecretCard">No provisioning token created in this session yet.</div>
-                <div class="form-msg" id="provisioningMsg"></div>
-              </div>
-              <div class="list" id="provisioningList">
-                <div class="empty">Loading provisioning tokens…</div>
-              </div>
-            </section>
-
-            <section class="panel">
               <div class="panel-head">pilot kit<span class="panel-head-right" id="pilotKitStatus">loading…</span></div>
               <div class="resource-grid" id="pilotKitResources"><div class="empty">Loading rollout resources…</div></div>
               <div class="checklist-box">

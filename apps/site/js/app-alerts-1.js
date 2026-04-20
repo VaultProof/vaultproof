@@ -471,7 +471,7 @@
       },
       {
         title: 'Org settings',
-        copy: 'Return to Org when you need ownership transfer, provisioning context, or SSO handoff details.',
+        copy: 'Return to Org when you need ownership transfer, archive controls, or workspace-level setup details.',
         href: currentOrganizationId ? `/app/org?org=${encodeURIComponent(currentOrganizationId)}` : '/app/org',
         label: 'open org',
       },

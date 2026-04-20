@@ -8,7 +8,6 @@
     ? 'https://vaultproof-init-staging.vaultproof.workers.dev/api/v1/init'
     : 'https://init.vaultproof.dev/api/v1/init';
   const ACTIVE_ORG_STORAGE_KEY = 'vaultproof_active_org';
-  const ENTERPRISE_CONTEXT_KEY = 'vp_enterprise_context';
   const LOOP_KEY = 'vp_login_ts';
   const PROMO_KEY = 'vp_promo';
   const LOCAL_AUTH_PREFIXES = ['vaultproof_', 'sb-'];
@@ -53,144 +52,6 @@
 
   function getSavedPromoCode() {
     return localStorage.getItem(PROMO_KEY);
-  }
-
-  function setEnterpriseMessage(text, type) {
-    const el = $('enterpriseSetupMsg');
-    if (!el) return;
-    el.textContent = text;
-    el.className = 'notice';
-    if (!text) {
-      el.classList.add('hidden');
-      return;
-    }
-    el.classList.remove('hidden');
-    if (type === 'success' || type === 'info') {
-      el.style.borderColor = 'rgba(22, 163, 74, 0.2)';
-      el.style.background = 'rgba(22, 163, 74, 0.05)';
-      el.style.color = 'var(--success)';
-    } else {
-      el.style.borderColor = 'rgba(185, 28, 28, 0.2)';
-      el.style.background = 'rgba(185, 28, 28, 0.05)';
-      el.style.color = 'var(--danger)';
-    }
-  }
-
-  function renderEnterpriseDiscovery(match) {
-    const card = $('enterpriseDiscoveryCard');
-    const title = $('enterpriseDiscoveryTitle');
-    const copy = $('enterpriseDiscoveryCopy');
-    if (!card || !title || !copy) return;
-    if (!match || !match.organization) {
-      card.classList.add('hidden');
-      return;
-    }
-    title.textContent = `${match.organization.name} is already set up`;
-    copy.textContent = `Domain ${match.domain || match.sso?.company_domain || 'this company'} maps to an existing ${match.organization.kind || 'shared'} workspace. Continue with sign-in and we will route you into access or provisioning for that org.`;
-    card.classList.remove('hidden');
-  }
-
-  function getEnterpriseContext() {
-    try {
-      return JSON.parse(sessionStorage.getItem(ENTERPRISE_CONTEXT_KEY) || 'null');
-    } catch {
-      return null;
-    }
-  }
-
-  function clearEnterpriseContext() {
-    sessionStorage.removeItem(ENTERPRISE_CONTEXT_KEY);
-  }
-
-  function normalizeDomain(value) {
-    const trimmed = String(value || '').trim().toLowerCase().replace(/^https?:\/\//, '').replace(/\/.*$/, '');
-    if (!trimmed) return '';
-    return /^[a-z0-9.-]+\.[a-z]{2,}$/i.test(trimmed) ? trimmed : '';
-  }
-
-  function buildEnterpriseSlug(name, domain) {
-    const source = domain ? domain.split('.')[0] : name;
-    return String(source || '')
-      .trim()
-      .toLowerCase()
-      .replace(/[^a-z0-9]+/g, '-')
-      .replace(/^-+|-+$/g, '')
-      .slice(0, 63);
-  }
-
-  function buildSsoRequestBody(context) {
-    return [
-      'VaultProof enterprise SSO setup request',
-      '',
-      `Company: ${context.company_name || ''}`,
-      `Domain: ${context.company_domain || ''}`,
-      `Identity provider: ${context.sso_provider || 'not specified'}`,
-      `Admin contact: ${context.admin_email || 'not specified'}`,
-      `Suggested org slug: ${context.suggested_slug || ''}`,
-      '',
-      'Requested outcome:',
-      '- Enable SSO-first login for the shared VaultProof workspace',
-      '- Confirm org provisioning / domain ownership flow',
-      '- Share any metadata or redirect URLs needed for setup',
-    ].join('\n');
-  }
-
-  async function discoverEnterpriseWorkspace(domain) {
-    const normalized = normalizeDomain(domain);
-    if (!normalized) return null;
-    try {
-      const res = await fetch(`${INIT_API}/orgs/discover?domain=${encodeURIComponent(normalized)}`, {
-        headers: { 'Content-Type': 'application/json' },
-      });
-      if (!res.ok) return null;
-      const payload = await res.json().catch(function() { return null; });
-      const data = payload && typeof payload === 'object' && payload.data ? payload.data : payload;
-      return data && data.match ? data : null;
-    } catch (error) {
-      console.warn('Enterprise workspace discovery failed:', error);
-      return null;
-    }
-  }
-
-  async function prepareEnterpriseContext() {
-    const name = ($('enterpriseOrgNameInput')?.value || '').trim();
-    const domain = normalizeDomain($('enterpriseDomainInput')?.value || '');
-    const provider = ($('enterpriseProviderSelect')?.value || '').trim();
-    const adminEmail = ($('enterpriseAdminEmailInput')?.value || '').trim().toLowerCase();
-    if (name.length < 2) {
-      setEnterpriseMessage('Add a company or workspace name before using the enterprise path.', 'error');
-      return null;
-    }
-    const discoveredWorkspace = domain ? await discoverEnterpriseWorkspace(domain) : null;
-    renderEnterpriseDiscovery(discoveredWorkspace);
-    const context = {
-      company_name: name,
-      company_domain: domain,
-      sso_provider: provider || '',
-      admin_email: adminEmail || '',
-      suggested_slug: buildEnterpriseSlug(name, domain),
-      discovered_organization_id: discoveredWorkspace?.organization?.id || '',
-      discovered_organization_name: discoveredWorkspace?.organization?.name || '',
-      discovered_organization_slug: discoveredWorkspace?.organization?.slug || '',
-      discovered_sso_provider: discoveredWorkspace?.sso?.sso_provider || '',
-      discovered_status: discoveredWorkspace?.sso?.status || '',
-      created_at: new Date().toISOString(),
-    };
-    sessionStorage.setItem(ENTERPRISE_CONTEXT_KEY, JSON.stringify(context));
-    if (discoveredWorkspace?.organization?.name) {
-      setEnterpriseMessage(`Found enterprise workspace ${discoveredWorkspace.organization.name} for ${domain}. Continue with sign-in and we will route you into workspace access or provisioning.`, 'success');
-    } else {
-      setEnterpriseMessage('Enterprise setup saved. Continue with OAuth or email and we will route you into org provisioning.', 'success');
-    }
-    return context;
-  }
-
-  async function requestEnterpriseSso() {
-    const context = await prepareEnterpriseContext();
-    if (!context) return;
-    const subject = encodeURIComponent(`VaultProof SSO setup for ${context.company_name}`);
-    const body = encodeURIComponent(buildSsoRequestBody(context));
-    window.location.href = `mailto:hello@vaultproof.dev?subject=${subject}&body=${body}`;
   }
 
   function setPromoMessage(text, tone) {
@@ -330,14 +191,6 @@
         if (pendingInvites.length) {
           return './control';
         }
-      }
-
-      const enterpriseContext = getEnterpriseContext();
-      if (enterpriseContext && enterpriseContext.company_name) {
-        if (enterpriseContext.discovered_organization_name) {
-          return `./org?provision=1&lookup=1`;
-        }
-        return './org?provision=1';
       }
 
       return './';
@@ -659,71 +512,6 @@
 
     const googleBtn = $('loginWithGoogleBtn');
     if (googleBtn) googleBtn.addEventListener('click', function() { loginWithProvider('google', cliContext); });
-
-    const enterpriseGitHubBtn = $('enterpriseGitHubBtn');
-    if (enterpriseGitHubBtn) enterpriseGitHubBtn.addEventListener('click', async function() {
-      if (!(await prepareEnterpriseContext())) return;
-      loginWithProvider('github', cliContext);
-    });
-
-    const enterpriseGoogleBtn = $('enterpriseGoogleBtn');
-    if (enterpriseGoogleBtn) enterpriseGoogleBtn.addEventListener('click', async function() {
-      if (!(await prepareEnterpriseContext())) return;
-      loginWithProvider('google', cliContext);
-    });
-
-    const enterpriseEmailModeBtn = $('enterpriseEmailModeBtn');
-    if (enterpriseEmailModeBtn) enterpriseEmailModeBtn.addEventListener('click', async function() {
-      const context = await prepareEnterpriseContext();
-      if (!context) return;
-      showTab('register');
-    });
-
-    const enterpriseProviderSelect = $('enterpriseProviderSelect');
-    if (enterpriseProviderSelect) {
-      enterpriseProviderSelect.addEventListener('change', function() {
-        if (enterpriseProviderSelect.value) {
-          setEnterpriseMessage('Identity provider captured. Continue with provisioning or request SSO setup.', 'info');
-        }
-      });
-    }
-
-    const enterpriseDomainInput = $('enterpriseDomainInput');
-    if (enterpriseDomainInput) {
-      enterpriseDomainInput.addEventListener('blur', async function() {
-        const domain = normalizeDomain(enterpriseDomainInput.value || '');
-        if (!domain) {
-          renderEnterpriseDiscovery(null);
-          return;
-        }
-        const match = await discoverEnterpriseWorkspace(domain);
-        renderEnterpriseDiscovery(match);
-        if (match?.organization?.name) {
-          setEnterpriseMessage(`Existing workspace found: ${match.organization.name}. Continue with sign-in and we will guide you into access for ${domain}.`, 'info');
-        }
-      });
-    }
-
-    const enterpriseAdminEmailInput = $('enterpriseAdminEmailInput');
-    if (enterpriseAdminEmailInput) {
-      enterpriseAdminEmailInput.addEventListener('keydown', function(event) {
-        if (event.key === 'Enter') {
-          event.preventDefault();
-          requestEnterpriseSso();
-        }
-      });
-    }
-
-    const authCard = $('authCard');
-    if (authCard) {
-      const ssoButton = document.createElement('button');
-      ssoButton.type = 'button';
-      ssoButton.className = 'btn btn-secondary';
-      ssoButton.textContent = 'request sso setup';
-      ssoButton.addEventListener('click', requestEnterpriseSso);
-      const actionRow = document.querySelector('.enterprise-actions');
-      if (actionRow) actionRow.appendChild(ssoButton);
-    }
 
     const loginTab = $('loginTab');
     if (loginTab) loginTab.addEventListener('click', function() { showTab('login'); });
