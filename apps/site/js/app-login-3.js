@@ -76,6 +76,20 @@
     }
   }
 
+  function renderEnterpriseDiscovery(match) {
+    const card = $('enterpriseDiscoveryCard');
+    const title = $('enterpriseDiscoveryTitle');
+    const copy = $('enterpriseDiscoveryCopy');
+    if (!card || !title || !copy) return;
+    if (!match || !match.organization) {
+      card.classList.add('hidden');
+      return;
+    }
+    title.textContent = `${match.organization.name} is already set up`;
+    copy.textContent = `Domain ${match.domain || match.sso?.company_domain || 'this company'} maps to an existing ${match.organization.kind || 'shared'} workspace. Continue with sign-in and we will route you into access or provisioning for that org.`;
+    card.classList.remove('hidden');
+  }
+
   function getEnterpriseContext() {
     try {
       return JSON.parse(sessionStorage.getItem(ENTERPRISE_CONTEXT_KEY) || 'null');
@@ -148,6 +162,7 @@
       return null;
     }
     const discoveredWorkspace = domain ? await discoverEnterpriseWorkspace(domain) : null;
+    renderEnterpriseDiscovery(discoveredWorkspace);
     const context = {
       company_name: name,
       company_domain: domain,
@@ -677,8 +692,12 @@
     if (enterpriseDomainInput) {
       enterpriseDomainInput.addEventListener('blur', async function() {
         const domain = normalizeDomain(enterpriseDomainInput.value || '');
-        if (!domain) return;
+        if (!domain) {
+          renderEnterpriseDiscovery(null);
+          return;
+        }
         const match = await discoverEnterpriseWorkspace(domain);
+        renderEnterpriseDiscovery(match);
         if (match?.organization?.name) {
           setEnterpriseMessage(`Existing workspace found: ${match.organization.name}. Continue with sign-in and we will guide you into access for ${domain}.`, 'info');
         }

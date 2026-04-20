@@ -403,6 +403,37 @@
       margin-top: 10px;
     }
 
+    .enterprise-discovery {
+      margin-top: 12px;
+      border: var(--rule);
+      border-radius: 6px;
+      background: rgba(217, 119, 6, 0.06);
+      padding: 12px 14px;
+      display: grid;
+      gap: 6px;
+    }
+
+    .enterprise-discovery-kicker {
+      font-family: var(--font-mono);
+      font-size: 10px;
+      letter-spacing: 0.7px;
+      text-transform: uppercase;
+      color: var(--accent);
+    }
+
+    .enterprise-discovery-title {
+      font-family: var(--font-display);
+      font-size: 17px;
+      font-weight: 600;
+      letter-spacing: -0.2px;
+    }
+
+    .enterprise-discovery-copy {
+      font-size: 13px;
+      color: var(--text-muted);
+      line-height: 1.5;
+    }
+
     .promo-toggle {
       width: 100%;
       border: 0;
@@ -874,6 +905,11 @@
                 <button id="enterpriseGoogleBtn" type="button" class="btn btn-secondary">google setup</button>
                 <button id="enterpriseGitHubBtn" type="button" class="btn btn-secondary">github setup</button>
                 <button id="enterpriseEmailModeBtn" type="button" class="btn btn-secondary">email setup</button>
+              </div>
+              <div id="enterpriseDiscoveryCard" class="enterprise-discovery hidden">
+                <div class="enterprise-discovery-kicker">workspace found</div>
+                <div id="enterpriseDiscoveryTitle" class="enterprise-discovery-title">Existing enterprise workspace</div>
+                <div id="enterpriseDiscoveryCopy" class="enterprise-discovery-copy">We found a shared workspace for this company domain.</div>
               </div>
               <div id="enterpriseSetupMsg" class="hidden"></div>
             </div>
