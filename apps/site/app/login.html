@@ -301,6 +301,43 @@
       margin-top: 8px;
     }
 
+    .entry-split {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 10px;
+      margin-top: 18px;
+    }
+
+    .entry-card {
+      border: var(--rule);
+      border-radius: 4px;
+      background: #fcfcf9;
+      padding: 12px 14px;
+    }
+
+    .entry-label {
+      font-family: var(--font-mono);
+      font-size: 10.5px;
+      letter-spacing: 0.7px;
+      text-transform: uppercase;
+      color: var(--accent);
+    }
+
+    .entry-title {
+      font-family: var(--font-display);
+      font-size: 18px;
+      font-weight: 600;
+      letter-spacing: -0.3px;
+      margin-top: 6px;
+    }
+
+    .entry-copy {
+      margin-top: 6px;
+      color: var(--text-muted);
+      font-size: 12.5px;
+      line-height: 1.5;
+    }
+
     .auth-card {
       background: var(--bg-card);
       border: var(--rule);
@@ -639,6 +676,7 @@
       }
 
       .auth-title { font-size: 26px; }
+      .entry-split { grid-template-columns: 1fr; }
     }
 
     @media (max-width: 480px) {
@@ -718,7 +756,7 @@
             <div class="log-row">
               <span class="log-glyph">&gt;</span>
               <span class="log-key">dashboard route prepared</span>
-              <span class="log-val">/app</span>
+              <span class="log-val">dynamic</span>
             </div>
             <div class="log-row">
               <span class="log-glyph log-success">&#10003;</span>
@@ -738,7 +776,19 @@
           <div class="auth-heading">
             <div class="auth-kicker">dashboard access</div>
             <h2 class="auth-title">Sign in to VaultProof</h2>
-            <p class="auth-subtitle">Manage keys, proxies, scans, and billing from one sealed workspace.</p>
+            <p class="auth-subtitle">Solo developers land in the standard Projects workspace. Team and business accounts can route into the separate Control dashboard once SSO is enabled.</p>
+            <div class="entry-split" aria-label="Access paths">
+              <div class="entry-card">
+                <div class="entry-label">solo developers</div>
+                <div class="entry-title">Projects workspace</div>
+                <p class="entry-copy">Use the regular VaultProof dashboard for individual projects, keys, scans, and day-to-day setup.</p>
+              </div>
+              <div class="entry-card">
+                <div class="entry-label">teams and businesses</div>
+                <div class="entry-title">Control workspace</div>
+                <p class="entry-copy">Shared orgs land in a separate operator dashboard for access, governance, runtime posture, and alert delivery. This is the future SSO destination.</p>
+              </div>
+            </div>
           </div>
 
           <div id="authCard" class="auth-card">

@@ -4,6 +4,9 @@
   const API = window.location.hostname.includes('dev.vaultproof')
     ? 'https://staging-api.vaultproof.dev/api/v1'
     : 'https://api.vaultproof.dev/api/v1';
+  const INIT_API = window.location.hostname.includes('dev.vaultproof')
+    ? 'https://vaultproof-init-staging.vaultproof.workers.dev/api/v1/init'
+    : 'https://init.vaultproof.dev/api/v1/init';
   const LOOP_KEY = 'vp_login_ts';
   const PROMO_KEY = 'vp_promo';
   const LOCAL_AUTH_PREFIXES = ['vaultproof_', 'sb-'];
@@ -143,12 +146,45 @@
     }
   }
 
+  async function resolveDashboardRoute(session) {
+    if (!session || !session.access_token) return './';
+
+    try {
+      const res = await fetch(`${INIT_API}/orgs`, {
+        headers: {
+          Authorization: 'Bearer ' + session.access_token,
+          'Content-Type': 'application/json',
+        },
+      });
+      if (!res.ok) return './';
+
+      const payload = await res.json().catch(function() { return null; });
+      const data = payload && typeof payload === 'object' && payload.data ? payload.data : payload;
+      const organizations = Array.isArray(data && data.organizations) ? data.organizations : [];
+      const activeOrganizationId = data && data.active_organization_id ? data.active_organization_id : null;
+      const activeOrganization = organizations.find(function(org) { return org.id === activeOrganizationId; }) || null;
+      const sharedOrganization = organizations.find(function(org) { return org.kind && org.kind !== 'personal'; }) || null;
+
+      if (activeOrganization && activeOrganization.kind && activeOrganization.kind !== 'personal') {
+        return './control';
+      }
+      if (sharedOrganization) {
+        return './control';
+      }
+      return './';
+    } catch (error) {
+      console.warn('Dashboard route resolution failed:', error);
+      return './';
+    }
+  }
+
   async function finalizeAuthenticatedSession(session, user, cliContext) {
     if (!session) return;
     storeLocalSession(session, user);
     await redeemPendingPromo(session);
     if (redirectToCli(cliContext, session, user)) return;
-    safeRedirect('./');
+    const dashboardRoute = await resolveDashboardRoute(session);
+    safeRedirect(dashboardRoute);
   }
 
   function showError(message) {
