@@ -596,19 +596,24 @@
     const slugInput = $('createOrgSlugInput');
     if (nameInput && !nameInput.value) nameInput.value = context.company_name || '';
     if (slugInput && !slugInput.value) slugInput.value = context.suggested_slug || '';
+    if (context.discovered_organization_name) {
+      setMessage('createOrgMsg', `Enterprise workspace ${context.discovered_organization_name} was found for ${context.company_domain || 'this domain'}. If you still need access, use the SSO setup panel or ask the owner to invite you.`, 'ok');
+      return;
+    }
     setMessage('createOrgMsg', 'Enterprise setup is ready. Create the shared org to move into the Control workspace.', 'ok');
   }
   function buildSsoSetupBrief() {
     const organization = currentOrgPayload?.organization || {};
     const context = getEnterpriseContext() || {};
-    const provider = ($('ssoProviderSelect')?.value || context.sso_provider || '').trim();
+    const domain = ($('ssoDomainInput')?.value || currentOrgPayload?.sso_settings?.company_domain || context.company_domain || '').trim();
+    const provider = ($('ssoProviderSelect')?.value || currentOrgPayload?.sso_settings?.sso_provider || context.sso_provider || '').trim();
     const adminEmail = ($('ssoAdminEmailInput')?.value || context.admin_email || '').trim();
     return [
       'VaultProof enterprise SSO setup request',
       '',
       `Organization: ${organization.name || context.company_name || 'Unknown org'}`,
       `Workspace slug: ${organization.slug || context.suggested_slug || ''}`,
-      `Domain: ${context.company_domain || ''}`,
+      `Domain: ${domain || ''}`,
       `Identity provider: ${provider || 'not specified'}`,
       `Admin contact: ${adminEmail || 'not specified'}`,
       `Current role: ${organization.role || 'unknown'}`,
@@ -622,17 +627,49 @@
   function renderSsoSetup(orgPayload) {
     const organization = orgPayload?.organization || null;
     const context = getEnterpriseContext() || {};
+    const ssoSettings = orgPayload?.sso_settings || null;
+    const domainInput = $('ssoDomainInput');
     const providerSelect = $('ssoProviderSelect');
     const adminInput = $('ssoAdminEmailInput');
-    if (providerSelect && context.sso_provider && !providerSelect.value) providerSelect.value = context.sso_provider;
-    if (adminInput && context.admin_email && !adminInput.value) adminInput.value = context.admin_email;
-    setText('ssoSetupStatus', organization?.kind === 'team' ? 'shared org ready' : 'provisioning');
+    if (domainInput && !domainInput.value) domainInput.value = ssoSettings?.company_domain || context.company_domain || '';
+    if (providerSelect && !providerSelect.value) providerSelect.value = ssoSettings?.sso_provider || context.sso_provider || '';
+    if (adminInput && !adminInput.value) adminInput.value = ssoSettings?.admin_email || context.admin_email || '';
+    setText('ssoSetupStatus', ssoSettings?.status || (organization?.kind === 'team' ? 'shared org ready' : 'provisioning'));
     setText(
       'ssoSetupHint',
       organization?.kind === 'team'
-        ? 'Use this to send the enterprise SSO setup brief with the active org attached.'
+        ? (ssoSettings?.company_domain
+            ? `Discovery is active for ${ssoSettings.company_domain}. Save updates here, then use the brief for the remaining SSO handoff.`
+            : 'Save the SSO domain/provider here so enterprise login can discover this workspace before the full SAML path is finished.')
         : 'Capture the SSO contact now and finish org creation if you still need a shared workspace.',
     );
+  }
+  async function saveSsoSettings() {
+    const domain = ($('ssoDomainInput')?.value || '').trim();
+    const provider = ($('ssoProviderSelect')?.value || '').trim();
+    const adminEmail = ($('ssoAdminEmailInput')?.value || '').trim().toLowerCase();
+    setButtonState($('saveSsoSettingsBtn'), true, 'saving…');
+    const res = await apiFetch(INIT_API, '/orgs/current/sso-settings', {
+      method: 'PUT',
+      body: {
+        company_domain: domain || null,
+        sso_provider: provider || null,
+        admin_email: adminEmail || null,
+        login_mode: 'sso-first',
+        status: domain ? 'requested' : null,
+      },
+    });
+    const payload = unwrapPayload(res?.data) || {};
+    if (!res?.ok) {
+      setButtonState($('saveSsoSettingsBtn'), false, 'save sso settings');
+      setMessage('ssoSetupMsg', payload?.error || 'Could not save SSO settings.', 'danger');
+      toast(payload?.error || 'Could not save SSO settings.', 'danger');
+      return;
+    }
+    setMessage('ssoSetupMsg', payload?.sso_settings ? 'SSO settings saved. Enterprise login can now discover this workspace by domain.' : 'SSO settings cleared.', 'ok');
+    toast(payload?.sso_settings ? 'SSO settings saved.' : 'SSO settings cleared.', 'ok');
+    await load();
+    setButtonState($('saveSsoSettingsBtn'), false, 'save sso settings');
   }
   async function copyOrgReport() {
     try {
@@ -885,6 +922,7 @@
     $('downloadOrgJsonInlineBtn')?.addEventListener('click', downloadOrgJson);
     $('copyOrgPilotBriefBtn')?.addEventListener('click', copyOrgPilotBrief);
     $('createOrgBtn')?.addEventListener('click', createOrganization);
+    $('saveSsoSettingsBtn')?.addEventListener('click', saveSsoSettings);
     $('copySsoBriefBtn')?.addEventListener('click', copySsoBrief);
     $('emailSsoSetupBtn')?.addEventListener('click', emailSsoSetup);
     $('saveOrgBtn')?.addEventListener('click', saveOrganizationProfile);

@@ -26,6 +26,14 @@ interface TransferOwnershipBody {
   target_user_id?: string;
 }
 
+interface UpdateOrganizationSsoSettingsBody {
+  company_domain?: string | null;
+  sso_provider?: string | null;
+  admin_email?: string | null;
+  status?: 'requested' | 'configured' | null;
+  login_mode?: 'sso-first' | 'assisted' | null;
+}
+
 function normalizeSlug(slug: string): string {
   return slug
     .trim()
@@ -35,11 +43,102 @@ function normalizeSlug(slug: string): string {
     .slice(0, 63);
 }
 
+function normalizeDomain(domain: string): string {
+  return domain
+    .trim()
+    .toLowerCase()
+    .replace(/^https?:\/\//, '')
+    .replace(/\/.*$/, '');
+}
+
+function isValidDomain(domain: string): boolean {
+  return /^[a-z0-9.-]+\.[a-z]{2,}$/i.test(domain);
+}
+
+function maskEmail(email: string | null | undefined): string | null {
+  if (!email) return null;
+  const [local, domain] = email.split('@');
+  if (!local || !domain) return email;
+  if (local.length <= 2) return `${local[0] || '*'}*@${domain}`;
+  return `${local.slice(0, 2)}***@${domain}`;
+}
+
+async function fetchOrganizationSsoSettings(
+  env: Env,
+  organizationId: string,
+): Promise<{
+  company_domain: string;
+  sso_provider: string | null;
+  admin_email: string | null;
+  login_mode: string;
+  status: string;
+  created_at: string;
+  updated_at: string;
+} | null> {
+  const supabase = getSupabase(env);
+  const { data } = await supabase
+    .from('organization_sso_settings')
+    .select('company_domain, sso_provider, admin_email, login_mode, status, created_at, updated_at')
+    .eq('organization_id', organizationId)
+    .maybeSingle();
+  return data || null;
+}
+
 export async function handleOrganizations(
   request: Request,
   env: Env,
   pathSegments: string[],
 ): Promise<Response> {
+  const supabase = getSupabase(env);
+
+  if (request.method === 'GET' && pathSegments.length === 1 && pathSegments[0] === 'discover') {
+    const url = new URL(request.url);
+    const domain = normalizeDomain(url.searchParams.get('domain') || '');
+    if (!domain || !isValidDomain(domain)) {
+      return Response.json({ match: false, error: 'Valid domain is required' }, { status: 400 });
+    }
+
+    const { data: settings } = await supabase
+      .from('organization_sso_settings')
+      .select('organization_id, company_domain, sso_provider, admin_email, login_mode, status')
+      .eq('company_domain', domain)
+      .maybeSingle();
+
+    if (!settings) {
+      return Response.json({ match: false, domain });
+    }
+
+    const { data: organization } = await supabase
+      .from('organizations')
+      .select('id, name, slug, kind')
+      .eq('id', settings.organization_id)
+      .is('archived_at', null)
+      .eq('kind', 'team')
+      .maybeSingle();
+
+    if (!organization) {
+      return Response.json({ match: false, domain });
+    }
+
+    return Response.json({
+      match: true,
+      domain,
+      organization: {
+        id: organization.id,
+        name: organization.name,
+        slug: organization.slug,
+        kind: organization.kind,
+      },
+      sso: {
+        company_domain: settings.company_domain,
+        sso_provider: settings.sso_provider,
+        admin_email_masked: maskEmail(settings.admin_email),
+        login_mode: settings.login_mode,
+        status: settings.status,
+      },
+    });
+  }
+
   const auth = await authenticateUser(request, env);
   if (!auth) {
     return Response.json(
@@ -48,7 +147,6 @@ export async function handleOrganizations(
     );
   }
 
-  const supabase = getSupabase(env);
   const method = request.method;
 
   if (method === 'GET' && pathSegments.length === 0) {
@@ -109,6 +207,8 @@ export async function handleOrganizations(
       return Response.json({ error: 'Organization not found' }, { status: 404 });
     }
 
+    const ssoSettings = await fetchOrganizationSsoSettings(env, organization.id);
+
     return Response.json({
       organization: {
         ...organization,
@@ -118,6 +218,7 @@ export async function handleOrganizations(
         can_archive: activeMembership.organization_role === 'owner' && organization.kind === 'team',
         can_transfer_ownership: activeMembership.organization_role === 'owner' && organization.kind === 'team',
       },
+      sso_settings: ssoSettings,
     });
   }
 
@@ -261,6 +362,112 @@ export async function handleOrganizations(
         role: activeMembership.organization_role,
       },
     });
+  }
+
+  if (pathSegments.length === 2 && pathSegments[0] === 'current' && pathSegments[1] === 'sso-settings') {
+    const activeMembership = await resolveOrganizationMembership(request, env, auth.userId);
+    if (!activeMembership) {
+      return Response.json({ error: 'Organization not found' }, { status: 404 });
+    }
+    if (activeMembership.organization_kind !== 'team') {
+      return Response.json({ error: 'SSO settings are only available on shared team organizations' }, { status: 400 });
+    }
+
+    if (method === 'GET') {
+      const ssoSettings = await fetchOrganizationSsoSettings(env, activeMembership.organization_id);
+      return Response.json({ sso_settings: ssoSettings });
+    }
+
+    if (method === 'PUT') {
+      if (!hasRequiredOrganizationRole(activeMembership.organization_role, 'admin')) {
+        return Response.json({ error: 'Insufficient organization permissions' }, { status: 403 });
+      }
+
+      let body: UpdateOrganizationSsoSettingsBody;
+      try {
+        body = (await request.json()) as UpdateOrganizationSsoSettingsBody;
+      } catch {
+        return Response.json({ error: 'Invalid JSON' }, { status: 400 });
+      }
+
+      const companyDomain = normalizeDomain(body.company_domain || '');
+      const ssoProvider = body.sso_provider?.trim() || null;
+      const adminEmail = body.admin_email?.trim().toLowerCase() || null;
+      const status = body.status || 'requested';
+      const loginMode = body.login_mode || 'sso-first';
+
+      if (!companyDomain) {
+        const { error } = await supabase
+          .from('organization_sso_settings')
+          .delete()
+          .eq('organization_id', activeMembership.organization_id);
+        if (error) {
+          return Response.json({ error: 'Failed to clear SSO settings' }, { status: 500 });
+        }
+
+        await writeGovernanceAuditEvent(env, {
+          organization_id: activeMembership.organization_id,
+          actor_user_id: auth.userId,
+          actor_email: auth.email,
+          event_type: 'organization_sso_settings_cleared',
+          target_type: 'organization',
+          target_id: activeMembership.organization_id,
+          description: 'Cleared organization SSO settings',
+        });
+
+        return Response.json({ sso_settings: null });
+      }
+
+      if (!isValidDomain(companyDomain)) {
+        return Response.json({ error: 'company_domain must be a valid domain' }, { status: 400 });
+      }
+      if (status !== 'requested' && status !== 'configured') {
+        return Response.json({ error: 'status must be requested or configured' }, { status: 400 });
+      }
+      if (loginMode !== 'sso-first' && loginMode !== 'assisted') {
+        return Response.json({ error: 'login_mode must be sso-first or assisted' }, { status: 400 });
+      }
+
+      const now = new Date().toISOString();
+      const { data, error } = await supabase
+        .from('organization_sso_settings')
+        .upsert({
+          organization_id: activeMembership.organization_id,
+          company_domain: companyDomain,
+          sso_provider: ssoProvider,
+          admin_email: adminEmail,
+          status,
+          login_mode: loginMode,
+          updated_at: now,
+        }, { onConflict: 'organization_id' })
+        .select('company_domain, sso_provider, admin_email, login_mode, status, created_at, updated_at')
+        .single();
+
+      if (error || !data) {
+        const message = error?.message?.includes('organization_sso_settings_domain_lower_uidx')
+          ? 'That company domain is already linked to another organization'
+          : 'Failed to save SSO settings';
+        return Response.json({ error: message }, { status: 400 });
+      }
+
+      await writeGovernanceAuditEvent(env, {
+        organization_id: activeMembership.organization_id,
+        actor_user_id: auth.userId,
+        actor_email: auth.email,
+        event_type: 'organization_sso_settings_updated',
+        target_type: 'organization',
+        target_id: activeMembership.organization_id,
+        description: `Updated SSO settings for ${companyDomain}`,
+        metadata: {
+          company_domain: companyDomain,
+          sso_provider: ssoProvider,
+          login_mode: loginMode,
+          status,
+        },
+      });
+
+      return Response.json({ sso_settings: data });
+    }
   }
 
   if (method === 'POST' && pathSegments.length === 2 && pathSegments[0] === 'current' && pathSegments[1] === 'archive') {

@@ -121,7 +121,24 @@
     ].join('\n');
   }
 
-  function prepareEnterpriseContext() {
+  async function discoverEnterpriseWorkspace(domain) {
+    const normalized = normalizeDomain(domain);
+    if (!normalized) return null;
+    try {
+      const res = await fetch(`${INIT_API}/orgs/discover?domain=${encodeURIComponent(normalized)}`, {
+        headers: { 'Content-Type': 'application/json' },
+      });
+      if (!res.ok) return null;
+      const payload = await res.json().catch(function() { return null; });
+      const data = payload && typeof payload === 'object' && payload.data ? payload.data : payload;
+      return data && data.match ? data : null;
+    } catch (error) {
+      console.warn('Enterprise workspace discovery failed:', error);
+      return null;
+    }
+  }
+
+  async function prepareEnterpriseContext() {
     const name = ($('enterpriseOrgNameInput')?.value || '').trim();
     const domain = normalizeDomain($('enterpriseDomainInput')?.value || '');
     const provider = ($('enterpriseProviderSelect')?.value || '').trim();
@@ -130,21 +147,31 @@
       setEnterpriseMessage('Add a company or workspace name before using the enterprise path.', 'error');
       return null;
     }
+    const discoveredWorkspace = domain ? await discoverEnterpriseWorkspace(domain) : null;
     const context = {
       company_name: name,
       company_domain: domain,
       sso_provider: provider || '',
       admin_email: adminEmail || '',
       suggested_slug: buildEnterpriseSlug(name, domain),
+      discovered_organization_id: discoveredWorkspace?.organization?.id || '',
+      discovered_organization_name: discoveredWorkspace?.organization?.name || '',
+      discovered_organization_slug: discoveredWorkspace?.organization?.slug || '',
+      discovered_sso_provider: discoveredWorkspace?.sso?.sso_provider || '',
+      discovered_status: discoveredWorkspace?.sso?.status || '',
       created_at: new Date().toISOString(),
     };
     sessionStorage.setItem(ENTERPRISE_CONTEXT_KEY, JSON.stringify(context));
-    setEnterpriseMessage('Enterprise setup saved. Continue with OAuth or email and we will route you into org provisioning.', 'success');
+    if (discoveredWorkspace?.organization?.name) {
+      setEnterpriseMessage(`Found enterprise workspace ${discoveredWorkspace.organization.name} for ${domain}. Continue with sign-in and we will route you into workspace access or provisioning.`, 'success');
+    } else {
+      setEnterpriseMessage('Enterprise setup saved. Continue with OAuth or email and we will route you into org provisioning.', 'success');
+    }
     return context;
   }
 
-  function requestEnterpriseSso() {
-    const context = prepareEnterpriseContext();
+  async function requestEnterpriseSso() {
+    const context = await prepareEnterpriseContext();
     if (!context) return;
     const subject = encodeURIComponent(`VaultProof SSO setup for ${context.company_name}`);
     const body = encodeURIComponent(buildSsoRequestBody(context));
@@ -292,6 +319,9 @@
 
       const enterpriseContext = getEnterpriseContext();
       if (enterpriseContext && enterpriseContext.company_name) {
+        if (enterpriseContext.discovered_organization_name) {
+          return `./org?provision=1&lookup=1`;
+        }
         return './org?provision=1';
       }
 
@@ -616,20 +646,20 @@
     if (googleBtn) googleBtn.addEventListener('click', function() { loginWithProvider('google', cliContext); });
 
     const enterpriseGitHubBtn = $('enterpriseGitHubBtn');
-    if (enterpriseGitHubBtn) enterpriseGitHubBtn.addEventListener('click', function() {
-      if (!prepareEnterpriseContext()) return;
+    if (enterpriseGitHubBtn) enterpriseGitHubBtn.addEventListener('click', async function() {
+      if (!(await prepareEnterpriseContext())) return;
       loginWithProvider('github', cliContext);
     });
 
     const enterpriseGoogleBtn = $('enterpriseGoogleBtn');
-    if (enterpriseGoogleBtn) enterpriseGoogleBtn.addEventListener('click', function() {
-      if (!prepareEnterpriseContext()) return;
+    if (enterpriseGoogleBtn) enterpriseGoogleBtn.addEventListener('click', async function() {
+      if (!(await prepareEnterpriseContext())) return;
       loginWithProvider('google', cliContext);
     });
 
     const enterpriseEmailModeBtn = $('enterpriseEmailModeBtn');
-    if (enterpriseEmailModeBtn) enterpriseEmailModeBtn.addEventListener('click', function() {
-      const context = prepareEnterpriseContext();
+    if (enterpriseEmailModeBtn) enterpriseEmailModeBtn.addEventListener('click', async function() {
+      const context = await prepareEnterpriseContext();
       if (!context) return;
       showTab('register');
     });
@@ -639,6 +669,18 @@
       enterpriseProviderSelect.addEventListener('change', function() {
         if (enterpriseProviderSelect.value) {
           setEnterpriseMessage('Identity provider captured. Continue with provisioning or request SSO setup.', 'info');
+        }
+      });
+    }
+
+    const enterpriseDomainInput = $('enterpriseDomainInput');
+    if (enterpriseDomainInput) {
+      enterpriseDomainInput.addEventListener('blur', async function() {
+        const domain = normalizeDomain(enterpriseDomainInput.value || '');
+        if (!domain) return;
+        const match = await discoverEnterpriseWorkspace(domain);
+        if (match?.organization?.name) {
+          setEnterpriseMessage(`Existing workspace found: ${match.organization.name}. Continue with sign-in and we will guide you into access for ${domain}.`, 'info');
         }
       });
     }
