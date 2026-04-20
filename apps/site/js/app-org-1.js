@@ -19,6 +19,8 @@
   let currentOrgPayload = null;
   let currentMembersPayload = null;
   let currentOrgsPayload = null;
+  let currentProvisioningTokens = [];
+  let lastProvisioningSecret = '';
 
   if (!token) {
     window.location.href = 'login';
@@ -396,6 +398,49 @@
     setText('postureStatus', organization ? 'live' : 'unavailable');
   }
 
+  function renderProvisioningTokens() {
+    const list = $('provisioningList');
+    const organization = currentOrgPayload?.organization || null;
+    const canManage = Boolean(organization && (organization.role === 'owner' || organization.role === 'admin'));
+    const createBtn = $('createProvisioningTokenBtn');
+    const copyBtn = $('copyProvisioningSecretBtn');
+    if (createBtn) createBtn.disabled = !canManage;
+    if (copyBtn) copyBtn.disabled = !lastProvisioningSecret;
+    setText('provisioningStatus', `${currentProvisioningTokens.filter((token) => !token.revoked_at).length} active`);
+    setText(
+      'provisioningHint',
+      canManage
+        ? 'Secret is shown once after creation. Revoke and rotate if it is lost.'
+        : 'Only admins and owners can create or revoke provisioning tokens.',
+    );
+
+    const secretCard = $('provisioningSecretCard');
+    if (secretCard) {
+      secretCard.textContent = lastProvisioningSecret
+        ? `Provisioning secret: ${lastProvisioningSecret}`
+        : 'No provisioning token created in this session yet.';
+    }
+
+    if (!list) return;
+    if (!currentProvisioningTokens.length) {
+      list.innerHTML = '<div class="empty">No provisioning tokens yet.</div>';
+      return;
+    }
+    list.innerHTML = currentProvisioningTokens.map((token, index) => `
+      <div class="list-row">
+        <div class="list-rank">0${index + 1}</div>
+        <div class="list-main">
+          <div class="list-title">${escapeHtml(token.label)}</div>
+          <div class="list-sub">${escapeHtml(token.token_prefix)}... · created ${relTime(token.created_at)}${token.last_used_at ? ` · last used ${relTime(token.last_used_at)}` : ''}</div>
+        </div>
+        <div class="list-meta">
+          <span class="pill ${token.revoked_at ? 'warn' : 'ok'}">${token.revoked_at ? 'revoked' : 'active'}</span>
+          ${!token.revoked_at && canManage ? `<button type="button" class="btn-outline" data-revoke-provisioning-token="${escapeHtml(token.id)}">revoke</button>` : ''}
+        </div>
+      </div>
+    `).join('');
+  }
+
   function buildOrgChecklistItems() {
     const organization = currentOrgPayload?.organization || {};
     const members = currentMembersPayload?.members || [];
@@ -706,6 +751,59 @@
       toast('Could not copy the SSO setup brief.', 'danger');
     }
   }
+  async function createProvisioningToken() {
+    const label = ($('provisioningLabelInput')?.value || '').trim() || 'Default provisioning token';
+    setButtonState($('createProvisioningTokenBtn'), true, 'creating…');
+    const res = await apiFetch(INIT_API, '/orgs/current/provisioning-tokens', {
+      method: 'POST',
+      body: { label },
+    });
+    const payload = unwrapPayload(res?.data) || {};
+    if (!res?.ok) {
+      setButtonState($('createProvisioningTokenBtn'), false, 'create token');
+      setMessage('provisioningMsg', payload?.error || 'Could not create provisioning token.', 'danger');
+      toast(payload?.error || 'Could not create provisioning token.', 'danger');
+      return;
+    }
+    lastProvisioningSecret = payload?.token_secret || '';
+    if ($('provisioningLabelInput')) $('provisioningLabelInput').value = '';
+    setMessage('provisioningMsg', 'Provisioning token created. Copy the secret now.', 'ok');
+    toast('Provisioning token created.', 'ok');
+    await load();
+    setButtonState($('createProvisioningTokenBtn'), false, 'create token');
+  }
+  async function copyProvisioningSecret() {
+    if (!lastProvisioningSecret) {
+      setMessage('provisioningMsg', 'No new provisioning secret to copy.', 'warn');
+      toast('No new provisioning secret to copy.', 'warn');
+      return;
+    }
+    try {
+      const copied = await copyText(lastProvisioningSecret);
+      setMessage('provisioningMsg', copied ? 'Provisioning secret copied.' : 'Could not copy provisioning secret.', copied ? 'ok' : 'danger');
+      toast(copied ? 'Provisioning secret copied.' : 'Could not copy provisioning secret.', copied ? 'ok' : 'danger');
+    } catch {
+      setMessage('provisioningMsg', 'Could not copy provisioning secret.', 'danger');
+      toast('Could not copy provisioning secret.', 'danger');
+    }
+  }
+  async function revokeProvisioningToken(tokenId) {
+    const button = document.querySelector(`[data-revoke-provisioning-token="${CSS.escape(tokenId)}"]`);
+    setButtonState(button, true, 'revoking…');
+    const res = await apiFetch(INIT_API, `/orgs/current/provisioning-tokens/${encodeURIComponent(tokenId)}`, {
+      method: 'DELETE',
+    });
+    const payload = unwrapPayload(res?.data) || {};
+    if (!res?.ok) {
+      setButtonState(button, false, 'revoke');
+      setMessage('provisioningMsg', payload?.error || 'Could not revoke provisioning token.', 'danger');
+      toast(payload?.error || 'Could not revoke provisioning token.', 'danger');
+      return;
+    }
+    setMessage('provisioningMsg', 'Provisioning token revoked.', 'ok');
+    toast('Provisioning token revoked.', 'ok');
+    await load();
+  }
   function emailSsoSetup() {
     const subject = encodeURIComponent(`VaultProof SSO setup for ${currentOrgPayload?.organization?.name || getEnterpriseContext()?.company_name || 'enterprise workspace'}`);
     const body = encodeURIComponent(buildSsoSetupBrief());
@@ -891,13 +989,15 @@
       return;
     }
 
-    const [currentRes, membersRes] = await Promise.all([
+    const [currentRes, membersRes, provisioningRes] = await Promise.all([
       apiFetch(INIT_API, '/orgs/current'),
       apiFetch(INIT_API, '/members'),
+      apiFetch(INIT_API, '/orgs/current/provisioning-tokens'),
     ]);
 
     currentOrgPayload = unwrapPayload(currentRes?.data) || {};
     currentMembersPayload = unwrapPayload(membersRes?.data) || {};
+    currentProvisioningTokens = unwrapPayload(provisioningRes?.data)?.provisioning_tokens || [];
 
     renderBanner(currentOrgPayload, currentMembersPayload);
     renderKpis(currentOrgPayload);
@@ -906,6 +1006,7 @@
     renderArchive(currentOrgPayload);
     renderCreateOrg(currentOrgPayload);
     renderSsoSetup(currentOrgPayload);
+    renderProvisioningTokens();
     renderPilotKit();
     renderPosture(currentOrgPayload, currentMembersPayload);
     renderArchivedOrganizations();
@@ -925,6 +1026,8 @@
     $('saveSsoSettingsBtn')?.addEventListener('click', saveSsoSettings);
     $('copySsoBriefBtn')?.addEventListener('click', copySsoBrief);
     $('emailSsoSetupBtn')?.addEventListener('click', emailSsoSetup);
+    $('createProvisioningTokenBtn')?.addEventListener('click', createProvisioningToken);
+    $('copyProvisioningSecretBtn')?.addEventListener('click', copyProvisioningSecret);
     $('saveOrgBtn')?.addEventListener('click', saveOrganizationProfile);
     $('transferOwnershipBtn')?.addEventListener('click', transferOwnership);
     $('archiveOrgBtn')?.addEventListener('click', archiveOrganization);
@@ -939,6 +1042,12 @@
       if (restoreButton) {
         const orgId = restoreButton.getAttribute('data-restore-org');
         if (orgId) await restoreArchivedOrganization(orgId);
+        return;
+      }
+      const revokeProvisioningTokenBtn = event.target.closest('[data-revoke-provisioning-token]');
+      if (revokeProvisioningTokenBtn) {
+        const tokenId = revokeProvisioningTokenBtn.getAttribute('data-revoke-provisioning-token');
+        if (tokenId) await revokeProvisioningToken(tokenId);
       }
     });
   }

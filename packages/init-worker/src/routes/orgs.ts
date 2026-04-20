@@ -34,6 +34,10 @@ interface UpdateOrganizationSsoSettingsBody {
   login_mode?: 'sso-first' | 'assisted' | null;
 }
 
+interface CreateProvisioningTokenBody {
+  label?: string | null;
+}
+
 function normalizeSlug(slug: string): string {
   return slug
     .trim()
@@ -61,6 +65,28 @@ function maskEmail(email: string | null | undefined): string | null {
   if (!local || !domain) return email;
   if (local.length <= 2) return `${local[0] || '*'}*@${domain}`;
   return `${local.slice(0, 2)}***@${domain}`;
+}
+
+function normalizeProvisioningLabel(label: string): string {
+  return label.trim().replace(/\s+/g, ' ').slice(0, 120);
+}
+
+function base64Url(bytes: Uint8Array): string {
+  let binary = '';
+  for (const byte of bytes) binary += String.fromCharCode(byte);
+  return btoa(binary).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/g, '');
+}
+
+function generateProvisioningTokenSecret(): string {
+  const bytes = new Uint8Array(24);
+  crypto.getRandomValues(bytes);
+  return `vp_scim_${base64Url(bytes)}`;
+}
+
+async function sha256Hex(value: string): Promise<string> {
+  const encoded = new TextEncoder().encode(value);
+  const digest = await crypto.subtle.digest('SHA-256', encoded);
+  return Array.from(new Uint8Array(digest)).map((byte) => byte.toString(16).padStart(2, '0')).join('');
 }
 
 async function fetchOrganizationSsoSettings(
@@ -467,6 +493,129 @@ export async function handleOrganizations(
       });
 
       return Response.json({ sso_settings: data });
+    }
+  }
+
+  if (pathSegments.length >= 2 && pathSegments[0] === 'current' && pathSegments[1] === 'provisioning-tokens') {
+    const activeMembership = await resolveOrganizationMembership(request, env, auth.userId);
+    if (!activeMembership) {
+      return Response.json({ error: 'Organization not found' }, { status: 404 });
+    }
+    if (activeMembership.organization_kind !== 'team') {
+      return Response.json({ error: 'Provisioning tokens are only available on shared team organizations' }, { status: 400 });
+    }
+    if (!hasRequiredOrganizationRole(activeMembership.organization_role, 'admin')) {
+      return Response.json({ error: 'Insufficient organization permissions' }, { status: 403 });
+    }
+
+    if (method === 'GET' && pathSegments.length === 2) {
+      const { data } = await supabase
+        .from('organization_provisioning_tokens')
+        .select('id, label, token_prefix, created_at, last_used_at, revoked_at')
+        .eq('organization_id', activeMembership.organization_id)
+        .order('created_at', { ascending: false });
+
+      return Response.json({
+        provisioning_tokens: (data || []).map((token) => ({
+          id: token.id,
+          label: token.label,
+          token_prefix: token.token_prefix,
+          created_at: token.created_at,
+          last_used_at: token.last_used_at,
+          revoked_at: token.revoked_at,
+        })),
+      });
+    }
+
+    if (method === 'POST' && pathSegments.length === 2) {
+      let body: CreateProvisioningTokenBody;
+      try {
+        body = (await request.json()) as CreateProvisioningTokenBody;
+      } catch {
+        return Response.json({ error: 'Invalid JSON' }, { status: 400 });
+      }
+
+      const label = normalizeProvisioningLabel(body.label || 'Default provisioning token');
+      if (!label || label.length < 2) {
+        return Response.json({ error: 'Token label must be at least 2 characters' }, { status: 400 });
+      }
+
+      const secret = generateProvisioningTokenSecret();
+      const tokenHash = await sha256Hex(secret);
+      const tokenPrefix = secret.slice(0, 16);
+      const createdAt = new Date().toISOString();
+
+      const { data, error } = await supabase
+        .from('organization_provisioning_tokens')
+        .insert({
+          organization_id: activeMembership.organization_id,
+          label,
+          token_prefix: tokenPrefix,
+          token_hash: tokenHash,
+          created_by_user_id: auth.userId,
+          created_at: createdAt,
+        })
+        .select('id, label, token_prefix, created_at, last_used_at, revoked_at')
+        .single();
+
+      if (error || !data) {
+        return Response.json({ error: 'Failed to create provisioning token' }, { status: 500 });
+      }
+
+      await writeGovernanceAuditEvent(env, {
+        organization_id: activeMembership.organization_id,
+        actor_user_id: auth.userId,
+        actor_email: auth.email,
+        event_type: 'organization_provisioning_token_created',
+        target_type: 'organization_provisioning_token',
+        target_id: data.id,
+        description: `Created provisioning token ${label}`,
+        metadata: {
+          label,
+          token_prefix: tokenPrefix,
+        },
+      });
+
+      return Response.json({
+        provisioning_token: data,
+        token_secret: secret,
+      }, { status: 201 });
+    }
+
+    if (method === 'DELETE' && pathSegments.length === 3) {
+      const tokenId = pathSegments[2];
+      const revokedAt = new Date().toISOString();
+      const { data: token, error: tokenError } = await supabase
+        .from('organization_provisioning_tokens')
+        .update({
+          revoked_at: revokedAt,
+          revoked_by_user_id: auth.userId,
+        })
+        .eq('id', tokenId)
+        .eq('organization_id', activeMembership.organization_id)
+        .is('revoked_at', null)
+        .select('id, label, token_prefix, created_at, last_used_at, revoked_at')
+        .single();
+
+      if (tokenError || !token) {
+        return Response.json({ error: 'Provisioning token not found' }, { status: 404 });
+      }
+
+      await writeGovernanceAuditEvent(env, {
+        organization_id: activeMembership.organization_id,
+        actor_user_id: auth.userId,
+        actor_email: auth.email,
+        event_type: 'organization_provisioning_token_revoked',
+        target_type: 'organization_provisioning_token',
+        target_id: token.id,
+        description: `Revoked provisioning token ${token.label}`,
+        metadata: {
+          label: token.label,
+          token_prefix: token.token_prefix,
+        },
+      });
+
+      return Response.json({ provisioning_token: token });
     }
   }
 

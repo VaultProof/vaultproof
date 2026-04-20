@@ -418,6 +418,29 @@
             </section>
 
             <section class="panel">
+              <div class="panel-head">provisioning token<span class="panel-head-right" id="provisioningStatus">loading…</span></div>
+              <div class="form-card">
+                <div class="callout">Create a provisioning token now so future SCIM or basic directory sync can use a real org-scoped credential instead of ad hoc admin access.</div>
+                <div class="form-grid">
+                  <label class="form-field">
+                    <span class="form-label">token label</span>
+                    <input id="provisioningLabelInput" class="form-input" type="text" placeholder="Okta sync token">
+                  </label>
+                </div>
+                <div class="form-inline">
+                  <button type="button" class="btn-outline" id="createProvisioningTokenBtn">create token</button>
+                  <button type="button" class="btn-outline" id="copyProvisioningSecretBtn" disabled>copy secret</button>
+                  <span class="form-hint" id="provisioningHint">Secret is shown once after creation. Revoke and rotate if it is lost.</span>
+                </div>
+                <div class="callout" id="provisioningSecretCard">No provisioning token created in this session yet.</div>
+                <div class="form-msg" id="provisioningMsg"></div>
+              </div>
+              <div class="list" id="provisioningList">
+                <div class="empty">Loading provisioning tokens…</div>
+              </div>
+            </section>
+
+            <section class="panel">
               <div class="panel-head">pilot kit<span class="panel-head-right" id="pilotKitStatus">loading…</span></div>
               <div class="resource-grid" id="pilotKitResources"><div class="empty">Loading rollout resources…</div></div>
               <div class="checklist-box">

@@ -315,6 +315,7 @@ Immediate next engineering slice after this file:
 - live static `org` and `alerts` pages now carry rollout resources plus copyable setup/ops checklists so enterprise handoff is not isolated to `control`
 - live static `members` and `audit` pages now carry rollout/review resources plus copyable access/audit checklists so the shared-org admin flow has consistent enterprise handoff support
 - worker now stores organization SSO/domain settings, login can discover existing enterprise workspaces by domain, and org setup can save real SSO-first provisioning metadata instead of only local form state
+- org setup now includes real provisioning-token management in the worker and live dashboard, giving future SCIM/basic directory sync a concrete org-scoped credential foundation
 - projects page now supports in-app project creation and a first-team-project onboarding empty state
 
 ## Decisions
