@@ -202,6 +202,125 @@ function maskTarget(channelType: AlertChannelType, target: string): string {
   }
 }
 
+function isEmailDeliveryConfigured(env: Env): boolean {
+  return Boolean(env.RESEND_API_KEY && env.ALERTS_FROM_EMAIL);
+}
+
+function buildAlertEmailSubject(
+  payload: Record<string, unknown>,
+  deliveryKind: AlertDeliveryKind,
+): string {
+  const organization = (payload.organization || {}) as { name?: string };
+  const pilotReview = (payload.pilot_review || {}) as { status?: string };
+  const orgName = organization.name || 'VaultProof workspace';
+  const status = pilotReview.status || 'update';
+  return deliveryKind === 'test_send'
+    ? `[VaultProof] Test alert for ${orgName}`
+    : `[VaultProof] ${orgName} alert dispatch (${status})`;
+}
+
+function buildAlertEmailText(
+  payload: Record<string, unknown>,
+  deliveryKind: AlertDeliveryKind,
+): string {
+  const organization = (payload.organization || {}) as { name?: string; kind?: string };
+  const policy = (payload.policy || {}) as { minimum_severity?: string; min_interval_minutes?: number };
+  const pilotReview = (payload.pilot_review || {}) as {
+    status?: string;
+    headline?: string;
+    recommendation?: string;
+    window_days?: number;
+  };
+  const metrics = (payload.metrics || {}) as {
+    total_calls?: number;
+    denied_calls?: number;
+    error_calls?: number;
+    error_rate?: number;
+  };
+  const alerts = Array.isArray(payload.alerts) ? payload.alerts as Array<{ severity?: string; title?: string; detail?: string }> : [];
+
+  return [
+    `VaultProof ${deliveryKind === 'test_send' ? 'test alert' : 'alert dispatch'}`,
+    '',
+    `Organization: ${organization.name || 'Unknown org'}`,
+    `Workspace type: ${organization.kind || 'unknown'}`,
+    `Generated: ${String(payload.generated_at || new Date().toISOString())}`,
+    `Minimum severity: ${policy.minimum_severity || 'warning'}`,
+    `Dispatch cooldown: ${String(policy.min_interval_minutes || 0)} minutes`,
+    '',
+    `Pilot status: ${pilotReview.status || 'unknown'}`,
+    `Headline: ${pilotReview.headline || 'No pilot summary available'}`,
+    `Recommendation: ${pilotReview.recommendation || 'No recommendation available'}`,
+    `Review window: ${String(pilotReview.window_days || 0)} days`,
+    '',
+    `Total calls: ${String(metrics.total_calls || 0)}`,
+    `Denied calls: ${String(metrics.denied_calls || 0)}`,
+    `Error calls: ${String(metrics.error_calls || 0)}`,
+    `Error rate: ${String(metrics.error_rate || 0)}`,
+    '',
+    'Active alerts:',
+    ...(alerts.length
+      ? alerts.map((alert) => `- [${alert.severity || 'info'}] ${alert.title || 'Alert'}${alert.detail ? ` — ${alert.detail}` : ''}`)
+      : ['- No alerts matched the current threshold.']),
+  ].join('\n');
+}
+
+async function deliverEmailViaResend(
+  env: Env,
+  destination: DestinationRow,
+  payload: Record<string, unknown>,
+  deliveryKind: AlertDeliveryKind,
+): Promise<{
+  status: AlertDeliveryStatus;
+  detail: string;
+  response_status: number | null;
+}> {
+  if (!isEmailDeliveryConfigured(env)) {
+    return {
+      status: 'skipped',
+      detail: 'Email destination saved, but Resend is not configured. Set RESEND_API_KEY and ALERTS_FROM_EMAIL in the worker environment.',
+      response_status: null,
+    };
+  }
+
+  try {
+    const response = await fetch('https://api.resend.com/emails', {
+      method: 'POST',
+      headers: {
+        authorization: `Bearer ${env.RESEND_API_KEY}`,
+        'content-type': 'application/json',
+      },
+      body: JSON.stringify({
+        from: env.ALERTS_FROM_EMAIL,
+        to: [destination.target],
+        subject: buildAlertEmailSubject(payload, deliveryKind),
+        text: buildAlertEmailText(payload, deliveryKind),
+        ...(env.ALERTS_REPLY_TO_EMAIL ? { reply_to: env.ALERTS_REPLY_TO_EMAIL } : {}),
+      }),
+    });
+
+    if (response.ok) {
+      return {
+        status: 'delivered',
+        detail: `Delivered ${deliveryKind === 'test_send' ? 'test' : 'policy'} email to ${maskTarget('email', destination.target)}`,
+        response_status: response.status,
+      };
+    }
+
+    return {
+      status: 'failed',
+      detail: `Email provider responded with status ${response.status}`,
+      response_status: response.status,
+    };
+  } catch (error) {
+    return {
+      status: 'failed',
+      detail: error instanceof Error ? error.message : 'Email request failed',
+      response_status: null,
+    };
+  }
+}
+
 function buildAlertPayload(
   organization: {
     id: string;
@@ -438,24 +557,24 @@ async function deliverPayload(
 
   for (const destination of input.destinations) {
     if (destination.channel_type === 'email') {
-      const detail = 'Email destination saved, but outbound email provider is not configured yet.';
+      const emailResult = await deliverEmailViaResend(env, destination, input.payload, input.delivery_kind);
       await writeDeliveryLog(env, {
         organization_id: input.organization_id,
         destination_id: destination.id,
         channel_type: destination.channel_type,
         delivery_kind: input.delivery_kind,
-        status: 'skipped',
-        detail,
-        response_status: null,
+        status: emailResult.status,
+        detail: emailResult.detail,
+        response_status: emailResult.response_status,
         payload: input.payload,
       });
       results.push({
         destination_id: destination.id,
         label: destination.label,
         channel_type: destination.channel_type,
-        status: 'skipped',
-        detail,
-        response_status: null,
+        status: emailResult.status,
+        detail: emailResult.detail,
+        response_status: emailResult.response_status,
       });
       continue;
     }

@@ -8,6 +8,10 @@ mode = "smart"
 
 [vars]
 ALLOWED_ORIGINS = "https://vaultproof.dev,https://www.vaultproof.dev"
+# Set these at deploy time when enabling email alert delivery:
+# RESEND_API_KEY = "<secret>"
+# ALERTS_FROM_EMAIL = "alerts@vaultproof.dev"
+# ALERTS_REPLY_TO_EMAIL = "support@vaultproof.dev"
 
 # ── Durable Objects ──
 # Strongly consistent rate limiting. Each DO instance is a singleton for
@@ -29,6 +33,7 @@ name = "vaultproof-init-staging"
 
 [env.staging.vars]
 ALLOWED_ORIGINS = "*"
+# Optional staging email delivery config uses the same vars/secrets as production.
 
 [[env.staging.durable_objects.bindings]]
 name = "RATE_LIMITER"

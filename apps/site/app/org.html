@@ -370,6 +370,35 @@
             </section>
 
             <section class="panel">
+              <div class="panel-head">sso setup<span class="panel-head-right" id="ssoSetupStatus">ready</span></div>
+              <div class="form-card">
+                <div class="callout">This is the enterprise handoff while full SSO wiring is still in progress. Capture the IdP and contact details, then send the setup request with the current org context attached.</div>
+                <div class="form-grid">
+                  <label class="form-field">
+                    <span class="form-label">identity provider</span>
+                    <select id="ssoProviderSelect" class="form-select">
+                      <option value="">identity provider</option>
+                      <option value="okta">okta</option>
+                      <option value="google-workspace">google workspace</option>
+                      <option value="microsoft-entra">microsoft entra</option>
+                      <option value="other">other / custom</option>
+                    </select>
+                  </label>
+                  <label class="form-field">
+                    <span class="form-label">admin contact</span>
+                    <input id="ssoAdminEmailInput" class="form-input" type="email" placeholder="admin@acme.com">
+                  </label>
+                </div>
+                <div class="form-inline">
+                  <button type="button" class="btn-outline" id="copySsoBriefBtn">copy sso brief</button>
+                  <button type="button" class="btn-primary" id="emailSsoSetupBtn">email sso setup</button>
+                  <span class="form-hint" id="ssoSetupHint">Use this while the full SAML / SSO backend flow is still being wired.</span>
+                </div>
+                <div class="form-msg" id="ssoSetupMsg"></div>
+              </div>
+            </section>
+
+            <section class="panel">
               <div class="panel-head">workspace posture<span class="panel-head-right" id="postureStatus">loading…</span></div>
               <div class="list" id="postureList">
                 <div class="empty">Loading workspace posture…</div>

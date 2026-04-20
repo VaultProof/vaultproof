@@ -4,6 +4,9 @@ export interface Env {
   SUPABASE_URL: string;
   SUPABASE_SERVICE_ROLE_KEY: string;
   RATE_LIMITER: DurableObjectNamespace;
+  RESEND_API_KEY?: string;
+  ALERTS_FROM_EMAIL?: string;
+  ALERTS_REPLY_TO_EMAIL?: string;
 }
 
 export interface ProjectRecord {

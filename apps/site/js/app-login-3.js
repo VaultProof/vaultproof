@@ -104,9 +104,28 @@
       .slice(0, 63);
   }
 
+  function buildSsoRequestBody(context) {
+    return [
+      'VaultProof enterprise SSO setup request',
+      '',
+      `Company: ${context.company_name || ''}`,
+      `Domain: ${context.company_domain || ''}`,
+      `Identity provider: ${context.sso_provider || 'not specified'}`,
+      `Admin contact: ${context.admin_email || 'not specified'}`,
+      `Suggested org slug: ${context.suggested_slug || ''}`,
+      '',
+      'Requested outcome:',
+      '- Enable SSO-first login for the shared VaultProof workspace',
+      '- Confirm org provisioning / domain ownership flow',
+      '- Share any metadata or redirect URLs needed for setup',
+    ].join('\n');
+  }
+
   function prepareEnterpriseContext() {
     const name = ($('enterpriseOrgNameInput')?.value || '').trim();
     const domain = normalizeDomain($('enterpriseDomainInput')?.value || '');
+    const provider = ($('enterpriseProviderSelect')?.value || '').trim();
+    const adminEmail = ($('enterpriseAdminEmailInput')?.value || '').trim().toLowerCase();
     if (name.length < 2) {
       setEnterpriseMessage('Add a company or workspace name before using the enterprise path.', 'error');
       return null;
@@ -114,12 +133,22 @@
     const context = {
       company_name: name,
       company_domain: domain,
+      sso_provider: provider || '',
+      admin_email: adminEmail || '',
       suggested_slug: buildEnterpriseSlug(name, domain),
       created_at: new Date().toISOString(),
     };
     sessionStorage.setItem(ENTERPRISE_CONTEXT_KEY, JSON.stringify(context));
     setEnterpriseMessage('Enterprise setup saved. Continue with OAuth or email and we will route you into org provisioning.', 'success');
     return context;
+  }
+
+  function requestEnterpriseSso() {
+    const context = prepareEnterpriseContext();
+    if (!context) return;
+    const subject = encodeURIComponent(`VaultProof SSO setup for ${context.company_name}`);
+    const body = encodeURIComponent(buildSsoRequestBody(context));
+    window.location.href = `mailto:hello@vaultproof.dev?subject=${subject}&body=${body}`;
   }
 
   function setPromoMessage(text, tone) {
@@ -604,6 +633,36 @@
       if (!context) return;
       showTab('register');
     });
+
+    const enterpriseProviderSelect = $('enterpriseProviderSelect');
+    if (enterpriseProviderSelect) {
+      enterpriseProviderSelect.addEventListener('change', function() {
+        if (enterpriseProviderSelect.value) {
+          setEnterpriseMessage('Identity provider captured. Continue with provisioning or request SSO setup.', 'info');
+        }
+      });
+    }
+
+    const enterpriseAdminEmailInput = $('enterpriseAdminEmailInput');
+    if (enterpriseAdminEmailInput) {
+      enterpriseAdminEmailInput.addEventListener('keydown', function(event) {
+        if (event.key === 'Enter') {
+          event.preventDefault();
+          requestEnterpriseSso();
+        }
+      });
+    }
+
+    const authCard = $('authCard');
+    if (authCard) {
+      const ssoButton = document.createElement('button');
+      ssoButton.type = 'button';
+      ssoButton.className = 'btn btn-secondary';
+      ssoButton.textContent = 'request sso setup';
+      ssoButton.addEventListener('click', requestEnterpriseSso);
+      const actionRow = document.querySelector('.enterprise-actions');
+      if (actionRow) actionRow.appendChild(ssoButton);
+    }
 
     const loginTab = $('loginTab');
     if (loginTab) loginTab.addEventListener('click', function() { showTab('login'); });

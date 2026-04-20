@@ -467,6 +467,42 @@
     if (slugInput && !slugInput.value) slugInput.value = context.suggested_slug || '';
     setMessage('createOrgMsg', 'Enterprise setup is ready. Create the shared org to move into the Control workspace.', 'ok');
   }
+  function buildSsoSetupBrief() {
+    const organization = currentOrgPayload?.organization || {};
+    const context = getEnterpriseContext() || {};
+    const provider = ($('ssoProviderSelect')?.value || context.sso_provider || '').trim();
+    const adminEmail = ($('ssoAdminEmailInput')?.value || context.admin_email || '').trim();
+    return [
+      'VaultProof enterprise SSO setup request',
+      '',
+      `Organization: ${organization.name || context.company_name || 'Unknown org'}`,
+      `Workspace slug: ${organization.slug || context.suggested_slug || ''}`,
+      `Domain: ${context.company_domain || ''}`,
+      `Identity provider: ${provider || 'not specified'}`,
+      `Admin contact: ${adminEmail || 'not specified'}`,
+      `Current role: ${organization.role || 'unknown'}`,
+      '',
+      'Requested outcome:',
+      '- Enable SSO-first login for this shared workspace',
+      '- Confirm org provisioning / domain ownership flow',
+      '- Share redirect URLs, metadata, and any required setup steps',
+    ].join('\n');
+  }
+  function renderSsoSetup(orgPayload) {
+    const organization = orgPayload?.organization || null;
+    const context = getEnterpriseContext() || {};
+    const providerSelect = $('ssoProviderSelect');
+    const adminInput = $('ssoAdminEmailInput');
+    if (providerSelect && context.sso_provider && !providerSelect.value) providerSelect.value = context.sso_provider;
+    if (adminInput && context.admin_email && !adminInput.value) adminInput.value = context.admin_email;
+    setText('ssoSetupStatus', organization?.kind === 'team' ? 'shared org ready' : 'provisioning');
+    setText(
+      'ssoSetupHint',
+      organization?.kind === 'team'
+        ? 'Use this to send the enterprise SSO setup brief with the active org attached.'
+        : 'Capture the SSO contact now and finish org creation if you still need a shared workspace.',
+    );
+  }
   async function copyOrgReport() {
     try {
       const copied = await copyText(buildOrgReport());
@@ -481,6 +517,23 @@
     downloadTextFile(`${getOrgExportBaseName()}-snapshot.json`, buildOrgJson(), 'application/json;charset=utf-8');
     setExportMessage('Org JSON downloaded.', 'ok');
     toast('Org JSON downloaded.', 'ok');
+  }
+  async function copySsoBrief() {
+    try {
+      const copied = await copyText(buildSsoSetupBrief());
+      setMessage('ssoSetupMsg', copied ? 'SSO setup brief copied.' : 'Could not copy the SSO setup brief.', copied ? 'ok' : 'danger');
+      toast(copied ? 'SSO setup brief copied.' : 'Could not copy the SSO setup brief.', copied ? 'ok' : 'danger');
+    } catch {
+      setMessage('ssoSetupMsg', 'Could not copy the SSO setup brief.', 'danger');
+      toast('Could not copy the SSO setup brief.', 'danger');
+    }
+  }
+  function emailSsoSetup() {
+    const subject = encodeURIComponent(`VaultProof SSO setup for ${currentOrgPayload?.organization?.name || getEnterpriseContext()?.company_name || 'enterprise workspace'}`);
+    const body = encodeURIComponent(buildSsoSetupBrief());
+    window.location.href = `mailto:hello@vaultproof.dev?subject=${subject}&body=${body}`;
+    setMessage('ssoSetupMsg', 'Opened your email app with the SSO setup brief.', 'ok');
+    toast('Opened your email app with the SSO setup brief.', 'ok');
   }
 
   async function createOrganization() {
@@ -640,6 +693,7 @@
       renderTransfer(null, null);
       renderArchive(null);
       renderCreateOrg(null);
+      renderSsoSetup(null);
       renderPosture(null, null);
       renderArchivedOrganizations();
       setText('profileStatus', 'unavailable');
@@ -672,6 +726,7 @@
     renderTransfer(currentOrgPayload, currentMembersPayload);
     renderArchive(currentOrgPayload);
     renderCreateOrg(currentOrgPayload);
+    renderSsoSetup(currentOrgPayload);
     renderPosture(currentOrgPayload, currentMembersPayload);
     renderArchivedOrganizations();
     renderUsageBox(currentOrgPayload);
@@ -686,6 +741,8 @@
     $('downloadOrgJsonBtn')?.addEventListener('click', downloadOrgJson);
     $('downloadOrgJsonInlineBtn')?.addEventListener('click', downloadOrgJson);
     $('createOrgBtn')?.addEventListener('click', createOrganization);
+    $('copySsoBriefBtn')?.addEventListener('click', copySsoBrief);
+    $('emailSsoSetupBtn')?.addEventListener('click', emailSsoSetup);
     $('saveOrgBtn')?.addEventListener('click', saveOrganizationProfile);
     $('transferOwnershipBtn')?.addEventListener('click', transferOwnership);
     $('archiveOrgBtn')?.addEventListener('click', archiveOrganization);

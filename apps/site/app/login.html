@@ -392,6 +392,10 @@
       margin-top: 12px;
     }
 
+    .enterprise-grid .form-input {
+      width: 100%;
+    }
+
     .enterprise-actions {
       display: grid;
       grid-template-columns: repeat(3, minmax(0, 1fr));
@@ -857,6 +861,14 @@
               <div class="enterprise-grid">
                 <input id="enterpriseOrgNameInput" type="text" class="form-input" placeholder="Acme Platform" />
                 <input id="enterpriseDomainInput" type="text" class="form-input" placeholder="acme.com" />
+                <select id="enterpriseProviderSelect" class="form-input">
+                  <option value="">identity provider</option>
+                  <option value="okta">okta</option>
+                  <option value="google-workspace">google workspace</option>
+                  <option value="microsoft-entra">microsoft entra</option>
+                  <option value="other">other / custom</option>
+                </select>
+                <input id="enterpriseAdminEmailInput" type="email" class="form-input" placeholder="admin@acme.com" />
               </div>
               <div class="enterprise-actions">
                 <button id="enterpriseGoogleBtn" type="button" class="btn btn-secondary">google setup</button>

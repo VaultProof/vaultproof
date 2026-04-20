@@ -239,9 +239,8 @@ Definition of done:
 Immediate next engineering slice after this file:
 
 1. wire an SSO-first enterprise login and org provisioning path
-2. wire a real email provider for email alert destinations
-3. add enterprise docs and pilot checklist links from the live product
-4. decide when to converge the live static dashboard and `apps/dashboard` into one primary surface
+2. add enterprise docs and pilot checklist links from the live product
+3. decide when to converge the live static dashboard and `apps/dashboard` into one primary surface
 
 ## Completed
 
@@ -310,6 +309,8 @@ Immediate next engineering slice after this file:
 - live static dashboard now includes a dedicated `org` page for rename/slug edit, ownership transfer, archive, restore, and org-level handoff export
 - live static dashboard now supports team-org creation directly from `/app/org`, so a solo user can create a shared workspace without relying on the separate Next.js app
 - login now supports an enterprise provisioning lane that captures company context and routes new team/business users into `/app/org?provision=1` instead of dropping them straight into the solo dashboard
+- login and org setup now support an enterprise SSO request handoff, including captured IdP/admin context plus copy/email setup briefs, while the full backend SSO flow remains a separate checklist item
+- email alert destinations in `init-worker` now deliver through Resend when `RESEND_API_KEY` and `ALERTS_FROM_EMAIL` are configured, while keeping webhook delivery unchanged
 - projects page now supports in-app project creation and a first-team-project onboarding empty state
 
 ## Decisions
