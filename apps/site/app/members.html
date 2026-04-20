@@ -120,6 +120,19 @@
     .pill.ok { background: rgba(21,128,61,0.08); color: var(--ok); }
     .pill.warn { background: rgba(180,83,9,0.08); color: var(--warn); }
     .pill.danger { background: rgba(185,28,28,0.08); color: var(--danger); }
+    .resource-grid { padding: 14px 18px 18px; display: grid; gap: 12px; }
+    .resource-card { border: var(--rule); border-radius: 4px; background: #fcfcf9; padding: 12px; display: grid; gap: 8px; }
+    .resource-title { font-size: 13px; font-weight: 600; color: var(--text); }
+    .resource-copy { color: var(--text-muted); font-size: 12px; }
+    .resource-link { font-family: var(--mono); font-size: 11px; color: var(--accent); }
+    .resource-link:hover { text-decoration: underline; }
+    .checklist-box { margin: 0 18px 18px; padding: 12px 14px; border: var(--rule); border-radius: 4px; background: #fcfcf9; display: grid; gap: 8px; }
+    .checklist-title { font-family: var(--mono); font-size: 10px; letter-spacing: 0.7px; text-transform: uppercase; color: var(--text-faint); }
+    .checklist-list { list-style: none; display: grid; gap: 8px; }
+    .checklist-item { display: grid; grid-template-columns: auto 1fr; gap: 8px; align-items: start; font-size: 12px; color: var(--text-muted); }
+    .checklist-mark { font-family: var(--mono); font-size: 11px; color: var(--text-faint); }
+    .checklist-mark.done { color: var(--ok); }
+    .checklist-mark.todo { color: var(--warn); }
     .list-rank { width: 24px; flex-shrink: 0; font-family: var(--mono); font-size: 11px; color: var(--text-faint); }
     .list-main { min-width: 0; flex: 1; }
     .list-title { font-size: 13px; color: var(--text); font-weight: 600; }
@@ -232,6 +245,7 @@
         <div class="action-strip">
           <span class="action-strip-label">access handoff</span>
           <button type="button" class="btn-outline" id="copyMembersReportBtn">copy report</button>
+          <button type="button" class="btn-outline" id="copyMembersChecklistBtn">copy access checklist</button>
           <button type="button" class="btn-outline" id="downloadMembersReportBtn">download report</button>
           <button type="button" class="btn-outline" id="downloadMembersCsvBtn">download csv</button>
           <button type="button" class="btn-outline" id="downloadMembersJsonBtn">download json</button>
@@ -290,6 +304,15 @@
           </div>
 
           <div class="stack">
+            <section class="panel">
+              <div class="panel-head">access kit<span class="panel-head-right" id="accessKitStatus">loading…</span></div>
+              <div class="resource-grid" id="accessKitResources"><div class="empty">Loading access resources…</div></div>
+              <div class="checklist-box">
+                <div class="checklist-title">member rollout checklist</div>
+                <div class="checklist-list" id="accessChecklistList"><div class="empty">Loading member checklist…</div></div>
+              </div>
+            </section>
+
             <section class="panel">
               <div class="panel-head">pending invites<span class="panel-head-right" id="invitesStatus">loading…</span></div>
               <div class="list" id="inviteList"><div class="empty">Loading invites…</div></div>

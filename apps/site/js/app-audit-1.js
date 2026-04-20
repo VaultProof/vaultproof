@@ -291,6 +291,77 @@
       </div>
     `).join('');
   }
+  function buildAuditChecklistItems() {
+    const org = latestAuditPayload?.organization || {};
+    const summary = latestAuditPayload?.summary || {};
+    const source = $('sourceFilter')?.value || '';
+    const eventType = $('eventTypeFilter')?.value || '';
+    const q = $('searchInput')?.value.trim() || '';
+
+    return [
+      {
+        done: org.kind && org.kind !== 'personal',
+        label: org.kind && org.kind !== 'personal'
+          ? `Shared audit workspace is active for ${org.name || 'the org'}.`
+          : 'Move review into a shared org before presenting audit evidence to the customer.',
+      },
+      {
+        done: (summary.governanceEvents || 0) > 0,
+        label: (summary.governanceEvents || 0) > 0
+          ? `${summary.governanceEvents || 0} governance event${summary.governanceEvents === 1 ? '' : 's'} loaded.`
+          : 'Load governance activity so membership and policy changes are visible in the review.',
+      },
+      {
+        done: (summary.proxyEvents || 0) > 0,
+        label: (summary.proxyEvents || 0) > 0
+          ? `${summary.proxyEvents || 0} proxy event${summary.proxyEvents === 1 ? '' : 's'} loaded.`
+          : 'Load runtime proxy activity so the review includes actual request behavior.',
+      },
+      {
+        done: events.length >= 5,
+        label: events.length >= 5
+          ? `${events.length} audit event${events.length === 1 ? '' : 's'} loaded in the current view.`
+          : 'Load more audit history so the review covers enough activity to be meaningful.',
+      },
+      {
+        done: Boolean(source || eventType || q),
+        label: (source || eventType || q)
+          ? 'A narrowed review filter is active for this evidence pass.'
+          : 'Apply a source, type, or search filter before sending a focused audit review.',
+      },
+    ];
+  }
+  function renderReviewKit() {
+    const resourcesEl = $('reviewKitResources');
+    const checklistEl = $('reviewChecklistList');
+    const items = buildAuditChecklistItems();
+    const completed = items.filter((item) => item.done).length;
+    const resources = [
+      { title: 'Control dashboard', copy: 'Use Control for the rollout summary that pairs with this audit evidence.', href: currentOrganizationId ? `/app/control?org=${encodeURIComponent(currentOrganizationId)}` : '/app/control', label: 'open control' },
+      { title: 'Members', copy: 'Cross-check the membership view when an audit review raises access questions.', href: currentOrganizationId ? `/app/members?org=${encodeURIComponent(currentOrganizationId)}` : '/app/members', label: 'open members' },
+      { title: 'Security', copy: 'Share the security page when buyers ask how audit and runtime logging are scoped.', href: '/security', label: 'open security' },
+      { title: 'Docs', copy: 'Use docs to explain onboarding and rollout details alongside the audit timeline.', href: '/docs', label: 'open docs' },
+    ];
+
+    setText('reviewKitStatus', `${completed}/${items.length} review checks done`);
+    if (resourcesEl) {
+      resourcesEl.innerHTML = resources.map((resource) => `
+        <div class="resource-card">
+          <div class="resource-title">${escapeHtml(resource.title)}</div>
+          <div class="resource-copy">${escapeHtml(resource.copy)}</div>
+          <a class="resource-link" href="${escapeHtml(resource.href)}">${escapeHtml(resource.label)}</a>
+        </div>
+      `).join('');
+    }
+    if (checklistEl) {
+      checklistEl.innerHTML = items.map((item) => `
+        <div class="checklist-item">
+          <span class="checklist-mark ${item.done ? 'done' : 'todo'}">${item.done ? '[x]' : '[ ]'}</span>
+          <span>${escapeHtml(item.label)}</span>
+        </div>
+      `).join('');
+    }
+  }
   function buildReport() {
     const org = latestAuditPayload?.organization || null;
     const summary = latestAuditPayload?.summary || {};
@@ -317,6 +388,23 @@
     });
     return lines.join('\n');
   }
+  function buildAuditChecklist() {
+    const org = latestAuditPayload?.organization || null;
+    return [
+      'VaultProof Audit Review Checklist',
+      `Organization: ${org?.name || 'Unknown'}`,
+      `Generated: ${new Date().toISOString()}`,
+      '',
+      'Audit review checklist',
+      ...buildAuditChecklistItems().map((item) => `- ${item.done ? '[x]' : '[ ]'} ${item.label}`),
+      '',
+      'Reference links',
+      '- Control dashboard: /app/control',
+      '- Members: /app/members',
+      '- Docs: /docs',
+      '- Security: /security',
+    ].join('\n');
+  }
   function buildJsonExport() {
     return JSON.stringify({
       organization: latestAuditPayload?.organization || null,
@@ -337,6 +425,14 @@
       toast('Audit report copied.', 'ok');
     } catch {
       toast('Could not copy audit report.', 'danger');
+    }
+  }
+  async function copyAuditChecklist() {
+    try {
+      await navigator.clipboard.writeText(buildAuditChecklist());
+      toast('Audit review checklist copied.', 'ok');
+    } catch {
+      toast('Could not copy audit review checklist.', 'danger');
     }
   }
   function downloadJson() {
@@ -376,6 +472,7 @@
     renderKpis(data);
     renderTimeline();
     renderMix();
+    renderReviewKit();
     const loadMoreBtn = $('loadMoreBtn');
     if (loadMoreBtn) loadMoreBtn.disabled = !data.has_more;
   }
@@ -398,6 +495,7 @@
     const refreshBtn = $('refreshBtn');
     const loadMoreBtn = $('loadMoreBtn');
     const copyReportBtn = $('copyReportBtn');
+    const copyAuditChecklistBtn = $('copyAuditChecklistBtn');
     const downloadJsonBtn = $('downloadJsonBtn');
     const orgSelect = $('orgSelect');
     const sourceFilter = $('sourceFilter');
@@ -409,6 +507,7 @@
     if (refreshBtn) refreshBtn.addEventListener('click', function() { loadAudit(false); });
     if (loadMoreBtn) loadMoreBtn.addEventListener('click', function() { loadAudit(true); });
     if (copyReportBtn) copyReportBtn.addEventListener('click', function() { copyReport(); });
+    if (copyAuditChecklistBtn) copyAuditChecklistBtn.addEventListener('click', function() { copyAuditChecklist(); });
     if (downloadJsonBtn) downloadJsonBtn.addEventListener('click', function() { downloadJson(); });
     if (orgSelect) {
       orgSelect.addEventListener('change', function(event) {

@@ -239,8 +239,8 @@ Definition of done:
 Immediate next engineering slice after this file:
 
 1. wire an SSO-first enterprise login and org provisioning path
-2. extend the pilot kit and enterprise docs links from `control` into `members` and `audit`
-3. decide when to converge the live static dashboard and `apps/dashboard` into one primary surface
+2. decide when to converge the live static dashboard and `apps/dashboard` into one primary surface
+3. keep rollout helpers coherent as new live shared-org pages are added
 
 ## Completed
 
@@ -313,6 +313,7 @@ Immediate next engineering slice after this file:
 - email alert destinations in `init-worker` now deliver through Resend when `RESEND_API_KEY` and `ALERTS_FROM_EMAIL` are configured, while keeping webhook delivery unchanged
 - live static `control` page now links enterprise demo/docs/security resources and generates a copyable/downloadable pilot checklist from the current org state
 - live static `org` and `alerts` pages now carry rollout resources plus copyable setup/ops checklists so enterprise handoff is not isolated to `control`
+- live static `members` and `audit` pages now carry rollout/review resources plus copyable access/audit checklists so the shared-org admin flow has consistent enterprise handoff support
 - projects page now supports in-app project creation and a first-team-project onboarding empty state
 
 ## Decisions

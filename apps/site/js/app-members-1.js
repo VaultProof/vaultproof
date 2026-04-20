@@ -406,6 +406,85 @@
       `;
     }).join('');
   }
+  function buildMembersChecklistItems() {
+    const payload = currentMembersPayload || {};
+    const org = payload.organization || {};
+    const members = payload.members || [];
+    const invites = (payload.invitations || []).filter((invite) => invite.status === 'pending');
+    const projects = payload.projects || [];
+    const membersWithAccess = members.filter((member) => (member.project_access || []).length > 0);
+    const admins = members.filter((member) => member.role === 'admin' || member.role === 'owner');
+
+    return [
+      {
+        done: org.kind && org.kind !== 'personal',
+        label: org.kind && org.kind !== 'personal'
+          ? `Shared workspace ${org.name || 'org'} is active.`
+          : 'Move team access into a shared org before presenting the business rollout.',
+      },
+      {
+        done: members.length >= 2,
+        label: members.length >= 2
+          ? `${members.length} joined members are in the workspace.`
+          : 'Invite at least one additional teammate into the shared workspace.',
+      },
+      {
+        done: admins.length >= 1,
+        label: admins.length >= 1
+          ? `${admins.length} admin/owner seat${admins.length === 1 ? '' : 's'} assigned.`
+          : 'Ensure at least one admin or owner can manage invites and policy.',
+      },
+      {
+        done: membersWithAccess.length >= 1,
+        label: membersWithAccess.length >= 1
+          ? `${membersWithAccess.length} member${membersWithAccess.length === 1 ? ' has' : 's have'} project access.`
+          : 'Assign project access so the pilot reflects real shared usage.',
+      },
+      {
+        done: invites.length === 0,
+        label: invites.length === 0
+          ? 'No pending invites are blocking rollout.'
+          : `${invites.length} pending invite${invites.length === 1 ? '' : 's'} still need follow-up.`,
+      },
+      {
+        done: projects.length > 0,
+        label: projects.length > 0
+          ? `${projects.length} project scope${projects.length === 1 ? '' : 's'} available for assignment.`
+          : 'Create a shared project before assigning access across the team.',
+      },
+    ];
+  }
+  function renderAccessKit() {
+    const resourcesEl = $('accessKitResources');
+    const checklistEl = $('accessChecklistList');
+    const items = buildMembersChecklistItems();
+    const completed = items.filter((item) => item.done).length;
+    const resources = [
+      { title: 'Control dashboard', copy: 'Use Control for rollout summary, project policy, and pilot posture.', href: currentOrganizationId ? `/app/control?org=${encodeURIComponent(currentOrganizationId)}` : '/app/control', label: 'open control' },
+      { title: 'Org settings', copy: 'Return to Org for ownership, SSO handoff, and workspace-level setup.', href: currentOrganizationId ? `/app/org?org=${encodeURIComponent(currentOrganizationId)}` : '/app/org', label: 'open org' },
+      { title: 'Docs', copy: 'Share docs while teammates are connecting their first protected workflows.', href: '/docs', label: 'open docs' },
+      { title: 'Security', copy: 'Use the security page when buyers ask how shared access and policy work.', href: '/security', label: 'open security' },
+    ];
+
+    setText('accessKitStatus', `${completed}/${items.length} access checks done`);
+    if (resourcesEl) {
+      resourcesEl.innerHTML = resources.map((resource) => `
+        <div class="resource-card">
+          <div class="resource-title">${escapeHtml(resource.title)}</div>
+          <div class="resource-copy">${escapeHtml(resource.copy)}</div>
+          <a class="resource-link" href="${escapeHtml(resource.href)}">${escapeHtml(resource.label)}</a>
+        </div>
+      `).join('');
+    }
+    if (checklistEl) {
+      checklistEl.innerHTML = items.map((item) => `
+        <div class="checklist-item">
+          <span class="checklist-mark ${item.done ? 'done' : 'todo'}">${item.done ? '[x]' : '[ ]'}</span>
+          <span>${escapeHtml(item.label)}</span>
+        </div>
+      `).join('');
+    }
+  }
   function buildMembersReport() {
     const payload = currentMembersPayload || {};
     const org = payload.organization || {};
@@ -429,6 +508,25 @@
       '',
       'Pending invites',
       ...(invites.length ? invites.map((invite) => `- ${invite.email} · ${invite.role} · invited ${formatTimestamp(invite.created_at)}`) : ['- none']),
+    ].join('\n');
+  }
+  function buildMembersChecklist() {
+    const payload = currentMembersPayload || {};
+    const org = payload.organization || {};
+    return [
+      'VaultProof Member Access Checklist',
+      `Organization: ${org.name || 'Unknown org'}`,
+      `Workspace type: ${org.kind || 'unknown'} · role ${org.current_role || 'unknown'}`,
+      `Generated: ${formatTimestamp(new Date().toISOString())}`,
+      '',
+      'Member rollout checklist',
+      ...buildMembersChecklistItems().map((item) => `- ${item.done ? '[x]' : '[ ]'} ${item.label}`),
+      '',
+      'Reference links',
+      '- Control dashboard: /app/control',
+      '- Org settings: /app/org',
+      '- Docs: /docs',
+      '- Security: /security',
     ].join('\n');
   }
   function buildMembersCsv() {
@@ -462,6 +560,16 @@
     } catch {
       setExportMessage('Could not copy members report.', 'danger');
       toast('Could not copy members report.', 'danger');
+    }
+  }
+  async function copyMembersChecklist() {
+    try {
+      const copied = await copyText(buildMembersChecklist());
+      setExportMessage(copied ? 'Member access checklist copied.' : 'Could not copy member access checklist.', copied ? 'ok' : 'danger');
+      toast(copied ? 'Member access checklist copied.' : 'Could not copy member access checklist.', copied ? 'ok' : 'danger');
+    } catch {
+      setExportMessage('Could not copy member access checklist.', 'danger');
+      toast('Could not copy member access checklist.', 'danger');
     }
   }
   function downloadMembersReport() {
@@ -607,6 +715,7 @@
     renderMembers(membersData);
     renderInvites(membersData);
     renderCoverage(membersData);
+    renderAccessKit();
   }
   function bind() {
     const signOutBtn = $('signOutBtn');
@@ -614,6 +723,7 @@
     const orgSelect = $('orgSelect');
     const inviteBtn = $('inviteBtn');
     const copyMembersReportBtn = $('copyMembersReportBtn');
+    const copyMembersChecklistBtn = $('copyMembersChecklistBtn');
     const downloadMembersReportBtn = $('downloadMembersReportBtn');
     const downloadMembersCsvBtn = $('downloadMembersCsvBtn');
     const downloadMembersJsonBtn = $('downloadMembersJsonBtn');
@@ -621,6 +731,7 @@
     if (refreshBtn) refreshBtn.addEventListener('click', function() { load(); });
     if (inviteBtn) inviteBtn.addEventListener('click', function() { sendInvite(); });
     if (copyMembersReportBtn) copyMembersReportBtn.addEventListener('click', function() { copyMembersReport(); });
+    if (copyMembersChecklistBtn) copyMembersChecklistBtn.addEventListener('click', function() { copyMembersChecklist(); });
     if (downloadMembersReportBtn) downloadMembersReportBtn.addEventListener('click', function() { downloadMembersReport(); });
     if (downloadMembersCsvBtn) downloadMembersCsvBtn.addEventListener('click', function() { downloadMembersCsv(); });
     if (downloadMembersJsonBtn) downloadMembersJsonBtn.addEventListener('click', function() { downloadMembersJson(); });
