@@ -3,6 +3,7 @@
 <head>
   <script async src="https://www.googletagmanager.com/gtag/js?id=G-NE5RYX1WTF"></script>
   <script src="/js/app-index-1.js" defer></script>
+  <script src="/js/app-toast-1.js" defer data-app-shell-page-script></script>
   <script src="/js/app-control-1.js" defer data-app-shell-page-script></script>
   <script src="/js/app-shell-router-1.js" defer></script>
 
@@ -84,6 +85,12 @@
     .subnav { display: flex; gap: 8px; margin-bottom: 20px; }
     .subnav-link { font-family: var(--mono); font-size: 11px; padding: 7px 10px; border-radius: 999px; border: var(--rule); background: var(--bg-card); color: var(--text-muted); }
     .subnav-link.active { color: var(--text); background: #fff8ef; border-color: #ead8b2; }
+    .action-strip { border: var(--rule); border-radius: 4px; background: var(--bg-card); padding: 12px 16px; display: flex; flex-wrap: wrap; gap: 10px; align-items: center; margin-bottom: 20px; }
+    .action-strip-label { font-family: var(--mono); font-size: 10px; letter-spacing: 0.7px; text-transform: uppercase; color: var(--text-faint); margin-right: 4px; }
+    .action-msg { margin-left: auto; font-family: var(--mono); font-size: 11px; color: var(--text-faint); }
+    .action-msg.ok { color: var(--ok); }
+    .action-msg.warn { color: var(--warn); }
+    .action-msg.danger { color: var(--danger); }
     .banner { border: var(--rule); border-radius: 4px; background: linear-gradient(135deg, rgba(217,119,6,0.08), rgba(23,23,23,0.02)); padding: 18px 20px; margin-bottom: 24px; display: grid; grid-template-columns: 1.2fr 0.8fr; gap: 16px; }
     .banner-kicker { font-family: var(--mono); font-size: 10.5px; letter-spacing: 0.8px; text-transform: uppercase; color: var(--accent); margin-bottom: 8px; }
     .banner-title { font-family: var(--display); font-size: 24px; font-weight: 600; letter-spacing: -0.5px; }
@@ -204,6 +211,7 @@
           <div class="sidebar-head">team</div>
           <a class="sidebar-item" href="/app/members"><span class="sidebar-dot">●</span> members</a>
           <a class="sidebar-item" href="/app/audit"><span class="sidebar-dot">●</span> audit</a>
+          <a class="sidebar-item" href="/app/org"><span class="sidebar-dot">●</span> org</a>
         </div>
         <div class="sidebar-group">
           <div class="sidebar-head">vault</div>
@@ -242,7 +250,7 @@
               <span class="org-switcher-status" id="orgSwitcherStatus">Org loading…</span>
             </div>
             <button type="button" class="btn-outline" id="refreshBtn">refresh</button>
-            <a class="btn-primary" href="/app/settings">manage org</a>
+            <a class="btn-primary" href="/app/org">manage org</a>
           </div>
         </div>
         <p class="page-desc">This is the separate control dashboard for team and business accounts. It keeps access, governance, runtime health, and alert delivery in one operator surface instead of the solo project view.</p>
@@ -251,6 +259,16 @@
           <a class="subnav-link active" href="/app/control">control overview</a>
           <a class="subnav-link" href="/app/members">members</a>
           <a class="subnav-link" href="/app/audit">audit</a>
+          <a class="subnav-link" href="/app/alerts">alerts</a>
+          <a class="subnav-link" href="/app/org">org</a>
+        </div>
+
+        <div class="action-strip">
+          <span class="action-strip-label">operator handoff</span>
+          <button type="button" class="btn-outline" id="copyControlReportBtn">copy report</button>
+          <button type="button" class="btn-outline" id="downloadControlReportBtn">download report</button>
+          <button type="button" class="btn-outline" id="downloadControlJsonBtn">download json</button>
+          <span class="action-msg" id="controlExportMsg"></span>
         </div>
 
         <section class="invite-panel hidden" id="incomingInvitePanel">

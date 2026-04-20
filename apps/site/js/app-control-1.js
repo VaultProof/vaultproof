@@ -15,6 +15,10 @@
   let currentOrganizationId = null;
   let availableOrganizations = [];
   let currentProjectsPayload = null;
+  let currentMembersPayload = null;
+  let currentOverviewPayload = null;
+  let currentAuditPayload = null;
+  let currentAlertsPayload = null;
 
   if (!token) {
     window.location.href = 'login';
@@ -36,6 +40,16 @@
     if (!button) return;
     button.disabled = Boolean(disabled);
     if (label) button.textContent = label;
+  }
+  function setExportMessage(text, tone) {
+    const el = $('controlExportMsg');
+    if (!el) return;
+    el.textContent = text || '';
+    el.className = `action-msg${tone ? ` ${tone}` : ''}`;
+  }
+  function toast(message, tone) {
+    if (!message || !window.VaultproofToast || typeof window.VaultproofToast.show !== 'function') return;
+    window.VaultproofToast.show(message, tone || 'neutral', 'Control');
   }
 
   function escapeHtml(str) {
@@ -218,6 +232,54 @@
     if (num >= 1e6) return `${(num / 1e6).toFixed(2)}M`;
     if (num >= 1e3) return `${(num / 1e3).toFixed(1)}k`;
     return num.toLocaleString('en-US');
+  }
+  function formatTimestamp(value) {
+    if (!value) return '—';
+    const date = new Date(value);
+    if (Number.isNaN(date.getTime())) return '—';
+    return date.toLocaleString('en-US', {
+      month: 'short',
+      day: 'numeric',
+      hour: 'numeric',
+      minute: '2-digit',
+    });
+  }
+  function slugify(value) {
+    return String(value || 'control')
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, '-')
+      .replace(/^-+|-+$/g, '') || 'control';
+  }
+  function csvEscape(value) {
+    const stringValue = String(value == null ? '' : value);
+    return /[",\n]/.test(stringValue) ? `"${stringValue.replace(/"/g, '""')}"` : stringValue;
+  }
+  function downloadTextFile(filename, content, type) {
+    const blob = new Blob([content], { type: type || 'text/plain;charset=utf-8' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = filename;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+  }
+  async function copyText(content) {
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      await navigator.clipboard.writeText(content);
+      return true;
+    }
+    const textarea = document.createElement('textarea');
+    textarea.value = content;
+    textarea.setAttribute('readonly', 'readonly');
+    textarea.style.position = 'absolute';
+    textarea.style.left = '-9999px';
+    document.body.appendChild(textarea);
+    textarea.select();
+    const copied = document.execCommand('copy');
+    document.body.removeChild(textarea);
+    return copied;
   }
 
   function relTime(value) {
@@ -550,6 +612,83 @@
     list.innerHTML = rows.join('');
   }
 
+  function buildControlReport() {
+    const membersPayload = currentMembersPayload || {};
+    const overviewPayload = currentOverviewPayload || {};
+    const auditPayload = currentAuditPayload || {};
+    const alertsPayload = currentAlertsPayload || {};
+    const org = membersPayload.organization || {};
+    const members = membersPayload.members || [];
+    const invites = (membersPayload.invitations || []).filter((invite) => invite.status === 'pending');
+    const projects = currentProjectsPayload?.projects || [];
+    const posture = overviewPayload.pilotReview || {};
+    const alertPolicy = alertsPayload.policy || {};
+    const dispatchRuns = alertsPayload.dispatch_runs || [];
+    const auditEvents = auditPayload.events || [];
+
+    return [
+      'VaultProof Control Report',
+      `Organization: ${org.name || 'Unknown org'}`,
+      `Workspace: ${org.kind || 'unknown'} · role ${org.current_role || 'unknown'}`,
+      `Generated: ${formatTimestamp(new Date().toISOString())}`,
+      '',
+      'Summary',
+      `- Members: ${members.length}`,
+      `- Pending invites: ${invites.length}`,
+      `- Projects: ${projects.length}`,
+      `- Security posture: ${posture.status || 'setup'}`,
+      `- Headline: ${posture.headline || 'No pilot review yet'}`,
+      `- Dispatch policy: ${alertPolicy.dispatch_enabled ? 'enabled' : 'disabled'} · ${alertPolicy.minimum_severity || 'warning'} · ${alertPolicy.min_interval_minutes || 60}m cooldown`,
+      '',
+      'Projects',
+      ...(projects.length ? projects.slice(0, 10).map((project) => `- ${project.name || project.vp_proj_id} · ${project.project_role || 'viewer'} · ${project.strict_origin ? 'strict origin' : 'observing origins'}`) : ['- none']),
+      '',
+      'Recent governance',
+      ...(auditEvents.length ? auditEvents.slice(0, 8).map((event) => `- ${formatTimestamp(event.timestamp)} · ${event.description || event.event_type || 'event'} · ${event.source || 'unknown'}`) : ['- none']),
+      '',
+      'Recent dispatch',
+      ...(dispatchRuns.length ? dispatchRuns.slice(0, 5).map((run) => `- ${formatTimestamp(run.checked_at)} · ${run.trigger_source} · ${run.status} · ${run.dispatched_alert_count || 0} alerts`) : ['- none']),
+    ].join('\n');
+  }
+
+  function buildControlJson() {
+    return JSON.stringify({
+      generated_at: new Date().toISOString(),
+      members: currentMembersPayload || {},
+      projects: currentProjectsPayload || {},
+      overview: currentOverviewPayload || {},
+      audit: currentAuditPayload || {},
+      alerts: currentAlertsPayload || {},
+    }, null, 2);
+  }
+
+  function getControlExportBaseName() {
+    return `${slugify(currentMembersPayload?.organization?.name || 'vaultproof')}-control`;
+  }
+
+  async function copyControlReport() {
+    try {
+      const copied = await copyText(buildControlReport());
+      setExportMessage(copied ? 'Control report copied.' : 'Could not copy control report.', copied ? 'ok' : 'danger');
+      toast(copied ? 'Control report copied.' : 'Could not copy control report.', copied ? 'ok' : 'danger');
+    } catch {
+      setExportMessage('Could not copy control report.', 'danger');
+      toast('Could not copy control report.', 'danger');
+    }
+  }
+
+  function downloadControlReport() {
+    downloadTextFile(`${getControlExportBaseName()}-report.txt`, buildControlReport(), 'text/plain;charset=utf-8');
+    setExportMessage('Control report downloaded.', 'ok');
+    toast('Control report downloaded.', 'ok');
+  }
+
+  function downloadControlJson() {
+    downloadTextFile(`${getControlExportBaseName()}-snapshot.json`, buildControlJson(), 'application/json;charset=utf-8');
+    setExportMessage('Control JSON downloaded.', 'ok');
+    toast('Control JSON downloaded.', 'ok');
+  }
+
   async function saveProjectPolicy(projectId, trigger) {
     const originsEl = document.querySelector(`[data-policy-origins="${projectId}"]`);
     const strictEl = document.querySelector(`[data-policy-strict="${projectId}"]`);
@@ -579,6 +718,7 @@
       const errorMessage = res?.data?.error || (res?.status === 403 ? 'You do not have permission to change this project.' : 'Could not save project policy.');
       setButtonState(trigger, false, 'save policy');
       setMessage(messageEl, errorMessage, 'danger');
+      toast(errorMessage, 'danger');
       return;
     }
 
@@ -587,6 +727,7 @@
     const nextButton = document.querySelector(`[data-policy-save="${projectId}"]`);
     setMessage(nextMessageEl, `Saved policy for ${project.name || project.vp_proj_id}.`, 'ok');
     setButtonState(nextButton, false, 'save policy');
+    toast(`Saved policy for ${project.name || project.vp_proj_id}.`, 'ok');
   }
 
   async function load() {
@@ -615,7 +756,11 @@
     const overviewData = unwrapPayload(overviewPayload?.data) || {};
     const auditData = unwrapPayload(auditPayload?.data) || {};
     const alertsData = unwrapPayload(alertsPayload?.data) || {};
+    currentMembersPayload = membersData;
     currentProjectsPayload = projectsData;
+    currentOverviewPayload = overviewData;
+    currentAuditPayload = auditData;
+    currentAlertsPayload = alertsData;
 
     renderBanner(membersData, overviewData, alertsData);
     renderIncomingInvites(membersData);
@@ -632,8 +777,14 @@
     const signOutBtn = $('signOutBtn');
     const refreshBtn = $('refreshBtn');
     const orgSelect = $('orgSelect');
+    const copyControlReportBtn = $('copyControlReportBtn');
+    const downloadControlReportBtn = $('downloadControlReportBtn');
+    const downloadControlJsonBtn = $('downloadControlJsonBtn');
     if (signOutBtn) signOutBtn.addEventListener('click', logout);
     if (refreshBtn) refreshBtn.addEventListener('click', function() { load(); });
+    if (copyControlReportBtn) copyControlReportBtn.addEventListener('click', function() { copyControlReport(); });
+    if (downloadControlReportBtn) downloadControlReportBtn.addEventListener('click', function() { downloadControlReport(); });
+    if (downloadControlJsonBtn) downloadControlJsonBtn.addEventListener('click', function() { downloadControlJson(); });
     if (orgSelect) {
       orgSelect.addEventListener('change', function(event) {
         const nextOrgId = event.target.value || '';
@@ -654,9 +805,11 @@
         });
         if (!res?.ok) {
           setButtonState(acceptBtn, false, 'accept invite');
+          toast(res?.data?.error || 'Could not accept invite.', 'danger');
           return;
         }
         await load();
+        toast('Invite accepted. Your team access is active now.', 'ok');
         return;
       }
 

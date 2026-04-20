@@ -34,6 +34,17 @@
     el.textContent = text;
     el.className = `form-msg ${tone || ''}`.trim();
   }
+  function setExportMessage(text, tone) {
+    const el = $('membersExportMsg');
+    if (!el) return;
+    el.textContent = text || '';
+    el.className = `action-msg${tone ? ` ${tone}` : ''}`;
+  }
+  function toast(message, tone) {
+    if (!message || !window.VaultproofToast || typeof window.VaultproofToast.show !== 'function') return;
+    const mappedTone = tone === 'success' ? 'ok' : tone === 'error' ? 'danger' : (tone || 'neutral');
+    window.VaultproofToast.show(message, mappedTone, 'Members');
+  }
   function escapeHtml(str) {
     return String(str == null ? '' : str)
       .replace(/&/g, '&amp;')
@@ -47,6 +58,17 @@
     if (num >= 1e6) return `${(num / 1e6).toFixed(2)}M`;
     if (num >= 1e3) return `${(num / 1e3).toFixed(1)}k`;
     return num.toLocaleString('en-US');
+  }
+  function formatTimestamp(value) {
+    if (!value) return '—';
+    const date = new Date(value);
+    if (Number.isNaN(date.getTime())) return '—';
+    return date.toLocaleString('en-US', {
+      month: 'short',
+      day: 'numeric',
+      hour: 'numeric',
+      minute: '2-digit',
+    });
   }
   function relTime(value) {
     if (!value) return '—';
@@ -62,6 +84,43 @@
     if (data.data && typeof data.data === 'object') return unwrapPayload(data.data);
     if (data.result && typeof data.result === 'object') return unwrapPayload(data.result);
     return data;
+  }
+  function slugify(value) {
+    return String(value || 'members')
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, '-')
+      .replace(/^-+|-+$/g, '') || 'members';
+  }
+  function csvEscape(value) {
+    const stringValue = String(value == null ? '' : value);
+    return /[",\n]/.test(stringValue) ? `"${stringValue.replace(/"/g, '""')}"` : stringValue;
+  }
+  function downloadTextFile(filename, content, type) {
+    const blob = new Blob([content], { type: type || 'text/plain;charset=utf-8' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = filename;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+  }
+  async function copyText(content) {
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      await navigator.clipboard.writeText(content);
+      return true;
+    }
+    const textarea = document.createElement('textarea');
+    textarea.value = content;
+    textarea.setAttribute('readonly', 'readonly');
+    textarea.style.position = 'absolute';
+    textarea.style.left = '-9999px';
+    document.body.appendChild(textarea);
+    textarea.select();
+    const copied = document.execCommand('copy');
+    document.body.removeChild(textarea);
+    return copied;
   }
   function extractRefreshToken(value) {
     if (!value) return null;
@@ -347,6 +406,79 @@
       `;
     }).join('');
   }
+  function buildMembersReport() {
+    const payload = currentMembersPayload || {};
+    const org = payload.organization || {};
+    const members = payload.members || [];
+    const invites = (payload.invitations || []).filter((invite) => invite.status === 'pending');
+    const projects = payload.projects || [];
+    return [
+      'VaultProof Members Report',
+      `Organization: ${org.name || 'Unknown org'}`,
+      `Workspace: ${org.kind || 'unknown'} · role ${org.current_role || 'unknown'}`,
+      `Generated: ${formatTimestamp(new Date().toISOString())}`,
+      '',
+      'Summary',
+      `- Joined members: ${members.length}`,
+      `- Admins/owners: ${members.filter((member) => member.role === 'admin' || member.role === 'owner').length}`,
+      `- Pending invites: ${invites.length}`,
+      `- Projects: ${projects.length}`,
+      '',
+      'Members',
+      ...(members.length ? members.map((member) => `- ${member.email || member.user_id} · ${member.role} · ${(member.project_access || []).length} project scopes`) : ['- none']),
+      '',
+      'Pending invites',
+      ...(invites.length ? invites.map((invite) => `- ${invite.email} · ${invite.role} · invited ${formatTimestamp(invite.created_at)}`) : ['- none']),
+    ].join('\n');
+  }
+  function buildMembersCsv() {
+    const rows = [
+      ['email', 'user_id', 'role', 'created_at', 'project_count', 'project_access'],
+      ...((currentMembersPayload?.members || []).map((member) => [
+        member.email,
+        member.user_id,
+        member.role,
+        member.created_at,
+        (member.project_access || []).length,
+        (member.project_access || []).map((project) => `${project.project_name || project.vp_proj_id}:${project.role}`).join(' | '),
+      ])),
+    ];
+    return rows.map((row) => row.map(csvEscape).join(',')).join('\n');
+  }
+  function buildMembersJson() {
+    return JSON.stringify({
+      generated_at: new Date().toISOString(),
+      members: currentMembersPayload || {},
+    }, null, 2);
+  }
+  function getMembersExportBaseName() {
+    return `${slugify(currentMembersPayload?.organization?.name || 'vaultproof')}-members`;
+  }
+  async function copyMembersReport() {
+    try {
+      const copied = await copyText(buildMembersReport());
+      setExportMessage(copied ? 'Members report copied.' : 'Could not copy members report.', copied ? 'ok' : 'danger');
+      toast(copied ? 'Members report copied.' : 'Could not copy members report.', copied ? 'ok' : 'danger');
+    } catch {
+      setExportMessage('Could not copy members report.', 'danger');
+      toast('Could not copy members report.', 'danger');
+    }
+  }
+  function downloadMembersReport() {
+    downloadTextFile(`${getMembersExportBaseName()}-report.txt`, buildMembersReport(), 'text/plain;charset=utf-8');
+    setExportMessage('Members report downloaded.', 'ok');
+    toast('Members report downloaded.', 'ok');
+  }
+  function downloadMembersCsv() {
+    downloadTextFile(`${getMembersExportBaseName()}-access.csv`, buildMembersCsv(), 'text/csv;charset=utf-8');
+    setExportMessage('Members CSV downloaded.', 'ok');
+    toast('Members CSV downloaded.', 'ok');
+  }
+  function downloadMembersJson() {
+    downloadTextFile(`${getMembersExportBaseName()}-snapshot.json`, buildMembersJson(), 'application/json;charset=utf-8');
+    setExportMessage('Members JSON downloaded.', 'ok');
+    toast('Members JSON downloaded.', 'ok');
+  }
   async function updateMemberRole(userId) {
     const select = document.querySelector(`[data-role-select="${CSS.escape(userId)}"]`);
     if (!select) return;
@@ -358,10 +490,12 @@
     const payload = unwrapPayload(res?.data) || {};
     if (!res?.ok) {
       setMessage('inviteMsg', payload?.error || 'Failed to update member role.', 'error');
+      toast(payload?.error || 'Failed to update member role.', 'error');
       return;
     }
     setMessage('inviteMsg', 'Member role updated.', 'success');
     await load();
+    toast('Member role updated.', 'success');
   }
   async function removeMember(userId) {
     const res = await apiFetch(INIT_API, `/members/${encodeURIComponent(userId)}`, {
@@ -370,10 +504,12 @@
     const payload = unwrapPayload(res?.data) || {};
     if (!res?.ok) {
       setMessage('inviteMsg', payload?.error || 'Failed to remove member.', 'error');
+      toast(payload?.error || 'Failed to remove member.', 'error');
       return;
     }
     setMessage('inviteMsg', 'Member removed from the organization.', 'success');
     await load();
+    toast('Member removed from the organization.', 'success');
   }
   async function revokeInvite(inviteId) {
     const res = await apiFetch(INIT_API, `/members/invitations/${encodeURIComponent(inviteId)}`, {
@@ -382,10 +518,12 @@
     const payload = unwrapPayload(res?.data) || {};
     if (!res?.ok) {
       setMessage('inviteMsg', payload?.error || 'Failed to revoke invite.', 'error');
+      toast(payload?.error || 'Failed to revoke invite.', 'error');
       return;
     }
     setMessage('inviteMsg', 'Invitation revoked.', 'success');
     await load();
+    toast('Invitation revoked.', 'success');
   }
   async function assignProjectAccess(userId) {
     const projectSelect = document.querySelector(`[data-project-select="${CSS.escape(userId)}"]`);
@@ -395,6 +533,7 @@
     const role = roleSelect.value || 'member';
     if (!projectId) {
       setMessage('inviteMsg', 'Choose a project before assigning access.', 'error');
+      toast('Choose a project before assigning access.', 'error');
       return;
     }
     const res = await apiFetch(INIT_API, `/projects/${encodeURIComponent(projectId)}/members`, {
@@ -404,10 +543,12 @@
     const payload = unwrapPayload(res?.data) || {};
     if (!res?.ok) {
       setMessage('inviteMsg', payload?.error || 'Failed to assign project access.', 'error');
+      toast(payload?.error || 'Failed to assign project access.', 'error');
       return;
     }
     setMessage('inviteMsg', 'Project access updated.', 'success');
     await load();
+    toast('Project access updated.', 'success');
   }
   async function removeProjectAccess(userId, projectId) {
     const res = await apiFetch(INIT_API, `/projects/${encodeURIComponent(projectId)}/members/${encodeURIComponent(userId)}`, {
@@ -416,10 +557,12 @@
     const payload = unwrapPayload(res?.data) || {};
     if (!res?.ok) {
       setMessage('inviteMsg', payload?.error || 'Failed to remove project access.', 'error');
+      toast(payload?.error || 'Failed to remove project access.', 'error');
       return;
     }
     setMessage('inviteMsg', 'Project access removed.', 'success');
     await load();
+    toast('Project access removed.', 'success');
   }
   async function sendInvite() {
     const email = ($('inviteEmail')?.value || '').trim();
@@ -432,12 +575,14 @@
     const payload = unwrapPayload(res?.data) || {};
     if (!res?.ok) {
       setMessage('inviteMsg', payload?.error || 'Failed to send invitation.', 'error');
+      toast(payload?.error || 'Failed to send invitation.', 'error');
       return;
     }
     if ($('inviteEmail')) $('inviteEmail').value = '';
     if ($('inviteRole')) $('inviteRole').value = 'member';
     setMessage('inviteMsg', 'Invitation sent.', 'success');
     await load();
+    toast('Invitation sent.', 'success');
   }
   async function load() {
     setText('user-email', user.email || 'loading...');
@@ -468,9 +613,17 @@
     const refreshBtn = $('refreshBtn');
     const orgSelect = $('orgSelect');
     const inviteBtn = $('inviteBtn');
+    const copyMembersReportBtn = $('copyMembersReportBtn');
+    const downloadMembersReportBtn = $('downloadMembersReportBtn');
+    const downloadMembersCsvBtn = $('downloadMembersCsvBtn');
+    const downloadMembersJsonBtn = $('downloadMembersJsonBtn');
     if (signOutBtn) signOutBtn.addEventListener('click', logout);
     if (refreshBtn) refreshBtn.addEventListener('click', function() { load(); });
     if (inviteBtn) inviteBtn.addEventListener('click', function() { sendInvite(); });
+    if (copyMembersReportBtn) copyMembersReportBtn.addEventListener('click', function() { copyMembersReport(); });
+    if (downloadMembersReportBtn) downloadMembersReportBtn.addEventListener('click', function() { downloadMembersReport(); });
+    if (downloadMembersCsvBtn) downloadMembersCsvBtn.addEventListener('click', function() { downloadMembersCsv(); });
+    if (downloadMembersJsonBtn) downloadMembersJsonBtn.addEventListener('click', function() { downloadMembersJson(); });
     if (orgSelect) {
       orgSelect.addEventListener('change', function(event) {
         persistOrganizationSelection(event.target.value || '');

@@ -16,6 +16,8 @@
   let availableOrganizations = [];
   let currentAlertsPayload = null;
   let currentOverviewPayload = null;
+  let runNextBefore = null;
+  let deliveryNextBefore = null;
 
   if (!token) {
     window.location.href = 'login';
@@ -30,6 +32,10 @@
     el.textContent = text || '';
     el.className = `form-msg${tone ? ` ${tone}` : ''}`;
   }
+  function toast(message, tone) {
+    if (!message || !window.VaultproofToast || typeof window.VaultproofToast.show !== 'function') return;
+    window.VaultproofToast.show(message, tone || 'neutral', 'Alerts');
+  }
   function setButtonState(button, disabled, label) {
     if (!button) return;
     button.disabled = Boolean(disabled);
@@ -43,11 +49,28 @@
       .replace(/"/g, '&quot;')
       .replace(/'/g, '&#039;');
   }
+  function slugify(value) {
+    return String(value || 'alerts')
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, '-')
+      .replace(/^-+|-+$/g, '') || 'alerts';
+  }
   function formatNum(value) {
     const num = Number(value || 0);
     if (num >= 1e6) return `${(num / 1e6).toFixed(2)}M`;
     if (num >= 1e3) return `${(num / 1e3).toFixed(1)}k`;
     return num.toLocaleString('en-US');
+  }
+  function formatTimestamp(value) {
+    if (!value) return '—';
+    const date = new Date(value);
+    if (Number.isNaN(date.getTime())) return '—';
+    return date.toLocaleString('en-US', {
+      month: 'short',
+      day: 'numeric',
+      hour: 'numeric',
+      minute: '2-digit',
+    });
   }
   function relTime(value) {
     if (!value) return '—';
@@ -63,6 +86,12 @@
     if (data.data && typeof data.data === 'object') return unwrapPayload(data.data);
     if (data.result && typeof data.result === 'object') return unwrapPayload(data.result);
     return data;
+  }
+  function setExportMessage(text, tone) {
+    const el = $('exportMsg');
+    if (!el) return;
+    el.textContent = text || '';
+    el.className = `action-msg${tone ? ` ${tone}` : ''}`;
   }
   function extractRefreshToken(value) {
     if (!value) return null;
@@ -206,6 +235,140 @@
     if (value === 'skipped') return 'warn';
     if (value === 'dispatched' || value === 'delivered') return 'ok';
     return 'neutral';
+  }
+  function getFilterState() {
+    return {
+      activity_window: $('activityWindow')?.value || '7d',
+      run_status: $('runStatusFilter')?.value || 'all',
+      run_trigger: $('runTriggerFilter')?.value || 'all',
+      delivery_status: $('deliveryStatusFilter')?.value || 'all',
+      delivery_channel: $('deliveryChannelFilter')?.value || 'all',
+      delivery_kind: $('deliveryKindFilter')?.value || 'all',
+    };
+  }
+  function csvEscape(value) {
+    const stringValue = String(value == null ? '' : value);
+    return /[",\n]/.test(stringValue) ? `"${stringValue.replace(/"/g, '""')}"` : stringValue;
+  }
+  function downloadTextFile(filename, content, type) {
+    const blob = new Blob([content], { type: type || 'text/plain;charset=utf-8' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = filename;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+  }
+  async function copyText(content) {
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      await navigator.clipboard.writeText(content);
+      return true;
+    }
+    const textarea = document.createElement('textarea');
+    textarea.value = content;
+    textarea.setAttribute('readonly', 'readonly');
+    textarea.style.position = 'absolute';
+    textarea.style.left = '-9999px';
+    document.body.appendChild(textarea);
+    textarea.select();
+    const copied = document.execCommand('copy');
+    document.body.removeChild(textarea);
+    return copied;
+  }
+  function buildOperationsReport() {
+    const alertsPayload = currentAlertsPayload || {};
+    const overviewPayload = currentOverviewPayload || {};
+    const org = alertsPayload.organization || {};
+    const policy = alertsPayload.policy || {};
+    const status = alertsPayload.dispatch_status || {};
+    const destinations = alertsPayload.destinations || [];
+    const runs = alertsPayload.dispatch_runs || [];
+    const deliveries = alertsPayload.delivery_logs || [];
+    const alerts = overviewPayload.alerts || [];
+    const filters = getFilterState();
+    const enabledDestinations = destinations.filter((item) => item.enabled).length;
+    const failedDeliveries = deliveries.filter((item) => item.status === 'failed').length;
+    const skippedDeliveries = deliveries.filter((item) => item.status === 'skipped').length;
+
+    return [
+      `VaultProof Alerts Operations Report`,
+      `Organization: ${org.name || 'Unknown org'}`,
+      `Workspace: ${org.kind || 'unknown'} · role ${org.current_role || 'unknown'}`,
+      `Generated: ${formatTimestamp(new Date().toISOString())}`,
+      `Filter scope: window ${filters.activity_window}, runs ${filters.run_status}/${filters.run_trigger}, deliveries ${filters.delivery_status}/${filters.delivery_channel}/${filters.delivery_kind}`,
+      '',
+      `Policy`,
+      `- Dispatch enabled: ${policy.dispatch_enabled ? 'yes' : 'no'}`,
+      `- Minimum severity: ${policy.minimum_severity || 'warning'}`,
+      `- Cooldown minutes: ${policy.min_interval_minutes || 60}`,
+      `- Last dispatch: ${status.last_policy_dispatch_at ? formatTimestamp(status.last_policy_dispatch_at) : 'never'}`,
+      `- Next eligible: ${status.next_eligible_at ? formatTimestamp(status.next_eligible_at) : 'now'}`,
+      '',
+      `Current signal`,
+      `- Active alerts: ${alerts.length}`,
+      `- Enabled destinations: ${enabledDestinations} of ${destinations.length}`,
+      `- Dispatch runs in scope: ${runs.length}`,
+      `- Delivery logs in scope: ${deliveries.length}`,
+      `- Failed deliveries: ${failedDeliveries}`,
+      `- Skipped deliveries: ${skippedDeliveries}`,
+      '',
+      `Active alerts`,
+      ...(alerts.length ? alerts.slice(0, 12).map((alert, index) => `- ${index + 1}. ${alert.severity || 'info'} · ${alert.title || alert.type || 'alert'} · ${alert.project_name || alert.project_id || 'org signal'}`) : ['- none']),
+      '',
+      `Destinations`,
+      ...(destinations.length ? destinations.map((destination) => `- ${destination.label} · ${destination.channel_type} · ${destination.target_masked} · ${destination.enabled ? 'enabled' : 'paused'}`) : ['- none']),
+      '',
+      `Recent dispatch runs`,
+      ...(runs.length ? runs.slice(0, 8).map((run) => `- ${formatTimestamp(run.checked_at)} · ${run.trigger_source} · ${run.status} · ${run.dispatched_alert_count || 0} alerts · ${run.delivered_count || 0} delivered`) : ['- none']),
+      '',
+      `Recent delivery logs`,
+      ...(deliveries.length ? deliveries.slice(0, 8).map((delivery) => `- ${formatTimestamp(delivery.delivered_at)} · ${delivery.channel_type} · ${delivery.delivery_kind} · ${delivery.status} · ${delivery.detail || 'delivery event'}`) : ['- none']),
+    ].join('\n');
+  }
+  function buildDispatchRunsCsv() {
+    const rows = [
+      ['checked_at', 'trigger_source', 'status', 'reason', 'dispatched_alert_count', 'destination_count', 'delivered_count', 'failed_count', 'skipped_count', 'next_eligible_at'],
+      ...((currentAlertsPayload?.dispatch_runs || []).map((run) => [
+        run.checked_at,
+        run.trigger_source,
+        run.status,
+        run.reason,
+        run.dispatched_alert_count,
+        run.destination_count,
+        run.delivered_count,
+        run.failed_count,
+        run.skipped_count,
+        run.next_eligible_at,
+      ])),
+    ];
+    return rows.map((row) => row.map(csvEscape).join(',')).join('\n');
+  }
+  function buildDeliveryLogsCsv() {
+    const rows = [
+      ['delivered_at', 'channel_type', 'delivery_kind', 'status', 'response_status', 'detail'],
+      ...((currentAlertsPayload?.delivery_logs || []).map((delivery) => [
+        delivery.delivered_at,
+        delivery.channel_type,
+        delivery.delivery_kind,
+        delivery.status,
+        delivery.response_status,
+        delivery.detail,
+      ])),
+    ];
+    return rows.map((row) => row.map(csvEscape).join(',')).join('\n');
+  }
+  function buildJsonExport() {
+    return JSON.stringify({
+      generated_at: new Date().toISOString(),
+      filters: getFilterState(),
+      alerts: currentAlertsPayload || {},
+      overview: currentOverviewPayload || {},
+    }, null, 2);
+  }
+  function getExportBaseName() {
+    return `${slugify(currentAlertsPayload?.organization?.name || 'vaultproof')}-alerts`;
   }
   function renderBanner(alertsPayload, overviewPayload) {
     const org = alertsPayload?.organization || null;
@@ -393,9 +556,51 @@
     params.set('delivery_kind', $('deliveryKindFilter')?.value || 'all');
     params.set('run_limit', '8');
     params.set('delivery_limit', '8');
+    if (arguments[0] === 'runs' && runNextBefore) params.set('run_before', runNextBefore);
+    if (arguments[0] === 'deliveries' && deliveryNextBefore) params.set('delivery_before', deliveryNextBefore);
     return params.toString();
   }
-  async function load() {
+  function renderPaging(alertsPayload) {
+    const runsMeta = alertsPayload?.dispatch_runs_meta || {};
+    const deliveriesMeta = alertsPayload?.delivery_logs_meta || {};
+    const runsBtn = $('loadMoreRunsBtn');
+    const deliveriesBtn = $('loadMoreDeliveriesBtn');
+    if (runsBtn) {
+      runsBtn.hidden = !runsMeta.has_more;
+      runsBtn.disabled = false;
+      runsBtn.textContent = 'load more runs';
+    }
+    if (deliveriesBtn) {
+      deliveriesBtn.hidden = !deliveriesMeta.has_more;
+      deliveriesBtn.disabled = false;
+      deliveriesBtn.textContent = 'load more deliveries';
+    }
+  }
+  function mergeAlertsPayload(nextAlertsData, loadMoreKind) {
+    if (!loadMoreKind || !currentAlertsPayload) {
+      runNextBefore = nextAlertsData?.dispatch_runs_meta?.next_before || null;
+      deliveryNextBefore = nextAlertsData?.delivery_logs_meta?.next_before || null;
+      return nextAlertsData;
+    }
+
+    const merged = Object.assign({}, currentAlertsPayload, nextAlertsData);
+    if (loadMoreKind === 'runs') {
+      merged.dispatch_runs = (currentAlertsPayload.dispatch_runs || []).concat(nextAlertsData.dispatch_runs || []);
+      merged.dispatch_runs_meta = nextAlertsData.dispatch_runs_meta || currentAlertsPayload.dispatch_runs_meta || {};
+      merged.delivery_logs = currentAlertsPayload.delivery_logs || [];
+      merged.delivery_logs_meta = currentAlertsPayload.delivery_logs_meta || {};
+      runNextBefore = merged.dispatch_runs_meta?.next_before || null;
+    }
+    if (loadMoreKind === 'deliveries') {
+      merged.delivery_logs = (currentAlertsPayload.delivery_logs || []).concat(nextAlertsData.delivery_logs || []);
+      merged.delivery_logs_meta = nextAlertsData.delivery_logs_meta || currentAlertsPayload.delivery_logs_meta || {};
+      merged.dispatch_runs = currentAlertsPayload.dispatch_runs || [];
+      merged.dispatch_runs_meta = currentAlertsPayload.dispatch_runs_meta || {};
+      deliveryNextBefore = merged.delivery_logs_meta?.next_before || null;
+    }
+    return merged;
+  }
+  async function load(loadMoreKind) {
     setText('user-email', user.email || 'loading...');
     const avatar = $('user-avatar');
     if (avatar) avatar.textContent = (user.email || 'VP').charAt(0).toUpperCase();
@@ -409,23 +614,24 @@
     renderOrganizationSelector();
 
     const [alertsPayload, overviewPayload] = await Promise.all([
-      apiFetch(INIT_API, `/alerts?${buildAlertsQuery()}`),
+      apiFetch(INIT_API, `/alerts?${buildAlertsQuery(loadMoreKind)}`),
       apiFetch(INIT_API, '/projects/stats/overview'),
     ]);
 
     const alertsData = unwrapPayload(alertsPayload?.data) || {};
     const overviewData = unwrapPayload(overviewPayload?.data) || {};
-    currentAlertsPayload = alertsData;
+    currentAlertsPayload = mergeAlertsPayload(alertsData, loadMoreKind);
     currentOverviewPayload = overviewData;
 
-    renderBanner(alertsData, overviewData);
-    renderUsageBox(alertsData);
-    renderKpis(alertsData, overviewData);
-    renderPolicy(alertsData);
-    renderDestinations(alertsData);
+    renderBanner(currentAlertsPayload, overviewData);
+    renderUsageBox(currentAlertsPayload);
+    renderKpis(currentAlertsPayload, overviewData);
+    renderPolicy(currentAlertsPayload);
+    renderDestinations(currentAlertsPayload);
     renderSignals(overviewData);
-    renderRuns(alertsData);
-    renderDeliveries(alertsData);
+    renderRuns(currentAlertsPayload);
+    renderDeliveries(currentAlertsPayload);
+    renderPaging(currentAlertsPayload);
   }
   async function savePolicy() {
     const savePolicyBtn = $('savePolicyBtn');
@@ -441,12 +647,15 @@
     });
     if (!res?.ok) {
       setButtonState(savePolicyBtn, false, 'save policy');
-      setMessage('policyMsg', res?.data?.error || 'Could not update alert policy.', 'danger');
+      const message = res?.data?.error || 'Could not update alert policy.';
+      setMessage('policyMsg', message, 'danger');
+      toast(message, 'danger');
       return;
     }
     await load();
     setButtonState($('savePolicyBtn'), false, 'save policy');
     setMessage('policyMsg', 'Alert policy saved.', 'ok');
+    toast('Alert policy saved.', 'ok');
   }
   async function addDestination() {
     const addDestinationBtn = $('addDestinationBtn');
@@ -462,7 +671,9 @@
     });
     if (!res?.ok) {
       setButtonState(addDestinationBtn, false, 'add destination');
-      setMessage('destinationMsg', res?.data?.error || 'Could not create alert destination.', 'danger');
+      const message = res?.data?.error || 'Could not create alert destination.';
+      setMessage('destinationMsg', message, 'danger');
+      toast(message, 'danger');
       return;
     }
     if ($('destinationLabel')) $('destinationLabel').value = '';
@@ -470,6 +681,7 @@
     await load();
     setButtonState($('addDestinationBtn'), false, 'add destination');
     setMessage('destinationMsg', 'Destination added.', 'ok');
+    toast('Destination added.', 'ok');
   }
   async function testSend(destinationId, trigger) {
     setButtonState(trigger, true, 'sending...');
@@ -479,12 +691,15 @@
     });
     if (!res?.ok) {
       setButtonState(trigger, false, destinationId ? 'test send' : 'send test alerts');
-      setMessage('policyMsg', res?.data?.error || 'Could not send test alerts.', 'danger');
+      const message = res?.data?.error || 'Could not send test alerts.';
+      setMessage('policyMsg', message, 'danger');
+      toast(message, 'danger');
       return;
     }
     await load();
     if (!destinationId) setButtonState($('testAllBtn'), false, 'send test alerts');
     setMessage('policyMsg', 'Test alert payload sent.', 'ok');
+    toast('Test alert payload sent.', 'ok');
   }
   async function dispatchCurrent(trigger) {
     setButtonState(trigger, true, 'dispatching...');
@@ -492,12 +707,16 @@
     const res = await apiFetch(INIT_API, '/alerts/dispatch-current', { method: 'POST', body: {} });
     if (!res?.ok) {
       setButtonState(trigger, false, 'dispatch current');
-      setMessage('policyMsg', res?.data?.error || 'Could not dispatch current alerts.', 'danger');
+      const message = res?.data?.error || 'Could not dispatch current alerts.';
+      setMessage('policyMsg', message, 'danger');
+      toast(message, 'danger');
       return;
     }
     await load();
     setButtonState($('dispatchCurrentBtn'), false, 'dispatch current');
-    setMessage('policyMsg', res?.data?.reason || 'Current alerts dispatched.', res?.data?.skipped ? 'warn' : 'ok');
+    const resultMessage = res?.data?.reason || 'Current alerts dispatched.';
+    setMessage('policyMsg', resultMessage, res?.data?.skipped ? 'warn' : 'ok');
+    toast(resultMessage, res?.data?.skipped ? 'warn' : 'ok');
   }
   async function updateDestination(destinationId, enabled, trigger) {
     setButtonState(trigger, true, enabled ? 'enabling...' : 'pausing...');
@@ -507,22 +726,59 @@
     });
     if (!res?.ok) {
       setButtonState(trigger, false, enabled ? 'enable' : 'pause');
-      setMessage('destinationMsg', res?.data?.error || 'Could not update destination.', 'danger');
+      const message = res?.data?.error || 'Could not update destination.';
+      setMessage('destinationMsg', message, 'danger');
+      toast(message, 'danger');
       return;
     }
     await load();
-    setMessage('destinationMsg', enabled ? 'Destination enabled.' : 'Destination paused.', 'ok');
+    const message = enabled ? 'Destination enabled.' : 'Destination paused.';
+    setMessage('destinationMsg', message, 'ok');
+    toast(message, 'ok');
   }
   async function deleteDestination(destinationId, trigger) {
     setButtonState(trigger, true, 'removing...');
     const res = await apiFetch(INIT_API, `/alerts/${encodeURIComponent(destinationId)}`, { method: 'DELETE' });
     if (!res?.ok) {
       setButtonState(trigger, false, 'remove');
-      setMessage('destinationMsg', res?.data?.error || 'Could not remove destination.', 'danger');
+      const message = res?.data?.error || 'Could not remove destination.';
+      setMessage('destinationMsg', message, 'danger');
+      toast(message, 'danger');
       return;
     }
     await load();
     setMessage('destinationMsg', 'Destination removed.', 'ok');
+    toast('Destination removed.', 'ok');
+  }
+  async function copyReport() {
+    try {
+      const copied = await copyText(buildOperationsReport());
+      setExportMessage(copied ? 'Operations report copied.' : 'Could not copy report.', copied ? 'ok' : 'danger');
+      toast(copied ? 'Operations report copied.' : 'Could not copy report.', copied ? 'ok' : 'danger');
+    } catch {
+      setExportMessage('Could not copy report.', 'danger');
+      toast('Could not copy report.', 'danger');
+    }
+  }
+  function downloadReport() {
+    downloadTextFile(`${getExportBaseName()}-report.txt`, buildOperationsReport(), 'text/plain;charset=utf-8');
+    setExportMessage('Operations report downloaded.', 'ok');
+    toast('Operations report downloaded.', 'ok');
+  }
+  function downloadRunsCsv() {
+    downloadTextFile(`${getExportBaseName()}-dispatch-runs.csv`, buildDispatchRunsCsv(), 'text/csv;charset=utf-8');
+    setExportMessage('Dispatch runs CSV downloaded.', 'ok');
+    toast('Dispatch runs CSV downloaded.', 'ok');
+  }
+  function downloadDeliveriesCsv() {
+    downloadTextFile(`${getExportBaseName()}-delivery-logs.csv`, buildDeliveryLogsCsv(), 'text/csv;charset=utf-8');
+    setExportMessage('Delivery logs CSV downloaded.', 'ok');
+    toast('Delivery logs CSV downloaded.', 'ok');
+  }
+  function downloadJson() {
+    downloadTextFile(`${getExportBaseName()}-snapshot.json`, buildJsonExport(), 'application/json;charset=utf-8');
+    setExportMessage('Alert snapshot JSON downloaded.', 'ok');
+    toast('Alert snapshot JSON downloaded.', 'ok');
   }
   function bind() {
     if ($('signOutBtn')) $('signOutBtn').addEventListener('click', logout);
@@ -531,18 +787,39 @@
     if ($('addDestinationBtn')) $('addDestinationBtn').addEventListener('click', addDestination);
     if ($('testAllBtn')) $('testAllBtn').addEventListener('click', function(event) { testSend(null, event.currentTarget); });
     if ($('dispatchCurrentBtn')) $('dispatchCurrentBtn').addEventListener('click', function(event) { dispatchCurrent(event.currentTarget); });
+    if ($('copyReportBtn')) $('copyReportBtn').addEventListener('click', copyReport);
+    if ($('downloadReportBtn')) $('downloadReportBtn').addEventListener('click', downloadReport);
+    if ($('downloadRunsBtn')) $('downloadRunsBtn').addEventListener('click', downloadRunsCsv);
+    if ($('downloadDeliveriesBtn')) $('downloadDeliveriesBtn').addEventListener('click', downloadDeliveriesCsv);
+    if ($('downloadJsonBtn')) $('downloadJsonBtn').addEventListener('click', downloadJson);
+    if ($('loadMoreRunsBtn')) $('loadMoreRunsBtn').addEventListener('click', function(event) {
+      setButtonState(event.currentTarget, true, 'loading...');
+      load('runs');
+    });
+    if ($('loadMoreDeliveriesBtn')) $('loadMoreDeliveriesBtn').addEventListener('click', function(event) {
+      setButtonState(event.currentTarget, true, 'loading...');
+      load('deliveries');
+    });
     if ($('orgSelect')) {
       $('orgSelect').addEventListener('change', function(event) {
         const nextOrgId = event.target.value || '';
         persistOrganizationSelection(nextOrgId);
         syncOrganizationUrl(currentOrganizationId);
         renderOrganizationSelector();
+        runNextBefore = null;
+        deliveryNextBefore = null;
+        currentAlertsPayload = null;
         load();
       });
     }
     ['activityWindow', 'runStatusFilter', 'runTriggerFilter', 'deliveryStatusFilter', 'deliveryChannelFilter', 'deliveryKindFilter'].forEach((id) => {
       const el = $(id);
-      if (el) el.addEventListener('change', function() { load(); });
+      if (el) el.addEventListener('change', function() {
+        runNextBefore = null;
+        deliveryNextBefore = null;
+        currentAlertsPayload = null;
+        load();
+      });
     });
     document.addEventListener('click', async function(event) {
       const toggleBtn = event.target.closest('[data-destination-toggle]');

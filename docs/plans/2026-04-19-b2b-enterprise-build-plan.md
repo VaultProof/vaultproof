@@ -13,7 +13,7 @@ Rules:
 - Every B2B/enterprise change should map to a phase and milestone in this file.
 - When we ship a meaningful slice, update `Current slice`, `Completed`, and `Next up`.
 - Prefer additive, non-breaking migrations and feature flags while the single-user flow still exists.
-- Build on `apps/dashboard` for the long-term team UI. Treat `apps/site/app/*` as legacy/static dashboard surface.
+- Build on `apps/dashboard` for the long-term team UI, but keep the live static dashboard in `apps/site/app/*` actively updated while production still routes there.
 
 ## Product goal
 
@@ -38,14 +38,15 @@ Core promise:
 - `packages/init-worker` already has project-based proxying, origin lock, and access logs
 - `supabase/migrations` already has `projects`, `project_keys`, and `project_access_logs`
 - `apps/dashboard` exists and is the right home for real org/team UX
+- `apps/site/app/*` is now also carrying real B2B surface area for the live product, not just solo views
 - enterprise messaging now exists in `apps/site/enterprise-demo.html`
 
 ### Current constraints
 
-- the schema is still basically single-user: `projects.user_id`
-- access rules are mostly "project owner only"
-- there is no org model, membership model, or role system yet
-- current dashboard code is still individual-user oriented
+- the schema and worker now support orgs, memberships, project roles, invitations, audit, and alerts, but the product is still dual-running across two dashboard surfaces
+- `apps/dashboard` is richer structurally, while `apps/site/app/*` is the live deployed shell
+- SSO/SAML is not wired yet, so enterprise login is still using the existing auth path with org-aware routing
+- contract/billing/admin packaging is still behind the governance surface we have built
 
 ## Repo surfaces we will touch
 
@@ -63,7 +64,8 @@ Core promise:
 ### Legacy/static UI
 
 - `apps/site/app/*`
-- marketing/demo pages only when needed for sales or rollout support
+- live production dashboard surface for solo plus team/business users
+- marketing/demo pages when needed for sales or rollout support
 
 ## Phases
 
@@ -133,7 +135,7 @@ Exit criteria:
 
 ## Phase 3 - Admin / governance controls
 
-Status: in progress
+Status: completed
 
 Goal:
 
@@ -165,8 +167,9 @@ Milestones:
 - [x] team/org onboarding flow in dashboard
 - [x] first-run "create org / invite team / create project" flow
 - [x] connect project creation directly into provider key setup
+- [x] usage summaries and alerting for pilot reviews
 - [ ] enterprise docs and pilot checklist linked from product
-- [ ] usage summaries and alerting for pilot reviews
+- [ ] SSO-first enterprise login and provisioning path
 
 Exit criteria:
 
@@ -196,51 +199,50 @@ Exit criteria:
 
 Slice name:
 
-- org + project access foundation
+- live static team/business dashboard completion
 
 Scope:
 
-- add org and membership tables
-- add project membership mapping
-- make `projects` capable of being org-owned
-- backfill existing single-user projects into personal orgs
-- build the first team-oriented shell in `apps/dashboard`
-- convert worker project access from owner-only checks to membership-aware checks
-- connect the first dashboard page to org/project-aware data
-- add org member and invitation APIs
-- add project member assignment APIs
-- replace the `Members` page placeholder with real org member and invitation data
-- do not break existing worker routes or current project creation
+- keep the checklist history from the `apps/dashboard` and worker foundation work
+- continue shipping the B2B experience into `apps/site/app/*`, which is still the live dashboard surface
+- add live static team pages for `control`, `members`, `audit`, `alerts`, and `org`
+- make login route shared-org users into the team/business surface
+- add org-aware switching, exports, toasts, and governance controls to the live shell
+- do not break the existing solo dashboard or live manual deploy flow
 
 Files:
 
-- `supabase/migrations/20260419000000_b2b_org_foundation.sql`
-- `supabase/migrations/20260419001000_project_members_foundation.sql`
-- `apps/dashboard/src/components/app-shell.tsx`
-- `apps/dashboard/src/app/projects/page.tsx`
-- `apps/dashboard/src/app/members/page.tsx`
-- `apps/dashboard/src/app/audit/page.tsx`
+- `apps/site/app/control.html`
+- `apps/site/app/members.html`
+- `apps/site/app/audit.html`
+- `apps/site/app/alerts.html`
+- `apps/site/app/org.html`
+- `apps/site/js/app-control-1.js`
+- `apps/site/js/app-members-1.js`
+- `apps/site/js/app-audit-1.js`
+- `apps/site/js/app-alerts-1.js`
+- `apps/site/js/app-org-1.js`
+- `apps/site/js/app-login-3.js`
+- `apps/site/js/app-shell-router-1.js`
+- `apps/site/js/app-toast-1.js`
 
 Definition of done:
 
-- migration is additive and safe
-- existing code paths still work
-- first team shell exists
-- worker auth understands org/project membership
-- first dashboard project view uses real org/project-aware data
-- member management has a real API surface
-- the dashboard can show real org members and pending invites
-- we can build Phase 1 UI and API work on top of it
+- live static dashboard has a complete shared-org surface
+- shared-org users can navigate between control, members, audit, alerts, and org pages without leaving the shell
+- org-level governance actions work from the live dashboard
+- exports/toasts/org switching are coherent across the live B2B pages
+- solo users still land in the simpler `/app/` surface
 
 ## Next up
 
 Immediate next engineering slice after this file:
 
-1. add richer audit events and UX for future org-level destructive actions
-2. decide whether archived orgs should have a dedicated recovery screen beyond the shell restore action
-3. wire a real email provider for email destinations
-4. add export-oriented audit workflows once security-review volume justifies it
-5. add richer scheduler visibility if per-org alert automation needs deeper troubleshooting
+1. add live team-org creation in the static dashboard so the full B2B path works without relying on `apps/dashboard`
+2. wire an SSO-first enterprise login and org provisioning path
+3. wire a real email provider for email alert destinations
+4. add enterprise docs and pilot checklist links from the live product
+5. decide when to converge the live static dashboard and `apps/dashboard` into one primary surface
 
 ## Completed
 
@@ -299,12 +301,20 @@ Immediate next engineering slice after this file:
 - project, member, and audit pages now scope requests to the selected organization via active-org headers
 - `/api/v1/init/orgs/current` now supports org settings reads and rename/slug edit flows
 - dashboard now includes a real Settings page for active-org metadata and overview
+- live static login now routes shared-org users and users with pending invites into the team/business dashboard surface
+- live static dashboard now includes separate team/business pages for `control`, `members`, `audit`, and `alerts`
+- live static `control` page now supports org switching, incoming invite acceptance, project policy editing, and exportable operator summaries
+- live static `members` page now supports invites, role changes, member removal, project access assignment, and export/csv/json handoff
+- live static `audit` page now supports org-aware audit review with filters, paging, copy report, and JSON export
+- live static `alerts` page now supports alert policy editing, destination management, test send, manual dispatch, exports, filters, and load-more paging
+- shared toast feedback now exists across the live static team/business pages
+- live static dashboard now includes a dedicated `org` page for rename/slug edit, ownership transfer, archive, restore, and org-level handoff export
 - projects page now supports in-app project creation and a first-team-project onboarding empty state
 
 ## Decisions
 
 - Use one product, not a completely separate enterprise UI.
-- Use `apps/dashboard` as the long-term B2B application surface.
-- Keep schema changes additive until worker and dashboard fully adopt org scope.
+- Use `apps/dashboard` as the long-term B2B application surface, but continue shipping meaningful B2B functionality in `apps/site/app/*` until production no longer depends on it.
+- Keep schema changes additive until worker and both dashboard surfaces fully adopt org scope.
 - Do not start with SSO, SCIM, or private deployment.
 - First real B2B wedge remains software teams using shared third-party API keys across apps, AI, and CI/CD.

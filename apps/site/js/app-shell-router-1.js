@@ -6,7 +6,8 @@
     '/app/alerts': true,
     '/app/control': true,
     '/app/members': true,
-    '/app/audit': true
+    '/app/audit': true,
+    '/app/org': true
   };
   var STYLE_SELECTOR = 'style[data-app-shell-style]';
   var PAGE_SCRIPT_SELECTOR = 'script[data-app-shell-page-script]';

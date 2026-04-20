@@ -25,6 +25,10 @@
 
   function $(id) { return document.getElementById(id); }
   function setText(id, value) { const el = $(id); if (el) el.textContent = value; }
+  function toast(message, tone) {
+    if (!message || !window.VaultproofToast || typeof window.VaultproofToast.show !== 'function') return;
+    window.VaultproofToast.show(message, tone || 'neutral', 'Audit');
+  }
   function slugify(value) {
     return String(value || 'audit')
       .toLowerCase()
@@ -330,7 +334,10 @@
     if (!text) return;
     try {
       await navigator.clipboard.writeText(text);
-    } catch {}
+      toast('Audit report copied.', 'ok');
+    } catch {
+      toast('Could not copy audit report.', 'danger');
+    }
   }
   function downloadJson() {
     const orgName = latestAuditPayload?.organization?.name || 'audit';
@@ -343,6 +350,7 @@
     link.click();
     link.remove();
     URL.revokeObjectURL(url);
+    toast('Audit JSON downloaded.', 'ok');
   }
   function buildAuditPath(loadMore) {
     const params = new URLSearchParams();
