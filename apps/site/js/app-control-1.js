@@ -7,6 +7,7 @@
     : 'https://init.vaultproof.dev/api/v1/init';
   const SUPABASE_AUTH_STORAGE_KEY = 'sb-gwzkjiomemjlhtrdrlan-auth-token';
   const ACTIVE_ORG_STORAGE_KEY = 'vaultproof_active_org';
+  const queryParams = new URLSearchParams(window.location.search);
 
   let token = localStorage.getItem('vaultproof_token');
   const user = JSON.parse(localStorage.getItem('vaultproof_user') || '{}');
@@ -312,11 +313,18 @@
     const activeAlerts = overviewPayload?.alerts || [];
 
     if (!org) {
+      const pendingSsoAccess = queryParams.get('sso_access') === 'pending';
+      const workspaceName = queryParams.get('workspace') || 'the matching shared workspace';
+      const ssoDomain = queryParams.get('sso_domain') || 'your company domain';
       return {
         label: 'unknown workspace',
-        title: 'No active organization found',
-        copy: 'This control surface appears after an organization is available. Solo users can stay in Projects, while shared-workspace users land here for governance and operations.',
-        note: 'No org resolved from the current session.',
+        title: pendingSsoAccess ? 'SSO worked, but workspace access is still pending' : 'No active organization found',
+        copy: pendingSsoAccess
+          ? `${workspaceName} is configured for ${ssoDomain}, but this account is not a member yet. Ask the workspace owner for an invite, then come back through the shared-workspace login path.`
+          : 'This control surface appears after an organization is available. Solo users can stay in Projects, while shared-workspace users land here for governance and operations.',
+        note: pendingSsoAccess
+          ? 'Matching SSO login detected, but no active organization membership was found.'
+          : 'No org resolved from the current session.',
       };
     }
 

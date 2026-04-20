@@ -114,7 +114,7 @@ Checklist:
 - [x] in-house SSO scaffolding was removed to avoid dead-weight product complexity
 - [x] `Supabase Auth` is the chosen near-term SSO path
 - [ ] collect real enterprise asks for SAML/OIDC
-- [ ] prepare the concrete `Supabase Auth` SSO implementation plan when those asks become concrete
+- [x] prepare the concrete `Supabase Auth` SSO implementation plan
 - [ ] do not build raw SAML plumbing in-house before that decision
 
 Implementation checklist when we start:
@@ -124,17 +124,21 @@ Implementation checklist when we start:
 - [ ] choose the routing model:
   - domain-based `signInWithSSO({ domain })`
   - provider-id based `signInWithSSO({ providerId })`
-- [ ] add a dedicated shared-workspace SSO entry point in the live dashboard login
-- [ ] map post-login users into the correct VaultProof organization membership
+- [x] add a dedicated shared-workspace SSO entry point in the live dashboard login
+- [x] map post-login users into the correct VaultProof organization membership
 - [ ] decide how auto-join should work for matching company domains
-- [ ] define fallback behavior for:
+- [x] define fallback behavior for:
   - no matching org
   - invited but not auto-joined user
   - SSO user with multiple org memberships
-- [ ] add audit events for:
+- [ ] add audit event for:
   - SSO login started
+- [x] add audit events for:
   - SSO login completed
-  - org auto-join or org membership resolution
+  - org membership resolution
+- [x] add an admin-facing rollout prep section in org settings
+- [x] persist org SSO rollout prep in backend state instead of browser-only state
+- [x] make rollout status match the real backend state model (`requested` / `configured`)
 - [ ] add an admin-facing org settings section for:
   - company domain
   - provider status
@@ -143,6 +147,13 @@ Implementation checklist when we start:
 - [ ] test at least one real provider end-to-end:
   - Google Workspace or Okta
 - [ ] document the customer setup steps and rollout checklist in the live product
+
+Notes:
+
+- current behavior is intentionally invite-safe:
+  - matching configured SSO logins resolve existing memberships
+  - matching pending invites are accepted after SSO login
+  - unmatched users do **not** auto-join the org yet
 
 ### 3. Directory sync / SCIM
 

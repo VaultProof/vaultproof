@@ -5,6 +5,7 @@
   const INIT_API = window.location.hostname.includes('dev.vaultproof')
     ? 'https://vaultproof-init-staging.vaultproof.workers.dev/api/v1/init'
     : 'https://init.vaultproof.dev/api/v1/init';
+  const SUPABASE_PROJECT_REF = 'gwzkjiomemjlhtrdrlan';
   const SUPABASE_AUTH_STORAGE_KEY = 'sb-gwzkjiomemjlhtrdrlan-auth-token';
   const ACTIVE_ORG_STORAGE_KEY = 'vaultproof_active_org';
 
@@ -18,6 +19,7 @@
   let currentOrgPayload = null;
   let currentMembersPayload = null;
   let currentOrgsPayload = null;
+  let currentSsoPrep = {};
 
   if (!token) {
     window.location.href = 'login';
@@ -90,6 +92,16 @@
       .toLowerCase()
       .replace(/[^a-z0-9]+/g, '-')
       .replace(/^-+|-+$/g, '') || 'org';
+  }
+  function normalizeDomain(value) {
+    const normalized = String(value || '').trim().toLowerCase().replace(/^https?:\/\//, '').replace(/\/.*$/, '');
+    return /^[a-z0-9.-]+\.[a-z]{2,}$/i.test(normalized) ? normalized : '';
+  }
+  function getSupabaseSsoMetadataUrl() {
+    return `https://${SUPABASE_PROJECT_REF}.supabase.co/auth/v1/sso/saml/metadata`;
+  }
+  function getSupabaseSsoAcsUrl() {
+    return `https://${SUPABASE_PROJECT_REF}.supabase.co/auth/v1/sso/saml/acs`;
   }
   function downloadTextFile(filename, content, type) {
     const blob = new Blob([content], { type: type || 'text/plain;charset=utf-8' });
@@ -399,6 +411,9 @@
     const organization = currentOrgPayload?.organization || {};
     const members = currentMembersPayload?.members || [];
     const owner = members.find((member) => member.role === 'owner') || null;
+    const ssoDomain = normalizeDomain(currentSsoPrep?.company_domain || '');
+    const ssoProvider = String(currentSsoPrep?.sso_provider || '').trim();
+    const ssoStatus = String(currentSsoPrep?.status || '').trim();
 
     return [
       {
@@ -436,6 +451,14 @@
         label: organization.role === 'owner' || organization.role === 'admin'
           ? `An admin-capable user is active in the workspace as ${organization.role}.`
           : 'Confirm an owner or admin is driving rollout before sharing the org broadly.',
+      },
+      {
+        done: Boolean(ssoDomain && ssoProvider && ssoStatus === 'configured'),
+        label: ssoDomain && ssoProvider
+          ? (ssoStatus === 'configured'
+              ? `Supabase SSO is configured for ${ssoDomain} via ${ssoProvider}.`
+              : `Supabase SSO prep is staged for ${ssoDomain} via ${ssoProvider}; switch status to configured after the SAML connection is live.`)
+          : 'Capture the company domain and identity provider before turning on Supabase SAML SSO.',
       },
     ];
   }
@@ -542,12 +565,20 @@
   function buildOrgPilotBrief() {
     const organization = currentOrgPayload?.organization || {};
     const checklistItems = buildOrgChecklistItems();
+    const ssoDomain = normalizeDomain(currentSsoPrep?.company_domain || '');
+    const ssoProvider = String(currentSsoPrep?.sso_provider || '').trim();
+    const ssoStatus = String(currentSsoPrep?.status || '').trim();
     return [
       'VaultProof Org Setup Brief',
       `Organization: ${organization.name || 'Unknown org'}`,
       `Workspace type: ${organization.kind || 'unknown'}`,
       `Role: ${organization.role || 'unknown'}`,
       `Slug: ${organization.slug || 'unset'}`,
+      `SSO domain: ${ssoDomain || 'not captured'}`,
+      `SSO provider: ${ssoProvider || 'not captured'}`,
+      `SSO status: ${ssoStatus || 'not captured'}`,
+      `Supabase metadata URL: ${getSupabaseSsoMetadataUrl()}`,
+      `Supabase ACS URL: ${getSupabaseSsoAcsUrl()}`,
       `Generated: ${formatTimestamp(new Date().toISOString())}`,
       '',
       'Org rollout checklist',
@@ -570,6 +601,63 @@
   }
   function getOrgExportBaseName() {
     return `${slugify(currentOrgPayload?.organization?.name || 'vaultproof')}-org`;
+  }
+  function renderSsoPrep(orgPayload) {
+    const organization = orgPayload?.organization || null;
+    const canManage = Boolean(organization && organization.kind === 'team' && (organization.role === 'owner' || organization.role === 'admin'));
+    currentSsoPrep = orgPayload?.sso_settings || {};
+    const domainInput = $('ssoPrepDomainInput');
+    const providerSelect = $('ssoPrepProviderSelect');
+    const statusSelect = $('ssoPrepStatusSelect');
+    if (domainInput && document.activeElement !== domainInput) domainInput.value = currentSsoPrep?.company_domain || '';
+    if (providerSelect && document.activeElement !== providerSelect) providerSelect.value = currentSsoPrep?.sso_provider || '';
+    if (statusSelect && document.activeElement !== statusSelect) statusSelect.value = currentSsoPrep?.status || 'requested';
+    if (domainInput) domainInput.disabled = !canManage;
+    if (providerSelect) providerSelect.disabled = !canManage;
+    if (statusSelect) statusSelect.disabled = !canManage;
+    setButtonState($('saveSsoPrepBtn'), !canManage, 'save sso prep');
+    setButtonState($('copySsoPrepBriefBtn'), !organization, 'copy sso brief');
+    setButtonState($('copySsoMetadataBtn'), !organization, 'copy metadata url');
+    setButtonState($('copySsoAcsBtn'), !organization, 'copy acs url');
+    if ($('ssoMetadataUrlInput')) $('ssoMetadataUrlInput').value = getSupabaseSsoMetadataUrl();
+    if ($('ssoAcsUrlInput')) $('ssoAcsUrlInput').value = getSupabaseSsoAcsUrl();
+    const domain = normalizeDomain(currentSsoPrep?.company_domain || '');
+    const provider = String(currentSsoPrep?.sso_provider || '').trim();
+    const status = String(currentSsoPrep?.status || '').trim();
+    setText('ssoPrepStatus', status || (domain && provider ? 'requested' : 'prep needed'));
+    setText(
+      'ssoPrepHint',
+      canManage
+        ? (domain && provider
+            ? (status === 'configured'
+                ? `Supabase SSO is configured for ${domain} via ${provider}. Matching SSO logins can resolve into existing org access.`
+                : `Supabase SSO rollout is staged for ${domain} via ${provider}. Keep this in requested mode until the SAML connection is live in Supabase.`)
+            : 'Capture the company domain and IdP here before turning on SAML in Supabase.')
+        : 'Only team-org admins and owners can manage Supabase SSO rollout prep here.',
+    );
+  }
+  function buildSsoPrepBrief() {
+    const organization = currentOrgPayload?.organization || {};
+    const domain = normalizeDomain(currentSsoPrep?.company_domain || '');
+    const provider = String(currentSsoPrep?.sso_provider || '').trim();
+    const status = String(currentSsoPrep?.status || '').trim();
+    return [
+      'VaultProof Supabase SSO Setup Brief',
+      `Organization: ${organization.name || 'Unknown org'}`,
+      `Workspace slug: ${organization.slug || 'unset'}`,
+      `Company domain: ${domain || 'not captured'}`,
+      `Identity provider: ${provider || 'not captured'}`,
+      `Rollout status: ${status || 'not captured'}`,
+      `Supabase metadata URL: ${getSupabaseSsoMetadataUrl()}`,
+      `Supabase ACS URL: ${getSupabaseSsoAcsUrl()}`,
+      '',
+      'Next steps:',
+      '- Enable SAML SSO on the Supabase project',
+      '- Register the customer IdP metadata in Supabase',
+      '- Map the customer domain to the SSO provider',
+      '- Switch the rollout status to configured after the SAML connection is live',
+      '- Test the shared-workspace SSO path from /app/login',
+    ].join('\n');
   }
   async function copyOrgReport() {
     try {
@@ -595,6 +683,78 @@
     downloadTextFile(`${getOrgExportBaseName()}-snapshot.json`, buildOrgJson(), 'application/json;charset=utf-8');
     setExportMessage('Org JSON downloaded.', 'ok');
     toast('Org JSON downloaded.', 'ok');
+  }
+  async function saveSsoPrep() {
+    const domain = normalizeDomain($('ssoPrepDomainInput')?.value || '');
+    const provider = String($('ssoPrepProviderSelect')?.value || '').trim();
+    const status = String($('ssoPrepStatusSelect')?.value || '').trim() || 'requested';
+    if (!domain) {
+      setMessage('ssoPrepMsg', 'Enter a valid company domain before saving SSO prep.', 'warn');
+      toast('Enter a valid company domain before saving SSO prep.', 'warn');
+      return;
+    }
+    if (!provider) {
+      setMessage('ssoPrepMsg', 'Choose the identity provider before saving SSO prep.', 'warn');
+      toast('Choose the identity provider before saving SSO prep.', 'warn');
+      return;
+    }
+    setButtonState($('saveSsoPrepBtn'), true, 'saving…');
+    const res = await apiFetch(INIT_API, '/orgs/current/sso-settings', {
+      method: 'PUT',
+      body: {
+        company_domain: domain,
+        sso_provider: provider,
+        status: status === 'configured' ? 'configured' : 'requested',
+      },
+    });
+    const payload = unwrapPayload(res?.data) || {};
+    if (!res?.ok) {
+      setButtonState($('saveSsoPrepBtn'), false, 'save sso prep');
+      setMessage('ssoPrepMsg', payload?.error || 'Could not save Supabase SSO rollout info.', 'danger');
+      toast(payload?.error || 'Could not save Supabase SSO rollout info.', 'danger');
+      return;
+    }
+    currentSsoPrep = payload?.sso_settings || {};
+    currentOrgPayload = { ...(currentOrgPayload || {}), sso_settings: currentSsoPrep };
+    renderSsoPrep(currentOrgPayload);
+    renderPilotKit();
+    setMessage('ssoPrepMsg', status === 'configured'
+      ? 'Supabase SSO is marked configured for this workspace.'
+      : 'Supabase SSO rollout info saved for this workspace.', 'ok');
+    toast(status === 'configured'
+      ? 'Supabase SSO marked configured.'
+      : 'Supabase SSO rollout info saved.', 'ok');
+    setButtonState($('saveSsoPrepBtn'), false, 'save sso prep');
+  }
+  async function copySsoPrepBrief() {
+    try {
+      const copied = await copyText(buildSsoPrepBrief());
+      setMessage('ssoPrepMsg', copied ? 'Supabase SSO setup brief copied.' : 'Could not copy the SSO setup brief.', copied ? 'ok' : 'danger');
+      toast(copied ? 'Supabase SSO setup brief copied.' : 'Could not copy the SSO setup brief.', copied ? 'ok' : 'danger');
+    } catch {
+      setMessage('ssoPrepMsg', 'Could not copy the SSO setup brief.', 'danger');
+      toast('Could not copy the SSO setup brief.', 'danger');
+    }
+  }
+  async function copySsoMetadataUrl() {
+    try {
+      const copied = await copyText(getSupabaseSsoMetadataUrl());
+      setMessage('ssoPrepMsg', copied ? 'Supabase metadata URL copied.' : 'Could not copy metadata URL.', copied ? 'ok' : 'danger');
+      toast(copied ? 'Supabase metadata URL copied.' : 'Could not copy metadata URL.', copied ? 'ok' : 'danger');
+    } catch {
+      setMessage('ssoPrepMsg', 'Could not copy metadata URL.', 'danger');
+      toast('Could not copy metadata URL.', 'danger');
+    }
+  }
+  async function copySsoAcsUrl() {
+    try {
+      const copied = await copyText(getSupabaseSsoAcsUrl());
+      setMessage('ssoPrepMsg', copied ? 'Supabase ACS URL copied.' : 'Could not copy ACS URL.', copied ? 'ok' : 'danger');
+      toast(copied ? 'Supabase ACS URL copied.' : 'Could not copy ACS URL.', copied ? 'ok' : 'danger');
+    } catch {
+      setMessage('ssoPrepMsg', 'Could not copy ACS URL.', 'danger');
+      toast('Could not copy ACS URL.', 'danger');
+    }
   }
 
   async function createOrganization() {
@@ -753,6 +913,7 @@
       renderTransfer(null, null);
       renderArchive(null);
       renderCreateOrg(null);
+      renderSsoPrep(null);
       renderPilotKit();
       renderPosture(null, null);
       renderArchivedOrganizations();
@@ -785,6 +946,7 @@
     renderTransfer(currentOrgPayload, currentMembersPayload);
     renderArchive(currentOrgPayload);
     renderCreateOrg(currentOrgPayload);
+    renderSsoPrep(currentOrgPayload);
     renderPilotKit();
     renderPosture(currentOrgPayload, currentMembersPayload);
     renderArchivedOrganizations();
@@ -799,6 +961,10 @@
     $('downloadOrgJsonBtn')?.addEventListener('click', downloadOrgJson);
     $('downloadOrgJsonInlineBtn')?.addEventListener('click', downloadOrgJson);
     $('copyOrgPilotBriefBtn')?.addEventListener('click', copyOrgPilotBrief);
+    $('saveSsoPrepBtn')?.addEventListener('click', saveSsoPrep);
+    $('copySsoPrepBriefBtn')?.addEventListener('click', copySsoPrepBrief);
+    $('copySsoMetadataBtn')?.addEventListener('click', copySsoMetadataUrl);
+    $('copySsoAcsBtn')?.addEventListener('click', copySsoAcsUrl);
     $('createOrgBtn')?.addEventListener('click', createOrganization);
     $('saveOrgBtn')?.addEventListener('click', saveOrganizationProfile);
     $('transferOwnershipBtn')?.addEventListener('click', transferOwnership);

@@ -10,6 +10,7 @@
   const ACTIVE_ORG_STORAGE_KEY = 'vaultproof_active_org';
   const LOOP_KEY = 'vp_login_ts';
   const PROMO_KEY = 'vp_promo';
+  const SSO_DOMAIN_KEY = 'vp_sso_domain';
   const LOCAL_AUTH_PREFIXES = ['vaultproof_', 'sb-'];
 
   const sbClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
@@ -54,6 +55,13 @@
     return localStorage.getItem(PROMO_KEY);
   }
 
+  function normalizeSsoDomain(value) {
+    const trimmed = String(value || '').trim().toLowerCase();
+    if (!trimmed) return '';
+    const normalized = trimmed.includes('@') ? trimmed.split('@').pop() : trimmed;
+    return /^[a-z0-9.-]+\.[a-z]{2,}$/i.test(normalized || '') ? normalized : '';
+  }
+
   function setPromoMessage(text, tone) {
     const msg = $('promoCodeMsg');
     if (!msg) return;
@@ -89,7 +97,7 @@
     return { cliCallback: null, cliState: cliState || '' };
   }
 
-  function buildLoginRedirectUrl(cliContext) {
+  function buildLoginRedirectUrl(cliContext, extraParams) {
     const promo = getSavedPromoCode();
     const params = new URLSearchParams();
     if (cliContext.cliCallback) {
@@ -97,6 +105,13 @@
       if (cliContext.cliState) params.set('state', cliContext.cliState);
     }
     if (promo) params.set('promo', promo);
+    if (extraParams && typeof extraParams === 'object') {
+      Object.keys(extraParams).forEach(function(key) {
+        const value = extraParams[key];
+        if (value == null || value === '') return;
+        params.set(key, String(value));
+      });
+    }
     const query = params.toString();
     return `${window.location.origin}/app/login${query ? '?' + query : ''}`;
   }
@@ -147,8 +162,52 @@
     }
   }
 
-  async function resolveDashboardRoute(session) {
+  async function resolveSsoMembership(session) {
+    if (!session || !session.access_token || urlParams.get('auth') !== 'sso') return null;
+    const domain = normalizeSsoDomain(urlParams.get('sso_domain') || localStorage.getItem(SSO_DOMAIN_KEY) || '');
+
+    try {
+      const res = await fetch(`${INIT_API}/orgs/resolve-sso`, {
+        method: 'POST',
+        headers: {
+          Authorization: 'Bearer ' + session.access_token,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          company_domain: domain || null,
+        }),
+      });
+      const payload = await res.json().catch(function() { return null; });
+      const data = payload && typeof payload === 'object' && payload.data ? payload.data : payload;
+      if (!res.ok) {
+        return {
+          error: (data && data.error) || 'Could not resolve shared-workspace access after SSO login.',
+        };
+      }
+      return data;
+    } catch (error) {
+      return {
+        error: error && error.message ? error.message : 'Could not resolve shared-workspace access after SSO login.',
+      };
+    }
+  }
+
+  async function resolveDashboardRoute(session, ssoResolution) {
     if (!session || !session.access_token) return './';
+
+    if (ssoResolution && ssoResolution.organization && ssoResolution.organization.id) {
+      localStorage.setItem(ACTIVE_ORG_STORAGE_KEY, ssoResolution.organization.id);
+      return `./control?org=${encodeURIComponent(ssoResolution.organization.id)}`;
+    }
+
+    if (ssoResolution && ssoResolution.resolution === 'pending_access') {
+      const params = new URLSearchParams({ sso_access: 'pending' });
+      if (ssoResolution.company_domain) params.set('sso_domain', ssoResolution.company_domain);
+      if (ssoResolution.organization && ssoResolution.organization.name) {
+        params.set('workspace', ssoResolution.organization.name);
+      }
+      return `./control?${params.toString()}`;
+    }
 
     try {
       const res = await fetch(`${INIT_API}/orgs`, {
@@ -205,7 +264,11 @@
     storeLocalSession(session, user);
     await redeemPendingPromo(session);
     if (redirectToCli(cliContext, session, user)) return;
-    const dashboardRoute = await resolveDashboardRoute(session);
+    const ssoResolution = await resolveSsoMembership(session);
+    if (ssoResolution?.error && urlParams.get('auth') === 'sso') {
+      setSsoStatus(ssoResolution.error, 'error');
+    }
+    const dashboardRoute = await resolveDashboardRoute(session, ssoResolution);
     safeRedirect(dashboardRoute);
   }
 
@@ -214,6 +277,19 @@
     if (!el) return;
     el.textContent = message;
     el.classList.remove('hidden');
+  }
+
+  function setSsoStatus(text, type) {
+    const el = $('ssoStatus');
+    if (!el) return;
+    if (!text) {
+      el.textContent = '';
+      el.className = 'hidden';
+      return;
+    }
+    el.textContent = text;
+    el.className = '';
+    setInlineStatus(el, text, type || 'info');
   }
 
   function setInlineStatus(el, text, type) {
@@ -260,6 +336,48 @@
       },
     });
     if (error) showError(error.message);
+  }
+
+  async function loginWithSso(cliContext) {
+    const button = $('ssoContinueBtn');
+    const rawDomain = $('ssoDomainInput')?.value || '';
+    const domain = normalizeSsoDomain(rawDomain);
+    if (!domain) {
+      setSsoStatus('Enter a valid company domain or work email to continue with SSO.', 'error');
+      return;
+    }
+
+    if (button) {
+      button.disabled = true;
+      button.textContent = 'starting sso...';
+    }
+    setSsoStatus(`Starting SSO for ${domain}...`, 'info');
+
+    try {
+      localStorage.setItem(SSO_DOMAIN_KEY, domain);
+      const { data, error } = await sbClient.auth.signInWithSSO({
+        domain,
+        options: {
+          redirectTo: buildLoginRedirectUrl(cliContext, { auth: 'sso', sso_domain: domain }),
+        },
+      });
+      if (error) throw error;
+      if (data?.url) {
+        window.location.href = data.url;
+        return;
+      }
+      setSsoStatus('Supabase did not return an SSO redirect URL for that domain.', 'error');
+    } catch (error) {
+      const message = error && error.message
+        ? error.message
+        : 'Could not start SSO for that domain.';
+      setSsoStatus(message, 'error');
+    } finally {
+      if (button) {
+        button.disabled = false;
+        button.textContent = 'continue with sso';
+      }
+    }
   }
 
   async function resendConfirmation() {
@@ -382,6 +500,14 @@
     }
   }
 
+  function prefillSsoDomainFromState() {
+    const fromUrl = normalizeSsoDomain(urlParams.get('sso_domain') || '');
+    const fromStorage = normalizeSsoDomain(localStorage.getItem(SSO_DOMAIN_KEY) || '');
+    const input = $('ssoDomainInput');
+    if (!input) return;
+    input.value = fromUrl || fromStorage || '';
+  }
+
   function showCliBanner(cliContext) {
     if (!cliContext.cliCallback) return;
     const banner = document.createElement('div');
@@ -457,11 +583,18 @@
     try {
       const { data, error } = await sbClient.auth.exchangeCodeForSession(confirmCode);
       if (!error && data.session) {
+        if (urlParams.get('auth') === 'sso') {
+          setSsoStatus(`SSO login completed for ${normalizeSsoDomain(urlParams.get('sso_domain') || localStorage.getItem(SSO_DOMAIN_KEY) || '') || 'your workspace'}. Routing now...`, 'success');
+        }
         await finalizeAuthenticatedSession(data.session, data.user, cliContext);
       } else if (error && !isRedirecting) {
         setTimeout(function() {
           if (!isRedirecting) {
-            showError('Email confirmation failed. Please try logging in with your email and password.');
+            if (urlParams.get('auth') === 'sso') {
+              setSsoStatus(error.message || 'SSO sign-in failed. Try another sign-in method or confirm the company domain is configured.', 'error');
+            } else {
+              showError('Email confirmation failed. Please try logging in with your email and password.');
+            }
           }
         }, 800);
       }
@@ -513,6 +646,19 @@
     const googleBtn = $('loginWithGoogleBtn');
     if (googleBtn) googleBtn.addEventListener('click', function() { loginWithProvider('google', cliContext); });
 
+    const ssoContinueBtn = $('ssoContinueBtn');
+    if (ssoContinueBtn) ssoContinueBtn.addEventListener('click', function() { loginWithSso(cliContext); });
+
+    const ssoDomainInput = $('ssoDomainInput');
+    if (ssoDomainInput) {
+      ssoDomainInput.addEventListener('keydown', function(event) {
+        if (event.key === 'Enter') {
+          event.preventDefault();
+          loginWithSso(cliContext);
+        }
+      });
+    }
+
     const loginTab = $('loginTab');
     if (loginTab) loginTab.addEventListener('click', function() { showTab('login'); });
 
@@ -543,6 +689,7 @@
     const cliContext = getCliContext();
 
     prefillPromoFromUrl();
+    prefillSsoDomainFromState();
     showCliBanner(cliContext);
     bindUiEvents(cliContext);
     bindAuthState(cliContext, forceLogout);

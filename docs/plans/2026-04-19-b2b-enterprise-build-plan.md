@@ -199,48 +199,49 @@ Exit criteria:
 
 Slice name:
 
-- live static team/business dashboard completion
+- initial `Supabase Auth` SSO entry, rollout prep, and membership resolution
 
 Scope:
 
-- keep the checklist history from the `apps/dashboard` and worker foundation work
-- continue shipping the B2B experience into `apps/site/app/*`, which is still the live dashboard surface
-- add live static team pages for `control`, `members`, `audit`, `alerts`, and `org`
-- make login route shared-org users into the team/business surface
-- add org-aware switching, exports, toasts, and governance controls to the live shell
-- do not break the existing solo dashboard or live manual deploy flow
+- keep the existing shared-workspace login flow intact
+- add a non-breaking `Supabase Auth` SSO entry point to the live login page
+- use domain-based `signInWithSSO()` as the first implementation path
+- add an admin-facing SSO rollout prep panel in the live org page
+- persist shared-org SSO rollout prep through the worker with governance audit coverage
+- resolve configured SSO logins into existing org membership or matching invited access
+- keep broad domain-based auto-join out of scope until we decide the enforcement model
+- route SSO callbacks back through the existing login/session resolution flow
+- do not turn on org auto-join or SSO enforcement yet
+- do not break the existing solo dashboard or OAuth/email paths
 
 Files:
 
-- `apps/site/app/control.html`
-- `apps/site/app/members.html`
-- `apps/site/app/audit.html`
-- `apps/site/app/alerts.html`
+- `apps/site/js/app-login-3.js`
+- `apps/site/app/login.html`
+- `apps/site/js/app-org-1.js`
 - `apps/site/app/org.html`
 - `apps/site/js/app-control-1.js`
-- `apps/site/js/app-members-1.js`
-- `apps/site/js/app-audit-1.js`
-- `apps/site/js/app-alerts-1.js`
-- `apps/site/js/app-org-1.js`
-- `apps/site/js/app-login-3.js`
-- `apps/site/js/app-shell-router-1.js`
-- `apps/site/js/app-toast-1.js`
+- `packages/init-worker/src/routes/orgs.ts`
+- `docs/plans/2026-04-19-third-party-acceleration.md`
 
 Definition of done:
 
-- live static dashboard has a complete shared-org surface
-- shared-org users can navigate between control, members, audit, alerts, and org pages without leaving the shell
-- org-level governance actions work from the live dashboard
-- exports/toasts/org switching are coherent across the live B2B pages
+- shared-workspace users have a visible `continue with sso` entry point on the live login page
+- domain-based `Supabase Auth` SSO can redirect to the configured IdP when available
+- org admins have a concrete Supabase SSO rollout panel with metadata and ACS URLs plus a copyable setup brief
+- org SSO rollout settings are persisted and auditable, not browser-local only
+- configured Supabase SSO logins can resolve into the correct shared workspace when the user already has membership or a matching invite
+- unmatched but configured SSO workspaces fail safely without broad auto-join
+- the callback path returns to the existing login/session resolution flow without breaking OAuth or email sign-in
 - solo users still land in the simpler `/app/` surface
 
 ## Next up
 
 Immediate next engineering slice after this file:
 
-1. decide when to converge the live static dashboard and `apps/dashboard` into one primary surface
-2. keep rollout helpers coherent as new live shared-org pages are added
-3. work through the third-party acceleration checklist before rebuilding more identity plumbing or delivery plumbing in-house
+1. test the `Supabase Auth` flow end-to-end with a real provider like Google Workspace or Okta
+2. decide whether matching-domain SSO should ever auto-join or stay invite-only until enforcement exists
+3. decide when to converge the live static dashboard and `apps/dashboard` into one primary surface
 
 ## Third-Party Acceleration Checklist
 
@@ -338,6 +339,10 @@ Rules:
 - live product SSO/provisioning scaffolding was intentionally removed from the worker and live static dashboard so the shipped B2B surface stays focused on orgs, members, audit, alerts, and governance
 - third-party acceleration is now tracked explicitly in-repo so auth, sync, webhook, and email decisions can be made against a checklist instead of ad hoc chat history
 - `Supabase Auth` is now the explicit chosen SSO path for the near-term roadmap; alternate vendors are fallback options, not the default plan
+- live login now includes the first real `Supabase Auth` SSO entry point using a company-domain flow that routes back through the existing session resolver
+- live org settings now include a practical `Supabase Auth` SSO rollout prep panel with domain/provider capture, Supabase metadata/ACS URLs, and a copyable setup brief
+- shared-org `Supabase Auth` rollout prep is now persisted through the worker and written into governance audit events instead of living only in browser state
+- shared-workspace `Supabase Auth` logins can now resolve into an existing org membership or accept a matching pending invite after SSO login, while unmatched users fail closed instead of broad auto-join
 - projects page now supports in-app project creation and a first-team-project onboarding empty state
 
 ## Decisions
