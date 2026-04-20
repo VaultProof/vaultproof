@@ -3,13 +3,13 @@
 <head>
   <script async src="https://www.googletagmanager.com/gtag/js?id=G-NE5RYX1WTF"></script>
   <script src="/js/app-index-1.js" defer></script>
-  <script src="/js/app-control-1.js" defer data-app-shell-page-script></script>
+  <script src="/js/app-members-1.js" defer data-app-shell-page-script></script>
   <script src="/js/app-shell-router-1.js" defer></script>
 
   <link rel="icon" type="image/png" href="/favicon.png">
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Control — VaultProof</title>
+  <title>Members — VaultProof</title>
 
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -84,82 +84,58 @@
     .subnav { display: flex; gap: 8px; margin-bottom: 20px; }
     .subnav-link { font-family: var(--mono); font-size: 11px; padding: 7px 10px; border-radius: 999px; border: var(--rule); background: var(--bg-card); color: var(--text-muted); }
     .subnav-link.active { color: var(--text); background: #fff8ef; border-color: #ead8b2; }
-    .banner { border: var(--rule); border-radius: 4px; background: linear-gradient(135deg, rgba(217,119,6,0.08), rgba(23,23,23,0.02)); padding: 18px 20px; margin-bottom: 24px; display: grid; grid-template-columns: 1.2fr 0.8fr; gap: 16px; }
-    .banner-kicker { font-family: var(--mono); font-size: 10.5px; letter-spacing: 0.8px; text-transform: uppercase; color: var(--accent); margin-bottom: 8px; }
-    .banner-title { font-family: var(--display); font-size: 24px; font-weight: 600; letter-spacing: -0.5px; }
-    .banner-copy { margin-top: 8px; color: var(--text-muted); max-width: 640px; }
-    .banner-note { border-left: var(--rule); padding-left: 16px; font-family: var(--mono); font-size: 11px; color: var(--text-muted); display: grid; gap: 10px; align-content: center; }
-    .invite-panel { border: var(--rule); border-radius: 4px; background: var(--bg-card); margin-bottom: 24px; overflow: hidden; }
-    .invite-panel.hidden { display: none; }
-    .invite-list { padding: 10px 18px 14px; }
-    .invite-row { display: flex; gap: 12px; align-items: flex-start; padding: 12px 0; border-bottom: 1px dashed #eeece5; }
-    .invite-row:last-child { border-bottom: none; }
-    .invite-main { min-width: 0; flex: 1; }
-    .invite-title { font-size: 13px; color: var(--text); font-weight: 600; }
-    .invite-sub { font-family: var(--mono); font-size: 11px; color: var(--text-faint); margin-top: 3px; }
-    .invite-actions { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
     .kpi-grid { display: grid; grid-template-columns: repeat(4, 1fr); border: var(--rule); border-radius: 4px; overflow: hidden; background: var(--bg-card); margin-bottom: 24px; }
     .kpi-cell { padding: 18px 20px; }
     .kpi-cell + .kpi-cell { border-left: var(--rule); }
     .kpi-label { font-family: var(--mono); font-size: 10.5px; letter-spacing: 0.8px; text-transform: uppercase; color: var(--text-faint); }
     .kpi-value { font-family: var(--display); font-size: 28px; font-weight: 600; letter-spacing: -0.5px; margin-top: 6px; color: var(--text); }
-    .kpi-value.ok { color: var(--ok); }
-    .kpi-value.warn { color: var(--warn); }
-    .kpi-value.danger { color: var(--danger); }
     .kpi-sub { font-family: var(--mono); font-size: 11px; color: var(--text-muted); margin-top: 4px; }
     .grid { display: grid; grid-template-columns: 1.2fr 0.8fr; gap: 20px; }
     .stack { display: grid; gap: 20px; }
     .panel { border: var(--rule); border-radius: 4px; background: var(--bg-card); overflow: hidden; }
     .panel-head { padding: 12px 18px; border-bottom: var(--rule); display: flex; align-items: center; gap: 10px; font-family: var(--mono); font-size: 11px; letter-spacing: 0.6px; text-transform: uppercase; color: var(--text-faint); }
     .panel-head-right { margin-left: auto; text-transform: none; letter-spacing: 0; }
-    .list { padding: 8px 18px 14px; }
-    .list-row { display: flex; gap: 12px; align-items: flex-start; padding: 10px 0; border-bottom: 1px dashed #eeece5; }
-    .list-row:last-child { border-bottom: none; }
-    .list-rank { width: 24px; flex-shrink: 0; font-family: var(--mono); font-size: 11px; color: var(--text-faint); }
-    .list-main { min-width: 0; flex: 1; }
-    .list-title { font-size: 13px; color: var(--text); font-weight: 600; }
-    .list-sub { font-family: var(--mono); font-size: 11px; color: var(--text-faint); margin-top: 2px; }
-    .list-meta { font-family: var(--mono); font-size: 11px; color: var(--text-muted); white-space: nowrap; }
-    .pill { display: inline-flex; align-items: center; gap: 6px; padding: 3px 8px; border-radius: 999px; border: var(--rule); font-family: var(--mono); font-size: 10px; letter-spacing: 0.3px; }
+    .member-list, .list { padding: 10px 18px 14px; }
+    .member-row, .list-row { display: flex; gap: 12px; align-items: flex-start; padding: 12px 0; border-bottom: 1px dashed #eeece5; }
+    .member-row:last-child, .list-row:last-child { border-bottom: none; }
+    .member-avatar { width: 36px; height: 36px; border-radius: 50%; background: #fff4df; color: var(--accent); display: flex; align-items: center; justify-content: center; font-family: var(--mono); font-size: 12px; font-weight: 700; flex-shrink: 0; }
+    .member-main { min-width: 0; flex: 1; }
+    .member-email { font-size: 13px; color: var(--text); font-weight: 600; }
+    .member-meta, .list-sub { font-family: var(--mono); font-size: 11px; color: var(--text-faint); margin-top: 3px; }
+    .member-projects { margin-top: 8px; display: flex; flex-wrap: wrap; gap: 6px; }
+    .member-project, .pill { font-family: var(--mono); font-size: 10px; padding: 3px 7px; border-radius: 999px; border: var(--rule); background: var(--bg-card); color: var(--text-muted); display: inline-flex; align-items: center; gap: 6px; }
+    .member-actions { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+    .role-select { min-height: 32px; border-radius: 3px; border: var(--rule); background: var(--bg-card); color: var(--text); padding: 0 8px; min-width: 112px; }
+    .action-btn { min-height: 32px; border-radius: 3px; border: var(--rule); background: var(--bg-card); color: var(--text-muted); padding: 0 10px; font-family: var(--mono); font-size: 11px; cursor: pointer; }
+    .action-btn:hover { color: var(--text); background: var(--bg-mid); }
+    .action-btn.danger:hover { color: var(--danger); }
+    .assign-grid { display: grid; grid-template-columns: minmax(0, 1fr) 120px auto; gap: 8px; align-items: center; width: 100%; }
     .pill.ok { background: rgba(21,128,61,0.08); color: var(--ok); }
     .pill.warn { background: rgba(180,83,9,0.08); color: var(--warn); }
     .pill.danger { background: rgba(185,28,28,0.08); color: var(--danger); }
-    .pill.neutral { background: #fbfaf6; color: var(--text-muted); }
-    .member-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; padding: 16px 18px 18px; }
-    .member-card { border: var(--rule); border-radius: 4px; padding: 12px; background: #fcfcf9; }
-    .member-email { font-size: 13px; font-weight: 600; color: var(--text); }
-    .member-meta { font-family: var(--mono); font-size: 11px; color: var(--text-faint); margin-top: 4px; }
-    .member-projects { margin-top: 8px; display: flex; flex-wrap: wrap; gap: 6px; }
-    .member-project { font-family: var(--mono); font-size: 10px; padding: 3px 7px; border-radius: 999px; border: var(--rule); background: var(--bg-card); color: var(--text-muted); }
-    .policy-list { padding: 12px 18px 18px; display: grid; gap: 12px; }
-    .policy-card { border: var(--rule); border-radius: 4px; background: #fcfcf9; padding: 12px; display: grid; gap: 12px; }
-    .policy-head { display: flex; gap: 12px; align-items: flex-start; justify-content: space-between; }
-    .policy-title { font-size: 13px; font-weight: 600; color: var(--text); }
-    .policy-meta { font-family: var(--mono); font-size: 11px; color: var(--text-faint); margin-top: 3px; }
-    .policy-badges { display: flex; gap: 6px; flex-wrap: wrap; justify-content: flex-end; }
-    .policy-grid { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 12px; align-items: end; }
-    .policy-field { display: grid; gap: 6px; }
-    .policy-label { font-family: var(--mono); font-size: 10px; letter-spacing: 0.7px; text-transform: uppercase; color: var(--text-faint); }
-    .policy-textarea { width: 100%; min-height: 78px; resize: vertical; padding: 10px 11px; border: var(--rule); border-radius: 3px; background: var(--bg-card); color: var(--text); font: inherit; }
-    .policy-checkbox-row { display: flex; gap: 8px; align-items: center; font-family: var(--mono); font-size: 11px; color: var(--text-muted); }
-    .policy-hint { font-family: var(--mono); font-size: 10px; color: var(--text-faint); }
-    .policy-actions { display: grid; gap: 8px; justify-items: end; }
-    .policy-message { min-height: 16px; font-family: var(--mono); font-size: 11px; color: var(--text-faint); }
-    .policy-message.ok { color: var(--ok); }
-    .policy-message.warn { color: var(--warn); }
-    .policy-message.danger { color: var(--danger); }
+    .list-rank { width: 24px; flex-shrink: 0; font-family: var(--mono); font-size: 11px; color: var(--text-faint); }
+    .list-main { min-width: 0; flex: 1; }
+    .list-title { font-size: 13px; color: var(--text); font-weight: 600; }
+    .list-meta { font-family: var(--mono); font-size: 11px; color: var(--text-muted); white-space: nowrap; }
     .empty { padding: 26px 18px; text-align: center; font-family: var(--mono); font-size: 12px; color: var(--text-faint); }
+    .form-card { border: var(--rule); border-radius: 4px; background: var(--bg-card); padding: 18px; }
+    .form-label { font-family: var(--mono); font-size: 10.5px; letter-spacing: 0.7px; text-transform: uppercase; color: var(--text-faint); margin-bottom: 8px; }
+    .form-grid { display: grid; grid-template-columns: minmax(0, 1fr) 160px auto; gap: 10px; align-items: end; }
+    .form-input { min-height: 40px; border-radius: 3px; border: var(--rule); background: var(--bg); color: var(--text); padding: 0 12px; }
+    .form-input:focus, .role-select:focus, .org-select:focus { outline: none; border-color: rgba(217,119,6,0.62); box-shadow: 0 0 0 3px rgba(217,119,6,0.11); background: #fff; }
+    .form-msg { margin-top: 10px; font-family: var(--mono); font-size: 11px; color: var(--text-faint); }
+    .form-msg.error { color: var(--danger); }
+    .form-msg.success { color: var(--ok); }
+    .hidden { display: none !important; }
     @media (max-width: 960px) {
       .layout { grid-template-columns: 1fr; }
       .sidebar { display: none; }
-      .banner, .grid { grid-template-columns: 1fr; }
-      .banner-note { border-left: none; border-top: var(--rule); padding-left: 0; padding-top: 14px; }
+      .grid { grid-template-columns: 1fr; }
       .kpi-grid { grid-template-columns: repeat(2, 1fr); }
       .kpi-cell:nth-child(3), .kpi-cell:nth-child(4) { border-top: var(--rule); }
       .kpi-cell:nth-child(3) { border-left: none; }
-      .member-grid { grid-template-columns: 1fr; }
-      .policy-grid { grid-template-columns: 1fr; }
-      .policy-actions { justify-items: stretch; }
+      .form-grid { grid-template-columns: 1fr; }
+      .assign-grid { grid-template-columns: 1fr; }
     }
     @media (max-width: 680px) {
       .page { border-left: none; border-right: none; }
@@ -169,7 +145,7 @@
       .main { padding: 20px 16px 28px; }
       .page-header { flex-direction: column; align-items: flex-start; }
       .page-actions { margin-left: 0; width: 100%; flex-wrap: wrap; }
-      .page-actions button { flex: 1 1 140px; }
+      .page-actions > * { flex: 1 1 160px; }
       .topbar-email { max-width: 140px; }
     }
   </style>
@@ -182,7 +158,7 @@
       <span class="topbar-sep">/</span>
       <span>dashboard</span>
       <span class="topbar-sep">/</span>
-      <span class="topbar-crumb">control</span>
+      <span class="topbar-crumb">members</span>
       <div class="topbar-links"><a href="/scan">scanner</a></div>
       <div class="topbar-session">
         <span class="topbar-email" id="user-email">loading...</span>
@@ -198,11 +174,11 @@
           <a class="sidebar-item" href="/app/"><span class="sidebar-dot">●</span> projects</a>
           <a class="sidebar-item" href="/app/activity"><span class="sidebar-dot">●</span> activity</a>
           <a class="sidebar-item" href="/app/alerts"><span class="sidebar-dot">●</span> alerts</a>
-          <a class="sidebar-item active" href="/app/control"><span class="sidebar-dot">●</span> control</a>
+          <a class="sidebar-item" href="/app/control"><span class="sidebar-dot">●</span> control</a>
         </div>
         <div class="sidebar-group">
           <div class="sidebar-head">team</div>
-          <a class="sidebar-item" href="/app/members"><span class="sidebar-dot">●</span> members</a>
+          <a class="sidebar-item active" href="/app/members"><span class="sidebar-dot">●</span> members</a>
           <a class="sidebar-item" href="/app/audit"><span class="sidebar-dot">●</span> audit</a>
         </div>
         <div class="sidebar-group">
@@ -210,16 +186,6 @@
           <a class="sidebar-item" href="/app/keys"><span class="sidebar-dot">●</span> keys</a>
           <a class="sidebar-item" href="/app/settings"><span class="sidebar-dot">●</span> settings</a>
           <a class="sidebar-item" href="/app/plans"><span class="sidebar-dot">●</span> plans</a>
-        </div>
-        <div class="sidebar-group">
-          <div class="sidebar-head">scanner</div>
-          <a class="sidebar-item" href="/app/scanner"><span class="sidebar-dot">●</span> repos</a>
-        </div>
-        <div class="sidebar-group">
-          <div class="sidebar-head">help</div>
-          <a class="sidebar-item" href="/docs"><span class="sidebar-dot">●</span> docs</a>
-          <a class="sidebar-item" href="#"><span class="sidebar-dot">●</span> changelog</a>
-          <a class="sidebar-item" href="mailto:hello@vaultproof.dev"><span class="sidebar-dot">●</span> support</a>
         </div>
         <div class="usage-box">
           <div class="usage-label" id="usagePlanLabel">workspace loading</div>
@@ -231,7 +197,7 @@
 
       <main class="main">
         <div class="page-header">
-          <h1 class="page-title">Control</h1>
+          <h1 class="page-title">Members</h1>
           <span class="page-meta" id="pageMeta">/ loading…</span>
           <div class="page-actions">
             <div class="org-switcher">
@@ -245,30 +211,13 @@
             <a class="btn-primary" href="/app/settings">manage org</a>
           </div>
         </div>
-        <p class="page-desc">This is the separate control dashboard for team and business accounts. It keeps access, governance, runtime health, and alert delivery in one operator surface instead of the solo project view.</p>
+        <p class="page-desc">Review shared access across the organization, spot pending invites, and see which projects each teammate can touch from the separate team dashboard.</p>
 
         <div class="subnav">
-          <a class="subnav-link active" href="/app/control">control overview</a>
-          <a class="subnav-link" href="/app/members">members</a>
+          <a class="subnav-link" href="/app/control">control overview</a>
+          <a class="subnav-link active" href="/app/members">members</a>
           <a class="subnav-link" href="/app/audit">audit</a>
         </div>
-
-        <section class="invite-panel hidden" id="incomingInvitePanel">
-          <div class="panel-head">incoming invites<span class="panel-head-right" id="incomingInviteStatus">loading…</span></div>
-          <div class="invite-list" id="incomingInviteList"><div class="empty">Loading invites…</div></div>
-        </section>
-
-        <section class="banner">
-          <div>
-            <div class="banner-kicker" id="segmentKicker">workspace type</div>
-            <div class="banner-title" id="segmentTitle">Loading organization…</div>
-            <div class="banner-copy" id="segmentCopy">Checking your active organization, members, and recent control-plane signals.</div>
-          </div>
-          <div class="banner-note" id="segmentNote">
-            <div>SSO-ready landing</div>
-            <div>This route is designed to be the destination for team and business logins once SSO routing is turned on.</div>
-          </div>
-        </section>
 
         <div class="kpi-grid">
           <div class="kpi-cell">
@@ -277,49 +226,59 @@
             <div class="kpi-sub" id="kpi-org-sub">loading…</div>
           </div>
           <div class="kpi-cell">
-            <div class="kpi-label">members</div>
+            <div class="kpi-label">joined members</div>
             <div class="kpi-value" id="kpi-members">—</div>
             <div class="kpi-sub" id="kpi-members-sub">loading…</div>
           </div>
           <div class="kpi-cell">
-            <div class="kpi-label">pending invites</div>
-            <div class="kpi-value warn" id="kpi-invites">—</div>
-            <div class="kpi-sub" id="kpi-invites-sub">loading…</div>
+            <div class="kpi-label">admins + owners</div>
+            <div class="kpi-value" id="kpi-admins">—</div>
+            <div class="kpi-sub" id="kpi-admins-sub">loading…</div>
           </div>
           <div class="kpi-cell">
-            <div class="kpi-label">security posture</div>
-            <div class="kpi-value" id="kpi-posture">—</div>
-            <div class="kpi-sub" id="kpi-posture-sub">loading…</div>
+            <div class="kpi-label">pending invites</div>
+            <div class="kpi-value" id="kpi-invites">—</div>
+            <div class="kpi-sub" id="kpi-invites-sub">loading…</div>
           </div>
         </div>
 
         <div class="grid">
           <div class="stack">
-            <section class="panel">
-              <div class="panel-head">team access<span class="panel-head-right" id="membersStatus">loading…</span></div>
-              <div class="member-grid" id="membersGrid"><div class="empty">Loading members…</div></div>
+            <section class="form-card" id="invitePanel">
+              <div class="form-label">invite member</div>
+              <div class="form-grid">
+                <div>
+                  <input id="inviteEmail" class="form-input" type="email" placeholder="teammate@company.com">
+                </div>
+                <div>
+                  <select id="inviteRole" class="role-select" aria-label="Invite role">
+                    <option value="member">member</option>
+                    <option value="admin">admin</option>
+                    <option value="viewer">viewer</option>
+                  </select>
+                </div>
+                <div>
+                  <button type="button" class="btn-primary" id="inviteBtn">send invite</button>
+                </div>
+              </div>
+              <div class="form-msg hidden" id="inviteMsg"></div>
             </section>
 
             <section class="panel">
-              <div class="panel-head">project policy<span class="panel-head-right" id="policyStatus">loading…</span></div>
-              <div class="policy-list" id="policyList"><div class="empty">Loading project policy…</div></div>
-            </section>
-
-            <section class="panel">
-              <div class="panel-head">recent governance<span class="panel-head-right" id="auditStatus">loading…</span></div>
-              <div class="list" id="auditList"><div class="empty">Loading audit feed…</div></div>
+              <div class="panel-head">joined members<span class="panel-head-right" id="membersStatus">loading…</span></div>
+              <div class="member-list" id="membersList"><div class="empty">Loading members…</div></div>
             </section>
           </div>
 
           <div class="stack">
             <section class="panel">
-              <div class="panel-head">runtime posture<span class="panel-head-right" id="healthStatus">loading…</span></div>
-              <div class="list" id="healthList"><div class="empty">Loading project health…</div></div>
+              <div class="panel-head">pending invites<span class="panel-head-right" id="invitesStatus">loading…</span></div>
+              <div class="list" id="inviteList"><div class="empty">Loading invites…</div></div>
             </section>
 
             <section class="panel">
-              <div class="panel-head">alert dispatch<span class="panel-head-right" id="dispatchStatus">loading…</span></div>
-              <div class="list" id="dispatchList"><div class="empty">Loading alert delivery…</div></div>
+              <div class="panel-head">project coverage<span class="panel-head-right" id="coverageStatus">loading…</span></div>
+              <div class="list" id="coverageList"><div class="empty">Loading project coverage…</div></div>
             </section>
           </div>
         </div>

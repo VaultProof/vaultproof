@@ -4,7 +4,9 @@
     '/app/': true,
     '/app/activity': true,
     '/app/alerts': true,
-    '/app/control': true
+    '/app/control': true,
+    '/app/members': true,
+    '/app/audit': true
   };
   var STYLE_SELECTOR = 'style[data-app-shell-style]';
   var PAGE_SCRIPT_SELECTOR = 'script[data-app-shell-page-script]';

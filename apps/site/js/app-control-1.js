@@ -6,11 +6,15 @@
     ? 'https://vaultproof-init-staging.vaultproof.workers.dev/api/v1/init'
     : 'https://init.vaultproof.dev/api/v1/init';
   const SUPABASE_AUTH_STORAGE_KEY = 'sb-gwzkjiomemjlhtrdrlan-auth-token';
+  const ACTIVE_ORG_STORAGE_KEY = 'vaultproof_active_org';
 
   let token = localStorage.getItem('vaultproof_token');
   const user = JSON.parse(localStorage.getItem('vaultproof_user') || '{}');
   let refreshAttempted = false;
   let refreshPromise = null;
+  let currentOrganizationId = null;
+  let availableOrganizations = [];
+  let currentProjectsPayload = null;
 
   if (!token) {
     window.location.href = 'login';
@@ -22,6 +26,16 @@
   function setText(id, value) {
     const el = $(id);
     if (el) el.textContent = value;
+  }
+  function setMessage(el, text, tone) {
+    if (!el) return;
+    el.textContent = text || '';
+    el.className = `policy-message${tone ? ` ${tone}` : ''}`;
+  }
+  function setButtonState(button, disabled, label) {
+    if (!button) return;
+    button.disabled = Boolean(disabled);
+    if (label) button.textContent = label;
   }
 
   function escapeHtml(str) {
@@ -88,27 +102,102 @@
     return refreshPromise;
   }
 
-  async function apiFetch(base, path) {
+  function getRequestedOrganizationId() {
+    const params = new URLSearchParams(window.location.search);
+    return params.get('org') || localStorage.getItem(ACTIVE_ORG_STORAGE_KEY) || '';
+  }
+
+  function persistOrganizationSelection(orgId) {
+    currentOrganizationId = orgId || null;
+    if (currentOrganizationId) {
+      localStorage.setItem(ACTIVE_ORG_STORAGE_KEY, currentOrganizationId);
+    } else {
+      localStorage.removeItem(ACTIVE_ORG_STORAGE_KEY);
+    }
+  }
+
+  function syncOrganizationUrl(orgId) {
+    const params = new URLSearchParams(window.location.search);
+    if (orgId) {
+      params.set('org', orgId);
+    } else {
+      params.delete('org');
+    }
+    const next = `${window.location.pathname}${params.toString() ? '?' + params.toString() : ''}`;
+    window.history.replaceState({}, '', next);
+  }
+
+  function chooseOrganization(orgs, activeOrganizationId) {
+    const requestedId = getRequestedOrganizationId();
+    const requested = orgs.find((org) => org.id === requestedId) || null;
+    if (requested) return requested;
+
+    const active = orgs.find((org) => org.id === activeOrganizationId) || null;
+    if (active && active.kind !== 'personal') return active;
+
+    const shared = orgs.find((org) => org.kind && org.kind !== 'personal') || null;
+    if (shared) return shared;
+
+    return active || orgs[0] || null;
+  }
+
+  function renderOrganizationSelector() {
+    const select = $('orgSelect');
+    const status = $('orgSwitcherStatus');
+    if (!select) return;
+
+    if (!availableOrganizations.length) {
+      select.innerHTML = '<option value="">No orgs available</option>';
+      select.disabled = true;
+      if (status) status.textContent = 'No org loaded';
+      return;
+    }
+
+    select.innerHTML = availableOrganizations.map((org) => {
+      const suffix = org.kind === 'personal' ? 'solo' : org.role;
+      return `<option value="${escapeHtml(org.id)}">${escapeHtml(org.name)} · ${escapeHtml(suffix)}</option>`;
+    }).join('');
+    select.disabled = false;
+    select.value = currentOrganizationId || availableOrganizations[0].id;
+
+    const current = availableOrganizations.find((org) => org.id === select.value) || null;
+    if (status) {
+      status.textContent = current
+        ? `${current.kind === 'personal' ? 'solo workspace' : 'shared org'}`
+        : 'Org loading…';
+    }
+  }
+
+  async function apiFetch(base, path, options) {
+    const opts = options || {};
     try {
       const res = await fetch(`${base}${path}`, {
         cache: 'no-store',
+        method: opts.method || 'GET',
         headers: {
           Authorization: `Bearer ${token}`,
           'Content-Type': 'application/json',
+          ...(opts.includeOrganization !== false && currentOrganizationId ? { 'x-vaultproof-organization': currentOrganizationId } : {}),
         },
+        ...(opts.body ? { body: JSON.stringify(opts.body) } : {}),
       });
       if (res.status === 401) {
         if (!refreshAttempted) {
           refreshAttempted = true;
           const refreshed = await tryRefreshToken();
-          if (refreshed) return apiFetch(base, path);
+          if (refreshed) return apiFetch(base, path, opts);
         }
         refreshAttempted = false;
         window.location.href = 'login';
         return null;
       }
       refreshAttempted = false;
-      return res.ok ? res.json() : null;
+      const data = await res.json().catch(() => null);
+      return {
+        ok: res.ok,
+        status: res.status,
+        data,
+      };
     } catch {
       return null;
     }
@@ -218,6 +307,29 @@
     setText('segmentCopy', workspace.copy);
     setText('segmentNote', workspace.note);
   }
+  function renderIncomingInvites(membersPayload) {
+    const panel = $('incomingInvitePanel');
+    const list = $('incomingInviteList');
+    const invites = membersPayload?.pending_invitations_for_me || [];
+    setText('incomingInviteStatus', `${invites.length} pending`);
+    if (!panel || !list) return;
+    panel.classList.toggle('hidden', !invites.length);
+    if (!invites.length) {
+      list.innerHTML = '<div class="empty">No incoming invites.</div>';
+      return;
+    }
+    list.innerHTML = invites.map((invite) => `
+      <div class="invite-row">
+        <div class="invite-main">
+          <div class="invite-title">${escapeHtml(invite.organization?.name || 'Team invite')}</div>
+          <div class="invite-sub">${escapeHtml(invite.role)} · invited ${relTime(invite.created_at)}</div>
+        </div>
+        <div class="invite-actions">
+          <button type="button" class="btn-primary" data-invite-accept="${escapeHtml(invite.id)}">accept invite</button>
+        </div>
+      </div>
+    `).join('');
+  }
 
   function renderKpis(membersPayload, overviewPayload) {
     const org = membersPayload?.organization || null;
@@ -272,6 +384,67 @@
     }).join('');
 
     grid.innerHTML = cards;
+  }
+
+  function canManageProjectPolicy(project) {
+    return project?.project_role === 'owner' || project?.project_role === 'admin';
+  }
+
+  function normalizeOriginsForTextarea(value) {
+    return String(value || '')
+      .split(',')
+      .map((item) => item.trim())
+      .filter(Boolean)
+      .join('\n');
+  }
+
+  function renderProjectPolicies(projectsPayload) {
+    const list = $('policyList');
+    const projects = projectsPayload?.projects || [];
+    const writableCount = projects.filter(canManageProjectPolicy).length;
+    setText('policyStatus', `${projects.length} project${projects.length === 1 ? '' : 's'} · ${writableCount} writable`);
+
+    if (!list) return;
+    if (!projects.length) {
+      list.innerHTML = '<div class="empty">No projects yet. Create one in the Projects view, then come back here to manage origin policy.</div>';
+      return;
+    }
+
+    list.innerHTML = projects.map((project) => {
+      const canManage = canManageProjectPolicy(project);
+      const origins = normalizeOriginsForTextarea(project.allowed_origins);
+      const policyTone = project.strict_origin ? 'warn' : 'neutral';
+      const policyLabel = project.strict_origin ? 'strict origin lock' : 'observing origins';
+      return `
+        <div class="policy-card" data-policy-card="${escapeHtml(project.id)}">
+          <div class="policy-head">
+            <div>
+              <div class="policy-title">${escapeHtml(project.name || project.vp_proj_id)}</div>
+              <div class="policy-meta">${escapeHtml(project.vp_proj_id)} · ${escapeHtml(project.project_role || 'viewer')} access · created ${relTime(project.created_at)}</div>
+            </div>
+            <div class="policy-badges">
+              <span class="pill ${policyTone}">${escapeHtml(policyLabel)}</span>
+              <span class="pill neutral">${project.allowed_origins ? `${escapeHtml(String(project.allowed_origins.split(',').filter(Boolean).length))} origin${project.allowed_origins.split(',').filter(Boolean).length === 1 ? '' : 's'}` : 'no origin list'}</span>
+            </div>
+          </div>
+          <div class="policy-grid">
+            <div class="policy-field">
+              <label class="policy-label" for="policyOrigins-${escapeHtml(project.id)}">Allowed origins</label>
+              <textarea id="policyOrigins-${escapeHtml(project.id)}" class="policy-textarea" data-policy-origins="${escapeHtml(project.id)}" ${canManage ? '' : 'disabled'} placeholder="https://app.example.com&#10;https://admin.example.com">${escapeHtml(origins)}</textarea>
+              <div class="policy-hint">One origin per line. Leave blank to allow requests without an origin allowlist.</div>
+              <label class="policy-checkbox-row">
+                <input type="checkbox" data-policy-strict="${escapeHtml(project.id)}" ${project.strict_origin ? 'checked' : ''} ${canManage ? '' : 'disabled'}>
+                Enforce strict origin lock for this project
+              </label>
+            </div>
+            <div class="policy-actions">
+              <button type="button" class="btn-primary" data-policy-save="${escapeHtml(project.id)}" ${canManage ? '' : 'disabled'}>${canManage ? 'save policy' : 'read only'}</button>
+              <div class="policy-message" data-policy-message="${escapeHtml(project.id)}">${canManage ? 'Admins can update origin policy here.' : 'You can review policy here, but only project admins can change it.'}</div>
+            </div>
+          </div>
+        </div>
+      `;
+    }).join('');
   }
 
   function renderHealth(overviewPayload) {
@@ -377,27 +550,79 @@
     list.innerHTML = rows.join('');
   }
 
+  async function saveProjectPolicy(projectId, trigger) {
+    const originsEl = document.querySelector(`[data-policy-origins="${projectId}"]`);
+    const strictEl = document.querySelector(`[data-policy-strict="${projectId}"]`);
+    const messageEl = document.querySelector(`[data-policy-message="${projectId}"]`);
+    const project = (currentProjectsPayload?.projects || []).find((item) => item.id === projectId);
+
+    if (!originsEl || !strictEl || !messageEl || !project) return;
+
+    const origins = String(originsEl.value || '')
+      .split('\n')
+      .map((item) => item.trim())
+      .filter(Boolean)
+      .join(',');
+
+    setButtonState(trigger, true, 'saving...');
+    setMessage(messageEl, 'Saving project policy…', '');
+
+    const res = await apiFetch(INIT_API, `/projects/${encodeURIComponent(projectId)}`, {
+      method: 'PUT',
+      body: {
+        allowed_origins: origins,
+        strict_origin: Boolean(strictEl.checked),
+      },
+    });
+
+    if (!res?.ok) {
+      const errorMessage = res?.data?.error || (res?.status === 403 ? 'You do not have permission to change this project.' : 'Could not save project policy.');
+      setButtonState(trigger, false, 'save policy');
+      setMessage(messageEl, errorMessage, 'danger');
+      return;
+    }
+
+    await load();
+    const nextMessageEl = document.querySelector(`[data-policy-message="${projectId}"]`);
+    const nextButton = document.querySelector(`[data-policy-save="${projectId}"]`);
+    setMessage(nextMessageEl, `Saved policy for ${project.name || project.vp_proj_id}.`, 'ok');
+    setButtonState(nextButton, false, 'save policy');
+  }
+
   async function load() {
     setText('user-email', user.email || 'loading...');
     const avatar = $('user-avatar');
     if (avatar) avatar.textContent = (user.email || 'VP').charAt(0).toUpperCase();
 
-    const [membersPayload, overviewPayload, auditPayload, alertsPayload] = await Promise.all([
+    const orgsPayload = await apiFetch(INIT_API, '/orgs', { includeOrganization: false });
+    const orgsData = unwrapPayload(orgsPayload?.data) || {};
+    availableOrganizations = Array.isArray(orgsData.organizations) ? orgsData.organizations : [];
+    const selectedOrganization = chooseOrganization(availableOrganizations, orgsData.active_organization_id || null);
+    persistOrganizationSelection(selectedOrganization?.id || null);
+    syncOrganizationUrl(currentOrganizationId);
+    renderOrganizationSelector();
+
+    const [membersPayload, projectsPayload, overviewPayload, auditPayload, alertsPayload] = await Promise.all([
       apiFetch(INIT_API, '/members'),
+      apiFetch(INIT_API, '/projects'),
       apiFetch(INIT_API, '/projects/stats/overview'),
       apiFetch(INIT_API, '/audit?days=7&limit=8'),
       apiFetch(INIT_API, '/alerts?activity_window=7d&delivery_limit=5&run_limit=5'),
     ]);
 
-    const membersData = unwrapPayload(membersPayload) || {};
-    const overviewData = unwrapPayload(overviewPayload) || {};
-    const auditData = unwrapPayload(auditPayload) || {};
-    const alertsData = unwrapPayload(alertsPayload) || {};
+    const membersData = unwrapPayload(membersPayload?.data) || {};
+    const projectsData = unwrapPayload(projectsPayload?.data) || {};
+    const overviewData = unwrapPayload(overviewPayload?.data) || {};
+    const auditData = unwrapPayload(auditPayload?.data) || {};
+    const alertsData = unwrapPayload(alertsPayload?.data) || {};
+    currentProjectsPayload = projectsData;
 
     renderBanner(membersData, overviewData, alertsData);
+    renderIncomingInvites(membersData);
     renderUsageBox(membersData, overviewData);
     renderKpis(membersData, overviewData);
     renderMembers(membersData);
+    renderProjectPolicies(projectsData);
     renderHealth(overviewData);
     renderAudit(auditData);
     renderDispatch(alertsData, overviewData);
@@ -406,8 +631,42 @@
   function bind() {
     const signOutBtn = $('signOutBtn');
     const refreshBtn = $('refreshBtn');
+    const orgSelect = $('orgSelect');
     if (signOutBtn) signOutBtn.addEventListener('click', logout);
     if (refreshBtn) refreshBtn.addEventListener('click', function() { load(); });
+    if (orgSelect) {
+      orgSelect.addEventListener('change', function(event) {
+        const nextOrgId = event.target.value || '';
+        persistOrganizationSelection(nextOrgId);
+        syncOrganizationUrl(currentOrganizationId);
+        renderOrganizationSelector();
+        load();
+      });
+    }
+    document.addEventListener('click', async function(event) {
+      const acceptBtn = event.target.closest('[data-invite-accept]');
+      if (acceptBtn) {
+        const invitationId = acceptBtn.getAttribute('data-invite-accept');
+        setButtonState(acceptBtn, true, 'accepting...');
+        const res = await apiFetch(INIT_API, `/members/invitations/${encodeURIComponent(invitationId)}/accept`, {
+          method: 'POST',
+          includeOrganization: false,
+        });
+        if (!res?.ok) {
+          setButtonState(acceptBtn, false, 'accept invite');
+          return;
+        }
+        await load();
+        return;
+      }
+
+      const savePolicyBtn = event.target.closest('[data-policy-save]');
+      if (savePolicyBtn) {
+        const projectId = savePolicyBtn.getAttribute('data-policy-save');
+        if (projectId) await saveProjectPolicy(projectId, savePolicyBtn);
+        return;
+      }
+    });
   }
 
   if (document.readyState === 'loading') {

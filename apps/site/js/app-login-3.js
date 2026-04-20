@@ -7,6 +7,7 @@
   const INIT_API = window.location.hostname.includes('dev.vaultproof')
     ? 'https://vaultproof-init-staging.vaultproof.workers.dev/api/v1/init'
     : 'https://init.vaultproof.dev/api/v1/init';
+  const ACTIVE_ORG_STORAGE_KEY = 'vaultproof_active_org';
   const LOOP_KEY = 'vp_login_ts';
   const PROMO_KEY = 'vp_promo';
   const LOCAL_AUTH_PREFIXES = ['vaultproof_', 'sb-'];
@@ -166,11 +167,32 @@
       const sharedOrganization = organizations.find(function(org) { return org.kind && org.kind !== 'personal'; }) || null;
 
       if (activeOrganization && activeOrganization.kind && activeOrganization.kind !== 'personal') {
-        return './control';
+        localStorage.setItem(ACTIVE_ORG_STORAGE_KEY, activeOrganization.id);
+        return `./control?org=${encodeURIComponent(activeOrganization.id)}`;
       }
       if (sharedOrganization) {
-        return './control';
+        localStorage.setItem(ACTIVE_ORG_STORAGE_KEY, sharedOrganization.id);
+        return `./control?org=${encodeURIComponent(sharedOrganization.id)}`;
       }
+      localStorage.removeItem(ACTIVE_ORG_STORAGE_KEY);
+
+      const inviteRes = await fetch(`${INIT_API}/members`, {
+        headers: {
+          Authorization: 'Bearer ' + session.access_token,
+          'Content-Type': 'application/json',
+        },
+      });
+      if (inviteRes.ok) {
+        const invitePayload = await inviteRes.json().catch(function() { return null; });
+        const inviteData = invitePayload && typeof invitePayload === 'object' && invitePayload.data ? invitePayload.data : invitePayload;
+        const pendingInvites = Array.isArray(inviteData && inviteData.pending_invitations_for_me)
+          ? inviteData.pending_invitations_for_me
+          : [];
+        if (pendingInvites.length) {
+          return './control';
+        }
+      }
+
       return './';
     } catch (error) {
       console.warn('Dashboard route resolution failed:', error);
