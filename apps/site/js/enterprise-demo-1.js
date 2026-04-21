@@ -32,37 +32,6 @@
     });
   }
 
-  (function() {
-    var groups = document.querySelectorAll('.nav-group');
-
-    function closeAll() {
-      groups.forEach(function(group) {
-        group.classList.remove('open');
-        var btn = group.querySelector('.nav-group-btn');
-        if (btn) btn.setAttribute('aria-expanded', 'false');
-      });
-    }
-
-    groups.forEach(function(group) {
-      var btn = group.querySelector('.nav-group-btn');
-      if (!btn) return;
-      btn.addEventListener('click', function(event) {
-        event.stopPropagation();
-        var isOpen = group.classList.contains('open');
-        closeAll();
-        if (!isOpen) {
-          group.classList.add('open');
-          btn.setAttribute('aria-expanded', 'true');
-        }
-      });
-    });
-
-    document.addEventListener('click', closeAll);
-    document.addEventListener('keydown', function(event) {
-      if (event.key === 'Escape') closeAll();
-    });
-  })();
-
   var revealObserver = new IntersectionObserver(function(entries) {
     entries.forEach(function(entry) {
       if (entry.isIntersecting) {
@@ -75,6 +44,20 @@
   document.querySelectorAll('.reveal').forEach(function(el) {
     revealObserver.observe(el);
   });
+
+  function bulletCard(text) {
+    return '<div class="detail-card" style="padding:14px;">' + text + '</div>';
+  }
+
+  function metricCard(metric) {
+    var extraStyle = metric.accent
+      ? ' background: var(--accent-soft); border-color: rgba(217,119,6,0.18);'
+      : '';
+    return '<div class="stat-card" style="padding:16px;' + extraStyle + '">' +
+      '<dt>' + metric.label + '</dt>' +
+      '<dd>' + metric.value + '</dd>' +
+    '</div>';
+  }
 
   var stakeholderData = {
     ciso: {
@@ -140,25 +123,8 @@
     if (label) label.textContent = data.label;
     if (title) title.textContent = data.title;
     if (body) body.textContent = data.body;
-
-    if (bullets) {
-      bullets.innerHTML = data.bullets.map(function(item) {
-        return '<div class="rounded-2xl border border-white/8 bg-white/5 p-4 text-sm text-slate-200">' + item + '</div>';
-      }).join('');
-    }
-
-    if (metrics) {
-      metrics.innerHTML = data.metrics.map(function(metric) {
-        var classes = metric.accent
-          ? 'rounded-2xl border border-emerald-400/18 bg-emerald-400/8 p-4'
-          : 'rounded-2xl border border-white/8 bg-white/5 p-4';
-        var labelColor = metric.accent ? 'text-emerald-300' : 'text-slate-500';
-        return '<div class="' + classes + '">' +
-          '<div class="text-xs uppercase tracking-[0.18em] ' + labelColor + '">' + metric.label + '</div>' +
-          '<div class="mt-2 text-base font-semibold text-white">' + metric.value + '</div>' +
-        '</div>';
-      }).join('');
-    }
+    if (bullets) bullets.innerHTML = data.bullets.map(bulletCard).join('');
+    if (metrics) metrics.innerHTML = data.metrics.map(metricCard).join('');
 
     document.querySelectorAll('[data-tab]').forEach(function(button) {
       button.classList.toggle('active', button.getAttribute('data-tab') === tab);
@@ -241,11 +207,7 @@
     if (label) label.textContent = data.label;
     if (title) title.textContent = data.title;
     if (body) body.textContent = data.body;
-    if (checklist) {
-      checklist.innerHTML = data.checklist.map(function(item) {
-        return '<div class="rounded-2xl border border-white/8 bg-white/5 p-4 text-sm text-slate-200">' + item + '</div>';
-      }).join('');
-    }
+    if (checklist) checklist.innerHTML = data.checklist.map(bulletCard).join('');
     if (champion) champion.textContent = data.champion;
     if (pilot) pilot.textContent = data.pilot;
     if (win) win.textContent = data.win;
