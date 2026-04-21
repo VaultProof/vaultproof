@@ -3,7 +3,6 @@
 
   if (window.VP_I18N && window.VP_I18N.ready) return;
 
-  var STORAGE_KEY = 'vp_locale';
   var DEFAULT_LOCALE = 'en';
   var SUPPORTED_LOCALES = ['en', 'es', 'fr', 'de', 'pt-BR', 'ru', 'he', 'ja', 'zh-CN'];
   var LOCALE_LABELS = {
@@ -740,8 +739,6 @@
   var isRendering = false;
 
   function resolveInitialLocale() {
-    var saved = localStorage.getItem(STORAGE_KEY);
-    if (saved && SUPPORTED_LOCALES.indexOf(saved) !== -1) return saved;
     return normalizeLocale(navigator.language || navigator.userLanguage || DEFAULT_LOCALE);
   }
 
@@ -1082,7 +1079,6 @@
     var next = normalizeLocale(locale);
     if (SUPPORTED_LOCALES.indexOf(next) === -1) next = DEFAULT_LOCALE;
     currentLocale = next;
-    localStorage.setItem(STORAGE_KEY, currentLocale);
     render();
     window.dispatchEvent(new CustomEvent('vp:localechange', { detail: { locale: currentLocale } }));
   }
