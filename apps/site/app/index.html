@@ -107,10 +107,11 @@
 
     /* MAIN */
     .main { padding: 28px 32px; }
-    .page-header { display: flex; align-items: baseline; margin-bottom: 4px; }
+    .page-header { display: flex; align-items: flex-start; gap: 16px 20px; flex-wrap: wrap; margin-bottom: 4px; }
+    .page-heading { display: grid; gap: 6px; min-width: 0; flex: 1 1 280px; }
     .page-title { font-family: var(--display); font-weight: 600; font-size: 30px; letter-spacing: -0.8px; }
-    .page-meta { font-family: var(--mono); font-size: 12px; color: var(--text-faint); margin-left: 10px; }
-    .page-actions { margin-left: auto; display: flex; gap: 8px; }
+    .page-meta { font-family: var(--mono); font-size: 12px; color: var(--text-faint); }
+    .page-actions { margin-left: auto; display: flex; gap: 10px; flex-wrap: wrap; align-items: flex-start; }
     .btn-outline { font-family: var(--mono); font-size: 12px; padding: 7px 12px; border: var(--rule); border-radius: 3px; background: var(--bg-card); cursor: pointer; }
     .btn-outline:hover { background: var(--bg-mid); }
     .btn-primary { font-family: var(--mono); font-size: 12px; padding: 7px 12px; background: var(--text); color: var(--bg); border-radius: 3px; cursor: pointer; }
@@ -211,8 +212,7 @@
       .topbar-links { display: none; }
       .topbar-session { margin-left: auto; }
       .main { padding: 20px 16px 28px; }
-      .page-header { flex-direction: column; align-items: flex-start; gap: 12px; }
-      .page-meta { margin-left: 0; }
+      .page-header { flex-direction: column; align-items: stretch; gap: 12px; }
       .page-actions { margin-left: 0; width: 100%; flex-wrap: wrap; }
       .page-actions button { flex: 1 1 140px; }
       .filter-bar { flex-wrap: wrap; }
@@ -290,8 +290,10 @@
   <!-- MAIN -->
   <main class="main">
     <div class="page-header">
-      <h1 class="page-title">Projects</h1>
-      <span class="page-meta" id="pageMeta">/ loading…</span>
+      <div class="page-heading">
+        <h1 class="page-title">Projects</h1>
+        <span class="page-meta" id="pageMeta">/ loading…</span>
+      </div>
       <div class="page-actions">
         <button class="btn-outline">import .env</button>
         <button class="btn-primary">+ new project</button>
