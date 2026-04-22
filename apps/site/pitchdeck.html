@@ -434,8 +434,8 @@
     </div>
     <h1>Here's what no one<br>is <span class="gradient-text">talking about.</span></h1>
     <ul class="problem-list">
-        <li>Every AI company stores API keys in .env files, config repos, and Slack threads. One copy-paste and they're gone.</li>
-        <li>One leaked key. That's all it takes. Someone racks up a six-figure bill overnight. No rate limit saves you. No kill switch is fast enough.</li>
+        <li>29 million secrets leaked on GitHub in 2025 alone — a 34% year-over-year increase. Every AI company stores API keys in .env files, config repos, and Slack threads. One copy-paste and they're gone.</li>
+        <li>February 2026: a stolen Google API key ran up an $82,314 bill in a single weekend. Six-figure losses from one leaked key are now routine. No rate limit saves you. No kill switch is fast enough.</li>
         <li>And here's the part that should make you uncomfortable: every secrets manager on the market — AWS, HashiCorp, Doppler — hands the raw key right back to your app. The key is still exposed. The "solution" doesn't actually solve anything.</li>
     </ul>
     <span class="slide-number">1 / 9</span>
@@ -566,7 +566,7 @@
                 <th>Feature</th>
                 <th class="vp-col">VaultProof</th>
                 <th>Doppler</th>
-                <th>Infisical</th>
+                <th>LiteLLM</th>
                 <th>AWS SM</th>
             </tr>
         </thead>
@@ -646,22 +646,22 @@
         <div class="force">
             <div class="force-num">1</div>
             <div class="force-content">
-                <h3>AI API spend didn't exist at this scale</h3>
-                <p>Now every company is building with OpenAI, Anthropic, and Google. Every new feature ships with a new API key. The attack surface is growing faster than anyone can secure it.</p>
+                <h3>AI API spend exploded</h3>
+                <p>Every company now builds with OpenAI, Anthropic, and Google. Every new feature ships with a new key. 29M secrets leaked in 2025 — up 34% YoY, the biggest single-year jump ever recorded.</p>
             </div>
         </div>
         <div class="force">
             <div class="force-num">2</div>
             <div class="force-content">
-                <h3>Key leaks went from embarrassing to catastrophic</h3>
-                <p>Six-figure bills. Overnight. From a single exposed key. This used to be a nuisance. Now it's a company-ending event.</p>
+                <h3>Leaks went from embarrassing to catastrophic</h3>
+                <p>$82K stolen from a Gemini key in one weekend. 1.5M API keys exposed in the Moltbook breach. Supply-chain attacks (LiteLLM, Vercel/Context.ai) now ship credentials straight to attackers. One leaked key is a company-ending event.</p>
             </div>
         </div>
         <div class="force">
             <div class="force-num">3</div>
             <div class="force-content">
                 <h3>Nobody built the obvious thing</h3>
-                <p>Every secrets manager still returns the raw key to the app. We looked at the market and couldn't believe no one had built a proxy-first security layer. So we did.</p>
+                <p>Every secrets manager still returns the raw key to the app. LLM gateways handle cost but store keys in plaintext config. No one built a proxy where the key is never assembled in one place. We did.</p>
             </div>
         </div>
     </div>
