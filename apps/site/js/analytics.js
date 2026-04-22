@@ -1,11 +1,6 @@
 (function () {
   'use strict';
 
-  var MIXPANEL_TOKEN = '0c509a4ba7934ed67e169f51b6947664';
-  var MIXPANEL_SRC = 'https://cdn.mxpnl.com/libs/mixpanel-2-latest.min.js';
-  var mixpanelQueue = [];
-  var mixpanelPollStarted = false;
-
   if (!window.__vpI18nLoaderAdded) {
     window.__vpI18nLoaderAdded = true;
     var i18nScript = document.createElement('script');
@@ -57,98 +52,6 @@
     } catch (e) {}
   }
 
-  function initMixpanel() {
-    if (!window.mixpanel || typeof window.mixpanel.init !== 'function') return false;
-
-    if (!window.__vpMixpanelInitialized) {
-      window.mixpanel.init(MIXPANEL_TOKEN, {
-        autocapture: {
-          click: true,
-          input: true,
-          scroll: true,
-          submit: true,
-          capture_text_content: false
-        },
-        record_sessions_percent: 100,
-        persistence: 'localStorage'
-      });
-      window.__vpMixpanelInitialized = true;
-    }
-
-    if (typeof window.mixpanel.identify === 'function') {
-      window.mixpanel.identify(visitorId);
-    }
-    if (typeof window.mixpanel.register === 'function') {
-      window.mixpanel.register({
-        visitor_id: visitorId,
-        session_id: sessionId,
-        site_surface: location.pathname.indexOf('/app/') === 0 ? 'site-app' : 'site'
-      });
-    }
-
-    return true;
-  }
-
-  function loadMixpanel() {
-    if (initMixpanel()) return;
-    if (window.__vpMixpanelRequested) return;
-    window.__vpMixpanelRequested = true;
-
-    var script = document.querySelector('script[data-vp-mixpanel]');
-    if (script) return;
-
-    script = document.createElement('script');
-    script.src = MIXPANEL_SRC;
-    script.async = true;
-    script.setAttribute('data-vp-mixpanel', 'true');
-    script.onload = function () {
-      if (initMixpanel()) flushMixpanelQueue();
-    };
-    document.head.appendChild(script);
-  }
-
-  function dispatchMixpanelEvent(event) {
-    if (!initMixpanel()) return false;
-    try {
-      if (event.type === 'pageview' && typeof window.mixpanel.track_pageview === 'function') {
-        window.mixpanel.track_pageview(event.properties || {});
-        return true;
-      }
-      if (typeof window.mixpanel.track === 'function') {
-        window.mixpanel.track(event.type, event.properties || {});
-        return true;
-      }
-    } catch (e) {}
-    return false;
-  }
-
-  function flushMixpanelQueue() {
-    if (!mixpanelQueue.length) return;
-    mixpanelQueue = mixpanelQueue.filter(function (event) {
-      return !dispatchMixpanelEvent(event);
-    });
-  }
-
-  function queueMixpanelEvent(type, properties) {
-    var event = { type: type, properties: properties || {} };
-    if (dispatchMixpanelEvent(event)) return;
-
-    mixpanelQueue.push(event);
-    loadMixpanel();
-
-    if (!mixpanelPollStarted) {
-      mixpanelPollStarted = true;
-      var attempts = 0;
-      var interval = setInterval(function () {
-        attempts += 1;
-        flushMixpanelQueue();
-        if (!mixpanelQueue.length || attempts >= 40) {
-          clearInterval(interval);
-        }
-      }, 250);
-    }
-  }
-
   // ── Send event helper ─────────────────────────────────────────
   function send(type, properties) {
     var payload = {
@@ -172,30 +75,9 @@
       }).catch(function () {});
     } catch (e) {}
 
-    var mixpanelProperties = {
-      page: location.pathname,
-      referrer: ref,
-      session_id: sessionId,
-      visitor_id: visitorId,
-      utm_source: utmSource,
-      utm_medium: utmMedium,
-      utm_campaign: utmCampaign,
-      site_surface: location.pathname.indexOf('/app/') === 0 ? 'site-app' : 'site'
-    };
-    if (properties) {
-      for (var key in properties) {
-        if (Object.prototype.hasOwnProperty.call(properties, key)) {
-          mixpanelProperties[key] = properties[key];
-        }
-      }
-    }
-    queueMixpanelEvent(type, mixpanelProperties);
-
     // Update last active on every event
     sessionStorage.setItem('vp_last_active', String(Date.now()));
   }
-
-  loadMixpanel();
 
   // ── Auto-track pageview ────────────────────────────────────────
   send('pageview');
