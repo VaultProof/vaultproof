@@ -9,6 +9,7 @@ User=vaultproof
 Group=vaultproof
 WorkingDirectory=/opt/vaultproof/zkvault
 EnvironmentFile=/etc/vaultproof/enterprise-secure-executor.env
+Environment=NODE_OPTIONS=--jitless
 ExecStart=/usr/bin/npm run start --workspace @vaultproof/enterprise-secure-executor
 Restart=always
 RestartSec=5
