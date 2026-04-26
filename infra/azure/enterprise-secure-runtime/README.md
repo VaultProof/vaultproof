@@ -33,6 +33,8 @@ Edit `main.parameters.json`:
 - `adminSshPublicKey`: your public SSH key.
 - `sshSourceCidr`: your current public IP with `/32`.
 - `environmentName`: keep short; Azure Key Vault names are globally unique and length-limited.
+- `allowFrontDoorToControlPlane`: keep `false` until local VM readiness is production-ready. Set `true` for Front Door cutover to port `3001`.
+- `controlPlaneIngressSource`: keep `AzureFrontDoor.Backend` for Front Door origin traffic.
 - `deployPrototypeReleaseKey`: keep `false` for the first VM deployment. Enable it only after a real Secure Key Release policy exists.
 - `deployManagedHsm`: set `true` when you are ready to create the final Managed HSM release-key home.
 - `managedHsmInitialAdminObjectId`: required when `deployManagedHsm=true`. Get it with `az ad signed-in-user show --query id -o tsv`.
@@ -221,6 +223,42 @@ curl -sS -H 'host: enterprise.vaultproof.dev' http://127.0.0.1:3001/readiness
 ```
 
 Only after local readiness is production-ready should `enterprise.vaultproof.dev` be cut over from the Container App origin to the Confidential VM origin. At that point, restrict port `3001` to Azure Front Door origins and remove direct SSH/public executor access where possible.
+
+### Front Door Cutover
+
+Before cutover, enable only Front Door backend ingress to the VM control plane:
+
+```bash
+az deployment group create \
+  --resource-group vaultproof-enterprise \
+  --name vp-enterprise-secure-runtime-eastus-hsm \
+  --template-file infra/azure/enterprise-secure-runtime/main.bicep \
+  --parameters \
+    location=eastus \
+    environmentName=vpenteu \
+    adminUsername=azureuser \
+    adminSshPublicKey='<existing SSH public key>' \
+    vmSize=Standard_DC2as_v5 \
+    sshSourceCidr='<your current IPv4>/32' \
+    executorSourceCidr=10.42.1.0/24 \
+    allowFrontDoorToControlPlane=true \
+    controlPlaneIngressSource=AzureFrontDoor.Backend \
+    secureKeyReleasePolicyData='' \
+    deployPrototypeReleaseKey=false \
+    deployManagedHsm=true \
+    managedHsmInitialAdminObjectId='<your Entra object id>' \
+    deployApiManagement=false
+```
+
+Then in Azure Front Door:
+
+- Add a new origin pointing to the Confidential VM public IP.
+- Set origin host header to `enterprise.vaultproof.dev`.
+- Set origin protocol to HTTP and origin port to `3001` for the current VM service.
+- Keep the old Container App origin available as rollback until `/readiness` is production-ready through Front Door.
+- After validation, move `default-route` traffic to the VM origin.
+
+Rollback is simply moving the route back to the Container App origin in Front Door.
 
 ## Secure Key Release Work Still Required
 
