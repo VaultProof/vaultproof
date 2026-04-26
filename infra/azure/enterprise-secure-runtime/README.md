@@ -183,6 +183,45 @@ sudo systemctl start vaultproof-executor
 sudo systemctl status vaultproof-executor --no-pager
 ```
 
+## Co-Located Production Control Plane
+
+For the strongest demo path, run the enterprise control plane on the same Confidential VM as the secure executor. The control plane then calls the executor over loopback:
+
+```text
+Azure Front Door + WAF
+  -> enterprise control plane on Confidential VM :3001
+  -> signed local handoff to 127.0.0.1:3002
+  -> secure executor releases the HSM root only after MAA attestation
+```
+
+This avoids sending executor requests over public HTTP and lets `/readiness` validate the same production executor that handles real calls.
+
+From your local machine, render the control-plane env:
+
+```bash
+cd infra/azure/enterprise-secure-runtime
+
+export ENTERPRISE_HOSTNAME='enterprise.vaultproof.dev'
+export ENTERPRISE_EXECUTOR_BASE_URL='http://127.0.0.1:3002'
+export ENTERPRISE_EXECUTOR_SIGNING_KEY_ID='enterprise-azure-v1'
+export ENTERPRISE_EXECUTOR_SIGNING_SECRET='...'
+export SUPABASE_URL='https://...supabase.co'
+export SUPABASE_SERVICE_ROLE_KEY='...'
+
+bash render-control-plane-env.sh > /tmp/enterprise-control-plane.env
+scp /tmp/enterprise-control-plane.env azureuser@<confidentialVmPublicIp>:/tmp/enterprise-control-plane.env
+```
+
+On the Confidential VM:
+
+```bash
+sudo install -o root -g vaultproof -m 0640 /tmp/enterprise-control-plane.env /etc/vaultproof/enterprise-control-plane.env
+sudo systemctl restart vaultproof-control-plane
+curl -sS -H 'host: enterprise.vaultproof.dev' http://127.0.0.1:3001/readiness
+```
+
+Only after local readiness is production-ready should `enterprise.vaultproof.dev` be cut over from the Container App origin to the Confidential VM origin. At that point, restrict port `3001` to Azure Front Door origins and remove direct SSH/public executor access where possible.
+
 ## Secure Key Release Work Still Required
 
 The first deployment can create Key Vault and Attestation resources, but the final release policy must be pinned to real Confidential VM attestation claims.

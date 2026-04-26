@@ -3,7 +3,9 @@ set -euo pipefail
 
 APP_DIR="/opt/vaultproof/zkvault"
 SERVICE_FILE="/etc/systemd/system/vaultproof-executor.service"
+CONTROL_PLANE_SERVICE_FILE="/etc/systemd/system/vaultproof-control-plane.service"
 ENV_FILE="/etc/vaultproof/enterprise-secure-executor.env"
+CONTROL_PLANE_ENV_FILE="/etc/vaultproof/enterprise-control-plane.env"
 
 if [[ "${EUID}" -ne 0 ]]; then
   echo "Run as root: sudo bash bootstrap-confidential-vm.sh" >&2
@@ -62,7 +64,23 @@ EOF
   echo "Created ${ENV_FILE}. Fill in the values before starting the service." >&2
 fi
 
+if [[ ! -f "${CONTROL_PLANE_ENV_FILE}" ]]; then
+  cat > "${CONTROL_PLANE_ENV_FILE}" <<'EOF'
+PORT=3001
+ENTERPRISE_HOSTNAME=enterprise.vaultproof.dev
+ENTERPRISE_EXECUTOR_BASE_URL=http://127.0.0.1:3002
+ENTERPRISE_EXECUTOR_SIGNING_KEY_ID=enterprise-azure-v1
+ENTERPRISE_EXECUTOR_SIGNING_SECRET=
+SUPABASE_URL=
+SUPABASE_SERVICE_ROLE_KEY=
+EOF
+  chmod 0640 "${CONTROL_PLANE_ENV_FILE}"
+  chown root:vaultproof "${CONTROL_PLANE_ENV_FILE}"
+  echo "Created ${CONTROL_PLANE_ENV_FILE}. Fill in the values before starting the control plane service." >&2
+fi
+
 install -m 0644 infra/azure/enterprise-secure-runtime/vaultproof-executor.service "${SERVICE_FILE}"
+install -m 0644 infra/azure/enterprise-secure-runtime/vaultproof-control-plane.service "${CONTROL_PLANE_SERVICE_FILE}"
 
 ufw allow OpenSSH
 ufw allow from 10.42.1.0/24 to any port 3002 proto tcp
@@ -70,9 +88,13 @@ ufw --force enable
 
 systemctl daemon-reload
 systemctl enable vaultproof-executor
+systemctl enable vaultproof-control-plane
 
 echo "Bootstrap complete."
 echo "Next:"
 echo "1. Edit ${ENV_FILE}"
 echo "2. systemctl start vaultproof-executor"
 echo "3. systemctl status vaultproof-executor --no-pager"
+echo "4. Edit ${CONTROL_PLANE_ENV_FILE}"
+echo "5. systemctl start vaultproof-control-plane"
+echo "6. systemctl status vaultproof-control-plane --no-pager"

@@ -1,0 +1,26 @@
+[Unit]
+Description=VaultProof Enterprise Control Plane
+After=network-online.target vaultproof-executor.service
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=vaultproof
+Group=vaultproof
+WorkingDirectory=/opt/vaultproof/zkvault
+EnvironmentFile=/etc/vaultproof/enterprise-control-plane.env
+ExecStart=/usr/bin/npm run start --workspace @vaultproof/enterprise-control-plane
+Restart=always
+RestartSec=5
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=strict
+ProtectHome=true
+ReadWritePaths=/opt/vaultproof/zkvault
+CapabilityBoundingSet=
+LockPersonality=true
+# Node/V8 and Undici require runtime executable memory/WASM for outbound HTTPS.
+MemoryDenyWriteExecute=false
+
+[Install]
+WantedBy=multi-user.target
