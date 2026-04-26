@@ -88,15 +88,26 @@ SSH to the VM using the deployment output public IP:
 ssh azureuser@<confidentialVmPublicIp>
 ```
 
-Clone the repo onto the VM, then run the bootstrap script:
+Copy the repo from Cloud Shell to the VM, then run the bootstrap script. This avoids putting GitHub credentials on the Confidential VM:
 
 ```bash
-sudo mkdir -p /opt/vaultproof
-sudo chown "$USER":"$USER" /opt/vaultproof
-git clone <repo-url> /opt/vaultproof/zkvault
+cd ~
+tar --exclude node_modules --exclude .git --exclude .next --exclude dist -czf /tmp/vaultproof.tgz vaultproof
+scp /tmp/vaultproof.tgz azureuser@<confidentialVmPublicIp>:/tmp/vaultproof.tgz
+ssh azureuser@<confidentialVmPublicIp>
+```
+
+On the VM:
+
+```bash
+sudo mkdir -p /opt/vaultproof/zkvault
+sudo tar -xzf /tmp/vaultproof.tgz -C /opt/vaultproof/zkvault --strip-components=1
+sudo chown -R azureuser:azureuser /opt/vaultproof
 cd /opt/vaultproof/zkvault
 sudo bash infra/azure/enterprise-secure-runtime/bootstrap-confidential-vm.sh
 ```
+
+If you prefer SSH deploy keys, you can also clone the private repo directly into `/opt/vaultproof/zkvault`.
 
 `VAULT_ENCRYPTION_KEY` must not be used in confidential mode.
 

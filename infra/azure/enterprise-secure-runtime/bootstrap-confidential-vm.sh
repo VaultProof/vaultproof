@@ -27,15 +27,18 @@ chown -R vaultproof:vaultproof /opt/vaultproof
 chmod 0750 /opt/vaultproof
 chmod 0750 /etc/vaultproof
 
-if [[ ! -d "${APP_DIR}/.git" ]]; then
-  echo "Clone the private repo into ${APP_DIR} before running this script again." >&2
-  echo "Expected: git clone <repo-url> ${APP_DIR}" >&2
+if [[ ! -f "${APP_DIR}/package.json" || ! -f "${APP_DIR}/packages/enterprise-secure-executor/package.json" ]]; then
+  echo "Copy or clone the VaultProof repo into ${APP_DIR} before running this script again." >&2
+  echo "Expected package files:" >&2
+  echo "  ${APP_DIR}/package.json" >&2
+  echo "  ${APP_DIR}/packages/enterprise-secure-executor/package.json" >&2
   exit 2
 fi
 
 cd "${APP_DIR}"
 npm ci
 npm run build:enterprise
+chown -R vaultproof:vaultproof "${APP_DIR}"
 
 if [[ ! -f "${ENV_FILE}" ]]; then
   cat > "${ENV_FILE}" <<'EOF'
