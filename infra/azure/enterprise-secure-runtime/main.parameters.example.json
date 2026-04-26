@@ -26,6 +26,9 @@
     "secureKeyReleasePolicyData": {
       "value": ""
     },
+    "deployPrototypeReleaseKey": {
+      "value": false
+    },
     "deployApiManagement": {
       "value": false
     },

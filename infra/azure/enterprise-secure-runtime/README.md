@@ -33,6 +33,7 @@ Edit `main.parameters.json`:
 - `adminSshPublicKey`: your public SSH key.
 - `sshSourceCidr`: your current public IP with `/32`.
 - `environmentName`: keep short; Azure Key Vault names are globally unique and length-limited.
+- `deployPrototypeReleaseKey`: keep `false` for the first VM deployment. Enable it only after a real Secure Key Release policy exists.
 - `deployApiManagement`: keep `false` until you are ready to add APIM cost/governance.
 - `apiManagementSkuName`: use `StandardV2` for production starter or `PremiumV2` when you need stronger isolation/networking features.
 
@@ -173,7 +174,14 @@ sudo systemctl status vaultproof-executor --no-pager
 
 The first deployment can create Key Vault and Attestation resources, but the final release policy must be pinned to real Confidential VM attestation claims.
 
-The Bicep template's Key Vault Premium `RSA-HSM` key is the prototype Secure Key Release path. The final AES-256 production design should use Azure Managed HSM with an `oct-HSM` 256-bit key. See `managed-hsm-oct-hsm-notes.md`.
+The Bicep template can create a Key Vault Premium `RSA-HSM` key as the prototype Secure Key Release path, but it is disabled by default because release keys require a valid release policy. The first deployment should create the VM, VNet, Key Vault, and Attestation provider only.
+
+After the VM is booted and attestation claims are known, create a release policy and either:
+
+- set `deployPrototypeReleaseKey=true` with `secureKeyReleasePolicyData`, then redeploy the prototype key, or
+- use the final Azure Managed HSM `oct-HSM` 256-bit path.
+
+The final AES-256 production design should use Azure Managed HSM with an `oct-HSM` 256-bit key. See `managed-hsm-oct-hsm-notes.md`.
 
 Flow:
 

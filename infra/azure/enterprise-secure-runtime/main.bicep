@@ -25,6 +25,9 @@ param executorSourceCidr string = '10.42.1.0/24'
 @description('Base64url-encoded Azure Key Vault Secure Key Release policy. Replace with the attestation policy after VM measurements are known.')
 param secureKeyReleasePolicyData string = ''
 
+@description('Create the prototype Key Vault release key. Keep false for the first VM deployment; enable only after a Secure Key Release policy exists.')
+param deployPrototypeReleaseKey bool = false
+
 @description('Deploy Azure API Management for enterprise API lifecycle governance.')
 param deployApiManagement bool = false
 
@@ -63,6 +66,7 @@ var keyVaultName = take('${environmentName}${uniqueString(resourceGroup().id)}kv
 var unwrapKeyName = 'vaultproof-enterprise-unwrap'
 var attestationName = take('${environmentName}${uniqueString(resourceGroup().id)}maa', 24)
 var apiManagementName = take('${environmentName}${uniqueString(resourceGroup().id)}apim', 50)
+var createPrototypeReleaseKey = deployPrototypeReleaseKey && !empty(secureKeyReleasePolicyData)
 
 resource vnet 'Microsoft.Network/virtualNetworks@2024-05-01' = {
   name: vnetName
@@ -195,7 +199,7 @@ resource keyVault 'Microsoft.KeyVault/vaults@2023-07-01' = {
   }
 }
 
-resource unwrapKey 'Microsoft.KeyVault/vaults/keys@2023-07-01' = {
+resource unwrapKey 'Microsoft.KeyVault/vaults/keys@2023-07-01' = if (createPrototypeReleaseKey) {
   parent: keyVault
   name: unwrapKeyName
   properties: {
@@ -210,7 +214,7 @@ resource unwrapKey 'Microsoft.KeyVault/vaults/keys@2023-07-01' = {
       enabled: true
       exportable: true
     }
-    release_policy: empty(secureKeyReleasePolicyData) ? null : {
+    release_policy: {
       contentType: 'application/json; charset=utf-8'
       data: secureKeyReleasePolicyData
     }
@@ -361,9 +365,9 @@ output executorSubnetId string = resourceId('Microsoft.Network/virtualNetworks/s
 output controlPlaneSubnetId string = resourceId('Microsoft.Network/virtualNetworks/subnets', vnet.name, controlPlaneSubnetName)
 output keyVaultName string = keyVault.name
 output keyVaultUri string = keyVault.properties.vaultUri
-output unwrapKeyName string = unwrapKey.name
-output unwrapKeyId string = unwrapKey.properties.keyUriWithVersion
-output prototypeKeyReleaseUrl string = '${unwrapKey.properties.keyUriWithVersion}/release'
+output unwrapKeyName string = createPrototypeReleaseKey ? unwrapKey!.name : ''
+output unwrapKeyId string = createPrototypeReleaseKey ? unwrapKey!.properties.keyUriWithVersion : ''
+output prototypeKeyReleaseUrl string = createPrototypeReleaseKey ? '${unwrapKey!.properties.keyUriWithVersion}/release' : ''
 output attestationProviderName string = attestation.name
 output attestationProviderUri string = attestation.properties.attestUri
 output apiManagementName string = deployApiManagement ? apiManagement!.name : ''
