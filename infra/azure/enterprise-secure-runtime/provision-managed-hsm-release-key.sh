@@ -37,7 +37,7 @@ az keyvault key create \
   --name "${KEY_NAME}" \
   --kty oct-HSM \
   --size 256 \
-  --ops release \
+  --ops export \
   --exportable true \
   --policy "${POLICY_FILE}" \
   -o none

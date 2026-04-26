@@ -37,7 +37,7 @@ az keyvault key create \
   --name vaultproof-enterprise-unwrap \
   --kty oct-HSM \
   --size 256 \
-  --ops release \
+  --ops export \
   --exportable true \
   --policy @skr-policy.json
 ```
@@ -90,4 +90,3 @@ The executor should only report production readiness when:
   "production_blockers": []
 }
 ```
-
