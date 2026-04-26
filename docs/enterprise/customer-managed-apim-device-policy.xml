@@ -1,0 +1,66 @@
+<policies>
+  <inbound>
+    <base />
+
+    <!-- Device-owned auth. Replace issuer/audience with the customer's device identity provider. -->
+    <validate-jwt header-name="Authorization" failed-validation-httpcode="401" failed-validation-error-message="Unauthorized device">
+      <openid-config url="https://login.microsoftonline.com/{tenant-id}/v2.0/.well-known/openid-configuration" />
+      <audiences>
+        <audience>api://vaultproof-enterprise-devices</audience>
+      </audiences>
+      <required-claims>
+        <claim name="device_id" match="all" />
+      </required-claims>
+    </validate-jwt>
+
+    <!-- Fleet/device throttles. Customer APIM absorbs bursts before VaultProof. -->
+    <rate-limit-by-key calls="30" renewal-period="60" counter-key="@((string)context.Request.Headers.GetValueOrDefault("x-device-id", context.Request.IpAddress))" />
+    <quota-by-key calls="2500" renewal-period="86400" counter-key="@((string)context.Request.Headers.GetValueOrDefault("x-fleet-id", context.Request.IpAddress))" />
+
+    <!-- Devices must never send provider credentials. -->
+    <set-header name="authorization" exists-action="delete" />
+    <set-header name="x-api-key" exists-action="delete" />
+    <set-header name="openai-api-key" exists-action="delete" />
+    <set-header name="anthropic-api-key" exists-action="delete" />
+    <set-header name="stripe-api-key" exists-action="delete" />
+
+    <!-- Non-secret metadata for VaultProof audit and policy. -->
+    <set-header name="x-vaultproof-customer-gateway" exists-action="override">
+      <value>{customer-slug}</value>
+    </set-header>
+    <set-header name="x-vaultproof-client-class" exists-action="override">
+      <value>device</value>
+    </set-header>
+    <set-header name="x-vaultproof-device-id" exists-action="override">
+      <value>@((string)context.Request.Headers.GetValueOrDefault("x-device-id", "unknown"))</value>
+    </set-header>
+    <set-header name="x-vaultproof-fleet-id" exists-action="override">
+      <value>@((string)context.Request.Headers.GetValueOrDefault("x-fleet-id", "unknown"))</value>
+    </set-header>
+    <set-header name="x-vaultproof-firmware-version" exists-action="override">
+      <value>@((string)context.Request.Headers.GetValueOrDefault("x-firmware-version", "unknown"))</value>
+    </set-header>
+
+    <!-- If customer APIM validates mTLS, forward only verified certificate metadata. -->
+    <set-header name="x-vaultproof-client-cert-thumbprint" exists-action="override">
+      <value>@((string)context.Request.Certificate?.Thumbprint ?? "")</value>
+    </set-header>
+    <set-header name="x-vaultproof-client-cert-subject" exists-action="override">
+      <value>@((string)context.Request.Certificate?.Subject ?? "")</value>
+    </set-header>
+
+    <set-backend-service base-url="https://enterprise.vaultproof.dev" />
+  </inbound>
+
+  <backend>
+    <base />
+  </backend>
+
+  <outbound>
+    <base />
+  </outbound>
+
+  <on-error>
+    <base />
+  </on-error>
+</policies>

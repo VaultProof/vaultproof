@@ -156,6 +156,15 @@
     .policy-message.ok { color: var(--ok); }
     .policy-message.warn { color: var(--warn); }
     .policy-message.danger { color: var(--danger); }
+    .exec-list { padding: 12px 18px 18px; display: grid; gap: 12px; }
+    .exec-card { border: var(--rule); border-radius: 4px; background: #fcfcf9; padding: 12px; display: grid; gap: 10px; }
+    .exec-head { display: flex; gap: 12px; align-items: flex-start; justify-content: space-between; }
+    .exec-meta { font-family: var(--mono); font-size: 11px; color: var(--text-faint); margin-top: 3px; }
+    .exec-actions { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+    .exec-message { min-height: 16px; font-family: var(--mono); font-size: 11px; color: var(--text-faint); }
+    .exec-message.ok { color: var(--ok); }
+    .exec-message.warn { color: var(--warn); }
+    .exec-message.danger { color: var(--danger); }
     .resource-grid { padding: 14px 18px 18px; display: grid; gap: 12px; }
     .resource-card { border: var(--rule); border-radius: 4px; background: #fcfcf9; padding: 12px; display: grid; gap: 8px; }
     .resource-title { font-size: 13px; font-weight: 600; color: var(--text); }
@@ -356,6 +365,11 @@
                 <div class="checklist-title">pilot checklist</div>
                 <div class="checklist-list" id="pilotChecklistList"><div class="empty">Loading pilot checklist…</div></div>
               </div>
+            </section>
+
+            <section class="panel">
+              <div class="panel-head">secure execution demo<span class="panel-head-right" id="secureExecutionStatus">loading…</span></div>
+              <div class="exec-list" id="secureExecutionList"><div class="empty">Loading secure execution options…</div></div>
             </section>
 
             <section class="panel">

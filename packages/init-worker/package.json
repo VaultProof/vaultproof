@@ -17,6 +17,7 @@
     "wrangler": "^4.0.0"
   },
   "dependencies": {
+    "@vaultproof/core": "0.1.0",
     "@supabase/supabase-js": "^2.101.1"
   }
 }

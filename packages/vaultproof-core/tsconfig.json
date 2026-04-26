@@ -3,13 +3,13 @@
     "target": "ES2022",
     "module": "ESNext",
     "moduleResolution": "bundler",
+    "outDir": "dist",
+    "rootDir": "src",
     "strict": true,
+    "esModuleInterop": true,
     "skipLibCheck": true,
-    "types": ["@cloudflare/workers-types", "node"],
-    "baseUrl": ".",
-    "paths": {
-      "@vaultproof/core": ["../vaultproof-core/src/index.ts"]
-    }
+    "declaration": true,
+    "sourceMap": true
   },
   "include": ["src/**/*"]
 }

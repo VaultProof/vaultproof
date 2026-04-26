@@ -1,5 +1,13 @@
 import type { Env } from '../types.js';
 import {
+  type StartedOrganizationSsoBody,
+  getEmailDomain,
+  isValidDomain,
+  normalizeDomain,
+  normalizeSlug,
+  validateStartedOrganizationSsoInput,
+} from '@vaultproof/core';
+import {
   authenticateUser,
   hasRequiredOrganizationRole,
   listOrganizationMemberships,
@@ -35,36 +43,6 @@ interface UpdateOrganizationSsoSettingsBody {
 
 interface ResolveOrganizationSsoBody {
   company_domain?: string | null;
-}
-
-interface StartedOrganizationSsoBody {
-  company_domain?: string | null;
-  email?: string | null;
-}
-
-function normalizeSlug(slug: string): string {
-  return slug
-    .trim()
-    .toLowerCase()
-    .replace(/[^a-z0-9-]+/g, '-')
-    .replace(/^-+|-+$/g, '')
-    .slice(0, 63);
-}
-
-function normalizeDomain(domain: string): string {
-  return domain
-    .trim()
-    .toLowerCase()
-    .replace(/^https?:\/\//, '')
-    .replace(/\/.*$/, '');
-}
-
-function isValidDomain(domain: string): boolean {
-  return /^[a-z0-9.-]+\.[a-z]{2,}$/i.test(domain);
-}
-
-function getEmailDomain(email: string): string {
-  return normalizeDomain(email.split('@').pop() || '');
 }
 
 async function fetchOrganizationSsoSettings(
@@ -192,17 +170,12 @@ export async function handleOrganizations(
       return Response.json({ error: 'Invalid JSON' }, { status: 400 });
     }
 
-    const companyDomain = normalizeDomain(body.company_domain || '');
-    const email = (body.email || '').trim().toLowerCase();
-    const emailDomain = email && email.includes('@') ? getEmailDomain(email) : '';
-    const effectiveDomain = companyDomain || emailDomain;
-
-    if (!effectiveDomain || !isValidDomain(effectiveDomain)) {
-      return Response.json({ error: 'company_domain must be a valid domain' }, { status: 400 });
+    const validated = validateStartedOrganizationSsoInput(body);
+    if (!validated.ok) {
+      return Response.json({ error: validated.error }, { status: 400 });
     }
-    if (email && emailDomain && emailDomain !== effectiveDomain) {
-      return Response.json({ error: 'email must match company_domain when provided' }, { status: 400 });
-    }
+    const effectiveDomain = validated.value.companyDomain;
+    const email = validated.value.email;
 
     const configuredSso = await findConfiguredSsoOrganizationByDomain(env, effectiveDomain);
     if (!configuredSso) {

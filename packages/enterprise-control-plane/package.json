@@ -1,0 +1,19 @@
+{
+  "name": "@vaultproof/enterprise-control-plane",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "scripts": {
+    "build": "rm -rf dist && tsc",
+    "start": "node dist/enterprise-control-plane/src/server.js"
+  },
+  "dependencies": {
+    "@supabase/supabase-js": "^2.101.1",
+    "@vaultproof/core": "0.1.0"
+  },
+  "devDependencies": {
+    "typescript": "^5.7.0"
+  }
+}

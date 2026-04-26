@@ -7,9 +7,16 @@
   ],
   "scripts": {
     "build": "turbo run build --force",
+    "build:enterprise": "npm run build --workspace @vaultproof/core && npm run build --workspace @vaultproof/enterprise-control-plane && npm run build --workspace @vaultproof/enterprise-secure-executor",
+    "docker:build:enterprise-control-plane": "docker build -f packages/enterprise-control-plane/Dockerfile -t vaultproof-enterprise-control-plane .",
+    "docker:build:enterprise-secure-executor": "docker build -f packages/enterprise-secure-executor/Dockerfile -t vaultproof-enterprise-secure-executor .",
     "dev": "turbo run dev",
+    "test:enterprise-control-plane-smoke": "npm run build:enterprise && node scripts/enterprise-control-plane-smoke.mjs",
+    "test:enterprise-smoke": "npm run build:enterprise && node scripts/enterprise-secure-executor-smoke.mjs",
     "test": "turbo run test",
     "lint": "turbo run lint",
+    "start:enterprise-control-plane": "npm run start --workspace @vaultproof/enterprise-control-plane",
+    "start:enterprise-secure-executor": "npm run start --workspace @vaultproof/enterprise-secure-executor",
     "deploy:init-worker": "cd packages/init-worker && npx wrangler deploy",
     "deploy:init-worker:staging": "cd packages/init-worker && npx wrangler deploy --env staging"
   },

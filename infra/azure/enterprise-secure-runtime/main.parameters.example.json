@@ -1,0 +1,45 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentParameters.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "location": {
+      "value": "westus2"
+    },
+    "environmentName": {
+      "value": "vpent"
+    },
+    "adminUsername": {
+      "value": "azureuser"
+    },
+    "adminSshPublicKey": {
+      "value": "ssh-ed25519 REPLACE_WITH_YOUR_PUBLIC_KEY nelson@vaultproof"
+    },
+    "vmSize": {
+      "value": "Standard_DC2as_v5"
+    },
+    "sshSourceCidr": {
+      "value": "REPLACE_WITH_YOUR_IP/32"
+    },
+    "executorSourceCidr": {
+      "value": "10.42.1.0/24"
+    },
+    "secureKeyReleasePolicyData": {
+      "value": ""
+    },
+    "deployApiManagement": {
+      "value": false
+    },
+    "apiManagementPublisherEmail": {
+      "value": "security@vaultproof.dev"
+    },
+    "apiManagementPublisherName": {
+      "value": "VaultProof"
+    },
+    "apiManagementSkuName": {
+      "value": "StandardV2"
+    },
+    "apiManagementCapacity": {
+      "value": 1
+    }
+  }
+}

@@ -10,19 +10,13 @@ import type {
   OrganizationRole,
   ProjectRole,
 } from '../types.js';
+import { compareAccessRoles, hasRequiredAccessRole } from '@vaultproof/core';
 import { getSupabase } from './supabase.js';
 
 export interface UserAuth {
   userId: string;
   email: string;
 }
-
-const ACCESS_ROLE_RANK: Record<ProjectRole, number> = {
-  viewer: 0,
-  member: 1,
-  admin: 2,
-  owner: 3,
-};
 
 export async function authenticateUser(
   request: Request,
@@ -56,15 +50,14 @@ function mergeProjectAccess(
     return;
   }
 
-  const existingRank = ACCESS_ROLE_RANK[existing.project_role];
-  const incomingRank = ACCESS_ROLE_RANK[incoming.project_role];
+  const rankDelta = compareAccessRoles(incoming.project_role, existing.project_role);
 
-  if (incomingRank > existingRank) {
+  if (rankDelta > 0) {
     target.set(incoming.id, incoming);
     return;
   }
 
-  if (incomingRank === existingRank && existing.access_via !== 'project' && incoming.access_via === 'project') {
+  if (rankDelta === 0 && existing.access_via !== 'project' && incoming.access_via === 'project') {
     target.set(incoming.id, incoming);
   }
 }
@@ -205,14 +198,14 @@ export function hasRequiredProjectRole(
   role: ProjectRole,
   minimum: ProjectRole,
 ): boolean {
-  return ACCESS_ROLE_RANK[role] >= ACCESS_ROLE_RANK[minimum];
+  return hasRequiredAccessRole(role, minimum);
 }
 
 export function hasRequiredOrganizationRole(
   role: OrganizationRole,
   minimum: OrganizationRole,
 ): boolean {
-  return ACCESS_ROLE_RANK[role] >= ACCESS_ROLE_RANK[minimum];
+  return hasRequiredAccessRole(role, minimum);
 }
 
 export async function getPersonalOrganizationId(
@@ -291,7 +284,7 @@ export async function listOrganizationMemberships(
     const bPersonal = b.organization_kind === 'personal' && b.organization_owner_user_id === userId ? 1 : 0;
     if (aPersonal !== bPersonal) return bPersonal - aPersonal;
 
-    const roleDelta = ACCESS_ROLE_RANK[b.organization_role] - ACCESS_ROLE_RANK[a.organization_role];
+    const roleDelta = compareAccessRoles(b.organization_role, a.organization_role);
     if (roleDelta !== 0) return roleDelta;
 
     return new Date(a.membership_created_at).getTime() - new Date(b.membership_created_at).getTime();

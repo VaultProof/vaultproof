@@ -1,0 +1,42 @@
+<policies>
+  <inbound>
+    <base />
+
+    <!-- Customer-owned auth. Replace with the customer's Entra issuer/audience. -->
+    <validate-jwt header-name="Authorization" failed-validation-httpcode="401" failed-validation-error-message="Unauthorized">
+      <openid-config url="https://login.microsoftonline.com/{tenant-id}/v2.0/.well-known/openid-configuration" />
+      <audiences>
+        <audience>api://vaultproof-enterprise</audience>
+      </audiences>
+    </validate-jwt>
+
+    <!-- Customer-owned quotas. VaultProof also applies its own org/project policy later. -->
+    <rate-limit-by-key calls="120" renewal-period="60" counter-key="@(context.Subscription?.Key ?? context.Request.IpAddress)" />
+    <quota-by-key calls="10000" renewal-period="86400" counter-key="@(context.Subscription?.Key ?? context.Request.IpAddress)" />
+
+    <!-- Do not let app callers smuggle provider credentials through APIM. -->
+    <set-header name="authorization" exists-action="delete" />
+    <set-header name="x-api-key" exists-action="delete" />
+    <set-header name="openai-api-key" exists-action="delete" />
+    <set-header name="anthropic-api-key" exists-action="delete" />
+
+    <!-- Non-secret tenant marker for VaultProof enterprise audit/routing. -->
+    <set-header name="x-vaultproof-customer-gateway" exists-action="override">
+      <value>{customer-slug}</value>
+    </set-header>
+
+    <set-backend-service base-url="https://enterprise.vaultproof.dev" />
+  </inbound>
+
+  <backend>
+    <base />
+  </backend>
+
+  <outbound>
+    <base />
+  </outbound>
+
+  <on-error>
+    <base />
+  </on-error>
+</policies>

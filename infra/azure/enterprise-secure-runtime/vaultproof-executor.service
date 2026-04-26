@@ -1,0 +1,25 @@
+[Unit]
+Description=VaultProof Enterprise Secure Executor
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=vaultproof
+Group=vaultproof
+WorkingDirectory=/opt/vaultproof/zkvault
+EnvironmentFile=/etc/vaultproof/enterprise-secure-executor.env
+ExecStart=/usr/bin/npm run start --workspace @vaultproof/enterprise-secure-executor
+Restart=always
+RestartSec=5
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=strict
+ProtectHome=true
+ReadWritePaths=/opt/vaultproof/zkvault
+CapabilityBoundingSet=
+LockPersonality=true
+MemoryDenyWriteExecute=true
+
+[Install]
+WantedBy=multi-user.target

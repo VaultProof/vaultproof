@@ -4,9 +4,13 @@
   const API = window.location.hostname.includes('dev.vaultproof')
     ? 'https://staging-api.vaultproof.dev/api/v1'
     : 'https://api.vaultproof.dev/api/v1';
-  const INIT_API = window.location.hostname.includes('dev.vaultproof')
-    ? 'https://vaultproof-init-staging.vaultproof.workers.dev/api/v1/init'
-    : 'https://init.vaultproof.dev/api/v1/init';
+  const IS_ENTERPRISE_HOST = window.location.hostname === 'enterprise.vaultproof.dev'
+    || window.location.hostname.startsWith('enterprise.');
+  const INIT_API = IS_ENTERPRISE_HOST
+    ? `${window.location.origin}/api/v1/enterprise`
+    : window.location.hostname.includes('dev.vaultproof')
+      ? 'https://vaultproof-init-staging.vaultproof.workers.dev/api/v1/init'
+      : 'https://init.vaultproof.dev/api/v1/init';
   const ACTIVE_ORG_STORAGE_KEY = 'vaultproof_active_org';
   const LOOP_KEY = 'vp_login_ts';
   const PROMO_KEY = 'vp_promo';

@@ -1,0 +1,81 @@
+import { createServer, type IncomingMessage, type ServerResponse } from 'node:http';
+import { handleEnterpriseControlPlaneRequest, type EnterpriseControlPlaneEnv } from './index.js';
+
+async function readRequestBody(req: IncomingMessage): Promise<Buffer | undefined> {
+  if (req.method === 'GET' || req.method === 'HEAD') return undefined;
+
+  const chunks: Buffer[] = [];
+  for await (const chunk of req) {
+    chunks.push(Buffer.isBuffer(chunk) ? chunk : Buffer.from(chunk));
+  }
+  return chunks.length ? Buffer.concat(chunks) : undefined;
+}
+
+async function toWebRequest(req: IncomingMessage): Promise<Request> {
+  const host = req.headers.host || 'localhost';
+  const url = new URL(req.url || '/', `http://${host}`);
+  const headers = new Headers();
+
+  for (const [key, value] of Object.entries(req.headers)) {
+    if (Array.isArray(value)) {
+      for (const item of value) headers.append(key, item);
+      continue;
+    }
+    if (typeof value === 'string') headers.set(key, value);
+  }
+
+  const body = await readRequestBody(req);
+  return new Request(url, {
+    method: req.method || 'GET',
+    headers,
+    body: body ? new Uint8Array(body) : undefined,
+  });
+}
+
+async function writeWebResponse(response: Response, res: ServerResponse): Promise<void> {
+  res.statusCode = response.status;
+  response.headers.forEach((value, key) => res.setHeader(key, value));
+
+  if (!response.body) {
+    res.end();
+    return;
+  }
+
+  const bytes = Buffer.from(await response.arrayBuffer());
+  res.end(bytes);
+}
+
+function getEnv(): EnterpriseControlPlaneEnv {
+  return {
+    enterpriseHostname: process.env.ENTERPRISE_HOSTNAME,
+    executorBaseUrl: process.env.ENTERPRISE_EXECUTOR_BASE_URL,
+    executorSigningKeyId: process.env.ENTERPRISE_EXECUTOR_SIGNING_KEY_ID,
+    executorSigningSecret: process.env.ENTERPRISE_EXECUTOR_SIGNING_SECRET,
+    supabaseUrl: process.env.SUPABASE_URL,
+    supabaseServiceRoleKey: process.env.SUPABASE_SERVICE_ROLE_KEY,
+  };
+}
+
+async function main(): Promise<void> {
+  const port = Number.parseInt(process.env.PORT || '3001', 10);
+  const env = getEnv();
+
+  const server = createServer(async (req, res) => {
+    try {
+      const request = await toWebRequest(req);
+      const response = await handleEnterpriseControlPlaneRequest(request, env);
+      await writeWebResponse(response, res);
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'Unexpected server error';
+      res.statusCode = 500;
+      res.setHeader('content-type', 'application/json');
+      res.end(JSON.stringify({ error: message }));
+    }
+  });
+
+  server.listen(port, () => {
+    console.log(`vaultproof enterprise control plane listening on :${port}`);
+  });
+}
+
+void main();

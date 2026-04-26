@@ -1,10 +1,13 @@
 (function() {
+  const IS_ENTERPRISE_HOST = window.location.hostname === 'enterprise.vaultproof.dev' || window.location.hostname.startsWith('enterprise.');
   const API = window.location.hostname.includes('dev.vaultproof')
     ? 'https://staging-api.vaultproof.dev/api/v1'
     : 'https://api.vaultproof.dev/api/v1';
-  const INIT_API = window.location.hostname.includes('dev.vaultproof')
-    ? 'https://vaultproof-init-staging.vaultproof.workers.dev/api/v1/init'
-    : 'https://init.vaultproof.dev/api/v1/init';
+  const INIT_API = IS_ENTERPRISE_HOST
+    ? `${window.location.origin}/api/v1/enterprise`
+    : (window.location.hostname.includes('dev.vaultproof')
+      ? 'https://vaultproof-init-staging.vaultproof.workers.dev/api/v1/init'
+      : 'https://init.vaultproof.dev/api/v1/init');
   const SUPABASE_AUTH_STORAGE_KEY = 'sb-gwzkjiomemjlhtrdrlan-auth-token';
   const ACTIVE_ORG_STORAGE_KEY = 'vaultproof_active_org';
   const queryParams = new URLSearchParams(window.location.search);
@@ -36,6 +39,11 @@
     if (!el) return;
     el.textContent = text || '';
     el.className = `policy-message${tone ? ` ${tone}` : ''}`;
+  }
+  function setInlineMessage(el, text, tone) {
+    if (!el) return;
+    el.textContent = text || '';
+    el.className = `exec-message${tone ? ` ${tone}` : ''}`;
   }
   function setButtonState(button, disabled, label) {
     if (!button) return;
@@ -620,6 +628,62 @@
     list.innerHTML = rows.join('');
   }
 
+  function buildOpenAiExecutionPayload() {
+    return {
+      method: 'POST',
+      upstream_path: '/v1/responses',
+      headers: {
+        'content-type': 'application/json',
+      },
+      body_base64: btoa(JSON.stringify({
+        model: 'gpt-4.1-mini',
+        input: 'VaultProof enterprise secure execution smoke test',
+      })),
+    };
+  }
+
+  function renderSecureExecution(projectsPayload) {
+    const list = $('secureExecutionList');
+    const projects = projectsPayload?.projects || [];
+    const runnableProjects = projects
+      .map((project) => ({
+        ...project,
+        openaiSlots: (project.provider_slots || []).filter((slot) => slot.provider === 'openai'),
+      }))
+      .filter((project) => project.openaiSlots.length);
+
+    setText('secureExecutionStatus', IS_ENTERPRISE_HOST ? `${runnableProjects.length} runnable project${runnableProjects.length === 1 ? '' : 's'}` : 'enterprise only');
+    if (!list) return;
+
+    if (!IS_ENTERPRISE_HOST) {
+      list.innerHTML = '<div class="empty">Secure execution demo is available only on enterprise.vaultproof.dev.</div>';
+      return;
+    }
+
+    if (!runnableProjects.length) {
+      list.innerHTML = '<div class="empty">No OpenAI provider slots are available yet. Add one to an enterprise project to run the secure execution demo.</div>';
+      return;
+    }
+
+    list.innerHTML = runnableProjects.slice(0, 4).map((project) => `
+      <div class="exec-card">
+        <div class="exec-head">
+          <div>
+            <div class="resource-title">${escapeHtml(project.name || project.vp_proj_id)}</div>
+            <div class="exec-meta">${escapeHtml(project.vp_proj_id)} · ${escapeHtml(project.project_role || 'viewer')} access · ${project.openaiSlots.length} OpenAI slot${project.openaiSlots.length === 1 ? '' : 's'}</div>
+          </div>
+          <div class="pill ${project.openaiSlots.length ? 'ok' : 'warn'}">${project.openaiSlots.length ? 'ready' : 'missing slot'}</div>
+        </div>
+        <div class="exec-actions">
+          ${project.openaiSlots.map((slot) => `
+            <button type="button" class="btn-outline" data-execute-project="${escapeHtml(project.id)}" data-execute-slug="${escapeHtml(slot.slug)}">run ${escapeHtml(slot.slug)}</button>
+          `).join('')}
+        </div>
+        <div class="exec-message" data-exec-message="${escapeHtml(project.id)}"></div>
+      </div>
+    `).join('');
+  }
+
   function buildPilotChecklistItems() {
     const membersPayload = currentMembersPayload || {};
     const projectsPayload = currentProjectsPayload || {};
@@ -912,6 +976,34 @@
     toast(`Saved policy for ${project.name || project.vp_proj_id}.`, 'ok');
   }
 
+  async function runSecureExecution(projectId, slug, trigger) {
+    const project = (currentProjectsPayload?.projects || []).find((item) => item.id === projectId);
+    const messageEl = document.querySelector(`[data-exec-message="${projectId}"]`);
+    if (!project || !messageEl) return;
+
+    setButtonState(trigger, true, 'running...');
+    setInlineMessage(messageEl, `Dispatching secure execution via ${slug}…`, '');
+
+    const res = await apiFetch(INIT_API, `/projects/${encodeURIComponent(projectId)}/providers/${encodeURIComponent(slug)}/execute`, {
+      method: 'POST',
+      body: buildOpenAiExecutionPayload(),
+    });
+
+    if (!res?.ok) {
+      const errorMessage = res?.data?.error || res?.data?.execution?.error || 'Could not run secure execution demo.';
+      setButtonState(trigger, false, `run ${slug}`);
+      setInlineMessage(messageEl, errorMessage, 'danger');
+      toast(errorMessage, 'danger');
+      return;
+    }
+
+    const providerRequestId = res?.data?.execution?.providerRequestId || 'n/a';
+    setButtonState(trigger, false, `run ${slug}`);
+    setInlineMessage(messageEl, `Secure execution succeeded. provider request id ${providerRequestId}.`, 'ok');
+    toast(`Secure execution succeeded for ${project.name || project.vp_proj_id}.`, 'ok');
+    await load();
+  }
+
   async function load() {
     setText('user-email', user.email || 'loading...');
     const avatar = $('user-avatar');
@@ -951,6 +1043,7 @@
     renderMembers(membersData);
     renderProjectPolicies(projectsData);
     renderPilotKit();
+    renderSecureExecution(projectsData);
     renderHealth(overviewData);
     renderAudit(auditData);
     renderDispatch(alertsData, overviewData);
@@ -1005,6 +1098,13 @@
         const projectId = savePolicyBtn.getAttribute('data-policy-save');
         if (projectId) await saveProjectPolicy(projectId, savePolicyBtn);
         return;
+      }
+
+      const executeBtn = event.target.closest('[data-execute-project]');
+      if (executeBtn) {
+        const projectId = executeBtn.getAttribute('data-execute-project');
+        const slug = executeBtn.getAttribute('data-execute-slug');
+        if (projectId && slug) await runSecureExecution(projectId, slug, executeBtn);
       }
     });
   }
