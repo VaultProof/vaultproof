@@ -82,6 +82,7 @@ function getEnv(): EnterpriseSecureExecutorEnv {
     azureKeyReleaseEnc: process.env.AZURE_KEY_RELEASE_ENC,
     azureKeyReleaseCacheTtlMs: Number.parseInt(process.env.AZURE_KEY_RELEASE_CACHE_TTL_MS || '', 10),
     azureAttestationProviderUri: process.env.AZURE_ATTESTATION_PROVIDER_URI,
+    azureAttestationTokenHash: process.env.AZURE_ATTESTATION_TOKEN_HASH,
     azureKeyReleasePolicyHash: process.env.AZURE_KEY_RELEASE_POLICY_HASH,
     azureKeyId: process.env.AZURE_KEY_ID,
     azureKeyVersion: process.env.AZURE_KEY_VERSION,

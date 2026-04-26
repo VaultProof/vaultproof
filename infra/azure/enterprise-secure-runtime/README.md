@@ -34,6 +34,8 @@ Edit `main.parameters.json`:
 - `sshSourceCidr`: your current public IP with `/32`.
 - `environmentName`: keep short; Azure Key Vault names are globally unique and length-limited.
 - `deployPrototypeReleaseKey`: keep `false` for the first VM deployment. Enable it only after a real Secure Key Release policy exists.
+- `deployManagedHsm`: set `true` when you are ready to create the final `oct-HSM` AES-256 release-key home.
+- `managedHsmInitialAdminObjectId`: required when `deployManagedHsm=true`. Get it with `az ad signed-in-user show --query id -o tsv`.
 - `deployApiManagement`: keep `false` until you are ready to add APIM cost/governance.
 - `apiManagementSkuName`: use `StandardV2` for production starter or `PremiumV2` when you need stronger isolation/networking features.
 
@@ -193,6 +195,78 @@ After the VM is booted and attestation claims are known, create a release policy
 - use the final Azure Managed HSM `oct-HSM` 256-bit path.
 
 The final AES-256 production design should use Azure Managed HSM with an `oct-HSM` 256-bit key. See `managed-hsm-oct-hsm-notes.md`.
+
+### Build The Strict Production SKR Policy
+
+On the Confidential VM, generate a fresh MAA token with the guest attestation client:
+
+```bash
+sudo -u vaultproof /usr/local/bin/AttestationClient \
+  -a https://<attestation-provider>.attest.azure.net \
+  -n "$(uuidgen)" \
+  -o token | tee /tmp/vaultproof-maa-token.jwt
+```
+
+Copy the token back to Cloud Shell:
+
+```bash
+scp azureuser@<confidentialVmPublicIp>:/tmp/vaultproof-maa-token.jwt /tmp/vaultproof-maa-token.jwt
+```
+
+Build the strict VM-bound release policy:
+
+```bash
+cd ~/vaultproof/infra/azure/enterprise-secure-runtime
+node build-skr-policy.mjs \
+  --token-file /tmp/vaultproof-maa-token.jwt \
+  --out-dir /tmp/vaultproof-skr \
+  --mode strict-vm
+```
+
+`strict-vm` pins the policy to the current Confidential VM's MAA issuer, SEV-SNP type, Azure-compliant CVM status, secure boot, vTPM, disabled debug flags, VM unique ID, and SEV-SNP launch measurement. For HA, generate one policy entry per production executor VM.
+
+### Create The Final Managed HSM Key
+
+If Managed HSM was not deployed yet, set these in `main.parameters.json` and redeploy:
+
+```json
+"deployManagedHsm": { "value": true },
+"managedHsmInitialAdminObjectId": { "value": "<your Entra object id>" }
+```
+
+Then create the release key and grant only release access to the Confidential VM managed identity:
+
+```bash
+export MANAGED_HSM_NAME='<managedHsmName output>'
+export POLICY_FILE='/tmp/vaultproof-skr/skr-policy.json'
+export VM_PRINCIPAL_ID='<confidentialVmPrincipalId output>'
+
+bash provision-managed-hsm-release-key.sh
+```
+
+Load the generated key and policy env, then render the executor env:
+
+```bash
+source /tmp/vaultproof-skr/skr-env.sh
+source ./managed-hsm-key-env.sh
+
+export DEPLOYMENT_NAME=vp-enterprise-secure-runtime-eastus
+export SUPABASE_URL='https://...supabase.co'
+export SUPABASE_SERVICE_ROLE_KEY='...'
+export ENTERPRISE_EXECUTOR_ACCEPTED_SIGNING_KEYS='enterprise-azure-v1:...'
+export VAULTPROOF_EXECUTOR_BUILD_DIGEST="sha256:$(tar --exclude node_modules --exclude .git --exclude dist -cf - ~/vaultproof | sha256sum | awk '{print $1}')"
+
+bash render-executor-env.sh > /tmp/enterprise-secure-executor.env
+scp /tmp/enterprise-secure-executor.env azureuser@<confidentialVmPublicIp>:/tmp/enterprise-secure-executor.env
+```
+
+On the Confidential VM:
+
+```bash
+sudo install -o root -g vaultproof -m 0640 /tmp/enterprise-secure-executor.env /etc/vaultproof/enterprise-secure-executor.env
+sudo systemctl restart vaultproof-executor
+curl -sS http://localhost:3002/health
+```
 
 Flow:
 

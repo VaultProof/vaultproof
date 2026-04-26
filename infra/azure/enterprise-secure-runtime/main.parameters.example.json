@@ -29,6 +29,12 @@
     "deployPrototypeReleaseKey": {
       "value": false
     },
+    "deployManagedHsm": {
+      "value": false
+    },
+    "managedHsmInitialAdminObjectId": {
+      "value": ""
+    },
     "deployApiManagement": {
       "value": false
     },

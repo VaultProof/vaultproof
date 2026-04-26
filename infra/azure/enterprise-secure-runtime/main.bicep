@@ -28,6 +28,12 @@ param secureKeyReleasePolicyData string = ''
 @description('Create the prototype Key Vault release key. Keep false for the first VM deployment; enable only after a Secure Key Release policy exists.')
 param deployPrototypeReleaseKey bool = false
 
+@description('Deploy Azure Managed HSM for the final oct-HSM AES-256 Secure Key Release path.')
+param deployManagedHsm bool = false
+
+@description('Initial Managed HSM administrator object ID. Required when deployManagedHsm is true. Get it with: az ad signed-in-user show --query id -o tsv')
+param managedHsmInitialAdminObjectId string = ''
+
 @description('Deploy Azure API Management for enterprise API lifecycle governance.')
 param deployApiManagement bool = false
 
@@ -63,6 +69,7 @@ var nicName = '${environmentName}-executor-nic'
 var pipName = '${environmentName}-executor-bootstrap-pip'
 var vmName = '${environmentName}-executor-cvm'
 var keyVaultName = take('${environmentName}${uniqueString(resourceGroup().id)}kv', 24)
+var managedHsmName = take('${environmentName}${uniqueString(resourceGroup().id)}hsm', 24)
 var unwrapKeyName = 'vaultproof-enterprise-unwrap'
 var attestationName = take('${environmentName}${uniqueString(resourceGroup().id)}maa', 24)
 var apiManagementName = take('${environmentName}${uniqueString(resourceGroup().id)}apim', 50)
@@ -196,6 +203,29 @@ resource keyVault 'Microsoft.KeyVault/vaults@2023-07-01' = {
     softDeleteRetentionInDays: 90
     enableRbacAuthorization: true
     publicNetworkAccess: 'Enabled'
+  }
+}
+
+resource managedHsm 'Microsoft.KeyVault/managedHSMs@2023-07-01' = if (deployManagedHsm) {
+  name: managedHsmName
+  location: location
+  tags: union(tags, {
+    role: 'production-oct-hsm'
+  })
+  sku: {
+    family: 'B'
+    name: 'Standard_B1'
+  }
+  properties: {
+    createMode: 'default'
+    enablePurgeProtection: true
+    enableSoftDelete: true
+    initialAdminObjectIds: [
+      managedHsmInitialAdminObjectId
+    ]
+    publicNetworkAccess: 'Enabled'
+    softDeleteRetentionInDays: 90
+    tenantId: tenant().tenantId
   }
 }
 
@@ -365,6 +395,8 @@ output executorSubnetId string = resourceId('Microsoft.Network/virtualNetworks/s
 output controlPlaneSubnetId string = resourceId('Microsoft.Network/virtualNetworks/subnets', vnet.name, controlPlaneSubnetName)
 output keyVaultName string = keyVault.name
 output keyVaultUri string = keyVault.properties.vaultUri
+output managedHsmName string = deployManagedHsm ? managedHsm!.name : ''
+output managedHsmUri string = deployManagedHsm ? 'https://${managedHsm!.name}.managedhsm.azure.net/' : ''
 output unwrapKeyName string = createPrototypeReleaseKey ? unwrapKey!.name : ''
 output unwrapKeyId string = createPrototypeReleaseKey ? unwrapKey!.properties.keyUriWithVersion : ''
 output prototypeKeyReleaseUrl string = createPrototypeReleaseKey ? '${unwrapKey!.properties.keyUriWithVersion}/release' : ''

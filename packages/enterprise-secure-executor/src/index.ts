@@ -42,6 +42,7 @@ export interface EnterpriseSecureExecutorEnv {
   azureKeyReleaseEnc?: string;
   azureKeyReleaseCacheTtlMs?: number;
   azureAttestationProviderUri?: string;
+  azureAttestationTokenHash?: string;
   azureKeyReleasePolicyHash?: string;
   azureKeyId?: string;
   azureKeyVersion?: string;

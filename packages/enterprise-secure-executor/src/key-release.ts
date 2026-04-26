@@ -53,6 +53,7 @@ export class AzureSecureKeyReleaseProvider implements VaultUnwrapKeyProvider {
     cacheTtlMs?: number;
     fetchImpl?: typeof fetch;
     attestationProviderUri?: string;
+    attestationTokenHash?: string;
     keyReleasePolicyHash?: string;
     keyId?: string;
     keyVersion?: string;
@@ -93,11 +94,12 @@ export class AzureSecureKeyReleaseProvider implements VaultUnwrapKeyProvider {
   }
 
   async getAttestationEvidence(): Promise<AzureSecureExecutionAttestationEvidence | null> {
-    const attestationToken = this.input.attestationToken || this.cachedAttestationToken?.value || null;
+    const attestationToken = await this.getAttestationTokenForEvidence();
+    const claims = attestationToken ? decodeAttestationClaims(attestationToken) : null;
     return {
       provider: 'azure-confidential-vm',
       attestationProviderUri: this.input.attestationProviderUri || null,
-      attestationTokenHash: attestationToken ? sha256Base64Url(attestationToken) : null,
+      attestationTokenHash: this.input.attestationTokenHash || (attestationToken ? sha256Base64Url(attestationToken) : null),
       keyReleasePolicyHash: this.input.keyReleasePolicyHash || null,
       keyId: this.input.keyId || null,
       keyVersion: this.input.keyVersion || null,
@@ -105,9 +107,9 @@ export class AzureSecureKeyReleaseProvider implements VaultUnwrapKeyProvider {
       confidentialVmResourceId: this.input.confidentialVmResourceId || null,
       claims: {
         attestationType: 'azure-maa',
-        secureBoot: null,
+        secureBoot: claims?.secureBoot ?? null,
         vmIsolation: 'azure-confidential-vm',
-        measurementSummary: this.input.measurementSummary || null,
+        measurementSummary: this.input.measurementSummary || claims?.measurementSummary || null,
       },
     };
   }
@@ -147,6 +149,18 @@ export class AzureSecureKeyReleaseProvider implements VaultUnwrapKeyProvider {
     };
     return token;
   }
+
+  private async getAttestationTokenForEvidence(): Promise<string | null> {
+    if (this.input.attestationToken) return this.input.attestationToken;
+    if (this.cachedAttestationToken?.value) return this.cachedAttestationToken.value;
+    if (!this.input.attestationClientPath || !this.input.attestationProviderUri) return null;
+
+    try {
+      return await this.getAttestationToken();
+    } catch {
+      return null;
+    }
+  }
 }
 
 export function buildVaultUnwrapKeyProvider(input: {
@@ -159,6 +173,7 @@ export function buildVaultUnwrapKeyProvider(input: {
   azureKeyReleaseEnc?: string;
   azureKeyReleaseCacheTtlMs?: number;
   azureAttestationProviderUri?: string;
+  azureAttestationTokenHash?: string;
   azureKeyReleasePolicyHash?: string;
   azureKeyId?: string;
   azureKeyVersion?: string;
@@ -181,6 +196,7 @@ export function buildVaultUnwrapKeyProvider(input: {
       cacheTtlMs: input.azureKeyReleaseCacheTtlMs,
       fetchImpl: input.fetchImpl,
       attestationProviderUri: input.azureAttestationProviderUri,
+      attestationTokenHash: input.azureAttestationTokenHash,
       keyReleasePolicyHash: input.azureKeyReleasePolicyHash,
       keyId: input.azureKeyId,
       keyVersion: input.azureKeyVersion,
@@ -195,6 +211,45 @@ export function buildVaultUnwrapKeyProvider(input: {
   }
 
   return new NullVaultUnwrapKeyProvider();
+}
+
+function decodeAttestationClaims(jwt: string): { secureBoot: boolean | null; measurementSummary: string | null } | null {
+  try {
+    const payload = decodeJwsPayload(jwt);
+    const isolationTee = payload['x-ms-isolation-tee'] as Record<string, unknown> | undefined;
+    const runtime = isolationTee?.['x-ms-runtime'] as Record<string, unknown> | undefined;
+    const vmConfiguration = runtime?.['vm-configuration'] as Record<string, unknown> | undefined;
+    const secureBoot = typeof payload.secureboot === 'boolean'
+      ? payload.secureboot
+      : typeof vmConfiguration?.['secure-boot'] === 'boolean'
+        ? vmConfiguration['secure-boot']
+        : null;
+    const launchMeasurement = typeof isolationTee?.['x-ms-sevsnpvm-launchmeasurement'] === 'string'
+      ? isolationTee['x-ms-sevsnpvm-launchmeasurement']
+      : null;
+    const vmUniqueId = typeof vmConfiguration?.vmUniqueId === 'string'
+      ? vmConfiguration.vmUniqueId
+      : typeof payload['x-ms-azurevm-vmid'] === 'string'
+        ? payload['x-ms-azurevm-vmid']
+        : null;
+    const tpmEnabled = typeof vmConfiguration?.['tpm-enabled'] === 'boolean'
+      ? vmConfiguration['tpm-enabled']
+      : null;
+    const measurementSummary = [
+      'sevsnpvm',
+      launchMeasurement ? `launch:${launchMeasurement}` : null,
+      vmUniqueId ? `vm:${vmUniqueId}` : null,
+      secureBoot !== null ? `secureboot:${secureBoot}` : null,
+      tpmEnabled !== null ? `tpm:${tpmEnabled}` : null,
+    ].filter(Boolean).join(';');
+
+    return {
+      secureBoot,
+      measurementSummary: measurementSummary || null,
+    };
+  } catch {
+    return null;
+  }
 }
 
 function getJwtCacheTtlMs(jwt: string, fallbackMs: number): number {
