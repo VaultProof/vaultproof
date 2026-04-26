@@ -84,7 +84,7 @@ export class AzureSecureKeyReleaseProvider implements VaultUnwrapKeyProvider {
       attestationToken,
       enc: this.input.releaseEnc,
     });
-    const vaultUnwrapKey = extractSymmetricKeyMaterial(releasedJws);
+    const vaultUnwrapKey = extractVaultUnwrapKeyMaterial(releasedJws);
     const ttlMs = Number.isFinite(this.input.cacheTtlMs) ? Number(this.input.cacheTtlMs) : 60_000;
     this.cachedVaultUnwrapKey = {
       value: vaultUnwrapKey,
@@ -327,7 +327,7 @@ async function releaseAzureKey(input: {
   return payload.value;
 }
 
-function extractSymmetricKeyMaterial(releasedKeyJws: string): string {
+function extractVaultUnwrapKeyMaterial(releasedKeyJws: string): string {
   const payload = decodeJwsPayload(releasedKeyJws);
   const jwk = pickJwk(payload);
   if (!jwk || typeof jwk !== 'object') {
@@ -337,10 +337,36 @@ function extractSymmetricKeyMaterial(releasedKeyJws: string): string {
   const kty = typeof jwk.kty === 'string' ? jwk.kty : '';
   const keyMaterial = typeof jwk.k === 'string' ? jwk.k : '';
   if (!['oct', 'oct-HSM'].includes(kty) || !keyMaterial) {
-    throw new Error('Azure Secure Key Release must return an oct-HSM symmetric unwrap key for this executor.');
+    if (kty === 'RSA' || kty === 'RSA-HSM') {
+      return deriveAes256RootFromReleasedJwk(jwk);
+    }
+
+    throw new Error('Azure Secure Key Release must return an oct-HSM symmetric key or RSA-HSM release root for this executor.');
   }
 
   return base64UrlToBase64(keyMaterial);
+}
+
+function deriveAes256RootFromReleasedJwk(jwk: Record<string, unknown>): string {
+  const requiredPrivateParts = ['n', 'e', 'd', 'p', 'q', 'dp', 'dq', 'qi'];
+  for (const part of requiredPrivateParts) {
+    if (typeof jwk[part] !== 'string' || !jwk[part]) {
+      throw new Error(`Released RSA-HSM JWK is missing private key material: ${part}`);
+    }
+  }
+
+  const canonicalPrivateJwk = JSON.stringify(
+    Object.fromEntries(
+      Object.entries(jwk)
+        .filter(([, value]) => typeof value === 'string')
+        .sort(([left], [right]) => left.localeCompare(right)),
+    ),
+  );
+  return createHash('sha256')
+    .update('vaultproof-enterprise-rsa-hsm-release-root-v1')
+    .update('\0')
+    .update(canonicalPrivateJwk)
+    .digest('base64');
 }
 
 function decodeJwsPayload(jws: string): Record<string, unknown> {

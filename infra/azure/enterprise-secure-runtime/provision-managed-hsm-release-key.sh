@@ -31,12 +31,12 @@ if [[ ! -f "${POLICY_FILE}" ]]; then
   exit 1
 fi
 
-echo "Creating exportable oct-HSM 256-bit release key in ${MANAGED_HSM_NAME}..."
+echo "Creating exportable RSA-HSM release root key in ${MANAGED_HSM_NAME}..."
 az keyvault key create \
   --hsm-name "${MANAGED_HSM_NAME}" \
   --name "${KEY_NAME}" \
-  --kty oct-HSM \
-  --size 256 \
+  --kty RSA-HSM \
+  --size 3072 \
   --ops export \
   --exportable true \
   --policy "${POLICY_FILE}" \

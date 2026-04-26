@@ -1,14 +1,16 @@
-# Managed HSM `oct-HSM` Production Notes
+# Managed HSM Release-Key Production Notes
 
 The Bicep template currently creates an Azure Key Vault Premium `RSA-HSM` key as the lower-friction Secure Key Release prototype path.
 
-For the final VaultProof Enterprise AES-256 story, use Azure Managed HSM with an `oct-HSM` 256-bit key and Secure Key Release policy.
+For the final VaultProof Enterprise AES-256 story, use Azure Managed HSM with an `RSA-HSM` key and Secure Key Release policy. The Confidential VM releases the RSA-HSM private JWK only after attestation succeeds, then derives a 256-bit AES unwrap root inside the Confidential VM.
+
+Azure Managed HSM supports `oct-HSM` keys for AES operations, but generated symmetric keys cannot be exportable/releasable. When `oct-HSM` was attempted with `--exportable true`, Azure returned: `Symmetric keys cannot be used for import or export`. For Secure Key Release, use an exportable asymmetric HSM key.
 
 Microsoft docs confirm:
 
 - Azure Key Vault vaults support RSA and EC key types.
 - Managed HSM supports RSA, EC, and symmetric keys.
-- `oct-HSM` is supported only by Managed HSM, with 128-bit, 192-bit, and 256-bit key sizes.
+- `oct-HSM` is supported only by Managed HSM, with 128-bit, 192-bit, and 256-bit key sizes, but generated symmetric keys are not exportable/releasable.
 - Managed HSM keys are FIPS 140-3 Level 3 HSM protected.
 
 Useful official docs:
@@ -23,7 +25,8 @@ Useful official docs:
 Azure Confidential VM executor
   -> Microsoft Azure Attestation token
   -> Azure Managed HSM release API
-  -> released oct-HSM 256-bit unwrap material
+  -> released RSA-HSM private JWK
+  -> derive AES-256 unwrap root inside the Confidential VM
   -> decrypt encrypted shares in confidential runtime
 ```
 
@@ -35,8 +38,8 @@ After the Managed HSM exists and is activated, create the key with a release pol
 az keyvault key create \
   --hsm-name <managed-hsm-name> \
   --name vaultproof-enterprise-unwrap \
-  --kty oct-HSM \
-  --size 256 \
+  --kty RSA-HSM \
+  --size 3072 \
   --ops export \
   --exportable true \
   --policy @skr-policy.json

@@ -34,7 +34,7 @@ Edit `main.parameters.json`:
 - `sshSourceCidr`: your current public IP with `/32`.
 - `environmentName`: keep short; Azure Key Vault names are globally unique and length-limited.
 - `deployPrototypeReleaseKey`: keep `false` for the first VM deployment. Enable it only after a real Secure Key Release policy exists.
-- `deployManagedHsm`: set `true` when you are ready to create the final `oct-HSM` AES-256 release-key home.
+- `deployManagedHsm`: set `true` when you are ready to create the final Managed HSM release-key home.
 - `managedHsmInitialAdminObjectId`: required when `deployManagedHsm=true`. Get it with `az ad signed-in-user show --query id -o tsv`.
 - `deployApiManagement`: keep `false` until you are ready to add APIM cost/governance.
 - `apiManagementSkuName`: use `StandardV2` for production starter or `PremiumV2` when you need stronger isolation/networking features.
@@ -192,9 +192,9 @@ The Bicep template can create a Key Vault Premium `RSA-HSM` key as the prototype
 After the VM is booted and attestation claims are known, create a release policy and either:
 
 - set `deployPrototypeReleaseKey=true` with `secureKeyReleasePolicyData`, then redeploy the prototype key, or
-- use the final Azure Managed HSM `oct-HSM` 256-bit path.
+- use the final Azure Managed HSM `RSA-HSM` release-root path.
 
-The final AES-256 production design should use Azure Managed HSM with an `oct-HSM` 256-bit key. See `managed-hsm-oct-hsm-notes.md`.
+The final AES-256 production design uses Azure Managed HSM with an exportable `RSA-HSM` key release policy. Azure does not allow generated symmetric `oct-HSM` keys to be exported/released. VaultProof releases the RSA-HSM private JWK only to the attested Confidential VM, then derives the AES-256 unwrap root inside that VM. See `managed-hsm-oct-hsm-notes.md`.
 
 ### Build The Strict Production SKR Policy
 

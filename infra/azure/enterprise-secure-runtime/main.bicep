@@ -28,7 +28,7 @@ param secureKeyReleasePolicyData string = ''
 @description('Create the prototype Key Vault release key. Keep false for the first VM deployment; enable only after a Secure Key Release policy exists.')
 param deployPrototypeReleaseKey bool = false
 
-@description('Deploy Azure Managed HSM for the final oct-HSM AES-256 Secure Key Release path.')
+@description('Deploy Azure Managed HSM for the final RSA-HSM Secure Key Release root. The executor derives the AES-256 unwrap key inside the Confidential VM.')
 param deployManagedHsm bool = false
 
 @description('Initial Managed HSM administrator object ID. Required when deployManagedHsm is true. Get it with: az ad signed-in-user show --query id -o tsv')

@@ -426,8 +426,38 @@ function makeJwsPayload(payload) {
   return `${encodedHeader}.${encodedPayload}.signature`;
 }
 
+function makeReleasedRsaJwk() {
+  return {
+    kty: 'RSA-HSM',
+    n: 'rsa-modulus',
+    e: 'AQAB',
+    d: 'rsa-private-exponent',
+    p: 'rsa-prime-p',
+    q: 'rsa-prime-q',
+    dp: 'rsa-dp',
+    dq: 'rsa-dq',
+    qi: 'rsa-qi',
+  };
+}
+
+async function expectedAesRootFromReleasedRsaJwk(jwk) {
+  const canonical = JSON.stringify(
+    Object.fromEntries(
+      Object.entries(jwk)
+        .filter(([, value]) => typeof value === 'string')
+        .sort(([left], [right]) => left.localeCompare(right)),
+    ),
+  );
+  const digest = await crypto.subtle.digest(
+    'SHA-256',
+    new TextEncoder().encode(`vaultproof-enterprise-rsa-hsm-release-root-v1\0${canonical}`),
+  );
+  return Buffer.from(digest).toString('base64');
+}
+
 async function assertAzureSecureKeyReleaseProvider() {
-  const expectedKey = Buffer.from('0123456789abcdef0123456789abcdef').toString('base64url');
+  const releasedRsaJwk = makeReleasedRsaJwk();
+  const expectedKey = await expectedAesRootFromReleasedRsaJwk(releasedRsaJwk);
   const provider = new AzureSecureKeyReleaseProvider({
     keyReleaseUrl: 'https://vaultproof-hsm.managedhsm.azure.net/keys/vaultproof-enterprise-unwrap/version-1/release',
     attestationToken: 'maa-attestation-token',
@@ -447,10 +477,7 @@ async function assertAzureSecureKeyReleaseProvider() {
         throw new Error('Expected MAA attestation token as release target');
       }
       return new Response(JSON.stringify({
-        value: makeJwsPayload({
-          kty: 'oct-HSM',
-          k: expectedKey,
-        }),
+        value: makeJwsPayload(releasedRsaJwk),
       }), {
         status: 200,
         headers: {
@@ -461,8 +488,8 @@ async function assertAzureSecureKeyReleaseProvider() {
   });
 
   const released = await provider.getVaultUnwrapKey();
-  if (released !== Buffer.from('0123456789abcdef0123456789abcdef').toString('base64')) {
-    throw new Error('Expected released oct-HSM key material to be converted to base64');
+  if (released !== expectedKey) {
+    throw new Error('Expected released RSA-HSM root to derive the AES-256 unwrap key');
   }
 
   const evidence = await provider.getAttestationEvidence();
@@ -482,7 +509,11 @@ async function assertAzureSecureKeyReleaseProviderCanGenerateAttestationToken() 
   await chmod(clientPath, 0o700);
 
   try {
-    const expectedKey = Buffer.from('abcdef0123456789abcdef0123456789').toString('base64url');
+    const releasedRsaJwk = {
+      ...makeReleasedRsaJwk(),
+      d: 'rsa-private-exponent-2',
+    };
+    const expectedKey = await expectedAesRootFromReleasedRsaJwk(releasedRsaJwk);
     const provider = new AzureSecureKeyReleaseProvider({
       keyReleaseUrl: 'https://vaultproof-hsm.managedhsm.azure.net/keys/vaultproof-enterprise-unwrap/version-2/release',
       attestationClientPath: clientPath,
@@ -494,10 +525,7 @@ async function assertAzureSecureKeyReleaseProviderCanGenerateAttestationToken() 
           throw new Error('Expected generated MAA attestation token as release target');
         }
         return new Response(JSON.stringify({
-          value: makeJwsPayload({
-            kty: 'oct-HSM',
-            k: expectedKey,
-          }),
+          value: makeJwsPayload(releasedRsaJwk),
         }), {
           status: 200,
           headers: {
@@ -508,8 +536,8 @@ async function assertAzureSecureKeyReleaseProviderCanGenerateAttestationToken() 
     });
 
     const released = await provider.getVaultUnwrapKey();
-    if (released !== Buffer.from('abcdef0123456789abcdef0123456789').toString('base64')) {
-      throw new Error('Expected generated-attestation SKR key material to be converted to base64');
+    if (released !== expectedKey) {
+      throw new Error('Expected generated-attestation RSA-HSM root to derive the AES-256 unwrap key');
     }
 
     const evidence = await provider.getAttestationEvidence();
