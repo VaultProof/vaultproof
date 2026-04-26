@@ -40,7 +40,7 @@ az keyvault key create \
   --name vaultproof-enterprise-unwrap \
   --kty RSA-HSM \
   --size 3072 \
-  --ops export \
+  --ops wrapKey unwrapKey \
   --exportable true \
   --policy @skr-policy.json
 ```

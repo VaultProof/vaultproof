@@ -37,7 +37,7 @@ az keyvault key create \
   --name "${KEY_NAME}" \
   --kty RSA-HSM \
   --size 3072 \
-  --ops export \
+  --ops wrapKey unwrapKey \
   --exportable true \
   --policy "${POLICY_FILE}" \
   -o none
