@@ -29,11 +29,39 @@ cp main.parameters.example.json main.parameters.json
 
 Edit `main.parameters.json`:
 
+- `location`: use a region where your subscription has DCasv5/DCesv5 Confidential VM SKUs. West US 2 may not have `Standard_DC2as_v5` for this subscription.
 - `adminSshPublicKey`: your public SSH key.
 - `sshSourceCidr`: your current public IP with `/32`.
 - `environmentName`: keep short; Azure Key Vault names are globally unique and length-limited.
 - `deployApiManagement`: keep `false` until you are ready to add APIM cost/governance.
 - `apiManagementSkuName`: use `StandardV2` for production starter or `PremiumV2` when you need stronger isolation/networking features.
+
+Check Confidential VM SKU availability before deploying:
+
+```bash
+for region in westus2 westus3 eastus eastus2 centralus southcentralus; do
+  echo "== $region =="
+  az vm list-skus \
+    --location "$region" \
+    --size Standard_DC \
+    --all \
+    --query "[?contains(name, 'DC') && contains(name, 'v5')].{name:name, zones:join(',', locationInfo[0].zones || [])}" \
+    -o table
+done
+```
+
+Pick a region that lists `Standard_DC2as_v5` or another DCasv5/DCesv5 SKU. If none appear, check whether the subscription has Confidential VM availability/quota in nearby regions:
+
+```bash
+az vm list-skus \
+  --location eastus \
+  --size Standard_EC \
+  --all \
+  --query "[?contains(name, 'v5')].name" \
+  -o table
+```
+
+Do not silently switch to a normal D/E/B VM size. That would remove the Confidential VM security boundary.
 
 Then deploy:
 

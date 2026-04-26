@@ -1,6 +1,6 @@
 targetScope = 'resourceGroup'
 
-@description('Azure region for the enterprise secure runtime.')
+@description('Azure region for the enterprise secure runtime. Pick a region where DCasv5/DCesv5 Confidential VM SKUs are available in your subscription.')
 param location string = resourceGroup().location
 
 @description('Short environment name used in resource names.')
@@ -13,7 +13,7 @@ param adminUsername string = 'azureuser'
 @description('SSH public key for the Confidential VM admin user.')
 param adminSshPublicKey string
 
-@description('Confidential VM size. DCasv5/DCesv5 families support AMD SEV-SNP in supported regions.')
+@description('Confidential VM size. Use a DCasv5/DCesv5 Confidential VM SKU that is available in the selected region.')
 param vmSize string = 'Standard_DC2as_v5'
 
 @description('CIDR allowed to SSH to the VM during bootstrap. Lock this to your current IP; do not leave as 0.0.0.0/0.')
