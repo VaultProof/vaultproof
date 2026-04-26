@@ -19,6 +19,27 @@ deploy.log
 output/
 packages/init-worker/.wrangler/
 
+# Local Azure deployment material.
+infra/azure/**/main.parameters.json
+infra/azure/**/*.parameters.json
+infra/azure/**/enterprise-secure-executor.env
+infra/azure/**/deployment-outputs*.json
+infra/azure/**/deployment-*.json
+infra/azure/**/skr-policy*.json
+infra/azure/**/attestation-token*.txt
+infra/azure/**/attestation-token*.jwt
+infra/azure/**/attestation-evidence*.json
+infra/azure/**/release-policy*.json
+infra/azure/**/managed-hsm-*.json
+infra/azure/**/secrets/
+infra/azure/**/.azure/
+
+# Local patent filing artifacts and receipts. Keep source disclosure docs in docs/ip tracked.
+docs/ip/filing/
+docs/ip/**/*.pdf
+docs/ip/**/*receipt*
+docs/ip/**/*confirmation*
+
 # Block new markdown files from accidental commits by default.
 # Keep intentional project docs unblocked.
 *.md
