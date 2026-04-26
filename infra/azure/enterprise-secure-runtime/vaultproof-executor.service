@@ -9,7 +9,6 @@ User=vaultproof
 Group=vaultproof
 WorkingDirectory=/opt/vaultproof/zkvault
 EnvironmentFile=/etc/vaultproof/enterprise-secure-executor.env
-Environment=NODE_OPTIONS=--jitless
 ExecStart=/usr/bin/npm run start --workspace @vaultproof/enterprise-secure-executor
 Restart=always
 RestartSec=5
@@ -20,7 +19,9 @@ ProtectHome=true
 ReadWritePaths=/opt/vaultproof/zkvault
 CapabilityBoundingSet=
 LockPersonality=true
-MemoryDenyWriteExecute=true
+# Node/V8 and Undici require runtime executable memory/WASM for outbound HTTPS.
+# Keep the Confidential VM + MAA + Managed HSM SKR boundary as the primary protection.
+MemoryDenyWriteExecute=false
 
 [Install]
 WantedBy=multi-user.target
