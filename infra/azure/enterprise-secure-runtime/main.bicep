@@ -366,5 +366,5 @@ output unwrapKeyId string = unwrapKey.properties.keyUriWithVersion
 output prototypeKeyReleaseUrl string = '${unwrapKey.properties.keyUriWithVersion}/release'
 output attestationProviderName string = attestation.name
 output attestationProviderUri string = attestation.properties.attestUri
-output apiManagementName string = deployApiManagement ? apiManagement.name : ''
-output apiManagementGatewayUrl string = deployApiManagement ? apiManagement.properties.gatewayUrl : ''
+output apiManagementName string = deployApiManagement ? apiManagement!.name : ''
+output apiManagementGatewayUrl string = deployApiManagement ? apiManagement!.properties.gatewayUrl : ''
