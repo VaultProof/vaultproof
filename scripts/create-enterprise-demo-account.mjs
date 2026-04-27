@@ -24,6 +24,37 @@ const demoProjectName = process.env.DEMO_PROJECT_NAME || 'Confidential Runtime P
 const demoProjectRef = process.env.DEMO_PROJECT_REF || `vp-demo-${randomBytes(5).toString('hex')}`;
 const seedSampleData = process.env.DEMO_SEED_SAMPLE_DATA !== 'false';
 
+function isMissingCallerLockPolicyError(error) {
+  return error?.code === 'PGRST204'
+    && String(error?.message || '').includes("'caller_lock_policy'")
+    && String(error?.message || '').includes("'projects'");
+}
+
+function printSchemaFixAndExit(error) {
+  console.error('Supabase schema is missing public.projects.caller_lock_policy, or PostgREST has not reloaded its schema cache.');
+  console.error('');
+  console.error('Run this SQL in the Supabase SQL editor, then rerun this command:');
+  console.error('');
+  console.error("alter table public.projects add column if not exists caller_lock_policy jsonb not null default '{}'::jsonb;");
+  console.error('grant select, insert, update, delete on public.projects to service_role;');
+  console.error("notify pgrst, 'reload schema';");
+  console.error('');
+  console.error(`Original error: ${error?.message || error}`);
+  process.exit(1);
+}
+
+async function runStep(label, fn) {
+  try {
+    return await fn();
+  } catch (error) {
+    if (isMissingCallerLockPolicyError(error)) {
+      printSchemaFixAndExit(error);
+    }
+    console.error(`Failed during ${label}:`);
+    throw error;
+  }
+}
+
 function normalizeSlug(value) {
   return String(value || 'vaultproof-enterprise-demo')
     .trim()
@@ -280,13 +311,13 @@ async function seedDashboardSampleData(organizationId, userId, projectId) {
   if (auditError) throw auditError;
 }
 
-const user = await ensureUser();
-const organization = await ensureOrganization(user.id);
-await ensureOrganizationMembership(organization.id, user.id);
-const project = await ensureProject(organization.id, user.id);
-await ensureProjectMembership(project.id, user.id);
+const user = await runStep('auth user creation', () => ensureUser());
+const organization = await runStep('organization creation', () => ensureOrganization(user.id));
+await runStep('organization membership creation', () => ensureOrganizationMembership(organization.id, user.id));
+const project = await runStep('project creation', () => ensureProject(organization.id, user.id));
+await runStep('project membership creation', () => ensureProjectMembership(project.id, user.id));
 if (seedSampleData) {
-  await seedDashboardSampleData(organization.id, user.id, project.id);
+  await runStep('dashboard sample data seeding', () => seedDashboardSampleData(organization.id, user.id, project.id));
 }
 
 console.log(JSON.stringify({
