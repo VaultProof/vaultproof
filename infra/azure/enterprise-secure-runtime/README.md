@@ -415,6 +415,20 @@ npm run verify:enterprise-production
 
 The verifier checks Front Door readiness, Confidential VM security settings, Front Door ID origin lock, NSG posture, direct-origin rejection, and loopback readiness.
 
+Capture a timestamped production evidence bundle for audits or handoff:
+
+```bash
+RESOURCE_GROUP=vaultproof-enterprise \
+DEPLOYMENT_NAME=vp-enterprise-secure-runtime-eastus-hsm \
+ENTERPRISE_URL=https://enterprise.vaultproof.dev \
+FRONT_DOOR_PROFILE=vaultproof-enterprise-fd \
+FRONT_DOOR_ENDPOINT=vaultproof-enterprise \
+FRONT_DOOR_ROUTE=default-route \
+npm run evidence:enterprise-production
+```
+
+By default, evidence JSON files are written to `/tmp/vaultproof-production-evidence`.
+
 - Remove the bootstrap public IP or close SSH after setup.
 - Route control plane to executor over private IP.
 - Restrict executor NSG source to the control-plane subnet or private endpoint.
