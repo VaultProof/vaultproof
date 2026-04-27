@@ -1,5 +1,8 @@
-export function renderEnterpriseDashboardPage(): string {
-  return `<!doctype html>
+import { injectEnterpriseAnalytics } from './analytics.js';
+import type { EnterpriseControlPlaneEnv } from './config.js';
+
+export function renderEnterpriseDashboardPage(env: EnterpriseControlPlaneEnv = {}): string {
+  return injectEnterpriseAnalytics(`<!doctype html>
 <html lang="en">
 <head>
   <meta charset="utf-8" />
@@ -437,5 +440,5 @@ export function renderEnterpriseDashboardPage(): string {
     })();
   </script>
 </body>
-</html>`;
+</html>`, env, 'dashboard');
 }

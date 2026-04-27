@@ -229,7 +229,7 @@ export async function handleEnterpriseControlPlaneRequest(
     request.method === 'GET' &&
     (url.pathname === '/app' || url.pathname === '/app/' || url.pathname === '/app/dashboard' || url.pathname === '/app/dashboard.html')
   ) {
-    return new Response(renderEnterpriseDashboardPage(), {
+    return new Response(renderEnterpriseDashboardPage(env), {
       status: 200,
       headers: {
         'content-type': 'text/html; charset=utf-8',
@@ -240,7 +240,7 @@ export async function handleEnterpriseControlPlaneRequest(
   }
 
   if (request.method === 'GET' && url.pathname === '/app/login') {
-    return new Response(renderEnterpriseLoginPage(), {
+    return new Response(renderEnterpriseLoginPage(env), {
       status: 200,
       headers: {
         'content-type': 'text/html; charset=utf-8',
@@ -262,7 +262,7 @@ export async function handleEnterpriseControlPlaneRequest(
   }
 
   if (request.method === 'GET' && (url.pathname === '/app/control' || url.pathname === '/app/control.html')) {
-    return new Response(renderEnterpriseControlPage(), {
+    return new Response(renderEnterpriseControlPage(env), {
       status: 200,
       headers: {
         'content-type': 'text/html; charset=utf-8',
@@ -273,7 +273,7 @@ export async function handleEnterpriseControlPlaneRequest(
   }
 
   if (request.method === 'GET' && (url.pathname === '/app/org' || url.pathname === '/app/org.html')) {
-    return new Response(renderEnterpriseOrgPage(), {
+    return new Response(renderEnterpriseOrgPage(env), {
       status: 200,
       headers: {
         'content-type': 'text/html; charset=utf-8',
@@ -288,7 +288,7 @@ export async function handleEnterpriseControlPlaneRequest(
       .replace(/^\/app\//, '')
       .replace(/\.html$/, '')
       .replace(/\/+$/, '');
-    const plannedPage = renderEnterprisePlannedAppPage(plannedPageName);
+    const plannedPage = renderEnterprisePlannedAppPage(plannedPageName, env);
     if (plannedPage) {
       return new Response(plannedPage, {
         status: 200,

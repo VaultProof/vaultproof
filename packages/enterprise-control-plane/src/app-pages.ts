@@ -1,5 +1,7 @@
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
+import { injectEnterpriseAnalytics } from './analytics.js';
+import type { EnterpriseControlPlaneEnv } from './config.js';
 
 const PUBLIC_SITE_ORIGIN = 'https://vaultproof.dev';
 
@@ -1655,21 +1657,21 @@ function escapeHtml(value: string): string {
     .replaceAll('"', '&quot;');
 }
 
-export function renderEnterprisePlannedAppPage(pageName: string): string | null {
-  if (pageName === 'members') return renderEnterpriseMembersPage();
-  if (pageName === 'audit') return renderEnterpriseAuditPage();
-  if (pageName === 'alerts') return renderEnterpriseAlertsPage();
+export function renderEnterprisePlannedAppPage(pageName: string, env: EnterpriseControlPlaneEnv = {}): string | null {
+  if (pageName === 'members') return injectEnterpriseAnalytics(renderEnterpriseMembersPage(), env, 'members');
+  if (pageName === 'audit') return injectEnterpriseAnalytics(renderEnterpriseAuditPage(), env, 'audit');
+  if (pageName === 'alerts') return injectEnterpriseAnalytics(renderEnterpriseAlertsPage(), env, 'alerts');
   if (pageName === 'activity' || pageName === 'projects' || pageName === 'keys') {
-    return renderEnterpriseOperationsPage(pageName);
+    return injectEnterpriseAnalytics(renderEnterpriseOperationsPage(pageName), env, pageName);
   }
   if (pageName === 'settings' || pageName === 'plans' || pageName === 'scanner') {
-    return renderEnterpriseSupportPage(pageName);
+    return injectEnterpriseAnalytics(renderEnterpriseSupportPage(pageName), env, pageName);
   }
 
   const page = plannedEnterprisePages[pageName];
   if (!page) return null;
 
-  return `<!doctype html>
+  return injectEnterpriseAnalytics(`<!doctype html>
 <html lang="en">
 <head>
   <meta charset="utf-8" />
@@ -1714,13 +1716,13 @@ export function renderEnterprisePlannedAppPage(pageName: string): string | null 
     </section>
   </main>
 </body>
-</html>`;
+</html>`, env, pageName);
 }
 
-export function renderEnterpriseControlPage(): string {
-  return readEnterpriseAppPage('control.html');
+export function renderEnterpriseControlPage(env: EnterpriseControlPlaneEnv = {}): string {
+  return injectEnterpriseAnalytics(readEnterpriseAppPage('control.html'), env, 'control');
 }
 
-export function renderEnterpriseOrgPage(): string {
-  return readEnterpriseAppPage('org.html');
+export function renderEnterpriseOrgPage(env: EnterpriseControlPlaneEnv = {}): string {
+  return injectEnterpriseAnalytics(readEnterpriseAppPage('org.html'), env, 'org');
 }

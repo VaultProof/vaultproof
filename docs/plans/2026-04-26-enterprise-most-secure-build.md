@@ -42,6 +42,7 @@ Live production-confidential path:
 - `npm run deploy:enterprise-vm` deploys/rebuilds/restarts the CVM runtime and can run the verifier.
 - `npm run evidence:enterprise-production` captures customer/audit evidence snapshots.
 - The enterprise control plane serves a separate `/app` and `/app/dashboard` dashboard instead of relying on the B2C dashboard shell. In progress: dashboard home, login, control, and org pages exist; remaining enterprise app links need enterprise-owned routes and feature-complete pages.
+- Enterprise `/app/*` pages support opt-in Mixpanel page/navigation analytics through `ENTERPRISE_MIXPANEL_TOKEN`; autocapture and session recording remain disabled by default for enterprise privacy.
 - APIM IaC/policy support exists with JWT validation, coarse limits, request-size guards, origin locking, and App Insights diagnostics, but APIM is not deployed in the live route yet.
 - Azure Monitor/App Insights alerting IaC exists but is not deployed yet.
 - TLS-origin proxy tooling exists but Front Door still uses HTTP origin forwarding until a real origin certificate/hostname is installed and cut over.
@@ -450,7 +451,8 @@ Implementation/test order:
 5. [x] Alerts page feature slice: wire `/app/alerts` to enterprise alert APIs; test destinations, policy, delivery logs, and dispatch-run states.
 6. [x] Activity/projects/keys slice: wire runtime activity, project inventory, provider slot status, and emergency revoke paths; test no B2C API calls.
 7. [x] Settings/plans/scanner slice: either wire real enterprise APIs or intentionally hide/disable unavailable actions; test no dead links and no B2C fallback.
-8. [ ] Browser QA after each feature slice: login as demo user, click all sidebar/subnav links, verify no `{"error":"Not found"}` pages, and verify `/readiness` remains production-ready after deploy.
+8. [x] Enterprise analytics slice: add opt-in Mixpanel page/navigation events across login, dashboard, planned pages, and static enterprise pages; test disabled-by-default behavior and explicit enablement.
+9. [ ] Browser QA after each feature slice: login as demo user, click all sidebar/subnav links, verify no `{"error":"Not found"}` pages, and verify `/readiness` remains production-ready after deploy.
 
 ## Azure Resources
 

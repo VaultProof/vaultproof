@@ -52,6 +52,10 @@ async function writeWebResponse(response: Response, res: ServerResponse): Promis
 }
 
 function getEnv(): EnterpriseControlPlaneEnv {
+  const mixpanelRecordSessionsPercent = Number.parseFloat(
+    process.env.ENTERPRISE_MIXPANEL_RECORD_SESSIONS_PERCENT || '0',
+  );
+
   return {
     enterpriseHostname: process.env.ENTERPRISE_HOSTNAME,
     executorBaseUrl: process.env.ENTERPRISE_EXECUTOR_BASE_URL,
@@ -63,6 +67,11 @@ function getEnv(): EnterpriseControlPlaneEnv {
     originLockSecret: process.env.ENTERPRISE_ORIGIN_LOCK_SECRET,
     supabaseUrl: process.env.SUPABASE_URL,
     supabaseServiceRoleKey: process.env.SUPABASE_SERVICE_ROLE_KEY,
+    mixpanelToken: process.env.ENTERPRISE_MIXPANEL_TOKEN,
+    mixpanelAutocapture: process.env.ENTERPRISE_MIXPANEL_AUTOCAPTURE === 'true',
+    mixpanelRecordSessionsPercent: Number.isFinite(mixpanelRecordSessionsPercent)
+      ? mixpanelRecordSessionsPercent
+      : 0,
   };
 }
 

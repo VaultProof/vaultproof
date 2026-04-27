@@ -15,6 +15,9 @@ export interface EnterpriseControlPlaneEnv {
   originLockSecret?: string;
   supabaseUrl?: string;
   supabaseServiceRoleKey?: string;
+  mixpanelToken?: string;
+  mixpanelAutocapture?: boolean;
+  mixpanelRecordSessionsPercent?: number;
 }
 
 export interface SecureExecutorDispatchInput {

@@ -1617,6 +1617,9 @@ async function assertEnterpriseLoginRoute() {
   if (loginResponse.status !== 200 || !html.includes('VaultProof Enterprise Login')) {
     throw new Error(`Expected enterprise login page, got ${loginResponse.status}`);
   }
+  if (html.includes('cdn.mxpnl.com') || html.includes('Enterprise Page Viewed')) {
+    throw new Error('Enterprise Mixpanel analytics must be disabled unless ENTERPRISE_MIXPANEL_TOKEN is configured');
+  }
   if (!html.includes('enterprise only')) {
     throw new Error('Expected enterprise-only login copy');
   }
@@ -1807,6 +1810,58 @@ async function assertEnterpriseLoginRoute() {
   }
 }
 
+async function assertEnterpriseMixpanelAnalytics() {
+  const env = {
+    enterpriseHostname: ENTERPRISE_HOSTNAME,
+    mixpanelToken: 'mixpanel-enterprise-smoke-token',
+  };
+
+  const pageChecks = [
+    ['/app/login', 'login'],
+    ['/app/dashboard', 'dashboard'],
+    ['/app/members', 'members'],
+    ['/app/control', 'control'],
+    ['/app/org', 'org'],
+  ];
+
+  for (const [path, pageName] of pageChecks) {
+    const response = await handleEnterpriseControlPlaneRequest(buildRequest(path), env);
+    const html = await response.text();
+    if (response.status !== 200) {
+      throw new Error(`Expected enterprise analytics page ${path} to render, got ${response.status}`);
+    }
+    if (!html.includes('cdn.mxpnl.com/libs/mixpanel-2-latest.min.js')) {
+      throw new Error(`Expected ${path} to load Mixpanel library when configured`);
+    }
+    if (!html.includes('mixpanel-enterprise-smoke-token')) {
+      throw new Error(`Expected ${path} to include configured Mixpanel token`);
+    }
+    if (!html.includes('Enterprise Page Viewed') || !html.includes(`var pageName = "${pageName}";`)) {
+      throw new Error(`Expected ${path} to track enterprise page view for ${pageName}`);
+    }
+    if (!html.includes('"record_sessions_percent":0') || !html.includes('"autocapture":false')) {
+      throw new Error(`Expected ${path} to keep enterprise autocapture/session recording disabled by default`);
+    }
+    if (html.includes('access_token') || html.includes('refresh_token') || html.includes('provider_token')) {
+      throw new Error(`Enterprise analytics snippet for ${path} must not reference URL token fragments`);
+    }
+  }
+
+  const recordingResponse = await handleEnterpriseControlPlaneRequest(
+    buildRequest('/app/dashboard'),
+    {
+      enterpriseHostname: ENTERPRISE_HOSTNAME,
+      mixpanelToken: 'mixpanel-enterprise-smoke-token',
+      mixpanelAutocapture: true,
+      mixpanelRecordSessionsPercent: 5,
+    },
+  );
+  const recordingHtml = await recordingResponse.text();
+  if (!recordingHtml.includes('"record_sessions_percent":5') || !recordingHtml.includes('"autocapture":true')) {
+    throw new Error('Expected explicit enterprise Mixpanel recording/autocapture env flags to be reflected');
+  }
+}
+
 async function assertEnterpriseReadinessRoute() {
   installSupabaseStub();
 
@@ -1892,6 +1947,7 @@ async function assertFrontDoorOriginLock() {
 }
 
 await assertEnterpriseLoginRoute();
+await assertEnterpriseMixpanelAnalytics();
 await assertEnterpriseReadinessRoute();
 await assertFrontDoorOriginLock();
 await assertExecuteRoute();

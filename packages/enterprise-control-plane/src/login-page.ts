@@ -1,8 +1,10 @@
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
+import { injectEnterpriseAnalytics } from './analytics.js';
+import type { EnterpriseControlPlaneEnv } from './config.js';
 
-export function renderEnterpriseLoginPage(): string {
-  return `<!doctype html>
+export function renderEnterpriseLoginPage(env: EnterpriseControlPlaneEnv = {}): string {
+  return injectEnterpriseAnalytics(`<!doctype html>
 <html lang="en">
 <head>
   <meta charset="utf-8" />
@@ -346,7 +348,7 @@ export function renderEnterpriseLoginPage(): string {
 
   <script src="/app/enterprise-login.js" defer></script>
 </body>
-</html>`;
+</html>`, env, 'login');
 }
 
 export function renderEnterpriseLoginScript(): string {
