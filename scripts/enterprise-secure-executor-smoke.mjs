@@ -458,12 +458,14 @@ async function expectedAesRootFromReleasedRsaJwk(jwk) {
 async function assertAzureSecureKeyReleaseProvider() {
   const releasedRsaJwk = makeReleasedRsaJwk();
   const expectedKey = await expectedAesRootFromReleasedRsaJwk(releasedRsaJwk);
+  let releaseCallCount = 0;
   const provider = new AzureSecureKeyReleaseProvider({
     keyReleaseUrl: 'https://vaultproof-hsm.managedhsm.azure.net/keys/vaultproof-enterprise-unwrap/version-1/release',
     attestationToken: 'maa-attestation-token',
     accessToken: 'managed-identity-access-token',
-    cacheTtlMs: 60_000,
+    cacheTtlMs: 25,
     fetchImpl: async (input, init) => {
+      releaseCallCount += 1;
       const url = input instanceof URL ? input : new URL(String(input));
       if (!url.toString().includes('api-version=2025-07-01')) {
         throw new Error('Expected Key Vault release API version to be added');
@@ -490,6 +492,15 @@ async function assertAzureSecureKeyReleaseProvider() {
   const released = await provider.getVaultUnwrapKey();
   if (released !== expectedKey) {
     throw new Error('Expected released RSA-HSM root to derive the AES-256 unwrap key');
+  }
+  const cached = await provider.getVaultUnwrapKey();
+  if (cached !== expectedKey || releaseCallCount !== 1) {
+    throw new Error('Expected released unwrap material to be cached in memory before TTL expiry');
+  }
+  await new Promise((resolve) => setTimeout(resolve, 35));
+  const refreshed = await provider.getVaultUnwrapKey();
+  if (refreshed !== expectedKey || releaseCallCount !== 2) {
+    throw new Error('Expected released unwrap material to be refreshed after TTL expiry');
   }
 
   const evidence = await provider.getAttestationEvidence();

@@ -4,6 +4,8 @@ import { createHash, randomUUID } from 'node:crypto';
 import { promisify } from 'node:util';
 
 const execFileAsync = promisify(execFile);
+const DEFAULT_RELEASED_KEY_CACHE_TTL_MS = 60_000;
+const MAX_RELEASED_KEY_CACHE_TTL_MS = 5 * 60_000;
 
 export interface VaultUnwrapKeyProvider {
   readonly mode: string;
@@ -85,10 +87,10 @@ export class AzureSecureKeyReleaseProvider implements VaultUnwrapKeyProvider {
       enc: this.input.releaseEnc,
     });
     const vaultUnwrapKey = extractVaultUnwrapKeyMaterial(releasedJws);
-    const ttlMs = Number.isFinite(this.input.cacheTtlMs) ? Number(this.input.cacheTtlMs) : 60_000;
+    const ttlMs = normalizeReleasedKeyCacheTtlMs(this.input.cacheTtlMs);
     this.cachedVaultUnwrapKey = {
       value: vaultUnwrapKey,
-      expiresAt: now + Math.max(0, ttlMs),
+      expiresAt: now + ttlMs,
     };
     return vaultUnwrapKey;
   }
@@ -262,6 +264,11 @@ function getJwtCacheTtlMs(jwt: string, fallbackMs: number): number {
   } catch {
     return fallbackMs;
   }
+}
+
+function normalizeReleasedKeyCacheTtlMs(value: number | undefined): number {
+  if (!Number.isFinite(value)) return DEFAULT_RELEASED_KEY_CACHE_TTL_MS;
+  return Math.max(0, Math.min(Number(value), MAX_RELEASED_KEY_CACHE_TTL_MS));
 }
 
 function sha256Base64Url(value: string): string {

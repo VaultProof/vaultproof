@@ -151,6 +151,7 @@ ENTERPRISE_EXECUTOR_ACCEPTED_SIGNING_KEYS=enterprise-azure-v1:...
 AZURE_KEY_RELEASE_URL=...
 AZURE_ATTESTATION_PROVIDER_URI=...
 AZURE_ATTESTATION_CLIENT_PATH=/usr/local/bin/AttestationClient
+AZURE_KEY_RELEASE_CACHE_TTL_MS=60000
 AZURE_KEY_RELEASE_POLICY_HASH=...
 AZURE_KEY_ID=...
 AZURE_KEY_VERSION=...
@@ -168,9 +169,12 @@ export ENTERPRISE_EXECUTOR_ACCEPTED_SIGNING_KEYS='enterprise-azure-v1:...'
 export VAULTPROOF_EXECUTOR_BUILD_DIGEST='sha256:...'
 export AZURE_KEY_RELEASE_POLICY_HASH='sha256:...'
 export AZURE_MEASUREMENT_SUMMARY='approved-vtpm-measurement'
+export AZURE_KEY_RELEASE_CACHE_TTL_MS=60000
 
 bash render-executor-env.sh > enterprise-secure-executor.env
 ```
+
+`AZURE_KEY_RELEASE_CACHE_TTL_MS` controls only in-process released unwrap material caching. The executor clamps it to a short maximum of five minutes and defaults to 60 seconds.
 
 Review `enterprise-secure-executor.env`, then copy it to the Confidential VM:
 

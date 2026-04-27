@@ -50,6 +50,7 @@ Live production-confidential path:
 - Executor request signing is implemented.
 - Enterprise executor now supports encrypted `share1_encrypted` and encrypted `share2_encrypted`.
 - Executor has explicit `demo` vs `confidential` key-release mode.
+- Released unwrap material is cached only in executor process memory with a short TTL.
 - Executor blocks replayed signed execution envelopes.
 - Executor health reports `production_ready`, `security_profile`, and concrete production blockers.
 - Control plane `/readiness` summarizes whole-path demo readiness and production-confidential blockers.
@@ -378,7 +379,7 @@ Minimum evidence bundle for customer review:
 - [x] Pin the release policy to approved MAA claims/measurements.
 - [x] Never place unwrap key in Azure app settings or container env vars in production.
 - [x] Add customer-verifiable attestation evidence to execution audit metadata.
-- [ ] Cache released unwrap material only in process memory with an explicit short TTL.
+- [x] Cache released unwrap material only in process memory with an explicit short TTL.
 - [ ] Rotate setup-time Supabase/service/signing secrets before customer production.
 
 Important key-type decision:
