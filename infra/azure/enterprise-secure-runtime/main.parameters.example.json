@@ -88,6 +88,40 @@
     },
     "apiManagementOriginLockSecret": {
       "value": ""
+    },
+    "deployMonitoring": {
+      "value": false
+    },
+    "monitoringEnterpriseUrl": {
+      "value": "https://enterprise.vaultproof.dev"
+    },
+    "monitoringAlertEmail": {
+      "value": ""
+    },
+    "monitoringWebhookUrl": {
+      "value": ""
+    },
+    "monitoringAvailabilityTestLocations": {
+      "value": [
+        {
+          "Id": "us-ca-sjc-azr"
+        },
+        {
+          "Id": "us-va-ash-azr"
+        },
+        {
+          "Id": "us-tx-sn1-azr"
+        }
+      ]
+    },
+    "monitoringEvaluationFrequency": {
+      "value": "PT1M"
+    },
+    "monitoringWindowSize": {
+      "value": "PT5M"
+    },
+    "monitoringFailedLocationCount": {
+      "value": 2
     }
   }
 }

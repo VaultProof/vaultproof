@@ -95,6 +95,40 @@ param apiManagementOriginLockHeaderName string = 'x-vaultproof-origin-lock'
 @description('Optional custom origin-lock secret APIM forwards to the control plane. Set the same value in ENTERPRISE_ORIGIN_LOCK_SECRET on the Confidential VM before requiring APIM-origin traffic.')
 param apiManagementOriginLockSecret string = ''
 
+@description('Deploy Azure Monitor resources for enterprise production readiness and VM availability alerting.')
+param deployMonitoring bool = false
+
+@description('Public enterprise URL monitored through Azure Front Door. Do not include a trailing slash.')
+param monitoringEnterpriseUrl string = 'https://enterprise.vaultproof.dev'
+
+@description('Email address for Azure Monitor action group notifications. Leave empty to create the action group without email receivers.')
+param monitoringAlertEmail string = ''
+
+@description('Webhook URL for Azure Monitor action group notifications. Leave empty to create the action group without webhook receivers.')
+param monitoringWebhookUrl string = ''
+
+@description('Application Insights availability test locations.')
+param monitoringAvailabilityTestLocations array = [
+  {
+    Id: 'us-ca-sjc-azr'
+  }
+  {
+    Id: 'us-va-ash-azr'
+  }
+  {
+    Id: 'us-tx-sn1-azr'
+  }
+]
+
+@description('How often Azure Monitor evaluates the availability and VM metric alerts.')
+param monitoringEvaluationFrequency string = 'PT1M'
+
+@description('Alert evaluation window.')
+param monitoringWindowSize string = 'PT5M'
+
+@description('Number of availability test locations that must fail before firing.')
+param monitoringFailedLocationCount int = 2
+
 var tags = {
   app: 'vaultproof'
   tier: 'enterprise'
@@ -114,6 +148,16 @@ var unwrapKeyName = 'vaultproof-enterprise-unwrap'
 var attestationName = take('${environmentName}${uniqueString(resourceGroup().id)}maa', 24)
 var apiManagementName = take('${environmentName}${uniqueString(resourceGroup().id)}apim', 50)
 var apiManagementResolvedBackendUrl = empty(apiManagementBackendUrl) ? 'http://${publicIp.properties.ipAddress}:3001' : apiManagementBackendUrl
+var monitoringWorkspaceName = take('${environmentName}-${uniqueString(resourceGroup().id)}-logs', 63)
+var monitoringAppInsightsName = take('${environmentName}-${uniqueString(resourceGroup().id)}-appi', 255)
+var monitoringActionGroupName = take('${environmentName}-${uniqueString(resourceGroup().id)}-ops-ag', 260)
+var monitoringHealthTestName = take('${environmentName}-${uniqueString(resourceGroup().id)}-health', 260)
+var monitoringReadinessTestName = take('${environmentName}-${uniqueString(resourceGroup().id)}-readiness', 260)
+var monitoringAvailabilityActions = [
+  {
+    actionGroupId: monitoringActionGroup.id
+  }
+]
 var createPrototypeReleaseKey = deployPrototypeReleaseKey && !empty(secureKeyReleasePolicyData)
 var enterpriseApiPolicyXml = format('''
 <policies>
@@ -520,6 +564,229 @@ resource enterpriseApiPolicy 'Microsoft.ApiManagement/service/apis/policies@2024
   }
 }
 
+resource monitoringWorkspace 'Microsoft.OperationalInsights/workspaces@2023-09-01' = if (deployMonitoring) {
+  name: monitoringWorkspaceName
+  location: location
+  tags: union(tags, {
+    role: 'production-monitoring'
+  })
+  properties: {
+    retentionInDays: 30
+    sku: {
+      name: 'PerGB2018'
+    }
+  }
+}
+
+resource monitoringAppInsights 'Microsoft.Insights/components@2020-02-02' = if (deployMonitoring) {
+  name: monitoringAppInsightsName
+  location: location
+  kind: 'web'
+  tags: union(tags, {
+    role: 'availability-tests'
+  })
+  properties: {
+    Application_Type: 'web'
+    RetentionInDays: 90
+    SamplingPercentage: 100
+    WorkspaceResourceId: monitoringWorkspace.id
+    publicNetworkAccessForIngestion: 'Enabled'
+    publicNetworkAccessForQuery: 'Enabled'
+  }
+}
+
+resource monitoringActionGroup 'Microsoft.Insights/actionGroups@2023-01-01' = if (deployMonitoring) {
+  name: monitoringActionGroupName
+  location: 'global'
+  tags: tags
+  properties: {
+    enabled: true
+    groupShortName: 'vpentops'
+    emailReceivers: empty(monitoringAlertEmail) ? [] : [
+      {
+        name: 'vaultproof-ops-email'
+        emailAddress: monitoringAlertEmail
+        useCommonAlertSchema: true
+      }
+    ]
+    webhookReceivers: empty(monitoringWebhookUrl) ? [] : [
+      {
+        name: 'vaultproof-ops-webhook'
+        serviceUri: monitoringWebhookUrl
+        useCommonAlertSchema: true
+      }
+    ]
+    armRoleReceivers: []
+    automationRunbookReceivers: []
+    azureAppPushReceivers: []
+    azureFunctionReceivers: []
+    eventHubReceivers: []
+    itsmReceivers: []
+    logicAppReceivers: []
+    smsReceivers: []
+    voiceReceivers: []
+  }
+}
+
+resource monitoringHealthWebTest 'Microsoft.Insights/webtests@2022-06-15' = if (deployMonitoring) {
+  name: monitoringHealthTestName
+  location: location
+  kind: 'standard'
+  tags: union(tags, {
+    'hidden-link:${monitoringAppInsights.id}': 'Resource'
+  })
+  properties: {
+    Description: 'VaultProof enterprise Front Door health availability test.'
+    Enabled: true
+    Frequency: 300
+    Kind: 'standard'
+    Locations: monitoringAvailabilityTestLocations
+    Name: monitoringHealthTestName
+    Request: {
+      FollowRedirects: true
+      HttpVerb: 'GET'
+      ParseDependentRequests: false
+      RequestUrl: '${monitoringEnterpriseUrl}/health'
+    }
+    RetryEnabled: true
+    SyntheticMonitorId: monitoringHealthTestName
+    Timeout: 30
+    ValidationRules: {
+      ContentValidation: {
+        ContentMatch: '"status":"ok"'
+        IgnoreCase: false
+        PassIfTextFound: true
+      }
+      ExpectedHttpStatusCode: 200
+      IgnoreHttpStatusCode: false
+      SSLCheck: true
+    }
+  }
+}
+
+resource monitoringReadinessWebTest 'Microsoft.Insights/webtests@2022-06-15' = if (deployMonitoring) {
+  name: monitoringReadinessTestName
+  location: location
+  kind: 'standard'
+  tags: union(tags, {
+    'hidden-link:${monitoringAppInsights.id}': 'Resource'
+  })
+  properties: {
+    Description: 'VaultProof enterprise production readiness drift test.'
+    Enabled: true
+    Frequency: 300
+    Kind: 'standard'
+    Locations: monitoringAvailabilityTestLocations
+    Name: monitoringReadinessTestName
+    Request: {
+      FollowRedirects: true
+      HttpVerb: 'GET'
+      ParseDependentRequests: false
+      RequestUrl: '${monitoringEnterpriseUrl}/readiness'
+    }
+    RetryEnabled: true
+    SyntheticMonitorId: monitoringReadinessTestName
+    Timeout: 30
+    ValidationRules: {
+      ContentValidation: {
+        ContentMatch: '"production_ready":true'
+        IgnoreCase: false
+        PassIfTextFound: true
+      }
+      ExpectedHttpStatusCode: 200
+      IgnoreHttpStatusCode: false
+      SSLCheck: true
+    }
+  }
+}
+
+resource monitoringHealthAlert 'Microsoft.Insights/metricAlerts@2018-03-01' = if (deployMonitoring) {
+  name: take('${environmentName}-${uniqueString(resourceGroup().id)}-health-alert', 260)
+  location: 'global'
+  tags: union(tags, {
+    'hidden-link:${monitoringAppInsights.id}': 'Resource'
+    'hidden-link:${monitoringHealthWebTest.id}': 'Resource'
+  })
+  properties: {
+    description: 'VaultProof enterprise /health availability failed from multiple Azure Monitor locations.'
+    severity: 1
+    enabled: true
+    scopes: [
+      monitoringHealthWebTest.id
+      monitoringAppInsights.id
+    ]
+    evaluationFrequency: monitoringEvaluationFrequency
+    windowSize: monitoringWindowSize
+    criteria: {
+      'odata.type': 'Microsoft.Azure.Monitor.WebtestLocationAvailabilityCriteria'
+      webTestId: monitoringHealthWebTest.id
+      componentId: monitoringAppInsights.id
+      failedLocationCount: monitoringFailedLocationCount
+    }
+    actions: monitoringAvailabilityActions
+  }
+}
+
+resource monitoringReadinessAlert 'Microsoft.Insights/metricAlerts@2018-03-01' = if (deployMonitoring) {
+  name: take('${environmentName}-${uniqueString(resourceGroup().id)}-readiness-alert', 260)
+  location: 'global'
+  tags: union(tags, {
+    'hidden-link:${monitoringAppInsights.id}': 'Resource'
+    'hidden-link:${monitoringReadinessWebTest.id}': 'Resource'
+  })
+  properties: {
+    description: 'VaultProof enterprise production readiness drifted away from production_ready=true.'
+    severity: 0
+    enabled: true
+    scopes: [
+      monitoringReadinessWebTest.id
+      monitoringAppInsights.id
+    ]
+    evaluationFrequency: monitoringEvaluationFrequency
+    windowSize: monitoringWindowSize
+    criteria: {
+      'odata.type': 'Microsoft.Azure.Monitor.WebtestLocationAvailabilityCriteria'
+      webTestId: monitoringReadinessWebTest.id
+      componentId: monitoringAppInsights.id
+      failedLocationCount: monitoringFailedLocationCount
+    }
+    actions: monitoringAvailabilityActions
+  }
+}
+
+resource monitoringVmAvailabilityAlert 'Microsoft.Insights/metricAlerts@2018-03-01' = if (deployMonitoring) {
+  name: take('${environmentName}-${uniqueString(resourceGroup().id)}-vm-availability-alert', 260)
+  location: 'global'
+  tags: tags
+  properties: {
+    description: 'VaultProof enterprise Confidential VM availability dropped below healthy.'
+    severity: 1
+    enabled: true
+    scopes: [
+      confidentialVm.id
+    ]
+    evaluationFrequency: monitoringEvaluationFrequency
+    windowSize: monitoringWindowSize
+    criteria: {
+      'odata.type': 'Microsoft.Azure.Monitor.SingleResourceMultipleMetricCriteria'
+      allOf: [
+        {
+          name: 'vmAvailability'
+          criterionType: 'StaticThresholdCriterion'
+          metricName: 'VmAvailabilityMetric'
+          metricNamespace: 'Microsoft.Compute/virtualMachines'
+          operator: 'LessThan'
+          threshold: 1
+          timeAggregation: 'Average'
+          skipMetricValidation: true
+          dimensions: []
+        }
+      ]
+    }
+    actions: monitoringAvailabilityActions
+  }
+}
+
 resource confidentialVm 'Microsoft.Compute/virtualMachines@2023-09-01' = {
   name: vmName
   location: location
@@ -604,3 +871,8 @@ output apiManagementName string = deployApiManagement ? apiManagement!.name : ''
 output apiManagementGatewayUrl string = deployApiManagement ? apiManagement!.properties.gatewayUrl : ''
 output apiManagementBackendUrl string = deployApiManagement ? apiManagementResolvedBackendUrl : ''
 output apiManagementApiUrl string = deployApiManagement ? '${apiManagement!.properties.gatewayUrl}/${apiManagementApiPath}' : ''
+output monitoringWorkspaceName string = deployMonitoring ? monitoringWorkspace!.name : ''
+output monitoringAppInsightsName string = deployMonitoring ? monitoringAppInsights!.name : ''
+output monitoringActionGroupName string = deployMonitoring ? monitoringActionGroup!.name : ''
+output monitoringHealthWebTestName string = deployMonitoring ? monitoringHealthWebTest!.name : ''
+output monitoringReadinessWebTestName string = deployMonitoring ? monitoringReadinessWebTest!.name : ''

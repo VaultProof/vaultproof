@@ -42,6 +42,7 @@ Live production-confidential path:
 - `npm run deploy:enterprise-vm` deploys/rebuilds/restarts the CVM runtime and can run the verifier.
 - `npm run evidence:enterprise-production` captures customer/audit evidence snapshots.
 - APIM IaC/policy support exists but is not deployed in the live route yet.
+- Azure Monitor/App Insights alerting IaC exists but is not deployed yet.
 - Supabase stores enterprise org/project metadata.
 - Executor request signing is implemented.
 - Enterprise executor now supports encrypted `share1_encrypted` and encrypted `share2_encrypted`.
@@ -55,7 +56,7 @@ Live production-confidential path:
 Important limitation:
 
 - The active production-confidential runtime is now Confidential VM plus Secure Key Release.
-- Azure API Management live deployment/cutover, Azure Monitor alerts, TLS-to-origin, and enterprise UI/policy controls are still pending.
+- Azure API Management live deployment/cutover, Azure Monitor alert deployment, TLS-to-origin, and enterprise UI/policy controls are still pending.
 - Secrets used during setup must be rotated before external/customer production use.
 
 ## Next Execution Order
@@ -349,6 +350,7 @@ Minimum evidence bundle for customer review:
 - [x] Add deployment script for the systemd artifact: `npm run deploy:enterprise-vm`.
 - [x] Add live production verifier: `npm run verify:enterprise-production`.
 - [x] Add production evidence collector: `npm run evidence:enterprise-production`.
+- [x] Add deployable Azure Monitor/App Insights alerting IaC for Front Door health, production readiness drift, and Confidential VM availability.
 
 ### Phase 3: Secure Key Release
 

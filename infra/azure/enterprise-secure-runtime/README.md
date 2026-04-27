@@ -44,6 +44,9 @@ Edit `main.parameters.json`:
 - `apiManagementSkuName`: use `StandardV2` for production starter or `PremiumV2` when you need stronger isolation/networking features.
 - `apiManagementBackendUrl`: leave empty to forward to the Confidential VM public control-plane origin on port `3001`, or set it to a private/internal origin once that exists.
 - `apiManagementOriginLockSecret`: optional APIM-to-control-plane shared origin-lock secret. If set, also set `ENTERPRISE_ORIGIN_LOCK_SECRET` in the control-plane env.
+- `deployMonitoring`: keep `false` until the Front Door production path is stable and you are ready to pay for Azure Monitor/App Insights resources.
+- `monitoringAlertEmail` / `monitoringWebhookUrl`: optional Azure Monitor action group receivers.
+- `monitoringEnterpriseUrl`: the public Front Door URL monitored by availability tests.
 
 Check Confidential VM SKU availability before deploying:
 
@@ -454,6 +457,57 @@ curl -sS "${APIM_API_URL}/readiness"
 For the final VaultProof-managed APIM route, Front Door should point to the APIM gateway origin, and APIM should point to the Confidential VM control-plane origin. Avoid configuring APIM to forward to `https://enterprise.vaultproof.dev`, because that creates a routing loop once Front Door sends `enterprise.vaultproof.dev` to APIM.
 
 Later policies should add JWT validation, Entra-aware products/subscriptions, request size limits, per-customer quotas, OpenAPI publishing, and Azure Monitor/Application Insights integration.
+
+## Azure Monitor Placement
+
+The template can deploy the first production monitoring bundle without changing the live route:
+
+- Log Analytics workspace.
+- Application Insights component.
+- Azure Monitor action group with optional email and webhook receivers.
+- Availability test for `GET /health`.
+- Availability test for `GET /readiness` with content validation for `"production_ready":true`.
+- Metric alert for health availability failures.
+- Severity 0 metric alert when production readiness drifts away from `production_ready=true`.
+- Metric alert when the Confidential VM availability metric drops below healthy.
+
+Deploy it after `https://enterprise.vaultproof.dev/readiness` is already production-ready:
+
+```bash
+az deployment group create \
+  --resource-group vaultproof-enterprise \
+  --name vp-enterprise-secure-runtime-eastus-hsm-monitoring \
+  --template-file infra/azure/enterprise-secure-runtime/main.bicep \
+  --parameters \
+    location=eastus \
+    environmentName=vpenteu \
+    adminUsername=azureuser \
+    adminSshPublicKey='<existing SSH public key>' \
+    vmSize=Standard_DC2as_v5 \
+    sshSourceCidr='<your current IPv4>/32' \
+    executorSourceCidr=10.42.1.0/24 \
+    allowFrontDoorToControlPlane=true \
+    controlPlaneIngressSource=AzureFrontDoor.Backend \
+    deployPrototypeReleaseKey=false \
+    deployManagedHsm=true \
+    managedHsmInitialAdminObjectId='<your Entra object id>' \
+    deployApiManagement=false \
+    deployMonitoring=true \
+    monitoringEnterpriseUrl='https://enterprise.vaultproof.dev' \
+    monitoringAlertEmail='security@vaultproof.dev'
+```
+
+Print the monitoring outputs:
+
+```bash
+az deployment group show \
+  --resource-group vaultproof-enterprise \
+  --name vp-enterprise-secure-runtime-eastus-hsm-monitoring \
+  --query "properties.outputs.{workspace:monitoringWorkspaceName.value,appInsights:monitoringAppInsightsName.value,actionGroup:monitoringActionGroupName.value,healthTest:monitoringHealthWebTestName.value,readinessTest:monitoringReadinessWebTestName.value}" \
+  -o table
+```
+
+The readiness availability test is the production-verifier drift alarm: it fails if Front Door cannot reach the control plane, if `/readiness` stops returning HTTP 200, or if the response no longer contains `"production_ready":true`.
 
 ## Lockdown Checklist
 
