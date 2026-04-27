@@ -1378,6 +1378,22 @@ async function assertEnterpriseLoginRoute() {
     }
   }
 
+  for (const plannedPath of ['/app/members', '/app/audit', '/app/alerts', '/app/activity', '/app/projects', '/app/keys', '/app/settings', '/app/plans', '/app/scanner']) {
+    const plannedResponse = await handleEnterpriseControlPlaneRequest(
+      buildRequest(plannedPath),
+      {
+        enterpriseHostname: ENTERPRISE_HOSTNAME,
+      },
+    );
+    const plannedHtml = await plannedResponse.text();
+    if (plannedResponse.status !== 200 || !plannedHtml.includes('Phase 6 of the build plan')) {
+      throw new Error(`Expected enterprise planned page for ${plannedPath}, got ${plannedResponse.status}`);
+    }
+    if (plannedHtml.includes('https://init.vaultproof.dev') || plannedHtml.includes('https://api.vaultproof.dev')) {
+      throw new Error(`Enterprise planned page ${plannedPath} must not load B2C APIs`);
+    }
+  }
+
   const controlResponse = await handleEnterpriseControlPlaneRequest(
     buildRequest('/app/control'),
     {

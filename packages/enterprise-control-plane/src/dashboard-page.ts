@@ -153,13 +153,25 @@ export function renderEnterpriseDashboardPage(): string {
       <div class="nav-group">
         <div class="nav-label">workspace</div>
         <a class="nav-link active" href="/app/dashboard"><span>Dashboard</span><span class="nav-pill">new</span></a>
+        <a class="nav-link" href="/app/projects"><span>Projects</span></a>
+        <a class="nav-link" href="/app/activity"><span>Activity</span></a>
+        <a class="nav-link" href="/app/alerts"><span>Alerts</span></a>
         <a class="nav-link" href="/app/control"><span>Control</span></a>
         <a class="nav-link" href="/app/org"><span>Org + SSO</span></a>
       </div>
       <div class="nav-group">
         <div class="nav-label">evidence</div>
+        <a class="nav-link" href="/app/members"><span>Members</span></a>
+        <a class="nav-link" href="/app/audit"><span>Audit</span></a>
+        <a class="nav-link" href="/app/keys"><span>Provider slots</span></a>
         <a class="nav-link" id="auditExportLink" href="/api/v1/enterprise/audit?format=csv&days=30"><span>Audit CSV</span></a>
         <a class="nav-link" id="accessReviewLink" href="/api/v1/enterprise/members/access-review?format=csv"><span>Access review CSV</span></a>
+      </div>
+      <div class="nav-group">
+        <div class="nav-label">setup</div>
+        <a class="nav-link" href="/app/settings"><span>Settings</span></a>
+        <a class="nav-link" href="/app/plans"><span>Plans</span></a>
+        <a class="nav-link" href="/app/scanner"><span>Scanner</span></a>
       </div>
     </aside>
 

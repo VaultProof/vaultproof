@@ -41,7 +41,7 @@ Live production-confidential path:
 - `npm run verify:enterprise-production` verifies the live path.
 - `npm run deploy:enterprise-vm` deploys/rebuilds/restarts the CVM runtime and can run the verifier.
 - `npm run evidence:enterprise-production` captures customer/audit evidence snapshots.
-- The enterprise control plane serves a separate `/app` and `/app/dashboard` dashboard instead of relying on the B2C dashboard shell.
+- The enterprise control plane serves a separate `/app` and `/app/dashboard` dashboard instead of relying on the B2C dashboard shell. In progress: dashboard home, login, control, and org pages exist; remaining enterprise app links need enterprise-owned routes and feature-complete pages.
 - APIM IaC/policy support exists with JWT validation, coarse limits, request-size guards, origin locking, and App Insights diagnostics, but APIM is not deployed in the live route yet.
 - Azure Monitor/App Insights alerting IaC exists but is not deployed yet.
 - TLS-origin proxy tooling exists but Front Door still uses HTTP origin forwarding until a real origin certificate/hostname is installed and cut over.
@@ -78,6 +78,7 @@ Important limitation:
 4. SSH/Bastion/JIT hardening and cleanup of old prototype Container Apps resources. In progress: reversible SSH bootstrap lockdown tooling, verifier expectations, and prototype Container Apps cleanup tooling are implemented; live SSH closure and live prototype cleanup are pending alternate access/break-glass readiness and soak.
 5. End-to-end enterprise API execution through `enterprise.vaultproof.dev` with evidence/audit metadata.
 6. Enterprise controls: SSO, provider allowlists, upstream domain/method policy, policy UI, per-project rate limits, emergency revoke, audit export, SOC 2 access review evidence.
+7. Enterprise dashboard completion: make every `/app/*` link resolve on `enterprise.vaultproof.dev`, then replace placeholders with API-backed enterprise pages one page at a time with tests between each slice.
 
 ## Security Boundary
 
@@ -419,6 +420,36 @@ Important key-type decision:
 - [x] Add policy UI for editing caller-lock provider overrides.
 - [x] Add access review evidence for SOC 2.
 - [x] Add separate enterprise dashboard served by the Azure control plane.
+
+### Phase 6: Enterprise Dashboard Completion
+
+Goal: `enterprise.vaultproof.dev/app/*` should be a complete enterprise operator workspace, served by the Azure enterprise control plane and backed by `/api/v1/enterprise/*`, not the B2C dashboard shell.
+
+Pages and links:
+
+- [x] `/app`, `/app/`, `/app/dashboard`: enterprise dashboard home with runtime posture, org summary, project health, access, audit, and recent runtime activity.
+- [x] `/app/login`: enterprise login entry point.
+- [x] `/app/control`: detailed enterprise control surface for project policy, provider overrides, incoming invites, export summaries, and secure execution posture.
+- [x] `/app/org`: organization settings and Microsoft Entra/Supabase SAML SSO rollout controls.
+- [ ] `/app/members`: enterprise-owned members page for members, pending invites, role changes, project assignments, CSV/JSON access evidence links, and invite acceptance.
+- [ ] `/app/audit`: enterprise-owned audit page for governance/runtime timeline, CSV export, search, filters, and evidence-friendly event details.
+- [ ] `/app/alerts`: enterprise-owned alerts page for destinations, delivery logs, dispatch runs, policy status, and test-send workflow.
+- [ ] `/app/activity`: enterprise-owned runtime activity page for recent proxy/executor events, status codes, latency, provider request IDs, and attestation summaries.
+- [ ] `/app/projects`: enterprise-owned project inventory page for project health, provider slots, policy status, and quick links to control.
+- [ ] `/app/keys`: enterprise-owned provider slots page for active/revoked providers, emergency revoke, rotation checklist, and SKR/confidential-mode notes.
+- [ ] `/app/settings`: enterprise-owned tenant settings page for dashboard preferences, session/security notices, and org defaults that do not belong on SSO setup.
+- [ ] `/app/plans`: enterprise-owned plan/billing/governance page for APIM/enterprise rollout status, limits, and contract-facing packaging.
+- [ ] `/app/scanner`: enterprise-owned repository/security scanning entry page, either wired to enterprise-safe scanner APIs or clearly marked as a separate future integration.
+
+Implementation/test order:
+
+1. [x] Navigation no-404 baseline: every link rendered by enterprise dashboard/control/org resolves to an enterprise control-plane page and smoke tests assert HTTP 200. Placeholder pages are allowed only for this baseline slice.
+2. [ ] Members page feature slice: wire `/app/members` to enterprise member APIs; test org selection, pending invites, access-review export link, and admin/member states.
+3. [ ] Audit page feature slice: wire `/app/audit` to enterprise audit APIs; test CSV export link, filter query generation, governance + proxy event rendering.
+4. [ ] Alerts page feature slice: wire `/app/alerts` to enterprise alert APIs; test destinations, policy, delivery logs, and dispatch-run states.
+5. [ ] Activity/projects/keys slice: wire runtime activity, project inventory, provider slot status, and emergency revoke paths; test no B2C API calls.
+6. [ ] Settings/plans/scanner slice: either wire real enterprise APIs or intentionally hide/disable unavailable actions; test no dead links and no B2C fallback.
+7. [ ] Browser QA after each feature slice: login as demo user, click all sidebar/subnav links, verify no `{"error":"Not found"}` pages, and verify `/readiness` remains production-ready after deploy.
 
 ## Azure Resources
 

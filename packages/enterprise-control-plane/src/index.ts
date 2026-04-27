@@ -1,7 +1,7 @@
 import type { SignedSecureExecutionEnvelope } from '@vaultproof/core';
 import { timingSafeEqual } from 'node:crypto';
 import { assertEnterpriseHostname, dispatchToSecureExecutor, type EnterpriseControlPlaneEnv } from './config.js';
-import { renderEnterpriseControlPage, renderEnterpriseOrgPage } from './app-pages.js';
+import { renderEnterpriseControlPage, renderEnterpriseOrgPage, renderEnterprisePlannedAppPage } from './app-pages.js';
 import { renderEnterpriseDashboardPage } from './dashboard-page.js';
 import { renderEnterpriseLoginPage, renderEnterpriseLoginScript } from './login-page.js';
 import { handleEnterpriseAlertRoutes } from './routes/alerts.js';
@@ -281,6 +281,24 @@ export async function handleEnterpriseControlPlaneRequest(
         'x-robots-tag': 'noindex',
       },
     });
+  }
+
+  if (request.method === 'GET' && url.pathname.startsWith('/app/')) {
+    const plannedPageName = url.pathname
+      .replace(/^\/app\//, '')
+      .replace(/\.html$/, '')
+      .replace(/\/+$/, '');
+    const plannedPage = renderEnterprisePlannedAppPage(plannedPageName);
+    if (plannedPage) {
+      return new Response(plannedPage, {
+        status: 200,
+        headers: {
+          'content-type': 'text/html; charset=utf-8',
+          'cache-control': 'no-store',
+          'x-robots-tag': 'noindex',
+        },
+      });
+    }
   }
 
   if (request.method === 'GET' && url.pathname === '/health') {
