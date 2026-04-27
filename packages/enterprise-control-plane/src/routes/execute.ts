@@ -1,7 +1,9 @@
 import {
   buildSignedSecureExecutionEnvelope,
+  type AzureSecureExecutionAttestationEvidence,
   type SecureExecutionCallerLock,
   type SecureExecutionRequest,
+  type SecureExecutionResult,
 } from '@vaultproof/core';
 import type { EnterpriseControlPlaneEnv } from '../config.js';
 import { dispatchToSecureExecutor } from '../config.js';
@@ -402,6 +404,53 @@ function generateNonce(): string {
   return crypto.randomUUID();
 }
 
+function summarizeAttestationEvidence(value: unknown): Record<string, unknown> | null {
+  if (!isRecord(value)) return null;
+  const evidence = value as Partial<AzureSecureExecutionAttestationEvidence>;
+  const claims = isRecord(evidence.claims) ? evidence.claims : {};
+  return {
+    provider: evidence.provider || null,
+    attestation_provider_uri: evidence.attestationProviderUri || null,
+    attestation_token_hash: evidence.attestationTokenHash || null,
+    key_release_policy_hash: evidence.keyReleasePolicyHash || null,
+    key_id: evidence.keyId || null,
+    key_version: evidence.keyVersion || null,
+    executor_build_digest: evidence.executorBuildDigest || null,
+    confidential_vm_resource_id: evidence.confidentialVmResourceId || null,
+    claims: {
+      attestation_type: claims.attestationType || null,
+      secure_boot: claims.secureBoot ?? null,
+      vm_isolation: claims.vmIsolation || null,
+      measurement_summary: claims.measurementSummary || null,
+    },
+  };
+}
+
+function buildExecutionAuditMetadata(
+  executionRequest: SecureExecutionRequest,
+  responseStatus: number,
+  responseData: unknown,
+): Record<string, unknown> {
+  const result = isRecord(responseData) ? responseData as Partial<SecureExecutionResult> : {};
+  const attestation = summarizeAttestationEvidence(result.attestation);
+  return {
+    request_id: executionRequest.requestId,
+    provider: executionRequest.provider,
+    method: executionRequest.method,
+    upstream_path: executionRequest.upstreamPath,
+    executor_status: responseStatus,
+    secure_execution: {
+      request_id: result.requestId || executionRequest.requestId,
+      status: typeof result.status === 'number' ? result.status : null,
+      provider_request_id: result.providerRequestId || null,
+      error: result.error || null,
+      attestation,
+    },
+    attestation,
+    caller_lock: executionRequest.callerLock || null,
+  };
+}
+
 async function auditCallerLockDenied(
   env: EnterpriseControlPlaneEnv,
   project: {
@@ -574,14 +623,7 @@ export async function handleEnterpriseExecuteRoutes(
       description: response.ok
         ? `Dispatched secure execution for ${slug} on ${project.name || project.vp_proj_id}`
         : `Failed secure execution dispatch for ${slug} on ${project.name || project.vp_proj_id}`,
-      metadata: {
-        request_id: executionRequest.requestId,
-        provider: executionRequest.provider,
-        method,
-        upstream_path: upstreamPath,
-        executor_status: response.status,
-        caller_lock: callerLock,
-      },
+      metadata: buildExecutionAuditMetadata(executionRequest, response.status, responseData),
     });
   }
 

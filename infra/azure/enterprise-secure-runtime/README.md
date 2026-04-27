@@ -722,6 +722,8 @@ npm run evidence:enterprise-production
 
 By default, evidence JSON files are written to `/tmp/vaultproof-production-evidence`.
 
+Execution-level governance audit events also include a compact executor attestation summary in `metadata.attestation` and `metadata.secure_execution.attestation`. This records hashes and identifiers needed for customer verification, including the Azure attestation token hash, release-policy hash, Managed HSM key ID/version, executor build digest, Confidential VM resource ID, and MAA claim summary. Request/response bodies and provider keys are not written to audit metadata.
+
 - Close SSH bootstrap with `harden-ssh-bootstrap.sh` after production readiness and alternate access are verified.
 - Route control plane to executor over private IP.
 - Restrict executor NSG source to the control-plane subnet or private endpoint.

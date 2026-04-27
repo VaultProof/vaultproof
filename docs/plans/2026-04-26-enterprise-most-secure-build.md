@@ -54,6 +54,7 @@ Live production-confidential path:
 - Executor health reports `production_ready`, `security_profile`, and concrete production blockers.
 - Control plane `/readiness` summarizes whole-path demo readiness and production-confidential blockers.
 - Enterprise caller-lock policy supports origin, customer gateway, client class, device identity requirement, fleet, firmware, IPv4/IPv6 CIDR, mTLS certificate identity checks, and stricter per-provider overrides.
+- Execution dispatch audit events include executor result metadata and customer-verifiable Azure attestation evidence summaries.
 - Azure secure-runtime IaC and operational scripts exist at `infra/azure/enterprise-secure-runtime`.
 
 Important limitation:
@@ -366,7 +367,7 @@ Minimum evidence bundle for customer review:
 - [x] Call Azure Managed HSM release API from the executor.
 - [x] Pin the release policy to approved MAA claims/measurements.
 - [x] Never place unwrap key in Azure app settings or container env vars in production.
-- [ ] Add customer-verifiable attestation evidence to execution audit metadata. In progress: evidence collection exists via `npm run evidence:enterprise-production`; execution-level audit linkage still needs to be added.
+- [x] Add customer-verifiable attestation evidence to execution audit metadata.
 - [ ] Cache released unwrap material only in process memory with an explicit short TTL.
 - [ ] Rotate setup-time Supabase/service/signing secrets before customer production.
 

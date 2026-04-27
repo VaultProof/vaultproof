@@ -34,8 +34,10 @@ const fakeProject = {
 };
 
 let activeProject = fakeProject;
+let auditEvents = [];
 
 function installSupabaseStub() {
+  auditEvents = [];
   globalThis.fetch = async (input, init) => {
     const url = typeof input === 'string' ? input : input instanceof URL ? input.toString() : input.url;
     const method = (init?.method || 'GET').toUpperCase();
@@ -80,6 +82,12 @@ function installSupabaseStub() {
     }
 
     if (url.includes('/rest/v1/organization_audit_events') && method === 'POST') {
+      const body = JSON.parse(init?.body || '{}');
+      if (Array.isArray(body)) {
+        auditEvents.push(...body);
+      } else {
+        auditEvents.push(body);
+      }
       return jsonResponse([]);
     }
 
@@ -103,6 +111,22 @@ function installSupabaseStub() {
         },
         bodyBase64: Buffer.from(JSON.stringify({ ok: true })).toString('base64'),
         providerRequestId: 'req_executor_smoke_123',
+        attestation: {
+          provider: 'azure-confidential-vm',
+          attestationProviderUri: 'https://vaultproof-attest.attest.azure.net',
+          attestationTokenHash: 'attestation-token-sha256',
+          keyReleasePolicyHash: 'sha256:release-policy',
+          keyId: 'https://vaultproof-hsm.managedhsm.azure.net/keys/vaultproof-enterprise-unwrap/1234',
+          keyVersion: '1234',
+          executorBuildDigest: 'sha256:executor-build',
+          confidentialVmResourceId: '/subscriptions/sub/resourceGroups/rg/providers/Microsoft.Compute/virtualMachines/vm',
+          claims: {
+            attestationType: 'azure-maa',
+            secureBoot: true,
+            vmIsolation: 'azure-confidential-vm',
+            measurementSummary: 'sevsnpvm;launch:abc;secureboot:true;tpm:true',
+          },
+        },
         error: null,
       });
     }
@@ -175,6 +199,19 @@ async function assertExecuteRoute() {
   }
   if (payload?.execution?.providerRequestId !== 'req_executor_smoke_123') {
     throw new Error('Expected executor response to be preserved');
+  }
+  const dispatchAudit = auditEvents.find((event) => event.event_type === 'enterprise_secure_execution_dispatched');
+  if (!dispatchAudit) {
+    throw new Error('Expected secure execution dispatch audit event');
+  }
+  if (dispatchAudit.metadata?.secure_execution?.provider_request_id !== 'req_executor_smoke_123') {
+    throw new Error('Expected provider request id in execution audit metadata');
+  }
+  if (dispatchAudit.metadata?.attestation?.provider !== 'azure-confidential-vm') {
+    throw new Error('Expected Azure attestation evidence in execution audit metadata');
+  }
+  if (dispatchAudit.metadata?.attestation?.claims?.attestation_type !== 'azure-maa') {
+    throw new Error('Expected Azure MAA claim summary in execution audit metadata');
   }
 }
 
