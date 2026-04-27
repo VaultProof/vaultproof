@@ -33,6 +33,14 @@ const fakeProject = {
   access_via: 'project',
 };
 
+const fakeOrganization = {
+  id: 'org_123',
+  name: 'Example Org',
+  kind: 'team',
+  owner_user_id: 'user_123',
+  created_at: new Date().toISOString(),
+};
+
 let activeProject = fakeProject;
 let auditEvents = [];
 let projectKeyRevoked = false;
@@ -42,6 +50,7 @@ function installSupabaseStub() {
   projectKeyRevoked = false;
   globalThis.fetch = async (input, init) => {
     const url = typeof input === 'string' ? input : input instanceof URL ? input.toString() : input.url;
+    const decodedUrl = decodeURIComponent(url);
     const method = (init?.method || 'GET').toUpperCase();
 
     if (url.includes('/auth/v1/user') && method === 'GET') {
@@ -55,24 +64,60 @@ function installSupabaseStub() {
       });
     }
 
-    if (url.includes('/rest/v1/organization_members')) {
-      return jsonResponse([{
-        role: 'owner',
-        created_at: new Date().toISOString(),
-        organizations: {
-          id: 'org_123',
-          name: 'Example Org',
-          kind: 'team',
-          owner_user_id: 'user_123',
-          created_at: new Date().toISOString(),
+    if (url.includes('/auth/v1/admin/users/user_123') && method === 'GET') {
+      return jsonResponse({
+        user: {
+          id: 'user_123',
+          email: 'owner@example.com',
         },
+      });
+    }
+
+    if (url.includes('/rest/v1/organization_members')) {
+      if (decodedUrl.includes('organizations')) {
+        return jsonResponse([{
+          role: 'owner',
+          created_at: new Date().toISOString(),
+          organizations: fakeOrganization,
+        }]);
+      }
+
+      return jsonResponse([{
+        id: 'org_member_123',
+        user_id: 'user_123',
+        role: 'owner',
+        created_at: '2026-04-01T12:00:00.000Z',
       }]);
     }
 
     if (url.includes('/rest/v1/project_members')) {
+      if (decodedUrl.includes('project_id')) {
+        return jsonResponse([{
+          project_id: PROJECT_ID,
+          user_id: 'user_123',
+          role: 'admin',
+          created_at: '2026-04-02T12:00:00.000Z',
+        }]);
+      }
+
       return jsonResponse([{
         role: 'admin',
         projects: activeProject,
+      }]);
+    }
+
+    if (url.includes('/rest/v1/organization_invitations') && method === 'GET') {
+      if (decodedUrl.includes('organizations')) {
+        return jsonResponse([]);
+      }
+
+      return jsonResponse([{
+        id: 'invite_123',
+        email: 'reviewer@example.com',
+        role: 'viewer',
+        status: 'pending',
+        created_at: '2026-04-03T12:00:00.000Z',
+        invited_by: 'user_123',
       }]);
     }
 
@@ -1030,6 +1075,65 @@ async function assertEnterpriseAuditCsvExport() {
   }
 }
 
+async function assertEnterpriseAccessReviewEvidenceExport() {
+  installSupabaseStub();
+  activeProject = fakeProject;
+
+  const jsonResponse = await handleEnterpriseControlPlaneRequest(
+    buildRequest('/api/v1/enterprise/members/access-review', {
+      headers: {
+        authorization: `Bearer ${AUTH_TOKEN}`,
+        'x-vaultproof-organization': 'org_123',
+      },
+    }),
+    {
+      enterpriseHostname: ENTERPRISE_HOSTNAME,
+      supabaseUrl: 'https://supabase.example.co',
+      supabaseServiceRoleKey: 'service-role-key',
+    },
+  );
+  const jsonPayload = await jsonResponse.json();
+  if (jsonResponse.status !== 200) {
+    throw new Error(`Expected access review evidence JSON export to succeed, got ${jsonResponse.status} ${JSON.stringify(jsonPayload)}`);
+  }
+  if (!jsonPayload?.controls?.includes('SOC2 CC6.2')) {
+    throw new Error(`Expected SOC 2 control tags in access review evidence, got ${JSON.stringify(jsonPayload)}`);
+  }
+  if (jsonPayload?.summary?.evidence_record_count !== 3) {
+    throw new Error(`Expected member, project, and invitation evidence records, got ${JSON.stringify(jsonPayload?.summary)}`);
+  }
+
+  const csvResponse = await handleEnterpriseControlPlaneRequest(
+    buildRequest('/api/v1/enterprise/members/access-review?format=csv', {
+      headers: {
+        authorization: `Bearer ${AUTH_TOKEN}`,
+        'x-vaultproof-organization': 'org_123',
+      },
+    }),
+    {
+      enterpriseHostname: ENTERPRISE_HOSTNAME,
+      supabaseUrl: 'https://supabase.example.co',
+      supabaseServiceRoleKey: 'service-role-key',
+    },
+  );
+  const csv = await csvResponse.text();
+  if (csvResponse.status !== 200) {
+    throw new Error(`Expected access review evidence CSV export to succeed, got ${csvResponse.status} ${csv}`);
+  }
+  if (!csvResponse.headers.get('content-type')?.includes('text/csv')) {
+    throw new Error('Expected access review evidence CSV content type');
+  }
+  if (!csv.includes('"subject_type","scope","email"')) {
+    throw new Error(`Expected CSV header in access review evidence, got ${csv}`);
+  }
+  if (!csv.includes('"member","project","owner@example.com"')) {
+    throw new Error(`Expected project member evidence in CSV, got ${csv}`);
+  }
+  if (!csv.includes('"invitation","invitation","reviewer@example.com"')) {
+    throw new Error(`Expected pending invitation evidence in CSV, got ${csv}`);
+  }
+}
+
 async function assertEnterpriseLoginRoute() {
   const rootResponse = await handleEnterpriseControlPlaneRequest(
     buildRequest('/'),
@@ -1186,4 +1290,5 @@ await assertEnterpriseProviderExecutionPolicy();
 await assertEnterpriseRateLimitPolicy();
 await assertEnterpriseEmergencyRevoke();
 await assertEnterpriseAuditCsvExport();
+await assertEnterpriseAccessReviewEvidenceExport();
 console.log('enterprise control plane smoke test passed');

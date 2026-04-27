@@ -21,8 +21,60 @@ interface IncomingInvitationSummary {
   };
 }
 
+type AccessReviewEvidenceRecord = {
+  subject_type: 'member' | 'invitation';
+  scope: 'organization' | 'project' | 'invitation';
+  email: string | null;
+  user_id: string | null;
+  organization_role: string | null;
+  project_id: string | null;
+  project_name: string | null;
+  project_ref: string | null;
+  project_role: string | null;
+  status: string;
+  access_created_at: string;
+  evidence_note: string;
+};
+
 function normalizeEmail(email: string): string {
   return email.trim().toLowerCase();
+}
+
+function parseEvidenceFormat(request: Request): 'json' | 'csv' {
+  const raw = new URL(request.url).searchParams.get('format')?.trim().toLowerCase();
+  return raw === 'csv' ? 'csv' : 'json';
+}
+
+function csvCell(value: unknown): string {
+  const raw = value === undefined || value === null
+    ? ''
+    : typeof value === 'string'
+      ? value
+      : JSON.stringify(value);
+  return `"${raw.replace(/"/g, '""')}"`;
+}
+
+function accessReviewEvidenceToCsv(records: AccessReviewEvidenceRecord[]): string {
+  const headers = [
+    'subject_type',
+    'scope',
+    'email',
+    'user_id',
+    'organization_role',
+    'project_id',
+    'project_name',
+    'project_ref',
+    'project_role',
+    'status',
+    'access_created_at',
+    'evidence_note',
+  ];
+  return [
+    headers.map(csvCell).join(','),
+    ...records.map((record) => headers.map((header) => {
+      return csvCell(record[header as keyof AccessReviewEvidenceRecord]);
+    }).join(',')),
+  ].join('\n') + '\n';
 }
 
 async function getUserEmailMap(env: EnterpriseControlPlaneEnv, userIds: string[]): Promise<Map<string, string | null>> {
@@ -200,6 +252,171 @@ export async function handleEnterpriseMemberRoutes(
   }
 
   const canManageMembers = hasRequiredOrganizationRole(membership.organization_role, 'admin');
+
+  if (method === 'GET' && pathSegments.length === 2 && pathSegments[0] === 'members' && pathSegments[1] === 'access-review') {
+    if (!canManageMembers) {
+      return Response.json({ error: 'Only organization admins can export access review evidence' }, { status: 403 });
+    }
+
+    const generatedAt = new Date().toISOString();
+    const format = parseEvidenceFormat(request);
+    const [{ data: orgMembers }, { data: projects }, { data: invitations }] = await Promise.all([
+      supabase
+        .from('organization_members')
+        .select('id, user_id, role, created_at')
+        .eq('organization_id', membership.organization_id)
+        .order('created_at', { ascending: true }),
+      supabase
+        .from('projects')
+        .select('id, name, vp_proj_id, created_at')
+        .eq('organization_id', membership.organization_id)
+        .is('revoked_at', null)
+        .order('created_at', { ascending: false }),
+      supabase
+        .from('organization_invitations')
+        .select('id, email, role, status, created_at, invited_by')
+        .eq('organization_id', membership.organization_id)
+        .in('status', ['pending', 'accepted'])
+        .order('created_at', { ascending: false }),
+    ]);
+
+    const memberRows = (orgMembers || []) as Array<{
+      id: string;
+      user_id: string;
+      role: OrganizationRole;
+      created_at: string;
+    }>;
+    const projectRows = (projects || []) as Array<{
+      id: string;
+      name: string | null;
+      vp_proj_id: string;
+      created_at: string;
+    }>;
+    const invitationRows = (invitations || []) as Array<{
+      id: string;
+      email: string;
+      role: OrganizationRole;
+      status: 'pending' | 'accepted';
+      created_at: string;
+      invited_by: string | null;
+    }>;
+
+    const projectIds = projectRows.map((project) => project.id);
+    const [{ data: projectMembers }, emailMap] = await Promise.all([
+      projectIds.length
+        ? supabase
+            .from('project_members')
+            .select('project_id, user_id, role, created_at')
+            .in('project_id', projectIds)
+        : Promise.resolve({ data: [] }),
+      getUserEmailMap(env, memberRows.map((row) => row.user_id)),
+    ]);
+
+    const projectById = new Map(projectRows.map((project) => [project.id, project]));
+    const memberByUserId = new Map(memberRows.map((member) => [member.user_id, member]));
+    if (!emailMap.get(auth.userId)) {
+      emailMap.set(auth.userId, auth.email);
+    }
+    const records: AccessReviewEvidenceRecord[] = [];
+
+    for (const member of memberRows) {
+      records.push({
+        subject_type: 'member',
+        scope: 'organization',
+        email: emailMap.get(member.user_id) || null,
+        user_id: member.user_id,
+        organization_role: member.role,
+        project_id: null,
+        project_name: null,
+        project_ref: null,
+        project_role: null,
+        status: 'active',
+        access_created_at: member.created_at,
+        evidence_note: 'Active organization membership included for quarterly access review.',
+      });
+    }
+
+    for (const assignment of (projectMembers || []) as Array<{
+      project_id: string;
+      user_id: string;
+      role: string;
+      created_at: string;
+    }>) {
+      const project = projectById.get(assignment.project_id);
+      if (!project) continue;
+      const member = memberByUserId.get(assignment.user_id);
+      records.push({
+        subject_type: 'member',
+        scope: 'project',
+        email: emailMap.get(assignment.user_id) || null,
+        user_id: assignment.user_id,
+        organization_role: member?.role || null,
+        project_id: assignment.project_id,
+        project_name: project.name,
+        project_ref: project.vp_proj_id,
+        project_role: assignment.role,
+        status: 'active',
+        access_created_at: assignment.created_at,
+        evidence_note: 'Active project assignment included for least-privilege review.',
+      });
+    }
+
+    for (const invitation of invitationRows.filter((row) => row.status === 'pending')) {
+      records.push({
+        subject_type: 'invitation',
+        scope: 'invitation',
+        email: invitation.email,
+        user_id: null,
+        organization_role: invitation.role,
+        project_id: null,
+        project_name: null,
+        project_ref: null,
+        project_role: null,
+        status: invitation.status,
+        access_created_at: invitation.created_at,
+        evidence_note: 'Pending organization invitation should be approved or revoked during access review.',
+      });
+    }
+
+    if (format === 'csv') {
+      const filenameDate = generatedAt.slice(0, 10);
+      return new Response(accessReviewEvidenceToCsv(records), {
+        status: 200,
+        headers: {
+          'content-type': 'text/csv; charset=utf-8',
+          'content-disposition': `attachment; filename="vaultproof-access-review-${filenameDate}.csv"`,
+          'cache-control': 'no-store',
+        },
+      });
+    }
+
+    return Response.json({
+      generated_at: generatedAt,
+      controls: ['SOC2 CC6.2', 'SOC2 CC6.3'],
+      reviewer: {
+        user_id: auth.userId,
+        email: auth.email,
+        organization_role: membership.organization_role,
+      },
+      organization: {
+        id: membership.organization_id,
+        name: membership.organization_name,
+        kind: membership.organization_kind,
+      },
+      summary: {
+        member_count: memberRows.length,
+        project_count: projectRows.length,
+        project_assignment_count: records.filter((record) => record.scope === 'project').length,
+        pending_invitation_count: records.filter((record) => record.scope === 'invitation').length,
+        evidence_record_count: records.length,
+      },
+      evidence: records,
+    }, {
+      headers: {
+        'cache-control': 'no-store',
+      },
+    });
+  }
 
   if (method === 'GET' && pathSegments.length === 1 && pathSegments[0] === 'members') {
     const [{ data: orgMembers }, { data: projects }, { data: invitations }] = await Promise.all([

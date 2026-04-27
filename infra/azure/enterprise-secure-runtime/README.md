@@ -709,6 +709,17 @@ Useful filters:
 - `before=<ISO timestamp>`
 - `q=<search text>`
 
+## Access Review Evidence
+
+Organization admins can export SOC 2 access-review evidence as JSON or CSV. The export includes active organization members, project assignments, pending invitations, reviewer metadata, and control tags for `SOC2 CC6.2` and `SOC2 CC6.3`.
+
+```bash
+curl -sS \
+  -H "Authorization: Bearer <supabase-user-jwt>" \
+  "https://enterprise.vaultproof.dev/api/v1/enterprise/members/access-review?format=csv" \
+  > vaultproof-access-review.csv
+```
+
 ## Azure Monitor Placement
 
 The template can deploy the first production monitoring bundle without changing the live route:
