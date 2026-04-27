@@ -8,9 +8,11 @@ FRONT_DOOR_PROFILE="${FRONT_DOOR_PROFILE:-vaultproof-enterprise-fd}"
 FRONT_DOOR_ENDPOINT="${FRONT_DOOR_ENDPOINT:-vaultproof-enterprise}"
 FRONT_DOOR_ROUTE="${FRONT_DOOR_ROUTE:-default-route}"
 FRONT_DOOR_ORIGIN_GROUP="${FRONT_DOOR_ORIGIN_GROUP:-default-origin-group}"
+MONITORING_DEPLOYMENT_NAME="${MONITORING_DEPLOYMENT_NAME:-${DEPLOYMENT_NAME}-monitoring}"
 EXPECTED_FRONT_DOOR_FORWARDING_PROTOCOL="${EXPECTED_FRONT_DOOR_FORWARDING_PROTOCOL:-HttpOnly}"
 EXPECTED_FRONT_DOOR_ORIGIN_HOSTNAME="${EXPECTED_FRONT_DOOR_ORIGIN_HOSTNAME:-}"
 EXPECTED_FRONT_DOOR_ORIGIN_CERT_NAME_CHECK="${EXPECTED_FRONT_DOOR_ORIGIN_CERT_NAME_CHECK:-}"
+EXPECTED_MONITORING_DEPLOYED="${EXPECTED_MONITORING_DEPLOYED:-false}"
 ORIGIN_TLS_HOSTNAME="${ORIGIN_TLS_HOSTNAME:-}"
 SSH_USER="${SSH_USER:-azureuser}"
 RUN_SSH_CHECKS="${RUN_SSH_CHECKS:-true}"
@@ -47,11 +49,16 @@ check_equals() {
 }
 
 deployment_output() {
-  local name="$1"
+  deployment_output_from "${DEPLOYMENT_NAME}" "$1"
+}
+
+deployment_output_from() {
+  local deployment_name="$1"
+  local output_name="$2"
   az deployment group show \
     --resource-group "${RESOURCE_GROUP}" \
-    --name "${DEPLOYMENT_NAME}" \
-    --query "properties.outputs.${name}.value" \
+    --name "${deployment_name}" \
+    --query "properties.outputs.${output_name}.value" \
     -o tsv
 }
 
@@ -75,6 +82,27 @@ http_status() {
   local output_file="$2"
   shift 2
   curl -sS --connect-timeout 10 --max-time 20 -o "${output_file}" -w "%{http_code}" "$@" "${url}"
+}
+
+check_resource_present() {
+  local label="$1"
+  local resource_type="$2"
+  local resource_name="$3"
+  local output_file="$4"
+  if [[ -z "${resource_name}" ]]; then
+    fail "${label}: resource name is empty"
+    return
+  fi
+
+  if az resource show \
+    --resource-group "${RESOURCE_GROUP}" \
+    --resource-type "${resource_type}" \
+    --name "${resource_name}" \
+    -o json > "${output_file}" 2>"${output_file}.err"; then
+    pass "${label} exists: ${resource_name}"
+  else
+    fail "${label} is missing: ${resource_name}"
+  fi
 }
 
 require_command az
@@ -190,6 +218,67 @@ if [[ -n "${EXPECTED_FRONT_DOOR_ORIGIN_CERT_NAME_CHECK}" ]]; then
     [[ -z "${cert_check_value}" ]] && continue
     check_equals "Front Door origin certificate name check" "${cert_check_value}" "${EXPECTED_FRONT_DOOR_ORIGIN_CERT_NAME_CHECK}"
   done <<< "${cert_check_values}"
+fi
+
+if [[ "${EXPECTED_MONITORING_DEPLOYED}" == "true" ]]; then
+  echo
+  echo "Azure Monitor production alerting:"
+  echo "  deployment: ${MONITORING_DEPLOYMENT_NAME}"
+
+  monitoring_workspace_name="$(deployment_output_from "${MONITORING_DEPLOYMENT_NAME}" monitoringWorkspaceName)"
+  monitoring_app_insights_name="$(deployment_output_from "${MONITORING_DEPLOYMENT_NAME}" monitoringAppInsightsName)"
+  monitoring_action_group_name="$(deployment_output_from "${MONITORING_DEPLOYMENT_NAME}" monitoringActionGroupName)"
+  monitoring_health_test_name="$(deployment_output_from "${MONITORING_DEPLOYMENT_NAME}" monitoringHealthWebTestName)"
+  monitoring_readiness_test_name="$(deployment_output_from "${MONITORING_DEPLOYMENT_NAME}" monitoringReadinessWebTestName)"
+  monitoring_health_alert_name="$(deployment_output_from "${MONITORING_DEPLOYMENT_NAME}" monitoringHealthAlertName)"
+  monitoring_readiness_alert_name="$(deployment_output_from "${MONITORING_DEPLOYMENT_NAME}" monitoringReadinessAlertName)"
+  monitoring_vm_alert_name="$(deployment_output_from "${MONITORING_DEPLOYMENT_NAME}" monitoringVmAvailabilityAlertName)"
+
+  workspace_json="${tmp_dir}/monitoring-workspace.json"
+  app_insights_json="${tmp_dir}/monitoring-app-insights.json"
+  action_group_json="${tmp_dir}/monitoring-action-group.json"
+  health_test_json="${tmp_dir}/monitoring-health-test.json"
+  readiness_test_json="${tmp_dir}/monitoring-readiness-test.json"
+  health_alert_json="${tmp_dir}/monitoring-health-alert.json"
+  readiness_alert_json="${tmp_dir}/monitoring-readiness-alert.json"
+  vm_alert_json="${tmp_dir}/monitoring-vm-alert.json"
+
+  check_resource_present "Log Analytics workspace" "Microsoft.OperationalInsights/workspaces" "${monitoring_workspace_name}" "${workspace_json}"
+  check_resource_present "Application Insights component" "Microsoft.Insights/components" "${monitoring_app_insights_name}" "${app_insights_json}"
+  check_resource_present "Azure Monitor action group" "Microsoft.Insights/actionGroups" "${monitoring_action_group_name}" "${action_group_json}"
+  check_resource_present "Health availability test" "Microsoft.Insights/webtests" "${monitoring_health_test_name}" "${health_test_json}"
+  check_resource_present "Readiness availability test" "Microsoft.Insights/webtests" "${monitoring_readiness_test_name}" "${readiness_test_json}"
+  check_resource_present "Health availability alert" "Microsoft.Insights/metricAlerts" "${monitoring_health_alert_name}" "${health_alert_json}"
+  check_resource_present "Readiness drift alert" "Microsoft.Insights/metricAlerts" "${monitoring_readiness_alert_name}" "${readiness_alert_json}"
+  check_resource_present "VM availability alert" "Microsoft.Insights/metricAlerts" "${monitoring_vm_alert_name}" "${vm_alert_json}"
+
+  if [[ -s "${action_group_json}" ]]; then
+    check_equals "Action group enabled" "$(json_value "${action_group_json}" "p => p.properties?.enabled")" "true"
+  fi
+  if [[ -s "${health_test_json}" ]]; then
+    check_equals "Health test enabled" "$(json_value "${health_test_json}" "p => p.properties?.Enabled ?? p.properties?.enabled")" "true"
+    check_equals "Health test URL" "$(json_value "${health_test_json}" "p => p.properties?.Request?.RequestUrl ?? p.properties?.request?.requestUrl")" "${ENTERPRISE_URL%/}/health"
+  fi
+  if [[ -s "${readiness_test_json}" ]]; then
+    check_equals "Readiness test enabled" "$(json_value "${readiness_test_json}" "p => p.properties?.Enabled ?? p.properties?.enabled")" "true"
+    check_equals "Readiness test URL" "$(json_value "${readiness_test_json}" "p => p.properties?.Request?.RequestUrl ?? p.properties?.request?.requestUrl")" "${ENTERPRISE_URL%/}/readiness"
+    check_equals "Readiness test content validation" "$(json_value "${readiness_test_json}" "p => p.properties?.ValidationRules?.ContentValidation?.ContentMatch ?? p.properties?.validationRules?.contentValidation?.contentMatch")" "\"production_ready\":true"
+  fi
+  if [[ -s "${health_alert_json}" ]]; then
+    check_equals "Health alert enabled" "$(json_value "${health_alert_json}" "p => p.properties?.enabled")" "true"
+    check_equals "Health alert severity" "$(json_value "${health_alert_json}" "p => p.properties?.severity")" "1"
+  fi
+  if [[ -s "${readiness_alert_json}" ]]; then
+    check_equals "Readiness drift alert enabled" "$(json_value "${readiness_alert_json}" "p => p.properties?.enabled")" "true"
+    check_equals "Readiness drift alert severity" "$(json_value "${readiness_alert_json}" "p => p.properties?.severity")" "0"
+  fi
+  if [[ -s "${vm_alert_json}" ]]; then
+    check_equals "VM availability alert enabled" "$(json_value "${vm_alert_json}" "p => p.properties?.enabled")" "true"
+    check_equals "VM availability alert severity" "$(json_value "${vm_alert_json}" "p => p.properties?.severity")" "1"
+  fi
+else
+  echo
+  echo "SKIP Azure Monitor production alerting checks because EXPECTED_MONITORING_DEPLOYED=false"
 fi
 
 echo

@@ -833,7 +833,7 @@ Print the monitoring outputs:
 az deployment group show \
   --resource-group vaultproof-enterprise \
   --name vp-enterprise-secure-runtime-eastus-hsm-monitoring \
-  --query "properties.outputs.{workspace:monitoringWorkspaceName.value,appInsights:monitoringAppInsightsName.value,actionGroup:monitoringActionGroupName.value,healthTest:monitoringHealthWebTestName.value,readinessTest:monitoringReadinessWebTestName.value}" \
+  --query "properties.outputs.{workspace:monitoringWorkspaceName.value,appInsights:monitoringAppInsightsName.value,actionGroup:monitoringActionGroupName.value,healthTest:monitoringHealthWebTestName.value,readinessTest:monitoringReadinessWebTestName.value,healthAlert:monitoringHealthAlertName.value,readinessAlert:monitoringReadinessAlertName.value,vmAlert:monitoringVmAvailabilityAlertName.value}" \
   -o table
 ```
 
@@ -850,6 +850,8 @@ ENTERPRISE_URL=https://enterprise.vaultproof.dev \
 FRONT_DOOR_PROFILE=vaultproof-enterprise-fd \
 FRONT_DOOR_ENDPOINT=vaultproof-enterprise \
 FRONT_DOOR_ROUTE=default-route \
+EXPECTED_MONITORING_DEPLOYED=true \
+MONITORING_DEPLOYMENT_NAME=vp-enterprise-secure-runtime-eastus-hsm-monitoring \
 npm run verify:enterprise-production
 ```
 

@@ -45,7 +45,7 @@ Live production-confidential path:
 - The enterprise control plane serves a separate `/app` and `/app/dashboard` dashboard instead of relying on the B2C dashboard shell. In progress: dashboard home, login, control, and org pages exist; remaining enterprise app links need enterprise-owned routes and feature-complete pages.
 - Enterprise `/app/*` pages support opt-in Mixpanel page/navigation analytics through `ENTERPRISE_MIXPANEL_TOKEN`; autocapture and session recording remain disabled by default for enterprise privacy.
 - APIM IaC/policy support exists with JWT validation, coarse limits, request-size guards, origin locking, and App Insights diagnostics, but APIM is not deployed in the live route yet.
-- Azure Monitor/App Insights alerting IaC exists but is not deployed yet.
+- Azure Monitor/App Insights alerting IaC and verifier checks exist, but live monitoring is not deployed yet.
 - TLS-origin proxy and Front Door cutover tooling exist, but Front Door still uses HTTP origin forwarding until a real origin certificate/hostname is installed and cut over.
 - SSH bootstrap lockdown tooling exists but public SSH remains open until alternate access or a controlled break-glass process is ready.
 - Old Container Apps prototype cleanup tooling exists with inventory, ingress-disable, and explicit deletion actions.
@@ -369,7 +369,7 @@ Minimum evidence bundle for customer review:
 - [x] Add deployment script for the systemd artifact: `npm run deploy:enterprise-vm`.
 - [x] Add live production verifier: `npm run verify:enterprise-production`.
 - [x] Add production evidence collector: `npm run evidence:enterprise-production`.
-- [x] Add deployable Azure Monitor/App Insights alerting IaC for Front Door health, production readiness drift, and Confidential VM availability.
+- [x] Add deployable and verifiable Azure Monitor/App Insights alerting IaC for Front Door health, production readiness drift, and Confidential VM availability.
 
 ### Phase 3: Secure Key Release
 

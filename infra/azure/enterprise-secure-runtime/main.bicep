@@ -171,6 +171,9 @@ var monitoringAppInsightsName = take('${environmentName}-${uniqueString(resource
 var monitoringActionGroupName = take('${environmentName}-${uniqueString(resourceGroup().id)}-ops-ag', 260)
 var monitoringHealthTestName = take('${environmentName}-${uniqueString(resourceGroup().id)}-health', 260)
 var monitoringReadinessTestName = take('${environmentName}-${uniqueString(resourceGroup().id)}-readiness', 260)
+var monitoringHealthAlertName = take('${environmentName}-${uniqueString(resourceGroup().id)}-health-alert', 260)
+var monitoringReadinessAlertName = take('${environmentName}-${uniqueString(resourceGroup().id)}-readiness-alert', 260)
+var monitoringVmAvailabilityAlertName = take('${environmentName}-${uniqueString(resourceGroup().id)}-vm-availability-alert', 260)
 var monitoringAvailabilityActions = [
   {
     actionGroupId: monitoringActionGroup.id
@@ -798,7 +801,7 @@ resource monitoringReadinessWebTest 'Microsoft.Insights/webtests@2022-06-15' = i
 }
 
 resource monitoringHealthAlert 'Microsoft.Insights/metricAlerts@2018-03-01' = if (deployMonitoring) {
-  name: take('${environmentName}-${uniqueString(resourceGroup().id)}-health-alert', 260)
+  name: monitoringHealthAlertName
   location: 'global'
   tags: union(tags, {
     'hidden-link:${monitoringAppInsights.id}': 'Resource'
@@ -825,7 +828,7 @@ resource monitoringHealthAlert 'Microsoft.Insights/metricAlerts@2018-03-01' = if
 }
 
 resource monitoringReadinessAlert 'Microsoft.Insights/metricAlerts@2018-03-01' = if (deployMonitoring) {
-  name: take('${environmentName}-${uniqueString(resourceGroup().id)}-readiness-alert', 260)
+  name: monitoringReadinessAlertName
   location: 'global'
   tags: union(tags, {
     'hidden-link:${monitoringAppInsights.id}': 'Resource'
@@ -852,7 +855,7 @@ resource monitoringReadinessAlert 'Microsoft.Insights/metricAlerts@2018-03-01' =
 }
 
 resource monitoringVmAvailabilityAlert 'Microsoft.Insights/metricAlerts@2018-03-01' = if (deployMonitoring) {
-  name: take('${environmentName}-${uniqueString(resourceGroup().id)}-vm-availability-alert', 260)
+  name: monitoringVmAvailabilityAlertName
   location: 'global'
   tags: tags
   properties: {
@@ -975,3 +978,6 @@ output monitoringAppInsightsName string = deployMonitoring ? monitoringAppInsigh
 output monitoringActionGroupName string = deployMonitoring ? monitoringActionGroup!.name : ''
 output monitoringHealthWebTestName string = deployMonitoring ? monitoringHealthWebTest!.name : ''
 output monitoringReadinessWebTestName string = deployMonitoring ? monitoringReadinessWebTest!.name : ''
+output monitoringHealthAlertName string = deployMonitoring ? monitoringHealthAlert!.name : ''
+output monitoringReadinessAlertName string = deployMonitoring ? monitoringReadinessAlert!.name : ''
+output monitoringVmAvailabilityAlertName string = deployMonitoring ? monitoringVmAvailabilityAlert!.name : ''
