@@ -85,6 +85,7 @@ fi
 
 install -m 0644 infra/azure/enterprise-secure-runtime/vaultproof-executor.service "${SERVICE_FILE}"
 install -m 0644 infra/azure/enterprise-secure-runtime/vaultproof-control-plane.service "${CONTROL_PLANE_SERVICE_FILE}"
+install -m 0755 infra/azure/enterprise-secure-runtime/install-origin-tls-proxy.sh /usr/local/sbin/vaultproof-install-origin-tls-proxy
 
 ufw allow OpenSSH
 ufw allow from 10.42.1.0/24 to any port 3002 proto tcp
@@ -102,3 +103,4 @@ echo "3. systemctl status vaultproof-executor --no-pager"
 echo "4. Edit ${CONTROL_PLANE_ENV_FILE}"
 echo "5. systemctl start vaultproof-control-plane"
 echo "6. systemctl status vaultproof-control-plane --no-pager"
+echo "7. Optional: install TLS origin proxy with /usr/local/sbin/vaultproof-install-origin-tls-proxy"

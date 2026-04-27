@@ -9,6 +9,7 @@ FRONT_DOOR_ENDPOINT="${FRONT_DOOR_ENDPOINT:-vaultproof-enterprise}"
 FRONT_DOOR_ROUTE="${FRONT_DOOR_ROUTE:-default-route}"
 SSH_USER="${SSH_USER:-azureuser}"
 RUN_SSH_CHECKS="${RUN_SSH_CHECKS:-true}"
+ORIGIN_TLS_HOSTNAME="${ORIGIN_TLS_HOSTNAME:-}"
 OUTPUT_DIR="${OUTPUT_DIR:-/tmp/vaultproof-production-evidence}"
 EVIDENCE_FILE="${EVIDENCE_FILE:-}"
 
@@ -153,13 +154,19 @@ fi
 ssh_capture="${tmp_dir}/ssh-checks.json"
 if [[ "${RUN_SSH_CHECKS}" == "true" ]]; then
   ssh -o BatchMode=yes -o ConnectTimeout=10 "${SSH_USER}@${vm_public_ip}" \
-    "VM_PRIVATE_IP='${vm_private_ip}' ENTERPRISE_HOST='${ENTERPRISE_URL#https://}' bash -s" > "${ssh_capture}" <<'REMOTE'
+    "VM_PRIVATE_IP='${vm_private_ip}' ENTERPRISE_HOST='${ENTERPRISE_URL#https://}' ORIGIN_TLS_HOSTNAME='${ORIGIN_TLS_HOSTNAME}' bash -s" > "${ssh_capture}" <<'REMOTE'
 set -euo pipefail
 executor_status="$(systemctl is-active vaultproof-executor || true)"
 control_plane_status="$(systemctl is-active vaultproof-control-plane || true)"
+nginx_status="$(systemctl is-active nginx || true)"
 loopback_readiness="$(curl -sS -H "host: ${ENTERPRISE_HOST}" http://127.0.0.1:3001/readiness)"
 private_body_file="/tmp/vaultproof-private-origin-evidence.json"
 private_status="$(curl -sS -o "${private_body_file}" -w "%{http_code}" -H "host: ${ENTERPRISE_HOST}" "http://${VM_PRIVATE_IP}:3001/health")"
+tls_status=""
+tls_body_file="/tmp/vaultproof-origin-tls-evidence.json"
+if [[ -n "${ORIGIN_TLS_HOSTNAME}" ]]; then
+  tls_status="$(curl -sS --connect-timeout 10 --max-time 20 --resolve "${ORIGIN_TLS_HOSTNAME}:443:127.0.0.1" -o "${tls_body_file}" -w "%{http_code}" "https://${ORIGIN_TLS_HOSTNAME}/health" || true)"
+fi
 node -e "
 const fs = require('fs');
 const readiness = JSON.parse(process.argv[1]);
@@ -167,18 +174,28 @@ let privateBody = '';
 try { privateBody = fs.readFileSync(process.argv[4], 'utf8'); } catch {}
 let privateParsed = null;
 try { privateParsed = JSON.parse(privateBody); } catch {}
+let tlsBody = '';
+try { tlsBody = fs.readFileSync(process.argv[6], 'utf8'); } catch {}
+let tlsParsed = null;
+try { tlsParsed = JSON.parse(tlsBody); } catch {}
 console.log(JSON.stringify({
   services: {
     executor: process.argv[2],
     controlPlane: process.argv[3],
+    nginx: process.argv[7],
   },
   loopbackReadiness: readiness,
   privateOriginWithoutFrontDoorId: {
     statusCode: process.argv[5],
     body: privateParsed || privateBody.slice(0, 2000),
   },
+  localTlsOrigin: {
+    hostname: process.env.ORIGIN_TLS_HOSTNAME || null,
+    statusCode: process.argv[8] || null,
+    body: tlsParsed || tlsBody.slice(0, 2000) || null,
+  },
 }, null, 2));
-" "${loopback_readiness}" "${executor_status}" "${control_plane_status}" "${private_body_file}" "${private_status}"
+" "${loopback_readiness}" "${executor_status}" "${control_plane_status}" "${private_body_file}" "${private_status}" "${tls_body_file}" "${nginx_status}" "${tls_status}"
 REMOTE
 else
   printf '{"skipped":true}\n' > "${ssh_capture}"
@@ -204,6 +221,7 @@ const evidence = {
     frontDoorProfile: process.argv[7],
     frontDoorEndpoint: process.argv[8],
     frontDoorRoute: process.argv[9],
+    originTlsHostname: process.argv[10] || null,
   },
   azure: {
     deployment: read('deployment.json'),
@@ -231,6 +249,7 @@ fs.writeFileSync(output, JSON.stringify(evidence, null, 2) + '\\n');
   "${ENTERPRISE_URL}" \
   "${FRONT_DOOR_PROFILE}" \
   "${FRONT_DOOR_ENDPOINT}" \
-  "${FRONT_DOOR_ROUTE}"
+  "${FRONT_DOOR_ROUTE}" \
+  "${ORIGIN_TLS_HOSTNAME}"
 
 echo "Evidence written to ${EVIDENCE_FILE}"

@@ -26,6 +26,9 @@
     "allowFrontDoorToControlPlane": {
       "value": false
     },
+    "allowFrontDoorToTlsControlPlane": {
+      "value": false
+    },
     "controlPlaneIngressSource": {
       "value": "AzureFrontDoor.Backend"
     },

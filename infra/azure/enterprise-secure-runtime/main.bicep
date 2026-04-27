@@ -25,6 +25,9 @@ param executorSourceCidr string = '10.42.1.0/24'
 @description('Allow Azure Front Door traffic to the co-located enterprise control plane on port 3001.')
 param allowFrontDoorToControlPlane bool = false
 
+@description('Allow Azure Front Door traffic to the TLS origin proxy on port 443.')
+param allowFrontDoorToTlsControlPlane bool = false
+
 @description('Primary source service tag or CIDR for public control-plane ingress. Use AzureFrontDoor.Backend for Front Door cutover.')
 param controlPlaneIngressSource string = 'AzureFrontDoor.Backend'
 
@@ -276,6 +279,19 @@ resource executorNsg 'Microsoft.Network/networkSecurityGroups@2024-05-01' = {
         }
       }
       {
+        name: 'AllowFrontDoorTlsControlPlane'
+        properties: {
+          priority: 121
+          direction: 'Inbound'
+          access: allowFrontDoorToTlsControlPlane ? 'Allow' : 'Deny'
+          protocol: 'Tcp'
+          sourcePortRange: '*'
+          destinationPortRange: '443'
+          sourceAddressPrefix: controlPlaneIngressSource
+          destinationAddressPrefix: '*'
+        }
+      }
+      {
         name: 'AllowFrontDoorFrontendControlPlane'
         properties: {
           priority: 122
@@ -289,6 +305,19 @@ resource executorNsg 'Microsoft.Network/networkSecurityGroups@2024-05-01' = {
         }
       }
       {
+        name: 'AllowFrontDoorFrontendTlsControlPlane'
+        properties: {
+          priority: 123
+          direction: 'Inbound'
+          access: allowFrontDoorToTlsControlPlane ? 'Allow' : 'Deny'
+          protocol: 'Tcp'
+          sourcePortRange: '*'
+          destinationPortRange: '443'
+          sourceAddressPrefix: 'AzureFrontDoor.Frontend'
+          destinationAddressPrefix: '*'
+        }
+      }
+      {
         name: 'AllowFrontDoorFirstPartyControlPlane'
         properties: {
           priority: 124
@@ -297,6 +326,19 @@ resource executorNsg 'Microsoft.Network/networkSecurityGroups@2024-05-01' = {
           protocol: 'Tcp'
           sourcePortRange: '*'
           destinationPortRange: '3001'
+          sourceAddressPrefix: 'AzureFrontDoor.FirstParty'
+          destinationAddressPrefix: '*'
+        }
+      }
+      {
+        name: 'AllowFrontDoorFirstPartyTlsControlPlane'
+        properties: {
+          priority: 125
+          direction: 'Inbound'
+          access: allowFrontDoorToTlsControlPlane ? 'Allow' : 'Deny'
+          protocol: 'Tcp'
+          sourcePortRange: '*'
+          destinationPortRange: '443'
           sourceAddressPrefix: 'AzureFrontDoor.FirstParty'
           destinationAddressPrefix: '*'
         }

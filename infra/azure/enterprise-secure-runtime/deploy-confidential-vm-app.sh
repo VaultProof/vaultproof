@@ -107,6 +107,7 @@ fi
 
 sudo install -m 0644 infra/azure/enterprise-secure-runtime/vaultproof-executor.service /etc/systemd/system/vaultproof-executor.service
 sudo install -m 0644 infra/azure/enterprise-secure-runtime/vaultproof-control-plane.service /etc/systemd/system/vaultproof-control-plane.service
+sudo install -m 0755 infra/azure/enterprise-secure-runtime/install-origin-tls-proxy.sh /usr/local/sbin/vaultproof-install-origin-tls-proxy
 sudo systemctl daemon-reload
 sudo systemctl enable vaultproof-executor vaultproof-control-plane >/dev/null
 

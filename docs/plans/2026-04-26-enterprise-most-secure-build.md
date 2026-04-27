@@ -43,6 +43,7 @@ Live production-confidential path:
 - `npm run evidence:enterprise-production` captures customer/audit evidence snapshots.
 - APIM IaC/policy support exists but is not deployed in the live route yet.
 - Azure Monitor/App Insights alerting IaC exists but is not deployed yet.
+- TLS-origin proxy tooling exists but Front Door still uses HTTP origin forwarding until a real origin certificate/hostname is installed and cut over.
 - Supabase stores enterprise org/project metadata.
 - Executor request signing is implemented.
 - Enterprise executor now supports encrypted `share1_encrypted` and encrypted `share2_encrypted`.
@@ -56,7 +57,7 @@ Live production-confidential path:
 Important limitation:
 
 - The active production-confidential runtime is now Confidential VM plus Secure Key Release.
-- Azure API Management live deployment/cutover, Azure Monitor alert deployment, TLS-to-origin, and enterprise UI/policy controls are still pending.
+- Azure API Management live deployment/cutover, Azure Monitor alert deployment, TLS-origin cutover, and enterprise UI/policy controls are still pending.
 - Secrets used during setup must be rotated before external/customer production use.
 
 ## Next Execution Order
@@ -388,7 +389,7 @@ Important key-type decision:
 - [ ] Add mTLS after private networking is stable.
 - [x] Block direct public access to executor.
 - [x] Require Azure Front Door ID origin lock for control-plane origin requests.
-- [ ] Add TLS from Front Door to the VM origin and switch origin forwarding from HTTP to HTTPS.
+- [ ] Add TLS from Front Door to the VM origin and switch origin forwarding from HTTP to HTTPS. In progress: TLS proxy installer, NSG 443 IaC, verifier/evidence support, and runbook are implemented; real origin certificate/hostname install and Front Door `HttpsOnly` cutover are pending.
 
 ### Phase 5: Enterprise Controls
 

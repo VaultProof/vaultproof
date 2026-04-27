@@ -7,6 +7,8 @@ ENTERPRISE_URL="${ENTERPRISE_URL:-https://enterprise.vaultproof.dev}"
 FRONT_DOOR_PROFILE="${FRONT_DOOR_PROFILE:-vaultproof-enterprise-fd}"
 FRONT_DOOR_ENDPOINT="${FRONT_DOOR_ENDPOINT:-vaultproof-enterprise}"
 FRONT_DOOR_ROUTE="${FRONT_DOOR_ROUTE:-default-route}"
+EXPECTED_FRONT_DOOR_FORWARDING_PROTOCOL="${EXPECTED_FRONT_DOOR_FORWARDING_PROTOCOL:-HttpOnly}"
+ORIGIN_TLS_HOSTNAME="${ORIGIN_TLS_HOSTNAME:-}"
 SSH_USER="${SSH_USER:-azureuser}"
 RUN_SSH_CHECKS="${RUN_SSH_CHECKS:-true}"
 
@@ -151,7 +153,7 @@ az afd route show \
   --query "{enabledState:enabledState,forwardingProtocol:forwardingProtocol,httpsRedirect:httpsRedirect}" \
   -o json > "${route_json}"
 check_equals "Front Door route enabled" "$(json_value "${route_json}" "p => p.enabledState")" "Enabled"
-check_equals "Front Door origin forwarding protocol" "$(json_value "${route_json}" "p => p.forwardingProtocol")" "HttpOnly"
+check_equals "Front Door origin forwarding protocol" "$(json_value "${route_json}" "p => p.forwardingProtocol")" "${EXPECTED_FRONT_DOOR_FORWARDING_PROTOCOL}"
 
 echo
 echo "NSG ingress posture:"
@@ -214,6 +216,16 @@ if [[ "${RUN_SSH_CHECKS}" == "true" ]]; then
   ssh -o BatchMode=yes -o ConnectTimeout=10 "${SSH_USER}@${vm_public_ip}" \
     "curl -sS -H 'host: ${ENTERPRISE_URL#https://}' http://127.0.0.1:3001/readiness" > "${loopback_file}"
   check_equals "Loopback readiness production_ready" "$(json_value "${loopback_file}" "p => p.production_ready")" "true"
+
+  if [[ -n "${ORIGIN_TLS_HOSTNAME}" ]]; then
+    tls_file="${tmp_dir}/origin-tls-health.json"
+    tls_status="$(ssh -o BatchMode=yes -o ConnectTimeout=10 "${SSH_USER}@${vm_public_ip}" \
+      "curl -sS --connect-timeout 10 --max-time 20 --resolve '${ORIGIN_TLS_HOSTNAME}:443:127.0.0.1' -o /tmp/vaultproof-origin-tls-health.json -w '%{http_code}' https://${ORIGIN_TLS_HOSTNAME}/health")"
+    ssh -o BatchMode=yes -o ConnectTimeout=10 "${SSH_USER}@${vm_public_ip}" \
+      "cat /tmp/vaultproof-origin-tls-health.json" > "${tls_file}"
+    check_equals "Local TLS origin /health status" "${tls_status}" "200"
+    check_equals "Local TLS origin health ok" "$(json_value "${tls_file}" "p => p.status")" "ok"
+  fi
 else
   echo "SKIP SSH-based VM checks because RUN_SSH_CHECKS=false"
 fi

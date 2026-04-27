@@ -34,6 +34,7 @@ Edit `main.parameters.json`:
 - `sshSourceCidr`: your current public IP with `/32`.
 - `environmentName`: keep short; Azure Key Vault names are globally unique and length-limited.
 - `allowFrontDoorToControlPlane`: keep `false` until local VM readiness is production-ready. Set `true` for Front Door cutover to port `3001`.
+- `allowFrontDoorToTlsControlPlane`: keep `false` until the TLS origin proxy is installed and tested. Set `true` when preparing Front Door `HttpsOnly` origin forwarding to port `443`.
 - `controlPlaneIngressSource`: keep `AzureFrontDoor.Backend` for Front Door origin traffic. When enabled, the template also allows `AzureFrontDoor.Frontend` and `AzureFrontDoor.FirstParty`, which are required by some Front Door health/request paths.
 - `allowApiManagementToControlPlane`: keep `false` until APIM is deployed and the Confidential VM control plane is configured to trust the APIM origin-lock secret or forwarded Front Door ID.
 - `apiManagementIngressSource`: default is `ApiManagement`; use a tighter CIDR/source only if you know the APIM outbound path.
@@ -286,6 +287,100 @@ Then in Azure Front Door:
 - After validation, move `default-route` traffic to the VM origin.
 
 Rollback is simply moving the route back to the Container App origin in Front Door.
+
+### TLS Origin Cutover
+
+The current production path is intentionally verifiable while Front Door forwards HTTP to the VM origin. The next hardening step is TLS between Front Door and the Confidential VM origin:
+
+```text
+Azure Front Door
+  -> HTTPS :443 on the Confidential VM origin proxy
+  -> HTTP loopback to enterprise control plane :3001
+  -> HTTP loopback to secure executor :3002
+```
+
+Use a dedicated origin hostname for the VM, for example `origin.enterprise.vaultproof.dev`, with DNS pointing to the Confidential VM public IP. Install a publicly trusted certificate on the VM whose subject/SAN matches that origin hostname. This lets Front Door certificate subject validation stay enabled. Avoid using `enterprise.vaultproof.dev` as the origin hostname once Front Door owns that public route, or you risk routing/certificate confusion.
+
+Copy the certificate and key to the VM:
+
+```bash
+sudo mkdir -p /etc/vaultproof/tls
+sudo install -o root -g root -m 0644 origin.enterprise.vaultproof.dev.crt /etc/vaultproof/tls/origin.crt
+sudo install -o root -g root -m 0600 origin.enterprise.vaultproof.dev.key /etc/vaultproof/tls/origin.key
+```
+
+Install the TLS proxy on the Confidential VM:
+
+```bash
+sudo ORIGIN_TLS_HOSTNAME=origin.enterprise.vaultproof.dev \
+  ENTERPRISE_HOSTNAME=enterprise.vaultproof.dev \
+  TLS_CERT_PATH=/etc/vaultproof/tls/origin.crt \
+  TLS_KEY_PATH=/etc/vaultproof/tls/origin.key \
+  /usr/local/sbin/vaultproof-install-origin-tls-proxy
+```
+
+For a temporary lab-only test, the installer can generate a self-signed certificate:
+
+```bash
+sudo ORIGIN_TLS_HOSTNAME=origin.enterprise.vaultproof.dev \
+  ENTERPRISE_HOSTNAME=enterprise.vaultproof.dev \
+  GENERATE_SELF_SIGNED=true \
+  /usr/local/sbin/vaultproof-install-origin-tls-proxy
+```
+
+Do not enable Front Door certificate subject validation with the temporary self-signed certificate.
+
+Validate local TLS before touching Front Door:
+
+```bash
+curl -sS \
+  --resolve origin.enterprise.vaultproof.dev:443:127.0.0.1 \
+  https://origin.enterprise.vaultproof.dev/health
+```
+
+Open port `443` to Azure Front Door in the NSG:
+
+```bash
+az deployment group create \
+  --resource-group vaultproof-enterprise \
+  --name vp-enterprise-secure-runtime-eastus-hsm-tls-origin \
+  --template-file infra/azure/enterprise-secure-runtime/main.bicep \
+  --parameters \
+    location=eastus \
+    environmentName=vpenteu \
+    adminUsername=azureuser \
+    adminSshPublicKey='<existing SSH public key>' \
+    vmSize=Standard_DC2as_v5 \
+    sshSourceCidr='<your current IPv4>/32' \
+    executorSourceCidr=10.42.1.0/24 \
+    allowFrontDoorToControlPlane=true \
+    allowFrontDoorToTlsControlPlane=true \
+    controlPlaneIngressSource=AzureFrontDoor.Backend \
+    deployPrototypeReleaseKey=false \
+    deployManagedHsm=true \
+    managedHsmInitialAdminObjectId='<your Entra object id>' \
+    deployApiManagement=false
+```
+
+Then update the Front Door origin:
+
+- Origin host name: `origin.enterprise.vaultproof.dev`
+- Origin host header: `origin.enterprise.vaultproof.dev`
+- HTTPS port: `443`
+- Certificate subject name validation: enabled
+- Route forwarding protocol: `HttpsOnly`
+
+The TLS proxy rewrites `Host` and `X-Forwarded-Host` to `enterprise.vaultproof.dev` before handing traffic to the Node control plane, so the public enterprise hostname check still passes even though the origin certificate is issued for the dedicated origin hostname.
+
+After the Front Door update, verify with the stricter expectation:
+
+```bash
+EXPECTED_FRONT_DOOR_FORWARDING_PROTOCOL=HttpsOnly \
+ORIGIN_TLS_HOSTNAME=origin.enterprise.vaultproof.dev \
+npm run verify:enterprise-production
+```
+
+If anything fails, roll back Front Door route forwarding to `HttpOnly` and the previous VM origin settings while leaving the TLS proxy installed for debugging.
 
 ## Secure Key Release Work Still Required
 
