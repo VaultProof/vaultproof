@@ -11,6 +11,7 @@
     "docker:build:enterprise-control-plane": "docker build -f packages/enterprise-control-plane/Dockerfile -t vaultproof-enterprise-control-plane .",
     "docker:build:enterprise-secure-executor": "docker build -f packages/enterprise-secure-executor/Dockerfile -t vaultproof-enterprise-secure-executor .",
     "deploy:enterprise-vm": "bash infra/azure/enterprise-secure-runtime/deploy-confidential-vm-app.sh",
+    "cleanup:enterprise-container-apps": "bash infra/azure/enterprise-secure-runtime/cleanup-container-apps-prototype.sh",
     "evidence:enterprise-production": "bash infra/azure/enterprise-secure-runtime/collect-production-evidence.sh",
     "dev": "turbo run dev",
     "test:enterprise-control-plane-smoke": "npm run build:enterprise && node scripts/enterprise-control-plane-smoke.mjs",

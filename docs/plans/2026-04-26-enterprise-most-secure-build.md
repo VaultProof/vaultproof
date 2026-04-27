@@ -45,6 +45,7 @@ Live production-confidential path:
 - Azure Monitor/App Insights alerting IaC exists but is not deployed yet.
 - TLS-origin proxy tooling exists but Front Door still uses HTTP origin forwarding until a real origin certificate/hostname is installed and cut over.
 - SSH bootstrap lockdown tooling exists but public SSH remains open until alternate access or a controlled break-glass process is ready.
+- Old Container Apps prototype cleanup tooling exists with inventory, ingress-disable, and explicit deletion actions.
 - Supabase stores enterprise org/project metadata.
 - Executor request signing is implemented.
 - Enterprise executor now supports encrypted `share1_encrypted` and encrypted `share2_encrypted`.
@@ -58,7 +59,7 @@ Live production-confidential path:
 Important limitation:
 
 - The active production-confidential runtime is now Confidential VM plus Secure Key Release.
-- Azure API Management live deployment/cutover, Azure Monitor alert deployment, TLS-origin cutover, SSH bootstrap lockdown, and enterprise UI/policy controls are still pending.
+- Azure API Management live deployment/cutover, Azure Monitor alert deployment, TLS-origin cutover, SSH bootstrap lockdown, prototype Container Apps cleanup, and enterprise UI/policy controls are still pending.
 - Secrets used during setup must be rotated before external/customer production use.
 
 ## Next Execution Order
@@ -66,7 +67,7 @@ Important limitation:
 1. Azure API Management placement and policy support.
 2. Azure Monitor/Log Analytics alerts for Front Door readiness, VM service health, and production verifier drift.
 3. TLS from Front Door to the VM origin, then switch Front Door origin forwarding to HTTPS.
-4. SSH/Bastion/JIT hardening and cleanup of old prototype Container Apps resources. In progress: reversible SSH bootstrap lockdown tooling and verifier expectations are implemented; live SSH closure is pending alternate access/break-glass readiness.
+4. SSH/Bastion/JIT hardening and cleanup of old prototype Container Apps resources. In progress: reversible SSH bootstrap lockdown tooling, verifier expectations, and prototype Container Apps cleanup tooling are implemented; live SSH closure and live prototype cleanup are pending alternate access/break-glass readiness and soak.
 5. End-to-end enterprise API execution through `enterprise.vaultproof.dev` with evidence/audit metadata.
 6. Enterprise controls: SSO, provider allowlists, upstream domain/method policy, policy UI, per-project rate limits, emergency revoke, audit export, SOC 2 access review evidence.
 
@@ -392,6 +393,7 @@ Important key-type decision:
 - [x] Require Azure Front Door ID origin lock for control-plane origin requests.
 - [ ] Add TLS from Front Door to the VM origin and switch origin forwarding from HTTP to HTTPS. In progress: TLS proxy installer, NSG 443 IaC, verifier/evidence support, and runbook are implemented; real origin certificate/hostname install and Front Door `HttpsOnly` cutover are pending.
 - [ ] Close public SSH bootstrap ingress after alternate access is ready. In progress: `allowSshBootstrap` IaC switch, `harden-ssh-bootstrap.sh`, verifier expectations, and runbook are implemented; live NSG rule remains `Allow` for bootstrap/break-glass.
+- [ ] Disable/delete old Container Apps prototype resources after soak. In progress: `cleanup-container-apps-prototype.sh` and `npm run cleanup:enterprise-container-apps` can inventory, disable ingress, and explicitly delete apps/environment/ACR; live cleanup is pending operator approval.
 
 ### Phase 5: Enterprise Controls
 

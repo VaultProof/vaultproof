@@ -287,7 +287,50 @@ Then in Azure Front Door:
 - Keep the old Container App origin available as rollback until `/readiness` is production-ready through Front Door.
 - After validation, move `default-route` traffic to the VM origin.
 
-Rollback is simply moving the route back to the Container App origin in Front Door.
+Rollback is simply moving the route back to the Container App origin in Front Door while the prototype resources still exist.
+
+### Old Container Apps Prototype Cleanup
+
+After the Confidential VM path is stable and Front Door no longer has an enabled `*.azurecontainerapps.io` origin, inventory and retire the old Container Apps prototype path. The cleanup helper defaults to read-only inventory:
+
+```bash
+RESOURCE_GROUP=vaultproof-enterprise \
+npm run cleanup:enterprise-container-apps
+```
+
+Disable public ingress on the old Container Apps first. This is the recommended reversible cleanup step before deletion:
+
+```bash
+RESOURCE_GROUP=vaultproof-enterprise \
+ENTERPRISE_URL=https://enterprise.vaultproof.dev \
+ACTION=disable-ingress \
+npm run cleanup:enterprise-container-apps
+```
+
+If rollback needs the old Container Apps endpoint again, restore external ingress:
+
+```bash
+ACTION=restore-ingress \
+npm run cleanup:enterprise-container-apps
+```
+
+The script refuses to disable or delete the prototype path unless:
+
+- `enterprise.vaultproof.dev/readiness` reports `production_ready: true`.
+- Front Door has no enabled `*.azurecontainerapps.io` origin in the active origin group.
+
+After a soak period, explicitly delete the old apps and then the environment if it is dedicated to VaultProof:
+
+```bash
+ACTION=delete-apps npm run cleanup:enterprise-container-apps
+ACTION=delete-environment npm run cleanup:enterprise-container-apps
+```
+
+Only delete the ACR if no other deployment path uses it:
+
+```bash
+ACTION=delete-acr npm run cleanup:enterprise-container-apps
+```
 
 ### TLS Origin Cutover
 
