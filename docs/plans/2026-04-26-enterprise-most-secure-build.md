@@ -452,7 +452,8 @@ Implementation/test order:
 6. [x] Activity/projects/keys slice: wire runtime activity, project inventory, provider slot status, and emergency revoke paths; test no B2C API calls.
 7. [x] Settings/plans/scanner slice: either wire real enterprise APIs or intentionally hide/disable unavailable actions; test no dead links and no B2C fallback.
 8. [x] Enterprise analytics slice: add opt-in Mixpanel page/navigation events across login, dashboard, planned pages, and static enterprise pages; test disabled-by-default behavior and explicit enablement.
-9. [ ] Browser QA after each feature slice: login as demo user, click all sidebar/subnav links, verify no `{"error":"Not found"}` pages, and verify `/readiness` remains production-ready after deploy.
+9. [x] Automated app-link QA smoke: crawl rendered enterprise `/app/*` links, verify every enterprise app link returns 200, and fail on `{"error":"Not found"}` or B2C API origins.
+10. [ ] Live browser QA after each deploy: login as demo user, click all sidebar/subnav links, verify no `{"error":"Not found"}` pages, and verify `/readiness` remains production-ready after deploy.
 
 ## Azure Resources
 

@@ -1894,6 +1894,76 @@ async function assertEnterpriseLoginRoute() {
   }
 }
 
+function extractHrefValues(html) {
+  const hrefs = [];
+  const pattern = /\shref\s*=\s*["']([^"']+)["']/gi;
+  let match = pattern.exec(html);
+  while (match) {
+    hrefs.push(match[1]);
+    match = pattern.exec(html);
+  }
+  return hrefs;
+}
+
+async function assertEnterpriseAppLinkCrawl() {
+  const env = {
+    enterpriseHostname: ENTERPRISE_HOSTNAME,
+  };
+  const startPaths = [
+    '/app/login',
+    '/app',
+    '/app/dashboard',
+    '/app/control',
+    '/app/org',
+    '/app/members',
+    '/app/audit',
+    '/app/alerts',
+    '/app/activity',
+    '/app/projects',
+    '/app/keys',
+    '/app/settings',
+    '/app/plans',
+    '/app/scanner',
+  ];
+  const checkedPaths = new Set();
+  const queue = [...startPaths];
+
+  while (queue.length) {
+    const path = queue.shift();
+    if (!path || checkedPaths.has(path)) continue;
+    checkedPaths.add(path);
+
+    const response = await handleEnterpriseControlPlaneRequest(buildRequest(path), env);
+    const html = await response.text();
+    if (response.status !== 200) {
+      throw new Error(`Expected enterprise app link ${path} to resolve, got ${response.status}`);
+    }
+    if (html.includes('"error":"Not found"') || html.includes('service":"vaultproof-enterprise-control-plane"')) {
+      throw new Error(`Enterprise app link ${path} rendered a Not found payload`);
+    }
+    if (html.includes('https://init.vaultproof.dev') || html.includes('https://api.vaultproof.dev')) {
+      throw new Error(`Enterprise app link ${path} references B2C API origins`);
+    }
+
+    for (const href of extractHrefValues(html)) {
+      if (!href || href.startsWith('#') || href.startsWith('mailto:') || href.startsWith('javascript:')) continue;
+      const resolved = new URL(href, `https://${ENTERPRISE_HOSTNAME}${path}`);
+      if (resolved.hostname !== ENTERPRISE_HOSTNAME) continue;
+      if (resolved.pathname === '/app/enterprise-login.js') continue;
+      if (!resolved.pathname.startsWith('/app')) continue;
+      const normalized = resolved.pathname.replace(/\.html$/, '').replace(/\/+$/, '') || '/app';
+      if (!checkedPaths.has(normalized)) queue.push(normalized);
+    }
+  }
+
+  for (const expectedPath of startPaths) {
+    const normalized = expectedPath.replace(/\/+$/, '') || '/app';
+    if (!checkedPaths.has(normalized)) {
+      throw new Error(`Expected enterprise app link crawler to cover ${expectedPath}`);
+    }
+  }
+}
+
 async function assertEnterpriseMixpanelAnalytics() {
   const env = {
     enterpriseHostname: ENTERPRISE_HOSTNAME,
@@ -2031,6 +2101,7 @@ async function assertFrontDoorOriginLock() {
 }
 
 await assertEnterpriseLoginRoute();
+await assertEnterpriseAppLinkCrawl();
 await assertEnterpriseMixpanelAnalytics();
 await assertEnterpriseReadinessRoute();
 await assertFrontDoorOriginLock();
