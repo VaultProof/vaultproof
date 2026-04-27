@@ -1375,6 +1375,278 @@ function renderEnterpriseOperationsPage(pageName: 'activity' | 'projects' | 'key
 </html>`;
 }
 
+function renderEnterpriseSupportPage(pageName: 'settings' | 'plans' | 'scanner'): string {
+  const pageTitle = pageName === 'settings' ? 'Settings' : pageName === 'plans' ? 'Plans' : 'Scanner';
+  const pageKicker = pageName === 'settings' ? 'tenant defaults' : pageName === 'plans' ? 'enterprise packaging' : 'repository security';
+  const pageLead = pageName === 'settings'
+    ? 'Review tenant defaults, organization identity, SSO state, and production readiness without falling back to the consumer dashboard.'
+    : pageName === 'plans'
+      ? 'Track enterprise rollout packaging, Azure/APIM readiness, usage posture, and contract-facing guardrails.'
+      : 'Prepare repository scanning for enterprise use while keeping scanner actions disabled until enterprise-safe scanner APIs are available.';
+
+  return `<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="robots" content="noindex" />
+  <title>${escapeHtml(pageTitle)} - VaultProof Enterprise</title>
+  <style>
+    :root { color-scheme: dark; --bg: #07110f; --panel: rgba(237,229,204,.09); --line: rgba(237,229,204,.16); --text: #f4ecd5; --muted: #a9b7a6; --gold: #d7a84b; --green: #6ee7b7; --red: #fb7185; --blue: #93c5fd; --ink: #07110f; }
+    * { box-sizing: border-box; }
+    body { margin: 0; min-height: 100vh; font-family: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; color: var(--text); background: radial-gradient(circle at 18% 8%, rgba(215,168,75,.2), transparent 28rem), radial-gradient(circle at 86% 16%, rgba(147,197,253,.18), transparent 28rem), linear-gradient(135deg, #06100e, #10231d 50%, #050807); }
+    a { color: inherit; text-decoration: none; }
+    select, button { border: 1px solid var(--line); background: rgba(237,229,204,.08); color: var(--text); border-radius: 13px; padding: 11px 12px; font: inherit; }
+    option { color: #111827; }
+    button { cursor: pointer; }
+    button[disabled] { cursor: not-allowed; opacity: .58; }
+    .shell { display: grid; grid-template-columns: 270px 1fr; min-height: 100vh; }
+    .sidebar { border-right: 1px solid var(--line); background: rgba(3,8,7,.66); padding: 28px 20px; }
+    .brand { font-weight: 850; letter-spacing: -.03em; margin-bottom: 28px; }
+    .brand span { display: block; color: var(--muted); font-size: 12px; margin-top: 4px; font-weight: 500; }
+    .nav-label { color: var(--muted); font-size: 11px; text-transform: uppercase; letter-spacing: .12em; margin: 22px 0 9px 10px; }
+    .nav-link { display: flex; justify-content: space-between; padding: 11px 12px; border-radius: 14px; margin-bottom: 4px; border: 1px solid transparent; color: #d8dfcf; }
+    .nav-link:hover, .nav-link.active { background: var(--panel); border-color: var(--line); }
+    .main { padding: 30px; max-width: 1380px; width: 100%; }
+    .topbar { display: flex; justify-content: space-between; gap: 18px; align-items: flex-start; margin-bottom: 22px; }
+    .kicker { color: var(--gold); font-size: 12px; text-transform: uppercase; letter-spacing: .16em; font-weight: 850; }
+    h1 { margin: 8px 0 8px; font-size: clamp(38px, 6vw, 74px); line-height: .92; letter-spacing: -.075em; }
+    .lead { color: var(--muted); line-height: 1.6; max-width: 780px; }
+    .toolbar { display: flex; gap: 10px; flex-wrap: wrap; justify-content: flex-end; }
+    .primary { background: linear-gradient(135deg, var(--gold), #f3df95); color: var(--ink); border: 0; font-weight: 850; }
+    .grid { display: grid; gap: 16px; }
+    .kpis { grid-template-columns: repeat(4, minmax(0, 1fr)); margin-bottom: 16px; }
+    .two { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); }
+    .card { border: 1px solid var(--line); background: linear-gradient(180deg, rgba(237,229,204,.13), rgba(237,229,204,.055)); border-radius: 24px; padding: 20px; box-shadow: 0 22px 90px rgba(0,0,0,.2); }
+    .kpi-label { color: var(--muted); font-size: 12px; text-transform: uppercase; letter-spacing: .1em; }
+    .kpi-value { font-size: 34px; font-weight: 850; letter-spacing: -.05em; margin-top: 8px; }
+    .kpi-sub { color: var(--muted); font-size: 13px; margin-top: 6px; }
+    .section-title { display: flex; justify-content: space-between; gap: 12px; align-items: center; margin-bottom: 14px; }
+    .section-title h2 { margin: 0; font-size: 19px; letter-spacing: -.03em; }
+    .mini { color: var(--muted); font-size: 13px; }
+    .list { display: grid; gap: 10px; }
+    .row { display: grid; grid-template-columns: 1fr auto; gap: 14px; align-items: start; border: 1px solid rgba(237,229,204,.1); border-radius: 18px; padding: 14px; background: rgba(3,8,7,.28); }
+    .row-title { font-weight: 780; letter-spacing: -.02em; }
+    .row-sub { color: var(--muted); font-size: 13px; margin-top: 5px; line-height: 1.45; }
+    .tag { display: inline-block; color: var(--blue); font-size: 12px; border: 1px solid rgba(147,197,253,.24); border-radius: 999px; padding: 5px 8px; margin: 3px 4px 0 0; }
+    .tag.good { color: var(--green); border-color: rgba(110,231,183,.24); }
+    .tag.warn { color: var(--gold); border-color: rgba(215,168,75,.28); }
+    .tag.bad { color: var(--red); border-color: rgba(251,113,133,.28); }
+    .empty, .notice { color: var(--muted); border: 1px dashed rgba(237,229,204,.22); border-radius: 18px; padding: 18px; background: rgba(3,8,7,.2); }
+    .notice.error { color: var(--red); border-color: rgba(251,113,133,.3); }
+    @media (max-width: 1100px) { .kpis, .two { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+    @media (max-width: 760px) { .shell { grid-template-columns: 1fr; } .topbar { flex-direction: column; } .kpis, .two { grid-template-columns: 1fr; } }
+  </style>
+</head>
+<body>
+  <div class="shell">
+    <aside class="sidebar">
+      <div class="brand">VaultProof Enterprise<span>${escapeHtml(pageKicker)}</span></div>
+      <div class="nav-label">workspace</div>
+      <a class="nav-link" href="/app/dashboard">Dashboard</a>
+      <a class="nav-link" href="/app/projects">Projects</a>
+      <a class="nav-link" href="/app/activity">Activity</a>
+      <a class="nav-link" href="/app/control">Control</a>
+      <a class="nav-link" href="/app/org">Org + SSO</a>
+      <div class="nav-label">evidence</div>
+      <a class="nav-link" href="/app/members">Members</a>
+      <a class="nav-link" href="/app/audit">Audit</a>
+      <a class="nav-link" href="/app/alerts">Alerts</a>
+      <a class="nav-link" href="/app/keys">Provider slots</a>
+      <div class="nav-label">admin</div>
+      <a class="nav-link${pageName === 'settings' ? ' active' : ''}" href="/app/settings">Settings</a>
+      <a class="nav-link${pageName === 'plans' ? ' active' : ''}" href="/app/plans">Plans</a>
+      <a class="nav-link${pageName === 'scanner' ? ' active' : ''}" href="/app/scanner">Scanner</a>
+    </aside>
+
+    <main class="main">
+      <div class="topbar">
+        <div>
+          <div class="kicker">${escapeHtml(pageKicker)}</div>
+          <h1>${escapeHtml(pageTitle)}</h1>
+          <p class="lead">${escapeHtml(pageLead)}</p>
+        </div>
+        <div class="toolbar">
+          <select id="orgSelect" aria-label="Organization"><option>Loading org...</option></select>
+          <button id="refreshBtn" type="button">refresh</button>
+          <a class="primary" href="/app/dashboard">dashboard</a>
+        </div>
+      </div>
+
+      <div id="notice" class="notice error" style="display:none"></div>
+
+      <section class="grid kpis">
+        <div class="card"><div class="kpi-label">production</div><div class="kpi-value" id="kpiProduction">...</div><div class="kpi-sub">control plane + executor</div></div>
+        <div class="card"><div class="kpi-label">projects</div><div class="kpi-value" id="kpiProjects">...</div><div class="kpi-sub">active scopes</div></div>
+        <div class="card"><div class="kpi-label">members</div><div class="kpi-value" id="kpiMembers">...</div><div class="kpi-sub" id="kpiOrgRole">org role</div></div>
+        <div class="card"><div class="kpi-label">calls</div><div class="kpi-value" id="kpiCalls">...</div><div class="kpi-sub">proxy traffic</div></div>
+      </section>
+
+      <section id="settingsPanel" class="grid two" style="display:none">
+        <div class="card"><div class="section-title"><h2>Organization defaults</h2><span id="settingsMeta" class="mini"></span></div><div id="settingsList" class="list"></div></div>
+        <div class="card"><div class="section-title"><h2>Security notices</h2><span class="mini">enterprise safe</span></div><div id="securityList" class="list"></div></div>
+      </section>
+
+      <section id="plansPanel" class="grid two" style="display:none">
+        <div class="card"><div class="section-title"><h2>Rollout package</h2><span id="planMeta" class="mini"></span></div><div id="planList" class="list"></div></div>
+        <div class="card"><div class="section-title"><h2>Contract guardrails</h2><span class="mini">evidence pack</span></div><div id="guardrailList" class="list"></div></div>
+      </section>
+
+      <section id="scannerPanel" class="grid two" style="display:none">
+        <div class="card"><div class="section-title"><h2>Enterprise scanner status</h2><span class="mini">not enabled</span></div><div id="scannerList" class="list"></div></div>
+        <div class="card"><div class="section-title"><h2>Safe launch checklist</h2><span class="mini">before wiring APIs</span></div><div id="scannerChecklist" class="list"></div></div>
+      </section>
+    </main>
+  </div>
+
+  <script>
+    (function() {
+      var PAGE_MODE = '${pageName}';
+      var ACTIVE_ORG_STORAGE_KEY = 'vaultproof_active_org';
+      var token = localStorage.getItem('vaultproof_token') || '';
+      var currentOrgId = localStorage.getItem(ACTIVE_ORG_STORAGE_KEY) || '';
+      function byId(id) { return document.getElementById(id); }
+      function text(id, value) { var el = byId(id); if (el) el.textContent = value == null ? '' : String(value); }
+      function escapeHtml(value) {
+        return String(value == null ? '' : value).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#039;');
+      }
+      function number(value) { var n = Number(value || 0); return Number.isFinite(n) ? n.toLocaleString() : '0'; }
+      function rel(value) {
+        if (!value) return 'never';
+        var diff = Date.now() - new Date(value).getTime();
+        if (!Number.isFinite(diff)) return String(value);
+        var mins = Math.max(0, Math.round(diff / 60000));
+        if (mins < 60) return mins + 'm ago';
+        var hours = Math.round(mins / 60);
+        if (hours < 48) return hours + 'h ago';
+        return Math.round(hours / 24) + 'd ago';
+      }
+      function headers() {
+        var h = { 'Content-Type': 'application/json' };
+        if (token) h.Authorization = 'Bearer ' + token;
+        if (currentOrgId) h['x-vaultproof-organization'] = currentOrgId;
+        return h;
+      }
+      async function fetchJson(path) {
+        var res = await fetch(path, { headers: headers() });
+        var payload = await res.json().catch(function() { return null; });
+        if (!res.ok) throw new Error((payload && payload.error) || ('Request failed: ' + res.status));
+        return payload && payload.data ? payload.data : payload;
+      }
+      function notice(message) {
+        var el = byId('notice');
+        if (!el) return;
+        el.style.display = message ? 'block' : 'none';
+        el.innerHTML = message ? escapeHtml(message) + ' <a href="/app/login">Sign in</a>' : '';
+      }
+      function row(title, sub, tag, tone) {
+        return '<div class="row"><div><div class="row-title">' + escapeHtml(title) + '</div><div class="row-sub">' + escapeHtml(sub || '') + '</div></div><span class="tag ' + (tone || '') + '">' + escapeHtml(tag || 'ready') + '</span></div>';
+      }
+      function renderOrgSelector(payload) {
+        var select = byId('orgSelect');
+        var orgs = Array.isArray(payload.organizations) ? payload.organizations : [];
+        if (!orgs.length) {
+          select.innerHTML = '<option value="">No orgs</option>';
+          select.disabled = true;
+          return;
+        }
+        select.disabled = false;
+        select.innerHTML = orgs.map(function(org) {
+          return '<option value="' + escapeHtml(org.id) + '">' + escapeHtml(org.name || 'Organization') + ' - ' + escapeHtml(org.role || org.kind || 'member') + '</option>';
+        }).join('');
+        var selected = orgs.find(function(org) { return org.id === currentOrgId; })
+          || orgs.find(function(org) { return org.id === payload.active_organization_id; })
+          || orgs.find(function(org) { return org.kind && org.kind !== 'personal'; })
+          || orgs[0];
+        currentOrgId = selected ? selected.id : '';
+        if (currentOrgId) {
+          localStorage.setItem(ACTIVE_ORG_STORAGE_KEY, currentOrgId);
+          select.value = currentOrgId;
+        }
+      }
+      function renderPanels(orgPayload, readiness, overview) {
+        var org = orgPayload.organization || {};
+        var sso = orgPayload.sso_status || {};
+        var productionReady = readiness.production_ready === true;
+        text('kpiProduction', productionReady ? 'yes' : 'no');
+        text('kpiProjects', number(org.project_count || overview.totalProjects));
+        text('kpiMembers', number(org.member_count));
+        text('kpiOrgRole', org.role || 'member');
+        text('kpiCalls', number(overview.totalCalls));
+        byId('settingsPanel').style.display = PAGE_MODE === 'settings' ? 'grid' : 'none';
+        byId('plansPanel').style.display = PAGE_MODE === 'plans' ? 'grid' : 'none';
+        byId('scannerPanel').style.display = PAGE_MODE === 'scanner' ? 'grid' : 'none';
+        if (PAGE_MODE === 'settings') {
+          text('settingsMeta', org.kind || 'organization');
+          byId('settingsList').innerHTML = [
+            row('Organization name', org.name || 'Organization', org.role || 'member', 'good'),
+            row('Organization slug', org.slug || 'not set', org.can_archive ? 'owner controls' : 'standard', org.can_archive ? 'good' : 'warn'),
+            row('SSO rollout', sso.provider_status || 'not_started', sso.login_mode || 'assisted', sso.provider_status === 'configured' ? 'good' : 'warn'),
+            row('Last SSO membership resolution', sso.last_membership_resolution_email || 'none recorded', sso.last_membership_resolution || 'pending', sso.last_membership_resolution ? 'good' : 'warn')
+          ].join('');
+          byId('securityList').innerHTML = [
+            row('Production readiness', productionReady ? 'Control plane and executor report production-ready.' : (readiness.production_blockers || []).join('; '), productionReady ? 'ready' : 'blocked', productionReady ? 'good' : 'bad'),
+            row('Origin lock', readiness.control_plane && readiness.control_plane.origin_lock_configured ? 'Front Door/custom origin lock configured.' : 'Origin lock is not configured.', readiness.control_plane && readiness.control_plane.origin_lock_required ? 'required' : 'optional', readiness.control_plane && readiness.control_plane.origin_lock_configured ? 'good' : 'warn'),
+            row('Dashboard session storage', 'Enterprise pages read the Supabase session from local storage and never load the B2C dashboard shell.', 'enterprise only', 'good')
+          ].join('');
+        }
+        if (PAGE_MODE === 'plans') {
+          text('planMeta', productionReady ? 'production package' : 'pre-production');
+          byId('planList').innerHTML = [
+            row('Azure confidential runtime', productionReady ? 'Secure executor is production-ready.' : 'Runtime needs blocker review.', productionReady ? 'ready' : 'blocked', productionReady ? 'good' : 'bad'),
+            row('APIM / Front Door package', readiness.control_plane && readiness.control_plane.origin_lock_configured ? 'Origin protection is configured for enterprise edge routing.' : 'Edge/origin lock still needs final packaging.', readiness.control_plane && readiness.control_plane.origin_lock_configured ? 'ready' : 'todo', readiness.control_plane && readiness.control_plane.origin_lock_configured ? 'good' : 'warn'),
+            row('Usage posture', number(overview.totalCalls) + ' calls, ' + number(overview.errorCalls) + ' errors, ' + number(overview.deniedCalls) + ' denied.', (overview.errorRate || 0).toFixed ? (overview.errorRate || 0).toFixed(1) + '% error' : 'usage', (overview.errorCalls || overview.deniedCalls) ? 'warn' : 'good')
+          ].join('');
+          byId('guardrailList').innerHTML = [
+            row('SOC 2 access evidence', 'Members page exports access review evidence and audit page exports governance/runtime CSV.', 'available', 'good'),
+            row('Plan limits', 'Enterprise commercial limits are not enforced by this control plane yet; keep contract terms external until billing APIs exist.', 'manual', 'warn'),
+            row('Customer rollout notes', 'Use /app/readiness, /app/audit, /app/members, and /app/keys as the contract-facing evidence bundle.', 'ready', 'good')
+          ].join('');
+        }
+        if (PAGE_MODE === 'scanner') {
+          byId('scannerList').innerHTML = [
+            row('Enterprise scanner APIs', 'No enterprise-safe scanner endpoint is enabled on this control plane yet.', 'disabled', 'warn'),
+            row('B2C scanner isolation', 'This page intentionally avoids consumer scanner endpoints and external API fallbacks.', 'isolated', 'good'),
+            row('Recommended interim flow', 'Run local scanner tooling during onboarding, then attach sanitized reports to the enterprise audit package.', 'manual', 'warn')
+          ].join('');
+          byId('scannerChecklist').innerHTML = [
+            row('Tenant scoping', 'Scanner results must be scoped to organization/project before enabling browser actions.', 'required', 'warn'),
+            row('Finding redaction', 'Secrets and provider tokens must be masked before rendering or exporting.', 'required', 'warn'),
+            row('Remediation workflow', 'PR creation, ignore/allowlist, and migration actions need enterprise audit events.', 'required', 'warn')
+          ].join('');
+        }
+      }
+      async function reload() {
+        if (!token) {
+          notice('Enterprise session missing.');
+          return;
+        }
+        notice('');
+        try {
+          renderOrgSelector(await fetchJson('/api/v1/enterprise/orgs'));
+          var results = await Promise.all([
+            fetchJson('/api/v1/enterprise/orgs/current'),
+            fetchJson('/readiness'),
+            fetchJson('/api/v1/enterprise/projects/stats/overview')
+          ]);
+          renderPanels(results[0], results[1], results[2] || {});
+        } catch (error) {
+          notice(error && error.message ? error.message : 'Enterprise admin page failed to load.');
+        }
+      }
+      byId('refreshBtn').addEventListener('click', reload);
+      byId('orgSelect').addEventListener('change', function(event) {
+        currentOrgId = event.target.value || '';
+        if (currentOrgId) localStorage.setItem(ACTIVE_ORG_STORAGE_KEY, currentOrgId);
+        reload();
+      });
+      reload();
+    })();
+  </script>
+</body>
+</html>`;
+}
+
 function escapeHtml(value: string): string {
   return value
     .replaceAll('&', '&amp;')
@@ -1389,6 +1661,9 @@ export function renderEnterprisePlannedAppPage(pageName: string): string | null 
   if (pageName === 'alerts') return renderEnterpriseAlertsPage();
   if (pageName === 'activity' || pageName === 'projects' || pageName === 'keys') {
     return renderEnterpriseOperationsPage(pageName);
+  }
+  if (pageName === 'settings' || pageName === 'plans' || pageName === 'scanner') {
+    return renderEnterpriseSupportPage(pageName);
   }
 
   const page = plannedEnterprisePages[pageName];

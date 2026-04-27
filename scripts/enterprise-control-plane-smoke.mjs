@@ -1740,19 +1740,41 @@ async function assertEnterpriseLoginRoute() {
     }
   }
 
-  for (const plannedPath of ['/app/settings', '/app/plans', '/app/scanner']) {
-    const plannedResponse = await handleEnterpriseControlPlaneRequest(
-      buildRequest(plannedPath),
+  const supportPages = [
+    {
+      path: '/app/settings',
+      title: 'Settings - VaultProof Enterprise',
+      required: ['/api/v1/enterprise/orgs/current', '/readiness', 'Security notices'],
+    },
+    {
+      path: '/app/plans',
+      title: 'Plans - VaultProof Enterprise',
+      required: ['/api/v1/enterprise/projects/stats/overview', 'Contract guardrails', 'Plan limits'],
+    },
+    {
+      path: '/app/scanner',
+      title: 'Scanner - VaultProof Enterprise',
+      required: ['Enterprise scanner APIs', 'No enterprise-safe scanner endpoint', 'B2C scanner isolation'],
+    },
+  ];
+  for (const page of supportPages) {
+    const response = await handleEnterpriseControlPlaneRequest(
+      buildRequest(page.path),
       {
         enterpriseHostname: ENTERPRISE_HOSTNAME,
       },
     );
-    const plannedHtml = await plannedResponse.text();
-    if (plannedResponse.status !== 200 || !plannedHtml.includes('Phase 6 of the build plan')) {
-      throw new Error(`Expected enterprise planned page for ${plannedPath}, got ${plannedResponse.status}`);
+    const html = await response.text();
+    if (response.status !== 200 || !html.includes(page.title)) {
+      throw new Error(`Expected enterprise support page for ${page.path}, got ${response.status}`);
     }
-    if (plannedHtml.includes('https://init.vaultproof.dev') || plannedHtml.includes('https://api.vaultproof.dev')) {
-      throw new Error(`Enterprise planned page ${plannedPath} must not load B2C APIs`);
+    for (const required of page.required) {
+      if (!html.includes(required)) {
+        throw new Error(`Expected ${page.path} to include ${required}`);
+      }
+    }
+    if (html.includes('https://init.vaultproof.dev') || html.includes('https://api.vaultproof.dev') || html.includes('/api/scanner')) {
+      throw new Error(`Enterprise support page ${page.path} must not load B2C APIs`);
     }
   }
 

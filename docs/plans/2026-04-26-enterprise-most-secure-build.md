@@ -437,9 +437,9 @@ Pages and links:
 - [x] `/app/activity`: enterprise-owned runtime activity page for recent proxy/executor events, status codes, latency, provider request IDs, and attestation summaries.
 - [x] `/app/projects`: enterprise-owned project inventory page for project health, provider slots, policy status, and quick links to control.
 - [x] `/app/keys`: enterprise-owned provider slots page for active providers, emergency revoke, rotation checklist, and SKR/confidential-mode notes. Revoked provider history is currently visible through `/app/audit`.
-- [ ] `/app/settings`: enterprise-owned tenant settings page for dashboard preferences, session/security notices, and org defaults that do not belong on SSO setup.
-- [ ] `/app/plans`: enterprise-owned plan/billing/governance page for APIM/enterprise rollout status, limits, and contract-facing packaging.
-- [ ] `/app/scanner`: enterprise-owned repository/security scanning entry page, either wired to enterprise-safe scanner APIs or clearly marked as a separate future integration.
+- [x] `/app/settings`: enterprise-owned tenant settings page for dashboard preferences, session/security notices, and org defaults that do not belong on SSO setup.
+- [x] `/app/plans`: enterprise-owned plan/billing/governance page for APIM/enterprise rollout status, limits, and contract-facing packaging. Billing/limit enforcement remains manual until enterprise billing APIs exist.
+- [x] `/app/scanner`: enterprise-owned repository/security scanning entry page, clearly marked as a separate future integration until enterprise-safe scanner APIs exist.
 
 Implementation/test order:
 
@@ -449,7 +449,7 @@ Implementation/test order:
 4. [x] Audit page feature slice: wire `/app/audit` to enterprise audit APIs; test CSV export link, filter query generation, governance + proxy event rendering.
 5. [x] Alerts page feature slice: wire `/app/alerts` to enterprise alert APIs; test destinations, policy, delivery logs, and dispatch-run states.
 6. [x] Activity/projects/keys slice: wire runtime activity, project inventory, provider slot status, and emergency revoke paths; test no B2C API calls.
-7. [ ] Settings/plans/scanner slice: either wire real enterprise APIs or intentionally hide/disable unavailable actions; test no dead links and no B2C fallback.
+7. [x] Settings/plans/scanner slice: either wire real enterprise APIs or intentionally hide/disable unavailable actions; test no dead links and no B2C fallback.
 8. [ ] Browser QA after each feature slice: login as demo user, click all sidebar/subnav links, verify no `{"error":"Not found"}` pages, and verify `/readiness` remains production-ready after deploy.
 
 ## Azure Resources
