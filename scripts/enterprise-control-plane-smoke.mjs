@@ -35,9 +35,11 @@ const fakeProject = {
 
 let activeProject = fakeProject;
 let auditEvents = [];
+let projectKeyRevoked = false;
 
 function installSupabaseStub() {
   auditEvents = [];
+  projectKeyRevoked = false;
   globalThis.fetch = async (input, init) => {
     const url = typeof input === 'string' ? input : input instanceof URL ? input.toString() : input.url;
     const method = (init?.method || 'GET').toUpperCase();
@@ -75,10 +77,24 @@ function installSupabaseStub() {
     }
 
     if (url.includes('/rest/v1/project_keys') && method === 'GET') {
+      if (projectKeyRevoked) return jsonResponse([]);
       return jsonResponse([{
         id: PROJECT_KEY_ID,
         provider: 'openai',
+        slug: 'openai',
         upstream_base_url: 'https://api.openai.com',
+      }]);
+    }
+
+    if (url.includes('/rest/v1/project_keys') && method === 'PATCH') {
+      projectKeyRevoked = true;
+      const body = JSON.parse(init?.body || '{}');
+      return jsonResponse([{
+        id: PROJECT_KEY_ID,
+        project_id: PROJECT_ID,
+        provider: 'openai',
+        slug: 'openai',
+        revoked_at: body.revoked_at || new Date().toISOString(),
       }]);
     }
 
@@ -871,6 +887,65 @@ async function assertEnterpriseRateLimitPolicy() {
   }
 }
 
+async function assertEnterpriseEmergencyRevoke() {
+  installSupabaseStub();
+  activeProject = fakeProject;
+
+  const env = {
+    enterpriseHostname: ENTERPRISE_HOSTNAME,
+    executorBaseUrl: 'https://executor.internal',
+    executorSigningKeyId: 'enterprise-local',
+    executorSigningSecret: 'local-secret',
+    supabaseUrl: 'https://supabase.example.co',
+    supabaseServiceRoleKey: 'service-role-key',
+  };
+
+  const revokeResponse = await handleEnterpriseControlPlaneRequest(
+    buildRequest(`/api/v1/enterprise/projects/${PROJECT_ID}/providers/openai/revoke`, {
+      method: 'POST',
+      headers: {
+        authorization: `Bearer ${AUTH_TOKEN}`,
+        'content-type': 'application/json',
+      },
+      body: JSON.stringify({
+        reason: 'smoke test emergency revoke',
+      }),
+    }),
+    env,
+  );
+  const revokePayload = await revokeResponse.json();
+  if (revokeResponse.status !== 200 || revokePayload?.revoked?.key_id !== PROJECT_KEY_ID) {
+    throw new Error(`Expected provider revoke to succeed, got ${revokeResponse.status} ${JSON.stringify(revokePayload)}`);
+  }
+
+  const revokeAudit = auditEvents.find((event) => event.event_type === 'enterprise_provider_key_revoked');
+  if (!revokeAudit) {
+    throw new Error('Expected provider revoke governance audit event');
+  }
+  if (revokeAudit.metadata?.reason !== 'smoke test emergency revoke') {
+    throw new Error('Expected revoke reason in governance audit metadata');
+  }
+
+  const executeResponse = await handleEnterpriseControlPlaneRequest(
+    buildRequest(`/api/v1/enterprise/projects/${PROJECT_ID}/providers/openai/execute`, {
+      method: 'POST',
+      headers: {
+        authorization: `Bearer ${AUTH_TOKEN}`,
+        'content-type': 'application/json',
+      },
+      body: JSON.stringify({
+        method: 'GET',
+        upstream_path: '/v1/models',
+      }),
+    }),
+    env,
+  );
+  const executePayload = await executeResponse.json();
+  if (executeResponse.status !== 404 || executePayload?.error !== 'Project provider slot not found') {
+    throw new Error(`Expected revoked provider slot to block execution, got ${executeResponse.status} ${JSON.stringify(executePayload)}`);
+  }
+}
+
 async function assertEnterpriseLoginRoute() {
   const rootResponse = await handleEnterpriseControlPlaneRequest(
     buildRequest('/'),
@@ -1025,4 +1100,5 @@ await assertEnterpriseProviderCallerLockPolicy();
 await assertEnterpriseExecutionPolicy();
 await assertEnterpriseProviderExecutionPolicy();
 await assertEnterpriseRateLimitPolicy();
+await assertEnterpriseEmergencyRevoke();
 console.log('enterprise control plane smoke test passed');

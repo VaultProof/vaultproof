@@ -54,6 +54,7 @@ Live production-confidential path:
 - Executor health reports `production_ready`, `security_profile`, and concrete production blockers.
 - Control plane `/readiness` summarizes whole-path demo readiness and production-confidential blockers.
 - Enterprise caller-lock policy supports origin, provider allowlists, upstream method/host/path policy, per-project/provider rate limits, customer gateway, client class, device identity requirement, fleet, firmware, IPv4/IPv6 CIDR, mTLS certificate identity checks, and stricter per-provider overrides.
+- Enterprise admins can emergency-revoke provider slots; revoked keys are excluded from future execution dispatch.
 - Execution dispatch audit events include executor result metadata and customer-verifiable Azure attestation evidence summaries.
 - Azure secure-runtime IaC and operational scripts exist at `infra/azure/enterprise-secure-runtime`.
 
@@ -407,8 +408,8 @@ Important key-type decision:
 - [x] Add project/provider allowlists.
 - [x] Add allowed upstream host/path/method policy.
 - [x] Add per-project/provider rate limits.
+- [x] Add emergency key revoke.
 - [ ] Add policy UI for editing caller-lock provider overrides.
-- [ ] Add emergency key revoke.
 - [ ] Add audit export.
 - [ ] Add access review evidence for SOC 2.
 

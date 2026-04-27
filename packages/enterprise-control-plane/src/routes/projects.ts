@@ -16,6 +16,10 @@ interface ProjectWriteBody {
   caller_lock_policy?: unknown;
 }
 
+interface RevokeProviderBody {
+  reason?: string | null;
+}
+
 type CallerLockPolicy = {
   allowed_providers?: string[];
   allowed_methods?: string[];
@@ -214,6 +218,16 @@ function normalizeCallerLockPolicy(raw: unknown): { ok: true; value: CallerLockP
   }
 
   return normalizeCallerLockPolicyObject(raw as Record<string, unknown>, 'caller_lock_policy', true);
+}
+
+async function parseOptionalRevokeBody(request: Request): Promise<RevokeProviderBody> {
+  const text = await request.text();
+  if (!text.trim()) return {};
+  try {
+    return JSON.parse(text) as RevokeProviderBody;
+  } catch {
+    return {};
+  }
 }
 
 function isDeniedStatus(statusCode: number | null | undefined): boolean {
@@ -645,6 +659,72 @@ export async function handleEnterpriseProjectRoutes(
         strict_origin: data.strict_origin,
         caller_lock_policy: data.caller_lock_policy || {},
         created_at: data.created_at,
+      },
+    });
+  }
+
+  if (
+    request.method === 'POST' &&
+    pathSegments.length === 5 &&
+    pathSegments[0] === 'projects' &&
+    pathSegments[2] === 'providers' &&
+    pathSegments[4] === 'revoke'
+  ) {
+    const projectId = pathSegments[1];
+    const slug = pathSegments[3];
+    const project = await getAccessibleProject(env, auth.userId, projectId);
+    if (!project) {
+      return Response.json({ error: 'Project not found' }, { status: 404 });
+    }
+    if (!hasRequiredProjectRole(project.project_role, 'admin')) {
+      return Response.json({ error: 'Insufficient project permissions' }, { status: 403 });
+    }
+
+    const body = await parseOptionalRevokeBody(request);
+    const revokedAt = new Date().toISOString();
+    const { data, error } = await supabase
+      .from('project_keys')
+      .update({ revoked_at: revokedAt })
+      .eq('project_id', project.id)
+      .eq('slug', slug)
+      .is('revoked_at', null)
+      .select('id, project_id, provider, slug, revoked_at')
+      .maybeSingle();
+
+    if (error) {
+      return Response.json({ error: 'Failed to revoke provider slot' }, { status: 500 });
+    }
+    if (!data) {
+      return Response.json({ error: 'Active provider slot not found' }, { status: 404 });
+    }
+
+    if (project.organization_id || organizationId) {
+      await writeGovernanceAuditEvent(env, {
+        organization_id: project.organization_id || organizationId || '',
+        project_id: project.id,
+        actor_user_id: auth.userId,
+        actor_email: auth.email,
+        event_type: 'enterprise_provider_key_revoked',
+        target_type: 'project_key',
+        target_id: data.id as string,
+        description: `Revoked provider slot ${slug} for ${project.name || project.vp_proj_id}`,
+        metadata: {
+          provider: data.provider,
+          slug: data.slug || slug,
+          revoked_at: data.revoked_at || revokedAt,
+          reason: typeof body.reason === 'string' ? body.reason.slice(0, 500) : null,
+          revoked_via: 'enterprise_control_plane',
+        },
+      });
+    }
+
+    return Response.json({
+      revoked: {
+        key_id: data.id,
+        project_id: data.project_id,
+        provider: data.provider,
+        slug: data.slug || slug,
+        revoked_at: data.revoked_at || revokedAt,
       },
     });
   }

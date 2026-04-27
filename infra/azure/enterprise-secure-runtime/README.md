@@ -676,6 +676,20 @@ Example:
 
 Denied execution-policy attempts write a governance audit event without request/response bodies or provider secrets.
 
+## Emergency Provider Revoke
+
+Enterprise project admins can immediately revoke a provider slot. Revocation sets `project_keys.revoked_at`, writes a governance audit event, removes the provider slot from project listings, and blocks future secure execution dispatch for that slug.
+
+```bash
+curl -sS -X POST \
+  -H "Authorization: Bearer <supabase-user-jwt>" \
+  -H "Content-Type: application/json" \
+  https://enterprise.vaultproof.dev/api/v1/enterprise/projects/<project-id>/providers/openai/revoke \
+  -d '{"reason":"customer-requested emergency revoke"}'
+```
+
+This does not decrypt or expose the provider secret. Historical audit/evidence records stay intact.
+
 ## Azure Monitor Placement
 
 The template can deploy the first production monitoring bundle without changing the live route:
