@@ -9,6 +9,9 @@ export interface EnterpriseControlPlaneEnv {
   executorBaseUrl?: string;
   executorSigningKeyId?: string;
   executorSigningSecret?: string;
+  originLockHeaderName?: string;
+  originLockRequired?: boolean;
+  originLockSecret?: string;
   supabaseUrl?: string;
   supabaseServiceRoleKey?: string;
 }

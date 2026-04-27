@@ -24,6 +24,12 @@ async function toWebRequest(req: IncomingMessage): Promise<Request> {
     if (typeof value === 'string') headers.set(key, value);
   }
 
+  headers.delete('x-vaultproof-local-loopback');
+  const remoteAddress = req.socket.remoteAddress;
+  if (remoteAddress === '127.0.0.1' || remoteAddress === '::1' || remoteAddress === '::ffff:127.0.0.1') {
+    headers.set('x-vaultproof-local-loopback', 'true');
+  }
+
   const body = await readRequestBody(req);
   return new Request(url, {
     method: req.method || 'GET',
@@ -51,6 +57,9 @@ function getEnv(): EnterpriseControlPlaneEnv {
     executorBaseUrl: process.env.ENTERPRISE_EXECUTOR_BASE_URL,
     executorSigningKeyId: process.env.ENTERPRISE_EXECUTOR_SIGNING_KEY_ID,
     executorSigningSecret: process.env.ENTERPRISE_EXECUTOR_SIGNING_SECRET,
+    originLockHeaderName: process.env.ENTERPRISE_ORIGIN_LOCK_HEADER_NAME,
+    originLockRequired: process.env.ENTERPRISE_REQUIRE_ORIGIN_LOCK === 'true',
+    originLockSecret: process.env.ENTERPRISE_ORIGIN_LOCK_SECRET,
     supabaseUrl: process.env.SUPABASE_URL,
     supabaseServiceRoleKey: process.env.SUPABASE_SERVICE_ROLE_KEY,
   };

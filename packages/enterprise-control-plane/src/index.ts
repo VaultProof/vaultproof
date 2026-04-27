@@ -1,4 +1,5 @@
 import type { SignedSecureExecutionEnvelope } from '@vaultproof/core';
+import { timingSafeEqual } from 'node:crypto';
 import { assertEnterpriseHostname, dispatchToSecureExecutor, type EnterpriseControlPlaneEnv } from './config.js';
 import { renderEnterpriseControlPage, renderEnterpriseOrgPage } from './app-pages.js';
 import { renderEnterpriseLoginPage } from './login-page.js';
@@ -21,6 +22,39 @@ function getRequestHostname(request: Request, url: URL): string {
   const forwardedHost = request.headers.get('x-forwarded-host') || request.headers.get('x-original-host');
   const host = forwardedHost || request.headers.get('host') || url.hostname;
   return host.split(',')[0]?.trim().split(':')[0]?.toLowerCase() || url.hostname.toLowerCase();
+}
+
+function normalizeOriginLockHeaderName(headerName?: string): string {
+  return (headerName || 'x-vaultproof-origin-lock').trim().toLowerCase();
+}
+
+function constantTimeEquals(left: string, right: string): boolean {
+  const leftBytes = Buffer.from(left);
+  const rightBytes = Buffer.from(right);
+  return leftBytes.length === rightBytes.length && timingSafeEqual(leftBytes, rightBytes);
+}
+
+function verifyOriginLock(request: Request, env: EnterpriseControlPlaneEnv): Response | null {
+  const expectedSecret = env.originLockSecret?.trim();
+  if (!expectedSecret) return null;
+
+  if (request.headers.get('x-vaultproof-local-loopback') === 'true') return null;
+
+  const headerName = normalizeOriginLockHeaderName(env.originLockHeaderName);
+  const actualSecret = request.headers.get(headerName) || '';
+  if (constantTimeEquals(actualSecret, expectedSecret)) return null;
+
+  return Response.json(
+    {
+      error: 'Front Door origin lock rejected this request.',
+    },
+    {
+      status: 403,
+      headers: {
+        'cache-control': 'no-store',
+      },
+    },
+  );
 }
 
 async function fetchExecutorHealth(env: EnterpriseControlPlaneEnv): Promise<{
@@ -75,6 +109,7 @@ async function buildEnterpriseReadiness(
   const supabaseConfigured = Boolean(env.supabaseUrl && env.supabaseServiceRoleKey);
   const executorConfigured = Boolean(env.executorBaseUrl);
   const signingConfigured = Boolean(env.executorSigningKeyId && env.executorSigningSecret);
+  const originLockConfigured = Boolean(env.originLockSecret?.trim());
 
   if (!supabaseConfigured) {
     productionBlockers.push('Supabase service role is not configured');
@@ -87,6 +122,9 @@ async function buildEnterpriseReadiness(
   if (!signingConfigured) {
     productionBlockers.push('control-plane-to-executor signing is not configured');
     demoBlockers.push('control-plane-to-executor signing is not configured');
+  }
+  if (env.originLockRequired && !originLockConfigured) {
+    productionBlockers.push('Front Door origin lock is not configured');
   }
 
   const executor = await fetchExecutorHealth(env);
@@ -137,6 +175,8 @@ async function buildEnterpriseReadiness(
       executor_configured: executorConfigured,
       supabase_configured: supabaseConfigured,
       signing_configured: signingConfigured,
+      origin_lock_configured: originLockConfigured,
+      origin_lock_required: env.originLockRequired === true,
     },
     executor: {
       reachable: executor.reachable,
@@ -164,6 +204,9 @@ export async function handleEnterpriseControlPlaneRequest(
       { status: 400 },
     );
   }
+
+  const originLockResponse = verifyOriginLock(request, env);
+  if (originLockResponse) return originLockResponse;
 
   if (request.method === 'GET' && url.pathname === '/') {
     return Response.redirect(`${url.origin}/app/login${url.search}`, 302);
@@ -210,6 +253,8 @@ export async function handleEnterpriseControlPlaneRequest(
       path: url.pathname,
       executor_configured: Boolean(env.executorBaseUrl),
       supabase_configured: Boolean(env.supabaseUrl && env.supabaseServiceRoleKey),
+      origin_lock_configured: Boolean(env.originLockSecret?.trim()),
+      origin_lock_required: env.originLockRequired === true,
     });
   }
 

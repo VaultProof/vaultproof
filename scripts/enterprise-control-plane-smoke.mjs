@@ -713,8 +713,50 @@ async function assertEnterpriseReadinessRoute() {
   }
 }
 
+async function assertFrontDoorOriginLock() {
+  const env = {
+    enterpriseHostname: ENTERPRISE_HOSTNAME,
+    executorBaseUrl: 'https://executor.internal',
+    originLockSecret: 'origin-lock-secret',
+  };
+
+  const deniedResponse = await handleEnterpriseControlPlaneRequest(
+    buildRequest('/health'),
+    env,
+  );
+  const deniedPayload = await deniedResponse.json();
+  if (deniedResponse.status !== 403 || !String(deniedPayload?.error || '').includes('origin lock')) {
+    throw new Error(`Expected Front Door origin lock denial, got ${deniedResponse.status} ${JSON.stringify(deniedPayload)}`);
+  }
+
+  const allowedResponse = await handleEnterpriseControlPlaneRequest(
+    buildRequest('/health', {
+      headers: {
+        'x-vaultproof-origin-lock': 'origin-lock-secret',
+      },
+    }),
+    env,
+  );
+  if (allowedResponse.status !== 200) {
+    throw new Error(`Expected Front Door origin lock header to allow request, got ${allowedResponse.status}`);
+  }
+
+  const loopbackResponse = await handleEnterpriseControlPlaneRequest(
+    buildRequest('/health', {
+      headers: {
+        'x-vaultproof-local-loopback': 'true',
+      },
+    }),
+    env,
+  );
+  if (loopbackResponse.status !== 200) {
+    throw new Error(`Expected local loopback control-plane check to bypass origin lock, got ${loopbackResponse.status}`);
+  }
+}
+
 await assertEnterpriseLoginRoute();
 await assertEnterpriseReadinessRoute();
+await assertFrontDoorOriginLock();
 await assertExecuteRoute();
 await assertEnterpriseOriginLock();
 await assertEnterpriseCallerLockPolicy();
