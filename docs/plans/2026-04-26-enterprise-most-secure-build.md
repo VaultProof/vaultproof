@@ -431,7 +431,7 @@ Pages and links:
 - [x] `/app/login`: enterprise login entry point.
 - [x] `/app/control`: detailed enterprise control surface for project policy, provider overrides, incoming invites, export summaries, and secure execution posture.
 - [x] `/app/org`: organization settings and Microsoft Entra/Supabase SAML SSO rollout controls.
-- [ ] `/app/members`: enterprise-owned members page for members, pending invites, role changes, project assignments, CSV/JSON access evidence links, and invite acceptance.
+- [ ] `/app/members`: enterprise-owned members page for members, pending invites, role changes, project assignments, CSV/JSON access evidence links, and invite acceptance. In progress: API-backed read-only member/invite/project coverage page exists with access-review CSV link; admin mutations and invite acceptance UI are pending.
 - [ ] `/app/audit`: enterprise-owned audit page for governance/runtime timeline, CSV export, search, filters, and evidence-friendly event details.
 - [ ] `/app/alerts`: enterprise-owned alerts page for destinations, delivery logs, dispatch runs, policy status, and test-send workflow.
 - [ ] `/app/activity`: enterprise-owned runtime activity page for recent proxy/executor events, status codes, latency, provider request IDs, and attestation summaries.
@@ -444,12 +444,13 @@ Pages and links:
 Implementation/test order:
 
 1. [x] Navigation no-404 baseline: every link rendered by enterprise dashboard/control/org resolves to an enterprise control-plane page and smoke tests assert HTTP 200. Placeholder pages are allowed only for this baseline slice.
-2. [ ] Members page feature slice: wire `/app/members` to enterprise member APIs; test org selection, pending invites, access-review export link, and admin/member states.
-3. [ ] Audit page feature slice: wire `/app/audit` to enterprise audit APIs; test CSV export link, filter query generation, governance + proxy event rendering.
-4. [ ] Alerts page feature slice: wire `/app/alerts` to enterprise alert APIs; test destinations, policy, delivery logs, and dispatch-run states.
-5. [ ] Activity/projects/keys slice: wire runtime activity, project inventory, provider slot status, and emergency revoke paths; test no B2C API calls.
-6. [ ] Settings/plans/scanner slice: either wire real enterprise APIs or intentionally hide/disable unavailable actions; test no dead links and no B2C fallback.
-7. [ ] Browser QA after each feature slice: login as demo user, click all sidebar/subnav links, verify no `{"error":"Not found"}` pages, and verify `/readiness` remains production-ready after deploy.
+2. [x] Members page read-only feature slice: wire `/app/members` to enterprise member APIs; test org selection, pending invites, access-review export link, and admin/member states.
+3. [ ] Members page admin-action slice: add invite acceptance, invite creation/revocation where supported, role changes, and project access assignment/removal.
+4. [ ] Audit page feature slice: wire `/app/audit` to enterprise audit APIs; test CSV export link, filter query generation, governance + proxy event rendering.
+5. [ ] Alerts page feature slice: wire `/app/alerts` to enterprise alert APIs; test destinations, policy, delivery logs, and dispatch-run states.
+6. [ ] Activity/projects/keys slice: wire runtime activity, project inventory, provider slot status, and emergency revoke paths; test no B2C API calls.
+7. [ ] Settings/plans/scanner slice: either wire real enterprise APIs or intentionally hide/disable unavailable actions; test no dead links and no B2C fallback.
+8. [ ] Browser QA after each feature slice: login as demo user, click all sidebar/subnav links, verify no `{"error":"Not found"}` pages, and verify `/readiness` remains production-ready after deploy.
 
 ## Azure Resources
 

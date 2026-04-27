@@ -1378,7 +1378,21 @@ async function assertEnterpriseLoginRoute() {
     }
   }
 
-  for (const plannedPath of ['/app/members', '/app/audit', '/app/alerts', '/app/activity', '/app/projects', '/app/keys', '/app/settings', '/app/plans', '/app/scanner']) {
+  const membersResponse = await handleEnterpriseControlPlaneRequest(
+    buildRequest('/app/members'),
+    {
+      enterpriseHostname: ENTERPRISE_HOSTNAME,
+    },
+  );
+  const membersHtml = await membersResponse.text();
+  if (membersResponse.status !== 200 || !membersHtml.includes('Members - VaultProof Enterprise')) {
+    throw new Error(`Expected enterprise members page, got ${membersResponse.status}`);
+  }
+  if (!membersHtml.includes('/api/v1/enterprise/members') || membersHtml.includes('https://init.vaultproof.dev')) {
+    throw new Error('Expected enterprise members page to use enterprise member APIs only');
+  }
+
+  for (const plannedPath of ['/app/audit', '/app/alerts', '/app/activity', '/app/projects', '/app/keys', '/app/settings', '/app/plans', '/app/scanner']) {
     const plannedResponse = await handleEnterpriseControlPlaneRequest(
       buildRequest(plannedPath),
       {
