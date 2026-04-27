@@ -390,6 +390,20 @@ Later policies should add JWT validation, Entra-aware products/subscriptions, re
 
 ## Lockdown Checklist
 
+Run the production verifier after each infrastructure or runtime change:
+
+```bash
+RESOURCE_GROUP=vaultproof-enterprise \
+DEPLOYMENT_NAME=vp-enterprise-secure-runtime-eastus-hsm \
+ENTERPRISE_URL=https://enterprise.vaultproof.dev \
+FRONT_DOOR_PROFILE=vaultproof-enterprise-fd \
+FRONT_DOOR_ENDPOINT=vaultproof-enterprise \
+FRONT_DOOR_ROUTE=default-route \
+npm run verify:enterprise-production
+```
+
+The verifier checks Front Door readiness, Confidential VM security settings, Front Door ID origin lock, NSG posture, direct-origin rejection, and loopback readiness.
+
 - Remove the bootstrap public IP or close SSH after setup.
 - Route control plane to executor over private IP.
 - Restrict executor NSG source to the control-plane subnet or private endpoint.
