@@ -1,8 +1,12 @@
 # VaultProof Enterprise Most-Secure Build
 
-Status: active
+Status: active - source of truth
 Owner: VaultProof enterprise
-Last updated: 2026-04-26
+Last updated: 2026-04-27
+
+## Operating Rule
+
+This file is the single source-of-truth plan for the enterprise most-secure build. Supporting runbooks and implementation notes can live in sub-docs, but status, priorities, and phase ownership should be updated here first.
 
 ## Decision
 
@@ -16,19 +20,27 @@ Build the enterprise path directly toward the strongest Azure-native design:
 - The executor is the only service allowed to decrypt shares and reconstruct keys.
 - Production executor runs on an Azure Confidential VM.
 - The unwrap/root key is released through Azure Secure Key Release only after attestation.
-- Highest-security production uses Azure Managed HSM with an `oct-HSM` AES-256 unwrap key.
+- Highest-security production uses Azure Managed HSM Secure Key Release. Current Azure implementation uses an exportable `RSA-HSM` release-root key and derives AES-256 unwrap material inside the Confidential VM, because Azure Managed HSM does not allow generated symmetric `oct-HSM` keys to be released/exported.
 - Plain provider keys exist only inside confidential execution memory for one outbound call and are zeroed immediately.
 - Azure API Management provides API lifecycle governance in front of the enterprise control plane.
 - Enterprise caller lock binds execution to approved origins, gateways, devices, fleets, and client classes.
 
 ## Current State
 
-Working prototype:
+Live production-confidential path:
 
 - Azure Front Door routes `enterprise.vaultproof.dev`.
 - Azure API Management is not deployed yet.
-- Azure Container Apps runs the enterprise control plane.
-- Azure Container Apps runs the current executor prototype.
+- Azure Container Apps remains available only as an old prototype/rollback path; it is not the active production-confidential runtime.
+- Azure Front Door routes active enterprise traffic to the co-located control plane on the Azure Confidential VM.
+- Azure Front Door ID origin lock is required by the control plane.
+- NSG ingress to the control plane is restricted to Azure Front Door service tags; direct public origin access is blocked.
+- Azure Confidential VM runs both the enterprise control plane and secure executor as systemd services.
+- The control plane calls the executor over loopback with signed execution envelopes.
+- Managed HSM Secure Key Release is wired and the executor reports `production_ready: true`.
+- `npm run verify:enterprise-production` verifies the live path.
+- `npm run deploy:enterprise-vm` deploys/rebuilds/restarts the CVM runtime and can run the verifier.
+- `npm run evidence:enterprise-production` captures customer/audit evidence snapshots.
 - Supabase stores enterprise org/project metadata.
 - Executor request signing is implemented.
 - Enterprise executor now supports encrypted `share1_encrypted` and encrypted `share2_encrypted`.
@@ -37,12 +49,22 @@ Working prototype:
 - Executor health reports `production_ready`, `security_profile`, and concrete production blockers.
 - Control plane `/readiness` summarizes whole-path demo readiness and production-confidential blockers.
 - Enterprise caller-lock policy supports origin, customer gateway, client class, device identity requirement, fleet, firmware, IPv4/IPv6 CIDR, mTLS certificate identity checks, and stricter per-provider overrides.
-- Azure secure-runtime IaC exists at `infra/azure/enterprise-secure-runtime`.
+- Azure secure-runtime IaC and operational scripts exist at `infra/azure/enterprise-secure-runtime`.
 
 Important limitation:
 
-- Container Apps is only the prototype runtime.
-- Production “most secure” requires Confidential VM plus Secure Key Release.
+- The active production-confidential runtime is now Confidential VM plus Secure Key Release.
+- Azure API Management, Azure Monitor alerts, TLS-to-origin, and enterprise UI/policy controls are still pending.
+- Secrets used during setup must be rotated before external/customer production use.
+
+## Next Execution Order
+
+1. Azure API Management placement and policy support.
+2. Azure Monitor/Log Analytics alerts for Front Door readiness, VM service health, and production verifier drift.
+3. TLS from Front Door to the VM origin, then switch Front Door origin forwarding to HTTPS.
+4. SSH/Bastion/JIT hardening and cleanup of old prototype Container Apps resources.
+5. End-to-end enterprise API execution through `enterprise.vaultproof.dev` with evidence/audit metadata.
+6. Enterprise controls: SSO, provider allowlists, upstream domain/method policy, policy UI, per-project rate limits, emergency revoke, audit export, SOC 2 access review evidence.
 
 ## Security Boundary
 
@@ -301,74 +323,80 @@ Minimum evidence bundle for customer review:
 
 ### Phase 1: Lock Prototype Into Enterprise Shape
 
-- Keep B2C Cloudflare code separate.
-- Use `share1_encrypted` and `share2_encrypted` for enterprise rows.
-- Remove any enterprise dependency on `share2_b64`.
-- Keep env-based unwrap key only under `VAULTPROOF_EXECUTOR_MODE=demo`.
-- Make `VAULTPROOF_EXECUTOR_MODE=confidential` fail closed until Secure Key Release is wired.
-- Block replayed execution envelopes by request ID and nonce.
-- Enforce enterprise caller lock for origins and sign caller-lock metadata into the execution envelope.
-- Store enterprise caller-lock policy in `projects.caller_lock_policy`.
-- Keep `/admin/seed-openai-demo` disabled by default and never enable it in confidential mode.
-- Remove `/admin/seed-openai-demo` entirely before production customer demos.
+- [x] Keep B2C Cloudflare code separate.
+- [x] Use `share1_encrypted` and `share2_encrypted` for enterprise rows.
+- [x] Remove any enterprise dependency on `share2_b64`.
+- [x] Keep env-based unwrap key only under `VAULTPROOF_EXECUTOR_MODE=demo`.
+- [x] Make `VAULTPROOF_EXECUTOR_MODE=confidential` fail closed until Secure Key Release is wired.
+- [x] Block replayed execution envelopes by request ID and nonce.
+- [x] Enforce enterprise caller lock for origins and sign caller-lock metadata into the execution envelope.
+- [x] Store enterprise caller-lock policy in `projects.caller_lock_policy`.
+- [x] Keep `/admin/seed-openai-demo` disabled by default and never enable it in confidential mode.
+- [ ] Remove `/admin/seed-openai-demo` entirely before production customer demos.
 
 ### Phase 2: Azure Confidential VM Runtime
 
-- Deploy `infra/azure/enterprise-secure-runtime/main.bicep`.
-- Create enterprise VNet.
-- Create Confidential VM in West US 2.
-- Install Docker or run the executor as a systemd service.
-- Bind executor to private IP only if possible.
-- Restrict inbound traffic to control plane/private network.
-- Add health endpoint for private monitoring.
-- Use control-plane `/readiness` as the operator-facing gate before saying the enterprise path is production-confidential ready.
-- Add deployment script for the executor image or systemd artifact.
+- [x] Deploy `infra/azure/enterprise-secure-runtime/main.bicep`.
+- [x] Create enterprise VNet.
+- [x] Create Confidential VM. Note: deployed in `eastus` because the target `Standard_DC2as_v5` SKU was unavailable for this subscription in West US 2.
+- [x] Run the executor as a systemd service.
+- [x] Run the enterprise control plane as a co-located systemd service on the Confidential VM.
+- [x] Bind executor to loopback/private access for the control plane path.
+- [x] Restrict inbound traffic to Azure Front Door/control-plane paths and private executor paths.
+- [x] Add health endpoint for private monitoring.
+- [x] Use control-plane `/readiness` as the operator-facing gate before saying the enterprise path is production-confidential ready.
+- [x] Add deployment script for the systemd artifact: `npm run deploy:enterprise-vm`.
+- [x] Add live production verifier: `npm run verify:enterprise-production`.
+- [x] Add production evidence collector: `npm run evidence:enterprise-production`.
 
 ### Phase 3: Secure Key Release
 
-- Create Azure Key Vault Premium.
-- Create enterprise unwrap key.
-- Mark key export/release policy for Secure Key Release.
-- Create Azure Attestation provider.
-- Generate guest attestation evidence from the Confidential VM.
-- Exchange attestation evidence for a token.
-- Call Azure Key Vault release API from the executor.
-- Pin the release policy to approved MAA claims/measurements.
-- Add customer-verifiable attestation evidence to execution audit metadata.
-- Cache released unwrap material only in process memory with a short TTL.
-- Never place unwrap key in Azure app settings or container env vars in production.
+- [x] Create Azure Attestation provider.
+- [x] Deploy Azure Managed HSM for production Secure Key Release.
+- [x] Create enterprise release-root key.
+- [x] Mark key export/release policy for Secure Key Release.
+- [x] Generate guest attestation evidence from the Confidential VM.
+- [x] Exchange attestation evidence for a token.
+- [x] Call Azure Managed HSM release API from the executor.
+- [x] Pin the release policy to approved MAA claims/measurements.
+- [x] Never place unwrap key in Azure app settings or container env vars in production.
+- [ ] Add customer-verifiable attestation evidence to execution audit metadata. In progress: evidence collection exists via `npm run evidence:enterprise-production`; execution-level audit linkage still needs to be added.
+- [ ] Cache released unwrap material only in process memory with an explicit short TTL.
+- [ ] Rotate setup-time Supabase/service/signing secrets before customer production.
 
 Important key-type decision:
 
 - Azure Key Vault Premium supports HSM-backed RSA/EC keys but not symmetric `oct-HSM`.
-- Azure Managed HSM supports symmetric `oct-HSM` 256-bit keys.
-- Because VaultProof enterprise share encryption uses AES-256-style symmetric unwrap material, the strongest production path should use Managed HSM `oct-HSM`.
-- Key Vault Premium remains acceptable for prototype/key-release plumbing, but do not sell it as the final AES-256 HSM-root story unless the wrapping design changes.
+- Azure Managed HSM supports symmetric `oct-HSM` 256-bit keys, but Azure rejects generated symmetric keys for export/release.
+- Current production-confidential implementation uses Managed HSM `RSA-HSM` Secure Key Release and derives AES-256 unwrap material inside the Confidential VM from the released private JWK.
+- Do not sell this as direct symmetric `oct-HSM` release. Sell it as Azure Managed HSM Secure Key Release with AES material derived only inside the attested Confidential VM.
 
 ### Phase 4: Private Network And Call Authentication
 
-- Add Azure API Management in front of the enterprise control plane.
-- Configure APIM policies for JWT validation, coarse rate limits, quotas, request size limits, and observability.
-- Support customer-managed APIM mode using `docs/enterprise/customer-managed-apim-policy.xml`.
-- Support customer device/IoT mode using `docs/enterprise/customer-managed-apim-device-policy.xml`.
-- Keep VaultProof-specific org/project authorization in the control plane.
-- Put executor behind private networking.
-- Prefer private endpoint/internal load balancer over public ingress.
-- Keep control-plane-to-executor HMAC request signing.
-- Add replay protection using nonce/request ID storage.
-- Add mTLS after private networking is stable.
-- Block direct public access to executor.
+- [ ] Add Azure API Management in front of the enterprise control plane.
+- [ ] Configure APIM policies for JWT validation, coarse rate limits, quotas, request size limits, and observability.
+- [ ] Support customer-managed APIM mode using `docs/enterprise/customer-managed-apim-policy.xml`.
+- [ ] Support customer device/IoT mode using `docs/enterprise/customer-managed-apim-device-policy.xml`.
+- [x] Keep VaultProof-specific org/project authorization in the control plane.
+- [x] Put executor behind loopback/private access from the co-located control plane.
+- [ ] Prefer private endpoint/internal load balancer over public ingress. In progress: current state uses public Front Door to VM origin with NSG service tags and Front Door ID origin lock; private-origin architecture is still pending.
+- [x] Keep control-plane-to-executor HMAC request signing.
+- [x] Add replay protection using nonce/request ID storage.
+- [ ] Add mTLS after private networking is stable.
+- [x] Block direct public access to executor.
+- [x] Require Azure Front Door ID origin lock for control-plane origin requests.
+- [ ] Add TLS from Front Door to the VM origin and switch origin forwarding from HTTP to HTTPS.
 
 ### Phase 5: Enterprise Controls
 
-- Add Microsoft Entra ID SSO.
-- Add org-level provider allowlist.
-- Add allowed upstream domains/methods.
-- Add policy UI for editing caller-lock provider overrides.
-- Add per-project rate limits.
-- Add emergency key revoke.
-- Add audit export.
-- Add access review evidence for SOC 2.
+- [ ] Add Microsoft Entra ID SSO.
+- [ ] Add org-level provider allowlist.
+- [ ] Add allowed upstream domains/methods.
+- [ ] Add policy UI for editing caller-lock provider overrides.
+- [ ] Add per-project rate limits.
+- [ ] Add emergency key revoke.
+- [ ] Add audit export.
+- [ ] Add access review evidence for SOC 2.
 
 ## Azure Resources
 
@@ -380,12 +408,16 @@ Already created:
 - Control plane app: `vp-enterprise-control-plane`
 - Prototype executor app: `vp-enterprise-secure-executor`
 - Front Door custom domain: `enterprise.vaultproof.dev`
+- Confidential VM: `vpenteu-executor-cvm`
+- Managed HSM: `vpenteuutf4ahzja5l3ohsm`
+- Attestation provider: `vpenteuutf4ahzja5l3omaa`
+- Enterprise VNet/subnets and NSG: `vpenteu-vnet`, `vpenteu-executor-nsg`
 
 Needed for most-secure production:
 
 - Azure API Management Standard v2 or Premium v2 for API lifecycle/governance
 - Azure Confidential VM
-- Azure Managed HSM for the enterprise AES-256 unwrap key
+- Azure Managed HSM Secure Key Release for the enterprise unwrap root
 - Azure Key Vault Premium only if using the lower-friction prototype path
 - Azure Attestation
 - Enterprise VNet/subnets
@@ -405,7 +437,7 @@ Confidential mode:
 - `VAULTPROOF_EXECUTOR_MODE=confidential`
 - Must not use `VAULT_ENCRYPTION_KEY`.
 - Must use Azure Secure Key Release.
-- Must receive an attested `oct-HSM` symmetric unwrap key from Azure Managed HSM for the final AES-256 design.
+- Must receive release material from Azure Managed HSM only after attestation; current implementation derives AES-256 unwrap material inside the Confidential VM from the released `RSA-HSM` private JWK.
 - Should be treated as the only sellable “most secure” architecture.
 - `/health.production_ready` must be `true`.
 - `/health.security_profile` must be `azure-confidential-production`.
