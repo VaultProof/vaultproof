@@ -265,6 +265,17 @@ Enterprise users land on a separate dashboard served by the Azure control plane:
 
 The enterprise dashboard is not the B2C dashboard shell. It calls only the enterprise control-plane APIs under `/api/v1/enterprise/*`.
 
+To create a temporary enterprise demo login for dashboard testing, run this from your local checkout with the Supabase service role key in your shell environment:
+
+```bash
+SUPABASE_URL='https://<project>.supabase.co' \
+SUPABASE_SERVICE_ROLE_KEY='<service-role-key>' \
+DEMO_EMAIL='enterprise-demo+test@vaultproof.dev' \
+npm run seed:enterprise-demo-account
+```
+
+The helper confirms the Supabase Auth user, creates/reuses a team organization, assigns owner membership, creates a sample enterprise project, and seeds dashboard-only sample audit/runtime rows. Set `DEMO_PASSWORD='...'` if you want a fixed password; otherwise it prints a generated one once. Delete or rotate the demo user after testing.
+
 Only after local readiness is production-ready should `enterprise.vaultproof.dev` be cut over from the Container App origin to the Confidential VM origin. At that point, restrict port `3001` to Azure Front Door origins and close public SSH bootstrap access when another operational access path is ready.
 
 ### Front Door Cutover

@@ -13,6 +13,7 @@
     "deploy:enterprise-vm": "bash infra/azure/enterprise-secure-runtime/deploy-confidential-vm-app.sh",
     "cleanup:enterprise-container-apps": "bash infra/azure/enterprise-secure-runtime/cleanup-container-apps-prototype.sh",
     "evidence:enterprise-production": "bash infra/azure/enterprise-secure-runtime/collect-production-evidence.sh",
+    "seed:enterprise-demo-account": "node scripts/create-enterprise-demo-account.mjs",
     "dev": "turbo run dev",
     "test:enterprise-control-plane-smoke": "npm run build:enterprise && node scripts/enterprise-control-plane-smoke.mjs",
     "test:enterprise-smoke": "npm run build:enterprise && node scripts/enterprise-secure-executor-smoke.mjs",
