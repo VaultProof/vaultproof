@@ -53,6 +53,60 @@ function parseQuery(request: Request): string | null {
   return normalized ? normalized.slice(0, 120) : null;
 }
 
+function parseFormat(request: Request): 'json' | 'csv' {
+  const raw = new URL(request.url).searchParams.get('format')?.trim().toLowerCase();
+  return raw === 'csv' ? 'csv' : 'json';
+}
+
+function csvCell(value: unknown): string {
+  const raw = value === undefined || value === null
+    ? ''
+    : typeof value === 'string'
+      ? value
+      : JSON.stringify(value);
+  return `"${raw.replace(/"/g, '""')}"`;
+}
+
+function auditEventsToCsv(events: Array<{
+  timestamp: string;
+  source: string;
+  event_type: string;
+  actor: string;
+  description: string;
+  project: { id: string; name: string | null; vp_proj_id: string } | null;
+  status: number | null;
+  metadata: Record<string, unknown>;
+}>): string {
+  const headers = [
+    'timestamp',
+    'source',
+    'event_type',
+    'actor',
+    'project_id',
+    'project_name',
+    'project_ref',
+    'status',
+    'description',
+    'metadata_json',
+  ];
+  const rows = events.map((event) => [
+    event.timestamp,
+    event.source,
+    event.event_type,
+    event.actor,
+    event.project?.id || '',
+    event.project?.name || '',
+    event.project?.vp_proj_id || '',
+    event.status ?? '',
+    event.description,
+    event.metadata,
+  ]);
+  return [
+    headers.map(csvCell).join(','),
+    ...rows.map((row) => row.map(csvCell).join(',')),
+  ].join('\n') + '\n';
+}
+
 export async function handleEnterpriseAuditRoutes(
   request: Request,
   env: EnterpriseControlPlaneEnv,
@@ -89,6 +143,7 @@ export async function handleEnterpriseAuditRoutes(
   const eventTypeFilter = parseEventTypeFilter(request);
   const before = parseBefore(request);
   const searchQuery = parseQuery(request);
+  const format = parseFormat(request);
   const since = new Date(Date.now() - days * 24 * 60 * 60 * 1000).toISOString();
 
   const { data: projectRows } = await supabase
@@ -274,6 +329,18 @@ export async function handleEnterpriseAuditRoutes(
   const hasMore = governanceEvents.length > limit || proxyEvents.length > limit || combinedEvents.length > limit;
   const nextBefore = hasMore && events.length ? events[events.length - 1].timestamp : null;
 
+  if (format === 'csv') {
+    const filename = `vaultproof-enterprise-audit-${new Date().toISOString().slice(0, 10)}.csv`;
+    return new Response(auditEventsToCsv(events), {
+      status: 200,
+      headers: {
+        'content-type': 'text/csv; charset=utf-8',
+        'content-disposition': `attachment; filename="${filename}"`,
+        'cache-control': 'no-store',
+      },
+    });
+  }
+
   return Response.json({
     organization: {
       id: membership.organization_id,
@@ -292,6 +359,7 @@ export async function handleEnterpriseAuditRoutes(
       event_type: eventTypeFilter,
       before,
       q: searchQuery,
+      format,
       days,
       limit,
     },

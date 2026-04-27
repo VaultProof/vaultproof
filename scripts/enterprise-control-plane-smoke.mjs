@@ -76,10 +76,19 @@ function installSupabaseStub() {
       }]);
     }
 
+    if (url.includes('/rest/v1/projects') && method === 'GET') {
+      return jsonResponse([{
+        id: PROJECT_ID,
+        name: 'Enterprise Pilot',
+        vp_proj_id: 'vp-proj-123',
+      }]);
+    }
+
     if (url.includes('/rest/v1/project_keys') && method === 'GET') {
       if (projectKeyRevoked) return jsonResponse([]);
       return jsonResponse([{
         id: PROJECT_KEY_ID,
+        project_id: PROJECT_ID,
         provider: 'openai',
         slug: 'openai',
         upstream_base_url: 'https://api.openai.com',
@@ -95,6 +104,43 @@ function installSupabaseStub() {
         provider: 'openai',
         slug: 'openai',
         revoked_at: body.revoked_at || new Date().toISOString(),
+      }]);
+    }
+
+    if (url.includes('/rest/v1/organization_audit_events') && method === 'GET') {
+      return jsonResponse([{
+        id: 'audit_123',
+        organization_id: 'org_123',
+        project_id: PROJECT_ID,
+        actor_user_id: 'user_123',
+        actor_email: 'owner@example.com',
+        event_type: 'enterprise_provider_key_revoked',
+        target_type: 'project_key',
+        target_id: PROJECT_KEY_ID,
+        description: 'Revoked provider slot openai for Enterprise Pilot',
+        metadata: {
+          reason: 'customer, requested export',
+        },
+        created_at: '2026-04-26T12:00:00.000Z',
+      }]);
+    }
+
+    if (url.includes('/rest/v1/project_access_logs') && method === 'GET') {
+      return jsonResponse([{
+        id: 'proxy_123',
+        project_id: PROJECT_ID,
+        project_key_id: PROJECT_KEY_ID,
+        provider: 'openai',
+        slug: 'openai',
+        method: 'POST',
+        upstream_path: '/v1/responses',
+        status_code: 200,
+        latency_ms: 42,
+        error: null,
+        metadata: {
+          provider_request_id: 'req_provider_123',
+        },
+        timestamp: '2026-04-26T12:01:00.000Z',
       }]);
     }
 
@@ -946,6 +992,44 @@ async function assertEnterpriseEmergencyRevoke() {
   }
 }
 
+async function assertEnterpriseAuditCsvExport() {
+  installSupabaseStub();
+  activeProject = fakeProject;
+
+  const response = await handleEnterpriseControlPlaneRequest(
+    buildRequest('/api/v1/enterprise/audit?format=csv&limit=10', {
+      headers: {
+        authorization: `Bearer ${AUTH_TOKEN}`,
+        'x-vaultproof-organization': 'org_123',
+      },
+    }),
+    {
+      enterpriseHostname: ENTERPRISE_HOSTNAME,
+      supabaseUrl: 'https://supabase.example.co',
+      supabaseServiceRoleKey: 'service-role-key',
+    },
+  );
+  const csv = await response.text();
+  if (response.status !== 200) {
+    throw new Error(`Expected audit CSV export to succeed, got ${response.status} ${csv}`);
+  }
+  if (!response.headers.get('content-type')?.includes('text/csv')) {
+    throw new Error('Expected audit CSV export content type');
+  }
+  if (!csv.includes('"timestamp","source","event_type"')) {
+    throw new Error(`Expected CSV header in audit export, got ${csv}`);
+  }
+  if (!csv.includes('"proxy","proxy_request"')) {
+    throw new Error(`Expected proxy event in audit CSV export, got ${csv}`);
+  }
+  if (!csv.includes('"governance","enterprise_provider_key_revoked"')) {
+    throw new Error(`Expected governance event in audit CSV export, got ${csv}`);
+  }
+  if (!csv.includes('customer, requested export')) {
+    throw new Error('Expected metadata in audit CSV export');
+  }
+}
+
 async function assertEnterpriseLoginRoute() {
   const rootResponse = await handleEnterpriseControlPlaneRequest(
     buildRequest('/'),
@@ -1101,4 +1185,5 @@ await assertEnterpriseExecutionPolicy();
 await assertEnterpriseProviderExecutionPolicy();
 await assertEnterpriseRateLimitPolicy();
 await assertEnterpriseEmergencyRevoke();
+await assertEnterpriseAuditCsvExport();
 console.log('enterprise control plane smoke test passed');

@@ -690,6 +690,25 @@ curl -sS -X POST \
 
 This does not decrypt or expose the provider secret. Historical audit/evidence records stay intact.
 
+## Audit Export
+
+Enterprise audit review data is available from the control plane as JSON or CSV. CSV export combines governance audit events and proxy execution events for the selected organization and applies the same filters as the JSON audit endpoint.
+
+```bash
+curl -sS \
+  -H "Authorization: Bearer <supabase-user-jwt>" \
+  "https://enterprise.vaultproof.dev/api/v1/enterprise/audit?format=csv&days=30&limit=500" \
+  > vaultproof-enterprise-audit.csv
+```
+
+Useful filters:
+
+- `source=governance` or `source=proxy`
+- `project_id=<project-id>`
+- `event_type=<event-type>`
+- `before=<ISO timestamp>`
+- `q=<search text>`
+
 ## Azure Monitor Placement
 
 The template can deploy the first production monitoring bundle without changing the live route:
