@@ -113,6 +113,17 @@ sudo bash infra/azure/enterprise-secure-runtime/bootstrap-confidential-vm.sh
 
 If you prefer SSH deploy keys, you can also clone the private repo directly into `/opt/vaultproof/zkvault`.
 
+After the first bootstrap, deploy code updates from your local checkout with:
+
+```bash
+RESOURCE_GROUP=vaultproof-enterprise \
+DEPLOYMENT_NAME=vp-enterprise-secure-runtime-eastus-hsm \
+VERIFY_AFTER_DEPLOY=true \
+npm run deploy:enterprise-vm
+```
+
+The deploy helper copies the repo without build artifacts, preserves `/etc/vaultproof/*.env`, rebuilds the enterprise workspaces on the VM, reinstalls the systemd units, restarts the executor and control plane, and optionally runs the production verifier.
+
 `VAULT_ENCRYPTION_KEY` must not be used in confidential mode.
 
 Fill in the service environment file:
