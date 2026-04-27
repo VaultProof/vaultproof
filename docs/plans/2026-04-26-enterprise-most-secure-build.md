@@ -352,7 +352,7 @@ Minimum evidence bundle for customer review:
 - [x] Enforce enterprise caller lock for origins and sign caller-lock metadata into the execution envelope.
 - [x] Store enterprise caller-lock policy in `projects.caller_lock_policy`.
 - [x] Keep `/admin/seed-openai-demo` disabled by default and never enable it in confidential mode.
-- [ ] Remove `/admin/seed-openai-demo` entirely before production customer demos.
+- [x] Remove `/admin/seed-openai-demo` entirely before production customer demos.
 
 ### Phase 2: Azure Confidential VM Runtime
 

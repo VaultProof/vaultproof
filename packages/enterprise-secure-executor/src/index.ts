@@ -5,7 +5,6 @@ import {
   type SignedSecureExecutionEnvelope,
   type AzureSecureExecutionAttestationEvidence,
 } from '@vaultproof/core';
-import { createCipheriv, createHmac, randomBytes } from 'node:crypto';
 import {
   executeUpstreamRequest,
   type ResolvedSecureExecutionMaterial,
@@ -24,7 +23,6 @@ import {
   type VaultUnwrapKeyProvider,
 } from './key-release.js';
 import { InMemoryReplayGuard, type ReplayGuard } from './replay-guard.js';
-import { getSupabase } from './supabase.js';
 
 export interface EnterpriseSecureExecutorEnv {
   acceptedSigningKeys?: Record<string, string>;
@@ -51,16 +49,9 @@ export interface EnterpriseSecureExecutorEnv {
   azureMeasurementSummary?: string;
   keyProvider?: VaultUnwrapKeyProvider;
   replayGuard?: ReplayGuard;
-  demoSeedToken?: string;
-  allowDemoSeedRoute?: boolean;
 }
 
 const defaultReplayGuard = new InMemoryReplayGuard();
-
-interface SeedDemoOpenAiBody {
-  project_id?: string;
-  demo_key?: string;
-}
 
 async function parseEnvelope(request: Request): Promise<SignedSecureExecutionEnvelope | null> {
   try {
@@ -76,176 +67,6 @@ function validateEnvelope(envelope: SignedSecureExecutionEnvelope): string | nul
   if (!envelope.request?.nonce) return 'Missing secure execution nonce.';
   if (isExpiredExecutionRequest(envelope.request)) return 'Secure execution request has expired.';
   return null;
-}
-
-function gf256Mul(a: number, b: number): number {
-  let result = 0;
-  let aa = a;
-  let bb = b;
-  for (let i = 0; i < 8; i++) {
-    if (bb & 1) result ^= aa;
-    const hi = aa & 0x80;
-    aa = (aa << 1) & 0xff;
-    if (hi) aa ^= 0x1b;
-    bb >>= 1;
-  }
-  return result;
-}
-
-function serializeShare(share: { x: number; y: Uint8Array }): string {
-  const bytes = new Uint8Array(1 + share.y.length);
-  bytes[0] = share.x;
-  bytes.set(share.y, 1);
-  return Buffer.from(bytes).toString('base64');
-}
-
-function splitTwoOfTwo(secret: string): [string, string] {
-  const secretBytes = new TextEncoder().encode(secret);
-  const share1 = { x: 1, y: new Uint8Array(secretBytes.length) };
-  const share2 = { x: 2, y: new Uint8Array(secretBytes.length) };
-
-  for (let i = 0; i < secretBytes.length; i++) {
-    const slope = randomBytes(1)[0];
-    share1.y[i] = secretBytes[i] ^ slope;
-    share2.y[i] = secretBytes[i] ^ gf256Mul(slope, 2);
-  }
-
-  return [serializeShare(share1), serializeShare(share2)];
-}
-
-function getMasterKey(raw: string): Buffer {
-  if (!raw) throw new Error('VAULT_ENCRYPTION_KEY not set');
-  if (raw.length === 64) return Buffer.from(raw, 'hex');
-  return Buffer.from(raw, 'base64');
-}
-
-function hkdfSha256(masterKey: Buffer, salt: Buffer, purpose: string): Buffer {
-  const prk = createHmac('sha256', salt).update(masterKey).digest();
-  const info = Buffer.from(purpose, 'utf8');
-  return createHmac('sha256', prk).update(info).update(Buffer.from([0x01])).digest();
-}
-
-function encryptShare(shareBase64: string, vaultEncryptionKey: string, purpose: string): string {
-  const plaintext = Buffer.from(shareBase64, 'base64');
-  const salt = randomBytes(16);
-  const iv = randomBytes(12);
-  const key = hkdfSha256(getMasterKey(vaultEncryptionKey), salt, purpose);
-  const cipher = createCipheriv('aes-256-gcm', key, iv);
-  const ciphertext = Buffer.concat([cipher.update(plaintext), cipher.final()]);
-  const tag = cipher.getAuthTag();
-  return Buffer.concat([Buffer.from([0x02]), salt, iv, tag, ciphertext]).toString('base64');
-}
-
-async function parseSeedBody(request: Request): Promise<SeedDemoOpenAiBody | null> {
-  try {
-    return (await request.json()) as SeedDemoOpenAiBody;
-  } catch {
-    return null;
-  }
-}
-
-async function seedDemoOpenAiKey(request: Request, env: EnterpriseSecureExecutorEnv): Promise<Response> {
-  if (!env.allowDemoSeedRoute) {
-    return Response.json({ error: 'Not found', service: 'vaultproof-enterprise-secure-executor' }, { status: 404 });
-  }
-
-  if ((env.executorMode || 'demo').trim().toLowerCase() === 'confidential') {
-    return Response.json({ error: 'Demo seed route is disabled in confidential mode.' }, { status: 404 });
-  }
-
-  const providedToken = request.headers.get('x-vaultproof-seed-token') || '';
-  if (!env.demoSeedToken || providedToken !== env.demoSeedToken) {
-    return Response.json({ error: 'Seed route is not authorized.' }, { status: 404 });
-  }
-
-  const keyProvider = buildVaultUnwrapKeyProvider(env);
-  if (!env.supabaseUrl || !env.supabaseServiceRoleKey || keyProvider instanceof NullVaultUnwrapKeyProvider) {
-    return Response.json({ error: 'Seed route requires Supabase and vault key release.' }, { status: 501 });
-  }
-
-  const body = await parseSeedBody(request);
-  const projectId = body?.project_id?.trim();
-  if (!projectId) {
-    return Response.json({ error: 'project_id is required' }, { status: 400 });
-  }
-
-  const demoKey = body?.demo_key?.trim() || 'sk-vaultproof-enterprise-demo-invalid-key';
-  const [share1, share2] = splitTwoOfTwo(demoKey);
-  const vaultEncryptionKey = await keyProvider.getVaultUnwrapKey();
-  const share1Encrypted = encryptShare(share1, vaultEncryptionKey, 'vaultproof-enterprise-share1-v1');
-  const share2Encrypted = encryptShare(share2, vaultEncryptionKey, 'vaultproof-enterprise-share2-v1');
-  const supabase = getSupabase(env);
-
-  const { data: project, error: projectError } = await supabase
-    .from('projects')
-    .select('id')
-    .eq('id', projectId)
-    .maybeSingle();
-
-  if (projectError || !project) {
-    return Response.json(
-      {
-        error: 'Demo project not found',
-        detail: projectError ? JSON.stringify(projectError) : null,
-      },
-      { status: 404 },
-    );
-  }
-
-  const { error: deleteError } = await supabase
-    .from('project_keys')
-    .delete()
-    .eq('project_id', projectId)
-    .or('provider.eq.openai,slug.eq.openai');
-
-  if (deleteError) {
-    return Response.json(
-      {
-        error: 'Failed to clear existing demo provider slot',
-        detail: JSON.stringify(deleteError),
-      },
-      { status: 500 },
-    );
-  }
-
-  const { error } = await supabase
-    .from('project_keys')
-    .insert({
-      project_id: projectId,
-      provider: 'openai',
-      slug: 'openai',
-      env_var: 'OPENAI_API_KEY',
-      upstream_base_url: 'https://api.openai.com',
-      auth_header_name: 'Authorization',
-      auth_header_template: 'Bearer {key}',
-      extra_headers: null,
-      share1_encrypted: share1Encrypted,
-      share2_encrypted: share2Encrypted,
-      revoked_at: null,
-    });
-
-  if (error) {
-    return Response.json({ error: 'Failed to seed demo provider slot', detail: JSON.stringify(error) }, { status: 500 });
-  }
-
-  const { data: projectKey, error: lookupError } = await supabase
-    .from('project_keys')
-    .select('id, project_id, provider, slug')
-    .eq('project_id', projectId)
-    .eq('provider', 'openai')
-    .maybeSingle();
-
-  if (lookupError || !projectKey) {
-    return Response.json(
-      {
-        error: 'Seed completed but project key lookup failed',
-        detail: lookupError?.message || null,
-      },
-      { status: 500 },
-    );
-  }
-
-  return Response.json({ ok: true, project_key: projectKey }, { status: 201 });
 }
 
 function notImplementedResult(envelope: SignedSecureExecutionEnvelope): SecureExecutionResult {
@@ -433,10 +254,6 @@ export async function handleEnterpriseSecureExecutorRequestWithEnv(
       security_profile: productionReadiness.securityProfile,
       production_blockers: productionReadiness.blockers,
     });
-  }
-
-  if (request.method === 'POST' && url.pathname === '/admin/seed-openai-demo') {
-    return seedDemoOpenAiKey(request, env);
   }
 
   if (request.method === 'POST' && url.pathname === '/execute') {

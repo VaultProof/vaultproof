@@ -89,8 +89,6 @@ function getEnv(): EnterpriseSecureExecutorEnv {
     executorBuildDigest: process.env.VAULTPROOF_EXECUTOR_BUILD_DIGEST,
     azureConfidentialVmResourceId: process.env.AZURE_CONFIDENTIAL_VM_RESOURCE_ID,
     azureMeasurementSummary: process.env.AZURE_MEASUREMENT_SUMMARY,
-    demoSeedToken: process.env.ENTERPRISE_DEMO_SEED_TOKEN,
-    allowDemoSeedRoute: process.env.ENTERPRISE_ALLOW_DEMO_SEED === 'true',
   };
 }
 

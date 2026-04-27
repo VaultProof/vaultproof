@@ -386,12 +386,11 @@ async function assertDemoSeedRouteRequiresExplicitOptIn() {
       body: JSON.stringify({ project_id: 'proj_123' }),
     }),
     {
-      demoSeedToken: 'seed-token',
       vaultEncryptionKey: Buffer.from('0123456789abcdef0123456789abcdef').toString('base64'),
     },
   );
   if (closedResponse.status !== 404) {
-    throw new Error(`Expected demo seed route to be closed by default, got ${closedResponse.status}`);
+    throw new Error(`Expected removed demo seed route to return 404, got ${closedResponse.status}`);
   }
 
   const confidentialResponse = await handleEnterpriseSecureExecutorRequestWithEnv(
@@ -404,8 +403,6 @@ async function assertDemoSeedRouteRequiresExplicitOptIn() {
       body: JSON.stringify({ project_id: 'proj_123' }),
     }),
     {
-      demoSeedToken: 'seed-token',
-      allowDemoSeedRoute: true,
       executorMode: 'confidential',
       keyProvider: {
         mode: 'azure-secure-key-release',
@@ -416,7 +413,7 @@ async function assertDemoSeedRouteRequiresExplicitOptIn() {
     },
   );
   if (confidentialResponse.status !== 404) {
-    throw new Error(`Expected demo seed route to be disabled in confidential mode, got ${confidentialResponse.status}`);
+    throw new Error(`Expected removed demo seed route to stay 404 in confidential mode, got ${confidentialResponse.status}`);
   }
 }
 
