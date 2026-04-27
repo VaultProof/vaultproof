@@ -724,6 +724,12 @@ curl -sS \
 
 Project admins can edit provider-level execution overrides from the enterprise Control page. Each provider slot can narrow allowed HTTP methods, upstream hosts, path prefixes, and per-minute rate limits without changing the project-wide origin policy.
 
+## Microsoft Entra SSO
+
+VaultProof uses Supabase Auth SAML SSO for the near-term Microsoft Entra path. Org admins configure the company domain and choose `microsoft-entra` in the enterprise Org page, then wire the displayed Supabase SAML metadata and ACS URLs into the customer's Entra enterprise application.
+
+The login page starts SSO with `signInWithSSO({ domain })`, records a best-effort `organization_sso_login_started` audit event, and resolves the callback into either an existing organization membership or a matching pending invitation. Matching-domain users without membership or invitation fail closed into a pending-access state instead of broad auto-join.
+
 ## Azure Monitor Placement
 
 The template can deploy the first production monitoring bundle without changing the live route:

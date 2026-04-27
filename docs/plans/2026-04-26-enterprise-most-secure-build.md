@@ -60,6 +60,7 @@ Live production-confidential path:
 - Azure secure-runtime IaC and operational scripts exist at `infra/azure/enterprise-secure-runtime`.
 - Enterprise audit events and SOC 2 access-review evidence can be exported from the control plane.
 - The Control page includes project policy and provider-level execution override editing.
+- Microsoft Entra ID SSO is supported through the Supabase Auth SAML path, with org-level rollout settings, SSO start/completion audit events, and safe membership resolution into existing access or matching pending invites.
 
 Important limitation:
 
@@ -407,7 +408,7 @@ Important key-type decision:
 
 ### Phase 5: Enterprise Controls
 
-- [ ] Add Microsoft Entra ID SSO.
+- [x] Add Microsoft Entra ID SSO.
 - [x] Add project/provider allowlists.
 - [x] Add allowed upstream host/path/method policy.
 - [x] Add per-project/provider rate limits.

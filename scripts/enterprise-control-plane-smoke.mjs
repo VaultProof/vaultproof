@@ -44,10 +44,26 @@ const fakeOrganization = {
 let activeProject = fakeProject;
 let auditEvents = [];
 let projectKeyRevoked = false;
+let ssoSettings = null;
+let ssoResolveMode = 'existing_membership';
+let ssoMembershipUpserted = false;
+let ssoInvitationAccepted = false;
 
 function installSupabaseStub() {
   auditEvents = [];
   projectKeyRevoked = false;
+  ssoSettings = {
+    organization_id: 'org_123',
+    company_domain: 'example.com',
+    sso_provider: 'microsoft-entra',
+    login_mode: 'sso-first',
+    status: 'configured',
+    created_at: '2026-04-04T12:00:00.000Z',
+    updated_at: '2026-04-04T12:00:00.000Z',
+  };
+  ssoResolveMode = 'existing_membership';
+  ssoMembershipUpserted = false;
+  ssoInvitationAccepted = false;
   globalThis.fetch = async (input, init) => {
     const url = typeof input === 'string' ? input : input instanceof URL ? input.toString() : input.url;
     const decodedUrl = decodeURIComponent(url);
@@ -73,6 +89,30 @@ function installSupabaseStub() {
       });
     }
 
+    if (url.includes('/rest/v1/organization_sso_settings')) {
+      if (method === 'GET') {
+        if (!ssoSettings) return jsonResponse(null);
+        return jsonResponse(ssoSettings);
+      }
+      if (method === 'POST' || method === 'PATCH') {
+        const body = JSON.parse(init?.body || '{}');
+        ssoSettings = {
+          organization_id: body.organization_id || 'org_123',
+          company_domain: body.company_domain,
+          sso_provider: body.sso_provider || null,
+          login_mode: body.login_mode || 'sso-first',
+          status: body.status || 'requested',
+          created_at: ssoSettings?.created_at || '2026-04-04T12:00:00.000Z',
+          updated_at: body.updated_at || '2026-04-05T12:00:00.000Z',
+        };
+        return jsonResponse(ssoSettings);
+      }
+      if (method === 'DELETE') {
+        ssoSettings = null;
+        return jsonResponse([]);
+      }
+    }
+
     if (url.includes('/rest/v1/organization_members')) {
       if (decodedUrl.includes('organizations')) {
         return jsonResponse([{
@@ -80,6 +120,16 @@ function installSupabaseStub() {
           created_at: new Date().toISOString(),
           organizations: fakeOrganization,
         }]);
+      }
+
+      if (method === 'POST') {
+        ssoMembershipUpserted = true;
+        return jsonResponse([]);
+      }
+
+      if (decodedUrl.includes('select=role')) {
+        if (ssoResolveMode === 'pending_invitation') return jsonResponse(null);
+        return jsonResponse({ role: 'admin' });
       }
 
       return jsonResponse([{
@@ -110,6 +160,17 @@ function installSupabaseStub() {
       if (decodedUrl.includes('organizations')) {
         return jsonResponse([]);
       }
+      if (decodedUrl.includes('email=eq.owner%40example.com') || decodedUrl.includes('email=eq.owner@example.com')) {
+        return ssoResolveMode === 'pending_invitation'
+          ? jsonResponse({
+              id: 'invite_owner_123',
+              email: 'owner@example.com',
+              role: 'member',
+              status: 'pending',
+              invited_by: 'user_456',
+            })
+          : jsonResponse(null);
+      }
 
       return jsonResponse([{
         id: 'invite_123',
@@ -119,6 +180,25 @@ function installSupabaseStub() {
         created_at: '2026-04-03T12:00:00.000Z',
         invited_by: 'user_123',
       }]);
+    }
+
+    if (url.includes('/rest/v1/organization_invitations') && method === 'PATCH') {
+      ssoInvitationAccepted = true;
+      return jsonResponse([]);
+    }
+
+    if (url.includes('/rest/v1/organizations') && method === 'GET') {
+      if (decodedUrl.includes('select=id%2C+kind') || decodedUrl.includes('select=id, kind')) {
+        return jsonResponse({ id: 'org_123', kind: 'team' });
+      }
+      if (decodedUrl.includes('select=id%2C+name%2C+kind') || decodedUrl.includes('select=id, name, kind')) {
+        return jsonResponse({
+          id: 'org_123',
+          name: 'Example Org',
+          kind: 'team',
+        });
+      }
+      return jsonResponse(fakeOrganization);
     }
 
     if (url.includes('/rest/v1/projects') && method === 'GET') {
@@ -1134,6 +1214,109 @@ async function assertEnterpriseAccessReviewEvidenceExport() {
   }
 }
 
+async function assertEnterpriseSsoLifecycle() {
+  installSupabaseStub();
+
+  const env = {
+    enterpriseHostname: ENTERPRISE_HOSTNAME,
+    supabaseUrl: 'https://supabase.example.co',
+    supabaseServiceRoleKey: 'service-role-key',
+  };
+
+  const settingsResponse = await handleEnterpriseControlPlaneRequest(
+    buildRequest('/api/v1/enterprise/orgs/current/sso-settings', {
+      method: 'PUT',
+      headers: {
+        authorization: `Bearer ${AUTH_TOKEN}`,
+        'content-type': 'application/json',
+        'x-vaultproof-organization': 'org_123',
+      },
+      body: JSON.stringify({
+        company_domain: 'example.com',
+        sso_provider: 'microsoft-entra',
+        status: 'configured',
+        login_mode: 'sso-first',
+      }),
+    }),
+    env,
+  );
+  const settingsPayload = await settingsResponse.json();
+  if (settingsResponse.status !== 200 || settingsPayload?.sso_settings?.sso_provider !== 'microsoft-entra') {
+    throw new Error(`Expected Microsoft Entra SSO settings save to succeed, got ${settingsResponse.status} ${JSON.stringify(settingsPayload)}`);
+  }
+  if (!auditEvents.find((event) => event.event_type === 'organization_sso_settings_updated')) {
+    throw new Error('Expected SSO settings update audit event');
+  }
+
+  const startedResponse = await handleEnterpriseControlPlaneRequest(
+    buildRequest('/api/v1/enterprise/orgs/sso-started', {
+      method: 'POST',
+      headers: {
+        'content-type': 'application/json',
+      },
+      body: JSON.stringify({
+        company_domain: 'example.com',
+        email: 'owner@example.com',
+      }),
+    }),
+    env,
+  );
+  const startedPayload = await startedResponse.json();
+  if (startedResponse.status !== 200 || startedPayload?.matched !== true) {
+    throw new Error(`Expected SSO start to match configured Entra domain, got ${startedResponse.status} ${JSON.stringify(startedPayload)}`);
+  }
+  if (!auditEvents.find((event) => event.event_type === 'organization_sso_login_started')) {
+    throw new Error('Expected SSO started audit event');
+  }
+
+  const existingMembershipResponse = await handleEnterpriseControlPlaneRequest(
+    buildRequest('/api/v1/enterprise/orgs/resolve-sso', {
+      method: 'POST',
+      headers: {
+        authorization: `Bearer ${AUTH_TOKEN}`,
+        'content-type': 'application/json',
+      },
+      body: JSON.stringify({
+        company_domain: 'example.com',
+      }),
+    }),
+    env,
+  );
+  const existingMembershipPayload = await existingMembershipResponse.json();
+  if (existingMembershipResponse.status !== 200 || existingMembershipPayload?.resolution !== 'existing_membership') {
+    throw new Error(`Expected SSO resolution into existing membership, got ${existingMembershipResponse.status} ${JSON.stringify(existingMembershipPayload)}`);
+  }
+  if (!auditEvents.find((event) => event.event_type === 'organization_sso_membership_resolved' && event.metadata?.resolution === 'existing_membership')) {
+    throw new Error('Expected existing membership SSO resolution audit event');
+  }
+
+  installSupabaseStub();
+  ssoResolveMode = 'pending_invitation';
+  const invitationResponse = await handleEnterpriseControlPlaneRequest(
+    buildRequest('/api/v1/enterprise/orgs/resolve-sso', {
+      method: 'POST',
+      headers: {
+        authorization: `Bearer ${AUTH_TOKEN}`,
+        'content-type': 'application/json',
+      },
+      body: JSON.stringify({
+        company_domain: 'example.com',
+      }),
+    }),
+    env,
+  );
+  const invitationPayload = await invitationResponse.json();
+  if (invitationResponse.status !== 200 || invitationPayload?.resolution !== 'accepted_invitation') {
+    throw new Error(`Expected SSO resolution to accept matching invitation, got ${invitationResponse.status} ${JSON.stringify(invitationPayload)}`);
+  }
+  if (!ssoMembershipUpserted || !ssoInvitationAccepted) {
+    throw new Error('Expected matching SSO invitation to create membership and mark invitation accepted');
+  }
+  if (!auditEvents.find((event) => event.event_type === 'organization_invitation_accepted' && event.metadata?.accepted_via === 'sso')) {
+    throw new Error('Expected SSO invitation acceptance audit event');
+  }
+}
+
 async function assertEnterpriseLoginRoute() {
   const rootResponse = await handleEnterpriseControlPlaneRequest(
     buildRequest('/'),
@@ -1291,4 +1474,5 @@ await assertEnterpriseRateLimitPolicy();
 await assertEnterpriseEmergencyRevoke();
 await assertEnterpriseAuditCsvExport();
 await assertEnterpriseAccessReviewEvidenceExport();
+await assertEnterpriseSsoLifecycle();
 console.log('enterprise control plane smoke test passed');
