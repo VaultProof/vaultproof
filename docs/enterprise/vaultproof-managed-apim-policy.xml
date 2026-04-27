@@ -1,0 +1,52 @@
+<policies>
+  <inbound>
+    <base />
+
+    <!-- VaultProof-managed APIM is governance only. It must never receive unwrap keys or provider secrets. -->
+    <rate-limit-by-key calls="120" renewal-period="60" counter-key="@(context.Subscription?.Key ?? context.Request.IpAddress)" />
+    <quota-by-key calls="10000" renewal-period="86400" counter-key="@(context.Subscription?.Key ?? context.Request.IpAddress)" />
+
+    <choose>
+      <when condition='@(context.Request.Headers.ContainsKey("content-length") &amp;&amp; long.Parse(context.Request.Headers.GetValueOrDefault("content-length", "0")) &gt; 1048576)'>
+        <return-response>
+          <set-status code="413" reason="Payload Too Large" />
+          <set-body>{"error":"Request body is too large"}</set-body>
+        </return-response>
+      </when>
+    </choose>
+
+    <!-- Preserve Authorization for VaultProof control-plane user/project auth. Strip provider-secret style headers. -->
+    <set-header name="x-api-key" exists-action="delete" />
+    <set-header name="openai-api-key" exists-action="delete" />
+    <set-header name="anthropic-api-key" exists-action="delete" />
+    <set-header name="stripe-api-key" exists-action="delete" />
+
+    <!-- Non-secret caller-lock and audit context forwarded into the enterprise control plane. -->
+    <set-header name="x-vaultproof-apim" exists-action="override">
+      <value>enterprise</value>
+    </set-header>
+    <set-header name="x-vaultproof-customer-gateway" exists-action="override">
+      <value>vaultproof-managed</value>
+    </set-header>
+
+    <!-- Prefer an APIM named value marked secret. Configure the control plane with the same value. -->
+    <set-header name="x-vaultproof-origin-lock" exists-action="override">
+      <value>{{vaultproof-origin-lock-secret}}</value>
+    </set-header>
+
+    <!-- For VaultProof-managed APIM behind Front Door, set this to the CVM control-plane origin or private origin. -->
+    <set-backend-service base-url="http://20.85.214.14:3001" />
+  </inbound>
+
+  <backend>
+    <base />
+  </backend>
+
+  <outbound>
+    <base />
+  </outbound>
+
+  <on-error>
+    <base />
+  </on-error>
+</policies>

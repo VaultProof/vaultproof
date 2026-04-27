@@ -41,6 +41,7 @@ Live production-confidential path:
 - `npm run verify:enterprise-production` verifies the live path.
 - `npm run deploy:enterprise-vm` deploys/rebuilds/restarts the CVM runtime and can run the verifier.
 - `npm run evidence:enterprise-production` captures customer/audit evidence snapshots.
+- APIM IaC/policy support exists but is not deployed in the live route yet.
 - Supabase stores enterprise org/project metadata.
 - Executor request signing is implemented.
 - Enterprise executor now supports encrypted `share1_encrypted` and encrypted `share2_encrypted`.
@@ -54,7 +55,7 @@ Live production-confidential path:
 Important limitation:
 
 - The active production-confidential runtime is now Confidential VM plus Secure Key Release.
-- Azure API Management, Azure Monitor alerts, TLS-to-origin, and enterprise UI/policy controls are still pending.
+- Azure API Management live deployment/cutover, Azure Monitor alerts, TLS-to-origin, and enterprise UI/policy controls are still pending.
 - Secrets used during setup must be rotated before external/customer production use.
 
 ## Next Execution Order
@@ -373,10 +374,10 @@ Important key-type decision:
 
 ### Phase 4: Private Network And Call Authentication
 
-- [ ] Add Azure API Management in front of the enterprise control plane.
-- [ ] Configure APIM policies for JWT validation, coarse rate limits, quotas, request size limits, and observability.
-- [ ] Support customer-managed APIM mode using `docs/enterprise/customer-managed-apim-policy.xml`.
-- [ ] Support customer device/IoT mode using `docs/enterprise/customer-managed-apim-device-policy.xml`.
+- [ ] Add Azure API Management in front of the enterprise control plane. In progress: deployable APIM IaC exists with sidecar validation path; live route cutover is pending.
+- [ ] Configure APIM policies for JWT validation, coarse rate limits, quotas, request size limits, and observability. In progress: coarse limits, quota, request-size guard, provider-secret header stripping, APIM marker, APIM origin-lock forwarding, and API operations are implemented; JWT validation and Azure Monitor wiring are still pending.
+- [x] Support customer-managed APIM mode using `docs/enterprise/customer-managed-apim-policy.xml`.
+- [x] Support customer device/IoT mode using `docs/enterprise/customer-managed-apim-device-policy.xml`.
 - [x] Keep VaultProof-specific org/project authorization in the control plane.
 - [x] Put executor behind loopback/private access from the co-located control plane.
 - [ ] Prefer private endpoint/internal load balancer over public ingress. In progress: current state uses public Front Door to VM origin with NSG service tags and Front Door ID origin lock; private-origin architecture is still pending.

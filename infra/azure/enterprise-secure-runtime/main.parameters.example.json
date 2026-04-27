@@ -29,6 +29,12 @@
     "controlPlaneIngressSource": {
       "value": "AzureFrontDoor.Backend"
     },
+    "allowApiManagementToControlPlane": {
+      "value": false
+    },
+    "apiManagementIngressSource": {
+      "value": "ApiManagement"
+    },
     "secureKeyReleasePolicyData": {
       "value": ""
     },
@@ -55,6 +61,33 @@
     },
     "apiManagementCapacity": {
       "value": 1
+    },
+    "apiManagementBackendUrl": {
+      "value": ""
+    },
+    "apiManagementApiPath": {
+      "value": "enterprise"
+    },
+    "apiManagementSubscriptionRequired": {
+      "value": false
+    },
+    "apiManagementRateLimitCalls": {
+      "value": 120
+    },
+    "apiManagementQuotaCalls": {
+      "value": 10000
+    },
+    "apiManagementMaxRequestBodyBytes": {
+      "value": 1048576
+    },
+    "apiManagementGatewayMarker": {
+      "value": "vaultproof-managed"
+    },
+    "apiManagementOriginLockHeaderName": {
+      "value": "x-vaultproof-origin-lock"
+    },
+    "apiManagementOriginLockSecret": {
+      "value": ""
     }
   }
 }

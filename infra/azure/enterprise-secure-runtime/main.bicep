@@ -28,6 +28,12 @@ param allowFrontDoorToControlPlane bool = false
 @description('Primary source service tag or CIDR for public control-plane ingress. Use AzureFrontDoor.Backend for Front Door cutover.')
 param controlPlaneIngressSource string = 'AzureFrontDoor.Backend'
 
+@description('Allow Azure API Management traffic to the co-located enterprise control plane on port 3001. Enable only when APIM is deployed and the control plane accepts the APIM origin-lock secret or forwarded Front Door ID.')
+param allowApiManagementToControlPlane bool = false
+
+@description('Primary source service tag or CIDR for API Management-to-control-plane ingress.')
+param apiManagementIngressSource string = 'ApiManagement'
+
 @description('Base64url-encoded Azure Key Vault Secure Key Release policy. Replace with the attestation policy after VM measurements are known.')
 param secureKeyReleasePolicyData string = ''
 
@@ -61,6 +67,34 @@ param apiManagementSkuName string = 'StandardV2'
 @description('API Management capacity units.')
 param apiManagementCapacity int = 1
 
+@description('Backend URL APIM forwards to. Leave empty to use the Confidential VM public control-plane origin on port 3001.')
+param apiManagementBackendUrl string = ''
+
+@description('APIM API path prefix. The default exposes /enterprise/* on the APIM gateway.')
+param apiManagementApiPath string = 'enterprise'
+
+@description('Require APIM subscriptions for the VaultProof-managed enterprise API.')
+param apiManagementSubscriptionRequired bool = false
+
+@description('Per-minute APIM rate limit per subscription key or client IP.')
+param apiManagementRateLimitCalls int = 120
+
+@description('Daily APIM quota per subscription key or client IP.')
+param apiManagementQuotaCalls int = 10000
+
+@description('Maximum inbound request body size APIM should allow, in bytes.')
+param apiManagementMaxRequestBodyBytes int = 1048576
+
+@description('Non-secret caller-lock marker APIM forwards to the control plane.')
+param apiManagementGatewayMarker string = 'vaultproof-managed'
+
+@description('Header name APIM uses when forwarding the custom origin-lock secret to the control plane.')
+param apiManagementOriginLockHeaderName string = 'x-vaultproof-origin-lock'
+
+@secure()
+@description('Optional custom origin-lock secret APIM forwards to the control plane. Set the same value in ENTERPRISE_ORIGIN_LOCK_SECRET on the Confidential VM before requiring APIM-origin traffic.')
+param apiManagementOriginLockSecret string = ''
+
 var tags = {
   app: 'vaultproof'
   tier: 'enterprise'
@@ -79,7 +113,48 @@ var managedHsmName = take('${environmentName}${uniqueString(resourceGroup().id)}
 var unwrapKeyName = 'vaultproof-enterprise-unwrap'
 var attestationName = take('${environmentName}${uniqueString(resourceGroup().id)}maa', 24)
 var apiManagementName = take('${environmentName}${uniqueString(resourceGroup().id)}apim', 50)
+var apiManagementResolvedBackendUrl = empty(apiManagementBackendUrl) ? 'http://${publicIp.properties.ipAddress}:3001' : apiManagementBackendUrl
 var createPrototypeReleaseKey = deployPrototypeReleaseKey && !empty(secureKeyReleasePolicyData)
+var enterpriseApiPolicyXml = format('''
+<policies>
+  <inbound>
+    <base />
+    <rate-limit-by-key calls="{0}" renewal-period="60" counter-key="@(context.Subscription?.Key ?? context.Request.IpAddress)" />
+    <quota-by-key calls="{1}" renewal-period="86400" counter-key="@(context.Subscription?.Key ?? context.Request.IpAddress)" />
+    <choose>
+      <when condition='@(context.Request.Headers.ContainsKey("content-length") &amp;&amp; long.Parse(context.Request.Headers.GetValueOrDefault("content-length", "0")) &gt; {2})'>
+        <return-response>
+          <set-status code="413" reason="Payload Too Large" />
+          <set-body>Request body is too large</set-body>
+        </return-response>
+      </when>
+    </choose>
+    <set-header name="x-vaultproof-apim" exists-action="override">
+      <value>enterprise</value>
+    </set-header>
+    <set-header name="x-vaultproof-customer-gateway" exists-action="override">
+      <value>{3}</value>
+    </set-header>
+    <set-header name="{4}" exists-action="override">
+      <value>{{{{vaultproof-origin-lock-secret}}}}</value>
+    </set-header>
+    <set-header name="x-api-key" exists-action="delete" />
+    <set-header name="openai-api-key" exists-action="delete" />
+    <set-header name="anthropic-api-key" exists-action="delete" />
+    <set-header name="stripe-api-key" exists-action="delete" />
+    <set-backend-service base-url="{5}" />
+  </inbound>
+  <backend>
+    <base />
+  </backend>
+  <outbound>
+    <base />
+  </outbound>
+  <on-error>
+    <base />
+  </on-error>
+</policies>
+''', apiManagementRateLimitCalls, apiManagementQuotaCalls, apiManagementMaxRequestBodyBytes, apiManagementGatewayMarker, apiManagementOriginLockHeaderName, apiManagementResolvedBackendUrl)
 
 resource vnet 'Microsoft.Network/virtualNetworks@2024-05-01' = {
   name: vnetName
@@ -183,6 +258,19 @@ resource executorNsg 'Microsoft.Network/networkSecurityGroups@2024-05-01' = {
         }
       }
       {
+        name: 'AllowApiManagementControlPlane'
+        properties: {
+          priority: 126
+          direction: 'Inbound'
+          access: allowApiManagementToControlPlane ? 'Allow' : 'Deny'
+          protocol: 'Tcp'
+          sourcePortRange: '*'
+          destinationPortRange: '3001'
+          sourceAddressPrefix: apiManagementIngressSource
+          destinationAddressPrefix: '*'
+        }
+      }
+      {
         name: 'DenyInboundInternet'
         properties: {
           priority: 4096
@@ -255,7 +343,7 @@ resource managedHsm 'Microsoft.KeyVault/managedHSMs@2023-07-01' = if (deployMana
   name: managedHsmName
   location: location
   tags: union(tags, {
-    role: 'production-oct-hsm'
+    role: 'production-skr'
   })
   sku: {
     family: 'B'
@@ -327,43 +415,108 @@ resource enterpriseApi 'Microsoft.ApiManagement/service/apis@2024-05-01' = if (d
   name: 'vaultproof-enterprise'
   properties: {
     displayName: 'VaultProof Enterprise API'
-    path: 'enterprise'
+    path: apiManagementApiPath
     protocols: [
       'https'
     ]
-    serviceUrl: 'https://enterprise.vaultproof.dev'
+    serviceUrl: apiManagementResolvedBackendUrl
     apiVersion: 'v1'
     apiVersionSetId: null
-    subscriptionRequired: false
+    subscriptionRequired: apiManagementSubscriptionRequired
+  }
+}
+
+resource apiManagementOriginLockNamedValue 'Microsoft.ApiManagement/service/namedValues@2024-05-01' = if (deployApiManagement) {
+  parent: apiManagement
+  name: 'vaultproof-origin-lock-secret'
+  properties: {
+    displayName: 'vaultproof-origin-lock-secret'
+    secret: true
+    value: apiManagementOriginLockSecret
+  }
+}
+
+resource enterpriseHealthOperation 'Microsoft.ApiManagement/service/apis/operations@2024-05-01' = if (deployApiManagement) {
+  parent: enterpriseApi
+  name: 'health'
+  properties: {
+    displayName: 'Health'
+    method: 'GET'
+    urlTemplate: '/health'
+    responses: [
+      {
+        statusCode: 200
+        description: 'Control-plane health response.'
+      }
+    ]
+  }
+}
+
+resource enterpriseReadinessOperation 'Microsoft.ApiManagement/service/apis/operations@2024-05-01' = if (deployApiManagement) {
+  parent: enterpriseApi
+  name: 'readiness'
+  properties: {
+    displayName: 'Readiness'
+    method: 'GET'
+    urlTemplate: '/readiness'
+    responses: [
+      {
+        statusCode: 200
+        description: 'End-to-end production readiness response.'
+      }
+    ]
+  }
+}
+
+resource enterpriseExecuteOperation 'Microsoft.ApiManagement/service/apis/operations@2024-05-01' = if (deployApiManagement) {
+  parent: enterpriseApi
+  name: 'execute'
+  properties: {
+    displayName: 'Legacy Execute'
+    method: 'POST'
+    urlTemplate: '/execute'
+    responses: [
+      {
+        statusCode: 200
+        description: 'Secure execution response.'
+      }
+    ]
+  }
+}
+
+resource enterpriseApiProxyOperation 'Microsoft.ApiManagement/service/apis/operations@2024-05-01' = if (deployApiManagement) {
+  parent: enterpriseApi
+  name: 'enterprise-api-proxy'
+  properties: {
+    displayName: 'Enterprise API Proxy'
+    method: '*'
+    urlTemplate: '/api/v1/enterprise/{*path}'
+    templateParameters: [
+      {
+        name: 'path'
+        type: 'string'
+        required: false
+        description: 'Enterprise API path after /api/v1/enterprise.'
+      }
+    ]
+    responses: [
+      {
+        statusCode: 200
+        description: 'Enterprise API response.'
+      }
+    ]
   }
 }
 
 resource enterpriseApiPolicy 'Microsoft.ApiManagement/service/apis/policies@2024-05-01' = if (deployApiManagement) {
   parent: enterpriseApi
   name: 'policy'
+  dependsOn: [
+    apiManagementOriginLockNamedValue
+  ]
   properties: {
     format: 'rawxml'
-    value: '''
-<policies>
-  <inbound>
-    <base />
-    <rate-limit-by-key calls="120" renewal-period="60" counter-key="@(context.Request.IpAddress)" />
-    <quota-by-key calls="10000" renewal-period="86400" counter-key="@(context.Request.IpAddress)" />
-    <set-header name="x-vaultproof-apim" exists-action="override">
-      <value>enterprise</value>
-    </set-header>
-  </inbound>
-  <backend>
-    <base />
-  </backend>
-  <outbound>
-    <base />
-  </outbound>
-  <on-error>
-    <base />
-  </on-error>
-</policies>
-'''
+    value: enterpriseApiPolicyXml
   }
 }
 
@@ -449,3 +602,5 @@ output attestationProviderName string = attestation.name
 output attestationProviderUri string = attestation.properties.attestUri
 output apiManagementName string = deployApiManagement ? apiManagement!.name : ''
 output apiManagementGatewayUrl string = deployApiManagement ? apiManagement!.properties.gatewayUrl : ''
+output apiManagementBackendUrl string = deployApiManagement ? apiManagementResolvedBackendUrl : ''
+output apiManagementApiUrl string = deployApiManagement ? '${apiManagement!.properties.gatewayUrl}/${apiManagementApiPath}' : ''

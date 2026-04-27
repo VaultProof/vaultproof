@@ -14,8 +14,7 @@
     <rate-limit-by-key calls="120" renewal-period="60" counter-key="@(context.Subscription?.Key ?? context.Request.IpAddress)" />
     <quota-by-key calls="10000" renewal-period="86400" counter-key="@(context.Subscription?.Key ?? context.Request.IpAddress)" />
 
-    <!-- Do not let app callers smuggle provider credentials through APIM. -->
-    <set-header name="authorization" exists-action="delete" />
+    <!-- Preserve Authorization for VaultProof control-plane user/project auth. Strip provider-secret style headers. -->
     <set-header name="x-api-key" exists-action="delete" />
     <set-header name="openai-api-key" exists-action="delete" />
     <set-header name="anthropic-api-key" exists-action="delete" />

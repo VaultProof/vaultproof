@@ -35,11 +35,15 @@ Edit `main.parameters.json`:
 - `environmentName`: keep short; Azure Key Vault names are globally unique and length-limited.
 - `allowFrontDoorToControlPlane`: keep `false` until local VM readiness is production-ready. Set `true` for Front Door cutover to port `3001`.
 - `controlPlaneIngressSource`: keep `AzureFrontDoor.Backend` for Front Door origin traffic. When enabled, the template also allows `AzureFrontDoor.Frontend` and `AzureFrontDoor.FirstParty`, which are required by some Front Door health/request paths.
+- `allowApiManagementToControlPlane`: keep `false` until APIM is deployed and the Confidential VM control plane is configured to trust the APIM origin-lock secret or forwarded Front Door ID.
+- `apiManagementIngressSource`: default is `ApiManagement`; use a tighter CIDR/source only if you know the APIM outbound path.
 - `deployPrototypeReleaseKey`: keep `false` for the first VM deployment. Enable it only after a real Secure Key Release policy exists.
 - `deployManagedHsm`: set `true` when you are ready to create the final Managed HSM release-key home.
 - `managedHsmInitialAdminObjectId`: required when `deployManagedHsm=true`. Get it with `az ad signed-in-user show --query id -o tsv`.
 - `deployApiManagement`: keep `false` until you are ready to add APIM cost/governance.
 - `apiManagementSkuName`: use `StandardV2` for production starter or `PremiumV2` when you need stronger isolation/networking features.
+- `apiManagementBackendUrl`: leave empty to forward to the Confidential VM public control-plane origin on port `3001`, or set it to a private/internal origin once that exists.
+- `apiManagementOriginLockSecret`: optional APIM-to-control-plane shared origin-lock secret. If set, also set `ENTERPRISE_ORIGIN_LOCK_SECRET` in the control-plane env.
 
 Check Confidential VM SKU availability before deploying:
 
@@ -396,6 +400,58 @@ APIM policy starts with coarse limits:
 - 120 calls per minute per IP.
 - 10,000 calls per day per IP.
 - Adds `x-vaultproof-apim: enterprise`.
+- Adds `x-vaultproof-customer-gateway: vaultproof-managed`.
+- Strips provider-secret style headers such as `x-api-key`, `openai-api-key`, `anthropic-api-key`, and `stripe-api-key`.
+- Preserves `Authorization` so the VaultProof control plane can still validate Supabase/user/project auth.
+- Optionally forwards a secret `x-vaultproof-origin-lock` value from an APIM named value.
+
+The template also creates APIM operations for:
+
+- `GET /health`
+- `GET /readiness`
+- `POST /execute`
+- `* /api/v1/enterprise/{*path}`
+
+To deploy APIM without changing the live Front Door route, keep Front Door pointed at the Confidential VM and deploy APIM as a sidecar gateway first:
+
+```bash
+az deployment group create \
+  --resource-group vaultproof-enterprise \
+  --name vp-enterprise-secure-runtime-eastus-hsm-apim \
+  --template-file infra/azure/enterprise-secure-runtime/main.bicep \
+  --parameters \
+    location=eastus \
+    environmentName=vpenteu \
+    adminUsername=azureuser \
+    adminSshPublicKey='<existing SSH public key>' \
+    vmSize=Standard_DC2as_v5 \
+    sshSourceCidr='<your current IPv4>/32' \
+    executorSourceCidr=10.42.1.0/24 \
+    allowFrontDoorToControlPlane=true \
+    controlPlaneIngressSource=AzureFrontDoor.Backend \
+    allowApiManagementToControlPlane=true \
+    deployPrototypeReleaseKey=false \
+    deployManagedHsm=true \
+    managedHsmInitialAdminObjectId='<your Entra object id>' \
+    deployApiManagement=true \
+    apiManagementBackendUrl='http://20.85.214.14:3001' \
+    apiManagementOriginLockSecret='<same value as ENTERPRISE_ORIGIN_LOCK_SECRET>'
+```
+
+Validate the APIM gateway before considering a Front Door route change:
+
+```bash
+APIM_API_URL="$(az deployment group show \
+  --resource-group vaultproof-enterprise \
+  --name vp-enterprise-secure-runtime-eastus-hsm-apim \
+  --query properties.outputs.apiManagementApiUrl.value \
+  -o tsv)"
+
+curl -sS "${APIM_API_URL}/health"
+curl -sS "${APIM_API_URL}/readiness"
+```
+
+For the final VaultProof-managed APIM route, Front Door should point to the APIM gateway origin, and APIM should point to the Confidential VM control-plane origin. Avoid configuring APIM to forward to `https://enterprise.vaultproof.dev`, because that creates a routing loop once Front Door sends `enterprise.vaultproof.dev` to APIM.
 
 Later policies should add JWT validation, Entra-aware products/subscriptions, request size limits, per-customer quotas, OpenAPI publishing, and Azure Monitor/Application Insights integration.
 

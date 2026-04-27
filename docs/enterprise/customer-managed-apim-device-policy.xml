@@ -14,11 +14,10 @@
     </validate-jwt>
 
     <!-- Fleet/device throttles. Customer APIM absorbs bursts before VaultProof. -->
-    <rate-limit-by-key calls="30" renewal-period="60" counter-key="@((string)context.Request.Headers.GetValueOrDefault("x-device-id", context.Request.IpAddress))" />
-    <quota-by-key calls="2500" renewal-period="86400" counter-key="@((string)context.Request.Headers.GetValueOrDefault("x-fleet-id", context.Request.IpAddress))" />
+    <rate-limit-by-key calls="30" renewal-period="60" counter-key='@((string)context.Request.Headers.GetValueOrDefault("x-device-id", context.Request.IpAddress))' />
+    <quota-by-key calls="2500" renewal-period="86400" counter-key='@((string)context.Request.Headers.GetValueOrDefault("x-fleet-id", context.Request.IpAddress))' />
 
-    <!-- Devices must never send provider credentials. -->
-    <set-header name="authorization" exists-action="delete" />
+    <!-- Preserve Authorization for VaultProof control-plane user/project auth. Strip provider-secret style headers. -->
     <set-header name="x-api-key" exists-action="delete" />
     <set-header name="openai-api-key" exists-action="delete" />
     <set-header name="anthropic-api-key" exists-action="delete" />
