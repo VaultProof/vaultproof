@@ -167,7 +167,7 @@ export function renderEnterpriseDashboardPage(): string {
       <div class="topbar">
         <div>
           <div class="eyebrow">enterprise command center</div>
-          <h1>Separate enterprise dashboard, live on the confidential path.</h1>
+          <h1>Enterprise dashboard.</h1>
         </div>
         <div class="toolbar">
           <select id="orgSelect" aria-label="Organization"><option>Loading org...</option></select>
