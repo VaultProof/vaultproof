@@ -1702,7 +1702,45 @@ async function assertEnterpriseLoginRoute() {
     throw new Error('Expected enterprise alerts page to avoid B2C APIs and explain unavailable test-send mutation');
   }
 
-  for (const plannedPath of ['/app/activity', '/app/projects', '/app/keys', '/app/settings', '/app/plans', '/app/scanner']) {
+  const operationsPages = [
+    {
+      path: '/app/activity',
+      title: 'Activity - VaultProof Enterprise',
+      required: ['/api/v1/enterprise/audit', 'activityFilterForm'],
+    },
+    {
+      path: '/app/projects',
+      title: 'Projects - VaultProof Enterprise',
+      required: ['/api/v1/enterprise/projects/stats/overview', 'Project inventory'],
+    },
+    {
+      path: '/app/keys',
+      title: 'Provider Slots - VaultProof Enterprise',
+      required: ['/api/v1/enterprise/projects', 'emergency revoke'],
+    },
+  ];
+  for (const page of operationsPages) {
+    const response = await handleEnterpriseControlPlaneRequest(
+      buildRequest(page.path),
+      {
+        enterpriseHostname: ENTERPRISE_HOSTNAME,
+      },
+    );
+    const html = await response.text();
+    if (response.status !== 200 || !html.includes(page.title)) {
+      throw new Error(`Expected enterprise operations page for ${page.path}, got ${response.status}`);
+    }
+    for (const required of page.required) {
+      if (!html.includes(required)) {
+        throw new Error(`Expected ${page.path} to include ${required}`);
+      }
+    }
+    if (html.includes('https://init.vaultproof.dev') || html.includes('https://api.vaultproof.dev')) {
+      throw new Error(`Enterprise operations page ${page.path} must not load B2C APIs`);
+    }
+  }
+
+  for (const plannedPath of ['/app/settings', '/app/plans', '/app/scanner']) {
     const plannedResponse = await handleEnterpriseControlPlaneRequest(
       buildRequest(plannedPath),
       {
