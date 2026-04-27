@@ -24,6 +24,10 @@ interface ExecuteBody {
 }
 
 type CallerLockPolicy = {
+  allowed_providers?: string[];
+  allowed_methods?: string[];
+  allowed_upstream_hosts?: string[];
+  allowed_upstream_path_prefixes?: string[];
   allowed_customer_gateways?: string[];
   allowed_client_classes?: string[];
   allowed_fleet_ids?: string[];
@@ -190,6 +194,17 @@ function isRecord(value: unknown): value is Record<string, unknown> {
 
 function getCallerLockPolicyFromRaw(raw: Record<string, unknown>): CallerLockPolicy {
   return {
+    allowed_providers: normalizePolicyList(raw.allowed_providers),
+    allowed_methods: normalizePolicyList(raw.allowed_methods).map((method) => method.toUpperCase()),
+    allowed_upstream_hosts: normalizePolicyList(raw.allowed_upstream_hosts).map((hostOrUrl) => {
+      try {
+        return new URL(hostOrUrl.includes('://') ? hostOrUrl : `https://${hostOrUrl}`).hostname.toLowerCase();
+      } catch {
+        return hostOrUrl;
+      }
+    }),
+    allowed_upstream_path_prefixes: normalizePolicyList(raw.allowed_upstream_path_prefixes)
+      .map((prefix) => prefix.startsWith('/') ? prefix : `/${prefix}`),
     allowed_customer_gateways: normalizePolicyList(raw.allowed_customer_gateways),
     allowed_client_classes: normalizePolicyList(raw.allowed_client_classes),
     allowed_fleet_ids: normalizePolicyList(raw.allowed_fleet_ids),
@@ -379,6 +394,64 @@ function enforceCallerLockPolicy(project: { caller_lock_policy?: Record<string, 
   return enforceCallerLockPolicyValue(getCallerLockPolicy(project), callerLock);
 }
 
+function getUpstreamHost(value: string | null | undefined): string | null {
+  if (!value) return null;
+  try {
+    return new URL(value.includes('://') ? value : `https://${value}`).hostname.toLowerCase();
+  } catch {
+    return null;
+  }
+}
+
+function enforceExecutionPolicyValue(
+  policy: CallerLockPolicy,
+  input: {
+    provider: string;
+    slug: string;
+    method: string;
+    upstreamBaseUrl?: string | null;
+    upstreamPath: string;
+  },
+  label = 'Execution policy',
+): string | null {
+  if (policy.allowed_providers?.length) {
+    const providerCandidates = [input.provider, input.slug].map((value) => value.trim().toLowerCase()).filter(Boolean);
+    if (!providerCandidates.some((candidate) => policy.allowed_providers?.includes(candidate))) {
+      return `${label} rejected provider ${input.provider || input.slug || 'missing'}.`;
+    }
+  }
+
+  if (policy.allowed_methods?.length) {
+    const method = input.method.trim().toUpperCase();
+    if (!policy.allowed_methods.includes(method)) {
+      return `${label} rejected method ${method || 'missing'}.`;
+    }
+  }
+
+  if (policy.allowed_upstream_hosts?.length) {
+    const upstreamHost = getUpstreamHost(input.upstreamBaseUrl);
+    if (!upstreamHost || !policy.allowed_upstream_hosts.includes(upstreamHost)) {
+      return `${label} rejected upstream host ${upstreamHost || 'missing'}.`;
+    }
+  }
+
+  if (policy.allowed_upstream_path_prefixes?.length) {
+    const upstreamPath = input.upstreamPath.toLowerCase();
+    if (!policy.allowed_upstream_path_prefixes.some((prefix) => upstreamPath.startsWith(prefix.toLowerCase()))) {
+      return `${label} rejected upstream path ${input.upstreamPath || 'missing'}.`;
+    }
+  }
+
+  return null;
+}
+
+function enforceExecutionPolicy(
+  project: { caller_lock_policy?: Record<string, unknown> | null },
+  input: Parameters<typeof enforceExecutionPolicyValue>[1],
+): string | null {
+  return enforceExecutionPolicyValue(getCallerLockPolicy(project), input);
+}
+
 function isBase64(value: string): boolean {
   try {
     return Buffer.from(value, 'base64').toString('base64').replace(/=+$/, '') === value.replace(/=+$/, '');
@@ -555,7 +628,7 @@ export async function handleEnterpriseExecuteRoutes(
   const supabase = getSupabase(env);
   const { data: keyRow } = await supabase
     .from('project_keys')
-    .select('id, provider')
+    .select('id, provider, upstream_base_url')
     .eq('project_id', project.id)
     .eq('slug', slug)
     .is('revoked_at', null)
@@ -566,6 +639,27 @@ export async function handleEnterpriseExecuteRoutes(
   }
 
   const provider = (keyRow.provider as string) || slug;
+  const upstreamBaseUrl = keyRow.upstream_base_url as string | null;
+
+  const executionPolicyError = enforceExecutionPolicy(project, {
+    provider,
+    slug,
+    method,
+    upstreamBaseUrl,
+    upstreamPath,
+  });
+  if (executionPolicyError) {
+    await auditCallerLockDenied(env, project, auth, executionPolicyError, callerLock, {
+      policy_scope: 'project_execution_policy',
+      provider,
+      slug,
+      method,
+      upstream_host: getUpstreamHost(upstreamBaseUrl),
+      upstream_path: upstreamPath,
+    });
+    return Response.json({ error: executionPolicyError }, { status: 403 });
+  }
+
   const providerLockPolicy = getProviderCallerLockPolicy(project, slug, provider);
   const providerLockError = providerLockPolicy
     ? enforceCallerLockPolicyValue(providerLockPolicy, callerLock, `Caller lock for ${slug}`)
@@ -577,6 +671,27 @@ export async function handleEnterpriseExecuteRoutes(
       slug,
     });
     return Response.json({ error: providerLockError }, { status: 403 });
+  }
+
+  const providerExecutionPolicyError = providerLockPolicy
+    ? enforceExecutionPolicyValue(providerLockPolicy, {
+        provider,
+        slug,
+        method,
+        upstreamBaseUrl,
+        upstreamPath,
+      }, `Execution policy for ${slug}`)
+    : null;
+  if (providerExecutionPolicyError) {
+    await auditCallerLockDenied(env, project, auth, providerExecutionPolicyError, callerLock, {
+      policy_scope: 'provider_execution_policy',
+      provider,
+      slug,
+      method,
+      upstream_host: getUpstreamHost(upstreamBaseUrl),
+      upstream_path: upstreamPath,
+    });
+    return Response.json({ error: providerExecutionPolicyError }, { status: 403 });
   }
 
   const now = Date.now();

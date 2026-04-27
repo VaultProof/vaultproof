@@ -78,6 +78,7 @@ function installSupabaseStub() {
       return jsonResponse([{
         id: PROJECT_KEY_ID,
         provider: 'openai',
+        upstream_base_url: 'https://api.openai.com',
       }]);
     }
 
@@ -663,6 +664,163 @@ async function assertEnterpriseProviderCallerLockPolicy() {
   }
 }
 
+async function assertEnterpriseExecutionPolicy() {
+  installSupabaseStub();
+  activeProject = {
+    ...fakeProject,
+    caller_lock_policy: {
+      allowed_providers: ['openai'],
+      allowed_methods: ['GET'],
+      allowed_upstream_hosts: ['api.openai.com'],
+      allowed_upstream_path_prefixes: ['/v1/models'],
+    },
+  };
+
+  const allowedResponse = await handleEnterpriseControlPlaneRequest(
+    buildRequest(`/api/v1/enterprise/projects/${PROJECT_ID}/providers/openai/execute`, {
+      method: 'POST',
+      headers: {
+        authorization: `Bearer ${AUTH_TOKEN}`,
+        'content-type': 'application/json',
+      },
+      body: JSON.stringify({
+        method: 'GET',
+        upstream_path: '/v1/models',
+      }),
+    }),
+    {
+      enterpriseHostname: ENTERPRISE_HOSTNAME,
+      executorBaseUrl: 'https://executor.internal',
+      executorSigningKeyId: 'enterprise-local',
+      executorSigningSecret: 'local-secret',
+      supabaseUrl: 'https://supabase.example.co',
+      supabaseServiceRoleKey: 'service-role-key',
+    },
+  );
+  if (allowedResponse.status !== 200) {
+    throw new Error(`Expected execution policy to allow OpenAI models request, got ${allowedResponse.status}`);
+  }
+
+  const deniedMethodResponse = await handleEnterpriseControlPlaneRequest(
+    buildRequest(`/api/v1/enterprise/projects/${PROJECT_ID}/providers/openai/execute`, {
+      method: 'POST',
+      headers: {
+        authorization: `Bearer ${AUTH_TOKEN}`,
+        'content-type': 'application/json',
+      },
+      body: JSON.stringify({
+        method: 'POST',
+        upstream_path: '/v1/responses',
+      }),
+    }),
+    {
+      enterpriseHostname: ENTERPRISE_HOSTNAME,
+      executorBaseUrl: 'https://executor.internal',
+      executorSigningKeyId: 'enterprise-local',
+      executorSigningSecret: 'local-secret',
+      supabaseUrl: 'https://supabase.example.co',
+      supabaseServiceRoleKey: 'service-role-key',
+    },
+  );
+  const deniedMethodPayload = await deniedMethodResponse.json();
+  if (deniedMethodResponse.status !== 403 || !String(deniedMethodPayload?.error || '').includes('rejected method')) {
+    throw new Error(`Expected execution method denial, got ${deniedMethodResponse.status} ${JSON.stringify(deniedMethodPayload)}`);
+  }
+
+  const deniedPathResponse = await handleEnterpriseControlPlaneRequest(
+    buildRequest(`/api/v1/enterprise/projects/${PROJECT_ID}/providers/openai/execute`, {
+      method: 'POST',
+      headers: {
+        authorization: `Bearer ${AUTH_TOKEN}`,
+        'content-type': 'application/json',
+      },
+      body: JSON.stringify({
+        method: 'GET',
+        upstream_path: '/v1/files',
+      }),
+    }),
+    {
+      enterpriseHostname: ENTERPRISE_HOSTNAME,
+      executorBaseUrl: 'https://executor.internal',
+      executorSigningKeyId: 'enterprise-local',
+      executorSigningSecret: 'local-secret',
+      supabaseUrl: 'https://supabase.example.co',
+      supabaseServiceRoleKey: 'service-role-key',
+    },
+  );
+  const deniedPathPayload = await deniedPathResponse.json();
+  if (deniedPathResponse.status !== 403 || !String(deniedPathPayload?.error || '').includes('rejected upstream path')) {
+    throw new Error(`Expected execution path denial, got ${deniedPathResponse.status} ${JSON.stringify(deniedPathPayload)}`);
+  }
+}
+
+async function assertEnterpriseProviderExecutionPolicy() {
+  installSupabaseStub();
+  activeProject = {
+    ...fakeProject,
+    caller_lock_policy: {
+      allowed_methods: ['GET', 'POST'],
+      provider_overrides: {
+        openai: {
+          allowed_methods: ['POST'],
+          allowed_upstream_path_prefixes: ['/v1/responses'],
+        },
+      },
+    },
+  };
+
+  const allowedResponse = await handleEnterpriseControlPlaneRequest(
+    buildRequest(`/api/v1/enterprise/projects/${PROJECT_ID}/providers/openai/execute`, {
+      method: 'POST',
+      headers: {
+        authorization: `Bearer ${AUTH_TOKEN}`,
+        'content-type': 'application/json',
+      },
+      body: JSON.stringify({
+        method: 'POST',
+        upstream_path: '/v1/responses',
+      }),
+    }),
+    {
+      enterpriseHostname: ENTERPRISE_HOSTNAME,
+      executorBaseUrl: 'https://executor.internal',
+      executorSigningKeyId: 'enterprise-local',
+      executorSigningSecret: 'local-secret',
+      supabaseUrl: 'https://supabase.example.co',
+      supabaseServiceRoleKey: 'service-role-key',
+    },
+  );
+  if (allowedResponse.status !== 200) {
+    throw new Error(`Expected provider execution policy to allow OpenAI responses request, got ${allowedResponse.status}`);
+  }
+
+  const deniedResponse = await handleEnterpriseControlPlaneRequest(
+    buildRequest(`/api/v1/enterprise/projects/${PROJECT_ID}/providers/openai/execute`, {
+      method: 'POST',
+      headers: {
+        authorization: `Bearer ${AUTH_TOKEN}`,
+        'content-type': 'application/json',
+      },
+      body: JSON.stringify({
+        method: 'GET',
+        upstream_path: '/v1/models',
+      }),
+    }),
+    {
+      enterpriseHostname: ENTERPRISE_HOSTNAME,
+      executorBaseUrl: 'https://executor.internal',
+      executorSigningKeyId: 'enterprise-local',
+      executorSigningSecret: 'local-secret',
+      supabaseUrl: 'https://supabase.example.co',
+      supabaseServiceRoleKey: 'service-role-key',
+    },
+  );
+  const deniedPayload = await deniedResponse.json();
+  if (deniedResponse.status !== 403 || !String(deniedPayload?.error || '').includes('Execution policy for openai rejected method')) {
+    throw new Error(`Expected provider execution policy denial, got ${deniedResponse.status} ${JSON.stringify(deniedPayload)}`);
+  }
+}
+
 async function assertEnterpriseLoginRoute() {
   const rootResponse = await handleEnterpriseControlPlaneRequest(
     buildRequest('/'),
@@ -814,4 +972,6 @@ await assertEnterpriseCallerLockIpPolicy();
 await assertEnterpriseCallerLockIpv6Policy();
 await assertEnterpriseCallerLockCertificatePolicy();
 await assertEnterpriseProviderCallerLockPolicy();
+await assertEnterpriseExecutionPolicy();
+await assertEnterpriseProviderExecutionPolicy();
 console.log('enterprise control plane smoke test passed');

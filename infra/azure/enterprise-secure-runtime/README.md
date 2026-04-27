@@ -641,6 +641,38 @@ For the final VaultProof-managed APIM route, Front Door should point to the APIM
 
 Later policies should add JWT validation, Entra-aware products/subscriptions, request size limits, per-customer quotas, OpenAPI publishing, and Azure Monitor/Application Insights integration.
 
+## Enterprise Execution Policy
+
+Enterprise execution policy is stored in `projects.caller_lock_policy`. The control plane enforces it before signing a secure-execution envelope, so disallowed requests never reach the Confidential VM executor.
+
+Supported project-level fields:
+
+- `allowed_providers`: provider names or slugs, such as `openai` or `stripe`.
+- `allowed_methods`: HTTP methods, such as `GET` or `POST`.
+- `allowed_upstream_hosts`: upstream hosts or URLs, such as `api.openai.com`.
+- `allowed_upstream_path_prefixes`: upstream API path prefixes, such as `/v1/responses`.
+- `provider_overrides.<provider-or-slug>`: stricter provider-specific policy using the same fields plus the caller-lock fields.
+
+Example:
+
+```json
+{
+  "allowed_providers": ["openai"],
+  "allowed_methods": ["POST"],
+  "allowed_upstream_hosts": ["api.openai.com"],
+  "allowed_upstream_path_prefixes": ["/v1/responses"],
+  "allowed_customer_gateways": ["vaultproof-managed"],
+  "provider_overrides": {
+    "openai": {
+      "allowed_methods": ["POST"],
+      "allowed_upstream_path_prefixes": ["/v1/responses"]
+    }
+  }
+}
+```
+
+Denied execution-policy attempts write a governance audit event without request/response bodies or provider secrets.
+
 ## Azure Monitor Placement
 
 The template can deploy the first production monitoring bundle without changing the live route:

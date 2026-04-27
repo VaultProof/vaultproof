@@ -53,7 +53,7 @@ Live production-confidential path:
 - Executor blocks replayed signed execution envelopes.
 - Executor health reports `production_ready`, `security_profile`, and concrete production blockers.
 - Control plane `/readiness` summarizes whole-path demo readiness and production-confidential blockers.
-- Enterprise caller-lock policy supports origin, customer gateway, client class, device identity requirement, fleet, firmware, IPv4/IPv6 CIDR, mTLS certificate identity checks, and stricter per-provider overrides.
+- Enterprise caller-lock policy supports origin, provider allowlists, upstream method/host/path policy, customer gateway, client class, device identity requirement, fleet, firmware, IPv4/IPv6 CIDR, mTLS certificate identity checks, and stricter per-provider overrides.
 - Execution dispatch audit events include executor result metadata and customer-verifiable Azure attestation evidence summaries.
 - Azure secure-runtime IaC and operational scripts exist at `infra/azure/enterprise-secure-runtime`.
 
@@ -256,6 +256,10 @@ Current implementation:
 
 - project `strict_origin=true` requires the request origin/referer origin to match `allowed_origins`
 - project `caller_lock_policy.allowed_customer_gateways` can restrict requests to approved customer gateways
+- project `caller_lock_policy.allowed_providers` can restrict execution to approved provider slugs/providers
+- project `caller_lock_policy.allowed_methods` can restrict execution to approved HTTP methods
+- project `caller_lock_policy.allowed_upstream_hosts` can restrict execution to approved upstream hosts
+- project `caller_lock_policy.allowed_upstream_path_prefixes` can restrict execution to approved upstream API path prefixes
 - project `caller_lock_policy.allowed_client_classes` can restrict requests to approved client classes
 - project `caller_lock_policy.allowed_fleet_ids` can restrict requests to approved fleets
 - project `caller_lock_policy.allowed_firmware_versions` can restrict requests to approved firmware versions
@@ -399,8 +403,8 @@ Important key-type decision:
 ### Phase 5: Enterprise Controls
 
 - [ ] Add Microsoft Entra ID SSO.
-- [ ] Add org-level provider allowlist.
-- [ ] Add allowed upstream domains/methods.
+- [x] Add project/provider allowlists.
+- [x] Add allowed upstream host/path/method policy.
 - [ ] Add policy UI for editing caller-lock provider overrides.
 - [ ] Add per-project rate limits.
 - [ ] Add emergency key revoke.

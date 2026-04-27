@@ -17,6 +17,10 @@ interface ProjectWriteBody {
 }
 
 type CallerLockPolicy = {
+  allowed_providers?: string[];
+  allowed_methods?: string[];
+  allowed_upstream_hosts?: string[];
+  allowed_upstream_path_prefixes?: string[];
   allowed_customer_gateways?: string[];
   allowed_client_classes?: string[];
   allowed_fleet_ids?: string[];
@@ -67,12 +71,65 @@ function normalizeStringList(value: unknown, field: string): { ok: true; value: 
   return { ok: true, value: [...new Set(normalized)] };
 }
 
+function normalizeMethodList(value: unknown, field: string): { ok: true; value: string[] | undefined } | { ok: false; error: string } {
+  const normalized = normalizeStringList(value, field);
+  if (!normalized.ok || normalized.value === undefined) return normalized;
+  const methods = normalized.value.map((method) => method.toUpperCase());
+  if (methods.some((method) => !/^[A-Z]+$/.test(method))) {
+    return { ok: false, error: `${field} must contain HTTP method names` };
+  }
+  return { ok: true, value: [...new Set(methods)] };
+}
+
+function normalizeHostList(value: unknown, field: string): { ok: true; value: string[] | undefined } | { ok: false; error: string } {
+  const normalized = normalizeStringList(value, field);
+  if (!normalized.ok || normalized.value === undefined) return normalized;
+
+  const hosts = normalized.value.map((hostOrUrl) => {
+    try {
+      return new URL(hostOrUrl.includes('://') ? hostOrUrl : `https://${hostOrUrl}`).hostname.toLowerCase();
+    } catch {
+      return null;
+    }
+  });
+  if (hosts.some((host) => !host)) {
+    return { ok: false, error: `${field} must contain valid hostnames or URLs` };
+  }
+  return { ok: true, value: [...new Set(hosts as string[])] };
+}
+
+function normalizePathPrefixList(value: unknown, field: string): { ok: true; value: string[] | undefined } | { ok: false; error: string } {
+  const normalized = normalizeStringList(value, field);
+  if (!normalized.ok || normalized.value === undefined) return normalized;
+  const prefixes = normalized.value.map((prefix) => prefix.startsWith('/') ? prefix : `/${prefix}`);
+  return { ok: true, value: [...new Set(prefixes)] };
+}
+
 function normalizeCallerLockPolicyObject(
   input: Record<string, unknown>,
   fieldPrefix: string,
   allowProviderOverrides: boolean,
 ): { ok: true; value: CallerLockPolicy } | { ok: false; error: string } {
   const policy: CallerLockPolicy = {};
+
+  const allowedProviders = normalizeStringList(input.allowed_providers, `${fieldPrefix}.allowed_providers`);
+  if (!allowedProviders.ok) return allowedProviders;
+  if (allowedProviders.value !== undefined) policy.allowed_providers = allowedProviders.value;
+
+  const allowedMethods = normalizeMethodList(input.allowed_methods, `${fieldPrefix}.allowed_methods`);
+  if (!allowedMethods.ok) return allowedMethods;
+  if (allowedMethods.value !== undefined) policy.allowed_methods = allowedMethods.value;
+
+  const allowedUpstreamHosts = normalizeHostList(input.allowed_upstream_hosts, `${fieldPrefix}.allowed_upstream_hosts`);
+  if (!allowedUpstreamHosts.ok) return allowedUpstreamHosts;
+  if (allowedUpstreamHosts.value !== undefined) policy.allowed_upstream_hosts = allowedUpstreamHosts.value;
+
+  const allowedUpstreamPathPrefixes = normalizePathPrefixList(input.allowed_upstream_path_prefixes, `${fieldPrefix}.allowed_upstream_path_prefixes`);
+  if (!allowedUpstreamPathPrefixes.ok) return allowedUpstreamPathPrefixes;
+  if (allowedUpstreamPathPrefixes.value !== undefined) {
+    policy.allowed_upstream_path_prefixes = allowedUpstreamPathPrefixes.value;
+  }
+
   for (const [field, value] of Object.entries({
     allowed_customer_gateways: input.allowed_customer_gateways,
     allowed_client_classes: input.allowed_client_classes,
