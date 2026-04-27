@@ -34,7 +34,7 @@ Edit `main.parameters.json`:
 - `sshSourceCidr`: your current public IP with `/32`.
 - `environmentName`: keep short; Azure Key Vault names are globally unique and length-limited.
 - `allowFrontDoorToControlPlane`: keep `false` until local VM readiness is production-ready. Set `true` for Front Door cutover to port `3001`.
-- `controlPlaneIngressSource`: keep `AzureFrontDoor.Backend` for Front Door origin traffic.
+- `controlPlaneIngressSource`: keep `AzureFrontDoor.Backend` for Front Door origin traffic. When enabled, the template also allows `AzureFrontDoor.Frontend` and `AzureFrontDoor.FirstParty`, which are required by some Front Door health/request paths.
 - `deployPrototypeReleaseKey`: keep `false` for the first VM deployment. Enable it only after a real Secure Key Release policy exists.
 - `deployManagedHsm`: set `true` when you are ready to create the final Managed HSM release-key home.
 - `managedHsmInitialAdminObjectId`: required when `deployManagedHsm=true`. Get it with `az ad signed-in-user show --query id -o tsv`.

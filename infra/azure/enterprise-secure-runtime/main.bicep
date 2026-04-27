@@ -22,10 +22,10 @@ param sshSourceCidr string
 @description('CIDR allowed to call the private executor port. Use the control-plane subnet once private networking is enabled.')
 param executorSourceCidr string = '10.42.1.0/24'
 
-@description('Allow Azure Front Door backend traffic to the co-located enterprise control plane on port 3001.')
+@description('Allow Azure Front Door traffic to the co-located enterprise control plane on port 3001.')
 param allowFrontDoorToControlPlane bool = false
 
-@description('Source service tag or CIDR for public control-plane ingress. Use AzureFrontDoor.Backend for Front Door cutover.')
+@description('Primary source service tag or CIDR for public control-plane ingress. Use AzureFrontDoor.Backend for Front Door cutover.')
 param controlPlaneIngressSource string = 'AzureFrontDoor.Backend'
 
 @description('Base64url-encoded Azure Key Vault Secure Key Release policy. Replace with the attestation policy after VM measurements are known.')
@@ -153,6 +153,32 @@ resource executorNsg 'Microsoft.Network/networkSecurityGroups@2024-05-01' = {
           sourcePortRange: '*'
           destinationPortRange: '3001'
           sourceAddressPrefix: controlPlaneIngressSource
+          destinationAddressPrefix: '*'
+        }
+      }
+      {
+        name: 'AllowFrontDoorFrontendControlPlane'
+        properties: {
+          priority: 122
+          direction: 'Inbound'
+          access: allowFrontDoorToControlPlane ? 'Allow' : 'Deny'
+          protocol: 'Tcp'
+          sourcePortRange: '*'
+          destinationPortRange: '3001'
+          sourceAddressPrefix: 'AzureFrontDoor.Frontend'
+          destinationAddressPrefix: '*'
+        }
+      }
+      {
+        name: 'AllowFrontDoorFirstPartyControlPlane'
+        properties: {
+          priority: 124
+          direction: 'Inbound'
+          access: allowFrontDoorToControlPlane ? 'Allow' : 'Deny'
+          protocol: 'Tcp'
+          sourcePortRange: '*'
+          destinationPortRange: '3001'
+          sourceAddressPrefix: 'AzureFrontDoor.FirstParty'
           destinationAddressPrefix: '*'
         }
       }
