@@ -475,6 +475,81 @@
       .filter(Boolean)
       .join('\n');
   }
+  function listToTextarea(value) {
+    return Array.isArray(value) ? value.map((item) => String(item || '').trim()).filter(Boolean).join('\n') : '';
+  }
+  function parseTextareaList(value, transform) {
+    const items = String(value || '')
+      .split(/[\n,]/)
+      .map((item) => item.trim())
+      .filter(Boolean)
+      .map((item) => transform ? transform(item) : item)
+      .filter(Boolean);
+    return Array.from(new Set(items));
+  }
+  function normalizeProviderOverrideSlug(value) {
+    return String(value || '').trim().toLowerCase();
+  }
+  function getProviderOverrides(project) {
+    const policy = project?.caller_lock_policy && typeof project.caller_lock_policy === 'object'
+      ? project.caller_lock_policy
+      : {};
+    const overrides = policy.provider_overrides && typeof policy.provider_overrides === 'object' && !Array.isArray(policy.provider_overrides)
+      ? policy.provider_overrides
+      : {};
+    return { policy, overrides };
+  }
+  function renderProviderOverrideFields(project, canManage) {
+    const slots = project.provider_slots || [];
+    if (!slots.length) {
+      return `
+        <div class="policy-provider-list">
+          <div class="policy-hint">Connect provider slots before adding provider-specific execution overrides.</div>
+        </div>
+      `;
+    }
+
+    const { overrides } = getProviderOverrides(project);
+    return `
+      <div class="policy-provider-list">
+        <div class="policy-label">Provider execution overrides</div>
+        ${slots.map((slot) => {
+          const slug = normalizeProviderOverrideSlug(slot.slug || slot.provider);
+          const override = overrides[slug] || {};
+          return `
+            <div class="policy-provider-card" data-provider-override-card="${escapeHtml(project.id)}:${escapeHtml(slug)}">
+              <div class="policy-provider-head">
+                <div>
+                  <div class="policy-provider-title">${escapeHtml(slot.slug || slot.provider)}</div>
+                  <div class="policy-hint">${escapeHtml(slot.provider)} slot · overrides merge with the project policy at execution time</div>
+                </div>
+                <span class="pill ${Object.keys(override).length ? 'warn' : 'neutral'}">${Object.keys(override).length ? 'override set' : 'inherits project'}</span>
+              </div>
+              <div class="policy-provider-grid">
+                <label class="policy-field">
+                  <span class="policy-label">Allowed methods</span>
+                  <textarea class="policy-textarea" data-provider-override="${escapeHtml(project.id)}" data-provider-slug="${escapeHtml(slug)}" data-provider-field="allowed_methods" ${canManage ? '' : 'disabled'} placeholder="POST&#10;GET">${escapeHtml(listToTextarea(override.allowed_methods))}</textarea>
+                </label>
+                <label class="policy-field">
+                  <span class="policy-label">Allowed upstream hosts</span>
+                  <textarea class="policy-textarea" data-provider-override="${escapeHtml(project.id)}" data-provider-slug="${escapeHtml(slug)}" data-provider-field="allowed_upstream_hosts" ${canManage ? '' : 'disabled'} placeholder="api.openai.com">${escapeHtml(listToTextarea(override.allowed_upstream_hosts))}</textarea>
+                </label>
+                <label class="policy-field">
+                  <span class="policy-label">Allowed path prefixes</span>
+                  <textarea class="policy-textarea" data-provider-override="${escapeHtml(project.id)}" data-provider-slug="${escapeHtml(slug)}" data-provider-field="allowed_upstream_path_prefixes" ${canManage ? '' : 'disabled'} placeholder="/v1/responses&#10;/v1/chat">${escapeHtml(listToTextarea(override.allowed_upstream_path_prefixes))}</textarea>
+                </label>
+                <label class="policy-field">
+                  <span class="policy-label">Rate limit / min</span>
+                  <input class="policy-input" data-provider-override="${escapeHtml(project.id)}" data-provider-slug="${escapeHtml(slug)}" data-provider-field="rate_limit_per_minute" ${canManage ? '' : 'disabled'} type="number" min="1" max="60000" step="1" value="${escapeHtml(override.rate_limit_per_minute || '')}" placeholder="inherit">
+                  <span class="policy-hint">Blank means inherit the project-level limit.</span>
+                </label>
+              </div>
+            </div>
+          `;
+        }).join('')}
+      </div>
+    `;
+  }
 
   function renderProjectPolicies(projectsPayload) {
     const list = $('policyList');
@@ -491,6 +566,9 @@
     list.innerHTML = projects.map((project) => {
       const canManage = canManageProjectPolicy(project);
       const origins = normalizeOriginsForTextarea(project.allowed_origins);
+      const { overrides } = getProviderOverrides(project);
+      const providerSlots = project.provider_slots || [];
+      const overrideCount = Object.keys(overrides).length;
       const policyTone = project.strict_origin ? 'warn' : 'neutral';
       const policyLabel = project.strict_origin ? 'strict origin lock' : 'observing origins';
       return `
@@ -502,6 +580,7 @@
             </div>
             <div class="policy-badges">
               <span class="pill ${policyTone}">${escapeHtml(policyLabel)}</span>
+              <span class="pill ${overrideCount ? 'warn' : 'neutral'}">${overrideCount ? `${overrideCount} provider override${overrideCount === 1 ? '' : 's'}` : `${providerSlots.length} provider slot${providerSlots.length === 1 ? '' : 's'}`}</span>
               <span class="pill neutral">${project.allowed_origins ? `${escapeHtml(String(project.allowed_origins.split(',').filter(Boolean).length))} origin${project.allowed_origins.split(',').filter(Boolean).length === 1 ? '' : 's'}` : 'no origin list'}</span>
             </div>
           </div>
@@ -514,10 +593,11 @@
                 <input type="checkbox" data-policy-strict="${escapeHtml(project.id)}" ${project.strict_origin ? 'checked' : ''} ${canManage ? '' : 'disabled'}>
                 Enforce strict origin lock for this project
               </label>
+              ${renderProviderOverrideFields(project, canManage)}
             </div>
             <div class="policy-actions">
               <button type="button" class="btn-primary" data-policy-save="${escapeHtml(project.id)}" ${canManage ? '' : 'disabled'}>${canManage ? 'save policy' : 'read only'}</button>
-              <div class="policy-message" data-policy-message="${escapeHtml(project.id)}">${canManage ? 'Admins can update origin policy here.' : 'You can review policy here, but only project admins can change it.'}</div>
+              <div class="policy-message" data-policy-message="${escapeHtml(project.id)}">${canManage ? 'Admins can update origin policy and provider overrides here.' : 'You can review policy here, but only project admins can change it.'}</div>
             </div>
           </div>
         </div>
@@ -948,6 +1028,38 @@
       .map((item) => item.trim())
       .filter(Boolean)
       .join(',');
+    const { policy: existingPolicy } = getProviderOverrides(project);
+    const providerOverrides = {};
+    document.querySelectorAll(`[data-provider-override="${projectId}"]`).forEach((field) => {
+      const slug = normalizeProviderOverrideSlug(field.getAttribute('data-provider-slug'));
+      const policyField = field.getAttribute('data-provider-field');
+      if (!slug || !policyField) return;
+      const override = providerOverrides[slug] || {};
+      if (policyField === 'rate_limit_per_minute') {
+        const numericValue = Number(field.value || 0);
+        if (Number.isInteger(numericValue) && numericValue >= 1) {
+          override.rate_limit_per_minute = numericValue;
+        }
+      } else if (policyField === 'allowed_methods') {
+        const list = parseTextareaList(field.value, (item) => item.toUpperCase());
+        if (list.length) override.allowed_methods = list;
+      } else if (policyField === 'allowed_upstream_hosts') {
+        const list = parseTextareaList(field.value, (item) => item.toLowerCase());
+        if (list.length) override.allowed_upstream_hosts = list;
+      } else if (policyField === 'allowed_upstream_path_prefixes') {
+        const list = parseTextareaList(field.value, (item) => item.startsWith('/') ? item : `/${item}`);
+        if (list.length) override.allowed_upstream_path_prefixes = list;
+      }
+      if (Object.keys(override).length) providerOverrides[slug] = override;
+    });
+
+    const callerLockPolicy = {
+      ...existingPolicy,
+      provider_overrides: providerOverrides,
+    };
+    if (!Object.keys(providerOverrides).length) {
+      delete callerLockPolicy.provider_overrides;
+    }
 
     setButtonState(trigger, true, 'saving...');
     setMessage(messageEl, 'Saving project policy…', '');
@@ -957,6 +1069,7 @@
       body: {
         allowed_origins: origins,
         strict_origin: Boolean(strictEl.checked),
+        caller_lock_policy: callerLockPolicy,
       },
     });
 

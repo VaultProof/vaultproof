@@ -720,6 +720,10 @@ curl -sS \
   > vaultproof-access-review.csv
 ```
 
+## Provider Policy Overrides
+
+Project admins can edit provider-level execution overrides from the enterprise Control page. Each provider slot can narrow allowed HTTP methods, upstream hosts, path prefixes, and per-minute rate limits without changing the project-wide origin policy.
+
 ## Azure Monitor Placement
 
 The template can deploy the first production monitoring bundle without changing the live route:

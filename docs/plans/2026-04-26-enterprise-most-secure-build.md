@@ -59,6 +59,7 @@ Live production-confidential path:
 - Execution dispatch audit events include executor result metadata and customer-verifiable Azure attestation evidence summaries.
 - Azure secure-runtime IaC and operational scripts exist at `infra/azure/enterprise-secure-runtime`.
 - Enterprise audit events and SOC 2 access-review evidence can be exported from the control plane.
+- The Control page includes project policy and provider-level execution override editing.
 
 Important limitation:
 
@@ -412,7 +413,7 @@ Important key-type decision:
 - [x] Add per-project/provider rate limits.
 - [x] Add emergency key revoke.
 - [x] Add audit export.
-- [ ] Add policy UI for editing caller-lock provider overrides.
+- [x] Add policy UI for editing caller-lock provider overrides.
 - [x] Add access review evidence for SOC 2.
 
 ## Azure Resources
