@@ -252,6 +252,74 @@ function installSupabaseStub() {
       return jsonResponse([]);
     }
 
+    if (url.includes('/rest/v1/organization_alert_policies') && method === 'GET') {
+      return jsonResponse({
+        dispatch_enabled: true,
+        minimum_severity: 'warning',
+        min_interval_minutes: 60,
+      });
+    }
+
+    if (url.includes('/rest/v1/organization_alert_destinations') && method === 'GET') {
+      return jsonResponse([{
+        id: 'alert_dest_email_123',
+        channel_type: 'email',
+        label: 'Security inbox',
+        target: 'security@example.com',
+        enabled: true,
+        created_at: '2026-04-20T12:00:00.000Z',
+        updated_at: '2026-04-21T12:00:00.000Z',
+      }, {
+        id: 'alert_dest_webhook_123',
+        channel_type: 'webhook',
+        label: 'SOC webhook',
+        target: 'https://hooks.example.com/vaultproof-alerts?secret=redacted',
+        enabled: false,
+        created_at: '2026-04-20T13:00:00.000Z',
+        updated_at: '2026-04-21T13:00:00.000Z',
+      }]);
+    }
+
+    if (url.includes('/rest/v1/organization_alert_deliveries') && method === 'GET') {
+      if (decodedUrl.includes('select=id&') || decodedUrl.includes('select=id HTTP')) return jsonResponse([]);
+      return jsonResponse([{
+        id: 'alert_delivery_123',
+        destination_id: 'alert_dest_email_123',
+        channel_type: 'email',
+        delivery_kind: 'policy_dispatch',
+        status: 'delivered',
+        detail: 'Production readiness drift resolved',
+        response_status: 202,
+        delivered_at: '2026-04-26T12:05:00.000Z',
+      }, {
+        id: 'alert_delivery_124',
+        destination_id: 'alert_dest_webhook_123',
+        channel_type: 'webhook',
+        delivery_kind: 'test_send',
+        status: 'failed',
+        detail: 'Webhook returned 500',
+        response_status: 500,
+        delivered_at: '2026-04-26T12:04:00.000Z',
+      }]);
+    }
+
+    if (url.includes('/rest/v1/organization_alert_dispatch_runs') && method === 'GET') {
+      if (decodedUrl.includes('select=id&') || decodedUrl.includes('select=id HTTP')) return jsonResponse([]);
+      return jsonResponse([{
+        id: 'alert_run_123',
+        trigger_source: 'scheduled',
+        status: 'dispatched',
+        reason: 'production readiness drift',
+        dispatched_alert_count: 1,
+        destination_count: 2,
+        delivered_count: 1,
+        failed_count: 1,
+        skipped_count: 0,
+        next_eligible_at: '2026-04-26T13:05:00.000Z',
+        checked_at: '2026-04-26T12:05:00.000Z',
+      }]);
+    }
+
     if (url.includes('/rest/v1/organizations') && method === 'GET') {
       if (decodedUrl.includes('select=id%2C+kind') || decodedUrl.includes('select=id, kind')) {
         return jsonResponse({ id: 'org_123', kind: 'team' });
@@ -1286,6 +1354,43 @@ async function assertEnterpriseAccessReviewEvidenceExport() {
   }
 }
 
+async function assertEnterpriseAlertsApi() {
+  installSupabaseStub();
+
+  const response = await handleEnterpriseControlPlaneRequest(
+    buildRequest('/api/v1/enterprise/alerts?activity_window=7d&delivery_status=delivered&delivery_channel=email&delivery_kind=policy_dispatch&delivery_q=readiness', {
+      headers: {
+        authorization: `Bearer ${AUTH_TOKEN}`,
+        'x-vaultproof-organization': 'org_123',
+      },
+    }),
+    {
+      enterpriseHostname: ENTERPRISE_HOSTNAME,
+      supabaseUrl: 'https://supabase.example.co',
+      supabaseServiceRoleKey: 'service-role-key',
+    },
+  );
+  const payload = await response.json();
+  if (response.status !== 200) {
+    throw new Error(`Expected alerts API to succeed, got ${response.status} ${JSON.stringify(payload)}`);
+  }
+  if (payload?.policy?.dispatch_enabled !== true || payload?.policy?.minimum_severity !== 'warning') {
+    throw new Error(`Expected alert policy in alerts API payload, got ${JSON.stringify(payload?.policy)}`);
+  }
+  if (!Array.isArray(payload?.destinations) || payload.destinations.length !== 2) {
+    throw new Error(`Expected alert destinations in alerts API payload, got ${JSON.stringify(payload?.destinations)}`);
+  }
+  if (!String(payload.destinations[0].target_masked || '').includes('se***@example.com')) {
+    throw new Error(`Expected alert destination target to be masked, got ${JSON.stringify(payload.destinations[0])}`);
+  }
+  if (!Array.isArray(payload?.delivery_logs) || !payload.delivery_logs.find((item) => item.status === 'delivered')) {
+    throw new Error(`Expected delivered alert log in alerts API payload, got ${JSON.stringify(payload?.delivery_logs)}`);
+  }
+  if (!Array.isArray(payload?.dispatch_runs) || payload.dispatch_runs[0]?.status !== 'dispatched') {
+    throw new Error(`Expected dispatch run in alerts API payload, got ${JSON.stringify(payload?.dispatch_runs)}`);
+  }
+}
+
 async function assertEnterpriseMembersAdminActions() {
   installSupabaseStub();
 
@@ -1580,7 +1685,24 @@ async function assertEnterpriseLoginRoute() {
     throw new Error('Expected enterprise audit page to include filters and avoid B2C APIs');
   }
 
-  for (const plannedPath of ['/app/alerts', '/app/activity', '/app/projects', '/app/keys', '/app/settings', '/app/plans', '/app/scanner']) {
+  const alertsResponse = await handleEnterpriseControlPlaneRequest(
+    buildRequest('/app/alerts'),
+    {
+      enterpriseHostname: ENTERPRISE_HOSTNAME,
+    },
+  );
+  const alertsHtml = await alertsResponse.text();
+  if (alertsResponse.status !== 200 || !alertsHtml.includes('Alerts - VaultProof Enterprise')) {
+    throw new Error(`Expected enterprise alerts page, got ${alertsResponse.status}`);
+  }
+  if (!alertsHtml.includes('/api/v1/enterprise/alerts') || !alertsHtml.includes('deliveryFilterForm')) {
+    throw new Error('Expected enterprise alerts page to use enterprise alerts API and delivery filters');
+  }
+  if (!alertsHtml.includes('Test-send API is planned') || alertsHtml.includes('https://init.vaultproof.dev')) {
+    throw new Error('Expected enterprise alerts page to avoid B2C APIs and explain unavailable test-send mutation');
+  }
+
+  for (const plannedPath of ['/app/activity', '/app/projects', '/app/keys', '/app/settings', '/app/plans', '/app/scanner']) {
     const plannedResponse = await handleEnterpriseControlPlaneRequest(
       buildRequest(plannedPath),
       {
@@ -1725,6 +1847,7 @@ await assertEnterpriseRateLimitPolicy();
 await assertEnterpriseEmergencyRevoke();
 await assertEnterpriseAuditCsvExport();
 await assertEnterpriseAccessReviewEvidenceExport();
+await assertEnterpriseAlertsApi();
 await assertEnterpriseMembersAdminActions();
 await assertEnterpriseSsoLifecycle();
 console.log('enterprise control plane smoke test passed');
