@@ -45,6 +45,9 @@ Edit `main.parameters.json`:
 - `apiManagementSkuName`: use `StandardV2` for production starter or `PremiumV2` when you need stronger isolation/networking features.
 - `apiManagementBackendUrl`: leave empty to forward to the Confidential VM public control-plane origin on port `3001`, or set it to a private/internal origin once that exists.
 - `apiManagementOriginLockSecret`: optional APIM-to-control-plane shared origin-lock secret. If set, also set `ENTERPRISE_ORIGIN_LOCK_SECRET` in the control-plane env.
+- `apiManagementJwtValidationEnabled`: enable APIM bearer-token validation before traffic reaches the control plane.
+- `apiManagementJwtOpenIdConfigUrl`: OpenID metadata URL for APIM `validate-jwt`, such as Entra ID tenant metadata or another OpenID-compatible session provider.
+- `apiManagementJwtIssuer` / `apiManagementJwtAudiences`: optional APIM issuer/audience allowlist checks.
 - `deployMonitoring`: keep `false` until the Front Door production path is stable and you are ready to pay for Azure Monitor/App Insights resources.
 - `monitoringAlertEmail` / `monitoringWebhookUrl`: optional Azure Monitor action group receivers.
 - `monitoringEnterpriseUrl`: the public Front Door URL monitored by availability tests.
@@ -590,11 +593,14 @@ APIM policy starts with coarse limits:
 
 - 120 calls per minute per IP.
 - 10,000 calls per day per IP.
+- Optionally validates bearer JWTs with APIM `validate-jwt` before forwarding to the control plane.
 - Adds `x-vaultproof-apim: enterprise`.
 - Adds `x-vaultproof-customer-gateway: vaultproof-managed`.
 - Strips provider-secret style headers such as `x-api-key`, `openai-api-key`, `anthropic-api-key`, and `stripe-api-key`.
 - Preserves `Authorization` so the VaultProof control plane can still validate Supabase/user/project auth.
 - Optionally forwards a secret `x-vaultproof-origin-lock` value from an APIM named value.
+
+When `deployMonitoring=true`, the template also wires the APIM API to the same Application Insights resource used for production availability tests. APIM diagnostics log gateway errors and W3C correlation metadata without logging request or response bodies.
 
 The template also creates APIM operations for:
 
@@ -627,7 +633,12 @@ az deployment group create \
     managedHsmInitialAdminObjectId='<your Entra object id>' \
     deployApiManagement=true \
     apiManagementBackendUrl='http://20.85.214.14:3001' \
-    apiManagementOriginLockSecret='<same value as ENTERPRISE_ORIGIN_LOCK_SECRET>'
+    apiManagementOriginLockSecret='<same value as ENTERPRISE_ORIGIN_LOCK_SECRET>' \
+    apiManagementJwtValidationEnabled=true \
+    apiManagementJwtOpenIdConfigUrl='https://login.microsoftonline.com/<tenant-id>/v2.0/.well-known/openid-configuration' \
+    apiManagementJwtAudiences='["<expected-api-audience>"]' \
+    deployMonitoring=true \
+    monitoringAlertEmail='security@vaultproof.dev'
 ```
 
 Validate the APIM gateway before considering a Front Door route change:
@@ -645,7 +656,7 @@ curl -sS "${APIM_API_URL}/readiness"
 
 For the final VaultProof-managed APIM route, Front Door should point to the APIM gateway origin, and APIM should point to the Confidential VM control-plane origin. Avoid configuring APIM to forward to `https://enterprise.vaultproof.dev`, because that creates a routing loop once Front Door sends `enterprise.vaultproof.dev` to APIM.
 
-Later policies should add JWT validation, Entra-aware products/subscriptions, request size limits, per-customer quotas, OpenAPI publishing, and Azure Monitor/Application Insights integration.
+Later policies should add Entra-aware products/subscriptions, per-customer quota tiers, and OpenAPI publishing. JWT validation, coarse request limits, request-size guards, provider-secret header stripping, APIM origin locking, and Application Insights diagnostics are already deployable from this template.
 
 ## Enterprise Execution Policy
 

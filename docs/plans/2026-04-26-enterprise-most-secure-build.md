@@ -41,7 +41,7 @@ Live production-confidential path:
 - `npm run verify:enterprise-production` verifies the live path.
 - `npm run deploy:enterprise-vm` deploys/rebuilds/restarts the CVM runtime and can run the verifier.
 - `npm run evidence:enterprise-production` captures customer/audit evidence snapshots.
-- APIM IaC/policy support exists but is not deployed in the live route yet.
+- APIM IaC/policy support exists with JWT validation, coarse limits, request-size guards, origin locking, and App Insights diagnostics, but APIM is not deployed in the live route yet.
 - Azure Monitor/App Insights alerting IaC exists but is not deployed yet.
 - TLS-origin proxy tooling exists but Front Door still uses HTTP origin forwarding until a real origin certificate/hostname is installed and cut over.
 - SSH bootstrap lockdown tooling exists but public SSH remains open until alternate access or a controlled break-glass process is ready.
@@ -392,7 +392,7 @@ Important key-type decision:
 ### Phase 4: Private Network And Call Authentication
 
 - [ ] Add Azure API Management in front of the enterprise control plane. In progress: deployable APIM IaC exists with sidecar validation path; live route cutover is pending.
-- [ ] Configure APIM policies for JWT validation, coarse rate limits, quotas, request size limits, and observability. In progress: coarse limits, quota, request-size guard, provider-secret header stripping, APIM marker, APIM origin-lock forwarding, and API operations are implemented; JWT validation and Azure Monitor wiring are still pending.
+- [x] Configure APIM policies for JWT validation, coarse rate limits, quotas, request size limits, and observability. Deployable APIM policy support now includes JWT validation, coarse limits, quota, request-size guard, provider-secret header stripping, APIM marker, APIM origin-lock forwarding, API operations, and App Insights diagnostics.
 - [x] Support customer-managed APIM mode using `docs/enterprise/customer-managed-apim-policy.xml`.
 - [x] Support customer device/IoT mode using `docs/enterprise/customer-managed-apim-device-policy.xml`.
 - [x] Keep VaultProof-specific org/project authorization in the control plane.

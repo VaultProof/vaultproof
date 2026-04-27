@@ -101,6 +101,18 @@ param apiManagementOriginLockHeaderName string = 'x-vaultproof-origin-lock'
 @description('Optional custom origin-lock secret APIM forwards to the control plane. Set the same value in ENTERPRISE_ORIGIN_LOCK_SECRET on the Confidential VM before requiring APIM-origin traffic.')
 param apiManagementOriginLockSecret string = ''
 
+@description('Enable APIM JWT validation before requests reach the VaultProof enterprise control plane. Requires apiManagementJwtOpenIdConfigUrl.')
+param apiManagementJwtValidationEnabled bool = false
+
+@description('OpenID Connect metadata URL used by APIM validate-jwt, such as https://login.microsoftonline.com/<tenant-id>/v2.0/.well-known/openid-configuration or another OpenID-compatible session provider metadata URL.')
+param apiManagementJwtOpenIdConfigUrl string = ''
+
+@description('Optional issuer APIM should require in inbound bearer tokens. Leave empty to rely on the OpenID metadata issuer.')
+param apiManagementJwtIssuer string = ''
+
+@description('Optional JWT audiences APIM should require in inbound bearer tokens.')
+param apiManagementJwtAudiences array = []
+
 @description('Deploy Azure Monitor resources for enterprise production readiness and VM availability alerting.')
 param deployMonitoring bool = false
 
@@ -165,10 +177,22 @@ var monitoringAvailabilityActions = [
   }
 ]
 var createPrototypeReleaseKey = deployPrototypeReleaseKey && !empty(secureKeyReleasePolicyData)
+var apiManagementJwtAudienceXmlParts = [for audience in apiManagementJwtAudiences: '<audience>${audience}</audience>']
+var apiManagementJwtAudienceXml = join(apiManagementJwtAudienceXmlParts, '')
+var apiManagementJwtAudiencesXml = empty(apiManagementJwtAudienceXml) ? '' : '<audiences>${apiManagementJwtAudienceXml}</audiences>'
+var apiManagementJwtIssuersXml = empty(apiManagementJwtIssuer) ? '' : '<issuers><issuer>${apiManagementJwtIssuer}</issuer></issuers>'
+var apiManagementJwtPolicyXml = apiManagementJwtValidationEnabled ? format('''
+    <validate-jwt header-name="Authorization" failed-validation-httpcode="401" failed-validation-error-message="Unauthorized" require-scheme="Bearer">
+      <openid-config url="{0}" />
+      {1}
+      {2}
+    </validate-jwt>
+''', apiManagementJwtOpenIdConfigUrl, apiManagementJwtAudiencesXml, apiManagementJwtIssuersXml) : ''
 var enterpriseApiPolicyXml = format('''
 <policies>
   <inbound>
     <base />
+{6}
     <rate-limit-by-key calls="{0}" renewal-period="60" counter-key="@(context.Subscription?.Key ?? context.Request.IpAddress)" />
     <quota-by-key calls="{1}" renewal-period="86400" counter-key="@(context.Subscription?.Key ?? context.Request.IpAddress)" />
     <choose>
@@ -204,7 +228,7 @@ var enterpriseApiPolicyXml = format('''
     <base />
   </on-error>
 </policies>
-''', apiManagementRateLimitCalls, apiManagementQuotaCalls, apiManagementMaxRequestBodyBytes, apiManagementGatewayMarker, apiManagementOriginLockHeaderName, apiManagementResolvedBackendUrl)
+''', apiManagementRateLimitCalls, apiManagementQuotaCalls, apiManagementMaxRequestBodyBytes, apiManagementGatewayMarker, apiManagementOriginLockHeaderName, apiManagementResolvedBackendUrl, apiManagementJwtPolicyXml)
 
 resource vnet 'Microsoft.Network/virtualNetworks@2024-05-01' = {
   name: vnetName
@@ -609,6 +633,34 @@ resource enterpriseApiPolicy 'Microsoft.ApiManagement/service/apis/policies@2024
   }
 }
 
+resource apiManagementAppInsightsLogger 'Microsoft.ApiManagement/service/loggers@2024-05-01' = if (deployApiManagement && deployMonitoring) {
+  parent: apiManagement
+  name: 'vaultproof-appinsights'
+  properties: {
+    loggerType: 'applicationInsights'
+    description: 'Application Insights logger for VaultProof enterprise APIM gateway errors and correlation.'
+    resourceId: monitoringAppInsights!.id
+    credentials: {
+      instrumentationKey: monitoringAppInsights!.properties.InstrumentationKey
+    }
+  }
+}
+
+resource enterpriseApiDiagnostic 'Microsoft.ApiManagement/service/apis/diagnostics@2024-05-01' = if (deployApiManagement && deployMonitoring) {
+  parent: enterpriseApi
+  name: 'applicationinsights'
+  properties: {
+    alwaysLog: 'allErrors'
+    httpCorrelationProtocol: 'W3C'
+    loggerId: apiManagementAppInsightsLogger.id
+    sampling: {
+      samplingType: 'fixed'
+      percentage: 100
+    }
+    verbosity: 'information'
+  }
+}
+
 resource monitoringWorkspace 'Microsoft.OperationalInsights/workspaces@2023-09-01' = if (deployMonitoring) {
   name: monitoringWorkspaceName
   location: location
@@ -916,6 +968,8 @@ output apiManagementName string = deployApiManagement ? apiManagement!.name : ''
 output apiManagementGatewayUrl string = deployApiManagement ? apiManagement!.properties.gatewayUrl : ''
 output apiManagementBackendUrl string = deployApiManagement ? apiManagementResolvedBackendUrl : ''
 output apiManagementApiUrl string = deployApiManagement ? '${apiManagement!.properties.gatewayUrl}/${apiManagementApiPath}' : ''
+output apiManagementAppInsightsLoggerName string = (deployApiManagement && deployMonitoring) ? apiManagementAppInsightsLogger!.name : ''
+output apiManagementDiagnosticName string = (deployApiManagement && deployMonitoring) ? enterpriseApiDiagnostic!.name : ''
 output monitoringWorkspaceName string = deployMonitoring ? monitoringWorkspace!.name : ''
 output monitoringAppInsightsName string = deployMonitoring ? monitoringAppInsights!.name : ''
 output monitoringActionGroupName string = deployMonitoring ? monitoringActionGroup!.name : ''
