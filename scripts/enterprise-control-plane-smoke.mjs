@@ -1563,7 +1563,24 @@ async function assertEnterpriseLoginRoute() {
     throw new Error('Expected enterprise members page to use enterprise member APIs only');
   }
 
-  for (const plannedPath of ['/app/audit', '/app/alerts', '/app/activity', '/app/projects', '/app/keys', '/app/settings', '/app/plans', '/app/scanner']) {
+  const auditResponse = await handleEnterpriseControlPlaneRequest(
+    buildRequest('/app/audit'),
+    {
+      enterpriseHostname: ENTERPRISE_HOSTNAME,
+    },
+  );
+  const auditHtml = await auditResponse.text();
+  if (auditResponse.status !== 200 || !auditHtml.includes('Audit - VaultProof Enterprise')) {
+    throw new Error(`Expected enterprise audit page, got ${auditResponse.status}`);
+  }
+  if (!auditHtml.includes('/api/v1/enterprise/audit') || !auditHtml.includes('/api/v1/enterprise/projects')) {
+    throw new Error('Expected enterprise audit page to use enterprise audit and project APIs');
+  }
+  if (!auditHtml.includes('sourceFilter') || !auditHtml.includes('eventTypeFilter') || auditHtml.includes('https://init.vaultproof.dev')) {
+    throw new Error('Expected enterprise audit page to include filters and avoid B2C APIs');
+  }
+
+  for (const plannedPath of ['/app/alerts', '/app/activity', '/app/projects', '/app/keys', '/app/settings', '/app/plans', '/app/scanner']) {
     const plannedResponse = await handleEnterpriseControlPlaneRequest(
       buildRequest(plannedPath),
       {
