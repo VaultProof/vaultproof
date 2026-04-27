@@ -168,7 +168,6 @@ export function renderEnterpriseDashboardPage(): string {
         <div>
           <div class="eyebrow">enterprise command center</div>
           <h1>Separate enterprise dashboard, live on the confidential path.</h1>
-          <p class="lead">This page is served by the Azure enterprise control plane, not the B2C dashboard shell. It reads org, runtime, access, audit, and project posture from the enterprise API only.</p>
         </div>
         <div class="toolbar">
           <select id="orgSelect" aria-label="Organization"><option>Loading org...</option></select>
