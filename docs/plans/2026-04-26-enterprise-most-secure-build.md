@@ -41,6 +41,7 @@ Live production-confidential path:
 - `npm run verify:enterprise-production` verifies the live path.
 - `npm run deploy:enterprise-vm` deploys/rebuilds/restarts the CVM runtime and can run the verifier.
 - `npm run evidence:enterprise-production` captures customer/audit evidence snapshots.
+- `npm run verify:enterprise-secrets` verifies the installed control-plane/executor env files for secret-rotation readiness and confidential-mode footguns.
 - The enterprise control plane serves a separate `/app` and `/app/dashboard` dashboard instead of relying on the B2C dashboard shell. In progress: dashboard home, login, control, and org pages exist; remaining enterprise app links need enterprise-owned routes and feature-complete pages.
 - Enterprise `/app/*` pages support opt-in Mixpanel page/navigation analytics through `ENTERPRISE_MIXPANEL_TOKEN`; autocapture and session recording remain disabled by default for enterprise privacy.
 - APIM IaC/policy support exists with JWT validation, coarse limits, request-size guards, origin locking, and App Insights diagnostics, but APIM is not deployed in the live route yet.
@@ -383,7 +384,7 @@ Minimum evidence bundle for customer review:
 - [x] Never place unwrap key in Azure app settings or container env vars in production.
 - [x] Add customer-verifiable attestation evidence to execution audit metadata.
 - [x] Cache released unwrap material only in process memory with an explicit short TTL.
-- [ ] Rotate setup-time Supabase/service/signing secrets before customer production.
+- [ ] Rotate setup-time Supabase/service/signing secrets before customer production. In progress: `npm run verify:enterprise-secrets` now validates installed runtime env files for matching rotated signing material, Supabase service-role presence, origin lock, and confidential-mode footguns; actual secret rotation remains an operator action.
 
 Important key-type decision:
 

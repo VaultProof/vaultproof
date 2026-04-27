@@ -831,6 +831,16 @@ FRONT_DOOR_ROUTE=default-route \
 npm run verify:enterprise-production
 ```
 
+Before any customer-facing production handoff, also verify that the installed runtime env files no longer contain setup-time or placeholder secrets:
+
+```bash
+CONTROL_PLANE_ENV_FILE=/etc/vaultproof/enterprise-control-plane.env \
+EXECUTOR_ENV_FILE=/etc/vaultproof/enterprise-secure-executor.env \
+npm run verify:enterprise-secrets
+```
+
+Set `REQUIRE_ROTATION_ACK=true` if you also add `ROTATED_SUPABASE_SERVICE_ROLE_AT` and `ROTATED_EXECUTOR_SIGNING_SECRET_AT` audit markers to the control-plane env after rotating those materials.
+
 The verifier checks Front Door readiness, Confidential VM security settings, Front Door ID origin lock, NSG posture, direct-origin rejection, and loopback readiness.
 
 Capture a timestamped production evidence bundle for audits or handoff:
@@ -853,6 +863,7 @@ Execution-level governance audit events also include a compact executor attestat
 - Route control plane to executor over private IP.
 - Restrict executor NSG source to the control-plane subnet or private endpoint.
 - Confirm no demo seed endpoint or demo seed environment variables are deployed.
+- Run `npm run verify:enterprise-secrets` against the installed control-plane and executor env files.
 - Keep `VAULT_ENCRYPTION_KEY` unset in production.
 - Keep `AZURE_ATTESTATION_TOKEN` unset in production unless debugging a failed attestation flow.
 - Confirm `AZURE_ATTESTATION_CLIENT_PATH` points to an executable guest attestation client.
