@@ -20,6 +20,9 @@
     "sshSourceCidr": {
       "value": "REPLACE_WITH_YOUR_IP/32"
     },
+    "allowSshBootstrap": {
+      "value": true
+    },
     "executorSourceCidr": {
       "value": "10.42.1.0/24"
     },

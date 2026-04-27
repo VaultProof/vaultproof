@@ -250,7 +250,7 @@ curl -sS -H 'host: enterprise.vaultproof.dev' http://127.0.0.1:3001/readiness
 Azure Front Door automatically sends `X-Azure-FDID` to origins. The control plane validates that header against `ENTERPRISE_AZURE_FRONT_DOOR_ID` when `ENTERPRISE_REQUIRE_ORIGIN_LOCK=true`.
 If you need to deploy the control-plane code before Front Door is fully configured, temporarily keep `ENTERPRISE_REQUIRE_ORIGIN_LOCK=false`.
 
-Only after local readiness is production-ready should `enterprise.vaultproof.dev` be cut over from the Container App origin to the Confidential VM origin. At that point, restrict port `3001` to Azure Front Door origins and remove direct SSH/public executor access where possible.
+Only after local readiness is production-ready should `enterprise.vaultproof.dev` be cut over from the Container App origin to the Confidential VM origin. At that point, restrict port `3001` to Azure Front Door origins and close public SSH bootstrap access when another operational access path is ready.
 
 ### Front Door Cutover
 
@@ -268,6 +268,7 @@ az deployment group create \
     adminSshPublicKey='<existing SSH public key>' \
     vmSize=Standard_DC2as_v5 \
     sshSourceCidr='<your current IPv4>/32' \
+    allowSshBootstrap=true \
     executorSourceCidr=10.42.1.0/24 \
     allowFrontDoorToControlPlane=true \
     controlPlaneIngressSource=AzureFrontDoor.Backend \
@@ -352,6 +353,7 @@ az deployment group create \
     adminSshPublicKey='<existing SSH public key>' \
     vmSize=Standard_DC2as_v5 \
     sshSourceCidr='<your current IPv4>/32' \
+    allowSshBootstrap=true \
     executorSourceCidr=10.42.1.0/24 \
     allowFrontDoorToControlPlane=true \
     allowFrontDoorToTlsControlPlane=true \
@@ -381,6 +383,48 @@ npm run verify:enterprise-production
 ```
 
 If anything fails, roll back Front Door route forwarding to `HttpOnly` and the previous VM origin settings while leaving the TLS proxy installed for debugging.
+
+### SSH Bootstrap Lockdown
+
+The VM keeps public SSH open only for bootstrap and break-glass access. Close it after `enterprise.vaultproof.dev/readiness` is production-ready, Front Door reaches the Confidential VM origin, and you have an alternate operational path such as Azure Bastion, JIT VM access, serial console, or a controlled temporary NSG reopen process.
+
+Preview the current SSH bootstrap rule:
+
+```bash
+RESOURCE_GROUP=vaultproof-enterprise \
+DEPLOYMENT_NAME=vp-enterprise-secure-runtime-eastus-hsm \
+ACTION=plan \
+bash infra/azure/enterprise-secure-runtime/harden-ssh-bootstrap.sh
+```
+
+Close public SSH bootstrap. The script refuses to close SSH unless `/readiness` reports production-ready with no production blockers:
+
+```bash
+RESOURCE_GROUP=vaultproof-enterprise \
+DEPLOYMENT_NAME=vp-enterprise-secure-runtime-eastus-hsm \
+ENTERPRISE_URL=https://enterprise.vaultproof.dev \
+ACTION=close \
+bash infra/azure/enterprise-secure-runtime/harden-ssh-bootstrap.sh
+```
+
+Verify the locked-down posture without SSH-based loopback checks:
+
+```bash
+EXPECTED_SSH_BOOTSTRAP_ACCESS=Deny \
+RUN_SSH_CHECKS=false \
+npm run verify:enterprise-production
+```
+
+Break-glass reopen:
+
+```bash
+RESOURCE_GROUP=vaultproof-enterprise \
+DEPLOYMENT_NAME=vp-enterprise-secure-runtime-eastus-hsm \
+ACTION=reopen \
+bash infra/azure/enterprise-secure-runtime/harden-ssh-bootstrap.sh
+```
+
+For declarative redeploys, set `allowSshBootstrap=false` in `main.bicep` parameters after the VM is stable. Keep it `true` during initial provisioning or when running SSH-based deployment helpers.
 
 ## Secure Key Release Work Still Required
 
@@ -524,6 +568,7 @@ az deployment group create \
     adminSshPublicKey='<existing SSH public key>' \
     vmSize=Standard_DC2as_v5 \
     sshSourceCidr='<your current IPv4>/32' \
+    allowSshBootstrap=true \
     executorSourceCidr=10.42.1.0/24 \
     allowFrontDoorToControlPlane=true \
     controlPlaneIngressSource=AzureFrontDoor.Backend \
@@ -634,7 +679,7 @@ npm run evidence:enterprise-production
 
 By default, evidence JSON files are written to `/tmp/vaultproof-production-evidence`.
 
-- Remove the bootstrap public IP or close SSH after setup.
+- Close SSH bootstrap with `harden-ssh-bootstrap.sh` after production readiness and alternate access are verified.
 - Route control plane to executor over private IP.
 - Restrict executor NSG source to the control-plane subnet or private endpoint.
 - Remove `ENTERPRISE_DEMO_SEED_TOKEN`.

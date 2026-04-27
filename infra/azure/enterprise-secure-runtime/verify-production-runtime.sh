@@ -11,6 +11,7 @@ EXPECTED_FRONT_DOOR_FORWARDING_PROTOCOL="${EXPECTED_FRONT_DOOR_FORWARDING_PROTOC
 ORIGIN_TLS_HOSTNAME="${ORIGIN_TLS_HOSTNAME:-}"
 SSH_USER="${SSH_USER:-azureuser}"
 RUN_SSH_CHECKS="${RUN_SSH_CHECKS:-true}"
+EXPECTED_SSH_BOOTSTRAP_ACCESS="${EXPECTED_SSH_BOOTSTRAP_ACCESS:-Allow}"
 
 failures=0
 
@@ -189,6 +190,16 @@ if (match) console.log(match[1]);
     pass "No broad Internet allow rule for control-plane port 3001"
   else
     fail "Broad Internet allow rule exists for port 3001: ${public_3001_allows//$'\n'/, }"
+  fi
+
+  ssh_bootstrap_access="$(json_value "${nsg_rules_file}" "rules => {
+    const rule = rules.find((candidate) => candidate.name === 'AllowSshBootstrap');
+    return rule?.properties?.access;
+  }")"
+  if [[ -n "${EXPECTED_SSH_BOOTSTRAP_ACCESS}" ]]; then
+    check_equals "SSH bootstrap NSG access" "${ssh_bootstrap_access}" "${EXPECTED_SSH_BOOTSTRAP_ACCESS}"
+  else
+    echo "SKIP SSH bootstrap NSG access check because EXPECTED_SSH_BOOTSTRAP_ACCESS is empty"
   fi
 fi
 

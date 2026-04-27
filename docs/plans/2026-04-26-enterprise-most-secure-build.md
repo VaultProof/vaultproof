@@ -44,6 +44,7 @@ Live production-confidential path:
 - APIM IaC/policy support exists but is not deployed in the live route yet.
 - Azure Monitor/App Insights alerting IaC exists but is not deployed yet.
 - TLS-origin proxy tooling exists but Front Door still uses HTTP origin forwarding until a real origin certificate/hostname is installed and cut over.
+- SSH bootstrap lockdown tooling exists but public SSH remains open until alternate access or a controlled break-glass process is ready.
 - Supabase stores enterprise org/project metadata.
 - Executor request signing is implemented.
 - Enterprise executor now supports encrypted `share1_encrypted` and encrypted `share2_encrypted`.
@@ -57,7 +58,7 @@ Live production-confidential path:
 Important limitation:
 
 - The active production-confidential runtime is now Confidential VM plus Secure Key Release.
-- Azure API Management live deployment/cutover, Azure Monitor alert deployment, TLS-origin cutover, and enterprise UI/policy controls are still pending.
+- Azure API Management live deployment/cutover, Azure Monitor alert deployment, TLS-origin cutover, SSH bootstrap lockdown, and enterprise UI/policy controls are still pending.
 - Secrets used during setup must be rotated before external/customer production use.
 
 ## Next Execution Order
@@ -65,7 +66,7 @@ Important limitation:
 1. Azure API Management placement and policy support.
 2. Azure Monitor/Log Analytics alerts for Front Door readiness, VM service health, and production verifier drift.
 3. TLS from Front Door to the VM origin, then switch Front Door origin forwarding to HTTPS.
-4. SSH/Bastion/JIT hardening and cleanup of old prototype Container Apps resources.
+4. SSH/Bastion/JIT hardening and cleanup of old prototype Container Apps resources. In progress: reversible SSH bootstrap lockdown tooling and verifier expectations are implemented; live SSH closure is pending alternate access/break-glass readiness.
 5. End-to-end enterprise API execution through `enterprise.vaultproof.dev` with evidence/audit metadata.
 6. Enterprise controls: SSO, provider allowlists, upstream domain/method policy, policy UI, per-project rate limits, emergency revoke, audit export, SOC 2 access review evidence.
 
@@ -390,6 +391,7 @@ Important key-type decision:
 - [x] Block direct public access to executor.
 - [x] Require Azure Front Door ID origin lock for control-plane origin requests.
 - [ ] Add TLS from Front Door to the VM origin and switch origin forwarding from HTTP to HTTPS. In progress: TLS proxy installer, NSG 443 IaC, verifier/evidence support, and runbook are implemented; real origin certificate/hostname install and Front Door `HttpsOnly` cutover are pending.
+- [ ] Close public SSH bootstrap ingress after alternate access is ready. In progress: `allowSshBootstrap` IaC switch, `harden-ssh-bootstrap.sh`, verifier expectations, and runbook are implemented; live NSG rule remains `Allow` for bootstrap/break-glass.
 
 ### Phase 5: Enterprise Controls
 

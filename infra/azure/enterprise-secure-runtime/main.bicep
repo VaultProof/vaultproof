@@ -19,6 +19,9 @@ param vmSize string = 'Standard_DC2as_v5'
 @description('CIDR allowed to SSH to the VM during bootstrap. Lock this to your current IP; do not leave as 0.0.0.0/0.')
 param sshSourceCidr string
 
+@description('Allow public SSH bootstrap ingress on port 22. Keep true during initial setup; set false after the production path and alternate access are verified.')
+param allowSshBootstrap bool = true
+
 @description('CIDR allowed to call the private executor port. Use the control-plane subnet once private networking is enabled.')
 param executorSourceCidr string = '10.42.1.0/24'
 
@@ -244,7 +247,7 @@ resource executorNsg 'Microsoft.Network/networkSecurityGroups@2024-05-01' = {
         properties: {
           priority: 100
           direction: 'Inbound'
-          access: 'Allow'
+          access: allowSshBootstrap ? 'Allow' : 'Deny'
           protocol: 'Tcp'
           sourcePortRange: '*'
           destinationPortRange: '22'
