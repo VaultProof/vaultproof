@@ -7,7 +7,10 @@ ENTERPRISE_URL="${ENTERPRISE_URL:-https://enterprise.vaultproof.dev}"
 FRONT_DOOR_PROFILE="${FRONT_DOOR_PROFILE:-vaultproof-enterprise-fd}"
 FRONT_DOOR_ENDPOINT="${FRONT_DOOR_ENDPOINT:-vaultproof-enterprise}"
 FRONT_DOOR_ROUTE="${FRONT_DOOR_ROUTE:-default-route}"
+FRONT_DOOR_ORIGIN_GROUP="${FRONT_DOOR_ORIGIN_GROUP:-default-origin-group}"
 EXPECTED_FRONT_DOOR_FORWARDING_PROTOCOL="${EXPECTED_FRONT_DOOR_FORWARDING_PROTOCOL:-HttpOnly}"
+EXPECTED_FRONT_DOOR_ORIGIN_HOSTNAME="${EXPECTED_FRONT_DOOR_ORIGIN_HOSTNAME:-}"
+EXPECTED_FRONT_DOOR_ORIGIN_CERT_NAME_CHECK="${EXPECTED_FRONT_DOOR_ORIGIN_CERT_NAME_CHECK:-}"
 ORIGIN_TLS_HOSTNAME="${ORIGIN_TLS_HOSTNAME:-}"
 SSH_USER="${SSH_USER:-azureuser}"
 RUN_SSH_CHECKS="${RUN_SSH_CHECKS:-true}"
@@ -155,6 +158,39 @@ az afd route show \
   -o json > "${route_json}"
 check_equals "Front Door route enabled" "$(json_value "${route_json}" "p => p.enabledState")" "Enabled"
 check_equals "Front Door origin forwarding protocol" "$(json_value "${route_json}" "p => p.forwardingProtocol")" "${EXPECTED_FRONT_DOOR_FORWARDING_PROTOCOL}"
+
+origins_json="${tmp_dir}/front-door-origins.json"
+az afd origin list \
+  --resource-group "${RESOURCE_GROUP}" \
+  --profile-name "${FRONT_DOOR_PROFILE}" \
+  --endpoint-name "${FRONT_DOOR_ENDPOINT}" \
+  --origin-group-name "${FRONT_DOOR_ORIGIN_GROUP}" \
+  --query "[].{name:name,hostName:hostName,originHostHeader:originHostHeader,httpPort:httpPort,httpsPort:httpsPort,enabledState:enabledState,enforceCertificateNameCheck:enforceCertificateNameCheck}" \
+  -o json > "${origins_json}"
+enabled_origins="$(json_value "${origins_json}" "origins => origins.filter((origin) => origin.enabledState === 'Enabled').map((origin) => origin.hostName)")"
+if [[ -n "${enabled_origins}" ]]; then
+  pass "Front Door enabled origin(s): ${enabled_origins//$'\n'/, }"
+else
+  fail "Front Door has no enabled origin in ${FRONT_DOOR_ORIGIN_GROUP}"
+fi
+if [[ -n "${EXPECTED_FRONT_DOOR_ORIGIN_HOSTNAME}" ]]; then
+  expected_origin_matches="$(json_value "${origins_json}" "origins => origins.filter((origin) => origin.enabledState === 'Enabled' && origin.hostName === '${EXPECTED_FRONT_DOOR_ORIGIN_HOSTNAME}').map((origin) => origin.name)")"
+  if [[ -n "${expected_origin_matches}" ]]; then
+    pass "Front Door enabled origin host matches ${EXPECTED_FRONT_DOOR_ORIGIN_HOSTNAME}"
+  else
+    fail "Front Door enabled origin host does not match ${EXPECTED_FRONT_DOOR_ORIGIN_HOSTNAME}; enabled: ${enabled_origins//$'\n'/, }"
+  fi
+fi
+if [[ -n "${EXPECTED_FRONT_DOOR_ORIGIN_CERT_NAME_CHECK}" ]]; then
+  cert_check_values="$(json_value "${origins_json}" "origins => origins.filter((origin) => origin.enabledState === 'Enabled').map((origin) => origin.enforceCertificateNameCheck || '')")"
+  if [[ -z "${cert_check_values}" ]]; then
+    fail "Front Door enabled origin certificate name check setting is missing"
+  fi
+  while IFS= read -r cert_check_value; do
+    [[ -z "${cert_check_value}" ]] && continue
+    check_equals "Front Door origin certificate name check" "${cert_check_value}" "${EXPECTED_FRONT_DOOR_ORIGIN_CERT_NAME_CHECK}"
+  done <<< "${cert_check_values}"
+fi
 
 echo
 echo "NSG ingress posture:"

@@ -425,6 +425,8 @@ After the Front Door update, verify with the stricter expectation:
 
 ```bash
 EXPECTED_FRONT_DOOR_FORWARDING_PROTOCOL=HttpsOnly \
+EXPECTED_FRONT_DOOR_ORIGIN_HOSTNAME=origin.enterprise.vaultproof.dev \
+EXPECTED_FRONT_DOOR_ORIGIN_CERT_NAME_CHECK=Enabled \
 ORIGIN_TLS_HOSTNAME=origin.enterprise.vaultproof.dev \
 npm run verify:enterprise-production
 ```
