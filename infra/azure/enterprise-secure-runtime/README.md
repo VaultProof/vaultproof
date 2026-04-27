@@ -207,7 +207,11 @@ export ENTERPRISE_HOSTNAME='enterprise.vaultproof.dev'
 export ENTERPRISE_EXECUTOR_BASE_URL='http://127.0.0.1:3002'
 export ENTERPRISE_EXECUTOR_SIGNING_KEY_ID='enterprise-azure-v1'
 export ENTERPRISE_EXECUTOR_SIGNING_SECRET='...'
-export ENTERPRISE_ORIGIN_LOCK_SECRET="$(openssl rand -hex 32)"
+export ENTERPRISE_AZURE_FRONT_DOOR_ID="$(az afd profile show \
+  --resource-group vaultproof-enterprise \
+  --profile-name vaultproof-enterprise-fd \
+  --query frontDoorId \
+  -o tsv)"
 export ENTERPRISE_REQUIRE_ORIGIN_LOCK=true
 export SUPABASE_URL='https://...supabase.co'
 export SUPABASE_SERVICE_ROLE_KEY='...'
@@ -224,14 +228,8 @@ sudo systemctl restart vaultproof-control-plane
 curl -sS -H 'host: enterprise.vaultproof.dev' http://127.0.0.1:3001/readiness
 ```
 
-Configure Azure Front Door to send the same origin-lock header to the VM origin:
-
-- Header name: `x-vaultproof-origin-lock`
-- Header value: the `ENTERPRISE_ORIGIN_LOCK_SECRET` value from the control-plane env
-- Scope: the route that forwards `enterprise.vaultproof.dev` to the Confidential VM origin
-
-After the Front Door rule is active, public requests without that injected header should return `403`, while `https://enterprise.vaultproof.dev/readiness` should stay production-ready.
-If you need to deploy the control-plane code before the Front Door rule has propagated, temporarily keep `ENTERPRISE_REQUIRE_ORIGIN_LOCK=false` and leave `ENTERPRISE_ORIGIN_LOCK_SECRET` empty.
+Azure Front Door automatically sends `X-Azure-FDID` to origins. The control plane validates that header against `ENTERPRISE_AZURE_FRONT_DOOR_ID` when `ENTERPRISE_REQUIRE_ORIGIN_LOCK=true`.
+If you need to deploy the control-plane code before Front Door is fully configured, temporarily keep `ENTERPRISE_REQUIRE_ORIGIN_LOCK=false`.
 
 Only after local readiness is production-ready should `enterprise.vaultproof.dev` be cut over from the Container App origin to the Confidential VM origin. At that point, restrict port `3001` to Azure Front Door origins and remove direct SSH/public executor access where possible.
 

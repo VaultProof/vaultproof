@@ -9,6 +9,7 @@ export interface EnterpriseControlPlaneEnv {
   executorBaseUrl?: string;
   executorSigningKeyId?: string;
   executorSigningSecret?: string;
+  azureFrontDoorId?: string;
   originLockHeaderName?: string;
   originLockRequired?: boolean;
   originLockSecret?: string;

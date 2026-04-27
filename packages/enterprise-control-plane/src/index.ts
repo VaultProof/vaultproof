@@ -36,13 +36,21 @@ function constantTimeEquals(left: string, right: string): boolean {
 
 function verifyOriginLock(request: Request, env: EnterpriseControlPlaneEnv): Response | null {
   const expectedSecret = env.originLockSecret?.trim();
-  if (!expectedSecret) return null;
+  const expectedFrontDoorId = env.azureFrontDoorId?.trim();
+  if (!expectedSecret && !expectedFrontDoorId) return null;
 
   if (request.headers.get('x-vaultproof-local-loopback') === 'true') return null;
 
-  const headerName = normalizeOriginLockHeaderName(env.originLockHeaderName);
-  const actualSecret = request.headers.get(headerName) || '';
-  if (constantTimeEquals(actualSecret, expectedSecret)) return null;
+  if (expectedFrontDoorId) {
+    const actualFrontDoorId = request.headers.get('x-azure-fdid') || '';
+    if (constantTimeEquals(actualFrontDoorId, expectedFrontDoorId)) return null;
+  }
+
+  if (expectedSecret) {
+    const headerName = normalizeOriginLockHeaderName(env.originLockHeaderName);
+    const actualSecret = request.headers.get(headerName) || '';
+    if (constantTimeEquals(actualSecret, expectedSecret)) return null;
+  }
 
   return Response.json(
     {
@@ -109,7 +117,9 @@ async function buildEnterpriseReadiness(
   const supabaseConfigured = Boolean(env.supabaseUrl && env.supabaseServiceRoleKey);
   const executorConfigured = Boolean(env.executorBaseUrl);
   const signingConfigured = Boolean(env.executorSigningKeyId && env.executorSigningSecret);
-  const originLockConfigured = Boolean(env.originLockSecret?.trim());
+  const frontDoorIdConfigured = Boolean(env.azureFrontDoorId?.trim());
+  const customOriginLockConfigured = Boolean(env.originLockSecret?.trim());
+  const originLockConfigured = frontDoorIdConfigured || customOriginLockConfigured;
 
   if (!supabaseConfigured) {
     productionBlockers.push('Supabase service role is not configured');
@@ -177,6 +187,8 @@ async function buildEnterpriseReadiness(
       signing_configured: signingConfigured,
       origin_lock_configured: originLockConfigured,
       origin_lock_required: env.originLockRequired === true,
+      azure_front_door_id_configured: frontDoorIdConfigured,
+      custom_origin_lock_configured: customOriginLockConfigured,
     },
     executor: {
       reachable: executor.reachable,
@@ -253,7 +265,7 @@ export async function handleEnterpriseControlPlaneRequest(
       path: url.pathname,
       executor_configured: Boolean(env.executorBaseUrl),
       supabase_configured: Boolean(env.supabaseUrl && env.supabaseServiceRoleKey),
-      origin_lock_configured: Boolean(env.originLockSecret?.trim()),
+      origin_lock_configured: Boolean(env.azureFrontDoorId?.trim() || env.originLockSecret?.trim()),
       origin_lock_required: env.originLockRequired === true,
     });
   }

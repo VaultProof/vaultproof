@@ -57,6 +57,7 @@ function getEnv(): EnterpriseControlPlaneEnv {
     executorBaseUrl: process.env.ENTERPRISE_EXECUTOR_BASE_URL,
     executorSigningKeyId: process.env.ENTERPRISE_EXECUTOR_SIGNING_KEY_ID,
     executorSigningSecret: process.env.ENTERPRISE_EXECUTOR_SIGNING_SECRET,
+    azureFrontDoorId: process.env.ENTERPRISE_AZURE_FRONT_DOOR_ID,
     originLockHeaderName: process.env.ENTERPRISE_ORIGIN_LOCK_HEADER_NAME,
     originLockRequired: process.env.ENTERPRISE_REQUIRE_ORIGIN_LOCK === 'true',
     originLockSecret: process.env.ENTERPRISE_ORIGIN_LOCK_SECRET,

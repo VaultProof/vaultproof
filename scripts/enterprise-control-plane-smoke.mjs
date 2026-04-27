@@ -717,6 +717,7 @@ async function assertFrontDoorOriginLock() {
   const env = {
     enterpriseHostname: ENTERPRISE_HOSTNAME,
     executorBaseUrl: 'https://executor.internal',
+    azureFrontDoorId: 'front-door-id',
     originLockSecret: 'origin-lock-secret',
   };
 
@@ -732,13 +733,25 @@ async function assertFrontDoorOriginLock() {
   const allowedResponse = await handleEnterpriseControlPlaneRequest(
     buildRequest('/health', {
       headers: {
-        'x-vaultproof-origin-lock': 'origin-lock-secret',
+        'x-azure-fdid': 'front-door-id',
       },
     }),
     env,
   );
   if (allowedResponse.status !== 200) {
-    throw new Error(`Expected Front Door origin lock header to allow request, got ${allowedResponse.status}`);
+    throw new Error(`Expected Front Door ID header to allow request, got ${allowedResponse.status}`);
+  }
+
+  const customHeaderResponse = await handleEnterpriseControlPlaneRequest(
+    buildRequest('/health', {
+      headers: {
+        'x-vaultproof-origin-lock': 'origin-lock-secret',
+      },
+    }),
+    env,
+  );
+  if (customHeaderResponse.status !== 200) {
+    throw new Error(`Expected custom origin lock header to allow request, got ${customHeaderResponse.status}`);
   }
 
   const loopbackResponse = await handleEnterpriseControlPlaneRequest(
