@@ -53,6 +53,9 @@ let revokedMemberInvitation = null;
 let updatedMemberRole = null;
 let updatedProjectAccess = null;
 let removedProjectAccess = null;
+let alertTestDelivery = null;
+let alertTestDispatchRun = null;
+let alertWebhookTestPayload = null;
 
 function installSupabaseStub() {
   auditEvents = [];
@@ -74,6 +77,9 @@ function installSupabaseStub() {
   updatedMemberRole = null;
   updatedProjectAccess = null;
   removedProjectAccess = null;
+  alertTestDelivery = null;
+  alertTestDispatchRun = null;
+  alertWebhookTestPayload = null;
   globalThis.fetch = async (input, init) => {
     const url = typeof input === 'string' ? input : input instanceof URL ? input.toString() : input.url;
     const decodedUrl = decodeURIComponent(url);
@@ -274,15 +280,24 @@ function installSupabaseStub() {
         channel_type: 'webhook',
         label: 'SOC webhook',
         target: 'https://hooks.example.com/vaultproof-alerts?secret=redacted',
-        enabled: false,
+        enabled: true,
         created_at: '2026-04-20T13:00:00.000Z',
         updated_at: '2026-04-21T13:00:00.000Z',
       }]);
     }
 
+    if (url.includes('/rest/v1/organization_alert_deliveries') && method === 'POST') {
+      const body = JSON.parse(init?.body || '{}');
+      alertTestDelivery = {
+        id: 'alert_delivery_test_123',
+        ...body,
+      };
+      return jsonResponse(alertTestDelivery);
+    }
+
     if (url.includes('/rest/v1/organization_alert_deliveries') && method === 'GET') {
       if (decodedUrl.includes('select=id&') || decodedUrl.includes('select=id HTTP')) return jsonResponse([]);
-      return jsonResponse([{
+      return jsonResponse([alertTestDelivery, {
         id: 'alert_delivery_123',
         destination_id: 'alert_dest_email_123',
         channel_type: 'email',
@@ -300,12 +315,21 @@ function installSupabaseStub() {
         detail: 'Webhook returned 500',
         response_status: 500,
         delivered_at: '2026-04-26T12:04:00.000Z',
-      }]);
+      }].filter(Boolean));
+    }
+
+    if (url.includes('/rest/v1/organization_alert_dispatch_runs') && method === 'POST') {
+      const body = JSON.parse(init?.body || '{}');
+      alertTestDispatchRun = {
+        id: 'alert_run_test_123',
+        ...body,
+      };
+      return jsonResponse(alertTestDispatchRun);
     }
 
     if (url.includes('/rest/v1/organization_alert_dispatch_runs') && method === 'GET') {
       if (decodedUrl.includes('select=id&') || decodedUrl.includes('select=id HTTP')) return jsonResponse([]);
-      return jsonResponse([{
+      return jsonResponse([alertTestDispatchRun, {
         id: 'alert_run_123',
         trigger_source: 'scheduled',
         status: 'dispatched',
@@ -317,7 +341,7 @@ function installSupabaseStub() {
         skipped_count: 0,
         next_eligible_at: '2026-04-26T13:05:00.000Z',
         checked_at: '2026-04-26T12:05:00.000Z',
-      }]);
+      }].filter(Boolean));
     }
 
     if (url.includes('/rest/v1/organizations') && method === 'GET') {
@@ -480,6 +504,11 @@ function installSupabaseStub() {
           'Azure attestation evidence is not ready',
         ],
       });
+    }
+
+    if (url.startsWith('https://hooks.example.com/vaultproof-alerts') && method === 'POST') {
+      alertWebhookTestPayload = JSON.parse(init?.body || '{}');
+      return jsonResponse({ accepted: true }, 202);
     }
 
     throw new Error(`Unexpected fetch in control-plane smoke test: ${method} ${url}`);
@@ -1389,6 +1418,61 @@ async function assertEnterpriseAlertsApi() {
   if (!Array.isArray(payload?.dispatch_runs) || payload.dispatch_runs[0]?.status !== 'dispatched') {
     throw new Error(`Expected dispatch run in alerts API payload, got ${JSON.stringify(payload?.dispatch_runs)}`);
   }
+
+  const testSendResponse = await handleEnterpriseControlPlaneRequest(
+    buildRequest('/api/v1/enterprise/alerts/test-send', {
+      method: 'POST',
+      headers: {
+        authorization: `Bearer ${AUTH_TOKEN}`,
+        'content-type': 'application/json',
+        'x-vaultproof-organization': 'org_123',
+      },
+      body: JSON.stringify({
+        destination_id: 'alert_dest_webhook_123',
+      }),
+    }),
+    {
+      enterpriseHostname: ENTERPRISE_HOSTNAME,
+      supabaseUrl: 'https://supabase.example.co',
+      supabaseServiceRoleKey: 'service-role-key',
+    },
+  );
+  const testSendPayload = await testSendResponse.json();
+  if (testSendResponse.status !== 200 || testSendPayload?.status !== 'delivered') {
+    throw new Error(`Expected alert test-send to deliver, got ${testSendResponse.status} ${JSON.stringify(testSendPayload)}`);
+  }
+  if (alertWebhookTestPayload?.event !== 'vaultproof.enterprise.alert.test') {
+    throw new Error(`Expected webhook test payload, got ${JSON.stringify(alertWebhookTestPayload)}`);
+  }
+  if (alertTestDelivery?.delivery_kind !== 'test_send' || alertTestDelivery?.status !== 'delivered') {
+    throw new Error(`Expected alert test delivery log insert, got ${JSON.stringify(alertTestDelivery)}`);
+  }
+  if (alertTestDispatchRun?.trigger_source !== 'manual' || alertTestDispatchRun?.status !== 'dispatched') {
+    throw new Error(`Expected alert test dispatch run insert, got ${JSON.stringify(alertTestDispatchRun)}`);
+  }
+
+  const deniedResponse = await handleEnterpriseControlPlaneRequest(
+    buildRequest('/api/v1/enterprise/alerts/test-send', {
+      method: 'POST',
+      headers: {
+        authorization: `Bearer ${AUTH_TOKEN}`,
+        'content-type': 'application/json',
+        'x-vaultproof-organization': 'org_123',
+      },
+      body: JSON.stringify({
+        destination_id: 'missing-destination',
+      }),
+    }),
+    {
+      enterpriseHostname: ENTERPRISE_HOSTNAME,
+      supabaseUrl: 'https://supabase.example.co',
+      supabaseServiceRoleKey: 'service-role-key',
+    },
+  );
+  const deniedPayload = await deniedResponse.json();
+  if (deniedResponse.status !== 400 || !String(deniedPayload?.error || '').includes('not enabled')) {
+    throw new Error(`Expected missing alert destination denial, got ${deniedResponse.status} ${JSON.stringify(deniedPayload)}`);
+  }
 }
 
 async function assertEnterpriseMembersAdminActions() {
@@ -1701,8 +1785,8 @@ async function assertEnterpriseLoginRoute() {
   if (!alertsHtml.includes('/api/v1/enterprise/alerts') || !alertsHtml.includes('deliveryFilterForm')) {
     throw new Error('Expected enterprise alerts page to use enterprise alerts API and delivery filters');
   }
-  if (!alertsHtml.includes('Test-send API is planned') || alertsHtml.includes('https://init.vaultproof.dev')) {
-    throw new Error('Expected enterprise alerts page to avoid B2C APIs and explain unavailable test-send mutation');
+  if (!alertsHtml.includes('/api/v1/enterprise/alerts/test-send') || alertsHtml.includes('Test-send API is planned') || alertsHtml.includes('https://init.vaultproof.dev')) {
+    throw new Error('Expected enterprise alerts page to use enterprise test-send API and avoid B2C APIs');
   }
 
   const operationsPages = [

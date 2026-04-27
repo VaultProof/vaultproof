@@ -434,7 +434,7 @@ Pages and links:
 - [x] `/app/org`: organization settings and Microsoft Entra/Supabase SAML SSO rollout controls.
 - [x] `/app/members`: enterprise-owned members page for members, pending invites, role changes, project assignments, CSV/JSON access evidence links, and invite acceptance. Current state: API-backed member/invite/project coverage page exists with access-review CSV link, invite create/revoke, role changes, project assignment/removal, and invite acceptance UI/API.
 - [x] `/app/audit`: enterprise-owned audit page for governance/runtime timeline, CSV export, search, filters, and evidence-friendly event details.
-- [x] `/app/alerts`: enterprise-owned alerts page for destinations, delivery logs, dispatch runs, policy status, and test-send workflow. Current state: API-backed read-only alert operations page exists; test-send mutation is clearly disabled until the backend endpoint is added.
+- [x] `/app/alerts`: enterprise-owned alerts page for destinations, delivery logs, dispatch runs, policy status, and test-send workflow. Current state: API-backed alert operations page exists with admin-only test-send, webhook delivery, email skip logging until email transport is configured, delivery logs, and dispatch-run records.
 - [x] `/app/activity`: enterprise-owned runtime activity page for recent proxy/executor events, status codes, latency, provider request IDs, and attestation summaries.
 - [x] `/app/projects`: enterprise-owned project inventory page for project health, provider slots, policy status, and quick links to control.
 - [x] `/app/keys`: enterprise-owned provider slots page for active providers, emergency revoke, rotation checklist, and SKR/confidential-mode notes. Revoked provider history is currently visible through `/app/audit`.
@@ -448,7 +448,7 @@ Implementation/test order:
 2. [x] Members page read-only feature slice: wire `/app/members` to enterprise member APIs; test org selection, pending invites, access-review export link, and admin/member states.
 3. [x] Members page admin-action slice: add invite acceptance, invite creation/revocation where supported, role changes, and project access assignment/removal.
 4. [x] Audit page feature slice: wire `/app/audit` to enterprise audit APIs; test CSV export link, filter query generation, governance + proxy event rendering.
-5. [x] Alerts page feature slice: wire `/app/alerts` to enterprise alert APIs; test destinations, policy, delivery logs, and dispatch-run states.
+5. [x] Alerts page feature slice: wire `/app/alerts` to enterprise alert APIs; test destinations, policy, delivery logs, dispatch-run states, and admin-only test-send.
 6. [x] Activity/projects/keys slice: wire runtime activity, project inventory, provider slot status, and emergency revoke paths; test no B2C API calls.
 7. [x] Settings/plans/scanner slice: either wire real enterprise APIs or intentionally hide/disable unavailable actions; test no dead links and no B2C fallback.
 8. [x] Enterprise analytics slice: add opt-in Mixpanel page/navigation events across login, dashboard, planned pages, and static enterprise pages; test disabled-by-default behavior and explicit enablement.

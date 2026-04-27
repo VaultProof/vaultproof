@@ -1,3 +1,4 @@
+import { randomUUID } from 'node:crypto';
 import type { EnterpriseControlPlaneEnv } from '../config.js';
 import {
   authenticateUser,
@@ -21,6 +22,12 @@ type DestinationRow = {
   enabled: boolean;
   created_at?: string;
   updated_at?: string;
+};
+
+type TestSendResult = {
+  status: AlertDeliveryStatus;
+  detail: string;
+  responseStatus: number | null;
 };
 
 type AlertsQueryFilters = {
@@ -153,6 +160,105 @@ function maskTarget(channelType: AlertChannelType, target: string): string {
   }
 }
 
+async function parseJsonBody(request: Request): Promise<Record<string, unknown>> {
+  try {
+    const body = await request.json();
+    return body && typeof body === 'object' && !Array.isArray(body) ? body as Record<string, unknown> : {};
+  } catch {
+    return {};
+  }
+}
+
+async function deliverTestAlert(destination: DestinationRow, organizationName: string): Promise<TestSendResult> {
+  if (destination.channel_type === 'email') {
+    return {
+      status: 'skipped',
+      detail: `Email test-send for ${destination.label || destination.id} was recorded; outbound email transport is not configured yet.`,
+      responseStatus: null,
+    };
+  }
+
+  try {
+    const response = await fetch(destination.target, {
+      method: 'POST',
+      headers: {
+        'content-type': 'application/json',
+        'user-agent': 'VaultProof Enterprise Alerts',
+      },
+      body: JSON.stringify({
+        event: 'vaultproof.enterprise.alert.test',
+        organization: organizationName,
+        destination_id: destination.id,
+        sent_at: new Date().toISOString(),
+      }),
+    });
+
+    return {
+      status: response.ok ? 'delivered' : 'failed',
+      detail: `Webhook test-send to ${destination.label || destination.id} returned HTTP ${response.status}.`,
+      responseStatus: response.status,
+    };
+  } catch (error) {
+    return {
+      status: 'failed',
+      detail: `Webhook test-send to ${destination.label || destination.id} failed: ${error instanceof Error ? error.message : 'unknown error'}.`,
+      responseStatus: null,
+    };
+  }
+}
+
+async function recordDelivery(
+  supabase: ReturnType<typeof getSupabase>,
+  input: {
+    organizationId: string;
+    destination: DestinationRow;
+    result: TestSendResult;
+    deliveredAt: string;
+  },
+): Promise<void> {
+  const { error } = await supabase
+    .from('organization_alert_deliveries')
+    .insert({
+      organization_id: input.organizationId,
+      destination_id: input.destination.id,
+      channel_type: input.destination.channel_type,
+      delivery_kind: 'test_send',
+      status: input.result.status,
+      detail: input.result.detail,
+      response_status: input.result.responseStatus,
+      delivered_at: input.deliveredAt,
+    });
+
+  if (error) throw new Error(`Failed to record alert delivery: ${error.message}`);
+}
+
+async function recordDispatchRun(
+  supabase: ReturnType<typeof getSupabase>,
+  input: {
+    organizationId: string;
+    result: TestSendResult;
+    checkedAt: string;
+  },
+): Promise<void> {
+  const { error } = await supabase
+    .from('organization_alert_dispatch_runs')
+    .insert({
+      organization_id: input.organizationId,
+      trigger_source: 'manual',
+      status: input.result.status === 'delivered' ? 'dispatched' : input.result.status === 'failed' ? 'failed' : 'skipped',
+      reason: 'manual test send',
+      dispatched_alert_count: 1,
+      destination_count: 1,
+      delivered_count: input.result.status === 'delivered' ? 1 : 0,
+      failed_count: input.result.status === 'failed' ? 1 : 0,
+      skipped_count: input.result.status === 'skipped' ? 1 : 0,
+      next_eligible_at: null,
+      checked_at: input.checkedAt,
+    });
+
+  if (error) throw new Error(`Failed to record alert dispatch run: ${error.message}`);
+}
+
 async function loadPolicy(env: EnterpriseControlPlaneEnv, organizationId: string): Promise<{
   dispatch_enabled: boolean;
   minimum_severity: AlertSeverity;
@@ -201,7 +307,12 @@ export async function handleEnterpriseAlertRoutes(
   pathSegments: string[],
 ): Promise<Response | null> {
   if (!env.supabaseUrl || !env.supabaseServiceRoleKey) return null;
-  if (!(request.method === 'GET' && pathSegments.length === 1 && pathSegments[0] === 'alerts')) {
+  const isListRoute = request.method === 'GET' && pathSegments.length === 1 && pathSegments[0] === 'alerts';
+  const isTestSendRoute = request.method === 'POST'
+    && pathSegments.length === 2
+    && pathSegments[0] === 'alerts'
+    && pathSegments[1] === 'test-send';
+  if (!isListRoute && !isTestSendRoute) {
     return null;
   }
 
@@ -220,6 +331,63 @@ export async function handleEnterpriseAlertRoutes(
 
   const supabase = getSupabase(env);
   const canManage = hasRequiredOrganizationRole(membership.organization_role, 'admin');
+  if (isTestSendRoute) {
+    if (!canManage) {
+      return Response.json({ error: 'Only organization admins can send alert tests.' }, { status: 403 });
+    }
+
+    const body = await parseJsonBody(request);
+    const requestedDestinationId = typeof body.destination_id === 'string' ? body.destination_id.trim() : '';
+    const { data: destinationRows } = await supabase
+      .from('organization_alert_destinations')
+      .select('id, channel_type, label, target, enabled, created_at, updated_at')
+      .eq('organization_id', membership.organization_id)
+      .order('created_at', { ascending: false });
+
+    const destinations = ((destinationRows || []) as DestinationRow[]);
+    const destination = destinations.find((item) => item.enabled && item.id === requestedDestinationId)
+      || (!requestedDestinationId ? destinations.find((item) => item.enabled) : null);
+    if (!destination) {
+      return Response.json(
+        {
+          error: requestedDestinationId
+            ? 'Alert destination is not enabled or does not exist.'
+            : 'No enabled alert destination is available for test-send.',
+        },
+        { status: 400 },
+      );
+    }
+
+    const deliveredAt = new Date().toISOString();
+    const result = await deliverTestAlert(destination, membership.organization_name);
+    await recordDelivery(supabase, {
+      organizationId: membership.organization_id,
+      destination,
+      result,
+      deliveredAt,
+    });
+    await recordDispatchRun(supabase, {
+      organizationId: membership.organization_id,
+      result,
+      checkedAt: deliveredAt,
+    });
+
+    return Response.json({
+      id: randomUUID(),
+      status: result.status,
+      delivery_kind: 'test_send',
+      detail: result.detail,
+      response_status: result.responseStatus,
+      delivered_at: deliveredAt,
+      destination: {
+        id: destination.id,
+        channel_type: destination.channel_type,
+        label: destination.label,
+        target_masked: maskTarget(destination.channel_type, destination.target),
+      },
+    });
+  }
+
   const queryFilters = parseAlertsQueryFilters(request);
   const policy = await loadPolicy(env, membership.organization_id);
   const lastPolicyDispatchAt = await getLastPolicyDispatchAt(supabase, membership.organization_id);

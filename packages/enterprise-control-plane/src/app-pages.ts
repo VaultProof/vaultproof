@@ -817,7 +817,7 @@ function renderEnterpriseAlertsPage(): string {
         <div class="toolbar">
           <select id="orgSelect" aria-label="Organization"><option>Loading org...</option></select>
           <button id="refreshBtn" type="button">refresh</button>
-          <button id="testSendBtn" type="button" disabled title="Test-send API is not enabled yet">test send</button>
+          <button id="testSendBtn" type="button" disabled title="Load destinations before sending a test alert">test send</button>
         </div>
       </div>
 
@@ -916,6 +916,12 @@ function renderEnterpriseAlertsPage(): string {
         if (!res.ok) throw new Error((payload && payload.error) || ('Request failed: ' + res.status));
         return payload && payload.data ? payload.data : payload;
       }
+      async function postJson(path, body) {
+        var res = await fetch(path, { method: 'POST', headers: headers(), body: JSON.stringify(body || {}) });
+        var payload = await res.json().catch(function() { return null; });
+        if (!res.ok) throw new Error((payload && payload.error) || ('Request failed: ' + res.status));
+        return payload && payload.data ? payload.data : payload;
+      }
       function notice(message) {
         var el = byId('notice');
         if (!el) return;
@@ -980,7 +986,15 @@ function renderEnterpriseAlertsPage(): string {
         text('destinationMeta', enabledCount + ' enabled of ' + destinations.length);
         text('deliveryMeta', (deliveryMeta.filters && deliveryMeta.filters.activity_window ? deliveryMeta.filters.activity_window : '7d') + ' window');
         text('runMeta', (runMeta.filters && runMeta.filters.activity_window ? runMeta.filters.activity_window : '7d') + ' window');
-        byId('testSendBtn').title = payload.can_manage ? 'Test-send API is planned but not enabled yet' : 'Only admins can test alert delivery';
+        var firstEnabledDestination = destinations.find(function(destination) { return destination.enabled; });
+        var testSendBtn = byId('testSendBtn');
+        testSendBtn.disabled = !payload.can_manage || !firstEnabledDestination;
+        testSendBtn.dataset.destinationId = firstEnabledDestination ? firstEnabledDestination.id : '';
+        testSendBtn.title = !payload.can_manage
+          ? 'Only admins can test alert delivery'
+          : firstEnabledDestination
+            ? 'Send a test alert to ' + (firstEnabledDestination.label || firstEnabledDestination.channel_type)
+            : 'No enabled alert destinations are configured';
         byId('policyDetails').innerHTML = '<div class="row"><div><div class="row-title">Policy dispatch is ' + escapeHtml(policy.dispatch_enabled ? 'enabled' : 'disabled') + '</div><div class="row-sub">Minimum severity ' + escapeHtml(policy.minimum_severity || 'warning') + ' - minimum interval ' + number(policy.min_interval_minutes || 0) + ' minutes - next eligible ' + escapeHtml(payload.dispatch_status && payload.dispatch_status.next_eligible_at ? rel(payload.dispatch_status.next_eligible_at) : 'now') + '</div></div>' + statusTag(policy.dispatch_enabled ? 'dispatched' : 'skipped') + '</div>';
         byId('destinationList').innerHTML = destinations.length ? destinations.map(function(destination) {
           return '<div class="row"><div><div class="row-title">' + escapeHtml(destination.label || destination.channel_type) + '</div><div class="row-sub">' + escapeHtml(destination.channel_type) + ' - ' + escapeHtml(destination.target_masked || '') + ' - updated ' + escapeHtml(rel(destination.updated_at || destination.created_at)) + '</div></div>' + statusTag(destination.enabled ? 'delivered' : 'skipped') + '</div>';
@@ -1030,7 +1044,19 @@ function renderEnterpriseAlertsPage(): string {
         fetchJson(buildAlertsPath({ runBefore: nextRunBefore })).then(function(payload) { renderPayload(payload, 'runs'); }).catch(function(error) { notice(error && error.message ? error.message : 'Older dispatch runs failed to load.'); });
       });
       byId('testSendBtn').addEventListener('click', function() {
-        notice('Test-send workflow is planned; the backend mutation endpoint is not enabled yet.');
+        var destinationId = byId('testSendBtn').dataset.destinationId || '';
+        byId('testSendBtn').disabled = true;
+        postJson('/api/v1/enterprise/alerts/test-send', { destination_id: destinationId })
+          .then(function(payload) {
+            notice('Test alert ' + (payload.status || 'sent') + ': ' + (payload.detail || 'delivery recorded'));
+            return reload();
+          })
+          .catch(function(error) {
+            notice(error && error.message ? error.message : 'Test alert failed.');
+          })
+          .finally(function() {
+            byId('testSendBtn').disabled = !byId('testSendBtn').dataset.destinationId;
+          });
       });
       byId('refreshBtn').addEventListener('click', reload);
       byId('orgSelect').addEventListener('change', function(event) {
