@@ -21,6 +21,19 @@ interface IncomingInvitationSummary {
   };
 }
 
+interface CreateInvitationBody {
+  email?: string | null;
+  role?: OrganizationRole | null;
+}
+
+interface UpdateMemberRoleBody {
+  role?: OrganizationRole | null;
+}
+
+interface UpdateProjectAccessBody {
+  role?: OrganizationRole | null;
+}
+
 type AccessReviewEvidenceRecord = {
   subject_type: 'member' | 'invitation';
   scope: 'organization' | 'project' | 'invitation';
@@ -38,6 +51,25 @@ type AccessReviewEvidenceRecord = {
 
 function normalizeEmail(email: string): string {
   return email.trim().toLowerCase();
+}
+
+function isOrganizationRole(value: unknown): value is OrganizationRole {
+  return value === 'owner' || value === 'admin' || value === 'member' || value === 'viewer';
+}
+
+function validateEmail(value: unknown): string | null {
+  if (typeof value !== 'string') return null;
+  const email = normalizeEmail(value);
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) return null;
+  return email;
+}
+
+async function parseJsonBody<T>(request: Request): Promise<T | null> {
+  try {
+    return (await request.json()) as T;
+  } catch {
+    return null;
+  }
 }
 
 function parseEvidenceFormat(request: Request): 'json' | 'csv' {
@@ -252,6 +284,293 @@ export async function handleEnterpriseMemberRoutes(
   }
 
   const canManageMembers = hasRequiredOrganizationRole(membership.organization_role, 'admin');
+
+  if (method === 'POST' && pathSegments.length === 2 && pathSegments[0] === 'members' && pathSegments[1] === 'invitations') {
+    if (!canManageMembers) {
+      return Response.json({ error: 'Only organization admins can invite members' }, { status: 403 });
+    }
+
+    const body = await parseJsonBody<CreateInvitationBody>(request);
+    if (!body) return Response.json({ error: 'Invalid JSON' }, { status: 400 });
+
+    const email = validateEmail(body.email);
+    if (!email) return Response.json({ error: 'email must be a valid email address' }, { status: 400 });
+
+    const role = body.role || 'viewer';
+    if (!isOrganizationRole(role)) {
+      return Response.json({ error: 'role must be owner, admin, member, or viewer' }, { status: 400 });
+    }
+    if (role === 'owner' && membership.organization_role !== 'owner') {
+      return Response.json({ error: 'Only organization owners can invite owners' }, { status: 403 });
+    }
+
+    const now = new Date().toISOString();
+    const { data, error } = await supabase
+      .from('organization_invitations')
+      .insert({
+        organization_id: membership.organization_id,
+        email,
+        role,
+        status: 'pending',
+        invited_by: auth.userId,
+        created_at: now,
+      })
+      .select('id, email, role, status, created_at, invited_by')
+      .single();
+
+    if (error || !data) {
+      return Response.json({ error: 'Failed to create invitation' }, { status: 500 });
+    }
+
+    await writeGovernanceAuditEvent(env, {
+      organization_id: membership.organization_id,
+      actor_user_id: auth.userId,
+      actor_email: auth.email,
+      event_type: 'organization_invitation_created',
+      target_type: 'organization_invitation',
+      target_id: data.id as string,
+      description: `${auth.email} invited ${email} as ${role}`,
+      metadata: {
+        invited_email: email,
+        role,
+        created_via: 'enterprise_members_dashboard',
+      },
+    });
+
+    return Response.json({ invitation: data });
+  }
+
+  if (method === 'POST' && pathSegments.length === 4 && pathSegments[0] === 'members' && pathSegments[1] === 'invitations' && pathSegments[3] === 'revoke') {
+    if (!canManageMembers) {
+      return Response.json({ error: 'Only organization admins can revoke invitations' }, { status: 403 });
+    }
+
+    const invitationId = pathSegments[2];
+    const { data, error } = await supabase
+      .from('organization_invitations')
+      .update({
+        status: 'revoked',
+        revoked_at: new Date().toISOString(),
+      })
+      .eq('id', invitationId)
+      .eq('organization_id', membership.organization_id)
+      .eq('status', 'pending')
+      .select('id, email, role, status, revoked_at')
+      .maybeSingle();
+
+    if (error) {
+      return Response.json({ error: 'Failed to revoke invitation' }, { status: 500 });
+    }
+    if (!data) {
+      return Response.json({ error: 'Pending invitation not found' }, { status: 404 });
+    }
+
+    await writeGovernanceAuditEvent(env, {
+      organization_id: membership.organization_id,
+      actor_user_id: auth.userId,
+      actor_email: auth.email,
+      event_type: 'organization_invitation_revoked',
+      target_type: 'organization_invitation',
+      target_id: data.id as string,
+      description: `${auth.email} revoked invitation for ${data.email}`,
+      metadata: {
+        invited_email: data.email,
+        previous_role: data.role,
+        revoked_via: 'enterprise_members_dashboard',
+      },
+    });
+
+    return Response.json({ invitation: data });
+  }
+
+  if (method === 'POST' && pathSegments.length === 3 && pathSegments[0] === 'members' && pathSegments[2] === 'role') {
+    if (!canManageMembers) {
+      return Response.json({ error: 'Only organization admins can change member roles' }, { status: 403 });
+    }
+
+    const targetUserId = pathSegments[1];
+    if (targetUserId === auth.userId) {
+      return Response.json({ error: 'Use another owner/admin to change your own organization role' }, { status: 400 });
+    }
+
+    const body = await parseJsonBody<UpdateMemberRoleBody>(request);
+    if (!body) return Response.json({ error: 'Invalid JSON' }, { status: 400 });
+
+    const role = body.role;
+    if (!isOrganizationRole(role)) {
+      return Response.json({ error: 'role must be owner, admin, member, or viewer' }, { status: 400 });
+    }
+    if (role === 'owner' && membership.organization_role !== 'owner') {
+      return Response.json({ error: 'Only organization owners can grant owner role' }, { status: 403 });
+    }
+
+    const { data, error } = await supabase
+      .from('organization_members')
+      .update({
+        role,
+        updated_at: new Date().toISOString(),
+      })
+      .eq('organization_id', membership.organization_id)
+      .eq('user_id', targetUserId)
+      .select('id, user_id, role, created_at')
+      .maybeSingle();
+
+    if (error) {
+      return Response.json({ error: 'Failed to update member role' }, { status: 500 });
+    }
+    if (!data) {
+      return Response.json({ error: 'Organization member not found' }, { status: 404 });
+    }
+
+    await writeGovernanceAuditEvent(env, {
+      organization_id: membership.organization_id,
+      actor_user_id: auth.userId,
+      actor_email: auth.email,
+      event_type: 'organization_member_role_updated',
+      target_type: 'organization_member',
+      target_id: targetUserId,
+      description: `${auth.email} changed ${targetUserId} organization role to ${role}`,
+      metadata: {
+        target_user_id: targetUserId,
+        role,
+        updated_via: 'enterprise_members_dashboard',
+      },
+    });
+
+    return Response.json({ member: data });
+  }
+
+  if (
+    method === 'POST' &&
+    pathSegments.length === 5 &&
+    pathSegments[0] === 'members' &&
+    pathSegments[2] === 'projects' &&
+    pathSegments[4] === 'access'
+  ) {
+    if (!canManageMembers) {
+      return Response.json({ error: 'Only organization admins can assign project access' }, { status: 403 });
+    }
+
+    const targetUserId = pathSegments[1];
+    const projectId = pathSegments[3];
+    const body = await parseJsonBody<UpdateProjectAccessBody>(request);
+    if (!body) return Response.json({ error: 'Invalid JSON' }, { status: 400 });
+
+    const role = body.role;
+    if (!isOrganizationRole(role)) {
+      return Response.json({ error: 'role must be owner, admin, member, or viewer' }, { status: 400 });
+    }
+
+    const { data: project } = await supabase
+      .from('projects')
+      .select('id, name, vp_proj_id')
+      .eq('id', projectId)
+      .eq('organization_id', membership.organization_id)
+      .is('revoked_at', null)
+      .maybeSingle();
+
+    if (!project) {
+      return Response.json({ error: 'Project not found' }, { status: 404 });
+    }
+
+    const { data, error } = await supabase
+      .from('project_members')
+      .upsert(
+        {
+          project_id: projectId,
+          user_id: targetUserId,
+          role,
+          invited_by: auth.userId,
+          updated_at: new Date().toISOString(),
+        },
+        { onConflict: 'project_id,user_id' },
+      )
+      .select('project_id, user_id, role, created_at')
+      .single();
+
+    if (error || !data) {
+      return Response.json({ error: 'Failed to assign project access' }, { status: 500 });
+    }
+
+    await writeGovernanceAuditEvent(env, {
+      organization_id: membership.organization_id,
+      project_id: projectId,
+      actor_user_id: auth.userId,
+      actor_email: auth.email,
+      event_type: 'project_member_access_updated',
+      target_type: 'project_member',
+      target_id: targetUserId,
+      description: `${auth.email} set ${targetUserId} project access to ${role} for ${project.name || project.vp_proj_id}`,
+      metadata: {
+        target_user_id: targetUserId,
+        role,
+        project_ref: project.vp_proj_id,
+        updated_via: 'enterprise_members_dashboard',
+      },
+    });
+
+    return Response.json({ project_access: data });
+  }
+
+  if (
+    method === 'DELETE' &&
+    pathSegments.length === 5 &&
+    pathSegments[0] === 'members' &&
+    pathSegments[2] === 'projects' &&
+    pathSegments[4] === 'access'
+  ) {
+    if (!canManageMembers) {
+      return Response.json({ error: 'Only organization admins can remove project access' }, { status: 403 });
+    }
+
+    const targetUserId = pathSegments[1];
+    const projectId = pathSegments[3];
+    const { data: project } = await supabase
+      .from('projects')
+      .select('id, name, vp_proj_id')
+      .eq('id', projectId)
+      .eq('organization_id', membership.organization_id)
+      .is('revoked_at', null)
+      .maybeSingle();
+
+    if (!project) {
+      return Response.json({ error: 'Project not found' }, { status: 404 });
+    }
+
+    const { data, error } = await supabase
+      .from('project_members')
+      .delete()
+      .eq('project_id', projectId)
+      .eq('user_id', targetUserId)
+      .select('project_id, user_id, role')
+      .maybeSingle();
+
+    if (error) {
+      return Response.json({ error: 'Failed to remove project access' }, { status: 500 });
+    }
+    if (!data) {
+      return Response.json({ error: 'Project access not found' }, { status: 404 });
+    }
+
+    await writeGovernanceAuditEvent(env, {
+      organization_id: membership.organization_id,
+      project_id: projectId,
+      actor_user_id: auth.userId,
+      actor_email: auth.email,
+      event_type: 'project_member_access_removed',
+      target_type: 'project_member',
+      target_id: targetUserId,
+      description: `${auth.email} removed ${targetUserId} access from ${project.name || project.vp_proj_id}`,
+      metadata: {
+        target_user_id: targetUserId,
+        removed_role: data.role,
+        project_ref: project.vp_proj_id,
+        removed_via: 'enterprise_members_dashboard',
+      },
+    });
+
+    return Response.json({ removed: data });
+  }
 
   if (method === 'GET' && pathSegments.length === 2 && pathSegments[0] === 'members' && pathSegments[1] === 'access-review') {
     if (!canManageMembers) {

@@ -431,7 +431,7 @@ Pages and links:
 - [x] `/app/login`: enterprise login entry point.
 - [x] `/app/control`: detailed enterprise control surface for project policy, provider overrides, incoming invites, export summaries, and secure execution posture.
 - [x] `/app/org`: organization settings and Microsoft Entra/Supabase SAML SSO rollout controls.
-- [ ] `/app/members`: enterprise-owned members page for members, pending invites, role changes, project assignments, CSV/JSON access evidence links, and invite acceptance. In progress: API-backed read-only member/invite/project coverage page exists with access-review CSV link; admin mutations and invite acceptance UI are pending.
+- [x] `/app/members`: enterprise-owned members page for members, pending invites, role changes, project assignments, CSV/JSON access evidence links, and invite acceptance. Current state: API-backed member/invite/project coverage page exists with access-review CSV link, invite create/revoke, role changes, project assignment/removal, and invite acceptance UI/API.
 - [ ] `/app/audit`: enterprise-owned audit page for governance/runtime timeline, CSV export, search, filters, and evidence-friendly event details.
 - [ ] `/app/alerts`: enterprise-owned alerts page for destinations, delivery logs, dispatch runs, policy status, and test-send workflow.
 - [ ] `/app/activity`: enterprise-owned runtime activity page for recent proxy/executor events, status codes, latency, provider request IDs, and attestation summaries.
@@ -445,7 +445,7 @@ Implementation/test order:
 
 1. [x] Navigation no-404 baseline: every link rendered by enterprise dashboard/control/org resolves to an enterprise control-plane page and smoke tests assert HTTP 200. Placeholder pages are allowed only for this baseline slice.
 2. [x] Members page read-only feature slice: wire `/app/members` to enterprise member APIs; test org selection, pending invites, access-review export link, and admin/member states.
-3. [ ] Members page admin-action slice: add invite acceptance, invite creation/revocation where supported, role changes, and project access assignment/removal.
+3. [x] Members page admin-action slice: add invite acceptance, invite creation/revocation where supported, role changes, and project access assignment/removal.
 4. [ ] Audit page feature slice: wire `/app/audit` to enterprise audit APIs; test CSV export link, filter query generation, governance + proxy event rendering.
 5. [ ] Alerts page feature slice: wire `/app/alerts` to enterprise alert APIs; test destinations, policy, delivery logs, and dispatch-run states.
 6. [ ] Activity/projects/keys slice: wire runtime activity, project inventory, provider slot status, and emergency revoke paths; test no B2C API calls.

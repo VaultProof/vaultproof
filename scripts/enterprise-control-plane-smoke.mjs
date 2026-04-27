@@ -48,6 +48,11 @@ let ssoSettings = null;
 let ssoResolveMode = 'existing_membership';
 let ssoMembershipUpserted = false;
 let ssoInvitationAccepted = false;
+let createdMemberInvitation = null;
+let revokedMemberInvitation = null;
+let updatedMemberRole = null;
+let updatedProjectAccess = null;
+let removedProjectAccess = null;
 
 function installSupabaseStub() {
   auditEvents = [];
@@ -64,6 +69,11 @@ function installSupabaseStub() {
   ssoResolveMode = 'existing_membership';
   ssoMembershipUpserted = false;
   ssoInvitationAccepted = false;
+  createdMemberInvitation = null;
+  revokedMemberInvitation = null;
+  updatedMemberRole = null;
+  updatedProjectAccess = null;
+  removedProjectAccess = null;
   globalThis.fetch = async (input, init) => {
     const url = typeof input === 'string' ? input : input instanceof URL ? input.toString() : input.url;
     const decodedUrl = decodeURIComponent(url);
@@ -127,6 +137,17 @@ function installSupabaseStub() {
         return jsonResponse([]);
       }
 
+      if (method === 'PATCH') {
+        const body = JSON.parse(init?.body || '{}');
+        updatedMemberRole = body.role;
+        return jsonResponse({
+          id: 'org_member_456',
+          user_id: 'user_456',
+          role: body.role,
+          created_at: '2026-04-04T12:00:00.000Z',
+        });
+      }
+
       if (decodedUrl.includes('select=role')) {
         if (ssoResolveMode === 'pending_invitation') return jsonResponse(null);
         return jsonResponse({ role: 'admin' });
@@ -141,6 +162,26 @@ function installSupabaseStub() {
     }
 
     if (url.includes('/rest/v1/project_members')) {
+      if (method === 'POST') {
+        const body = JSON.parse(init?.body || '{}');
+        updatedProjectAccess = body;
+        return jsonResponse({
+          project_id: body.project_id || PROJECT_ID,
+          user_id: body.user_id || 'user_456',
+          role: body.role || 'viewer',
+          created_at: '2026-04-04T12:00:00.000Z',
+        });
+      }
+
+      if (method === 'DELETE') {
+        removedProjectAccess = true;
+        return jsonResponse({
+          project_id: PROJECT_ID,
+          user_id: 'user_456',
+          role: 'viewer',
+        });
+      }
+
       if (decodedUrl.includes('project_id')) {
         return jsonResponse([{
           project_id: PROJECT_ID,
@@ -182,7 +223,31 @@ function installSupabaseStub() {
       }]);
     }
 
+    if (url.includes('/rest/v1/organization_invitations') && method === 'POST') {
+      const body = JSON.parse(init?.body || '{}');
+      createdMemberInvitation = body;
+      return jsonResponse({
+        id: 'invite_created_123',
+        email: body.email,
+        role: body.role,
+        status: body.status || 'pending',
+        created_at: body.created_at || '2026-04-04T12:00:00.000Z',
+        invited_by: body.invited_by || 'user_123',
+      });
+    }
+
     if (url.includes('/rest/v1/organization_invitations') && method === 'PATCH') {
+      const body = JSON.parse(init?.body || '{}');
+      if (body.status === 'revoked') {
+        revokedMemberInvitation = body;
+        return jsonResponse({
+          id: 'invite_123',
+          email: 'reviewer@example.com',
+          role: 'viewer',
+          status: 'revoked',
+          revoked_at: body.revoked_at || '2026-04-04T12:00:00.000Z',
+        });
+      }
       ssoInvitationAccepted = true;
       return jsonResponse([]);
     }
@@ -202,6 +267,13 @@ function installSupabaseStub() {
     }
 
     if (url.includes('/rest/v1/projects') && method === 'GET') {
+      if (decodedUrl.includes('id=eq.proj_123')) {
+        return jsonResponse({
+          id: PROJECT_ID,
+          name: 'Enterprise Pilot',
+          vp_proj_id: 'vp-proj-123',
+        });
+      }
       return jsonResponse([{
         id: PROJECT_ID,
         name: 'Enterprise Pilot',
@@ -1214,6 +1286,105 @@ async function assertEnterpriseAccessReviewEvidenceExport() {
   }
 }
 
+async function assertEnterpriseMembersAdminActions() {
+  installSupabaseStub();
+
+  const env = {
+    enterpriseHostname: ENTERPRISE_HOSTNAME,
+    supabaseUrl: 'https://supabase.example.co',
+    supabaseServiceRoleKey: 'service-role-key',
+  };
+  const authHeaders = {
+    authorization: `Bearer ${AUTH_TOKEN}`,
+    'content-type': 'application/json',
+    'x-vaultproof-organization': 'org_123',
+  };
+
+  const inviteResponse = await handleEnterpriseControlPlaneRequest(
+    buildRequest('/api/v1/enterprise/members/invitations', {
+      method: 'POST',
+      headers: authHeaders,
+      body: JSON.stringify({
+        email: 'Reviewer@Example.com',
+        role: 'viewer',
+      }),
+    }),
+    env,
+  );
+  const invitePayload = await inviteResponse.json();
+  if (inviteResponse.status !== 200 || invitePayload?.invitation?.email !== 'reviewer@example.com') {
+    throw new Error(`Expected invitation creation to normalize email, got ${inviteResponse.status} ${JSON.stringify(invitePayload)}`);
+  }
+  if (createdMemberInvitation?.role !== 'viewer') {
+    throw new Error(`Expected invitation insert to use requested role, got ${JSON.stringify(createdMemberInvitation)}`);
+  }
+  if (!auditEvents.find((event) => event.event_type === 'organization_invitation_created')) {
+    throw new Error('Expected invitation creation audit event');
+  }
+
+  const revokeResponse = await handleEnterpriseControlPlaneRequest(
+    buildRequest('/api/v1/enterprise/members/invitations/invite_123/revoke', {
+      method: 'POST',
+      headers: authHeaders,
+    }),
+    env,
+  );
+  const revokePayload = await revokeResponse.json();
+  if (revokeResponse.status !== 200 || revokePayload?.invitation?.status !== 'revoked' || !revokedMemberInvitation) {
+    throw new Error(`Expected invitation revocation to succeed, got ${revokeResponse.status} ${JSON.stringify(revokePayload)}`);
+  }
+  if (!auditEvents.find((event) => event.event_type === 'organization_invitation_revoked')) {
+    throw new Error('Expected invitation revocation audit event');
+  }
+
+  const roleResponse = await handleEnterpriseControlPlaneRequest(
+    buildRequest('/api/v1/enterprise/members/user_456/role', {
+      method: 'POST',
+      headers: authHeaders,
+      body: JSON.stringify({ role: 'admin' }),
+    }),
+    env,
+  );
+  const rolePayload = await roleResponse.json();
+  if (roleResponse.status !== 200 || rolePayload?.member?.role !== 'admin' || updatedMemberRole !== 'admin') {
+    throw new Error(`Expected role update to succeed, got ${roleResponse.status} ${JSON.stringify(rolePayload)}`);
+  }
+  if (!auditEvents.find((event) => event.event_type === 'organization_member_role_updated')) {
+    throw new Error('Expected member role update audit event');
+  }
+
+  const assignResponse = await handleEnterpriseControlPlaneRequest(
+    buildRequest(`/api/v1/enterprise/members/user_456/projects/${PROJECT_ID}/access`, {
+      method: 'POST',
+      headers: authHeaders,
+      body: JSON.stringify({ role: 'viewer' }),
+    }),
+    env,
+  );
+  const assignPayload = await assignResponse.json();
+  if (assignResponse.status !== 200 || assignPayload?.project_access?.role !== 'viewer' || updatedProjectAccess?.project_id !== PROJECT_ID) {
+    throw new Error(`Expected project assignment to succeed, got ${assignResponse.status} ${JSON.stringify(assignPayload)}`);
+  }
+  if (!auditEvents.find((event) => event.event_type === 'project_member_access_updated')) {
+    throw new Error('Expected project assignment audit event');
+  }
+
+  const removeResponse = await handleEnterpriseControlPlaneRequest(
+    buildRequest(`/api/v1/enterprise/members/user_456/projects/${PROJECT_ID}/access`, {
+      method: 'DELETE',
+      headers: authHeaders,
+    }),
+    env,
+  );
+  const removePayload = await removeResponse.json();
+  if (removeResponse.status !== 200 || removePayload?.removed?.role !== 'viewer' || !removedProjectAccess) {
+    throw new Error(`Expected project assignment removal to succeed, got ${removeResponse.status} ${JSON.stringify(removePayload)}`);
+  }
+  if (!auditEvents.find((event) => event.event_type === 'project_member_access_removed')) {
+    throw new Error('Expected project assignment removal audit event');
+  }
+}
+
 async function assertEnterpriseSsoLifecycle() {
   installSupabaseStub();
 
@@ -1537,5 +1708,6 @@ await assertEnterpriseRateLimitPolicy();
 await assertEnterpriseEmergencyRevoke();
 await assertEnterpriseAuditCsvExport();
 await assertEnterpriseAccessReviewEvidenceExport();
+await assertEnterpriseMembersAdminActions();
 await assertEnterpriseSsoLifecycle();
 console.log('enterprise control plane smoke test passed');

@@ -124,11 +124,16 @@ function renderEnterpriseMembersPage(): string {
     .kicker { color: var(--gold); font-size: 12px; text-transform: uppercase; letter-spacing: .16em; font-weight: 850; }
     h1 { margin: 8px 0 8px; font-size: clamp(38px, 6vw, 74px); line-height: .92; letter-spacing: -.075em; }
     .lead { color: var(--muted); line-height: 1.6; max-width: 720px; }
-    select, button { border: 1px solid var(--line); background: rgba(237,229,204,.08); color: var(--text); border-radius: 13px; padding: 11px 12px; font: inherit; }
+    select, button, input { border: 1px solid var(--line); background: rgba(237,229,204,.08); color: var(--text); border-radius: 13px; padding: 11px 12px; font: inherit; }
     option { color: #111827; }
     button { cursor: pointer; }
+    input::placeholder { color: rgba(244,236,213,.48); }
     .primary { background: linear-gradient(135deg, var(--gold), #f3df95); color: var(--ink); border: 0; font-weight: 850; }
+    .danger { color: var(--red); border-color: rgba(251,113,133,.34); }
     .toolbar { display: flex; gap: 10px; flex-wrap: wrap; justify-content: flex-end; }
+    .form-row { display: grid; grid-template-columns: minmax(220px, 1fr) 150px auto; gap: 10px; align-items: center; }
+    .inline-actions { display: flex; gap: 8px; justify-content: flex-end; align-items: center; flex-wrap: wrap; }
+    .inline-actions select, .inline-actions button { padding: 8px 9px; font-size: 13px; border-radius: 11px; }
     .grid { display: grid; gap: 16px; }
     .kpis { grid-template-columns: repeat(4, minmax(0, 1fr)); margin-bottom: 16px; }
     .two { grid-template-columns: minmax(0, 1fr) minmax(340px, .72fr); }
@@ -181,6 +186,19 @@ function renderEnterpriseMembersPage(): string {
       </div>
 
       <div id="notice" class="notice error" style="display:none"></div>
+
+      <section class="card" id="adminPanel" style="display:none; margin-bottom:16px">
+        <div class="section-title"><h2>Admin actions</h2><span class="mini">invite, role, project access</span></div>
+        <form id="inviteForm" class="form-row">
+          <input id="inviteEmail" type="email" autocomplete="email" placeholder="teammate@company.com" required />
+          <select id="inviteRole" aria-label="Invite role">
+            <option value="viewer">viewer</option>
+            <option value="member">member</option>
+            <option value="admin">admin</option>
+          </select>
+          <button class="primary" type="submit">send invite</button>
+        </form>
+      </section>
 
       <section class="grid kpis">
         <div class="card"><div class="kpi-label">members</div><div class="kpi-value" id="kpiMembers">...</div><div class="kpi-sub" id="kpiMembersSub">loading</div></div>
@@ -240,6 +258,14 @@ function renderEnterpriseMembersPage(): string {
         if (!res.ok) throw new Error((payload && payload.error) || ('Request failed: ' + res.status));
         return payload && payload.data ? payload.data : payload;
       }
+      async function apiJson(path, options) {
+        var opts = options || {};
+        opts.headers = Object.assign(headers(), opts.headers || {});
+        var res = await fetch(path, opts);
+        var payload = await res.json().catch(function() { return null; });
+        if (!res.ok) throw new Error((payload && payload.error) || ('Request failed: ' + res.status));
+        return payload;
+      }
       function notice(message) {
         var el = byId('notice');
         if (!el) return;
@@ -272,28 +298,47 @@ function renderEnterpriseMembersPage(): string {
       function renderMembers(payload) {
         var members = Array.isArray(payload.members) ? payload.members : [];
         var invites = Array.isArray(payload.invitations) ? payload.invitations.filter(function(invite) { return invite.status === 'pending'; }) : [];
+        var incomingInvites = Array.isArray(payload.pending_invitations_for_me) ? payload.pending_invitations_for_me : [];
         var projects = Array.isArray(payload.projects) ? payload.projects : [];
         var admins = members.filter(function(member) { return member.role === 'owner' || member.role === 'admin'; });
+        var canManage = !!(payload.organization && payload.organization.can_manage_members);
+        var adminPanel = byId('adminPanel');
+        if (adminPanel) adminPanel.style.display = canManage ? 'block' : 'none';
         text('kpiMembers', number(members.length));
         text('kpiMembersSub', payload.organization ? payload.organization.name : 'active org');
         text('kpiAdmins', number(admins.length));
-        text('kpiInvites', number(invites.length));
+        text('kpiInvites', number(invites.length + incomingInvites.length));
         text('kpiProjects', number(projects.length));
         text('membersMeta', payload.organization && payload.organization.can_manage_members ? 'admin view' : 'read-only view');
-        text('invitesMeta', invites.length ? 'follow up' : 'clear');
+        text('invitesMeta', (invites.length + incomingInvites.length) ? 'follow up' : 'clear');
         text('coverageMeta', projects.length + ' project scopes');
         var membersList = byId('membersList');
         if (membersList) {
           membersList.innerHTML = members.length ? members.map(function(member) {
             var access = Array.isArray(member.project_access) ? member.project_access : [];
-            return '<div class="row"><div><div class="row-title">' + escapeHtml(member.email || member.user_id) + '</div><div class="row-sub">' + escapeHtml(member.role) + ' - ' + access.length + ' project scopes - joined ' + escapeHtml(rel(member.created_at)) + '</div></div><span class="tag good">' + escapeHtml(member.role) + '</span></div>';
+            var roleControl = canManage ? '<div class="inline-actions"><select data-action="member-role" data-user-id="' + escapeHtml(member.user_id) + '">' + ['viewer','member','admin','owner'].map(function(role) {
+              return '<option value="' + role + '"' + (member.role === role ? ' selected' : '') + '>' + role + '</option>';
+            }).join('') + '</select><select data-action="project-pick" data-user-id="' + escapeHtml(member.user_id) + '"><option value="">assign project...</option>' + projects.map(function(project) {
+              return '<option value="' + escapeHtml(project.id) + '">' + escapeHtml(project.name || project.vp_proj_id) + '</option>';
+            }).join('') + '</select><select data-action="project-role" data-user-id="' + escapeHtml(member.user_id) + '"><option value="viewer">viewer</option><option value="member">member</option><option value="admin">admin</option></select><button type="button" data-action="assign-project" data-user-id="' + escapeHtml(member.user_id) + '">assign</button></div>' : '<span class="tag good">' + escapeHtml(member.role) + '</span>';
+            var projectBadges = access.length ? '<div class="row-sub">' + access.map(function(item) {
+              var remove = canManage ? ' <button type="button" class="danger" data-action="remove-project" data-user-id="' + escapeHtml(member.user_id) + '" data-project-id="' + escapeHtml(item.project_id) + '">remove</button>' : '';
+              return '<span class="tag">' + escapeHtml(item.project_name || item.vp_proj_id) + ' / ' + escapeHtml(item.role) + '</span>' + remove;
+            }).join(' ') + '</div>' : '';
+            return '<div class="row"><div><div class="row-title">' + escapeHtml(member.email || member.user_id) + '</div><div class="row-sub">' + escapeHtml(member.role) + ' - ' + access.length + ' project scopes - joined ' + escapeHtml(rel(member.created_at)) + '</div>' + projectBadges + '</div>' + roleControl + '</div>';
           }).join('') : '<div class="empty">No members found.</div>';
         }
         var invitesList = byId('invitesList');
         if (invitesList) {
-          invitesList.innerHTML = invites.length ? invites.map(function(invite) {
-            return '<div class="row"><div><div class="row-title">' + escapeHtml(invite.email) + '</div><div class="row-sub">' + escapeHtml(invite.role) + ' - invited ' + escapeHtml(rel(invite.created_at)) + '</div></div><span class="tag warn">pending</span></div>';
-          }).join('') : '<div class="empty">No pending invites.</div>';
+          var outgoingInviteRows = invites.map(function(invite) {
+            var action = canManage ? '<button type="button" class="danger" data-action="revoke-invite" data-invite-id="' + escapeHtml(invite.id) + '">revoke</button>' : '<span class="tag warn">pending</span>';
+            return '<div class="row"><div><div class="row-title">' + escapeHtml(invite.email) + '</div><div class="row-sub">' + escapeHtml(invite.role) + ' - invited ' + escapeHtml(rel(invite.created_at)) + '</div></div>' + action + '</div>';
+          });
+          var incomingInviteRows = incomingInvites.map(function(invite) {
+            var org = invite.organization || {};
+            return '<div class="row"><div><div class="row-title">' + escapeHtml(org.name || 'Organization invite') + '</div><div class="row-sub">for ' + escapeHtml(invite.email) + ' as ' + escapeHtml(invite.role) + ' - invited ' + escapeHtml(rel(invite.created_at)) + '</div></div><button type="button" class="primary" data-action="accept-invite" data-invite-id="' + escapeHtml(invite.id) + '">accept</button></div>';
+          });
+          invitesList.innerHTML = outgoingInviteRows.concat(incomingInviteRows).length ? outgoingInviteRows.concat(incomingInviteRows).join('') : '<div class="empty">No pending invites.</div>';
         }
         var coverage = projects.map(function(project) {
           var assigned = members.filter(function(member) {
@@ -334,6 +379,69 @@ function renderEnterpriseMembersPage(): string {
       });
       var refresh = byId('refreshBtn');
       if (refresh) refresh.addEventListener('click', load);
+      var inviteForm = byId('inviteForm');
+      if (inviteForm) inviteForm.addEventListener('submit', async function(event) {
+        event.preventDefault();
+        try {
+          await apiJson('/api/v1/enterprise/members/invitations', {
+            method: 'POST',
+            body: JSON.stringify({
+              email: byId('inviteEmail').value,
+              role: byId('inviteRole').value
+            })
+          });
+          byId('inviteEmail').value = '';
+          await load();
+        } catch (error) {
+          notice(error && error.message ? error.message : 'Invite failed.');
+        }
+      });
+      document.addEventListener('change', async function(event) {
+        var target = event.target;
+        if (!target || target.getAttribute('data-action') !== 'member-role') return;
+        try {
+          await apiJson('/api/v1/enterprise/members/' + encodeURIComponent(target.getAttribute('data-user-id')) + '/role', {
+            method: 'POST',
+            body: JSON.stringify({ role: target.value })
+          });
+          await load();
+        } catch (error) {
+          notice(error && error.message ? error.message : 'Role update failed.');
+          await load();
+        }
+      });
+      document.addEventListener('click', async function(event) {
+        var target = event.target;
+        if (!target || !target.getAttribute) return;
+        var action = target.getAttribute('data-action');
+        try {
+          if (action === 'revoke-invite') {
+            await apiJson('/api/v1/enterprise/members/invitations/' + encodeURIComponent(target.getAttribute('data-invite-id')) + '/revoke', { method: 'POST' });
+            await load();
+          }
+          if (action === 'accept-invite') {
+            await apiJson('/api/v1/enterprise/members/invitations/' + encodeURIComponent(target.getAttribute('data-invite-id')) + '/accept', { method: 'POST' });
+            await load();
+          }
+          if (action === 'assign-project') {
+            var userId = target.getAttribute('data-user-id');
+            var projectSelect = document.querySelector('select[data-action="project-pick"][data-user-id="' + CSS.escape(userId) + '"]');
+            var roleSelect = document.querySelector('select[data-action="project-role"][data-user-id="' + CSS.escape(userId) + '"]');
+            if (!projectSelect || !projectSelect.value) throw new Error('Choose a project first.');
+            await apiJson('/api/v1/enterprise/members/' + encodeURIComponent(userId) + '/projects/' + encodeURIComponent(projectSelect.value) + '/access', {
+              method: 'POST',
+              body: JSON.stringify({ role: roleSelect ? roleSelect.value : 'viewer' })
+            });
+            await load();
+          }
+          if (action === 'remove-project') {
+            await apiJson('/api/v1/enterprise/members/' + encodeURIComponent(target.getAttribute('data-user-id')) + '/projects/' + encodeURIComponent(target.getAttribute('data-project-id')) + '/access', { method: 'DELETE' });
+            await load();
+          }
+        } catch (error) {
+          notice(error && error.message ? error.message : 'Member action failed.');
+        }
+      });
       load();
     })();
   </script>
