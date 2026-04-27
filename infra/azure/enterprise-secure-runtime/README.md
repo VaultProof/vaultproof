@@ -651,6 +651,7 @@ Supported project-level fields:
 - `allowed_methods`: HTTP methods, such as `GET` or `POST`.
 - `allowed_upstream_hosts`: upstream hosts or URLs, such as `api.openai.com`.
 - `allowed_upstream_path_prefixes`: upstream API path prefixes, such as `/v1/responses`.
+- `rate_limit_per_minute`: maximum signed execution dispatches per minute for this project or provider override.
 - `provider_overrides.<provider-or-slug>`: stricter provider-specific policy using the same fields plus the caller-lock fields.
 
 Example:
@@ -661,11 +662,13 @@ Example:
   "allowed_methods": ["POST"],
   "allowed_upstream_hosts": ["api.openai.com"],
   "allowed_upstream_path_prefixes": ["/v1/responses"],
+  "rate_limit_per_minute": 120,
   "allowed_customer_gateways": ["vaultproof-managed"],
   "provider_overrides": {
     "openai": {
       "allowed_methods": ["POST"],
-      "allowed_upstream_path_prefixes": ["/v1/responses"]
+      "allowed_upstream_path_prefixes": ["/v1/responses"],
+      "rate_limit_per_minute": 60
     }
   }
 }

@@ -21,6 +21,7 @@ type CallerLockPolicy = {
   allowed_methods?: string[];
   allowed_upstream_hosts?: string[];
   allowed_upstream_path_prefixes?: string[];
+  rate_limit_per_minute?: number;
   allowed_customer_gateways?: string[];
   allowed_client_classes?: string[];
   allowed_fleet_ids?: string[];
@@ -105,6 +106,15 @@ function normalizePathPrefixList(value: unknown, field: string): { ok: true; val
   return { ok: true, value: [...new Set(prefixes)] };
 }
 
+function normalizeRateLimit(value: unknown, field: string): { ok: true; value: number | undefined } | { ok: false; error: string } {
+  if (value === undefined) return { ok: true, value: undefined };
+  if (value === null) return { ok: true, value: undefined };
+  if (typeof value !== 'number' || !Number.isInteger(value) || value < 1 || value > 60000) {
+    return { ok: false, error: `${field} must be an integer between 1 and 60000` };
+  }
+  return { ok: true, value };
+}
+
 function normalizeCallerLockPolicyObject(
   input: Record<string, unknown>,
   fieldPrefix: string,
@@ -129,6 +139,10 @@ function normalizeCallerLockPolicyObject(
   if (allowedUpstreamPathPrefixes.value !== undefined) {
     policy.allowed_upstream_path_prefixes = allowedUpstreamPathPrefixes.value;
   }
+
+  const rateLimit = normalizeRateLimit(input.rate_limit_per_minute, `${fieldPrefix}.rate_limit_per_minute`);
+  if (!rateLimit.ok) return rateLimit;
+  if (rateLimit.value !== undefined) policy.rate_limit_per_minute = rateLimit.value;
 
   for (const [field, value] of Object.entries({
     allowed_customer_gateways: input.allowed_customer_gateways,

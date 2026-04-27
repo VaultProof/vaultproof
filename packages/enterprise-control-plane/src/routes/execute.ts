@@ -28,6 +28,7 @@ type CallerLockPolicy = {
   allowed_methods?: string[];
   allowed_upstream_hosts?: string[];
   allowed_upstream_path_prefixes?: string[];
+  rate_limit_per_minute?: number;
   allowed_customer_gateways?: string[];
   allowed_client_classes?: string[];
   allowed_fleet_ids?: string[];
@@ -38,6 +39,8 @@ type CallerLockPolicy = {
   require_device_id?: boolean;
   provider_overrides?: Record<string, CallerLockPolicy>;
 };
+
+const executionRateLimitBuckets = new Map<string, { windowStart: number; count: number }>();
 
 const SAFE_EXECUTION_HEADERS = new Set([
   'content-type',
@@ -205,6 +208,11 @@ function getCallerLockPolicyFromRaw(raw: Record<string, unknown>): CallerLockPol
     }),
     allowed_upstream_path_prefixes: normalizePolicyList(raw.allowed_upstream_path_prefixes)
       .map((prefix) => prefix.startsWith('/') ? prefix : `/${prefix}`),
+    rate_limit_per_minute: typeof raw.rate_limit_per_minute === 'number'
+      && Number.isInteger(raw.rate_limit_per_minute)
+      && raw.rate_limit_per_minute > 0
+      ? raw.rate_limit_per_minute
+      : undefined,
     allowed_customer_gateways: normalizePolicyList(raw.allowed_customer_gateways),
     allowed_client_classes: normalizePolicyList(raw.allowed_client_classes),
     allowed_fleet_ids: normalizePolicyList(raw.allowed_fleet_ids),
@@ -452,6 +460,24 @@ function enforceExecutionPolicy(
   return enforceExecutionPolicyValue(getCallerLockPolicy(project), input);
 }
 
+function enforceRateLimit(policy: CallerLockPolicy | null, key: string, now = Date.now()): string | null {
+  const limit = policy?.rate_limit_per_minute;
+  if (!limit) return null;
+
+  const windowMs = 60_000;
+  const windowStart = Math.floor(now / windowMs) * windowMs;
+  const existing = executionRateLimitBuckets.get(key);
+  const bucket = existing?.windowStart === windowStart
+    ? existing
+    : { windowStart, count: 0 };
+  bucket.count += 1;
+  executionRateLimitBuckets.set(key, bucket);
+
+  return bucket.count > limit
+    ? `Rate limit exceeded for ${key}. Limit is ${limit} request(s) per minute.`
+    : null;
+}
+
 function isBase64(value: string): boolean {
   try {
     return Buffer.from(value, 'base64').toString('base64').replace(/=+$/, '') === value.replace(/=+$/, '');
@@ -560,6 +586,31 @@ async function auditCallerLockDenied(
       policy: project.caller_lock_policy || {},
       ...metadata,
     },
+  });
+}
+
+async function auditExecutionRateLimited(
+  env: EnterpriseControlPlaneEnv,
+  project: {
+    id: string;
+    organization_id?: string | null;
+  },
+  actor: { userId: string; email: string | null },
+  description: string,
+  metadata: Record<string, unknown>,
+): Promise<void> {
+  if (!project.organization_id) return;
+
+  await writeGovernanceAuditEvent(env, {
+    organization_id: project.organization_id,
+    project_id: project.id,
+    actor_user_id: actor.userId,
+    actor_email: actor.email,
+    event_type: 'enterprise_execution_rate_limited',
+    target_type: 'project',
+    target_id: project.id,
+    description,
+    metadata,
   });
 }
 
@@ -692,6 +743,35 @@ export async function handleEnterpriseExecuteRoutes(
       upstream_path: upstreamPath,
     });
     return Response.json({ error: providerExecutionPolicyError }, { status: 403 });
+  }
+
+  const projectPolicy = getCallerLockPolicy(project);
+  const projectRateLimitError = enforceRateLimit(projectPolicy, `project:${project.id}`);
+  if (projectRateLimitError) {
+    await auditExecutionRateLimited(env, project, auth, projectRateLimitError, {
+      policy_scope: 'project_rate_limit',
+      provider,
+      slug,
+      method,
+      upstream_host: getUpstreamHost(upstreamBaseUrl),
+      upstream_path: upstreamPath,
+      rate_limit_per_minute: projectPolicy.rate_limit_per_minute,
+    });
+    return Response.json({ error: projectRateLimitError }, { status: 429 });
+  }
+
+  const providerRateLimitError = enforceRateLimit(providerLockPolicy, `project:${project.id}:provider:${slug}`);
+  if (providerRateLimitError) {
+    await auditExecutionRateLimited(env, project, auth, providerRateLimitError, {
+      policy_scope: 'provider_rate_limit',
+      provider,
+      slug,
+      method,
+      upstream_host: getUpstreamHost(upstreamBaseUrl),
+      upstream_path: upstreamPath,
+      rate_limit_per_minute: providerLockPolicy?.rate_limit_per_minute,
+    });
+    return Response.json({ error: providerRateLimitError }, { status: 429 });
   }
 
   const now = Date.now();

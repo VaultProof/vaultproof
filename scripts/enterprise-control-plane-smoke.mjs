@@ -821,6 +821,56 @@ async function assertEnterpriseProviderExecutionPolicy() {
   }
 }
 
+async function assertEnterpriseRateLimitPolicy() {
+  installSupabaseStub();
+  activeProject = {
+    ...fakeProject,
+    caller_lock_policy: {
+      rate_limit_per_minute: 1,
+    },
+  };
+
+  const env = {
+    enterpriseHostname: ENTERPRISE_HOSTNAME,
+    executorBaseUrl: 'https://executor.internal',
+    executorSigningKeyId: 'enterprise-local',
+    executorSigningSecret: 'local-secret',
+    supabaseUrl: 'https://supabase.example.co',
+    supabaseServiceRoleKey: 'service-role-key',
+  };
+
+  const buildExecuteRequest = () => buildRequest(`/api/v1/enterprise/projects/${PROJECT_ID}/providers/openai/execute`, {
+    method: 'POST',
+    headers: {
+      authorization: `Bearer ${AUTH_TOKEN}`,
+      'content-type': 'application/json',
+    },
+    body: JSON.stringify({
+      method: 'GET',
+      upstream_path: '/v1/models',
+    }),
+  });
+
+  const firstResponse = await handleEnterpriseControlPlaneRequest(buildExecuteRequest(), env);
+  if (firstResponse.status !== 200) {
+    throw new Error(`Expected first request under rate limit to pass, got ${firstResponse.status}`);
+  }
+
+  const secondResponse = await handleEnterpriseControlPlaneRequest(buildExecuteRequest(), env);
+  const secondPayload = await secondResponse.json();
+  if (secondResponse.status !== 429 || !String(secondPayload?.error || '').includes('Rate limit exceeded')) {
+    throw new Error(`Expected rate limit denial, got ${secondResponse.status} ${JSON.stringify(secondPayload)}`);
+  }
+
+  const rateLimitAudit = auditEvents.find((event) => event.event_type === 'enterprise_execution_rate_limited');
+  if (!rateLimitAudit) {
+    throw new Error('Expected execution rate limit governance audit event');
+  }
+  if (rateLimitAudit.metadata?.rate_limit_per_minute !== 1) {
+    throw new Error('Expected rate limit value in governance audit metadata');
+  }
+}
+
 async function assertEnterpriseLoginRoute() {
   const rootResponse = await handleEnterpriseControlPlaneRequest(
     buildRequest('/'),
@@ -974,4 +1024,5 @@ await assertEnterpriseCallerLockCertificatePolicy();
 await assertEnterpriseProviderCallerLockPolicy();
 await assertEnterpriseExecutionPolicy();
 await assertEnterpriseProviderExecutionPolicy();
+await assertEnterpriseRateLimitPolicy();
 console.log('enterprise control plane smoke test passed');
