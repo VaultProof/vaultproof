@@ -257,6 +257,14 @@ curl -sS -H 'host: enterprise.vaultproof.dev' http://127.0.0.1:3001/readiness
 Azure Front Door automatically sends `X-Azure-FDID` to origins. The control plane validates that header against `ENTERPRISE_AZURE_FRONT_DOOR_ID` when `ENTERPRISE_REQUIRE_ORIGIN_LOCK=true`.
 If you need to deploy the control-plane code before Front Door is fully configured, temporarily keep `ENTERPRISE_REQUIRE_ORIGIN_LOCK=false`.
 
+Enterprise users land on a separate dashboard served by the Azure control plane:
+
+- `https://enterprise.vaultproof.dev/app` and `/app/dashboard`: enterprise dashboard, runtime posture, org summary, project health, access, and audit.
+- `https://enterprise.vaultproof.dev/app/control`: detailed policy and provider override control.
+- `https://enterprise.vaultproof.dev/app/org`: organization and SSO settings.
+
+The enterprise dashboard is not the B2C dashboard shell. It calls only the enterprise control-plane APIs under `/api/v1/enterprise/*`.
+
 Only after local readiness is production-ready should `enterprise.vaultproof.dev` be cut over from the Container App origin to the Confidential VM origin. At that point, restrict port `3001` to Azure Front Door origins and close public SSH bootstrap access when another operational access path is ready.
 
 ### Front Door Cutover

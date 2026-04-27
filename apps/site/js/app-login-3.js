@@ -216,10 +216,11 @@
 
   async function resolveDashboardRoute(session, ssoResolution) {
     if (!session || !session.access_token) return './';
+    const enterpriseDashboardPath = IS_ENTERPRISE_HOST ? './dashboard' : './control';
 
     if (ssoResolution && ssoResolution.organization && ssoResolution.organization.id) {
       localStorage.setItem(ACTIVE_ORG_STORAGE_KEY, ssoResolution.organization.id);
-      return `./control?org=${encodeURIComponent(ssoResolution.organization.id)}`;
+      return `${enterpriseDashboardPath}?org=${encodeURIComponent(ssoResolution.organization.id)}`;
     }
 
     if (ssoResolution && ssoResolution.resolution === 'pending_access') {
@@ -228,7 +229,7 @@
       if (ssoResolution.organization && ssoResolution.organization.name) {
         params.set('workspace', ssoResolution.organization.name);
       }
-      return `./control?${params.toString()}`;
+      return `${enterpriseDashboardPath}?${params.toString()}`;
     }
 
     try {
@@ -249,11 +250,11 @@
 
       if (activeOrganization && activeOrganization.kind && activeOrganization.kind !== 'personal') {
         localStorage.setItem(ACTIVE_ORG_STORAGE_KEY, activeOrganization.id);
-        return `./control?org=${encodeURIComponent(activeOrganization.id)}`;
+        return `${enterpriseDashboardPath}?org=${encodeURIComponent(activeOrganization.id)}`;
       }
       if (sharedOrganization) {
         localStorage.setItem(ACTIVE_ORG_STORAGE_KEY, sharedOrganization.id);
-        return `./control?org=${encodeURIComponent(sharedOrganization.id)}`;
+        return `${enterpriseDashboardPath}?org=${encodeURIComponent(sharedOrganization.id)}`;
       }
       localStorage.removeItem(ACTIVE_ORG_STORAGE_KEY);
 
@@ -270,7 +271,7 @@
           ? inviteData.pending_invitations_for_me
           : [];
         if (pendingInvites.length) {
-          return './control';
+          return enterpriseDashboardPath;
         }
       }
 

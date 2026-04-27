@@ -1,3 +1,6 @@
+import { readFileSync } from 'node:fs';
+import { join } from 'node:path';
+
 export function renderEnterpriseLoginPage(): string {
   return `<!doctype html>
 <html lang="en">
@@ -262,11 +265,11 @@ export function renderEnterpriseLoginPage(): string {
       <div class="auth-heading">
         <div class="auth-kicker">enterprise only</div>
         <h2 class="auth-title">Sign in to VaultProof Enterprise</h2>
-        <p class="auth-subtitle">Use company SSO, Google, GitHub, or email. After sign-in, enterprise users route to the Control workspace.</p>
+        <p class="auth-subtitle">Use company SSO, Google, GitHub, or email. After sign-in, enterprise users route to the separate Enterprise dashboard.</p>
         <div class="entry-split" aria-label="Access path">
           <div class="entry-card">
             <div class="entry-label">enterprise workspace</div>
-            <div class="entry-title">Control dashboard</div>
+            <div class="entry-title">Enterprise dashboard</div>
             <p class="entry-copy">Access governance, project policy, audit review, secure execution posture, and enterprise provider routing.</p>
           </div>
         </div>
@@ -341,7 +344,11 @@ export function renderEnterpriseLoginPage(): string {
     </section>
   </main>
 
-  <script src="https://vaultproof.dev/js/app-login-3.js" defer></script>
+  <script src="/app/enterprise-login.js" defer></script>
 </body>
 </html>`;
+}
+
+export function renderEnterpriseLoginScript(): string {
+  return readFileSync(join(process.cwd(), 'apps/site/js/app-login-3.js'), 'utf8');
 }

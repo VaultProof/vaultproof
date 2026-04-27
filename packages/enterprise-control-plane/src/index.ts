@@ -2,7 +2,8 @@ import type { SignedSecureExecutionEnvelope } from '@vaultproof/core';
 import { timingSafeEqual } from 'node:crypto';
 import { assertEnterpriseHostname, dispatchToSecureExecutor, type EnterpriseControlPlaneEnv } from './config.js';
 import { renderEnterpriseControlPage, renderEnterpriseOrgPage } from './app-pages.js';
-import { renderEnterpriseLoginPage } from './login-page.js';
+import { renderEnterpriseDashboardPage } from './dashboard-page.js';
+import { renderEnterpriseLoginPage, renderEnterpriseLoginScript } from './login-page.js';
 import { handleEnterpriseAlertRoutes } from './routes/alerts.js';
 import { handleEnterpriseAuditRoutes } from './routes/audit.js';
 import { handleEnterpriseExecuteRoutes } from './routes/execute.js';
@@ -224,11 +225,36 @@ export async function handleEnterpriseControlPlaneRequest(
     return Response.redirect(`${url.origin}/app/login${url.search}`, 302);
   }
 
+  if (
+    request.method === 'GET' &&
+    (url.pathname === '/app' || url.pathname === '/app/' || url.pathname === '/app/dashboard' || url.pathname === '/app/dashboard.html')
+  ) {
+    return new Response(renderEnterpriseDashboardPage(), {
+      status: 200,
+      headers: {
+        'content-type': 'text/html; charset=utf-8',
+        'cache-control': 'no-store',
+        'x-robots-tag': 'noindex',
+      },
+    });
+  }
+
   if (request.method === 'GET' && url.pathname === '/app/login') {
     return new Response(renderEnterpriseLoginPage(), {
       status: 200,
       headers: {
         'content-type': 'text/html; charset=utf-8',
+        'cache-control': 'no-store',
+        'x-robots-tag': 'noindex',
+      },
+    });
+  }
+
+  if (request.method === 'GET' && url.pathname === '/app/enterprise-login.js') {
+    return new Response(renderEnterpriseLoginScript(), {
+      status: 200,
+      headers: {
+        'content-type': 'application/javascript; charset=utf-8',
         'cache-control': 'no-store',
         'x-robots-tag': 'noindex',
       },

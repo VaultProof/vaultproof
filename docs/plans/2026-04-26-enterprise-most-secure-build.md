@@ -41,6 +41,7 @@ Live production-confidential path:
 - `npm run verify:enterprise-production` verifies the live path.
 - `npm run deploy:enterprise-vm` deploys/rebuilds/restarts the CVM runtime and can run the verifier.
 - `npm run evidence:enterprise-production` captures customer/audit evidence snapshots.
+- The enterprise control plane serves a separate `/app` and `/app/dashboard` dashboard instead of relying on the B2C dashboard shell.
 - APIM IaC/policy support exists with JWT validation, coarse limits, request-size guards, origin locking, and App Insights diagnostics, but APIM is not deployed in the live route yet.
 - Azure Monitor/App Insights alerting IaC exists but is not deployed yet.
 - TLS-origin proxy tooling exists but Front Door still uses HTTP origin forwarding until a real origin certificate/hostname is installed and cut over.
@@ -417,6 +418,7 @@ Important key-type decision:
 - [x] Add audit export.
 - [x] Add policy UI for editing caller-lock provider overrides.
 - [x] Add access review evidence for SOC 2.
+- [x] Add separate enterprise dashboard served by the Azure control plane.
 
 ## Azure Resources
 

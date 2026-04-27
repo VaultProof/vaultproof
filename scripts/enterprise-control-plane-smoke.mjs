@@ -1344,6 +1344,39 @@ async function assertEnterpriseLoginRoute() {
   if (!html.includes('enterprise only')) {
     throw new Error('Expected enterprise-only login copy');
   }
+  if (!html.includes('/app/enterprise-login.js')) {
+    throw new Error('Expected enterprise login page to load control-plane-owned login script');
+  }
+
+  const loginScriptResponse = await handleEnterpriseControlPlaneRequest(
+    buildRequest('/app/enterprise-login.js'),
+    {
+      enterpriseHostname: ENTERPRISE_HOSTNAME,
+    },
+  );
+  const loginScript = await loginScriptResponse.text();
+  if (loginScriptResponse.status !== 200 || !loginScript.includes("const enterpriseDashboardPath = IS_ENTERPRISE_HOST ? './dashboard' : './control';")) {
+    throw new Error(`Expected enterprise login script to route enterprise users to dashboard, got ${loginScriptResponse.status}`);
+  }
+
+  for (const dashboardPath of ['/app', '/app/', '/app/dashboard']) {
+    const dashboardResponse = await handleEnterpriseControlPlaneRequest(
+      buildRequest(dashboardPath),
+      {
+        enterpriseHostname: ENTERPRISE_HOSTNAME,
+      },
+    );
+    const dashboardHtml = await dashboardResponse.text();
+    if (dashboardResponse.status !== 200 || !dashboardHtml.includes('Enterprise Dashboard - VaultProof')) {
+      throw new Error(`Expected enterprise dashboard page for ${dashboardPath}, got ${dashboardResponse.status}`);
+    }
+    if (dashboardHtml.includes('https://vaultproof.dev/js/app-dashboard')) {
+      throw new Error('Enterprise dashboard must not load the B2C dashboard shell script');
+    }
+    if (!dashboardHtml.includes('/api/v1/enterprise/projects/stats/overview')) {
+      throw new Error('Expected enterprise dashboard to call enterprise control-plane APIs');
+    }
+  }
 
   const controlResponse = await handleEnterpriseControlPlaneRequest(
     buildRequest('/app/control'),
