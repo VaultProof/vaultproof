@@ -46,7 +46,7 @@ Live production-confidential path:
 - Enterprise `/app/*` pages support opt-in Mixpanel page/navigation analytics through `ENTERPRISE_MIXPANEL_TOKEN`; autocapture and session recording remain disabled by default for enterprise privacy.
 - APIM IaC/policy support exists with JWT validation, coarse limits, request-size guards, origin locking, and App Insights diagnostics, but APIM is not deployed in the live route yet.
 - Azure Monitor/App Insights alerting IaC exists but is not deployed yet.
-- TLS-origin proxy tooling exists but Front Door still uses HTTP origin forwarding until a real origin certificate/hostname is installed and cut over.
+- TLS-origin proxy and Front Door cutover tooling exist, but Front Door still uses HTTP origin forwarding until a real origin certificate/hostname is installed and cut over.
 - SSH bootstrap lockdown tooling exists but public SSH remains open until alternate access or a controlled break-glass process is ready.
 - Old Container Apps prototype cleanup tooling exists with inventory, ingress-disable, and explicit deletion actions.
 - Supabase stores enterprise org/project metadata.
@@ -407,7 +407,7 @@ Important key-type decision:
 - [ ] Add mTLS after private networking is stable.
 - [x] Block direct public access to executor.
 - [x] Require Azure Front Door ID origin lock for control-plane origin requests.
-- [ ] Add TLS from Front Door to the VM origin and switch origin forwarding from HTTP to HTTPS. In progress: TLS proxy installer, NSG 443 IaC, verifier/evidence support, and runbook are implemented; real origin certificate/hostname install and Front Door `HttpsOnly` cutover are pending.
+- [ ] Add TLS from Front Door to the VM origin and switch origin forwarding from HTTP to HTTPS. In progress: TLS proxy installer, guarded Front Door cutover/rollback helper, NSG 443 IaC, verifier/evidence support, and runbook are implemented; real origin certificate/hostname install and Front Door `HttpsOnly` cutover are pending.
 - [ ] Close public SSH bootstrap ingress after alternate access is ready. In progress: `allowSshBootstrap` IaC switch, `harden-ssh-bootstrap.sh`, verifier expectations, and runbook are implemented; live NSG rule remains `Allow` for bootstrap/break-glass.
 - [ ] Disable/delete old Container Apps prototype resources after soak. In progress: `cleanup-container-apps-prototype.sh` and `npm run cleanup:enterprise-container-apps` can inventory, disable ingress, and explicitly delete apps/environment/ACR; live cleanup is pending operator approval.
 
