@@ -7,8 +7,8 @@ export function renderEnterpriseHomepage(env: EnterpriseControlPlaneEnv = {}): s
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>VaultProof - A safer way to use API keys</title>
-  <meta name="description" content="VaultProof is a secure gateway for enterprise API keys. Your app calls VaultProof, VaultProof uses the key inside a protected runtime, and the raw key is never stored whole." />
+  <title>VaultProof - API keys that are harder to steal</title>
+  <meta name="description" content="VaultProof protects important API keys. Your app calls VaultProof instead of storing the real key, and VaultProof safely uses the key for one request at a time." />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Inter+Tight:wght@300;400;500;600&family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;1,6..72,400&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
@@ -644,23 +644,23 @@ export function renderEnterpriseHomepage(env: EnterpriseControlPlaneEnv = {}): s
             <span>v0.9 · PRIVATE BETA</span>
           </div>
           <div class="vp-eyebrow"><strong>§ 01</strong><span>What VaultProof is</span></div>
-          <h1 class="vp-hero-title">API keys,<br><em>without the blast radius.</em></h1>
+          <h1 class="vp-hero-title">API keys,<br><em>without the leak.</em></h1>
           <div class="vp-hero-lower">
             <div>
-              <p class="vp-lede">VaultProof is a secure gateway between your app and the services it calls, like OpenAI, Stripe, Twilio, or Snowflake. Your app never stores the raw API key. VaultProof unlocks it only inside a protected Azure runtime, uses it for one request, then wipes it.</p>
+              <p class="vp-lede">VaultProof is a safe middle layer for important API keys. Your app calls VaultProof instead of storing the real key. VaultProof unlocks the key in a protected Azure machine, uses it for one request, then erases it.</p>
               <div class="vp-cta-row">
                 <a class="vp-btn primary" href="mailto:security@vaultproof.dev?subject=VaultProof%20Enterprise%20early%20access">Request early access →</a>
                 <a class="vp-btn secondary" href="/app/login">Enterprise sign in</a>
               </div>
               <div class="vp-proof-stat">
                 <div class="vp-stat-big" data-count="99.998" data-suffix="%">0%</div>
-                <p class="vp-stat-caption">Illustrative successful protected requests across 1.42 million calls in a 30-day production-style run.</p>
+                <p class="vp-stat-caption">Illustrative successful safe API calls across 1.42 million requests in a 30-day test run.</p>
               </div>
             </div>
             <div>
-              <div class="vp-feed-head"><span>Illustrative · protected API calls</span><span class="vp-live"><span class="vp-dot"></span>streaming</span></div>
+              <div class="vp-feed-head"><span>Illustrative · safe API calls</span><span class="vp-live"><span class="vp-dot"></span>streaming</span></div>
               <div class="vp-feed-card" id="proxy-feed" aria-live="polite"></div>
-              <p class="vp-note">An animated example of VaultProof in the middle of each request. Not real customer traffic; the live production posture remains available at <a href="/readiness">/readiness</a>.</p>
+              <p class="vp-note">An animated example of VaultProof protecting each request. Not real customer traffic; the live production check is available at <a href="/readiness">/readiness</a>.</p>
             </div>
           </div>
         </div>
@@ -669,14 +669,14 @@ export function renderEnterpriseHomepage(env: EnterpriseControlPlaneEnv = {}): s
       <section class="vp-section surface vp-pad vp-reveal" id="security">
         <div class="vp-container vp-two-col">
           <div>
-            <div class="vp-eyebrow"><span>The picture · at a glance</span></div>
+            <div class="vp-eyebrow"><span>The simple picture</span></div>
             <h2 class="vp-heading">Your app talks to <em>VaultProof</em> instead of holding keys.</h2>
-            <p class="vp-copy">Think of VaultProof as a secure key room for API calls. We split each key into pieces, store the pieces separately, and only put enough pieces together inside a protected runtime when your app needs to make one approved request.</p>
+            <p class="vp-copy">Think of VaultProof like a locked key room. Your app asks for an API call. VaultProof checks that the call is allowed, briefly unlocks the key in a safe place, makes the call, and locks everything back up.</p>
             <div class="vp-steps">
               <b>01</b><span>Your app sends the request to VaultProof</span>
-              <b>02</b><span>VaultProof checks policy and gathers key pieces</span>
-              <b>03</b><span>The key exists briefly inside a protected runtime</span>
-              <b>04</b><span>VaultProof calls the provider, wipes memory, and writes audit proof</span>
+              <b>02</b><span>VaultProof checks if the request is allowed</span>
+              <b>03</b><span>The key appears only briefly in a safe machine</span>
+              <b>04</b><span>VaultProof calls the provider, erases the key, and saves a receipt</span>
             </div>
           </div>
           <div class="vp-figure" aria-label="Animated key sharding diagram">
@@ -696,13 +696,13 @@ export function renderEnterpriseHomepage(env: EnterpriseControlPlaneEnv = {}): s
         <div class="vp-container vp-threat-layout">
           <div class="vp-sticky">
             <div class="vp-eyebrow"><strong>§ 02</strong><span>Why it matters</span></div>
-            <h2 class="vp-heading">API keys are powerful. <em>Too powerful</em> to leave lying around.</h2>
+            <h2 class="vp-heading">API keys are like passwords for your business. <em>Do not leave them lying around.</em></h2>
           </div>
           <div>
-            <article class="vp-threat-row"><div class="vp-threat-stat" data-count="80" data-prefix="~" data-suffix="%">~0%</div><div><p>of breaches involve a stolen or misused credential in industry reports like Verizon's DBIR.</p><div class="vp-source">— Verizon DBIR, recent years</div></div></article>
-            <article class="vp-threat-row"><div class="vp-threat-stat" data-count="4.88" data-prefix="$" data-suffix="M">$0M</div><div><p>average global cost of a single data breach, per IBM's annual study.</p><div class="vp-source">— IBM Cost of a Data Breach Report</div></div></article>
-            <article class="vp-threat-row"><div class="vp-threat-stat">minutes</div><div><p>is all it can take for a leaked key in a repo, log, laptop, or build system to become an incident.</p><div class="vp-source">— Common incident pattern</div></div></article>
-            <article class="vp-threat-row"><div class="vp-threat-stat" data-count="1">0</div><div><p>raw key stored in your app is the goal. VaultProof keeps the dangerous part out of your code, env vars, and databases.</p><div class="vp-source">— Our operating model</div></div></article>
+            <article class="vp-threat-row"><div class="vp-threat-stat" data-count="80" data-prefix="~" data-suffix="%">~0%</div><div><p>of breaches involve stolen or misused login details, passwords, or keys in industry reports like Verizon's DBIR.</p><div class="vp-source">— Verizon DBIR, recent years</div></div></article>
+            <article class="vp-threat-row"><div class="vp-threat-stat" data-count="4.88" data-prefix="$" data-suffix="M">$0M</div><div><p>is the average global cost of one data breach, per IBM's annual study.</p><div class="vp-source">— IBM Cost of a Data Breach Report</div></div></article>
+            <article class="vp-threat-row"><div class="vp-threat-stat">minutes</div><div><p>is all it can take for a leaked key in GitHub, logs, a laptop, or a build system to become a real problem.</p><div class="vp-source">— Common incident pattern</div></div></article>
+            <article class="vp-threat-row"><div class="vp-threat-stat" data-count="0">0</div><div><p>raw keys should live in your app. VaultProof keeps the dangerous key out of your code, settings, logs, and database.</p><div class="vp-source">— Our operating model</div></div></article>
           </div>
         </div>
       </section>
@@ -711,20 +711,20 @@ export function renderEnterpriseHomepage(env: EnterpriseControlPlaneEnv = {}): s
         <div class="vp-container">
           <div class="vp-two-col" style="align-items:end;margin-bottom:44px">
             <div>
-              <div class="vp-eyebrow"><strong>§ 03</strong><span>How a request works</span></div>
-              <h2 class="vp-heading"><em>Check.</em> Unlock. Call. Erase.</h2>
+              <div class="vp-eyebrow"><strong>§ 03</strong><span>How one request works</span></div>
+              <h2 class="vp-heading"><em>Ask.</em> Check. Use. Erase.</h2>
             </div>
-            <p class="vp-copy" style="margin:0">Your service sends a normal API request through VaultProof. VaultProof verifies the request, unlocks the key only inside a protected runtime, sends the provider call, then erases the key from memory.</p>
+            <p class="vp-copy" style="margin:0">Your app sends a normal API request through VaultProof. VaultProof checks the request, uses the key in a safe machine, sends the provider call, then erases the key from memory.</p>
           </div>
           <div class="vp-region-strip">
             <span><i></i>1/5 · us-east-1</span><span><i></i>2/5 · eu-west-2</span><span><i></i>3/5 · ap-south-1</span><span><i></i>4/5 · us-west-2</span><span><i></i>5/5 · eu-north-1</span>
           </div>
           <div class="vp-mechanism-grid">
             <div class="vp-wire"></div><div class="vp-beam"></div>
-            <article class="vp-node"><div class="vp-node-dot">01</div><div><h3>Your app</h3><p>Your service calls VaultProof instead of putting the API key in code or an env var.</p></div></article>
-            <article class="vp-node"><div class="vp-node-dot">02</div><div><h3>VaultProof</h3><p>We check policy, gather key pieces, and unlock the key inside a protected Azure runtime.</p></div></article>
+            <article class="vp-node"><div class="vp-node-dot">01</div><div><h3>Your app</h3><p>Your app calls VaultProof instead of putting the API key in code or an env var.</p></div></article>
+            <article class="vp-node"><div class="vp-node-dot">02</div><div><h3>VaultProof</h3><p>We check the rules, gather the key pieces, and unlock the key inside a protected Azure machine.</p></div></article>
             <article class="vp-node"><div class="vp-node-dot">03</div><div><h3>Provider</h3><p>VaultProof sends the approved request to OpenAI, Stripe, Twilio, Snowflake, or another provider.</p></div></article>
-            <article class="vp-node"><div class="vp-node-dot">04</div><div><h3>Audit</h3><p>The key is erased from memory and a signed event is written for your security team.</p></div></article>
+            <article class="vp-node"><div class="vp-node-dot">04</div><div><h3>Receipt</h3><p>The key is erased from memory and your security team gets a record of what happened.</p></div></article>
           </div>
         </div>
       </section>
@@ -732,14 +732,14 @@ export function renderEnterpriseHomepage(env: EnterpriseControlPlaneEnv = {}): s
       <section class="vp-section vp-pad vp-reveal" id="integrations">
         <div class="vp-container vp-code-layout">
           <div>
-            <div class="vp-eyebrow"><strong>§ 04</strong><span>How teams adopt it</span></div>
-            <h2 class="vp-heading">Keep your code. <em>Move the key.</em></h2>
-            <p class="vp-copy">You keep using the providers your business already depends on. The change is where the secret lives: the raw key moves out of your app and into VaultProof, then your app references a VaultProof vault URI.</p>
+            <div class="vp-eyebrow"><strong>§ 04</strong><span>How teams start</span></div>
+            <h2 class="vp-heading">Keep your code. <em>Stop storing the key.</em></h2>
+            <p class="vp-copy">You keep using OpenAI, Stripe, Twilio, Snowflake, and the tools you already have. The change is simple: the real key moves out of your app and into VaultProof.</p>
             <div class="vp-checklist">
-              <span>Start with one high-risk provider key</span>
-              <span>Keep existing provider SDKs and business logic</span>
-              <span>Use your Azure Key Vault or Managed HSM when you need customer-owned control</span>
-              <span>Send signed request logs to your SIEM and audit workflow</span>
+              <span>Start with one important API key</span>
+              <span>Keep your current provider SDKs and app logic</span>
+              <span>Use your Azure Key Vault or Managed HSM if your company wants to own the keys</span>
+              <span>Send clear request records to your security tools</span>
             </div>
           </div>
           <div class="vp-code-card">
@@ -750,7 +750,7 @@ export function renderEnterpriseHomepage(env: EnterpriseControlPlaneEnv = {}): s
             </div>
             <pre><code id="code-sample" aria-live="polite"></code></pre>
             <div class="vp-code-foot">
-              <span>vault-id resolved · key unlocked inside protected runtime · memory wiped</span>
+              <span>vault-id found · key used inside safe machine · memory erased</span>
               <span class="vp-code-sign"><span class="vp-dot"></span>signed audit event #<span id="audit-id">84,127,902</span></span>
             </div>
           </div>
@@ -762,17 +762,17 @@ export function renderEnterpriseHomepage(env: EnterpriseControlPlaneEnv = {}): s
           <div class="vp-features-head">
             <div>
               <div class="vp-eyebrow"><strong>§ 05</strong><span>What you get</span></div>
-              <h2 class="vp-heading" style="font-size:48px">A safer control layer for API keys.</h2>
+              <h2 class="vp-heading" style="font-size:48px">A safer home for API keys.</h2>
             </div>
             <a href="mailto:security@vaultproof.dev?subject=VaultProof%20architecture%20brief" style="color:var(--accent);font-weight:500;font-size:13px">Architecture brief →</a>
           </div>
           <div class="vp-feature-grid">
             <article class="vp-card"><div class="vp-card-num">01 / 06</div><h3>No raw keys in apps</h3><p>Move API keys out of code, env vars, CI logs, and app databases.</p></article>
-            <article class="vp-card"><div class="vp-card-num">02 / 06</div><h3>Protected key use</h3><p>Keys are unlocked only inside an Azure Confidential VM path with attestation evidence.</p></article>
-            <article class="vp-card"><div class="vp-card-num">03 / 06</div><h3>Request policy</h3><p>Control which project, host, method, provider, and customer gateway can use each key.</p></article>
-            <article class="vp-card"><div class="vp-card-num">04 / 06</div><h3>Security audit trail</h3><p>Every use creates signed evidence your security team can review or send to a SIEM.</p></article>
-            <article class="vp-card"><div class="vp-card-num">05 / 06</div><h3>Customer-owned keys</h3><p>Use Azure Key Vault or Managed HSM so your team keeps ownership and revocation power.</p></article>
-            <article class="vp-card"><div class="vp-card-num">06 / 06</div><h3>Provider coverage</h3><p>Protect calls to OpenAI, Stripe, Twilio, Snowflake, Datadog, and other APIs from one control plane.</p></article>
+            <article class="vp-card"><div class="vp-card-num">02 / 06</div><h3>Keys used safely</h3><p>Keys are unlocked only inside a protected Azure machine, only when a request needs them.</p></article>
+            <article class="vp-card"><div class="vp-card-num">03 / 06</div><h3>Clear rules</h3><p>Choose which project, website, provider, and customer gateway is allowed to use each key.</p></article>
+            <article class="vp-card"><div class="vp-card-num">04 / 06</div><h3>Simple audit records</h3><p>Every key use creates a clear record your security team can review.</p></article>
+            <article class="vp-card"><div class="vp-card-num">05 / 06</div><h3>You can own the keys</h3><p>Use Azure Key Vault or Managed HSM when your company needs ownership and shutoff control.</p></article>
+            <article class="vp-card"><div class="vp-card-num">06 / 06</div><h3>Works with major APIs</h3><p>Protect calls to OpenAI, Stripe, Twilio, Snowflake, Datadog, and other APIs from one place.</p></article>
           </div>
         </div>
       </section>
@@ -780,12 +780,12 @@ export function renderEnterpriseHomepage(env: EnterpriseControlPlaneEnv = {}): s
       <section class="vp-section vp-pad vp-reveal">
         <div class="vp-grid-bg" aria-hidden="true"></div>
         <div class="vp-container" style="position:relative">
-          <div class="vp-eyebrow"><strong>§ 06</strong><span>Our security promise</span></div>
-          <h2 class="vp-heading" style="max-width:14ch;font-size:clamp(48px,5.6vw,88px);margin-bottom:64px">Simple rules for <em>dangerous keys.</em></h2>
+          <div class="vp-eyebrow"><strong>§ 06</strong><span>Our promise</span></div>
+          <h2 class="vp-heading" style="max-width:14ch;font-size:clamp(48px,5.6vw,88px);margin-bottom:64px">Simple rules for <em>important keys.</em></h2>
           <div class="vp-belief-grid">
-            <article class="vp-belief"><div class="vp-card-num">01</div><h3>Do not store the whole key.</h3><p>If a raw key is not sitting in your app, repo, or database, attackers have less to steal.</p></article>
-            <article class="vp-belief"><div class="vp-card-num">02</div><h3>Use the key only when needed.</h3><p>VaultProof unlocks keys for individual approved requests, not as long-lived plaintext.</p></article>
-            <article class="vp-belief"><div class="vp-card-num">03</div><h3>Make every use explainable.</h3><p>Every protected request should leave behind clear evidence: who used what, for which provider, and when.</p></article>
+            <article class="vp-belief"><div class="vp-card-num">01</div><h3>Do not leave keys in apps.</h3><p>If the real key is not sitting in your app, repo, or database, attackers have less to steal.</p></article>
+            <article class="vp-belief"><div class="vp-card-num">02</div><h3>Use keys only for the request.</h3><p>VaultProof unlocks keys for one approved API call at a time, not forever.</p></article>
+            <article class="vp-belief"><div class="vp-card-num">03</div><h3>Show what happened.</h3><p>Every safe request leaves behind a clear record: who used what, for which provider, and when.</p></article>
           </div>
         </div>
       </section>
@@ -795,9 +795,9 @@ export function renderEnterpriseHomepage(env: EnterpriseControlPlaneEnv = {}): s
           <div class="vp-two-col" style="align-items:baseline;margin-bottom:32px">
             <div>
               <div class="vp-eyebrow"><strong>§ 07</strong><span>Trust · the honest version</span></div>
-              <h2 class="vp-heading">We're early. <em>The secure runtime is live.</em></h2>
+              <h2 class="vp-heading">We're early. <em>The safe Azure version is live.</em></h2>
             </div>
-            <p class="vp-copy" style="margin:0">VaultProof is in private beta. We do not claim certifications before auditors sign them. Today we have a production-ready Azure confidential runtime, a clear enterprise dashboard, and a roadmap toward the compliance artifacts buyers need.</p>
+            <p class="vp-copy" style="margin:0">VaultProof is in private beta. We do not claim certifications before auditors sign them. Today we have a live secure Azure setup, a clear enterprise dashboard, and a roadmap toward the proof big companies need.</p>
           </div>
           <div class="vp-compliance-grid">
             <article class="vp-compliance-card"><h3>SOC 2 Type II</h3><p>Pursuing · Type I observation underway</p></article>
@@ -815,7 +815,7 @@ export function renderEnterpriseHomepage(env: EnterpriseControlPlaneEnv = {}): s
           <div class="vp-final">
             <div class="vp-eyebrow" style="justify-content:center"><span>Private beta · design partners welcome</span></div>
             <h2>Start with the API key <em>you worry about most.</em></h2>
-            <p>We're working with a small number of design partners while we harden the platform. Bring one critical provider key, and we will help you move it out of your app and behind VaultProof.</p>
+            <p>We're working with a small number of design partners while we harden the platform. Bring one important provider key, and we will help you move it out of your app and behind VaultProof.</p>
             <div class="vp-cta-row" style="justify-content:center;margin-top:40px">
               <a class="vp-btn primary" href="mailto:security@vaultproof.dev?subject=VaultProof%20Enterprise%20early%20access">Request early access</a>
               <a class="vp-btn secondary" href="/app/login">Sign in to enterprise</a>
@@ -830,9 +830,9 @@ export function renderEnterpriseHomepage(env: EnterpriseControlPlaneEnv = {}): s
         <div class="vp-footer-grid">
           <div>
             <div class="vp-brand" style="min-width:0"><svg class="vp-mark" viewBox="0 0 24 24" aria-hidden="true"><rect x="2" y="2" width="9" height="9" stroke="currentColor" stroke-width="1.4" fill="none"></rect><rect x="13" y="2" width="9" height="9" stroke="currentColor" stroke-width="1.4" fill="none"></rect><rect x="2" y="13" width="9" height="9" stroke="currentColor" stroke-width="1.4" fill="none"></rect><rect x="13" y="13" width="9" height="9" fill="currentColor"></rect></svg><span class="vp-brand-title">VaultProof</span></div>
-            <p>A secure gateway for enterprise API keys. Your app calls VaultProof; VaultProof uses the key safely; your app never stores the raw secret.</p>
+            <p>A safer home for enterprise API keys. Your app calls VaultProof; VaultProof safely uses the key; your app never stores the raw secret.</p>
           </div>
-          <div><h3>Platform</h3><ul><li>Secure API gateway</li><li>Protected key use</li><li>Policy engine</li><li>Audit & SIEM</li><li>BYO Azure keys</li></ul></div>
+          <div><h3>Platform</h3><ul><li>Secure API gateway</li><li>Safe key use</li><li>Access rules</li><li>Audit records</li><li>BYO Azure keys</li></ul></div>
           <div><h3>Resources</h3><ul><li><a href="/readiness">Readiness</a></li><li><a href="/health">Health</a></li><li><a href="/app/dashboard">Dashboard</a></li><li><a href="/app/alerts">Alerts</a></li></ul></div>
           <div><h3>Company</h3><ul><li>Private beta</li><li>Design partners</li><li>Security review</li><li>Founder-led support</li></ul></div>
           <div><h3>Contact</h3><ul><li><a href="mailto:hello@vaultproof.dev">hello@vaultproof.dev</a></li><li><a href="mailto:security@vaultproof.dev">security@vaultproof.dev</a></li><li>San Francisco, CA</li></ul></div>

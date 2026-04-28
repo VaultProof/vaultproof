@@ -1685,15 +1685,15 @@ async function assertEnterpriseLoginRoute() {
     },
   );
   const rootHtml = await rootResponse.text();
-  if (rootResponse.status !== 200 || !rootHtml.includes('VaultProof - A safer way to use API keys')) {
+  if (rootResponse.status !== 200 || !rootHtml.includes('VaultProof - API keys that are harder to steal')) {
     throw new Error(`Expected enterprise root homepage, got ${rootResponse.status}`);
   }
   for (const required of [
-    'API keys,<br><em>without the blast radius.</em>',
-    'VaultProof is a secure gateway between your app and the services it calls',
-    'Illustrative · protected API calls',
+    'API keys,<br><em>without the leak.</em>',
+    'VaultProof is a safe middle layer for important API keys',
+    'Illustrative · safe API calls',
     'Your app talks to <em>VaultProof</em> instead of holding keys.',
-    'Keep your code. <em>Move the key.</em>',
+    'Keep your code. <em>Stop storing the key.</em>',
     '/app/login',
     '/app/dashboard',
     '/readiness',
