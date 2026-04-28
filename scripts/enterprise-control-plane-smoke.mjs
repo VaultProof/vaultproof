@@ -1685,14 +1685,15 @@ async function assertEnterpriseLoginRoute() {
     },
   );
   const rootHtml = await rootResponse.text();
-  if (rootResponse.status !== 200 || !rootHtml.includes('VaultProof - Secrets, never whole at rest')) {
+  if (rootResponse.status !== 200 || !rootHtml.includes('VaultProof - A safer way to use API keys')) {
     throw new Error(`Expected enterprise root homepage, got ${rootResponse.status}`);
   }
   for (const required of [
-    'Your secrets,<br><em>never whole at rest.</em>',
-    'Illustrative · simulated proxy feed',
-    'One key, <em>five regions,</em> zero plaintext at rest.',
-    "One line. <em>That's the migration.</em>",
+    'API keys,<br><em>without the blast radius.</em>',
+    'VaultProof is a secure gateway between your app and the services it calls',
+    'Illustrative · protected API calls',
+    'Your app talks to <em>VaultProof</em> instead of holding keys.',
+    'Keep your code. <em>Move the key.</em>',
     '/app/login',
     '/app/dashboard',
     '/readiness',
