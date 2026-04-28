@@ -3,6 +3,7 @@ import { timingSafeEqual } from 'node:crypto';
 import { assertEnterpriseHostname, dispatchToSecureExecutor, type EnterpriseControlPlaneEnv } from './config.js';
 import { renderEnterpriseControlPage, renderEnterpriseOrgPage, renderEnterprisePlannedAppPage } from './app-pages.js';
 import { renderEnterpriseDashboardPage } from './dashboard-page.js';
+import { renderEnterpriseHomepage } from './homepage-page.js';
 import { renderEnterpriseLoginPage, renderEnterpriseLoginScript } from './login-page.js';
 import { handleEnterpriseAlertRoutes } from './routes/alerts.js';
 import { handleEnterpriseAuditRoutes } from './routes/audit.js';
@@ -222,7 +223,13 @@ export async function handleEnterpriseControlPlaneRequest(
   if (originLockResponse) return originLockResponse;
 
   if (request.method === 'GET' && url.pathname === '/') {
-    return Response.redirect(`${url.origin}/app/login${url.search}`, 302);
+    return new Response(renderEnterpriseHomepage(env), {
+      status: 200,
+      headers: {
+        'content-type': 'text/html; charset=utf-8',
+        'cache-control': 'no-store',
+      },
+    });
   }
 
   if (

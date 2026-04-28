@@ -42,7 +42,7 @@ Live production-confidential path:
 - `npm run deploy:enterprise-vm` deploys/rebuilds/restarts the CVM runtime and can run the verifier.
 - `npm run evidence:enterprise-production` captures customer/audit evidence snapshots.
 - `npm run verify:enterprise-secrets` verifies the installed control-plane/executor env files for secret-rotation readiness and confidential-mode footguns.
-- The enterprise control plane serves a separate `/app` and `/app/dashboard` dashboard instead of relying on the B2C dashboard shell. In progress: dashboard home, login, control, and org pages exist; remaining enterprise app links need enterprise-owned routes and feature-complete pages.
+- The enterprise control plane serves a separate public `/` enterprise homepage plus `/app` and `/app/dashboard` dashboard instead of relying on the B2C dashboard shell. Current state: the root page implements the editorial/terminal VaultProof Homepage design handoff; dashboard, login, control, org, and remaining enterprise app pages exist under `/app/*`.
 - Enterprise `/app/*` pages support opt-in Mixpanel page/navigation analytics through `ENTERPRISE_MIXPANEL_TOKEN`; autocapture and session recording remain disabled by default for enterprise privacy.
 - APIM IaC/policy support exists with JWT validation, coarse limits, request-size guards, origin locking, and App Insights diagnostics, but APIM is not deployed in the live route yet.
 - Azure Monitor/App Insights alerting IaC and verifier checks exist, but live monitoring is not deployed yet.
@@ -429,6 +429,7 @@ Goal: `enterprise.vaultproof.dev/app/*` should be a complete enterprise operator
 
 Pages and links:
 
+- [x] `/`: public enterprise homepage based on the VaultProof Homepage design handoff, with proof-led hero, animated proxy feed, sharded-key architecture figure, mechanism diagram, code diff, capabilities, trust roadmap, and CTAs into `/app/login`, `/app/dashboard`, `/readiness`, and email.
 - [x] `/app`, `/app/`, `/app/dashboard`: enterprise dashboard home with runtime posture, org summary, project health, access, audit, and recent runtime activity.
 - [x] `/app/login`: enterprise login entry point.
 - [x] `/app/control`: detailed enterprise control surface for project policy, provider overrides, incoming invites, export summaries, and secure execution posture.
@@ -454,7 +455,8 @@ Implementation/test order:
 7. [x] Settings/plans/scanner slice: either wire real enterprise APIs or intentionally hide/disable unavailable actions; test no dead links and no B2C fallback.
 8. [x] Enterprise analytics slice: add opt-in Mixpanel page/navigation events across login, dashboard, planned pages, and static enterprise pages; test disabled-by-default behavior and explicit enablement.
 9. [x] Automated app-link QA smoke: crawl rendered enterprise `/app/*` links, verify every enterprise app link returns 200, and fail on `{"error":"Not found"}` or B2C API origins.
-10. [ ] Live browser QA after each deploy: login as demo user, click all sidebar/subnav links, verify no `{"error":"Not found"}` pages, and verify `/readiness` remains production-ready after deploy.
+10. [x] Enterprise homepage design slice: serve the public `/` homepage from the enterprise control plane, smoke-test design landmarks, no B2C API origins, and disabled-by-default analytics.
+11. [ ] Live browser QA after each deploy: login as demo user, click all sidebar/subnav links, verify no `{"error":"Not found"}` pages, and verify `/readiness` remains production-ready after deploy.
 
 ## Azure Resources
 

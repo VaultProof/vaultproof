@@ -1684,11 +1684,28 @@ async function assertEnterpriseLoginRoute() {
       enterpriseHostname: ENTERPRISE_HOSTNAME,
     },
   );
-  if (rootResponse.status !== 302) {
-    throw new Error(`Expected enterprise root to redirect to login, got ${rootResponse.status}`);
+  const rootHtml = await rootResponse.text();
+  if (rootResponse.status !== 200 || !rootHtml.includes('VaultProof - Secrets, never whole at rest')) {
+    throw new Error(`Expected enterprise root homepage, got ${rootResponse.status}`);
   }
-  if (rootResponse.headers.get('location') !== `https://${ENTERPRISE_HOSTNAME}/app/login`) {
-    throw new Error(`Unexpected enterprise root redirect: ${rootResponse.headers.get('location')}`);
+  for (const required of [
+    'Your secrets,<br><em>never whole at rest.</em>',
+    'Illustrative · simulated proxy feed',
+    'One key, <em>five regions,</em> zero plaintext at rest.',
+    "One line. <em>That's the migration.</em>",
+    '/app/login',
+    '/app/dashboard',
+    '/readiness',
+  ]) {
+    if (!rootHtml.includes(required)) {
+      throw new Error(`Expected enterprise homepage to include ${required}`);
+    }
+  }
+  if (rootHtml.includes('https://init.vaultproof.dev') || rootHtml.includes('https://api.vaultproof.dev')) {
+    throw new Error('Enterprise homepage must not reference B2C API origins');
+  }
+  if (rootHtml.includes('cdn.mxpnl.com') || rootHtml.includes('Enterprise Page Viewed')) {
+    throw new Error('Enterprise homepage Mixpanel analytics must be disabled unless ENTERPRISE_MIXPANEL_TOKEN is configured');
   }
 
   const loginResponse = await handleEnterpriseControlPlaneRequest(
@@ -1971,6 +1988,7 @@ async function assertEnterpriseMixpanelAnalytics() {
   };
 
   const pageChecks = [
+    ['/', 'homepage'],
     ['/app/login', 'login'],
     ['/app/dashboard', 'dashboard'],
     ['/app/members', 'members'],
