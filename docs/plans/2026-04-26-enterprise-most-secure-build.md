@@ -42,10 +42,11 @@ Live production-confidential path:
 - `npm run deploy:enterprise-vm` deploys/rebuilds/restarts the CVM runtime and can run the verifier.
 - `npm run evidence:enterprise-production` captures customer/audit evidence snapshots.
 - `npm run verify:enterprise-secrets` verifies the installed control-plane/executor env files for secret-rotation readiness and confidential-mode footguns.
+- Azure Monitor/App Insights alerting is deployed as `vp-enterprise-secure-runtime-eastus-hsm-monitoring` and `EXPECTED_MONITORING_DEPLOYED=true npm run verify:enterprise-production` verifies the workspace, App Insights component, action group, health/readiness availability tests, readiness drift alert, health alert, and Confidential VM availability alert.
 - The enterprise control plane serves a separate public `/` enterprise homepage plus `/app` and `/app/dashboard` dashboard instead of relying on the B2C dashboard shell. Current state: the root page implements the editorial/terminal VaultProof Homepage design handoff; dashboard, login, control, org, and remaining enterprise app pages exist under `/app/*`.
 - Enterprise `/app/*` pages support opt-in Mixpanel page/navigation analytics through `ENTERPRISE_MIXPANEL_TOKEN`; autocapture and session recording remain disabled by default for enterprise privacy.
 - APIM IaC/policy support exists with JWT validation, coarse limits, request-size guards, origin locking, and App Insights diagnostics, but APIM is not deployed in the live route yet.
-- Azure Monitor/App Insights alerting IaC and verifier checks exist, but live monitoring is not deployed yet.
+- Azure Monitor/App Insights alerting is live for Front Door health, production readiness drift, and Confidential VM availability.
 - TLS-origin proxy and Front Door cutover tooling exist and use the current Azure CLI Front Door origin command shape, but Front Door still uses HTTP origin forwarding until a real origin certificate/hostname is installed and cut over.
 - SSH bootstrap lockdown tooling exists but public SSH remains open until alternate access or a controlled break-glass process is ready.
 - Old Container Apps prototype cleanup tooling exists with inventory, ingress-disable, and explicit deletion actions.
@@ -69,18 +70,17 @@ Live production-confidential path:
 Important limitation:
 
 - The active production-confidential runtime is now Confidential VM plus Secure Key Release.
-- Azure API Management live deployment/cutover, Azure Monitor alert deployment, TLS-origin cutover, SSH bootstrap lockdown, prototype Container Apps cleanup, and enterprise UI/policy controls are still pending.
+- Azure API Management live deployment/cutover, TLS-origin cutover, SSH bootstrap lockdown, prototype Container Apps cleanup, and enterprise UI/policy controls are still pending.
 - Secrets used during setup must be rotated before external/customer production use.
 
 ## Next Execution Order
 
 1. Azure API Management placement and policy support.
-2. Azure Monitor/Log Analytics alerts for Front Door readiness, VM service health, and production verifier drift.
-3. TLS from Front Door to the VM origin, then switch Front Door origin forwarding to HTTPS.
-4. SSH/Bastion/JIT hardening and cleanup of old prototype Container Apps resources. In progress: reversible SSH bootstrap lockdown tooling, verifier expectations, and prototype Container Apps cleanup tooling are implemented; live SSH closure and live prototype cleanup are pending alternate access/break-glass readiness and soak.
-5. End-to-end enterprise API execution through `enterprise.vaultproof.dev` with evidence/audit metadata.
-6. Enterprise controls: SSO, provider allowlists, upstream domain/method policy, policy UI, per-project rate limits, emergency revoke, audit export, SOC 2 access review evidence.
-7. Enterprise dashboard completion: make every `/app/*` link resolve on `enterprise.vaultproof.dev`, then replace placeholders with API-backed enterprise pages one page at a time with tests between each slice.
+2. TLS from Front Door to the VM origin, then switch Front Door origin forwarding to HTTPS.
+3. SSH/Bastion/JIT hardening and cleanup of old prototype Container Apps resources. In progress: reversible SSH bootstrap lockdown tooling, verifier expectations, and prototype Container Apps cleanup tooling are implemented; live SSH closure and live prototype cleanup are pending alternate access/break-glass readiness and soak.
+4. End-to-end enterprise API execution through `enterprise.vaultproof.dev` with evidence/audit metadata.
+5. Enterprise controls: SSO, provider allowlists, upstream domain/method policy, policy UI, per-project rate limits, emergency revoke, audit export, SOC 2 access review evidence.
+6. Enterprise dashboard completion: make every `/app/*` link resolve on `enterprise.vaultproof.dev`, then replace placeholders with API-backed enterprise pages one page at a time with tests between each slice.
 
 ## Security Boundary
 
@@ -369,7 +369,7 @@ Minimum evidence bundle for customer review:
 - [x] Add deployment script for the systemd artifact: `npm run deploy:enterprise-vm`.
 - [x] Add live production verifier: `npm run verify:enterprise-production`.
 - [x] Add production evidence collector: `npm run evidence:enterprise-production`.
-- [x] Add deployable and verifiable Azure Monitor/App Insights alerting IaC for Front Door health, production readiness drift, and Confidential VM availability.
+- [x] Deploy and verify Azure Monitor/App Insights alerting for Front Door health, production readiness drift, and Confidential VM availability.
 
 ### Phase 3: Secure Key Release
 
