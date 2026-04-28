@@ -2,7 +2,7 @@
 
 Status: active - source of truth
 Owner: VaultProof enterprise
-Last updated: 2026-04-27
+Last updated: 2026-04-28
 
 ## Operating Rule
 
@@ -38,7 +38,7 @@ Live production-confidential path:
 - Azure Confidential VM runs both the enterprise control plane and secure executor as systemd services.
 - The control plane calls the executor over loopback with signed execution envelopes.
 - Managed HSM Secure Key Release is wired and the executor reports `production_ready: true`.
-- `npm run verify:enterprise-production` verifies the live path.
+- `npm run verify:enterprise-production` verifies the live path and passes against the current Azure CLI/Front Door/NSG output shapes.
 - `npm run deploy:enterprise-vm` deploys/rebuilds/restarts the CVM runtime and can run the verifier.
 - `npm run evidence:enterprise-production` captures customer/audit evidence snapshots.
 - `npm run verify:enterprise-secrets` verifies the installed control-plane/executor env files for secret-rotation readiness and confidential-mode footguns.
@@ -46,7 +46,7 @@ Live production-confidential path:
 - Enterprise `/app/*` pages support opt-in Mixpanel page/navigation analytics through `ENTERPRISE_MIXPANEL_TOKEN`; autocapture and session recording remain disabled by default for enterprise privacy.
 - APIM IaC/policy support exists with JWT validation, coarse limits, request-size guards, origin locking, and App Insights diagnostics, but APIM is not deployed in the live route yet.
 - Azure Monitor/App Insights alerting IaC and verifier checks exist, but live monitoring is not deployed yet.
-- TLS-origin proxy and Front Door cutover tooling exist, but Front Door still uses HTTP origin forwarding until a real origin certificate/hostname is installed and cut over.
+- TLS-origin proxy and Front Door cutover tooling exist and use the current Azure CLI Front Door origin command shape, but Front Door still uses HTTP origin forwarding until a real origin certificate/hostname is installed and cut over.
 - SSH bootstrap lockdown tooling exists but public SSH remains open until alternate access or a controlled break-glass process is ready.
 - Old Container Apps prototype cleanup tooling exists with inventory, ingress-disable, and explicit deletion actions.
 - Supabase stores enterprise org/project metadata.

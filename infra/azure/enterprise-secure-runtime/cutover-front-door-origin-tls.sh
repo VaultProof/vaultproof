@@ -107,7 +107,6 @@ show_current_front_door() {
   az afd origin show \
     --resource-group "${RESOURCE_GROUP}" \
     --profile-name "${FRONT_DOOR_PROFILE}" \
-    --endpoint-name "${FRONT_DOOR_ENDPOINT}" \
     --origin-group-name "${FRONT_DOOR_ORIGIN_GROUP}" \
     --origin-name "${FRONT_DOOR_ORIGIN_NAME}" \
     --query "{name:name,hostName:hostName,originHostHeader:originHostHeader,httpPort:httpPort,httpsPort:httpsPort,enabledState:enabledState,enforceCertificateNameCheck:enforceCertificateNameCheck}" \
@@ -121,7 +120,6 @@ enable_tls_origin() {
   az afd origin update \
     --resource-group "${RESOURCE_GROUP}" \
     --profile-name "${FRONT_DOOR_PROFILE}" \
-    --endpoint-name "${FRONT_DOOR_ENDPOINT}" \
     --origin-group-name "${FRONT_DOOR_ORIGIN_GROUP}" \
     --origin-name "${FRONT_DOOR_ORIGIN_NAME}" \
     --host-name "${ORIGIN_TLS_HOSTNAME}" \
@@ -158,7 +156,6 @@ rollback_http_origin() {
   az afd origin update \
     --resource-group "${RESOURCE_GROUP}" \
     --profile-name "${FRONT_DOOR_PROFILE}" \
-    --endpoint-name "${FRONT_DOOR_ENDPOINT}" \
     --origin-group-name "${FRONT_DOOR_ORIGIN_GROUP}" \
     --origin-name "${FRONT_DOOR_ORIGIN_NAME}" \
     --host-name "${rollback_origin}" \

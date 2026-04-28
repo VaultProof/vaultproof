@@ -191,7 +191,6 @@ origins_json="${tmp_dir}/front-door-origins.json"
 az afd origin list \
   --resource-group "${RESOURCE_GROUP}" \
   --profile-name "${FRONT_DOOR_PROFILE}" \
-  --endpoint-name "${FRONT_DOOR_ENDPOINT}" \
   --origin-group-name "${FRONT_DOOR_ORIGIN_GROUP}" \
   --query "[].{name:name,hostName:hostName,originHostHeader:originHostHeader,httpPort:httpPort,httpsPort:httpsPort,enabledState:enabledState,enforceCertificateNameCheck:enforceCertificateNameCheck}" \
   -o json > "${origins_json}"
@@ -302,7 +301,7 @@ if (match) console.log(match[1]);
   nsg_rules_file="${tmp_dir}/nsg-rules.json"
   az network nsg rule list --resource-group "${nsg_resource_group}" --nsg-name "${nsg_name}" -o json > "${nsg_rules_file}"
   public_3001_allows="$(json_value "${nsg_rules_file}" "rules => rules.filter((rule) => {
-    const props = rule.properties || {};
+    const props = rule.properties || rule;
     if (props.direction !== 'Inbound' || props.access !== 'Allow') return false;
     const source = props.sourceAddressPrefix || '';
     const sources = props.sourceAddressPrefixes || [];
@@ -319,7 +318,8 @@ if (match) console.log(match[1]);
 
   ssh_bootstrap_access="$(json_value "${nsg_rules_file}" "rules => {
     const rule = rules.find((candidate) => candidate.name === 'AllowSshBootstrap');
-    return rule?.properties?.access;
+    const props = rule?.properties || rule;
+    return props?.access;
   }")"
   if [[ -n "${EXPECTED_SSH_BOOTSTRAP_ACCESS}" ]]; then
     check_equals "SSH bootstrap NSG access" "${ssh_bootstrap_access}" "${EXPECTED_SSH_BOOTSTRAP_ACCESS}"
