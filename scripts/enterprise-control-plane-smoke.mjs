@@ -1725,6 +1725,18 @@ async function assertEnterpriseLoginRoute() {
   if (!html.includes('enterprise only')) {
     throw new Error('Expected enterprise-only login copy');
   }
+  for (const required of [
+    'Newsreader',
+    'Sign in to the place where your <em>API keys stay safe.</em>',
+    'Safe Azure path',
+    'Move real API keys out of apps, env vars, and logs.',
+    'Manage protected keys, access rules, team members, audit records, and provider settings.',
+    'back to enterprise homepage',
+  ]) {
+    if (!html.includes(required)) {
+      throw new Error(`Expected themed enterprise login page to include ${required}`);
+    }
+  }
   if (!html.includes('/app/enterprise-login.js')) {
     throw new Error('Expected enterprise login page to load control-plane-owned login script');
   }

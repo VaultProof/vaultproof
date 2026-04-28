@@ -12,94 +12,139 @@ export function renderEnterpriseLoginPage(env: EnterpriseControlPlaneEnv = {}): 
   <title>VaultProof Enterprise Login</title>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Inter+Tight:wght@600;700;800&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@500;600&display=swap" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter+Tight:wght@300;400;500;600&family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;1,6..72,400&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.101.1" integrity="sha384-0VpB0wAYDdhWCEv3+IjT0Z9Kgpvszkf70RFX3ro7l4QR5nywxsMaOpmvZKsfRF8I" crossorigin="anonymous"></script>
   <style>
     :root {
-      --bg: #10130f;
-      --panel: #f3efe3;
-      --ink: #171914;
-      --muted: #65695d;
-      --line: rgba(23, 25, 20, 0.16);
-      --accent: #b45309;
-      --dark-card: rgba(255, 255, 255, 0.08);
-      --dark-line: rgba(255, 255, 255, 0.16);
+      color-scheme: light;
+      --bg: #f2eee5;
+      --paper: #fbf9f4;
+      --surface: #e8e2d4;
+      --ink: #14120e;
+      --ink-soft: #3d3a33;
+      --muted: #867f6f;
+      --line: rgba(20, 18, 14, 0.12);
+      --line-strong: rgba(20, 18, 14, 0.25);
+      --line-soft: rgba(20, 18, 14, 0.06);
+      --accent: #8b5a3c;
+      --accent-soft: rgba(139, 90, 60, 0.12);
+      --success: #3f6b47;
+      --display: "Newsreader", "Times New Roman", Georgia, serif;
+      --body: "Inter Tight", -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
+      --mono: "JetBrains Mono", ui-monospace, SFMono-Regular, monospace;
     }
     * { box-sizing: border-box; }
+    html { min-height: 100%; }
     body {
       margin: 0;
       min-height: 100vh;
-      font-family: Inter, system-ui, sans-serif;
+      font-family: var(--body);
       background:
-        radial-gradient(circle at 12% 12%, rgba(217, 119, 6, 0.24), transparent 34%),
-        radial-gradient(circle at 88% 18%, rgba(132, 204, 22, 0.12), transparent 30%),
-        linear-gradient(135deg, #10130f 0%, #1f221b 48%, #090b08 100%);
-      color: #fff;
+        radial-gradient(circle at 14% 12%, rgba(139, 90, 60, 0.14), transparent 34%),
+        radial-gradient(circle at 88% 18%, rgba(63, 107, 71, 0.10), transparent 32%),
+        linear-gradient(135deg, var(--bg) 0%, #f8f4eb 48%, #e9e1d2 100%);
+      color: var(--ink);
+      -webkit-font-smoothing: antialiased;
+      text-rendering: optimizeLegibility;
     }
-    a { color: inherit; }
+    body:before {
+      content: "";
+      position: fixed;
+      inset: -10%;
+      pointer-events: none;
+      background-image: radial-gradient(rgba(20, 18, 14, 0.11) 1px, transparent 1px);
+      background-size: 28px 28px;
+      mask-image: radial-gradient(ellipse at center, black 28%, transparent 72%);
+      -webkit-mask-image: radial-gradient(ellipse at center, black 28%, transparent 72%);
+    }
+    a { color: inherit; text-decoration: none; }
     .hidden { display: none !important; }
     .shell {
-      width: min(1180px, calc(100% - 32px));
+      position: relative;
+      z-index: 1;
+      width: min(1220px, calc(100% - 48px));
       min-height: 100vh;
       margin: 0 auto;
       display: grid;
-      grid-template-columns: minmax(0, 1fr) 430px;
-      gap: 28px;
+      grid-template-columns: minmax(0, 1fr) 450px;
+      gap: 36px;
       align-items: center;
-      padding: 32px 0;
+      padding: 42px 0;
     }
     .hero {
-      min-height: 620px;
-      border: 1px solid var(--dark-line);
-      border-radius: 34px;
+      min-height: 660px;
+      border: 0.5px solid var(--line);
+      border-radius: 18px;
       padding: 34px;
-      background: linear-gradient(145deg, rgba(255,255,255,0.10), rgba(255,255,255,0.03));
-      box-shadow: 0 30px 90px rgba(0,0,0,0.34);
+      background: rgba(251, 249, 244, 0.72);
+      box-shadow: 0 1px 0 rgba(255,255,255,.5) inset, 0 28px 80px -30px rgba(20,18,14,.22);
       display: flex;
       flex-direction: column;
       justify-content: space-between;
       overflow: hidden;
       position: relative;
     }
+    .hero:before {
+      content: "";
+      position: absolute;
+      inset: 80px 34px auto auto;
+      width: 220px;
+      height: 220px;
+      border: 0.5px solid var(--line);
+      border-radius: 999px;
+      background: radial-gradient(circle, var(--accent-soft), transparent 68%);
+    }
     .hero:after {
       content: "";
       position: absolute;
-      inset: auto -80px -120px auto;
-      width: 360px;
-      height: 360px;
+      inset: auto -90px -110px auto;
+      width: 340px;
+      height: 340px;
       border-radius: 999px;
-      background: rgba(180, 83, 9, 0.32);
-      filter: blur(24px);
+      background: rgba(139, 90, 60, 0.15);
+      filter: blur(28px);
     }
     .brand {
       display: flex;
       justify-content: space-between;
       align-items: center;
-      font-family: "JetBrains Mono", monospace;
-      font-size: 13px;
-      letter-spacing: -0.02em;
-      color: rgba(255,255,255,0.72);
+      gap: 18px;
+      font: 500 11px/1 var(--mono);
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--muted);
+      position: relative;
+      z-index: 1;
     }
     .pill {
-      border: 1px solid var(--dark-line);
+      border: 0.5px solid var(--line);
       border-radius: 999px;
-      padding: 8px 12px;
-      background: rgba(0,0,0,0.2);
+      padding: 9px 12px;
+      background: var(--paper);
+      color: var(--accent);
     }
     h1 {
       max-width: 760px;
       margin: 0;
-      font-family: "Inter Tight", Inter, sans-serif;
-      font-size: clamp(44px, 7vw, 88px);
-      line-height: 0.88;
-      letter-spacing: -0.08em;
+      font: 400 clamp(54px, 7.4vw, 112px)/0.92 var(--display);
+      letter-spacing: -0.045em;
+      text-wrap: balance;
+      position: relative;
+      z-index: 1;
+    }
+    h1 em {
+      color: var(--accent);
+      font-style: italic;
     }
     .hero-copy {
       max-width: 610px;
-      color: rgba(255,255,255,0.68);
-      font-size: 18px;
-      line-height: 1.7;
+      color: var(--ink-soft);
+      font-size: 19px;
+      line-height: 1.55;
       margin-top: 24px;
+      text-wrap: pretty;
+      position: relative;
+      z-index: 1;
     }
     .proof-grid {
       display: grid;
@@ -110,45 +155,44 @@ export function renderEnterpriseLoginPage(env: EnterpriseControlPlaneEnv = {}): 
       z-index: 1;
     }
     .proof {
-      border: 1px solid var(--dark-line);
-      background: rgba(0,0,0,0.22);
-      border-radius: 20px;
-      padding: 16px;
+      border: 0.5px solid var(--line);
+      background: rgba(242, 238, 229, 0.7);
+      border-radius: 12px;
+      padding: 18px;
     }
     .proof strong {
       display: block;
-      font-family: "JetBrains Mono", monospace;
-      font-size: 12px;
-      color: #fbbf24;
+      font: 500 11px/1 var(--mono);
+      color: var(--accent);
       margin-bottom: 8px;
       text-transform: uppercase;
+      letter-spacing: 0.08em;
     }
     .proof span {
-      color: rgba(255,255,255,0.66);
+      color: var(--ink-soft);
       font-size: 13px;
       line-height: 1.5;
     }
     .login-card {
-      background: var(--panel);
+      background: var(--paper);
       color: var(--ink);
-      border-radius: 30px;
-      padding: 26px;
-      box-shadow: 0 30px 90px rgba(0,0,0,0.42);
+      border: 0.5px solid var(--line);
+      border-radius: 18px;
+      padding: 28px;
+      box-shadow: 0 1px 0 rgba(255,255,255,.6) inset, 0 28px 80px -30px rgba(20,18,14,.28);
     }
     .auth-kicker, .sso-kicker {
-      font-family: "JetBrains Mono", monospace;
-      font-size: 11px;
+      font-family: var(--mono);
+      font-size: 10.5px;
       letter-spacing: 0.08em;
       text-transform: uppercase;
       color: var(--accent);
-      font-weight: 700;
+      font-weight: 500;
     }
     .auth-title {
       margin: 10px 0 8px;
-      font-family: "Inter Tight", Inter, sans-serif;
-      font-size: 34px;
-      letter-spacing: -0.05em;
-      line-height: 1;
+      font: 400 42px/0.98 var(--display);
+      letter-spacing: -0.025em;
     }
     .auth-subtitle, .entry-copy, .sso-copy, .sso-hint, .legal, .back-link, .auth-footnote {
       color: var(--muted);
@@ -162,43 +206,48 @@ export function renderEnterpriseLoginPage(env: EnterpriseControlPlaneEnv = {}): 
       margin: 18px 0;
     }
     .entry-card, .sso-block, .promo-block {
-      border: 1px solid var(--line);
-      border-radius: 18px;
-      padding: 14px;
-      background: rgba(255,255,255,0.42);
+      border: 0.5px solid var(--line);
+      border-radius: 12px;
+      padding: 15px;
+      background: rgba(242, 238, 229, 0.58);
     }
     .entry-label {
-      font-family: "JetBrains Mono", monospace;
+      font-family: var(--mono);
       color: var(--accent);
       font-size: 10px;
       text-transform: uppercase;
-      font-weight: 700;
+      letter-spacing: 0.08em;
+      font-weight: 500;
     }
     .entry-title, .sso-title {
-      font-weight: 800;
+      font-weight: 600;
       margin-top: 4px;
     }
     .auth-card { display: grid; gap: 14px; }
     .form-input {
       width: 100%;
-      border: 1px solid var(--line);
-      background: #fffaf0;
-      border-radius: 14px;
+      border: 0.5px solid var(--line);
+      background: #fffdf8;
+      border-radius: 9px;
       padding: 12px 13px;
       color: var(--ink);
       outline: none;
+      font: 400 14px/1.2 var(--body);
     }
-    .form-input:focus { border-color: rgba(180, 83, 9, 0.65); }
+    .form-input:focus { border-color: rgba(139, 90, 60, 0.65); box-shadow: 0 0 0 3px var(--accent-soft); }
     .btn {
       width: 100%;
-      border: 0;
-      border-radius: 14px;
+      border: 0.5px solid var(--line);
+      border-radius: 9px;
       padding: 12px 14px;
-      font-weight: 800;
+      font: 600 13px/1 var(--body);
       cursor: pointer;
+      min-height: 42px;
+      transition: transform 180ms ease, background 180ms ease, color 180ms ease, border-color 180ms ease;
     }
-    .btn-primary { background: #171914; color: #fff; }
-    .btn-secondary { background: #fffaf0; color: var(--ink); border: 1px solid var(--line); }
+    .btn:hover { transform: translateY(-1px); }
+    .btn-primary { background: var(--ink); color: var(--bg); border-color: var(--ink); }
+    .btn-secondary { background: #fffdf8; color: var(--ink); }
     .btn-small { width: auto; padding: 10px 12px; }
     .oauth-stack, .form-stack { display: grid; gap: 10px; }
     .sso-row, .promo-row { display: grid; grid-template-columns: 1fr auto; gap: 8px; margin-top: 10px; }
@@ -209,7 +258,7 @@ export function renderEnterpriseLoginPage(env: EnterpriseControlPlaneEnv = {}): 
       color: var(--muted);
       font-size: 12px;
       text-transform: uppercase;
-      font-family: "JetBrains Mono", monospace;
+      font-family: var(--mono);
     }
     .divider:before, .divider:after { content: ""; height: 1px; background: var(--line); flex: 1; }
     .auth-tabs { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 10px; }
@@ -218,15 +267,15 @@ export function renderEnterpriseLoginPage(env: EnterpriseControlPlaneEnv = {}): 
       background: transparent;
       color: var(--accent);
       cursor: pointer;
-      font-weight: 700;
+      font-weight: 600;
     }
     .input-icon svg, .oauth-stack svg { display: none; }
     #authError, #loginError, #regError, #resetStatus, #ssoStatus, #promoCodeMsg {
-      border-radius: 12px;
+      border-radius: 9px;
       padding: 10px;
       font-size: 13px;
-      border: 1px solid rgba(180, 83, 9, 0.24);
-      background: rgba(180, 83, 9, 0.08);
+      border: 0.5px solid rgba(139, 90, 60, 0.24);
+      background: var(--accent-soft);
     }
     .legal { margin-top: 6px; }
     .back-link { text-align: center; margin-top: 16px; }
@@ -235,11 +284,11 @@ export function renderEnterpriseLoginPage(env: EnterpriseControlPlaneEnv = {}): 
       justify-content: center;
       gap: 10px;
       margin-top: 10px;
-      font-family: "JetBrains Mono", monospace;
+      font-family: var(--mono);
       font-size: 11px;
     }
     @media (max-width: 900px) {
-      .shell { grid-template-columns: 1fr; }
+      .shell { width: min(100% - 32px, 760px); grid-template-columns: 1fr; }
       .hero { min-height: auto; }
       .proof-grid { grid-template-columns: 1fr; }
     }
@@ -250,15 +299,15 @@ export function renderEnterpriseLoginPage(env: EnterpriseControlPlaneEnv = {}): 
     <section class="hero">
       <div class="brand">
         <span>VaultProof Enterprise</span>
-        <span class="pill">Azure confidential path</span>
+        <span class="pill">Safe Azure path</span>
       </div>
       <div>
-        <h1>Enterprise login for keys we should never see.</h1>
-        <p class="hero-copy">This portal is separate from the B2C Cloudflare stack. Enterprise traffic routes through Azure, with signed handoff to the secure executor and a path toward Confidential VM plus Secure Key Release.</p>
+        <h1>Sign in to the place where your <em>API keys stay safe.</em></h1>
+        <p class="hero-copy">This is the enterprise control room for VaultProof. Your team can see which keys are protected, who can use them, and every safe API call made through the system.</p>
         <div class="proof-grid">
-          <div class="proof"><strong>01 / Separate</strong><span>B2C stays on Cloudflare. Enterprise runs on Azure.</span></div>
-          <div class="proof"><strong>02 / Encrypted</strong><span>Both Shamir shares are encrypted at rest for enterprise rows.</span></div>
-          <div class="proof"><strong>03 / Attested</strong><span>Production executor target is Azure Confidential VM gated by key release.</span></div>
+          <div class="proof"><strong>01 / Keys</strong><span>Move real API keys out of apps, env vars, and logs.</span></div>
+          <div class="proof"><strong>02 / Rules</strong><span>Choose which apps, providers, and people can use each key.</span></div>
+          <div class="proof"><strong>03 / Receipts</strong><span>See a clear record every time a protected key is used.</span></div>
         </div>
       </div>
     </section>
@@ -267,12 +316,12 @@ export function renderEnterpriseLoginPage(env: EnterpriseControlPlaneEnv = {}): 
       <div class="auth-heading">
         <div class="auth-kicker">enterprise only</div>
         <h2 class="auth-title">Sign in to VaultProof Enterprise</h2>
-        <p class="auth-subtitle">Use company SSO, Google, GitHub, or email. After sign-in, enterprise users route to the separate Enterprise dashboard.</p>
+        <p class="auth-subtitle">Use company SSO, Google, GitHub, or email. After sign-in, you will land in the enterprise dashboard.</p>
         <div class="entry-split" aria-label="Access path">
           <div class="entry-card">
             <div class="entry-label">enterprise workspace</div>
             <div class="entry-title">Enterprise dashboard</div>
-            <p class="entry-copy">Access governance, project policy, audit review, secure execution posture, and enterprise provider routing.</p>
+            <p class="entry-copy">Manage protected keys, access rules, team members, audit records, and provider settings.</p>
           </div>
         </div>
       </div>
@@ -292,12 +341,12 @@ export function renderEnterpriseLoginPage(env: EnterpriseControlPlaneEnv = {}): 
         <div class="sso-block">
           <div class="sso-kicker">company sso</div>
           <div class="sso-title">Continue with Microsoft Entra / SSO</div>
-          <p class="sso-copy">Enter your company domain or work email to start enterprise SSO.</p>
+          <p class="sso-copy">Enter your company domain or work email to start your company login.</p>
           <div class="sso-row">
             <input id="ssoDomainInput" type="text" class="form-input" placeholder="company.com or you@company.com" />
             <button id="ssoContinueBtn" type="button" class="btn btn-secondary">continue</button>
           </div>
-          <div class="sso-hint">If SSO is not configured yet, use Google, GitHub, or email for the demo workspace.</div>
+          <div class="sso-hint">If SSO is not set up yet, use Google, GitHub, or email for the demo workspace.</div>
           <div id="ssoStatus" class="hidden"></div>
         </div>
 
@@ -338,11 +387,11 @@ export function renderEnterpriseLoginPage(env: EnterpriseControlPlaneEnv = {}): 
           </form>
         </div>
 
-        <p class="legal">Enterprise access is governed by your organization policy. B2C users should use <a href="https://vaultproof.dev/app/login">vaultproof.dev/app/login</a>.</p>
+        <p class="legal">Enterprise access follows your company's rules. Consumer users should use <a href="https://vaultproof.dev/app/login">vaultproof.dev/app/login</a>.</p>
       </div>
 
-      <p class="back-link"><a href="https://vaultproof.dev">public VaultProof site</a></p>
-      <div class="auth-footnote"><span>enterprise.vaultproof.dev</span><span>secure path</span></div>
+      <p class="back-link"><a href="/">back to enterprise homepage</a></p>
+      <div class="auth-footnote"><span>enterprise.vaultproof.dev</span><span>safe key path</span></div>
     </section>
   </main>
 
