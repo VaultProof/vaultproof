@@ -299,7 +299,7 @@ export function renderEnterpriseLoginPage(env: EnterpriseControlPlaneEnv = {}): 
     <section class="hero">
       <div class="brand">
         <span>VaultProof Enterprise</span>
-        <span class="pill">Safe Azure path</span>
+        <span class="pill">Enterprise access</span>
       </div>
       <div>
         <h1>Sign in to the place where your <em>API keys stay safe.</em></h1>
@@ -391,7 +391,7 @@ export function renderEnterpriseLoginPage(env: EnterpriseControlPlaneEnv = {}): 
       </div>
 
       <p class="back-link"><a href="/">back to enterprise homepage</a></p>
-      <div class="auth-footnote"><span>enterprise.vaultproof.dev</span><span>safe key path</span></div>
+      <div class="auth-footnote"><span>enterprise.vaultproof.dev</span><span>protected key access</span></div>
     </section>
   </main>
 

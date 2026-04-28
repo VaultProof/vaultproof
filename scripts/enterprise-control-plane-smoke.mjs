@@ -1728,7 +1728,7 @@ async function assertEnterpriseLoginRoute() {
   for (const required of [
     'Newsreader',
     'Sign in to the place where your <em>API keys stay safe.</em>',
-    'Safe Azure path',
+    'Enterprise access',
     'Move real API keys out of apps, env vars, and logs.',
     'Manage protected keys, access rules, team members, audit records, and provider settings.',
     'back to enterprise homepage',
