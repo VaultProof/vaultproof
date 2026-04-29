@@ -9,10 +9,13 @@ FRONT_DOOR_ENDPOINT="${FRONT_DOOR_ENDPOINT:-vaultproof-enterprise}"
 FRONT_DOOR_ROUTE="${FRONT_DOOR_ROUTE:-default-route}"
 FRONT_DOOR_ORIGIN_GROUP="${FRONT_DOOR_ORIGIN_GROUP:-default-origin-group}"
 MONITORING_DEPLOYMENT_NAME="${MONITORING_DEPLOYMENT_NAME:-${DEPLOYMENT_NAME}-monitoring}"
+APIM_DEPLOYMENT_NAME="${APIM_DEPLOYMENT_NAME:-${DEPLOYMENT_NAME}-apim}"
 EXPECTED_FRONT_DOOR_FORWARDING_PROTOCOL="${EXPECTED_FRONT_DOOR_FORWARDING_PROTOCOL:-HttpOnly}"
 EXPECTED_FRONT_DOOR_ORIGIN_HOSTNAME="${EXPECTED_FRONT_DOOR_ORIGIN_HOSTNAME:-}"
 EXPECTED_FRONT_DOOR_ORIGIN_CERT_NAME_CHECK="${EXPECTED_FRONT_DOOR_ORIGIN_CERT_NAME_CHECK:-}"
 EXPECTED_MONITORING_DEPLOYED="${EXPECTED_MONITORING_DEPLOYED:-false}"
+EXPECTED_APIM_DEPLOYED="${EXPECTED_APIM_DEPLOYED:-false}"
+EXPECTED_APIM_INGRESS_SOURCE="${EXPECTED_APIM_INGRESS_SOURCE:-}"
 ORIGIN_TLS_HOSTNAME="${ORIGIN_TLS_HOSTNAME:-}"
 SSH_USER="${SSH_USER:-azureuser}"
 RUN_SSH_CHECKS="${RUN_SSH_CHECKS:-true}"
@@ -80,8 +83,18 @@ if (Array.isArray(value)) {
 http_status() {
   local url="$1"
   local output_file="$2"
+  local curl_exit
+  local status
   shift 2
-  curl -sS --connect-timeout 10 --max-time 20 -o "${output_file}" -w "%{http_code}" "$@" "${url}"
+  set +e
+  status="$(curl -sS --connect-timeout 10 --max-time 20 -o "${output_file}" -w "%{http_code}" "$@" "${url}" 2>"${output_file}.err")"
+  curl_exit=$?
+  set -e
+  if [[ "${curl_exit}" -ne 0 ]]; then
+    echo "000"
+  else
+    echo "${status}"
+  fi
 }
 
 check_resource_present() {
@@ -102,6 +115,22 @@ check_resource_present() {
     pass "${label} exists: ${resource_name}"
   else
     fail "${label} is missing: ${resource_name}"
+  fi
+}
+
+check_resource_id_present() {
+  local label="$1"
+  local resource_id="$2"
+  local output_file="$3"
+  if [[ -z "${resource_id}" ]]; then
+    fail "${label}: resource ID is empty"
+    return
+  fi
+
+  if az resource show --ids "${resource_id}" -o json > "${output_file}" 2>"${output_file}.err"; then
+    pass "${label} exists"
+  else
+    fail "${label} is missing: ${resource_id}"
   fi
 }
 
@@ -280,6 +309,83 @@ else
   echo "SKIP Azure Monitor production alerting checks because EXPECTED_MONITORING_DEPLOYED=false"
 fi
 
+if [[ "${EXPECTED_APIM_DEPLOYED}" == "true" ]]; then
+  echo
+  echo "Azure API Management gateway:"
+  echo "  deployment: ${APIM_DEPLOYMENT_NAME}"
+
+  api_management_name="$(deployment_output_from "${APIM_DEPLOYMENT_NAME}" apiManagementName)"
+  api_management_gateway_url="$(deployment_output_from "${APIM_DEPLOYMENT_NAME}" apiManagementGatewayUrl)"
+  api_management_backend_url="$(deployment_output_from "${APIM_DEPLOYMENT_NAME}" apiManagementBackendUrl)"
+  api_management_api_url="$(deployment_output_from "${APIM_DEPLOYMENT_NAME}" apiManagementApiUrl)"
+  api_management_logger_name="$(deployment_output_from "${APIM_DEPLOYMENT_NAME}" apiManagementAppInsightsLoggerName)"
+  api_management_diagnostic_name="$(deployment_output_from "${APIM_DEPLOYMENT_NAME}" apiManagementDiagnosticName)"
+
+  echo "  APIM name:       ${api_management_name}"
+  echo "  gateway URL:     ${api_management_gateway_url}"
+  echo "  API URL:         ${api_management_api_url}"
+  echo "  backend URL:     ${api_management_backend_url}"
+
+  apim_json="${tmp_dir}/apim-service.json"
+  apim_api_json="${tmp_dir}/apim-api.json"
+  apim_policy_json="${tmp_dir}/apim-policy.json"
+  apim_named_value_json="${tmp_dir}/apim-origin-lock-named-value.json"
+  apim_health_operation_json="${tmp_dir}/apim-health-operation.json"
+  apim_readiness_operation_json="${tmp_dir}/apim-readiness-operation.json"
+  apim_execute_operation_json="${tmp_dir}/apim-execute-operation.json"
+  apim_proxy_operation_json="${tmp_dir}/apim-proxy-operation.json"
+  subscription_id="$(az account show --query id -o tsv)"
+  api_management_resource_id="/subscriptions/${subscription_id}/resourceGroups/${RESOURCE_GROUP}/providers/Microsoft.ApiManagement/service/${api_management_name}"
+
+  check_resource_present "API Management service" "Microsoft.ApiManagement/service" "${api_management_name}" "${apim_json}"
+  check_resource_id_present "APIM enterprise API" "${api_management_resource_id}/apis/vaultproof-enterprise" "${apim_api_json}"
+  check_resource_id_present "APIM enterprise API policy" "${api_management_resource_id}/apis/vaultproof-enterprise/policies/policy" "${apim_policy_json}"
+  check_resource_id_present "APIM origin-lock named value" "${api_management_resource_id}/namedValues/vaultproof-origin-lock-secret" "${apim_named_value_json}"
+  check_resource_id_present "APIM health operation" "${api_management_resource_id}/apis/vaultproof-enterprise/operations/health" "${apim_health_operation_json}"
+  check_resource_id_present "APIM readiness operation" "${api_management_resource_id}/apis/vaultproof-enterprise/operations/readiness" "${apim_readiness_operation_json}"
+  check_resource_id_present "APIM execute operation" "${api_management_resource_id}/apis/vaultproof-enterprise/operations/execute" "${apim_execute_operation_json}"
+  check_resource_id_present "APIM enterprise proxy operation" "${api_management_resource_id}/apis/vaultproof-enterprise/operations/enterprise-api-proxy" "${apim_proxy_operation_json}"
+
+  if [[ -s "${apim_api_json}" ]]; then
+    check_equals "APIM API path" "$(json_value "${apim_api_json}" "p => p.properties?.path")" "enterprise"
+    check_equals "APIM API service URL" "$(json_value "${apim_api_json}" "p => p.properties?.serviceUrl")" "${api_management_backend_url}"
+  fi
+  if [[ -s "${apim_named_value_json}" ]]; then
+    check_equals "APIM origin-lock named value is secret" "$(json_value "${apim_named_value_json}" "p => p.properties?.secret")" "true"
+  fi
+
+  if [[ -n "${api_management_logger_name}" ]]; then
+    apim_logger_json="${tmp_dir}/apim-app-insights-logger.json"
+    check_resource_id_present "APIM App Insights logger" "${api_management_resource_id}/loggers/${api_management_logger_name}" "${apim_logger_json}"
+  fi
+  if [[ -n "${api_management_diagnostic_name}" ]]; then
+    apim_diagnostic_json="${tmp_dir}/apim-app-insights-diagnostic.json"
+    check_resource_id_present "APIM App Insights diagnostic" "${api_management_resource_id}/apis/vaultproof-enterprise/diagnostics/${api_management_diagnostic_name}" "${apim_diagnostic_json}"
+  fi
+
+  apim_health_file="${tmp_dir}/apim-health.json"
+  apim_health_status="$(http_status "${api_management_api_url%/}/health?verify_ts=$(date +%s)" "${apim_health_file}")"
+  check_equals "APIM /health HTTP status" "${apim_health_status}" "200"
+  if node -e "JSON.parse(require('fs').readFileSync(process.argv[1], 'utf8'))" "${apim_health_file}" >/dev/null 2>&1; then
+    check_equals "APIM health ok" "$(json_value "${apim_health_file}" "p => p.status")" "ok"
+  else
+    fail "APIM /health did not return valid JSON"
+  fi
+
+  apim_readiness_file="${tmp_dir}/apim-readiness.json"
+  apim_readiness_status="$(http_status "${api_management_api_url%/}/readiness?verify_ts=$(date +%s)" "${apim_readiness_file}")"
+  check_equals "APIM /readiness HTTP status" "${apim_readiness_status}" "200"
+  if node -e "JSON.parse(require('fs').readFileSync(process.argv[1], 'utf8'))" "${apim_readiness_file}" >/dev/null 2>&1; then
+    check_equals "APIM readiness production_ready" "$(json_value "${apim_readiness_file}" "p => p.production_ready")" "true"
+    check_equals "APIM readiness security_profile" "$(json_value "${apim_readiness_file}" "p => p.security_profile")" "azure-confidential-production"
+  else
+    fail "APIM /readiness did not return valid JSON"
+  fi
+else
+  echo
+  echo "SKIP Azure API Management checks because EXPECTED_APIM_DEPLOYED=false"
+fi
+
 echo
 echo "NSG ingress posture:"
 nic_id="$(az vm show --resource-group "${RESOURCE_GROUP}" --name "${vm_name}" --query "networkProfile.networkInterfaces[0].id" -o tsv)"
@@ -325,6 +431,27 @@ if (match) console.log(match[1]);
     check_equals "SSH bootstrap NSG access" "${ssh_bootstrap_access}" "${EXPECTED_SSH_BOOTSTRAP_ACCESS}"
   else
     echo "SKIP SSH bootstrap NSG access check because EXPECTED_SSH_BOOTSTRAP_ACCESS is empty"
+  fi
+
+  if [[ "${EXPECTED_APIM_DEPLOYED}" == "true" ]]; then
+    apim_control_plane_access="$(json_value "${nsg_rules_file}" "rules => {
+      const rule = rules.find((candidate) => candidate.name === 'AllowApiManagementControlPlane');
+      const props = rule?.properties || rule;
+      return props?.access;
+    }")"
+    apim_control_plane_source="$(json_value "${nsg_rules_file}" "rules => {
+      const rule = rules.find((candidate) => candidate.name === 'AllowApiManagementControlPlane');
+      const props = rule?.properties || rule;
+      return props?.sourceAddressPrefix || (props?.sourceAddressPrefixes || []).join(',');
+    }")"
+    check_equals "APIM control-plane NSG access" "${apim_control_plane_access}" "Allow"
+    if [[ -n "${EXPECTED_APIM_INGRESS_SOURCE}" ]]; then
+      check_equals "APIM control-plane NSG source" "${apim_control_plane_source}" "${EXPECTED_APIM_INGRESS_SOURCE}"
+    elif [[ -n "${apim_control_plane_source}" ]]; then
+      pass "APIM control-plane NSG source: ${apim_control_plane_source}"
+    else
+      fail "APIM control-plane NSG source is missing"
+    fi
   fi
 fi
 

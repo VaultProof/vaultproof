@@ -94,6 +94,9 @@ param apiManagementMaxRequestBodyBytes int = 1048576
 @description('Non-secret caller-lock marker APIM forwards to the control plane.')
 param apiManagementGatewayMarker string = 'vaultproof-managed'
 
+@description('Hostname APIM forwards to the control plane through x-forwarded-host so the enterprise hostname guard accepts sidecar gateway traffic.')
+param apiManagementForwardedHost string = 'enterprise.vaultproof.dev'
+
 @description('Header name APIM uses when forwarding the custom origin-lock secret to the control plane.')
 param apiManagementOriginLockHeaderName string = 'x-vaultproof-origin-lock'
 
@@ -212,14 +215,17 @@ var enterpriseApiPolicyXml = format('''
     <set-header name="x-vaultproof-customer-gateway" exists-action="override">
       <value>{3}</value>
     </set-header>
-    <set-header name="{4}" exists-action="override">
+    <set-header name="x-forwarded-host" exists-action="override">
+      <value>{4}</value>
+    </set-header>
+    <set-header name="{5}" exists-action="override">
       <value>{{{{vaultproof-origin-lock-secret}}}}</value>
     </set-header>
     <set-header name="x-api-key" exists-action="delete" />
     <set-header name="openai-api-key" exists-action="delete" />
     <set-header name="anthropic-api-key" exists-action="delete" />
     <set-header name="stripe-api-key" exists-action="delete" />
-    <set-backend-service base-url="{5}" />
+    <set-backend-service base-url="{6}" />
   </inbound>
   <backend>
     <base />
@@ -231,7 +237,7 @@ var enterpriseApiPolicyXml = format('''
     <base />
   </on-error>
 </policies>
-''', apiManagementRateLimitCalls, apiManagementQuotaCalls, apiManagementMaxRequestBodyBytes, apiManagementGatewayMarker, apiManagementOriginLockHeaderName, apiManagementResolvedBackendUrl, apiManagementJwtPolicyXml)
+''', apiManagementRateLimitCalls, apiManagementQuotaCalls, apiManagementMaxRequestBodyBytes, apiManagementGatewayMarker, apiManagementForwardedHost, apiManagementOriginLockHeaderName, apiManagementResolvedBackendUrl, apiManagementJwtPolicyXml)
 
 resource vnet 'Microsoft.Network/virtualNetworks@2024-05-01' = {
   name: vnetName
@@ -536,8 +542,6 @@ resource enterpriseApi 'Microsoft.ApiManagement/service/apis@2024-05-01' = if (d
       'https'
     ]
     serviceUrl: apiManagementResolvedBackendUrl
-    apiVersion: 'v1'
-    apiVersionSetId: null
     subscriptionRequired: apiManagementSubscriptionRequired
   }
 }

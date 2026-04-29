@@ -89,6 +89,9 @@
     "apiManagementGatewayMarker": {
       "value": "vaultproof-managed"
     },
+    "apiManagementForwardedHost": {
+      "value": "enterprise.vaultproof.dev"
+    },
     "apiManagementOriginLockHeaderName": {
       "value": "x-vaultproof-origin-lock"
     },

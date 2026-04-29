@@ -44,6 +44,7 @@ Edit `main.parameters.json`:
 - `deployApiManagement`: keep `false` until you are ready to add APIM cost/governance.
 - `apiManagementSkuName`: use `StandardV2` for production starter or `PremiumV2` when you need stronger isolation/networking features.
 - `apiManagementBackendUrl`: leave empty to forward to the Confidential VM public control-plane origin on port `3001`, or set it to a private/internal origin once that exists.
+- `apiManagementForwardedHost`: hostname APIM sends through `x-forwarded-host` so the enterprise control plane accepts APIM sidecar traffic.
 - `apiManagementOriginLockSecret`: optional APIM-to-control-plane shared origin-lock secret. If set, also set `ENTERPRISE_ORIGIN_LOCK_SECRET` in the control-plane env.
 - `apiManagementJwtValidationEnabled`: enable APIM bearer-token validation before traffic reaches the control plane.
 - `apiManagementJwtOpenIdConfigUrl`: OpenID metadata URL for APIM `validate-jwt`, such as Entra ID tenant metadata or another OpenID-compatible session provider.
@@ -669,11 +670,13 @@ az deployment group create \
     allowFrontDoorToControlPlane=true \
     controlPlaneIngressSource=AzureFrontDoor.Backend \
     allowApiManagementToControlPlane=true \
+    apiManagementIngressSource=AzureCloud.eastus \
     deployPrototypeReleaseKey=false \
     deployManagedHsm=true \
     managedHsmInitialAdminObjectId='<your Entra object id>' \
     deployApiManagement=true \
     apiManagementBackendUrl='http://20.85.214.14:3001' \
+    apiManagementForwardedHost='enterprise.vaultproof.dev' \
     apiManagementOriginLockSecret='<same value as ENTERPRISE_ORIGIN_LOCK_SECRET>' \
     apiManagementJwtValidationEnabled=true \
     apiManagementJwtOpenIdConfigUrl='https://login.microsoftonline.com/<tenant-id>/v2.0/.well-known/openid-configuration' \
@@ -695,7 +698,21 @@ curl -sS "${APIM_API_URL}/health"
 curl -sS "${APIM_API_URL}/readiness"
 ```
 
+After the sidecar gateway responds, include APIM in the production verifier:
+
+```bash
+RESOURCE_GROUP=vaultproof-enterprise \
+DEPLOYMENT_NAME=vp-enterprise-secure-runtime-eastus-hsm \
+APIM_DEPLOYMENT_NAME=vp-enterprise-secure-runtime-eastus-hsm-apim \
+EXPECTED_APIM_DEPLOYED=true \
+EXPECTED_APIM_INGRESS_SOURCE=AzureCloud.eastus \
+EXPECTED_MONITORING_DEPLOYED=true \
+npm run verify:enterprise-production
+```
+
 For the final VaultProof-managed APIM route, Front Door should point to the APIM gateway origin, and APIM should point to the Confidential VM control-plane origin. Avoid configuring APIM to forward to `https://enterprise.vaultproof.dev`, because that creates a routing loop once Front Door sends `enterprise.vaultproof.dev` to APIM.
+
+`StandardV2` APIM runs on shared Azure infrastructure and does not expose a deterministic dedicated outbound IP. For the public-VM sidecar path, use a regional Azure source such as `AzureCloud.eastus` at the NSG plus the APIM origin-lock secret at the application layer. For a tighter final design, move APIM/backend traffic onto private networking or use an APIM tier/network model with deterministic egress.
 
 Later policies should add Entra-aware products/subscriptions, per-customer quota tiers, and OpenAPI publishing. JWT validation, coarse request limits, request-size guards, provider-secret header stripping, APIM origin locking, and Application Insights diagnostics are already deployable from this template.
 

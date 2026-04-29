@@ -30,7 +30,7 @@ Build the enterprise path directly toward the strongest Azure-native design:
 Live production-confidential path:
 
 - Azure Front Door routes `enterprise.vaultproof.dev`.
-- Azure API Management is not deployed yet.
+- Azure API Management is deployed as a verified sidecar gateway at `https://vpenteuutf4ahzja5l3oapim.azure-api.net/enterprise`; Front Door is not cut over to APIM yet.
 - Azure Container Apps remains available only as an old prototype/rollback path; it is not the active production-confidential runtime.
 - Azure Front Door routes active enterprise traffic to the co-located control plane on the Azure Confidential VM.
 - Azure Front Door ID origin lock is required by the control plane.
@@ -45,7 +45,7 @@ Live production-confidential path:
 - Azure Monitor/App Insights alerting is deployed as `vp-enterprise-secure-runtime-eastus-hsm-monitoring` and `EXPECTED_MONITORING_DEPLOYED=true npm run verify:enterprise-production` verifies the workspace, App Insights component, action group, health/readiness availability tests, readiness drift alert, health alert, and Confidential VM availability alert.
 - The enterprise control plane serves a separate public `/` enterprise homepage plus `/app` and `/app/dashboard` dashboard instead of relying on the B2C dashboard shell. Current state: the root page implements the editorial/terminal VaultProof Homepage design handoff; dashboard, login, control, org, and remaining enterprise app pages exist under `/app/*`.
 - Enterprise `/app/*` pages support opt-in Mixpanel page/navigation analytics through `ENTERPRISE_MIXPANEL_TOKEN`; autocapture and session recording remain disabled by default for enterprise privacy.
-- APIM IaC/policy support exists with JWT validation, coarse limits, request-size guards, origin locking, and App Insights diagnostics, but APIM is not deployed in the live route yet.
+- APIM IaC/policy support is deployed and verified with coarse limits, request-size guards, origin locking, forwarded enterprise host headers, App Insights diagnostics, and `EXPECTED_APIM_DEPLOYED=true npm run verify:enterprise-production`. JWT validation remains disabled until the final Entra/Supabase API audience is selected.
 - Azure Monitor/App Insights alerting is live for Front Door health, production readiness drift, and Confidential VM availability.
 - TLS-origin proxy and Front Door cutover tooling exist and use the current Azure CLI Front Door origin command shape, but Front Door still uses HTTP origin forwarding until a real origin certificate/hostname is installed and cut over.
 - SSH bootstrap lockdown tooling exists but public SSH remains open until alternate access or a controlled break-glass process is ready.
@@ -70,13 +70,13 @@ Live production-confidential path:
 Important limitation:
 
 - The active production-confidential runtime is now Confidential VM plus Secure Key Release.
-- Azure API Management live deployment/cutover, TLS-origin cutover, SSH bootstrap lockdown, prototype Container Apps cleanup, and enterprise UI/policy controls are still pending.
+- Azure API Management Front Door route cutover, TLS-origin cutover, SSH bootstrap lockdown, prototype Container Apps cleanup, and enterprise UI/policy controls are still pending.
 - Secrets used during setup must be rotated before external/customer production use.
 
 ## Next Execution Order
 
-1. Azure API Management placement and policy support.
-2. TLS from Front Door to the VM origin, then switch Front Door origin forwarding to HTTPS.
+1. TLS from Front Door to the VM origin, then switch Front Door origin forwarding to HTTPS.
+2. Azure API Management route cutover after TLS/private-origin risk is resolved.
 3. SSH/Bastion/JIT hardening and cleanup of old prototype Container Apps resources. In progress: reversible SSH bootstrap lockdown tooling, verifier expectations, and prototype Container Apps cleanup tooling are implemented; live SSH closure and live prototype cleanup are pending alternate access/break-glass readiness and soak.
 4. End-to-end enterprise API execution through `enterprise.vaultproof.dev` with evidence/audit metadata.
 5. Enterprise controls: SSO, provider allowlists, upstream domain/method policy, policy UI, per-project rate limits, emergency revoke, audit export, SOC 2 access review evidence.
@@ -395,7 +395,8 @@ Important key-type decision:
 
 ### Phase 4: Private Network And Call Authentication
 
-- [ ] Add Azure API Management in front of the enterprise control plane. In progress: deployable APIM IaC exists with sidecar validation path; live route cutover is pending.
+- [x] Add Azure API Management sidecar in front of the enterprise control plane. Deployed as `vp-enterprise-secure-runtime-eastus-hsm-apim` with backend `http://20.85.214.14:3001`, forwarded host `enterprise.vaultproof.dev`, App Insights diagnostics, APIM origin-lock secret, and `AzureCloud.eastus` NSG source for StandardV2 shared egress.
+- [ ] Cut Azure Front Door over to APIM after TLS/private-origin risk is resolved. APIM currently remains a verified sidecar, not the active `enterprise.vaultproof.dev` route.
 - [x] Configure APIM policies for JWT validation, coarse rate limits, quotas, request size limits, and observability. Deployable APIM policy support now includes JWT validation, coarse limits, quota, request-size guard, provider-secret header stripping, APIM marker, APIM origin-lock forwarding, API operations, and App Insights diagnostics.
 - [x] Support customer-managed APIM mode using `docs/enterprise/customer-managed-apim-policy.xml`.
 - [x] Support customer device/IoT mode using `docs/enterprise/customer-managed-apim-device-policy.xml`.
