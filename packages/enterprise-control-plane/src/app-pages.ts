@@ -1440,14 +1440,16 @@ function renderEnterpriseOperationsPage(pageName: 'activity' | 'projects' | 'key
 </html>`;
 }
 
-function renderEnterpriseSupportPage(pageName: 'settings' | 'plans' | 'scanner'): string {
-  const pageTitle = pageName === 'settings' ? 'Settings' : pageName === 'plans' ? 'Plans' : 'Scanner';
-  const pageKicker = pageName === 'settings' ? 'tenant defaults' : pageName === 'plans' ? 'enterprise packaging' : 'repository security';
+function renderEnterpriseSupportPage(pageName: 'settings' | 'plans' | 'scanner' | 'runbooks'): string {
+  const pageTitle = pageName === 'settings' ? 'Settings' : pageName === 'plans' ? 'Plans' : pageName === 'scanner' ? 'Scanner' : 'Runbooks';
+  const pageKicker = pageName === 'settings' ? 'tenant defaults' : pageName === 'plans' ? 'enterprise packaging' : pageName === 'scanner' ? 'repository security' : 'operator commands';
   const pageLead = pageName === 'settings'
     ? 'Review tenant defaults, organization identity, SSO state, and production readiness without falling back to the consumer dashboard.'
     : pageName === 'plans'
       ? 'Track enterprise rollout packaging, Azure/APIM readiness, usage posture, and contract-facing guardrails.'
-      : 'Prepare repository scanning for enterprise use while keeping scanner actions disabled until enterprise-safe scanner APIs are available.';
+      : pageName === 'scanner'
+        ? 'Prepare repository scanning for enterprise use while keeping scanner actions disabled until enterprise-safe scanner APIs are available.'
+        : 'Review production verification, evidence, deploy, secret, TLS, APIM, SSH, and cleanup runbooks before making live infrastructure changes.';
 
   return `<!doctype html>
 <html lang="en">
@@ -1522,6 +1524,7 @@ function renderEnterpriseSupportPage(pageName: 'settings' | 'plans' | 'scanner')
       <a class="nav-link${pageName === 'settings' ? ' active' : ''}" href="/app/settings">Settings</a>
       <a class="nav-link${pageName === 'plans' ? ' active' : ''}" href="/app/plans">Plans</a>
       <a class="nav-link${pageName === 'scanner' ? ' active' : ''}" href="/app/scanner">Scanner</a>
+      <a class="nav-link${pageName === 'runbooks' ? ' active' : ''}" href="/app/runbooks">Runbooks</a>
     </aside>
 
     <main class="main">
@@ -1560,6 +1563,11 @@ function renderEnterpriseSupportPage(pageName: 'settings' | 'plans' | 'scanner')
       <section id="scannerPanel" class="grid two" style="display:none">
         <div class="card"><div class="section-title"><h2>Enterprise scanner status</h2><span class="mini">not enabled</span></div><div id="scannerList" class="list"></div></div>
         <div class="card"><div class="section-title"><h2>Safe launch checklist</h2><span class="mini">before wiring APIs</span></div><div id="scannerChecklist" class="list"></div></div>
+      </section>
+
+      <section id="runbooksPanel" class="grid two" style="display:none">
+        <div class="card"><div class="section-title"><h2>Safe verification commands</h2><span class="mini">read-only checks</span></div><div id="runbooksSafeList" class="list"></div></div>
+        <div class="card"><div class="section-title"><h2>Gated infrastructure actions</h2><span class="mini">operator approval</span></div><div id="runbooksGatedList" class="list"></div></div>
       </section>
     </main>
   </div>
@@ -1646,6 +1654,7 @@ function renderEnterpriseSupportPage(pageName: 'settings' | 'plans' | 'scanner')
         byId('settingsPanel').style.display = PAGE_MODE === 'settings' ? 'grid' : 'none';
         byId('plansPanel').style.display = PAGE_MODE === 'plans' ? 'grid' : 'none';
         byId('scannerPanel').style.display = PAGE_MODE === 'scanner' ? 'grid' : 'none';
+        byId('runbooksPanel').style.display = PAGE_MODE === 'runbooks' ? 'grid' : 'none';
         if (PAGE_MODE === 'settings') {
           text('settingsMeta', org.kind || 'organization');
           byId('settingsList').innerHTML = [
@@ -1683,6 +1692,23 @@ function renderEnterpriseSupportPage(pageName: 'settings' | 'plans' | 'scanner')
             row('Tenant scoping', 'Scanner results must be scoped to organization/project before enabling browser actions.', 'required', 'warn'),
             row('Finding redaction', 'Secrets and provider tokens must be masked before rendering or exporting.', 'required', 'warn'),
             row('Remediation workflow', 'PR creation, ignore/allowlist, and migration actions need enterprise audit events.', 'required', 'warn')
+          ].join('');
+        }
+        if (PAGE_MODE === 'runbooks') {
+          byId('runbooksSafeList').innerHTML = [
+            row('Production verifier', 'npm run verify:enterprise-production checks Azure, Front Door, APIM sidecar, monitoring, TLS origin posture, and live readiness.', 'read-only', 'good'),
+            row('Evidence bundle', 'npm run evidence:enterprise-production captures timestamped infrastructure, app, readiness, and monitoring evidence for review.', 'read-only', 'good'),
+            row('Evidence validator', 'npm run validate:enterprise-evidence validates the latest evidence bundle before customer or compliance handoff.', 'read-only', 'good'),
+            row('Live app QA', 'npm run qa:enterprise-live-app checks enterprise app pages, internal links, auth-safe rendering, and production readiness.', 'read-only', 'good'),
+            row('Execution dry run', 'npm run qa:enterprise-live-execute validates auth, policy, signing, and executor reachability without dispatching real provider work.', 'safe default', 'good')
+          ].join('');
+          byId('runbooksGatedList').innerHTML = [
+            row('Deploy to Confidential VM', 'npm run deploy:enterprise-vm copies code, rebuilds, and restarts selected systemd services on the CVM.', 'operator', 'warn'),
+            row('Secret verification and rotation', 'npm run verify:enterprise-secrets checks installed env posture; actual rotation remains a manual break-glass action.', 'operator', 'warn'),
+            row('TLS origin cutover', 'npm run cutover:enterprise-origin-tls can plan, enable, or rollback Front Door HTTPS origin after DNS and cert checks pass.', 'blocked', 'warn'),
+            row('APIM cutover', 'APIM is deployed and verified as a sidecar; active traffic cutover waits for origin TLS/private-origin risk closure.', 'blocked', 'warn'),
+            row('SSH hardening', 'harden-ssh-bootstrap.sh can close or reopen bootstrap SSH after alternate operations access is ready.', 'approval', 'warn'),
+            row('Container Apps cleanup', 'npm run cleanup:enterprise-container-apps inventories, disables, or deletes old prototype resources after approval.', 'approval', 'warn')
           ].join('');
         }
       }
@@ -1732,7 +1758,7 @@ export function renderEnterprisePlannedAppPage(pageName: string, env: Enterprise
   if (pageName === 'activity' || pageName === 'projects' || pageName === 'keys') {
     return injectEnterpriseAnalytics(renderEnterpriseOperationsPage(pageName), env, pageName);
   }
-  if (pageName === 'settings' || pageName === 'plans' || pageName === 'scanner') {
+  if (pageName === 'settings' || pageName === 'plans' || pageName === 'scanner' || pageName === 'runbooks') {
     return injectEnterpriseAnalytics(renderEnterpriseSupportPage(pageName), env, pageName);
   }
 

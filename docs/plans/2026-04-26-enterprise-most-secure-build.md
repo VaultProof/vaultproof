@@ -45,7 +45,7 @@ Live production-confidential path:
 - `npm run verify:enterprise-secrets` verifies the installed control-plane/executor env files for secret-rotation readiness and confidential-mode footguns.
 - `npm run qa:enterprise-live-app` verifies the live enterprise homepage/app pages, crawls enterprise-owned links, confirms `/readiness` remains production-ready, and can optionally authenticate the demo account when `ENTERPRISE_DEMO_EMAIL` and `ENTERPRISE_DEMO_PASSWORD` are provided.
 - Azure Monitor/App Insights alerting is deployed as `vp-enterprise-secure-runtime-eastus-hsm-monitoring` and `EXPECTED_MONITORING_DEPLOYED=true npm run verify:enterprise-production` verifies the workspace, App Insights component, action group, health/readiness availability tests, readiness drift alert, health alert, and Confidential VM availability alert.
-- The enterprise control plane serves a separate public `/` enterprise homepage plus `/app` and `/app/dashboard` dashboard instead of relying on the B2C dashboard shell. Current state: the root page implements the editorial/terminal VaultProof Homepage design handoff; dashboard, login, control, org, and remaining enterprise app pages exist under `/app/*`.
+- The enterprise control plane serves a separate public `/` enterprise homepage plus `/app` and `/app/dashboard` dashboard instead of relying on the B2C dashboard shell. Current state: the root page implements the editorial/terminal VaultProof Homepage design handoff; dashboard, login, control, org, runbooks, and remaining enterprise app pages exist under `/app/*`.
 - Enterprise dashboard/API unauthenticated errors are product-safe: users see a normal sign-in prompt instead of implementation details about bearer tokens or Supabase JWTs.
 - Enterprise `/app/*` pages support opt-in Mixpanel page/navigation analytics through `ENTERPRISE_MIXPANEL_TOKEN`; autocapture and session recording remain disabled by default for enterprise privacy.
 - APIM IaC/policy support is deployed and verified with coarse limits, request-size guards, origin locking, forwarded enterprise host headers, App Insights diagnostics, and `EXPECTED_APIM_DEPLOYED=true npm run verify:enterprise-production`. JWT validation remains disabled until the final Entra/Supabase API audience is selected.
@@ -450,6 +450,7 @@ Pages and links:
 - [x] `/app/settings`: enterprise-owned tenant settings page for dashboard preferences, session/security notices, and org defaults that do not belong on SSO setup.
 - [x] `/app/plans`: enterprise-owned plan/billing/governance page for APIM/enterprise rollout status, limits, and contract-facing packaging. Billing/limit enforcement remains manual until enterprise billing APIs exist.
 - [x] `/app/scanner`: enterprise-owned repository/security scanning entry page, clearly marked as a separate future integration until enterprise-safe scanner APIs exist.
+- [x] `/app/runbooks`: enterprise-owned operator runbooks page covering production verification, evidence capture, deploys, secret verification/rotation, TLS/APIM cutover, SSH hardening, and Container Apps cleanup.
 
 Implementation/test order:
 
@@ -464,7 +465,8 @@ Implementation/test order:
 9. [x] Automated app-link QA smoke: crawl rendered enterprise `/app/*` links, verify every enterprise app link returns 200, and fail on `{"error":"Not found"}` or B2C API origins.
 10. [x] Enterprise homepage design slice: serve the public `/` homepage from the enterprise control plane, smoke-test design landmarks, no B2C API origins, and disabled-by-default analytics.
 11. [x] Live app QA automation: `npm run qa:enterprise-live-app` checks live `/app/*` routes, app-owned links, no `{"error":"Not found"}` pages, no B2C fallback, and production-ready `/readiness`; with demo credentials it also signs in through Supabase Auth and verifies authenticated enterprise org APIs.
-12. [ ] Live browser QA after each major deploy: run the automated live app QA, then manually login as demo user and click through sidebar/subnav links when visual regressions or browser-only session behavior are in scope.
+12. [x] Runbooks page slice: expose the built operator commands in the enterprise dashboard, document which are read-only versus approval-gated, and cover it with smoke/link QA.
+13. [ ] Live browser QA after each major deploy: run the automated live app QA, then manually login as demo user and click through sidebar/subnav links when visual regressions or browser-only session behavior are in scope.
 
 ## Azure Resources
 

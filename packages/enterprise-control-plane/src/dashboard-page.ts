@@ -177,6 +177,7 @@ export function renderEnterpriseDashboardPage(env: EnterpriseControlPlaneEnv = {
         <a class="nav-link" href="/app/settings"><span>Settings</span></a>
         <a class="nav-link" href="/app/plans"><span>Plans</span></a>
         <a class="nav-link" href="/app/scanner"><span>Scanner</span></a>
+        <a class="nav-link" href="/app/runbooks"><span>Runbooks</span></a>
       </div>
     </aside>
 

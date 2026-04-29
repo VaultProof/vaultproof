@@ -1926,6 +1926,11 @@ async function assertEnterpriseLoginRoute() {
       title: 'Scanner - VaultProof Enterprise',
       required: ['Enterprise scanner APIs', 'No enterprise-safe scanner endpoint', 'B2C scanner isolation'],
     },
+    {
+      path: '/app/runbooks',
+      title: 'Runbooks - VaultProof Enterprise',
+      required: ['Production verifier', 'Evidence bundle', 'TLS origin cutover', 'Container Apps cleanup'],
+    },
   ];
   for (const page of supportPages) {
     const response = await handleEnterpriseControlPlaneRequest(
@@ -2007,6 +2012,7 @@ async function assertEnterpriseAppLinkCrawl() {
     '/app/settings',
     '/app/plans',
     '/app/scanner',
+    '/app/runbooks',
   ];
   const checkedPaths = new Set();
   const queue = [...startPaths];
@@ -2060,6 +2066,7 @@ async function assertEnterpriseMixpanelAnalytics() {
     ['/app/members', 'members'],
     ['/app/control', 'control'],
     ['/app/org', 'org'],
+    ['/app/runbooks', 'runbooks'],
   ];
 
   for (const [path, pageName] of pageChecks) {

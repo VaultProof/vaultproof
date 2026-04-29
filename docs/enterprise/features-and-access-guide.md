@@ -71,6 +71,7 @@ If you see an auth message:
 | Settings | `/app/settings` | Tenant preferences, session/security notices, and org defaults. |
 | Plans | `/app/plans` | APIM/enterprise rollout status, limits, and contract-facing packaging notes. |
 | Scanner | `/app/scanner` | Placeholder entry for future enterprise-safe repository/security scanning integration. |
+| Runbooks | `/app/runbooks` | Operator guide for production verification, evidence capture, deployment, secret checks, TLS/APIM cutover, SSH hardening, and cleanup. |
 
 ## Security Features Built
 
