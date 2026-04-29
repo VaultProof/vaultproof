@@ -78,7 +78,12 @@
 
   function savePromoCode(code) {
     localStorage.setItem(PROMO_KEY, code);
-    setPromoMessage('Code saved — will be applied after you sign up.', 'info');
+    setPromoMessage(
+      IS_ENTERPRISE_HOST
+        ? 'Code saved — your admin can apply it after enterprise access is approved.'
+        : 'Code saved — will be applied after you sign up.',
+      'info',
+    );
   }
 
   function getCliContext() {
@@ -331,14 +336,18 @@
   }
 
   function showTab(tab) {
-    $('loginForm').classList.toggle('hidden', tab !== 'login');
-    $('registerForm').classList.toggle('hidden', tab !== 'register');
-    $('loginTab').className = tab === 'login'
+    const loginForm = $('loginForm');
+    const registerForm = $('registerForm');
+    const loginTab = $('loginTab');
+    const registerTab = $('registerTab');
+    if (loginForm) loginForm.classList.toggle('hidden', tab !== 'login');
+    if (registerForm) registerForm.classList.toggle('hidden', tab !== 'register');
+    if (loginTab) loginTab.className = tab === 'login'
       ? 'flex-1 py-2 text-sm font-medium rounded-md bg-[#6366f1] text-white transition-all duration-200 cursor-pointer'
       : 'flex-1 py-2 text-sm font-medium rounded-md text-gray-500 hover:text-gray-300 transition-all duration-200 cursor-pointer';
-    $('registerTab').className = tab === 'register'
-      ? 'flex-1 py-2 text-sm font-medium rounded-md bg-[#6366f1] text-white transition-all duration-200 cursor-pointer'
-      : 'flex-1 py-2 text-sm font-medium rounded-md text-gray-500 hover:text-gray-300 transition-all duration-200 cursor-pointer';
+    if (registerTab) registerTab.className = tab === 'register'
+        ? 'flex-1 py-2 text-sm font-medium rounded-md bg-[#6366f1] text-white transition-all duration-200 cursor-pointer'
+        : 'flex-1 py-2 text-sm font-medium rounded-md text-gray-500 hover:text-gray-300 transition-all duration-200 cursor-pointer';
   }
 
   function showResetForm() {
@@ -520,7 +529,12 @@
     if (input && row) {
       input.value = promoParam;
       row.classList.remove('hidden');
-      setPromoMessage('Code saved — will be applied after you sign up.', 'info');
+      setPromoMessage(
+        IS_ENTERPRISE_HOST
+          ? 'Code saved — your admin can apply it after enterprise access is approved.'
+          : 'Code saved — will be applied after you sign up.',
+        'info',
+      );
     }
   }
 

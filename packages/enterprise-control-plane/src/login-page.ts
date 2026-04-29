@@ -261,7 +261,7 @@ export function renderEnterpriseLoginPage(env: EnterpriseControlPlaneEnv = {}): 
       font-family: var(--mono);
     }
     .divider:before, .divider:after { content: ""; height: 1px; background: var(--line); flex: 1; }
-    .auth-tabs { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 10px; }
+    .auth-tabs { display: grid; grid-template-columns: 1fr; gap: 8px; margin-bottom: 10px; }
     .auth-tabs button, .text-button, .promo-toggle {
       border: 0;
       background: transparent;
@@ -316,7 +316,7 @@ export function renderEnterpriseLoginPage(env: EnterpriseControlPlaneEnv = {}): 
       <div class="auth-heading">
         <div class="auth-kicker">enterprise only</div>
         <h2 class="auth-title">Sign in to VaultProof Enterprise</h2>
-        <p class="auth-subtitle">Use company SSO, Google, GitHub, or email. After sign-in, you will land in the enterprise dashboard.</p>
+        <p class="auth-subtitle">Use the login method your company already approved. New enterprise workspaces are created by invite or by your VaultProof admin.</p>
         <div class="entry-split" aria-label="Access path">
           <div class="entry-card">
             <div class="entry-label">enterprise workspace</div>
@@ -341,12 +341,12 @@ export function renderEnterpriseLoginPage(env: EnterpriseControlPlaneEnv = {}): 
         <div class="sso-block">
           <div class="sso-kicker">company sso</div>
           <div class="sso-title">Continue with Microsoft Entra / SSO</div>
-          <p class="sso-copy">Enter your company domain or work email to start your company login.</p>
+          <p class="sso-copy">Enter your company domain or work email to start your approved company login.</p>
           <div class="sso-row">
             <input id="ssoDomainInput" type="text" class="form-input" placeholder="company.com or you@company.com" />
             <button id="ssoContinueBtn" type="button" class="btn btn-secondary">continue</button>
           </div>
-          <div class="sso-hint">If SSO is not set up yet, use Google, GitHub, or email for the demo workspace.</div>
+          <div class="sso-hint">If SSO is not set up yet, use the Google, GitHub, or email account your admin invited.</div>
           <div id="ssoStatus" class="hidden"></div>
         </div>
 
@@ -360,7 +360,6 @@ export function renderEnterpriseLoginPage(env: EnterpriseControlPlaneEnv = {}): 
         <div id="emailSection">
           <div class="auth-tabs">
             <button type="button" id="loginTab" class="btn btn-primary">sign in</button>
-            <button type="button" id="registerTab" class="btn btn-secondary">create account</button>
           </div>
 
           <form id="loginForm" class="form-stack">
@@ -378,16 +377,9 @@ export function renderEnterpriseLoginPage(env: EnterpriseControlPlaneEnv = {}): 
             <button type="button" id="resetBtn" class="btn btn-primary">send reset link</button>
             <button type="button" id="backToSigninBtn" class="text-button">back to sign in</button>
           </div>
-
-          <form id="registerForm" class="form-stack hidden">
-            <div class="input-icon"><input type="email" id="regEmail" required class="form-input" placeholder="you@example.com" /></div>
-            <div class="input-icon"><input type="password" id="regPassword" required minlength="8" class="form-input" placeholder="min 8 characters" /></div>
-            <div id="regError" class="hidden"></div>
-            <button type="submit" id="regBtn" class="btn btn-primary">create account</button>
-          </form>
         </div>
 
-        <p class="legal">Enterprise access follows your company's rules. Consumer users should use <a href="https://vaultproof.dev/app/login">vaultproof.dev/app/login</a>.</p>
+        <p class="legal">Enterprise access is invite-only. If your credentials do not work, ask your VaultProof admin to invite you or enable SSO for your company domain.</p>
       </div>
 
       <p class="back-link"><a href="/">back to enterprise homepage</a></p>
