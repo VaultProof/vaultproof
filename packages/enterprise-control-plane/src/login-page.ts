@@ -3,6 +3,22 @@ import { join } from 'node:path';
 import { injectEnterpriseAnalytics } from './analytics.js';
 import type { EnterpriseControlPlaneEnv } from './config.js';
 
+function readWorkspaceFile(relativePath: string): string {
+  const candidates = [
+    join(process.cwd(), relativePath),
+    join(process.cwd(), '..', '..', relativePath),
+  ];
+  let lastError: unknown = null;
+  for (const candidate of candidates) {
+    try {
+      return readFileSync(candidate, 'utf8');
+    } catch (error) {
+      lastError = error;
+    }
+  }
+  throw lastError;
+}
+
 export function renderEnterpriseLoginPage(env: EnterpriseControlPlaneEnv = {}): string {
   return injectEnterpriseAnalytics(`<!doctype html>
 <html lang="en">
@@ -393,5 +409,5 @@ export function renderEnterpriseLoginPage(env: EnterpriseControlPlaneEnv = {}): 
 }
 
 export function renderEnterpriseLoginScript(): string {
-  return readFileSync(join(process.cwd(), 'apps/site/js/app-login-3.js'), 'utf8');
+  return readWorkspaceFile('apps/site/js/app-login-3.js');
 }

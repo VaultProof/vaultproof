@@ -15,8 +15,24 @@ function rewriteStaticAssetUrls(html: string): string {
     .replaceAll('href="/privacy"', `href="${PUBLIC_SITE_ORIGIN}/privacy"`);
 }
 
+function readWorkspaceFile(relativePath: string): string {
+  const candidates = [
+    join(process.cwd(), relativePath),
+    join(process.cwd(), '..', '..', relativePath),
+  ];
+  let lastError: unknown = null;
+  for (const candidate of candidates) {
+    try {
+      return readFileSync(candidate, 'utf8');
+    } catch (error) {
+      lastError = error;
+    }
+  }
+  throw lastError;
+}
+
 function readEnterpriseAppPage(filename: string): string {
-  const html = readFileSync(join(process.cwd(), 'apps/site/app', filename), 'utf8');
+  const html = readWorkspaceFile(join('apps/site/app', filename));
   return rewriteStaticAssetUrls(html);
 }
 
