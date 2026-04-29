@@ -1822,6 +1822,21 @@ async function assertEnterpriseLoginRoute() {
     if (!dashboardHtml.includes('/api/v1/enterprise/projects/stats/overview')) {
       throw new Error('Expected enterprise dashboard to call enterprise control-plane APIs');
     }
+    for (const requiredFeature of [
+      'Built feature map',
+      'Policy control',
+      'Provider slots',
+      'Members and invites',
+      'Audit and exports',
+      'Org and Entra SSO',
+      'Plans and APIM',
+      'Operator runbooks',
+      '/app/runbooks',
+    ]) {
+      if (!dashboardHtml.includes(requiredFeature)) {
+        throw new Error(`Expected enterprise dashboard feature map to include ${requiredFeature}`);
+      }
+    }
   }
 
   const membersResponse = await handleEnterpriseControlPlaneRequest(

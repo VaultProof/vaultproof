@@ -59,7 +59,7 @@ If you see an auth message:
 | --- | --- | --- |
 | Homepage | `https://enterprise.vaultproof.dev/` | Public enterprise landing page with the product story, architecture, proof points, and CTAs. |
 | Login | `/app/login` | Enterprise-only login, SSO start, password reset, and approved access messaging. |
-| Dashboard | `/app/dashboard` | Runtime posture, org summary, project health, members/access, audit, and recent activity. |
+| Dashboard | `/app/dashboard` | Main enterprise command center with a built-feature map plus runtime posture, org summary, project health, members/access, audit, and recent activity. |
 | Control | `/app/control` | Project policy, provider overrides, incoming invites, export summaries, and secure execution posture. |
 | Organization + SSO | `/app/org` | Organization settings and Microsoft Entra/Supabase SAML SSO rollout controls. |
 | Members | `/app/members` | Members, pending invites, roles, project assignments, invite create/revoke, and access-review links. |
