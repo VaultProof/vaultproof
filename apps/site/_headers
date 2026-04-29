@@ -14,3 +14,9 @@
 
 /sitemap.xml
   Content-Type: application/xml
+
+/vp-admin
+  X-Robots-Tag: noindex, nofollow, noarchive
+
+/pitchdeck
+  X-Robots-Tag: noindex, nofollow, noarchive
