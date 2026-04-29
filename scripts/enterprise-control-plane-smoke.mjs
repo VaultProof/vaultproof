@@ -572,6 +572,59 @@ async function assertExecuteRoute() {
   }
 }
 
+async function assertEnterpriseExecuteDryRun() {
+  installSupabaseStub();
+  activeProject = fakeProject;
+
+  const response = await handleEnterpriseControlPlaneRequest(
+    buildRequest(`/api/v1/enterprise/projects/${PROJECT_ID}/providers/openai/execute`, {
+      method: 'POST',
+      headers: {
+        authorization: `Bearer ${AUTH_TOKEN}`,
+        'content-type': 'application/json',
+        'x-vaultproof-organization': 'org_123',
+        origin: 'https://app.example.com',
+      },
+      body: JSON.stringify({
+        dry_run: true,
+        method: 'POST',
+        upstream_path: '/v1/responses',
+        headers: {
+          'content-type': 'application/json',
+          authorization: 'should-be-dropped',
+        },
+        body_base64: Buffer.from(JSON.stringify({ input: 'hello' })).toString('base64'),
+      }),
+    }),
+    {
+      enterpriseHostname: ENTERPRISE_HOSTNAME,
+      executorBaseUrl: 'https://executor.internal',
+      executorSigningKeyId: 'enterprise-local',
+      executorSigningSecret: 'local-secret',
+      supabaseUrl: 'https://supabase.example.co',
+      supabaseServiceRoleKey: 'service-role-key',
+    },
+  );
+
+  const payload = await response.json();
+  if (response.status !== 202) {
+    throw new Error(`Expected dry-run execute route status 202, got ${response.status} ${JSON.stringify(payload)}`);
+  }
+  if (payload?.execution?.dryRun !== true || payload?.request?.dry_run !== true) {
+    throw new Error(`Expected dry-run execution payload, got ${JSON.stringify(payload)}`);
+  }
+  if (payload?.execution?.signedEnvelope?.keyId !== 'enterprise-local' || !payload?.execution?.signedEnvelope?.signatureHash) {
+    throw new Error(`Expected signed envelope metadata in dry-run payload, got ${JSON.stringify(payload?.execution)}`);
+  }
+  const dryRunAudit = auditEvents.find((event) => event.event_type === 'enterprise_secure_execution_validated');
+  if (!dryRunAudit) {
+    throw new Error('Expected dry-run execution validation audit event');
+  }
+  if (dryRunAudit.metadata?.dry_run !== true || !dryRunAudit.metadata?.signed_envelope?.signatureHash) {
+    throw new Error(`Expected dry-run signed envelope evidence in audit metadata, got ${JSON.stringify(dryRunAudit.metadata)}`);
+  }
+}
+
 async function assertEnterpriseOriginLock() {
   installSupabaseStub();
   activeProject = {
@@ -2137,6 +2190,7 @@ await assertEnterpriseMixpanelAnalytics();
 await assertEnterpriseReadinessRoute();
 await assertFrontDoorOriginLock();
 await assertExecuteRoute();
+await assertEnterpriseExecuteDryRun();
 await assertEnterpriseOriginLock();
 await assertEnterpriseCallerLockPolicy();
 await assertEnterpriseCallerLockIpPolicy();

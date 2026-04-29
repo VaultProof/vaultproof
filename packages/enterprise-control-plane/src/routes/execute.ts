@@ -21,6 +21,8 @@ interface ExecuteBody {
   query?: string;
   headers?: Record<string, string>;
   body_base64?: string | null;
+  dry_run?: boolean;
+  validate_only?: boolean;
 }
 
 type CallerLockPolicy = {
@@ -495,6 +497,11 @@ async function parseExecuteBody(request: Request): Promise<{ ok: true; value: Ex
   }
 }
 
+async function hashForAudit(value: string): Promise<string> {
+  const digest = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(value));
+  return Buffer.from(digest).toString('base64url');
+}
+
 function generateRequestId(): string {
   return `exec_${crypto.randomUUID()}`;
 }
@@ -798,6 +805,56 @@ export async function handleEnterpriseExecuteRoutes(
     secret: env.executorSigningSecret,
     request: executionRequest,
   });
+
+  const dryRun = parsedBody.value.dry_run === true || parsedBody.value.validate_only === true;
+  if (dryRun) {
+    const signatureHash = await hashForAudit(envelope.signature);
+    const dryRunData = {
+      requestId: executionRequest.requestId,
+      status: 202,
+      dryRun: true,
+      message: 'Secure execution validated. Upstream provider dispatch was skipped.',
+      signedEnvelope: {
+        keyId: envelope.keyId,
+        signatureHash,
+        issuedAt: executionRequest.issuedAt,
+        expiresAt: executionRequest.expiresAt,
+      },
+    };
+
+    if (project.organization_id) {
+      await writeGovernanceAuditEvent(env, {
+        organization_id: project.organization_id,
+        project_id: project.id,
+        actor_user_id: auth.userId,
+        actor_email: auth.email,
+        event_type: 'enterprise_secure_execution_validated',
+        target_type: 'project_key',
+        target_id: keyRow.id as string,
+        description: `Validated secure execution for ${slug} on ${project.name || project.vp_proj_id}`,
+        metadata: {
+          dry_run: true,
+          signed_envelope: dryRunData.signedEnvelope,
+          ...buildExecutionAuditMetadata(executionRequest, 202, dryRunData),
+        },
+      });
+    }
+
+    return Response.json({
+      execution: dryRunData,
+      request: {
+        request_id: executionRequest.requestId,
+        project_id: executionRequest.projectId,
+        project_key_id: executionRequest.projectKeyId,
+        provider: executionRequest.provider,
+        slug: executionRequest.slug,
+        method: executionRequest.method,
+        upstream_path: executionRequest.upstreamPath,
+        caller_lock: callerLock,
+        dry_run: true,
+      },
+    }, { status: 202 });
+  }
 
   const response = await dispatchToSecureExecutor({
     envelope,

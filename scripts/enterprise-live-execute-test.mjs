@@ -4,6 +4,8 @@ import { serializeShare, splitString } from '@vaultproof/shamir';
 
 const API_BASE = process.env.ENTERPRISE_API_BASE || 'https://enterprise.vaultproof.dev/api/v1/enterprise';
 const INIT_API_BASE = process.env.INIT_API_BASE || 'https://init.vaultproof.dev/api/v1/init';
+const DRY_RUN = process.env.EXECUTE_DRY_RUN !== 'false' && process.env.DRY_RUN !== 'false';
+const ALLOW_INIT_SEED = process.env.ALLOW_INIT_SEED === 'true';
 
 async function readStdin() {
   const chunks = [];
@@ -167,7 +169,7 @@ if (!effectiveProjectsResponse.ok) {
 
 let projects = effectiveProjectsResponse.body?.projects || [];
 let selected = pickOpenAiSlot(projects);
-if (!selected) {
+if (!selected && ALLOW_INIT_SEED) {
   const seeded = await seedDemoProject(token);
   if (seeded) {
     effectiveProjectsResponse = await api('/projects', token);
@@ -185,7 +187,9 @@ if (!selected) {
   console.log(JSON.stringify({
     step: 'select-provider-slot',
     ok: false,
-    error: 'No OpenAI provider slot found on accessible enterprise projects.',
+    error: ALLOW_INIT_SEED
+      ? 'No OpenAI provider slot found on accessible enterprise projects.'
+      : 'No OpenAI provider slot found on accessible enterprise projects. Set ALLOW_INIT_SEED=true only if you intentionally want to create a demo project through the legacy init API.',
     projects: projects.map((project) => ({
       id: project.id,
       name: project.name,
@@ -197,6 +201,7 @@ if (!selected) {
 }
 
 const payload = {
+  dry_run: DRY_RUN,
   method: 'POST',
   upstream_path: '/v1/responses',
   headers: {
@@ -220,9 +225,10 @@ const executeResponse = await api(
 );
 
 console.log(JSON.stringify({
-  step: 'execute',
+  step: DRY_RUN ? 'execute-dry-run' : 'execute',
   status: executeResponse.status,
   ok: executeResponse.ok,
+  dry_run: DRY_RUN,
   project_id: selected.project.id,
   project_name: selected.project.name,
   provider_slug: selected.slot.slug,

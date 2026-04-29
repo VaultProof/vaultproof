@@ -64,6 +64,7 @@ Live production-confidential path:
 - Enterprise admins can emergency-revoke provider slots; revoked keys are excluded from future execution dispatch.
 - Enterprise audit events can be exported as CSV from the control plane.
 - Execution dispatch audit events include executor result metadata and customer-verifiable Azure attestation evidence summaries.
+- Enterprise execution now supports a safe `dry_run` / `validate_only` mode that authenticates, enforces caller-lock/execution policy, signs the secure-execution envelope, writes validation audit metadata, and skips upstream provider dispatch. `npm run qa:enterprise-live-execute` uses this path by default when passed a Supabase access token on stdin.
 - Azure secure-runtime IaC and operational scripts exist at `infra/azure/enterprise-secure-runtime`.
 - Enterprise audit events and SOC 2 access-review evidence can be exported from the control plane.
 - The Control page includes project policy and provider-level execution override editing.
@@ -80,7 +81,7 @@ Important limitation:
 1. TLS from Front Door to the VM origin, then switch Front Door origin forwarding to HTTPS.
 2. Azure API Management route cutover after TLS/private-origin risk is resolved.
 3. SSH/Bastion/JIT hardening and cleanup of old prototype Container Apps resources. In progress: reversible SSH bootstrap lockdown tooling, verifier expectations, and prototype Container Apps cleanup tooling are implemented; live SSH closure and live prototype cleanup are pending alternate access/break-glass readiness and soak.
-4. End-to-end enterprise API execution through `enterprise.vaultproof.dev` with evidence/audit metadata.
+4. End-to-end enterprise API execution through `enterprise.vaultproof.dev` with evidence/audit metadata. In progress: safe dry-run execution validates auth, policy, signed-envelope creation, and audit metadata without calling upstream providers; real provider dispatch remains an explicit `EXECUTE_DRY_RUN=false` action.
 5. Enterprise controls: SSO, provider allowlists, upstream domain/method policy, policy UI, per-project rate limits, emergency revoke, audit export, SOC 2 access review evidence.
 6. Enterprise dashboard completion: make every `/app/*` link resolve on `enterprise.vaultproof.dev`, then replace placeholders with API-backed enterprise pages one page at a time with tests between each slice.
 
