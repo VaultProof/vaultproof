@@ -1706,7 +1706,7 @@ function renderEnterpriseSupportPage(pageName: 'settings' | 'plans' | 'scanner' 
             row('Deploy to Confidential VM', 'npm run deploy:enterprise-vm copies code, rebuilds, and restarts selected systemd services on the CVM.', 'operator', 'warn'),
             row('Secret verification and rotation', 'npm run verify:enterprise-secrets checks installed env posture; actual rotation remains a manual break-glass action.', 'operator', 'warn'),
             row('TLS origin cutover', 'npm run cutover:enterprise-origin-tls can plan, enable, or rollback Front Door HTTPS origin after DNS and cert checks pass.', 'blocked', 'warn'),
-            row('APIM cutover', 'APIM is deployed and verified as a sidecar; active traffic cutover waits for origin TLS/private-origin risk closure.', 'blocked', 'warn'),
+            row('APIM cutover', 'npm run cutover:enterprise-apim previews APIM route cutover and requires explicit confirmation before Front Door changes.', 'blocked', 'warn'),
             row('SSH hardening', 'harden-ssh-bootstrap.sh can close or reopen bootstrap SSH after alternate operations access is ready.', 'approval', 'warn'),
             row('Container Apps cleanup', 'npm run cleanup:enterprise-container-apps inventories, disables, or deletes old prototype resources after approval.', 'approval', 'warn')
           ].join('');

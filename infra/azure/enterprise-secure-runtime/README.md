@@ -722,6 +722,37 @@ EXPECTED_MONITORING_DEPLOYED=true \
 npm run verify:enterprise-production
 ```
 
+Preview the Front Door route cutover to APIM. This is read-only by default:
+
+```bash
+RESOURCE_GROUP=vaultproof-enterprise \
+DEPLOYMENT_NAME=vp-enterprise-secure-runtime-eastus-hsm \
+APIM_DEPLOYMENT_NAME=vp-enterprise-secure-runtime-eastus-hsm-apim \
+npm run cutover:enterprise-apim
+```
+
+The APIM cutover helper refuses live Front Door changes unless all of these are true:
+
+- `enterprise.vaultproof.dev/readiness` is production-ready.
+- APIM `/health` and `/readiness` return healthy production JSON.
+- APIM backend URL is HTTPS, unless you deliberately set `ALLOW_HTTP_APIM_BACKEND=true` for a temporary controlled cutover.
+- `CONFIRM_APIM_CUTOVER=route-enterprise-through-apim` is set.
+
+Enable the APIM Front Door route only after TLS/private-origin risk is resolved:
+
+```bash
+ACTION=enable \
+CONFIRM_APIM_CUTOVER=route-enterprise-through-apim \
+RUN_VERIFIER=true \
+npm run cutover:enterprise-apim
+```
+
+Rollback to the VM origin:
+
+```bash
+ACTION=rollback npm run cutover:enterprise-apim
+```
+
 For the final VaultProof-managed APIM route, Front Door should point to the APIM gateway origin, and APIM should point to the Confidential VM control-plane origin. Avoid configuring APIM to forward to `https://enterprise.vaultproof.dev`, because that creates a routing loop once Front Door sends `enterprise.vaultproof.dev` to APIM.
 
 `StandardV2` APIM runs on shared Azure infrastructure and does not expose a deterministic dedicated outbound IP. For the public-VM sidecar path, use a regional Azure source such as `AzureCloud.eastus` at the NSG plus the APIM origin-lock secret at the application layer. For a tighter final design, move APIM/backend traffic onto private networking or use an APIM tier/network model with deterministic egress.

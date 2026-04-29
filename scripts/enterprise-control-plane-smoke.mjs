@@ -1944,7 +1944,7 @@ async function assertEnterpriseLoginRoute() {
     {
       path: '/app/runbooks',
       title: 'Runbooks - VaultProof Enterprise',
-      required: ['Production verifier', 'Evidence bundle', 'TLS origin cutover', 'Container Apps cleanup'],
+      required: ['Production verifier', 'Evidence bundle', 'TLS origin cutover', 'npm run cutover:enterprise-apim', 'Container Apps cleanup'],
     },
   ];
   for (const page of supportPages) {

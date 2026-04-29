@@ -48,7 +48,7 @@ Live production-confidential path:
 - The enterprise control plane serves a separate public `/` enterprise homepage plus `/app` and `/app/dashboard` dashboard instead of relying on the B2C dashboard shell. Current state: the root page implements the editorial/terminal VaultProof Homepage design handoff; dashboard includes a built-feature map and live posture panels; login, control, org, runbooks, and remaining enterprise app pages exist under `/app/*`.
 - Enterprise dashboard/API unauthenticated errors are product-safe: users see a normal sign-in prompt instead of implementation details about bearer tokens or Supabase JWTs.
 - Enterprise `/app/*` pages support opt-in Mixpanel page/navigation analytics through `ENTERPRISE_MIXPANEL_TOKEN`; autocapture and session recording remain disabled by default for enterprise privacy.
-- APIM IaC/policy support is deployed and verified with coarse limits, request-size guards, origin locking, forwarded enterprise host headers, App Insights diagnostics, and `EXPECTED_APIM_DEPLOYED=true npm run verify:enterprise-production`. JWT validation remains disabled until the final Entra/Supabase API audience is selected.
+- APIM IaC/policy support is deployed and verified with coarse limits, request-size guards, origin locking, forwarded enterprise host headers, App Insights diagnostics, and `EXPECTED_APIM_DEPLOYED=true npm run verify:enterprise-production`. JWT validation remains disabled until the final Entra/Supabase API audience is selected. `npm run cutover:enterprise-apim` now provides a guarded Front Door-to-APIM cutover/rollback helper that defaults to read-only planning.
 - Azure Monitor/App Insights alerting is live for Front Door health, production readiness drift, and Confidential VM availability.
 - TLS-origin proxy and Front Door cutover tooling exist and use the current Azure CLI Front Door origin command shape. A VM-local TLS proxy is installed and verified with a lab-only self-signed certificate, but Front Door still uses HTTP origin forwarding until a real origin DNS name and publicly trusted certificate are installed and cut over.
 - SSH bootstrap lockdown tooling exists but public SSH remains open until alternate access or a controlled break-glass process is ready.
@@ -75,7 +75,7 @@ Live production-confidential path:
 Important limitation:
 
 - The active production-confidential runtime is now Confidential VM plus Secure Key Release.
-- Azure API Management Front Door route cutover, TLS-origin cutover, SSH bootstrap lockdown, prototype Container Apps cleanup, and enterprise UI/policy controls are still pending.
+- Azure API Management Front Door route cutover, TLS-origin cutover, SSH bootstrap lockdown, prototype Container Apps cleanup, and enterprise UI/policy controls are still pending live actions.
 - Secrets used during setup must be rotated before external/customer production use.
 
 ## Next Execution Order
@@ -402,7 +402,7 @@ Important key-type decision:
 ### Phase 4: Private Network And Call Authentication
 
 - [x] Add Azure API Management sidecar in front of the enterprise control plane. Deployed as `vp-enterprise-secure-runtime-eastus-hsm-apim` with backend `http://20.85.214.14:3001`, forwarded host `enterprise.vaultproof.dev`, App Insights diagnostics, APIM origin-lock secret, and `AzureCloud.eastus` NSG source for StandardV2 shared egress.
-- [ ] Cut Azure Front Door over to APIM after TLS/private-origin risk is resolved. APIM currently remains a verified sidecar, not the active `enterprise.vaultproof.dev` route.
+- [ ] Cut Azure Front Door over to APIM after TLS/private-origin risk is resolved. In progress: APIM currently remains a verified sidecar, not the active `enterprise.vaultproof.dev` route; `cutover-front-door-apim.sh` and `npm run cutover:enterprise-apim` now provide read-only planning, guarded enable, rollback, APIM readiness checks, backend HTTPS safety, and verifier expectations.
 - [x] Configure APIM policies for JWT validation, coarse rate limits, quotas, request size limits, and observability. Deployable APIM policy support now includes JWT validation, coarse limits, quota, request-size guard, provider-secret header stripping, APIM marker, APIM origin-lock forwarding, API operations, and App Insights diagnostics.
 - [x] Support customer-managed APIM mode using `docs/enterprise/customer-managed-apim-policy.xml`.
 - [x] Support customer device/IoT mode using `docs/enterprise/customer-managed-apim-device-policy.xml`.

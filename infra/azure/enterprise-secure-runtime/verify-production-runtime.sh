@@ -13,6 +13,7 @@ APIM_DEPLOYMENT_NAME="${APIM_DEPLOYMENT_NAME:-${DEPLOYMENT_NAME}-apim}"
 EXPECTED_FRONT_DOOR_FORWARDING_PROTOCOL="${EXPECTED_FRONT_DOOR_FORWARDING_PROTOCOL:-HttpOnly}"
 EXPECTED_FRONT_DOOR_ORIGIN_HOSTNAME="${EXPECTED_FRONT_DOOR_ORIGIN_HOSTNAME:-}"
 EXPECTED_FRONT_DOOR_ORIGIN_CERT_NAME_CHECK="${EXPECTED_FRONT_DOOR_ORIGIN_CERT_NAME_CHECK:-}"
+EXPECTED_FRONT_DOOR_ORIGIN_PATH="${EXPECTED_FRONT_DOOR_ORIGIN_PATH:-}"
 EXPECTED_MONITORING_DEPLOYED="${EXPECTED_MONITORING_DEPLOYED:-false}"
 EXPECTED_APIM_DEPLOYED="${EXPECTED_APIM_DEPLOYED:-false}"
 EXPECTED_APIM_INGRESS_SOURCE="${EXPECTED_APIM_INGRESS_SOURCE:-}"
@@ -212,10 +213,13 @@ az afd route show \
   --profile-name "${FRONT_DOOR_PROFILE}" \
   --endpoint-name "${FRONT_DOOR_ENDPOINT}" \
   --route-name "${FRONT_DOOR_ROUTE}" \
-  --query "{enabledState:enabledState,forwardingProtocol:forwardingProtocol,httpsRedirect:httpsRedirect}" \
+  --query "{enabledState:enabledState,forwardingProtocol:forwardingProtocol,originPath:originPath,httpsRedirect:httpsRedirect}" \
   -o json > "${route_json}"
 check_equals "Front Door route enabled" "$(json_value "${route_json}" "p => p.enabledState")" "Enabled"
 check_equals "Front Door origin forwarding protocol" "$(json_value "${route_json}" "p => p.forwardingProtocol")" "${EXPECTED_FRONT_DOOR_FORWARDING_PROTOCOL}"
+if [[ -n "${EXPECTED_FRONT_DOOR_ORIGIN_PATH}" ]]; then
+  check_equals "Front Door route origin path" "$(json_value "${route_json}" "p => p.originPath || ''")" "${EXPECTED_FRONT_DOOR_ORIGIN_PATH}"
+fi
 
 origins_json="${tmp_dir}/front-door-origins.json"
 az afd origin list \

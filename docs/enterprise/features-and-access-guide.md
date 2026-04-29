@@ -167,6 +167,7 @@ Current state:
 - APIM is deployed and verified.
 - Front Door is not cut over to APIM yet.
 - Cutover is intentionally waiting until TLS/private-origin risk is resolved.
+- `npm run cutover:enterprise-apim` now previews the APIM route cutover and refuses live Front Door changes unless production readiness, APIM readiness, backend safety, and an explicit confirmation string pass.
 
 Policy files:
 
@@ -384,6 +385,19 @@ RESTART_SERVICES='vaultproof-control-plane' \
 VERIFY_AFTER_DEPLOY=false \
 npm run deploy:enterprise-vm
 ```
+
+### Preview APIM Front Door cutover
+
+Read-only plan:
+
+```bash
+RESOURCE_GROUP=vaultproof-enterprise \
+DEPLOYMENT_NAME=vp-enterprise-secure-runtime-eastus-hsm \
+APIM_DEPLOYMENT_NAME=vp-enterprise-secure-runtime-eastus-hsm-apim \
+npm run cutover:enterprise-apim
+```
+
+The helper refuses `ACTION=enable` unless production readiness, APIM readiness, backend safety, and `CONFIRM_APIM_CUTOVER=route-enterprise-through-apim` pass. Keep this as a plan-only command until TLS/private-origin risk is resolved.
 
 ### Local smoke tests
 

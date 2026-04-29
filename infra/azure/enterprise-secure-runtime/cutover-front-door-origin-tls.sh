@@ -8,7 +8,7 @@ FRONT_DOOR_PROFILE="${FRONT_DOOR_PROFILE:-vaultproof-enterprise-fd}"
 FRONT_DOOR_ENDPOINT="${FRONT_DOOR_ENDPOINT:-vaultproof-enterprise}"
 FRONT_DOOR_ROUTE="${FRONT_DOOR_ROUTE:-default-route}"
 FRONT_DOOR_ORIGIN_GROUP="${FRONT_DOOR_ORIGIN_GROUP:-default-origin-group}"
-FRONT_DOOR_ORIGIN_NAME="${FRONT_DOOR_ORIGIN_NAME:-default-origin}"
+FRONT_DOOR_ORIGIN_NAME="${FRONT_DOOR_ORIGIN_NAME:-}"
 ORIGIN_TLS_HOSTNAME="${ORIGIN_TLS_HOSTNAME:-origin.enterprise.vaultproof.dev}"
 ORIGIN_TLS_PORT="${ORIGIN_TLS_PORT:-443}"
 SSH_USER="${SSH_USER:-azureuser}"
@@ -35,6 +35,35 @@ deployment_output() {
     --name "${DEPLOYMENT_NAME}" \
     --query "properties.outputs.${name}.value" \
     -o tsv
+}
+
+selected_front_door_origin_name() {
+  if [[ -n "${FRONT_DOOR_ORIGIN_NAME}" ]]; then
+    echo "${FRONT_DOOR_ORIGIN_NAME}"
+    return
+  fi
+
+  local tmp_file
+  tmp_file="$(mktemp)"
+  trap 'rm -f "${tmp_file}"' RETURN
+  az afd origin list \
+    --resource-group "${RESOURCE_GROUP}" \
+    --profile-name "${FRONT_DOOR_PROFILE}" \
+    --origin-group-name "${FRONT_DOOR_ORIGIN_GROUP}" \
+    -o json > "${tmp_file}"
+  node -e "
+const fs = require('fs');
+const origins = JSON.parse(fs.readFileSync(process.argv[1], 'utf8'));
+const enabled = origins.filter((origin) => origin.enabledState === 'Enabled');
+if (enabled.length !== 1) {
+  console.error('Expected exactly one enabled Front Door origin; found ' + enabled.length + '. Set FRONT_DOOR_ORIGIN_NAME explicitly.');
+  for (const origin of origins) {
+    console.error('- ' + origin.name + ' ' + origin.enabledState + ' ' + origin.hostName);
+  }
+  process.exit(1);
+}
+console.log(enabled[0].name);
+" "${tmp_file}"
 }
 
 require_production_ready() {
@@ -93,6 +122,8 @@ require_origin_tls() {
 }
 
 show_current_front_door() {
+  local origin_name
+  origin_name="$(selected_front_door_origin_name)"
   echo "Current Front Door route:"
   az afd route show \
     --resource-group "${RESOURCE_GROUP}" \
@@ -108,12 +139,14 @@ show_current_front_door() {
     --resource-group "${RESOURCE_GROUP}" \
     --profile-name "${FRONT_DOOR_PROFILE}" \
     --origin-group-name "${FRONT_DOOR_ORIGIN_GROUP}" \
-    --origin-name "${FRONT_DOOR_ORIGIN_NAME}" \
+    --origin-name "${origin_name}" \
     --query "{name:name,hostName:hostName,originHostHeader:originHostHeader,httpPort:httpPort,httpsPort:httpsPort,enabledState:enabledState,enforceCertificateNameCheck:enforceCertificateNameCheck}" \
     -o table
 }
 
 enable_tls_origin() {
+  local origin_name
+  origin_name="$(selected_front_door_origin_name)"
   require_production_ready
   require_origin_tls
 
@@ -121,7 +154,7 @@ enable_tls_origin() {
     --resource-group "${RESOURCE_GROUP}" \
     --profile-name "${FRONT_DOOR_PROFILE}" \
     --origin-group-name "${FRONT_DOOR_ORIGIN_GROUP}" \
-    --origin-name "${FRONT_DOOR_ORIGIN_NAME}" \
+    --origin-name "${origin_name}" \
     --host-name "${ORIGIN_TLS_HOSTNAME}" \
     --origin-host-header "${ORIGIN_TLS_HOSTNAME}" \
     --http-port "${ROLLBACK_ORIGIN_PORT}" \
@@ -143,7 +176,9 @@ enable_tls_origin() {
 
 rollback_http_origin() {
   local rollback_origin
+  local origin_name
   rollback_origin="${ROLLBACK_ORIGIN_HOSTNAME:-$(deployment_output confidentialVmPublicIp)}"
+  origin_name="$(selected_front_door_origin_name)"
 
   az afd route update \
     --resource-group "${RESOURCE_GROUP}" \
@@ -157,7 +192,7 @@ rollback_http_origin() {
     --resource-group "${RESOURCE_GROUP}" \
     --profile-name "${FRONT_DOOR_PROFILE}" \
     --origin-group-name "${FRONT_DOOR_ORIGIN_GROUP}" \
-    --origin-name "${FRONT_DOOR_ORIGIN_NAME}" \
+    --origin-name "${origin_name}" \
     --host-name "${rollback_origin}" \
     --origin-host-header "${rollback_origin}" \
     --http-port "${ROLLBACK_ORIGIN_PORT}" \
@@ -193,7 +228,7 @@ case "${ACTION}" in
     echo "  endpoint:       ${FRONT_DOOR_ENDPOINT}"
     echo "  route:          ${FRONT_DOOR_ROUTE}"
     echo "  origin group:   ${FRONT_DOOR_ORIGIN_GROUP}"
-    echo "  origin:         ${FRONT_DOOR_ORIGIN_NAME}"
+    echo "  origin:         ${FRONT_DOOR_ORIGIN_NAME:-auto-select enabled origin}"
     echo "  TLS origin:     ${ORIGIN_TLS_HOSTNAME}:${ORIGIN_TLS_PORT}"
     echo "  SSH user:       ${SSH_USER}"
     echo
