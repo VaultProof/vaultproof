@@ -399,7 +399,7 @@ sudo ORIGIN_TLS_HOSTNAME=origin.enterprise.vaultproof.dev \
   /usr/local/sbin/vaultproof-install-origin-tls-proxy
 ```
 
-Do not enable Front Door certificate subject validation with the temporary self-signed certificate.
+Do not enable Front Door certificate subject validation or cut Front Door over with the temporary self-signed certificate. The installer writes `/etc/vaultproof/tls/origin.self-signed` when the proxy is in this lab-only state.
 
 Validate local TLS before touching Front Door:
 
@@ -407,6 +407,18 @@ Validate local TLS before touching Front Door:
 curl -sS \
   --resolve origin.enterprise.vaultproof.dev:443:127.0.0.1 \
   https://origin.enterprise.vaultproof.dev/health
+```
+
+For the lab-only self-signed path, use:
+
+```bash
+curl -k -sS \
+  --resolve origin.enterprise.vaultproof.dev:443:127.0.0.1 \
+  https://origin.enterprise.vaultproof.dev/health
+
+ORIGIN_TLS_HOSTNAME=origin.enterprise.vaultproof.dev \
+ORIGIN_TLS_INSECURE=true \
+npm run verify:enterprise-production
 ```
 
 Open port `443` to Azure Front Door in the NSG:

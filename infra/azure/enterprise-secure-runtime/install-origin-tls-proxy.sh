@@ -27,6 +27,7 @@ if [[ "${GENERATE_SELF_SIGNED}" == "true" && (! -f "${TLS_CERT_PATH}" || ! -f "$
     -out "${TLS_CERT_PATH}" \
     -subj "/CN=${ORIGIN_TLS_HOSTNAME}" \
     -addext "subjectAltName=DNS:${ORIGIN_TLS_HOSTNAME}"
+  echo "${ORIGIN_TLS_HOSTNAME}" > /etc/vaultproof/tls/origin.self-signed
 fi
 
 if [[ ! -f "${TLS_CERT_PATH}" || ! -f "${TLS_KEY_PATH}" ]]; then
@@ -44,6 +45,9 @@ fi
 chown root:root "${TLS_CERT_PATH}" "${TLS_KEY_PATH}"
 chmod 0644 "${TLS_CERT_PATH}"
 chmod 0600 "${TLS_KEY_PATH}"
+if [[ "${GENERATE_SELF_SIGNED}" != "true" ]]; then
+  rm -f /etc/vaultproof/tls/origin.self-signed
+fi
 
 cat > /etc/nginx/sites-available/vaultproof-origin-tls.conf <<EOF
 server {
@@ -92,4 +96,13 @@ echo "  upstream: ${CONTROL_PLANE_UPSTREAM}"
 echo "  cert:     ${TLS_CERT_PATH}"
 echo
 echo "Local test:"
-echo "  curl -sS --resolve ${ORIGIN_TLS_HOSTNAME}:443:127.0.0.1 https://${ORIGIN_TLS_HOSTNAME}/health"
+if [[ -f /etc/vaultproof/tls/origin.self-signed ]]; then
+  echo "  curl -k -sS --resolve ${ORIGIN_TLS_HOSTNAME}:443:127.0.0.1 https://${ORIGIN_TLS_HOSTNAME}/health"
+  echo
+  echo "Temporary self-signed certificate marker:"
+  echo "  /etc/vaultproof/tls/origin.self-signed"
+  echo
+  echo "Do not cut Front Door over to this origin with certificate subject validation enabled until a publicly trusted certificate is installed."
+else
+  echo "  curl -sS --resolve ${ORIGIN_TLS_HOSTNAME}:443:127.0.0.1 https://${ORIGIN_TLS_HOSTNAME}/health"
+fi

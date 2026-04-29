@@ -17,6 +17,7 @@ EXPECTED_MONITORING_DEPLOYED="${EXPECTED_MONITORING_DEPLOYED:-false}"
 EXPECTED_APIM_DEPLOYED="${EXPECTED_APIM_DEPLOYED:-false}"
 EXPECTED_APIM_INGRESS_SOURCE="${EXPECTED_APIM_INGRESS_SOURCE:-}"
 ORIGIN_TLS_HOSTNAME="${ORIGIN_TLS_HOSTNAME:-}"
+ORIGIN_TLS_INSECURE="${ORIGIN_TLS_INSECURE:-false}"
 SSH_USER="${SSH_USER:-azureuser}"
 RUN_SSH_CHECKS="${RUN_SSH_CHECKS:-true}"
 EXPECTED_SSH_BOOTSTRAP_ACCESS="${EXPECTED_SSH_BOOTSTRAP_ACCESS:-Allow}"
@@ -482,8 +483,13 @@ if [[ "${RUN_SSH_CHECKS}" == "true" ]]; then
 
   if [[ -n "${ORIGIN_TLS_HOSTNAME}" ]]; then
     tls_file="${tmp_dir}/origin-tls-health.json"
+    tls_curl_extra=""
+    if [[ "${ORIGIN_TLS_INSECURE}" == "true" ]]; then
+      tls_curl_extra="-k"
+      echo "WARN Local TLS origin check allows self-signed/untrusted certificates because ORIGIN_TLS_INSECURE=true"
+    fi
     tls_status="$(ssh -o BatchMode=yes -o ConnectTimeout=10 "${SSH_USER}@${vm_public_ip}" \
-      "curl -sS --connect-timeout 10 --max-time 20 --resolve '${ORIGIN_TLS_HOSTNAME}:443:127.0.0.1' -o /tmp/vaultproof-origin-tls-health.json -w '%{http_code}' https://${ORIGIN_TLS_HOSTNAME}/health")"
+      "curl -sS ${tls_curl_extra} --connect-timeout 10 --max-time 20 --resolve '${ORIGIN_TLS_HOSTNAME}:443:127.0.0.1' -o /tmp/vaultproof-origin-tls-health.json -w '%{http_code}' https://${ORIGIN_TLS_HOSTNAME}/health")"
     ssh -o BatchMode=yes -o ConnectTimeout=10 "${SSH_USER}@${vm_public_ip}" \
       "cat /tmp/vaultproof-origin-tls-health.json" > "${tls_file}"
     check_equals "Local TLS origin /health status" "${tls_status}" "200"
