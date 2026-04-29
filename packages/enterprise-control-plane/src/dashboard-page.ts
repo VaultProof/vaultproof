@@ -1,6 +1,8 @@
 import { injectEnterpriseAnalytics } from './analytics.js';
 import type { EnterpriseControlPlaneEnv } from './config.js';
 
+const ENTERPRISE_AUTH_ERROR_MESSAGE = 'Your enterprise session expired or is missing. Sign in again to continue.';
+
 export function renderEnterpriseDashboardPage(env: EnterpriseControlPlaneEnv = {}): string {
   return injectEnterpriseAnalytics(`<!doctype html>
 <html lang="en">
@@ -264,6 +266,10 @@ export function renderEnterpriseDashboardPage(env: EnterpriseControlPlaneEnv = {
           .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
           .replace(/"/g, '&quot;').replace(/'/g, '&#039;');
       }
+      function friendlyErrorMessage(message) {
+        var value = String(message || '');
+        return /not authenticated/i.test(value) ? ${JSON.stringify(ENTERPRISE_AUTH_ERROR_MESSAGE)} : value;
+      }
       function number(value) {
         var n = Number(value || 0);
         return Number.isFinite(n) ? n.toLocaleString() : '0';
@@ -289,7 +295,7 @@ export function renderEnterpriseDashboardPage(env: EnterpriseControlPlaneEnv = {
       async function fetchJson(path, options) {
         var res = await fetch(path, Object.assign({}, options || {}, { headers: Object.assign(authHeaders(), (options && options.headers) || {}) }));
         var payload = await res.json().catch(function() { return null; });
-        if (!res.ok) throw new Error((payload && payload.error) || ('Request failed: ' + res.status));
+        if (!res.ok) throw new Error(friendlyErrorMessage((payload && payload.error) || ('Request failed: ' + res.status)));
         return payload && payload.data ? payload.data : payload;
       }
       function setNotice(message) {
@@ -300,6 +306,7 @@ export function renderEnterpriseDashboardPage(env: EnterpriseControlPlaneEnv = {
           el.textContent = '';
           return;
         }
+        message = friendlyErrorMessage(message);
         el.style.display = 'block';
         el.innerHTML = escapeHtml(message) + ' <a href="/app/login">Sign in</a>';
       }

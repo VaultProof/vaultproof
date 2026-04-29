@@ -244,7 +244,7 @@ export async function handleEnterpriseOrganizationRoutes(
     const auth = await authenticateUser(request, env);
     if (!auth) {
       return Response.json(
-        { error: 'Not authenticated. Pass Authorization: Bearer <supabase jwt>' },
+        { error: 'Not authenticated. Sign in to VaultProof Enterprise.' },
         { status: 401 },
       );
     }
@@ -288,7 +288,7 @@ export async function handleEnterpriseOrganizationRoutes(
     const auth = await authenticateUser(request, env);
     if (!auth) {
       return Response.json(
-        { error: 'Not authenticated. Pass Authorization: Bearer <supabase jwt>' },
+        { error: 'Not authenticated. Sign in to VaultProof Enterprise.' },
         { status: 401 },
       );
     }
@@ -376,7 +376,7 @@ export async function handleEnterpriseOrganizationRoutes(
     const auth = await authenticateUser(request, env);
     if (!auth) {
       return Response.json(
-        { error: 'Not authenticated. Pass Authorization: Bearer <supabase jwt>' },
+        { error: 'Not authenticated. Sign in to VaultProof Enterprise.' },
         { status: 401 },
       );
     }
@@ -441,7 +441,7 @@ export async function handleEnterpriseOrganizationRoutes(
     const auth = await authenticateUser(request, env);
     if (!auth) {
       return Response.json(
-        { error: 'Not authenticated. Pass Authorization: Bearer <supabase jwt>' },
+        { error: 'Not authenticated. Sign in to VaultProof Enterprise.' },
         { status: 401 },
       );
     }
@@ -526,7 +526,7 @@ export async function handleEnterpriseOrganizationRoutes(
     const auth = await authenticateUser(request, env);
     if (!auth) {
       return Response.json(
-        { error: 'Not authenticated. Pass Authorization: Bearer <supabase jwt>' },
+        { error: 'Not authenticated. Sign in to VaultProof Enterprise.' },
         { status: 401 },
       );
     }
@@ -612,7 +612,7 @@ export async function handleEnterpriseOrganizationRoutes(
     const auth = await authenticateUser(request, env);
     if (!auth) {
       return Response.json(
-        { error: 'Not authenticated. Pass Authorization: Bearer <supabase jwt>' },
+        { error: 'Not authenticated. Sign in to VaultProof Enterprise.' },
         { status: 401 },
       );
     }
@@ -716,7 +716,7 @@ export async function handleEnterpriseOrganizationRoutes(
     const auth = await authenticateUser(request, env);
     if (!auth) {
       return Response.json(
-        { error: 'Not authenticated. Pass Authorization: Bearer <supabase jwt>' },
+        { error: 'Not authenticated. Sign in to VaultProof Enterprise.' },
         { status: 401 },
       );
     }
@@ -789,7 +789,7 @@ export async function handleEnterpriseOrganizationRoutes(
     const auth = await authenticateUser(request, env);
     if (!auth) {
       return Response.json(
-        { error: 'Not authenticated. Pass Authorization: Bearer <supabase jwt>' },
+        { error: 'Not authenticated. Sign in to VaultProof Enterprise.' },
         { status: 401 },
       );
     }
@@ -818,7 +818,7 @@ export async function handleEnterpriseOrganizationRoutes(
     const auth = await authenticateUser(request, env);
     if (!auth) {
       return Response.json(
-        { error: 'Not authenticated. Pass Authorization: Bearer <supabase jwt>' },
+        { error: 'Not authenticated. Sign in to VaultProof Enterprise.' },
         { status: 401 },
       );
     }
@@ -934,7 +934,7 @@ export async function handleEnterpriseOrganizationRoutes(
     const auth = await authenticateUser(request, env);
     if (!auth) {
       return Response.json(
-        { error: 'Not authenticated. Pass Authorization: Bearer <supabase jwt>' },
+        { error: 'Not authenticated. Sign in to VaultProof Enterprise.' },
         { status: 401 },
       );
     }

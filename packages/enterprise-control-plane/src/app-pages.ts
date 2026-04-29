@@ -4,6 +4,7 @@ import { injectEnterpriseAnalytics } from './analytics.js';
 import type { EnterpriseControlPlaneEnv } from './config.js';
 
 const PUBLIC_SITE_ORIGIN = 'https://vaultproof.dev';
+const ENTERPRISE_AUTH_ERROR_MESSAGE = 'Your enterprise session expired or is missing. Sign in again to continue.';
 
 function rewriteStaticAssetUrls(html: string): string {
   return html
@@ -237,6 +238,10 @@ function renderEnterpriseMembersPage(): string {
       function escapeHtml(value) {
         return String(value == null ? '' : value).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#039;');
       }
+      function friendlyErrorMessage(message) {
+        var value = String(message || '');
+        return /not authenticated/i.test(value) ? ${JSON.stringify(ENTERPRISE_AUTH_ERROR_MESSAGE)} : value;
+      }
       function number(value) { var n = Number(value || 0); return Number.isFinite(n) ? n.toLocaleString() : '0'; }
       function rel(value) {
         if (!value) return 'never';
@@ -257,7 +262,7 @@ function renderEnterpriseMembersPage(): string {
       async function fetchJson(path) {
         var res = await fetch(path, { headers: headers() });
         var payload = await res.json().catch(function() { return null; });
-        if (!res.ok) throw new Error((payload && payload.error) || ('Request failed: ' + res.status));
+        if (!res.ok) throw new Error(friendlyErrorMessage((payload && payload.error) || ('Request failed: ' + res.status)));
         return payload && payload.data ? payload.data : payload;
       }
       async function apiJson(path, options) {
@@ -265,13 +270,14 @@ function renderEnterpriseMembersPage(): string {
         opts.headers = Object.assign(headers(), opts.headers || {});
         var res = await fetch(path, opts);
         var payload = await res.json().catch(function() { return null; });
-        if (!res.ok) throw new Error((payload && payload.error) || ('Request failed: ' + res.status));
+        if (!res.ok) throw new Error(friendlyErrorMessage((payload && payload.error) || ('Request failed: ' + res.status)));
         return payload;
       }
       function notice(message) {
         var el = byId('notice');
         if (!el) return;
         el.style.display = message ? 'block' : 'none';
+        message = friendlyErrorMessage(message);
         el.innerHTML = message ? escapeHtml(message) + ' <a href="/app/login">Sign in</a>' : '';
       }
       function renderOrgSelector(payload) {
@@ -593,6 +599,10 @@ function renderEnterpriseAuditPage(): string {
       function escapeHtml(value) {
         return String(value == null ? '' : value).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#039;');
       }
+      function friendlyErrorMessage(message) {
+        var value = String(message || '');
+        return /not authenticated/i.test(value) ? ${JSON.stringify(ENTERPRISE_AUTH_ERROR_MESSAGE)} : value;
+      }
       function number(value) { var n = Number(value || 0); return Number.isFinite(n) ? n.toLocaleString() : '0'; }
       function rel(value) {
         if (!value) return 'never';
@@ -613,13 +623,14 @@ function renderEnterpriseAuditPage(): string {
       async function fetchJson(path) {
         var res = await fetch(path, { headers: headers() });
         var payload = await res.json().catch(function() { return null; });
-        if (!res.ok) throw new Error((payload && payload.error) || ('Request failed: ' + res.status));
+        if (!res.ok) throw new Error(friendlyErrorMessage((payload && payload.error) || ('Request failed: ' + res.status)));
         return payload && payload.data ? payload.data : payload;
       }
       function notice(message) {
         var el = byId('notice');
         if (!el) return;
         el.style.display = message ? 'block' : 'none';
+        message = friendlyErrorMessage(message);
         el.innerHTML = message ? escapeHtml(message) + ' <a href="/app/login">Sign in</a>' : '';
       }
       function buildAuditPath(before) {
@@ -893,6 +904,10 @@ function renderEnterpriseAlertsPage(): string {
       function escapeHtml(value) {
         return String(value == null ? '' : value).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#039;');
       }
+      function friendlyErrorMessage(message) {
+        var value = String(message || '');
+        return /not authenticated/i.test(value) ? ${JSON.stringify(ENTERPRISE_AUTH_ERROR_MESSAGE)} : value;
+      }
       function number(value) { var n = Number(value || 0); return Number.isFinite(n) ? n.toLocaleString() : '0'; }
       function rel(value) {
         if (!value) return 'never';
@@ -913,19 +928,20 @@ function renderEnterpriseAlertsPage(): string {
       async function fetchJson(path) {
         var res = await fetch(path, { headers: headers() });
         var payload = await res.json().catch(function() { return null; });
-        if (!res.ok) throw new Error((payload && payload.error) || ('Request failed: ' + res.status));
+        if (!res.ok) throw new Error(friendlyErrorMessage((payload && payload.error) || ('Request failed: ' + res.status)));
         return payload && payload.data ? payload.data : payload;
       }
       async function postJson(path, body) {
         var res = await fetch(path, { method: 'POST', headers: headers(), body: JSON.stringify(body || {}) });
         var payload = await res.json().catch(function() { return null; });
-        if (!res.ok) throw new Error((payload && payload.error) || ('Request failed: ' + res.status));
+        if (!res.ok) throw new Error(friendlyErrorMessage((payload && payload.error) || ('Request failed: ' + res.status)));
         return payload && payload.data ? payload.data : payload;
       }
       function notice(message) {
         var el = byId('notice');
         if (!el) return;
         el.style.display = message ? 'block' : 'none';
+        message = friendlyErrorMessage(message);
         el.innerHTML = message ? escapeHtml(message) + ' <a href="/app/login">Sign in</a>' : '';
       }
       function buildAlertsPath(extra) {
@@ -1222,6 +1238,10 @@ function renderEnterpriseOperationsPage(pageName: 'activity' | 'projects' | 'key
       function escapeHtml(value) {
         return String(value == null ? '' : value).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#039;');
       }
+      function friendlyErrorMessage(message) {
+        var value = String(message || '');
+        return /not authenticated/i.test(value) ? ${JSON.stringify(ENTERPRISE_AUTH_ERROR_MESSAGE)} : value;
+      }
       function number(value) { var n = Number(value || 0); return Number.isFinite(n) ? n.toLocaleString() : '0'; }
       function rel(value) {
         if (!value) return 'never';
@@ -1244,13 +1264,14 @@ function renderEnterpriseOperationsPage(pageName: 'activity' | 'projects' | 'key
         opts.headers = Object.assign(headers(), opts.headers || {});
         var res = await fetch(path, opts);
         var payload = await res.json().catch(function() { return null; });
-        if (!res.ok) throw new Error((payload && payload.error) || ('Request failed: ' + res.status));
+        if (!res.ok) throw new Error(friendlyErrorMessage((payload && payload.error) || ('Request failed: ' + res.status)));
         return payload && payload.data ? payload.data : payload;
       }
       function notice(message) {
         var el = byId('notice');
         if (!el) return;
         el.style.display = message ? 'block' : 'none';
+        message = friendlyErrorMessage(message);
         el.innerHTML = message ? escapeHtml(message) + ' <a href="/app/login">Sign in</a>' : '';
       }
       function statusTag(value) {
@@ -1538,6 +1559,10 @@ function renderEnterpriseSupportPage(pageName: 'settings' | 'plans' | 'scanner')
       function escapeHtml(value) {
         return String(value == null ? '' : value).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#039;');
       }
+      function friendlyErrorMessage(message) {
+        var value = String(message || '');
+        return /not authenticated/i.test(value) ? ${JSON.stringify(ENTERPRISE_AUTH_ERROR_MESSAGE)} : value;
+      }
       function number(value) { var n = Number(value || 0); return Number.isFinite(n) ? n.toLocaleString() : '0'; }
       function rel(value) {
         if (!value) return 'never';
@@ -1558,13 +1583,14 @@ function renderEnterpriseSupportPage(pageName: 'settings' | 'plans' | 'scanner')
       async function fetchJson(path) {
         var res = await fetch(path, { headers: headers() });
         var payload = await res.json().catch(function() { return null; });
-        if (!res.ok) throw new Error((payload && payload.error) || ('Request failed: ' + res.status));
+        if (!res.ok) throw new Error(friendlyErrorMessage((payload && payload.error) || ('Request failed: ' + res.status)));
         return payload && payload.data ? payload.data : payload;
       }
       function notice(message) {
         var el = byId('notice');
         if (!el) return;
         el.style.display = message ? 'block' : 'none';
+        message = friendlyErrorMessage(message);
         el.innerHTML = message ? escapeHtml(message) + ' <a href="/app/login">Sign in</a>' : '';
       }
       function row(title, sub, tag, tone) {
