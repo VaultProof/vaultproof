@@ -910,6 +910,20 @@ npm run evidence:enterprise-production
 
 By default, evidence JSON files are written to `/tmp/vaultproof-production-evidence`.
 
+Validate the latest evidence bundle before customer or audit handoff:
+
+```bash
+npm run validate:enterprise-evidence
+```
+
+You can also validate a specific evidence file:
+
+```bash
+npm run validate:enterprise-evidence -- /tmp/vaultproof-production-evidence/<file>.json
+```
+
+The validator fails if the bundle is missing production readiness, Confidential VM posture, origin-lock/direct-origin evidence, service health evidence, or if it contains obvious secret-shaped material. It currently warns, rather than fails, while Front Door origin forwarding remains `HttpOnly` during the pre-TLS-origin phase.
+
 Execution-level governance audit events also include a compact executor attestation summary in `metadata.attestation` and `metadata.secure_execution.attestation`. This records hashes and identifiers needed for customer verification, including the Azure attestation token hash, release-policy hash, Managed HSM key ID/version, executor build digest, Confidential VM resource ID, and MAA claim summary. Request/response bodies and provider keys are not written to audit metadata.
 
 For safe end-to-end execution-path QA through the public enterprise domain, pass a Supabase access token on stdin and use dry-run mode. This authenticates the user, resolves the org/project/provider slot, enforces caller-lock and execution policy, signs the secure-execution envelope, writes validation audit metadata, and skips upstream provider dispatch:

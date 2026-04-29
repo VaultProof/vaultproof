@@ -41,6 +41,7 @@ Live production-confidential path:
 - `npm run verify:enterprise-production` verifies the live path and passes against the current Azure CLI/Front Door/NSG output shapes.
 - `npm run deploy:enterprise-vm` deploys/rebuilds/restarts the CVM runtime and can run the verifier.
 - `npm run evidence:enterprise-production` captures customer/audit evidence snapshots.
+- `npm run validate:enterprise-evidence` validates the latest production evidence bundle for production readiness, Confidential VM posture, Front Door/origin-lock posture, service health, and obvious secret-shaped material before customer handoff.
 - `npm run verify:enterprise-secrets` verifies the installed control-plane/executor env files for secret-rotation readiness and confidential-mode footguns.
 - `npm run qa:enterprise-live-app` verifies the live enterprise homepage/app pages, crawls enterprise-owned links, confirms `/readiness` remains production-ready, and can optionally authenticate the demo account when `ENTERPRISE_DEMO_EMAIL` and `ENTERPRISE_DEMO_PASSWORD` are provided.
 - Azure Monitor/App Insights alerting is deployed as `vp-enterprise-secure-runtime-eastus-hsm-monitoring` and `EXPECTED_MONITORING_DEPLOYED=true npm run verify:enterprise-production` verifies the workspace, App Insights component, action group, health/readiness availability tests, readiness drift alert, health alert, and Confidential VM availability alert.
@@ -66,6 +67,7 @@ Live production-confidential path:
 - Execution dispatch audit events include executor result metadata and customer-verifiable Azure attestation evidence summaries.
 - Enterprise execution now supports a safe `dry_run` / `validate_only` mode that authenticates, enforces caller-lock/execution policy, signs the secure-execution envelope, writes validation audit metadata, and skips upstream provider dispatch. `npm run qa:enterprise-live-execute` uses this path by default when passed a Supabase access token on stdin.
 - Azure secure-runtime IaC and operational scripts exist at `infra/azure/enterprise-secure-runtime`.
+- Production evidence bundles are now machine-validated against the customer verification target before handoff.
 - Enterprise audit events and SOC 2 access-review evidence can be exported from the control plane.
 - The Control page includes project policy and provider-level execution override editing.
 - Microsoft Entra ID SSO is supported through the Supabase Auth SAML path, with org-level rollout settings, SSO start/completion audit events, and safe membership resolution into existing access or matching pending invites.
@@ -372,6 +374,7 @@ Minimum evidence bundle for customer review:
 - [x] Add deployment script for the systemd artifact: `npm run deploy:enterprise-vm`.
 - [x] Add live production verifier: `npm run verify:enterprise-production`.
 - [x] Add production evidence collector: `npm run evidence:enterprise-production`.
+- [x] Add production evidence validator: `npm run validate:enterprise-evidence`.
 - [x] Deploy and verify Azure Monitor/App Insights alerting for Front Door health, production readiness drift, and Confidential VM availability.
 
 ### Phase 3: Secure Key Release

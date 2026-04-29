@@ -14,6 +14,7 @@
     "cleanup:enterprise-container-apps": "bash infra/azure/enterprise-secure-runtime/cleanup-container-apps-prototype.sh",
     "cutover:enterprise-origin-tls": "bash infra/azure/enterprise-secure-runtime/cutover-front-door-origin-tls.sh",
     "evidence:enterprise-production": "bash infra/azure/enterprise-secure-runtime/collect-production-evidence.sh",
+    "validate:enterprise-evidence": "node scripts/validate-enterprise-production-evidence.mjs",
     "seed:enterprise-demo-account": "node scripts/create-enterprise-demo-account.mjs",
     "dev": "turbo run dev",
     "test:enterprise-control-plane-smoke": "npm run build:enterprise && node scripts/enterprise-control-plane-smoke.mjs",
