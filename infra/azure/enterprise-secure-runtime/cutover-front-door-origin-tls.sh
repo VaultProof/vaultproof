@@ -18,6 +18,9 @@ CERTIFICATE_NAME_CHECK="${CERTIFICATE_NAME_CHECK:-Enabled}"
 ACTION="${ACTION:-plan}"
 SKIP_READINESS_CHECK="${SKIP_READINESS_CHECK:-false}"
 SKIP_ORIGIN_TLS_CHECK="${SKIP_ORIGIN_TLS_CHECK:-false}"
+SKIP_STRICT_ORIGIN_TLS_PREFLIGHT="${SKIP_STRICT_ORIGIN_TLS_PREFLIGHT:-false}"
+STRICT_ORIGIN_TLS_SSH_CHECKS="${STRICT_ORIGIN_TLS_SSH_CHECKS:-true}"
+CONFIRM_ORIGIN_TLS_CUTOVER="${CONFIRM_ORIGIN_TLS_CUTOVER:-}"
 RUN_VERIFIER="${RUN_VERIFIER:-false}"
 
 require_command() {
@@ -121,6 +124,35 @@ require_origin_tls() {
   fi
 }
 
+require_strict_origin_tls_preflight() {
+  if [[ "${SKIP_STRICT_ORIGIN_TLS_PREFLIGHT}" == "true" ]]; then
+    echo "Skipping strict origin TLS preflight because SKIP_STRICT_ORIGIN_TLS_PREFLIGHT=true."
+    return
+  fi
+
+  CUTOVER_READY_REQUIRED=true \
+  RUN_SSH_CHECKS="${STRICT_ORIGIN_TLS_SSH_CHECKS}" \
+  ORIGIN_TLS_HOSTNAME="${ORIGIN_TLS_HOSTNAME}" \
+  RESOURCE_GROUP="${RESOURCE_GROUP}" \
+  DEPLOYMENT_NAME="${DEPLOYMENT_NAME}" \
+  ENTERPRISE_URL="${ENTERPRISE_URL}" \
+  FRONT_DOOR_PROFILE="${FRONT_DOOR_PROFILE}" \
+  FRONT_DOOR_ENDPOINT="${FRONT_DOOR_ENDPOINT}" \
+  FRONT_DOOR_ROUTE="${FRONT_DOOR_ROUTE}" \
+  FRONT_DOOR_ORIGIN_GROUP="${FRONT_DOOR_ORIGIN_GROUP}" \
+  SSH_USER="${SSH_USER}" \
+  bash "$(dirname "$0")/verify-origin-tls-readiness.sh"
+}
+
+require_confirmation() {
+  local expected="$1"
+  local action_description="$2"
+  if [[ "${CONFIRM_ORIGIN_TLS_CUTOVER}" != "${expected}" ]]; then
+    echo "Refusing ${action_description}: set CONFIRM_ORIGIN_TLS_CUTOVER=${expected} to confirm this live Front Door change." >&2
+    exit 1
+  fi
+}
+
 show_current_front_door() {
   local origin_name
   origin_name="$(selected_front_door_origin_name)"
@@ -146,9 +178,10 @@ show_current_front_door() {
 
 enable_tls_origin() {
   local origin_name
-  origin_name="$(selected_front_door_origin_name)"
   require_production_ready
+  require_strict_origin_tls_preflight
   require_origin_tls
+  origin_name="$(selected_front_door_origin_name)"
 
   az afd origin update \
     --resource-group "${RESOURCE_GROUP}" \
@@ -235,17 +268,19 @@ case "${ACTION}" in
     show_current_front_door
     echo
     echo "Enable TLS origin forwarding after DNS, certificate, NSG 443, and local TLS checks pass:"
-    echo "  ACTION=enable ORIGIN_TLS_HOSTNAME=${ORIGIN_TLS_HOSTNAME} bash infra/azure/enterprise-secure-runtime/cutover-front-door-origin-tls.sh"
+    echo "  ACTION=enable CONFIRM_ORIGIN_TLS_CUTOVER=enable-origin-https ORIGIN_TLS_HOSTNAME=${ORIGIN_TLS_HOSTNAME} RUN_VERIFIER=true npm run cutover:enterprise-origin-tls"
     echo
     echo "Rollback to HTTP origin:"
-    echo "  ACTION=rollback bash infra/azure/enterprise-secure-runtime/cutover-front-door-origin-tls.sh"
+    echo "  ACTION=rollback CONFIRM_ORIGIN_TLS_CUTOVER=rollback-origin-http npm run cutover:enterprise-origin-tls"
     ;;
   enable)
+    require_confirmation "enable-origin-https" "enable Front Door TLS origin cutover"
     enable_tls_origin
     show_current_front_door
     run_verifier_if_requested
     ;;
   rollback)
+    require_confirmation "rollback-origin-http" "rollback Front Door TLS origin cutover"
     rollback_http_origin
     show_current_front_door
     ;;

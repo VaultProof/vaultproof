@@ -305,7 +305,8 @@ show_plan() {
   echo "     CUTOVER_READY_REQUIRED=true npm run verify:enterprise-origin-tls"
   echo "  5. Point APIM to the HTTPS origin after strict TLS readiness passes:"
   echo "     ACTION=update-apim-backend-https CONFIRM_ORIGIN_TLS_PREP=point-apim-to-origin-tls npm run prepare:enterprise-origin-tls"
-  echo "  6. Then consider ACTION=enable npm run cutover:enterprise-origin-tls."
+  echo "  6. Then consider the confirmation-gated Front Door cutover:"
+  echo "     ACTION=enable CONFIRM_ORIGIN_TLS_CUTOVER=enable-origin-https RUN_VERIFIER=true npm run cutover:enterprise-origin-tls"
 }
 
 require_command az

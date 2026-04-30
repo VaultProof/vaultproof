@@ -423,7 +423,7 @@ Important key-type decision:
 - [ ] Add mTLS after private networking is stable.
 - [x] Block direct public access to executor.
 - [x] Require Azure Front Door ID origin lock for control-plane origin requests.
-- [ ] Add TLS from Front Door to the VM origin and switch origin forwarding from HTTP to HTTPS. In progress: TLS proxy installer, `npm run prepare:enterprise-origin-cert` CSR/certificate install helper, `npm run prepare:enterprise-origin-tls` DNS/NSG/APIM backend preparation helper, `npm run verify:enterprise-origin-tls` readiness preflight, guarded Front Door cutover/rollback helper, NSG 443 IaC, verifier/evidence support, lab-only self-signed verification support, and runbook are implemented. The VM-local nginx TLS proxy is installed and passes `ORIGIN_TLS_INSECURE=true` verifier checks; publicly trusted origin certificate/DNS, NSG 443 allow, APIM HTTPS backend update, and Front Door `HttpsOnly` cutover are pending.
+- [ ] Add TLS from Front Door to the VM origin and switch origin forwarding from HTTP to HTTPS. In progress: TLS proxy installer, `npm run prepare:enterprise-origin-cert` CSR/certificate install helper, `npm run prepare:enterprise-origin-tls` DNS/NSG/APIM backend preparation helper, `npm run verify:enterprise-origin-tls` readiness preflight, confirmation-gated Front Door cutover/rollback helper with strict preflight, NSG 443 IaC, verifier/evidence support, lab-only self-signed verification support, and runbook are implemented. The VM-local nginx TLS proxy is installed and passes `ORIGIN_TLS_INSECURE=true` verifier checks; publicly trusted origin certificate/DNS, NSG 443 allow, APIM HTTPS backend update, and Front Door `HttpsOnly` cutover are pending.
 - [ ] Close public SSH bootstrap ingress after alternate access is ready. In progress: `allowSshBootstrap` IaC switch, `npm run harden:enterprise-ssh`, confirmation-gated close/reopen workflow, verifier expectations, and runbook are implemented; live NSG rule remains `Allow` for bootstrap/break-glass.
 - [ ] Disable/delete old Container Apps prototype resources after soak. In progress: `cleanup-container-apps-prototype.sh` and `npm run cleanup:enterprise-container-apps` can inventory, disable ingress, and explicitly delete apps/environment/ACR; live cleanup is pending operator approval.
 
@@ -479,7 +479,8 @@ Implementation/test order:
 14. [x] Hardening status slice: add `npm run status:enterprise-hardening` to summarize production verification, TLS-origin preparation/readiness, APIM plan, SSH plan, and Container Apps inventory without mutating infrastructure; expose it from `/app/runbooks`.
 15. [x] Origin TLS preparation slice: add `npm run prepare:enterprise-origin-tls` to plan DNS, NSG 443, APIM HTTPS backend, and rollback actions before the final Front Door `HttpsOnly` cutover.
 16. [x] Origin TLS certificate workflow slice: add `npm run prepare:enterprise-origin-cert` to plan CSR generation, signed certificate install, self-signed marker removal, proxy restart, and VM-local TLS checks.
-17. [ ] Live browser QA after each major deploy: run the automated live app QA, then manually login as demo user and click through sidebar/subnav links when visual regressions or browser-only session behavior are in scope.
+17. [x] Origin TLS cutover guardrail slice: require explicit confirmation for Front Door `HttpsOnly` enable/rollback and run strict origin TLS preflight before live enable by default.
+18. [ ] Live browser QA after each major deploy: run the automated live app QA, then manually login as demo user and click through sidebar/subnav links when visual regressions or browser-only session behavior are in scope.
 
 ## Azure Resources
 

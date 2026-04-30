@@ -514,12 +514,13 @@ Enable the Front Door TLS origin cutover only after readiness, DNS, certificate,
 
 ```bash
 ACTION=enable \
+CONFIRM_ORIGIN_TLS_CUTOVER=enable-origin-https \
 ORIGIN_TLS_HOSTNAME=origin.enterprise.vaultproof.dev \
 RUN_VERIFIER=true \
 npm run cutover:enterprise-origin-tls
 ```
 
-By default the cutover helper SSHes to the VM and verifies `https://origin.enterprise.vaultproof.dev/health` against `127.0.0.1` before changing Front Door. If SSH has already been locked down and you have independently verified local origin TLS, set `SKIP_ORIGIN_TLS_CHECK=true`.
+By default the cutover helper requires production readiness, runs the strict origin TLS preflight with `CUTOVER_READY_REQUIRED=true`, then SSHes to the VM and verifies `https://origin.enterprise.vaultproof.dev/health` against `127.0.0.1` before changing Front Door. If SSH has already been locked down and you have independently verified local origin TLS, set `STRICT_ORIGIN_TLS_SSH_CHECKS=false SKIP_ORIGIN_TLS_CHECK=true`.
 
 The helper updates the configured Front Door origin and route to:
 
@@ -544,7 +545,9 @@ npm run verify:enterprise-production
 If anything fails, roll back Front Door route forwarding to `HttpOnly` and the previous VM origin settings while leaving the TLS proxy installed for debugging:
 
 ```bash
-ACTION=rollback npm run cutover:enterprise-origin-tls
+ACTION=rollback \
+CONFIRM_ORIGIN_TLS_CUTOVER=rollback-origin-http \
+npm run cutover:enterprise-origin-tls
 ```
 
 ### SSH Bootstrap Lockdown

@@ -224,7 +224,7 @@ Built:
 - VM-local nginx TLS proxy installer exists.
 - The TLS proxy is installed on the Confidential VM.
 - Origin certificate helper exists for VM-generated CSR, CA-signed certificate install, self-signed marker cleanup, and VM-local TLS health checks.
-- TLS origin cutover helper exists for plan, enable, and rollback.
+- TLS origin cutover helper exists for plan, confirmation-gated enable, strict preflight, and confirmation-gated rollback.
 - TLS origin preparation helper exists for DNS/NSG/APIM backend planning and guarded Azure-side prep.
 - Read-only TLS readiness preflight exists and is exposed in runbooks.
 - Production verifier can validate TLS-origin posture when `ORIGIN_TLS_HOSTNAME` is enabled.
@@ -279,6 +279,11 @@ DEPLOYMENT_NAME=vp-enterprise-secure-runtime-eastus-hsm \
 ORIGIN_TLS_HOSTNAME=origin.enterprise.vaultproof.dev \
 npm run cutover:enterprise-origin-tls
 ```
+
+Guarded cutover actions:
+
+- `ACTION=enable CONFIRM_ORIGIN_TLS_CUTOVER=enable-origin-https RUN_VERIFIER=true npm run cutover:enterprise-origin-tls`
+- `ACTION=rollback CONFIRM_ORIGIN_TLS_CUTOVER=rollback-origin-http npm run cutover:enterprise-origin-tls`
 
 Current blockers before enabling `HttpsOnly`:
 
