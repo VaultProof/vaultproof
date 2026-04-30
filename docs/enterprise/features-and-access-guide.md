@@ -363,6 +363,19 @@ npm run verify:enterprise-secrets
 
 Use this before customer handoff and after rotating setup-time secrets.
 
+### Verify origin TLS readiness
+
+Read-only preflight:
+
+```bash
+RESOURCE_GROUP=vaultproof-enterprise \
+DEPLOYMENT_NAME=vp-enterprise-secure-runtime-eastus-hsm \
+ORIGIN_TLS_HOSTNAME=origin.enterprise.vaultproof.dev \
+npm run verify:enterprise-origin-tls
+```
+
+This checks DNS, Front Door route state, NSG port 443 from Front Door service tags, nginx, certificate SAN/trust, and VM-local TLS `/health`. It runs in report-only mode by default because the current live path is intentionally still HTTP-to-origin. Set `CUTOVER_READY_REQUIRED=true` when you want TLS blockers to fail the command before an actual cutover.
+
 ### Deploy app updates to the Confidential VM
 
 ```bash

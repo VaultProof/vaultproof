@@ -455,6 +455,17 @@ ORIGIN_TLS_HOSTNAME=origin.enterprise.vaultproof.dev \
 npm run cutover:enterprise-origin-tls
 ```
 
+Run the full read-only TLS origin readiness preflight before attempting cutover:
+
+```bash
+RESOURCE_GROUP=vaultproof-enterprise \
+DEPLOYMENT_NAME=vp-enterprise-secure-runtime-eastus-hsm \
+ORIGIN_TLS_HOSTNAME=origin.enterprise.vaultproof.dev \
+npm run verify:enterprise-origin-tls
+```
+
+The preflight checks DNS, current Front Door route state, NSG port 443 from Front Door service tags, nginx, certificate SAN/trust, and VM-local TLS `/health`. It defaults to report-only mode because the current deployment intentionally still uses HTTP origin forwarding. Set `CUTOVER_READY_REQUIRED=true` to fail the command on any TLS cutover blocker.
+
 Enable the Front Door TLS origin cutover only after readiness, DNS, certificate, and local TLS checks pass:
 
 ```bash

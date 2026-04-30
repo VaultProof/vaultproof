@@ -22,6 +22,7 @@
     "test:enterprise-smoke": "npm run build:enterprise && node scripts/enterprise-secure-executor-smoke.mjs",
     "qa:enterprise-live-app": "node scripts/enterprise-live-app-qa.mjs",
     "qa:enterprise-live-execute": "node scripts/enterprise-live-execute-test.mjs",
+    "verify:enterprise-origin-tls": "bash infra/azure/enterprise-secure-runtime/verify-origin-tls-readiness.sh",
     "verify:enterprise-production": "bash infra/azure/enterprise-secure-runtime/verify-production-runtime.sh",
     "verify:enterprise-secrets": "bash infra/azure/enterprise-secure-runtime/verify-runtime-secrets.sh",
     "test": "turbo run test",
