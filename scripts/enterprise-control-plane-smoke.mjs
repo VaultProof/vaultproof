@@ -1872,6 +1872,9 @@ async function assertEnterpriseLoginRoute() {
     if (!dashboardHtml.includes('/api/v1/enterprise/projects/stats/overview')) {
       throw new Error('Expected enterprise dashboard to call enterprise control-plane APIs');
     }
+    if (!dashboardHtml.includes('loadPanel(sequence') || !dashboardHtml.includes('project stats')) {
+      throw new Error('Expected enterprise dashboard to render data panels progressively');
+    }
     assertDashboardShellTheme(dashboardPath, dashboardHtml);
     for (const requiredFeature of [
       'Customer workspace',

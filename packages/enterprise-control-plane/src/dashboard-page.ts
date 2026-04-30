@@ -539,6 +539,7 @@ export function renderEnterpriseDashboardPage(env: EnterpriseControlPlaneEnv = {
       var ACTIVE_ORG_STORAGE_KEY = 'vaultproof_active_org';
       var token = localStorage.getItem('vaultproof_token') || '';
       var currentOrgId = localStorage.getItem(ACTIVE_ORG_STORAGE_KEY) || '';
+      var loadSequence = 0;
       function byId(id) { return document.getElementById(id); }
       function text(id, value) { var el = byId(id); if (el) el.textContent = value == null ? '' : String(value); }
       function escapeHtml(value) {
@@ -589,6 +590,22 @@ export function renderEnterpriseDashboardPage(env: EnterpriseControlPlaneEnv = {
         message = friendlyErrorMessage(message);
         el.style.display = 'block';
         el.innerHTML = escapeHtml(message) + ' <a href="/app/login">Sign in</a>';
+      }
+      function recordPanelFailure(failures, label, error) {
+        var message = label + ': ' + friendlyErrorMessage(error && error.message ? error.message : 'failed to load');
+        failures.push(message);
+        setNotice('Some dashboard panels could not load: ' + failures.join(' | '));
+      }
+      function loadPanel(sequence, label, promise, render, failures) {
+        return promise.then(function(payload) {
+          if (sequence !== loadSequence) return null;
+          render(payload);
+          return payload;
+        }).catch(function(error) {
+          if (sequence !== loadSequence) return null;
+          recordPanelFailure(failures, label, error);
+          return null;
+        });
       }
       function selectDashboardTab(tabName) {
         var target = tabName || 'overview';
@@ -700,29 +717,24 @@ export function renderEnterpriseDashboardPage(env: EnterpriseControlPlaneEnv = {
           setNotice('Enterprise session missing.');
           return;
         }
+        var sequence = ++loadSequence;
+        var panelFailures = [];
         setNotice('');
         try {
-          var readinessPromise = fetchJson('/readiness');
+          var readinessTask = loadPanel(sequence, 'readiness', fetchJson('/readiness'), renderReadiness, panelFailures);
           var orgsPayload = await fetchJson('/api/v1/enterprise/orgs');
+          if (sequence !== loadSequence) return;
           var orgs = Array.isArray(orgsPayload.organizations) ? orgsPayload.organizations : [];
           renderOrgSelector(orgs, orgsPayload.active_organization_id || '');
-          var results = await Promise.allSettled([
-            readinessPromise,
-            fetchJson('/api/v1/enterprise/orgs/current'),
-            fetchJson('/api/v1/enterprise/projects/stats/overview'),
-            fetchJson('/api/v1/enterprise/members'),
-            fetchJson('/api/v1/enterprise/audit?limit=6&days=30')
+          await Promise.allSettled([
+            readinessTask,
+            loadPanel(sequence, 'organization', fetchJson('/api/v1/enterprise/orgs/current'), renderOrganization, panelFailures),
+            loadPanel(sequence, 'project stats', fetchJson('/api/v1/enterprise/projects/stats/overview'), renderOverview, panelFailures),
+            loadPanel(sequence, 'members', fetchJson('/api/v1/enterprise/members'), renderMembers, panelFailures),
+            loadPanel(sequence, 'audit', fetchJson('/api/v1/enterprise/audit?limit=6&days=30'), renderAudit, panelFailures)
           ]);
-          if (results[0].status === 'fulfilled') renderReadiness(results[0].value);
-          if (results[1].status === 'fulfilled') renderOrganization(results[1].value);
-          if (results[2].status === 'fulfilled') renderOverview(results[2].value);
-          if (results[3].status === 'fulfilled') renderMembers(results[3].value);
-          if (results[4].status === 'fulfilled') renderAudit(results[4].value);
-          if (results.some(function(result) { return result.status === 'rejected'; })) {
-            var failed = results.filter(function(result) { return result.status === 'rejected'; }).map(function(result) { return result.reason && result.reason.message; }).filter(Boolean);
-            setNotice('Some dashboard panels could not load: ' + failed.join(' | '));
-          }
         } catch (error) {
+          if (sequence !== loadSequence) return;
           setNotice(error && error.message ? error.message : 'Dashboard failed to load.');
         }
       }

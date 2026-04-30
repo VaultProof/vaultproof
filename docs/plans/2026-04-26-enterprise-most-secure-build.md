@@ -511,7 +511,8 @@ Implementation/test order:
 36. [x] Enterprise app theme parity slice: move all signed-in enterprise app pages onto the same dashboard shell/theme and add smoke coverage so future pages keep the VP mark, workspace/evidence/setup sidebar, and setup-order card.
 37. [x] Control page dashboard polish slice: add a route-scoped `/app/control` theme layer so the control overview uses the same enterprise shell, tab bar, cardified KPI grid, operator action strip, banner treatment, and nested policy/member/runtime cards as the main business dashboard.
 38. [x] Org page dashboard polish slice: add a route-scoped `/app/org` theme layer so organization profile, ownership transfer, archive/recovery, SSO rollout, pilot kit, and workspace posture panels match the main enterprise dashboard.
-39. [ ] Live browser QA after each major deploy: run the automated live app QA, then manually login as demo user and click through sidebar/subnav links when visual regressions or browser-only session behavior are in scope.
+39. [x] Dashboard progressive loading slice: render readiness, organization, project stats, members, and audit panels as each request resolves so one slow stats/readiness endpoint does not block the whole dashboard from filling in.
+40. [ ] Live browser QA after each major deploy: run the automated live app QA, then manually login as demo user and click through sidebar/subnav links when visual regressions or browser-only session behavior are in scope.
 
 ### Phase 7: VaultProof Internal Admin Console
 
