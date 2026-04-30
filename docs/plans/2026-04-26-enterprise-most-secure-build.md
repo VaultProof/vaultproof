@@ -49,6 +49,7 @@ Live production-confidential path:
 - `npm run evidence:enterprise-production` captures customer/audit evidence snapshots.
 - `npm run validate:enterprise-evidence` validates the latest production evidence bundle for production readiness, Confidential VM posture, Front Door/origin-lock posture, service health, and obvious secret-shaped material before customer handoff.
 - `npm run package:enterprise-handoff` builds a local customer/compliance handoff folder with the features guide, source-of-truth plan, APIM policy templates, secure-runtime runbook, manifest, and latest local evidence if available, without mutating Azure resources.
+- `npm run gate:enterprise-handoff` runs the local pre-handoff gate: APIM policy template smoke, handoff package build, and manifest verification, with optional live QA/evidence strictness.
 - `npm run verify:enterprise-secrets` verifies the installed control-plane/executor env files for secret-rotation readiness and confidential-mode footguns.
 - `npm run prepare:enterprise-secret-rotation` plans customer-handoff secret rotation and can generate fresh executor signing material into chmod-600 local files without printing secrets.
 - `npm run prepare:enterprise-private-origin` inventories Front Door/APIM/Confidential VM network state and plans the APIM Private Link or internal-load-balancer Private Link migration without mutating Azure resources.
@@ -495,7 +496,8 @@ Implementation/test order:
 24. [x] mTLS caller-lock preparation slice: add `npm run prepare:enterprise-mtls` to compute customer/APIM client certificate thumbprints, subject fragments, trusted gateway headers, and caller-lock policy snippets before live mTLS enforcement.
 25. [x] APIM mTLS policy template slice: add `docs/enterprise/customer-managed-apim-mtls-policy.xml` and `npm run test:enterprise-apim-policies` so customer APIM mTLS validation/header-forwarding policy is reviewable and tested before live enforcement.
 26. [x] Customer handoff package slice: add `npm run package:enterprise-handoff` to assemble customer/compliance docs, APIM templates, latest local evidence, and a manifest into a local handoff folder without calling Azure.
-27. [ ] Live browser QA after each major deploy: run the automated live app QA, then manually login as demo user and click through sidebar/subnav links when visual regressions or browser-only session behavior are in scope.
+27. [x] Customer handoff gate slice: add `npm run gate:enterprise-handoff` to run APIM policy smoke, build the package, verify its manifest, and optionally require valid evidence/live QA before handoff.
+28. [ ] Live browser QA after each major deploy: run the automated live app QA, then manually login as demo user and click through sidebar/subnav links when visual regressions or browser-only session behavior are in scope.
 
 ## Azure Resources
 

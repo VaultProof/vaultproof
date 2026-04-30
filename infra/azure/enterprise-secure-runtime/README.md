@@ -1073,6 +1073,21 @@ npm run package:enterprise-handoff
 
 This copies the enterprise features guide, source-of-truth plan, APIM policy templates, secure-runtime README, and the latest local production evidence bundle if one exists. Set `REQUIRE_EVIDENCE=true REQUIRE_VALID_EVIDENCE=true` when CI or a release gate should fail unless the latest evidence bundle is present and valid.
 
+Run the local handoff gate before sharing the package:
+
+```bash
+npm run gate:enterprise-handoff
+```
+
+The gate validates APIM policy templates, builds the handoff package, and verifies the manifest includes the required docs, policies, and operator commands. Optional stricter modes:
+
+```bash
+REQUIRE_EVIDENCE=true \
+REQUIRE_VALID_EVIDENCE=true \
+RUN_LIVE_APP_QA=true \
+npm run gate:enterprise-handoff
+```
+
 Plan the stronger private-origin migration without changing Azure resources:
 
 ```bash

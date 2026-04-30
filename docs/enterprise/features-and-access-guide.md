@@ -840,6 +840,14 @@ npm run package:enterprise-handoff
 
 This creates a local folder with the enterprise features guide, source-of-truth plan, APIM policy templates, secure-runtime runbook, manifest, and latest local production evidence bundle if one exists. It does not call Azure or change live infrastructure.
 
+Run the local handoff gate before sharing the package:
+
+```bash
+npm run gate:enterprise-handoff
+```
+
+The gate validates APIM policy templates, builds the package, and verifies the manifest includes required docs, policy files, and operator commands. Set `REQUIRE_EVIDENCE=true REQUIRE_VALID_EVIDENCE=true RUN_LIVE_APP_QA=true` for a stricter pre-handoff pass.
+
 ### Prepare origin TLS cutover
 
 Read-only plan:

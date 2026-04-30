@@ -1944,7 +1944,7 @@ async function assertEnterpriseLoginRoute() {
     {
       path: '/app/runbooks',
       title: 'Runbooks - VaultProof Enterprise',
-      required: ['Hardening status', 'Production verifier', 'Evidence bundle', 'Handoff package', 'npm run package:enterprise-handoff', 'mTLS caller-lock preparation', 'npm run prepare:enterprise-mtls', 'APIM policy template smoke', 'npm run test:enterprise-apim-policies', 'Origin TLS certificate plan', 'Origin TLS preparation plan', 'Origin TLS preflight', 'TLS origin cutover', 'npm run cutover:enterprise-apim', 'Container Apps cleanup'],
+      required: ['Hardening status', 'Production verifier', 'Evidence bundle', 'Handoff package', 'npm run package:enterprise-handoff', 'Handoff gate', 'npm run gate:enterprise-handoff', 'mTLS caller-lock preparation', 'npm run prepare:enterprise-mtls', 'APIM policy template smoke', 'npm run test:enterprise-apim-policies', 'Origin TLS certificate plan', 'Origin TLS preparation plan', 'Origin TLS preflight', 'TLS origin cutover', 'npm run cutover:enterprise-apim', 'Container Apps cleanup'],
     },
   ];
   for (const page of supportPages) {
