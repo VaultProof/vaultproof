@@ -32,6 +32,33 @@ function removePublicSiteTheme(html: string): string {
   return html.replace(publicSiteThemePattern, '');
 }
 
+const LEGACY_STATIC_SIDEBAR_ARTIFACTS = [
+  '.sidebar-group',
+  '.sidebar-head',
+  '.sidebar-item',
+  '.sidebar-dot',
+  '.usage-box',
+  '.usage-label',
+  '.usage-row',
+  '.usage-bar-track',
+  '.usage-bar-fill',
+  '.usage-reset',
+];
+
+function removeLegacyStaticSidebarArtifacts(html: string): string {
+  return html
+    .split('\n')
+    .filter((line) => !LEGACY_STATIC_SIDEBAR_ARTIFACTS.some((artifact) => line.includes(artifact)))
+    .join('\n');
+}
+
+function replaceOrInjectEnterpriseSidebar(html: string, activePage: EnterpriseAppNavPage, subtitle: string): string {
+  const sidebar = renderEnterpriseAppSidebar(activePage, subtitle);
+  const replaced = html.replace(/<aside class="sidebar">[\s\S]*?<\/aside>/, sidebar);
+  if (replaced !== html) return replaced;
+  return html.replace('<div class="layout">', `<div class="layout">\n      ${sidebar}`);
+}
+
 function readWorkspaceFile(relativePath: string): string {
   const candidates = [
     join(process.cwd(), relativePath),
@@ -93,7 +120,7 @@ const ENTERPRISE_STATIC_APP_THEME = `
     .main { padding: 30px; max-width: 1380px; width: 100%; }
     .page-title { color: var(--text); font-size: clamp(38px, 6vw, 74px); line-height: .92; letter-spacing: -.075em; font-weight: 850; }
     .page-desc, .page-meta, .list-sub, .resource-copy, .banner-copy, .banner-note, .form-copy, .callout { color: var(--muted); }
-    .panel, .kpi-grid, .banner, .invite-panel, .action-strip, .usage-box, .member-card, .policy-card, .policy-provider-card, .exec-card, .resource-card, .checklist-box, .callout {
+    .panel, .kpi-grid, .banner, .invite-panel, .action-strip, .member-card, .policy-card, .policy-provider-card, .exec-card, .resource-card, .checklist-box, .callout {
       border: 1px solid var(--line);
       background: linear-gradient(180deg, rgba(237, 229, 204, 0.13), rgba(237, 229, 204, 0.055));
       border-radius: 24px;
@@ -685,8 +712,7 @@ const ENTERPRISE_STATIC_PAGE_THEMES: Partial<Record<EnterpriseAppNavPage, string
 function applyEnterpriseStaticAppTheme(html: string, activePage: EnterpriseAppNavPage, subtitle: string): string {
   const pageSpecificTheme = ENTERPRISE_STATIC_PAGE_THEMES[activePage] ?? '';
 
-  return removePublicSiteTheme(html)
-    .replace(/<aside class="sidebar">[\s\S]*?<\/aside>/, renderEnterpriseAppSidebar(activePage, subtitle))
+  return removeLegacyStaticSidebarArtifacts(replaceOrInjectEnterpriseSidebar(removePublicSiteTheme(html), activePage, subtitle))
     .replace('</style>', `${ENTERPRISE_APP_SHELL_THEME}${ENTERPRISE_STATIC_APP_THEME}${pageSpecificTheme}\n  </style>`);
 }
 

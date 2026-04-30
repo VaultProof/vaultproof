@@ -2057,6 +2057,11 @@ async function assertEnterpriseLoginRoute() {
   if (controlHtml.includes('/css/site-theme.css')) {
     throw new Error('Control page must not load public site-theme.css over the enterprise dashboard theme');
   }
+  for (const legacySidebarToken of ['sidebar-group', 'sidebar-head', 'sidebar-item', 'sidebar-dot', 'usage-box']) {
+    if (controlHtml.includes(legacySidebarToken)) {
+      throw new Error(`Control page must not include legacy sidebar artifact ${legacySidebarToken}`);
+    }
+  }
   assertDashboardShellTheme('/app/control', controlHtml);
 
   const orgResponse = await handleEnterpriseControlPlaneRequest(
@@ -2077,6 +2082,11 @@ async function assertEnterpriseLoginRoute() {
   }
   if (orgHtml.includes('/css/site-theme.css')) {
     throw new Error('Org page must not load public site-theme.css over the enterprise dashboard theme');
+  }
+  for (const legacySidebarToken of ['sidebar-group', 'sidebar-head', 'sidebar-item', 'sidebar-dot', 'usage-box']) {
+    if (orgHtml.includes(legacySidebarToken)) {
+      throw new Error(`Org page must not include legacy sidebar artifact ${legacySidebarToken}`);
+    }
   }
   assertDashboardShellTheme('/app/org', orgHtml);
 }

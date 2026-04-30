@@ -514,7 +514,8 @@ Implementation/test order:
 39. [x] Dashboard progressive loading slice: render readiness, organization, project stats, members, and audit panels as each request resolves so one slow stats/readiness endpoint does not block the whole dashboard from filling in.
 40. [x] Static enterprise CSS isolation slice: strip the public `site-theme.css` from `/app/control` and `/app/org` enterprise renders so its broad `!important` public-site rules cannot override the dashboard-matched dark enterprise theme.
 41. [x] Universal enterprise sidebar slice: move the enterprise app sidebar renderer and CSS into one shared control-plane module, then wire Dashboard, Control, Org, Members, Audit, Alerts, Projects, Keys, Settings, Plans, Scanner, and Runbooks through that single source with smoke-test markers.
-42. [ ] Live browser QA after each major deploy: run the automated live app QA, then manually login as demo user and click through sidebar/subnav links when visual regressions or browser-only session behavior are in scope.
+42. [x] Legacy sidebar artifact cleanup slice: strip stale static sidebar CSS/artifacts from enterprise-rendered Control and Org pages and add smoke checks for legacy `sidebar-group`, `sidebar-item`, `sidebar-dot`, and `usage-box` leakage.
+43. [ ] Live browser QA after each major deploy: run the automated live app QA, then manually login as demo user and click through sidebar/subnav links when visual regressions or browser-only session behavior are in scope.
 
 ### Phase 7: VaultProof Internal Admin Console
 
