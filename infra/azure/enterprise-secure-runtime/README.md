@@ -9,10 +9,12 @@ It intentionally does **not** replace the B2C Cloudflare path.
 - Enterprise VNet with separate control-plane and executor subnets.
 - Network Security Group for the executor subnet.
 - Azure Confidential VM for the secure executor.
-- Azure Key Vault Premium for the enterprise unwrap key.
+- Azure Managed HSM for the production Secure Key Release root key.
 - RSA-HSM unwrap key with `release` capability.
 - Azure Attestation provider.
 - Optional Azure API Management instance for API lifecycle governance.
+
+Current decision: keep Managed HSM for this Azure finish pass. Key Vault Premium can remain a lower-friction future option, but do not switch the active production-confidential path away from Managed HSM until after the Azure build is stable.
 
 API Management is for routing, rate limits, auth policy, observability, products, versions, and developer portal/catalog workflows. It must not reconstruct secrets or replace the Confidential VM executor.
 

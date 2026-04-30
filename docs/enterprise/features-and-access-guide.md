@@ -88,6 +88,7 @@ If you see an auth message:
 ### Secure Key Release
 
 - Azure Managed HSM is deployed.
+- Current decision: keep Managed HSM for the Azure finish pass, then design AWS separately after the Azure path is stable.
 - Secure Key Release is wired to Microsoft Azure Attestation evidence.
 - Current implementation uses an exportable `RSA-HSM` release-root key and derives AES-256 unwrap material inside the Confidential VM.
 - This is intentional because Azure Managed HSM rejects generated symmetric `oct-HSM` keys for export/release.

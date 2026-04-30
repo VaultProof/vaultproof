@@ -25,6 +25,12 @@ Build the enterprise path directly toward the strongest Azure-native design:
 - Azure API Management provides API lifecycle governance in front of the enterprise control plane.
 - Enterprise caller lock binds execution to approved origins, gateways, devices, fleets, and client classes.
 
+Current architecture decision:
+
+- Keep Azure Managed HSM as the production Secure Key Release key home for the next week while finishing the Azure build.
+- Do not switch back to Key Vault Premium/Standard during this hardening pass unless Managed HSM blocks a required customer/demo milestone.
+- After the Azure build is finished and stable, start the AWS equivalent design as a separate cloud track instead of mixing AWS work into the active Azure cutover/hardening work.
+
 ## Current State
 
 Live production-confidential path:
@@ -80,12 +86,14 @@ Important limitation:
 
 ## Next Execution Order
 
-1. TLS from Front Door to the VM origin, then switch Front Door origin forwarding to HTTPS.
-2. Azure API Management route cutover after TLS/private-origin risk is resolved.
-3. SSH/Bastion/JIT hardening and cleanup of old prototype Container Apps resources. In progress: reversible SSH bootstrap lockdown tooling, verifier expectations, and prototype Container Apps cleanup tooling are implemented; live SSH closure and live prototype cleanup are pending alternate access/break-glass readiness and soak.
-4. End-to-end enterprise API execution through `enterprise.vaultproof.dev` with evidence/audit metadata. In progress: safe dry-run execution validates auth, policy, signed-envelope creation, and audit metadata without calling upstream providers; real provider dispatch remains an explicit `EXECUTE_DRY_RUN=false` action.
-5. Enterprise controls: SSO, provider allowlists, upstream domain/method policy, policy UI, per-project rate limits, emergency revoke, audit export, SOC 2 access review evidence.
-6. Enterprise dashboard completion: make every `/app/*` link resolve on `enterprise.vaultproof.dev`, then replace placeholders with API-backed enterprise pages one page at a time with tests between each slice.
+1. Keep Managed HSM and finish Azure hardening first; defer Key Vault Premium simplification and AWS design until after the Azure path is stable.
+2. TLS from Front Door to the VM origin, then switch Front Door origin forwarding to HTTPS.
+3. Azure API Management route cutover after TLS/private-origin risk is resolved.
+4. SSH/Bastion/JIT hardening and cleanup of old prototype Container Apps resources. In progress: reversible SSH bootstrap lockdown tooling, verifier expectations, and prototype Container Apps cleanup tooling are implemented; live SSH closure and live prototype cleanup are pending alternate access/break-glass readiness and soak.
+5. End-to-end enterprise API execution through `enterprise.vaultproof.dev` with evidence/audit metadata. In progress: safe dry-run execution validates auth, policy, signed-envelope creation, and audit metadata without calling upstream providers; real provider dispatch remains an explicit `EXECUTE_DRY_RUN=false` action.
+6. Enterprise controls: SSO, provider allowlists, upstream domain/method policy, policy UI, per-project rate limits, emergency revoke, audit export, SOC 2 access review evidence.
+7. Enterprise dashboard completion: make every `/app/*` link resolve on `enterprise.vaultproof.dev`, then replace placeholders with API-backed enterprise pages one page at a time with tests between each slice.
+8. Start AWS equivalent architecture after Azure finish line: Nitro Enclaves or equivalent confidential compute, KMS/HSM key-release equivalent, API Gateway/PrivateLink routing, monitoring, evidence, and dashboard parity.
 
 ## Security Boundary
 
