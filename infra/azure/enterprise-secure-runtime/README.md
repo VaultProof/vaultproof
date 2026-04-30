@@ -1052,6 +1052,18 @@ npm run prepare:enterprise-mtls
 
 This helper normalizes the certificate thumbprint and subject fragment that the control plane already enforces through `projects.caller_lock_policy.allowed_client_certificate_thumbprints` and `projects.caller_lock_policy.allowed_client_certificate_subjects`. Live mTLS should only be enabled after the gateway validates the client certificate, strips spoofable inbound certificate headers, and sets trusted `x-vaultproof-client-cert-*` headers from the gateway certificate context.
 
+For customer-managed APIM mTLS, use this policy template as the starting point:
+
+```text
+docs/enterprise/customer-managed-apim-mtls-policy.xml
+```
+
+Validate all enterprise APIM policy templates before handoff:
+
+```bash
+npm run test:enterprise-apim-policies
+```
+
 Plan the stronger private-origin migration without changing Azure resources:
 
 ```bash

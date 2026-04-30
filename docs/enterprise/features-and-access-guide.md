@@ -156,6 +156,14 @@ npm run prepare:enterprise-mtls
 
 This prints the normalized certificate thumbprint, subject fragment, APIM header contract, and a `caller_lock_policy` JSON snippet for `allowed_client_certificate_thumbprints` and `allowed_client_certificate_subjects`. It does not change APIM, Supabase, project policy, or live traffic.
 
+For a customer-owned APIM gateway that terminates mTLS, start from:
+
+```text
+docs/enterprise/customer-managed-apim-mtls-policy.xml
+```
+
+This template validates the presented client certificate, strips spoofable VaultProof caller-lock headers from the inbound request, sets trusted certificate metadata from `context.Request.Certificate`, preserves `Authorization` for VaultProof org/project auth, and forwards to `https://enterprise.vaultproof.dev`.
+
 ### Emergency Revoke
 
 Enterprise admins can revoke provider slots.

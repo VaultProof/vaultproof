@@ -129,6 +129,7 @@ EOF
 
 show_cert_plan() {
   local sha1_thumbprint
+  local sha1_thumbprint_upper
   local sha256_thumbprint
   local subject
   local issuer
@@ -143,6 +144,7 @@ show_cert_plan() {
 
   require_command openssl
   sha1_thumbprint="$(cert_fingerprint sha1)"
+  sha1_thumbprint_upper="$(printf '%s' "${sha1_thumbprint}" | tr '[:lower:]' '[:upper:]')"
   sha256_thumbprint="$(cert_fingerprint sha256)"
   subject="$(cert_field -noout -subject -nameopt RFC2253)"
   issuer="$(cert_field -noout -issuer -nameopt RFC2253)"
@@ -157,12 +159,18 @@ show_cert_plan() {
   echo "  ${serial}"
   echo "  ${dates}"
   echo "  sha1 thumbprint:      ${sha1_thumbprint}"
+  echo "  APIM thumbprint:      ${sha1_thumbprint_upper}"
   echo "  sha256 thumbprint:    ${sha256_thumbprint}"
   echo "  subject fragment:     ${subject_fragment}"
   echo
   echo "Control-plane caller_lock_policy snippet:"
   print_policy_snippet "${sha1_thumbprint}" "${subject_fragment}"
   print_apim_policy_contract
+  echo
+  echo "APIM mTLS policy template:"
+  echo "  docs/enterprise/customer-managed-apim-mtls-policy.xml"
+  echo "  replace {CLIENT_CERT_SHA1_THUMBPRINT_UPPERCASE} with ${sha1_thumbprint_upper}"
+  echo "  replace {customer-slug} with ${CUSTOMER_GATEWAY}"
   print_test_hints "${sha1_thumbprint}" "${subject_fragment}"
 }
 
@@ -173,6 +181,9 @@ show_empty_plan() {
   echo "Control-plane caller_lock_policy snippet template:"
   print_policy_snippet "" ""
   print_apim_policy_contract
+  echo
+  echo "APIM mTLS policy template:"
+  echo "  docs/enterprise/customer-managed-apim-mtls-policy.xml"
   print_test_hints "" ""
 }
 

@@ -1,0 +1,68 @@
+<policies>
+  <inbound>
+    <base />
+
+    <!--
+      Customer-managed APIM mTLS gateway template.
+
+      Before enabling:
+      - Enable "Request client certificate" / "Negotiate client certificate" on the APIM gateway hostname.
+      - Upload the trusted root/intermediate CA used to validate client certificates.
+      - Replace {CLIENT_CERT_SHA1_THUMBPRINT_UPPERCASE} with the approved client certificate SHA-1 thumbprint.
+      - Replace {customer-slug} with the non-secret gateway marker configured in VaultProof caller_lock_policy.
+    -->
+    <validate-client-certificate
+      validate-revocation="true"
+      validate-trust="true"
+      validate-not-before="true"
+      validate-not-after="true"
+      ignore-error="false">
+      <identities>
+        <identity thumbprint="{CLIENT_CERT_SHA1_THUMBPRINT_UPPERCASE}" />
+      </identities>
+    </validate-client-certificate>
+
+    <!-- Customer-owned throttles. VaultProof still enforces org/project policy later. -->
+    <rate-limit-by-key calls="120" renewal-period="60" counter-key='@(context.Request.Certificate == null ? context.Request.IpAddress : context.Request.Certificate.Thumbprint)' />
+    <quota-by-key calls="10000" renewal-period="86400" counter-key='@(context.Request.Certificate == null ? context.Request.IpAddress : context.Request.Certificate.Thumbprint)' />
+
+    <!-- Preserve Authorization for VaultProof control-plane user/project auth. Strip provider-secret style headers. -->
+    <set-header name="x-api-key" exists-action="delete" />
+    <set-header name="openai-api-key" exists-action="delete" />
+    <set-header name="anthropic-api-key" exists-action="delete" />
+    <set-header name="stripe-api-key" exists-action="delete" />
+
+    <!-- Strip spoofable caller-lock headers, then re-set trusted values from APIM's validated certificate context. -->
+    <set-header name="x-vaultproof-customer-gateway" exists-action="delete" />
+    <set-header name="x-vaultproof-client-class" exists-action="delete" />
+    <set-header name="x-vaultproof-client-cert-thumbprint" exists-action="delete" />
+    <set-header name="x-vaultproof-client-cert-subject" exists-action="delete" />
+
+    <set-header name="x-vaultproof-customer-gateway" exists-action="override">
+      <value>{customer-slug}</value>
+    </set-header>
+    <set-header name="x-vaultproof-client-class" exists-action="override">
+      <value>gateway</value>
+    </set-header>
+    <set-header name="x-vaultproof-client-cert-thumbprint" exists-action="override">
+      <value>@(context.Request.Certificate == null ? "" : context.Request.Certificate.Thumbprint)</value>
+    </set-header>
+    <set-header name="x-vaultproof-client-cert-subject" exists-action="override">
+      <value>@(context.Request.Certificate == null ? "" : context.Request.Certificate.Subject)</value>
+    </set-header>
+
+    <set-backend-service base-url="https://enterprise.vaultproof.dev" />
+  </inbound>
+
+  <backend>
+    <base />
+  </backend>
+
+  <outbound>
+    <base />
+  </outbound>
+
+  <on-error>
+    <base />
+  </on-error>
+</policies>
