@@ -1007,7 +1007,28 @@ ORIGIN_TLS_HOSTNAME=origin.enterprise.vaultproof.dev \
 npm run status:enterprise-hardening
 ```
 
-The wrapper runs the production verifier, secret-rotation plan, private-origin plan, TLS-origin preparation plan, TLS-origin readiness preflight, APIM cutover plan, SSH bootstrap hardening plan, and Container Apps prototype inventory. It does not mutate Azure resources. Add `RUN_LIVE_APP_QA=true` to include the live enterprise app link/readiness sweep, or `EXIT_NONZERO_ON_ATTENTION=true` when CI should fail on any reported blocker.
+The wrapper runs the production verifier, secret-rotation plan, private-origin plan, APIM JWT validation plan, TLS-origin preparation plan, TLS-origin readiness preflight, APIM cutover plan, SSH bootstrap hardening plan, and Container Apps prototype inventory. It does not mutate Azure resources. Add `RUN_LIVE_APP_QA=true` to include the live enterprise app link/readiness sweep, or `EXIT_NONZERO_ON_ATTENTION=true` when CI should fail on any reported blocker.
+
+Plan APIM JWT validation without redeploying APIM:
+
+```bash
+RESOURCE_GROUP=vaultproof-enterprise \
+APIM_DEPLOYMENT_NAME=vp-enterprise-secure-runtime-eastus-hsm-apim \
+JWT_PROVIDER=supabase \
+SUPABASE_URL='https://<project-ref>.supabase.co' \
+npm run prepare:enterprise-apim-jwt
+```
+
+For a direct Entra access-token path, use:
+
+```bash
+JWT_PROVIDER=entra \
+ENTRA_TENANT_ID='<tenant-id>' \
+JWT_AUDIENCES='["api://vaultproof-enterprise"]' \
+npm run prepare:enterprise-apim-jwt
+```
+
+This reports the current APIM JWT deployment parameters, derives the target OpenID metadata URL, warns on broad/default audiences, and prints the safe redeploy parameters. APIM JWT validation is an outer gate only; the control plane still performs VaultProof org/project authorization.
 
 Plan the stronger private-origin migration without changing Azure resources:
 

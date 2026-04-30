@@ -24,6 +24,7 @@
     "qa:enterprise-live-app": "node scripts/enterprise-live-app-qa.mjs",
     "qa:enterprise-live-execute": "node scripts/enterprise-live-execute-test.mjs",
     "prepare:enterprise-alternate-access": "bash infra/azure/enterprise-secure-runtime/prepare-alternate-access.sh",
+    "prepare:enterprise-apim-jwt": "bash infra/azure/enterprise-secure-runtime/prepare-apim-jwt-validation.sh",
     "prepare:enterprise-private-origin": "bash infra/azure/enterprise-secure-runtime/prepare-private-origin.sh",
     "prepare:enterprise-secret-rotation": "bash infra/azure/enterprise-secure-runtime/prepare-secret-rotation.sh",
     "prepare:enterprise-origin-cert": "bash infra/azure/enterprise-secure-runtime/prepare-origin-tls-certificate.sh",

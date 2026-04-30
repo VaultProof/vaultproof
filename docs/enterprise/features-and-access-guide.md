@@ -323,6 +323,7 @@ Built:
 - APIM health/readiness routes are verified.
 - APIM policies include request-size guards, rate limits, quotas, provider-secret header stripping, APIM marker headers, origin-lock forwarding, and App Insights diagnostics.
 - Optional JWT validation support exists in IaC/policy.
+- APIM JWT validation preparation helper exists for Supabase-session or direct-Entra token paths before enabling `validate-jwt`.
 - APIM Front Door cutover helper exists for plan, confirmation-gated enable, and confirmation-gated rollback.
 
 Access:
@@ -338,6 +339,25 @@ RESOURCE_GROUP=vaultproof-enterprise \
 DEPLOYMENT_NAME=vp-enterprise-secure-runtime-eastus-hsm \
 APIM_DEPLOYMENT_NAME=vp-enterprise-secure-runtime-eastus-hsm-apim \
 npm run cutover:enterprise-apim
+```
+
+JWT validation plan:
+
+```bash
+RESOURCE_GROUP=vaultproof-enterprise \
+APIM_DEPLOYMENT_NAME=vp-enterprise-secure-runtime-eastus-hsm-apim \
+JWT_PROVIDER=supabase \
+SUPABASE_URL='https://<project-ref>.supabase.co' \
+npm run prepare:enterprise-apim-jwt
+```
+
+For direct Entra access-token validation:
+
+```bash
+JWT_PROVIDER=entra \
+ENTRA_TENANT_ID='<tenant-id>' \
+JWT_AUDIENCES='["api://vaultproof-enterprise"]' \
+npm run prepare:enterprise-apim-jwt
 ```
 
 Live mutation is guarded. `ACTION=enable` refuses to run unless:
@@ -356,6 +376,7 @@ Current status:
 - APIM is deployed and verified as a sidecar.
 - APIM is not yet the active Front Door route.
 - APIM cutover waits until TLS/private-origin risk is resolved.
+- APIM JWT validation remains disabled until the final Supabase-session or direct-Entra issuer/audience decision is confirmed.
 - Private-origin preparation tooling now inventories Front Door/APIM/VM network state and documents the APIM Private Link or internal-load-balancer Private Link migration choices.
 
 ### Monitoring And Drift Detection
@@ -716,6 +737,7 @@ This checks:
 - No `{"error":"Not found"}` pages.
 - No B2C API fallback on enterprise pages.
 - `/readiness` remains production-ready.
+- `/readiness` is retried briefly to avoid false negatives during transient executor attestation refreshes.
 
 Optional authenticated demo check:
 

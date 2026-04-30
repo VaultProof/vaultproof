@@ -3,6 +3,8 @@ const DEFAULT_ENTERPRISE_URL = 'https://enterprise.vaultproof.dev';
 const enterpriseUrl = normalizeBaseUrl(process.env.ENTERPRISE_URL || DEFAULT_ENTERPRISE_URL);
 const demoEmail = process.env.ENTERPRISE_DEMO_EMAIL || process.env.DEMO_EMAIL || '';
 const demoPassword = process.env.ENTERPRISE_DEMO_PASSWORD || process.env.DEMO_PASSWORD || '';
+const readinessRetries = Number.parseInt(process.env.READINESS_RETRIES || '3', 10);
+const readinessRetryDelayMs = Number.parseInt(process.env.READINESS_RETRY_DELAY_MS || '3000', 10);
 
 const requiredAppPaths = [
   '/',
@@ -98,20 +100,34 @@ async function assertPathOk(path) {
 }
 
 async function assertReadiness() {
-  const { response, text } = await fetchText('/readiness', {
-    headers: { accept: 'application/json' },
-  });
-  if (response.status !== 200) {
-    throw new Error(`/readiness returned HTTP ${response.status}`);
+  let lastError;
+  const attempts = Number.isFinite(readinessRetries) && readinessRetries > 0 ? readinessRetries : 1;
+
+  for (let attempt = 1; attempt <= attempts; attempt += 1) {
+    const { response, text } = await fetchText(`/readiness?qa_attempt=${attempt}&ts=${Date.now()}`, {
+      headers: { accept: 'application/json' },
+    });
+    try {
+      if (response.status !== 200) {
+        throw new Error(`/readiness returned HTTP ${response.status}`);
+      }
+      const payload = JSON.parse(text);
+      if (payload.production_ready !== true) {
+        throw new Error(`/readiness production_ready is not true: ${text}`);
+      }
+      if (payload.security_profile !== 'azure-confidential-production') {
+        throw new Error(`/readiness security_profile is not azure-confidential-production: ${text}`);
+      }
+      return payload;
+    } catch (error) {
+      lastError = error;
+      if (attempt < attempts) {
+        await new Promise((resolve) => setTimeout(resolve, readinessRetryDelayMs));
+      }
+    }
   }
-  const payload = JSON.parse(text);
-  if (payload.production_ready !== true) {
-    throw new Error(`/readiness production_ready is not true: ${text}`);
-  }
-  if (payload.security_profile !== 'azure-confidential-production') {
-    throw new Error(`/readiness security_profile is not azure-confidential-production: ${text}`);
-  }
-  return payload;
+
+  throw lastError;
 }
 
 async function assertPublicPagesAndLinks() {
