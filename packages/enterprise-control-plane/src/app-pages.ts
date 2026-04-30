@@ -1696,6 +1696,7 @@ function renderEnterpriseSupportPage(pageName: 'settings' | 'plans' | 'scanner' 
         }
         if (PAGE_MODE === 'runbooks') {
           byId('runbooksSafeList').innerHTML = [
+            row('Hardening status', 'npm run status:enterprise-hardening runs the safe verifier, TLS preflight, APIM plan, SSH plan, and Container Apps inventory in one read-only pass.', 'read-only', 'good'),
             row('Production verifier', 'npm run verify:enterprise-production checks Azure, Front Door, APIM sidecar, monitoring, TLS origin posture, and live readiness.', 'read-only', 'good'),
             row('Evidence bundle', 'npm run evidence:enterprise-production captures timestamped infrastructure, app, readiness, and monitoring evidence for review.', 'read-only', 'good'),
             row('Evidence validator', 'npm run validate:enterprise-evidence validates the latest evidence bundle before customer or compliance handoff.', 'read-only', 'good'),

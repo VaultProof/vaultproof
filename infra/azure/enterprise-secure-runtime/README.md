@@ -914,6 +914,19 @@ The readiness availability test is the production-verifier drift alarm: it fails
 
 ## Lockdown Checklist
 
+Run the read-only hardening status wrapper when you want one finish-line view of the remaining Azure cutover and cleanup gates:
+
+```bash
+RESOURCE_GROUP=vaultproof-enterprise \
+DEPLOYMENT_NAME=vp-enterprise-secure-runtime-eastus-hsm \
+APIM_DEPLOYMENT_NAME=vp-enterprise-secure-runtime-eastus-hsm-apim \
+MONITORING_DEPLOYMENT_NAME=vp-enterprise-secure-runtime-eastus-hsm-monitoring \
+ORIGIN_TLS_HOSTNAME=origin.enterprise.vaultproof.dev \
+npm run status:enterprise-hardening
+```
+
+The wrapper runs the production verifier, TLS-origin readiness preflight, APIM cutover plan, SSH bootstrap hardening plan, and Container Apps prototype inventory. It does not mutate Azure resources. Add `RUN_LIVE_APP_QA=true` to include the live enterprise app link/readiness sweep, or `EXIT_NONZERO_ON_ATTENTION=true` when CI should fail on any reported blocker.
+
 Run the production verifier after each infrastructure or runtime change:
 
 ```bash

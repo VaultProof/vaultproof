@@ -363,6 +363,21 @@ npm run verify:enterprise-secrets
 
 Use this before customer handoff and after rotating setup-time secrets.
 
+### Check Azure hardening status
+
+Read-only finish-line summary:
+
+```bash
+RESOURCE_GROUP=vaultproof-enterprise \
+DEPLOYMENT_NAME=vp-enterprise-secure-runtime-eastus-hsm \
+APIM_DEPLOYMENT_NAME=vp-enterprise-secure-runtime-eastus-hsm-apim \
+MONITORING_DEPLOYMENT_NAME=vp-enterprise-secure-runtime-eastus-hsm-monitoring \
+ORIGIN_TLS_HOSTNAME=origin.enterprise.vaultproof.dev \
+npm run status:enterprise-hardening
+```
+
+This runs the production verifier, TLS-origin readiness preflight, APIM cutover plan, SSH bootstrap hardening plan, and Container Apps prototype inventory without mutating Azure resources. Set `RUN_LIVE_APP_QA=true` to include the live `/app/*` link/readiness sweep. Set `EXIT_NONZERO_ON_ATTENTION=true` if CI should fail when any enabled step reports blockers or exits nonzero.
+
 ### Verify origin TLS readiness
 
 Read-only preflight:

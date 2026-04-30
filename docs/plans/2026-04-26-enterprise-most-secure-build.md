@@ -50,6 +50,7 @@ Live production-confidential path:
 - `npm run validate:enterprise-evidence` validates the latest production evidence bundle for production readiness, Confidential VM posture, Front Door/origin-lock posture, service health, and obvious secret-shaped material before customer handoff.
 - `npm run verify:enterprise-secrets` verifies the installed control-plane/executor env files for secret-rotation readiness and confidential-mode footguns.
 - `npm run qa:enterprise-live-app` verifies the live enterprise homepage/app pages, crawls enterprise-owned links, confirms `/readiness` remains production-ready, and can optionally authenticate the demo account when `ENTERPRISE_DEMO_EMAIL` and `ENTERPRISE_DEMO_PASSWORD` are provided.
+- `npm run status:enterprise-hardening` provides one read-only finish-line pass across production verification, TLS-origin readiness, APIM cutover planning, SSH bootstrap planning, and old Container Apps inventory.
 - Azure Monitor/App Insights alerting is deployed as `vp-enterprise-secure-runtime-eastus-hsm-monitoring` and `EXPECTED_MONITORING_DEPLOYED=true npm run verify:enterprise-production` verifies the workspace, App Insights component, action group, health/readiness availability tests, readiness drift alert, health alert, and Confidential VM availability alert.
 - The enterprise control plane serves a separate public `/` enterprise homepage plus `/app` and `/app/dashboard` dashboard instead of relying on the B2C dashboard shell. Current state: the root page implements the editorial/terminal VaultProof Homepage design handoff; dashboard includes a built-feature map and live posture panels; login, control, org, runbooks, and remaining enterprise app pages exist under `/app/*`.
 - Enterprise dashboard/API unauthenticated errors are product-safe: users see a normal sign-in prompt instead of implementation details about bearer tokens or Supabase JWTs.
@@ -475,7 +476,8 @@ Implementation/test order:
 11. [x] Live app QA automation: `npm run qa:enterprise-live-app` checks live `/app/*` routes, app-owned links, no `{"error":"Not found"}` pages, no B2C fallback, and production-ready `/readiness`; with demo credentials it also signs in through Supabase Auth and verifies authenticated enterprise org APIs.
 12. [x] Runbooks page slice: expose the built operator commands in the enterprise dashboard, document which are read-only versus approval-gated, and cover it with smoke/link QA.
 13. [x] Dashboard feature-map slice: expose every built enterprise feature from `/app/dashboard`, including live app pages, readiness/health, evidence/export surfaces, APIM/rollout status, scanner placeholder, and operator runbooks; cover it with smoke/link QA.
-14. [ ] Live browser QA after each major deploy: run the automated live app QA, then manually login as demo user and click through sidebar/subnav links when visual regressions or browser-only session behavior are in scope.
+14. [x] Hardening status slice: add `npm run status:enterprise-hardening` to summarize production verification, TLS-origin readiness, APIM plan, SSH plan, and Container Apps inventory without mutating infrastructure; expose it from `/app/runbooks`.
+15. [ ] Live browser QA after each major deploy: run the automated live app QA, then manually login as demo user and click through sidebar/subnav links when visual regressions or browser-only session behavior are in scope.
 
 ## Azure Resources
 
