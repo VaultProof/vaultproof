@@ -831,6 +831,15 @@ npm run status:enterprise-hardening
 
 This runs the production verifier, TLS-origin preparation plan, TLS-origin readiness preflight, APIM cutover plan, SSH bootstrap hardening plan, and Container Apps prototype inventory without mutating Azure resources. Set `RUN_LIVE_APP_QA=true` to include the live `/app/*` link/readiness sweep. Set `EXIT_NONZERO_ON_ATTENTION=true` if CI should fail when any enabled step reports blockers or exits nonzero.
 
+### Build a handoff package
+
+```bash
+OUTPUT_DIR=/tmp/vaultproof-enterprise-handoff \
+npm run package:enterprise-handoff
+```
+
+This creates a local folder with the enterprise features guide, source-of-truth plan, APIM policy templates, secure-runtime runbook, manifest, and latest local production evidence bundle if one exists. It does not call Azure or change live infrastructure.
+
 ### Prepare origin TLS cutover
 
 Read-only plan:

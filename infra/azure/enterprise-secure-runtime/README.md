@@ -1064,6 +1064,15 @@ Validate all enterprise APIM policy templates before handoff:
 npm run test:enterprise-apim-policies
 ```
 
+Build a local customer/compliance handoff package without changing Azure resources:
+
+```bash
+OUTPUT_DIR=/tmp/vaultproof-enterprise-handoff \
+npm run package:enterprise-handoff
+```
+
+This copies the enterprise features guide, source-of-truth plan, APIM policy templates, secure-runtime README, and the latest local production evidence bundle if one exists. Set `REQUIRE_EVIDENCE=true REQUIRE_VALID_EVIDENCE=true` when CI or a release gate should fail unless the latest evidence bundle is present and valid.
+
 Plan the stronger private-origin migration without changing Azure resources:
 
 ```bash

@@ -16,6 +16,7 @@
     "cutover:enterprise-origin-tls": "bash infra/azure/enterprise-secure-runtime/cutover-front-door-origin-tls.sh",
     "evidence:enterprise-production": "bash infra/azure/enterprise-secure-runtime/collect-production-evidence.sh",
     "harden:enterprise-ssh": "bash infra/azure/enterprise-secure-runtime/harden-ssh-bootstrap.sh",
+    "package:enterprise-handoff": "node scripts/build-enterprise-handoff-package.mjs",
     "validate:enterprise-evidence": "node scripts/validate-enterprise-production-evidence.mjs",
     "seed:enterprise-demo-account": "node scripts/create-enterprise-demo-account.mjs",
     "dev": "turbo run dev",
