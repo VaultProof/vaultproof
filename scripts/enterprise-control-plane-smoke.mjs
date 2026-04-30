@@ -2,12 +2,17 @@ import { Buffer } from 'node:buffer';
 import { handleEnterpriseControlPlaneRequest } from '../packages/enterprise-control-plane/dist/enterprise-control-plane/src/index.js';
 
 const ENTERPRISE_HOSTNAME = 'enterprise.vaultproof.dev';
+const INTERNAL_ADMIN_HOSTNAME = 'admin.vaultproof.dev';
 const AUTH_TOKEN = 'jwt_enterprise_test';
 const PROJECT_ID = 'proj_123';
 const PROJECT_KEY_ID = 'pk_123';
 
 function buildRequest(pathname, init = {}) {
   return new Request(`https://${ENTERPRISE_HOSTNAME}${pathname}`, init);
+}
+
+function buildHostRequest(hostname, pathname, init = {}) {
+  return new Request(`https://${hostname}${pathname}`, init);
 }
 
 function jsonResponse(body, status = 200) {
@@ -107,6 +112,9 @@ function installSupabaseStub() {
 
     if (url.includes('/rest/v1/organization_sso_settings')) {
       if (method === 'GET') {
+        if (decodedUrl.includes('select=organization_id')) {
+          return jsonResponse(ssoSettings ? [ssoSettings] : []);
+        }
         if (!ssoSettings) return jsonResponse(null);
         return jsonResponse(ssoSettings);
       }
@@ -161,6 +169,7 @@ function installSupabaseStub() {
 
       return jsonResponse([{
         id: 'org_member_123',
+        organization_id: 'org_123',
         user_id: 'user_123',
         role: 'owner',
         created_at: '2026-04-01T12:00:00.000Z',
@@ -221,6 +230,7 @@ function installSupabaseStub() {
 
       return jsonResponse([{
         id: 'invite_123',
+        organization_id: 'org_123',
         email: 'reviewer@example.com',
         role: 'viewer',
         status: 'pending',
@@ -345,6 +355,18 @@ function installSupabaseStub() {
     }
 
     if (url.includes('/rest/v1/organizations') && method === 'GET') {
+      if (decodedUrl.includes('select=id, name, slug, kind, owner_user_id, created_at, updated_at, archived_at')) {
+        return jsonResponse([{
+          id: 'org_123',
+          name: 'Example Org',
+          slug: 'example-org',
+          kind: 'team',
+          owner_user_id: 'user_123',
+          created_at: '2026-04-01T12:00:00.000Z',
+          updated_at: '2026-04-02T12:00:00.000Z',
+          archived_at: null,
+        }]);
+      }
       if (decodedUrl.includes('select=id%2C+kind') || decodedUrl.includes('select=id, kind')) {
         return jsonResponse({ id: 'org_123', kind: 'team' });
       }
@@ -368,8 +390,11 @@ function installSupabaseStub() {
       }
       return jsonResponse([{
         id: PROJECT_ID,
+        organization_id: 'org_123',
         name: 'Enterprise Pilot',
         vp_proj_id: 'vp-proj-123',
+        revoked_at: null,
+        created_at: '2026-04-02T12:00:00.000Z',
       }]);
     }
 
@@ -1801,7 +1826,12 @@ async function assertEnterpriseLoginRoute() {
     },
   );
   const loginScript = await loginScriptResponse.text();
-  if (loginScriptResponse.status !== 200 || !loginScript.includes("const enterpriseDashboardPath = IS_ENTERPRISE_HOST ? './dashboard' : './control';")) {
+  if (
+    loginScriptResponse.status !== 200
+    || !loginScript.includes('IS_INTERNAL_ADMIN_HOST')
+    || !loginScript.includes('/internal/admin')
+    || !loginScript.includes('IS_AZURE_CONTROL_PLANE_HOST')
+  ) {
     throw new Error(`Expected enterprise login script to route enterprise users to dashboard, got ${loginScriptResponse.status}`);
   }
 
@@ -2131,6 +2161,100 @@ async function assertEnterpriseMixpanelAnalytics() {
   }
 }
 
+async function assertInternalAdminConsole() {
+  installSupabaseStub();
+
+  const env = {
+    enterpriseHostname: ENTERPRISE_HOSTNAME,
+    internalAdminHostname: INTERNAL_ADMIN_HOSTNAME,
+    internalAdminAllowedEmails: 'owner@example.com',
+    supabaseUrl: 'https://supabase.example.co',
+    supabaseServiceRoleKey: 'service-role-key',
+  };
+
+  const pageResponse = await handleEnterpriseControlPlaneRequest(
+    buildHostRequest(INTERNAL_ADMIN_HOSTNAME, '/'),
+    env,
+  );
+  const pageHtml = await pageResponse.text();
+  if (pageResponse.status !== 200 || !pageHtml.includes('VaultProof Internal Admin')) {
+    throw new Error(`Expected internal admin page to render, got ${pageResponse.status}`);
+  }
+  for (const required of [
+    'VaultProof employees only',
+    'Manage businesses safely.',
+    'Businesses',
+    'Users and access',
+    'SSO rollout',
+    'read-only',
+    '/api/v1/internal-admin/overview',
+  ]) {
+    if (!pageHtml.includes(required)) {
+      throw new Error(`Expected internal admin page to include ${required}`);
+    }
+  }
+  if (pageHtml.includes('https://api.vaultproof.dev') || pageHtml.includes('https://init.vaultproof.dev')) {
+    throw new Error('Internal admin page must not use B2C API origins');
+  }
+
+  const unauthenticatedResponse = await handleEnterpriseControlPlaneRequest(
+    buildHostRequest(INTERNAL_ADMIN_HOSTNAME, '/api/v1/internal-admin/overview'),
+    env,
+  );
+  if (unauthenticatedResponse.status !== 401) {
+    throw new Error(`Expected internal admin API to require auth, got ${unauthenticatedResponse.status}`);
+  }
+
+  const deniedResponse = await handleEnterpriseControlPlaneRequest(
+    buildHostRequest(INTERNAL_ADMIN_HOSTNAME, '/api/v1/internal-admin/overview', {
+      headers: {
+        authorization: `Bearer ${AUTH_TOKEN}`,
+      },
+    }),
+    {
+      ...env,
+      internalAdminAllowedEmails: 'security@vaultproof.dev',
+    },
+  );
+  if (deniedResponse.status !== 403) {
+    throw new Error(`Expected internal admin API to reject non-allowlisted employee, got ${deniedResponse.status}`);
+  }
+
+  const overviewResponse = await handleEnterpriseControlPlaneRequest(
+    buildHostRequest(INTERNAL_ADMIN_HOSTNAME, '/api/v1/internal-admin/overview', {
+      headers: {
+        authorization: `Bearer ${AUTH_TOKEN}`,
+      },
+    }),
+    env,
+  );
+  const overview = await overviewResponse.json();
+  if (overviewResponse.status !== 200) {
+    throw new Error(`Expected internal admin overview, got ${overviewResponse.status}: ${JSON.stringify(overview)}`);
+  }
+  if (overview.mode !== 'read_only' || overview.admin_actions_enabled !== false) {
+    throw new Error('Expected internal admin overview to be read-only by default');
+  }
+  if (overview.summary?.active_business_count !== 1 || overview.summary?.pending_invitation_count !== 1) {
+    throw new Error(`Expected internal admin business summary, got ${JSON.stringify(overview.summary)}`);
+  }
+  if (!Array.isArray(overview.businesses) || overview.businesses[0]?.name !== 'Example Org') {
+    throw new Error(`Expected internal admin overview to include Example Org, got ${JSON.stringify(overview.businesses)}`);
+  }
+
+  const enterpriseHostResponse = await handleEnterpriseControlPlaneRequest(
+    buildRequest('/api/v1/internal-admin/overview', {
+      headers: {
+        authorization: `Bearer ${AUTH_TOKEN}`,
+      },
+    }),
+    env,
+  );
+  if (enterpriseHostResponse.status !== 404) {
+    throw new Error(`Expected internal admin API to stay unavailable on enterprise host, got ${enterpriseHostResponse.status}`);
+  }
+}
+
 async function assertEnterpriseReadinessRoute() {
   installSupabaseStub();
 
@@ -2217,6 +2341,7 @@ async function assertFrontDoorOriginLock() {
 
 await assertEnterpriseLoginRoute();
 await assertEnterpriseAppLinkCrawl();
+await assertInternalAdminConsole();
 await assertEnterpriseMixpanelAnalytics();
 await assertEnterpriseReadinessRoute();
 await assertFrontDoorOriginLock();

@@ -6,7 +6,10 @@
     : 'https://api.vaultproof.dev/api/v1';
   const IS_ENTERPRISE_HOST = window.location.hostname === 'enterprise.vaultproof.dev'
     || window.location.hostname.startsWith('enterprise.');
-  const INIT_API = IS_ENTERPRISE_HOST
+  const IS_INTERNAL_ADMIN_HOST = window.location.hostname === 'admin.vaultproof.dev'
+    || window.location.hostname.startsWith('admin.');
+  const IS_AZURE_CONTROL_PLANE_HOST = IS_ENTERPRISE_HOST || IS_INTERNAL_ADMIN_HOST;
+  const INIT_API = IS_AZURE_CONTROL_PLANE_HOST
     ? `${window.location.origin}/api/v1/enterprise`
     : window.location.hostname.includes('dev.vaultproof')
       ? 'https://vaultproof-init-staging.vaultproof.workers.dev/api/v1/init'
@@ -79,7 +82,7 @@
   function savePromoCode(code) {
     localStorage.setItem(PROMO_KEY, code);
     setPromoMessage(
-      IS_ENTERPRISE_HOST
+      IS_AZURE_CONTROL_PLANE_HOST
         ? 'Code saved — your admin can apply it after enterprise access is approved.'
         : 'Code saved — will be applied after you sign up.',
       'info',
@@ -221,7 +224,12 @@
 
   async function resolveDashboardRoute(session, ssoResolution) {
     if (!session || !session.access_token) return './';
-    const enterpriseDashboardPath = IS_ENTERPRISE_HOST ? './dashboard' : './control';
+    const enterpriseDashboardPath = IS_INTERNAL_ADMIN_HOST || urlParams.get('internal_admin') === 'true'
+      ? '/internal/admin'
+      : IS_ENTERPRISE_HOST
+        ? './dashboard'
+        : './control';
+    if (IS_INTERNAL_ADMIN_HOST || urlParams.get('internal_admin') === 'true') return enterpriseDashboardPath;
 
     if (ssoResolution && ssoResolution.organization && ssoResolution.organization.id) {
       localStorage.setItem(ACTIVE_ORG_STORAGE_KEY, ssoResolution.organization.id);
@@ -530,7 +538,7 @@
       input.value = promoParam;
       row.classList.remove('hidden');
       setPromoMessage(
-        IS_ENTERPRISE_HOST
+        IS_AZURE_CONTROL_PLANE_HOST
           ? 'Code saved — your admin can apply it after enterprise access is approved.'
           : 'Code saved — will be applied after you sign up.',
         'info',

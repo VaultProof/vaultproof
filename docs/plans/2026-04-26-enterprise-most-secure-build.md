@@ -61,6 +61,7 @@ Live production-confidential path:
 - `npm run status:enterprise-hardening` provides one read-only finish-line pass across production verification, TLS-origin preparation/readiness, APIM cutover planning, alternate access preparation/readiness, SSH bootstrap planning, and old Container Apps inventory.
 - Azure Monitor/App Insights alerting is deployed as `vp-enterprise-secure-runtime-eastus-hsm-monitoring` and `EXPECTED_MONITORING_DEPLOYED=true npm run verify:enterprise-production` verifies the workspace, App Insights component, action group, health/readiness availability tests, readiness drift alert, health alert, and Confidential VM availability alert.
 - The enterprise control plane serves a separate public `/` enterprise homepage plus `/app` and `/app/dashboard` dashboard instead of relying on the B2C dashboard shell. Current state: the root page implements the editorial/terminal VaultProof Homepage design handoff; dashboard is now a business-ready command center with sidebar navigation, overview/security/access/operations/features tabs, a built-feature map, live posture panels, and direct paths into login, control, org, runbooks, and remaining enterprise app pages under `/app/*`.
+- The enterprise control plane also has the first VaultProof employee-only internal admin console slice ready for `admin.vaultproof.dev`: read-only business/org/user/project/SSO/support/audit visibility, explicit employee email/domain allowlist auth, no browser service-role exposure, and no customer-dashboard links. Live DNS/Front Door exposure and write actions are intentionally pending.
 - Enterprise dashboard/API unauthenticated errors are product-safe: users see a normal sign-in prompt instead of implementation details about bearer tokens or Supabase JWTs.
 - Enterprise `/app/*` pages support opt-in Mixpanel page/navigation analytics through `ENTERPRISE_MIXPANEL_TOKEN`; autocapture and session recording remain disabled by default for enterprise privacy.
 - APIM IaC/policy support is deployed and verified with coarse limits, request-size guards, provider-secret stripping, spoofable caller-lock header stripping, trusted gateway/device/mTLS header re-setting, origin locking, forwarded enterprise host headers, App Insights diagnostics, and `EXPECTED_APIM_DEPLOYED=true npm run verify:enterprise-production`. JWT validation remains disabled until the final Entra/Supabase API audience is selected. `npm run prepare:enterprise-apim-jwt` now plans Supabase-session or direct-Entra JWT validation parameters before enabling APIM `validate-jwt`. `npm run cutover:enterprise-apim` provides a guarded Front Door-to-APIM cutover/rollback helper that defaults to read-only planning.
@@ -504,7 +505,31 @@ Implementation/test order:
 31. [x] Finish gate issue-detail slice: attach exact hardening `BLOCKER`/`WARN` lines to each pending action so the remaining finish-line work can be triaged without reading the full Azure log.
 32. [x] APIM JWT issuer discovery slice: allow `npm run prepare:enterprise-apim-jwt` and the hardening status wrapper to discover the Supabase OpenID config from the public enterprise login script when `SUPABASE_URL` is omitted.
 33. [x] Business-ready dashboard layout slice: reorganize `/app/dashboard` into a plain-English command center with sidebar navigation, role-friendly summary cards, and Overview/Security/Access/Operations/Features tabs while preserving the API-backed posture panels and feature map.
-34. [ ] Live browser QA after each major deploy: run the automated live app QA, then manually login as demo user and click through sidebar/subnav links when visual regressions or browser-only session behavior are in scope.
+34. [x] Internal admin console foundation slice: add `admin.vaultproof.dev`-ready routing plus a read-only VaultProof employee console for businesses, users, projects, SSO rollout, support signals, and recent audit, gated by explicit employee email/domain allowlists.
+35. [ ] Live browser QA after each major deploy: run the automated live app QA, then manually login as demo user and click through sidebar/subnav links when visual regressions or browser-only session behavior are in scope.
+
+### Phase 7: VaultProof Internal Admin Console
+
+Goal: VaultProof employees should manage customer businesses from a separate internal workspace, never from the customer enterprise dashboard.
+
+Security rules:
+
+- `admin.vaultproof.dev` is the employee surface; customer dashboards remain under `enterprise.vaultproof.dev/app/*`.
+- The browser never receives Supabase service-role credentials.
+- Employee access requires explicit `VAULTPROOF_INTERNAL_ADMIN_EMAILS` or `VAULTPROOF_INTERNAL_ADMIN_DOMAINS`.
+- First release is read-only. Write actions require internal admin audit tables, approval gates, and rollback/undo plans.
+- Impersonation is not enabled. If needed later, build read-only customer-view mode with loud audit logging instead of silent impersonation.
+
+Implementation/test order:
+
+1. [x] Read-only internal admin shell and overview API: businesses, owners, memberships, projects, pending invites, SSO settings, support signals, and recent audit.
+2. [x] Host separation guardrail: internal admin API stays unavailable from the customer enterprise host unless explicit preview mode is enabled.
+3. [x] Login redirect support: employee login on the internal admin host returns to `/internal/admin`.
+4. [ ] Configure `admin.vaultproof.dev` in Front Door/DNS and employee allowlist env vars.
+5. [ ] Add persistent internal admin audit table for every employee page view and action.
+6. [ ] Add org detail page with user/member timeline, SSO setup checklist, support notes, and evidence links.
+7. [ ] Add safe admin actions one at a time: resend invite, revoke invite, disable org access, plan/status updates, and support-note creation.
+8. [ ] Add approval gates for destructive actions and break-glass workflows.
 
 ## Azure Resources
 

@@ -73,6 +73,23 @@ If you see an auth message:
 | Scanner | `/app/scanner` | Placeholder entry for future enterprise-safe repository/security scanning integration. |
 | Runbooks | `/app/runbooks` | Operator guide for production verification, evidence capture, deployment, secret checks, TLS/APIM cutover, SSH hardening, and cleanup. |
 
+## VaultProof Employee Admin Console
+
+This is separate from the customer dashboard.
+
+| Surface | URL | What It Does |
+| --- | --- | --- |
+| Internal admin console | `https://admin.vaultproof.dev/` | VaultProof employee-only workspace for businesses, owners, users, project counts, pending invites, SSO rollout, support follow-ups, and recent audit. First slice is read-only. |
+| Internal admin API | `/api/v1/internal-admin/overview` | Read-only overview API. Requires a Supabase user session plus explicit employee email/domain allowlist. The browser never receives the Supabase service-role key. |
+
+Required environment before exposing it live:
+
+- `VAULTPROOF_INTERNAL_ADMIN_HOSTNAME=admin.vaultproof.dev`
+- `VAULTPROOF_INTERNAL_ADMIN_EMAILS=employee@vaultproof.dev,...` or `VAULTPROOF_INTERNAL_ADMIN_DOMAINS=vaultproof.dev`
+- Front Door/DNS route for `admin.vaultproof.dev`
+
+Do not add write actions until internal admin audit logging and approval gates are built.
+
 ## Security Features Built
 
 ### Confidential Runtime

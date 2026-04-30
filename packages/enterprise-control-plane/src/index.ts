@@ -1,9 +1,15 @@
 import type { SignedSecureExecutionEnvelope } from '@vaultproof/core';
 import { timingSafeEqual } from 'node:crypto';
-import { assertEnterpriseHostname, dispatchToSecureExecutor, type EnterpriseControlPlaneEnv } from './config.js';
+import {
+  assertControlPlaneHostname,
+  dispatchToSecureExecutor,
+  isInternalAdminHostname,
+  type EnterpriseControlPlaneEnv,
+} from './config.js';
 import { renderEnterpriseControlPage, renderEnterpriseOrgPage, renderEnterprisePlannedAppPage } from './app-pages.js';
 import { renderEnterpriseDashboardPage } from './dashboard-page.js';
 import { renderEnterpriseHomepage } from './homepage-page.js';
+import { handleInternalAdminRoutes, renderInternalAdminPage } from './internal-admin.js';
 import { renderEnterpriseLoginPage, renderEnterpriseLoginScript } from './login-page.js';
 import { handleEnterpriseAlertRoutes } from './routes/alerts.js';
 import { handleEnterpriseAuditRoutes } from './routes/audit.js';
@@ -65,6 +71,10 @@ function verifyOriginLock(request: Request, env: EnterpriseControlPlaneEnv): Res
       },
     },
   );
+}
+
+function isInternalAdminPreviewPath(url: URL, env: EnterpriseControlPlaneEnv): boolean {
+  return env.internalAdminPreviewEnabled === true && url.pathname.startsWith('/internal/');
 }
 
 async function fetchExecutorHealth(env: EnterpriseControlPlaneEnv): Promise<{
@@ -211,7 +221,7 @@ export async function handleEnterpriseControlPlaneRequest(
   const hostname = getRequestHostname(request, url);
 
   try {
-    assertEnterpriseHostname(hostname, env);
+    assertControlPlaneHostname(hostname, env);
   } catch (error) {
     return Response.json(
       { error: error instanceof Error ? error.message : 'Invalid enterprise hostname.' },
@@ -221,6 +231,23 @@ export async function handleEnterpriseControlPlaneRequest(
 
   const originLockResponse = verifyOriginLock(request, env);
   if (originLockResponse) return originLockResponse;
+
+  const internalAdminSurface = isInternalAdminHostname(hostname, env) || isInternalAdminPreviewPath(url, env);
+
+  if (
+    internalAdminSurface &&
+    request.method === 'GET' &&
+    (url.pathname === '/' || url.pathname === '/admin' || url.pathname === '/admin/' || url.pathname === '/internal/admin')
+  ) {
+    return new Response(renderInternalAdminPage(), {
+      status: 200,
+      headers: {
+        'content-type': 'text/html; charset=utf-8',
+        'cache-control': 'no-store',
+        'x-robots-tag': 'noindex,nofollow',
+      },
+    });
+  }
 
   if (request.method === 'GET' && url.pathname === '/') {
     return new Response(renderEnterpriseHomepage(env), {
@@ -330,6 +357,14 @@ export async function handleEnterpriseControlPlaneRequest(
   }
 
   const pathSegments = url.pathname.split('/').filter(Boolean);
+  if (pathSegments[0] === 'api' && pathSegments[1] === 'v1' && pathSegments[2] === 'internal-admin') {
+    if (!internalAdminSurface) {
+      return Response.json({ error: 'Internal admin console is not available on this host.' }, { status: 404 });
+    }
+    const internalAdminResponse = await handleInternalAdminRoutes(request, env, pathSegments.slice(3));
+    if (internalAdminResponse) return internalAdminResponse;
+  }
+
   if (pathSegments[0] === 'api' && pathSegments[1] === 'v1' && pathSegments[2] === 'enterprise') {
     const enterpriseRouteResponse = await handleEnterpriseOrganizationRoutes(request, env, pathSegments.slice(3));
     if (enterpriseRouteResponse) return enterpriseRouteResponse;

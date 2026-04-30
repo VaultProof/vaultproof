@@ -135,7 +135,12 @@ async function assertPublicPagesAndLinks() {
   for (const path of requiredAppPaths) {
     const text = await assertPathOk(path);
     if (path === '/app/enterprise-login.js') {
-      if (!text.includes("const enterpriseDashboardPath = IS_ENTERPRISE_HOST ? './dashboard' : './control';")) {
+      if (
+        !text.includes('IS_INTERNAL_ADMIN_HOST')
+        || !text.includes('/internal/admin')
+        || !text.includes("IS_ENTERPRISE_HOST")
+        || !text.includes("'./dashboard'")
+      ) {
         throw new Error('Enterprise login script no longer routes enterprise users to /app/dashboard');
       }
       continue;
