@@ -1021,7 +1021,7 @@ OUTPUT_DIR=/tmp/vaultproof-enterprise-finish-gate \
 npm run gate:enterprise-finish
 ```
 
-The finish gate returns `ok`, `attention`, or `blocked`, writes `finish-gate-result.json` in the output directory, and turns the hardening-status summary into named pending actions. Keep `attention` as the expected state while known live hardening actions such as TLS-origin cutover, APIM route cutover, SSH closure, Container Apps cleanup, or setup-time secret rotation are deliberately pending. Use stricter external-handoff settings only when those actions are ready to be enforced:
+The finish gate returns `ok`, `attention`, or `blocked`, writes `finish-gate-result.json` in the output directory, and turns the hardening-status summary into named pending actions with exact `BLOCKER`/`WARN` issue lines. Keep `attention` as the expected state while known live hardening actions such as TLS-origin cutover, APIM route cutover, SSH closure, Container Apps cleanup, or setup-time secret rotation are deliberately pending. Use stricter external-handoff settings only when those actions are ready to be enforced:
 
 ```bash
 REQUIRE_EVIDENCE=true \

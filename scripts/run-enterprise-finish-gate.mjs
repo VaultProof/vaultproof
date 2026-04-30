@@ -50,6 +50,41 @@ function parseHardeningSummary(output) {
   return summary;
 }
 
+function parseHardeningIssues(output) {
+  const issuesByStep = new Map();
+  let currentStep = '';
+
+  for (const line of String(output || '').split('\n')) {
+    const sectionMatch = line.match(/^==\s+(.+?)\s+==$/);
+    if (sectionMatch) {
+      currentStep = sectionMatch[1].trim();
+      continue;
+    }
+
+    const issueMatch = line.match(/^(BLOCKER|WARN|FAIL)\s+(.+)$/);
+    if (!issueMatch || !currentStep) continue;
+
+    const issues = issuesByStep.get(currentStep) || [];
+    issues.push({
+      severity: issueMatch[1] === 'WARN' ? 'warning' : 'blocker',
+      message: issueMatch[2].trim(),
+    });
+    issuesByStep.set(currentStep, issues);
+  }
+
+  return issuesByStep;
+}
+
+function summarizeAttentionItem(item) {
+  if (!item.issues?.length) return item.note;
+  const issueSummary = item.issues
+    .slice(0, 6)
+    .map((issue) => `${issue.severity}: ${issue.message}`)
+    .join('; ');
+  const suffix = item.issues.length > 6 ? `; plus ${item.issues.length - 6} more` : '';
+  return `${item.note}: ${issueSummary}${suffix}`;
+}
+
 function runStep(name, command, args, options = {}) {
   const startedAt = Date.now();
   const result = spawnSync(command, args, {
@@ -89,7 +124,8 @@ function runStep(name, command, args, options = {}) {
     if (attentionItems.length > 0) {
       pendingActions.push(...attentionItems.map((item) => ({
         name: item.name,
-        detail: item.note,
+        detail: summarizeAttentionItem(item),
+        issues: item.issues || [],
       })));
     } else {
       pendingActions.push({
@@ -163,8 +199,15 @@ runOrSkip(
       EXIT_NONZERO_ON_ATTENTION: 'false',
     },
     attentionPattern: /need attention|BLOCKER | WARN | attention\s+/i,
-    parseAttentionItems: (output) => parseHardeningSummary(output)
-      .filter((item) => item.status === 'attention' || item.status === 'failed'),
+    parseAttentionItems: (output) => {
+      const issuesByStep = parseHardeningIssues(output);
+      return parseHardeningSummary(output)
+        .filter((item) => item.status === 'attention' || item.status === 'failed')
+        .map((item) => ({
+          ...item,
+          issues: issuesByStep.get(item.name) || [],
+        }));
+    },
     attentionDetail: 'Read-only hardening status still reports live cutover, cleanup, rotation, or access-hardening items.',
   },
 );
