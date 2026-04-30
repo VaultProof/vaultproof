@@ -13,6 +13,7 @@ ORIGIN_TLS_HOSTNAME="${ORIGIN_TLS_HOSTNAME:-origin.enterprise.vaultproof.dev}"
 
 RUN_PRODUCTION_VERIFIER="${RUN_PRODUCTION_VERIFIER:-true}"
 RUN_SECRET_ROTATION_PLAN="${RUN_SECRET_ROTATION_PLAN:-true}"
+RUN_PRIVATE_ORIGIN_PLAN="${RUN_PRIVATE_ORIGIN_PLAN:-true}"
 RUN_ORIGIN_TLS_CERT_PLAN="${RUN_ORIGIN_TLS_CERT_PLAN:-true}"
 RUN_ORIGIN_TLS_PREP_PLAN="${RUN_ORIGIN_TLS_PREP_PLAN:-true}"
 RUN_ORIGIN_TLS_PREFLIGHT="${RUN_ORIGIN_TLS_PREFLIGHT:-true}"
@@ -137,6 +138,17 @@ run_or_skip "${RUN_SECRET_ROTATION_PLAN}" \
     CONTROL_PLANE_ENV_FILE="${CONTROL_PLANE_ENV_FILE:-/etc/vaultproof/enterprise-control-plane.env}" \
     EXECUTOR_ENV_FILE="${EXECUTOR_ENV_FILE:-/etc/vaultproof/enterprise-secure-executor.env}" \
     bash "${SCRIPT_DIR}/prepare-secret-rotation.sh"
+
+run_or_skip "${RUN_PRIVATE_ORIGIN_PLAN}" \
+  "Private origin preparation plan" \
+  env \
+    RESOURCE_GROUP="${RESOURCE_GROUP}" \
+    DEPLOYMENT_NAME="${DEPLOYMENT_NAME}" \
+    APIM_DEPLOYMENT_NAME="${APIM_DEPLOYMENT_NAME}" \
+    FRONT_DOOR_PROFILE="${FRONT_DOOR_PROFILE:-vaultproof-enterprise-fd}" \
+    FRONT_DOOR_ORIGIN_GROUP="${FRONT_DOOR_ORIGIN_GROUP:-default-origin-group}" \
+    ACTION=plan \
+    bash "${SCRIPT_DIR}/prepare-private-origin.sh"
 
 run_or_skip "${RUN_ORIGIN_TLS_CERT_PLAN}" \
   "Origin TLS certificate plan" \

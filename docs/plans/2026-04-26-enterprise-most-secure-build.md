@@ -50,6 +50,7 @@ Live production-confidential path:
 - `npm run validate:enterprise-evidence` validates the latest production evidence bundle for production readiness, Confidential VM posture, Front Door/origin-lock posture, service health, and obvious secret-shaped material before customer handoff.
 - `npm run verify:enterprise-secrets` verifies the installed control-plane/executor env files for secret-rotation readiness and confidential-mode footguns.
 - `npm run prepare:enterprise-secret-rotation` plans customer-handoff secret rotation and can generate fresh executor signing material into chmod-600 local files without printing secrets.
+- `npm run prepare:enterprise-private-origin` inventories Front Door/APIM/Confidential VM network state and plans the APIM Private Link or internal-load-balancer Private Link migration without mutating Azure resources.
 - `npm run qa:enterprise-live-app` verifies the live enterprise homepage/app pages, crawls enterprise-owned links, confirms `/readiness` remains production-ready, and can optionally authenticate the demo account when `ENTERPRISE_DEMO_EMAIL` and `ENTERPRISE_DEMO_PASSWORD` are provided.
 - `npm run status:enterprise-hardening` provides one read-only finish-line pass across production verification, TLS-origin preparation/readiness, APIM cutover planning, alternate access preparation/readiness, SSH bootstrap planning, and old Container Apps inventory.
 - Azure Monitor/App Insights alerting is deployed as `vp-enterprise-secure-runtime-eastus-hsm-monitoring` and `EXPECTED_MONITORING_DEPLOYED=true npm run verify:enterprise-production` verifies the workspace, App Insights component, action group, health/readiness availability tests, readiness drift alert, health alert, and Confidential VM availability alert.
@@ -418,7 +419,7 @@ Important key-type decision:
 - [x] Support customer device/IoT mode using `docs/enterprise/customer-managed-apim-device-policy.xml`.
 - [x] Keep VaultProof-specific org/project authorization in the control plane.
 - [x] Put executor behind loopback/private access from the co-located control plane.
-- [ ] Prefer private endpoint/internal load balancer over public ingress. In progress: current state uses public Front Door to VM origin with NSG service tags and Front Door ID origin lock; private-origin architecture is still pending.
+- [ ] Prefer private endpoint/internal load balancer over public ingress. In progress: current state uses public Front Door to VM origin with NSG service tags and Front Door ID origin lock; `npm run prepare:enterprise-private-origin` now inventories Front Door/APIM/VM network posture and plans the APIM Private Link or internal-load-balancer Private Link migration; live private-origin architecture remains pending.
 - [x] Keep control-plane-to-executor HMAC request signing.
 - [x] Add replay protection using nonce/request ID storage.
 - [ ] Add mTLS after private networking is stable.
@@ -485,7 +486,8 @@ Implementation/test order:
 19. [x] Alternate access readiness slice: add `npm run verify:enterprise-alternate-access` to report Bastion, boot diagnostics/serial-console prerequisites, Defender JIT visibility, and SSH NSG posture before public SSH closure.
 20. [x] Alternate access preparation slice: add `npm run prepare:enterprise-alternate-access` to plan and confirmation-gate boot diagnostics plus Azure Bastion subnet/host setup before SSH closure.
 21. [x] Secret rotation preparation slice: add `npm run prepare:enterprise-secret-rotation` to plan signing/Supabase service-role rotation, generate fresh executor signing material without printing secrets, and render rotation evidence markers for customer handoff verification.
-22. [ ] Live browser QA after each major deploy: run the automated live app QA, then manually login as demo user and click through sidebar/subnav links when visual regressions or browser-only session behavior are in scope.
+22. [x] Private-origin preparation slice: add `npm run prepare:enterprise-private-origin` to inventory Front Door/APIM/VM network posture and plan APIM Private Link or internal-load-balancer Private Link migration without mutating Azure resources.
+23. [ ] Live browser QA after each major deploy: run the automated live app QA, then manually login as demo user and click through sidebar/subnav links when visual regressions or browser-only session behavior are in scope.
 
 ## Azure Resources
 

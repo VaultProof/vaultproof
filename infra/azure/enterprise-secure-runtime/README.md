@@ -1007,7 +1007,19 @@ ORIGIN_TLS_HOSTNAME=origin.enterprise.vaultproof.dev \
 npm run status:enterprise-hardening
 ```
 
-The wrapper runs the production verifier, TLS-origin preparation plan, TLS-origin readiness preflight, APIM cutover plan, SSH bootstrap hardening plan, and Container Apps prototype inventory. It does not mutate Azure resources. Add `RUN_LIVE_APP_QA=true` to include the live enterprise app link/readiness sweep, or `EXIT_NONZERO_ON_ATTENTION=true` when CI should fail on any reported blocker.
+The wrapper runs the production verifier, secret-rotation plan, private-origin plan, TLS-origin preparation plan, TLS-origin readiness preflight, APIM cutover plan, SSH bootstrap hardening plan, and Container Apps prototype inventory. It does not mutate Azure resources. Add `RUN_LIVE_APP_QA=true` to include the live enterprise app link/readiness sweep, or `EXIT_NONZERO_ON_ATTENTION=true` when CI should fail on any reported blocker.
+
+Plan the stronger private-origin migration without changing Azure resources:
+
+```bash
+RESOURCE_GROUP=vaultproof-enterprise \
+DEPLOYMENT_NAME=vp-enterprise-secure-runtime-eastus-hsm \
+APIM_DEPLOYMENT_NAME=vp-enterprise-secure-runtime-eastus-hsm-apim \
+FRONT_DOOR_PROFILE=vaultproof-enterprise-fd \
+npm run prepare:enterprise-private-origin
+```
+
+This inventories Front Door, APIM, the Confidential VM network, and watched public ingress rules, then prints the safe migration choices for either an APIM private-origin path or an internal-load-balancer/Private-Link-service path. Azure Front Door Private Link requires Front Door Premium, and public/private origins must not be mixed in one origin group.
 
 Run the production verifier after each infrastructure or runtime change:
 

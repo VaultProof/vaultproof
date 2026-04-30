@@ -217,6 +217,29 @@ Current status:
 - Active Front Door origin points to the Confidential VM.
 - Front Door still forwards to the VM origin over `HttpOnly` while TLS origin cutover is pending.
 
+### Private Origin Hardening
+
+Built:
+
+- Read-only private-origin preparation helper inventories Front Door SKU/origins, APIM gateway/backend/network posture, Confidential VM IP/subnets, and watched public ingress rules.
+- The helper documents both supported migration tracks: Front Door Premium to APIM over Private Link, or Front Door Premium to an internal load balancer through a Private Link service.
+- The helper flags key blockers such as non-Premium Front Door profiles and mixed public/private origins in a single origin group.
+
+Plan command:
+
+```bash
+RESOURCE_GROUP=vaultproof-enterprise \
+DEPLOYMENT_NAME=vp-enterprise-secure-runtime-eastus-hsm \
+APIM_DEPLOYMENT_NAME=vp-enterprise-secure-runtime-eastus-hsm-apim \
+FRONT_DOOR_PROFILE=vaultproof-enterprise-fd \
+npm run prepare:enterprise-private-origin
+```
+
+Current status:
+
+- Current production path still uses public Front Door to VM origin with NSG service tags and Front Door ID origin lock.
+- Private-origin migration remains a planned hardening step after TLS/APIM readiness decisions.
+
 ### TLS Origin Hardening
 
 Built:
@@ -333,6 +356,7 @@ Current status:
 - APIM is deployed and verified as a sidecar.
 - APIM is not yet the active Front Door route.
 - APIM cutover waits until TLS/private-origin risk is resolved.
+- Private-origin preparation tooling now inventories Front Door/APIM/VM network state and documents the APIM Private Link or internal-load-balancer Private Link migration choices.
 
 ### Monitoring And Drift Detection
 
