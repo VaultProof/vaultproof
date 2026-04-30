@@ -423,6 +423,39 @@ ORIGIN_TLS_INSECURE=true \
 npm run verify:enterprise-production
 ```
 
+Preview the remaining origin TLS prep steps before changing Azure resources:
+
+```bash
+RESOURCE_GROUP=vaultproof-enterprise \
+DEPLOYMENT_NAME=vp-enterprise-secure-runtime-eastus-hsm \
+APIM_DEPLOYMENT_NAME=vp-enterprise-secure-runtime-eastus-hsm-apim \
+ORIGIN_TLS_HOSTNAME=origin.enterprise.vaultproof.dev \
+npm run prepare:enterprise-origin-tls
+```
+
+The prep helper is read-only by default. It prints the expected DNS `A` record, current DNS records, Front Door TLS NSG rule access, and the APIM API backend URL. It can also perform the guarded Azure-side prep actions when the DNS/certificate work is ready:
+
+```bash
+ACTION=enable-nsg443 \
+CONFIRM_ORIGIN_TLS_PREP=open-origin-443 \
+npm run prepare:enterprise-origin-tls
+```
+
+After strict TLS readiness passes, point the APIM sidecar at the HTTPS origin:
+
+```bash
+ACTION=update-apim-backend-https \
+CONFIRM_ORIGIN_TLS_PREP=point-apim-to-origin-tls \
+npm run prepare:enterprise-origin-tls
+```
+
+Rollback helpers are also available:
+
+```bash
+ACTION=disable-nsg443 CONFIRM_ORIGIN_TLS_PREP=close-origin-443 npm run prepare:enterprise-origin-tls
+ACTION=rollback-apim-backend-http CONFIRM_ORIGIN_TLS_PREP=rollback-apim-backend-http npm run prepare:enterprise-origin-tls
+```
+
 Open port `443` to Azure Front Door in the NSG:
 
 ```bash
@@ -925,7 +958,7 @@ ORIGIN_TLS_HOSTNAME=origin.enterprise.vaultproof.dev \
 npm run status:enterprise-hardening
 ```
 
-The wrapper runs the production verifier, TLS-origin readiness preflight, APIM cutover plan, SSH bootstrap hardening plan, and Container Apps prototype inventory. It does not mutate Azure resources. Add `RUN_LIVE_APP_QA=true` to include the live enterprise app link/readiness sweep, or `EXIT_NONZERO_ON_ATTENTION=true` when CI should fail on any reported blocker.
+The wrapper runs the production verifier, TLS-origin preparation plan, TLS-origin readiness preflight, APIM cutover plan, SSH bootstrap hardening plan, and Container Apps prototype inventory. It does not mutate Azure resources. Add `RUN_LIVE_APP_QA=true` to include the live enterprise app link/readiness sweep, or `EXIT_NONZERO_ON_ATTENTION=true` when CI should fail on any reported blocker.
 
 Run the production verifier after each infrastructure or runtime change:
 

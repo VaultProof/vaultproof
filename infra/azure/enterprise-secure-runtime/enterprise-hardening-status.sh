@@ -12,6 +12,7 @@ ENTERPRISE_URL="${ENTERPRISE_URL:-https://enterprise.vaultproof.dev}"
 ORIGIN_TLS_HOSTNAME="${ORIGIN_TLS_HOSTNAME:-origin.enterprise.vaultproof.dev}"
 
 RUN_PRODUCTION_VERIFIER="${RUN_PRODUCTION_VERIFIER:-true}"
+RUN_ORIGIN_TLS_PREP_PLAN="${RUN_ORIGIN_TLS_PREP_PLAN:-true}"
 RUN_ORIGIN_TLS_PREFLIGHT="${RUN_ORIGIN_TLS_PREFLIGHT:-true}"
 RUN_APIM_PLAN="${RUN_APIM_PLAN:-true}"
 RUN_SSH_PLAN="${RUN_SSH_PLAN:-true}"
@@ -124,6 +125,17 @@ run_or_skip "${RUN_PRODUCTION_VERIFIER}" \
     EXPECTED_APIM_DEPLOYED="${EXPECTED_APIM_DEPLOYED:-true}" \
     ORIGIN_TLS_HOSTNAME="${PRODUCTION_VERIFIER_ORIGIN_TLS_HOSTNAME:-}" \
     bash "${SCRIPT_DIR}/verify-production-runtime.sh"
+
+run_or_skip "${RUN_ORIGIN_TLS_PREP_PLAN}" \
+  "Origin TLS preparation plan" \
+  env \
+    RESOURCE_GROUP="${RESOURCE_GROUP}" \
+    DEPLOYMENT_NAME="${DEPLOYMENT_NAME}" \
+    APIM_DEPLOYMENT_NAME="${APIM_DEPLOYMENT_NAME}" \
+    ENTERPRISE_URL="${ENTERPRISE_URL}" \
+    ORIGIN_TLS_HOSTNAME="${ORIGIN_TLS_HOSTNAME}" \
+    ACTION=plan \
+    bash "${SCRIPT_DIR}/prepare-origin-tls-cutover.sh"
 
 run_or_skip "${RUN_ORIGIN_TLS_PREFLIGHT}" \
   "Origin TLS readiness preflight" \

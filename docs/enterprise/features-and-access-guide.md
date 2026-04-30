@@ -179,6 +179,7 @@ npm run status:enterprise-hardening
 What it checks:
 
 - Production verifier for Front Door, APIM sidecar, monitoring, NSG posture, Confidential VM, executor, and readiness.
+- TLS-origin preparation plan for DNS, NSG `443`, and APIM backend changes.
 - TLS-origin readiness preflight.
 - APIM cutover plan.
 - SSH bootstrap hardening plan.
@@ -223,8 +224,26 @@ Built:
 - VM-local nginx TLS proxy installer exists.
 - The TLS proxy is installed on the Confidential VM.
 - TLS origin cutover helper exists for plan, enable, and rollback.
+- TLS origin preparation helper exists for DNS/NSG/APIM backend planning and guarded Azure-side prep.
 - Read-only TLS readiness preflight exists and is exposed in runbooks.
 - Production verifier can validate TLS-origin posture when `ORIGIN_TLS_HOSTNAME` is enabled.
+
+Preparation plan:
+
+```bash
+RESOURCE_GROUP=vaultproof-enterprise \
+DEPLOYMENT_NAME=vp-enterprise-secure-runtime-eastus-hsm \
+APIM_DEPLOYMENT_NAME=vp-enterprise-secure-runtime-eastus-hsm-apim \
+ORIGIN_TLS_HOSTNAME=origin.enterprise.vaultproof.dev \
+npm run prepare:enterprise-origin-tls
+```
+
+Guarded prep actions:
+
+- `ACTION=enable-nsg443 CONFIRM_ORIGIN_TLS_PREP=open-origin-443 npm run prepare:enterprise-origin-tls`
+- `ACTION=disable-nsg443 CONFIRM_ORIGIN_TLS_PREP=close-origin-443 npm run prepare:enterprise-origin-tls`
+- `ACTION=update-apim-backend-https CONFIRM_ORIGIN_TLS_PREP=point-apim-to-origin-tls npm run prepare:enterprise-origin-tls`
+- `ACTION=rollback-apim-backend-http CONFIRM_ORIGIN_TLS_PREP=rollback-apim-backend-http npm run prepare:enterprise-origin-tls`
 
 Readiness command:
 
@@ -667,7 +686,21 @@ ORIGIN_TLS_HOSTNAME=origin.enterprise.vaultproof.dev \
 npm run status:enterprise-hardening
 ```
 
-This runs the production verifier, TLS-origin readiness preflight, APIM cutover plan, SSH bootstrap hardening plan, and Container Apps prototype inventory without mutating Azure resources. Set `RUN_LIVE_APP_QA=true` to include the live `/app/*` link/readiness sweep. Set `EXIT_NONZERO_ON_ATTENTION=true` if CI should fail when any enabled step reports blockers or exits nonzero.
+This runs the production verifier, TLS-origin preparation plan, TLS-origin readiness preflight, APIM cutover plan, SSH bootstrap hardening plan, and Container Apps prototype inventory without mutating Azure resources. Set `RUN_LIVE_APP_QA=true` to include the live `/app/*` link/readiness sweep. Set `EXIT_NONZERO_ON_ATTENTION=true` if CI should fail when any enabled step reports blockers or exits nonzero.
+
+### Prepare origin TLS cutover
+
+Read-only plan:
+
+```bash
+RESOURCE_GROUP=vaultproof-enterprise \
+DEPLOYMENT_NAME=vp-enterprise-secure-runtime-eastus-hsm \
+APIM_DEPLOYMENT_NAME=vp-enterprise-secure-runtime-eastus-hsm-apim \
+ORIGIN_TLS_HOSTNAME=origin.enterprise.vaultproof.dev \
+npm run prepare:enterprise-origin-tls
+```
+
+This prints the expected DNS record, current DNS records, TLS NSG rule access, current APIM backend URL, and the guarded commands for opening port `443` and pointing APIM at the trusted HTTPS origin.
 
 ### Verify origin TLS readiness
 
