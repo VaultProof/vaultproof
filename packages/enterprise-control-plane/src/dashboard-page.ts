@@ -67,6 +67,16 @@ export function renderEnterpriseDashboardPage(env: EnterpriseControlPlaneEnv = {
     }
     .nav-link:hover, .nav-link.active { background: var(--panel); border-color: var(--line); }
     .nav-pill { font-size: 10px; color: var(--green); border: 1px solid rgba(110, 231, 183, 0.24); border-radius: 999px; padding: 2px 7px; }
+    .sidebar-card {
+      border: 1px solid rgba(237, 229, 204, 0.12);
+      border-radius: 18px;
+      padding: 14px;
+      background: linear-gradient(180deg, rgba(237, 229, 204, 0.1), rgba(3, 8, 7, 0.24));
+      color: var(--muted);
+      font-size: 12px;
+      line-height: 1.45;
+    }
+    .sidebar-card strong { display: block; color: var(--text); font-size: 13px; margin-bottom: 4px; }
     .main { padding: 30px; max-width: 1320px; width: 100%; }
     .topbar {
       display: flex; justify-content: space-between; align-items: flex-start; gap: 20px;
@@ -95,6 +105,7 @@ export function renderEnterpriseDashboardPage(env: EnterpriseControlPlaneEnv = {
     .grid { display: grid; gap: 16px; }
     .kpis { grid-template-columns: repeat(4, minmax(0, 1fr)); margin-bottom: 16px; }
     .two { grid-template-columns: minmax(0, 1.15fr) minmax(340px, 0.85fr); }
+    .business-strip { grid-template-columns: repeat(3, minmax(0, 1fr)); margin-bottom: 16px; }
     .card {
       border: 1px solid var(--line);
       background: linear-gradient(180deg, var(--panel-strong), rgba(237, 229, 204, 0.055));
@@ -114,8 +125,46 @@ export function renderEnterpriseDashboardPage(env: EnterpriseControlPlaneEnv = {
     .status-pill.bad { background: rgba(251, 113, 133, 0.12); color: var(--red); border-color: rgba(251, 113, 133, 0.28); }
     .section-title { display: flex; justify-content: space-between; gap: 12px; align-items: center; margin-bottom: 14px; }
     .section-title h2 { margin: 0; font-size: 19px; letter-spacing: -0.03em; }
+    .section-title p { margin: 4px 0 0; color: var(--muted); font-size: 13px; line-height: 1.45; }
     .mini { color: var(--muted); font-size: 13px; }
     .list { display: grid; gap: 10px; }
+    .business-card h2, .intent-card h3, .action-card h3 { margin: 0; letter-spacing: -0.03em; }
+    .business-card p, .intent-card p, .action-card p { margin: 8px 0 0; color: var(--muted); line-height: 1.5; font-size: 13px; }
+    .tabbar {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      border: 1px solid var(--line);
+      border-radius: 18px;
+      padding: 8px;
+      margin-bottom: 16px;
+      background: rgba(3, 8, 7, 0.28);
+    }
+    .tab-button {
+      border-radius: 12px;
+      padding: 10px 12px;
+      color: #d8dfcf;
+      background: transparent;
+      border-color: transparent;
+    }
+    .tab-button.active {
+      background: linear-gradient(135deg, var(--gold), #f3df95);
+      color: var(--ink);
+      border-color: transparent;
+      font-weight: 850;
+    }
+    .tab-panel { display: grid; gap: 16px; }
+    .tab-panel[hidden] { display: none; }
+    .intent-grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px; }
+    .intent-card, .action-card {
+      border: 1px solid rgba(237, 229, 204, 0.12);
+      border-radius: 20px;
+      padding: 16px;
+      background: rgba(3, 8, 7, 0.25);
+    }
+    .action-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; }
+    .action-card { display: flex; flex-direction: column; gap: 10px; min-height: 176px; }
+    .action-card .action { margin-top: auto; align-self: flex-start; }
     .row {
       display: grid; grid-template-columns: 1fr auto; gap: 14px; align-items: center;
       border: 1px solid rgba(237, 229, 204, 0.1);
@@ -125,6 +174,9 @@ export function renderEnterpriseDashboardPage(env: EnterpriseControlPlaneEnv = {
     .row-title { font-weight: 750; }
     .row-sub { color: var(--muted); font-size: 13px; margin-top: 4px; }
     .tag { color: var(--blue); font-size: 12px; border: 1px solid rgba(147, 197, 253, 0.24); border-radius: 999px; padding: 5px 8px; }
+    .tag.good { color: var(--green); border-color: rgba(110, 231, 183, 0.24); }
+    .tag.warn { color: var(--gold); border-color: rgba(215, 168, 75, 0.28); }
+    .tag.bad { color: var(--red); border-color: rgba(251, 113, 133, 0.28); }
     .empty, .error {
       color: var(--muted);
       border: 1px dashed rgba(237, 229, 204, 0.22);
@@ -136,7 +188,7 @@ export function renderEnterpriseDashboardPage(env: EnterpriseControlPlaneEnv = {
     .actions { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 14px; }
     .action { border: 1px solid var(--line); border-radius: 14px; padding: 10px 12px; color: #e8ddbf; background: rgba(237, 229, 204, 0.07); }
     .action.primary { color: var(--ink); }
-    .feature-grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px; margin: 16px 0; }
+    .feature-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; margin: 16px 0; }
     .feature-card {
       display: flex; flex-direction: column; gap: 10px;
       min-height: 170px; border: 1px solid rgba(237, 229, 204, 0.12);
@@ -155,10 +207,10 @@ export function renderEnterpriseDashboardPage(env: EnterpriseControlPlaneEnv = {
       .sidebar { position: relative; height: auto; }
       .topbar { flex-direction: column; }
       .toolbar { justify-content: flex-start; }
-      .kpis, .two, .feature-grid { grid-template-columns: 1fr; }
+      .kpis, .two, .feature-grid, .business-strip, .intent-grid, .action-grid { grid-template-columns: 1fr; }
     }
     @media (min-width: 981px) and (max-width: 1220px) {
-      .feature-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+      .feature-grid, .intent-grid, .action-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
     }
   </style>
 </head>
@@ -196,14 +248,18 @@ export function renderEnterpriseDashboardPage(env: EnterpriseControlPlaneEnv = {
         <a class="nav-link" href="/app/scanner"><span>Scanner</span></a>
         <a class="nav-link" href="/app/runbooks"><span>Runbooks</span></a>
       </div>
+      <div class="sidebar-card">
+        <strong>Built for business teams</strong>
+        Start with Overview for status, Security for proof, Access for people, and Operations for daily work.
+      </div>
     </aside>
 
     <main class="main">
       <div class="topbar">
         <div>
-          <div class="eyebrow">enterprise command center</div>
-          <h1>Enterprise dashboard.</h1>
-          <p class="lead">Everything we have built for enterprise is reachable from here: runtime proof, policy, SSO, members, audit, alerts, provider slots, evidence, and operator runbooks.</p>
+          <div class="eyebrow">Business command center</div>
+          <h1>Run VaultProof for your company.</h1>
+          <p class="lead">A simple workspace for business, security, and operations teams. See if the secure runtime is healthy, who has access, which projects use protected keys, and what still needs attention.</p>
         </div>
         <div class="toolbar">
           <select id="orgSelect" aria-label="Organization"><option>Loading org...</option></select>
@@ -214,150 +270,266 @@ export function renderEnterpriseDashboardPage(env: EnterpriseControlPlaneEnv = {
 
       <div id="authNotice" class="error" style="display:none"></div>
 
-      <section class="card" aria-label="Built enterprise features">
-        <div class="section-title">
-          <h2>Built feature map</h2>
-          <span class="mini">one place to open every enterprise surface</span>
+      <section class="grid business-strip" aria-label="Business dashboard summary">
+        <div class="card business-card">
+          <div class="kpi-label">What VaultProof does</div>
+          <h2>Keeps API keys out of apps.</h2>
+          <p>Your team calls VaultProof. VaultProof checks policy, runs inside confidential Azure hardware, uses the provider key for one request, then keeps the key hidden.</p>
         </div>
-        <div class="feature-grid">
-          <a class="feature-card" href="/">
-            <div class="feature-tags"><span class="feature-tag">live</span><span class="feature-tag">public</span></div>
-            <h3>Enterprise homepage</h3>
-            <p>Simple public explanation of VaultProof, the confidential runtime, and the enterprise path.</p>
-          </a>
-          <a class="feature-card" href="/app/login">
-            <div class="feature-tags"><span class="feature-tag">live</span><span class="feature-tag">auth</span></div>
-            <h3>Enterprise login</h3>
-            <p>Enterprise-only sign-in with approved access messaging, reset flow, and SSO entry point.</p>
-          </a>
-          <a class="feature-card" href="/readiness" target="_blank" rel="noopener">
-            <div class="feature-tags"><span class="feature-tag">live</span><span class="feature-tag">proof</span></div>
-            <h3>Production readiness</h3>
-            <p>Shows whether Front Door, the control plane, executor, attestation, and Secure Key Release are production-ready.</p>
-          </a>
-          <a class="feature-card" href="/health" target="_blank" rel="noopener">
-            <div class="feature-tags"><span class="feature-tag">live</span><span class="feature-tag">health</span></div>
-            <h3>Control-plane health</h3>
-            <p>Fast health endpoint used by Front Door, monitoring, APIM checks, and operators.</p>
-          </a>
-          <a class="feature-card" href="/app/control">
-            <div class="feature-tags"><span class="feature-tag">live</span><span class="feature-tag">policy</span></div>
-            <h3>Policy control</h3>
-            <p>Edit project policy, provider allowlists, caller-lock rules, rate limits, and secure execution settings.</p>
-          </a>
-          <a class="feature-card" href="/app/projects">
-            <div class="feature-tags"><span class="feature-tag">live</span><span class="feature-tag">inventory</span></div>
-            <h3>Project inventory</h3>
-            <p>Review project health, provider slot posture, policy status, and quick paths into Control.</p>
-          </a>
-          <a class="feature-card" href="/app/keys">
-            <div class="feature-tags"><span class="feature-tag">live</span><span class="feature-tag">secrets</span></div>
-            <h3>Provider slots</h3>
-            <p>View active providers, emergency revoke slots, rotation checklists, and Secure Key Release notes.</p>
-          </a>
-          <a class="feature-card" href="/app/activity">
-            <div class="feature-tags"><span class="feature-tag">live</span><span class="feature-tag">runtime</span></div>
-            <h3>Runtime activity</h3>
-            <p>See proxy and executor events, status codes, latency, provider request IDs, and attestation summaries.</p>
-          </a>
-          <a class="feature-card" href="/app/members">
-            <div class="feature-tags"><span class="feature-tag">live</span><span class="feature-tag">access</span></div>
-            <h3>Members and invites</h3>
-            <p>Manage members, pending invites, roles, project assignments, and access-review exports.</p>
-          </a>
-          <a class="feature-card" href="/app/audit">
-            <div class="feature-tags"><span class="feature-tag">live</span><span class="feature-tag">evidence</span></div>
-            <h3>Audit and exports</h3>
-            <p>Search governance/runtime events, export CSV evidence, and review customer-verifiable metadata.</p>
-          </a>
-          <a class="feature-card" href="/app/alerts">
-            <div class="feature-tags"><span class="feature-tag">live</span><span class="feature-tag">monitoring</span></div>
-            <h3>Alerts</h3>
-            <p>Manage alert destinations, delivery logs, dispatch runs, policy state, and admin test-send workflow.</p>
-          </a>
-          <a class="feature-card" href="/app/org">
-            <div class="feature-tags"><span class="feature-tag">live</span><span class="feature-tag">SSO</span></div>
-            <h3>Org and Entra SSO</h3>
-            <p>Configure organization settings and the Microsoft Entra ID SSO path through Supabase SAML.</p>
-          </a>
-          <a class="feature-card" href="/app/settings">
-            <div class="feature-tags"><span class="feature-tag">live</span><span class="feature-tag">tenant</span></div>
-            <h3>Tenant settings</h3>
-            <p>Review tenant defaults, organization identity, SSO state, and session/security notices.</p>
-          </a>
-          <a class="feature-card" href="/app/plans">
-            <div class="feature-tags"><span class="feature-tag">live</span><span class="feature-tag pending">cutover pending</span></div>
-            <h3>Plans and APIM</h3>
-            <p>Track enterprise rollout packaging, APIM sidecar readiness, limits, and contract guardrails.</p>
-          </a>
-          <a class="feature-card" href="/app/scanner">
-            <div class="feature-tags"><span class="feature-tag">visible</span><span class="feature-tag pending">future API</span></div>
-            <h3>Scanner entry</h3>
-            <p>Enterprise-safe placeholder for repository/security scanning until scoped scanner APIs are ready.</p>
-          </a>
-          <a class="feature-card" href="/app/runbooks">
-            <div class="feature-tags"><span class="feature-tag">live</span><span class="feature-tag">ops</span></div>
-            <h3>Operator runbooks</h3>
-            <p>Open verification, evidence, deploy, secret, TLS, APIM, SSH, and cleanup runbooks.</p>
-          </a>
+        <div class="card business-card">
+          <div class="kpi-label">Who this is for</div>
+          <h2>Security, IT, and product teams.</h2>
+          <p>Security gets evidence. IT gets SSO and access control. Builders get a safe way to use AI and API providers without copying secrets everywhere.</p>
+        </div>
+        <div class="card business-card">
+          <div class="kpi-label">Best next step</div>
+          <h2>Check production readiness first.</h2>
+          <p>If readiness is green, review access and projects. If it needs attention, open Runbooks for the exact operator checklist.</p>
         </div>
       </section>
 
-      <section class="grid kpis" aria-label="Enterprise KPIs">
-        <div class="card"><div class="kpi-label">production runtime</div><div id="kpiRuntime" class="kpi-value">...</div><div id="kpiRuntimeSub" class="kpi-sub">checking Front Door to CVM</div></div>
-        <div class="card"><div class="kpi-label">projects</div><div id="kpiProjects" class="kpi-value">...</div><div id="kpiProjectsSub" class="kpi-sub">enterprise scopes</div></div>
-        <div class="card"><div class="kpi-label">members</div><div id="kpiMembers" class="kpi-value">...</div><div id="kpiMembersSub" class="kpi-sub">active org access</div></div>
-        <div class="card"><div class="kpi-label">30d calls</div><div id="kpiCalls" class="kpi-value">...</div><div id="kpiCallsSub" class="kpi-sub">proxy activity</div></div>
+      <nav class="tabbar" aria-label="Enterprise dashboard tabs">
+        <button class="tab-button active" type="button" data-dashboard-tab="overview">Overview</button>
+        <button class="tab-button" type="button" data-dashboard-tab="security">Security</button>
+        <button class="tab-button" type="button" data-dashboard-tab="access">Access</button>
+        <button class="tab-button" type="button" data-dashboard-tab="operations">Operations</button>
+        <button class="tab-button" type="button" data-dashboard-tab="features">Features</button>
+      </nav>
+
+      <section id="tab-overview" class="tab-panel" data-tab-panel="overview">
+        <section class="grid kpis" aria-label="Enterprise KPIs">
+          <div class="card"><div class="kpi-label">production runtime</div><div id="kpiRuntime" class="kpi-value">...</div><div id="kpiRuntimeSub" class="kpi-sub">checking Front Door to CVM</div></div>
+          <div class="card"><div class="kpi-label">projects</div><div id="kpiProjects" class="kpi-value">...</div><div id="kpiProjectsSub" class="kpi-sub">enterprise scopes</div></div>
+          <div class="card"><div class="kpi-label">members</div><div id="kpiMembers" class="kpi-value">...</div><div id="kpiMembersSub" class="kpi-sub">active org access</div></div>
+          <div class="card"><div class="kpi-label">30d calls</div><div id="kpiCalls" class="kpi-value">...</div><div id="kpiCallsSub" class="kpi-sub">proxy activity</div></div>
+        </section>
+
+        <section class="grid two">
+          <div class="card">
+            <div class="section-title">
+              <div>
+                <h2>Confidential runtime posture</h2>
+                <p>The simple answer to: is the secure key path safe to use today?</p>
+              </div>
+              <span id="runtimePill" class="status-pill warn">checking</span>
+            </div>
+            <div id="runtimeDetail" class="mini">Waiting for readiness...</div>
+            <div class="actions">
+              <a class="action" href="/readiness" target="_blank" rel="noopener">open readiness JSON</a>
+              <a class="action" href="/health" target="_blank" rel="noopener">open health JSON</a>
+            </div>
+          </div>
+
+          <div class="card">
+            <div class="section-title">
+              <div>
+                <h2>Organization</h2>
+                <p>Current tenant, role, SSO state, and setup links.</p>
+              </div>
+              <span id="orgRole" class="tag">...</span>
+            </div>
+            <div id="orgDetail" class="mini">Loading organization...</div>
+            <div class="actions">
+              <a class="action" href="/app/org">manage SSO</a>
+              <a class="action" href="/app/control">policy control</a>
+            </div>
+          </div>
+        </section>
+
+        <section class="grid action-grid">
+          <div class="action-card">
+            <div class="feature-tags"><span class="feature-tag">business</span><span class="feature-tag">daily</span></div>
+            <h3>1. Confirm the runtime is ready</h3>
+            <p>Use the readiness badge before sales demos, customer onboarding, or production traffic.</p>
+            <a class="action" href="/readiness" target="_blank" rel="noopener">check readiness</a>
+          </div>
+          <div class="action-card">
+            <div class="feature-tags"><span class="feature-tag">access</span><span class="feature-tag">SSO</span></div>
+            <h3>2. Review who can use it</h3>
+            <p>Open Members for roles and access-review evidence, then Org + SSO for Entra setup.</p>
+            <a class="action" href="/app/members">review access</a>
+          </div>
+          <div class="action-card">
+            <div class="feature-tags"><span class="feature-tag">policy</span><span class="feature-tag">keys</span></div>
+            <h3>3. Lock down projects</h3>
+            <p>Review provider slots, caller-lock rules, allowed origins, and emergency revoke controls.</p>
+            <a class="action" href="/app/control">open policy control</a>
+          </div>
+        </section>
       </section>
 
-      <section class="grid two">
-        <div class="card">
+      <section id="tab-security" class="tab-panel" data-tab-panel="security" hidden>
+        <section class="grid intent-grid">
+          <div class="intent-card"><div class="feature-tags"><span class="feature-tag">ready</span></div><h3>Confidential VM</h3><p>Control plane and executor run on Azure confidential infrastructure.</p></div>
+          <div class="intent-card"><div class="feature-tags"><span class="feature-tag">ready</span></div><h3>Secure Key Release</h3><p>The executor gets unwrap material only after attestation and policy checks.</p></div>
+          <div class="intent-card"><div class="feature-tags"><span class="feature-tag">ready</span></div><h3>Replay protection</h3><p>Signed execution envelopes cannot be reused after the first valid request.</p></div>
+          <div class="intent-card"><div class="feature-tags"><span class="feature-tag pending">finish line</span></div><h3>TLS and APIM cutovers</h3><p>Operator runbooks track the final origin TLS, APIM, SSH, and cleanup steps.</p></div>
+        </section>
+
+        <section class="grid two">
+          <div class="card">
+            <div class="section-title"><h2>Evidence links</h2><span class="mini">safe to open</span></div>
+            <div class="list">
+              <div class="row"><div><div class="row-title">Production readiness</div><div class="row-sub">Proof that the live runtime and executor report production-ready.</div></div><a class="tag good" href="/readiness" target="_blank" rel="noopener">open</a></div>
+              <div class="row"><div><div class="row-title">Audit export</div><div class="row-sub">CSV evidence for governance and runtime events.</div></div><a class="tag good" href="/api/v1/enterprise/audit?format=csv&days=30">export</a></div>
+              <div class="row"><div><div class="row-title">Access review</div><div class="row-sub">CSV evidence for members, roles, and project access.</div></div><a class="tag good" href="/api/v1/enterprise/members/access-review?format=csv">export</a></div>
+            </div>
+          </div>
+          <div class="card">
+            <div class="section-title"><h2>Security controls</h2><span class="mini">where to work</span></div>
+            <div class="list">
+              <div class="row"><div><div class="row-title">Caller lock and provider policy</div><div class="row-sub">Limit execution by origin, gateway, device, provider, method, host, path, and rate.</div></div><a class="tag" href="/app/control">control</a></div>
+              <div class="row"><div><div class="row-title">Provider slots</div><div class="row-sub">View active provider keys and emergency-revoke a slot.</div></div><a class="tag" href="/app/keys">keys</a></div>
+              <div class="row"><div><div class="row-title">Operator runbooks</div><div class="row-sub">Verification, evidence, deploys, secret rotation, TLS, APIM, SSH, and cleanup.</div></div><a class="tag" href="/app/runbooks">runbooks</a></div>
+            </div>
+          </div>
+        </section>
+      </section>
+
+      <section id="tab-access" class="tab-panel" data-tab-panel="access" hidden>
+        <section class="grid two">
+          <div class="card">
+            <div class="section-title"><h2>Access and alerts</h2><span id="accessMeta" class="mini"></span></div>
+            <div id="accessList" class="list"><div class="empty">Loading access...</div></div>
+            <div class="actions">
+              <a class="action" href="/app/members">open members</a>
+              <a class="action" href="/app/alerts">open alerts</a>
+              <a class="action" href="/app/org">open Org + SSO</a>
+            </div>
+          </div>
+          <div class="card">
+            <div class="section-title"><h2>Business access checklist</h2><span class="mini">before customer use</span></div>
+            <div class="list">
+              <div class="row"><div><div class="row-title">SSO path</div><div class="row-sub">Use Entra ID through Supabase SAML broker/session provider for customer-facing SSO.</div></div><span class="tag">Org + SSO</span></div>
+              <div class="row"><div><div class="row-title">Admin review</div><div class="row-sub">Confirm owners/admins are the right people before onboarding a business team.</div></div><span class="tag">Members</span></div>
+              <div class="row"><div><div class="row-title">Alert delivery</div><div class="row-sub">Set destinations and test delivery before relying on incident notifications.</div></div><span class="tag">Alerts</span></div>
+            </div>
+          </div>
+        </section>
+      </section>
+
+      <section id="tab-operations" class="tab-panel" data-tab-panel="operations" hidden>
+        <section class="grid two">
+          <div class="card">
+            <div class="section-title"><h2>Project health</h2><span id="projectHealthMeta" class="mini"></span></div>
+            <div id="projectHealthList" class="list"><div class="empty">Loading projects...</div></div>
+          </div>
+
+          <div class="card">
+            <div class="section-title"><h2>Recent runtime activity</h2><span id="activityMeta" class="mini"></span></div>
+            <div id="activityList" class="list"><div class="empty">Loading activity...</div></div>
+          </div>
+        </section>
+
+        <section class="grid two">
+          <div class="card">
+            <div class="section-title"><h2>Recent audit</h2><a class="mini" href="/api/v1/enterprise/audit?format=csv&days=30">export CSV</a></div>
+            <div id="auditList" class="list"><div class="empty">Loading audit...</div></div>
+          </div>
+
+          <div class="card">
+            <div class="section-title"><h2>Operator shortcuts</h2><span class="mini">business-safe links</span></div>
+            <div class="list">
+              <div class="row"><div><div class="row-title">Runbooks</div><div class="row-sub">Open the built deploy, evidence, verification, hardening, and cleanup playbooks.</div></div><a class="tag good" href="/app/runbooks">open</a></div>
+              <div class="row"><div><div class="row-title">Plans and APIM</div><div class="row-sub">Track packaging, APIM sidecar readiness, and contract-facing guardrails.</div></div><a class="tag" href="/app/plans">open</a></div>
+              <div class="row"><div><div class="row-title">Scanner</div><div class="row-sub">Future enterprise-safe security scanning entry point, kept separate from B2C.</div></div><a class="tag warn" href="/app/scanner">planned</a></div>
+            </div>
+          </div>
+        </section>
+      </section>
+
+      <section id="tab-features" class="tab-panel" data-tab-panel="features" hidden>
+        <section class="card" aria-label="Built enterprise features">
           <div class="section-title">
-            <h2>Confidential runtime posture</h2>
-            <span id="runtimePill" class="status-pill warn">checking</span>
+            <div>
+              <h2>Built feature map</h2>
+              <p>Every enterprise surface that is currently available from the Azure control plane.</p>
+            </div>
+            <span class="mini">one place to open every enterprise surface</span>
           </div>
-          <div id="runtimeDetail" class="mini">Waiting for readiness...</div>
-          <div class="actions">
-            <a class="action" href="/readiness" target="_blank" rel="noopener">open readiness JSON</a>
-            <a class="action" href="/health" target="_blank" rel="noopener">open health JSON</a>
+          <div class="feature-grid">
+            <a class="feature-card" href="/">
+              <div class="feature-tags"><span class="feature-tag">live</span><span class="feature-tag">public</span></div>
+              <h3>Enterprise homepage</h3>
+              <p>Simple public explanation of VaultProof, the confidential runtime, and the enterprise path.</p>
+            </a>
+            <a class="feature-card" href="/app/login">
+              <div class="feature-tags"><span class="feature-tag">live</span><span class="feature-tag">auth</span></div>
+              <h3>Enterprise login</h3>
+              <p>Enterprise-only sign-in with approved access messaging, reset flow, and SSO entry point.</p>
+            </a>
+            <a class="feature-card" href="/readiness" target="_blank" rel="noopener">
+              <div class="feature-tags"><span class="feature-tag">live</span><span class="feature-tag">proof</span></div>
+              <h3>Production readiness</h3>
+              <p>Shows whether Front Door, the control plane, executor, attestation, and Secure Key Release are production-ready.</p>
+            </a>
+            <a class="feature-card" href="/health" target="_blank" rel="noopener">
+              <div class="feature-tags"><span class="feature-tag">live</span><span class="feature-tag">health</span></div>
+              <h3>Control-plane health</h3>
+              <p>Fast health endpoint used by Front Door, monitoring, APIM checks, and operators.</p>
+            </a>
+            <a class="feature-card" href="/app/control">
+              <div class="feature-tags"><span class="feature-tag">live</span><span class="feature-tag">policy</span></div>
+              <h3>Policy control</h3>
+              <p>Edit project policy, provider allowlists, caller-lock rules, rate limits, and secure execution settings.</p>
+            </a>
+            <a class="feature-card" href="/app/projects">
+              <div class="feature-tags"><span class="feature-tag">live</span><span class="feature-tag">inventory</span></div>
+              <h3>Project inventory</h3>
+              <p>Review project health, provider slot posture, policy status, and quick paths into Control.</p>
+            </a>
+            <a class="feature-card" href="/app/keys">
+              <div class="feature-tags"><span class="feature-tag">live</span><span class="feature-tag">secrets</span></div>
+              <h3>Provider slots</h3>
+              <p>View active providers, emergency revoke slots, rotation checklists, and Secure Key Release notes.</p>
+            </a>
+            <a class="feature-card" href="/app/activity">
+              <div class="feature-tags"><span class="feature-tag">live</span><span class="feature-tag">runtime</span></div>
+              <h3>Runtime activity</h3>
+              <p>See proxy and executor events, status codes, latency, provider request IDs, and attestation summaries.</p>
+            </a>
+            <a class="feature-card" href="/app/members">
+              <div class="feature-tags"><span class="feature-tag">live</span><span class="feature-tag">access</span></div>
+              <h3>Members and invites</h3>
+              <p>Manage members, pending invites, roles, project assignments, and access-review exports.</p>
+            </a>
+            <a class="feature-card" href="/app/audit">
+              <div class="feature-tags"><span class="feature-tag">live</span><span class="feature-tag">evidence</span></div>
+              <h3>Audit and exports</h3>
+              <p>Search governance/runtime events, export CSV evidence, and review customer-verifiable metadata.</p>
+            </a>
+            <a class="feature-card" href="/app/alerts">
+              <div class="feature-tags"><span class="feature-tag">live</span><span class="feature-tag">monitoring</span></div>
+              <h3>Alerts</h3>
+              <p>Manage alert destinations, delivery logs, dispatch runs, policy state, and admin test-send workflow.</p>
+            </a>
+            <a class="feature-card" href="/app/org">
+              <div class="feature-tags"><span class="feature-tag">live</span><span class="feature-tag">SSO</span></div>
+              <h3>Org and Entra SSO</h3>
+              <p>Configure organization settings and the Microsoft Entra ID SSO path through Supabase SAML.</p>
+            </a>
+            <a class="feature-card" href="/app/settings">
+              <div class="feature-tags"><span class="feature-tag">live</span><span class="feature-tag">tenant</span></div>
+              <h3>Tenant settings</h3>
+              <p>Review tenant defaults, organization identity, SSO state, and session/security notices.</p>
+            </a>
+            <a class="feature-card" href="/app/plans">
+              <div class="feature-tags"><span class="feature-tag">live</span><span class="feature-tag pending">cutover pending</span></div>
+              <h3>Plans and APIM</h3>
+              <p>Track enterprise rollout packaging, APIM sidecar readiness, limits, and contract guardrails.</p>
+            </a>
+            <a class="feature-card" href="/app/scanner">
+              <div class="feature-tags"><span class="feature-tag">visible</span><span class="feature-tag pending">future API</span></div>
+              <h3>Scanner entry</h3>
+              <p>Enterprise-safe placeholder for repository/security scanning until scoped scanner APIs are ready.</p>
+            </a>
+            <a class="feature-card" href="/app/runbooks">
+              <div class="feature-tags"><span class="feature-tag">live</span><span class="feature-tag">ops</span></div>
+              <h3>Operator runbooks</h3>
+              <p>Open verification, evidence, deploy, secret, TLS, APIM, SSH, and cleanup runbooks.</p>
+            </a>
           </div>
-        </div>
-
-        <div class="card">
-          <div class="section-title">
-            <h2>Organization</h2>
-            <span id="orgRole" class="tag">...</span>
-          </div>
-          <div id="orgDetail" class="mini">Loading organization...</div>
-          <div class="actions">
-            <a class="action" href="/app/org">manage SSO</a>
-            <a class="action" href="/app/control">policy control</a>
-          </div>
-        </div>
-      </section>
-
-      <section class="grid two" style="margin-top:16px">
-        <div class="card">
-          <div class="section-title"><h2>Project health</h2><span id="projectHealthMeta" class="mini"></span></div>
-          <div id="projectHealthList" class="list"><div class="empty">Loading projects...</div></div>
-        </div>
-
-        <div class="card">
-          <div class="section-title"><h2>Access and alerts</h2><span id="accessMeta" class="mini"></span></div>
-          <div id="accessList" class="list"><div class="empty">Loading access...</div></div>
-        </div>
-      </section>
-
-      <section class="grid two" style="margin-top:16px">
-        <div class="card">
-          <div class="section-title"><h2>Recent audit</h2><a class="mini" href="/api/v1/enterprise/audit?format=csv&days=30">export CSV</a></div>
-          <div id="auditList" class="list"><div class="empty">Loading audit...</div></div>
-        </div>
-
-        <div class="card">
-          <div class="section-title"><h2>Recent runtime activity</h2><span id="activityMeta" class="mini"></span></div>
-          <div id="activityList" class="list"><div class="empty">Loading activity...</div></div>
-        </div>
+        </section>
       </section>
     </main>
   </div>
@@ -417,6 +589,17 @@ export function renderEnterpriseDashboardPage(env: EnterpriseControlPlaneEnv = {
         message = friendlyErrorMessage(message);
         el.style.display = 'block';
         el.innerHTML = escapeHtml(message) + ' <a href="/app/login">Sign in</a>';
+      }
+      function selectDashboardTab(tabName) {
+        var target = tabName || 'overview';
+        document.querySelectorAll('[data-dashboard-tab]').forEach(function(button) {
+          var active = button.getAttribute('data-dashboard-tab') === target;
+          button.classList.toggle('active', active);
+          button.setAttribute('aria-selected', active ? 'true' : 'false');
+        });
+        document.querySelectorAll('[data-tab-panel]').forEach(function(panel) {
+          panel.hidden = panel.getAttribute('data-tab-panel') !== target;
+        });
       }
       function renderReadiness(payload) {
         var ready = payload && payload.production_ready === true;
@@ -545,12 +728,18 @@ export function renderEnterpriseDashboardPage(env: EnterpriseControlPlaneEnv = {
       }
       var refreshBtn = byId('refreshBtn');
       if (refreshBtn) refreshBtn.addEventListener('click', loadDashboard);
+      document.querySelectorAll('[data-dashboard-tab]').forEach(function(button) {
+        button.addEventListener('click', function() {
+          selectDashboardTab(button.getAttribute('data-dashboard-tab') || 'overview');
+        });
+      });
       var orgSelect = byId('orgSelect');
       if (orgSelect) orgSelect.addEventListener('change', function(event) {
         currentOrgId = event.target.value || '';
         if (currentOrgId) localStorage.setItem(ACTIVE_ORG_STORAGE_KEY, currentOrgId);
         loadDashboard();
       });
+      selectDashboardTab('overview');
       loadDashboard();
     })();
   </script>

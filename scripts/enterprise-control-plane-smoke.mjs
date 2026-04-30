@@ -1823,6 +1823,15 @@ async function assertEnterpriseLoginRoute() {
       throw new Error('Expected enterprise dashboard to call enterprise control-plane APIs');
     }
     for (const requiredFeature of [
+      'Business command center',
+      'Run VaultProof for your company.',
+      'Enterprise dashboard tabs',
+      'Overview',
+      'Security',
+      'Access',
+      'Operations',
+      'Features',
+      'Business access checklist',
       'Built feature map',
       'Policy control',
       'Provider slots',
