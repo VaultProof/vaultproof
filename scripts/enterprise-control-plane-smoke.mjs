@@ -1848,6 +1848,8 @@ async function assertEnterpriseLoginRoute() {
       '/app/org',
       '/app/runbooks',
       'enterprise-app-sidebar',
+      'data-enterprise-sidebar="universal"',
+      'enterprise-universal-sidebar',
     ]) {
       if (!pageHtml.includes(required)) {
         throw new Error(`Expected ${path} to use the main enterprise dashboard shell theme (${required})`);

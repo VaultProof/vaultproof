@@ -1,5 +1,6 @@
 import { injectEnterpriseAnalytics } from './analytics.js';
 import type { EnterpriseControlPlaneEnv } from './config.js';
+import { ENTERPRISE_APP_SHELL_THEME, renderEnterpriseAppSidebar } from './enterprise-app-shell.js';
 
 const ENTERPRISE_AUTH_ERROR_MESSAGE = 'Your enterprise session expired or is missing. Sign in again to continue.';
 
@@ -38,45 +39,7 @@ export function renderEnterpriseDashboardPage(env: EnterpriseControlPlaneEnv = {
         linear-gradient(135deg, #06100e 0%, #10231d 45%, #050807 100%);
     }
     a { color: inherit; text-decoration: none; }
-    .shell { display: grid; grid-template-columns: 280px 1fr; min-height: 100vh; }
-    .sidebar {
-      border-right: 1px solid var(--line);
-      background: rgba(3, 8, 7, 0.66);
-      backdrop-filter: blur(18px);
-      padding: 28px 20px;
-      position: sticky;
-      top: 0;
-      height: 100vh;
-    }
-    .brand { display: flex; align-items: center; gap: 12px; margin-bottom: 30px; }
-    .mark {
-      width: 38px; height: 38px; border-radius: 14px;
-      display: grid; place-items: center;
-      color: var(--ink); font-weight: 900;
-      background: linear-gradient(135deg, var(--gold), #f3df95);
-      box-shadow: 0 18px 60px rgba(215, 168, 75, 0.18);
-    }
-    .brand-title { font-weight: 850; letter-spacing: -0.03em; }
-    .brand-sub { color: var(--muted); font-size: 12px; margin-top: 2px; }
-    .nav-group { margin: 24px 0; }
-    .nav-label { color: var(--muted); font-size: 11px; text-transform: uppercase; letter-spacing: 0.12em; margin: 0 0 9px 10px; }
-    .nav-link {
-      display: flex; justify-content: space-between; align-items: center;
-      padding: 11px 12px; border-radius: 14px; color: #d8dfcf;
-      margin-bottom: 4px; border: 1px solid transparent;
-    }
-    .nav-link:hover, .nav-link.active { background: var(--panel); border-color: var(--line); }
-    .nav-pill { font-size: 10px; color: var(--green); border: 1px solid rgba(110, 231, 183, 0.24); border-radius: 999px; padding: 2px 7px; }
-    .sidebar-card {
-      border: 1px solid rgba(237, 229, 204, 0.12);
-      border-radius: 18px;
-      padding: 14px;
-      background: linear-gradient(180deg, rgba(237, 229, 204, 0.1), rgba(3, 8, 7, 0.24));
-      color: var(--muted);
-      font-size: 12px;
-      line-height: 1.45;
-    }
-    .sidebar-card strong { display: block; color: var(--text); font-size: 13px; margin-bottom: 4px; }
+    ${ENTERPRISE_APP_SHELL_THEME}
     .main { padding: 30px; max-width: 1320px; width: 100%; }
     .topbar {
       display: flex; justify-content: space-between; align-items: flex-start; gap: 20px;
@@ -203,8 +166,6 @@ export function renderEnterpriseDashboardPage(env: EnterpriseControlPlaneEnv = {
     .feature-tag { color: var(--green); border: 1px solid rgba(110, 231, 183, 0.22); border-radius: 999px; padding: 4px 7px; font-size: 11px; }
     .feature-tag.pending { color: var(--gold); border-color: rgba(215, 168, 75, 0.28); }
     @media (max-width: 980px) {
-      .shell { grid-template-columns: 1fr; }
-      .sidebar { position: relative; height: auto; }
       .topbar { flex-direction: column; }
       .toolbar { justify-content: flex-start; }
       .kpis, .two, .feature-grid, .business-strip, .intent-grid, .action-grid { grid-template-columns: 1fr; }
@@ -216,43 +177,7 @@ export function renderEnterpriseDashboardPage(env: EnterpriseControlPlaneEnv = {
 </head>
 <body>
   <div class="shell">
-    <aside class="sidebar enterprise-app-sidebar">
-      <div class="brand">
-        <div class="mark">VP</div>
-        <div>
-          <div class="brand-title">VaultProof Enterprise</div>
-          <div class="brand-sub">Azure confidential dashboard</div>
-        </div>
-      </div>
-      <div class="nav-group">
-        <div class="nav-label">workspace</div>
-        <a class="nav-link active" href="/app/dashboard"><span>Dashboard</span><span class="nav-pill">new</span></a>
-        <a class="nav-link" href="/app/projects"><span>Projects</span></a>
-        <a class="nav-link" href="/app/activity"><span>Activity</span></a>
-        <a class="nav-link" href="/app/alerts"><span>Alerts</span></a>
-        <a class="nav-link" href="/app/control"><span>Control</span></a>
-        <a class="nav-link" href="/app/org"><span>Org + SSO</span></a>
-      </div>
-      <div class="nav-group">
-        <div class="nav-label">evidence</div>
-        <a class="nav-link" href="/app/members"><span>Members</span></a>
-        <a class="nav-link" href="/app/audit"><span>Audit</span></a>
-        <a class="nav-link" href="/app/keys"><span>Provider slots</span></a>
-        <a class="nav-link" id="auditExportLink" href="/api/v1/enterprise/audit?format=csv&days=30"><span>Audit CSV</span></a>
-        <a class="nav-link" id="accessReviewLink" href="/api/v1/enterprise/members/access-review?format=csv"><span>Access review CSV</span></a>
-      </div>
-      <div class="nav-group">
-        <div class="nav-label">setup</div>
-        <a class="nav-link" href="/app/settings"><span>Settings</span></a>
-        <a class="nav-link" href="/app/plans"><span>Plans</span></a>
-        <a class="nav-link" href="/app/scanner"><span>Scanner</span></a>
-        <a class="nav-link" href="/app/runbooks"><span>Runbooks</span></a>
-      </div>
-      <div class="sidebar-card">
-        <strong>Setup order</strong>
-        Connect the org, invite the right people, configure projects, confirm readiness, then monitor daily use.
-      </div>
-    </aside>
+    ${renderEnterpriseAppSidebar('dashboard')}
 
     <main class="main">
       <div class="topbar">

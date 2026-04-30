@@ -2,6 +2,11 @@ import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { injectEnterpriseAnalytics } from './analytics.js';
 import type { EnterpriseControlPlaneEnv } from './config.js';
+import {
+  ENTERPRISE_APP_SHELL_THEME,
+  renderEnterpriseAppSidebar,
+  type EnterpriseAppNavPage,
+} from './enterprise-app-shell.js';
 
 const PUBLIC_SITE_ORIGIN = 'https://vaultproof.dev';
 const ENTERPRISE_AUTH_ERROR_MESSAGE = 'Your enterprise session expired or is missing. Sign in again to continue.';
@@ -47,112 +52,6 @@ function readEnterpriseAppPage(filename: string): string {
   const html = readWorkspaceFile(join('apps/site/app', filename));
   return rewriteStaticAssetUrls(html);
 }
-
-type EnterpriseAppNavPage =
-  | 'dashboard'
-  | 'projects'
-  | 'activity'
-  | 'alerts'
-  | 'control'
-  | 'org'
-  | 'members'
-  | 'audit'
-  | 'keys'
-  | 'settings'
-  | 'plans'
-  | 'scanner'
-  | 'runbooks';
-
-function enterpriseAppNavLink(activePage: EnterpriseAppNavPage, page: EnterpriseAppNavPage, href: string, label: string, pill = ''): string {
-  const active = activePage === page;
-  return `<a class="nav-link${active ? ' active' : ''}" href="${href}"${active ? ' aria-current="page"' : ''}><span>${label}</span>${pill ? `<span class="nav-pill">${pill}</span>` : ''}</a>`;
-}
-
-function renderEnterpriseAppSidebar(activePage: EnterpriseAppNavPage, subtitle = 'Azure confidential dashboard'): string {
-  return `<aside class="sidebar enterprise-app-sidebar">
-      <div class="brand">
-        <div class="mark">VP</div>
-        <div>
-          <div class="brand-title">VaultProof Enterprise</div>
-          <div class="brand-sub">${escapeHtml(subtitle)}</div>
-        </div>
-      </div>
-      <div class="nav-group">
-        <div class="nav-label">workspace</div>
-        ${enterpriseAppNavLink(activePage, 'dashboard', '/app/dashboard', 'Dashboard')}
-        ${enterpriseAppNavLink(activePage, 'projects', '/app/projects', 'Projects')}
-        ${enterpriseAppNavLink(activePage, 'activity', '/app/activity', 'Activity')}
-        ${enterpriseAppNavLink(activePage, 'alerts', '/app/alerts', 'Alerts')}
-        ${enterpriseAppNavLink(activePage, 'control', '/app/control', 'Control')}
-        ${enterpriseAppNavLink(activePage, 'org', '/app/org', 'Org + SSO')}
-      </div>
-      <div class="nav-group">
-        <div class="nav-label">evidence</div>
-        ${enterpriseAppNavLink(activePage, 'members', '/app/members', 'Members')}
-        ${enterpriseAppNavLink(activePage, 'audit', '/app/audit', 'Audit')}
-        ${enterpriseAppNavLink(activePage, 'keys', '/app/keys', 'Provider slots')}
-        <a class="nav-link" id="auditExportLink" href="/api/v1/enterprise/audit?format=csv&days=30"><span>Audit CSV</span></a>
-        <a class="nav-link" id="accessReviewLink" href="/api/v1/enterprise/members/access-review?format=csv"><span>Access review CSV</span></a>
-      </div>
-      <div class="nav-group">
-        <div class="nav-label">setup</div>
-        ${enterpriseAppNavLink(activePage, 'settings', '/app/settings', 'Settings')}
-        ${enterpriseAppNavLink(activePage, 'plans', '/app/plans', 'Plans')}
-        ${enterpriseAppNavLink(activePage, 'scanner', '/app/scanner', 'Scanner')}
-        ${enterpriseAppNavLink(activePage, 'runbooks', '/app/runbooks', 'Runbooks')}
-      </div>
-      <div class="sidebar-card">
-        <strong>Setup order</strong>
-        Connect the org, invite the right people, configure projects, confirm readiness, then monitor daily use.
-      </div>
-    </aside>`;
-}
-
-const ENTERPRISE_APP_SHELL_THEME = `
-    .shell, .layout { display: grid; grid-template-columns: 280px 1fr; min-height: 100vh; }
-    .sidebar.enterprise-app-sidebar {
-      display: block;
-      border-right: 1px solid var(--line);
-      background: rgba(3, 8, 7, 0.66);
-      backdrop-filter: blur(18px);
-      padding: 28px 20px;
-      position: sticky;
-      top: 0;
-      height: 100vh;
-      align-self: start;
-    }
-    .brand { display: flex; align-items: center; gap: 12px; margin-bottom: 30px; }
-    .brand .mark {
-      width: 38px;
-      height: 38px;
-      border-radius: 14px;
-      display: grid;
-      place-items: center;
-      color: var(--ink);
-      font-weight: 900;
-      background: linear-gradient(135deg, var(--gold), #f3df95);
-      box-shadow: 0 18px 60px rgba(215, 168, 75, 0.18);
-    }
-    .brand-title { font-weight: 850; letter-spacing: -0.03em; color: var(--text); }
-    .brand-sub { color: var(--muted); font-size: 12px; margin-top: 2px; font-weight: 500; }
-    .nav-group { margin: 24px 0; }
-    .nav-link { display: flex; justify-content: space-between; align-items: center; }
-    .nav-pill { font-size: 10px; color: var(--green); border: 1px solid rgba(110, 231, 183, 0.24); border-radius: 999px; padding: 2px 7px; }
-    .sidebar-card {
-      border: 1px solid rgba(237, 229, 204, 0.12);
-      border-radius: 18px;
-      padding: 14px;
-      background: linear-gradient(180deg, rgba(237, 229, 204, 0.1), rgba(3, 8, 7, 0.24));
-      color: var(--muted);
-      font-size: 12px;
-      line-height: 1.45;
-    }
-    .sidebar-card strong { display: block; color: var(--text); font-size: 13px; margin-bottom: 4px; }
-    @media (max-width: 980px) {
-      .shell, .layout { grid-template-columns: 1fr; }
-      .sidebar.enterprise-app-sidebar { position: relative; height: auto; }
-    }
-`;
 
 const ENTERPRISE_STATIC_APP_THEME = `
     :root {
