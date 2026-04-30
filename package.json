@@ -15,6 +15,7 @@
     "cutover:enterprise-apim": "bash infra/azure/enterprise-secure-runtime/cutover-front-door-apim.sh",
     "cutover:enterprise-origin-tls": "bash infra/azure/enterprise-secure-runtime/cutover-front-door-origin-tls.sh",
     "evidence:enterprise-production": "bash infra/azure/enterprise-secure-runtime/collect-production-evidence.sh",
+    "harden:enterprise-ssh": "bash infra/azure/enterprise-secure-runtime/harden-ssh-bootstrap.sh",
     "validate:enterprise-evidence": "node scripts/validate-enterprise-production-evidence.mjs",
     "seed:enterprise-demo-account": "node scripts/create-enterprise-demo-account.mjs",
     "dev": "turbo run dev",

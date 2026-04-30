@@ -9,6 +9,9 @@ SSH_RULE_NAME="${SSH_RULE_NAME:-AllowSshBootstrap}"
 NSG_NAME="${NSG_NAME:-}"
 NSG_RESOURCE_GROUP="${NSG_RESOURCE_GROUP:-}"
 SKIP_READINESS_CHECK="${SKIP_READINESS_CHECK:-false}"
+ALTERNATE_ACCESS_ACK="${ALTERNATE_ACCESS_ACK:-false}"
+SKIP_ALTERNATE_ACCESS_ACK="${SKIP_ALTERNATE_ACCESS_ACK:-false}"
+CONFIRM_SSH_LOCKDOWN="${CONFIRM_SSH_LOCKDOWN:-}"
 
 require_command() {
   local command_name="$1"
@@ -110,6 +113,28 @@ if (blockers.length > 0) {
 " "${tmp_file}"
 }
 
+require_confirmation() {
+  local expected="$1"
+  local reason="$2"
+  if [[ "${CONFIRM_SSH_LOCKDOWN}" != "${expected}" ]]; then
+    echo "Refusing to ${reason}: set CONFIRM_SSH_LOCKDOWN=${expected} to confirm this live NSG change." >&2
+    exit 1
+  fi
+}
+
+require_alternate_access_ack() {
+  if [[ "${SKIP_ALTERNATE_ACCESS_ACK}" == "true" ]]; then
+    echo "Skipping alternate access acknowledgment because SKIP_ALTERNATE_ACCESS_ACK=true."
+    return
+  fi
+
+  if [[ "${ALTERNATE_ACCESS_ACK}" != "true" ]]; then
+    echo "Refusing to close SSH: confirm an alternate operator access path first." >&2
+    echo "Set ALTERNATE_ACCESS_ACK=true after Bastion/JIT/serial-console/private access or a tested NSG break-glass path is ready." >&2
+    exit 1
+  fi
+}
+
 require_command az
 require_command node
 resolve_nsg
@@ -123,13 +148,20 @@ case "${ACTION}" in
     echo "  rule:           ${SSH_RULE_NAME}"
     echo "  current access: $(rule_access)"
     echo
-    echo "Close public SSH bootstrap after production readiness is verified:"
-    echo "  ACTION=close bash infra/azure/enterprise-secure-runtime/harden-ssh-bootstrap.sh"
+    echo "Close public SSH bootstrap after production readiness and alternate access are verified:"
+    echo "  ALTERNATE_ACCESS_ACK=true CONFIRM_SSH_LOCKDOWN=close-public-ssh ACTION=close npm run harden:enterprise-ssh"
+    echo
+    echo "Before close, confirm at least one non-public-SSH operator path:"
+    echo "  - Azure Bastion, JIT VM access, serial console, or private network access works."
+    echo "  - A Cloud Shell/operator can run the break-glass reopen command if needed."
+    echo "  - Live readiness is production-ready with no production blockers."
     echo
     echo "Reopen public SSH bootstrap as a break-glass step:"
-    echo "  ACTION=reopen bash infra/azure/enterprise-secure-runtime/harden-ssh-bootstrap.sh"
+    echo "  CONFIRM_SSH_LOCKDOWN=reopen-public-ssh ACTION=reopen npm run harden:enterprise-ssh"
     ;;
   close)
+    require_confirmation "close-public-ssh" "close public SSH"
+    require_alternate_access_ack
     require_production_ready
     az network nsg rule update \
       --resource-group "${NSG_RESOURCE_GROUP}" \
@@ -141,6 +173,7 @@ case "${ACTION}" in
     echo "Verify with: EXPECTED_SSH_BOOTSTRAP_ACCESS=Deny RUN_SSH_CHECKS=false npm run verify:enterprise-production"
     ;;
   reopen)
+    require_confirmation "reopen-public-ssh" "reopen public SSH"
     az network nsg rule update \
       --resource-group "${NSG_RESOURCE_GROUP}" \
       --nsg-name "${NSG_NAME}" \

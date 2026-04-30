@@ -557,17 +557,19 @@ Preview the current SSH bootstrap rule:
 RESOURCE_GROUP=vaultproof-enterprise \
 DEPLOYMENT_NAME=vp-enterprise-secure-runtime-eastus-hsm \
 ACTION=plan \
-bash infra/azure/enterprise-secure-runtime/harden-ssh-bootstrap.sh
+npm run harden:enterprise-ssh
 ```
 
-Close public SSH bootstrap. The script refuses to close SSH unless `/readiness` reports production-ready with no production blockers:
+Close public SSH bootstrap. The script refuses to close SSH unless `/readiness` reports production-ready with no production blockers, an alternate operator path has been confirmed, and the live-change confirmation phrase is present:
 
 ```bash
 RESOURCE_GROUP=vaultproof-enterprise \
 DEPLOYMENT_NAME=vp-enterprise-secure-runtime-eastus-hsm \
 ENTERPRISE_URL=https://enterprise.vaultproof.dev \
+ALTERNATE_ACCESS_ACK=true \
+CONFIRM_SSH_LOCKDOWN=close-public-ssh \
 ACTION=close \
-bash infra/azure/enterprise-secure-runtime/harden-ssh-bootstrap.sh
+npm run harden:enterprise-ssh
 ```
 
 Verify the locked-down posture without SSH-based loopback checks:
@@ -583,8 +585,9 @@ Break-glass reopen:
 ```bash
 RESOURCE_GROUP=vaultproof-enterprise \
 DEPLOYMENT_NAME=vp-enterprise-secure-runtime-eastus-hsm \
+CONFIRM_SSH_LOCKDOWN=reopen-public-ssh \
 ACTION=reopen \
-bash infra/azure/enterprise-secure-runtime/harden-ssh-bootstrap.sh
+npm run harden:enterprise-ssh
 ```
 
 For declarative redeploys, set `allowSshBootstrap=false` in `main.bicep` parameters after the VM is stable. Keep it `true` during initial provisioning or when running SSH-based deployment helpers.

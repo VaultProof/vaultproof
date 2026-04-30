@@ -377,8 +377,8 @@ Built:
 
 - Reversible SSH bootstrap hardening script exists.
 - Plan mode shows the current NSG rule and safe next command.
-- Close mode requires production readiness before setting the SSH bootstrap rule to `Deny`.
-- Reopen mode exists for break-glass rollback.
+- Close mode requires production readiness, an alternate-access acknowledgment, and `CONFIRM_SSH_LOCKDOWN=close-public-ssh` before setting the SSH bootstrap rule to `Deny`.
+- Reopen mode exists for break-glass rollback and requires `CONFIRM_SSH_LOCKDOWN=reopen-public-ssh`.
 - Production verifier can assert expected SSH bootstrap access.
 
 Plan command:
@@ -386,7 +386,7 @@ Plan command:
 ```bash
 RESOURCE_GROUP=vaultproof-enterprise \
 DEPLOYMENT_NAME=vp-enterprise-secure-runtime-eastus-hsm \
-bash infra/azure/enterprise-secure-runtime/harden-ssh-bootstrap.sh
+npm run harden:enterprise-ssh
 ```
 
 Current status:

@@ -424,7 +424,7 @@ Important key-type decision:
 - [x] Block direct public access to executor.
 - [x] Require Azure Front Door ID origin lock for control-plane origin requests.
 - [ ] Add TLS from Front Door to the VM origin and switch origin forwarding from HTTP to HTTPS. In progress: TLS proxy installer, `npm run prepare:enterprise-origin-cert` CSR/certificate install helper, `npm run prepare:enterprise-origin-tls` DNS/NSG/APIM backend preparation helper, `npm run verify:enterprise-origin-tls` readiness preflight, guarded Front Door cutover/rollback helper, NSG 443 IaC, verifier/evidence support, lab-only self-signed verification support, and runbook are implemented. The VM-local nginx TLS proxy is installed and passes `ORIGIN_TLS_INSECURE=true` verifier checks; publicly trusted origin certificate/DNS, NSG 443 allow, APIM HTTPS backend update, and Front Door `HttpsOnly` cutover are pending.
-- [ ] Close public SSH bootstrap ingress after alternate access is ready. In progress: `allowSshBootstrap` IaC switch, `harden-ssh-bootstrap.sh`, verifier expectations, and runbook are implemented; live NSG rule remains `Allow` for bootstrap/break-glass.
+- [ ] Close public SSH bootstrap ingress after alternate access is ready. In progress: `allowSshBootstrap` IaC switch, `npm run harden:enterprise-ssh`, confirmation-gated close/reopen workflow, verifier expectations, and runbook are implemented; live NSG rule remains `Allow` for bootstrap/break-glass.
 - [ ] Disable/delete old Container Apps prototype resources after soak. In progress: `cleanup-container-apps-prototype.sh` and `npm run cleanup:enterprise-container-apps` can inventory, disable ingress, and explicitly delete apps/environment/ACR; live cleanup is pending operator approval.
 
 ### Phase 5: Enterprise Controls
