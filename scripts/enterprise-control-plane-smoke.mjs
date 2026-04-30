@@ -1835,6 +1835,26 @@ async function assertEnterpriseLoginRoute() {
     throw new Error(`Expected enterprise login script to route enterprise users to dashboard, got ${loginScriptResponse.status}`);
   }
 
+  function assertDashboardShellTheme(path, pageHtml) {
+    for (const required of [
+      'class="mark">VP',
+      'VaultProof Enterprise',
+      'Setup order',
+      'nav-label">workspace',
+      'nav-label">evidence',
+      'nav-label">setup',
+      '/app/dashboard',
+      '/app/control',
+      '/app/org',
+      '/app/runbooks',
+      'enterprise-app-sidebar',
+    ]) {
+      if (!pageHtml.includes(required)) {
+        throw new Error(`Expected ${path} to use the main enterprise dashboard shell theme (${required})`);
+      }
+    }
+  }
+
   for (const dashboardPath of ['/app', '/app/', '/app/dashboard']) {
     const dashboardResponse = await handleEnterpriseControlPlaneRequest(
       buildRequest(dashboardPath),
@@ -1852,6 +1872,7 @@ async function assertEnterpriseLoginRoute() {
     if (!dashboardHtml.includes('/api/v1/enterprise/projects/stats/overview')) {
       throw new Error('Expected enterprise dashboard to call enterprise control-plane APIs');
     }
+    assertDashboardShellTheme(dashboardPath, dashboardHtml);
     for (const requiredFeature of [
       'Customer workspace',
       'Set up and run your business account.',
@@ -1891,6 +1912,7 @@ async function assertEnterpriseLoginRoute() {
   if (!membersHtml.includes('/api/v1/enterprise/members') || membersHtml.includes('https://init.vaultproof.dev')) {
     throw new Error('Expected enterprise members page to use enterprise member APIs only');
   }
+  assertDashboardShellTheme('/app/members', membersHtml);
 
   const auditResponse = await handleEnterpriseControlPlaneRequest(
     buildRequest('/app/audit'),
@@ -1908,6 +1930,7 @@ async function assertEnterpriseLoginRoute() {
   if (!auditHtml.includes('sourceFilter') || !auditHtml.includes('eventTypeFilter') || auditHtml.includes('https://init.vaultproof.dev')) {
     throw new Error('Expected enterprise audit page to include filters and avoid B2C APIs');
   }
+  assertDashboardShellTheme('/app/audit', auditHtml);
 
   const alertsResponse = await handleEnterpriseControlPlaneRequest(
     buildRequest('/app/alerts'),
@@ -1925,6 +1948,7 @@ async function assertEnterpriseLoginRoute() {
   if (!alertsHtml.includes('/api/v1/enterprise/alerts/test-send') || alertsHtml.includes('Test-send API is planned') || alertsHtml.includes('https://init.vaultproof.dev')) {
     throw new Error('Expected enterprise alerts page to use enterprise test-send API and avoid B2C APIs');
   }
+  assertDashboardShellTheme('/app/alerts', alertsHtml);
 
   const operationsPages = [
     {
@@ -1962,6 +1986,7 @@ async function assertEnterpriseLoginRoute() {
     if (html.includes('https://init.vaultproof.dev') || html.includes('https://api.vaultproof.dev')) {
       throw new Error(`Enterprise operations page ${page.path} must not load B2C APIs`);
     }
+    assertDashboardShellTheme(page.path, html);
   }
 
   const supportPages = [
@@ -2005,6 +2030,7 @@ async function assertEnterpriseLoginRoute() {
     if (html.includes('https://init.vaultproof.dev') || html.includes('https://api.vaultproof.dev') || html.includes('/api/scanner')) {
       throw new Error(`Enterprise support page ${page.path} must not load B2C APIs`);
     }
+    assertDashboardShellTheme(page.path, html);
   }
 
   const controlResponse = await handleEnterpriseControlPlaneRequest(
@@ -2020,6 +2046,7 @@ async function assertEnterpriseLoginRoute() {
   if (!controlHtml.includes('https://vaultproof.dev/js/app-control-1.js')) {
     throw new Error('Expected control page static scripts to load from public site origin');
   }
+  assertDashboardShellTheme('/app/control', controlHtml);
 
   const orgResponse = await handleEnterpriseControlPlaneRequest(
     buildRequest('/app/org'),
@@ -2034,6 +2061,7 @@ async function assertEnterpriseLoginRoute() {
   if (!orgHtml.includes('https://vaultproof.dev/js/app-org-1.js')) {
     throw new Error('Expected org page static scripts to load from public site origin');
   }
+  assertDashboardShellTheme('/app/org', orgHtml);
 }
 
 function extractHrefValues(html) {

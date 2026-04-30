@@ -216,7 +216,7 @@ export function renderEnterpriseDashboardPage(env: EnterpriseControlPlaneEnv = {
 </head>
 <body>
   <div class="shell">
-    <aside class="sidebar">
+    <aside class="sidebar enterprise-app-sidebar">
       <div class="brand">
         <div class="mark">VP</div>
         <div>

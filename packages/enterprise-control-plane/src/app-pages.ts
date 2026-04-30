@@ -36,6 +36,191 @@ function readEnterpriseAppPage(filename: string): string {
   return rewriteStaticAssetUrls(html);
 }
 
+type EnterpriseAppNavPage =
+  | 'dashboard'
+  | 'projects'
+  | 'activity'
+  | 'alerts'
+  | 'control'
+  | 'org'
+  | 'members'
+  | 'audit'
+  | 'keys'
+  | 'settings'
+  | 'plans'
+  | 'scanner'
+  | 'runbooks';
+
+function enterpriseAppNavLink(activePage: EnterpriseAppNavPage, page: EnterpriseAppNavPage, href: string, label: string, pill = ''): string {
+  const active = activePage === page;
+  return `<a class="nav-link${active ? ' active' : ''}" href="${href}"${active ? ' aria-current="page"' : ''}><span>${label}</span>${pill ? `<span class="nav-pill">${pill}</span>` : ''}</a>`;
+}
+
+function renderEnterpriseAppSidebar(activePage: EnterpriseAppNavPage, subtitle = 'Azure confidential dashboard'): string {
+  return `<aside class="sidebar enterprise-app-sidebar">
+      <div class="brand">
+        <div class="mark">VP</div>
+        <div>
+          <div class="brand-title">VaultProof Enterprise</div>
+          <div class="brand-sub">${escapeHtml(subtitle)}</div>
+        </div>
+      </div>
+      <div class="nav-group">
+        <div class="nav-label">workspace</div>
+        ${enterpriseAppNavLink(activePage, 'dashboard', '/app/dashboard', 'Dashboard')}
+        ${enterpriseAppNavLink(activePage, 'projects', '/app/projects', 'Projects')}
+        ${enterpriseAppNavLink(activePage, 'activity', '/app/activity', 'Activity')}
+        ${enterpriseAppNavLink(activePage, 'alerts', '/app/alerts', 'Alerts')}
+        ${enterpriseAppNavLink(activePage, 'control', '/app/control', 'Control')}
+        ${enterpriseAppNavLink(activePage, 'org', '/app/org', 'Org + SSO')}
+      </div>
+      <div class="nav-group">
+        <div class="nav-label">evidence</div>
+        ${enterpriseAppNavLink(activePage, 'members', '/app/members', 'Members')}
+        ${enterpriseAppNavLink(activePage, 'audit', '/app/audit', 'Audit')}
+        ${enterpriseAppNavLink(activePage, 'keys', '/app/keys', 'Provider slots')}
+        <a class="nav-link" id="auditExportLink" href="/api/v1/enterprise/audit?format=csv&days=30"><span>Audit CSV</span></a>
+        <a class="nav-link" id="accessReviewLink" href="/api/v1/enterprise/members/access-review?format=csv"><span>Access review CSV</span></a>
+      </div>
+      <div class="nav-group">
+        <div class="nav-label">setup</div>
+        ${enterpriseAppNavLink(activePage, 'settings', '/app/settings', 'Settings')}
+        ${enterpriseAppNavLink(activePage, 'plans', '/app/plans', 'Plans')}
+        ${enterpriseAppNavLink(activePage, 'scanner', '/app/scanner', 'Scanner')}
+        ${enterpriseAppNavLink(activePage, 'runbooks', '/app/runbooks', 'Runbooks')}
+      </div>
+      <div class="sidebar-card">
+        <strong>Setup order</strong>
+        Connect the org, invite the right people, configure projects, confirm readiness, then monitor daily use.
+      </div>
+    </aside>`;
+}
+
+const ENTERPRISE_APP_SHELL_THEME = `
+    .shell, .layout { display: grid; grid-template-columns: 280px 1fr; min-height: 100vh; }
+    .sidebar.enterprise-app-sidebar {
+      display: block;
+      border-right: 1px solid var(--line);
+      background: rgba(3, 8, 7, 0.66);
+      backdrop-filter: blur(18px);
+      padding: 28px 20px;
+      position: sticky;
+      top: 0;
+      height: 100vh;
+      align-self: start;
+    }
+    .brand { display: flex; align-items: center; gap: 12px; margin-bottom: 30px; }
+    .brand .mark {
+      width: 38px;
+      height: 38px;
+      border-radius: 14px;
+      display: grid;
+      place-items: center;
+      color: var(--ink);
+      font-weight: 900;
+      background: linear-gradient(135deg, var(--gold), #f3df95);
+      box-shadow: 0 18px 60px rgba(215, 168, 75, 0.18);
+    }
+    .brand-title { font-weight: 850; letter-spacing: -0.03em; color: var(--text); }
+    .brand-sub { color: var(--muted); font-size: 12px; margin-top: 2px; font-weight: 500; }
+    .nav-group { margin: 24px 0; }
+    .nav-link { display: flex; justify-content: space-between; align-items: center; }
+    .nav-pill { font-size: 10px; color: var(--green); border: 1px solid rgba(110, 231, 183, 0.24); border-radius: 999px; padding: 2px 7px; }
+    .sidebar-card {
+      border: 1px solid rgba(237, 229, 204, 0.12);
+      border-radius: 18px;
+      padding: 14px;
+      background: linear-gradient(180deg, rgba(237, 229, 204, 0.1), rgba(3, 8, 7, 0.24));
+      color: var(--muted);
+      font-size: 12px;
+      line-height: 1.45;
+    }
+    .sidebar-card strong { display: block; color: var(--text); font-size: 13px; margin-bottom: 4px; }
+    @media (max-width: 980px) {
+      .shell, .layout { grid-template-columns: 1fr; }
+      .sidebar.enterprise-app-sidebar { position: relative; height: auto; }
+    }
+`;
+
+const ENTERPRISE_STATIC_APP_THEME = `
+    :root {
+      color-scheme: dark;
+      --accent: #d7a84b;
+      --bg: #07110f;
+      --bg-mid: rgba(237, 229, 204, 0.08);
+      --bg-card: rgba(237, 229, 204, 0.08);
+      --rule: 1px solid rgba(237, 229, 204, 0.16);
+      --hair: 1px solid rgba(237, 229, 204, 0.1);
+      --line: rgba(237, 229, 204, 0.16);
+      --text: #f4ecd5;
+      --text-muted: #a9b7a6;
+      --text-faint: #8f9b8b;
+      --muted: #a9b7a6;
+      --gold: #d7a84b;
+      --green: #6ee7b7;
+      --red: #fb7185;
+      --blue: #93c5fd;
+      --ok: #6ee7b7;
+      --warn: #d7a84b;
+      --danger: #fb7185;
+      --ink: #07110f;
+      --display: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      --body: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      --mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace;
+    }
+    html, body {
+      background:
+        radial-gradient(circle at 15% 10%, rgba(215, 168, 75, 0.24), transparent 32rem),
+        radial-gradient(circle at 85% 0%, rgba(110, 231, 183, 0.16), transparent 28rem),
+        linear-gradient(135deg, #06100e 0%, #10231d 45%, #050807 100%);
+      color: var(--text);
+      font-family: var(--body);
+    }
+    .page { max-width: none; margin: 0; background: transparent; border: 0; }
+    .page > .topbar { display: none; }
+    .layout { min-height: 100vh; }
+    .main { padding: 30px; max-width: 1380px; width: 100%; }
+    .page-title { color: var(--text); font-size: clamp(38px, 6vw, 74px); line-height: .92; letter-spacing: -.075em; font-weight: 850; }
+    .page-desc, .page-meta, .list-sub, .resource-copy, .banner-copy, .banner-note, .form-copy, .callout { color: var(--muted); }
+    .panel, .kpi-grid, .banner, .invite-panel, .action-strip, .usage-box, .member-card, .policy-card, .policy-provider-card, .exec-card, .resource-card, .checklist-box, .callout {
+      border: 1px solid var(--line);
+      background: linear-gradient(180deg, rgba(237, 229, 204, 0.13), rgba(237, 229, 204, 0.055));
+      border-radius: 24px;
+      box-shadow: 0 22px 90px rgba(0,0,0,.18);
+      color: var(--text);
+    }
+    .panel-head, .list-row, .invite-row { border-color: rgba(237, 229, 204, 0.12); }
+    .resource-title, .list-title, .member-email, .policy-title, .exec-title, .banner-title { color: var(--text); }
+    .org-select, .form-input, .form-select, .policy-input, .policy-textarea, select, input, textarea {
+      border: 1px solid var(--line);
+      background: rgba(237, 229, 204, 0.08);
+      color: var(--text);
+      border-radius: 13px;
+    }
+    option { color: #111827; }
+    .btn-primary { background: linear-gradient(135deg, var(--gold), #f3df95); color: var(--ink); border: 0; font-weight: 850; border-radius: 13px; }
+    .btn-outline, .btn-danger { background: rgba(237, 229, 204, 0.08); color: var(--text); border: 1px solid var(--line); border-radius: 13px; }
+    .btn-danger { color: var(--red); border-color: rgba(251, 113, 133, 0.34); }
+    .subnav-link { background: rgba(237, 229, 204, 0.08); color: var(--muted); border: 1px solid var(--line); }
+    .subnav-link.active { color: var(--ink); background: linear-gradient(135deg, var(--gold), #f3df95); border-color: transparent; }
+    .pill.neutral { background: rgba(237, 229, 204, 0.08); color: var(--muted); }
+    .pill.ok { background: rgba(110, 231, 183, 0.1); color: var(--green); border-color: rgba(110, 231, 183, 0.24); }
+    .pill.warn { background: rgba(215, 168, 75, 0.1); color: var(--gold); border-color: rgba(215, 168, 75, 0.28); }
+    .pill.danger { background: rgba(251, 113, 133, 0.12); color: var(--red); border-color: rgba(251, 113, 133, 0.28); }
+    .kpi-cell + .kpi-cell { border-left-color: rgba(237, 229, 204, 0.12); }
+    .empty { color: var(--muted); }
+    .resource-link { color: var(--gold); }
+    @media (max-width: 980px) {
+      .main { padding: 24px 18px; }
+    }
+`;
+
+function applyEnterpriseStaticAppTheme(html: string, activePage: EnterpriseAppNavPage, subtitle: string): string {
+  return html
+    .replace(/<aside class="sidebar">[\s\S]*?<\/aside>/, renderEnterpriseAppSidebar(activePage, subtitle))
+    .replace('</style>', `${ENTERPRISE_APP_SHELL_THEME}${ENTERPRISE_STATIC_APP_THEME}\n  </style>`);
+}
+
 const plannedEnterprisePages: Record<string, {
   title: string;
   kicker: string;
@@ -173,22 +358,12 @@ function renderEnterpriseMembersPage(): string {
     .empty, .notice { color: var(--muted); border: 1px dashed rgba(237,229,204,.22); border-radius: 18px; padding: 18px; background: rgba(3,8,7,.2); }
     .notice.error { color: var(--red); border-color: rgba(251,113,133,.3); }
     @media (max-width: 980px) { .shell { grid-template-columns: 1fr; } .topbar { flex-direction: column; } .kpis, .two { grid-template-columns: 1fr; } }
+    ${ENTERPRISE_APP_SHELL_THEME}
   </style>
 </head>
 <body>
   <div class="shell">
-    <aside class="sidebar">
-      <div class="brand">VaultProof Enterprise<span>members + access</span></div>
-      <div class="nav-label">workspace</div>
-      <a class="nav-link" href="/app/dashboard">Dashboard</a>
-      <a class="nav-link" href="/app/projects">Projects</a>
-      <a class="nav-link" href="/app/control">Control</a>
-      <a class="nav-link" href="/app/org">Org + SSO</a>
-      <div class="nav-label">evidence</div>
-      <a class="nav-link active" href="/app/members">Members</a>
-      <a class="nav-link" href="/app/audit">Audit</a>
-      <a class="nav-link" href="/app/alerts">Alerts</a>
-    </aside>
+    ${renderEnterpriseAppSidebar('members', 'members + access')}
 
     <main class="main">
       <div class="topbar">
@@ -529,22 +704,12 @@ function renderEnterpriseAuditPage(): string {
     .notice.error { color: var(--red); border-color: rgba(251,113,133,.3); }
     @media (max-width: 1100px) { .filters { grid-template-columns: repeat(2, minmax(0, 1fr)); } .kpis { grid-template-columns: repeat(2, minmax(0, 1fr)); } .event { grid-template-columns: 1fr; } }
     @media (max-width: 760px) { .shell { grid-template-columns: 1fr; } .topbar { flex-direction: column; } .filters, .kpis { grid-template-columns: 1fr; } }
+    ${ENTERPRISE_APP_SHELL_THEME}
   </style>
 </head>
 <body>
   <div class="shell">
-    <aside class="sidebar">
-      <div class="brand">VaultProof Enterprise<span>audit evidence</span></div>
-      <div class="nav-label">workspace</div>
-      <a class="nav-link" href="/app/dashboard">Dashboard</a>
-      <a class="nav-link" href="/app/projects">Projects</a>
-      <a class="nav-link" href="/app/control">Control</a>
-      <a class="nav-link" href="/app/org">Org + SSO</a>
-      <div class="nav-label">evidence</div>
-      <a class="nav-link" href="/app/members">Members</a>
-      <a class="nav-link active" href="/app/audit">Audit</a>
-      <a class="nav-link" href="/app/alerts">Alerts</a>
-    </aside>
+    ${renderEnterpriseAppSidebar('audit', 'audit evidence')}
 
     <main class="main">
       <div class="topbar">
@@ -817,22 +982,12 @@ function renderEnterpriseAlertsPage(): string {
     .notice.error { color: var(--red); border-color: rgba(251,113,133,.3); }
     @media (max-width: 1100px) { .filters, .kpis, .two { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
     @media (max-width: 760px) { .shell { grid-template-columns: 1fr; } .topbar { flex-direction: column; } .filters, .kpis, .two { grid-template-columns: 1fr; } }
+    ${ENTERPRISE_APP_SHELL_THEME}
   </style>
 </head>
 <body>
   <div class="shell">
-    <aside class="sidebar">
-      <div class="brand">VaultProof Enterprise<span>alert operations</span></div>
-      <div class="nav-label">workspace</div>
-      <a class="nav-link" href="/app/dashboard">Dashboard</a>
-      <a class="nav-link" href="/app/projects">Projects</a>
-      <a class="nav-link" href="/app/control">Control</a>
-      <a class="nav-link" href="/app/org">Org + SSO</a>
-      <div class="nav-label">evidence</div>
-      <a class="nav-link" href="/app/members">Members</a>
-      <a class="nav-link" href="/app/audit">Audit</a>
-      <a class="nav-link active" href="/app/alerts">Alerts</a>
-    </aside>
+    ${renderEnterpriseAppSidebar('alerts', 'alert operations')}
 
     <main class="main">
       <div class="topbar">
@@ -1166,24 +1321,12 @@ function renderEnterpriseOperationsPage(pageName: 'activity' | 'projects' | 'key
     .notice.error { color: var(--red); border-color: rgba(251,113,133,.3); }
     @media (max-width: 1100px) { .filters, .kpis, .two { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
     @media (max-width: 760px) { .shell { grid-template-columns: 1fr; } .topbar { flex-direction: column; } .filters, .kpis, .two { grid-template-columns: 1fr; } }
+    ${ENTERPRISE_APP_SHELL_THEME}
   </style>
 </head>
 <body>
   <div class="shell">
-    <aside class="sidebar">
-      <div class="brand">VaultProof Enterprise<span>${escapeHtml(pageKicker)}</span></div>
-      <div class="nav-label">workspace</div>
-      <a class="nav-link" href="/app/dashboard">Dashboard</a>
-      <a class="nav-link${pageName === 'projects' ? ' active' : ''}" href="/app/projects">Projects</a>
-      <a class="nav-link${pageName === 'activity' ? ' active' : ''}" href="/app/activity">Activity</a>
-      <a class="nav-link" href="/app/control">Control</a>
-      <a class="nav-link" href="/app/org">Org + SSO</a>
-      <div class="nav-label">evidence</div>
-      <a class="nav-link" href="/app/members">Members</a>
-      <a class="nav-link" href="/app/audit">Audit</a>
-      <a class="nav-link" href="/app/alerts">Alerts</a>
-      <a class="nav-link${pageName === 'keys' ? ' active' : ''}" href="/app/keys">Provider slots</a>
-    </aside>
+    ${renderEnterpriseAppSidebar(pageName, pageKicker)}
 
     <main class="main">
       <div class="topbar">
@@ -1503,29 +1646,12 @@ function renderEnterpriseSupportPage(pageName: 'settings' | 'plans' | 'scanner' 
     .notice.error { color: var(--red); border-color: rgba(251,113,133,.3); }
     @media (max-width: 1100px) { .kpis, .two { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
     @media (max-width: 760px) { .shell { grid-template-columns: 1fr; } .topbar { flex-direction: column; } .kpis, .two { grid-template-columns: 1fr; } }
+    ${ENTERPRISE_APP_SHELL_THEME}
   </style>
 </head>
 <body>
   <div class="shell">
-    <aside class="sidebar">
-      <div class="brand">VaultProof Enterprise<span>${escapeHtml(pageKicker)}</span></div>
-      <div class="nav-label">workspace</div>
-      <a class="nav-link" href="/app/dashboard">Dashboard</a>
-      <a class="nav-link" href="/app/projects">Projects</a>
-      <a class="nav-link" href="/app/activity">Activity</a>
-      <a class="nav-link" href="/app/control">Control</a>
-      <a class="nav-link" href="/app/org">Org + SSO</a>
-      <div class="nav-label">evidence</div>
-      <a class="nav-link" href="/app/members">Members</a>
-      <a class="nav-link" href="/app/audit">Audit</a>
-      <a class="nav-link" href="/app/alerts">Alerts</a>
-      <a class="nav-link" href="/app/keys">Provider slots</a>
-      <div class="nav-label">admin</div>
-      <a class="nav-link${pageName === 'settings' ? ' active' : ''}" href="/app/settings">Settings</a>
-      <a class="nav-link${pageName === 'plans' ? ' active' : ''}" href="/app/plans">Plans</a>
-      <a class="nav-link${pageName === 'scanner' ? ' active' : ''}" href="/app/scanner">Scanner</a>
-      <a class="nav-link${pageName === 'runbooks' ? ' active' : ''}" href="/app/runbooks">Runbooks</a>
-    </aside>
+    ${renderEnterpriseAppSidebar(pageName, pageKicker)}
 
     <main class="main">
       <div class="topbar">
@@ -1828,9 +1954,17 @@ export function renderEnterprisePlannedAppPage(pageName: string, env: Enterprise
 }
 
 export function renderEnterpriseControlPage(env: EnterpriseControlPlaneEnv = {}): string {
-  return injectEnterpriseAnalytics(readEnterpriseAppPage('control.html'), env, 'control');
+  return injectEnterpriseAnalytics(
+    applyEnterpriseStaticAppTheme(readEnterpriseAppPage('control.html'), 'control', 'policy control'),
+    env,
+    'control',
+  );
 }
 
 export function renderEnterpriseOrgPage(env: EnterpriseControlPlaneEnv = {}): string {
-  return injectEnterpriseAnalytics(readEnterpriseAppPage('org.html'), env, 'org');
+  return injectEnterpriseAnalytics(
+    applyEnterpriseStaticAppTheme(readEnterpriseAppPage('org.html'), 'org', 'organization setup'),
+    env,
+    'org',
+  );
 }
