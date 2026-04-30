@@ -744,6 +744,7 @@ APIM policy starts with coarse limits:
 - Adds `x-vaultproof-apim: enterprise`.
 - Adds `x-vaultproof-customer-gateway: vaultproof-managed`.
 - Strips provider-secret style headers such as `x-api-key`, `openai-api-key`, `anthropic-api-key`, and `stripe-api-key`.
+- Strips spoofable VaultProof caller-lock headers before setting trusted APIM, customer gateway, device, or mTLS certificate metadata.
 - Preserves `Authorization` so the VaultProof control plane can still validate Supabase/user/project auth.
 - Optionally forwards a secret `x-vaultproof-origin-lock` value from an APIM named value.
 
@@ -1063,6 +1064,8 @@ Validate all enterprise APIM policy templates before handoff:
 ```bash
 npm run test:enterprise-apim-policies
 ```
+
+The smoke validates the VaultProof-managed, customer-managed, device, and mTLS templates for provider-secret header stripping plus caller-lock header delete/override behavior, so callers cannot spoof trusted VaultProof gateway, device, or certificate metadata.
 
 Build a local customer/compliance handoff package without changing Azure resources:
 

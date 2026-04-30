@@ -14,6 +14,20 @@ function assertIncludes(name, content, required) {
   }
 }
 
+function escapeRegExp(value) {
+  return value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+}
+
+function assertHeaderAction(name, content, headerName, action) {
+  const pattern = new RegExp(
+    `<set-header\\s+name=["']${escapeRegExp(headerName)}["']\\s+exists-action=["']${escapeRegExp(action)}["']`,
+    'i',
+  );
+  if (!pattern.test(content)) {
+    throw new Error(`${name} must set ${headerName} with exists-action=${action}`);
+  }
+}
+
 function assertBalancedPolicyShell(name, content) {
   assertIncludes(name, content, [
     '<policies>',
@@ -26,10 +40,34 @@ function assertBalancedPolicyShell(name, content) {
   ]);
 }
 
+const providerSecretHeaders = [
+  'x-api-key',
+  'openai-api-key',
+  'anthropic-api-key',
+  'stripe-api-key',
+];
+
+const certificateCallerLockHeaders = [
+  'x-vaultproof-client-cert-thumbprint',
+  'x-vaultproof-client-cert-subject',
+];
+
 const policies = [
   {
     name: 'VaultProof-managed APIM',
     path: 'docs/enterprise/vaultproof-managed-apim-policy.xml',
+    deleteHeaders: [
+      ...providerSecretHeaders,
+      'x-vaultproof-customer-gateway',
+      'x-vaultproof-client-class',
+      ...certificateCallerLockHeaders,
+    ],
+    overrideHeaders: [
+      'x-vaultproof-apim',
+      'x-vaultproof-customer-gateway',
+      'x-vaultproof-client-class',
+      'x-vaultproof-origin-lock',
+    ],
     required: [
       'rate-limit-by-key',
       'quota-by-key',
@@ -39,24 +77,54 @@ const policies = [
       'openai-api-key',
       'anthropic-api-key',
       'stripe-api-key',
+      '<value>gateway</value>',
       'set-backend-service',
     ],
   },
   {
     name: 'Customer-managed APIM',
     path: 'docs/enterprise/customer-managed-apim-policy.xml',
+    deleteHeaders: [
+      ...providerSecretHeaders,
+      'x-vaultproof-customer-gateway',
+      'x-vaultproof-client-class',
+      ...certificateCallerLockHeaders,
+    ],
+    overrideHeaders: [
+      'x-vaultproof-customer-gateway',
+      'x-vaultproof-client-class',
+    ],
     required: [
       'validate-jwt',
       'x-vaultproof-customer-gateway',
       'x-api-key',
       'openai-api-key',
       'anthropic-api-key',
+      'stripe-api-key',
+      '<value>gateway</value>',
       'set-backend-service base-url="https://enterprise.vaultproof.dev"',
     ],
   },
   {
     name: 'Customer-managed APIM device',
     path: 'docs/enterprise/customer-managed-apim-device-policy.xml',
+    deleteHeaders: [
+      ...providerSecretHeaders,
+      'x-vaultproof-customer-gateway',
+      'x-vaultproof-client-class',
+      'x-vaultproof-device-id',
+      'x-vaultproof-fleet-id',
+      'x-vaultproof-firmware-version',
+      ...certificateCallerLockHeaders,
+    ],
+    overrideHeaders: [
+      'x-vaultproof-customer-gateway',
+      'x-vaultproof-client-class',
+      'x-vaultproof-device-id',
+      'x-vaultproof-fleet-id',
+      'x-vaultproof-firmware-version',
+      ...certificateCallerLockHeaders,
+    ],
     required: [
       'validate-jwt',
       'x-vaultproof-client-class',
@@ -72,6 +140,17 @@ const policies = [
   {
     name: 'Customer-managed APIM mTLS',
     path: 'docs/enterprise/customer-managed-apim-mtls-policy.xml',
+    deleteHeaders: [
+      ...providerSecretHeaders,
+      'x-vaultproof-customer-gateway',
+      'x-vaultproof-client-class',
+      ...certificateCallerLockHeaders,
+    ],
+    overrideHeaders: [
+      'x-vaultproof-customer-gateway',
+      'x-vaultproof-client-class',
+      ...certificateCallerLockHeaders,
+    ],
     required: [
       'validate-client-certificate',
       'validate-revocation="true"',
@@ -97,6 +176,12 @@ for (const policy of policies) {
   const content = readPolicy(policy.path);
   assertBalancedPolicyShell(policy.name, content);
   assertIncludes(policy.name, content, policy.required);
+  for (const headerName of policy.deleteHeaders) {
+    assertHeaderAction(policy.name, content, headerName, 'delete');
+  }
+  for (const headerName of policy.overrideHeaders) {
+    assertHeaderAction(policy.name, content, headerName, 'override');
+  }
 }
 
 console.log(JSON.stringify({

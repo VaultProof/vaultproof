@@ -351,7 +351,7 @@ Built:
 
 - Azure API Management StandardV2 sidecar is deployed.
 - APIM health/readiness routes are verified.
-- APIM policies include request-size guards, rate limits, quotas, provider-secret header stripping, APIM marker headers, origin-lock forwarding, and App Insights diagnostics.
+- APIM policies include request-size guards, rate limits, quotas, provider-secret header stripping, spoofable VaultProof caller-lock header stripping, trusted gateway/device/mTLS header re-setting, APIM marker headers, origin-lock forwarding, and App Insights diagnostics.
 - Optional JWT validation support exists in IaC/policy.
 - APIM JWT validation preparation helper exists for Supabase-session or direct-Entra token paths before enabling `validate-jwt`.
 - APIM Front Door cutover helper exists for plan, confirmation-gated enable, and confirmation-gated rollback.
@@ -610,6 +610,7 @@ Current APIM capabilities:
 - Request-size guard.
 - Coarse rate limits and quotas.
 - Provider-secret header stripping.
+- Spoofable VaultProof caller-lock header stripping before trusted APIM/device/mTLS values are set.
 - APIM marker headers.
 - APIM origin-lock forwarding.
 - App Insights diagnostics.
@@ -627,6 +628,15 @@ Policy files:
 - VaultProof-managed APIM: `docs/enterprise/vaultproof-managed-apim-policy.xml`
 - Customer-managed APIM: `docs/enterprise/customer-managed-apim-policy.xml`
 - Customer device/IoT APIM: `docs/enterprise/customer-managed-apim-device-policy.xml`
+- Customer-managed APIM mTLS: `docs/enterprise/customer-managed-apim-mtls-policy.xml`
+
+Policy smoke test:
+
+```bash
+npm run test:enterprise-apim-policies
+```
+
+This checks provider-secret stripping and verifies every policy deletes caller-supplied VaultProof caller-lock headers before overriding them with trusted APIM, device, or certificate-derived values.
 
 ## SSO
 
@@ -846,7 +856,7 @@ Run the local handoff gate before sharing the package:
 npm run gate:enterprise-handoff
 ```
 
-The gate validates APIM policy templates, builds the package, and verifies the manifest includes required docs, policy files, and operator commands. Set `REQUIRE_EVIDENCE=true REQUIRE_VALID_EVIDENCE=true RUN_LIVE_APP_QA=true` for a stricter pre-handoff pass.
+The gate validates APIM policy templates, including provider-secret stripping and caller-lock header delete/override checks, builds the package, and verifies the manifest includes required docs, policy files, and operator commands. Set `REQUIRE_EVIDENCE=true REQUIRE_VALID_EVIDENCE=true RUN_LIVE_APP_QA=true` for a stricter pre-handoff pass.
 
 ### Prepare origin TLS cutover
 

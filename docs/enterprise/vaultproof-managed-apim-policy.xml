@@ -21,12 +21,21 @@
     <set-header name="anthropic-api-key" exists-action="delete" />
     <set-header name="stripe-api-key" exists-action="delete" />
 
+    <!-- Strip spoofable caller-lock headers, then re-set trusted values from VaultProof-managed APIM. -->
+    <set-header name="x-vaultproof-customer-gateway" exists-action="delete" />
+    <set-header name="x-vaultproof-client-class" exists-action="delete" />
+    <set-header name="x-vaultproof-client-cert-thumbprint" exists-action="delete" />
+    <set-header name="x-vaultproof-client-cert-subject" exists-action="delete" />
+
     <!-- Non-secret caller-lock and audit context forwarded into the enterprise control plane. -->
     <set-header name="x-vaultproof-apim" exists-action="override">
       <value>enterprise</value>
     </set-header>
     <set-header name="x-vaultproof-customer-gateway" exists-action="override">
       <value>vaultproof-managed</value>
+    </set-header>
+    <set-header name="x-vaultproof-client-class" exists-action="override">
+      <value>gateway</value>
     </set-header>
 
     <!-- Prefer an APIM named value marked secret. Configure the control plane with the same value. -->

@@ -23,6 +23,15 @@
     <set-header name="anthropic-api-key" exists-action="delete" />
     <set-header name="stripe-api-key" exists-action="delete" />
 
+    <!-- Strip spoofable caller-lock headers, then re-set trusted values from customer APIM. -->
+    <set-header name="x-vaultproof-customer-gateway" exists-action="delete" />
+    <set-header name="x-vaultproof-client-class" exists-action="delete" />
+    <set-header name="x-vaultproof-device-id" exists-action="delete" />
+    <set-header name="x-vaultproof-fleet-id" exists-action="delete" />
+    <set-header name="x-vaultproof-firmware-version" exists-action="delete" />
+    <set-header name="x-vaultproof-client-cert-thumbprint" exists-action="delete" />
+    <set-header name="x-vaultproof-client-cert-subject" exists-action="delete" />
+
     <!-- Non-secret metadata for VaultProof audit and policy. -->
     <set-header name="x-vaultproof-customer-gateway" exists-action="override">
       <value>{customer-slug}</value>
