@@ -2064,6 +2064,9 @@ async function assertEnterpriseLoginRoute() {
   if (!orgHtml.includes('https://vaultproof.dev/js/app-org-1.js')) {
     throw new Error('Expected org page static scripts to load from public site origin');
   }
+  if (!orgHtml.includes('org-dashboard-theme')) {
+    throw new Error('Expected org page to include the dashboard-matched org theme');
+  }
   assertDashboardShellTheme('/app/org', orgHtml);
 }
 

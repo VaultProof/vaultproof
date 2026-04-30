@@ -470,8 +470,309 @@ const ENTERPRISE_CONTROL_PAGE_THEME = `
     }
 `;
 
+const ENTERPRISE_ORG_PAGE_THEME = `
+    /* org-dashboard-theme */
+    .page-header {
+      margin-bottom: 18px;
+      padding-bottom: 18px;
+      border-bottom: 1px solid rgba(237, 229, 204, 0.1);
+    }
+    .page-heading::before {
+      content: "Organization setup";
+      width: max-content;
+      padding: 6px 10px;
+      border: 1px solid rgba(215, 168, 75, 0.26);
+      border-radius: 999px;
+      background: rgba(215, 168, 75, 0.1);
+      color: var(--gold);
+      font-family: var(--mono);
+      font-size: 10px;
+      font-weight: 850;
+      letter-spacing: .12em;
+      text-transform: uppercase;
+    }
+    .page-actions {
+      align-items: flex-end;
+      gap: 12px;
+      flex: 1 1 460px;
+    }
+    .org-switcher {
+      min-width: 280px;
+      padding: 12px;
+      border: 1px solid rgba(237, 229, 204, 0.14);
+      border-radius: 18px;
+      background: rgba(3, 8, 7, 0.26);
+    }
+    .org-switcher-label,
+    .action-strip-label,
+    .kpi-label,
+    .panel-head,
+    .banner-kicker,
+    .form-label,
+    .checklist-title {
+      color: rgba(244, 236, 213, 0.58);
+      font-weight: 850;
+      letter-spacing: .12em;
+    }
+    .page-desc {
+      max-width: 820px;
+      margin: 0 0 18px;
+      color: rgba(244, 236, 213, 0.72);
+      font-size: 15px;
+      line-height: 1.65;
+    }
+    .subnav {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      width: max-content;
+      max-width: 100%;
+      margin: 0 0 16px;
+      padding: 7px;
+      border: 1px solid rgba(237, 229, 204, 0.14);
+      border-radius: 18px;
+      background: rgba(3, 8, 7, 0.3);
+      box-shadow: inset 0 1px 0 rgba(244, 236, 213, 0.05);
+    }
+    .subnav-link {
+      padding: 9px 12px;
+      border-radius: 13px;
+      background: transparent;
+      border-color: transparent;
+      color: rgba(244, 236, 213, 0.68);
+      font-weight: 800;
+    }
+    .subnav-link:hover {
+      background: rgba(237, 229, 204, 0.08);
+      color: var(--text);
+    }
+    .subnav-link.active {
+      color: var(--ink);
+      box-shadow: 0 12px 34px rgba(215, 168, 75, 0.18);
+    }
+    .action-strip {
+      margin-bottom: 18px;
+      padding: 14px;
+      border-radius: 22px;
+      background:
+        linear-gradient(135deg, rgba(110, 231, 183, 0.1), transparent 46%),
+        rgba(3, 8, 7, 0.32);
+    }
+    .action-strip .btn-outline {
+      min-height: 38px;
+      background: rgba(237, 229, 204, 0.07);
+    }
+    .action-msg,
+    .form-msg,
+    .form-hint,
+    .org-switcher-status {
+      color: var(--muted);
+    }
+    .banner {
+      grid-template-columns: minmax(0, 1.1fr) minmax(260px, .9fr);
+      gap: 20px;
+      margin-bottom: 18px;
+      padding: 22px;
+      border-radius: 28px;
+      background:
+        radial-gradient(circle at 18% 0%, rgba(110, 231, 183, 0.18), transparent 28rem),
+        radial-gradient(circle at 78% 0%, rgba(215, 168, 75, 0.18), transparent 24rem),
+        linear-gradient(180deg, rgba(237, 229, 204, 0.14), rgba(237, 229, 204, 0.055));
+    }
+    .banner-title {
+      font-size: clamp(28px, 4vw, 44px);
+      letter-spacing: -.06em;
+      line-height: 1;
+    }
+    .banner-copy {
+      max-width: 680px;
+      font-size: 14px;
+      line-height: 1.65;
+    }
+    .banner-note {
+      border-left: 1px solid rgba(237, 229, 204, 0.14);
+      padding-left: 18px;
+      color: rgba(244, 236, 213, 0.7);
+    }
+    .kpi-grid {
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 14px;
+      margin-bottom: 18px;
+      border: 0;
+      border-radius: 0;
+      overflow: visible;
+      background: transparent;
+      box-shadow: none;
+    }
+    .kpi-cell {
+      min-height: 150px;
+      padding: 18px;
+      border: 1px solid rgba(237, 229, 204, 0.14);
+      border-radius: 24px;
+      background:
+        linear-gradient(180deg, rgba(237, 229, 204, 0.12), rgba(237, 229, 204, 0.05)),
+        rgba(3, 8, 7, 0.2);
+      box-shadow: 0 18px 70px rgba(0, 0, 0, 0.16);
+    }
+    .kpi-cell + .kpi-cell { border-left: 1px solid rgba(237, 229, 204, 0.14); }
+    .kpi-value {
+      margin-top: 10px;
+      color: var(--text);
+      font-size: clamp(30px, 4vw, 42px);
+      letter-spacing: -.055em;
+      line-height: .95;
+      overflow-wrap: anywhere;
+    }
+    .kpi-sub {
+      margin-top: 12px;
+      color: rgba(244, 236, 213, 0.62);
+      line-height: 1.45;
+      white-space: normal;
+    }
+    .grid {
+      grid-template-columns: minmax(0, 1.02fr) minmax(390px, .98fr);
+      gap: 18px;
+    }
+    .stack { gap: 18px; }
+    .panel {
+      border-radius: 26px;
+      overflow: hidden;
+      background:
+        linear-gradient(180deg, rgba(237, 229, 204, 0.115), rgba(237, 229, 204, 0.045)),
+        rgba(3, 8, 7, 0.18);
+    }
+    .panel-head {
+      min-height: 54px;
+      padding: 16px 18px;
+      border-bottom: 1px solid rgba(237, 229, 204, 0.1);
+      background: rgba(3, 8, 7, 0.18);
+    }
+    .panel-head-right {
+      color: var(--muted);
+      font-weight: 700;
+    }
+    .form-card,
+    .resource-grid,
+    .list {
+      padding: 14px;
+    }
+    .form-card {
+      gap: 14px;
+    }
+    .form-grid {
+      gap: 12px;
+    }
+    .form-field {
+      gap: 7px;
+    }
+    .form-input,
+    .form-select,
+    .org-select {
+      min-height: 42px;
+      border-radius: 14px;
+      background: rgba(3, 8, 7, 0.28);
+      border-color: rgba(237, 229, 204, 0.16);
+      color: var(--text);
+    }
+    .form-input::placeholder {
+      color: rgba(244, 236, 213, 0.34);
+    }
+    .form-input:disabled,
+    .form-select:disabled,
+    .org-select:disabled {
+      background: rgba(237, 229, 204, 0.05);
+      color: rgba(244, 236, 213, 0.42);
+    }
+    .form-inline {
+      gap: 10px;
+    }
+    .form-copy,
+    .callout,
+    .resource-copy {
+      color: rgba(244, 236, 213, 0.68);
+      line-height: 1.55;
+    }
+    .callout,
+    .resource-card,
+    .checklist-box {
+      border-radius: 18px;
+      background: rgba(3, 8, 7, 0.26);
+      border-color: rgba(237, 229, 204, 0.12);
+    }
+    .callout strong {
+      color: var(--text);
+    }
+    .resource-card {
+      padding: 14px;
+    }
+    .resource-title,
+    .list-title {
+      color: var(--text);
+    }
+    .resource-link {
+      color: var(--gold);
+      font-weight: 800;
+    }
+    .checklist-box {
+      margin: 0 14px 14px;
+    }
+    .checklist-item {
+      color: rgba(244, 236, 213, 0.68);
+    }
+    .list-row {
+      padding: 13px 4px;
+      border-bottom: 1px dashed rgba(237, 229, 204, 0.12);
+    }
+    .list-rank,
+    .list-meta,
+    .list-sub {
+      color: rgba(244, 236, 213, 0.55);
+    }
+    .pill {
+      border-color: rgba(237, 229, 204, 0.16);
+      background: rgba(237, 229, 204, 0.07);
+    }
+    .btn-danger {
+      background: rgba(251, 113, 133, 0.1);
+      color: var(--red);
+      border-color: rgba(251, 113, 133, 0.32);
+      border-radius: 13px;
+    }
+    .btn-danger:hover {
+      background: rgba(251, 113, 133, 0.16);
+    }
+    @media (max-width: 1180px) {
+      .kpi-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+      .grid { grid-template-columns: 1fr; }
+    }
+    @media (max-width: 760px) {
+      .page-header { gap: 14px; }
+      .page-actions { align-items: stretch; flex-basis: 100%; }
+      .org-switcher { min-width: 100%; }
+      .banner { grid-template-columns: 1fr; }
+      .banner-note {
+        border-left: 0;
+        border-top: 1px solid rgba(237, 229, 204, 0.14);
+        padding-left: 0;
+        padding-top: 16px;
+      }
+      .kpi-grid,
+      .form-grid {
+        grid-template-columns: 1fr;
+      }
+      .subnav { width: 100%; }
+      .subnav-link { flex: 1 1 130px; text-align: center; }
+      .page-actions > * { flex: 1 1 150px; }
+    }
+`;
+
+const ENTERPRISE_STATIC_PAGE_THEMES: Partial<Record<EnterpriseAppNavPage, string>> = {
+  control: ENTERPRISE_CONTROL_PAGE_THEME,
+  org: ENTERPRISE_ORG_PAGE_THEME,
+};
+
 function applyEnterpriseStaticAppTheme(html: string, activePage: EnterpriseAppNavPage, subtitle: string): string {
-  const pageSpecificTheme = activePage === 'control' ? ENTERPRISE_CONTROL_PAGE_THEME : '';
+  const pageSpecificTheme = ENTERPRISE_STATIC_PAGE_THEMES[activePage] ?? '';
 
   return html
     .replace(/<aside class="sidebar">[\s\S]*?<\/aside>/, renderEnterpriseAppSidebar(activePage, subtitle))
