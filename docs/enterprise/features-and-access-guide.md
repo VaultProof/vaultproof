@@ -363,9 +363,22 @@ Why it matters:
 Built:
 
 - Installed env verifier checks control-plane and executor env files.
+- Secret rotation preparation helper exists for signing-key generation, install order, and customer-handoff evidence markers.
 - Verifier catches missing signing material, Supabase service-role issues, origin-lock misconfiguration, and confidential-mode footguns.
 - Confidential mode fails closed if static/demo unwrap key configuration is present.
 - Production readiness fails closed if a static `AZURE_ATTESTATION_TOKEN` is configured instead of dynamic guest attestation.
+
+Prepare rotation:
+
+```bash
+npm run prepare:enterprise-secret-rotation
+```
+
+Generate new executor signing material:
+
+```bash
+ACTION=generate-signing-material npm run prepare:enterprise-secret-rotation
+```
 
 Verify:
 
@@ -378,6 +391,7 @@ npm run verify:enterprise-secrets
 Current status:
 
 - Verification tooling exists.
+- Rotation preparation tooling exists; generated signing material stays in chmod-600 local files and is not printed to stdout.
 - Setup-time Supabase/service/signing secrets still need operator rotation before external customer production use.
 
 ### SSH Bootstrap Hardening

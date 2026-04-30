@@ -12,6 +12,7 @@ ENTERPRISE_URL="${ENTERPRISE_URL:-https://enterprise.vaultproof.dev}"
 ORIGIN_TLS_HOSTNAME="${ORIGIN_TLS_HOSTNAME:-origin.enterprise.vaultproof.dev}"
 
 RUN_PRODUCTION_VERIFIER="${RUN_PRODUCTION_VERIFIER:-true}"
+RUN_SECRET_ROTATION_PLAN="${RUN_SECRET_ROTATION_PLAN:-true}"
 RUN_ORIGIN_TLS_CERT_PLAN="${RUN_ORIGIN_TLS_CERT_PLAN:-true}"
 RUN_ORIGIN_TLS_PREP_PLAN="${RUN_ORIGIN_TLS_PREP_PLAN:-true}"
 RUN_ORIGIN_TLS_PREFLIGHT="${RUN_ORIGIN_TLS_PREFLIGHT:-true}"
@@ -128,6 +129,14 @@ run_or_skip "${RUN_PRODUCTION_VERIFIER}" \
     EXPECTED_APIM_DEPLOYED="${EXPECTED_APIM_DEPLOYED:-true}" \
     ORIGIN_TLS_HOSTNAME="${PRODUCTION_VERIFIER_ORIGIN_TLS_HOSTNAME:-}" \
     bash "${SCRIPT_DIR}/verify-production-runtime.sh"
+
+run_or_skip "${RUN_SECRET_ROTATION_PLAN}" \
+  "Secret rotation preparation plan" \
+  env \
+    ACTION=plan \
+    CONTROL_PLANE_ENV_FILE="${CONTROL_PLANE_ENV_FILE:-/etc/vaultproof/enterprise-control-plane.env}" \
+    EXECUTOR_ENV_FILE="${EXECUTOR_ENV_FILE:-/etc/vaultproof/enterprise-secure-executor.env}" \
+    bash "${SCRIPT_DIR}/prepare-secret-rotation.sh"
 
 run_or_skip "${RUN_ORIGIN_TLS_CERT_PLAN}" \
   "Origin TLS certificate plan" \

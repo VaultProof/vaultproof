@@ -1033,6 +1033,24 @@ npm run verify:enterprise-secrets
 
 Set `REQUIRE_ROTATION_ACK=true` if you also add `ROTATED_SUPABASE_SERVICE_ROLE_AT` and `ROTATED_EXECUTOR_SIGNING_SECRET_AT` audit markers to the control-plane env after rotating those materials.
 
+Prepare the rotation without mutating live secrets:
+
+```bash
+npm run prepare:enterprise-secret-rotation
+```
+
+Generate fresh executor signing material into a chmod-600 local bundle:
+
+```bash
+ACTION=generate-signing-material npm run prepare:enterprise-secret-rotation
+```
+
+The generated secret is written to the output env file and is not printed. Rotate the Supabase service-role key in Supabase, install the executor env first, then the control-plane env, add the rotation markers, restart both services, and run:
+
+```bash
+REQUIRE_ROTATION_ACK=true npm run verify:enterprise-secrets
+```
+
 The verifier checks Front Door readiness, Confidential VM security settings, Front Door ID origin lock, NSG posture, direct-origin rejection, and loopback readiness.
 
 Capture a timestamped production evidence bundle for audits or handoff:

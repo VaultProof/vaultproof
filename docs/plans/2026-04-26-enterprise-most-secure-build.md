@@ -49,6 +49,7 @@ Live production-confidential path:
 - `npm run evidence:enterprise-production` captures customer/audit evidence snapshots.
 - `npm run validate:enterprise-evidence` validates the latest production evidence bundle for production readiness, Confidential VM posture, Front Door/origin-lock posture, service health, and obvious secret-shaped material before customer handoff.
 - `npm run verify:enterprise-secrets` verifies the installed control-plane/executor env files for secret-rotation readiness and confidential-mode footguns.
+- `npm run prepare:enterprise-secret-rotation` plans customer-handoff secret rotation and can generate fresh executor signing material into chmod-600 local files without printing secrets.
 - `npm run qa:enterprise-live-app` verifies the live enterprise homepage/app pages, crawls enterprise-owned links, confirms `/readiness` remains production-ready, and can optionally authenticate the demo account when `ENTERPRISE_DEMO_EMAIL` and `ENTERPRISE_DEMO_PASSWORD` are provided.
 - `npm run status:enterprise-hardening` provides one read-only finish-line pass across production verification, TLS-origin preparation/readiness, APIM cutover planning, alternate access preparation/readiness, SSH bootstrap planning, and old Container Apps inventory.
 - Azure Monitor/App Insights alerting is deployed as `vp-enterprise-secure-runtime-eastus-hsm-monitoring` and `EXPECTED_MONITORING_DEPLOYED=true npm run verify:enterprise-production` verifies the workspace, App Insights component, action group, health/readiness availability tests, readiness drift alert, health alert, and Confidential VM availability alert.
@@ -399,7 +400,7 @@ Minimum evidence bundle for customer review:
 - [x] Never place unwrap key in Azure app settings or container env vars in production.
 - [x] Add customer-verifiable attestation evidence to execution audit metadata.
 - [x] Cache released unwrap material only in process memory with an explicit short TTL.
-- [ ] Rotate setup-time Supabase/service/signing secrets before customer production. In progress: `npm run verify:enterprise-secrets` now validates installed runtime env files for matching rotated signing material, Supabase service-role presence, origin lock, and confidential-mode footguns; actual secret rotation remains an operator action.
+- [ ] Rotate setup-time Supabase/service/signing secrets before customer production. In progress: `npm run prepare:enterprise-secret-rotation` plans the operator sequence and generates new executor signing material into chmod-600 local files, `render-control-plane-env.sh` supports rotation evidence markers, and `npm run verify:enterprise-secrets` validates installed runtime env files for matching rotated signing material, Supabase service-role presence, origin lock, and confidential-mode footguns; actual Supabase/service-role rotation and live env install remain operator actions.
 
 Important key-type decision:
 
@@ -483,7 +484,8 @@ Implementation/test order:
 18. [x] APIM/container cleanup guardrail slice: require explicit confirmation for APIM rollback and for Container Apps ingress disable/restore/delete actions; keep inventory and plans read-only by default.
 19. [x] Alternate access readiness slice: add `npm run verify:enterprise-alternate-access` to report Bastion, boot diagnostics/serial-console prerequisites, Defender JIT visibility, and SSH NSG posture before public SSH closure.
 20. [x] Alternate access preparation slice: add `npm run prepare:enterprise-alternate-access` to plan and confirmation-gate boot diagnostics plus Azure Bastion subnet/host setup before SSH closure.
-21. [ ] Live browser QA after each major deploy: run the automated live app QA, then manually login as demo user and click through sidebar/subnav links when visual regressions or browser-only session behavior are in scope.
+21. [x] Secret rotation preparation slice: add `npm run prepare:enterprise-secret-rotation` to plan signing/Supabase service-role rotation, generate fresh executor signing material without printing secrets, and render rotation evidence markers for customer handoff verification.
+22. [ ] Live browser QA after each major deploy: run the automated live app QA, then manually login as demo user and click through sidebar/subnav links when visual regressions or browser-only session behavior are in scope.
 
 ## Azure Resources
 

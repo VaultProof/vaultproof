@@ -1701,6 +1701,7 @@ function renderEnterpriseSupportPage(pageName: 'settings' | 'plans' | 'scanner' 
             row('Evidence bundle', 'npm run evidence:enterprise-production captures timestamped infrastructure, app, readiness, and monitoring evidence for review.', 'read-only', 'good'),
             row('Evidence validator', 'npm run validate:enterprise-evidence validates the latest evidence bundle before customer or compliance handoff.', 'read-only', 'good'),
             row('Live app QA', 'npm run qa:enterprise-live-app checks enterprise app pages, internal links, auth-safe rendering, and production readiness.', 'read-only', 'good'),
+            row('Secret rotation preparation', 'npm run prepare:enterprise-secret-rotation plans the install order and can generate fresh executor signing material without printing secrets.', 'read-only', 'good'),
             row('Origin TLS certificate plan', 'npm run prepare:enterprise-origin-cert plans VM CSR generation, signed certificate install, self-signed marker removal, and local TLS checks.', 'read-only', 'good'),
             row('Origin TLS preparation plan', 'npm run prepare:enterprise-origin-tls previews DNS, NSG 443, and APIM backend steps before the HTTPS origin cutover.', 'read-only', 'good'),
             row('Origin TLS preflight', 'npm run verify:enterprise-origin-tls checks DNS, NSG 443, nginx, certificate SAN/trust, and local origin health before HttpsOnly cutover.', 'read-only', 'good'),
@@ -1710,7 +1711,7 @@ function renderEnterpriseSupportPage(pageName: 'settings' | 'plans' | 'scanner' 
           ].join('');
           byId('runbooksGatedList').innerHTML = [
             row('Deploy to Confidential VM', 'npm run deploy:enterprise-vm copies code, rebuilds, and restarts selected systemd services on the CVM.', 'operator', 'warn'),
-            row('Secret verification and rotation', 'npm run verify:enterprise-secrets checks installed env posture; actual rotation remains a manual break-glass action.', 'operator', 'warn'),
+            row('Secret verification and rotation', 'npm run verify:enterprise-secrets checks installed env posture after the prepared rotation bundle is installed; Supabase key rotation and live env installs remain operator actions.', 'operator', 'warn'),
             row('TLS origin cutover', 'npm run cutover:enterprise-origin-tls plans the Front Door HTTPS origin cutover and requires strict preflight plus confirmation-gated enable/rollback.', 'blocked', 'warn'),
             row('APIM cutover', 'npm run cutover:enterprise-apim previews APIM route cutover and requires confirmation-gated enable/rollback before Front Door changes.', 'blocked', 'warn'),
             row('SSH hardening', 'npm run harden:enterprise-ssh can plan, close, or reopen bootstrap SSH with readiness, alternate-access, and confirmation gates.', 'approval', 'warn'),
