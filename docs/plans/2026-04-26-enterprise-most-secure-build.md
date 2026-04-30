@@ -57,7 +57,7 @@ Live production-confidential path:
 - Enterprise `/app/*` pages support opt-in Mixpanel page/navigation analytics through `ENTERPRISE_MIXPANEL_TOKEN`; autocapture and session recording remain disabled by default for enterprise privacy.
 - APIM IaC/policy support is deployed and verified with coarse limits, request-size guards, origin locking, forwarded enterprise host headers, App Insights diagnostics, and `EXPECTED_APIM_DEPLOYED=true npm run verify:enterprise-production`. JWT validation remains disabled until the final Entra/Supabase API audience is selected. `npm run cutover:enterprise-apim` now provides a guarded Front Door-to-APIM cutover/rollback helper that defaults to read-only planning.
 - Azure Monitor/App Insights alerting is live for Front Door health, production readiness drift, and Confidential VM availability.
-- TLS-origin proxy, preparation planning, readiness preflight, and Front Door cutover tooling exist and use the current Azure CLI Front Door origin command shape. A VM-local TLS proxy is installed and verified with a lab-only self-signed certificate, but Front Door still uses HTTP origin forwarding until a real origin DNS name and publicly trusted certificate are installed and cut over.
+- TLS-origin proxy, certificate workflow, preparation planning, readiness preflight, and Front Door cutover tooling exist and use the current Azure CLI Front Door origin command shape. A VM-local TLS proxy is installed and verified with a lab-only self-signed certificate, but Front Door still uses HTTP origin forwarding until a real origin DNS name and publicly trusted certificate are installed and cut over.
 - SSH bootstrap lockdown tooling exists but public SSH remains open until alternate access or a controlled break-glass process is ready.
 - Old Container Apps prototype cleanup tooling exists with inventory, ingress-disable, and explicit deletion actions.
 - Supabase stores enterprise org/project metadata.
@@ -423,7 +423,7 @@ Important key-type decision:
 - [ ] Add mTLS after private networking is stable.
 - [x] Block direct public access to executor.
 - [x] Require Azure Front Door ID origin lock for control-plane origin requests.
-- [ ] Add TLS from Front Door to the VM origin and switch origin forwarding from HTTP to HTTPS. In progress: TLS proxy installer, `npm run prepare:enterprise-origin-tls` DNS/NSG/APIM backend preparation helper, `npm run verify:enterprise-origin-tls` readiness preflight, guarded Front Door cutover/rollback helper, NSG 443 IaC, verifier/evidence support, lab-only self-signed verification support, and runbook are implemented. The VM-local nginx TLS proxy is installed and passes `ORIGIN_TLS_INSECURE=true` verifier checks; publicly trusted origin certificate/DNS, NSG 443 allow, APIM HTTPS backend update, and Front Door `HttpsOnly` cutover are pending.
+- [ ] Add TLS from Front Door to the VM origin and switch origin forwarding from HTTP to HTTPS. In progress: TLS proxy installer, `npm run prepare:enterprise-origin-cert` CSR/certificate install helper, `npm run prepare:enterprise-origin-tls` DNS/NSG/APIM backend preparation helper, `npm run verify:enterprise-origin-tls` readiness preflight, guarded Front Door cutover/rollback helper, NSG 443 IaC, verifier/evidence support, lab-only self-signed verification support, and runbook are implemented. The VM-local nginx TLS proxy is installed and passes `ORIGIN_TLS_INSECURE=true` verifier checks; publicly trusted origin certificate/DNS, NSG 443 allow, APIM HTTPS backend update, and Front Door `HttpsOnly` cutover are pending.
 - [ ] Close public SSH bootstrap ingress after alternate access is ready. In progress: `allowSshBootstrap` IaC switch, `harden-ssh-bootstrap.sh`, verifier expectations, and runbook are implemented; live NSG rule remains `Allow` for bootstrap/break-glass.
 - [ ] Disable/delete old Container Apps prototype resources after soak. In progress: `cleanup-container-apps-prototype.sh` and `npm run cleanup:enterprise-container-apps` can inventory, disable ingress, and explicitly delete apps/environment/ACR; live cleanup is pending operator approval.
 
@@ -478,7 +478,8 @@ Implementation/test order:
 13. [x] Dashboard feature-map slice: expose every built enterprise feature from `/app/dashboard`, including live app pages, readiness/health, evidence/export surfaces, APIM/rollout status, scanner placeholder, and operator runbooks; cover it with smoke/link QA.
 14. [x] Hardening status slice: add `npm run status:enterprise-hardening` to summarize production verification, TLS-origin preparation/readiness, APIM plan, SSH plan, and Container Apps inventory without mutating infrastructure; expose it from `/app/runbooks`.
 15. [x] Origin TLS preparation slice: add `npm run prepare:enterprise-origin-tls` to plan DNS, NSG 443, APIM HTTPS backend, and rollback actions before the final Front Door `HttpsOnly` cutover.
-16. [ ] Live browser QA after each major deploy: run the automated live app QA, then manually login as demo user and click through sidebar/subnav links when visual regressions or browser-only session behavior are in scope.
+16. [x] Origin TLS certificate workflow slice: add `npm run prepare:enterprise-origin-cert` to plan CSR generation, signed certificate install, self-signed marker removal, proxy restart, and VM-local TLS checks.
+17. [ ] Live browser QA after each major deploy: run the automated live app QA, then manually login as demo user and click through sidebar/subnav links when visual regressions or browser-only session behavior are in scope.
 
 ## Azure Resources
 

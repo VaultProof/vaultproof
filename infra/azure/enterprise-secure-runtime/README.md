@@ -382,6 +382,17 @@ sudo install -o root -g root -m 0644 origin.enterprise.vaultproof.dev.crt /etc/v
 sudo install -o root -g root -m 0600 origin.enterprise.vaultproof.dev.key /etc/vaultproof/tls/origin.key
 ```
 
+Use the guarded certificate helper if you want the VM to generate the key and CSR, then install only the CA-signed certificate/fullchain after DNS validation:
+
+```bash
+npm run prepare:enterprise-origin-cert
+ACTION=generate-csr CONFIRM_ORIGIN_TLS_CERT=generate-origin-csr npm run prepare:enterprise-origin-cert
+ACTION=install LOCAL_CERT_FILE=/path/to/fullchain.pem CONFIRM_ORIGIN_TLS_CERT=install-origin-cert npm run prepare:enterprise-origin-cert
+ACTION=check npm run prepare:enterprise-origin-cert
+```
+
+If the key was generated outside the Confidential VM, pass `LOCAL_KEY_FILE=/path/to/privkey.pem` with `ACTION=install`. The install action verifies the certificate SAN, installs certificate material under `/etc/vaultproof/tls`, removes `/etc/vaultproof/tls/origin.self-signed`, restarts the origin TLS proxy, and runs a VM-local trusted TLS `/health` check.
+
 Install the TLS proxy on the Confidential VM:
 
 ```bash

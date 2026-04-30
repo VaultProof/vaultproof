@@ -223,10 +223,27 @@ Built:
 
 - VM-local nginx TLS proxy installer exists.
 - The TLS proxy is installed on the Confidential VM.
+- Origin certificate helper exists for VM-generated CSR, CA-signed certificate install, self-signed marker cleanup, and VM-local TLS health checks.
 - TLS origin cutover helper exists for plan, enable, and rollback.
 - TLS origin preparation helper exists for DNS/NSG/APIM backend planning and guarded Azure-side prep.
 - Read-only TLS readiness preflight exists and is exposed in runbooks.
 - Production verifier can validate TLS-origin posture when `ORIGIN_TLS_HOSTNAME` is enabled.
+
+Certificate plan:
+
+```bash
+RESOURCE_GROUP=vaultproof-enterprise \
+DEPLOYMENT_NAME=vp-enterprise-secure-runtime-eastus-hsm \
+ORIGIN_TLS_HOSTNAME=origin.enterprise.vaultproof.dev \
+npm run prepare:enterprise-origin-cert
+```
+
+Certificate actions:
+
+- `ACTION=generate-csr CONFIRM_ORIGIN_TLS_CERT=generate-origin-csr npm run prepare:enterprise-origin-cert`
+- `ACTION=install LOCAL_CERT_FILE=/path/to/fullchain.pem CONFIRM_ORIGIN_TLS_CERT=install-origin-cert npm run prepare:enterprise-origin-cert`
+- `ACTION=install LOCAL_CERT_FILE=/path/to/fullchain.pem LOCAL_KEY_FILE=/path/to/privkey.pem CONFIRM_ORIGIN_TLS_CERT=install-origin-cert npm run prepare:enterprise-origin-cert`
+- `ACTION=check npm run prepare:enterprise-origin-cert`
 
 Preparation plan:
 
