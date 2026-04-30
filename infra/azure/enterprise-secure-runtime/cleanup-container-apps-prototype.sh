@@ -13,6 +13,7 @@ FRONT_DOOR_PROFILE="${FRONT_DOOR_PROFILE:-vaultproof-enterprise-fd}"
 FRONT_DOOR_ORIGIN_GROUP="${FRONT_DOOR_ORIGIN_GROUP:-default-origin-group}"
 SKIP_READINESS_CHECK="${SKIP_READINESS_CHECK:-false}"
 SKIP_FRONT_DOOR_ORIGIN_CHECK="${SKIP_FRONT_DOOR_ORIGIN_CHECK:-false}"
+CONFIRM_CONTAINER_APPS_CLEANUP="${CONFIRM_CONTAINER_APPS_CLEANUP:-}"
 
 require_command() {
   local command_name="$1"
@@ -111,6 +112,15 @@ require_front_door_not_using_container_apps() {
   fi
 }
 
+require_confirmation() {
+  local expected="$1"
+  local action_description="$2"
+  if [[ "${CONFIRM_CONTAINER_APPS_CLEANUP}" != "${expected}" ]]; then
+    echo "Refusing ${action_description}: set CONFIRM_CONTAINER_APPS_CLEANUP=${expected} to confirm this live cleanup action." >&2
+    exit 1
+  fi
+}
+
 inventory() {
   echo "VaultProof old Container Apps prototype inventory"
   echo "  resource group: ${RESOURCE_GROUP}"
@@ -138,9 +148,17 @@ inventory() {
     --origin-group-name "${FRONT_DOOR_ORIGIN_GROUP}" \
     --query "[].{name:name,hostName:hostName,enabledState:enabledState,priority:priority,weight:weight}" \
     -o table
+  echo
+  echo "Guarded cleanup actions:"
+  echo "  ACTION=disable-ingress CONFIRM_CONTAINER_APPS_CLEANUP=disable-prototype-ingress npm run cleanup:enterprise-container-apps"
+  echo "  ACTION=restore-ingress CONFIRM_CONTAINER_APPS_CLEANUP=restore-prototype-ingress npm run cleanup:enterprise-container-apps"
+  echo "  ACTION=delete-apps CONFIRM_CONTAINER_APPS_CLEANUP=delete-prototype-apps npm run cleanup:enterprise-container-apps"
+  echo "  ACTION=delete-environment CONFIRM_CONTAINER_APPS_CLEANUP=delete-prototype-environment npm run cleanup:enterprise-container-apps"
+  echo "  ACTION=delete-acr CONFIRM_CONTAINER_APPS_CLEANUP=delete-prototype-acr npm run cleanup:enterprise-container-apps"
 }
 
 disable_ingress() {
+  require_confirmation "disable-prototype-ingress" "Container Apps ingress disable"
   require_production_ready
   require_front_door_not_using_container_apps
   while IFS= read -r app_name; do
@@ -157,6 +175,7 @@ disable_ingress() {
 }
 
 delete_apps() {
+  require_confirmation "delete-prototype-apps" "Container Apps delete"
   require_production_ready
   require_front_door_not_using_container_apps
   while IFS= read -r app_name; do
@@ -174,6 +193,7 @@ delete_apps() {
 }
 
 restore_ingress() {
+  require_confirmation "restore-prototype-ingress" "Container Apps ingress restore"
   while IFS= read -r app_name; do
     if app_exists "${app_name}"; then
       echo "Restoring external ingress for ${app_name}..."
@@ -191,6 +211,7 @@ restore_ingress() {
 }
 
 delete_environment() {
+  require_confirmation "delete-prototype-environment" "Container Apps environment delete"
   require_production_ready
   require_front_door_not_using_container_apps
   echo "Deleting Container Apps environment ${CONTAINER_APPS_ENVIRONMENT}..."
@@ -202,6 +223,7 @@ delete_environment() {
 }
 
 delete_acr() {
+  require_confirmation "delete-prototype-acr" "Azure Container Registry delete"
   require_production_ready
   require_front_door_not_using_container_apps
   echo "Deleting Azure Container Registry ${ACR_NAME}..."

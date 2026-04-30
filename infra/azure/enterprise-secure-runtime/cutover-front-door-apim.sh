@@ -205,9 +205,11 @@ if (payload.security_profile !== 'azure-confidential-production') {
 " "${readiness_file}"
 }
 
-require_explicit_confirmation() {
-  if [[ "${CONFIRM_APIM_CUTOVER}" != "route-enterprise-through-apim" ]]; then
-    echo "Refusing APIM cutover: set CONFIRM_APIM_CUTOVER=route-enterprise-through-apim to mutate Front Door." >&2
+require_confirmation() {
+  local expected="$1"
+  local action_description="$2"
+  if [[ "${CONFIRM_APIM_CUTOVER}" != "${expected}" ]]; then
+    echo "Refusing ${action_description}: set CONFIRM_APIM_CUTOVER=${expected} to mutate Front Door." >&2
     exit 1
   fi
 }
@@ -273,7 +275,7 @@ enable_apim_origin() {
   gateway_host="$(url_host "${gateway_url}")"
   origin_name="$(selected_front_door_origin_name)"
 
-  require_explicit_confirmation
+  require_confirmation "route-enterprise-through-apim" "APIM cutover"
   require_production_ready
   require_apim_ready
 
@@ -373,7 +375,7 @@ case "${ACTION}" in
     echo "  ACTION=enable CONFIRM_APIM_CUTOVER=route-enterprise-through-apim RUN_VERIFIER=true npm run cutover:enterprise-apim"
     echo
     echo "Rollback to the VM origin:"
-    echo "  ACTION=rollback npm run cutover:enterprise-apim"
+    echo "  ACTION=rollback CONFIRM_APIM_CUTOVER=rollback-enterprise-to-vm npm run cutover:enterprise-apim"
     ;;
   enable)
     enable_apim_origin
@@ -381,6 +383,7 @@ case "${ACTION}" in
     run_verifier_if_requested
     ;;
   rollback)
+    require_confirmation "rollback-enterprise-to-vm" "APIM rollback"
     rollback_vm_origin
     show_current_front_door
     ;;

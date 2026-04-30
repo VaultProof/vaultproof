@@ -1710,9 +1710,9 @@ function renderEnterpriseSupportPage(pageName: 'settings' | 'plans' | 'scanner' 
             row('Deploy to Confidential VM', 'npm run deploy:enterprise-vm copies code, rebuilds, and restarts selected systemd services on the CVM.', 'operator', 'warn'),
             row('Secret verification and rotation', 'npm run verify:enterprise-secrets checks installed env posture; actual rotation remains a manual break-glass action.', 'operator', 'warn'),
             row('TLS origin cutover', 'npm run cutover:enterprise-origin-tls plans the Front Door HTTPS origin cutover and requires strict preflight plus confirmation-gated enable/rollback.', 'blocked', 'warn'),
-            row('APIM cutover', 'npm run cutover:enterprise-apim previews APIM route cutover and requires explicit confirmation before Front Door changes.', 'blocked', 'warn'),
+            row('APIM cutover', 'npm run cutover:enterprise-apim previews APIM route cutover and requires confirmation-gated enable/rollback before Front Door changes.', 'blocked', 'warn'),
             row('SSH hardening', 'npm run harden:enterprise-ssh can plan, close, or reopen bootstrap SSH with readiness, alternate-access, and confirmation gates.', 'approval', 'warn'),
-            row('Container Apps cleanup', 'npm run cleanup:enterprise-container-apps inventories, disables, or deletes old prototype resources after approval.', 'approval', 'warn')
+            row('Container Apps cleanup', 'npm run cleanup:enterprise-container-apps inventories the old prototype resources and requires action-specific confirmation before ingress disable/restore/delete.', 'approval', 'warn')
           ].join('');
         }
       }

@@ -333,6 +333,7 @@ Disable public ingress on the old Container Apps first. This is the recommended 
 RESOURCE_GROUP=vaultproof-enterprise \
 ENTERPRISE_URL=https://enterprise.vaultproof.dev \
 ACTION=disable-ingress \
+CONFIRM_CONTAINER_APPS_CLEANUP=disable-prototype-ingress \
 npm run cleanup:enterprise-container-apps
 ```
 
@@ -340,6 +341,7 @@ If rollback needs the old Container Apps endpoint again, restore external ingres
 
 ```bash
 ACTION=restore-ingress \
+CONFIRM_CONTAINER_APPS_CLEANUP=restore-prototype-ingress \
 npm run cleanup:enterprise-container-apps
 ```
 
@@ -351,14 +353,14 @@ The script refuses to disable or delete the prototype path unless:
 After a soak period, explicitly delete the old apps and then the environment if it is dedicated to VaultProof:
 
 ```bash
-ACTION=delete-apps npm run cleanup:enterprise-container-apps
-ACTION=delete-environment npm run cleanup:enterprise-container-apps
+ACTION=delete-apps CONFIRM_CONTAINER_APPS_CLEANUP=delete-prototype-apps npm run cleanup:enterprise-container-apps
+ACTION=delete-environment CONFIRM_CONTAINER_APPS_CLEANUP=delete-prototype-environment npm run cleanup:enterprise-container-apps
 ```
 
 Only delete the ACR if no other deployment path uses it:
 
 ```bash
-ACTION=delete-acr npm run cleanup:enterprise-container-apps
+ACTION=delete-acr CONFIRM_CONTAINER_APPS_CLEANUP=delete-prototype-acr npm run cleanup:enterprise-container-apps
 ```
 
 ### TLS Origin Cutover
@@ -813,7 +815,9 @@ npm run cutover:enterprise-apim
 Rollback to the VM origin:
 
 ```bash
-ACTION=rollback npm run cutover:enterprise-apim
+ACTION=rollback \
+CONFIRM_APIM_CUTOVER=rollback-enterprise-to-vm \
+npm run cutover:enterprise-apim
 ```
 
 For the final VaultProof-managed APIM route, Front Door should point to the APIM gateway origin, and APIM should point to the Confidential VM control-plane origin. Avoid configuring APIM to forward to `https://enterprise.vaultproof.dev`, because that creates a routing loop once Front Door sends `enterprise.vaultproof.dev` to APIM.

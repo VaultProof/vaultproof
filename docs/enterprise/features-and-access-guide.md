@@ -300,7 +300,7 @@ Built:
 - APIM health/readiness routes are verified.
 - APIM policies include request-size guards, rate limits, quotas, provider-secret header stripping, APIM marker headers, origin-lock forwarding, and App Insights diagnostics.
 - Optional JWT validation support exists in IaC/policy.
-- APIM Front Door cutover helper exists for plan, enable, and rollback.
+- APIM Front Door cutover helper exists for plan, confirmation-gated enable, and confirmation-gated rollback.
 
 Access:
 
@@ -323,6 +323,10 @@ Live mutation is guarded. `ACTION=enable` refuses to run unless:
 - APIM `/health` and `/readiness` pass.
 - Backend safety checks pass.
 - `CONFIRM_APIM_CUTOVER=route-enterprise-through-apim` is set.
+
+Rollback is also guarded:
+
+- `ACTION=rollback CONFIRM_APIM_CUTOVER=rollback-enterprise-to-vm npm run cutover:enterprise-apim`
 
 Current status:
 
@@ -407,7 +411,8 @@ Built:
 - Disable-ingress action exists for reversible cleanup.
 - Delete actions exist for apps, environment, and ACR.
 - Restore-ingress action exists for rollback while apps still exist.
-- Destructive actions require production readiness and refuse to run if Front Door still has an enabled Container Apps origin.
+- Disable/delete actions require production readiness, confirmation phrases, and refuse to run if Front Door still has an enabled Container Apps origin.
+- Restore-ingress requires a confirmation phrase because it reopens the prototype public path.
 
 Inventory command:
 
@@ -415,6 +420,14 @@ Inventory command:
 RESOURCE_GROUP=vaultproof-enterprise \
 npm run cleanup:enterprise-container-apps
 ```
+
+Guarded actions:
+
+- `ACTION=disable-ingress CONFIRM_CONTAINER_APPS_CLEANUP=disable-prototype-ingress npm run cleanup:enterprise-container-apps`
+- `ACTION=restore-ingress CONFIRM_CONTAINER_APPS_CLEANUP=restore-prototype-ingress npm run cleanup:enterprise-container-apps`
+- `ACTION=delete-apps CONFIRM_CONTAINER_APPS_CLEANUP=delete-prototype-apps npm run cleanup:enterprise-container-apps`
+- `ACTION=delete-environment CONFIRM_CONTAINER_APPS_CLEANUP=delete-prototype-environment npm run cleanup:enterprise-container-apps`
+- `ACTION=delete-acr CONFIRM_CONTAINER_APPS_CLEANUP=delete-prototype-acr npm run cleanup:enterprise-container-apps`
 
 Current status:
 

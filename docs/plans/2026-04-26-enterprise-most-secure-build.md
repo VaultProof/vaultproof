@@ -411,7 +411,7 @@ Important key-type decision:
 ### Phase 4: Private Network And Call Authentication
 
 - [x] Add Azure API Management sidecar in front of the enterprise control plane. Deployed as `vp-enterprise-secure-runtime-eastus-hsm-apim` with backend `http://20.85.214.14:3001`, forwarded host `enterprise.vaultproof.dev`, App Insights diagnostics, APIM origin-lock secret, and `AzureCloud.eastus` NSG source for StandardV2 shared egress.
-- [ ] Cut Azure Front Door over to APIM after TLS/private-origin risk is resolved. In progress: APIM currently remains a verified sidecar, not the active `enterprise.vaultproof.dev` route; `cutover-front-door-apim.sh` and `npm run cutover:enterprise-apim` now provide read-only planning, guarded enable, rollback, APIM readiness checks, backend HTTPS safety, and verifier expectations.
+- [ ] Cut Azure Front Door over to APIM after TLS/private-origin risk is resolved. In progress: APIM currently remains a verified sidecar, not the active `enterprise.vaultproof.dev` route; `cutover-front-door-apim.sh` and `npm run cutover:enterprise-apim` now provide read-only planning, confirmation-gated enable/rollback, APIM readiness checks, backend HTTPS safety, and verifier expectations.
 - [x] Configure APIM policies for JWT validation, coarse rate limits, quotas, request size limits, and observability. Deployable APIM policy support now includes JWT validation, coarse limits, quota, request-size guard, provider-secret header stripping, APIM marker, APIM origin-lock forwarding, API operations, and App Insights diagnostics.
 - [x] Support customer-managed APIM mode using `docs/enterprise/customer-managed-apim-policy.xml`.
 - [x] Support customer device/IoT mode using `docs/enterprise/customer-managed-apim-device-policy.xml`.
@@ -425,7 +425,7 @@ Important key-type decision:
 - [x] Require Azure Front Door ID origin lock for control-plane origin requests.
 - [ ] Add TLS from Front Door to the VM origin and switch origin forwarding from HTTP to HTTPS. In progress: TLS proxy installer, `npm run prepare:enterprise-origin-cert` CSR/certificate install helper, `npm run prepare:enterprise-origin-tls` DNS/NSG/APIM backend preparation helper, `npm run verify:enterprise-origin-tls` readiness preflight, confirmation-gated Front Door cutover/rollback helper with strict preflight, NSG 443 IaC, verifier/evidence support, lab-only self-signed verification support, and runbook are implemented. The VM-local nginx TLS proxy is installed and passes `ORIGIN_TLS_INSECURE=true` verifier checks; publicly trusted origin certificate/DNS, NSG 443 allow, APIM HTTPS backend update, and Front Door `HttpsOnly` cutover are pending.
 - [ ] Close public SSH bootstrap ingress after alternate access is ready. In progress: `allowSshBootstrap` IaC switch, `npm run harden:enterprise-ssh`, confirmation-gated close/reopen workflow, verifier expectations, and runbook are implemented; live NSG rule remains `Allow` for bootstrap/break-glass.
-- [ ] Disable/delete old Container Apps prototype resources after soak. In progress: `cleanup-container-apps-prototype.sh` and `npm run cleanup:enterprise-container-apps` can inventory, disable ingress, and explicitly delete apps/environment/ACR; live cleanup is pending operator approval.
+- [ ] Disable/delete old Container Apps prototype resources after soak. In progress: `cleanup-container-apps-prototype.sh` and `npm run cleanup:enterprise-container-apps` can inventory, confirmation-gate ingress disable/restore, and explicitly delete apps/environment/ACR; live cleanup is pending operator approval.
 
 ### Phase 5: Enterprise Controls
 
@@ -480,7 +480,8 @@ Implementation/test order:
 15. [x] Origin TLS preparation slice: add `npm run prepare:enterprise-origin-tls` to plan DNS, NSG 443, APIM HTTPS backend, and rollback actions before the final Front Door `HttpsOnly` cutover.
 16. [x] Origin TLS certificate workflow slice: add `npm run prepare:enterprise-origin-cert` to plan CSR generation, signed certificate install, self-signed marker removal, proxy restart, and VM-local TLS checks.
 17. [x] Origin TLS cutover guardrail slice: require explicit confirmation for Front Door `HttpsOnly` enable/rollback and run strict origin TLS preflight before live enable by default.
-18. [ ] Live browser QA after each major deploy: run the automated live app QA, then manually login as demo user and click through sidebar/subnav links when visual regressions or browser-only session behavior are in scope.
+18. [x] APIM/container cleanup guardrail slice: require explicit confirmation for APIM rollback and for Container Apps ingress disable/restore/delete actions; keep inventory and plans read-only by default.
+19. [ ] Live browser QA after each major deploy: run the automated live app QA, then manually login as demo user and click through sidebar/subnav links when visual regressions or browser-only session behavior are in scope.
 
 ## Azure Resources
 
