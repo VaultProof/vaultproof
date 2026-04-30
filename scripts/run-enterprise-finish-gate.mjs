@@ -1,6 +1,8 @@
 #!/usr/bin/env node
 
 import { spawnSync } from 'node:child_process';
+import { mkdirSync, writeFileSync } from 'node:fs';
+import { join } from 'node:path';
 
 const root = process.cwd();
 const outputDir = process.env.OUTPUT_DIR || '/tmp/vaultproof-enterprise-finish-gate';
@@ -29,6 +31,25 @@ function tail(value, max = 3000) {
   return `...${text.slice(text.length - max)}`;
 }
 
+function parseHardeningSummary(output) {
+  const lines = String(output || '').split('\n');
+  const startIndex = lines.findIndex((line) => line.trim() === 'Hardening status summary:');
+  if (startIndex < 0) return [];
+
+  const summary = [];
+  for (const line of lines.slice(startIndex + 1)) {
+    if (!line.trim()) break;
+    const match = line.match(/^\s{2}(.{1,36})\s+(pass|attention|failed|skipped)\s+(.*)$/);
+    if (!match) continue;
+    summary.push({
+      name: match[1].trim(),
+      status: match[2],
+      note: match[3].trim(),
+    });
+  }
+  return summary;
+}
+
 function runStep(name, command, args, options = {}) {
   const startedAt = Date.now();
   const result = spawnSync(command, args, {
@@ -42,6 +63,7 @@ function runStep(name, command, args, options = {}) {
   const stderr = result.stderr || '';
   const output = `${stdout}\n${stderr}`;
   const hasAttention = options.attentionPattern?.test(output) || false;
+  const attentionItems = options.parseAttentionItems?.(output) || [];
   const status = result.status === 0 ? (hasAttention ? 'attention' : 'pass') : 'fail';
 
   const step = {
@@ -50,6 +72,9 @@ function runStep(name, command, args, options = {}) {
     status,
     durationMs,
   };
+  if (attentionItems.length > 0) {
+    step.attentionItems = attentionItems;
+  }
   if (status !== 'pass') {
     step.outputTail = tail(output);
   }
@@ -61,10 +86,17 @@ function runStep(name, command, args, options = {}) {
       detail: tail(stderr || stdout || `exit ${result.status}`),
     });
   } else if (hasAttention) {
-    pendingActions.push({
-      name,
-      detail: options.attentionDetail || 'Step completed, but reported remaining attention items.',
-    });
+    if (attentionItems.length > 0) {
+      pendingActions.push(...attentionItems.map((item) => ({
+        name: item.name,
+        detail: item.note,
+      })));
+    } else {
+      pendingActions.push({
+        name,
+        detail: options.attentionDetail || 'Step completed, but reported remaining attention items.',
+      });
+    }
   }
   return result;
 }
@@ -131,6 +163,8 @@ runOrSkip(
       EXIT_NONZERO_ON_ATTENTION: 'false',
     },
     attentionPattern: /need attention|BLOCKER | WARN | attention\s+/i,
+    parseAttentionItems: (output) => parseHardeningSummary(output)
+      .filter((item) => item.status === 'attention' || item.status === 'failed'),
     attentionDetail: 'Read-only hardening status still reports live cutover, cleanup, rotation, or access-hardening items.',
   },
 );
@@ -165,7 +199,7 @@ if (!runHardeningStatus) {
 
 const status = blockers.length > 0 ? 'blocked' : pendingActions.length > 0 ? 'attention' : 'ok';
 
-console.log(JSON.stringify({
+const result = {
   status,
   outputDir,
   options: {
@@ -183,7 +217,12 @@ console.log(JSON.stringify({
   pendingActions,
   warnings,
   blockers,
-}, null, 2));
+};
+
+mkdirSync(outputDir, { recursive: true });
+writeFileSync(join(outputDir, 'finish-gate-result.json'), JSON.stringify(result, null, 2) + '\n');
+
+console.log(JSON.stringify(result, null, 2));
 
 if (blockers.length > 0) {
   process.exit(1);

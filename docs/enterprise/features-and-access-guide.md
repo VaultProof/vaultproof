@@ -850,7 +850,7 @@ OUTPUT_DIR=/tmp/vaultproof-enterprise-finish-gate \
 npm run gate:enterprise-finish
 ```
 
-The finish gate runs the enterprise control-plane smoke, APIM policy smoke, handoff gate, live app QA, and read-only hardening status. It returns `ok`, `attention`, or `blocked`. Use `STRICT_HARDENING_CLEAR=true` when CI should fail on remaining live cutover/cleanup attention items, and use `REQUIRE_EVIDENCE=true REQUIRE_VALID_EVIDENCE=true STRICT_CUSTOMER_HANDOFF=true` before external customer handoff.
+The finish gate runs the enterprise control-plane smoke, APIM policy smoke, handoff gate, live app QA, and read-only hardening status. It returns `ok`, `attention`, or `blocked`, writes `finish-gate-result.json` in the output directory, and lists the named pending actions from the hardening summary. Use `STRICT_HARDENING_CLEAR=true` when CI should fail on remaining live cutover/cleanup attention items, and use `REQUIRE_EVIDENCE=true REQUIRE_VALID_EVIDENCE=true STRICT_CUSTOMER_HANDOFF=true` before external customer handoff.
 
 ### Build a handoff package
 
