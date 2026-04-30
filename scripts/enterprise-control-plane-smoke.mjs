@@ -2046,6 +2046,9 @@ async function assertEnterpriseLoginRoute() {
   if (!controlHtml.includes('https://vaultproof.dev/js/app-control-1.js')) {
     throw new Error('Expected control page static scripts to load from public site origin');
   }
+  if (!controlHtml.includes('control-dashboard-theme')) {
+    throw new Error('Expected control page to include the dashboard-matched control theme');
+  }
   assertDashboardShellTheme('/app/control', controlHtml);
 
   const orgResponse = await handleEnterpriseControlPlaneRequest(

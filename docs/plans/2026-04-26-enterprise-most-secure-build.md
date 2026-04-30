@@ -509,7 +509,8 @@ Implementation/test order:
 34. [x] Internal admin console foundation slice: add `admin.vaultproof.dev`-ready routing plus a read-only VaultProof employee console for businesses, users, projects, SSO rollout, support signals, and recent audit, gated by explicit employee email/domain allowlists.
 35. [x] Customer dashboard setup-copy slice: remove product-selling copy from the signed-in enterprise customer dashboard and refocus it on onboarding, SSO, teammates, projects, provider slots, readiness, alerts, evidence, and go-live tasks.
 36. [x] Enterprise app theme parity slice: move all signed-in enterprise app pages onto the same dashboard shell/theme and add smoke coverage so future pages keep the VP mark, workspace/evidence/setup sidebar, and setup-order card.
-37. [ ] Live browser QA after each major deploy: run the automated live app QA, then manually login as demo user and click through sidebar/subnav links when visual regressions or browser-only session behavior are in scope.
+37. [x] Control page dashboard polish slice: add a route-scoped `/app/control` theme layer so the control overview uses the same enterprise shell, tab bar, cardified KPI grid, operator action strip, banner treatment, and nested policy/member/runtime cards as the main business dashboard.
+38. [ ] Live browser QA after each major deploy: run the automated live app QA, then manually login as demo user and click through sidebar/subnav links when visual regressions or browser-only session behavior are in scope.
 
 ### Phase 7: VaultProof Internal Admin Console
 
