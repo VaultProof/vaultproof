@@ -134,6 +134,28 @@ Enterprise caller lock can restrict execution by:
 
 Policy editing is available in `/app/control`.
 
+### mTLS Caller-Lock Preparation
+
+The control plane can already require an approved client certificate identity before it signs a secure execution envelope. The gateway, usually VaultProof APIM or a customer-managed APIM, must validate mTLS first and then forward trusted certificate metadata to the control plane.
+
+Use the read-only helper to plan the policy:
+
+```bash
+npm run prepare:enterprise-mtls
+```
+
+When you have the customer or gateway client certificate:
+
+```bash
+CLIENT_CERT_FILE=/path/to/client-cert.pem \
+CLIENT_CLASS=gateway \
+CUSTOMER_GATEWAY=customer-apim \
+PROJECT_ID='<project-id>' \
+npm run prepare:enterprise-mtls
+```
+
+This prints the normalized certificate thumbprint, subject fragment, APIM header contract, and a `caller_lock_policy` JSON snippet for `allowed_client_certificate_thumbprints` and `allowed_client_certificate_subjects`. It does not change APIM, Supabase, project policy, or live traffic.
+
 ### Emergency Revoke
 
 Enterprise admins can revoke provider slots.

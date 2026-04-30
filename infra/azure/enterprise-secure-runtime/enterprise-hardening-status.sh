@@ -15,6 +15,7 @@ RUN_PRODUCTION_VERIFIER="${RUN_PRODUCTION_VERIFIER:-true}"
 RUN_SECRET_ROTATION_PLAN="${RUN_SECRET_ROTATION_PLAN:-true}"
 RUN_PRIVATE_ORIGIN_PLAN="${RUN_PRIVATE_ORIGIN_PLAN:-true}"
 RUN_APIM_JWT_PLAN="${RUN_APIM_JWT_PLAN:-true}"
+RUN_MTLS_PLAN="${RUN_MTLS_PLAN:-true}"
 RUN_ORIGIN_TLS_CERT_PLAN="${RUN_ORIGIN_TLS_CERT_PLAN:-true}"
 RUN_ORIGIN_TLS_PREP_PLAN="${RUN_ORIGIN_TLS_PREP_PLAN:-true}"
 RUN_ORIGIN_TLS_PREFLIGHT="${RUN_ORIGIN_TLS_PREFLIGHT:-true}"
@@ -165,6 +166,17 @@ run_or_skip "${RUN_APIM_JWT_PLAN}" \
     VALIDATE_JWT_METADATA="${VALIDATE_JWT_METADATA:-false}" \
     ACTION=plan \
     bash "${SCRIPT_DIR}/prepare-apim-jwt-validation.sh"
+
+run_or_skip "${RUN_MTLS_PLAN}" \
+  "mTLS caller-lock preparation plan" \
+  env \
+    ACTION=plan \
+    CLIENT_CERT_FILE="${CLIENT_CERT_FILE:-}" \
+    CLIENT_CLASS="${CLIENT_CLASS:-gateway}" \
+    CUSTOMER_GATEWAY="${CUSTOMER_GATEWAY:-customer-apim}" \
+    SUBJECT_FRAGMENT="${SUBJECT_FRAGMENT:-}" \
+    PROJECT_ID="${PROJECT_ID:-<project-id>}" \
+    bash "${SCRIPT_DIR}/prepare-mtls-caller-lock.sh"
 
 run_or_skip "${RUN_ORIGIN_TLS_CERT_PLAN}" \
   "Origin TLS certificate plan" \

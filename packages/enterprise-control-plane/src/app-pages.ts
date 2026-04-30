@@ -1704,6 +1704,7 @@ function renderEnterpriseSupportPage(pageName: 'settings' | 'plans' | 'scanner' 
             row('Secret rotation preparation', 'npm run prepare:enterprise-secret-rotation plans the install order and can generate fresh executor signing material without printing secrets.', 'read-only', 'good'),
             row('Private origin preparation', 'npm run prepare:enterprise-private-origin inventories Front Door, APIM, VM network posture, and Private Link migration choices without changing Azure.', 'read-only', 'good'),
             row('APIM JWT validation preparation', 'npm run prepare:enterprise-apim-jwt plans Supabase or Entra JWT validation settings before enabling APIM validate-jwt.', 'read-only', 'good'),
+            row('mTLS caller-lock preparation', 'npm run prepare:enterprise-mtls computes a client certificate thumbprint, subject fragment, APIM header contract, and caller-lock policy snippet without changing Azure.', 'read-only', 'good'),
             row('Origin TLS certificate plan', 'npm run prepare:enterprise-origin-cert plans VM CSR generation, signed certificate install, self-signed marker removal, and local TLS checks.', 'read-only', 'good'),
             row('Origin TLS preparation plan', 'npm run prepare:enterprise-origin-tls previews DNS, NSG 443, and APIM backend steps before the HTTPS origin cutover.', 'read-only', 'good'),
             row('Origin TLS preflight', 'npm run verify:enterprise-origin-tls checks DNS, NSG 443, nginx, certificate SAN/trust, and local origin health before HttpsOnly cutover.', 'read-only', 'good'),

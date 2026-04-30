@@ -865,6 +865,10 @@ Supported project-level fields:
 - `allowed_upstream_hosts`: upstream hosts or URLs, such as `api.openai.com`.
 - `allowed_upstream_path_prefixes`: upstream API path prefixes, such as `/v1/responses`.
 - `rate_limit_per_minute`: maximum signed execution dispatches per minute for this project or provider override.
+- `allowed_customer_gateways`: trusted gateway markers, such as `vaultproof-managed` or a customer APIM marker.
+- `allowed_client_classes`: trusted caller classes, such as `browser`, `server`, `device`, `iot`, or `gateway`.
+- `allowed_client_certificate_thumbprints`: normalized certificate thumbprints forwarded by APIM/customer gateway after mTLS validation.
+- `allowed_client_certificate_subjects`: certificate subject fragments, such as `cn=customer-gateway`, forwarded by APIM/customer gateway after mTLS validation.
 - `provider_overrides.<provider-or-slug>`: stricter provider-specific policy using the same fields plus the caller-lock fields.
 
 Example:
@@ -1007,7 +1011,7 @@ ORIGIN_TLS_HOSTNAME=origin.enterprise.vaultproof.dev \
 npm run status:enterprise-hardening
 ```
 
-The wrapper runs the production verifier, secret-rotation plan, private-origin plan, APIM JWT validation plan, TLS-origin preparation plan, TLS-origin readiness preflight, APIM cutover plan, SSH bootstrap hardening plan, and Container Apps prototype inventory. It does not mutate Azure resources. Add `RUN_LIVE_APP_QA=true` to include the live enterprise app link/readiness sweep, or `EXIT_NONZERO_ON_ATTENTION=true` when CI should fail on any reported blocker.
+The wrapper runs the production verifier, secret-rotation plan, private-origin plan, APIM JWT validation plan, mTLS caller-lock preparation plan, TLS-origin preparation plan, TLS-origin readiness preflight, APIM cutover plan, SSH bootstrap hardening plan, and Container Apps prototype inventory. It does not mutate Azure resources. Add `RUN_LIVE_APP_QA=true` to include the live enterprise app link/readiness sweep, or `EXIT_NONZERO_ON_ATTENTION=true` when CI should fail on any reported blocker.
 
 Plan APIM JWT validation without redeploying APIM:
 
@@ -1029,6 +1033,24 @@ npm run prepare:enterprise-apim-jwt
 ```
 
 This reports the current APIM JWT deployment parameters, derives the target OpenID metadata URL, warns on broad/default audiences, and prints the safe redeploy parameters. APIM JWT validation is an outer gate only; the control plane still performs VaultProof org/project authorization.
+
+Plan mTLS caller-lock policy without changing APIM or project policy:
+
+```bash
+npm run prepare:enterprise-mtls
+```
+
+When the customer or APIM client certificate is available, compute the exact policy snippet and gateway header contract:
+
+```bash
+CLIENT_CERT_FILE=/path/to/client-cert.pem \
+CLIENT_CLASS=gateway \
+CUSTOMER_GATEWAY=customer-apim \
+PROJECT_ID='<project-id>' \
+npm run prepare:enterprise-mtls
+```
+
+This helper normalizes the certificate thumbprint and subject fragment that the control plane already enforces through `projects.caller_lock_policy.allowed_client_certificate_thumbprints` and `projects.caller_lock_policy.allowed_client_certificate_subjects`. Live mTLS should only be enabled after the gateway validates the client certificate, strips spoofable inbound certificate headers, and sets trusted `x-vaultproof-client-cert-*` headers from the gateway certificate context.
 
 Plan the stronger private-origin migration without changing Azure resources:
 
