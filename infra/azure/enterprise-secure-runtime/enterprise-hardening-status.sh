@@ -16,6 +16,7 @@ RUN_ORIGIN_TLS_CERT_PLAN="${RUN_ORIGIN_TLS_CERT_PLAN:-true}"
 RUN_ORIGIN_TLS_PREP_PLAN="${RUN_ORIGIN_TLS_PREP_PLAN:-true}"
 RUN_ORIGIN_TLS_PREFLIGHT="${RUN_ORIGIN_TLS_PREFLIGHT:-true}"
 RUN_APIM_PLAN="${RUN_APIM_PLAN:-true}"
+RUN_ALTERNATE_ACCESS_PREP_PLAN="${RUN_ALTERNATE_ACCESS_PREP_PLAN:-true}"
 RUN_ALTERNATE_ACCESS_CHECK="${RUN_ALTERNATE_ACCESS_CHECK:-true}"
 RUN_SSH_PLAN="${RUN_SSH_PLAN:-true}"
 RUN_CONTAINER_APPS_INVENTORY="${RUN_CONTAINER_APPS_INVENTORY:-true}"
@@ -168,6 +169,14 @@ run_or_skip "${RUN_APIM_PLAN}" \
     ENTERPRISE_URL="${ENTERPRISE_URL}" \
     ACTION=plan \
     bash "${SCRIPT_DIR}/cutover-front-door-apim.sh"
+
+run_or_skip "${RUN_ALTERNATE_ACCESS_PREP_PLAN}" \
+  "Alternate access preparation plan" \
+  env \
+    RESOURCE_GROUP="${RESOURCE_GROUP}" \
+    DEPLOYMENT_NAME="${DEPLOYMENT_NAME}" \
+    ACTION=plan \
+    bash "${SCRIPT_DIR}/prepare-alternate-access.sh"
 
 run_or_skip "${RUN_ALTERNATE_ACCESS_CHECK}" \
   "Alternate access readiness" \

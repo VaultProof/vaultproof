@@ -566,6 +566,24 @@ npm run verify:enterprise-alternate-access
 
 This read-only check reports boot diagnostics/serial-console prerequisites, Azure Bastion subnet/host inventory, Defender JIT policy visibility, and the current public SSH bootstrap NSG rule.
 
+Plan optional alternate access setup. This is read-only by default and prints guarded actions for boot diagnostics and Azure Bastion:
+
+```bash
+RESOURCE_GROUP=vaultproof-enterprise \
+DEPLOYMENT_NAME=vp-enterprise-secure-runtime-eastus-hsm \
+npm run prepare:enterprise-alternate-access
+```
+
+Guarded setup actions:
+
+```bash
+ACTION=enable-boot-diagnostics CONFIRM_ALTERNATE_ACCESS=enable-boot-diagnostics npm run prepare:enterprise-alternate-access
+ACTION=create-bastion-subnet CONFIRM_ALTERNATE_ACCESS=create-bastion-subnet npm run prepare:enterprise-alternate-access
+ACTION=create-bastion-host CONFIRM_ALTERNATE_ACCESS=create-bastion-host npm run prepare:enterprise-alternate-access
+```
+
+`create-bastion-host` creates billable Azure Bastion resources and can take several minutes. Use it only when you are ready for Bastion to become the operator access path.
+
 Preview the current SSH bootstrap rule:
 
 ```bash
