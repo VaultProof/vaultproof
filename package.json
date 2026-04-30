@@ -27,6 +27,7 @@
     "prepare:enterprise-origin-tls": "bash infra/azure/enterprise-secure-runtime/prepare-origin-tls-cutover.sh",
     "status:enterprise-hardening": "bash infra/azure/enterprise-secure-runtime/enterprise-hardening-status.sh",
     "verify:enterprise-origin-tls": "bash infra/azure/enterprise-secure-runtime/verify-origin-tls-readiness.sh",
+    "verify:enterprise-alternate-access": "bash infra/azure/enterprise-secure-runtime/verify-alternate-access-readiness.sh",
     "verify:enterprise-production": "bash infra/azure/enterprise-secure-runtime/verify-production-runtime.sh",
     "verify:enterprise-secrets": "bash infra/azure/enterprise-secure-runtime/verify-runtime-secrets.sh",
     "test": "turbo run test",

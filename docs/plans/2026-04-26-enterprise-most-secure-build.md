@@ -50,7 +50,7 @@ Live production-confidential path:
 - `npm run validate:enterprise-evidence` validates the latest production evidence bundle for production readiness, Confidential VM posture, Front Door/origin-lock posture, service health, and obvious secret-shaped material before customer handoff.
 - `npm run verify:enterprise-secrets` verifies the installed control-plane/executor env files for secret-rotation readiness and confidential-mode footguns.
 - `npm run qa:enterprise-live-app` verifies the live enterprise homepage/app pages, crawls enterprise-owned links, confirms `/readiness` remains production-ready, and can optionally authenticate the demo account when `ENTERPRISE_DEMO_EMAIL` and `ENTERPRISE_DEMO_PASSWORD` are provided.
-- `npm run status:enterprise-hardening` provides one read-only finish-line pass across production verification, TLS-origin preparation/readiness, APIM cutover planning, SSH bootstrap planning, and old Container Apps inventory.
+- `npm run status:enterprise-hardening` provides one read-only finish-line pass across production verification, TLS-origin preparation/readiness, APIM cutover planning, alternate access readiness, SSH bootstrap planning, and old Container Apps inventory.
 - Azure Monitor/App Insights alerting is deployed as `vp-enterprise-secure-runtime-eastus-hsm-monitoring` and `EXPECTED_MONITORING_DEPLOYED=true npm run verify:enterprise-production` verifies the workspace, App Insights component, action group, health/readiness availability tests, readiness drift alert, health alert, and Confidential VM availability alert.
 - The enterprise control plane serves a separate public `/` enterprise homepage plus `/app` and `/app/dashboard` dashboard instead of relying on the B2C dashboard shell. Current state: the root page implements the editorial/terminal VaultProof Homepage design handoff; dashboard includes a built-feature map and live posture panels; login, control, org, runbooks, and remaining enterprise app pages exist under `/app/*`.
 - Enterprise dashboard/API unauthenticated errors are product-safe: users see a normal sign-in prompt instead of implementation details about bearer tokens or Supabase JWTs.
@@ -424,7 +424,7 @@ Important key-type decision:
 - [x] Block direct public access to executor.
 - [x] Require Azure Front Door ID origin lock for control-plane origin requests.
 - [ ] Add TLS from Front Door to the VM origin and switch origin forwarding from HTTP to HTTPS. In progress: TLS proxy installer, `npm run prepare:enterprise-origin-cert` CSR/certificate install helper, `npm run prepare:enterprise-origin-tls` DNS/NSG/APIM backend preparation helper, `npm run verify:enterprise-origin-tls` readiness preflight, confirmation-gated Front Door cutover/rollback helper with strict preflight, NSG 443 IaC, verifier/evidence support, lab-only self-signed verification support, and runbook are implemented. The VM-local nginx TLS proxy is installed and passes `ORIGIN_TLS_INSECURE=true` verifier checks; publicly trusted origin certificate/DNS, NSG 443 allow, APIM HTTPS backend update, and Front Door `HttpsOnly` cutover are pending.
-- [ ] Close public SSH bootstrap ingress after alternate access is ready. In progress: `allowSshBootstrap` IaC switch, `npm run harden:enterprise-ssh`, confirmation-gated close/reopen workflow, verifier expectations, and runbook are implemented; live NSG rule remains `Allow` for bootstrap/break-glass.
+- [ ] Close public SSH bootstrap ingress after alternate access is ready. In progress: `allowSshBootstrap` IaC switch, `npm run verify:enterprise-alternate-access`, `npm run harden:enterprise-ssh`, confirmation-gated close/reopen workflow, verifier expectations, and runbook are implemented; live NSG rule remains `Allow` for bootstrap/break-glass.
 - [ ] Disable/delete old Container Apps prototype resources after soak. In progress: `cleanup-container-apps-prototype.sh` and `npm run cleanup:enterprise-container-apps` can inventory, confirmation-gate ingress disable/restore, and explicitly delete apps/environment/ACR; live cleanup is pending operator approval.
 
 ### Phase 5: Enterprise Controls
@@ -481,7 +481,8 @@ Implementation/test order:
 16. [x] Origin TLS certificate workflow slice: add `npm run prepare:enterprise-origin-cert` to plan CSR generation, signed certificate install, self-signed marker removal, proxy restart, and VM-local TLS checks.
 17. [x] Origin TLS cutover guardrail slice: require explicit confirmation for Front Door `HttpsOnly` enable/rollback and run strict origin TLS preflight before live enable by default.
 18. [x] APIM/container cleanup guardrail slice: require explicit confirmation for APIM rollback and for Container Apps ingress disable/restore/delete actions; keep inventory and plans read-only by default.
-19. [ ] Live browser QA after each major deploy: run the automated live app QA, then manually login as demo user and click through sidebar/subnav links when visual regressions or browser-only session behavior are in scope.
+19. [x] Alternate access readiness slice: add `npm run verify:enterprise-alternate-access` to report Bastion, boot diagnostics/serial-console prerequisites, Defender JIT visibility, and SSH NSG posture before public SSH closure.
+20. [ ] Live browser QA after each major deploy: run the automated live app QA, then manually login as demo user and click through sidebar/subnav links when visual regressions or browser-only session behavior are in scope.
 
 ## Azure Resources
 

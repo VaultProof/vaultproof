@@ -384,13 +384,22 @@ Current status:
 
 Built:
 
+- Alternate operator access readiness check exists for Bastion, boot diagnostics/serial-console prerequisites, Defender JIT visibility, and the current SSH NSG rule.
 - Reversible SSH bootstrap hardening script exists.
 - Plan mode shows the current NSG rule and safe next command.
 - Close mode requires production readiness, an alternate-access acknowledgment, and `CONFIRM_SSH_LOCKDOWN=close-public-ssh` before setting the SSH bootstrap rule to `Deny`.
 - Reopen mode exists for break-glass rollback and requires `CONFIRM_SSH_LOCKDOWN=reopen-public-ssh`.
 - Production verifier can assert expected SSH bootstrap access.
 
-Plan command:
+Alternate access readiness command:
+
+```bash
+RESOURCE_GROUP=vaultproof-enterprise \
+DEPLOYMENT_NAME=vp-enterprise-secure-runtime-eastus-hsm \
+npm run verify:enterprise-alternate-access
+```
+
+SSH hardening plan command:
 
 ```bash
 RESOURCE_GROUP=vaultproof-enterprise \

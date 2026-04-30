@@ -556,6 +556,16 @@ npm run cutover:enterprise-origin-tls
 
 The VM keeps public SSH open only for bootstrap and break-glass access. Close it after `enterprise.vaultproof.dev/readiness` is production-ready, Front Door reaches the Confidential VM origin, and you have an alternate operational path such as Azure Bastion, JIT VM access, serial console, or a controlled temporary NSG reopen process.
 
+Check alternate operator access readiness before closing public SSH:
+
+```bash
+RESOURCE_GROUP=vaultproof-enterprise \
+DEPLOYMENT_NAME=vp-enterprise-secure-runtime-eastus-hsm \
+npm run verify:enterprise-alternate-access
+```
+
+This read-only check reports boot diagnostics/serial-console prerequisites, Azure Bastion subnet/host inventory, Defender JIT policy visibility, and the current public SSH bootstrap NSG rule.
+
 Preview the current SSH bootstrap rule:
 
 ```bash
