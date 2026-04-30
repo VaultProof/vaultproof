@@ -1,6 +1,6 @@
 # VaultProof Enterprise Features And Access Guide
 
-Last updated: 2026-04-29
+Last updated: 2026-04-30
 
 This guide explains what has been built for VaultProof Enterprise, where to access it, and which operator commands verify the production-confidential path.
 
@@ -143,6 +143,297 @@ Revoked provider slots:
 - Are excluded from future secure execution dispatch.
 - Remain visible in audit/history.
 - Do not decrypt or expose the provider secret during revoke.
+
+## Enterprise Hardening Built
+
+The enterprise path now has hardening at four layers:
+
+```text
+Internet edge
+  -> Azure Front Door origin controls
+  -> optional APIM governance gateway
+  -> Confidential VM control plane
+  -> signed loopback executor handoff
+  -> Managed HSM Secure Key Release after attestation
+```
+
+### Hardening Dashboard And One-Command Status
+
+Access:
+
+```text
+https://enterprise.vaultproof.dev/app/runbooks
+```
+
+Primary read-only command:
+
+```bash
+RESOURCE_GROUP=vaultproof-enterprise \
+DEPLOYMENT_NAME=vp-enterprise-secure-runtime-eastus-hsm \
+APIM_DEPLOYMENT_NAME=vp-enterprise-secure-runtime-eastus-hsm-apim \
+MONITORING_DEPLOYMENT_NAME=vp-enterprise-secure-runtime-eastus-hsm-monitoring \
+ORIGIN_TLS_HOSTNAME=origin.enterprise.vaultproof.dev \
+npm run status:enterprise-hardening
+```
+
+What it checks:
+
+- Production verifier for Front Door, APIM sidecar, monitoring, NSG posture, Confidential VM, executor, and readiness.
+- TLS-origin readiness preflight.
+- APIM cutover plan.
+- SSH bootstrap hardening plan.
+- Old Container Apps prototype inventory.
+
+Current live result:
+
+- Production verifier passes.
+- APIM plan passes as a read-only plan.
+- SSH hardening plan passes as a read-only plan.
+- Container Apps inventory passes.
+- TLS-origin readiness is the remaining attention item because public DNS, trusted certificate, and NSG `443` are not fully cut over yet.
+
+### Front Door And Origin Hardening
+
+Built:
+
+- `enterprise.vaultproof.dev` is routed through Azure Front Door.
+- The enterprise control plane requires Azure Front Door ID origin lock.
+- Direct public origin access is blocked before the app layer.
+- Private/non-loopback origin requests without the Front Door ID are rejected with `403`.
+- The VM executor port is not publicly exposed.
+- Control-plane ingress on port `3001` is restricted by NSG rules instead of broad Internet access.
+
+Access and verification:
+
+```bash
+EXPECTED_MONITORING_DEPLOYED=true \
+EXPECTED_APIM_DEPLOYED=true \
+npm run verify:enterprise-production
+```
+
+Current status:
+
+- Active Front Door origin points to the Confidential VM.
+- Front Door still forwards to the VM origin over `HttpOnly` while TLS origin cutover is pending.
+
+### TLS Origin Hardening
+
+Built:
+
+- VM-local nginx TLS proxy installer exists.
+- The TLS proxy is installed on the Confidential VM.
+- TLS origin cutover helper exists for plan, enable, and rollback.
+- Read-only TLS readiness preflight exists and is exposed in runbooks.
+- Production verifier can validate TLS-origin posture when `ORIGIN_TLS_HOSTNAME` is enabled.
+
+Readiness command:
+
+```bash
+RESOURCE_GROUP=vaultproof-enterprise \
+DEPLOYMENT_NAME=vp-enterprise-secure-runtime-eastus-hsm \
+ORIGIN_TLS_HOSTNAME=origin.enterprise.vaultproof.dev \
+npm run verify:enterprise-origin-tls
+```
+
+Cutover plan:
+
+```bash
+RESOURCE_GROUP=vaultproof-enterprise \
+DEPLOYMENT_NAME=vp-enterprise-secure-runtime-eastus-hsm \
+ORIGIN_TLS_HOSTNAME=origin.enterprise.vaultproof.dev \
+npm run cutover:enterprise-origin-tls
+```
+
+Current blockers before enabling `HttpsOnly`:
+
+- `origin.enterprise.vaultproof.dev` needs a public IPv4 DNS record pointing to the Confidential VM origin.
+- NSG needs Front Door/service-tag access to port `443`.
+- The temporary self-signed origin certificate needs to be replaced with a publicly trusted certificate.
+- The self-signed marker at `/etc/vaultproof/tls/origin.self-signed` should be gone before production TLS-origin claims.
+
+### API Management Hardening
+
+Built:
+
+- Azure API Management StandardV2 sidecar is deployed.
+- APIM health/readiness routes are verified.
+- APIM policies include request-size guards, rate limits, quotas, provider-secret header stripping, APIM marker headers, origin-lock forwarding, and App Insights diagnostics.
+- Optional JWT validation support exists in IaC/policy.
+- APIM Front Door cutover helper exists for plan, enable, and rollback.
+
+Access:
+
+```text
+https://vpenteuutf4ahzja5l3oapim.azure-api.net/enterprise
+```
+
+Plan command:
+
+```bash
+RESOURCE_GROUP=vaultproof-enterprise \
+DEPLOYMENT_NAME=vp-enterprise-secure-runtime-eastus-hsm \
+APIM_DEPLOYMENT_NAME=vp-enterprise-secure-runtime-eastus-hsm-apim \
+npm run cutover:enterprise-apim
+```
+
+Live mutation is guarded. `ACTION=enable` refuses to run unless:
+
+- Enterprise `/readiness` is production-ready.
+- APIM `/health` and `/readiness` pass.
+- Backend safety checks pass.
+- `CONFIRM_APIM_CUTOVER=route-enterprise-through-apim` is set.
+
+Current status:
+
+- APIM is deployed and verified as a sidecar.
+- APIM is not yet the active Front Door route.
+- APIM cutover waits until TLS/private-origin risk is resolved.
+
+### Monitoring And Drift Detection
+
+Built:
+
+- Azure Monitor Log Analytics workspace.
+- Application Insights component.
+- Action group for operations alerting.
+- Front Door `/health` availability test.
+- Front Door `/readiness` availability test.
+- Readiness drift alert that checks for `"production_ready":true`.
+- Confidential VM availability alert.
+
+Verify:
+
+```bash
+EXPECTED_MONITORING_DEPLOYED=true npm run verify:enterprise-production
+```
+
+Why it matters:
+
+- If the live path stops responding, alerts fire.
+- If `/readiness` is reachable but no longer production-ready, drift is detected.
+- If the Confidential VM becomes unavailable, operators get a VM-specific signal.
+
+### Secret And Runtime Env Hardening
+
+Built:
+
+- Installed env verifier checks control-plane and executor env files.
+- Verifier catches missing signing material, Supabase service-role issues, origin-lock misconfiguration, and confidential-mode footguns.
+- Confidential mode fails closed if static/demo unwrap key configuration is present.
+- Production readiness fails closed if a static `AZURE_ATTESTATION_TOKEN` is configured instead of dynamic guest attestation.
+
+Verify:
+
+```bash
+CONTROL_PLANE_ENV_FILE=/etc/vaultproof/enterprise-control-plane.env \
+EXECUTOR_ENV_FILE=/etc/vaultproof/enterprise-secure-executor.env \
+npm run verify:enterprise-secrets
+```
+
+Current status:
+
+- Verification tooling exists.
+- Setup-time Supabase/service/signing secrets still need operator rotation before external customer production use.
+
+### SSH Bootstrap Hardening
+
+Built:
+
+- Reversible SSH bootstrap hardening script exists.
+- Plan mode shows the current NSG rule and safe next command.
+- Close mode requires production readiness before setting the SSH bootstrap rule to `Deny`.
+- Reopen mode exists for break-glass rollback.
+- Production verifier can assert expected SSH bootstrap access.
+
+Plan command:
+
+```bash
+RESOURCE_GROUP=vaultproof-enterprise \
+DEPLOYMENT_NAME=vp-enterprise-secure-runtime-eastus-hsm \
+bash infra/azure/enterprise-secure-runtime/harden-ssh-bootstrap.sh
+```
+
+Current status:
+
+- Public SSH bootstrap remains open for break-glass while alternate access/Bastion/JIT is not finalized.
+- Next hardening step is to close it after alternate operator access is confirmed.
+
+### Old Container Apps Cleanup Hardening
+
+Built:
+
+- Inventory command lists old Container Apps, revisions, ingress, scale, environment, ACR, and Front Door origin state.
+- Disable-ingress action exists for reversible cleanup.
+- Delete actions exist for apps, environment, and ACR.
+- Restore-ingress action exists for rollback while apps still exist.
+- Destructive actions require production readiness and refuse to run if Front Door still has an enabled Container Apps origin.
+
+Inventory command:
+
+```bash
+RESOURCE_GROUP=vaultproof-enterprise \
+npm run cleanup:enterprise-container-apps
+```
+
+Current status:
+
+- Old Container Apps resources still exist.
+- Front Door's old Container Apps origin is disabled.
+- Cleanup remains pending explicit operator approval and soak.
+
+### Deployment And QA Hardening
+
+Built:
+
+- `npm run deploy:enterprise-vm` deploys code to the Confidential VM, rebuilds, and restarts selected systemd services.
+- Deploy script can restart only the control plane or both control plane and executor.
+- Live app QA checks enterprise-owned pages and links.
+- Enterprise smoke tests cover route rendering and runbook entries.
+- Safe execute-path QA defaults to `dry_run` and will not call upstream providers unless explicitly disabled.
+
+Useful commands:
+
+```bash
+npm run qa:enterprise-live-app
+npm run test:enterprise-control-plane-smoke
+printf '%s' "$SUPABASE_ACCESS_TOKEN" | npm run qa:enterprise-live-execute
+```
+
+Real provider dispatch requires:
+
+```bash
+EXECUTE_DRY_RUN=false printf '%s' "$SUPABASE_ACCESS_TOKEN" | npm run qa:enterprise-live-execute
+```
+
+Do not use real dispatch unless the selected provider slot is expected to call a real provider API.
+
+### Evidence And Customer Verification Hardening
+
+Built:
+
+- Production evidence collector captures timestamped Azure, app, readiness, monitoring, SSH/local, and Front Door evidence.
+- Evidence validator checks production readiness, Confidential VM posture, Front Door origin-lock posture, service health, and obvious secret-shaped material.
+- Execution audit metadata includes compact attestation references without logging request bodies or provider keys.
+- Audit CSV and SOC 2 access-review exports are available from the enterprise app.
+
+Commands:
+
+```bash
+npm run evidence:enterprise-production
+npm run validate:enterprise-evidence
+```
+
+Customer-verifiable evidence includes:
+
+- Confidential VM resource ID.
+- Attestation provider URI.
+- Attestation token hash.
+- Secure Key Release policy hash.
+- Managed HSM key ID and version.
+- Executor build digest.
+- Azure MAA claim summary.
+- Measurement summary.
+- Caller-lock decision metadata.
 
 ## API Management
 
