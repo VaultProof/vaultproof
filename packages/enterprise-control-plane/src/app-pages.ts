@@ -1702,6 +1702,7 @@ function renderEnterpriseSupportPage(pageName: 'settings' | 'plans' | 'scanner' 
             row('Evidence validator', 'npm run validate:enterprise-evidence validates the latest evidence bundle before customer or compliance handoff.', 'read-only', 'good'),
             row('Handoff package', 'npm run package:enterprise-handoff assembles customer/compliance docs, APIM templates, latest local evidence, and a manifest without changing Azure.', 'read-only', 'good'),
             row('Handoff gate', 'npm run gate:enterprise-handoff validates APIM templates, builds the package, verifies the manifest, and can optionally require live QA/evidence strictness.', 'read-only', 'good'),
+            row('Finish gate', 'npm run gate:enterprise-finish runs the local enterprise smoke, APIM policy smoke, handoff gate, live app QA, and hardening status into one ok/attention/blocked release view.', 'read-only', 'good'),
             row('Live app QA', 'npm run qa:enterprise-live-app checks enterprise app pages, internal links, auth-safe rendering, and production readiness.', 'read-only', 'good'),
             row('Secret rotation preparation', 'npm run prepare:enterprise-secret-rotation plans the install order and can generate fresh executor signing material without printing secrets.', 'read-only', 'good'),
             row('Private origin preparation', 'npm run prepare:enterprise-private-origin inventories Front Door, APIM, VM network posture, and Private Link migration choices without changing Azure.', 'read-only', 'good'),

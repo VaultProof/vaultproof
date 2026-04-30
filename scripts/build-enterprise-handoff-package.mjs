@@ -36,6 +36,7 @@ const operatorCommands = [
   'npm run validate:enterprise-evidence',
   'npm run package:enterprise-handoff',
   'npm run gate:enterprise-handoff',
+  'npm run gate:enterprise-finish',
   'npm run status:enterprise-hardening',
   'npm run test:enterprise-apim-policies',
   'npm run prepare:enterprise-secret-rotation',

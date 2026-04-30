@@ -50,6 +50,7 @@ Live production-confidential path:
 - `npm run validate:enterprise-evidence` validates the latest production evidence bundle for production readiness, Confidential VM posture, Front Door/origin-lock posture, service health, and obvious secret-shaped material before customer handoff.
 - `npm run package:enterprise-handoff` builds a local customer/compliance handoff folder with the features guide, source-of-truth plan, APIM policy templates, secure-runtime runbook, manifest, and latest local evidence if available, without mutating Azure resources.
 - `npm run gate:enterprise-handoff` runs the local pre-handoff gate: APIM policy template smoke, handoff package build, and manifest verification, with optional live QA/evidence strictness.
+- `npm run gate:enterprise-finish` runs the finish-line release view across local enterprise smoke, APIM policy smoke, handoff gate, live app QA, and read-only hardening status, returning `ok`, `attention`, or `blocked`.
 - `npm run verify:enterprise-secrets` verifies the installed control-plane/executor env files for secret-rotation readiness and confidential-mode footguns.
 - `npm run prepare:enterprise-secret-rotation` plans customer-handoff secret rotation and can generate fresh executor signing material into chmod-600 local files without printing secrets.
 - `npm run prepare:enterprise-private-origin` inventories Front Door/APIM/Confidential VM network state and plans the APIM Private Link or internal-load-balancer Private Link migration without mutating Azure resources.
@@ -498,7 +499,8 @@ Implementation/test order:
 26. [x] Customer handoff package slice: add `npm run package:enterprise-handoff` to assemble customer/compliance docs, APIM templates, latest local evidence, and a manifest into a local handoff folder without calling Azure.
 27. [x] Customer handoff gate slice: add `npm run gate:enterprise-handoff` to run APIM policy smoke, build the package, verify its manifest, and optionally require valid evidence/live QA before handoff.
 28. [x] APIM spoofable-header hardening slice: policy templates now delete caller-supplied VaultProof caller-lock headers before setting trusted APIM, gateway, device, or mTLS metadata, and `npm run test:enterprise-apim-policies` enforces delete/override coverage.
-29. [ ] Live browser QA after each major deploy: run the automated live app QA, then manually login as demo user and click through sidebar/subnav links when visual regressions or browser-only session behavior are in scope.
+29. [x] Enterprise finish gate slice: add `npm run gate:enterprise-finish` to combine local smoke tests, APIM policy validation, handoff packaging, live app QA, and read-only hardening status into one release result.
+30. [ ] Live browser QA after each major deploy: run the automated live app QA, then manually login as demo user and click through sidebar/subnav links when visual regressions or browser-only session behavior are in scope.
 
 ## Azure Resources
 

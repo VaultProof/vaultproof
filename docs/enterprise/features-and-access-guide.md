@@ -841,6 +841,17 @@ npm run status:enterprise-hardening
 
 This runs the production verifier, TLS-origin preparation plan, TLS-origin readiness preflight, APIM cutover plan, SSH bootstrap hardening plan, and Container Apps prototype inventory without mutating Azure resources. Set `RUN_LIVE_APP_QA=true` to include the live `/app/*` link/readiness sweep. Set `EXIT_NONZERO_ON_ATTENTION=true` if CI should fail when any enabled step reports blockers or exits nonzero.
 
+### Run the finish gate
+
+Use this when you want the short answer for whether the enterprise build is green, needs attention, or is blocked:
+
+```bash
+OUTPUT_DIR=/tmp/vaultproof-enterprise-finish-gate \
+npm run gate:enterprise-finish
+```
+
+The finish gate runs the enterprise control-plane smoke, APIM policy smoke, handoff gate, live app QA, and read-only hardening status. It returns `ok`, `attention`, or `blocked`. Use `STRICT_HARDENING_CLEAR=true` when CI should fail on remaining live cutover/cleanup attention items, and use `REQUIRE_EVIDENCE=true REQUIRE_VALID_EVIDENCE=true STRICT_CUSTOMER_HANDOFF=true` before external customer handoff.
+
 ### Build a handoff package
 
 ```bash

@@ -1014,6 +1014,23 @@ npm run status:enterprise-hardening
 
 The wrapper runs the production verifier, secret-rotation plan, private-origin plan, APIM JWT validation plan, mTLS caller-lock preparation plan, TLS-origin preparation plan, TLS-origin readiness preflight, APIM cutover plan, SSH bootstrap hardening plan, and Container Apps prototype inventory. It does not mutate Azure resources. Add `RUN_LIVE_APP_QA=true` to include the live enterprise app link/readiness sweep, or `EXIT_NONZERO_ON_ATTENTION=true` when CI should fail on any reported blocker.
 
+Run the top-level finish gate when you want one release-style result across local smoke tests, APIM policy validation, handoff packaging, live app QA, and the read-only hardening status:
+
+```bash
+OUTPUT_DIR=/tmp/vaultproof-enterprise-finish-gate \
+npm run gate:enterprise-finish
+```
+
+The finish gate returns `ok`, `attention`, or `blocked`. Keep `attention` as the expected state while known live hardening actions such as TLS-origin cutover, APIM route cutover, SSH closure, Container Apps cleanup, or setup-time secret rotation are deliberately pending. Use stricter external-handoff settings only when those actions are ready to be enforced:
+
+```bash
+REQUIRE_EVIDENCE=true \
+REQUIRE_VALID_EVIDENCE=true \
+STRICT_CUSTOMER_HANDOFF=true \
+STRICT_HARDENING_CLEAR=true \
+npm run gate:enterprise-finish
+```
+
 Plan APIM JWT validation without redeploying APIM:
 
 ```bash
@@ -1090,6 +1107,8 @@ REQUIRE_VALID_EVIDENCE=true \
 RUN_LIVE_APP_QA=true \
 npm run gate:enterprise-handoff
 ```
+
+For the broader release view, prefer `npm run gate:enterprise-finish`; it wraps this handoff gate with local smoke tests, live app QA, and the read-only hardening status.
 
 Plan the stronger private-origin migration without changing Azure resources:
 

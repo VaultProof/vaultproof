@@ -28,6 +28,7 @@ const requiredPackageCommands = [
   'npm run validate:enterprise-evidence',
   'npm run package:enterprise-handoff',
   'npm run test:enterprise-apim-policies',
+  'npm run gate:enterprise-finish',
   'npm run prepare:enterprise-mtls',
   'npm run cleanup:enterprise-container-apps',
 ];
