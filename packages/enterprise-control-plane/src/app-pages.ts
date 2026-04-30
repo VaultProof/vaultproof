@@ -6,6 +6,10 @@ import type { EnterpriseControlPlaneEnv } from './config.js';
 const PUBLIC_SITE_ORIGIN = 'https://vaultproof.dev';
 const ENTERPRISE_AUTH_ERROR_MESSAGE = 'Your enterprise session expired or is missing. Sign in again to continue.';
 
+function escapeRegExp(value: string): string {
+  return value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+}
+
 function rewriteStaticAssetUrls(html: string): string {
   return html
     .replaceAll('src="/js/', `src="${PUBLIC_SITE_ORIGIN}/js/`)
@@ -13,6 +17,14 @@ function rewriteStaticAssetUrls(html: string): string {
     .replaceAll('href="/favicon.png"', `href="${PUBLIC_SITE_ORIGIN}/favicon.png"`)
     .replaceAll('href="/terms"', `href="${PUBLIC_SITE_ORIGIN}/terms"`)
     .replaceAll('href="/privacy"', `href="${PUBLIC_SITE_ORIGIN}/privacy"`);
+}
+
+function removePublicSiteTheme(html: string): string {
+  const publicSiteThemePattern = new RegExp(
+    `\\s*<link\\s+rel="stylesheet"\\s+href="${escapeRegExp(PUBLIC_SITE_ORIGIN)}/css/site-theme\\.css"\\s*>`,
+    'g',
+  );
+  return html.replace(publicSiteThemePattern, '');
 }
 
 function readWorkspaceFile(relativePath: string): string {
@@ -774,7 +786,7 @@ const ENTERPRISE_STATIC_PAGE_THEMES: Partial<Record<EnterpriseAppNavPage, string
 function applyEnterpriseStaticAppTheme(html: string, activePage: EnterpriseAppNavPage, subtitle: string): string {
   const pageSpecificTheme = ENTERPRISE_STATIC_PAGE_THEMES[activePage] ?? '';
 
-  return html
+  return removePublicSiteTheme(html)
     .replace(/<aside class="sidebar">[\s\S]*?<\/aside>/, renderEnterpriseAppSidebar(activePage, subtitle))
     .replace('</style>', `${ENTERPRISE_APP_SHELL_THEME}${ENTERPRISE_STATIC_APP_THEME}${pageSpecificTheme}\n  </style>`);
 }

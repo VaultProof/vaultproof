@@ -2052,6 +2052,9 @@ async function assertEnterpriseLoginRoute() {
   if (!controlHtml.includes('control-dashboard-theme')) {
     throw new Error('Expected control page to include the dashboard-matched control theme');
   }
+  if (controlHtml.includes('/css/site-theme.css')) {
+    throw new Error('Control page must not load public site-theme.css over the enterprise dashboard theme');
+  }
   assertDashboardShellTheme('/app/control', controlHtml);
 
   const orgResponse = await handleEnterpriseControlPlaneRequest(
@@ -2069,6 +2072,9 @@ async function assertEnterpriseLoginRoute() {
   }
   if (!orgHtml.includes('org-dashboard-theme')) {
     throw new Error('Expected org page to include the dashboard-matched org theme');
+  }
+  if (orgHtml.includes('/css/site-theme.css')) {
+    throw new Error('Org page must not load public site-theme.css over the enterprise dashboard theme');
   }
   assertDashboardShellTheme('/app/org', orgHtml);
 }
