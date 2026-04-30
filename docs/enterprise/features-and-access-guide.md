@@ -381,6 +381,8 @@ SUPABASE_URL='https://<project-ref>.supabase.co' \
 npm run prepare:enterprise-apim-jwt
 ```
 
+If `JWT_PROVIDER=supabase` and `SUPABASE_URL` is not set, the helper tries to discover the public Supabase issuer from `https://enterprise.vaultproof.dev/app/enterprise-login.js`. This is read-only and uses only public auth configuration.
+
 For direct Entra access-token validation:
 
 ```bash

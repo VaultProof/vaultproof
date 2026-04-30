@@ -3,6 +3,7 @@ set -euo pipefail
 
 RESOURCE_GROUP="${RESOURCE_GROUP:-vaultproof-enterprise}"
 APIM_DEPLOYMENT_NAME="${APIM_DEPLOYMENT_NAME:-vp-enterprise-secure-runtime-eastus-hsm-apim}"
+ENTERPRISE_URL="${ENTERPRISE_URL:-https://enterprise.vaultproof.dev}"
 JWT_PROVIDER="${JWT_PROVIDER:-supabase}"
 SUPABASE_URL="${SUPABASE_URL:-}"
 ENTRA_TENANT_ID="${ENTRA_TENANT_ID:-}"
@@ -10,6 +11,7 @@ JWT_OPENID_CONFIG_URL="${JWT_OPENID_CONFIG_URL:-}"
 JWT_ISSUER="${JWT_ISSUER:-}"
 JWT_AUDIENCES="${JWT_AUDIENCES:-}"
 VALIDATE_JWT_METADATA="${VALIDATE_JWT_METADATA:-false}"
+DISCOVER_SUPABASE_URL_FROM_ENTERPRISE="${DISCOVER_SUPABASE_URL_FROM_ENTERPRISE:-true}"
 ACTION="${ACTION:-plan}"
 
 require_command() {
@@ -50,9 +52,42 @@ console.log(value.replace(/\/+$/, ''));
 " "$1"
 }
 
+discover_supabase_url_from_enterprise() {
+  if [[ "${DISCOVER_SUPABASE_URL_FROM_ENTERPRISE}" != "true" ]]; then
+    return
+  fi
+
+  node -e "
+const enterpriseUrl = (process.argv[1] || '').replace(/\\/+$/, '');
+if (!enterpriseUrl) process.exit(0);
+fetch(enterpriseUrl + '/app/enterprise-login.js')
+  .then(async (response) => {
+    if (!response.ok) process.exit(0);
+    const text = await response.text();
+    const match = text.match(/const SUPABASE_URL = '([^']+)'/);
+    if (match?.[1]) console.log(match[1].replace(/\\/+$/, ''));
+  })
+  .catch(() => process.exit(0));
+" "${ENTERPRISE_URL}"
+}
+
 derive_target() {
   local normalized_supabase_url
+  local discovered_supabase_url
   normalized_supabase_url="$(normalize_url "${SUPABASE_URL}")"
+  discovered_supabase_url=""
+
+  if [[ -z "${normalized_supabase_url}" && "${JWT_PROVIDER}" == "supabase" && -z "${JWT_OPENID_CONFIG_URL}" ]]; then
+    discovered_supabase_url="$(discover_supabase_url_from_enterprise)"
+    normalized_supabase_url="$(normalize_url "${discovered_supabase_url}")"
+  fi
+
+  target_supabase_url_source=""
+  if [[ -n "${SUPABASE_URL}" ]]; then
+    target_supabase_url_source="SUPABASE_URL"
+  elif [[ -n "${discovered_supabase_url}" ]]; then
+    target_supabase_url_source="${ENTERPRISE_URL}/app/enterprise-login.js"
+  fi
 
   case "${JWT_PROVIDER}" in
     supabase)
@@ -141,9 +176,12 @@ show_target() {
   echo "  openid config:       ${target_openid_config_url:-missing}"
   echo "  issuer:              ${target_issuer:-metadata/default}"
   echo "  audiences:           ${target_audiences:-missing}"
+  if [[ -n "${target_supabase_url_source}" ]]; then
+    echo "  Supabase URL source: ${target_supabase_url_source}"
+  fi
 
   if [[ -z "${target_openid_config_url}" ]]; then
-    echo "BLOCKER select an OpenID configuration URL before enabling APIM JWT validation."
+    echo "BLOCKER select an OpenID configuration URL before enabling APIM JWT validation, or set SUPABASE_URL / JWT_OPENID_CONFIG_URL / ENTRA_TENANT_ID."
   fi
   if [[ -z "${target_audiences}" || "${target_audiences}" == "[]" ]]; then
     echo "BLOCKER select at least one API audience before enabling APIM JWT validation."
@@ -190,6 +228,7 @@ show_plan() {
   echo "VaultProof APIM JWT validation preparation"
   echo "  resource group:      ${RESOURCE_GROUP}"
   echo "  APIM deployment:     ${APIM_DEPLOYMENT_NAME}"
+  echo "  enterprise URL:      ${ENTERPRISE_URL}"
   echo
   echo "This command is read-only. It does not redeploy APIM or change policy."
   echo

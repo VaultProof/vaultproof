@@ -1041,6 +1041,8 @@ SUPABASE_URL='https://<project-ref>.supabase.co' \
 npm run prepare:enterprise-apim-jwt
 ```
 
+If `JWT_PROVIDER=supabase` and `SUPABASE_URL` is omitted, the helper attempts to discover the public Supabase issuer from `${ENTERPRISE_URL}/app/enterprise-login.js`. This only reads public login configuration and does not print service-role secrets.
+
 For a direct Entra access-token path, use:
 
 ```bash

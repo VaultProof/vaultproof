@@ -54,7 +54,7 @@ Live production-confidential path:
 - `npm run verify:enterprise-secrets` verifies the installed control-plane/executor env files for secret-rotation readiness and confidential-mode footguns.
 - `npm run prepare:enterprise-secret-rotation` plans customer-handoff secret rotation and can generate fresh executor signing material into chmod-600 local files without printing secrets.
 - `npm run prepare:enterprise-private-origin` inventories Front Door/APIM/Confidential VM network state and plans the APIM Private Link or internal-load-balancer Private Link migration without mutating Azure resources.
-- `npm run prepare:enterprise-apim-jwt` reports current APIM JWT policy parameters, derives Supabase or Entra OpenID metadata settings, and prints safe redeploy parameters before APIM JWT validation is enabled.
+- `npm run prepare:enterprise-apim-jwt` reports current APIM JWT policy parameters, derives Supabase or Entra OpenID metadata settings, can discover the public Supabase issuer from the live enterprise login script, and prints safe redeploy parameters before APIM JWT validation is enabled.
 - `npm run prepare:enterprise-mtls` turns a customer/APIM client certificate into the normalized caller-lock thumbprint, subject fragment, APIM header contract, and project policy snippet without mutating Azure or project policy.
 - `npm run test:enterprise-apim-policies` validates the VaultProof-managed, customer-managed, device, and mTLS APIM policy templates before handoff, including provider-secret stripping and caller-lock header delete/override behavior.
 - `npm run qa:enterprise-live-app` verifies the live enterprise homepage/app pages, crawls enterprise-owned links, confirms `/readiness` remains production-ready with short retry coverage for transient attestation refreshes, and can optionally authenticate the demo account when `ENTERPRISE_DEMO_EMAIL` and `ENTERPRISE_DEMO_PASSWORD` are provided.
@@ -493,7 +493,7 @@ Implementation/test order:
 20. [x] Alternate access preparation slice: add `npm run prepare:enterprise-alternate-access` to plan and confirmation-gate boot diagnostics plus Azure Bastion subnet/host setup before SSH closure.
 21. [x] Secret rotation preparation slice: add `npm run prepare:enterprise-secret-rotation` to plan signing/Supabase service-role rotation, generate fresh executor signing material without printing secrets, and render rotation evidence markers for customer handoff verification.
 22. [x] Private-origin preparation slice: add `npm run prepare:enterprise-private-origin` to inventory Front Door/APIM/VM network posture and plan APIM Private Link or internal-load-balancer Private Link migration without mutating Azure resources.
-23. [x] APIM JWT validation preparation slice: add `npm run prepare:enterprise-apim-jwt` to plan Supabase-session or direct-Entra issuer/audience settings before enabling APIM `validate-jwt`.
+23. [x] APIM JWT validation preparation slice: add `npm run prepare:enterprise-apim-jwt` to plan Supabase-session or direct-Entra issuer/audience settings before enabling APIM `validate-jwt`. Current state: the helper can discover the public Supabase issuer from the live enterprise login script when `SUPABASE_URL` is not passed, while still leaving live APIM mutation gated.
 24. [x] mTLS caller-lock preparation slice: add `npm run prepare:enterprise-mtls` to compute customer/APIM client certificate thumbprints, subject fragments, trusted gateway headers, and caller-lock policy snippets before live mTLS enforcement.
 25. [x] APIM mTLS policy template slice: add `docs/enterprise/customer-managed-apim-mtls-policy.xml` and `npm run test:enterprise-apim-policies` so customer APIM mTLS validation/header-forwarding policy is reviewable and tested before live enforcement.
 26. [x] Customer handoff package slice: add `npm run package:enterprise-handoff` to assemble customer/compliance docs, APIM templates, latest local evidence, and a manifest into a local handoff folder without calling Azure.
@@ -502,7 +502,8 @@ Implementation/test order:
 29. [x] Enterprise finish gate slice: add `npm run gate:enterprise-finish` to combine local smoke tests, APIM policy validation, handoff packaging, live app QA, and read-only hardening status into one release result.
 30. [x] Finish gate structured attention slice: parse hardening-status attention rows into named pending actions and write `finish-gate-result.json` for CI/operator review.
 31. [x] Finish gate issue-detail slice: attach exact hardening `BLOCKER`/`WARN` lines to each pending action so the remaining finish-line work can be triaged without reading the full Azure log.
-32. [ ] Live browser QA after each major deploy: run the automated live app QA, then manually login as demo user and click through sidebar/subnav links when visual regressions or browser-only session behavior are in scope.
+32. [x] APIM JWT issuer discovery slice: allow `npm run prepare:enterprise-apim-jwt` and the hardening status wrapper to discover the Supabase OpenID config from the public enterprise login script when `SUPABASE_URL` is omitted.
+33. [ ] Live browser QA after each major deploy: run the automated live app QA, then manually login as demo user and click through sidebar/subnav links when visual regressions or browser-only session behavior are in scope.
 
 ## Azure Resources
 
