@@ -185,6 +185,19 @@ Required environment before exposing it live:
 - Supabase migration `20260501003000_internal_admin_action_requests.sql` applied before relying on destructive-action approval history.
 - Supabase migration `20260501004000_internal_admin_action_execution_records.sql` applied before relying on destructive-action execution/rollback planning.
 
+Use `infra/azure/enterprise-secure-runtime/render-control-plane-env.sh` to render these internal-admin variables into the Confidential VM control-plane env file. Keep `VAULTPROOF_INTERNAL_ADMIN_ACTIONS_ENABLED=false` until VaultProof is ready to operate approval-gated employee write actions live.
+
+Before exposing `admin.vaultproof.dev`, run:
+
+```bash
+VAULTPROOF_INTERNAL_ADMIN_EMAILS='employee@vaultproof.dev' \
+SUPABASE_URL='https://<project>.supabase.co' \
+SUPABASE_SERVICE_ROLE_KEY='<service-role-key>' \
+npm run prepare:enterprise-internal-admin
+```
+
+This is read-only. It checks employee allowlist env, the required internal-admin/verifier tables, customer-host separation, and unauthenticated admin-host behavior.
+
 Support notes, invitation create/resend-request/revoke, and business status updates are approval-gated write actions. Leave `VAULTPROOF_INTERNAL_ADMIN_ACTIONS_ENABLED` unset or `false` in production until the team is ready to operate employee writes. Every future write action should insert into `internal_admin_audit_events`.
 
 For destructive actions, use the action-request workflow first. `disable_org_access` can be requested, approved, rejected, dry-run planned, and rollback dry-run planned. The execution dry-run records current organization archive fields as rollback payload. The rollback dry-run reads that payload and records what would be restored. Neither endpoint mutates customer organization records in the current internal admin API.

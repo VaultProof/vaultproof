@@ -279,6 +279,9 @@ export ENTERPRISE_AZURE_FRONT_DOOR_ID="$(az afd profile show \
 export ENTERPRISE_REQUIRE_ORIGIN_LOCK=true
 export SUPABASE_URL='https://...supabase.co'
 export SUPABASE_SERVICE_ROLE_KEY='...'
+export VAULTPROOF_INTERNAL_ADMIN_HOSTNAME='admin.vaultproof.dev'
+export VAULTPROOF_INTERNAL_ADMIN_EMAILS='employee@vaultproof.dev'
+export VAULTPROOF_INTERNAL_ADMIN_ACTIONS_ENABLED=false
 
 bash render-control-plane-env.sh > /tmp/enterprise-control-plane.env
 scp /tmp/enterprise-control-plane.env azureuser@<confidentialVmPublicIp>:/tmp/enterprise-control-plane.env
@@ -294,6 +297,17 @@ curl -sS -H 'host: enterprise.vaultproof.dev' http://127.0.0.1:3001/readiness
 
 Azure Front Door automatically sends `X-Azure-FDID` to origins. The control plane validates that header against `ENTERPRISE_AZURE_FRONT_DOOR_ID` when `ENTERPRISE_REQUIRE_ORIGIN_LOCK=true`.
 If you need to deploy the control-plane code before Front Door is fully configured, temporarily keep `ENTERPRISE_REQUIRE_ORIGIN_LOCK=false`.
+
+Before exposing the employee-only internal admin host, run the read-only preflight:
+
+```bash
+VAULTPROOF_INTERNAL_ADMIN_EMAILS='employee@vaultproof.dev' \
+SUPABASE_URL='https://<project>.supabase.co' \
+SUPABASE_SERVICE_ROLE_KEY='<service-role-key>' \
+npm run prepare:enterprise-internal-admin
+```
+
+The preflight checks required internal-admin/verifier tables, employee allowlist env, customer-host separation, and unauthenticated admin-host behavior. Keep `VAULTPROOF_INTERNAL_ADMIN_ACTIONS_ENABLED=false` until the team is ready to operate approval-gated employee write actions live.
 
 Enterprise users land on a separate dashboard served by the Azure control plane:
 
