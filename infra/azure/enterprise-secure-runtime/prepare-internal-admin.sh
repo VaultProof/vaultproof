@@ -96,7 +96,7 @@ if [[ "${RUN_SUPABASE_SCHEMA_CHECK}" == "true" ]]; then
     check_supabase_table internal_admin_action_requests
     check_supabase_table internal_admin_action_execution_records
     check_supabase_table organization_verifier_models
-    check_supabase_table organization_verifier_proofs
+    check_supabase_table organization_proof_verifications
   fi
 else
   ok "Supabase schema checks skipped by RUN_SUPABASE_SCHEMA_CHECK=false"
