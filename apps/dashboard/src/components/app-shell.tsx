@@ -42,6 +42,11 @@ const supabase = SUPABASE_URL && SUPABASE_ANON_KEY
 
 const PRIMARY_NAV = [
   {
+    href: "/",
+    label: "Executive",
+    blurb: "Chief of staff workflows, approvals, and secure workspace surfaces.",
+  },
+  {
     href: "/projects",
     label: "Projects",
     blurb: "Shared environments, providers, and rollout status.",
@@ -78,8 +83,8 @@ const SECONDARY_NAV = [
     label: "Admin",
   },
   {
-    href: "/",
-    label: "Marketing Site",
+    href: "https://vaultproof.dev",
+    label: "Website",
   },
 ];
 
@@ -369,10 +374,14 @@ export function AppShell({
             <div className="border-t border-white/8 pt-5">
               <div className="mb-2 text-[11px] uppercase tracking-[0.2em] text-slate-500">Secondary</div>
               <div className="space-y-1">
-                {SECONDARY_NAV.map((item) => (
+                {SECONDARY_NAV.map((item) => {
+                  const external = item.href.startsWith("http");
+                  return (
                   <Link
                     key={item.href}
                     href={item.href}
+                    target={external ? "_blank" : undefined}
+                    rel={external ? "noreferrer" : undefined}
                     className={classNames(
                       "flex items-center justify-between rounded-xl px-3 py-2 text-sm transition",
                       pathname === item.href
@@ -383,7 +392,8 @@ export function AppShell({
                     <span>{item.label}</span>
                     <span className="text-slate-600">&rarr;</span>
                   </Link>
-                ))}
+                  );
+                })}
               </div>
             </div>
           </div>

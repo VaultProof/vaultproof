@@ -60,17 +60,17 @@ require_production_ready() {
   local tmp_file
   local status
   tmp_file="$(mktemp)"
-  trap 'rm -f "${tmp_file}"' RETURN
   status="$(curl -sS --connect-timeout 10 --max-time 20 \
     -o "${tmp_file}" \
     -w "%{http_code}" \
     "${ENTERPRISE_URL%/}/readiness?container_apps_cleanup_ts=$(date +%s)")"
   if [[ "${status}" != "200" ]]; then
     echo "Refusing cleanup: ${ENTERPRISE_URL%/}/readiness returned HTTP ${status}." >&2
+    rm -f "${tmp_file}"
     exit 1
   fi
 
-  node -e "
+  if ! node -e "
 const fs = require('fs');
 const payload = JSON.parse(fs.readFileSync(process.argv[1], 'utf8'));
 if (payload.production_ready !== true) {
@@ -82,7 +82,11 @@ if (blockers.length > 0) {
   console.error('Refusing cleanup: production blockers remain: ' + blockers.join(', '));
   process.exit(1);
 }
-" "${tmp_file}"
+" "${tmp_file}"; then
+    rm -f "${tmp_file}"
+    exit 1
+  fi
+  rm -f "${tmp_file}"
 }
 
 require_front_door_not_using_container_apps() {
@@ -93,12 +97,14 @@ require_front_door_not_using_container_apps() {
 
   local tmp_file
   tmp_file="$(mktemp)"
-  trap 'rm -f "${tmp_file}"' RETURN
-  az afd origin list \
+  if ! az afd origin list \
     --resource-group "${RESOURCE_GROUP}" \
     --profile-name "${FRONT_DOOR_PROFILE}" \
     --origin-group-name "${FRONT_DOOR_ORIGIN_GROUP}" \
-    -o json > "${tmp_file}"
+    -o json > "${tmp_file}"; then
+    rm -f "${tmp_file}"
+    exit 1
+  fi
 
   local active_container_app_origins
   active_container_app_origins="$(json_value "${tmp_file}" "origins => origins.filter((origin) => {
@@ -108,8 +114,10 @@ require_front_door_not_using_container_apps() {
   if [[ -n "${active_container_app_origins}" ]]; then
     echo "Refusing cleanup: Front Door still has enabled Container Apps origin(s):" >&2
     echo "${active_container_app_origins}" >&2
+    rm -f "${tmp_file}"
     exit 1
   fi
+  rm -f "${tmp_file}"
 }
 
 require_confirmation() {
@@ -151,6 +159,7 @@ inventory() {
   echo
   echo "Guarded cleanup actions:"
   echo "  ACTION=disable-ingress CONFIRM_CONTAINER_APPS_CLEANUP=disable-prototype-ingress npm run cleanup:enterprise-container-apps"
+  echo "  ACTION=scale-to-zero CONFIRM_CONTAINER_APPS_CLEANUP=scale-prototype-to-zero npm run cleanup:enterprise-container-apps"
   echo "  ACTION=restore-ingress CONFIRM_CONTAINER_APPS_CLEANUP=restore-prototype-ingress npm run cleanup:enterprise-container-apps"
   echo "  ACTION=delete-apps CONFIRM_CONTAINER_APPS_CLEANUP=delete-prototype-apps npm run cleanup:enterprise-container-apps"
   echo "  ACTION=delete-environment CONFIRM_CONTAINER_APPS_CLEANUP=delete-prototype-environment npm run cleanup:enterprise-container-apps"
@@ -167,6 +176,24 @@ disable_ingress() {
       az containerapp ingress disable \
         --resource-group "${RESOURCE_GROUP}" \
         --name "${app_name}" \
+        -o none
+    else
+      echo "Skipping ${app_name}; it does not exist."
+    fi
+  done < <(app_names)
+}
+
+scale_to_zero() {
+  require_confirmation "scale-prototype-to-zero" "Container Apps scale-to-zero"
+  require_production_ready
+  require_front_door_not_using_container_apps
+  while IFS= read -r app_name; do
+    if app_exists "${app_name}"; then
+      echo "Setting minimum replicas to 0 for ${app_name}..."
+      az containerapp update \
+        --resource-group "${RESOURCE_GROUP}" \
+        --name "${app_name}" \
+        --min-replicas 0 \
         -o none
     else
       echo "Skipping ${app_name}; it does not exist."
@@ -244,6 +271,9 @@ case "${ACTION}" in
   disable-ingress)
     disable_ingress
     ;;
+  scale-to-zero|scale-zero)
+    scale_to_zero
+    ;;
   restore-ingress)
     restore_ingress
     ;;
@@ -257,7 +287,7 @@ case "${ACTION}" in
     delete_acr
     ;;
   *)
-    echo "Unknown ACTION: ${ACTION}. Use inventory, disable-ingress, restore-ingress, delete-apps, delete-environment, or delete-acr." >&2
+    echo "Unknown ACTION: ${ACTION}. Use inventory, disable-ingress, scale-to-zero, restore-ingress, delete-apps, delete-environment, or delete-acr." >&2
     exit 1
     ;;
 esac

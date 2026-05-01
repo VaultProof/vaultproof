@@ -830,7 +830,7 @@ function renderEnterpriseMembersPage(): string {
     .primary { background: linear-gradient(135deg, var(--gold), #f3df95); color: var(--ink); border: 0; font-weight: 850; }
     .danger { color: var(--red); border-color: rgba(251,113,133,.34); }
     .toolbar { display: flex; gap: 10px; flex-wrap: wrap; justify-content: flex-end; }
-    .form-row { display: grid; grid-template-columns: minmax(220px, 1fr) 150px auto; gap: 10px; align-items: center; }
+    .form-row { display: grid; grid-template-columns: minmax(220px, 1fr) minmax(240px, .42fr) auto; gap: 10px; align-items: center; }
     .inline-actions { display: flex; gap: 8px; justify-content: flex-end; align-items: center; flex-wrap: wrap; }
     .inline-actions select, .inline-actions button { padding: 8px 9px; font-size: 13px; border-radius: 11px; }
     .grid { display: grid; gap: 16px; }
@@ -850,9 +850,14 @@ function renderEnterpriseMembersPage(): string {
     .tag { color: var(--blue); font-size: 12px; border: 1px solid rgba(147,197,253,.24); border-radius: 999px; padding: 5px 8px; }
     .tag.good { color: var(--green); border-color: rgba(110,231,183,.24); }
     .tag.warn { color: var(--gold); border-color: rgba(215,168,75,.28); }
+    .role-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; }
+    .role-card { border: 1px solid rgba(237,229,204,.1); border-radius: 17px; padding: 13px; background: rgba(3,8,7,.22); }
+    .role-card strong { display: block; margin-bottom: 5px; }
+    .role-card p { color: var(--muted); font-size: 13px; line-height: 1.45; margin: 0 0 9px; }
+    .role-card .tag { display: inline-block; margin: 0 5px 5px 0; }
     .empty, .notice { color: var(--muted); border: 1px dashed rgba(237,229,204,.22); border-radius: 18px; padding: 18px; background: rgba(3,8,7,.2); }
     .notice.error { color: var(--red); border-color: rgba(251,113,133,.3); }
-    @media (max-width: 980px) { .shell { grid-template-columns: 1fr; } .topbar { flex-direction: column; } .kpis, .two { grid-template-columns: 1fr; } }
+    @media (max-width: 980px) { .shell { grid-template-columns: 1fr; } .topbar { flex-direction: column; } .kpis, .two, .role-grid, .form-row { grid-template-columns: 1fr; } }
     ${ENTERPRISE_APP_SHELL_THEME}
   </style>
 </head>
@@ -877,13 +882,16 @@ function renderEnterpriseMembersPage(): string {
       <div id="notice" class="notice error" style="display:none"></div>
 
       <section class="card" id="adminPanel" style="display:none; margin-bottom:16px">
-        <div class="section-title"><h2>Admin actions</h2><span class="mini">invite, role, project access</span></div>
+        <div class="section-title"><h2>IAM actions</h2><span class="mini">invite, role, project access</span></div>
         <form id="inviteForm" class="form-row">
           <input id="inviteEmail" type="email" autocomplete="email" placeholder="teammate@company.com" required />
           <select id="inviteRole" aria-label="Invite role">
-            <option value="viewer">viewer</option>
-            <option value="member">member</option>
-            <option value="admin">admin</option>
+            <option value="viewer">Viewer - read-only</option>
+            <option value="auditor">Auditor - evidence review</option>
+            <option value="developer">Developer - assigned project work</option>
+            <option value="iam_admin">IAM Admin - users and SSO</option>
+            <option value="security_admin">Security Admin - policy and evidence</option>
+            <option value="platform_admin">Platform Admin - runtime and gateway</option>
           </select>
           <button class="primary" type="submit">send invite</button>
         </form>
@@ -891,9 +899,14 @@ function renderEnterpriseMembersPage(): string {
 
       <section class="grid kpis">
         <div class="card"><div class="kpi-label">members</div><div class="kpi-value" id="kpiMembers">...</div><div class="kpi-sub" id="kpiMembersSub">loading</div></div>
-        <div class="card"><div class="kpi-label">admins</div><div class="kpi-value" id="kpiAdmins">...</div><div class="kpi-sub">owners and admins</div></div>
+        <div class="card"><div class="kpi-label">privileged roles</div><div class="kpi-value" id="kpiAdmins">...</div><div class="kpi-sub">owner, admin, IAM, security, platform</div></div>
         <div class="card"><div class="kpi-label">pending invites</div><div class="kpi-value" id="kpiInvites">...</div><div class="kpi-sub">waiting for acceptance</div></div>
         <div class="card"><div class="kpi-label">projects</div><div class="kpi-value" id="kpiProjects">...</div><div class="kpi-sub">access scopes</div></div>
+      </section>
+
+      <section class="card" style="margin-bottom:16px">
+        <div class="section-title"><h2>Role guide</h2><span class="mini">least-privilege IAM model</span></div>
+        <div id="roleGuideList" class="role-grid"><div class="empty">Loading role guide...</div></div>
       </section>
 
       <section class="grid two">
@@ -919,6 +932,29 @@ function renderEnterpriseMembersPage(): string {
       var ACTIVE_ORG_STORAGE_KEY = 'vaultproof_active_org';
       var token = localStorage.getItem('vaultproof_token') || '';
       var currentOrgId = localStorage.getItem(ACTIVE_ORG_STORAGE_KEY) || '';
+      var roleDefinitions = {
+        organization_roles: [
+          { value: 'owner', label: 'Owner', summary: 'Full workspace control and final break-glass authority.', permissions: ['all controls'], privileged: true },
+          { value: 'admin', label: 'Admin', summary: 'Legacy broad admin role.', permissions: ['members', 'projects', 'policy', 'evidence'], legacy: true, privileged: true },
+          { value: 'iam_admin', label: 'IAM Admin', summary: 'Manages users, roles, project access, and SSO setup.', permissions: ['invite users', 'change roles', 'assign projects'], privileged: true },
+          { value: 'security_admin', label: 'Security Admin', summary: 'Owns policy, provider slot controls, alerts, and evidence.', permissions: ['security policy', 'provider revoke', 'evidence'], privileged: true },
+          { value: 'platform_admin', label: 'Platform Admin', summary: 'Runs gateway, runtime, TLS/APIM, and production readiness.', permissions: ['runtime', 'gateway', 'project controls'], privileged: true },
+          { value: 'developer', label: 'Developer', summary: 'Builds and tests assigned project integrations.', permissions: ['assigned projects'] },
+          { value: 'auditor', label: 'Auditor', summary: 'Read-only compliance reviewer for audit and evidence.', permissions: ['audit', 'evidence'] },
+          { value: 'member', label: 'Member', summary: 'Legacy contributor role.', permissions: ['assigned project work'], legacy: true },
+          { value: 'viewer', label: 'Viewer', summary: 'Read-only business visibility.', permissions: ['read only'] }
+        ],
+        project_roles: [
+          { value: 'owner', label: 'Project Owner', summary: 'Full control for one project.', permissions: ['policy', 'provider slots', 'execution'], privileged: true },
+          { value: 'admin', label: 'Project Admin', summary: 'Legacy broad project admin role.', permissions: ['policy', 'provider slots', 'execution'], legacy: true, privileged: true },
+          { value: 'project_admin', label: 'Project Admin', summary: 'Configures one project without org-wide IAM.', permissions: ['policy', 'provider slots'], privileged: true },
+          { value: 'operator', label: 'Operator', summary: 'Runs approved traffic and reviews activity.', permissions: ['execution', 'activity'] },
+          { value: 'developer', label: 'Developer', summary: 'Builds and tests without changing security policy.', permissions: ['execution', 'activity'] },
+          { value: 'auditor', label: 'Auditor', summary: 'Read-only reviewer for one project.', permissions: ['evidence', 'activity'] },
+          { value: 'member', label: 'Member', summary: 'Legacy project contributor role.', permissions: ['execution'], legacy: true },
+          { value: 'viewer', label: 'Viewer', summary: 'Read-only project visibility.', permissions: ['read only'] }
+        ]
+      };
       function byId(id) { return document.getElementById(id); }
       function text(id, value) { var el = byId(id); if (el) el.textContent = value == null ? '' : String(value); }
       function escapeHtml(value) {
@@ -929,6 +965,44 @@ function renderEnterpriseMembersPage(): string {
         return /not authenticated/i.test(value) ? ${JSON.stringify(ENTERPRISE_AUTH_ERROR_MESSAGE)} : value;
       }
       function number(value) { var n = Number(value || 0); return Number.isFinite(n) ? n.toLocaleString() : '0'; }
+      function roleList(scope) {
+        return scope === 'project' ? roleDefinitions.project_roles : roleDefinitions.organization_roles;
+      }
+      function roleDefinition(scope, value) {
+        return (roleList(scope) || []).find(function(role) { return role.value === value; }) || { value: value, label: value, summary: '', permissions: [] };
+      }
+      function roleLabel(scope, value) {
+        return roleDefinition(scope, value).label || value;
+      }
+      function isPrivilegedOrgRole(value) {
+        return !!roleDefinition('organization', value).privileged;
+      }
+      function renderRoleOptions(scope, selected, includeOwner) {
+        return (roleList(scope) || []).filter(function(role) {
+          return includeOwner || role.value !== 'owner';
+        }).map(function(role) {
+          var label = role.label || role.value;
+          var suffix = role.summary ? ' - ' + role.summary : '';
+          return '<option value="' + escapeHtml(role.value) + '"' + (selected === role.value ? ' selected' : '') + '>' + escapeHtml(label + suffix) + '</option>';
+        }).join('');
+      }
+      function renderRoleGuide() {
+        var el = byId('roleGuideList');
+        if (!el) return;
+        var roles = (roleDefinitions.organization_roles || []).filter(function(role) {
+          return role.value !== 'admin' && role.value !== 'member';
+        });
+        el.innerHTML = roles.map(function(role) {
+          var permissions = Array.isArray(role.permissions) ? role.permissions : [];
+          return '<div class="role-card"><strong>' + escapeHtml(role.label || role.value) + '</strong><p>' + escapeHtml(role.summary || '') + '</p><div>' + permissions.slice(0, 4).map(function(permission) {
+            return '<span class="tag ' + (role.privileged ? 'warn' : '') + '">' + escapeHtml(permission) + '</span>';
+          }).join('') + '</div></div>';
+        }).join('');
+      }
+      function refreshInviteRoleOptions() {
+        var inviteRole = byId('inviteRole');
+        if (inviteRole) inviteRole.innerHTML = renderRoleOptions('organization', inviteRole.value || 'viewer', false);
+      }
       function rel(value) {
         if (!value) return 'never';
         var diff = Date.now() - new Date(value).getTime();
@@ -945,8 +1019,8 @@ function renderEnterpriseMembersPage(): string {
         if (currentOrgId) h['x-vaultproof-organization'] = currentOrgId;
         return h;
       }
-      async function fetchJson(path) {
-        var res = await fetch(path, { headers: headers() });
+      async function fetchJson(path, options) {
+        var res = await fetch(path, Object.assign({}, options || {}, { headers: Object.assign(headers(), (options && options.headers) || {}) }));
         var payload = await res.json().catch(function() { return null; });
         if (!res.ok) throw new Error(friendlyErrorMessage((payload && payload.error) || ('Request failed: ' + res.status)));
         return payload && payload.data ? payload.data : payload;
@@ -990,11 +1064,19 @@ function renderEnterpriseMembersPage(): string {
         }
       }
       function renderMembers(payload) {
+        if (payload.role_definitions) {
+          roleDefinitions = {
+            organization_roles: Array.isArray(payload.role_definitions.organization_roles) ? payload.role_definitions.organization_roles : roleDefinitions.organization_roles,
+            project_roles: Array.isArray(payload.role_definitions.project_roles) ? payload.role_definitions.project_roles : roleDefinitions.project_roles
+          };
+        }
+        refreshInviteRoleOptions();
+        renderRoleGuide();
         var members = Array.isArray(payload.members) ? payload.members : [];
         var invites = Array.isArray(payload.invitations) ? payload.invitations.filter(function(invite) { return invite.status === 'pending'; }) : [];
         var incomingInvites = Array.isArray(payload.pending_invitations_for_me) ? payload.pending_invitations_for_me : [];
         var projects = Array.isArray(payload.projects) ? payload.projects : [];
-        var admins = members.filter(function(member) { return member.role === 'owner' || member.role === 'admin'; });
+        var admins = members.filter(function(member) { return isPrivilegedOrgRole(member.role); });
         var canManage = !!(payload.organization && payload.organization.can_manage_members);
         var adminPanel = byId('adminPanel');
         if (adminPanel) adminPanel.style.display = canManage ? 'block' : 'none';
@@ -1010,27 +1092,26 @@ function renderEnterpriseMembersPage(): string {
         if (membersList) {
           membersList.innerHTML = members.length ? members.map(function(member) {
             var access = Array.isArray(member.project_access) ? member.project_access : [];
-            var roleControl = canManage ? '<div class="inline-actions"><select data-action="member-role" data-user-id="' + escapeHtml(member.user_id) + '">' + ['viewer','member','admin','owner'].map(function(role) {
-              return '<option value="' + role + '"' + (member.role === role ? ' selected' : '') + '>' + role + '</option>';
-            }).join('') + '</select><select data-action="project-pick" data-user-id="' + escapeHtml(member.user_id) + '"><option value="">assign project...</option>' + projects.map(function(project) {
+            var roleControl = canManage ? '<div class="inline-actions"><select data-action="member-role" data-user-id="' + escapeHtml(member.user_id) + '">' + renderRoleOptions('organization', member.role, true)
+              + '</select><select data-action="project-pick" data-user-id="' + escapeHtml(member.user_id) + '"><option value="">assign project...</option>' + projects.map(function(project) {
               return '<option value="' + escapeHtml(project.id) + '">' + escapeHtml(project.name || project.vp_proj_id) + '</option>';
-            }).join('') + '</select><select data-action="project-role" data-user-id="' + escapeHtml(member.user_id) + '"><option value="viewer">viewer</option><option value="member">member</option><option value="admin">admin</option></select><button type="button" data-action="assign-project" data-user-id="' + escapeHtml(member.user_id) + '">assign</button></div>' : '<span class="tag good">' + escapeHtml(member.role) + '</span>';
+            }).join('') + '</select><select data-action="project-role" data-user-id="' + escapeHtml(member.user_id) + '">' + renderRoleOptions('project', 'viewer', true) + '</select><button type="button" data-action="assign-project" data-user-id="' + escapeHtml(member.user_id) + '">assign</button></div>' : '<span class="tag good">' + escapeHtml(roleLabel('organization', member.role)) + '</span>';
             var projectBadges = access.length ? '<div class="row-sub">' + access.map(function(item) {
               var remove = canManage ? ' <button type="button" class="danger" data-action="remove-project" data-user-id="' + escapeHtml(member.user_id) + '" data-project-id="' + escapeHtml(item.project_id) + '">remove</button>' : '';
-              return '<span class="tag">' + escapeHtml(item.project_name || item.vp_proj_id) + ' / ' + escapeHtml(item.role) + '</span>' + remove;
+              return '<span class="tag">' + escapeHtml(item.project_name || item.vp_proj_id) + ' / ' + escapeHtml(roleLabel('project', item.role)) + '</span>' + remove;
             }).join(' ') + '</div>' : '';
-            return '<div class="row"><div><div class="row-title">' + escapeHtml(member.email || member.user_id) + '</div><div class="row-sub">' + escapeHtml(member.role) + ' - ' + access.length + ' project scopes - joined ' + escapeHtml(rel(member.created_at)) + '</div>' + projectBadges + '</div>' + roleControl + '</div>';
+            return '<div class="row"><div><div class="row-title">' + escapeHtml(member.email || member.user_id) + '</div><div class="row-sub">' + escapeHtml(roleLabel('organization', member.role)) + ' - ' + access.length + ' project scopes - joined ' + escapeHtml(rel(member.created_at)) + '</div>' + projectBadges + '</div>' + roleControl + '</div>';
           }).join('') : '<div class="empty">No members found.</div>';
         }
         var invitesList = byId('invitesList');
         if (invitesList) {
           var outgoingInviteRows = invites.map(function(invite) {
             var action = canManage ? '<button type="button" class="danger" data-action="revoke-invite" data-invite-id="' + escapeHtml(invite.id) + '">revoke</button>' : '<span class="tag warn">pending</span>';
-            return '<div class="row"><div><div class="row-title">' + escapeHtml(invite.email) + '</div><div class="row-sub">' + escapeHtml(invite.role) + ' - invited ' + escapeHtml(rel(invite.created_at)) + '</div></div>' + action + '</div>';
+            return '<div class="row"><div><div class="row-title">' + escapeHtml(invite.email) + '</div><div class="row-sub">' + escapeHtml(roleLabel('organization', invite.role)) + ' - invited ' + escapeHtml(rel(invite.created_at)) + '</div></div>' + action + '</div>';
           });
           var incomingInviteRows = incomingInvites.map(function(invite) {
             var org = invite.organization || {};
-            return '<div class="row"><div><div class="row-title">' + escapeHtml(org.name || 'Organization invite') + '</div><div class="row-sub">for ' + escapeHtml(invite.email) + ' as ' + escapeHtml(invite.role) + ' - invited ' + escapeHtml(rel(invite.created_at)) + '</div></div><button type="button" class="primary" data-action="accept-invite" data-invite-id="' + escapeHtml(invite.id) + '">accept</button></div>';
+            return '<div class="row"><div><div class="row-title">' + escapeHtml(org.name || 'Organization invite') + '</div><div class="row-sub">for ' + escapeHtml(invite.email) + ' as ' + escapeHtml(roleLabel('organization', invite.role)) + ' - invited ' + escapeHtml(rel(invite.created_at)) + '</div></div><button type="button" class="primary" data-action="accept-invite" data-invite-id="' + escapeHtml(invite.id) + '">accept</button></div>';
           });
           invitesList.innerHTML = outgoingInviteRows.concat(incomingInviteRows).length ? outgoingInviteRows.concat(incomingInviteRows).join('') : '<div class="empty">No pending invites.</div>';
         }
@@ -2078,16 +2159,49 @@ function renderEnterpriseOperationsPage(pageName: 'activity' | 'projects' | 'key
 </html>`;
 }
 
-function renderEnterpriseSupportPage(pageName: 'settings' | 'plans' | 'scanner' | 'runbooks'): string {
-  const pageTitle = pageName === 'settings' ? 'Settings' : pageName === 'plans' ? 'Plans' : pageName === 'scanner' ? 'Scanner' : 'Runbooks';
-  const pageKicker = pageName === 'settings' ? 'tenant defaults' : pageName === 'plans' ? 'enterprise packaging' : pageName === 'scanner' ? 'repository security' : 'operator commands';
-  const pageLead = pageName === 'settings'
-    ? 'Review tenant defaults, organization identity, SSO state, and production readiness without falling back to the consumer dashboard.'
-    : pageName === 'plans'
-      ? 'Track enterprise rollout packaging, Azure/APIM readiness, usage posture, and contract-facing guardrails.'
-      : pageName === 'scanner'
-        ? 'Prepare repository scanning for enterprise use while keeping scanner actions disabled until enterprise-safe scanner APIs are available.'
-        : 'Review production verification, evidence, deploy, secret, TLS, APIM, SSH, and cleanup runbooks before making live infrastructure changes.';
+type EnterpriseSupportPageName = 'setup' | 'technical-guide' | 'verifier' | 'settings' | 'plans' | 'scanner' | 'runbooks';
+
+function renderEnterpriseSupportPage(pageName: EnterpriseSupportPageName): string {
+  const supportPageCopy: Record<EnterpriseSupportPageName, { title: string; kicker: string; lead: string }> = {
+    setup: {
+      title: 'Enterprise setup guide',
+      kicker: 'welcome to VaultProof',
+      lead: 'Welcome to VaultProof Enterprise, and congratulations on starting your secure workspace. This guide is for enterprise teams with many apps, environments, owners, and provider integrations. Use it to map your environment, connect identity, choose a gateway pattern, protect provider keys, prove readiness, and operate VaultProof safely.',
+    },
+    'technical-guide': {
+      title: 'Technical guide',
+      kicker: 'implementation details',
+      lead: 'Deep implementation reference for identity, gateways, project modeling, caller lock, key custody, evidence, operations, rollout, and troubleshooting. Use it when technical teams need the exact wiring behind the setup guide.',
+    },
+    verifier: {
+      title: 'AI Proof Verifier',
+      kicker: 'verifier-first evidence',
+      lead: 'Register models that run outside VaultProof, submit proof bundles from those external jobs, verify the evidence, and tie demo results to the shared enterprise runtime attestation, project policy, RBAC, and audit.',
+    },
+    settings: {
+      title: 'Settings',
+      kicker: 'tenant defaults',
+      lead: 'Review tenant defaults, organization identity, SSO state, and production readiness from the enterprise control plane.',
+    },
+    plans: {
+      title: 'Plans',
+      kicker: 'enterprise packaging',
+      lead: 'Track enterprise rollout packaging, Azure/APIM readiness, usage posture, and contract-facing guardrails.',
+    },
+    scanner: {
+      title: 'Scanner',
+      kicker: 'repository security',
+      lead: 'Prepare repository scanning for enterprise use while keeping scanner actions disabled until enterprise-safe scanner APIs are available.',
+    },
+    runbooks: {
+      title: 'Runbooks',
+      kicker: 'operator commands',
+      lead: 'Review production verification, evidence, deploy, secret, TLS, APIM, SSH, and cleanup runbooks before making live infrastructure changes.',
+    },
+  };
+  const pageTitle = supportPageCopy[pageName].title;
+  const pageKicker = supportPageCopy[pageName].kicker;
+  const pageLead = supportPageCopy[pageName].lead;
 
   return `<!doctype html>
 <html lang="en">
@@ -2101,7 +2215,9 @@ function renderEnterpriseSupportPage(pageName: 'settings' | 'plans' | 'scanner' 
     * { box-sizing: border-box; }
     body { margin: 0; min-height: 100vh; font-family: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; color: var(--text); background: radial-gradient(circle at 18% 8%, rgba(215,168,75,.2), transparent 28rem), radial-gradient(circle at 86% 16%, rgba(147,197,253,.18), transparent 28rem), linear-gradient(135deg, #06100e, #10231d 50%, #050807); }
     a { color: inherit; text-decoration: none; }
-    select, button { border: 1px solid var(--line); background: rgba(237,229,204,.08); color: var(--text); border-radius: 13px; padding: 11px 12px; font: inherit; }
+    select, button, input, textarea { border: 1px solid var(--line); background: rgba(237,229,204,.08); color: var(--text); border-radius: 13px; padding: 11px 12px; font: inherit; }
+    input::placeholder, textarea::placeholder { color: rgba(244,236,213,.48); }
+    textarea { min-height: 120px; resize: vertical; line-height: 1.45; }
     option { color: #111827; }
     button { cursor: pointer; }
     button[disabled] { cursor: not-allowed; opacity: .58; }
@@ -2123,6 +2239,17 @@ function renderEnterpriseSupportPage(pageName: 'settings' | 'plans' | 'scanner' 
     .kpis { grid-template-columns: repeat(4, minmax(0, 1fr)); margin-bottom: 16px; }
     .two { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); }
     .card { border: 1px solid var(--line); background: linear-gradient(180deg, rgba(237,229,204,.13), rgba(237,229,204,.055)); border-radius: 24px; padding: 20px; box-shadow: 0 22px 90px rgba(0,0,0,.2); }
+    .doc-guide { display: none; max-width: 940px; }
+    .doc-section { border: 1px solid var(--line); background: linear-gradient(180deg, rgba(237,229,204,.12), rgba(237,229,204,.045)); border-radius: 24px; padding: 24px; margin-bottom: 18px; box-shadow: 0 22px 90px rgba(0,0,0,.16); }
+    .doc-section h2 { margin: 0 0 10px; font-size: 26px; letter-spacing: -.045em; }
+    .doc-section h3 { margin: 18px 0 8px; font-size: 16px; letter-spacing: -.02em; color: var(--text); }
+    .doc-section p { margin: 0 0 12px; color: var(--muted); line-height: 1.68; }
+    .doc-section ul, .doc-section ol { margin: 10px 0 0; padding-left: 22px; color: var(--muted); line-height: 1.68; }
+    .doc-section li { margin: 7px 0; }
+    .doc-section code { color: var(--gold); }
+    .doc-note { border-left: 3px solid var(--gold); padding: 12px 14px; margin-top: 14px; border-radius: 0 14px 14px 0; background: rgba(215,168,75,.08); color: var(--text); }
+    .doc-note strong { color: var(--gold); }
+    .doc-kicker { display: block; color: var(--gold); font-size: 12px; text-transform: uppercase; letter-spacing: .14em; font-weight: 850; margin-bottom: 8px; }
     .kpi-label { color: var(--muted); font-size: 12px; text-transform: uppercase; letter-spacing: .1em; }
     .kpi-value { font-size: 34px; font-weight: 850; letter-spacing: -.05em; margin-top: 8px; }
     .kpi-sub { color: var(--muted); font-size: 13px; margin-top: 6px; }
@@ -2164,11 +2291,314 @@ function renderEnterpriseSupportPage(pageName: 'settings' | 'plans' | 'scanner' 
 
       <div id="notice" class="notice error" style="display:none"></div>
 
-      <section class="grid kpis">
+      <section id="supportKpis" class="grid kpis">
         <div class="card"><div class="kpi-label">production</div><div class="kpi-value" id="kpiProduction">...</div><div class="kpi-sub">control plane + executor</div></div>
         <div class="card"><div class="kpi-label">projects</div><div class="kpi-value" id="kpiProjects">...</div><div class="kpi-sub">active scopes</div></div>
         <div class="card"><div class="kpi-label">members</div><div class="kpi-value" id="kpiMembers">...</div><div class="kpi-sub" id="kpiOrgRole">org role</div></div>
         <div class="card"><div class="kpi-label">calls</div><div class="kpi-value" id="kpiCalls">...</div><div class="kpi-sub">proxy traffic</div></div>
+      </section>
+
+      <section id="setupPanel" class="doc-guide" style="display:none">
+        <article class="doc-section">
+          <span class="doc-kicker">Read first</span>
+          <h2>Start here</h2>
+          <p>VaultProof setup is not just a button click. In a large enterprise, the hard part is deciding which teams, apps, provider keys, environments, gateways, and security owners should be allowed to use protected provider access.</p>
+          <p>Use this page like an implementation document. Work through it from top to bottom, then return to the dashboard pages when you are ready to configure the live account.</p>
+          <ol>
+            <li>Confirm the workspace and readiness status.</li>
+            <li>Map environments, apps, owners, providers, and sensitive flows.</li>
+            <li>Connect identity and assign least-privilege access.</li>
+            <li>Choose the gateway and network pattern.</li>
+            <li>Create projects, provider slots, caller-lock rules, and rate limits.</li>
+            <li>Validate with dry-run traffic before real provider calls.</li>
+            <li>Export evidence, test alerts, and launch one workload at a time.</li>
+          </ol>
+        </article>
+
+        <article class="doc-section">
+          <span class="doc-kicker">Live status</span>
+          <h2>Current workspace status</h2>
+          <p>These values come from the selected organization and the live confidential runtime. If something looks wrong, select the correct organization and refresh before changing policy.</p>
+          <div id="setupStatusList" class="list"></div>
+        </article>
+
+        <article class="doc-section">
+          <span class="doc-kicker">Before setup</span>
+          <h2>What your team should prepare</h2>
+          <p>Gather this before production configuration. It saves a lot of rework later, especially when security, identity, app teams, and network teams are all involved.</p>
+          <ul>
+            <li>Business owner, security owner, identity owner, network owner, developer owner, and incident contact.</li>
+            <li>Production, staging, development, sandbox, regional, subsidiary, and regulated environment list.</li>
+            <li>Provider inventory: provider name, account, API family, current key location, owner, rotation date, and leak blast radius.</li>
+            <li>Compliance needs: SOC 2 evidence, access reviews, audit exports, retention requirements, and customer-specific proof.</li>
+            <li>Gateway preference: VaultProof-managed APIM, customer-managed APIM, mTLS gateway, device gateway, or direct Front Door path.</li>
+          </ul>
+        </article>
+
+        <article class="doc-section">
+          <span class="doc-kicker">Step 1</span>
+          <h2>Map your enterprise environment</h2>
+          <p>Create VaultProof projects around real business and security boundaries. Do not put unrelated production and development apps into the same project just because they use the same provider.</p>
+          <h3>For each workload, write down:</h3>
+          <ul>
+            <li>Environment, application name, business purpose, and owning team.</li>
+            <li>Calling origin, gateway marker, CIDR, device fleet, or mTLS identity.</li>
+            <li>Allowed provider, upstream host, HTTP methods, and path prefixes.</li>
+            <li>Expected request volume, rate-limit needs, and incident priority.</li>
+            <li>Whether the flow handles regulated, financial, customer, production automation, or other sensitive data.</li>
+          </ul>
+          <div class="doc-note"><strong>Rule of thumb:</strong> if two workloads need different owners, approval flows, provider keys, rate limits, or audit reviews, they should usually be separate projects.</div>
+        </article>
+
+        <article class="doc-section">
+          <span class="doc-kicker">Step 2</span>
+          <h2>Configure identity and access</h2>
+          <p>Use company identity for enterprise access. VaultProof currently supports Microsoft Entra ID through the Supabase SAML session path, while VaultProof still enforces organization membership, project permissions, caller lock, and execution policy.</p>
+          <ul>
+            <li>Owners approve the organization, admins, SSO rollout, and go-live timing.</li>
+            <li>Admins manage projects, members, provider slots, and policy.</li>
+            <li>Security reviewers inspect readiness, audit, access reviews, alerts, and evidence.</li>
+            <li>Developers and operators configure project rules and troubleshoot runtime activity.</li>
+            <li>Viewers can inspect posture without changing policy.</li>
+          </ul>
+          <p>Use access-review exports before rollout, after major org changes, and on a recurring schedule. Keep a documented break-glass admin path outside normal SSO changes.</p>
+        </article>
+
+        <article class="doc-section">
+          <span class="doc-kicker">Step 3</span>
+          <h2>Choose the gateway and network pattern</h2>
+          <p>The gateway pattern decides which system is trusted to identify callers before VaultProof signs secure execution requests.</p>
+          <h3>VaultProof-managed gateway</h3>
+          <p>Fastest path. Customer apps call <code>enterprise.vaultproof.dev</code>, and VaultProof manages Front Door/APIM controls, coarse rate limits, origin lock, request-size guards, and telemetry.</p>
+          <h3>Customer-managed APIM</h3>
+          <p>Use this when the customer requires all SaaS or API traffic through their own Azure API Management. Customer APIM validates identity, device, subscription, or mTLS policy first, then forwards trusted caller-lock headers to VaultProof.</p>
+          <h3>mTLS or device gateway</h3>
+          <p>Use this for server, device, IoT, or fleet traffic. Caller lock can use certificate thumbprints, certificate subject fragments, device identity hashes, fleet IDs, firmware versions, CIDRs, and gateway markers.</p>
+          <div class="doc-note"><strong>Later hardening:</strong> plan TLS-origin cutover, APIM cutover, private-origin migration, and rollback during a controlled change window after the basic production path is stable.</div>
+        </article>
+
+        <article class="doc-section">
+          <span class="doc-kicker">Step 4</span>
+          <h2>Configure projects, provider slots, and policy</h2>
+          <p>Projects define who can use protected provider access and under what rules. Provider slots hold the protected provider connection state. Policy decides which callers and upstream requests are allowed.</p>
+          <ul>
+            <li>Allow only the provider families each project needs.</li>
+            <li>Bind execution to approved origins, gateways, CIDRs, devices, fleets, firmware versions, mTLS identities, methods, hosts, and paths.</li>
+            <li>Set expected request volume before production so rate limits reduce blast radius from bugs, leaked client tokens, or compromised apps.</li>
+            <li>Give each provider slot an owner, purpose, rotation date, and emergency revoke path.</li>
+          </ul>
+          <p>Provider keys should not be visible in the dashboard. Enterprise execution reconstructs provider key material only inside confidential execution memory and zeroes plaintext after use.</p>
+        </article>
+
+        <article class="doc-section">
+          <span class="doc-kicker">Step 5</span>
+          <h2>Validate with dry-run traffic</h2>
+          <p>Dry-run first. Before real provider calls, use dry-run or validate-only execution to prove auth, organization access, project policy, caller lock, request signing, executor reachability, and audit metadata.</p>
+          <p>Dry-run is successful when the request is accepted by policy, audit metadata is written, the secure executor is reachable, and provider dispatch is intentionally skipped.</p>
+        </article>
+
+        <article class="doc-section">
+          <span class="doc-kicker">Step 6</span>
+          <h2>Evidence, alerts, and compliance</h2>
+          <p>Enterprise security teams need proof, not promises. Before go-live, confirm production readiness, audit CSV export, access-review CSV export, alert delivery, and attestation evidence.</p>
+          <ul>
+            <li>Use <code>/readiness</code> to confirm Front Door, control plane, executor, attestation, Secure Key Release, replay protection, and origin lock.</li>
+            <li>Use Audit for governance/runtime events and evidence-friendly CSV export.</li>
+            <li>Use Members for access-review export.</li>
+            <li>Configure alert destinations and send a test alert.</li>
+            <li>Decide who receives key leak, emergency revoke, readiness drift, denial spike, provider error, and runtime availability notifications.</li>
+          </ul>
+        </article>
+
+        <article class="doc-section">
+          <span class="doc-kicker">Step 7</span>
+          <h2>Go live gradually</h2>
+          <p>Do not move every app at once. Start with one low-risk production workload, one provider path, and a known traffic volume.</p>
+          <ol>
+            <li>Confirm readiness is production-ready.</li>
+            <li>Confirm SSO/admin access works.</li>
+            <li>Confirm provider slot and policy are locked.</li>
+            <li>Send low-volume traffic.</li>
+            <li>Watch Activity, Audit, Alerts, readiness, provider denials, and provider errors.</li>
+            <li>Expand by project only after the first workload is stable.</li>
+          </ol>
+        </article>
+
+        <article class="doc-section">
+          <span class="doc-kicker">Reference</span>
+          <h2>Pages used during setup</h2>
+          <p>Use these pages when the document tells you to configure or verify a specific area.</p>
+          <div id="setupReferenceList" class="list"></div>
+        </article>
+      </section>
+
+      <section id="technicalGuidePanel" class="doc-guide" style="display:none">
+        <article class="doc-section">
+          <span class="doc-kicker">Audience</span>
+          <h2>Who should use this guide</h2>
+          <p>This guide is for the people who need to connect VaultProof to a real enterprise environment: identity admins, network teams, platform engineers, app owners, security reviewers, compliance owners, and incident responders.</p>
+          <p>The setup guide explains what to do in order. This technical guide explains why each part exists, what system owns it, what data crosses the boundary, and what questions technical teams usually ask before approving production traffic.</p>
+          <div class="doc-note"><strong>Keep the setup page simple:</strong> use this page when someone asks for architecture, trust boundaries, identity flow, gateway behavior, key custody, attestation, audit evidence, or troubleshooting details.</div>
+        </article>
+
+        <article class="doc-section">
+          <span class="doc-kicker">Architecture</span>
+          <h2>Architecture at a glance</h2>
+          <p>VaultProof Enterprise separates the customer-facing control plane from the secure execution path. The control plane handles organization access, projects, policies, members, audit, alerts, and dashboards. The executor handles protected provider calls and key release inside the Azure confidential runtime.</p>
+          <ol>
+            <li>A user signs in to the enterprise dashboard and receives an enterprise session.</li>
+            <li>The dashboard calls only <code>/api/v1/enterprise/*</code> APIs on the enterprise control plane.</li>
+            <li>The control plane checks organization membership, project access, policy state, and request signing rules.</li>
+            <li>Approved execution requests are sent to the secure executor over the internal enterprise path.</li>
+            <li>The executor verifies the request signature, replay protection, caller-lock metadata, attestation posture, and key-release readiness.</li>
+            <li>Provider key material is released only through the configured Azure Secure Key Release path and is used inside the confidential runtime.</li>
+            <li>Governance, runtime, alerts, readiness, and evidence events are recorded for review and export.</li>
+          </ol>
+        </article>
+
+        <article class="doc-section">
+          <span class="doc-kicker">Identity</span>
+          <h2>Identity and authorization model</h2>
+          <p>Enterprise users should use company identity. Today the customer-facing path is Microsoft Entra ID SSO through Supabase SAML session brokering. Supabase provides the browser session and JWT validation surface; VaultProof still controls organization membership, project roles, audit events, and policy enforcement.</p>
+          <h3>What Entra ID owns</h3>
+          <ul>
+            <li>Corporate user identity, MFA, conditional access, device posture, and identity lifecycle.</li>
+            <li>Who can use the customer enterprise app, based on the customer identity team policy.</li>
+            <li>SAML assertions sent into the brokered session path.</li>
+          </ul>
+          <h3>What VaultProof owns</h3>
+          <ul>
+            <li>Organization membership, project-level access, dashboard authorization, and audit records.</li>
+            <li>Role model for owners, admins, security reviewers, developers/operators, and viewers.</li>
+            <li>Caller-lock policy, provider-slot policy, rate limits, evidence exports, and emergency revoke actions.</li>
+          </ul>
+          <p>This means a user can authenticate successfully but still be blocked if they are not a member of the VaultProof organization or do not have access to the requested project.</p>
+        </article>
+
+        <article class="doc-section">
+          <span class="doc-kicker">Network</span>
+          <h2>Gateway and network patterns</h2>
+          <p>The gateway identifies the caller before VaultProof allows protected provider access. A customer can start with the VaultProof-managed path and later move to a customer-managed APIM, mTLS, device gateway, or private-origin pattern.</p>
+          <h3>VaultProof-managed Front Door/APIM</h3>
+          <p>Good for fast pilots and standard SaaS rollout. VaultProof manages edge routing, health checks, origin lock, coarse rate limiting, request-size controls, telemetry, and rollback steps.</p>
+          <h3>Customer-managed Azure API Management</h3>
+          <p>Good when the business requires every API to pass through its own gateway. Customer APIM validates subscriptions, Entra JWTs, private network controls, mTLS, device policy, and customer rate limits before forwarding trusted caller-lock headers to VaultProof.</p>
+          <h3>mTLS, device, and fleet gateways</h3>
+          <p>Good for servers, devices, IoT, or internal agents. Caller lock can bind policy to certificate thumbprints, certificate subjects, device IDs, firmware versions, fleet IDs, CIDRs, and gateway markers.</p>
+          <h3>Private origin path</h3>
+          <p>Use this for a hardened production phase after the basic path is stable. The target state is to remove public origin exposure, keep Front Door/APIM as the allowed ingress, and maintain a separate break-glass operations path.</p>
+        </article>
+
+        <article class="doc-section">
+          <span class="doc-kicker">Projects</span>
+          <h2>Project modeling and environment boundaries</h2>
+          <p>Projects should match security and ownership boundaries, not just product names. Separate projects are usually better when workloads have different owners, environments, provider accounts, compliance needs, rate limits, or incident response owners.</p>
+          <ul>
+            <li>Separate production, staging, development, sandbox, regulated, regional, and subsidiary workloads when they have different risk.</li>
+            <li>Use one project for one clear business purpose and one owner group.</li>
+            <li>Assign project members by least privilege, then use access-review exports before and after launch.</li>
+            <li>Keep provider slots scoped to the exact project that needs them.</li>
+          </ul>
+          <p>A strong project model makes incident response easier because VaultProof can show which caller, project, provider slot, and policy allowed or blocked the traffic.</p>
+        </article>
+
+        <article class="doc-section">
+          <span class="doc-kicker">Key custody</span>
+          <h2>Provider key custody and Secure Key Release</h2>
+          <p>VaultProof is designed so raw provider keys do not sit in customer app code, environment variables, browser storage, logs, or ordinary dashboard views. The enterprise executor uses Azure confidential computing and Secure Key Release so protected material is only released to the expected measured runtime.</p>
+          <ul>
+            <li>The Azure confidential VM reports attestation evidence through Microsoft Azure Attestation.</li>
+            <li>The key-release policy binds release to measured runtime attributes and policy hash.</li>
+            <li>The executor verifies request signatures and replay protection before using protected material.</li>
+            <li>Plaintext provider material is kept inside the execution process and cleared after use.</li>
+            <li>Provider slots track owner, purpose, rotation state, and emergency revoke posture.</li>
+          </ul>
+          <div class="doc-note"><strong>Important:</strong> key release readiness is not the same as business approval. Technical readiness proves the runtime can release securely; organization policy still decides whether a project is allowed to use a provider.</div>
+        </article>
+
+        <article class="doc-section">
+          <span class="doc-kicker">Policy</span>
+          <h2>Caller lock and execution policy</h2>
+          <p>Caller lock is the set of facts that prove the request came through the expected application, gateway, network, device, or certificate path. Execution policy is the rule set that decides what provider access is allowed after identity and caller lock pass.</p>
+          <h3>Common caller-lock inputs</h3>
+          <ul>
+            <li>Allowed origins, gateway headers, APIM markers, CIDRs, mTLS certificate thumbprints, device IDs, fleet IDs, firmware versions, and service identities.</li>
+            <li>Allowed upstream hosts, path prefixes, HTTP methods, provider families, and rate limits.</li>
+            <li>Required dry-run mode during validation and launch windows.</li>
+          </ul>
+          <p>The goal is simple: a stolen app token or leaked browser session should not be enough to use a protected provider key from the wrong network, origin, device, gateway, or project.</p>
+        </article>
+
+        <article class="doc-section">
+          <span class="doc-kicker">Evidence</span>
+          <h2>Evidence, logs, exports, and audit</h2>
+          <p>Enterprise teams need evidence for security reviews, incident response, customer questionnaires, and compliance handoff. VaultProof records both governance events and runtime events so teams can answer who changed access, what policy applied, which provider slot was used, and whether the confidential runtime was production-ready.</p>
+          <ul>
+            <li><code>/readiness</code> proves current production posture for control plane and executor.</li>
+            <li>Audit CSV exports governance/runtime events for compliance review.</li>
+            <li>Access-review CSV exports members, roles, and project assignments.</li>
+            <li>Activity shows runtime status codes, provider request IDs, denial reasons, latency, and attestation summaries.</li>
+            <li>Runbooks capture evidence bundles and validate them before handoff.</li>
+          </ul>
+        </article>
+
+        <article class="doc-section">
+          <span class="doc-kicker">Operations</span>
+          <h2>Alerts and incident response</h2>
+          <p>Alerts should go to teams that can act quickly. A useful launch setup usually includes security operations, platform operations, app owners, and an incident commander path.</p>
+          <ul>
+            <li>Send test alerts before go-live and after changing alert destinations.</li>
+            <li>Alert on key leak reports, emergency revoke, readiness drift, denial spikes, provider errors, execution failures, and unusual traffic volume.</li>
+            <li>Use emergency revoke when a provider key, project, or caller path is suspected to be unsafe.</li>
+            <li>Use audit and activity together: audit explains governance changes; activity explains runtime behavior.</li>
+          </ul>
+        </article>
+
+        <article class="doc-section">
+          <span class="doc-kicker">Rollout</span>
+          <h2>Rollout and validation flow</h2>
+          <ol>
+            <li>Confirm the organization, SSO path, break-glass path, and project owner.</li>
+            <li>Create the project, provider slot, caller lock, allowlisted upstreams, and rate limits.</li>
+            <li>Run dry-run execution until auth, policy, signing, executor reachability, and audit metadata pass.</li>
+            <li>Verify production readiness, evidence export, access review export, and alert delivery.</li>
+            <li>Send low-volume production traffic for one workload and one provider path.</li>
+            <li>Watch Activity, Alerts, Audit, provider errors, denials, and readiness.</li>
+            <li>Expand project by project after the first workload is stable.</li>
+          </ol>
+        </article>
+
+        <article class="doc-section">
+          <span class="doc-kicker">Troubleshooting</span>
+          <h2>Troubleshooting map</h2>
+          <h3>User cannot sign in</h3>
+          <p>Check Entra assignment, Supabase SAML configuration, invite status, organization membership, browser session storage, and whether the user is on the expected enterprise hostname.</p>
+          <h3>User can sign in but sees no data</h3>
+          <p>Check organization membership, active organization selection, project assignments, role level, and API auth errors in the browser network tab.</p>
+          <h3>Dry-run fails</h3>
+          <p>Check bearer token, selected organization, project role, caller-lock inputs, provider allowlist, upstream method/host/path, request signature, and executor reachability.</p>
+          <h3>Readiness is not production-ready</h3>
+          <p>Open <code>/readiness</code>, then use Runbooks for verifier, evidence, key-release, attestation, TLS, APIM, SSH, and origin-lock checks.</p>
+          <h3>Front Door returns 503 or 504</h3>
+          <p>Check origin host, port, protocol, health probe path, NSG rules, UFW rules, nginx/systemd service status, and whether the origin allows Front Door traffic.</p>
+          <h3>Provider call is denied</h3>
+          <p>Check caller-lock mismatch, project policy, rate limit, provider slot state, emergency revoke status, and audit/activity denial details.</p>
+        </article>
+
+        <article class="doc-section">
+          <span class="doc-kicker">Checklist</span>
+          <h2>Integration questions for technical review</h2>
+          <ul>
+            <li>Which Entra tenant, enterprise app, groups, MFA, and conditional access rules govern VaultProof users?</li>
+            <li>Which apps, environments, regions, subsidiaries, and provider accounts are in scope for the first rollout?</li>
+            <li>Which gateway pattern is required: VaultProof-managed, customer APIM, mTLS, device gateway, private origin, or hybrid?</li>
+            <li>Which caller-lock facts can the customer reliably provide and monitor?</li>
+            <li>Which provider keys move first, who owns them, and what is the emergency revoke path?</li>
+            <li>Which evidence exports are required for security, audit, legal, procurement, and customer trust teams?</li>
+            <li>Who receives alerts and who has authority to pause or revoke traffic?</li>
+            <li>What is the rollback plan if SSO, gateway routing, APIM, TLS, or provider execution breaks?</li>
+          </ul>
+        </article>
       </section>
 
       <section id="settingsPanel" class="grid two" style="display:none">
@@ -2184,6 +2614,55 @@ function renderEnterpriseSupportPage(pageName: 'settings' | 'plans' | 'scanner' 
       <section id="scannerPanel" class="grid two" style="display:none">
         <div class="card"><div class="section-title"><h2>Enterprise scanner status</h2><span class="mini">not enabled</span></div><div id="scannerList" class="list"></div></div>
         <div class="card"><div class="section-title"><h2>Safe launch checklist</h2><span class="mini">before wiring APIs</span></div><div id="scannerChecklist" class="list"></div></div>
+      </section>
+
+      <section id="verifierPanel" class="grid two" style="display:none">
+        <div class="card" style="grid-column:1/-1">
+          <div class="section-title"><h2>Shared demo attestation</h2><span class="mini">one confidential runtime proof</span></div>
+          <p class="mini">Demo proof records use the shared VaultProof Enterprise confidential runtime attestation. That proves the VaultProof verifier/control path is running with the expected Azure confidential posture; it does not mean VaultProof ran the customer model.</p>
+          <div id="verifierAttestationList" class="list" style="margin-top:12px"></div>
+        </div>
+        <div class="card">
+          <div class="section-title"><h2>Register external model</h2><span class="mini">VaultProof does not run it</span></div>
+          <form id="verifierModelForm" class="list">
+            <select id="verifierModelProjectSelect" aria-label="Verifier model project"><option value="">Loading projects...</option></select>
+            <input id="verifierModelRef" placeholder="model ref, for example fraud-xgb-v1" />
+            <input id="verifierModelName" placeholder="display name, for example Fraud Score XGBoost v1" />
+            <select id="verifierModelFamily" aria-label="Model family">
+              <option value="classification">classification</option>
+              <option value="regression">regression</option>
+              <option value="ranking">ranking</option>
+              <option value="embedding">embedding</option>
+              <option value="llm">llm</option>
+              <option value="vision">vision</option>
+              <option value="custom">custom</option>
+            </select>
+            <input id="verifierProofSystems" value="vaultproof-manifest-v1,external-verifier,tee-attestation" aria-label="Allowed proof systems" />
+            <button class="primary" type="submit">save model</button>
+          </form>
+          <div class="section-title" style="margin-top:18px"><h2>Model registry</h2><span class="mini">allowed models</span></div>
+          <div id="verifierModelList" class="list"></div>
+        </div>
+        <div class="card">
+          <div class="section-title"><h2>Submit proof bundle</h2><span class="mini">verify evidence only</span></div>
+          <form id="verifierProofForm" class="list">
+            <select id="verifierProofProjectSelect" aria-label="Proof project"><option value="">Loading projects...</option></select>
+            <select id="verifierProofModelSelect" aria-label="Proof model"><option value="">Register a model first</option></select>
+            <select id="verifierProofSystem" aria-label="Proof system">
+              <option value="vaultproof-manifest-v1">vaultproof-manifest-v1</option>
+              <option value="external-verifier">external-verifier</option>
+              <option value="tee-attestation">tee-attestation</option>
+              <option value="world-zk-compute">world-zk-compute</option>
+              <option value="ezkl">ezkl</option>
+              <option value="risc0">risc0</option>
+            </select>
+            <input id="verifierOutputHash" placeholder="claimed output hash, optional sha256:..." />
+            <textarea id="verifierProofBundle" placeholder='{"proof_system":"vaultproof-manifest-v1","model_ref":"fraud-xgb-v1","claimed_output_hash":"sha256:..."}'></textarea>
+            <button class="primary" type="submit">verify proof bundle</button>
+          </form>
+          <div class="section-title" style="margin-top:18px"><h2>Proof verification evidence</h2><span class="mini">latest checks</span></div>
+          <div id="verifierEvidenceList" class="list"></div>
+        </div>
       </section>
 
       <section id="runbooksPanel" class="grid two" style="display:none">
@@ -2241,6 +2720,9 @@ function renderEnterpriseSupportPage(pageName: 'settings' | 'plans' | 'scanner' 
       function row(title, sub, tag, tone) {
         return '<div class="row"><div><div class="row-title">' + escapeHtml(title) + '</div><div class="row-sub">' + escapeHtml(sub || '') + '</div></div><span class="tag ' + (tone || '') + '">' + escapeHtml(tag || 'ready') + '</span></div>';
       }
+      function linkRow(title, sub, href, label, tone) {
+        return '<div class="row"><div><div class="row-title">' + escapeHtml(title) + '</div><div class="row-sub">' + escapeHtml(sub || '') + '</div></div><a class="tag ' + (tone || '') + '" href="' + escapeHtml(href) + '">' + escapeHtml(label || 'open') + '</a></div>';
+      }
       function renderOrgSelector(payload) {
         var select = byId('orgSelect');
         var orgs = Array.isArray(payload.organizations) ? payload.organizations : [];
@@ -2272,10 +2754,36 @@ function renderEnterpriseSupportPage(pageName: 'settings' | 'plans' | 'scanner' 
         text('kpiMembers', number(org.member_count));
         text('kpiOrgRole', org.role || 'member');
         text('kpiCalls', number(overview.totalCalls));
+        byId('supportKpis').style.display = PAGE_MODE === 'setup' || PAGE_MODE === 'technical-guide' ? 'none' : 'grid';
+        byId('setupPanel').style.display = PAGE_MODE === 'setup' ? 'block' : 'none';
+        byId('technicalGuidePanel').style.display = PAGE_MODE === 'technical-guide' ? 'block' : 'none';
         byId('settingsPanel').style.display = PAGE_MODE === 'settings' ? 'grid' : 'none';
         byId('plansPanel').style.display = PAGE_MODE === 'plans' ? 'grid' : 'none';
         byId('scannerPanel').style.display = PAGE_MODE === 'scanner' ? 'grid' : 'none';
+        byId('verifierPanel').style.display = PAGE_MODE === 'verifier' ? 'grid' : 'none';
         byId('runbooksPanel').style.display = PAGE_MODE === 'runbooks' ? 'grid' : 'none';
+        if (PAGE_MODE === 'setup') {
+          byId('setupStatusList').innerHTML = [
+            row('Organization selected', currentOrgId ? 'The page is scoped to the selected organization.' : 'Select an organization before configuring projects, members, or audit exports.', currentOrgId ? 'selected' : 'select org', currentOrgId ? 'good' : 'warn'),
+            row('Production readiness', productionReady ? 'The confidential runtime reports production-ready.' : 'Open readiness and clear blockers before sending real traffic.', productionReady ? 'ready' : 'blocked', productionReady ? 'good' : 'bad'),
+            row('SSO status', sso.provider_status === 'configured' ? 'Company sign-in is configured for this organization.' : 'Company sign-in still needs setup or confirmation.', sso.provider_status || 'todo', sso.provider_status === 'configured' ? 'good' : 'warn'),
+            row('Projects', number(org.project_count || overview.totalProjects) + ' project scopes are visible for this organization.', number(org.project_count || overview.totalProjects), (org.project_count || overview.totalProjects) ? 'good' : 'warn'),
+            row('Members', number(org.member_count) + ' members are visible for this organization.', number(org.member_count), org.member_count ? 'good' : 'warn'),
+            row('Recent traffic', number(overview.totalCalls) + ' proxy calls are visible in the current overview window.', 'activity', overview.totalCalls ? 'good' : 'warn')
+          ].join('');
+          byId('setupReferenceList').innerHTML = [
+            linkRow('Dashboard overview', 'Check runtime readiness, organization health, projects, members, calls, and shortcuts.', '/app/dashboard', 'dashboard', 'good'),
+            linkRow('Org + SSO', 'Confirm your organization details and company sign-in status.', '/app/org', 'open', 'good'),
+            linkRow('Members', 'Invite teammates, assign roles, manage project access, and export access reviews.', '/app/members', 'open', 'good'),
+            linkRow('Projects', 'Review project inventory, provider slots, policy status, and health.', '/app/projects', 'open', 'good'),
+            linkRow('Control', 'Set caller lock, provider allowlists, upstream restrictions, rate limits, and secure execution policy.', '/app/control', 'open', 'good'),
+            linkRow('Provider slots', 'Review active providers, rotation state, Secure Key Release notes, and emergency revoke.', '/app/keys', 'open', 'good'),
+            linkRow('Audit', 'Search governance/runtime events and export CSV evidence.', '/app/audit', 'open', 'good'),
+            linkRow('Alerts', 'Set destinations, review delivery logs, and send test alerts.', '/app/alerts', 'open', 'good'),
+            linkRow('Technical guide', 'Deep implementation details for identity, gateways, key custody, caller lock, evidence, rollout, and troubleshooting.', '/app/technical-guide', 'open', 'good'),
+            linkRow('Runbooks', 'Use operator commands for verification, evidence, deployment, secrets, TLS, APIM, SSH, and cleanup.', '/app/runbooks', 'open', 'good')
+          ].join('');
+        }
         if (PAGE_MODE === 'settings') {
           text('settingsMeta', org.kind || 'organization');
           byId('settingsList').innerHTML = [
@@ -2287,7 +2795,7 @@ function renderEnterpriseSupportPage(pageName: 'settings' | 'plans' | 'scanner' 
           byId('securityList').innerHTML = [
             row('Production readiness', productionReady ? 'Control plane and executor report production-ready.' : (readiness.production_blockers || []).join('; '), productionReady ? 'ready' : 'blocked', productionReady ? 'good' : 'bad'),
             row('Origin lock', readiness.control_plane && readiness.control_plane.origin_lock_configured ? 'Front Door/custom origin lock configured.' : 'Origin lock is not configured.', readiness.control_plane && readiness.control_plane.origin_lock_required ? 'required' : 'optional', readiness.control_plane && readiness.control_plane.origin_lock_configured ? 'good' : 'warn'),
-            row('Dashboard session storage', 'Enterprise pages read the Supabase session from local storage and never load the B2C dashboard shell.', 'enterprise only', 'good')
+            row('Dashboard session storage', 'Enterprise pages read the Supabase session from local storage and call only enterprise control-plane APIs.', 'enterprise only', 'good')
           ].join('');
         }
         if (PAGE_MODE === 'plans') {
@@ -2306,7 +2814,7 @@ function renderEnterpriseSupportPage(pageName: 'settings' | 'plans' | 'scanner' 
         if (PAGE_MODE === 'scanner') {
           byId('scannerList').innerHTML = [
             row('Enterprise scanner APIs', 'No enterprise-safe scanner endpoint is enabled on this control plane yet.', 'disabled', 'warn'),
-            row('B2C scanner isolation', 'This page intentionally avoids consumer scanner endpoints and external API fallbacks.', 'isolated', 'good'),
+            row('Enterprise scanner isolation', 'This page waits for organization-scoped scanner endpoints before enabling browser actions.', 'isolated', 'good'),
             row('Recommended interim flow', 'Run local scanner tooling during onboarding, then attach sanitized reports to the enterprise audit package.', 'manual', 'warn')
           ].join('');
           byId('scannerChecklist').innerHTML = [
@@ -2314,6 +2822,9 @@ function renderEnterpriseSupportPage(pageName: 'settings' | 'plans' | 'scanner' 
             row('Finding redaction', 'Secrets and provider tokens must be masked before rendering or exporting.', 'required', 'warn'),
             row('Remediation workflow', 'PR creation, ignore/allowlist, and migration actions need enterprise audit events.', 'required', 'warn')
           ].join('');
+        }
+        if (PAGE_MODE === 'verifier') {
+          loadVerifier();
         }
         if (PAGE_MODE === 'runbooks') {
           byId('runbooksSafeList').innerHTML = [
@@ -2331,7 +2842,8 @@ function renderEnterpriseSupportPage(pageName: 'settings' | 'plans' | 'scanner' 
             row('mTLS caller-lock preparation', 'npm run prepare:enterprise-mtls computes a client certificate thumbprint, subject fragment, APIM header contract, and caller-lock policy snippet without changing Azure.', 'read-only', 'good'),
             row('APIM policy template smoke', 'npm run test:enterprise-apim-policies validates provider-secret stripping plus caller-lock header delete/override behavior across VaultProof-managed, customer-managed, device, and mTLS APIM templates before customer handoff.', 'read-only', 'good'),
             row('Origin TLS certificate plan', 'npm run prepare:enterprise-origin-cert plans VM CSR generation, signed certificate install, self-signed marker removal, and local TLS checks.', 'read-only', 'good'),
-            row('Origin TLS preparation plan', 'npm run prepare:enterprise-origin-tls previews DNS, NSG 443, and APIM backend steps before the HTTPS origin cutover.', 'read-only', 'good'),
+            row('Origin TLS preparation plan', 'npm run prepare:enterprise-origin-tls previews DNS, Azure DNS zone discovery, NSG 443, and APIM backend steps before the HTTPS origin cutover.', 'read-only', 'good'),
+            row('Origin DNS guardrail', 'The origin TLS prep helper can create or remove origin.enterprise.vaultproof.dev only when the DNS zone is hosted in Azure DNS and the operator supplies the confirmation phrase.', 'read-only', 'good'),
             row('Origin TLS preflight', 'npm run verify:enterprise-origin-tls checks DNS, NSG 443, nginx, certificate SAN/trust, and local origin health before HttpsOnly cutover.', 'read-only', 'good'),
             row('Alternate access preparation', 'npm run prepare:enterprise-alternate-access plans boot diagnostics and Bastion setup with confirmation-gated live actions.', 'read-only', 'good'),
             row('Alternate access readiness', 'npm run verify:enterprise-alternate-access checks Bastion, boot diagnostics/serial-console prerequisites, Defender JIT visibility, and SSH NSG posture before public SSH closure.', 'read-only', 'good'),
@@ -2340,11 +2852,102 @@ function renderEnterpriseSupportPage(pageName: 'settings' | 'plans' | 'scanner' 
           byId('runbooksGatedList').innerHTML = [
             row('Deploy to Confidential VM', 'npm run deploy:enterprise-vm copies code, rebuilds, and restarts selected systemd services on the CVM.', 'operator', 'warn'),
             row('Secret verification and rotation', 'npm run verify:enterprise-secrets checks installed env posture after the prepared rotation bundle is installed; Supabase key rotation and live env installs remain operator actions.', 'operator', 'warn'),
+            row('Origin DNS record', 'ACTION=upsert-origin-dns or ACTION=remove-origin-dns on npm run prepare:enterprise-origin-tls updates the Azure DNS A record only with the required confirmation phrase; external DNS still needs manual provider access.', 'approval', 'warn'),
             row('TLS origin cutover', 'npm run cutover:enterprise-origin-tls plans the Front Door HTTPS origin cutover and requires strict preflight plus confirmation-gated enable/rollback.', 'blocked', 'warn'),
             row('APIM cutover', 'npm run cutover:enterprise-apim previews APIM route cutover and requires confirmation-gated enable/rollback before Front Door changes.', 'blocked', 'warn'),
             row('SSH hardening', 'npm run harden:enterprise-ssh can plan, close, or reopen bootstrap SSH with readiness, alternate-access, and confirmation gates.', 'approval', 'warn'),
             row('Container Apps cleanup', 'npm run cleanup:enterprise-container-apps inventories the old prototype resources and requires action-specific confirmation before ingress disable/restore/delete.', 'approval', 'warn')
           ].join('');
+        }
+      }
+      function populateVerifierSelect(selectId, rows, current) {
+        var select = byId(selectId);
+        if (!select) return;
+        select.innerHTML = rows.length ? rows.map(function(row) {
+          return '<option value="' + escapeHtml(row.value) + '"' + (current === row.value ? ' selected' : '') + '>' + escapeHtml(row.label) + '</option>';
+        }).join('') : '<option value="">No options</option>';
+      }
+      function renderVerifier(payload) {
+        var projects = Array.isArray(payload.projects) ? payload.projects : [];
+        var models = Array.isArray(payload.models) ? payload.models : [];
+        var verifications = Array.isArray(payload.verifications) ? payload.verifications : [];
+        var sharedAttestation = payload.shared_attestation || {};
+        var projectOptions = projects.map(function(project) {
+          return { value: project.id, label: (project.name || project.vp_proj_id || project.id) + ' - ' + (project.project_role || 'project') };
+        });
+        byId('verifierAttestationList').innerHTML = row(
+          sharedAttestation.label || 'Shared enterprise runtime attestation',
+          'Mode: ' + (sharedAttestation.mode || 'shared-enterprise-runtime-attestation') + '. Tier: ' + (sharedAttestation.runtime_tier || 'shared-demo') + '. Source: ' + (sharedAttestation.source || '/readiness') + '. Dynamic guest attestation is required; static attestation tokens stay disabled.',
+          sharedAttestation.customer_dedicated_runtime ? 'dedicated' : 'shared',
+          'good'
+        );
+        populateVerifierSelect('verifierModelProjectSelect', projectOptions, projectOptions[0] && projectOptions[0].value);
+        populateVerifierSelect('verifierProofProjectSelect', projectOptions, projectOptions[0] && projectOptions[0].value);
+        populateVerifierSelect('verifierProofModelSelect', models.map(function(model) {
+          return { value: model.model_ref, label: (model.display_name || model.model_ref) + ' - ' + model.model_ref };
+        }), models[0] && models[0].model_ref);
+        if (!payload.schema_ready) {
+          byId('verifierModelList').innerHTML = '<div class="empty">AI Proof Verifier tables are not deployed yet. Apply the verifier Supabase migration before customer use.</div>';
+          byId('verifierEvidenceList').innerHTML = '<div class="empty">Proof evidence will appear after the migration is deployed and proof bundles are submitted.</div>';
+          return;
+        }
+        byId('verifierModelList').innerHTML = models.length ? models.map(function(model) {
+          var systems = Array.isArray(model.allowed_proof_systems) ? model.allowed_proof_systems.join(', ') : 'vaultproof-manifest-v1';
+          return row(model.display_name || model.model_ref, 'External model only. Family: ' + (model.model_family || 'custom') + '. Proof systems: ' + systems, model.status || 'enabled', model.status === 'enabled' ? 'good' : 'warn');
+        }).join('') : '<div class="empty">No models registered yet. Add the external model ID first, then submit proof bundles from jobs that ran outside VaultProof.</div>';
+        byId('verifierEvidenceList').innerHTML = verifications.length ? verifications.map(function(item) {
+          var tone = item.status === 'verified' ? 'good' : item.status === 'failed' ? 'bad' : 'warn';
+          var detail = 'Proof system: ' + (item.proof_system || 'unknown') + '. Hash: ' + (item.proof_hash || '').slice(0, 38) + (item.failure_reason ? '. ' + item.failure_reason : '');
+          return row((item.model_ref || 'model') + ' - ' + (item.status || 'recorded'), detail, item.status || 'recorded', tone);
+        }).join('') : '<div class="empty">No proof bundles submitted yet. VaultProof verifies/stores evidence; it does not run the model.</div>';
+      }
+      async function loadVerifier() {
+        try {
+          renderVerifier(await fetchJson('/api/v1/enterprise/verifier'));
+        } catch (error) {
+          byId('verifierModelList').innerHTML = '<div class="empty">' + escapeHtml(error && error.message ? error.message : 'Verifier failed to load.') + '</div>';
+          byId('verifierEvidenceList').innerHTML = '<div class="empty">Proof evidence unavailable.</div>';
+        }
+      }
+      async function submitVerifierModel(event) {
+        event.preventDefault();
+        try {
+          await fetchJson('/api/v1/enterprise/verifier/models', {
+            method: 'POST',
+            body: JSON.stringify({
+              project_id: byId('verifierModelProjectSelect').value,
+              model_ref: byId('verifierModelRef').value,
+              display_name: byId('verifierModelName').value,
+              model_family: byId('verifierModelFamily').value,
+              allowed_proof_systems: byId('verifierProofSystems').value.split(',').map(function(value) { return value.trim(); }).filter(Boolean),
+            })
+          });
+          byId('verifierModelRef').value = '';
+          byId('verifierModelName').value = '';
+          await loadVerifier();
+        } catch (error) {
+          notice(error && error.message ? error.message : 'Failed to save verifier model.');
+        }
+      }
+      async function submitVerifierProof(event) {
+        event.preventDefault();
+        try {
+          var bundleRaw = byId('verifierProofBundle').value.trim();
+          var proofBundle = bundleRaw ? JSON.parse(bundleRaw) : undefined;
+          await fetchJson('/api/v1/enterprise/verifier/proofs', {
+            method: 'POST',
+            body: JSON.stringify({
+              project_id: byId('verifierProofProjectSelect').value,
+              model_ref: byId('verifierProofModelSelect').value,
+              proof_system: byId('verifierProofSystem').value,
+              claimed_output_hash: byId('verifierOutputHash').value,
+              proof_bundle: proofBundle,
+            })
+          });
+          byId('verifierProofBundle').value = '';
+          await loadVerifier();
+        } catch (error) {
+          notice(error && error.message ? error.message : 'Failed to verify proof bundle. Use valid JSON for the proof bundle.');
         }
       }
       async function reload() {
@@ -2366,6 +2969,10 @@ function renderEnterpriseSupportPage(pageName: 'settings' | 'plans' | 'scanner' 
         }
       }
       byId('refreshBtn').addEventListener('click', reload);
+      var verifierModelForm = byId('verifierModelForm');
+      if (verifierModelForm) verifierModelForm.addEventListener('submit', submitVerifierModel);
+      var verifierProofForm = byId('verifierProofForm');
+      if (verifierProofForm) verifierProofForm.addEventListener('submit', submitVerifierProof);
       byId('orgSelect').addEventListener('change', function(event) {
         currentOrgId = event.target.value || '';
         if (currentOrgId) localStorage.setItem(ACTIVE_ORG_STORAGE_KEY, currentOrgId);
@@ -2393,7 +3000,7 @@ export function renderEnterprisePlannedAppPage(pageName: string, env: Enterprise
   if (pageName === 'activity' || pageName === 'projects' || pageName === 'keys') {
     return injectEnterpriseAnalytics(renderEnterpriseOperationsPage(pageName), env, pageName);
   }
-  if (pageName === 'settings' || pageName === 'plans' || pageName === 'scanner' || pageName === 'runbooks') {
+  if (pageName === 'setup' || pageName === 'technical-guide' || pageName === 'verifier' || pageName === 'settings' || pageName === 'plans' || pageName === 'scanner' || pageName === 'runbooks') {
     return injectEnterpriseAnalytics(renderEnterpriseSupportPage(pageName), env, pageName);
   }
 

@@ -199,7 +199,8 @@ if [[ "${RUN_SSH_CHECKS}" == "true" ]]; then
   echo
   echo "VM-local TLS proxy and certificate readiness:"
   remote_json="${tmp_dir}/origin-tls-remote.json"
-ssh -o BatchMode=yes -o ConnectTimeout=10 "${SSH_USER}@${vm_public_ip}" \
+  set +e
+  ssh -o BatchMode=yes -o ConnectTimeout=10 "${SSH_USER}@${vm_public_ip}" \
     "ORIGIN_TLS_HOSTNAME='${ORIGIN_TLS_HOSTNAME}' TLS_CERT_PATH='${TLS_CERT_PATH}' SELF_SIGNED_MARKER='${SELF_SIGNED_MARKER}' bash -s" > "${remote_json}" <<'REMOTE'
 set -euo pipefail
 configured_cert_path="${TLS_CERT_PATH}"
@@ -250,6 +251,16 @@ const payload = {
 console.log(JSON.stringify(payload, null, 2));
 " "${nginx_status}" "${cert_exists}" "${marker_exists}" "${trusted_status}" "${insecure_status}" "${subject}" "${issuer}" "${not_before}" "${not_after}" "${san}" "${configured_cert_path}" "${configured_key_path}"
 REMOTE
+  ssh_exit=$?
+  set -e
+
+  if [[ "${ssh_exit}" -ne 0 ]]; then
+    if [[ "${CUTOVER_READY_REQUIRED}" == "true" ]]; then
+      blocker "VM-local TLS SSH checks failed for ${SSH_USER}@${vm_public_ip}; reopen SSH temporarily or set RUN_SSH_CHECKS=false only after independent VM-local TLS verification."
+    else
+      warn "Skipping VM-local TLS SSH checks because SSH to ${SSH_USER}@${vm_public_ip} failed; public SSH may be intentionally locked down."
+    fi
+  else
 
   nginx_status="$(json_value "${remote_json}" "p => p.nginxStatus")"
   cert_exists="$(json_value "${remote_json}" "p => p.certExists")"
@@ -292,6 +303,7 @@ REMOTE
     pass "Insecure VM-local TLS /health returned HTTP 200."
   else
     blocker "Insecure VM-local TLS /health returned HTTP ${insecure_status:-<empty>}."
+  fi
   fi
 else
   warn "Skipping VM-local SSH checks because RUN_SSH_CHECKS=false."

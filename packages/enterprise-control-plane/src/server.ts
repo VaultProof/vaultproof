@@ -58,10 +58,13 @@ function getEnv(): EnterpriseControlPlaneEnv {
 
   return {
     enterpriseHostname: process.env.ENTERPRISE_HOSTNAME,
+    enterpriseRuntimeTier: process.env.ENTERPRISE_RUNTIME_TIER,
     internalAdminHostname: process.env.VAULTPROOF_INTERNAL_ADMIN_HOSTNAME,
     internalAdminPreviewEnabled: process.env.VAULTPROOF_INTERNAL_ADMIN_PREVIEW_ENABLED === 'true',
     internalAdminAllowedEmails: process.env.VAULTPROOF_INTERNAL_ADMIN_EMAILS,
     internalAdminAllowedDomains: process.env.VAULTPROOF_INTERNAL_ADMIN_DOMAINS,
+    internalAdminActionsEnabled: process.env.VAULTPROOF_INTERNAL_ADMIN_ACTIONS_ENABLED === 'true',
+    internalAdminApprovalSecret: process.env.VAULTPROOF_INTERNAL_ADMIN_APPROVAL_SECRET,
     executorBaseUrl: process.env.ENTERPRISE_EXECUTOR_BASE_URL,
     executorSigningKeyId: process.env.ENTERPRISE_EXECUTOR_SIGNING_KEY_ID,
     executorSigningSecret: process.env.ENTERPRISE_EXECUTOR_SIGNING_SECRET,

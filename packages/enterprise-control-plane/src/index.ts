@@ -3,6 +3,7 @@ import { timingSafeEqual } from 'node:crypto';
 import {
   assertControlPlaneHostname,
   dispatchToSecureExecutor,
+  getEnterpriseRuntimeTier,
   isInternalAdminHostname,
   type EnterpriseControlPlaneEnv,
 } from './config.js';
@@ -10,13 +11,15 @@ import { renderEnterpriseControlPage, renderEnterpriseOrgPage, renderEnterpriseP
 import { renderEnterpriseDashboardPage } from './dashboard-page.js';
 import { renderEnterpriseHomepage } from './homepage-page.js';
 import { handleInternalAdminRoutes, renderInternalAdminPage } from './internal-admin.js';
-import { renderEnterpriseLoginPage, renderEnterpriseLoginScript } from './login-page.js';
+import { renderEnterpriseLoginPage, renderEnterpriseLoginScript, renderEnterpriseLogoutPage } from './login-page.js';
 import { handleEnterpriseAlertRoutes } from './routes/alerts.js';
 import { handleEnterpriseAuditRoutes } from './routes/audit.js';
 import { handleEnterpriseExecuteRoutes } from './routes/execute.js';
 import { handleEnterpriseMemberRoutes } from './routes/members.js';
 import { handleEnterpriseOrganizationRoutes } from './routes/orgs.js';
 import { handleEnterpriseProjectRoutes } from './routes/projects.js';
+import { handleEnterpriseVerifierRoutes } from './routes/verifier.js';
+import { withEnterpriseSecurityHeaders } from './security-headers.js';
 
 async function parseEnvelope(request: Request): Promise<SignedSecureExecutionEnvelope | null> {
   try {
@@ -41,6 +44,17 @@ function constantTimeEquals(left: string, right: string): boolean {
   const rightBytes = Buffer.from(right);
   return leftBytes.length === rightBytes.length && timingSafeEqual(leftBytes, rightBytes);
 }
+
+let executorHealthCache: {
+  key: string;
+  expiresAt: number;
+  value: {
+    reachable: boolean;
+    status: number | null;
+    health: Record<string, unknown> | null;
+    error: string | null;
+  };
+} | null = null;
 
 function verifyOriginLock(request: Request, env: EnterpriseControlPlaneEnv): Response | null {
   const expectedSecret = env.originLockSecret?.trim();
@@ -92,14 +106,20 @@ async function fetchExecutorHealth(env: EnterpriseControlPlaneEnv): Promise<{
     };
   }
 
+  const cacheKey = env.executorBaseUrl.replace(/\/+$/, '');
+  const cached = executorHealthCache && executorHealthCache.key === cacheKey && executorHealthCache.expiresAt > Date.now()
+    ? executorHealthCache.value
+    : null;
+  if (cached) return cached;
+
   const controller = new AbortController();
   const timeout = setTimeout(() => controller.abort(), 2500);
   try {
-    const response = await fetch(`${env.executorBaseUrl.replace(/\/+$/, '')}/health`, {
+    const response = await fetch(`${cacheKey}/health`, {
       signal: controller.signal,
     });
     const health = await response.json().catch(() => null);
-    return {
+    const result = {
       reachable: response.ok,
       status: response.status,
       health: health && typeof health === 'object' && !Array.isArray(health)
@@ -107,13 +127,25 @@ async function fetchExecutorHealth(env: EnterpriseControlPlaneEnv): Promise<{
         : null,
       error: response.ok ? null : `executor health returned ${response.status}`,
     };
+    executorHealthCache = {
+      key: cacheKey,
+      expiresAt: Date.now() + 5000,
+      value: result,
+    };
+    return result;
   } catch (error) {
-    return {
+    const result = {
       reachable: false,
       status: null,
       health: null,
       error: error instanceof Error ? error.message : 'failed to reach executor health',
     };
+    executorHealthCache = {
+      key: cacheKey,
+      expiresAt: Date.now() + 5000,
+      value: result,
+    };
+    return result;
   } finally {
     clearTimeout(timeout);
   }
@@ -125,6 +157,7 @@ async function buildEnterpriseReadiness(
 ): Promise<Record<string, unknown>> {
   const productionBlockers: string[] = [];
   const demoBlockers: string[] = [];
+  const runtimeTier = getEnterpriseRuntimeTier(env);
 
   const supabaseConfigured = Boolean(env.supabaseUrl && env.supabaseServiceRoleKey);
   const executorConfigured = Boolean(env.executorBaseUrl);
@@ -190,6 +223,8 @@ async function buildEnterpriseReadiness(
     status: demoReady ? 'ok' : 'degraded',
     service: 'vaultproof-enterprise-control-plane',
     hostname,
+    runtime_tier: runtimeTier,
+    customer_dedicated_runtime: runtimeTier === 'dedicated-production',
     demo_ready: demoReady,
     production_ready: productionReady,
     security_profile: productionReady ? 'azure-confidential-production' : demoReady ? 'demo-or-incomplete' : 'not-ready',
@@ -213,7 +248,7 @@ async function buildEnterpriseReadiness(
   };
 }
 
-export async function handleEnterpriseControlPlaneRequest(
+async function handleEnterpriseControlPlaneRequestInner(
   request: Request,
   env: EnterpriseControlPlaneEnv = {},
 ): Promise<Response> {
@@ -237,7 +272,12 @@ export async function handleEnterpriseControlPlaneRequest(
   if (
     internalAdminSurface &&
     request.method === 'GET' &&
-    (url.pathname === '/' || url.pathname === '/admin' || url.pathname === '/admin/' || url.pathname === '/internal/admin')
+    (url.pathname === '/'
+      || url.pathname === '/admin'
+      || url.pathname === '/admin/'
+      || url.pathname === '/internal/admin'
+      || /^\/orgs\/[^/]+\/?$/.test(url.pathname)
+      || /^\/internal\/admin\/orgs\/[^/]+\/?$/.test(url.pathname))
   ) {
     return new Response(renderInternalAdminPage(), {
       status: 200,
@@ -275,6 +315,17 @@ export async function handleEnterpriseControlPlaneRequest(
 
   if (request.method === 'GET' && url.pathname === '/app/login') {
     return new Response(renderEnterpriseLoginPage(env), {
+      status: 200,
+      headers: {
+        'content-type': 'text/html; charset=utf-8',
+        'cache-control': 'no-store',
+        'x-robots-tag': 'noindex',
+      },
+    });
+  }
+
+  if (request.method === 'GET' && (url.pathname === '/app/logout' || url.pathname === '/app/logout.html')) {
+    return new Response(renderEnterpriseLogoutPage(), {
       status: 200,
       headers: {
         'content-type': 'text/html; charset=utf-8',
@@ -376,6 +427,8 @@ export async function handleEnterpriseControlPlaneRequest(
     if (enterpriseAuditResponse) return enterpriseAuditResponse;
     const enterpriseAlertResponse = await handleEnterpriseAlertRoutes(request, env, pathSegments.slice(3));
     if (enterpriseAlertResponse) return enterpriseAlertResponse;
+    const enterpriseVerifierResponse = await handleEnterpriseVerifierRoutes(request, env, pathSegments.slice(3));
+    if (enterpriseVerifierResponse) return enterpriseVerifierResponse;
     const enterpriseExecuteResponse = await handleEnterpriseExecuteRoutes(request, env, pathSegments.slice(3));
     if (enterpriseExecuteResponse) return enterpriseExecuteResponse;
   }
@@ -396,6 +449,14 @@ export async function handleEnterpriseControlPlaneRequest(
     },
     { status: 404 },
   );
+}
+
+export async function handleEnterpriseControlPlaneRequest(
+  request: Request,
+  env: EnterpriseControlPlaneEnv = {},
+): Promise<Response> {
+  const response = await handleEnterpriseControlPlaneRequestInner(request, env);
+  return withEnterpriseSecurityHeaders(response);
 }
 
 export type { EnterpriseControlPlaneEnv } from './config.js';

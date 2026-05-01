@@ -61,6 +61,15 @@ let removedProjectAccess = null;
 let alertTestDelivery = null;
 let alertTestDispatchRun = null;
 let alertWebhookTestPayload = null;
+let stubAuthUserId = 'user_123';
+let stubAuthUserEmail = 'owner@example.com';
+let verifierModels = [];
+let verifierProofs = [];
+let internalAdminAuditEvents = [];
+let internalAdminSupportNotes = [];
+let internalAdminBusinessStatusUpdates = [];
+let internalAdminActionRequests = [];
+let internalAdminActionExecutionRecords = [];
 
 function installSupabaseStub() {
   auditEvents = [];
@@ -85,6 +94,70 @@ function installSupabaseStub() {
   alertTestDelivery = null;
   alertTestDispatchRun = null;
   alertWebhookTestPayload = null;
+  stubAuthUserId = 'user_123';
+  stubAuthUserEmail = 'owner@example.com';
+  verifierModels = [{
+    id: 'verifier_model_123',
+    organization_id: 'org_123',
+    project_id: PROJECT_ID,
+    model_ref: 'fraud-xgb-v1',
+    display_name: 'Fraud XGBoost v1',
+    model_family: 'classification',
+    allowed_proof_systems: ['vaultproof-manifest-v1', 'external-verifier', 'tee-attestation'],
+    status: 'enabled',
+    metadata: {},
+    created_by: 'user_123',
+    created_at: '2026-04-26T12:00:00.000Z',
+    updated_at: '2026-04-26T12:00:00.000Z',
+  }];
+  verifierProofs = [];
+  internalAdminAuditEvents = [];
+  internalAdminSupportNotes = [{
+    id: 'support_note_123',
+    organization_id: 'org_123',
+    note_type: 'onboarding',
+    body: 'Customer asked for Entra SSO rollout help.',
+    created_by_user_id: 'user_123',
+    created_by_email: 'owner@example.com',
+    created_at: '2026-04-26T12:10:00.000Z',
+  }];
+  internalAdminBusinessStatusUpdates = [{
+    id: 'business_status_123',
+    organization_id: 'org_123',
+    status: 'onboarding',
+    plan_label: 'Enterprise Pilot',
+    summary: 'Customer is preparing SSO and gateway rollout.',
+    next_step: 'Confirm Entra metadata exchange.',
+    created_by_user_id: 'user_123',
+    created_by_email: 'owner@example.com',
+    created_at: '2026-04-26T12:12:00.000Z',
+  }];
+  internalAdminActionRequests = [{
+    id: 'action_request_123',
+    organization_id: 'org_123',
+    action_type: 'disable_org_access',
+    risk_level: 'critical',
+    status: 'pending',
+    reason: 'Customer requested temporary access pause during incident response.',
+    requested_payload: {
+      requested_duration: '24h',
+    },
+    requested_by_user_id: 'user_456',
+    requested_by_email: 'security@vaultproof.dev',
+    approved_by_user_id: null,
+    approved_by_email: null,
+    approved_at: null,
+    rejected_by_user_id: null,
+    rejected_by_email: null,
+    rejected_at: null,
+    executed_by_user_id: null,
+    executed_by_email: null,
+    executed_at: null,
+    decision_note: null,
+    created_at: '2026-04-26T12:15:00.000Z',
+    updated_at: '2026-04-26T12:15:00.000Z',
+  }];
+  internalAdminActionExecutionRecords = [];
   globalThis.fetch = async (input, init) => {
     const url = typeof input === 'string' ? input : input instanceof URL ? input.toString() : input.url;
     const decodedUrl = decodeURIComponent(url);
@@ -96,8 +169,8 @@ function installSupabaseStub() {
         return jsonResponse({ error: 'Unauthorized' }, 401);
       }
       return jsonResponse({
-        id: 'user_123',
-        email: 'owner@example.com',
+        id: stubAuthUserId,
+        email: stubAuthUserEmail,
       });
     }
 
@@ -105,7 +178,7 @@ function installSupabaseStub() {
       return jsonResponse({
         user: {
           id: 'user_123',
-          email: 'owner@example.com',
+          email: stubAuthUserEmail,
         },
       });
     }
@@ -354,7 +427,67 @@ function installSupabaseStub() {
       }].filter(Boolean));
     }
 
+    if (url.includes('/rest/v1/organization_verifier_models')) {
+      if (method === 'GET') {
+        if (decodedUrl.includes('model_ref=eq.')) {
+          const modelRef = decodedUrl.match(/model_ref=eq\.([^&]+)/)?.[1];
+          return jsonResponse(verifierModels.filter((model) => !modelRef || model.model_ref === modelRef));
+        }
+        if (decodedUrl.includes('id=eq.')) {
+          const modelId = decodedUrl.match(/id=eq\.([^&]+)/)?.[1];
+          return jsonResponse(verifierModels.filter((model) => !modelId || model.id === modelId));
+        }
+        return jsonResponse(verifierModels);
+      }
+      if (method === 'POST') {
+        const body = JSON.parse(init?.body || '{}');
+        const row = {
+          id: body.id || 'verifier_model_created_123',
+          organization_id: body.organization_id || 'org_123',
+          project_id: body.project_id || PROJECT_ID,
+          model_ref: body.model_ref || 'fraud-xgb-v1',
+          display_name: body.display_name || body.model_ref || 'Verifier model',
+          model_family: body.model_family || 'custom',
+          allowed_proof_systems: body.allowed_proof_systems || ['vaultproof-manifest-v1'],
+          status: body.status || 'enabled',
+          metadata: body.metadata || {},
+          created_by: body.created_by || 'user_123',
+          created_at: body.created_at || '2026-04-26T12:00:00.000Z',
+          updated_at: body.updated_at || '2026-04-26T12:00:00.000Z',
+        };
+        verifierModels = verifierModels.filter((model) => !(model.project_id === row.project_id && model.model_ref === row.model_ref));
+        verifierModels.unshift(row);
+        return jsonResponse(row);
+      }
+    }
+
+    if (url.includes('/rest/v1/organization_proof_verifications')) {
+      if (method === 'GET') return jsonResponse(verifierProofs);
+      if (method === 'POST') {
+        const body = JSON.parse(init?.body || '{}');
+        const row = {
+          id: 'proof_verification_123',
+          created_at: '2026-04-26T12:01:00.000Z',
+          ...body,
+        };
+        verifierProofs.unshift(row);
+        return jsonResponse(row);
+      }
+    }
+
     if (url.includes('/rest/v1/organizations') && method === 'GET') {
+      if (decodedUrl.includes('archived_by_user_id')) {
+        return jsonResponse([{
+          id: 'org_123',
+          name: 'Example Org',
+          slug: 'example-org',
+          kind: 'team',
+          owner_user_id: 'user_123',
+          archived_at: null,
+          archived_by_user_id: null,
+          updated_at: '2026-04-02T12:00:00.000Z',
+        }]);
+      }
       if (decodedUrl.includes('select=id, name, slug, kind, owner_user_id, created_at, updated_at, archived_at')) {
         return jsonResponse([{
           id: 'org_123',
@@ -466,6 +599,156 @@ function installSupabaseStub() {
         auditEvents.push(body);
       }
       return jsonResponse([]);
+    }
+
+    if (url.includes('/rest/v1/internal_admin_audit_events')) {
+      if (method === 'POST') {
+        const body = JSON.parse(init?.body || '{}');
+        const rows = (Array.isArray(body) ? body : [body]).map((event, index) => ({
+          id: event.id || `internal_admin_audit_${internalAdminAuditEvents.length + index + 1}`,
+          actor_user_id: event.actor_user_id || 'user_123',
+          actor_email: event.actor_email || stubAuthUserEmail,
+          event_type: event.event_type || 'internal_admin_event',
+          target_type: event.target_type || 'internal_admin',
+          target_id: event.target_id || '/api/v1/internal-admin/overview',
+          request_method: event.request_method || 'GET',
+          request_path: event.request_path || '/api/v1/internal-admin/overview',
+          request_host: event.request_host || INTERNAL_ADMIN_HOSTNAME,
+          metadata: event.metadata || {},
+          created_at: event.created_at || new Date().toISOString(),
+        }));
+        internalAdminAuditEvents.unshift(...rows);
+        return jsonResponse([]);
+      }
+
+      if (method === 'GET') {
+        return jsonResponse(internalAdminAuditEvents);
+      }
+    }
+
+    if (url.includes('/rest/v1/internal_admin_support_notes')) {
+      if (method === 'POST') {
+        const body = JSON.parse(init?.body || '{}');
+        const row = {
+          id: body.id || `support_note_${internalAdminSupportNotes.length + 1}`,
+          organization_id: body.organization_id || 'org_123',
+          note_type: body.note_type || 'support_note',
+          body: body.body || 'Support note',
+          created_by_user_id: body.created_by_user_id || 'user_123',
+          created_by_email: body.created_by_email || stubAuthUserEmail,
+          created_at: body.created_at || new Date().toISOString(),
+        };
+        internalAdminSupportNotes.unshift(row);
+        return jsonResponse([row]);
+      }
+      if (method === 'GET') {
+        return jsonResponse(internalAdminSupportNotes);
+      }
+    }
+
+    if (url.includes('/rest/v1/internal_admin_business_status_updates')) {
+      if (method === 'POST') {
+        const body = JSON.parse(init?.body || '{}');
+        const row = {
+          id: body.id || `business_status_${internalAdminBusinessStatusUpdates.length + 1}`,
+          organization_id: body.organization_id || 'org_123',
+          status: body.status || 'onboarding',
+          plan_label: body.plan_label || null,
+          summary: body.summary || 'Status updated.',
+          next_step: body.next_step || null,
+          created_by_user_id: body.created_by_user_id || 'user_123',
+          created_by_email: body.created_by_email || stubAuthUserEmail,
+          created_at: body.created_at || new Date().toISOString(),
+        };
+        internalAdminBusinessStatusUpdates.unshift(row);
+        return jsonResponse([row]);
+      }
+      if (method === 'GET') {
+        return jsonResponse(internalAdminBusinessStatusUpdates);
+      }
+    }
+
+    if (url.includes('/rest/v1/internal_admin_action_requests')) {
+      if (method === 'POST') {
+        const body = JSON.parse(init?.body || '{}');
+        const row = {
+          id: body.id || `action_request_${internalAdminActionRequests.length + 1}`,
+          organization_id: body.organization_id || 'org_123',
+          action_type: body.action_type || 'disable_org_access',
+          risk_level: body.risk_level || 'critical',
+          status: body.status || 'pending',
+          reason: body.reason || 'Action requested.',
+          requested_payload: body.requested_payload || {},
+          requested_by_user_id: body.requested_by_user_id || stubAuthUserId,
+          requested_by_email: body.requested_by_email || stubAuthUserEmail,
+          approved_by_user_id: body.approved_by_user_id || null,
+          approved_by_email: body.approved_by_email || null,
+          approved_at: body.approved_at || null,
+          rejected_by_user_id: body.rejected_by_user_id || null,
+          rejected_by_email: body.rejected_by_email || null,
+          rejected_at: body.rejected_at || null,
+          executed_by_user_id: body.executed_by_user_id || null,
+          executed_by_email: body.executed_by_email || null,
+          executed_at: body.executed_at || null,
+          decision_note: body.decision_note || null,
+          created_at: body.created_at || new Date().toISOString(),
+          updated_at: body.updated_at || new Date().toISOString(),
+        };
+        internalAdminActionRequests.unshift(row);
+        return jsonResponse([row]);
+      }
+      if (method === 'PATCH') {
+        const body = JSON.parse(init?.body || '{}');
+        const requestId = decodedUrl.match(/[?&]id=eq\.([^&]+)/)?.[1];
+        const index = internalAdminActionRequests.findIndex((row) => !requestId || row.id === requestId);
+        if (index < 0 || internalAdminActionRequests[index].status !== 'pending') return jsonResponse([]);
+        internalAdminActionRequests[index] = {
+          ...internalAdminActionRequests[index],
+          ...body,
+          updated_at: body.updated_at || new Date().toISOString(),
+        };
+        return jsonResponse([internalAdminActionRequests[index]]);
+      }
+      if (method === 'GET') {
+        const requestId = decodedUrl.match(/[?&]id=eq\.([^&]+)/)?.[1];
+        const status = decodedUrl.match(/[?&]status=eq\.([^&]+)/)?.[1];
+        return jsonResponse(internalAdminActionRequests.filter((row) => {
+          return (!requestId || row.id === requestId) && (!status || row.status === status);
+        }));
+      }
+    }
+
+    if (url.includes('/rest/v1/internal_admin_action_execution_records')) {
+      if (method === 'POST') {
+        const body = JSON.parse(init?.body || '{}');
+        const row = {
+          id: body.id || `execution_record_${internalAdminActionExecutionRecords.length + 1}`,
+          action_request_id: body.action_request_id || 'action_request_123',
+          organization_id: body.organization_id || 'org_123',
+          action_type: body.action_type || 'disable_org_access',
+          execution_mode: body.execution_mode || 'dry_run',
+          status: body.status || 'planned',
+          execution_enabled: body.execution_enabled === true,
+          preflight_result: body.preflight_result || {},
+          rollback_payload: body.rollback_payload || {},
+          executed_by_user_id: body.executed_by_user_id || stubAuthUserId,
+          executed_by_email: body.executed_by_email || stubAuthUserEmail,
+          executed_at: body.executed_at || new Date().toISOString(),
+          created_at: body.created_at || new Date().toISOString(),
+        };
+        internalAdminActionExecutionRecords.unshift(row);
+        return jsonResponse([row]);
+      }
+      if (method === 'GET') {
+        const recordId = decodedUrl.match(/[?&]id=eq\.([^&]+)/)?.[1];
+        const actionRequestId = decodedUrl.match(/[?&]action_request_id=eq\.([^&]+)/)?.[1];
+        const organizationId = decodedUrl.match(/[?&]organization_id=eq\.([^&]+)/)?.[1];
+        return jsonResponse(internalAdminActionExecutionRecords.filter((row) => {
+          return (!recordId || row.id === recordId)
+            && (!actionRequestId || row.action_request_id === actionRequestId)
+            && (!organizationId || row.organization_id === organizationId);
+        }));
+      }
     }
 
     if (url === 'https://executor.internal/execute' && method === 'POST') {
@@ -1573,7 +1856,7 @@ async function assertEnterpriseMembersAdminActions() {
       headers: authHeaders,
       body: JSON.stringify({
         email: 'Reviewer@Example.com',
-        role: 'viewer',
+        role: 'auditor',
       }),
     }),
     env,
@@ -1582,7 +1865,7 @@ async function assertEnterpriseMembersAdminActions() {
   if (inviteResponse.status !== 200 || invitePayload?.invitation?.email !== 'reviewer@example.com') {
     throw new Error(`Expected invitation creation to normalize email, got ${inviteResponse.status} ${JSON.stringify(invitePayload)}`);
   }
-  if (createdMemberInvitation?.role !== 'viewer') {
+  if (createdMemberInvitation?.role !== 'auditor') {
     throw new Error(`Expected invitation insert to use requested role, got ${JSON.stringify(createdMemberInvitation)}`);
   }
   if (!auditEvents.find((event) => event.event_type === 'organization_invitation_created')) {
@@ -1608,12 +1891,12 @@ async function assertEnterpriseMembersAdminActions() {
     buildRequest('/api/v1/enterprise/members/user_456/role', {
       method: 'POST',
       headers: authHeaders,
-      body: JSON.stringify({ role: 'admin' }),
+      body: JSON.stringify({ role: 'iam_admin' }),
     }),
     env,
   );
   const rolePayload = await roleResponse.json();
-  if (roleResponse.status !== 200 || rolePayload?.member?.role !== 'admin' || updatedMemberRole !== 'admin') {
+  if (roleResponse.status !== 200 || rolePayload?.member?.role !== 'iam_admin' || updatedMemberRole !== 'iam_admin') {
     throw new Error(`Expected role update to succeed, got ${roleResponse.status} ${JSON.stringify(rolePayload)}`);
   }
   if (!auditEvents.find((event) => event.event_type === 'organization_member_role_updated')) {
@@ -1624,12 +1907,12 @@ async function assertEnterpriseMembersAdminActions() {
     buildRequest(`/api/v1/enterprise/members/user_456/projects/${PROJECT_ID}/access`, {
       method: 'POST',
       headers: authHeaders,
-      body: JSON.stringify({ role: 'viewer' }),
+      body: JSON.stringify({ role: 'operator' }),
     }),
     env,
   );
   const assignPayload = await assignResponse.json();
-  if (assignResponse.status !== 200 || assignPayload?.project_access?.role !== 'viewer' || updatedProjectAccess?.project_id !== PROJECT_ID) {
+  if (assignResponse.status !== 200 || assignPayload?.project_access?.role !== 'operator' || updatedProjectAccess?.project_id !== PROJECT_ID) {
     throw new Error(`Expected project assignment to succeed, got ${assignResponse.status} ${JSON.stringify(assignPayload)}`);
   }
   if (!auditEvents.find((event) => event.event_type === 'project_member_access_updated')) {
@@ -1755,6 +2038,96 @@ async function assertEnterpriseSsoLifecycle() {
   }
 }
 
+async function assertEnterpriseVerifierApi() {
+  installSupabaseStub();
+  const env = {
+    enterpriseHostname: ENTERPRISE_HOSTNAME,
+    enterpriseRuntimeTier: 'shared-demo',
+    executorBaseUrl: 'https://executor.internal',
+    supabaseUrl: 'https://supabase.example.co',
+    supabaseServiceRoleKey: 'service-role-key',
+  };
+  const headers = {
+    authorization: `Bearer ${AUTH_TOKEN}`,
+    'content-type': 'application/json',
+    'x-vaultproof-organization': 'org_123',
+  };
+
+  const listResponse = await handleEnterpriseControlPlaneRequest(
+    buildRequest('/api/v1/enterprise/verifier', { headers }),
+    env,
+  );
+  const listPayload = await listResponse.json();
+  if (listResponse.status !== 200 || listPayload?.schema_ready !== true || !Array.isArray(listPayload.models)) {
+    throw new Error(`Expected AI Proof Verifier list to load, got ${listResponse.status} ${JSON.stringify(listPayload)}`);
+  }
+  if (!listPayload.proof_systems?.includes('vaultproof-manifest-v1') || !listPayload.proof_systems?.includes('external-verifier')) {
+    throw new Error('Expected verifier capabilities to list supported proof systems');
+  }
+  if (listPayload.shared_attestation?.mode !== 'shared-enterprise-runtime-attestation') {
+    throw new Error('Expected verifier API to expose shared demo attestation mode');
+  }
+  if (listPayload.shared_attestation?.runtime_tier !== 'shared-demo' || listPayload.shared_attestation?.customer_dedicated_runtime !== false) {
+    throw new Error('Expected verifier API to expose non-dedicated shared demo runtime tier');
+  }
+
+  const modelResponse = await handleEnterpriseControlPlaneRequest(
+    buildRequest('/api/v1/enterprise/verifier/models', {
+      method: 'POST',
+      headers,
+      body: JSON.stringify({
+        project_id: PROJECT_ID,
+        model_ref: 'credit-risk-xgb-v1',
+        display_name: 'Credit Risk XGBoost v1',
+        model_family: 'classification',
+        allowed_proof_systems: ['vaultproof-manifest-v1', 'external-verifier'],
+      }),
+    }),
+    env,
+  );
+  const modelPayload = await modelResponse.json();
+  if (modelResponse.status !== 200 || modelPayload?.model?.model_ref !== 'credit-risk-xgb-v1') {
+    throw new Error(`Expected verifier model registration to succeed, got ${modelResponse.status} ${JSON.stringify(modelPayload)}`);
+  }
+  if (!auditEvents.find((event) => event.event_type === 'enterprise_ai_verifier_model_registered')) {
+    throw new Error('Expected verifier model registration audit event');
+  }
+
+  const proofResponse = await handleEnterpriseControlPlaneRequest(
+    buildRequest('/api/v1/enterprise/verifier/proofs', {
+      method: 'POST',
+      headers,
+      body: JSON.stringify({
+        project_id: PROJECT_ID,
+        model_ref: 'credit-risk-xgb-v1',
+        proof_system: 'vaultproof-manifest-v1',
+        claimed_output_hash: 'sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa',
+        proof_bundle: {
+          proof_system: 'vaultproof-manifest-v1',
+          project_id: PROJECT_ID,
+          model_ref: 'credit-risk-xgb-v1',
+          claimed_output_hash: 'sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa',
+          proof: 'external-model-ran-outside-vaultproof',
+        },
+      }),
+    }),
+    env,
+  );
+  const proofPayload = await proofResponse.json();
+  if (proofResponse.status !== 200 || proofPayload?.verification?.status !== 'verified') {
+    throw new Error(`Expected manifest proof bundle to verify, got ${proofResponse.status} ${JSON.stringify(proofPayload)}`);
+  }
+  if (proofPayload.verification.evidence?.model_execution_hosted_by_vaultproof !== false) {
+    throw new Error('Expected verifier evidence to state VaultProof did not run the model');
+  }
+  if (proofPayload.verification.evidence?.runtime_binding?.shared_attestation_mode !== 'shared-enterprise-runtime-attestation') {
+    throw new Error('Expected verifier evidence to bind demo proof to shared runtime attestation');
+  }
+  if (!auditEvents.find((event) => event.event_type === 'enterprise_ai_proof_verified')) {
+    throw new Error('Expected proof verification audit event');
+  }
+}
+
 async function assertEnterpriseLoginRoute() {
   const rootResponse = await handleEnterpriseControlPlaneRequest(
     buildRequest('/'),
@@ -1845,8 +2218,16 @@ async function assertEnterpriseLoginRoute() {
       'nav-label">setup',
       '/app/dashboard',
       '/app/control',
+      '/app/verifier',
       '/app/org',
+      '/app/technical-guide',
       '/app/runbooks',
+      '/app/logout',
+      'Sign out',
+      'enterpriseThemeToggle',
+      'Light mode',
+      'Dark mode',
+      'data-enterprise-theme="light"',
       'enterprise-app-sidebar',
       'data-enterprise-sidebar="universal"',
       'enterprise-universal-sidebar',
@@ -1879,17 +2260,23 @@ async function assertEnterpriseLoginRoute() {
     }
     assertDashboardShellTheme(dashboardPath, dashboardHtml);
     for (const requiredFeature of [
-      'Customer workspace',
-      'Set up and run your business account.',
+      'Enterprise dashboard',
+      'Runtime, access, and evidence.',
       'Enterprise dashboard tabs',
       'Overview',
       'Security',
       'Access',
       'Operations',
-      'Setup Map',
+      'Workspace',
       'Setup access checklist',
-      'Setup and operations map',
+      'Workspace tools',
+      'Setup guide',
+      '/app/setup',
+      'Technical guide',
+      '/app/technical-guide',
       'Policy control',
+      'AI Proof Verifier',
+      '/app/verifier',
       'Provider slots',
       'Members and invites',
       'Audit and exports',
@@ -1900,6 +2287,21 @@ async function assertEnterpriseLoginRoute() {
     ]) {
       if (!dashboardHtml.includes(requiredFeature)) {
         throw new Error(`Expected enterprise dashboard feature map to include ${requiredFeature}`);
+      }
+    }
+    for (const forbiddenFeature of [
+      'Set up and run your business account.',
+      'Use this dashboard to finish onboarding',
+      'Connect the organization.',
+      'Configure projects.',
+      'Go live safely.',
+      'Enterprise homepage',
+      'Public page for people who have not signed in yet',
+      'Enterprise login',
+      'Enterprise-only sign-in',
+    ]) {
+      if (dashboardHtml.includes(forbiddenFeature)) {
+        throw new Error(`Enterprise dashboard must not include public marketing/login card copy: ${forbiddenFeature}`);
       }
     }
   }
@@ -1916,6 +2318,11 @@ async function assertEnterpriseLoginRoute() {
   }
   if (!membersHtml.includes('/api/v1/enterprise/members') || membersHtml.includes('https://init.vaultproof.dev')) {
     throw new Error('Expected enterprise members page to use enterprise member APIs only');
+  }
+  for (const requiredIamCopy of ['Role guide', 'IAM Admin', 'Security Admin', 'Platform Admin', 'Auditor']) {
+    if (!membersHtml.includes(requiredIamCopy)) {
+      throw new Error(`Expected enterprise members page to include expanded IAM role copy: ${requiredIamCopy}`);
+    }
   }
   assertDashboardShellTheme('/app/members', membersHtml);
 
@@ -1996,6 +2403,16 @@ async function assertEnterpriseLoginRoute() {
 
   const supportPages = [
     {
+      path: '/app/setup',
+      title: 'Enterprise setup guide - VaultProof Enterprise',
+      required: ['Welcome to VaultProof Enterprise', 'Map your enterprise environment', 'Configure identity and access', 'Choose the gateway and network pattern', 'Configure projects, provider slots, and policy', 'Evidence, alerts, and compliance', 'Go live gradually', 'Customer-managed APIM', 'Dry-run first', '/app/technical-guide'],
+    },
+    {
+      path: '/app/technical-guide',
+      title: 'Technical guide - VaultProof Enterprise',
+      required: ['Architecture at a glance', 'Identity and authorization model', 'Gateway and network patterns', 'Provider key custody and Secure Key Release', 'Caller lock and execution policy', 'Evidence, logs, exports, and audit', 'Troubleshooting map', 'Integration questions for technical review'],
+    },
+    {
       path: '/app/settings',
       title: 'Settings - VaultProof Enterprise',
       required: ['/api/v1/enterprise/orgs/current', '/readiness', 'Security notices'],
@@ -2008,12 +2425,17 @@ async function assertEnterpriseLoginRoute() {
     {
       path: '/app/scanner',
       title: 'Scanner - VaultProof Enterprise',
-      required: ['Enterprise scanner APIs', 'No enterprise-safe scanner endpoint', 'B2C scanner isolation'],
+      required: ['Enterprise scanner APIs', 'No enterprise-safe scanner endpoint', 'Enterprise scanner isolation'],
+    },
+    {
+      path: '/app/verifier',
+      title: 'AI Proof Verifier - VaultProof Enterprise',
+      required: ['Model registry', 'Register external model', 'Submit proof bundle', 'Shared demo attestation', 'Shared enterprise runtime attestation', 'verify evidence only', '/api/v1/enterprise/verifier', 'VaultProof does not run it'],
     },
     {
       path: '/app/runbooks',
       title: 'Runbooks - VaultProof Enterprise',
-      required: ['Hardening status', 'Production verifier', 'Evidence bundle', 'Handoff package', 'npm run package:enterprise-handoff', 'Handoff gate', 'npm run gate:enterprise-handoff', 'Finish gate', 'blocker/warning details', 'npm run gate:enterprise-finish', 'mTLS caller-lock preparation', 'npm run prepare:enterprise-mtls', 'APIM JWT validation preparation', 'discover the Supabase issuer', 'APIM policy template smoke', 'caller-lock header delete/override', 'npm run test:enterprise-apim-policies', 'Origin TLS certificate plan', 'Origin TLS preparation plan', 'Origin TLS preflight', 'TLS origin cutover', 'npm run cutover:enterprise-apim', 'Container Apps cleanup'],
+      required: ['Hardening status', 'Production verifier', 'Evidence bundle', 'Handoff package', 'npm run package:enterprise-handoff', 'Handoff gate', 'npm run gate:enterprise-handoff', 'Finish gate', 'blocker/warning details', 'npm run gate:enterprise-finish', 'mTLS caller-lock preparation', 'npm run prepare:enterprise-mtls', 'APIM JWT validation preparation', 'discover the Supabase issuer', 'APIM policy template smoke', 'caller-lock header delete/override', 'npm run test:enterprise-apim-policies', 'Origin TLS certificate plan', 'Origin TLS preparation plan', 'Origin DNS guardrail', 'Origin DNS record', 'upsert-origin-dns', 'remove-origin-dns', 'Origin TLS preflight', 'TLS origin cutover', 'npm run cutover:enterprise-apim', 'Container Apps cleanup'],
     },
   ];
   for (const page of supportPages) {
@@ -2091,6 +2513,58 @@ async function assertEnterpriseLoginRoute() {
   assertDashboardShellTheme('/app/org', orgHtml);
 }
 
+function assertSecurityHeaders(path, response, html = '') {
+  const csp = response.headers.get('content-security-policy') || '';
+  if (!csp.includes("default-src 'self'") || !csp.includes("frame-ancestors 'none'")) {
+    throw new Error(`Expected strict HTML CSP for ${path}, got ${csp}`);
+  }
+  if (!/script-src[^;]+nonce-/.test(csp)) {
+    throw new Error(`Expected nonce-based script CSP for ${path}, got ${csp}`);
+  }
+  if (response.headers.get('x-frame-options') !== 'DENY') {
+    throw new Error(`Expected X-Frame-Options DENY for ${path}`);
+  }
+  if (response.headers.get('x-content-type-options') !== 'nosniff') {
+    throw new Error(`Expected X-Content-Type-Options nosniff for ${path}`);
+  }
+  if (!response.headers.get('strict-transport-security')?.includes('max-age=31536000')) {
+    throw new Error(`Expected HSTS for ${path}`);
+  }
+  if (!response.headers.get('permissions-policy')?.includes('camera=()')) {
+    throw new Error(`Expected Permissions-Policy for ${path}`);
+  }
+  if (html.includes('<script') && !/<script nonce="[^"]+"/.test(html)) {
+    throw new Error(`Expected inline/external scripts to carry a CSP nonce for ${path}`);
+  }
+}
+
+async function assertEnterpriseSecurityHeaders() {
+  const htmlPaths = ['/', '/app/login', '/app/logout', '/app/dashboard', '/app/control', '/app/verifier', '/app/org', '/app/setup', '/app/technical-guide', '/app/runbooks'];
+  for (const path of htmlPaths) {
+    const response = await handleEnterpriseControlPlaneRequest(
+      buildRequest(path),
+      { enterpriseHostname: ENTERPRISE_HOSTNAME },
+    );
+    const html = await response.text();
+    if (response.status !== 200) {
+      throw new Error(`Expected security header page ${path} to render, got ${response.status}`);
+    }
+    assertSecurityHeaders(path, response, html);
+  }
+
+  const scriptResponse = await handleEnterpriseControlPlaneRequest(
+    buildRequest('/app/enterprise-login.js'),
+    { enterpriseHostname: ENTERPRISE_HOSTNAME },
+  );
+  const scriptCsp = scriptResponse.headers.get('content-security-policy') || '';
+  if (!scriptCsp.includes("default-src 'none'") || !scriptCsp.includes("frame-ancestors 'none'")) {
+    throw new Error(`Expected non-HTML CSP for login script, got ${scriptCsp}`);
+  }
+  if (scriptResponse.headers.get('x-content-type-options') !== 'nosniff') {
+    throw new Error('Expected login script to include nosniff security header');
+  }
+}
+
 function extractHrefValues(html) {
   const hrefs = [];
   const pattern = /\shref\s*=\s*["']([^"']+)["']/gi;
@@ -2118,10 +2592,14 @@ async function assertEnterpriseAppLinkCrawl() {
     '/app/activity',
     '/app/projects',
     '/app/keys',
+    '/app/verifier',
+    '/app/setup',
+    '/app/technical-guide',
     '/app/settings',
     '/app/plans',
     '/app/scanner',
     '/app/runbooks',
+    '/app/logout',
   ];
   const checkedPaths = new Set();
   const queue = [...startPaths];
@@ -2172,6 +2650,9 @@ async function assertEnterpriseMixpanelAnalytics() {
     ['/', 'homepage'],
     ['/app/login', 'login'],
     ['/app/dashboard', 'dashboard'],
+    ['/app/setup', 'setup'],
+    ['/app/technical-guide', 'technical-guide'],
+    ['/app/verifier', 'verifier'],
     ['/app/members', 'members'],
     ['/app/control', 'control'],
     ['/app/org', 'org'],
@@ -2241,6 +2722,7 @@ async function assertInternalAdminConsole() {
     'Businesses',
     'Users and access',
     'SSO rollout',
+    'Internal admin audit',
     'read-only',
     '/api/v1/internal-admin/overview',
   ]) {
@@ -2250,6 +2732,27 @@ async function assertInternalAdminConsole() {
   }
   if (pageHtml.includes('https://api.vaultproof.dev') || pageHtml.includes('https://init.vaultproof.dev')) {
     throw new Error('Internal admin page must not use B2C API origins');
+  }
+
+  const orgDetailPageResponse = await handleEnterpriseControlPlaneRequest(
+    buildHostRequest(INTERNAL_ADMIN_HOSTNAME, '/orgs/org_123'),
+    env,
+  );
+  const orgDetailPageHtml = await orgDetailPageResponse.text();
+  if (orgDetailPageResponse.status !== 200) {
+    throw new Error(`Expected internal admin org detail page shell to render, got ${orgDetailPageResponse.status}`);
+  }
+  for (const required of [
+    'Business detail',
+    'SSO setup checklist',
+    'User/member timeline',
+    'Support notes',
+    'Evidence links',
+    '/api/v1/internal-admin/orgs/',
+  ]) {
+    if (!orgDetailPageHtml.includes(required)) {
+      throw new Error(`Expected internal admin org detail shell to include ${required}`);
+    }
   }
 
   const unauthenticatedResponse = await handleEnterpriseControlPlaneRequest(
@@ -2275,6 +2778,24 @@ async function assertInternalAdminConsole() {
     throw new Error(`Expected internal admin API to reject non-allowlisted employee, got ${deniedResponse.status}`);
   }
 
+  stubAuthUserEmail = 'owner@gmail.com';
+  const publicDomainDeniedResponse = await handleEnterpriseControlPlaneRequest(
+    buildHostRequest(INTERNAL_ADMIN_HOSTNAME, '/api/v1/internal-admin/overview', {
+      headers: {
+        authorization: `Bearer ${AUTH_TOKEN}`,
+      },
+    }),
+    {
+      ...env,
+      internalAdminAllowedEmails: '',
+      internalAdminAllowedDomains: 'gmail.com',
+    },
+  );
+  if (publicDomainDeniedResponse.status !== 403) {
+    throw new Error(`Expected internal admin API to ignore public email-domain allowlists, got ${publicDomainDeniedResponse.status}`);
+  }
+  stubAuthUserEmail = 'owner@example.com';
+
   const overviewResponse = await handleEnterpriseControlPlaneRequest(
     buildHostRequest(INTERNAL_ADMIN_HOSTNAME, '/api/v1/internal-admin/overview', {
       headers: {
@@ -2296,6 +2817,450 @@ async function assertInternalAdminConsole() {
   if (!Array.isArray(overview.businesses) || overview.businesses[0]?.name !== 'Example Org') {
     throw new Error(`Expected internal admin overview to include Example Org, got ${JSON.stringify(overview.businesses)}`);
   }
+  if (!Array.isArray(overview.recent_internal_admin_audit)
+    || overview.recent_internal_admin_audit[0]?.event_type !== 'internal_admin_overview_viewed') {
+    throw new Error(`Expected internal admin overview to include employee audit stream, got ${JSON.stringify(overview.recent_internal_admin_audit)}`);
+  }
+  if (!internalAdminAuditEvents.some((event) => event.event_type === 'internal_admin_overview_viewed')) {
+    throw new Error(`Expected internal admin overview request to insert audit event, got ${JSON.stringify(internalAdminAuditEvents)}`);
+  }
+
+  const orgDetailResponse = await handleEnterpriseControlPlaneRequest(
+    buildHostRequest(INTERNAL_ADMIN_HOSTNAME, '/api/v1/internal-admin/orgs/org_123', {
+      headers: {
+        authorization: `Bearer ${AUTH_TOKEN}`,
+      },
+    }),
+    env,
+  );
+  const orgDetail = await orgDetailResponse.json();
+  if (orgDetailResponse.status !== 200) {
+    throw new Error(`Expected internal admin org detail API, got ${orgDetailResponse.status}: ${JSON.stringify(orgDetail)}`);
+  }
+  if (orgDetail.business?.name !== 'Example Org' || orgDetail.business?.member_count !== 1) {
+    throw new Error(`Expected org detail business summary, got ${JSON.stringify(orgDetail.business)}`);
+  }
+  if (!Array.isArray(orgDetail.sso_checklist) || !orgDetail.sso_checklist.find((item) => item.label === 'Choose identity provider')) {
+    throw new Error(`Expected org detail SSO checklist, got ${JSON.stringify(orgDetail.sso_checklist)}`);
+  }
+  if (!Array.isArray(orgDetail.member_timeline) || !orgDetail.member_timeline.find((item) => item.type === 'member')) {
+    throw new Error(`Expected org detail member timeline, got ${JSON.stringify(orgDetail.member_timeline)}`);
+  }
+  if (!orgDetail.support_notes_schema_ready || orgDetail.support_notes?.[0]?.body !== 'Customer asked for Entra SSO rollout help.') {
+    throw new Error(`Expected org detail support notes, got ${JSON.stringify(orgDetail.support_notes)}`);
+  }
+  if (!orgDetail.business_status_schema_ready || orgDetail.business_status_updates?.[0]?.status !== 'onboarding') {
+    throw new Error(`Expected org detail business status updates, got ${JSON.stringify(orgDetail.business_status_updates)}`);
+  }
+  if (!orgDetail.action_requests_schema_ready || orgDetail.action_requests?.[0]?.action_type !== 'disable_org_access') {
+    throw new Error(`Expected org detail action request approvals, got ${JSON.stringify(orgDetail.action_requests)}`);
+  }
+  if (!orgDetail.execution_records_schema_ready || !Array.isArray(orgDetail.execution_records)) {
+    throw new Error(`Expected org detail execution record ledger readiness, got ${JSON.stringify(orgDetail.execution_records)}`);
+  }
+  if (!orgDetail.evidence_links?.find((link) => link.href.includes('/app/audit?organization_id=org_123'))) {
+    throw new Error(`Expected org detail evidence links, got ${JSON.stringify(orgDetail.evidence_links)}`);
+  }
+  if (!internalAdminAuditEvents.some((event) => event.event_type === 'internal_admin_org_detail_viewed')) {
+    throw new Error(`Expected org detail request to insert audit event, got ${JSON.stringify(internalAdminAuditEvents)}`);
+  }
+
+  const disabledNoteResponse = await handleEnterpriseControlPlaneRequest(
+    buildHostRequest(INTERNAL_ADMIN_HOSTNAME, '/api/v1/internal-admin/orgs/org_123/support-notes', {
+      method: 'POST',
+      headers: {
+        authorization: `Bearer ${AUTH_TOKEN}`,
+        'content-type': 'application/json',
+      },
+      body: JSON.stringify({
+        note_type: 'onboarding',
+        body: 'Follow up on SSO rollout.',
+      }),
+    }),
+    env,
+  );
+  if (disabledNoteResponse.status !== 403) {
+    throw new Error(`Expected support-note write to be disabled by default, got ${disabledNoteResponse.status}`);
+  }
+
+  const badApprovalResponse = await handleEnterpriseControlPlaneRequest(
+    buildHostRequest(INTERNAL_ADMIN_HOSTNAME, '/api/v1/internal-admin/orgs/org_123/support-notes', {
+      method: 'POST',
+      headers: {
+        authorization: `Bearer ${AUTH_TOKEN}`,
+        'content-type': 'application/json',
+        'x-vaultproof-internal-admin-approval': 'wrong-secret',
+      },
+      body: JSON.stringify({
+        note_type: 'onboarding',
+        body: 'Follow up on SSO rollout.',
+      }),
+    }),
+    {
+      ...env,
+      internalAdminActionsEnabled: true,
+      internalAdminApprovalSecret: 'approval-secret',
+    },
+  );
+  if (badApprovalResponse.status !== 403) {
+    throw new Error(`Expected support-note write to reject bad approval header, got ${badApprovalResponse.status}`);
+  }
+
+  const noteResponse = await handleEnterpriseControlPlaneRequest(
+    buildHostRequest(INTERNAL_ADMIN_HOSTNAME, '/api/v1/internal-admin/orgs/org_123/support-notes', {
+      method: 'POST',
+      headers: {
+        authorization: `Bearer ${AUTH_TOKEN}`,
+        'content-type': 'application/json',
+        'x-vaultproof-internal-admin-approval': 'approval-secret',
+      },
+      body: JSON.stringify({
+        note_type: 'onboarding',
+        body: 'Follow up on SSO rollout.',
+      }),
+    }),
+    {
+      ...env,
+      internalAdminActionsEnabled: true,
+      internalAdminApprovalSecret: 'approval-secret',
+    },
+  );
+  const notePayload = await noteResponse.json();
+  if (noteResponse.status !== 201 || notePayload.note?.body !== 'Follow up on SSO rollout.') {
+    throw new Error(`Expected approved support-note write to succeed, got ${noteResponse.status}: ${JSON.stringify(notePayload)}`);
+  }
+  if (!internalAdminAuditEvents.some((event) => event.event_type === 'internal_admin_support_note_created')) {
+    throw new Error(`Expected support-note write to insert audit event, got ${JSON.stringify(internalAdminAuditEvents)}`);
+  }
+
+  const disabledInviteResponse = await handleEnterpriseControlPlaneRequest(
+    buildHostRequest(INTERNAL_ADMIN_HOSTNAME, '/api/v1/internal-admin/orgs/org_123/invitations', {
+      method: 'POST',
+      headers: {
+        authorization: `Bearer ${AUTH_TOKEN}`,
+        'content-type': 'application/json',
+      },
+      body: JSON.stringify({
+        email: 'new-admin@example.com',
+        role: 'iam_admin',
+      }),
+    }),
+    env,
+  );
+  if (disabledInviteResponse.status !== 403) {
+    throw new Error(`Expected internal invite creation to be disabled by default, got ${disabledInviteResponse.status}`);
+  }
+
+  const inviteCreateResponse = await handleEnterpriseControlPlaneRequest(
+    buildHostRequest(INTERNAL_ADMIN_HOSTNAME, '/api/v1/internal-admin/orgs/org_123/invitations', {
+      method: 'POST',
+      headers: {
+        authorization: `Bearer ${AUTH_TOKEN}`,
+        'content-type': 'application/json',
+        'x-vaultproof-internal-admin-approval': 'approval-secret',
+      },
+      body: JSON.stringify({
+        email: 'new-admin@example.com',
+        role: 'iam_admin',
+      }),
+    }),
+    {
+      ...env,
+      internalAdminActionsEnabled: true,
+      internalAdminApprovalSecret: 'approval-secret',
+    },
+  );
+  const inviteCreatePayload = await inviteCreateResponse.json();
+  if (inviteCreateResponse.status !== 201
+    || inviteCreatePayload.invitation?.email !== 'new-admin@example.com'
+    || createdMemberInvitation?.role !== 'iam_admin') {
+    throw new Error(`Expected approved internal invite creation, got ${inviteCreateResponse.status}: ${JSON.stringify(inviteCreatePayload)}`);
+  }
+  if (!internalAdminAuditEvents.some((event) => event.event_type === 'internal_admin_invitation_created')) {
+    throw new Error(`Expected internal invite creation audit event, got ${JSON.stringify(internalAdminAuditEvents)}`);
+  }
+
+  const inviteResendResponse = await handleEnterpriseControlPlaneRequest(
+    buildHostRequest(INTERNAL_ADMIN_HOSTNAME, '/api/v1/internal-admin/orgs/org_123/invitations/invite_123/resend', {
+      method: 'POST',
+      headers: {
+        authorization: `Bearer ${AUTH_TOKEN}`,
+        'content-type': 'application/json',
+        'x-vaultproof-internal-admin-approval': 'approval-secret',
+      },
+    }),
+    {
+      ...env,
+      internalAdminActionsEnabled: true,
+      internalAdminApprovalSecret: 'approval-secret',
+    },
+  );
+  const inviteResendPayload = await inviteResendResponse.json();
+  if (inviteResendResponse.status !== 200
+    || inviteResendPayload.resend?.requested !== true
+    || inviteResendPayload.resend?.email_delivery !== 'not_sent_by_internal_admin_endpoint') {
+    throw new Error(`Expected approved internal invite resend request, got ${inviteResendResponse.status}: ${JSON.stringify(inviteResendPayload)}`);
+  }
+  if (!internalAdminAuditEvents.some((event) => event.event_type === 'internal_admin_invitation_resend_requested')) {
+    throw new Error(`Expected internal invite resend audit event, got ${JSON.stringify(internalAdminAuditEvents)}`);
+  }
+
+  const inviteRevokeResponse = await handleEnterpriseControlPlaneRequest(
+    buildHostRequest(INTERNAL_ADMIN_HOSTNAME, '/api/v1/internal-admin/orgs/org_123/invitations/invite_123/revoke', {
+      method: 'POST',
+      headers: {
+        authorization: `Bearer ${AUTH_TOKEN}`,
+        'content-type': 'application/json',
+        'x-vaultproof-internal-admin-approval': 'approval-secret',
+      },
+    }),
+    {
+      ...env,
+      internalAdminActionsEnabled: true,
+      internalAdminApprovalSecret: 'approval-secret',
+    },
+  );
+  const inviteRevokePayload = await inviteRevokeResponse.json();
+  if (inviteRevokeResponse.status !== 200
+    || inviteRevokePayload.invitation?.status !== 'revoked'
+    || !revokedMemberInvitation) {
+    throw new Error(`Expected approved internal invite revoke, got ${inviteRevokeResponse.status}: ${JSON.stringify(inviteRevokePayload)}`);
+  }
+  if (!internalAdminAuditEvents.some((event) => event.event_type === 'internal_admin_invitation_revoked')) {
+    throw new Error(`Expected internal invite revoke audit event, got ${JSON.stringify(internalAdminAuditEvents)}`);
+  }
+
+  const statusUpdateResponse = await handleEnterpriseControlPlaneRequest(
+    buildHostRequest(INTERNAL_ADMIN_HOSTNAME, '/api/v1/internal-admin/orgs/org_123/status', {
+      method: 'POST',
+      headers: {
+        authorization: `Bearer ${AUTH_TOKEN}`,
+        'content-type': 'application/json',
+        'x-vaultproof-internal-admin-approval': 'approval-secret',
+      },
+      body: JSON.stringify({
+        status: 'active',
+        plan_label: 'Enterprise Production',
+        summary: 'Production path is live and customer is ready for monitored rollout.',
+        next_step: 'Schedule first access review.',
+      }),
+    }),
+    {
+      ...env,
+      internalAdminActionsEnabled: true,
+      internalAdminApprovalSecret: 'approval-secret',
+    },
+  );
+  const statusUpdatePayload = await statusUpdateResponse.json();
+  if (statusUpdateResponse.status !== 201
+    || statusUpdatePayload.status_update?.status !== 'active'
+    || statusUpdatePayload.status_update?.plan_label !== 'Enterprise Production') {
+    throw new Error(`Expected approved business status update, got ${statusUpdateResponse.status}: ${JSON.stringify(statusUpdatePayload)}`);
+  }
+  if (!internalAdminAuditEvents.some((event) => event.event_type === 'internal_admin_business_status_updated')) {
+    throw new Error(`Expected business status update audit event, got ${JSON.stringify(internalAdminAuditEvents)}`);
+  }
+
+  const disabledActionRequestResponse = await handleEnterpriseControlPlaneRequest(
+    buildHostRequest(INTERNAL_ADMIN_HOSTNAME, '/api/v1/internal-admin/orgs/org_123/action-requests', {
+      method: 'POST',
+      headers: {
+        authorization: `Bearer ${AUTH_TOKEN}`,
+        'content-type': 'application/json',
+      },
+      body: JSON.stringify({
+        action_type: 'disable_org_access',
+        reason: 'Customer requested temporary disable during incident response.',
+      }),
+    }),
+    env,
+  );
+  if (disabledActionRequestResponse.status !== 403) {
+    throw new Error(`Expected destructive action request creation to be disabled by default, got ${disabledActionRequestResponse.status}`);
+  }
+
+  const actionRequestResponse = await handleEnterpriseControlPlaneRequest(
+    buildHostRequest(INTERNAL_ADMIN_HOSTNAME, '/api/v1/internal-admin/orgs/org_123/action-requests', {
+      method: 'POST',
+      headers: {
+        authorization: `Bearer ${AUTH_TOKEN}`,
+        'content-type': 'application/json',
+        'x-vaultproof-internal-admin-approval': 'approval-secret',
+      },
+      body: JSON.stringify({
+        action_type: 'disable_org_access',
+        reason: 'Customer requested temporary disable during incident response.',
+        requested_payload: {
+          requested_duration: '24h',
+        },
+      }),
+    }),
+    {
+      ...env,
+      internalAdminActionsEnabled: true,
+      internalAdminApprovalSecret: 'approval-secret',
+    },
+  );
+  const actionRequestPayload = await actionRequestResponse.json();
+  if (actionRequestResponse.status !== 201
+    || actionRequestPayload.action_request?.action_type !== 'disable_org_access'
+    || actionRequestPayload.execution_enabled !== false) {
+    throw new Error(`Expected approved destructive action request creation, got ${actionRequestResponse.status}: ${JSON.stringify(actionRequestPayload)}`);
+  }
+  if (!internalAdminAuditEvents.some((event) => event.event_type === 'internal_admin_action_request_created')) {
+    throw new Error(`Expected destructive action request audit event, got ${JSON.stringify(internalAdminAuditEvents)}`);
+  }
+
+  const sameUserApproveResponse = await handleEnterpriseControlPlaneRequest(
+    buildHostRequest(INTERNAL_ADMIN_HOSTNAME, `/api/v1/internal-admin/action-requests/${actionRequestPayload.action_request.id}/approve`, {
+      method: 'POST',
+      headers: {
+        authorization: `Bearer ${AUTH_TOKEN}`,
+        'content-type': 'application/json',
+        'x-vaultproof-internal-admin-approval': 'approval-secret',
+      },
+      body: JSON.stringify({
+        decision_note: 'Approving my own request should not be allowed.',
+      }),
+    }),
+    {
+      ...env,
+      internalAdminActionsEnabled: true,
+      internalAdminApprovalSecret: 'approval-secret',
+    },
+  );
+  if (sameUserApproveResponse.status !== 409) {
+    throw new Error(`Expected same employee action approval to be rejected, got ${sameUserApproveResponse.status}`);
+  }
+
+  stubAuthUserId = 'user_789';
+  stubAuthUserEmail = 'ops@vaultproof.dev';
+  const approveResponse = await handleEnterpriseControlPlaneRequest(
+    buildHostRequest(INTERNAL_ADMIN_HOSTNAME, `/api/v1/internal-admin/action-requests/${actionRequestPayload.action_request.id}/approve`, {
+      method: 'POST',
+      headers: {
+        authorization: `Bearer ${AUTH_TOKEN}`,
+        'content-type': 'application/json',
+        'x-vaultproof-internal-admin-approval': 'approval-secret',
+      },
+      body: JSON.stringify({
+        decision_note: 'Second employee approved after customer confirmation.',
+      }),
+    }),
+    {
+      ...env,
+      internalAdminAllowedEmails: 'owner@example.com,ops@vaultproof.dev',
+      internalAdminActionsEnabled: true,
+      internalAdminApprovalSecret: 'approval-secret',
+    },
+  );
+  const approvePayload = await approveResponse.json();
+  if (approveResponse.status !== 200
+    || approvePayload.action_request?.status !== 'approved'
+    || approvePayload.execution_enabled !== false) {
+    throw new Error(`Expected second employee action approval, got ${approveResponse.status}: ${JSON.stringify(approvePayload)}`);
+  }
+  if (!internalAdminAuditEvents.some((event) => event.event_type === 'internal_admin_action_request_approved')) {
+    throw new Error(`Expected destructive action approval audit event, got ${JSON.stringify(internalAdminAuditEvents)}`);
+  }
+
+  const rejectResponse = await handleEnterpriseControlPlaneRequest(
+    buildHostRequest(INTERNAL_ADMIN_HOSTNAME, '/api/v1/internal-admin/action-requests/action_request_123/reject', {
+      method: 'POST',
+      headers: {
+        authorization: `Bearer ${AUTH_TOKEN}`,
+        'content-type': 'application/json',
+        'x-vaultproof-internal-admin-approval': 'approval-secret',
+      },
+      body: JSON.stringify({
+        decision_note: 'Rejected because customer asked to wait.',
+      }),
+    }),
+    {
+      ...env,
+      internalAdminAllowedEmails: 'owner@example.com,ops@vaultproof.dev',
+      internalAdminActionsEnabled: true,
+      internalAdminApprovalSecret: 'approval-secret',
+    },
+  );
+  const rejectPayload = await rejectResponse.json();
+  if (rejectResponse.status !== 200 || rejectPayload.action_request?.status !== 'rejected') {
+    throw new Error(`Expected second employee action rejection, got ${rejectResponse.status}: ${JSON.stringify(rejectPayload)}`);
+  }
+  if (!internalAdminAuditEvents.some((event) => event.event_type === 'internal_admin_action_request_rejected')) {
+    throw new Error(`Expected destructive action rejection audit event, got ${JSON.stringify(internalAdminAuditEvents)}`);
+  }
+
+  const executePlanResponse = await handleEnterpriseControlPlaneRequest(
+    buildHostRequest(INTERNAL_ADMIN_HOSTNAME, `/api/v1/internal-admin/action-requests/${actionRequestPayload.action_request.id}/execute-plan`, {
+      method: 'POST',
+      headers: {
+        authorization: `Bearer ${AUTH_TOKEN}`,
+        'content-type': 'application/json',
+        'x-vaultproof-internal-admin-approval': 'approval-secret',
+      },
+    }),
+    {
+      ...env,
+      internalAdminAllowedEmails: 'owner@example.com,ops@vaultproof.dev',
+      internalAdminActionsEnabled: true,
+      internalAdminApprovalSecret: 'approval-secret',
+    },
+  );
+  const executePlanPayload = await executePlanResponse.json();
+  if (executePlanResponse.status !== 201
+    || executePlanPayload.execution_enabled !== false
+    || executePlanPayload.execution_record?.execution_mode !== 'dry_run'
+    || executePlanPayload.execution_record?.status !== 'planned') {
+    throw new Error(`Expected approved destructive action dry-run execution plan, got ${executePlanResponse.status}: ${JSON.stringify(executePlanPayload)}`);
+  }
+  if (executePlanPayload.preflight_result?.would_set_archived_at !== true
+    || executePlanPayload.rollback_payload?.organization?.archived_at !== null) {
+    throw new Error(`Expected execution plan to include org archive preflight and rollback payload, got ${JSON.stringify(executePlanPayload)}`);
+  }
+  if (!internalAdminActionExecutionRecords.find((record) => record.action_request_id === actionRequestPayload.action_request.id)) {
+    throw new Error(`Expected dry-run execution record to be inserted, got ${JSON.stringify(internalAdminActionExecutionRecords)}`);
+  }
+  if (!internalAdminAuditEvents.some((event) => event.event_type === 'internal_admin_action_execution_planned')) {
+    throw new Error(`Expected dry-run execution plan audit event, got ${JSON.stringify(internalAdminAuditEvents)}`);
+  }
+
+  const rollbackPlanResponse = await handleEnterpriseControlPlaneRequest(
+    buildHostRequest(INTERNAL_ADMIN_HOSTNAME, `/api/v1/internal-admin/action-execution-records/${executePlanPayload.execution_record.id}/rollback-plan`, {
+      method: 'POST',
+      headers: {
+        authorization: `Bearer ${AUTH_TOKEN}`,
+        'content-type': 'application/json',
+        'x-vaultproof-internal-admin-approval': 'approval-secret',
+      },
+    }),
+    {
+      ...env,
+      internalAdminAllowedEmails: 'owner@example.com,ops@vaultproof.dev',
+      internalAdminActionsEnabled: true,
+      internalAdminApprovalSecret: 'approval-secret',
+    },
+  );
+  const rollbackPlanPayload = await rollbackPlanResponse.json();
+  if (rollbackPlanResponse.status !== 201
+    || rollbackPlanPayload.rollback_enabled !== false
+    || rollbackPlanPayload.rollback_record?.execution_mode !== 'dry_run'
+    || rollbackPlanPayload.rollback_record?.status !== 'planned'
+    || rollbackPlanPayload.rollback_plan?.action_direction !== 'rollback') {
+    throw new Error(`Expected approved destructive action rollback dry-run plan, got ${rollbackPlanResponse.status}: ${JSON.stringify(rollbackPlanPayload)}`);
+  }
+  if (rollbackPlanPayload.rollback_plan?.would_restore_organization_fields?.archived_at !== null
+    || rollbackPlanPayload.rollback_record?.rollback_payload?.organization?.archived_at !== null) {
+    throw new Error(`Expected rollback plan to preserve original org archive fields, got ${JSON.stringify(rollbackPlanPayload)}`);
+  }
+  if (!internalAdminActionExecutionRecords.find((record) => record.id === rollbackPlanPayload.rollback_record.id)) {
+    throw new Error(`Expected dry-run rollback record to be inserted, got ${JSON.stringify(internalAdminActionExecutionRecords)}`);
+  }
+  if (!internalAdminAuditEvents.some((event) => event.event_type === 'internal_admin_action_rollback_planned')) {
+    throw new Error(`Expected dry-run rollback plan audit event, got ${JSON.stringify(internalAdminAuditEvents)}`);
+  }
+  stubAuthUserId = 'user_123';
+  stubAuthUserEmail = 'owner@example.com';
 
   const enterpriseHostResponse = await handleEnterpriseControlPlaneRequest(
     buildRequest('/api/v1/internal-admin/overview', {
@@ -2317,6 +3282,7 @@ async function assertEnterpriseReadinessRoute() {
     buildRequest('/readiness'),
     {
       enterpriseHostname: ENTERPRISE_HOSTNAME,
+      enterpriseRuntimeTier: 'shared-demo',
       executorBaseUrl: 'https://executor.internal',
       executorSigningKeyId: 'enterprise-local',
       executorSigningSecret: 'local-secret',
@@ -2334,6 +3300,9 @@ async function assertEnterpriseReadinessRoute() {
   }
   if (payload?.production_ready !== false) {
     throw new Error(`Expected readiness route production_ready=false while executor is demo mode, got ${JSON.stringify(payload)}`);
+  }
+  if (payload?.runtime_tier !== 'shared-demo' || payload?.customer_dedicated_runtime !== false) {
+    throw new Error(`Expected readiness route to expose shared demo runtime tier, got ${JSON.stringify(payload)}`);
   }
   if (!payload?.production_blockers?.includes('executor: key release is not hardware-bound')) {
     throw new Error(`Expected readiness route to include executor production blockers, got ${JSON.stringify(payload)}`);
@@ -2395,6 +3364,7 @@ async function assertFrontDoorOriginLock() {
 }
 
 await assertEnterpriseLoginRoute();
+await assertEnterpriseSecurityHeaders();
 await assertEnterpriseAppLinkCrawl();
 await assertInternalAdminConsole();
 await assertEnterpriseMixpanelAnalytics();
@@ -2416,5 +3386,6 @@ await assertEnterpriseAuditCsvExport();
 await assertEnterpriseAccessReviewEvidenceExport();
 await assertEnterpriseAlertsApi();
 await assertEnterpriseMembersAdminActions();
+await assertEnterpriseVerifierApi();
 await assertEnterpriseSsoLifecycle();
 console.log('enterprise control plane smoke test passed');

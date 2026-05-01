@@ -9,16 +9,39 @@ It intentionally does **not** replace the B2C Cloudflare path.
 - Enterprise VNet with separate control-plane and executor subnets.
 - Network Security Group for the executor subnet.
 - Azure Confidential VM for the secure executor.
-- Azure Managed HSM for the production Secure Key Release root key.
+- Azure Key Vault Premium for the shared-demo Secure Key Release root key.
+- Optional Azure Managed HSM for dedicated regulated/high-trust production release keys.
 - RSA-HSM unwrap key with `release` capability.
 - Azure Attestation provider.
 - Optional Azure API Management instance for API lifecycle governance.
 
-Current decision: keep Managed HSM for this Azure finish pass. Key Vault Premium can remain a lower-friction future option, but do not switch the active production-confidential path away from Managed HSM until after the Azure build is stable.
+Current shared-demo state: the executor uses Key Vault Premium Secure Key Release at `vpenteuutf4ahzja5l3okv.vault.azure.net`, with key version `2a0bd596c1b54d3a8344d4309c85dd4e`. The old Managed HSM `vpenteuutf4ahzja5l3ohsm` has been deleted from the active resource list and is soft-deleted with purge protection enabled. Azure rejected immediate purge; scheduled purge is `2026-07-30T08:06:41Z`.
 
 API Management is for routing, rate limits, auth policy, observability, products, versions, and developer portal/catalog workflows. It must not reconstruct secrets or replace the Confidential VM executor.
 
 The current template keeps a temporary public IP for SSH bootstrap. After the executor is installed and private routing is working, remove public SSH access.
+
+## Cost-Controlled Demo Profile
+
+For demos, do **not** create a new Confidential VM, Managed HSM, APIM instance, or monitoring stack per demo organization. Use one shared enterprise demo runtime and isolate demo accounts with Supabase organizations, projects, IAM roles, caller-lock policy, audit records, and seeded sample data.
+
+Recommended demo posture:
+
+- `ENTERPRISE_RUNTIME_TIER=shared-demo` on the enterprise control plane.
+- One shared Azure Confidential VM runtime when live attestation/SKR needs to be demonstrated.
+- One shared Microsoft Azure Attestation provider and readiness path for demo evidence.
+- No static `AZURE_ATTESTATION_TOKEN`; dynamic guest attestation remains required when the executor is running in confidential mode.
+- `deployManagedHsm=false`, `deployApiManagement=false`, and `deployMonitoring=false` for new demo-only infrastructure.
+- Existing expensive demo resources should be reused, stopped when not needed, or removed only after the shared demo route is verified.
+
+Dedicated customer production posture:
+
+- `ENTERPRISE_RUNTIME_TIER=dedicated-production`.
+- Customer-dedicated Confidential VM and release-key boundary, or a documented customer-owned key path.
+- Managed HSM/Key Vault choice is part of the customer security architecture, not a per-demo default.
+- APIM, monitoring, TLS origin, private origin, and SSH hardening are enabled according to the customer production plan.
+
+This keeps demos honest: shared demo evidence can prove the VaultProof runtime posture, but it must not be described as a customer-dedicated production enclave.
 
 ## Deploy From Azure Cloud Shell
 
@@ -138,6 +161,17 @@ npm run deploy:enterprise-vm
 
 The deploy helper copies the repo without build artifacts, preserves `/etc/vaultproof/*.env`, rebuilds the enterprise workspaces on the VM, reinstalls the systemd units, restarts the executor and control plane, and optionally runs the production verifier.
 
+Because the current shared-demo runtime has public SSH bootstrap closed, the helper runs an SSH preflight before creating or uploading the archive. If SSH is locked down, it fails fast and prints the exact break-glass sequence to reopen SSH, deploy, close SSH again, and verify the locked-down posture.
+
+Temporary reopen/deploy/close sequence:
+
+```bash
+CONFIRM_SSH_LOCKDOWN=reopen-public-ssh ACTION=reopen npm run harden:enterprise-ssh
+npm run deploy:enterprise-vm
+ALTERNATE_ACCESS_ACK=true CONFIRM_SSH_LOCKDOWN=close-public-ssh ACTION=close npm run harden:enterprise-ssh
+EXPECTED_SSH_BOOTSTRAP_ACCESS=Deny RUN_SSH_CHECKS=false npm run verify:enterprise-production
+```
+
 `VAULT_ENCRYPTION_KEY` must not be used in confidential mode.
 
 Fill in the service environment file:
@@ -233,6 +267,7 @@ From your local machine, render the control-plane env:
 cd infra/azure/enterprise-secure-runtime
 
 export ENTERPRISE_HOSTNAME='enterprise.vaultproof.dev'
+export ENTERPRISE_RUNTIME_TIER='shared-demo'
 export ENTERPRISE_EXECUTOR_BASE_URL='http://127.0.0.1:3002'
 export ENTERPRISE_EXECUTOR_SIGNING_KEY_ID='enterprise-azure-v1'
 export ENTERPRISE_EXECUTOR_SIGNING_SECRET='...'
@@ -327,6 +362,8 @@ RESOURCE_GROUP=vaultproof-enterprise \
 npm run cleanup:enterprise-container-apps
 ```
 
+Current shared-demo status: the old Container Apps prototype ingress is disabled and both prototype apps are scaled to `minReplicas=0`. Keep the resources through the rollback soak period, then delete them only when the Confidential VM path no longer needs that fallback.
+
 Disable public ingress on the old Container Apps first. This is the recommended reversible cleanup step before deletion:
 
 ```bash
@@ -334,6 +371,16 @@ RESOURCE_GROUP=vaultproof-enterprise \
 ENTERPRISE_URL=https://enterprise.vaultproof.dev \
 ACTION=disable-ingress \
 CONFIRM_CONTAINER_APPS_CLEANUP=disable-prototype-ingress \
+npm run cleanup:enterprise-container-apps
+```
+
+Then scale the old apps to zero replicas. This is the low-risk cost-control step for the old always-on executor prototype while keeping the rollback resources in place:
+
+```bash
+RESOURCE_GROUP=vaultproof-enterprise \
+ENTERPRISE_URL=https://enterprise.vaultproof.dev \
+ACTION=scale-to-zero \
+CONFIRM_CONTAINER_APPS_CLEANUP=scale-prototype-to-zero \
 npm run cleanup:enterprise-container-apps
 ```
 
@@ -345,7 +392,7 @@ CONFIRM_CONTAINER_APPS_CLEANUP=restore-prototype-ingress \
 npm run cleanup:enterprise-container-apps
 ```
 
-The script refuses to disable or delete the prototype path unless:
+The script refuses to disable, scale down, or delete the prototype path unless:
 
 - `enterprise.vaultproof.dev/readiness` reports `production_ready: true`.
 - Front Door has no enabled `*.azurecontainerapps.io` origin in the active origin group.
@@ -446,7 +493,19 @@ ORIGIN_TLS_HOSTNAME=origin.enterprise.vaultproof.dev \
 npm run prepare:enterprise-origin-tls
 ```
 
-The prep helper is read-only by default. It prints the expected DNS `A` record, current DNS records, Front Door TLS NSG rule access, and the APIM API backend URL. It can also perform the guarded Azure-side prep actions when the DNS/certificate work is ready:
+The prep helper is read-only by default. It prints the expected DNS `A` record, current DNS records, Azure DNS zone discovery, Front Door TLS NSG rule access, and the APIM API backend URL. It can also perform the guarded Azure-side prep actions when the DNS/certificate work is ready.
+
+If `vaultproof.dev` is hosted in Azure DNS for the current subscription, the helper can create the origin record with a confirmation gate:
+
+```bash
+ACTION=upsert-origin-dns \
+CONFIRM_ORIGIN_TLS_PREP=create-origin-dns-record \
+npm run prepare:enterprise-origin-tls
+```
+
+Current shared-demo status: Azure DNS zone discovery reports `<not found for vaultproof.dev>`, so `origin.enterprise.vaultproof.dev -> 20.85.214.14` must be created at the external DNS provider unless `DNS_ZONE_NAME` and `DNS_RESOURCE_GROUP` are pointed at the real Azure DNS zone.
+
+Open port `443` to Azure Front Door only after DNS and the public certificate are ready:
 
 ```bash
 ACTION=enable-nsg443 \
@@ -465,6 +524,7 @@ npm run prepare:enterprise-origin-tls
 Rollback helpers are also available:
 
 ```bash
+ACTION=remove-origin-dns CONFIRM_ORIGIN_TLS_PREP=remove-origin-dns-record npm run prepare:enterprise-origin-tls
 ACTION=disable-nsg443 CONFIRM_ORIGIN_TLS_PREP=close-origin-443 npm run prepare:enterprise-origin-tls
 ACTION=rollback-apim-backend-http CONFIRM_ORIGIN_TLS_PREP=rollback-apim-backend-http npm run prepare:enterprise-origin-tls
 ```
@@ -510,7 +570,7 @@ ORIGIN_TLS_HOSTNAME=origin.enterprise.vaultproof.dev \
 npm run verify:enterprise-origin-tls
 ```
 
-The preflight checks DNS, current Front Door route state, NSG port 443 from Front Door service tags, nginx, certificate SAN/trust, and VM-local TLS `/health`. It defaults to report-only mode because the current deployment intentionally still uses HTTP origin forwarding. Set `CUTOVER_READY_REQUIRED=true` to fail the command on any TLS cutover blocker.
+The preflight checks DNS, current Front Door route state, NSG port 443 from Front Door service tags, nginx, certificate SAN/trust, and VM-local TLS `/health`. It defaults to report-only mode because the current deployment intentionally still uses HTTP origin forwarding. In report-only mode, an unreachable SSH path is a warning so the status summary can still show DNS/NSG blockers while public SSH is locked down. Set `CUTOVER_READY_REQUIRED=true` to fail the command on any TLS cutover blocker.
 
 Enable the Front Door TLS origin cutover only after readiness, DNS, certificate, and local TLS checks pass:
 
@@ -555,6 +615,10 @@ npm run cutover:enterprise-origin-tls
 ### SSH Bootstrap Lockdown
 
 The VM keeps public SSH open only for bootstrap and break-glass access. Close it after `enterprise.vaultproof.dev/readiness` is production-ready, Front Door reaches the Confidential VM origin, and you have an alternate operational path such as Azure Bastion, JIT VM access, serial console, or a controlled temporary NSG reopen process.
+
+Current shared-demo status: boot diagnostics is enabled, alternate-access readiness reports a ready break-glass signal, and the public SSH bootstrap NSG rule is set to `Deny`. Run the break-glass reopen command before using SSH-based deployment helpers such as `npm run deploy:enterprise-vm`, then close SSH again after verification.
+
+The deploy helper now includes an SSH preflight with a short connect timeout. If the public bootstrap rule is still closed, it exits before archiving/uploading and prints the reopen/deploy/close/verify sequence. Set `SKIP_SSH_PREFLIGHT=true` only when using a private network path where SSH is reachable outside the public bootstrap rule.
 
 Check alternate operator access readiness before closing public SSH:
 
@@ -633,10 +697,10 @@ The Bicep template can create a Key Vault Premium `RSA-HSM` key as the prototype
 
 After the VM is booted and attestation claims are known, create a release policy and either:
 
-- set `deployPrototypeReleaseKey=true` with `secureKeyReleasePolicyData`, then redeploy the prototype key, or
-- use the final Azure Managed HSM `RSA-HSM` release-root path.
+- use Key Vault Premium `RSA-HSM` Secure Key Release for the cost-controlled shared demo path, or
+- use the Azure Managed HSM `RSA-HSM` release-root path for regulated/high-trust dedicated production.
 
-The final AES-256 production design uses Azure Managed HSM with an exportable `RSA-HSM` key release policy. Azure does not allow generated symmetric `oct-HSM` keys to be exported/released. VaultProof releases the RSA-HSM private JWK only to the attested Confidential VM, then derives the AES-256 unwrap root inside that VM. See `managed-hsm-oct-hsm-notes.md`.
+The same executor flow is used for Key Vault Premium and Managed HSM: VaultProof releases an exportable `RSA-HSM` private JWK only to the attested Confidential VM, then derives the AES-256 unwrap root inside that VM. Azure does not allow generated symmetric `oct-HSM` keys to be exported/released. See `managed-hsm-oct-hsm-notes.md`.
 
 ### Build The Strict Production SKR Policy
 
@@ -667,7 +731,65 @@ node build-skr-policy.mjs \
 
 `strict-vm` pins the policy to the current Confidential VM's MAA issuer, SEV-SNP type, Azure-compliant CVM status, secure boot, vTPM, disabled debug flags, VM unique ID, and SEV-SNP launch measurement. For HA, generate one policy entry per production executor VM.
 
-### Create The Final Managed HSM Key
+### Create The Shared Demo Key Vault Premium Key
+
+Use this path for `ENTERPRISE_RUNTIME_TIER=shared-demo` to avoid the Managed HSM pool cost while keeping HSM-backed Secure Key Release and Microsoft Azure Attestation.
+
+Current shared-demo status: completed. The live executor release URL points to `vpenteuutf4ahzja5l3okv.vault.azure.net`, and `npm run verify:enterprise-production` passes after the migration.
+
+Prerequisites:
+
+- The vault must be Key Vault Premium.
+- The vault must use Azure RBAC authorization.
+- The operator creating the key needs key create/export permission.
+- The operator also needs permission to create an Azure role assignment for the VM managed identity.
+
+Create the release key and grant only release access to the Confidential VM managed identity:
+
+```bash
+export KEY_VAULT_NAME='<keyVaultName output>'
+export POLICY_FILE='/tmp/vaultproof-skr/skr-policy.json'
+export VM_PRINCIPAL_ID='<confidentialVmPrincipalId output>'
+
+npm run provision:enterprise-key-vault-release-key
+```
+
+Load the generated key and policy env, then render the executor env, or install only the release-key fields into the existing executor env when preserving already-installed Supabase/signing secrets:
+
+```bash
+source /tmp/vaultproof-skr/skr-env.sh
+source ./key-vault-key-env.sh
+
+export DEPLOYMENT_NAME=vp-enterprise-secure-runtime-eastus-hsm
+export SUPABASE_URL='https://...supabase.co'
+export SUPABASE_SERVICE_ROLE_KEY='...'
+export ENTERPRISE_EXECUTOR_ACCEPTED_SIGNING_KEYS='enterprise-azure-v1:...'
+export VAULTPROOF_EXECUTOR_BUILD_DIGEST="sha256:$(tar --exclude node_modules --exclude .git --exclude dist -cf - ~/vaultproof | sha256sum | awk '{print $1}')"
+
+bash render-executor-env.sh > /tmp/enterprise-secure-executor.env
+scp /tmp/enterprise-secure-executor.env azureuser@<confidentialVmPublicIp>:/tmp/enterprise-secure-executor.env
+ssh azureuser@<confidentialVmPublicIp>
+sudo install -o root -g vaultproof -m 0640 /tmp/enterprise-secure-executor.env /etc/vaultproof/enterprise-secure-executor.env
+sudo systemctl restart vaultproof-executor
+curl -sS http://127.0.0.1:3002/health
+```
+
+Preserve installed runtime secrets and swap only the release-key fields:
+
+```bash
+scp install-executor-release-env.sh key-vault-key-env.sh /tmp/vaultproof-skr/skr-env.sh azureuser@<confidentialVmPublicIp>:/tmp/
+ssh azureuser@<confidentialVmPublicIp>
+sudo env \
+  KEY_ENV_FILE=/tmp/key-vault-key-env.sh \
+  SKR_ENV_FILE=/tmp/skr-env.sh \
+  RESTART_SERVICE=true \
+  bash /tmp/install-executor-release-env.sh
+curl -sS http://127.0.0.1:3002/health
+```
+
+Only after `/readiness` stays `production_ready: true` with the Key Vault release URL should the Managed HSM be removed from the shared demo path. This was completed for `vpenteuutf4ahzja5l3ohsm`: active deletion succeeded, immediate purge was blocked by purge protection, and Azure reports scheduled purge at `2026-07-30T08:06:41Z`. A fresh security-domain backup was downloaded to `/tmp/vaultproof-hsm-security-domain/` before deletion.
+
+### Create The Dedicated Managed HSM Key
 
 If Managed HSM was not deployed yet, set these in `main.parameters.json` and redeploy:
 
@@ -1012,7 +1134,7 @@ ORIGIN_TLS_HOSTNAME=origin.enterprise.vaultproof.dev \
 npm run status:enterprise-hardening
 ```
 
-The wrapper runs the production verifier, secret-rotation plan, private-origin plan, APIM JWT validation plan, mTLS caller-lock preparation plan, TLS-origin preparation plan, TLS-origin readiness preflight, APIM cutover plan, SSH bootstrap hardening plan, and Container Apps prototype inventory. It does not mutate Azure resources. Add `RUN_LIVE_APP_QA=true` to include the live enterprise app link/readiness sweep, or `EXIT_NONZERO_ON_ATTENTION=true` when CI should fail on any reported blocker.
+The wrapper runs the production verifier, secret-rotation plan, private-origin plan, APIM JWT validation plan, mTLS caller-lock preparation plan, TLS-origin preparation plan, TLS-origin readiness preflight, APIM cutover plan, SSH bootstrap hardening plan, and Container Apps prototype inventory. It defaults the production verifier to the current locked-down SSH posture with `EXPECTED_SSH_BOOTSTRAP_ACCESS=Deny` and `RUN_SSH_CHECKS=false`; override those only while deliberately testing the temporary SSH reopen path. It does not mutate Azure resources. Add `RUN_LIVE_APP_QA=true` to include the live enterprise app link/readiness sweep, or `EXIT_NONZERO_ON_ATTENTION=true` when CI should fail on any reported blocker.
 
 Run the top-level finish gate when you want one release-style result across local smoke tests, APIM policy validation, handoff packaging, live app QA, and the read-only hardening status:
 
@@ -1196,7 +1318,7 @@ npm run validate:enterprise-evidence -- /tmp/vaultproof-production-evidence/<fil
 
 The validator fails if the bundle is missing production readiness, Confidential VM posture, origin-lock/direct-origin evidence, service health evidence, or if it contains obvious secret-shaped material. It currently warns, rather than fails, while Front Door origin forwarding remains `HttpOnly` during the pre-TLS-origin phase.
 
-Execution-level governance audit events also include a compact executor attestation summary in `metadata.attestation` and `metadata.secure_execution.attestation`. This records hashes and identifiers needed for customer verification, including the Azure attestation token hash, release-policy hash, Managed HSM key ID/version, executor build digest, Confidential VM resource ID, and MAA claim summary. Request/response bodies and provider keys are not written to audit metadata.
+Execution-level governance audit events also include a compact executor attestation summary in `metadata.attestation` and `metadata.secure_execution.attestation`. This records hashes and identifiers needed for customer verification, including the Azure attestation token hash, release-policy hash, Key Vault or Managed HSM key ID/version, executor build digest, Confidential VM resource ID, and MAA claim summary. Request/response bodies and provider keys are not written to audit metadata.
 
 For safe end-to-end execution-path QA through the public enterprise domain, pass a Supabase access token on stdin and use dry-run mode. This authenticates the user, resolves the org/project/provider slot, enforces caller-lock and execution policy, signs the secure-execution envelope, writes validation audit metadata, and skips upstream provider dispatch:
 

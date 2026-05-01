@@ -1,11 +1,13 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { Suspense, useCallback, useEffect, useMemo, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { createClient } from "@supabase/supabase-js";
 import { AppShell } from "../../components/app-shell";
 import { getOrganizationHeaders, ORG_EVENT_NAME } from "../../lib/org-context";
 import { serializeShare, splitString } from "../../lib/shamir";
+
+export const dynamic = "force-dynamic";
 
 const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL || "https://api.vaultproof.dev";
 const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL;
@@ -20,6 +22,8 @@ interface ProjectSummary {
   organization_id: string | null;
   vp_proj_id: string;
   name: string | null;
+  allowed_origins: string | null;
+  strict_origin: boolean;
   project_role: "owner" | "admin" | "member" | "viewer";
 }
 
@@ -107,7 +111,7 @@ function timeAgo(iso: string | null): string {
   return `${days}d ago`;
 }
 
-export default function KeysDashboard() {
+function KeysDashboardInner() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const onboardingProjectId = searchParams.get("project");
@@ -551,5 +555,21 @@ export default function KeysDashboard() {
         ) : null}
       </div>
     </AppShell>
+  );
+}
+
+export default function KeysDashboard() {
+  return (
+    <Suspense
+      fallback={
+        <div className="min-h-screen bg-[radial-gradient(circle_at_top_left,_rgba(34,197,94,0.18),_transparent_24%),radial-gradient(circle_at_top_right,_rgba(56,189,248,0.16),_transparent_22%),linear-gradient(180deg,_#06101b_0%,_#020712_100%)] text-white">
+          <div className="mx-auto max-w-7xl px-4 py-8 text-sm text-slate-300 lg:px-6">
+            Loading key workspace...
+          </div>
+        </div>
+      }
+    >
+      <KeysDashboardInner />
+    </Suspense>
   );
 }

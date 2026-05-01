@@ -411,3 +411,57 @@ export function renderEnterpriseLoginPage(env: EnterpriseControlPlaneEnv = {}): 
 export function renderEnterpriseLoginScript(): string {
   return readWorkspaceFile('apps/site/js/app-login-3.js');
 }
+
+export function renderEnterpriseLogoutPage(): string {
+  return `<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="robots" content="noindex" />
+  <title>Signing out - VaultProof Enterprise</title>
+  <style>
+    :root { color-scheme: dark; --bg: #07110f; --panel: rgba(237,229,204,.1); --line: rgba(237,229,204,.16); --text: #f4ecd5; --muted: #a9b7a6; --gold: #d7a84b; --ink: #07110f; }
+    * { box-sizing: border-box; }
+    body { margin: 0; min-height: 100vh; display: grid; place-items: center; font-family: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; color: var(--text); background: radial-gradient(circle at 20% 10%, rgba(215,168,75,.24), transparent 30rem), linear-gradient(135deg, #06100e, #10231d 50%, #050807); }
+    main { width: min(100% - 32px, 560px); border: 1px solid var(--line); background: linear-gradient(180deg, rgba(237,229,204,.13), rgba(237,229,204,.055)); border-radius: 28px; padding: 34px; box-shadow: 0 24px 90px rgba(0,0,0,.24); }
+    .kicker { color: var(--gold); font-size: 12px; text-transform: uppercase; letter-spacing: .16em; font-weight: 850; }
+    h1 { margin: 10px 0; font-size: clamp(34px, 8vw, 58px); line-height: .92; letter-spacing: -.065em; }
+    p { color: var(--muted); line-height: 1.6; margin: 0 0 18px; }
+    a { display: inline-flex; border-radius: 14px; padding: 11px 13px; color: var(--ink); background: linear-gradient(135deg, var(--gold), #f3df95); text-decoration: none; font-weight: 850; }
+  </style>
+</head>
+<body>
+  <main>
+    <div class="kicker">enterprise session</div>
+    <h1>Signing out.</h1>
+    <p id="logoutStatus">Clearing the local VaultProof Enterprise session and sending you back to sign in.</p>
+    <a href="/app/login?logout=1">go to login</a>
+  </main>
+  <script>
+    (function() {
+      function clearStorage(storage) {
+        if (!storage) return;
+        var keys = [];
+        for (var i = 0; i < storage.length; i += 1) {
+          keys.push(storage.key(i));
+        }
+        keys.forEach(function(key) {
+          if (!key) return;
+          if (key.indexOf('auth-token') !== -1 || key.indexOf('vaultproof_') === 0 || key.indexOf('sb-') === 0) {
+            storage.removeItem(key);
+          }
+        });
+      }
+      try { clearStorage(window.localStorage); } catch (error) {}
+      try { window.sessionStorage.clear(); } catch (error) {}
+      var status = document.getElementById('logoutStatus');
+      if (status) status.textContent = 'Signed out. Redirecting to login...';
+      window.setTimeout(function() {
+        window.location.replace('/app/login?logout=1');
+      }, 250);
+    })();
+  </script>
+</body>
+</html>`;
+}

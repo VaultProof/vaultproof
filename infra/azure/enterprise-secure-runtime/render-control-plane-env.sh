@@ -2,6 +2,7 @@
 set -euo pipefail
 
 ENTERPRISE_HOSTNAME_VALUE="${ENTERPRISE_HOSTNAME:-enterprise.vaultproof.dev}"
+ENTERPRISE_RUNTIME_TIER_VALUE="${ENTERPRISE_RUNTIME_TIER:-dedicated-production}"
 EXECUTOR_BASE_URL_VALUE="${ENTERPRISE_EXECUTOR_BASE_URL:-http://127.0.0.1:3002}"
 SIGNING_KEY_ID_VALUE="${ENTERPRISE_EXECUTOR_SIGNING_KEY_ID:-enterprise-azure-v1}"
 SIGNING_SECRET_VALUE="${ENTERPRISE_EXECUTOR_SIGNING_SECRET:-}"
@@ -20,6 +21,7 @@ ROTATED_EXECUTOR_SIGNING_SECRET_AT_VALUE="${ROTATED_EXECUTOR_SIGNING_SECRET_AT:-
 cat <<EOF
 PORT=3001
 ENTERPRISE_HOSTNAME=${ENTERPRISE_HOSTNAME_VALUE}
+ENTERPRISE_RUNTIME_TIER=${ENTERPRISE_RUNTIME_TIER_VALUE}
 ENTERPRISE_EXECUTOR_BASE_URL=${EXECUTOR_BASE_URL_VALUE}
 ENTERPRISE_EXECUTOR_SIGNING_KEY_ID=${SIGNING_KEY_ID_VALUE}
 ENTERPRISE_EXECUTOR_SIGNING_SECRET=${SIGNING_SECRET_VALUE}
@@ -40,6 +42,7 @@ cat >&2 <<'EOF'
 
 Review the generated control-plane env before installing it on the Confidential VM.
 For the co-located production demo, keep ENTERPRISE_EXECUTOR_BASE_URL=http://127.0.0.1:3002.
+Set ENTERPRISE_RUNTIME_TIER=shared-demo for shared demo infrastructure; keep dedicated-production for a customer-dedicated runtime.
 Set ENTERPRISE_AZURE_FRONT_DOOR_ID to the Front Door profile's frontDoorId before requiring origin lock.
 Set ENTERPRISE_MIXPANEL_TOKEN to enable enterprise page analytics. Autocapture/session recording stay off unless explicitly enabled.
 EOF

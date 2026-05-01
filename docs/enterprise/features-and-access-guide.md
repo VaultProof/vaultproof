@@ -1,6 +1,6 @@
 # VaultProof Enterprise Features And Access Guide
 
-Last updated: 2026-04-30
+Last updated: 2026-05-01
 
 This guide explains what has been built for VaultProof Enterprise, where to access it, and which operator commands verify the production-confidential path.
 
@@ -13,7 +13,33 @@ VaultProof Enterprise is a separate Azure-hosted product path at:
 - Enterprise dashboard: `https://enterprise.vaultproof.dev/app/dashboard`
 - Production readiness: `https://enterprise.vaultproof.dev/readiness`
 
-The enterprise path is not the B2C dashboard shell. It is served by the Azure enterprise control plane and backed by `/api/v1/enterprise/*`.
+Dashboard user guide:
+
+- `docs/enterprise/dashboard-usage-guide.md`
+
+Customer operating guide:
+
+- `docs/enterprise/customer-operating-guide.md`
+
+Technical implementation guide:
+
+- `docs/enterprise/technical-implementation-guide.md`
+
+Paid customer dedicated environment runbook:
+
+- `docs/enterprise/paid-customer-dedicated-environment-runbook.md`
+
+The enterprise product is served by the Azure enterprise control plane and backed by `/api/v1/enterprise/*`.
+
+## Which Enterprise Doc To Use
+
+| Document | Best For | Use It When |
+| --- | --- | --- |
+| `docs/enterprise/customer-operating-guide.md` | Customer admins, business owners, security owners, app teams, identity teams, platform teams. | You need to understand how a business should use VaultProof Enterprise day to day. |
+| `docs/enterprise/dashboard-usage-guide.md` | Dashboard users. | You need step-by-step instructions for using the pages in the enterprise dashboard. |
+| `docs/enterprise/technical-implementation-guide.md` | Technical reviewers, architects, network/platform/identity/security teams. | You need architecture, trust boundaries, identity, gateway, key custody, attestation, rollout, or troubleshooting detail. |
+| `docs/enterprise/paid-customer-dedicated-environment-runbook.md` | VaultProof operators and customer onboarding owners. | A demo converts to paid, or a customer needs a dedicated runtime, HSM/Key Vault, database, SSO, gateway, monitoring, and evidence boundary. |
+| `docs/enterprise/features-and-access-guide.md` | VaultProof team, customer reviewers, handoff packages. | You need the full list of built features, URLs, hardening, and operator commands. |
 
 The current production-confidential runtime is:
 
@@ -23,7 +49,7 @@ enterprise.vaultproof.dev
   -> Enterprise control plane on Azure Confidential VM
   -> signed loopback handoff
   -> secure executor on the same Azure Confidential VM
-  -> Azure Managed HSM Secure Key Release after attestation
+  -> Azure Key Vault Premium Secure Key Release after attestation
   -> upstream provider call without returning provider keys
 ```
 
@@ -59,10 +85,13 @@ If you see an auth message:
 | --- | --- | --- |
 | Homepage | `https://enterprise.vaultproof.dev/` | Public enterprise landing page with the product story, architecture, proof points, and CTAs. |
 | Login | `/app/login` | Enterprise-only login, SSO start, password reset, and approved access messaging. |
-| Dashboard | `/app/dashboard` | Business-ready enterprise command center with sidebar navigation, Overview/Security/Access/Operations/Features tabs, runtime posture, org summary, project health, members/access, audit, recent activity, and a full built-feature map. |
+| Dashboard | `/app/dashboard` | Business-ready enterprise command center with sidebar navigation, Overview/Security/Access/Operations/Workspace tabs, runtime posture, org summary, project health, members/access, audit, recent activity, and a workspace tools map. |
+| Setup Guide | `/app/setup` | Enterprise implementation guide for purchased workspaces, covering environment mapping, Entra SSO, members, gateway choices, projects, provider slots, policy, evidence, alerts, go-live, and operations. |
+| Technical Guide | `/app/technical-guide` | Detailed implementation reference for identity, network patterns, APIM, project modeling, caller lock, provider key custody, Azure attestation, evidence, alerts, rollout, and troubleshooting. |
 | Control | `/app/control` | Project policy, provider overrides, incoming invites, export summaries, and secure execution posture. |
+| AI Proof Verifier | `/app/verifier` | Register external AI/ML models, verify submitted proof bundles, and store evidence without VaultProof running the model. |
 | Organization + SSO | `/app/org` | Organization settings and Microsoft Entra/Supabase SAML SSO rollout controls. |
-| Members | `/app/members` | Members, pending invites, roles, project assignments, invite create/revoke, and access-review links. |
+| Members | `/app/members` | Members, pending invites, expanded IAM roles, project-specific roles, invite create/revoke, project assignment/removal, and access-review links. |
 | Audit | `/app/audit` | Governance/runtime timeline, CSV export, search, filters, and evidence-friendly event details. |
 | Alerts | `/app/alerts` | Alert destinations, delivery logs, dispatch runs, policy status, and admin test-send workflow. |
 | Activity | `/app/activity` | Runtime proxy/executor events, status codes, latency, provider request IDs, and attestation summaries. |
@@ -73,22 +102,92 @@ If you see an auth message:
 | Scanner | `/app/scanner` | Placeholder entry for future enterprise-safe repository/security scanning integration. |
 | Runbooks | `/app/runbooks` | Operator guide for production verification, evidence capture, deployment, secret checks, TLS/APIM cutover, SSH hardening, and cleanup. |
 
+## VaultProof AI Proof Verifier
+
+VaultProof AI Proof Verifier is the verifiable AI/ML evidence layer. VaultProof does not run the model. The model runs in the customer's app, provider environment, partner prover, or another approved external path. VaultProof verifies the submitted proof bundle or attestation record, then stores the result as enterprise evidence tied to the organization, project, actor, model, verifier version, timestamp, and confidential-runtime posture.
+
+For demos, AI Proof Verifier uses shared enterprise runtime attestation. That means demo proof records point to the same production-ready Azure Confidential VM readiness path and Microsoft Azure Attestation posture used by the enterprise runtime. It does not mean VaultProof ran the model, and it does not create a fake or static attestation token.
+
+The broader enterprise demo environment should also run as shared demo infrastructure. Use `ENTERPRISE_RUNTIME_TIER=shared-demo` for the shared demo control plane, reuse one shared confidential runtime when live attestation is needed, and keep per-customer dedicated Confidential VM/HSM/APIM/monitoring stacks for paid production or high-trust pilots only.
+
+What it does:
+
+- Verifies that an AI/ML computation produced the claimed output without requiring the reviewer to rerun the model.
+- Keeps raw model inputs and provider material out of ordinary dashboard views.
+- Stores the verifier decision, proof metadata, policy decision, and export history in the enterprise audit/evidence path.
+- Shows the operational status in `/app/verifier`.
+- Keeps managed proving and model hosting out of scope.
+
+How VaultProof improves the baseline proof-compute pattern:
+
+- Azure confidential binding: attach Microsoft Azure Attestation, Secure Key Release posture, key-release policy hash, build digest, and runtime readiness to compute evidence.
+- Demo-safe shared attestation: demos reuse the shared enterprise runtime attestation mode, while customer model execution and private inputs stay outside VaultProof.
+- Enterprise policy: require org/project RBAC, caller lock, allowed model IDs, verifier version pinning, rate limits, and export permissions.
+- Evidence workflow: connect proof verification to Audit, Activity, access reviews, handoff packages, and production-readiness checks.
+- Safer rollout: keep the product verifier-only. Customer systems run models; VaultProof verifies submitted proof evidence and records the decision.
+
+## Enterprise IAM Roles
+
+Organization roles are for workspace-wide responsibility:
+
+| Role | What It Can Do |
+| --- | --- |
+| Owner | Full workspace control, ownership transfer, archive/restore, and break-glass decisions. |
+| Admin | Legacy broad admin. Keep for compatibility; prefer narrower roles for new users. |
+| IAM Admin | Invites users, changes roles, assigns project access, manages SSO setup, and exports access reviews. |
+| Security Admin | Manages security posture, provider slot controls, alerts, evidence, and security operations across projects. |
+| Platform Admin | Manages runtime/gateway operations, APIM/TLS rollout, project policy, and production runbooks. |
+| Developer | Works on assigned projects only. |
+| Auditor | Read-only evidence, audit, readiness, and access-review visibility. |
+| Member | Legacy contributor. Prefer `Developer` for new users. |
+| Viewer | Read-only dashboard visibility. |
+
+Project roles are for one project at a time:
+
+| Role | What It Can Do |
+| --- | --- |
+| Project Owner / Project Admin | Project policy, provider slots, execution, and project evidence. |
+| Operator | Approved execution and activity review without policy/provider-slot changes. |
+| Developer | Integration and test execution without policy/provider-slot changes. |
+| Auditor | Read-only project evidence and activity. |
+| Viewer | Read-only project summary visibility. |
+
 ## VaultProof Employee Admin Console
 
 This is separate from the customer dashboard.
 
 | Surface | URL | What It Does |
 | --- | --- | --- |
-| Internal admin console | `https://admin.vaultproof.dev/` | VaultProof employee-only workspace for businesses, owners, users, project counts, pending invites, SSO rollout, support follow-ups, and recent audit. First slice is read-only. |
-| Internal admin API | `/api/v1/internal-admin/overview` | Read-only overview API. Requires a Supabase user session plus explicit employee email/domain allowlist. The browser never receives the Supabase service-role key. |
+| Internal admin console | `https://admin.vaultproof.dev/` | VaultProof employee-only workspace for businesses, owners, users, project counts, pending invites, SSO rollout, support follow-ups, customer audit, and internal admin audit. First slice is read-only. |
+| Internal admin API | `/api/v1/internal-admin/overview` | Read-only overview API. Requires a Supabase user session plus explicit employee email/domain allowlist. The browser never receives the Supabase service-role key. Successful overview views are written to the internal admin audit stream. |
+| Internal org detail | `https://admin.vaultproof.dev/orgs/<organization-id>` and `/api/v1/internal-admin/orgs/<organization-id>` | Read-only business detail for member timeline, SSO setup checklist, support notes, active projects, customer audit, destructive action approvals, execution/rollback plans, and evidence links back to the enterprise dashboard. Detail views are audit logged. |
+| Internal invitation actions | `/api/v1/internal-admin/orgs/<organization-id>/invitations` and `/api/v1/internal-admin/orgs/<organization-id>/invitations/<invitation-id>/(resend|revoke)` | Approval-gated employee actions for creating an invite, recording a resend request, and revoking a pending invite. Resend is audit/request-only until email delivery tooling is wired. |
+| Internal business status | `/api/v1/internal-admin/orgs/<organization-id>/status` | Approval-gated employee status history for onboarding, active, at-risk, paused, and offboarding states. This tracks VaultProof support posture without mutating customer organization records. |
+| Internal destructive action requests | `/api/v1/internal-admin/orgs/<organization-id>/action-requests` and `/api/v1/internal-admin/action-requests/<request-id>/(approve|reject)` | Approval-request workflow for dangerous actions such as `disable_org_access`. A requester cannot approve their own request. Execution remains disabled until rollback and break-glass controls are finalized. |
+| Internal destructive execution plans | `/api/v1/internal-admin/action-requests/<request-id>/execute-plan` | Approval-gated dry-run execution planner for approved destructive requests. Captures preflight checks and rollback payload without changing customer organization records. |
+| Internal destructive rollback plans | `/api/v1/internal-admin/action-execution-records/<execution-record-id>/rollback-plan` | Approval-gated dry-run rollback planner for destructive execution records. Reads the stored rollback payload, records a rollback plan, and audits the event without changing customer organization records. |
+| Internal admin audit table | `public.internal_admin_audit_events` | Service-role-only employee audit stream for internal admin page views and future admin actions. Customer sessions and normal authenticated users do not receive table access. |
+| Internal support notes table | `public.internal_admin_support_notes` | Service-role-only support notes for the org detail page. Note creation is available only when internal admin write actions are enabled and the approval secret header is provided. |
+| Internal business status table | `public.internal_admin_business_status_updates` | Service-role-only business status history for VaultProof employee onboarding/support tracking. |
+| Internal action request table | `public.internal_admin_action_requests` | Service-role-only approval ledger for destructive actions. Stores requester, second-employee decision, risk level, status, reason, and requested payload. |
+| Internal execution record table | `public.internal_admin_action_execution_records` | Service-role-only execution/rollback ledger. Current endpoint writes dry-run records only, including preflight result and rollback payload. |
 
 Required environment before exposing it live:
 
 - `VAULTPROOF_INTERNAL_ADMIN_HOSTNAME=admin.vaultproof.dev`
 - `VAULTPROOF_INTERNAL_ADMIN_EMAILS=employee@vaultproof.dev,...` or `VAULTPROOF_INTERNAL_ADMIN_DOMAINS=vaultproof.dev`
+- Optional write-action gate: `VAULTPROOF_INTERNAL_ADMIN_ACTIONS_ENABLED=true`
+- Optional write-action approval secret: `VAULTPROOF_INTERNAL_ADMIN_APPROVAL_SECRET=<strong-random-secret>`
 - Front Door/DNS route for `admin.vaultproof.dev`
+- Supabase migration `20260501000000_internal_admin_audit_events.sql` applied before relying on durable employee access audit history.
+- Supabase migration `20260501001000_internal_admin_support_notes.sql` applied before relying on internal support notes.
+- Supabase migration `20260501002000_internal_admin_business_status_updates.sql` applied before relying on internal business status history.
+- Supabase migration `20260501003000_internal_admin_action_requests.sql` applied before relying on destructive-action approval history.
+- Supabase migration `20260501004000_internal_admin_action_execution_records.sql` applied before relying on destructive-action execution/rollback planning.
 
-Do not add write actions until internal admin audit logging and approval gates are built.
+Support notes, invitation create/resend-request/revoke, and business status updates are approval-gated write actions. Leave `VAULTPROOF_INTERNAL_ADMIN_ACTIONS_ENABLED` unset or `false` in production until the team is ready to operate employee writes. Every future write action should insert into `internal_admin_audit_events`.
+
+For destructive actions, use the action-request workflow first. `disable_org_access` can be requested, approved, rejected, dry-run planned, and rollback dry-run planned. The execution dry-run records current organization archive fields as rollback payload. The rollback dry-run reads that payload and records what would be restored. Neither endpoint mutates customer organization records in the current internal admin API.
 
 ## Security Features Built
 
@@ -104,11 +203,13 @@ Do not add write actions until internal admin audit logging and approval gates a
 
 ### Secure Key Release
 
-- Azure Managed HSM is deployed.
-- Current decision: keep Managed HSM for the Azure finish pass, then design AWS separately after the Azure path is stable.
+- Shared-demo Secure Key Release now uses Azure Key Vault Premium.
+- The old Azure Managed HSM is no longer the active shared-demo release-key backend and has been deleted from the active resource list.
+- Immediate Managed HSM purge was blocked by purge protection; Azure reports scheduled purge at `2026-07-30T08:06:41Z`.
+- Use a fresh Managed HSM only for a dedicated regulated/high-trust customer that requires that boundary.
 - Secure Key Release is wired to Microsoft Azure Attestation evidence.
 - Current implementation uses an exportable `RSA-HSM` release-root key and derives AES-256 unwrap material inside the Confidential VM.
-- This is intentional because Azure Managed HSM rejects generated symmetric `oct-HSM` keys for export/release.
+- This is intentional because Azure rejects generated symmetric `oct-HSM` keys for export/release in the SKR path.
 - The control plane never receives unwrap key material.
 - The executor caches released unwrap material only in process memory with a short TTL.
 - Production readiness fails closed if Secure Key Release or attestation evidence is incomplete.
@@ -201,7 +302,7 @@ Internet edge
   -> optional APIM governance gateway
   -> Confidential VM control plane
   -> signed loopback executor handoff
-  -> Managed HSM Secure Key Release after attestation
+  -> Azure Secure Key Release after attestation
 ```
 
 ### Hardening Dashboard And One-Command Status
@@ -250,6 +351,25 @@ Built:
 - Private/non-loopback origin requests without the Front Door ID are rejected with `403`.
 - The VM executor port is not publicly exposed.
 - Control-plane ingress on port `3001` is restricted by NSG rules instead of broad Internet access.
+
+### Browser And Dashboard Hardening
+
+Built:
+
+- Enterprise control-plane HTML responses include nonce-based Content Security Policy.
+- Enterprise pages deny framing through CSP `frame-ancestors 'none'` and `X-Frame-Options: DENY`.
+- Enterprise responses include `X-Content-Type-Options: nosniff`, HSTS, strict referrer policy, and restrictive permissions policy.
+- Employee-only executive workspace and internal finance APIs require a valid Supabase session plus an explicit VaultProof employee allowlist.
+- Employee/domain allowlists ignore broad public domains such as `gmail.com`; public-domain accounts must be allowlisted by exact email.
+- Token-bearing dashboard UI escapes project, scanner alert, and activity data before rendering into HTML.
+
+Required environment for the employee-only dashboard APIs:
+
+```bash
+DASHBOARD_INTERNAL_ALLOWED_EMAILS=employee@vaultproof.dev,...
+# Optional for a company-owned domain only:
+DASHBOARD_INTERNAL_ALLOWED_DOMAINS=vaultproof.dev
+```
 
 Access and verification:
 
@@ -327,10 +447,14 @@ npm run prepare:enterprise-origin-tls
 
 Guarded prep actions:
 
+- `ACTION=upsert-origin-dns CONFIRM_ORIGIN_TLS_PREP=create-origin-dns-record npm run prepare:enterprise-origin-tls`
+- `ACTION=remove-origin-dns CONFIRM_ORIGIN_TLS_PREP=remove-origin-dns-record npm run prepare:enterprise-origin-tls`
 - `ACTION=enable-nsg443 CONFIRM_ORIGIN_TLS_PREP=open-origin-443 npm run prepare:enterprise-origin-tls`
 - `ACTION=disable-nsg443 CONFIRM_ORIGIN_TLS_PREP=close-origin-443 npm run prepare:enterprise-origin-tls`
 - `ACTION=update-apim-backend-https CONFIRM_ORIGIN_TLS_PREP=point-apim-to-origin-tls npm run prepare:enterprise-origin-tls`
 - `ACTION=rollback-apim-backend-http CONFIRM_ORIGIN_TLS_PREP=rollback-apim-backend-http npm run prepare:enterprise-origin-tls`
+
+The DNS actions work only when the DNS zone is hosted in Azure DNS for the current subscription or when `DNS_ZONE_NAME` and `DNS_RESOURCE_GROUP` point at the real Azure DNS zone. Current shared-demo discovery reports that `vaultproof.dev` is not hosted in this Azure subscription, so `origin.enterprise.vaultproof.dev -> 20.85.214.14` must be created at the external DNS provider first.
 
 Readiness command:
 
@@ -499,6 +623,7 @@ Built:
 - Close mode requires production readiness, an alternate-access acknowledgment, and `CONFIRM_SSH_LOCKDOWN=close-public-ssh` before setting the SSH bootstrap rule to `Deny`.
 - Reopen mode exists for break-glass rollback and requires `CONFIRM_SSH_LOCKDOWN=reopen-public-ssh`.
 - Production verifier can assert expected SSH bootstrap access.
+- The VM deploy helper runs an SSH preflight before archive/upload and prints the approved reopen/deploy/close/verify sequence when public SSH is locked down.
 
 Alternate access preparation command:
 
@@ -526,8 +651,10 @@ npm run harden:enterprise-ssh
 
 Current status:
 
-- Public SSH bootstrap remains open for break-glass while alternate access/Bastion/JIT is not finalized.
-- Next hardening step is to close it after alternate operator access is confirmed.
+- Boot diagnostics is enabled and alternate-access readiness reports a ready break-glass signal.
+- Public SSH bootstrap is closed with the NSG rule set to `Deny`.
+- Use the break-glass reopen command before SSH-based VM deployments, then close SSH again after verification.
+- `npm run deploy:enterprise-vm` now fails fast with operator guidance instead of hanging when SSH is closed. Use `SKIP_SSH_PREFLIGHT=true` only for a verified private SSH path.
 
 ### Old Container Apps Cleanup Hardening
 
@@ -559,6 +686,7 @@ Current status:
 
 - Old Container Apps resources still exist.
 - Front Door's old Container Apps origin is disabled.
+- Both old prototype apps are scaled to `minReplicas=0`.
 - Cleanup remains pending explicit operator approval and soak.
 
 ### Deployment And QA Hardening
@@ -567,6 +695,7 @@ Built:
 
 - `npm run deploy:enterprise-vm` deploys code to the Confidential VM, rebuilds, and restarts selected systemd services.
 - Deploy script can restart only the control plane or both control plane and executor.
+- Deploy script preflights SSH reachability before packaging/uploading so locked-down public SSH produces actionable guidance instead of a long timeout.
 - Live app QA checks enterprise-owned pages and links.
 - Enterprise smoke tests cover route rendering and runbook entries.
 - Safe execute-path QA defaults to `dry_run` and will not call upstream providers unless explicitly disabled.
@@ -609,7 +738,7 @@ Customer-verifiable evidence includes:
 - Attestation provider URI.
 - Attestation token hash.
 - Secure Key Release policy hash.
-- Managed HSM key ID and version.
+- Key Vault or Managed HSM key ID and version.
 - Executor build digest.
 - Azure MAA claim summary.
 - Measurement summary.
@@ -794,7 +923,7 @@ This checks:
 - Homepage and `/app/*` pages return 200.
 - Enterprise-owned links return 200.
 - No `{"error":"Not found"}` pages.
-- No B2C API fallback on enterprise pages.
+- No cross-product API fallback on enterprise pages.
 - `/readiness` remains production-ready.
 - `/readiness` is retried briefly to avoid false negatives during transient executor attestation refreshes.
 
@@ -858,7 +987,7 @@ ORIGIN_TLS_HOSTNAME=origin.enterprise.vaultproof.dev \
 npm run status:enterprise-hardening
 ```
 
-This runs the production verifier, TLS-origin preparation plan, TLS-origin readiness preflight, APIM cutover plan, SSH bootstrap hardening plan, and Container Apps prototype inventory without mutating Azure resources. Set `RUN_LIVE_APP_QA=true` to include the live `/app/*` link/readiness sweep. Set `EXIT_NONZERO_ON_ATTENTION=true` if CI should fail when any enabled step reports blockers or exits nonzero.
+This runs the production verifier, TLS-origin preparation plan, TLS-origin readiness preflight, APIM cutover plan, SSH bootstrap hardening plan, and Container Apps prototype inventory without mutating Azure resources. It defaults the production verifier to the current locked-down SSH posture with `EXPECTED_SSH_BOOTSTRAP_ACCESS=Deny` and `RUN_SSH_CHECKS=false`; override those only while testing a temporary SSH reopen. Set `RUN_LIVE_APP_QA=true` to include the live `/app/*` link/readiness sweep. Set `EXIT_NONZERO_ON_ATTENTION=true` if CI should fail when any enabled step reports blockers or exits nonzero.
 
 ### Run the finish gate
 
@@ -915,6 +1044,8 @@ npm run verify:enterprise-origin-tls
 
 This checks DNS, Front Door route state, NSG port 443 from Front Door service tags, nginx, certificate SAN/trust, and VM-local TLS `/health`. It runs in report-only mode by default because the current live path is intentionally still HTTP-to-origin. Set `CUTOVER_READY_REQUIRED=true` when you want TLS blockers to fail the command before an actual cutover.
 
+Report-only mode treats unreachable SSH as a warning because public SSH bootstrap is intentionally closed. Strict cutover mode still treats failed VM-local SSH checks as a blocker unless `RUN_SSH_CHECKS=false` is set after independent VM-local TLS verification.
+
 ### Deploy app updates to the Confidential VM
 
 ```bash
@@ -937,6 +1068,15 @@ RUN_BUILD=true \
 RESTART_SERVICES='vaultproof-control-plane' \
 VERIFY_AFTER_DEPLOY=false \
 npm run deploy:enterprise-vm
+```
+
+If public SSH bootstrap is locked down, the deploy helper exits before archiving/uploading and prints the temporary reopen flow. The approved sequence is:
+
+```bash
+CONFIRM_SSH_LOCKDOWN=reopen-public-ssh ACTION=reopen npm run harden:enterprise-ssh
+npm run deploy:enterprise-vm
+ALTERNATE_ACCESS_ACK=true CONFIRM_SSH_LOCKDOWN=close-public-ssh ACTION=close npm run harden:enterprise-ssh
+EXPECTED_SSH_BOOTSTRAP_ACCESS=Deny RUN_SSH_CHECKS=false npm run verify:enterprise-production
 ```
 
 ### Preview APIM Front Door cutover
@@ -983,7 +1123,7 @@ These are intentionally not finished yet:
 
 - Front Door to VM origin still uses HTTP forwarding. VM-local TLS proxy exists, but public DNS/certificate and Front Door `HttpsOnly` cutover are pending.
 - APIM is a verified sidecar, not the active Front Door route.
-- Public SSH bootstrap remains open for break-glass until alternate access or a controlled Bastion/JIT process is ready.
+- Public SSH bootstrap is closed; SSH-based VM deployment requires temporary break-glass reopen through Azure CLI.
 - Old Container Apps prototype resources still exist as rollback/legacy inventory until cleanup is approved.
 - Setup-time Supabase/service/signing secrets must be rotated before external customer production use.
 - Enterprise billing/plan enforcement is still manual.
@@ -996,7 +1136,8 @@ These are intentionally not finished yet:
 | Resource group | `vaultproof-enterprise` |
 | Main deployment | `vp-enterprise-secure-runtime-eastus-hsm` |
 | Confidential VM | `vpenteu-executor-cvm` |
-| Managed HSM | `vpenteuutf4ahzja5l3ohsm` |
+| Key Vault Premium | `vpenteuutf4ahzja5l3okv` |
+| Soft-deleted Managed HSM | `vpenteuutf4ahzja5l3ohsm`, scheduled purge `2026-07-30T08:06:41Z` |
 | Attestation provider | `vpenteuutf4ahzja5l3omaa` |
 | APIM deployment | `vp-enterprise-secure-runtime-eastus-hsm-apim` |
 | APIM gateway | `https://vpenteuutf4ahzja5l3oapim.azure-api.net/enterprise` |
@@ -1012,4 +1153,4 @@ VaultProof lets a business use API keys without putting those keys inside apps, 
 
 More technical explanation:
 
-VaultProof Enterprise separates policy from secret use. The Azure control plane authenticates the user, checks org/project/caller policy, and signs a short-lived execution envelope. The secure executor verifies the envelope inside an Azure Confidential VM, obtains unwrap capability through Azure Managed HSM Secure Key Release after Microsoft Azure Attestation succeeds, decrypts the encrypted Shamir shares in memory, calls the upstream provider, and records audit/evidence metadata without exposing provider secrets.
+VaultProof Enterprise separates policy from secret use. The Azure control plane authenticates the user, checks org/project/caller policy, and signs a short-lived execution envelope. The secure executor verifies the envelope inside an Azure Confidential VM, obtains unwrap capability through Azure Secure Key Release after Microsoft Azure Attestation succeeds, decrypts the encrypted Shamir shares in memory, calls the upstream provider, and records audit/evidence metadata without exposing provider secrets. Shared demo uses Key Vault Premium SKR; dedicated regulated deployments can use Managed HSM SKR.

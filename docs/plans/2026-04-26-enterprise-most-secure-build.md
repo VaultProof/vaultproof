@@ -2,7 +2,7 @@
 
 Status: active - source of truth
 Owner: VaultProof enterprise
-Last updated: 2026-04-30
+Last updated: 2026-05-01
 
 ## Operating Rule
 
@@ -27,8 +27,11 @@ Build the enterprise path directly toward the strongest Azure-native design:
 
 Current architecture decision:
 
-- Keep Azure Managed HSM as the production Secure Key Release key home for the next week while finishing the Azure build.
-- Do not switch back to Key Vault Premium/Standard during this hardening pass unless Managed HSM blocks a required customer/demo milestone.
+- Use shared enterprise demo infrastructure for demos. Set `ENTERPRISE_RUNTIME_TIER=shared-demo`, reuse one shared confidential runtime when live attestation is needed, and isolate demo customers through Supabase organizations, projects, IAM, policy, audit, and data. Do not create a new Confidential VM, Managed HSM, APIM instance, or Azure Monitor stack per demo organization.
+- Use customer-dedicated infrastructure only when it is a paid production deployment or a high-trust pilot that explicitly requires a dedicated runtime/key boundary. Set `ENTERPRISE_RUNTIME_TIER=dedicated-production` for that path.
+- Paid-customer onboarding checklist lives in `docs/enterprise/paid-customer-dedicated-environment-runbook.md`; update that runbook when the dedicated customer deployment process changes.
+- Shared demo runtime has migrated from Managed HSM to Key Vault Premium Secure Key Release. The old Managed HSM `vpenteuutf4ahzja5l3ohsm` was deleted after migration, but purge protection blocked immediate purge; Azure reports scheduled purge at `2026-07-30T08:06:41Z`.
+- Keep Azure Managed HSM as the dedicated regulated/high-trust customer option, not the default demo key home.
 - After the Azure build is finished and stable, start the AWS equivalent design as a separate cloud track instead of mixing AWS work into the active Azure cutover/hardening work.
 
 ## Current State
@@ -37,15 +40,15 @@ Live production-confidential path:
 
 - Azure Front Door routes `enterprise.vaultproof.dev`.
 - Azure API Management is deployed as a verified sidecar gateway at `https://vpenteuutf4ahzja5l3oapim.azure-api.net/enterprise`; Front Door is not cut over to APIM yet.
-- Azure Container Apps remains available only as an old prototype/rollback path; it is not the active production-confidential runtime.
+- Azure Container Apps remains only as an old prototype rollback artifact; public ingress is disabled, both old apps are scaled to `minReplicas=0`, and it is not the active production-confidential runtime.
 - Azure Front Door routes active enterprise traffic to the co-located control plane on the Azure Confidential VM.
 - Azure Front Door ID origin lock is required by the control plane.
 - NSG ingress to the control plane is restricted to Azure Front Door service tags; direct public origin access is blocked.
 - Azure Confidential VM runs both the enterprise control plane and secure executor as systemd services.
 - The control plane calls the executor over loopback with signed execution envelopes.
-- Managed HSM Secure Key Release is wired and the executor reports `production_ready: true`.
+- Key Vault Premium Secure Key Release is wired for the shared-demo runtime and the executor reports `production_ready: true`. The previous Managed HSM is soft-deleted; future dedicated regulated/high-trust customers can deploy a fresh Managed HSM when required.
 - `npm run verify:enterprise-production` verifies the live path and passes against the current Azure CLI/Front Door/NSG output shapes.
-- `npm run deploy:enterprise-vm` deploys/rebuilds/restarts the CVM runtime and can run the verifier.
+- `npm run deploy:enterprise-vm` deploys/rebuilds/restarts the CVM runtime and can run the verifier. Because public SSH bootstrap is closed, the helper now preflights SSH with a short timeout and prints the reopen/deploy/close/verify sequence instead of hanging.
 - `npm run evidence:enterprise-production` captures customer/audit evidence snapshots.
 - `npm run validate:enterprise-evidence` validates the latest production evidence bundle for production readiness, Confidential VM posture, Front Door/origin-lock posture, service health, and obvious secret-shaped material before customer handoff.
 - `npm run package:enterprise-handoff` builds a local customer/compliance handoff folder with the features guide, source-of-truth plan, APIM policy templates, secure-runtime runbook, manifest, and latest local evidence if available, without mutating Azure resources.
@@ -58,18 +61,22 @@ Live production-confidential path:
 - `npm run prepare:enterprise-mtls` turns a customer/APIM client certificate into the normalized caller-lock thumbprint, subject fragment, APIM header contract, and project policy snippet without mutating Azure or project policy.
 - `npm run test:enterprise-apim-policies` validates the VaultProof-managed, customer-managed, device, and mTLS APIM policy templates before handoff, including provider-secret stripping and caller-lock header delete/override behavior.
 - `npm run qa:enterprise-live-app` verifies the live enterprise homepage/app pages, crawls enterprise-owned links, confirms `/readiness` remains production-ready with short retry coverage for transient attestation refreshes, and can optionally authenticate the demo account when `ENTERPRISE_DEMO_EMAIL` and `ENTERPRISE_DEMO_PASSWORD` are provided.
-- `npm run status:enterprise-hardening` provides one read-only finish-line pass across production verification, TLS-origin preparation/readiness, APIM cutover planning, alternate access preparation/readiness, SSH bootstrap planning, and old Container Apps inventory.
+- `npm run status:enterprise-hardening` provides one read-only finish-line pass across production verification, TLS-origin preparation/readiness, APIM cutover planning, alternate access preparation/readiness, SSH bootstrap planning, and old Container Apps inventory. It defaults to the current locked-down SSH posture so closed public SSH is not treated as a verifier failure.
 - Azure Monitor/App Insights alerting is deployed as `vp-enterprise-secure-runtime-eastus-hsm-monitoring` and `EXPECTED_MONITORING_DEPLOYED=true npm run verify:enterprise-production` verifies the workspace, App Insights component, action group, health/readiness availability tests, readiness drift alert, health alert, and Confidential VM availability alert.
-- The enterprise control plane serves a separate public `/` enterprise homepage plus `/app` and `/app/dashboard` dashboard instead of relying on the B2C dashboard shell. Current state: the root page implements the editorial/terminal VaultProof Homepage design handoff; dashboard is now a customer setup and operations workspace with sidebar navigation, overview/security/access/operations/setup-map tabs, live posture panels, and direct paths into SSO, members, projects, provider slots, policy control, evidence exports, runbooks, and remaining enterprise app pages under `/app/*`.
+- The enterprise control plane serves a separate public `/` enterprise homepage plus `/app` and `/app/dashboard` dashboard instead of relying on the B2C dashboard shell. Current state: the root page implements the editorial/terminal VaultProof Homepage design handoff; dashboard is now a customer setup and operations workspace with sidebar navigation, overview/security/access/operations/workspace tabs, live posture panels, a dedicated `/app/setup` setup guide, and direct paths into SSO, members, projects, provider slots, policy control, evidence exports, runbooks, and remaining enterprise app pages under `/app/*`.
 - Enterprise `/app/*` pages now share the same customer dashboard shell: dark Azure confidential theme, VP mark, workspace/evidence/setup sidebar groups, setup-order card, and consistent card/form styling across dashboard, control, org, members, audit, alerts, activity, projects, provider slots, settings, plans, scanner, and runbooks.
-- The enterprise control plane also has the first VaultProof employee-only internal admin console slice ready for `admin.vaultproof.dev`: read-only business/org/user/project/SSO/support/audit visibility, explicit employee email/domain allowlist auth, no browser service-role exposure, and no customer-dashboard links. Live DNS/Front Door exposure and write actions are intentionally pending.
+- The enterprise control plane also has the first VaultProof employee-only internal admin console slice ready for `admin.vaultproof.dev`: read-only business/org/user/project/SSO/support/audit visibility, persistent service-role-only employee access audit logging, explicit employee email/domain allowlist auth, no browser service-role exposure, and no customer-dashboard links. Live DNS/Front Door exposure and write actions are intentionally pending.
 - Enterprise dashboard/API unauthenticated errors are product-safe: users see a normal sign-in prompt instead of implementation details about bearer tokens or Supabase JWTs.
+- Enterprise employee-only dashboard APIs now fail closed: executive workspace and internal finance endpoints require a valid Supabase bearer session plus explicit employee email/domain allowlist before returning or mutating internal data.
+- Enterprise control-plane responses now include app-level security headers, including nonce-based Content Security Policy for HTML, `frame-ancestors 'none'`, `X-Frame-Options: DENY`, `nosniff`, HSTS, referrer policy, and restrictive permissions policy.
+- Internal admin and dashboard allowlist logic ignores broad public email domains such as `gmail.com`; public-domain users must be explicitly allowlisted by email.
+- The token-bearing public dashboard escaped remaining API-driven `innerHTML` render paths for project, scanner alert, and activity data.
 - Enterprise `/app/*` pages support opt-in Mixpanel page/navigation analytics through `ENTERPRISE_MIXPANEL_TOKEN`; autocapture and session recording remain disabled by default for enterprise privacy.
 - APIM IaC/policy support is deployed and verified with coarse limits, request-size guards, provider-secret stripping, spoofable caller-lock header stripping, trusted gateway/device/mTLS header re-setting, origin locking, forwarded enterprise host headers, App Insights diagnostics, and `EXPECTED_APIM_DEPLOYED=true npm run verify:enterprise-production`. JWT validation remains disabled until the final Entra/Supabase API audience is selected. `npm run prepare:enterprise-apim-jwt` now plans Supabase-session or direct-Entra JWT validation parameters before enabling APIM `validate-jwt`. `npm run cutover:enterprise-apim` provides a guarded Front Door-to-APIM cutover/rollback helper that defaults to read-only planning.
 - Azure Monitor/App Insights alerting is live for Front Door health, production readiness drift, and Confidential VM availability.
-- TLS-origin proxy, certificate workflow, preparation planning, readiness preflight, and Front Door cutover tooling exist and use the current Azure CLI Front Door origin command shape. A VM-local TLS proxy is installed and verified with a lab-only self-signed certificate, but Front Door still uses HTTP origin forwarding until a real origin DNS name and publicly trusted certificate are installed and cut over.
-- SSH bootstrap lockdown tooling exists but public SSH remains open until alternate access or a controlled break-glass process is ready.
-- Old Container Apps prototype cleanup tooling exists with inventory, ingress-disable, and explicit deletion actions.
+- TLS-origin proxy, certificate workflow, preparation planning, readiness preflight, and Front Door cutover tooling exist and use the current Azure CLI Front Door origin command shape. A VM-local TLS proxy is installed and verified with a lab-only self-signed certificate, but Front Door still uses HTTP origin forwarding until `origin.enterprise.vaultproof.dev` has a public A record to `20.85.214.14`, a publicly trusted certificate is installed, NSG 443 is opened to Front Door service tags, and the guarded `HttpsOnly` cutover runs.
+- SSH bootstrap lockdown tooling exists, boot diagnostics is enabled, and public SSH bootstrap is closed with the live NSG rule set to `Deny`.
+- Old Container Apps prototype cleanup tooling exists with inventory, ingress-disable, scale-to-zero, restore-ingress, and explicit deletion actions. Live status: ingress is disabled and both old apps are scaled to zero; deletion is deferred until the rollback soak period is complete.
 - Supabase stores enterprise org/project metadata.
 - Executor request signing is implemented.
 - Enterprise executor now supports encrypted `share1_encrypted` and encrypted `share2_encrypted`.
@@ -92,19 +99,20 @@ Live production-confidential path:
 Important limitation:
 
 - The active production-confidential runtime is now Confidential VM plus Secure Key Release.
-- Azure API Management Front Door route cutover, TLS-origin cutover, SSH bootstrap lockdown, prototype Container Apps cleanup, and enterprise UI/policy controls are still pending live actions.
+- Azure API Management Front Door route cutover, TLS-origin cutover, SSH bootstrap lockdown, old Container Apps deletion after soak, and enterprise UI/policy controls are still pending live actions.
 - Secrets used during setup must be rotated before external/customer production use.
 
 ## Next Execution Order
 
-1. Keep Managed HSM and finish Azure hardening first; defer Key Vault Premium simplification and AWS design until after the Azure path is stable.
-2. TLS from Front Door to the VM origin, then switch Front Door origin forwarding to HTTPS.
-3. Azure API Management route cutover after TLS/private-origin risk is resolved.
-4. SSH/Bastion/JIT hardening and cleanup of old prototype Container Apps resources. In progress: reversible SSH bootstrap lockdown tooling, verifier expectations, and prototype Container Apps cleanup tooling are implemented; live SSH closure and live prototype cleanup are pending alternate access/break-glass readiness and soak.
-5. End-to-end enterprise API execution through `enterprise.vaultproof.dev` with evidence/audit metadata. In progress: safe dry-run execution validates auth, policy, signed-envelope creation, and audit metadata without calling upstream providers; real provider dispatch remains an explicit `EXECUTE_DRY_RUN=false` action.
-6. Enterprise controls: SSO, provider allowlists, upstream domain/method policy, policy UI, per-project rate limits, emergency revoke, audit export, SOC 2 access review evidence.
-7. Enterprise dashboard completion: make every `/app/*` link resolve on `enterprise.vaultproof.dev`, then replace placeholders with API-backed enterprise pages one page at a time with tests between each slice.
-8. Start AWS equivalent architecture after Azure finish line: Nitro Enclaves or equivalent confidential compute, KMS/HSM key-release equivalent, API Gateway/PrivateLink routing, monitoring, evidence, and dashboard parity.
+1. Shared demo cost cut: complete. Executor uses Key Vault Premium SKR, the old Managed HSM is soft-deleted, and immediate purge is blocked by purge protection until the scheduled purge date.
+2. Soak the old Container Apps prototype resources with ingress disabled and `minReplicas=0`, then delete the apps/environment/ACR only after rollback is no longer needed.
+3. TLS from Front Door to the VM origin, then switch Front Door origin forwarding to HTTPS.
+4. Azure API Management route cutover after TLS/private-origin risk is resolved.
+5. SSH/Bastion/JIT hardening and cleanup of old prototype Container Apps resources. In progress: boot diagnostics is enabled, alternate-access readiness has a ready break-glass signal, public SSH bootstrap is closed with NSG `Deny`, and prototype Container Apps are ingress-disabled/scaled-to-zero. Remaining work is TLS/private-origin hardening and eventual prototype resource deletion after soak.
+6. End-to-end enterprise API execution through `enterprise.vaultproof.dev` with evidence/audit metadata. In progress: safe dry-run execution validates auth, policy, signed-envelope creation, and audit metadata without calling upstream providers; real provider dispatch remains an explicit `EXECUTE_DRY_RUN=false` action.
+7. Enterprise controls: SSO, provider allowlists, upstream domain/method policy, policy UI, per-project rate limits, emergency revoke, audit export, SOC 2 access review evidence.
+8. Enterprise dashboard completion: make every `/app/*` link resolve on `enterprise.vaultproof.dev`, then replace placeholders with API-backed enterprise pages one page at a time with tests between each slice.
+9. Start AWS equivalent architecture after Azure finish line: Nitro Enclaves or equivalent confidential compute, KMS/HSM key-release equivalent, API Gateway/PrivateLink routing, monitoring, evidence, and dashboard parity.
 
 ## Security Boundary
 
@@ -391,6 +399,7 @@ Minimum evidence bundle for customer review:
 - [x] Add health endpoint for private monitoring.
 - [x] Use control-plane `/readiness` as the operator-facing gate before saying the enterprise path is production-confidential ready.
 - [x] Add deployment script for the systemd artifact: `npm run deploy:enterprise-vm`.
+- [x] Add closed-SSH deploy guardrail: the deploy helper fails fast when SSH bootstrap is locked down, prints the exact break-glass reopen/deploy/close/verify commands, and allows `SKIP_SSH_PREFLIGHT=true` only for known private SSH paths.
 - [x] Add live production verifier: `npm run verify:enterprise-production`.
 - [x] Add production evidence collector: `npm run evidence:enterprise-production`.
 - [x] Add production evidence validator: `npm run validate:enterprise-evidence`.
@@ -400,11 +409,12 @@ Minimum evidence bundle for customer review:
 
 - [x] Create Azure Attestation provider.
 - [x] Deploy Azure Managed HSM for production Secure Key Release.
+- [x] Migrate shared-demo Secure Key Release from Managed HSM to Key Vault Premium.
 - [x] Create enterprise release-root key.
 - [x] Mark key export/release policy for Secure Key Release.
 - [x] Generate guest attestation evidence from the Confidential VM.
 - [x] Exchange attestation evidence for a token.
-- [x] Call Azure Managed HSM release API from the executor.
+- [x] Call Azure Secure Key Release API from the executor. Managed HSM path was proven first; shared-demo now uses Key Vault Premium.
 - [x] Pin the release policy to approved MAA claims/measurements.
 - [x] Never place unwrap key in Azure app settings or container env vars in production.
 - [x] Add customer-verifiable attestation evidence to execution audit metadata.
@@ -415,8 +425,9 @@ Important key-type decision:
 
 - Azure Key Vault Premium supports HSM-backed RSA/EC keys but not symmetric `oct-HSM`.
 - Azure Managed HSM supports symmetric `oct-HSM` 256-bit keys, but Azure rejects generated symmetric keys for export/release.
-- Current production-confidential implementation uses Managed HSM `RSA-HSM` Secure Key Release and derives AES-256 unwrap material inside the Confidential VM from the released private JWK.
-- Do not sell this as direct symmetric `oct-HSM` release. Sell it as Azure Managed HSM Secure Key Release with AES material derived only inside the attested Confidential VM.
+- Current shared-demo implementation uses Key Vault Premium `RSA-HSM` Secure Key Release and derives AES-256 unwrap material inside the Confidential VM from the released private JWK.
+- Dedicated regulated/high-trust production can use Managed HSM `RSA-HSM` Secure Key Release with the same executor derivation pattern.
+- Do not sell this as direct symmetric `oct-HSM` release. Sell it as Azure Secure Key Release with AES material derived only inside the attested Confidential VM, and specify whether the customer deployment uses Key Vault Premium or Managed HSM.
 
 ### Phase 4: Private Network And Call Authentication
 
@@ -433,9 +444,9 @@ Important key-type decision:
 - [ ] Add mTLS after private networking is stable. In progress: `npm run prepare:enterprise-mtls` now computes the certificate caller-lock policy snippet and APIM/customer-gateway header contract, `docs/enterprise/customer-managed-apim-mtls-policy.xml` provides a concrete customer APIM mTLS template, and `npm run test:enterprise-apim-policies` validates policy templates without changing live traffic; actual APIM/customer gateway client-certificate enforcement remains pending private networking and customer certificate rollout.
 - [x] Block direct public access to executor.
 - [x] Require Azure Front Door ID origin lock for control-plane origin requests.
-- [ ] Add TLS from Front Door to the VM origin and switch origin forwarding from HTTP to HTTPS. In progress: TLS proxy installer, `npm run prepare:enterprise-origin-cert` CSR/certificate install helper, `npm run prepare:enterprise-origin-tls` DNS/NSG/APIM backend preparation helper, `npm run verify:enterprise-origin-tls` readiness preflight, confirmation-gated Front Door cutover/rollback helper with strict preflight, NSG 443 IaC, verifier/evidence support, lab-only self-signed verification support, and runbook are implemented. The VM-local nginx TLS proxy is installed and passes `ORIGIN_TLS_INSECURE=true` verifier checks; publicly trusted origin certificate/DNS, NSG 443 allow, APIM HTTPS backend update, and Front Door `HttpsOnly` cutover are pending.
-- [ ] Close public SSH bootstrap ingress after alternate access is ready. In progress: `allowSshBootstrap` IaC switch, `npm run prepare:enterprise-alternate-access`, `npm run verify:enterprise-alternate-access`, `npm run harden:enterprise-ssh`, confirmation-gated close/reopen workflow, verifier expectations, and runbook are implemented; live NSG rule remains `Allow` for bootstrap/break-glass.
-- [ ] Disable/delete old Container Apps prototype resources after soak. In progress: `cleanup-container-apps-prototype.sh` and `npm run cleanup:enterprise-container-apps` can inventory, confirmation-gate ingress disable/restore, and explicitly delete apps/environment/ACR; live cleanup is pending operator approval.
+- [ ] Add TLS from Front Door to the VM origin and switch origin forwarding from HTTP to HTTPS. In progress: TLS proxy installer, `npm run prepare:enterprise-origin-cert` CSR/certificate install helper, `npm run prepare:enterprise-origin-tls` DNS/NSG 443/APIM backend preparation helper, `npm run verify:enterprise-origin-tls` readiness preflight, confirmation-gated Front Door cutover/rollback helper with strict preflight, NSG 443 IaC, verifier/evidence support, lab-only self-signed verification support, and runbook are implemented. Current blocker: create DNS A record `origin.enterprise.vaultproof.dev -> 20.85.214.14`, install a publicly trusted certificate for that name, then run the guarded NSG 443 and Front Door `HttpsOnly` cutover.
+- [x] Close public SSH bootstrap ingress after alternate access is ready. Boot diagnostics is enabled, alternate-access readiness passes with one break-glass signal, and the live `AllowSshBootstrap` NSG rule is `Deny`. Use `CONFIRM_SSH_LOCKDOWN=reopen-public-ssh ACTION=reopen npm run harden:enterprise-ssh` before SSH-based deployments, then close it again after verification.
+- [ ] Delete old Container Apps prototype resources after rollback soak. In progress: public ingress is disabled and both old prototype apps are scaled to `minReplicas=0`; `cleanup-container-apps-prototype.sh` and `npm run cleanup:enterprise-container-apps` can inventory, restore ingress for rollback, and explicitly delete apps/environment/ACR when the soak period is complete.
 
 ### Phase 5: Enterprise Controls
 
@@ -456,16 +467,18 @@ Goal: `enterprise.vaultproof.dev/app/*` should be a complete enterprise operator
 Pages and links:
 
 - [x] `/`: public enterprise homepage based on the VaultProof Homepage design handoff, with proof-led hero, animated proxy feed, sharded-key architecture figure, mechanism diagram, code diff, capabilities, trust roadmap, and CTAs into `/app/login`, `/app/dashboard`, `/readiness`, and email.
-- [x] `/app`, `/app/`, `/app/dashboard`: enterprise dashboard home with business setup sidebar navigation, overview/security/access/operations/setup-map tabs, runtime posture, org summary, project health, access, audit, recent runtime activity, and plain setup steps for SSO, members, projects, provider slots, policy, evidence, and go-live readiness.
+- [x] `/app`, `/app/`, `/app/dashboard`: enterprise dashboard home with business setup sidebar navigation, overview/security/access/operations/workspace tabs, runtime posture, org summary, project health, access, audit, recent runtime activity, and plain setup steps for SSO, members, projects, provider slots, policy, evidence, and go-live readiness.
+- [x] `/app/setup`: customer-facing setup reference page linked from the universal sidebar, with onboarding steps, reference links, go-live checks, and role guidance.
 - [x] `/app/login`: enterprise login entry point.
 - [x] `/app/control`: detailed enterprise control surface for project policy, provider overrides, incoming invites, export summaries, and secure execution posture.
 - [x] `/app/org`: organization settings and Microsoft Entra/Supabase SAML SSO rollout controls.
-- [x] `/app/members`: enterprise-owned members page for members, pending invites, role changes, project assignments, CSV/JSON access evidence links, and invite acceptance. Current state: API-backed member/invite/project coverage page exists with access-review CSV link, invite create/revoke, role changes, project assignment/removal, and invite acceptance UI/API.
+- [x] `/app/members`: enterprise-owned members page for members, pending invites, expanded IAM roles, project-specific roles, CSV/JSON access evidence links, and invite acceptance. Current state: API-backed member/invite/project coverage page exists with access-review CSV link, invite create/revoke, role changes, project assignment/removal, invite acceptance UI/API, and role guidance for Owner, IAM Admin, Security Admin, Platform Admin, Developer, Auditor, Viewer, plus legacy compatibility roles.
 - [x] `/app/audit`: enterprise-owned audit page for governance/runtime timeline, CSV export, search, filters, and evidence-friendly event details.
 - [x] `/app/alerts`: enterprise-owned alerts page for destinations, delivery logs, dispatch runs, policy status, and test-send workflow. Current state: API-backed alert operations page exists with admin-only test-send, webhook delivery, email skip logging until email transport is configured, delivery logs, and dispatch-run records.
 - [x] `/app/activity`: enterprise-owned runtime activity page for recent proxy/executor events, status codes, latency, provider request IDs, and attestation summaries.
 - [x] `/app/projects`: enterprise-owned project inventory page for project health, provider slots, policy status, and quick links to control.
 - [x] `/app/keys`: enterprise-owned provider slots page for active providers, emergency revoke, rotation checklist, and SKR/confidential-mode notes. Revoked provider history is currently visible through `/app/audit`.
+- [x] `/app/verifier`: enterprise-owned AI Proof Verifier surface for external model registration, proof bundle verification, shared demo attestation, Azure confidential attestation binding, enterprise evidence, and policy/RBAC gates. VaultProof does not run the model.
 - [x] `/app/settings`: enterprise-owned tenant settings page for dashboard preferences, session/security notices, and org defaults that do not belong on SSO setup.
 - [x] `/app/plans`: enterprise-owned plan/billing/governance page for APIM/enterprise rollout status, limits, and contract-facing packaging. Billing/limit enforcement remains manual until enterprise billing APIs exist.
 - [x] `/app/scanner`: enterprise-owned repository/security scanning entry page, clearly marked as a separate future integration until enterprise-safe scanner APIs exist.
@@ -474,7 +487,7 @@ Pages and links:
 Implementation/test order:
 
 1. [x] Navigation no-404 baseline: every link rendered by enterprise dashboard/control/org resolves to an enterprise control-plane page and smoke tests assert HTTP 200. Placeholder pages are allowed only for this baseline slice.
-2. [x] Members page read-only feature slice: wire `/app/members` to enterprise member APIs; test org selection, pending invites, access-review export link, and admin/member states.
+2. [x] Members page read-only feature slice: wire `/app/members` to enterprise member APIs; test org selection, pending invites, access-review export link, and privileged/read-only states.
 3. [x] Members page admin-action slice: add invite acceptance, invite creation/revocation where supported, role changes, and project access assignment/removal.
 4. [x] Audit page feature slice: wire `/app/audit` to enterprise audit APIs; test CSV export link, filter query generation, governance + proxy event rendering.
 5. [x] Alerts page feature slice: wire `/app/alerts` to enterprise alert APIs; test destinations, policy, delivery logs, dispatch-run states, and admin-only test-send.
@@ -505,7 +518,7 @@ Implementation/test order:
 30. [x] Finish gate structured attention slice: parse hardening-status attention rows into named pending actions and write `finish-gate-result.json` for CI/operator review.
 31. [x] Finish gate issue-detail slice: attach exact hardening `BLOCKER`/`WARN` lines to each pending action so the remaining finish-line work can be triaged without reading the full Azure log.
 32. [x] APIM JWT issuer discovery slice: allow `npm run prepare:enterprise-apim-jwt` and the hardening status wrapper to discover the Supabase OpenID config from the public enterprise login script when `SUPABASE_URL` is omitted.
-33. [x] Business-ready dashboard layout slice: reorganize `/app/dashboard` into a plain-English command center with sidebar navigation, role-friendly summary cards, and Overview/Security/Access/Operations/Features tabs while preserving the API-backed posture panels and feature map.
+33. [x] Business-ready dashboard layout slice: reorganize `/app/dashboard` into a plain-English command center with sidebar navigation, role-friendly summary cards, and Overview/Security/Access/Operations/Workspace tabs while preserving the API-backed posture panels and workspace tools map.
 34. [x] Internal admin console foundation slice: add `admin.vaultproof.dev`-ready routing plus a read-only VaultProof employee console for businesses, users, projects, SSO rollout, support signals, and recent audit, gated by explicit employee email/domain allowlists.
 35. [x] Customer dashboard setup-copy slice: remove product-selling copy from the signed-in enterprise customer dashboard and refocus it on onboarding, SSO, teammates, projects, provider slots, readiness, alerts, evidence, and go-live tasks.
 36. [x] Enterprise app theme parity slice: move all signed-in enterprise app pages onto the same dashboard shell/theme and add smoke coverage so future pages keep the VP mark, workspace/evidence/setup sidebar, and setup-order card.
@@ -514,8 +527,15 @@ Implementation/test order:
 39. [x] Dashboard progressive loading slice: render readiness, organization, project stats, members, and audit panels as each request resolves so one slow stats/readiness endpoint does not block the whole dashboard from filling in.
 40. [x] Static enterprise CSS isolation slice: strip the public `site-theme.css` from `/app/control` and `/app/org` enterprise renders so its broad `!important` public-site rules cannot override the dashboard-matched dark enterprise theme.
 41. [x] Universal enterprise sidebar slice: move the enterprise app sidebar renderer and CSS into one shared control-plane module, then wire Dashboard, Control, Org, Members, Audit, Alerts, Projects, Keys, Settings, Plans, Scanner, and Runbooks through that single source with smoke-test markers.
+42. [x] Expanded enterprise IAM slice: replace the coarse invite model with narrower organization roles, project roles, backend validation, Supabase CHECK-constraint migration, Members page role guide, and smoke coverage for auditor invites, IAM-admin role changes, and operator project assignments.
 42. [x] Legacy sidebar artifact cleanup slice: strip stale static sidebar CSS/artifacts from enterprise-rendered Control and Org pages and add smoke checks for legacy `sidebar-group`, `sidebar-item`, `sidebar-dot`, and `usage-box` leakage.
-43. [ ] Live browser QA after each major deploy: run the automated live app QA, then manually login as demo user and click through sidebar/subnav links when visual regressions or browser-only session behavior are in scope.
+43. [x] AI Proof Verifier feature slice: add `/app/verifier`, dashboard/sidebar/docs entries, Supabase verifier tables, verifier APIs, model registry UI, proof submission UI, audit events, shared enterprise runtime attestation for demos, and smoke coverage for a verifier-first AI/ML evidence workflow. VaultProof records proof evidence from models that run outside VaultProof.
+44. [ ] Live browser QA after each major deploy: automated live app QA passed after Key Vault SKR migration, Managed HSM soft-delete, Container Apps scale-to-zero, boot diagnostics enablement, and SSH bootstrap closure. Latest sweep checked 19 paths and 22 links with `production_ready: true`; authenticated demo-user clickthrough remains manual when credentials are available.
+45. [x] Closed-SSH deploy workflow slice: harden `npm run deploy:enterprise-vm` so it runs SSH preflight before archive/upload, exits quickly when the public bootstrap NSG rule is closed, and points operators to the approved temporary reopen/deploy/close/verify flow.
+46. [x] Closed-SSH hardening-status slice: default `npm run status:enterprise-hardening` to `EXPECTED_SSH_BOOTSTRAP_ACCESS=Deny` and `RUN_SSH_CHECKS=false` so the read-only status wrapper matches the approved live posture.
+47. [x] Origin TLS report-only SSH handling slice: make `npm run verify:enterprise-origin-tls` warn instead of aborting when VM-local SSH checks cannot connect in report-only mode, while keeping strict cutover mode fail-closed.
+48. [x] Origin TLS DNS guardrail slice: extend `npm run prepare:enterprise-origin-tls` with confirmation-gated Azure DNS A-record create/remove actions, Azure DNS zone discovery, and external-DNS guidance when `vaultproof.dev` is not hosted in this subscription.
+49. [x] Runbooks DNS guardrail slice: expose the origin DNS guardrail and `upsert-origin-dns` / `remove-origin-dns` actions from the enterprise `/app/runbooks` page with smoke coverage.
 
 ### Phase 7: VaultProof Internal Admin Console
 
@@ -526,7 +546,7 @@ Security rules:
 - `admin.vaultproof.dev` is the employee surface; customer dashboards remain under `enterprise.vaultproof.dev/app/*`.
 - The browser never receives Supabase service-role credentials.
 - Employee access requires explicit `VAULTPROOF_INTERNAL_ADMIN_EMAILS` or `VAULTPROOF_INTERNAL_ADMIN_DOMAINS`.
-- First release is read-only. Write actions require internal admin audit tables, approval gates, and rollback/undo plans.
+- First release is read-only. Employee console views are audit logged. Write actions require approval gates, break-glass rules, and rollback/undo plans.
 - Impersonation is not enabled. If needed later, build read-only customer-view mode with loud audit logging instead of silent impersonation.
 
 Implementation/test order:
@@ -535,10 +555,10 @@ Implementation/test order:
 2. [x] Host separation guardrail: internal admin API stays unavailable from the customer enterprise host unless explicit preview mode is enabled.
 3. [x] Login redirect support: employee login on the internal admin host returns to `/internal/admin`.
 4. [ ] Configure `admin.vaultproof.dev` in Front Door/DNS and employee allowlist env vars.
-5. [ ] Add persistent internal admin audit table for every employee page view and action.
-6. [ ] Add org detail page with user/member timeline, SSO setup checklist, support notes, and evidence links.
-7. [ ] Add safe admin actions one at a time: resend invite, revoke invite, disable org access, plan/status updates, and support-note creation.
-8. [ ] Add approval gates for destructive actions and break-glass workflows.
+5. [x] Add persistent internal admin audit table and non-blocking overview access logging for employee page views. Future write actions must use the same stream.
+6. [x] Add read-only org detail page/API with user/member timeline, SSO setup checklist, service-role-only support notes, evidence links, and employee access audit logging.
+7. [ ] Add safe admin actions one at a time: support-note creation, invitation create, invitation resend-request, invitation revoke, and business plan/status updates are built behind disabled-by-default action gating plus an approval secret header; disable org access live execution remains pending and blocked.
+8. [ ] Add approval gates for destructive actions and break-glass workflows. In progress: destructive `disable_org_access` requests can be created, approved, rejected, dry-run planned, and rollback dry-run planned with two-employee separation, rollback payload capture, execution records, and audit logging, but live execution is intentionally not wired yet.
 
 ## Azure Resources
 
@@ -551,7 +571,8 @@ Already created:
 - Prototype executor app: `vp-enterprise-secure-executor`
 - Front Door custom domain: `enterprise.vaultproof.dev`
 - Confidential VM: `vpenteu-executor-cvm`
-- Managed HSM: `vpenteuutf4ahzja5l3ohsm`
+- Key Vault Premium: `vpenteuutf4ahzja5l3okv`
+- Soft-deleted Managed HSM: `vpenteuutf4ahzja5l3ohsm` (scheduled purge `2026-07-30T08:06:41Z`)
 - Attestation provider: `vpenteuutf4ahzja5l3omaa`
 - Enterprise VNet/subnets and NSG: `vpenteu-vnet`, `vpenteu-executor-nsg`
 
@@ -559,8 +580,8 @@ Needed for most-secure production:
 
 - Azure API Management Standard v2 or Premium v2 for API lifecycle/governance
 - Azure Confidential VM
-- Azure Managed HSM Secure Key Release for the enterprise unwrap root
-- Azure Key Vault Premium only if using the lower-friction prototype path
+- Azure Key Vault Premium Secure Key Release for shared-demo and standard enterprise unwrap roots
+- Azure Managed HSM Secure Key Release only when a dedicated regulated/high-trust customer requires that boundary
 - Azure Attestation
 - Enterprise VNet/subnets
 - Private DNS/private endpoints where supported
@@ -579,7 +600,7 @@ Confidential mode:
 - `VAULTPROOF_EXECUTOR_MODE=confidential`
 - Must not use `VAULT_ENCRYPTION_KEY`.
 - Must use Azure Secure Key Release.
-- Must receive release material from Azure Managed HSM only after attestation; current implementation derives AES-256 unwrap material inside the Confidential VM from the released `RSA-HSM` private JWK.
+- Must receive release material from Azure Secure Key Release only after attestation; current shared-demo implementation derives AES-256 unwrap material inside the Confidential VM from the released Key Vault Premium `RSA-HSM` private JWK.
 - Should be treated as the only sellable “most secure” architecture.
 - `/health.production_ready` must be `true`.
 - `/health.security_profile` must be `azure-confidential-production`.

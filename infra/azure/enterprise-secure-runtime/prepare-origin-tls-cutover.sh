@@ -9,6 +9,10 @@ APIM_DEPLOYMENT_NAME="${APIM_DEPLOYMENT_NAME:-${DEPLOYMENT_NAME}-apim}"
 ENTERPRISE_URL="${ENTERPRISE_URL:-https://enterprise.vaultproof.dev}"
 ORIGIN_TLS_HOSTNAME="${ORIGIN_TLS_HOSTNAME:-origin.enterprise.vaultproof.dev}"
 ORIGIN_TLS_BACKEND_URL="${ORIGIN_TLS_BACKEND_URL:-https://${ORIGIN_TLS_HOSTNAME}}"
+DNS_ZONE_NAME="${DNS_ZONE_NAME:-vaultproof.dev}"
+DNS_RESOURCE_GROUP="${DNS_RESOURCE_GROUP:-}"
+DNS_RECORD_SET_NAME="${DNS_RECORD_SET_NAME:-}"
+DNS_TTL="${DNS_TTL:-300}"
 ROLLBACK_APIM_BACKEND_URL="${ROLLBACK_APIM_BACKEND_URL:-}"
 APIM_API_ID="${APIM_API_ID:-vaultproof-enterprise}"
 ACTION="${ACTION:-plan}"
@@ -135,6 +139,52 @@ dns.resolve4(process.argv[1]).then((records) => {
 " "$1"
 }
 
+derive_dns_record_set_name() {
+  node -e "
+const host = (process.argv[1] || '').replace(/\.$/, '').toLowerCase();
+const zone = (process.argv[2] || '').replace(/\.$/, '').toLowerCase();
+if (!host || !zone) process.exit(1);
+if (host === zone) {
+  console.log('@');
+  process.exit(0);
+}
+if (!host.endsWith('.' + zone)) {
+  console.error(host + ' is not inside DNS zone ' + zone);
+  process.exit(2);
+}
+console.log(host.slice(0, -(zone.length + 1)));
+" "${ORIGIN_TLS_HOSTNAME}" "${DNS_ZONE_NAME}"
+}
+
+resolve_dns_zone() {
+  if [[ -n "${DNS_RESOURCE_GROUP}" ]]; then
+    return 0
+  fi
+
+  DNS_RESOURCE_GROUP="$(az network dns zone list \
+    --query "[?name=='${DNS_ZONE_NAME}'].resourceGroup | [0]" \
+    -o tsv 2>/dev/null || true)"
+  [[ -n "${DNS_RESOURCE_GROUP}" ]]
+}
+
+dns_record_set_name() {
+  if [[ -n "${DNS_RECORD_SET_NAME}" ]]; then
+    echo "${DNS_RECORD_SET_NAME}"
+    return
+  fi
+  derive_dns_record_set_name
+}
+
+dns_record_values() {
+  local record_set_name="$1"
+  az network dns record-set a show \
+    --resource-group "${DNS_RESOURCE_GROUP}" \
+    --zone-name "${DNS_ZONE_NAME}" \
+    --name "${record_set_name}" \
+    --query "arecords[].ipv4Address" \
+    -o tsv 2>/dev/null || true
+}
+
 http_status() {
   local url="$1"
   local output_file="$2"
@@ -244,14 +294,69 @@ fs.writeFileSync(process.argv[1], JSON.stringify({ properties: { serviceUrl: pro
     -o none
 }
 
+upsert_origin_dns_record() {
+  local vm_public_ip
+  local record_set_name
+  local current_records
+  vm_public_ip="$(deployment_output confidentialVmPublicIp)"
+  resolve_dns_zone || {
+    echo "Could not find Azure DNS zone ${DNS_ZONE_NAME}. Set DNS_RESOURCE_GROUP if it exists in another resource group, or create the DNS record at your external DNS provider." >&2
+    exit 1
+  }
+  record_set_name="$(dns_record_set_name)"
+
+  az network dns record-set a create \
+    --resource-group "${DNS_RESOURCE_GROUP}" \
+    --zone-name "${DNS_ZONE_NAME}" \
+    --name "${record_set_name}" \
+    --ttl "${DNS_TTL}" \
+    -o none >/dev/null 2>&1 || true
+
+  current_records="$(dns_record_values "${record_set_name}")"
+  if grep -Fxq "${vm_public_ip}" <<< "${current_records}"; then
+    echo "Azure DNS A record already contains ${ORIGIN_TLS_HOSTNAME} -> ${vm_public_ip}."
+    return
+  fi
+
+  az network dns record-set a add-record \
+    --resource-group "${DNS_RESOURCE_GROUP}" \
+    --zone-name "${DNS_ZONE_NAME}" \
+    --record-set-name "${record_set_name}" \
+    --ipv4-address "${vm_public_ip}" \
+    -o none
+  echo "Added Azure DNS A record ${ORIGIN_TLS_HOSTNAME} -> ${vm_public_ip} in ${DNS_RESOURCE_GROUP}/${DNS_ZONE_NAME} (${record_set_name})."
+}
+
+remove_origin_dns_record() {
+  local vm_public_ip
+  local record_set_name
+  vm_public_ip="$(deployment_output confidentialVmPublicIp)"
+  resolve_dns_zone || {
+    echo "Could not find Azure DNS zone ${DNS_ZONE_NAME}. Set DNS_RESOURCE_GROUP if it exists in another resource group." >&2
+    exit 1
+  }
+  record_set_name="$(dns_record_set_name)"
+
+  az network dns record-set a remove-record \
+    --resource-group "${DNS_RESOURCE_GROUP}" \
+    --zone-name "${DNS_ZONE_NAME}" \
+    --record-set-name "${record_set_name}" \
+    --ipv4-address "${vm_public_ip}" \
+    --keep-empty-record-set \
+    -o none
+  echo "Removed Azure DNS A record ${ORIGIN_TLS_HOSTNAME} -> ${vm_public_ip} from ${DNS_RESOURCE_GROUP}/${DNS_ZONE_NAME} (${record_set_name})."
+}
+
 show_plan() {
   local vm_public_ip
   local apim_name
   local current_apim_backend
   local dns_records
   local dns_exit
+  local record_set_name
   vm_public_ip="$(deployment_output confidentialVmPublicIp)"
   apim_name="$(apim_output apiManagementName)"
+  record_set_name="$(dns_record_set_name)"
 
   echo "VaultProof origin TLS preparation plan"
   echo "  resource group:    ${RESOURCE_GROUP}"
@@ -264,6 +369,13 @@ show_plan() {
   echo
 
   echo "DNS:"
+  if resolve_dns_zone; then
+    echo "  Azure DNS zone: ${DNS_RESOURCE_GROUP}/${DNS_ZONE_NAME}"
+    echo "  record set:     ${record_set_name}"
+  else
+    echo "  Azure DNS zone: <not found for ${DNS_ZONE_NAME}>"
+    echo "  record set:     ${record_set_name}"
+  fi
   set +e
   dns_records="$(resolve_ipv4 "${ORIGIN_TLS_HOSTNAME}")"
   dns_exit=$?
@@ -298,6 +410,8 @@ show_plan() {
 
   echo "Safe next steps:"
   echo "  1. Point DNS: ${ORIGIN_TLS_HOSTNAME} -> ${vm_public_ip}."
+  echo "     If ${DNS_ZONE_NAME} is hosted in Azure DNS here:"
+  echo "     ACTION=upsert-origin-dns CONFIRM_ORIGIN_TLS_PREP=create-origin-dns-record npm run prepare:enterprise-origin-tls"
   echo "  2. Install a publicly trusted certificate for ${ORIGIN_TLS_HOSTNAME} on the VM."
   echo "  3. Open NSG 443 only when ready:"
   echo "     ACTION=enable-nsg443 CONFIRM_ORIGIN_TLS_PREP=open-origin-443 npm run prepare:enterprise-origin-tls"
@@ -307,6 +421,9 @@ show_plan() {
   echo "     ACTION=update-apim-backend-https CONFIRM_ORIGIN_TLS_PREP=point-apim-to-origin-tls npm run prepare:enterprise-origin-tls"
   echo "  6. Then consider the confirmation-gated Front Door cutover:"
   echo "     ACTION=enable CONFIRM_ORIGIN_TLS_CUTOVER=enable-origin-https RUN_VERIFIER=true npm run cutover:enterprise-origin-tls"
+  echo
+  echo "Rollback DNS record if needed:"
+  echo "  ACTION=remove-origin-dns CONFIRM_ORIGIN_TLS_PREP=remove-origin-dns-record npm run prepare:enterprise-origin-tls"
 }
 
 require_command az
@@ -317,6 +434,15 @@ resolve_nsg
 case "${ACTION}" in
   plan)
     show_plan
+    ;;
+  upsert-origin-dns)
+    require_confirmation "create-origin-dns-record" "origin DNS A record upsert"
+    require_production_ready
+    upsert_origin_dns_record
+    ;;
+  remove-origin-dns)
+    require_confirmation "remove-origin-dns-record" "origin DNS A record removal"
+    remove_origin_dns_record
     ;;
   enable-nsg443)
     require_confirmation "open-origin-443" "NSG 443 open"
@@ -354,7 +480,7 @@ case "${ACTION}" in
     echo "Rolled APIM API ${APIM_API_ID} backend back to ${rollback_url}."
     ;;
   *)
-    echo "Unknown ACTION: ${ACTION}. Use plan, enable-nsg443, disable-nsg443, update-apim-backend-https, or rollback-apim-backend-http." >&2
+    echo "Unknown ACTION: ${ACTION}. Use plan, upsert-origin-dns, remove-origin-dns, enable-nsg443, disable-nsg443, update-apim-backend-https, or rollback-apim-backend-http." >&2
     exit 1
     ;;
 esac

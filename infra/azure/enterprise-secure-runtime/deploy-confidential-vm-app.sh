@@ -11,6 +11,8 @@ RUN_NPM_CI="${RUN_NPM_CI:-true}"
 RUN_BUILD="${RUN_BUILD:-true}"
 RESTART_SERVICES="${RESTART_SERVICES:-vaultproof-executor vaultproof-control-plane}"
 VERIFY_AFTER_DEPLOY="${VERIFY_AFTER_DEPLOY:-false}"
+SSH_CONNECT_TIMEOUT="${SSH_CONNECT_TIMEOUT:-10}"
+SKIP_SSH_PREFLIGHT="${SKIP_SSH_PREFLIGHT:-false}"
 
 script_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 repo_root="$(cd "${script_dir}/../../.." && pwd)"
@@ -30,6 +32,37 @@ deployment_output() {
     --name "${DEPLOYMENT_NAME}" \
     --query "properties.outputs.${name}.value" \
     -o tsv
+}
+
+print_ssh_reopen_guidance() {
+  cat >&2 <<EOF
+SSH preflight to ${SSH_USER}@${VM_HOST} failed.
+
+If public SSH bootstrap is intentionally locked down, temporarily reopen it,
+deploy, verify, then close it again:
+
+  CONFIRM_SSH_LOCKDOWN=reopen-public-ssh ACTION=reopen npm run harden:enterprise-ssh
+  npm run deploy:enterprise-vm
+  ALTERNATE_ACCESS_ACK=true CONFIRM_SSH_LOCKDOWN=close-public-ssh ACTION=close npm run harden:enterprise-ssh
+  EXPECTED_SSH_BOOTSTRAP_ACCESS=Deny RUN_SSH_CHECKS=false npm run verify:enterprise-production
+
+If you are deploying through a private network path and know SSH is reachable
+outside the public bootstrap rule, set SKIP_SSH_PREFLIGHT=true.
+EOF
+}
+
+require_ssh_reachable() {
+  if [[ "${SKIP_SSH_PREFLIGHT}" == "true" ]]; then
+    echo "Skipping SSH preflight because SKIP_SSH_PREFLIGHT=true."
+    return
+  fi
+
+  if ssh -o BatchMode=yes -o ConnectTimeout="${SSH_CONNECT_TIMEOUT}" "${SSH_USER}@${VM_HOST}" "true" >/dev/null 2>&1; then
+    return
+  fi
+
+  print_ssh_reopen_guidance
+  exit 1
 }
 
 make_archive() {
@@ -75,8 +108,9 @@ echo "  build:      ${RUN_BUILD}"
 echo "  restarts:   ${RESTART_SERVICES:-<none>}"
 echo
 
+require_ssh_reachable
 make_archive
-scp "${ARCHIVE_PATH}" "${SSH_USER}@${VM_HOST}:/tmp/vaultproof.tgz"
+scp -o BatchMode=yes -o ConnectTimeout="${SSH_CONNECT_TIMEOUT}" "${ARCHIVE_PATH}" "${SSH_USER}@${VM_HOST}:/tmp/vaultproof.tgz"
 
 remote_command="$(
   printf 'APP_DIR=%q RUN_NPM_CI=%q RUN_BUILD=%q RESTART_SERVICES=%q bash -s' \
@@ -86,7 +120,7 @@ remote_command="$(
     "${RESTART_SERVICES}"
 )"
 
-ssh "${SSH_USER}@${VM_HOST}" "${remote_command}" <<'REMOTE'
+ssh -o BatchMode=yes -o ConnectTimeout="${SSH_CONNECT_TIMEOUT}" "${SSH_USER}@${VM_HOST}" "${remote_command}" <<'REMOTE'
 set -euo pipefail
 
 sudo mkdir -p "${APP_DIR}"

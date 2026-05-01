@@ -68,7 +68,6 @@ export function renderEnterpriseDashboardPage(env: EnterpriseControlPlaneEnv = {
     .grid { display: grid; gap: 16px; }
     .kpis { grid-template-columns: repeat(4, minmax(0, 1fr)); margin-bottom: 16px; }
     .two { grid-template-columns: minmax(0, 1.15fr) minmax(340px, 0.85fr); }
-    .business-strip { grid-template-columns: repeat(3, minmax(0, 1fr)); margin-bottom: 16px; }
     .card {
       border: 1px solid var(--line);
       background: linear-gradient(180deg, var(--panel-strong), rgba(237, 229, 204, 0.055));
@@ -168,7 +167,7 @@ export function renderEnterpriseDashboardPage(env: EnterpriseControlPlaneEnv = {
     @media (max-width: 980px) {
       .topbar { flex-direction: column; }
       .toolbar { justify-content: flex-start; }
-      .kpis, .two, .feature-grid, .business-strip, .intent-grid, .action-grid { grid-template-columns: 1fr; }
+      .kpis, .two, .feature-grid, .intent-grid, .action-grid { grid-template-columns: 1fr; }
     }
     @media (min-width: 981px) and (max-width: 1220px) {
       .feature-grid, .intent-grid, .action-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
@@ -182,9 +181,9 @@ export function renderEnterpriseDashboardPage(env: EnterpriseControlPlaneEnv = {
     <main class="main">
       <div class="topbar">
         <div>
-          <div class="eyebrow">Customer workspace</div>
-          <h1>Set up and run your business account.</h1>
-          <p class="lead">Use this dashboard to finish onboarding, connect SSO, invite teammates, configure projects, review provider slots, and confirm the production runtime is ready before traffic goes live.</p>
+          <div class="eyebrow">Enterprise dashboard</div>
+          <h1>Runtime, access, and evidence.</h1>
+          <p class="lead">Monitor the live enterprise account and jump into the pages your team needs.</p>
         </div>
         <div class="toolbar">
           <select id="orgSelect" aria-label="Organization"><option>Loading org...</option></select>
@@ -195,30 +194,12 @@ export function renderEnterpriseDashboardPage(env: EnterpriseControlPlaneEnv = {
 
       <div id="authNotice" class="error" style="display:none"></div>
 
-      <section class="grid business-strip" aria-label="Business dashboard summary">
-        <div class="card business-card">
-          <div class="kpi-label">Step 1</div>
-          <h2>Connect the organization.</h2>
-          <p>Pick the active business org, confirm owners/admins, invite teammates, and set up Entra SSO before broader rollout.</p>
-        </div>
-        <div class="card business-card">
-          <div class="kpi-label">Step 2</div>
-          <h2>Configure projects.</h2>
-          <p>Add provider slots, choose allowed providers, set caller-lock rules, and confirm each project has the right owners.</p>
-        </div>
-        <div class="card business-card">
-          <div class="kpi-label">Step 3</div>
-          <h2>Go live safely.</h2>
-          <p>Check readiness, export audit/access evidence, turn on alerts, and use Runbooks for final TLS, APIM, SSH, and cleanup steps.</p>
-        </div>
-      </section>
-
       <nav class="tabbar" aria-label="Enterprise dashboard tabs">
         <button class="tab-button active" type="button" data-dashboard-tab="overview">Overview</button>
         <button class="tab-button" type="button" data-dashboard-tab="security">Security</button>
         <button class="tab-button" type="button" data-dashboard-tab="access">Access</button>
         <button class="tab-button" type="button" data-dashboard-tab="operations">Operations</button>
-        <button class="tab-button" type="button" data-dashboard-tab="features">Setup Map</button>
+        <button class="tab-button" type="button" data-dashboard-tab="features">Workspace</button>
       </nav>
 
       <section id="tab-overview" class="tab-panel" data-tab-panel="overview">
@@ -234,7 +215,7 @@ export function renderEnterpriseDashboardPage(env: EnterpriseControlPlaneEnv = {
             <div class="section-title">
               <div>
                 <h2>Confidential runtime posture</h2>
-                <p>The simple answer to: is the secure key path safe to use today?</p>
+                <p>Current status for the production key path.</p>
               </div>
               <span id="runtimePill" class="status-pill warn">checking</span>
             </div>
@@ -263,9 +244,9 @@ export function renderEnterpriseDashboardPage(env: EnterpriseControlPlaneEnv = {
 
         <section class="grid action-grid">
           <div class="action-card">
-            <div class="feature-tags"><span class="feature-tag">business</span><span class="feature-tag">daily</span></div>
+            <div class="feature-tags"><span class="feature-tag">daily check</span><span class="feature-tag">go live</span></div>
             <h3>1. Confirm the runtime is ready</h3>
-            <p>Use the readiness badge before onboarding more users or sending production traffic.</p>
+            <p>Check this before inviting more users or routing production traffic.</p>
             <a class="action" href="/readiness" target="_blank" rel="noopener">check readiness</a>
           </div>
           <div class="action-card">
@@ -285,10 +266,10 @@ export function renderEnterpriseDashboardPage(env: EnterpriseControlPlaneEnv = {
 
       <section id="tab-security" class="tab-panel" data-tab-panel="security" hidden>
         <section class="grid intent-grid">
-          <div class="intent-card"><div class="feature-tags"><span class="feature-tag">ready</span></div><h3>Confidential VM</h3><p>Control plane and executor run on Azure confidential infrastructure.</p></div>
-          <div class="intent-card"><div class="feature-tags"><span class="feature-tag">ready</span></div><h3>Secure Key Release</h3><p>The executor gets unwrap material only after attestation and policy checks.</p></div>
-          <div class="intent-card"><div class="feature-tags"><span class="feature-tag">ready</span></div><h3>Replay protection</h3><p>Signed execution envelopes cannot be reused after the first valid request.</p></div>
-          <div class="intent-card"><div class="feature-tags"><span class="feature-tag pending">finish line</span></div><h3>TLS and APIM cutovers</h3><p>Operator runbooks track the final origin TLS, APIM, SSH, and cleanup steps.</p></div>
+          <div class="intent-card"><div class="feature-tags"><span class="feature-tag">ready</span></div><h3>Confidential VM</h3><p>Runtime host for the control plane and executor.</p></div>
+          <div class="intent-card"><div class="feature-tags"><span class="feature-tag">ready</span></div><h3>Secure Key Release</h3><p>Attestation-gated unwrap path for provider key material.</p></div>
+          <div class="intent-card"><div class="feature-tags"><span class="feature-tag">ready</span></div><h3>Replay protection</h3><p>Blocks reused signed execution envelopes.</p></div>
+          <div class="intent-card"><div class="feature-tags"><span class="feature-tag pending">finish line</span></div><h3>TLS and APIM cutovers</h3><p>Track remaining origin TLS, APIM, SSH, and cleanup actions.</p></div>
         </section>
 
         <section class="grid two">
@@ -356,47 +337,54 @@ export function renderEnterpriseDashboardPage(env: EnterpriseControlPlaneEnv = {
             <div class="section-title"><h2>Operator shortcuts</h2><span class="mini">business-safe links</span></div>
             <div class="list">
               <div class="row"><div><div class="row-title">Runbooks</div><div class="row-sub">Open the built deploy, evidence, verification, hardening, and cleanup playbooks.</div></div><a class="tag good" href="/app/runbooks">open</a></div>
+              <div class="row"><div><div class="row-title">Technical guide</div><div class="row-sub">Open the enterprise implementation reference for identity, network, key custody, attestation, and troubleshooting.</div></div><a class="tag good" href="/app/technical-guide">open</a></div>
               <div class="row"><div><div class="row-title">Plans and APIM</div><div class="row-sub">Track packaging, APIM sidecar readiness, and contract-facing guardrails.</div></div><a class="tag" href="/app/plans">open</a></div>
-              <div class="row"><div><div class="row-title">Scanner</div><div class="row-sub">Future enterprise-safe security scanning entry point, kept separate from B2C.</div></div><a class="tag warn" href="/app/scanner">planned</a></div>
+              <div class="row"><div><div class="row-title">AI Proof Verifier</div><div class="row-sub">Register external models and verify proof bundles without VaultProof running the model.</div></div><a class="tag warn" href="/app/verifier">beta</a></div>
+              <div class="row"><div><div class="row-title">Scanner</div><div class="row-sub">Launch checklist for enterprise repository scanning when the scoped API is ready.</div></div><a class="tag warn" href="/app/scanner">planned</a></div>
             </div>
           </div>
         </section>
       </section>
 
       <section id="tab-features" class="tab-panel" data-tab-panel="features" hidden>
-        <section class="card" aria-label="Built enterprise features">
+        <section class="card" aria-label="Enterprise workspace tools">
           <div class="section-title">
             <div>
-              <h2>Setup and operations map</h2>
-              <p>Open the pages needed to finish setup, run the account, and collect audit evidence.</p>
+              <h2>Workspace tools</h2>
+              <p>Use these pages to configure the account, monitor usage, export evidence, and run operator checks.</p>
             </div>
-            <span class="mini">business-use links</span>
+            <span class="mini">operational links</span>
           </div>
           <div class="feature-grid">
-            <a class="feature-card" href="/">
-              <div class="feature-tags"><span class="feature-tag">live</span><span class="feature-tag">public</span></div>
-              <h3>Enterprise homepage</h3>
-              <p>Public page for people who have not signed in yet. Use the app pages below for setup and daily work.</p>
+            <a class="feature-card" href="/app/setup">
+              <div class="feature-tags"><span class="feature-tag">live</span><span class="feature-tag">start here</span></div>
+              <h3>Setup guide</h3>
+              <p>Enterprise implementation guide for mapping environments, connecting SSO, choosing gateways, configuring projects, protecting provider slots, and going live safely.</p>
             </a>
-            <a class="feature-card" href="/app/login">
-              <div class="feature-tags"><span class="feature-tag">live</span><span class="feature-tag">auth</span></div>
-              <h3>Enterprise login</h3>
-              <p>Enterprise-only sign-in with approved access messaging, reset flow, and SSO entry point.</p>
+            <a class="feature-card" href="/app/technical-guide">
+              <div class="feature-tags"><span class="feature-tag">live</span><span class="feature-tag">technical</span></div>
+              <h3>Technical guide</h3>
+              <p>Detailed enterprise reference for identity, APIM/network patterns, caller lock, key custody, attestation, evidence, rollout, and troubleshooting.</p>
             </a>
             <a class="feature-card" href="/readiness" target="_blank" rel="noopener">
               <div class="feature-tags"><span class="feature-tag">live</span><span class="feature-tag">proof</span></div>
               <h3>Production readiness</h3>
-              <p>Shows whether Front Door, the control plane, executor, attestation, and Secure Key Release are production-ready.</p>
+              <p>Current production gate for runtime, executor, attestation, and Secure Key Release.</p>
             </a>
             <a class="feature-card" href="/health" target="_blank" rel="noopener">
               <div class="feature-tags"><span class="feature-tag">live</span><span class="feature-tag">health</span></div>
               <h3>Control-plane health</h3>
-              <p>Fast health endpoint used by Front Door, monitoring, APIM checks, and operators.</p>
+              <p>Lightweight status endpoint for Front Door, monitoring, APIM checks, and operators.</p>
             </a>
             <a class="feature-card" href="/app/control">
               <div class="feature-tags"><span class="feature-tag">live</span><span class="feature-tag">policy</span></div>
               <h3>Policy control</h3>
               <p>Edit project policy, provider allowlists, caller-lock rules, rate limits, and secure execution settings.</p>
+            </a>
+            <a class="feature-card" href="/app/verifier">
+              <div class="feature-tags"><span class="feature-tag">visible</span><span class="feature-tag pending">verifier beta</span></div>
+              <h3>AI Proof Verifier</h3>
+              <p>Register models that run outside VaultProof, verify submitted proof bundles, store evidence, and bind results to project policy, audit, and runtime posture.</p>
             </a>
             <a class="feature-card" href="/app/projects">
               <div class="feature-tags"><span class="feature-tag">live</span><span class="feature-tag">inventory</span></div>
@@ -441,17 +429,17 @@ export function renderEnterpriseDashboardPage(env: EnterpriseControlPlaneEnv = {
             <a class="feature-card" href="/app/plans">
               <div class="feature-tags"><span class="feature-tag">live</span><span class="feature-tag pending">cutover pending</span></div>
               <h3>Plans and APIM</h3>
-              <p>Track enterprise rollout packaging, APIM sidecar readiness, limits, and contract guardrails.</p>
+              <p>Track APIM status, cutover readiness, limits, and handoff notes.</p>
             </a>
             <a class="feature-card" href="/app/scanner">
               <div class="feature-tags"><span class="feature-tag">visible</span><span class="feature-tag pending">future API</span></div>
               <h3>Scanner entry</h3>
-              <p>Enterprise-safe placeholder for repository/security scanning until scoped scanner APIs are ready.</p>
+              <p>Repository scanning is not enabled for enterprise yet; use this page for the launch checklist.</p>
             </a>
             <a class="feature-card" href="/app/runbooks">
               <div class="feature-tags"><span class="feature-tag">live</span><span class="feature-tag">ops</span></div>
               <h3>Operator runbooks</h3>
-              <p>Open verification, evidence, deploy, secret, TLS, APIM, SSH, and cleanup runbooks.</p>
+              <p>Verification, evidence, deploy, secret rotation, TLS, APIM, SSH, and cleanup commands.</p>
             </a>
           </div>
         </section>
@@ -545,16 +533,20 @@ export function renderEnterpriseDashboardPage(env: EnterpriseControlPlaneEnv = {
       }
       function renderReadiness(payload) {
         var ready = payload && payload.production_ready === true;
+        var runtimeTier = payload && payload.runtime_tier === 'shared-demo' ? 'shared-demo' : 'dedicated-production';
+        var sharedDemo = runtimeTier === 'shared-demo';
         text('kpiRuntime', ready ? 'ready' : 'watch');
-        text('kpiRuntimeSub', ready ? 'Azure confidential production' : 'needs review');
+        text('kpiRuntimeSub', ready ? (sharedDemo ? 'shared demo runtime' : 'Azure confidential production') : 'needs review');
         var pill = byId('runtimePill');
         if (pill) {
-          pill.textContent = ready ? 'production ready' : 'not production ready';
+          pill.textContent = ready ? (sharedDemo ? 'shared demo ready' : 'production ready') : 'not production ready';
           pill.className = 'status-pill ' + (ready ? '' : 'bad');
         }
         var blockers = Array.isArray(payload && payload.production_blockers) ? payload.production_blockers : [];
         text('runtimeDetail', ready
-          ? 'Front Door, control plane, executor, attestation, replay protection, and Secure Key Release all report production-ready.'
+          ? (sharedDemo
+            ? 'Shared enterprise demo runtime is confidential-ready. It is safe for demos, but it is not a dedicated customer production runtime.'
+            : 'Front Door, control plane, executor, attestation, replay protection, and Secure Key Release all report production-ready.')
           : (blockers.length ? blockers.join(' | ') : 'Readiness is incomplete.'));
       }
       function renderOrgSelector(orgs, activeId) {
@@ -644,20 +636,28 @@ export function renderEnterpriseDashboardPage(env: EnterpriseControlPlaneEnv = {
         }
         var sequence = ++loadSequence;
         var panelFailures = [];
+        var initialOrgId = currentOrgId;
+        var dataPanelTasks = [];
+        var dataPanelsStarted = false;
         setNotice('');
-        try {
-          var readinessTask = loadPanel(sequence, 'readiness', fetchJson('/readiness'), renderReadiness, panelFailures);
-          var orgsPayload = await fetchJson('/api/v1/enterprise/orgs');
-          if (sequence !== loadSequence) return;
-          var orgs = Array.isArray(orgsPayload.organizations) ? orgsPayload.organizations : [];
-          renderOrgSelector(orgs, orgsPayload.active_organization_id || '');
-          await Promise.allSettled([
-            readinessTask,
+        function startDataPanels() {
+          dataPanelsStarted = true;
+          return [
             loadPanel(sequence, 'organization', fetchJson('/api/v1/enterprise/orgs/current'), renderOrganization, panelFailures),
             loadPanel(sequence, 'project stats', fetchJson('/api/v1/enterprise/projects/stats/overview'), renderOverview, panelFailures),
             loadPanel(sequence, 'members', fetchJson('/api/v1/enterprise/members'), renderMembers, panelFailures),
             loadPanel(sequence, 'audit', fetchJson('/api/v1/enterprise/audit?limit=6&days=30'), renderAudit, panelFailures)
-          ]);
+          ];
+        }
+        try {
+          var readinessTask = loadPanel(sequence, 'readiness', fetchJson('/readiness'), renderReadiness, panelFailures);
+          if (currentOrgId) dataPanelTasks = startDataPanels();
+          var orgsPayload = await fetchJson('/api/v1/enterprise/orgs');
+          if (sequence !== loadSequence) return;
+          var orgs = Array.isArray(orgsPayload.organizations) ? orgsPayload.organizations : [];
+          renderOrgSelector(orgs, orgsPayload.active_organization_id || '');
+          if (!dataPanelsStarted || currentOrgId !== initialOrgId) dataPanelTasks = startDataPanels();
+          await Promise.allSettled([readinessTask].concat(dataPanelTasks));
         } catch (error) {
           if (sequence !== loadSequence) return;
           setNotice(error && error.message ? error.message : 'Dashboard failed to load.');

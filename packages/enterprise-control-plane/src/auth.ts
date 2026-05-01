@@ -1,9 +1,11 @@
 import {
   compareAccessRoles,
   getEmailDomain,
+  getOrganizationWideProjectRole,
   hasRequiredAccessRole,
   isValidDomain,
   normalizeDomain,
+  ORGANIZATION_ROLES,
   type OrganizationRole,
   type ProjectRole,
 } from '@vaultproof/core';
@@ -283,7 +285,7 @@ export async function listAccessibleProjects(
         )
       `)
       .eq('user_id', userId)
-      .in('role', ['owner', 'admin']),
+      .in('role', ORGANIZATION_ROLES.filter((role) => !!getOrganizationWideProjectRole(role))),
   ]);
 
   for (const row of (projectRows || []) as unknown as Array<{
@@ -297,7 +299,7 @@ export async function listAccessibleProjects(
   }
 
   for (const row of (orgRows || []) as unknown as Array<{
-    role: 'owner' | 'admin';
+    role: OrganizationRole;
     organizations: {
       id: string;
       projects: ProjectRow[] | null;
@@ -308,9 +310,11 @@ export async function listAccessibleProjects(
   }>) {
     const organization = Array.isArray(row.organizations) ? row.organizations[0] : row.organizations;
     if (!organization) continue;
+    const organizationWideProjectRole = getOrganizationWideProjectRole(row.role);
+    if (!organizationWideProjectRole) continue;
     for (const project of organization.projects || []) {
       if (project.revoked_at) continue;
-      mergeProjectAccess(byId, normalizeProjectRow(project, row.role, 'organization'));
+      mergeProjectAccess(byId, normalizeProjectRow(project, organizationWideProjectRole, 'organization'));
     }
   }
 

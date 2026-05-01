@@ -6,12 +6,17 @@ import {
 
 const DEFAULT_INTERNAL_ADMIN_HOSTNAME = 'admin.vaultproof.dev';
 
+export type EnterpriseRuntimeTier = 'shared-demo' | 'dedicated-production';
+
 export interface EnterpriseControlPlaneEnv {
   enterpriseHostname?: string;
+  enterpriseRuntimeTier?: EnterpriseRuntimeTier | string;
   internalAdminHostname?: string;
   internalAdminPreviewEnabled?: boolean;
   internalAdminAllowedEmails?: string;
   internalAdminAllowedDomains?: string;
+  internalAdminActionsEnabled?: boolean;
+  internalAdminApprovalSecret?: string;
   executorBaseUrl?: string;
   executorSigningKeyId?: string;
   executorSigningSecret?: string;
@@ -34,6 +39,10 @@ export interface SecureExecutorDispatchInput {
 
 export function getEnterpriseHostname(env: EnterpriseControlPlaneEnv): string {
   return (env.enterpriseHostname || ENTERPRISE_HOSTNAME).trim().toLowerCase();
+}
+
+export function getEnterpriseRuntimeTier(env: EnterpriseControlPlaneEnv): EnterpriseRuntimeTier {
+  return env.enterpriseRuntimeTier === 'shared-demo' ? 'shared-demo' : 'dedicated-production';
 }
 
 export function getInternalAdminHostname(env: EnterpriseControlPlaneEnv): string {

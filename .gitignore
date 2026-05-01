@@ -32,6 +32,8 @@ infra/azure/**/attestation-evidence*.json
 infra/azure/**/release-policy*.json
 infra/azure/**/managed-hsm-*.json
 infra/azure/**/managed-hsm-key-env.sh
+key-vault-key-env.sh
+infra/azure/**/key-vault-key-env.sh
 infra/azure/**/main.json
 infra/azure/**/secrets/
 infra/azure/**/.azure/

@@ -48,6 +48,19 @@
     if (el) el.textContent = value;
   }
 
+  function escapeHtml(value) {
+    return String(value == null ? '' : value)
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;')
+      .replace(/'/g, '&#39;');
+  }
+
+  function safeClassSegment(value) {
+    return String(value || 'unknown').toLowerCase().replace(/[^a-z0-9_-]/g, '-');
+  }
+
   function normalizeTier(value) {
     const tier = String(value || '').trim().toLowerCase();
     if (!tier) return 'free';
@@ -448,15 +461,15 @@
       return `
         <div class="table-row ${project.status === 'alert' ? 'alert-row' : ''}">
           <div>
-            <div class="proj-name">${project.name}</div>
-            <div class="proj-id">${project.vpProjId}</div>
+            <div class="proj-name">${escapeHtml(project.name)}</div>
+            <div class="proj-id">${escapeHtml(project.vpProjId)}</div>
           </div>
-          <div><span class="env-badge env-${project.env}">${project.env}</span></div>
+          <div><span class="env-badge env-${safeClassSegment(project.env)}">${escapeHtml(project.env)}</span></div>
           <div class="cell-mono">${project.keysCount}</div>
           <div class="cell-mono">${formatNum(project.calls30d)}</div>
           <div class="sparkline">${bars}</div>
-          <div class="last-call">${lastUsedLabel}</div>
-          <div class="status-cell ${project.status === 'idle' && project.keysCount === 0 ? 'status-empty' : ''}" style="color:${project.status === 'idle' && project.keysCount === 0 ? 'var(--text-faint)' : sparkColor}">● ${statusLabel}</div>
+          <div class="last-call">${escapeHtml(lastUsedLabel)}</div>
+          <div class="status-cell ${project.status === 'idle' && project.keysCount === 0 ? 'status-empty' : ''}" style="color:${project.status === 'idle' && project.keysCount === 0 ? 'var(--text-faint)' : sparkColor}">● ${escapeHtml(statusLabel)}</div>
         </div>`;
     }).join('');
   }
@@ -496,9 +509,9 @@
           <span class="alert-glyph" style="color:${severity.color}">!!</span>
           <div class="alert-text">
             <div class="alert-title">${findingsCount} scanner finding${findingsCount === 1 ? '' : 's'}</div>
-            <div class="alert-meta">${repoName} · ${scanTime ? relTime(scanTime) : 'recently scanned'}</div>
+            <div class="alert-meta">${escapeHtml(repoName)} · ${escapeHtml(scanTime ? relTime(scanTime) : 'recently scanned')}</div>
           </div>
-          <span class="alert-badge" style="color:${severity.color};background:${severity.bg}">${severity.label}</span>
+          <span class="alert-badge" style="color:${severity.color};background:${severity.bg}">${escapeHtml(severity.label)}</span>
           <a class="alert-review" href="/app/scanner">review →</a>
         </div>`;
     }).join('');
@@ -625,7 +638,7 @@
       }
       description = description || (event.keySlot && event.keySlot.provider) || event.appId || '—';
       const ts = relTime(extractTimestamp(event.timestamp, event.created_at, event.createdAt, event.started_at, event.startedAt));
-      return `<div class="activity-row"><span class="act-time">${ts}</span><span class="act-tag">${label}</span><span style="color:${color}">${description}</span></div>`;
+      return `<div class="activity-row"><span class="act-time">${escapeHtml(ts)}</span><span class="act-tag">${escapeHtml(label)}</span><span style="color:${color}">${escapeHtml(description)}</span></div>`;
     }).join('');
   }
 

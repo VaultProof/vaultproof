@@ -1,8 +1,16 @@
-import type { OrganizationRole } from '@vaultproof/core';
+import {
+  canManageOrganizationIam,
+  canViewOrganizationEvidence,
+  isOrganizationRole,
+  isProjectRole,
+  ORGANIZATION_ROLE_DEFINITIONS,
+  PROJECT_ROLE_DEFINITIONS,
+  type OrganizationRole,
+  type ProjectRole,
+} from '@vaultproof/core';
 import type { EnterpriseControlPlaneEnv } from '../config.js';
 import {
   authenticateUser,
-  hasRequiredOrganizationRole,
   resolveOrganizationMembership,
 } from '../auth.js';
 import { writeGovernanceAuditEvent } from '../audit.js';
@@ -31,7 +39,7 @@ interface UpdateMemberRoleBody {
 }
 
 interface UpdateProjectAccessBody {
-  role?: OrganizationRole | null;
+  role?: ProjectRole | null;
 }
 
 type AccessReviewEvidenceRecord = {
@@ -53,15 +61,19 @@ function normalizeEmail(email: string): string {
   return email.trim().toLowerCase();
 }
 
-function isOrganizationRole(value: unknown): value is OrganizationRole {
-  return value === 'owner' || value === 'admin' || value === 'member' || value === 'viewer';
-}
-
 function validateEmail(value: unknown): string | null {
   if (typeof value !== 'string') return null;
   const email = normalizeEmail(value);
   if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) return null;
   return email;
+}
+
+function organizationRoleValidationMessage(): string {
+  return `role must be one of: ${ORGANIZATION_ROLE_DEFINITIONS.map((role) => role.value).join(', ')}`;
+}
+
+function projectRoleValidationMessage(): string {
+  return `role must be one of: ${PROJECT_ROLE_DEFINITIONS.map((role) => role.value).join(', ')}`;
 }
 
 async function parseJsonBody<T>(request: Request): Promise<T | null> {
@@ -214,6 +226,10 @@ export async function handleEnterpriseMemberRoutes(
       invitations: [],
       projects: [],
       pending_invitations_for_me: pendingInvitationsForMe,
+      role_definitions: {
+        organization_roles: ORGANIZATION_ROLE_DEFINITIONS,
+        project_roles: PROJECT_ROLE_DEFINITIONS,
+      },
     });
   }
 
@@ -283,11 +299,12 @@ export async function handleEnterpriseMemberRoutes(
     return Response.json({ error: 'Organization not found' }, { status: 404 });
   }
 
-  const canManageMembers = hasRequiredOrganizationRole(membership.organization_role, 'admin');
+  const canManageMembers = canManageOrganizationIam(membership.organization_role);
+  const canExportAccessReview = canManageMembers || canViewOrganizationEvidence(membership.organization_role);
 
   if (method === 'POST' && pathSegments.length === 2 && pathSegments[0] === 'members' && pathSegments[1] === 'invitations') {
     if (!canManageMembers) {
-      return Response.json({ error: 'Only organization admins can invite members' }, { status: 403 });
+      return Response.json({ error: 'Only owners, admins, or IAM admins can invite members' }, { status: 403 });
     }
 
     const body = await parseJsonBody<CreateInvitationBody>(request);
@@ -298,7 +315,7 @@ export async function handleEnterpriseMemberRoutes(
 
     const role = body.role || 'viewer';
     if (!isOrganizationRole(role)) {
-      return Response.json({ error: 'role must be owner, admin, member, or viewer' }, { status: 400 });
+      return Response.json({ error: organizationRoleValidationMessage() }, { status: 400 });
     }
     if (role === 'owner' && membership.organization_role !== 'owner') {
       return Response.json({ error: 'Only organization owners can invite owners' }, { status: 403 });
@@ -342,7 +359,7 @@ export async function handleEnterpriseMemberRoutes(
 
   if (method === 'POST' && pathSegments.length === 4 && pathSegments[0] === 'members' && pathSegments[1] === 'invitations' && pathSegments[3] === 'revoke') {
     if (!canManageMembers) {
-      return Response.json({ error: 'Only organization admins can revoke invitations' }, { status: 403 });
+      return Response.json({ error: 'Only owners, admins, or IAM admins can revoke invitations' }, { status: 403 });
     }
 
     const invitationId = pathSegments[2];
@@ -385,7 +402,7 @@ export async function handleEnterpriseMemberRoutes(
 
   if (method === 'POST' && pathSegments.length === 3 && pathSegments[0] === 'members' && pathSegments[2] === 'role') {
     if (!canManageMembers) {
-      return Response.json({ error: 'Only organization admins can change member roles' }, { status: 403 });
+      return Response.json({ error: 'Only owners, admins, or IAM admins can change member roles' }, { status: 403 });
     }
 
     const targetUserId = pathSegments[1];
@@ -398,7 +415,7 @@ export async function handleEnterpriseMemberRoutes(
 
     const role = body.role;
     if (!isOrganizationRole(role)) {
-      return Response.json({ error: 'role must be owner, admin, member, or viewer' }, { status: 400 });
+      return Response.json({ error: organizationRoleValidationMessage() }, { status: 400 });
     }
     if (role === 'owner' && membership.organization_role !== 'owner') {
       return Response.json({ error: 'Only organization owners can grant owner role' }, { status: 403 });
@@ -448,7 +465,7 @@ export async function handleEnterpriseMemberRoutes(
     pathSegments[4] === 'access'
   ) {
     if (!canManageMembers) {
-      return Response.json({ error: 'Only organization admins can assign project access' }, { status: 403 });
+      return Response.json({ error: 'Only owners, admins, or IAM admins can assign project access' }, { status: 403 });
     }
 
     const targetUserId = pathSegments[1];
@@ -457,8 +474,8 @@ export async function handleEnterpriseMemberRoutes(
     if (!body) return Response.json({ error: 'Invalid JSON' }, { status: 400 });
 
     const role = body.role;
-    if (!isOrganizationRole(role)) {
-      return Response.json({ error: 'role must be owner, admin, member, or viewer' }, { status: 400 });
+    if (!isProjectRole(role)) {
+      return Response.json({ error: projectRoleValidationMessage() }, { status: 400 });
     }
 
     const { data: project } = await supabase
@@ -520,7 +537,7 @@ export async function handleEnterpriseMemberRoutes(
     pathSegments[4] === 'access'
   ) {
     if (!canManageMembers) {
-      return Response.json({ error: 'Only organization admins can remove project access' }, { status: 403 });
+      return Response.json({ error: 'Only owners, admins, or IAM admins can remove project access' }, { status: 403 });
     }
 
     const targetUserId = pathSegments[1];
@@ -573,8 +590,8 @@ export async function handleEnterpriseMemberRoutes(
   }
 
   if (method === 'GET' && pathSegments.length === 2 && pathSegments[0] === 'members' && pathSegments[1] === 'access-review') {
-    if (!canManageMembers) {
-      return Response.json({ error: 'Only organization admins can export access review evidence' }, { status: 403 });
+    if (!canExportAccessReview) {
+      return Response.json({ error: 'Only IAM admins, security admins, platform admins, auditors, admins, or owners can export access review evidence' }, { status: 403 });
     }
 
     const generatedAt = new Date().toISOString();
@@ -841,6 +858,10 @@ export async function handleEnterpriseMemberRoutes(
       }>,
       projects: projectRows,
       pending_invitations_for_me: pendingInvitationsForMe,
+      role_definitions: {
+        organization_roles: ORGANIZATION_ROLE_DEFINITIONS,
+        project_roles: PROJECT_ROLE_DEFINITIONS,
+      },
     });
   }
 
