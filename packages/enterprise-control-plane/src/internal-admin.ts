@@ -626,7 +626,7 @@ export function renderInternalAdminPage(): string {
       <div class="nav-label">proof</div>
       <a class="nav-link" href="#runtime"><span>Runtime</span></a>
       <a class="nav-link" href="#audit"><span>Audit</span></a>
-      <div class="sidebar-note"><strong>Safe first slice</strong><br />This console is read-only. Employee access is audited; write actions still need approval gates and break-glass rules.</div>
+      <div class="sidebar-note"><strong>Safe first slice</strong><br />Read visibility is live. Employee writes stay disabled unless the approval gate and secret are enabled.</div>
     </aside>
     <main class="main">
       <div class="topbar">
@@ -674,7 +674,7 @@ export function renderInternalAdminPage(): string {
       </section>
 
       <section class="card" id="org-detail" style="margin-top:16px; display:none">
-        <div class="section-title"><h2>Business detail</h2><span id="orgDetailMeta" class="mini">read-only</span></div>
+        <div class="section-title"><h2>Business detail</h2><span id="orgDetailMeta" class="mini">approval-gated actions</span></div>
         <div id="orgDetailContent" class="list"><div class="empty">Open a business to view member timeline, SSO checklist, support notes, and evidence links.</div></div>
       </section>
 
@@ -756,7 +756,7 @@ export function renderInternalAdminPage(): string {
         if (!section) return;
         section.style.display = 'block';
         var org = payload.business || {};
-        text('orgDetailMeta', (org.name || org.slug || org.id || 'business') + ' - read-only');
+        text('orgDetailMeta', (org.name || org.slug || org.id || 'business') + ' - approval-gated actions');
         var ssoChecklist = Array.isArray(payload.sso_checklist) ? payload.sso_checklist : [];
         var timeline = Array.isArray(payload.member_timeline) ? payload.member_timeline : [];
         var supportNotes = Array.isArray(payload.support_notes) ? payload.support_notes : [];
@@ -1108,11 +1108,11 @@ async function handleInternalAdminOrgDetail(
     })),
     evidence_links: enterpriseEvidenceLinks(env, orgId),
     guardrails: [
-      'Org detail is read-only.',
+      'Org detail reads are available to allowlisted employees.',
       auditWriteSucceeded
         ? 'Employee org-detail views are recorded in the internal admin audit stream.'
         : 'Internal admin audit migration is pending; org-detail views are allowed but not yet persisted.',
-      'Support notes are display-only until approval-gated note creation is enabled.',
+      'Support notes, invitations, and business status updates require internal admin actions to be enabled plus the approval secret header.',
     ],
   }, {
     headers: {
@@ -2394,7 +2394,7 @@ export async function handleInternalAdminRoutes(
       auditWriteSucceeded
         ? 'Employee console views are recorded in the internal admin audit stream.'
         : 'Internal admin audit migration is pending; employee views are allowed but not yet persisted.',
-      'This first slice remains read-only until approval gates and break-glass rules are added.',
+      'Customer data views are read-only by default; safe employee writes require the disabled-by-default action gate and approval secret.',
     ],
   }, {
     headers: {

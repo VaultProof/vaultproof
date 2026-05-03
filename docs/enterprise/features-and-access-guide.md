@@ -196,7 +196,7 @@ SUPABASE_SERVICE_ROLE_KEY='<service-role-key>' \
 npm run prepare:enterprise-internal-admin
 ```
 
-This is read-only. It checks employee allowlist env, the required internal-admin/verifier tables, customer-host separation, and unauthenticated admin-host behavior.
+This is read-only. It checks employee allowlist env, the required internal-admin/verifier tables, customer-host separation, the exact unauthenticated employee-login redirect, and internal-admin API auth behavior.
 
 If the preflight reports that the admin page is not reachable, configure the Front Door custom domain and DNS:
 

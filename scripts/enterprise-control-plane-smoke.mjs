@@ -2765,7 +2765,7 @@ async function assertInternalAdminConsole() {
     'Users and access',
     'SSO rollout',
     'Internal admin audit',
-    'read-only',
+    'approval gate',
     '/api/v1/internal-admin/overview',
   ]) {
     if (!pageHtml.includes(required)) {

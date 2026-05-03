@@ -42,6 +42,12 @@ http_status() {
   curl -sS -o /dev/null -w '%{http_code}' --connect-timeout 8 --max-time 15 "${url}" || true
 }
 
+http_location() {
+  local url="$1"
+  curl -sS -I --connect-timeout 8 --max-time 15 "${url}" 2>/dev/null \
+    | awk 'BEGIN { IGNORECASE=1 } /^location:/ { sub(/\r$/, ""); sub(/^[Ll]ocation:[[:space:]]*/, ""); print; exit }' || true
+}
+
 check_supabase_table() {
   local table_name="$1"
   local status
@@ -69,6 +75,7 @@ echo "This command is read-only. It checks env wiring, expected schema, and safe
 echo
 
 require_command curl
+require_command awk
 
 if [[ -z "${INTERNAL_ADMIN_EMAILS}" && -z "${INTERNAL_ADMIN_DOMAINS}" ]]; then
   blocker "set VAULTPROOF_INTERNAL_ADMIN_EMAILS or VAULTPROOF_INTERNAL_ADMIN_DOMAINS before exposing the employee console"
@@ -118,8 +125,16 @@ if [[ "${RUN_NETWORK_CHECKS}" == "true" ]]; then
   fi
 
   internal_page_status="$(http_status "${INTERNAL_ADMIN_URL%/}/")"
-  if [[ "${internal_page_status}" == "200" || "${internal_page_status}" == "302" ]]; then
-    ok "internal admin page is reachable or redirects to employee login"
+  if [[ "${internal_page_status}" == "200" ]]; then
+    ok "internal admin page is reachable"
+  elif [[ "${internal_page_status}" == "302" ]]; then
+    internal_page_location="$(http_location "${INTERNAL_ADMIN_URL%/}/")"
+    if [[ "${internal_page_location}" == "/app/login?internal_admin=true"* \
+      || "${internal_page_location}" == "${INTERNAL_ADMIN_URL%/}/app/login?internal_admin=true"* ]]; then
+      ok "internal admin page redirects to employee login"
+    else
+      blocker "expected internal admin page to redirect to employee login, got Location: ${internal_page_location:-none}"
+    fi
   else
     warn "internal admin page is not reachable yet (HTTP ${internal_page_status:-none}); configure Front Door/DNS before live use"
   fi
