@@ -10,7 +10,12 @@ import {
 import { renderEnterpriseControlPage, renderEnterpriseOrgPage, renderEnterprisePlannedAppPage } from './app-pages.js';
 import { renderEnterpriseDashboardPage } from './dashboard-page.js';
 import { renderEnterpriseHomepage } from './homepage-page.js';
-import { handleInternalAdminRoutes, renderInternalAdminPage } from './internal-admin.js';
+import {
+  authorizeInternalAdmin,
+  clearInternalAdminSessionCookie,
+  handleInternalAdminRoutes,
+  renderInternalAdminPage,
+} from './internal-admin.js';
 import { renderEnterpriseLoginPage, renderEnterpriseLoginScript, renderEnterpriseLogoutPage } from './login-page.js';
 import { handleEnterpriseAlertRoutes } from './routes/alerts.js';
 import { handleEnterpriseAuditRoutes } from './routes/audit.js';
@@ -33,6 +38,20 @@ function getRequestHostname(request: Request, url: URL): string {
   const forwardedHost = request.headers.get('x-forwarded-host') || request.headers.get('x-original-host');
   const host = forwardedHost || request.headers.get('host') || url.hostname;
   return host.split(',')[0]?.trim().split(':')[0]?.toLowerCase() || url.hostname.toLowerCase();
+}
+
+function redirectToInternalAdminLogin(url: URL): Response {
+  const loginUrl = new URL('/app/login', url);
+  loginUrl.searchParams.set('internal_admin', 'true');
+  loginUrl.searchParams.set('next', `${url.pathname}${url.search}`);
+  return new Response(null, {
+    status: 302,
+    headers: {
+      location: `${loginUrl.pathname}${loginUrl.search}`,
+      'cache-control': 'no-store',
+      'x-robots-tag': 'noindex,nofollow',
+    },
+  });
 }
 
 function normalizeOriginLockHeaderName(headerName?: string): string {
@@ -254,6 +273,7 @@ async function handleEnterpriseControlPlaneRequestInner(
 ): Promise<Response> {
   const url = new URL(request.url);
   const hostname = getRequestHostname(request, url);
+  const isReadRequest = request.method === 'GET' || request.method === 'HEAD';
 
   try {
     assertControlPlaneHostname(hostname, env);
@@ -271,7 +291,7 @@ async function handleEnterpriseControlPlaneRequestInner(
 
   if (
     internalAdminSurface &&
-    request.method === 'GET' &&
+    isReadRequest &&
     (url.pathname === '/'
       || url.pathname === '/admin'
       || url.pathname === '/admin/'
@@ -279,6 +299,10 @@ async function handleEnterpriseControlPlaneRequestInner(
       || /^\/orgs\/[^/]+\/?$/.test(url.pathname)
       || /^\/internal\/admin\/orgs\/[^/]+\/?$/.test(url.pathname))
   ) {
+    const authorized = await authorizeInternalAdmin(request, env);
+    if (authorized instanceof Response) {
+      return redirectToInternalAdminLogin(url);
+    }
     return new Response(renderInternalAdminPage(), {
       status: 200,
       headers: {
@@ -289,7 +313,7 @@ async function handleEnterpriseControlPlaneRequestInner(
     });
   }
 
-  if (request.method === 'GET' && url.pathname === '/') {
+  if (isReadRequest && url.pathname === '/') {
     return new Response(renderEnterpriseHomepage(env), {
       status: 200,
       headers: {
@@ -300,7 +324,7 @@ async function handleEnterpriseControlPlaneRequestInner(
   }
 
   if (
-    request.method === 'GET' &&
+    isReadRequest &&
     (url.pathname === '/app' || url.pathname === '/app/' || url.pathname === '/app/dashboard' || url.pathname === '/app/dashboard.html')
   ) {
     return new Response(renderEnterpriseDashboardPage(env), {
@@ -313,7 +337,7 @@ async function handleEnterpriseControlPlaneRequestInner(
     });
   }
 
-  if (request.method === 'GET' && url.pathname === '/app/login') {
+  if (isReadRequest && url.pathname === '/app/login') {
     return new Response(renderEnterpriseLoginPage(env), {
       status: 200,
       headers: {
@@ -324,18 +348,19 @@ async function handleEnterpriseControlPlaneRequestInner(
     });
   }
 
-  if (request.method === 'GET' && (url.pathname === '/app/logout' || url.pathname === '/app/logout.html')) {
+  if (isReadRequest && (url.pathname === '/app/logout' || url.pathname === '/app/logout.html')) {
     return new Response(renderEnterpriseLogoutPage(), {
       status: 200,
       headers: {
         'content-type': 'text/html; charset=utf-8',
         'cache-control': 'no-store',
         'x-robots-tag': 'noindex',
+        'set-cookie': clearInternalAdminSessionCookie(),
       },
     });
   }
 
-  if (request.method === 'GET' && url.pathname === '/app/enterprise-login.js') {
+  if (isReadRequest && url.pathname === '/app/enterprise-login.js') {
     return new Response(renderEnterpriseLoginScript(), {
       status: 200,
       headers: {
@@ -346,7 +371,7 @@ async function handleEnterpriseControlPlaneRequestInner(
     });
   }
 
-  if (request.method === 'GET' && (url.pathname === '/app/control' || url.pathname === '/app/control.html')) {
+  if (isReadRequest && (url.pathname === '/app/control' || url.pathname === '/app/control.html')) {
     return new Response(renderEnterpriseControlPage(env), {
       status: 200,
       headers: {
@@ -357,7 +382,7 @@ async function handleEnterpriseControlPlaneRequestInner(
     });
   }
 
-  if (request.method === 'GET' && (url.pathname === '/app/org' || url.pathname === '/app/org.html')) {
+  if (isReadRequest && (url.pathname === '/app/org' || url.pathname === '/app/org.html')) {
     return new Response(renderEnterpriseOrgPage(env), {
       status: 200,
       headers: {
@@ -368,7 +393,7 @@ async function handleEnterpriseControlPlaneRequestInner(
     });
   }
 
-  if (request.method === 'GET' && url.pathname.startsWith('/app/')) {
+  if (isReadRequest && url.pathname.startsWith('/app/')) {
     const plannedPageName = url.pathname
       .replace(/^\/app\//, '')
       .replace(/\.html$/, '')
@@ -386,7 +411,7 @@ async function handleEnterpriseControlPlaneRequestInner(
     }
   }
 
-  if (request.method === 'GET' && url.pathname === '/health') {
+  if (isReadRequest && url.pathname === '/health') {
     return Response.json({
       status: 'ok',
       service: 'vaultproof-enterprise-control-plane',
@@ -399,7 +424,7 @@ async function handleEnterpriseControlPlaneRequestInner(
     });
   }
 
-  if (request.method === 'GET' && url.pathname === '/readiness') {
+  if (isReadRequest && url.pathname === '/readiness') {
     return Response.json(await buildEnterpriseReadiness(hostname, env), {
       headers: {
         'cache-control': 'no-store',

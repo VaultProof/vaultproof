@@ -2182,6 +2182,8 @@ async function assertEnterpriseLoginRoute() {
     'Enterprise access',
     'Move real API keys out of apps, env vars, and logs.',
     'Manage protected keys, access rules, team members, audit records, and provider settings.',
+    'continue with microsoft',
+    'Continue with company SAML SSO',
     'back to enterprise homepage',
   ]) {
     if (!html.includes(required)) {
@@ -2204,6 +2206,7 @@ async function assertEnterpriseLoginRoute() {
     || !loginScript.includes('IS_INTERNAL_ADMIN_HOST')
     || !loginScript.includes('/internal/admin')
     || !loginScript.includes('IS_AZURE_CONTROL_PLANE_HOST')
+    || !loginScript.includes("loginWithProvider('azure'")
   ) {
     throw new Error(`Expected enterprise login script to route enterprise users to dashboard, got ${loginScriptResponse.status}`);
   }
@@ -2708,13 +2711,52 @@ async function assertInternalAdminConsole() {
     supabaseServiceRoleKey: 'service-role-key',
   };
 
-  const pageResponse = await handleEnterpriseControlPlaneRequest(
+  const unauthenticatedPageResponse = await handleEnterpriseControlPlaneRequest(
     buildHostRequest(INTERNAL_ADMIN_HOSTNAME, '/'),
+    env,
+  );
+  if (unauthenticatedPageResponse.status !== 302
+    || !unauthenticatedPageResponse.headers.get('location')?.startsWith('/app/login?internal_admin=true')) {
+    throw new Error(`Expected internal admin page to redirect to login, got ${unauthenticatedPageResponse.status}`);
+  }
+
+  const sessionResponse = await handleEnterpriseControlPlaneRequest(
+    buildHostRequest(INTERNAL_ADMIN_HOSTNAME, '/api/v1/internal-admin/session', {
+      method: 'POST',
+      headers: {
+        authorization: `Bearer ${AUTH_TOKEN}`,
+      },
+    }),
+    env,
+  );
+  const sessionCookie = sessionResponse.headers.get('set-cookie') || '';
+  if (sessionResponse.status !== 200 || !sessionCookie.includes('vp_internal_admin_session=')) {
+    throw new Error(`Expected internal admin session cookie, got ${sessionResponse.status}: ${sessionCookie}`);
+  }
+
+  const pageResponse = await handleEnterpriseControlPlaneRequest(
+    buildHostRequest(INTERNAL_ADMIN_HOSTNAME, '/', {
+      headers: {
+        cookie: sessionCookie.split(';')[0],
+      },
+    }),
     env,
   );
   const pageHtml = await pageResponse.text();
   if (pageResponse.status !== 200 || !pageHtml.includes('VaultProof Internal Admin')) {
     throw new Error(`Expected internal admin page to render, got ${pageResponse.status}`);
+  }
+  const headPageResponse = await handleEnterpriseControlPlaneRequest(
+    buildHostRequest(INTERNAL_ADMIN_HOSTNAME, '/', {
+      method: 'HEAD',
+      headers: {
+        cookie: sessionCookie.split(';')[0],
+      },
+    }),
+    env,
+  );
+  if (headPageResponse.status !== 200) {
+    throw new Error(`Expected internal admin HEAD check to return 200, got ${headPageResponse.status}`);
   }
   for (const required of [
     'VaultProof employees only',
@@ -2735,7 +2777,11 @@ async function assertInternalAdminConsole() {
   }
 
   const orgDetailPageResponse = await handleEnterpriseControlPlaneRequest(
-    buildHostRequest(INTERNAL_ADMIN_HOSTNAME, '/orgs/org_123'),
+    buildHostRequest(INTERNAL_ADMIN_HOSTNAME, '/orgs/org_123', {
+      headers: {
+        cookie: sessionCookie.split(';')[0],
+      },
+    }),
     env,
   );
   const orgDetailPageHtml = await orgDetailPageResponse.text();
@@ -2761,6 +2807,13 @@ async function assertInternalAdminConsole() {
   );
   if (unauthenticatedResponse.status !== 401) {
     throw new Error(`Expected internal admin API to require auth, got ${unauthenticatedResponse.status}`);
+  }
+  const unauthenticatedHeadResponse = await handleEnterpriseControlPlaneRequest(
+    buildHostRequest(INTERNAL_ADMIN_HOSTNAME, '/api/v1/internal-admin/overview', { method: 'HEAD' }),
+    env,
+  );
+  if (unauthenticatedHeadResponse.status !== 401) {
+    throw new Error(`Expected internal admin API HEAD check to require auth, got ${unauthenticatedHeadResponse.status}`);
   }
 
   const deniedResponse = await handleEnterpriseControlPlaneRequest(

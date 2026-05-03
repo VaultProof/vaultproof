@@ -295,9 +295,25 @@
     }
   }
 
+  async function establishInternalAdminSession(session) {
+    if (!IS_INTERNAL_ADMIN_HOST || !session || !session.access_token) return;
+    const res = await fetch('/api/v1/internal-admin/session', {
+      method: 'POST',
+      headers: {
+        Authorization: 'Bearer ' + session.access_token,
+        'Content-Type': 'application/json',
+      },
+    });
+    if (!res.ok) {
+      const payload = await res.json().catch(function() { return null; });
+      throw new Error((payload && payload.error) || 'This account is not allowed to use the internal admin console.');
+    }
+  }
+
   async function finalizeAuthenticatedSession(session, user, cliContext) {
     if (!session) return;
     storeLocalSession(session, user);
+    await establishInternalAdminSession(session);
     await redeemPendingPromo(session);
     if (redirectToCli(cliContext, session, user)) return;
     const ssoResolution = await resolveSsoMembership(session);
@@ -373,6 +389,7 @@
       provider,
       options: {
         redirectTo: buildLoginRedirectUrl(cliContext),
+        scopes: provider === 'azure' ? 'email' : undefined,
       },
     });
     if (error) showError(error.message);
@@ -691,6 +708,9 @@
 
     const googleBtn = $('loginWithGoogleBtn');
     if (googleBtn) googleBtn.addEventListener('click', function() { loginWithProvider('google', cliContext); });
+
+    const microsoftBtn = $('loginWithMicrosoftBtn');
+    if (microsoftBtn) microsoftBtn.addEventListener('click', function() { loginWithProvider('azure', cliContext); });
 
     const ssoContinueBtn = $('ssoContinueBtn');
     if (ssoContinueBtn) ssoContinueBtn.addEventListener('click', function() { loginWithSso(cliContext); });

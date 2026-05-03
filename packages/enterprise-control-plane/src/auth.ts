@@ -17,6 +17,8 @@ export interface EnterpriseUserAuth {
   email: string;
 }
 
+const INTERNAL_ADMIN_SESSION_COOKIE = 'vp_internal_admin_session';
+
 export interface ResolveOrganizationSsoBody {
   company_domain?: string | null;
 }
@@ -56,9 +58,9 @@ export async function authenticateUser(
   env: EnterpriseControlPlaneEnv,
 ): Promise<EnterpriseUserAuth | null> {
   const authHeader = request.headers.get('authorization') || '';
-  if (!authHeader.startsWith('Bearer ')) return null;
-
-  const token = authHeader.slice(7);
+  const token = authHeader.startsWith('Bearer ')
+    ? authHeader.slice(7)
+    : readCookie(request, INTERNAL_ADMIN_SESSION_COOKIE);
   if (!token || token.startsWith('vp_') || token.startsWith('vp-proj-')) return null;
 
   const supabase = getSupabase(env);
@@ -70,6 +72,21 @@ export async function authenticateUser(
   if (!userId || !email) return null;
 
   return { userId, email };
+}
+
+function readCookie(request: Request, name: string): string {
+  const cookieHeader = request.headers.get('cookie') || '';
+  const prefix = `${name}=`;
+  for (const part of cookieHeader.split(';')) {
+    const trimmed = part.trim();
+    if (!trimmed.startsWith(prefix)) continue;
+    try {
+      return decodeURIComponent(trimmed.slice(prefix.length));
+    } catch {
+      return trimmed.slice(prefix.length);
+    }
+  }
+  return '';
 }
 
 export function resolveRequestedSsoDomain(

@@ -12,6 +12,7 @@
     "docker:build:enterprise-secure-executor": "docker build -f packages/enterprise-secure-executor/Dockerfile -t vaultproof-enterprise-secure-executor .",
     "deploy:enterprise-vm": "bash infra/azure/enterprise-secure-runtime/deploy-confidential-vm-app.sh",
     "cleanup:enterprise-container-apps": "bash infra/azure/enterprise-secure-runtime/cleanup-container-apps-prototype.sh",
+    "configure:enterprise-internal-admin-front-door": "bash infra/azure/enterprise-secure-runtime/configure-internal-admin-front-door.sh",
     "cutover:enterprise-apim": "bash infra/azure/enterprise-secure-runtime/cutover-front-door-apim.sh",
     "cutover:enterprise-origin-tls": "bash infra/azure/enterprise-secure-runtime/cutover-front-door-origin-tls.sh",
     "evidence:enterprise-production": "bash infra/azure/enterprise-secure-runtime/collect-production-evidence.sh",

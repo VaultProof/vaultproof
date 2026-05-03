@@ -356,7 +356,7 @@ export function renderEnterpriseLoginPage(env: EnterpriseControlPlaneEnv = {}): 
 
         <div class="sso-block">
           <div class="sso-kicker">company sso</div>
-          <div class="sso-title">Continue with Microsoft Entra / SSO</div>
+          <div class="sso-title">Continue with company SAML SSO</div>
           <p class="sso-copy">Enter your company domain or work email to start your approved company login.</p>
           <div class="sso-row">
             <input id="ssoDomainInput" type="text" class="form-input" placeholder="company.com or you@company.com" />
@@ -367,6 +367,7 @@ export function renderEnterpriseLoginPage(env: EnterpriseControlPlaneEnv = {}): 
         </div>
 
         <div class="oauth-stack">
+          <button id="loginWithMicrosoftBtn" type="button" class="btn btn-secondary">continue with microsoft</button>
           <button id="loginWithGitHubBtn" type="button" class="btn btn-primary">continue with github</button>
           <button id="loginWithGoogleBtn" type="button" class="btn btn-secondary">continue with google</button>
         </div>

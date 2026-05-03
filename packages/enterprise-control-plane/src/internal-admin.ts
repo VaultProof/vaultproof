@@ -6,6 +6,8 @@ import { authenticateUser, type EnterpriseUserAuth } from './auth.js';
 import { getSupabase } from './supabase.js';
 
 const INTERNAL_AUTH_ERROR = 'VaultProof employee access required. Sign in with an approved employee account.';
+const INTERNAL_ADMIN_SESSION_COOKIE = 'vp_internal_admin_session';
+const INTERNAL_ADMIN_SESSION_MAX_AGE_SECONDS = 60 * 60 * 8;
 const PUBLIC_EMAIL_DOMAINS = new Set([
   'gmail.com',
   'googlemail.com',
@@ -150,7 +152,7 @@ function isAllowedInternalAdminEmail(email: string, env: EnterpriseControlPlaneE
   };
 }
 
-async function authorizeInternalAdmin(
+export async function authorizeInternalAdmin(
   request: Request,
   env: EnterpriseControlPlaneEnv,
 ): Promise<InternalAdminAuthResult | Response> {
@@ -175,6 +177,77 @@ async function authorizeInternalAdmin(
     allowedEmails: allowed.allowedEmails,
     allowedDomains: allowed.allowedDomains,
   };
+}
+
+function internalAdminSessionCookie(token: string): string {
+  return [
+    `${INTERNAL_ADMIN_SESSION_COOKIE}=${encodeURIComponent(token)}`,
+    'Path=/',
+    `Max-Age=${INTERNAL_ADMIN_SESSION_MAX_AGE_SECONDS}`,
+    'HttpOnly',
+    'Secure',
+    'SameSite=Lax',
+  ].join('; ');
+}
+
+export function clearInternalAdminSessionCookie(): string {
+  return [
+    `${INTERNAL_ADMIN_SESSION_COOKIE}=`,
+    'Path=/',
+    'Max-Age=0',
+    'HttpOnly',
+    'Secure',
+    'SameSite=Lax',
+  ].join('; ');
+}
+
+async function handleInternalAdminSession(
+  request: Request,
+  env: EnterpriseControlPlaneEnv,
+): Promise<Response> {
+  if (request.method === 'DELETE') {
+    return Response.json({ ok: true }, {
+      headers: {
+        'cache-control': 'no-store',
+        'set-cookie': clearInternalAdminSessionCookie(),
+      },
+    });
+  }
+
+  if (request.method !== 'POST') {
+    return Response.json({ error: 'Method not allowed.' }, { status: 405 });
+  }
+
+  const authHeader = request.headers.get('authorization') || '';
+  const token = authHeader.startsWith('Bearer ') ? authHeader.slice(7).trim() : '';
+  if (!token) {
+    return Response.json({ error: INTERNAL_AUTH_ERROR }, { status: 401 });
+  }
+
+  const authorized = await authorizeInternalAdmin(request, env);
+  if (authorized instanceof Response) return authorized;
+
+  await writeInternalAdminAuditEvent(
+    env,
+    authorized.auth,
+    request,
+    'internal_admin_session_started',
+    {
+      allowed_emails_configured: authorized.allowedEmails.length,
+      allowed_domains_configured: authorized.allowedDomains.length,
+    },
+  );
+
+  return Response.json({
+    ok: true,
+    email: authorized.auth.email,
+    expires_in: INTERNAL_ADMIN_SESSION_MAX_AGE_SECONDS,
+  }, {
+    headers: {
+      'cache-control': 'no-store',
+      'set-cookie': internalAdminSessionCookie(token),
+    },
+  });
 }
 
 async function getUserEmailMap(
@@ -1997,6 +2070,10 @@ export async function handleInternalAdminRoutes(
   env: EnterpriseControlPlaneEnv,
   pathSegments: string[],
 ): Promise<Response | null> {
+  if (pathSegments.length === 1 && pathSegments[0] === 'session') {
+    return handleInternalAdminSession(request, env);
+  }
+
   if (
     request.method === 'POST'
     && pathSegments.length === 3
@@ -2085,7 +2162,7 @@ export async function handleInternalAdminRoutes(
     return handlePlanInternalAdminActionRollback(request, env, pathSegments[1] || '');
   }
 
-  if (request.method !== 'GET') {
+  if (request.method !== 'GET' && request.method !== 'HEAD') {
     return null;
   }
 

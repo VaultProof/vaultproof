@@ -198,6 +198,25 @@ npm run prepare:enterprise-internal-admin
 
 This is read-only. It checks employee allowlist env, the required internal-admin/verifier tables, customer-host separation, and unauthenticated admin-host behavior.
 
+If the preflight reports that the admin page is not reachable, configure the Front Door custom domain and DNS:
+
+```bash
+npm run configure:enterprise-internal-admin-front-door
+ACTION=create-domain \
+CONFIRM_INTERNAL_ADMIN_FRONT_DOOR=create-admin-custom-domain \
+npm run configure:enterprise-internal-admin-front-door
+```
+
+Create the DNS records printed by the helper, including `CNAME admin.vaultproof.dev -> <front-door-endpoint>` and the `_dnsauth.admin.vaultproof.dev` TXT validation token. After Azure reports the custom domain as validated, attach it to the existing route:
+
+```bash
+ACTION=associate-route \
+CONFIRM_INTERNAL_ADMIN_FRONT_DOOR=associate-admin-route \
+npm run configure:enterprise-internal-admin-front-door
+```
+
+The expected unauthenticated live result is a redirect from `https://admin.vaultproof.dev/` to `/app/login?internal_admin=true` and `401` or `403` for `https://admin.vaultproof.dev/api/v1/internal-admin/overview`. A large Azure-branded `404` page means the request is still being answered by Front Door before it reaches the control-plane service.
+
 Support notes, invitation create/resend-request/revoke, and business status updates are approval-gated write actions. Leave `VAULTPROOF_INTERNAL_ADMIN_ACTIONS_ENABLED` unset or `false` in production until the team is ready to operate employee writes. Every future write action should insert into `internal_admin_audit_events`.
 
 For destructive actions, use the action-request workflow first. `disable_org_access` can be requested, approved, rejected, dry-run planned, and rollback dry-run planned. The execution dry-run records current organization archive fields as rollback payload. The rollback dry-run reads that payload and records what would be restored. Neither endpoint mutates customer organization records in the current internal admin API.

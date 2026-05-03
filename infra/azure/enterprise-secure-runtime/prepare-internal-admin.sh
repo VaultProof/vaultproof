@@ -118,8 +118,8 @@ if [[ "${RUN_NETWORK_CHECKS}" == "true" ]]; then
   fi
 
   internal_page_status="$(http_status "${INTERNAL_ADMIN_URL%/}/")"
-  if [[ "${internal_page_status}" == "200" ]]; then
-    ok "internal admin page is reachable"
+  if [[ "${internal_page_status}" == "200" || "${internal_page_status}" == "302" ]]; then
+    ok "internal admin page is reachable or redirects to employee login"
   else
     warn "internal admin page is not reachable yet (HTTP ${internal_page_status:-none}); configure Front Door/DNS before live use"
   fi
