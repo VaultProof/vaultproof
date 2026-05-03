@@ -537,6 +537,7 @@ Implementation/test order:
 47. [x] Origin TLS report-only SSH handling slice: make `npm run verify:enterprise-origin-tls` warn instead of aborting when VM-local SSH checks cannot connect in report-only mode, while keeping strict cutover mode fail-closed.
 48. [x] Origin TLS DNS guardrail slice: extend `npm run prepare:enterprise-origin-tls` with confirmation-gated Azure DNS A-record create/remove actions, Azure DNS zone discovery, and external-DNS guidance when `vaultproof.dev` is not hosted in this subscription.
 49. [x] Runbooks DNS guardrail slice: expose the origin DNS guardrail and `upsert-origin-dns` / `remove-origin-dns` actions from the enterprise `/app/runbooks` page with smoke coverage.
+50. [x] Enterprise login recovery slice: add password-recovery completion UI, prevent recovery links from being treated as normal sign-ins before a new password is set, add explicit email magic-link sign-in, and cover the rendered/script markers in smoke tests.
 
 ### Phase 7: VaultProof Internal Admin Console
 

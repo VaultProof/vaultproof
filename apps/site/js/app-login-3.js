@@ -22,6 +22,7 @@
 
   const sbClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
   const urlParams = new URLSearchParams(window.location.search);
+  const hashParams = new URLSearchParams(window.location.hash.replace(/^#/, ''));
 
   let isRedirecting = false;
 
@@ -126,6 +127,12 @@
     }
     const query = params.toString();
     return `${window.location.origin}/app/login${query ? '?' + query : ''}`;
+  }
+
+  function isRecoveryFlow() {
+    return urlParams.get('auth') === 'recovery'
+      || urlParams.get('type') === 'recovery'
+      || hashParams.get('type') === 'recovery';
   }
 
   function redirectToCli(cliContext, session, user) {
@@ -376,12 +383,26 @@
 
   function showResetForm() {
     $('loginForm').classList.add('hidden');
+    const recoveryForm = $('recoveryForm');
+    if (recoveryForm) recoveryForm.classList.add('hidden');
     $('resetForm').classList.remove('hidden');
   }
 
   function hideResetForm() {
     $('resetForm').classList.add('hidden');
+    const recoveryForm = $('recoveryForm');
+    if (recoveryForm) recoveryForm.classList.add('hidden');
     $('loginForm').classList.remove('hidden');
+  }
+
+  function showRecoveryForm(message) {
+    const loginForm = $('loginForm');
+    const resetForm = $('resetForm');
+    const recoveryForm = $('recoveryForm');
+    if (loginForm) loginForm.classList.add('hidden');
+    if (resetForm) resetForm.classList.add('hidden');
+    if (recoveryForm) recoveryForm.classList.remove('hidden');
+    if (message) setInlineStatus($('recoveryStatus'), message, 'info');
   }
 
   async function loginWithProvider(provider, cliContext) {
@@ -522,7 +543,7 @@
     }
   }
 
-  async function handleReset() {
+  async function handleReset(cliContext) {
     const email = $('resetEmail').value;
     const btn = $('resetBtn');
     const status = $('resetStatus');
@@ -531,7 +552,7 @@
     btn.disabled = true;
 
     const { error } = await sbClient.auth.resetPasswordForEmail(email, {
-      redirectTo: window.location.origin + '/app/login',
+      redirectTo: buildLoginRedirectUrl(cliContext, { auth: 'recovery' }),
     });
 
     if (error) {
@@ -542,6 +563,69 @@
 
     btn.textContent = 'Send reset link';
     btn.disabled = false;
+  }
+
+  async function handleMagicLink(cliContext) {
+    const email = String($('loginEmail')?.value || '').trim().toLowerCase();
+    const status = $('loginError');
+    if (!email) {
+      setInlineStatus(status, 'Enter your email first, then request a sign-in link.', 'error');
+      return;
+    }
+    const button = $('magicLinkBtn');
+    if (button) {
+      button.disabled = true;
+      button.textContent = 'sending link...';
+    }
+    const { error } = await sbClient.auth.signInWithOtp({
+      email,
+      options: {
+        emailRedirectTo: buildLoginRedirectUrl(cliContext, { auth: 'magic' }),
+        shouldCreateUser: false,
+      },
+    });
+    if (error) {
+      setInlineStatus(status, error.message, 'error');
+    } else {
+      setInlineStatus(status, 'Sign-in link sent. Check your email.', 'success');
+    }
+    if (button) {
+      button.disabled = false;
+      button.textContent = 'email me a sign-in link';
+    }
+  }
+
+  async function handleRecoverySubmit(event, cliContext) {
+    event.preventDefault();
+    const password = String($('newPassword')?.value || '');
+    const confirmPassword = String($('confirmNewPassword')?.value || '');
+    const status = $('recoveryStatus');
+    const button = $('recoveryBtn');
+    if (password.length < 8) {
+      setInlineStatus(status, 'Password must be at least 8 characters.', 'error');
+      return;
+    }
+    if (password !== confirmPassword) {
+      setInlineStatus(status, 'Passwords do not match.', 'error');
+      return;
+    }
+    if (button) {
+      button.disabled = true;
+      button.textContent = 'updating...';
+    }
+    const { data, error } = await sbClient.auth.updateUser({ password });
+    if (error) {
+      setInlineStatus(status, error.message, 'error');
+    } else {
+      setInlineStatus(status, 'Password updated. Routing you now...', 'success');
+      const sessionResult = await sbClient.auth.getSession();
+      const session = sessionResult.data && sessionResult.data.session;
+      await finalizeAuthenticatedSession(session, data.user || (session && session.user), cliContext);
+    }
+    if (button) {
+      button.disabled = false;
+      button.textContent = 'update password';
+    }
   }
 
   function prefillPromoFromUrl() {
@@ -642,10 +726,25 @@
 
   async function handleCodeExchange(cliContext) {
     const confirmCode = urlParams.get('code');
-    if (!confirmCode) return;
+    if (!confirmCode) {
+      if (isRecoveryFlow()) {
+        const result = await sbClient.auth.getSession();
+        const session = result.data && result.data.session;
+        if (session) {
+          showRecoveryForm('Recovery link verified. Choose a new password.');
+        } else {
+          showRecoveryForm('Open the latest reset email link, then choose a new password.');
+        }
+      }
+      return;
+    }
     try {
       const { data, error } = await sbClient.auth.exchangeCodeForSession(confirmCode);
       if (!error && data.session) {
+        if (isRecoveryFlow()) {
+          showRecoveryForm('Recovery link verified. Choose a new password.');
+          return;
+        }
         if (urlParams.get('auth') === 'sso') {
           setSsoStatus(`SSO login completed for ${normalizeSsoDomain(urlParams.get('sso_domain') || localStorage.getItem(SSO_DOMAIN_KEY) || '') || 'your workspace'}. Routing now...`, 'success');
         }
@@ -665,7 +764,7 @@
   }
 
   async function handleExistingSession(cliContext, forceLogout, loopCount) {
-    if (forceLogout || urlParams.get('code') || loopCount >= 3) return;
+    if (forceLogout || urlParams.get('code') || loopCount >= 3 || isRecoveryFlow()) return;
     const result = await sbClient.auth.getSession();
     const session = result.data && result.data.session;
     if (session && !isRedirecting) {
@@ -675,6 +774,10 @@
 
   function bindAuthState(cliContext, forceLogout) {
     sbClient.auth.onAuthStateChange(async function(event, session) {
+      if ((event === 'PASSWORD_RECOVERY' || isRecoveryFlow()) && session && !forceLogout) {
+        showRecoveryForm('Recovery link verified. Choose a new password.');
+        return;
+      }
       if (event === 'SIGNED_IN' && session && !isRedirecting && !forceLogout) {
         await finalizeAuthenticatedSession(session, session.user, cliContext);
       }
@@ -738,7 +841,13 @@
     if (showResetBtn) showResetBtn.addEventListener('click', showResetForm);
 
     const resetBtn = $('resetBtn');
-    if (resetBtn) resetBtn.addEventListener('click', handleReset);
+    if (resetBtn) resetBtn.addEventListener('click', function() { handleReset(cliContext); });
+
+    const magicLinkBtn = $('magicLinkBtn');
+    if (magicLinkBtn) magicLinkBtn.addEventListener('click', function() { handleMagicLink(cliContext); });
+
+    const recoveryForm = $('recoveryForm');
+    if (recoveryForm) recoveryForm.addEventListener('submit', function(event) { handleRecoverySubmit(event, cliContext); });
 
     const backToSigninBtn = $('backToSigninBtn');
     if (backToSigninBtn) backToSigninBtn.addEventListener('click', hideResetForm);

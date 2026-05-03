@@ -2188,6 +2188,8 @@ async function assertEnterpriseLoginRoute() {
     'Manage protected keys, access rules, team members, audit records, and provider settings.',
     'continue with microsoft',
     'Continue with company SAML SSO',
+    'email me a sign-in link',
+    'recoveryForm',
     'back to enterprise homepage',
   ]) {
     if (!html.includes(required)) {
@@ -2211,6 +2213,9 @@ async function assertEnterpriseLoginRoute() {
     || !loginScript.includes('/internal/admin')
     || !loginScript.includes('IS_AZURE_CONTROL_PLANE_HOST')
     || !loginScript.includes("loginWithProvider('azure'")
+    || !loginScript.includes('signInWithOtp')
+    || !loginScript.includes('updateUser({ password })')
+    || !loginScript.includes("auth: 'recovery'")
   ) {
     throw new Error(`Expected enterprise login script to route enterprise users to dashboard, got ${loginScriptResponse.status}`);
   }

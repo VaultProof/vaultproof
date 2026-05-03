@@ -895,6 +895,7 @@
                 </div>
                 <div class="form-row">
                   <button type="button" id="showResetBtn" class="text-button">forgot password?</button>
+                  <button type="button" id="magicLinkBtn" class="text-button">email me a sign-in link</button>
                 </div>
                 <div id="loginError" class="hidden"></div>
                 <button type="submit" id="loginBtn" class="btn btn-primary">sign in</button>
@@ -913,6 +914,26 @@
                 <button type="button" id="resetBtn" class="btn btn-primary">send reset link</button>
                 <button type="button" id="backToSigninBtn" class="text-button">back to sign in</button>
               </div>
+
+              <form id="recoveryForm" class="form-stack hidden">
+                <p class="reset-copy">Choose a new password for this account.</p>
+                <div class="input-icon">
+                  <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                    <rect x="5" y="11" width="14" height="10" rx="2" stroke="currentColor" stroke-width="1.5"/>
+                    <path d="M8 11V7C8 4.79 9.79 3 12 3C14.21 3 16 4.79 16 7V11" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+                  </svg>
+                  <input type="password" id="newPassword" required minlength="8" class="form-input" placeholder="new password" />
+                </div>
+                <div class="input-icon">
+                  <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                    <rect x="5" y="11" width="14" height="10" rx="2" stroke="currentColor" stroke-width="1.5"/>
+                    <path d="M8 11V7C8 4.79 9.79 3 12 3C14.21 3 16 4.79 16 7V11" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+                  </svg>
+                  <input type="password" id="confirmNewPassword" required minlength="8" class="form-input" placeholder="confirm new password" />
+                </div>
+                <div id="recoveryStatus" class="hidden"></div>
+                <button type="submit" id="recoveryBtn" class="btn btn-primary">update password</button>
+              </form>
 
               <form id="registerForm" class="form-stack hidden">
                 <div class="input-icon">

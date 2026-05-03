@@ -382,7 +382,7 @@ export function renderEnterpriseLoginPage(env: EnterpriseControlPlaneEnv = {}): 
           <form id="loginForm" class="form-stack">
             <div class="input-icon"><input type="email" id="loginEmail" required class="form-input" placeholder="you@example.com" /></div>
             <div class="input-icon"><input type="password" id="loginPassword" required class="form-input" placeholder="password" /></div>
-            <div class="form-row"><button type="button" id="showResetBtn" class="text-button">forgot password?</button></div>
+            <div class="form-row"><button type="button" id="showResetBtn" class="text-button">forgot password?</button><button type="button" id="magicLinkBtn" class="text-button">email me a sign-in link</button></div>
             <div id="loginError" class="hidden"></div>
             <button type="submit" id="loginBtn" class="btn btn-primary">sign in</button>
           </form>
@@ -394,6 +394,14 @@ export function renderEnterpriseLoginPage(env: EnterpriseControlPlaneEnv = {}): 
             <button type="button" id="resetBtn" class="btn btn-primary">send reset link</button>
             <button type="button" id="backToSigninBtn" class="text-button">back to sign in</button>
           </div>
+
+          <form id="recoveryForm" class="form-stack hidden">
+            <p class="reset-copy">Choose a new password for this account.</p>
+            <div class="input-icon"><input type="password" id="newPassword" required minlength="8" class="form-input" placeholder="new password" /></div>
+            <div class="input-icon"><input type="password" id="confirmNewPassword" required minlength="8" class="form-input" placeholder="confirm new password" /></div>
+            <div id="recoveryStatus" class="hidden"></div>
+            <button type="submit" id="recoveryBtn" class="btn btn-primary">update password</button>
+          </form>
         </div>
 
         <p class="legal">Enterprise access is invite-only. If your credentials do not work, ask your VaultProof admin to invite you or enable SSO for your company domain.</p>
