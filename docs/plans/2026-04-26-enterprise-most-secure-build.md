@@ -559,7 +559,7 @@ Implementation/test order:
 5. [x] Add persistent internal admin audit table and non-blocking overview access logging for employee page views. Future write actions must use the same stream.
 6. [x] Add read-only org detail page/API with user/member timeline, SSO setup checklist, service-role-only support notes, evidence links, and employee access audit logging.
 7. [x] Add safe admin actions one at a time: support-note creation, invitation create, invitation resend-request, invitation revoke, and business plan/status updates are built behind disabled-by-default action gating plus an approval secret header; disable org access live execution remains pending and blocked.
-8. [ ] Add approval gates for destructive actions and break-glass workflows. In progress: destructive `disable_org_access` requests can be created, approved, rejected, dry-run planned, and rollback dry-run planned with two-employee separation, rollback payload capture, execution records, and audit logging, but live execution is intentionally not wired yet.
+8. [ ] Add approval gates for destructive actions and break-glass workflows. In progress: destructive `disable_org_access` requests require customer authorization, rollback owner, rollback plan, and break-glass reason evidence before they can be recorded; they can then be approved, rejected, dry-run planned, and rollback dry-run planned with two-employee separation, rollback payload capture, execution records, and audit logging. Live execution is intentionally not wired yet.
 
 ## Azure Resources
 

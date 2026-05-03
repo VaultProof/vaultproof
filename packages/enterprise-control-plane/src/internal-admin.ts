@@ -107,6 +107,13 @@ interface InternalAdminActionExecutionRecordRow {
   created_at: string;
 }
 
+interface InternalAdminBreakGlassEvidence {
+  customer_authorization_ref: string;
+  rollback_owner_email: string;
+  rollback_plan_summary: string;
+  break_glass_reason: string;
+}
+
 function csvList(value?: string): string[] {
   return (value || '')
     .split(',')
@@ -371,6 +378,73 @@ function validateBusinessStatus(value: unknown): InternalAdminBusinessStatusRow[
 
 function validateInternalAdminActionType(value: unknown): InternalAdminActionRequestRow['action_type'] | null {
   return value === 'disable_org_access' ? value : null;
+}
+
+function requiredPayloadString(
+  payload: Record<string, unknown>,
+  fieldName: keyof InternalAdminBreakGlassEvidence,
+  label: string,
+  minLength: number,
+  maxLength: number,
+): string | Response {
+  const value = typeof payload[fieldName] === 'string' ? payload[fieldName].trim() : '';
+  if (value.length < minLength) {
+    return Response.json({ error: `${label} is required for destructive action requests.` }, { status: 400 });
+  }
+  if (value.length > maxLength) {
+    return Response.json({ error: `${label} must be ${maxLength} characters or fewer.` }, { status: 400 });
+  }
+  return value;
+}
+
+function validateBreakGlassEvidence(
+  payload: Record<string, unknown>,
+): InternalAdminBreakGlassEvidence | Response {
+  const customerAuthorizationRef = requiredPayloadString(
+    payload,
+    'customer_authorization_ref',
+    'customer_authorization_ref',
+    6,
+    160,
+  );
+  if (customerAuthorizationRef instanceof Response) return customerAuthorizationRef;
+
+  const rollbackOwnerEmail = requiredPayloadString(
+    payload,
+    'rollback_owner_email',
+    'rollback_owner_email',
+    6,
+    254,
+  );
+  if (rollbackOwnerEmail instanceof Response) return rollbackOwnerEmail;
+  if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(rollbackOwnerEmail)) {
+    return Response.json({ error: 'rollback_owner_email must be a valid email address.' }, { status: 400 });
+  }
+
+  const rollbackPlanSummary = requiredPayloadString(
+    payload,
+    'rollback_plan_summary',
+    'rollback_plan_summary',
+    12,
+    1000,
+  );
+  if (rollbackPlanSummary instanceof Response) return rollbackPlanSummary;
+
+  const breakGlassReason = requiredPayloadString(
+    payload,
+    'break_glass_reason',
+    'break_glass_reason',
+    12,
+    1000,
+  );
+  if (breakGlassReason instanceof Response) return breakGlassReason;
+
+  return {
+    customer_authorization_ref: customerAuthorizationRef,
+    rollback_owner_email: rollbackOwnerEmail.toLowerCase(),
+    rollback_plan_summary: rollbackPlanSummary,
+    break_glass_reason: breakGlassReason,
+  };
 }
 
 async function getRecentInternalAdminAudit(
@@ -1609,6 +1683,12 @@ async function handleCreateInternalAdminActionRequest(
   const requestedPayload = body.requested_payload && typeof body.requested_payload === 'object' && !Array.isArray(body.requested_payload)
     ? body.requested_payload as Record<string, unknown>
     : {};
+  const breakGlassEvidence = validateBreakGlassEvidence(requestedPayload);
+  if (breakGlassEvidence instanceof Response) return breakGlassEvidence;
+  const safeRequestedPayload = {
+    ...requestedPayload,
+    ...breakGlassEvidence,
+  };
 
   const orgError = await ensureInternalAdminOrganizationExists(env, orgId);
   if (orgError) return orgError;
@@ -1622,11 +1702,13 @@ async function handleCreateInternalAdminActionRequest(
       risk_level: 'critical',
       status: 'pending',
       reason,
-      requested_payload: requestedPayload,
+      requested_payload: safeRequestedPayload,
       requested_by_user_id: authorized.auth.userId,
       requested_by_email: authorized.auth.email,
       metadata: {
         approval_header_present: true,
+        break_glass_evidence_present: true,
+        rollback_owner_email: breakGlassEvidence.rollback_owner_email,
         execution_wired: false,
       },
       created_at: now,
@@ -1650,6 +1732,8 @@ async function handleCreateInternalAdminActionRequest(
       action_request_id: actionRequest?.id || null,
       action_type: actionType,
       risk_level: 'critical',
+      customer_authorization_ref: breakGlassEvidence.customer_authorization_ref,
+      rollback_owner_email: breakGlassEvidence.rollback_owner_email,
     },
   );
 
@@ -1659,6 +1743,7 @@ async function handleCreateInternalAdminActionRequest(
     guardrails: [
       'Destructive action requests require internal admin actions to be enabled.',
       'Destructive action requests require the approval secret header.',
+      'Destructive action requests require customer authorization, rollback owner, rollback plan, and break-glass reason evidence.',
       'This only creates a request. Disable-org execution is intentionally not wired until rollback/break-glass controls are finalized.',
     ],
   }, {
@@ -1854,13 +1939,18 @@ async function handlePlanInternalAdminActionExecution(
     organization.kind !== 'team' ? 'only team organizations can be disabled' : null,
     organization.archived_at ? 'organization is already archived/disabled' : null,
   ].filter(Boolean) as string[];
+  const breakGlassEvidence = validateBreakGlassEvidence(actionRequest.requested_payload || {});
+  const breakGlassBlockers = breakGlassEvidence instanceof Response
+    ? ['action request is missing required break-glass evidence']
+    : [];
   const preflightResult = {
     action_type: actionRequest.action_type,
     execution_mode: 'dry_run',
     execution_enabled: false,
     would_set_archived_at: !organization.archived_at,
     would_set_archived_by_user_id: authorized.auth.userId,
-    blockers,
+    blockers: [...blockers, ...breakGlassBlockers],
+    break_glass_evidence: breakGlassEvidence instanceof Response ? null : breakGlassEvidence,
     warnings: [
       'Live disable-org execution is intentionally not enabled from this endpoint.',
       'Confirm customer authorization and rollback owner before live execution is added.',

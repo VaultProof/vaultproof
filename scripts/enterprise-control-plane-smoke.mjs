@@ -141,6 +141,10 @@ function installSupabaseStub() {
     reason: 'Customer requested temporary access pause during incident response.',
     requested_payload: {
       requested_duration: '24h',
+      customer_authorization_ref: 'ticket-CUST-123',
+      rollback_owner_email: 'ops@vaultproof.dev',
+      rollback_plan_summary: 'Restore the previous organization archive fields from the captured rollback payload.',
+      break_glass_reason: 'Customer confirmed emergency access pause during incident response.',
     },
     requested_by_user_id: 'user_456',
     requested_by_email: 'security@vaultproof.dev',
@@ -3132,7 +3136,7 @@ async function assertInternalAdminConsole() {
     throw new Error(`Expected destructive action request creation to be disabled by default, got ${disabledActionRequestResponse.status}`);
   }
 
-  const actionRequestResponse = await handleEnterpriseControlPlaneRequest(
+  const missingBreakGlassResponse = await handleEnterpriseControlPlaneRequest(
     buildHostRequest(INTERNAL_ADMIN_HOSTNAME, '/api/v1/internal-admin/orgs/org_123/action-requests', {
       method: 'POST',
       headers: {
@@ -3154,9 +3158,40 @@ async function assertInternalAdminConsole() {
       internalAdminApprovalSecret: 'approval-secret',
     },
   );
+  if (missingBreakGlassResponse.status !== 400) {
+    throw new Error(`Expected destructive action request to require break-glass evidence, got ${missingBreakGlassResponse.status}`);
+  }
+
+  const actionRequestResponse = await handleEnterpriseControlPlaneRequest(
+    buildHostRequest(INTERNAL_ADMIN_HOSTNAME, '/api/v1/internal-admin/orgs/org_123/action-requests', {
+      method: 'POST',
+      headers: {
+        authorization: `Bearer ${AUTH_TOKEN}`,
+        'content-type': 'application/json',
+        'x-vaultproof-internal-admin-approval': 'approval-secret',
+      },
+      body: JSON.stringify({
+        action_type: 'disable_org_access',
+        reason: 'Customer requested temporary disable during incident response.',
+        requested_payload: {
+          requested_duration: '24h',
+          customer_authorization_ref: 'ticket-CUST-456',
+          rollback_owner_email: 'ops@vaultproof.dev',
+          rollback_plan_summary: 'Restore the previous organization archive fields from the captured rollback payload.',
+          break_glass_reason: 'Customer confirmed emergency access pause during incident response.',
+        },
+      }),
+    }),
+    {
+      ...env,
+      internalAdminActionsEnabled: true,
+      internalAdminApprovalSecret: 'approval-secret',
+    },
+  );
   const actionRequestPayload = await actionRequestResponse.json();
   if (actionRequestResponse.status !== 201
     || actionRequestPayload.action_request?.action_type !== 'disable_org_access'
+    || actionRequestPayload.action_request?.requested_payload?.rollback_owner_email !== 'ops@vaultproof.dev'
     || actionRequestPayload.execution_enabled !== false) {
     throw new Error(`Expected approved destructive action request creation, got ${actionRequestResponse.status}: ${JSON.stringify(actionRequestPayload)}`);
   }
@@ -3264,7 +3299,8 @@ async function assertInternalAdminConsole() {
   if (executePlanResponse.status !== 201
     || executePlanPayload.execution_enabled !== false
     || executePlanPayload.execution_record?.execution_mode !== 'dry_run'
-    || executePlanPayload.execution_record?.status !== 'planned') {
+    || executePlanPayload.execution_record?.status !== 'planned'
+    || executePlanPayload.preflight_result?.break_glass_evidence?.customer_authorization_ref !== 'ticket-CUST-456') {
     throw new Error(`Expected approved destructive action dry-run execution plan, got ${executePlanResponse.status}: ${JSON.stringify(executePlanPayload)}`);
   }
   if (executePlanPayload.preflight_result?.would_set_archived_at !== true
