@@ -1,6 +1,8 @@
 export type EnterpriseAppNavPage =
   | 'dashboard'
   | 'projects'
+  | 'readiness'
+  | 'health'
   | 'activity'
   | 'alerts'
   | 'control'
@@ -14,7 +16,8 @@ export type EnterpriseAppNavPage =
   | 'settings'
   | 'plans'
   | 'scanner'
-  | 'runbooks';
+  | 'runbooks'
+  | 'admin';
 
 function escapeHtml(value: string): string {
   return value
@@ -25,409 +28,587 @@ function escapeHtml(value: string): string {
     .replace(/'/g, '&#039;');
 }
 
-function enterpriseAppNavLink(activePage: EnterpriseAppNavPage, page: EnterpriseAppNavPage, href: string, label: string, pill = ''): string {
-  const active = activePage === page;
-  return `<a class="nav-link${active ? ' active' : ''}" href="${href}"${active ? ' aria-current="page"' : ''}><span>${label}</span>${pill ? `<span class="nav-pill">${pill}</span>` : ''}</a>`;
+const ENTERPRISE_SIDEBAR_SUBTITLE = 'confidential dashboard';
+
+interface EnterpriseSidebarNavItem {
+  readonly page?: EnterpriseAppNavPage;
+  readonly href: string;
+  readonly label: string;
+  readonly blurb: string;
+  readonly id?: string;
+  readonly pill?: string;
+  readonly activePill?: string;
+  readonly className?: string;
+  readonly external?: boolean;
 }
 
-export function renderEnterpriseAppSidebar(activePage: EnterpriseAppNavPage, subtitle = 'Azure confidential dashboard'): string {
+interface EnterpriseSidebarNavGroup {
+  readonly label: string;
+  readonly items: readonly EnterpriseSidebarNavItem[];
+}
+
+const ENTERPRISE_SIDEBAR_NAV_GROUPS: readonly EnterpriseSidebarNavGroup[] = [
+  {
+    label: 'workspace',
+    items: [
+      {
+        page: 'dashboard',
+        href: '/app/dashboard',
+        label: 'Dashboard',
+        blurb: 'Runtime posture, access, evidence, and urgent actions.',
+        activePill: 'new',
+      },
+      {
+        page: 'projects',
+        href: '/app/projects',
+        label: 'Projects',
+        blurb: 'Project inventory, usage, and provider slot posture.',
+      },
+      {
+        page: 'readiness',
+        href: '/readiness',
+        label: 'Readiness',
+        blurb: 'Production gate for runtime, executor, and key custody.',
+        external: true,
+      },
+      {
+        page: 'health',
+        href: '/health',
+        label: 'Health',
+        blurb: 'Lightweight status for the control plane and edge.',
+        external: true,
+      },
+      {
+        page: 'activity',
+        href: '/app/activity',
+        label: 'Activity',
+        blurb: 'Runtime events, request IDs, latency, and outcomes.',
+      },
+      {
+        page: 'alerts',
+        href: '/app/alerts',
+        label: 'Alerts',
+        blurb: 'Destinations, delivery tests, and incident notices.',
+      },
+      {
+        page: 'control',
+        href: '/app/control',
+        label: 'Control',
+        blurb: 'Project policy, caller lock, limits, and secure execution.',
+      },
+      {
+        page: 'verifier',
+        href: '/app/verifier',
+        label: 'AI Proof Verifier',
+        blurb: 'Register external models and validate proof bundles.',
+        pill: 'beta',
+      },
+      {
+        page: 'org',
+        href: '/app/org',
+        label: 'Org + SSO',
+        blurb: 'Enterprise identity, Entra SSO, roles, and domains.',
+      },
+    ],
+  },
+  {
+    label: 'evidence',
+    items: [
+      {
+        page: 'members',
+        href: '/app/members',
+        label: 'Members',
+        blurb: 'People, invitations, roles, and project assignments.',
+      },
+      {
+        page: 'audit',
+        href: '/app/audit',
+        label: 'Audit',
+        blurb: 'Governance and runtime events for review.',
+      },
+      {
+        page: 'keys',
+        href: '/app/keys',
+        label: 'Provider slots',
+        blurb: 'Provider key slots, material mode, and emergency revoke.',
+      },
+      {
+        id: 'auditExportLink',
+        href: '/api/v1/enterprise/audit?format=csv&days=30',
+        label: 'Audit CSV',
+        blurb: 'Download the last 30 days of audit evidence.',
+      },
+      {
+        id: 'accessReviewLink',
+        href: '/api/v1/enterprise/members/access-review?format=csv',
+        label: 'Access review CSV',
+        blurb: 'Export members, roles, and project access.',
+      },
+    ],
+  },
+  {
+    label: 'guides',
+    items: [
+      {
+        page: 'setup',
+        href: '/app/setup',
+        label: 'Setup guide',
+        blurb: 'Implementation guide for enterprise rollout.',
+      },
+      {
+        page: 'technical-guide',
+        href: '/app/technical-guide',
+        label: 'Technical guide',
+        blurb: 'Identity, network, custody, attestation, and debugging.',
+      },
+      {
+        page: 'settings',
+        href: '/app/settings',
+        label: 'Settings',
+        blurb: 'Tenant defaults and organization notices.',
+      },
+      {
+        page: 'plans',
+        href: '/app/plans',
+        label: 'Plans',
+        blurb: 'Launch readiness, limits, and handoff notes.',
+      },
+      {
+        page: 'scanner',
+        href: '/app/scanner',
+        label: 'Scanner',
+        blurb: 'Repository scanner launch checklist.',
+      },
+      {
+        page: 'runbooks',
+        href: '/app/runbooks',
+        label: 'Runbooks',
+        blurb: 'Deploy, evidence, rotation, DNS, edge, and cleanup.',
+      },
+    ],
+  },
+  {
+    label: 'help',
+    items: [
+      {
+        href: 'https://vaultproof.dev/docs',
+        label: 'Docs',
+        blurb: 'Public product docs and enterprise references.',
+        external: true,
+      },
+      {
+        href: 'https://vaultproof.dev/status',
+        label: 'Status',
+        blurb: 'Service availability and incident updates.',
+        external: true,
+      },
+      {
+        href: 'mailto:hello@vaultproof.dev',
+        label: 'Support',
+        blurb: 'Reach the VaultProof team.',
+      },
+      {
+        page: 'admin',
+        href: 'https://admin.vaultproof.dev/internal/admin',
+        label: 'Admin',
+        blurb: 'Internal customer support and operations console.',
+        external: true,
+      },
+      {
+        href: '/app/logout',
+        label: 'Sign out',
+        blurb: 'End the current enterprise session.',
+        className: 'signout-link',
+      },
+    ],
+  },
+];
+
+function enterpriseAppNavLink(activePage: EnterpriseAppNavPage, item: EnterpriseSidebarNavItem): string {
+  const active = item.page === activePage;
+  const className = ['nav-link', active ? 'active' : '', item.className || ''].filter(Boolean).join(' ');
+  const activePill = active && item.activePill ? item.activePill : '';
+  const pill = item.pill || activePill;
+  const isExternalUrl = item.external && /^https?:\/\//.test(item.href);
+  const targetAttrs = isExternalUrl ? ' target="_blank" rel="noopener"' : '';
+  return `<a class="${className}"${item.id ? ` id="${escapeHtml(item.id)}"` : ''} href="${escapeHtml(item.href)}"${active ? ' aria-current="page"' : ''}${targetAttrs}>
+          <span class="nav-link-main">
+            <span class="nav-link-label">${escapeHtml(item.label)}</span>
+            ${pill ? `<span class="nav-pill">${escapeHtml(pill)}</span>` : active ? '<span class="nav-active-dot" aria-hidden="true"></span>' : ''}
+          </span>
+          <span class="nav-link-blurb">${escapeHtml(item.blurb)}</span>
+        </a>`;
+}
+
+function enterpriseSidebarNavGroup(activePage: EnterpriseAppNavPage, group: EnterpriseSidebarNavGroup): string {
+  return `<div class="nav-group">
+        <div class="nav-label">${escapeHtml(group.label)}</div>
+        ${group.items.map((item) => enterpriseAppNavLink(activePage, item)).join('')}
+      </div>`;
+}
+
+export function renderEnterpriseAppSidebar(activePage: EnterpriseAppNavPage, _subtitle = ENTERPRISE_SIDEBAR_SUBTITLE): string {
+  const sidebarSubtitle = ENTERPRISE_SIDEBAR_SUBTITLE;
+
   return `<aside class="sidebar enterprise-app-sidebar" data-enterprise-sidebar="universal">
-      <div class="brand">
-        <div class="mark">VP</div>
-        <div>
+      <div class="sidebar-panel">
+        <div class="brand">
           <div class="brand-title">VaultProof Enterprise</div>
-          <div class="brand-sub">${escapeHtml(subtitle)}</div>
+          <div class="brand-sub">${escapeHtml(sidebarSubtitle)}</div>
         </div>
+        <div class="workspace-card">
+          <div class="workspace-kicker">Organization Workspace</div>
+          <div class="workspace-title">Provisioned organization</div>
+          <p>VaultProof creates and manages the enterprise workspace for each organization.</p>
+          <span>Workspace selection is controlled by the organization.</span>
+        </div>
+        <nav class="nav-groups" aria-label="Enterprise workspace navigation">
+          ${ENTERPRISE_SIDEBAR_NAV_GROUPS.map((group) => enterpriseSidebarNavGroup(activePage, group)).join('')}
+        </nav>
       </div>
-      <div class="nav-group">
-        <div class="nav-label">workspace</div>
-        ${enterpriseAppNavLink(activePage, 'dashboard', '/app/dashboard', 'Dashboard', activePage === 'dashboard' ? 'new' : '')}
-        ${enterpriseAppNavLink(activePage, 'projects', '/app/projects', 'Projects')}
-        ${enterpriseAppNavLink(activePage, 'activity', '/app/activity', 'Activity')}
-        ${enterpriseAppNavLink(activePage, 'alerts', '/app/alerts', 'Alerts')}
-        ${enterpriseAppNavLink(activePage, 'control', '/app/control', 'Control')}
-        ${enterpriseAppNavLink(activePage, 'verifier', '/app/verifier', 'AI Proof Verifier', activePage === 'verifier' ? 'beta' : '')}
-        ${enterpriseAppNavLink(activePage, 'org', '/app/org', 'Org + SSO')}
-      </div>
-      <div class="nav-group">
-        <div class="nav-label">evidence</div>
-        ${enterpriseAppNavLink(activePage, 'members', '/app/members', 'Members')}
-        ${enterpriseAppNavLink(activePage, 'audit', '/app/audit', 'Audit')}
-        ${enterpriseAppNavLink(activePage, 'keys', '/app/keys', 'Provider slots')}
-        <a class="nav-link" id="auditExportLink" href="/api/v1/enterprise/audit?format=csv&days=30"><span>Audit CSV</span></a>
-        <a class="nav-link" id="accessReviewLink" href="/api/v1/enterprise/members/access-review?format=csv"><span>Access review CSV</span></a>
-      </div>
-      <div class="nav-group">
-        <div class="nav-label">setup</div>
-        ${enterpriseAppNavLink(activePage, 'setup', '/app/setup', 'Setup guide', activePage === 'setup' ? 'start' : '')}
-        ${enterpriseAppNavLink(activePage, 'technical-guide', '/app/technical-guide', 'Technical guide')}
-        ${enterpriseAppNavLink(activePage, 'settings', '/app/settings', 'Settings')}
-        ${enterpriseAppNavLink(activePage, 'plans', '/app/plans', 'Plans')}
-        ${enterpriseAppNavLink(activePage, 'scanner', '/app/scanner', 'Scanner')}
-        ${enterpriseAppNavLink(activePage, 'runbooks', '/app/runbooks', 'Runbooks')}
-        <a class="nav-link signout-link" href="/app/logout"><span>Sign out</span></a>
-      </div>
-      <div class="sidebar-card">
-        <strong>Setup order</strong>
-        Connect the org, invite the right people, configure projects, confirm readiness, then monitor daily use.
-      </div>
-      <button id="enterpriseThemeToggle" class="theme-toggle" type="button" aria-label="Switch to light mode" aria-pressed="false">
-        <span class="theme-dot" aria-hidden="true"></span>
-        <span id="enterpriseThemeToggleLabel">Dark mode</span>
-      </button>
-      ${ENTERPRISE_THEME_BOOT_SCRIPT}
     </aside>`;
 }
 
-export const ENTERPRISE_THEME_BOOT_SCRIPT = `<script>
-    (function() {
-      var key = 'vaultproof_enterprise_theme';
-      function getStoredTheme() {
-        try {
-          var value = window.localStorage.getItem(key);
-          return value === 'light' || value === 'dark' ? value : 'dark';
-        } catch (error) {
-          return 'dark';
-        }
-      }
-      function setStoredTheme(theme) {
-        try { window.localStorage.setItem(key, theme); } catch (error) {}
-      }
-      function updateToggle(theme) {
-        var button = document.getElementById('enterpriseThemeToggle');
-        var label = document.getElementById('enterpriseThemeToggleLabel');
-        if (!button || !label) return;
-        var isLight = theme === 'light';
-        button.setAttribute('aria-pressed', isLight ? 'true' : 'false');
-        button.setAttribute('aria-label', isLight ? 'Switch to dark mode' : 'Switch to light mode');
-        label.textContent = isLight ? 'Light mode' : 'Dark mode';
-      }
-      function applyTheme(theme) {
-        document.documentElement.setAttribute('data-enterprise-theme', theme);
-        document.documentElement.style.colorScheme = theme;
-        updateToggle(theme);
-      }
-      var initialTheme = getStoredTheme();
-      applyTheme(initialTheme);
-      window.__vaultproofApplyEnterpriseTheme = applyTheme;
-      document.addEventListener('DOMContentLoaded', function() {
-        applyTheme(getStoredTheme());
-        var button = document.getElementById('enterpriseThemeToggle');
-        if (!button) return;
-        button.addEventListener('click', function() {
-          var current = document.documentElement.getAttribute('data-enterprise-theme') || getStoredTheme();
-          var next = current === 'light' ? 'dark' : 'light';
-          setStoredTheme(next);
-          applyTheme(next);
-        });
-      });
-    })();
-  </script>`;
-
 export const ENTERPRISE_APP_SHELL_THEME = `
     /* enterprise-universal-sidebar */
-    :root,
-    html[data-enterprise-theme="dark"] {
-      color-scheme: dark;
-      --bg: #07110f;
-      --bg-mid: rgba(237, 229, 204, 0.08);
-      --bg-card: rgba(237, 229, 204, 0.08);
-      --panel: rgba(237, 229, 204, 0.09);
-      --panel-strong: rgba(237, 229, 204, 0.14);
-      --card-bg: linear-gradient(180deg, rgba(237, 229, 204, 0.13), rgba(237, 229, 204, 0.055));
-      --row-bg: rgba(3, 8, 7, 0.28);
-      --sidebar-bg: rgba(3, 8, 7, 0.66);
-      --sidebar-card-bg: linear-gradient(180deg, rgba(237, 229, 204, 0.1), rgba(3, 8, 7, 0.24));
-      --control-bg: rgba(237, 229, 204, 0.08);
-      --page-bg:
-        radial-gradient(circle at 15% 10%, rgba(215, 168, 75, 0.24), transparent 32rem),
-        radial-gradient(circle at 85% 0%, rgba(110, 231, 183, 0.16), transparent 28rem),
-        linear-gradient(135deg, #06100e 0%, #10231d 45%, #050807 100%);
-      --line: rgba(237, 229, 204, 0.16);
-      --line-soft: rgba(237, 229, 204, 0.1);
-      --rule: 1px solid rgba(237, 229, 204, 0.16);
-      --hair: 1px solid rgba(237, 229, 204, 0.1);
-      --text: #f4ecd5;
-      --text-muted: #a9b7a6;
-      --text-faint: #8f9b8b;
-      --muted: #a9b7a6;
-      --nav-text: #d8dfcf;
-      --action-text: #e8ddbf;
-      --gold: #d7a84b;
-      --green: #6ee7b7;
-      --red: #fb7185;
-      --blue: #93c5fd;
-      --ok: #6ee7b7;
-      --warn: #d7a84b;
-      --danger: #fb7185;
-      --ink: #07110f;
-      --option-bg: #ffffff;
-      --option-text: #111827;
-      --shadow: 0 22px 90px rgba(0, 0, 0, 0.2);
-    }
-    html[data-enterprise-theme="light"] {
+    :root {
       color-scheme: light;
-      --bg: #f5efe3;
-      --bg-mid: rgba(95, 73, 40, 0.07);
-      --bg-card: rgba(255, 252, 246, 0.82);
-      --panel: rgba(255, 252, 246, 0.72);
-      --panel-strong: rgba(255, 252, 246, 0.92);
-      --card-bg: linear-gradient(180deg, rgba(255, 252, 246, 0.96), rgba(239, 230, 214, 0.74));
-      --row-bg: rgba(255, 252, 246, 0.78);
-      --sidebar-bg: rgba(255, 250, 240, 0.88);
-      --sidebar-card-bg: linear-gradient(180deg, rgba(255, 252, 246, 0.95), rgba(236, 225, 205, 0.72));
-      --control-bg: rgba(255, 252, 246, 0.78);
-      --page-bg:
-        radial-gradient(circle at 16% 8%, rgba(189, 131, 46, 0.16), transparent 31rem),
-        radial-gradient(circle at 86% 0%, rgba(22, 101, 72, 0.11), transparent 29rem),
-        linear-gradient(135deg, #f8f2e8 0%, #eee4d2 48%, #fbf7ee 100%);
-      --line: rgba(60, 48, 31, 0.18);
-      --line-soft: rgba(60, 48, 31, 0.1);
-      --rule: 1px solid rgba(60, 48, 31, 0.18);
-      --hair: 1px solid rgba(60, 48, 31, 0.1);
-      --text: #17130d;
-      --text-muted: #4f594a;
-      --text-faint: #6f7568;
-      --muted: #4f594a;
-      --nav-text: #2f352d;
-      --action-text: #2f2617;
-      --gold: #8a5a00;
-      --green: #047857;
-      --red: #b91c1c;
-      --blue: #1d4ed8;
-      --ok: #047857;
-      --warn: #8a5a00;
-      --danger: #b91c1c;
-      --ink: #fff8ea;
-      --option-bg: #fffaf0;
-      --option-text: #17130d;
-      --shadow: 0 20px 70px rgba(72, 56, 31, 0.13);
+      --bg: #f6f7f2;
+      --bg-mid: #edf1ea;
+      --bg-card: rgba(255, 255, 255, 0.88);
+      --paper: #fbfcf8;
+      --surface: #f1f5ef;
+      --panel: rgba(255, 255, 255, 0.76);
+      --panel-strong: rgba(255, 255, 255, 0.96);
+      --card-bg: #ffffff;
+      --row-bg: #f7faf4;
+      --sidebar-bg: #10231d;
+      --sidebar-card-bg: #0a1914;
+      --sidebar-text: #ffffff;
+      --sidebar-muted: rgba(143, 224, 193, 0.78);
+      --sidebar-link: rgba(255, 255, 255, 0.88);
+      --sidebar-link-active-bg: rgba(143, 224, 193, 0.15);
+      --sidebar-link-active-border: rgba(143, 224, 193, 0.40);
+      --control-bg: rgba(255, 255, 255, 0.78);
+      --page-bg: #f6f7f2;
+      --line: rgba(32, 48, 39, 0.14);
+      --line-soft: rgba(32, 48, 39, 0.09);
+      --rule: 1px solid rgba(32, 48, 39, 0.14);
+      --hair: 1px solid rgba(32, 48, 39, 0.09);
+      --text: #17231d;
+      --text-muted: #52625a;
+      --text-faint: #7d8c84;
+      --muted: #52625a;
+      --soft: #7d8c84;
+      --nav-text: #52625a;
+      --action-text: #17231d;
+      --gold: #176b4b;
+      --accent: #176b4b;
+      --accent-soft: rgba(23, 107, 75, 0.13);
+      --green: #176b4b;
+      --red: #b95d50;
+      --blue: #168a9f;
+      --ok: #176b4b;
+      --warn: #8a5a13;
+      --danger: #b95d50;
+      --ink: #ffffff;
+      --primary-bg: #8fe0c1;
+      --primary-text: #10231d;
+      --primary-border: #8fe0c1;
+      --option-bg: #fbfcf8;
+      --option-text: #17231d;
+      --shadow: 0 22px 72px rgba(22, 35, 29, 0.12);
     }
-    html[data-enterprise-theme] body {
+    body {
       background: var(--page-bg) !important;
       color: var(--text) !important;
     }
-    html[data-enterprise-theme] a,
-    html[data-enterprise-theme] .row-title,
-    html[data-enterprise-theme] .list-title,
-    html[data-enterprise-theme] .resource-title,
-    html[data-enterprise-theme] .member-email,
-    html[data-enterprise-theme] .policy-title,
-    html[data-enterprise-theme] .exec-title,
-    html[data-enterprise-theme] .banner-title,
-    html[data-enterprise-theme] h1,
-    html[data-enterprise-theme] h2,
-    html[data-enterprise-theme] h3 {
+    a,
+    .row-title,
+    .list-title,
+    .resource-title,
+    .member-email,
+    .policy-title,
+    .exec-title,
+    .banner-title,
+    h1,
+    h2,
+    h3 {
       color: var(--text);
     }
-    html[data-enterprise-theme] .lead,
-    html[data-enterprise-theme] .mini,
-    html[data-enterprise-theme] .row-sub,
-    html[data-enterprise-theme] .kpi-sub,
-    html[data-enterprise-theme] .page-desc,
-    html[data-enterprise-theme] .page-meta,
-    html[data-enterprise-theme] .list-sub,
-    html[data-enterprise-theme] .resource-copy,
-    html[data-enterprise-theme] .banner-copy,
-    html[data-enterprise-theme] .banner-note,
-    html[data-enterprise-theme] .form-copy,
-    html[data-enterprise-theme] .callout,
-    html[data-enterprise-theme] .business-card p,
-    html[data-enterprise-theme] .intent-card p,
-    html[data-enterprise-theme] .action-card p,
-    html[data-enterprise-theme] .feature-card p,
-    html[data-enterprise-theme] .role-card p {
+    .lead,
+    .mini,
+    .row-sub,
+    .kpi-sub,
+    .page-desc,
+    .page-meta,
+    .list-sub,
+    .resource-copy,
+    .banner-copy,
+    .banner-note,
+    .form-copy,
+    .callout,
+    .business-card p,
+    .intent-card p,
+    .action-card p,
+    .feature-card p,
+    .role-card p {
       color: var(--muted) !important;
     }
-    html[data-enterprise-theme] select,
-    html[data-enterprise-theme] button,
-    html[data-enterprise-theme] input,
-    html[data-enterprise-theme] textarea {
+    select,
+    button,
+    input,
+    textarea {
       background: var(--control-bg);
       color: var(--text);
       border-color: var(--line);
     }
-    html[data-enterprise-theme] option {
+    option {
       background: var(--option-bg);
       color: var(--option-text);
     }
-    html[data-enterprise-theme] .card,
-    html[data-enterprise-theme] .panel,
-    html[data-enterprise-theme] .kpi-grid,
-    html[data-enterprise-theme] .banner,
-    html[data-enterprise-theme] .invite-panel,
-    html[data-enterprise-theme] .action-strip,
-    html[data-enterprise-theme] .member-card,
-    html[data-enterprise-theme] .policy-card,
-    html[data-enterprise-theme] .policy-provider-card,
-    html[data-enterprise-theme] .exec-card,
-    html[data-enterprise-theme] .resource-card,
-    html[data-enterprise-theme] .checklist-box,
-    html[data-enterprise-theme] .callout {
+    .card,
+    .panel,
+    .kpi-grid,
+    .banner,
+    .invite-panel,
+    .action-strip,
+    .member-card,
+    .policy-card,
+    .policy-provider-card,
+    .exec-card,
+    .resource-card,
+    .checklist-box,
+    .callout {
       background: var(--card-bg) !important;
       border-color: var(--line) !important;
       box-shadow: var(--shadow) !important;
       color: var(--text) !important;
     }
-    html[data-enterprise-theme] .row,
-    html[data-enterprise-theme] .list-row,
-    html[data-enterprise-theme] .invite-row,
-    html[data-enterprise-theme] .intent-card,
-    html[data-enterprise-theme] .action-card,
-    html[data-enterprise-theme] .feature-card,
-    html[data-enterprise-theme] .role-card,
-    html[data-enterprise-theme] .tabbar {
+    .row,
+    .list-row,
+    .invite-row,
+    .intent-card,
+    .action-card,
+    .feature-card,
+    .role-card,
+    .tabbar {
       background: var(--row-bg) !important;
       border-color: var(--line-soft) !important;
       color: var(--text) !important;
     }
-    html[data-enterprise-theme] .empty,
-    html[data-enterprise-theme] .notice,
-    html[data-enterprise-theme] .error {
+    .empty,
+    .notice,
+    .error {
       background: var(--row-bg) !important;
       border-color: var(--line) !important;
       color: var(--muted) !important;
     }
-    html[data-enterprise-theme] .action,
-    html[data-enterprise-theme] .tab-button {
+    .action,
+    .tab-button {
       color: var(--action-text) !important;
     }
-    html[data-enterprise-theme] .primary,
-    html[data-enterprise-theme] .tab-button.active,
-    html[data-enterprise-theme] .action.primary {
-      color: var(--ink) !important;
+    .primary,
+    .tab-button.active,
+    .action.primary {
+      background: var(--primary-bg, var(--text)) !important;
+      color: var(--primary-text, var(--bg)) !important;
+      border-color: var(--primary-border, var(--text)) !important;
     }
-    .shell, .layout { display: grid; grid-template-columns: 280px minmax(0, 1fr); min-height: 100vh; }
+    .sidebar:not(.enterprise-app-sidebar),
+    #sidebar:not(.enterprise-app-sidebar) {
+      display: none !important;
+    }
+    .shell, .layout {
+      display: grid;
+      grid-template-columns: 300px minmax(0, 1fr);
+      gap: 20px;
+      min-height: 100vh;
+      max-width: 1480px;
+      margin: 0 auto;
+      padding: 16px 24px;
+    }
+    .main {
+      min-width: 0;
+    }
+    .toolbar #orgSelect {
+      display: none !important;
+    }
     .sidebar.enterprise-app-sidebar {
-      display: flex;
-      flex-direction: column;
-      border-right: 1px solid var(--line);
-      background: var(--sidebar-bg);
-      backdrop-filter: blur(18px);
-      padding: 28px 20px;
-      position: sticky;
-      top: 0;
-      height: 100vh;
+      display: block !important;
+      border: 0;
+      background: transparent;
+      padding: 0;
+      min-height: auto;
       align-self: start;
-      overflow-y: auto;
+      overflow: visible;
+      font-family: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      font-size: 16px;
+      font-weight: 400;
+      line-height: 1.5;
+    }
+    .sidebar.enterprise-app-sidebar,
+    .sidebar.enterprise-app-sidebar * {
+      letter-spacing: 0 !important;
+    }
+    .sidebar.enterprise-app-sidebar .sidebar-panel {
+      background: var(--sidebar-bg);
+      color: var(--sidebar-text);
+      border: 1px solid rgba(143, 224, 193, 0.18);
+      border-radius: 22px;
+      padding: 16px;
+      box-shadow: 0 22px 70px rgba(16, 35, 29, 0.20);
+      overflow: visible;
     }
     .sidebar.enterprise-app-sidebar .brand {
-      display: flex;
-      align-items: center;
-      gap: 12px;
-      margin-bottom: 30px;
-    }
-    .sidebar.enterprise-app-sidebar .mark {
-      width: 38px;
-      height: 38px;
-      border-radius: 14px;
-      display: grid;
-      place-items: center;
-      color: var(--ink);
-      font-weight: 900;
-      background: linear-gradient(135deg, var(--gold), #f3df95);
-      box-shadow: 0 18px 60px rgba(215, 168, 75, 0.18);
-      flex: 0 0 auto;
+      margin-bottom: 14px;
+      padding: 4px 4px 16px;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.10);
     }
     .sidebar.enterprise-app-sidebar .brand-title {
-      font-weight: 850;
-      letter-spacing: -0.03em;
-      color: var(--text);
+      font-weight: 600;
+      font-size: 16px;
+      line-height: 1.12;
+      letter-spacing: 0;
+      color: var(--sidebar-text, var(--text));
     }
     .sidebar.enterprise-app-sidebar .brand-sub {
-      color: var(--muted);
+      color: #8fe0c1;
       font-size: 12px;
-      margin-top: 2px;
-      font-weight: 500;
-    }
-    .sidebar.enterprise-app-sidebar .nav-group { margin: 24px 0; }
-    .sidebar.enterprise-app-sidebar .nav-label {
-      color: var(--muted);
-      font-size: 11px;
+      margin-top: 4px;
+      font-weight: 400;
+      letter-spacing: 0.16em;
       text-transform: uppercase;
-      letter-spacing: 0.12em;
-      margin: 0 0 9px 10px;
+    }
+    .sidebar.enterprise-app-sidebar .workspace-card {
+      border: 1px solid rgba(255, 255, 255, 0.10);
+      background: rgba(255, 255, 255, 0.07);
+      border-radius: 18px;
+      padding: 16px;
+      margin: 0 0 18px;
+    }
+    .sidebar.enterprise-app-sidebar .workspace-kicker {
+      color: #8fe0c1;
+      font-size: 11px;
+      font-weight: 400;
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+    }
+    .sidebar.enterprise-app-sidebar .workspace-title {
+      color: var(--sidebar-text);
+      font-size: 18px;
+      font-weight: 600;
+      margin-top: 12px;
+    }
+    .sidebar.enterprise-app-sidebar .workspace-card p {
+      color: rgba(255, 255, 255, 0.70) !important;
+      margin: 4px 0 14px;
+      font-size: 14px;
+      line-height: 1.5rem;
+    }
+    .sidebar.enterprise-app-sidebar .workspace-card span {
+      display: inline-flex;
+      color: rgba(255, 255, 255, 0.60);
+      border: 1px solid rgba(255, 255, 255, 0.10);
+      background: #0a1914;
+      border-radius: 12px;
+      padding: 10px 12px;
+      font-size: 12px;
+      font-weight: 400;
+      line-height: 1.25rem;
+    }
+    .sidebar.enterprise-app-sidebar .nav-groups {
+      display: grid;
+      gap: 16px;
+    }
+    .sidebar.enterprise-app-sidebar .nav-group { margin: 0; }
+    .sidebar.enterprise-app-sidebar .nav-label {
+      color: rgba(255, 255, 255, 0.35);
+      font-size: 11px;
+      font-weight: 400;
+      text-transform: uppercase;
+      letter-spacing: 0.18em;
+      margin: 0 0 8px 10px;
     }
     .sidebar.enterprise-app-sidebar .nav-link {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      gap: 12px;
-      padding: 11px 12px;
+      display: block;
+      padding: 10px 12px;
       border-radius: 14px;
-      color: var(--nav-text);
-      margin-bottom: 4px;
-      border: 1px solid transparent;
+      color: var(--sidebar-link, var(--nav-text));
+      margin-bottom: 5px;
+      border: 1px solid rgba(255, 255, 255, 0.08);
       text-decoration: none;
+      font-size: 14px;
+      font-weight: 600;
+      line-height: 1.25;
+    }
+    .sidebar.enterprise-app-sidebar .nav-link-main {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      min-width: 0;
+    }
+    .sidebar.enterprise-app-sidebar .nav-link-label {
+      min-width: 0;
+    }
+    .sidebar.enterprise-app-sidebar .nav-link-blurb {
+      display: block;
+      color: rgba(255, 255, 255, 0.55);
+      font-size: 12px;
+      font-weight: 400;
+      line-height: 1.25rem;
+      margin-top: 4px;
     }
     .sidebar.enterprise-app-sidebar .nav-link:hover,
     .sidebar.enterprise-app-sidebar .nav-link.active {
-      background: var(--panel, rgba(237, 229, 204, 0.08));
-      border-color: var(--line);
-      color: var(--text);
+      background: var(--sidebar-link-active-bg, var(--panel));
+      border-color: var(--sidebar-link-active-border, var(--line));
+      color: var(--sidebar-text, var(--text));
+    }
+    .sidebar.enterprise-app-sidebar .nav-link:hover .nav-link-blurb,
+    .sidebar.enterprise-app-sidebar .nav-link.active .nav-link-blurb {
+      color: rgba(255, 255, 255, 0.55);
     }
     .sidebar.enterprise-app-sidebar .signout-link {
-      color: var(--red, #fb7185);
+      color: #ffd1c9;
     }
     .sidebar.enterprise-app-sidebar .signout-link:hover {
-      background: rgba(251, 113, 133, 0.1);
-      border-color: rgba(251, 113, 133, 0.28);
-      color: var(--red, #fb7185);
+      background: rgba(255, 209, 201, 0.12);
+      border-color: rgba(255, 209, 201, 0.26);
+      color: #ffffff;
     }
     .sidebar.enterprise-app-sidebar .nav-pill {
       font-size: 10px;
-      color: var(--green);
-      border: 1px solid rgba(110, 231, 183, 0.24);
+      color: #8fe0c1;
+      border: 1px solid rgba(143, 224, 193, 0.34);
       border-radius: 999px;
       padding: 2px 7px;
+      font-weight: 400;
+      text-transform: uppercase;
     }
-    .sidebar.enterprise-app-sidebar .sidebar-card {
-      border: 1px solid var(--line-soft);
-      border-radius: 18px;
-      padding: 14px;
-      background: var(--sidebar-card-bg);
-      color: var(--muted);
-      font-size: 12px;
-      line-height: 1.45;
-      margin-top: auto;
-    }
-    .sidebar.enterprise-app-sidebar .sidebar-card strong {
-      display: block;
-      color: var(--text);
-      font-size: 13px;
-      margin-bottom: 4px;
-    }
-    .sidebar.enterprise-app-sidebar .theme-toggle {
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      gap: 9px;
-      margin-top: 14px;
+    .sidebar.enterprise-app-sidebar .nav-active-dot {
+      width: 7px;
+      height: 7px;
       border-radius: 999px;
-      padding: 10px 12px;
-      border: 1px solid var(--line);
-      background: var(--control-bg);
-      color: var(--text);
-      cursor: pointer;
-      font: inherit;
-      font-size: 13px;
-      font-weight: 750;
-    }
-    .sidebar.enterprise-app-sidebar .theme-toggle:hover {
-      border-color: rgba(215, 168, 75, 0.45);
-    }
-    .sidebar.enterprise-app-sidebar .theme-dot {
-      width: 10px;
-      height: 10px;
-      border-radius: 999px;
-      background: var(--gold);
-      box-shadow: 0 0 0 4px rgba(215, 168, 75, 0.14);
+      background: #8fe0c1;
+      box-shadow: 0 0 0 4px rgba(143, 224, 193, 0.13);
+      flex: 0 0 auto;
     }
     @media (max-width: 980px) {
-      .shell, .layout { grid-template-columns: 1fr; }
+      .shell, .layout {
+        grid-template-columns: 1fr;
+        padding: 12px;
+      }
       .sidebar.enterprise-app-sidebar {
+        order: 2;
         position: relative;
         height: auto;
+        min-height: auto;
+        display: flex !important;
+      }
+      .main {
+        order: 1;
       }
     }
 `;

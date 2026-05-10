@@ -14,84 +14,186 @@ export function renderEnterpriseDashboardPage(env: EnterpriseControlPlaneEnv = {
   <title>Enterprise Dashboard - VaultProof</title>
   <style>
     :root {
-      color-scheme: dark;
-      --bg: #07110f;
-      --panel: rgba(237, 229, 204, 0.08);
-      --panel-strong: rgba(237, 229, 204, 0.14);
-      --line: rgba(237, 229, 204, 0.16);
-      --text: #f4ecd5;
-      --muted: #a9b7a6;
-      --gold: #d7a84b;
-      --green: #6ee7b7;
-      --red: #fb7185;
-      --blue: #93c5fd;
-      --ink: #07110f;
+      color-scheme: light;
+      --bg: #f6f7f2;
+      --panel: rgba(255, 255, 255, 0.76);
+      --panel-strong: rgba(255, 255, 255, 0.96);
+      --line: rgba(32, 48, 39, 0.14);
+      --text: #17231d;
+      --muted: #52625a;
+      --soft: #7d8c84;
+      --gold: #176b4b;
+      --green: #176b4b;
+      --red: #b95d50;
+      --blue: #168a9f;
+      --ink: #ffffff;
     }
     * { box-sizing: border-box; }
     body {
       margin: 0;
       min-height: 100vh;
       font-family: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      font-weight: 400;
       color: var(--text);
-      background:
-        radial-gradient(circle at 15% 10%, rgba(215, 168, 75, 0.24), transparent 32rem),
-        radial-gradient(circle at 85% 0%, rgba(110, 231, 183, 0.16), transparent 28rem),
-        linear-gradient(135deg, #06100e 0%, #10231d 45%, #050807 100%);
+      background: #f6f7f2;
     }
     a { color: inherit; text-decoration: none; }
     ${ENTERPRISE_APP_SHELL_THEME}
-    .main { padding: 30px; max-width: 1320px; width: 100%; }
+    .enterprise-dashboard-main,
+    .enterprise-dashboard-main * {
+      letter-spacing: 0 !important;
+    }
+    .main.enterprise-dashboard-main {
+      padding: 0;
+      max-width: none;
+      width: 100%;
+    }
+    .enterprise-page-shell {
+      background: #ffffff;
+      border: 1px solid var(--line);
+      border-radius: 24px;
+      padding: 20px;
+      box-shadow: var(--shadow);
+    }
+    .dashboard-head-card,
+    .control-center-card {
+      border: 1px solid var(--line);
+      background: #fbfcf8;
+      border-radius: 20px;
+      padding: 20px;
+    }
+    .dashboard-head-card {
+      margin-bottom: 16px;
+    }
+    .control-center-card {
+      background: #ffffff;
+    }
     .topbar {
       display: flex; justify-content: space-between; align-items: flex-start; gap: 20px;
-      margin-bottom: 26px;
+      margin-bottom: 18px;
     }
-    .eyebrow { color: var(--gold); font-size: 12px; text-transform: uppercase; letter-spacing: 0.16em; font-weight: 800; }
-    h1 { font-size: clamp(34px, 5vw, 66px); letter-spacing: -0.07em; line-height: 0.92; margin: 8px 0 12px; max-width: 760px; }
-    .lead { color: var(--muted); max-width: 760px; font-size: 16px; line-height: 1.6; }
+    .eyebrow {
+      display: inline-flex;
+      color: var(--green);
+      background: rgba(23, 107, 75, 0.10);
+      border: 1px solid rgba(23, 107, 75, 0.18);
+      border-radius: 999px;
+      padding: 6px 9px;
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 0.16em;
+      font-weight: 600;
+    }
+    h1 { font-size: 1.875rem; font-weight: 600; letter-spacing: 0; line-height: 2.25rem; margin: 12px 0 12px; max-width: 760px; }
+    @media (min-width: 640px) {
+      h1 { font-size: 2.6rem; }
+    }
+    .lead { color: var(--muted); max-width: 760px; font-size: 14px; line-height: 1.75; }
+    @media (min-width: 640px) {
+      .lead { font-size: 16px; }
+    }
     .toolbar { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; justify-content: flex-end; }
     select, button {
       border: 1px solid var(--line);
-      background: rgba(237, 229, 204, 0.08);
+      background: var(--control-bg);
       color: var(--text);
       border-radius: 13px;
       padding: 11px 12px;
       font: inherit;
     }
-    option { color: #111827; }
+    option { background: var(--option-bg); color: var(--option-text); }
     button { cursor: pointer; }
     .primary {
-      background: linear-gradient(135deg, var(--gold), #f3df95);
-      color: var(--ink);
-      border: 0;
-      font-weight: 800;
+      background: var(--primary-bg, var(--gold));
+      color: var(--primary-text, var(--text));
+      border-color: var(--primary-border, var(--gold));
+      font-weight: 600;
+    }
+    .dashboard-context-grid {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 12px;
+    }
+    .context-card {
+      display: block;
+      border: 1px solid var(--line-soft);
+      background: #ffffff;
+      border-radius: 16px;
+      padding: 14px;
+      min-height: 116px;
+    }
+    .context-label {
+      color: var(--green);
+      font-size: 11px;
+      font-weight: 600;
+      letter-spacing: 0.16em;
+      text-transform: uppercase;
+    }
+    .context-title {
+      font-size: 17px;
+      font-weight: 600;
+      margin-top: 8px;
+    }
+    .context-copy {
+      color: #5f6f67;
+      font-size: 13px;
+      line-height: 1.5;
+      margin-top: 6px;
+    }
+    .control-center-intro {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      gap: 18px;
+      margin-bottom: 14px;
+    }
+    .control-title {
+      font-size: 22px;
+      font-weight: 600;
+      letter-spacing: 0;
+      margin: 0;
+    }
+    .control-copy {
+      color: #5f6f67;
+      margin: 6px 0 0;
+      max-width: 700px;
+      line-height: 1.5;
+      font-size: 14px;
+    }
+    .control-links {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      justify-content: flex-end;
+      flex: 0 0 auto;
     }
     .grid { display: grid; gap: 16px; }
     .kpis { grid-template-columns: repeat(4, minmax(0, 1fr)); margin-bottom: 16px; }
     .two { grid-template-columns: minmax(0, 1.15fr) minmax(340px, 0.85fr); }
     .card {
       border: 1px solid var(--line);
-      background: linear-gradient(180deg, var(--panel-strong), rgba(237, 229, 204, 0.055));
+      background: var(--card-bg);
       border-radius: 24px;
       padding: 20px;
-      box-shadow: 0 22px 90px rgba(0, 0, 0, 0.2);
+      box-shadow: var(--shadow);
     }
-    .kpi-label { color: var(--muted); font-size: 12px; text-transform: uppercase; letter-spacing: 0.1em; }
-    .kpi-value { font-size: 34px; font-weight: 850; letter-spacing: -0.05em; margin-top: 8px; }
-    .kpi-sub { color: var(--muted); margin-top: 6px; font-size: 13px; }
+    .kpi-label { color: var(--soft); font-size: 12px; font-weight: 400; text-transform: uppercase; letter-spacing: 0; }
+    .kpi-value { font-size: 34px; font-weight: 600; letter-spacing: 0; margin-top: 8px; }
+    .kpi-sub { color: #5f6f67; margin-top: 6px; font-size: 13px; }
     .status-pill {
       display: inline-flex; align-items: center; gap: 8px;
-      border-radius: 999px; padding: 7px 10px; font-size: 12px; font-weight: 800;
-      background: rgba(110, 231, 183, 0.1); color: var(--green); border: 1px solid rgba(110, 231, 183, 0.24);
+      border-radius: 999px; padding: 7px 10px; font-size: 12px; font-weight: 600;
+      background: rgba(62, 93, 87, 0.09); color: var(--green); border: 1px solid rgba(62, 93, 87, 0.22);
     }
-    .status-pill.warn { background: rgba(215, 168, 75, 0.1); color: var(--gold); border-color: rgba(215, 168, 75, 0.28); }
-    .status-pill.bad { background: rgba(251, 113, 133, 0.12); color: var(--red); border-color: rgba(251, 113, 133, 0.28); }
+    .status-pill.warn { background: rgba(213, 169, 20, 0.13); color: #94730a; border-color: rgba(213, 169, 20, 0.32); }
+    .status-pill.bad { background: rgba(185, 93, 80, 0.12); color: var(--red); border-color: rgba(185, 93, 80, 0.28); }
     .section-title { display: flex; justify-content: space-between; gap: 12px; align-items: center; margin-bottom: 14px; }
-    .section-title h2 { margin: 0; font-size: 19px; letter-spacing: -0.03em; }
-    .section-title p { margin: 4px 0 0; color: var(--muted); font-size: 13px; line-height: 1.45; }
-    .mini { color: var(--muted); font-size: 13px; }
+    .section-title h2 { margin: 0; font-size: 19px; letter-spacing: 0; }
+    .section-title p { margin: 4px 0 0; color: #5f6f67; font-size: 13px; line-height: 1.45; }
+    .mini { color: #5f6f67; font-size: 13px; }
     .list { display: grid; gap: 10px; }
-    .business-card h2, .intent-card h3, .action-card h3 { margin: 0; letter-spacing: -0.03em; }
-    .business-card p, .intent-card p, .action-card p { margin: 8px 0 0; color: var(--muted); line-height: 1.5; font-size: 13px; }
+    .business-card h2, .intent-card h3, .action-card h3 { margin: 0; letter-spacing: 0; }
+    .business-card p, .intent-card p, .action-card p { margin: 8px 0 0; color: #5f6f67; line-height: 1.5; font-size: 13px; }
     .tabbar {
       display: flex;
       gap: 8px;
@@ -99,75 +201,77 @@ export function renderEnterpriseDashboardPage(env: EnterpriseControlPlaneEnv = {
       border: 1px solid var(--line);
       border-radius: 18px;
       padding: 8px;
-      margin-bottom: 16px;
-      background: rgba(3, 8, 7, 0.28);
+      margin-bottom: 18px;
+      background: var(--row-bg);
     }
     .tab-button {
       border-radius: 12px;
       padding: 10px 12px;
-      color: #d8dfcf;
+      color: var(--nav-text);
       background: transparent;
       border-color: transparent;
     }
     .tab-button.active {
-      background: linear-gradient(135deg, var(--gold), #f3df95);
-      color: var(--ink);
-      border-color: transparent;
-      font-weight: 850;
+      background: var(--primary-bg, var(--gold));
+      color: var(--primary-text, var(--text));
+      border-color: var(--primary-border, var(--gold));
+      font-weight: 600;
     }
     .tab-panel { display: grid; gap: 16px; }
     .tab-panel[hidden] { display: none; }
     .intent-grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px; }
     .intent-card, .action-card {
-      border: 1px solid rgba(237, 229, 204, 0.12);
+      border: 1px solid var(--line-soft);
       border-radius: 20px;
       padding: 16px;
-      background: rgba(3, 8, 7, 0.25);
+      background: var(--row-bg);
     }
     .action-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; }
     .action-card { display: flex; flex-direction: column; gap: 10px; min-height: 176px; }
     .action-card .action { margin-top: auto; align-self: flex-start; }
     .row {
       display: grid; grid-template-columns: 1fr auto; gap: 14px; align-items: center;
-      border: 1px solid rgba(237, 229, 204, 0.1);
+      border: 1px solid var(--line-soft);
       border-radius: 17px; padding: 13px;
-      background: rgba(3, 8, 7, 0.28);
+      background: var(--row-bg);
     }
-    .row-title { font-weight: 750; }
+    .row-title { font-weight: 600; }
     .row-sub { color: var(--muted); font-size: 13px; margin-top: 4px; }
-    .tag { color: var(--blue); font-size: 12px; border: 1px solid rgba(147, 197, 253, 0.24); border-radius: 999px; padding: 5px 8px; }
-    .tag.good { color: var(--green); border-color: rgba(110, 231, 183, 0.24); }
-    .tag.warn { color: var(--gold); border-color: rgba(215, 168, 75, 0.28); }
-    .tag.bad { color: var(--red); border-color: rgba(251, 113, 133, 0.28); }
+    .tag { color: var(--blue); font-size: 12px; border: 1px solid rgba(22, 138, 159, 0.24); border-radius: 999px; padding: 5px 8px; }
+    .tag.good { color: var(--green); border-color: rgba(62, 93, 87, 0.24); }
+    .tag.warn { color: #94730a; border-color: rgba(213, 169, 20, 0.32); }
+    .tag.bad { color: var(--red); border-color: rgba(185, 93, 80, 0.28); }
     .empty, .error {
       color: var(--muted);
-      border: 1px dashed rgba(237, 229, 204, 0.22);
+      border: 1px dashed var(--line);
       border-radius: 18px;
       padding: 18px;
-      background: rgba(3, 8, 7, 0.2);
+      background: var(--row-bg);
     }
-    .error { color: var(--red); border-color: rgba(251, 113, 133, 0.3); }
+    .error { color: var(--red); border-color: rgba(185, 93, 80, 0.3); }
     .actions { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 14px; }
-    .action { border: 1px solid var(--line); border-radius: 14px; padding: 10px 12px; color: #e8ddbf; background: rgba(237, 229, 204, 0.07); }
-    .action.primary { color: var(--ink); }
+    .action { border: 1px solid var(--line); border-radius: 14px; padding: 10px 12px; color: var(--action-text); background: var(--control-bg); }
+    .action.primary { color: var(--primary-text, var(--text)); }
     .feature-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; margin: 16px 0; }
     .feature-card {
       display: flex; flex-direction: column; gap: 10px;
-      min-height: 170px; border: 1px solid rgba(237, 229, 204, 0.12);
+      min-height: 170px; border: 1px solid var(--line-soft);
       border-radius: 22px; padding: 16px;
-      background: linear-gradient(180deg, rgba(237, 229, 204, 0.105), rgba(3, 8, 7, 0.25));
+      background: var(--card-bg);
       transition: transform 160ms ease, border-color 160ms ease, background 160ms ease;
     }
-    .feature-card:hover { transform: translateY(-2px); border-color: rgba(215, 168, 75, 0.38); background: linear-gradient(180deg, rgba(215, 168, 75, 0.12), rgba(3, 8, 7, 0.26)); }
-    .feature-card h3 { margin: 0; font-size: 16px; line-height: 1.15; letter-spacing: -0.03em; }
+    .feature-card:hover { transform: translateY(-2px); border-color: rgba(23, 107, 75, 0.28); background: #f7faf4; }
+    .feature-card h3 { margin: 0; font-size: 16px; line-height: 1.15; letter-spacing: 0; }
     .feature-card p { margin: 0; color: var(--muted); font-size: 13px; line-height: 1.45; flex: 1; }
     .feature-tags { display: flex; gap: 6px; flex-wrap: wrap; }
-    .feature-tag { color: var(--green); border: 1px solid rgba(110, 231, 183, 0.22); border-radius: 999px; padding: 4px 7px; font-size: 11px; }
-    .feature-tag.pending { color: var(--gold); border-color: rgba(215, 168, 75, 0.28); }
+    .feature-tag { color: var(--green); border: 1px solid rgba(62, 93, 87, 0.22); border-radius: 999px; padding: 4px 7px; font-size: 11px; }
+    .feature-tag.pending { color: #94730a; border-color: rgba(213, 169, 20, 0.32); }
     @media (max-width: 980px) {
       .topbar { flex-direction: column; }
       .toolbar { justify-content: flex-start; }
-      .kpis, .two, .feature-grid, .intent-grid, .action-grid { grid-template-columns: 1fr; }
+      .dashboard-context-grid, .kpis, .two, .feature-grid, .intent-grid, .action-grid { grid-template-columns: 1fr; }
+      .control-center-intro { flex-direction: column; }
+      .control-links { justify-content: flex-start; }
     }
     @media (min-width: 981px) and (max-width: 1220px) {
       .feature-grid, .intent-grid, .action-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
@@ -178,33 +282,66 @@ export function renderEnterpriseDashboardPage(env: EnterpriseControlPlaneEnv = {
   <div class="shell">
     ${renderEnterpriseAppSidebar('dashboard')}
 
-    <main class="main">
-      <div class="topbar">
-        <div>
-          <div class="eyebrow">Enterprise dashboard</div>
-          <h1>Runtime, access, and evidence.</h1>
-          <p class="lead">Monitor the live enterprise account and jump into the pages your team needs.</p>
-        </div>
-        <div class="toolbar">
-          <select id="orgSelect" aria-label="Organization"><option>Loading org...</option></select>
-          <button id="refreshBtn" type="button">refresh</button>
-          <a class="action primary" href="/app/control">open control</a>
-        </div>
-      </div>
+    <main class="main enterprise-dashboard-main">
+      <section class="enterprise-page-shell">
+        <section class="dashboard-head-card" aria-label="Enterprise control center overview">
+          <div class="topbar">
+            <div>
+              <div class="eyebrow">Enterprise dashboard</div>
+              <h1>Runtime, access, and evidence.</h1>
+              <p class="lead">Monitor the live enterprise account and jump into the pages your team needs.</p>
+            </div>
+            <div class="toolbar">
+              <button id="refreshBtn" type="button">refresh</button>
+              <a class="action primary" href="/app/control">open control</a>
+            </div>
+          </div>
+
+          <div class="dashboard-context-grid" aria-label="Control center orientation">
+            <a class="context-card" href="/app/dashboard">
+              <div class="context-label">You are here</div>
+              <div class="context-title">Control center</div>
+              <div class="context-copy">A single operational view for runtime posture, users, evidence, and launch actions.</div>
+            </a>
+            <a class="context-card" href="/app/org">
+              <div class="context-label">Active org</div>
+              <div class="context-title">Provisioned workspace</div>
+              <div class="context-copy">VaultProof sets up the organization workspace; operators review status and SSO here.</div>
+            </a>
+            <a class="context-card" href="/readiness" target="_blank" rel="noopener">
+              <div class="context-label">Next best step</div>
+              <div class="context-title">Confirm readiness</div>
+              <div class="context-copy">Check runtime, access, provider policy, and evidence before expanding rollout.</div>
+            </a>
+          </div>
+        </section>
 
       <div id="authNotice" class="error" style="display:none"></div>
 
-      <nav class="tabbar" aria-label="Enterprise dashboard tabs">
-        <button class="tab-button active" type="button" data-dashboard-tab="overview">Overview</button>
-        <button class="tab-button" type="button" data-dashboard-tab="security">Security</button>
-        <button class="tab-button" type="button" data-dashboard-tab="access">Access</button>
-        <button class="tab-button" type="button" data-dashboard-tab="operations">Operations</button>
-        <button class="tab-button" type="button" data-dashboard-tab="features">Workspace</button>
-      </nav>
+        <section class="control-center-card" aria-label="Enterprise control center">
+          <div class="control-center-intro">
+            <div>
+              <h2 class="control-title">Control center</h2>
+              <p class="control-copy">Use the tabs below for daily operator checks. The sidebar keeps every enterprise page and evidence export in reach.</p>
+            </div>
+            <div class="control-links" aria-label="Primary operator links">
+              <a class="action" href="/app/members">members</a>
+              <a class="action" href="/app/audit">audit</a>
+              <a class="action" href="/app/runbooks">runbooks</a>
+            </div>
+          </div>
+
+          <nav class="tabbar" aria-label="Enterprise dashboard tabs">
+            <button class="tab-button active" type="button" data-dashboard-tab="overview">Overview</button>
+            <button class="tab-button" type="button" data-dashboard-tab="security">Security</button>
+            <button class="tab-button" type="button" data-dashboard-tab="access">Access</button>
+            <button class="tab-button" type="button" data-dashboard-tab="operations">Operations</button>
+            <button class="tab-button" type="button" data-dashboard-tab="features">Workspace</button>
+          </nav>
 
       <section id="tab-overview" class="tab-panel" data-tab-panel="overview">
         <section class="grid kpis" aria-label="Enterprise KPIs">
-          <div class="card"><div class="kpi-label">production runtime</div><div id="kpiRuntime" class="kpi-value">...</div><div id="kpiRuntimeSub" class="kpi-sub">checking Front Door to CVM</div></div>
+          <div class="card"><div class="kpi-label">production runtime</div><div id="kpiRuntime" class="kpi-value">...</div><div id="kpiRuntimeSub" class="kpi-sub">checking GCP runtime</div></div>
           <div class="card"><div class="kpi-label">projects</div><div id="kpiProjects" class="kpi-value">...</div><div id="kpiProjectsSub" class="kpi-sub">enterprise scopes</div></div>
           <div class="card"><div class="kpi-label">members</div><div id="kpiMembers" class="kpi-value">...</div><div id="kpiMembersSub" class="kpi-sub">active org access</div></div>
           <div class="card"><div class="kpi-label">30d calls</div><div id="kpiCalls" class="kpi-value">...</div><div id="kpiCallsSub" class="kpi-sub">proxy activity</div></div>
@@ -230,7 +367,7 @@ export function renderEnterpriseDashboardPage(env: EnterpriseControlPlaneEnv = {
             <div class="section-title">
               <div>
                 <h2>Organization</h2>
-                <p>Current tenant, role, SSO state, and setup links.</p>
+                <p>VaultProof provisions the organization workspace; operators review role, SSO state, and controls here.</p>
               </div>
               <span id="orgRole" class="tag">...</span>
             </div>
@@ -266,10 +403,10 @@ export function renderEnterpriseDashboardPage(env: EnterpriseControlPlaneEnv = {
 
       <section id="tab-security" class="tab-panel" data-tab-panel="security" hidden>
         <section class="grid intent-grid">
-          <div class="intent-card"><div class="feature-tags"><span class="feature-tag">ready</span></div><h3>Confidential VM</h3><p>Runtime host for the control plane and executor.</p></div>
-          <div class="intent-card"><div class="feature-tags"><span class="feature-tag">ready</span></div><h3>Secure Key Release</h3><p>Attestation-gated unwrap path for provider key material.</p></div>
+          <div class="intent-card"><div class="feature-tags"><span class="feature-tag">ready</span></div><h3>Confidential VM</h3><p>GCP runtime host for the control plane and executor.</p></div>
+          <div class="intent-card"><div class="feature-tags"><span class="feature-tag">ready</span></div><h3>Cloud KMS key path</h3><p>Controlled unwrap path for provider key material.</p></div>
           <div class="intent-card"><div class="feature-tags"><span class="feature-tag">ready</span></div><h3>Replay protection</h3><p>Blocks reused signed execution envelopes.</p></div>
-          <div class="intent-card"><div class="feature-tags"><span class="feature-tag pending">finish line</span></div><h3>TLS and APIM cutovers</h3><p>Track remaining origin TLS, APIM, SSH, and cleanup actions.</p></div>
+          <div class="intent-card"><div class="feature-tags"><span class="feature-tag pending">finish line</span></div><h3>Launch hardening</h3><p>Track remaining DNS, edge, monitoring, SSH, and cleanup actions.</p></div>
         </section>
 
         <section class="grid two">
@@ -286,7 +423,7 @@ export function renderEnterpriseDashboardPage(env: EnterpriseControlPlaneEnv = {
             <div class="list">
               <div class="row"><div><div class="row-title">Caller lock and provider policy</div><div class="row-sub">Limit execution by origin, gateway, device, provider, method, host, path, and rate.</div></div><a class="tag" href="/app/control">control</a></div>
               <div class="row"><div><div class="row-title">Provider slots</div><div class="row-sub">View active provider keys and emergency-revoke a slot.</div></div><a class="tag" href="/app/keys">keys</a></div>
-              <div class="row"><div><div class="row-title">Operator runbooks</div><div class="row-sub">Verification, evidence, deploys, secret rotation, TLS, APIM, SSH, and cleanup.</div></div><a class="tag" href="/app/runbooks">runbooks</a></div>
+              <div class="row"><div><div class="row-title">Operator runbooks</div><div class="row-sub">Verification, evidence, deploys, secret rotation, DNS, edge, SSH, and cleanup.</div></div><a class="tag" href="/app/runbooks">runbooks</a></div>
             </div>
           </div>
         </section>
@@ -338,7 +475,7 @@ export function renderEnterpriseDashboardPage(env: EnterpriseControlPlaneEnv = {
             <div class="list">
               <div class="row"><div><div class="row-title">Runbooks</div><div class="row-sub">Open the built deploy, evidence, verification, hardening, and cleanup playbooks.</div></div><a class="tag good" href="/app/runbooks">open</a></div>
               <div class="row"><div><div class="row-title">Technical guide</div><div class="row-sub">Open the enterprise implementation reference for identity, network, key custody, attestation, and troubleshooting.</div></div><a class="tag good" href="/app/technical-guide">open</a></div>
-              <div class="row"><div><div class="row-title">Plans and APIM</div><div class="row-sub">Track packaging, APIM sidecar readiness, and contract-facing guardrails.</div></div><a class="tag" href="/app/plans">open</a></div>
+              <div class="row"><div><div class="row-title">Launch plans</div><div class="row-sub">Track packaging, GCP edge readiness, and contract-facing guardrails.</div></div><a class="tag" href="/app/plans">open</a></div>
               <div class="row"><div><div class="row-title">AI Proof Verifier</div><div class="row-sub">Register external models and verify proof bundles without VaultProof running the model.</div></div><a class="tag warn" href="/app/verifier">beta</a></div>
               <div class="row"><div><div class="row-title">Scanner</div><div class="row-sub">Launch checklist for enterprise repository scanning when the scoped API is ready.</div></div><a class="tag warn" href="/app/scanner">planned</a></div>
             </div>
@@ -364,17 +501,17 @@ export function renderEnterpriseDashboardPage(env: EnterpriseControlPlaneEnv = {
             <a class="feature-card" href="/app/technical-guide">
               <div class="feature-tags"><span class="feature-tag">live</span><span class="feature-tag">technical</span></div>
               <h3>Technical guide</h3>
-              <p>Detailed enterprise reference for identity, APIM/network patterns, caller lock, key custody, attestation, evidence, rollout, and troubleshooting.</p>
+              <p>Detailed enterprise reference for identity, GCP/network patterns, caller lock, key custody, attestation, evidence, rollout, and troubleshooting.</p>
             </a>
             <a class="feature-card" href="/readiness" target="_blank" rel="noopener">
               <div class="feature-tags"><span class="feature-tag">live</span><span class="feature-tag">proof</span></div>
               <h3>Production readiness</h3>
-              <p>Current production gate for runtime, executor, attestation, and Secure Key Release.</p>
+              <p>Current production gate for runtime, executor, attestation, and Cloud KMS posture.</p>
             </a>
             <a class="feature-card" href="/health" target="_blank" rel="noopener">
               <div class="feature-tags"><span class="feature-tag">live</span><span class="feature-tag">health</span></div>
               <h3>Control-plane health</h3>
-              <p>Lightweight status endpoint for Front Door, monitoring, APIM checks, and operators.</p>
+              <p>Lightweight status endpoint for GCP edge, monitoring, runtime checks, and operators.</p>
             </a>
             <a class="feature-card" href="/app/control">
               <div class="feature-tags"><span class="feature-tag">live</span><span class="feature-tag">policy</span></div>
@@ -394,7 +531,7 @@ export function renderEnterpriseDashboardPage(env: EnterpriseControlPlaneEnv = {
             <a class="feature-card" href="/app/keys">
               <div class="feature-tags"><span class="feature-tag">live</span><span class="feature-tag">secrets</span></div>
               <h3>Provider slots</h3>
-              <p>View active providers, emergency revoke slots, rotation checklists, and Secure Key Release notes.</p>
+              <p>View active providers, emergency revoke slots, rotation checklists, and Cloud KMS notes.</p>
             </a>
             <a class="feature-card" href="/app/activity">
               <div class="feature-tags"><span class="feature-tag">live</span><span class="feature-tag">runtime</span></div>
@@ -428,8 +565,8 @@ export function renderEnterpriseDashboardPage(env: EnterpriseControlPlaneEnv = {
             </a>
             <a class="feature-card" href="/app/plans">
               <div class="feature-tags"><span class="feature-tag">live</span><span class="feature-tag pending">cutover pending</span></div>
-              <h3>Plans and APIM</h3>
-              <p>Track APIM status, cutover readiness, limits, and handoff notes.</p>
+              <h3>Launch plans</h3>
+              <p>Track GCP edge status, launch readiness, limits, and handoff notes.</p>
             </a>
             <a class="feature-card" href="/app/scanner">
               <div class="feature-tags"><span class="feature-tag">visible</span><span class="feature-tag pending">future API</span></div>
@@ -439,9 +576,11 @@ export function renderEnterpriseDashboardPage(env: EnterpriseControlPlaneEnv = {
             <a class="feature-card" href="/app/runbooks">
               <div class="feature-tags"><span class="feature-tag">live</span><span class="feature-tag">ops</span></div>
               <h3>Operator runbooks</h3>
-              <p>Verification, evidence, deploy, secret rotation, TLS, APIM, SSH, and cleanup commands.</p>
+              <p>Verification, evidence, deploy, secret rotation, DNS, edge, SSH, and cleanup commands.</p>
             </a>
           </div>
+        </section>
+      </section>
         </section>
       </section>
     </main>
@@ -536,7 +675,7 @@ export function renderEnterpriseDashboardPage(env: EnterpriseControlPlaneEnv = {
         var runtimeTier = payload && payload.runtime_tier === 'shared-demo' ? 'shared-demo' : 'dedicated-production';
         var sharedDemo = runtimeTier === 'shared-demo';
         text('kpiRuntime', ready ? 'ready' : 'watch');
-        text('kpiRuntimeSub', ready ? (sharedDemo ? 'shared demo runtime' : 'Azure confidential production') : 'needs review');
+        text('kpiRuntimeSub', ready ? (sharedDemo ? 'shared demo runtime' : 'GCP confidential production') : 'needs review');
         var pill = byId('runtimePill');
         if (pill) {
           pill.textContent = ready ? (sharedDemo ? 'shared demo ready' : 'production ready') : 'not production ready';
@@ -546,21 +685,14 @@ export function renderEnterpriseDashboardPage(env: EnterpriseControlPlaneEnv = {
         text('runtimeDetail', ready
           ? (sharedDemo
             ? 'Shared enterprise demo runtime is confidential-ready. It is safe for demos, but it is not a dedicated customer production runtime.'
-            : 'Front Door, control plane, executor, attestation, replay protection, and Secure Key Release all report production-ready.')
+            : 'GCP edge, control plane, executor, attestation, replay protection, and Cloud KMS all report production-ready.')
           : (blockers.length ? blockers.join(' | ') : 'Readiness is incomplete.'));
       }
-      function renderOrgSelector(orgs, activeId) {
-        var select = byId('orgSelect');
-        if (!select) return;
+      function resolveProvisionedOrg(orgs, activeId) {
         if (!orgs.length) {
-          select.innerHTML = '<option value="">No enterprise org</option>';
-          select.disabled = true;
+          currentOrgId = '';
           return;
         }
-        select.disabled = false;
-        select.innerHTML = orgs.map(function(org) {
-          return '<option value="' + escapeHtml(org.id) + '">' + escapeHtml(org.name || 'Organization') + ' - ' + escapeHtml(org.role || org.kind || 'member') + '</option>';
-        }).join('');
         var requested = orgs.find(function(org) { return org.id === currentOrgId; });
         var active = orgs.find(function(org) { return org.id === activeId; });
         var team = orgs.find(function(org) { return org.kind && org.kind !== 'personal'; });
@@ -568,7 +700,6 @@ export function renderEnterpriseDashboardPage(env: EnterpriseControlPlaneEnv = {
         currentOrgId = selected ? selected.id : '';
         if (currentOrgId) {
           localStorage.setItem(ACTIVE_ORG_STORAGE_KEY, currentOrgId);
-          select.value = currentOrgId;
         }
       }
       function renderOrganization(payload) {
@@ -655,7 +786,7 @@ export function renderEnterpriseDashboardPage(env: EnterpriseControlPlaneEnv = {
           var orgsPayload = await fetchJson('/api/v1/enterprise/orgs');
           if (sequence !== loadSequence) return;
           var orgs = Array.isArray(orgsPayload.organizations) ? orgsPayload.organizations : [];
-          renderOrgSelector(orgs, orgsPayload.active_organization_id || '');
+          resolveProvisionedOrg(orgs, orgsPayload.active_organization_id || '');
           if (!dataPanelsStarted || currentOrgId !== initialOrgId) dataPanelTasks = startDataPanels();
           await Promise.allSettled([readinessTask].concat(dataPanelTasks));
         } catch (error) {
@@ -669,12 +800,6 @@ export function renderEnterpriseDashboardPage(env: EnterpriseControlPlaneEnv = {
         button.addEventListener('click', function() {
           selectDashboardTab(button.getAttribute('data-dashboard-tab') || 'overview');
         });
-      });
-      var orgSelect = byId('orgSelect');
-      if (orgSelect) orgSelect.addEventListener('change', function(event) {
-        currentOrgId = event.target.value || '';
-        if (currentOrgId) localStorage.setItem(ACTIVE_ORG_STORAGE_KEY, currentOrgId);
-        loadDashboard();
       });
       selectDashboardTab('overview');
       loadDashboard();

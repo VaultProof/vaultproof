@@ -10,6 +10,7 @@ export type EnterpriseRuntimeTier = 'shared-demo' | 'dedicated-production';
 
 export interface EnterpriseControlPlaneEnv {
   enterpriseHostname?: string;
+  enterpriseCloudProvider?: string;
   enterpriseRuntimeTier?: EnterpriseRuntimeTier | string;
   internalAdminHostname?: string;
   internalAdminPreviewEnabled?: boolean;
@@ -20,11 +21,15 @@ export interface EnterpriseControlPlaneEnv {
   executorBaseUrl?: string;
   executorSigningKeyId?: string;
   executorSigningSecret?: string;
+  enterpriseProxyTokenSecret?: string;
+  enterpriseExecuteContextCacheTtlMs?: number;
   azureFrontDoorId?: string;
   originLockHeaderName?: string;
   originLockRequired?: boolean;
   originLockSecret?: string;
+  trustedSourceIpHeaderSecret?: string;
   supabaseUrl?: string;
+  supabaseAnonKey?: string;
   supabaseServiceRoleKey?: string;
   mixpanelToken?: string;
   mixpanelAutocapture?: boolean;

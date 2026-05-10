@@ -4,12 +4,28 @@ import {
   type EnterpriseSecureExecutorEnv,
 } from './index.js';
 
+const MAX_REQUEST_BODY_BYTES = 5 * 1024 * 1024;
+
+class RequestBodyTooLargeError extends Error {
+  statusCode = 413;
+
+  constructor() {
+    super('Request body too large');
+  }
+}
+
 async function readRequestBody(req: IncomingMessage): Promise<Buffer | undefined> {
   if (req.method === 'GET' || req.method === 'HEAD') return undefined;
 
   const chunks: Buffer[] = [];
+  let totalBytes = 0;
   for await (const chunk of req) {
-    chunks.push(Buffer.isBuffer(chunk) ? chunk : Buffer.from(chunk));
+    const buffer = Buffer.isBuffer(chunk) ? chunk : Buffer.from(chunk);
+    totalBytes += buffer.length;
+    if (totalBytes > MAX_REQUEST_BODY_BYTES) {
+      throw new RequestBodyTooLargeError();
+    }
+    chunks.push(buffer);
   }
   return chunks.length ? Buffer.concat(chunks) : undefined;
 }
@@ -74,6 +90,7 @@ function getEnv(): EnterpriseSecureExecutorEnv {
     supabaseUrl: process.env.SUPABASE_URL,
     supabaseServiceRoleKey: process.env.SUPABASE_SERVICE_ROLE_KEY,
     vaultEncryptionKey: process.env.VAULT_ENCRYPTION_KEY,
+    enterpriseCloudProvider: process.env.ENTERPRISE_CLOUD_PROVIDER,
     executorMode: process.env.VAULTPROOF_EXECUTOR_MODE,
     azureKeyReleaseUrl: process.env.AZURE_KEY_RELEASE_URL,
     azureAttestationToken: process.env.AZURE_ATTESTATION_TOKEN,
@@ -89,6 +106,29 @@ function getEnv(): EnterpriseSecureExecutorEnv {
     executorBuildDigest: process.env.VAULTPROOF_EXECUTOR_BUILD_DIGEST,
     azureConfidentialVmResourceId: process.env.AZURE_CONFIDENTIAL_VM_RESOURCE_ID,
     azureMeasurementSummary: process.env.AZURE_MEASUREMENT_SUMMARY,
+    gcpProjectId: process.env.GCP_PROJECT_ID,
+    gcpLocation: process.env.GCP_LOCATION,
+    gcpKmsKeyRing: process.env.GCP_KMS_KEY_RING,
+    gcpKmsKeyName: process.env.GCP_KMS_KEY_NAME,
+    gcpKmsCryptoKeyResource: process.env.GCP_KMS_CRYPTO_KEY_RESOURCE,
+    gcpKmsKeyVersion: process.env.GCP_KMS_KEY_VERSION,
+    gcpKmsProtectionLevel: process.env.GCP_KMS_PROTECTION_LEVEL,
+    gcpKmsEncryptedVaultUnwrapKeyBase64: process.env.GCP_KMS_ENCRYPTED_VAULT_UNWRAP_KEY_BASE64,
+    gcpKmsAccessToken: process.env.GCP_KMS_ACCESS_TOKEN,
+    gcpKmsCacheTtlMs: Number.parseInt(process.env.GCP_KMS_CACHE_TTL_MS || '', 10),
+    gcpAttestationTokenHash: process.env.GCP_ATTESTATION_TOKEN_HASH,
+    gcpAttestationToken: process.env.GCP_ATTESTATION_TOKEN,
+    gcpConfidentialVmResourceId: process.env.GCP_CONFIDENTIAL_VM_RESOURCE_ID,
+    gcpMeasurementSummary: process.env.GCP_MEASUREMENT_SUMMARY,
+    gcpSecureBoot: process.env.GCP_SECURE_BOOT === 'true',
+    gcpImageDigest: process.env.GCP_ATTESTATION_EXPECTED_IMAGE_DIGEST,
+    gcpServiceAccountEmail: process.env.GCP_SERVICE_ACCOUNT_EMAIL,
+    gcpAttestationType: process.env.GCP_ATTESTATION_TYPE,
+    gcpIsolationProvider: process.env.GCP_ISOLATION_PROVIDER === 'gcp-confidential-space'
+      ? 'gcp-confidential-space'
+      : process.env.GCP_ISOLATION_PROVIDER === 'gcp-confidential-vm'
+        ? 'gcp-confidential-vm'
+        : undefined,
   };
 }
 
@@ -102,8 +142,11 @@ async function main(): Promise<void> {
       const response = await handleEnterpriseSecureExecutorRequestWithEnv(request, env);
       await writeWebResponse(response, res);
     } catch (error) {
-      const message = error instanceof Error ? error.message : 'Unexpected server error';
-      res.statusCode = 500;
+      const statusCode = error instanceof RequestBodyTooLargeError ? error.statusCode : 500;
+      const message = statusCode === 413
+        ? 'Request body too large'
+        : error instanceof Error ? error.message : 'Unexpected server error';
+      res.statusCode = statusCode;
       res.setHeader('content-type', 'application/json');
       res.end(JSON.stringify({ error: message }));
     }

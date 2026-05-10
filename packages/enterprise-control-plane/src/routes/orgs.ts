@@ -12,6 +12,7 @@ import {
   authenticateUser,
   listOrganizationMemberships,
   resolveOrganizationMembership,
+  resolveOrganizationMembershipFromList,
   resolveRequestedSsoDomain,
   type ResolveOrganizationSsoBody,
 } from '../auth.js';
@@ -250,15 +251,18 @@ export async function handleEnterpriseOrganizationRoutes(
     }
 
     const supabase = getSupabase(env);
-    const memberships = await listOrganizationMemberships(env, auth.userId);
-    const activeMembership = await resolveOrganizationMembership(request, env, auth.userId);
-    const { data: archivedOrganizations } = await supabase
-      .from('organizations')
-      .select('id, name, kind, archived_at')
-      .eq('owner_user_id', auth.userId)
-      .eq('kind', 'team')
-      .not('archived_at', 'is', null)
-      .order('archived_at', { ascending: false });
+    const [memberships, archivedOrganizationsResult] = await Promise.all([
+      listOrganizationMemberships(env, auth.userId),
+      supabase
+        .from('organizations')
+        .select('id, name, kind, archived_at')
+        .eq('owner_user_id', auth.userId)
+        .eq('kind', 'team')
+        .not('archived_at', 'is', null)
+        .order('archived_at', { ascending: false }),
+    ]);
+    const activeMembership = resolveOrganizationMembershipFromList(request, memberships);
+    const archivedOrganizations = archivedOrganizationsResult.data || [];
 
     return Response.json({
       organizations: memberships.map((membership) => ({

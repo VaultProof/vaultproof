@@ -18,7 +18,7 @@ export const RUNTIME_ROUTE_BOUNDARIES: RuntimeRouteBoundary[] = [
   {
     hostname: ENTERPRISE_HOSTNAME,
     executionTier: 'b2b_enterprise',
-    description: 'Azure-backed enterprise runtime with confidential execution.',
+    description: 'Enterprise runtime with confidential execution.',
   },
 ];
 

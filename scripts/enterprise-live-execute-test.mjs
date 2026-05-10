@@ -78,7 +78,7 @@ async function seedDemoProject(token) {
   const createProjectResponse = await initApi('/projects', token, {
     method: 'POST',
     body: JSON.stringify({
-      name: 'Azure Enterprise Execute Demo',
+      name: 'GCP Enterprise Execute Demo',
       strict_origin: false,
     }),
   });
@@ -210,7 +210,7 @@ const payload = {
   },
   body_base64: Buffer.from(JSON.stringify({
     model: 'gpt-4.1-mini',
-    input: 'Reply with exactly: vaultproof enterprise azure ok',
+    input: 'Reply with exactly: vaultproof enterprise gcp ok',
     max_output_tokens: 20,
   }), 'utf8').toString('base64'),
 };

@@ -420,9 +420,9 @@ export default function MembersPage() {
 
   return (
     <AppShell
-      eyebrow="Phase 2 In Progress"
+      eyebrow="Access evidence"
       title="Members"
-      description="Organization membership and pending invites are now coming from the worker instead of placeholder rows. This is the first real team-safe access surface for who is in the org and which projects they can already touch."
+      description="Review shared access across the organization, pending invites, roles, project assignments, and access-review evidence."
       actions={
         <>
           {userEmail ? (
@@ -438,7 +438,7 @@ export default function MembersPage() {
               onClick={() => setShowInviteForm((current) => !current)}
               className="rounded-full border border-emerald-400/25 bg-emerald-400/10 px-4 py-2 text-sm font-medium text-emerald-200 transition hover:bg-emerald-400/14"
             >
-              {showInviteForm ? "Close" : "Invite Member"}
+              {showInviteForm ? "Close" : "Invite member"}
             </button>
           ) : null}
         </>
@@ -501,7 +501,7 @@ export default function MembersPage() {
           <div className="text-xs uppercase tracking-[0.18em] text-emerald-300">Invite Flow</div>
           <h2 className="mt-3 text-2xl font-semibold text-white">Create a pending org invite</h2>
           <p className="mt-3 text-sm leading-7 text-slate-300">
-            This creates a real pending invitation record now. Accept/join UX comes next, but we no longer need fake member placeholders to manage the pipeline.
+            Send one invite at a time, choose the starting organization role, then assign project access after the person joins.
           </p>
 
           <div className="mt-5 grid gap-4 md:grid-cols-[1.2fr_0.8fr_auto]">

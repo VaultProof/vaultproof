@@ -136,7 +136,7 @@ export default function AdminPage() {
     <AppShell
       eyebrow="Internal Admin"
       title="Admin"
-      description="This remains the internal analytics surface for now. It sits inside the new dashboard shell so the eventual enterprise admin experience can grow from one navigation model."
+      description="Staff-only operating metrics for growth, referrals, account activity, and enterprise funnel review."
       actions={
         <div className="flex items-center gap-3">
           <select

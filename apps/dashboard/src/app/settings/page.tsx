@@ -268,9 +268,9 @@ export default function SettingsPage() {
 
   return (
     <AppShell
-      eyebrow="Organization Settings"
+      eyebrow="Tenant settings"
       title="Settings"
-      description="Manage the currently selected organization. This is the first admin surface for team org identity, basic metadata, and ownership context."
+      description="Review tenant defaults, organization identity, SSO state, session posture, and sensitive lifecycle controls."
       actions={
         userEmail ? (
           <div className="flex items-center gap-3 rounded-full border border-white/10 bg-white/[0.04] px-3 py-2">

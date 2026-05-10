@@ -176,6 +176,13 @@ export async function resolveOrganizationMembership(
   userId: string,
 ): Promise<OrganizationMembershipContext | null> {
   const memberships = await listOrganizationMemberships(env, userId);
+  return resolveOrganizationMembershipFromList(request, memberships);
+}
+
+export function resolveOrganizationMembershipFromList(
+  request: Request,
+  memberships: OrganizationMembershipContext[],
+): OrganizationMembershipContext | null {
   if (!memberships.length) return null;
 
   const requestedId = request.headers.get('x-vaultproof-organization')?.trim();
@@ -246,10 +253,11 @@ export async function listAccessibleProjects(
   env: EnterpriseControlPlaneEnv,
   userId: string,
   organizationId?: string | null,
+  activeMemberships?: OrganizationMembershipContext[],
 ): Promise<AccessibleProjectSummary[]> {
   const supabase = getSupabase(env);
-  const activeMemberships = await listOrganizationMemberships(env, userId);
-  const activeOrganizationIds = new Set(activeMemberships.map((membership) => membership.organization_id));
+  const memberships = activeMemberships || await listOrganizationMemberships(env, userId);
+  const activeOrganizationIds = new Set(memberships.map((membership) => membership.organization_id));
   const byId = new Map<string, AccessibleProjectSummary>();
   type ProjectRow = {
     id: string;

@@ -32,5 +32,6 @@ COPY --from=build /app/packages/vaultproof-core/package.json ./packages/vaultpro
 COPY --from=build /app/packages/enterprise-secure-executor/dist ./packages/enterprise-secure-executor/dist
 COPY --from=build /app/packages/enterprise-secure-executor/package.json ./packages/enterprise-secure-executor/package.json
 
-EXPOSE 80
+USER node
+EXPOSE 3002
 CMD ["node", "packages/enterprise-secure-executor/dist/enterprise-secure-executor/src/server.js"]

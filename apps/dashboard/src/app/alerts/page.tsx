@@ -766,9 +766,9 @@ export default function AlertsPage() {
 
   return (
     <AppShell
-      eyebrow="Alert Delivery Foundation"
+      eyebrow="Alert delivery"
       title="Alerts"
-      description="Set up where pilot and health alerts should go next. Email/webhook destinations, policy dispatch rules, and scheduled worker delivery now live behind this org-level alerting surface."
+      description="Manage alert destinations, delivery logs, dispatch runs, policy state, and admin test-send workflow."
       actions={
         userEmail ? (
           <div className="flex items-center gap-3 rounded-full border border-white/10 bg-white/[0.04] px-3 py-2">

@@ -3,6 +3,7 @@ const DEFAULT_ENTERPRISE_URL = 'https://enterprise.vaultproof.dev';
 const enterpriseUrl = normalizeBaseUrl(process.env.ENTERPRISE_URL || DEFAULT_ENTERPRISE_URL);
 const demoEmail = process.env.ENTERPRISE_DEMO_EMAIL || process.env.DEMO_EMAIL || '';
 const demoPassword = process.env.ENTERPRISE_DEMO_PASSWORD || process.env.DEMO_PASSWORD || '';
+const expectedSecurityProfile = process.env.ENTERPRISE_EXPECTED_SECURITY_PROFILE || '';
 const readinessRetries = Number.parseInt(process.env.READINESS_RETRIES || '3', 10);
 const readinessRetryDelayMs = Number.parseInt(process.env.READINESS_RETRY_DELAY_MS || '3000', 10);
 
@@ -115,8 +116,15 @@ async function assertReadiness() {
       if (payload.production_ready !== true) {
         throw new Error(`/readiness production_ready is not true: ${text}`);
       }
-      if (payload.security_profile !== 'azure-confidential-production') {
-        throw new Error(`/readiness security_profile is not azure-confidential-production: ${text}`);
+      const allowedSecurityProfiles = [
+        'azure-confidential-production',
+        'google-confidential-production',
+      ];
+      if (expectedSecurityProfile && payload.security_profile !== expectedSecurityProfile) {
+        throw new Error(`/readiness security_profile is not ${expectedSecurityProfile}: ${text}`);
+      }
+      if (!expectedSecurityProfile && !allowedSecurityProfiles.includes(payload.security_profile)) {
+        throw new Error(`/readiness security_profile is not production-grade: ${text}`);
       }
       return payload;
     } catch (error) {
@@ -160,8 +168,8 @@ async function assertPublicPagesAndLinks() {
 }
 
 function parseLoginScriptConfig(scriptText) {
-  const supabaseUrl = scriptText.match(/const SUPABASE_URL = '([^']+)'/)?.[1] || '';
-  const supabaseAnonKey = scriptText.match(/const SUPABASE_ANON_KEY = '([^']+)'/)?.[1] || '';
+  const supabaseUrl = scriptText.match(/const SUPABASE_URL = ["']([^"']+)["']/)?.[1] || '';
+  const supabaseAnonKey = scriptText.match(/const SUPABASE_ANON_KEY = ["']([^"']+)["']/)?.[1] || '';
   if (!supabaseUrl || !supabaseAnonKey) {
     throw new Error('Could not discover Supabase public auth config from enterprise login script');
   }

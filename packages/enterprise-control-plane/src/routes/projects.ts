@@ -1,10 +1,13 @@
 import type { EnterpriseControlPlaneEnv } from '../config.js';
 import {
+  type AccessibleProjectSummary,
   authenticateUser,
   getAccessibleProject,
   hasRequiredProjectRole,
   listAccessibleProjects,
-  resolveOrganizationMembership,
+  listOrganizationMemberships,
+  type OrganizationMembershipContext,
+  resolveOrganizationMembershipFromList,
 } from '../auth.js';
 import { writeGovernanceAuditEvent } from '../audit.js';
 import { getSupabase } from '../supabase.js';
@@ -19,6 +22,57 @@ interface ProjectWriteBody {
 interface RevokeProviderBody {
   reason?: string | null;
 }
+
+interface CreateProviderSlotBody {
+  provider?: string | null;
+  slug?: string | null;
+  upstream_base_url?: string | null;
+  auth_header_name?: string | null;
+  auth_header_template?: string | null;
+  extra_headers?: unknown;
+  api_key?: string | null;
+  provider_key?: string | null;
+}
+
+type ProviderMaterialMode = 'sealed-live' | 'demo-placeholder' | 'missing' | 'mixed';
+
+type ProviderSlotSummary = {
+  key_id: string;
+  provider: string;
+  slug: string;
+  material_mode: ProviderMaterialMode;
+  material_ready: boolean;
+};
+
+type ProjectBootstrapSummary = {
+  id: string;
+  organization_id: string | null;
+  vp_proj_id: string;
+  name: string | null;
+  allowed_origins: string | null;
+  strict_origin: boolean;
+  caller_lock_policy: Record<string, unknown>;
+  created_at: string;
+  revoked_at: string | null;
+  project_role: string;
+  access_via: string;
+  provider_slots: ProviderSlotSummary[];
+};
+
+type OrganizationBootstrapSummary = {
+  id: string;
+  name: string;
+  kind: 'personal' | 'team';
+  role: string;
+  is_active: boolean;
+};
+
+type ProjectsBootstrapPayload = {
+  organizations: OrganizationBootstrapSummary[];
+  active_organization_id: string | null;
+  projects: ProjectBootstrapSummary[];
+  overview: Record<string, unknown>;
+};
 
 type CallerLockPolicy = {
   allowed_providers?: string[];
@@ -220,6 +274,87 @@ function normalizeCallerLockPolicy(raw: unknown): { ok: true; value: CallerLockP
   return normalizeCallerLockPolicyObject(raw as Record<string, unknown>, 'caller_lock_policy', true);
 }
 
+function normalizeProviderSlug(raw: string | null | undefined, field: string): { ok: true; value: string } | { ok: false; error: string } {
+  const value = String(raw || '').trim().toLowerCase();
+  if (!/^[a-z0-9][a-z0-9_-]{0,63}$/.test(value)) {
+    return { ok: false, error: `${field} must use lowercase letters, numbers, hyphens, or underscores` };
+  }
+  return { ok: true, value };
+}
+
+function isPrivateIpv4(hostname: string): boolean {
+  const match = hostname.match(/^(\d{1,3})\.(\d{1,3})\.(\d{1,3})\.(\d{1,3})$/);
+  if (!match) return false;
+  const parts = match.slice(1).map((part) => Number(part));
+  if (parts.some((part) => !Number.isInteger(part) || part < 0 || part > 255)) return true;
+  const [a, b] = parts;
+  return a === 10
+    || a === 127
+    || (a === 169 && b === 254)
+    || (a === 172 && b >= 16 && b <= 31)
+    || (a === 192 && b === 168)
+    || a === 0;
+}
+
+function normalizeUpstreamBaseUrl(raw: string | null | undefined): { ok: true; value: string } | { ok: false; error: string } {
+  const value = String(raw || '').trim();
+  if (!value) return { ok: false, error: 'upstream_base_url is required' };
+  let url: URL;
+  try {
+    url = new URL(value);
+  } catch {
+    return { ok: false, error: 'upstream_base_url must be a valid URL' };
+  }
+  if (url.protocol !== 'https:') return { ok: false, error: 'upstream_base_url must use https' };
+  if (url.username || url.password) return { ok: false, error: 'upstream_base_url cannot include credentials' };
+  const hostname = url.hostname.toLowerCase();
+  if (hostname === 'localhost' || hostname.endsWith('.local') || isPrivateIpv4(hostname)) {
+    return { ok: false, error: 'upstream_base_url must point to a public provider host' };
+  }
+  url.hash = '';
+  url.search = '';
+  url.pathname = url.pathname === '/' ? '' : url.pathname.replace(/\/+$/, '');
+  return { ok: true, value: url.toString().replace(/\/$/, '') };
+}
+
+function normalizeHeaderName(raw: string | null | undefined, field: string): { ok: true; value: string } | { ok: false; error: string } {
+  const value = String(raw || '').trim().toLowerCase();
+  if (!/^[!#$%&'*+\-.^_`|~0-9a-z]+$/.test(value)) {
+    return { ok: false, error: `${field} must be a valid HTTP header name` };
+  }
+  return { ok: true, value };
+}
+
+function normalizeAuthHeaderTemplate(raw: string | null | undefined): { ok: true; value: string } | { ok: false; error: string } {
+  const value = String(raw || '').trim();
+  if (!value || value.length > 300) return { ok: false, error: 'auth_header_template is required' };
+  if (!value.includes('{key}')) return { ok: false, error: 'auth_header_template must include {key}' };
+  if (/[\r\n]/.test(value)) return { ok: false, error: 'auth_header_template cannot contain line breaks' };
+  return { ok: true, value };
+}
+
+function normalizeExtraHeaders(raw: unknown): { ok: true; value: Record<string, string> } | { ok: false; error: string } {
+  if (raw === undefined || raw === null || raw === '') return { ok: true, value: {} };
+  if (typeof raw !== 'object' || Array.isArray(raw)) {
+    return { ok: false, error: 'extra_headers must be an object' };
+  }
+
+  const normalized: Record<string, string> = {};
+  for (const [nameRaw, valueRaw] of Object.entries(raw as Record<string, unknown>)) {
+    const name = normalizeHeaderName(nameRaw, 'extra_headers');
+    if (!name.ok) return name;
+    if (name.value === 'authorization' || name.value === 'proxy-authorization') {
+      return { ok: false, error: 'extra_headers cannot override authorization headers' };
+    }
+    if (typeof valueRaw !== 'string' || valueRaw.length > 500 || /[\r\n]/.test(valueRaw)) {
+      return { ok: false, error: `extra_headers.${name.value} must be a short string without line breaks` };
+    }
+    normalized[name.value] = valueRaw;
+  }
+
+  return { ok: true, value: normalized };
+}
+
 async function parseOptionalRevokeBody(request: Request): Promise<RevokeProviderBody> {
   const text = await request.text();
   if (!text.trim()) return {};
@@ -234,12 +369,227 @@ function isDeniedStatus(statusCode: number | null | undefined): boolean {
   return statusCode === 401 || statusCode === 403 || statusCode === 429;
 }
 
+type AccessLogRecentRow = {
+  project_id: string | null;
+  project_key_id: string | null;
+  provider: string | null;
+  slug: string | null;
+  method: string | null;
+  upstream_path: string | null;
+  status_code: number | null;
+  latency_ms: number | null;
+  timestamp: string;
+  metadata: unknown;
+};
+
+type ProjectHealthAggregate = {
+  project_id: string;
+  calls: number;
+  errors: number;
+  denied: number;
+  lastActivity: string | null;
+};
+
+type AccessLogOverview = {
+  source: 'rollup_rpc' | 'raw_fallback';
+  totalCalls: number;
+  errorCalls: number;
+  deniedCalls: number;
+  projectHealth: ProjectHealthAggregate[];
+  recentLogs: AccessLogRecentRow[];
+};
+
+function countValue(value: unknown): number {
+  const numeric = Number(value || 0);
+  return Number.isFinite(numeric) && numeric > 0 ? numeric : 0;
+}
+
+function stringOrNull(value: unknown): string | null {
+  return typeof value === 'string' && value ? value : null;
+}
+
+function objectOrEmpty(value: unknown): Record<string, unknown> {
+  return value && typeof value === 'object' && !Array.isArray(value)
+    ? value as Record<string, unknown>
+    : {};
+}
+
+function isProviderMaterialMode(value: unknown): value is ProviderMaterialMode {
+  return value === 'sealed-live'
+    || value === 'demo-placeholder'
+    || value === 'missing'
+    || value === 'mixed';
+}
+
+function resolveProviderMaterialMode(row: {
+  share1_encrypted?: string | null;
+  share2_encrypted?: string | null;
+}): ProviderMaterialMode {
+  const share1 = String(row.share1_encrypted || '');
+  const share2 = String(row.share2_encrypted || '');
+  if (!share1 || !share2) return 'missing';
+  const share1IsPlaceholder = share1.startsWith('demo-dashboard-placeholder');
+  const share2IsPlaceholder = share2.startsWith('demo-dashboard-placeholder');
+  if (share1IsPlaceholder && share2IsPlaceholder) return 'demo-placeholder';
+  if (!share1IsPlaceholder && !share2IsPlaceholder) return 'sealed-live';
+  return 'mixed';
+}
+
+function normalizeRecentAccessLogRows(value: unknown): AccessLogRecentRow[] {
+  if (!Array.isArray(value)) return [];
+  return value
+    .map((row) => {
+      if (!row || typeof row !== 'object') return null;
+      const record = row as Record<string, unknown>;
+      const timestamp = stringOrNull(record.timestamp);
+      if (!timestamp) return null;
+      return {
+        project_id: stringOrNull(record.project_id),
+        project_key_id: stringOrNull(record.project_key_id),
+        provider: stringOrNull(record.provider),
+        slug: stringOrNull(record.slug),
+        method: stringOrNull(record.method),
+        upstream_path: stringOrNull(record.upstream_path),
+        status_code: record.status_code === null || record.status_code === undefined ? null : countValue(record.status_code),
+        latency_ms: record.latency_ms === null || record.latency_ms === undefined ? null : countValue(record.latency_ms),
+        timestamp,
+        metadata: record.metadata,
+      };
+    })
+    .filter((row): row is AccessLogRecentRow => Boolean(row));
+}
+
+function normalizeProjectHealthAggregates(value: unknown): ProjectHealthAggregate[] {
+  if (!Array.isArray(value)) return [];
+  return value
+    .map((row) => {
+      if (!row || typeof row !== 'object') return null;
+      const record = row as Record<string, unknown>;
+      const projectId = stringOrNull(record.project_id);
+      if (!projectId) return null;
+      return {
+        project_id: projectId,
+        calls: countValue(record.calls),
+        errors: countValue(record.errors),
+        denied: countValue(record.denied),
+        lastActivity: stringOrNull(record.last_activity),
+      };
+    })
+    .filter((row): row is ProjectHealthAggregate => Boolean(row));
+}
+
+function normalizeRollupOverviewPayload(payload: unknown): AccessLogOverview | null {
+  if (!payload || typeof payload !== 'object' || Array.isArray(payload)) return null;
+  const record = payload as Record<string, unknown>;
+  return {
+    source: 'rollup_rpc',
+    totalCalls: countValue(record.total_calls),
+    errorCalls: countValue(record.error_calls),
+    deniedCalls: countValue(record.denied_calls),
+    projectHealth: normalizeProjectHealthAggregates(record.project_health),
+    recentLogs: normalizeRecentAccessLogRows(record.recent_activity),
+  };
+}
+
+function emptyAccessLogOverview(source: AccessLogOverview['source']): AccessLogOverview {
+  return {
+    source,
+    totalCalls: 0,
+    errorCalls: 0,
+    deniedCalls: 0,
+    projectHealth: [],
+    recentLogs: [],
+  };
+}
+
+async function fetchRawAccessLogOverview(
+  supabase: any,
+  projectIds: string[],
+  healthWindowSince: string,
+): Promise<AccessLogOverview> {
+  const [totalCallsRes, errorCallsRes, deniedCallsRes, recentLogsRes, projectHealthLogsRes] = await Promise.all([
+    supabase
+      .from('project_access_logs')
+      .select('id', { count: 'exact', head: true })
+      .in('project_id', projectIds),
+    supabase
+      .from('project_access_logs')
+      .select('id', { count: 'exact', head: true })
+      .in('project_id', projectIds)
+      .gte('status_code', 400),
+    supabase
+      .from('project_access_logs')
+      .select('id', { count: 'exact', head: true })
+      .in('project_id', projectIds)
+      .in('status_code', [401, 403, 429]),
+    supabase
+      .from('project_access_logs')
+      .select('id, project_id, project_key_id, provider, slug, method, upstream_path, status_code, latency_ms, timestamp, metadata')
+      .in('project_id', projectIds)
+      .order('timestamp', { ascending: false })
+      .limit(20),
+    supabase
+      .from('project_access_logs')
+      .select('project_id, status_code, timestamp')
+      .in('project_id', projectIds)
+      .gte('timestamp', healthWindowSince),
+  ]);
+
+  const projectHealthStats = new Map<string, ProjectHealthAggregate>();
+  for (const log of (projectHealthLogsRes?.data || []) as Array<{ project_id: string; status_code: number | null; timestamp: string }>) {
+    const existing = projectHealthStats.get(log.project_id) || {
+      project_id: log.project_id,
+      calls: 0,
+      errors: 0,
+      denied: 0,
+      lastActivity: null,
+    };
+    existing.calls += 1;
+    if ((log.status_code || 0) >= 400) existing.errors += 1;
+    if (isDeniedStatus(log.status_code)) existing.denied += 1;
+    if (!existing.lastActivity || log.timestamp > existing.lastActivity) existing.lastActivity = log.timestamp;
+    projectHealthStats.set(log.project_id, existing);
+  }
+
+  return {
+    source: 'raw_fallback',
+    totalCalls: totalCallsRes?.count || 0,
+    errorCalls: errorCallsRes?.count || 0,
+    deniedCalls: deniedCallsRes?.count || 0,
+    projectHealth: [...projectHealthStats.values()],
+    recentLogs: normalizeRecentAccessLogRows(recentLogsRes?.data || []),
+  };
+}
+
+async function fetchAccessLogOverview(
+  supabase: any,
+  projectIds: string[],
+  healthWindowSince: string,
+): Promise<AccessLogOverview> {
+  try {
+    const { data, error } = await supabase.rpc('enterprise_project_access_overview', {
+      project_ids: projectIds,
+      health_window_since: healthWindowSince,
+      recent_limit: 20,
+    });
+    if (!error) {
+      const normalized = normalizeRollupOverviewPayload(Array.isArray(data) ? data[0] : data);
+      if (normalized) return normalized;
+    }
+  } catch {
+    // The migration may not be applied yet; fall back to the legacy raw-log path.
+  }
+
+  return fetchRawAccessLogOverview(supabase, projectIds, healthWindowSince);
+}
+
 async function listActiveProjects(
   env: EnterpriseControlPlaneEnv,
   userId: string,
   organizationId?: string | null,
+  activeMemberships?: OrganizationMembershipContext[],
 ): Promise<Array<{ id: string; vp_proj_id: string; name: string | null }>> {
-  const projects = await listAccessibleProjects(env, userId, organizationId || null);
+  const projects = await listAccessibleProjects(env, userId, organizationId || null, activeMemberships);
   return projects.map((project) => ({
     id: project.id,
     vp_proj_id: project.vp_proj_id,
@@ -247,13 +597,70 @@ async function listActiveProjects(
   }));
 }
 
-async function buildInitOverviewStats(
-  projects: Array<{ id: string; vp_proj_id: string; name: string | null }>,
+async function buildProjectsPayload(
   supabase: any,
-): Promise<Record<string, unknown>> {
+  projects: AccessibleProjectSummary[],
+): Promise<{ projects: Array<Record<string, unknown>> }> {
+  const projectIds = projects.map((project) => project.id);
+  const { data: keyRows } = projectIds.length
+    ? await supabase
+        .from('project_keys')
+        .select('id, project_id, provider, slug, share1_encrypted, share2_encrypted')
+        .in('project_id', projectIds)
+        .is('revoked_at', null)
+    : { data: [] };
+  const providerSlotsByProject = ((keyRows || []) as Array<{
+    id: string;
+    project_id: string;
+    provider: string;
+    slug: string | null;
+    share1_encrypted?: string | null;
+    share2_encrypted?: string | null;
+  }>).reduce<Map<string, Array<{
+    key_id: string;
+    provider: string;
+    slug: string;
+    material_mode: 'sealed-live' | 'demo-placeholder' | 'missing' | 'mixed';
+    material_ready: boolean;
+  }>>>((acc, row) => {
+    const existing = acc.get(row.project_id) || [];
+    const materialMode = resolveProviderMaterialMode(row);
+    existing.push({
+      key_id: row.id,
+      provider: row.provider,
+      slug: row.slug || row.provider,
+      material_mode: materialMode,
+      material_ready: materialMode === 'sealed-live',
+    });
+    acc.set(row.project_id, existing);
+    return acc;
+  }, new Map());
+
+  return {
+    projects: projects.map((project) => ({
+      id: project.id,
+      vp_proj_id: project.vp_proj_id,
+      name: project.name,
+      allowed_origins: project.allowed_origins,
+      strict_origin: project.strict_origin,
+      caller_lock_policy: project.caller_lock_policy || {},
+      created_at: project.created_at,
+      revoked_at: project.revoked_at,
+      project_role: project.project_role,
+      access_via: project.access_via,
+      provider_slots: providerSlotsByProject.get(project.id) || [],
+    })),
+  };
+}
+
+function buildOverviewStatsFromAccess(
+  projects: Array<{ id: string; vp_proj_id: string; name: string | null }>,
+  keys: Array<{ id: string; provider: string; slug: string | null }>,
+  accessOverview: AccessLogOverview,
+  healthWindowDays: number,
+  statsSourceOverride?: 'bootstrap_rpc',
+): Record<string, unknown> {
   const projectIds = projects.map((p) => p.id);
-  const healthWindowDays = 7;
-  const healthWindowSince = new Date(Date.now() - (healthWindowDays * 24 * 60 * 60 * 1000)).toISOString();
 
   if (projectIds.length === 0) {
     return {
@@ -267,6 +674,8 @@ async function buildInitOverviewStats(
       deniedCalls: 0,
       errorRate: 0,
       healthWindowDays,
+      statsSource: statsSourceOverride || accessOverview.source,
+      accessLogStatsSource: accessOverview.source,
       projectHealth: [],
       alerts: [{
         id: 'setup:no_projects',
@@ -288,50 +697,15 @@ async function buildInitOverviewStats(
       recentActivity: [],
     };
   }
-
-  const [{ data: keyRows }, totalCallsRes, errorCallsRes, deniedCallsRes, recentLogsRes, projectHealthLogsRes] = await Promise.all([
-    supabase
-      .from('project_keys')
-      .select('id, project_id, provider, slug')
-      .in('project_id', projectIds)
-      .is('revoked_at', null),
-    supabase
-      .from('project_access_logs')
-      .select('id', { count: 'exact', head: true })
-      .in('project_id', projectIds),
-    supabase
-      .from('project_access_logs')
-      .select('id', { count: 'exact', head: true })
-      .in('project_id', projectIds)
-      .gte('status_code', 400),
-    supabase
-      .from('project_access_logs')
-      .select('id', { count: 'exact', head: true })
-      .in('project_id', projectIds)
-      .in('status_code', [401, 403, 429]),
-    supabase
-      .from('project_access_logs')
-      .select('id, project_key_id, provider, slug, method, upstream_path, status_code, latency_ms, timestamp, metadata')
-      .in('project_id', projectIds)
-      .order('timestamp', { ascending: false })
-      .limit(20),
-    supabase
-      .from('project_access_logs')
-      .select('project_id, status_code, timestamp')
-      .in('project_id', projectIds)
-      .gte('timestamp', healthWindowSince),
-  ]);
-
-  const keys = (keyRows || []) as Array<{ id: string; provider: string; slug: string | null }>;
   const providers = [...new Set(keys.map((k) => k.provider).filter(Boolean))];
   const keyMap = new Map<string, { provider: string; label: string }>();
   for (const key of keys) {
     keyMap.set(key.id, { provider: key.provider, label: key.slug || key.provider });
   }
 
-  const totalCalls = totalCallsRes?.count || 0;
-  const errorCalls = errorCallsRes?.count || 0;
-  const deniedCalls = deniedCallsRes?.count || 0;
+  const totalCalls = accessOverview.totalCalls;
+  const errorCalls = accessOverview.errorCalls;
+  const deniedCalls = accessOverview.deniedCalls;
   const errorRate = totalCalls > 0 ? (errorCalls / totalCalls) * 100 : 0;
 
   const projectHealthStats = new Map<string, {
@@ -355,13 +729,13 @@ async function buildInitOverviewStats(
     });
   }
 
-  for (const log of (projectHealthLogsRes?.data || []) as Array<{ project_id: string; status_code: number | null; timestamp: string }>) {
-    const stat = projectHealthStats.get(log.project_id);
+  for (const aggregate of accessOverview.projectHealth) {
+    const stat = projectHealthStats.get(aggregate.project_id);
     if (!stat) continue;
-    stat.calls += 1;
-    if ((log.status_code || 0) >= 400) stat.errors += 1;
-    if (isDeniedStatus(log.status_code)) stat.denied += 1;
-    if (!stat.lastActivity || log.timestamp > stat.lastActivity) stat.lastActivity = log.timestamp;
+    stat.calls = aggregate.calls;
+    stat.errors = aggregate.errors;
+    stat.denied = aggregate.denied;
+    stat.lastActivity = aggregate.lastActivity;
   }
 
   const projectHealth = [...projectHealthStats.values()].sort((a, b) => {
@@ -407,18 +781,7 @@ async function buildInitOverviewStats(
     });
   }
 
-  const recentLogs = (recentLogsRes?.data || []) as Array<{
-    project_key_id: string | null;
-    provider: string | null;
-    slug: string | null;
-    method: string | null;
-    upstream_path: string | null;
-    status_code: number | null;
-    latency_ms: number | null;
-    timestamp: string;
-  }>;
-
-  const recentActivity = recentLogs.map((log) => {
+  const recentActivity = accessOverview.recentLogs.map((log) => {
     const keyInfo = log.project_key_id ? keyMap.get(log.project_key_id) : null;
     const endpoint = log.upstream_path || '';
     const method = (log.method || '').toUpperCase();
@@ -450,6 +813,8 @@ async function buildInitOverviewStats(
     deniedCalls,
     errorRate,
     healthWindowDays,
+    statsSource: statsSourceOverride || accessOverview.source,
+    accessLogStatsSource: accessOverview.source,
     projectHealth,
     alerts: alerts.slice(0, 6),
     pilotReview: {
@@ -476,12 +841,169 @@ async function buildInitOverviewStats(
   };
 }
 
+async function buildInitOverviewStats(
+  projects: Array<{ id: string; vp_proj_id: string; name: string | null }>,
+  supabase: any,
+): Promise<Record<string, unknown>> {
+  const projectIds = projects.map((p) => p.id);
+  const healthWindowDays = 7;
+  const healthWindowSince = new Date(Date.now() - (healthWindowDays * 24 * 60 * 60 * 1000)).toISOString();
+
+  if (projectIds.length === 0) {
+    return buildOverviewStatsFromAccess(projects, [], emptyAccessLogOverview('rollup_rpc'), healthWindowDays);
+  }
+
+  const [{ data: keyRows }, accessOverview] = await Promise.all([
+    supabase
+      .from('project_keys')
+      .select('id, project_id, provider, slug')
+      .in('project_id', projectIds)
+      .is('revoked_at', null),
+    fetchAccessLogOverview(supabase, projectIds, healthWindowSince),
+  ]);
+
+  const keys = (keyRows || []) as Array<{ id: string; provider: string; slug: string | null }>;
+  return buildOverviewStatsFromAccess(projects, keys, accessOverview, healthWindowDays);
+}
+
+function normalizeBootstrapProviderSlots(value: unknown): ProviderSlotSummary[] {
+  if (!Array.isArray(value)) return [];
+  return value
+    .map((slot) => {
+      if (!slot || typeof slot !== 'object' || Array.isArray(slot)) return null;
+      const record = slot as Record<string, unknown>;
+      const keyId = stringOrNull(record.key_id);
+      const provider = stringOrNull(record.provider);
+      if (!keyId || !provider) return null;
+      const materialMode = isProviderMaterialMode(record.material_mode) ? record.material_mode : 'missing';
+      return {
+        key_id: keyId,
+        provider,
+        slug: stringOrNull(record.slug) || provider,
+        material_mode: materialMode,
+        material_ready: typeof record.material_ready === 'boolean'
+          ? record.material_ready
+          : materialMode === 'sealed-live',
+      };
+    })
+    .filter((slot): slot is ProviderSlotSummary => Boolean(slot));
+}
+
+function normalizeBootstrapProjects(value: unknown): ProjectBootstrapSummary[] {
+  if (!Array.isArray(value)) return [];
+  return value
+    .map((project) => {
+      if (!project || typeof project !== 'object' || Array.isArray(project)) return null;
+      const record = project as Record<string, unknown>;
+      const id = stringOrNull(record.id);
+      const vpProjId = stringOrNull(record.vp_proj_id);
+      const createdAt = stringOrNull(record.created_at);
+      if (!id || !vpProjId || !createdAt) return null;
+      return {
+        id,
+        organization_id: stringOrNull(record.organization_id),
+        vp_proj_id: vpProjId,
+        name: stringOrNull(record.name),
+        allowed_origins: stringOrNull(record.allowed_origins),
+        strict_origin: record.strict_origin === true,
+        caller_lock_policy: objectOrEmpty(record.caller_lock_policy),
+        created_at: createdAt,
+        revoked_at: stringOrNull(record.revoked_at),
+        project_role: stringOrNull(record.project_role) || 'viewer',
+        access_via: stringOrNull(record.access_via) || 'project',
+        provider_slots: normalizeBootstrapProviderSlots(record.provider_slots),
+      };
+    })
+    .filter((project): project is ProjectBootstrapSummary => Boolean(project));
+}
+
+function normalizeBootstrapOrganizations(value: unknown): OrganizationBootstrapSummary[] {
+  if (!Array.isArray(value)) return [];
+  return value
+    .map((organization) => {
+      if (!organization || typeof organization !== 'object' || Array.isArray(organization)) return null;
+      const record = organization as Record<string, unknown>;
+      const id = stringOrNull(record.id);
+      const name = stringOrNull(record.name);
+      if (!id || !name) return null;
+      const kind = record.kind === 'personal' ? 'personal' : 'team';
+      return {
+        id,
+        name,
+        kind,
+        role: stringOrNull(record.role) || 'viewer',
+        is_active: record.is_active === true,
+      };
+    })
+    .filter((organization): organization is OrganizationBootstrapSummary => Boolean(organization));
+}
+
+async function fetchProjectsBootstrapRpc(
+  supabase: any,
+  userId: string,
+  requestedOrganizationId: string | null,
+): Promise<ProjectsBootstrapPayload | null> {
+  const healthWindowDays = 7;
+  const healthWindowSince = new Date(Date.now() - (healthWindowDays * 24 * 60 * 60 * 1000)).toISOString();
+
+  try {
+    const { data, error } = await supabase.rpc('enterprise_projects_bootstrap', {
+      input_user_id: userId,
+      input_organization_id: requestedOrganizationId || null,
+      health_window_since: healthWindowSince,
+      recent_limit: 20,
+    });
+    if (error) return null;
+
+    const payload = Array.isArray(data) ? data[0] : data;
+    if (!payload || typeof payload !== 'object' || Array.isArray(payload)) return null;
+    const record = payload as Record<string, unknown>;
+    const projects = normalizeBootstrapProjects(record.projects);
+    const organizations = normalizeBootstrapOrganizations(record.organizations);
+    const accessOverview = normalizeRollupOverviewPayload(record.access_overview)
+      || emptyAccessLogOverview('rollup_rpc');
+    const keys = projects.flatMap((project) => project.provider_slots.map((slot) => ({
+      id: slot.key_id,
+      provider: slot.provider,
+      slug: slot.slug,
+    })));
+
+    return {
+      organizations,
+      active_organization_id: stringOrNull(record.active_organization_id),
+      projects,
+      overview: buildOverviewStatsFromAccess(
+        projects.map((project) => ({
+          id: project.id,
+          vp_proj_id: project.vp_proj_id,
+          name: project.name,
+        })),
+        keys,
+        accessOverview,
+        healthWindowDays,
+        'bootstrap_rpc',
+      ),
+    };
+  } catch {
+    return null;
+  }
+}
+
 export async function handleEnterpriseProjectRoutes(
   request: Request,
   env: EnterpriseControlPlaneEnv,
   pathSegments: string[],
 ): Promise<Response | null> {
   if (!env.supabaseUrl || !env.supabaseServiceRoleKey) return null;
+  if (
+    request.method === 'POST'
+    && pathSegments.length === 5
+    && pathSegments[0] === 'projects'
+    && pathSegments[2] === 'providers'
+    && pathSegments[4] === 'execute'
+  ) {
+    return null;
+  }
 
   const auth = await authenticateUser(request, env);
   if (!auth) {
@@ -491,55 +1013,52 @@ export async function handleEnterpriseProjectRoutes(
     );
   }
 
-  const membership = await resolveOrganizationMembership(request, env, auth.userId);
-  const organizationId = membership?.organization_id || null;
   const supabase = getSupabase(env);
 
-  if (request.method === 'GET' && pathSegments.length === 1 && pathSegments[0] === 'projects') {
-    const projects = await listAccessibleProjects(env, auth.userId, organizationId);
-    const projectIds = projects.map((project) => project.id);
-    const { data: keyRows } = projectIds.length
-      ? await supabase
-          .from('project_keys')
-          .select('id, project_id, provider, slug')
-          .in('project_id', projectIds)
-          .is('revoked_at', null)
-      : { data: [] };
-    const providerSlotsByProject = ((keyRows || []) as Array<{
-      id: string;
-      project_id: string;
-      provider: string;
-      slug: string | null;
-    }>).reduce<Map<string, Array<{
-      key_id: string;
-      provider: string;
-      slug: string;
-    }>>>((acc, row) => {
-      const existing = acc.get(row.project_id) || [];
-      existing.push({
-        key_id: row.id,
-        provider: row.provider,
-        slug: row.slug || row.provider,
-      });
-      acc.set(row.project_id, existing);
-      return acc;
-    }, new Map());
+  if (request.method === 'GET' && pathSegments.length === 2 && pathSegments[0] === 'projects' && pathSegments[1] === 'bootstrap') {
+    const requestedOrganizationId = request.headers.get('x-vaultproof-organization')?.trim() || null;
+    const rpcPayload = await fetchProjectsBootstrapRpc(supabase, auth.userId, requestedOrganizationId);
+    if (rpcPayload) {
+      return Response.json(rpcPayload);
+    }
+
+    const memberships = await listOrganizationMemberships(env, auth.userId);
+    const membership = resolveOrganizationMembershipFromList(request, memberships);
+    const organizationId = membership?.organization_id || null;
+    const projects = await listAccessibleProjects(env, auth.userId, organizationId, memberships);
+    const [projectsPayload, overview] = await Promise.all([
+      buildProjectsPayload(supabase, projects),
+      buildInitOverviewStats(
+        projects.map((project) => ({
+          id: project.id,
+          vp_proj_id: project.vp_proj_id,
+          name: project.name,
+        })),
+        supabase,
+      ),
+    ]);
 
     return Response.json({
-      projects: projects.map((project) => ({
-        id: project.id,
-        vp_proj_id: project.vp_proj_id,
-        name: project.name,
-        allowed_origins: project.allowed_origins,
-        strict_origin: project.strict_origin,
-        caller_lock_policy: project.caller_lock_policy || {},
-        created_at: project.created_at,
-        revoked_at: project.revoked_at,
-        project_role: project.project_role,
-        access_via: project.access_via,
-        provider_slots: providerSlotsByProject.get(project.id) || [],
+      organizations: memberships.map((item) => ({
+        id: item.organization_id,
+        name: item.organization_name,
+        kind: item.organization_kind,
+        role: item.organization_role,
+        is_active: item.organization_id === organizationId,
       })),
+      active_organization_id: organizationId,
+      ...projectsPayload,
+      overview,
     });
+  }
+
+  const memberships = await listOrganizationMemberships(env, auth.userId);
+  const membership = resolveOrganizationMembershipFromList(request, memberships);
+  const organizationId = membership?.organization_id || null;
+
+  if (request.method === 'GET' && pathSegments.length === 1 && pathSegments[0] === 'projects') {
+    const projects = await listAccessibleProjects(env, auth.userId, organizationId, memberships);
+    return Response.json(await buildProjectsPayload(supabase, projects));
   }
 
   if (
@@ -549,7 +1068,7 @@ export async function handleEnterpriseProjectRoutes(
     pathSegments[1] === 'stats' &&
     pathSegments[2] === 'overview'
   ) {
-    const projects = await listActiveProjects(env, auth.userId, organizationId);
+    const projects = await listActiveProjects(env, auth.userId, organizationId, memberships);
     const overview = await buildInitOverviewStats(projects, supabase);
     return Response.json(overview);
   }
@@ -661,6 +1180,103 @@ export async function handleEnterpriseProjectRoutes(
         created_at: data.created_at,
       },
     });
+  }
+
+  if (
+    request.method === 'POST' &&
+    pathSegments.length === 3 &&
+    pathSegments[0] === 'projects' &&
+    pathSegments[2] === 'providers'
+  ) {
+    const projectId = pathSegments[1];
+    const project = await getAccessibleProject(env, auth.userId, projectId);
+    if (!project) {
+      return Response.json({ error: 'Project not found' }, { status: 404 });
+    }
+    if (!hasRequiredProjectRole(project.project_role, 'admin')) {
+      return Response.json({ error: 'Insufficient project permissions' }, { status: 403 });
+    }
+
+    let body: CreateProviderSlotBody;
+    try {
+      body = (await request.json()) as CreateProviderSlotBody;
+    } catch {
+      return Response.json({ error: 'Invalid JSON' }, { status: 400 });
+    }
+
+    if ((body.api_key && body.api_key.trim()) || (body.provider_key && body.provider_key.trim())) {
+      return Response.json(
+        { error: 'Live provider key ingest is not enabled in this dashboard build. Create a demo slot here, or use the sealed local seed flow for real key material.' },
+        { status: 501 },
+      );
+    }
+
+    const provider = normalizeProviderSlug(body.provider, 'provider');
+    if (!provider.ok) return Response.json({ error: provider.error }, { status: 400 });
+    const slug = normalizeProviderSlug(body.slug || provider.value, 'slug');
+    if (!slug.ok) return Response.json({ error: slug.error }, { status: 400 });
+    const upstreamBaseUrl = normalizeUpstreamBaseUrl(body.upstream_base_url);
+    if (!upstreamBaseUrl.ok) return Response.json({ error: upstreamBaseUrl.error }, { status: 400 });
+    const authHeaderName = normalizeHeaderName(body.auth_header_name || 'authorization', 'auth_header_name');
+    if (!authHeaderName.ok) return Response.json({ error: authHeaderName.error }, { status: 400 });
+    const authHeaderTemplate = normalizeAuthHeaderTemplate(body.auth_header_template || 'Bearer {key}');
+    if (!authHeaderTemplate.ok) return Response.json({ error: authHeaderTemplate.error }, { status: 400 });
+    const extraHeaders = normalizeExtraHeaders(body.extra_headers);
+    if (!extraHeaders.ok) return Response.json({ error: extraHeaders.error }, { status: 400 });
+
+    const placeholderSuffix = `${project.id}:${slug.value}`;
+    const { data, error } = await supabase
+      .from('project_keys')
+      .upsert({
+        project_id: project.id,
+        provider: provider.value,
+        slug: slug.value,
+        env_var: `${provider.value.toUpperCase().replace(/[^A-Z0-9]+/g, '_')}_API_KEY`,
+        upstream_base_url: upstreamBaseUrl.value,
+        auth_header_name: authHeaderName.value,
+        auth_header_template: authHeaderTemplate.value,
+        share1_encrypted: `demo-dashboard-placeholder-share-1:${placeholderSuffix}`,
+        share2_encrypted: `demo-dashboard-placeholder-share-2:${placeholderSuffix}`,
+        extra_headers: extraHeaders.value,
+        revoked_at: null,
+      }, { onConflict: 'project_id,provider' })
+      .select('id, project_id, provider, slug, upstream_base_url')
+      .single();
+
+    if (error || !data) {
+      return Response.json({ error: 'Failed to create provider slot' }, { status: 500 });
+    }
+
+    if (project.organization_id || organizationId) {
+      await writeGovernanceAuditEvent(env, {
+        organization_id: project.organization_id || organizationId || '',
+        project_id: project.id,
+        actor_user_id: auth.userId,
+        actor_email: auth.email,
+        event_type: 'enterprise_provider_slot_created',
+        target_type: 'project_key',
+        target_id: data.id as string,
+        description: `Created provider slot ${slug.value} for ${project.name || project.vp_proj_id}`,
+        metadata: {
+          provider: data.provider,
+          slug: data.slug || slug.value,
+          upstream_base_url: data.upstream_base_url,
+          material_mode: 'demo-placeholder',
+          created_via: 'enterprise_dashboard',
+        },
+      });
+    }
+
+    return Response.json({
+      provider_slot: {
+        key_id: data.id,
+        project_id: data.project_id,
+        provider: data.provider,
+        slug: data.slug || slug.value,
+        upstream_base_url: data.upstream_base_url,
+        material_mode: 'demo-placeholder',
+      },
+    }, { status: 201 });
   }
 
   if (

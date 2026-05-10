@@ -15,6 +15,7 @@ import {
 } from '../packages/enterprise-secure-executor/dist/enterprise-secure-executor/src/replay-guard.js';
 import {
   AzureSecureKeyReleaseProvider,
+  GcpKmsVaultUnwrapKeyProvider,
 } from '../packages/enterprise-secure-executor/dist/enterprise-secure-executor/src/key-release.js';
 
 const SIGNING_KEY_ID = 'enterprise-local';
@@ -269,6 +270,64 @@ async function assertHealthReadinessProfiles() {
   }
   if (productionPayload?.security_profile !== 'azure-confidential-production') {
     throw new Error('Expected production health profile to identify Azure confidential production');
+  }
+
+  const gcpProductionHealth = await handleEnterpriseSecureExecutorRequestWithEnv(
+    new Request('http://localhost/health'),
+    {
+      acceptedSigningKeys: {
+        [SIGNING_KEY_ID]: SIGNING_SECRET,
+      },
+      materialResolver: {
+        resolveExecutionMaterial: async () => ({
+          apiKey: 'sk-enterprise-smoke',
+          upstreamBaseUrl: 'https://api.openai.com',
+          authHeaderName: 'authorization',
+          authHeaderTemplate: 'Bearer {key}',
+          extraHeaders: null,
+        }),
+      },
+      enterpriseCloudProvider: 'gcp',
+      executorMode: 'confidential',
+      gcpProjectId: 'vaultproof-prod',
+      gcpLocation: 'us-central1',
+      gcpKmsKeyRing: 'vaultproof-runtime',
+      gcpKmsKeyName: 'vaultproof-unwrap',
+      gcpKmsKeyVersion: '1',
+      gcpKmsProtectionLevel: 'SOFTWARE',
+      gcpKmsEncryptedVaultUnwrapKeyBase64: 'kms-ciphertext',
+      keyProvider: {
+        mode: 'gcp-cloud-kms',
+        hardwareBound: false,
+        getVaultUnwrapKey: async () => 'unused-in-health-smoke',
+        getAttestationEvidence: async () => ({
+          provider: 'gcp-confidential-vm',
+          projectId: 'vaultproof-prod',
+          location: 'us-central1',
+          attestationTokenHash: 'gcp-attestation-token-sha256',
+          keyId: 'projects/vaultproof-prod/locations/us-central1/keyRings/vaultproof-runtime/cryptoKeys/vaultproof-unwrap',
+          keyVersion: '1',
+          keyProtectionLevel: 'SOFTWARE',
+          executorBuildDigest: 'sha256:gcp-executor-build',
+          confidentialVmResourceId: 'projects/vaultproof-prod/zones/us-central1-a/instances/vaultproof-enterprise-runtime-1',
+          claims: {
+            attestationType: 'google-cloud-attestation',
+            secureBoot: true,
+            vmIsolation: 'gcp-confidential-vm',
+            measurementSummary: 'sev-snp;secureboot:true',
+            imageDigest: 'sha256:gcp-executor-build',
+            serviceAccountEmail: 'vaultproof-executor@vaultproof-prod.iam.gserviceaccount.com',
+          },
+        }),
+      },
+    },
+  );
+  const gcpProductionPayload = await gcpProductionHealth.json();
+  if (gcpProductionPayload?.production_ready !== true) {
+    throw new Error(`Expected GCP production health profile to be ready, got ${JSON.stringify(gcpProductionPayload)}`);
+  }
+  if (gcpProductionPayload?.security_profile !== 'google-confidential-production') {
+    throw new Error('Expected production health profile to identify Google confidential production');
   }
 
   const staticTokenHealth = await handleEnterpriseSecureExecutorRequestWithEnv(
@@ -557,6 +616,72 @@ async function assertAzureSecureKeyReleaseProviderCanGenerateAttestationToken() 
   }
 }
 
+async function assertGcpKmsVaultUnwrapKeyProvider() {
+  const expectedKey = Buffer.from('0123456789abcdef0123456789abcdef').toString('base64');
+  let decryptCallCount = 0;
+  const provider = new GcpKmsVaultUnwrapKeyProvider({
+    projectId: 'vaultproof-prod',
+    location: 'us-central1',
+    keyRing: 'vaultproof-runtime',
+    keyName: 'vaultproof-unwrap',
+    keyVersion: '1',
+    keyProtectionLevel: 'SOFTWARE',
+    encryptedVaultUnwrapKeyBase64: 'kms-ciphertext',
+    accessToken: 'gcp-access-token',
+    cacheTtlMs: 25,
+    fetchImpl: async (input, init) => {
+      decryptCallCount += 1;
+      const url = typeof input === 'string' ? input : input instanceof URL ? input.toString() : input.url;
+      if (url !== 'https://cloudkms.googleapis.com/v1/projects/vaultproof-prod/locations/us-central1/keyRings/vaultproof-runtime/cryptoKeys/vaultproof-unwrap:decrypt') {
+        throw new Error(`Unexpected GCP KMS decrypt URL: ${url}`);
+      }
+      const headers = new Headers(init?.headers);
+      if (headers.get('authorization') !== 'Bearer gcp-access-token') {
+        throw new Error('Expected GCP access token bearer header');
+      }
+      const body = JSON.parse(init?.body || '{}');
+      if (body.ciphertext !== 'kms-ciphertext') {
+        throw new Error('Expected encrypted unwrap key ciphertext to be sent to KMS');
+      }
+      return new Response(JSON.stringify({ plaintext: expectedKey }), {
+        status: 200,
+        headers: {
+          'content-type': 'application/json',
+        },
+      });
+    },
+    attestationTokenHash: 'gcp-attestation-token-sha256',
+    executorBuildDigest: 'sha256:gcp-executor-build',
+    confidentialVmResourceId: 'projects/vaultproof-prod/zones/us-central1-a/instances/vaultproof-enterprise-runtime-1',
+    measurementSummary: 'sev-snp;secureboot:true',
+    secureBoot: true,
+    imageDigest: 'sha256:gcp-executor-build',
+    serviceAccountEmail: 'vaultproof-executor@vaultproof-prod.iam.gserviceaccount.com',
+  });
+
+  const released = await provider.getVaultUnwrapKey();
+  if (released !== expectedKey) {
+    throw new Error('Expected GCP KMS decrypt plaintext to become the AES-256 unwrap key');
+  }
+  const cached = await provider.getVaultUnwrapKey();
+  if (cached !== expectedKey || decryptCallCount !== 1) {
+    throw new Error('Expected GCP KMS unwrap material to be cached in memory before TTL expiry');
+  }
+  await new Promise((resolve) => setTimeout(resolve, 35));
+  const refreshed = await provider.getVaultUnwrapKey();
+  if (refreshed !== expectedKey || decryptCallCount !== 2) {
+    throw new Error('Expected GCP KMS unwrap material to be refreshed after TTL expiry');
+  }
+
+  const evidence = await provider.getAttestationEvidence();
+  if (evidence?.provider !== 'gcp-confidential-vm') {
+    throw new Error('Expected GCP confidential VM attestation evidence from KMS provider');
+  }
+  if (evidence?.keyProtectionLevel !== 'SOFTWARE') {
+    throw new Error('Expected GCP KMS software protection level in evidence');
+  }
+}
+
 async function assertInvalidEnvelope() {
   const envelope = await buildSignedSecureExecutionEnvelope({
     keyId: SIGNING_KEY_ID,
@@ -601,5 +726,6 @@ await assertHealthReadinessProfiles();
 await assertDemoSeedRouteRequiresExplicitOptIn();
 await assertAzureSecureKeyReleaseProvider();
 await assertAzureSecureKeyReleaseProviderCanGenerateAttestationToken();
+await assertGcpKmsVaultUnwrapKeyProvider();
 await assertInvalidEnvelope();
 console.log('enterprise secure executor smoke test passed');

@@ -9,28 +9,31 @@ export function renderEnterpriseHomepage(env: EnterpriseControlPlaneEnv = {}): s
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>VaultProof - API keys that are harder to steal</title>
   <meta name="description" content="VaultProof protects important API keys. Your app calls VaultProof instead of storing the real key, and VaultProof safely uses the key for one request at a time." />
-  <link rel="preconnect" href="https://fonts.googleapis.com" />
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Inter+Tight:wght@300;400;500;600&family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;1,6..72,400&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
   <style>
     :root {
       color-scheme: light;
-      --bg: #f2eee5;
-      --paper: #fbf9f4;
-      --surface: #e8e2d4;
-      --ink: #14120e;
-      --ink-soft: #3d3a33;
-      --muted: #867f6f;
-      --line: rgba(20, 18, 14, 0.12);
-      --line-strong: rgba(20, 18, 14, 0.25);
-      --line-soft: rgba(20, 18, 14, 0.06);
-      --accent: #8b5a3c;
-      --accent-soft: rgba(139, 90, 60, 0.12);
-      --success: #3f6b47;
-      --danger: #b44838;
-      --display: "Newsreader", "Times New Roman", Georgia, serif;
-      --body: "Inter Tight", -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
-      --mono: "JetBrains Mono", ui-monospace, SFMono-Regular, monospace;
+      --bg: #f6f7f2;
+      --paper: #fbfcf8;
+      --surface: #f7faf4;
+      --card-bg: #ffffff;
+      --row-bg: #f7faf4;
+      --ink: #17231d;
+      --ink-soft: #52625a;
+      --muted: #7d8c84;
+      --line: #dfe5dc;
+      --line-strong: #ccd8cf;
+      --line-soft: rgba(32, 48, 39, 0.09);
+      --accent: #176b4b;
+      --accent-ink: #10231d;
+      --accent-soft: rgba(143, 224, 193, 0.16);
+      --primary-bg: #8fe0c1;
+      --success: #176b4b;
+      --danger: #b95d50;
+      --blue: #168a9f;
+      --shadow: none;
+      --display: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      --body: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      --mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace;
     }
 
     * { box-sizing: border-box; }
@@ -40,6 +43,7 @@ export function renderEnterpriseHomepage(env: EnterpriseControlPlaneEnv = {}): s
       background: var(--bg);
       color: var(--ink);
       font-family: var(--body);
+      font-weight: 400;
       -webkit-font-smoothing: antialiased;
       text-rendering: optimizeLegibility;
     }
@@ -51,7 +55,7 @@ export function renderEnterpriseHomepage(env: EnterpriseControlPlaneEnv = {}): s
       position: sticky;
       top: 0;
       z-index: 50;
-      background: rgba(242, 238, 229, 0.88);
+      background: rgba(220, 235, 232, 0.88);
       -webkit-backdrop-filter: blur(14px);
       backdrop-filter: blur(14px);
       border-bottom: 0.5px solid var(--line);
@@ -90,10 +94,10 @@ export function renderEnterpriseHomepage(env: EnterpriseControlPlaneEnv = {}): s
       transition: transform 180ms ease, background 180ms ease, color 180ms ease, border-color 180ms ease;
     }
     .vp-btn:hover { transform: translateY(-1px); }
-    .vp-btn.primary { background: var(--ink); color: var(--bg); border-color: var(--ink); }
-    .vp-btn.secondary { background: transparent; color: var(--ink); }
+    .vp-btn.primary { background: var(--accent); color: var(--accent-ink); border-color: var(--accent); font-weight: 650; }
+    .vp-btn.secondary { background: rgba(255, 255, 255, 0.72); color: var(--ink); }
     .vp-section { border-bottom: 0.5px solid var(--line); position: relative; }
-    .vp-section.surface { background: var(--paper); }
+    .vp-section.surface { background: rgba(255, 255, 255, 0.46); }
     .vp-pad { padding: 64px 0; }
     .vp-eyebrow {
       display: flex;
@@ -109,7 +113,7 @@ export function renderEnterpriseHomepage(env: EnterpriseControlPlaneEnv = {}): s
       position: absolute;
       inset: -10% -8%;
       pointer-events: none;
-      background-image: radial-gradient(rgba(20, 18, 14, 0.1) 1px, transparent 1px);
+      background-image: radial-gradient(rgba(48, 76, 71, 0.12) 1px, transparent 1px);
       background-size: 28px 28px;
       mask-image: radial-gradient(ellipse at center, black 30%, transparent 74%);
       -webkit-mask-image: radial-gradient(ellipse at center, black 30%, transparent 74%);
@@ -182,11 +186,11 @@ export function renderEnterpriseHomepage(env: EnterpriseControlPlaneEnv = {}): s
     .vp-live { display: inline-flex; align-items: center; gap: 6px; text-transform: lowercase; letter-spacing: 0.04em; }
     .vp-dot { width: 6px; height: 6px; border-radius: 999px; background: var(--success); animation: vp-blink 1.6s ease-in-out infinite; }
     .vp-feed-card {
-      background: var(--paper);
+      background: var(--card-bg);
       border: 0.5px solid var(--line);
       border-radius: 9px;
       padding: 5px 18px;
-      box-shadow: 0 1px 0 rgba(255,255,255,.5) inset, 0 18px 60px -20px rgba(20,18,14,.18);
+      box-shadow: 0 1px 0 rgba(255,255,255,.5) inset, var(--shadow);
     }
     .vp-feed-row {
       display: grid;
@@ -243,10 +247,10 @@ export function renderEnterpriseHomepage(env: EnterpriseControlPlaneEnv = {}): s
       min-height: 430px;
       position: relative;
       overflow: hidden;
-      background: var(--paper);
+      background: var(--card-bg);
       border: 0.5px solid var(--line);
       border-radius: 12px;
-      box-shadow: 0 1px 0 rgba(255,255,255,.5) inset, 0 18px 60px -20px rgba(20,18,14,.18);
+      box-shadow: 0 1px 0 rgba(255,255,255,.5) inset, var(--shadow);
     }
     .vp-figure-grid {
       position: absolute;
@@ -273,7 +277,7 @@ export function renderEnterpriseHomepage(env: EnterpriseControlPlaneEnv = {}): s
     .vp-key-glyph {
       width: 46px;
       height: 18px;
-      border: 6px solid var(--ink);
+      border: 6px solid var(--success);
       border-right: 0;
       border-radius: 18px 0 0 18px;
       position: relative;
@@ -285,7 +289,7 @@ export function renderEnterpriseHomepage(env: EnterpriseControlPlaneEnv = {}): s
       top: 2px;
       width: 42px;
       height: 6px;
-      background: var(--ink);
+      background: var(--success);
     }
     .vp-key-glyph::after {
       content: "";
@@ -294,7 +298,7 @@ export function renderEnterpriseHomepage(env: EnterpriseControlPlaneEnv = {}): s
       top: 2px;
       width: 4px;
       height: 15px;
-      background: var(--ink);
+      background: var(--success);
     }
     .vp-region {
       position: absolute;
@@ -312,7 +316,7 @@ export function renderEnterpriseHomepage(env: EnterpriseControlPlaneEnv = {}): s
       margin: 0 auto 9px;
       border-radius: 999px;
       background: var(--accent);
-      box-shadow: 0 0 0 0 rgba(139, 90, 60, .35);
+      box-shadow: 0 0 0 0 rgba(213, 169, 20, .35);
       animation: vp-region-pulse 6s linear infinite;
     }
     .vp-shard {
@@ -387,7 +391,7 @@ export function renderEnterpriseHomepage(env: EnterpriseControlPlaneEnv = {}): s
       width: 56px;
       height: 56px;
       border-radius: 999px;
-      background: var(--paper);
+      background: rgba(255, 255, 255, 0.86);
       border: 0.5px solid var(--line-strong);
       display: grid;
       place-items: center;
@@ -458,11 +462,11 @@ export function renderEnterpriseHomepage(env: EnterpriseControlPlaneEnv = {}): s
     }
     .vp-checklist span::before { content: "↳"; color: var(--accent); font-family: var(--mono); font-size: 11px; margin-right: 10px; }
     .vp-code-card {
-      background: var(--paper);
+      background: var(--card-bg);
       border: 0.5px solid var(--line);
       border-radius: 9px;
       overflow: hidden;
-      box-shadow: 0 1px 0 rgba(255,255,255,.5) inset, 0 18px 60px -20px rgba(20,18,14,.18);
+      box-shadow: 0 1px 0 rgba(255,255,255,.5) inset, var(--shadow);
     }
     .vp-code-head, .vp-code-foot {
       display: flex;
@@ -487,7 +491,7 @@ export function renderEnterpriseHomepage(env: EnterpriseControlPlaneEnv = {}): s
     }
     .vp-code-card code span { display: block; padding: 0 20px; white-space: pre; }
     .vp-code-muted { color: var(--muted); }
-    .vp-code-remove { background: rgba(192, 57, 43, .14); color: var(--muted); }
+    .vp-code-remove { background: rgba(185, 93, 80, .14); color: var(--muted); }
     .vp-code-add { background: var(--accent-soft); color: var(--ink); }
     .vp-code-sign { color: var(--success); display: inline-flex; align-items: center; gap: 6px; }
     .vp-cursor {
@@ -512,6 +516,7 @@ export function renderEnterpriseHomepage(env: EnterpriseControlPlaneEnv = {}): s
       padding: 32px 28px;
       border-right: 0.5px solid var(--line);
       border-bottom: 0.5px solid var(--line);
+      background: var(--row-bg);
     }
     .vp-card-num { margin-bottom: 18px; color: var(--accent); font: 11px/1 var(--mono); letter-spacing: 0.06em; }
     .vp-card h3 { margin: 0; color: var(--ink); font: 400 24px/1.15 var(--display); letter-spacing: -0.015em; }
@@ -525,6 +530,7 @@ export function renderEnterpriseHomepage(env: EnterpriseControlPlaneEnv = {}): s
       padding: 24px 22px;
       border-right: 0.5px solid var(--line);
       border-bottom: 0.5px solid var(--line);
+      background: var(--row-bg);
     }
     .vp-compliance-card h3 { margin: 0; font: 500 22px/1.1 var(--display); letter-spacing: -0.01em; }
     .vp-compliance-card p { margin: 8px 0 0; color: var(--muted); font-size: 12.5px; line-height: 1.5; }
@@ -544,7 +550,7 @@ export function renderEnterpriseHomepage(env: EnterpriseControlPlaneEnv = {}): s
     .vp-final h2 em { color: var(--accent); font-style: italic; }
     .vp-final p { max-width: 610px; margin: 28px auto 0; color: var(--ink-soft); font-size: 17px; line-height: 1.55; text-wrap: pretty; }
     .vp-footer {
-      background: var(--paper);
+      background: rgba(255, 255, 255, 0.54);
       border-top: 0.5px solid var(--line);
     }
     .vp-footer-grid {
@@ -566,18 +572,329 @@ export function renderEnterpriseHomepage(env: EnterpriseControlPlaneEnv = {}): s
       font: 11px/1.4 var(--mono);
       letter-spacing: 0.04em;
     }
+    /* enterprise-homepage-dashboard-match */
+    .vp-page,
+    .vp-page * {
+      letter-spacing: 0 !important;
+    }
+    .vp-page {
+      background: var(--bg);
+      color: var(--ink);
+    }
+    .vp-container {
+      width: min(1480px, calc(100vw - 48px));
+    }
+    .vp-nav {
+      background: #10231d;
+      border-bottom: 1px solid rgba(143, 224, 193, 0.18);
+      -webkit-backdrop-filter: none;
+      backdrop-filter: none;
+    }
+    .vp-nav-inner {
+      min-height: 68px;
+      height: auto;
+      padding: 12px 0;
+    }
+    .vp-brand,
+    .vp-mark,
+    .vp-brand-title {
+      color: #ffffff;
+    }
+    .vp-mark {
+      display: none;
+    }
+    .vp-brand {
+      gap: 0;
+    }
+    .vp-brand-title {
+      font-size: 16px;
+      font-weight: 600;
+    }
+    .vp-brand-sub {
+      color: #8fe0c1;
+      font: 400 12px/1 var(--body);
+      text-transform: uppercase;
+    }
+    .vp-links a,
+    .vp-signin {
+      color: rgba(255, 255, 255, 0.70);
+      font-size: 14px;
+      font-weight: 400;
+    }
+    .vp-links a:hover,
+    .vp-signin:hover {
+      color: #ffffff;
+    }
+    .vp-btn {
+      min-height: 42px;
+      border-radius: 13px;
+      border: 1px solid var(--line);
+      font: 500 14px/1 var(--body);
+      box-shadow: none;
+    }
+    .vp-btn.primary {
+      background: var(--primary-bg);
+      color: var(--accent-ink);
+      border-color: var(--primary-bg);
+      font-weight: 600;
+    }
+    .vp-btn.secondary {
+      background: #ffffff;
+      color: var(--ink);
+      border-color: var(--line);
+    }
+    .vp-btn:hover {
+      transform: none;
+      border-color: var(--line-strong);
+    }
+    .vp-section {
+      border-bottom: 1px solid var(--line);
+      background: var(--bg);
+    }
+    .vp-section.surface,
+    .vp-footer {
+      background: #fbfcf8;
+    }
+    .vp-hero {
+      padding: 28px 0 44px;
+    }
+    .vp-hero .vp-container {
+      background: #ffffff;
+      border: 1px solid var(--line);
+      border-radius: 24px;
+      padding: 20px;
+    }
+    .vp-grid-bg,
+    .vp-dateline {
+      display: none;
+    }
+    .vp-eyebrow {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      width: auto;
+      color: #3d6f5b;
+      background: #ffffff;
+      border: 1px solid #ccd8cf;
+      border-radius: 999px;
+      padding: 6px 10px;
+      font: 600 11px/1.2 var(--body);
+      text-transform: uppercase;
+    }
+    .vp-eyebrow strong,
+    .vp-card-num,
+    .vp-steps b {
+      color: var(--accent);
+      font-weight: 600;
+    }
+    .vp-hero-title,
+    .vp-heading,
+    .vp-final h2 {
+      color: var(--ink);
+      font-family: var(--body);
+      font-size: 1.875rem !important;
+      font-weight: 600;
+      line-height: 2.25rem;
+      max-width: 760px;
+      margin-top: 16px;
+      text-wrap: balance;
+    }
+    .vp-hero-title em,
+    .vp-heading em,
+    .vp-final h2 em {
+      color: var(--accent);
+      font-style: normal;
+    }
+    .vp-hero-lower,
+    .vp-two-col,
+    .vp-threat-layout,
+    .vp-code-layout {
+      gap: 20px;
+    }
+    .vp-hero-lower {
+      margin-top: 18px;
+      padding-top: 18px;
+      border-top: 1px solid var(--line);
+    }
+    .vp-lede,
+    .vp-copy,
+    .vp-final p {
+      color: var(--ink-soft);
+      font-size: 14px;
+      line-height: 1.75;
+      font-family: var(--body);
+    }
+    .vp-note,
+    .vp-stat-caption,
+    .vp-source,
+    .vp-footer p,
+    .vp-footer-bottom,
+    .vp-compliance-card p {
+      color: var(--muted);
+      font-family: var(--body);
+      font-weight: 400;
+    }
+    .vp-feed-card,
+    .vp-code-card,
+    .vp-figure,
+    .vp-card,
+    .vp-compliance-card,
+    .vp-final {
+      background: #ffffff;
+      border: 1px solid var(--line);
+      border-radius: 18px;
+      box-shadow: none;
+    }
+    .vp-feed-card {
+      padding: 8px 16px;
+    }
+    .vp-feed-head,
+    .vp-code-head,
+    .vp-code-foot,
+    .vp-region,
+    .vp-region-strip,
+    .vp-card-num,
+    .vp-footer h3 {
+      color: var(--muted);
+      font-family: var(--body);
+      font-weight: 400;
+      text-transform: uppercase;
+    }
+    .vp-feed-row {
+      color: var(--ink);
+      font-family: var(--mono);
+      border-bottom: 1px solid var(--line-soft);
+    }
+    .vp-feed-row .accent,
+    .vp-feed-row .ok,
+    .vp-code-sign {
+      color: var(--accent);
+    }
+    .vp-stat-big,
+    .vp-threat-stat {
+      color: var(--accent);
+      font: 600 34px/1.05 var(--body);
+    }
+    .vp-proof-stat,
+    .vp-threat-row,
+    .vp-threat-row:last-child,
+    .vp-mechanism-grid,
+    .vp-region-strip,
+    .vp-footer-bottom {
+      border-color: var(--line);
+    }
+    .vp-threat-row p,
+    .vp-card p,
+    .vp-node p,
+    .vp-compliance-card p,
+    .vp-footer ul {
+      color: #5f6f67;
+      font-size: 13px;
+      line-height: 1.5;
+    }
+    .vp-node h3,
+    .vp-card h3,
+    .vp-compliance-card h3 {
+      color: var(--ink);
+      font: 600 17px/1.2 var(--body);
+    }
+    .vp-node-dot {
+      background: #ffffff;
+      border: 1px solid var(--line-strong);
+      color: var(--accent);
+      font-family: var(--body);
+      font-weight: 600;
+    }
+    .vp-key-core,
+    .vp-shard,
+    .vp-region i,
+    .vp-window-dots i,
+    .vp-dot {
+      border-color: rgba(143, 224, 193, 0.40);
+      background: #8fe0c1;
+      color: var(--accent-ink);
+    }
+    .vp-key-glyph,
+    .vp-key-glyph::before,
+    .vp-key-glyph::after,
+    .vp-beam,
+    .vp-cursor {
+      border-color: var(--accent);
+      background: var(--accent);
+    }
+    .vp-shard {
+      border: 1px solid rgba(23, 107, 75, 0.24);
+      border-radius: 8px;
+      font-weight: 600;
+    }
+    .vp-region-strip span:nth-child(-n+3) {
+      color: var(--accent);
+    }
+    .vp-code-card .vp-code-add,
+    .vp-code-add {
+      background: rgba(143, 224, 193, 0.14);
+      color: var(--accent);
+    }
+    .vp-code-card pre {
+      color: #52625a;
+      font-family: var(--mono);
+    }
+    .vp-code-muted,
+    .vp-code-remove {
+      color: var(--muted);
+    }
+    .vp-feature-grid,
+    .vp-compliance-grid,
+    .vp-belief-grid {
+      border: 0;
+      gap: 12px;
+    }
+    .vp-card,
+    .vp-compliance-card,
+    .vp-belief {
+      border: 1px solid var(--line);
+      border-radius: 16px;
+      background: #ffffff;
+    }
+    .vp-belief {
+      min-height: 220px;
+      padding: 28px;
+    }
+    .vp-belief:first-child {
+      padding-left: 28px;
+    }
+    .vp-final {
+      padding: 32px 20px;
+    }
+    .vp-footer-grid {
+      border-top: 1px solid var(--line);
+      padding-top: 32px;
+    }
+    @media (min-width: 640px) {
+      .vp-hero-title,
+      .vp-heading,
+      .vp-final h2 {
+        font-size: 2.6rem !important;
+        line-height: 1.1;
+      }
+      .vp-lede,
+      .vp-copy,
+      .vp-final p {
+        font-size: 16px;
+      }
+    }
     .vp-reveal { opacity: 0; transform: translateY(18px); transition: opacity 850ms cubic-bezier(.2,.6,.2,1), transform 850ms cubic-bezier(.2,.6,.2,1); }
     .vp-reveal.visible { opacity: 1; transform: translateY(0); }
     @keyframes vp-blink { 0%, 50% { opacity: 1; } 51%, 100% { opacity: 0; } }
     @keyframes vp-feed-in { from { opacity: 0; transform: translateY(-12px); } to { opacity: 1; transform: translateY(0); } }
     @keyframes vp-key-core { 0%, 5%, 95%, 100% { opacity: 1; } 15%, 90% { opacity: .18; } }
-    @keyframes vp-region-pulse { 0%, 40% { box-shadow: 0 0 0 0 rgba(139,90,60,.28); } 52% { box-shadow: 0 0 0 12px rgba(139,90,60,.13); } 70%, 100% { box-shadow: 0 0 0 18px transparent; } }
+    @keyframes vp-region-pulse { 0%, 40% { box-shadow: 0 0 0 0 rgba(213,169,20,.28); } 52% { box-shadow: 0 0 0 12px rgba(213,169,20,.13); } 70%, 100% { box-shadow: 0 0 0 18px transparent; } }
     @keyframes vp-shard {
       0%, 5% { transform: translate(-50%, -50%) rotate(0deg); opacity: 1; }
       35%, 65% { transform: translate(calc(-50% + var(--tx)), calc(-50% + var(--ty))) rotate(var(--rot)); opacity: 1; }
       95%, 100% { transform: translate(-50%, -50%) rotate(0deg); opacity: 1; }
     }
-    @keyframes vp-node-pulse { 0%, 50% { box-shadow: 0 0 0 0 rgba(139,90,60,.28); } 58% { box-shadow: 0 0 0 8px rgba(139,90,60,.18); } 74%, 100% { box-shadow: 0 0 0 16px transparent; } }
+    @keyframes vp-node-pulse { 0%, 50% { box-shadow: 0 0 0 0 rgba(213,169,20,.28); } 58% { box-shadow: 0 0 0 8px rgba(213,169,20,.18); } 74%, 100% { box-shadow: 0 0 0 16px transparent; } }
     @keyframes vp-beam { 0%, 60% { transform: scaleX(0); transform-origin: left; opacity: 0; } 65% { transform: scaleX(0); opacity: 1; } 85% { transform: scaleX(1); opacity: 1; } 92%, 100% { transform: scaleX(1); opacity: 0; } }
     @keyframes vp-zero-flash { 0%, 88% { background: var(--paper); } 90% { background: var(--accent-soft); } 100% { background: var(--paper); } }
     @media (max-width: 980px) {
@@ -647,7 +964,7 @@ export function renderEnterpriseHomepage(env: EnterpriseControlPlaneEnv = {}): s
           <h1 class="vp-hero-title">API keys,<br><em>without the leak.</em></h1>
           <div class="vp-hero-lower">
             <div>
-              <p class="vp-lede">VaultProof is a safe middle layer for important API keys. Your app calls VaultProof instead of storing the real key. VaultProof unlocks the key in a protected Azure machine, uses it for one request, then erases it.</p>
+              <p class="vp-lede">VaultProof is a safe middle layer for important API keys. Your app calls VaultProof instead of storing the real key. VaultProof unlocks the key in a protected GCP runtime, uses it for one request, then erases it.</p>
               <div class="vp-cta-row">
                 <a class="vp-btn primary" href="mailto:security@vaultproof.dev?subject=VaultProof%20Enterprise%20early%20access">Request early access →</a>
                 <a class="vp-btn secondary" href="/app/login">Enterprise sign in</a>
@@ -722,7 +1039,7 @@ export function renderEnterpriseHomepage(env: EnterpriseControlPlaneEnv = {}): s
           <div class="vp-mechanism-grid">
             <div class="vp-wire"></div><div class="vp-beam"></div>
             <article class="vp-node"><div class="vp-node-dot">01</div><div><h3>Your app</h3><p>Your app calls VaultProof instead of putting the API key in code or an env var.</p></div></article>
-            <article class="vp-node"><div class="vp-node-dot">02</div><div><h3>VaultProof</h3><p>We check the rules, gather the key pieces, and unlock the key inside a protected Azure machine.</p></div></article>
+            <article class="vp-node"><div class="vp-node-dot">02</div><div><h3>VaultProof</h3><p>We check the rules, gather the key pieces, and unlock the key inside a protected GCP runtime.</p></div></article>
             <article class="vp-node"><div class="vp-node-dot">03</div><div><h3>Provider</h3><p>VaultProof sends the approved request to OpenAI, Stripe, Twilio, Snowflake, or another provider.</p></div></article>
             <article class="vp-node"><div class="vp-node-dot">04</div><div><h3>Receipt</h3><p>The key is erased from memory and your security team gets a record of what happened.</p></div></article>
           </div>
@@ -738,7 +1055,7 @@ export function renderEnterpriseHomepage(env: EnterpriseControlPlaneEnv = {}): s
             <div class="vp-checklist">
               <span>Start with one important API key</span>
               <span>Keep your current provider SDKs and app logic</span>
-              <span>Use your Azure Key Vault or Managed HSM if your company wants to own the keys</span>
+              <span>Use Cloud KMS or a customer-owned gateway pattern when your company wants stronger custody controls</span>
               <span>Send clear request records to your security tools</span>
             </div>
           </div>
@@ -768,10 +1085,10 @@ export function renderEnterpriseHomepage(env: EnterpriseControlPlaneEnv = {}): s
           </div>
           <div class="vp-feature-grid">
             <article class="vp-card"><div class="vp-card-num">01 / 06</div><h3>No raw keys in apps</h3><p>Move API keys out of code, env vars, CI logs, and app databases.</p></article>
-            <article class="vp-card"><div class="vp-card-num">02 / 06</div><h3>Keys used safely</h3><p>Keys are unlocked only inside a protected Azure machine, only when a request needs them.</p></article>
+            <article class="vp-card"><div class="vp-card-num">02 / 06</div><h3>Keys used safely</h3><p>Keys are unlocked only inside a protected GCP runtime, only when a request needs them.</p></article>
             <article class="vp-card"><div class="vp-card-num">03 / 06</div><h3>Clear rules</h3><p>Choose which project, website, provider, and customer gateway is allowed to use each key.</p></article>
             <article class="vp-card"><div class="vp-card-num">04 / 06</div><h3>Simple audit records</h3><p>Every key use creates a clear record your security team can review.</p></article>
-            <article class="vp-card"><div class="vp-card-num">05 / 06</div><h3>You can own the keys</h3><p>Use Azure Key Vault or Managed HSM when your company needs ownership and shutoff control.</p></article>
+            <article class="vp-card"><div class="vp-card-num">05 / 06</div><h3>You can own the keys</h3><p>Use Cloud KMS or a customer-owned gateway pattern when your company needs ownership and shutoff controls.</p></article>
             <article class="vp-card"><div class="vp-card-num">06 / 06</div><h3>Works with major APIs</h3><p>Protect calls to OpenAI, Stripe, Twilio, Snowflake, Datadog, and other APIs from one place.</p></article>
           </div>
         </div>
@@ -795,9 +1112,9 @@ export function renderEnterpriseHomepage(env: EnterpriseControlPlaneEnv = {}): s
           <div class="vp-two-col" style="align-items:baseline;margin-bottom:32px">
             <div>
               <div class="vp-eyebrow"><strong>§ 07</strong><span>Trust · the honest version</span></div>
-              <h2 class="vp-heading">We're early. <em>The safe Azure version is live.</em></h2>
+              <h2 class="vp-heading">We're early. <em>The safe GCP demo is live.</em></h2>
             </div>
-            <p class="vp-copy" style="margin:0">VaultProof is in private beta. We do not claim certifications before auditors sign them. Today we have a live secure Azure setup, a clear enterprise dashboard, and a roadmap toward the proof big companies need.</p>
+            <p class="vp-copy" style="margin:0">VaultProof is in private beta. We do not claim certifications before auditors sign them. Today we have a live secure GCP demo, a clear enterprise dashboard, and a roadmap toward the proof big companies need.</p>
           </div>
           <div class="vp-compliance-grid">
             <article class="vp-compliance-card"><h3>SOC 2 Type II</h3><p>Pursuing · Type I observation underway</p></article>
@@ -832,7 +1149,7 @@ export function renderEnterpriseHomepage(env: EnterpriseControlPlaneEnv = {}): s
             <div class="vp-brand" style="min-width:0"><svg class="vp-mark" viewBox="0 0 24 24" aria-hidden="true"><rect x="2" y="2" width="9" height="9" stroke="currentColor" stroke-width="1.4" fill="none"></rect><rect x="13" y="2" width="9" height="9" stroke="currentColor" stroke-width="1.4" fill="none"></rect><rect x="2" y="13" width="9" height="9" stroke="currentColor" stroke-width="1.4" fill="none"></rect><rect x="13" y="13" width="9" height="9" fill="currentColor"></rect></svg><span class="vp-brand-title">VaultProof</span></div>
             <p>A safer home for enterprise API keys. Your app calls VaultProof; VaultProof safely uses the key; your app never stores the raw secret.</p>
           </div>
-          <div><h3>Platform</h3><ul><li>Secure API gateway</li><li>Safe key use</li><li>Access rules</li><li>Audit records</li><li>BYO Azure keys</li></ul></div>
+          <div><h3>Platform</h3><ul><li>Secure API gateway</li><li>Safe key use</li><li>Access rules</li><li>Audit records</li><li>Cloud KMS custody</li></ul></div>
           <div><h3>Resources</h3><ul><li><a href="/readiness">Readiness</a></li><li><a href="/health">Health</a></li><li><a href="/app/dashboard">Dashboard</a></li><li><a href="/app/alerts">Alerts</a></li></ul></div>
           <div><h3>Company</h3><ul><li>Private beta</li><li>Design partners</li><li>Security review</li><li>Founder-led support</li></ul></div>
           <div><h3>Contact</h3><ul><li><a href="mailto:hello@vaultproof.dev">hello@vaultproof.dev</a></li><li><a href="mailto:security@vaultproof.dev">security@vaultproof.dev</a></li><li>San Francisco, CA</li></ul></div>

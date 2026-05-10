@@ -3,7 +3,8 @@ import {
   isExpiredExecutionRequest,
   type SecureExecutionResult,
   type SignedSecureExecutionEnvelope,
-  type AzureSecureExecutionAttestationEvidence,
+  type GcpSecureExecutionAttestationEvidence,
+  type SecureExecutionAttestationEvidence,
 } from '@vaultproof/core';
 import {
   executeUpstreamRequest,
@@ -32,6 +33,7 @@ export interface EnterpriseSecureExecutorEnv {
   supabaseUrl?: string;
   supabaseServiceRoleKey?: string;
   vaultEncryptionKey?: string;
+  enterpriseCloudProvider?: string;
   executorMode?: string;
   azureKeyReleaseUrl?: string;
   azureAttestationToken?: string;
@@ -47,6 +49,25 @@ export interface EnterpriseSecureExecutorEnv {
   executorBuildDigest?: string;
   azureConfidentialVmResourceId?: string;
   azureMeasurementSummary?: string;
+  gcpProjectId?: string;
+  gcpLocation?: string;
+  gcpKmsKeyRing?: string;
+  gcpKmsKeyName?: string;
+  gcpKmsCryptoKeyResource?: string;
+  gcpKmsKeyVersion?: string;
+  gcpKmsProtectionLevel?: string;
+  gcpKmsEncryptedVaultUnwrapKeyBase64?: string;
+  gcpKmsAccessToken?: string;
+  gcpKmsCacheTtlMs?: number;
+  gcpAttestationTokenHash?: string;
+  gcpAttestationToken?: string;
+  gcpConfidentialVmResourceId?: string;
+  gcpMeasurementSummary?: string;
+  gcpSecureBoot?: boolean;
+  gcpImageDigest?: string;
+  gcpServiceAccountEmail?: string;
+  gcpAttestationType?: string;
+  gcpIsolationProvider?: 'gcp-confidential-vm' | 'gcp-confidential-space';
   keyProvider?: VaultUnwrapKeyProvider;
   replayGuard?: ReplayGuard;
 }
@@ -83,7 +104,23 @@ function buildProductionReadiness(input: {
   acceptedKeyIds: string[];
   materialResolver: EnterpriseExecutionMaterialResolver;
   keyProvider: VaultUnwrapKeyProvider;
-  attestationEvidence: AzureSecureExecutionAttestationEvidence | null;
+  attestationEvidence: SecureExecutionAttestationEvidence | null;
+  replayProtectionReady: boolean;
+  env: EnterpriseSecureExecutorEnv;
+}): { ready: boolean; securityProfile: string; blockers: string[] } {
+  const cloudProvider = inferCloudProvider(input.env, input.keyProvider);
+  if (cloudProvider === 'gcp') {
+    return buildGcpProductionReadiness(input);
+  }
+
+  return buildAzureProductionReadiness(input);
+}
+
+function buildAzureProductionReadiness(input: {
+  acceptedKeyIds: string[];
+  materialResolver: EnterpriseExecutionMaterialResolver;
+  keyProvider: VaultUnwrapKeyProvider;
+  attestationEvidence: SecureExecutionAttestationEvidence | null;
   replayProtectionReady: boolean;
   env: EnterpriseSecureExecutorEnv;
 }): { ready: boolean; securityProfile: string; blockers: string[] } {
@@ -121,37 +158,39 @@ function buildProductionReadiness(input: {
   if (!input.attestationEvidence) {
     blockers.push('Azure attestation evidence is not ready');
   } else {
-    if (input.attestationEvidence.provider !== 'azure-confidential-vm') {
+    const evidence = input.attestationEvidence;
+    if (evidence.provider !== 'azure-confidential-vm') {
       blockers.push('attestation provider is not Azure Confidential VM');
     }
-    if (!input.attestationEvidence.attestationProviderUri) {
+    const azureEvidence = evidence as Extract<SecureExecutionAttestationEvidence, { provider: 'azure-confidential-vm' }>;
+    if (!azureEvidence.attestationProviderUri) {
       blockers.push('attestation provider URI is missing');
     }
-    if (!input.attestationEvidence.attestationTokenHash) {
+    if (!azureEvidence.attestationTokenHash) {
       blockers.push('attestation token hash is missing');
     }
-    if (!input.attestationEvidence.keyReleasePolicyHash) {
+    if (!azureEvidence.keyReleasePolicyHash) {
       blockers.push('key release policy hash is missing');
     }
-    if (!input.attestationEvidence.keyId) {
+    if (!azureEvidence.keyId) {
       blockers.push('released key ID is missing');
     }
-    if (!input.attestationEvidence.keyVersion) {
+    if (!azureEvidence.keyVersion) {
       blockers.push('released key version is missing');
     }
-    if (!input.attestationEvidence.executorBuildDigest) {
+    if (!azureEvidence.executorBuildDigest) {
       blockers.push('executor build digest is missing');
     }
-    if (!input.attestationEvidence.confidentialVmResourceId) {
+    if (!azureEvidence.confidentialVmResourceId) {
       blockers.push('Confidential VM resource ID is missing');
     }
-    if (input.attestationEvidence.claims?.attestationType !== 'azure-maa') {
+    if (azureEvidence.claims?.attestationType !== 'azure-maa') {
       blockers.push('Azure MAA attestation claim summary is missing');
     }
-    if (input.attestationEvidence.claims?.vmIsolation !== 'azure-confidential-vm') {
+    if (azureEvidence.claims?.vmIsolation !== 'azure-confidential-vm') {
       blockers.push('Azure Confidential VM isolation claim is missing');
     }
-    if (!input.attestationEvidence.claims?.measurementSummary) {
+    if (!azureEvidence.claims?.measurementSummary) {
       blockers.push('measurement summary is missing');
     }
   }
@@ -164,6 +203,98 @@ function buildProductionReadiness(input: {
     securityProfile: blockers.length === 0 ? 'azure-confidential-production' : 'demo-or-incomplete',
     blockers,
   };
+}
+
+function buildGcpProductionReadiness(input: {
+  acceptedKeyIds: string[];
+  materialResolver: EnterpriseExecutionMaterialResolver;
+  keyProvider: VaultUnwrapKeyProvider;
+  attestationEvidence: SecureExecutionAttestationEvidence | null;
+  replayProtectionReady: boolean;
+  env: EnterpriseSecureExecutorEnv;
+}): { ready: boolean; securityProfile: string; blockers: string[] } {
+  const blockers: string[] = [];
+  const executorMode = (input.env.executorMode || 'demo').trim().toLowerCase();
+  const hasKmsKeyResource = Boolean(
+    input.env.gcpKmsCryptoKeyResource
+      || (input.env.gcpProjectId && input.env.gcpLocation && input.env.gcpKmsKeyRing && input.env.gcpKmsKeyName),
+  );
+
+  if (input.materialResolver instanceof NullExecutionMaterialResolver) {
+    blockers.push('execution material resolver is not configured');
+  }
+  if (!input.acceptedKeyIds.length) {
+    blockers.push('no accepted control-plane signing keys are configured');
+  }
+  if (input.keyProvider instanceof NullVaultUnwrapKeyProvider) {
+    blockers.push('vault unwrap key release is not configured');
+  }
+  if (input.keyProvider.mode !== 'gcp-cloud-kms') {
+    blockers.push(`key release mode is ${input.keyProvider.mode}`);
+  }
+  if (executorMode !== 'confidential') {
+    blockers.push(`executor mode is ${executorMode}`);
+  }
+  if (!hasKmsKeyResource) {
+    blockers.push('GCP Cloud KMS key resource is not configured');
+  }
+  if (!input.env.gcpKmsEncryptedVaultUnwrapKeyBase64) {
+    blockers.push('GCP encrypted vault unwrap key is not configured');
+  }
+
+  if (!input.attestationEvidence) {
+    blockers.push('GCP attestation evidence is not ready');
+  } else {
+    const evidence = input.attestationEvidence;
+    if (!['gcp-confidential-vm', 'gcp-confidential-space'].includes(evidence.provider)) {
+      blockers.push('attestation provider is not GCP Confidential Computing');
+    }
+    const gcpEvidence = evidence as GcpSecureExecutionAttestationEvidence;
+    if (!gcpEvidence.attestationTokenHash) {
+      blockers.push('attestation token hash is missing');
+    }
+    if (!gcpEvidence.keyId) {
+      blockers.push('GCP KMS key resource is missing');
+    }
+    if (!gcpEvidence.keyVersion) {
+      blockers.push('GCP KMS key version is missing');
+    }
+    if (!gcpEvidence.keyProtectionLevel) {
+      blockers.push('GCP KMS key protection level is missing');
+    }
+    if (!gcpEvidence.executorBuildDigest) {
+      blockers.push('executor build digest is missing');
+    }
+    if (!gcpEvidence.confidentialVmResourceId) {
+      blockers.push('GCP Confidential VM resource ID is missing');
+    }
+    if (!gcpEvidence.claims?.attestationType) {
+      blockers.push('GCP attestation claim summary is missing');
+    }
+    if (!gcpEvidence.claims?.vmIsolation) {
+      blockers.push('GCP Confidential Computing isolation claim is missing');
+    }
+    if (!gcpEvidence.claims?.measurementSummary) {
+      blockers.push('measurement summary is missing');
+    }
+  }
+
+  if (!input.replayProtectionReady) {
+    blockers.push('replay protection is not ready');
+  }
+
+  return {
+    ready: blockers.length === 0,
+    securityProfile: blockers.length === 0 ? 'google-confidential-production' : 'demo-or-incomplete',
+    blockers,
+  };
+}
+
+function inferCloudProvider(env: EnterpriseSecureExecutorEnv, keyProvider: VaultUnwrapKeyProvider): 'azure' | 'gcp' {
+  const configured = env.enterpriseCloudProvider?.trim().toLowerCase();
+  if (configured === 'gcp' || configured === 'google' || configured === 'google-cloud') return 'gcp';
+  if (keyProvider.mode === 'gcp-cloud-kms') return 'gcp';
+  return 'azure';
 }
 
 async function executeEnvelope(

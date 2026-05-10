@@ -33,10 +33,20 @@ function removePublicSiteTheme(html: string): string {
 }
 
 const LEGACY_STATIC_SIDEBAR_ARTIFACTS = [
+  'id="sidebar"',
+  'id="sidebarOverlay"',
   '.sidebar-group',
   '.sidebar-head',
   '.sidebar-item',
+  '.sidebar-nav-item',
+  '.sidebar-label',
   '.sidebar-dot',
+  '.sidebar-overlay',
+  '.sidebar-bottom',
+  'sidebar-nav-item',
+  'sidebar-label',
+  'sidebar-overlay',
+  'sidebar-bottom',
   '.usage-box',
   '.usage-label',
   '.usage-row',
@@ -54,7 +64,7 @@ function removeLegacyStaticSidebarArtifacts(html: string): string {
 
 function replaceOrInjectEnterpriseSidebar(html: string, activePage: EnterpriseAppNavPage, subtitle: string): string {
   const sidebar = renderEnterpriseAppSidebar(activePage, subtitle);
-  const replaced = html.replace(/<aside class="sidebar">[\s\S]*?<\/aside>/, sidebar);
+  const replaced = html.replace(/<aside\b[^>]*class="[^"]*\bsidebar\b[^"]*"[^>]*>[\s\S]*?<\/aside>/, sidebar);
   if (replaced !== html) return replaced;
   return html.replace('<div class="layout">', `<div class="layout">\n      ${sidebar}`);
 }
@@ -80,76 +90,315 @@ function readEnterpriseAppPage(filename: string): string {
   return rewriteStaticAssetUrls(html);
 }
 
+const ENTERPRISE_RENDERED_APP_BASE_THEME = `
+    :root {
+      color-scheme: light;
+      --bg: #f6f7f2;
+      --panel: rgba(255, 255, 255, 0.76);
+      --line: rgba(32, 48, 39, 0.14);
+      --line-soft: rgba(32, 48, 39, 0.09);
+      --text: #17231d;
+      --muted: #52625a;
+      --soft: #7d8c84;
+      --gold: #176b4b;
+      --green: #176b4b;
+      --red: #b95d50;
+      --blue: #168a9f;
+      --ink: #17231d;
+      --primary-bg: #8fe0c1;
+      --primary-text: #10231d;
+      --primary-border: #8fe0c1;
+      --warn: #8a5a13;
+      --page-bg: #f6f7f2;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      min-height: 100vh;
+      font-family: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      color: var(--text);
+      background: var(--page-bg);
+    }
+    a { color: inherit; text-decoration: none; }
+    .toolbar a,
+    a.primary {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 42px;
+      padding: 0 14px;
+      border: 1px solid var(--line);
+      border-radius: 13px;
+      font: inherit;
+      line-height: 1;
+      white-space: nowrap;
+    }
+`;
+
 const ENTERPRISE_STATIC_APP_THEME = `
     :root {
-      color-scheme: dark;
-      --accent: #d7a84b;
-      --bg: #07110f;
-      --bg-mid: rgba(237, 229, 204, 0.08);
-      --bg-card: rgba(237, 229, 204, 0.08);
-      --rule: 1px solid rgba(237, 229, 204, 0.16);
-      --hair: 1px solid rgba(237, 229, 204, 0.1);
-      --line: rgba(237, 229, 204, 0.16);
-      --text: #f4ecd5;
-      --text-muted: #a9b7a6;
-      --text-faint: #8f9b8b;
-      --muted: #a9b7a6;
-      --gold: #d7a84b;
-      --green: #6ee7b7;
-      --red: #fb7185;
-      --blue: #93c5fd;
-      --ok: #6ee7b7;
-      --warn: #d7a84b;
-      --danger: #fb7185;
-      --ink: #07110f;
+      color-scheme: light;
+      --accent: #176b4b;
+      --accent-soft: rgba(23, 107, 75, 0.13);
+      --bg: #f6f7f2;
+      --bg-mid: #edf1ea;
+      --bg-card: rgba(255, 255, 255, 0.88);
+      --paper: #fbfcf8;
+      --surface: #f1f5ef;
+      --rule: 1px solid rgba(32, 48, 39, 0.14);
+      --hair: 1px solid rgba(32, 48, 39, 0.09);
+      --line: rgba(32, 48, 39, 0.14);
+      --text: #17231d;
+      --text-muted: #52625a;
+      --text-faint: #7d8c84;
+      --muted: #52625a;
+      --soft: #7d8c84;
+      --gold: #176b4b;
+      --green: #176b4b;
+      --red: #b95d50;
+      --blue: #168a9f;
+      --ok: #176b4b;
+      --warn: #8a5a13;
+      --danger: #b95d50;
+      --ink: #ffffff;
+      --primary-bg: #8fe0c1;
+      --primary-text: #10231d;
+      --primary-border: #8fe0c1;
+      --page-bg: #f6f7f2;
       --display: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
       --body: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
       --mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace;
     }
     html, body {
-      background:
-        radial-gradient(circle at 15% 10%, rgba(215, 168, 75, 0.24), transparent 32rem),
-        radial-gradient(circle at 85% 0%, rgba(110, 231, 183, 0.16), transparent 28rem),
-        linear-gradient(135deg, #06100e 0%, #10231d 45%, #050807 100%);
+      background: var(--page-bg);
       color: var(--text);
       font-family: var(--body);
     }
-    .page { max-width: none; margin: 0; background: transparent; border: 0; }
-    .page > .topbar { display: none; }
-    .layout { min-height: 100vh; }
-    .main { padding: 30px; max-width: 1380px; width: 100%; }
+    .page {
+      max-width: none;
+      margin: 0;
+      background: transparent;
+      border: 0;
+      min-height: 100vh;
+    }
+    .page > .topbar { display: none !important; }
+    .page .layout { min-height: 100vh; }
+    .main { padding: 30px; max-width: 1320px; width: 100%; }
     .page-title { color: var(--text); font-size: clamp(38px, 6vw, 74px); line-height: .92; letter-spacing: -.075em; font-weight: 850; }
     .page-desc, .page-meta, .list-sub, .resource-copy, .banner-copy, .banner-note, .form-copy, .callout { color: var(--muted); }
     .panel, .kpi-grid, .banner, .invite-panel, .action-strip, .member-card, .policy-card, .policy-provider-card, .exec-card, .resource-card, .checklist-box, .callout {
       border: 1px solid var(--line);
-      background: linear-gradient(180deg, rgba(237, 229, 204, 0.13), rgba(237, 229, 204, 0.055));
+      background: #ffffff;
       border-radius: 24px;
-      box-shadow: 0 22px 90px rgba(0,0,0,.18);
+      box-shadow: 0 22px 72px rgba(48,76,71,.16);
       color: var(--text);
     }
-    .panel-head, .list-row, .invite-row { border-color: rgba(237, 229, 204, 0.12); }
+    .panel-head, .list-row, .invite-row { border-color: rgba(48, 76, 71, 0.12); }
     .resource-title, .list-title, .member-email, .policy-title, .exec-title, .banner-title { color: var(--text); }
     .org-select, .form-input, .form-select, .policy-input, .policy-textarea, select, input, textarea {
       border: 1px solid var(--line);
-      background: rgba(237, 229, 204, 0.08);
+      background: rgba(255, 255, 255, 0.78);
       color: var(--text);
       border-radius: 13px;
     }
     option { color: #111827; }
     .btn-primary { background: linear-gradient(135deg, var(--gold), #f3df95); color: var(--ink); border: 0; font-weight: 850; border-radius: 13px; }
-    .btn-outline, .btn-danger { background: rgba(237, 229, 204, 0.08); color: var(--text); border: 1px solid var(--line); border-radius: 13px; }
+    .btn-outline, .btn-danger { background: rgba(255, 255, 255, 0.78); color: var(--text); border: 1px solid var(--line); border-radius: 13px; }
     .btn-danger { color: var(--red); border-color: rgba(251, 113, 133, 0.34); }
-    .subnav-link { background: rgba(237, 229, 204, 0.08); color: var(--muted); border: 1px solid var(--line); }
+    .subnav-link { background: rgba(255, 255, 255, 0.78); color: var(--muted); border: 1px solid var(--line); }
     .subnav-link.active { color: var(--ink); background: linear-gradient(135deg, var(--gold), #f3df95); border-color: transparent; }
-    .pill.neutral { background: rgba(237, 229, 204, 0.08); color: var(--muted); }
-    .pill.ok { background: rgba(110, 231, 183, 0.1); color: var(--green); border-color: rgba(110, 231, 183, 0.24); }
-    .pill.warn { background: rgba(215, 168, 75, 0.1); color: var(--gold); border-color: rgba(215, 168, 75, 0.28); }
+    .pill.neutral { background: rgba(255, 255, 255, 0.78); color: var(--muted); }
+    .pill.ok { background: rgba(62, 93, 87, 0.1); color: var(--green); border-color: rgba(62, 93, 87, 0.24); }
+    .pill.warn { background: rgba(213, 169, 20, 0.1); color: var(--gold); border-color: rgba(213, 169, 20, 0.28); }
     .pill.danger { background: rgba(251, 113, 133, 0.12); color: var(--red); border-color: rgba(251, 113, 133, 0.28); }
-    .kpi-cell + .kpi-cell { border-left-color: rgba(237, 229, 204, 0.12); }
+    .kpi-cell + .kpi-cell { border-left-color: rgba(48, 76, 71, 0.12); }
     .empty { color: var(--muted); }
     .resource-link { color: var(--gold); }
     @media (max-width: 980px) {
       .main { padding: 24px 18px; }
+    }
+`;
+
+const ENTERPRISE_STATIC_APP_POLISH_THEME = `
+    /* enterprise-static-theme-polish */
+    .main {
+      color: var(--text) !important;
+      font-family: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif !important;
+      font-size: 16px !important;
+      font-weight: 400 !important;
+    }
+    .main,
+    .main * {
+      letter-spacing: 0 !important;
+    }
+    main.main > .topbar,
+    .page-header {
+      border: 1px solid var(--line) !important;
+      background: #fbfcf8 !important;
+      border-radius: 20px !important;
+      padding: 20px !important;
+      box-shadow: none !important;
+    }
+    h1,
+    .page-title {
+      color: var(--text) !important;
+      font-size: 1.875rem !important;
+      font-weight: 600 !important;
+      line-height: 2.25rem !important;
+    }
+    @media (min-width: 640px) {
+      h1,
+      .page-title {
+        font-size: 2.6rem !important;
+      }
+    }
+    h2,
+    h3,
+    .control-title,
+    .section-title h2,
+    .doc-section h2,
+    .doc-section h3 {
+      color: var(--text) !important;
+      font-weight: 600 !important;
+      line-height: 1.2 !important;
+    }
+    .kicker,
+    .doc-kicker,
+    .banner-kicker,
+    .page-heading::before,
+    .org-switcher-label,
+    .action-strip-label,
+    .kpi-label,
+    .panel-head,
+    .checklist-title,
+    .slot-form label {
+      color: #7d8c84 !important;
+      font-weight: 400 !important;
+    }
+    .lead,
+    .page-desc,
+    .page-meta,
+    .list-sub,
+    .resource-copy,
+    .banner-copy,
+    .banner-note,
+    .form-copy,
+    .callout,
+    .row-sub,
+    .event-sub,
+    .event-time,
+    .kpi-sub,
+    .summary {
+      color: var(--muted) !important;
+      font-size: 14px !important;
+      line-height: 1.6 !important;
+      font-weight: 400 !important;
+    }
+    @media (min-width: 640px) {
+      .lead,
+      .page-desc,
+      .page-meta,
+      .summary {
+        font-size: 16px !important;
+      }
+    }
+    .row-sub,
+    .event-sub,
+    .event-time,
+    .kpi-sub,
+    .mini,
+    .resource-copy,
+    .list-sub,
+    .banner-note,
+    .form-copy {
+      color: #5f6f67 !important;
+      font-size: 13px !important;
+      line-height: 1.45 !important;
+    }
+    .primary,
+    .btn-primary,
+    .btn.primary,
+    .subnav-link.active,
+    button.primary,
+    a.primary {
+      background: var(--primary-bg) !important;
+      color: var(--primary-text) !important;
+      border-color: var(--primary-border) !important;
+      font-weight: 600 !important;
+      box-shadow: none !important;
+    }
+    .btn-outline,
+    .btn-danger,
+    .action,
+    .subnav-link,
+    button,
+    select,
+    input,
+    textarea {
+      font-weight: 500 !important;
+    }
+    .card,
+    .panel,
+    .kpi-cell,
+    .kpi-grid,
+    .banner,
+    .invite-panel,
+    .action-strip,
+    .member-card,
+    .policy-card,
+    .policy-provider-card,
+    .exec-card,
+    .resource-card,
+    .checklist-box,
+    .doc-section {
+      background: #ffffff !important;
+      border-color: var(--line) !important;
+      box-shadow: 0 18px 48px rgba(22, 35, 29, 0.10) !important;
+    }
+    .action-strip,
+    .list-row,
+    .invite-row,
+    .row,
+    .event,
+    .role-card,
+    .feature,
+    .member-project,
+    .pill {
+      background: #f7faf4 !important;
+    }
+    .kpi-value {
+      font-weight: 600 !important;
+    }
+    .row-title,
+    .event-title,
+    .list-title,
+    .resource-title,
+    .member-email,
+    .policy-title,
+    .exec-title,
+    .banner-title {
+      font-weight: 600 !important;
+    }
+    .tag,
+    .pill,
+    .feature-tag {
+      font-weight: 400 !important;
+    }
+    .tag.warn,
+    .pill.warn,
+    .feature-tag.pending {
+      color: var(--warn) !important;
+      border-color: rgba(138, 90, 19, 0.30) !important;
+      background: rgba(138, 90, 19, 0.08) !important;
+    }
+    .resource-link,
+    .doc-section code,
+    .doc-note strong {
+      color: var(--green) !important;
+    }
+    .doc-note {
+      border-left-color: var(--primary-bg) !important;
+      background: rgba(143, 224, 193, 0.12) !important;
     }
 `;
 
@@ -158,15 +407,15 @@ const ENTERPRISE_CONTROL_PAGE_THEME = `
     .page-header {
       margin-bottom: 18px;
       padding-bottom: 18px;
-      border-bottom: 1px solid rgba(237, 229, 204, 0.1);
+      border-bottom: 1px solid rgba(48, 76, 71, 0.10);
     }
     .page-heading::before {
       content: "Enterprise operations";
       width: max-content;
       padding: 6px 10px;
-      border: 1px solid rgba(215, 168, 75, 0.26);
+      border: 1px solid rgba(213, 169, 20, 0.26);
       border-radius: 999px;
-      background: rgba(215, 168, 75, 0.1);
+      background: rgba(213, 169, 20, 0.1);
       color: var(--gold);
       font-family: var(--mono);
       font-size: 10px;
@@ -182,9 +431,9 @@ const ENTERPRISE_CONTROL_PAGE_THEME = `
     .org-switcher {
       min-width: 280px;
       padding: 12px;
-      border: 1px solid rgba(237, 229, 204, 0.14);
+      border: 1px solid rgba(48, 76, 71, 0.14);
       border-radius: 18px;
-      background: rgba(3, 8, 7, 0.26);
+      background: rgba(247, 250, 244, 0.82);
     }
     .org-switcher-label,
     .action-strip-label,
@@ -192,7 +441,7 @@ const ENTERPRISE_CONTROL_PAGE_THEME = `
     .panel-head,
     .banner-kicker,
     .checklist-title {
-      color: rgba(244, 236, 213, 0.58);
+      color: rgba(52, 81, 76, 0.58);
       font-weight: 850;
       letter-spacing: .12em;
     }
@@ -200,7 +449,7 @@ const ENTERPRISE_CONTROL_PAGE_THEME = `
     .page-desc {
       max-width: 780px;
       margin: 0 0 18px;
-      color: rgba(244, 236, 213, 0.72);
+      color: rgba(52, 81, 76, 0.72);
       font-size: 15px;
       line-height: 1.65;
     }
@@ -212,38 +461,38 @@ const ENTERPRISE_CONTROL_PAGE_THEME = `
       max-width: 100%;
       margin: 0 0 16px;
       padding: 7px;
-      border: 1px solid rgba(237, 229, 204, 0.14);
+      border: 1px solid rgba(48, 76, 71, 0.14);
       border-radius: 18px;
-      background: rgba(3, 8, 7, 0.3);
-      box-shadow: inset 0 1px 0 rgba(244, 236, 213, 0.05);
+      background: rgba(255, 255, 255, 0.66);
+      box-shadow: inset 0 1px 0 rgba(52, 81, 76, 0.05);
     }
     .subnav-link {
       padding: 9px 12px;
       border-radius: 13px;
       background: transparent;
       border-color: transparent;
-      color: rgba(244, 236, 213, 0.68);
+      color: rgba(52, 81, 76, 0.68);
       font-weight: 800;
     }
     .subnav-link:hover {
-      background: rgba(237, 229, 204, 0.08);
+      background: rgba(255, 255, 255, 0.78);
       color: var(--text);
     }
     .subnav-link.active {
       color: var(--ink);
-      box-shadow: 0 12px 34px rgba(215, 168, 75, 0.18);
+      box-shadow: 0 12px 34px rgba(213, 169, 20, 0.18);
     }
     .action-strip {
       margin-bottom: 18px;
       padding: 14px;
       border-radius: 22px;
       background:
-        linear-gradient(135deg, rgba(215, 168, 75, 0.12), transparent 48%),
-        rgba(3, 8, 7, 0.32);
+        linear-gradient(135deg, rgba(213, 169, 20, 0.12), transparent 48%),
+        rgba(255, 255, 255, 0.72);
     }
     .action-strip .btn-outline {
       min-height: 38px;
-      background: rgba(237, 229, 204, 0.07);
+      background: rgba(255, 255, 255, 0.68);
     }
     .action-msg {
       color: var(--muted);
@@ -256,8 +505,8 @@ const ENTERPRISE_CONTROL_PAGE_THEME = `
       padding: 22px;
       border-radius: 28px;
       background:
-        radial-gradient(circle at 18% 0%, rgba(215, 168, 75, 0.22), transparent 28rem),
-        linear-gradient(180deg, rgba(237, 229, 204, 0.14), rgba(237, 229, 204, 0.055));
+        radial-gradient(circle at 18% 0%, rgba(213, 169, 20, 0.22), transparent 28rem),
+        linear-gradient(180deg, rgba(48, 76, 71, 0.14), rgba(247, 250, 244, 0.86));
     }
     .banner-title {
       font-size: clamp(28px, 4vw, 44px);
@@ -270,9 +519,9 @@ const ENTERPRISE_CONTROL_PAGE_THEME = `
       line-height: 1.65;
     }
     .banner-note {
-      border-left: 1px solid rgba(237, 229, 204, 0.14);
+      border-left: 1px solid rgba(48, 76, 71, 0.14);
       padding-left: 18px;
-      color: rgba(244, 236, 213, 0.7);
+      color: rgba(52, 81, 76, 0.70);
     }
     .kpi-grid {
       grid-template-columns: repeat(4, minmax(0, 1fr));
@@ -287,14 +536,14 @@ const ENTERPRISE_CONTROL_PAGE_THEME = `
     .kpi-cell {
       min-height: 150px;
       padding: 18px;
-      border: 1px solid rgba(237, 229, 204, 0.14);
+      border: 1px solid rgba(48, 76, 71, 0.14);
       border-radius: 24px;
       background:
-        linear-gradient(180deg, rgba(237, 229, 204, 0.12), rgba(237, 229, 204, 0.05)),
-        rgba(3, 8, 7, 0.2);
+        linear-gradient(180deg, rgba(48, 76, 71, 0.12), rgba(247, 250, 244, 0.78)),
+        rgba(247, 250, 244, 0.78);
       box-shadow: 0 18px 70px rgba(0, 0, 0, 0.16);
     }
-    .kpi-cell + .kpi-cell { border-left: 1px solid rgba(237, 229, 204, 0.14); }
+    .kpi-cell + .kpi-cell { border-left: 1px solid rgba(48, 76, 71, 0.14); }
     .kpi-value {
       margin-top: 10px;
       color: var(--text);
@@ -304,7 +553,7 @@ const ENTERPRISE_CONTROL_PAGE_THEME = `
     }
     .kpi-sub {
       margin-top: 12px;
-      color: rgba(244, 236, 213, 0.62);
+      color: rgba(52, 81, 76, 0.62);
       line-height: 1.45;
       white-space: normal;
     }
@@ -317,14 +566,14 @@ const ENTERPRISE_CONTROL_PAGE_THEME = `
       border-radius: 26px;
       overflow: hidden;
       background:
-        linear-gradient(180deg, rgba(237, 229, 204, 0.115), rgba(237, 229, 204, 0.045)),
-        rgba(3, 8, 7, 0.18);
+        linear-gradient(180deg, rgba(255, 255, 255, 0.92), rgba(247, 250, 244, 0.76)),
+        rgba(247, 250, 244, 0.72);
     }
     .panel-head {
       min-height: 54px;
       padding: 16px 18px;
-      border-bottom: 1px solid rgba(237, 229, 204, 0.1);
-      background: rgba(3, 8, 7, 0.18);
+      border-bottom: 1px solid rgba(48, 76, 71, 0.10);
+      background: rgba(247, 250, 244, 0.72);
     }
     .panel-head-right {
       color: var(--muted);
@@ -340,7 +589,7 @@ const ENTERPRISE_CONTROL_PAGE_THEME = `
     }
     .list-row {
       padding: 13px 4px;
-      border-bottom: 1px dashed rgba(237, 229, 204, 0.12);
+      border-bottom: 1px dashed rgba(48, 76, 71, 0.12);
     }
     .member-card,
     .policy-card,
@@ -349,16 +598,16 @@ const ENTERPRISE_CONTROL_PAGE_THEME = `
     .resource-card,
     .checklist-box {
       border-radius: 18px;
-      background: rgba(3, 8, 7, 0.26);
-      border-color: rgba(237, 229, 204, 0.12);
+      background: rgba(247, 250, 244, 0.82);
+      border-color: rgba(48, 76, 71, 0.12);
     }
     .member-grid {
       grid-template-columns: repeat(2, minmax(0, 1fr));
     }
     .member-project,
     .pill {
-      border-color: rgba(237, 229, 204, 0.16);
-      background: rgba(237, 229, 204, 0.07);
+      border-color: rgba(48, 76, 71, 0.16);
+      background: rgba(255, 255, 255, 0.68);
     }
     .policy-grid {
       grid-template-columns: minmax(0, 1fr) minmax(120px, auto);
@@ -370,7 +619,7 @@ const ENTERPRISE_CONTROL_PAGE_THEME = `
     .list-rank,
     .list-meta,
     .invite-sub {
-      color: rgba(244, 236, 213, 0.55);
+      color: rgba(52, 81, 76, 0.55);
     }
     .policy-message,
     .exec-message {
@@ -380,7 +629,7 @@ const ENTERPRISE_CONTROL_PAGE_THEME = `
       margin: 0 14px 14px;
     }
     .checklist-item {
-      color: rgba(244, 236, 213, 0.68);
+      color: rgba(52, 81, 76, 0.68);
     }
     @media (max-width: 1180px) {
       .kpi-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
@@ -393,7 +642,7 @@ const ENTERPRISE_CONTROL_PAGE_THEME = `
       .banner { grid-template-columns: 1fr; }
       .banner-note {
         border-left: 0;
-        border-top: 1px solid rgba(237, 229, 204, 0.14);
+        border-top: 1px solid rgba(48, 76, 71, 0.14);
         padding-left: 0;
         padding-top: 16px;
       }
@@ -413,15 +662,15 @@ const ENTERPRISE_ORG_PAGE_THEME = `
     .page-header {
       margin-bottom: 18px;
       padding-bottom: 18px;
-      border-bottom: 1px solid rgba(237, 229, 204, 0.1);
+      border-bottom: 1px solid rgba(48, 76, 71, 0.10);
     }
     .page-heading::before {
       content: "Organization setup";
       width: max-content;
       padding: 6px 10px;
-      border: 1px solid rgba(215, 168, 75, 0.26);
+      border: 1px solid rgba(213, 169, 20, 0.26);
       border-radius: 999px;
-      background: rgba(215, 168, 75, 0.1);
+      background: rgba(213, 169, 20, 0.1);
       color: var(--gold);
       font-family: var(--mono);
       font-size: 10px;
@@ -437,9 +686,9 @@ const ENTERPRISE_ORG_PAGE_THEME = `
     .org-switcher {
       min-width: 280px;
       padding: 12px;
-      border: 1px solid rgba(237, 229, 204, 0.14);
+      border: 1px solid rgba(48, 76, 71, 0.14);
       border-radius: 18px;
-      background: rgba(3, 8, 7, 0.26);
+      background: rgba(247, 250, 244, 0.82);
     }
     .org-switcher-label,
     .action-strip-label,
@@ -448,14 +697,14 @@ const ENTERPRISE_ORG_PAGE_THEME = `
     .banner-kicker,
     .form-label,
     .checklist-title {
-      color: rgba(244, 236, 213, 0.58);
+      color: rgba(52, 81, 76, 0.58);
       font-weight: 850;
       letter-spacing: .12em;
     }
     .page-desc {
       max-width: 820px;
       margin: 0 0 18px;
-      color: rgba(244, 236, 213, 0.72);
+      color: rgba(52, 81, 76, 0.72);
       font-size: 15px;
       line-height: 1.65;
     }
@@ -467,38 +716,38 @@ const ENTERPRISE_ORG_PAGE_THEME = `
       max-width: 100%;
       margin: 0 0 16px;
       padding: 7px;
-      border: 1px solid rgba(237, 229, 204, 0.14);
+      border: 1px solid rgba(48, 76, 71, 0.14);
       border-radius: 18px;
-      background: rgba(3, 8, 7, 0.3);
-      box-shadow: inset 0 1px 0 rgba(244, 236, 213, 0.05);
+      background: rgba(255, 255, 255, 0.66);
+      box-shadow: inset 0 1px 0 rgba(52, 81, 76, 0.05);
     }
     .subnav-link {
       padding: 9px 12px;
       border-radius: 13px;
       background: transparent;
       border-color: transparent;
-      color: rgba(244, 236, 213, 0.68);
+      color: rgba(52, 81, 76, 0.68);
       font-weight: 800;
     }
     .subnav-link:hover {
-      background: rgba(237, 229, 204, 0.08);
+      background: rgba(255, 255, 255, 0.78);
       color: var(--text);
     }
     .subnav-link.active {
       color: var(--ink);
-      box-shadow: 0 12px 34px rgba(215, 168, 75, 0.18);
+      box-shadow: 0 12px 34px rgba(213, 169, 20, 0.18);
     }
     .action-strip {
       margin-bottom: 18px;
       padding: 14px;
       border-radius: 22px;
       background:
-        linear-gradient(135deg, rgba(110, 231, 183, 0.1), transparent 46%),
-        rgba(3, 8, 7, 0.32);
+        linear-gradient(135deg, rgba(62, 93, 87, 0.1), transparent 46%),
+        rgba(255, 255, 255, 0.72);
     }
     .action-strip .btn-outline {
       min-height: 38px;
-      background: rgba(237, 229, 204, 0.07);
+      background: rgba(255, 255, 255, 0.68);
     }
     .action-msg,
     .form-msg,
@@ -513,9 +762,9 @@ const ENTERPRISE_ORG_PAGE_THEME = `
       padding: 22px;
       border-radius: 28px;
       background:
-        radial-gradient(circle at 18% 0%, rgba(110, 231, 183, 0.18), transparent 28rem),
-        radial-gradient(circle at 78% 0%, rgba(215, 168, 75, 0.18), transparent 24rem),
-        linear-gradient(180deg, rgba(237, 229, 204, 0.14), rgba(237, 229, 204, 0.055));
+        radial-gradient(circle at 18% 0%, rgba(62, 93, 87, 0.18), transparent 28rem),
+        radial-gradient(circle at 78% 0%, rgba(213, 169, 20, 0.18), transparent 24rem),
+        linear-gradient(180deg, rgba(48, 76, 71, 0.14), rgba(247, 250, 244, 0.86));
     }
     .banner-title {
       font-size: clamp(28px, 4vw, 44px);
@@ -528,9 +777,9 @@ const ENTERPRISE_ORG_PAGE_THEME = `
       line-height: 1.65;
     }
     .banner-note {
-      border-left: 1px solid rgba(237, 229, 204, 0.14);
+      border-left: 1px solid rgba(48, 76, 71, 0.14);
       padding-left: 18px;
-      color: rgba(244, 236, 213, 0.7);
+      color: rgba(52, 81, 76, 0.70);
     }
     .kpi-grid {
       grid-template-columns: repeat(4, minmax(0, 1fr));
@@ -545,14 +794,14 @@ const ENTERPRISE_ORG_PAGE_THEME = `
     .kpi-cell {
       min-height: 150px;
       padding: 18px;
-      border: 1px solid rgba(237, 229, 204, 0.14);
+      border: 1px solid rgba(48, 76, 71, 0.14);
       border-radius: 24px;
       background:
-        linear-gradient(180deg, rgba(237, 229, 204, 0.12), rgba(237, 229, 204, 0.05)),
-        rgba(3, 8, 7, 0.2);
+        linear-gradient(180deg, rgba(48, 76, 71, 0.12), rgba(247, 250, 244, 0.78)),
+        rgba(247, 250, 244, 0.78);
       box-shadow: 0 18px 70px rgba(0, 0, 0, 0.16);
     }
-    .kpi-cell + .kpi-cell { border-left: 1px solid rgba(237, 229, 204, 0.14); }
+    .kpi-cell + .kpi-cell { border-left: 1px solid rgba(48, 76, 71, 0.14); }
     .kpi-value {
       margin-top: 10px;
       color: var(--text);
@@ -563,7 +812,7 @@ const ENTERPRISE_ORG_PAGE_THEME = `
     }
     .kpi-sub {
       margin-top: 12px;
-      color: rgba(244, 236, 213, 0.62);
+      color: rgba(52, 81, 76, 0.62);
       line-height: 1.45;
       white-space: normal;
     }
@@ -576,14 +825,14 @@ const ENTERPRISE_ORG_PAGE_THEME = `
       border-radius: 26px;
       overflow: hidden;
       background:
-        linear-gradient(180deg, rgba(237, 229, 204, 0.115), rgba(237, 229, 204, 0.045)),
-        rgba(3, 8, 7, 0.18);
+        linear-gradient(180deg, rgba(255, 255, 255, 0.92), rgba(247, 250, 244, 0.76)),
+        rgba(247, 250, 244, 0.72);
     }
     .panel-head {
       min-height: 54px;
       padding: 16px 18px;
-      border-bottom: 1px solid rgba(237, 229, 204, 0.1);
-      background: rgba(3, 8, 7, 0.18);
+      border-bottom: 1px solid rgba(48, 76, 71, 0.10);
+      background: rgba(247, 250, 244, 0.72);
     }
     .panel-head-right {
       color: var(--muted);
@@ -608,18 +857,18 @@ const ENTERPRISE_ORG_PAGE_THEME = `
     .org-select {
       min-height: 42px;
       border-radius: 14px;
-      background: rgba(3, 8, 7, 0.28);
-      border-color: rgba(237, 229, 204, 0.16);
+      background: rgba(247, 250, 244, 0.84);
+      border-color: rgba(48, 76, 71, 0.16);
       color: var(--text);
     }
     .form-input::placeholder {
-      color: rgba(244, 236, 213, 0.34);
+      color: rgba(52, 81, 76, 0.34);
     }
     .form-input:disabled,
     .form-select:disabled,
     .org-select:disabled {
-      background: rgba(237, 229, 204, 0.05);
-      color: rgba(244, 236, 213, 0.42);
+      background: rgba(247, 250, 244, 0.78);
+      color: rgba(52, 81, 76, 0.42);
     }
     .form-inline {
       gap: 10px;
@@ -627,15 +876,15 @@ const ENTERPRISE_ORG_PAGE_THEME = `
     .form-copy,
     .callout,
     .resource-copy {
-      color: rgba(244, 236, 213, 0.68);
+      color: rgba(52, 81, 76, 0.68);
       line-height: 1.55;
     }
     .callout,
     .resource-card,
     .checklist-box {
       border-radius: 18px;
-      background: rgba(3, 8, 7, 0.26);
-      border-color: rgba(237, 229, 204, 0.12);
+      background: rgba(247, 250, 244, 0.82);
+      border-color: rgba(48, 76, 71, 0.12);
     }
     .callout strong {
       color: var(--text);
@@ -655,20 +904,20 @@ const ENTERPRISE_ORG_PAGE_THEME = `
       margin: 0 14px 14px;
     }
     .checklist-item {
-      color: rgba(244, 236, 213, 0.68);
+      color: rgba(52, 81, 76, 0.68);
     }
     .list-row {
       padding: 13px 4px;
-      border-bottom: 1px dashed rgba(237, 229, 204, 0.12);
+      border-bottom: 1px dashed rgba(48, 76, 71, 0.12);
     }
     .list-rank,
     .list-meta,
     .list-sub {
-      color: rgba(244, 236, 213, 0.55);
+      color: rgba(52, 81, 76, 0.55);
     }
     .pill {
-      border-color: rgba(237, 229, 204, 0.16);
-      background: rgba(237, 229, 204, 0.07);
+      border-color: rgba(48, 76, 71, 0.16);
+      background: rgba(255, 255, 255, 0.68);
     }
     .btn-danger {
       background: rgba(251, 113, 133, 0.1);
@@ -690,7 +939,7 @@ const ENTERPRISE_ORG_PAGE_THEME = `
       .banner { grid-template-columns: 1fr; }
       .banner-note {
         border-left: 0;
-        border-top: 1px solid rgba(237, 229, 204, 0.14);
+        border-top: 1px solid rgba(48, 76, 71, 0.14);
         padding-left: 0;
         padding-top: 16px;
       }
@@ -709,11 +958,51 @@ const ENTERPRISE_STATIC_PAGE_THEMES: Partial<Record<EnterpriseAppNavPage, string
   org: ENTERPRISE_ORG_PAGE_THEME,
 };
 
+const ENTERPRISE_STATIC_CANONICAL_ORG_URL_SCRIPT = `<script>
+    /* enterprise-static-canonical-org-url */
+    (function() {
+      var ACTIVE_ORG_STORAGE_KEY = 'vaultproof_active_org';
+      var nativeReplaceState = window.history.replaceState;
+      var nativePushState = window.history.pushState;
+
+      function canonicalizeAppUrl(value) {
+        if (value === undefined || value === null || value === '') return value;
+        try {
+          var url = new URL(String(value), window.location.href);
+          if (url.origin !== window.location.origin) return value;
+          if (url.pathname !== '/app/control' && url.pathname !== '/app/org') return value;
+          var orgId = url.searchParams.get('org');
+          if (orgId) window.localStorage.setItem(ACTIVE_ORG_STORAGE_KEY, orgId);
+          url.searchParams.delete('org');
+          return url.pathname + url.search + url.hash;
+        } catch (error) {
+          return value;
+        }
+      }
+
+      window.history.replaceState = function(state, title, url) {
+        if (arguments.length < 3) return nativeReplaceState.call(window.history, state, title);
+        return nativeReplaceState.call(window.history, state, title, canonicalizeAppUrl(url));
+      };
+      window.history.pushState = function(state, title, url) {
+        if (arguments.length < 3) return nativePushState.call(window.history, state, title);
+        return nativePushState.call(window.history, state, title, canonicalizeAppUrl(url));
+      };
+
+      var canonical = canonicalizeAppUrl(window.location.href);
+      var current = window.location.pathname + window.location.search + window.location.hash;
+      if (canonical && canonical !== current) {
+        nativeReplaceState.call(window.history, window.history.state || {}, '', canonical);
+      }
+    })();
+  </script>`;
+
 function applyEnterpriseStaticAppTheme(html: string, activePage: EnterpriseAppNavPage, subtitle: string): string {
   const pageSpecificTheme = ENTERPRISE_STATIC_PAGE_THEMES[activePage] ?? '';
 
   return removeLegacyStaticSidebarArtifacts(replaceOrInjectEnterpriseSidebar(removePublicSiteTheme(html), activePage, subtitle))
-    .replace('</style>', `${ENTERPRISE_APP_SHELL_THEME}${ENTERPRISE_STATIC_APP_THEME}${pageSpecificTheme}\n  </style>`);
+    .replace('</style>', `${ENTERPRISE_APP_SHELL_THEME}${ENTERPRISE_STATIC_APP_THEME}${pageSpecificTheme}${ENTERPRISE_STATIC_APP_POLISH_THEME}\n  </style>`)
+    .replace('</head>', `${ENTERPRISE_STATIC_CANONICAL_ORG_URL_SCRIPT}\n</head>`);
 }
 
 const plannedEnterprisePages: Record<string, {
@@ -727,7 +1016,7 @@ const plannedEnterprisePages: Record<string, {
   members: {
     title: 'Members',
     kicker: 'access review',
-    summary: 'Enterprise member management will bring org members, pending invites, project assignments, and SOC 2 access-review evidence into one Azure-hosted page.',
+    summary: 'Enterprise member management will bring org members, pending invites, project assignments, and SOC 2 access-review evidence into one GCP-hosted page.',
     features: ['Active members and roles', 'Pending invites and invite acceptance', 'Project assignment coverage', 'CSV/JSON access-review evidence'],
     primaryHref: '/api/v1/enterprise/members/access-review?format=csv',
     primaryLabel: 'export access review',
@@ -768,7 +1057,7 @@ const plannedEnterprisePages: Record<string, {
     title: 'Provider slots',
     kicker: 'secrets posture',
     summary: 'Enterprise provider slots will show active/revoked upstream providers, emergency revoke status, and rotation checklists without exposing raw provider secrets.',
-    features: ['Active and revoked slots', 'Emergency revoke workflow', 'Rotation checklist', 'Secure Key Release posture notes'],
+    features: ['Active and revoked slots', 'Emergency revoke workflow', 'Rotation checklist', 'Cloud KMS posture notes'],
     primaryHref: '/app/control',
     primaryLabel: 'manage provider policy',
   },
@@ -783,8 +1072,8 @@ const plannedEnterprisePages: Record<string, {
   plans: {
     title: 'Plans',
     kicker: 'enterprise packaging',
-    summary: 'Enterprise plans will track rollout status, APIM/monitoring packaging, limits, and contract-facing governance notes.',
-    features: ['APIM rollout status', 'Monitoring package status', 'Enterprise limits', 'Contract-facing plan notes'],
+    summary: 'Enterprise plans will track rollout status, GCP edge and monitoring packaging, limits, and contract-facing governance notes.',
+    features: ['GCP edge rollout status', 'Monitoring package status', 'Enterprise limits', 'Contract-facing plan notes'],
     primaryHref: '/app/dashboard',
     primaryLabel: 'back to dashboard',
   },
@@ -807,28 +1096,18 @@ function renderEnterpriseMembersPage(): string {
   <meta name="robots" content="noindex" />
   <title>Members - VaultProof Enterprise</title>
   <style>
-    :root { color-scheme: dark; --bg: #07110f; --panel: rgba(237,229,204,.09); --line: rgba(237,229,204,.16); --text: #f4ecd5; --muted: #a9b7a6; --gold: #d7a84b; --green: #6ee7b7; --red: #fb7185; --blue: #93c5fd; --ink: #07110f; }
-    * { box-sizing: border-box; }
-    body { margin: 0; min-height: 100vh; font-family: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; color: var(--text); background: radial-gradient(circle at 16% 8%, rgba(215,168,75,.24), transparent 30rem), linear-gradient(135deg, #06100e, #10231d 48%, #050807); }
-    a { color: inherit; text-decoration: none; }
-    .shell { display: grid; grid-template-columns: 270px 1fr; min-height: 100vh; }
-    .sidebar { border-right: 1px solid var(--line); background: rgba(3,8,7,.66); padding: 28px 20px; }
-    .brand { font-weight: 850; letter-spacing: -.03em; margin-bottom: 28px; }
-    .brand span { display: block; color: var(--muted); font-size: 12px; margin-top: 4px; font-weight: 500; }
-    .nav-label { color: var(--muted); font-size: 11px; text-transform: uppercase; letter-spacing: .12em; margin: 22px 0 9px 10px; }
-    .nav-link { display: flex; justify-content: space-between; padding: 11px 12px; border-radius: 14px; margin-bottom: 4px; border: 1px solid transparent; color: #d8dfcf; }
-    .nav-link:hover, .nav-link.active { background: var(--panel); border-color: var(--line); }
+    ${ENTERPRISE_RENDERED_APP_BASE_THEME}
     .main { padding: 30px; max-width: 1320px; width: 100%; }
     .topbar { display: flex; justify-content: space-between; gap: 18px; align-items: flex-start; margin-bottom: 22px; }
     .kicker { color: var(--gold); font-size: 12px; text-transform: uppercase; letter-spacing: .16em; font-weight: 850; }
     h1 { margin: 8px 0 8px; font-size: clamp(38px, 6vw, 74px); line-height: .92; letter-spacing: -.075em; }
     .lead { color: var(--muted); line-height: 1.6; max-width: 720px; }
-    select, button, input { border: 1px solid var(--line); background: rgba(237,229,204,.08); color: var(--text); border-radius: 13px; padding: 11px 12px; font: inherit; }
+    select, button, input, textarea { border: 1px solid var(--line); background: rgba(255,255,255,.78); color: var(--text); border-radius: 13px; padding: 11px 12px; font: inherit; }
     option { color: #111827; }
     button { cursor: pointer; }
-    input::placeholder { color: rgba(244,236,213,.48); }
+    input::placeholder { color: rgba(52,81,76,.48); }
     .primary { background: linear-gradient(135deg, var(--gold), #f3df95); color: var(--ink); border: 0; font-weight: 850; }
-    .danger { color: var(--red); border-color: rgba(251,113,133,.34); }
+    .danger { color: var(--red); border-color: rgba(185,93,80,.34); }
     .toolbar { display: flex; gap: 10px; flex-wrap: wrap; justify-content: flex-end; }
     .form-row { display: grid; grid-template-columns: minmax(220px, 1fr) minmax(240px, .42fr) auto; gap: 10px; align-items: center; }
     .inline-actions { display: flex; gap: 8px; justify-content: flex-end; align-items: center; flex-wrap: wrap; }
@@ -836,7 +1115,7 @@ function renderEnterpriseMembersPage(): string {
     .grid { display: grid; gap: 16px; }
     .kpis { grid-template-columns: repeat(4, minmax(0, 1fr)); margin-bottom: 16px; }
     .two { grid-template-columns: minmax(0, 1fr) minmax(340px, .72fr); }
-    .card { border: 1px solid var(--line); background: linear-gradient(180deg, rgba(237,229,204,.13), rgba(237,229,204,.055)); border-radius: 24px; padding: 20px; box-shadow: 0 22px 90px rgba(0,0,0,.2); }
+    .card { border: 1px solid var(--line); background: linear-gradient(180deg, rgba(255,255,255,.98), rgba(247,250,244,.86)); border-radius: 24px; padding: 20px; box-shadow: 0 22px 90px rgba(48,76,71,.16); }
     .kpi-label { color: var(--muted); font-size: 12px; text-transform: uppercase; letter-spacing: .1em; }
     .kpi-value { font-size: 34px; font-weight: 850; letter-spacing: -.05em; margin-top: 8px; }
     .kpi-sub { color: var(--muted); font-size: 13px; margin-top: 6px; }
@@ -844,21 +1123,22 @@ function renderEnterpriseMembersPage(): string {
     .section-title h2 { margin: 0; font-size: 19px; letter-spacing: -.03em; }
     .mini { color: var(--muted); font-size: 13px; }
     .list { display: grid; gap: 10px; }
-    .row { display: grid; grid-template-columns: 1fr auto; gap: 14px; align-items: center; border: 1px solid rgba(237,229,204,.1); border-radius: 17px; padding: 13px; background: rgba(3,8,7,.28); }
+    .row { display: grid; grid-template-columns: 1fr auto; gap: 14px; align-items: center; border: 1px solid rgba(48,76,71,.10); border-radius: 17px; padding: 13px; background: rgba(247,250,244,.84); }
     .row-title { font-weight: 760; }
     .row-sub { color: var(--muted); font-size: 13px; margin-top: 4px; }
-    .tag { color: var(--blue); font-size: 12px; border: 1px solid rgba(147,197,253,.24); border-radius: 999px; padding: 5px 8px; }
-    .tag.good { color: var(--green); border-color: rgba(110,231,183,.24); }
-    .tag.warn { color: var(--gold); border-color: rgba(215,168,75,.28); }
+    .tag { color: var(--blue); font-size: 12px; border: 1px solid rgba(22,138,159,.24); border-radius: 999px; padding: 5px 8px; }
+    .tag.good { color: var(--green); border-color: rgba(62,93,87,.24); }
+    .tag.warn { color: var(--gold); border-color: rgba(213,169,20,.28); }
     .role-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; }
-    .role-card { border: 1px solid rgba(237,229,204,.1); border-radius: 17px; padding: 13px; background: rgba(3,8,7,.22); }
+    .role-card { border: 1px solid rgba(48,76,71,.10); border-radius: 17px; padding: 13px; background: rgba(247,250,244,.80); }
     .role-card strong { display: block; margin-bottom: 5px; }
     .role-card p { color: var(--muted); font-size: 13px; line-height: 1.45; margin: 0 0 9px; }
     .role-card .tag { display: inline-block; margin: 0 5px 5px 0; }
-    .empty, .notice { color: var(--muted); border: 1px dashed rgba(237,229,204,.22); border-radius: 18px; padding: 18px; background: rgba(3,8,7,.2); }
-    .notice.error { color: var(--red); border-color: rgba(251,113,133,.3); }
+    .empty, .notice { color: var(--muted); border: 1px dashed rgba(48,76,71,.22); border-radius: 18px; padding: 18px; background: rgba(247,250,244,.78); }
+    .notice.error { color: var(--red); border-color: rgba(185,93,80,.3); }
     @media (max-width: 980px) { .shell { grid-template-columns: 1fr; } .topbar { flex-direction: column; } .kpis, .two, .role-grid, .form-row { grid-template-columns: 1fr; } }
     ${ENTERPRISE_APP_SHELL_THEME}
+    ${ENTERPRISE_STATIC_APP_POLISH_THEME}
   </style>
 </head>
 <body>
@@ -938,7 +1218,7 @@ function renderEnterpriseMembersPage(): string {
           { value: 'admin', label: 'Admin', summary: 'Legacy broad admin role.', permissions: ['members', 'projects', 'policy', 'evidence'], legacy: true, privileged: true },
           { value: 'iam_admin', label: 'IAM Admin', summary: 'Manages users, roles, project access, and SSO setup.', permissions: ['invite users', 'change roles', 'assign projects'], privileged: true },
           { value: 'security_admin', label: 'Security Admin', summary: 'Owns policy, provider slot controls, alerts, and evidence.', permissions: ['security policy', 'provider revoke', 'evidence'], privileged: true },
-          { value: 'platform_admin', label: 'Platform Admin', summary: 'Runs gateway, runtime, TLS/APIM, and production readiness.', permissions: ['runtime', 'gateway', 'project controls'], privileged: true },
+          { value: 'platform_admin', label: 'Platform Admin', summary: 'Runs gateway, runtime, DNS/edge, and production readiness.', permissions: ['runtime', 'gateway', 'project controls'], privileged: true },
           { value: 'developer', label: 'Developer', summary: 'Builds and tests assigned project integrations.', permissions: ['assigned projects'] },
           { value: 'auditor', label: 'Auditor', summary: 'Read-only compliance reviewer for audit and evidence.', permissions: ['audit', 'evidence'] },
           { value: 'member', label: 'Member', summary: 'Legacy contributor role.', permissions: ['assigned project work'], legacy: true },
@@ -1233,21 +1513,11 @@ function renderEnterpriseAuditPage(): string {
   <meta name="robots" content="noindex" />
   <title>Audit - VaultProof Enterprise</title>
   <style>
-    :root { color-scheme: dark; --bg: #07110f; --panel: rgba(237,229,204,.09); --line: rgba(237,229,204,.16); --text: #f4ecd5; --muted: #a9b7a6; --gold: #d7a84b; --green: #6ee7b7; --red: #fb7185; --blue: #93c5fd; --ink: #07110f; }
-    * { box-sizing: border-box; }
-    body { margin: 0; min-height: 100vh; font-family: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; color: var(--text); background: radial-gradient(circle at 12% 8%, rgba(147,197,253,.18), transparent 28rem), radial-gradient(circle at 82% 12%, rgba(215,168,75,.2), transparent 26rem), linear-gradient(135deg, #06100e, #10231d 50%, #050807); }
-    a { color: inherit; text-decoration: none; }
-    select, button, input { border: 1px solid var(--line); background: rgba(237,229,204,.08); color: var(--text); border-radius: 13px; padding: 11px 12px; font: inherit; }
+    ${ENTERPRISE_RENDERED_APP_BASE_THEME}
+    select, button, input { border: 1px solid var(--line); background: rgba(255,255,255,.78); color: var(--text); border-radius: 13px; padding: 11px 12px; font: inherit; }
     option { color: #111827; }
     button { cursor: pointer; }
-    input::placeholder { color: rgba(244,236,213,.48); }
-    .shell { display: grid; grid-template-columns: 270px 1fr; min-height: 100vh; }
-    .sidebar { border-right: 1px solid var(--line); background: rgba(3,8,7,.66); padding: 28px 20px; }
-    .brand { font-weight: 850; letter-spacing: -.03em; margin-bottom: 28px; }
-    .brand span { display: block; color: var(--muted); font-size: 12px; margin-top: 4px; font-weight: 500; }
-    .nav-label { color: var(--muted); font-size: 11px; text-transform: uppercase; letter-spacing: .12em; margin: 22px 0 9px 10px; }
-    .nav-link { display: flex; justify-content: space-between; padding: 11px 12px; border-radius: 14px; margin-bottom: 4px; border: 1px solid transparent; color: #d8dfcf; }
-    .nav-link:hover, .nav-link.active { background: var(--panel); border-color: var(--line); }
+    input::placeholder { color: rgba(52,81,76,.48); }
     .main { padding: 30px; max-width: 1380px; width: 100%; }
     .topbar { display: flex; justify-content: space-between; gap: 18px; align-items: flex-start; margin-bottom: 22px; }
     .kicker { color: var(--gold); font-size: 12px; text-transform: uppercase; letter-spacing: .16em; font-weight: 850; }
@@ -1257,7 +1527,7 @@ function renderEnterpriseAuditPage(): string {
     .primary { background: linear-gradient(135deg, var(--gold), #f3df95); color: var(--ink); border: 0; font-weight: 850; }
     .grid { display: grid; gap: 16px; }
     .kpis { grid-template-columns: repeat(4, minmax(0, 1fr)); margin-bottom: 16px; }
-    .card { border: 1px solid var(--line); background: linear-gradient(180deg, rgba(237,229,204,.13), rgba(237,229,204,.055)); border-radius: 24px; padding: 20px; box-shadow: 0 22px 90px rgba(0,0,0,.2); }
+    .card { border: 1px solid var(--line); background: linear-gradient(180deg, rgba(255,255,255,.98), rgba(247,250,244,.86)); border-radius: 24px; padding: 20px; box-shadow: 0 22px 90px rgba(48,76,71,.16); }
     .filters { display: grid; grid-template-columns: 1.1fr .85fr .9fr .9fr 1.3fr auto; gap: 10px; margin-bottom: 16px; }
     .kpi-label { color: var(--muted); font-size: 12px; text-transform: uppercase; letter-spacing: .1em; }
     .kpi-value { font-size: 34px; font-weight: 850; letter-spacing: -.05em; margin-top: 8px; }
@@ -1266,21 +1536,22 @@ function renderEnterpriseAuditPage(): string {
     .section-title h2 { margin: 0; font-size: 19px; letter-spacing: -.03em; }
     .mini { color: var(--muted); font-size: 13px; }
     .list { display: grid; gap: 10px; }
-    .event { display: grid; grid-template-columns: 160px 1fr auto; gap: 14px; align-items: start; border: 1px solid rgba(237,229,204,.1); border-radius: 18px; padding: 14px; background: rgba(3,8,7,.28); }
+    .event { display: grid; grid-template-columns: 160px 1fr auto; gap: 14px; align-items: start; border: 1px solid rgba(48,76,71,.10); border-radius: 18px; padding: 14px; background: rgba(247,250,244,.84); }
     .event-time { color: var(--muted); font-size: 13px; line-height: 1.45; }
     .event-title { font-weight: 780; letter-spacing: -.02em; }
     .event-sub { color: var(--muted); font-size: 13px; margin-top: 5px; line-height: 1.45; }
-    .tag { display: inline-block; color: var(--blue); font-size: 12px; border: 1px solid rgba(147,197,253,.24); border-radius: 999px; padding: 5px 8px; margin: 3px 4px 0 0; }
-    .tag.good { color: var(--green); border-color: rgba(110,231,183,.24); }
-    .tag.warn { color: var(--gold); border-color: rgba(215,168,75,.28); }
-    .tag.bad { color: var(--red); border-color: rgba(251,113,133,.28); }
+    .tag { display: inline-block; color: var(--blue); font-size: 12px; border: 1px solid rgba(22,138,159,.24); border-radius: 999px; padding: 5px 8px; margin: 3px 4px 0 0; }
+    .tag.good { color: var(--green); border-color: rgba(62,93,87,.24); }
+    .tag.warn { color: var(--gold); border-color: rgba(213,169,20,.28); }
+    .tag.bad { color: var(--red); border-color: rgba(185,93,80,.28); }
     details { margin-top: 8px; color: var(--muted); font-size: 13px; }
-    pre { white-space: pre-wrap; word-break: break-word; border: 1px solid rgba(237,229,204,.12); border-radius: 14px; padding: 12px; background: rgba(0,0,0,.24); color: #d8dfcf; overflow: auto; }
-    .empty, .notice { color: var(--muted); border: 1px dashed rgba(237,229,204,.22); border-radius: 18px; padding: 18px; background: rgba(3,8,7,.2); }
-    .notice.error { color: var(--red); border-color: rgba(251,113,133,.3); }
+    pre { white-space: pre-wrap; word-break: break-word; border: 1px solid rgba(48,76,71,.12); border-radius: 14px; padding: 12px; background: rgba(48,76,71,.18); color: #4e6862; overflow: auto; }
+    .empty, .notice { color: var(--muted); border: 1px dashed rgba(48,76,71,.22); border-radius: 18px; padding: 18px; background: rgba(247,250,244,.78); }
+    .notice.error { color: var(--red); border-color: rgba(185,93,80,.3); }
     @media (max-width: 1100px) { .filters { grid-template-columns: repeat(2, minmax(0, 1fr)); } .kpis { grid-template-columns: repeat(2, minmax(0, 1fr)); } .event { grid-template-columns: 1fr; } }
     @media (max-width: 760px) { .shell { grid-template-columns: 1fr; } .topbar { flex-direction: column; } .filters, .kpis { grid-template-columns: 1fr; } }
     ${ENTERPRISE_APP_SHELL_THEME}
+    ${ENTERPRISE_STATIC_APP_POLISH_THEME}
   </style>
 </head>
 <body>
@@ -1512,22 +1783,12 @@ function renderEnterpriseAlertsPage(): string {
   <meta name="robots" content="noindex" />
   <title>Alerts - VaultProof Enterprise</title>
   <style>
-    :root { color-scheme: dark; --bg: #07110f; --panel: rgba(237,229,204,.09); --line: rgba(237,229,204,.16); --text: #f4ecd5; --muted: #a9b7a6; --gold: #d7a84b; --green: #6ee7b7; --red: #fb7185; --blue: #93c5fd; --ink: #07110f; }
-    * { box-sizing: border-box; }
-    body { margin: 0; min-height: 100vh; font-family: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; color: var(--text); background: radial-gradient(circle at 16% 6%, rgba(251,113,133,.18), transparent 28rem), radial-gradient(circle at 82% 18%, rgba(215,168,75,.22), transparent 28rem), linear-gradient(135deg, #06100e, #10231d 50%, #050807); }
-    a { color: inherit; text-decoration: none; }
-    select, button, input { border: 1px solid var(--line); background: rgba(237,229,204,.08); color: var(--text); border-radius: 13px; padding: 11px 12px; font: inherit; }
+    ${ENTERPRISE_RENDERED_APP_BASE_THEME}
+    select, button, input { border: 1px solid var(--line); background: rgba(255,255,255,.78); color: var(--text); border-radius: 13px; padding: 11px 12px; font: inherit; }
     option { color: #111827; }
     button { cursor: pointer; }
     button[disabled] { cursor: not-allowed; opacity: .58; }
-    input::placeholder { color: rgba(244,236,213,.48); }
-    .shell { display: grid; grid-template-columns: 270px 1fr; min-height: 100vh; }
-    .sidebar { border-right: 1px solid var(--line); background: rgba(3,8,7,.66); padding: 28px 20px; }
-    .brand { font-weight: 850; letter-spacing: -.03em; margin-bottom: 28px; }
-    .brand span { display: block; color: var(--muted); font-size: 12px; margin-top: 4px; font-weight: 500; }
-    .nav-label { color: var(--muted); font-size: 11px; text-transform: uppercase; letter-spacing: .12em; margin: 22px 0 9px 10px; }
-    .nav-link { display: flex; justify-content: space-between; padding: 11px 12px; border-radius: 14px; margin-bottom: 4px; border: 1px solid transparent; color: #d8dfcf; }
-    .nav-link:hover, .nav-link.active { background: var(--panel); border-color: var(--line); }
+    input::placeholder { color: rgba(52,81,76,.48); }
     .main { padding: 30px; max-width: 1380px; width: 100%; }
     .topbar { display: flex; justify-content: space-between; gap: 18px; align-items: flex-start; margin-bottom: 22px; }
     .kicker { color: var(--gold); font-size: 12px; text-transform: uppercase; letter-spacing: .16em; font-weight: 850; }
@@ -1538,7 +1799,7 @@ function renderEnterpriseAlertsPage(): string {
     .grid { display: grid; gap: 16px; }
     .kpis { grid-template-columns: repeat(4, minmax(0, 1fr)); margin-bottom: 16px; }
     .two { grid-template-columns: minmax(0, .85fr) minmax(0, 1.15fr); }
-    .card { border: 1px solid var(--line); background: linear-gradient(180deg, rgba(237,229,204,.13), rgba(237,229,204,.055)); border-radius: 24px; padding: 20px; box-shadow: 0 22px 90px rgba(0,0,0,.2); }
+    .card { border: 1px solid var(--line); background: linear-gradient(180deg, rgba(255,255,255,.98), rgba(247,250,244,.86)); border-radius: 24px; padding: 20px; box-shadow: 0 22px 90px rgba(48,76,71,.16); }
     .filters { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)) auto; gap: 10px; margin-bottom: 16px; }
     .kpi-label { color: var(--muted); font-size: 12px; text-transform: uppercase; letter-spacing: .1em; }
     .kpi-value { font-size: 34px; font-weight: 850; letter-spacing: -.05em; margin-top: 8px; }
@@ -1547,18 +1808,25 @@ function renderEnterpriseAlertsPage(): string {
     .section-title h2 { margin: 0; font-size: 19px; letter-spacing: -.03em; }
     .mini { color: var(--muted); font-size: 13px; }
     .list { display: grid; gap: 10px; }
-    .row { display: grid; grid-template-columns: 1fr auto; gap: 14px; align-items: start; border: 1px solid rgba(237,229,204,.1); border-radius: 18px; padding: 14px; background: rgba(3,8,7,.28); }
+    .row { display: grid; grid-template-columns: 1fr auto; gap: 14px; align-items: start; border: 1px solid rgba(48,76,71,.10); border-radius: 18px; padding: 14px; background: rgba(247,250,244,.84); }
     .row-title { font-weight: 780; letter-spacing: -.02em; }
     .row-sub { color: var(--muted); font-size: 13px; margin-top: 5px; line-height: 1.45; }
-    .tag { display: inline-block; color: var(--blue); font-size: 12px; border: 1px solid rgba(147,197,253,.24); border-radius: 999px; padding: 5px 8px; margin: 3px 4px 0 0; }
-    .tag.good { color: var(--green); border-color: rgba(110,231,183,.24); }
-    .tag.warn { color: var(--gold); border-color: rgba(215,168,75,.28); }
-    .tag.bad { color: var(--red); border-color: rgba(251,113,133,.28); }
-    .empty, .notice { color: var(--muted); border: 1px dashed rgba(237,229,204,.22); border-radius: 18px; padding: 18px; background: rgba(3,8,7,.2); }
-    .notice.error { color: var(--red); border-color: rgba(251,113,133,.3); }
+    .tag { display: inline-block; color: var(--blue); font-size: 12px; border: 1px solid rgba(22,138,159,.24); border-radius: 999px; padding: 5px 8px; margin: 3px 4px 0 0; }
+    .tag.good { color: var(--green); border-color: rgba(62,93,87,.24); }
+    .tag.warn { color: var(--gold); border-color: rgba(213,169,20,.28); }
+    .tag.bad { color: var(--red); border-color: rgba(185,93,80,.28); }
+    .empty, .notice { color: var(--muted); border: 1px dashed rgba(48,76,71,.22); border-radius: 18px; padding: 18px; background: rgba(247,250,244,.78); }
+    .notice.error { color: var(--red); border-color: rgba(185,93,80,.3); }
+    .slot-form { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; }
+    .slot-form label { display: grid; gap: 7px; color: var(--muted); font-size: 12px; font-weight: 800; letter-spacing: .08em; text-transform: uppercase; }
+    .slot-form input, .slot-form select { width: 100%; }
+    .slot-form .wide { grid-column: span 2; }
+    .slot-form-actions { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; margin-top: 14px; }
+    .slot-form-note { color: var(--muted); font-size: 13px; line-height: 1.45; margin: 0; }
     @media (max-width: 1100px) { .filters, .kpis, .two { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
-    @media (max-width: 760px) { .shell { grid-template-columns: 1fr; } .topbar { flex-direction: column; } .filters, .kpis, .two { grid-template-columns: 1fr; } }
+    @media (max-width: 760px) { .shell { grid-template-columns: 1fr; } .topbar { flex-direction: column; } .filters, .kpis, .two, .slot-form { grid-template-columns: 1fr; } .slot-form .wide { grid-column: auto; } }
     ${ENTERPRISE_APP_SHELL_THEME}
+    ${ENTERPRISE_STATIC_APP_POLISH_THEME}
   </style>
 </head>
 <body>
@@ -1851,21 +2119,11 @@ function renderEnterpriseOperationsPage(pageName: 'activity' | 'projects' | 'key
   <meta name="robots" content="noindex" />
   <title>${escapeHtml(pageTitle)} - VaultProof Enterprise</title>
   <style>
-    :root { color-scheme: dark; --bg: #07110f; --panel: rgba(237,229,204,.09); --line: rgba(237,229,204,.16); --text: #f4ecd5; --muted: #a9b7a6; --gold: #d7a84b; --green: #6ee7b7; --red: #fb7185; --blue: #93c5fd; --ink: #07110f; }
-    * { box-sizing: border-box; }
-    body { margin: 0; min-height: 100vh; font-family: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; color: var(--text); background: radial-gradient(circle at 12% 8%, rgba(110,231,183,.18), transparent 28rem), radial-gradient(circle at 84% 16%, rgba(215,168,75,.2), transparent 28rem), linear-gradient(135deg, #06100e, #10231d 50%, #050807); }
-    a { color: inherit; text-decoration: none; }
-    select, button, input { border: 1px solid var(--line); background: rgba(237,229,204,.08); color: var(--text); border-radius: 13px; padding: 11px 12px; font: inherit; }
+    ${ENTERPRISE_RENDERED_APP_BASE_THEME}
+    select, button, input { border: 1px solid var(--line); background: rgba(255,255,255,.78); color: var(--text); border-radius: 13px; padding: 11px 12px; font: inherit; }
     option { color: #111827; }
     button { cursor: pointer; }
-    input::placeholder { color: rgba(244,236,213,.48); }
-    .shell { display: grid; grid-template-columns: 270px 1fr; min-height: 100vh; }
-    .sidebar { border-right: 1px solid var(--line); background: rgba(3,8,7,.66); padding: 28px 20px; }
-    .brand { font-weight: 850; letter-spacing: -.03em; margin-bottom: 28px; }
-    .brand span { display: block; color: var(--muted); font-size: 12px; margin-top: 4px; font-weight: 500; }
-    .nav-label { color: var(--muted); font-size: 11px; text-transform: uppercase; letter-spacing: .12em; margin: 22px 0 9px 10px; }
-    .nav-link { display: flex; justify-content: space-between; padding: 11px 12px; border-radius: 14px; margin-bottom: 4px; border: 1px solid transparent; color: #d8dfcf; }
-    .nav-link:hover, .nav-link.active { background: var(--panel); border-color: var(--line); }
+    input::placeholder { color: rgba(52,81,76,.48); }
     .main { padding: 30px; max-width: 1380px; width: 100%; }
     .topbar { display: flex; justify-content: space-between; gap: 18px; align-items: flex-start; margin-bottom: 22px; }
     .kicker { color: var(--gold); font-size: 12px; text-transform: uppercase; letter-spacing: .16em; font-weight: 850; }
@@ -1873,11 +2131,11 @@ function renderEnterpriseOperationsPage(pageName: 'activity' | 'projects' | 'key
     .lead { color: var(--muted); line-height: 1.6; max-width: 780px; }
     .toolbar { display: flex; gap: 10px; flex-wrap: wrap; justify-content: flex-end; }
     .primary { background: linear-gradient(135deg, var(--gold), #f3df95); color: var(--ink); border: 0; font-weight: 850; }
-    .danger { color: var(--red); border-color: rgba(251,113,133,.34); }
+    .danger { color: var(--red); border-color: rgba(185,93,80,.34); }
     .grid { display: grid; gap: 16px; }
     .kpis { grid-template-columns: repeat(4, minmax(0, 1fr)); margin-bottom: 16px; }
     .two { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); }
-    .card { border: 1px solid var(--line); background: linear-gradient(180deg, rgba(237,229,204,.13), rgba(237,229,204,.055)); border-radius: 24px; padding: 20px; box-shadow: 0 22px 90px rgba(0,0,0,.2); }
+    .card { border: 1px solid var(--line); background: linear-gradient(180deg, rgba(255,255,255,.98), rgba(247,250,244,.86)); border-radius: 24px; padding: 20px; box-shadow: 0 22px 90px rgba(48,76,71,.16); }
     .filters { display: grid; grid-template-columns: minmax(180px, 1fr) minmax(150px, .7fr) minmax(180px, 1fr) auto; gap: 10px; margin-bottom: 16px; }
     .kpi-label { color: var(--muted); font-size: 12px; text-transform: uppercase; letter-spacing: .1em; }
     .kpi-value { font-size: 34px; font-weight: 850; letter-spacing: -.05em; margin-top: 8px; }
@@ -1886,18 +2144,19 @@ function renderEnterpriseOperationsPage(pageName: 'activity' | 'projects' | 'key
     .section-title h2 { margin: 0; font-size: 19px; letter-spacing: -.03em; }
     .mini { color: var(--muted); font-size: 13px; }
     .list { display: grid; gap: 10px; }
-    .row { display: grid; grid-template-columns: 1fr auto; gap: 14px; align-items: start; border: 1px solid rgba(237,229,204,.1); border-radius: 18px; padding: 14px; background: rgba(3,8,7,.28); }
+    .row { display: grid; grid-template-columns: 1fr auto; gap: 14px; align-items: start; border: 1px solid rgba(48,76,71,.10); border-radius: 18px; padding: 14px; background: rgba(247,250,244,.84); }
     .row-title { font-weight: 780; letter-spacing: -.02em; }
     .row-sub { color: var(--muted); font-size: 13px; margin-top: 5px; line-height: 1.45; }
-    .tag { display: inline-block; color: var(--blue); font-size: 12px; border: 1px solid rgba(147,197,253,.24); border-radius: 999px; padding: 5px 8px; margin: 3px 4px 0 0; }
-    .tag.good { color: var(--green); border-color: rgba(110,231,183,.24); }
-    .tag.warn { color: var(--gold); border-color: rgba(215,168,75,.28); }
-    .tag.bad { color: var(--red); border-color: rgba(251,113,133,.28); }
-    .empty, .notice { color: var(--muted); border: 1px dashed rgba(237,229,204,.22); border-radius: 18px; padding: 18px; background: rgba(3,8,7,.2); }
-    .notice.error { color: var(--red); border-color: rgba(251,113,133,.3); }
+    .tag { display: inline-block; color: var(--blue); font-size: 12px; border: 1px solid rgba(22,138,159,.24); border-radius: 999px; padding: 5px 8px; margin: 3px 4px 0 0; }
+    .tag.good { color: var(--green); border-color: rgba(62,93,87,.24); }
+    .tag.warn { color: var(--gold); border-color: rgba(213,169,20,.28); }
+    .tag.bad { color: var(--red); border-color: rgba(185,93,80,.28); }
+    .empty, .notice { color: var(--muted); border: 1px dashed rgba(48,76,71,.22); border-radius: 18px; padding: 18px; background: rgba(247,250,244,.78); }
+    .notice.error { color: var(--red); border-color: rgba(185,93,80,.3); }
     @media (max-width: 1100px) { .filters, .kpis, .two { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
     @media (max-width: 760px) { .shell { grid-template-columns: 1fr; } .topbar { flex-direction: column; } .filters, .kpis, .two { grid-template-columns: 1fr; } }
     ${ENTERPRISE_APP_SHELL_THEME}
+    ${ENTERPRISE_STATIC_APP_POLISH_THEME}
   </style>
 </head>
 <body>
@@ -1913,12 +2172,52 @@ function renderEnterpriseOperationsPage(pageName: 'activity' | 'projects' | 'key
         </div>
         <div class="toolbar">
           <select id="orgSelect" aria-label="Organization"><option>Loading org...</option></select>
+          ${pageName === 'keys' ? '<button id="openProviderSlotForm" class="primary" type="button">add slot</button>' : ''}
           <button id="refreshBtn" type="button">refresh</button>
           <a class="primary" href="/app/control">open control</a>
         </div>
       </div>
 
       <div id="notice" class="notice error" style="display:none"></div>
+
+      ${pageName === 'keys' ? `
+      <section id="providerSlotFormPanel" class="card" style="display:none;margin-bottom:16px">
+        <div class="section-title"><h2>Add provider slot</h2><span class="mini">demo material</span></div>
+        <form id="providerSlotForm">
+          <div class="slot-form">
+            <label>Project
+              <select id="slotProject" required></select>
+            </label>
+            <label>Provider
+              <input id="slotProvider" list="providerSlotOptions" value="openai" required maxlength="64" />
+            </label>
+            <label>Slug
+              <input id="slotSlug" value="openai" required maxlength="64" />
+            </label>
+            <label class="wide">Upstream base URL
+              <input id="slotUpstream" value="https://api.openai.com" required />
+            </label>
+            <label>Auth header
+              <input id="slotHeaderName" value="authorization" required />
+            </label>
+            <label class="wide">Auth template
+              <input id="slotHeaderTemplate" value="Bearer {key}" required />
+            </label>
+          </div>
+          <datalist id="providerSlotOptions">
+            <option value="openai"></option>
+            <option value="anthropic"></option>
+            <option value="stripe"></option>
+            <option value="twilio"></option>
+            <option value="snowflake"></option>
+          </datalist>
+          <div class="slot-form-actions">
+            <button class="primary" type="submit">create slot</button>
+            <button id="cancelProviderSlotForm" type="button">cancel</button>
+            <p class="slot-form-note">Real provider keys stay out of this browser flow until sealed ingest is enabled.</p>
+          </div>
+        </form>
+      </section>` : ''}
 
       <section class="grid kpis">
         <div class="card"><div class="kpi-label">projects</div><div class="kpi-value" id="kpiProjects">...</div><div class="kpi-sub">active scopes</div></div>
@@ -1968,6 +2267,13 @@ function renderEnterpriseOperationsPage(pageName: 'activity' | 'projects' | 'key
       var currentOrgId = localStorage.getItem(ACTIVE_ORG_STORAGE_KEY) || '';
       var cachedProjects = [];
       var cachedOverview = {};
+      var providerDefaults = {
+        openai: { upstream: 'https://api.openai.com', header: 'authorization', template: 'Bearer {key}' },
+        anthropic: { upstream: 'https://api.anthropic.com', header: 'x-api-key', template: '{key}' },
+        stripe: { upstream: 'https://api.stripe.com', header: 'authorization', template: 'Bearer {key}' },
+        twilio: { upstream: 'https://api.twilio.com', header: 'authorization', template: 'Basic {key}' },
+        snowflake: { upstream: 'https://snowflakecomputing.com', header: 'authorization', template: 'Bearer {key}' }
+      };
       function byId(id) { return document.getElementById(id); }
       function text(id, value) { var el = byId(id); if (el) el.textContent = value == null ? '' : String(value); }
       function escapeHtml(value) {
@@ -2038,18 +2344,32 @@ function renderEnterpriseOperationsPage(pageName: 'activity' | 'projects' | 'key
       }
       function updateKpis() {
         var slotCount = cachedProjects.reduce(function(total, project) { return total + ((project.provider_slots || []).length); }, 0);
+        var liveSlotCount = cachedProjects.reduce(function(total, project) {
+          return total + (project.provider_slots || []).filter(function(slot) { return slot.material_mode === 'sealed-live'; }).length;
+        }, 0);
+        var demoSlotCount = cachedProjects.reduce(function(total, project) {
+          return total + (project.provider_slots || []).filter(function(slot) { return slot.material_mode === 'demo-placeholder'; }).length;
+        }, 0);
         text('kpiProjects', number(cachedProjects.length));
         text('kpiKeys', number(slotCount));
-        text('kpiProviders', (cachedOverview.providers || []).join(', ') || 'no active slots');
+        text('kpiProviders', slotCount ? (liveSlotCount + ' live sealed / ' + demoSlotCount + ' demo') : 'no active slots');
         text('kpiCalls', number(cachedOverview.totalCalls));
         text('kpiDenied', number(cachedOverview.deniedCalls));
       }
       function renderProjectOptions() {
         var select = byId('activityProjectFilter');
-        if (!select) return;
-        select.innerHTML = '<option value="">All projects</option>' + cachedProjects.map(function(project) {
-          return '<option value="' + escapeHtml(project.id) + '">' + escapeHtml(project.name || project.vp_proj_id) + '</option>';
-        }).join('');
+        if (select) {
+          select.innerHTML = '<option value="">All projects</option>' + cachedProjects.map(function(project) {
+            return '<option value="' + escapeHtml(project.id) + '">' + escapeHtml(project.name || project.vp_proj_id) + '</option>';
+          }).join('');
+        }
+        var slotProject = byId('slotProject');
+        if (slotProject) {
+          slotProject.innerHTML = cachedProjects.length ? cachedProjects.map(function(project) {
+            return '<option value="' + escapeHtml(project.id) + '">' + escapeHtml(project.name || project.vp_proj_id) + ' - ' + escapeHtml(project.project_role || 'member') + '</option>';
+          }).join('') : '<option value="">No projects</option>';
+          slotProject.disabled = !cachedProjects.length;
+        }
       }
       function renderProjects() {
         byId('projectsPanel').style.display = PAGE_MODE === 'projects' ? 'grid' : 'none';
@@ -2059,7 +2379,9 @@ function renderEnterpriseOperationsPage(pageName: 'activity' | 'projects' | 'key
         projectList.innerHTML = cachedProjects.length ? cachedProjects.map(function(project) {
           var policy = project.caller_lock_policy || {};
           var providers = (project.provider_slots || []).map(function(slot) { return slot.slug || slot.provider; });
-          return '<div class="row"><div><div class="row-title">' + escapeHtml(project.name || project.vp_proj_id) + '</div><div class="row-sub">' + escapeHtml(project.vp_proj_id) + ' - ' + escapeHtml(project.project_role) + ' via ' + escapeHtml(project.access_via) + ' - created ' + escapeHtml(rel(project.created_at)) + '</div><div><span class="tag ' + (project.strict_origin ? 'good' : 'warn') + '">' + (project.strict_origin ? 'strict origin' : 'origin relaxed') + '</span><span class="tag">' + providers.length + ' provider slots</span><span class="tag">' + (policy.rate_limit_per_minute ? policy.rate_limit_per_minute + '/min' : 'no project rate cap') + '</span></div></div><a class="tag" href="/app/control">control</a></div>';
+          var liveSlots = (project.provider_slots || []).filter(function(slot) { return slot.material_mode === 'sealed-live'; }).length;
+          var demoSlots = (project.provider_slots || []).filter(function(slot) { return slot.material_mode === 'demo-placeholder'; }).length;
+          return '<div class="row"><div><div class="row-title">' + escapeHtml(project.name || project.vp_proj_id) + '</div><div class="row-sub">' + escapeHtml(project.vp_proj_id) + ' - ' + escapeHtml(project.project_role) + ' via ' + escapeHtml(project.access_via) + ' - created ' + escapeHtml(rel(project.created_at)) + '</div><div><span class="tag ' + (project.strict_origin ? 'good' : 'warn') + '">' + (project.strict_origin ? 'strict origin' : 'origin relaxed') + '</span><span class="tag">' + providers.length + ' provider slots</span><span class="tag ' + (liveSlots ? 'good' : 'warn') + '">' + liveSlots + ' live sealed</span><span class="tag ' + (demoSlots ? 'warn' : '') + '">' + demoSlots + ' demo</span><span class="tag">' + (policy.rate_limit_per_minute ? policy.rate_limit_per_minute + '/min' : 'no project rate cap') + '</span></div></div><a class="tag" href="/app/control">control</a></div>';
         }).join('') : '<div class="empty">No active enterprise projects yet.</div>';
         var health = Array.isArray(cachedOverview.projectHealth) ? cachedOverview.projectHealth : [];
         text('healthMeta', (cachedOverview.healthWindowDays || 7) + 'd window');
@@ -2099,8 +2421,62 @@ function renderEnterpriseOperationsPage(pageName: 'activity' | 'projects' | 'key
           var override = policy.provider_overrides && policy.provider_overrides[item.slot.slug || item.slot.provider];
           var canAdmin = item.project.project_role === 'owner' || item.project.project_role === 'admin';
           var action = canAdmin ? '<button type="button" class="danger" data-action="revoke-slot" data-project-id="' + escapeHtml(item.project.id) + '" data-slug="' + escapeHtml(item.slot.slug || item.slot.provider) + '">emergency revoke</button>' : '<span class="tag warn">read-only</span>';
-          return '<div class="row"><div><div class="row-title">' + escapeHtml(item.slot.slug || item.slot.provider) + '</div><div class="row-sub">' + escapeHtml(item.project.name || item.project.vp_proj_id) + ' - provider ' + escapeHtml(item.slot.provider) + ' - key id ' + escapeHtml(item.slot.key_id) + '</div><div><span class="tag good">active</span><span class="tag">' + (override ? 'provider override' : 'project policy') + '</span><span class="tag">rotation: manual checklist</span><span class="tag">SKR: executor-bound</span></div></div>' + action + '</div>';
+          var materialMode = item.slot.material_mode || 'missing';
+          var materialClass = materialMode === 'sealed-live' ? 'good' : materialMode === 'demo-placeholder' ? 'warn' : 'bad';
+          var materialLabel = materialMode === 'sealed-live' ? 'live sealed material' : materialMode === 'demo-placeholder' ? 'demo placeholder material' : materialMode === 'mixed' ? 'mixed material state' : 'material missing';
+          return '<div class="row"><div><div class="row-title">' + escapeHtml(item.slot.slug || item.slot.provider) + '</div><div class="row-sub">' + escapeHtml(item.project.name || item.project.vp_proj_id) + ' - provider ' + escapeHtml(item.slot.provider) + ' - key id ' + escapeHtml(item.slot.key_id) + '</div><div><span class="tag good">active</span><span class="tag ' + materialClass + '">' + materialLabel + '</span><span class="tag">' + (override ? 'provider override' : 'project policy') + '</span><span class="tag">rotation: manual checklist</span><span class="tag">SKR: executor-bound</span></div></div>' + action + '</div>';
         }).join('') : '<div class="empty">No active provider slots found.</div>';
+      }
+      function syncProviderDefaults(force) {
+        var providerInput = byId('slotProvider');
+        if (!providerInput) return;
+        var provider = String(providerInput.value || '').trim().toLowerCase();
+        var defaults = providerDefaults[provider];
+        if (!defaults) return;
+        var slug = byId('slotSlug');
+        var upstream = byId('slotUpstream');
+        var header = byId('slotHeaderName');
+        var template = byId('slotHeaderTemplate');
+        if (slug && (force || !slug.value || providerDefaults[slug.value])) slug.value = provider;
+        if (upstream && (force || !upstream.value)) upstream.value = defaults.upstream;
+        if (header && (force || !header.value)) header.value = defaults.header;
+        if (template && (force || !template.value)) template.value = defaults.template;
+      }
+      function setProviderSlotFormVisible(visible) {
+        var panel = byId('providerSlotFormPanel');
+        if (!panel) return;
+        panel.style.display = visible ? 'block' : 'none';
+        if (visible) {
+          renderProjectOptions();
+          syncProviderDefaults(false);
+          var provider = byId('slotProvider');
+          if (provider) provider.focus();
+        }
+      }
+      async function submitProviderSlotForm(event) {
+        event.preventDefault();
+        var projectId = byId('slotProject') && byId('slotProject').value;
+        if (!projectId) {
+          notice('Choose a project first.');
+          return;
+        }
+        var payload = {
+          provider: byId('slotProvider').value,
+          slug: byId('slotSlug').value,
+          upstream_base_url: byId('slotUpstream').value,
+          auth_header_name: byId('slotHeaderName').value,
+          auth_header_template: byId('slotHeaderTemplate').value
+        };
+        try {
+          await fetchJson('/api/v1/enterprise/projects/' + encodeURIComponent(projectId) + '/providers', {
+            method: 'POST',
+            body: JSON.stringify(payload)
+          });
+          setProviderSlotFormVisible(false);
+          await reload();
+        } catch (error) {
+          notice(error && error.message ? error.message : 'Provider slot could not be created.');
+        }
       }
       async function reload() {
         if (!token) {
@@ -2109,13 +2485,10 @@ function renderEnterpriseOperationsPage(pageName: 'activity' | 'projects' | 'key
         }
         notice('');
         try {
-          renderOrgSelector(await fetchJson('/api/v1/enterprise/orgs'));
-          var results = await Promise.all([
-            fetchJson('/api/v1/enterprise/projects'),
-            fetchJson('/api/v1/enterprise/projects/stats/overview')
-          ]);
-          cachedProjects = Array.isArray(results[0].projects) ? results[0].projects : [];
-          cachedOverview = results[1] || {};
+          var bootstrap = await fetchJson('/api/v1/enterprise/projects/bootstrap');
+          renderOrgSelector(bootstrap);
+          cachedProjects = Array.isArray(bootstrap.projects) ? bootstrap.projects : [];
+          cachedOverview = bootstrap.overview || {};
           updateKpis();
           renderProjectOptions();
           renderProjects();
@@ -2130,6 +2503,18 @@ function renderEnterpriseOperationsPage(pageName: 'activity' | 'projects' | 'key
           event.preventDefault();
           renderActivity().catch(function(error) { notice(error && error.message ? error.message : 'Activity failed to load.'); });
         });
+      }
+      if (byId('openProviderSlotForm')) {
+        byId('openProviderSlotForm').addEventListener('click', function() { setProviderSlotFormVisible(true); });
+      }
+      if (byId('cancelProviderSlotForm')) {
+        byId('cancelProviderSlotForm').addEventListener('click', function() { setProviderSlotFormVisible(false); });
+      }
+      if (byId('providerSlotForm')) {
+        byId('providerSlotForm').addEventListener('submit', submitProviderSlotForm);
+      }
+      if (byId('slotProvider')) {
+        byId('slotProvider').addEventListener('change', function() { syncProviderDefaults(true); });
       }
       document.addEventListener('click', async function(event) {
         var target = event.target;
@@ -2186,7 +2571,7 @@ function renderEnterpriseSupportPage(pageName: EnterpriseSupportPageName): strin
     plans: {
       title: 'Plans',
       kicker: 'enterprise packaging',
-      lead: 'Track enterprise rollout packaging, Azure/APIM readiness, usage posture, and contract-facing guardrails.',
+      lead: 'Track enterprise rollout packaging, GCP edge readiness, usage posture, and contract-facing guardrails.',
     },
     scanner: {
       title: 'Scanner',
@@ -2196,7 +2581,7 @@ function renderEnterpriseSupportPage(pageName: EnterpriseSupportPageName): strin
     runbooks: {
       title: 'Runbooks',
       kicker: 'operator commands',
-      lead: 'Review production verification, evidence, deploy, secret, TLS, APIM, SSH, and cleanup runbooks before making live infrastructure changes.',
+      lead: 'Review production verification, evidence, deploy, secret, DNS, edge, SSH, and cleanup runbooks before making live infrastructure changes.',
     },
   };
   const pageTitle = supportPageCopy[pageName].title;
@@ -2211,23 +2596,13 @@ function renderEnterpriseSupportPage(pageName: EnterpriseSupportPageName): strin
   <meta name="robots" content="noindex" />
   <title>${escapeHtml(pageTitle)} - VaultProof Enterprise</title>
   <style>
-    :root { color-scheme: dark; --bg: #07110f; --panel: rgba(237,229,204,.09); --line: rgba(237,229,204,.16); --text: #f4ecd5; --muted: #a9b7a6; --gold: #d7a84b; --green: #6ee7b7; --red: #fb7185; --blue: #93c5fd; --ink: #07110f; }
-    * { box-sizing: border-box; }
-    body { margin: 0; min-height: 100vh; font-family: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; color: var(--text); background: radial-gradient(circle at 18% 8%, rgba(215,168,75,.2), transparent 28rem), radial-gradient(circle at 86% 16%, rgba(147,197,253,.18), transparent 28rem), linear-gradient(135deg, #06100e, #10231d 50%, #050807); }
-    a { color: inherit; text-decoration: none; }
-    select, button, input, textarea { border: 1px solid var(--line); background: rgba(237,229,204,.08); color: var(--text); border-radius: 13px; padding: 11px 12px; font: inherit; }
-    input::placeholder, textarea::placeholder { color: rgba(244,236,213,.48); }
+    ${ENTERPRISE_RENDERED_APP_BASE_THEME}
+    select, button, input, textarea { border: 1px solid var(--line); background: rgba(255,255,255,.78); color: var(--text); border-radius: 13px; padding: 11px 12px; font: inherit; }
+    input::placeholder, textarea::placeholder { color: rgba(52,81,76,.48); }
     textarea { min-height: 120px; resize: vertical; line-height: 1.45; }
     option { color: #111827; }
     button { cursor: pointer; }
     button[disabled] { cursor: not-allowed; opacity: .58; }
-    .shell { display: grid; grid-template-columns: 270px 1fr; min-height: 100vh; }
-    .sidebar { border-right: 1px solid var(--line); background: rgba(3,8,7,.66); padding: 28px 20px; }
-    .brand { font-weight: 850; letter-spacing: -.03em; margin-bottom: 28px; }
-    .brand span { display: block; color: var(--muted); font-size: 12px; margin-top: 4px; font-weight: 500; }
-    .nav-label { color: var(--muted); font-size: 11px; text-transform: uppercase; letter-spacing: .12em; margin: 22px 0 9px 10px; }
-    .nav-link { display: flex; justify-content: space-between; padding: 11px 12px; border-radius: 14px; margin-bottom: 4px; border: 1px solid transparent; color: #d8dfcf; }
-    .nav-link:hover, .nav-link.active { background: var(--panel); border-color: var(--line); }
     .main { padding: 30px; max-width: 1380px; width: 100%; }
     .topbar { display: flex; justify-content: space-between; gap: 18px; align-items: flex-start; margin-bottom: 22px; }
     .kicker { color: var(--gold); font-size: 12px; text-transform: uppercase; letter-spacing: .16em; font-weight: 850; }
@@ -2238,16 +2613,16 @@ function renderEnterpriseSupportPage(pageName: EnterpriseSupportPageName): strin
     .grid { display: grid; gap: 16px; }
     .kpis { grid-template-columns: repeat(4, minmax(0, 1fr)); margin-bottom: 16px; }
     .two { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); }
-    .card { border: 1px solid var(--line); background: linear-gradient(180deg, rgba(237,229,204,.13), rgba(237,229,204,.055)); border-radius: 24px; padding: 20px; box-shadow: 0 22px 90px rgba(0,0,0,.2); }
+    .card { border: 1px solid var(--line); background: linear-gradient(180deg, rgba(255,255,255,.98), rgba(247,250,244,.86)); border-radius: 24px; padding: 20px; box-shadow: 0 22px 90px rgba(48,76,71,.16); }
     .doc-guide { display: none; max-width: 940px; }
-    .doc-section { border: 1px solid var(--line); background: linear-gradient(180deg, rgba(237,229,204,.12), rgba(237,229,204,.045)); border-radius: 24px; padding: 24px; margin-bottom: 18px; box-shadow: 0 22px 90px rgba(0,0,0,.16); }
+    .doc-section { border: 1px solid var(--line); background: linear-gradient(180deg, rgba(48,76,71,.12), rgba(247,250,244,.76)); border-radius: 24px; padding: 24px; margin-bottom: 18px; box-shadow: 0 22px 90px rgba(48,76,71,.12); }
     .doc-section h2 { margin: 0 0 10px; font-size: 26px; letter-spacing: -.045em; }
     .doc-section h3 { margin: 18px 0 8px; font-size: 16px; letter-spacing: -.02em; color: var(--text); }
     .doc-section p { margin: 0 0 12px; color: var(--muted); line-height: 1.68; }
     .doc-section ul, .doc-section ol { margin: 10px 0 0; padding-left: 22px; color: var(--muted); line-height: 1.68; }
     .doc-section li { margin: 7px 0; }
     .doc-section code { color: var(--gold); }
-    .doc-note { border-left: 3px solid var(--gold); padding: 12px 14px; margin-top: 14px; border-radius: 0 14px 14px 0; background: rgba(215,168,75,.08); color: var(--text); }
+    .doc-note { border-left: 3px solid var(--gold); padding: 12px 14px; margin-top: 14px; border-radius: 0 14px 14px 0; background: rgba(213,169,20,.08); color: var(--text); }
     .doc-note strong { color: var(--gold); }
     .doc-kicker { display: block; color: var(--gold); font-size: 12px; text-transform: uppercase; letter-spacing: .14em; font-weight: 850; margin-bottom: 8px; }
     .kpi-label { color: var(--muted); font-size: 12px; text-transform: uppercase; letter-spacing: .1em; }
@@ -2257,18 +2632,19 @@ function renderEnterpriseSupportPage(pageName: EnterpriseSupportPageName): strin
     .section-title h2 { margin: 0; font-size: 19px; letter-spacing: -.03em; }
     .mini { color: var(--muted); font-size: 13px; }
     .list { display: grid; gap: 10px; }
-    .row { display: grid; grid-template-columns: 1fr auto; gap: 14px; align-items: start; border: 1px solid rgba(237,229,204,.1); border-radius: 18px; padding: 14px; background: rgba(3,8,7,.28); }
+    .row { display: grid; grid-template-columns: 1fr auto; gap: 14px; align-items: start; border: 1px solid rgba(48,76,71,.10); border-radius: 18px; padding: 14px; background: rgba(247,250,244,.84); }
     .row-title { font-weight: 780; letter-spacing: -.02em; }
     .row-sub { color: var(--muted); font-size: 13px; margin-top: 5px; line-height: 1.45; }
-    .tag { display: inline-block; color: var(--blue); font-size: 12px; border: 1px solid rgba(147,197,253,.24); border-radius: 999px; padding: 5px 8px; margin: 3px 4px 0 0; }
-    .tag.good { color: var(--green); border-color: rgba(110,231,183,.24); }
-    .tag.warn { color: var(--gold); border-color: rgba(215,168,75,.28); }
-    .tag.bad { color: var(--red); border-color: rgba(251,113,133,.28); }
-    .empty, .notice { color: var(--muted); border: 1px dashed rgba(237,229,204,.22); border-radius: 18px; padding: 18px; background: rgba(3,8,7,.2); }
-    .notice.error { color: var(--red); border-color: rgba(251,113,133,.3); }
+    .tag { display: inline-block; color: var(--blue); font-size: 12px; border: 1px solid rgba(22,138,159,.24); border-radius: 999px; padding: 5px 8px; margin: 3px 4px 0 0; }
+    .tag.good { color: var(--green); border-color: rgba(62,93,87,.24); }
+    .tag.warn { color: var(--gold); border-color: rgba(213,169,20,.28); }
+    .tag.bad { color: var(--red); border-color: rgba(185,93,80,.28); }
+    .empty, .notice { color: var(--muted); border: 1px dashed rgba(48,76,71,.22); border-radius: 18px; padding: 18px; background: rgba(247,250,244,.78); }
+    .notice.error { color: var(--red); border-color: rgba(185,93,80,.3); }
     @media (max-width: 1100px) { .kpis, .two { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
     @media (max-width: 760px) { .shell { grid-template-columns: 1fr; } .topbar { flex-direction: column; } .kpis, .two { grid-template-columns: 1fr; } }
     ${ENTERPRISE_APP_SHELL_THEME}
+    ${ENTERPRISE_STATIC_APP_POLISH_THEME}
   </style>
 </head>
 <body>
@@ -2331,7 +2707,7 @@ function renderEnterpriseSupportPage(pageName: EnterpriseSupportPageName): strin
             <li>Production, staging, development, sandbox, regional, subsidiary, and regulated environment list.</li>
             <li>Provider inventory: provider name, account, API family, current key location, owner, rotation date, and leak blast radius.</li>
             <li>Compliance needs: SOC 2 evidence, access reviews, audit exports, retention requirements, and customer-specific proof.</li>
-            <li>Gateway preference: VaultProof-managed APIM, customer-managed APIM, mTLS gateway, device gateway, or direct Front Door path.</li>
+            <li>Gateway preference: VaultProof-managed edge, customer-managed gateway, mTLS gateway, device gateway, or direct trusted edge path.</li>
           </ul>
         </article>
 
@@ -2369,12 +2745,12 @@ function renderEnterpriseSupportPage(pageName: EnterpriseSupportPageName): strin
           <h2>Choose the gateway and network pattern</h2>
           <p>The gateway pattern decides which system is trusted to identify callers before VaultProof signs secure execution requests.</p>
           <h3>VaultProof-managed gateway</h3>
-          <p>Fastest path. Customer apps call <code>enterprise.vaultproof.dev</code>, and VaultProof manages Front Door/APIM controls, coarse rate limits, origin lock, request-size guards, and telemetry.</p>
-          <h3>Customer-managed APIM</h3>
-          <p>Use this when the customer requires all SaaS or API traffic through their own Azure API Management. Customer APIM validates identity, device, subscription, or mTLS policy first, then forwards trusted caller-lock headers to VaultProof.</p>
+          <p>Fastest path. Customer apps call <code>enterprise.vaultproof.dev</code>, and VaultProof manages GCP edge controls, coarse rate limits, origin lock, request-size guards, and telemetry.</p>
+          <h3>Customer-managed gateway</h3>
+          <p>Use this when the customer requires all SaaS or API traffic through their own API gateway. The customer gateway validates identity, device, subscription, or mTLS policy first, then forwards trusted caller-lock headers to VaultProof.</p>
           <h3>mTLS or device gateway</h3>
           <p>Use this for server, device, IoT, or fleet traffic. Caller lock can use certificate thumbprints, certificate subject fragments, device identity hashes, fleet IDs, firmware versions, CIDRs, and gateway markers.</p>
-          <div class="doc-note"><strong>Later hardening:</strong> plan TLS-origin cutover, APIM cutover, private-origin migration, and rollback during a controlled change window after the basic production path is stable.</div>
+          <div class="doc-note"><strong>Later hardening:</strong> plan TLS-origin cutover, gateway cutover, private-origin migration, and rollback during a controlled change window after the basic production path is stable.</div>
         </article>
 
         <article class="doc-section">
@@ -2402,7 +2778,7 @@ function renderEnterpriseSupportPage(pageName: EnterpriseSupportPageName): strin
           <h2>Evidence, alerts, and compliance</h2>
           <p>Enterprise security teams need proof, not promises. Before go-live, confirm production readiness, audit CSV export, access-review CSV export, alert delivery, and attestation evidence.</p>
           <ul>
-            <li>Use <code>/readiness</code> to confirm Front Door, control plane, executor, attestation, Secure Key Release, replay protection, and origin lock.</li>
+            <li>Use <code>/readiness</code> to confirm GCP edge, control plane, executor, attestation, Cloud KMS posture, replay protection, and origin lock.</li>
             <li>Use Audit for governance/runtime events and evidence-friendly CSV export.</li>
             <li>Use Members for access-review export.</li>
             <li>Configure alert destinations and send a test alert.</li>
@@ -2444,14 +2820,14 @@ function renderEnterpriseSupportPage(pageName: EnterpriseSupportPageName): strin
         <article class="doc-section">
           <span class="doc-kicker">Architecture</span>
           <h2>Architecture at a glance</h2>
-          <p>VaultProof Enterprise separates the customer-facing control plane from the secure execution path. The control plane handles organization access, projects, policies, members, audit, alerts, and dashboards. The executor handles protected provider calls and key release inside the Azure confidential runtime.</p>
+          <p>VaultProof Enterprise separates the customer-facing control plane from the secure execution path. The control plane handles organization access, projects, policies, members, audit, alerts, and dashboards. The executor handles protected provider calls and key release inside the GCP confidential runtime.</p>
           <ol>
             <li>A user signs in to the enterprise dashboard and receives an enterprise session.</li>
             <li>The dashboard calls only <code>/api/v1/enterprise/*</code> APIs on the enterprise control plane.</li>
             <li>The control plane checks organization membership, project access, policy state, and request signing rules.</li>
             <li>Approved execution requests are sent to the secure executor over the internal enterprise path.</li>
             <li>The executor verifies the request signature, replay protection, caller-lock metadata, attestation posture, and key-release readiness.</li>
-            <li>Provider key material is released only through the configured Azure Secure Key Release path and is used inside the confidential runtime.</li>
+            <li>Provider key material is protected through the configured Cloud KMS path and is used inside the confidential runtime.</li>
             <li>Governance, runtime, alerts, readiness, and evidence events are recorded for review and export.</li>
           </ol>
         </article>
@@ -2478,15 +2854,15 @@ function renderEnterpriseSupportPage(pageName: EnterpriseSupportPageName): strin
         <article class="doc-section">
           <span class="doc-kicker">Network</span>
           <h2>Gateway and network patterns</h2>
-          <p>The gateway identifies the caller before VaultProof allows protected provider access. A customer can start with the VaultProof-managed path and later move to a customer-managed APIM, mTLS, device gateway, or private-origin pattern.</p>
-          <h3>VaultProof-managed Front Door/APIM</h3>
+          <p>The gateway identifies the caller before VaultProof allows protected provider access. A customer can start with the VaultProof-managed path and later move to a customer-managed gateway, mTLS, device gateway, or private-origin pattern.</p>
+          <h3>VaultProof-managed GCP edge/gateway</h3>
           <p>Good for fast pilots and standard SaaS rollout. VaultProof manages edge routing, health checks, origin lock, coarse rate limiting, request-size controls, telemetry, and rollback steps.</p>
-          <h3>Customer-managed Azure API Management</h3>
-          <p>Good when the business requires every API to pass through its own gateway. Customer APIM validates subscriptions, Entra JWTs, private network controls, mTLS, device policy, and customer rate limits before forwarding trusted caller-lock headers to VaultProof.</p>
+          <h3>Customer-managed API gateway</h3>
+          <p>Good when the business requires every API to pass through its own gateway. The customer gateway validates subscriptions, Entra JWTs, private network controls, mTLS, device policy, and customer rate limits before forwarding trusted caller-lock headers to VaultProof.</p>
           <h3>mTLS, device, and fleet gateways</h3>
           <p>Good for servers, devices, IoT, or internal agents. Caller lock can bind policy to certificate thumbprints, certificate subjects, device IDs, firmware versions, fleet IDs, CIDRs, and gateway markers.</p>
           <h3>Private origin path</h3>
-          <p>Use this for a hardened production phase after the basic path is stable. The target state is to remove public origin exposure, keep Front Door/APIM as the allowed ingress, and maintain a separate break-glass operations path.</p>
+          <p>Use this for a hardened production phase after the basic path is stable. The target state is to remove public origin exposure, keep GCP edge/gateway as the allowed ingress, and maintain a separate break-glass operations path.</p>
         </article>
 
         <article class="doc-section">
@@ -2504,10 +2880,10 @@ function renderEnterpriseSupportPage(pageName: EnterpriseSupportPageName): strin
 
         <article class="doc-section">
           <span class="doc-kicker">Key custody</span>
-          <h2>Provider key custody and Secure Key Release</h2>
-          <p>VaultProof is designed so raw provider keys do not sit in customer app code, environment variables, browser storage, logs, or ordinary dashboard views. The enterprise executor uses Azure confidential computing and Secure Key Release so protected material is only released to the expected measured runtime.</p>
+          <h2>Provider key custody and Cloud KMS</h2>
+          <p>VaultProof is designed so raw provider keys do not sit in customer app code, environment variables, browser storage, logs, or ordinary dashboard views. The enterprise executor uses GCP confidential computing and Cloud KMS so protected material is only released to the expected measured runtime.</p>
           <ul>
-            <li>The Azure confidential VM reports attestation evidence through Microsoft Azure Attestation.</li>
+            <li>The GCP confidential VM reports attestation evidence through GCP attestation.</li>
             <li>The key-release policy binds release to measured runtime attributes and policy hash.</li>
             <li>The executor verifies request signatures and replay protection before using protected material.</li>
             <li>Plaintext provider material is kept inside the execution process and cleared after use.</li>
@@ -2522,7 +2898,7 @@ function renderEnterpriseSupportPage(pageName: EnterpriseSupportPageName): strin
           <p>Caller lock is the set of facts that prove the request came through the expected application, gateway, network, device, or certificate path. Execution policy is the rule set that decides what provider access is allowed after identity and caller lock pass.</p>
           <h3>Common caller-lock inputs</h3>
           <ul>
-            <li>Allowed origins, gateway headers, APIM markers, CIDRs, mTLS certificate thumbprints, device IDs, fleet IDs, firmware versions, and service identities.</li>
+            <li>Allowed origins, gateway headers, gateway markers, CIDRs, mTLS certificate thumbprints, device IDs, fleet IDs, firmware versions, and service identities.</li>
             <li>Allowed upstream hosts, path prefixes, HTTP methods, provider families, and rate limits.</li>
             <li>Required dry-run mode during validation and launch windows.</li>
           </ul>
@@ -2578,9 +2954,9 @@ function renderEnterpriseSupportPage(pageName: EnterpriseSupportPageName): strin
           <h3>Dry-run fails</h3>
           <p>Check bearer token, selected organization, project role, caller-lock inputs, provider allowlist, upstream method/host/path, request signature, and executor reachability.</p>
           <h3>Readiness is not production-ready</h3>
-          <p>Open <code>/readiness</code>, then use Runbooks for verifier, evidence, key-release, attestation, TLS, APIM, SSH, and origin-lock checks.</p>
-          <h3>Front Door returns 503 or 504</h3>
-          <p>Check origin host, port, protocol, health probe path, NSG rules, UFW rules, nginx/systemd service status, and whether the origin allows Front Door traffic.</p>
+          <p>Open <code>/readiness</code>, then use Runbooks for verifier, evidence, key-release, attestation, DNS, edge, SSH, and origin-lock checks.</p>
+          <h3>GCP edge returns 503 or 504</h3>
+          <p>Check origin host, port, protocol, health probe path, NSG rules, UFW rules, nginx/systemd service status, and whether the origin allows GCP edge traffic.</p>
           <h3>Provider call is denied</h3>
           <p>Check caller-lock mismatch, project policy, rate limit, provider slot state, emergency revoke status, and audit/activity denial details.</p>
         </article>
@@ -2591,12 +2967,12 @@ function renderEnterpriseSupportPage(pageName: EnterpriseSupportPageName): strin
           <ul>
             <li>Which Entra tenant, enterprise app, groups, MFA, and conditional access rules govern VaultProof users?</li>
             <li>Which apps, environments, regions, subsidiaries, and provider accounts are in scope for the first rollout?</li>
-            <li>Which gateway pattern is required: VaultProof-managed, customer APIM, mTLS, device gateway, private origin, or hybrid?</li>
+            <li>Which gateway pattern is required: VaultProof-managed, customer gateway, mTLS, device gateway, private origin, or hybrid?</li>
             <li>Which caller-lock facts can the customer reliably provide and monitor?</li>
             <li>Which provider keys move first, who owns them, and what is the emergency revoke path?</li>
             <li>Which evidence exports are required for security, audit, legal, procurement, and customer trust teams?</li>
             <li>Who receives alerts and who has authority to pause or revoke traffic?</li>
-            <li>What is the rollback plan if SSO, gateway routing, APIM, TLS, or provider execution breaks?</li>
+            <li>What is the rollback plan if SSO, gateway routing, gateway routing, DNS, or provider execution breaks?</li>
           </ul>
         </article>
       </section>
@@ -2619,7 +2995,7 @@ function renderEnterpriseSupportPage(pageName: EnterpriseSupportPageName): strin
       <section id="verifierPanel" class="grid two" style="display:none">
         <div class="card" style="grid-column:1/-1">
           <div class="section-title"><h2>Shared demo attestation</h2><span class="mini">one confidential runtime proof</span></div>
-          <p class="mini">Demo proof records use the shared VaultProof Enterprise confidential runtime attestation. That proves the VaultProof verifier/control path is running with the expected Azure confidential posture; it does not mean VaultProof ran the customer model.</p>
+          <p class="mini">Demo proof records use the shared VaultProof Enterprise confidential runtime attestation. That proves the VaultProof verifier/control path is running with the expected GCP confidential posture; it does not mean VaultProof ran the customer model.</p>
           <div id="verifierAttestationList" class="list" style="margin-top:12px"></div>
         </div>
         <div class="card">
@@ -2777,11 +3153,11 @@ function renderEnterpriseSupportPage(pageName: EnterpriseSupportPageName): strin
             linkRow('Members', 'Invite teammates, assign roles, manage project access, and export access reviews.', '/app/members', 'open', 'good'),
             linkRow('Projects', 'Review project inventory, provider slots, policy status, and health.', '/app/projects', 'open', 'good'),
             linkRow('Control', 'Set caller lock, provider allowlists, upstream restrictions, rate limits, and secure execution policy.', '/app/control', 'open', 'good'),
-            linkRow('Provider slots', 'Review active providers, rotation state, Secure Key Release notes, and emergency revoke.', '/app/keys', 'open', 'good'),
+            linkRow('Provider slots', 'Review active providers, rotation state, Cloud KMS notes, and emergency revoke.', '/app/keys', 'open', 'good'),
             linkRow('Audit', 'Search governance/runtime events and export CSV evidence.', '/app/audit', 'open', 'good'),
             linkRow('Alerts', 'Set destinations, review delivery logs, and send test alerts.', '/app/alerts', 'open', 'good'),
             linkRow('Technical guide', 'Deep implementation details for identity, gateways, key custody, caller lock, evidence, rollout, and troubleshooting.', '/app/technical-guide', 'open', 'good'),
-            linkRow('Runbooks', 'Use operator commands for verification, evidence, deployment, secrets, TLS, APIM, SSH, and cleanup.', '/app/runbooks', 'open', 'good')
+            linkRow('Runbooks', 'Use operator commands for verification, evidence, deployment, secrets, DNS, edge, SSH, and cleanup.', '/app/runbooks', 'open', 'good')
           ].join('');
         }
         if (PAGE_MODE === 'settings') {
@@ -2794,15 +3170,15 @@ function renderEnterpriseSupportPage(pageName: EnterpriseSupportPageName): strin
           ].join('');
           byId('securityList').innerHTML = [
             row('Production readiness', productionReady ? 'Control plane and executor report production-ready.' : (readiness.production_blockers || []).join('; '), productionReady ? 'ready' : 'blocked', productionReady ? 'good' : 'bad'),
-            row('Origin lock', readiness.control_plane && readiness.control_plane.origin_lock_configured ? 'Front Door/custom origin lock configured.' : 'Origin lock is not configured.', readiness.control_plane && readiness.control_plane.origin_lock_required ? 'required' : 'optional', readiness.control_plane && readiness.control_plane.origin_lock_configured ? 'good' : 'warn'),
+            row('Origin lock', readiness.control_plane && readiness.control_plane.origin_lock_configured ? 'GCP edge/custom origin lock configured.' : 'Origin lock is not configured.', readiness.control_plane && readiness.control_plane.origin_lock_required ? 'required' : 'optional', readiness.control_plane && readiness.control_plane.origin_lock_configured ? 'good' : 'warn'),
             row('Dashboard session storage', 'Enterprise pages read the Supabase session from local storage and call only enterprise control-plane APIs.', 'enterprise only', 'good')
           ].join('');
         }
         if (PAGE_MODE === 'plans') {
           text('planMeta', productionReady ? 'production package' : 'pre-production');
           byId('planList').innerHTML = [
-            row('Azure confidential runtime', productionReady ? 'Secure executor is production-ready.' : 'Runtime needs blocker review.', productionReady ? 'ready' : 'blocked', productionReady ? 'good' : 'bad'),
-            row('APIM / Front Door package', readiness.control_plane && readiness.control_plane.origin_lock_configured ? 'Origin protection is configured for enterprise edge routing.' : 'Edge/origin lock still needs final packaging.', readiness.control_plane && readiness.control_plane.origin_lock_configured ? 'ready' : 'todo', readiness.control_plane && readiness.control_plane.origin_lock_configured ? 'good' : 'warn'),
+            row('GCP confidential runtime', productionReady ? 'Secure executor is production-ready.' : 'Runtime needs blocker review.', productionReady ? 'ready' : 'blocked', productionReady ? 'good' : 'bad'),
+            row('GCP edge package', readiness.control_plane && readiness.control_plane.origin_lock_configured ? 'Origin protection is configured for enterprise edge routing.' : 'Edge/origin lock still needs final packaging.', readiness.control_plane && readiness.control_plane.origin_lock_configured ? 'ready' : 'todo', readiness.control_plane && readiness.control_plane.origin_lock_configured ? 'good' : 'warn'),
             row('Usage posture', number(overview.totalCalls) + ' calls, ' + number(overview.errorCalls) + ' errors, ' + number(overview.deniedCalls) + ' denied.', (overview.errorRate || 0).toFixed ? (overview.errorRate || 0).toFixed(1) + '% error' : 'usage', (overview.errorCalls || overview.deniedCalls) ? 'warn' : 'good')
           ].join('');
           byId('guardrailList').innerHTML = [
@@ -2828,36 +3204,36 @@ function renderEnterpriseSupportPage(pageName: EnterpriseSupportPageName): strin
         }
         if (PAGE_MODE === 'runbooks') {
           byId('runbooksSafeList').innerHTML = [
-            row('Hardening status', 'npm run status:enterprise-hardening runs the safe verifier, TLS preflight, APIM plan, alternate-access prep/check, SSH plan, and Container Apps inventory in one read-only pass.', 'read-only', 'good'),
-            row('Production verifier', 'npm run verify:enterprise-production checks Azure, Front Door, APIM sidecar, monitoring, TLS origin posture, and live readiness.', 'read-only', 'good'),
+            row('Hardening status', 'npm run status:enterprise-hardening runs the safe verifier, TLS preflight, gateway plan, alternate-access prep/check, SSH plan, and old prototype inventory in one read-only pass.', 'read-only', 'good'),
+            row('Production verifier', 'npm run verify:gcp-enterprise-edge checks the GCP edge, backend health, managed TLS, and live readiness.', 'read-only', 'good'),
             row('Evidence bundle', 'npm run evidence:enterprise-production captures timestamped infrastructure, app, readiness, and monitoring evidence for review.', 'read-only', 'good'),
             row('Evidence validator', 'npm run validate:enterprise-evidence validates the latest evidence bundle before customer or compliance handoff.', 'read-only', 'good'),
-            row('Handoff package', 'npm run package:enterprise-handoff assembles customer/compliance docs, APIM templates, latest local evidence, and a manifest without changing Azure.', 'read-only', 'good'),
-            row('Handoff gate', 'npm run gate:enterprise-handoff validates APIM templates, builds the package, verifies the manifest, and can optionally require live QA/evidence strictness.', 'read-only', 'good'),
-            row('Finish gate', 'npm run gate:enterprise-finish runs local smoke, APIM policy smoke, handoff gate, live app QA, and hardening status into one ok/attention/blocked release view with structured blocker/warning details.', 'read-only', 'good'),
+            row('Handoff package', 'npm run package:enterprise-handoff assembles customer/compliance docs, gateway templates, latest local evidence, and a manifest without changing live infrastructure.', 'read-only', 'good'),
+            row('Handoff gate', 'npm run gate:enterprise-handoff validates gateway templates, builds the package, verifies the manifest, and can optionally require live QA/evidence strictness.', 'read-only', 'good'),
+            row('Finish gate', 'npm run gate:enterprise-finish runs local smoke, gateway policy smoke, handoff gate, live app QA, and hardening status into one ok/attention/blocked release view with structured blocker/warning details.', 'read-only', 'good'),
             row('Live app QA', 'npm run qa:enterprise-live-app checks enterprise app pages, internal links, auth-safe rendering, and production readiness.', 'read-only', 'good'),
             row('Secret rotation preparation', 'npm run prepare:enterprise-secret-rotation plans the install order and can generate fresh executor signing material without printing secrets.', 'read-only', 'good'),
-            row('Private origin preparation', 'npm run prepare:enterprise-private-origin inventories Front Door, APIM, VM network posture, and Private Link migration choices without changing Azure.', 'read-only', 'good'),
-            row('APIM JWT validation preparation', 'npm run prepare:enterprise-apim-jwt plans Supabase or Entra JWT validation settings before enabling APIM validate-jwt and can discover the Supabase issuer from the live enterprise login script.', 'read-only', 'good'),
+            row('Private origin preparation', 'npm run prepare:enterprise-private-origin inventories edge, gateway, VM network posture, and private-origin migration choices without changing live infrastructure.', 'read-only', 'good'),
+            row('Gateway JWT validation preparation', 'npm run prepare:enterprise-apim-jwt plans Supabase or Entra JWT validation settings before enabling gateway JWT validation and can discover the Supabase issuer from the live enterprise login script.', 'read-only', 'good'),
             row('Internal admin preparation', 'npm run prepare:enterprise-internal-admin checks employee allowlist env, internal admin schema tables, customer-host separation, and admin-host auth behavior before exposing admin.vaultproof.dev.', 'read-only', 'good'),
-            row('mTLS caller-lock preparation', 'npm run prepare:enterprise-mtls computes a client certificate thumbprint, subject fragment, APIM header contract, and caller-lock policy snippet without changing Azure.', 'read-only', 'good'),
-            row('APIM policy template smoke', 'npm run test:enterprise-apim-policies validates provider-secret stripping plus caller-lock header delete/override behavior across VaultProof-managed, customer-managed, device, and mTLS APIM templates before customer handoff.', 'read-only', 'good'),
+            row('mTLS caller-lock preparation', 'npm run prepare:enterprise-mtls computes a client certificate thumbprint, subject fragment, gateway header contract, and caller-lock policy snippet without changing live infrastructure.', 'read-only', 'good'),
+            row('gateway policy template smoke', 'npm run test:enterprise-apim-policies validates provider-secret stripping plus caller-lock header delete/override behavior across VaultProof-managed, customer-managed, device, and mTLS gateway templates before customer handoff.', 'read-only', 'good'),
             row('Origin TLS certificate plan', 'npm run prepare:enterprise-origin-cert plans VM CSR generation, signed certificate install, self-signed marker removal, and local TLS checks.', 'read-only', 'good'),
-            row('Origin TLS preparation plan', 'npm run prepare:enterprise-origin-tls previews DNS, Azure DNS zone discovery, NSG 443, and APIM backend steps before the HTTPS origin cutover.', 'read-only', 'good'),
-            row('Origin DNS guardrail', 'The origin TLS prep helper can create or remove origin.enterprise.vaultproof.dev only when the DNS zone is hosted in Azure DNS and the operator supplies the confirmation phrase.', 'read-only', 'good'),
+            row('Origin TLS preparation plan', 'npm run prepare:enterprise-origin-tls previews DNS, firewall, and backend steps before any HTTPS origin cutover.', 'read-only', 'good'),
+            row('Origin DNS guardrail', 'Origin DNS changes must happen only through the selected DNS provider and with an explicit operator confirmation phrase.', 'read-only', 'good'),
             row('Origin TLS preflight', 'npm run verify:enterprise-origin-tls checks DNS, NSG 443, nginx, certificate SAN/trust, and local origin health before HttpsOnly cutover.', 'read-only', 'good'),
             row('Alternate access preparation', 'npm run prepare:enterprise-alternate-access plans boot diagnostics and Bastion setup with confirmation-gated live actions.', 'read-only', 'good'),
             row('Alternate access readiness', 'npm run verify:enterprise-alternate-access checks Bastion, boot diagnostics/serial-console prerequisites, Defender JIT visibility, and SSH NSG posture before public SSH closure.', 'read-only', 'good'),
             row('Execution dry run', 'npm run qa:enterprise-live-execute validates auth, policy, signing, and executor reachability without dispatching real provider work.', 'safe default', 'good')
           ].join('');
           byId('runbooksGatedList').innerHTML = [
-            row('Deploy to Confidential VM', 'npm run deploy:enterprise-vm copies code, rebuilds, and restarts selected systemd services on the CVM.', 'operator', 'warn'),
+            row('Deploy to Confidential VM', 'npm run deploy:enterprise-vm copies code, rebuilds, and restarts selected systemd services on the GCP VM.', 'operator', 'warn'),
             row('Secret verification and rotation', 'npm run verify:enterprise-secrets checks installed env posture after the prepared rotation bundle is installed; Supabase key rotation and live env installs remain operator actions.', 'operator', 'warn'),
-            row('Origin DNS record', 'ACTION=upsert-origin-dns or ACTION=remove-origin-dns on npm run prepare:enterprise-origin-tls updates the Azure DNS A record only with the required confirmation phrase; external DNS still needs manual provider access.', 'approval', 'warn'),
-            row('TLS origin cutover', 'npm run cutover:enterprise-origin-tls plans the Front Door HTTPS origin cutover and requires strict preflight plus confirmation-gated enable/rollback.', 'blocked', 'warn'),
-            row('APIM cutover', 'npm run cutover:enterprise-apim previews APIM route cutover and requires confirmation-gated enable/rollback before Front Door changes.', 'blocked', 'warn'),
+            row('Origin DNS record', 'DNS record updates require the selected DNS provider and the required operator confirmation phrase.', 'approval', 'warn'),
+            row('TLS origin cutover', 'npm run cutover:enterprise-origin-tls plans the GCP edge HTTPS origin cutover and requires strict preflight plus confirmation-gated enable/rollback.', 'blocked', 'warn'),
+            row('gateway cutover', 'npm run cutover:enterprise-apim previews gateway route cutover and requires confirmation-gated enable/rollback before GCP edge changes.', 'blocked', 'warn'),
             row('SSH hardening', 'npm run harden:enterprise-ssh can plan, close, or reopen bootstrap SSH with readiness, alternate-access, and confirmation gates.', 'approval', 'warn'),
-            row('Container Apps cleanup', 'npm run cleanup:enterprise-container-apps inventories the old prototype resources and requires action-specific confirmation before ingress disable/restore/delete.', 'approval', 'warn')
+            row('old prototype cleanup', 'npm run cleanup:enterprise-container-apps inventories the old prototype resources and requires action-specific confirmation before ingress disable/restore/delete.', 'approval', 'warn')
           ].join('');
         }
       }
@@ -3016,27 +3392,28 @@ export function renderEnterprisePlannedAppPage(pageName: string, env: Enterprise
   <meta name="robots" content="noindex" />
   <title>${escapeHtml(page.title)} - VaultProof Enterprise</title>
   <style>
-    :root { color-scheme: dark; --bg: #07110f; --panel: rgba(237,229,204,.09); --line: rgba(237,229,204,.16); --text: #f4ecd5; --muted: #a9b7a6; --gold: #d7a84b; --green: #6ee7b7; --ink: #07110f; }
-    * { box-sizing: border-box; }
-    body { margin: 0; min-height: 100vh; font-family: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; color: var(--text); background: radial-gradient(circle at 20% 10%, rgba(215,168,75,.22), transparent 28rem), linear-gradient(135deg, #06100e, #10231d 48%, #050807); }
-    a { color: inherit; text-decoration: none; }
-    .shell { min-height: 100vh; display: grid; place-items: center; padding: 28px; }
-    .card { width: min(940px, 100%); border: 1px solid var(--line); border-radius: 30px; background: linear-gradient(180deg, rgba(237,229,204,.13), rgba(237,229,204,.055)); padding: clamp(24px, 5vw, 48px); box-shadow: 0 28px 100px rgba(0,0,0,.24); }
+    ${ENTERPRISE_RENDERED_APP_BASE_THEME}
+    .main { padding: 30px; max-width: 1380px; width: 100%; }
+    .card { width: min(940px, 100%); border: 1px solid var(--line); border-radius: 24px; background: linear-gradient(180deg, rgba(255,255,255,.98), rgba(247,250,244,.86)); padding: clamp(24px, 5vw, 48px); box-shadow: 0 22px 72px rgba(48,76,71,.18); }
     .kicker { color: var(--gold); font-size: 12px; text-transform: uppercase; letter-spacing: .16em; font-weight: 850; }
     h1 { margin: 10px 0 12px; font-size: clamp(40px, 7vw, 82px); letter-spacing: -.075em; line-height: .9; }
     .summary { color: var(--muted); font-size: 17px; line-height: 1.65; max-width: 760px; }
     .grid { margin-top: 28px; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
-    .feature { border: 1px solid rgba(237,229,204,.12); border-radius: 18px; padding: 14px; background: rgba(3,8,7,.26); color: #e7ddc2; }
+    .feature { border: 1px solid var(--line-soft); border-radius: 18px; padding: 14px; background: rgba(247,250,244,.82); color: var(--text); }
     .actions { margin-top: 30px; display: flex; gap: 12px; flex-wrap: wrap; }
-    .btn { border: 1px solid var(--line); border-radius: 15px; padding: 12px 14px; background: rgba(237,229,204,.08); }
+    .btn { border: 1px solid var(--line); border-radius: 15px; padding: 12px 14px; background: rgba(255,255,255,.78); }
     .btn.primary { background: linear-gradient(135deg, var(--gold), #f3df95); color: var(--ink); border: 0; font-weight: 850; }
     .note { margin-top: 20px; color: var(--muted); font-size: 13px; }
     @media (max-width: 720px) { .grid { grid-template-columns: 1fr; } }
+    ${ENTERPRISE_APP_SHELL_THEME}
+    ${ENTERPRISE_STATIC_APP_POLISH_THEME}
   </style>
 </head>
 <body>
-  <main class="shell">
-    <section class="card">
+  <div class="shell">
+    ${renderEnterpriseAppSidebar(pageName as EnterpriseAppNavPage, page.kicker)}
+    <main class="main">
+      <section class="card">
       <div class="kicker">${escapeHtml(page.kicker)}</div>
       <h1>${escapeHtml(page.title)}</h1>
       <p class="summary">${escapeHtml(page.summary)}</p>
@@ -3050,8 +3427,9 @@ export function renderEnterprisePlannedAppPage(pageName: string, env: Enterprise
         <a class="btn" href="/app/org">org + SSO</a>
       </div>
       <div class="note">Navigation baseline is live. This page is scheduled for API-backed enterprise features in Phase 6 of the build plan.</div>
-    </section>
-  </main>
+      </section>
+    </main>
+  </div>
 </body>
 </html>`, env, pageName);
 }

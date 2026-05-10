@@ -1,0 +1,29 @@
+substitutions:
+  _REGISTRY: us-central1-docker.pkg.dev/vaultproof-prod/vaultproof
+  _TAG: manual
+
+steps:
+  - name: gcr.io/cloud-builders/docker
+    args:
+      - build
+      - -f
+      - packages/enterprise-control-plane/Dockerfile
+      - -t
+      - ${_REGISTRY}/enterprise-control-plane:${_TAG}
+      - .
+  - name: gcr.io/cloud-builders/docker
+    args:
+      - build
+      - -f
+      - packages/enterprise-secure-executor/Dockerfile
+      - -t
+      - ${_REGISTRY}/enterprise-secure-executor:${_TAG}
+      - .
+
+images:
+  - ${_REGISTRY}/enterprise-control-plane:${_TAG}
+  - ${_REGISTRY}/enterprise-secure-executor:${_TAG}
+
+options:
+  logging: CLOUD_LOGGING_ONLY
+  machineType: E2_HIGHCPU_8

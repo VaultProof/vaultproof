@@ -1,4 +1,5 @@
 import { Buffer } from 'node:buffer';
+import { createHmac } from 'node:crypto';
 import { handleEnterpriseControlPlaneRequest } from '../packages/enterprise-control-plane/dist/enterprise-control-plane/src/index.js';
 
 const ENTERPRISE_HOSTNAME = 'enterprise.vaultproof.dev';
@@ -6,6 +7,26 @@ const INTERNAL_ADMIN_HOSTNAME = 'admin.vaultproof.dev';
 const AUTH_TOKEN = 'jwt_enterprise_test';
 const PROJECT_ID = 'proj_123';
 const PROJECT_KEY_ID = 'pk_123';
+const RUNTIME_TOKEN_SECRET = 'enterprise-runtime-token-secret-32-bytes-minimum';
+const RUNTIME_TOKEN_PREFIX = 'vp_exec_v1.';
+
+function mintRuntimeToken(overrides = {}) {
+  const payload = {
+    v: 1,
+    aud: 'vaultproof-enterprise-execute',
+    scope: 'project:execute',
+    project_id: PROJECT_ID,
+    iat: Math.floor(Date.now() / 1000),
+    exp: Math.floor(Date.now() / 1000) + 300,
+    jti: 'runtime-smoke-token',
+    ...overrides,
+  };
+  const encodedPayload = Buffer.from(JSON.stringify(payload)).toString('base64url');
+  const signature = createHmac('sha256', RUNTIME_TOKEN_SECRET)
+    .update(`${RUNTIME_TOKEN_PREFIX}${encodedPayload}`)
+    .digest('base64url');
+  return `${RUNTIME_TOKEN_PREFIX}${encodedPayload}.${signature}`;
+}
 
 function buildRequest(pathname, init = {}) {
   return new Request(`https://${ENTERPRISE_HOSTNAME}${pathname}`, init);
@@ -22,6 +43,17 @@ function jsonResponse(body, status = 200) {
       'content-type': 'application/json',
     },
   });
+}
+
+function materialModeForProviderSlot(slot) {
+  const share1 = String(slot?.share1_encrypted || '');
+  const share2 = String(slot?.share2_encrypted || '');
+  if (!share1 || !share2) return 'missing';
+  const share1Placeholder = share1.startsWith('demo-dashboard-placeholder');
+  const share2Placeholder = share2.startsWith('demo-dashboard-placeholder');
+  if (share1Placeholder && share2Placeholder) return 'demo-placeholder';
+  if (!share1Placeholder && !share2Placeholder) return 'sealed-live';
+  return 'mixed';
 }
 
 const fakeProject = {
@@ -49,6 +81,7 @@ const fakeOrganization = {
 let activeProject = fakeProject;
 let auditEvents = [];
 let projectKeyRevoked = false;
+let providerSlotRows = [];
 let ssoSettings = null;
 let ssoResolveMode = 'existing_membership';
 let ssoMembershipUpserted = false;
@@ -70,10 +103,22 @@ let internalAdminSupportNotes = [];
 let internalAdminBusinessStatusUpdates = [];
 let internalAdminActionRequests = [];
 let internalAdminActionExecutionRecords = [];
+let bootstrapRpcCalls = 0;
+let authUserLookupCalls = 0;
+let projectKeyGetCalls = 0;
 
 function installSupabaseStub() {
   auditEvents = [];
   projectKeyRevoked = false;
+  providerSlotRows = [{
+    id: PROJECT_KEY_ID,
+    project_id: PROJECT_ID,
+    provider: 'openai',
+    slug: 'openai',
+    upstream_base_url: 'https://api.openai.com',
+    share1_encrypted: 'demo-dashboard-placeholder-share-1:proj_123:openai',
+    share2_encrypted: 'demo-dashboard-placeholder-share-2:proj_123:openai',
+  }];
   ssoSettings = {
     organization_id: 'org_123',
     company_domain: 'example.com',
@@ -162,12 +207,16 @@ function installSupabaseStub() {
     updated_at: '2026-04-26T12:15:00.000Z',
   }];
   internalAdminActionExecutionRecords = [];
+  bootstrapRpcCalls = 0;
+  authUserLookupCalls = 0;
+  projectKeyGetCalls = 0;
   globalThis.fetch = async (input, init) => {
     const url = typeof input === 'string' ? input : input instanceof URL ? input.toString() : input.url;
     const decodedUrl = decodeURIComponent(url);
     const method = (init?.method || 'GET').toUpperCase();
 
     if (url.includes('/auth/v1/user') && method === 'GET') {
+      authUserLookupCalls += 1;
       const authHeader = new Headers(init?.headers).get('authorization');
       if (authHeader !== `Bearer ${AUTH_TOKEN}`) {
         return jsonResponse({ error: 'Unauthorized' }, 401);
@@ -212,6 +261,73 @@ function installSupabaseStub() {
         ssoSettings = null;
         return jsonResponse([]);
       }
+    }
+
+    if (url.includes('/rest/v1/rpc/enterprise_projects_bootstrap') && method === 'POST') {
+      bootstrapRpcCalls += 1;
+      const slots = projectKeyRevoked
+        ? []
+        : providerSlotRows.map((slot) => {
+            const materialMode = materialModeForProviderSlot(slot);
+            return {
+              key_id: slot.id,
+              provider: slot.provider,
+              slug: slot.slug || slot.provider,
+              material_mode: materialMode,
+              material_ready: materialMode === 'sealed-live',
+            };
+          });
+      return jsonResponse({
+        organizations: [{
+          id: 'org_123',
+          name: fakeOrganization.name,
+          kind: fakeOrganization.kind,
+          role: 'owner',
+          is_active: true,
+        }],
+        active_organization_id: 'org_123',
+        projects: [{
+          id: activeProject.id,
+          organization_id: activeProject.organization_id,
+          vp_proj_id: activeProject.vp_proj_id,
+          name: activeProject.name,
+          allowed_origins: activeProject.allowed_origins,
+          strict_origin: activeProject.strict_origin,
+          caller_lock_policy: activeProject.caller_lock_policy || {},
+          created_at: activeProject.created_at,
+          revoked_at: activeProject.revoked_at,
+          project_role: activeProject.project_role || 'admin',
+          access_via: activeProject.access_via || 'project',
+          provider_slots: slots,
+        }],
+        access_overview: {
+          total_calls: 1,
+          error_calls: 0,
+          denied_calls: 0,
+          project_health: [{
+            project_id: PROJECT_ID,
+            calls: 1,
+            errors: 0,
+            denied: 0,
+            last_activity: '2026-04-26T12:01:00.000Z',
+          }],
+          recent_activity: [{
+            id: 'proxy_123',
+            project_id: PROJECT_ID,
+            project_key_id: PROJECT_KEY_ID,
+            provider: 'openai',
+            slug: 'openai',
+            method: 'POST',
+            upstream_path: '/v1/responses',
+            status_code: 200,
+            latency_ms: 42,
+            metadata: {
+              provider_request_id: 'req_provider_123',
+            },
+            timestamp: '2026-04-26T12:01:00.000Z',
+          }],
+        },
+      });
     }
 
     if (url.includes('/rest/v1/organization_members')) {
@@ -519,11 +635,7 @@ function installSupabaseStub() {
 
     if (url.includes('/rest/v1/projects') && method === 'GET') {
       if (decodedUrl.includes('id=eq.proj_123')) {
-        return jsonResponse({
-          id: PROJECT_ID,
-          name: 'Enterprise Pilot',
-          vp_proj_id: 'vp-proj-123',
-        });
+        return jsonResponse(activeProject);
       }
       return jsonResponse([{
         id: PROJECT_ID,
@@ -536,14 +648,31 @@ function installSupabaseStub() {
     }
 
     if (url.includes('/rest/v1/project_keys') && method === 'GET') {
+      projectKeyGetCalls += 1;
       if (projectKeyRevoked) return jsonResponse([]);
-      return jsonResponse([{
-        id: PROJECT_KEY_ID,
-        project_id: PROJECT_ID,
-        provider: 'openai',
-        slug: 'openai',
-        upstream_base_url: 'https://api.openai.com',
-      }]);
+      const includeProject = decodedUrl.includes('projects!inner');
+      const rows = providerSlotRows.map((row) => includeProject
+        ? { ...row, projects: activeProject }
+        : row);
+      return jsonResponse(rows);
+    }
+
+    if (url.includes('/rest/v1/project_keys') && method === 'POST') {
+      const body = JSON.parse(init?.body || '{}');
+      const row = {
+        id: body.id || 'pk_created',
+        project_id: body.project_id || PROJECT_ID,
+        provider: body.provider || 'openai',
+        slug: body.slug || body.provider || 'openai',
+        upstream_base_url: body.upstream_base_url || 'https://api.openai.com',
+        share1_encrypted: body.share1_encrypted,
+        share2_encrypted: body.share2_encrypted,
+        revoked_at: body.revoked_at || null,
+      };
+      providerSlotRows = providerSlotRows.filter((slot) => slot.provider !== row.provider);
+      providerSlotRows.push(row);
+      projectKeyRevoked = false;
+      return jsonResponse(row, 201);
     }
 
     if (url.includes('/rest/v1/project_keys') && method === 'PATCH') {
@@ -574,6 +703,36 @@ function installSupabaseStub() {
         },
         created_at: '2026-04-26T12:00:00.000Z',
       }]);
+    }
+
+    if (url.includes('/rest/v1/rpc/enterprise_project_access_overview') && method === 'POST') {
+      return jsonResponse({
+        total_calls: 1,
+        error_calls: 0,
+        denied_calls: 0,
+        project_health: [{
+          project_id: PROJECT_ID,
+          calls: 1,
+          errors: 0,
+          denied: 0,
+          last_activity: '2026-04-26T12:01:00.000Z',
+        }],
+        recent_activity: [{
+          id: 'proxy_123',
+          project_id: PROJECT_ID,
+          project_key_id: PROJECT_KEY_ID,
+          provider: 'openai',
+          slug: 'openai',
+          method: 'POST',
+          upstream_path: '/v1/responses',
+          status_code: 200,
+          latency_ms: 42,
+          metadata: {
+            provider_request_id: 'req_provider_123',
+          },
+          timestamp: '2026-04-26T12:01:00.000Z',
+        }],
+      });
     }
 
     if (url.includes('/rest/v1/project_access_logs') && method === 'GET') {
@@ -937,6 +1096,116 @@ async function assertEnterpriseExecuteDryRun() {
   }
 }
 
+async function assertEnterpriseRuntimeExecuteToken() {
+  installSupabaseStub();
+  activeProject = {
+    ...fakeProject,
+    allowed_origins: 'https://app.example.com',
+    strict_origin: true,
+    caller_lock_policy: {
+      allowed_providers: ['openai'],
+      allowed_methods: ['POST'],
+      allowed_upstream_hosts: ['api.openai.com'],
+      allowed_upstream_path_prefixes: ['/v1/responses'],
+    },
+  };
+  const env = {
+    enterpriseHostname: ENTERPRISE_HOSTNAME,
+    enterpriseProxyTokenSecret: RUNTIME_TOKEN_SECRET,
+    enterpriseExecuteContextCacheTtlMs: 5000,
+    executorBaseUrl: 'https://executor.internal',
+    executorSigningKeyId: 'enterprise-local',
+    executorSigningSecret: 'local-secret',
+    supabaseUrl: 'https://supabase.example.co',
+    supabaseServiceRoleKey: 'service-role-key',
+  };
+  const token = mintRuntimeToken({
+    providers: ['openai'],
+    slugs: ['openai'],
+    methods: ['POST'],
+    upstream_path_prefixes: ['/v1/responses'],
+    customer_gateways: ['runtime-gateway'],
+  });
+  const buildRuntimeRequest = (gateway = 'runtime-gateway') => buildRequest(`/api/v1/enterprise/projects/${PROJECT_ID}/providers/openai/execute`, {
+    method: 'POST',
+    headers: {
+      authorization: `Bearer ${token}`,
+      'content-type': 'application/json',
+      origin: 'https://app.example.com',
+      'x-vaultproof-customer-gateway': gateway,
+    },
+    body: JSON.stringify({
+      dry_run: true,
+      method: 'POST',
+      upstream_path: '/v1/responses',
+      headers: {
+        'content-type': 'application/json',
+      },
+      body_base64: Buffer.from(JSON.stringify({ input: 'runtime hello' })).toString('base64'),
+    }),
+  });
+
+  const firstResponse = await handleEnterpriseControlPlaneRequest(buildRuntimeRequest(), env);
+  const firstPayload = await firstResponse.json();
+  if (firstResponse.status !== 202 || firstPayload?.request?.auth_mode !== 'runtime_token') {
+    throw new Error(`Expected runtime token dry-run execution, got ${firstResponse.status} ${JSON.stringify(firstPayload)}`);
+  }
+  if (authUserLookupCalls !== 0) {
+    throw new Error('Expected runtime token execution to bypass Supabase user auth lookup');
+  }
+  if (firstPayload?.request?.execute_context_source !== 'supabase') {
+    throw new Error(`Expected first runtime execution to load context from Supabase, got ${firstPayload?.request?.execute_context_source}`);
+  }
+
+  const secondResponse = await handleEnterpriseControlPlaneRequest(buildRuntimeRequest(), env);
+  const secondPayload = await secondResponse.json();
+  if (secondResponse.status !== 202 || secondPayload?.request?.execute_context_source !== 'cache') {
+    throw new Error(`Expected second runtime execution to use cached context, got ${secondResponse.status} ${JSON.stringify(secondPayload)}`);
+  }
+  if (projectKeyGetCalls !== 1) {
+    throw new Error(`Expected runtime context cache to avoid repeated provider slot lookups, got ${projectKeyGetCalls}`);
+  }
+
+  const gatewayDeniedResponse = await handleEnterpriseControlPlaneRequest(buildRuntimeRequest('wrong-gateway'), env);
+  const gatewayDeniedPayload = await gatewayDeniedResponse.json();
+  if (
+    gatewayDeniedResponse.status !== 403
+    || !String(gatewayDeniedPayload?.error || '').includes('Runtime token scope rejected gateway')
+  ) {
+    throw new Error(`Expected runtime token gateway denial, got ${gatewayDeniedResponse.status} ${JSON.stringify(gatewayDeniedPayload)}`);
+  }
+
+  const expiredToken = mintRuntimeToken({
+    exp: Math.floor(Date.now() / 1000) - 120,
+  });
+  const expiredResponse = await handleEnterpriseControlPlaneRequest(
+    buildRequest(`/api/v1/enterprise/projects/${PROJECT_ID}/providers/openai/execute`, {
+      method: 'POST',
+      headers: {
+        authorization: `Bearer ${expiredToken}`,
+        'content-type': 'application/json',
+        origin: 'https://app.example.com',
+        'x-vaultproof-customer-gateway': 'runtime-gateway',
+      },
+      body: JSON.stringify({
+        dry_run: true,
+        method: 'POST',
+        upstream_path: '/v1/responses',
+      }),
+    }),
+    env,
+  );
+  const expiredPayload = await expiredResponse.json();
+  if (expiredResponse.status !== 401 || !String(expiredPayload?.error || '').includes('runtime token')) {
+    throw new Error(`Expected expired runtime token denial, got ${expiredResponse.status} ${JSON.stringify(expiredPayload)}`);
+  }
+
+  const runtimeAudit = auditEvents.find((event) => event.event_type === 'enterprise_secure_execution_validated');
+  if (runtimeAudit?.actor_email !== 'runtime:runtime-smoke-token' || runtimeAudit?.metadata?.auth_mode !== 'runtime_token') {
+    throw new Error(`Expected runtime actor metadata in audit event, got ${JSON.stringify(runtimeAudit)}`);
+  }
+}
+
 async function assertEnterpriseOriginLock() {
   installSupabaseStub();
   activeProject = {
@@ -1078,6 +1347,15 @@ async function assertEnterpriseCallerLockPolicy() {
 
 async function assertEnterpriseCallerLockIpPolicy() {
   installSupabaseStub();
+  const sourceIpEnv = {
+    enterpriseHostname: ENTERPRISE_HOSTNAME,
+    executorBaseUrl: 'https://executor.internal',
+    executorSigningKeyId: 'enterprise-local',
+    executorSigningSecret: 'local-secret',
+    trustedSourceIpHeaderSecret: 'source-ip-secret',
+    supabaseUrl: 'https://supabase.example.co',
+    supabaseServiceRoleKey: 'service-role-key',
+  };
   activeProject = {
     ...fakeProject,
     caller_lock_policy: {
@@ -1093,21 +1371,15 @@ async function assertEnterpriseCallerLockIpPolicy() {
         authorization: `Bearer ${AUTH_TOKEN}`,
         'content-type': 'application/json',
         'x-vaultproof-client-class': 'server',
-        'x-forwarded-for': '203.0.113.42, 10.0.0.4',
+        'x-vaultproof-source-ip': '203.0.113.42',
+        'x-vaultproof-source-ip-secret': 'source-ip-secret',
       },
       body: JSON.stringify({
         method: 'GET',
         upstream_path: '/v1/models',
       }),
     }),
-    {
-      enterpriseHostname: ENTERPRISE_HOSTNAME,
-      executorBaseUrl: 'https://executor.internal',
-      executorSigningKeyId: 'enterprise-local',
-      executorSigningSecret: 'local-secret',
-      supabaseUrl: 'https://supabase.example.co',
-      supabaseServiceRoleKey: 'service-role-key',
-    },
+    sourceIpEnv,
   );
   if (allowedResponse.status !== 200) {
     throw new Error(`Expected caller lock IP policy to allow server request, got ${allowedResponse.status}`);
@@ -1120,30 +1392,57 @@ async function assertEnterpriseCallerLockIpPolicy() {
         authorization: `Bearer ${AUTH_TOKEN}`,
         'content-type': 'application/json',
         'x-vaultproof-client-class': 'server',
-        'x-forwarded-for': '198.51.100.42',
+        'x-vaultproof-source-ip': '198.51.100.42',
+        'x-vaultproof-source-ip-secret': 'source-ip-secret',
       },
       body: JSON.stringify({
         method: 'GET',
         upstream_path: '/v1/models',
       }),
     }),
-    {
-      enterpriseHostname: ENTERPRISE_HOSTNAME,
-      executorBaseUrl: 'https://executor.internal',
-      executorSigningKeyId: 'enterprise-local',
-      executorSigningSecret: 'local-secret',
-      supabaseUrl: 'https://supabase.example.co',
-      supabaseServiceRoleKey: 'service-role-key',
-    },
+    sourceIpEnv,
   );
   const deniedPayload = await deniedResponse.json();
   if (deniedResponse.status !== 403 || !String(deniedPayload?.error || '').includes('source IP')) {
     throw new Error(`Expected caller lock IP denial, got ${deniedResponse.status} ${JSON.stringify(deniedPayload)}`);
   }
+
+  const spoofedForwardedForResponse = await handleEnterpriseControlPlaneRequest(
+    buildRequest(`/api/v1/enterprise/projects/${PROJECT_ID}/providers/openai/execute`, {
+      method: 'POST',
+      headers: {
+        authorization: `Bearer ${AUTH_TOKEN}`,
+        'content-type': 'application/json',
+        'x-vaultproof-client-class': 'server',
+        'x-forwarded-for': '203.0.113.42',
+      },
+      body: JSON.stringify({
+        method: 'GET',
+        upstream_path: '/v1/models',
+      }),
+    }),
+    sourceIpEnv,
+  );
+  const spoofedForwardedForPayload = await spoofedForwardedForResponse.json();
+  if (
+    spoofedForwardedForResponse.status !== 403
+    || !String(spoofedForwardedForPayload?.error || '').includes('source IP missing')
+  ) {
+    throw new Error(`Expected spoofed x-forwarded-for to fail closed, got ${spoofedForwardedForResponse.status} ${JSON.stringify(spoofedForwardedForPayload)}`);
+  }
 }
 
 async function assertEnterpriseCallerLockIpv6Policy() {
   installSupabaseStub();
+  const sourceIpEnv = {
+    enterpriseHostname: ENTERPRISE_HOSTNAME,
+    executorBaseUrl: 'https://executor.internal',
+    executorSigningKeyId: 'enterprise-local',
+    executorSigningSecret: 'local-secret',
+    trustedSourceIpHeaderSecret: 'source-ip-secret',
+    supabaseUrl: 'https://supabase.example.co',
+    supabaseServiceRoleKey: 'service-role-key',
+  };
   activeProject = {
     ...fakeProject,
     caller_lock_policy: {
@@ -1159,21 +1458,15 @@ async function assertEnterpriseCallerLockIpv6Policy() {
         authorization: `Bearer ${AUTH_TOKEN}`,
         'content-type': 'application/json',
         'x-vaultproof-client-class': 'server',
-        'x-forwarded-for': '2001:db8:abcd:0012::42',
+        'x-vaultproof-source-ip': '2001:db8:abcd:0012::42',
+        'x-vaultproof-source-ip-secret': 'source-ip-secret',
       },
       body: JSON.stringify({
         method: 'GET',
         upstream_path: '/v1/models',
       }),
     }),
-    {
-      enterpriseHostname: ENTERPRISE_HOSTNAME,
-      executorBaseUrl: 'https://executor.internal',
-      executorSigningKeyId: 'enterprise-local',
-      executorSigningSecret: 'local-secret',
-      supabaseUrl: 'https://supabase.example.co',
-      supabaseServiceRoleKey: 'service-role-key',
-    },
+    sourceIpEnv,
   );
   if (allowedResponse.status !== 200) {
     throw new Error(`Expected caller lock IPv6 policy to allow server request, got ${allowedResponse.status}`);
@@ -1186,21 +1479,15 @@ async function assertEnterpriseCallerLockIpv6Policy() {
         authorization: `Bearer ${AUTH_TOKEN}`,
         'content-type': 'application/json',
         'x-vaultproof-client-class': 'server',
-        'x-forwarded-for': '2001:db8:ffff::42',
+        'x-vaultproof-source-ip': '2001:db8:ffff::42',
+        'x-vaultproof-source-ip-secret': 'source-ip-secret',
       },
       body: JSON.stringify({
         method: 'GET',
         upstream_path: '/v1/models',
       }),
     }),
-    {
-      enterpriseHostname: ENTERPRISE_HOSTNAME,
-      executorBaseUrl: 'https://executor.internal',
-      executorSigningKeyId: 'enterprise-local',
-      executorSigningSecret: 'local-secret',
-      supabaseUrl: 'https://supabase.example.co',
-      supabaseServiceRoleKey: 'service-role-key',
-    },
+    sourceIpEnv,
   );
   const deniedPayload = await deniedResponse.json();
   if (deniedResponse.status !== 403 || !String(deniedPayload?.error || '').includes('source IP')) {
@@ -1279,6 +1566,15 @@ async function assertEnterpriseCallerLockCertificatePolicy() {
 
 async function assertEnterpriseProviderCallerLockPolicy() {
   installSupabaseStub();
+  const sourceIpEnv = {
+    enterpriseHostname: ENTERPRISE_HOSTNAME,
+    executorBaseUrl: 'https://executor.internal',
+    executorSigningKeyId: 'enterprise-local',
+    executorSigningSecret: 'local-secret',
+    trustedSourceIpHeaderSecret: 'source-ip-secret',
+    supabaseUrl: 'https://supabase.example.co',
+    supabaseServiceRoleKey: 'service-role-key',
+  };
   activeProject = {
     ...fakeProject,
     caller_lock_policy: {
@@ -1300,21 +1596,15 @@ async function assertEnterpriseProviderCallerLockPolicy() {
         'content-type': 'application/json',
         'x-vaultproof-client-class': 'server',
         'x-vaultproof-customer-gateway': 'openai-apim',
-        'x-forwarded-for': '203.0.113.42',
+        'x-vaultproof-source-ip': '203.0.113.42',
+        'x-vaultproof-source-ip-secret': 'source-ip-secret',
       },
       body: JSON.stringify({
         method: 'GET',
         upstream_path: '/v1/models',
       }),
     }),
-    {
-      enterpriseHostname: ENTERPRISE_HOSTNAME,
-      executorBaseUrl: 'https://executor.internal',
-      executorSigningKeyId: 'enterprise-local',
-      executorSigningSecret: 'local-secret',
-      supabaseUrl: 'https://supabase.example.co',
-      supabaseServiceRoleKey: 'service-role-key',
-    },
+    sourceIpEnv,
   );
   if (allowedResponse.status !== 200) {
     throw new Error(`Expected provider caller lock policy to allow OpenAI request, got ${allowedResponse.status}`);
@@ -1328,21 +1618,15 @@ async function assertEnterpriseProviderCallerLockPolicy() {
         'content-type': 'application/json',
         'x-vaultproof-client-class': 'server',
         'x-vaultproof-customer-gateway': 'generic-apim',
-        'x-forwarded-for': '203.0.113.42',
+        'x-vaultproof-source-ip': '203.0.113.42',
+        'x-vaultproof-source-ip-secret': 'source-ip-secret',
       },
       body: JSON.stringify({
         method: 'GET',
         upstream_path: '/v1/models',
       }),
     }),
-    {
-      enterpriseHostname: ENTERPRISE_HOSTNAME,
-      executorBaseUrl: 'https://executor.internal',
-      executorSigningKeyId: 'enterprise-local',
-      executorSigningSecret: 'local-secret',
-      supabaseUrl: 'https://supabase.example.co',
-      supabaseServiceRoleKey: 'service-role-key',
-    },
+    sourceIpEnv,
   );
   const wrongGatewayPayload = await wrongGatewayResponse.json();
   if (
@@ -1360,21 +1644,15 @@ async function assertEnterpriseProviderCallerLockPolicy() {
         'content-type': 'application/json',
         'x-vaultproof-client-class': 'browser',
         'x-vaultproof-customer-gateway': 'openai-apim',
-        'x-forwarded-for': '203.0.113.42',
+        'x-vaultproof-source-ip': '203.0.113.42',
+        'x-vaultproof-source-ip-secret': 'source-ip-secret',
       },
       body: JSON.stringify({
         method: 'GET',
         upstream_path: '/v1/models',
       }),
     }),
-    {
-      enterpriseHostname: ENTERPRISE_HOSTNAME,
-      executorBaseUrl: 'https://executor.internal',
-      executorSigningKeyId: 'enterprise-local',
-      executorSigningSecret: 'local-secret',
-      supabaseUrl: 'https://supabase.example.co',
-      supabaseServiceRoleKey: 'service-role-key',
-    },
+    sourceIpEnv,
   );
   const wrongClassPayload = await wrongClassResponse.json();
   if (
@@ -1589,6 +1867,125 @@ async function assertEnterpriseRateLimitPolicy() {
   }
   if (rateLimitAudit.metadata?.rate_limit_per_minute !== 1) {
     throw new Error('Expected rate limit value in governance audit metadata');
+  }
+}
+
+async function assertEnterpriseCreateProviderSlot() {
+  installSupabaseStub();
+  activeProject = fakeProject;
+
+  const env = {
+    enterpriseHostname: ENTERPRISE_HOSTNAME,
+    executorBaseUrl: 'https://executor.internal',
+    executorSigningKeyId: 'enterprise-local',
+    executorSigningSecret: 'local-secret',
+    supabaseUrl: 'https://supabase.example.co',
+    supabaseServiceRoleKey: 'service-role-key',
+  };
+
+  const createResponse = await handleEnterpriseControlPlaneRequest(
+    buildRequest(`/api/v1/enterprise/projects/${PROJECT_ID}/providers`, {
+      method: 'POST',
+      headers: {
+        authorization: `Bearer ${AUTH_TOKEN}`,
+        'content-type': 'application/json',
+      },
+      body: JSON.stringify({
+        provider: 'anthropic',
+        slug: 'anthropic',
+        upstream_base_url: 'https://api.anthropic.com',
+        auth_header_name: 'x-api-key',
+        auth_header_template: '{key}',
+      }),
+    }),
+    env,
+  );
+  const createPayload = await createResponse.json();
+  if (createResponse.status !== 201 || createPayload?.provider_slot?.slug !== 'anthropic') {
+    throw new Error(`Expected provider slot creation to succeed, got ${createResponse.status} ${JSON.stringify(createPayload)}`);
+  }
+  const createdSlot = providerSlotRows.find((slot) => slot.provider === 'anthropic');
+  if (!createdSlot || !String(createdSlot.share1_encrypted || '').startsWith('demo-dashboard-placeholder-share-1:')) {
+    throw new Error('Expected created provider slot to use demo placeholder material');
+  }
+  const createAudit = auditEvents.find((event) => event.event_type === 'enterprise_provider_slot_created');
+  if (!createAudit || createAudit.metadata?.material_mode !== 'demo-placeholder') {
+    throw new Error('Expected provider slot creation governance audit event');
+  }
+
+  const liveMaterialResponse = await handleEnterpriseControlPlaneRequest(
+    buildRequest(`/api/v1/enterprise/projects/${PROJECT_ID}/providers`, {
+      method: 'POST',
+      headers: {
+        authorization: `Bearer ${AUTH_TOKEN}`,
+        'content-type': 'application/json',
+      },
+      body: JSON.stringify({
+        provider: 'openai',
+        upstream_base_url: 'https://api.openai.com',
+        auth_header_name: 'authorization',
+        auth_header_template: 'Bearer {key}',
+        api_key: 'sk-live-material-must-not-enter-dashboard',
+      }),
+    }),
+    env,
+  );
+  const liveMaterialPayload = await liveMaterialResponse.json();
+  if (liveMaterialResponse.status !== 501 || !String(liveMaterialPayload?.error || '').includes('Live provider key ingest is not enabled')) {
+    throw new Error(`Expected live key material to be rejected, got ${liveMaterialResponse.status} ${JSON.stringify(liveMaterialPayload)}`);
+  }
+}
+
+async function assertEnterpriseProjectOverviewRollup() {
+  installSupabaseStub();
+  activeProject = fakeProject;
+
+  const env = {
+    enterpriseHostname: ENTERPRISE_HOSTNAME,
+    executorBaseUrl: 'https://executor.internal',
+    executorSigningKeyId: 'enterprise-local',
+    executorSigningSecret: 'local-secret',
+    supabaseUrl: 'https://supabase.example.co',
+    supabaseServiceRoleKey: 'service-role-key',
+  };
+
+  const bootstrapResponse = await handleEnterpriseControlPlaneRequest(
+    buildRequest('/api/v1/enterprise/projects/bootstrap', {
+      headers: {
+        authorization: `Bearer ${AUTH_TOKEN}`,
+      },
+    }),
+    env,
+  );
+  const bootstrapPayload = await bootstrapResponse.json();
+  if (bootstrapResponse.status !== 200 || bootstrapPayload?.overview?.statsSource !== 'bootstrap_rpc') {
+    throw new Error(`Expected projects bootstrap to use consolidated bootstrap RPC, got ${bootstrapResponse.status} ${JSON.stringify(bootstrapPayload?.overview)}`);
+  }
+  if (bootstrapPayload?.overview?.accessLogStatsSource !== 'rollup_rpc' || bootstrapRpcCalls !== 1) {
+    throw new Error(`Expected bootstrap RPC to wrap rollup stats once, got calls=${bootstrapRpcCalls} overview=${JSON.stringify(bootstrapPayload?.overview)}`);
+  }
+  if (bootstrapPayload.overview.totalCalls !== 1 || bootstrapPayload.overview.recentActivity?.[0]?.metadata?.status_code !== 200) {
+    throw new Error(`Expected rollup overview traffic summary, got ${JSON.stringify(bootstrapPayload.overview)}`);
+  }
+  const slot = bootstrapPayload.projects?.[0]?.provider_slots?.[0];
+  if (slot?.material_mode !== 'demo-placeholder' || slot?.material_ready !== false) {
+    throw new Error(`Expected provider slot material status without exposing shares, got ${JSON.stringify(slot)}`);
+  }
+  if ('share1_encrypted' in slot || 'share2_encrypted' in slot) {
+    throw new Error(`Provider slot API must not expose encrypted share payloads: ${JSON.stringify(slot)}`);
+  }
+
+  const overviewResponse = await handleEnterpriseControlPlaneRequest(
+    buildRequest('/api/v1/enterprise/projects/stats/overview', {
+      headers: {
+        authorization: `Bearer ${AUTH_TOKEN}`,
+      },
+    }),
+    env,
+  );
+  const overviewPayload = await overviewResponse.json();
+  if (overviewResponse.status !== 200 || overviewPayload?.statsSource !== 'rollup_rpc') {
+    throw new Error(`Expected projects stats overview to use rollup stats, got ${overviewResponse.status} ${JSON.stringify(overviewPayload)}`);
   }
 }
 
@@ -2149,6 +2546,10 @@ async function assertEnterpriseLoginRoute() {
     'Illustrative · safe API calls',
     'Your app talks to <em>VaultProof</em> instead of holding keys.',
     'Keep your code. <em>Stop storing the key.</em>',
+    'enterprise-homepage-dashboard-match',
+    '--primary-bg: #8fe0c1',
+    '--body: ui-sans-serif',
+    'letter-spacing: 0 !important',
     '/app/login',
     '/app/dashboard',
     '/readiness',
@@ -2159,6 +2560,9 @@ async function assertEnterpriseLoginRoute() {
   }
   if (rootHtml.includes('https://init.vaultproof.dev') || rootHtml.includes('https://api.vaultproof.dev')) {
     throw new Error('Enterprise homepage must not reference B2C API origins');
+  }
+  if (rootHtml.includes('fonts.googleapis.com') || rootHtml.includes('Newsreader') || rootHtml.includes('Inter Tight')) {
+    throw new Error('Enterprise homepage must use the dashboard system-font theme, not the old editorial font theme');
   }
   if (rootHtml.includes('cdn.mxpnl.com') || rootHtml.includes('Enterprise Page Viewed')) {
     throw new Error('Enterprise homepage Mixpanel analytics must be disabled unless ENTERPRISE_MIXPANEL_TOKEN is configured');
@@ -2177,11 +2581,17 @@ async function assertEnterpriseLoginRoute() {
   if (html.includes('cdn.mxpnl.com') || html.includes('Enterprise Page Viewed')) {
     throw new Error('Enterprise Mixpanel analytics must be disabled unless ENTERPRISE_MIXPANEL_TOKEN is configured');
   }
+  if (html.includes('fonts.googleapis.com') || html.includes('Newsreader') || html.includes('Inter Tight')) {
+    throw new Error('Enterprise login page must use the dashboard system-font theme, not the old editorial font theme');
+  }
   if (!html.includes('enterprise only')) {
     throw new Error('Expected enterprise-only login copy');
   }
   for (const required of [
-    'Newsreader',
+    'enterprise-login-dashboard-match',
+    '--primary-bg: #8fe0c1',
+    '--body: ui-sans-serif',
+    'letter-spacing: 0 !important',
     'Sign in to the place where your <em>API keys stay safe.</em>',
     'Enterprise access',
     'Move real API keys out of apps, env vars, and logs.',
@@ -2222,30 +2632,69 @@ async function assertEnterpriseLoginRoute() {
 
   function assertDashboardShellTheme(path, pageHtml) {
     for (const required of [
-      'class="mark">VP',
       'VaultProof Enterprise',
-      'Setup order',
       'nav-label">workspace',
       'nav-label">evidence',
-      'nav-label">setup',
+      'nav-label">guides',
+      'Organization Workspace',
+      'Provisioned organization',
       '/app/dashboard',
       '/app/control',
       '/app/verifier',
       '/app/org',
+      'Readiness',
+      'Health',
       '/app/technical-guide',
       '/app/runbooks',
+      'Admin',
       '/app/logout',
       'Sign out',
-      'enterpriseThemeToggle',
-      'Light mode',
-      'Dark mode',
-      'data-enterprise-theme="light"',
+      'confidential dashboard',
       'enterprise-app-sidebar',
       'data-enterprise-sidebar="universal"',
+      'sidebar-panel',
+      'workspace-card',
+      'nav-link-blurb',
       'enterprise-universal-sidebar',
+      '--sidebar-bg: #10231d',
+      '--card-bg: #ffffff',
+      '--primary-bg: #8fe0c1',
+      '.sidebar.enterprise-app-sidebar .nav-link',
+      'border: 1px solid rgba(255, 255, 255, 0.08);',
+      'color: rgba(255, 255, 255, 0.35);',
+      'color: rgba(255, 255, 255, 0.55);',
+      'color: rgba(255, 255, 255, 0.60);',
+      'letter-spacing: 0 !important;',
+      '--muted: #52625a',
+      '--soft: #7d8c84',
+      'font-size: 14px;',
+      'font-weight: 600;',
+      'font-size: 1.875rem',
+      'font-size: 2.6rem',
     ]) {
       if (!pageHtml.includes(required)) {
         throw new Error(`Expected ${path} to use the main enterprise dashboard shell theme (${required})`);
+      }
+    }
+    for (const pageSpecificSidebarSubtitle of [
+      'policy control',
+      'organization setup',
+      'members + access',
+      'audit evidence',
+      'alert operations',
+    ]) {
+      if (pageHtml.includes(`<div class="brand-sub">${pageSpecificSidebarSubtitle}</div>`)) {
+        throw new Error(`Expected ${path} to use the shared sidebar subtitle, not ${pageSpecificSidebarSubtitle}`);
+      }
+    }
+    for (const removedShellElement of [
+      'class="mark">VP',
+      'Setup order',
+      'overflow-y: auto',
+      '--card-bg: linear-gradient',
+    ]) {
+      if (pageHtml.includes(removedShellElement)) {
+        throw new Error(`Expected ${path} to omit removed dashboard shell element (${removedShellElement})`);
       }
     }
   }
@@ -2271,9 +2720,17 @@ async function assertEnterpriseLoginRoute() {
       throw new Error('Expected enterprise dashboard to render data panels progressively');
     }
     assertDashboardShellTheme(dashboardPath, dashboardHtml);
+    if (!dashboardHtml.includes('confidential dashboard') || dashboardHtml.includes('GCP confidential dashboard')) {
+      throw new Error('Expected enterprise dashboard sidebar subtitle to omit GCP');
+    }
     for (const requiredFeature of [
       'Enterprise dashboard',
       'Runtime, access, and evidence.',
+      'enterprise-page-shell',
+      'control-center-card',
+      'Control center',
+      'Provisioned workspace',
+      'Confirm readiness',
       'Enterprise dashboard tabs',
       'Overview',
       'Security',
@@ -2293,7 +2750,7 @@ async function assertEnterpriseLoginRoute() {
       'Members and invites',
       'Audit and exports',
       'Org and Entra SSO',
-      'Plans and APIM',
+      'Launch plans',
       'Operator runbooks',
       '/app/runbooks',
     ]) {
@@ -2383,12 +2840,12 @@ async function assertEnterpriseLoginRoute() {
     {
       path: '/app/projects',
       title: 'Projects - VaultProof Enterprise',
-      required: ['/api/v1/enterprise/projects/stats/overview', 'Project inventory'],
+      required: ['/api/v1/enterprise/projects/bootstrap', 'Project inventory'],
     },
     {
       path: '/app/keys',
       title: 'Provider Slots - VaultProof Enterprise',
-      required: ['/api/v1/enterprise/projects', 'emergency revoke'],
+      required: ['/api/v1/enterprise/projects', 'add slot', 'create slot', 'emergency revoke', 'live sealed material', 'demo placeholder material'],
     },
   ];
   for (const page of operationsPages) {
@@ -2417,12 +2874,12 @@ async function assertEnterpriseLoginRoute() {
     {
       path: '/app/setup',
       title: 'Enterprise setup guide - VaultProof Enterprise',
-      required: ['Welcome to VaultProof Enterprise', 'Map your enterprise environment', 'Configure identity and access', 'Choose the gateway and network pattern', 'Configure projects, provider slots, and policy', 'Evidence, alerts, and compliance', 'Go live gradually', 'Customer-managed APIM', 'Dry-run first', '/app/technical-guide'],
+      required: ['Welcome to VaultProof Enterprise', 'Map your enterprise environment', 'Configure identity and access', 'Choose the gateway and network pattern', 'Configure projects, provider slots, and policy', 'Evidence, alerts, and compliance', 'Go live gradually', 'Customer-managed gateway', 'Dry-run first', '/app/technical-guide'],
     },
     {
       path: '/app/technical-guide',
       title: 'Technical guide - VaultProof Enterprise',
-      required: ['Architecture at a glance', 'Identity and authorization model', 'Gateway and network patterns', 'Provider key custody and Secure Key Release', 'Caller lock and execution policy', 'Evidence, logs, exports, and audit', 'Troubleshooting map', 'Integration questions for technical review'],
+      required: ['Architecture at a glance', 'Identity and authorization model', 'Gateway and network patterns', 'Provider key custody and Cloud KMS', 'Caller lock and execution policy', 'Evidence, logs, exports, and audit', 'Troubleshooting map', 'Integration questions for technical review'],
     },
     {
       path: '/app/settings',
@@ -2447,7 +2904,7 @@ async function assertEnterpriseLoginRoute() {
     {
       path: '/app/runbooks',
       title: 'Runbooks - VaultProof Enterprise',
-      required: ['Hardening status', 'Production verifier', 'Evidence bundle', 'Handoff package', 'npm run package:enterprise-handoff', 'Handoff gate', 'npm run gate:enterprise-handoff', 'Finish gate', 'blocker/warning details', 'npm run gate:enterprise-finish', 'mTLS caller-lock preparation', 'npm run prepare:enterprise-mtls', 'APIM JWT validation preparation', 'discover the Supabase issuer', 'APIM policy template smoke', 'caller-lock header delete/override', 'npm run test:enterprise-apim-policies', 'Origin TLS certificate plan', 'Origin TLS preparation plan', 'Origin DNS guardrail', 'Origin DNS record', 'upsert-origin-dns', 'remove-origin-dns', 'Origin TLS preflight', 'TLS origin cutover', 'npm run cutover:enterprise-apim', 'Container Apps cleanup'],
+      required: ['Hardening status', 'Production verifier', 'Evidence bundle', 'Handoff package', 'npm run package:enterprise-handoff', 'Handoff gate', 'npm run gate:enterprise-handoff', 'Finish gate', 'blocker/warning details', 'npm run gate:enterprise-finish', 'mTLS caller-lock preparation', 'npm run prepare:enterprise-mtls', 'Gateway JWT validation preparation', 'discover the Supabase issuer', 'gateway policy template smoke', 'caller-lock header delete/override', 'npm run test:enterprise-apim-policies', 'Origin TLS certificate plan', 'Origin TLS preparation plan', 'Origin DNS guardrail', 'Origin DNS record', 'DNS record updates', 'Origin TLS preflight', 'TLS origin cutover', 'gateway cutover', 'old prototype cleanup'],
     },
   ];
   for (const page of supportPages) {
@@ -2488,6 +2945,13 @@ async function assertEnterpriseLoginRoute() {
   if (!controlHtml.includes('control-dashboard-theme')) {
     throw new Error('Expected control page to include the dashboard-matched control theme');
   }
+  if (
+    !controlHtml.includes('enterprise-static-canonical-org-url')
+    || !controlHtml.includes('.page > .topbar { display: none !important; }')
+    || controlHtml.includes('/app/org?org=')
+  ) {
+    throw new Error('Expected control page to use canonical app URLs and hide the legacy static topbar');
+  }
   if (controlHtml.includes('/css/site-theme.css')) {
     throw new Error('Control page must not load public site-theme.css over the enterprise dashboard theme');
   }
@@ -2513,6 +2977,13 @@ async function assertEnterpriseLoginRoute() {
   }
   if (!orgHtml.includes('org-dashboard-theme')) {
     throw new Error('Expected org page to include the dashboard-matched org theme');
+  }
+  if (
+    !orgHtml.includes('enterprise-static-canonical-org-url')
+    || !orgHtml.includes('.page > .topbar { display: none !important; }')
+    || orgHtml.includes('/app/control?org=')
+  ) {
+    throw new Error('Expected org page to use canonical app URLs and hide the legacy static topbar');
   }
   if (orgHtml.includes('/css/site-theme.css')) {
     throw new Error('Org page must not load public site-theme.css over the enterprise dashboard theme');
@@ -2727,6 +3198,18 @@ async function assertInternalAdminConsole() {
   if (unauthenticatedPageResponse.status !== 302
     || !unauthenticatedPageResponse.headers.get('location')?.startsWith('/app/login?internal_admin=true')) {
     throw new Error(`Expected internal admin page to redirect to login, got ${unauthenticatedPageResponse.status}`);
+  }
+
+  const spoofedAdminHostResponse = await handleEnterpriseControlPlaneRequest(
+    buildHostRequest(ENTERPRISE_HOSTNAME, '/', {
+      headers: {
+        'x-forwarded-host': INTERNAL_ADMIN_HOSTNAME,
+      },
+    }),
+    env,
+  );
+  if (spoofedAdminHostResponse.headers.get('location')?.startsWith('/app/login?internal_admin=true')) {
+    throw new Error('Enterprise host must not route to internal admin via spoofed x-forwarded-host');
   }
 
   const sessionResponse = await handleEnterpriseControlPlaneRequest(
@@ -3401,6 +3884,15 @@ async function assertEnterpriseReadinessRoute() {
   if (!payload?.production_blockers?.includes('executor: key release is not hardware-bound')) {
     throw new Error(`Expected readiness route to include executor production blockers, got ${JSON.stringify(payload)}`);
   }
+  if (payload?.detail !== 'summary') {
+    throw new Error(`Expected public readiness to return summary detail, got ${JSON.stringify(payload)}`);
+  }
+  if (payload?.executor?.health?.accepted_key_ids || payload?.executor?.health?.key_release_hardware_bound !== undefined) {
+    throw new Error(`Expected public readiness to hide raw executor internals, got ${JSON.stringify(payload.executor?.health)}`);
+  }
+  if (payload?.executor?.health?.production_blocker_count !== 3) {
+    throw new Error(`Expected public readiness to expose only executor blocker count, got ${JSON.stringify(payload.executor?.health)}`);
+  }
 }
 
 async function assertFrontDoorOriginLock() {
@@ -3411,8 +3903,17 @@ async function assertFrontDoorOriginLock() {
     originLockSecret: 'origin-lock-secret',
   };
 
-  const deniedResponse = await handleEnterpriseControlPlaneRequest(
+  const healthResponse = await handleEnterpriseControlPlaneRequest(
     buildRequest('/health'),
+    env,
+  );
+  const healthPayload = await healthResponse.json();
+  if (healthResponse.status !== 200 || healthPayload?.origin_lock_configured !== true) {
+    throw new Error(`Expected health route to stay available for load-balancer checks, got ${healthResponse.status} ${JSON.stringify(healthPayload)}`);
+  }
+
+  const deniedResponse = await handleEnterpriseControlPlaneRequest(
+    buildRequest('/readiness'),
     env,
   );
   const deniedPayload = await deniedResponse.json();
@@ -3421,7 +3922,7 @@ async function assertFrontDoorOriginLock() {
   }
 
   const allowedResponse = await handleEnterpriseControlPlaneRequest(
-    buildRequest('/health', {
+    buildRequest('/readiness', {
       headers: {
         'x-azure-fdid': 'front-door-id',
       },
@@ -3433,7 +3934,7 @@ async function assertFrontDoorOriginLock() {
   }
 
   const customHeaderResponse = await handleEnterpriseControlPlaneRequest(
-    buildRequest('/health', {
+    buildRequest('/readiness', {
       headers: {
         'x-vaultproof-origin-lock': 'origin-lock-secret',
       },
@@ -3445,7 +3946,7 @@ async function assertFrontDoorOriginLock() {
   }
 
   const loopbackResponse = await handleEnterpriseControlPlaneRequest(
-    buildRequest('/health', {
+    buildRequest('/readiness', {
       headers: {
         'x-vaultproof-local-loopback': 'true',
       },
@@ -3466,6 +3967,7 @@ await assertEnterpriseReadinessRoute();
 await assertFrontDoorOriginLock();
 await assertExecuteRoute();
 await assertEnterpriseExecuteDryRun();
+await assertEnterpriseRuntimeExecuteToken();
 await assertEnterpriseOriginLock();
 await assertEnterpriseCallerLockPolicy();
 await assertEnterpriseCallerLockIpPolicy();
@@ -3475,6 +3977,8 @@ await assertEnterpriseProviderCallerLockPolicy();
 await assertEnterpriseExecutionPolicy();
 await assertEnterpriseProviderExecutionPolicy();
 await assertEnterpriseRateLimitPolicy();
+await assertEnterpriseProjectOverviewRollup();
+await assertEnterpriseCreateProviderSlot();
 await assertEnterpriseEmergencyRevoke();
 await assertEnterpriseAuditCsvExport();
 await assertEnterpriseAccessReviewEvidenceExport();

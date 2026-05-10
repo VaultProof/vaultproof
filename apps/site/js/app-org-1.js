@@ -211,8 +211,7 @@
   }
   function syncOrganizationUrl(orgId) {
     const params = new URLSearchParams(window.location.search);
-    if (orgId) params.set('org', orgId);
-    else params.delete('org');
+    params.delete('org');
     const next = `${window.location.pathname}${params.toString() ? '?' + params.toString() : ''}`;
     window.history.replaceState({}, '', next);
   }
@@ -504,7 +503,7 @@
       {
         title: 'Control dashboard',
         copy: 'Return to Control for pilot review, project policy, and runtime health after org setup.',
-        href: currentOrganizationId ? `/app/control?org=${encodeURIComponent(currentOrganizationId)}` : '/app/control',
+        href: '/app/control',
         label: 'open control',
       },
     ];
@@ -606,7 +605,7 @@
       '- Enterprise demo: /enterprise-demo',
       '- Docs: /docs',
       '- Security: /security',
-      `- Control dashboard: ${currentOrganizationId ? `/app/control?org=${currentOrganizationId}` : '/app/control'}`,
+      '- Control dashboard: /app/control',
     ].join('\n');
   }
   function buildOrgJson() {

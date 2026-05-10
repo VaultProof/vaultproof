@@ -26,28 +26,26 @@ export function renderEnterpriseLoginPage(env: EnterpriseControlPlaneEnv = {}): 
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>VaultProof Enterprise Login</title>
-  <link rel="preconnect" href="https://fonts.googleapis.com" />
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Inter+Tight:wght@300;400;500;600&family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;1,6..72,400&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.101.1" integrity="sha384-0VpB0wAYDdhWCEv3+IjT0Z9Kgpvszkf70RFX3ro7l4QR5nywxsMaOpmvZKsfRF8I" crossorigin="anonymous"></script>
   <style>
     :root {
       color-scheme: light;
-      --bg: #f2eee5;
-      --paper: #fbf9f4;
-      --surface: #e8e2d4;
-      --ink: #14120e;
-      --ink-soft: #3d3a33;
-      --muted: #867f6f;
-      --line: rgba(20, 18, 14, 0.12);
-      --line-strong: rgba(20, 18, 14, 0.25);
-      --line-soft: rgba(20, 18, 14, 0.06);
-      --accent: #8b5a3c;
-      --accent-soft: rgba(139, 90, 60, 0.12);
-      --success: #3f6b47;
-      --display: "Newsreader", "Times New Roman", Georgia, serif;
-      --body: "Inter Tight", -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
-      --mono: "JetBrains Mono", ui-monospace, SFMono-Regular, monospace;
+      --bg: #f6f7f2;
+      --paper: #ffffff;
+      --surface: #f7faf4;
+      --ink: #17231d;
+      --ink-soft: #52625a;
+      --muted: #7d8c84;
+      --line: #dfe5dc;
+      --line-strong: #ccd8cf;
+      --line-soft: rgba(32, 48, 39, 0.09);
+      --accent: #176b4b;
+      --accent-soft: rgba(143, 224, 193, 0.16);
+      --primary-bg: #8fe0c1;
+      --success: #176b4b;
+      --display: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      --body: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      --mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace;
     }
     * { box-sizing: border-box; }
     html { min-height: 100%; }
@@ -55,10 +53,8 @@ export function renderEnterpriseLoginPage(env: EnterpriseControlPlaneEnv = {}): 
       margin: 0;
       min-height: 100vh;
       font-family: var(--body);
-      background:
-        radial-gradient(circle at 14% 12%, rgba(139, 90, 60, 0.14), transparent 34%),
-        radial-gradient(circle at 88% 18%, rgba(63, 107, 71, 0.10), transparent 32%),
-        linear-gradient(135deg, var(--bg) 0%, #f8f4eb 48%, #e9e1d2 100%);
+      font-weight: 400;
+      background: var(--bg);
       color: var(--ink);
       -webkit-font-smoothing: antialiased;
       text-rendering: optimizeLegibility;
@@ -72,6 +68,7 @@ export function renderEnterpriseLoginPage(env: EnterpriseControlPlaneEnv = {}): 
       background-size: 28px 28px;
       mask-image: radial-gradient(ellipse at center, black 28%, transparent 72%);
       -webkit-mask-image: radial-gradient(ellipse at center, black 28%, transparent 72%);
+      display: none;
     }
     a { color: inherit; text-decoration: none; }
     .hidden { display: none !important; }
@@ -303,6 +300,173 @@ export function renderEnterpriseLoginPage(env: EnterpriseControlPlaneEnv = {}): 
       font-family: var(--mono);
       font-size: 11px;
     }
+    /* enterprise-login-dashboard-match */
+    .shell,
+    .shell * {
+      letter-spacing: 0 !important;
+    }
+    .shell {
+      width: min(1480px, calc(100% - 48px));
+      grid-template-columns: minmax(0, 1fr) minmax(380px, 450px);
+      gap: 20px;
+      padding: 24px 0;
+    }
+    .hero,
+    .login-card {
+      border: 1px solid var(--line);
+      border-radius: 24px;
+      background: #ffffff;
+      box-shadow: none;
+    }
+    .hero {
+      min-height: 620px;
+      padding: 20px;
+    }
+    .hero:before,
+    .hero:after {
+      display: none;
+    }
+    .brand {
+      color: var(--ink);
+      font: 400 14px/1.2 var(--body);
+      text-transform: none;
+    }
+    .brand > span:first-child {
+      color: var(--ink);
+      font-size: 16px;
+      font-weight: 600;
+    }
+    .pill {
+      border: 1px solid #ccd8cf;
+      background: #fbfcf8;
+      color: #3d6f5b;
+      font: 600 11px/1 var(--body);
+      text-transform: uppercase;
+      padding: 7px 10px;
+    }
+    h1 {
+      max-width: 760px;
+      margin: 0;
+      color: var(--ink);
+      font: 600 1.875rem/2.25rem var(--body);
+      text-wrap: balance;
+    }
+    h1 em {
+      color: var(--accent);
+      font-style: normal;
+    }
+    .hero-copy {
+      color: var(--ink-soft);
+      font-size: 14px;
+      line-height: 1.75;
+    }
+    .proof-grid {
+      margin-top: 24px;
+    }
+    .proof,
+    .entry-card,
+    .sso-block,
+    .promo-block {
+      border: 1px solid var(--line);
+      background: #f7faf4;
+      border-radius: 16px;
+      box-shadow: none;
+    }
+    .proof strong,
+    .auth-kicker,
+    .sso-kicker,
+    .entry-label,
+    .divider,
+    .auth-footnote {
+      color: #7d8c84;
+      font: 400 11px/1.2 var(--body);
+      text-transform: uppercase;
+    }
+    .proof span,
+    .auth-subtitle,
+    .entry-copy,
+    .sso-copy,
+    .sso-hint,
+    .legal,
+    .back-link,
+    .reset-copy {
+      color: #5f6f67;
+      font-size: 13px;
+      line-height: 1.5;
+    }
+    .login-card {
+      padding: 24px;
+    }
+    .auth-title {
+      color: var(--ink);
+      margin: 10px 0 8px;
+      font: 600 1.875rem/2.25rem var(--body);
+    }
+    .entry-title,
+    .sso-title {
+      color: var(--ink);
+      font-weight: 600;
+    }
+    .form-input {
+      border: 1px solid #ccd8cf;
+      background: #ffffff;
+      border-radius: 13px;
+      color: var(--ink);
+      font: 400 14px/1.2 var(--body);
+    }
+    .form-input:focus {
+      border-color: rgba(23, 107, 75, 0.35);
+      box-shadow: 0 0 0 3px rgba(143, 224, 193, 0.18);
+    }
+    .btn {
+      border: 1px solid var(--line);
+      border-radius: 13px;
+      font: 500 14px/1 var(--body);
+      box-shadow: none;
+    }
+    .btn:hover {
+      transform: none;
+      border-color: var(--line-strong);
+    }
+    .btn-primary {
+      background: var(--primary-bg);
+      color: #10231d;
+      border-color: var(--primary-bg);
+      font-weight: 600;
+    }
+    .btn-secondary,
+    .btn-small {
+      background: #ffffff;
+      color: var(--ink);
+      border-color: var(--line);
+    }
+    .auth-tabs button,
+    .text-button,
+    .promo-toggle {
+      color: var(--accent);
+      font-weight: 500;
+    }
+    #authError,
+    #loginError,
+    #regError,
+    #resetStatus,
+    #ssoStatus,
+    #promoCodeMsg,
+    #recoveryStatus {
+      border: 1px solid rgba(23, 107, 75, 0.24);
+      background: rgba(143, 224, 193, 0.14);
+      color: var(--ink);
+    }
+    @media (min-width: 640px) {
+      h1,
+      .auth-title {
+        font-size: 2.6rem;
+        line-height: 1.1;
+      }
+      .hero-copy {
+        font-size: 16px;
+      }
+    }
     @media (max-width: 900px) {
       .shell { width: min(100% - 32px, 760px); grid-template-columns: 1fr; }
       .hero { min-height: auto; }
@@ -417,8 +581,19 @@ export function renderEnterpriseLoginPage(env: EnterpriseControlPlaneEnv = {}): 
 </html>`, env, 'login');
 }
 
-export function renderEnterpriseLoginScript(): string {
-  return readWorkspaceFile('apps/site/js/app-login-3.js');
+function replaceJavaScriptConst(source: string, name: string, value: string | undefined): string {
+  if (!value?.trim()) return source;
+  return source.replace(
+    new RegExp(`const ${name} = '[^']*';`),
+    `const ${name} = ${JSON.stringify(value.trim())};`,
+  );
+}
+
+export function renderEnterpriseLoginScript(env: EnterpriseControlPlaneEnv = {}): string {
+  let script = readWorkspaceFile('apps/site/js/app-login-3.js');
+  script = replaceJavaScriptConst(script, 'SUPABASE_URL', env.supabaseUrl);
+  script = replaceJavaScriptConst(script, 'SUPABASE_ANON_KEY', env.supabaseAnonKey);
+  return script;
 }
 
 export function renderEnterpriseLogoutPage(): string {
@@ -430,10 +605,10 @@ export function renderEnterpriseLogoutPage(): string {
   <meta name="robots" content="noindex" />
   <title>Signing out - VaultProof Enterprise</title>
   <style>
-    :root { color-scheme: dark; --bg: #07110f; --panel: rgba(237,229,204,.1); --line: rgba(237,229,204,.16); --text: #f4ecd5; --muted: #a9b7a6; --gold: #d7a84b; --ink: #07110f; }
+    :root { color-scheme: light; --bg: #dcebe8; --panel: rgba(255,255,255,.88); --line: rgba(48,76,71,.16); --text: #34514c; --muted: #667b75; --gold: #d5a914; --ink: #304b46; }
     * { box-sizing: border-box; }
-    body { margin: 0; min-height: 100vh; display: grid; place-items: center; font-family: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; color: var(--text); background: radial-gradient(circle at 20% 10%, rgba(215,168,75,.24), transparent 30rem), linear-gradient(135deg, #06100e, #10231d 50%, #050807); }
-    main { width: min(100% - 32px, 560px); border: 1px solid var(--line); background: linear-gradient(180deg, rgba(237,229,204,.13), rgba(237,229,204,.055)); border-radius: 28px; padding: 34px; box-shadow: 0 24px 90px rgba(0,0,0,.24); }
+    body { margin: 0; min-height: 100vh; display: grid; place-items: center; font-family: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; color: var(--text); background: linear-gradient(135deg, #dcebe8 0%, #eef6f2 50%, #c9ddda 100%); }
+    main { width: min(100% - 32px, 560px); border: 1px solid var(--line); background: linear-gradient(180deg, rgba(255,255,255,.98), rgba(247,250,244,.86)); border-radius: 28px; padding: 34px; box-shadow: 0 22px 72px rgba(48,76,71,.18); }
     .kicker { color: var(--gold); font-size: 12px; text-transform: uppercase; letter-spacing: .16em; font-weight: 850; }
     h1 { margin: 10px 0; font-size: clamp(34px, 8vw, 58px); line-height: .92; letter-spacing: -.065em; }
     p { color: var(--muted); line-height: 1.6; margin: 0 0 18px; }

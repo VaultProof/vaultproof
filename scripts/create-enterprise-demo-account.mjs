@@ -1,5 +1,6 @@
-import { randomBytes } from 'node:crypto';
+import { createCipheriv, createHmac, randomBytes } from 'node:crypto';
 import { createClient } from '@supabase/supabase-js';
+import { serializeShare, splitString } from '@vaultproof/shamir';
 
 const requiredEnv = ['SUPABASE_URL', 'SUPABASE_SERVICE_ROLE_KEY'];
 const missing = requiredEnv.filter((key) => !process.env[key]);
@@ -23,6 +24,18 @@ const demoOrgSlug = normalizeSlug(process.env.DEMO_ORG_SLUG || demoOrgName);
 const demoProjectName = process.env.DEMO_PROJECT_NAME || 'Confidential Runtime Pilot';
 const demoProjectRef = process.env.DEMO_PROJECT_REF || `vp-demo-${randomBytes(5).toString('hex')}`;
 const seedSampleData = process.env.DEMO_SEED_SAMPLE_DATA !== 'false';
+const demoProviderApiKey = process.env.DEMO_PROVIDER_API_KEY || process.env.OPENAI_API_KEY || '';
+const vaultUnwrapKey = process.env.VAULT_UNWRAP_KEY_BASE64
+  || process.env.VAULT_UNWRAP_KEY_HEX
+  || process.env.VAULT_UNWRAP_KEY
+  || '';
+
+const VERSION_FAST = 0x02;
+const IV_LENGTH = 12;
+const TAG_LENGTH = 16;
+const SALT_LENGTH = 16;
+const VERSION_LENGTH = 1;
+const ALGORITHM = 'aes-256-gcm';
 
 function isMissingCallerLockPolicyError(error) {
   return error?.code === 'PGRST204'
@@ -62,6 +75,48 @@ function normalizeSlug(value) {
     .replace(/[^a-z0-9]+/g, '-')
     .replace(/^-+|-+$/g, '')
     .slice(0, 63) || 'vaultproof-enterprise-demo';
+}
+
+function getMasterKey(value) {
+  const trimmed = String(value || '').trim();
+  if (!trimmed) throw new Error('VAULT_UNWRAP_KEY_BASE64, VAULT_UNWRAP_KEY_HEX, or VAULT_UNWRAP_KEY is required to seed a decryptable provider slot.');
+  if (/^[a-f0-9]{64}$/i.test(trimmed)) return Buffer.from(trimmed, 'hex');
+  return Buffer.from(trimmed, 'base64');
+}
+
+function hkdfSha256(masterKey, salt, purpose) {
+  const prk = createHmac('sha256', salt).update(masterKey).digest();
+  const info = Buffer.from(purpose, 'utf8');
+  return createHmac('sha256', prk).update(info).update(Buffer.from([0x01])).digest();
+}
+
+function encryptShare(serializedShare, vaultKey, purpose) {
+  const plaintext = Buffer.from(serializedShare, 'base64');
+  const masterKey = getMasterKey(vaultKey);
+  const salt = randomBytes(SALT_LENGTH);
+  const iv = randomBytes(IV_LENGTH);
+  const derivedKey = hkdfSha256(masterKey, salt, purpose);
+  const cipher = createCipheriv(ALGORITHM, derivedKey, iv);
+  const encrypted = Buffer.concat([cipher.update(plaintext), cipher.final()]);
+  const tag = cipher.getAuthTag();
+  return Buffer.concat([Buffer.from([VERSION_FAST]), salt, iv, tag, encrypted]).toString('base64');
+}
+
+function buildProviderSlotMaterial() {
+  if (!demoProviderApiKey || !vaultUnwrapKey) {
+    return {
+      real: false,
+      share1_encrypted: 'demo-dashboard-placeholder-share-1',
+      share2_encrypted: 'demo-dashboard-placeholder-share-2',
+    };
+  }
+
+  const shares = splitString(demoProviderApiKey, 2, 2).map((share) => serializeShare(share));
+  return {
+    real: true,
+    share1_encrypted: encryptShare(shares[0], vaultUnwrapKey, 'vaultproof-enterprise-share1-v1'),
+    share2_encrypted: encryptShare(shares[1], vaultUnwrapKey, 'vaultproof-enterprise-share2-v1'),
+  };
 }
 
 async function findUserByEmail(email) {
@@ -243,8 +298,25 @@ async function seedDashboardSampleData(organizationId, userId, projectId) {
     .eq('provider', 'openai')
     .maybeSingle();
 
+  const providerSlotMaterial = buildProviderSlotMaterial();
   let keyId = existingKey?.id;
-  if (!keyId) {
+  if (keyId && providerSlotMaterial.real) {
+    const { error } = await supabase
+      .from('project_keys')
+      .update({
+        slug: 'openai',
+        env_var: 'OPENAI_API_KEY',
+        upstream_base_url: 'https://api.openai.com',
+        auth_header_name: 'authorization',
+        auth_header_template: 'Bearer {key}',
+        share1_encrypted: providerSlotMaterial.share1_encrypted,
+        share2_encrypted: providerSlotMaterial.share2_encrypted,
+        extra_headers: {},
+        revoked_at: null,
+      })
+      .eq('id', keyId);
+    if (error) throw error;
+  } else if (!keyId) {
     const { data, error } = await supabase
       .from('project_keys')
       .insert({
@@ -254,9 +326,9 @@ async function seedDashboardSampleData(organizationId, userId, projectId) {
         env_var: 'OPENAI_API_KEY',
         upstream_base_url: 'https://api.openai.com',
         auth_header_name: 'authorization',
-        auth_header_template: 'Bearer {{secret}}',
-        share1_encrypted: 'demo-dashboard-placeholder-share-1',
-        share2_encrypted: 'demo-dashboard-placeholder-share-2',
+        auth_header_template: 'Bearer {key}',
+        share1_encrypted: providerSlotMaterial.share1_encrypted,
+        share2_encrypted: providerSlotMaterial.share2_encrypted,
         extra_headers: {},
       })
       .select('id')
@@ -309,6 +381,11 @@ async function seedDashboardSampleData(organizationId, userId, projectId) {
       },
     });
   if (auditError) throw auditError;
+
+  return {
+    providerSlotKeyId: keyId,
+    providerSlotMaterialReady: providerSlotMaterial.real,
+  };
 }
 
 const user = await runStep('auth user creation', () => ensureUser());
@@ -316,8 +393,9 @@ const organization = await runStep('organization creation', () => ensureOrganiza
 await runStep('organization membership creation', () => ensureOrganizationMembership(organization.id, user.id));
 const project = await runStep('project creation', () => ensureProject(organization.id, user.id));
 await runStep('project membership creation', () => ensureProjectMembership(project.id, user.id));
+let sampleData = null;
 if (seedSampleData) {
-  await runStep('dashboard sample data seeding', () => seedDashboardSampleData(organization.id, user.id, project.id));
+  sampleData = await runStep('dashboard sample data seeding', () => seedDashboardSampleData(organization.id, user.id, project.id));
 }
 
 console.log(JSON.stringify({
@@ -336,4 +414,8 @@ console.log(JSON.stringify({
     name: project.name,
   },
   seededSampleData: seedSampleData,
+  providerSlotMaterialReady: sampleData?.providerSlotMaterialReady === true,
+  providerSlotNote: sampleData?.providerSlotMaterialReady === true
+    ? 'OpenAI provider slot was seeded with decryptable enterprise shares.'
+    : 'Provider slot uses dashboard placeholders. Set DEMO_PROVIDER_API_KEY or OPENAI_API_KEY plus VAULT_UNWRAP_KEY_BASE64 to seed a live execute-ready slot.',
 }, null, 2));

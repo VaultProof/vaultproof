@@ -1,4 +1,4 @@
-import type { AzureSecureExecutionAttestationEvidence } from '@vaultproof/core';
+import type { SecureExecutionAttestationEvidence } from '@vaultproof/core';
 import { execFile } from 'node:child_process';
 import { createHash, randomUUID } from 'node:crypto';
 import { promisify } from 'node:util';
@@ -11,7 +11,7 @@ export interface VaultUnwrapKeyProvider {
   readonly mode: string;
   readonly hardwareBound: boolean;
   getVaultUnwrapKey(): Promise<string>;
-  getAttestationEvidence(): Promise<AzureSecureExecutionAttestationEvidence | null>;
+  getAttestationEvidence(): Promise<SecureExecutionAttestationEvidence | null>;
 }
 
 export class EnvVaultUnwrapKeyProvider implements VaultUnwrapKeyProvider {
@@ -24,7 +24,7 @@ export class EnvVaultUnwrapKeyProvider implements VaultUnwrapKeyProvider {
     return this.vaultEncryptionKey;
   }
 
-  async getAttestationEvidence(): Promise<AzureSecureExecutionAttestationEvidence | null> {
+  async getAttestationEvidence(): Promise<SecureExecutionAttestationEvidence | null> {
     return null;
   }
 }
@@ -37,7 +37,7 @@ export class NullVaultUnwrapKeyProvider implements VaultUnwrapKeyProvider {
     throw new Error('Vault unwrap key release is not configured.');
   }
 
-  async getAttestationEvidence(): Promise<AzureSecureExecutionAttestationEvidence | null> {
+  async getAttestationEvidence(): Promise<SecureExecutionAttestationEvidence | null> {
     return null;
   }
 }
@@ -95,7 +95,7 @@ export class AzureSecureKeyReleaseProvider implements VaultUnwrapKeyProvider {
     return vaultUnwrapKey;
   }
 
-  async getAttestationEvidence(): Promise<AzureSecureExecutionAttestationEvidence | null> {
+  async getAttestationEvidence(): Promise<SecureExecutionAttestationEvidence | null> {
     const attestationToken = await this.getAttestationTokenForEvidence();
     const claims = attestationToken ? decodeAttestationClaims(attestationToken) : null;
     return {
@@ -165,7 +165,109 @@ export class AzureSecureKeyReleaseProvider implements VaultUnwrapKeyProvider {
   }
 }
 
+export class GcpKmsVaultUnwrapKeyProvider implements VaultUnwrapKeyProvider {
+  readonly mode = 'gcp-cloud-kms';
+  readonly hardwareBound: boolean;
+
+  constructor(private readonly input: {
+    projectId?: string;
+    location?: string;
+    keyRing?: string;
+    keyName?: string;
+    cryptoKeyResource?: string;
+    keyVersion?: string;
+    keyProtectionLevel?: string;
+    encryptedVaultUnwrapKeyBase64?: string;
+    accessToken?: string;
+    cacheTtlMs?: number;
+    fetchImpl?: typeof fetch;
+    attestationTokenHash?: string;
+    attestationToken?: string;
+    executorBuildDigest?: string;
+    confidentialVmResourceId?: string;
+    measurementSummary?: string;
+    secureBoot?: boolean;
+    imageDigest?: string;
+    serviceAccountEmail?: string;
+    attestationType?: string;
+    isolationProvider?: 'gcp-confidential-vm' | 'gcp-confidential-space';
+  }) {
+    this.hardwareBound = (input.keyProtectionLevel || '').trim().toUpperCase() === 'HSM';
+  }
+
+  private cachedVaultUnwrapKey: { value: string; expiresAt: number } | null = null;
+
+  async getVaultUnwrapKey(): Promise<string> {
+    if (!this.input.encryptedVaultUnwrapKeyBase64) {
+      throw new Error('GCP Cloud KMS requires GCP_KMS_ENCRYPTED_VAULT_UNWRAP_KEY_BASE64.');
+    }
+
+    const now = Date.now();
+    if (this.cachedVaultUnwrapKey && this.cachedVaultUnwrapKey.expiresAt > now) {
+      return this.cachedVaultUnwrapKey.value;
+    }
+
+    const keyResource = buildGcpKmsCryptoKeyResource(this.input);
+    const accessToken = this.input.accessToken || await fetchGcpAccessToken(this.fetchImpl());
+    const response = await this.fetchImpl()(`https://cloudkms.googleapis.com/v1/${keyResource}:decrypt`, {
+      method: 'POST',
+      headers: {
+        authorization: `Bearer ${accessToken}`,
+        'content-type': 'application/json',
+      },
+      body: JSON.stringify({
+        ciphertext: this.input.encryptedVaultUnwrapKeyBase64,
+      }),
+    });
+
+    const payload = await response.json().catch(() => null) as { plaintext?: string; error?: { message?: string } } | null;
+    if (!response.ok || !payload?.plaintext) {
+      throw new Error(payload?.error?.message || `GCP Cloud KMS decrypt failed with ${response.status}`);
+    }
+
+    const vaultUnwrapKey = payload.plaintext;
+    const ttlMs = normalizeReleasedKeyCacheTtlMs(this.input.cacheTtlMs);
+    this.cachedVaultUnwrapKey = {
+      value: vaultUnwrapKey,
+      expiresAt: now + ttlMs,
+    };
+    return vaultUnwrapKey;
+  }
+
+  async getAttestationEvidence(): Promise<SecureExecutionAttestationEvidence | null> {
+    const keyResource = buildGcpKmsCryptoKeyResource(this.input);
+    const provider = this.input.isolationProvider || 'gcp-confidential-vm';
+    const attestationTokenHash = this.input.attestationTokenHash
+      || (this.input.attestationToken ? sha256Base64Url(this.input.attestationToken) : null);
+
+    return {
+      provider,
+      projectId: this.input.projectId || parseGcpKmsResourcePart(keyResource, 'projects') || null,
+      location: this.input.location || parseGcpKmsResourcePart(keyResource, 'locations') || null,
+      attestationTokenHash,
+      keyId: keyResource,
+      keyVersion: this.input.keyVersion || null,
+      keyProtectionLevel: this.input.keyProtectionLevel || null,
+      executorBuildDigest: this.input.executorBuildDigest || null,
+      confidentialVmResourceId: this.input.confidentialVmResourceId || null,
+      claims: {
+        attestationType: this.input.attestationType || 'google-cloud-attestation',
+        secureBoot: this.input.secureBoot ?? null,
+        vmIsolation: provider,
+        measurementSummary: this.input.measurementSummary || null,
+        imageDigest: this.input.imageDigest || null,
+        serviceAccountEmail: this.input.serviceAccountEmail || null,
+      },
+    };
+  }
+
+  private fetchImpl(): typeof fetch {
+    return this.input.fetchImpl || fetch;
+  }
+}
+
 export function buildVaultUnwrapKeyProvider(input: {
+  enterpriseCloudProvider?: string;
   executorMode?: string;
   vaultEncryptionKey?: string;
   azureKeyReleaseUrl?: string;
@@ -182,13 +284,59 @@ export function buildVaultUnwrapKeyProvider(input: {
   executorBuildDigest?: string;
   azureConfidentialVmResourceId?: string;
   azureMeasurementSummary?: string;
+  gcpProjectId?: string;
+  gcpLocation?: string;
+  gcpKmsKeyRing?: string;
+  gcpKmsKeyName?: string;
+  gcpKmsCryptoKeyResource?: string;
+  gcpKmsKeyVersion?: string;
+  gcpKmsProtectionLevel?: string;
+  gcpKmsEncryptedVaultUnwrapKeyBase64?: string;
+  gcpKmsAccessToken?: string;
+  gcpKmsCacheTtlMs?: number;
+  gcpAttestationTokenHash?: string;
+  gcpAttestationToken?: string;
+  gcpConfidentialVmResourceId?: string;
+  gcpMeasurementSummary?: string;
+  gcpSecureBoot?: boolean;
+  gcpImageDigest?: string;
+  gcpServiceAccountEmail?: string;
+  gcpAttestationType?: string;
+  gcpIsolationProvider?: 'gcp-confidential-vm' | 'gcp-confidential-space';
   fetchImpl?: typeof fetch;
   keyProvider?: VaultUnwrapKeyProvider;
 }): VaultUnwrapKeyProvider {
   if (input.keyProvider) return input.keyProvider;
 
   const mode = (input.executorMode || 'demo').trim().toLowerCase();
+  const cloudProvider = (input.enterpriseCloudProvider || 'azure').trim().toLowerCase();
   if (mode === 'confidential') {
+    if (cloudProvider === 'gcp' || cloudProvider === 'google' || cloudProvider === 'google-cloud') {
+      return new GcpKmsVaultUnwrapKeyProvider({
+        projectId: input.gcpProjectId,
+        location: input.gcpLocation,
+        keyRing: input.gcpKmsKeyRing,
+        keyName: input.gcpKmsKeyName,
+        cryptoKeyResource: input.gcpKmsCryptoKeyResource,
+        keyVersion: input.gcpKmsKeyVersion,
+        keyProtectionLevel: input.gcpKmsProtectionLevel,
+        encryptedVaultUnwrapKeyBase64: input.gcpKmsEncryptedVaultUnwrapKeyBase64,
+        accessToken: input.gcpKmsAccessToken,
+        cacheTtlMs: input.gcpKmsCacheTtlMs,
+        fetchImpl: input.fetchImpl,
+        attestationTokenHash: input.gcpAttestationTokenHash,
+        attestationToken: input.gcpAttestationToken,
+        executorBuildDigest: input.executorBuildDigest,
+        confidentialVmResourceId: input.gcpConfidentialVmResourceId,
+        measurementSummary: input.gcpMeasurementSummary,
+        secureBoot: input.gcpSecureBoot,
+        imageDigest: input.gcpImageDigest,
+        serviceAccountEmail: input.gcpServiceAccountEmail,
+        attestationType: input.gcpAttestationType,
+        isolationProvider: input.gcpIsolationProvider,
+      });
+    }
+
     return new AzureSecureKeyReleaseProvider({
       keyReleaseUrl: input.azureKeyReleaseUrl,
       attestationToken: input.azureAttestationToken,
@@ -213,6 +361,34 @@ export function buildVaultUnwrapKeyProvider(input: {
   }
 
   return new NullVaultUnwrapKeyProvider();
+}
+
+function buildGcpKmsCryptoKeyResource(input: {
+  projectId?: string;
+  location?: string;
+  keyRing?: string;
+  keyName?: string;
+  cryptoKeyResource?: string;
+}): string {
+  const explicit = input.cryptoKeyResource?.trim();
+  if (explicit) return explicit;
+
+  const projectId = input.projectId?.trim();
+  const location = input.location?.trim();
+  const keyRing = input.keyRing?.trim();
+  const keyName = input.keyName?.trim();
+  if (!projectId || !location || !keyRing || !keyName) {
+    throw new Error('GCP Cloud KMS requires GCP_PROJECT_ID, GCP_LOCATION, GCP_KMS_KEY_RING, and GCP_KMS_KEY_NAME or GCP_KMS_CRYPTO_KEY_RESOURCE.');
+  }
+
+  return `projects/${projectId}/locations/${location}/keyRings/${keyRing}/cryptoKeys/${keyName}`;
+}
+
+function parseGcpKmsResourcePart(resource: string, partName: string): string | null {
+  const parts = resource.split('/');
+  const index = parts.indexOf(partName);
+  if (index < 0 || index + 1 >= parts.length) return null;
+  return parts[index + 1] || null;
 }
 
 function decodeAttestationClaims(jwt: string): { secureBoot: boolean | null; measurementSummary: string | null } | null {
@@ -294,6 +470,21 @@ async function fetchManagedIdentityToken(fetchImpl: typeof fetch): Promise<strin
   const payload = await response.json().catch(() => null) as { access_token?: string; error_description?: string } | null;
   if (!response.ok || !payload?.access_token) {
     throw new Error(payload?.error_description || `Managed identity token request failed with ${response.status}`);
+  }
+
+  return payload.access_token;
+}
+
+async function fetchGcpAccessToken(fetchImpl: typeof fetch): Promise<string> {
+  const response = await fetchImpl('http://metadata.google.internal/computeMetadata/v1/instance/service-accounts/default/token', {
+    headers: {
+      'Metadata-Flavor': 'Google',
+    },
+  });
+
+  const payload = await response.json().catch(() => null) as { access_token?: string; error_description?: string } | null;
+  if (!response.ok || !payload?.access_token) {
+    throw new Error(payload?.error_description || `GCP metadata access token request failed with ${response.status}`);
   }
 
   return payload.access_token;

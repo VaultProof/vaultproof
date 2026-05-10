@@ -35,9 +35,11 @@ async function parseEnvelope(request: Request): Promise<SignedSecureExecutionEnv
 }
 
 function getRequestHostname(request: Request, url: URL): string {
-  const forwardedHost = request.headers.get('x-forwarded-host') || request.headers.get('x-original-host');
-  const host = forwardedHost || request.headers.get('host') || url.hostname;
-  return host.split(',')[0]?.trim().split(':')[0]?.toLowerCase() || url.hostname.toLowerCase();
+  const host = request.headers.get('host') || url.host || url.hostname;
+  const normalized = host.split(',')[0]?.trim().toLowerCase() || url.hostname.toLowerCase();
+  const ipv6Match = normalized.match(/^\[([^\]]+)\](?::\d+)?$/);
+  if (ipv6Match?.[1]) return ipv6Match[1];
+  return normalized.replace(/:\d+$/, '') || url.hostname.toLowerCase();
 }
 
 function redirectToInternalAdminLogin(url: URL): Response {
@@ -95,7 +97,7 @@ function verifyOriginLock(request: Request, env: EnterpriseControlPlaneEnv): Res
 
   return Response.json(
     {
-      error: 'Front Door origin lock rejected this request.',
+      error: 'Enterprise edge origin lock rejected this request.',
     },
     {
       status: 403,
@@ -104,6 +106,19 @@ function verifyOriginLock(request: Request, env: EnterpriseControlPlaneEnv): Res
       },
     },
   );
+}
+
+function buildHealthResponse(hostname: string, url: URL, env: EnterpriseControlPlaneEnv): Response {
+  return Response.json({
+    status: 'ok',
+    service: 'vaultproof-enterprise-control-plane',
+    hostname,
+    path: url.pathname,
+    executor_configured: Boolean(env.executorBaseUrl),
+    supabase_configured: Boolean(env.supabaseUrl && env.supabaseServiceRoleKey),
+    origin_lock_configured: Boolean(env.azureFrontDoorId?.trim() || env.originLockSecret?.trim()),
+    origin_lock_required: env.originLockRequired === true,
+  });
 }
 
 function isInternalAdminPreviewPath(url: URL, env: EnterpriseControlPlaneEnv): boolean {
@@ -198,11 +213,14 @@ async function buildEnterpriseReadiness(
     demoBlockers.push('control-plane-to-executor signing is not configured');
   }
   if (env.originLockRequired && !originLockConfigured) {
-    productionBlockers.push('Front Door origin lock is not configured');
+    productionBlockers.push('Enterprise edge origin lock is not configured');
   }
 
   const executor = await fetchExecutorHealth(env);
   const executorHealth = executor.health || {};
+  const executorSecurityProfile = typeof executorHealth.security_profile === 'string'
+    ? executorHealth.security_profile
+    : null;
   const executorProductionBlockers = Array.isArray(executorHealth.production_blockers)
     ? executorHealth.production_blockers.map((item) => String(item)).filter(Boolean)
     : [];
@@ -246,8 +264,9 @@ async function buildEnterpriseReadiness(
     customer_dedicated_runtime: runtimeTier === 'dedicated-production',
     demo_ready: demoReady,
     production_ready: productionReady,
-    security_profile: productionReady ? 'azure-confidential-production' : demoReady ? 'demo-or-incomplete' : 'not-ready',
+    security_profile: productionReady ? executorSecurityProfile || 'confidential-production' : demoReady ? 'demo-or-incomplete' : 'not-ready',
     control_plane: {
+      cloud_provider: env.enterpriseCloudProvider || 'azure',
       executor_configured: executorConfigured,
       supabase_configured: supabaseConfigured,
       signing_configured: signingConfigured,
@@ -264,6 +283,65 @@ async function buildEnterpriseReadiness(
     },
     demo_blockers: demoBlockers,
     production_blockers: [...new Set(productionBlockers)],
+  };
+}
+
+function summarizeExecutorHealth(health: Record<string, unknown> | null): Record<string, unknown> | null {
+  if (!health) return null;
+  return {
+    status: health.status,
+    service: health.service,
+    secure_execution_ready: health.secure_execution_ready,
+    signature_verification_ready: health.signature_verification_ready,
+    execution_material_resolver_ready: health.execution_material_resolver_ready,
+    key_release_ready: health.key_release_ready,
+    key_release_mode: health.key_release_mode,
+    attestation_evidence_ready: health.attestation_evidence_ready,
+    replay_protection_ready: health.replay_protection_ready,
+    production_ready: health.production_ready,
+    security_profile: health.security_profile,
+    production_blocker_count: Array.isArray(health.production_blockers) ? health.production_blockers.length : 0,
+  };
+}
+
+function buildPublicEnterpriseReadiness(readiness: Record<string, unknown>): Record<string, unknown> {
+  const controlPlane = readiness.control_plane && typeof readiness.control_plane === 'object'
+    ? readiness.control_plane as Record<string, unknown>
+    : {};
+  const executor = readiness.executor && typeof readiness.executor === 'object'
+    ? readiness.executor as Record<string, unknown>
+    : {};
+  const executorHealth = executor.health && typeof executor.health === 'object'
+    ? executor.health as Record<string, unknown>
+    : null;
+
+  return {
+    status: readiness.status,
+    service: readiness.service,
+    hostname: readiness.hostname,
+    runtime_tier: readiness.runtime_tier,
+    customer_dedicated_runtime: readiness.customer_dedicated_runtime,
+    demo_ready: readiness.demo_ready,
+    production_ready: readiness.production_ready,
+    security_profile: readiness.security_profile,
+    detail: 'summary',
+    control_plane: {
+      cloud_provider: controlPlane.cloud_provider,
+      executor_configured: controlPlane.executor_configured,
+      supabase_configured: controlPlane.supabase_configured,
+      signing_configured: controlPlane.signing_configured,
+      origin_lock_configured: controlPlane.origin_lock_configured,
+      origin_lock_required: controlPlane.origin_lock_required,
+      custom_origin_lock_configured: controlPlane.custom_origin_lock_configured,
+    },
+    executor: {
+      reachable: executor.reachable,
+      status: executor.status,
+      health: summarizeExecutorHealth(executorHealth),
+      error: executor.error ? 'executor health unavailable' : null,
+    },
+    demo_blockers: readiness.demo_blockers,
+    production_blockers: readiness.production_blockers,
   };
 }
 
@@ -284,10 +362,14 @@ async function handleEnterpriseControlPlaneRequestInner(
     );
   }
 
+  const internalAdminSurface = isInternalAdminHostname(hostname, env) || isInternalAdminPreviewPath(url, env);
+
+  if (isReadRequest && url.pathname === '/health') {
+    return buildHealthResponse(hostname, url, env);
+  }
+
   const originLockResponse = verifyOriginLock(request, env);
   if (originLockResponse) return originLockResponse;
-
-  const internalAdminSurface = isInternalAdminHostname(hostname, env) || isInternalAdminPreviewPath(url, env);
 
   if (
     internalAdminSurface &&
@@ -361,7 +443,7 @@ async function handleEnterpriseControlPlaneRequestInner(
   }
 
   if (isReadRequest && url.pathname === '/app/enterprise-login.js') {
-    return new Response(renderEnterpriseLoginScript(), {
+    return new Response(renderEnterpriseLoginScript(env), {
       status: 200,
       headers: {
         'content-type': 'application/javascript; charset=utf-8',
@@ -411,21 +493,9 @@ async function handleEnterpriseControlPlaneRequestInner(
     }
   }
 
-  if (isReadRequest && url.pathname === '/health') {
-    return Response.json({
-      status: 'ok',
-      service: 'vaultproof-enterprise-control-plane',
-      hostname,
-      path: url.pathname,
-      executor_configured: Boolean(env.executorBaseUrl),
-      supabase_configured: Boolean(env.supabaseUrl && env.supabaseServiceRoleKey),
-      origin_lock_configured: Boolean(env.azureFrontDoorId?.trim() || env.originLockSecret?.trim()),
-      origin_lock_required: env.originLockRequired === true,
-    });
-  }
-
   if (isReadRequest && url.pathname === '/readiness') {
-    return Response.json(await buildEnterpriseReadiness(hostname, env), {
+    const readiness = await buildEnterpriseReadiness(hostname, env);
+    return Response.json(buildPublicEnterpriseReadiness(readiness), {
       headers: {
         'cache-control': 'no-store',
       },
@@ -442,6 +512,8 @@ async function handleEnterpriseControlPlaneRequestInner(
   }
 
   if (pathSegments[0] === 'api' && pathSegments[1] === 'v1' && pathSegments[2] === 'enterprise') {
+    const enterpriseExecuteResponse = await handleEnterpriseExecuteRoutes(request, env, pathSegments.slice(3));
+    if (enterpriseExecuteResponse) return enterpriseExecuteResponse;
     const enterpriseRouteResponse = await handleEnterpriseOrganizationRoutes(request, env, pathSegments.slice(3));
     if (enterpriseRouteResponse) return enterpriseRouteResponse;
     const enterpriseMemberResponse = await handleEnterpriseMemberRoutes(request, env, pathSegments.slice(3));
@@ -454,8 +526,6 @@ async function handleEnterpriseControlPlaneRequestInner(
     if (enterpriseAlertResponse) return enterpriseAlertResponse;
     const enterpriseVerifierResponse = await handleEnterpriseVerifierRoutes(request, env, pathSegments.slice(3));
     if (enterpriseVerifierResponse) return enterpriseVerifierResponse;
-    const enterpriseExecuteResponse = await handleEnterpriseExecuteRoutes(request, env, pathSegments.slice(3));
-    if (enterpriseExecuteResponse) return enterpriseExecuteResponse;
   }
 
   if (request.method === 'POST' && url.pathname === '/execute') {

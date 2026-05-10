@@ -6,7 +6,7 @@ Last updated: 2026-05-05
 
 - Local repo: `/Users/nelson/projects/zkvault`
 - GitHub remote: `https://github.com/windsurftemplate/vaultproof.git`
-- Latest checked local commit during shutdown planning: `280567d`
+- Latest checked local commit during shutdown planning: `2cc6f4d`
 - Local source is enough to rebuild the app later.
 - Azure-only secrets, certs, runtime env files, and generated build output are not all stored in git.
 
@@ -48,7 +48,7 @@ These were present locally as untracked files during shutdown planning. Preserve
 
 ## Restart Later
 
-For the Google Cloud rebuild path, use `docs/enterprise/google-cloud-migration-plan.md`.
+For the Google Cloud rebuild path, use `docs/enterprise/google-cloud-migration-plan.md`. For DNS cleanup and later domain cutover, use `docs/enterprise/dns-shutdown-and-gcp-cutover-plan.md`.
 
 1. Restore or recreate Azure resources.
 2. Restore runtime env files and certs, or rotate/generate fresh values.

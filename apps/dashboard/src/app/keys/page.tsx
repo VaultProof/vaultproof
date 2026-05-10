@@ -316,9 +316,9 @@ function KeysDashboardInner() {
 
   return (
     <AppShell
-      eyebrow="Provider Setup"
-      title="Keys"
-      description="Connect providers to the selected project in the active organization. This is the next step after creating a team project, so onboarding can move straight from org setup into protected provider traffic."
+      eyebrow="Provider slots"
+      title="Provider slots"
+      description="View active providers, emergency revoke slots, rotation checklists, and Cloud KMS custody notes for each project."
       actions={
         <>
           {userEmail ? (
@@ -333,7 +333,7 @@ function KeysDashboardInner() {
             onClick={() => setShowAddKey((current) => !current)}
             className="rounded-full bg-emerald-500 px-4 py-2 text-sm font-semibold text-slate-950 transition hover:bg-emerald-400"
           >
-            {showAddKey ? "Close" : "+ Add Key"}
+            {showAddKey ? "Close" : "Add provider slot"}
           </button>
         </>
       }
@@ -355,7 +355,7 @@ function KeysDashboardInner() {
             </select>
           </div>
           <div className="self-end text-sm text-slate-400">
-            {selectedProjectId ? "Keys are project-scoped and never shared as raw provider secrets." : "Create a project first."}
+            {selectedProjectId ? "Provider slots are project-scoped and never shared as raw provider secrets." : "A project is required before provider slots can be added."}
           </div>
         </div>
 

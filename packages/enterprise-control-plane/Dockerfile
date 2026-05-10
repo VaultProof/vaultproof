@@ -33,6 +33,8 @@ COPY --from=build /app/packages/enterprise-control-plane/dist ./packages/enterpr
 COPY --from=build /app/packages/enterprise-control-plane/package.json ./packages/enterprise-control-plane/package.json
 COPY --from=build /app/apps/site/app/control.html ./apps/site/app/control.html
 COPY --from=build /app/apps/site/app/org.html ./apps/site/app/org.html
+COPY --from=build /app/apps/site/js/app-login-3.js ./apps/site/js/app-login-3.js
 
-EXPOSE 80
+USER node
+EXPOSE 3001
 CMD ["node", "packages/enterprise-control-plane/dist/enterprise-control-plane/src/server.js"]

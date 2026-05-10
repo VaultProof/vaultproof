@@ -639,33 +639,33 @@ export function renderInternalAdminPage(): string {
   <meta name="robots" content="noindex,nofollow" />
   <title>VaultProof Internal Admin</title>
   <style>
-    :root { color-scheme: dark; --bg:#070b10; --panel:rgba(235,241,255,.08); --panel-strong:rgba(235,241,255,.13); --line:rgba(235,241,255,.16); --text:#eef4ff; --muted:#a9b6c8; --gold:#d7a84b; --blue:#8ec5ff; --green:#72e3b5; --red:#fb7185; --ink:#07110f; }
+    :root { color-scheme: light; --bg:#dcebe8; --panel:rgba(255,255,255,.78); --panel-strong:rgba(255,255,255,.96); --line:rgba(48,76,71,.16); --text:#34514c; --muted:#667b75; --gold:#d5a914; --blue:#168a9f; --green:#3e5d57; --red:#b95d50; --ink:#304b46; }
     * { box-sizing: border-box; }
-    body { margin:0; min-height:100vh; font-family: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; color:var(--text); background: radial-gradient(circle at 12% 10%, rgba(142,197,255,.22), transparent 28rem), radial-gradient(circle at 88% 0%, rgba(215,168,75,.16), transparent 30rem), linear-gradient(135deg, #060a10, #111827 52%, #050807); }
+    body { margin:0; min-height:100vh; font-family: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; color:var(--text); background:linear-gradient(135deg, #dcebe8 0%, #eef6f2 50%, #c9ddda 100%); }
     a { color: inherit; text-decoration: none; }
     .shell { display:grid; grid-template-columns:280px 1fr; min-height:100vh; }
-    .sidebar { border-right:1px solid var(--line); background:rgba(2,6,12,.72); padding:28px 20px; position:sticky; top:0; height:100vh; }
+    .sidebar { border-right:1px solid var(--line); background:#3e5d57; color:#fff; padding:28px 20px; position:sticky; top:0; height:100vh; }
     .brand { display:flex; gap:12px; align-items:center; margin-bottom:28px; }
-    .mark { width:38px; height:38px; border-radius:14px; display:grid; place-items:center; background:linear-gradient(135deg, var(--blue), #e9f5ff); color:#08111f; font-weight:900; }
+    .mark { width:38px; height:38px; border-radius:14px; display:grid; place-items:center; background:var(--gold); color:#304b46; font-weight:900; }
     .brand-title { font-weight:850; letter-spacing:-.03em; }
     .brand-sub { color:var(--muted); font-size:12px; margin-top:2px; }
     .nav-label { color:var(--muted); font-size:11px; text-transform:uppercase; letter-spacing:.12em; margin:22px 0 9px 10px; }
-    .nav-link { display:flex; justify-content:space-between; padding:11px 12px; border-radius:14px; color:#dce8f9; border:1px solid transparent; margin-bottom:4px; }
+    .nav-link { display:flex; justify-content:space-between; padding:11px 12px; border-radius:14px; color:rgba(255,255,255,.88); border:1px solid transparent; margin-bottom:4px; }
     .nav-link:hover, .nav-link.active { background:var(--panel); border-color:var(--line); }
-    .sidebar-note { margin-top:24px; border:1px solid var(--line); border-radius:18px; padding:14px; color:var(--muted); background:rgba(235,241,255,.06); font-size:12px; line-height:1.45; }
+    .sidebar-note { margin-top:24px; border:1px solid rgba(255,255,255,.22); border-radius:18px; padding:14px; color:rgba(255,255,255,.7); background:rgba(255,255,255,.12); font-size:12px; line-height:1.45; }
     .main { padding:30px; max-width:1400px; width:100%; }
     .topbar { display:flex; justify-content:space-between; gap:18px; align-items:flex-start; margin-bottom:22px; }
     .eyebrow { color:var(--blue); font-size:12px; font-weight:850; text-transform:uppercase; letter-spacing:.16em; }
     h1 { margin:8px 0 10px; font-size:clamp(38px, 5vw, 70px); line-height:.92; letter-spacing:-.07em; }
     .lead { color:var(--muted); max-width:780px; line-height:1.6; }
-    button, select { border:1px solid var(--line); background:rgba(235,241,255,.08); color:var(--text); border-radius:13px; padding:11px 12px; font:inherit; }
+    button, select { border:1px solid var(--line); background:rgba(255,255,255,.78); color:var(--text); border-radius:13px; padding:11px 12px; font:inherit; }
     button { cursor:pointer; }
-    .primary { background:linear-gradient(135deg, var(--blue), #e9f5ff); color:#08111f; border:0; font-weight:850; }
+    .primary { background:linear-gradient(135deg, var(--gold), #f3df95); color:var(--ink); border:0; font-weight:850; }
     .toolbar { display:flex; flex-wrap:wrap; justify-content:flex-end; gap:10px; }
     .grid { display:grid; gap:16px; }
     .kpis { grid-template-columns:repeat(5, minmax(0,1fr)); margin-bottom:16px; }
     .two { grid-template-columns:minmax(0,1fr) minmax(360px,.8fr); }
-    .card { border:1px solid var(--line); border-radius:24px; padding:20px; background:linear-gradient(180deg, var(--panel-strong), rgba(235,241,255,.05)); box-shadow:0 22px 90px rgba(0,0,0,.22); }
+    .card { border:1px solid var(--line); border-radius:24px; padding:20px; background:linear-gradient(180deg, var(--panel-strong), rgba(247,250,244,.86)); box-shadow:0 22px 72px rgba(48,76,71,.18); }
     .kpi-label { color:var(--muted); font-size:12px; text-transform:uppercase; letter-spacing:.1em; }
     .kpi-value { font-size:34px; font-weight:850; letter-spacing:-.05em; margin-top:8px; }
     .kpi-sub { color:var(--muted); font-size:13px; margin-top:6px; }
@@ -673,17 +673,17 @@ export function renderInternalAdminPage(): string {
     .section-title h2 { margin:0; font-size:20px; letter-spacing:-.03em; }
     .mini { color:var(--muted); font-size:13px; }
     .list { display:grid; gap:10px; }
-    .row { display:grid; grid-template-columns:1fr auto; gap:14px; align-items:start; border:1px solid rgba(235,241,255,.1); border-radius:17px; padding:14px; background:rgba(2,6,12,.3); }
+    .row { display:grid; grid-template-columns:1fr auto; gap:14px; align-items:start; border:1px solid rgba(48,76,71,.1); border-radius:17px; padding:14px; background:rgba(247,250,244,.84); }
     .row-title { font-weight:780; letter-spacing:-.02em; }
     .row-sub { color:var(--muted); font-size:13px; margin-top:5px; line-height:1.45; }
-    .tag { display:inline-block; color:var(--blue); border:1px solid rgba(142,197,255,.24); border-radius:999px; padding:5px 8px; font-size:12px; margin:3px 4px 0 0; white-space:nowrap; }
-    .tag.good { color:var(--green); border-color:rgba(114,227,181,.24); }
-    .tag.warn { color:var(--gold); border-color:rgba(215,168,75,.28); }
-    .tag.bad { color:var(--red); border-color:rgba(251,113,133,.28); }
-    .notice, .empty { color:var(--muted); border:1px dashed rgba(235,241,255,.22); border-radius:18px; padding:18px; background:rgba(2,6,12,.24); }
-    .notice.error { color:var(--red); border-color:rgba(251,113,133,.3); }
+    .tag { display:inline-block; color:var(--blue); border:1px solid rgba(22,138,159,.24); border-radius:999px; padding:5px 8px; font-size:12px; margin:3px 4px 0 0; white-space:nowrap; }
+    .tag.good { color:var(--green); border-color:rgba(62,93,87,.24); }
+    .tag.warn { color:var(--gold); border-color:rgba(213,169,20,.28); }
+    .tag.bad { color:var(--red); border-color:rgba(185,93,80,.28); }
+    .notice, .empty { color:var(--muted); border:1px dashed rgba(48,76,71,.22); border-radius:18px; padding:18px; background:rgba(247,250,244,.78); }
+    .notice.error { color:var(--red); border-color:rgba(185,93,80,.3); }
     .actions { display:flex; gap:10px; flex-wrap:wrap; margin-top:14px; }
-    .action { border:1px solid var(--line); border-radius:14px; padding:10px 12px; background:rgba(235,241,255,.07); }
+    .action { border:1px solid var(--line); border-radius:14px; padding:10px 12px; background:rgba(255,255,255,.72); }
     @media (max-width: 1050px) { .shell { grid-template-columns:1fr; } .sidebar { position:relative; height:auto; } .topbar { flex-direction:column; } .toolbar { justify-content:flex-start; } .kpis, .two { grid-template-columns:1fr; } }
   </style>
 </head>

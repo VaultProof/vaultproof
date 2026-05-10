@@ -1,6 +1,7 @@
 "use client";
 
 import { createClient } from "@supabase/supabase-js";
+import Link from "next/link";
 import { useEffect, useMemo, useState, useTransition } from "react";
 import type {
   ApprovalItem,
@@ -41,6 +42,57 @@ const SCENARIO_STYLES: Record<InternalFinanceSnapshot["scenarios"][number]["stat
   watch: "border-amber-300/20 bg-amber-300/10 text-amber-100",
   extension: "border-emerald-400/20 bg-emerald-400/10 text-emerald-100",
 };
+
+const CONTROL_CENTER_LINKS = [
+  ["Project health", "Review environments, traffic, policy status, and allowed origins.", "/projects"],
+  ["Provider slots", "View active providers, rotation checklists, and emergency revoke controls.", "/keys"],
+  ["Access evidence", "Review members, pending invites, roles, and project assignments.", "/members"],
+  ["Audit exports", "Search governance/runtime events and prepare CSV evidence.", "/audit"],
+  ["Alert delivery", "Manage destinations, delivery logs, dispatch runs, and policy state.", "/alerts"],
+] as const;
+
+const ENTERPRISE_LINK_GROUPS = [
+  {
+    title: "Evidence links",
+    detail: "The old enterprise console put readiness, health, and review exports within one click for operators.",
+    links: [
+      ["Production readiness", "/readiness"],
+      ["Control-plane health", "/health"],
+      ["Audit CSV", "/api/v1/enterprise/audit?format=csv&days=30"],
+      ["Access review CSV", "/api/v1/enterprise/members/access-review?format=csv"],
+    ],
+  },
+  {
+    title: "Security controls",
+    detail: "Caller lock, provider custody, SSO, and proof verification are the core enterprise controls.",
+    links: [
+      ["Policy control", "/app/control"],
+      ["Provider slots", "/keys"],
+      ["Org + Entra SSO", "/app/org"],
+      ["AI Proof Verifier", "/app/verifier"],
+    ],
+  },
+  {
+    title: "Operator resources",
+    detail: "Setup, launch, scanner, and runbook material remain available without taking over workspace provisioning.",
+    links: [
+      ["Setup guide", "/app/setup"],
+      ["Technical guide", "/app/technical-guide"],
+      ["Launch plans", "/app/plans"],
+      ["Scanner", "/app/scanner"],
+      ["Runbooks", "/app/runbooks"],
+    ],
+  },
+  {
+    title: "Support",
+    detail: "Keep public docs and service status visible for teams moving between implementation and operations.",
+    links: [
+      ["Docs", "https://vaultproof.dev/docs"],
+      ["Status", "https://vaultproof.dev/status"],
+      ["Support", "mailto:hello@vaultproof.dev"],
+    ],
+  },
+] as const;
 
 const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL;
 const SUPABASE_ANON_KEY = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
@@ -134,30 +186,30 @@ async function postInternalFinanceAction(token: string, body: Record<string, unk
 export function ExecutivePortalShell() {
   const [state, setState] = useState<ExecutiveStateSnapshot>(EMPTY_STATE);
   const [sessionToken, setSessionToken] = useState<string | null>(null);
-  const [sessionChecked, setSessionChecked] = useState(false);
+  const [sessionChecked, setSessionChecked] = useState(!supabase);
   const [finance, setFinance] = useState<InternalFinanceSnapshot | null>(null);
   const [activeAssistant, setActiveAssistant] = useState<AssistantMode>("chief_of_staff");
   const [composer, setComposer] = useState("");
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const [loading, setLoading] = useState(Boolean(supabase));
+  const [error, setError] = useState<string | null>(supabase ? null : "Dashboard sign-in is not configured.");
   const [financeError, setFinanceError] = useState<string | null>(null);
   const [pendingMessage, startMessageTransition] = useTransition();
   const [pendingAction, startActionTransition] = useTransition();
   const [pendingFinanceAction, startFinanceTransition] = useTransition();
 
   useEffect(() => {
-    if (!supabase) {
-      setSessionChecked(true);
-      setLoading(false);
-      setError("Dashboard sign-in is not configured.");
-      return;
-    }
+    if (!supabase) return;
     let cancelled = false;
 
     supabase.auth.getSession().then(({ data }) => {
       if (cancelled) return;
-      setSessionToken(data.session?.access_token || null);
+      const accessToken = data.session?.access_token || null;
+      setSessionToken(accessToken);
       setSessionChecked(true);
+      if (!accessToken) {
+        setLoading(false);
+        setError("Sign in with an approved VaultProof employee account to access this dashboard.");
+      }
     }).catch(() => {
       if (cancelled) return;
       setSessionChecked(true);
@@ -170,6 +222,8 @@ export function ExecutivePortalShell() {
       setSessionChecked(true);
       if (!session?.access_token) {
         setFinance(null);
+        setLoading(false);
+        setError("Sign in with an approved VaultProof employee account to access this dashboard.");
       }
     });
 
@@ -181,26 +235,26 @@ export function ExecutivePortalShell() {
 
   useEffect(() => {
     if (!sessionChecked) return;
-    if (!sessionToken) {
-      setLoading(false);
-      setError("Sign in with an approved VaultProof employee account to access this dashboard.");
-      return;
-    }
+    if (!sessionToken) return;
 
     let cancelled = false;
-    setLoading(true);
-    fetchExecutiveState(sessionToken)
-      .then((nextState) => {
+    const tokenForRequest = sessionToken;
+    async function loadExecutiveState() {
+      setLoading(true);
+      try {
+        const nextState = await fetchExecutiveState(tokenForRequest);
         if (cancelled) return;
         setState(nextState);
         setError(null);
         setLoading(false);
-      })
-      .catch((loadError: Error) => {
+      } catch (loadError) {
         if (cancelled) return;
-        setError(loadError.message);
+        setError(loadError instanceof Error ? loadError.message : "Failed to load executive workspace.");
         setLoading(false);
-      });
+      }
+    }
+
+    void loadExecutiveState();
 
     return () => {
       cancelled = true;
@@ -236,6 +290,11 @@ export function ExecutivePortalShell() {
     () => state.approvals.filter((approval) => approval.status === "pending"),
     [state.approvals],
   );
+  const highRiskApprovals = useMemo(
+    () => pendingApprovals.filter((approval) => approval.risk === "high").length,
+    [pendingApprovals],
+  );
+  const latestToolEvent = state.toolEvents[0] || null;
   const financeLoading = Boolean(sessionToken && !finance && !financeError);
   const activeFinanceScenario = useMemo(
     () => finance?.scenarios.find((scenario) => scenario.id === finance.activeScenarioId) || finance?.scenarios[0] || null,
@@ -291,80 +350,104 @@ export function ExecutivePortalShell() {
   if (loading) {
     return (
       <div className="rounded-[28px] border border-white/10 bg-white/[0.03] p-6 text-sm text-slate-300">
-        Loading the local executive workspace...
+        Loading the executive workspace...
       </div>
     );
   }
 
   return (
     <div className="space-y-6">
-      <div className="grid gap-4 xl:grid-cols-[1.7fr_1fr]">
-        <section className="rounded-[28px] border border-white/10 bg-white/[0.03] p-5 shadow-[0_16px_48px_rgba(2,6,23,0.18)]">
-          <div className="flex flex-col gap-5 lg:flex-row lg:items-start lg:justify-between">
-            <div className="max-w-2xl">
-              <div className="text-[11px] uppercase tracking-[0.22em] text-emerald-300">Executive Portal / Local MVP</div>
-              <h2 className="mt-3 text-2xl font-semibold tracking-tight text-white sm:text-[2rem]">
-                A working control-plane-first assistant, built locally.
-              </h2>
-              <p className="mt-3 text-sm leading-7 text-slate-300 sm:text-base">
-                This is now a functioning local product slice, not just a concept shell. Chat, artifacts, approvals,
-                workflows, and the audit trail all run through a local executive API so we can prove the shape before
-                we wire the production backend.
-              </p>
-            </div>
+      <section className="rounded-[30px] border border-white/10 bg-white/[0.03] p-5 shadow-[0_16px_48px_rgba(2,6,23,0.18)]">
+        <div className="grid gap-5 xl:grid-cols-[1.35fr_0.65fr]">
+          <div>
+            <div className="text-[11px] uppercase tracking-[0.22em] text-emerald-300">Enterprise dashboard</div>
+            <h2 className="mt-3 text-2xl font-semibold tracking-tight text-white sm:text-[2rem]">
+              Runtime, access, and evidence in one control center.
+            </h2>
+            <p className="mt-3 max-w-3xl text-sm leading-7 text-slate-300 sm:text-base">
+              This dashboard uses the same operating model as the enterprise control plane: confirm confidential runtime
+              readiness, review provider slots and caller-lock policy, then export evidence for audit and access review.
+            </p>
 
-            <div className="flex flex-wrap gap-3">
-              <button
-                onClick={() => triggerAction({ action: "artifact", assistantId: activeAssistant })}
-                disabled={pendingAction || pendingMessage}
-                className="rounded-2xl border border-white/10 bg-white/[0.04] px-4 py-3 text-sm font-medium text-white transition hover:border-white/20 hover:bg-white/[0.07] disabled:cursor-not-allowed disabled:opacity-60"
-              >
-                Generate artifact
-              </button>
-              <button
-                onClick={() => triggerAction({ action: "approval:create", assistantId: activeAssistant })}
-                disabled={pendingAction || pendingMessage}
-                className="rounded-2xl bg-emerald-400 px-4 py-3 text-sm font-semibold text-slate-950 transition hover:bg-emerald-300 disabled:cursor-not-allowed disabled:opacity-60"
-              >
-                Queue approval
-              </button>
+            <div className="mt-6 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+              {[
+                ["Production runtime", "check", "Confidential VM, executor, attestation, replay protection, and KMS path."],
+                ["Access review", String(pendingApprovals.length), highRiskApprovals ? `${highRiskApprovals} high-risk approvals held` : "Members, roles, and project access evidence."],
+                ["Provider slots", "review", "Active providers, rotation notes, caller lock, and emergency revoke."],
+                ["30d evidence", String(state.auditEvents.length), latestToolEvent ? `${latestToolEvent.tool} · ${latestToolEvent.status}` : "Governance and runtime activity exports."],
+              ].map(([label, value, detail]) => (
+                <div key={label} className="rounded-2xl border border-white/8 bg-slate-950/35 p-4">
+                  <div className="text-[11px] uppercase tracking-[0.2em] text-slate-400">{label}</div>
+                  <div className="mt-3 text-3xl font-semibold tracking-tight text-white">{value}</div>
+                  <div className="mt-2 text-sm leading-6 text-slate-400">{detail}</div>
+                </div>
+              ))}
             </div>
           </div>
 
-          <div className="mt-6 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
-            {[
-              ["Assistants live", String(state.profiles.length), "Chief of Staff, Revenue Watch, and Board Prep sessions."],
-              ["Pending approvals", String(pendingApprovals.length), "Every sensitive action is held for review locally."],
-              ["Scheduled workflows", String(state.workflows.length), "Morning briefings, dossiers, and board prep flows."],
-              ["Recent operations", String(state.toolEvents.length), "Tool runs and workflow events are already captured."],
-            ].map(([label, value, detail]) => (
-              <div key={label} className="rounded-2xl border border-white/8 bg-slate-950/35 p-4">
-                <div className="text-[11px] uppercase tracking-[0.2em] text-slate-400">{label}</div>
-                <div className="mt-3 text-3xl font-semibold tracking-tight text-white">{value}</div>
-                <div className="mt-2 text-sm leading-6 text-slate-400">{detail}</div>
+          <div className="rounded-[26px] border border-emerald-400/15 bg-emerald-400/8 p-4">
+            <div className="text-[11px] uppercase tracking-[0.22em] text-emerald-300">Confidential runtime posture</div>
+            <div className="mt-3 text-lg font-semibold text-white">Daily operator check</div>
+            <p className="mt-2 text-sm leading-6 text-slate-300">
+              The enterprise pages frame runtime security around the GCP confidential host, Cloud KMS unwrap path,
+              replay protection, and launch hardening checks.
+            </p>
+            <div className="mt-4 grid gap-2 text-sm leading-6 text-slate-300">
+              <div className="rounded-2xl border border-white/8 bg-slate-950/35 px-3 py-2">Confidential VM runtime host</div>
+              <div className="rounded-2xl border border-white/8 bg-slate-950/35 px-3 py-2">Cloud KMS provider-key path</div>
+              <div className="rounded-2xl border border-white/8 bg-slate-950/35 px-3 py-2">Replay protection for signed envelopes</div>
+            </div>
+            <div className="mt-4 flex flex-wrap gap-2">
+              <Link href="/audit" className="rounded-2xl border border-white/10 bg-white/[0.04] px-4 py-3 text-sm font-medium text-white transition hover:border-white/20 hover:bg-white/[0.07]">
+                Audit evidence
+              </Link>
+              <Link href="/keys" className="rounded-2xl bg-emerald-400 px-4 py-3 text-sm font-semibold text-slate-950 transition hover:bg-emerald-300">
+                Provider slots
+              </Link>
+            </div>
+          </div>
+        </div>
+
+        <div className="mt-5 grid gap-3 md:grid-cols-2 xl:grid-cols-5">
+          {CONTROL_CENTER_LINKS.map(([label, detail, href]) => (
+            <Link
+              key={href}
+              href={href}
+              className="rounded-2xl border border-white/8 bg-slate-950/35 p-4 transition hover:border-emerald-400/25 hover:bg-emerald-400/8"
+            >
+              <div className="text-sm font-semibold text-white">{label}</div>
+              <div className="mt-2 text-sm leading-6 text-slate-400">{detail}</div>
+              <div className="mt-4 text-xs font-semibold uppercase tracking-[0.16em] text-emerald-300">Open</div>
+            </Link>
+          ))}
+        </div>
+
+        <div className="mt-5 grid gap-3 lg:grid-cols-2 2xl:grid-cols-4">
+          {ENTERPRISE_LINK_GROUPS.map((group) => (
+            <div key={group.title} className="rounded-2xl border border-white/8 bg-slate-950/35 p-4">
+              <div className="text-sm font-semibold text-white">{group.title}</div>
+              <div className="mt-2 text-sm leading-6 text-slate-400">{group.detail}</div>
+              <div className="mt-4 grid gap-2">
+                {group.links.map(([label, href]) => {
+                  const external = href.startsWith("http") || href.startsWith("mailto:");
+                  return (
+                    <Link
+                      key={href}
+                      href={href}
+                      target={external ? "_blank" : undefined}
+                      rel={external ? "noreferrer" : undefined}
+                      className="flex items-center justify-between gap-3 rounded-xl border border-white/8 bg-white/[0.03] px-3 py-2 text-sm font-medium text-white transition hover:border-emerald-400/25 hover:bg-emerald-400/8"
+                    >
+                      <span>{label}</span>
+                      <span className="text-xs uppercase text-emerald-300">Open</span>
+                    </Link>
+                  );
+                })}
               </div>
-            ))}
-          </div>
-        </section>
-
-        <section className="rounded-[28px] border border-sky-300/15 bg-sky-300/7 p-5">
-          <div className="text-[11px] uppercase tracking-[0.22em] text-sky-200">Deployment answer</div>
-          <div className="mt-4 space-y-4 text-sm leading-7 text-slate-200">
-            <p>
-              This can run comfortably as a small hosted MVP. The dashboard can stay lightweight while the serious
-              runtime pieces remain separate.
-            </p>
-            <ul className="space-y-2 text-slate-300">
-              <li>The signed-in dashboard can host private workspace views when we are ready.</li>
-              <li>The current local API mirrors the control-plane shape we will harden later.</li>
-              <li>We can keep approvals and workflow discipline before adding risky autonomy.</li>
-            </ul>
-            <p className="text-slate-400">
-              {pendingAction || pendingMessage ? "Local action in progress..." : "Local MVP is interactive and ready for the next backend slice."}
-            </p>
-          </div>
-        </section>
-      </div>
+            </div>
+          ))}
+        </div>
+      </section>
 
       {error ? (
         <div className="rounded-2xl border border-rose-400/20 bg-rose-400/10 px-4 py-3 text-sm text-rose-100">
@@ -523,10 +606,9 @@ export function ExecutivePortalShell() {
           <div className="flex flex-col gap-4 border-b border-white/8 pb-5 lg:flex-row lg:items-end lg:justify-between">
             <div>
               <div className="text-[11px] uppercase tracking-[0.2em] text-slate-400">Workspace</div>
-              <h3 className="mt-2 text-xl font-semibold tracking-tight text-white">Executive assistant console</h3>
+              <h3 className="mt-2 text-xl font-semibold tracking-tight text-white">Operator brief console</h3>
               <p className="mt-2 max-w-2xl text-sm leading-6 text-slate-300">
-                One workspace for chat, artifacts, approvals, and workflow launch. The assistant changes role without
-                changing the trust boundary.
+                Draft briefs, artifacts, approvals, and playbook runs without leaving the enterprise evidence workflow.
               </p>
             </div>
             <div className="flex flex-wrap gap-2">

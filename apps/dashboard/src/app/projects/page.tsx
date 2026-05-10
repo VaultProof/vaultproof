@@ -450,9 +450,9 @@ export default function ProjectsPage() {
 
   return (
     <AppShell
-      eyebrow="Phase 1 Build Surface"
+      eyebrow="Project inventory"
       title="Projects"
-      description="This is the first real team-facing dashboard surface. Projects are now moving from owner-only resources toward shared, role-aware access controlled by VaultProof instead of raw provider key sharing."
+      description="Review project health, provider slot posture, policy status, traffic activity, and quick paths into enterprise controls."
       actions={
         <>
           {userEmail ? (
@@ -467,7 +467,7 @@ export default function ProjectsPage() {
             onClick={() => setShowCreateForm((current) => !current)}
             className="rounded-full bg-emerald-500 px-4 py-2 text-sm font-semibold text-slate-950 transition hover:bg-emerald-400"
           >
-            {showCreateForm ? "Close" : "Create Project"}
+            {showCreateForm ? "Close" : "New project"}
           </button>
         </>
       }

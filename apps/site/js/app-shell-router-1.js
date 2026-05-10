@@ -68,6 +68,13 @@
     currentMain.replaceWith(nextMain.cloneNode(true));
   }
 
+  function syncEnterpriseSidebar(nextDoc) {
+    var nextSidebar = nextDoc.querySelector('.sidebar.enterprise-app-sidebar');
+    var currentSidebar = document.querySelector('.sidebar.enterprise-app-sidebar');
+    if (!nextSidebar || !currentSidebar) return;
+    currentSidebar.replaceWith(nextSidebar.cloneNode(true));
+  }
+
   function unloadRuntimeScripts() {
     document.querySelectorAll(RUNTIME_SCRIPT_SELECTOR).forEach(function(script) {
       script.remove();
@@ -117,6 +124,7 @@
       var nextDoc = parser.parseFromString(html, 'text/html');
 
       syncPageStyle(nextDoc);
+      syncEnterpriseSidebar(nextDoc);
       syncTopbarAndMain(nextDoc);
       loadPageScripts(nextDoc);
       updateSidebar(target.pathname);

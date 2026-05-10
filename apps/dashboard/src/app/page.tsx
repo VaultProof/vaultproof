@@ -6,9 +6,9 @@ import { ExecutivePortalShell } from "../components/executive-portal-shell";
 export default function ExecutivePage() {
   return (
     <AppShell
-      eyebrow="Executive Portal Build"
-      title="Executive"
-      description="A VaultProof-owned chief of staff workspace that combines assistant chat, artifacts, approvals, and scheduled workflows inside the same enterprise control plane."
+      eyebrow="Enterprise dashboard"
+      title="Runtime, access, and evidence."
+      description="Monitor the provisioned organization workspace: confidential runtime posture, provider slots, team access, audit exports, alerts, and daily operating signals."
     >
       <ExecutivePortalShell />
     </AppShell>

@@ -1,6 +1,6 @@
 # Google Cloud Migration Plan
 
-Last updated: 2026-05-05
+Last updated: 2026-05-08
 
 ## Goal
 
@@ -10,25 +10,25 @@ Move VaultProof Enterprise off Azure and rebuild the most-secure runtime on Goog
 - signed execution envelopes,
 - replay protection,
 - confidential compute for provider execution,
-- HSM-backed key control,
+- non-exportable Cloud KMS key control for the shared pilot,
 - audit/evidence metadata that customers can inspect.
 
 ## Important Difference From Azure
 
 Azure currently uses Secure Key Release with an exportable `RSA-HSM` key path, then derives unwrap material inside the Confidential VM.
 
-Google Cloud KMS/Cloud HSM is not a 1:1 replacement for Azure Secure Key Release. Cloud KMS key material cannot be viewed or exported; it is used through KMS APIs by authorized identities. For GCP, prefer one of these designs:
+Google Cloud KMS is not a 1:1 replacement for Azure Secure Key Release. Cloud KMS key material cannot be viewed or exported; it is used through KMS APIs by authorized identities. For GCP, prefer one of these designs:
 
-1. **Cost-controlled pilot:** Compute Engine Confidential VM + Cloud KMS/Cloud HSM decrypt calls from the executor service account. Keep decrypted material only in process memory with short TTL.
+1. **Cost-controlled pilot:** Compute Engine Confidential VM + standard Cloud KMS decrypt calls from the executor service account. Keep decrypted material only in process memory with short TTL.
 2. **Stronger attested release model:** Confidential Space container + Google Cloud Attestation + Workload Identity Federation conditions to grant KMS access only to the expected workload image/TEE.
-3. **Future high-trust customer mode:** customer-owned Cloud KMS/Cloud HSM or external key manager, with policy and audit requirements negotiated per customer.
+3. **Future high-trust customer mode:** customer-owned Cloud KMS, optional Cloud HSM, or external key manager, with policy and audit requirements negotiated per customer.
 
 ## Azure To GCP Mapping
 
 | Azure component | GCP target | Notes |
 | --- | --- | --- |
 | Azure Confidential VM | Compute Engine Confidential VM | Use Confidential VM for the first lift. Use Confidential Space if we need stronger image-bound attestation before KMS access. |
-| Azure Managed HSM / Key Vault Premium SKR | Cloud KMS with Cloud HSM protection level | Cloud HSM is managed through Cloud KMS. Do not assume raw key export. |
+| Azure Managed HSM / Key Vault Premium SKR | Standard Cloud KMS for the shared pilot; optional Cloud HSM later | Do not assume raw key export. Avoid HSM in the shared pilot unless explicitly approved. |
 | Azure Attestation / SKR policy hash | Google Cloud Attestation / Confidential Space token claims | Evidence model must be redesigned around GCP attestation tokens and workload identity attributes. |
 | Azure Front Door | External HTTPS Load Balancer + Cloud Armor | Map `enterprise.vaultproof.dev` and `admin.vaultproof.dev` after DNS cutover. |
 | Azure API Management | API Gateway, Apigee, or customer gateway | For lowest cost, start without Apigee. Add API Gateway/Apigee only if needed for customer-managed gateway, quotas, and enterprise policy packaging. |
@@ -42,7 +42,6 @@ Google Cloud KMS/Cloud HSM is not a 1:1 replacement for Azure Secure Key Release
 2. Enable APIs:
    - Compute Engine
    - Cloud KMS
-   - Cloud HSM
    - Secret Manager
    - Cloud Logging
    - Cloud Monitoring
@@ -52,7 +51,7 @@ Google Cloud KMS/Cloud HSM is not a 1:1 replacement for Azure Secure Key Release
    - `vaultproof-control-plane`
    - `vaultproof-executor`
    - optional `vaultproof-deploy`
-4. Create Cloud KMS key ring and Cloud HSM-backed key for unwrap/decrypt.
+4. Create Cloud KMS key ring and standard KMS key for unwrap/decrypt.
 5. Deploy a small Compute Engine Confidential VM first.
 6. Install Node.js and deploy this repo from GitHub/local source.
 7. Restore or rotate runtime env values into Secret Manager and VM env files.
@@ -62,7 +61,8 @@ Google Cloud KMS/Cloud HSM is not a 1:1 replacement for Azure Secure Key Release
 
 ```bash
 npm run test:enterprise-control-plane-smoke
-npm run qa:enterprise-live-app
+npm run gate:gcp-customer-launch
+RUN_LIVE_EDGE=true RUN_LIVE_APP_QA=true STRICT_LIVE=true npm run gate:gcp-customer-launch
 ```
 
 ## Code Changes Needed
@@ -83,7 +83,7 @@ Suggested slices:
 4. Keep the same in-memory TTL cache behavior used by Azure release material.
 5. Extend `/health` and `/readiness` to report:
    - `security_profile: google-confidential-production`
-   - KMS/HSM readiness
+   - KMS readiness
    - attestation evidence summary
    - production blockers.
 6. Extend audit metadata to include:
@@ -110,10 +110,10 @@ If these are lost, recreate/rotate them in GCP instead of trying to recover old 
 
 ## Cost Controls
 
-- Start with one small Confidential VM and Cloud KMS/Cloud HSM only.
+- Start with one small Confidential VM and standard Cloud KMS only.
 - Do not create Apigee until the gateway business requirement is clear.
 - Avoid per-demo GCP runtimes. Use one shared demo runtime and isolate with Supabase organizations/projects.
-- Set a GCP budget and alerts before creating HSM-backed keys.
+- Set a GCP budget and alerts before creating compute or load-balancing resources.
 - Keep old Azure canceled/closed once backups are captured.
 
 ## First Implementation Order
@@ -126,8 +126,9 @@ If these are lost, recreate/rotate them in GCP instead of trying to recover old 
 6. Create `infra/gcp/enterprise-secure-runtime/README.md` and deploy scripts.
 7. Deploy first GCP Confidential VM.
 8. Wire DNS/load balancer.
-9. Run public QA.
-10. Add attestation-bound Confidential Space/KMS policy once the basic lift is stable.
+9. Publish real runtime secret versions and reset the VM.
+10. Run public QA and the GCP customer launch gate.
+11. Add attestation-bound Confidential Space/KMS policy once the basic lift is stable.
 
 ## Official GCP References
 

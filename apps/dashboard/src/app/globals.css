@@ -24,3 +24,102 @@ body {
   font-family: var(--font-body);
   -webkit-font-smoothing: antialiased;
 }
+
+.enterprise-dashboard,
+.enterprise-dashboard * {
+  letter-spacing: 0 !important;
+}
+
+.enterprise-content {
+  --enterprise-ink: #17231d;
+  --enterprise-muted: #56665e;
+  --enterprise-soft: #738078;
+  --enterprise-line: rgba(32, 48, 39, 0.14);
+  --enterprise-panel: #ffffff;
+  --enterprise-panel-soft: #fbfcf8;
+}
+
+.enterprise-content [class*="bg-white/["],
+.enterprise-content [class*="bg-slate-950/"],
+.enterprise-content .bg-zinc-900 {
+  background-color: var(--enterprise-panel) !important;
+}
+
+.enterprise-content [class*="border-white/"],
+.enterprise-content .border-zinc-800 {
+  border-color: var(--enterprise-line) !important;
+}
+
+.enterprise-content .text-white,
+.enterprise-content .text-slate-50,
+.enterprise-content .text-slate-100,
+.enterprise-content .text-slate-200,
+.enterprise-content .text-zinc-100,
+.enterprise-content .text-zinc-200,
+.enterprise-content .text-zinc-300,
+.enterprise-content .text-zinc-400 {
+  color: var(--enterprise-ink) !important;
+}
+
+.enterprise-content .text-slate-300,
+.enterprise-content .text-slate-400,
+.enterprise-content .text-zinc-500 {
+  color: var(--enterprise-muted) !important;
+}
+
+.enterprise-content .text-slate-500,
+.enterprise-content .text-slate-600 {
+  color: var(--enterprise-soft) !important;
+}
+
+.enterprise-content .text-emerald-100,
+.enterprise-content .text-emerald-200,
+.enterprise-content .text-emerald-300,
+.enterprise-content .text-emerald-400 {
+  color: #176b4b !important;
+}
+
+.enterprise-content .text-sky-100,
+.enterprise-content .text-sky-200,
+.enterprise-content .text-sky-300,
+.enterprise-content .text-sky-400,
+.enterprise-content .text-blue-400 {
+  color: #1b5f86 !important;
+}
+
+.enterprise-content .text-amber-100,
+.enterprise-content .text-amber-200,
+.enterprise-content .text-amber-300,
+.enterprise-content .text-orange-400 {
+  color: #94730a !important;
+}
+
+.enterprise-content .text-rose-100,
+.enterprise-content .text-rose-200,
+.enterprise-content .text-rose-300,
+.enterprise-content .text-red-300,
+.enterprise-content .text-red-400 {
+  color: #9b263d !important;
+}
+
+.enterprise-content input:not([type="checkbox"]):not([type="radio"]),
+.enterprise-content select,
+.enterprise-content textarea {
+  background: #ffffff !important;
+  border-color: #ccd8cf !important;
+  color: var(--enterprise-ink) !important;
+}
+
+.enterprise-content input::placeholder,
+.enterprise-content textarea::placeholder {
+  color: #87938d !important;
+}
+
+.enterprise-content option {
+  background: #ffffff;
+  color: var(--enterprise-ink);
+}
+
+.enterprise-content table {
+  color: var(--enterprise-ink);
+}

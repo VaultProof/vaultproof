@@ -76,7 +76,7 @@ export const ORGANIZATION_ROLE_DEFINITIONS: readonly OrganizationRoleDefinition[
   {
     value: 'platform_admin',
     label: 'Platform Admin',
-    summary: 'Operates gateway, runtime, TLS/APIM, readiness, and production traffic controls.',
+    summary: 'Operates gateway, runtime, DNS/edge, readiness, and production traffic controls.',
     permissions: ['runtime readiness', 'gateway setup', 'project policy', 'provider operations', 'runbooks'],
     privileged: true,
   },

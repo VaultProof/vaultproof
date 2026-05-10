@@ -35,7 +35,7 @@ export interface SecureExecutionResult {
   headers: Record<string, string>;
   bodyBase64: string | null;
   providerRequestId?: string | null;
-  attestation?: AzureSecureExecutionAttestationEvidence | null;
+  attestation?: SecureExecutionAttestationEvidence | null;
   error?: string | null;
 }
 
@@ -61,6 +61,30 @@ export interface AzureSecureExecutionAttestationEvidence {
     measurementSummary?: string | null;
   };
 }
+
+export interface GcpSecureExecutionAttestationEvidence {
+  provider: 'gcp-confidential-vm' | 'gcp-confidential-space';
+  projectId?: string | null;
+  location?: string | null;
+  attestationTokenHash?: string | null;
+  keyId?: string | null;
+  keyVersion?: string | null;
+  keyProtectionLevel?: 'SOFTWARE' | 'HSM' | 'EXTERNAL' | 'EXTERNAL_VPC' | string | null;
+  executorBuildDigest?: string | null;
+  confidentialVmResourceId?: string | null;
+  claims?: {
+    attestationType?: string | null;
+    secureBoot?: boolean | null;
+    vmIsolation?: string | null;
+    measurementSummary?: string | null;
+    imageDigest?: string | null;
+    serviceAccountEmail?: string | null;
+  };
+}
+
+export type SecureExecutionAttestationEvidence =
+  | AzureSecureExecutionAttestationEvidence
+  | GcpSecureExecutionAttestationEvidence;
 
 function sortRecord(value: Record<string, unknown>): Record<string, unknown> {
   return Object.keys(value)

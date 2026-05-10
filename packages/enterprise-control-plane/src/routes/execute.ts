@@ -1,10 +1,11 @@
 import {
   buildSignedSecureExecutionEnvelope,
-  type AzureSecureExecutionAttestationEvidence,
+  type SecureExecutionAttestationEvidence,
   type SecureExecutionCallerLock,
   type SecureExecutionRequest,
   type SecureExecutionResult,
 } from '@vaultproof/core';
+import { createHmac, timingSafeEqual } from 'node:crypto';
 import type { EnterpriseControlPlaneEnv } from '../config.js';
 import { dispatchToSecureExecutor } from '../config.js';
 import {
@@ -42,7 +43,66 @@ type CallerLockPolicy = {
   provider_overrides?: Record<string, CallerLockPolicy>;
 };
 
+type ExecuteActor = {
+  userId: string | null;
+  email: string | null;
+};
+
+type ExecuteProjectContext = {
+  id: string;
+  organization_id: string | null;
+  vp_proj_id: string;
+  name: string | null;
+  allowed_origins: string | null;
+  strict_origin: boolean;
+  caller_lock_policy?: Record<string, unknown> | null;
+  created_at?: string | null;
+  revoked_at?: string | null;
+  project_role?: string;
+  access_via?: string;
+};
+
+type ExecuteProviderContext = {
+  id: string;
+  provider: string | null;
+  slug?: string | null;
+  upstream_base_url?: string | null;
+};
+
+type ExecuteContext = {
+  project: ExecuteProjectContext;
+  keyRow: ExecuteProviderContext;
+  source: 'cache' | 'supabase';
+};
+
+type RuntimeTokenPayload = {
+  v?: number;
+  aud?: string;
+  scope?: string;
+  project_id?: string;
+  exp?: number;
+  nbf?: number;
+  iat?: number;
+  jti?: string;
+  providers?: string[];
+  slugs?: string[];
+  methods?: string[];
+  upstream_path_prefixes?: string[];
+  customer_gateways?: string[];
+};
+
+type RuntimeTokenAuth = {
+  payload: RuntimeTokenPayload;
+  actor: ExecuteActor;
+};
+
 const executionRateLimitBuckets = new Map<string, { windowStart: number; count: number }>();
+const executionContextCache = new Map<string, { expiresAt: number; context: ExecuteContext }>();
+
+const RUNTIME_TOKEN_PREFIX = 'vp_exec_v1.';
+const RUNTIME_TOKEN_AUDIENCE = 'vaultproof-enterprise-execute';
+const RUNTIME_TOKEN_SCOPE = 'project:execute';
+const RUNTIME_TOKEN_CLOCK_SKEW_SECONDS = 30;
 
 const SAFE_EXECUTION_HEADERS = new Set([
   'content-type',
@@ -120,13 +180,119 @@ function firstHeader(request: Request, names: string[]): string | null {
   return null;
 }
 
-function getSourceIp(request: Request): string | null {
-  const forwardedFor = request.headers.get('x-forwarded-for');
-  if (forwardedFor) {
-    const first = forwardedFor.split(',')[0]?.trim();
-    if (first) return first;
+function constantTimeEquals(left: string, right: string): boolean {
+  const leftBytes = Buffer.from(left);
+  const rightBytes = Buffer.from(right);
+  return leftBytes.length === rightBytes.length && timingSafeEqual(leftBytes, rightBytes);
+}
+
+function extractBearerToken(request: Request): string {
+  const authHeader = request.headers.get('authorization') || '';
+  return authHeader.startsWith('Bearer ') ? authHeader.slice(7).trim() : '';
+}
+
+function getRuntimeTokenSecret(env: EnterpriseControlPlaneEnv): string | null {
+  const secret = env.enterpriseProxyTokenSecret?.trim() || '';
+  return secret.length >= 32 ? secret : null;
+}
+
+function decodeRuntimeTokenPayload(encodedPayload: string): RuntimeTokenPayload | null {
+  if (!encodedPayload || encodedPayload.length > 4096) return null;
+  try {
+    const parsed = JSON.parse(Buffer.from(encodedPayload, 'base64url').toString('utf8'));
+    return isRecord(parsed) ? parsed as RuntimeTokenPayload : null;
+  } catch {
+    return null;
   }
-  return firstHeader(request, ['x-real-ip', 'x-client-ip', 'cf-connecting-ip']);
+}
+
+function signRuntimeTokenPayload(encodedPayload: string, secret: string): string {
+  return createHmac('sha256', secret)
+    .update(`${RUNTIME_TOKEN_PREFIX}${encodedPayload}`)
+    .digest('base64url');
+}
+
+function getRuntimeTokenList(value: unknown, uppercase = false): string[] {
+  const normalized = normalizePolicyList(value);
+  return uppercase ? normalized.map((item) => item.toUpperCase()) : normalized;
+}
+
+function verifyEnterpriseRuntimeToken(
+  request: Request,
+  env: EnterpriseControlPlaneEnv,
+  projectId: string,
+): { status: 'none' } | { status: 'valid'; auth: RuntimeTokenAuth } | { status: 'invalid' } {
+  const token = extractBearerToken(request);
+  if (!token.startsWith(RUNTIME_TOKEN_PREFIX)) return { status: 'none' };
+  if (token.length > 8192) return { status: 'invalid' };
+
+  const secret = getRuntimeTokenSecret(env);
+  if (!secret) return { status: 'invalid' };
+
+  const remainder = token.slice(RUNTIME_TOKEN_PREFIX.length);
+  const parts = remainder.split('.');
+  if (parts.length !== 2) return { status: 'invalid' };
+
+  const [encodedPayload, signature] = parts;
+  if (!encodedPayload || !signature) return { status: 'invalid' };
+
+  const expectedSignature = signRuntimeTokenPayload(encodedPayload, secret);
+  if (!constantTimeEquals(signature, expectedSignature)) return { status: 'invalid' };
+
+  const payload = decodeRuntimeTokenPayload(encodedPayload);
+  if (!payload) return { status: 'invalid' };
+
+  const nowSeconds = Math.floor(Date.now() / 1000);
+  if (
+    payload.v !== 1
+    || payload.aud !== RUNTIME_TOKEN_AUDIENCE
+    || payload.scope !== RUNTIME_TOKEN_SCOPE
+    || payload.project_id !== projectId
+    || typeof payload.exp !== 'number'
+    || !Number.isFinite(payload.exp)
+    || payload.exp < nowSeconds - RUNTIME_TOKEN_CLOCK_SKEW_SECONDS
+  ) {
+    return { status: 'invalid' };
+  }
+
+  if (
+    typeof payload.nbf === 'number'
+    && Number.isFinite(payload.nbf)
+    && payload.nbf > nowSeconds + RUNTIME_TOKEN_CLOCK_SKEW_SECONDS
+  ) {
+    return { status: 'invalid' };
+  }
+
+  const tokenId = typeof payload.jti === 'string' && payload.jti.trim()
+    ? payload.jti.trim()
+    : payload.project_id;
+  return {
+    status: 'valid',
+    auth: {
+      payload,
+      actor: {
+        userId: null,
+        email: `runtime:${tokenId}`,
+      },
+    },
+  };
+}
+
+function getSourceIp(request: Request, env: EnterpriseControlPlaneEnv): string | null {
+  const expectedSecret = env.trustedSourceIpHeaderSecret?.trim();
+  if (!expectedSecret) return null;
+
+  const actualSecret = firstHeader(request, [
+    'x-vaultproof-source-ip-secret',
+    'x-vaultproof-client-ip-secret',
+  ]);
+  if (!actualSecret || !constantTimeEquals(actualSecret, expectedSecret)) return null;
+
+  const sourceIp = firstHeader(request, [
+    'x-vaultproof-source-ip',
+    'x-vaultproof-client-ip',
+  ]);
+  return sourceIp?.split(',')[0]?.trim() || null;
 }
 
 function normalizeThumbprint(value: string | null): string | null {
@@ -149,7 +315,7 @@ function normalizeClientClass(value: string | null): SecureExecutionCallerLock['
   return normalized ? 'unknown' : undefined;
 }
 
-async function buildCallerLock(request: Request): Promise<SecureExecutionCallerLock> {
+async function buildCallerLock(request: Request, env: EnterpriseControlPlaneEnv): Promise<SecureExecutionCallerLock> {
   const origin = normalizeOrigin(request.headers.get('origin'));
   const refererOrigin = getRefererOrigin(request.headers.get('referer'));
   const rawDeviceId = firstHeader(request, ['x-vaultproof-device-id', 'x-device-id']);
@@ -161,7 +327,7 @@ async function buildCallerLock(request: Request): Promise<SecureExecutionCallerL
     deviceIdHash: await hashIdentifier(rawDeviceId),
     fleetId: firstHeader(request, ['x-vaultproof-fleet-id', 'x-fleet-id']),
     firmwareVersion: firstHeader(request, ['x-vaultproof-firmware-version', 'x-firmware-version']),
-    sourceIp: getSourceIp(request),
+    sourceIp: getSourceIp(request, env),
     clientCertificateThumbprint: normalizeThumbprint(firstHeader(request, [
       'x-vaultproof-client-cert-thumbprint',
       'x-client-cert-thumbprint',
@@ -462,6 +628,57 @@ function enforceExecutionPolicy(
   return enforceExecutionPolicyValue(getCallerLockPolicy(project), input);
 }
 
+function enforceRuntimeTokenScope(
+  runtimeAuth: RuntimeTokenAuth | null,
+  input: {
+    provider: string;
+    slug: string;
+    method: string;
+    upstreamPath: string;
+    callerLock: SecureExecutionCallerLock;
+  },
+): string | null {
+  if (!runtimeAuth) return null;
+  const { payload } = runtimeAuth;
+
+  const providers = getRuntimeTokenList(payload.providers);
+  if (providers.length) {
+    const candidates = [input.provider, input.slug].map((value) => value.trim().toLowerCase()).filter(Boolean);
+    if (!candidates.some((candidate) => providers.includes(candidate))) {
+      return `Runtime token scope rejected provider ${input.provider || input.slug || 'missing'}.`;
+    }
+  }
+
+  const slugs = getRuntimeTokenList(payload.slugs);
+  if (slugs.length && !slugs.includes(input.slug.trim().toLowerCase())) {
+    return `Runtime token scope rejected slug ${input.slug || 'missing'}.`;
+  }
+
+  const methods = getRuntimeTokenList(payload.methods, true);
+  if (methods.length && !methods.includes(input.method.trim().toUpperCase())) {
+    return `Runtime token scope rejected method ${input.method || 'missing'}.`;
+  }
+
+  const upstreamPathPrefixes = getRuntimeTokenList(payload.upstream_path_prefixes)
+    .map((prefix) => prefix.startsWith('/') ? prefix : `/${prefix}`);
+  if (
+    upstreamPathPrefixes.length
+    && !upstreamPathPrefixes.some((prefix) => input.upstreamPath.toLowerCase().startsWith(prefix.toLowerCase()))
+  ) {
+    return `Runtime token scope rejected upstream path ${input.upstreamPath || 'missing'}.`;
+  }
+
+  const customerGateways = getRuntimeTokenList(payload.customer_gateways);
+  if (customerGateways.length) {
+    const gateway = input.callerLock.customerGateway?.trim().toLowerCase() || '';
+    if (!gateway || !customerGateways.includes(gateway)) {
+      return `Runtime token scope rejected gateway ${gateway || 'missing'}.`;
+    }
+  }
+
+  return null;
+}
+
 function enforceRateLimit(policy: CallerLockPolicy | null, key: string, now = Date.now()): string | null {
   const limit = policy?.rate_limit_per_minute;
   if (!limit) return null;
@@ -497,6 +714,155 @@ async function parseExecuteBody(request: Request): Promise<{ ok: true; value: Ex
   }
 }
 
+function getExecutionContextCacheTtlMs(env: EnterpriseControlPlaneEnv): number {
+  const rawTtl = env.enterpriseExecuteContextCacheTtlMs ?? 3000;
+  if (!Number.isFinite(rawTtl) || rawTtl <= 0) return 0;
+  return Math.min(Math.floor(rawTtl), 15_000);
+}
+
+function getExecutionContextCacheKey(env: EnterpriseControlPlaneEnv, projectId: string, slug: string): string {
+  return `${env.supabaseUrl || 'supabase'}:${projectId}:${slug.trim().toLowerCase()}`;
+}
+
+function normalizeJoinedProject(value: unknown): ExecuteProjectContext | null {
+  const project = Array.isArray(value) ? value[0] : value;
+  if (!isRecord(project)) return null;
+  if (typeof project.id !== 'string') return null;
+  return {
+    id: project.id,
+    organization_id: typeof project.organization_id === 'string' ? project.organization_id : null,
+    vp_proj_id: typeof project.vp_proj_id === 'string' ? project.vp_proj_id : project.id,
+    name: typeof project.name === 'string' ? project.name : null,
+    allowed_origins: typeof project.allowed_origins === 'string' ? project.allowed_origins : null,
+    strict_origin: project.strict_origin === true,
+    caller_lock_policy: isRecord(project.caller_lock_policy) ? project.caller_lock_policy : {},
+    created_at: typeof project.created_at === 'string' ? project.created_at : null,
+    revoked_at: typeof project.revoked_at === 'string' ? project.revoked_at : null,
+  };
+}
+
+function normalizeExecuteKeyRow(value: unknown, slug: string): ExecuteProviderContext | null {
+  const row = Array.isArray(value) ? value[0] : value;
+  if (!isRecord(row)) return null;
+  if (typeof row.id !== 'string') return null;
+  return {
+    id: row.id,
+    provider: typeof row.provider === 'string' ? row.provider : slug,
+    slug: typeof row.slug === 'string' ? row.slug : slug,
+    upstream_base_url: typeof row.upstream_base_url === 'string' ? row.upstream_base_url : null,
+  };
+}
+
+function normalizeExecuteContextFromJoinedRow(value: unknown, slug: string): ExecuteContext | null {
+  const row = Array.isArray(value) ? value[0] : value;
+  if (!isRecord(row)) return null;
+  const keyRow = normalizeExecuteKeyRow(row, slug);
+  const project = normalizeJoinedProject(row.projects);
+  if (!keyRow || !project) return null;
+  return {
+    project,
+    keyRow,
+    source: 'supabase',
+  };
+}
+
+async function fetchExecuteContextFallback(
+  env: EnterpriseControlPlaneEnv,
+  projectId: string,
+  slug: string,
+): Promise<ExecuteContext | null> {
+  const supabase = getSupabase(env);
+  const [{ data: keyData }, { data: projectData }] = await Promise.all([
+    supabase
+      .from('project_keys')
+      .select('id, provider, slug, upstream_base_url')
+      .eq('project_id', projectId)
+      .eq('slug', slug)
+      .is('revoked_at', null)
+      .maybeSingle(),
+    supabase
+      .from('projects')
+      .select('id, organization_id, vp_proj_id, name, allowed_origins, strict_origin, caller_lock_policy, created_at, revoked_at')
+      .eq('id', projectId)
+      .is('revoked_at', null)
+      .maybeSingle(),
+  ]);
+
+  const keyRow = normalizeExecuteKeyRow(keyData, slug);
+  const project = normalizeJoinedProject(projectData);
+  if (!keyRow || !project) return null;
+
+  return {
+    project,
+    keyRow,
+    source: 'supabase',
+  };
+}
+
+async function fetchExecuteContext(
+  env: EnterpriseControlPlaneEnv,
+  projectId: string,
+  slug: string,
+): Promise<ExecuteContext | null> {
+  const supabase = getSupabase(env);
+  const { data, error } = await supabase
+    .from('project_keys')
+    .select(`
+      id,
+      provider,
+      slug,
+      upstream_base_url,
+      projects!inner (
+        id,
+        organization_id,
+        vp_proj_id,
+        name,
+        allowed_origins,
+        strict_origin,
+        caller_lock_policy,
+        created_at,
+        revoked_at
+      )
+    `)
+    .eq('project_id', projectId)
+    .eq('slug', slug)
+    .is('revoked_at', null)
+    .is('projects.revoked_at', null)
+    .maybeSingle();
+
+  const context = !error ? normalizeExecuteContextFromJoinedRow(data, slug) : null;
+  return context || fetchExecuteContextFallback(env, projectId, slug);
+}
+
+async function getExecuteContext(
+  env: EnterpriseControlPlaneEnv,
+  projectId: string,
+  slug: string,
+): Promise<ExecuteContext | null> {
+  const ttlMs = getExecutionContextCacheTtlMs(env);
+  const cacheKey = getExecutionContextCacheKey(env, projectId, slug);
+  const now = Date.now();
+
+  if (ttlMs > 0) {
+    const cached = executionContextCache.get(cacheKey);
+    if (cached && cached.expiresAt > now) {
+      return {
+        ...cached.context,
+        source: 'cache',
+      };
+    }
+  }
+
+  const context = await fetchExecuteContext(env, projectId, slug);
+  if (context && ttlMs > 0) {
+    executionContextCache.set(cacheKey, {
+      expiresAt: now + ttlMs,
+      context,
+    });
+  }
+  return context;
+}
+
 async function hashForAudit(value: string): Promise<string> {
   const digest = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(value));
   return Buffer.from(digest).toString('base64url');
@@ -512,8 +878,29 @@ function generateNonce(): string {
 
 function summarizeAttestationEvidence(value: unknown): Record<string, unknown> | null {
   if (!isRecord(value)) return null;
-  const evidence = value as Partial<AzureSecureExecutionAttestationEvidence>;
-  const claims = isRecord(evidence.claims) ? evidence.claims : {};
+  const evidence = value as Partial<SecureExecutionAttestationEvidence> & {
+    attestationProviderUri?: string | null;
+    attestationTokenHash?: string | null;
+    keyReleasePolicyHash?: string | null;
+    keyId?: string | null;
+    keyVersion?: string | null;
+    keyProtectionLevel?: string | null;
+    projectId?: string | null;
+    location?: string | null;
+    executorBuildDigest?: string | null;
+    confidentialVmResourceId?: string | null;
+    claims?: unknown;
+  };
+  const claims = isRecord(evidence.claims)
+    ? evidence.claims as {
+        attestationType?: string | null;
+        secureBoot?: boolean | null;
+        vmIsolation?: string | null;
+        measurementSummary?: string | null;
+        imageDigest?: string | null;
+        serviceAccountEmail?: string | null;
+      }
+    : {};
   return {
     provider: evidence.provider || null,
     attestation_provider_uri: evidence.attestationProviderUri || null,
@@ -521,6 +908,9 @@ function summarizeAttestationEvidence(value: unknown): Record<string, unknown> |
     key_release_policy_hash: evidence.keyReleasePolicyHash || null,
     key_id: evidence.keyId || null,
     key_version: evidence.keyVersion || null,
+    key_protection_level: evidence.keyProtectionLevel || null,
+    gcp_project_id: evidence.projectId || null,
+    gcp_location: evidence.location || null,
     executor_build_digest: evidence.executorBuildDigest || null,
     confidential_vm_resource_id: evidence.confidentialVmResourceId || null,
     claims: {
@@ -528,6 +918,8 @@ function summarizeAttestationEvidence(value: unknown): Record<string, unknown> |
       secure_boot: claims.secureBoot ?? null,
       vm_isolation: claims.vmIsolation || null,
       measurement_summary: claims.measurementSummary || null,
+      image_digest: claims.imageDigest || null,
+      service_account_email: claims.serviceAccountEmail || null,
     },
   };
 }
@@ -564,7 +956,7 @@ async function auditCallerLockDenied(
     organization_id?: string | null;
     caller_lock_policy?: Record<string, unknown> | null;
   },
-  actor: { userId: string; email: string | null },
+  actor: ExecuteActor,
   lockError: string,
   callerLock: SecureExecutionCallerLock,
   metadata: Record<string, unknown> = {},
@@ -602,7 +994,7 @@ async function auditExecutionRateLimited(
     id: string;
     organization_id?: string | null;
   },
-  actor: { userId: string; email: string | null },
+  actor: ExecuteActor,
   description: string,
   metadata: Record<string, unknown>,
 ): Promise<void> {
@@ -641,22 +1033,35 @@ export async function handleEnterpriseExecuteRoutes(
     return Response.json({ error: 'Secure executor signing is not configured yet.' }, { status: 501 });
   }
 
-  const auth = await authenticateUser(request, env);
-  if (!auth) {
+  const projectId = pathSegments[1];
+  const slug = pathSegments[3];
+  const runtimeVerification = verifyEnterpriseRuntimeToken(request, env, projectId);
+  if (runtimeVerification.status === 'invalid') {
+    return Response.json({ error: 'Invalid or expired runtime token.' }, { status: 401 });
+  }
+
+  const runtimeAuth = runtimeVerification.status === 'valid' ? runtimeVerification.auth : null;
+  const dashboardAuth = runtimeAuth ? null : await authenticateUser(request, env);
+  if (!runtimeAuth && !dashboardAuth) {
     return Response.json(
       { error: 'Not authenticated. Sign in to VaultProof Enterprise.' },
       { status: 401 },
     );
   }
 
-  const projectId = pathSegments[1];
-  const slug = pathSegments[3];
-  const project = await getAccessibleProject(env, auth.userId, projectId);
-  if (!project) {
-    return Response.json({ error: 'Project not found' }, { status: 404 });
-  }
-  if (!hasRequiredProjectRole(project.project_role, 'member')) {
-    return Response.json({ error: 'Insufficient project permissions' }, { status: 403 });
+  let project: ExecuteProjectContext | null = null;
+  let keyRow: ExecuteProviderContext | null = null;
+  let executeContextSource = runtimeAuth ? 'runtime_miss' : 'dashboard_session';
+
+  if (dashboardAuth) {
+    project = await getAccessibleProject(env, dashboardAuth.userId, projectId);
+    if (!project) {
+      return Response.json({ error: 'Project not found' }, { status: 404 });
+    }
+    const projectRole = project.project_role as Parameters<typeof hasRequiredProjectRole>[0] | undefined;
+    if (!projectRole || !hasRequiredProjectRole(projectRole, 'member')) {
+      return Response.json({ error: 'Insufficient project permissions' }, { status: 403 });
+    }
   }
 
   const parsedBody = await parseExecuteBody(request);
@@ -674,30 +1079,73 @@ export async function handleEnterpriseExecuteRoutes(
     return Response.json({ error: 'body_base64 must be valid base64' }, { status: 400 });
   }
 
-  const callerLock = await buildCallerLock(request);
+  if (runtimeAuth) {
+    const context = await getExecuteContext(env, projectId, slug);
+    if (!context) {
+      return Response.json({ error: 'Project provider slot not found' }, { status: 404 });
+    }
+    project = context.project;
+    keyRow = context.keyRow;
+    executeContextSource = context.source;
+  } else if (project) {
+    const supabase = getSupabase(env);
+    const { data: keyData } = await supabase
+      .from('project_keys')
+      .select('id, provider, slug, upstream_base_url')
+      .eq('project_id', project.id)
+      .eq('slug', slug)
+      .is('revoked_at', null)
+      .maybeSingle();
+
+    keyRow = normalizeExecuteKeyRow(keyData, slug);
+  }
+
+  if (!project || !keyRow) {
+    return Response.json({ error: 'Project provider slot not found' }, { status: 404 });
+  }
+
+  const actor = runtimeAuth?.actor || {
+    userId: dashboardAuth?.userId || null,
+    email: dashboardAuth?.email || null,
+  };
+  const authAuditMetadata = {
+    auth_mode: runtimeAuth ? 'runtime_token' : 'dashboard_session',
+    runtime_token_jti: runtimeAuth?.payload.jti || null,
+    execute_context_source: executeContextSource,
+  };
+
+  const callerLock = await buildCallerLock(request, env);
   const lockError = enforceOriginLock(project, callerLock) || enforceCallerLockPolicy(project, callerLock);
   if (lockError) {
-    await auditCallerLockDenied(env, project, auth, lockError, callerLock, {
+    await auditCallerLockDenied(env, project, actor, lockError, callerLock, {
       policy_scope: 'project',
+      ...authAuditMetadata,
     });
     return Response.json({ error: lockError }, { status: 403 });
   }
 
-  const supabase = getSupabase(env);
-  const { data: keyRow } = await supabase
-    .from('project_keys')
-    .select('id, provider, upstream_base_url')
-    .eq('project_id', project.id)
-    .eq('slug', slug)
-    .is('revoked_at', null)
-    .maybeSingle();
+  const provider = keyRow.provider || slug;
+  const upstreamBaseUrl = keyRow.upstream_base_url || null;
 
-  if (!keyRow) {
-    return Response.json({ error: 'Project provider slot not found' }, { status: 404 });
+  const runtimeScopeError = enforceRuntimeTokenScope(runtimeAuth, {
+    provider,
+    slug,
+    method,
+    upstreamPath,
+    callerLock,
+  });
+  if (runtimeScopeError) {
+    await auditCallerLockDenied(env, project, actor, runtimeScopeError, callerLock, {
+      policy_scope: 'runtime_token',
+      provider,
+      slug,
+      method,
+      upstream_host: getUpstreamHost(upstreamBaseUrl),
+      upstream_path: upstreamPath,
+      ...authAuditMetadata,
+    });
+    return Response.json({ error: runtimeScopeError }, { status: 403 });
   }
-
-  const provider = (keyRow.provider as string) || slug;
-  const upstreamBaseUrl = keyRow.upstream_base_url as string | null;
 
   const executionPolicyError = enforceExecutionPolicy(project, {
     provider,
@@ -707,13 +1155,14 @@ export async function handleEnterpriseExecuteRoutes(
     upstreamPath,
   });
   if (executionPolicyError) {
-    await auditCallerLockDenied(env, project, auth, executionPolicyError, callerLock, {
+    await auditCallerLockDenied(env, project, actor, executionPolicyError, callerLock, {
       policy_scope: 'project_execution_policy',
       provider,
       slug,
       method,
       upstream_host: getUpstreamHost(upstreamBaseUrl),
       upstream_path: upstreamPath,
+      ...authAuditMetadata,
     });
     return Response.json({ error: executionPolicyError }, { status: 403 });
   }
@@ -723,10 +1172,11 @@ export async function handleEnterpriseExecuteRoutes(
     ? enforceCallerLockPolicyValue(providerLockPolicy, callerLock, `Caller lock for ${slug}`)
     : null;
   if (providerLockError) {
-    await auditCallerLockDenied(env, project, auth, providerLockError, callerLock, {
+    await auditCallerLockDenied(env, project, actor, providerLockError, callerLock, {
       policy_scope: 'provider',
       provider,
       slug,
+      ...authAuditMetadata,
     });
     return Response.json({ error: providerLockError }, { status: 403 });
   }
@@ -741,13 +1191,14 @@ export async function handleEnterpriseExecuteRoutes(
       }, `Execution policy for ${slug}`)
     : null;
   if (providerExecutionPolicyError) {
-    await auditCallerLockDenied(env, project, auth, providerExecutionPolicyError, callerLock, {
+    await auditCallerLockDenied(env, project, actor, providerExecutionPolicyError, callerLock, {
       policy_scope: 'provider_execution_policy',
       provider,
       slug,
       method,
       upstream_host: getUpstreamHost(upstreamBaseUrl),
       upstream_path: upstreamPath,
+      ...authAuditMetadata,
     });
     return Response.json({ error: providerExecutionPolicyError }, { status: 403 });
   }
@@ -755,7 +1206,7 @@ export async function handleEnterpriseExecuteRoutes(
   const projectPolicy = getCallerLockPolicy(project);
   const projectRateLimitError = enforceRateLimit(projectPolicy, `project:${project.id}`);
   if (projectRateLimitError) {
-    await auditExecutionRateLimited(env, project, auth, projectRateLimitError, {
+    await auditExecutionRateLimited(env, project, actor, projectRateLimitError, {
       policy_scope: 'project_rate_limit',
       provider,
       slug,
@@ -763,13 +1214,14 @@ export async function handleEnterpriseExecuteRoutes(
       upstream_host: getUpstreamHost(upstreamBaseUrl),
       upstream_path: upstreamPath,
       rate_limit_per_minute: projectPolicy.rate_limit_per_minute,
+      ...authAuditMetadata,
     });
     return Response.json({ error: projectRateLimitError }, { status: 429 });
   }
 
   const providerRateLimitError = enforceRateLimit(providerLockPolicy, `project:${project.id}:provider:${slug}`);
   if (providerRateLimitError) {
-    await auditExecutionRateLimited(env, project, auth, providerRateLimitError, {
+    await auditExecutionRateLimited(env, project, actor, providerRateLimitError, {
       policy_scope: 'provider_rate_limit',
       provider,
       slug,
@@ -777,6 +1229,7 @@ export async function handleEnterpriseExecuteRoutes(
       upstream_host: getUpstreamHost(upstreamBaseUrl),
       upstream_path: upstreamPath,
       rate_limit_per_minute: providerLockPolicy?.rate_limit_per_minute,
+      ...authAuditMetadata,
     });
     return Response.json({ error: providerRateLimitError }, { status: 429 });
   }
@@ -826,15 +1279,16 @@ export async function handleEnterpriseExecuteRoutes(
       await writeGovernanceAuditEvent(env, {
         organization_id: project.organization_id,
         project_id: project.id,
-        actor_user_id: auth.userId,
-        actor_email: auth.email,
+        actor_user_id: actor.userId,
+        actor_email: actor.email,
         event_type: 'enterprise_secure_execution_validated',
         target_type: 'project_key',
-        target_id: keyRow.id as string,
+        target_id: keyRow.id,
         description: `Validated secure execution for ${slug} on ${project.name || project.vp_proj_id}`,
         metadata: {
           dry_run: true,
           signed_envelope: dryRunData.signedEnvelope,
+          ...authAuditMetadata,
           ...buildExecutionAuditMetadata(executionRequest, 202, dryRunData),
         },
       });
@@ -852,6 +1306,8 @@ export async function handleEnterpriseExecuteRoutes(
         upstream_path: executionRequest.upstreamPath,
         caller_lock: callerLock,
         dry_run: true,
+        auth_mode: authAuditMetadata.auth_mode,
+        execute_context_source: executeContextSource,
       },
     }, { status: 202 });
   }
@@ -867,15 +1323,18 @@ export async function handleEnterpriseExecuteRoutes(
     await writeGovernanceAuditEvent(env, {
       organization_id: project.organization_id,
       project_id: project.id,
-      actor_user_id: auth.userId,
-      actor_email: auth.email,
+      actor_user_id: actor.userId,
+      actor_email: actor.email,
       event_type: response.ok ? 'enterprise_secure_execution_dispatched' : 'enterprise_secure_execution_failed',
       target_type: 'project_key',
-      target_id: keyRow.id as string,
+      target_id: keyRow.id,
       description: response.ok
         ? `Dispatched secure execution for ${slug} on ${project.name || project.vp_proj_id}`
         : `Failed secure execution dispatch for ${slug} on ${project.name || project.vp_proj_id}`,
-      metadata: buildExecutionAuditMetadata(executionRequest, response.status, responseData),
+      metadata: {
+        ...authAuditMetadata,
+        ...buildExecutionAuditMetadata(executionRequest, response.status, responseData),
+      },
     });
   }
 
@@ -890,6 +1349,8 @@ export async function handleEnterpriseExecuteRoutes(
       method: executionRequest.method,
       upstream_path: executionRequest.upstreamPath,
       caller_lock: callerLock,
+      auth_mode: authAuditMetadata.auth_mode,
+      execute_context_source: executeContextSource,
     },
   }, { status: response.status });
 }

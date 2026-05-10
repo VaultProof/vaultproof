@@ -141,11 +141,7 @@
 
   function syncOrganizationUrl(orgId) {
     const params = new URLSearchParams(window.location.search);
-    if (orgId) {
-      params.set('org', orgId);
-    } else {
-      params.delete('org');
-    }
+    params.delete('org');
     const next = `${window.location.pathname}${params.toString() ? '?' + params.toString() : ''}`;
     window.history.replaceState({}, '', next);
   }
@@ -852,7 +848,7 @@
       {
         title: 'Org setup',
         copy: 'Use the org page for ownership transfer, archive controls, and team-admin setup before rollout starts.',
-        href: currentOrganizationId ? `/app/org?org=${encodeURIComponent(currentOrganizationId)}` : '/app/org',
+        href: '/app/org',
         label: 'open org settings',
       },
     ];
@@ -917,7 +913,7 @@
       '- Enterprise demo: /enterprise-demo',
       '- Docs: /docs',
       '- Security: /security',
-      `- Org settings: ${currentOrganizationId ? `/app/org?org=${currentOrganizationId}` : '/app/org'}`,
+      '- Org settings: /app/org',
     ].join('\n');
   }
 

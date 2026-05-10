@@ -368,9 +368,9 @@ export default function AuditPage() {
 
   return (
     <AppShell
-      eyebrow="Phase 3 In Progress"
+      eyebrow="Audit and exports"
       title="Audit"
-      description="This page now reads a real unified feed from the worker: governance events for invites, accepts, assignments, and project changes, plus the existing runtime proxy logs."
+      description="Search governance and runtime events, prepare CSV evidence, and review customer-verifiable metadata."
       actions={
         userEmail ? (
           <div className="flex items-center gap-3 rounded-full border border-white/10 bg-white/[0.04] px-3 py-2">
