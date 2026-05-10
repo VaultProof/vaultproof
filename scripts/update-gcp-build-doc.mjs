@@ -250,8 +250,9 @@ const goal1Status = firstGoalGateDone
 const knownBlockers = readinessProductionReady
   ? [
       ...(publicSupabaseAnonReady
-        ? ['Browser OAuth/password login still needs final human browser QA.']
+        ? ['Run strict login readiness QA with `LOGIN_QA_REQUIRE_SESSION=true npm run qa:enterprise-login` to verify the Supabase redirect/session/API path.']
         : ['Browser OAuth/password login still needs the valid public Supabase anon key published as `SUPABASE_ANON_KEY`.']),
+      'Human OAuth/password login still needs final browser click-through QA.',
       `Supabase Auth redirect/provider settings still need confirmation for \`https://${edgeDomain}/app/login\`.`,
       'Rotate the pilot MiniMax key before paid customer onboarding because it was shared in chat; keep using sealed local ingest for any future live provider key.',
     ]
@@ -270,10 +271,11 @@ if (!readinessProductionReady && edgeCert?.managed?.status !== 'ACTIVE') {
 const nextSteps = readinessProductionReady
   ? [
       ...(publicSupabaseAnonReady
-        ? [`Browser-test \`https://${edgeDomain}/app/login\` with \`ken@vaultproof.dev\`.`]
+        ? [`Run \`LOGIN_QA_REQUIRE_SESSION=true npm run qa:enterprise-login\` with Supabase service-role env for \`ken@vaultproof.dev\`.`]
         : ['Copy the valid public Supabase anon key from Supabase Project Settings > API and publish it as `SUPABASE_ANON_KEY` in the control-plane env.']),
+      `Browser-test \`https://${edgeDomain}/app/login\` with \`ken@vaultproof.dev\`.`,
       `Confirm managed Supabase Auth redirect settings include \`https://${edgeDomain}/app/login\`.`,
-      'Configure the external OAuth provider app callback as `https://gwzkjiomemjlhtrdrlan.supabase.co/auth/v1/callback` if using Google/GitHub/Microsoft login.',
+      'Configure the external OAuth provider app callback as `https://gwzkjiomemjlhtrdrlan.supabase.co/auth/v1/callback` if using Google/GitHub/Microsoft login; add `LOGIN_QA_OAUTH_PROVIDER=google` to the login QA command to verify the public OAuth authorize redirect.',
       'Add a valid OpenAI Platform key only if the demo specifically needs OpenAI; MiniMax upstream dispatch is now live.',
       'Keep running `npm run gate:gcp-first-goal`; it can generate a temporary Supabase magic-link test session when no `ENTERPRISE_TEST_ACCESS_TOKEN` is provided.',
     ]
@@ -378,6 +380,14 @@ ${firstGoalGateDone
 Current blockers:
 
 ${markdownList(knownBlockers)}
+
+## Login Readiness QA
+
+Status: \`built in login-readiness-20260510\`
+
+\`npm run qa:enterprise-login\` now checks the live enterprise login page, validates the public Supabase URL/anon key embedded in \`/app/enterprise-login.js\`, and verifies the login script still sends OAuth, magic-link, confirmation, and recovery redirects back to \`https://${edgeDomain}/app/login\`.
+
+For the final demo go/no-go run, use \`LOGIN_QA_REQUIRE_SESSION=true npm run qa:enterprise-login\` with Supabase service-role env loaded. That strict mode generates a temporary magic-link session for \`ken@vaultproof.dev\`, which also proves the Supabase Auth redirect allowlist accepts \`https://${edgeDomain}/app/login\`, then calls \`/api/v1/enterprise/orgs\`, \`/orgs/current\`, and \`/projects/bootstrap\` with the generated browser session. To verify a specific external provider redirect, add \`LOGIN_QA_OAUTH_PROVIDER=google\` after the provider is configured.
 
 ## App Shell Notes
 

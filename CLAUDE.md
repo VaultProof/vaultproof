@@ -97,6 +97,7 @@ bash docs/compliance/scripts/compliance-check.sh
 
 **DO:**
 - Always update `docs/` when adding new commands, methods, or endpoints
+- After adding or changing code, ask Nelson before pushing; once confirmed, push the committed change so work does not sit only in the local worktree.
 - Use soft-expiry envelope pattern for logical sub-60s TTLs in KV
 - Use `auth.uid()::text` for RLS policies (user_id columns are TEXT)
 - Keep staging and production workers using different names (`vaultproof-staging` vs `zkvault`)

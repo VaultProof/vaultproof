@@ -44,6 +44,7 @@
     "test:enterprise-apim-policies": "node scripts/enterprise-apim-policy-docs-smoke.mjs",
     "test:enterprise-smoke": "npm run build:enterprise && node scripts/enterprise-secure-executor-smoke.mjs",
     "qa:enterprise-live-app": "node scripts/enterprise-live-app-qa.mjs",
+    "qa:enterprise-login": "node scripts/enterprise-login-readiness.mjs",
     "qa:enterprise-live-execute": "node scripts/enterprise-live-execute-test.mjs",
     "prepare:enterprise-alternate-access": "bash infra/azure/enterprise-secure-runtime/prepare-alternate-access.sh",
     "prepare:enterprise-apim-jwt": "bash infra/azure/enterprise-secure-runtime/prepare-apim-jwt-validation.sh",

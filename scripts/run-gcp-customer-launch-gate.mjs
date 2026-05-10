@@ -6,6 +6,7 @@ import { spawnSync } from 'node:child_process';
 const root = process.cwd();
 const runLiveEdge = process.env.RUN_LIVE_EDGE === 'true';
 const runLiveAppQa = process.env.RUN_LIVE_APP_QA === 'true';
+const runLoginQa = process.env.RUN_LOGIN_QA === 'true';
 const strictLive = process.env.STRICT_LIVE === 'true';
 const enterpriseUrl = process.env.ENTERPRISE_URL || 'https://enterprise.vaultproof.dev';
 
@@ -18,6 +19,7 @@ const requiredFiles = [
   'infra/gcp/enterprise-secure-runtime/publish-runtime-secrets.sh',
   'infra/gcp/enterprise-secure-runtime/collect-runtime-evidence.sh',
   'infra/gcp/enterprise-secure-runtime/prepare-first-goal-runtime.sh',
+  'scripts/enterprise-login-readiness.mjs',
 ];
 
 const steps = [];
@@ -87,6 +89,7 @@ runStep('GCP secret publisher syntax', 'bash', ['-n', 'infra/gcp/enterprise-secu
 runStep('GCP runtime evidence collector syntax', 'bash', ['-n', 'infra/gcp/enterprise-secure-runtime/collect-runtime-evidence.sh']);
 runStep('GCP first-goal runtime preparer syntax', 'bash', ['-n', 'infra/gcp/enterprise-secure-runtime/prepare-first-goal-runtime.sh']);
 runStep('GCP build doc generator syntax', 'node', ['--check', 'scripts/update-gcp-build-doc.mjs']);
+runStep('Enterprise login readiness syntax', 'node', ['--check', 'scripts/enterprise-login-readiness.mjs']);
 runStep('Enterprise build', 'npm', ['run', 'build:enterprise']);
 runStep('Enterprise smoke', 'npm', ['run', 'test:enterprise-smoke']);
 
@@ -107,10 +110,22 @@ if (runLiveAppQa) {
   skipStep('GCP live app QA', 'npm run qa:enterprise-live-app', 'Set RUN_LIVE_APP_QA=true after DNS and readiness are production-ready.');
 }
 
-if (strictLive && (!runLiveEdge || !runLiveAppQa)) {
+if (runLoginQa) {
+  runStep('GCP login readiness QA', 'npm', ['run', 'qa:enterprise-login'], {
+    env: {
+      ENTERPRISE_URL: enterpriseUrl,
+      LOGIN_QA_REQUIRE_SESSION: process.env.LOGIN_QA_REQUIRE_SESSION || (strictLive ? 'true' : 'false'),
+      LOGIN_QA_OAUTH_PROVIDER: process.env.LOGIN_QA_OAUTH_PROVIDER || '',
+    },
+  });
+} else {
+  skipStep('GCP login readiness QA', 'npm run qa:enterprise-login', 'Set RUN_LOGIN_QA=true after Supabase service-role credentials are available.');
+}
+
+if (strictLive && (!runLiveEdge || !runLiveAppQa || !runLoginQa)) {
   blockers.push({
     name: 'strict live launch gate requires live checks',
-    detail: 'Set RUN_LIVE_EDGE=true and RUN_LIVE_APP_QA=true with STRICT_LIVE=true.',
+    detail: 'Set RUN_LIVE_EDGE=true, RUN_LIVE_APP_QA=true, and RUN_LOGIN_QA=true with STRICT_LIVE=true.',
   });
 }
 
@@ -120,6 +135,7 @@ const result = {
   options: {
     runLiveEdge,
     runLiveAppQa,
+    runLoginQa,
     strictLive,
   },
   steps,

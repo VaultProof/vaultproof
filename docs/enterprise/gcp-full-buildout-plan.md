@@ -1,6 +1,6 @@
 # VaultProof GCP Full Buildout Plan
 
-Last updated: 2026-05-09
+Last updated: 2026-05-10
 
 This is the customer-demo buildout plan for moving VaultProof Enterprise from the current GCP pilot into a credible demo path that can support near-term customer conversations.
 
@@ -29,8 +29,8 @@ Already built:
 
 Not yet customer-ready:
 
-- Live browser OAuth/password login still needs final human QA and redirect settings confirmed.
-- Live upstream provider dispatch still needs encrypted provider material when we are ready to call a real provider.
+- Strict login readiness QA and final human OAuth/password browser QA still need to pass.
+- Live MiniMax provider dispatch works for the demo; add a separate OpenAI slot only if the demo specifically needs OpenAI.
 - Supabase OAuth/login settings still need to be confirmed for `enterprise.vaultproof.dev`.
 - Older migration/history docs still have Azure-era language; customer-facing app UI is cleaned for the GCP demo.
 
@@ -57,7 +57,7 @@ Goal 1 is the first milestone where Ken can start testing the sellable product p
 - A first pilot organization, member, project, and provider slot exist.
 - A dry-run execute request proves control plane -> executor -> policy -> audit flow.
 
-Current status: Goal 1 demo dry-run gate is done. The control-plane runtime env includes the public Supabase anon key. Browser testing still needs final human QA and managed Supabase OAuth/Auth redirect confirmation.
+Current status: Goal 1 demo dry-run gate is done. The control-plane runtime env includes the public Supabase anon key. `npm run qa:enterprise-login` now exists for repeatable login readiness checks; strict mode still needs to be run with Supabase service-role env, then followed by final human OAuth/password browser QA.
 
 ## Architecture
 
@@ -83,7 +83,7 @@ The executor stays private. Only the load balancer can reach the VM control-plan
 | Phase 1: Public Edge | Complete | DNS, TLS, forwarding rule, backend health, restricted LB firewall, and `/health` pass. |
 | Phase 2: Runtime Secrets And Readiness | Complete for demo | Real control-plane/executor env versions are published and live readiness reports `production_ready: true`. |
 | Phase 3: DNS Cutover | Complete for `enterprise` | Cloudflare `enterprise` A record points to `34.102.179.105`; TLS is active. |
-| Phase 4: Demo Readiness | In progress | Live gate passed for dry-run demo data; browser login still needs final human QA and Supabase OAuth/Auth redirect confirmation. |
+| Phase 4: Demo Readiness | In progress | Live gate passed for dry-run demo data; login readiness tooling is built; strict login QA, human browser login QA, and Supabase OAuth/Auth redirect confirmation remain. |
 | Phase 5: Customer Scale | Later | Managed instance group, WAF/rate limits, monitoring policies, evidence automation, rollback. |
 
 ## Cost Snapshot
@@ -167,6 +167,8 @@ Build:
 - Create one demo project with strict origin/caller policy.
 - Confirm provider slots and allowed origins.
 - Seed a demo provider slot. Placeholder shares are acceptable for dashboard and dry-run validation; live provider dispatch later needs encrypted shares generated from the same unwrap root encrypted into GCP KMS.
+- Run `LOGIN_QA_REQUIRE_SESSION=true npm run qa:enterprise-login` with Supabase service-role env to verify the live login page, Supabase redirect allowlist, generated browser session, and authenticated enterprise org/bootstrap APIs.
+- Add `LOGIN_QA_OAUTH_PROVIDER=google` to the login QA command after the external OAuth provider app is configured.
 - Confirm API execution path through `/api/v1/enterprise/execute`.
 - Prepare demo talking points and one-page security proof.
 

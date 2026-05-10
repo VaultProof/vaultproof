@@ -100,6 +100,7 @@ Last validated GCP image build: `runtime-fastpath-20260510`
 | Projects page bootstrap load | Built | `/app/projects`, `/app/keys`, and `/app/activity` now load orgs, projects, provider slots, and overview stats from `GET /api/v1/enterprise/projects/bootstrap`. Deployed consolidated bootstrap RPC median is about 383 ms for authenticated bootstrap; direct stats overview remains about 474 ms median. |
 | Consolidated Projects bootstrap RPC | Built and deployed | Deployed in `bootstrap-rpc-20260510`. `supabase/migrations/20260510010000_enterprise_projects_bootstrap_rpc.sql` adds service-role-only `enterprise_projects_bootstrap(...)`; the control plane uses it first and falls back to the older query chain only if the RPC is unavailable. This removes separate membership, direct project access, org-wide project access, provider slot, duplicate key-count, and rollup HTTP calls from bootstrap after auth. |
 | Supabase OAuth login | Existing, needs final browser QA | Managed Supabase OAuth/Auth stays in the Goal 1 demo. The control-plane runtime env now includes `SUPABASE_ANON_KEY`; confirm callback/site URLs include `https://enterprise.vaultproof.dev/app/login` and run human browser QA. |
+| Enterprise login readiness QA | Built | `npm run qa:enterprise-login` validates the live login page, public Supabase URL/anon key, redirect logic, and, with `LOGIN_QA_REQUIRE_SESSION=true` plus service-role env, generates a temporary magic-link session for `ken@vaultproof.dev` and calls authenticated org/bootstrap APIs. Optional `LOGIN_QA_OAUTH_PROVIDER=google` checks the public OAuth authorize redirect after the provider is configured. |
 | Goal 1 gate test session | Built | `npm run gate:gcp-first-goal` can generate a temporary Supabase magic-link test session for the pilot user when service-role credentials are available and no access token is supplied. The live demo gate returned `status: done` on 2026-05-10 for `ken@vaultproof.dev` with demo placeholder provider material and dry execute. |
 | Internal admin hostname support | Existing | `admin.vaultproof.dev` accepted by control plane config. |
 | Internal admin preview routes | Existing | Controlled by environment flags. |
@@ -119,10 +120,10 @@ Last validated GCP image build: `runtime-fastpath-20260510`
 
 ## Current Production Blockers
 
+- Run strict automated login readiness QA with `LOGIN_QA_REQUIRE_SESSION=true npm run qa:enterprise-login`.
 - Run final human browser QA for `https://enterprise.vaultproof.dev/app/login`.
 - Keep managed Supabase for the Goal 1 demo and confirm Supabase OAuth/Auth settings for `https://enterprise.vaultproof.dev/app/login`.
-- Seal live encrypted provider material for the pilot project with `npm run seal:enterprise-provider-slot`, then run live upstream execute QA; dashboard-created slots are demo placeholders only.
-- Run browser login QA after the anon key and OAuth settings are confirmed.
+- MiniMax live encrypted provider material is sealed for the pilot; add a separate OpenAI slot only if the demo specifically needs OpenAI.
 - Rotate the Supabase service-role key and origin-lock value before paid customer onboarding.
 - Clean older Azure migration/history docs before paid-production handoff; customer-facing app UI is cleaned for the GCP demo.
 

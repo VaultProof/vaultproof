@@ -1,6 +1,6 @@
 # VaultProof GCP Build Status
 
-Last updated: 2026-05-10T06:11:15.918Z
+Last updated: 2026-05-10T23:42:45Z
 
 This file is the living inventory of what has been built for VaultProof on Google Cloud. It is refreshed after every successful enterprise image build by `infra/gcp/enterprise-secure-runtime/build-images.sh`.
 
@@ -24,9 +24,18 @@ Status: `done for the demo dry-run goal`
 
 Current blockers:
 
-- Browser OAuth/password login still needs final human browser QA.
+- Run strict login readiness QA with `LOGIN_QA_REQUIRE_SESSION=true npm run qa:enterprise-login` to verify the Supabase redirect/session/API path.
+- Human OAuth/password login still needs final browser click-through QA.
 - Supabase Auth redirect/provider settings still need confirmation for `https://enterprise.vaultproof.dev/app/login`.
 - Rotate the pilot MiniMax key before paid customer onboarding because it was shared in chat; keep using sealed local ingest for any future live provider key.
+
+## Login Readiness QA
+
+Status: `built in login-readiness-20260510`
+
+`npm run qa:enterprise-login` now checks the live enterprise login page, validates the public Supabase URL/anon key embedded in `/app/enterprise-login.js`, and verifies the login script still sends OAuth, magic-link, confirmation, and recovery redirects back to `https://enterprise.vaultproof.dev/app/login`.
+
+For the final demo go/no-go run, use `LOGIN_QA_REQUIRE_SESSION=true npm run qa:enterprise-login` with Supabase service-role env loaded. That strict mode generates a temporary magic-link session for `ken@vaultproof.dev`, which also proves the Supabase Auth redirect allowlist accepts `https://enterprise.vaultproof.dev/app/login`, then calls `/api/v1/enterprise/orgs`, `/orgs/current`, and `/projects/bootstrap` with the generated browser session. To verify a specific external provider redirect, add `LOGIN_QA_OAUTH_PROVIDER=google` after the provider is configured.
 
 ## App Shell Notes
 
@@ -121,11 +130,12 @@ Project and Provider Slots pages now classify each active slot as `live sealed`,
 
 ## What's Next
 
-1. Browser-test `https://enterprise.vaultproof.dev/app/login` with `ken@vaultproof.dev`.
-2. Confirm managed Supabase Auth redirect settings include `https://enterprise.vaultproof.dev/app/login`.
-3. Configure the external OAuth provider app callback as `https://gwzkjiomemjlhtrdrlan.supabase.co/auth/v1/callback` if using Google/GitHub/Microsoft login.
-4. Add a valid OpenAI Platform key only if the demo specifically needs OpenAI; MiniMax upstream dispatch is now live.
-5. Keep running `npm run gate:gcp-first-goal`; it can generate a temporary Supabase magic-link test session when no `ENTERPRISE_TEST_ACCESS_TOKEN` is provided.
+1. Run `LOGIN_QA_REQUIRE_SESSION=true npm run qa:enterprise-login` with Supabase service-role env for `ken@vaultproof.dev`.
+2. Browser-test `https://enterprise.vaultproof.dev/app/login` with `ken@vaultproof.dev`.
+3. Confirm managed Supabase Auth redirect settings include `https://enterprise.vaultproof.dev/app/login`.
+4. Configure the external OAuth provider app callback as `https://gwzkjiomemjlhtrdrlan.supabase.co/auth/v1/callback` if using Google/GitHub/Microsoft login; add `LOGIN_QA_OAUTH_PROVIDER=google` to the login QA command to verify the public OAuth authorize redirect.
+5. Add a valid OpenAI Platform key only if the demo specifically needs OpenAI; MiniMax upstream dispatch is now live.
+6. Keep running `npm run gate:gcp-first-goal`; it can generate a temporary Supabase magic-link test session when no `ENTERPRISE_TEST_ACCESS_TOKEN` is provided.
 
 ## Rough Monthly Cost
 
