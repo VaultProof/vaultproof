@@ -44,12 +44,23 @@ docs/ip/**/*.pdf
 docs/ip/**/*receipt*
 docs/ip/**/*confirmation*
 
+# Local generated handoff/copy artifacts. Keep the source docs tracked, but do not
+# accidentally commit VM code snapshots or generated deck binaries.
+docs/enterprise/gcp-runtime-code-copy/
+docs/enterprise/gcp-runtime-code-copy-*.tar.gz
+docs/fundraising/vaultproof-nvidia-resubmission-deck.pptx
+docs/fundraising/vaultproof-pitch-deck.pptx
+docs/fundraising/vaultproof-seed-deck.pptx
+
 # Block new markdown files from accidental commits by default.
 # Keep intentional project docs unblocked.
 *.md
 !README.md
 !docs/**/*.md
 !packages/**/README.md
+
+docs/enterprise/gcp-runtime-code-copy.md
+docs/enterprise/gcp-runtime-vm-copy.md
 
 # Block additional text-like files by default.
 *.txt
