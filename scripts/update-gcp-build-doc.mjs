@@ -17,6 +17,7 @@ const edgeFirewall = process.env.EDGE_FIREWALL || 'vaultproof-enterprise-allow-l
 const edgeInstanceGroup = process.env.EDGE_INSTANCE_GROUP || 'vaultproof-enterprise-runtime-ig';
 const edgeHealthCheck = process.env.EDGE_HEALTH_CHECK || 'vaultproof-enterprise-health';
 const edgeBackendService = process.env.EDGE_BACKEND_SERVICE || 'vaultproof-enterprise-backend';
+const edgeSecurityPolicy = process.env.EDGE_SECURITY_POLICY || 'vaultproof-enterprise-armor';
 const edgeSslCertificate = process.env.EDGE_SSL_CERTIFICATE || 'vaultproof-enterprise-cert';
 const edgeForwardingRule = process.env.EDGE_FORWARDING_RULE || 'vaultproof-enterprise-https';
 let buildTag = process.env.BUILD_TAG || '';
@@ -180,6 +181,11 @@ const edgeBackend = gcloudJson([
   '--global',
   '--project', projectId,
 ]);
+const cloudArmorPolicy = gcloudJson([
+  'compute', 'security-policies', 'describe', edgeSecurityPolicy,
+  '--global',
+  '--project', projectId,
+]);
 const edgeBackendHealth = gcloudJson([
   'compute', 'backend-services', 'get-health', edgeBackendService,
   '--global',
@@ -221,6 +227,17 @@ const edgeDnsPointsAtGcp = edgeIp !== '' && edgeDnsA.includes(edgeIp);
 const edgeCertDomainStatus = edgeCert?.managed?.domainStatus?.[edgeDomain] || '';
 const edgeTlsActive = edgeCert?.managed?.status === 'ACTIVE' && edgeCertDomainStatus === 'ACTIVE';
 const edgeBackendHealthy = edgeHealthStates.some((state) => state.startsWith('HEALTHY '));
+const cloudArmorAttached = Boolean(edgeBackend?.securityPolicy && String(edgeBackend.securityPolicy).includes(`/securityPolicies/${edgeSecurityPolicy}`));
+const cloudArmorRules = Array.isArray(cloudArmorPolicy?.rules) ? cloudArmorPolicy.rules : [];
+const cloudArmorExpectedPriorities = [1000, 1100, 1200, 1300];
+const cloudArmorRulesReady = cloudArmorExpectedPriorities.every((priority) => (
+  cloudArmorRules.some((rule) => Number(rule.priority) === priority)
+));
+const cloudArmorState = cloudArmorAttached && cloudArmorRulesReady
+  ? 'attached and enforced'
+  : cloudArmorPolicy
+    ? 'created but not fully attached'
+    : 'not configured';
 const publicEdgeState = edgeRule && edgeDnsPointsAtGcp && edgeTlsActive && edgeBackendHealthy ? 'live' : 'in progress';
 const readinessCheck = await fetchJson(`https://${edgeDomain}/readiness`);
 const readinessBody = readinessCheck.body && typeof readinessCheck.body === 'object' ? readinessCheck.body : {};
@@ -254,6 +271,9 @@ const knownBlockers = readinessProductionReady
         : ['Browser OAuth/password login still needs the valid public Supabase anon key published as `SUPABASE_ANON_KEY`.']),
       'Human OAuth/password login still needs final browser click-through QA.',
       `Supabase Auth redirect/provider settings still need confirmation for \`https://${edgeDomain}/app/login\`.`,
+      ...(cloudArmorAttached && cloudArmorRulesReady
+        ? []
+        : ['Attach and verify Cloud Armor WAF/rate-limit policy on the enterprise backend service.']),
       'Rotate the pilot MiniMax key before paid customer onboarding because it was shared in chat; keep using sealed local ingest for any future live provider key.',
     ]
   : readinessBlockers.length
@@ -276,6 +296,9 @@ const nextSteps = readinessProductionReady
       `Browser-test \`https://${edgeDomain}/app/login\` with \`ken@vaultproof.dev\`.`,
       `Confirm managed Supabase Auth redirect settings include \`https://${edgeDomain}/app/login\`.`,
       'Configure the external OAuth provider app callback as `https://gwzkjiomemjlhtrdrlan.supabase.co/auth/v1/callback` if using Google/GitHub/Microsoft login; add `LOGIN_QA_OAUTH_PROVIDER=google` to the login QA command to verify the public OAuth authorize redirect.',
+      ...(cloudArmorAttached && cloudArmorRulesReady
+        ? ['Keep `npm run verify:gcp-enterprise-cloud-armor` in the strict live launch gate.']
+        : ['Run `npm run configure:gcp-enterprise-cloud-armor`, then `npm run verify:gcp-enterprise-cloud-armor`.']),
       'Add a valid OpenAI Platform key only if the demo specifically needs OpenAI; MiniMax upstream dispatch is now live.',
       'Keep running `npm run gate:gcp-first-goal`; it can generate a temporary Supabase magic-link test session when no `ENTERPRISE_TEST_ACCESS_TOKEN` is provided.',
     ]
@@ -365,6 +388,7 @@ This file is the living inventory of what has been built for VaultProof on Googl
 - TLS: \`${edgeTlsActive ? 'Google-managed certificate active' : `Google-managed certificate ${valueOrUnknown(edgeCert?.managed?.status)}`}\`
 - Backend: \`${edgeBackendHealthy ? 'healthy' : 'not healthy'}\`
 - Origin-lock backend header: \`${edgeBackend?.customRequestHeaders?.length ? 'configured' : 'not configured'}\`
+- Cloud Armor edge policy: \`${cloudArmorState}\`
 - Auth/database provider: \`managed Supabase for Goal 1 demo; fresh database later\`
 - Public Supabase anon key: \`${publicSupabaseAnonReady ? 'configured' : 'not confirmed'}\`
 - Runtime readiness: \`${runtimeReadiness}\`
@@ -388,6 +412,12 @@ Status: \`built in login-readiness-20260510\`
 \`npm run qa:enterprise-login\` now checks the live enterprise login page, validates the public Supabase URL/anon key embedded in \`/app/enterprise-login.js\`, and verifies the login script still sends OAuth, magic-link, confirmation, and recovery redirects back to \`https://${edgeDomain}/app/login\`.
 
 For the final demo go/no-go run, use \`LOGIN_QA_REQUIRE_SESSION=true npm run qa:enterprise-login\` with Supabase service-role env loaded. That strict mode generates a temporary magic-link session for \`ken@vaultproof.dev\`, which also proves the Supabase Auth redirect allowlist accepts \`https://${edgeDomain}/app/login\`, then calls \`/api/v1/enterprise/orgs\`, \`/orgs/current\`, and \`/projects/bootstrap\` with the generated browser session. To verify a specific external provider redirect, add \`LOGIN_QA_OAUTH_PROVIDER=google\` after the provider is configured.
+
+## Cloud Armor Edge Guardrail
+
+Status: \`${cloudArmorState}\`
+
+\`npm run configure:gcp-enterprise-cloud-armor\` creates or updates \`${edgeSecurityPolicy}\` and attaches it to \`${edgeBackendService}\`. The policy blocks common secret/config/admin scanner paths before they reach the VM and applies per-IP throttles to the secure execute route, enterprise API routes, and the public edge. \`npm run verify:gcp-enterprise-cloud-armor\` checks the policy attachment, expected rule priorities, \`/health\` availability, and a blocked \`/.env\` scanner probe.
 
 ## App Shell Notes
 
@@ -498,7 +528,7 @@ Usage-based adders:
 
 - Load balancer data processing: about \`$0.008/GiB\` inbound and \`$0.008/GiB\` outbound through the load balancer.
 - Internet data transfer out from \`us-central1\`: first 1 GiB/month free, then about \`$0.12/GiB\` to North America for the first 1 TiB.
-- Backend custom request header feature: \`$0.75 per 1,000,000 HTTP(S) requests\` because the backend does not currently have Cloud Armor attached.
+- Backend custom request header feature: \`$0.75 per 1,000,000 HTTP(S) requests\` when using custom headers without Cloud Armor; Cloud Armor request/rule charges may apply after the edge policy is attached.
 - KMS decrypt/encrypt operations: \`$0.03 per 10,000 cryptographic operations\`.
 - Secret Manager access operations: \`$0.03 per 10,000 access operations\`, with 10,000/month free at the billing-account level.
 - Artifact Registry storage is currently tiny; first 0.5 GB is free, then \`$0.10/GB-month\`.
@@ -575,6 +605,8 @@ The VM runs both containers on localhost:
 - Backend port name: \`${valueOrUnknown(edgeBackend?.portName)}\`
 - Backend logging enabled: \`${bool(edgeBackend?.logConfig?.enable)}\`
 - Backend custom headers configured: \`${edgeBackend?.customRequestHeaders?.length ? 'true' : 'false'}\`
+- Cloud Armor policy: \`${edgeBackend?.securityPolicy ? edgeSecurityPolicy : 'none'}\`
+- Cloud Armor expected rules ready: \`${bool(cloudArmorRulesReady)}\`
 - Backend health: \`${valueOrUnknown(edgeHealthStates.join(', '))}\`
 - Instance group: \`${valueOrUnknown(edgeIg?.name)}\`
 - Health check: \`${valueOrUnknown(edgeHc?.name)}\`

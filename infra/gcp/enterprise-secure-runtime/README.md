@@ -258,6 +258,26 @@ Use the helper to create or reuse the Secret Manager value and apply it to the l
 npm run configure:gcp-enterprise-origin-lock
 ```
 
+## Configure Cloud Armor WAF And Rate Limits
+
+Use Cloud Armor as the public edge guardrail before inviting customer traffic. The policy blocks common secret/config/admin scanner paths and applies per-IP throttles to the secure execute path, enterprise API routes, and the overall public edge.
+
+```bash
+npm run configure:gcp-enterprise-cloud-armor
+npm run verify:gcp-enterprise-cloud-armor
+```
+
+Defaults:
+
+- policy: `vaultproof-enterprise-armor`
+- backend: `vaultproof-enterprise-backend`
+- secret/config/admin scanner probes: HTTP 403
+- secure execute route throttle: `240` requests/minute per IP
+- enterprise API throttle: `900` requests/minute per IP
+- public edge throttle: `2400` requests/minute per IP
+
+Set `CLOUD_ARMOR_PREVIEW=true` only when you want to log rule matches without enforcing them.
+
 Set `ROTATE_ORIGIN_LOCK_SECRET=true` to add a new secret version and update the backend header.
 
 Build the edge:
@@ -312,6 +332,8 @@ After gcloud auth, the public edge, DNS, and production readiness are complete, 
 ```bash
 RUN_LIVE_EDGE=true \
 RUN_LIVE_APP_QA=true \
+RUN_LOGIN_QA=true \
+RUN_CLOUD_ARMOR_QA=true \
 STRICT_LIVE=true \
 npm run gate:gcp-customer-launch
 ```

@@ -24,6 +24,7 @@ Already built:
 - Cloudflare A record for `enterprise.vaultproof.dev` pointing to `34.102.179.105`
 - Google-managed TLS certificate for `enterprise.vaultproof.dev`, status `ACTIVE`
 - Load-balancer backend custom origin-lock header injection
+- Cloud Armor edge policy helper for WAF-style scanner blocking and coarse per-IP rate limits
 - Build-status and feature inventory docs
 - Managed Supabase remains the auth/database provider for the pilot
 
@@ -84,7 +85,7 @@ The executor stays private. Only the load balancer can reach the VM control-plan
 | Phase 2: Runtime Secrets And Readiness | Complete for demo | Real control-plane/executor env versions are published and live readiness reports `production_ready: true`. |
 | Phase 3: DNS Cutover | Complete for `enterprise` | Cloudflare `enterprise` A record points to `34.102.179.105`; TLS is active. |
 | Phase 4: Demo Readiness | In progress | Live gate passed for dry-run demo data; login readiness tooling is built; strict login QA, human browser login QA, and Supabase OAuth/Auth redirect confirmation remain. |
-| Phase 5: Customer Scale | Later | Managed instance group, WAF/rate limits, monitoring policies, evidence automation, rollback. |
+| Phase 5: Customer Scale | Started | Cloud Armor WAF/rate-limit helper is built; managed instance group, monitoring policies, evidence automation, and rollback still remain. |
 
 ## Cost Snapshot
 
@@ -184,7 +185,7 @@ Success:
 Build after first customer proof:
 
 - Move from one bootstrap VM to a managed instance group or blue/green VM pair.
-- Add Cloud Armor WAF and rate limits.
+- Add Cloud Armor WAF and rate limits. Status: helper built with scanner-path blocking plus per-IP throttles for secure execute, enterprise APIs, and the public edge.
 - Add uptime checks and alerting policies.
 - Add automated evidence bundle capture for each release.
 - Add a rollback script for edge, VM image, and DNS changes.
@@ -202,6 +203,7 @@ Build after first customer proof:
 - Supabase org/project/user data seeded.
 - Customer-facing docs reviewed for Azure-era leftovers.
 - Budget and monitoring reviewed daily during launch week.
+- Cloud Armor policy is attached and `npm run verify:gcp-enterprise-cloud-armor` passes.
 - Rollback path written down before sending real customer traffic.
 
 ## Operating Rules
@@ -220,6 +222,8 @@ npm run provision:gcp-enterprise-core
 npm run build:gcp-enterprise-images
 npm run deploy:gcp-enterprise-vm
 npm run configure:gcp-enterprise-edge
+npm run configure:gcp-enterprise-cloud-armor
+npm run verify:gcp-enterprise-cloud-armor
 npm run collect:gcp-runtime-evidence
 npm run prepare:gcp-first-goal-runtime
 npm run publish:gcp-enterprise-secrets

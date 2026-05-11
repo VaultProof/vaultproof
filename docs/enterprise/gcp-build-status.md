@@ -12,6 +12,7 @@ This file is the living inventory of what has been built for VaultProof on Googl
 - TLS: `Google-managed certificate active`
 - Backend: `healthy`
 - Origin-lock backend header: `configured`
+- Cloud Armor edge policy: `built; pending live attach verification`
 - Auth/database provider: `managed Supabase for Goal 1 demo; fresh database later`
 - Public Supabase anon key: `configured`
 - Runtime readiness: `production ready on the live GCP edge`
@@ -27,6 +28,7 @@ Current blockers:
 - Run strict login readiness QA with `LOGIN_QA_REQUIRE_SESSION=true npm run qa:enterprise-login` to verify the Supabase redirect/session/API path.
 - Human OAuth/password login still needs final browser click-through QA.
 - Supabase Auth redirect/provider settings still need confirmation for `https://enterprise.vaultproof.dev/app/login`.
+- Attach and verify Cloud Armor WAF/rate-limit policy on the enterprise backend service.
 - Rotate the pilot MiniMax key before paid customer onboarding because it was shared in chat; keep using sealed local ingest for any future live provider key.
 
 ## Login Readiness QA
@@ -36,6 +38,12 @@ Status: `built in login-readiness-20260510`
 `npm run qa:enterprise-login` now checks the live enterprise login page, validates the public Supabase URL/anon key embedded in `/app/enterprise-login.js`, and verifies the login script still sends OAuth, magic-link, confirmation, and recovery redirects back to `https://enterprise.vaultproof.dev/app/login`.
 
 For the final demo go/no-go run, use `LOGIN_QA_REQUIRE_SESSION=true npm run qa:enterprise-login` with Supabase service-role env loaded. That strict mode generates a temporary magic-link session for `ken@vaultproof.dev`, which also proves the Supabase Auth redirect allowlist accepts `https://enterprise.vaultproof.dev/app/login`, then calls `/api/v1/enterprise/orgs`, `/orgs/current`, and `/projects/bootstrap` with the generated browser session. To verify a specific external provider redirect, add `LOGIN_QA_OAUTH_PROVIDER=google` after the provider is configured.
+
+## Cloud Armor Edge Guardrail
+
+Status: `built; pending live attach verification`
+
+`npm run configure:gcp-enterprise-cloud-armor` creates or updates `vaultproof-enterprise-armor` and attaches it to `vaultproof-enterprise-backend`. The policy blocks common secret/config/admin scanner paths before they reach the VM and applies per-IP throttles to the secure execute route, enterprise API routes, and the public edge. `npm run verify:gcp-enterprise-cloud-armor` checks the policy attachment, expected rule priorities, `/health` availability, and a blocked `/.env` scanner probe.
 
 ## App Shell Notes
 
@@ -134,8 +142,9 @@ Project and Provider Slots pages now classify each active slot as `live sealed`,
 2. Browser-test `https://enterprise.vaultproof.dev/app/login` with `ken@vaultproof.dev`.
 3. Confirm managed Supabase Auth redirect settings include `https://enterprise.vaultproof.dev/app/login`.
 4. Configure the external OAuth provider app callback as `https://gwzkjiomemjlhtrdrlan.supabase.co/auth/v1/callback` if using Google/GitHub/Microsoft login; add `LOGIN_QA_OAUTH_PROVIDER=google` to the login QA command to verify the public OAuth authorize redirect.
-5. Add a valid OpenAI Platform key only if the demo specifically needs OpenAI; MiniMax upstream dispatch is now live.
-6. Keep running `npm run gate:gcp-first-goal`; it can generate a temporary Supabase magic-link test session when no `ENTERPRISE_TEST_ACCESS_TOKEN` is provided.
+5. Run `npm run configure:gcp-enterprise-cloud-armor`, then `npm run verify:gcp-enterprise-cloud-armor`.
+6. Add a valid OpenAI Platform key only if the demo specifically needs OpenAI; MiniMax upstream dispatch is now live.
+7. Keep running `npm run gate:gcp-first-goal`; it can generate a temporary Supabase magic-link test session when no `ENTERPRISE_TEST_ACCESS_TOKEN` is provided.
 
 ## Rough Monthly Cost
 
@@ -158,7 +167,7 @@ Usage-based adders:
 
 - Load balancer data processing: about `$0.008/GiB` inbound and `$0.008/GiB` outbound through the load balancer.
 - Internet data transfer out from `us-central1`: first 1 GiB/month free, then about `$0.12/GiB` to North America for the first 1 TiB.
-- Backend custom request header feature: `$0.75 per 1,000,000 HTTP(S) requests` because the backend does not currently have Cloud Armor attached.
+- Backend custom request header feature: `$0.75 per 1,000,000 HTTP(S) requests` when using custom headers without Cloud Armor; Cloud Armor request/rule charges may apply after the edge policy is attached.
 - KMS decrypt/encrypt operations: `$0.03 per 10,000 cryptographic operations`.
 - Secret Manager access operations: `$0.03 per 10,000 access operations`, with 10,000/month free at the billing-account level.
 - Artifact Registry storage is currently tiny; first 0.5 GB is free, then `$0.10/GB-month`.
@@ -235,6 +244,8 @@ The VM runs both containers on localhost:
 - Backend port name: `http`
 - Backend logging enabled: `true`
 - Backend custom headers configured: `true`
+- Cloud Armor policy: `pending live attach`
+- Cloud Armor expected rules ready: `pending verification`
 - Backend health: `HEALTHY 10.60.0.2:3001`
 - Instance group: `vaultproof-enterprise-runtime-ig`
 - Health check: `vaultproof-enterprise-health`

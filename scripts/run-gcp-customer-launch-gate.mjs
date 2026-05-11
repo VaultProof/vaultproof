@@ -7,6 +7,7 @@ const root = process.cwd();
 const runLiveEdge = process.env.RUN_LIVE_EDGE === 'true';
 const runLiveAppQa = process.env.RUN_LIVE_APP_QA === 'true';
 const runLoginQa = process.env.RUN_LOGIN_QA === 'true';
+const runCloudArmorQa = process.env.RUN_CLOUD_ARMOR_QA === 'true';
 const strictLive = process.env.STRICT_LIVE === 'true';
 const enterpriseUrl = process.env.ENTERPRISE_URL || 'https://enterprise.vaultproof.dev';
 
@@ -16,6 +17,8 @@ const requiredFiles = [
   'docs/enterprise/gcp-feature-inventory.md',
   'infra/gcp/enterprise-secure-runtime/configure-public-edge.sh',
   'infra/gcp/enterprise-secure-runtime/verify-public-edge.sh',
+  'infra/gcp/enterprise-secure-runtime/configure-cloud-armor.sh',
+  'infra/gcp/enterprise-secure-runtime/verify-cloud-armor.sh',
   'infra/gcp/enterprise-secure-runtime/publish-runtime-secrets.sh',
   'infra/gcp/enterprise-secure-runtime/collect-runtime-evidence.sh',
   'infra/gcp/enterprise-secure-runtime/prepare-first-goal-runtime.sh',
@@ -85,6 +88,8 @@ if (!fullBuildoutPlan.includes('No HSM is included')) {
 
 runStep('GCP edge script syntax', 'bash', ['-n', 'infra/gcp/enterprise-secure-runtime/configure-public-edge.sh']);
 runStep('GCP edge verifier syntax', 'bash', ['-n', 'infra/gcp/enterprise-secure-runtime/verify-public-edge.sh']);
+runStep('GCP Cloud Armor script syntax', 'bash', ['-n', 'infra/gcp/enterprise-secure-runtime/configure-cloud-armor.sh']);
+runStep('GCP Cloud Armor verifier syntax', 'bash', ['-n', 'infra/gcp/enterprise-secure-runtime/verify-cloud-armor.sh']);
 runStep('GCP secret publisher syntax', 'bash', ['-n', 'infra/gcp/enterprise-secure-runtime/publish-runtime-secrets.sh']);
 runStep('GCP runtime evidence collector syntax', 'bash', ['-n', 'infra/gcp/enterprise-secure-runtime/collect-runtime-evidence.sh']);
 runStep('GCP first-goal runtime preparer syntax', 'bash', ['-n', 'infra/gcp/enterprise-secure-runtime/prepare-first-goal-runtime.sh']);
@@ -122,10 +127,20 @@ if (runLoginQa) {
   skipStep('GCP login readiness QA', 'npm run qa:enterprise-login', 'Set RUN_LOGIN_QA=true after Supabase service-role credentials are available.');
 }
 
-if (strictLive && (!runLiveEdge || !runLiveAppQa || !runLoginQa)) {
+if (runCloudArmorQa) {
+  runStep('GCP Cloud Armor verification', 'npm', ['run', 'verify:gcp-enterprise-cloud-armor'], {
+    env: {
+      DOMAIN: new URL(enterpriseUrl).hostname,
+    },
+  });
+} else {
+  skipStep('GCP Cloud Armor verification', 'npm run verify:gcp-enterprise-cloud-armor', 'Set RUN_CLOUD_ARMOR_QA=true after the Cloud Armor policy is attached.');
+}
+
+if (strictLive && (!runLiveEdge || !runLiveAppQa || !runLoginQa || !runCloudArmorQa)) {
   blockers.push({
     name: 'strict live launch gate requires live checks',
-    detail: 'Set RUN_LIVE_EDGE=true, RUN_LIVE_APP_QA=true, and RUN_LOGIN_QA=true with STRICT_LIVE=true.',
+    detail: 'Set RUN_LIVE_EDGE=true, RUN_LIVE_APP_QA=true, RUN_LOGIN_QA=true, and RUN_CLOUD_ARMOR_QA=true with STRICT_LIVE=true.',
   });
 }
 
@@ -136,6 +151,7 @@ const result = {
     runLiveEdge,
     runLiveAppQa,
     runLoginQa,
+    runCloudArmorQa,
     strictLive,
   },
   steps,

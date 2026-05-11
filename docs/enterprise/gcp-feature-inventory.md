@@ -50,6 +50,7 @@ Last validated GCP image build: `runtime-fastpath-20260510`
 | IAP-only SSH ingress | Built | Firewall allows TCP 22 only from `35.235.240.0/20` to tagged runtime VM. |
 | Public HTTPS ingress | Built | GCP edge is live at `34.102.179.105`; Cloudflare DNS points `enterprise.vaultproof.dev` at the edge, Google-managed TLS is active, and backend health is healthy. |
 | Load-balancer origin lock header | Built and enforced | `enterprise-origin-lock-secret` exists in Secret Manager, the GCP backend service injects `x-vaultproof-origin-lock`, and the control plane requires the matching value. |
+| Cloud Armor edge guardrail | Built | `npm run configure:gcp-enterprise-cloud-armor` creates `vaultproof-enterprise-armor`, attaches it to the enterprise backend, blocks common secret/config/admin scanner paths, and applies per-IP throttles to secure execute, enterprise API, and public edge routes. |
 | Public readiness summary | Built | `/readiness` now returns a summary view for public checks and hides raw executor internals such as accepted signing key IDs and hardware-bound key flags. |
 | Bootstrap Confidential VM | Built | `vaultproof-enterprise-runtime-1`, `n2d-standard-2`, AMD SEV, Secure Boot, vTPM, integrity monitoring. |
 | Container runtime on VM | Built | Startup script installs Docker, pulls Artifact Registry images, and runs both containers on host network. |
@@ -73,6 +74,7 @@ Last validated GCP image build: `runtime-fastpath-20260510`
 | Sealed provider slot ingest helper | Built | `npm run seal:enterprise-provider-slot` locally Shamir-splits and encrypts a provider key with the vault unwrap root, upserts `project_keys.share1_encrypted` and `project_keys.share2_encrypted`, and records a governance audit event without printing raw key material. See `docs/enterprise/provider-key-ingest.md`. |
 | GCP public edge helper | Built | Creates global IP, SSL cert, backend service, health check, TLS policy, forwarding rule, and restricted LB firewall. |
 | GCP origin-lock helper | Built | `npm run configure:gcp-enterprise-origin-lock` creates/reuses the Secret Manager value and applies it to the backend service without printing the secret. |
+| GCP Cloud Armor helper | Built | `npm run configure:gcp-enterprise-cloud-armor` and `npm run verify:gcp-enterprise-cloud-armor` configure and verify the enterprise backend security policy, expected rule priorities, live `/health`, and blocked `/.env` scanner probes. |
 | GCP public edge verifier | Built | Checks forwarding rule, managed cert, backend health, DNS, `/health`, and `/readiness`. |
 | GCP customer launch gate | Built | Runs local build/smoke/script checks and can require live edge plus live app QA after DNS is ready. |
 | GCP first-goal gate | Built | `npm run gate:gcp-first-goal` requires live readiness, pilot Supabase data, a usable provider slot, and a dry execute token before it reports done. Demo placeholders are accepted by default; set `GOAL1_DEMO_ONLY=false` to require live encrypted provider material. |
@@ -123,6 +125,7 @@ Last validated GCP image build: `runtime-fastpath-20260510`
 - Run strict automated login readiness QA with `LOGIN_QA_REQUIRE_SESSION=true npm run qa:enterprise-login`.
 - Run final human browser QA for `https://enterprise.vaultproof.dev/app/login`.
 - Keep managed Supabase for the Goal 1 demo and confirm Supabase OAuth/Auth settings for `https://enterprise.vaultproof.dev/app/login`.
+- Run and keep `npm run verify:gcp-enterprise-cloud-armor` in the strict live launch gate.
 - MiniMax live encrypted provider material is sealed for the pilot; add a separate OpenAI slot only if the demo specifically needs OpenAI.
 - Rotate the Supabase service-role key and origin-lock value before paid customer onboarding.
 - Clean older Azure migration/history docs before paid-production handoff; customer-facing app UI is cleaned for the GCP demo.
