@@ -2639,6 +2639,7 @@ async function assertEnterpriseLoginRoute() {
       'Organization Workspace',
       'Provisioned organization',
       '/app/dashboard',
+      '/app/launch',
       '/app/control',
       '/app/verifier',
       '/app/org',
@@ -2877,6 +2878,11 @@ async function assertEnterpriseLoginRoute() {
       required: ['Welcome to VaultProof Enterprise', 'Map your enterprise environment', 'Configure identity and access', 'Choose the gateway and network pattern', 'Configure projects, provider slots, and policy', 'Evidence, alerts, and compliance', 'Go live gradually', 'Customer-managed gateway', 'Dry-run first', '/app/technical-guide'],
     },
     {
+      path: '/app/launch',
+      title: 'Launch checklist - VaultProof Enterprise',
+      required: ['Launch progress', 'Customer tasks', 'Launch package', 'copy brief', 'Customer owners confirmed', 'Caller policy reviewed', 'Evidence exports reviewed', 'vaultproof_launch_checklist', '/app/control', '/app/keys', '/app/audit'],
+    },
+    {
       path: '/app/technical-guide',
       title: 'Technical guide - VaultProof Enterprise',
       required: ['Architecture at a glance', 'Identity and authorization model', 'Gateway and network patterns', 'Provider key custody and Cloud KMS', 'Caller lock and execution policy', 'Evidence, logs, exports, and audit', 'Troubleshooting map', 'Integration questions for technical review'],
@@ -3022,7 +3028,7 @@ function assertSecurityHeaders(path, response, html = '') {
 }
 
 async function assertEnterpriseSecurityHeaders() {
-  const htmlPaths = ['/', '/app/login', '/app/logout', '/app/dashboard', '/app/control', '/app/verifier', '/app/org', '/app/setup', '/app/technical-guide', '/app/runbooks'];
+  const htmlPaths = ['/', '/app/login', '/app/logout', '/app/dashboard', '/app/launch', '/app/control', '/app/verifier', '/app/org', '/app/setup', '/app/technical-guide', '/app/runbooks'];
   for (const path of htmlPaths) {
     const response = await handleEnterpriseControlPlaneRequest(
       buildRequest(path),
@@ -3076,6 +3082,7 @@ async function assertEnterpriseAppLinkCrawl() {
     '/app/projects',
     '/app/keys',
     '/app/verifier',
+    '/app/launch',
     '/app/setup',
     '/app/technical-guide',
     '/app/settings',
@@ -3133,6 +3140,7 @@ async function assertEnterpriseMixpanelAnalytics() {
     ['/', 'homepage'],
     ['/app/login', 'login'],
     ['/app/dashboard', 'dashboard'],
+    ['/app/launch', 'launch'],
     ['/app/setup', 'setup'],
     ['/app/technical-guide', 'technical-guide'],
     ['/app/verifier', 'verifier'],

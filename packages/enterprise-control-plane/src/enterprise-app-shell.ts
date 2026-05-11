@@ -1,5 +1,6 @@
 export type EnterpriseAppNavPage =
   | 'dashboard'
+  | 'launch'
   | 'projects'
   | 'readiness'
   | 'health'
@@ -57,6 +58,13 @@ const ENTERPRISE_SIDEBAR_NAV_GROUPS: readonly EnterpriseSidebarNavGroup[] = [
         label: 'Dashboard',
         blurb: 'Runtime posture, access, evidence, and urgent actions.',
         activePill: 'new',
+      },
+      {
+        page: 'launch',
+        href: '/app/launch',
+        label: 'Launch checklist',
+        blurb: 'Customer go-live tasks, owners, and next actions.',
+        activePill: 'ready',
       },
       {
         page: 'projects',

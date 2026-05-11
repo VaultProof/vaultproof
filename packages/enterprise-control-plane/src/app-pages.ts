@@ -1815,6 +1815,14 @@ function renderEnterpriseAlertsPage(): string {
     .tag.good { color: var(--green); border-color: rgba(62,93,87,.24); }
     .tag.warn { color: var(--gold); border-color: rgba(213,169,20,.28); }
     .tag.bad { color: var(--red); border-color: rgba(185,93,80,.28); }
+    .launch-progress { height: 11px; border-radius: 999px; background: rgba(48,76,71,.12); overflow: hidden; margin-top: 16px; }
+    .launch-progress span { display: block; height: 100%; width: 0; background: linear-gradient(135deg, var(--green), var(--primary-bg)); border-radius: inherit; transition: width 180ms ease; }
+    .launch-check-row { display: grid; grid-template-columns: 22px 1fr auto; gap: 12px; align-items: start; border: 1px solid rgba(48,76,71,.10); border-radius: 18px; padding: 14px; background: rgba(247,250,244,.84); }
+    .launch-check-row input { width: 18px; height: 18px; margin: 2px 0 0; accent-color: var(--green); }
+    .launch-check-title { font-weight: 780; letter-spacing: -.02em; }
+    .launch-check-sub { color: var(--muted); font-size: 13px; line-height: 1.45; margin-top: 5px; }
+    .launch-check-row[data-complete="true"] { border-color: rgba(62,93,87,.24); background: rgba(143,224,193,.11); }
+    .brief-box { width: 100%; min-height: 210px; font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace; font-size: 12px; line-height: 1.55; }
     .empty, .notice { color: var(--muted); border: 1px dashed rgba(48,76,71,.22); border-radius: 18px; padding: 18px; background: rgba(247,250,244,.78); }
     .notice.error { color: var(--red); border-color: rgba(185,93,80,.3); }
     .slot-form { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; }
@@ -2544,7 +2552,7 @@ function renderEnterpriseOperationsPage(pageName: 'activity' | 'projects' | 'key
 </html>`;
 }
 
-type EnterpriseSupportPageName = 'setup' | 'technical-guide' | 'verifier' | 'settings' | 'plans' | 'scanner' | 'runbooks';
+type EnterpriseSupportPageName = 'setup' | 'launch' | 'technical-guide' | 'verifier' | 'settings' | 'plans' | 'scanner' | 'runbooks';
 
 function renderEnterpriseSupportPage(pageName: EnterpriseSupportPageName): string {
   const supportPageCopy: Record<EnterpriseSupportPageName, { title: string; kicker: string; lead: string }> = {
@@ -2552,6 +2560,11 @@ function renderEnterpriseSupportPage(pageName: EnterpriseSupportPageName): strin
       title: 'Enterprise setup guide',
       kicker: 'welcome to VaultProof',
       lead: 'Welcome to VaultProof Enterprise, and congratulations on starting your secure workspace. This guide is for enterprise teams with many apps, environments, owners, and provider integrations. Use it to map your environment, connect identity, choose a gateway pattern, protect provider keys, prove readiness, and operate VaultProof safely.',
+    },
+    launch: {
+      title: 'Launch checklist',
+      kicker: 'customer go-live',
+      lead: 'Turn the enterprise setup plan into a working customer launch board. Track readiness, owners, policy, evidence, alerts, and rollout actions before sending real customer traffic.',
     },
     'technical-guide': {
       title: 'Technical guide',
@@ -2672,6 +2685,34 @@ function renderEnterpriseSupportPage(pageName: EnterpriseSupportPageName): strin
         <div class="card"><div class="kpi-label">projects</div><div class="kpi-value" id="kpiProjects">...</div><div class="kpi-sub">active scopes</div></div>
         <div class="card"><div class="kpi-label">members</div><div class="kpi-value" id="kpiMembers">...</div><div class="kpi-sub" id="kpiOrgRole">org role</div></div>
         <div class="card"><div class="kpi-label">calls</div><div class="kpi-value" id="kpiCalls">...</div><div class="kpi-sub">proxy traffic</div></div>
+      </section>
+
+      <section id="launchPanel" class="grid two" style="display:none">
+        <div class="card">
+          <div class="section-title"><h2>Launch progress</h2><span class="mini" id="launchProgressMeta">0 of 0</span></div>
+          <div class="kpi-value" id="launchProgressValue">0%</div>
+          <div class="launch-progress" aria-hidden="true"><span id="launchProgressBar"></span></div>
+          <p class="mini" id="launchProgressCopy" style="margin-top:14px">Loading launch state...</p>
+        </div>
+        <div class="card">
+          <div class="section-title"><h2>Launch package</h2><span class="mini">live checks</span></div>
+          <div id="launchSummaryList" class="list"></div>
+        </div>
+        <div class="card">
+          <div class="section-title"><h2>Customer tasks</h2><span class="mini">saved in this browser</span></div>
+          <div id="launchChecklist" class="list"></div>
+        </div>
+        <div class="card">
+          <div class="section-title"><h2>Next actions</h2><span class="mini">customer workflow</span></div>
+          <div id="launchActions" class="list"></div>
+        </div>
+        <div class="card" style="grid-column:1/-1">
+          <div class="section-title">
+            <h2>Launch brief</h2>
+            <button id="copyLaunchBriefBtn" type="button">copy brief</button>
+          </div>
+          <textarea id="launchBrief" class="brief-box" readonly aria-label="Launch brief"></textarea>
+        </div>
       </section>
 
       <section id="setupPanel" class="doc-guide" style="display:none">
@@ -3099,6 +3140,106 @@ function renderEnterpriseSupportPage(pageName: EnterpriseSupportPageName): strin
       function linkRow(title, sub, href, label, tone) {
         return '<div class="row"><div><div class="row-title">' + escapeHtml(title) + '</div><div class="row-sub">' + escapeHtml(sub || '') + '</div></div><a class="tag ' + (tone || '') + '" href="' + escapeHtml(href) + '">' + escapeHtml(label || 'open') + '</a></div>';
       }
+      function launchStorageKey() {
+        return 'vaultproof_launch_checklist:' + (currentOrgId || 'default');
+      }
+      function getLaunchManualState() {
+        try {
+          var raw = localStorage.getItem(launchStorageKey()) || '{}';
+          var parsed = JSON.parse(raw);
+          return parsed && typeof parsed === 'object' ? parsed : {};
+        } catch (_) {
+          return {};
+        }
+      }
+      function setLaunchManualState(id, checked) {
+        var state = getLaunchManualState();
+        state[id] = Boolean(checked);
+        localStorage.setItem(launchStorageKey(), JSON.stringify(state));
+      }
+      function launchCheckRow(item, checked) {
+        var complete = item.auto ? Boolean(item.complete) : Boolean(checked);
+        var disabled = item.auto ? ' disabled' : '';
+        return '<label class="launch-check-row" data-complete="' + (complete ? 'true' : 'false') + '">' +
+          '<input type="checkbox" data-launch-check="' + escapeHtml(item.id) + '"' + (complete ? ' checked' : '') + disabled + ' />' +
+          '<span><span class="launch-check-title">' + escapeHtml(item.title) + '</span><span class="launch-check-sub">' + escapeHtml(item.sub) + '</span></span>' +
+          '<span class="tag ' + (complete ? 'good' : item.auto ? 'warn' : '') + '">' + escapeHtml(complete ? 'done' : item.tag) + '</span>' +
+        '</label>';
+      }
+      function buildLaunchItems(org, sso, readiness, overview) {
+        var productionReady = readiness.production_ready === true;
+        var projectCount = Number(org.project_count || overview.totalProjects || 0);
+        var memberCount = Number(org.member_count || 0);
+        var providerCount = Number(overview.activeApps || overview.providerCount || overview.provider_count || 0);
+        var totalCalls = Number(overview.totalCalls || overview.total_calls || 0);
+        return [
+          { id: 'production-ready', auto: true, complete: productionReady, tag: 'blocked', title: 'Runtime readiness is green', sub: productionReady ? 'The confidential runtime reports production-ready.' : 'Open readiness and clear runtime blockers before customer traffic.' },
+          { id: 'org-selected', auto: true, complete: Boolean(currentOrgId), tag: 'select org', title: 'Workspace selected', sub: currentOrgId ? 'This launch board is scoped to the selected organization.' : 'Select the customer organization before reviewing launch state.' },
+          { id: 'projects-created', auto: true, complete: projectCount > 0, tag: 'todo', title: 'At least one project exists', sub: projectCount + ' project scopes are visible for this organization.' },
+          { id: 'members-added', auto: true, complete: memberCount > 0, tag: 'todo', title: 'Members are visible', sub: memberCount + ' organization members are visible.' },
+          { id: 'sso-confirmed', auto: true, complete: sso.provider_status === 'configured', tag: 'confirm', title: 'SSO or login path confirmed', sub: sso.provider_status === 'configured' ? 'Company sign-in is configured.' : 'Confirm SSO or the assisted login path before customer testing.' },
+          { id: 'provider-posture', auto: true, complete: providerCount > 0, tag: 'todo', title: 'Provider posture visible', sub: providerCount + ' provider/app connections are visible in the overview.' },
+          { id: 'traffic-observed', auto: true, complete: totalCalls > 0, tag: 'manual', title: 'Test traffic observed', sub: totalCalls + ' proxy calls are visible in the overview window.' },
+          { id: 'owners-confirmed', tag: 'owner', title: 'Customer owners confirmed', sub: 'Business, security, identity, network, developer, and incident owners are named.' },
+          { id: 'first-workload-picked', tag: 'scope', title: 'First workload selected', sub: 'One low-risk production workflow, one provider path, and one owner group are chosen.' },
+          { id: 'policy-reviewed', tag: 'policy', title: 'Caller policy reviewed', sub: 'Origins, gateways, CIDRs, methods, hosts, path prefixes, and rate limits are approved.' },
+          { id: 'evidence-exported', tag: 'evidence', title: 'Evidence exports reviewed', sub: 'Readiness, audit CSV, access-review CSV, and activity views are ready for customer review.' },
+          { id: 'alerts-tested', tag: 'alerts', title: 'Alerts tested', sub: 'Alert destinations are configured and a test alert has reached the right responders.' },
+          { id: 'rollback-owner', tag: 'rollback', title: 'Rollback owner assigned', sub: 'A named owner can pause traffic, revoke provider slots, or roll back the first workload.' },
+        ];
+      }
+      function launchBriefText(org, sso, readiness, overview, percent, doneCount, totalCount) {
+        var productionReady = readiness.production_ready === true;
+        return [
+          'VaultProof Enterprise launch brief',
+          'Organization: ' + (org.name || 'selected workspace'),
+          'Launch progress: ' + percent + '% (' + doneCount + '/' + totalCount + ' tasks)',
+          'Runtime production-ready: ' + (productionReady ? 'yes' : 'no'),
+          'SSO/login status: ' + (sso.provider_status || 'not confirmed'),
+          'Projects: ' + number(org.project_count || overview.totalProjects),
+          'Members: ' + number(org.member_count),
+          'Proxy calls observed: ' + number(overview.totalCalls),
+          '',
+          'Next customer actions:',
+          '- Confirm the first workload, owner, provider path, and expected volume.',
+          '- Review caller-lock policy in Control.',
+          '- Review provider slot posture and emergency revoke path.',
+          '- Export audit and access-review evidence.',
+          '- Send one low-volume dry-run or test request before production traffic.',
+        ].join('\\n');
+      }
+      function renderLaunchPanel(org, sso, readiness, overview) {
+        var manualState = getLaunchManualState();
+        var items = buildLaunchItems(org, sso, readiness, overview);
+        var doneCount = items.filter(function(item) {
+          return item.auto ? item.complete : manualState[item.id];
+        }).length;
+        var totalCount = items.length;
+        var percent = totalCount ? Math.round(doneCount * 100 / totalCount) : 0;
+        text('launchProgressValue', percent + '%');
+        text('launchProgressMeta', doneCount + ' of ' + totalCount);
+        text('launchProgressCopy', percent >= 80 ? 'This workspace is close to a customer test.' : 'Work through the remaining launch tasks before inviting customer traffic.');
+        var bar = byId('launchProgressBar');
+        if (bar) bar.style.width = percent + '%';
+        byId('launchSummaryList').innerHTML = [
+          row('Production readiness', readiness.production_ready === true ? 'Control plane and executor report production-ready.' : (readiness.production_blockers || []).join('; '), readiness.production_ready === true ? 'ready' : 'blocked', readiness.production_ready === true ? 'good' : 'bad'),
+          row('Organization role', org.role || 'member', org.kind || 'workspace', org.role === 'owner' || org.role === 'admin' ? 'good' : 'warn'),
+          row('SSO/login posture', sso.provider_status || 'not confirmed', sso.login_mode || 'assisted', sso.provider_status === 'configured' ? 'good' : 'warn'),
+          row('Usage posture', number(overview.totalCalls) + ' calls, ' + number(overview.errorCalls) + ' errors, ' + number(overview.deniedCalls) + ' denied.', (overview.errorCalls || overview.deniedCalls) ? 'watch' : 'clean', (overview.errorCalls || overview.deniedCalls) ? 'warn' : 'good')
+        ].join('');
+        byId('launchChecklist').innerHTML = items.map(function(item) {
+          return launchCheckRow(item, manualState[item.id]);
+        }).join('');
+        byId('launchActions').innerHTML = [
+          linkRow('Review policy', 'Open Control to confirm origins, gateways, provider allowlists, upstream restrictions, and rate limits.', '/app/control', 'control', 'good'),
+          linkRow('Check provider slots', 'Confirm material mode, owner, rotation, and emergency revoke posture before customer calls.', '/app/keys', 'slots', 'good'),
+          linkRow('Export audit evidence', 'Open Audit to search events and export CSV evidence for the customer packet.', '/app/audit', 'audit', 'good'),
+          linkRow('Export access review', 'Open Members to review roles and export access-review CSV.', '/app/members', 'members', 'good'),
+          linkRow('Open readiness', 'Confirm the live runtime reports the current production posture.', '/readiness', 'readiness', readiness.production_ready === true ? 'good' : 'warn')
+        ].join('');
+        var brief = byId('launchBrief');
+        if (brief) brief.value = launchBriefText(org, sso, readiness, overview, percent, doneCount, totalCount);
+      }
       function renderOrgSelector(payload) {
         var select = byId('orgSelect');
         var orgs = Array.isArray(payload.organizations) ? payload.organizations : [];
@@ -3131,6 +3272,7 @@ function renderEnterpriseSupportPage(pageName: EnterpriseSupportPageName): strin
         text('kpiOrgRole', org.role || 'member');
         text('kpiCalls', number(overview.totalCalls));
         byId('supportKpis').style.display = PAGE_MODE === 'setup' || PAGE_MODE === 'technical-guide' ? 'none' : 'grid';
+        byId('launchPanel').style.display = PAGE_MODE === 'launch' ? 'grid' : 'none';
         byId('setupPanel').style.display = PAGE_MODE === 'setup' ? 'block' : 'none';
         byId('technicalGuidePanel').style.display = PAGE_MODE === 'technical-guide' ? 'block' : 'none';
         byId('settingsPanel').style.display = PAGE_MODE === 'settings' ? 'grid' : 'none';
@@ -3159,6 +3301,9 @@ function renderEnterpriseSupportPage(pageName: EnterpriseSupportPageName): strin
             linkRow('Technical guide', 'Deep implementation details for identity, gateways, key custody, caller lock, evidence, rollout, and troubleshooting.', '/app/technical-guide', 'open', 'good'),
             linkRow('Runbooks', 'Use operator commands for verification, evidence, deployment, secrets, DNS, edge, SSH, and cleanup.', '/app/runbooks', 'open', 'good')
           ].join('');
+        }
+        if (PAGE_MODE === 'launch') {
+          renderLaunchPanel(org, sso, readiness, overview);
         }
         if (PAGE_MODE === 'settings') {
           text('settingsMeta', org.kind || 'organization');
@@ -3350,6 +3495,25 @@ function renderEnterpriseSupportPage(pageName: EnterpriseSupportPageName): strin
       if (verifierModelForm) verifierModelForm.addEventListener('submit', submitVerifierModel);
       var verifierProofForm = byId('verifierProofForm');
       if (verifierProofForm) verifierProofForm.addEventListener('submit', submitVerifierProof);
+      document.addEventListener('change', function(event) {
+        var target = event.target;
+        if (!target || !target.getAttribute || !target.hasAttribute('data-launch-check')) return;
+        setLaunchManualState(target.getAttribute('data-launch-check') || '', target.checked);
+        reload();
+      });
+      var copyLaunchBriefBtn = byId('copyLaunchBriefBtn');
+      if (copyLaunchBriefBtn) copyLaunchBriefBtn.addEventListener('click', async function() {
+        var brief = byId('launchBrief');
+        if (!brief) return;
+        try {
+          await navigator.clipboard.writeText(brief.value);
+          copyLaunchBriefBtn.textContent = 'copied';
+          setTimeout(function() { copyLaunchBriefBtn.textContent = 'copy brief'; }, 1400);
+        } catch (_) {
+          brief.focus();
+          brief.select();
+        }
+      });
       byId('orgSelect').addEventListener('change', function(event) {
         currentOrgId = event.target.value || '';
         if (currentOrgId) localStorage.setItem(ACTIVE_ORG_STORAGE_KEY, currentOrgId);
@@ -3377,7 +3541,7 @@ export function renderEnterprisePlannedAppPage(pageName: string, env: Enterprise
   if (pageName === 'activity' || pageName === 'projects' || pageName === 'keys') {
     return injectEnterpriseAnalytics(renderEnterpriseOperationsPage(pageName), env, pageName);
   }
-  if (pageName === 'setup' || pageName === 'technical-guide' || pageName === 'verifier' || pageName === 'settings' || pageName === 'plans' || pageName === 'scanner' || pageName === 'runbooks') {
+  if (pageName === 'setup' || pageName === 'launch' || pageName === 'technical-guide' || pageName === 'verifier' || pageName === 'settings' || pageName === 'plans' || pageName === 'scanner' || pageName === 'runbooks') {
     return injectEnterpriseAnalytics(renderEnterpriseSupportPage(pageName), env, pageName);
   }
 

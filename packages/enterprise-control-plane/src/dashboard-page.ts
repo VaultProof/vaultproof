@@ -474,6 +474,7 @@ export function renderEnterpriseDashboardPage(env: EnterpriseControlPlaneEnv = {
             <div class="section-title"><h2>Operator shortcuts</h2><span class="mini">business-safe links</span></div>
             <div class="list">
               <div class="row"><div><div class="row-title">Runbooks</div><div class="row-sub">Open the built deploy, evidence, verification, hardening, and cleanup playbooks.</div></div><a class="tag good" href="/app/runbooks">open</a></div>
+              <div class="row"><div><div class="row-title">Launch checklist</div><div class="row-sub">Turn readiness, policy, owners, evidence, alerts, and rollout actions into one customer go-live board.</div></div><a class="tag good" href="/app/launch">open</a></div>
               <div class="row"><div><div class="row-title">Technical guide</div><div class="row-sub">Open the enterprise implementation reference for identity, network, key custody, attestation, and troubleshooting.</div></div><a class="tag good" href="/app/technical-guide">open</a></div>
               <div class="row"><div><div class="row-title">Launch plans</div><div class="row-sub">Track packaging, GCP edge readiness, and contract-facing guardrails.</div></div><a class="tag" href="/app/plans">open</a></div>
               <div class="row"><div><div class="row-title">AI Proof Verifier</div><div class="row-sub">Register external models and verify proof bundles without VaultProof running the model.</div></div><a class="tag warn" href="/app/verifier">beta</a></div>
@@ -497,6 +498,11 @@ export function renderEnterpriseDashboardPage(env: EnterpriseControlPlaneEnv = {
               <div class="feature-tags"><span class="feature-tag">live</span><span class="feature-tag">start here</span></div>
               <h3>Setup guide</h3>
               <p>Enterprise implementation guide for mapping environments, connecting SSO, choosing gateways, configuring projects, protecting provider slots, and going live safely.</p>
+            </a>
+            <a class="feature-card" href="/app/launch">
+              <div class="feature-tags"><span class="feature-tag">live</span><span class="feature-tag">go-live</span></div>
+              <h3>Launch checklist</h3>
+              <p>Customer go-live board with live readiness, owner tasks, policy evidence, alerts, rollout steps, and a copyable launch brief.</p>
             </a>
             <a class="feature-card" href="/app/technical-guide">
               <div class="feature-tags"><span class="feature-tag">live</span><span class="feature-tag">technical</span></div>

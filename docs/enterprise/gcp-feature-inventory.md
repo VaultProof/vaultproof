@@ -88,6 +88,7 @@ Last validated GCP image build: `runtime-fastpath-20260510`
 | Feature | Status | Notes |
 | --- | --- | --- |
 | Enterprise dashboard | Existing | Control-plane pages are present in the enterprise app image. |
+| Customer launch checklist | Built | `/app/launch` is a customer-facing go-live board with live readiness summary, auto/manual launch tasks, browser-saved checklist progress, direct workflow links, and a copyable launch brief for customer testing. |
 | Dashboard reference palette | Built | The live dashboard/app shell now uses the supplied mint, deep green, mustard gold, white card, and teal accent palette. Live HTML verification checks the deployed palette values on `https://enterprise.vaultproof.dev/app/dashboard`. |
 | Enterprise homepage dashboard light theme | Built | The public enterprise homepage now uses the same light dashboard palette, white card surfaces, green/mustard accents, and GCP demo copy. Live HTML verification checks the deployed palette values on `https://enterprise.vaultproof.dev/` and rejects the old beige/brown tokens. |
 | Provider slot add button | Built | `/app/keys` now has an admin-only add-slot flow backed by `POST /api/v1/enterprise/projects/:projectId/providers`. It creates demo/dry-run provider slots with placeholder material and rejects raw live provider keys; use the sealed local ingest helper for live upstream material. |

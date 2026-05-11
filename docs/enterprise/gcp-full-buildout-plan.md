@@ -25,6 +25,7 @@ Already built:
 - Google-managed TLS certificate for `enterprise.vaultproof.dev`, status `ACTIVE`
 - Load-balancer backend custom origin-lock header injection
 - Cloud Armor edge policy helper for WAF-style scanner blocking and coarse per-IP rate limits
+- Customer launch checklist page at `/app/launch`
 - Build-status and feature inventory docs
 - Managed Supabase remains the auth/database provider for the pilot
 
@@ -204,6 +205,7 @@ Build after first customer proof:
 - Customer-facing docs reviewed for Azure-era leftovers.
 - Budget and monitoring reviewed daily during launch week.
 - Cloud Armor policy is attached and `npm run verify:gcp-enterprise-cloud-armor` passes.
+- Customer launch checklist at `/app/launch` is reviewed with the pilot user.
 - Rollback path written down before sending real customer traffic.
 
 ## Operating Rules
