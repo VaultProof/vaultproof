@@ -2541,7 +2541,7 @@ async function assertEnterpriseLoginRoute() {
     throw new Error(`Expected enterprise root homepage, got ${rootResponse.status}`);
   }
   for (const required of [
-    'API keys,<br><em>without the leak.</em>',
+    'Active Key Protection<br><em>for every API call.</em>',
     'VaultProof is a safe middle layer for important API keys',
     'Illustrative · safe API calls',
     'Your app talks to <em>VaultProof</em> instead of holding keys.',

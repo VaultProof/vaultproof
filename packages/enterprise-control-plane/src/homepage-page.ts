@@ -961,7 +961,7 @@ export function renderEnterpriseHomepage(env: EnterpriseControlPlaneEnv = {}): s
             <span>v0.9 · PRIVATE BETA</span>
           </div>
           <div class="vp-eyebrow"><strong>§ 01</strong><span>What VaultProof is</span></div>
-          <h1 class="vp-hero-title">API keys,<br><em>without the leak.</em></h1>
+          <h1 class="vp-hero-title">Active Key Protection<br><em>for every API call.</em></h1>
           <div class="vp-hero-lower">
             <div>
               <p class="vp-lede">VaultProof is a safe middle layer for important API keys. Your app calls VaultProof instead of storing the real key. VaultProof unlocks the key in a protected GCP runtime, uses it for one request, then erases it.</p>
