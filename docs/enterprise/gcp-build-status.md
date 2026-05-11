@@ -1,6 +1,6 @@
 # VaultProof GCP Build Status
 
-Last updated: 2026-05-10T23:42:45Z
+Last updated: 2026-05-11T05:48:25.709Z
 
 This file is the living inventory of what has been built for VaultProof on Google Cloud. It is refreshed after every successful enterprise image build by `infra/gcp/enterprise-secure-runtime/build-images.sh`.
 
@@ -12,7 +12,7 @@ This file is the living inventory of what has been built for VaultProof on Googl
 - TLS: `Google-managed certificate active`
 - Backend: `healthy`
 - Origin-lock backend header: `configured`
-- Cloud Armor edge policy: `built; pending live attach verification`
+- Cloud Armor edge policy: `not configured`
 - Auth/database provider: `managed Supabase for Goal 1 demo; fresh database later`
 - Public Supabase anon key: `configured`
 - Runtime readiness: `production ready on the live GCP edge`
@@ -41,14 +41,14 @@ For the final demo go/no-go run, use `LOGIN_QA_REQUIRE_SESSION=true npm run qa:e
 
 ## Cloud Armor Edge Guardrail
 
-Status: `built; pending live attach verification`
+Status: `not configured`
 
 `npm run configure:gcp-enterprise-cloud-armor` creates or updates `vaultproof-enterprise-armor` and attaches it to `vaultproof-enterprise-backend`. The policy blocks common secret/config/admin scanner paths before they reach the VM and applies per-IP throttles to the secure execute route, enterprise API routes, and the public edge. `npm run verify:gcp-enterprise-cloud-armor` checks the policy attachment, expected rule priorities, `/health` availability, and a blocked `/.env` scanner probe.
 
 ## App Shell Notes
 
-- Build `runtime-fastpath-20260510` is the current deployed GCP image tag for both control plane and executor containers.
-- `/app/launch` is built as the customer go-live board: live readiness summary, auto/manual customer tasks, browser-saved checklist progress, workflow links, and a copyable launch brief.
+- Build `5bf6c8a` is the current deployed GCP image tag for both control plane and executor containers.
+- `/app/launch` is the customer go-live board: live readiness summary, auto/manual customer tasks, browser-saved checklist progress, workflow links, and a copyable launch brief.
 - `/app/control` and `/app/org` use the shared universal sidebar with explicit sidebar typography, hide the legacy static topbar/page frame, and clean old `?org=<uuid>` URLs back to canonical `/app/control` and `/app/org` while preserving the selected org in local storage.
 - Live HTML verification on both long-form URLs confirmed the universal sidebar, URL cleanup script, hidden legacy topbar, explicit sidebar font sizing, and no legacy sidebar/site-theme artifacts.
 
@@ -178,14 +178,14 @@ Cost note: the current fixed estimate is above the existing `VaultProof Producti
 
 ## Build Pointer
 
-- Build tag: `runtime-fastpath-20260510`
+- Build tag: `5bf6c8a`
 - Registry: `us-central1-docker.pkg.dev/vaultproof-prod/vaultproof`
-- Control plane image: `us-central1-docker.pkg.dev/vaultproof-prod/vaultproof/enterprise-control-plane:runtime-fastpath-20260510`
-- Control plane digest: `sha256:a6379c204c15060f136ad7c8e8ba0a3977afe28e48652f80500a8bc93f4ab622`
-- Control plane built at: `2026-05-10T03:36:53.293181591Z`
-- Executor image: `us-central1-docker.pkg.dev/vaultproof-prod/vaultproof/enterprise-secure-executor:runtime-fastpath-20260510`
-- Executor digest: `sha256:182f773876065033dfb86efd5735db9c46565e4b1fc1ca6db4ddd849c9b04566`
-- Executor built at: `2026-05-10T03:37:04.318849886Z`
+- Control plane image: `us-central1-docker.pkg.dev/vaultproof-prod/vaultproof/enterprise-control-plane:5bf6c8a`
+- Control plane digest: `sha256:54adc401f5a40b7271fabfdf3b0035ef76c7ef88e23489c17a053b2bcbe20c99`
+- Control plane built at: `2026-05-11T05:46:14.561753881Z`
+- Executor image: `us-central1-docker.pkg.dev/vaultproof-prod/vaultproof/enterprise-secure-executor:5bf6c8a`
+- Executor digest: `sha256:85897413e3e250bd4c1a5f35eda09e3edf1d489cd9fdff4c0294b6e2e8eacdd4`
+- Executor built at: `2026-05-11T05:46:27.847197202Z`
 
 ## Project
 
@@ -245,8 +245,8 @@ The VM runs both containers on localhost:
 - Backend port name: `http`
 - Backend logging enabled: `true`
 - Backend custom headers configured: `true`
-- Cloud Armor policy: `pending live attach`
-- Cloud Armor expected rules ready: `pending verification`
+- Cloud Armor policy: `none`
+- Cloud Armor expected rules ready: `false`
 - Backend health: `HEALTHY 10.60.0.2:3001`
 - Instance group: `vaultproof-enterprise-runtime-ig`
 - Health check: `vaultproof-enterprise-health`
@@ -303,8 +303,10 @@ Current runtime status:
 
 Known blockers:
 
-- Browser OAuth/password login still needs final human browser QA.
+- Run strict login readiness QA with `LOGIN_QA_REQUIRE_SESSION=true npm run qa:enterprise-login` to verify the Supabase redirect/session/API path.
+- Human OAuth/password login still needs final browser click-through QA.
 - Supabase Auth redirect/provider settings still need confirmation for `https://enterprise.vaultproof.dev/app/login`.
+- Attach and verify Cloud Armor WAF/rate-limit policy on the enterprise backend service.
 - Rotate the pilot MiniMax key before paid customer onboarding because it was shared in chat; keep using sealed local ingest for any future live provider key.
 
 ## Verification Commands
