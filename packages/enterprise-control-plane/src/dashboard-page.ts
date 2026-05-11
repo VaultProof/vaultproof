@@ -327,6 +327,7 @@ export function renderEnterpriseDashboardPage(env: EnterpriseControlPlaneEnv = {
             <div class="control-links" aria-label="Primary operator links">
               <a class="action" href="/app/members">members</a>
               <a class="action" href="/app/audit">audit</a>
+              <a class="action" href="/app/evidence">evidence</a>
               <a class="action" href="/app/runbooks">runbooks</a>
             </div>
           </div>
@@ -475,6 +476,7 @@ export function renderEnterpriseDashboardPage(env: EnterpriseControlPlaneEnv = {
             <div class="list">
               <div class="row"><div><div class="row-title">Runbooks</div><div class="row-sub">Open the built deploy, evidence, verification, hardening, and cleanup playbooks.</div></div><a class="tag good" href="/app/runbooks">open</a></div>
               <div class="row"><div><div class="row-title">Launch checklist</div><div class="row-sub">Turn readiness, policy, owners, evidence, alerts, and rollout actions into one customer go-live board.</div></div><a class="tag good" href="/app/launch">open</a></div>
+              <div class="row"><div><div class="row-title">Evidence packet</div><div class="row-sub">Assemble runtime readiness, access review, audit, provider posture, and launch proof for customer security review.</div></div><a class="tag good" href="/app/evidence">open</a></div>
               <div class="row"><div><div class="row-title">Technical guide</div><div class="row-sub">Open the enterprise implementation reference for identity, network, key custody, attestation, and troubleshooting.</div></div><a class="tag good" href="/app/technical-guide">open</a></div>
               <div class="row"><div><div class="row-title">Launch plans</div><div class="row-sub">Track packaging, GCP edge readiness, and contract-facing guardrails.</div></div><a class="tag" href="/app/plans">open</a></div>
               <div class="row"><div><div class="row-title">AI Proof Verifier</div><div class="row-sub">Register external models and verify proof bundles without VaultProof running the model.</div></div><a class="tag warn" href="/app/verifier">beta</a></div>
@@ -503,6 +505,11 @@ export function renderEnterpriseDashboardPage(env: EnterpriseControlPlaneEnv = {
               <div class="feature-tags"><span class="feature-tag">live</span><span class="feature-tag">go-live</span></div>
               <h3>Launch checklist</h3>
               <p>Customer go-live board with live readiness, owner tasks, policy evidence, alerts, rollout steps, and a copyable launch brief.</p>
+            </a>
+            <a class="feature-card" href="/app/evidence">
+              <div class="feature-tags"><span class="feature-tag">live</span><span class="feature-tag">proof</span></div>
+              <h3>Evidence packet</h3>
+              <p>Customer proof packet with readiness, access review, audit export links, provider posture, rollout workflow, and downloadable JSON summary.</p>
             </a>
             <a class="feature-card" href="/app/technical-guide">
               <div class="feature-tags"><span class="feature-tag">live</span><span class="feature-tag">technical</span></div>

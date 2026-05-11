@@ -26,6 +26,7 @@ Already built:
 - Load-balancer backend custom origin-lock header injection
 - Cloud Armor edge policy helper for WAF-style scanner blocking and coarse per-IP rate limits
 - Customer launch checklist page at `/app/launch`
+- Customer evidence packet page at `/app/evidence`
 - Build-status and feature inventory docs
 - Managed Supabase remains the auth/database provider for the pilot
 
@@ -172,7 +173,7 @@ Build:
 - Run `LOGIN_QA_REQUIRE_SESSION=true npm run qa:enterprise-login` with Supabase service-role env to verify the live login page, Supabase redirect allowlist, generated browser session, and authenticated enterprise org/bootstrap APIs.
 - Add `LOGIN_QA_OAUTH_PROVIDER=google` to the login QA command after the external OAuth provider app is configured.
 - Confirm API execution path through `/api/v1/enterprise/execute`.
-- Prepare demo talking points and one-page security proof.
+- Prepare demo talking points and use `/app/evidence` as the first customer one-page security proof.
 
 Success:
 
@@ -206,6 +207,7 @@ Build after first customer proof:
 - Budget and monitoring reviewed daily during launch week.
 - Cloud Armor policy is attached and `npm run verify:gcp-enterprise-cloud-armor` passes.
 - Customer launch checklist at `/app/launch` is reviewed with the pilot user.
+- Customer evidence packet at `/app/evidence` is reviewed with the pilot user.
 - Rollback path written down before sending real customer traffic.
 
 ## Operating Rules

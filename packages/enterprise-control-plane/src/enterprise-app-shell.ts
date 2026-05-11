@@ -1,6 +1,7 @@
 export type EnterpriseAppNavPage =
   | 'dashboard'
   | 'launch'
+  | 'evidence'
   | 'projects'
   | 'readiness'
   | 'health'
@@ -122,6 +123,13 @@ const ENTERPRISE_SIDEBAR_NAV_GROUPS: readonly EnterpriseSidebarNavGroup[] = [
   {
     label: 'evidence',
     items: [
+      {
+        page: 'evidence',
+        href: '/app/evidence',
+        label: 'Evidence packet',
+        blurb: 'Readiness, access, audit, policy, and proof exports.',
+        activePill: 'proof',
+      },
       {
         page: 'members',
         href: '/app/members',

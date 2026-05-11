@@ -423,6 +423,7 @@ Status: \`${cloudArmorState}\`
 
 - Build \`${buildTag}\` is the current deployed GCP image tag for both control plane and executor containers.
 - \`/app/launch\` is the customer go-live board: live readiness summary, auto/manual customer tasks, browser-saved checklist progress, workflow links, and a copyable launch brief.
+- \`/app/evidence\` is the customer proof packet: runtime readiness, access-review and audit export links, provider posture, rollout workflow, and copy/download JSON evidence summary without secrets.
 - \`/app/control\` and \`/app/org\` use the shared universal sidebar with explicit sidebar typography, hide the legacy static topbar/page frame, and clean old \`?org=<uuid>\` URLs back to canonical \`/app/control\` and \`/app/org\` while preserving the selected org in local storage.
 - Live HTML verification on both long-form URLs confirmed the universal sidebar, URL cleanup script, hidden legacy topbar, explicit sidebar font sizing, and no legacy sidebar/site-theme artifacts.
 

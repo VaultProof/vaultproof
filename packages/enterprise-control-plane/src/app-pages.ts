@@ -1815,14 +1815,6 @@ function renderEnterpriseAlertsPage(): string {
     .tag.good { color: var(--green); border-color: rgba(62,93,87,.24); }
     .tag.warn { color: var(--gold); border-color: rgba(213,169,20,.28); }
     .tag.bad { color: var(--red); border-color: rgba(185,93,80,.28); }
-    .launch-progress { height: 11px; border-radius: 999px; background: rgba(48,76,71,.12); overflow: hidden; margin-top: 16px; }
-    .launch-progress span { display: block; height: 100%; width: 0; background: linear-gradient(135deg, var(--green), var(--primary-bg)); border-radius: inherit; transition: width 180ms ease; }
-    .launch-check-row { display: grid; grid-template-columns: 22px 1fr auto; gap: 12px; align-items: start; border: 1px solid rgba(48,76,71,.10); border-radius: 18px; padding: 14px; background: rgba(247,250,244,.84); }
-    .launch-check-row input { width: 18px; height: 18px; margin: 2px 0 0; accent-color: var(--green); }
-    .launch-check-title { font-weight: 780; letter-spacing: -.02em; }
-    .launch-check-sub { color: var(--muted); font-size: 13px; line-height: 1.45; margin-top: 5px; }
-    .launch-check-row[data-complete="true"] { border-color: rgba(62,93,87,.24); background: rgba(143,224,193,.11); }
-    .brief-box { width: 100%; min-height: 210px; font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace; font-size: 12px; line-height: 1.55; }
     .empty, .notice { color: var(--muted); border: 1px dashed rgba(48,76,71,.22); border-radius: 18px; padding: 18px; background: rgba(247,250,244,.78); }
     .notice.error { color: var(--red); border-color: rgba(185,93,80,.3); }
     .slot-form { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; }
@@ -2552,7 +2544,7 @@ function renderEnterpriseOperationsPage(pageName: 'activity' | 'projects' | 'key
 </html>`;
 }
 
-type EnterpriseSupportPageName = 'setup' | 'launch' | 'technical-guide' | 'verifier' | 'settings' | 'plans' | 'scanner' | 'runbooks';
+type EnterpriseSupportPageName = 'setup' | 'launch' | 'evidence' | 'technical-guide' | 'verifier' | 'settings' | 'plans' | 'scanner' | 'runbooks';
 
 function renderEnterpriseSupportPage(pageName: EnterpriseSupportPageName): string {
   const supportPageCopy: Record<EnterpriseSupportPageName, { title: string; kicker: string; lead: string }> = {
@@ -2565,6 +2557,11 @@ function renderEnterpriseSupportPage(pageName: EnterpriseSupportPageName): strin
       title: 'Launch checklist',
       kicker: 'customer go-live',
       lead: 'Turn the enterprise setup plan into a working customer launch board. Track readiness, owners, policy, evidence, alerts, and rollout actions before sending real customer traffic.',
+    },
+    evidence: {
+      title: 'Evidence packet',
+      kicker: 'customer proof',
+      lead: 'Assemble the proof a customer security team asks for first: runtime readiness, access review, audit exports, provider posture, policy workflow, and a downloadable JSON packet scoped to the selected organization.',
     },
     'technical-guide': {
       title: 'Technical guide',
@@ -2638,6 +2635,17 @@ function renderEnterpriseSupportPage(pageName: EnterpriseSupportPageName): strin
     .doc-note { border-left: 3px solid var(--gold); padding: 12px 14px; margin-top: 14px; border-radius: 0 14px 14px 0; background: rgba(213,169,20,.08); color: var(--text); }
     .doc-note strong { color: var(--gold); }
     .doc-kicker { display: block; color: var(--gold); font-size: 12px; text-transform: uppercase; letter-spacing: .14em; font-weight: 850; margin-bottom: 8px; }
+    .launch-progress { height: 11px; border-radius: 999px; background: rgba(48,76,71,.12); overflow: hidden; margin-top: 16px; }
+    .launch-progress span { display: block; height: 100%; width: 0; background: linear-gradient(135deg, var(--green), var(--primary-bg)); border-radius: inherit; transition: width 180ms ease; }
+    .launch-check-row { display: grid; grid-template-columns: 22px 1fr auto; gap: 12px; align-items: start; border: 1px solid rgba(48,76,71,.10); border-radius: 18px; padding: 14px; background: rgba(247,250,244,.84); }
+    .launch-check-row input { width: 18px; height: 18px; margin: 2px 0 0; accent-color: var(--green); }
+    .launch-check-title { font-weight: 780; letter-spacing: -.02em; }
+    .launch-check-sub { color: var(--muted); font-size: 13px; line-height: 1.45; margin-top: 5px; }
+    .launch-check-row[data-complete="true"] { border-color: rgba(62,93,87,.24); background: rgba(143,224,193,.11); }
+    .evidence-callout { display: grid; gap: 10px; border: 1px solid rgba(62,93,87,.22); background: rgba(143,224,193,.10); border-radius: 18px; padding: 16px; }
+    .evidence-callout strong { font-size: 18px; letter-spacing: -.03em; }
+    .evidence-actions { display: flex; gap: 10px; flex-wrap: wrap; }
+    .brief-box { width: 100%; min-height: 210px; font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace; font-size: 12px; line-height: 1.55; }
     .kpi-label { color: var(--muted); font-size: 12px; text-transform: uppercase; letter-spacing: .1em; }
     .kpi-value { font-size: 34px; font-weight: 850; letter-spacing: -.05em; margin-top: 8px; }
     .kpi-sub { color: var(--muted); font-size: 13px; margin-top: 6px; }
@@ -2712,6 +2720,39 @@ function renderEnterpriseSupportPage(pageName: EnterpriseSupportPageName): strin
             <button id="copyLaunchBriefBtn" type="button">copy brief</button>
           </div>
           <textarea id="launchBrief" class="brief-box" readonly aria-label="Launch brief"></textarea>
+        </div>
+      </section>
+
+      <section id="evidencePanel" class="grid two" style="display:none">
+        <div class="card">
+          <div class="section-title"><h2>Evidence readiness</h2><span class="mini" id="evidenceMeta">live packet</span></div>
+          <div id="evidenceReadinessList" class="list"></div>
+        </div>
+        <div class="card">
+          <div class="section-title"><h2>Customer exports</h2><span class="mini">review links</span></div>
+          <div id="evidenceExportList" class="list"></div>
+        </div>
+        <div class="card">
+          <div class="section-title"><h2>Proof inventory</h2><span class="mini">current scope</span></div>
+          <div id="evidenceProofList" class="list"></div>
+        </div>
+        <div class="card">
+          <div class="section-title"><h2>Review workflow</h2><span class="mini">customer handoff</span></div>
+          <div id="evidenceWorkflowList" class="list"></div>
+        </div>
+        <div class="card" style="grid-column:1/-1">
+          <div class="section-title">
+            <h2>Evidence packet JSON</h2>
+            <div class="evidence-actions">
+              <button id="copyEvidencePacketBtn" type="button">copy JSON</button>
+              <button id="downloadEvidencePacketBtn" type="button">download JSON</button>
+            </div>
+          </div>
+          <div class="evidence-callout" style="margin-bottom:14px">
+            <strong>Safe customer packet</strong>
+            <span class="mini">This summary is generated in the browser from existing enterprise APIs and does not include provider keys, encrypted shares, Supabase service-role keys, origin-lock values, signing secrets, or raw executor internals.</span>
+          </div>
+          <textarea id="evidencePacket" class="brief-box" readonly aria-label="Evidence packet JSON"></textarea>
         </div>
       </section>
 
@@ -3240,6 +3281,109 @@ function renderEnterpriseSupportPage(pageName: EnterpriseSupportPageName): strin
         var brief = byId('launchBrief');
         if (brief) brief.value = launchBriefText(org, sso, readiness, overview, percent, doneCount, totalCount);
       }
+      function evidenceExportHref(path) {
+        if (!currentOrgId) return path;
+        var joiner = path.indexOf('?') === -1 ? '?' : '&';
+        return path + joiner + 'org=' + encodeURIComponent(currentOrgId);
+      }
+      function evidencePacketObject(org, sso, readiness, overview) {
+        var controlPlane = readiness.control_plane || {};
+        var executor = readiness.executor || {};
+        var executorHealth = executor.health || {};
+        return {
+          packet_type: 'vaultproof_enterprise_evidence_packet',
+          packet_version: 1,
+          generated_at: new Date().toISOString(),
+          generated_from: location.origin + '/app/evidence',
+          organization: {
+            id: currentOrgId || null,
+            name: org.name || null,
+            role: org.role || null,
+            kind: org.kind || null,
+            project_count: Number(org.project_count || overview.totalProjects || 0),
+            member_count: Number(org.member_count || 0),
+            sso_provider_status: sso.provider_status || 'not confirmed',
+            sso_login_mode: sso.login_mode || 'assisted'
+          },
+          runtime_readiness: {
+            production_ready: readiness.production_ready === true,
+            demo_ready: readiness.demo_ready === true,
+            security_profile: readiness.security_profile || null,
+            runtime_tier: readiness.runtime_tier || null,
+            customer_dedicated_runtime: readiness.customer_dedicated_runtime === true,
+            control_plane: {
+              executor_configured: controlPlane.executor_configured === true,
+              supabase_configured: controlPlane.supabase_configured === true,
+              origin_lock_configured: controlPlane.origin_lock_configured === true,
+              origin_lock_required: controlPlane.origin_lock_required === true
+            },
+            executor: {
+              reachable: executor.reachable === true,
+              status: executor.status || null,
+              production_ready: executorHealth.production_ready === true,
+              key_release_ready: executorHealth.key_release_ready === true,
+              attestation_evidence_ready: executorHealth.attestation_evidence_ready === true,
+              security_profile: executorHealth.security_profile || null
+            }
+          },
+          usage_summary: {
+            proxy_calls: Number(overview.totalCalls || 0),
+            denied_calls: Number(overview.deniedCalls || 0),
+            error_calls: Number(overview.errorCalls || 0),
+            active_provider_slots: Number(overview.activeApps || overview.providerCount || overview.provider_count || 0)
+          },
+          exports: {
+            readiness: '/readiness',
+            audit_csv_30_days: evidenceExportHref('/api/v1/enterprise/audit?format=csv&days=30'),
+            access_review_csv: evidenceExportHref('/api/v1/enterprise/members/access-review?format=csv'),
+            activity: '/app/activity',
+            provider_slots: '/app/keys',
+            launch_checklist: '/app/launch'
+          },
+          customer_review_notes: [
+            'Verify production readiness before customer traffic.',
+            'Export audit CSV and access-review CSV for the review packet.',
+            'Confirm caller-lock policy, provider slot posture, and emergency revoke owners.',
+            'Keep provider keys, encrypted shares, service-role keys, origin-lock values, and signing secrets out of customer packets.'
+          ]
+        };
+      }
+      function renderEvidencePanel(org, sso, readiness, overview) {
+        var productionReady = readiness.production_ready === true;
+        var controlPlane = readiness.control_plane || {};
+        var executor = readiness.executor || {};
+        var executorHealth = executor.health || {};
+        var packet = evidencePacketObject(org, sso, readiness, overview);
+        text('evidenceMeta', productionReady ? 'ready for review' : 'needs attention');
+        byId('evidenceReadinessList').innerHTML = [
+          row('Production readiness', productionReady ? 'Control plane and confidential executor report production-ready.' : (readiness.production_blockers || []).join('; '), productionReady ? 'ready' : 'blocked', productionReady ? 'good' : 'bad'),
+          row('Security profile', readiness.security_profile || 'not reported', readiness.runtime_tier || 'runtime', readiness.security_profile === 'google-confidential-production' ? 'good' : 'warn'),
+          row('Origin lock', controlPlane.origin_lock_configured ? 'GCP edge origin-lock header is configured and enforced by the control plane.' : 'Origin lock still needs configuration review.', controlPlane.origin_lock_required ? 'required' : 'optional', controlPlane.origin_lock_configured ? 'good' : 'warn'),
+          row('Executor evidence', executor.reachable ? 'Executor health is reachable through the private runtime path. Key release: ' + (executorHealth.key_release_ready ? 'ready' : 'attention') + '. Attestation: ' + (executorHealth.attestation_evidence_ready ? 'ready' : 'attention') + '.' : 'Executor health was not reachable from readiness.', executor.reachable ? 'reachable' : 'attention', executor.reachable ? 'good' : 'bad')
+        ].join('');
+        byId('evidenceExportList').innerHTML = [
+          linkRow('Readiness summary', 'Customer-facing production gate for runtime, executor, key release, and Cloud KMS posture.', '/readiness', 'open', productionReady ? 'good' : 'warn'),
+          linkRow('Audit CSV', 'Governance and runtime evidence for the last 30 days.', packet.exports.audit_csv_30_days, 'CSV', 'good'),
+          linkRow('Access review CSV', 'Members, roles, invitations, and project assignment evidence.', packet.exports.access_review_csv, 'CSV', 'good'),
+          linkRow('Activity review', 'Runtime events, status codes, latency, provider request IDs, and attestation hints.', '/app/activity', 'open', 'good'),
+          linkRow('Provider slot posture', 'Protected provider slots, material mode, rotation, and emergency revoke state.', '/app/keys', 'open', 'good')
+        ].join('');
+        byId('evidenceProofList').innerHTML = [
+          row('Organization scope', org.name || 'Selected workspace', org.role || 'member', currentOrgId ? 'good' : 'warn'),
+          row('Projects', number(packet.organization.project_count) + ' project scopes are visible for this organization.', number(packet.organization.project_count), packet.organization.project_count ? 'good' : 'warn'),
+          row('Members', number(packet.organization.member_count) + ' members are visible for access review.', number(packet.organization.member_count), packet.organization.member_count ? 'good' : 'warn'),
+          row('Provider posture', number(packet.usage_summary.active_provider_slots) + ' active provider/app connections are visible in overview.', number(packet.usage_summary.active_provider_slots), packet.usage_summary.active_provider_slots ? 'good' : 'warn'),
+          row('Traffic evidence', number(packet.usage_summary.proxy_calls) + ' proxy calls, ' + number(packet.usage_summary.denied_calls) + ' denied, ' + number(packet.usage_summary.error_calls) + ' errors.', packet.usage_summary.proxy_calls ? 'observed' : 'pending', packet.usage_summary.error_calls || packet.usage_summary.denied_calls ? 'warn' : 'good')
+        ].join('');
+        byId('evidenceWorkflowList').innerHTML = [
+          linkRow('Review launch checklist', 'Confirm owners, policy, evidence exports, alerts, rollback, and first workload scope.', '/app/launch', 'launch', 'good'),
+          linkRow('Review policy control', 'Confirm origins, gateways, CIDRs, upstream hosts, path prefixes, and rate limits.', '/app/control', 'control', 'good'),
+          linkRow('Review technical guide', 'Use the implementation guide for architecture, trust boundaries, key custody, and troubleshooting answers.', '/app/technical-guide', 'guide', 'good'),
+          linkRow('Review runbooks', 'Operator commands for verification, evidence capture, deploys, secrets, DNS, edge, SSH, and cleanup.', '/app/runbooks', 'runbooks', 'good')
+        ].join('');
+        var packetBox = byId('evidencePacket');
+        if (packetBox) packetBox.value = JSON.stringify(packet, null, 2);
+      }
       function renderOrgSelector(payload) {
         var select = byId('orgSelect');
         var orgs = Array.isArray(payload.organizations) ? payload.organizations : [];
@@ -3273,6 +3417,7 @@ function renderEnterpriseSupportPage(pageName: EnterpriseSupportPageName): strin
         text('kpiCalls', number(overview.totalCalls));
         byId('supportKpis').style.display = PAGE_MODE === 'setup' || PAGE_MODE === 'technical-guide' ? 'none' : 'grid';
         byId('launchPanel').style.display = PAGE_MODE === 'launch' ? 'grid' : 'none';
+        byId('evidencePanel').style.display = PAGE_MODE === 'evidence' ? 'grid' : 'none';
         byId('setupPanel').style.display = PAGE_MODE === 'setup' ? 'block' : 'none';
         byId('technicalGuidePanel').style.display = PAGE_MODE === 'technical-guide' ? 'block' : 'none';
         byId('settingsPanel').style.display = PAGE_MODE === 'settings' ? 'grid' : 'none';
@@ -3304,6 +3449,9 @@ function renderEnterpriseSupportPage(pageName: EnterpriseSupportPageName): strin
         }
         if (PAGE_MODE === 'launch') {
           renderLaunchPanel(org, sso, readiness, overview);
+        }
+        if (PAGE_MODE === 'evidence') {
+          renderEvidencePanel(org, sso, readiness, overview);
         }
         if (PAGE_MODE === 'settings') {
           text('settingsMeta', org.kind || 'organization');
@@ -3514,6 +3662,33 @@ function renderEnterpriseSupportPage(pageName: EnterpriseSupportPageName): strin
           brief.select();
         }
       });
+      var copyEvidencePacketBtn = byId('copyEvidencePacketBtn');
+      if (copyEvidencePacketBtn) copyEvidencePacketBtn.addEventListener('click', async function() {
+        var packet = byId('evidencePacket');
+        if (!packet) return;
+        try {
+          await navigator.clipboard.writeText(packet.value);
+          copyEvidencePacketBtn.textContent = 'copied';
+          setTimeout(function() { copyEvidencePacketBtn.textContent = 'copy JSON'; }, 1400);
+        } catch (_) {
+          packet.focus();
+          packet.select();
+        }
+      });
+      var downloadEvidencePacketBtn = byId('downloadEvidencePacketBtn');
+      if (downloadEvidencePacketBtn) downloadEvidencePacketBtn.addEventListener('click', function() {
+        var packet = byId('evidencePacket');
+        if (!packet) return;
+        var blob = new Blob([packet.value], { type: 'application/json' });
+        var url = URL.createObjectURL(blob);
+        var link = document.createElement('a');
+        link.href = url;
+        link.download = 'vaultproof-evidence-packet.json';
+        document.body.appendChild(link);
+        link.click();
+        link.remove();
+        URL.revokeObjectURL(url);
+      });
       byId('orgSelect').addEventListener('change', function(event) {
         currentOrgId = event.target.value || '';
         if (currentOrgId) localStorage.setItem(ACTIVE_ORG_STORAGE_KEY, currentOrgId);
@@ -3541,7 +3716,7 @@ export function renderEnterprisePlannedAppPage(pageName: string, env: Enterprise
   if (pageName === 'activity' || pageName === 'projects' || pageName === 'keys') {
     return injectEnterpriseAnalytics(renderEnterpriseOperationsPage(pageName), env, pageName);
   }
-  if (pageName === 'setup' || pageName === 'launch' || pageName === 'technical-guide' || pageName === 'verifier' || pageName === 'settings' || pageName === 'plans' || pageName === 'scanner' || pageName === 'runbooks') {
+  if (pageName === 'setup' || pageName === 'launch' || pageName === 'evidence' || pageName === 'technical-guide' || pageName === 'verifier' || pageName === 'settings' || pageName === 'plans' || pageName === 'scanner' || pageName === 'runbooks') {
     return injectEnterpriseAnalytics(renderEnterpriseSupportPage(pageName), env, pageName);
   }
 
