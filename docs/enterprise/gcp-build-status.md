@@ -1,6 +1,6 @@
 # VaultProof GCP Build Status
 
-Last updated: 2026-05-11T05:48:25.709Z
+Last updated: 2026-05-11T07:00:54.600Z
 
 This file is the living inventory of what has been built for VaultProof on Google Cloud. It is refreshed after every successful enterprise image build by `infra/gcp/enterprise-secure-runtime/build-images.sh`.
 
@@ -47,9 +47,9 @@ Status: `not configured`
 
 ## App Shell Notes
 
-- Build `5bf6c8a` is the current deployed GCP image tag for both control plane and executor containers.
+- Build `6407637` is the current deployed GCP image tag for both control plane and executor containers.
 - `/app/launch` is the customer go-live board: live readiness summary, auto/manual customer tasks, browser-saved checklist progress, workflow links, and a copyable launch brief.
-- `/app/evidence` is built as the customer proof packet: runtime readiness, access-review and audit export links, provider posture, rollout workflow, and copy/download JSON evidence summary without secrets.
+- `/app/evidence` is the customer proof packet: runtime readiness, access-review and audit export links, provider posture, rollout workflow, and copy/download JSON evidence summary without secrets.
 - `/app/control` and `/app/org` use the shared universal sidebar with explicit sidebar typography, hide the legacy static topbar/page frame, and clean old `?org=<uuid>` URLs back to canonical `/app/control` and `/app/org` while preserving the selected org in local storage.
 - Live HTML verification on both long-form URLs confirmed the universal sidebar, URL cleanup script, hidden legacy topbar, explicit sidebar font sizing, and no legacy sidebar/site-theme artifacts.
 
@@ -179,14 +179,14 @@ Cost note: the current fixed estimate is above the existing `VaultProof Producti
 
 ## Build Pointer
 
-- Build tag: `5bf6c8a`
+- Build tag: `6407637`
 - Registry: `us-central1-docker.pkg.dev/vaultproof-prod/vaultproof`
-- Control plane image: `us-central1-docker.pkg.dev/vaultproof-prod/vaultproof/enterprise-control-plane:5bf6c8a`
-- Control plane digest: `sha256:54adc401f5a40b7271fabfdf3b0035ef76c7ef88e23489c17a053b2bcbe20c99`
-- Control plane built at: `2026-05-11T05:46:14.561753881Z`
-- Executor image: `us-central1-docker.pkg.dev/vaultproof-prod/vaultproof/enterprise-secure-executor:5bf6c8a`
-- Executor digest: `sha256:85897413e3e250bd4c1a5f35eda09e3edf1d489cd9fdff4c0294b6e2e8eacdd4`
-- Executor built at: `2026-05-11T05:46:27.847197202Z`
+- Control plane image: `us-central1-docker.pkg.dev/vaultproof-prod/vaultproof/enterprise-control-plane:6407637`
+- Control plane digest: `sha256:76fc262448606ddcd5ce88225e16704e6b0eedda7f75fe94bfc50ceb1b67bd6a`
+- Control plane built at: `2026-05-11T07:00:17.462753709Z`
+- Executor image: `us-central1-docker.pkg.dev/vaultproof-prod/vaultproof/enterprise-secure-executor:6407637`
+- Executor digest: `sha256:495d0629b06ab8758d95b36b133d9ae1bf593ffd940261c1dda0a9eca97a1db6`
+- Executor built at: `2026-05-11T07:00:29.977651462Z`
 
 ## Project
 
