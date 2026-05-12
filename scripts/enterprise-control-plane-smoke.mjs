@@ -2836,6 +2836,23 @@ async function assertEnterpriseLoginRoute() {
     }
   }
 
+  function assertLaunchGoNoGoLocalStorage(pageHtml) {
+    for (const required of [
+      "return 'vaultproof_go_no_go_evidence:' + (currentOrgId || 'default');",
+      'Object.assign({}, existing, patch || {}, { updated_at: new Date().toISOString() })',
+      'localStorage.setItem(goNoGoStorageKey(), JSON.stringify(state));',
+      'GO_NO_GO_MANUAL_STALE_MS',
+      'isStaleGoNoGoEvidence',
+      "status: target.checked ? 'passed' : 'missing'",
+      "target.hasAttribute('data-go-no-go-status')",
+      "target.hasAttribute('data-go-no-go-note')",
+    ]) {
+      if (!pageHtml.includes(required)) {
+        throw new Error(`Expected launch go/no-go local-storage behavior to include ${required}`);
+      }
+    }
+  }
+
   for (const dashboardPath of ['/app', '/app/', '/app/dashboard']) {
     const dashboardResponse = await handleEnterpriseControlPlaneRequest(
       buildRequest(dashboardPath),
@@ -3017,12 +3034,12 @@ async function assertEnterpriseLoginRoute() {
     {
       path: '/app/launch',
       title: 'Launch checklist - VaultProof Enterprise',
-      required: ['Launch progress', 'Customer tasks', 'Launch package', 'copy brief', 'Customer owners confirmed', 'Caller policy reviewed', 'Evidence exports reviewed', 'Email provider key protected', 'vaultproof_launch_checklist', '/app/control', '/app/keys', '/app/audit'],
+      required: ['Launch progress', 'Customer tasks', 'Launch package', 'Go/No-Go Readiness', 'Cloud Armor verification passed', 'Strict login QA run', 'Key rotation status', 'Rollback owner/path confirmed', 'go/hold decision copy', 'vaultproof_go_no_go_evidence', 'updated_at', 'data-go-no-go-check', 'data-go-no-go-status', 'data-go-no-go-note', 'copy brief', 'Customer owners confirmed', 'Caller policy reviewed', 'Evidence exports reviewed', 'Email provider key protected', 'vaultproof_launch_checklist', '/api/v1/enterprise/projects/bootstrap', '/app/control', '/app/keys', '/app/audit'],
     },
     {
       path: '/app/evidence',
       title: 'Evidence packet - VaultProof Enterprise',
-      required: ['Evidence readiness', 'Customer exports', 'Proof inventory', 'Review workflow', 'Email API key protection', 'Evidence packet JSON', 'copy JSON', 'download JSON', 'vaultproof_enterprise_evidence_packet', 'email_provider_slots', '/app/launch', '/app/control', '/api/v1/enterprise/audit?format=csv&days=30', '/api/v1/enterprise/members/access-review?format=csv'],
+      required: ['Evidence readiness', 'Customer exports', 'Proof inventory', 'Review workflow', 'Go/no-go launch decision', 'go_no_go', 'manual_evidence', 'Email API key protection', 'Evidence packet JSON', 'copy JSON', 'download JSON', 'vaultproof_enterprise_evidence_packet', 'email_provider_slots', '/app/launch', '/app/control', '/api/v1/enterprise/audit?format=csv&days=30', '/api/v1/enterprise/members/access-review?format=csv'],
     },
     {
       path: '/app/technical-guide',
@@ -3032,13 +3049,13 @@ async function assertEnterpriseLoginRoute() {
     {
       path: '/app/settings',
       title: 'Settings - VaultProof Enterprise',
-      required: ['/api/v1/enterprise/orgs/current', '/readiness', 'Security notices'],
+      required: ['/api/v1/enterprise/projects/bootstrap', '/api/v1/enterprise/orgs/current', '/readiness', 'Security notices'],
     },
     {
       path: '/app/plans',
       title: 'Plans - VaultProof Enterprise',
       required: [
-        '/api/v1/enterprise/projects/stats/overview',
+        '/api/v1/enterprise/projects/bootstrap',
         'Commercial package',
         'Enterprise paid pilot starts at $5,000/month',
         'Capacity envelope',
@@ -3085,6 +3102,9 @@ async function assertEnterpriseLoginRoute() {
     }
     if (html.includes('https://init.vaultproof.dev') || html.includes('https://api.vaultproof.dev') || html.includes('/api/scanner')) {
       throw new Error(`Enterprise support page ${page.path} must not load B2C APIs`);
+    }
+    if (page.path === '/app/launch') {
+      assertLaunchGoNoGoLocalStorage(html);
     }
     assertDashboardShellTheme(page.path, html);
   }

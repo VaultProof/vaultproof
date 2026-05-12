@@ -25,8 +25,8 @@ Already built:
 - Google-managed TLS certificate for `enterprise.vaultproof.dev`, status `ACTIVE`
 - Load-balancer backend custom origin-lock header injection
 - Cloud Armor edge policy helper for WAF-style scanner blocking and coarse per-IP rate limits
-- Customer launch checklist page at `/app/launch`
-- Customer evidence packet page at `/app/evidence`
+- Customer launch checklist page at `/app/launch`, including safe-to-pilot go/no-go board with browser-local operator evidence status, timestamps, and stale holds
+- Customer evidence packet page at `/app/evidence`, including go/no-go launch decision summary and blockers
 - Buyer commercial package page at `/app/plans` for paid-pilot scope, included controls, contract guardrails, security boundaries, and customer review links
 - Build-status and feature inventory docs
 - Managed Supabase remains the auth/database provider for the pilot
@@ -263,8 +263,8 @@ Build after first customer proof:
 - Customer-facing docs reviewed for Azure-era leftovers.
 - Budget and monitoring reviewed daily during launch week.
 - Cloud Armor policy is attached and `npm run verify:gcp-enterprise-cloud-armor` passes.
-- Customer launch checklist at `/app/launch` is reviewed with the pilot user.
-- Customer evidence packet at `/app/evidence` is reviewed with the pilot user.
+- Customer launch checklist and go/no-go board at `/app/launch` are reviewed with the pilot user, including browser-local manual evidence status/timestamps.
+- Customer evidence packet at `/app/evidence` is reviewed with the pilot user and includes the current go/no-go launch decision and blockers.
 - Email API key demo dry-run flow is policy-gated, audited, and tested before showing customers; live sandbox send is sealed first when needed.
 - Rollback path written down before sending real customer traffic.
 

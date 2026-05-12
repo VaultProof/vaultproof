@@ -2822,6 +2822,15 @@ function renderEnterpriseSupportPage(pageName: EnterpriseSupportPageName): strin
     .launch-check-title { font-weight: 780; letter-spacing: -.02em; }
     .launch-check-sub { color: var(--muted); font-size: 13px; line-height: 1.45; margin-top: 5px; }
     .launch-check-row[data-complete="true"] { border-color: rgba(62,93,87,.24); background: rgba(143,224,193,.11); }
+    .go-decision { display: grid; gap: 8px; margin-bottom: 14px; }
+    .go-decision-title { font-size: 24px; font-weight: 850; letter-spacing: -.045em; }
+    .go-evidence-row { display: grid; grid-template-columns: 22px minmax(0, 1fr) auto; gap: 12px; align-items: start; border: 1px solid rgba(48,76,71,.10); border-radius: 18px; padding: 14px; background: rgba(247,250,244,.84); }
+    .go-evidence-row input[type="checkbox"] { width: 18px; height: 18px; margin: 2px 0 0; accent-color: var(--green); }
+    .go-evidence-row[data-complete="true"] { border-color: rgba(62,93,87,.24); background: rgba(143,224,193,.11); }
+    .go-note { width: 100%; min-height: 42px; margin-top: 10px; padding: 10px 11px; border: 1px solid var(--line); border-radius: 13px; background: rgba(255,255,255,.78); color: var(--text); font: inherit; }
+    .go-status { width: 100%; min-width: 118px; border: 1px solid var(--line); border-radius: 999px; background: rgba(255,255,255,.78); color: var(--text); font: inherit; font-size: 12px; padding: 8px 10px; }
+    .go-action { display: block; color: var(--muted); font-size: 12px; margin-top: 7px; line-height: 1.45; }
+    .go-action code { color: var(--gold); font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace; overflow-wrap: anywhere; word-break: break-word; }
     .evidence-callout { display: grid; gap: 10px; border: 1px solid rgba(62,93,87,.22); background: rgba(143,224,193,.10); border-radius: 18px; padding: 16px; }
     .evidence-callout strong { font-size: 18px; letter-spacing: -.03em; }
     .evidence-actions { display: flex; gap: 10px; flex-wrap: wrap; }
@@ -2843,7 +2852,7 @@ function renderEnterpriseSupportPage(pageName: EnterpriseSupportPageName): strin
     .empty, .notice { color: var(--muted); border: 1px dashed rgba(48,76,71,.22); border-radius: 18px; padding: 18px; background: rgba(247,250,244,.78); }
     .notice.error { color: var(--red); border-color: rgba(185,93,80,.3); }
     @media (max-width: 1100px) { .kpis, .two { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
-    @media (max-width: 760px) { .shell { grid-template-columns: 1fr; } .topbar { flex-direction: column; } .kpis, .two { grid-template-columns: 1fr; } }
+    @media (max-width: 760px) { .shell { grid-template-columns: 1fr; } .topbar { flex-direction: column; } .kpis, .two, .launch-check-row, .go-evidence-row, .row { grid-template-columns: 1fr; } .go-evidence-row > span:last-child { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; } .go-status { width: auto; } }
     ${ENTERPRISE_APP_SHELL_THEME}
     ${ENTERPRISE_STATIC_APP_POLISH_THEME}
   </style>
@@ -2885,6 +2894,11 @@ function renderEnterpriseSupportPage(pageName: EnterpriseSupportPageName): strin
         <div class="card">
           <div class="section-title"><h2>Launch package</h2><span class="mini">live checks</span></div>
           <div id="launchSummaryList" class="list"></div>
+        </div>
+        <div class="card" style="grid-column:1/-1">
+          <div class="section-title"><h2>Go/No-Go Readiness</h2><span class="mini" id="goNoGoMeta">hold</span></div>
+          <div id="goNoGoDecision" class="evidence-callout go-decision"></div>
+          <div id="goNoGoList" class="list"></div>
         </div>
         <div class="card">
           <div class="section-title"><h2>Customer tasks</h2><span class="mini">saved in this browser</span></div>
@@ -3366,6 +3380,9 @@ function renderEnterpriseSupportPage(pageName: EnterpriseSupportPageName): strin
       function launchStorageKey() {
         return 'vaultproof_launch_checklist:' + (currentOrgId || 'default');
       }
+      function goNoGoStorageKey() {
+        return 'vaultproof_go_no_go_evidence:' + (currentOrgId || 'default');
+      }
       function getLaunchManualState() {
         try {
           var raw = localStorage.getItem(launchStorageKey()) || '{}';
@@ -3380,6 +3397,21 @@ function renderEnterpriseSupportPage(pageName: EnterpriseSupportPageName): strin
         state[id] = Boolean(checked);
         localStorage.setItem(launchStorageKey(), JSON.stringify(state));
       }
+      function getGoNoGoManualState() {
+        try {
+          var raw = localStorage.getItem(goNoGoStorageKey()) || '{}';
+          var parsed = JSON.parse(raw);
+          return parsed && typeof parsed === 'object' ? parsed : {};
+        } catch (_) {
+          return {};
+        }
+      }
+      function setGoNoGoManualState(id, patch) {
+        var state = getGoNoGoManualState();
+        var existing = state[id] && typeof state[id] === 'object' ? state[id] : {};
+        state[id] = Object.assign({}, existing, patch || {}, { updated_at: new Date().toISOString() });
+        localStorage.setItem(goNoGoStorageKey(), JSON.stringify(state));
+      }
       function launchCheckRow(item, checked) {
         var complete = item.auto ? Boolean(item.complete) : Boolean(checked);
         var disabled = item.auto ? ' disabled' : '';
@@ -3389,6 +3421,108 @@ function renderEnterpriseSupportPage(pageName: EnterpriseSupportPageName): strin
           '<span class="tag ' + (complete ? 'good' : item.auto ? 'warn' : '') + '">' + escapeHtml(complete ? 'done' : item.tag) + '</span>' +
         '</label>';
       }
+      var GO_NO_GO_MANUAL_ITEMS = [
+        { id: 'strict-login-qa', title: 'Strict login QA run', action: 'LOGIN_QA_REQUIRE_SESSION=true npm run qa:enterprise-login', sub: 'Automated Supabase redirect, generated session, and authenticated enterprise API checks passed.', critical: true },
+        { id: 'human-login-qa', title: 'Human login QA completed', action: 'Browser-test https://enterprise.vaultproof.dev/app/login with ken@vaultproof.dev', sub: 'A real browser sign-in has been clicked through on the enterprise hostname.', critical: true },
+        { id: 'supabase-redirect-oauth', title: 'Supabase redirect/OAuth settings confirmed', action: 'Confirm https://enterprise.vaultproof.dev/app/login is allowed and the external OAuth callback is https://gwzkjiomemjlhtrdrlan.supabase.co/auth/v1/callback', sub: 'Supabase Auth settings match the enterprise demo hostname and external OAuth provider app.', critical: true },
+        { id: 'cloud-armor-verified', title: 'Cloud Armor verification passed', action: 'npm run verify:gcp-enterprise-cloud-armor', sub: 'Scanner-path blocking, expected rules, live health, and blocked /.env probe have been verified.', critical: true },
+        { id: 'key-rotation-reviewed', title: 'Key rotation status', action: 'Rotate exposed/shared pilot keys before paid onboarding, or document demo-only acceptance for this walkthrough', sub: 'Shared pilot keys, service-role keys, and origin-lock values have been reviewed for this launch decision.', critical: true },
+        { id: 'rollback-owner-confirmed', title: 'Rollback owner/path confirmed', action: 'Name the owner who can pause traffic, revoke provider slots, reset the VM image, or roll back DNS/edge changes', sub: 'The rollback path is known before customer traffic starts.', critical: true },
+        { id: 'budget-monitoring-reviewed', title: 'Budget/monitoring reviewed', action: 'Review budget alert, uptime expectations, denial/error monitoring, and launch-week owner coverage', sub: 'The customer pilot will not run blind on cost, availability, or provider errors.', critical: true }
+      ];
+      var GO_NO_GO_MANUAL_STALE_MS = 7 * 24 * 60 * 60 * 1000;
+      function providerSlotsFromBootstrap(bootstrap) {
+        var projects = bootstrap && Array.isArray(bootstrap.projects) ? bootstrap.projects : [];
+        var slots = [];
+        projects.forEach(function(project) {
+          (project.provider_slots || []).forEach(function(slot) { slots.push(slot); });
+        });
+        return slots;
+      }
+      function providerCountFromData(overview, bootstrap) {
+        var slots = providerSlotsFromBootstrap(bootstrap);
+        if (slots.length) return slots.length;
+        return Number(overview.activeApps || overview.providerCount || overview.provider_count || 0);
+      }
+      function projectCountFromData(org, overview, bootstrap) {
+        var projects = bootstrap && Array.isArray(bootstrap.projects) ? bootstrap.projects : [];
+        return Number(org.project_count || overview.totalProjects || projects.length || 0);
+      }
+      function normalizeGoNoGoStatus(value, legacyPassed) {
+        var status = String(value || '').trim().toLowerCase();
+        if (['passed', 'blocked', 'missing'].indexOf(status) !== -1) return status;
+        return legacyPassed === true ? 'passed' : 'missing';
+      }
+      function isStaleGoNoGoEvidence(updatedAt) {
+        if (!updatedAt) return true;
+        var age = Date.now() - new Date(updatedAt).getTime();
+        return !Number.isFinite(age) || age > GO_NO_GO_MANUAL_STALE_MS;
+      }
+      function buildGoNoGoAutomatedChecks(org, sso, readiness, overview, bootstrap) {
+        var controlPlane = readiness.control_plane || {};
+        var executor = readiness.executor || {};
+        var executorHealth = executor.health || {};
+        var projectCount = projectCountFromData(org, overview, bootstrap);
+        var memberCount = Number(org.member_count || 0);
+        var providerCount = providerCountFromData(overview, bootstrap);
+        var emailProviders = emailProvidersFromData(overview, bootstrap);
+        var totalCalls = Number(overview.totalCalls || overview.total_calls || 0);
+        return [
+          { id: 'runtime-production-ready', title: 'Runtime production readiness', sub: readiness.production_ready === true ? 'Control plane and executor report production-ready.' : (readiness.production_blockers || []).join('; ') || 'Production readiness is not green.', passed: readiness.production_ready === true, critical: true },
+          { id: 'security-profile', title: 'GCP confidential security profile', sub: readiness.security_profile || 'not reported', passed: readiness.security_profile === 'google-confidential-production', critical: true },
+          { id: 'origin-lock', title: 'Origin lock enforced', sub: controlPlane.origin_lock_configured ? 'GCP edge origin-lock header is configured and required state is visible.' : 'Origin lock is not configured.', passed: controlPlane.origin_lock_configured === true && controlPlane.origin_lock_required === true, critical: true },
+          { id: 'executor-private-health', title: 'Executor private health', sub: executor.reachable ? 'Executor health is reachable through the private runtime path with key release and attestation evidence status visible.' : 'Executor health is not reachable from readiness.', passed: executor.reachable === true && executorHealth.production_ready === true, critical: true },
+          { id: 'organization-scope', title: 'Organization selected', sub: currentOrgId ? 'This decision is scoped to the selected organization.' : 'Select an organization before launch.', passed: Boolean(currentOrgId), critical: true },
+          { id: 'project-scope', title: 'Project scope exists', sub: projectCount + ' project scopes are visible.', passed: projectCount > 0, critical: true },
+          { id: 'members-visible', title: 'Members visible', sub: memberCount + ' members are visible for access review.', passed: memberCount > 0, critical: true },
+          { id: 'provider-slots-visible', title: 'Provider slots visible', sub: providerCount + ' provider/app connections are visible.', passed: providerCount > 0, critical: true },
+          { id: 'email-demo-ready', title: 'Email provider demo readiness', sub: emailProviders.length ? 'Email API key demo provider visible: ' + emailProviders.join(', ') + '.' : 'Add Resend, SendGrid, Mailgun, Postmark, or AWS SES before this demo path.', passed: emailProviders.length > 0, critical: true },
+          { id: 'traffic-evidence', title: 'Traffic evidence observed', sub: totalCalls + ' proxy calls are visible in the overview window.', passed: totalCalls > 0, critical: true },
+          { id: 'sso-status', title: 'SSO/login posture reported', sub: sso.provider_status || 'not confirmed', passed: Boolean(sso.provider_status), critical: false }
+        ];
+      }
+      function buildGoNoGoStatus(org, sso, readiness, overview, bootstrap) {
+        var manualState = getGoNoGoManualState();
+        var automated = buildGoNoGoAutomatedChecks(org, sso, readiness, overview, bootstrap);
+        var manual = GO_NO_GO_MANUAL_ITEMS.map(function(item) {
+          var saved = manualState[item.id] && typeof manualState[item.id] === 'object' ? manualState[item.id] : {};
+          var status = normalizeGoNoGoStatus(saved.status, saved.passed);
+          var updatedAt = saved.updated_at || null;
+          var stale = status === 'passed' && isStaleGoNoGoEvidence(updatedAt);
+          return Object.assign({}, item, {
+            status: stale ? 'stale' : status,
+            passed: status === 'passed' && !stale,
+            stale: stale,
+            note: String(saved.note || ''),
+            updated_at: updatedAt
+          });
+        });
+        var blockers = automated.filter(function(item) { return item.critical && !item.passed; })
+          .map(function(item) { return item.title; })
+          .concat(manual.filter(function(item) { return item.critical && !item.passed; }).map(function(item) {
+            return item.title + (item.status === 'blocked' ? ' (blocked)' : item.status === 'stale' ? ' (stale)' : '');
+          }));
+        return {
+          status: blockers.length ? 'hold' : 'go',
+          automated: automated,
+          manual: manual,
+          blockers: blockers,
+          automated_passed: automated.filter(function(item) { return item.passed; }).length,
+          manual_passed: manual.filter(function(item) { return item.passed; }).length
+        };
+      }
+      function goNoGoAutomatedRow(item) {
+        return row(item.title, item.sub, item.passed ? 'pass' : (item.critical ? 'blocked' : 'watch'), item.passed ? 'good' : (item.critical ? 'bad' : 'warn'));
+      }
+      function goNoGoManualRow(item) {
+        var updated = item.updated_at ? 'Last updated ' + rel(item.updated_at) + (item.stale ? '; stale after 7 days.' : '.') : 'No operator evidence timestamp yet.';
+        var tagTone = item.passed ? 'good' : item.status === 'blocked' || item.status === 'stale' ? 'bad' : 'warn';
+        return '<label class="go-evidence-row" data-complete="' + (item.passed ? 'true' : 'false') + '">' +
+          '<input type="checkbox" data-go-no-go-check="' + escapeHtml(item.id) + '"' + (item.passed ? ' checked' : '') + ' />' +
+          '<span><span class="launch-check-title">' + escapeHtml(item.title) + '</span><span class="launch-check-sub">' + escapeHtml(item.sub) + '</span><span class="go-action">Action: <code>' + escapeHtml(item.action) + '</code></span><span class="go-action">' + escapeHtml(updated) + '</span><input class="go-note" data-go-no-go-note="' + escapeHtml(item.id) + '" value="' + escapeHtml(item.note) + '" placeholder="Optional note for the customer launch record" /></span>' +
+          '<span><select class="go-status" data-go-no-go-status="' + escapeHtml(item.id) + '"><option value="missing"' + (item.status === 'missing' ? ' selected' : '') + '>missing</option><option value="passed"' + (item.status === 'passed' || item.status === 'stale' ? ' selected' : '') + '>passed</option><option value="blocked"' + (item.status === 'blocked' ? ' selected' : '') + '>blocked</option></select><span class="tag ' + tagTone + '">' + escapeHtml(item.status) + '</span></span>' +
+        '</label>';
+      }
       function isEmailProviderName(value) {
         return ['resend', 'sendgrid', 'mailgun', 'postmark', 'aws-ses', 'aws_ses'].indexOf(String(value || '').trim().toLowerCase()) !== -1;
       }
@@ -3396,13 +3530,24 @@ function renderEnterpriseSupportPage(pageName: EnterpriseSupportPageName): strin
         var providers = Array.isArray(overview.providers) ? overview.providers : [];
         return providers.map(function(provider) { return String(provider || '').trim().toLowerCase(); }).filter(isEmailProviderName);
       }
-      function buildLaunchItems(org, sso, readiness, overview) {
+      function emailProvidersFromData(overview, bootstrap) {
+        var fromSlots = providerSlotsFromBootstrap(bootstrap).map(function(slot) {
+          return String(slot.provider || slot.slug || '').trim().toLowerCase();
+        }).filter(isEmailProviderName);
+        var seen = {};
+        return fromSlots.concat(emailProvidersFromOverview(overview)).filter(function(provider) {
+          if (!provider || seen[provider]) return false;
+          seen[provider] = true;
+          return true;
+        });
+      }
+      function buildLaunchItems(org, sso, readiness, overview, bootstrap) {
         var productionReady = readiness.production_ready === true;
-        var projectCount = Number(org.project_count || overview.totalProjects || 0);
+        var projectCount = projectCountFromData(org, overview, bootstrap);
         var memberCount = Number(org.member_count || 0);
-        var providerCount = Number(overview.activeApps || overview.providerCount || overview.provider_count || 0);
+        var providerCount = providerCountFromData(overview, bootstrap);
         var totalCalls = Number(overview.totalCalls || overview.total_calls || 0);
-        var emailProviders = emailProvidersFromOverview(overview);
+        var emailProviders = emailProvidersFromData(overview, bootstrap);
         return [
           { id: 'production-ready', auto: true, complete: productionReady, tag: 'blocked', title: 'Runtime readiness is green', sub: productionReady ? 'The confidential runtime reports production-ready.' : 'Open readiness and clear runtime blockers before customer traffic.' },
           { id: 'org-selected', auto: true, complete: Boolean(currentOrgId), tag: 'select org', title: 'Workspace selected', sub: currentOrgId ? 'This launch board is scoped to the selected organization.' : 'Select the customer organization before reviewing launch state.' },
@@ -3420,29 +3565,37 @@ function renderEnterpriseSupportPage(pageName: EnterpriseSupportPageName): strin
           { id: 'rollback-owner', tag: 'rollback', title: 'Rollback owner assigned', sub: 'A named owner can pause traffic, revoke provider slots, or roll back the first workload.' },
         ];
       }
-      function launchBriefText(org, sso, readiness, overview, percent, doneCount, totalCount) {
+      function launchBriefText(org, sso, readiness, overview, percent, doneCount, totalCount, goNoGo) {
         var productionReady = readiness.production_ready === true;
+        var blockers = goNoGo && goNoGo.blockers && goNoGo.blockers.length
+          ? goNoGo.blockers.join('; ')
+          : 'none';
         return [
           'VaultProof Enterprise launch brief',
           'Organization: ' + (org.name || 'selected workspace'),
           'Launch progress: ' + percent + '% (' + doneCount + '/' + totalCount + ' tasks)',
+          'Go/no-go decision: ' + (goNoGo && goNoGo.status === 'go' ? 'GO' : 'HOLD'),
+          'Go/no-go blockers: ' + blockers,
           'Runtime production-ready: ' + (productionReady ? 'yes' : 'no'),
           'SSO/login status: ' + (sso.provider_status || 'not confirmed'),
           'Projects: ' + number(org.project_count || overview.totalProjects),
           'Members: ' + number(org.member_count),
           'Proxy calls observed: ' + number(overview.totalCalls),
+          'Manual launch evidence passed: ' + (goNoGo ? goNoGo.manual_passed + '/' + goNoGo.manual.length : '0/0'),
           '',
           'Next customer actions:',
           '- Confirm the first workload, owner, provider path, and expected volume.',
           '- Review caller-lock policy in Control.',
           '- Review provider slot posture and emergency revoke path.',
+          '- Complete strict login QA, Cloud Armor verification, key-rotation review, rollback owner, and budget/monitoring review.',
           '- Export audit and access-review evidence.',
           '- Send one low-volume dry-run or test request before production traffic.',
         ].join('\\n');
       }
-      function renderLaunchPanel(org, sso, readiness, overview) {
+      function renderLaunchPanel(org, sso, readiness, overview, bootstrap) {
         var manualState = getLaunchManualState();
-        var items = buildLaunchItems(org, sso, readiness, overview);
+        var items = buildLaunchItems(org, sso, readiness, overview, bootstrap);
+        var goNoGo = buildGoNoGoStatus(org, sso, readiness, overview, bootstrap);
         var doneCount = items.filter(function(item) {
           return item.auto ? item.complete : manualState[item.id];
         }).length;
@@ -3459,6 +3612,16 @@ function renderEnterpriseSupportPage(pageName: EnterpriseSupportPageName): strin
           row('SSO/login posture', sso.provider_status || 'not confirmed', sso.login_mode || 'assisted', sso.provider_status === 'configured' ? 'good' : 'warn'),
           row('Usage posture', number(overview.totalCalls) + ' calls, ' + number(overview.errorCalls) + ' errors, ' + number(overview.deniedCalls) + ' denied.', (overview.errorCalls || overview.deniedCalls) ? 'watch' : 'clean', (overview.errorCalls || overview.deniedCalls) ? 'warn' : 'good')
         ].join('');
+        text('goNoGoMeta', goNoGo.status === 'go' ? 'go' : 'hold');
+        byId('goNoGoDecision').innerHTML =
+          '<div class="go-decision-title">' + (goNoGo.status === 'go' ? 'GO: safe to start pilot testing' : 'HOLD: finish launch evidence first') + '</div>' +
+          '<span class="mini">' + (goNoGo.status === 'go' ? 'Automated readiness is green and all critical operator evidence is recorded for this organization.' : 'Remaining blockers: ' + escapeHtml(goNoGo.blockers.join('; '))) + '</span>' +
+          '<div><span class="tag ' + (goNoGo.status === 'go' ? 'good' : 'bad') + '">' + (goNoGo.status === 'go' ? 'go' : 'hold') + '</span><span class="tag">go/hold decision copy</span><span class="tag">' + goNoGo.automated_passed + '/' + goNoGo.automated.length + ' automated</span><span class="tag">' + goNoGo.manual_passed + '/' + goNoGo.manual.length + ' manual</span></div>';
+        byId('goNoGoList').innerHTML =
+          '<div class="mini">Automated checks from readiness and workspace data</div>' +
+          goNoGo.automated.map(goNoGoAutomatedRow).join('') +
+          '<div class="mini" style="margin-top:8px">Operator-confirmed evidence saved in this browser</div>' +
+          goNoGo.manual.map(goNoGoManualRow).join('');
         byId('launchChecklist').innerHTML = items.map(function(item) {
           return launchCheckRow(item, manualState[item.id]);
         }).join('');
@@ -3470,18 +3633,19 @@ function renderEnterpriseSupportPage(pageName: EnterpriseSupportPageName): strin
           linkRow('Open readiness', 'Confirm the live runtime reports the current production posture.', '/readiness', 'readiness', readiness.production_ready === true ? 'good' : 'warn')
         ].join('');
         var brief = byId('launchBrief');
-        if (brief) brief.value = launchBriefText(org, sso, readiness, overview, percent, doneCount, totalCount);
+        if (brief) brief.value = launchBriefText(org, sso, readiness, overview, percent, doneCount, totalCount, goNoGo);
       }
       function evidenceExportHref(path) {
         if (!currentOrgId) return path;
         var joiner = path.indexOf('?') === -1 ? '?' : '&';
         return path + joiner + 'org=' + encodeURIComponent(currentOrgId);
       }
-      function evidencePacketObject(org, sso, readiness, overview) {
+      function evidencePacketObject(org, sso, readiness, overview, bootstrap) {
         var controlPlane = readiness.control_plane || {};
         var executor = readiness.executor || {};
         var executorHealth = executor.health || {};
-        var emailProviders = emailProvidersFromOverview(overview);
+        var emailProviders = emailProvidersFromData(overview, bootstrap);
+        var goNoGo = buildGoNoGoStatus(org, sso, readiness, overview, bootstrap);
         return {
           packet_type: 'vaultproof_enterprise_evidence_packet',
           packet_version: 1,
@@ -3492,7 +3656,7 @@ function renderEnterpriseSupportPage(pageName: EnterpriseSupportPageName): strin
             name: org.name || null,
             role: org.role || null,
             kind: org.kind || null,
-            project_count: Number(org.project_count || overview.totalProjects || 0),
+            project_count: projectCountFromData(org, overview, bootstrap),
             member_count: Number(org.member_count || 0),
             sso_provider_status: sso.provider_status || 'not confirmed',
             sso_login_mode: sso.login_mode || 'assisted'
@@ -3522,9 +3686,34 @@ function renderEnterpriseSupportPage(pageName: EnterpriseSupportPageName): strin
             proxy_calls: Number(overview.totalCalls || 0),
             denied_calls: Number(overview.deniedCalls || 0),
             error_calls: Number(overview.errorCalls || 0),
-            active_provider_slots: Number(overview.activeApps || overview.providerCount || overview.provider_count || 0),
+            active_provider_slots: providerCountFromData(overview, bootstrap),
             email_provider_slots: emailProviders.length,
             email_providers: emailProviders
+          },
+          go_no_go: {
+            status: goNoGo.status,
+            blockers: goNoGo.blockers,
+            automated_checks: goNoGo.automated.map(function(item) {
+              return {
+                id: item.id,
+                title: item.title,
+                status: item.passed ? 'pass' : 'block',
+                critical: item.critical === true,
+                detail: item.sub
+              };
+            }),
+            manual_evidence: goNoGo.manual.map(function(item) {
+              return {
+                id: item.id,
+                title: item.title,
+                status: item.status || (item.passed ? 'passed' : 'missing'),
+                critical: item.critical === true,
+                stale: item.stale === true,
+                updated_at: item.updated_at,
+                note: item.note || null,
+                action: item.action
+              };
+            })
           },
           exports: {
             readiness: '/readiness',
@@ -3536,6 +3725,7 @@ function renderEnterpriseSupportPage(pageName: EnterpriseSupportPageName): strin
           },
           customer_review_notes: [
             'Verify production readiness before customer traffic.',
+            'Review the go/no-go launch decision and close any hold blockers.',
             'Export audit CSV and access-review CSV for the review packet.',
             'Confirm caller-lock policy, provider slot posture, and emergency revoke owners.',
             'For the email API key demo, verify sender, recipient, template, gateway, and rate policy before live sends.',
@@ -3543,15 +3733,16 @@ function renderEnterpriseSupportPage(pageName: EnterpriseSupportPageName): strin
           ]
         };
       }
-      function renderEvidencePanel(org, sso, readiness, overview) {
+      function renderEvidencePanel(org, sso, readiness, overview, bootstrap) {
         var productionReady = readiness.production_ready === true;
         var controlPlane = readiness.control_plane || {};
         var executor = readiness.executor || {};
         var executorHealth = executor.health || {};
-        var packet = evidencePacketObject(org, sso, readiness, overview);
+        var packet = evidencePacketObject(org, sso, readiness, overview, bootstrap);
         text('evidenceMeta', productionReady ? 'ready for review' : 'needs attention');
         byId('evidenceReadinessList').innerHTML = [
           row('Production readiness', productionReady ? 'Control plane and confidential executor report production-ready.' : (readiness.production_blockers || []).join('; '), productionReady ? 'ready' : 'blocked', productionReady ? 'good' : 'bad'),
+          row('Go/no-go launch decision', packet.go_no_go.status === 'go' ? 'Launch board says GO for pilot testing.' : 'Launch board says HOLD: ' + packet.go_no_go.blockers.join('; '), packet.go_no_go.status, packet.go_no_go.status === 'go' ? 'good' : 'bad'),
           row('Security profile', readiness.security_profile || 'not reported', readiness.runtime_tier || 'runtime', readiness.security_profile === 'google-confidential-production' ? 'good' : 'warn'),
           row('Origin lock', controlPlane.origin_lock_configured ? 'GCP edge origin-lock header is configured and enforced by the control plane.' : 'Origin lock still needs configuration review.', controlPlane.origin_lock_required ? 'required' : 'optional', controlPlane.origin_lock_configured ? 'good' : 'warn'),
           row('Executor evidence', executor.reachable ? 'Executor health is reachable through the private runtime path. Key release: ' + (executorHealth.key_release_ready ? 'ready' : 'attention') + '. Attestation: ' + (executorHealth.attestation_evidence_ready ? 'ready' : 'attention') + '.' : 'Executor health was not reachable from readiness.', executor.reachable ? 'reachable' : 'attention', executor.reachable ? 'good' : 'bad')
@@ -3602,7 +3793,7 @@ function renderEnterpriseSupportPage(pageName: EnterpriseSupportPageName): strin
           select.value = currentOrgId;
         }
       }
-      function renderPanels(orgPayload, readiness, overview) {
+      function renderPanels(orgPayload, readiness, overview, bootstrap) {
         var org = orgPayload.organization || {};
         var sso = orgPayload.sso_status || {};
         var productionReady = readiness.production_ready === true;
@@ -3644,10 +3835,10 @@ function renderEnterpriseSupportPage(pageName: EnterpriseSupportPageName): strin
           ].join('');
         }
         if (PAGE_MODE === 'launch') {
-          renderLaunchPanel(org, sso, readiness, overview);
+          renderLaunchPanel(org, sso, readiness, overview, bootstrap);
         }
         if (PAGE_MODE === 'evidence') {
-          renderEvidencePanel(org, sso, readiness, overview);
+          renderEvidencePanel(org, sso, readiness, overview, bootstrap);
         }
         if (PAGE_MODE === 'settings') {
           text('settingsMeta', org.kind || 'organization');
@@ -3836,13 +4027,13 @@ function renderEnterpriseSupportPage(pageName: EnterpriseSupportPageName): strin
         }
         notice('');
         try {
-          renderOrgSelector(await fetchJson('/api/v1/enterprise/orgs'));
+          var bootstrap = await fetchJson('/api/v1/enterprise/projects/bootstrap');
+          renderOrgSelector(bootstrap);
           var results = await Promise.all([
             fetchJson('/api/v1/enterprise/orgs/current'),
-            fetchJson('/readiness'),
-            fetchJson('/api/v1/enterprise/projects/stats/overview')
+            fetchJson('/readiness')
           ]);
-          renderPanels(results[0], results[1], results[2] || {});
+          renderPanels(results[0], results[1], (bootstrap && bootstrap.overview) || {}, bootstrap || {});
         } catch (error) {
           notice(error && error.message ? error.message : 'Enterprise admin page failed to load.');
         }
@@ -3854,7 +4045,24 @@ function renderEnterpriseSupportPage(pageName: EnterpriseSupportPageName): strin
       if (verifierProofForm) verifierProofForm.addEventListener('submit', submitVerifierProof);
       document.addEventListener('change', function(event) {
         var target = event.target;
-        if (!target || !target.getAttribute || !target.hasAttribute('data-launch-check')) return;
+        if (!target || !target.getAttribute) return;
+        if (target.hasAttribute('data-go-no-go-check')) {
+          setGoNoGoManualState(target.getAttribute('data-go-no-go-check') || '', { status: target.checked ? 'passed' : 'missing', passed: target.checked });
+          reload();
+          return;
+        }
+        if (target.hasAttribute('data-go-no-go-status')) {
+          var status = normalizeGoNoGoStatus(target.value, false);
+          setGoNoGoManualState(target.getAttribute('data-go-no-go-status') || '', { status: status, passed: status === 'passed' });
+          reload();
+          return;
+        }
+        if (target.hasAttribute('data-go-no-go-note')) {
+          setGoNoGoManualState(target.getAttribute('data-go-no-go-note') || '', { note: target.value });
+          reload();
+          return;
+        }
+        if (!target.hasAttribute('data-launch-check')) return;
         setLaunchManualState(target.getAttribute('data-launch-check') || '', target.checked);
         reload();
       });
