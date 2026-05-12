@@ -88,6 +88,11 @@ type CallerLockPolicy = {
   allowed_client_certificate_thumbprints?: string[];
   allowed_client_certificate_subjects?: string[];
   require_device_id?: boolean;
+  allowed_email_sender_domains?: string[];
+  allowed_email_recipient_domains?: string[];
+  allowed_email_recipients?: string[];
+  allowed_email_template_ids?: string[];
+  require_email_template_id?: boolean;
   provider_overrides?: Record<string, CallerLockPolicy>;
 };
 
@@ -210,6 +215,10 @@ function normalizeCallerLockPolicyObject(
     allowed_ip_cidrs: input.allowed_ip_cidrs,
     allowed_client_certificate_thumbprints: input.allowed_client_certificate_thumbprints,
     allowed_client_certificate_subjects: input.allowed_client_certificate_subjects,
+    allowed_email_sender_domains: input.allowed_email_sender_domains,
+    allowed_email_recipient_domains: input.allowed_email_recipient_domains,
+    allowed_email_recipients: input.allowed_email_recipients,
+    allowed_email_template_ids: input.allowed_email_template_ids,
   })) {
     const normalized = normalizeStringList(value, `${fieldPrefix}.${field}`);
     if (!normalized.ok) return normalized;
@@ -223,6 +232,13 @@ function normalizeCallerLockPolicyObject(
       return { ok: false, error: `${fieldPrefix}.require_device_id must be a boolean` };
     }
     policy.require_device_id = input.require_device_id;
+  }
+
+  if (input.require_email_template_id !== undefined) {
+    if (typeof input.require_email_template_id !== 'boolean') {
+      return { ok: false, error: `${fieldPrefix}.require_email_template_id must be a boolean` };
+    }
+    policy.require_email_template_id = input.require_email_template_id;
   }
 
   if (input.provider_overrides !== undefined) {

@@ -1879,7 +1879,23 @@ async function assertEnterpriseRateLimitPolicy() {
 
 async function assertEnterpriseCreateProviderSlot() {
   installSupabaseStub();
-  activeProject = fakeProject;
+  activeProject = {
+    ...fakeProject,
+    caller_lock_policy: {
+      allowed_customer_gateways: ['vaultproof-managed'],
+      allowed_client_classes: ['browser'],
+      provider_overrides: {
+        resend: {
+          allowed_methods: ['POST'],
+          allowed_upstream_hosts: ['api.resend.com'],
+          allowed_upstream_path_prefixes: ['/emails'],
+          allowed_email_sender_domains: ['vaultproof.dev'],
+          allowed_email_recipient_domains: ['example.com'],
+          allowed_email_recipients: ['security-review@example.com'],
+        },
+      },
+    },
+  };
 
   const env = {
     enterpriseHostname: ENTERPRISE_HOSTNAME,
@@ -2000,6 +2016,58 @@ async function assertEnterpriseCreateProviderSlot() {
   ));
   if (!emailDryRunAudit || emailDryRunAudit.metadata?.protected_workflow !== 'email_provider_send') {
     throw new Error(`Expected protected email dry-run audit metadata, got ${JSON.stringify(auditEvents)}`);
+  }
+  if (
+    emailDryRunAudit.metadata?.email_policy?.sender_domain !== 'vaultproof.dev'
+    || !emailDryRunAudit.metadata?.email_policy?.recipient_domains?.includes('example.com')
+    || emailDryRunAudit.metadata?.email_policy?.recipient_count !== 1
+  ) {
+    throw new Error(`Expected protected email dry-run email policy metadata, got ${JSON.stringify(emailDryRunAudit.metadata)}`);
+  }
+
+  const deniedEmailResponse = await handleEnterpriseControlPlaneRequest(
+    buildRequest(`/api/v1/enterprise/projects/${PROJECT_ID}/providers/resend/execute`, {
+      method: 'POST',
+      headers: {
+        authorization: `Bearer ${AUTH_TOKEN}`,
+        'content-type': 'application/json',
+        origin: 'https://enterprise.vaultproof.dev',
+        'x-vaultproof-customer-gateway': 'vaultproof-managed',
+        'x-vaultproof-client-class': 'browser',
+      },
+      body: JSON.stringify({
+        method: 'POST',
+        upstream_path: '/emails',
+        headers: { 'content-type': 'application/json' },
+        body_base64: Buffer.from(JSON.stringify({
+          from: 'VaultProof Demo <demo@vaultproof.dev>',
+          to: ['blocked@untrusted.example'],
+          subject: 'VaultProof protected email deny test',
+          text: 'VaultProof should block this recipient domain.',
+        })).toString('base64'),
+        dry_run: true,
+      }),
+    }),
+    env,
+  );
+  const deniedEmailPayload = await deniedEmailResponse.json();
+  if (
+    deniedEmailResponse.status !== 403
+    || !String(deniedEmailPayload?.error || '').includes('Email policy for resend rejected recipient domain untrusted.example')
+  ) {
+    throw new Error(`Expected protected email policy denial, got ${deniedEmailResponse.status} ${JSON.stringify(deniedEmailPayload)}`);
+  }
+  const deniedEmailAudit = auditEvents.find((event) => (
+    event.event_type === 'enterprise_caller_lock_denied'
+    && event.metadata?.policy_scope === 'provider_email_policy'
+    && event.metadata?.provider === 'resend'
+  ));
+  if (
+    !deniedEmailAudit
+    || deniedEmailAudit.metadata?.protected_secret_kind !== 'email_api_key'
+    || !deniedEmailAudit.metadata?.email_policy?.recipient_domains?.includes('untrusted.example')
+  ) {
+    throw new Error(`Expected protected email denial audit metadata, got ${JSON.stringify(auditEvents)}`);
   }
 }
 
@@ -2915,7 +2983,7 @@ async function assertEnterpriseLoginRoute() {
     {
       path: '/app/keys',
       title: 'Provider Slots - VaultProof Enterprise',
-      required: ['/api/v1/enterprise/projects', 'add slot', 'create slot', 'emergency revoke', 'live sealed material', 'demo placeholder material', 'Email API key demo', 'protected email dry-run', 'resend', 'sendgrid', 'postmark'],
+      required: ['/api/v1/enterprise/projects', 'add slot', 'create slot', 'emergency revoke', 'live sealed material', 'demo placeholder material', 'Email API key demo', 'protected email dry-run', 'blocked recipient test', 'Policy denial evidence', 'resend', 'sendgrid', 'postmark'],
     },
   ];
   for (const page of operationsPages) {

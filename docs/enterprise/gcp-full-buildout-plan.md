@@ -34,7 +34,7 @@ Already built:
 Not yet customer-ready:
 
 - Strict login readiness QA and final human OAuth/password browser QA still need to pass.
-- Email API key demo dry-run flow is built; live sandbox email sends need sealed provider material only if the demo specifically needs an actual delivered email.
+- Email API key demo dry-run and blocked-recipient policy evidence flow are built; live sandbox email sends need sealed provider material only if the demo specifically needs an actual delivered email.
 - Live MiniMax provider dispatch works for the demo; add a separate OpenAI slot only if the demo specifically needs OpenAI.
 - Supabase OAuth/login settings still need to be confirmed for `enterprise.vaultproof.dev`.
 - Older migration/history docs still have Azure-era language; customer-facing app UI is cleaned for the GCP demo.
@@ -225,6 +225,8 @@ Demo UI/API work:
 
 - Built: add email-provider options to Provider Slots for `resend`, `sendgrid`, `mailgun`, `postmark`, and `aws-ses`.
 - Built: add a protected email dry-run action that validates policy/signing/audit without dispatching a live email.
+- Built: enforce email-specific sender domain, recipient domain, recipient address, and template ID policy on protected email-provider calls.
+- Built: add a blocked-recipient demo test that records denial evidence without exposing the raw email payload.
 - Built: classify email-provider execution audit metadata as `protected_secret_kind: email_api_key` and `protected_workflow: email_provider_send`.
 - Built: add evidence packet and launch-checklist lines for email API key protection.
 - Next: seal a sandbox email provider key and run a live sandbox send only when the demo needs actual delivery.

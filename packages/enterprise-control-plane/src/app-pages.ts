@@ -2267,7 +2267,8 @@ function renderEnterpriseOperationsPage(pageName: 'activity' | 'projects' | 'key
           <div class="section-title"><h2>Protected email policy</h2><span class="mini">no raw keys</span></div>
           <div class="list">
             <div class="row"><div><div class="row-title">What this proves</div><div class="row-sub">The customer app sends through VaultProof without storing, viewing, copying, logging, or emailing the raw email-provider key.</div></div><span class="tag good">use-only</span></div>
-            <div class="row"><div><div class="row-title">Policy boundary</div><div class="row-sub">Lock sender domains, recipient allowlists, template/category paths, gateway markers, and per-minute limits before live sends.</div></div><span class="tag warn">policy</span></div>
+            <div class="row"><div><div class="row-title">Policy boundary</div><div class="row-sub">Lock sender domains, recipient allowlists, template IDs, gateway markers, and per-minute limits before live sends.</div></div><span class="tag warn">policy</span></div>
+            <div class="row"><div><div class="row-title">Policy denial evidence</div><div class="row-sub">Blocked email attempts record sender domain, recipient domains, recipient count, template IDs, caller-lock facts, and protected-secret classification without writing the raw email payload.</div></div><span class="tag bad">deny + audit</span></div>
             <div class="row"><div><div class="row-title">Demo path</div><div class="row-sub">Use protected email dry-run first. Live sandbox send should wait until a sealed provider key is loaded with the local ingest helper.</div></div><span class="tag">dry-run first</span></div>
           </div>
         </div>
@@ -2364,12 +2365,14 @@ function renderEnterpriseOperationsPage(pageName: 'activity' | 'projects' | 'key
       function toBase64Utf8(value) {
         return btoa(unescape(encodeURIComponent(value)));
       }
-      function demoEmailPayload(slot) {
+      function demoEmailPayload(slot, options) {
         var provider = String(slot.provider || slot.slug || '').trim().toLowerCase();
+        var recipient = options && options.blocked ? 'blocked@untrusted.example' : 'security-review@example.com';
         if (provider === 'sendgrid') {
           return {
-            personalizations: [{ to: [{ email: 'security-review@example.com' }] }],
+            personalizations: [{ to: [{ email: recipient }] }],
             from: { email: 'demo@vaultproof.dev' },
+            template_id: 'vaultproof-demo',
             subject: 'VaultProof protected email dry-run',
             content: [{ type: 'text/plain', value: 'VaultProof policy validated this email-provider call without exposing the raw key.' }]
           };
@@ -2377,7 +2380,7 @@ function renderEnterpriseOperationsPage(pageName: 'activity' | 'projects' | 'key
         if (provider === 'mailgun') {
           return {
             from: 'VaultProof Demo <demo@vaultproof.dev>',
-            to: 'security-review@example.com',
+            to: recipient,
             subject: 'VaultProof protected email dry-run',
             text: 'VaultProof policy validated this email-provider call without exposing the raw key.'
           };
@@ -2385,7 +2388,8 @@ function renderEnterpriseOperationsPage(pageName: 'activity' | 'projects' | 'key
         if (provider === 'postmark') {
           return {
             From: 'demo@vaultproof.dev',
-            To: 'security-review@example.com',
+            To: recipient,
+            TemplateId: 'vaultproof-demo',
             Subject: 'VaultProof protected email dry-run',
             TextBody: 'VaultProof policy validated this email-provider call without exposing the raw key.'
           };
@@ -2393,7 +2397,8 @@ function renderEnterpriseOperationsPage(pageName: 'activity' | 'projects' | 'key
         if (provider === 'aws-ses' || provider === 'aws_ses') {
           return {
             Source: 'demo@vaultproof.dev',
-            Destination: { ToAddresses: ['security-review@example.com'] },
+            Destination: { ToAddresses: [recipient] },
+            Template: 'vaultproof-demo',
             Message: {
               Subject: { Data: 'VaultProof protected email dry-run' },
               Body: { Text: { Data: 'VaultProof policy validated this email-provider call without exposing the raw key.' } }
@@ -2402,7 +2407,7 @@ function renderEnterpriseOperationsPage(pageName: 'activity' | 'projects' | 'key
         }
         return {
           from: 'VaultProof Demo <demo@vaultproof.dev>',
-          to: ['security-review@example.com'],
+          to: [recipient],
           subject: 'VaultProof protected email dry-run',
           text: 'VaultProof policy validated this email-provider call without exposing the raw key.'
         };
@@ -2509,7 +2514,7 @@ function renderEnterpriseOperationsPage(pageName: 'activity' | 'projects' | 'key
           byId('emailKeyDemoList').innerHTML = emailRows.length ? emailRows.map(function(item) {
             var materialMode = item.slot.material_mode || 'missing';
             var materialClass = materialMode === 'sealed-live' ? 'good' : materialMode === 'demo-placeholder' ? 'warn' : 'bad';
-            var action = '<button type="button" class="primary" data-action="email-dry-run" data-project-id="' + escapeHtml(item.project.id) + '" data-provider="' + escapeHtml(item.slot.provider) + '" data-slug="' + escapeHtml(item.slot.slug || item.slot.provider) + '">protected email dry-run</button>';
+            var action = '<button type="button" class="primary" data-action="email-dry-run" data-project-id="' + escapeHtml(item.project.id) + '" data-provider="' + escapeHtml(item.slot.provider) + '" data-slug="' + escapeHtml(item.slot.slug || item.slot.provider) + '">protected email dry-run</button><button type="button" data-action="email-deny-test" data-project-id="' + escapeHtml(item.project.id) + '" data-provider="' + escapeHtml(item.slot.provider) + '" data-slug="' + escapeHtml(item.slot.slug || item.slot.provider) + '">blocked recipient test</button>';
             return '<div class="row"><div><div class="row-title">' + escapeHtml(emailProviderLabel(item.slot.provider)) + ' protected send</div><div class="row-sub">' + escapeHtml(item.project.name || item.project.vp_proj_id) + ' - path ' + escapeHtml(emailDemoPath(item.slot)) + ' - material ' + escapeHtml(materialMode) + '</div><div><span class="tag ' + materialClass + '">' + escapeHtml(materialMode) + '</span><span class="tag good">no raw key in browser</span><span class="tag">audit evidence</span><span class="tag warn">recipient allowlist</span></div></div>' + action + '</div>';
           }).join('') : '<div class="row"><div><div class="row-title">No email provider key protected yet</div><div class="row-sub">Create a Resend, SendGrid, Mailgun, Postmark, or AWS SES provider slot, then run protected email dry-run before the customer demo.</div><div><span class="tag warn">required for demo</span><span class="tag">raw keys stay out</span></div></div><button type="button" class="primary" data-action="prefill-email-slot">create resend slot</button></div>';
         }
@@ -2578,30 +2583,61 @@ function renderEnterpriseOperationsPage(pageName: 'activity' | 'projects' | 'key
           notice(error && error.message ? error.message : 'Provider slot could not be created.');
         }
       }
-      async function runProtectedEmailDryRun(target) {
+      function emailExecuteRequest(target, options) {
         var projectId = target.getAttribute('data-project-id');
         var slug = target.getAttribute('data-slug');
         var provider = target.getAttribute('data-provider') || slug;
-        var payload = demoEmailPayload({ provider: provider, slug: slug });
+        var payload = demoEmailPayload({ provider: provider, slug: slug }, options || {});
+        return {
+          path: '/api/v1/enterprise/projects/' + encodeURIComponent(projectId) + '/providers/' + encodeURIComponent(slug) + '/execute',
+          body: {
+            method: 'POST',
+            upstream_path: emailDemoPath({ provider: provider, slug: slug }),
+            headers: { 'content-type': 'application/json' },
+            body_base64: toBase64Utf8(JSON.stringify(payload)),
+            dry_run: true
+          }
+        };
+      }
+      async function runProtectedEmailDryRun(target) {
+        var request = emailExecuteRequest(target);
         try {
-          var result = await fetchJson('/api/v1/enterprise/projects/' + encodeURIComponent(projectId) + '/providers/' + encodeURIComponent(slug) + '/execute', {
+          var result = await fetchJson(request.path, {
             method: 'POST',
             headers: {
               'x-vaultproof-customer-gateway': 'vaultproof-managed',
               'x-vaultproof-client-class': 'browser'
             },
-            body: JSON.stringify({
-              method: 'POST',
-              upstream_path: emailDemoPath({ provider: provider, slug: slug }),
-              headers: { 'content-type': 'application/json' },
-              body_base64: toBase64Utf8(JSON.stringify(payload)),
-              dry_run: true
-            })
+            body: JSON.stringify(request.body)
           });
           notice('Protected email dry-run validated: ' + (result.execution && result.execution.requestId ? result.execution.requestId : 'accepted') + '. Raw email provider key was not exposed.');
           await reload();
         } catch (error) {
           notice(error && error.message ? error.message : 'Protected email dry-run failed.');
+        }
+      }
+      async function runProtectedEmailDenialTest(target) {
+        var request = emailExecuteRequest(target, { blocked: true });
+        try {
+          var res = await fetch(request.path, {
+            method: 'POST',
+            headers: Object.assign(headers(), {
+              'x-vaultproof-customer-gateway': 'vaultproof-managed',
+              'x-vaultproof-client-class': 'browser'
+            }),
+            body: JSON.stringify(request.body)
+          });
+          var payload = await res.json().catch(function() { return null; });
+          if (res.status === 403) {
+            notice('Policy denial evidence recorded: ' + friendlyErrorMessage((payload && payload.error) || 'blocked recipient rejected') + '.');
+          } else if (res.ok) {
+            notice('Blocked recipient test was accepted. Add an email recipient-domain or recipient allowlist before using this as the denial demo.');
+          } else {
+            notice(friendlyErrorMessage((payload && payload.error) || ('Blocked recipient test failed: ' + res.status)));
+          }
+          await reload();
+        } catch (error) {
+          notice(error && error.message ? error.message : 'Blocked recipient test failed.');
         }
       }
       function prefillEmailSlot() {
@@ -2656,6 +2692,10 @@ function renderEnterpriseOperationsPage(pageName: 'activity' | 'projects' | 'key
         }
         if (target.getAttribute('data-action') === 'email-dry-run') {
           await runProtectedEmailDryRun(target);
+          return;
+        }
+        if (target.getAttribute('data-action') === 'email-deny-test') {
+          await runProtectedEmailDenialTest(target);
           return;
         }
         if (target.getAttribute('data-action') !== 'revoke-slot') return;

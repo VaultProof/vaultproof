@@ -40,6 +40,11 @@ type CallerLockPolicy = {
   allowed_client_certificate_thumbprints?: string[];
   allowed_client_certificate_subjects?: string[];
   require_device_id?: boolean;
+  allowed_email_sender_domains?: string[];
+  allowed_email_recipient_domains?: string[];
+  allowed_email_recipients?: string[];
+  allowed_email_template_ids?: string[];
+  require_email_template_id?: boolean;
   provider_overrides?: Record<string, CallerLockPolicy>;
 };
 
@@ -67,6 +72,15 @@ type ExecuteProviderContext = {
   provider: string | null;
   slug?: string | null;
   upstream_base_url?: string | null;
+};
+
+type EmailPolicyContext = {
+  senderEmail: string | null;
+  senderDomain: string | null;
+  recipientEmails: string[];
+  recipientDomains: string[];
+  templateIds: string[];
+  parseError: string | null;
 };
 
 type ExecuteContext = {
@@ -400,6 +414,11 @@ function getCallerLockPolicyFromRaw(raw: Record<string, unknown>): CallerLockPol
       .filter(Boolean) as string[],
     allowed_client_certificate_subjects: normalizePolicyList(raw.allowed_client_certificate_subjects),
     require_device_id: raw.require_device_id === true,
+    allowed_email_sender_domains: normalizePolicyList(raw.allowed_email_sender_domains),
+    allowed_email_recipient_domains: normalizePolicyList(raw.allowed_email_recipient_domains),
+    allowed_email_recipients: normalizePolicyList(raw.allowed_email_recipients),
+    allowed_email_template_ids: normalizePolicyList(raw.allowed_email_template_ids),
+    require_email_template_id: raw.require_email_template_id === true,
   };
 }
 
@@ -611,6 +630,206 @@ function classifyProtectedSecret(input: {
     protected_secret_kind: isEmailProvider ? 'email_api_key' : 'provider_api_key',
     protected_workflow: isEmailProvider ? 'email_provider_send' : 'provider_api_call',
   };
+}
+
+function uniqueNonEmpty(values: string[]): string[] {
+  return [...new Set(values.map((value) => value.trim().toLowerCase()).filter(Boolean))];
+}
+
+function normalizeEmailAddress(value: unknown): string | null {
+  const raw = isRecord(value)
+    ? String(value.email || value.Email || value.address || value.Address || '')
+    : String(value || '');
+  const match = raw.match(/[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}/i);
+  return match ? match[0].toLowerCase() : null;
+}
+
+function extractEmailList(value: unknown): string[] {
+  if (value === undefined || value === null) return [];
+  if (Array.isArray(value)) return uniqueNonEmpty(value.flatMap((item) => extractEmailList(item)));
+  if (isRecord(value)) {
+    const direct = normalizeEmailAddress(value);
+    return direct ? [direct] : [];
+  }
+  if (typeof value !== 'string') return [];
+  return uniqueNonEmpty(value.match(/[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}/gi) || []);
+}
+
+function getEmailDomain(email: string | null): string | null {
+  if (!email || !email.includes('@')) return null;
+  return email.split('@').pop()?.trim().toLowerCase() || null;
+}
+
+function extractTemplateId(value: unknown): string | null {
+  if (typeof value === 'string' || typeof value === 'number') {
+    const normalized = String(value).trim().toLowerCase();
+    return normalized || null;
+  }
+  if (isRecord(value)) {
+    return extractTemplateId(value.id || value.name || value.template_id || value.templateId || value.TemplateId);
+  }
+  return null;
+}
+
+function extractEmailTemplateIds(body: Record<string, unknown>): string[] {
+  const directKeys = ['template_id', 'templateId', 'TemplateId', 'template', 'Template', 'TemplateName'];
+  const values = directKeys
+    .map((key) => extractTemplateId(body[key]))
+    .filter(Boolean) as string[];
+
+  for (const nestedKey of ['metadata', 'message', 'Message']) {
+    const nested = body[nestedKey];
+    if (!isRecord(nested)) continue;
+    for (const key of directKeys) {
+      const templateId = extractTemplateId(nested[key]);
+      if (templateId) values.push(templateId);
+    }
+  }
+
+  return uniqueNonEmpty(values);
+}
+
+function parseEmailPolicyBody(bodyBase64: string | null | undefined): { ok: true; value: Record<string, unknown> } | { ok: false; error: string } {
+  if (!bodyBase64) return { ok: false, error: 'missing JSON email payload' };
+  if (bodyBase64.length > 512_000) return { ok: false, error: 'email payload is too large to inspect' };
+  try {
+    const parsed = JSON.parse(Buffer.from(bodyBase64, 'base64').toString('utf8'));
+    return isRecord(parsed)
+      ? { ok: true, value: parsed }
+      : { ok: false, error: 'email payload must be a JSON object' };
+  } catch {
+    return { ok: false, error: 'email payload could not be parsed as JSON' };
+  }
+}
+
+function buildEmailPolicyContext(bodyBase64: string | null | undefined): EmailPolicyContext {
+  const parsed = parseEmailPolicyBody(bodyBase64);
+  if (!parsed.ok) {
+    return {
+      senderEmail: null,
+      senderDomain: null,
+      recipientEmails: [],
+      recipientDomains: [],
+      templateIds: [],
+      parseError: parsed.error,
+    };
+  }
+
+  const body = parsed.value;
+  const senderEmail = extractEmailList(body.from || body.From || body.Source || body.sender || body.senderEmail)[0] || null;
+  const recipientEmails = [
+    ...extractEmailList(body.to),
+    ...extractEmailList(body.To),
+    ...extractEmailList(body.cc),
+    ...extractEmailList(body.Cc),
+    ...extractEmailList(body.bcc),
+    ...extractEmailList(body.Bcc),
+  ];
+
+  const personalizations = body.personalizations;
+  if (Array.isArray(personalizations)) {
+    for (const personalization of personalizations) {
+      if (!isRecord(personalization)) continue;
+      recipientEmails.push(
+        ...extractEmailList(personalization.to),
+        ...extractEmailList(personalization.cc),
+        ...extractEmailList(personalization.bcc),
+      );
+    }
+  }
+
+  const destination = body.Destination || body.destination;
+  if (isRecord(destination)) {
+    recipientEmails.push(
+      ...extractEmailList(destination.ToAddresses),
+      ...extractEmailList(destination.CcAddresses),
+      ...extractEmailList(destination.BccAddresses),
+      ...extractEmailList(destination.toAddresses),
+      ...extractEmailList(destination.ccAddresses),
+      ...extractEmailList(destination.bccAddresses),
+    );
+  }
+
+  const normalizedRecipients = uniqueNonEmpty(recipientEmails);
+  return {
+    senderEmail,
+    senderDomain: getEmailDomain(senderEmail),
+    recipientEmails: normalizedRecipients,
+    recipientDomains: uniqueNonEmpty(normalizedRecipients.map((email) => getEmailDomain(email) || '')),
+    templateIds: extractEmailTemplateIds(body),
+    parseError: null,
+  };
+}
+
+function hasEmailPolicy(policy: CallerLockPolicy | null): boolean {
+  return Boolean(
+    policy?.allowed_email_sender_domains?.length
+    || policy?.allowed_email_recipient_domains?.length
+    || policy?.allowed_email_recipients?.length
+    || policy?.allowed_email_template_ids?.length
+    || policy?.require_email_template_id,
+  );
+}
+
+function summarizeEmailPolicyForAudit(context: EmailPolicyContext): Record<string, unknown> {
+  return {
+    sender_domain: context.senderDomain,
+    recipient_domains: context.recipientDomains,
+    recipient_count: context.recipientEmails.length,
+    template_ids: context.templateIds,
+    parse_error: context.parseError,
+  };
+}
+
+function buildEmailPolicyAuditMetadata(context: EmailPolicyContext | null): Record<string, unknown> {
+  return context ? { email_policy: summarizeEmailPolicyForAudit(context) } : {};
+}
+
+function enforceEmailPolicyValue(
+  policy: CallerLockPolicy,
+  context: EmailPolicyContext,
+  label = 'Email policy',
+): string | null {
+  if (!hasEmailPolicy(policy)) return null;
+  if (context.parseError) {
+    return `${label} rejected this request because ${context.parseError}.`;
+  }
+
+  if (policy.allowed_email_sender_domains?.length) {
+    if (!context.senderDomain || !policy.allowed_email_sender_domains.includes(context.senderDomain)) {
+      return `${label} rejected sender domain ${context.senderDomain || 'missing'}.`;
+    }
+  }
+
+  if (policy.allowed_email_recipient_domains?.length) {
+    if (!context.recipientDomains.length) {
+      return `${label} rejected this request because no email recipients were found.`;
+    }
+    const deniedDomain = context.recipientDomains.find((domain) => !policy.allowed_email_recipient_domains?.includes(domain));
+    if (deniedDomain) return `${label} rejected recipient domain ${deniedDomain}.`;
+  }
+
+  if (policy.allowed_email_recipients?.length) {
+    if (!context.recipientEmails.length) {
+      return `${label} rejected this request because no email recipients were found.`;
+    }
+    const deniedRecipient = context.recipientEmails.find((email) => !policy.allowed_email_recipients?.includes(email));
+    if (deniedRecipient) return `${label} rejected recipient ${deniedRecipient}.`;
+  }
+
+  if (policy.require_email_template_id && !context.templateIds.length) {
+    return `${label} rejected this request because template id is required.`;
+  }
+
+  if (policy.allowed_email_template_ids?.length) {
+    if (!context.templateIds.length) {
+      return `${label} rejected this request because no template id was found.`;
+    }
+    const deniedTemplate = context.templateIds.find((templateId) => !policy.allowed_email_template_ids?.includes(templateId));
+    if (deniedTemplate) return `${label} rejected template ${deniedTemplate}.`;
+  }
+
+  return null;
 }
 
 function enforceExecutionPolicyValue(
@@ -1249,6 +1468,46 @@ export async function handleEnterpriseExecuteRoutes(
   }
 
   const projectPolicy = getCallerLockPolicy(project);
+  const emailPolicyContext = protectedSecret.protected_secret_kind === 'email_api_key'
+    ? buildEmailPolicyContext(parsedBody.value.body_base64)
+    : null;
+  const emailPolicyMetadata = buildEmailPolicyAuditMetadata(emailPolicyContext);
+  const projectEmailPolicyError = emailPolicyContext
+    ? enforceEmailPolicyValue(projectPolicy, emailPolicyContext)
+    : null;
+  if (projectEmailPolicyError) {
+    await auditCallerLockDenied(env, project, actor, projectEmailPolicyError, callerLock, {
+      policy_scope: 'project_email_policy',
+      provider,
+      slug,
+      method,
+      upstream_host: getUpstreamHost(upstreamBaseUrl),
+      upstream_path: upstreamPath,
+      ...protectedSecret,
+      ...authAuditMetadata,
+      ...emailPolicyMetadata,
+    });
+    return Response.json({ error: projectEmailPolicyError }, { status: 403 });
+  }
+
+  const providerEmailPolicyError = emailPolicyContext && providerLockPolicy
+    ? enforceEmailPolicyValue(providerLockPolicy, emailPolicyContext, `Email policy for ${slug}`)
+    : null;
+  if (providerEmailPolicyError) {
+    await auditCallerLockDenied(env, project, actor, providerEmailPolicyError, callerLock, {
+      policy_scope: 'provider_email_policy',
+      provider,
+      slug,
+      method,
+      upstream_host: getUpstreamHost(upstreamBaseUrl),
+      upstream_path: upstreamPath,
+      ...protectedSecret,
+      ...authAuditMetadata,
+      ...emailPolicyMetadata,
+    });
+    return Response.json({ error: providerEmailPolicyError }, { status: 403 });
+  }
+
   const projectRateLimitError = enforceRateLimit(projectPolicy, `project:${project.id}`);
   if (projectRateLimitError) {
     await auditExecutionRateLimited(env, project, actor, projectRateLimitError, {
@@ -1261,6 +1520,7 @@ export async function handleEnterpriseExecuteRoutes(
       rate_limit_per_minute: projectPolicy.rate_limit_per_minute,
       ...protectedSecret,
       ...authAuditMetadata,
+      ...emailPolicyMetadata,
     });
     return Response.json({ error: projectRateLimitError }, { status: 429 });
   }
@@ -1277,6 +1537,7 @@ export async function handleEnterpriseExecuteRoutes(
       rate_limit_per_minute: providerLockPolicy?.rate_limit_per_minute,
       ...protectedSecret,
       ...authAuditMetadata,
+      ...emailPolicyMetadata,
     });
     return Response.json({ error: providerRateLimitError }, { status: 429 });
   }
@@ -1338,6 +1599,7 @@ export async function handleEnterpriseExecuteRoutes(
           ...protectedSecret,
           ...authAuditMetadata,
           ...buildExecutionAuditMetadata(executionRequest, 202, dryRunData),
+          ...emailPolicyMetadata,
         },
       });
     }
@@ -1383,6 +1645,7 @@ export async function handleEnterpriseExecuteRoutes(
         ...protectedSecret,
         ...authAuditMetadata,
         ...buildExecutionAuditMetadata(executionRequest, response.status, responseData),
+        ...emailPolicyMetadata,
       },
     });
   }
