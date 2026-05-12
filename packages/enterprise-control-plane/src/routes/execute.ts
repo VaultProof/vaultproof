@@ -119,6 +119,15 @@ const SAFE_EXECUTION_HEADERS = new Set([
   'anthropic-beta',
 ]);
 
+const EMAIL_PROVIDER_SLUGS = new Set([
+  'resend',
+  'sendgrid',
+  'mailgun',
+  'postmark',
+  'aws-ses',
+  'aws_ses',
+]);
+
 function normalizeMethod(value: string | undefined): string {
   const method = (value || 'POST').trim().toUpperCase();
   return method || 'POST';
@@ -577,6 +586,31 @@ function getUpstreamHost(value: string | null | undefined): string | null {
   } catch {
     return null;
   }
+}
+
+function classifyProtectedSecret(input: {
+  provider: string;
+  slug: string;
+  upstreamBaseUrl?: string | null;
+}): Record<string, unknown> {
+  const provider = input.provider.trim().toLowerCase();
+  const slug = input.slug.trim().toLowerCase();
+  const upstreamHost = getUpstreamHost(input.upstreamBaseUrl);
+  const emailHosts = [
+    'api.resend.com',
+    'api.sendgrid.com',
+    'api.mailgun.net',
+    'api.postmarkapp.com',
+    'email.us-east-1.amazonaws.com',
+  ];
+  const isEmailProvider = EMAIL_PROVIDER_SLUGS.has(provider)
+    || EMAIL_PROVIDER_SLUGS.has(slug)
+    || Boolean(upstreamHost && emailHosts.includes(upstreamHost));
+
+  return {
+    protected_secret_kind: isEmailProvider ? 'email_api_key' : 'provider_api_key',
+    protected_workflow: isEmailProvider ? 'email_provider_send' : 'provider_api_call',
+  };
 }
 
 function enforceExecutionPolicyValue(
@@ -1113,19 +1147,26 @@ export async function handleEnterpriseExecuteRoutes(
     runtime_token_jti: runtimeAuth?.payload.jti || null,
     execute_context_source: executeContextSource,
   };
+  const provider = keyRow.provider || slug;
+  const upstreamBaseUrl = keyRow.upstream_base_url || null;
+  const protectedSecret = classifyProtectedSecret({
+    provider,
+    slug,
+    upstreamBaseUrl,
+  });
 
   const callerLock = await buildCallerLock(request, env);
   const lockError = enforceOriginLock(project, callerLock) || enforceCallerLockPolicy(project, callerLock);
   if (lockError) {
     await auditCallerLockDenied(env, project, actor, lockError, callerLock, {
       policy_scope: 'project',
+      provider,
+      slug,
+      ...protectedSecret,
       ...authAuditMetadata,
     });
     return Response.json({ error: lockError }, { status: 403 });
   }
-
-  const provider = keyRow.provider || slug;
-  const upstreamBaseUrl = keyRow.upstream_base_url || null;
 
   const runtimeScopeError = enforceRuntimeTokenScope(runtimeAuth, {
     provider,
@@ -1142,6 +1183,7 @@ export async function handleEnterpriseExecuteRoutes(
       method,
       upstream_host: getUpstreamHost(upstreamBaseUrl),
       upstream_path: upstreamPath,
+      ...protectedSecret,
       ...authAuditMetadata,
     });
     return Response.json({ error: runtimeScopeError }, { status: 403 });
@@ -1162,6 +1204,7 @@ export async function handleEnterpriseExecuteRoutes(
       method,
       upstream_host: getUpstreamHost(upstreamBaseUrl),
       upstream_path: upstreamPath,
+      ...protectedSecret,
       ...authAuditMetadata,
     });
     return Response.json({ error: executionPolicyError }, { status: 403 });
@@ -1176,6 +1219,7 @@ export async function handleEnterpriseExecuteRoutes(
       policy_scope: 'provider',
       provider,
       slug,
+      ...protectedSecret,
       ...authAuditMetadata,
     });
     return Response.json({ error: providerLockError }, { status: 403 });
@@ -1198,6 +1242,7 @@ export async function handleEnterpriseExecuteRoutes(
       method,
       upstream_host: getUpstreamHost(upstreamBaseUrl),
       upstream_path: upstreamPath,
+      ...protectedSecret,
       ...authAuditMetadata,
     });
     return Response.json({ error: providerExecutionPolicyError }, { status: 403 });
@@ -1214,6 +1259,7 @@ export async function handleEnterpriseExecuteRoutes(
       upstream_host: getUpstreamHost(upstreamBaseUrl),
       upstream_path: upstreamPath,
       rate_limit_per_minute: projectPolicy.rate_limit_per_minute,
+      ...protectedSecret,
       ...authAuditMetadata,
     });
     return Response.json({ error: projectRateLimitError }, { status: 429 });
@@ -1229,6 +1275,7 @@ export async function handleEnterpriseExecuteRoutes(
       upstream_host: getUpstreamHost(upstreamBaseUrl),
       upstream_path: upstreamPath,
       rate_limit_per_minute: providerLockPolicy?.rate_limit_per_minute,
+      ...protectedSecret,
       ...authAuditMetadata,
     });
     return Response.json({ error: providerRateLimitError }, { status: 429 });
@@ -1288,6 +1335,7 @@ export async function handleEnterpriseExecuteRoutes(
         metadata: {
           dry_run: true,
           signed_envelope: dryRunData.signedEnvelope,
+          ...protectedSecret,
           ...authAuditMetadata,
           ...buildExecutionAuditMetadata(executionRequest, 202, dryRunData),
         },
@@ -1332,6 +1380,7 @@ export async function handleEnterpriseExecuteRoutes(
         ? `Dispatched secure execution for ${slug} on ${project.name || project.vp_proj_id}`
         : `Failed secure execution dispatch for ${slug} on ${project.name || project.vp_proj_id}`,
       metadata: {
+        ...protectedSecret,
         ...authAuditMetadata,
         ...buildExecutionAuditMetadata(executionRequest, response.status, responseData),
       },

@@ -1,6 +1,6 @@
 # VaultProof GCP Feature Inventory
 
-Last updated: 2026-05-10
+Last updated: 2026-05-12
 
 This file tracks what VaultProof features exist, which ones have been adapted for Google Cloud, and what still blocks production cutover. Update it every time a build changes product behavior, runtime behavior, infrastructure behavior, or customer-facing claims.
 
@@ -91,6 +91,7 @@ Last validated GCP image build: `10d66c8`
 | Customer launch checklist | Built | `/app/launch` is a customer-facing go-live board with live readiness summary, auto/manual launch tasks, browser-saved checklist progress, direct workflow links, and a copyable launch brief for customer testing. |
 | Customer evidence packet | Built | `/app/evidence` assembles readiness, access-review, audit export links, provider posture, rollout workflow, and a copy/download JSON proof packet scoped to the selected organization without exposing secrets. |
 | Buyer commercial package view | Built | `/app/plans` now explains the first paid-pilot package, included controls, contract-controlled capacity envelope, expansion path, guardrails, security boundaries, and links into evidence, launch, technical guide, and runbooks for customer review. |
+| Email API key and secret protection demo | Built | `/app/keys` now has email-provider defaults for Resend, SendGrid, Mailgun, Postmark, and AWS SES, a customer-facing email API key demo panel, protected email dry-run actions, launch/evidence packet coverage, and audit metadata that classifies email-provider calls as `email_api_key` / `email_provider_send`. Raw provider keys still stay out of browser flows; live sandbox sends require sealed provider material through the local ingest helper. General secret slots remain use-only by default and must never be emailed or casually revealed. |
 | Dashboard reference palette | Built | The live dashboard/app shell now uses the supplied mint, deep green, mustard gold, white card, and teal accent palette. Live HTML verification checks the deployed palette values on `https://enterprise.vaultproof.dev/app/dashboard`. |
 | Enterprise homepage dashboard light theme | Built | The public enterprise homepage now uses the same light dashboard palette, white card surfaces, green/mustard accents, GCP demo copy, and headline `Active Key Protection for every API call.` Live HTML verification checks the deployed palette values on `https://enterprise.vaultproof.dev/` and rejects the old beige/brown tokens. |
 | Provider slot add button | Built | `/app/keys` now has an admin-only add-slot flow backed by `POST /api/v1/enterprise/projects/:projectId/providers`. It creates demo/dry-run provider slots with placeholder material and rejects raw live provider keys; use the sealed local ingest helper for live upstream material. |
@@ -128,6 +129,7 @@ Last validated GCP image build: `10d66c8`
 - Run strict automated login readiness QA with `LOGIN_QA_REQUIRE_SESSION=true npm run qa:enterprise-login`.
 - Run final human browser QA for `https://enterprise.vaultproof.dev/app/login`.
 - Keep managed Supabase for the Goal 1 demo and confirm Supabase OAuth/Auth settings for `https://enterprise.vaultproof.dev/app/login`.
+- Seal and test a live sandbox email-provider key only if the customer demo needs an actual email send; the browser demo flow supports protected dry-run without exposing raw keys.
 - Run and keep `npm run verify:gcp-enterprise-cloud-armor` in the strict live launch gate.
 - MiniMax live encrypted provider material is sealed for the pilot; add a separate OpenAI slot only if the demo specifically needs OpenAI.
 - Rotate the Supabase service-role key and origin-lock value before paid customer onboarding.

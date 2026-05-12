@@ -34,6 +34,7 @@ Already built:
 Not yet customer-ready:
 
 - Strict login readiness QA and final human OAuth/password browser QA still need to pass.
+- Email API key demo dry-run flow is built; live sandbox email sends need sealed provider material only if the demo specifically needs an actual delivered email.
 - Live MiniMax provider dispatch works for the demo; add a separate OpenAI slot only if the demo specifically needs OpenAI.
 - Supabase OAuth/login settings still need to be confirmed for `enterprise.vaultproof.dev`.
 - Older migration/history docs still have Azure-era language; customer-facing app UI is cleaned for the GCP demo.
@@ -173,6 +174,7 @@ Build:
 - Create one demo project with strict origin/caller policy.
 - Confirm provider slots and allowed origins.
 - Seed a demo provider slot. Placeholder shares are acceptable for dashboard and dry-run validation; live provider dispatch later needs encrypted shares generated from the same unwrap root encrypted into GCP KMS.
+- Use the email API key protection demo flow described below.
 - Run `LOGIN_QA_REQUIRE_SESSION=true npm run qa:enterprise-login` with Supabase service-role env to verify the live login page, Supabase redirect allowlist, generated browser session, and authenticated enterprise org/bootstrap APIs.
 - Add `LOGIN_QA_OAUTH_PROVIDER=google` to the login QA command after the external OAuth provider app is configured.
 - Confirm API execution path through `/api/v1/enterprise/execute`.
@@ -184,6 +186,56 @@ Success:
 - Test execution succeeds without exposing provider keys to the customer app.
 - Audit export shows request, policy, executor, and attestation metadata.
 - Support/admin path is available internally.
+
+## Demo Feature: Email API Key And Secret Protection
+
+This is required for the enterprise demo because buyers understand the risk quickly: leaked email-provider keys can be used for spam, phishing, domain reputation damage, account abuse, and customer-trust incidents.
+
+Demo goal:
+
+- Show that VaultProof protects high-risk API keys beyond AI providers.
+- Use an email provider key as the easy-to-understand demo secret.
+- Let the customer app send through VaultProof without ever storing, viewing, copying, logging, or emailing the raw provider key.
+- Record policy, execution, provider, and evidence events for review.
+
+Demo provider scope:
+
+- Start with one provider path: `resend`, `sendgrid`, `mailgun`, `postmark`, or `aws-ses`.
+- Prefer a sandbox/test-mode provider account for the first demo.
+- Store the provider credential as sealed provider material using the existing sealed provider slot path.
+- Show status as `live sealed` or `demo placeholder`; never expose encrypted shares or plaintext secret material in browser responses.
+
+Policy controls for the demo:
+
+- Allowed sender domains.
+- Allowed recipient domains or test recipient allowlist.
+- Allowed template IDs or message categories.
+- Environment label: `test`, `staging`, or `production`.
+- Per-minute and per-day send limits.
+- Emergency revoke / pause state.
+- Caller-lock requirements for origin, gateway marker, method, and upstream path prefix.
+
+General secret protection scope:
+
+- Add secret slot types for webhook signing secrets, OAuth client secrets, signing keys, and database/API credentials.
+- Treat secret slots as use-only by default: the product can call, sign, verify, or exchange through a protected workflow, but admins should not casually reveal/copy plaintext secrets.
+- Do not send raw secrets by email. Send setup links, rotation links, evidence notices, and revoke notices instead.
+
+Demo UI/API work:
+
+- Built: add email-provider options to Provider Slots for `resend`, `sendgrid`, `mailgun`, `postmark`, and `aws-ses`.
+- Built: add a protected email dry-run action that validates policy/signing/audit without dispatching a live email.
+- Built: classify email-provider execution audit metadata as `protected_secret_kind: email_api_key` and `protected_workflow: email_provider_send`.
+- Built: add evidence packet and launch-checklist lines for email API key protection.
+- Next: seal a sandbox email provider key and run a live sandbox send only when the demo needs actual delivery.
+
+Demo success:
+
+- A test email dry-run passes through VaultProof.
+- A blocked recipient/domain/template attempt is denied and audited.
+- The customer can export evidence without exposing the email provider key.
+- Emergency revoke prevents further email-provider sends.
+- The demo script can explain: "VaultProof protects every sensitive API call, not just AI calls."
 
 ## Phase 5: Customer Scale
 
@@ -211,6 +263,7 @@ Build after first customer proof:
 - Cloud Armor policy is attached and `npm run verify:gcp-enterprise-cloud-armor` passes.
 - Customer launch checklist at `/app/launch` is reviewed with the pilot user.
 - Customer evidence packet at `/app/evidence` is reviewed with the pilot user.
+- Email API key demo dry-run flow is policy-gated, audited, and tested before showing customers; live sandbox send is sealed first when needed.
 - Rollback path written down before sending real customer traffic.
 
 ## Operating Rules

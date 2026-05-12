@@ -544,7 +544,7 @@ export function renderEnterpriseDashboardPage(env: EnterpriseControlPlaneEnv = {
             <a class="feature-card" href="/app/keys">
               <div class="feature-tags"><span class="feature-tag">live</span><span class="feature-tag">secrets</span></div>
               <h3>Provider slots</h3>
-              <p>View active providers, emergency revoke slots, rotation checklists, and Cloud KMS notes.</p>
+              <p>View active providers, email API key demo slots, emergency revoke controls, rotation checklists, and Cloud KMS notes.</p>
             </a>
             <a class="feature-card" href="/app/activity">
               <div class="feature-tags"><span class="feature-tag">live</span><span class="feature-tag">runtime</span></div>

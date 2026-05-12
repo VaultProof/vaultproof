@@ -651,7 +651,14 @@ function installSupabaseStub() {
       projectKeyGetCalls += 1;
       if (projectKeyRevoked) return jsonResponse([]);
       const includeProject = decodedUrl.includes('projects!inner');
-      const rows = providerSlotRows.map((row) => includeProject
+      const slugMatch = decodedUrl.match(/slug=eq\.([^&]+)/);
+      const providerMatch = decodedUrl.match(/provider=eq\.([^&]+)/);
+      const filteredRows = providerSlotRows.filter((row) => {
+        if (slugMatch && (row.slug || row.provider) !== slugMatch[1]) return false;
+        if (providerMatch && row.provider !== providerMatch[1]) return false;
+        return true;
+      });
+      const rows = filteredRows.map((row) => includeProject
         ? { ...row, projects: activeProject }
         : row);
       return jsonResponse(rows);
@@ -1934,6 +1941,66 @@ async function assertEnterpriseCreateProviderSlot() {
   if (liveMaterialResponse.status !== 501 || !String(liveMaterialPayload?.error || '').includes('Live provider key ingest is not enabled')) {
     throw new Error(`Expected live key material to be rejected, got ${liveMaterialResponse.status} ${JSON.stringify(liveMaterialPayload)}`);
   }
+
+  const emailSlotResponse = await handleEnterpriseControlPlaneRequest(
+    buildRequest(`/api/v1/enterprise/projects/${PROJECT_ID}/providers`, {
+      method: 'POST',
+      headers: {
+        authorization: `Bearer ${AUTH_TOKEN}`,
+        'content-type': 'application/json',
+      },
+      body: JSON.stringify({
+        provider: 'resend',
+        slug: 'resend',
+        upstream_base_url: 'https://api.resend.com',
+        auth_header_name: 'authorization',
+        auth_header_template: 'Bearer {key}',
+      }),
+    }),
+    env,
+  );
+  const emailSlotPayload = await emailSlotResponse.json();
+  if (emailSlotResponse.status !== 201 || emailSlotPayload?.provider_slot?.slug !== 'resend') {
+    throw new Error(`Expected email provider slot creation to succeed, got ${emailSlotResponse.status} ${JSON.stringify(emailSlotPayload)}`);
+  }
+
+  const emailDryRunResponse = await handleEnterpriseControlPlaneRequest(
+    buildRequest(`/api/v1/enterprise/projects/${PROJECT_ID}/providers/resend/execute`, {
+      method: 'POST',
+      headers: {
+        authorization: `Bearer ${AUTH_TOKEN}`,
+        'content-type': 'application/json',
+        origin: 'https://enterprise.vaultproof.dev',
+        'x-vaultproof-customer-gateway': 'vaultproof-managed',
+        'x-vaultproof-client-class': 'browser',
+      },
+      body: JSON.stringify({
+        method: 'POST',
+        upstream_path: '/emails',
+        headers: { 'content-type': 'application/json' },
+        body_base64: Buffer.from(JSON.stringify({
+          from: 'VaultProof Demo <demo@vaultproof.dev>',
+          to: ['security-review@example.com'],
+          subject: 'VaultProof protected email dry-run',
+          text: 'VaultProof policy validated this email-provider call without exposing the raw key.',
+        })).toString('base64'),
+        dry_run: true,
+      }),
+    }),
+    env,
+  );
+  const emailDryRunPayload = await emailDryRunResponse.json();
+  if (emailDryRunResponse.status !== 202 || emailDryRunPayload?.request?.provider !== 'resend') {
+    throw new Error(`Expected protected email dry-run to validate, got ${emailDryRunResponse.status} ${JSON.stringify(emailDryRunPayload)}`);
+  }
+  const emailDryRunAudit = auditEvents.find((event) => (
+    event.event_type === 'enterprise_secure_execution_validated'
+    && event.metadata?.provider === 'resend'
+    && event.metadata?.protected_secret_kind === 'email_api_key'
+  ));
+  if (!emailDryRunAudit || emailDryRunAudit.metadata?.protected_workflow !== 'email_provider_send') {
+    throw new Error(`Expected protected email dry-run audit metadata, got ${JSON.stringify(auditEvents)}`);
+  }
 }
 
 async function assertEnterpriseProjectOverviewRollup() {
@@ -2749,6 +2816,7 @@ async function assertEnterpriseLoginRoute() {
       'AI Proof Verifier',
       '/app/verifier',
       'Provider slots',
+      'email API key demo slots',
       'Members and invites',
       'Audit and exports',
       'Org and Entra SSO',
@@ -2847,7 +2915,7 @@ async function assertEnterpriseLoginRoute() {
     {
       path: '/app/keys',
       title: 'Provider Slots - VaultProof Enterprise',
-      required: ['/api/v1/enterprise/projects', 'add slot', 'create slot', 'emergency revoke', 'live sealed material', 'demo placeholder material'],
+      required: ['/api/v1/enterprise/projects', 'add slot', 'create slot', 'emergency revoke', 'live sealed material', 'demo placeholder material', 'Email API key demo', 'protected email dry-run', 'resend', 'sendgrid', 'postmark'],
     },
   ];
   for (const page of operationsPages) {
@@ -2881,12 +2949,12 @@ async function assertEnterpriseLoginRoute() {
     {
       path: '/app/launch',
       title: 'Launch checklist - VaultProof Enterprise',
-      required: ['Launch progress', 'Customer tasks', 'Launch package', 'copy brief', 'Customer owners confirmed', 'Caller policy reviewed', 'Evidence exports reviewed', 'vaultproof_launch_checklist', '/app/control', '/app/keys', '/app/audit'],
+      required: ['Launch progress', 'Customer tasks', 'Launch package', 'copy brief', 'Customer owners confirmed', 'Caller policy reviewed', 'Evidence exports reviewed', 'Email provider key protected', 'vaultproof_launch_checklist', '/app/control', '/app/keys', '/app/audit'],
     },
     {
       path: '/app/evidence',
       title: 'Evidence packet - VaultProof Enterprise',
-      required: ['Evidence readiness', 'Customer exports', 'Proof inventory', 'Review workflow', 'Evidence packet JSON', 'copy JSON', 'download JSON', 'vaultproof_enterprise_evidence_packet', '/app/launch', '/app/control', '/api/v1/enterprise/audit?format=csv&days=30', '/api/v1/enterprise/members/access-review?format=csv'],
+      required: ['Evidence readiness', 'Customer exports', 'Proof inventory', 'Review workflow', 'Email API key protection', 'Evidence packet JSON', 'copy JSON', 'download JSON', 'vaultproof_enterprise_evidence_packet', 'email_provider_slots', '/app/launch', '/app/control', '/api/v1/enterprise/audit?format=csv&days=30', '/api/v1/enterprise/members/access-review?format=csv'],
     },
     {
       path: '/app/technical-guide',
@@ -2909,6 +2977,7 @@ async function assertEnterpriseLoginRoute() {
         'Contract guardrails',
         'Plan limits',
         'Security boundaries',
+        'provider/email key slot controls',
         'Buyer review path',
         '/app/evidence',
         '/app/launch',

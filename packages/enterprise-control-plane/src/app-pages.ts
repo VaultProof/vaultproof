@@ -2207,6 +2207,11 @@ function renderEnterpriseOperationsPage(pageName: 'activity' | 'projects' | 'key
           <datalist id="providerSlotOptions">
             <option value="openai"></option>
             <option value="anthropic"></option>
+            <option value="resend"></option>
+            <option value="sendgrid"></option>
+            <option value="mailgun"></option>
+            <option value="postmark"></option>
+            <option value="aws-ses"></option>
             <option value="stripe"></option>
             <option value="twilio"></option>
             <option value="snowflake"></option>
@@ -2252,6 +2257,22 @@ function renderEnterpriseOperationsPage(pageName: 'activity' | 'projects' | 'key
         </div>
       </section>
 
+      ${pageName === 'keys' ? `
+      <section id="emailKeyDemoPanel" class="grid two" style="display:none;margin-bottom:16px">
+        <div class="card">
+          <div class="section-title"><h2>Email API key demo</h2><span class="mini">required for demo</span></div>
+          <div id="emailKeyDemoList" class="list"></div>
+        </div>
+        <div class="card">
+          <div class="section-title"><h2>Protected email policy</h2><span class="mini">no raw keys</span></div>
+          <div class="list">
+            <div class="row"><div><div class="row-title">What this proves</div><div class="row-sub">The customer app sends through VaultProof without storing, viewing, copying, logging, or emailing the raw email-provider key.</div></div><span class="tag good">use-only</span></div>
+            <div class="row"><div><div class="row-title">Policy boundary</div><div class="row-sub">Lock sender domains, recipient allowlists, template/category paths, gateway markers, and per-minute limits before live sends.</div></div><span class="tag warn">policy</span></div>
+            <div class="row"><div><div class="row-title">Demo path</div><div class="row-sub">Use protected email dry-run first. Live sandbox send should wait until a sealed provider key is loaded with the local ingest helper.</div></div><span class="tag">dry-run first</span></div>
+          </div>
+        </div>
+      </section>` : ''}
+
       <section id="keysPanel" class="card" style="display:none">
         <div class="section-title"><h2>Provider slots</h2><span id="keyMeta" class="mini"></span></div>
         <div id="keyList" class="list"><div class="empty">Loading provider slots...</div></div>
@@ -2270,6 +2291,11 @@ function renderEnterpriseOperationsPage(pageName: 'activity' | 'projects' | 'key
       var providerDefaults = {
         openai: { upstream: 'https://api.openai.com', header: 'authorization', template: 'Bearer {key}' },
         anthropic: { upstream: 'https://api.anthropic.com', header: 'x-api-key', template: '{key}' },
+        resend: { upstream: 'https://api.resend.com', header: 'authorization', template: 'Bearer {key}', emailPath: '/emails' },
+        sendgrid: { upstream: 'https://api.sendgrid.com', header: 'authorization', template: 'Bearer {key}', emailPath: '/v3/mail/send' },
+        mailgun: { upstream: 'https://api.mailgun.net', header: 'authorization', template: 'Basic {key}', emailPath: '/v3/example.com/messages' },
+        postmark: { upstream: 'https://api.postmarkapp.com', header: 'x-postmark-server-token', template: '{key}', emailPath: '/email' },
+        'aws-ses': { upstream: 'https://email.us-east-1.amazonaws.com', header: 'authorization', template: 'Bearer {key}', emailPath: '/' },
         stripe: { upstream: 'https://api.stripe.com', header: 'authorization', template: 'Bearer {key}' },
         twilio: { upstream: 'https://api.twilio.com', header: 'authorization', template: 'Basic {key}' },
         snowflake: { upstream: 'https://snowflakecomputing.com', header: 'authorization', template: 'Bearer {key}' }
@@ -2319,6 +2345,67 @@ function renderEnterpriseOperationsPage(pageName: 'activity' | 'projects' | 'key
         var n = Number(value || 0);
         var cls = n >= 400 ? 'bad' : n >= 300 ? 'warn' : 'good';
         return '<span class="tag ' + cls + '">' + escapeHtml(value == null ? 'unknown' : value) + '</span>';
+      }
+      function isEmailProvider(value) {
+        return ['resend', 'sendgrid', 'mailgun', 'postmark', 'aws-ses', 'aws_ses'].indexOf(String(value || '').trim().toLowerCase()) !== -1;
+      }
+      function slotIsEmailProvider(slot) {
+        return isEmailProvider(slot.provider) || isEmailProvider(slot.slug);
+      }
+      function emailProviderLabel(value) {
+        var provider = String(value || '').trim().toLowerCase();
+        return provider === 'aws-ses' || provider === 'aws_ses' ? 'AWS SES' : provider ? provider.charAt(0).toUpperCase() + provider.slice(1) : 'Email provider';
+      }
+      function emailDemoPath(slot) {
+        var provider = String(slot.provider || slot.slug || '').trim().toLowerCase();
+        var defaults = providerDefaults[provider] || providerDefaults[String(slot.slug || '').trim().toLowerCase()] || {};
+        return defaults.emailPath || '/emails';
+      }
+      function toBase64Utf8(value) {
+        return btoa(unescape(encodeURIComponent(value)));
+      }
+      function demoEmailPayload(slot) {
+        var provider = String(slot.provider || slot.slug || '').trim().toLowerCase();
+        if (provider === 'sendgrid') {
+          return {
+            personalizations: [{ to: [{ email: 'security-review@example.com' }] }],
+            from: { email: 'demo@vaultproof.dev' },
+            subject: 'VaultProof protected email dry-run',
+            content: [{ type: 'text/plain', value: 'VaultProof policy validated this email-provider call without exposing the raw key.' }]
+          };
+        }
+        if (provider === 'mailgun') {
+          return {
+            from: 'VaultProof Demo <demo@vaultproof.dev>',
+            to: 'security-review@example.com',
+            subject: 'VaultProof protected email dry-run',
+            text: 'VaultProof policy validated this email-provider call without exposing the raw key.'
+          };
+        }
+        if (provider === 'postmark') {
+          return {
+            From: 'demo@vaultproof.dev',
+            To: 'security-review@example.com',
+            Subject: 'VaultProof protected email dry-run',
+            TextBody: 'VaultProof policy validated this email-provider call without exposing the raw key.'
+          };
+        }
+        if (provider === 'aws-ses' || provider === 'aws_ses') {
+          return {
+            Source: 'demo@vaultproof.dev',
+            Destination: { ToAddresses: ['security-review@example.com'] },
+            Message: {
+              Subject: { Data: 'VaultProof protected email dry-run' },
+              Body: { Text: { Data: 'VaultProof policy validated this email-provider call without exposing the raw key.' } }
+            }
+          };
+        }
+        return {
+          from: 'VaultProof Demo <demo@vaultproof.dev>',
+          to: ['security-review@example.com'],
+          subject: 'VaultProof protected email dry-run',
+          text: 'VaultProof policy validated this email-provider call without exposing the raw key.'
+        };
       }
       function renderOrgSelector(payload) {
         var select = byId('orgSelect');
@@ -2408,6 +2495,7 @@ function renderEnterpriseOperationsPage(pageName: 'activity' | 'projects' | 'key
       }
       function renderKeys() {
         byId('keysPanel').style.display = PAGE_MODE === 'keys' ? 'block' : 'none';
+        if (byId('emailKeyDemoPanel')) byId('emailKeyDemoPanel').style.display = PAGE_MODE === 'keys' ? 'grid' : 'none';
         if (PAGE_MODE !== 'keys') return;
         var rows = [];
         cachedProjects.forEach(function(project) {
@@ -2416,15 +2504,27 @@ function renderEnterpriseOperationsPage(pageName: 'activity' | 'projects' | 'key
           });
         });
         text('keyMeta', rows.length + ' active provider slots');
+        var emailRows = rows.filter(function(item) { return slotIsEmailProvider(item.slot); });
+        if (byId('emailKeyDemoList')) {
+          byId('emailKeyDemoList').innerHTML = emailRows.length ? emailRows.map(function(item) {
+            var materialMode = item.slot.material_mode || 'missing';
+            var materialClass = materialMode === 'sealed-live' ? 'good' : materialMode === 'demo-placeholder' ? 'warn' : 'bad';
+            var action = '<button type="button" class="primary" data-action="email-dry-run" data-project-id="' + escapeHtml(item.project.id) + '" data-provider="' + escapeHtml(item.slot.provider) + '" data-slug="' + escapeHtml(item.slot.slug || item.slot.provider) + '">protected email dry-run</button>';
+            return '<div class="row"><div><div class="row-title">' + escapeHtml(emailProviderLabel(item.slot.provider)) + ' protected send</div><div class="row-sub">' + escapeHtml(item.project.name || item.project.vp_proj_id) + ' - path ' + escapeHtml(emailDemoPath(item.slot)) + ' - material ' + escapeHtml(materialMode) + '</div><div><span class="tag ' + materialClass + '">' + escapeHtml(materialMode) + '</span><span class="tag good">no raw key in browser</span><span class="tag">audit evidence</span><span class="tag warn">recipient allowlist</span></div></div>' + action + '</div>';
+          }).join('') : '<div class="row"><div><div class="row-title">No email provider key protected yet</div><div class="row-sub">Create a Resend, SendGrid, Mailgun, Postmark, or AWS SES provider slot, then run protected email dry-run before the customer demo.</div><div><span class="tag warn">required for demo</span><span class="tag">raw keys stay out</span></div></div><button type="button" class="primary" data-action="prefill-email-slot">create resend slot</button></div>';
+        }
         byId('keyList').innerHTML = rows.length ? rows.map(function(item) {
           var policy = item.project.caller_lock_policy || {};
           var override = policy.provider_overrides && policy.provider_overrides[item.slot.slug || item.slot.provider];
           var canAdmin = item.project.project_role === 'owner' || item.project.project_role === 'admin';
-          var action = canAdmin ? '<button type="button" class="danger" data-action="revoke-slot" data-project-id="' + escapeHtml(item.project.id) + '" data-slug="' + escapeHtml(item.slot.slug || item.slot.provider) + '">emergency revoke</button>' : '<span class="tag warn">read-only</span>';
+          var emailAction = slotIsEmailProvider(item.slot) ? '<button type="button" data-action="email-dry-run" data-project-id="' + escapeHtml(item.project.id) + '" data-provider="' + escapeHtml(item.slot.provider) + '" data-slug="' + escapeHtml(item.slot.slug || item.slot.provider) + '">protected email dry-run</button>' : '';
+          var revokeAction = canAdmin ? '<button type="button" class="danger" data-action="revoke-slot" data-project-id="' + escapeHtml(item.project.id) + '" data-slug="' + escapeHtml(item.slot.slug || item.slot.provider) + '">emergency revoke</button>' : '<span class="tag warn">read-only</span>';
+          var action = emailAction + revokeAction;
           var materialMode = item.slot.material_mode || 'missing';
           var materialClass = materialMode === 'sealed-live' ? 'good' : materialMode === 'demo-placeholder' ? 'warn' : 'bad';
           var materialLabel = materialMode === 'sealed-live' ? 'live sealed material' : materialMode === 'demo-placeholder' ? 'demo placeholder material' : materialMode === 'mixed' ? 'mixed material state' : 'material missing';
-          return '<div class="row"><div><div class="row-title">' + escapeHtml(item.slot.slug || item.slot.provider) + '</div><div class="row-sub">' + escapeHtml(item.project.name || item.project.vp_proj_id) + ' - provider ' + escapeHtml(item.slot.provider) + ' - key id ' + escapeHtml(item.slot.key_id) + '</div><div><span class="tag good">active</span><span class="tag ' + materialClass + '">' + materialLabel + '</span><span class="tag">' + (override ? 'provider override' : 'project policy') + '</span><span class="tag">rotation: manual checklist</span><span class="tag">SKR: executor-bound</span></div></div>' + action + '</div>';
+          var secretKind = slotIsEmailProvider(item.slot) ? 'email API key' : 'provider API key';
+          return '<div class="row"><div><div class="row-title">' + escapeHtml(item.slot.slug || item.slot.provider) + '</div><div class="row-sub">' + escapeHtml(item.project.name || item.project.vp_proj_id) + ' - provider ' + escapeHtml(item.slot.provider) + ' - key id ' + escapeHtml(item.slot.key_id) + '</div><div><span class="tag good">active</span><span class="tag">' + escapeHtml(secretKind) + '</span><span class="tag ' + materialClass + '">' + materialLabel + '</span><span class="tag">' + (override ? 'provider override' : 'project policy') + '</span><span class="tag">rotation: manual checklist</span><span class="tag">SKR: executor-bound</span></div></div><div style="display:flex;gap:8px;flex-wrap:wrap;justify-content:flex-end">' + action + '</div></div>';
         }).join('') : '<div class="empty">No active provider slots found.</div>';
       }
       function syncProviderDefaults(force) {
@@ -2478,6 +2578,37 @@ function renderEnterpriseOperationsPage(pageName: 'activity' | 'projects' | 'key
           notice(error && error.message ? error.message : 'Provider slot could not be created.');
         }
       }
+      async function runProtectedEmailDryRun(target) {
+        var projectId = target.getAttribute('data-project-id');
+        var slug = target.getAttribute('data-slug');
+        var provider = target.getAttribute('data-provider') || slug;
+        var payload = demoEmailPayload({ provider: provider, slug: slug });
+        try {
+          var result = await fetchJson('/api/v1/enterprise/projects/' + encodeURIComponent(projectId) + '/providers/' + encodeURIComponent(slug) + '/execute', {
+            method: 'POST',
+            headers: {
+              'x-vaultproof-customer-gateway': 'vaultproof-managed',
+              'x-vaultproof-client-class': 'browser'
+            },
+            body: JSON.stringify({
+              method: 'POST',
+              upstream_path: emailDemoPath({ provider: provider, slug: slug }),
+              headers: { 'content-type': 'application/json' },
+              body_base64: toBase64Utf8(JSON.stringify(payload)),
+              dry_run: true
+            })
+          });
+          notice('Protected email dry-run validated: ' + (result.execution && result.execution.requestId ? result.execution.requestId : 'accepted') + '. Raw email provider key was not exposed.');
+          await reload();
+        } catch (error) {
+          notice(error && error.message ? error.message : 'Protected email dry-run failed.');
+        }
+      }
+      function prefillEmailSlot() {
+        setProviderSlotFormVisible(true);
+        if (byId('slotProvider')) byId('slotProvider').value = 'resend';
+        syncProviderDefaults(true);
+      }
       async function reload() {
         if (!token) {
           notice('Enterprise session missing.');
@@ -2518,7 +2649,16 @@ function renderEnterpriseOperationsPage(pageName: 'activity' | 'projects' | 'key
       }
       document.addEventListener('click', async function(event) {
         var target = event.target;
-        if (!target || !target.getAttribute || target.getAttribute('data-action') !== 'revoke-slot') return;
+        if (!target || !target.getAttribute) return;
+        if (target.getAttribute('data-action') === 'prefill-email-slot') {
+          prefillEmailSlot();
+          return;
+        }
+        if (target.getAttribute('data-action') === 'email-dry-run') {
+          await runProtectedEmailDryRun(target);
+          return;
+        }
+        if (target.getAttribute('data-action') !== 'revoke-slot') return;
         var reason = prompt('Reason for emergency revoke?');
         if (reason === null) return;
         try {
@@ -3209,12 +3349,20 @@ function renderEnterpriseSupportPage(pageName: EnterpriseSupportPageName): strin
           '<span class="tag ' + (complete ? 'good' : item.auto ? 'warn' : '') + '">' + escapeHtml(complete ? 'done' : item.tag) + '</span>' +
         '</label>';
       }
+      function isEmailProviderName(value) {
+        return ['resend', 'sendgrid', 'mailgun', 'postmark', 'aws-ses', 'aws_ses'].indexOf(String(value || '').trim().toLowerCase()) !== -1;
+      }
+      function emailProvidersFromOverview(overview) {
+        var providers = Array.isArray(overview.providers) ? overview.providers : [];
+        return providers.map(function(provider) { return String(provider || '').trim().toLowerCase(); }).filter(isEmailProviderName);
+      }
       function buildLaunchItems(org, sso, readiness, overview) {
         var productionReady = readiness.production_ready === true;
         var projectCount = Number(org.project_count || overview.totalProjects || 0);
         var memberCount = Number(org.member_count || 0);
         var providerCount = Number(overview.activeApps || overview.providerCount || overview.provider_count || 0);
         var totalCalls = Number(overview.totalCalls || overview.total_calls || 0);
+        var emailProviders = emailProvidersFromOverview(overview);
         return [
           { id: 'production-ready', auto: true, complete: productionReady, tag: 'blocked', title: 'Runtime readiness is green', sub: productionReady ? 'The confidential runtime reports production-ready.' : 'Open readiness and clear runtime blockers before customer traffic.' },
           { id: 'org-selected', auto: true, complete: Boolean(currentOrgId), tag: 'select org', title: 'Workspace selected', sub: currentOrgId ? 'This launch board is scoped to the selected organization.' : 'Select the customer organization before reviewing launch state.' },
@@ -3222,6 +3370,7 @@ function renderEnterpriseSupportPage(pageName: EnterpriseSupportPageName): strin
           { id: 'members-added', auto: true, complete: memberCount > 0, tag: 'todo', title: 'Members are visible', sub: memberCount + ' organization members are visible.' },
           { id: 'sso-confirmed', auto: true, complete: sso.provider_status === 'configured', tag: 'confirm', title: 'SSO or login path confirmed', sub: sso.provider_status === 'configured' ? 'Company sign-in is configured.' : 'Confirm SSO or the assisted login path before customer testing.' },
           { id: 'provider-posture', auto: true, complete: providerCount > 0, tag: 'todo', title: 'Provider posture visible', sub: providerCount + ' provider/app connections are visible in the overview.' },
+          { id: 'email-key-protected', auto: true, complete: emailProviders.length > 0, tag: 'email key', title: 'Email provider key protected', sub: emailProviders.length ? 'Email API key demo provider visible: ' + emailProviders.join(', ') + '.' : 'Add Resend, SendGrid, Mailgun, Postmark, or AWS SES before customer demo.' },
           { id: 'traffic-observed', auto: true, complete: totalCalls > 0, tag: 'manual', title: 'Test traffic observed', sub: totalCalls + ' proxy calls are visible in the overview window.' },
           { id: 'owners-confirmed', tag: 'owner', title: 'Customer owners confirmed', sub: 'Business, security, identity, network, developer, and incident owners are named.' },
           { id: 'first-workload-picked', tag: 'scope', title: 'First workload selected', sub: 'One low-risk production workflow, one provider path, and one owner group are chosen.' },
@@ -3292,6 +3441,7 @@ function renderEnterpriseSupportPage(pageName: EnterpriseSupportPageName): strin
         var controlPlane = readiness.control_plane || {};
         var executor = readiness.executor || {};
         var executorHealth = executor.health || {};
+        var emailProviders = emailProvidersFromOverview(overview);
         return {
           packet_type: 'vaultproof_enterprise_evidence_packet',
           packet_version: 1,
@@ -3332,7 +3482,9 @@ function renderEnterpriseSupportPage(pageName: EnterpriseSupportPageName): strin
             proxy_calls: Number(overview.totalCalls || 0),
             denied_calls: Number(overview.deniedCalls || 0),
             error_calls: Number(overview.errorCalls || 0),
-            active_provider_slots: Number(overview.activeApps || overview.providerCount || overview.provider_count || 0)
+            active_provider_slots: Number(overview.activeApps || overview.providerCount || overview.provider_count || 0),
+            email_provider_slots: emailProviders.length,
+            email_providers: emailProviders
           },
           exports: {
             readiness: '/readiness',
@@ -3346,6 +3498,7 @@ function renderEnterpriseSupportPage(pageName: EnterpriseSupportPageName): strin
             'Verify production readiness before customer traffic.',
             'Export audit CSV and access-review CSV for the review packet.',
             'Confirm caller-lock policy, provider slot posture, and emergency revoke owners.',
+            'For the email API key demo, verify sender, recipient, template, gateway, and rate policy before live sends.',
             'Keep provider keys, encrypted shares, service-role keys, origin-lock values, and signing secrets out of customer packets.'
           ]
         };
@@ -3375,6 +3528,7 @@ function renderEnterpriseSupportPage(pageName: EnterpriseSupportPageName): strin
           row('Projects', number(packet.organization.project_count) + ' project scopes are visible for this organization.', number(packet.organization.project_count), packet.organization.project_count ? 'good' : 'warn'),
           row('Members', number(packet.organization.member_count) + ' members are visible for access review.', number(packet.organization.member_count), packet.organization.member_count ? 'good' : 'warn'),
           row('Provider posture', number(packet.usage_summary.active_provider_slots) + ' active provider/app connections are visible in overview.', number(packet.usage_summary.active_provider_slots), packet.usage_summary.active_provider_slots ? 'good' : 'warn'),
+          row('Email API key protection', packet.usage_summary.email_provider_slots ? 'Email demo provider slots visible: ' + packet.usage_summary.email_providers.join(', ') + '. Run protected email dry-run before the customer walkthrough.' : 'No email provider key slot is visible yet. Add Resend, SendGrid, Mailgun, Postmark, or AWS SES before the demo.', packet.usage_summary.email_provider_slots ? 'ready' : 'todo', packet.usage_summary.email_provider_slots ? 'good' : 'warn'),
           row('Traffic evidence', number(packet.usage_summary.proxy_calls) + ' proxy calls, ' + number(packet.usage_summary.denied_calls) + ' denied, ' + number(packet.usage_summary.error_calls) + ' errors.', packet.usage_summary.proxy_calls ? 'observed' : 'pending', packet.usage_summary.error_calls || packet.usage_summary.denied_calls ? 'warn' : 'good')
         ].join('');
         byId('evidenceWorkflowList').innerHTML = [
@@ -3478,7 +3632,7 @@ function renderEnterpriseSupportPage(pageName: EnterpriseSupportPageName): strin
           ].join('');
           byId('commercialList').innerHTML = [
             row('Starting package', 'Enterprise paid pilot starts at $5,000/month for one guided customer rollout, one first workload, customer proof reviews, and production-readiness support.', '$5k+/mo', 'good'),
-            row('Included controls', 'Company login path, organization/project roles, caller-lock policy, provider slot controls, audit CSV, access-review CSV, alerts, readiness, and evidence packet.', 'included', 'good'),
+            row('Included controls', 'Company login path, organization/project roles, caller-lock policy, provider/email key slot controls, audit CSV, access-review CSV, alerts, readiness, and evidence packet.', 'included', 'good'),
             row('Capacity envelope', 'Traffic, retention, key slots, SSO depth, support cadence, and dedicated-runtime needs are set in the customer contract until billing APIs enforce them.', 'contract', 'warn'),
             row('Expansion path', 'After the first workload is stable, expand project by project with a new policy/evidence review instead of a broad all-at-once cutover.', 'phased', 'good')
           ].join('');
