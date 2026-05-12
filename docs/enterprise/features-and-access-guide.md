@@ -1,12 +1,12 @@
 # VaultProof Enterprise Features And Access Guide
 
-Last updated: 2026-05-01
+Last updated: 2026-05-12
 
 This guide explains what has been built for VaultProof Enterprise, where to access it, and which operator commands verify the production-confidential path.
 
 ## Short Version
 
-VaultProof Enterprise is a separate Azure-hosted product path at:
+VaultProof Enterprise is a separate GCP-hosted demo product path at:
 
 - Public homepage: `https://enterprise.vaultproof.dev`
 - Enterprise login: `https://enterprise.vaultproof.dev/app/login`
@@ -29,7 +29,7 @@ Paid customer dedicated environment runbook:
 
 - `docs/enterprise/paid-customer-dedicated-environment-runbook.md`
 
-The enterprise product is served by the Azure enterprise control plane and backed by `/api/v1/enterprise/*`.
+The enterprise product is served by the GCP enterprise control plane and backed by `/api/v1/enterprise/*`.
 
 ## Which Enterprise Doc To Use
 
@@ -38,18 +38,19 @@ The enterprise product is served by the Azure enterprise control plane and backe
 | `docs/enterprise/customer-operating-guide.md` | Customer admins, business owners, security owners, app teams, identity teams, platform teams. | You need to understand how a business should use VaultProof Enterprise day to day. |
 | `docs/enterprise/dashboard-usage-guide.md` | Dashboard users. | You need step-by-step instructions for using the pages in the enterprise dashboard. |
 | `docs/enterprise/technical-implementation-guide.md` | Technical reviewers, architects, network/platform/identity/security teams. | You need architecture, trust boundaries, identity, gateway, key custody, attestation, rollout, or troubleshooting detail. |
-| `docs/enterprise/paid-customer-dedicated-environment-runbook.md` | VaultProof operators and customer onboarding owners. | A demo converts to paid, or a customer needs a dedicated runtime, HSM/Key Vault, database, SSO, gateway, monitoring, and evidence boundary. |
+| `docs/enterprise/paid-customer-dedicated-environment-runbook.md` | VaultProof operators and customer onboarding owners. | A demo converts to paid, or a customer needs a dedicated runtime, database, SSO, gateway, monitoring, and evidence boundary. |
 | `docs/enterprise/features-and-access-guide.md` | VaultProof team, customer reviewers, handoff packages. | You need the full list of built features, URLs, hardening, and operator commands. |
 
 The current production-confidential runtime is:
 
 ```text
 enterprise.vaultproof.dev
-  -> Azure Front Door
-  -> Enterprise control plane on Azure Confidential VM
+  -> Cloudflare DNS
+  -> GCP global HTTPS load balancer
+  -> Enterprise control plane on GCP Confidential VM
   -> signed loopback handoff
-  -> secure executor on the same Azure Confidential VM
-  -> Azure Key Vault Premium Secure Key Release after attestation
+  -> secure executor on the same GCP Confidential VM
+  -> Google Cloud KMS unwrap after runtime readiness checks
   -> upstream provider call without returning provider keys
 ```
 
@@ -87,7 +88,7 @@ If you see an auth message:
 | Login | `/app/login` | Enterprise-only login, SSO start, password reset, and approved access messaging. |
 | Dashboard | `/app/dashboard` | Business-ready enterprise command center with sidebar navigation, Overview/Security/Access/Operations/Workspace tabs, runtime posture, org summary, project health, members/access, audit, recent activity, and a workspace tools map. |
 | Setup Guide | `/app/setup` | Enterprise implementation guide for purchased workspaces, covering environment mapping, Entra SSO, members, gateway choices, projects, provider slots, policy, evidence, alerts, go-live, and operations. |
-| Technical Guide | `/app/technical-guide` | Detailed implementation reference for identity, network patterns, APIM, project modeling, caller lock, provider key custody, Azure attestation, evidence, alerts, rollout, and troubleshooting. |
+| Technical Guide | `/app/technical-guide` | Detailed implementation reference for identity, network patterns, project modeling, caller lock, provider key custody, GCP runtime posture, evidence, alerts, rollout, and troubleshooting. |
 | Control | `/app/control` | Project policy, provider overrides, incoming invites, export summaries, and secure execution posture. |
 | AI Proof Verifier | `/app/verifier` | Register external AI/ML models, verify submitted proof bundles, and store evidence without VaultProof running the model. |
 | Organization + SSO | `/app/org` | Organization settings and Microsoft Entra/Supabase SAML SSO rollout controls. |
@@ -98,17 +99,17 @@ If you see an auth message:
 | Projects | `/app/projects` | Project inventory, project health, provider slots, policy status, and quick links into Control. |
 | Provider Slots | `/app/keys` | Active providers, emergency revoke, rotation checklist, and Secure Key Release notes. |
 | Settings | `/app/settings` | Tenant preferences, session/security notices, and org defaults. |
-| Plans | `/app/plans` | APIM/enterprise rollout status, limits, and contract-facing packaging notes. |
+| Plans | `/app/plans` | Paid-pilot package, included controls, capacity envelope, contract guardrails, security boundaries, rollout posture, and customer review links. |
 | Scanner | `/app/scanner` | Placeholder entry for future enterprise-safe repository/security scanning integration. |
-| Runbooks | `/app/runbooks` | Operator guide for production verification, evidence capture, deployment, secret checks, TLS/APIM cutover, SSH hardening, and cleanup. |
+| Runbooks | `/app/runbooks` | Operator guide for production verification, evidence capture, deployment, secret checks, DNS/edge checks, SSH hardening, and cleanup. |
 
 ## VaultProof AI Proof Verifier
 
 VaultProof AI Proof Verifier is the verifiable AI/ML evidence layer. VaultProof does not run the model. The model runs in the customer's app, provider environment, partner prover, or another approved external path. VaultProof verifies the submitted proof bundle or attestation record, then stores the result as enterprise evidence tied to the organization, project, actor, model, verifier version, timestamp, and confidential-runtime posture.
 
-For demos, AI Proof Verifier uses shared enterprise runtime attestation. That means demo proof records point to the same production-ready Azure Confidential VM readiness path and Microsoft Azure Attestation posture used by the enterprise runtime. It does not mean VaultProof ran the model, and it does not create a fake or static attestation token.
+For demos, AI Proof Verifier uses shared enterprise runtime attestation language from the production-ready GCP Confidential VM readiness path. It does not mean VaultProof ran the model, and it does not create a fake or static attestation token.
 
-The broader enterprise demo environment should also run as shared demo infrastructure. Use `ENTERPRISE_RUNTIME_TIER=shared-demo` for the shared demo control plane, reuse one shared confidential runtime when live attestation is needed, and keep per-customer dedicated Confidential VM/HSM/APIM/monitoring stacks for paid production or high-trust pilots only.
+The broader enterprise demo environment should also run as shared demo infrastructure. Use `ENTERPRISE_RUNTIME_TIER=shared-demo` for the shared demo control plane, reuse one shared confidential runtime when live attestation is needed, and keep per-customer dedicated runtime, monitoring, database, SSO, and gateway stacks for paid production or high-trust pilots only.
 
 What it does:
 
@@ -120,7 +121,7 @@ What it does:
 
 How VaultProof improves the baseline proof-compute pattern:
 
-- Azure confidential binding: attach Microsoft Azure Attestation, Secure Key Release posture, key-release policy hash, build digest, and runtime readiness to compute evidence.
+- GCP confidential binding: attach runtime readiness, Cloud KMS posture, build digest, and enterprise evidence metadata to compute evidence.
 - Demo-safe shared attestation: demos reuse the shared enterprise runtime attestation mode, while customer model execution and private inputs stay outside VaultProof.
 - Enterprise policy: require org/project RBAC, caller lock, allowed model IDs, verifier version pinning, rate limits, and export permissions.
 - Evidence workflow: connect proof verification to Audit, Activity, access reviews, handoff packages, and production-readiness checks.
@@ -136,7 +137,7 @@ Organization roles are for workspace-wide responsibility:
 | Admin | Legacy broad admin. Keep for compatibility; prefer narrower roles for new users. |
 | IAM Admin | Invites users, changes roles, assigns project access, manages SSO setup, and exports access reviews. |
 | Security Admin | Manages security posture, provider slot controls, alerts, evidence, and security operations across projects. |
-| Platform Admin | Manages runtime/gateway operations, APIM/TLS rollout, project policy, and production runbooks. |
+| Platform Admin | Manages runtime/gateway operations, DNS/TLS rollout, project policy, and production runbooks. |
 | Developer | Works on assigned projects only. |
 | Auditor | Read-only evidence, audit, readiness, and access-review visibility. |
 | Member | Legacy contributor. Prefer `Developer` for new users. |

@@ -2901,7 +2901,18 @@ async function assertEnterpriseLoginRoute() {
     {
       path: '/app/plans',
       title: 'Plans - VaultProof Enterprise',
-      required: ['/api/v1/enterprise/projects/stats/overview', 'Contract guardrails', 'Plan limits'],
+      required: [
+        '/api/v1/enterprise/projects/stats/overview',
+        'Commercial package',
+        'Enterprise paid pilot starts at $5,000/month',
+        'Capacity envelope',
+        'Contract guardrails',
+        'Plan limits',
+        'Security boundaries',
+        'Buyer review path',
+        '/app/evidence',
+        '/app/launch',
+      ],
     },
     {
       path: '/app/scanner',

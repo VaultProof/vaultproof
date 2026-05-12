@@ -1,6 +1,6 @@
 # VaultProof GCP Full Buildout Plan
 
-Last updated: 2026-05-10
+Last updated: 2026-05-12
 
 This is the customer-demo buildout plan for moving VaultProof Enterprise from the current GCP pilot into a credible demo path that can support near-term customer conversations.
 
@@ -27,6 +27,7 @@ Already built:
 - Cloud Armor edge policy helper for WAF-style scanner blocking and coarse per-IP rate limits
 - Customer launch checklist page at `/app/launch`
 - Customer evidence packet page at `/app/evidence`
+- Buyer commercial package page at `/app/plans` for paid-pilot scope, included controls, contract guardrails, security boundaries, and customer review links
 - Build-status and feature inventory docs
 - Managed Supabase remains the auth/database provider for the pilot
 
@@ -61,6 +62,8 @@ Goal 1 is the first milestone where Ken can start testing the sellable product p
 - A dry-run execute request proves control plane -> executor -> policy -> audit flow.
 
 Current status: Goal 1 demo dry-run gate is done. The control-plane runtime env includes the public Supabase anon key. `npm run qa:enterprise-login` now exists for repeatable login readiness checks; strict mode still needs to be run with Supabase service-role env, then followed by final human OAuth/password browser QA.
+
+Customer packaging status: `/app/plans` now carries the first sellable paid-pilot package view. It keeps automated billing and hard plan enforcement out of scope for Goal 1; capacity, support cadence, retention, SSO depth, and dedicated-runtime terms stay contract-controlled until billing APIs exist.
 
 ## Architecture
 

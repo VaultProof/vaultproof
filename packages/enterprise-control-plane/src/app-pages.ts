@@ -3054,7 +3054,7 @@ function renderEnterpriseSupportPage(pageName: EnterpriseSupportPageName): strin
             <li>Which provider keys move first, who owns them, and what is the emergency revoke path?</li>
             <li>Which evidence exports are required for security, audit, legal, procurement, and customer trust teams?</li>
             <li>Who receives alerts and who has authority to pause or revoke traffic?</li>
-            <li>What is the rollback plan if SSO, gateway routing, gateway routing, DNS, or provider execution breaks?</li>
+            <li>What is the rollback plan if SSO, gateway routing, DNS, or provider execution breaks?</li>
           </ul>
         </article>
       </section>
@@ -3066,7 +3066,9 @@ function renderEnterpriseSupportPage(pageName: EnterpriseSupportPageName): strin
 
       <section id="plansPanel" class="grid two" style="display:none">
         <div class="card"><div class="section-title"><h2>Rollout package</h2><span id="planMeta" class="mini"></span></div><div id="planList" class="list"></div></div>
+        <div class="card"><div class="section-title"><h2>Commercial package</h2><span class="mini">paid pilot</span></div><div id="commercialList" class="list"></div></div>
         <div class="card"><div class="section-title"><h2>Contract guardrails</h2><span class="mini">evidence pack</span></div><div id="guardrailList" class="list"></div></div>
+        <div class="card"><div class="section-title"><h2>Buyer review path</h2><span class="mini">proof workflow</span></div><div id="buyerReviewList" class="list"></div></div>
       </section>
 
       <section id="scannerPanel" class="grid two" style="display:none">
@@ -3474,10 +3476,23 @@ function renderEnterpriseSupportPage(pageName: EnterpriseSupportPageName): strin
             row('GCP edge package', readiness.control_plane && readiness.control_plane.origin_lock_configured ? 'Origin protection is configured for enterprise edge routing.' : 'Edge/origin lock still needs final packaging.', readiness.control_plane && readiness.control_plane.origin_lock_configured ? 'ready' : 'todo', readiness.control_plane && readiness.control_plane.origin_lock_configured ? 'good' : 'warn'),
             row('Usage posture', number(overview.totalCalls) + ' calls, ' + number(overview.errorCalls) + ' errors, ' + number(overview.deniedCalls) + ' denied.', (overview.errorRate || 0).toFixed ? (overview.errorRate || 0).toFixed(1) + '% error' : 'usage', (overview.errorCalls || overview.deniedCalls) ? 'warn' : 'good')
           ].join('');
+          byId('commercialList').innerHTML = [
+            row('Starting package', 'Enterprise paid pilot starts at $5,000/month for one guided customer rollout, one first workload, customer proof reviews, and production-readiness support.', '$5k+/mo', 'good'),
+            row('Included controls', 'Company login path, organization/project roles, caller-lock policy, provider slot controls, audit CSV, access-review CSV, alerts, readiness, and evidence packet.', 'included', 'good'),
+            row('Capacity envelope', 'Traffic, retention, key slots, SSO depth, support cadence, and dedicated-runtime needs are set in the customer contract until billing APIs enforce them.', 'contract', 'warn'),
+            row('Expansion path', 'After the first workload is stable, expand project by project with a new policy/evidence review instead of a broad all-at-once cutover.', 'phased', 'good')
+          ].join('');
           byId('guardrailList').innerHTML = [
             row('SOC 2 access evidence', 'Members page exports access review evidence and audit page exports governance/runtime CSV.', 'available', 'good'),
-            row('Plan limits', 'Enterprise commercial limits are not enforced by this control plane yet; keep contract terms external until billing APIs exist.', 'manual', 'warn'),
-            row('Customer rollout notes', 'Use /app/readiness, /app/audit, /app/members, and /app/keys as the contract-facing evidence bundle.', 'ready', 'good')
+            row('Plan limits', 'Enterprise commercial limits are not enforced by this control plane yet; keep capacity and support terms in the customer contract until billing APIs exist.', 'manual', 'warn'),
+            row('Security boundaries', 'Provider keys, encrypted shares, service-role keys, origin-lock values, and signing secrets stay out of customer packets and browser responses.', 'secret safe', 'good'),
+            row('Customer rollout notes', 'Use /app/readiness, /app/evidence, /app/audit, /app/members, and /app/keys as the contract-facing evidence bundle.', 'ready', 'good')
+          ].join('');
+          byId('buyerReviewList').innerHTML = [
+            linkRow('Evidence packet', 'Copy or download the customer proof packet before security review.', '/app/evidence', 'packet', 'good'),
+            linkRow('Launch checklist', 'Review owners, first workload, policy, alerts, evidence exports, and rollback owner.', '/app/launch', 'launch', 'good'),
+            linkRow('Technical guide', 'Answer architecture, key custody, caller-lock, GCP runtime, and troubleshooting questions.', '/app/technical-guide', 'guide', 'good'),
+            linkRow('Runbooks', 'Keep verification, evidence, deploy, DNS, edge, SSH, and cleanup commands visible to operators.', '/app/runbooks', 'runbooks', 'good')
           ].join('');
         }
         if (PAGE_MODE === 'scanner') {
