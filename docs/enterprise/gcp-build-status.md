@@ -1,6 +1,6 @@
 # VaultProof GCP Build Status
 
-Last updated: 2026-05-13T10:19:02.043Z
+Last updated: 2026-05-13T23:32:16.288Z
 
 This file is the living inventory of what has been built for VaultProof on Google Cloud. It is refreshed after every successful enterprise image build by `infra/gcp/enterprise-secure-runtime/build-images.sh`.
 
@@ -159,6 +159,16 @@ Demo implementation should start from existing data instead of new infrastructur
 
 Inventory records must never store raw provider keys, bearer tokens, OAuth client secrets, SAML material, request bodies, response bodies, or customer payloads.
 
+## Planned Feature: Policy Drift And Exceptions
+
+Status: `planned for enterprise demo`
+
+Policy drift and exceptions management is now in the enterprise feature plan. The first slice should start from API inventory and existing enterprise posture data, then show customer-safe control-gap rows for missing provider slots, weak or absent caller-lock policy, demo-placeholder material on a paid path, missing owner, stale or no recent traffic, review overdue, rotation due, login QA not confirmed, or live gate evidence not current.
+
+Demo exceptions should be metadata-only and browser-local at first: owner, reason, risk level, compensating control, expiration date, approval status, and next action. The launch and evidence packets should include the drift summary so customers can see whether risk is clean, accepted for demo, or blocking. Persistent audited exceptions, second-person approval, expiry reminders, policy-as-code export, and alerting can follow after the demo slice.
+
+Exception records must never store raw provider keys, bearer tokens, OAuth client secrets, SAML material, request bodies, response bodies, or customer payloads.
+
 ## What's Next
 
 1. Run `LOGIN_QA_REQUIRE_SESSION=true npm run qa:enterprise-login` with Supabase service-role env for `ken@vaultproof.dev`.
@@ -167,8 +177,9 @@ Inventory records must never store raw provider keys, bearer tokens, OAuth clien
 4. Configure the external OAuth provider app callback as `https://gwzkjiomemjlhtrdrlan.supabase.co/auth/v1/callback` if using Google/GitHub/Microsoft login; add `LOGIN_QA_OAUTH_PROVIDER=google` to the login QA command to verify the public OAuth authorize redirect.
 5. Keep `npm run verify:gcp-enterprise-cloud-armor` in the strict live launch gate.
 6. Build the first API inventory management slice for the demo: derived API rows from projects/provider slots/access logs, owner/risk/review annotations, stale/orphaned flags, and evidence export without secrets.
-7. Add a valid OpenAI Platform key only if the demo specifically needs OpenAI; MiniMax upstream dispatch is now live.
-8. Keep running `npm run gate:gcp-first-goal`; it can generate a temporary Supabase magic-link test session when no `ENTERPRISE_TEST_ACCESS_TOKEN` is provided.
+7. Build the first policy drift and exceptions slice for the demo: control-gap rows, browser-local accepted-risk records, owner/risk/expiry fields, and launch/evidence summary without secrets.
+8. Add a valid OpenAI Platform key only if the demo specifically needs OpenAI; MiniMax upstream dispatch is now live.
+9. Keep running `npm run gate:gcp-first-goal`; it can generate a temporary Supabase magic-link test session when no `ENTERPRISE_TEST_ACCESS_TOKEN` is provided.
 
 ## Rough Monthly Cost
 

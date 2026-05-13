@@ -36,6 +36,7 @@ Already built:
 - Build-status and feature inventory docs
 - Managed Supabase remains the auth/database provider for the pilot
 - API inventory management is now a planned enterprise demo feature for cataloging APIs, provider slots, ownership, policy posture, traffic evidence, and review status without storing or displaying secrets
+- Policy drift and exceptions management is now a planned enterprise demo feature for turning inventory gaps into owner-assigned, expiry-bound remediation or accepted-risk decisions
 
 Not yet customer-ready:
 
@@ -43,6 +44,7 @@ Not yet customer-ready:
 - Email API key demo dry-run and blocked-recipient policy evidence flow are built; live sandbox email sends need sealed provider material only if the demo specifically needs an actual delivered email.
 - Live MiniMax provider dispatch works for the demo; add a separate OpenAI slot only if the demo specifically needs OpenAI.
 - API inventory management still needs its first customer-facing slice.
+- Policy drift and exceptions management still needs its first customer-facing slice.
 - Supabase OAuth/login settings still need to be confirmed for `enterprise.vaultproof.dev`.
 - Older migration/history docs still have Azure-era language; customer-facing app UI is cleaned for the GCP demo.
 
@@ -183,6 +185,7 @@ Build:
 - Seed a demo provider slot. Placeholder shares are acceptable for dashboard and dry-run validation; live provider dispatch later needs encrypted shares generated from the same unwrap root encrypted into GCP KMS.
 - Use the email API key protection demo flow described below.
 - Add the first API inventory management slice described below.
+- Add the first policy drift and exceptions slice described below.
 - Run `LOGIN_QA_REQUIRE_SESSION=true npm run qa:enterprise-login` with Supabase service-role env to verify the live login page, Supabase redirect allowlist, generated browser session, and authenticated enterprise org/bootstrap APIs.
 - Add `LOGIN_QA_OAUTH_PROVIDER=google` to the login QA command after the external OAuth provider app is configured.
 - Confirm API execution path through `/api/v1/enterprise/execute`.
@@ -284,6 +287,42 @@ Demo success:
 - Inventory export can be shown in a security review without exposing secrets or payloads.
 - The demo script can explain: "VaultProof does not just proxy keys; it gives enterprise teams an API system of record for protected calls."
 
+## Demo Feature: Policy Drift And Exceptions
+
+This belongs in the enterprise demo because security buyers expect every exception to have an owner, reason, compensating control, and expiration date. VaultProof should show that insecure or incomplete API posture is visible, assigned, and time-bound instead of hidden in chat or spreadsheets.
+
+Demo goal:
+
+- Give customer security, platform, and app teams a drift board that starts from the API inventory.
+- Flag missing or weak controls: no provider slot, demo-placeholder material on a paid path, missing caller-lock policy, missing owner, stale API, no recent traffic, no rotation plan, review overdue, SSO/login QA not confirmed, or Cloud Armor/live gate not verified.
+- Let an authorized operator record a demo-local exception with owner, reason, risk level, compensating control, expiration date, and next action.
+- Keep exceptions metadata-only. Do not store raw provider keys, OAuth secrets, SAML material, request bodies, response bodies, or customer payloads.
+- Include drift and exception summaries in launch/evidence packets so customer reviewers see remaining risk before pilot traffic.
+
+First demo slice:
+
+- Add `https://enterprise.vaultproof.dev/app/policy` or a Policy tab on `https://enterprise.vaultproof.dev/app/inventory`.
+- Derive drift rows from existing projects, provider slots, caller-lock policy, material mode, traffic rollups, launch go/no-go evidence, and manual browser-local inventory annotations.
+- Persist demo exceptions in browser local storage per organization until the audited table exists.
+- Show status badges for `critical drift`, `needs owner`, `exception active`, `exception expiring`, `accepted for demo`, `blocked`, and `ready`.
+- Add copyable customer-safe drift report text and JSON without secrets.
+- Add links to Control, Provider Slots, API Inventory, Launch, Evidence, Audit CSV, and Access Review CSV.
+
+Production follow-up:
+
+- Add a persistent `enterprise_policy_exceptions` table with org/project RBAC, approval workflow, audit events, expiry reminders, and service-role-only reads.
+- Require second-person approval for high-risk exceptions or production traffic exceptions.
+- Add policy-as-code export for customer review.
+- Add automated drift checks from gateway policy, scanner findings, provider slots, API inventory, login QA, Cloud Armor verification, rotation due dates, and access reviews.
+- Add notifications for exception expiry, new critical drift, and recurring policy violations.
+
+Demo success:
+
+- A customer can see current drift, approved exceptions, owner, risk, expiry, and next action in one board.
+- Launch/evidence packets show whether risk is clean, accepted for demo, or blocking.
+- No exception can quietly become permanent; every exception has a date and owner.
+- The demo script can explain: "VaultProof gives you active key protection and an operating model for the exceptions that always exist in real enterprises."
+
 ## Phase 5: Customer Scale
 
 Build after first customer proof:
@@ -292,6 +331,7 @@ Build after first customer proof:
 - Add Cloud Armor WAF and rate limits. Status: helper built with scanner-path blocking plus per-IP throttles for secure execute, enterprise APIs, and the public edge.
 - Add uptime checks and alerting policies. Status: customer-safe monitoring evidence kit built in `https://enterprise.vaultproof.dev/app/evidence`, `https://enterprise.vaultproof.dev/app/demo`, and `https://enterprise.vaultproof.dev/app/runbooks`; GCP-native uptime check and alert-policy resources are still a paid-production scale task.
 - Add persistent API inventory management with ownership, review workflow, drift detection, imports, and evidence exports.
+- Add persistent policy drift and exceptions management with approvals, expiry reminders, policy-as-code export, and alerting.
 - Add automated evidence bundle capture for each release.
 - Add a rollback script for edge, VM image, and DNS changes.
 - Clean older Azure migration/history docs into provider-neutral or clearly archived references before paid-production handoff.

@@ -303,6 +303,7 @@ const nextSteps = readinessProductionReady
         ? ['Keep `npm run verify:gcp-enterprise-cloud-armor` in the strict live launch gate.']
         : ['Run `npm run configure:gcp-enterprise-cloud-armor`, then `npm run verify:gcp-enterprise-cloud-armor`.']),
       'Build the first API inventory management slice for the demo: derived API rows from projects/provider slots/access logs, owner/risk/review annotations, stale/orphaned flags, and evidence export without secrets.',
+      'Build the first policy drift and exceptions slice for the demo: control-gap rows, browser-local accepted-risk records, owner/risk/expiry fields, and launch/evidence summary without secrets.',
       'Add a valid OpenAI Platform key only if the demo specifically needs OpenAI; MiniMax upstream dispatch is now live.',
       'Keep running `npm run gate:gcp-first-goal`; it can generate a temporary Supabase magic-link test session when no `ENTERPRISE_TEST_ACCESS_TOKEN` is provided.',
     ]
@@ -537,6 +538,16 @@ API inventory management is now in the enterprise feature plan. The first slice 
 Demo implementation should start from existing data instead of new infrastructure: derive inventory rows from projects, provider slots, project policies, access logs, and rollups; add browser-local/manual annotations for owners and review notes; flag missing provider slots, stale APIs, no recent traffic, policy gaps, and review-due items; then include the summary in the evidence packet. Persistent audited inventory tables, CSV/OpenAPI import, and automatic discovery can follow after the customer demo slice.
 
 Inventory records must never store raw provider keys, bearer tokens, OAuth client secrets, SAML material, request bodies, response bodies, or customer payloads.
+
+## Planned Feature: Policy Drift And Exceptions
+
+Status: \`planned for enterprise demo\`
+
+Policy drift and exceptions management is now in the enterprise feature plan. The first slice should start from API inventory and existing enterprise posture data, then show customer-safe control-gap rows for missing provider slots, weak or absent caller-lock policy, demo-placeholder material on a paid path, missing owner, stale or no recent traffic, review overdue, rotation due, login QA not confirmed, or live gate evidence not current.
+
+Demo exceptions should be metadata-only and browser-local at first: owner, reason, risk level, compensating control, expiration date, approval status, and next action. The launch and evidence packets should include the drift summary so customers can see whether risk is clean, accepted for demo, or blocking. Persistent audited exceptions, second-person approval, expiry reminders, policy-as-code export, and alerting can follow after the demo slice.
+
+Exception records must never store raw provider keys, bearer tokens, OAuth client secrets, SAML material, request bodies, response bodies, or customer payloads.
 
 ## What's Next
 
