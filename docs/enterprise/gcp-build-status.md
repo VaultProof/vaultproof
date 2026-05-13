@@ -1,6 +1,6 @@
 # VaultProof GCP Build Status
 
-Last updated: 2026-05-13T01:39:03.316Z
+Last updated: 2026-05-13T01:51:07.219Z
 
 This file is the living inventory of what has been built for VaultProof on Google Cloud. It is refreshed after every successful enterprise image build by `infra/gcp/enterprise-secure-runtime/build-images.sh`.
 
@@ -46,13 +46,13 @@ Status: `attached and enforced`
 
 ## App Shell Notes
 
-- Build `pilot-ops-evidence-20260513` is the current deployed GCP image tag for both control plane and executor containers.
+- Build `api-proxy-self-test-20260513` is the current deployed GCP image tag for both control plane and executor containers.
 - Homepage hero headline is `Active Key Protection for every API call.`
-- `/app/demo` is the buyer walkthrough: live workspace facts, proof path, identity/OAuth proof kit, key-rotation proof kit, pilot operations proof kit, safety guardrails, objection answers, paid-pilot close steps, and a copyable demo talk track generated without secrets.
+- `/app/demo` is the buyer walkthrough: live workspace facts, proof path, identity/OAuth proof kit, key-rotation proof kit, pilot operations proof kit, API proxy self-test kit, safety guardrails, objection answers, paid-pilot close steps, and a copyable demo talk track generated without secrets.
 - `/app/launch` is the customer go-live board: live readiness summary, auto/manual customer tasks, browser-saved checklist progress, safe-to-pilot go/no-go readiness, browser-local status/timestamp evidence with stale holds, workflow links, identity/OAuth, key-rotation, and pilot-operations evidence packets, and a copyable launch brief.
-- `/app/evidence` is the customer proof packet: runtime readiness, go/no-go launch decision and blockers, identity/login QA evidence, key-rotation/demo-only acceptance evidence, pilot operations rollback and budget/monitoring evidence, access-review and audit export links, provider posture, rollout workflow, and copy/download JSON evidence summary without secrets.
+- `/app/evidence` is the customer proof packet: runtime readiness, go/no-go launch decision and blockers, identity/login QA evidence, key-rotation/demo-only acceptance evidence, pilot operations rollback and budget/monitoring evidence, API proxy self-test evidence, access-review and audit export links, provider posture, rollout workflow, and copy/download JSON evidence summary without secrets.
 - `/app/plans` is the buyer package view: rollout posture, paid-pilot commercial package, contract guardrails, security boundaries, and direct links into evidence, launch, technical guide, and runbooks.
-- `/app/keys` includes the email API key demo path: Resend/SendGrid/Mailgun/Postmark/AWS SES slot defaults, protected email dry-run, blocked-recipient policy testing, no raw key reveal, launch/evidence coverage, and email-specific audit metadata.
+- `/app/keys` includes the API proxy self-test kit and email API key demo path: copy-safe dry-run requests with required caller-lock headers, Resend/SendGrid/Mailgun/Postmark/AWS SES slot defaults, protected email dry-run, blocked-recipient policy testing, no raw key reveal, launch/evidence coverage, and email-specific audit metadata.
 - `/app/control` and `/app/org` use the shared universal sidebar with explicit sidebar typography, hide the legacy static topbar/page frame, and clean old `?org=<uuid>` URLs back to canonical `/app/control` and `/app/org` while preserving the selected org in local storage.
 - Live HTML verification on both long-form URLs confirmed the universal sidebar, URL cleanup script, hidden legacy topbar, explicit sidebar font sizing, and no legacy sidebar/site-theme artifacts.
 
@@ -182,14 +182,14 @@ Cost note: the current fixed estimate is above the existing `VaultProof Producti
 
 ## Build Pointer
 
-- Build tag: `pilot-ops-evidence-20260513`
+- Build tag: `api-proxy-self-test-20260513`
 - Registry: `us-central1-docker.pkg.dev/vaultproof-prod/vaultproof`
-- Control plane image: `us-central1-docker.pkg.dev/vaultproof-prod/vaultproof/enterprise-control-plane:pilot-ops-evidence-20260513`
-- Control plane digest: `sha256:cae3e15af925045a5b5efc218213a2c7c1ea40c4abd91168f8057237569f6cdf`
-- Control plane built at: `2026-05-13T01:35:43.422807529Z`
-- Executor image: `us-central1-docker.pkg.dev/vaultproof-prod/vaultproof/enterprise-secure-executor:pilot-ops-evidence-20260513`
-- Executor digest: `sha256:8b9a31d5663d87c8a6aab51d94202fcdfdc6d4b6e19effa5e334a0adb5c83af3`
-- Executor built at: `2026-05-13T01:35:55.678707810Z`
+- Control plane image: `us-central1-docker.pkg.dev/vaultproof-prod/vaultproof/enterprise-control-plane:api-proxy-self-test-20260513`
+- Control plane digest: `sha256:4f157594076dea1cba3e54038202415eac79a8c86f1300c2a6c803c1e3cb7237`
+- Control plane built at: `2026-05-13T01:47:40.333547597Z`
+- Executor image: `us-central1-docker.pkg.dev/vaultproof-prod/vaultproof/enterprise-secure-executor:api-proxy-self-test-20260513`
+- Executor digest: `sha256:2777b1b12cefae4acac244390d58c9731a6284a4a6e8bced763c9c9d3f0e5ede`
+- Executor built at: `2026-05-13T01:47:52.199170381Z`
 
 ## Project
 

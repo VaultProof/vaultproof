@@ -3003,7 +3003,7 @@ async function assertEnterpriseLoginRoute() {
     {
       path: '/app/keys',
       title: 'Provider Slots - VaultProof Enterprise',
-      required: ['/api/v1/enterprise/projects', 'add slot', 'create slot', 'emergency revoke', 'live sealed material', 'demo placeholder material', 'Email API key demo', 'protected email dry-run', 'blocked recipient test', 'Policy denial evidence', 'resend', 'sendgrid', 'postmark'],
+      required: ['/api/v1/enterprise/projects', 'add slot', 'create slot', 'emergency revoke', 'live sealed material', 'demo placeholder material', 'Customer API proxy test kit', 'copy dry-run request', 'copy blocked-recipient request', 'YOUR_VAULTPROOF_SESSION_JWT', 'Email API key demo', 'protected email dry-run', 'blocked recipient test', 'Policy denial evidence', 'resend', 'sendgrid', 'postmark'],
     },
   ];
   for (const page of operationsPages) {
@@ -3042,12 +3042,12 @@ async function assertEnterpriseLoginRoute() {
     {
       path: '/app/evidence',
       title: 'Evidence packet - VaultProof Enterprise',
-      required: ['Evidence readiness', 'Customer exports', 'Proof inventory', 'Review workflow', 'Identity/OAuth proof', 'Key rotation proof', 'Pilot operations proof', 'Go/no-go launch decision', 'go_no_go', 'manual_evidence', 'identity_login_qa', 'key_rotation_evidence', 'pilot_operations_evidence', 'paid_onboarding_actions', 'rollback_paths', 'monitoring_review', 'oauth_redirect_qa_command', 'Email API key protection', 'Evidence packet JSON', 'copy JSON', 'download JSON', 'vaultproof_enterprise_evidence_packet', 'email_provider_slots', '/app/launch', '/app/control', '/api/v1/enterprise/audit?format=csv&days=30', '/api/v1/enterprise/members/access-review?format=csv'],
+      required: ['Evidence readiness', 'Customer exports', 'Proof inventory', 'Review workflow', 'Identity/OAuth proof', 'Key rotation proof', 'Pilot operations proof', 'API proxy self-test proof', 'Go/no-go launch decision', 'go_no_go', 'manual_evidence', 'identity_login_qa', 'key_rotation_evidence', 'pilot_operations_evidence', 'api_proxy_self_test', 'execute_endpoint_pattern', 'paid_onboarding_actions', 'rollback_paths', 'monitoring_review', 'oauth_redirect_qa_command', 'Email API key protection', 'Evidence packet JSON', 'copy JSON', 'download JSON', 'vaultproof_enterprise_evidence_packet', 'email_provider_slots', '/app/launch', '/app/control', '/api/v1/enterprise/audit?format=csv&days=30', '/api/v1/enterprise/members/access-review?format=csv'],
     },
     {
       path: '/app/demo',
       title: 'Demo script - VaultProof Enterprise',
-      required: ['Demo objective', 'Live proof path', 'Buyer proof points', 'Safety guardrails', 'Objection answers', 'Close path', 'Copyable demo talk track', 'Active Key Protection for every API call.', 'Email API key story', 'Identity/OAuth proof kit', 'Key rotation proof kit', 'Pilot operations proof kit', 'Policy denial evidence', 'Cloud Armor evidence', 'Why keep Supabase for the demo?', 'Is this only AI?', 'copy script', '/app/keys', '/app/evidence', '/app/launch', '/app/plans', '/api/v1/enterprise/projects/bootstrap'],
+      required: ['Demo objective', 'Live proof path', 'Buyer proof points', 'Safety guardrails', 'Objection answers', 'Close path', 'Copyable demo talk track', 'Active Key Protection for every API call.', 'Email API key story', 'Identity/OAuth proof kit', 'Key rotation proof kit', 'Pilot operations proof kit', 'API proxy self-test kit', 'Policy denial evidence', 'Cloud Armor evidence', 'Why keep Supabase for the demo?', 'Is this only AI?', 'copy script', '/app/keys', '/app/evidence', '/app/launch', '/app/plans', '/api/v1/enterprise/projects/bootstrap'],
     },
     {
       path: '/app/technical-guide',

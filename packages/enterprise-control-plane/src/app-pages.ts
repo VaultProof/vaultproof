@@ -1810,6 +1810,7 @@ function renderEnterpriseAlertsPage(): string {
     .mini { color: var(--muted); font-size: 13px; }
     .list { display: grid; gap: 10px; }
     .row { display: grid; grid-template-columns: 1fr auto; gap: 14px; align-items: start; border: 1px solid rgba(48,76,71,.10); border-radius: 18px; padding: 14px; background: rgba(247,250,244,.84); }
+    .row-actions { display: flex; gap: 8px; flex-wrap: wrap; justify-content: flex-end; }
     .row-title { font-weight: 780; letter-spacing: -.02em; }
     .row-sub { color: var(--muted); font-size: 13px; margin-top: 5px; line-height: 1.45; }
     .tag { display: inline-block; color: var(--blue); font-size: 12px; border: 1px solid rgba(22,138,159,.24); border-radius: 999px; padding: 5px 8px; margin: 3px 4px 0 0; }
@@ -2259,6 +2260,11 @@ function renderEnterpriseOperationsPage(pageName: 'activity' | 'projects' | 'key
       </section>
 
       ${pageName === 'keys' ? `
+      <section id="apiProxyTestPanel" class="card" style="display:none;margin-bottom:16px">
+        <div class="section-title"><h2>Customer API proxy test kit</h2><span id="apiProxyTestMeta" class="mini">copy-safe</span></div>
+        <div id="apiProxyTestList" class="list"><div class="empty">Loading self-test kit...</div></div>
+      </section>
+
       <section id="emailKeyDemoPanel" class="grid two" style="display:none;margin-bottom:16px">
         <div class="card">
           <div class="section-title"><h2>Email API key demo</h2><span class="mini">required for demo</span></div>
@@ -2291,16 +2297,16 @@ function renderEnterpriseOperationsPage(pageName: 'activity' | 'projects' | 'key
       var cachedProjects = [];
       var cachedOverview = {};
       var providerDefaults = {
-        openai: { upstream: 'https://api.openai.com', header: 'authorization', template: 'Bearer {key}' },
-        anthropic: { upstream: 'https://api.anthropic.com', header: 'x-api-key', template: '{key}' },
+        openai: { upstream: 'https://api.openai.com', header: 'authorization', template: 'Bearer {key}', demoPath: '/v1/models' },
+        anthropic: { upstream: 'https://api.anthropic.com', header: 'x-api-key', template: '{key}', demoPath: '/v1/messages' },
         resend: { upstream: 'https://api.resend.com', header: 'authorization', template: 'Bearer {key}', emailPath: '/emails' },
         sendgrid: { upstream: 'https://api.sendgrid.com', header: 'authorization', template: 'Bearer {key}', emailPath: '/v3/mail/send' },
         mailgun: { upstream: 'https://api.mailgun.net', header: 'authorization', template: 'Basic {key}', emailPath: '/v3/example.com/messages' },
         postmark: { upstream: 'https://api.postmarkapp.com', header: 'x-postmark-server-token', template: '{key}', emailPath: '/email' },
         'aws-ses': { upstream: 'https://email.us-east-1.amazonaws.com', header: 'authorization', template: 'Bearer {key}', emailPath: '/' },
-        stripe: { upstream: 'https://api.stripe.com', header: 'authorization', template: 'Bearer {key}' },
-        twilio: { upstream: 'https://api.twilio.com', header: 'authorization', template: 'Basic {key}' },
-        snowflake: { upstream: 'https://snowflakecomputing.com', header: 'authorization', template: 'Bearer {key}' }
+        stripe: { upstream: 'https://api.stripe.com', header: 'authorization', template: 'Bearer {key}', demoPath: '/v1/customers' },
+        twilio: { upstream: 'https://api.twilio.com', header: 'authorization', template: 'Basic {key}', demoPath: '/2010-04-01/Accounts.json' },
+        snowflake: { upstream: 'https://snowflakecomputing.com', header: 'authorization', template: 'Bearer {key}', demoPath: '/api/v2/statements' }
       };
       function byId(id) { return document.getElementById(id); }
       function text(id, value) { var el = byId(id); if (el) el.textContent = value == null ? '' : String(value); }
@@ -2363,6 +2369,12 @@ function renderEnterpriseOperationsPage(pageName: 'activity' | 'projects' | 'key
         var defaults = providerDefaults[provider] || providerDefaults[String(slot.slug || '').trim().toLowerCase()] || {};
         return defaults.emailPath || '/emails';
       }
+      function providerDemoPath(slot) {
+        if (slotIsEmailProvider(slot)) return emailDemoPath(slot);
+        var provider = String(slot.provider || slot.slug || '').trim().toLowerCase();
+        var defaults = providerDefaults[provider] || providerDefaults[String(slot.slug || '').trim().toLowerCase()] || {};
+        return defaults.demoPath || '/';
+      }
       function toBase64Utf8(value) {
         return btoa(unescape(encodeURIComponent(value)));
       }
@@ -2412,6 +2424,63 @@ function renderEnterpriseOperationsPage(pageName: 'activity' | 'projects' | 'key
           subject: 'VaultProof protected email dry-run',
           text: 'VaultProof policy validated this email-provider call without exposing the raw key.'
         };
+      }
+      function proxySelfTestBody(slot, options) {
+        if (slotIsEmailProvider(slot)) {
+          return {
+            method: 'POST',
+            upstream_path: emailDemoPath(slot),
+            headers: { 'content-type': 'application/json' },
+            body_base64: toBase64Utf8(JSON.stringify(demoEmailPayload(slot, options || {}))),
+            dry_run: true
+          };
+        }
+        return {
+          method: 'GET',
+          upstream_path: providerDemoPath(slot),
+          dry_run: true
+        };
+      }
+      function proxySelfTestSnippet(project, slot, options) {
+        var slug = slot.slug || slot.provider;
+        var path = '/api/v1/enterprise/projects/' + encodeURIComponent(project.id) + '/providers/' + encodeURIComponent(slug) + '/execute';
+        var headers = {
+          authorization: 'Bearer YOUR_VAULTPROOF_SESSION_JWT',
+          'content-type': 'application/json',
+          'x-vaultproof-organization': currentOrgId || project.organization_id || 'YOUR_ORGANIZATION_ID',
+          'x-vaultproof-customer-gateway': 'vaultproof-managed',
+          'x-vaultproof-client-class': 'browser'
+        };
+        return [
+          'fetch(' + JSON.stringify(location.origin + path) + ', {',
+          '  method: "POST",',
+          '  headers: ' + JSON.stringify(headers, null, 2).replace(/\\n/g, '\\n  ') + ',',
+          '  body: JSON.stringify(' + JSON.stringify(proxySelfTestBody(slot, options || {}), null, 2).replace(/\\n/g, '\\n  ') + ')',
+          '}).then(async (response) => ({',
+          '  status: response.status,',
+          '  body: await response.json().catch(() => null)',
+          '}));'
+        ].join('\\n');
+      }
+      function copyToClipboard(value, label) {
+        function done() { notice((label || 'Self-test request') + ' copied. It uses the VaultProof session token placeholder and no raw provider key.'); }
+        if (navigator.clipboard && navigator.clipboard.writeText) {
+          navigator.clipboard.writeText(value).then(done).catch(function() { fallbackCopy(value); done(); });
+          return;
+        }
+        fallbackCopy(value);
+        done();
+      }
+      function fallbackCopy(value) {
+        var textarea = document.createElement('textarea');
+        textarea.value = value;
+        textarea.setAttribute('readonly', 'readonly');
+        textarea.style.position = 'fixed';
+        textarea.style.left = '-9999px';
+        document.body.appendChild(textarea);
+        textarea.select();
+        document.execCommand('copy');
+        document.body.removeChild(textarea);
       }
       function renderOrgSelector(payload) {
         var select = byId('orgSelect');
@@ -2499,6 +2568,20 @@ function renderEnterpriseOperationsPage(pageName: 'activity' | 'projects' | 'key
           return '<div class="row"><div><div class="row-title">' + escapeHtml(event.description || event.event_type) + '</div><div class="row-sub">' + escapeHtml(rel(event.timestamp)) + ' - ' + escapeHtml(project.name || project.vp_proj_id || 'unknown project') + ' - ' + escapeHtml(meta.provider || meta.slug || 'unknown provider') + ' - ' + escapeHtml(meta.latency_ms == null ? 'latency n/a' : meta.latency_ms + 'ms') + (meta.provider_request_id ? ' - request ' + escapeHtml(meta.provider_request_id) : '') + '</div></div>' + statusTag(event.status) + '</div>';
         }).join('') : '<div class="empty">No runtime activity matches these filters.</div>';
       }
+      function renderApiProxyTestKit(rows) {
+        var panel = byId('apiProxyTestPanel');
+        if (panel) panel.style.display = PAGE_MODE === 'keys' ? 'block' : 'none';
+        var list = byId('apiProxyTestList');
+        if (!list || PAGE_MODE !== 'keys') return;
+        text('apiProxyTestMeta', rows.length ? rows.length + ' slot self-tests' : 'copy-safe');
+        list.innerHTML = rows.length ? rows.slice(0, 8).map(function(item) {
+          var slug = item.slot.slug || item.slot.provider;
+          var materialMode = item.slot.material_mode || 'missing';
+          var materialClass = materialMode === 'sealed-live' ? 'good' : materialMode === 'demo-placeholder' ? 'warn' : 'bad';
+          var denyButton = slotIsEmailProvider(item.slot) ? '<button type="button" data-action="copy-proxy-deny-test" data-project-id="' + escapeHtml(item.project.id) + '" data-slug="' + escapeHtml(slug) + '">copy blocked-recipient request</button>' : '';
+          return '<div class="row"><div><div class="row-title">' + escapeHtml(slug) + ' API proxy self-test</div><div class="row-sub">POST /api/v1/enterprise/projects/' + escapeHtml(item.project.id) + '/providers/' + escapeHtml(slug) + '/execute - dry-run request with VaultProof auth, gateway marker, client class, and organization header. No raw provider key is copied into the customer app.</div><div><span class="tag ' + materialClass + '">' + escapeHtml(materialMode) + '</span><span class="tag good">YOUR_VAULTPROOF_SESSION_JWT</span><span class="tag">x-vaultproof-customer-gateway</span><span class="tag">audit evidence</span></div></div><div class="row-actions"><button type="button" class="primary" data-action="copy-proxy-dry-run" data-project-id="' + escapeHtml(item.project.id) + '" data-slug="' + escapeHtml(slug) + '">copy dry-run request</button>' + denyButton + '</div></div>';
+        }).join('') : '<div class="empty">No provider slots are visible yet. Add a demo provider slot before sharing the customer API proxy self-test kit.</div>';
+      }
       function renderKeys() {
         byId('keysPanel').style.display = PAGE_MODE === 'keys' ? 'block' : 'none';
         if (byId('emailKeyDemoPanel')) byId('emailKeyDemoPanel').style.display = PAGE_MODE === 'keys' ? 'grid' : 'none';
@@ -2509,6 +2592,7 @@ function renderEnterpriseOperationsPage(pageName: 'activity' | 'projects' | 'key
             rows.push({ project: project, slot: slot });
           });
         });
+        renderApiProxyTestKit(rows);
         text('keyMeta', rows.length + ' active provider slots');
         var emailRows = rows.filter(function(item) { return slotIsEmailProvider(item.slot); });
         if (byId('emailKeyDemoList')) {
@@ -2646,6 +2730,25 @@ function renderEnterpriseOperationsPage(pageName: 'activity' | 'projects' | 'key
         if (byId('slotProvider')) byId('slotProvider').value = 'resend';
         syncProviderDefaults(true);
       }
+      function findProviderItem(projectId, slug) {
+        var found = null;
+        cachedProjects.forEach(function(project) {
+          if (found || project.id !== projectId) return;
+          (project.provider_slots || []).forEach(function(slot) {
+            var slotSlug = slot.slug || slot.provider;
+            if (!found && slotSlug === slug) found = { project: project, slot: slot };
+          });
+        });
+        return found;
+      }
+      function copyProxySelfTest(target, options) {
+        var item = findProviderItem(target.getAttribute('data-project-id'), target.getAttribute('data-slug'));
+        if (!item) {
+          notice('Provider slot is not visible. Refresh the page and try again.');
+          return;
+        }
+        copyToClipboard(proxySelfTestSnippet(item.project, item.slot, options || {}), options && options.blocked ? 'Blocked-recipient self-test request' : 'Dry-run self-test request');
+      }
       async function reload() {
         if (!token) {
           notice('Enterprise session missing.');
@@ -2697,6 +2800,14 @@ function renderEnterpriseOperationsPage(pageName: 'activity' | 'projects' | 'key
         }
         if (target.getAttribute('data-action') === 'email-deny-test') {
           await runProtectedEmailDenialTest(target);
+          return;
+        }
+        if (target.getAttribute('data-action') === 'copy-proxy-dry-run') {
+          copyProxySelfTest(target);
+          return;
+        }
+        if (target.getAttribute('data-action') === 'copy-proxy-deny-test') {
+          copyProxySelfTest(target, { blocked: true });
           return;
         }
         if (target.getAttribute('data-action') !== 'revoke-slot') return;
@@ -2964,6 +3075,10 @@ function renderEnterpriseSupportPage(pageName: EnterpriseSupportPageName): strin
         <div class="card" style="grid-column:1/-1">
           <div class="section-title"><h2>Pilot operations proof</h2><span class="mini" id="evidencePilotOpsMeta">hold</span></div>
           <div id="evidencePilotOpsList" class="list"></div>
+        </div>
+        <div class="card" style="grid-column:1/-1">
+          <div class="section-title"><h2>API proxy self-test proof</h2><span class="mini" id="evidenceApiProxyMeta">hold</span></div>
+          <div id="evidenceApiProxyList" class="list"></div>
         </div>
         <div class="card" style="grid-column:1/-1">
           <div class="section-title">
@@ -3700,6 +3815,75 @@ function renderEnterpriseSupportPage(pageName: EnterpriseSupportPageName): strin
           row('Secrets excluded', packet.secrets_excluded.join(', '), 'redacted', 'good')
         ];
       }
+      function buildApiProxySelfTestPacket(overview, bootstrap) {
+        var slots = providerSlotsFromBootstrap(bootstrap);
+        var totalCalls = Number(overview.totalCalls || overview.total_calls || 0);
+        var deniedCalls = Number(overview.deniedCalls || overview.denied_calls || 0);
+        var errorCalls = Number(overview.errorCalls || overview.error_calls || 0);
+        var emailProviders = emailProvidersFromData(overview, bootstrap);
+        return {
+          status: slots.length && totalCalls > 0 ? 'ready' : 'hold',
+          execute_endpoint_pattern: '/api/v1/enterprise/projects/{projectId}/providers/{providerSlug}/execute',
+          required_headers: [
+            'Authorization: Bearer <VaultProof session or runtime token>',
+            'Content-Type: application/json',
+            'x-vaultproof-organization: <organization id>',
+            'x-vaultproof-customer-gateway: vaultproof-managed',
+            'x-vaultproof-client-class: browser'
+          ],
+          dry_run_contract: 'Use dry_run: true for the customer self-test. The control plane validates auth, caller lock, policy, signing, executor reachability, and audit metadata without exposing provider keys.',
+          pass_criteria: [
+            'Dry-run request returns accepted/validated execution evidence.',
+            'Blocked-recipient email test returns 403 and creates denial evidence.',
+            'Activity/Audit shows provider, status, policy, latency, request id, and protected-secret classification.',
+            'Customer packet excludes raw provider keys, encrypted shares, service-role keys, and origin-lock values.'
+          ],
+          traffic_evidence: {
+            proxy_calls: totalCalls,
+            denied_calls: deniedCalls,
+            error_calls: errorCalls
+          },
+          provider_slots: slots.map(function(slot) {
+            return {
+              provider: slot.provider || null,
+              slug: slot.slug || slot.provider || null,
+              material_mode: slot.material_mode || 'missing',
+              material_ready: slot.material_ready === true,
+              secret_kind: isEmailProviderName(slot.provider || slot.slug) ? 'email_api_key' : 'provider_api_key'
+            };
+          }),
+          email_demo: {
+            providers: emailProviders,
+            dry_run_available: emailProviders.length > 0,
+            blocked_recipient_test_available: emailProviders.length > 0
+          },
+          secrets_excluded: [
+            'raw provider keys',
+            'encrypted provider shares',
+            'Supabase service-role key',
+            'browser session token',
+            'origin-lock secret',
+            'executor signing secret',
+            'vault unwrap root'
+          ]
+        };
+      }
+      function apiProxySelfTestRows(packet) {
+        var traffic = packet.traffic_evidence || {};
+        var slots = packet.provider_slots || [];
+        var email = packet.email_demo || {};
+        return [
+          row('API proxy self-test status', packet.status === 'ready' ? 'Provider slots and traffic evidence are visible for a customer dry-run walkthrough.' : 'Hold until a provider slot and at least one proxy test event are visible.', packet.status, packet.status === 'ready' ? 'good' : 'warn'),
+          row('Execute endpoint pattern', packet.execute_endpoint_pattern, 'customer test', 'good'),
+          row('Required headers', packet.required_headers.join('; '), 'caller lock', 'good'),
+          row('Dry-run contract', packet.dry_run_contract, 'no upstream spend', 'good'),
+          row('Provider slots in scope', slots.length ? slots.map(function(slot) { return (slot.slug || slot.provider || 'provider') + ' (' + slot.material_mode + ')'; }).join(', ') : 'No provider slots visible yet.', slots.length + ' slots', slots.length ? 'good' : 'warn'),
+          row('Email denial test', email.blocked_recipient_test_available ? 'Protected email dry-run and blocked-recipient test are available for: ' + email.providers.join(', ') + '.' : 'Add an email provider slot to show the denial evidence path.', email.blocked_recipient_test_available ? 'available' : 'todo', email.blocked_recipient_test_available ? 'good' : 'warn'),
+          row('Traffic evidence', number(traffic.proxy_calls) + ' calls, ' + number(traffic.error_calls) + ' errors, ' + number(traffic.denied_calls) + ' denied.', traffic.proxy_calls ? 'observed' : 'pending', traffic.error_calls || traffic.denied_calls ? 'warn' : traffic.proxy_calls ? 'good' : 'warn'),
+          row('Pass criteria', packet.pass_criteria.join(' '), 'demo proof', 'good'),
+          row('Secrets excluded', packet.secrets_excluded.join(', '), 'redacted', 'good')
+        ];
+      }
       function providerSlotsFromBootstrap(bootstrap) {
         var projects = bootstrap && Array.isArray(bootstrap.projects) ? bootstrap.projects : [];
         var slots = [];
@@ -3839,6 +4023,7 @@ function renderEnterpriseSupportPage(pageName: EnterpriseSupportPageName): strin
         var identityQa = buildIdentityQaPacket(goNoGo);
         var rotation = buildKeyRotationPacket(goNoGo, bootstrap || {});
         var pilotOps = buildPilotOpsPacket(goNoGo, readiness, overview);
+        var apiProxy = buildApiProxySelfTestPacket(overview, bootstrap || {});
         var blockers = goNoGo && goNoGo.blockers && goNoGo.blockers.length
           ? goNoGo.blockers.join('; ')
           : 'none';
@@ -3857,6 +4042,8 @@ function renderEnterpriseSupportPage(pageName: EnterpriseSupportPageName): strin
           'Pilot operations proof status: ' + pilotOps.status,
           'Rollback owner/path: ' + pilotOps.manual_evidence.rollback_owner_path.status,
           'Budget/monitoring review: ' + pilotOps.manual_evidence.budget_monitoring.status,
+          'API proxy self-test status: ' + apiProxy.status,
+          'API proxy execute endpoint: ' + apiProxy.execute_endpoint_pattern,
           'Runtime production-ready: ' + (productionReady ? 'yes' : 'no'),
           'SSO/login status: ' + (sso.provider_status || 'not confirmed'),
           'Projects: ' + number(org.project_count || overview.totalProjects),
@@ -3868,6 +4055,7 @@ function renderEnterpriseSupportPage(pageName: EnterpriseSupportPageName): strin
           '- Confirm the first workload, owner, provider path, and expected volume.',
           '- Review caller-lock policy in Control.',
           '- Review provider slot posture and emergency revoke path.',
+          '- Run or copy the API proxy self-test dry-run from Provider Slots.',
           '- Complete strict login QA, Cloud Armor verification, key-rotation review, rollback owner, and budget/monitoring review.',
           '- Export audit and access-review evidence.',
           '- Send one low-volume dry-run or test request before production traffic.',
@@ -3939,6 +4127,7 @@ function renderEnterpriseSupportPage(pageName: EnterpriseSupportPageName): strin
         var identityQa = buildIdentityQaPacket(goNoGo);
         var rotation = buildKeyRotationPacket(goNoGo, bootstrap);
         var pilotOps = buildPilotOpsPacket(goNoGo, readiness, overview);
+        var apiProxy = buildApiProxySelfTestPacket(overview, bootstrap);
         return {
           packet_type: 'vaultproof_enterprise_evidence_packet',
           packet_version: 1,
@@ -4011,6 +4200,7 @@ function renderEnterpriseSupportPage(pageName: EnterpriseSupportPageName): strin
           identity_login_qa: identityQa,
           key_rotation_evidence: rotation,
           pilot_operations_evidence: pilotOps,
+          api_proxy_self_test: apiProxy,
           exports: {
             readiness: '/readiness',
             audit_csv_30_days: evidenceExportHref('/api/v1/enterprise/audit?format=csv&days=30'),
@@ -4026,6 +4216,7 @@ function renderEnterpriseSupportPage(pageName: EnterpriseSupportPageName): strin
             'Confirm caller-lock policy, provider slot posture, and emergency revoke owners.',
             'Rotate shared or exposed pilot keys before paid customer data, or keep a demo-only acceptance note in the launch board.',
             'Confirm rollback ownership, budget alert coverage, and launch-week monitoring ownership before live customer traffic.',
+            'Run the API proxy dry-run self-test and blocked-recipient email denial test before the customer walkthrough.',
             'For the email API key demo, verify sender, recipient, template, gateway, and rate policy before live sends.',
             'Keep provider keys, encrypted shares, service-role keys, origin-lock values, and signing secrets out of customer packets.'
           ]
@@ -4040,6 +4231,7 @@ function renderEnterpriseSupportPage(pageName: EnterpriseSupportPageName): strin
         var identityQa = packet.identity_login_qa || buildIdentityQaPacket(buildGoNoGoStatus(org, sso, readiness, overview, bootstrap));
         var rotation = packet.key_rotation_evidence || buildKeyRotationPacket(buildGoNoGoStatus(org, sso, readiness, overview, bootstrap), bootstrap);
         var pilotOps = packet.pilot_operations_evidence || buildPilotOpsPacket(buildGoNoGoStatus(org, sso, readiness, overview, bootstrap), readiness, overview);
+        var apiProxy = packet.api_proxy_self_test || buildApiProxySelfTestPacket(overview, bootstrap);
         text('evidenceMeta', productionReady ? 'ready for review' : 'needs attention');
         byId('evidenceReadinessList').innerHTML = [
           row('Production readiness', productionReady ? 'Control plane and confidential executor report production-ready.' : (readiness.production_blockers || []).join('; '), productionReady ? 'ready' : 'blocked', productionReady ? 'good' : 'bad'),
@@ -4075,6 +4267,8 @@ function renderEnterpriseSupportPage(pageName: EnterpriseSupportPageName): strin
         byId('evidenceKeyRotationList').innerHTML = keyRotationRows(rotation).join('');
         text('evidencePilotOpsMeta', pilotOps.status);
         byId('evidencePilotOpsList').innerHTML = pilotOpsRows(pilotOps).join('');
+        text('evidenceApiProxyMeta', apiProxy.status);
+        byId('evidenceApiProxyList').innerHTML = apiProxySelfTestRows(apiProxy).join('');
         var packetBox = byId('evidencePacket');
         if (packetBox) packetBox.value = JSON.stringify(packet, null, 2);
       }
@@ -4083,6 +4277,7 @@ function renderEnterpriseSupportPage(pageName: EnterpriseSupportPageName): strin
         var identityQa = buildIdentityQaPacket(goNoGo);
         var rotation = buildKeyRotationPacket(goNoGo, bootstrap);
         var pilotOps = buildPilotOpsPacket(goNoGo, readiness, overview);
+        var apiProxy = buildApiProxySelfTestPacket(overview, bootstrap);
         var emailProviders = emailProvidersFromData(overview, bootstrap);
         var providerCount = providerCountFromData(overview, bootstrap);
         var projectCount = projectCountFromData(org, overview, bootstrap);
@@ -4106,6 +4301,7 @@ function renderEnterpriseSupportPage(pageName: EnterpriseSupportPageName): strin
           'OAuth callback: ' + identityQa.external_oauth_callback_uri,
           'Key rotation proof status: ' + rotation.status,
           'Pilot operations proof status: ' + pilotOps.status,
+          'API proxy self-test status: ' + apiProxy.status,
           '',
           '3. Walk the buyer through the product',
           '- Dashboard: current runtime, access, project, and evidence posture.',
@@ -4115,6 +4311,7 @@ function renderEnterpriseSupportPage(pageName: EnterpriseSupportPageName): strin
           '- Identity/OAuth evidence packet: strict QA command, redirect allowlist, callback URL, and browser QA status without secrets.',
           '- Key rotation evidence packet: material-mode inventory, paid-onboarding rotation actions, sealed ingest command, and redacted secret boundary.',
           '- Pilot operations evidence packet: rollback owner/path, budget/monitoring review, live launch gate command, and incident-response boundary.',
+          '- API proxy self-test kit: copy-safe dry-run request, required caller-lock headers, protected email proof, and blocked-recipient denial test.',
           '- Launch checklist: go/no-go board, manual evidence, stale holds, and remaining blockers.',
           '',
           '4. Be crisp about boundaries',
@@ -4134,6 +4331,7 @@ function renderEnterpriseSupportPage(pageName: EnterpriseSupportPageName): strin
         var identityQa = buildIdentityQaPacket(goNoGo);
         var rotation = buildKeyRotationPacket(goNoGo, bootstrap);
         var pilotOps = buildPilotOpsPacket(goNoGo, readiness, overview);
+        var apiProxy = buildApiProxySelfTestPacket(overview, bootstrap);
         var providerCount = providerCountFromData(overview, bootstrap);
         var emailProviders = emailProvidersFromData(overview, bootstrap);
         text('demoMeta', goNoGo.status === 'go' ? 'ready to pilot' : 'hold for evidence');
@@ -4154,6 +4352,7 @@ function renderEnterpriseSupportPage(pageName: EnterpriseSupportPageName): strin
           row('Identity/OAuth proof kit', identityQa.status === 'ready' ? 'Login QA evidence is recorded with redirect allowlist and external OAuth callback facts.' : 'Use Launch to record strict login QA, human browser QA, and Supabase redirect/OAuth confirmation.', identityQa.status, identityQa.status === 'ready' ? 'good' : 'warn'),
           row('Key rotation proof kit', rotation.status === 'accepted_for_demo' ? 'Launch evidence records either rotation or explicit demo-only acceptance for shared pilot key posture.' : 'Use Launch to record key rotation or demo-only acceptance before a customer pilot.', rotation.status, rotation.status === 'accepted_for_demo' ? 'good' : 'warn'),
           row('Pilot operations proof kit', pilotOps.status === 'ready' ? 'Rollback ownership and budget/monitoring review evidence are recorded for this pilot.' : 'Use Launch to record rollback owner/path and budget/monitoring review before customer traffic.', pilotOps.status, pilotOps.status === 'ready' ? 'good' : 'warn'),
+          row('API proxy self-test kit', apiProxy.status === 'ready' ? 'Provider slots and proxy traffic evidence are visible; use Provider Slots to copy the safe dry-run request.' : 'Use Provider Slots to run/copy a dry-run request and create proxy traffic evidence before the customer walkthrough.', apiProxy.status, apiProxy.status === 'ready' ? 'good' : 'warn'),
           row('No raw key exposure', 'Provider slots show posture and material mode without returning encrypted shares or plaintext provider material to the browser.', 'secret safe', 'good'),
           row('Policy denial evidence', 'The blocked-recipient test gives a buyer a concrete denial story: policy rejected unsafe traffic and recorded evidence.', 'auditable', 'good'),
           row('Access and audit exports', 'Members, Audit, Activity, and Evidence produce reviewable CSV/JSON artifacts for security teams.', 'exportable', 'good')
@@ -4163,6 +4362,7 @@ function renderEnterpriseSupportPage(pageName: EnterpriseSupportPageName): strin
           row('Login proof before customer testing', identityQa.status === 'ready' ? 'Identity proof is recorded for this organization.' : 'Do not invite a customer pilot user until login/OAuth proof is recorded or explicitly accepted as a demo hold.', 'identity gate', identityQa.status === 'ready' ? 'good' : 'warn'),
           row('Rotate before paid data', rotation.status === 'accepted_for_demo' ? 'Demo-only key posture is acknowledged; rotate shared material before paid customer data.' : 'Shared/exposed pilot keys still need rotation or an explicit demo-only acceptance note.', 'key gate', rotation.status === 'accepted_for_demo' ? 'good' : 'warn'),
           row('Rollback/monitoring before traffic', pilotOps.status === 'ready' ? 'Rollback and monitoring ownership is recorded for this organization.' : 'Do not start pilot traffic until rollback owner/path and budget/monitoring review are recorded.', 'ops gate', pilotOps.status === 'ready' ? 'good' : 'warn'),
+          row('Self-test before live calls', apiProxy.status === 'ready' ? 'API proxy self-test evidence is visible for this organization.' : 'Use dry-run and blocked-recipient tests before enabling any live sandbox provider call.', 'proxy gate', apiProxy.status === 'ready' ? 'good' : 'warn'),
           row('Do not mark GO casually', goNoGo.status === 'go' ? 'The board is green for this browser/org evidence state.' : 'The board is holding on: ' + goNoGo.blockers.join('; '), goNoGo.status, goNoGo.status === 'go' ? 'good' : 'warn'),
           row('Cloud Armor evidence', 'Keep Cloud Armor as a required operator-confirmed check until the live policy exists and verify passes.', 'manual proof', 'warn'),
           row('Key rotation before paid onboarding', 'Shared or exposed pilot keys should be rotated or explicitly accepted for demo-only use before paid customer data.', 'required', 'warn')

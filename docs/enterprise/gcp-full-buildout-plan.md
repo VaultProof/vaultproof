@@ -230,6 +230,7 @@ Demo UI/API work:
 - Built: add a blocked-recipient demo test that records denial evidence without exposing the raw email payload.
 - Built: classify email-provider execution audit metadata as `protected_secret_kind: email_api_key` and `protected_workflow: email_provider_send`.
 - Built: add evidence packet and launch-checklist lines for email API key protection.
+- Built: add `/app/keys` customer API proxy self-test kit with copy-safe dry-run requests, required caller-lock headers, browser-session placeholder, blocked-recipient denial snippets, and matching `/app/evidence` proof under `api_proxy_self_test`.
 - Next: seal a sandbox email provider key and run a live sandbox send only when the demo needs actual delivery.
 
 Demo success:

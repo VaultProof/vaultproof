@@ -5,11 +5,11 @@ Last updated: 2026-05-12
 This file tracks what VaultProof features exist, which ones have been adapted for Google Cloud, and what still blocks production cutover. Update it every time a build changes product behavior, runtime behavior, infrastructure behavior, or customer-facing claims.
 
 <!-- gcp-build-marker:start -->
-Last validated GCP image build: `pilot-ops-evidence-20260513`
+Last validated GCP image build: `api-proxy-self-test-20260513`
 
-- Control plane digest: `sha256:cae3e15af925045a5b5efc218213a2c7c1ea40c4abd91168f8057237569f6cdf`
-- Executor digest: `sha256:8b9a31d5663d87c8a6aab51d94202fcdfdc6d4b6e19effa5e334a0adb5c83af3`
-- Updated: 2026-05-13T01:39:03.889Z
+- Control plane digest: `sha256:4f157594076dea1cba3e54038202415eac79a8c86f1300c2a6c803c1e3cb7237`
+- Executor digest: `sha256:2777b1b12cefae4acac244390d58c9731a6284a4a6e8bced763c9c9d3f0e5ede`
+- Updated: 2026-05-13T01:51:07.731Z
 <!-- gcp-build-marker:end -->
 
 ## Runtime Features
@@ -94,6 +94,7 @@ Last validated GCP image build: `pilot-ops-evidence-20260513`
 | Identity/OAuth evidence kit | Built | `/app/launch` now shows a customer-safe identity proof packet with the enterprise login URL, Supabase redirect allowlist URL, external OAuth callback URL, strict login QA command, OAuth redirect QA command, human browser QA action, and the current browser-local evidence status. `/app/evidence` includes the same data under `identity_login_qa` without Supabase service-role keys, browser sessions, OAuth client secrets, provider keys, or origin-lock values. `/app/demo` now has a buyer-facing identity/OAuth proof point. |
 | Key rotation evidence kit | Built | `/app/launch` now shows a customer-safe key-rotation packet with provider material-mode counts, visible providers, paid-onboarding rotation actions, sealed local ingest command, strict live-material gate command, and browser-local demo-only acceptance status. `/app/evidence` includes the same data under `key_rotation_evidence` without raw provider keys, encrypted shares, service-role keys, origin-lock values, executor signing secrets, runtime-token secrets, or unwrap roots. `/app/demo` now has a buyer-facing key-rotation proof point. |
 | Pilot operations evidence kit | Built | `/app/launch` now shows rollback owner/path and budget/monitoring review evidence beside the go/no-go board. `/app/evidence` includes `pilot_operations_evidence` with rollback paths, monitoring review, live launch gate command, customer incident-response boundary, and redacted secret boundaries. `/app/demo` now has a buyer-facing pilot operations proof point and `/app/runbooks` lists the strict live launch gate plus GCP runtime reset rollback action. |
+| API proxy self-test kit | Built | `/app/keys` now has a customer API proxy test kit with copy-safe dry-run request snippets, required caller-lock headers, `YOUR_VAULTPROOF_SESSION_JWT` placeholder, provider-slot material posture, and copyable blocked-recipient email denial requests. `/app/evidence` includes `api_proxy_self_test` with execute endpoint pattern, pass criteria, traffic evidence, email demo status, and redacted secret boundaries. `/app/demo` now has a buyer-facing API proxy self-test proof point. |
 | Buyer commercial package view | Built | `/app/plans` now explains the first paid-pilot package, included controls, contract-controlled capacity envelope, expansion path, guardrails, security boundaries, and links into evidence, launch, technical guide, and runbooks for customer review. |
 | Email API key and secret protection demo | Built | `/app/keys` now has email-provider defaults for Resend, SendGrid, Mailgun, Postmark, and AWS SES, a customer-facing email API key demo panel, protected email dry-run actions, blocked-recipient policy testing, launch/evidence packet coverage, and audit metadata that classifies email-provider calls as `email_api_key` / `email_provider_send`. The execute route enforces email sender-domain, recipient-domain, recipient-address, and template-ID policy and records denial evidence from derived fields only. Raw provider keys still stay out of browser flows; live sandbox sends require sealed provider material through the local ingest helper. General secret slots remain use-only by default and must never be emailed or casually revealed. |
 | Dashboard reference palette | Built | The live dashboard/app shell now uses the supplied mint, deep green, mustard gold, white card, and teal accent palette. Live HTML verification checks the deployed palette values on `https://enterprise.vaultproof.dev/app/dashboard`. |
