@@ -1,6 +1,6 @@
 # VaultProof GCP Build Status
 
-Last updated: 2026-05-13T08:49:35.048Z
+Last updated: 2026-05-13T09:51:59.085Z
 
 This file is the living inventory of what has been built for VaultProof on Google Cloud. It is refreshed after every successful enterprise image build by `infra/gcp/enterprise-secure-runtime/build-images.sh`.
 
@@ -10,6 +10,8 @@ This file is the living inventory of what has been built for VaultProof on Googl
 - Enterprise URL: `https://enterprise.vaultproof.dev`
 - DNS: `Cloudflare A record points at 34.102.179.105`
 - TLS: `Google-managed certificate active`
+- Employee admin URL: `https://admin.vaultproof.dev`
+- Employee admin DNS/TLS: `waiting on DNS/certificate; cert PROVISIONING`
 - Backend: `healthy`
 - Origin-lock backend header: `configured`
 - Cloud Armor edge policy: `attached and enforced`
@@ -28,6 +30,7 @@ Current blockers:
 - Run strict login readiness QA with `LOGIN_QA_REQUIRE_SESSION=true npm run qa:enterprise-login` to verify the Supabase redirect/session/API path.
 - Human OAuth/password login still needs final browser click-through QA.
 - Supabase Auth redirect/provider settings still need confirmation for `https://enterprise.vaultproof.dev/app/login`.
+- Add the Cloudflare `admin` A record to `34.102.179.105` and wait for `vaultproof-enterprise-admin-cert` to become `ACTIVE` before using `https://admin.vaultproof.dev`.
 - Rotate the pilot MiniMax key before paid customer onboarding because it was shared in chat; keep using sealed local ingest for any future live provider key.
 
 ## Login Readiness QA
@@ -46,7 +49,7 @@ Status: `attached and enforced`
 
 ## App Shell Notes
 
-- Build `pilot-success-20260513` is the current deployed GCP image tag for both control plane and executor containers.
+- Build `internal-admin-sso-20260513` is the current deployed GCP image tag for both control plane and executor containers.
 - Homepage hero headline is `Active Key Protection for every API call.`
 - All customer-facing enterprise pages below live under `https://enterprise.vaultproof.dev`; route-only mentions are in-app links on that subdomain.
 - `https://enterprise.vaultproof.dev/app/demo` is the buyer walkthrough: live workspace facts, proof path, identity/OAuth proof kit, key-rotation proof kit, pilot operations proof kit, API proxy self-test kit, monitoring evidence kit, safety guardrails, objection answers, paid-pilot close steps, and a copyable demo talk track generated without secrets.
@@ -56,10 +59,11 @@ Status: `attached and enforced`
 - `https://enterprise.vaultproof.dev/app/plans` is the buyer package view: rollout posture, paid-pilot commercial package, contract guardrails, security boundaries, and direct links into evidence, launch, technical guide, and runbooks.
 - `https://enterprise.vaultproof.dev/app/pilot` is the paid-pilot proposal builder: browser-local first workload scope, expected volume, monthly price, 20% sales commission math, support/incident-response terms, success metric, and copyable customer proposal text without secrets.
 - `https://enterprise.vaultproof.dev/app/pilot-success` is the pilot success tracker: live checks, browser-local customer milestones, evidence links, blockers, expansion/no-go readiness, and copyable weekly customer update without secrets.
-- `https://enterprise.vaultproof.dev/app/support` is the launch support room: founder-led support scope, optional 24-hour incident-response boundary, internal admin URL, read-only default, approval-gated actions, support handoff checklist, and copyable support brief without secrets.
+- `https://enterprise.vaultproof.dev/app/support` is the launch support room: founder-led support scope, optional 24-hour incident-response boundary, customer-safe staff/admin boundary, read-only default, approval-gated actions, support handoff checklist, and copyable support brief without secrets.
 - `https://enterprise.vaultproof.dev/app/keys` includes the API proxy self-test kit and email API key demo path: copy-safe dry-run requests with required caller-lock headers, Resend/SendGrid/Mailgun/Postmark/AWS SES slot defaults, protected email dry-run, blocked-recipient policy testing, no raw key reveal, launch/evidence coverage, and email-specific audit metadata.
 - `https://enterprise.vaultproof.dev/app/control` and `https://enterprise.vaultproof.dev/app/org` use the shared universal sidebar with explicit sidebar typography, hide the legacy static topbar/page frame, and clean old `?org=<uuid>` URLs back to canonical `https://enterprise.vaultproof.dev/app/control` and `https://enterprise.vaultproof.dev/app/org` while preserving the selected org in local storage.
 - Live HTML verification on both long-form URLs confirmed the universal sidebar, URL cleanup script, hidden legacy topbar, explicit sidebar font sizing, and no legacy sidebar/site-theme artifacts.
+- `https://admin.vaultproof.dev` is the separate VaultProof employee admin surface. It has approval-gated SSO settings, enterprise invitations, business/account status, support notes, and invite resend/revoke controls for staff; `enterprise.vaultproof.dev` does not link to the employee admin console.
 
 ## Projects Page Performance
 
@@ -152,9 +156,10 @@ Project and Provider Slots pages now classify each active slot as `live sealed`,
 2. Browser-test `https://enterprise.vaultproof.dev/app/login` with `ken@vaultproof.dev`.
 3. Confirm managed Supabase Auth redirect settings include `https://enterprise.vaultproof.dev/app/login`.
 4. Configure the external OAuth provider app callback as `https://gwzkjiomemjlhtrdrlan.supabase.co/auth/v1/callback` if using Google/GitHub/Microsoft login; add `LOGIN_QA_OAUTH_PROVIDER=google` to the login QA command to verify the public OAuth authorize redirect.
-5. Keep `npm run verify:gcp-enterprise-cloud-armor` in the strict live launch gate.
-6. Add a valid OpenAI Platform key only if the demo specifically needs OpenAI; MiniMax upstream dispatch is now live.
-7. Keep running `npm run gate:gcp-first-goal`; it can generate a temporary Supabase magic-link test session when no `ENTERPRISE_TEST_ACCESS_TOKEN` is provided.
+5. Create a DNS-only Cloudflare `A admin -> 34.102.179.105` record, then wait for `vaultproof-enterprise-admin-cert` to become `ACTIVE`.
+6. Keep `npm run verify:gcp-enterprise-cloud-armor` in the strict live launch gate.
+7. Add a valid OpenAI Platform key only if the demo specifically needs OpenAI; MiniMax upstream dispatch is now live.
+8. Keep running `npm run gate:gcp-first-goal`; it can generate a temporary Supabase magic-link test session when no `ENTERPRISE_TEST_ACCESS_TOKEN` is provided.
 
 ## Rough Monthly Cost
 
@@ -187,14 +192,14 @@ Cost note: the current fixed estimate is above the existing `VaultProof Producti
 
 ## Build Pointer
 
-- Build tag: `pilot-success-20260513`
+- Build tag: `internal-admin-sso-20260513`
 - Registry: `us-central1-docker.pkg.dev/vaultproof-prod/vaultproof`
-- Control plane image: `us-central1-docker.pkg.dev/vaultproof-prod/vaultproof/enterprise-control-plane:pilot-success-20260513`
-- Control plane digest: `sha256:da64c951c02b1392e3eb01c6fae380a41e657a17627922eb8262f5b79f5b5ab2`
-- Control plane built at: `2026-05-13T08:37:21.801472043Z`
-- Executor image: `us-central1-docker.pkg.dev/vaultproof-prod/vaultproof/enterprise-secure-executor:pilot-success-20260513`
-- Executor digest: `sha256:043d220f70e089c11b03a2eb09832f96f263641fa4fe4e5857a0002841d2f887`
-- Executor built at: `2026-05-13T08:37:33.770470275Z`
+- Control plane image: `us-central1-docker.pkg.dev/vaultproof-prod/vaultproof/enterprise-control-plane:internal-admin-sso-20260513`
+- Control plane digest: `sha256:b3771d7cb3586f85076367e4bf7da7a9aa2588af80691e8eac40b43f6ec7c809`
+- Control plane built at: `2026-05-13T09:38:57.585434400Z`
+- Executor image: `us-central1-docker.pkg.dev/vaultproof-prod/vaultproof/enterprise-secure-executor:internal-admin-sso-20260513`
+- Executor digest: `sha256:84ab86d7e6a2e837f16855aefbb1083182e6bd7011f4ca979cbb22665e117890`
+- Executor built at: `2026-05-13T09:39:12.346705470Z`
 
 ## Project
 
@@ -266,6 +271,10 @@ The VM runs both containers on localhost:
 - SSL certificate status: `ACTIVE`
 - SSL certificate domain status: `ACTIVE`
 - SSL certificate domains: `enterprise.vaultproof.dev`
+- Admin SSL certificate: `vaultproof-enterprise-admin-cert`
+- Admin SSL certificate status: `PROVISIONING`
+- Admin SSL certificate domain status: `PROVISIONING`
+- Admin observed DNS A records: `unknown`
 - Load-balancer firewall: `vaultproof-enterprise-allow-lb-to-control-plane`
 - Load-balancer firewall source ranges: `130.211.0.0/22, 35.191.0.0/16`
 - Observed DNS A records: `34.102.179.105`
@@ -315,6 +324,7 @@ Known blockers:
 - Run strict login readiness QA with `LOGIN_QA_REQUIRE_SESSION=true npm run qa:enterprise-login` to verify the Supabase redirect/session/API path.
 - Human OAuth/password login still needs final browser click-through QA.
 - Supabase Auth redirect/provider settings still need confirmation for `https://enterprise.vaultproof.dev/app/login`.
+- Add the Cloudflare `admin` A record to `34.102.179.105` and wait for `vaultproof-enterprise-admin-cert` to become `ACTIVE` before using `https://admin.vaultproof.dev`.
 - Rotate the pilot MiniMax key before paid customer onboarding because it was shared in chat; keep using sealed local ingest for any future live provider key.
 
 ## Verification Commands

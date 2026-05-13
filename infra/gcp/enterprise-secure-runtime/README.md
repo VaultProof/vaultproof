@@ -245,7 +245,7 @@ Keep `enterprise.vaultproof.dev` and `admin.vaultproof.dev` off Azure after shut
 
 ## Configure The Public HTTPS Edge
 
-`vaultproof.dev` DNS is currently hosted in Cloudflare. The GCP script can build the load balancer and reserve the IP, but the final `enterprise.vaultproof.dev` A record must be updated in Cloudflare unless DNS hosting is moved later.
+`vaultproof.dev` DNS is currently hosted in Cloudflare. The GCP script can build the load balancer, reserve the IP, and keep the admin certificate attached when `vaultproof-enterprise-admin-cert` exists, but the final `enterprise.vaultproof.dev` and `admin.vaultproof.dev` A records must be updated in Cloudflare unless DNS hosting is moved later.
 
 Before customer cutover, generate one origin-lock secret and put the same value in:
 

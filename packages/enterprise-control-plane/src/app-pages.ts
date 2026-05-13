@@ -4103,7 +4103,7 @@ function renderEnterpriseSupportPage(pageName: EnterpriseSupportPageName): strin
           status: ready ? 'ready' : 'hold',
           support_model: 'Founder-led launch-week support for the first paid pilot. 24-hour incident response is an optional add-on, not included in the base pilot package.',
           support_page: location.origin + '/app/support',
-          internal_admin_url: 'https://admin.vaultproof.dev/internal/admin',
+          internal_admin_surface: 'VaultProof employee admin is hosted separately from enterprise.vaultproof.dev.',
           internal_admin_boundary: {
             hostname: 'admin.vaultproof.dev',
             default_mode: 'read_only',
@@ -4173,7 +4173,7 @@ function renderEnterpriseSupportPage(pageName: EnterpriseSupportPageName): strin
       function launchSupportBoundaryRows(packet) {
         var boundary = packet.internal_admin_boundary || {};
         return [
-          row('Internal admin URL', packet.internal_admin_url, 'employee only', 'good'),
+          row('Employee admin surface', packet.internal_admin_surface || 'VaultProof employee admin stays off the customer dashboard.', boundary.hostname || 'separate host', 'good'),
           row('Internal admin default mode', 'The support console is ' + (boundary.default_mode || 'read_only') + ' by default.', boundary.default_mode || 'read_only', 'good'),
           row('Approval-gated actions', boundary.writes || 'Administrative writes require explicit approval.', 'approval secret header', 'warn'),
           row('Internal audit', boundary.audit || 'Employee support views and actions are audited.', 'audit trail', 'good'),
@@ -5326,7 +5326,8 @@ function renderEnterpriseSupportPage(pageName: EnterpriseSupportPageName): strin
           'Members: ' + number(coverage.member_count),
           'Provider slots: ' + number(coverage.provider_slots),
           'Proxy calls observed: ' + number(coverage.proxy_calls),
-          'Internal admin URL: ' + support.internal_admin_url,
+          'Employee admin surface: ' + support.internal_admin_surface,
+          'Employee admin host: ' + support.internal_admin_boundary.hostname,
           'Internal admin mode: ' + support.internal_admin_boundary.default_mode,
           'Approval gate: ' + support.internal_admin_boundary.writes,
           'Incident response boundary: base pilot uses customer IR plus VaultProof launch support; 24-hour response is an optional add-on.',

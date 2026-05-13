@@ -23,8 +23,7 @@ export type EnterpriseAppNavPage =
   | 'pilot-success'
   | 'scanner'
   | 'support'
-  | 'runbooks'
-  | 'admin';
+  | 'runbooks';
 
 function escapeHtml(value: string): string {
   return value
@@ -258,13 +257,6 @@ const ENTERPRISE_SIDEBAR_NAV_GROUPS: readonly EnterpriseSidebarNavGroup[] = [
         href: 'mailto:hello@vaultproof.dev',
         label: 'Support',
         blurb: 'Reach the VaultProof team.',
-      },
-      {
-        page: 'admin',
-        href: 'https://admin.vaultproof.dev/internal/admin',
-        label: 'Admin',
-        blurb: 'Internal customer support and operations console.',
-        external: true,
       },
       {
         href: '/app/logout',

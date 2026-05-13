@@ -16,6 +16,7 @@ HEALTH_CHECK="${HEALTH_CHECK:-vaultproof-enterprise-health}"
 BACKEND_SERVICE="${BACKEND_SERVICE:-vaultproof-enterprise-backend}"
 URL_MAP="${URL_MAP:-vaultproof-enterprise-url-map}"
 SSL_CERTIFICATE="${SSL_CERTIFICATE:-vaultproof-enterprise-cert}"
+ADMIN_SSL_CERTIFICATE="${ADMIN_SSL_CERTIFICATE:-vaultproof-enterprise-admin-cert}"
 SSL_POLICY="${SSL_POLICY:-vaultproof-enterprise-modern-tls}"
 HTTPS_PROXY="${HTTPS_PROXY:-vaultproof-enterprise-https-proxy}"
 HTTPS_FORWARDING_RULE="${HTTPS_FORWARDING_RULE:-vaultproof-enterprise-https}"
@@ -157,6 +158,13 @@ else
   echo "SSL certificate ${SSL_CERTIFICATE} already exists; leaving its domain list unchanged."
 fi
 
+SSL_CERTIFICATE_LIST="${SSL_CERTIFICATE}"
+if [[ -n "${ADMIN_SSL_CERTIFICATE}" ]] \
+  && gcloud compute ssl-certificates describe "${ADMIN_SSL_CERTIFICATE}" --global --project="${PROJECT_ID}" >/dev/null 2>&1; then
+  SSL_CERTIFICATE_LIST="${SSL_CERTIFICATE_LIST},${ADMIN_SSL_CERTIFICATE}"
+  echo "Including admin SSL certificate ${ADMIN_SSL_CERTIFICATE} on the HTTPS proxy."
+fi
+
 if ! gcloud compute ssl-policies describe "${SSL_POLICY}" --global --project="${PROJECT_ID}" >/dev/null 2>&1; then
   gcloud compute ssl-policies create "${SSL_POLICY}" \
     --global \
@@ -170,7 +178,7 @@ if ! gcloud compute target-https-proxies describe "${HTTPS_PROXY}" --global --pr
     --global \
     --url-map="${URL_MAP}" \
     --global-url-map \
-    --ssl-certificates="${SSL_CERTIFICATE}" \
+    --ssl-certificates="${SSL_CERTIFICATE_LIST}" \
     --global-ssl-certificates \
     --ssl-policy="${SSL_POLICY}" \
     --global-ssl-policy \
@@ -180,7 +188,7 @@ else
     --global \
     --url-map="${URL_MAP}" \
     --global-url-map \
-    --ssl-certificates="${SSL_CERTIFICATE}" \
+    --ssl-certificates="${SSL_CERTIFICATE_LIST}" \
     --global-ssl-certificates \
     --ssl-policy="${SSL_POLICY}" \
     --global-ssl-policy \

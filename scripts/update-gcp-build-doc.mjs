@@ -19,6 +19,8 @@ const edgeHealthCheck = process.env.EDGE_HEALTH_CHECK || 'vaultproof-enterprise-
 const edgeBackendService = process.env.EDGE_BACKEND_SERVICE || 'vaultproof-enterprise-backend';
 const edgeSecurityPolicy = process.env.EDGE_SECURITY_POLICY || 'vaultproof-enterprise-armor';
 const edgeSslCertificate = process.env.EDGE_SSL_CERTIFICATE || 'vaultproof-enterprise-cert';
+const adminDomain = process.env.ADMIN_DOMAIN || 'admin.vaultproof.dev';
+const adminSslCertificate = process.env.ADMIN_SSL_CERTIFICATE || 'vaultproof-enterprise-admin-cert';
 const edgeForwardingRule = process.env.EDGE_FORWARDING_RULE || 'vaultproof-enterprise-https';
 let buildTag = process.env.BUILD_TAG || '';
 const buildDocPath = resolve('docs/enterprise/gcp-build-status.md');
@@ -196,6 +198,11 @@ const edgeCert = gcloudJson([
   '--global',
   '--project', projectId,
 ]);
+const adminCert = gcloudJson([
+  'compute', 'ssl-certificates', 'describe', adminSslCertificate,
+  '--global',
+  '--project', projectId,
+]);
 const edgeRule = gcloudJson([
   'compute', 'forwarding-rules', 'describe', edgeForwardingRule,
   '--global',
@@ -222,10 +229,17 @@ const edgeDnsA = shellValue('dig', ['+short', edgeDomain])
   .split('\n')
   .map((value) => value.trim())
   .filter(Boolean);
+const adminDnsA = shellValue('dig', ['+short', adminDomain])
+  .split('\n')
+  .map((value) => value.trim())
+  .filter(Boolean);
 const edgeIp = edgeAddress?.address || edgeRule?.IPAddress || '';
 const edgeDnsPointsAtGcp = edgeIp !== '' && edgeDnsA.includes(edgeIp);
+const adminDnsPointsAtGcp = edgeIp !== '' && adminDnsA.includes(edgeIp);
 const edgeCertDomainStatus = edgeCert?.managed?.domainStatus?.[edgeDomain] || '';
+const adminCertDomainStatus = adminCert?.managed?.domainStatus?.[adminDomain] || '';
 const edgeTlsActive = edgeCert?.managed?.status === 'ACTIVE' && edgeCertDomainStatus === 'ACTIVE';
+const adminTlsActive = adminCert?.managed?.status === 'ACTIVE' && adminCertDomainStatus === 'ACTIVE';
 const edgeBackendHealthy = edgeHealthStates.some((state) => state.startsWith('HEALTHY '));
 const cloudArmorAttached = Boolean(edgeBackend?.securityPolicy && String(edgeBackend.securityPolicy).includes(`/securityPolicies/${edgeSecurityPolicy}`));
 const cloudArmorPolicyResource = Array.isArray(cloudArmorPolicy) ? cloudArmorPolicy[0] : cloudArmorPolicy;
@@ -274,6 +288,9 @@ const knownBlockers = readinessProductionReady
         : ['Browser OAuth/password login still needs the valid public Supabase anon key published as `SUPABASE_ANON_KEY`.']),
       'Human OAuth/password login still needs final browser click-through QA.',
       `Supabase Auth redirect/provider settings still need confirmation for \`https://${edgeDomain}/app/login\`.`,
+      ...(adminDnsPointsAtGcp && adminTlsActive
+        ? []
+        : [`Add the Cloudflare \`admin\` A record to \`${edgeIp || 'the GCP edge IP'}\` and wait for \`${adminSslCertificate}\` to become \`ACTIVE\` before using \`https://${adminDomain}\`.`]),
       ...(cloudArmorAttached && cloudArmorRulesReady
         ? []
         : ['Attach and verify Cloud Armor WAF/rate-limit policy on the enterprise backend service.']),
@@ -299,6 +316,9 @@ const nextSteps = readinessProductionReady
       `Browser-test \`https://${edgeDomain}/app/login\` with \`ken@vaultproof.dev\`.`,
       `Confirm managed Supabase Auth redirect settings include \`https://${edgeDomain}/app/login\`.`,
       'Configure the external OAuth provider app callback as `https://gwzkjiomemjlhtrdrlan.supabase.co/auth/v1/callback` if using Google/GitHub/Microsoft login; add `LOGIN_QA_OAUTH_PROVIDER=google` to the login QA command to verify the public OAuth authorize redirect.',
+      ...(adminDnsPointsAtGcp && adminTlsActive
+        ? [`Verify \`https://${adminDomain}/\` redirects allowlisted employees to the internal-admin login flow.`]
+        : [`Create a DNS-only Cloudflare \`A admin -> ${edgeIp || 'GCP edge IP'}\` record, then wait for \`${adminSslCertificate}\` to become \`ACTIVE\`.`]),
       ...(cloudArmorAttached && cloudArmorRulesReady
         ? ['Keep `npm run verify:gcp-enterprise-cloud-armor` in the strict live launch gate.']
         : ['Run `npm run configure:gcp-enterprise-cloud-armor`, then `npm run verify:gcp-enterprise-cloud-armor`.']),
@@ -389,6 +409,8 @@ This file is the living inventory of what has been built for VaultProof on Googl
 - Enterprise URL: \`https://${edgeDomain}\`
 - DNS: \`${edgeDnsPointsAtGcp ? `Cloudflare A record points at ${edgeIp}` : 'not yet pointing at the GCP edge'}\`
 - TLS: \`${edgeTlsActive ? 'Google-managed certificate active' : `Google-managed certificate ${valueOrUnknown(edgeCert?.managed?.status)}`}\`
+- Employee admin URL: \`https://${adminDomain}\`
+- Employee admin DNS/TLS: \`${adminDnsPointsAtGcp && adminTlsActive ? 'active' : `waiting on DNS/certificate; cert ${valueOrUnknown(adminCert?.managed?.status)}`}\`
 - Backend: \`${edgeBackendHealthy ? 'healthy' : 'not healthy'}\`
 - Origin-lock backend header: \`${edgeBackend?.customRequestHeaders?.length ? 'configured' : 'not configured'}\`
 - Cloud Armor edge policy: \`${cloudArmorState}\`
@@ -434,10 +456,11 @@ Status: \`${cloudArmorState}\`
 - \`https://${edgeDomain}/app/plans\` is the buyer package view: rollout posture, paid-pilot commercial package, contract guardrails, security boundaries, and direct links into evidence, launch, technical guide, and runbooks.
 - \`https://${edgeDomain}/app/pilot\` is the paid-pilot proposal builder: browser-local first workload scope, expected volume, monthly price, 20% sales commission math, support/incident-response terms, success metric, and copyable customer proposal text without secrets.
 - \`https://${edgeDomain}/app/pilot-success\` is the pilot success tracker: live checks, browser-local customer milestones, evidence links, blockers, expansion/no-go readiness, and copyable weekly customer update without secrets.
-- \`https://${edgeDomain}/app/support\` is the launch support room: founder-led support scope, optional 24-hour incident-response boundary, internal admin URL, read-only default, approval-gated actions, support handoff checklist, and copyable support brief without secrets.
+- \`https://${edgeDomain}/app/support\` is the launch support room: founder-led support scope, optional 24-hour incident-response boundary, customer-safe staff/admin boundary, read-only default, approval-gated actions, support handoff checklist, and copyable support brief without secrets.
 - \`https://${edgeDomain}/app/keys\` includes the API proxy self-test kit and email API key demo path: copy-safe dry-run requests with required caller-lock headers, Resend/SendGrid/Mailgun/Postmark/AWS SES slot defaults, protected email dry-run, blocked-recipient policy testing, no raw key reveal, launch/evidence coverage, and email-specific audit metadata.
 - \`https://${edgeDomain}/app/control\` and \`https://${edgeDomain}/app/org\` use the shared universal sidebar with explicit sidebar typography, hide the legacy static topbar/page frame, and clean old \`?org=<uuid>\` URLs back to canonical \`https://${edgeDomain}/app/control\` and \`https://${edgeDomain}/app/org\` while preserving the selected org in local storage.
 - Live HTML verification on both long-form URLs confirmed the universal sidebar, URL cleanup script, hidden legacy topbar, explicit sidebar font sizing, and no legacy sidebar/site-theme artifacts.
+- \`https://admin.vaultproof.dev\` is the separate VaultProof employee admin surface. It has approval-gated SSO settings, enterprise invitations, business/account status, support notes, and invite resend/revoke controls for staff; \`enterprise.vaultproof.dev\` does not link to the employee admin console.
 
 ## Projects Page Performance
 
@@ -631,6 +654,10 @@ The VM runs both containers on localhost:
 - SSL certificate status: \`${valueOrUnknown(edgeCert?.managed?.status)}\`
 - SSL certificate domain status: \`${valueOrUnknown(edgeCertDomainStatus)}\`
 - SSL certificate domains: \`${valueOrUnknown(edgeCert?.managed?.domains?.join(', '))}\`
+- Admin SSL certificate: \`${valueOrUnknown(adminCert?.name)}\`
+- Admin SSL certificate status: \`${valueOrUnknown(adminCert?.managed?.status)}\`
+- Admin SSL certificate domain status: \`${valueOrUnknown(adminCertDomainStatus)}\`
+- Admin observed DNS A records: \`${valueOrUnknown(adminDnsA.join(', '))}\`
 - Load-balancer firewall: \`${valueOrUnknown(edgeFw?.name)}\`
 - Load-balancer firewall source ranges: \`${valueOrUnknown(edgeFw?.sourceRanges?.join(', '))}\`
 - Observed DNS A records: \`${valueOrUnknown(edgeDnsA.join(', '))}\`

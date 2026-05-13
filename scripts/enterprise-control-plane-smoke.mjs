@@ -2784,7 +2784,6 @@ async function assertEnterpriseLoginRoute() {
       'Health',
       '/app/technical-guide',
       '/app/runbooks',
-      'Admin',
       '/app/logout',
       'Sign out',
       'confidential dashboard',
@@ -2813,6 +2812,9 @@ async function assertEnterpriseLoginRoute() {
       if (!pageHtml.includes(required)) {
         throw new Error(`Expected ${path} to use the main enterprise dashboard shell theme (${required})`);
       }
+    }
+    if (pageHtml.includes('https://admin.vaultproof.dev/internal/admin')) {
+      throw new Error(`Expected ${path} customer shell to keep internal admin off the enterprise host`);
     }
     for (const pageSpecificSidebarSubtitle of [
       'policy control',
@@ -3102,7 +3104,7 @@ async function assertEnterpriseLoginRoute() {
     {
       path: '/app/support',
       title: 'Launch support room - VaultProof Enterprise',
-      required: ['Support readiness', 'Internal admin boundary', 'Launch-week workflow', 'Customer handoff', 'Support brief', 'founder-led launch-week support', '24-hour incident response add-on', 'approval secret header', 'read_only', 'launch_support_readiness', 'admin.vaultproof.dev/internal/admin', 'copy brief'],
+      required: ['Support readiness', 'Internal admin boundary', 'Launch-week workflow', 'Customer handoff', 'Support brief', 'founder-led launch-week support', '24-hour incident response add-on', 'approval secret header', 'read_only', 'launch_support_readiness', 'VaultProof employee admin is hosted separately from enterprise.vaultproof.dev.', 'copy brief'],
     },
     {
       path: '/app/verifier',
@@ -3479,6 +3481,9 @@ async function assertInternalAdminConsole() {
     'Businesses',
     'Users and access',
     'SSO rollout',
+    'Enterprise account administration',
+    'SSO settings',
+    'Invite enterprise user',
     'Internal admin audit',
     'approval gate',
     '/api/v1/internal-admin/overview',
@@ -3506,6 +3511,10 @@ async function assertInternalAdminConsole() {
   for (const required of [
     'Business detail',
     'SSO setup checklist',
+    'data-internal-admin-action="org-account-management"',
+    '/sso-settings',
+    'save SSO',
+    'create invite',
     'User/member timeline',
     'Support notes',
     'Evidence links',
@@ -3631,6 +3640,86 @@ async function assertInternalAdminConsole() {
   }
   if (!internalAdminAuditEvents.some((event) => event.event_type === 'internal_admin_org_detail_viewed')) {
     throw new Error(`Expected org detail request to insert audit event, got ${JSON.stringify(internalAdminAuditEvents)}`);
+  }
+
+  const disabledSsoResponse = await handleEnterpriseControlPlaneRequest(
+    buildHostRequest(INTERNAL_ADMIN_HOSTNAME, '/api/v1/internal-admin/orgs/org_123/sso-settings', {
+      method: 'POST',
+      headers: {
+        authorization: `Bearer ${AUTH_TOKEN}`,
+        'content-type': 'application/json',
+      },
+      body: JSON.stringify({
+        company_domain: 'pilot.example.com',
+        sso_provider: 'microsoft-entra',
+        status: 'configured',
+        login_mode: 'sso-first',
+      }),
+    }),
+    env,
+  );
+  if (disabledSsoResponse.status !== 403) {
+    throw new Error(`Expected internal SSO settings update to be disabled by default, got ${disabledSsoResponse.status}`);
+  }
+
+  const invalidSsoProviderResponse = await handleEnterpriseControlPlaneRequest(
+    buildHostRequest(INTERNAL_ADMIN_HOSTNAME, '/api/v1/internal-admin/orgs/org_123/sso-settings', {
+      method: 'POST',
+      headers: {
+        authorization: `Bearer ${AUTH_TOKEN}`,
+        'content-type': 'application/json',
+        'x-vaultproof-internal-admin-approval': 'approval-secret',
+      },
+      body: JSON.stringify({
+        company_domain: 'pilot.example.com',
+        sso_provider: 'https://idp.example.com/metadata',
+        status: 'configured',
+        login_mode: 'sso-first',
+      }),
+    }),
+    {
+      ...env,
+      internalAdminActionsEnabled: true,
+      internalAdminApprovalSecret: 'approval-secret',
+    },
+  );
+  if (invalidSsoProviderResponse.status !== 400) {
+    throw new Error(`Expected internal SSO settings update to reject URL-like provider values, got ${invalidSsoProviderResponse.status}`);
+  }
+
+  const ssoUpdateResponse = await handleEnterpriseControlPlaneRequest(
+    buildHostRequest(INTERNAL_ADMIN_HOSTNAME, '/api/v1/internal-admin/orgs/org_123/sso-settings', {
+      method: 'POST',
+      headers: {
+        authorization: `Bearer ${AUTH_TOKEN}`,
+        'content-type': 'application/json',
+        'x-vaultproof-internal-admin-approval': 'approval-secret',
+      },
+      body: JSON.stringify({
+        company_domain: 'pilot.example.com',
+        sso_provider: 'okta',
+        status: 'configured',
+        login_mode: 'sso-first',
+      }),
+    }),
+    {
+      ...env,
+      internalAdminActionsEnabled: true,
+      internalAdminApprovalSecret: 'approval-secret',
+    },
+  );
+  const ssoUpdatePayload = await ssoUpdateResponse.json();
+  if (ssoUpdateResponse.status !== 200
+    || ssoUpdatePayload.sso_settings?.company_domain !== 'pilot.example.com'
+    || ssoUpdatePayload.sso_settings?.sso_provider !== 'okta'
+    || ssoUpdatePayload.sso_settings?.status !== 'configured') {
+    throw new Error(`Expected approved internal SSO settings update, got ${ssoUpdateResponse.status}: ${JSON.stringify(ssoUpdatePayload)}`);
+  }
+  if (!internalAdminAuditEvents.some((event) => event.event_type === 'internal_admin_sso_settings_updated')) {
+    throw new Error(`Expected internal SSO settings update audit event, got ${JSON.stringify(internalAdminAuditEvents)}`);
+  }
+  if (!auditEvents.some((event) => event.event_type === 'organization_sso_settings_updated' && event.metadata?.updated_via === 'internal_admin')) {
+    throw new Error(`Expected customer org audit event for internal SSO settings update, got ${JSON.stringify(auditEvents)}`);
   }
 
   const disabledNoteResponse = await handleEnterpriseControlPlaneRequest(

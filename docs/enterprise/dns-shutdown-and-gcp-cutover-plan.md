@@ -61,21 +61,22 @@ The GCP load balancer edge now exists:
 - Managed certificate: provisioning until DNS points at the GCP edge
 - Origin lock: not enabled yet; add the backend custom header and matching control-plane secret before customer traffic
 
-Create this Cloudflare DNS record when ready to validate the Google-managed certificate:
+Create these Cloudflare DNS records when ready to validate the Google-managed certificates:
 
 | Type | Name | Value | Proxy status |
 | --- | --- | --- | --- |
 | A | `enterprise` | `34.102.179.105` | DNS-only for first validation |
+| A | `admin` | `34.102.179.105` | DNS-only for first validation |
 
 After DNS and TLS are healthy:
 
-1. Use a separate host rule/backend or load balancer target for `admin.vaultproof.dev`.
-2. Keep Cloudflare DNS-only until TLS and health checks are confirmed.
-3. If Cloudflare proxying is desired, enable it only after the GCP origin certificate, host headers, and security headers pass QA.
-4. Run public checks after cutover:
+1. Keep Cloudflare DNS-only until TLS and health checks are confirmed.
+2. If Cloudflare proxying is desired, enable it only after the GCP certificates, host headers, and security headers pass QA.
+3. Run public checks after cutover:
 
 ```bash
 curl -I https://enterprise.vaultproof.dev/
+curl -I https://admin.vaultproof.dev/
 RUN_LIVE_EDGE=true RUN_LIVE_APP_QA=true STRICT_LIVE=true npm run gate:gcp-customer-launch
 ```
 

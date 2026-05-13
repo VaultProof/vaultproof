@@ -5,11 +5,11 @@ Last updated: 2026-05-13
 This file tracks what VaultProof features exist, which ones have been adapted for Google Cloud, and what still blocks production cutover. Update it every time a build changes product behavior, runtime behavior, infrastructure behavior, or customer-facing claims.
 
 <!-- gcp-build-marker:start -->
-Last validated GCP image build: `pilot-success-20260513`
+Last validated GCP image build: `internal-admin-sso-20260513`
 
-- Control plane digest: `sha256:da64c951c02b1392e3eb01c6fae380a41e657a17627922eb8262f5b79f5b5ab2`
-- Executor digest: `sha256:043d220f70e089c11b03a2eb09832f96f263641fa4fe4e5857a0002841d2f887`
-- Updated: 2026-05-13T08:49:35.607Z
+- Control plane digest: `sha256:b3771d7cb3586f85076367e4bf7da7a9aa2588af80691e8eac40b43f6ec7c809`
+- Executor digest: `sha256:84ab86d7e6a2e837f16855aefbb1083182e6bd7011f4ca979cbb22665e117890`
+- Updated: 2026-05-13T09:51:59.598Z
 <!-- gcp-build-marker:end -->
 
 ## Runtime Features
@@ -143,12 +143,13 @@ All customer-facing enterprise pages live on the enterprise subdomain: `https://
 | Universal enterprise app sidebar | Built | The enterprise dashboard, static control/org pages, and all planned app pages render the same VaultProof-themed sidebar with app links, CSV exports, Docs/Status/Support, and logout. Local smoke and live app QA cover the deployed pages and links. |
 | Control/org sidebar parity | Built | `https://enterprise.vaultproof.dev/app/control` and `https://enterprise.vaultproof.dev/app/org` now use the same sidebar brand subtitle and the static app router swaps the universal sidebar when moving between shell pages. |
 | Control/org canonical URL and typography | Built | Deployed in `sidebar-canonical-20260509`. The static Control and Org pages hide the legacy static topbar/page frame, force the universal sidebar typography to match the rest of the dashboard, and clean old `?org=<uuid>` URLs back to `https://enterprise.vaultproof.dev/app/control` or `https://enterprise.vaultproof.dev/app/org` while keeping the selected organization in local storage. Live HTML verification passed for both long-form URLs. |
+| Customer/staff surface split | Built | `enterprise.vaultproof.dev` is customer-facing only; the universal enterprise sidebar no longer links to the VaultProof employee admin console. Staff SSO/account operations live on `admin.vaultproof.dev` with allowlisted employee auth and approval-gated writes. |
 | Projects page bootstrap load | Built | `https://enterprise.vaultproof.dev/app/projects`, `https://enterprise.vaultproof.dev/app/keys`, and `https://enterprise.vaultproof.dev/app/activity` now load orgs, projects, provider slots, and overview stats from `GET /api/v1/enterprise/projects/bootstrap`. Deployed consolidated bootstrap RPC median is about 383 ms for authenticated bootstrap; direct stats overview remains about 474 ms median. |
 | Consolidated Projects bootstrap RPC | Built and deployed | Deployed in `bootstrap-rpc-20260510`. `supabase/migrations/20260510010000_enterprise_projects_bootstrap_rpc.sql` adds service-role-only `enterprise_projects_bootstrap(...)`; the control plane uses it first and falls back to the older query chain only if the RPC is unavailable. This removes separate membership, direct project access, org-wide project access, provider slot, duplicate key-count, and rollup HTTP calls from bootstrap after auth. |
 | Supabase OAuth login | Existing, needs final browser QA | Managed Supabase OAuth/Auth stays in the Goal 1 demo. The control-plane runtime env now includes `SUPABASE_ANON_KEY`; confirm callback/site URLs include `https://enterprise.vaultproof.dev/app/login` and run human browser QA. |
 | Enterprise login readiness QA | Built | `npm run qa:enterprise-login` validates the live login page, public Supabase URL/anon key, redirect logic, and, with `LOGIN_QA_REQUIRE_SESSION=true` plus service-role env, generates a temporary magic-link session for `ken@vaultproof.dev` and calls authenticated org/bootstrap APIs. Optional `LOGIN_QA_OAUTH_PROVIDER=google` checks the public OAuth authorize redirect after the provider is configured. |
 | Goal 1 gate test session | Built | `npm run gate:gcp-first-goal` can generate a temporary Supabase magic-link test session for the pilot user when service-role credentials are available and no access token is supplied. The live demo gate returned `status: done` on 2026-05-10 for `ken@vaultproof.dev` with demo placeholder provider material and dry execute. |
-| Internal admin hostname support | Existing | `admin.vaultproof.dev` accepted by control plane config. |
+| Internal admin hostname support | Built | `admin.vaultproof.dev` accepted by control plane config and reserved for VaultProof employees. The internal org detail page now includes approval-gated controls for SSO settings, enterprise invites, account/business status, support notes, and invite resend/revoke requests. Internal admin APIs still return 404 on `enterprise.vaultproof.dev`, including spoofed forwarded-host attempts. |
 | Internal admin preview routes | Existing | Controlled by environment flags. |
 | Organization/project/member/audit/alert routes | Existing | Supabase credentials required for live data. |
 | Verifier routes | Existing | Shared enterprise runtime attestation language is now customer-facing provider-neutral/GCP in the enterprise app templates; the shared core still keeps Azure evidence types for legacy provider compatibility. |
@@ -171,6 +172,7 @@ All customer-facing enterprise pages live on the enterprise subdomain: `https://
 - Keep managed Supabase for the Goal 1 demo and confirm Supabase OAuth/Auth settings for `https://enterprise.vaultproof.dev/app/login`.
 - Seal and test a live sandbox email-provider key only if the customer demo needs an actual email send; the browser demo flow supports protected dry-run without exposing raw keys.
 - Run and keep `npm run verify:gcp-enterprise-cloud-armor` in the strict live launch gate.
+- Add the Cloudflare `admin` A record to `34.102.179.105` and wait for `vaultproof-enterprise-admin-cert` to become `ACTIVE` before using `https://admin.vaultproof.dev` without a test `--resolve` override.
 - MiniMax live encrypted provider material is sealed for the pilot; add a separate OpenAI slot only if the demo specifically needs OpenAI.
 - Rotate the Supabase service-role key and origin-lock value before paid customer onboarding.
 - Clean older Azure migration/history docs before paid-production handoff; customer-facing app UI is cleaned for the GCP demo.

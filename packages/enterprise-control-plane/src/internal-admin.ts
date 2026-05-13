@@ -1,7 +1,13 @@
 import { Buffer } from 'node:buffer';
 import { timingSafeEqual } from 'node:crypto';
-import { isOrganizationRole, type OrganizationRole } from '@vaultproof/core';
+import {
+  isOrganizationRole,
+  isValidDomain,
+  normalizeDomain,
+  type OrganizationRole,
+} from '@vaultproof/core';
 import type { EnterpriseControlPlaneEnv } from './config.js';
+import { writeGovernanceAuditEvent } from './audit.js';
 import { authenticateUser, type EnterpriseUserAuth } from './auth.js';
 import { getSupabase } from './supabase.js';
 
@@ -376,6 +382,28 @@ function validateBusinessStatus(value: unknown): InternalAdminBusinessStatusRow[
   return null;
 }
 
+function validateInternalAdminSsoStatus(value: unknown): 'requested' | 'configured' | null {
+  if (value === 'requested' || value === 'configured') return value;
+  return null;
+}
+
+function validateInternalAdminSsoLoginMode(value: unknown): 'sso-first' | 'assisted' | null {
+  if (value === 'sso-first' || value === 'assisted') return value;
+  return null;
+}
+
+function normalizeInternalAdminSsoProvider(value: unknown): string | null | Response {
+  const provider = typeof value === 'string' ? value.trim().toLowerCase() : '';
+  if (!provider) return null;
+  if (provider.length > 80) {
+    return Response.json({ error: 'sso_provider must be 80 characters or fewer.' }, { status: 400 });
+  }
+  if (!/^[a-z0-9][a-z0-9._ -]*$/.test(provider)) {
+    return Response.json({ error: 'sso_provider can only contain letters, numbers, spaces, dots, underscores, and hyphens.' }, { status: 400 });
+  }
+  return provider;
+}
+
 function validateInternalAdminActionType(value: unknown): InternalAdminActionRequestRow['action_type'] | null {
   return value === 'disable_org_access' ? value : null;
 }
@@ -658,7 +686,8 @@ export function renderInternalAdminPage(): string {
     .eyebrow { color:var(--blue); font-size:12px; font-weight:850; text-transform:uppercase; letter-spacing:.16em; }
     h1 { margin:8px 0 10px; font-size:clamp(38px, 5vw, 70px); line-height:.92; letter-spacing:-.07em; }
     .lead { color:var(--muted); max-width:780px; line-height:1.6; }
-    button, select { border:1px solid var(--line); background:rgba(255,255,255,.78); color:var(--text); border-radius:13px; padding:11px 12px; font:inherit; }
+    button, select, input, textarea { border:1px solid var(--line); background:rgba(255,255,255,.78); color:var(--text); border-radius:13px; padding:11px 12px; font:inherit; }
+    textarea { resize:vertical; min-height:86px; }
     button { cursor:pointer; }
     .primary { background:linear-gradient(135deg, var(--gold), #f3df95); color:var(--ink); border:0; font-weight:850; }
     .toolbar { display:flex; flex-wrap:wrap; justify-content:flex-end; gap:10px; }
@@ -684,7 +713,20 @@ export function renderInternalAdminPage(): string {
     .notice.error { color:var(--red); border-color:rgba(185,93,80,.3); }
     .actions { display:flex; gap:10px; flex-wrap:wrap; margin-top:14px; }
     .action { border:1px solid var(--line); border-radius:14px; padding:10px 12px; background:rgba(255,255,255,.72); }
-    @media (max-width: 1050px) { .shell { grid-template-columns:1fr; } .sidebar { position:relative; height:auto; } .topbar { flex-direction:column; } .toolbar { justify-content:flex-start; } .kpis, .two { grid-template-columns:1fr; } }
+    .admin-action-panel { display:grid; gap:16px; margin-top:4px; }
+    .action-grid { display:grid; grid-template-columns:repeat(2, minmax(0,1fr)); gap:14px; }
+    .action-form { border:1px solid rgba(48,76,71,.12); border-radius:18px; padding:16px; background:rgba(255,255,255,.62); display:grid; gap:12px; }
+    .action-form h3 { margin:0; font-size:16px; letter-spacing:-.02em; }
+    .field { display:grid; gap:6px; color:var(--muted); font-size:12px; font-weight:760; text-transform:uppercase; letter-spacing:.08em; }
+    .field input, .field select, .field textarea { width:100%; color:var(--text); font-size:14px; font-weight:500; text-transform:none; letter-spacing:0; }
+    .form-row { display:grid; grid-template-columns:1fr 1fr; gap:10px; }
+    .form-status { color:var(--muted); font-size:13px; min-height:18px; }
+    .form-status.good { color:var(--green); }
+    .form-status.bad { color:var(--red); }
+    .admin-actions-toolbar { display:grid; grid-template-columns:minmax(220px, 360px) 1fr; gap:12px; align-items:end; }
+    .danger { color:#fff; background:var(--red); border:0; }
+    .inline-actions { display:flex; gap:8px; flex-wrap:wrap; margin-top:8px; }
+    @media (max-width: 1050px) { .shell { grid-template-columns:1fr; } .sidebar { position:relative; height:auto; } .topbar { flex-direction:column; } .toolbar { justify-content:flex-start; } .kpis, .two, .action-grid, .admin-actions-toolbar, .form-row { grid-template-columns:1fr; } }
   </style>
 </head>
 <body>
@@ -819,11 +861,146 @@ export function renderInternalAdminPage(): string {
         if (!response.ok) throw new Error((payload && payload.error) || 'Internal admin org detail failed.');
         return payload;
       }
+      function approvalSecret() {
+        var input = byId('adminApprovalSecret');
+        return input && input.value ? input.value.trim() : '';
+      }
+      function formValue(form, name) {
+        var field = form && form.elements ? form.elements[name] : null;
+        return field && typeof field.value === 'string' ? field.value.trim() : '';
+      }
+      function setActionStatus(message, tone) {
+        var status = byId('adminActionStatus');
+        if (!status) return;
+        status.className = 'form-status ' + (tone || '');
+        status.textContent = message || '';
+      }
+      async function postAdminAction(path, body) {
+        var secret = approvalSecret();
+        if (!secret) throw new Error('Approval secret is required for admin writes.');
+        var response = await fetch(path, {
+          method: 'POST',
+          headers: {
+            Authorization: 'Bearer ' + token,
+            'Content-Type': 'application/json',
+            'x-vaultproof-internal-admin-approval': secret
+          },
+          body: body ? JSON.stringify(body) : '{}'
+        });
+        var payload = await response.json().catch(function() { return null; });
+        if (!response.ok) throw new Error((payload && payload.error) || 'Admin action failed.');
+        return payload;
+      }
       function tagList(items) {
         return (items || []).map(function(item) {
           var tone = item.status === 'done' || item.status === 'ready' ? 'good' : 'warn';
           return '<span class="tag ' + tone + '">' + escapeHtml(item.label || item.status || item) + '</span>';
         }).join('');
+      }
+      function roleOptions(selected) {
+        return ['viewer', 'member', 'developer', 'auditor', 'iam_admin', 'security_admin', 'platform_admin', 'admin'].map(function(role) {
+          return '<option value="' + role + '"' + (role === selected ? ' selected' : '') + '>' + role + '</option>';
+        }).join('');
+      }
+      function renderAdminActionForms(org, pendingInvitations, currentStatus) {
+        var sso = org.sso || {};
+        var provider = sso.sso_provider || 'microsoft-entra';
+        var loginMode = sso.login_mode || 'sso-first';
+        var ssoStatus = sso.status || 'requested';
+        var resendRevoke = pendingInvitations.length ? pendingInvitations.map(function(invite) {
+          return '<div class="row"><div><div class="row-title">' + escapeHtml(invite.email) + '</div><div class="row-sub">' + escapeHtml(invite.role + ' invite created ' + rel(invite.created_at)) + '</div><div class="inline-actions"><button type="button" data-invite-action="resend" data-invite-id="' + escapeHtml(invite.id) + '">record resend</button><button class="danger" type="button" data-invite-action="revoke" data-invite-id="' + escapeHtml(invite.id) + '">revoke invite</button></div></div><span class="tag warn">pending</span></div>';
+        }).join('') : '<div class="empty">No pending invites to resend or revoke.</div>';
+        return '<div class="admin-action-panel" data-internal-admin-action="org-account-management">'
+          + '<div class="admin-actions-toolbar"><label class="field">approval secret<input id="adminApprovalSecret" type="password" autocomplete="off" placeholder="required for writes"></label><div><div class="row-title">Enterprise account administration</div><div class="row-sub">Use this staff-only page on admin.vaultproof.dev to set SSO metadata, invite admins, record account status, and keep support notes. Secrets and IdP private material stay out of these forms.</div><div id="adminActionStatus" class="form-status"></div></div></div>'
+          + '<div class="action-grid">'
+          + '<form id="ssoSettingsForm" class="action-form"><h3>SSO settings</h3><label class="field">company domain<input name="company_domain" value="' + escapeHtml(sso.company_domain || '') + '" placeholder="customer.com"></label><div class="form-row"><label class="field">provider<select name="sso_provider"><option value="microsoft-entra"' + (provider === 'microsoft-entra' ? ' selected' : '') + '>microsoft-entra</option><option value="okta"' + (provider === 'okta' ? ' selected' : '') + '>okta</option><option value="google-workspace"' + (provider === 'google-workspace' ? ' selected' : '') + '>google-workspace</option><option value="generic-saml"' + (provider === 'generic-saml' ? ' selected' : '') + '>generic-saml</option><option value="supabase-saml"' + (provider === 'supabase-saml' ? ' selected' : '') + '>supabase-saml</option></select></label><label class="field">rollout status<select name="status"><option value="requested"' + (ssoStatus === 'requested' ? ' selected' : '') + '>requested</option><option value="configured"' + (ssoStatus === 'configured' ? ' selected' : '') + '>configured</option></select></label></div><label class="field">login mode<select name="login_mode"><option value="sso-first"' + (loginMode === 'sso-first' ? ' selected' : '') + '>sso-first</option><option value="assisted"' + (loginMode === 'assisted' ? ' selected' : '') + '>assisted</option></select></label><button class="primary" type="submit">save SSO</button></form>'
+          + '<form id="inviteForm" class="action-form"><h3>Invite enterprise user</h3><label class="field">email<input name="email" type="email" placeholder="identity.owner@customer.com"></label><label class="field">role<select name="role">' + roleOptions('iam_admin') + '</select></label><button class="primary" type="submit">create invite</button></form>'
+          + '<form id="businessStatusForm" class="action-form"><h3>Account status</h3><div class="form-row"><label class="field">status<select name="status"><option value="onboarding"' + (currentStatus && currentStatus.status === 'onboarding' ? ' selected' : '') + '>onboarding</option><option value="active"' + (currentStatus && currentStatus.status === 'active' ? ' selected' : '') + '>active</option><option value="at_risk"' + (currentStatus && currentStatus.status === 'at_risk' ? ' selected' : '') + '>at_risk</option><option value="paused"' + (currentStatus && currentStatus.status === 'paused' ? ' selected' : '') + '>paused</option><option value="offboarding"' + (currentStatus && currentStatus.status === 'offboarding' ? ' selected' : '') + '>offboarding</option></select></label><label class="field">plan label<input name="plan_label" value="' + escapeHtml(currentStatus && currentStatus.plan_label ? currentStatus.plan_label : '') + '" placeholder="Enterprise Pilot"></label></div><label class="field">summary<textarea name="summary" placeholder="Current account status">' + escapeHtml(currentStatus && currentStatus.summary ? currentStatus.summary : '') + '</textarea></label><label class="field">next step<input name="next_step" value="' + escapeHtml(currentStatus && currentStatus.next_step ? currentStatus.next_step : '') + '" placeholder="Next customer/admin action"></label><button class="primary" type="submit">record status</button></form>'
+          + '<form id="supportNoteForm" class="action-form"><h3>Support note</h3><label class="field">note type<select name="note_type"><option value="support_note">support_note</option><option value="onboarding">onboarding</option><option value="security">security</option><option value="billing">billing</option><option value="go_live">go_live</option></select></label><label class="field">note<textarea name="body" placeholder="Customer-visible context, no secrets"></textarea></label><button class="primary" type="submit">add note</button></form>'
+          + '</div><div><div class="section-title"><h2>Pending invite controls</h2><span class="mini">approval-gated</span></div>' + resendRevoke + '</div></div>';
+      }
+      function bindOrgAdminActions(org) {
+        var orgId = org && org.id ? org.id : '';
+        if (!orgId) return;
+        var ssoForm = byId('ssoSettingsForm');
+        if (ssoForm) ssoForm.addEventListener('submit', async function(event) {
+          event.preventDefault();
+          try {
+            setActionStatus('Saving SSO settings...', '');
+            await postAdminAction('/api/v1/internal-admin/orgs/' + encodeURIComponent(orgId) + '/sso-settings', {
+              company_domain: formValue(ssoForm, 'company_domain'),
+              sso_provider: formValue(ssoForm, 'sso_provider'),
+              status: formValue(ssoForm, 'status'),
+              login_mode: formValue(ssoForm, 'login_mode')
+            });
+            setActionStatus('SSO settings saved and audited.', 'good');
+            renderOrgDetail(await fetchOrgDetail(orgId));
+          } catch (error) {
+            setActionStatus(error && error.message ? error.message : 'SSO update failed.', 'bad');
+          }
+        });
+        var inviteForm = byId('inviteForm');
+        if (inviteForm) inviteForm.addEventListener('submit', async function(event) {
+          event.preventDefault();
+          try {
+            setActionStatus('Creating invite...', '');
+            await postAdminAction('/api/v1/internal-admin/orgs/' + encodeURIComponent(orgId) + '/invitations', {
+              email: formValue(inviteForm, 'email'),
+              role: formValue(inviteForm, 'role')
+            });
+            setActionStatus('Invite created and audited.', 'good');
+            renderOrgDetail(await fetchOrgDetail(orgId));
+          } catch (error) {
+            setActionStatus(error && error.message ? error.message : 'Invite creation failed.', 'bad');
+          }
+        });
+        var statusForm = byId('businessStatusForm');
+        if (statusForm) statusForm.addEventListener('submit', async function(event) {
+          event.preventDefault();
+          try {
+            setActionStatus('Recording account status...', '');
+            await postAdminAction('/api/v1/internal-admin/orgs/' + encodeURIComponent(orgId) + '/status', {
+              status: formValue(statusForm, 'status'),
+              plan_label: formValue(statusForm, 'plan_label'),
+              summary: formValue(statusForm, 'summary'),
+              next_step: formValue(statusForm, 'next_step')
+            });
+            setActionStatus('Account status recorded and audited.', 'good');
+            renderOrgDetail(await fetchOrgDetail(orgId));
+          } catch (error) {
+            setActionStatus(error && error.message ? error.message : 'Status update failed.', 'bad');
+          }
+        });
+        var noteForm = byId('supportNoteForm');
+        if (noteForm) noteForm.addEventListener('submit', async function(event) {
+          event.preventDefault();
+          try {
+            setActionStatus('Adding support note...', '');
+            await postAdminAction('/api/v1/internal-admin/orgs/' + encodeURIComponent(orgId) + '/support-notes', {
+              note_type: formValue(noteForm, 'note_type'),
+              body: formValue(noteForm, 'body')
+            });
+            setActionStatus('Support note added and audited.', 'good');
+            renderOrgDetail(await fetchOrgDetail(orgId));
+          } catch (error) {
+            setActionStatus(error && error.message ? error.message : 'Support note failed.', 'bad');
+          }
+        });
+        Array.prototype.forEach.call(document.querySelectorAll('[data-invite-action]'), function(button) {
+          button.addEventListener('click', async function() {
+            var inviteId = button.getAttribute('data-invite-id') || '';
+            var action = button.getAttribute('data-invite-action') || '';
+            if (!inviteId || !action) return;
+            try {
+              setActionStatus((action === 'revoke' ? 'Revoking' : 'Recording resend for') + ' invite...', '');
+              await postAdminAction('/api/v1/internal-admin/orgs/' + encodeURIComponent(orgId) + '/invitations/' + encodeURIComponent(inviteId) + '/' + action, {});
+              setActionStatus(action === 'revoke' ? 'Invite revoked and audited.' : 'Invite resend request recorded and audited.', 'good');
+              renderOrgDetail(await fetchOrgDetail(orgId));
+            } catch (error) {
+              setActionStatus(error && error.message ? error.message : 'Invite action failed.', 'bad');
+            }
+          });
+        });
       }
       function renderOrgDetail(payload) {
         var section = byId('org-detail');
@@ -843,6 +1020,7 @@ export function renderInternalAdminPage(): string {
         var executionRecords = Array.isArray(payload.execution_records) ? payload.execution_records : [];
         var html = '';
         html += row(org.name || org.slug || org.id || 'Business', (org.owner_email || 'owner unknown') + ' - ' + number(org.member_count) + ' users - ' + number(org.active_project_count) + ' active projects', org.sso && org.sso.status === 'configured' ? 'SSO ready' : 'SSO todo', org.sso && org.sso.status === 'configured' ? 'good' : 'warn');
+        html += renderAdminActionForms(org, pendingInvitations, currentStatus);
         html += '<div class="row"><div><div class="row-title">Business plan and status</div><div class="row-sub">' + (currentStatus ? escapeHtml((currentStatus.plan_label || 'plan not set') + ' - ' + currentStatus.summary + (currentStatus.next_step ? ' - next: ' + currentStatus.next_step : '') + ' - ' + rel(currentStatus.created_at)) : (payload.business_status_schema_ready ? 'No business status has been recorded yet.' : 'Business status table is not applied yet.')) + '</div></div><span class="tag ' + (currentStatus && currentStatus.status === 'active' ? 'good' : 'warn') + '">' + escapeHtml(currentStatus ? currentStatus.status : (payload.business_status_schema_ready ? 'not set' : 'pending')) + '</span></div>';
         html += '<div class="row"><div><div class="row-title">SSO setup checklist</div><div class="row-sub">' + ssoChecklist.map(function(item) { return escapeHtml(item.label + ': ' + item.detail); }).join('<br>') + '</div></div><div>' + tagList(ssoChecklist) + '</div></div>';
         html += '<div class="row"><div><div class="row-title">User/member timeline</div><div class="row-sub">' + (timeline.length ? timeline.slice(0, 8).map(function(item) { return escapeHtml(item.label + ' - ' + (item.detail || '') + ' - ' + rel(item.created_at)); }).join('<br>') : 'No member timeline events yet.') + '</div></div><span class="tag">timeline</span></div>';
@@ -852,6 +1030,7 @@ export function renderInternalAdminPage(): string {
         html += '<div class="row"><div><div class="row-title">Destructive execution and rollback ledger</div><div class="row-sub">' + (executionRecords.length ? executionRecords.map(function(record) { var direction = record.preflight_result && record.preflight_result.action_direction === 'rollback' ? 'rollback plan' : 'execution plan'; return escapeHtml(direction + ' - ' + record.action_type + ' - ' + record.execution_mode + ' - ' + record.status + ' - by ' + record.executed_by_email + ' - ' + rel(record.created_at)); }).join('<br>') : (payload.execution_records_schema_ready ? 'No execution or rollback plans have been recorded yet.' : 'Execution record table is not applied yet.')) + '</div></div><span class="tag ' + (payload.execution_records_schema_ready ? 'warn' : 'bad') + '">' + (payload.execution_records_schema_ready ? 'dry-run only' : 'pending') + '</span></div>';
         html += '<div class="row"><div><div class="row-title">Evidence links</div><div class="row-sub">' + evidenceLinks.map(function(link) { return '<a class="tag" href="' + escapeHtml(link.href) + '">' + escapeHtml(link.label) + '</a>'; }).join('') + '</div></div><span class="tag good">links</span></div>';
         byId('orgDetailContent').innerHTML = html;
+        bindOrgAdminActions(org);
       }
       function render(payload) {
         var summary = payload.summary || {};
@@ -1086,7 +1265,7 @@ async function handleInternalAdminOrgDetail(
   return Response.json({
     generated_at: new Date().toISOString(),
     mode: 'read_only',
-    admin_actions_enabled: false,
+    admin_actions_enabled: env.internalAdminActionsEnabled === true,
     admin: {
       user_id: authorized.auth.userId,
       email: authorized.auth.email,
@@ -1213,6 +1392,138 @@ async function ensureInternalAdminOrganizationExists(
   return null;
 }
 
+async function handleUpdateInternalAdminSsoSettings(
+  request: Request,
+  env: EnterpriseControlPlaneEnv,
+  organizationId: string,
+): Promise<Response> {
+  const orgId = decodeURIComponent(organizationId || '').trim();
+  if (!orgId) {
+    return Response.json({ error: 'Organization ID is required.' }, { status: 400 });
+  }
+
+  const authorized = await authorizeInternalAdmin(request, env);
+  if (authorized instanceof Response) return authorized;
+
+  const approvalError = requireInternalAdminActionApproval(request, env);
+  if (approvalError) return approvalError;
+
+  let body: Record<string, unknown>;
+  try {
+    const parsed = await request.json();
+    body = parsed && typeof parsed === 'object' && !Array.isArray(parsed)
+      ? parsed as Record<string, unknown>
+      : {};
+  } catch {
+    return Response.json({ error: 'Invalid JSON body.' }, { status: 400 });
+  }
+
+  const companyDomain = normalizeDomain(typeof body.company_domain === 'string' ? body.company_domain : '');
+  if (!companyDomain) {
+    return Response.json({ error: 'company_domain is required.' }, { status: 400 });
+  }
+  if (!isValidDomain(companyDomain)) {
+    return Response.json({ error: 'company_domain must be a valid domain.' }, { status: 400 });
+  }
+
+  const ssoProvider = normalizeInternalAdminSsoProvider(body.sso_provider);
+  if (ssoProvider instanceof Response) return ssoProvider;
+
+  const status = validateInternalAdminSsoStatus(body.status || 'requested');
+  if (!status) {
+    return Response.json({ error: 'status must be requested or configured.' }, { status: 400 });
+  }
+
+  const loginMode = validateInternalAdminSsoLoginMode(body.login_mode || 'sso-first');
+  if (!loginMode) {
+    return Response.json({ error: 'login_mode must be assisted or sso-first.' }, { status: 400 });
+  }
+
+  const supabase = getSupabase(env);
+  const orgResult = await supabase
+    .from('organizations')
+    .select('id, kind')
+    .eq('id', orgId)
+    .limit(1);
+  if (orgResult.error) {
+    return Response.json({ error: `Internal admin org lookup failed: ${orgResult.error.message}` }, { status: 500 });
+  }
+  const organization = normalizeRows(orgResult.data as MaybeArray<{ id: string; kind: string }>)[0];
+  if (!organization) {
+    return Response.json({ error: 'Organization not found.' }, { status: 404 });
+  }
+  if (organization.kind !== 'team') {
+    return Response.json({ error: 'SSO settings are only available on enterprise team organizations.' }, { status: 400 });
+  }
+
+  const now = new Date().toISOString();
+  const { data, error } = await supabase
+    .from('organization_sso_settings')
+    .upsert({
+      organization_id: orgId,
+      company_domain: companyDomain,
+      sso_provider: ssoProvider,
+      admin_email: null,
+      status,
+      login_mode: loginMode,
+      updated_at: now,
+    }, { onConflict: 'organization_id' })
+    .select('organization_id, company_domain, sso_provider, login_mode, status, created_at, updated_at')
+    .single();
+
+  if (error || !data) {
+    const message = error?.message?.includes('organization_sso_settings_domain_lower_uidx')
+      ? 'That company domain is already linked to another organization.'
+      : `Internal admin SSO settings update failed${error?.message ? `: ${error.message}` : '.'}`;
+    return Response.json({ error: message }, { status: 400 });
+  }
+
+  await writeGovernanceAuditEvent(env, {
+    organization_id: orgId,
+    actor_user_id: authorized.auth.userId,
+    actor_email: authorized.auth.email,
+    event_type: 'organization_sso_settings_updated',
+    target_type: 'organization',
+    target_id: orgId,
+    description: `Updated SSO rollout settings for ${companyDomain}`,
+    metadata: {
+      company_domain: companyDomain,
+      sso_provider: ssoProvider,
+      login_mode: loginMode,
+      status,
+      updated_via: 'internal_admin',
+    },
+  });
+
+  await writeInternalAdminAuditEvent(
+    env,
+    authorized.auth,
+    request,
+    'internal_admin_sso_settings_updated',
+    {
+      organization_id: orgId,
+      company_domain: companyDomain,
+      sso_provider: ssoProvider,
+      login_mode: loginMode,
+      status,
+    },
+  );
+
+  return Response.json({
+    sso_settings: data,
+    guardrails: [
+      'SSO settings updates require internal admin actions to be enabled.',
+      'SSO settings updates require the approval secret header.',
+      'This endpoint stores only provider metadata and rollout status. It does not accept OAuth client secrets, SAML metadata XML, certificates, or IdP private material.',
+      'The customer organization audit and internal admin audit streams both record the change.',
+    ],
+  }, {
+    headers: {
+      'cache-control': 'no-store',
+    },
+  });
+}
+
 async function handleCreateInternalAdminSupportNote(
   request: Request,
   env: EnterpriseControlPlaneEnv,
@@ -1334,6 +1645,9 @@ async function handleCreateInternalAdminInvitation(
   const role = validateInternalInvitationRole(body.role || 'viewer');
   if (!role) {
     return Response.json({ error: 'role is not a valid organization role.' }, { status: 400 });
+  }
+  if (role === 'owner') {
+    return Response.json({ error: 'owner invitations must be handled through the customer ownership transfer flow.' }, { status: 400 });
   }
 
   const orgError = await ensureInternalAdminOrganizationExists(env, orgId);
@@ -2168,6 +2482,15 @@ export async function handleInternalAdminRoutes(
     request.method === 'POST'
     && pathSegments.length === 3
     && pathSegments[0] === 'orgs'
+    && pathSegments[2] === 'sso-settings'
+  ) {
+    return handleUpdateInternalAdminSsoSettings(request, env, pathSegments[1] || '');
+  }
+
+  if (
+    request.method === 'POST'
+    && pathSegments.length === 3
+    && pathSegments[0] === 'orgs'
     && pathSegments[2] === 'invitations'
   ) {
     return handleCreateInternalAdminInvitation(request, env, pathSegments[1] || '');
@@ -2432,7 +2755,7 @@ export async function handleInternalAdminRoutes(
   return Response.json({
     generated_at: new Date().toISOString(),
     mode: 'read_only',
-    admin_actions_enabled: false,
+    admin_actions_enabled: env.internalAdminActionsEnabled === true,
     admin: {
       user_id: authorized.auth.userId,
       email: authorized.auth.email,
