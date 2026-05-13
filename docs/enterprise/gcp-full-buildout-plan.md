@@ -248,7 +248,7 @@ Build after first customer proof:
 
 - Move from one bootstrap VM to a managed instance group or blue/green VM pair.
 - Add Cloud Armor WAF and rate limits. Status: helper built with scanner-path blocking plus per-IP throttles for secure execute, enterprise APIs, and the public edge.
-- Add uptime checks and alerting policies.
+- Add uptime checks and alerting policies. Status: customer-safe monitoring evidence kit built in `/app/evidence`, `/app/demo`, and `/app/runbooks`; GCP-native uptime check and alert-policy resources are still a paid-production scale task.
 - Add automated evidence bundle capture for each release.
 - Add a rollback script for edge, VM image, and DNS changes.
 - Clean older Azure migration/history docs into provider-neutral or clearly archived references before paid-production handoff.

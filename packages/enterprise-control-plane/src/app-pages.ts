@@ -3090,6 +3090,10 @@ function renderEnterpriseSupportPage(pageName: EnterpriseSupportPageName): strin
           <div id="evidenceSupportList" class="list"></div>
         </div>
         <div class="card" style="grid-column:1/-1">
+          <div class="section-title"><h2>Monitoring evidence proof</h2><span class="mini" id="evidenceMonitoringMeta">hold</span></div>
+          <div id="evidenceMonitoringList" class="list"></div>
+        </div>
+        <div class="card" style="grid-column:1/-1">
           <div class="section-title">
             <h2>Evidence packet JSON</h2>
             <div class="evidence-actions">
@@ -4029,6 +4033,89 @@ function renderEnterpriseSupportPage(pageName: EnterpriseSupportPageName): strin
           .concat(launchSupportBoundaryRows(packet))
           .concat(launchSupportHandoffRows(packet));
       }
+      function buildMonitoringEvidencePacket(org, sso, readiness, overview, bootstrap, goNoGo) {
+        var manual = goNoGoManualById(goNoGo);
+        var cloudArmor = manual['cloud-armor-verified'];
+        var budget = manual['budget-monitoring-reviewed'];
+        var rollback = manual['rollback-owner-confirmed'];
+        var projectCount = projectCountFromData(org, overview, bootstrap);
+        var providerCount = providerCountFromData(overview, bootstrap);
+        var totalCalls = Number(overview.totalCalls || overview.total_calls || 0);
+        var deniedCalls = Number(overview.deniedCalls || overview.denied_calls || 0);
+        var errorCalls = Number(overview.errorCalls || overview.error_calls || 0);
+        var runtimeReady = readiness.production_ready === true;
+        var ready = runtimeReady && Boolean(currentOrgId) && projectCount > 0 && providerCount > 0 && totalCalls > 0 && cloudArmor && cloudArmor.passed && budget && budget.passed;
+        return {
+          status: ready ? 'ready' : 'hold',
+          decision: ready ? 'Monitoring evidence is ready for launch-week customer testing.' : 'Hold until runtime readiness, traffic evidence, Cloud Armor verification, and budget/monitoring review are recorded.',
+          monitoring_page: location.origin + '/app/alerts',
+          readiness_source: location.origin + '/readiness',
+          manual_evidence: {
+            cloud_armor_verification: manualEvidenceSummary(cloudArmor),
+            budget_monitoring: manualEvidenceSummary(budget),
+            rollback_owner_path: manualEvidenceSummary(rollback)
+          },
+          telemetry: {
+            runtime_production_ready: runtimeReady,
+            security_profile: readiness.security_profile || null,
+            sso_provider_status: sso.provider_status || 'not confirmed',
+            project_count: projectCount,
+            provider_slots: providerCount,
+            proxy_calls: totalCalls,
+            denied_calls: deniedCalls,
+            error_calls: errorCalls
+          },
+          signals: [
+            'Runtime posture from /readiness.',
+            'Traffic, denial, and error posture from enterprise overview/bootstrap data.',
+            'Alert destinations, delivery logs, and test-send workflow from /app/alerts.',
+            'Cloud Armor verification is operator-confirmed until policy state is exposed through a trusted backend source.',
+            'Budget/monitoring review is operator-confirmed in the launch board for this demo slice.'
+          ],
+          operator_commands: {
+            live_gate: 'RUN_LIVE_EDGE=true RUN_LIVE_APP_QA=true RUN_CLOUD_ARMOR_QA=true npm run gate:gcp-customer-launch',
+            cloud_armor_verification: 'npm run verify:gcp-enterprise-cloud-armor',
+            live_app_qa: 'npm run qa:enterprise-live-app',
+            edge_verification: 'npm run verify:gcp-enterprise-edge',
+            evidence_bundle: 'npm run evidence:enterprise-production'
+          },
+          budget_alert: 'VaultProof Production Monthly USD 50 alerting budget. Raise or tune before a paid pilot because the fixed shared-runtime estimate is about $85-$90/month before traffic.',
+          customer_handoff: [
+            'Open /app/alerts to review destinations, delivery logs, dispatch runs, and test-send behavior.',
+            'Open /app/activity for runtime status, latency, denial, and provider request evidence.',
+            'Open /app/audit and /app/evidence for customer-safe exports.',
+            'Keep launch-week owner coverage and rollback owner/path visible before pilot traffic.'
+          ],
+          secrets_excluded: [
+            'alert webhook secrets',
+            'provider API keys',
+            'encrypted provider shares',
+            'Supabase service-role key',
+            'browser session token',
+            'origin-lock secret',
+            'executor signing secret',
+            'vault unwrap root'
+          ]
+        };
+      }
+      function monitoringEvidenceRows(packet) {
+        var telemetry = packet.telemetry || {};
+        var manual = packet.manual_evidence || {};
+        var cloudArmor = manual.cloud_armor_verification || {};
+        var budget = manual.budget_monitoring || {};
+        return [
+          row('Monitoring evidence status', packet.decision, packet.status, packet.status === 'ready' ? 'good' : 'warn'),
+          row('Runtime readiness signal', (telemetry.runtime_production_ready ? 'Runtime reports production-ready. ' : 'Runtime is not production-ready. ') + 'Security profile: ' + (telemetry.security_profile || 'not reported') + '.', telemetry.runtime_production_ready ? 'ready' : 'blocked', telemetry.runtime_production_ready ? 'good' : 'bad'),
+          row('Traffic, denial, and error watch', number(telemetry.proxy_calls) + ' calls, ' + number(telemetry.error_calls) + ' errors, ' + number(telemetry.denied_calls) + ' denied across ' + number(telemetry.project_count) + ' projects and ' + number(telemetry.provider_slots) + ' provider slots.', telemetry.proxy_calls ? 'observed' : 'pending', telemetry.error_calls || telemetry.denied_calls ? 'warn' : telemetry.proxy_calls ? 'good' : 'warn'),
+          row('Alert operations path', 'Use ' + packet.monitoring_page + ' to review destinations, delivery logs, dispatch runs, and test-send workflow before customer traffic.', 'alerts', 'good'),
+          row('Cloud Armor verification timestamp', cloudArmor.updated_at ? 'Verified ' + rel(cloudArmor.updated_at) + (cloudArmor.stale ? '; stale after 7 days.' : '.') : 'No Cloud Armor verification timestamp is saved in this browser evidence yet.', cloudArmor.status || 'missing', cloudArmor.status === 'passed' && !cloudArmor.stale ? 'good' : 'warn'),
+          row('Budget/monitoring review timestamp', budget.updated_at ? 'Reviewed ' + rel(budget.updated_at) + (budget.stale ? '; stale after 7 days.' : '.') : 'No budget/monitoring review timestamp is saved in this browser evidence yet.', budget.status || 'missing', budget.status === 'passed' && !budget.stale ? 'good' : 'warn'),
+          row('Budget alert', packet.budget_alert, 'cost guardrail', 'warn'),
+          row('Live monitoring gate', packet.operator_commands.live_gate, 'strict gate', 'good'),
+          row('Customer monitoring handoff', packet.customer_handoff.join(' '), 'shareable', 'good'),
+          row('Secrets excluded', packet.secrets_excluded.join(', '), 'redacted', 'good')
+        ];
+      }
       function providerSlotsFromBootstrap(bootstrap) {
         var projects = bootstrap && Array.isArray(bootstrap.projects) ? bootstrap.projects : [];
         var slots = [];
@@ -4169,6 +4256,7 @@ function renderEnterpriseSupportPage(pageName: EnterpriseSupportPageName): strin
         var rotation = buildKeyRotationPacket(goNoGo, bootstrap || {});
         var pilotOps = buildPilotOpsPacket(goNoGo, readiness, overview);
         var apiProxy = buildApiProxySelfTestPacket(overview, bootstrap || {});
+        var monitoring = buildMonitoringEvidencePacket(org, sso, readiness, overview, bootstrap || {}, goNoGo);
         var blockers = goNoGo && goNoGo.blockers && goNoGo.blockers.length
           ? goNoGo.blockers.join('; ')
           : 'none';
@@ -4189,6 +4277,8 @@ function renderEnterpriseSupportPage(pageName: EnterpriseSupportPageName): strin
           'Budget/monitoring review: ' + pilotOps.manual_evidence.budget_monitoring.status,
           'API proxy self-test status: ' + apiProxy.status,
           'API proxy execute endpoint: ' + apiProxy.execute_endpoint_pattern,
+          'Monitoring evidence status: ' + monitoring.status,
+          'Monitoring live gate: ' + monitoring.operator_commands.live_gate,
           'Runtime production-ready: ' + (productionReady ? 'yes' : 'no'),
           'SSO/login status: ' + (sso.provider_status || 'not confirmed'),
           'Projects: ' + number(org.project_count || overview.totalProjects),
@@ -4201,6 +4291,7 @@ function renderEnterpriseSupportPage(pageName: EnterpriseSupportPageName): strin
           '- Review caller-lock policy in Control.',
           '- Review provider slot posture and emergency revoke path.',
           '- Run or copy the API proxy self-test dry-run from Provider Slots.',
+          '- Review Monitoring evidence in Evidence and alert operations in Alerts.',
           '- Complete strict login QA, Cloud Armor verification, key-rotation review, rollback owner, and budget/monitoring review.',
           '- Export audit and access-review evidence.',
           '- Send one low-volume dry-run or test request before production traffic.',
@@ -4274,6 +4365,7 @@ function renderEnterpriseSupportPage(pageName: EnterpriseSupportPageName): strin
         var pilotOps = buildPilotOpsPacket(goNoGo, readiness, overview);
         var apiProxy = buildApiProxySelfTestPacket(overview, bootstrap);
         var support = buildLaunchSupportPacket(org, sso, readiness, overview, bootstrap, goNoGo);
+        var monitoring = buildMonitoringEvidencePacket(org, sso, readiness, overview, bootstrap, goNoGo);
         return {
           packet_type: 'vaultproof_enterprise_evidence_packet',
           packet_version: 1,
@@ -4348,6 +4440,7 @@ function renderEnterpriseSupportPage(pageName: EnterpriseSupportPageName): strin
           pilot_operations_evidence: pilotOps,
           api_proxy_self_test: apiProxy,
           launch_support_readiness: support,
+          monitoring_evidence: monitoring,
           exports: {
             readiness: '/readiness',
             audit_csv_30_days: evidenceExportHref('/api/v1/enterprise/audit?format=csv&days=30'),
@@ -4365,6 +4458,7 @@ function renderEnterpriseSupportPage(pageName: EnterpriseSupportPageName): strin
             'Confirm rollback ownership, budget alert coverage, and launch-week monitoring ownership before live customer traffic.',
             'Run the API proxy dry-run self-test and blocked-recipient email denial test before the customer walkthrough.',
             'Review launch support scope, internal admin boundary, approval gates, and customer handoff notes before pilot traffic.',
+            'Review monitoring evidence, alert destination/test-send workflow, Cloud Armor verification, and budget alert posture before launch-week traffic.',
             'For the email API key demo, verify sender, recipient, template, gateway, and rate policy before live sends.',
             'Keep provider keys, encrypted shares, service-role keys, origin-lock values, and signing secrets out of customer packets.'
           ]
@@ -4381,6 +4475,7 @@ function renderEnterpriseSupportPage(pageName: EnterpriseSupportPageName): strin
         var pilotOps = packet.pilot_operations_evidence || buildPilotOpsPacket(buildGoNoGoStatus(org, sso, readiness, overview, bootstrap), readiness, overview);
         var apiProxy = packet.api_proxy_self_test || buildApiProxySelfTestPacket(overview, bootstrap);
         var support = packet.launch_support_readiness || buildLaunchSupportPacket(org, sso, readiness, overview, bootstrap, buildGoNoGoStatus(org, sso, readiness, overview, bootstrap));
+        var monitoring = packet.monitoring_evidence || buildMonitoringEvidencePacket(org, sso, readiness, overview, bootstrap, buildGoNoGoStatus(org, sso, readiness, overview, bootstrap));
         text('evidenceMeta', productionReady ? 'ready for review' : 'needs attention');
         byId('evidenceReadinessList').innerHTML = [
           row('Production readiness', productionReady ? 'Control plane and confidential executor report production-ready.' : (readiness.production_blockers || []).join('; '), productionReady ? 'ready' : 'blocked', productionReady ? 'good' : 'bad'),
@@ -4420,6 +4515,8 @@ function renderEnterpriseSupportPage(pageName: EnterpriseSupportPageName): strin
         byId('evidenceApiProxyList').innerHTML = apiProxySelfTestRows(apiProxy).join('');
         text('evidenceSupportMeta', support.status);
         byId('evidenceSupportList').innerHTML = launchSupportProofRows(support).join('');
+        text('evidenceMonitoringMeta', monitoring.status);
+        byId('evidenceMonitoringList').innerHTML = monitoringEvidenceRows(monitoring).join('');
         var packetBox = byId('evidencePacket');
         if (packetBox) packetBox.value = JSON.stringify(packet, null, 2);
       }
@@ -4430,6 +4527,7 @@ function renderEnterpriseSupportPage(pageName: EnterpriseSupportPageName): strin
         var pilotOps = buildPilotOpsPacket(goNoGo, readiness, overview);
         var apiProxy = buildApiProxySelfTestPacket(overview, bootstrap);
         var support = buildLaunchSupportPacket(org, sso, readiness, overview, bootstrap, goNoGo);
+        var monitoring = buildMonitoringEvidencePacket(org, sso, readiness, overview, bootstrap, goNoGo);
         var emailProviders = emailProvidersFromData(overview, bootstrap);
         var providerCount = providerCountFromData(overview, bootstrap);
         var projectCount = projectCountFromData(org, overview, bootstrap);
@@ -4455,6 +4553,7 @@ function renderEnterpriseSupportPage(pageName: EnterpriseSupportPageName): strin
           'Pilot operations proof status: ' + pilotOps.status,
           'API proxy self-test status: ' + apiProxy.status,
           'Launch support proof status: ' + support.status,
+          'Monitoring evidence proof status: ' + monitoring.status,
           '',
           '3. Walk the buyer through the product',
           '- Dashboard: current runtime, access, project, and evidence posture.',
@@ -4466,6 +4565,7 @@ function renderEnterpriseSupportPage(pageName: EnterpriseSupportPageName): strin
           '- Pilot operations evidence packet: rollback owner/path, budget/monitoring review, live launch gate command, and incident-response boundary.',
           '- API proxy self-test kit: copy-safe dry-run request, required caller-lock headers, protected email proof, and blocked-recipient denial test.',
           '- Launch support room: support model, internal admin boundary, approval gates, and customer-safe handoff package.',
+          '- Monitoring evidence kit: readiness, traffic, denial/error posture, alert workflow, Cloud Armor verification, and budget guardrails.',
           '- Launch checklist: go/no-go board, manual evidence, stale holds, and remaining blockers.',
           '',
           '4. Be crisp about boundaries',
@@ -4487,6 +4587,7 @@ function renderEnterpriseSupportPage(pageName: EnterpriseSupportPageName): strin
         var pilotOps = buildPilotOpsPacket(goNoGo, readiness, overview);
         var apiProxy = buildApiProxySelfTestPacket(overview, bootstrap);
         var support = buildLaunchSupportPacket(org, sso, readiness, overview, bootstrap, goNoGo);
+        var monitoring = buildMonitoringEvidencePacket(org, sso, readiness, overview, bootstrap, goNoGo);
         var providerCount = providerCountFromData(overview, bootstrap);
         var emailProviders = emailProvidersFromData(overview, bootstrap);
         text('demoMeta', goNoGo.status === 'go' ? 'ready to pilot' : 'hold for evidence');
@@ -4499,6 +4600,7 @@ function renderEnterpriseSupportPage(pageName: EnterpriseSupportPageName): strin
           linkRow('Dashboard posture', 'Show runtime readiness, organization scope, project count, member count, and quick links.', '/app/dashboard', 'open', 'good'),
           linkRow('Provider slot demo', 'Show material mode, protected email dry-run, blocked recipient test, policy denial evidence, and emergency revoke.', '/app/keys', 'open', providerCount ? 'good' : 'warn'),
           linkRow('Runtime activity', 'Show status codes, denial events, latency, provider request IDs, and recent traffic.', '/app/activity', 'open', overview.totalCalls ? 'good' : 'warn'),
+          linkRow('Alert operations', 'Show monitoring destinations, delivery logs, dispatch runs, and test-send workflow.', '/app/alerts', 'open', monitoring.status === 'ready' ? 'good' : 'warn'),
           linkRow('Evidence packet', 'Copy/download the customer-safe proof packet and explain what secrets are excluded.', '/app/evidence', 'packet', 'good'),
           linkRow('Launch support room', 'Show support model, internal admin boundary, approval gates, and customer handoff package.', '/app/support', 'support', support.status === 'ready' ? 'good' : 'warn'),
           linkRow('Go/no-go board', 'Show the current launch decision, manual evidence rows, stale holds, and blockers.', '/app/launch', 'board', goNoGo.status === 'go' ? 'good' : 'warn')
@@ -4510,6 +4612,7 @@ function renderEnterpriseSupportPage(pageName: EnterpriseSupportPageName): strin
           row('Pilot operations proof kit', pilotOps.status === 'ready' ? 'Rollback ownership and budget/monitoring review evidence are recorded for this pilot.' : 'Use Launch to record rollback owner/path and budget/monitoring review before customer traffic.', pilotOps.status, pilotOps.status === 'ready' ? 'good' : 'warn'),
           row('API proxy self-test kit', apiProxy.status === 'ready' ? 'Provider slots and proxy traffic evidence are visible; use Provider Slots to copy the safe dry-run request.' : 'Use Provider Slots to run/copy a dry-run request and create proxy traffic evidence before the customer walkthrough.', apiProxy.status, apiProxy.status === 'ready' ? 'good' : 'warn'),
           row('Launch support kit', support.status === 'ready' ? 'Support model, internal admin boundary, and customer handoff package are ready for the pilot story.' : 'Use Support to review launch-week support scope and customer handoff boundaries.', support.status, support.status === 'ready' ? 'good' : 'warn'),
+          row('Monitoring evidence kit', monitoring.status === 'ready' ? 'Runtime, traffic, alert workflow, Cloud Armor, and budget evidence are ready for launch-week review.' : 'Use Launch and Alerts to record Cloud Armor verification, budget/monitoring review, and alert test workflow before pilot traffic.', monitoring.status, monitoring.status === 'ready' ? 'good' : 'warn'),
           row('No raw key exposure', 'Provider slots show posture and material mode without returning encrypted shares or plaintext provider material to the browser.', 'secret safe', 'good'),
           row('Policy denial evidence', 'The blocked-recipient test gives a buyer a concrete denial story: policy rejected unsafe traffic and recorded evidence.', 'auditable', 'good'),
           row('Access and audit exports', 'Members, Audit, Activity, and Evidence produce reviewable CSV/JSON artifacts for security teams.', 'exportable', 'good')
@@ -4521,6 +4624,7 @@ function renderEnterpriseSupportPage(pageName: EnterpriseSupportPageName): strin
           row('Rollback/monitoring before traffic', pilotOps.status === 'ready' ? 'Rollback and monitoring ownership is recorded for this organization.' : 'Do not start pilot traffic until rollback owner/path and budget/monitoring review are recorded.', 'ops gate', pilotOps.status === 'ready' ? 'good' : 'warn'),
           row('Self-test before live calls', apiProxy.status === 'ready' ? 'API proxy self-test evidence is visible for this organization.' : 'Use dry-run and blocked-recipient tests before enabling any live sandbox provider call.', 'proxy gate', apiProxy.status === 'ready' ? 'good' : 'warn'),
           row('Support boundary before pilot', support.status === 'ready' ? 'Support scope and internal admin boundaries are visible.' : 'Review support model and internal admin boundaries before the customer starts testing.', 'support gate', support.status === 'ready' ? 'good' : 'warn'),
+          row('Monitoring before pilot', monitoring.status === 'ready' ? 'Monitoring evidence is ready for launch-week customer testing.' : 'Do not start pilot traffic until runtime, traffic, alert workflow, Cloud Armor, and budget evidence are reviewed.', 'monitoring gate', monitoring.status === 'ready' ? 'good' : 'warn'),
           row('Do not mark GO casually', goNoGo.status === 'go' ? 'The board is green for this browser/org evidence state.' : 'The board is holding on: ' + goNoGo.blockers.join('; '), goNoGo.status, goNoGo.status === 'go' ? 'good' : 'warn'),
           row('Cloud Armor evidence', 'Keep Cloud Armor as a required operator-confirmed check until the live policy exists and verify passes.', 'manual proof', 'warn'),
           row('Key rotation before paid onboarding', 'Shared or exposed pilot keys should be rotated or explicitly accepted for demo-only use before paid customer data.', 'required', 'warn')
@@ -4719,6 +4823,7 @@ function renderEnterpriseSupportPage(pageName: EnterpriseSupportPageName): strin
             row('Production verifier', 'npm run verify:gcp-enterprise-edge checks the GCP edge, backend health, managed TLS, and live readiness.', 'read-only', 'good'),
             row('Evidence bundle', 'npm run evidence:enterprise-production captures timestamped infrastructure, app, readiness, and monitoring evidence for review.', 'read-only', 'good'),
             row('Evidence validator', 'npm run validate:enterprise-evidence validates the latest evidence bundle before customer or compliance handoff.', 'read-only', 'good'),
+            row('Monitoring evidence review', 'Review /app/evidence monitoring_evidence plus /app/alerts destinations, delivery logs, dispatch runs, and test-send workflow before pilot traffic.', 'read-only', 'good'),
             row('Pilot live launch gate', 'RUN_LIVE_EDGE=true RUN_LIVE_APP_QA=true RUN_CLOUD_ARMOR_QA=true npm run gate:gcp-customer-launch runs live edge, app QA, Cloud Armor, and customer-launch evidence checks before pilot traffic.', 'read-only', 'good'),
             row('Handoff package', 'npm run package:enterprise-handoff assembles customer/compliance docs, gateway templates, latest local evidence, and a manifest without changing live infrastructure.', 'read-only', 'good'),
             row('Handoff gate', 'npm run gate:enterprise-handoff validates gateway templates, builds the package, verifies the manifest, and can optionally require live QA/evidence strictness.', 'read-only', 'good'),

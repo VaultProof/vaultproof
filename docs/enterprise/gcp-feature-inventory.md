@@ -5,11 +5,11 @@ Last updated: 2026-05-12
 This file tracks what VaultProof features exist, which ones have been adapted for Google Cloud, and what still blocks production cutover. Update it every time a build changes product behavior, runtime behavior, infrastructure behavior, or customer-facing claims.
 
 <!-- gcp-build-marker:start -->
-Last validated GCP image build: `launch-support-room-20260513`
+Last validated GCP image build: `monitoring-evidence-20260513`
 
-- Control plane digest: `sha256:898ef9d8a31ca4add1c5c20fd104f65bbe77ea8c90d0f241fa2f425e5c22cdf0`
-- Executor digest: `sha256:d6d94a35e9210bce9d76d8055113783d04fdfc3eb71ead4a3c32b47f0032c0d3`
-- Updated: 2026-05-13T02:03:48.366Z
+- Control plane digest: `sha256:402f4d6901f0fd1005cef26be1d6e2d81c49a2648ec74aa91f7afb0aef5fa289`
+- Executor digest: `sha256:7ae2af9b9d823bd91a2d0405d0c162063017dd64da322a21fd55808f9d367dde`
+- Updated: 2026-05-13T02:13:53.310Z
 <!-- gcp-build-marker:end -->
 
 ## Runtime Features
@@ -96,6 +96,7 @@ Last validated GCP image build: `launch-support-room-20260513`
 | Pilot operations evidence kit | Built | `/app/launch` now shows rollback owner/path and budget/monitoring review evidence beside the go/no-go board. `/app/evidence` includes `pilot_operations_evidence` with rollback paths, monitoring review, live launch gate command, customer incident-response boundary, and redacted secret boundaries. `/app/demo` now has a buyer-facing pilot operations proof point and `/app/runbooks` lists the strict live launch gate plus GCP runtime reset rollback action. |
 | API proxy self-test kit | Built | `/app/keys` now has a customer API proxy test kit with copy-safe dry-run request snippets, required caller-lock headers, `YOUR_VAULTPROOF_SESSION_JWT` placeholder, provider-slot material posture, and copyable blocked-recipient email denial requests. `/app/evidence` includes `api_proxy_self_test` with execute endpoint pattern, pass criteria, traffic evidence, email demo status, and redacted secret boundaries. `/app/demo` now has a buyer-facing API proxy self-test proof point. |
 | Launch support room | Built | `/app/support` packages founder-led launch-week support for the demo with support readiness, internal admin boundary, read-only default, approval-gated actions, optional 24-hour incident-response add-on boundary, customer handoff checklist, and copyable support brief. `/app/evidence` includes `launch_support_readiness` and `/app/demo` now has a buyer-facing launch support proof point. |
+| Monitoring evidence kit | Built | `/app/evidence` now includes `monitoring_evidence` with runtime readiness, traffic/denial/error posture, alert workflow path, Cloud Armor verification evidence, budget alert guardrail, live monitoring gate command, customer handoff notes, and redacted secret boundaries. `/app/demo` adds a buyer-facing monitoring proof point and `/app/runbooks` lists the monitoring evidence review before pilot traffic. |
 | Buyer commercial package view | Built | `/app/plans` now explains the first paid-pilot package, included controls, contract-controlled capacity envelope, expansion path, guardrails, security boundaries, and links into evidence, launch, technical guide, and runbooks for customer review. |
 | Email API key and secret protection demo | Built | `/app/keys` now has email-provider defaults for Resend, SendGrid, Mailgun, Postmark, and AWS SES, a customer-facing email API key demo panel, protected email dry-run actions, blocked-recipient policy testing, launch/evidence packet coverage, and audit metadata that classifies email-provider calls as `email_api_key` / `email_provider_send`. The execute route enforces email sender-domain, recipient-domain, recipient-address, and template-ID policy and records denial evidence from derived fields only. Raw provider keys still stay out of browser flows; live sandbox sends require sealed provider material through the local ingest helper. General secret slots remain use-only by default and must never be emailed or casually revealed. |
 | Dashboard reference palette | Built | The live dashboard/app shell now uses the supplied mint, deep green, mustard gold, white card, and teal accent palette. Live HTML verification checks the deployed palette values on `https://enterprise.vaultproof.dev/app/dashboard`. |

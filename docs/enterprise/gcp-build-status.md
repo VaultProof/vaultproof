@@ -1,6 +1,6 @@
 # VaultProof GCP Build Status
 
-Last updated: 2026-05-13T02:03:47.860Z
+Last updated: 2026-05-13T02:13:52.713Z
 
 This file is the living inventory of what has been built for VaultProof on Google Cloud. It is refreshed after every successful enterprise image build by `infra/gcp/enterprise-secure-runtime/build-images.sh`.
 
@@ -46,11 +46,11 @@ Status: `attached and enforced`
 
 ## App Shell Notes
 
-- Build `launch-support-room-20260513` is the current deployed GCP image tag for both control plane and executor containers.
+- Build `monitoring-evidence-20260513` is the current deployed GCP image tag for both control plane and executor containers.
 - Homepage hero headline is `Active Key Protection for every API call.`
-- `/app/demo` is the buyer walkthrough: live workspace facts, proof path, identity/OAuth proof kit, key-rotation proof kit, pilot operations proof kit, API proxy self-test kit, safety guardrails, objection answers, paid-pilot close steps, and a copyable demo talk track generated without secrets.
+- `/app/demo` is the buyer walkthrough: live workspace facts, proof path, identity/OAuth proof kit, key-rotation proof kit, pilot operations proof kit, API proxy self-test kit, monitoring evidence kit, safety guardrails, objection answers, paid-pilot close steps, and a copyable demo talk track generated without secrets.
 - `/app/launch` is the customer go-live board: live readiness summary, auto/manual customer tasks, browser-saved checklist progress, safe-to-pilot go/no-go readiness, browser-local status/timestamp evidence with stale holds, workflow links, identity/OAuth, key-rotation, and pilot-operations evidence packets, and a copyable launch brief.
-- `/app/evidence` is the customer proof packet: runtime readiness, go/no-go launch decision and blockers, identity/login QA evidence, key-rotation/demo-only acceptance evidence, pilot operations rollback and budget/monitoring evidence, API proxy self-test evidence, access-review and audit export links, provider posture, rollout workflow, and copy/download JSON evidence summary without secrets.
+- `/app/evidence` is the customer proof packet: runtime readiness, go/no-go launch decision and blockers, identity/login QA evidence, key-rotation/demo-only acceptance evidence, pilot operations rollback and budget/monitoring evidence, API proxy self-test evidence, launch support readiness, monitoring evidence with alert workflow/Cloud Armor/budget guardrails, access-review and audit export links, provider posture, rollout workflow, and copy/download JSON evidence summary without secrets.
 - `/app/plans` is the buyer package view: rollout posture, paid-pilot commercial package, contract guardrails, security boundaries, and direct links into evidence, launch, technical guide, and runbooks.
 - `/app/support` is the launch support room: founder-led support scope, optional 24-hour incident-response boundary, internal admin URL, read-only default, approval-gated actions, support handoff checklist, and copyable support brief without secrets.
 - `/app/keys` includes the API proxy self-test kit and email API key demo path: copy-safe dry-run requests with required caller-lock headers, Resend/SendGrid/Mailgun/Postmark/AWS SES slot defaults, protected email dry-run, blocked-recipient policy testing, no raw key reveal, launch/evidence coverage, and email-specific audit metadata.
@@ -183,14 +183,14 @@ Cost note: the current fixed estimate is above the existing `VaultProof Producti
 
 ## Build Pointer
 
-- Build tag: `launch-support-room-20260513`
+- Build tag: `monitoring-evidence-20260513`
 - Registry: `us-central1-docker.pkg.dev/vaultproof-prod/vaultproof`
-- Control plane image: `us-central1-docker.pkg.dev/vaultproof-prod/vaultproof/enterprise-control-plane:launch-support-room-20260513`
-- Control plane digest: `sha256:898ef9d8a31ca4add1c5c20fd104f65bbe77ea8c90d0f241fa2f425e5c22cdf0`
-- Control plane built at: `2026-05-13T02:00:02.469016352Z`
-- Executor image: `us-central1-docker.pkg.dev/vaultproof-prod/vaultproof/enterprise-secure-executor:launch-support-room-20260513`
-- Executor digest: `sha256:d6d94a35e9210bce9d76d8055113783d04fdfc3eb71ead4a3c32b47f0032c0d3`
-- Executor built at: `2026-05-13T02:00:15.992842940Z`
+- Control plane image: `us-central1-docker.pkg.dev/vaultproof-prod/vaultproof/enterprise-control-plane:monitoring-evidence-20260513`
+- Control plane digest: `sha256:402f4d6901f0fd1005cef26be1d6e2d81c49a2648ec74aa91f7afb0aef5fa289`
+- Control plane built at: `2026-05-13T02:10:49.828715250Z`
+- Executor image: `us-central1-docker.pkg.dev/vaultproof-prod/vaultproof/enterprise-secure-executor:monitoring-evidence-20260513`
+- Executor digest: `sha256:7ae2af9b9d823bd91a2d0405d0c162063017dd64da322a21fd55808f9d367dde`
+- Executor built at: `2026-05-13T02:11:01.957061298Z`
 
 ## Project
 
