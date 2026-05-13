@@ -1,6 +1,6 @@
 # VaultProof GCP Build Status
 
-Last updated: 2026-05-13T10:03:21Z
+Last updated: 2026-05-13T10:15:37.092Z
 
 This file is the living inventory of what has been built for VaultProof on Google Cloud. It is refreshed after every successful enterprise image build by `infra/gcp/enterprise-secure-runtime/build-images.sh`.
 
@@ -47,7 +47,7 @@ Status: `attached and enforced`
 
 ## App Shell Notes
 
-- Build `internal-admin-sso-20260513` is the current deployed GCP image tag for both control plane and executor containers.
+- Build `0a2bcee` is the current deployed GCP image tag for both control plane and executor containers.
 - Homepage hero headline is `Active Key Protection for every API call.`
 - All customer-facing enterprise pages below live under `https://enterprise.vaultproof.dev`; route-only mentions are in-app links on that subdomain.
 - `https://enterprise.vaultproof.dev/app/demo` is the buyer walkthrough: live workspace facts, proof path, identity/OAuth proof kit, key-rotation proof kit, pilot operations proof kit, API proxy self-test kit, monitoring evidence kit, safety guardrails, objection answers, paid-pilot close steps, and a copyable demo talk track generated without secrets.
@@ -62,7 +62,7 @@ Status: `attached and enforced`
 - `https://enterprise.vaultproof.dev/app/control` and `https://enterprise.vaultproof.dev/app/org` use the shared universal sidebar with explicit sidebar typography, hide the legacy static topbar/page frame, and clean old `?org=<uuid>` URLs back to canonical `https://enterprise.vaultproof.dev/app/control` and `https://enterprise.vaultproof.dev/app/org` while preserving the selected org in local storage.
 - Live HTML verification on both long-form URLs confirmed the universal sidebar, URL cleanup script, hidden legacy topbar, explicit sidebar font sizing, and no legacy sidebar/site-theme artifacts.
 - Staff/admin pages belong to the separate VaultProof B2C/root system on `vaultproof.dev`. The enterprise runtime does not default to an employee admin hostname, and `enterprise.vaultproof.dev` remains customer-facing only.
-- Root admin boundary page added at `vaultproof.dev/admin` in the B2C static site so staff/B2C admin entry is distinct from enterprise customer login.
+- Root admin boundary page lives at `vaultproof.dev/admin` in the B2C static site so staff/B2C admin entry is distinct from enterprise customer login.
 
 ## Projects Page Performance
 
@@ -190,14 +190,14 @@ Cost note: the current fixed estimate is above the existing `VaultProof Producti
 
 ## Build Pointer
 
-- Build tag: `internal-admin-sso-20260513`
+- Build tag: `0a2bcee`
 - Registry: `us-central1-docker.pkg.dev/vaultproof-prod/vaultproof`
-- Control plane image: `us-central1-docker.pkg.dev/vaultproof-prod/vaultproof/enterprise-control-plane:internal-admin-sso-20260513`
-- Control plane digest: `sha256:b3771d7cb3586f85076367e4bf7da7a9aa2588af80691e8eac40b43f6ec7c809`
-- Control plane built at: `2026-05-13T09:38:57.585434400Z`
-- Executor image: `us-central1-docker.pkg.dev/vaultproof-prod/vaultproof/enterprise-secure-executor:internal-admin-sso-20260513`
-- Executor digest: `sha256:84ab86d7e6a2e837f16855aefbb1083182e6bd7011f4ca979cbb22665e117890`
-- Executor built at: `2026-05-13T09:39:12.346705470Z`
+- Control plane image: `us-central1-docker.pkg.dev/vaultproof-prod/vaultproof/enterprise-control-plane:0a2bcee`
+- Control plane digest: `sha256:58c1a8824ea6e613e96e9a3f733db78bd9c597dbfc6fac75bbf678ff1f6f8ab2`
+- Control plane built at: `2026-05-13T10:08:15.091986845Z`
+- Executor image: `us-central1-docker.pkg.dev/vaultproof-prod/vaultproof/enterprise-secure-executor:0a2bcee`
+- Executor digest: `sha256:01152e7b307601e19fdb74035f6787164590d77019485054e004aaeef8b7eb01`
+- Executor built at: `2026-05-13T10:08:26.673301993Z`
 
 ## Project
 

@@ -440,6 +440,7 @@ Status: \`${cloudArmorState}\`
 - \`https://${edgeDomain}/app/control\` and \`https://${edgeDomain}/app/org\` use the shared universal sidebar with explicit sidebar typography, hide the legacy static topbar/page frame, and clean old \`?org=<uuid>\` URLs back to canonical \`https://${edgeDomain}/app/control\` and \`https://${edgeDomain}/app/org\` while preserving the selected org in local storage.
 - Live HTML verification on both long-form URLs confirmed the universal sidebar, URL cleanup script, hidden legacy topbar, explicit sidebar font sizing, and no legacy sidebar/site-theme artifacts.
 - Staff/admin pages belong to the separate VaultProof B2C/root system on \`vaultproof.dev\`. The enterprise runtime does not default to an employee admin hostname, and \`enterprise.vaultproof.dev\` remains customer-facing only.
+- Root admin boundary page lives at \`vaultproof.dev/admin\` in the B2C static site so staff/B2C admin entry is distinct from enterprise customer login.
 
 ## Projects Page Performance
 
