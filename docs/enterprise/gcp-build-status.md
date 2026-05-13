@@ -1,6 +1,6 @@
 # VaultProof GCP Build Status
 
-Last updated: 2026-05-13T08:42:30.603Z
+Last updated: 2026-05-13T08:49:35.048Z
 
 This file is the living inventory of what has been built for VaultProof on Google Cloud. It is refreshed after every successful enterprise image build by `infra/gcp/enterprise-secure-runtime/build-images.sh`.
 
@@ -34,7 +34,7 @@ Current blockers:
 
 Status: `built in login-readiness-20260510`
 
-`npm run qa:enterprise-login` now checks the live enterprise login page, validates the public Supabase URL/anon key embedded in `/app/enterprise-login.js`, and verifies the login script still sends OAuth, magic-link, confirmation, and recovery redirects back to `https://enterprise.vaultproof.dev/app/login`.
+`npm run qa:enterprise-login` now checks the live enterprise login page, validates the public Supabase URL/anon key embedded in `https://enterprise.vaultproof.dev/app/enterprise-login.js`, and verifies the login script still sends OAuth, magic-link, confirmation, and recovery redirects back to `https://enterprise.vaultproof.dev/app/login`.
 
 For the final demo go/no-go run, use `LOGIN_QA_REQUIRE_SESSION=true npm run qa:enterprise-login` with Supabase service-role env loaded. That strict mode generates a temporary magic-link session for `ken@vaultproof.dev`, which also proves the Supabase Auth redirect allowlist accepts `https://enterprise.vaultproof.dev/app/login`, then calls `/api/v1/enterprise/orgs`, `/orgs/current`, and `/projects/bootstrap` with the generated browser session. To verify a specific external provider redirect, add `LOGIN_QA_OAUTH_PROVIDER=google` after the provider is configured.
 
@@ -48,16 +48,17 @@ Status: `attached and enforced`
 
 - Build `pilot-success-20260513` is the current deployed GCP image tag for both control plane and executor containers.
 - Homepage hero headline is `Active Key Protection for every API call.`
-- `/app/demo` is the buyer walkthrough: live workspace facts, proof path, identity/OAuth proof kit, key-rotation proof kit, pilot operations proof kit, API proxy self-test kit, monitoring evidence kit, safety guardrails, objection answers, paid-pilot close steps, and a copyable demo talk track generated without secrets.
-- `/app/launch` is the customer go-live board: live readiness summary, auto/manual customer tasks, browser-saved checklist progress, safe-to-pilot go/no-go readiness, browser-local status/timestamp evidence with stale holds, workflow links, identity/OAuth, key-rotation, and pilot-operations evidence packets, and a copyable launch brief.
-- `/app/evidence` is the customer proof packet: runtime readiness, go/no-go launch decision and blockers, identity/login QA evidence, key-rotation/demo-only acceptance evidence, pilot operations rollback and budget/monitoring evidence, API proxy self-test evidence, launch support readiness, monitoring evidence with alert workflow/Cloud Armor/budget guardrails, access-review and audit export links, provider posture, rollout workflow, and copy/download JSON evidence summary without secrets.
-- `/app/security-review` is the buyer security packet: concise architecture summary, control coverage, evidence links, open review items, common customer answers, known limitations, secret exclusions, and copyable security/procurement review text.
-- `/app/plans` is the buyer package view: rollout posture, paid-pilot commercial package, contract guardrails, security boundaries, and direct links into evidence, launch, technical guide, and runbooks.
-- `/app/pilot` is the paid-pilot proposal builder: browser-local first workload scope, expected volume, monthly price, 20% sales commission math, support/incident-response terms, success metric, and copyable customer proposal text without secrets.
-- `/app/pilot-success` is the pilot success tracker: live checks, browser-local customer milestones, evidence links, blockers, expansion/no-go readiness, and copyable weekly customer update without secrets.
-- `/app/support` is the launch support room: founder-led support scope, optional 24-hour incident-response boundary, internal admin URL, read-only default, approval-gated actions, support handoff checklist, and copyable support brief without secrets.
-- `/app/keys` includes the API proxy self-test kit and email API key demo path: copy-safe dry-run requests with required caller-lock headers, Resend/SendGrid/Mailgun/Postmark/AWS SES slot defaults, protected email dry-run, blocked-recipient policy testing, no raw key reveal, launch/evidence coverage, and email-specific audit metadata.
-- `/app/control` and `/app/org` use the shared universal sidebar with explicit sidebar typography, hide the legacy static topbar/page frame, and clean old `?org=<uuid>` URLs back to canonical `/app/control` and `/app/org` while preserving the selected org in local storage.
+- All customer-facing enterprise pages below live under `https://enterprise.vaultproof.dev`; route-only mentions are in-app links on that subdomain.
+- `https://enterprise.vaultproof.dev/app/demo` is the buyer walkthrough: live workspace facts, proof path, identity/OAuth proof kit, key-rotation proof kit, pilot operations proof kit, API proxy self-test kit, monitoring evidence kit, safety guardrails, objection answers, paid-pilot close steps, and a copyable demo talk track generated without secrets.
+- `https://enterprise.vaultproof.dev/app/launch` is the customer go-live board: live readiness summary, auto/manual customer tasks, browser-saved checklist progress, safe-to-pilot go/no-go readiness, browser-local status/timestamp evidence with stale holds, workflow links, identity/OAuth, key-rotation, and pilot-operations evidence packets, and a copyable launch brief.
+- `https://enterprise.vaultproof.dev/app/evidence` is the customer proof packet: runtime readiness, go/no-go launch decision and blockers, identity/login QA evidence, key-rotation/demo-only acceptance evidence, pilot operations rollback and budget/monitoring evidence, API proxy self-test evidence, launch support readiness, monitoring evidence with alert workflow/Cloud Armor/budget guardrails, access-review and audit export links, provider posture, rollout workflow, and copy/download JSON evidence summary without secrets.
+- `https://enterprise.vaultproof.dev/app/security-review` is the buyer security packet: concise architecture summary, control coverage, evidence links, open review items, common customer answers, known limitations, secret exclusions, and copyable security/procurement review text.
+- `https://enterprise.vaultproof.dev/app/plans` is the buyer package view: rollout posture, paid-pilot commercial package, contract guardrails, security boundaries, and direct links into evidence, launch, technical guide, and runbooks.
+- `https://enterprise.vaultproof.dev/app/pilot` is the paid-pilot proposal builder: browser-local first workload scope, expected volume, monthly price, 20% sales commission math, support/incident-response terms, success metric, and copyable customer proposal text without secrets.
+- `https://enterprise.vaultproof.dev/app/pilot-success` is the pilot success tracker: live checks, browser-local customer milestones, evidence links, blockers, expansion/no-go readiness, and copyable weekly customer update without secrets.
+- `https://enterprise.vaultproof.dev/app/support` is the launch support room: founder-led support scope, optional 24-hour incident-response boundary, internal admin URL, read-only default, approval-gated actions, support handoff checklist, and copyable support brief without secrets.
+- `https://enterprise.vaultproof.dev/app/keys` includes the API proxy self-test kit and email API key demo path: copy-safe dry-run requests with required caller-lock headers, Resend/SendGrid/Mailgun/Postmark/AWS SES slot defaults, protected email dry-run, blocked-recipient policy testing, no raw key reveal, launch/evidence coverage, and email-specific audit metadata.
+- `https://enterprise.vaultproof.dev/app/control` and `https://enterprise.vaultproof.dev/app/org` use the shared universal sidebar with explicit sidebar typography, hide the legacy static topbar/page frame, and clean old `?org=<uuid>` URLs back to canonical `https://enterprise.vaultproof.dev/app/control` and `https://enterprise.vaultproof.dev/app/org` while preserving the selected org in local storage.
 - Live HTML verification on both long-form URLs confirmed the universal sidebar, URL cleanup script, hidden legacy topbar, explicit sidebar font sizing, and no legacy sidebar/site-theme artifacts.
 
 ## Projects Page Performance
@@ -81,7 +82,7 @@ Live timing on `https://enterprise.vaultproof.dev` with a temporary Supabase pil
 
 | Endpoint | Before | After |
 | --- | ---: | ---: |
-| `/app/projects` HTML | 132 ms | 140 ms |
+| `https://enterprise.vaultproof.dev/app/projects` HTML | 132 ms | 140 ms |
 | `/api/v1/enterprise/orgs` | 1,709 ms | 209 ms median |
 | `/api/v1/enterprise/projects` | 2,173 ms | 456 ms median |
 | `/api/v1/enterprise/projects/stats/overview` | 880 ms | 513 ms median |

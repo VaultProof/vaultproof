@@ -25,14 +25,14 @@ Already built:
 - Google-managed TLS certificate for `enterprise.vaultproof.dev`, status `ACTIVE`
 - Load-balancer backend custom origin-lock header injection
 - Cloud Armor edge policy helper for WAF-style scanner blocking and coarse per-IP rate limits
-- Customer demo script page at `/app/demo` for buyer walkthrough, proof path, guardrails, Q&A, and close steps
-- Customer launch checklist page at `/app/launch`, including safe-to-pilot go/no-go board with browser-local operator evidence status, timestamps, and stale holds
-- Customer evidence packet page at `/app/evidence`, including go/no-go launch decision summary and blockers
-- Customer launch support room at `/app/support` for support model, internal admin boundary, approval gates, handoff checklist, and copyable support brief
-- Customer security review packet at `/app/security-review` for architecture, controls, evidence links, open items, common buyer answers, known limitations, and secret exclusions
-- Buyer commercial package page at `/app/plans` for paid-pilot scope, included controls, contract guardrails, security boundaries, and customer review links
-- Paid-pilot proposal builder at `/app/pilot` for first workload scope, expected volume, monthly price, sales commission math, support boundary, incident-response terms, success metric, and close steps
-- Pilot success tracker at `/app/pilot-success` for live checks, browser-local milestones, evidence links, blockers, weekly customer update copy, and expansion/no-go readiness
+- Customer demo script page at `https://enterprise.vaultproof.dev/app/demo` for buyer walkthrough, proof path, guardrails, Q&A, and close steps
+- Customer launch checklist page at `https://enterprise.vaultproof.dev/app/launch`, including safe-to-pilot go/no-go board with browser-local operator evidence status, timestamps, and stale holds
+- Customer evidence packet page at `https://enterprise.vaultproof.dev/app/evidence`, including go/no-go launch decision summary and blockers
+- Customer launch support room at `https://enterprise.vaultproof.dev/app/support` for support model, internal admin boundary, approval gates, handoff checklist, and copyable support brief
+- Customer security review packet at `https://enterprise.vaultproof.dev/app/security-review` for architecture, controls, evidence links, open items, common buyer answers, known limitations, and secret exclusions
+- Buyer commercial package page at `https://enterprise.vaultproof.dev/app/plans` for paid-pilot scope, included controls, contract guardrails, security boundaries, and customer review links
+- Paid-pilot proposal builder at `https://enterprise.vaultproof.dev/app/pilot` for first workload scope, expected volume, monthly price, sales commission math, support boundary, incident-response terms, success metric, and close steps
+- Pilot success tracker at `https://enterprise.vaultproof.dev/app/pilot-success` for live checks, browser-local milestones, evidence links, blockers, weekly customer update copy, and expansion/no-go readiness
 - Build-status and feature inventory docs
 - Managed Supabase remains the auth/database provider for the pilot
 
@@ -69,7 +69,7 @@ Goal 1 is the first milestone where Ken can start testing the sellable product p
 
 Current status: Goal 1 demo dry-run gate is done. The control-plane runtime env includes the public Supabase anon key. `npm run qa:enterprise-login` now exists for repeatable login readiness checks; strict mode still needs to be run with Supabase service-role env, then followed by final human OAuth/password browser QA.
 
-Customer packaging status: `/app/plans` now carries the first sellable paid-pilot package view, `/app/security-review` gives buyers a copyable security/procurement review packet, `/app/pilot` creates the first-workload proposal with price, commission, support, incident-response, and close-step terms, and `/app/pilot-success` tracks weekly proof, milestones, blockers, and expansion/no-go readiness after kickoff. It keeps automated billing and hard plan enforcement out of scope for Goal 1; capacity, support cadence, retention, SSO depth, and dedicated-runtime terms stay contract-controlled until billing APIs exist.
+Customer packaging status: all enterprise buyer pages are on `https://enterprise.vaultproof.dev`. `https://enterprise.vaultproof.dev/app/plans` now carries the first sellable paid-pilot package view, `https://enterprise.vaultproof.dev/app/security-review` gives buyers a copyable security/procurement review packet, `https://enterprise.vaultproof.dev/app/pilot` creates the first-workload proposal with price, commission, support, incident-response, and close-step terms, and `https://enterprise.vaultproof.dev/app/pilot-success` tracks weekly proof, milestones, blockers, and expansion/no-go readiness after kickoff. It keeps automated billing and hard plan enforcement out of scope for Goal 1; capacity, support cadence, retention, SSO depth, and dedicated-runtime terms stay contract-controlled until billing APIs exist.
 
 ## Architecture
 
@@ -169,7 +169,7 @@ Success:
 
 - `dig +short enterprise.vaultproof.dev` returns the GCP edge IP.
 - TLS is valid for `enterprise.vaultproof.dev`.
-- `/health`, `/readiness`, `/app/login`, and `/app/dashboard` render without mixed Azure/GCP claims.
+- `/health`, `/readiness`, `https://enterprise.vaultproof.dev/app/login`, and `https://enterprise.vaultproof.dev/app/dashboard` render without mixed Azure/GCP claims.
 
 ## Phase 4: Demo Readiness
 
@@ -183,14 +183,14 @@ Build:
 - Run `LOGIN_QA_REQUIRE_SESSION=true npm run qa:enterprise-login` with Supabase service-role env to verify the live login page, Supabase redirect allowlist, generated browser session, and authenticated enterprise org/bootstrap APIs.
 - Add `LOGIN_QA_OAUTH_PROVIDER=google` to the login QA command after the external OAuth provider app is configured.
 - Confirm API execution path through `/api/v1/enterprise/execute`.
-- Prepare demo talking points in `/app/demo` and use `/app/evidence` as the first customer one-page security proof.
+- Prepare demo talking points in `https://enterprise.vaultproof.dev/app/demo` and use `https://enterprise.vaultproof.dev/app/evidence` as the first customer one-page security proof.
 
 Success:
 
 - Ken can log in or use a guided demo account.
 - Test execution succeeds without exposing provider keys to the customer app.
 - Audit export shows request, policy, executor, and attestation metadata.
-- Support/admin path is available internally and summarized for customers through `/app/support` without exposing the employee console or secrets.
+- Support/admin path is available internally and summarized for customers through `https://enterprise.vaultproof.dev/app/support` without exposing the employee console or secrets.
 
 ## Demo Feature: Email API Key And Secret Protection
 
@@ -234,7 +234,7 @@ Demo UI/API work:
 - Built: add a blocked-recipient demo test that records denial evidence without exposing the raw email payload.
 - Built: classify email-provider execution audit metadata as `protected_secret_kind: email_api_key` and `protected_workflow: email_provider_send`.
 - Built: add evidence packet and launch-checklist lines for email API key protection.
-- Built: add `/app/keys` customer API proxy self-test kit with copy-safe dry-run requests, required caller-lock headers, browser-session placeholder, blocked-recipient denial snippets, and matching `/app/evidence` proof under `api_proxy_self_test`.
+- Built: add `https://enterprise.vaultproof.dev/app/keys` customer API proxy self-test kit with copy-safe dry-run requests, required caller-lock headers, browser-session placeholder, blocked-recipient denial snippets, and matching `https://enterprise.vaultproof.dev/app/evidence` proof under `api_proxy_self_test`.
 - Next: seal a sandbox email provider key and run a live sandbox send only when the demo needs actual delivery.
 
 Demo success:
@@ -251,7 +251,7 @@ Build after first customer proof:
 
 - Move from one bootstrap VM to a managed instance group or blue/green VM pair.
 - Add Cloud Armor WAF and rate limits. Status: helper built with scanner-path blocking plus per-IP throttles for secure execute, enterprise APIs, and the public edge.
-- Add uptime checks and alerting policies. Status: customer-safe monitoring evidence kit built in `/app/evidence`, `/app/demo`, and `/app/runbooks`; GCP-native uptime check and alert-policy resources are still a paid-production scale task.
+- Add uptime checks and alerting policies. Status: customer-safe monitoring evidence kit built in `https://enterprise.vaultproof.dev/app/evidence`, `https://enterprise.vaultproof.dev/app/demo`, and `https://enterprise.vaultproof.dev/app/runbooks`; GCP-native uptime check and alert-policy resources are still a paid-production scale task.
 - Add automated evidence bundle capture for each release.
 - Add a rollback script for edge, VM image, and DNS changes.
 - Clean older Azure migration/history docs into provider-neutral or clearly archived references before paid-production handoff.
@@ -269,8 +269,8 @@ Build after first customer proof:
 - Customer-facing docs reviewed for Azure-era leftovers.
 - Budget and monitoring reviewed daily during launch week.
 - Cloud Armor policy is attached and `npm run verify:gcp-enterprise-cloud-armor` passes.
-- Customer launch checklist and go/no-go board at `/app/launch` are reviewed with the pilot user, including browser-local manual evidence status/timestamps.
-- Customer evidence packet at `/app/evidence` is reviewed with the pilot user and includes the current go/no-go launch decision and blockers.
+- Customer launch checklist and go/no-go board at `https://enterprise.vaultproof.dev/app/launch` are reviewed with the pilot user, including browser-local manual evidence status/timestamps.
+- Customer evidence packet at `https://enterprise.vaultproof.dev/app/evidence` is reviewed with the pilot user and includes the current go/no-go launch decision and blockers.
 - Email API key demo dry-run flow is policy-gated, audited, and tested before showing customers; live sandbox send is sealed first when needed.
 - Rollback path written down before sending real customer traffic.
 
