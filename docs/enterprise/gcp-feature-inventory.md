@@ -81,7 +81,7 @@ Last validated GCP image build: `pilot-success-20260513`
 | Build-context secret exclusions | Built | `.dockerignore` and `.gcloudignore` now exclude PEM/key/env material before local Docker or Cloud Build uploads. |
 | Non-root runtime containers | Built | Control-plane and executor Dockerfiles set `USER node`; deployed in GCP image tag `security-hardening-20260509`. |
 | Request body size cap | Built | Control-plane and executor HTTP servers reject request bodies over 5 MiB with HTTP 413; deployed in GCP image tag `security-hardening-20260509`. |
-| Security audit report | Built | Current audit is recorded in `docs/enterprise/security-audit-2026-05-09.md`. |
+| Security audit report | Built | Current audit is recorded in `docs/enterprise/security-audit-2026-05-13.md`; previous baseline is `docs/enterprise/security-audit-2026-05-09.md`. |
 
 ## Enterprise App Features
 
