@@ -1,6 +1,6 @@
 # VaultProof GCP Build Status
 
-Last updated: 2026-05-13T00:17:54.327Z
+Last updated: 2026-05-13T00:41:04.667Z
 
 This file is the living inventory of what has been built for VaultProof on Google Cloud. It is refreshed after every successful enterprise image build by `infra/gcp/enterprise-secure-runtime/build-images.sh`.
 
@@ -12,7 +12,7 @@ This file is the living inventory of what has been built for VaultProof on Googl
 - TLS: `Google-managed certificate active`
 - Backend: `healthy`
 - Origin-lock backend header: `configured`
-- Cloud Armor edge policy: `not configured`
+- Cloud Armor edge policy: `attached and enforced`
 - Auth/database provider: `managed Supabase for Goal 1 demo; fresh database later`
 - Public Supabase anon key: `configured`
 - Runtime readiness: `production ready on the live GCP edge`
@@ -28,7 +28,6 @@ Current blockers:
 - Run strict login readiness QA with `LOGIN_QA_REQUIRE_SESSION=true npm run qa:enterprise-login` to verify the Supabase redirect/session/API path.
 - Human OAuth/password login still needs final browser click-through QA.
 - Supabase Auth redirect/provider settings still need confirmation for `https://enterprise.vaultproof.dev/app/login`.
-- Attach and verify Cloud Armor WAF/rate-limit policy on the enterprise backend service.
 - Rotate the pilot MiniMax key before paid customer onboarding because it was shared in chat; keep using sealed local ingest for any future live provider key.
 
 ## Login Readiness QA
@@ -41,7 +40,7 @@ For the final demo go/no-go run, use `LOGIN_QA_REQUIRE_SESSION=true npm run qa:e
 
 ## Cloud Armor Edge Guardrail
 
-Status: `not configured`
+Status: `attached and enforced`
 
 `npm run configure:gcp-enterprise-cloud-armor` creates or updates `vaultproof-enterprise-armor` and attaches it to `vaultproof-enterprise-backend`. The policy blocks common secret/config/admin scanner paths before they reach the VM and applies per-IP throttles to the secure execute route, enterprise API routes, and the public edge. `npm run verify:gcp-enterprise-cloud-armor` checks the policy attachment, expected rule priorities, `/health` availability, and a blocked `/.env` scanner probe.
 
@@ -148,7 +147,7 @@ Project and Provider Slots pages now classify each active slot as `live sealed`,
 2. Browser-test `https://enterprise.vaultproof.dev/app/login` with `ken@vaultproof.dev`.
 3. Confirm managed Supabase Auth redirect settings include `https://enterprise.vaultproof.dev/app/login`.
 4. Configure the external OAuth provider app callback as `https://gwzkjiomemjlhtrdrlan.supabase.co/auth/v1/callback` if using Google/GitHub/Microsoft login; add `LOGIN_QA_OAUTH_PROVIDER=google` to the login QA command to verify the public OAuth authorize redirect.
-5. Run `npm run configure:gcp-enterprise-cloud-armor`, then `npm run verify:gcp-enterprise-cloud-armor`.
+5. Keep `npm run verify:gcp-enterprise-cloud-armor` in the strict live launch gate.
 6. Add a valid OpenAI Platform key only if the demo specifically needs OpenAI; MiniMax upstream dispatch is now live.
 7. Keep running `npm run gate:gcp-first-goal`; it can generate a temporary Supabase magic-link test session when no `ENTERPRISE_TEST_ACCESS_TOKEN` is provided.
 
@@ -250,8 +249,8 @@ The VM runs both containers on localhost:
 - Backend port name: `http`
 - Backend logging enabled: `true`
 - Backend custom headers configured: `true`
-- Cloud Armor policy: `none`
-- Cloud Armor expected rules ready: `false`
+- Cloud Armor policy: `vaultproof-enterprise-armor`
+- Cloud Armor expected rules ready: `true`
 - Backend health: `HEALTHY 10.60.0.2:3001`
 - Instance group: `vaultproof-enterprise-runtime-ig`
 - Health check: `vaultproof-enterprise-health`
@@ -311,7 +310,6 @@ Known blockers:
 - Run strict login readiness QA with `LOGIN_QA_REQUIRE_SESSION=true npm run qa:enterprise-login` to verify the Supabase redirect/session/API path.
 - Human OAuth/password login still needs final browser click-through QA.
 - Supabase Auth redirect/provider settings still need confirmation for `https://enterprise.vaultproof.dev/app/login`.
-- Attach and verify Cloud Armor WAF/rate-limit policy on the enterprise backend service.
 - Rotate the pilot MiniMax key before paid customer onboarding because it was shared in chat; keep using sealed local ingest for any future live provider key.
 
 ## Verification Commands

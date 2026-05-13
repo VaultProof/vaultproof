@@ -8,6 +8,9 @@ SECURITY_POLICY="${SECURITY_POLICY:-vaultproof-enterprise-armor}"
 CLOUD_ARMOR_PREVIEW="${CLOUD_ARMOR_PREVIEW:-false}"
 
 SENSITIVE_PATH_PRIORITY="${SENSITIVE_PATH_PRIORITY:-1000}"
+SENSITIVE_APP_PRIORITY="${SENSITIVE_APP_PRIORITY:-1001}"
+SENSITIVE_FILE_PRIORITY="${SENSITIVE_FILE_PRIORITY:-1002}"
+SENSITIVE_LOCKFILE_PRIORITY="${SENSITIVE_LOCKFILE_PRIORITY:-1003}"
 EXECUTE_RATE_PRIORITY="${EXECUTE_RATE_PRIORITY:-1100}"
 API_RATE_PRIORITY="${API_RATE_PRIORITY:-1200}"
 EDGE_RATE_PRIORITY="${EDGE_RATE_PRIORITY:-1300}"
@@ -16,10 +19,13 @@ EXECUTE_RATE_LIMIT_PER_MINUTE="${EXECUTE_RATE_LIMIT_PER_MINUTE:-240}"
 API_RATE_LIMIT_PER_MINUTE="${API_RATE_LIMIT_PER_MINUTE:-900}"
 EDGE_RATE_LIMIT_PER_MINUTE="${EDGE_RATE_LIMIT_PER_MINUTE:-2400}"
 
-SENSITIVE_PATH_EXPR="${SENSITIVE_PATH_EXPR:-request.path.matches('^/(\\.env|\\.git|\\.svn|wp-admin|wp-login\\.php|phpmyadmin|server-status|actuator|debug|config)(/|$).*') || request.path.matches('^/(id_rsa|id_dsa|id_ed25519|composer\\.json|package-lock\\.json|yarn\\.lock)$')}"
-EXECUTE_PATH_EXPR="${EXECUTE_PATH_EXPR:-request.path.matches('^/api/v1/enterprise/projects/[^/]+/providers/[^/]+/execute$')}"
-API_PATH_EXPR="${API_PATH_EXPR:-request.path.matches('^/api/v1/enterprise/.*')}"
-EDGE_PATH_EXPR="${EDGE_PATH_EXPR:-request.path.matches('^/.*')}"
+SENSITIVE_PATH_EXPR="${SENSITIVE_PATH_EXPR:-request.path.startsWith(\"/.env\") || request.path.startsWith(\"/.git\") || request.path.startsWith(\"/.svn\") || request.path.startsWith(\"/wp-admin\") || request.path == \"/wp-login.php\"}"
+SENSITIVE_APP_EXPR="${SENSITIVE_APP_EXPR:-request.path.startsWith(\"/phpmyadmin\") || request.path.startsWith(\"/server-status\") || request.path.startsWith(\"/actuator\") || request.path.startsWith(\"/debug\") || request.path.startsWith(\"/config\")}"
+SENSITIVE_FILE_EXPR="${SENSITIVE_FILE_EXPR:-request.path == \"/id_rsa\" || request.path == \"/id_dsa\" || request.path == \"/id_ed25519\" || request.path == \"/composer.json\" || request.path == \"/package-lock.json\"}"
+SENSITIVE_LOCKFILE_EXPR="${SENSITIVE_LOCKFILE_EXPR:-request.path == \"/yarn.lock\"}"
+EXECUTE_PATH_EXPR="${EXECUTE_PATH_EXPR:-request.path.matches(\"^/api/v1/enterprise/projects/[^/]+/providers/[^/]+/execute$\")}"
+API_PATH_EXPR="${API_PATH_EXPR:-request.path.matches(\"^/api/v1/enterprise/.*\")}"
+EDGE_PATH_EXPR="${EDGE_PATH_EXPR:-request.path.matches(\"^/.*\")}"
 
 preview_args_for_command() {
   local command="$1"
@@ -67,7 +73,7 @@ upsert_deny_rule() {
     --action=deny-403 \
     --expression="${expression}" \
     --description="${description}" \
-    "${preview_args[@]}" \
+    ${preview_args[@]+"${preview_args[@]}"} \
     --project="${PROJECT_ID}"
 }
 
@@ -95,7 +101,7 @@ upsert_throttle_rule() {
     --exceed-action=deny-429 \
     --enforce-on-key=ip \
     --description="${description}" \
-    "${preview_args[@]}" \
+    ${preview_args[@]+"${preview_args[@]}"} \
     --project="${PROJECT_ID}"
 }
 
@@ -105,6 +111,21 @@ upsert_deny_rule \
   "${SENSITIVE_PATH_PRIORITY}" \
   "${SENSITIVE_PATH_EXPR}" \
   "Block common secret/config/admin scanner paths before the request reaches the VM."
+
+upsert_deny_rule \
+  "${SENSITIVE_APP_PRIORITY}" \
+  "${SENSITIVE_APP_EXPR}" \
+  "Block common application admin and debug scanner paths before the request reaches the VM."
+
+upsert_deny_rule \
+  "${SENSITIVE_FILE_PRIORITY}" \
+  "${SENSITIVE_FILE_EXPR}" \
+  "Block common private key and package manifest probes before the request reaches the VM."
+
+upsert_deny_rule \
+  "${SENSITIVE_LOCKFILE_PRIORITY}" \
+  "${SENSITIVE_LOCKFILE_EXPR}" \
+  "Block package lockfile scanner probes before the request reaches the VM."
 
 upsert_throttle_rule \
   "${EXECUTE_RATE_PRIORITY}" \
@@ -135,6 +156,9 @@ echo "  backend_service=${BACKEND_SERVICE}"
 echo "  security_policy=${SECURITY_POLICY}"
 echo "  preview=${CLOUD_ARMOR_PREVIEW}"
 echo "  deny_sensitive_paths=${SENSITIVE_PATH_PRIORITY}"
+echo "  deny_sensitive_app_paths=${SENSITIVE_APP_PRIORITY}"
+echo "  deny_sensitive_file_paths=${SENSITIVE_FILE_PRIORITY}"
+echo "  deny_sensitive_lockfile_paths=${SENSITIVE_LOCKFILE_PRIORITY}"
 echo "  execute_rate_limit_per_minute=${EXECUTE_RATE_LIMIT_PER_MINUTE}"
 echo "  api_rate_limit_per_minute=${API_RATE_LIMIT_PER_MINUTE}"
 echo "  edge_rate_limit_per_minute=${EDGE_RATE_LIMIT_PER_MINUTE}"

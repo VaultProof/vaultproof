@@ -9,7 +9,7 @@ Last validated GCP image build: `a6fb14f`
 
 - Control plane digest: `sha256:900c4e8e9f849cb3c4cf0ffe5623d40fbd4dca3485a3b9a8648e585bdf6c5980`
 - Executor digest: `sha256:f3518b0bb7954fdebcff49807e544efeb6b256392ab41c04ec10952e19ee6167`
-- Updated: 2026-05-13T00:17:54.833Z
+- Updated: 2026-05-13T00:41:05.326Z
 <!-- gcp-build-marker:end -->
 
 ## Runtime Features

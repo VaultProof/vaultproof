@@ -228,16 +228,19 @@ const edgeCertDomainStatus = edgeCert?.managed?.domainStatus?.[edgeDomain] || ''
 const edgeTlsActive = edgeCert?.managed?.status === 'ACTIVE' && edgeCertDomainStatus === 'ACTIVE';
 const edgeBackendHealthy = edgeHealthStates.some((state) => state.startsWith('HEALTHY '));
 const cloudArmorAttached = Boolean(edgeBackend?.securityPolicy && String(edgeBackend.securityPolicy).includes(`/securityPolicies/${edgeSecurityPolicy}`));
-const cloudArmorRules = Array.isArray(cloudArmorPolicy?.rules) ? cloudArmorPolicy.rules : [];
-const cloudArmorExpectedPriorities = [1000, 1100, 1200, 1300];
+const cloudArmorPolicyResource = Array.isArray(cloudArmorPolicy) ? cloudArmorPolicy[0] : cloudArmorPolicy;
+const cloudArmorRules = Array.isArray(cloudArmorPolicyResource?.rules) ? cloudArmorPolicyResource.rules : [];
+const cloudArmorExpectedPriorities = [1000, 1001, 1002, 1003, 1100, 1200, 1300];
 const cloudArmorRulesReady = cloudArmorExpectedPriorities.every((priority) => (
   cloudArmorRules.some((rule) => Number(rule.priority) === priority)
 ));
 const cloudArmorState = cloudArmorAttached && cloudArmorRulesReady
   ? 'attached and enforced'
-  : cloudArmorPolicy
-    ? 'created but not fully attached'
-    : 'not configured';
+  : cloudArmorAttached
+    ? 'attached but expected rules are incomplete'
+    : cloudArmorPolicyResource
+      ? 'created but not attached'
+      : 'not configured';
 const publicEdgeState = edgeRule && edgeDnsPointsAtGcp && edgeTlsActive && edgeBackendHealthy ? 'live' : 'in progress';
 const readinessCheck = await fetchJson(`https://${edgeDomain}/readiness`);
 const readinessBody = readinessCheck.body && typeof readinessCheck.body === 'object' ? readinessCheck.body : {};
