@@ -2724,7 +2724,7 @@ function renderEnterpriseOperationsPage(pageName: 'activity' | 'projects' | 'key
 </html>`;
 }
 
-type EnterpriseSupportPageName = 'setup' | 'launch' | 'evidence' | 'technical-guide' | 'verifier' | 'settings' | 'plans' | 'scanner' | 'runbooks';
+type EnterpriseSupportPageName = 'setup' | 'launch' | 'evidence' | 'demo' | 'technical-guide' | 'verifier' | 'settings' | 'plans' | 'scanner' | 'runbooks';
 
 function renderEnterpriseSupportPage(pageName: EnterpriseSupportPageName): string {
   const supportPageCopy: Record<EnterpriseSupportPageName, { title: string; kicker: string; lead: string }> = {
@@ -2742,6 +2742,11 @@ function renderEnterpriseSupportPage(pageName: EnterpriseSupportPageName): strin
       title: 'Evidence packet',
       kicker: 'customer proof',
       lead: 'Assemble the proof a customer security team asks for first: runtime readiness, access review, audit exports, provider posture, policy workflow, and a downloadable JSON packet scoped to the selected organization.',
+    },
+    demo: {
+      title: 'Demo script',
+      kicker: 'customer walkthrough',
+      lead: 'Run a repeatable buyer demo that shows active key protection, a safe email API key story, runtime evidence, launch blockers, pricing packaging, and the next paid-pilot step without exposing secrets.',
     },
     'technical-guide': {
       title: 'Technical guide',
@@ -2835,6 +2840,7 @@ function renderEnterpriseSupportPage(pageName: EnterpriseSupportPageName): strin
     .evidence-callout strong { font-size: 18px; letter-spacing: -.03em; }
     .evidence-actions { display: flex; gap: 10px; flex-wrap: wrap; }
     .brief-box { width: 100%; min-height: 210px; font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace; font-size: 12px; line-height: 1.55; }
+    .demo-script { min-height: 330px; }
     .kpi-label { color: var(--muted); font-size: 12px; text-transform: uppercase; letter-spacing: .1em; }
     .kpi-value { font-size: 34px; font-weight: 850; letter-spacing: -.05em; margin-top: 8px; }
     .kpi-sub { color: var(--muted); font-size: 13px; margin-top: 6px; }
@@ -2947,6 +2953,40 @@ function renderEnterpriseSupportPage(pageName: EnterpriseSupportPageName): strin
             <span class="mini">This summary is generated in the browser from existing enterprise APIs and does not include provider keys, encrypted shares, Supabase service-role keys, origin-lock values, signing secrets, or raw executor internals.</span>
           </div>
           <textarea id="evidencePacket" class="brief-box" readonly aria-label="Evidence packet JSON"></textarea>
+        </div>
+      </section>
+
+      <section id="demoPanel" class="grid two" style="display:none">
+        <div class="card">
+          <div class="section-title"><h2>Demo objective</h2><span class="mini" id="demoMeta">buyer flow</span></div>
+          <div id="demoObjectiveList" class="list"></div>
+        </div>
+        <div class="card">
+          <div class="section-title"><h2>Live proof path</h2><span class="mini">show these in order</span></div>
+          <div id="demoPathList" class="list"></div>
+        </div>
+        <div class="card">
+          <div class="section-title"><h2>Buyer proof points</h2><span class="mini">why it matters</span></div>
+          <div id="demoProofList" class="list"></div>
+        </div>
+        <div class="card">
+          <div class="section-title"><h2>Safety guardrails</h2><span class="mini">demo only</span></div>
+          <div id="demoGuardrailList" class="list"></div>
+        </div>
+        <div class="card">
+          <div class="section-title"><h2>Objection answers</h2><span class="mini">customer Q&A</span></div>
+          <div id="demoObjectionList" class="list"></div>
+        </div>
+        <div class="card">
+          <div class="section-title"><h2>Close path</h2><span class="mini">paid pilot</span></div>
+          <div id="demoCloseList" class="list"></div>
+        </div>
+        <div class="card" style="grid-column:1/-1">
+          <div class="section-title">
+            <h2>Copyable demo talk track</h2>
+            <button id="copyDemoScriptBtn" type="button">copy script</button>
+          </div>
+          <textarea id="demoScript" class="brief-box demo-script" readonly aria-label="Demo talk track"></textarea>
         </div>
       </section>
 
@@ -3771,6 +3811,91 @@ function renderEnterpriseSupportPage(pageName: EnterpriseSupportPageName): strin
         var packetBox = byId('evidencePacket');
         if (packetBox) packetBox.value = JSON.stringify(packet, null, 2);
       }
+      function demoScriptText(org, sso, readiness, overview, bootstrap) {
+        var goNoGo = buildGoNoGoStatus(org, sso, readiness, overview, bootstrap);
+        var emailProviders = emailProvidersFromData(overview, bootstrap);
+        var providerCount = providerCountFromData(overview, bootstrap);
+        var projectCount = projectCountFromData(org, overview, bootstrap);
+        var blockers = goNoGo.blockers.length ? goNoGo.blockers.join('; ') : 'none';
+        return [
+          'VaultProof Enterprise demo talk track',
+          'Headline: Active Key Protection for every API call.',
+          '',
+          '1. Open with the risk',
+          'Leaked API keys are not just an AI problem. Email-provider keys, model-provider keys, automation keys, and partner API keys can all become live abuse paths if they sit in app code, browser storage, logs, or ordinary dashboards.',
+          '',
+          '2. Show the active protection path',
+          'Organization: ' + (org.name || 'selected workspace'),
+          'Projects visible: ' + number(projectCount),
+          'Provider slots visible: ' + number(providerCount),
+          'Email provider demo slots: ' + (emailProviders.length ? emailProviders.join(', ') : 'none yet'),
+          'Proxy calls observed: ' + number(overview.totalCalls),
+          'Runtime production-ready: ' + (readiness.production_ready === true ? 'yes' : 'no'),
+          'SSO/login status: ' + (sso.provider_status || 'not confirmed'),
+          '',
+          '3. Walk the buyer through the product',
+          '- Dashboard: current runtime, access, project, and evidence posture.',
+          '- Provider slots: protected key slots, material mode, dry-run email send, blocked-recipient denial, and emergency revoke.',
+          '- Activity and Audit: runtime status, denial evidence, latency, provider request IDs, and governance exports.',
+          '- Evidence packet: customer-safe JSON and CSV proof with no raw provider key material.',
+          '- Launch checklist: go/no-go board, manual evidence, stale holds, and remaining blockers.',
+          '',
+          '4. Be crisp about boundaries',
+          'VaultProof does not show raw provider keys in the browser, customer packet, logs, or ordinary dashboard views. Demo dry-runs are safe by default. Live sandbox delivery needs sealed provider material first.',
+          '',
+          '5. Current go/no-go',
+          'Decision: ' + (goNoGo.status === 'go' ? 'GO' : 'HOLD'),
+          'Blockers: ' + blockers,
+          '',
+          '6. Close',
+          'The first paid pilot is one low-risk workload, one owner group, one provider path, exported evidence, and a rollback owner. Expansion happens project by project after the first workflow is stable.'
+        ].join('\\n');
+      }
+      function renderDemoPanel(org, sso, readiness, overview, bootstrap) {
+        var productionReady = readiness.production_ready === true;
+        var goNoGo = buildGoNoGoStatus(org, sso, readiness, overview, bootstrap);
+        var providerCount = providerCountFromData(overview, bootstrap);
+        var emailProviders = emailProvidersFromData(overview, bootstrap);
+        text('demoMeta', goNoGo.status === 'go' ? 'ready to pilot' : 'hold for evidence');
+        byId('demoObjectiveList').innerHTML = [
+          row('Active Key Protection for every API call.', 'Start with a simple claim buyers remember: VaultProof protects sensitive provider/API calls while keeping raw keys out of app code, browser storage, logs, and customer packets.', 'headline', 'good'),
+          row('Email API key story', emailProviders.length ? 'Use ' + emailProviders.join(', ') + ' as the easy-to-understand demo secret.' : 'Create or select an email provider slot before relying on the email-key story.', emailProviders.length ? 'ready' : 'todo', emailProviders.length ? 'good' : 'warn'),
+          row('One paid-pilot ask', 'Close on one low-risk workflow, one owner group, one provider path, exported evidence, and rollback owner.', 'focused', 'good')
+        ].join('');
+        byId('demoPathList').innerHTML = [
+          linkRow('Dashboard posture', 'Show runtime readiness, organization scope, project count, member count, and quick links.', '/app/dashboard', 'open', 'good'),
+          linkRow('Provider slot demo', 'Show material mode, protected email dry-run, blocked recipient test, policy denial evidence, and emergency revoke.', '/app/keys', 'open', providerCount ? 'good' : 'warn'),
+          linkRow('Runtime activity', 'Show status codes, denial events, latency, provider request IDs, and recent traffic.', '/app/activity', 'open', overview.totalCalls ? 'good' : 'warn'),
+          linkRow('Evidence packet', 'Copy/download the customer-safe proof packet and explain what secrets are excluded.', '/app/evidence', 'packet', 'good'),
+          linkRow('Go/no-go board', 'Show the current launch decision, manual evidence rows, stale holds, and blockers.', '/app/launch', 'board', goNoGo.status === 'go' ? 'good' : 'warn')
+        ].join('');
+        byId('demoProofList').innerHTML = [
+          row('GCP confidential runtime', productionReady ? 'Readiness reports production-ready with the expected GCP confidential security profile.' : 'Readiness is not green; use this as a blocker instead of a claim.', productionReady ? 'ready' : 'blocked', productionReady ? 'good' : 'bad'),
+          row('No raw key exposure', 'Provider slots show posture and material mode without returning encrypted shares or plaintext provider material to the browser.', 'secret safe', 'good'),
+          row('Policy denial evidence', 'The blocked-recipient test gives a buyer a concrete denial story: policy rejected unsafe traffic and recorded evidence.', 'auditable', 'good'),
+          row('Access and audit exports', 'Members, Audit, Activity, and Evidence produce reviewable CSV/JSON artifacts for security teams.', 'exportable', 'good')
+        ].join('');
+        byId('demoGuardrailList').innerHTML = [
+          row('Demo dry-run first', 'Use dry-run provider execution unless sealed sandbox provider material is intentionally installed for this demo.', 'safe default', 'good'),
+          row('Do not mark GO casually', goNoGo.status === 'go' ? 'The board is green for this browser/org evidence state.' : 'The board is holding on: ' + goNoGo.blockers.join('; '), goNoGo.status, goNoGo.status === 'go' ? 'good' : 'warn'),
+          row('Cloud Armor evidence', 'Keep Cloud Armor as a required operator-confirmed check until the live policy exists and verify passes.', 'manual proof', 'warn'),
+          row('Key rotation before paid onboarding', 'Shared or exposed pilot keys should be rotated or explicitly accepted for demo-only use before paid customer data.', 'required', 'warn')
+        ].join('');
+        byId('demoObjectionList').innerHTML = [
+          row('Why charge for this?', 'The value is reducing key-leak blast radius, speeding security review, giving audit evidence, and avoiding incident cleanup from abused provider keys.', 'value', 'good'),
+          row('Why keep Supabase for the demo?', 'Supabase keeps OAuth/session/Admin Auth working now; a fresh GCP database can be planned after the demo without delaying customer conversations.', 'practical', 'good'),
+          row('Do customers need incident response included?', 'Most enterprise buyers have their own teams. Treat 24-hour response as optional add-on or higher-tier coverage, not a mandatory base feature.', 'package', 'good'),
+          row('Is this only AI?', 'No. The email-key demo proves the broader category: VaultProof protects sensitive API calls, including email, model, automation, and partner providers.', 'broader', 'good')
+        ].join('');
+        byId('demoCloseList').innerHTML = [
+          linkRow('Package and price', 'Use Plans for the paid-pilot scope, $5k/month starting package, guardrails, and expansion path.', '/app/plans', 'plans', 'good'),
+          linkRow('Launch evidence', 'Use Launch to prove remaining blockers are visible and assigned before customer traffic.', '/app/launch', 'launch', goNoGo.status === 'go' ? 'good' : 'warn'),
+          linkRow('Runbooks', 'Use Runbooks for verification, deploy, evidence, secrets, DNS, edge, and cleanup commands.', '/app/runbooks', 'runbooks', 'good'),
+          linkRow('Technical review', 'Use the Technical guide for architecture, identity, gateway, key custody, policy, and troubleshooting questions.', '/app/technical-guide', 'guide', 'good')
+        ].join('');
+        var scriptBox = byId('demoScript');
+        if (scriptBox) scriptBox.value = demoScriptText(org, sso, readiness, overview, bootstrap);
+      }
       function renderOrgSelector(payload) {
         var select = byId('orgSelect');
         var orgs = Array.isArray(payload.organizations) ? payload.organizations : [];
@@ -3805,6 +3930,7 @@ function renderEnterpriseSupportPage(pageName: EnterpriseSupportPageName): strin
         byId('supportKpis').style.display = PAGE_MODE === 'setup' || PAGE_MODE === 'technical-guide' ? 'none' : 'grid';
         byId('launchPanel').style.display = PAGE_MODE === 'launch' ? 'grid' : 'none';
         byId('evidencePanel').style.display = PAGE_MODE === 'evidence' ? 'grid' : 'none';
+        byId('demoPanel').style.display = PAGE_MODE === 'demo' ? 'grid' : 'none';
         byId('setupPanel').style.display = PAGE_MODE === 'setup' ? 'block' : 'none';
         byId('technicalGuidePanel').style.display = PAGE_MODE === 'technical-guide' ? 'block' : 'none';
         byId('settingsPanel').style.display = PAGE_MODE === 'settings' ? 'grid' : 'none';
@@ -3839,6 +3965,9 @@ function renderEnterpriseSupportPage(pageName: EnterpriseSupportPageName): strin
         }
         if (PAGE_MODE === 'evidence') {
           renderEvidencePanel(org, sso, readiness, overview, bootstrap);
+        }
+        if (PAGE_MODE === 'demo') {
+          renderDemoPanel(org, sso, readiness, overview, bootstrap);
         }
         if (PAGE_MODE === 'settings') {
           text('settingsMeta', org.kind || 'organization');
@@ -4092,6 +4221,19 @@ function renderEnterpriseSupportPage(pageName: EnterpriseSupportPageName): strin
           packet.select();
         }
       });
+      var copyDemoScriptBtn = byId('copyDemoScriptBtn');
+      if (copyDemoScriptBtn) copyDemoScriptBtn.addEventListener('click', async function() {
+        var script = byId('demoScript');
+        if (!script) return;
+        try {
+          await navigator.clipboard.writeText(script.value);
+          copyDemoScriptBtn.textContent = 'copied';
+          setTimeout(function() { copyDemoScriptBtn.textContent = 'copy script'; }, 1400);
+        } catch (_) {
+          script.focus();
+          script.select();
+        }
+      });
       var downloadEvidencePacketBtn = byId('downloadEvidencePacketBtn');
       if (downloadEvidencePacketBtn) downloadEvidencePacketBtn.addEventListener('click', function() {
         var packet = byId('evidencePacket');
@@ -4133,7 +4275,7 @@ export function renderEnterprisePlannedAppPage(pageName: string, env: Enterprise
   if (pageName === 'activity' || pageName === 'projects' || pageName === 'keys') {
     return injectEnterpriseAnalytics(renderEnterpriseOperationsPage(pageName), env, pageName);
   }
-  if (pageName === 'setup' || pageName === 'launch' || pageName === 'evidence' || pageName === 'technical-guide' || pageName === 'verifier' || pageName === 'settings' || pageName === 'plans' || pageName === 'scanner' || pageName === 'runbooks') {
+  if (pageName === 'setup' || pageName === 'launch' || pageName === 'evidence' || pageName === 'demo' || pageName === 'technical-guide' || pageName === 'verifier' || pageName === 'settings' || pageName === 'plans' || pageName === 'scanner' || pageName === 'runbooks') {
     return injectEnterpriseAnalytics(renderEnterpriseSupportPage(pageName), env, pageName);
   }
 

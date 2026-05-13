@@ -88,6 +88,7 @@ Last validated GCP image build: `5bfadea`
 | Feature | Status | Notes |
 | --- | --- | --- |
 | Enterprise dashboard | Existing | Control-plane pages are present in the enterprise app image. |
+| Customer demo script | Built | `/app/demo` gives sales and founders a repeatable buyer walkthrough with live workspace facts, proof path links, safety guardrails, objection answers, paid-pilot close steps, and a copyable talk track. It uses existing readiness/bootstrap data and does not include secrets. |
 | Customer launch checklist | Built | `/app/launch` is a customer-facing go-live board with live readiness summary, auto/manual launch tasks, browser-saved checklist progress, direct workflow links, a safe-to-pilot go/no-go board, browser-local operator evidence rows with status/timestamps/stale holds, and a copyable launch brief for customer testing. It now reads project/provider/email readiness from the existing enterprise bootstrap payload. |
 | Customer evidence packet | Built | `/app/evidence` assembles readiness, go/no-go launch decision and blockers, access-review, audit export links, provider posture, rollout workflow, and a copy/download JSON proof packet scoped to the selected organization without exposing secrets. |
 | Buyer commercial package view | Built | `/app/plans` now explains the first paid-pilot package, included controls, contract-controlled capacity envelope, expansion path, guardrails, security boundaries, and links into evidence, launch, technical guide, and runbooks for customer review. |

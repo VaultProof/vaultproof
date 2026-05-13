@@ -25,6 +25,7 @@ Already built:
 - Google-managed TLS certificate for `enterprise.vaultproof.dev`, status `ACTIVE`
 - Load-balancer backend custom origin-lock header injection
 - Cloud Armor edge policy helper for WAF-style scanner blocking and coarse per-IP rate limits
+- Customer demo script page at `/app/demo` for buyer walkthrough, proof path, guardrails, Q&A, and close steps
 - Customer launch checklist page at `/app/launch`, including safe-to-pilot go/no-go board with browser-local operator evidence status, timestamps, and stale holds
 - Customer evidence packet page at `/app/evidence`, including go/no-go launch decision summary and blockers
 - Buyer commercial package page at `/app/plans` for paid-pilot scope, included controls, contract guardrails, security boundaries, and customer review links
@@ -178,7 +179,7 @@ Build:
 - Run `LOGIN_QA_REQUIRE_SESSION=true npm run qa:enterprise-login` with Supabase service-role env to verify the live login page, Supabase redirect allowlist, generated browser session, and authenticated enterprise org/bootstrap APIs.
 - Add `LOGIN_QA_OAUTH_PROVIDER=google` to the login QA command after the external OAuth provider app is configured.
 - Confirm API execution path through `/api/v1/enterprise/execute`.
-- Prepare demo talking points and use `/app/evidence` as the first customer one-page security proof.
+- Prepare demo talking points in `/app/demo` and use `/app/evidence` as the first customer one-page security proof.
 
 Success:
 

@@ -14,6 +14,7 @@ export type EnterpriseAppNavPage =
   | 'audit'
   | 'keys'
   | 'setup'
+  | 'demo'
   | 'technical-guide'
   | 'settings'
   | 'plans'
@@ -170,6 +171,13 @@ const ENTERPRISE_SIDEBAR_NAV_GROUPS: readonly EnterpriseSidebarNavGroup[] = [
         href: '/app/setup',
         label: 'Setup guide',
         blurb: 'Implementation guide for enterprise rollout.',
+      },
+      {
+        page: 'demo',
+        href: '/app/demo',
+        label: 'Demo script',
+        blurb: 'Buyer walkthrough, proof path, and objection answers.',
+        activePill: 'demo',
       },
       {
         page: 'technical-guide',

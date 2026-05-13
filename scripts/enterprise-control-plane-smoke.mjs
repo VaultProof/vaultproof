@@ -2776,6 +2776,7 @@ async function assertEnterpriseLoginRoute() {
       '/app/dashboard',
       '/app/launch',
       '/app/evidence',
+      '/app/demo',
       '/app/control',
       '/app/verifier',
       '/app/org',
@@ -2895,6 +2896,8 @@ async function assertEnterpriseLoginRoute() {
       'Workspace tools',
       'Setup guide',
       '/app/setup',
+      'Demo script',
+      '/app/demo',
       'Technical guide',
       '/app/technical-guide',
       'Policy control',
@@ -3040,6 +3043,11 @@ async function assertEnterpriseLoginRoute() {
       path: '/app/evidence',
       title: 'Evidence packet - VaultProof Enterprise',
       required: ['Evidence readiness', 'Customer exports', 'Proof inventory', 'Review workflow', 'Go/no-go launch decision', 'go_no_go', 'manual_evidence', 'Email API key protection', 'Evidence packet JSON', 'copy JSON', 'download JSON', 'vaultproof_enterprise_evidence_packet', 'email_provider_slots', '/app/launch', '/app/control', '/api/v1/enterprise/audit?format=csv&days=30', '/api/v1/enterprise/members/access-review?format=csv'],
+    },
+    {
+      path: '/app/demo',
+      title: 'Demo script - VaultProof Enterprise',
+      required: ['Demo objective', 'Live proof path', 'Buyer proof points', 'Safety guardrails', 'Objection answers', 'Close path', 'Copyable demo talk track', 'Active Key Protection for every API call.', 'Email API key story', 'Policy denial evidence', 'Cloud Armor evidence', 'Why keep Supabase for the demo?', 'Is this only AI?', 'copy script', '/app/keys', '/app/evidence', '/app/launch', '/app/plans', '/api/v1/enterprise/projects/bootstrap'],
     },
     {
       path: '/app/technical-guide',
@@ -3202,7 +3210,7 @@ function assertSecurityHeaders(path, response, html = '') {
 }
 
 async function assertEnterpriseSecurityHeaders() {
-  const htmlPaths = ['/', '/app/login', '/app/logout', '/app/dashboard', '/app/launch', '/app/evidence', '/app/control', '/app/verifier', '/app/org', '/app/setup', '/app/technical-guide', '/app/runbooks'];
+  const htmlPaths = ['/', '/app/login', '/app/logout', '/app/dashboard', '/app/launch', '/app/evidence', '/app/demo', '/app/control', '/app/verifier', '/app/org', '/app/setup', '/app/technical-guide', '/app/runbooks'];
   for (const path of htmlPaths) {
     const response = await handleEnterpriseControlPlaneRequest(
       buildRequest(path),
@@ -3258,6 +3266,7 @@ async function assertEnterpriseAppLinkCrawl() {
     '/app/verifier',
     '/app/launch',
     '/app/evidence',
+    '/app/demo',
     '/app/setup',
     '/app/technical-guide',
     '/app/settings',
@@ -3317,6 +3326,7 @@ async function assertEnterpriseMixpanelAnalytics() {
     ['/app/dashboard', 'dashboard'],
     ['/app/launch', 'launch'],
     ['/app/evidence', 'evidence'],
+    ['/app/demo', 'demo'],
     ['/app/setup', 'setup'],
     ['/app/technical-guide', 'technical-guide'],
     ['/app/verifier', 'verifier'],
