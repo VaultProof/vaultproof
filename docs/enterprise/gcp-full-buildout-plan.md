@@ -35,12 +35,14 @@ Already built:
 - Pilot success tracker at `https://enterprise.vaultproof.dev/app/pilot-success` for live checks, browser-local milestones, evidence links, blockers, weekly customer update copy, and expansion/no-go readiness
 - Build-status and feature inventory docs
 - Managed Supabase remains the auth/database provider for the pilot
+- API inventory management is now a planned enterprise demo feature for cataloging APIs, provider slots, ownership, policy posture, traffic evidence, and review status without storing or displaying secrets
 
 Not yet customer-ready:
 
 - Strict login readiness QA and final human OAuth/password browser QA still need to pass.
 - Email API key demo dry-run and blocked-recipient policy evidence flow are built; live sandbox email sends need sealed provider material only if the demo specifically needs an actual delivered email.
 - Live MiniMax provider dispatch works for the demo; add a separate OpenAI slot only if the demo specifically needs OpenAI.
+- API inventory management still needs its first customer-facing slice.
 - Supabase OAuth/login settings still need to be confirmed for `enterprise.vaultproof.dev`.
 - Older migration/history docs still have Azure-era language; customer-facing app UI is cleaned for the GCP demo.
 
@@ -180,6 +182,7 @@ Build:
 - Confirm provider slots and allowed origins.
 - Seed a demo provider slot. Placeholder shares are acceptable for dashboard and dry-run validation; live provider dispatch later needs encrypted shares generated from the same unwrap root encrypted into GCP KMS.
 - Use the email API key protection demo flow described below.
+- Add the first API inventory management slice described below.
 - Run `LOGIN_QA_REQUIRE_SESSION=true npm run qa:enterprise-login` with Supabase service-role env to verify the live login page, Supabase redirect allowlist, generated browser session, and authenticated enterprise org/bootstrap APIs.
 - Add `LOGIN_QA_OAUTH_PROVIDER=google` to the login QA command after the external OAuth provider app is configured.
 - Confirm API execution path through `/api/v1/enterprise/execute`.
@@ -245,6 +248,42 @@ Demo success:
 - Emergency revoke prevents further email-provider sends.
 - The demo script can explain: "VaultProof protects every sensitive API call, not just AI calls."
 
+## Demo Feature: API Inventory Management
+
+This belongs in the enterprise demo because buyers need an inventory before they can safely route production traffic through VaultProof. The feature should answer: which APIs exist, who owns them, which provider slot protects them, which environments use them, what policy applies, when they were last used, and what needs review.
+
+Demo goal:
+
+- Give customer security and platform teams a single API inventory board.
+- Connect each API entry to a VaultProof project, provider slot, caller-lock policy, owner, environment, risk level, and evidence path.
+- Show last-seen traffic, denial/error posture, and stale or orphaned APIs from existing enterprise access logs and rollups.
+- Keep all inventory data metadata-only. Do not store provider keys, request bodies, bearer tokens, OAuth client secrets, or customer payloads in inventory records.
+- Export a customer-safe CSV/JSON inventory for access reviews, procurement, security review, and renewal conversations.
+
+First demo slice:
+
+- Add `https://enterprise.vaultproof.dev/app/inventory` or an inventory section on `https://enterprise.vaultproof.dev/app/projects`.
+- Derive initial rows from existing projects, provider slots, project policies, and access-log rollups.
+- Allow browser-local/manual annotations first: business owner, technical owner, environment, business service, data sensitivity, compliance tag, approval status, review note, and next review date.
+- Show status badges for `protected`, `missing provider slot`, `stale`, `no recent traffic`, `policy incomplete`, and `review due`.
+- Add links to Provider Slots, Control, Activity, Audit CSV, Access Review CSV, Launch, and Evidence.
+- Include inventory summary in the evidence packet without secrets.
+
+Production follow-up:
+
+- Add a persistent `enterprise_api_inventory` table with org/project RBAC, audit events on every change, and service-role-only reads.
+- Add import/export for CSV and OpenAPI hints.
+- Add automatic discovery from access logs, provider slots, gateway routes, and future scanner findings.
+- Add ownership and review workflows: assign owner, approve API, mark exception, require rotation, archive API, and record review completion.
+- Add policy drift checks: inventory says protected but provider slot revoked, project policy missing caller lock, no traffic for 30/60/90 days, new provider observed without an owner, or sensitive data tag missing.
+
+Demo success:
+
+- A customer can see every demo API surface in one board.
+- Each API has owner, environment, provider slot, policy posture, last-used evidence, and next action.
+- Inventory export can be shown in a security review without exposing secrets or payloads.
+- The demo script can explain: "VaultProof does not just proxy keys; it gives enterprise teams an API system of record for protected calls."
+
 ## Phase 5: Customer Scale
 
 Build after first customer proof:
@@ -252,6 +291,7 @@ Build after first customer proof:
 - Move from one bootstrap VM to a managed instance group or blue/green VM pair.
 - Add Cloud Armor WAF and rate limits. Status: helper built with scanner-path blocking plus per-IP throttles for secure execute, enterprise APIs, and the public edge.
 - Add uptime checks and alerting policies. Status: customer-safe monitoring evidence kit built in `https://enterprise.vaultproof.dev/app/evidence`, `https://enterprise.vaultproof.dev/app/demo`, and `https://enterprise.vaultproof.dev/app/runbooks`; GCP-native uptime check and alert-policy resources are still a paid-production scale task.
+- Add persistent API inventory management with ownership, review workflow, drift detection, imports, and evidence exports.
 - Add automated evidence bundle capture for each release.
 - Add a rollback script for edge, VM image, and DNS changes.
 - Clean older Azure migration/history docs into provider-neutral or clearly archived references before paid-production handoff.

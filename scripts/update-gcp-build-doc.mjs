@@ -302,6 +302,7 @@ const nextSteps = readinessProductionReady
       ...(cloudArmorAttached && cloudArmorRulesReady
         ? ['Keep `npm run verify:gcp-enterprise-cloud-armor` in the strict live launch gate.']
         : ['Run `npm run configure:gcp-enterprise-cloud-armor`, then `npm run verify:gcp-enterprise-cloud-armor`.']),
+      'Build the first API inventory management slice for the demo: derived API rows from projects/provider slots/access logs, owner/risk/review annotations, stale/orphaned flags, and evidence export without secrets.',
       'Add a valid OpenAI Platform key only if the demo specifically needs OpenAI; MiniMax upstream dispatch is now live.',
       'Keep running `npm run gate:gcp-first-goal`; it can generate a temporary Supabase magic-link test session when no `ENTERPRISE_TEST_ACCESS_TOKEN` is provided.',
     ]
@@ -526,6 +527,16 @@ Upstream dispatch reached MiniMax and returned \`chat.completion\` responses fro
 Status: \`built and deployed in provider-material-status-20260509\`
 
 Project and Provider Slots pages now classify each active slot as \`live sealed\`, \`demo placeholder\`, \`mixed\`, or \`missing\` without returning \`share1_encrypted\` or \`share2_encrypted\` to the browser. After sealing provider material on 2026-05-10, live API verification returned one MiniMax slot for \`First Paid Pilot\` with \`material_mode: sealed-live\`, \`material_ready: true\`, and no encrypted share fields in the payload. The OpenAI slot was reset to \`demo-placeholder\` because the supplied key was for MiniMax.
+
+## Planned Feature: API Inventory Management
+
+Status: \`planned for enterprise demo\`
+
+API inventory management is now in the enterprise feature plan. The first slice should give customer security and platform teams a metadata-only system of record for protected API surfaces: project, provider slot, owner, environment, business service, risk level, data sensitivity, caller-lock posture, policy status, last-seen traffic, denial/error posture, review status, and evidence/export links.
+
+Demo implementation should start from existing data instead of new infrastructure: derive inventory rows from projects, provider slots, project policies, access logs, and rollups; add browser-local/manual annotations for owners and review notes; flag missing provider slots, stale APIs, no recent traffic, policy gaps, and review-due items; then include the summary in the evidence packet. Persistent audited inventory tables, CSV/OpenAPI import, and automatic discovery can follow after the customer demo slice.
+
+Inventory records must never store raw provider keys, bearer tokens, OAuth client secrets, SAML material, request bodies, response bodies, or customer payloads.
 
 ## What's Next
 

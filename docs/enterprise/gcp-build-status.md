@@ -1,6 +1,6 @@
 # VaultProof GCP Build Status
 
-Last updated: 2026-05-13T10:15:37.092Z
+Last updated: 2026-05-13T10:19:02.043Z
 
 This file is the living inventory of what has been built for VaultProof on Google Cloud. It is refreshed after every successful enterprise image build by `infra/gcp/enterprise-secure-runtime/build-images.sh`.
 
@@ -149,6 +149,16 @@ Status: `built and deployed in provider-material-status-20260509`
 
 Project and Provider Slots pages now classify each active slot as `live sealed`, `demo placeholder`, `mixed`, or `missing` without returning `share1_encrypted` or `share2_encrypted` to the browser. After sealing provider material on 2026-05-10, live API verification returned one MiniMax slot for `First Paid Pilot` with `material_mode: sealed-live`, `material_ready: true`, and no encrypted share fields in the payload. The OpenAI slot was reset to `demo-placeholder` because the supplied key was for MiniMax.
 
+## Planned Feature: API Inventory Management
+
+Status: `planned for enterprise demo`
+
+API inventory management is now in the enterprise feature plan. The first slice should give customer security and platform teams a metadata-only system of record for protected API surfaces: project, provider slot, owner, environment, business service, risk level, data sensitivity, caller-lock posture, policy status, last-seen traffic, denial/error posture, review status, and evidence/export links.
+
+Demo implementation should start from existing data instead of new infrastructure: derive inventory rows from projects, provider slots, project policies, access logs, and rollups; add browser-local/manual annotations for owners and review notes; flag missing provider slots, stale APIs, no recent traffic, policy gaps, and review-due items; then include the summary in the evidence packet. Persistent audited inventory tables, CSV/OpenAPI import, and automatic discovery can follow after the customer demo slice.
+
+Inventory records must never store raw provider keys, bearer tokens, OAuth client secrets, SAML material, request bodies, response bodies, or customer payloads.
+
 ## What's Next
 
 1. Run `LOGIN_QA_REQUIRE_SESSION=true npm run qa:enterprise-login` with Supabase service-role env for `ken@vaultproof.dev`.
@@ -156,8 +166,9 @@ Project and Provider Slots pages now classify each active slot as `live sealed`,
 3. Confirm managed Supabase Auth redirect settings include `https://enterprise.vaultproof.dev/app/login`.
 4. Configure the external OAuth provider app callback as `https://gwzkjiomemjlhtrdrlan.supabase.co/auth/v1/callback` if using Google/GitHub/Microsoft login; add `LOGIN_QA_OAUTH_PROVIDER=google` to the login QA command to verify the public OAuth authorize redirect.
 5. Keep `npm run verify:gcp-enterprise-cloud-armor` in the strict live launch gate.
-6. Add a valid OpenAI Platform key only if the demo specifically needs OpenAI; MiniMax upstream dispatch is now live.
-7. Keep running `npm run gate:gcp-first-goal`; it can generate a temporary Supabase magic-link test session when no `ENTERPRISE_TEST_ACCESS_TOKEN` is provided.
+6. Build the first API inventory management slice for the demo: derived API rows from projects/provider slots/access logs, owner/risk/review annotations, stale/orphaned flags, and evidence export without secrets.
+7. Add a valid OpenAI Platform key only if the demo specifically needs OpenAI; MiniMax upstream dispatch is now live.
+8. Keep running `npm run gate:gcp-first-goal`; it can generate a temporary Supabase magic-link test session when no `ENTERPRISE_TEST_ACCESS_TOKEN` is provided.
 
 ## Rough Monthly Cost
 
