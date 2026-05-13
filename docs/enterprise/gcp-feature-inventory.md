@@ -5,11 +5,11 @@ Last updated: 2026-05-12
 This file tracks what VaultProof features exist, which ones have been adapted for Google Cloud, and what still blocks production cutover. Update it every time a build changes product behavior, runtime behavior, infrastructure behavior, or customer-facing claims.
 
 <!-- gcp-build-marker:start -->
-Last validated GCP image build: `security-review-packet-20260513`
+Last validated GCP image build: `pilot-proposal-20260513`
 
-- Control plane digest: `sha256:186bb19d0078d444ea0da1ceb3eade7a6d005770c1ce2708aa2a1e54359e5eb7`
-- Executor digest: `sha256:e097d45c46052df39ab884ed1448b8051d0af2ead33d0acb66c49d1d63c513ef`
-- Updated: 2026-05-13T02:27:39.905Z
+- Control plane digest: `sha256:0170f498a879c758bcd0da7eee89628bdaaf135cb2b4ca298156cecc9cff6f81`
+- Executor digest: `sha256:a8ed41c979a075e613d00ef8e0c6881224ae579c96ffa0d7959e837e35e8d556`
+- Updated: 2026-05-13T02:46:34.808Z
 <!-- gcp-build-marker:end -->
 
 ## Runtime Features
@@ -98,6 +98,7 @@ Last validated GCP image build: `security-review-packet-20260513`
 | Launch support room | Built | `/app/support` packages founder-led launch-week support for the demo with support readiness, internal admin boundary, read-only default, approval-gated actions, optional 24-hour incident-response add-on boundary, customer handoff checklist, and copyable support brief. `/app/evidence` includes `launch_support_readiness` and `/app/demo` now has a buyer-facing launch support proof point. |
 | Monitoring evidence kit | Built | `/app/evidence` now includes `monitoring_evidence` with runtime readiness, traffic/denial/error posture, alert workflow path, Cloud Armor verification evidence, budget alert guardrail, live monitoring gate command, customer handoff notes, and redacted secret boundaries. `/app/demo` adds a buyer-facing monitoring proof point and `/app/runbooks` lists the monitoring evidence review before pilot traffic. |
 | Security review packet | Built | `/app/security-review` packages customer-safe architecture, control coverage, evidence links, open review items, known limitations, common security/procurement answers, and secret exclusions into a copyable review packet. `/app/evidence` now includes `security_review_packet`, while `/app/demo`, `/app/plans`, and `/app/runbooks` link reviewers to the packet. |
+| Paid-pilot proposal builder | Built | `/app/pilot` lets the team shape the first customer proposal with browser-local workload scope, provider path, owner group, expected monthly calls, monthly price, 20% sales commission math, support tier, incident-response add-on stance, success metric, guardrails, close steps, and copyable proposal text. `/app/evidence` includes `pilot_proposal`, while `/app/demo`, `/app/plans`, and `/app/runbooks` link to the proposal builder. |
 | Buyer commercial package view | Built | `/app/plans` now explains the first paid-pilot package, included controls, contract-controlled capacity envelope, expansion path, guardrails, security boundaries, and links into evidence, launch, technical guide, and runbooks for customer review. |
 | Email API key and secret protection demo | Built | `/app/keys` now has email-provider defaults for Resend, SendGrid, Mailgun, Postmark, and AWS SES, a customer-facing email API key demo panel, protected email dry-run actions, blocked-recipient policy testing, launch/evidence packet coverage, and audit metadata that classifies email-provider calls as `email_api_key` / `email_provider_send`. The execute route enforces email sender-domain, recipient-domain, recipient-address, and template-ID policy and records denial evidence from derived fields only. Raw provider keys still stay out of browser flows; live sandbox sends require sealed provider material through the local ingest helper. General secret slots remain use-only by default and must never be emailed or casually revealed. |
 | Dashboard reference palette | Built | The live dashboard/app shell now uses the supplied mint, deep green, mustard gold, white card, and teal accent palette. Live HTML verification checks the deployed palette values on `https://enterprise.vaultproof.dev/app/dashboard`. |

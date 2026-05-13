@@ -2836,7 +2836,7 @@ function renderEnterpriseOperationsPage(pageName: 'activity' | 'projects' | 'key
 </html>`;
 }
 
-type EnterpriseSupportPageName = 'setup' | 'launch' | 'evidence' | 'demo' | 'technical-guide' | 'security-review' | 'verifier' | 'settings' | 'plans' | 'scanner' | 'support' | 'runbooks';
+type EnterpriseSupportPageName = 'setup' | 'launch' | 'evidence' | 'demo' | 'technical-guide' | 'security-review' | 'verifier' | 'settings' | 'plans' | 'pilot' | 'scanner' | 'support' | 'runbooks';
 
 function renderEnterpriseSupportPage(pageName: EnterpriseSupportPageName): string {
   const supportPageCopy: Record<EnterpriseSupportPageName, { title: string; kicker: string; lead: string }> = {
@@ -2884,6 +2884,11 @@ function renderEnterpriseSupportPage(pageName: EnterpriseSupportPageName): strin
       title: 'Plans',
       kicker: 'enterprise packaging',
       lead: 'Track enterprise rollout packaging, GCP edge readiness, usage posture, and contract-facing guardrails.',
+    },
+    pilot: {
+      title: 'Pilot proposal',
+      kicker: 'first customer',
+      lead: 'Shape the first paid pilot into a clear buyer proposal: one workload, one owner group, one provider path, price, support boundary, success metric, and go-live guardrails.',
     },
     scanner: {
       title: 'Scanner',
@@ -3515,6 +3520,50 @@ function renderEnterpriseSupportPage(pageName: EnterpriseSupportPageName): strin
         <div class="card"><div class="section-title"><h2>Buyer review path</h2><span class="mini">proof workflow</span></div><div id="buyerReviewList" class="list"></div></div>
       </section>
 
+      <section id="pilotPanel" class="grid two" style="display:none">
+        <div class="card">
+          <div class="section-title"><h2>Pilot scope</h2><span id="pilotMeta" class="mini">browser-local</span></div>
+          <form id="pilotProposalForm" class="list">
+            <input id="pilotWorkload" data-pilot-field="workload" placeholder="First workload" />
+            <input id="pilotProvider" data-pilot-field="provider_path" placeholder="Provider path" />
+            <input id="pilotOwner" data-pilot-field="owner_group" placeholder="Owner group" />
+            <input id="pilotMonthlyCalls" data-pilot-field="monthly_calls" inputmode="numeric" placeholder="Expected monthly calls" />
+            <input id="pilotPrice" data-pilot-field="monthly_price_usd" inputmode="numeric" placeholder="Monthly pilot price" />
+            <select id="pilotSupportTier" data-pilot-field="support_tier" aria-label="Support tier">
+              <option value="founder-led launch-week support">founder-led launch-week support</option>
+              <option value="standard business-hours support">standard business-hours support</option>
+              <option value="dedicated launch support">dedicated launch support</option>
+            </select>
+            <select id="pilotIrAddon" data-pilot-field="incident_response_add_on" aria-label="Incident response add-on">
+              <option value="optional add-on">24-hour incident response optional</option>
+              <option value="included for pilot">24-hour incident response included</option>
+              <option value="customer-owned">customer incident-response team owns 24-hour coverage</option>
+            </select>
+            <input id="pilotStartWindow" data-pilot-field="start_window" placeholder="Start window" />
+            <textarea id="pilotSuccessMetric" data-pilot-field="success_metric" placeholder="Success metric"></textarea>
+          </form>
+        </div>
+        <div class="card">
+          <div class="section-title"><h2>Commercial summary</h2><span class="mini">sellable package</span></div>
+          <div id="pilotCommercialList" class="list"></div>
+        </div>
+        <div class="card">
+          <div class="section-title"><h2>Guardrails</h2><span class="mini">before traffic</span></div>
+          <div id="pilotGuardrailList" class="list"></div>
+        </div>
+        <div class="card">
+          <div class="section-title"><h2>Close checklist</h2><span class="mini">next buyer step</span></div>
+          <div id="pilotCloseList" class="list"></div>
+        </div>
+        <div class="card" style="grid-column:1/-1">
+          <div class="section-title">
+            <h2>Copyable pilot proposal</h2>
+            <button id="copyPilotProposalBtn" type="button">copy proposal</button>
+          </div>
+          <textarea id="pilotProposalBrief" class="brief-box demo-script" readonly aria-label="Pilot proposal"></textarea>
+        </div>
+      </section>
+
       <section id="scannerPanel" class="grid two" style="display:none">
         <div class="card"><div class="section-title"><h2>Enterprise scanner status</h2><span class="mini">not enabled</span></div><div id="scannerList" class="list"></div></div>
         <div class="card"><div class="section-title"><h2>Safe launch checklist</h2><span class="mini">before wiring APIs</span></div><div id="scannerChecklist" class="list"></div></div>
@@ -3582,6 +3631,10 @@ function renderEnterpriseSupportPage(pageName: EnterpriseSupportPageName): strin
       var ACTIVE_ORG_STORAGE_KEY = 'vaultproof_active_org';
       var token = localStorage.getItem('vaultproof_token') || '';
       var currentOrgId = localStorage.getItem(ACTIVE_ORG_STORAGE_KEY) || '';
+      var latestOrgPayload = null;
+      var latestReadiness = null;
+      var latestOverview = null;
+      var latestBootstrap = null;
       function byId(id) { return document.getElementById(id); }
       function text(id, value) { var el = byId(id); if (el) el.textContent = value == null ? '' : String(value); }
       function escapeHtml(value) {
@@ -3632,6 +3685,37 @@ function renderEnterpriseSupportPage(pageName: EnterpriseSupportPageName): strin
       }
       function goNoGoStorageKey() {
         return 'vaultproof_go_no_go_evidence:' + (currentOrgId || 'default');
+      }
+      function pilotProposalStorageKey() {
+        return 'vaultproof_pilot_proposal:' + (currentOrgId || 'default');
+      }
+      function defaultPilotProposalState() {
+        return {
+          workload: 'First protected email/API workflow',
+          provider_path: 'Resend, SendGrid, Mailgun, Postmark, AWS SES, MiniMax, or selected provider slot',
+          owner_group: 'Security owner + application owner',
+          monthly_calls: '100000',
+          monthly_price_usd: '5000',
+          support_tier: 'founder-led launch-week support',
+          incident_response_add_on: 'optional add-on',
+          start_window: 'Two-week pilot window after login, key, and monitoring evidence pass',
+          success_metric: 'Dry-run and low-volume production traffic pass with exported evidence, no raw key exposure, and a named rollback owner.'
+        };
+      }
+      function getPilotProposalState() {
+        try {
+          var raw = localStorage.getItem(pilotProposalStorageKey()) || '{}';
+          var parsed = JSON.parse(raw);
+          return Object.assign(defaultPilotProposalState(), parsed && typeof parsed === 'object' ? parsed : {});
+        } catch (_) {
+          return defaultPilotProposalState();
+        }
+      }
+      function setPilotProposalState(field, value) {
+        var state = getPilotProposalState();
+        state[field] = String(value == null ? '' : value);
+        state.updated_at = new Date().toISOString();
+        localStorage.setItem(pilotProposalStorageKey(), JSON.stringify(state));
       }
       function getLaunchManualState() {
         try {
@@ -4304,6 +4388,160 @@ function renderEnterpriseSupportPage(pageName: EnterpriseSupportPageName): strin
           '- ' + packet.secrets_excluded.join('\\n- ')
         ].join('\\n');
       }
+      function parseMoney(value, fallback) {
+        var parsed = Number(String(value || '').replace(/[^0-9.]/g, ''));
+        return Number.isFinite(parsed) && parsed > 0 ? parsed : fallback;
+      }
+      function buildPilotProposalPacket(org, sso, readiness, overview, bootstrap, goNoGo) {
+        var state = getPilotProposalState();
+        var monthlyPrice = parseMoney(state.monthly_price_usd, 5000);
+        var monthlyCalls = parseMoney(state.monthly_calls, 100000);
+        var salesCommission = Math.round(monthlyPrice * 0.2);
+        var netAfterCommission = monthlyPrice - salesCommission;
+        var providerCount = providerCountFromData(overview, bootstrap);
+        var emailProviders = emailProvidersFromData(overview, bootstrap);
+        var productionReady = readiness.production_ready === true;
+        var proposalReady = Boolean(state.workload && state.provider_path && state.owner_group && state.success_metric);
+        return {
+          packet_type: 'vaultproof_enterprise_pilot_proposal',
+          packet_version: 1,
+          status: proposalReady && productionReady && currentOrgId ? 'ready_to_send' : 'draft',
+          generated_at: new Date().toISOString(),
+          generated_from: location.origin + '/app/pilot',
+          organization: {
+            id: currentOrgId || null,
+            name: org.name || null,
+            sso_provider_status: sso.provider_status || 'not confirmed',
+            project_count: projectCountFromData(org, overview, bootstrap),
+            member_count: Number(org.member_count || 0),
+            provider_slots: providerCount,
+            email_providers: emailProviders
+          },
+          scope: {
+            workload: state.workload,
+            provider_path: state.provider_path,
+            owner_group: state.owner_group,
+            monthly_calls: monthlyCalls,
+            start_window: state.start_window,
+            success_metric: state.success_metric
+          },
+          commercial: {
+            monthly_price_usd: monthlyPrice,
+            sales_commission_pct: 20,
+            sales_commission_usd: salesCommission,
+            net_after_commission_usd: netAfterCommission,
+            support_tier: state.support_tier,
+            incident_response_add_on: state.incident_response_add_on,
+            included: [
+              'one guided customer rollout',
+              'one first workload',
+              'one provider path',
+              'customer proof reviews',
+              'production-readiness support',
+              'audit/access/evidence exports'
+            ]
+          },
+          readiness: {
+            runtime_production_ready: productionReady,
+            security_profile: readiness.security_profile || null,
+            go_no_go_status: goNoGo.status,
+            blockers: goNoGo.blockers || [],
+            proxy_calls_observed: Number(overview.totalCalls || 0)
+          },
+          guardrails: [
+            'Start with one low-risk workflow and one owner group.',
+            'Use dry-run or low-volume traffic before production volume.',
+            'Complete strict login QA, Cloud Armor verification, key-rotation review, rollback owner/path, and budget/monitoring review before live customer traffic.',
+            'Keep 24-hour incident response optional unless the customer contract includes it.',
+            'Keep traffic envelope, retention, support cadence, SSO depth, and dedicated-runtime needs in the contract until billing and limits APIs enforce them.'
+          ],
+          close_steps: [
+            'Confirm business, security, identity, network, developer, and incident owners.',
+            'Approve the first workload, provider path, expected monthly calls, and success metric.',
+            'Review /app/security-review, /app/evidence, /app/launch, and /app/runbooks.',
+            'Sign paid-pilot order form with support and incident-response terms.',
+            'Schedule launch-week validation and rollback owner review.'
+          ],
+          secrets_excluded: [
+            'provider API keys',
+            'encrypted provider shares',
+            'Supabase service-role key',
+            'browser session token',
+            'OAuth client secret',
+            'alert webhook secrets',
+            'origin-lock secret',
+            'executor signing secret',
+            'vault unwrap root'
+          ]
+        };
+      }
+      function pilotCommercialRows(packet) {
+        var commercial = packet.commercial || {};
+        return [
+          row('Pilot proposal status', packet.status === 'ready_to_send' ? 'Proposal is ready to share after final customer review.' : 'Draft proposal; complete scope and readiness before sending.', packet.status, packet.status === 'ready_to_send' ? 'good' : 'warn'),
+          row('Monthly pilot price', '$' + number(commercial.monthly_price_usd) + '/month for one first workload and one provider path.', '$' + number(commercial.monthly_price_usd), 'good'),
+          row('Sales commission', '20% commission is $' + number(commercial.sales_commission_usd) + '; net after commission is $' + number(commercial.net_after_commission_usd) + ' before infrastructure and support labor.', '20%', 'warn'),
+          row('Support tier', commercial.support_tier || 'founder-led launch-week support', 'support', 'good'),
+          row('Incident response', commercial.incident_response_add_on || 'optional add-on', 'contract', commercial.incident_response_add_on === 'included for pilot' ? 'good' : 'warn')
+        ];
+      }
+      function pilotGuardrailRows(packet) {
+        return packet.guardrails.map(function(item) {
+          return row('Pilot guardrail', item, 'required', 'warn');
+        });
+      }
+      function pilotCloseRows(packet) {
+        return packet.close_steps.map(function(item) {
+          return row('Close step', item, 'next', 'good');
+        });
+      }
+      function pilotProposalText(packet) {
+        var org = packet.organization || {};
+        var scope = packet.scope || {};
+        var commercial = packet.commercial || {};
+        return [
+          'VaultProof Enterprise paid-pilot proposal',
+          'Organization: ' + (org.name || 'selected workspace'),
+          'Status: ' + packet.status,
+          '',
+          'Pilot scope:',
+          '- Workload: ' + scope.workload,
+          '- Provider path: ' + scope.provider_path,
+          '- Owner group: ' + scope.owner_group,
+          '- Expected monthly calls: ' + number(scope.monthly_calls),
+          '- Start window: ' + scope.start_window,
+          '- Success metric: ' + scope.success_metric,
+          '',
+          'Commercial package:',
+          '- Price: $' + number(commercial.monthly_price_usd) + '/month',
+          '- Sales commission: 20% ($' + number(commercial.sales_commission_usd) + ')',
+          '- Net after commission before infrastructure/support labor: $' + number(commercial.net_after_commission_usd),
+          '- Support: ' + commercial.support_tier,
+          '- 24-hour incident response: ' + commercial.incident_response_add_on,
+          '- Included: ' + commercial.included.join(', '),
+          '',
+          'Readiness:',
+          '- Runtime production-ready: ' + (packet.readiness.runtime_production_ready ? 'yes' : 'no'),
+          '- Security profile: ' + (packet.readiness.security_profile || 'not reported'),
+          '- Go/no-go status: ' + packet.readiness.go_no_go_status,
+          '- Blockers: ' + (packet.readiness.blockers.length ? packet.readiness.blockers.join('; ') : 'none'),
+          '',
+          'Guardrails:',
+          '- ' + packet.guardrails.join('\\n- '),
+          '',
+          'Next steps:',
+          '- ' + packet.close_steps.join('\\n- '),
+          '',
+          'Review links:',
+          '- Security review: ' + location.origin + '/app/security-review',
+          '- Evidence packet: ' + location.origin + '/app/evidence',
+          '- Launch board: ' + location.origin + '/app/launch',
+          '- Runbooks: ' + location.origin + '/app/runbooks',
+          '',
+          'Secrets excluded:',
+          '- ' + packet.secrets_excluded.join('\\n- ')
+        ].join('\\n');
+      }
       function providerSlotsFromBootstrap(bootstrap) {
         var projects = bootstrap && Array.isArray(bootstrap.projects) ? bootstrap.projects : [];
         var slots = [];
@@ -4555,6 +4793,7 @@ function renderEnterpriseSupportPage(pageName: EnterpriseSupportPageName): strin
         var support = buildLaunchSupportPacket(org, sso, readiness, overview, bootstrap, goNoGo);
         var monitoring = buildMonitoringEvidencePacket(org, sso, readiness, overview, bootstrap, goNoGo);
         var securityReview = buildSecurityReviewPacket(org, sso, readiness, overview, bootstrap, goNoGo);
+        var pilotProposal = buildPilotProposalPacket(org, sso, readiness, overview, bootstrap, goNoGo);
         return {
           packet_type: 'vaultproof_enterprise_evidence_packet',
           packet_version: 1,
@@ -4631,6 +4870,7 @@ function renderEnterpriseSupportPage(pageName: EnterpriseSupportPageName): strin
           launch_support_readiness: support,
           monitoring_evidence: monitoring,
           security_review_packet: securityReview,
+          pilot_proposal: pilotProposal,
           exports: {
             readiness: '/readiness',
             audit_csv_30_days: evidenceExportHref('/api/v1/enterprise/audit?format=csv&days=30'),
@@ -4638,7 +4878,8 @@ function renderEnterpriseSupportPage(pageName: EnterpriseSupportPageName): strin
             activity: '/app/activity',
             provider_slots: '/app/keys',
             launch_checklist: '/app/launch',
-            security_review: '/app/security-review'
+            security_review: '/app/security-review',
+            pilot_proposal: '/app/pilot'
           },
           customer_review_notes: [
             'Verify production readiness before customer traffic.',
@@ -4651,6 +4892,7 @@ function renderEnterpriseSupportPage(pageName: EnterpriseSupportPageName): strin
             'Review launch support scope, internal admin boundary, approval gates, and customer handoff notes before pilot traffic.',
             'Review monitoring evidence, alert destination/test-send workflow, Cloud Armor verification, and budget alert posture before launch-week traffic.',
             'Share the security review packet with customer security, procurement, and technical reviewers after validating launch blockers.',
+            'Use the pilot proposal builder to confirm workload, provider path, owner group, price, support boundary, and success metric before the paid-pilot close.',
             'For the email API key demo, verify sender, recipient, template, gateway, and rate policy before live sends.',
             'Keep provider keys, encrypted shares, service-role keys, origin-lock values, and signing secrets out of customer packets.'
           ]
@@ -4722,6 +4964,7 @@ function renderEnterpriseSupportPage(pageName: EnterpriseSupportPageName): strin
         var support = buildLaunchSupportPacket(org, sso, readiness, overview, bootstrap, goNoGo);
         var monitoring = buildMonitoringEvidencePacket(org, sso, readiness, overview, bootstrap, goNoGo);
         var securityReview = buildSecurityReviewPacket(org, sso, readiness, overview, bootstrap, goNoGo);
+        var pilotProposal = buildPilotProposalPacket(org, sso, readiness, overview, bootstrap, goNoGo);
         var emailProviders = emailProvidersFromData(overview, bootstrap);
         var providerCount = providerCountFromData(overview, bootstrap);
         var projectCount = projectCountFromData(org, overview, bootstrap);
@@ -4749,6 +4992,7 @@ function renderEnterpriseSupportPage(pageName: EnterpriseSupportPageName): strin
           'Launch support proof status: ' + support.status,
           'Monitoring evidence proof status: ' + monitoring.status,
           'Security review packet status: ' + securityReview.status,
+          'Pilot proposal status: ' + pilotProposal.status,
           '',
           '3. Walk the buyer through the product',
           '- Dashboard: current runtime, access, project, and evidence posture.',
@@ -4762,6 +5006,7 @@ function renderEnterpriseSupportPage(pageName: EnterpriseSupportPageName): strin
           '- Launch support room: support model, internal admin boundary, approval gates, and customer-safe handoff package.',
           '- Monitoring evidence kit: readiness, traffic, denial/error posture, alert workflow, Cloud Armor verification, and budget guardrails.',
           '- Security review packet: architecture summary, control coverage, evidence links, open launch items, and common customer answers.',
+          '- Pilot proposal builder: first workload scope, expected volume, price, commission math, support boundary, and close steps.',
           '- Launch checklist: go/no-go board, manual evidence, stale holds, and remaining blockers.',
           '',
           '4. Be crisp about boundaries',
@@ -4785,6 +5030,7 @@ function renderEnterpriseSupportPage(pageName: EnterpriseSupportPageName): strin
         var support = buildLaunchSupportPacket(org, sso, readiness, overview, bootstrap, goNoGo);
         var monitoring = buildMonitoringEvidencePacket(org, sso, readiness, overview, bootstrap, goNoGo);
         var securityReview = buildSecurityReviewPacket(org, sso, readiness, overview, bootstrap, goNoGo);
+        var pilotProposal = buildPilotProposalPacket(org, sso, readiness, overview, bootstrap, goNoGo);
         var providerCount = providerCountFromData(overview, bootstrap);
         var emailProviders = emailProvidersFromData(overview, bootstrap);
         text('demoMeta', goNoGo.status === 'go' ? 'ready to pilot' : 'hold for evidence');
@@ -4800,6 +5046,7 @@ function renderEnterpriseSupportPage(pageName: EnterpriseSupportPageName): strin
           linkRow('Alert operations', 'Show monitoring destinations, delivery logs, dispatch runs, and test-send workflow.', '/app/alerts', 'open', monitoring.status === 'ready' ? 'good' : 'warn'),
           linkRow('Evidence packet', 'Copy/download the customer-safe proof packet and explain what secrets are excluded.', '/app/evidence', 'packet', 'good'),
           linkRow('Security review packet', 'Show the copyable buyer packet for security, procurement, and technical review.', '/app/security-review', 'review', securityReview.status === 'ready_for_review' ? 'good' : 'warn'),
+          linkRow('Pilot proposal', 'Show the first workload, price, owner group, expected traffic, support terms, and close steps.', '/app/pilot', 'proposal', pilotProposal.status === 'ready_to_send' ? 'good' : 'warn'),
           linkRow('Launch support room', 'Show support model, internal admin boundary, approval gates, and customer handoff package.', '/app/support', 'support', support.status === 'ready' ? 'good' : 'warn'),
           linkRow('Go/no-go board', 'Show the current launch decision, manual evidence rows, stale holds, and blockers.', '/app/launch', 'board', goNoGo.status === 'go' ? 'good' : 'warn')
         ].join('');
@@ -4812,6 +5059,7 @@ function renderEnterpriseSupportPage(pageName: EnterpriseSupportPageName): strin
           row('Launch support kit', support.status === 'ready' ? 'Support model, internal admin boundary, and customer handoff package are ready for the pilot story.' : 'Use Support to review launch-week support scope and customer handoff boundaries.', support.status, support.status === 'ready' ? 'good' : 'warn'),
           row('Monitoring evidence kit', monitoring.status === 'ready' ? 'Runtime, traffic, alert workflow, Cloud Armor, and budget evidence are ready for launch-week review.' : 'Use Launch and Alerts to record Cloud Armor verification, budget/monitoring review, and alert test workflow before pilot traffic.', monitoring.status, monitoring.status === 'ready' ? 'good' : 'warn'),
           row('Security review packet', securityReview.status === 'ready_for_review' ? 'A copyable customer-safe packet is ready for security, procurement, and technical reviewers.' : 'Runtime readiness or organization scope still needs attention before sharing the review packet.', securityReview.status, securityReview.status === 'ready_for_review' ? 'good' : 'warn'),
+          row('Pilot proposal builder', pilotProposal.status === 'ready_to_send' ? 'The paid-pilot proposal is scoped and ready to send after customer review.' : 'Use Pilot Proposal to confirm workload, provider path, owner group, price, support terms, and success metric.', pilotProposal.status, pilotProposal.status === 'ready_to_send' ? 'good' : 'warn'),
           row('No raw key exposure', 'Provider slots show posture and material mode without returning encrypted shares or plaintext provider material to the browser.', 'secret safe', 'good'),
           row('Policy denial evidence', 'The blocked-recipient test gives a buyer a concrete denial story: policy rejected unsafe traffic and recorded evidence.', 'auditable', 'good'),
           row('Access and audit exports', 'Members, Audit, Activity, and Evidence produce reviewable CSV/JSON artifacts for security teams.', 'exportable', 'good')
@@ -4836,6 +5084,7 @@ function renderEnterpriseSupportPage(pageName: EnterpriseSupportPageName): strin
         ].join('');
         byId('demoCloseList').innerHTML = [
           linkRow('Package and price', 'Use Plans for the paid-pilot scope, $5k/month starting package, guardrails, and expansion path.', '/app/plans', 'plans', 'good'),
+          linkRow('Pilot proposal', 'Copy the first-workload proposal with price, scope, commission math, support terms, and close steps.', '/app/pilot', 'proposal', pilotProposal.status === 'ready_to_send' ? 'good' : 'warn'),
           linkRow('Security review packet', 'Give customer reviewers the concise controls, evidence links, open items, and common answers packet.', '/app/security-review', 'review', securityReview.status === 'ready_for_review' ? 'good' : 'warn'),
           linkRow('Launch evidence', 'Use Launch to prove remaining blockers are visible and assigned before customer traffic.', '/app/launch', 'launch', goNoGo.status === 'go' ? 'good' : 'warn'),
           linkRow('Support room', 'Use Support to explain launch-week support, evidence handoff, internal admin boundary, and approval gates.', '/app/support', 'support', support.status === 'ready' ? 'good' : 'warn'),
@@ -4895,6 +5144,31 @@ function renderEnterpriseSupportPage(pageName: EnterpriseSupportPageName): strin
         var brief = byId('securityReviewBrief');
         if (brief) brief.value = securityReviewBriefText(packet);
       }
+      function renderPilotProposalPanel(org, sso, readiness, overview, bootstrap) {
+        var goNoGo = buildGoNoGoStatus(org, sso, readiness, overview, bootstrap);
+        var packet = buildPilotProposalPacket(org, sso, readiness, overview, bootstrap, goNoGo);
+        var state = getPilotProposalState();
+        text('pilotMeta', packet.status === 'ready_to_send' ? 'ready to send' : 'draft');
+        [
+          ['pilotWorkload', 'workload'],
+          ['pilotProvider', 'provider_path'],
+          ['pilotOwner', 'owner_group'],
+          ['pilotMonthlyCalls', 'monthly_calls'],
+          ['pilotPrice', 'monthly_price_usd'],
+          ['pilotSupportTier', 'support_tier'],
+          ['pilotIrAddon', 'incident_response_add_on'],
+          ['pilotStartWindow', 'start_window'],
+          ['pilotSuccessMetric', 'success_metric']
+        ].forEach(function(item) {
+          var el = byId(item[0]);
+          if (el && document.activeElement !== el) el.value = state[item[1]] || '';
+        });
+        byId('pilotCommercialList').innerHTML = pilotCommercialRows(packet).join('');
+        byId('pilotGuardrailList').innerHTML = pilotGuardrailRows(packet).join('');
+        byId('pilotCloseList').innerHTML = pilotCloseRows(packet).join('');
+        var brief = byId('pilotProposalBrief');
+        if (brief) brief.value = pilotProposalText(packet);
+      }
       function renderOrgSelector(payload) {
         var select = byId('orgSelect');
         var orgs = Array.isArray(payload.organizations) ? payload.organizations : [];
@@ -4934,6 +5208,7 @@ function renderEnterpriseSupportPage(pageName: EnterpriseSupportPageName): strin
         byId('technicalGuidePanel').style.display = PAGE_MODE === 'technical-guide' ? 'block' : 'none';
         byId('settingsPanel').style.display = PAGE_MODE === 'settings' ? 'grid' : 'none';
         byId('plansPanel').style.display = PAGE_MODE === 'plans' ? 'grid' : 'none';
+        byId('pilotPanel').style.display = PAGE_MODE === 'pilot' ? 'grid' : 'none';
         byId('scannerPanel').style.display = PAGE_MODE === 'scanner' ? 'grid' : 'none';
         byId('supportPanel').style.display = PAGE_MODE === 'support' ? 'grid' : 'none';
         byId('securityReviewPanel').style.display = PAGE_MODE === 'security-review' ? 'grid' : 'none';
@@ -4976,6 +5251,9 @@ function renderEnterpriseSupportPage(pageName: EnterpriseSupportPageName): strin
         if (PAGE_MODE === 'security-review') {
           renderSecurityReviewPanel(org, sso, readiness, overview, bootstrap);
         }
+        if (PAGE_MODE === 'pilot') {
+          renderPilotProposalPanel(org, sso, readiness, overview, bootstrap);
+        }
         if (PAGE_MODE === 'settings') {
           text('settingsMeta', org.kind || 'organization');
           byId('settingsList').innerHTML = [
@@ -5012,6 +5290,7 @@ function renderEnterpriseSupportPage(pageName: EnterpriseSupportPageName): strin
           byId('buyerReviewList').innerHTML = [
             linkRow('Evidence packet', 'Copy or download the customer proof packet before security review.', '/app/evidence', 'packet', 'good'),
             linkRow('Security review packet', 'Share architecture, controls, evidence links, open items, and common answers with customer reviewers.', '/app/security-review', 'review', 'good'),
+            linkRow('Pilot proposal', 'Shape the first workload, price, owner group, support tier, and close steps before sending the paid-pilot ask.', '/app/pilot', 'proposal', 'good'),
             linkRow('Launch checklist', 'Review owners, first workload, policy, alerts, evidence exports, and rollback owner.', '/app/launch', 'launch', 'good'),
             linkRow('Launch support', 'Review support model, internal admin boundary, approval gates, and customer handoff package.', '/app/support', 'support', 'good'),
             linkRow('Technical guide', 'Answer architecture, key custody, caller-lock, GCP runtime, and troubleshooting questions.', '/app/technical-guide', 'guide', 'good'),
@@ -5040,6 +5319,7 @@ function renderEnterpriseSupportPage(pageName: EnterpriseSupportPageName): strin
             row('Evidence bundle', 'npm run evidence:enterprise-production captures timestamped infrastructure, app, readiness, and monitoring evidence for review.', 'read-only', 'good'),
             row('Evidence validator', 'npm run validate:enterprise-evidence validates the latest evidence bundle before customer or compliance handoff.', 'read-only', 'good'),
             row('Security review packet', 'Open /app/security-review to copy customer-safe architecture, controls, evidence links, open items, common answers, and secret exclusions before procurement review.', 'read-only', 'good'),
+            row('Pilot proposal review', 'Open /app/pilot to confirm first workload scope, expected volume, monthly price, 20% sales commission, support boundary, incident-response terms, and close steps.', 'read-only', 'good'),
             row('Monitoring evidence review', 'Review /app/evidence monitoring_evidence plus /app/alerts destinations, delivery logs, dispatch runs, and test-send workflow before pilot traffic.', 'read-only', 'good'),
             row('Pilot live launch gate', 'RUN_LIVE_EDGE=true RUN_LIVE_APP_QA=true RUN_CLOUD_ARMOR_QA=true npm run gate:gcp-customer-launch runs live edge, app QA, Cloud Armor, and customer-launch evidence checks before pilot traffic.', 'read-only', 'good'),
             row('Handoff package', 'npm run package:enterprise-handoff assembles customer/compliance docs, gateway templates, latest local evidence, and a manifest without changing live infrastructure.', 'read-only', 'good'),
@@ -5179,7 +5459,11 @@ function renderEnterpriseSupportPage(pageName: EnterpriseSupportPageName): strin
             fetchJson('/api/v1/enterprise/orgs/current'),
             fetchJson('/readiness')
           ]);
-          renderPanels(results[0], results[1], (bootstrap && bootstrap.overview) || {}, bootstrap || {});
+          latestOrgPayload = results[0];
+          latestReadiness = results[1];
+          latestOverview = (bootstrap && bootstrap.overview) || {};
+          latestBootstrap = bootstrap || {};
+          renderPanels(latestOrgPayload, latestReadiness, latestOverview, latestBootstrap);
         } catch (error) {
           notice(error && error.message ? error.message : 'Enterprise admin page failed to load.');
         }
@@ -5189,6 +5473,10 @@ function renderEnterpriseSupportPage(pageName: EnterpriseSupportPageName): strin
       if (verifierModelForm) verifierModelForm.addEventListener('submit', submitVerifierModel);
       var verifierProofForm = byId('verifierProofForm');
       if (verifierProofForm) verifierProofForm.addEventListener('submit', submitVerifierProof);
+      var pilotProposalForm = byId('pilotProposalForm');
+      if (pilotProposalForm) pilotProposalForm.addEventListener('submit', function(event) {
+        event.preventDefault();
+      });
       document.addEventListener('change', function(event) {
         var target = event.target;
         if (!target || !target.getAttribute) return;
@@ -5206,6 +5494,13 @@ function renderEnterpriseSupportPage(pageName: EnterpriseSupportPageName): strin
         if (target.hasAttribute('data-go-no-go-note')) {
           setGoNoGoManualState(target.getAttribute('data-go-no-go-note') || '', { note: target.value });
           reload();
+          return;
+        }
+        if (target.hasAttribute('data-pilot-field')) {
+          setPilotProposalState(target.getAttribute('data-pilot-field') || '', target.value);
+          if (latestOrgPayload && latestReadiness) {
+            renderPilotProposalPanel((latestOrgPayload && latestOrgPayload.organization) || {}, (latestOrgPayload && latestOrgPayload.sso_status) || {}, latestReadiness, latestOverview || {}, latestBootstrap || {});
+          }
           return;
         }
         if (!target.hasAttribute('data-launch-check')) return;
@@ -5277,6 +5572,19 @@ function renderEnterpriseSupportPage(pageName: EnterpriseSupportPageName): strin
           brief.select();
         }
       });
+      var copyPilotProposalBtn = byId('copyPilotProposalBtn');
+      if (copyPilotProposalBtn) copyPilotProposalBtn.addEventListener('click', async function() {
+        var brief = byId('pilotProposalBrief');
+        if (!brief) return;
+        try {
+          await navigator.clipboard.writeText(brief.value);
+          copyPilotProposalBtn.textContent = 'copied';
+          setTimeout(function() { copyPilotProposalBtn.textContent = 'copy proposal'; }, 1400);
+        } catch (_) {
+          brief.focus();
+          brief.select();
+        }
+      });
       var downloadEvidencePacketBtn = byId('downloadEvidencePacketBtn');
       if (downloadEvidencePacketBtn) downloadEvidencePacketBtn.addEventListener('click', function() {
         var packet = byId('evidencePacket');
@@ -5318,7 +5626,7 @@ export function renderEnterprisePlannedAppPage(pageName: string, env: Enterprise
   if (pageName === 'activity' || pageName === 'projects' || pageName === 'keys') {
     return injectEnterpriseAnalytics(renderEnterpriseOperationsPage(pageName), env, pageName);
   }
-  if (pageName === 'setup' || pageName === 'launch' || pageName === 'evidence' || pageName === 'demo' || pageName === 'technical-guide' || pageName === 'security-review' || pageName === 'verifier' || pageName === 'settings' || pageName === 'plans' || pageName === 'scanner' || pageName === 'support' || pageName === 'runbooks') {
+  if (pageName === 'setup' || pageName === 'launch' || pageName === 'evidence' || pageName === 'demo' || pageName === 'technical-guide' || pageName === 'security-review' || pageName === 'verifier' || pageName === 'settings' || pageName === 'plans' || pageName === 'pilot' || pageName === 'scanner' || pageName === 'support' || pageName === 'runbooks') {
     return injectEnterpriseAnalytics(renderEnterpriseSupportPage(pageName), env, pageName);
   }
 

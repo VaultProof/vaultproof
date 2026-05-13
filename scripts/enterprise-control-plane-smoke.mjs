@@ -3042,12 +3042,12 @@ async function assertEnterpriseLoginRoute() {
     {
       path: '/app/evidence',
       title: 'Evidence packet - VaultProof Enterprise',
-      required: ['Evidence readiness', 'Customer exports', 'Proof inventory', 'Review workflow', 'Identity/OAuth proof', 'Key rotation proof', 'Pilot operations proof', 'API proxy self-test proof', 'Launch support proof', 'Monitoring evidence proof', 'Go/no-go launch decision', 'go_no_go', 'manual_evidence', 'identity_login_qa', 'key_rotation_evidence', 'pilot_operations_evidence', 'api_proxy_self_test', 'launch_support_readiness', 'monitoring_evidence', 'security_review_packet', 'vaultproof_enterprise_security_review_packet', 'execute_endpoint_pattern', 'paid_onboarding_actions', 'rollback_paths', 'monitoring_review', 'budget_alert', 'live_gate', 'oauth_redirect_qa_command', 'Email API key protection', 'Evidence packet JSON', 'copy JSON', 'download JSON', 'vaultproof_enterprise_evidence_packet', 'email_provider_slots', '/app/launch', '/app/control', '/app/alerts', '/app/security-review', '/api/v1/enterprise/audit?format=csv&days=30', '/api/v1/enterprise/members/access-review?format=csv'],
+      required: ['Evidence readiness', 'Customer exports', 'Proof inventory', 'Review workflow', 'Identity/OAuth proof', 'Key rotation proof', 'Pilot operations proof', 'API proxy self-test proof', 'Launch support proof', 'Monitoring evidence proof', 'Go/no-go launch decision', 'go_no_go', 'manual_evidence', 'identity_login_qa', 'key_rotation_evidence', 'pilot_operations_evidence', 'api_proxy_self_test', 'launch_support_readiness', 'monitoring_evidence', 'security_review_packet', 'pilot_proposal', 'vaultproof_enterprise_security_review_packet', 'vaultproof_enterprise_pilot_proposal', 'execute_endpoint_pattern', 'paid_onboarding_actions', 'rollback_paths', 'monitoring_review', 'budget_alert', 'live_gate', 'oauth_redirect_qa_command', 'Email API key protection', 'Evidence packet JSON', 'copy JSON', 'download JSON', 'vaultproof_enterprise_evidence_packet', 'email_provider_slots', '/app/launch', '/app/control', '/app/alerts', '/app/security-review', '/app/pilot', '/api/v1/enterprise/audit?format=csv&days=30', '/api/v1/enterprise/members/access-review?format=csv'],
     },
     {
       path: '/app/demo',
       title: 'Demo script - VaultProof Enterprise',
-      required: ['Demo objective', 'Live proof path', 'Buyer proof points', 'Safety guardrails', 'Objection answers', 'Close path', 'Copyable demo talk track', 'Active Key Protection for every API call.', 'Email API key story', 'Identity/OAuth proof kit', 'Key rotation proof kit', 'Pilot operations proof kit', 'API proxy self-test kit', 'Launch support kit', 'Monitoring evidence kit', 'Security review packet', 'Monitoring before pilot', 'Policy denial evidence', 'Cloud Armor evidence', 'Why keep Supabase for the demo?', 'Is this only AI?', 'copy script', '/app/keys', '/app/evidence', '/app/security-review', '/app/alerts', '/app/support', '/app/launch', '/app/plans', '/api/v1/enterprise/projects/bootstrap'],
+      required: ['Demo objective', 'Live proof path', 'Buyer proof points', 'Safety guardrails', 'Objection answers', 'Close path', 'Copyable demo talk track', 'Active Key Protection for every API call.', 'Email API key story', 'Identity/OAuth proof kit', 'Key rotation proof kit', 'Pilot operations proof kit', 'API proxy self-test kit', 'Launch support kit', 'Monitoring evidence kit', 'Security review packet', 'Pilot proposal builder', 'Monitoring before pilot', 'Policy denial evidence', 'Cloud Armor evidence', 'Why keep Supabase for the demo?', 'Is this only AI?', 'copy script', '/app/keys', '/app/evidence', '/app/security-review', '/app/pilot', '/app/alerts', '/app/support', '/app/launch', '/app/plans', '/api/v1/enterprise/projects/bootstrap'],
     },
     {
       path: '/app/technical-guide',
@@ -3078,9 +3078,15 @@ async function assertEnterpriseLoginRoute() {
         'provider/email key slot controls',
         'Buyer review path',
         '/app/security-review',
+        '/app/pilot',
         '/app/evidence',
         '/app/launch',
       ],
+    },
+    {
+      path: '/app/pilot',
+      title: 'Pilot proposal - VaultProof Enterprise',
+      required: ['Pilot scope', 'Commercial summary', 'Guardrails', 'Close checklist', 'Copyable pilot proposal', 'VaultProof Enterprise paid-pilot proposal', '20% sales commission', 'Incident response', 'copy proposal', 'vaultproof_pilot_proposal', 'data-pilot-field', 'monthly_price_usd', 'incident_response_add_on', 'support_tier', '/app/security-review', '/app/evidence', '/app/launch', '/app/runbooks'],
     },
     {
       path: '/app/scanner',
@@ -3100,7 +3106,7 @@ async function assertEnterpriseLoginRoute() {
     {
       path: '/app/runbooks',
       title: 'Runbooks - VaultProof Enterprise',
-      required: ['Hardening status', 'Production verifier', 'Evidence bundle', 'Security review packet', 'Monitoring evidence review', 'Pilot live launch gate', 'RUN_LIVE_EDGE=true RUN_LIVE_APP_QA=true RUN_CLOUD_ARMOR_QA=true npm run gate:gcp-customer-launch', 'Handoff package', 'npm run package:enterprise-handoff', 'Handoff gate', 'npm run gate:enterprise-handoff', 'Finish gate', 'blocker/warning details', 'npm run gate:enterprise-finish', 'mTLS caller-lock preparation', 'npm run prepare:enterprise-mtls', 'Gateway JWT validation preparation', 'discover the Supabase issuer', 'gateway policy template smoke', 'caller-lock header delete/override', 'npm run test:enterprise-apim-policies', 'Origin TLS certificate plan', 'Origin TLS preparation plan', 'Origin DNS guardrail', 'Origin DNS record', 'DNS record updates', 'Origin TLS preflight', 'TLS origin cutover', 'gateway cutover', 'GCP runtime reset rollback', 'old prototype cleanup'],
+      required: ['Hardening status', 'Production verifier', 'Evidence bundle', 'Security review packet', 'Pilot proposal review', 'Monitoring evidence review', 'Pilot live launch gate', 'RUN_LIVE_EDGE=true RUN_LIVE_APP_QA=true RUN_CLOUD_ARMOR_QA=true npm run gate:gcp-customer-launch', 'Handoff package', 'npm run package:enterprise-handoff', 'Handoff gate', 'npm run gate:enterprise-handoff', 'Finish gate', 'blocker/warning details', 'npm run gate:enterprise-finish', 'mTLS caller-lock preparation', 'npm run prepare:enterprise-mtls', 'Gateway JWT validation preparation', 'discover the Supabase issuer', 'gateway policy template smoke', 'caller-lock header delete/override', 'npm run test:enterprise-apim-policies', 'Origin TLS certificate plan', 'Origin TLS preparation plan', 'Origin DNS guardrail', 'Origin DNS record', 'DNS record updates', 'Origin TLS preflight', 'TLS origin cutover', 'gateway cutover', 'GCP runtime reset rollback', 'old prototype cleanup'],
     },
   ];
   for (const page of supportPages) {
@@ -3221,7 +3227,7 @@ function assertSecurityHeaders(path, response, html = '') {
 }
 
 async function assertEnterpriseSecurityHeaders() {
-  const htmlPaths = ['/', '/app/login', '/app/logout', '/app/dashboard', '/app/launch', '/app/evidence', '/app/demo', '/app/control', '/app/verifier', '/app/org', '/app/setup', '/app/technical-guide', '/app/security-review', '/app/support', '/app/runbooks'];
+  const htmlPaths = ['/', '/app/login', '/app/logout', '/app/dashboard', '/app/launch', '/app/evidence', '/app/demo', '/app/control', '/app/verifier', '/app/org', '/app/setup', '/app/technical-guide', '/app/security-review', '/app/pilot', '/app/support', '/app/runbooks'];
   for (const path of htmlPaths) {
     const response = await handleEnterpriseControlPlaneRequest(
       buildRequest(path),
@@ -3281,6 +3287,7 @@ async function assertEnterpriseAppLinkCrawl() {
     '/app/setup',
     '/app/technical-guide',
     '/app/security-review',
+    '/app/pilot',
     '/app/settings',
     '/app/plans',
     '/app/scanner',
@@ -3342,6 +3349,7 @@ async function assertEnterpriseMixpanelAnalytics() {
     ['/app/setup', 'setup'],
     ['/app/technical-guide', 'technical-guide'],
     ['/app/security-review', 'security-review'],
+    ['/app/pilot', 'pilot'],
     ['/app/verifier', 'verifier'],
     ['/app/members', 'members'],
     ['/app/control', 'control'],

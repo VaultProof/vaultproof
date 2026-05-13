@@ -19,6 +19,7 @@ export type EnterpriseAppNavPage =
   | 'security-review'
   | 'settings'
   | 'plans'
+  | 'pilot'
   | 'scanner'
   | 'support'
   | 'runbooks'
@@ -204,6 +205,12 @@ const ENTERPRISE_SIDEBAR_NAV_GROUPS: readonly EnterpriseSidebarNavGroup[] = [
         href: '/app/plans',
         label: 'Plans',
         blurb: 'Launch readiness, limits, and handoff notes.',
+      },
+      {
+        page: 'pilot',
+        href: '/app/pilot',
+        label: 'Pilot proposal',
+        blurb: 'Scope, price, owners, guardrails, and close copy.',
       },
       {
         page: 'support',

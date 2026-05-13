@@ -27,6 +27,7 @@ const requiredAppPaths = [
   '/app/keys',
   '/app/settings',
   '/app/plans',
+  '/app/pilot',
   '/app/scanner',
   '/app/support',
   '/health',
