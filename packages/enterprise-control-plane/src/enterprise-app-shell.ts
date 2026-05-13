@@ -19,6 +19,7 @@ export type EnterpriseAppNavPage =
   | 'settings'
   | 'plans'
   | 'scanner'
+  | 'support'
   | 'runbooks'
   | 'admin';
 
@@ -196,6 +197,12 @@ const ENTERPRISE_SIDEBAR_NAV_GROUPS: readonly EnterpriseSidebarNavGroup[] = [
         href: '/app/plans',
         label: 'Plans',
         blurb: 'Launch readiness, limits, and handoff notes.',
+      },
+      {
+        page: 'support',
+        href: '/app/support',
+        label: 'Launch support',
+        blurb: 'Support model, escalation boundaries, and admin guardrails.',
       },
       {
         page: 'scanner',

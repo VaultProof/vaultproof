@@ -2836,7 +2836,7 @@ function renderEnterpriseOperationsPage(pageName: 'activity' | 'projects' | 'key
 </html>`;
 }
 
-type EnterpriseSupportPageName = 'setup' | 'launch' | 'evidence' | 'demo' | 'technical-guide' | 'verifier' | 'settings' | 'plans' | 'scanner' | 'runbooks';
+type EnterpriseSupportPageName = 'setup' | 'launch' | 'evidence' | 'demo' | 'technical-guide' | 'verifier' | 'settings' | 'plans' | 'scanner' | 'support' | 'runbooks';
 
 function renderEnterpriseSupportPage(pageName: EnterpriseSupportPageName): string {
   const supportPageCopy: Record<EnterpriseSupportPageName, { title: string; kicker: string; lead: string }> = {
@@ -2884,6 +2884,11 @@ function renderEnterpriseSupportPage(pageName: EnterpriseSupportPageName): strin
       title: 'Scanner',
       kicker: 'repository security',
       lead: 'Prepare repository scanning for enterprise use while keeping scanner actions disabled until enterprise-safe scanner APIs are available.',
+    },
+    support: {
+      title: 'Launch support room',
+      kicker: 'customer support',
+      lead: 'Package the founder-led support model for a customer pilot: who owns launch-week follow-up, what evidence support can inspect, which actions require approval, and where the internal admin console begins and ends.',
     },
     runbooks: {
       title: 'Runbooks',
@@ -3081,6 +3086,10 @@ function renderEnterpriseSupportPage(pageName: EnterpriseSupportPageName): strin
           <div id="evidenceApiProxyList" class="list"></div>
         </div>
         <div class="card" style="grid-column:1/-1">
+          <div class="section-title"><h2>Launch support proof</h2><span class="mini" id="evidenceSupportMeta">hold</span></div>
+          <div id="evidenceSupportList" class="list"></div>
+        </div>
+        <div class="card" style="grid-column:1/-1">
           <div class="section-title">
             <h2>Evidence packet JSON</h2>
             <div class="evidence-actions">
@@ -3127,6 +3136,32 @@ function renderEnterpriseSupportPage(pageName: EnterpriseSupportPageName): strin
             <button id="copyDemoScriptBtn" type="button">copy script</button>
           </div>
           <textarea id="demoScript" class="brief-box demo-script" readonly aria-label="Demo talk track"></textarea>
+        </div>
+      </section>
+
+      <section id="supportPanel" class="grid two" style="display:none">
+        <div class="card">
+          <div class="section-title"><h2>Support readiness</h2><span id="supportMeta" class="mini">customer pilot</span></div>
+          <div id="supportReadinessList" class="list"></div>
+        </div>
+        <div class="card">
+          <div class="section-title"><h2>Internal admin boundary</h2><span class="mini">employee only</span></div>
+          <div id="supportBoundaryList" class="list"></div>
+        </div>
+        <div class="card">
+          <div class="section-title"><h2>Launch-week workflow</h2><span class="mini">founder-led</span></div>
+          <div id="supportWorkflowList" class="list"></div>
+        </div>
+        <div class="card">
+          <div class="section-title"><h2>Customer handoff</h2><span class="mini">what to share</span></div>
+          <div id="supportHandoffList" class="list"></div>
+        </div>
+        <div class="card" style="grid-column:1/-1">
+          <div class="section-title">
+            <h2>Support brief</h2>
+            <button id="copySupportBriefBtn" type="button">copy brief</button>
+          </div>
+          <textarea id="supportBrief" class="brief-box" readonly aria-label="Support brief"></textarea>
         </div>
       </section>
 
@@ -3884,6 +3919,116 @@ function renderEnterpriseSupportPage(pageName: EnterpriseSupportPageName): strin
           row('Secrets excluded', packet.secrets_excluded.join(', '), 'redacted', 'good')
         ];
       }
+      function buildLaunchSupportPacket(org, sso, readiness, overview, bootstrap, goNoGo) {
+        var projectCount = projectCountFromData(org, overview, bootstrap);
+        var memberCount = Number(org.member_count || 0);
+        var providerCount = providerCountFromData(overview, bootstrap);
+        var manual = goNoGoManualById(goNoGo);
+        var rollback = manual['rollback-owner-confirmed'];
+        var budget = manual['budget-monitoring-reviewed'];
+        var ready = readiness.production_ready === true && Boolean(currentOrgId) && projectCount > 0 && memberCount > 0 && providerCount > 0;
+        return {
+          status: ready ? 'ready' : 'hold',
+          support_model: 'Founder-led launch-week support for the first paid pilot. 24-hour incident response is an optional add-on, not included in the base pilot package.',
+          support_page: location.origin + '/app/support',
+          internal_admin_url: 'https://admin.vaultproof.dev/internal/admin',
+          internal_admin_boundary: {
+            hostname: 'admin.vaultproof.dev',
+            default_mode: 'read_only',
+            writes: 'Support notes, invitations, business status updates, destructive action requests, executions, and rollbacks require internal admin actions to be enabled plus the approval secret header.',
+            audit: 'Employee console views and approved actions are recorded in the internal admin audit stream.',
+            customer_access: 'Customers do not receive access to the employee admin console; they receive evidence exports, support summaries, and approved action notes.'
+          },
+          coverage: {
+            organization_id: currentOrgId || null,
+            organization_name: org.name || null,
+            sso_provider_status: sso.provider_status || 'not confirmed',
+            project_count: projectCount,
+            member_count: memberCount,
+            provider_slots: providerCount,
+            proxy_calls: Number(overview.totalCalls || 0),
+            denied_calls: Number(overview.deniedCalls || 0),
+            error_calls: Number(overview.errorCalls || 0),
+            runtime_production_ready: readiness.production_ready === true,
+            security_profile: readiness.security_profile || null
+          },
+          manual_evidence: {
+            rollback_owner_path: manualEvidenceSummary(rollback),
+            budget_monitoring: manualEvidenceSummary(budget)
+          },
+          launch_week_workflow: [
+            'Review /readiness, /app/launch, /app/evidence, /app/activity, /app/audit, /app/keys, and /app/alerts before each customer test.',
+            'Record customer-visible notes in the launch brief or evidence packet, not in chat threads.',
+            'Use internal admin only for employee support triage and approval-gated administrative actions.',
+            'Escalate real incidents to the customer incident-response team unless 24-hour response is sold as an add-on.',
+            'Export audit/access-review evidence after policy, key, member, or support-action changes.'
+          ],
+          customer_handoff: [
+            'Launch brief from /app/launch.',
+            'Evidence JSON from /app/evidence.',
+            'Audit CSV and access-review CSV.',
+            'API proxy self-test output from /app/keys.',
+            'Named rollback owner/path and budget/monitoring review status.'
+          ],
+          operator_commands: [
+            'npm run qa:enterprise-live-app',
+            'npm run verify:gcp-enterprise-edge',
+            'npm run verify:gcp-enterprise-cloud-armor',
+            'RUN_LIVE_EDGE=true RUN_LIVE_APP_QA=true RUN_CLOUD_ARMOR_QA=true npm run gate:gcp-customer-launch',
+            'npm run prepare:enterprise-internal-admin'
+          ],
+          secrets_excluded: [
+            'Supabase service-role key',
+            'browser session token',
+            'provider API keys',
+            'encrypted provider shares',
+            'origin-lock secret',
+            'executor signing secret',
+            'internal admin approval secret'
+          ]
+        };
+      }
+      function launchSupportReadinessRows(packet) {
+        var coverage = packet.coverage || {};
+        return [
+          row('Launch support status', packet.status === 'ready' ? 'Support page can be used for customer pilot prep with runtime, org, member, project, and provider evidence visible.' : 'Hold until runtime, org, member, project, and provider evidence are visible.', packet.status, packet.status === 'ready' ? 'good' : 'warn'),
+          row('Support model', packet.support_model, 'founder-led launch-week support', 'good'),
+          row('Runtime support posture', (coverage.runtime_production_ready ? 'Production-ready runtime. ' : 'Runtime is not production-ready. ') + 'Security profile: ' + (coverage.security_profile || 'not reported') + '.', coverage.runtime_production_ready ? 'ready' : 'blocked', coverage.runtime_production_ready ? 'good' : 'bad'),
+          row('Customer scope', number(coverage.project_count) + ' projects, ' + number(coverage.member_count) + ' members, ' + number(coverage.provider_slots) + ' provider slots.', currentOrgId ? 'scoped' : 'select org', currentOrgId ? 'good' : 'warn'),
+          row('Traffic watch', number(coverage.proxy_calls) + ' calls, ' + number(coverage.error_calls) + ' errors, ' + number(coverage.denied_calls) + ' denied.', coverage.proxy_calls ? 'observed' : 'pending', coverage.error_calls || coverage.denied_calls ? 'warn' : coverage.proxy_calls ? 'good' : 'warn')
+        ];
+      }
+      function launchSupportBoundaryRows(packet) {
+        var boundary = packet.internal_admin_boundary || {};
+        return [
+          row('Internal admin URL', packet.internal_admin_url, 'employee only', 'good'),
+          row('Internal admin default mode', 'The support console is ' + (boundary.default_mode || 'read_only') + ' by default.', boundary.default_mode || 'read_only', 'good'),
+          row('Approval-gated actions', boundary.writes || 'Administrative writes require explicit approval.', 'approval secret header', 'warn'),
+          row('Internal audit', boundary.audit || 'Employee support views and actions are audited.', 'audit trail', 'good'),
+          row('Customer boundary', boundary.customer_access || 'Customers receive evidence exports, not employee-console access.', 'no customer admin access', 'good')
+        ];
+      }
+      function launchSupportWorkflowRows(packet) {
+        return [
+          row('Launch-week workflow', packet.launch_week_workflow.join(' '), 'runbook', 'good'),
+          row('Operator commands', packet.operator_commands.join(' | '), 'verification', 'good'),
+          row('Rollback evidence', packet.manual_evidence.rollback_owner_path.updated_at ? 'Rollback owner/path recorded ' + rel(packet.manual_evidence.rollback_owner_path.updated_at) + '.' : 'Rollback owner/path has not been recorded in this browser evidence yet.', packet.manual_evidence.rollback_owner_path.status || 'missing', packet.manual_evidence.rollback_owner_path.status === 'passed' ? 'good' : 'warn'),
+          row('Budget/monitoring evidence', packet.manual_evidence.budget_monitoring.updated_at ? 'Budget/monitoring recorded ' + rel(packet.manual_evidence.budget_monitoring.updated_at) + '.' : 'Budget/monitoring review has not been recorded in this browser evidence yet.', packet.manual_evidence.budget_monitoring.status || 'missing', packet.manual_evidence.budget_monitoring.status === 'passed' ? 'good' : 'warn')
+        ];
+      }
+      function launchSupportHandoffRows(packet) {
+        return [
+          row('Customer handoff package', packet.customer_handoff.join(' '), 'shareable', 'good'),
+          row('Support page', packet.support_page, 'customer-safe', 'good'),
+          row('Incident response boundary', '24-hour incident response add-on is optional; base pilot uses customer incident-response team plus VaultProof launch support.', 'contract', 'warn'),
+          row('Secrets excluded', packet.secrets_excluded.join(', '), 'redacted', 'good')
+        ];
+      }
+      function launchSupportProofRows(packet) {
+        return launchSupportReadinessRows(packet)
+          .concat(launchSupportBoundaryRows(packet))
+          .concat(launchSupportHandoffRows(packet));
+      }
       function providerSlotsFromBootstrap(bootstrap) {
         var projects = bootstrap && Array.isArray(bootstrap.projects) ? bootstrap.projects : [];
         var slots = [];
@@ -4128,6 +4273,7 @@ function renderEnterpriseSupportPage(pageName: EnterpriseSupportPageName): strin
         var rotation = buildKeyRotationPacket(goNoGo, bootstrap);
         var pilotOps = buildPilotOpsPacket(goNoGo, readiness, overview);
         var apiProxy = buildApiProxySelfTestPacket(overview, bootstrap);
+        var support = buildLaunchSupportPacket(org, sso, readiness, overview, bootstrap, goNoGo);
         return {
           packet_type: 'vaultproof_enterprise_evidence_packet',
           packet_version: 1,
@@ -4201,6 +4347,7 @@ function renderEnterpriseSupportPage(pageName: EnterpriseSupportPageName): strin
           key_rotation_evidence: rotation,
           pilot_operations_evidence: pilotOps,
           api_proxy_self_test: apiProxy,
+          launch_support_readiness: support,
           exports: {
             readiness: '/readiness',
             audit_csv_30_days: evidenceExportHref('/api/v1/enterprise/audit?format=csv&days=30'),
@@ -4217,6 +4364,7 @@ function renderEnterpriseSupportPage(pageName: EnterpriseSupportPageName): strin
             'Rotate shared or exposed pilot keys before paid customer data, or keep a demo-only acceptance note in the launch board.',
             'Confirm rollback ownership, budget alert coverage, and launch-week monitoring ownership before live customer traffic.',
             'Run the API proxy dry-run self-test and blocked-recipient email denial test before the customer walkthrough.',
+            'Review launch support scope, internal admin boundary, approval gates, and customer handoff notes before pilot traffic.',
             'For the email API key demo, verify sender, recipient, template, gateway, and rate policy before live sends.',
             'Keep provider keys, encrypted shares, service-role keys, origin-lock values, and signing secrets out of customer packets.'
           ]
@@ -4232,6 +4380,7 @@ function renderEnterpriseSupportPage(pageName: EnterpriseSupportPageName): strin
         var rotation = packet.key_rotation_evidence || buildKeyRotationPacket(buildGoNoGoStatus(org, sso, readiness, overview, bootstrap), bootstrap);
         var pilotOps = packet.pilot_operations_evidence || buildPilotOpsPacket(buildGoNoGoStatus(org, sso, readiness, overview, bootstrap), readiness, overview);
         var apiProxy = packet.api_proxy_self_test || buildApiProxySelfTestPacket(overview, bootstrap);
+        var support = packet.launch_support_readiness || buildLaunchSupportPacket(org, sso, readiness, overview, bootstrap, buildGoNoGoStatus(org, sso, readiness, overview, bootstrap));
         text('evidenceMeta', productionReady ? 'ready for review' : 'needs attention');
         byId('evidenceReadinessList').innerHTML = [
           row('Production readiness', productionReady ? 'Control plane and confidential executor report production-ready.' : (readiness.production_blockers || []).join('; '), productionReady ? 'ready' : 'blocked', productionReady ? 'good' : 'bad'),
@@ -4269,6 +4418,8 @@ function renderEnterpriseSupportPage(pageName: EnterpriseSupportPageName): strin
         byId('evidencePilotOpsList').innerHTML = pilotOpsRows(pilotOps).join('');
         text('evidenceApiProxyMeta', apiProxy.status);
         byId('evidenceApiProxyList').innerHTML = apiProxySelfTestRows(apiProxy).join('');
+        text('evidenceSupportMeta', support.status);
+        byId('evidenceSupportList').innerHTML = launchSupportProofRows(support).join('');
         var packetBox = byId('evidencePacket');
         if (packetBox) packetBox.value = JSON.stringify(packet, null, 2);
       }
@@ -4278,6 +4429,7 @@ function renderEnterpriseSupportPage(pageName: EnterpriseSupportPageName): strin
         var rotation = buildKeyRotationPacket(goNoGo, bootstrap);
         var pilotOps = buildPilotOpsPacket(goNoGo, readiness, overview);
         var apiProxy = buildApiProxySelfTestPacket(overview, bootstrap);
+        var support = buildLaunchSupportPacket(org, sso, readiness, overview, bootstrap, goNoGo);
         var emailProviders = emailProvidersFromData(overview, bootstrap);
         var providerCount = providerCountFromData(overview, bootstrap);
         var projectCount = projectCountFromData(org, overview, bootstrap);
@@ -4302,6 +4454,7 @@ function renderEnterpriseSupportPage(pageName: EnterpriseSupportPageName): strin
           'Key rotation proof status: ' + rotation.status,
           'Pilot operations proof status: ' + pilotOps.status,
           'API proxy self-test status: ' + apiProxy.status,
+          'Launch support proof status: ' + support.status,
           '',
           '3. Walk the buyer through the product',
           '- Dashboard: current runtime, access, project, and evidence posture.',
@@ -4312,6 +4465,7 @@ function renderEnterpriseSupportPage(pageName: EnterpriseSupportPageName): strin
           '- Key rotation evidence packet: material-mode inventory, paid-onboarding rotation actions, sealed ingest command, and redacted secret boundary.',
           '- Pilot operations evidence packet: rollback owner/path, budget/monitoring review, live launch gate command, and incident-response boundary.',
           '- API proxy self-test kit: copy-safe dry-run request, required caller-lock headers, protected email proof, and blocked-recipient denial test.',
+          '- Launch support room: support model, internal admin boundary, approval gates, and customer-safe handoff package.',
           '- Launch checklist: go/no-go board, manual evidence, stale holds, and remaining blockers.',
           '',
           '4. Be crisp about boundaries',
@@ -4332,6 +4486,7 @@ function renderEnterpriseSupportPage(pageName: EnterpriseSupportPageName): strin
         var rotation = buildKeyRotationPacket(goNoGo, bootstrap);
         var pilotOps = buildPilotOpsPacket(goNoGo, readiness, overview);
         var apiProxy = buildApiProxySelfTestPacket(overview, bootstrap);
+        var support = buildLaunchSupportPacket(org, sso, readiness, overview, bootstrap, goNoGo);
         var providerCount = providerCountFromData(overview, bootstrap);
         var emailProviders = emailProvidersFromData(overview, bootstrap);
         text('demoMeta', goNoGo.status === 'go' ? 'ready to pilot' : 'hold for evidence');
@@ -4345,6 +4500,7 @@ function renderEnterpriseSupportPage(pageName: EnterpriseSupportPageName): strin
           linkRow('Provider slot demo', 'Show material mode, protected email dry-run, blocked recipient test, policy denial evidence, and emergency revoke.', '/app/keys', 'open', providerCount ? 'good' : 'warn'),
           linkRow('Runtime activity', 'Show status codes, denial events, latency, provider request IDs, and recent traffic.', '/app/activity', 'open', overview.totalCalls ? 'good' : 'warn'),
           linkRow('Evidence packet', 'Copy/download the customer-safe proof packet and explain what secrets are excluded.', '/app/evidence', 'packet', 'good'),
+          linkRow('Launch support room', 'Show support model, internal admin boundary, approval gates, and customer handoff package.', '/app/support', 'support', support.status === 'ready' ? 'good' : 'warn'),
           linkRow('Go/no-go board', 'Show the current launch decision, manual evidence rows, stale holds, and blockers.', '/app/launch', 'board', goNoGo.status === 'go' ? 'good' : 'warn')
         ].join('');
         byId('demoProofList').innerHTML = [
@@ -4353,6 +4509,7 @@ function renderEnterpriseSupportPage(pageName: EnterpriseSupportPageName): strin
           row('Key rotation proof kit', rotation.status === 'accepted_for_demo' ? 'Launch evidence records either rotation or explicit demo-only acceptance for shared pilot key posture.' : 'Use Launch to record key rotation or demo-only acceptance before a customer pilot.', rotation.status, rotation.status === 'accepted_for_demo' ? 'good' : 'warn'),
           row('Pilot operations proof kit', pilotOps.status === 'ready' ? 'Rollback ownership and budget/monitoring review evidence are recorded for this pilot.' : 'Use Launch to record rollback owner/path and budget/monitoring review before customer traffic.', pilotOps.status, pilotOps.status === 'ready' ? 'good' : 'warn'),
           row('API proxy self-test kit', apiProxy.status === 'ready' ? 'Provider slots and proxy traffic evidence are visible; use Provider Slots to copy the safe dry-run request.' : 'Use Provider Slots to run/copy a dry-run request and create proxy traffic evidence before the customer walkthrough.', apiProxy.status, apiProxy.status === 'ready' ? 'good' : 'warn'),
+          row('Launch support kit', support.status === 'ready' ? 'Support model, internal admin boundary, and customer handoff package are ready for the pilot story.' : 'Use Support to review launch-week support scope and customer handoff boundaries.', support.status, support.status === 'ready' ? 'good' : 'warn'),
           row('No raw key exposure', 'Provider slots show posture and material mode without returning encrypted shares or plaintext provider material to the browser.', 'secret safe', 'good'),
           row('Policy denial evidence', 'The blocked-recipient test gives a buyer a concrete denial story: policy rejected unsafe traffic and recorded evidence.', 'auditable', 'good'),
           row('Access and audit exports', 'Members, Audit, Activity, and Evidence produce reviewable CSV/JSON artifacts for security teams.', 'exportable', 'good')
@@ -4363,6 +4520,7 @@ function renderEnterpriseSupportPage(pageName: EnterpriseSupportPageName): strin
           row('Rotate before paid data', rotation.status === 'accepted_for_demo' ? 'Demo-only key posture is acknowledged; rotate shared material before paid customer data.' : 'Shared/exposed pilot keys still need rotation or an explicit demo-only acceptance note.', 'key gate', rotation.status === 'accepted_for_demo' ? 'good' : 'warn'),
           row('Rollback/monitoring before traffic', pilotOps.status === 'ready' ? 'Rollback and monitoring ownership is recorded for this organization.' : 'Do not start pilot traffic until rollback owner/path and budget/monitoring review are recorded.', 'ops gate', pilotOps.status === 'ready' ? 'good' : 'warn'),
           row('Self-test before live calls', apiProxy.status === 'ready' ? 'API proxy self-test evidence is visible for this organization.' : 'Use dry-run and blocked-recipient tests before enabling any live sandbox provider call.', 'proxy gate', apiProxy.status === 'ready' ? 'good' : 'warn'),
+          row('Support boundary before pilot', support.status === 'ready' ? 'Support scope and internal admin boundaries are visible.' : 'Review support model and internal admin boundaries before the customer starts testing.', 'support gate', support.status === 'ready' ? 'good' : 'warn'),
           row('Do not mark GO casually', goNoGo.status === 'go' ? 'The board is green for this browser/org evidence state.' : 'The board is holding on: ' + goNoGo.blockers.join('; '), goNoGo.status, goNoGo.status === 'go' ? 'good' : 'warn'),
           row('Cloud Armor evidence', 'Keep Cloud Armor as a required operator-confirmed check until the live policy exists and verify passes.', 'manual proof', 'warn'),
           row('Key rotation before paid onboarding', 'Shared or exposed pilot keys should be rotated or explicitly accepted for demo-only use before paid customer data.', 'required', 'warn')
@@ -4376,11 +4534,51 @@ function renderEnterpriseSupportPage(pageName: EnterpriseSupportPageName): strin
         byId('demoCloseList').innerHTML = [
           linkRow('Package and price', 'Use Plans for the paid-pilot scope, $5k/month starting package, guardrails, and expansion path.', '/app/plans', 'plans', 'good'),
           linkRow('Launch evidence', 'Use Launch to prove remaining blockers are visible and assigned before customer traffic.', '/app/launch', 'launch', goNoGo.status === 'go' ? 'good' : 'warn'),
+          linkRow('Support room', 'Use Support to explain launch-week support, evidence handoff, internal admin boundary, and approval gates.', '/app/support', 'support', support.status === 'ready' ? 'good' : 'warn'),
           linkRow('Runbooks', 'Use Runbooks for verification, deploy, evidence, secrets, DNS, edge, and cleanup commands.', '/app/runbooks', 'runbooks', 'good'),
           linkRow('Technical review', 'Use the Technical guide for architecture, identity, gateway, key custody, policy, and troubleshooting questions.', '/app/technical-guide', 'guide', 'good')
         ].join('');
         var scriptBox = byId('demoScript');
         if (scriptBox) scriptBox.value = demoScriptText(org, sso, readiness, overview, bootstrap);
+      }
+      function supportBriefText(org, sso, readiness, overview, bootstrap) {
+        var goNoGo = buildGoNoGoStatus(org, sso, readiness, overview, bootstrap);
+        var support = buildLaunchSupportPacket(org, sso, readiness, overview, bootstrap, goNoGo);
+        var coverage = support.coverage || {};
+        return [
+          'VaultProof Enterprise launch support brief',
+          'Organization: ' + (coverage.organization_name || org.name || 'selected workspace'),
+          'Support readiness: ' + support.status,
+          'Support model: ' + support.support_model,
+          'Runtime production-ready: ' + (coverage.runtime_production_ready ? 'yes' : 'no'),
+          'Security profile: ' + (coverage.security_profile || 'not reported'),
+          'SSO/login status: ' + (coverage.sso_provider_status || sso.provider_status || 'not confirmed'),
+          'Projects: ' + number(coverage.project_count),
+          'Members: ' + number(coverage.member_count),
+          'Provider slots: ' + number(coverage.provider_slots),
+          'Proxy calls observed: ' + number(coverage.proxy_calls),
+          'Internal admin URL: ' + support.internal_admin_url,
+          'Internal admin mode: ' + support.internal_admin_boundary.default_mode,
+          'Approval gate: ' + support.internal_admin_boundary.writes,
+          'Incident response boundary: base pilot uses customer IR plus VaultProof launch support; 24-hour response is an optional add-on.',
+          '',
+          'Customer handoff:',
+          '- ' + support.customer_handoff.join('\\n- '),
+          '',
+          'Launch-week workflow:',
+          '- ' + support.launch_week_workflow.join('\\n- '),
+        ].join('\\n');
+      }
+      function renderSupportPanel(org, sso, readiness, overview, bootstrap) {
+        var goNoGo = buildGoNoGoStatus(org, sso, readiness, overview, bootstrap);
+        var support = buildLaunchSupportPacket(org, sso, readiness, overview, bootstrap, goNoGo);
+        text('supportMeta', support.status === 'ready' ? 'ready for pilot' : 'hold for evidence');
+        byId('supportReadinessList').innerHTML = launchSupportReadinessRows(support).join('');
+        byId('supportBoundaryList').innerHTML = launchSupportBoundaryRows(support).join('');
+        byId('supportWorkflowList').innerHTML = launchSupportWorkflowRows(support).join('');
+        byId('supportHandoffList').innerHTML = launchSupportHandoffRows(support).join('');
+        var brief = byId('supportBrief');
+        if (brief) brief.value = supportBriefText(org, sso, readiness, overview, bootstrap);
       }
       function renderOrgSelector(payload) {
         var select = byId('orgSelect');
@@ -4422,6 +4620,7 @@ function renderEnterpriseSupportPage(pageName: EnterpriseSupportPageName): strin
         byId('settingsPanel').style.display = PAGE_MODE === 'settings' ? 'grid' : 'none';
         byId('plansPanel').style.display = PAGE_MODE === 'plans' ? 'grid' : 'none';
         byId('scannerPanel').style.display = PAGE_MODE === 'scanner' ? 'grid' : 'none';
+        byId('supportPanel').style.display = PAGE_MODE === 'support' ? 'grid' : 'none';
         byId('verifierPanel').style.display = PAGE_MODE === 'verifier' ? 'grid' : 'none';
         byId('runbooksPanel').style.display = PAGE_MODE === 'runbooks' ? 'grid' : 'none';
         if (PAGE_MODE === 'setup') {
@@ -4454,6 +4653,9 @@ function renderEnterpriseSupportPage(pageName: EnterpriseSupportPageName): strin
         }
         if (PAGE_MODE === 'demo') {
           renderDemoPanel(org, sso, readiness, overview, bootstrap);
+        }
+        if (PAGE_MODE === 'support') {
+          renderSupportPanel(org, sso, readiness, overview, bootstrap);
         }
         if (PAGE_MODE === 'settings') {
           text('settingsMeta', org.kind || 'organization');
@@ -4491,6 +4693,7 @@ function renderEnterpriseSupportPage(pageName: EnterpriseSupportPageName): strin
           byId('buyerReviewList').innerHTML = [
             linkRow('Evidence packet', 'Copy or download the customer proof packet before security review.', '/app/evidence', 'packet', 'good'),
             linkRow('Launch checklist', 'Review owners, first workload, policy, alerts, evidence exports, and rollback owner.', '/app/launch', 'launch', 'good'),
+            linkRow('Launch support', 'Review support model, internal admin boundary, approval gates, and customer handoff package.', '/app/support', 'support', 'good'),
             linkRow('Technical guide', 'Answer architecture, key custody, caller-lock, GCP runtime, and troubleshooting questions.', '/app/technical-guide', 'guide', 'good'),
             linkRow('Runbooks', 'Keep verification, evidence, deploy, DNS, edge, SSH, and cleanup commands visible to operators.', '/app/runbooks', 'runbooks', 'good')
           ].join('');
@@ -4726,6 +4929,19 @@ function renderEnterpriseSupportPage(pageName: EnterpriseSupportPageName): strin
           script.select();
         }
       });
+      var copySupportBriefBtn = byId('copySupportBriefBtn');
+      if (copySupportBriefBtn) copySupportBriefBtn.addEventListener('click', async function() {
+        var brief = byId('supportBrief');
+        if (!brief) return;
+        try {
+          await navigator.clipboard.writeText(brief.value);
+          copySupportBriefBtn.textContent = 'copied';
+          setTimeout(function() { copySupportBriefBtn.textContent = 'copy brief'; }, 1400);
+        } catch (_) {
+          brief.focus();
+          brief.select();
+        }
+      });
       var downloadEvidencePacketBtn = byId('downloadEvidencePacketBtn');
       if (downloadEvidencePacketBtn) downloadEvidencePacketBtn.addEventListener('click', function() {
         var packet = byId('evidencePacket');
@@ -4767,7 +4983,7 @@ export function renderEnterprisePlannedAppPage(pageName: string, env: Enterprise
   if (pageName === 'activity' || pageName === 'projects' || pageName === 'keys') {
     return injectEnterpriseAnalytics(renderEnterpriseOperationsPage(pageName), env, pageName);
   }
-  if (pageName === 'setup' || pageName === 'launch' || pageName === 'evidence' || pageName === 'demo' || pageName === 'technical-guide' || pageName === 'verifier' || pageName === 'settings' || pageName === 'plans' || pageName === 'scanner' || pageName === 'runbooks') {
+  if (pageName === 'setup' || pageName === 'launch' || pageName === 'evidence' || pageName === 'demo' || pageName === 'technical-guide' || pageName === 'verifier' || pageName === 'settings' || pageName === 'plans' || pageName === 'scanner' || pageName === 'support' || pageName === 'runbooks') {
     return injectEnterpriseAnalytics(renderEnterpriseSupportPage(pageName), env, pageName);
   }
 

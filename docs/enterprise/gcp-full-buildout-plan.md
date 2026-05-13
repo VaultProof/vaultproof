@@ -28,6 +28,7 @@ Already built:
 - Customer demo script page at `/app/demo` for buyer walkthrough, proof path, guardrails, Q&A, and close steps
 - Customer launch checklist page at `/app/launch`, including safe-to-pilot go/no-go board with browser-local operator evidence status, timestamps, and stale holds
 - Customer evidence packet page at `/app/evidence`, including go/no-go launch decision summary and blockers
+- Customer launch support room at `/app/support` for support model, internal admin boundary, approval gates, handoff checklist, and copyable support brief
 - Buyer commercial package page at `/app/plans` for paid-pilot scope, included controls, contract guardrails, security boundaries, and customer review links
 - Build-status and feature inventory docs
 - Managed Supabase remains the auth/database provider for the pilot
@@ -186,7 +187,7 @@ Success:
 - Ken can log in or use a guided demo account.
 - Test execution succeeds without exposing provider keys to the customer app.
 - Audit export shows request, policy, executor, and attestation metadata.
-- Support/admin path is available internally.
+- Support/admin path is available internally and summarized for customers through `/app/support` without exposing the employee console or secrets.
 
 ## Demo Feature: Email API Key And Secret Protection
 
