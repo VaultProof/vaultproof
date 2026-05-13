@@ -1,6 +1,6 @@
 # VaultProof GCP Full Buildout Plan
 
-Last updated: 2026-05-12
+Last updated: 2026-05-13
 
 This is the customer-demo buildout plan for moving VaultProof Enterprise from the current GCP pilot into a credible demo path that can support near-term customer conversations.
 
@@ -32,6 +32,7 @@ Already built:
 - Customer security review packet at `/app/security-review` for architecture, controls, evidence links, open items, common buyer answers, known limitations, and secret exclusions
 - Buyer commercial package page at `/app/plans` for paid-pilot scope, included controls, contract guardrails, security boundaries, and customer review links
 - Paid-pilot proposal builder at `/app/pilot` for first workload scope, expected volume, monthly price, sales commission math, support boundary, incident-response terms, success metric, and close steps
+- Pilot success tracker at `/app/pilot-success` for live checks, browser-local milestones, evidence links, blockers, weekly customer update copy, and expansion/no-go readiness
 - Build-status and feature inventory docs
 - Managed Supabase remains the auth/database provider for the pilot
 
@@ -68,7 +69,7 @@ Goal 1 is the first milestone where Ken can start testing the sellable product p
 
 Current status: Goal 1 demo dry-run gate is done. The control-plane runtime env includes the public Supabase anon key. `npm run qa:enterprise-login` now exists for repeatable login readiness checks; strict mode still needs to be run with Supabase service-role env, then followed by final human OAuth/password browser QA.
 
-Customer packaging status: `/app/plans` now carries the first sellable paid-pilot package view, `/app/security-review` gives buyers a copyable security/procurement review packet, and `/app/pilot` creates the first-workload proposal with price, commission, support, incident-response, and close-step terms. It keeps automated billing and hard plan enforcement out of scope for Goal 1; capacity, support cadence, retention, SSO depth, and dedicated-runtime terms stay contract-controlled until billing APIs exist.
+Customer packaging status: `/app/plans` now carries the first sellable paid-pilot package view, `/app/security-review` gives buyers a copyable security/procurement review packet, `/app/pilot` creates the first-workload proposal with price, commission, support, incident-response, and close-step terms, and `/app/pilot-success` tracks weekly proof, milestones, blockers, and expansion/no-go readiness after kickoff. It keeps automated billing and hard plan enforcement out of scope for Goal 1; capacity, support cadence, retention, SSO depth, and dedicated-runtime terms stay contract-controlled until billing APIs exist.
 
 ## Architecture
 

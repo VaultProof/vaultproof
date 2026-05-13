@@ -1,15 +1,15 @@
 # VaultProof GCP Feature Inventory
 
-Last updated: 2026-05-12
+Last updated: 2026-05-13
 
 This file tracks what VaultProof features exist, which ones have been adapted for Google Cloud, and what still blocks production cutover. Update it every time a build changes product behavior, runtime behavior, infrastructure behavior, or customer-facing claims.
 
 <!-- gcp-build-marker:start -->
-Last validated GCP image build: `pilot-proposal-20260513`
+Last validated GCP image build: `pilot-success-20260513`
 
-- Control plane digest: `sha256:0170f498a879c758bcd0da7eee89628bdaaf135cb2b4ca298156cecc9cff6f81`
-- Executor digest: `sha256:a8ed41c979a075e613d00ef8e0c6881224ae579c96ffa0d7959e837e35e8d556`
-- Updated: 2026-05-13T02:46:34.808Z
+- Control plane digest: `sha256:da64c951c02b1392e3eb01c6fae380a41e657a17627922eb8262f5b79f5b5ab2`
+- Executor digest: `sha256:043d220f70e089c11b03a2eb09832f96f263641fa4fe4e5857a0002841d2f887`
+- Updated: 2026-05-13T08:42:31.094Z
 <!-- gcp-build-marker:end -->
 
 ## Runtime Features
@@ -99,6 +99,7 @@ Last validated GCP image build: `pilot-proposal-20260513`
 | Monitoring evidence kit | Built | `/app/evidence` now includes `monitoring_evidence` with runtime readiness, traffic/denial/error posture, alert workflow path, Cloud Armor verification evidence, budget alert guardrail, live monitoring gate command, customer handoff notes, and redacted secret boundaries. `/app/demo` adds a buyer-facing monitoring proof point and `/app/runbooks` lists the monitoring evidence review before pilot traffic. |
 | Security review packet | Built | `/app/security-review` packages customer-safe architecture, control coverage, evidence links, open review items, known limitations, common security/procurement answers, and secret exclusions into a copyable review packet. `/app/evidence` now includes `security_review_packet`, while `/app/demo`, `/app/plans`, and `/app/runbooks` link reviewers to the packet. |
 | Paid-pilot proposal builder | Built | `/app/pilot` lets the team shape the first customer proposal with browser-local workload scope, provider path, owner group, expected monthly calls, monthly price, 20% sales commission math, support tier, incident-response add-on stance, success metric, guardrails, close steps, and copyable proposal text. `/app/evidence` includes `pilot_proposal`, while `/app/demo`, `/app/plans`, and `/app/runbooks` link to the proposal builder. |
+| Pilot success tracker | Built | `/app/pilot-success` tracks live checks, browser-local customer milestones, evidence links, blockers, weekly update copy, and expansion/no-go readiness. `/app/evidence` includes `pilot_success_tracker`, while `/app/demo`, `/app/plans`, and `/app/runbooks` link to the tracker. |
 | Buyer commercial package view | Built | `/app/plans` now explains the first paid-pilot package, included controls, contract-controlled capacity envelope, expansion path, guardrails, security boundaries, and links into evidence, launch, technical guide, and runbooks for customer review. |
 | Email API key and secret protection demo | Built | `/app/keys` now has email-provider defaults for Resend, SendGrid, Mailgun, Postmark, and AWS SES, a customer-facing email API key demo panel, protected email dry-run actions, blocked-recipient policy testing, launch/evidence packet coverage, and audit metadata that classifies email-provider calls as `email_api_key` / `email_provider_send`. The execute route enforces email sender-domain, recipient-domain, recipient-address, and template-ID policy and records denial evidence from derived fields only. Raw provider keys still stay out of browser flows; live sandbox sends require sealed provider material through the local ingest helper. General secret slots remain use-only by default and must never be emailed or casually revealed. |
 | Dashboard reference palette | Built | The live dashboard/app shell now uses the supplied mint, deep green, mustard gold, white card, and teal accent palette. Live HTML verification checks the deployed palette values on `https://enterprise.vaultproof.dev/app/dashboard`. |

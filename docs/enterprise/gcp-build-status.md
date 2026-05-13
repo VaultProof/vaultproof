@@ -1,6 +1,6 @@
 # VaultProof GCP Build Status
 
-Last updated: 2026-05-13T02:46:34.260Z
+Last updated: 2026-05-13T08:42:30.603Z
 
 This file is the living inventory of what has been built for VaultProof on Google Cloud. It is refreshed after every successful enterprise image build by `infra/gcp/enterprise-secure-runtime/build-images.sh`.
 
@@ -46,7 +46,7 @@ Status: `attached and enforced`
 
 ## App Shell Notes
 
-- Build `pilot-proposal-20260513` is the current deployed GCP image tag for both control plane and executor containers.
+- Build `pilot-success-20260513` is the current deployed GCP image tag for both control plane and executor containers.
 - Homepage hero headline is `Active Key Protection for every API call.`
 - `/app/demo` is the buyer walkthrough: live workspace facts, proof path, identity/OAuth proof kit, key-rotation proof kit, pilot operations proof kit, API proxy self-test kit, monitoring evidence kit, safety guardrails, objection answers, paid-pilot close steps, and a copyable demo talk track generated without secrets.
 - `/app/launch` is the customer go-live board: live readiness summary, auto/manual customer tasks, browser-saved checklist progress, safe-to-pilot go/no-go readiness, browser-local status/timestamp evidence with stale holds, workflow links, identity/OAuth, key-rotation, and pilot-operations evidence packets, and a copyable launch brief.
@@ -54,6 +54,7 @@ Status: `attached and enforced`
 - `/app/security-review` is the buyer security packet: concise architecture summary, control coverage, evidence links, open review items, common customer answers, known limitations, secret exclusions, and copyable security/procurement review text.
 - `/app/plans` is the buyer package view: rollout posture, paid-pilot commercial package, contract guardrails, security boundaries, and direct links into evidence, launch, technical guide, and runbooks.
 - `/app/pilot` is the paid-pilot proposal builder: browser-local first workload scope, expected volume, monthly price, 20% sales commission math, support/incident-response terms, success metric, and copyable customer proposal text without secrets.
+- `/app/pilot-success` is the pilot success tracker: live checks, browser-local customer milestones, evidence links, blockers, expansion/no-go readiness, and copyable weekly customer update without secrets.
 - `/app/support` is the launch support room: founder-led support scope, optional 24-hour incident-response boundary, internal admin URL, read-only default, approval-gated actions, support handoff checklist, and copyable support brief without secrets.
 - `/app/keys` includes the API proxy self-test kit and email API key demo path: copy-safe dry-run requests with required caller-lock headers, Resend/SendGrid/Mailgun/Postmark/AWS SES slot defaults, protected email dry-run, blocked-recipient policy testing, no raw key reveal, launch/evidence coverage, and email-specific audit metadata.
 - `/app/control` and `/app/org` use the shared universal sidebar with explicit sidebar typography, hide the legacy static topbar/page frame, and clean old `?org=<uuid>` URLs back to canonical `/app/control` and `/app/org` while preserving the selected org in local storage.
@@ -185,14 +186,14 @@ Cost note: the current fixed estimate is above the existing `VaultProof Producti
 
 ## Build Pointer
 
-- Build tag: `pilot-proposal-20260513`
+- Build tag: `pilot-success-20260513`
 - Registry: `us-central1-docker.pkg.dev/vaultproof-prod/vaultproof`
-- Control plane image: `us-central1-docker.pkg.dev/vaultproof-prod/vaultproof/enterprise-control-plane:pilot-proposal-20260513`
-- Control plane digest: `sha256:0170f498a879c758bcd0da7eee89628bdaaf135cb2b4ca298156cecc9cff6f81`
-- Control plane built at: `2026-05-13T02:43:03.839098510Z`
-- Executor image: `us-central1-docker.pkg.dev/vaultproof-prod/vaultproof/enterprise-secure-executor:pilot-proposal-20260513`
-- Executor digest: `sha256:a8ed41c979a075e613d00ef8e0c6881224ae579c96ffa0d7959e837e35e8d556`
-- Executor built at: `2026-05-13T02:43:16.466871108Z`
+- Control plane image: `us-central1-docker.pkg.dev/vaultproof-prod/vaultproof/enterprise-control-plane:pilot-success-20260513`
+- Control plane digest: `sha256:da64c951c02b1392e3eb01c6fae380a41e657a17627922eb8262f5b79f5b5ab2`
+- Control plane built at: `2026-05-13T08:37:21.801472043Z`
+- Executor image: `us-central1-docker.pkg.dev/vaultproof-prod/vaultproof/enterprise-secure-executor:pilot-success-20260513`
+- Executor digest: `sha256:043d220f70e089c11b03a2eb09832f96f263641fa4fe4e5857a0002841d2f887`
+- Executor built at: `2026-05-13T08:37:33.770470275Z`
 
 ## Project
 

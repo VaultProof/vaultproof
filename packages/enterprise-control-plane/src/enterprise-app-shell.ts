@@ -20,6 +20,7 @@ export type EnterpriseAppNavPage =
   | 'settings'
   | 'plans'
   | 'pilot'
+  | 'pilot-success'
   | 'scanner'
   | 'support'
   | 'runbooks'
@@ -211,6 +212,12 @@ const ENTERPRISE_SIDEBAR_NAV_GROUPS: readonly EnterpriseSidebarNavGroup[] = [
         href: '/app/pilot',
         label: 'Pilot proposal',
         blurb: 'Scope, price, owners, guardrails, and close copy.',
+      },
+      {
+        page: 'pilot-success',
+        href: '/app/pilot-success',
+        label: 'Pilot success',
+        blurb: 'Milestones, proof, blockers, and weekly update copy.',
       },
       {
         page: 'support',

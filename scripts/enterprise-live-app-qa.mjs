@@ -28,6 +28,7 @@ const requiredAppPaths = [
   '/app/settings',
   '/app/plans',
   '/app/pilot',
+  '/app/pilot-success',
   '/app/scanner',
   '/app/support',
   '/health',
