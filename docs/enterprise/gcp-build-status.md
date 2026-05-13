@@ -1,6 +1,6 @@
 # VaultProof GCP Build Status
 
-Last updated: 2026-05-13T00:41:04.667Z
+Last updated: 2026-05-13T01:01:04.668Z
 
 This file is the living inventory of what has been built for VaultProof on Google Cloud. It is refreshed after every successful enterprise image build by `infra/gcp/enterprise-secure-runtime/build-images.sh`.
 
@@ -46,11 +46,11 @@ Status: `attached and enforced`
 
 ## App Shell Notes
 
-- Build `a6fb14f` is the current deployed GCP image tag for both control plane and executor containers.
+- Build `identity-oauth-proof-20260513` is the current deployed GCP image tag for both control plane and executor containers.
 - Homepage hero headline is `Active Key Protection for every API call.`
-- `/app/demo` is the buyer walkthrough: live workspace facts, proof path, safety guardrails, objection answers, paid-pilot close steps, and a copyable demo talk track generated without secrets.
-- `/app/launch` is the customer go-live board: live readiness summary, auto/manual customer tasks, browser-saved checklist progress, safe-to-pilot go/no-go readiness, browser-local status/timestamp evidence with stale holds, workflow links, and a copyable launch brief.
-- `/app/evidence` is the customer proof packet: runtime readiness, go/no-go launch decision and blockers, access-review and audit export links, provider posture, rollout workflow, and copy/download JSON evidence summary without secrets.
+- `/app/demo` is the buyer walkthrough: live workspace facts, proof path, identity/OAuth proof kit, safety guardrails, objection answers, paid-pilot close steps, and a copyable demo talk track generated without secrets.
+- `/app/launch` is the customer go-live board: live readiness summary, auto/manual customer tasks, browser-saved checklist progress, safe-to-pilot go/no-go readiness, browser-local status/timestamp evidence with stale holds, workflow links, an identity/OAuth evidence packet, and a copyable launch brief.
+- `/app/evidence` is the customer proof packet: runtime readiness, go/no-go launch decision and blockers, identity/login QA evidence, access-review and audit export links, provider posture, rollout workflow, and copy/download JSON evidence summary without secrets.
 - `/app/plans` is the buyer package view: rollout posture, paid-pilot commercial package, contract guardrails, security boundaries, and direct links into evidence, launch, technical guide, and runbooks.
 - `/app/keys` includes the email API key demo path: Resend/SendGrid/Mailgun/Postmark/AWS SES slot defaults, protected email dry-run, blocked-recipient policy testing, no raw key reveal, launch/evidence coverage, and email-specific audit metadata.
 - `/app/control` and `/app/org` use the shared universal sidebar with explicit sidebar typography, hide the legacy static topbar/page frame, and clean old `?org=<uuid>` URLs back to canonical `/app/control` and `/app/org` while preserving the selected org in local storage.
@@ -182,14 +182,14 @@ Cost note: the current fixed estimate is above the existing `VaultProof Producti
 
 ## Build Pointer
 
-- Build tag: `a6fb14f`
+- Build tag: `identity-oauth-proof-20260513`
 - Registry: `us-central1-docker.pkg.dev/vaultproof-prod/vaultproof`
-- Control plane image: `us-central1-docker.pkg.dev/vaultproof-prod/vaultproof/enterprise-control-plane:a6fb14f`
-- Control plane digest: `sha256:900c4e8e9f849cb3c4cf0ffe5623d40fbd4dca3485a3b9a8648e585bdf6c5980`
-- Control plane built at: `2026-05-13T00:17:21.214431680Z`
-- Executor image: `us-central1-docker.pkg.dev/vaultproof-prod/vaultproof/enterprise-secure-executor:a6fb14f`
-- Executor digest: `sha256:f3518b0bb7954fdebcff49807e544efeb6b256392ab41c04ec10952e19ee6167`
-- Executor built at: `2026-05-13T00:17:32.087292879Z`
+- Control plane image: `us-central1-docker.pkg.dev/vaultproof-prod/vaultproof/enterprise-control-plane:identity-oauth-proof-20260513`
+- Control plane digest: `sha256:ac3f5de754601880f6c0c9e67a1076c504a0ef22d6c6bad6610bdf92e14cc5da`
+- Control plane built at: `2026-05-13T00:57:41.832577509Z`
+- Executor image: `us-central1-docker.pkg.dev/vaultproof-prod/vaultproof/enterprise-secure-executor:identity-oauth-proof-20260513`
+- Executor digest: `sha256:e09065445e2559ba9bd5940aa32f885c38b61da994a910188a3b359f1142a302`
+- Executor built at: `2026-05-13T00:57:54.131982086Z`
 
 ## Project
 

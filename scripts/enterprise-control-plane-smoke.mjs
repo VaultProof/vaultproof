@@ -3037,17 +3037,17 @@ async function assertEnterpriseLoginRoute() {
     {
       path: '/app/launch',
       title: 'Launch checklist - VaultProof Enterprise',
-      required: ['Launch progress', 'Customer tasks', 'Launch package', 'Go/No-Go Readiness', 'Cloud Armor verification passed', 'Strict login QA run', 'Key rotation status', 'Rollback owner/path confirmed', 'go/hold decision copy', 'vaultproof_go_no_go_evidence', 'updated_at', 'data-go-no-go-check', 'data-go-no-go-status', 'data-go-no-go-note', 'copy brief', 'Customer owners confirmed', 'Caller policy reviewed', 'Evidence exports reviewed', 'Email provider key protected', 'vaultproof_launch_checklist', '/api/v1/enterprise/projects/bootstrap', '/app/control', '/app/keys', '/app/audit'],
+      required: ['Launch progress', 'Customer tasks', 'Launch package', 'Go/No-Go Readiness', 'Identity/OAuth evidence packet', 'Cloud Armor verification passed', 'Strict login QA run', 'OAuth redirect QA command', 'External OAuth callback', 'Key rotation status', 'Rollback owner/path confirmed', 'go/hold decision copy', 'vaultproof_go_no_go_evidence', 'updated_at', 'data-go-no-go-check', 'data-go-no-go-status', 'data-go-no-go-note', 'copy brief', 'Customer owners confirmed', 'Caller policy reviewed', 'Evidence exports reviewed', 'Email provider key protected', 'vaultproof_launch_checklist', '/api/v1/enterprise/projects/bootstrap', '/app/control', '/app/keys', '/app/audit'],
     },
     {
       path: '/app/evidence',
       title: 'Evidence packet - VaultProof Enterprise',
-      required: ['Evidence readiness', 'Customer exports', 'Proof inventory', 'Review workflow', 'Go/no-go launch decision', 'go_no_go', 'manual_evidence', 'Email API key protection', 'Evidence packet JSON', 'copy JSON', 'download JSON', 'vaultproof_enterprise_evidence_packet', 'email_provider_slots', '/app/launch', '/app/control', '/api/v1/enterprise/audit?format=csv&days=30', '/api/v1/enterprise/members/access-review?format=csv'],
+      required: ['Evidence readiness', 'Customer exports', 'Proof inventory', 'Review workflow', 'Identity/OAuth proof', 'Go/no-go launch decision', 'go_no_go', 'manual_evidence', 'identity_login_qa', 'oauth_redirect_qa_command', 'Email API key protection', 'Evidence packet JSON', 'copy JSON', 'download JSON', 'vaultproof_enterprise_evidence_packet', 'email_provider_slots', '/app/launch', '/app/control', '/api/v1/enterprise/audit?format=csv&days=30', '/api/v1/enterprise/members/access-review?format=csv'],
     },
     {
       path: '/app/demo',
       title: 'Demo script - VaultProof Enterprise',
-      required: ['Demo objective', 'Live proof path', 'Buyer proof points', 'Safety guardrails', 'Objection answers', 'Close path', 'Copyable demo talk track', 'Active Key Protection for every API call.', 'Email API key story', 'Policy denial evidence', 'Cloud Armor evidence', 'Why keep Supabase for the demo?', 'Is this only AI?', 'copy script', '/app/keys', '/app/evidence', '/app/launch', '/app/plans', '/api/v1/enterprise/projects/bootstrap'],
+      required: ['Demo objective', 'Live proof path', 'Buyer proof points', 'Safety guardrails', 'Objection answers', 'Close path', 'Copyable demo talk track', 'Active Key Protection for every API call.', 'Email API key story', 'Identity/OAuth proof kit', 'Policy denial evidence', 'Cloud Armor evidence', 'Why keep Supabase for the demo?', 'Is this only AI?', 'copy script', '/app/keys', '/app/evidence', '/app/launch', '/app/plans', '/api/v1/enterprise/projects/bootstrap'],
     },
     {
       path: '/app/technical-guide',

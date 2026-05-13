@@ -5,11 +5,11 @@ Last updated: 2026-05-12
 This file tracks what VaultProof features exist, which ones have been adapted for Google Cloud, and what still blocks production cutover. Update it every time a build changes product behavior, runtime behavior, infrastructure behavior, or customer-facing claims.
 
 <!-- gcp-build-marker:start -->
-Last validated GCP image build: `a6fb14f`
+Last validated GCP image build: `identity-oauth-proof-20260513`
 
-- Control plane digest: `sha256:900c4e8e9f849cb3c4cf0ffe5623d40fbd4dca3485a3b9a8648e585bdf6c5980`
-- Executor digest: `sha256:f3518b0bb7954fdebcff49807e544efeb6b256392ab41c04ec10952e19ee6167`
-- Updated: 2026-05-13T00:41:05.326Z
+- Control plane digest: `sha256:ac3f5de754601880f6c0c9e67a1076c504a0ef22d6c6bad6610bdf92e14cc5da`
+- Executor digest: `sha256:e09065445e2559ba9bd5940aa32f885c38b61da994a910188a3b359f1142a302`
+- Updated: 2026-05-13T01:01:05.144Z
 <!-- gcp-build-marker:end -->
 
 ## Runtime Features
@@ -91,6 +91,7 @@ Last validated GCP image build: `a6fb14f`
 | Customer demo script | Built | `/app/demo` gives sales and founders a repeatable buyer walkthrough with live workspace facts, proof path links, safety guardrails, objection answers, paid-pilot close steps, and a copyable talk track. It uses existing readiness/bootstrap data and does not include secrets. |
 | Customer launch checklist | Built | `/app/launch` is a customer-facing go-live board with live readiness summary, auto/manual launch tasks, browser-saved checklist progress, direct workflow links, a safe-to-pilot go/no-go board, browser-local operator evidence rows with status/timestamps/stale holds, and a copyable launch brief for customer testing. It now reads project/provider/email readiness from the existing enterprise bootstrap payload. |
 | Customer evidence packet | Built | `/app/evidence` assembles readiness, go/no-go launch decision and blockers, access-review, audit export links, provider posture, rollout workflow, and a copy/download JSON proof packet scoped to the selected organization without exposing secrets. |
+| Identity/OAuth evidence kit | Built | `/app/launch` now shows a customer-safe identity proof packet with the enterprise login URL, Supabase redirect allowlist URL, external OAuth callback URL, strict login QA command, OAuth redirect QA command, human browser QA action, and the current browser-local evidence status. `/app/evidence` includes the same data under `identity_login_qa` without Supabase service-role keys, browser sessions, OAuth client secrets, provider keys, or origin-lock values. `/app/demo` now has a buyer-facing identity/OAuth proof point. |
 | Buyer commercial package view | Built | `/app/plans` now explains the first paid-pilot package, included controls, contract-controlled capacity envelope, expansion path, guardrails, security boundaries, and links into evidence, launch, technical guide, and runbooks for customer review. |
 | Email API key and secret protection demo | Built | `/app/keys` now has email-provider defaults for Resend, SendGrid, Mailgun, Postmark, and AWS SES, a customer-facing email API key demo panel, protected email dry-run actions, blocked-recipient policy testing, launch/evidence packet coverage, and audit metadata that classifies email-provider calls as `email_api_key` / `email_provider_send`. The execute route enforces email sender-domain, recipient-domain, recipient-address, and template-ID policy and records denial evidence from derived fields only. Raw provider keys still stay out of browser flows; live sandbox sends require sealed provider material through the local ingest helper. General secret slots remain use-only by default and must never be emailed or casually revealed. |
 | Dashboard reference palette | Built | The live dashboard/app shell now uses the supplied mint, deep green, mustard gold, white card, and teal accent palette. Live HTML verification checks the deployed palette values on `https://enterprise.vaultproof.dev/app/dashboard`. |

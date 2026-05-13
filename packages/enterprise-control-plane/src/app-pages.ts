@@ -10,6 +10,7 @@ import {
 
 const PUBLIC_SITE_ORIGIN = 'https://vaultproof.dev';
 const ENTERPRISE_AUTH_ERROR_MESSAGE = 'Your enterprise session expired or is missing. Sign in again to continue.';
+const DEMO_SUPABASE_CALLBACK_URL = 'https://gwzkjiomemjlhtrdrlan.supabase.co/auth/v1/callback';
 
 function escapeRegExp(value: string): string {
   return value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
@@ -2906,6 +2907,10 @@ function renderEnterpriseSupportPage(pageName: EnterpriseSupportPageName): strin
           <div id="goNoGoDecision" class="evidence-callout go-decision"></div>
           <div id="goNoGoList" class="list"></div>
         </div>
+        <div class="card" style="grid-column:1/-1">
+          <div class="section-title"><h2>Identity/OAuth evidence packet</h2><span class="mini" id="identityQaMeta">hold</span></div>
+          <div id="identityQaList" class="list"></div>
+        </div>
         <div class="card">
           <div class="section-title"><h2>Customer tasks</h2><span class="mini">saved in this browser</span></div>
           <div id="launchChecklist" class="list"></div>
@@ -2939,6 +2944,10 @@ function renderEnterpriseSupportPage(pageName: EnterpriseSupportPageName): strin
         <div class="card">
           <div class="section-title"><h2>Review workflow</h2><span class="mini">customer handoff</span></div>
           <div id="evidenceWorkflowList" class="list"></div>
+        </div>
+        <div class="card" style="grid-column:1/-1">
+          <div class="section-title"><h2>Identity/OAuth proof</h2><span class="mini" id="evidenceIdentityMeta">hold</span></div>
+          <div id="evidenceIdentityList" class="list"></div>
         </div>
         <div class="card" style="grid-column:1/-1">
           <div class="section-title">
@@ -3471,6 +3480,62 @@ function renderEnterpriseSupportPage(pageName: EnterpriseSupportPageName): strin
         { id: 'budget-monitoring-reviewed', title: 'Budget/monitoring reviewed', action: 'Review budget alert, uptime expectations, denial/error monitoring, and launch-week owner coverage', sub: 'The customer pilot will not run blind on cost, availability, or provider errors.', critical: true }
       ];
       var GO_NO_GO_MANUAL_STALE_MS = 7 * 24 * 60 * 60 * 1000;
+      function goNoGoManualById(goNoGo) {
+        var lookup = {};
+        ((goNoGo && goNoGo.manual) || []).forEach(function(item) { lookup[item.id] = item; });
+        return lookup;
+      }
+      function manualEvidenceSummary(item) {
+        return {
+          status: item && item.status ? item.status : 'missing',
+          updated_at: item && item.updated_at ? item.updated_at : null,
+          note: item && item.note ? item.note : null,
+          stale: item && item.stale === true
+        };
+      }
+      function buildIdentityQaPacket(goNoGo) {
+        var manual = goNoGoManualById(goNoGo);
+        var strict = manual['strict-login-qa'];
+        var human = manual['human-login-qa'];
+        var redirect = manual['supabase-redirect-oauth'];
+        var ready = strict && strict.passed && human && human.passed && redirect && redirect.passed;
+        return {
+          status: ready ? 'ready' : 'hold',
+          login_url: location.origin + '/app/login',
+          allowed_redirect_uri: location.origin + '/app/login',
+          external_oauth_callback_uri: ${JSON.stringify(DEMO_SUPABASE_CALLBACK_URL)},
+          strict_login_qa_command: 'LOGIN_QA_REQUIRE_SESSION=true npm run qa:enterprise-login',
+          oauth_redirect_qa_command: 'LOGIN_QA_OAUTH_PROVIDER=google npm run qa:enterprise-login',
+          human_browser_qa_action: 'Browser-test ' + location.origin + '/app/login with ken@vaultproof.dev',
+          manual_evidence: {
+            strict_login_qa: manualEvidenceSummary(strict),
+            human_login_qa: manualEvidenceSummary(human),
+            supabase_redirect_oauth: manualEvidenceSummary(redirect)
+          },
+          secrets_excluded: [
+            'Supabase service-role key',
+            'Supabase browser session token',
+            'OAuth client secret',
+            'provider API keys',
+            'origin-lock secret'
+          ]
+        };
+      }
+      function identityQaRows(packet) {
+        var strictStatus = packet.manual_evidence.strict_login_qa.status;
+        var humanStatus = packet.manual_evidence.human_login_qa.status;
+        var redirectStatus = packet.manual_evidence.supabase_redirect_oauth.status;
+        return [
+          row('Identity proof status', packet.status === 'ready' ? 'Strict login QA, human browser QA, and Supabase redirect/OAuth settings are all recorded for this org.' : 'Keep this on HOLD until strict login QA, human login QA, and redirect/OAuth confirmation are recorded.', packet.status, packet.status === 'ready' ? 'good' : 'warn'),
+          row('Enterprise login URL', packet.login_url, 'login', 'good'),
+          row('Supabase redirect allowlist', packet.allowed_redirect_uri, redirectStatus, redirectStatus === 'passed' ? 'good' : 'warn'),
+          row('External OAuth callback', packet.external_oauth_callback_uri, 'callback', 'good'),
+          row('Strict login QA command', packet.strict_login_qa_command, strictStatus, strictStatus === 'passed' ? 'good' : 'warn'),
+          row('OAuth redirect QA command', packet.oauth_redirect_qa_command, 'oauth redirect QA', 'warn'),
+          row('Human browser QA action', packet.human_browser_qa_action, humanStatus, humanStatus === 'passed' ? 'good' : 'warn'),
+          row('Secrets excluded', packet.secrets_excluded.join(', '), 'redacted', 'good')
+        ];
+      }
       function providerSlotsFromBootstrap(bootstrap) {
         var projects = bootstrap && Array.isArray(bootstrap.projects) ? bootstrap.projects : [];
         var slots = [];
@@ -3607,6 +3672,7 @@ function renderEnterpriseSupportPage(pageName: EnterpriseSupportPageName): strin
       }
       function launchBriefText(org, sso, readiness, overview, percent, doneCount, totalCount, goNoGo) {
         var productionReady = readiness.production_ready === true;
+        var identityQa = buildIdentityQaPacket(goNoGo);
         var blockers = goNoGo && goNoGo.blockers && goNoGo.blockers.length
           ? goNoGo.blockers.join('; ')
           : 'none';
@@ -3616,6 +3682,10 @@ function renderEnterpriseSupportPage(pageName: EnterpriseSupportPageName): strin
           'Launch progress: ' + percent + '% (' + doneCount + '/' + totalCount + ' tasks)',
           'Go/no-go decision: ' + (goNoGo && goNoGo.status === 'go' ? 'GO' : 'HOLD'),
           'Go/no-go blockers: ' + blockers,
+          'Identity/OAuth proof status: ' + identityQa.status,
+          'Enterprise login URL: ' + identityQa.login_url,
+          'Supabase redirect allowlist: ' + identityQa.allowed_redirect_uri,
+          'External OAuth callback: ' + identityQa.external_oauth_callback_uri,
           'Runtime production-ready: ' + (productionReady ? 'yes' : 'no'),
           'SSO/login status: ' + (sso.provider_status || 'not confirmed'),
           'Projects: ' + number(org.project_count || overview.totalProjects),
@@ -3636,6 +3706,7 @@ function renderEnterpriseSupportPage(pageName: EnterpriseSupportPageName): strin
         var manualState = getLaunchManualState();
         var items = buildLaunchItems(org, sso, readiness, overview, bootstrap);
         var goNoGo = buildGoNoGoStatus(org, sso, readiness, overview, bootstrap);
+        var identityQa = buildIdentityQaPacket(goNoGo);
         var doneCount = items.filter(function(item) {
           return item.auto ? item.complete : manualState[item.id];
         }).length;
@@ -3662,6 +3733,8 @@ function renderEnterpriseSupportPage(pageName: EnterpriseSupportPageName): strin
           goNoGo.automated.map(goNoGoAutomatedRow).join('') +
           '<div class="mini" style="margin-top:8px">Operator-confirmed evidence saved in this browser</div>' +
           goNoGo.manual.map(goNoGoManualRow).join('');
+        text('identityQaMeta', identityQa.status);
+        byId('identityQaList').innerHTML = identityQaRows(identityQa).join('');
         byId('launchChecklist').innerHTML = items.map(function(item) {
           return launchCheckRow(item, manualState[item.id]);
         }).join('');
@@ -3686,6 +3759,7 @@ function renderEnterpriseSupportPage(pageName: EnterpriseSupportPageName): strin
         var executorHealth = executor.health || {};
         var emailProviders = emailProvidersFromData(overview, bootstrap);
         var goNoGo = buildGoNoGoStatus(org, sso, readiness, overview, bootstrap);
+        var identityQa = buildIdentityQaPacket(goNoGo);
         return {
           packet_type: 'vaultproof_enterprise_evidence_packet',
           packet_version: 1,
@@ -3755,6 +3829,7 @@ function renderEnterpriseSupportPage(pageName: EnterpriseSupportPageName): strin
               };
             })
           },
+          identity_login_qa: identityQa,
           exports: {
             readiness: '/readiness',
             audit_csv_30_days: evidenceExportHref('/api/v1/enterprise/audit?format=csv&days=30'),
@@ -3779,6 +3854,7 @@ function renderEnterpriseSupportPage(pageName: EnterpriseSupportPageName): strin
         var executor = readiness.executor || {};
         var executorHealth = executor.health || {};
         var packet = evidencePacketObject(org, sso, readiness, overview, bootstrap);
+        var identityQa = packet.identity_login_qa || buildIdentityQaPacket(buildGoNoGoStatus(org, sso, readiness, overview, bootstrap));
         text('evidenceMeta', productionReady ? 'ready for review' : 'needs attention');
         byId('evidenceReadinessList').innerHTML = [
           row('Production readiness', productionReady ? 'Control plane and confidential executor report production-ready.' : (readiness.production_blockers || []).join('; '), productionReady ? 'ready' : 'blocked', productionReady ? 'good' : 'bad'),
@@ -3808,11 +3884,14 @@ function renderEnterpriseSupportPage(pageName: EnterpriseSupportPageName): strin
           linkRow('Review technical guide', 'Use the implementation guide for architecture, trust boundaries, key custody, and troubleshooting answers.', '/app/technical-guide', 'guide', 'good'),
           linkRow('Review runbooks', 'Operator commands for verification, evidence capture, deploys, secrets, DNS, edge, SSH, and cleanup.', '/app/runbooks', 'runbooks', 'good')
         ].join('');
+        text('evidenceIdentityMeta', identityQa.status);
+        byId('evidenceIdentityList').innerHTML = identityQaRows(identityQa).join('');
         var packetBox = byId('evidencePacket');
         if (packetBox) packetBox.value = JSON.stringify(packet, null, 2);
       }
       function demoScriptText(org, sso, readiness, overview, bootstrap) {
         var goNoGo = buildGoNoGoStatus(org, sso, readiness, overview, bootstrap);
+        var identityQa = buildIdentityQaPacket(goNoGo);
         var emailProviders = emailProvidersFromData(overview, bootstrap);
         var providerCount = providerCountFromData(overview, bootstrap);
         var projectCount = projectCountFromData(org, overview, bootstrap);
@@ -3832,12 +3911,15 @@ function renderEnterpriseSupportPage(pageName: EnterpriseSupportPageName): strin
           'Proxy calls observed: ' + number(overview.totalCalls),
           'Runtime production-ready: ' + (readiness.production_ready === true ? 'yes' : 'no'),
           'SSO/login status: ' + (sso.provider_status || 'not confirmed'),
+          'Identity/OAuth proof status: ' + identityQa.status,
+          'OAuth callback: ' + identityQa.external_oauth_callback_uri,
           '',
           '3. Walk the buyer through the product',
           '- Dashboard: current runtime, access, project, and evidence posture.',
           '- Provider slots: protected key slots, material mode, dry-run email send, blocked-recipient denial, and emergency revoke.',
           '- Activity and Audit: runtime status, denial evidence, latency, provider request IDs, and governance exports.',
           '- Evidence packet: customer-safe JSON and CSV proof with no raw provider key material.',
+          '- Identity/OAuth evidence packet: strict QA command, redirect allowlist, callback URL, and browser QA status without secrets.',
           '- Launch checklist: go/no-go board, manual evidence, stale holds, and remaining blockers.',
           '',
           '4. Be crisp about boundaries',
@@ -3854,6 +3936,7 @@ function renderEnterpriseSupportPage(pageName: EnterpriseSupportPageName): strin
       function renderDemoPanel(org, sso, readiness, overview, bootstrap) {
         var productionReady = readiness.production_ready === true;
         var goNoGo = buildGoNoGoStatus(org, sso, readiness, overview, bootstrap);
+        var identityQa = buildIdentityQaPacket(goNoGo);
         var providerCount = providerCountFromData(overview, bootstrap);
         var emailProviders = emailProvidersFromData(overview, bootstrap);
         text('demoMeta', goNoGo.status === 'go' ? 'ready to pilot' : 'hold for evidence');
@@ -3871,12 +3954,14 @@ function renderEnterpriseSupportPage(pageName: EnterpriseSupportPageName): strin
         ].join('');
         byId('demoProofList').innerHTML = [
           row('GCP confidential runtime', productionReady ? 'Readiness reports production-ready with the expected GCP confidential security profile.' : 'Readiness is not green; use this as a blocker instead of a claim.', productionReady ? 'ready' : 'blocked', productionReady ? 'good' : 'bad'),
+          row('Identity/OAuth proof kit', identityQa.status === 'ready' ? 'Login QA evidence is recorded with redirect allowlist and external OAuth callback facts.' : 'Use Launch to record strict login QA, human browser QA, and Supabase redirect/OAuth confirmation.', identityQa.status, identityQa.status === 'ready' ? 'good' : 'warn'),
           row('No raw key exposure', 'Provider slots show posture and material mode without returning encrypted shares or plaintext provider material to the browser.', 'secret safe', 'good'),
           row('Policy denial evidence', 'The blocked-recipient test gives a buyer a concrete denial story: policy rejected unsafe traffic and recorded evidence.', 'auditable', 'good'),
           row('Access and audit exports', 'Members, Audit, Activity, and Evidence produce reviewable CSV/JSON artifacts for security teams.', 'exportable', 'good')
         ].join('');
         byId('demoGuardrailList').innerHTML = [
           row('Demo dry-run first', 'Use dry-run provider execution unless sealed sandbox provider material is intentionally installed for this demo.', 'safe default', 'good'),
+          row('Login proof before customer testing', identityQa.status === 'ready' ? 'Identity proof is recorded for this organization.' : 'Do not invite a customer pilot user until login/OAuth proof is recorded or explicitly accepted as a demo hold.', 'identity gate', identityQa.status === 'ready' ? 'good' : 'warn'),
           row('Do not mark GO casually', goNoGo.status === 'go' ? 'The board is green for this browser/org evidence state.' : 'The board is holding on: ' + goNoGo.blockers.join('; '), goNoGo.status, goNoGo.status === 'go' ? 'good' : 'warn'),
           row('Cloud Armor evidence', 'Keep Cloud Armor as a required operator-confirmed check until the live policy exists and verify passes.', 'manual proof', 'warn'),
           row('Key rotation before paid onboarding', 'Shared or exposed pilot keys should be rotated or explicitly accepted for demo-only use before paid customer data.', 'required', 'warn')
@@ -4034,6 +4119,8 @@ function renderEnterpriseSupportPage(pageName: EnterpriseSupportPageName): strin
             row('Handoff gate', 'npm run gate:enterprise-handoff validates gateway templates, builds the package, verifies the manifest, and can optionally require live QA/evidence strictness.', 'read-only', 'good'),
             row('Finish gate', 'npm run gate:enterprise-finish runs local smoke, gateway policy smoke, handoff gate, live app QA, and hardening status into one ok/attention/blocked release view with structured blocker/warning details.', 'read-only', 'good'),
             row('Live app QA', 'npm run qa:enterprise-live-app checks enterprise app pages, internal links, auth-safe rendering, and production readiness.', 'read-only', 'good'),
+            row('Strict login QA', 'LOGIN_QA_REQUIRE_SESSION=true npm run qa:enterprise-login validates live login redirects, generates a temporary Supabase session, and checks authenticated enterprise APIs when service-role env is loaded.', 'identity', 'good'),
+            row('OAuth redirect QA', 'LOGIN_QA_OAUTH_PROVIDER=google npm run qa:enterprise-login checks the public Supabase OAuth authorize redirect after the external provider app is configured.', 'identity', 'good'),
             row('Secret rotation preparation', 'npm run prepare:enterprise-secret-rotation plans the install order and can generate fresh executor signing material without printing secrets.', 'read-only', 'good'),
             row('Private origin preparation', 'npm run prepare:enterprise-private-origin inventories edge, gateway, VM network posture, and private-origin migration choices without changing live infrastructure.', 'read-only', 'good'),
             row('Gateway JWT validation preparation', 'npm run prepare:enterprise-apim-jwt plans Supabase or Entra JWT validation settings before enabling gateway JWT validation and can discover the Supabase issuer from the live enterprise login script.', 'read-only', 'good'),

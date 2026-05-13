@@ -426,9 +426,9 @@ Status: \`${cloudArmorState}\`
 
 - Build \`${buildTag}\` is the current deployed GCP image tag for both control plane and executor containers.
 - Homepage hero headline is \`Active Key Protection for every API call.\`
-- \`/app/demo\` is the buyer walkthrough: live workspace facts, proof path, safety guardrails, objection answers, paid-pilot close steps, and a copyable demo talk track generated without secrets.
-- \`/app/launch\` is the customer go-live board: live readiness summary, auto/manual customer tasks, browser-saved checklist progress, safe-to-pilot go/no-go readiness, browser-local status/timestamp evidence with stale holds, workflow links, and a copyable launch brief.
-- \`/app/evidence\` is the customer proof packet: runtime readiness, go/no-go launch decision and blockers, access-review and audit export links, provider posture, rollout workflow, and copy/download JSON evidence summary without secrets.
+- \`/app/demo\` is the buyer walkthrough: live workspace facts, proof path, identity/OAuth proof kit, safety guardrails, objection answers, paid-pilot close steps, and a copyable demo talk track generated without secrets.
+- \`/app/launch\` is the customer go-live board: live readiness summary, auto/manual customer tasks, browser-saved checklist progress, safe-to-pilot go/no-go readiness, browser-local status/timestamp evidence with stale holds, workflow links, an identity/OAuth evidence packet, and a copyable launch brief.
+- \`/app/evidence\` is the customer proof packet: runtime readiness, go/no-go launch decision and blockers, identity/login QA evidence, access-review and audit export links, provider posture, rollout workflow, and copy/download JSON evidence summary without secrets.
 - \`/app/plans\` is the buyer package view: rollout posture, paid-pilot commercial package, contract guardrails, security boundaries, and direct links into evidence, launch, technical guide, and runbooks.
 - \`/app/keys\` includes the email API key demo path: Resend/SendGrid/Mailgun/Postmark/AWS SES slot defaults, protected email dry-run, blocked-recipient policy testing, no raw key reveal, launch/evidence coverage, and email-specific audit metadata.
 - \`/app/control\` and \`/app/org\` use the shared universal sidebar with explicit sidebar typography, hide the legacy static topbar/page frame, and clean old \`?org=<uuid>\` URLs back to canonical \`/app/control\` and \`/app/org\` while preserving the selected org in local storage.
