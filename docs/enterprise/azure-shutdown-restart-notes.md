@@ -36,7 +36,7 @@ If these are not preserved, restart is still possible, but expect to recreate/ro
 - Front Door profile: `vaultproof-enterprise-fd`
 - Front Door endpoint: `vaultproof-enterprise`
 - Enterprise hostname: `enterprise.vaultproof.dev`
-- Internal admin hostname: `admin.vaultproof.dev`
+- Internal admin hostname: deprecated for the enterprise runtime; staff/admin pages belong to the separate `vaultproof.dev` root/B2C system.
 
 ## Local Files Not Yet Tracked In Git
 

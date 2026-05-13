@@ -30,7 +30,7 @@ Google Cloud KMS is not a 1:1 replacement for Azure Secure Key Release. Cloud KM
 | Azure Confidential VM | Compute Engine Confidential VM | Use Confidential VM for the first lift. Use Confidential Space if we need stronger image-bound attestation before KMS access. |
 | Azure Managed HSM / Key Vault Premium SKR | Standard Cloud KMS for the shared pilot; optional Cloud HSM later | Do not assume raw key export. Avoid HSM in the shared pilot unless explicitly approved. |
 | Azure Attestation / SKR policy hash | Google Cloud Attestation / Confidential Space token claims | Evidence model must be redesigned around GCP attestation tokens and workload identity attributes. |
-| Azure Front Door | External HTTPS Load Balancer + Cloud Armor | Map `enterprise.vaultproof.dev` and `admin.vaultproof.dev` after DNS cutover. |
+| Azure Front Door | External HTTPS Load Balancer + Cloud Armor | Map `enterprise.vaultproof.dev` after DNS cutover. Staff/admin pages stay in the separate `vaultproof.dev` root/B2C system. |
 | Azure API Management | API Gateway, Apigee, or customer gateway | For lowest cost, start without Apigee. Add API Gateway/Apigee only if needed for customer-managed gateway, quotas, and enterprise policy packaging. |
 | Azure Monitor / App Insights | Cloud Logging, Cloud Monitoring, uptime checks, alert policies | Preserve readiness/health/attestation drift alerts. |
 | Azure VM systemd deployment | Compute Engine VM systemd deployment or containerized Confidential Space workload | First lift can keep systemd. Confidential Space will require containerizing the executor/control-plane split. |
@@ -56,7 +56,7 @@ Google Cloud KMS is not a 1:1 replacement for Azure Secure Key Release. Cloud KM
 6. Install Node.js and deploy this repo from GitHub/local source.
 7. Restore or rotate runtime env values into Secret Manager and VM env files.
 8. Wire external HTTPS load balancer for `enterprise.vaultproof.dev`.
-9. Add `admin.vaultproof.dev` once the employee allowlist path is validated.
+9. Keep VaultProof staff/admin pages out of `enterprise.vaultproof.dev`; wire any staff tooling through the separate root/B2C admin system.
 10. Run:
 
 ```bash

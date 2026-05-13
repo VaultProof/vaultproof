@@ -12,12 +12,12 @@ These records point at Azure Front Door. Remove them when Azure is stopped or cl
 
 | Type | Name | Current target | Action |
 | --- | --- | --- | --- |
-| CNAME | `admin` | `vaultproof-enterprise-h0bwaahfg6che7ft.z02.azurefd.net` | Delete for Azure shutdown. Recreate later for GCP admin load balancer. |
+| CNAME | `admin` | `vaultproof-enterprise-h0bwaahfg6che7ft.z02.azurefd.net` | Delete for Azure shutdown. Do not recreate for the enterprise runtime. |
 | CNAME | `enterprise` | `vaultproof-enterprise-h0bwaahfg6che7ft.z02.azurefd.net` | Delete for Azure shutdown. Recreate later for GCP enterprise load balancer. |
 | TXT | `_dnsauth.admin` | Azure custom-domain validation token | Delete after Azure Front Door custom domain is no longer needed. |
 | TXT | `_dnsauth.enterprise` | Azure custom-domain validation token | Delete after Azure Front Door custom domain is no longer needed. |
 
-Do not leave `admin.vaultproof.dev` or `enterprise.vaultproof.dev` pointing to a closed Azure Front Door endpoint. That creates a confusing broken production surface and can also make later GCP validation harder to reason about.
+Do not leave `admin.vaultproof.dev` or `enterprise.vaultproof.dev` pointing to a closed Azure Front Door endpoint. `enterprise.vaultproof.dev` should point at the GCP enterprise runtime; VaultProof staff/admin pages should stay in the separate `vaultproof.dev` root/B2C system.
 
 ## Keep
 
@@ -66,7 +66,6 @@ Create these Cloudflare DNS records when ready to validate the Google-managed ce
 | Type | Name | Value | Proxy status |
 | --- | --- | --- | --- |
 | A | `enterprise` | `34.102.179.105` | DNS-only for first validation |
-| A | `admin` | `34.102.179.105` | DNS-only for first validation |
 
 After DNS and TLS are healthy:
 
@@ -76,7 +75,6 @@ After DNS and TLS are healthy:
 
 ```bash
 curl -I https://enterprise.vaultproof.dev/
-curl -I https://admin.vaultproof.dev/
 RUN_LIVE_EDGE=true RUN_LIVE_APP_QA=true STRICT_LIVE=true npm run gate:gcp-customer-launch
 ```
 

@@ -4103,9 +4103,9 @@ function renderEnterpriseSupportPage(pageName: EnterpriseSupportPageName): strin
           status: ready ? 'ready' : 'hold',
           support_model: 'Founder-led launch-week support for the first paid pilot. 24-hour incident response is an optional add-on, not included in the base pilot package.',
           support_page: location.origin + '/app/support',
-          internal_admin_surface: 'VaultProof employee admin is hosted separately from enterprise.vaultproof.dev.',
+          internal_admin_surface: 'VaultProof staff/admin belongs to the separate VaultProof B2C/root admin system, not enterprise.vaultproof.dev.',
           internal_admin_boundary: {
-            hostname: 'admin.vaultproof.dev',
+            hostname: 'vaultproof.dev admin system',
             default_mode: 'read_only',
             writes: 'Support notes, invitations, business status updates, destructive action requests, executions, and rollbacks require internal admin actions to be enabled plus the approval secret header.',
             audit: 'Employee console views and approved actions are recorded in the internal admin audit stream.',
@@ -4131,7 +4131,7 @@ function renderEnterpriseSupportPage(pageName: EnterpriseSupportPageName): strin
           launch_week_workflow: [
             'Review /readiness, /app/launch, /app/evidence, /app/activity, /app/audit, /app/keys, and /app/alerts before each customer test.',
             'Record customer-visible notes in the launch brief or evidence packet, not in chat threads.',
-            'Use internal admin only for employee support triage and approval-gated administrative actions.',
+            'Use the separate VaultProof staff/admin system only for employee support triage and approval-gated administrative actions.',
             'Escalate real incidents to the customer incident-response team unless 24-hour response is sold as an add-on.',
             'Export audit/access-review evidence after policy, key, member, or support-action changes.'
           ],
@@ -4147,7 +4147,7 @@ function renderEnterpriseSupportPage(pageName: EnterpriseSupportPageName): strin
             'npm run verify:gcp-enterprise-edge',
             'npm run verify:gcp-enterprise-cloud-armor',
             'RUN_LIVE_EDGE=true RUN_LIVE_APP_QA=true RUN_CLOUD_ARMOR_QA=true npm run gate:gcp-customer-launch',
-            'npm run prepare:enterprise-internal-admin'
+            'Confirm staff/admin tooling is not exposed on enterprise.vaultproof.dev'
           ],
           secrets_excluded: [
             'Supabase service-role key',
@@ -5327,7 +5327,7 @@ function renderEnterpriseSupportPage(pageName: EnterpriseSupportPageName): strin
           'Provider slots: ' + number(coverage.provider_slots),
           'Proxy calls observed: ' + number(coverage.proxy_calls),
           'Employee admin surface: ' + support.internal_admin_surface,
-          'Employee admin host: ' + support.internal_admin_boundary.hostname,
+          'Employee admin system: ' + support.internal_admin_boundary.hostname,
           'Internal admin mode: ' + support.internal_admin_boundary.default_mode,
           'Approval gate: ' + support.internal_admin_boundary.writes,
           'Incident response boundary: base pilot uses customer IR plus VaultProof launch support; 24-hour response is an optional add-on.',
@@ -5566,7 +5566,7 @@ function renderEnterpriseSupportPage(pageName: EnterpriseSupportPageName): strin
             row('Secret rotation preparation', 'npm run prepare:enterprise-secret-rotation plans the install order and can generate fresh executor signing material without printing secrets.', 'read-only', 'good'),
             row('Private origin preparation', 'npm run prepare:enterprise-private-origin inventories edge, gateway, VM network posture, and private-origin migration choices without changing live infrastructure.', 'read-only', 'good'),
             row('Gateway JWT validation preparation', 'npm run prepare:enterprise-apim-jwt plans Supabase or Entra JWT validation settings before enabling gateway JWT validation and can discover the Supabase issuer from the live enterprise login script.', 'read-only', 'good'),
-            row('Internal admin preparation', 'npm run prepare:enterprise-internal-admin checks employee allowlist env, internal admin schema tables, customer-host separation, and admin-host auth behavior before exposing admin.vaultproof.dev.', 'read-only', 'good'),
+            row('Staff/admin boundary', 'Keep VaultProof staff/admin pages in the separate root/B2C admin system and keep them off enterprise.vaultproof.dev customer routes.', 'read-only', 'good'),
             row('mTLS caller-lock preparation', 'npm run prepare:enterprise-mtls computes a client certificate thumbprint, subject fragment, gateway header contract, and caller-lock policy snippet without changing live infrastructure.', 'read-only', 'good'),
             row('gateway policy template smoke', 'npm run test:enterprise-apim-policies validates provider-secret stripping plus caller-lock header delete/override behavior across VaultProof-managed, customer-managed, device, and mTLS gateway templates before customer handoff.', 'read-only', 'good'),
             row('Origin TLS certificate plan', 'npm run prepare:enterprise-origin-cert plans VM CSR generation, signed certificate install, self-signed marker removal, and local TLS checks.', 'read-only', 'good'),

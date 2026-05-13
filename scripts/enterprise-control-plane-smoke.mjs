@@ -3,7 +3,7 @@ import { createHmac } from 'node:crypto';
 import { handleEnterpriseControlPlaneRequest } from '../packages/enterprise-control-plane/dist/enterprise-control-plane/src/index.js';
 
 const ENTERPRISE_HOSTNAME = 'enterprise.vaultproof.dev';
-const INTERNAL_ADMIN_HOSTNAME = 'admin.vaultproof.dev';
+const INTERNAL_ADMIN_HOSTNAME = 'internal-admin.vaultproof.test';
 const AUTH_TOKEN = 'jwt_enterprise_test';
 const PROJECT_ID = 'proj_123';
 const PROJECT_KEY_ID = 'pk_123';
@@ -3104,7 +3104,7 @@ async function assertEnterpriseLoginRoute() {
     {
       path: '/app/support',
       title: 'Launch support room - VaultProof Enterprise',
-      required: ['Support readiness', 'Internal admin boundary', 'Launch-week workflow', 'Customer handoff', 'Support brief', 'founder-led launch-week support', '24-hour incident response add-on', 'approval secret header', 'read_only', 'launch_support_readiness', 'VaultProof employee admin is hosted separately from enterprise.vaultproof.dev.', 'copy brief'],
+      required: ['Support readiness', 'Internal admin boundary', 'Launch-week workflow', 'Customer handoff', 'Support brief', 'founder-led launch-week support', '24-hour incident response add-on', 'approval secret header', 'read_only', 'launch_support_readiness', 'VaultProof staff/admin belongs to the separate VaultProof B2C/root admin system, not enterprise.vaultproof.dev.', 'copy brief'],
     },
     {
       path: '/app/verifier',

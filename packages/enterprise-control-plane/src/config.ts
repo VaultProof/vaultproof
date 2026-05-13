@@ -4,7 +4,7 @@ import {
   type SignedSecureExecutionEnvelope,
 } from '@vaultproof/core';
 
-const DEFAULT_INTERNAL_ADMIN_HOSTNAME = 'admin.vaultproof.dev';
+const DEFAULT_INTERNAL_ADMIN_HOSTNAME = '';
 
 export type EnterpriseRuntimeTier = 'shared-demo' | 'dedicated-production';
 
@@ -55,14 +55,16 @@ export function getInternalAdminHostname(env: EnterpriseControlPlaneEnv): string
 }
 
 export function isInternalAdminHostname(hostname: string, env: EnterpriseControlPlaneEnv): boolean {
-  return hostname.trim().toLowerCase() === getInternalAdminHostname(env);
+  const configuredHostname = getInternalAdminHostname(env);
+  return Boolean(configuredHostname) && hostname.trim().toLowerCase() === configuredHostname;
 }
 
 export function isAllowedControlPlaneHostname(hostname: string, env: EnterpriseControlPlaneEnv): boolean {
   const normalized = hostname.trim().toLowerCase();
   const expectedEnterpriseHostname = getEnterpriseHostname(env);
+  const configuredInternalAdminHostname = getInternalAdminHostname(env);
   return (normalized === expectedEnterpriseHostname && isEnterpriseHostname(expectedEnterpriseHostname))
-    || normalized === getInternalAdminHostname(env);
+    || (Boolean(configuredInternalAdminHostname) && normalized === configuredInternalAdminHostname);
 }
 
 export function assertEnterpriseHostname(hostname: string, env: EnterpriseControlPlaneEnv): void {
@@ -74,7 +76,11 @@ export function assertEnterpriseHostname(hostname: string, env: EnterpriseContro
 
 export function assertControlPlaneHostname(hostname: string, env: EnterpriseControlPlaneEnv): void {
   if (!isAllowedControlPlaneHostname(hostname, env)) {
-    throw new Error(`enterprise control plane must run behind ${getEnterpriseHostname(env)} or ${getInternalAdminHostname(env)}`);
+    const configuredInternalAdminHostname = getInternalAdminHostname(env);
+    const allowedHosts = configuredInternalAdminHostname
+      ? `${getEnterpriseHostname(env)} or ${configuredInternalAdminHostname}`
+      : getEnterpriseHostname(env);
+    throw new Error(`enterprise control plane must run behind ${allowedHosts}`);
   }
 }
 

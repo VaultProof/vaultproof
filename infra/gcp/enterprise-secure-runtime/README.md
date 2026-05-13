@@ -241,11 +241,11 @@ The executor reports `security_profile: google-confidential-production` only whe
 
 ## DNS Cutover
 
-Keep `enterprise.vaultproof.dev` and `admin.vaultproof.dev` off Azure after shutdown. Recreate them only after the GCP HTTPS load balancer, certificates, health checks, and origin-lock policy pass QA.
+Keep `enterprise.vaultproof.dev` off Azure after shutdown. Do not recreate `admin.vaultproof.dev` for the enterprise runtime; VaultProof staff/admin pages belong to the separate root/B2C system on `vaultproof.dev`.
 
 ## Configure The Public HTTPS Edge
 
-`vaultproof.dev` DNS is currently hosted in Cloudflare. The GCP script can build the load balancer, reserve the IP, and keep the admin certificate attached when `vaultproof-enterprise-admin-cert` exists, but the final `enterprise.vaultproof.dev` and `admin.vaultproof.dev` A records must be updated in Cloudflare unless DNS hosting is moved later.
+`vaultproof.dev` DNS is currently hosted in Cloudflare. The GCP script can build the enterprise load balancer and reserve the IP, but only `enterprise.vaultproof.dev` should be pointed at this runtime unless DNS hosting is moved later.
 
 Before customer cutover, generate one origin-lock secret and put the same value in:
 

@@ -6,8 +6,7 @@
     : 'https://api.vaultproof.dev/api/v1';
   const IS_ENTERPRISE_HOST = window.location.hostname === 'enterprise.vaultproof.dev'
     || window.location.hostname.startsWith('enterprise.');
-  const IS_INTERNAL_ADMIN_HOST = window.location.hostname === 'admin.vaultproof.dev'
-    || window.location.hostname.startsWith('admin.');
+  const IS_INTERNAL_ADMIN_HOST = false;
   const IS_AZURE_CONTROL_PLANE_HOST = IS_ENTERPRISE_HOST || IS_INTERNAL_ADMIN_HOST;
   const INIT_API = IS_AZURE_CONTROL_PLANE_HOST
     ? `${window.location.origin}/api/v1/enterprise`
@@ -231,12 +230,12 @@
 
   async function resolveDashboardRoute(session, ssoResolution) {
     if (!session || !session.access_token) return './';
-    const enterpriseDashboardPath = IS_INTERNAL_ADMIN_HOST || urlParams.get('internal_admin') === 'true'
+    const enterpriseDashboardPath = IS_INTERNAL_ADMIN_HOST
       ? '/internal/admin'
       : IS_ENTERPRISE_HOST
         ? './dashboard'
         : './control';
-    if (IS_INTERNAL_ADMIN_HOST || urlParams.get('internal_admin') === 'true') return enterpriseDashboardPath;
+    if (IS_INTERNAL_ADMIN_HOST) return enterpriseDashboardPath;
 
     if (ssoResolution && ssoResolution.organization && ssoResolution.organization.id) {
       localStorage.setItem(ACTIVE_ORG_STORAGE_KEY, ssoResolution.organization.id);

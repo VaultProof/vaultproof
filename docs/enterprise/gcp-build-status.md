@@ -1,6 +1,6 @@
 # VaultProof GCP Build Status
 
-Last updated: 2026-05-13T09:51:59.085Z
+Last updated: 2026-05-13T10:03:21Z
 
 This file is the living inventory of what has been built for VaultProof on Google Cloud. It is refreshed after every successful enterprise image build by `infra/gcp/enterprise-secure-runtime/build-images.sh`.
 
@@ -10,8 +10,7 @@ This file is the living inventory of what has been built for VaultProof on Googl
 - Enterprise URL: `https://enterprise.vaultproof.dev`
 - DNS: `Cloudflare A record points at 34.102.179.105`
 - TLS: `Google-managed certificate active`
-- Employee admin URL: `https://admin.vaultproof.dev`
-- Employee admin DNS/TLS: `waiting on DNS/certificate; cert PROVISIONING`
+- Staff/admin boundary: `vaultproof.dev is the B2C/root system; enterprise.vaultproof.dev is customer enterprise only`
 - Backend: `healthy`
 - Origin-lock backend header: `configured`
 - Cloud Armor edge policy: `attached and enforced`
@@ -30,7 +29,6 @@ Current blockers:
 - Run strict login readiness QA with `LOGIN_QA_REQUIRE_SESSION=true npm run qa:enterprise-login` to verify the Supabase redirect/session/API path.
 - Human OAuth/password login still needs final browser click-through QA.
 - Supabase Auth redirect/provider settings still need confirmation for `https://enterprise.vaultproof.dev/app/login`.
-- Add the Cloudflare `admin` A record to `34.102.179.105` and wait for `vaultproof-enterprise-admin-cert` to become `ACTIVE` before using `https://admin.vaultproof.dev`.
 - Rotate the pilot MiniMax key before paid customer onboarding because it was shared in chat; keep using sealed local ingest for any future live provider key.
 
 ## Login Readiness QA
@@ -63,7 +61,8 @@ Status: `attached and enforced`
 - `https://enterprise.vaultproof.dev/app/keys` includes the API proxy self-test kit and email API key demo path: copy-safe dry-run requests with required caller-lock headers, Resend/SendGrid/Mailgun/Postmark/AWS SES slot defaults, protected email dry-run, blocked-recipient policy testing, no raw key reveal, launch/evidence coverage, and email-specific audit metadata.
 - `https://enterprise.vaultproof.dev/app/control` and `https://enterprise.vaultproof.dev/app/org` use the shared universal sidebar with explicit sidebar typography, hide the legacy static topbar/page frame, and clean old `?org=<uuid>` URLs back to canonical `https://enterprise.vaultproof.dev/app/control` and `https://enterprise.vaultproof.dev/app/org` while preserving the selected org in local storage.
 - Live HTML verification on both long-form URLs confirmed the universal sidebar, URL cleanup script, hidden legacy topbar, explicit sidebar font sizing, and no legacy sidebar/site-theme artifacts.
-- `https://admin.vaultproof.dev` is the separate VaultProof employee admin surface. It has approval-gated SSO settings, enterprise invitations, business/account status, support notes, and invite resend/revoke controls for staff; `enterprise.vaultproof.dev` does not link to the employee admin console.
+- Staff/admin pages belong to the separate VaultProof B2C/root system on `vaultproof.dev`. The enterprise runtime does not default to an employee admin hostname, and `enterprise.vaultproof.dev` remains customer-facing only.
+- Root admin boundary page added at `vaultproof.dev/admin` in the B2C static site so staff/B2C admin entry is distinct from enterprise customer login.
 
 ## Projects Page Performance
 
@@ -156,10 +155,9 @@ Project and Provider Slots pages now classify each active slot as `live sealed`,
 2. Browser-test `https://enterprise.vaultproof.dev/app/login` with `ken@vaultproof.dev`.
 3. Confirm managed Supabase Auth redirect settings include `https://enterprise.vaultproof.dev/app/login`.
 4. Configure the external OAuth provider app callback as `https://gwzkjiomemjlhtrdrlan.supabase.co/auth/v1/callback` if using Google/GitHub/Microsoft login; add `LOGIN_QA_OAUTH_PROVIDER=google` to the login QA command to verify the public OAuth authorize redirect.
-5. Create a DNS-only Cloudflare `A admin -> 34.102.179.105` record, then wait for `vaultproof-enterprise-admin-cert` to become `ACTIVE`.
-6. Keep `npm run verify:gcp-enterprise-cloud-armor` in the strict live launch gate.
-7. Add a valid OpenAI Platform key only if the demo specifically needs OpenAI; MiniMax upstream dispatch is now live.
-8. Keep running `npm run gate:gcp-first-goal`; it can generate a temporary Supabase magic-link test session when no `ENTERPRISE_TEST_ACCESS_TOKEN` is provided.
+5. Keep `npm run verify:gcp-enterprise-cloud-armor` in the strict live launch gate.
+6. Add a valid OpenAI Platform key only if the demo specifically needs OpenAI; MiniMax upstream dispatch is now live.
+7. Keep running `npm run gate:gcp-first-goal`; it can generate a temporary Supabase magic-link test session when no `ENTERPRISE_TEST_ACCESS_TOKEN` is provided.
 
 ## Rough Monthly Cost
 
@@ -271,10 +269,6 @@ The VM runs both containers on localhost:
 - SSL certificate status: `ACTIVE`
 - SSL certificate domain status: `ACTIVE`
 - SSL certificate domains: `enterprise.vaultproof.dev`
-- Admin SSL certificate: `vaultproof-enterprise-admin-cert`
-- Admin SSL certificate status: `PROVISIONING`
-- Admin SSL certificate domain status: `PROVISIONING`
-- Admin observed DNS A records: `unknown`
 - Load-balancer firewall: `vaultproof-enterprise-allow-lb-to-control-plane`
 - Load-balancer firewall source ranges: `130.211.0.0/22, 35.191.0.0/16`
 - Observed DNS A records: `34.102.179.105`
@@ -324,7 +318,6 @@ Known blockers:
 - Run strict login readiness QA with `LOGIN_QA_REQUIRE_SESSION=true npm run qa:enterprise-login` to verify the Supabase redirect/session/API path.
 - Human OAuth/password login still needs final browser click-through QA.
 - Supabase Auth redirect/provider settings still need confirmation for `https://enterprise.vaultproof.dev/app/login`.
-- Add the Cloudflare `admin` A record to `34.102.179.105` and wait for `vaultproof-enterprise-admin-cert` to become `ACTIVE` before using `https://admin.vaultproof.dev`.
 - Rotate the pilot MiniMax key before paid customer onboarding because it was shared in chat; keep using sealed local ingest for any future live provider key.
 
 ## Verification Commands

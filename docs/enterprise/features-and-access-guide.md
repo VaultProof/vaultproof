@@ -155,13 +155,13 @@ Project roles are for one project at a time:
 
 ## VaultProof Employee Admin Console
 
-This is separate from the customer dashboard.
+This is separate from the customer dashboard and must not be exposed through `enterprise.vaultproof.dev`. The current internal-admin code remains in the enterprise control-plane package for local/explicit staff-system wiring, but the GCP enterprise runtime no longer defaults to `admin.vaultproof.dev`.
 
 | Surface | URL | What It Does |
 | --- | --- | --- |
-| Internal admin console | `https://admin.vaultproof.dev/` | VaultProof employee-only workspace for businesses, owners, users, project counts, pending invites, SSO rollout, support follow-ups, customer audit, and internal admin audit. It is separate from `enterprise.vaultproof.dev`, which stays customer-facing. |
-| Internal admin API | `/api/v1/internal-admin/overview` | Read-only overview API. Requires a Supabase user session plus explicit employee email/domain allowlist. The browser never receives the Supabase service-role key. Successful overview views are written to the internal admin audit stream. |
-| Internal org detail | `https://admin.vaultproof.dev/orgs/<organization-id>` and `/api/v1/internal-admin/orgs/<organization-id>` | Business detail for member timeline, SSO setup checklist, support notes, active projects, customer audit, destructive action approvals, execution/rollback plans, and evidence links back to the enterprise dashboard. The page now includes approval-gated staff forms for SSO metadata, invitations, business/account status, support notes, and invite resend/revoke requests. Detail views are audit logged. |
+| Root/B2C admin system | `vaultproof.dev` admin pages | VaultProof staff/admin belongs to the separate B2C/root system. It should manage B2C users and staff-only enterprise account operations without turning `enterprise.vaultproof.dev` into an employee console. |
+| Internal admin API | `/api/v1/internal-admin/overview` | Opt-in staff API code path for future explicit wiring. Requires a Supabase user session plus explicit employee email/domain allowlist. The browser never receives the Supabase service-role key. Successful overview views are written to the internal admin audit stream. |
+| Internal org detail | `/api/v1/internal-admin/orgs/<organization-id>` | Business detail for member timeline, SSO setup checklist, support notes, active projects, customer audit, destructive action approvals, execution/rollback plans, and evidence links back to the enterprise dashboard. The page includes approval-gated staff forms for SSO metadata, invitations, business/account status, support notes, and invite resend/revoke requests. Detail views are audit logged. |
 | Internal SSO settings | `/api/v1/internal-admin/orgs/<organization-id>/sso-settings` | Approval-gated employee action for setting enterprise SSO metadata: company domain, provider label, login mode, and rollout status. It does not accept OAuth client secrets, SAML metadata XML, certificates, or IdP private material. Successful changes are written to both organization audit and internal admin audit. |
 | Internal invitation actions | `/api/v1/internal-admin/orgs/<organization-id>/invitations` and `/api/v1/internal-admin/orgs/<organization-id>/invitations/<invitation-id>/(resend|revoke)` | Approval-gated employee actions for creating an invite, recording a resend request, and revoking a pending invite. Resend is audit/request-only until email delivery tooling is wired. |
 | Internal business status | `/api/v1/internal-admin/orgs/<organization-id>/status` | Approval-gated employee status history for onboarding, active, at-risk, paused, and offboarding states. This tracks VaultProof support posture without mutating customer organization records. |
@@ -174,22 +174,22 @@ This is separate from the customer dashboard.
 | Internal action request table | `public.internal_admin_action_requests` | Service-role-only approval ledger for destructive actions. Stores requester, second-employee decision, risk level, status, reason, and requested payload. |
 | Internal execution record table | `public.internal_admin_action_execution_records` | Service-role-only execution/rollback ledger. Current endpoint writes dry-run records only, including preflight result and rollback payload. |
 
-Required environment before exposing it live:
+Required environment before explicitly wiring this code into a staff system:
 
-- `VAULTPROOF_INTERNAL_ADMIN_HOSTNAME=admin.vaultproof.dev`
+- `VAULTPROOF_INTERNAL_ADMIN_HOSTNAME=<explicit staff/admin host>`
 - `VAULTPROOF_INTERNAL_ADMIN_EMAILS=employee@vaultproof.dev,...` or `VAULTPROOF_INTERNAL_ADMIN_DOMAINS=vaultproof.dev`
 - Optional write-action gate: `VAULTPROOF_INTERNAL_ADMIN_ACTIONS_ENABLED=true`
 - Optional write-action approval secret: `VAULTPROOF_INTERNAL_ADMIN_APPROVAL_SECRET=<strong-random-secret>`
-- Front Door/DNS route for `admin.vaultproof.dev`
+- Staff/admin routing must stay outside `enterprise.vaultproof.dev`.
 - Supabase migration `20260501000000_internal_admin_audit_events.sql` applied before relying on durable employee access audit history.
 - Supabase migration `20260501001000_internal_admin_support_notes.sql` applied before relying on internal support notes.
 - Supabase migration `20260501002000_internal_admin_business_status_updates.sql` applied before relying on internal business status history.
 - Supabase migration `20260501003000_internal_admin_action_requests.sql` applied before relying on destructive-action approval history.
 - Supabase migration `20260501004000_internal_admin_action_execution_records.sql` applied before relying on destructive-action execution/rollback planning.
 
-Use `infra/azure/enterprise-secure-runtime/render-control-plane-env.sh` to render these internal-admin variables into the Confidential VM control-plane env file. Keep `VAULTPROOF_INTERNAL_ADMIN_ACTIONS_ENABLED=false` until VaultProof is ready to operate approval-gated employee write actions live.
+Keep `VAULTPROOF_INTERNAL_ADMIN_ACTIONS_ENABLED=false` until VaultProof is ready to operate approval-gated employee write actions live.
 
-Before exposing `admin.vaultproof.dev`, run:
+Before exposing any staff-admin host, run:
 
 ```bash
 VAULTPROOF_INTERNAL_ADMIN_EMAILS='employee@vaultproof.dev' \
@@ -198,26 +198,7 @@ SUPABASE_SERVICE_ROLE_KEY='<service-role-key>' \
 npm run prepare:enterprise-internal-admin
 ```
 
-This is read-only. It checks employee allowlist env, the required internal-admin/verifier tables, customer-host separation, the exact unauthenticated employee-login redirect, and internal-admin API auth behavior.
-
-If the preflight reports that the admin page is not reachable, configure the Front Door custom domain and DNS:
-
-```bash
-npm run configure:enterprise-internal-admin-front-door
-ACTION=create-domain \
-CONFIRM_INTERNAL_ADMIN_FRONT_DOOR=create-admin-custom-domain \
-npm run configure:enterprise-internal-admin-front-door
-```
-
-Create the DNS records printed by the helper, including `CNAME admin.vaultproof.dev -> <front-door-endpoint>` and the `_dnsauth.admin.vaultproof.dev` TXT validation token. After Azure reports the custom domain as validated, attach it to the existing route:
-
-```bash
-ACTION=associate-route \
-CONFIRM_INTERNAL_ADMIN_FRONT_DOOR=associate-admin-route \
-npm run configure:enterprise-internal-admin-front-door
-```
-
-The expected unauthenticated live result is a redirect from `https://admin.vaultproof.dev/` to `/app/login?internal_admin=true` and `401` or `403` for `https://admin.vaultproof.dev/api/v1/internal-admin/overview`. A large Azure-branded `404` page means the request is still being answered by Front Door before it reaches the control-plane service.
+This is read-only. It checks employee allowlist env, the required internal-admin/verifier tables, customer-host separation, the exact unauthenticated employee-login redirect, and internal-admin API auth behavior. The expected enterprise-host result remains `404` for `/api/v1/internal-admin/*`.
 
 Support notes, invitation create/resend-request/revoke, and business status updates are approval-gated write actions. Leave `VAULTPROOF_INTERNAL_ADMIN_ACTIONS_ENABLED` unset or `false` in production until the team is ready to operate employee writes. Every future write action should insert into `internal_admin_audit_events`.
 
