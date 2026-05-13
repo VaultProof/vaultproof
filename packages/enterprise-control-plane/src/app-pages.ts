@@ -2915,6 +2915,10 @@ function renderEnterpriseSupportPage(pageName: EnterpriseSupportPageName): strin
           <div class="section-title"><h2>Key rotation evidence packet</h2><span class="mini" id="keyRotationMeta">hold</span></div>
           <div id="keyRotationList" class="list"></div>
         </div>
+        <div class="card" style="grid-column:1/-1">
+          <div class="section-title"><h2>Pilot operations evidence packet</h2><span class="mini" id="pilotOpsMeta">hold</span></div>
+          <div id="pilotOpsList" class="list"></div>
+        </div>
         <div class="card">
           <div class="section-title"><h2>Customer tasks</h2><span class="mini">saved in this browser</span></div>
           <div id="launchChecklist" class="list"></div>
@@ -2956,6 +2960,10 @@ function renderEnterpriseSupportPage(pageName: EnterpriseSupportPageName): strin
         <div class="card" style="grid-column:1/-1">
           <div class="section-title"><h2>Key rotation proof</h2><span class="mini" id="evidenceKeyRotationMeta">hold</span></div>
           <div id="evidenceKeyRotationList" class="list"></div>
+        </div>
+        <div class="card" style="grid-column:1/-1">
+          <div class="section-title"><h2>Pilot operations proof</h2><span class="mini" id="evidencePilotOpsMeta">hold</span></div>
+          <div id="evidencePilotOpsList" class="list"></div>
         </div>
         <div class="card" style="grid-column:1/-1">
           <div class="section-title">
@@ -3629,6 +3637,69 @@ function renderEnterpriseSupportPage(pageName: EnterpriseSupportPageName): strin
           row('Secrets excluded', packet.secrets_excluded.join(', '), 'redacted', 'good')
         ];
       }
+      function buildPilotOpsPacket(goNoGo, readiness, overview) {
+        var manual = goNoGoManualById(goNoGo);
+        var rollback = manual['rollback-owner-confirmed'];
+        var budget = manual['budget-monitoring-reviewed'];
+        var ready = rollback && rollback.passed && budget && budget.passed;
+        return {
+          status: ready ? 'ready' : 'hold',
+          decision: ready ? 'Pilot operations evidence is recorded for rollback ownership and budget/monitoring review.' : 'Hold until rollback ownership and budget/monitoring review are recorded for this organization.',
+          manual_evidence: {
+            rollback_owner_path: manualEvidenceSummary(rollback),
+            budget_monitoring: manualEvidenceSummary(budget)
+          },
+          rollback_paths: [
+            'Emergency revoke a provider slot from /app/keys.',
+            'Pause or redirect customer traffic through the GCP edge policy.',
+            'Reset the GCP runtime VM if the container runtime becomes unhealthy.',
+            'Roll back DNS or edge changes through the selected DNS provider and GCP load balancer config.',
+            'Export audit, access-review, readiness, and evidence packet records before and after rollback.'
+          ],
+          monitoring_review: {
+            runtime_production_ready: readiness.production_ready === true,
+            security_profile: readiness.security_profile || null,
+            proxy_calls: Number(overview.totalCalls || 0),
+            denied_calls: Number(overview.deniedCalls || 0),
+            error_calls: Number(overview.errorCalls || 0),
+            budget_alert: 'VaultProof Production Monthly USD 50 alerting budget',
+            review_scope: 'budget alert, uptime expectations, denial/error monitoring, and launch-week owner coverage'
+          },
+          operator_commands: {
+            edge_verification: 'npm run verify:gcp-enterprise-edge',
+            live_launch_gate: 'RUN_LIVE_EDGE=true RUN_LIVE_APP_QA=true RUN_CLOUD_ARMOR_QA=true npm run gate:gcp-customer-launch',
+            live_app_qa: 'npm run qa:enterprise-live-app',
+            cloud_armor_verification: 'npm run verify:gcp-enterprise-cloud-armor',
+            vm_reset_rollback: 'gcloud compute instances reset vaultproof-enterprise-runtime-1 --zone=us-central1-a --project=vaultproof-prod'
+          },
+          customer_boundary: 'Base enterprise pilot includes launch evidence and operator runbooks. Customer incident-response teams own 24-hour escalation unless that coverage is sold as an add-on.',
+          secrets_excluded: [
+            'provider API keys',
+            'encrypted provider shares',
+            'Supabase service-role key',
+            'origin-lock secret',
+            'executor signing secret',
+            'runtime-token secret',
+            'vault unwrap root'
+          ]
+        };
+      }
+      function pilotOpsRows(packet) {
+        var rollback = packet.manual_evidence.rollback_owner_path || {};
+        var budget = packet.manual_evidence.budget_monitoring || {};
+        var monitoring = packet.monitoring_review || {};
+        return [
+          row('Pilot operations status', packet.decision, packet.status, packet.status === 'ready' ? 'good' : 'warn'),
+          row('Rollback owner/path evidence timestamp', rollback.updated_at ? 'Last updated ' + rel(rollback.updated_at) + (rollback.stale ? '; stale after 7 days.' : '.') : 'No rollback owner/path evidence timestamp yet.', rollback.status || 'missing', rollback.status === 'passed' && !rollback.stale ? 'good' : 'warn'),
+          row('Budget/monitoring evidence timestamp', budget.updated_at ? 'Last updated ' + rel(budget.updated_at) + (budget.stale ? '; stale after 7 days.' : '.') : 'No budget/monitoring evidence timestamp yet.', budget.status || 'missing', budget.status === 'passed' && !budget.stale ? 'good' : 'warn'),
+          row('Runtime monitoring posture', (monitoring.runtime_production_ready ? 'Runtime reports production-ready. ' : 'Runtime is not production-ready. ') + 'Security profile: ' + (monitoring.security_profile || 'not reported') + '.', monitoring.runtime_production_ready ? 'ready' : 'blocked', monitoring.runtime_production_ready ? 'good' : 'bad'),
+          row('Traffic/error/denial monitoring', number(monitoring.proxy_calls) + ' calls, ' + number(monitoring.error_calls) + ' errors, ' + number(monitoring.denied_calls) + ' denied.', (monitoring.error_calls || monitoring.denied_calls) ? 'watch' : 'clean', (monitoring.error_calls || monitoring.denied_calls) ? 'warn' : 'good'),
+          row('Rollback paths', packet.rollback_paths.join(' '), 'operator owned', 'good'),
+          row('Live launch gate command', packet.operator_commands.live_launch_gate, 'strict gate', 'good'),
+          row('Customer incident-response boundary', packet.customer_boundary, 'contract', 'warn'),
+          row('Secrets excluded', packet.secrets_excluded.join(', '), 'redacted', 'good')
+        ];
+      }
       function providerSlotsFromBootstrap(bootstrap) {
         var projects = bootstrap && Array.isArray(bootstrap.projects) ? bootstrap.projects : [];
         var slots = [];
@@ -3767,6 +3838,7 @@ function renderEnterpriseSupportPage(pageName: EnterpriseSupportPageName): strin
         var productionReady = readiness.production_ready === true;
         var identityQa = buildIdentityQaPacket(goNoGo);
         var rotation = buildKeyRotationPacket(goNoGo, bootstrap || {});
+        var pilotOps = buildPilotOpsPacket(goNoGo, readiness, overview);
         var blockers = goNoGo && goNoGo.blockers && goNoGo.blockers.length
           ? goNoGo.blockers.join('; ')
           : 'none';
@@ -3782,6 +3854,9 @@ function renderEnterpriseSupportPage(pageName: EnterpriseSupportPageName): strin
           'External OAuth callback: ' + identityQa.external_oauth_callback_uri,
           'Key rotation proof status: ' + rotation.status,
           'Provider material modes: ' + rotation.provider_material_summary.live_sealed_slots + ' live sealed / ' + rotation.provider_material_summary.demo_placeholder_slots + ' demo placeholder / ' + rotation.provider_material_summary.missing_slots + ' missing',
+          'Pilot operations proof status: ' + pilotOps.status,
+          'Rollback owner/path: ' + pilotOps.manual_evidence.rollback_owner_path.status,
+          'Budget/monitoring review: ' + pilotOps.manual_evidence.budget_monitoring.status,
           'Runtime production-ready: ' + (productionReady ? 'yes' : 'no'),
           'SSO/login status: ' + (sso.provider_status || 'not confirmed'),
           'Projects: ' + number(org.project_count || overview.totalProjects),
@@ -3804,6 +3879,7 @@ function renderEnterpriseSupportPage(pageName: EnterpriseSupportPageName): strin
         var goNoGo = buildGoNoGoStatus(org, sso, readiness, overview, bootstrap);
         var identityQa = buildIdentityQaPacket(goNoGo);
         var rotation = buildKeyRotationPacket(goNoGo, bootstrap);
+        var pilotOps = buildPilotOpsPacket(goNoGo, readiness, overview);
         var doneCount = items.filter(function(item) {
           return item.auto ? item.complete : manualState[item.id];
         }).length;
@@ -3834,6 +3910,8 @@ function renderEnterpriseSupportPage(pageName: EnterpriseSupportPageName): strin
         byId('identityQaList').innerHTML = identityQaRows(identityQa).join('');
         text('keyRotationMeta', rotation.status);
         byId('keyRotationList').innerHTML = keyRotationRows(rotation).join('');
+        text('pilotOpsMeta', pilotOps.status);
+        byId('pilotOpsList').innerHTML = pilotOpsRows(pilotOps).join('');
         byId('launchChecklist').innerHTML = items.map(function(item) {
           return launchCheckRow(item, manualState[item.id]);
         }).join('');
@@ -3860,6 +3938,7 @@ function renderEnterpriseSupportPage(pageName: EnterpriseSupportPageName): strin
         var goNoGo = buildGoNoGoStatus(org, sso, readiness, overview, bootstrap);
         var identityQa = buildIdentityQaPacket(goNoGo);
         var rotation = buildKeyRotationPacket(goNoGo, bootstrap);
+        var pilotOps = buildPilotOpsPacket(goNoGo, readiness, overview);
         return {
           packet_type: 'vaultproof_enterprise_evidence_packet',
           packet_version: 1,
@@ -3931,6 +4010,7 @@ function renderEnterpriseSupportPage(pageName: EnterpriseSupportPageName): strin
           },
           identity_login_qa: identityQa,
           key_rotation_evidence: rotation,
+          pilot_operations_evidence: pilotOps,
           exports: {
             readiness: '/readiness',
             audit_csv_30_days: evidenceExportHref('/api/v1/enterprise/audit?format=csv&days=30'),
@@ -3945,6 +4025,7 @@ function renderEnterpriseSupportPage(pageName: EnterpriseSupportPageName): strin
             'Export audit CSV and access-review CSV for the review packet.',
             'Confirm caller-lock policy, provider slot posture, and emergency revoke owners.',
             'Rotate shared or exposed pilot keys before paid customer data, or keep a demo-only acceptance note in the launch board.',
+            'Confirm rollback ownership, budget alert coverage, and launch-week monitoring ownership before live customer traffic.',
             'For the email API key demo, verify sender, recipient, template, gateway, and rate policy before live sends.',
             'Keep provider keys, encrypted shares, service-role keys, origin-lock values, and signing secrets out of customer packets.'
           ]
@@ -3958,6 +4039,7 @@ function renderEnterpriseSupportPage(pageName: EnterpriseSupportPageName): strin
         var packet = evidencePacketObject(org, sso, readiness, overview, bootstrap);
         var identityQa = packet.identity_login_qa || buildIdentityQaPacket(buildGoNoGoStatus(org, sso, readiness, overview, bootstrap));
         var rotation = packet.key_rotation_evidence || buildKeyRotationPacket(buildGoNoGoStatus(org, sso, readiness, overview, bootstrap), bootstrap);
+        var pilotOps = packet.pilot_operations_evidence || buildPilotOpsPacket(buildGoNoGoStatus(org, sso, readiness, overview, bootstrap), readiness, overview);
         text('evidenceMeta', productionReady ? 'ready for review' : 'needs attention');
         byId('evidenceReadinessList').innerHTML = [
           row('Production readiness', productionReady ? 'Control plane and confidential executor report production-ready.' : (readiness.production_blockers || []).join('; '), productionReady ? 'ready' : 'blocked', productionReady ? 'good' : 'bad'),
@@ -3991,6 +4073,8 @@ function renderEnterpriseSupportPage(pageName: EnterpriseSupportPageName): strin
         byId('evidenceIdentityList').innerHTML = identityQaRows(identityQa).join('');
         text('evidenceKeyRotationMeta', rotation.status);
         byId('evidenceKeyRotationList').innerHTML = keyRotationRows(rotation).join('');
+        text('evidencePilotOpsMeta', pilotOps.status);
+        byId('evidencePilotOpsList').innerHTML = pilotOpsRows(pilotOps).join('');
         var packetBox = byId('evidencePacket');
         if (packetBox) packetBox.value = JSON.stringify(packet, null, 2);
       }
@@ -3998,6 +4082,7 @@ function renderEnterpriseSupportPage(pageName: EnterpriseSupportPageName): strin
         var goNoGo = buildGoNoGoStatus(org, sso, readiness, overview, bootstrap);
         var identityQa = buildIdentityQaPacket(goNoGo);
         var rotation = buildKeyRotationPacket(goNoGo, bootstrap);
+        var pilotOps = buildPilotOpsPacket(goNoGo, readiness, overview);
         var emailProviders = emailProvidersFromData(overview, bootstrap);
         var providerCount = providerCountFromData(overview, bootstrap);
         var projectCount = projectCountFromData(org, overview, bootstrap);
@@ -4020,6 +4105,7 @@ function renderEnterpriseSupportPage(pageName: EnterpriseSupportPageName): strin
           'Identity/OAuth proof status: ' + identityQa.status,
           'OAuth callback: ' + identityQa.external_oauth_callback_uri,
           'Key rotation proof status: ' + rotation.status,
+          'Pilot operations proof status: ' + pilotOps.status,
           '',
           '3. Walk the buyer through the product',
           '- Dashboard: current runtime, access, project, and evidence posture.',
@@ -4028,6 +4114,7 @@ function renderEnterpriseSupportPage(pageName: EnterpriseSupportPageName): strin
           '- Evidence packet: customer-safe JSON and CSV proof with no raw provider key material.',
           '- Identity/OAuth evidence packet: strict QA command, redirect allowlist, callback URL, and browser QA status without secrets.',
           '- Key rotation evidence packet: material-mode inventory, paid-onboarding rotation actions, sealed ingest command, and redacted secret boundary.',
+          '- Pilot operations evidence packet: rollback owner/path, budget/monitoring review, live launch gate command, and incident-response boundary.',
           '- Launch checklist: go/no-go board, manual evidence, stale holds, and remaining blockers.',
           '',
           '4. Be crisp about boundaries',
@@ -4046,6 +4133,7 @@ function renderEnterpriseSupportPage(pageName: EnterpriseSupportPageName): strin
         var goNoGo = buildGoNoGoStatus(org, sso, readiness, overview, bootstrap);
         var identityQa = buildIdentityQaPacket(goNoGo);
         var rotation = buildKeyRotationPacket(goNoGo, bootstrap);
+        var pilotOps = buildPilotOpsPacket(goNoGo, readiness, overview);
         var providerCount = providerCountFromData(overview, bootstrap);
         var emailProviders = emailProvidersFromData(overview, bootstrap);
         text('demoMeta', goNoGo.status === 'go' ? 'ready to pilot' : 'hold for evidence');
@@ -4065,6 +4153,7 @@ function renderEnterpriseSupportPage(pageName: EnterpriseSupportPageName): strin
           row('GCP confidential runtime', productionReady ? 'Readiness reports production-ready with the expected GCP confidential security profile.' : 'Readiness is not green; use this as a blocker instead of a claim.', productionReady ? 'ready' : 'blocked', productionReady ? 'good' : 'bad'),
           row('Identity/OAuth proof kit', identityQa.status === 'ready' ? 'Login QA evidence is recorded with redirect allowlist and external OAuth callback facts.' : 'Use Launch to record strict login QA, human browser QA, and Supabase redirect/OAuth confirmation.', identityQa.status, identityQa.status === 'ready' ? 'good' : 'warn'),
           row('Key rotation proof kit', rotation.status === 'accepted_for_demo' ? 'Launch evidence records either rotation or explicit demo-only acceptance for shared pilot key posture.' : 'Use Launch to record key rotation or demo-only acceptance before a customer pilot.', rotation.status, rotation.status === 'accepted_for_demo' ? 'good' : 'warn'),
+          row('Pilot operations proof kit', pilotOps.status === 'ready' ? 'Rollback ownership and budget/monitoring review evidence are recorded for this pilot.' : 'Use Launch to record rollback owner/path and budget/monitoring review before customer traffic.', pilotOps.status, pilotOps.status === 'ready' ? 'good' : 'warn'),
           row('No raw key exposure', 'Provider slots show posture and material mode without returning encrypted shares or plaintext provider material to the browser.', 'secret safe', 'good'),
           row('Policy denial evidence', 'The blocked-recipient test gives a buyer a concrete denial story: policy rejected unsafe traffic and recorded evidence.', 'auditable', 'good'),
           row('Access and audit exports', 'Members, Audit, Activity, and Evidence produce reviewable CSV/JSON artifacts for security teams.', 'exportable', 'good')
@@ -4073,6 +4162,7 @@ function renderEnterpriseSupportPage(pageName: EnterpriseSupportPageName): strin
           row('Demo dry-run first', 'Use dry-run provider execution unless sealed sandbox provider material is intentionally installed for this demo.', 'safe default', 'good'),
           row('Login proof before customer testing', identityQa.status === 'ready' ? 'Identity proof is recorded for this organization.' : 'Do not invite a customer pilot user until login/OAuth proof is recorded or explicitly accepted as a demo hold.', 'identity gate', identityQa.status === 'ready' ? 'good' : 'warn'),
           row('Rotate before paid data', rotation.status === 'accepted_for_demo' ? 'Demo-only key posture is acknowledged; rotate shared material before paid customer data.' : 'Shared/exposed pilot keys still need rotation or an explicit demo-only acceptance note.', 'key gate', rotation.status === 'accepted_for_demo' ? 'good' : 'warn'),
+          row('Rollback/monitoring before traffic', pilotOps.status === 'ready' ? 'Rollback and monitoring ownership is recorded for this organization.' : 'Do not start pilot traffic until rollback owner/path and budget/monitoring review are recorded.', 'ops gate', pilotOps.status === 'ready' ? 'good' : 'warn'),
           row('Do not mark GO casually', goNoGo.status === 'go' ? 'The board is green for this browser/org evidence state.' : 'The board is holding on: ' + goNoGo.blockers.join('; '), goNoGo.status, goNoGo.status === 'go' ? 'good' : 'warn'),
           row('Cloud Armor evidence', 'Keep Cloud Armor as a required operator-confirmed check until the live policy exists and verify passes.', 'manual proof', 'warn'),
           row('Key rotation before paid onboarding', 'Shared or exposed pilot keys should be rotated or explicitly accepted for demo-only use before paid customer data.', 'required', 'warn')
@@ -4226,6 +4316,7 @@ function renderEnterpriseSupportPage(pageName: EnterpriseSupportPageName): strin
             row('Production verifier', 'npm run verify:gcp-enterprise-edge checks the GCP edge, backend health, managed TLS, and live readiness.', 'read-only', 'good'),
             row('Evidence bundle', 'npm run evidence:enterprise-production captures timestamped infrastructure, app, readiness, and monitoring evidence for review.', 'read-only', 'good'),
             row('Evidence validator', 'npm run validate:enterprise-evidence validates the latest evidence bundle before customer or compliance handoff.', 'read-only', 'good'),
+            row('Pilot live launch gate', 'RUN_LIVE_EDGE=true RUN_LIVE_APP_QA=true RUN_CLOUD_ARMOR_QA=true npm run gate:gcp-customer-launch runs live edge, app QA, Cloud Armor, and customer-launch evidence checks before pilot traffic.', 'read-only', 'good'),
             row('Handoff package', 'npm run package:enterprise-handoff assembles customer/compliance docs, gateway templates, latest local evidence, and a manifest without changing live infrastructure.', 'read-only', 'good'),
             row('Handoff gate', 'npm run gate:enterprise-handoff validates gateway templates, builds the package, verifies the manifest, and can optionally require live QA/evidence strictness.', 'read-only', 'good'),
             row('Finish gate', 'npm run gate:enterprise-finish runs local smoke, gateway policy smoke, handoff gate, live app QA, and hardening status into one ok/attention/blocked release view with structured blocker/warning details.', 'read-only', 'good'),
@@ -4255,6 +4346,7 @@ function renderEnterpriseSupportPage(pageName: EnterpriseSupportPageName): strin
             row('TLS origin cutover', 'npm run cutover:enterprise-origin-tls plans the GCP edge HTTPS origin cutover and requires strict preflight plus confirmation-gated enable/rollback.', 'blocked', 'warn'),
             row('gateway cutover', 'npm run cutover:enterprise-apim previews gateway route cutover and requires confirmation-gated enable/rollback before GCP edge changes.', 'blocked', 'warn'),
             row('SSH hardening', 'npm run harden:enterprise-ssh can plan, close, or reopen bootstrap SSH with readiness, alternate-access, and confirmation gates.', 'approval', 'warn'),
+            row('GCP runtime reset rollback', 'gcloud compute instances reset vaultproof-enterprise-runtime-1 --zone=us-central1-a --project=vaultproof-prod resets the current enterprise runtime VM when the named rollback owner approves.', 'operator', 'warn'),
             row('old prototype cleanup', 'npm run cleanup:enterprise-container-apps inventories the old prototype resources and requires action-specific confirmation before ingress disable/restore/delete.', 'approval', 'warn')
           ].join('');
         }
