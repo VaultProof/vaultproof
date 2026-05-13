@@ -2911,6 +2911,10 @@ function renderEnterpriseSupportPage(pageName: EnterpriseSupportPageName): strin
           <div class="section-title"><h2>Identity/OAuth evidence packet</h2><span class="mini" id="identityQaMeta">hold</span></div>
           <div id="identityQaList" class="list"></div>
         </div>
+        <div class="card" style="grid-column:1/-1">
+          <div class="section-title"><h2>Key rotation evidence packet</h2><span class="mini" id="keyRotationMeta">hold</span></div>
+          <div id="keyRotationList" class="list"></div>
+        </div>
         <div class="card">
           <div class="section-title"><h2>Customer tasks</h2><span class="mini">saved in this browser</span></div>
           <div id="launchChecklist" class="list"></div>
@@ -2948,6 +2952,10 @@ function renderEnterpriseSupportPage(pageName: EnterpriseSupportPageName): strin
         <div class="card" style="grid-column:1/-1">
           <div class="section-title"><h2>Identity/OAuth proof</h2><span class="mini" id="evidenceIdentityMeta">hold</span></div>
           <div id="evidenceIdentityList" class="list"></div>
+        </div>
+        <div class="card" style="grid-column:1/-1">
+          <div class="section-title"><h2>Key rotation proof</h2><span class="mini" id="evidenceKeyRotationMeta">hold</span></div>
+          <div id="evidenceKeyRotationList" class="list"></div>
         </div>
         <div class="card" style="grid-column:1/-1">
           <div class="section-title">
@@ -3536,6 +3544,91 @@ function renderEnterpriseSupportPage(pageName: EnterpriseSupportPageName): strin
           row('Secrets excluded', packet.secrets_excluded.join(', '), 'redacted', 'good')
         ];
       }
+      function slotMaterialCounts(bootstrap) {
+        var counts = { total: 0, live_sealed: 0, demo_placeholder: 0, mixed: 0, missing: 0 };
+        providerSlotsFromBootstrap(bootstrap).forEach(function(slot) {
+          var mode = String(slot.material_mode || 'missing').replace(/-/g, '_');
+          counts.total += 1;
+          if (mode === 'sealed_live') counts.live_sealed += 1;
+          else if (mode === 'demo_placeholder') counts.demo_placeholder += 1;
+          else if (mode === 'mixed') counts.mixed += 1;
+          else counts.missing += 1;
+        });
+        return counts;
+      }
+      function providersFromBootstrap(bootstrap) {
+        var seen = {};
+        return providerSlotsFromBootstrap(bootstrap).map(function(slot) {
+          return String(slot.provider || slot.slug || '').trim().toLowerCase();
+        }).filter(function(provider) {
+          if (!provider || seen[provider]) return false;
+          seen[provider] = true;
+          return true;
+        });
+      }
+      function buildKeyRotationPacket(goNoGo, bootstrap) {
+        var manual = goNoGoManualById(goNoGo);
+        var item = manual['key-rotation-reviewed'];
+        var counts = slotMaterialCounts(bootstrap);
+        var providers = providersFromBootstrap(bootstrap);
+        var emailProviders = emailProvidersFromData({}, bootstrap);
+        var status = item && item.passed ? 'accepted_for_demo' : 'hold';
+        return {
+          status: status,
+          decision: status === 'accepted_for_demo' ? 'Pilot key posture is rotated or explicitly accepted for demo-only use in this browser evidence record.' : 'Hold until exposed/shared pilot keys are rotated or explicitly accepted for demo-only use.',
+          manual_evidence: manualEvidenceSummary(item),
+          provider_material_summary: {
+            total_provider_slots: counts.total,
+            live_sealed_slots: counts.live_sealed,
+            demo_placeholder_slots: counts.demo_placeholder,
+            mixed_slots: counts.mixed,
+            missing_slots: counts.missing,
+            providers: providers,
+            email_providers: emailProviders
+          },
+          paid_onboarding_actions: [
+            'Rotate the shared MiniMax pilot key before paid customer data.',
+            'Use sealed local ingest for any future live provider key material.',
+            'Rotate Supabase service-role credentials after setup/demo wiring stabilizes.',
+            'Rotate origin-lock, executor signing, and runtime-token secrets before paid onboarding.',
+            'Keep browser raw-key ingest disabled; dashboard demo slots may stay placeholder-only.'
+          ],
+          operator_commands: {
+            sealed_provider_ingest: 'SUPABASE_URL=... SUPABASE_SERVICE_ROLE_KEY=... VAULT_UNWRAP_KEY_BASE64=... DEMO_PROVIDER_API_KEY=... npm run seal:enterprise-provider-slot',
+            first_goal_gate: 'GOAL1_DEMO_ONLY=false npm run gate:gcp-first-goal',
+            launch_evidence_note: 'Mark Key rotation status passed only after rotation or explicit demo-only acceptance is recorded.'
+          },
+          secrets_excluded: [
+            'raw provider keys',
+            'encrypted provider shares',
+            'Supabase service-role key',
+            'origin-lock secret',
+            'executor signing secret',
+            'runtime-token secret',
+            'vault unwrap root'
+          ]
+        };
+      }
+      function keyRotationRows(packet) {
+        var evidence = packet.manual_evidence || {};
+        var summary = packet.provider_material_summary || {};
+        var material = [
+          (summary.live_sealed_slots || 0) + ' live sealed',
+          (summary.demo_placeholder_slots || 0) + ' demo placeholder',
+          (summary.mixed_slots || 0) + ' mixed',
+          (summary.missing_slots || 0) + ' missing'
+        ].join(', ');
+        return [
+          row('Rotation decision', packet.decision, packet.status, packet.status === 'accepted_for_demo' ? 'good' : 'warn'),
+          row('Evidence timestamp', evidence.updated_at ? 'Last updated ' + rel(evidence.updated_at) + (evidence.stale ? '; stale after 7 days.' : '.') : 'No key-rotation evidence timestamp yet.', evidence.status || 'missing', evidence.status === 'passed' && !evidence.stale ? 'good' : 'warn'),
+          row('Provider material modes', material, (summary.total_provider_slots || 0) + ' slots', summary.live_sealed_slots ? 'good' : 'warn'),
+          row('Providers in scope', (summary.providers && summary.providers.length ? summary.providers.join(', ') : 'none visible') + (summary.email_providers && summary.email_providers.length ? '. Email providers: ' + summary.email_providers.join(', ') + '.' : ''), 'inventory', summary.total_provider_slots ? 'good' : 'warn'),
+          row('Paid onboarding actions', packet.paid_onboarding_actions.join(' '), 'before paid', 'warn'),
+          row('Sealed ingest command', packet.operator_commands.sealed_provider_ingest, 'operator only', 'good'),
+          row('Strict live material gate', packet.operator_commands.first_goal_gate, 'optional', 'warn'),
+          row('Secrets excluded', packet.secrets_excluded.join(', '), 'redacted', 'good')
+        ];
+      }
       function providerSlotsFromBootstrap(bootstrap) {
         var projects = bootstrap && Array.isArray(bootstrap.projects) ? bootstrap.projects : [];
         var slots = [];
@@ -3670,9 +3763,10 @@ function renderEnterpriseSupportPage(pageName: EnterpriseSupportPageName): strin
           { id: 'rollback-owner', tag: 'rollback', title: 'Rollback owner assigned', sub: 'A named owner can pause traffic, revoke provider slots, or roll back the first workload.' },
         ];
       }
-      function launchBriefText(org, sso, readiness, overview, percent, doneCount, totalCount, goNoGo) {
+      function launchBriefText(org, sso, readiness, overview, percent, doneCount, totalCount, goNoGo, bootstrap) {
         var productionReady = readiness.production_ready === true;
         var identityQa = buildIdentityQaPacket(goNoGo);
+        var rotation = buildKeyRotationPacket(goNoGo, bootstrap || {});
         var blockers = goNoGo && goNoGo.blockers && goNoGo.blockers.length
           ? goNoGo.blockers.join('; ')
           : 'none';
@@ -3686,6 +3780,8 @@ function renderEnterpriseSupportPage(pageName: EnterpriseSupportPageName): strin
           'Enterprise login URL: ' + identityQa.login_url,
           'Supabase redirect allowlist: ' + identityQa.allowed_redirect_uri,
           'External OAuth callback: ' + identityQa.external_oauth_callback_uri,
+          'Key rotation proof status: ' + rotation.status,
+          'Provider material modes: ' + rotation.provider_material_summary.live_sealed_slots + ' live sealed / ' + rotation.provider_material_summary.demo_placeholder_slots + ' demo placeholder / ' + rotation.provider_material_summary.missing_slots + ' missing',
           'Runtime production-ready: ' + (productionReady ? 'yes' : 'no'),
           'SSO/login status: ' + (sso.provider_status || 'not confirmed'),
           'Projects: ' + number(org.project_count || overview.totalProjects),
@@ -3707,6 +3803,7 @@ function renderEnterpriseSupportPage(pageName: EnterpriseSupportPageName): strin
         var items = buildLaunchItems(org, sso, readiness, overview, bootstrap);
         var goNoGo = buildGoNoGoStatus(org, sso, readiness, overview, bootstrap);
         var identityQa = buildIdentityQaPacket(goNoGo);
+        var rotation = buildKeyRotationPacket(goNoGo, bootstrap);
         var doneCount = items.filter(function(item) {
           return item.auto ? item.complete : manualState[item.id];
         }).length;
@@ -3735,6 +3832,8 @@ function renderEnterpriseSupportPage(pageName: EnterpriseSupportPageName): strin
           goNoGo.manual.map(goNoGoManualRow).join('');
         text('identityQaMeta', identityQa.status);
         byId('identityQaList').innerHTML = identityQaRows(identityQa).join('');
+        text('keyRotationMeta', rotation.status);
+        byId('keyRotationList').innerHTML = keyRotationRows(rotation).join('');
         byId('launchChecklist').innerHTML = items.map(function(item) {
           return launchCheckRow(item, manualState[item.id]);
         }).join('');
@@ -3746,7 +3845,7 @@ function renderEnterpriseSupportPage(pageName: EnterpriseSupportPageName): strin
           linkRow('Open readiness', 'Confirm the live runtime reports the current production posture.', '/readiness', 'readiness', readiness.production_ready === true ? 'good' : 'warn')
         ].join('');
         var brief = byId('launchBrief');
-        if (brief) brief.value = launchBriefText(org, sso, readiness, overview, percent, doneCount, totalCount, goNoGo);
+        if (brief) brief.value = launchBriefText(org, sso, readiness, overview, percent, doneCount, totalCount, goNoGo, bootstrap);
       }
       function evidenceExportHref(path) {
         if (!currentOrgId) return path;
@@ -3760,6 +3859,7 @@ function renderEnterpriseSupportPage(pageName: EnterpriseSupportPageName): strin
         var emailProviders = emailProvidersFromData(overview, bootstrap);
         var goNoGo = buildGoNoGoStatus(org, sso, readiness, overview, bootstrap);
         var identityQa = buildIdentityQaPacket(goNoGo);
+        var rotation = buildKeyRotationPacket(goNoGo, bootstrap);
         return {
           packet_type: 'vaultproof_enterprise_evidence_packet',
           packet_version: 1,
@@ -3830,6 +3930,7 @@ function renderEnterpriseSupportPage(pageName: EnterpriseSupportPageName): strin
             })
           },
           identity_login_qa: identityQa,
+          key_rotation_evidence: rotation,
           exports: {
             readiness: '/readiness',
             audit_csv_30_days: evidenceExportHref('/api/v1/enterprise/audit?format=csv&days=30'),
@@ -3843,6 +3944,7 @@ function renderEnterpriseSupportPage(pageName: EnterpriseSupportPageName): strin
             'Review the go/no-go launch decision and close any hold blockers.',
             'Export audit CSV and access-review CSV for the review packet.',
             'Confirm caller-lock policy, provider slot posture, and emergency revoke owners.',
+            'Rotate shared or exposed pilot keys before paid customer data, or keep a demo-only acceptance note in the launch board.',
             'For the email API key demo, verify sender, recipient, template, gateway, and rate policy before live sends.',
             'Keep provider keys, encrypted shares, service-role keys, origin-lock values, and signing secrets out of customer packets.'
           ]
@@ -3855,6 +3957,7 @@ function renderEnterpriseSupportPage(pageName: EnterpriseSupportPageName): strin
         var executorHealth = executor.health || {};
         var packet = evidencePacketObject(org, sso, readiness, overview, bootstrap);
         var identityQa = packet.identity_login_qa || buildIdentityQaPacket(buildGoNoGoStatus(org, sso, readiness, overview, bootstrap));
+        var rotation = packet.key_rotation_evidence || buildKeyRotationPacket(buildGoNoGoStatus(org, sso, readiness, overview, bootstrap), bootstrap);
         text('evidenceMeta', productionReady ? 'ready for review' : 'needs attention');
         byId('evidenceReadinessList').innerHTML = [
           row('Production readiness', productionReady ? 'Control plane and confidential executor report production-ready.' : (readiness.production_blockers || []).join('; '), productionReady ? 'ready' : 'blocked', productionReady ? 'good' : 'bad'),
@@ -3886,12 +3989,15 @@ function renderEnterpriseSupportPage(pageName: EnterpriseSupportPageName): strin
         ].join('');
         text('evidenceIdentityMeta', identityQa.status);
         byId('evidenceIdentityList').innerHTML = identityQaRows(identityQa).join('');
+        text('evidenceKeyRotationMeta', rotation.status);
+        byId('evidenceKeyRotationList').innerHTML = keyRotationRows(rotation).join('');
         var packetBox = byId('evidencePacket');
         if (packetBox) packetBox.value = JSON.stringify(packet, null, 2);
       }
       function demoScriptText(org, sso, readiness, overview, bootstrap) {
         var goNoGo = buildGoNoGoStatus(org, sso, readiness, overview, bootstrap);
         var identityQa = buildIdentityQaPacket(goNoGo);
+        var rotation = buildKeyRotationPacket(goNoGo, bootstrap);
         var emailProviders = emailProvidersFromData(overview, bootstrap);
         var providerCount = providerCountFromData(overview, bootstrap);
         var projectCount = projectCountFromData(org, overview, bootstrap);
@@ -3913,6 +4019,7 @@ function renderEnterpriseSupportPage(pageName: EnterpriseSupportPageName): strin
           'SSO/login status: ' + (sso.provider_status || 'not confirmed'),
           'Identity/OAuth proof status: ' + identityQa.status,
           'OAuth callback: ' + identityQa.external_oauth_callback_uri,
+          'Key rotation proof status: ' + rotation.status,
           '',
           '3. Walk the buyer through the product',
           '- Dashboard: current runtime, access, project, and evidence posture.',
@@ -3920,6 +4027,7 @@ function renderEnterpriseSupportPage(pageName: EnterpriseSupportPageName): strin
           '- Activity and Audit: runtime status, denial evidence, latency, provider request IDs, and governance exports.',
           '- Evidence packet: customer-safe JSON and CSV proof with no raw provider key material.',
           '- Identity/OAuth evidence packet: strict QA command, redirect allowlist, callback URL, and browser QA status without secrets.',
+          '- Key rotation evidence packet: material-mode inventory, paid-onboarding rotation actions, sealed ingest command, and redacted secret boundary.',
           '- Launch checklist: go/no-go board, manual evidence, stale holds, and remaining blockers.',
           '',
           '4. Be crisp about boundaries',
@@ -3937,6 +4045,7 @@ function renderEnterpriseSupportPage(pageName: EnterpriseSupportPageName): strin
         var productionReady = readiness.production_ready === true;
         var goNoGo = buildGoNoGoStatus(org, sso, readiness, overview, bootstrap);
         var identityQa = buildIdentityQaPacket(goNoGo);
+        var rotation = buildKeyRotationPacket(goNoGo, bootstrap);
         var providerCount = providerCountFromData(overview, bootstrap);
         var emailProviders = emailProvidersFromData(overview, bootstrap);
         text('demoMeta', goNoGo.status === 'go' ? 'ready to pilot' : 'hold for evidence');
@@ -3955,6 +4064,7 @@ function renderEnterpriseSupportPage(pageName: EnterpriseSupportPageName): strin
         byId('demoProofList').innerHTML = [
           row('GCP confidential runtime', productionReady ? 'Readiness reports production-ready with the expected GCP confidential security profile.' : 'Readiness is not green; use this as a blocker instead of a claim.', productionReady ? 'ready' : 'blocked', productionReady ? 'good' : 'bad'),
           row('Identity/OAuth proof kit', identityQa.status === 'ready' ? 'Login QA evidence is recorded with redirect allowlist and external OAuth callback facts.' : 'Use Launch to record strict login QA, human browser QA, and Supabase redirect/OAuth confirmation.', identityQa.status, identityQa.status === 'ready' ? 'good' : 'warn'),
+          row('Key rotation proof kit', rotation.status === 'accepted_for_demo' ? 'Launch evidence records either rotation or explicit demo-only acceptance for shared pilot key posture.' : 'Use Launch to record key rotation or demo-only acceptance before a customer pilot.', rotation.status, rotation.status === 'accepted_for_demo' ? 'good' : 'warn'),
           row('No raw key exposure', 'Provider slots show posture and material mode without returning encrypted shares or plaintext provider material to the browser.', 'secret safe', 'good'),
           row('Policy denial evidence', 'The blocked-recipient test gives a buyer a concrete denial story: policy rejected unsafe traffic and recorded evidence.', 'auditable', 'good'),
           row('Access and audit exports', 'Members, Audit, Activity, and Evidence produce reviewable CSV/JSON artifacts for security teams.', 'exportable', 'good')
@@ -3962,6 +4072,7 @@ function renderEnterpriseSupportPage(pageName: EnterpriseSupportPageName): strin
         byId('demoGuardrailList').innerHTML = [
           row('Demo dry-run first', 'Use dry-run provider execution unless sealed sandbox provider material is intentionally installed for this demo.', 'safe default', 'good'),
           row('Login proof before customer testing', identityQa.status === 'ready' ? 'Identity proof is recorded for this organization.' : 'Do not invite a customer pilot user until login/OAuth proof is recorded or explicitly accepted as a demo hold.', 'identity gate', identityQa.status === 'ready' ? 'good' : 'warn'),
+          row('Rotate before paid data', rotation.status === 'accepted_for_demo' ? 'Demo-only key posture is acknowledged; rotate shared material before paid customer data.' : 'Shared/exposed pilot keys still need rotation or an explicit demo-only acceptance note.', 'key gate', rotation.status === 'accepted_for_demo' ? 'good' : 'warn'),
           row('Do not mark GO casually', goNoGo.status === 'go' ? 'The board is green for this browser/org evidence state.' : 'The board is holding on: ' + goNoGo.blockers.join('; '), goNoGo.status, goNoGo.status === 'go' ? 'good' : 'warn'),
           row('Cloud Armor evidence', 'Keep Cloud Armor as a required operator-confirmed check until the live policy exists and verify passes.', 'manual proof', 'warn'),
           row('Key rotation before paid onboarding', 'Shared or exposed pilot keys should be rotated or explicitly accepted for demo-only use before paid customer data.', 'required', 'warn')
@@ -4121,6 +4232,8 @@ function renderEnterpriseSupportPage(pageName: EnterpriseSupportPageName): strin
             row('Live app QA', 'npm run qa:enterprise-live-app checks enterprise app pages, internal links, auth-safe rendering, and production readiness.', 'read-only', 'good'),
             row('Strict login QA', 'LOGIN_QA_REQUIRE_SESSION=true npm run qa:enterprise-login validates live login redirects, generates a temporary Supabase session, and checks authenticated enterprise APIs when service-role env is loaded.', 'identity', 'good'),
             row('OAuth redirect QA', 'LOGIN_QA_OAUTH_PROVIDER=google npm run qa:enterprise-login checks the public Supabase OAuth authorize redirect after the external provider app is configured.', 'identity', 'good'),
+            row('Sealed provider ingest', 'npm run seal:enterprise-provider-slot is the local operator path for live provider material. Keep raw keys out of browser forms and customer packets.', 'rotation', 'good'),
+            row('Strict live material gate', 'GOAL1_DEMO_ONLY=false npm run gate:gcp-first-goal requires live encrypted provider material instead of demo placeholders before paid customer data.', 'rotation', 'good'),
             row('Secret rotation preparation', 'npm run prepare:enterprise-secret-rotation plans the install order and can generate fresh executor signing material without printing secrets.', 'read-only', 'good'),
             row('Private origin preparation', 'npm run prepare:enterprise-private-origin inventories edge, gateway, VM network posture, and private-origin migration choices without changing live infrastructure.', 'read-only', 'good'),
             row('Gateway JWT validation preparation', 'npm run prepare:enterprise-apim-jwt plans Supabase or Entra JWT validation settings before enabling gateway JWT validation and can discover the Supabase issuer from the live enterprise login script.', 'read-only', 'good'),
