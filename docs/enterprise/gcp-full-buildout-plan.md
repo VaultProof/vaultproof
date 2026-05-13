@@ -29,6 +29,7 @@ Already built:
 - Customer launch checklist page at `/app/launch`, including safe-to-pilot go/no-go board with browser-local operator evidence status, timestamps, and stale holds
 - Customer evidence packet page at `/app/evidence`, including go/no-go launch decision summary and blockers
 - Customer launch support room at `/app/support` for support model, internal admin boundary, approval gates, handoff checklist, and copyable support brief
+- Customer security review packet at `/app/security-review` for architecture, controls, evidence links, open items, common buyer answers, known limitations, and secret exclusions
 - Buyer commercial package page at `/app/plans` for paid-pilot scope, included controls, contract guardrails, security boundaries, and customer review links
 - Build-status and feature inventory docs
 - Managed Supabase remains the auth/database provider for the pilot
@@ -66,7 +67,7 @@ Goal 1 is the first milestone where Ken can start testing the sellable product p
 
 Current status: Goal 1 demo dry-run gate is done. The control-plane runtime env includes the public Supabase anon key. `npm run qa:enterprise-login` now exists for repeatable login readiness checks; strict mode still needs to be run with Supabase service-role env, then followed by final human OAuth/password browser QA.
 
-Customer packaging status: `/app/plans` now carries the first sellable paid-pilot package view. It keeps automated billing and hard plan enforcement out of scope for Goal 1; capacity, support cadence, retention, SSO depth, and dedicated-runtime terms stay contract-controlled until billing APIs exist.
+Customer packaging status: `/app/plans` now carries the first sellable paid-pilot package view, and `/app/security-review` gives buyers a copyable security/procurement review packet. It keeps automated billing and hard plan enforcement out of scope for Goal 1; capacity, support cadence, retention, SSO depth, and dedicated-runtime terms stay contract-controlled until billing APIs exist.
 
 ## Architecture
 

@@ -16,6 +16,7 @@ const requiredAppPaths = [
   '/app/dashboard',
   '/app/launch',
   '/app/evidence',
+  '/app/security-review',
   '/app/control',
   '/app/org',
   '/app/members',

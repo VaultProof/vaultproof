@@ -16,6 +16,7 @@ export type EnterpriseAppNavPage =
   | 'setup'
   | 'demo'
   | 'technical-guide'
+  | 'security-review'
   | 'settings'
   | 'plans'
   | 'scanner'
@@ -185,6 +186,12 @@ const ENTERPRISE_SIDEBAR_NAV_GROUPS: readonly EnterpriseSidebarNavGroup[] = [
         href: '/app/technical-guide',
         label: 'Technical guide',
         blurb: 'Identity, network, custody, attestation, and debugging.',
+      },
+      {
+        page: 'security-review',
+        href: '/app/security-review',
+        label: 'Security review',
+        blurb: 'Copyable buyer packet for security and procurement review.',
       },
       {
         page: 'settings',
