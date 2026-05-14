@@ -448,6 +448,7 @@ Status: \`${cloudArmorState}\`
 - Staff/admin pages belong on \`admin.vaultproof.dev\`; \`enterprise.vaultproof.dev\` remains customer-facing only and does not expose \`/api/v1/internal-admin/*\`.
 - Root admin boundary page at \`vaultproof.dev/admin\` now points staff to \`admin.vaultproof.dev\` and keeps enterprise customer login on \`enterprise.vaultproof.dev\`.
 - Built in this update: the staff admin console can create enterprise businesses, invite/find the first owner, seed SSO metadata, create user invites, and show per-business login links such as \`https://${edgeDomain}/app/login?org=<business-id>\` without exposing service-role keys, OAuth secrets, SAML secrets, or invite tokens.
+- GCP edge now has the \`vaultproof-enterprise-admin-cert\` certificate attached for \`admin.vaultproof.dev\`; Cloudflare still needs an \`admin\` A record to \`${edgeIp}\` before Google can mark the certificate visible/active.
 
 ## Projects Page Performance
 

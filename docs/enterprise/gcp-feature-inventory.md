@@ -5,11 +5,11 @@ Last updated: 2026-05-14
 This file tracks what VaultProof features exist, which ones have been adapted for Google Cloud, and what still blocks production cutover. Update it every time a build changes product behavior, runtime behavior, infrastructure behavior, or customer-facing claims.
 
 <!-- gcp-build-marker:start -->
-Last validated GCP image build: `e988dc9`
+Last validated GCP image build: `36221e8`
 
-- Control plane digest: `sha256:9cc7b4f889508afe434dd9cb618e78beee1149d888f8943c5c3d493f7944b394`
-- Executor digest: `sha256:36d99af7e7ff80ed7b699ee11ebca45de6f8a15e26b2164952df7a55ef55d1f1`
-- Updated: 2026-05-14T05:11:35.932Z
+- Control plane digest: `sha256:d74d053a0444758da329850e01027069d99a38f2adc491dee7d40f0428029d0b`
+- Executor digest: `sha256:f83b4c5a7f61c3305cc2ce2ee1c2f5173a75f6bcdc1a6044c29dc8440b7c0219`
+- Updated: 2026-05-14T05:36:04.145Z
 <!-- gcp-build-marker:end -->
 
 ## Runtime Features
@@ -155,7 +155,7 @@ All customer-facing enterprise pages live on the enterprise subdomain: `https://
 | Control/org sidebar parity | Built | `https://enterprise.vaultproof.dev/app/control` and `https://enterprise.vaultproof.dev/app/org` now use the same sidebar brand subtitle and the static app router swaps the universal sidebar when moving between shell pages. |
 | Control/org canonical URL and typography | Built | Deployed in `sidebar-canonical-20260509`. The static Control and Org pages hide the legacy static topbar/page frame, force the universal sidebar typography to match the rest of the dashboard, and clean old `?org=<uuid>` URLs back to `https://enterprise.vaultproof.dev/app/control` or `https://enterprise.vaultproof.dev/app/org` while keeping the selected organization in local storage. Live HTML verification passed for both long-form URLs. |
 | Customer/staff surface split | Built | `enterprise.vaultproof.dev` is customer-facing only; the universal enterprise sidebar no longer links to VaultProof staff/admin tooling. Staff/admin operations belong on `admin.vaultproof.dev`, with a root boundary page at `vaultproof.dev/admin` pointing staff to the employee console and customers to the enterprise login. |
-| Enterprise staff admin console | Built | `admin.vaultproof.dev` is the staff-only enterprise account console. It can create businesses, find or invite the first owner through Supabase Auth, seed owner membership and SSO metadata, create user invites, record account/support status, and show per-business login links such as `https://enterprise.vaultproof.dev/app/login?org=<business-id>`. Staff writes are allowlist-protected, approval-secret gated, and audited; browser responses do not include service-role keys, OAuth secrets, SAML secrets, or invite tokens. |
+| Enterprise staff admin console | Built; DNS pending | `admin.vaultproof.dev` is the staff-only enterprise account console. It can create businesses, find or invite the first owner through Supabase Auth, seed owner membership and SSO metadata, create user invites, record account/support status, and show per-business login links such as `https://enterprise.vaultproof.dev/app/login?org=<business-id>`. Staff writes are allowlist-protected, approval-secret gated, and audited; browser responses do not include service-role keys, OAuth secrets, SAML secrets, or invite tokens. The GCP HTTPS proxy has the admin certificate attached; Cloudflare still needs `admin -> 34.102.179.105` for certificate activation. |
 | Projects page bootstrap load | Built | `https://enterprise.vaultproof.dev/app/projects`, `https://enterprise.vaultproof.dev/app/inventory`, `https://enterprise.vaultproof.dev/app/policy`, `https://enterprise.vaultproof.dev/app/rollout`, `https://enterprise.vaultproof.dev/app/keys`, and `https://enterprise.vaultproof.dev/app/activity` now load orgs, projects, provider slots, and overview stats from `GET /api/v1/enterprise/projects/bootstrap`. Deployed consolidated bootstrap RPC median is about 383 ms for authenticated bootstrap; direct stats overview remains about 474 ms median. |
 | Consolidated Projects bootstrap RPC | Built and deployed | Deployed in `bootstrap-rpc-20260510`. `supabase/migrations/20260510010000_enterprise_projects_bootstrap_rpc.sql` adds service-role-only `enterprise_projects_bootstrap(...)`; the control plane uses it first and falls back to the older query chain only if the RPC is unavailable. This removes separate membership, direct project access, org-wide project access, provider slot, duplicate key-count, and rollup HTTP calls from bootstrap after auth. |
 | Supabase OAuth login | Existing, needs final browser QA | Managed Supabase OAuth/Auth stays in the Goal 1 demo. The control-plane runtime env now includes `SUPABASE_ANON_KEY`; confirm callback/site URLs include `https://enterprise.vaultproof.dev/app/login` and run human browser QA. |

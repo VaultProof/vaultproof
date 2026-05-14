@@ -1,6 +1,6 @@
 # VaultProof GCP Build Status
 
-Last updated: 2026-05-14T05:11:35.450Z
+Last updated: 2026-05-14T05:36:03.682Z
 
 This file is the living inventory of what has been built for VaultProof on Google Cloud. It is refreshed after every successful enterprise image build by `infra/gcp/enterprise-secure-runtime/build-images.sh`.
 
@@ -47,7 +47,7 @@ Status: `attached and enforced`
 
 ## App Shell Notes
 
-- Build `e988dc9` is the current deployed GCP image tag for both control plane and executor containers.
+- Build `36221e8` is the current deployed GCP image tag for both control plane and executor containers.
 - Homepage hero headline is `Active Key Protection for every API call.`
 - All customer-facing enterprise pages below live under `https://enterprise.vaultproof.dev`; route-only mentions are in-app links on that subdomain.
 - `https://enterprise.vaultproof.dev/app/demo` is the buyer walkthrough: live workspace facts, proof path, identity/OAuth proof kit, key-rotation proof kit, pilot operations proof kit, API proxy self-test kit, monitoring evidence kit, paid-pilot tester readiness, safety guardrails, objection answers, paid-pilot close steps, and a copyable demo talk track generated without secrets.
@@ -70,6 +70,7 @@ Status: `attached and enforced`
 - Staff/admin pages belong on `admin.vaultproof.dev`; `enterprise.vaultproof.dev` remains customer-facing only and does not expose `/api/v1/internal-admin/*`.
 - Root admin boundary page at `vaultproof.dev/admin` now points staff to `admin.vaultproof.dev` and keeps enterprise customer login on `enterprise.vaultproof.dev`.
 - Built in this update: the staff admin console can create enterprise businesses, invite/find the first owner, seed SSO metadata, create user invites, and show per-business login links such as `https://enterprise.vaultproof.dev/app/login?org=<business-id>` without exposing service-role keys, OAuth secrets, SAML secrets, or invite tokens.
+- GCP edge now has the `vaultproof-enterprise-admin-cert` certificate attached for `admin.vaultproof.dev`; Cloudflare still needs an `admin` A record to `34.102.179.105` before Google can mark the certificate visible/active.
 
 ## Projects Page Performance
 
@@ -257,14 +258,14 @@ Cost note: the current fixed estimate is above the existing `VaultProof Producti
 
 ## Build Pointer
 
-- Build tag: `e988dc9`
+- Build tag: `36221e8`
 - Registry: `us-central1-docker.pkg.dev/vaultproof-prod/vaultproof`
-- Control plane image: `us-central1-docker.pkg.dev/vaultproof-prod/vaultproof/enterprise-control-plane:e988dc9`
-- Control plane digest: `sha256:9cc7b4f889508afe434dd9cb618e78beee1149d888f8943c5c3d493f7944b394`
-- Control plane built at: `2026-05-14T05:10:57.709324288Z`
-- Executor image: `us-central1-docker.pkg.dev/vaultproof-prod/vaultproof/enterprise-secure-executor:e988dc9`
-- Executor digest: `sha256:36d99af7e7ff80ed7b699ee11ebca45de6f8a15e26b2164952df7a55ef55d1f1`
-- Executor built at: `2026-05-14T05:11:09.565291763Z`
+- Control plane image: `us-central1-docker.pkg.dev/vaultproof-prod/vaultproof/enterprise-control-plane:36221e8`
+- Control plane digest: `sha256:d74d053a0444758da329850e01027069d99a38f2adc491dee7d40f0428029d0b`
+- Control plane built at: `2026-05-14T05:35:27.542479695Z`
+- Executor image: `us-central1-docker.pkg.dev/vaultproof-prod/vaultproof/enterprise-secure-executor:36221e8`
+- Executor digest: `sha256:f83b4c5a7f61c3305cc2ce2ee1c2f5173a75f6bcdc1a6044c29dc8440b7c0219`
+- Executor built at: `2026-05-14T05:35:39.900426853Z`
 
 ## Project
 
