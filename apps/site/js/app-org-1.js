@@ -500,12 +500,6 @@
         href: '/security',
         label: 'open security',
       },
-      {
-        title: 'Control dashboard',
-        copy: 'Return to Control for pilot review, project policy, and runtime health after org setup.',
-        href: '/app/control',
-        label: 'open control',
-      },
     ];
 
     setText('pilotKitStatus', `${completed}/${items.length} org checks done`);
@@ -605,7 +599,6 @@
       '- Enterprise demo: /enterprise-demo',
       '- Docs: /docs',
       '- Security: /security',
-      '- Control dashboard: /app/control',
     ].join('\n');
   }
   function buildOrgJson() {

@@ -337,8 +337,7 @@
     const items = buildAuditChecklistItems();
     const completed = items.filter((item) => item.done).length;
     const resources = [
-      { title: 'Control dashboard', copy: 'Use Control for the rollout summary that pairs with this audit evidence.', href: currentOrganizationId ? `/app/control?org=${encodeURIComponent(currentOrganizationId)}` : '/app/control', label: 'open control' },
-      { title: 'Members', copy: 'Cross-check the membership view when an audit review raises access questions.', href: currentOrganizationId ? `/app/members?org=${encodeURIComponent(currentOrganizationId)}` : '/app/members', label: 'open members' },
+      { title: 'Projects', copy: 'Use Projects for the rollout summary that pairs with this audit evidence.', href: '/app/', label: 'open projects' },
       { title: 'Security', copy: 'Share the security page when buyers ask how audit and runtime logging are scoped.', href: '/security', label: 'open security' },
       { title: 'Docs', copy: 'Use docs to explain onboarding and rollout details alongside the audit timeline.', href: '/docs', label: 'open docs' },
     ];
@@ -399,8 +398,6 @@
       ...buildAuditChecklistItems().map((item) => `- ${item.done ? '[x]' : '[ ]'} ${item.label}`),
       '',
       'Reference links',
-      '- Control dashboard: /app/control',
-      '- Members: /app/members',
       '- Docs: /docs',
       '- Security: /security',
     ].join('\n');

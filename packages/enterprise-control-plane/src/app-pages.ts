@@ -87,7 +87,10 @@ function readWorkspaceFile(relativePath: string): string {
 }
 
 function readEnterpriseAppPage(filename: string): string {
-  const html = readWorkspaceFile(join('apps/site/app', filename));
+  const relativePath = filename === 'control.html'
+    ? join('packages/enterprise-control-plane/static', filename)
+    : join('apps/site/app', filename);
+  const html = readWorkspaceFile(relativePath);
   return rewriteStaticAssetUrls(html);
 }
 

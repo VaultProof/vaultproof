@@ -4,8 +4,6 @@
     '/app/': true,
     '/app/activity': true,
     '/app/alerts': true,
-    '/app/control': true,
-    '/app/members': true,
     '/app/audit': true,
     '/app/org': true
   };

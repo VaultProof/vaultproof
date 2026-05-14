@@ -31,7 +31,7 @@ COPY --from=build /app/packages/vaultproof-core/dist ./packages/vaultproof-core/
 COPY --from=build /app/packages/vaultproof-core/package.json ./packages/vaultproof-core/package.json
 COPY --from=build /app/packages/enterprise-control-plane/dist ./packages/enterprise-control-plane/dist
 COPY --from=build /app/packages/enterprise-control-plane/package.json ./packages/enterprise-control-plane/package.json
-COPY --from=build /app/apps/site/app/control.html ./apps/site/app/control.html
+COPY --from=build /app/packages/enterprise-control-plane/static/control.html ./packages/enterprise-control-plane/static/control.html
 COPY --from=build /app/apps/site/app/org.html ./apps/site/app/org.html
 COPY --from=build /app/apps/site/js/app-login-3.js ./apps/site/js/app-login-3.js
 

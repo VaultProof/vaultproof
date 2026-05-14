@@ -392,7 +392,6 @@
       ...checklistItems.map((item) => `- ${item.done ? '[x]' : '[ ]'} ${item.label}`),
       '',
       'Reference links',
-      '- Control dashboard: /app/control',
       '- Org settings: /app/org',
       '- Docs: /docs',
       '- Security: /security',
@@ -463,12 +462,6 @@
     const items = buildOpsChecklistItems();
     const completed = items.filter((item) => item.done).length;
     const resources = [
-      {
-        title: 'Control dashboard',
-        copy: 'Use Control for pilot posture, project policy, and the broader rollout summary.',
-        href: currentOrganizationId ? `/app/control?org=${encodeURIComponent(currentOrganizationId)}` : '/app/control',
-        label: 'open control',
-      },
       {
         title: 'Org settings',
         copy: 'Return to Org when you need ownership transfer, archive controls, or workspace-level setup details.',
