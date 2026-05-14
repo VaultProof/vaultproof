@@ -2104,16 +2104,18 @@ function renderEnterpriseAlertsPage(): string {
 </html>`;
 }
 
-function renderEnterpriseOperationsPage(pageName: 'activity' | 'projects' | 'inventory' | 'keys'): string {
-  const pageTitle = pageName === 'activity' ? 'Activity' : pageName === 'projects' ? 'Projects' : pageName === 'inventory' ? 'API Inventory' : 'Provider Slots';
-  const pageKicker = pageName === 'activity' ? 'runtime feed' : pageName === 'projects' ? 'project inventory' : pageName === 'inventory' ? 'api inventory' : 'secrets posture';
+function renderEnterpriseOperationsPage(pageName: 'activity' | 'projects' | 'inventory' | 'policy' | 'keys'): string {
+  const pageTitle = pageName === 'activity' ? 'Activity' : pageName === 'projects' ? 'Projects' : pageName === 'inventory' ? 'API Inventory' : pageName === 'policy' ? 'Policy Drift' : 'Provider Slots';
+  const pageKicker = pageName === 'activity' ? 'runtime feed' : pageName === 'projects' ? 'project inventory' : pageName === 'inventory' ? 'api inventory' : pageName === 'policy' ? 'accepted risk' : 'secrets posture';
   const pageLead = pageName === 'activity'
     ? 'Review secure proxy/runtime events, status codes, latency, provider request IDs, and attestation evidence hints.'
     : pageName === 'projects'
       ? 'Track enterprise projects, provider coverage, caller-lock policy, traffic health, and quick links into Control.'
       : pageName === 'inventory'
         ? 'Catalog protected API surfaces by project, provider slot, owner, environment, risk, policy posture, traffic evidence, and review status without storing secrets.'
-      : 'Review active provider slots, trigger emergency revoke, and keep rotation posture visible without exposing upstream secrets.';
+        : pageName === 'policy'
+          ? 'Review caller-lock drift, missing controls, demo-only risk, accepted exceptions, owners, expiry dates, and remaining blockers before paid traffic.'
+          : 'Review active provider slots, trigger emergency revoke, and keep rotation posture visible without exposing upstream secrets.';
 
   return `<!doctype html>
 <html lang="en">
@@ -2187,6 +2189,7 @@ function renderEnterpriseOperationsPage(pageName: 'activity' | 'projects' | 'inv
           <select id="orgSelect" aria-label="Organization"><option>Loading org...</option></select>
           ${pageName === 'keys' ? '<button id="openProviderSlotForm" class="primary" type="button">add slot</button>' : ''}
           ${pageName === 'inventory' ? '<button id="copyInventoryJsonBtn" class="primary" type="button">copy inventory JSON</button>' : ''}
+          ${pageName === 'policy' ? '<button id="copyPolicyJsonBtn" class="primary" type="button">copy policy JSON</button>' : ''}
           <button id="refreshBtn" type="button">refresh</button>
           <a class="primary" href="/app/control">open control</a>
         </div>
@@ -2286,6 +2289,21 @@ function renderEnterpriseOperationsPage(pageName: 'activity' | 'projects' | 'inv
         </div>
       </section>
 
+      <section id="policyPanel" class="grid two" style="display:none">
+        <div class="card" style="grid-column:1/-1">
+          <div class="section-title"><h2>Policy drift board</h2><span id="policyMeta" class="mini">accepted-risk records</span></div>
+          <div id="policyList" class="list"><div class="empty">Loading policy drift...</div></div>
+        </div>
+        <div class="card">
+          <div class="section-title"><h2>Exception evidence</h2><span class="mini">no secrets</span></div>
+          <div id="policySummaryList" class="list"></div>
+        </div>
+        <div class="card">
+          <div class="section-title"><h2>Review workflow</h2><span class="mini">paid-user ready</span></div>
+          <div id="policyWorkflowList" class="list"></div>
+        </div>
+      </section>
+
       ${pageName === 'keys' ? `
       <section id="apiProxyTestPanel" class="card" style="display:none;margin-bottom:16px">
         <div class="section-title"><h2>Customer API proxy test kit</h2><span id="apiProxyTestMeta" class="mini">copy-safe</span></div>
@@ -2324,6 +2342,7 @@ function renderEnterpriseOperationsPage(pageName: 'activity' | 'projects' | 'inv
       var cachedProjects = [];
       var cachedOverview = {};
       var cachedInventoryRows = [];
+      var cachedPolicyRows = [];
       var providerDefaults = {
         openai: { upstream: 'https://api.openai.com', header: 'authorization', template: 'Bearer {key}', demoPath: '/v1/models' },
         anthropic: { upstream: 'https://api.anthropic.com', header: 'x-api-key', template: '{key}', demoPath: '/v1/messages' },
@@ -2878,6 +2897,280 @@ function renderEnterpriseOperationsPage(pageName: 'activity' | 'projects' | 'inv
         cachedInventoryRows = buildInventoryRows();
         copyToClipboard(JSON.stringify(inventoryEvidencePacket(), null, 2), 'API inventory JSON');
       }
+      function policyStorageKey() {
+        return 'vaultproof_policy_exceptions::' + (currentOrgId || 'default');
+      }
+      function readPolicyExceptions() {
+        try {
+          var parsed = JSON.parse(localStorage.getItem(policyStorageKey()) || '{}');
+          return parsed && typeof parsed === 'object' && !Array.isArray(parsed) ? parsed : {};
+        } catch (_error) {
+          return {};
+        }
+      }
+      function writePolicyExceptions(value) {
+        localStorage.setItem(policyStorageKey(), JSON.stringify(value || {}));
+      }
+      function redactPolicyText(value) {
+        var textValue = String(value || '');
+        if (!textValue) return null;
+        if (/(sk-[a-z0-9_-]{8,}|gocspx-|eyJ[a-zA-Z0-9_-]{10,}|-----BEGIN|Bearer\\s+|service[_ -]?role|client[_ -]?secret|api[_ -]?key|password|private[_ -]?key)/i.test(textValue)) {
+          return '[redacted: policy note contained secret-like material]';
+        }
+        return textValue;
+      }
+      function policyExceptionActive(exception) {
+        if (!exception || ['accepted_demo', 'approved'].indexOf(exception.approval_status || '') === -1) return false;
+        if (!exception.expires_at) return false;
+        var expires = new Date(exception.expires_at + 'T23:59:59Z').getTime();
+        return Number.isFinite(expires) && expires >= Date.now();
+      }
+      function policyExceptionExpired(exception) {
+        if (!exception || !exception.expires_at) return false;
+        var expires = new Date(exception.expires_at + 'T23:59:59Z').getTime();
+        return Number.isFinite(expires) && expires < Date.now();
+      }
+      function policySeverityRank(value) {
+        return { critical: 4, high: 3, medium: 2, low: 1 }[String(value || '').toLowerCase()] || 0;
+      }
+      function policyRowStatus(row) {
+        var exception = row.exception || {};
+        if (exception.approval_status === 'blocked') return 'blocked';
+        if (policyExceptionActive(exception)) return exception.approval_status === 'approved' ? 'approved exception' : 'demo accepted';
+        if (policyExceptionExpired(exception)) return 'expired exception';
+        return 'open drift';
+      }
+      function policyRowTone(row) {
+        var status = policyRowStatus(row);
+        if (status === 'approved exception' || status === 'demo accepted') return 'good';
+        if (status === 'blocked' || row.severity === 'critical') return 'bad';
+        return 'warn';
+      }
+      function addPolicyRow(rows, inventoryRow, controlId, title, detail, severity, action) {
+        var exceptions = readPolicyExceptions();
+        var id = inventoryRow.id + '::' + controlId;
+        var exception = exceptions[id] && typeof exceptions[id] === 'object' ? exceptions[id] : {};
+        rows.push({
+          id: id,
+          api_surface_id: inventoryRow.id,
+          control_id: controlId,
+          title: title,
+          detail: detail,
+          severity: severity,
+          action: action,
+          project: inventoryRow.project,
+          provider: inventoryRow.provider,
+          policy: inventoryRow.policy,
+          traffic: inventoryRow.traffic,
+          inventory_annotation: inventoryRow.annotation || {},
+          exception: exception
+        });
+      }
+      function buildPolicyRows() {
+        var rows = [];
+        buildInventoryRows().forEach(function(inventoryRow) {
+          var annotation = inventoryRow.annotation || {};
+          var provider = inventoryRow.provider || {};
+          var policy = inventoryRow.policy || {};
+          var traffic = inventoryRow.traffic || {};
+          var ownerMissing = !annotation.business_owner || !annotation.technical_owner;
+          if (!inventoryRow.provider) {
+            addPolicyRow(rows, inventoryRow, 'missing-provider-slot', 'Missing provider slot', 'This project has no mapped provider slot, so VaultProof cannot prove which upstream API is protected.', 'critical', 'Create a provider slot in /app/keys, then map the caller policy in /app/control.');
+          }
+          if (inventoryRow.provider && provider.material_mode === 'demo-placeholder') {
+            addPolicyRow(rows, inventoryRow, 'demo-placeholder-material', 'Demo-only provider material', 'The provider slot uses demo placeholder material. That is acceptable for a demo only when explicitly accepted and dated.', 'high', 'Rotate to sealed live material before paid customer data, or record a demo-only exception with an expiry.');
+          }
+          if (inventoryRow.project && inventoryRow.project.strict_origin !== true) {
+            addPolicyRow(rows, inventoryRow, 'strict-origin-missing', 'Strict origin not enabled', 'Strict origin enforcement is not active for this project, which weakens browser-origin binding.', 'critical', 'Enable strict origin and confirm allowed origins in /app/control.');
+          }
+          if (!Array.isArray(policy.allowed_customer_gateways) || policy.allowed_customer_gateways.length === 0) {
+            addPolicyRow(rows, inventoryRow, 'gateway-lock-missing', 'Customer gateway lock missing', 'No approved customer gateway marker is visible for this API surface.', 'high', 'Add allowed_customer_gateways in /app/control or document the accepted demo gateway path.');
+          }
+          if (!Array.isArray(policy.allowed_methods) || policy.allowed_methods.length === 0) {
+            addPolicyRow(rows, inventoryRow, 'method-lock-missing', 'Allowed methods not set', 'The caller-lock policy does not report an allowed HTTP method list for this surface.', 'medium', 'Set the smallest allowed method list in /app/control.');
+          }
+          if ((!Array.isArray(policy.allowed_upstream_hosts) || policy.allowed_upstream_hosts.length === 0) && (!Array.isArray(policy.allowed_upstream_path_prefixes) || policy.allowed_upstream_path_prefixes.length === 0)) {
+            addPolicyRow(rows, inventoryRow, 'upstream-scope-missing', 'Upstream scope not set', 'No upstream host or path-prefix restriction is visible for this protected provider path.', 'high', 'Set allowed upstream hosts or path prefixes in /app/control.');
+          }
+          if (ownerMissing) {
+            addPolicyRow(rows, inventoryRow, 'inventory-owner-missing', 'Owner metadata missing', 'Business owner and technical owner are required before a buyer can treat this API as operationally owned.', 'medium', 'Open /app/inventory and set both owners for this API surface.');
+          }
+          if (Number(traffic.calls || 0) === 0) {
+            addPolicyRow(rows, inventoryRow, 'traffic-evidence-missing', 'No recent traffic evidence', 'No proxy traffic is visible for this API surface, so the demo cannot prove live runtime behavior yet.', 'medium', 'Run a dry-run request from /app/keys and review /app/activity.');
+          }
+          if (traffic.stale) {
+            addPolicyRow(rows, inventoryRow, 'traffic-evidence-stale', 'Traffic evidence is stale', 'The last observed proxy activity is older than 30 days.', 'medium', 'Run a fresh dry-run or low-volume test and review /app/activity.');
+          }
+          if (isReviewDue(annotation) || !annotation.review_status || annotation.review_status === 'needs_review') {
+            addPolicyRow(rows, inventoryRow, 'inventory-review-due', 'Inventory review due', 'The API inventory row is not approved or the next review date has passed.', 'medium', 'Approve, block, or record an exception from /app/inventory.');
+          }
+          if (annotation.review_status === 'blocked') {
+            addPolicyRow(rows, inventoryRow, 'inventory-blocked', 'Inventory row blocked', 'The API inventory record is explicitly blocked and should hold launch until resolved.', 'critical', 'Resolve the blocker or record a signed accepted-risk decision with owner and expiry.');
+          }
+        });
+        return rows.sort(function(a, b) {
+          return policySeverityRank(b.severity) - policySeverityRank(a.severity) || a.title.localeCompare(b.title);
+        });
+      }
+      function policySelect(row, field, label, options) {
+        var exception = row.exception || {};
+        return '<div class="inventory-field"><label>' + escapeHtml(label) + '</label><select data-policy-row-id="' + escapeHtml(row.id) + '" data-policy-field="' + escapeHtml(field) + '">' + options.map(function(option) {
+          return '<option value="' + escapeHtml(option.value) + '"' + selectedOption(exception[field], option.value) + '>' + escapeHtml(option.label) + '</option>';
+        }).join('') + '</select></div>';
+      }
+      function policyInput(row, field, label, placeholder) {
+        var exception = row.exception || {};
+        return '<div class="inventory-field"><label>' + escapeHtml(label) + '</label><input data-policy-row-id="' + escapeHtml(row.id) + '" data-policy-field="' + escapeHtml(field) + '" value="' + escapeHtml(exception[field] || '') + '" placeholder="' + escapeHtml(placeholder || '') + '" /></div>';
+      }
+      function renderPolicyRow(row) {
+        var exception = row.exception || {};
+        var provider = row.provider || {};
+        var providerLabel = row.provider ? provider.slug + ' / ' + provider.provider : 'no provider slot';
+        var status = policyRowStatus(row);
+        var tone = policyRowTone(row);
+        var expired = policyExceptionExpired(exception);
+        return '<div class="inventory-row" data-policy-card="' + escapeHtml(row.id) + '">' +
+          '<div class="inventory-head"><div><div class="row-title">' + escapeHtml(row.title) + '</div>' +
+          '<div class="row-sub">' + escapeHtml(row.project.name) + ' - ' + escapeHtml(providerLabel) + ' - ' + escapeHtml(row.detail) + '</div>' +
+          '<div><span class="tag ' + tone + '">' + escapeHtml(status) + '</span><span class="tag ' + (row.severity === 'critical' ? 'bad' : row.severity === 'high' ? 'warn' : '') + '">' + escapeHtml(row.severity) + '</span><span class="tag">' + escapeHtml(row.control_id) + '</span>' + (expired ? '<span class="tag bad">expired</span>' : '') + '</div></div>' +
+          '<div class="row-actions"><a class="tag" href="/app/control">control</a><a class="tag" href="/app/inventory">inventory</a><a class="tag" href="/app/keys">provider slots</a><a class="tag" href="/app/activity">activity</a></div></div>' +
+          '<div class="inventory-fields">' +
+          policySelect(row, 'approval_status', 'exception status', [
+            { value: '', label: 'open' },
+            { value: 'accepted_demo', label: 'accepted for demo' },
+            { value: 'approved', label: 'approved exception' },
+            { value: 'blocked', label: 'blocked' }
+          ]) +
+          policyInput(row, 'owner', 'exception owner', row.inventory_annotation.technical_owner || row.inventory_annotation.business_owner || 'Security owner') +
+          policySelect(row, 'risk_level', 'risk level', [
+            { value: '', label: 'unset' },
+            { value: 'low', label: 'low' },
+            { value: 'medium', label: 'medium' },
+            { value: 'high', label: 'high' },
+            { value: 'critical', label: 'critical' }
+          ]) +
+          '<div class="inventory-field"><label>expiration date</label><input type="date" data-policy-row-id="' + escapeHtml(row.id) + '" data-policy-field="expires_at" value="' + escapeHtml(exception.expires_at || '') + '" /></div>' +
+          '<div class="inventory-field wide"><label>accepted-risk reason</label><textarea data-policy-row-id="' + escapeHtml(row.id) + '" data-policy-field="reason" placeholder="Metadata only. Do not paste secrets, request bodies, response bodies, or customer payloads.">' + escapeHtml(exception.reason || '') + '</textarea></div>' +
+          '<div class="inventory-field wide"><label>compensating control</label><textarea data-policy-row-id="' + escapeHtml(row.id) + '" data-policy-field="compensating_control" placeholder="Temporary control, monitoring owner, or rollout guardrail.">' + escapeHtml(exception.compensating_control || '') + '</textarea></div>' +
+          '<div class="inventory-field wide"><label>next action</label><textarea data-policy-row-id="' + escapeHtml(row.id) + '" data-policy-field="next_action" placeholder="' + escapeHtml(row.action) + '">' + escapeHtml(exception.next_action || '') + '</textarea></div>' +
+          '<div class="inventory-field wide"><label>recommended action</label><div class="row-sub">' + escapeHtml(row.action) + '</div></div>' +
+          '</div></div>';
+      }
+      function savePolicyField(target, rerender) {
+        var rowId = target.getAttribute('data-policy-row-id');
+        var field = target.getAttribute('data-policy-field');
+        if (!rowId || !field) return;
+        var exceptions = readPolicyExceptions();
+        var current = exceptions[rowId] && typeof exceptions[rowId] === 'object' ? exceptions[rowId] : {};
+        current[field] = target.value || '';
+        current.updated_at = new Date().toISOString();
+        exceptions[rowId] = current;
+        writePolicyExceptions(exceptions);
+        cachedPolicyRows = buildPolicyRows();
+        if (rerender || field === 'approval_status' || field === 'expires_at') {
+          renderPolicy();
+        } else {
+          renderPolicySummary();
+        }
+      }
+      function policySummary() {
+        var rows = cachedPolicyRows;
+        var activeExceptions = rows.filter(function(row) { return policyExceptionActive(row.exception); });
+        var criticalOpen = rows.filter(function(row) {
+          return (row.severity === 'critical' || row.severity === 'high') && !policyExceptionActive(row.exception) && policyRowStatus(row) !== 'blocked';
+        });
+        return {
+          total: rows.length,
+          critical: rows.filter(function(row) { return row.severity === 'critical'; }).length,
+          high: rows.filter(function(row) { return row.severity === 'high'; }).length,
+          active_exceptions: activeExceptions.length,
+          expired_exceptions: rows.filter(function(row) { return policyExceptionExpired(row.exception); }).length,
+          blocked: rows.filter(function(row) { return policyRowStatus(row) === 'blocked'; }).length,
+          launch_status: criticalOpen.length || rows.some(function(row) { return policyRowStatus(row) === 'blocked'; }) ? 'hold' : 'ready'
+        };
+      }
+      function policyEvidencePacket() {
+        var summary = policySummary();
+        return {
+          packet_type: 'vaultproof_enterprise_policy_drift',
+          packet_version: 1,
+          generated_at: new Date().toISOString(),
+          generated_from: location.origin + '/app/policy',
+          organization_id: currentOrgId || null,
+          status: summary.launch_status,
+          summary: summary,
+          rows: cachedPolicyRows.map(function(row) {
+            return {
+              id: row.id,
+              api_surface_id: row.api_surface_id,
+              control_id: row.control_id,
+              title: row.title,
+              severity: row.severity,
+              status: policyRowStatus(row),
+              project: row.project,
+              provider: row.provider,
+              action: row.action,
+              exception: {
+                approval_status: row.exception.approval_status || null,
+                owner: row.exception.owner || null,
+                risk_level: row.exception.risk_level || null,
+                expires_at: row.exception.expires_at || null,
+                updated_at: row.exception.updated_at || null,
+                reason: redactPolicyText(row.exception.reason),
+                compensating_control: redactPolicyText(row.exception.compensating_control),
+                next_action: redactPolicyText(row.exception.next_action)
+              }
+            };
+          }),
+          workflow_links: {
+            policy_drift: '/app/policy',
+            api_inventory: '/app/inventory',
+            control: '/app/control',
+            provider_slots: '/app/keys',
+            activity: '/app/activity',
+            launch: '/app/launch',
+            evidence: '/app/evidence'
+          },
+          secrets_excluded: [
+            'raw provider keys',
+            'encrypted provider shares',
+            'bearer tokens',
+            'OAuth client secrets',
+            'SAML material',
+            'request bodies',
+            'response bodies',
+            'customer payloads'
+          ]
+        };
+      }
+      function renderPolicySummary() {
+        if (PAGE_MODE !== 'policy') return;
+        var summary = policySummary();
+        byId('policySummaryList').innerHTML = [
+          '<div class="row"><div><div class="row-title">Policy drift status</div><div class="row-sub">' + number(summary.total) + ' drift rows, ' + number(summary.critical) + ' critical, ' + number(summary.high) + ' high, ' + number(summary.active_exceptions) + ' active accepted-risk records.</div></div><span class="tag ' + (summary.launch_status === 'ready' ? 'good' : 'bad') + '">' + escapeHtml(summary.launch_status) + '</span></div>',
+          '<div class="row"><div><div class="row-title">Exception hygiene</div><div class="row-sub">' + number(summary.expired_exceptions) + ' expired exceptions and ' + number(summary.blocked) + ' blocked rows. Every paid-user exception needs owner, reason, compensating control, expiration date, and next action.</div></div><span class="tag warn">review</span></div>',
+          '<div class="row"><div><div class="row-title">Secret boundary</div><div class="row-sub">Policy drift evidence excludes raw provider keys, encrypted shares, bearer tokens, OAuth secrets, SAML material, request bodies, response bodies, and customer payloads.</div></div><span class="tag good">redacted</span></div>'
+        ].join('');
+        byId('policyWorkflowList').innerHTML = [
+          '<div class="row"><div><div class="row-title">Close policy gaps</div><div class="row-sub">Fix strict origin, gateway lock, method lock, upstream scope, and provider-slot posture in Control and Provider Slots.</div></div><span><a class="tag good" href="/app/control">control</a><a class="tag good" href="/app/keys">provider slots</a></span></div>',
+          '<div class="row"><div><div class="row-title">Own every API surface</div><div class="row-sub">Use API Inventory to set business owner, technical owner, data sensitivity, risk, review status, and next review date.</div></div><a class="tag good" href="/app/inventory">inventory</a></div>',
+          '<div class="row"><div><div class="row-title">Prove runtime behavior</div><div class="row-sub">Run dry-run or low-volume traffic and review Activity before the customer walkthrough.</div></div><a class="tag" href="/app/activity">activity</a></div>',
+          '<div class="row"><div><div class="row-title">Launch packet</div><div class="row-sub">Export vaultproof_enterprise_policy_drift into Evidence and Security Review before paid traffic.</div></div><span><a class="tag" href="/app/evidence">evidence</a><a class="tag" href="/app/security-review">security review</a></span></div>'
+        ].join('');
+      }
+      function renderPolicy() {
+        var panel = byId('policyPanel');
+        if (panel) panel.style.display = PAGE_MODE === 'policy' ? 'grid' : 'none';
+        if (PAGE_MODE !== 'policy') return;
+        cachedPolicyRows = buildPolicyRows();
+        text('policyMeta', cachedPolicyRows.length + ' drift rows');
+        byId('policyList').innerHTML = cachedPolicyRows.length ? cachedPolicyRows.map(renderPolicyRow).join('') : '<div class="empty">No active policy drift is visible from the current projects, provider slots, inventory metadata, policy settings, and traffic evidence.</div>';
+        renderPolicySummary();
+      }
+      function copyPolicyJson() {
+        cachedPolicyRows = buildPolicyRows();
+        copyToClipboard(JSON.stringify(policyEvidencePacket(), null, 2), 'Policy drift JSON');
+      }
       function renderProjects() {
         byId('projectsPanel').style.display = PAGE_MODE === 'projects' ? 'grid' : 'none';
         if (PAGE_MODE !== 'projects') return;
@@ -3109,6 +3402,7 @@ function renderEnterpriseOperationsPage(pageName: 'activity' | 'projects' | 'inv
           renderProjectOptions();
           renderProjects();
           renderInventory();
+          renderPolicy();
           renderKeys();
           await renderActivity();
         } catch (error) {
@@ -3136,15 +3430,30 @@ function renderEnterpriseOperationsPage(pageName: 'activity' | 'projects' | 'inv
       if (byId('copyInventoryJsonBtn')) {
         byId('copyInventoryJsonBtn').addEventListener('click', copyInventoryJson);
       }
+      if (byId('copyPolicyJsonBtn')) {
+        byId('copyPolicyJsonBtn').addEventListener('click', copyPolicyJson);
+      }
       document.addEventListener('input', function(event) {
         var target = event.target;
-        if (!target || !target.getAttribute || !target.getAttribute('data-inventory-field')) return;
-        saveInventoryField(target);
+        if (!target || !target.getAttribute) return;
+        if (target.getAttribute('data-inventory-field')) {
+          saveInventoryField(target);
+          return;
+        }
+        if (target.getAttribute('data-policy-field')) {
+          savePolicyField(target, false);
+        }
       });
       document.addEventListener('change', function(event) {
         var target = event.target;
-        if (!target || !target.getAttribute || !target.getAttribute('data-inventory-field')) return;
-        saveInventoryField(target);
+        if (!target || !target.getAttribute) return;
+        if (target.getAttribute('data-inventory-field')) {
+          saveInventoryField(target);
+          return;
+        }
+        if (target.getAttribute('data-policy-field')) {
+          savePolicyField(target, true);
+        }
       });
       document.addEventListener('click', async function(event) {
         var target = event.target;
@@ -3462,6 +3771,10 @@ function renderEnterpriseSupportPage(pageName: EnterpriseSupportPageName): strin
         <div class="card" style="grid-column:1/-1">
           <div class="section-title"><h2>API inventory proof</h2><span class="mini" id="evidenceApiInventoryMeta">hold</span></div>
           <div id="evidenceApiInventoryList" class="list"></div>
+        </div>
+        <div class="card" style="grid-column:1/-1">
+          <div class="section-title"><h2>Policy drift proof</h2><span class="mini" id="evidencePolicyDriftMeta">hold</span></div>
+          <div id="evidencePolicyDriftList" class="list"></div>
         </div>
         <div class="card" style="grid-column:1/-1">
           <div class="section-title"><h2>Launch support proof</h2><span class="mini" id="evidenceSupportMeta">hold</span></div>
@@ -4530,6 +4843,176 @@ function renderEnterpriseSupportPage(pageName: EnterpriseSupportPageName): strin
           row('Secret boundary', 'Inventory evidence excludes ' + packet.secrets_excluded.join(', ') + '.', 'redacted', 'good')
         ];
       }
+      function policyDriftStorageKey() {
+        return 'vaultproof_policy_exceptions::' + (currentOrgId || 'default');
+      }
+      function readPolicyDriftExceptions() {
+        try {
+          var parsed = JSON.parse(localStorage.getItem(policyDriftStorageKey()) || '{}');
+          return parsed && typeof parsed === 'object' && !Array.isArray(parsed) ? parsed : {};
+        } catch (_error) {
+          return {};
+        }
+      }
+      function redactPolicyDriftText(value) {
+        var textValue = String(value || '');
+        if (!textValue) return null;
+        if (/(sk-[a-z0-9_-]{8,}|gocspx-|eyJ[a-zA-Z0-9_-]{10,}|-----BEGIN|Bearer\\s+|service[_ -]?role|client[_ -]?secret|api[_ -]?key|password|private[_ -]?key)/i.test(textValue)) {
+          return '[redacted: policy exception contained secret-like material]';
+        }
+        return textValue;
+      }
+      function policyDriftExceptionActive(exception) {
+        if (!exception || ['accepted_demo', 'approved'].indexOf(exception.approval_status || '') === -1) return false;
+        if (!exception.expires_at) return false;
+        var expires = new Date(exception.expires_at + 'T23:59:59Z').getTime();
+        return Number.isFinite(expires) && expires >= Date.now();
+      }
+      function policyDriftExceptionExpired(exception) {
+        if (!exception || !exception.expires_at) return false;
+        var expires = new Date(exception.expires_at + 'T23:59:59Z').getTime();
+        return Number.isFinite(expires) && expires < Date.now();
+      }
+      function policyDriftRowStatus(row) {
+        var exception = row.exception || {};
+        if (exception.approval_status === 'blocked') return 'blocked';
+        if (policyDriftExceptionActive(exception)) return exception.approval_status === 'approved' ? 'approved exception' : 'demo accepted';
+        if (policyDriftExceptionExpired(exception)) return 'expired exception';
+        return 'open drift';
+      }
+      function addPolicyDriftRow(rows, exceptions, inventoryRow, controlId, title, detail, severity, action) {
+        var id = inventoryRow.id + '::' + controlId;
+        var exception = exceptions[id] && typeof exceptions[id] === 'object' ? exceptions[id] : {};
+        rows.push({
+          id: id,
+          api_surface_id: inventoryRow.id,
+          control_id: controlId,
+          title: title,
+          detail: detail,
+          severity: severity,
+          action: action,
+          project: {
+            id: inventoryRow.project_id,
+            name: inventoryRow.project_name,
+            vp_proj_id: inventoryRow.vp_proj_id
+          },
+          provider: inventoryRow.provider,
+          traffic: inventoryRow.traffic,
+          inventory_annotation: inventoryRow.annotation || {},
+          exception: exception
+        });
+      }
+      function policyDriftRowsFromData(overview, bootstrap) {
+        var inventoryRows = apiInventoryRowsFromData(overview || {}, bootstrap || {});
+        var exceptions = readPolicyDriftExceptions();
+        var rows = [];
+        inventoryRows.forEach(function(inventoryRow) {
+          var annotation = inventoryRow.annotation || {};
+          var traffic = inventoryRow.traffic || {};
+          var statuses = Array.isArray(inventoryRow.statuses) ? inventoryRow.statuses : [];
+          if (!inventoryRow.provider) {
+            addPolicyDriftRow(rows, exceptions, inventoryRow, 'missing-provider-slot', 'Missing provider slot', 'This API surface has no mapped provider slot, so protected execution cannot be proven.', 'critical', 'Create a provider slot and map it to project policy.');
+          }
+          if (inventoryRow.provider && inventoryRow.provider.material_mode === 'demo-placeholder') {
+            addPolicyDriftRow(rows, exceptions, inventoryRow, 'demo-placeholder-material', 'Demo-only provider material', 'This provider slot is running demo placeholder material and needs paid-traffic acceptance or live sealed material.', 'high', 'Rotate to sealed live material before paid data, or record a demo-only accepted-risk expiry.');
+          }
+          if (statuses.indexOf('policy incomplete') !== -1) {
+            addPolicyDriftRow(rows, exceptions, inventoryRow, 'policy-incomplete', 'Caller-lock policy incomplete', 'Strict origin, gateway, method, provider, host, or path-prefix controls are not complete for this API surface.', inventoryRow.policy && inventoryRow.policy.strict_origin ? 'high' : 'critical', 'Close caller-lock policy gaps in /app/control.');
+          }
+          if (!annotation.business_owner || !annotation.technical_owner) {
+            addPolicyDriftRow(rows, exceptions, inventoryRow, 'inventory-owner-missing', 'Owner metadata missing', 'Business and technical owner metadata are required before customer launch.', 'medium', 'Set owners in /app/inventory.');
+          }
+          if (statuses.indexOf('no recent traffic') !== -1) {
+            addPolicyDriftRow(rows, exceptions, inventoryRow, 'traffic-evidence-missing', 'No recent traffic evidence', 'No proxy traffic is visible for this API surface yet.', 'medium', 'Run a dry-run self-test and verify /app/activity.');
+          }
+          if (statuses.indexOf('review due') !== -1) {
+            addPolicyDriftRow(rows, exceptions, inventoryRow, 'inventory-review-due', 'Inventory review due', 'This API inventory row needs an approval, blocker, or accepted exception.', 'medium', 'Review status and next review date in /app/inventory.');
+          }
+          if (statuses.indexOf('blocked') !== -1) {
+            addPolicyDriftRow(rows, exceptions, inventoryRow, 'inventory-blocked', 'Inventory row blocked', 'The API inventory record is explicitly blocked.', 'critical', 'Resolve blocker or record a customer-approved exception before launch.');
+          }
+        });
+        return rows;
+      }
+      function buildPolicyDriftPacket(overview, bootstrap) {
+        var rows = policyDriftRowsFromData(overview || {}, bootstrap || {});
+        var blocked = rows.filter(function(item) { return policyDriftRowStatus(item) === 'blocked'; }).length;
+        var openCritical = rows.filter(function(item) {
+          return (item.severity === 'critical' || item.severity === 'high') && !policyDriftExceptionActive(item.exception) && policyDriftRowStatus(item) !== 'blocked';
+        }).length;
+        var summary = {
+          total_drift_rows: rows.length,
+          critical: rows.filter(function(item) { return item.severity === 'critical'; }).length,
+          high: rows.filter(function(item) { return item.severity === 'high'; }).length,
+          medium: rows.filter(function(item) { return item.severity === 'medium'; }).length,
+          active_exceptions: rows.filter(function(item) { return policyDriftExceptionActive(item.exception); }).length,
+          expired_exceptions: rows.filter(function(item) { return policyDriftExceptionExpired(item.exception); }).length,
+          blocked: blocked
+        };
+        var status = blocked || openCritical ? 'hold' : rows.length ? 'ready_with_review' : 'clean';
+        return {
+          packet_type: 'vaultproof_enterprise_policy_drift',
+          packet_version: 1,
+          status: status,
+          generated_at: new Date().toISOString(),
+          generated_from: location.origin + '/app/evidence',
+          policy_page: '/app/policy',
+          summary: summary,
+          rows: rows.map(function(row) {
+            return {
+              id: row.id,
+              api_surface_id: row.api_surface_id,
+              control_id: row.control_id,
+              title: row.title,
+              severity: row.severity,
+              status: policyDriftRowStatus(row),
+              project: row.project,
+              provider: row.provider,
+              traffic: row.traffic,
+              action: row.action,
+              exception: {
+                approval_status: row.exception.approval_status || null,
+                owner: row.exception.owner || null,
+                risk_level: row.exception.risk_level || null,
+                expires_at: row.exception.expires_at || null,
+                updated_at: row.exception.updated_at || null,
+                reason: redactPolicyDriftText(row.exception.reason),
+                compensating_control: redactPolicyDriftText(row.exception.compensating_control),
+                next_action: redactPolicyDriftText(row.exception.next_action)
+              }
+            };
+          }),
+          workflow_links: {
+            policy_drift: '/app/policy',
+            api_inventory: '/app/inventory',
+            control: '/app/control',
+            provider_slots: '/app/keys',
+            activity: '/app/activity',
+            launch: '/app/launch',
+            evidence: '/app/evidence'
+          },
+          secrets_excluded: [
+            'raw provider keys',
+            'encrypted provider shares',
+            'bearer tokens',
+            'OAuth client secrets',
+            'SAML material',
+            'request bodies',
+            'response bodies',
+            'customer payloads'
+          ]
+        };
+      }
+      function policyDriftProofRows(packet) {
+        var summary = packet.summary || {};
+        return [
+          row('Policy drift status', packet.status === 'clean' ? 'No active drift rows are visible from project/provider/policy/traffic evidence.' : number(summary.total_drift_rows) + ' drift rows are visible. Critical/high rows must be closed or have current accepted-risk records before paid traffic.', packet.status, packet.status === 'hold' ? 'bad' : 'good'),
+          row('Open severity mix', number(summary.critical) + ' critical, ' + number(summary.high) + ' high, ' + number(summary.medium) + ' medium. ' + number(summary.active_exceptions) + ' active accepted-risk records.', 'severity', summary.critical || summary.high ? 'warn' : 'good'),
+          row('Exception hygiene', number(summary.expired_exceptions) + ' expired exceptions and ' + number(summary.blocked) + ' blocked rows.', summary.blocked ? 'blocked' : 'review', summary.blocked ? 'bad' : 'warn'),
+          linkRow('Open policy drift', 'Review control gaps, owners, compensating controls, expiration date, and next action for each accepted-risk record.', '/app/policy', 'policy drift', 'good'),
+          row('Secret boundary', 'Policy drift evidence excludes ' + packet.secrets_excluded.join(', ') + '.', 'redacted', 'good')
+        ];
+      }
       function buildApiProxySelfTestPacket(overview, bootstrap) {
         var slots = providerSlotsFromBootstrap(bootstrap);
         var totalCalls = Number(overview.totalCalls || overview.total_calls || 0);
@@ -4798,6 +5281,7 @@ function renderEnterpriseSupportPage(pageName: EnterpriseSupportPageName): strin
         var pilotOps = buildPilotOpsPacket(goNoGo, readiness, overview);
         var apiProxy = buildApiProxySelfTestPacket(overview, bootstrap);
         var apiInventory = buildApiInventoryPacket(overview, bootstrap);
+        var policyDrift = buildPolicyDriftPacket(overview, bootstrap);
         var support = buildLaunchSupportPacket(org, sso, readiness, overview, bootstrap, goNoGo);
         var monitoring = buildMonitoringEvidencePacket(org, sso, readiness, overview, bootstrap, goNoGo);
         var projectCount = projectCountFromData(org, overview, bootstrap);
@@ -4834,6 +5318,7 @@ function renderEnterpriseSupportPage(pageName: EnterpriseSupportPageName): strin
             { name: 'Caller-lock policy', status: 'built', tone: 'good', detail: 'Control policy can bind protected calls to approved origins, gateways, CIDRs, methods, upstream hosts, path prefixes, provider families, and rate limits.' },
             { name: 'Provider key custody', status: rotation.status, tone: rotation.status === 'accepted_for_demo' ? 'good' : 'warn', detail: 'Provider slots expose posture and material mode without returning plaintext keys or encrypted shares to customer browsers.' },
             { name: 'API inventory', status: apiInventory.status, tone: apiInventory.status === 'ready' ? 'good' : 'warn', detail: 'API surfaces are derived from projects, provider slots, policy, traffic evidence, and browser-local owner/review metadata without storing secrets.' },
+            { name: 'Policy drift and exceptions', status: policyDrift.status, tone: policyDrift.status === 'hold' ? 'warn' : 'good', detail: 'Policy drift rows are derived from existing project/provider/policy/traffic evidence, with browser-local accepted-risk records, owners, expiry, and compensating controls.' },
             { name: 'Runtime attestation', status: productionReady ? 'ready' : 'blocked', tone: productionReady ? 'good' : 'bad', detail: 'Readiness reports GCP confidential production posture, key release readiness, signature verification, replay protection, and executor reachability.' },
             { name: 'Audit and evidence', status: 'exportable', tone: 'good', detail: 'Evidence packet, audit CSV, access-review CSV, activity records, launch brief, and security review packet are customer-safe review artifacts.' },
             { name: 'Monitoring and edge protection', status: monitoring.status, tone: monitoring.status === 'ready' ? 'good' : 'warn', detail: 'Monitoring evidence links readiness, traffic/error/denial posture, alert workflow, Cloud Armor verification, live gate, and budget guardrails.' },
@@ -4846,6 +5331,7 @@ function renderEnterpriseSupportPage(pageName: EnterpriseSupportPageName): strin
             { title: 'Access review CSV', href: evidenceExportHref('/api/v1/enterprise/members/access-review?format=csv'), detail: 'Members, roles, invitations, and project assignments.', tag: 'csv', tone: 'good' },
             { title: 'Activity', href: '/app/activity', detail: 'Runtime status codes, latency, provider request IDs, denials, and attestation hints.', tag: 'events', tone: 'good' },
             { title: 'API Inventory', href: '/app/inventory', detail: 'API catalog with owners, environment, risk, provider-slot mapping, policy posture, traffic evidence, review status, and JSON export.', tag: apiInventory.status, tone: apiInventory.status === 'ready' ? 'good' : 'warn' },
+            { title: 'Policy Drift', href: '/app/policy', detail: 'Control gaps, demo-only material, owner gaps, stale traffic, accepted-risk records, expiry dates, and customer-safe JSON export.', tag: policyDrift.status, tone: policyDrift.status === 'hold' ? 'warn' : 'good' },
             { title: 'Alerts', href: '/app/alerts', detail: 'Destinations, delivery logs, dispatch runs, and test-send workflow.', tag: 'monitoring', tone: 'good' },
             { title: 'Provider slots', href: '/app/keys', detail: 'Provider material mode, rotation status, dry-run self-test, email demo, and emergency revoke.', tag: 'keys', tone: providerCount ? 'good' : 'warn' },
             { title: 'Launch board', href: '/app/launch', detail: 'Go/no-go decision, operator-confirmed manual evidence, stale holds, and customer tasks.', tag: goNoGo.status, tone: goNoGo.status === 'go' ? 'good' : 'warn' },
@@ -4874,6 +5360,7 @@ function renderEnterpriseSupportPage(pageName: EnterpriseSupportPageName): strin
             pilot_operations_evidence: pilotOps.status,
             api_proxy_self_test: apiProxy.status,
             api_inventory: apiInventory.status,
+            policy_drift_exceptions: policyDrift.status,
             launch_support_readiness: support.status,
             monitoring_evidence: monitoring.status
           },
@@ -4897,7 +5384,7 @@ function renderEnterpriseSupportPage(pageName: EnterpriseSupportPageName): strin
           row('Security review packet status', packet.decision, packet.status, packet.status === 'ready_for_review' ? 'good' : 'warn'),
           row('Organization scope', (org.name || 'Selected workspace') + ' with ' + number(org.project_count) + ' projects, ' + number(org.member_count) + ' members, and ' + number(org.provider_slots) + ' provider slots.', org.id ? 'scoped' : 'select org', org.id ? 'good' : 'warn'),
           row('Go/no-go decision', 'Current launch board status is ' + packet.related_packets.go_no_go_status + '.', packet.related_packets.go_no_go_status, packet.related_packets.go_no_go_status === 'go' ? 'good' : 'warn'),
-          row('Related proof packets', 'Identity: ' + packet.related_packets.identity_login_qa + '. Rotation: ' + packet.related_packets.key_rotation_evidence + '. Pilot ops: ' + packet.related_packets.pilot_operations_evidence + '. Proxy self-test: ' + packet.related_packets.api_proxy_self_test + '. API inventory: ' + packet.related_packets.api_inventory + '. Monitoring: ' + packet.related_packets.monitoring_evidence + '.', 'summary', 'good'),
+          row('Related proof packets', 'Identity: ' + packet.related_packets.identity_login_qa + '. Rotation: ' + packet.related_packets.key_rotation_evidence + '. Pilot ops: ' + packet.related_packets.pilot_operations_evidence + '. Proxy self-test: ' + packet.related_packets.api_proxy_self_test + '. API inventory: ' + packet.related_packets.api_inventory + '. Policy drift: ' + packet.related_packets.policy_drift_exceptions + '. Monitoring: ' + packet.related_packets.monitoring_evidence + '.', 'summary', 'good'),
           row('Secret boundary', 'This packet excludes ' + packet.secrets_excluded.join(', ') + '.', 'redacted', 'good')
         ];
       }
@@ -5508,6 +5995,7 @@ function renderEnterpriseSupportPage(pageName: EnterpriseSupportPageName): strin
         var pilotOps = buildPilotOpsPacket(goNoGo, readiness, overview);
         var apiProxy = buildApiProxySelfTestPacket(overview, bootstrap);
         var apiInventory = buildApiInventoryPacket(overview, bootstrap);
+        var policyDrift = buildPolicyDriftPacket(overview, bootstrap);
         var support = buildLaunchSupportPacket(org, sso, readiness, overview, bootstrap, goNoGo);
         var monitoring = buildMonitoringEvidencePacket(org, sso, readiness, overview, bootstrap, goNoGo);
         var securityReview = buildSecurityReviewPacket(org, sso, readiness, overview, bootstrap, goNoGo);
@@ -5587,6 +6075,7 @@ function renderEnterpriseSupportPage(pageName: EnterpriseSupportPageName): strin
           pilot_operations_evidence: pilotOps,
           api_proxy_self_test: apiProxy,
           api_inventory: apiInventory,
+          policy_drift_exceptions: policyDrift,
           launch_support_readiness: support,
           monitoring_evidence: monitoring,
           security_review_packet: securityReview,
@@ -5598,6 +6087,7 @@ function renderEnterpriseSupportPage(pageName: EnterpriseSupportPageName): strin
             access_review_csv: evidenceExportHref('/api/v1/enterprise/members/access-review?format=csv'),
             activity: '/app/activity',
             api_inventory: '/app/inventory',
+            policy_drift: '/app/policy',
             provider_slots: '/app/keys',
             launch_checklist: '/app/launch',
             security_review: '/app/security-review',
@@ -5613,6 +6103,7 @@ function renderEnterpriseSupportPage(pageName: EnterpriseSupportPageName): strin
             'Confirm rollback ownership, budget alert coverage, and launch-week monitoring ownership before live customer traffic.',
             'Run the API proxy dry-run self-test and blocked-recipient email denial test before the customer walkthrough.',
             'Review the API inventory for owners, environment, data sensitivity, risk, provider-slot mapping, policy posture, stale traffic, and review due items.',
+            'Review policy drift and accepted-risk exceptions for owner, reason, compensating control, expiration date, next action, and launch hold status.',
             'Review launch support scope, internal admin boundary, approval gates, and customer handoff notes before pilot traffic.',
             'Review monitoring evidence, alert destination/test-send workflow, Cloud Armor verification, and budget alert posture before launch-week traffic.',
             'Share the security review packet with customer security, procurement, and technical reviewers after validating launch blockers.',
@@ -5634,6 +6125,7 @@ function renderEnterpriseSupportPage(pageName: EnterpriseSupportPageName): strin
         var pilotOps = packet.pilot_operations_evidence || buildPilotOpsPacket(buildGoNoGoStatus(org, sso, readiness, overview, bootstrap), readiness, overview);
         var apiProxy = packet.api_proxy_self_test || buildApiProxySelfTestPacket(overview, bootstrap);
         var apiInventory = packet.api_inventory || buildApiInventoryPacket(overview, bootstrap);
+        var policyDrift = packet.policy_drift_exceptions || buildPolicyDriftPacket(overview, bootstrap);
         var support = packet.launch_support_readiness || buildLaunchSupportPacket(org, sso, readiness, overview, bootstrap, buildGoNoGoStatus(org, sso, readiness, overview, bootstrap));
         var monitoring = packet.monitoring_evidence || buildMonitoringEvidencePacket(org, sso, readiness, overview, bootstrap, buildGoNoGoStatus(org, sso, readiness, overview, bootstrap));
         text('evidenceMeta', productionReady ? 'ready for review' : 'needs attention');
@@ -5650,6 +6142,7 @@ function renderEnterpriseSupportPage(pageName: EnterpriseSupportPageName): strin
           linkRow('Access review CSV', 'Members, roles, invitations, and project assignment evidence.', packet.exports.access_review_csv, 'CSV', 'good'),
           linkRow('Activity review', 'Runtime events, status codes, latency, provider request IDs, and attestation hints.', '/app/activity', 'open', 'good'),
           linkRow('API inventory export', 'Metadata-only API inventory with owners, risk, provider mapping, policy posture, traffic evidence, and review state.', '/app/inventory', 'inventory', 'good'),
+          linkRow('Policy drift export', 'Customer-safe policy drift and accepted-risk evidence with owners, expiry, compensating controls, and launch status.', '/app/policy', 'policy drift', policyDrift.status === 'hold' ? 'warn' : 'good'),
           linkRow('Provider slot posture', 'Protected provider slots, material mode, rotation, and emergency revoke state.', '/app/keys', 'open', 'good')
         ].join('');
         byId('evidenceProofList').innerHTML = [
@@ -5663,6 +6156,7 @@ function renderEnterpriseSupportPage(pageName: EnterpriseSupportPageName): strin
         byId('evidenceWorkflowList').innerHTML = [
           linkRow('Review launch checklist', 'Confirm owners, policy, evidence exports, alerts, rollback, and first workload scope.', '/app/launch', 'launch', 'good'),
           linkRow('Review policy control', 'Confirm origins, gateways, CIDRs, upstream hosts, path prefixes, and rate limits.', '/app/control', 'control', 'good'),
+          linkRow('Review policy drift', 'Confirm every critical/high drift row is closed, blocked intentionally, or accepted with owner and expiration date.', '/app/policy', 'policy drift', policyDrift.status === 'hold' ? 'warn' : 'good'),
           linkRow('Review technical guide', 'Use the implementation guide for architecture, trust boundaries, key custody, and troubleshooting answers.', '/app/technical-guide', 'guide', 'good'),
           linkRow('Review security packet', 'Share the concise architecture, controls, evidence links, open items, and customer-safe answers with security reviewers.', '/app/security-review', 'security', 'good'),
           linkRow('Review runbooks', 'Operator commands for verification, evidence capture, deploys, secrets, DNS, edge, SSH, and cleanup.', '/app/runbooks', 'runbooks', 'good')
@@ -5677,6 +6171,8 @@ function renderEnterpriseSupportPage(pageName: EnterpriseSupportPageName): strin
         byId('evidenceApiProxyList').innerHTML = apiProxySelfTestRows(apiProxy).join('');
         text('evidenceApiInventoryMeta', apiInventory.status);
         byId('evidenceApiInventoryList').innerHTML = apiInventoryProofRows(apiInventory).join('');
+        text('evidencePolicyDriftMeta', policyDrift.status);
+        byId('evidencePolicyDriftList').innerHTML = policyDriftProofRows(policyDrift).join('');
         text('evidenceSupportMeta', support.status);
         byId('evidenceSupportList').innerHTML = launchSupportProofRows(support).join('');
         text('evidenceMonitoringMeta', monitoring.status);
@@ -6403,7 +6899,7 @@ export function renderEnterprisePlannedAppPage(pageName: string, env: Enterprise
   if (pageName === 'members') return injectEnterpriseAnalytics(renderEnterpriseMembersPage(), env, 'members');
   if (pageName === 'audit') return injectEnterpriseAnalytics(renderEnterpriseAuditPage(), env, 'audit');
   if (pageName === 'alerts') return injectEnterpriseAnalytics(renderEnterpriseAlertsPage(), env, 'alerts');
-  if (pageName === 'activity' || pageName === 'projects' || pageName === 'inventory' || pageName === 'keys') {
+  if (pageName === 'activity' || pageName === 'projects' || pageName === 'inventory' || pageName === 'policy' || pageName === 'keys') {
     return injectEnterpriseAnalytics(renderEnterpriseOperationsPage(pageName), env, pageName);
   }
   if (pageName === 'setup' || pageName === 'launch' || pageName === 'evidence' || pageName === 'demo' || pageName === 'technical-guide' || pageName === 'security-review' || pageName === 'verifier' || pageName === 'settings' || pageName === 'plans' || pageName === 'pilot' || pageName === 'pilot-success' || pageName === 'scanner' || pageName === 'support' || pageName === 'runbooks') {

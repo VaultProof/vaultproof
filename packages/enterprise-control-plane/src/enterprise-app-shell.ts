@@ -4,6 +4,7 @@ export type EnterpriseAppNavPage =
   | 'evidence'
   | 'projects'
   | 'inventory'
+  | 'policy'
   | 'readiness'
   | 'health'
   | 'activity'
@@ -83,6 +84,13 @@ const ENTERPRISE_SIDEBAR_NAV_GROUPS: readonly EnterpriseSidebarNavGroup[] = [
         href: '/app/inventory',
         label: 'API Inventory',
         blurb: 'Protected API catalog, owners, risk, review status, and evidence.',
+        activePill: 'new',
+      },
+      {
+        page: 'policy',
+        href: '/app/policy',
+        label: 'Policy Drift',
+        blurb: 'Control gaps, accepted-risk records, owners, expiry, and launch blockers.',
         activePill: 'new',
       },
       {

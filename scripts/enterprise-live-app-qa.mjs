@@ -25,6 +25,7 @@ const requiredAppPaths = [
   '/app/activity',
   '/app/projects',
   '/app/inventory',
+  '/app/policy',
   '/app/keys',
   '/app/settings',
   '/app/plans',

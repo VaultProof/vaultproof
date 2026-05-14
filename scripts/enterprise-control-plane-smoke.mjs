@@ -2778,6 +2778,7 @@ async function assertEnterpriseLoginRoute() {
       '/app/evidence',
       '/app/demo',
       '/app/control',
+      '/app/policy',
       '/app/verifier',
       '/app/org',
       'Readiness',
@@ -2903,6 +2904,8 @@ async function assertEnterpriseLoginRoute() {
       'Technical guide',
       '/app/technical-guide',
       'Policy control',
+      'Policy Drift',
+      '/app/policy',
       'AI Proof Verifier',
       '/app/verifier',
       'Provider slots',
@@ -3008,6 +3011,11 @@ async function assertEnterpriseLoginRoute() {
       required: ['/api/v1/enterprise/projects/bootstrap', 'API inventory board', 'vaultproof_api_inventory', 'data-inventory-field', 'business owner', 'technical owner', 'data sensitivity', 'review status', 'review due', 'copy inventory JSON', 'vaultproof_enterprise_api_inventory', '/app/control', '/app/keys', '/app/activity', '/app/launch', '/app/evidence', '/api/v1/enterprise/audit?format=csv&days=30', '/api/v1/enterprise/members/access-review?format=csv'],
     },
     {
+      path: '/app/policy',
+      title: 'Policy Drift - VaultProof Enterprise',
+      required: ['/api/v1/enterprise/projects/bootstrap', 'Policy drift board', 'Exception evidence', 'accepted-risk records', 'vaultproof_policy_exceptions', 'data-policy-field', 'exception owner', 'accepted-risk reason', 'compensating control', 'expiration date', 'copy policy JSON', 'vaultproof_enterprise_policy_drift', 'strict-origin-missing', 'gateway-lock-missing', '/app/control', '/app/inventory', '/app/keys', '/app/activity', '/app/evidence', '/app/security-review'],
+    },
+    {
       path: '/app/keys',
       title: 'Provider Slots - VaultProof Enterprise',
       required: ['/api/v1/enterprise/projects', 'add slot', 'create slot', 'emergency revoke', 'live sealed material', 'demo placeholder material', 'Customer API proxy test kit', 'copy dry-run request', 'copy blocked-recipient request', 'YOUR_VAULTPROOF_SESSION_JWT', 'Email API key demo', 'protected email dry-run', 'blocked recipient test', 'Policy denial evidence', 'resend', 'sendgrid', 'postmark'],
@@ -3049,7 +3057,7 @@ async function assertEnterpriseLoginRoute() {
     {
       path: '/app/evidence',
       title: 'Evidence packet - VaultProof Enterprise',
-      required: ['Evidence readiness', 'Customer exports', 'Proof inventory', 'Review workflow', 'Identity/OAuth proof', 'Key rotation proof', 'Pilot operations proof', 'API proxy self-test proof', 'API inventory proof', 'Launch support proof', 'Monitoring evidence proof', 'Go/no-go launch decision', 'go_no_go', 'manual_evidence', 'identity_login_qa', 'key_rotation_evidence', 'pilot_operations_evidence', 'api_proxy_self_test', 'api_inventory', 'launch_support_readiness', 'monitoring_evidence', 'security_review_packet', 'pilot_proposal', 'pilot_success_tracker', 'vaultproof_enterprise_security_review_packet', 'vaultproof_enterprise_pilot_proposal', 'vaultproof_enterprise_pilot_success_tracker', 'vaultproof_enterprise_api_inventory', 'execute_endpoint_pattern', 'paid_onboarding_actions', 'rollback_paths', 'monitoring_review', 'budget_alert', 'live_gate', 'oauth_redirect_qa_command', 'Email API key protection', 'Evidence packet JSON', 'copy JSON', 'download JSON', 'vaultproof_enterprise_evidence_packet', 'email_provider_slots', '/app/inventory', '/app/launch', '/app/control', '/app/alerts', '/app/security-review', '/app/pilot', '/app/pilot-success', '/api/v1/enterprise/audit?format=csv&days=30', '/api/v1/enterprise/members/access-review?format=csv'],
+      required: ['Evidence readiness', 'Customer exports', 'Proof inventory', 'Review workflow', 'Identity/OAuth proof', 'Key rotation proof', 'Pilot operations proof', 'API proxy self-test proof', 'API inventory proof', 'Policy drift proof', 'Launch support proof', 'Monitoring evidence proof', 'Go/no-go launch decision', 'go_no_go', 'manual_evidence', 'identity_login_qa', 'key_rotation_evidence', 'pilot_operations_evidence', 'api_proxy_self_test', 'api_inventory', 'policy_drift_exceptions', 'launch_support_readiness', 'monitoring_evidence', 'security_review_packet', 'pilot_proposal', 'pilot_success_tracker', 'vaultproof_enterprise_security_review_packet', 'vaultproof_enterprise_pilot_proposal', 'vaultproof_enterprise_pilot_success_tracker', 'vaultproof_enterprise_api_inventory', 'vaultproof_enterprise_policy_drift', 'execute_endpoint_pattern', 'paid_onboarding_actions', 'rollback_paths', 'monitoring_review', 'budget_alert', 'live_gate', 'oauth_redirect_qa_command', 'Email API key protection', 'Evidence packet JSON', 'copy JSON', 'download JSON', 'vaultproof_enterprise_evidence_packet', 'email_provider_slots', '/app/inventory', '/app/policy', '/app/launch', '/app/control', '/app/alerts', '/app/security-review', '/app/pilot', '/app/pilot-success', '/api/v1/enterprise/audit?format=csv&days=30', '/api/v1/enterprise/members/access-review?format=csv'],
     },
     {
       path: '/app/demo',
@@ -3064,7 +3072,7 @@ async function assertEnterpriseLoginRoute() {
     {
       path: '/app/security-review',
       title: 'Security review packet - VaultProof Enterprise',
-      required: ['Review readiness', 'Control coverage', 'Evidence map', 'Open review items', 'Copyable security review packet', 'vaultproof_enterprise_security_review_packet', 'Architecture summary', 'Control coverage', 'Evidence links', 'Common answers', 'Secrets excluded', 'Identity and RBAC', 'Caller-lock policy', 'Provider key custody', 'Runtime attestation', 'Monitoring and edge protection', 'Security review packet status', 'copy packet', '/app/evidence', '/app/audit', '/app/alerts', '/app/launch', '/app/runbooks'],
+      required: ['Review readiness', 'Control coverage', 'Evidence map', 'Open review items', 'Copyable security review packet', 'vaultproof_enterprise_security_review_packet', 'Architecture summary', 'Control coverage', 'Evidence links', 'Common answers', 'Secrets excluded', 'Identity and RBAC', 'Caller-lock policy', 'Provider key custody', 'Policy drift and exceptions', 'Runtime attestation', 'Monitoring and edge protection', 'Security review packet status', 'copy packet', '/app/evidence', '/app/audit', '/app/alerts', '/app/policy', '/app/launch', '/app/runbooks'],
     },
     {
       path: '/app/settings',
@@ -3240,7 +3248,7 @@ function assertSecurityHeaders(path, response, html = '') {
 }
 
 async function assertEnterpriseSecurityHeaders() {
-  const htmlPaths = ['/', '/app/login', '/app/logout', '/app/dashboard', '/app/launch', '/app/evidence', '/app/demo', '/app/control', '/app/verifier', '/app/org', '/app/setup', '/app/technical-guide', '/app/security-review', '/app/pilot', '/app/pilot-success', '/app/support', '/app/runbooks', '/app/inventory'];
+  const htmlPaths = ['/', '/app/login', '/app/logout', '/app/dashboard', '/app/launch', '/app/evidence', '/app/demo', '/app/control', '/app/verifier', '/app/org', '/app/setup', '/app/technical-guide', '/app/security-review', '/app/pilot', '/app/pilot-success', '/app/support', '/app/runbooks', '/app/inventory', '/app/policy'];
   for (const path of htmlPaths) {
     const response = await handleEnterpriseControlPlaneRequest(
       buildRequest(path),
@@ -3293,6 +3301,7 @@ async function assertEnterpriseAppLinkCrawl() {
     '/app/activity',
     '/app/projects',
     '/app/inventory',
+    '/app/policy',
     '/app/keys',
     '/app/verifier',
     '/app/launch',
@@ -3368,6 +3377,7 @@ async function assertEnterpriseMixpanelAnalytics() {
     ['/app/pilot-success', 'pilot-success'],
     ['/app/verifier', 'verifier'],
     ['/app/members', 'members'],
+    ['/app/policy', 'policy'],
     ['/app/control', 'control'],
     ['/app/org', 'org'],
     ['/app/runbooks', 'runbooks'],

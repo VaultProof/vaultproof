@@ -36,7 +36,7 @@ Already built:
 - API inventory board at `https://enterprise.vaultproof.dev/app/inventory` for metadata-only API catalog rows derived from projects, provider slots, caller-lock policy, traffic rollups, browser-local owner/risk/review annotations, and customer-safe JSON evidence
 - Build-status and feature inventory docs
 - Managed Supabase remains the auth/database provider for the pilot
-- Policy drift and exceptions management is now a planned enterprise demo feature for turning inventory gaps into owner-assigned, expiry-bound remediation or accepted-risk decisions
+- Policy drift and exceptions board at `https://enterprise.vaultproof.dev/app/policy` for customer-safe control-gap rows, browser-local accepted-risk records, owner/risk/expiry metadata, compensating controls, and JSON evidence
 - Integration rollout management is now a planned enterprise demo feature for tracking safe workload cutover, canary status, gateway/SDK path, owners, blockers, rollback, and evidence without exposing secrets
 
 Not yet customer-ready:
@@ -44,7 +44,6 @@ Not yet customer-ready:
 - Strict login readiness QA and final human OAuth/password browser QA still need to pass.
 - Email API key demo dry-run and blocked-recipient policy evidence flow are built; live sandbox email sends need sealed provider material only if the demo specifically needs an actual delivered email.
 - Live MiniMax provider dispatch works for the demo; add a separate OpenAI slot only if the demo specifically needs OpenAI.
-- Policy drift and exceptions management still needs its first customer-facing slice.
 - Integration rollout management still needs its first customer-facing slice.
 - API inventory management still needs persistent audited records, CSV/OpenAPI import, automatic discovery, and production review workflow after the demo.
 - Supabase OAuth/login settings still need to be confirmed for `enterprise.vaultproof.dev`.
@@ -187,7 +186,7 @@ Build:
 - Seed a demo provider slot. Placeholder shares are acceptable for dashboard and dry-run validation; live provider dispatch later needs encrypted shares generated from the same unwrap root encrypted into GCP KMS.
 - Use the email API key protection demo flow described below.
 - Built: add the first API inventory management slice described below.
-- Add the first policy drift and exceptions slice described below.
+- Built: add the first policy drift and exceptions slice described below.
 - Add the first integration rollout manager slice described below.
 - Run `LOGIN_QA_REQUIRE_SESSION=true npm run qa:enterprise-login` with Supabase service-role env to verify the live login page, Supabase redirect allowlist, generated browser session, and authenticated enterprise org/bootstrap APIs.
 - Add `LOGIN_QA_OAUTH_PROVIDER=google` to the login QA command after the external OAuth provider app is configured.
@@ -304,12 +303,12 @@ Demo goal:
 
 First demo slice:
 
-- Add `https://enterprise.vaultproof.dev/app/policy` or a Policy tab on `https://enterprise.vaultproof.dev/app/inventory`.
-- Derive drift rows from existing projects, provider slots, caller-lock policy, material mode, traffic rollups, launch go/no-go evidence, and manual browser-local inventory annotations.
-- Persist demo exceptions in browser local storage per organization until the audited table exists.
-- Show status badges for `critical drift`, `needs owner`, `exception active`, `exception expiring`, `accepted for demo`, `blocked`, and `ready`.
-- Add copyable customer-safe drift report text and JSON without secrets.
-- Add links to Control, Provider Slots, API Inventory, Launch, Evidence, Audit CSV, and Access Review CSV.
+- Built: `https://enterprise.vaultproof.dev/app/policy` renders a customer-facing Policy Drift board using the shared enterprise sidebar and light dashboard theme.
+- Built: derive drift rows from existing projects, provider slots, caller-lock policy posture, provider material mode, API inventory annotations, project health, traffic rollups, and `GET /api/v1/enterprise/projects/bootstrap`.
+- Built: persist demo exceptions in browser local storage per organization under `vaultproof_policy_exceptions::<orgId>` until the audited table exists.
+- Built: show status for missing provider slot, demo-only provider material, strict-origin gaps, gateway/method/upstream-scope gaps, missing owners, stale or missing traffic evidence, review-due rows, blocked rows, active exceptions, expired exceptions, and open drift.
+- Built: add copyable customer-safe `vaultproof_enterprise_policy_drift` JSON without secrets and include the summary in the evidence packet under `policy_drift_exceptions`.
+- Built: add links to Control, Provider Slots, API Inventory, Activity, Launch, Evidence, and Security Review.
 
 Production follow-up:
 
@@ -390,6 +389,7 @@ Build after first customer proof:
 - Customer launch checklist and go/no-go board at `https://enterprise.vaultproof.dev/app/launch` are reviewed with the pilot user, including browser-local manual evidence status/timestamps.
 - Customer evidence packet at `https://enterprise.vaultproof.dev/app/evidence` is reviewed with the pilot user and includes the current go/no-go launch decision and blockers.
 - API inventory at `https://enterprise.vaultproof.dev/app/inventory` is reviewed for owner, environment, risk, data sensitivity, provider-slot mapping, caller-lock posture, traffic evidence, stale/no-traffic status, and review due items.
+- Policy drift board at `https://enterprise.vaultproof.dev/app/policy` is reviewed for control gaps, accepted-risk owner, reason, compensating control, expiration date, next action, and launch hold status.
 - Email API key demo dry-run flow is policy-gated, audited, and tested before showing customers; live sandbox send is sealed first when needed.
 - Rollback path written down before sending real customer traffic.
 
