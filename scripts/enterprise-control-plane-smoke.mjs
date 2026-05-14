@@ -2803,6 +2803,7 @@ async function assertEnterpriseLoginRoute() {
     || !loginScript.includes('normalizeOrgTarget')
     || !loginScript.includes("params.set('org', orgTarget)")
     || !loginScript.includes('IS_AZURE_CONTROL_PLANE_HOST')
+    || !loginScript.includes("hd: 'vaultproof.dev'")
     || !loginScript.includes("loginWithProvider('azure'")
     || !loginScript.includes('signInWithOtp')
     || !loginScript.includes('updateUser({ password })')
@@ -3563,10 +3564,11 @@ async function assertInternalAdminConsole() {
   const env = {
     enterpriseHostname: ENTERPRISE_HOSTNAME,
     internalAdminHostname: INTERNAL_ADMIN_HOSTNAME,
-    internalAdminAllowedEmails: 'owner@example.com',
+    internalAdminAllowedEmails: 'owner@vaultproof.dev',
     supabaseUrl: 'https://supabase.example.co',
     supabaseServiceRoleKey: 'service-role-key',
   };
+  stubAuthUserEmail = 'owner@vaultproof.dev';
 
   const unauthenticatedPageResponse = await handleEnterpriseControlPlaneRequest(
     buildHostRequest(INTERNAL_ADMIN_HOSTNAME, '/'),
@@ -3585,6 +3587,7 @@ async function assertInternalAdminConsole() {
   if (adminLoginResponse.status !== 200
     || !adminLoginHtml.includes('<title>Login</title>')
     || !adminLoginHtml.includes('id="loginWithGoogleBtn"')
+    || !adminLoginHtml.includes('Continue with Google')
     || !adminLoginHtml.includes('id="loginForm"')) {
     throw new Error(`Expected minimal internal admin login page, got ${adminLoginResponse.status}`);
   }
@@ -3752,7 +3755,7 @@ async function assertInternalAdminConsole() {
   if (publicDomainDeniedResponse.status !== 403) {
     throw new Error(`Expected internal admin API to ignore public email-domain allowlists, got ${publicDomainDeniedResponse.status}`);
   }
-  stubAuthUserEmail = 'owner@example.com';
+  stubAuthUserEmail = 'owner@vaultproof.dev';
 
   const overviewResponse = await handleEnterpriseControlPlaneRequest(
     buildHostRequest(INTERNAL_ADMIN_HOSTNAME, '/api/v1/internal-admin/overview', {
@@ -4283,7 +4286,7 @@ async function assertInternalAdminConsole() {
     }),
     {
       ...env,
-      internalAdminAllowedEmails: 'owner@example.com,ops@vaultproof.dev',
+      internalAdminAllowedEmails: 'owner@vaultproof.dev,ops@vaultproof.dev',
       internalAdminActionsEnabled: true,
       internalAdminApprovalSecret: 'approval-secret',
     },
@@ -4312,7 +4315,7 @@ async function assertInternalAdminConsole() {
     }),
     {
       ...env,
-      internalAdminAllowedEmails: 'owner@example.com,ops@vaultproof.dev',
+      internalAdminAllowedEmails: 'owner@vaultproof.dev,ops@vaultproof.dev',
       internalAdminActionsEnabled: true,
       internalAdminApprovalSecret: 'approval-secret',
     },
@@ -4336,7 +4339,7 @@ async function assertInternalAdminConsole() {
     }),
     {
       ...env,
-      internalAdminAllowedEmails: 'owner@example.com,ops@vaultproof.dev',
+      internalAdminAllowedEmails: 'owner@vaultproof.dev,ops@vaultproof.dev',
       internalAdminActionsEnabled: true,
       internalAdminApprovalSecret: 'approval-secret',
     },
@@ -4371,7 +4374,7 @@ async function assertInternalAdminConsole() {
     }),
     {
       ...env,
-      internalAdminAllowedEmails: 'owner@example.com,ops@vaultproof.dev',
+      internalAdminAllowedEmails: 'owner@vaultproof.dev,ops@vaultproof.dev',
       internalAdminActionsEnabled: true,
       internalAdminApprovalSecret: 'approval-secret',
     },

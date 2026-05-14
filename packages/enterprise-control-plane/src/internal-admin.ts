@@ -15,6 +15,7 @@ import { getSupabase } from './supabase.js';
 const INTERNAL_AUTH_ERROR = 'VaultProof employee access required. Sign in with an approved employee account.';
 const INTERNAL_ADMIN_SESSION_COOKIE = 'vp_internal_admin_session';
 const INTERNAL_ADMIN_SESSION_MAX_AGE_SECONDS = 60 * 60 * 8;
+const INTERNAL_ADMIN_REQUIRED_EMAIL_DOMAIN = 'vaultproof.dev';
 const PUBLIC_EMAIL_DOMAINS = new Set([
   'gmail.com',
   'googlemail.com',
@@ -166,13 +167,16 @@ function isAllowedInternalAdminEmail(email: string, env: EnterpriseControlPlaneE
   allowedDomains: string[];
 } {
   const normalizedEmail = email.trim().toLowerCase();
-  const allowedEmails = csvList(env.internalAdminAllowedEmails);
+  const allowedEmails = csvList(env.internalAdminAllowedEmails)
+    .filter((allowedEmail) => emailDomain(allowedEmail) === INTERNAL_ADMIN_REQUIRED_EMAIL_DOMAIN);
   const allowedDomains = csvList(env.internalAdminAllowedDomains)
-    .filter((domain) => !PUBLIC_EMAIL_DOMAINS.has(domain));
+    .filter((domain) => !PUBLIC_EMAIL_DOMAINS.has(domain))
+    .filter((domain) => domain === INTERNAL_ADMIN_REQUIRED_EMAIL_DOMAIN);
   const domain = emailDomain(normalizedEmail);
 
   return {
-    ok: allowedEmails.includes(normalizedEmail) || (domain ? allowedDomains.includes(domain) : false),
+    ok: domain === INTERNAL_ADMIN_REQUIRED_EMAIL_DOMAIN
+      && (allowedEmails.includes(normalizedEmail) || allowedDomains.includes(domain)),
     allowedEmails,
     allowedDomains,
   };

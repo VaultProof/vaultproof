@@ -423,12 +423,19 @@
   }
 
   async function loginWithProvider(provider, cliContext) {
+    const options = {
+      redirectTo: buildLoginRedirectUrl(cliContext),
+      scopes: provider === 'azure' ? 'email' : undefined,
+    };
+    if (IS_INTERNAL_ADMIN_HOST && provider === 'google') {
+      options.queryParams = {
+        hd: 'vaultproof.dev',
+        prompt: 'select_account',
+      };
+    }
     const { error } = await sbClient.auth.signInWithOAuth({
       provider,
-      options: {
-        redirectTo: buildLoginRedirectUrl(cliContext),
-        scopes: provider === 'azure' ? 'email' : undefined,
-      },
+      options,
     });
     if (error) showError(error.message);
   }

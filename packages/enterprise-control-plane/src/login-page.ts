@@ -643,7 +643,7 @@ export function renderInternalAdminLoginPage(env: EnterpriseControlPlaneEnv = {}
   <main id="authCard" class="auth-card">
     <div id="authError" class="hidden"></div>
     <div class="oauth-stack">
-      <button id="loginWithGoogleBtn" type="button" class="btn btn-secondary">Login</button>
+      <button id="loginWithGoogleBtn" type="button" class="btn btn-secondary" aria-label="Continue with Google">Continue with Google</button>
     </div>
     <form id="loginForm" class="form-stack">
       <input type="email" id="loginEmail" required autocomplete="email" class="form-input" placeholder="Email" />

@@ -207,6 +207,7 @@ Control plane:
 ```bash
 SUPABASE_URL='https://...supabase.co' \
 SUPABASE_SERVICE_ROLE_KEY='...' \
+VAULTPROOF_INTERNAL_ADMIN_DOMAINS='vaultproof.dev' \
 ENTERPRISE_EXECUTOR_SIGNING_KEY_ID='enterprise-gcp-v1' \
 ENTERPRISE_EXECUTOR_SIGNING_SECRET='...' \
 bash infra/gcp/enterprise-secure-runtime/render-control-plane-env.sh > enterprise-control-plane.env
