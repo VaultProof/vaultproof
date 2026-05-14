@@ -129,6 +129,33 @@ interface InternalAdminBreakGlassEvidence {
   break_glass_reason: string;
 }
 
+interface InternalAdminCallRollupRow {
+  project_id: string | null;
+  call_count: number | string | null;
+  status_bucket: string | null;
+  last_timestamp: string | null;
+}
+
+interface InternalAdminRawAccessLogRow {
+  project_id: string | null;
+  status_code: number | string | null;
+  timestamp: string | null;
+}
+
+interface InternalAdminApiCallStats {
+  call_count: number;
+  error_count: number;
+  denied_count: number;
+  last_api_call_at: string | null;
+}
+
+interface InternalAdminApiCallAnalytics {
+  byProjectId: Map<string, InternalAdminApiCallStats>;
+  totals: InternalAdminApiCallStats;
+  source: 'rollup_table' | 'raw_logs_sample' | 'missing';
+  schemaReady: boolean;
+}
+
 function csvList(value?: string): string[] {
   return (value || '')
     .split(',')
@@ -156,6 +183,17 @@ function isMissingOrganizationSsoSettingsTable(error: { code?: string; message?:
     ));
 }
 
+function isMissingProjectAccessRollupTable(error: { code?: string; message?: string } | null | undefined): boolean {
+  const message = String(error?.message || '').toLowerCase();
+  return error?.code === '42P01'
+    || error?.code === 'PGRST205'
+    || (message.includes('project_access_log_daily_rollups') && (
+      message.includes('schema cache')
+      || message.includes('does not exist')
+      || message.includes('could not find')
+    ));
+}
+
 function truncateForAudit(value: string | null, maxLength = 160): string | null {
   if (!value) return null;
   return value.length > maxLength ? `${value.slice(0, maxLength - 1)}...` : value;
@@ -170,6 +208,75 @@ function secureStringEquals(left: string, right: string): boolean {
   const leftBytes = Buffer.from(left);
   const rightBytes = Buffer.from(right);
   return leftBytes.length === rightBytes.length && timingSafeEqual(leftBytes, rightBytes);
+}
+
+function positiveCount(value: unknown): number {
+  const numeric = Number(value || 0);
+  return Number.isFinite(numeric) && numeric > 0 ? numeric : 0;
+}
+
+function emptyApiCallStats(): InternalAdminApiCallStats {
+  return {
+    call_count: 0,
+    error_count: 0,
+    denied_count: 0,
+    last_api_call_at: null,
+  };
+}
+
+function mergeApiCallStats(
+  target: InternalAdminApiCallStats,
+  source: InternalAdminApiCallStats,
+): InternalAdminApiCallStats {
+  target.call_count += source.call_count;
+  target.error_count += source.error_count;
+  target.denied_count += source.denied_count;
+  if (source.last_api_call_at && (!target.last_api_call_at || source.last_api_call_at > target.last_api_call_at)) {
+    target.last_api_call_at = source.last_api_call_at;
+  }
+  return target;
+}
+
+function addRollupRowToStats(
+  statsByProjectId: Map<string, InternalAdminApiCallStats>,
+  totals: InternalAdminApiCallStats,
+  row: InternalAdminCallRollupRow,
+): void {
+  const projectId = typeof row.project_id === 'string' ? row.project_id : '';
+  if (!projectId) return;
+  const callCount = positiveCount(row.call_count);
+  const bucket = String(row.status_bucket || '').toLowerCase();
+  const rowStats: InternalAdminApiCallStats = {
+    call_count: callCount,
+    error_count: bucket === 'error' || bucket === 'denied' ? callCount : 0,
+    denied_count: bucket === 'denied' ? callCount : 0,
+    last_api_call_at: typeof row.last_timestamp === 'string' && row.last_timestamp ? row.last_timestamp : null,
+  };
+  const existing = statsByProjectId.get(projectId) || emptyApiCallStats();
+  mergeApiCallStats(existing, rowStats);
+  statsByProjectId.set(projectId, existing);
+  mergeApiCallStats(totals, rowStats);
+}
+
+function addRawAccessLogRowToStats(
+  statsByProjectId: Map<string, InternalAdminApiCallStats>,
+  totals: InternalAdminApiCallStats,
+  row: InternalAdminRawAccessLogRow,
+): void {
+  const projectId = typeof row.project_id === 'string' ? row.project_id : '';
+  if (!projectId) return;
+  const statusCode = Number(row.status_code || 0);
+  const denied = statusCode === 401 || statusCode === 403 || statusCode === 429;
+  const rowStats: InternalAdminApiCallStats = {
+    call_count: 1,
+    error_count: statusCode >= 400 ? 1 : 0,
+    denied_count: denied ? 1 : 0,
+    last_api_call_at: typeof row.timestamp === 'string' && row.timestamp ? row.timestamp : null,
+  };
+  const existing = statsByProjectId.get(projectId) || emptyApiCallStats();
+  mergeApiCallStats(existing, rowStats);
+  statsByProjectId.set(projectId, existing);
+  mergeApiCallStats(totals, rowStats);
 }
 
 function isAllowedInternalAdminEmail(email: string, env: EnterpriseControlPlaneEnv): {
@@ -190,6 +297,84 @@ function isAllowedInternalAdminEmail(email: string, env: EnterpriseControlPlaneE
       && (allowedEmails.includes(normalizedEmail) || allowedDomains.includes(domain)),
     allowedEmails,
     allowedDomains,
+  };
+}
+
+async function getInternalAdminApiCallAnalytics(
+  env: EnterpriseControlPlaneEnv,
+  projectIds: string[],
+): Promise<InternalAdminApiCallAnalytics> {
+  const uniqueProjectIds = [...new Set(projectIds.filter(Boolean))];
+  const emptyResult: InternalAdminApiCallAnalytics = {
+    byProjectId: new Map(),
+    totals: emptyApiCallStats(),
+    source: 'missing',
+    schemaReady: true,
+  };
+
+  if (uniqueProjectIds.length === 0) {
+    return emptyResult;
+  }
+
+  const supabase = getSupabase(env);
+  try {
+    const rollupResult = await supabase
+      .from('project_access_log_daily_rollups')
+      .select('project_id, call_count, status_bucket, last_timestamp')
+      .in('project_id', uniqueProjectIds)
+      .limit(10000);
+
+    if (!rollupResult.error) {
+      const byProjectId = new Map<string, InternalAdminApiCallStats>();
+      const totals = emptyApiCallStats();
+      for (const row of normalizeRows(rollupResult.data as MaybeArray<InternalAdminCallRollupRow>)) {
+        addRollupRowToStats(byProjectId, totals, row);
+      }
+      return {
+        byProjectId,
+        totals,
+        source: 'rollup_table',
+        schemaReady: true,
+      };
+    }
+
+    if (!isMissingProjectAccessRollupTable(rollupResult.error)) {
+      console.warn(`internal admin API call rollup read skipped: ${rollupResult.error.message}`);
+    }
+  } catch (error) {
+    console.warn(`internal admin API call rollup read failed: ${error instanceof Error ? error.message : String(error)}`);
+  }
+
+  try {
+    const rawResult = await supabase
+      .from('project_access_logs')
+      .select('project_id, status_code, timestamp')
+      .in('project_id', uniqueProjectIds)
+      .order('timestamp', { ascending: false })
+      .limit(10000);
+
+    if (!rawResult.error) {
+      const byProjectId = new Map<string, InternalAdminApiCallStats>();
+      const totals = emptyApiCallStats();
+      for (const row of normalizeRows(rawResult.data as MaybeArray<InternalAdminRawAccessLogRow>)) {
+        addRawAccessLogRowToStats(byProjectId, totals, row);
+      }
+      return {
+        byProjectId,
+        totals,
+        source: 'raw_logs_sample',
+        schemaReady: false,
+      };
+    }
+
+    console.warn(`internal admin API call raw-log fallback skipped: ${rawResult.error.message}`);
+  } catch (error) {
+    console.warn(`internal admin API call raw-log fallback failed: ${error instanceof Error ? error.message : String(error)}`);
+  }
+
+  return {
+    ...emptyResult,
+    schemaReady: false,
   };
 }
 
@@ -725,20 +910,21 @@ export function renderInternalAdminPage(): string {
   <meta name="robots" content="noindex,nofollow" />
   <title>VaultProof Internal Admin</title>
   <style>
-    :root { color-scheme: light; --bg:#dcebe8; --panel:rgba(255,255,255,.78); --panel-strong:rgba(255,255,255,.96); --line:rgba(48,76,71,.16); --text:#34514c; --muted:#667b75; --gold:#d5a914; --blue:#168a9f; --green:#3e5d57; --red:#b95d50; --ink:#304b46; }
+    :root { color-scheme: light; --bg:#dcebe8; --panel:rgba(255,255,255,.78); --panel-strong:rgba(255,255,255,.96); --line:rgba(48,76,71,.16); --text:#34514c; --muted:#667b75; --gold:#d5a914; --blue:#168a9f; --green:#3e5d57; --red:#b95d50; --ink:#304b46; --sidebar-bg:#2f4f49; --sidebar-bg-2:#243e39; --sidebar-panel:rgba(255,255,255,.1); --sidebar-panel-strong:rgba(255,255,255,.16); --sidebar-line:rgba(255,255,255,.18); --sidebar-muted:rgba(255,255,255,.68); }
     * { box-sizing: border-box; }
     body { margin:0; min-height:100vh; font-family: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; color:var(--text); background:linear-gradient(135deg, #dcebe8 0%, #eef6f2 50%, #c9ddda 100%); }
     a { color: inherit; text-decoration: none; }
     .shell { display:grid; grid-template-columns:280px 1fr; min-height:100vh; }
-    .sidebar { border-right:1px solid var(--line); background:#3e5d57; color:#fff; padding:28px 20px; position:sticky; top:0; height:100vh; }
+    .sidebar { border-right:1px solid var(--sidebar-line); background:linear-gradient(180deg, var(--sidebar-bg), var(--sidebar-bg-2)); color:#fff; padding:28px 20px; position:sticky; top:0; height:100vh; box-shadow:18px 0 48px rgba(48,76,71,.18); }
     .brand { display:flex; gap:12px; align-items:center; margin-bottom:28px; }
     .mark { width:38px; height:38px; border-radius:14px; display:grid; place-items:center; background:var(--gold); color:#304b46; font-weight:900; }
     .brand-title { font-weight:850; letter-spacing:-.03em; }
-    .brand-sub { color:var(--muted); font-size:12px; margin-top:2px; }
-    .nav-label { color:var(--muted); font-size:11px; text-transform:uppercase; letter-spacing:.12em; margin:22px 0 9px 10px; }
+    .brand-sub { color:var(--sidebar-muted); font-size:12px; margin-top:2px; }
+    .nav-label { color:var(--sidebar-muted); font-size:11px; text-transform:uppercase; letter-spacing:.12em; margin:22px 0 9px 10px; }
     .nav-link { display:flex; justify-content:space-between; padding:11px 12px; border-radius:14px; color:rgba(255,255,255,.88); border:1px solid transparent; margin-bottom:4px; }
-    .nav-link:hover, .nav-link.active { background:var(--panel); border-color:var(--line); }
-    .sidebar-note { margin-top:24px; border:1px solid rgba(255,255,255,.22); border-radius:18px; padding:14px; color:rgba(255,255,255,.7); background:rgba(255,255,255,.12); font-size:12px; line-height:1.45; }
+    .nav-link:hover, .nav-link.active { background:var(--sidebar-panel-strong); border-color:var(--sidebar-line); color:#fff; }
+    .sidebar .tag { color:#f2d56a; border-color:rgba(242,213,106,.42); background:rgba(242,213,106,.1); }
+    .sidebar-note { margin-top:24px; border:1px solid var(--sidebar-line); border-radius:18px; padding:14px; color:var(--sidebar-muted); background:var(--sidebar-panel); font-size:12px; line-height:1.45; }
     .main { padding:30px; max-width:1400px; width:100%; }
     .topbar { display:flex; justify-content:space-between; gap:18px; align-items:flex-start; margin-bottom:22px; }
     .eyebrow { color:var(--blue); font-size:12px; font-weight:850; text-transform:uppercase; letter-spacing:.16em; }
@@ -753,6 +939,25 @@ export function renderInternalAdminPage(): string {
     .kpis { grid-template-columns:repeat(5, minmax(0,1fr)); margin-bottom:16px; }
     .two { grid-template-columns:minmax(0,1fr) minmax(360px,.8fr); }
     .card { border:1px solid var(--line); border-radius:24px; padding:20px; background:linear-gradient(180deg, var(--panel-strong), rgba(247,250,244,.86)); box-shadow:0 22px 72px rgba(48,76,71,.18); }
+    .control-center { margin-bottom:16px; overflow:hidden; }
+    .control-title { display:flex; justify-content:space-between; align-items:flex-start; gap:16px; margin-bottom:16px; }
+    .control-title h2 { margin:0; font-size:26px; letter-spacing:-.045em; }
+    .control-title p { margin:6px 0 0; color:var(--muted); max-width:760px; line-height:1.5; }
+    .control-kpis { display:grid; grid-template-columns:1.25fr repeat(4, minmax(0,1fr)); gap:12px; margin-bottom:16px; }
+    .control-kpi { border:1px solid rgba(48,76,71,.12); border-radius:18px; padding:15px; background:rgba(255,255,255,.68); min-width:0; }
+    .control-kpi.main { background:linear-gradient(135deg, rgba(213,169,20,.28), rgba(255,255,255,.86)); }
+    .control-chart-grid { display:grid; grid-template-columns:minmax(0,1.1fr) minmax(0,1fr); gap:14px; }
+    .control-panel { border:1px solid rgba(48,76,71,.12); border-radius:20px; padding:16px; background:rgba(247,250,244,.82); min-width:0; }
+    .control-panel h3 { margin:0; font-size:16px; letter-spacing:-.02em; }
+    .chart-list { display:grid; gap:11px; margin-top:14px; }
+    .chart-row { display:grid; gap:6px; }
+    .chart-row-head { display:flex; justify-content:space-between; gap:12px; color:var(--muted); font-size:12px; }
+    .chart-row-head strong { color:var(--text); font-size:13px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+    .chart-track { height:11px; border-radius:999px; background:rgba(48,76,71,.12); overflow:hidden; }
+    .chart-bar { height:100%; width:0; border-radius:999px; background:linear-gradient(90deg, var(--green), var(--blue)); }
+    .chart-bar.gold { background:linear-gradient(90deg, var(--gold), #f1d86f); }
+    .chart-bar.warn { background:linear-gradient(90deg, var(--gold), var(--red)); }
+    .chart-empty { color:var(--muted); border:1px dashed rgba(48,76,71,.18); border-radius:16px; padding:14px; background:rgba(255,255,255,.54); font-size:13px; }
     .kpi-label { color:var(--muted); font-size:12px; text-transform:uppercase; letter-spacing:.1em; }
     .kpi-value { font-size:34px; font-weight:850; letter-spacing:-.05em; margin-top:8px; }
     .kpi-sub { color:var(--muted); font-size:13px; margin-top:6px; }
@@ -786,7 +991,7 @@ export function renderInternalAdminPage(): string {
     .inline-actions { display:flex; gap:8px; flex-wrap:wrap; margin-top:8px; }
     .link-stack { display:flex; flex-wrap:wrap; gap:7px; margin-top:8px; }
     .create-business { margin-bottom:16px; }
-    @media (max-width: 1050px) { .shell { grid-template-columns:1fr; } .sidebar { position:relative; height:auto; } .topbar { flex-direction:column; } .toolbar { justify-content:flex-start; } .kpis, .two, .action-grid, .admin-actions-toolbar, .form-row { grid-template-columns:1fr; } }
+    @media (max-width: 1050px) { .shell { grid-template-columns:1fr; } .sidebar { position:relative; height:auto; } .topbar { flex-direction:column; } .toolbar { justify-content:flex-start; } .kpis, .two, .action-grid, .admin-actions-toolbar, .form-row, .control-kpis, .control-chart-grid { grid-template-columns:1fr; } }
   </style>
 </head>
 <body>
@@ -794,7 +999,8 @@ export function renderInternalAdminPage(): string {
     <aside class="sidebar">
       <div class="brand"><div class="mark">VP</div><div><div class="brand-title">VaultProof Internal</div><div class="brand-sub">employee admin console</div></div></div>
       <div class="nav-label">manage</div>
-      <a class="nav-link active" href="#business-create"><span>Create business</span></a>
+      <a class="nav-link active" href="#control-center"><span>Control Center</span><span class="tag">live</span></a>
+      <a class="nav-link" href="#business-create"><span>Create business</span></a>
       <a class="nav-link" href="#businesses"><span>Businesses</span><span class="tag">read</span></a>
       <a class="nav-link" href="#users"><span>Users</span></a>
       <a class="nav-link" href="#sso"><span>SSO</span></a>
@@ -821,6 +1027,44 @@ export function renderInternalAdminPage(): string {
       </div>
 
       <div id="notice" class="notice error" style="display:none"></div>
+
+      <section class="card control-center" id="control-center">
+        <div class="control-title">
+          <div>
+            <div class="eyebrow">internal control center</div>
+            <h2>Control Center</h2>
+            <p>Enterprise business command view for signed-on businesses, users, SSO rollout, pending invites, and API proxy traffic across customer projects.</p>
+          </div>
+          <span id="controlApiMeta" class="tag">loading traffic</span>
+        </div>
+        <div class="control-kpis">
+          <div class="control-kpi main"><div class="kpi-label">total API calls</div><div id="controlTotalCalls" class="kpi-value">...</div><div class="kpi-sub">from access-log rollups</div></div>
+          <div class="control-kpi"><div class="kpi-label">signed-on businesses</div><div id="controlSignedBusinesses" class="kpi-value">...</div><div class="kpi-sub">with at least one user</div></div>
+          <div class="control-kpi"><div class="kpi-label">users</div><div id="controlUsers" class="kpi-value">...</div><div class="kpi-sub">all memberships</div></div>
+          <div class="control-kpi"><div class="kpi-label">SSO ready</div><div id="controlSso" class="kpi-value">...</div><div class="kpi-sub">configured businesses</div></div>
+          <div class="control-kpi"><div class="kpi-label">pending invites</div><div id="controlPendingInvites" class="kpi-value">...</div><div class="kpi-sub">customer access follow-up</div></div>
+        </div>
+        <div class="control-chart-grid">
+          <div class="control-panel">
+            <div class="section-title"><h3>Businesses and users</h3><span class="mini">signed-on status</span></div>
+            <div id="businessUserChart" class="chart-list"><div class="chart-empty">Loading business sign-on chart...</div></div>
+          </div>
+          <div class="control-panel">
+            <div class="section-title"><h3>API calls by business</h3><span class="mini">total proxy usage</span></div>
+            <div id="businessCallChart" class="chart-list"><div class="chart-empty">Loading API call chart...</div></div>
+          </div>
+        </div>
+        <div class="control-chart-grid" style="margin-top:14px">
+          <div class="control-panel">
+            <div class="section-title"><h3>Account mix</h3><span class="mini">onboarding blockers</span></div>
+            <div id="accountMixChart" class="chart-list"><div class="chart-empty">Loading account mix...</div></div>
+          </div>
+          <div class="control-panel">
+            <div class="section-title"><h3>Traffic health</h3><span class="mini">success, error, denied</span></div>
+            <div id="trafficHealthChart" class="chart-list"><div class="chart-empty">Loading traffic health...</div></div>
+          </div>
+        </div>
+      </section>
 
       <section class="grid kpis" id="runtime">
         <div class="card"><div class="kpi-label">businesses</div><div id="kpiBusinesses" class="kpi-value">...</div><div class="kpi-sub">active team orgs</div></div>
@@ -907,6 +1151,15 @@ export function renderInternalAdminPage(): string {
         if (hours < 48) return hours + 'h ago';
         return Math.round(hours / 24) + 'd ago';
       }
+      function percent(value, max) {
+        var numeric = Number(value || 0);
+        var maximum = Number(max || 0);
+        if (!Number.isFinite(numeric) || !Number.isFinite(maximum) || maximum <= 0) return '0%';
+        return Math.max(0, Math.min(100, Math.round((numeric / maximum) * 100))) + '%';
+      }
+      function businessLabel(biz) {
+        return biz && (biz.name || biz.slug || biz.id) ? (biz.name || biz.slug || biz.id) : 'Business';
+      }
       function notice(message) {
         var el = byId('notice');
         if (!el) return;
@@ -928,6 +1181,77 @@ export function renderInternalAdminPage(): string {
         var side = '<span class="tag ' + (tone || '') + '">' + escapeHtml(tag || '') + '</span>';
         if (href) side += '<a class="tag" href="' + escapeHtml(href) + '">' + escapeHtml(linkLabel || 'open') + '</a>';
         return '<div class="row"><div><div class="row-title">' + escapeHtml(title) + '</div><div class="row-sub">' + escapeHtml(sub || '') + '</div></div><div>' + side + '</div></div>';
+      }
+      function chartRow(title, metric, value, max, tone) {
+        return '<div class="chart-row"><div class="chart-row-head"><strong>' + escapeHtml(title) + '</strong><span>' + escapeHtml(metric) + '</span></div><div class="chart-track"><div class="chart-bar ' + escapeHtml(tone || '') + '" style="width:' + percent(value, max) + '"></div></div></div>';
+      }
+      function renderControlCenter(payload) {
+        var summary = payload.summary || {};
+        var businesses = Array.isArray(payload.businesses) ? payload.businesses : [];
+        var activeBusinesses = businesses.filter(function(biz) { return !biz.archived_at; });
+        var signedOnBusinesses = activeBusinesses.filter(function(biz) { return Number(biz.member_count || 0) > 0; });
+        var noUserBusinesses = activeBusinesses.filter(function(biz) { return Number(biz.member_count || 0) === 0; });
+        var ssoReadyBusinesses = activeBusinesses.filter(function(biz) { return biz.sso && biz.sso.status === 'configured'; });
+        var pendingInviteBusinesses = activeBusinesses.filter(function(biz) { return Number(biz.pending_invitation_count || 0) > 0; });
+        var archivedBusinesses = businesses.filter(function(biz) { return biz.archived_at; });
+        var totalCalls = Number(summary.total_api_call_count || 0);
+        var errorCalls = Number(summary.api_error_count || 0);
+        var deniedCalls = Number(summary.api_denied_count || 0);
+        var nonDeniedErrors = Math.max(0, errorCalls - deniedCalls);
+        var successCalls = Math.max(0, totalCalls - errorCalls);
+
+        text('controlTotalCalls', number(totalCalls));
+        text('controlSignedBusinesses', number(signedOnBusinesses.length) + '/' + number(activeBusinesses.length));
+        text('controlUsers', number(summary.membership_count));
+        text('controlSso', number(summary.sso_configured_count));
+        text('controlPendingInvites', number(summary.pending_invitation_count));
+        text('controlApiMeta', (summary.api_call_source === 'rollup_table' ? 'rollup-backed' : 'traffic sample') + ' - ' + number(totalCalls) + ' calls');
+
+        var userMax = Math.max.apply(null, [1].concat(activeBusinesses.map(function(biz) { return Number(biz.member_count || 0); })));
+        var businessUserRows = activeBusinesses
+          .slice()
+          .sort(function(left, right) { return Number(right.member_count || 0) - Number(left.member_count || 0); })
+          .slice(0, 8)
+          .map(function(biz) {
+            var users = Number(biz.member_count || 0);
+            var status = users > 0 ? 'signed on' : 'no users yet';
+            return chartRow(businessLabel(biz), number(users) + ' users - ' + status, users, userMax, users > 0 ? '' : 'warn');
+          })
+          .join('');
+        byId('businessUserChart').innerHTML = businessUserRows || '<div class="chart-empty">No businesses are visible yet.</div>';
+
+        var callRows = activeBusinesses
+          .slice()
+          .sort(function(left, right) { return Number(right.api_call_count || 0) - Number(left.api_call_count || 0); })
+          .slice(0, 8);
+        var callMax = Math.max.apply(null, [1].concat(callRows.map(function(biz) { return Number(biz.api_call_count || 0); })));
+        byId('businessCallChart').innerHTML = totalCalls > 0 ? callRows.map(function(biz) {
+          var calls = Number(biz.api_call_count || 0);
+          var last = biz.last_api_call_at ? ' - last ' + rel(biz.last_api_call_at) : '';
+          return chartRow(businessLabel(biz), number(calls) + ' calls' + last, calls, callMax, 'gold');
+        }).join('') : '<div class="chart-empty">No API proxy calls are recorded in the admin snapshot yet.</div>';
+
+        var accountMixRows = [
+          { title: 'Signed-on businesses', metric: number(signedOnBusinesses.length), value: signedOnBusinesses.length, tone: '' },
+          { title: 'No users yet', metric: number(noUserBusinesses.length), value: noUserBusinesses.length, tone: 'warn' },
+          { title: 'SSO configured', metric: number(ssoReadyBusinesses.length), value: ssoReadyBusinesses.length, tone: 'gold' },
+          { title: 'Pending invites', metric: number(pendingInviteBusinesses.length), value: pendingInviteBusinesses.length, tone: 'warn' },
+          { title: 'Archived', metric: number(archivedBusinesses.length), value: archivedBusinesses.length, tone: 'warn' }
+        ];
+        var accountMax = Math.max.apply(null, [1].concat(accountMixRows.map(function(item) { return item.value; })));
+        byId('accountMixChart').innerHTML = accountMixRows.map(function(item) {
+          return chartRow(item.title, item.metric, item.value, accountMax, item.tone);
+        }).join('');
+
+        var trafficRows = [
+          { title: 'Successful calls', metric: number(successCalls), value: successCalls, tone: '' },
+          { title: 'Provider/app errors', metric: number(nonDeniedErrors), value: nonDeniedErrors, tone: 'warn' },
+          { title: 'Denied by policy', metric: number(deniedCalls), value: deniedCalls, tone: 'warn' }
+        ];
+        var trafficMax = Math.max.apply(null, [1].concat(trafficRows.map(function(item) { return item.value; })));
+        byId('trafficHealthChart').innerHTML = totalCalls > 0 ? trafficRows.map(function(item) {
+          return chartRow(item.title, item.metric, item.value, trafficMax, item.tone);
+        }).join('') : '<div class="chart-empty">Traffic health appears after the API proxy records calls.</div>';
       }
       function selectedOrgId() {
         var match = window.location.pathname.match(/\\/orgs\\/([^/]+)/);
@@ -993,7 +1317,7 @@ export function renderInternalAdminPage(): string {
       }
       function businessRow(biz) {
         var sso = biz.sso || {};
-        var sub = (biz.owner_email || 'owner unknown') + ' - ' + number(biz.member_count) + ' users - ' + number(biz.active_project_count) + ' projects - created ' + rel(biz.created_at);
+        var sub = (biz.owner_email || 'owner unknown') + ' - ' + number(biz.member_count) + ' users - ' + number(biz.active_project_count) + ' projects - ' + number(biz.api_call_count) + ' API calls - created ' + rel(biz.created_at);
         var links = linkTags(biz.business_login_links || []);
         return '<div class="row"><div><div class="row-title">' + escapeHtml(biz.name || biz.slug || biz.id) + '</div><div class="row-sub">' + escapeHtml(sub) + '</div><div class="link-stack">' + links + '</div></div><div><span class="tag ' + (sso.status === 'configured' ? 'good' : 'warn') + '">' + escapeHtml(sso.status === 'configured' ? 'SSO ready' : 'SSO todo') + '</span><a class="tag" href="/orgs/' + encodeURIComponent(biz.id) + '">detail</a></div></div>';
       }
@@ -1163,6 +1487,7 @@ export function renderInternalAdminPage(): string {
       }
       function render(payload) {
         var summary = payload.summary || {};
+        renderControlCenter(payload);
         text('kpiBusinesses', number(summary.active_business_count));
         text('kpiUsers', number(summary.membership_count));
         text('kpiProjects', number(summary.active_project_count));
@@ -3136,6 +3461,18 @@ export async function handleInternalAdminRoutes(
   const pendingInvitations = invitations.filter((invitation) => invitation.status === 'pending');
   const configuredSso = ssoRows.filter((row) => row.status === 'configured');
   const adminMemberships = members.filter((member) => member.role === 'owner' || member.role === 'admin');
+  const apiCallAnalytics = await getInternalAdminApiCallAnalytics(
+    env,
+    activeProjects.map((project) => project.id),
+  );
+  const apiCallsByOrg = new Map<string, InternalAdminApiCallStats>();
+  for (const project of activeProjects) {
+    if (!project.organization_id) continue;
+    const projectStats = apiCallAnalytics.byProjectId.get(project.id) || emptyApiCallStats();
+    const orgStats = apiCallsByOrg.get(project.organization_id) || emptyApiCallStats();
+    mergeApiCallStats(orgStats, projectStats);
+    apiCallsByOrg.set(project.organization_id, orgStats);
+  }
 
   const businesses = organizations.map((organization) => {
     const orgMembers = membersByOrg.get(organization.id) || [];
@@ -3144,6 +3481,7 @@ export async function handleInternalAdminRoutes(
     const activeOrgProjects = orgProjects.filter((project) => !project.revoked_at);
     const pendingOrgInvitations = orgInvitations.filter((invitation) => invitation.status === 'pending');
     const sso = ssoByOrgId.get(organization.id) || null;
+    const orgApiCallStats = apiCallsByOrg.get(organization.id) || emptyApiCallStats();
     return {
       id: organization.id,
       name: organization.name,
@@ -3157,6 +3495,10 @@ export async function handleInternalAdminRoutes(
       admin_count: orgMembers.filter((member) => member.role === 'owner' || member.role === 'admin').length,
       active_project_count: activeOrgProjects.length,
       pending_invitation_count: pendingOrgInvitations.length,
+      api_call_count: orgApiCallStats.call_count,
+      api_error_count: orgApiCallStats.error_count,
+      api_denied_count: orgApiCallStats.denied_count,
+      last_api_call_at: orgApiCallStats.last_api_call_at,
       sso,
       business_login_links: enterpriseBusinessLoginLinks(env, organization.id, sso?.company_domain || null),
     };
@@ -3182,6 +3524,11 @@ export async function handleInternalAdminRoutes(
       active_project_count: activeProjects.length,
       pending_invitation_count: pendingInvitations.length,
       sso_configured_count: configuredSso.length,
+      total_api_call_count: apiCallAnalytics.totals.call_count,
+      api_error_count: apiCallAnalytics.totals.error_count,
+      api_denied_count: apiCallAnalytics.totals.denied_count,
+      api_call_source: apiCallAnalytics.source,
+      api_call_rollup_ready: apiCallAnalytics.schemaReady,
     },
     sso_schema_ready: ssoSchemaReady,
     migration_required: ssoSchemaReady ? null : 'Apply supabase/migrations/20260419010000_organization_sso_settings.sql',

@@ -810,6 +810,21 @@ function installSupabaseStub() {
       });
     }
 
+    if (url.includes('/rest/v1/project_access_log_daily_rollups') && method === 'GET') {
+      return jsonResponse([{
+        id: 'rollup_123',
+        project_id: PROJECT_ID,
+        day: '2026-04-26',
+        provider: 'openai',
+        slug: 'openai',
+        status_bucket: 'success',
+        call_count: 1,
+        total_latency_ms: 42,
+        max_latency_ms: 42,
+        last_timestamp: '2026-04-26T12:01:00.000Z',
+      }]);
+    }
+
     if (url.includes('/rest/v1/project_access_logs') && method === 'GET') {
       return jsonResponse([{
         id: 'proxy_123',
@@ -3673,6 +3688,13 @@ async function assertInternalAdminConsole() {
   for (const required of [
     'VaultProof employees only',
     'Manage enterprise customers.',
+    'Control Center',
+    'Enterprise business command view',
+    'businessUserChart',
+    'businessCallChart',
+    'API calls by business',
+    'controlTotalCalls',
+    '--sidebar-muted',
     'Create business',
     'Businesses',
     'Users and access',
@@ -3825,8 +3847,14 @@ async function assertInternalAdminConsole() {
   if (overview.summary?.active_business_count !== 1 || overview.summary?.pending_invitation_count !== 1) {
     throw new Error(`Expected internal admin business summary, got ${JSON.stringify(overview.summary)}`);
   }
+  if (overview.summary?.total_api_call_count !== 1 || overview.summary?.api_call_source !== 'rollup_table') {
+    throw new Error(`Expected internal admin API call rollup summary, got ${JSON.stringify(overview.summary)}`);
+  }
   if (!Array.isArray(overview.businesses) || overview.businesses[0]?.name !== 'Example Org') {
     throw new Error(`Expected internal admin overview to include Example Org, got ${JSON.stringify(overview.businesses)}`);
+  }
+  if (overview.businesses[0]?.api_call_count !== 1 || overview.businesses[0]?.last_api_call_at !== '2026-04-26T12:01:00.000Z') {
+    throw new Error(`Expected internal admin overview to include per-business API call totals, got ${JSON.stringify(overview.businesses[0])}`);
   }
   if (!overview.businesses[0]?.business_login_links?.find((link) => link.href.includes('/app/login?org=org_123'))) {
     throw new Error(`Expected internal admin overview to include per-business login links, got ${JSON.stringify(overview.businesses[0]?.business_login_links)}`);
