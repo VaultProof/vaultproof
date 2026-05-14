@@ -24,6 +24,7 @@ export type EnterpriseAppNavPage =
   | 'plans'
   | 'pilot'
   | 'pilot-success'
+  | 'release'
   | 'scanner'
   | 'support'
   | 'runbooks';
@@ -157,6 +158,13 @@ const ENTERPRISE_SIDEBAR_NAV_GROUPS: readonly EnterpriseSidebarNavGroup[] = [
         label: 'Evidence packet',
         blurb: 'Readiness, access, audit, policy, and proof exports.',
         activePill: 'proof',
+      },
+      {
+        page: 'release',
+        href: '/app/release',
+        label: 'Release evidence',
+        blurb: 'Build tags, approvals, verification, rollback, and customer-safe release proof.',
+        activePill: 'new',
       },
       {
         page: 'members',

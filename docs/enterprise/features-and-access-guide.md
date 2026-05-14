@@ -101,6 +101,7 @@ If you see an auth message:
 | Policy Drift + Exceptions | `/app/policy` | Enterprise drift board for missing controls, accepted-risk records, owner/risk/expiry metadata, compensating controls, launch hold status, and customer-safe `vaultproof_enterprise_policy_drift` evidence exports without secrets. |
 | Integration Rollout | `/app/rollout` | Enterprise rollout board for moving workloads into VaultProof with integration mode, app/gateway owners, environment status, canary percentage, rollback path, blockers, copy-safe dry-run snippets, and customer-safe `vaultproof_enterprise_integration_rollout` evidence exports without secrets. |
 | Provider Slots | `/app/keys` | Active providers, emergency revoke, rotation checklist, and Secure Key Release notes. |
+| Release Evidence | `/app/release` | Customer-safe release proof for build/image tag, approval, verification status, rollout state, rollback owner/path, and `vaultproof_enterprise_release_evidence` JSON exports without secrets. |
 | Settings | `/app/settings` | Tenant preferences, session/security notices, and org defaults. |
 | Plans | `/app/plans` | Paid-pilot package, included controls, capacity envelope, contract guardrails, security boundaries, rollout posture, and customer review links. |
 | Scanner | `/app/scanner` | Enterprise-safe secret exposure intake for redacted repository findings, owners, rotation/remediation status, provider-slot hints, and customer-safe `vaultproof_enterprise_scanner_exposure_review` evidence exports without repo contents or secret values. |

@@ -328,6 +328,7 @@ export function renderEnterpriseDashboardPage(env: EnterpriseControlPlaneEnv = {
               <a class="action" href="/app/members">members</a>
               <a class="action" href="/app/audit">audit</a>
               <a class="action" href="/app/evidence">evidence</a>
+              <a class="action" href="/app/release">release</a>
               <a class="action" href="/app/runbooks">runbooks</a>
             </div>
           </div>
@@ -415,6 +416,7 @@ export function renderEnterpriseDashboardPage(env: EnterpriseControlPlaneEnv = {
             <div class="section-title"><h2>Evidence links</h2><span class="mini">safe to open</span></div>
             <div class="list">
               <div class="row"><div><div class="row-title">Production readiness</div><div class="row-sub">Proof that the live runtime and executor report production-ready.</div></div><a class="tag good" href="/readiness" target="_blank" rel="noopener">open</a></div>
+              <div class="row"><div><div class="row-title">Release evidence</div><div class="row-sub">Customer-safe proof of build tag, approval, verification, rollout state, and rollback path.</div></div><a class="tag good" href="/app/release">open</a></div>
               <div class="row"><div><div class="row-title">Audit export</div><div class="row-sub">CSV evidence for governance and runtime events.</div></div><a class="tag good" href="/api/v1/enterprise/audit?format=csv&days=30">export</a></div>
               <div class="row"><div><div class="row-title">Access review</div><div class="row-sub">CSV evidence for members, roles, and project access.</div></div><a class="tag good" href="/api/v1/enterprise/members/access-review?format=csv">export</a></div>
             </div>
@@ -478,6 +480,7 @@ export function renderEnterpriseDashboardPage(env: EnterpriseControlPlaneEnv = {
               <div class="row"><div><div class="row-title">Demo script</div><div class="row-sub">Run the buyer walkthrough with proof path, guardrails, Q&A, and close steps.</div></div><a class="tag good" href="/app/demo">open</a></div>
               <div class="row"><div><div class="row-title">Launch checklist</div><div class="row-sub">Turn readiness, policy, owners, evidence, alerts, and rollout actions into one customer go-live board.</div></div><a class="tag good" href="/app/launch">open</a></div>
               <div class="row"><div><div class="row-title">Evidence packet</div><div class="row-sub">Assemble runtime readiness, access review, audit, provider posture, and launch proof for customer security review.</div></div><a class="tag good" href="/app/evidence">open</a></div>
+              <div class="row"><div><div class="row-title">Release evidence</div><div class="row-sub">Record build tag, approval, verification, rollout state, and rollback path after each enterprise deploy.</div></div><a class="tag good" href="/app/release">open</a></div>
               <div class="row"><div><div class="row-title">Rollout Manager</div><div class="row-sub">Plan one workload cutover with owners, canary, rollback, blockers, and evidence export.</div></div><a class="tag good" href="/app/rollout">open</a></div>
               <div class="row"><div><div class="row-title">Technical guide</div><div class="row-sub">Open the enterprise implementation reference for identity, network, key custody, attestation, and troubleshooting.</div></div><a class="tag good" href="/app/technical-guide">open</a></div>
               <div class="row"><div><div class="row-title">Launch plans</div><div class="row-sub">Track packaging, GCP edge readiness, and contract-facing guardrails.</div></div><a class="tag" href="/app/plans">open</a></div>
@@ -517,6 +520,11 @@ export function renderEnterpriseDashboardPage(env: EnterpriseControlPlaneEnv = {
               <div class="feature-tags"><span class="feature-tag">live</span><span class="feature-tag">proof</span></div>
               <h3>Evidence packet</h3>
               <p>Customer proof packet with readiness, access review, audit export links, provider posture, rollout workflow, and downloadable JSON summary.</p>
+            </a>
+            <a class="feature-card" href="/app/release">
+              <div class="feature-tags"><span class="feature-tag">live</span><span class="feature-tag">change proof</span></div>
+              <h3>Release evidence</h3>
+              <p>Record the active build/image tag, approval, verification result, rollout state, rollback path, and customer-safe release notes after each deploy.</p>
             </a>
             <a class="feature-card" href="/app/rollout">
               <div class="feature-tags"><span class="feature-tag">live</span><span class="feature-tag">cutover</span></div>

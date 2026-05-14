@@ -3851,7 +3851,7 @@ function renderEnterpriseOperationsPage(pageName: 'activity' | 'projects' | 'inv
 </html>`;
 }
 
-type EnterpriseSupportPageName = 'setup' | 'launch' | 'evidence' | 'demo' | 'technical-guide' | 'security-review' | 'verifier' | 'settings' | 'plans' | 'pilot' | 'pilot-success' | 'scanner' | 'support' | 'runbooks';
+type EnterpriseSupportPageName = 'setup' | 'launch' | 'evidence' | 'demo' | 'technical-guide' | 'security-review' | 'verifier' | 'settings' | 'plans' | 'pilot' | 'pilot-success' | 'release' | 'scanner' | 'support' | 'runbooks';
 
 function renderEnterpriseSupportPage(pageName: EnterpriseSupportPageName): string {
   const supportPageCopy: Record<EnterpriseSupportPageName, { title: string; kicker: string; lead: string }> = {
@@ -3909,6 +3909,11 @@ function renderEnterpriseSupportPage(pageName: EnterpriseSupportPageName): strin
       title: 'Pilot success tracker',
       kicker: 'customer proof',
       lead: 'Track the pilot from kickoff to expansion decision with live readiness signals, browser-local milestone evidence, proof links, blockers, and a copyable weekly customer update.',
+    },
+    release: {
+      title: 'Release evidence',
+      kicker: 'change proof',
+      lead: 'Record what changed, which build/image tag is live, who approved it, how it was verified, and where rollback lives before a customer sees the release.',
     },
     scanner: {
       title: 'Scanner',
@@ -3988,12 +3993,12 @@ function renderEnterpriseSupportPage(pageName: EnterpriseSupportPageName): strin
     .evidence-actions { display: flex; gap: 10px; flex-wrap: wrap; }
     .brief-box { width: 100%; min-height: 210px; font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace; font-size: 12px; line-height: 1.55; }
     .demo-script { min-height: 330px; }
-    .scanner-form, .scanner-fields { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
-    .scanner-field { display: grid; gap: 6px; }
-    .scanner-field.wide { grid-column: 1 / -1; }
-    .scanner-field label { color: var(--muted); font-size: 12px; text-transform: uppercase; letter-spacing: .08em; font-weight: 800; }
-    .scanner-row { border: 1px solid rgba(48,76,71,.12); background: rgba(247,250,244,.84); border-radius: 18px; padding: 15px; display: grid; gap: 12px; }
-    .scanner-head { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 12px; align-items: start; }
+    .scanner-form, .scanner-fields, .release-form, .release-fields { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
+    .scanner-field, .release-field { display: grid; gap: 6px; }
+    .scanner-field.wide, .release-field.wide { grid-column: 1 / -1; }
+    .scanner-field label, .release-field label { color: var(--muted); font-size: 12px; text-transform: uppercase; letter-spacing: .08em; font-weight: 800; }
+    .scanner-row, .release-row { border: 1px solid rgba(48,76,71,.12); background: rgba(247,250,244,.84); border-radius: 18px; padding: 15px; display: grid; gap: 12px; }
+    .scanner-head, .release-head { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 12px; align-items: start; }
     .row-actions { display: flex; gap: 8px; flex-wrap: wrap; justify-content: flex-end; }
     .kpi-label { color: var(--muted); font-size: 12px; text-transform: uppercase; letter-spacing: .1em; }
     .kpi-value { font-size: 34px; font-weight: 850; letter-spacing: -.05em; margin-top: 8px; }
@@ -4012,7 +4017,7 @@ function renderEnterpriseSupportPage(pageName: EnterpriseSupportPageName): strin
     .empty, .notice { color: var(--muted); border: 1px dashed rgba(48,76,71,.22); border-radius: 18px; padding: 18px; background: rgba(247,250,244,.78); }
     .notice.error { color: var(--red); border-color: rgba(185,93,80,.3); }
     @media (max-width: 1100px) { .kpis, .two { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
-    @media (max-width: 760px) { .shell { grid-template-columns: 1fr; } .topbar { flex-direction: column; } .kpis, .two, .launch-check-row, .go-evidence-row, .row, .scanner-form, .scanner-fields, .scanner-head { grid-template-columns: 1fr; } .go-evidence-row > span:last-child { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; } .go-status { width: auto; } .row-actions { justify-content: flex-start; } }
+    @media (max-width: 760px) { .shell { grid-template-columns: 1fr; } .topbar { flex-direction: column; } .kpis, .two, .launch-check-row, .go-evidence-row, .row, .scanner-form, .scanner-fields, .scanner-head, .release-form, .release-fields, .release-head { grid-template-columns: 1fr; } .go-evidence-row > span:last-child { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; } .go-status { width: auto; } .row-actions { justify-content: flex-start; } }
     ${ENTERPRISE_APP_SHELL_THEME}
     ${ENTERPRISE_STATIC_APP_POLISH_THEME}
   </style>
@@ -4147,6 +4152,10 @@ function renderEnterpriseSupportPage(pageName: EnterpriseSupportPageName): strin
           <div id="evidenceMonitoringList" class="list"></div>
         </div>
         <div class="card" style="grid-column:1/-1">
+          <div class="section-title"><h2>Release evidence proof</h2><span class="mini" id="evidenceReleaseMeta">hold</span></div>
+          <div id="evidenceReleaseList" class="list"></div>
+        </div>
+        <div class="card" style="grid-column:1/-1">
           <div class="section-title">
             <h2>Evidence packet JSON</h2>
             <div class="evidence-actions">
@@ -4219,6 +4228,44 @@ function renderEnterpriseSupportPage(pageName: EnterpriseSupportPageName): strin
             <button id="copySupportBriefBtn" type="button">copy brief</button>
           </div>
           <textarea id="supportBrief" class="brief-box" readonly aria-label="Support brief"></textarea>
+        </div>
+      </section>
+
+      <section id="releasePanel" class="grid two" style="display:none">
+        <div class="card">
+          <div class="section-title"><h2>Release intake</h2><span id="releaseMeta" class="mini">browser-local</span></div>
+          <form id="releaseEvidenceForm" class="release-form">
+            <div class="release-field"><label for="releaseLabel">release label</label><input id="releaseLabel" placeholder="enterprise demo release 2026-05-13" /></div>
+            <div class="release-field"><label for="releaseBuildTag">build/image tag</label><input id="releaseBuildTag" placeholder="git sha or container tag" /></div>
+            <div class="release-field"><label for="releaseApprover">approver</label><input id="releaseApprover" placeholder="operator or customer owner" /></div>
+            <div class="release-field"><label for="releaseVerifier">verifier</label><input id="releaseVerifier" placeholder="person who ran QA/gates" /></div>
+            <div class="release-field"><label for="releaseVerificationStatus">verification status</label><select id="releaseVerificationStatus"><option value="pending">pending</option><option value="passed">passed</option><option value="failed">failed</option><option value="blocked">blocked</option><option value="accepted_demo">accepted for demo</option></select></div>
+            <div class="release-field"><label for="releaseRolloutStatus">rollout status</label><select id="releaseRolloutStatus"><option value="planned">planned</option><option value="canary">canary</option><option value="live">live</option><option value="rolled_back">rolled back</option><option value="paused">paused</option></select></div>
+            <div class="release-field"><label for="releaseRollbackOwner">rollback owner</label><input id="releaseRollbackOwner" placeholder="operator name or team" /></div>
+            <div class="release-field"><label for="releaseRollbackPath">rollback path</label><input id="releaseRollbackPath" placeholder="previous build tag, reset plan, or runbook ref" /></div>
+            <div class="release-field wide"><label for="releaseSummary">change summary</label><textarea id="releaseSummary" placeholder="What changed for customers. Metadata only; do not paste env values, tokens, request bodies, or secrets."></textarea></div>
+            <div class="release-field wide"><label for="releaseEvidenceNote">verification evidence note</label><textarea id="releaseEvidenceNote" placeholder="Smoke/gate command results, Cloud Build id, deploy ticket, or customer approval reference. Metadata only."></textarea></div>
+            <button class="primary" type="submit">add release record</button>
+          </form>
+        </div>
+        <div class="card">
+          <div class="section-title"><h2>Release posture</h2><span class="mini">customer-safe</span></div>
+          <div id="releaseReadinessList" class="list"></div>
+        </div>
+        <div class="card" style="grid-column:1/-1">
+          <div class="section-title"><h2>Release records</h2><span class="mini">saved in this browser</span></div>
+          <div id="releaseRecordList" class="list"></div>
+        </div>
+        <div class="card">
+          <div class="section-title"><h2>Release workflow</h2><span class="mini">operator handoff</span></div>
+          <div id="releaseWorkflowList" class="list"></div>
+        </div>
+        <div class="card">
+          <div class="section-title">
+            <h2>Release evidence JSON</h2>
+            <button id="copyReleaseJsonBtn" type="button">copy release JSON</button>
+          </div>
+          <textarea id="releaseEvidencePacket" class="brief-box" readonly aria-label="Release evidence JSON"></textarea>
         </div>
       </section>
 
@@ -5737,6 +5784,155 @@ function renderEnterpriseSupportPage(pageName: EnterpriseSupportPageName): strin
           row('Secret boundary', 'Scanner evidence excludes ' + packet.secrets_excluded.join(', ') + '.', 'redacted', 'good')
         ];
       }
+      function releaseEvidenceStorageKey() {
+        return 'vaultproof_release_evidence::' + (currentOrgId || 'default');
+      }
+      function releaseSecretPattern(value) {
+        return /(sk-[a-z0-9_-]{8,}|gocspx-|eyJ[a-zA-Z0-9_-]{10,}|-----BEGIN|Bearer\\s+|service[_ -]?role|client[_ -]?secret|api[_ -]?key|password|private[_ -]?key|authorization:|cookie:|x-api-key|secret_access_key|origin[_ -]?lock|runtime[_ -]?token|executor[_ -]?signing)/i.test(String(value || ''));
+      }
+      function redactReleaseText(value) {
+        var textValue = String(value || '').trim();
+        if (!textValue) return '';
+        if (releaseSecretPattern(textValue)) return '[redacted: release field contained secret-like material]';
+        return textValue.slice(0, 700);
+      }
+      function releaseSelected(value, expected) {
+        return String(value || '') === expected ? ' selected' : '';
+      }
+      function readReleaseEvidenceRecords() {
+        try {
+          var parsed = JSON.parse(localStorage.getItem(releaseEvidenceStorageKey()) || '[]');
+          var rows = Array.isArray(parsed) ? parsed : Object.keys(parsed || {}).map(function(key) { return parsed[key]; });
+          return rows.filter(function(row) { return row && typeof row === 'object'; }).map(function(row) {
+            return {
+              id: row.id || ('release-' + Math.random().toString(36).slice(2)),
+              release_label: redactReleaseText(row.release_label),
+              build_tag: redactReleaseText(row.build_tag),
+              change_summary: redactReleaseText(row.change_summary),
+              approver: redactReleaseText(row.approver),
+              verifier: redactReleaseText(row.verifier),
+              verification_status: ['pending', 'passed', 'failed', 'blocked', 'accepted_demo'].indexOf(row.verification_status) !== -1 ? row.verification_status : 'pending',
+              rollout_status: ['planned', 'canary', 'live', 'rolled_back', 'paused'].indexOf(row.rollout_status) !== -1 ? row.rollout_status : 'planned',
+              rollback_owner: redactReleaseText(row.rollback_owner),
+              rollback_path: redactReleaseText(row.rollback_path),
+              evidence_note: redactReleaseText(row.evidence_note),
+              created_at: row.created_at || null,
+              updated_at: row.updated_at || row.created_at || null
+            };
+          }).sort(function(a, b) {
+            return String(b.updated_at || b.created_at || '').localeCompare(String(a.updated_at || a.created_at || ''));
+          }).slice(0, 40);
+        } catch (_error) {
+          return [];
+        }
+      }
+      function writeReleaseEvidenceRecords(rows) {
+        localStorage.setItem(releaseEvidenceStorageKey(), JSON.stringify((rows || []).slice(0, 40)));
+      }
+      function releaseVerificationTone(status) {
+        if (status === 'passed') return 'good';
+        if (status === 'accepted_demo' || status === 'pending') return 'warn';
+        return 'bad';
+      }
+      function releaseRolloutTone(status) {
+        if (status === 'live' || status === 'canary') return 'good';
+        if (status === 'planned') return 'warn';
+        return 'bad';
+      }
+      function buildReleaseEvidencePacket(org, sso, readiness, overview, bootstrap) {
+        var records = readReleaseEvidenceRecords();
+        var latest = records[0] || null;
+        var productionReady = readiness.production_ready === true;
+        var verificationReady = Boolean(latest && (latest.verification_status === 'passed' || latest.verification_status === 'accepted_demo'));
+        var rollbackReady = Boolean(latest && latest.rollback_owner && latest.rollback_path);
+        var approvalReady = Boolean(latest && latest.approver);
+        var rolloutReady = Boolean(latest && (latest.rollout_status === 'canary' || latest.rollout_status === 'live'));
+        var blockedRollout = latest && (latest.rollout_status === 'rolled_back' || latest.rollout_status === 'paused');
+        var blockers = [];
+        if (!productionReady) blockers.push('Runtime readiness is not production-ready.');
+        if (!records.length) blockers.push('No release evidence record is saved for this organization.');
+        if (latest && !approvalReady) blockers.push('Latest release record is missing an approver.');
+        if (latest && !verificationReady) blockers.push('Latest release record verification is not passed or demo-accepted.');
+        if (latest && !rollbackReady) blockers.push('Latest release record is missing rollback owner/path.');
+        if (latest && !rolloutReady) blockers.push('Latest release record is not canary or live.');
+        if (blockedRollout) blockers.push('Latest release record is paused or rolled back.');
+        var status = blockers.length ? (records.length ? 'hold' : 'needs_release_record') : 'ready_with_review';
+        return {
+          packet_type: 'vaultproof_enterprise_release_evidence',
+          packet_version: 1,
+          status: status,
+          generated_at: new Date().toISOString(),
+          generated_from: location.origin + '/app/release',
+          release_page: '/app/release',
+          organization: {
+            id: currentOrgId || null,
+            name: org.name || null,
+            sso_provider_status: sso.provider_status || 'not confirmed',
+            project_count: projectCountFromData(org, overview, bootstrap),
+            provider_slots: providerCountFromData(overview, bootstrap)
+          },
+          runtime: {
+            production_ready: productionReady,
+            security_profile: readiness.security_profile || null,
+            runtime_tier: readiness.runtime_tier || null,
+            customer_dedicated_runtime: readiness.customer_dedicated_runtime === true
+          },
+          latest_release: latest,
+          summary: {
+            total_records: records.length,
+            latest_build_tag: latest && latest.build_tag || null,
+            latest_verification_status: latest && latest.verification_status || 'missing',
+            latest_rollout_status: latest && latest.rollout_status || 'missing',
+            approved: approvalReady === true,
+            rollback_ready: rollbackReady === true,
+            blockers: blockers
+          },
+          records: records,
+          workflow_links: {
+            release_evidence: '/app/release',
+            evidence_packet: '/app/evidence',
+            launch_board: '/app/launch',
+            rollout_manager: '/app/rollout',
+            security_review: '/app/security-review',
+            activity: '/app/activity',
+            audit: '/app/audit',
+            runbooks: '/app/runbooks'
+          },
+          operator_commands: [
+            'npm run build:gcp-enterprise-images',
+            'npm run qa:enterprise-live-app',
+            'RUN_LIVE_EDGE=true RUN_LIVE_APP_QA=true npm run gate:gcp-customer-launch',
+            "gcloud compute instances describe vaultproof-enterprise-runtime-1 --zone=us-central1-a --project=vaultproof-prod --format='get(metadata.items.vaultproof-build-tag)'",
+            'gcloud compute instances reset vaultproof-enterprise-runtime-1 --zone=us-central1-a --project=vaultproof-prod'
+          ],
+          secrets_excluded: [
+            'raw provider keys',
+            'encrypted provider shares',
+            'Supabase service-role key',
+            'browser session token',
+            'OAuth client secret',
+            'origin-lock secret',
+            'executor signing secret',
+            'runtime-token secret',
+            'environment variables',
+            'request bodies',
+            'response bodies',
+            'customer payloads'
+          ]
+        };
+      }
+      function releaseEvidenceProofRows(packet) {
+        var summary = packet.summary || {};
+        var latest = packet.latest_release || {};
+        return [
+          row('Release evidence status', packet.status === 'ready_with_review' ? 'Latest release is approved, verified, in canary/live state, and has rollback owner/path recorded.' : 'Hold until release evidence, approval, verification, canary/live state, and rollback owner/path are complete.', packet.status, packet.status === 'ready_with_review' ? 'good' : 'warn'),
+          row('Latest build tag', summary.latest_build_tag || 'No build/image tag recorded yet.', summary.latest_build_tag ? 'recorded' : 'missing', summary.latest_build_tag ? 'good' : 'warn'),
+          row('Verification status', latest.verification_status ? 'Verifier: ' + (latest.verifier || 'not set') + '. Status: ' + latest.verification_status + '.' : 'No verification record saved yet.', latest.verification_status || 'missing', releaseVerificationTone(latest.verification_status)),
+          row('Rollback path', latest.rollback_owner && latest.rollback_path ? 'Owner: ' + latest.rollback_owner + '. Path: ' + latest.rollback_path + '.' : 'No rollback owner/path recorded for the latest release.', latest.rollback_owner && latest.rollback_path ? 'ready' : 'missing', latest.rollback_owner && latest.rollback_path ? 'good' : 'warn'),
+          linkRow('Open release evidence', 'Record the latest build/image tag, approver, verifier, test result, rollout state, rollback path, and customer-safe notes.', '/app/release', 'release', packet.status === 'ready_with_review' ? 'good' : 'warn'),
+          row('Secret boundary', 'Release evidence excludes ' + packet.secrets_excluded.join(', ') + '.', 'redacted', 'good')
+        ];
+      }
       function buildApiProxySelfTestPacket(overview, bootstrap) {
         var slots = providerSlotsFromBootstrap(bootstrap);
         var totalCalls = Number(overview.totalCalls || overview.total_calls || 0);
@@ -6010,6 +6206,7 @@ function renderEnterpriseSupportPage(pageName: EnterpriseSupportPageName): strin
         var scannerExposure = buildScannerExposurePacket(overview, bootstrap);
         var support = buildLaunchSupportPacket(org, sso, readiness, overview, bootstrap, goNoGo);
         var monitoring = buildMonitoringEvidencePacket(org, sso, readiness, overview, bootstrap, goNoGo);
+        var releaseEvidence = buildReleaseEvidencePacket(org, sso, readiness, overview, bootstrap);
         var projectCount = projectCountFromData(org, overview, bootstrap);
         var memberCount = Number(org.member_count || 0);
         var providerCount = providerCountFromData(overview, bootstrap);
@@ -6047,6 +6244,7 @@ function renderEnterpriseSupportPage(pageName: EnterpriseSupportPageName): strin
             { name: 'Policy drift and exceptions', status: policyDrift.status, tone: policyDrift.status === 'hold' ? 'warn' : 'good', detail: 'Policy drift rows are derived from existing project/provider/policy/traffic evidence, with browser-local accepted-risk records, owners, expiry, and compensating controls.' },
             { name: 'Integration rollout', status: integrationRollout.status, tone: integrationRollout.status === 'hold' ? 'warn' : 'good', detail: 'Rollout rows tie API inventory, policy drift, owners, canary status, rollback path, and copy-safe dry-run snippets into one customer cutover plan.' },
             { name: 'Secret exposure review', status: scannerExposure.status, tone: scannerExposure.status === 'hold' ? 'warn' : 'good', detail: 'Scanner intake records redacted repository exposure metadata, owners, rotation/remediation status, and customer-safe evidence references without uploading repo contents or secret values.' },
+            { name: 'Release evidence', status: releaseEvidence.status, tone: releaseEvidence.status === 'ready_with_review' ? 'good' : 'warn', detail: 'Release evidence records build/image tags, approver, verifier, QA/gate summary, rollout state, rollback owner/path, and customer-safe notes without exposing secrets.' },
             { name: 'Runtime attestation', status: productionReady ? 'ready' : 'blocked', tone: productionReady ? 'good' : 'bad', detail: 'Readiness reports GCP confidential production posture, key release readiness, signature verification, replay protection, and executor reachability.' },
             { name: 'Audit and evidence', status: 'exportable', tone: 'good', detail: 'Evidence packet, audit CSV, access-review CSV, activity records, launch brief, and security review packet are customer-safe review artifacts.' },
             { name: 'Monitoring and edge protection', status: monitoring.status, tone: monitoring.status === 'ready' ? 'good' : 'warn', detail: 'Monitoring evidence links readiness, traffic/error/denial posture, alert workflow, Cloud Armor verification, live gate, and budget guardrails.' },
@@ -6062,6 +6260,7 @@ function renderEnterpriseSupportPage(pageName: EnterpriseSupportPageName): strin
             { title: 'Policy Drift', href: '/app/policy', detail: 'Control gaps, demo-only material, owner gaps, stale traffic, accepted-risk records, expiry dates, and customer-safe JSON export.', tag: policyDrift.status, tone: policyDrift.status === 'hold' ? 'warn' : 'good' },
             { title: 'Rollout Manager', href: '/app/rollout', detail: 'Workload cutover plan with owners, integration mode, canary percentage, test status, rollback path, blockers, and evidence export.', tag: integrationRollout.status, tone: integrationRollout.status === 'hold' ? 'warn' : 'good' },
             { title: 'Scanner Exposure', href: '/app/scanner', detail: 'Redacted repository exposure findings, owners, rotation status, scanner evidence references, and remediation workflow.', tag: scannerExposure.status, tone: scannerExposure.status === 'hold' ? 'warn' : 'good' },
+            { title: 'Release Evidence', href: '/app/release', detail: 'Build/image tag, approval, verification, rollout state, rollback owner/path, and customer-safe release proof.', tag: releaseEvidence.status, tone: releaseEvidence.status === 'ready_with_review' ? 'good' : 'warn' },
             { title: 'Alerts', href: '/app/alerts', detail: 'Destinations, delivery logs, dispatch runs, and test-send workflow.', tag: 'monitoring', tone: 'good' },
             { title: 'Provider slots', href: '/app/keys', detail: 'Provider material mode, rotation status, dry-run self-test, email demo, and emergency revoke.', tag: 'keys', tone: providerCount ? 'good' : 'warn' },
             { title: 'Launch board', href: '/app/launch', detail: 'Go/no-go decision, operator-confirmed manual evidence, stale holds, and customer tasks.', tag: goNoGo.status, tone: goNoGo.status === 'go' ? 'good' : 'warn' },
@@ -6094,6 +6293,7 @@ function renderEnterpriseSupportPage(pageName: EnterpriseSupportPageName): strin
             integration_rollout: integrationRollout.status,
             scanner_exposure_review: scannerExposure.status,
             launch_support_readiness: support.status,
+            release_evidence: releaseEvidence.status,
             monitoring_evidence: monitoring.status
           },
           secrets_excluded: [
@@ -6116,7 +6316,7 @@ function renderEnterpriseSupportPage(pageName: EnterpriseSupportPageName): strin
           row('Security review packet status', packet.decision, packet.status, packet.status === 'ready_for_review' ? 'good' : 'warn'),
           row('Organization scope', (org.name || 'Selected workspace') + ' with ' + number(org.project_count) + ' projects, ' + number(org.member_count) + ' members, and ' + number(org.provider_slots) + ' provider slots.', org.id ? 'scoped' : 'select org', org.id ? 'good' : 'warn'),
           row('Go/no-go decision', 'Current launch board status is ' + packet.related_packets.go_no_go_status + '.', packet.related_packets.go_no_go_status, packet.related_packets.go_no_go_status === 'go' ? 'good' : 'warn'),
-          row('Related proof packets', 'Identity: ' + packet.related_packets.identity_login_qa + '. Rotation: ' + packet.related_packets.key_rotation_evidence + '. Pilot ops: ' + packet.related_packets.pilot_operations_evidence + '. Proxy self-test: ' + packet.related_packets.api_proxy_self_test + '. API inventory: ' + packet.related_packets.api_inventory + '. Policy drift: ' + packet.related_packets.policy_drift_exceptions + '. Rollout: ' + packet.related_packets.integration_rollout + '. Scanner: ' + packet.related_packets.scanner_exposure_review + '. Monitoring: ' + packet.related_packets.monitoring_evidence + '.', 'summary', 'good'),
+          row('Related proof packets', 'Identity: ' + packet.related_packets.identity_login_qa + '. Rotation: ' + packet.related_packets.key_rotation_evidence + '. Pilot ops: ' + packet.related_packets.pilot_operations_evidence + '. Proxy self-test: ' + packet.related_packets.api_proxy_self_test + '. API inventory: ' + packet.related_packets.api_inventory + '. Policy drift: ' + packet.related_packets.policy_drift_exceptions + '. Rollout: ' + packet.related_packets.integration_rollout + '. Scanner: ' + packet.related_packets.scanner_exposure_review + '. Release: ' + packet.related_packets.release_evidence + '. Monitoring: ' + packet.related_packets.monitoring_evidence + '.', 'summary', 'good'),
           row('Secret boundary', 'This packet excludes ' + packet.secrets_excluded.join(', ') + '.', 'redacted', 'good')
         ];
       }
@@ -6732,6 +6932,7 @@ function renderEnterpriseSupportPage(pageName: EnterpriseSupportPageName): strin
         var scannerExposure = buildScannerExposurePacket(overview, bootstrap);
         var support = buildLaunchSupportPacket(org, sso, readiness, overview, bootstrap, goNoGo);
         var monitoring = buildMonitoringEvidencePacket(org, sso, readiness, overview, bootstrap, goNoGo);
+        var releaseEvidence = buildReleaseEvidencePacket(org, sso, readiness, overview, bootstrap);
         var securityReview = buildSecurityReviewPacket(org, sso, readiness, overview, bootstrap, goNoGo);
         var pilotProposal = buildPilotProposalPacket(org, sso, readiness, overview, bootstrap, goNoGo);
         var pilotSuccess = buildPilotSuccessPacket(org, sso, readiness, overview, bootstrap, goNoGo);
@@ -6814,6 +7015,7 @@ function renderEnterpriseSupportPage(pageName: EnterpriseSupportPageName): strin
           scanner_exposure_review: scannerExposure,
           launch_support_readiness: support,
           monitoring_evidence: monitoring,
+          release_evidence: releaseEvidence,
           security_review_packet: securityReview,
           pilot_proposal: pilotProposal,
           pilot_success_tracker: pilotSuccess,
@@ -6826,6 +7028,7 @@ function renderEnterpriseSupportPage(pageName: EnterpriseSupportPageName): strin
             policy_drift: '/app/policy',
             integration_rollout: '/app/rollout',
             scanner_exposure: '/app/scanner',
+            release_evidence: '/app/release',
             provider_slots: '/app/keys',
             launch_checklist: '/app/launch',
             security_review: '/app/security-review',
@@ -6846,6 +7049,7 @@ function renderEnterpriseSupportPage(pageName: EnterpriseSupportPageName): strin
             'Review scanner exposure evidence for redacted finding metadata, owner, rotation status, evidence reference, and open critical/high remediation before paid traffic.',
             'Review launch support scope, internal admin boundary, approval gates, and customer handoff notes before pilot traffic.',
             'Review monitoring evidence, alert destination/test-send workflow, Cloud Armor verification, and budget alert posture before launch-week traffic.',
+            'Review release evidence for build/image tag, approver, verifier, QA/gate result, rollout state, rollback owner/path, and customer-safe notes after each deploy.',
             'Share the security review packet with customer security, procurement, and technical reviewers after validating launch blockers.',
             'Use the pilot proposal builder to confirm workload, provider path, owner group, price, support boundary, and success metric before the paid-pilot close.',
             'Use the pilot success tracker for weekly customer updates, milestone proof, and expansion/no-go decisions.',
@@ -6870,6 +7074,7 @@ function renderEnterpriseSupportPage(pageName: EnterpriseSupportPageName): strin
         var scannerExposure = packet.scanner_exposure_review || buildScannerExposurePacket(overview, bootstrap);
         var support = packet.launch_support_readiness || buildLaunchSupportPacket(org, sso, readiness, overview, bootstrap, buildGoNoGoStatus(org, sso, readiness, overview, bootstrap));
         var monitoring = packet.monitoring_evidence || buildMonitoringEvidencePacket(org, sso, readiness, overview, bootstrap, buildGoNoGoStatus(org, sso, readiness, overview, bootstrap));
+        var releaseEvidence = packet.release_evidence || buildReleaseEvidencePacket(org, sso, readiness, overview, bootstrap);
         text('evidenceMeta', productionReady ? 'ready for review' : 'needs attention');
         byId('evidenceReadinessList').innerHTML = [
           row('Production readiness', productionReady ? 'Control plane and confidential executor report production-ready.' : (readiness.production_blockers || []).join('; '), productionReady ? 'ready' : 'blocked', productionReady ? 'good' : 'bad'),
@@ -6887,6 +7092,7 @@ function renderEnterpriseSupportPage(pageName: EnterpriseSupportPageName): strin
           linkRow('Policy drift export', 'Customer-safe policy drift and accepted-risk evidence with owners, expiry, compensating controls, and launch status.', '/app/policy', 'policy drift', policyDrift.status === 'hold' ? 'warn' : 'good'),
           linkRow('Integration rollout export', 'Customer-safe cutover plan with application/gateway owners, canary status, rollback path, blockers, and copy-safe snippet guidance.', '/app/rollout', 'rollout', integrationRollout.status === 'hold' ? 'warn' : 'good'),
           linkRow('Scanner exposure export', 'Customer-safe secret exposure intake with redacted finding metadata, owners, rotation status, and remediation evidence.', '/app/scanner', 'scanner', scannerExposure.status === 'hold' ? 'warn' : 'good'),
+          linkRow('Release evidence export', 'Customer-safe release proof with build/image tag, approval, verification, rollout state, and rollback path.', '/app/release', 'release', releaseEvidence.status === 'ready_with_review' ? 'good' : 'warn'),
           linkRow('Provider slot posture', 'Protected provider slots, material mode, rotation, and emergency revoke state.', '/app/keys', 'open', 'good')
         ].join('');
         byId('evidenceProofList').innerHTML = [
@@ -6903,6 +7109,7 @@ function renderEnterpriseSupportPage(pageName: EnterpriseSupportPageName): strin
           linkRow('Review policy drift', 'Confirm every critical/high drift row is closed, blocked intentionally, or accepted with owner and expiration date.', '/app/policy', 'policy drift', policyDrift.status === 'hold' ? 'warn' : 'good'),
           linkRow('Review integration rollout', 'Confirm first workload, owners, target date, canary percentage, rollback path, and dry-run evidence before live traffic.', '/app/rollout', 'rollout', integrationRollout.status === 'hold' ? 'warn' : 'good'),
           linkRow('Review scanner exposure', 'Confirm redacted repository scan findings, owners, rotation/remediation status, and scanner evidence references before paid traffic.', '/app/scanner', 'scanner', scannerExposure.status === 'hold' ? 'warn' : 'good'),
+          linkRow('Review release evidence', 'Confirm the active build tag, approval, verification, rollout state, rollback path, and customer-safe release notes.', '/app/release', 'release', releaseEvidence.status === 'ready_with_review' ? 'good' : 'warn'),
           linkRow('Review technical guide', 'Use the implementation guide for architecture, trust boundaries, key custody, and troubleshooting answers.', '/app/technical-guide', 'guide', 'good'),
           linkRow('Review security packet', 'Share the concise architecture, controls, evidence links, open items, and customer-safe answers with security reviewers.', '/app/security-review', 'security', 'good'),
           linkRow('Review runbooks', 'Operator commands for verification, evidence capture, deploys, secrets, DNS, edge, SSH, and cleanup.', '/app/runbooks', 'runbooks', 'good')
@@ -6927,6 +7134,8 @@ function renderEnterpriseSupportPage(pageName: EnterpriseSupportPageName): strin
         byId('evidenceSupportList').innerHTML = launchSupportProofRows(support).join('');
         text('evidenceMonitoringMeta', monitoring.status);
         byId('evidenceMonitoringList').innerHTML = monitoringEvidenceRows(monitoring).join('');
+        text('evidenceReleaseMeta', releaseEvidence.status);
+        byId('evidenceReleaseList').innerHTML = releaseEvidenceProofRows(releaseEvidence).join('');
         var packetBox = byId('evidencePacket');
         if (packetBox) packetBox.value = JSON.stringify(packet, null, 2);
       }
@@ -6938,6 +7147,7 @@ function renderEnterpriseSupportPage(pageName: EnterpriseSupportPageName): strin
         var apiProxy = buildApiProxySelfTestPacket(overview, bootstrap);
         var support = buildLaunchSupportPacket(org, sso, readiness, overview, bootstrap, goNoGo);
         var monitoring = buildMonitoringEvidencePacket(org, sso, readiness, overview, bootstrap, goNoGo);
+        var releaseEvidence = buildReleaseEvidencePacket(org, sso, readiness, overview, bootstrap);
         var securityReview = buildSecurityReviewPacket(org, sso, readiness, overview, bootstrap, goNoGo);
         var pilotProposal = buildPilotProposalPacket(org, sso, readiness, overview, bootstrap, goNoGo);
         var pilotSuccess = buildPilotSuccessPacket(org, sso, readiness, overview, bootstrap, goNoGo);
@@ -6968,6 +7178,7 @@ function renderEnterpriseSupportPage(pageName: EnterpriseSupportPageName): strin
           'API proxy self-test status: ' + apiProxy.status,
           'Launch support proof status: ' + support.status,
           'Monitoring evidence proof status: ' + monitoring.status,
+          'Release evidence proof status: ' + releaseEvidence.status,
           'Security review packet status: ' + securityReview.status,
           'Pilot proposal status: ' + pilotProposal.status,
           'Pilot success tracker status: ' + pilotSuccess.status,
@@ -6984,6 +7195,7 @@ function renderEnterpriseSupportPage(pageName: EnterpriseSupportPageName): strin
           '- API proxy self-test kit: copy-safe dry-run request, required caller-lock headers, protected email proof, and blocked-recipient denial test.',
           '- Launch support room: support model, internal admin boundary, approval gates, and customer-safe handoff package.',
           '- Monitoring evidence kit: readiness, traffic, denial/error posture, alert workflow, Cloud Armor verification, and budget guardrails.',
+          '- Release evidence: active build/image tag, approver, verifier, gate result, rollout state, rollback path, and secret-safe release notes.',
           '- Security review packet: architecture summary, control coverage, evidence links, open launch items, and common customer answers.',
           '- Pilot proposal builder: first workload scope, expected volume, price, commission math, support boundary, and close steps.',
           '- Pilot success tracker: weekly customer update, milestone proof, live traffic posture, blockers, and expansion decision trail.',
@@ -7010,6 +7222,7 @@ function renderEnterpriseSupportPage(pageName: EnterpriseSupportPageName): strin
         var apiProxy = buildApiProxySelfTestPacket(overview, bootstrap);
         var support = buildLaunchSupportPacket(org, sso, readiness, overview, bootstrap, goNoGo);
         var monitoring = buildMonitoringEvidencePacket(org, sso, readiness, overview, bootstrap, goNoGo);
+        var releaseEvidence = buildReleaseEvidencePacket(org, sso, readiness, overview, bootstrap);
         var securityReview = buildSecurityReviewPacket(org, sso, readiness, overview, bootstrap, goNoGo);
         var pilotProposal = buildPilotProposalPacket(org, sso, readiness, overview, bootstrap, goNoGo);
         var pilotSuccess = buildPilotSuccessPacket(org, sso, readiness, overview, bootstrap, goNoGo);
@@ -7027,6 +7240,7 @@ function renderEnterpriseSupportPage(pageName: EnterpriseSupportPageName): strin
           linkRow('Provider slot demo', 'Show material mode, protected email dry-run, blocked recipient test, policy denial evidence, and emergency revoke.', '/app/keys', 'open', providerCount ? 'good' : 'warn'),
           linkRow('Runtime activity', 'Show status codes, denial events, latency, provider request IDs, and recent traffic.', '/app/activity', 'open', overview.totalCalls ? 'good' : 'warn'),
           linkRow('Alert operations', 'Show monitoring destinations, delivery logs, dispatch runs, and test-send workflow.', '/app/alerts', 'open', monitoring.status === 'ready' ? 'good' : 'warn'),
+          linkRow('Release evidence', 'Show active build/image tag, approval, verification, rollout state, rollback path, and customer-safe notes.', '/app/release', 'release', releaseEvidence.status === 'ready_with_review' ? 'good' : 'warn'),
           linkRow('Evidence packet', 'Copy/download the customer-safe proof packet and explain what secrets are excluded.', '/app/evidence', 'packet', 'good'),
           linkRow('Security review packet', 'Show the copyable buyer packet for security, procurement, and technical review.', '/app/security-review', 'review', securityReview.status === 'ready_for_review' ? 'good' : 'warn'),
           linkRow('Pilot proposal', 'Show the first workload, price, owner group, expected traffic, support terms, and close steps.', '/app/pilot', 'proposal', pilotProposal.status === 'ready_to_send' ? 'good' : 'warn'),
@@ -7043,6 +7257,7 @@ function renderEnterpriseSupportPage(pageName: EnterpriseSupportPageName): strin
           row('API proxy self-test kit', apiProxy.status === 'ready' ? 'Provider slots and proxy traffic evidence are visible; use Provider Slots to copy the safe dry-run request.' : 'Use Provider Slots to run/copy a dry-run request and create proxy traffic evidence before the customer walkthrough.', apiProxy.status, apiProxy.status === 'ready' ? 'good' : 'warn'),
           row('Launch support kit', support.status === 'ready' ? 'Support model, internal admin boundary, and customer handoff package are ready for the pilot story.' : 'Use Support to review launch-week support scope and customer handoff boundaries.', support.status, support.status === 'ready' ? 'good' : 'warn'),
           row('Monitoring evidence kit', monitoring.status === 'ready' ? 'Runtime, traffic, alert workflow, Cloud Armor, and budget evidence are ready for launch-week review.' : 'Use Launch and Alerts to record Cloud Armor verification, budget/monitoring review, and alert test workflow before pilot traffic.', monitoring.status, monitoring.status === 'ready' ? 'good' : 'warn'),
+          row('Release evidence kit', releaseEvidence.status === 'ready_with_review' ? 'Latest release has build tag, approval, verification, rollout state, and rollback evidence recorded.' : 'Use Release Evidence after each deploy so customer reviewers can see what changed and how it was verified.', releaseEvidence.status, releaseEvidence.status === 'ready_with_review' ? 'good' : 'warn'),
           row('Security review packet', securityReview.status === 'ready_for_review' ? 'A copyable customer-safe packet is ready for security, procurement, and technical reviewers.' : 'Runtime readiness or organization scope still needs attention before sharing the review packet.', securityReview.status, securityReview.status === 'ready_for_review' ? 'good' : 'warn'),
           row('Pilot proposal builder', pilotProposal.status === 'ready_to_send' ? 'The paid-pilot proposal is scoped and ready to send after customer review.' : 'Use Pilot Proposal to confirm workload, provider path, owner group, price, support terms, and success metric.', pilotProposal.status, pilotProposal.status === 'ready_to_send' ? 'good' : 'warn'),
           row('Pilot success tracker', pilotSuccess.status === 'on_track' ? 'Pilot milestones, live checks, and weekly update proof are on track.' : 'Use Pilot Success to record kickoff, dry-run, customer review, low-volume traffic, and success metric evidence.', pilotSuccess.status, pilotSuccess.status === 'on_track' ? 'good' : 'warn'),
@@ -7059,6 +7274,7 @@ function renderEnterpriseSupportPage(pageName: EnterpriseSupportPageName): strin
           row('Self-test before live calls', apiProxy.status === 'ready' ? 'API proxy self-test evidence is visible for this organization.' : 'Use dry-run and blocked-recipient tests before enabling any live sandbox provider call.', 'proxy gate', apiProxy.status === 'ready' ? 'good' : 'warn'),
           row('Support boundary before pilot', support.status === 'ready' ? 'Support scope and internal admin boundaries are visible.' : 'Review support model and internal admin boundaries before the customer starts testing.', 'support gate', support.status === 'ready' ? 'good' : 'warn'),
           row('Monitoring before pilot', monitoring.status === 'ready' ? 'Monitoring evidence is ready for launch-week customer testing.' : 'Do not start pilot traffic until runtime, traffic, alert workflow, Cloud Armor, and budget evidence are reviewed.', 'monitoring gate', monitoring.status === 'ready' ? 'good' : 'warn'),
+          row('Release proof after deploy', releaseEvidence.status === 'ready_with_review' ? 'The current release is recorded with approval, verification, and rollback evidence.' : 'Do not present a deploy as customer-ready until Release Evidence records approver, verifier, build tag, rollout state, and rollback path.', 'release gate', releaseEvidence.status === 'ready_with_review' ? 'good' : 'warn'),
           row('Scanner before paid data', scannerExposure.status === 'hold' ? 'Open exposure findings are a paid-data blocker until rotated, revoked, or explicitly accepted for demo-only use.' : 'Use Scanner to keep redacted exposure findings tied to owner and rotation evidence.', 'scanner gate', scannerExposure.status === 'hold' ? 'bad' : 'warn'),
           row('Do not mark GO casually', goNoGo.status === 'go' ? 'The board is green for this browser/org evidence state.' : 'The board is holding on: ' + goNoGo.blockers.join('; '), goNoGo.status, goNoGo.status === 'go' ? 'good' : 'warn'),
           row('Cloud Armor evidence', 'Keep Cloud Armor as a required operator-confirmed check until the live policy exists and verify passes.', 'manual proof', 'warn'),
@@ -7076,6 +7292,7 @@ function renderEnterpriseSupportPage(pageName: EnterpriseSupportPageName): strin
           linkRow('Pilot success', 'Send a weekly update with milestones, blockers, evidence links, and expansion/no-go path.', '/app/pilot-success', 'success', pilotSuccess.status === 'on_track' ? 'good' : 'warn'),
           linkRow('Security review packet', 'Give customer reviewers the concise controls, evidence links, open items, and common answers packet.', '/app/security-review', 'review', securityReview.status === 'ready_for_review' ? 'good' : 'warn'),
           linkRow('Launch evidence', 'Use Launch to prove remaining blockers are visible and assigned before customer traffic.', '/app/launch', 'launch', goNoGo.status === 'go' ? 'good' : 'warn'),
+          linkRow('Release evidence', 'Record the active build tag, approver, verification result, rollout state, rollback path, and customer-safe notes after each deploy.', '/app/release', 'release', releaseEvidence.status === 'ready_with_review' ? 'good' : 'warn'),
           linkRow('Support room', 'Use Support to explain launch-week support, evidence handoff, internal admin boundary, and approval gates.', '/app/support', 'support', support.status === 'ready' ? 'good' : 'warn'),
           linkRow('Runbooks', 'Use Runbooks for verification, deploy, evidence, secrets, DNS, edge, and cleanup commands.', '/app/runbooks', 'runbooks', 'good'),
           linkRow('Technical review', 'Use the Technical guide for architecture, identity, gateway, key custody, policy, and troubleshooting questions.', '/app/technical-guide', 'guide', 'good')
@@ -7168,6 +7385,125 @@ function renderEnterpriseSupportPage(pageName: EnterpriseSupportPageName): strin
         byId('pilotSuccessEvidenceList').innerHTML = pilotSuccessEvidenceRows(packet).join('');
         var brief = byId('pilotSuccessBrief');
         if (brief) brief.value = pilotSuccessBriefText(packet);
+      }
+      function releaseInput(record, field, label, placeholder) {
+        return '<div class="release-field"><label>' + escapeHtml(label) + '</label><input data-release-record-id="' + escapeHtml(record.id) + '" data-release-field="' + escapeHtml(field) + '" value="' + escapeHtml(record[field] || '') + '" placeholder="' + escapeHtml(placeholder || '') + '" /></div>';
+      }
+      function releaseSelect(record, field, label, options) {
+        return '<div class="release-field"><label>' + escapeHtml(label) + '</label><select data-release-record-id="' + escapeHtml(record.id) + '" data-release-field="' + escapeHtml(field) + '">' + options.map(function(option) {
+          return '<option value="' + escapeHtml(option.value) + '"' + releaseSelected(record[field], option.value) + '>' + escapeHtml(option.label) + '</option>';
+        }).join('') + '</select></div>';
+      }
+      function renderReleaseRecord(record) {
+        return '<div class="release-row" data-release-card="' + escapeHtml(record.id) + '">' +
+          '<div class="release-head"><div><div class="row-title">' + escapeHtml(record.release_label || 'Release label not set') + '</div>' +
+          '<div class="row-sub">' + escapeHtml((record.build_tag || 'build tag missing') + ' - ' + (record.rollout_status || 'planned') + ' - updated ' + rel(record.updated_at || record.created_at)) + '</div>' +
+          '<div><span class="tag ' + releaseVerificationTone(record.verification_status) + '">' + escapeHtml(record.verification_status || 'pending') + '</span><span class="tag ' + releaseRolloutTone(record.rollout_status) + '">' + escapeHtml(record.rollout_status || 'planned') + '</span><span class="tag">' + escapeHtml(record.approver || 'approver missing') + '</span></div></div>' +
+          '<div class="row-actions"><button type="button" data-action="remove-release-record" data-release-record-id="' + escapeHtml(record.id) + '">remove</button><a class="tag" href="/app/runbooks">runbooks</a><a class="tag" href="/app/rollout">rollout</a></div></div>' +
+          '<div class="release-fields">' +
+          releaseInput(record, 'release_label', 'release label', 'enterprise demo release') +
+          releaseInput(record, 'build_tag', 'build/image tag', 'git sha or image tag') +
+          releaseInput(record, 'approver', 'approver', 'operator or customer owner') +
+          releaseInput(record, 'verifier', 'verifier', 'person who ran QA/gates') +
+          releaseSelect(record, 'verification_status', 'verification status', [
+            { value: 'pending', label: 'pending' },
+            { value: 'passed', label: 'passed' },
+            { value: 'failed', label: 'failed' },
+            { value: 'blocked', label: 'blocked' },
+            { value: 'accepted_demo', label: 'accepted for demo' }
+          ]) +
+          releaseSelect(record, 'rollout_status', 'rollout status', [
+            { value: 'planned', label: 'planned' },
+            { value: 'canary', label: 'canary' },
+            { value: 'live', label: 'live' },
+            { value: 'rolled_back', label: 'rolled back' },
+            { value: 'paused', label: 'paused' }
+          ]) +
+          releaseInput(record, 'rollback_owner', 'rollback owner', 'operator or team') +
+          releaseInput(record, 'rollback_path', 'rollback path', 'previous tag, reset plan, or runbook ref') +
+          '<div class="release-field wide"><label>change summary</label><textarea data-release-record-id="' + escapeHtml(record.id) + '" data-release-field="change_summary" placeholder="Customer-visible change summary. Metadata only.">' + escapeHtml(record.change_summary || '') + '</textarea></div>' +
+          '<div class="release-field wide"><label>verification evidence note</label><textarea data-release-record-id="' + escapeHtml(record.id) + '" data-release-field="evidence_note" placeholder="Smoke/gate results, build id, deploy ticket, or approval reference. Metadata only.">' + escapeHtml(record.evidence_note || '') + '</textarea></div>' +
+          '</div></div>';
+      }
+      function saveReleaseRecordField(target) {
+        var id = target.getAttribute('data-release-record-id');
+        var field = target.getAttribute('data-release-field');
+        if (!id || !field) return;
+        var rows = readReleaseEvidenceRecords();
+        var now = new Date().toISOString();
+        rows = rows.map(function(row) {
+          if (row.id !== id) return row;
+          row[field] = field === 'verification_status' || field === 'rollout_status' ? target.value : redactReleaseText(target.value);
+          row.updated_at = now;
+          return row;
+        });
+        writeReleaseEvidenceRecords(rows);
+        if (latestOrgPayload && latestReadiness) {
+          renderReleasePanel((latestOrgPayload && latestOrgPayload.organization) || {}, (latestOrgPayload && latestOrgPayload.sso_status) || {}, latestReadiness, latestOverview || {}, latestBootstrap || {});
+        }
+      }
+      function addReleaseRecordFromForm() {
+        var now = new Date().toISOString();
+        var record = {
+          id: 'release-' + Date.now().toString(36),
+          release_label: redactReleaseText(byId('releaseLabel') && byId('releaseLabel').value),
+          build_tag: redactReleaseText(byId('releaseBuildTag') && byId('releaseBuildTag').value),
+          change_summary: redactReleaseText(byId('releaseSummary') && byId('releaseSummary').value),
+          approver: redactReleaseText(byId('releaseApprover') && byId('releaseApprover').value),
+          verifier: redactReleaseText(byId('releaseVerifier') && byId('releaseVerifier').value),
+          verification_status: byId('releaseVerificationStatus') && byId('releaseVerificationStatus').value || 'pending',
+          rollout_status: byId('releaseRolloutStatus') && byId('releaseRolloutStatus').value || 'planned',
+          rollback_owner: redactReleaseText(byId('releaseRollbackOwner') && byId('releaseRollbackOwner').value),
+          rollback_path: redactReleaseText(byId('releaseRollbackPath') && byId('releaseRollbackPath').value),
+          evidence_note: redactReleaseText(byId('releaseEvidenceNote') && byId('releaseEvidenceNote').value),
+          created_at: now,
+          updated_at: now
+        };
+        if (!record.release_label && !record.build_tag && !record.change_summary) {
+          notice('Add a release label, build tag, or change summary before saving release evidence.');
+          return;
+        }
+        var rows = readReleaseEvidenceRecords();
+        rows.unshift(record);
+        writeReleaseEvidenceRecords(rows);
+        ['releaseLabel', 'releaseBuildTag', 'releaseSummary', 'releaseApprover', 'releaseVerifier', 'releaseRollbackOwner', 'releaseRollbackPath', 'releaseEvidenceNote'].forEach(function(id) {
+          var el = byId(id);
+          if (el) el.value = '';
+        });
+        notice('Release evidence saved as customer-safe metadata.');
+        if (latestOrgPayload && latestReadiness) {
+          renderReleasePanel((latestOrgPayload && latestOrgPayload.organization) || {}, (latestOrgPayload && latestOrgPayload.sso_status) || {}, latestReadiness, latestOverview || {}, latestBootstrap || {});
+        }
+      }
+      function removeReleaseRecord(id) {
+        writeReleaseEvidenceRecords(readReleaseEvidenceRecords().filter(function(row) { return row.id !== id; }));
+        if (latestOrgPayload && latestReadiness) {
+          renderReleasePanel((latestOrgPayload && latestOrgPayload.organization) || {}, (latestOrgPayload && latestOrgPayload.sso_status) || {}, latestReadiness, latestOverview || {}, latestBootstrap || {});
+        }
+      }
+      function renderReleasePanel(org, sso, readiness, overview, bootstrap) {
+        var packet = buildReleaseEvidencePacket(org, sso, readiness, overview, bootstrap);
+        var summary = packet.summary || {};
+        var latest = packet.latest_release || {};
+        text('releaseMeta', packet.status);
+        byId('releaseReadinessList').innerHTML = [
+          row('Release evidence status', packet.status === 'ready_with_review' ? 'The latest release is approved, verified, canary/live, and has rollback owner/path recorded.' : 'Hold until release record, approval, verification, canary/live status, and rollback path are complete.', packet.status, packet.status === 'ready_with_review' ? 'good' : 'warn'),
+          row('Runtime readiness', packet.runtime.production_ready ? 'Runtime reports production-ready for this release evidence state.' : 'Runtime readiness is not green; treat this release as a hold for customer traffic.', packet.runtime.production_ready ? 'ready' : 'blocked', packet.runtime.production_ready ? 'good' : 'bad'),
+          row('Latest build/image tag', summary.latest_build_tag || 'Missing build/image tag.', summary.latest_build_tag ? 'recorded' : 'missing', summary.latest_build_tag ? 'good' : 'warn'),
+          row('Latest verification', latest.verification_status ? 'Verifier: ' + (latest.verifier || 'not set') + '. Status: ' + latest.verification_status + '.' : 'No release verification record exists yet.', latest.verification_status || 'missing', releaseVerificationTone(latest.verification_status)),
+          row('Rollback coverage', latest.rollback_owner && latest.rollback_path ? 'Owner: ' + latest.rollback_owner + '. Path: ' + latest.rollback_path + '.' : 'Rollback owner/path is required before treating a release as customer-ready.', latest.rollback_owner && latest.rollback_path ? 'ready' : 'missing', latest.rollback_owner && latest.rollback_path ? 'good' : 'warn')
+        ].join('');
+        byId('releaseRecordList').innerHTML = packet.records.length ? packet.records.map(renderReleaseRecord).join('') : '<div class="empty">No release evidence recorded yet. Add the latest build/image tag, approver, verifier, rollout state, rollback path, and customer-safe notes above.</div>';
+        byId('releaseWorkflowList').innerHTML = [
+          row('Build and tag evidence', 'Record the Git SHA or container tag after Cloud Build or the selected build system finishes. Do not paste environment variables or secrets.', 'metadata only', 'good'),
+          row('Verify before customer traffic', packet.operator_commands[1] + ' and ' + packet.operator_commands[2] + ' should pass before marking verification passed.', 'gate', 'good'),
+          linkRow('Runbooks', 'Use deploy, evidence, live QA, reset, rollback, and cleanup commands from the operator runbooks.', '/app/runbooks', 'runbooks', 'good'),
+          linkRow('Rollout Manager', 'Tie the release to the workload canary, rollout state, blockers, and rollback owner/path.', '/app/rollout', 'rollout', 'good'),
+          linkRow('Evidence packet', 'Export the release evidence with the rest of the customer-safe proof packet.', '/app/evidence', 'packet', 'good'),
+          row('Secret boundary', 'Release evidence excludes ' + packet.secrets_excluded.join(', ') + '.', 'redacted', 'good')
+        ].join('');
+        var packetBox = byId('releaseEvidencePacket');
+        if (packetBox) packetBox.value = JSON.stringify(packet, null, 2);
       }
       function scannerInput(finding, field, label, placeholder) {
         return '<div class="scanner-field"><label>' + escapeHtml(label) + '</label><input data-scanner-finding-id="' + escapeHtml(finding.id) + '" data-scanner-field="' + escapeHtml(field) + '" value="' + escapeHtml(finding[field] || '') + '" placeholder="' + escapeHtml(placeholder || '') + '" /></div>';
@@ -7335,6 +7671,7 @@ function renderEnterpriseSupportPage(pageName: EnterpriseSupportPageName): strin
         byId('plansPanel').style.display = PAGE_MODE === 'plans' ? 'grid' : 'none';
         byId('pilotPanel').style.display = PAGE_MODE === 'pilot' ? 'grid' : 'none';
         byId('pilotSuccessPanel').style.display = PAGE_MODE === 'pilot-success' ? 'grid' : 'none';
+        byId('releasePanel').style.display = PAGE_MODE === 'release' ? 'grid' : 'none';
         byId('scannerPanel').style.display = PAGE_MODE === 'scanner' ? 'grid' : 'none';
         byId('supportPanel').style.display = PAGE_MODE === 'support' ? 'grid' : 'none';
         byId('securityReviewPanel').style.display = PAGE_MODE === 'security-review' ? 'grid' : 'none';
@@ -7382,6 +7719,9 @@ function renderEnterpriseSupportPage(pageName: EnterpriseSupportPageName): strin
         }
         if (PAGE_MODE === 'pilot-success') {
           renderPilotSuccessPanel(org, sso, readiness, overview, bootstrap);
+        }
+        if (PAGE_MODE === 'release') {
+          renderReleasePanel(org, sso, readiness, overview, bootstrap);
         }
         if (PAGE_MODE === 'scanner') {
           renderScannerPanel(org, sso, readiness, overview, bootstrap);
@@ -7604,6 +7944,11 @@ function renderEnterpriseSupportPage(pageName: EnterpriseSupportPageName): strin
         event.preventDefault();
         addScannerFindingFromForm();
       });
+      var releaseEvidenceForm = byId('releaseEvidenceForm');
+      if (releaseEvidenceForm) releaseEvidenceForm.addEventListener('submit', function(event) {
+        event.preventDefault();
+        addReleaseRecordFromForm();
+      });
       document.addEventListener('change', function(event) {
         var target = event.target;
         if (!target || !target.getAttribute) return;
@@ -7648,6 +7993,10 @@ function renderEnterpriseSupportPage(pageName: EnterpriseSupportPageName): strin
           saveScannerFindingField(target);
           return;
         }
+        if (target.hasAttribute('data-release-field')) {
+          saveReleaseRecordField(target);
+          return;
+        }
         if (!target.hasAttribute('data-launch-check')) return;
         setLaunchManualState(target.getAttribute('data-launch-check') || '', target.checked);
         reload();
@@ -7657,6 +8006,9 @@ function renderEnterpriseSupportPage(pageName: EnterpriseSupportPageName): strin
         if (!target || !target.getAttribute) return;
         if (target.getAttribute('data-action') === 'remove-scanner-finding') {
           removeScannerFinding(target.getAttribute('data-scanner-finding-id') || '');
+        }
+        if (target.getAttribute('data-action') === 'remove-release-record') {
+          removeReleaseRecord(target.getAttribute('data-release-record-id') || '');
         }
       });
       var copyLaunchBriefBtn = byId('copyLaunchBriefBtn');
@@ -7763,6 +8115,19 @@ function renderEnterpriseSupportPage(pageName: EnterpriseSupportPageName): strin
           packet.select();
         }
       });
+      var copyReleaseJsonBtn = byId('copyReleaseJsonBtn');
+      if (copyReleaseJsonBtn) copyReleaseJsonBtn.addEventListener('click', async function() {
+        var packet = byId('releaseEvidencePacket');
+        if (!packet) return;
+        try {
+          await navigator.clipboard.writeText(packet.value);
+          copyReleaseJsonBtn.textContent = 'copied';
+          setTimeout(function() { copyReleaseJsonBtn.textContent = 'copy release JSON'; }, 1400);
+        } catch (_) {
+          packet.focus();
+          packet.select();
+        }
+      });
       var downloadEvidencePacketBtn = byId('downloadEvidencePacketBtn');
       if (downloadEvidencePacketBtn) downloadEvidencePacketBtn.addEventListener('click', function() {
         var packet = byId('evidencePacket');
@@ -7804,7 +8169,7 @@ export function renderEnterprisePlannedAppPage(pageName: string, env: Enterprise
   if (pageName === 'activity' || pageName === 'projects' || pageName === 'inventory' || pageName === 'policy' || pageName === 'rollout' || pageName === 'keys') {
     return injectEnterpriseAnalytics(renderEnterpriseOperationsPage(pageName), env, pageName);
   }
-  if (pageName === 'setup' || pageName === 'launch' || pageName === 'evidence' || pageName === 'demo' || pageName === 'technical-guide' || pageName === 'security-review' || pageName === 'verifier' || pageName === 'settings' || pageName === 'plans' || pageName === 'pilot' || pageName === 'pilot-success' || pageName === 'scanner' || pageName === 'support' || pageName === 'runbooks') {
+  if (pageName === 'setup' || pageName === 'launch' || pageName === 'evidence' || pageName === 'demo' || pageName === 'technical-guide' || pageName === 'security-review' || pageName === 'verifier' || pageName === 'settings' || pageName === 'plans' || pageName === 'pilot' || pageName === 'pilot-success' || pageName === 'release' || pageName === 'scanner' || pageName === 'support' || pageName === 'runbooks') {
     return injectEnterpriseAnalytics(renderEnterpriseSupportPage(pageName), env, pageName);
   }
 

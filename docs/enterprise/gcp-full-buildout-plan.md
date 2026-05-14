@@ -28,6 +28,7 @@ Already built:
 - Customer demo script page at `https://enterprise.vaultproof.dev/app/demo` for buyer walkthrough, proof path, guardrails, Q&A, and close steps
 - Customer launch checklist page at `https://enterprise.vaultproof.dev/app/launch`, including safe-to-pilot go/no-go board with browser-local operator evidence status, timestamps, and stale holds
 - Customer evidence packet page at `https://enterprise.vaultproof.dev/app/evidence`, including go/no-go launch decision summary and blockers
+- Customer release evidence center at `https://enterprise.vaultproof.dev/app/release` for build/image tag, approver, verifier, rollout state, rollback owner/path, and customer-safe release proof
 - Customer launch support room at `https://enterprise.vaultproof.dev/app/support` for support model, internal admin boundary, approval gates, handoff checklist, and copyable support brief
 - Customer security review packet at `https://enterprise.vaultproof.dev/app/security-review` for architecture, controls, evidence links, open items, common buyer answers, known limitations, and secret exclusions
 - Buyer commercial package page at `https://enterprise.vaultproof.dev/app/plans` for paid-pilot scope, included controls, contract guardrails, security boundaries, and customer review links
@@ -47,6 +48,7 @@ Not yet customer-ready:
 - Live MiniMax provider dispatch works for the demo; add a separate OpenAI slot only if the demo specifically needs OpenAI.
 - API inventory management still needs persistent audited records, CSV/OpenAPI import, automatic discovery, and production review workflow after the demo.
 - Scanner exposure intake still needs persistent audited records, CI/scanner imports, automatic discovery, and PR/remediation workflows after the demo.
+- Release evidence still needs persistent audited records, automated Cloud Build/deploy evidence capture, approval workflow, and rollback automation after the demo.
 - Supabase OAuth/login settings still need to be confirmed for `enterprise.vaultproof.dev`.
 - Older migration/history docs still have Azure-era language; customer-facing app UI is cleaned for the GCP demo.
 
@@ -75,7 +77,7 @@ Goal 1 is the first milestone where Ken can start testing the sellable product p
 
 Current status: Goal 1 demo dry-run gate is done. The control-plane runtime env includes the public Supabase anon key. `npm run qa:enterprise-login` now exists for repeatable login readiness checks; strict mode still needs to be run with Supabase service-role env, then followed by final human OAuth/password browser QA.
 
-Customer packaging status: all enterprise buyer pages are on `https://enterprise.vaultproof.dev`. `https://enterprise.vaultproof.dev/app/plans` now carries the first sellable paid-pilot package view, `https://enterprise.vaultproof.dev/app/security-review` gives buyers a copyable security/procurement review packet, `https://enterprise.vaultproof.dev/app/pilot` creates the first-workload proposal with price, commission, support, incident-response, and close-step terms, and `https://enterprise.vaultproof.dev/app/pilot-success` tracks weekly proof, milestones, blockers, and expansion/no-go readiness after kickoff. It keeps automated billing and hard plan enforcement out of scope for Goal 1; capacity, support cadence, retention, SSO depth, and dedicated-runtime terms stay contract-controlled until billing APIs exist.
+Customer packaging status: all enterprise buyer pages are on `https://enterprise.vaultproof.dev`. `https://enterprise.vaultproof.dev/app/plans` now carries the first sellable paid-pilot package view, `https://enterprise.vaultproof.dev/app/security-review` gives buyers a copyable security/procurement review packet, `https://enterprise.vaultproof.dev/app/release` records build/approval/verification/rollback proof after each deploy, `https://enterprise.vaultproof.dev/app/pilot` creates the first-workload proposal with price, commission, support, incident-response, and close-step terms, and `https://enterprise.vaultproof.dev/app/pilot-success` tracks weekly proof, milestones, blockers, and expansion/no-go readiness after kickoff. It keeps automated billing and hard plan enforcement out of scope for Goal 1; capacity, support cadence, retention, SSO depth, and dedicated-runtime terms stay contract-controlled until billing APIs exist.
 
 ## Architecture
 
@@ -189,6 +191,7 @@ Build:
 - Built: add the first API inventory management slice described below.
 - Built: add the first policy drift and exceptions slice described below.
 - Built: add the first integration rollout manager slice described below.
+- Built: add the first release evidence slice described below.
 - Run `LOGIN_QA_REQUIRE_SESSION=true npm run qa:enterprise-login` with Supabase service-role env to verify the live login page, Supabase redirect allowlist, generated browser session, and authenticated enterprise org/bootstrap APIs.
 - Add `LOGIN_QA_OAUTH_PROVIDER=google` to the login QA command after the external OAuth provider app is configured.
 - Confirm API execution path through `/api/v1/enterprise/execute`.
@@ -394,6 +397,36 @@ Demo success:
 - Evidence is useful for security review without revealing the secret value that triggered the finding.
 - The demo script can explain: "VaultProof protects new calls and gives you a controlled path to clean up old exposed keys."
 
+## Demo Feature: Release Evidence Center
+
+This belongs in the enterprise demo because buyers will ask what changed, which build is live, who approved it, how it was tested, and how VaultProof can roll back if the release is bad. The first version is browser-local and customer-safe so it can support demos without adding release database scope yet.
+
+Demo goal:
+
+- Track release label, build/image tag, change summary, approver, verifier, verification status, rollout state, rollback owner/path, and evidence note.
+- Keep release evidence metadata-only: no raw provider keys, encrypted shares, Supabase service-role keys, browser sessions, OAuth client secrets, origin-lock secrets, executor signing secrets, runtime-token secrets, environment variables, request bodies, response bodies, or customer payloads.
+- Tie release readiness to `/readiness`, the live app QA/gate commands, Rollout Manager, Launch go/no-go, Evidence, Security Review, and Runbooks.
+
+First demo slice:
+
+- Built: `https://enterprise.vaultproof.dev/app/release` renders a customer-facing Release Evidence center using the shared enterprise sidebar and light dashboard theme.
+- Built: save browser-local redacted release records per organization under `vaultproof_release_evidence::<orgId>` until audited release records exist.
+- Built: compute a `needs_release_record`, `hold`, or `ready_with_review` state from runtime readiness, approval, verification, rollout state, and rollback owner/path.
+- Built: export `vaultproof_enterprise_release_evidence` JSON without secrets.
+- Built: include release evidence proof under `release_evidence` in the evidence packet and link it from the security review packet and demo script.
+
+Production follow-up:
+
+- Add persistent audited release records with org/project RBAC, deploy/build metadata ingestion, approval workflow, and status transitions.
+- Attach Cloud Build IDs, image digests, VM metadata, live gate results, Cloud Armor verification, and rollback snapshots automatically.
+- Add notification and approval gates for failed verification, paused rollout, stale release evidence, and missing rollback owner/path.
+
+Demo success:
+
+- A customer can see the active build tag, what changed, who approved it, which gate verified it, whether it is canary/live, and who owns rollback.
+- Evidence is useful for procurement/security review without leaking env values, keys, tokens, requests, responses, or payloads.
+- The demo script can explain: "VaultProof does not just protect calls; it gives you a release proof trail for the protected path."
+
 ## Phase 5: Customer Scale
 
 Build after first customer proof:
@@ -405,7 +438,7 @@ Build after first customer proof:
 - Add persistent policy drift and exceptions management with approvals, expiry reminders, policy-as-code export, and alerting.
 - Add persistent integration rollout management with audited cutover records, canary gates, rollback paths, gateway template management, and launch evidence.
 - Add persistent scanner exposure management with audited findings, CI imports, automatic discovery, PR/remediation workflow, and alerting.
-- Add automated evidence bundle capture for each release.
+- Add persistent release evidence management and automated evidence bundle capture for each release.
 - Add a rollback script for edge, VM image, and DNS changes.
 - Clean older Azure migration/history docs into provider-neutral or clearly archived references before paid-production handoff.
 
@@ -424,6 +457,7 @@ Build after first customer proof:
 - Cloud Armor policy is attached and `npm run verify:gcp-enterprise-cloud-armor` passes.
 - Customer launch checklist and go/no-go board at `https://enterprise.vaultproof.dev/app/launch` are reviewed with the pilot user, including browser-local manual evidence status/timestamps.
 - Customer evidence packet at `https://enterprise.vaultproof.dev/app/evidence` is reviewed with the pilot user and includes the current go/no-go launch decision and blockers.
+- Release evidence at `https://enterprise.vaultproof.dev/app/release` is reviewed after each deploy for build/image tag, approval, verification, rollout state, and rollback owner/path.
 - API inventory at `https://enterprise.vaultproof.dev/app/inventory` is reviewed for owner, environment, risk, data sensitivity, provider-slot mapping, caller-lock posture, traffic evidence, stale/no-traffic status, and review due items.
 - Policy drift board at `https://enterprise.vaultproof.dev/app/policy` is reviewed for control gaps, accepted-risk owner, reason, compensating control, expiration date, next action, and launch hold status.
 - Integration rollout manager at `https://enterprise.vaultproof.dev/app/rollout` is reviewed for first workload, integration mode, app/gateway owners, target date, canary percentage, dry-run/test status, rollback owner/path, blockers, and evidence export.
