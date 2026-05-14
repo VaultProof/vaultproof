@@ -1,6 +1,6 @@
 # VaultProof GCP Build Status
 
-Last updated: 2026-05-14T00:28:35Z
+Last updated: 2026-05-14T01:20:35.585Z
 
 This file is the living inventory of what has been built for VaultProof on Google Cloud. It is refreshed after every successful enterprise image build by `infra/gcp/enterprise-secure-runtime/build-images.sh`.
 
@@ -47,15 +47,16 @@ Status: `attached and enforced`
 
 ## App Shell Notes
 
-- Build `0a2bcee` is the current deployed GCP image tag for both control plane and executor containers.
+- Build `814863c` is the current deployed GCP image tag for both control plane and executor containers.
 - Homepage hero headline is `Active Key Protection for every API call.`
 - All customer-facing enterprise pages below live under `https://enterprise.vaultproof.dev`; route-only mentions are in-app links on that subdomain.
 - `https://enterprise.vaultproof.dev/app/demo` is the buyer walkthrough: live workspace facts, proof path, identity/OAuth proof kit, key-rotation proof kit, pilot operations proof kit, API proxy self-test kit, monitoring evidence kit, safety guardrails, objection answers, paid-pilot close steps, and a copyable demo talk track generated without secrets.
 - `https://enterprise.vaultproof.dev/app/launch` is the customer go-live board: live readiness summary, auto/manual customer tasks, browser-saved checklist progress, safe-to-pilot go/no-go readiness, browser-local status/timestamp evidence with stale holds, workflow links, identity/OAuth, key-rotation, and pilot-operations evidence packets, and a copyable launch brief.
-- `https://enterprise.vaultproof.dev/app/evidence` is the customer proof packet: runtime readiness, go/no-go launch decision and blockers, identity/login QA evidence, key-rotation/demo-only acceptance evidence, pilot operations rollback and budget/monitoring evidence, API proxy self-test evidence, API inventory proof, policy drift proof, integration rollout proof, launch support readiness, monitoring evidence with alert workflow/Cloud Armor/budget guardrails, access-review and audit export links, provider posture, rollout workflow, and copy/download JSON evidence summary without secrets.
+- `https://enterprise.vaultproof.dev/app/evidence` is the customer proof packet: runtime readiness, go/no-go launch decision and blockers, identity/login QA evidence, key-rotation/demo-only acceptance evidence, pilot operations rollback and budget/monitoring evidence, API proxy self-test evidence, API inventory proof, policy drift proof, integration rollout proof, scanner exposure proof, launch support readiness, monitoring evidence with alert workflow/Cloud Armor/budget guardrails, access-review and audit export links, provider posture, rollout workflow, and copy/download JSON evidence summary without secrets.
 - `https://enterprise.vaultproof.dev/app/inventory` is the customer API inventory board: metadata-only API surfaces from existing projects, provider slots, caller-lock policy, project health, and access-log rollups; browser-local owner/environment/risk/review annotations; protected/missing-provider/policy-incomplete/no-traffic/stale/review-due posture; workflow links; and copyable `vaultproof_enterprise_api_inventory` JSON without secrets.
 - `https://enterprise.vaultproof.dev/app/policy` is the customer policy drift board: control-gap rows from existing project/provider/policy/inventory/traffic evidence; browser-local accepted-risk records with owner, reason, risk, compensating control, expiration date, approval status, and next action; launch hold summary; workflow links; and copyable `vaultproof_enterprise_policy_drift` JSON without secrets.
 - `https://enterprise.vaultproof.dev/app/rollout` is the customer integration rollout board: workload cutover rows from API inventory/policy/traffic evidence; browser-local application, integration mode, owner, target date, canary, test status, rollback, and support metadata; derived blockers; copy-safe dry-run snippets with placeholders; and copyable `vaultproof_enterprise_integration_rollout` JSON without secrets.
+- `https://enterprise.vaultproof.dev/app/scanner` is the scanner exposure intake: browser-local redacted repository exposure findings; owner, severity, status, provider-slot hint, evidence reference, and remediation metadata; no repository upload or `/api/scanner` calls; and copyable `vaultproof_enterprise_scanner_exposure_review` JSON without secrets.
 - `https://enterprise.vaultproof.dev/app/security-review` is the buyer security packet: concise architecture summary, control coverage, evidence links, open review items, common customer answers, known limitations, secret exclusions, and copyable security/procurement review text.
 - `https://enterprise.vaultproof.dev/app/plans` is the buyer package view: rollout posture, paid-pilot commercial package, contract guardrails, security boundaries, and direct links into evidence, launch, technical guide, and runbooks.
 - `https://enterprise.vaultproof.dev/app/pilot` is the paid-pilot proposal builder: browser-local first workload scope, expected volume, monthly price, 20% sales commission math, support/incident-response terms, success metric, and copyable customer proposal text without secrets.
@@ -182,6 +183,16 @@ The demo slice starts from existing data instead of new infrastructure: it deriv
 
 Rollout records must never store raw provider keys, bearer tokens, OAuth client secrets, SAML material, request bodies, response bodies, or customer payloads.
 
+## Feature: Scanner Exposure Intake
+
+Status: `built for enterprise demo`
+
+`https://enterprise.vaultproof.dev/app/scanner` gives customer security and platform teams a metadata-only place to record repository exposure findings before paid traffic. It captures repository/ref, finding class, secret family, severity, status, owner, provider-slot hint, redacted evidence reference, and remediation note without uploading repositories or secret values.
+
+The demo slice starts from browser-local records instead of new infrastructure: it saves redacted scanner findings in local storage per organization under `vaultproof_scanner_findings::<orgId>`, redacts secret-like input before storage/export, avoids `/api/scanner` and repository upload paths, and includes the summary in the evidence packet under `scanner_exposure_review`. Persistent audited scanner tables, CI imports, automatic discovery, PR/remediation workflow, and alerting can follow after the customer demo slice.
+
+Scanner records must never store raw secret values, repository credentials, source file contents, provider API keys, OAuth client secrets, webhook signing secrets, private key material, bearer tokens, request bodies, response bodies, or customer payloads.
+
 ## What's Next
 
 1. Run `LOGIN_QA_REQUIRE_SESSION=true npm run qa:enterprise-login` with Supabase service-role env for `ken@vaultproof.dev`.
@@ -223,14 +234,14 @@ Cost note: the current fixed estimate is above the existing `VaultProof Producti
 
 ## Build Pointer
 
-- Build tag: `0a2bcee`
+- Build tag: `814863c`
 - Registry: `us-central1-docker.pkg.dev/vaultproof-prod/vaultproof`
-- Control plane image: `us-central1-docker.pkg.dev/vaultproof-prod/vaultproof/enterprise-control-plane:0a2bcee`
-- Control plane digest: `sha256:58c1a8824ea6e613e96e9a3f733db78bd9c597dbfc6fac75bbf678ff1f6f8ab2`
-- Control plane built at: `2026-05-13T10:08:15.091986845Z`
-- Executor image: `us-central1-docker.pkg.dev/vaultproof-prod/vaultproof/enterprise-secure-executor:0a2bcee`
-- Executor digest: `sha256:01152e7b307601e19fdb74035f6787164590d77019485054e004aaeef8b7eb01`
-- Executor built at: `2026-05-13T10:08:26.673301993Z`
+- Control plane image: `us-central1-docker.pkg.dev/vaultproof-prod/vaultproof/enterprise-control-plane:814863c`
+- Control plane digest: `sha256:d0bef127ef7f98522a6a261d3bf983c418056cfe661cede38fc8933fe56f6fd5`
+- Control plane built at: `2026-05-14T01:19:56.611437793Z`
+- Executor image: `us-central1-docker.pkg.dev/vaultproof-prod/vaultproof/enterprise-secure-executor:814863c`
+- Executor digest: `sha256:fb91a4b19aa21177a9569e008c40506031b311a8be50900dcb640f023d9ebe7f`
+- Executor built at: `2026-05-14T01:20:11.520280755Z`
 
 ## Project
 

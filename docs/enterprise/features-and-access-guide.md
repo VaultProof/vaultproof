@@ -103,7 +103,7 @@ If you see an auth message:
 | Provider Slots | `/app/keys` | Active providers, emergency revoke, rotation checklist, and Secure Key Release notes. |
 | Settings | `/app/settings` | Tenant preferences, session/security notices, and org defaults. |
 | Plans | `/app/plans` | Paid-pilot package, included controls, capacity envelope, contract guardrails, security boundaries, rollout posture, and customer review links. |
-| Scanner | `/app/scanner` | Placeholder entry for future enterprise-safe repository/security scanning integration. |
+| Scanner | `/app/scanner` | Enterprise-safe secret exposure intake for redacted repository findings, owners, rotation/remediation status, provider-slot hints, and customer-safe `vaultproof_enterprise_scanner_exposure_review` evidence exports without repo contents or secret values. |
 | Runbooks | `/app/runbooks` | Operator guide for production verification, evidence capture, deployment, secret checks, DNS/edge checks, SSH hardening, and cleanup. |
 
 ## VaultProof AI Proof Verifier
@@ -1145,7 +1145,7 @@ These are intentionally not finished yet:
 - Old Container Apps prototype resources still exist as rollback/legacy inventory until cleanup is approved.
 - Setup-time Supabase/service/signing secrets must be rotated before external customer production use.
 - Enterprise billing/plan enforcement is still manual.
-- Scanner page is an enterprise-safe placeholder until scanner APIs are ready.
+- Scanner page is a browser-local, metadata-only exposure intake; persistent audited scanner APIs and CI imports are still future work.
 
 ## Useful Resource Names
 

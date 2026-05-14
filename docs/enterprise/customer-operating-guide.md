@@ -280,7 +280,7 @@ After an incident:
 | Runbooks | Operators run verification, evidence, deployment, hardening, TLS/APIM, SSH, and cleanup commands. |
 | Settings | Admins review tenant defaults and security notices. |
 | Plans | Owners track APIM, TLS, limits, packaging, and rollout notes. |
-| Scanner | Teams track future enterprise-safe scanner readiness. |
+| Scanner | Teams record redacted repository exposure findings, owners, rotation/remediation status, and evidence references without uploading repo contents or secret values. |
 
 ## Recommended First Rollout
 

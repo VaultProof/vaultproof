@@ -494,7 +494,7 @@ Best for:
 | setup | Technical guide | Read detailed identity, network, gateway, key custody, attestation, evidence, and troubleshooting guidance. |
 | setup | Settings | Review tenant defaults and session/security notices. |
 | setup | Plans | Track APIM, TLS, limits, rollout, and handoff notes. |
-| setup | Scanner | Placeholder/checklist for enterprise repository scanning. |
+| setup | Scanner | Record redacted repository exposure findings, owners, rotation/remediation status, and customer-safe scanner evidence. |
 | setup | Runbooks | Use operator commands for verification, deployment, evidence, and hardening. |
 | setup | Sign out | Clear the local enterprise session and return to the login page. |
 
@@ -721,7 +721,7 @@ Ready:
 
 Pending or still operationally controlled:
 
-- Scanner is a launch checklist until scoped scanner APIs are enabled.
+- Scanner is now a metadata-only exposure intake for the demo. It does not upload repositories or raw secret values; persistent scanner APIs and audited CI imports can come later.
 - APIM route cutover is planned/verified but not the active Front Door path yet.
 - Origin TLS cutover needs final trusted cert/DNS/NSG/cutover work.
 - SSH closure waits for alternate access or break-glass readiness.

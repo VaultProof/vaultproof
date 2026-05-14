@@ -1080,9 +1080,9 @@ const plannedEnterprisePages: Record<string, {
   },
   scanner: {
     title: 'Scanner',
-    kicker: 'repository security',
-    summary: 'Enterprise scanner will become a separate repository/security scanning entry point once the scanner APIs are enterprise-safe.',
-    features: ['Repository scan entry', 'Secret remediation workflow', 'Enterprise-safe scanner API integration', 'Provider rotation follow-up'],
+    kicker: 'secret exposure intake',
+    summary: 'Enterprise scanner records metadata-only repository exposure findings, owners, rotation status, and evidence while scanner APIs remain disabled.',
+    features: ['Redacted exposure intake', 'Secret remediation workflow', 'Provider rotation follow-up', 'Customer-safe scanner evidence export'],
     primaryHref: '/app/dashboard',
     primaryLabel: 'back to dashboard',
   },
@@ -3912,8 +3912,8 @@ function renderEnterpriseSupportPage(pageName: EnterpriseSupportPageName): strin
     },
     scanner: {
       title: 'Scanner',
-      kicker: 'repository security',
-      lead: 'Prepare repository scanning for enterprise use while keeping scanner actions disabled until enterprise-safe scanner APIs are available.',
+      kicker: 'secret exposure intake',
+      lead: 'Record sanitized repository exposure findings, owners, rotation state, and remediation evidence for enterprise review without uploading repository contents or secret values.',
     },
     support: {
       title: 'Launch support room',
@@ -3988,6 +3988,13 @@ function renderEnterpriseSupportPage(pageName: EnterpriseSupportPageName): strin
     .evidence-actions { display: flex; gap: 10px; flex-wrap: wrap; }
     .brief-box { width: 100%; min-height: 210px; font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace; font-size: 12px; line-height: 1.55; }
     .demo-script { min-height: 330px; }
+    .scanner-form, .scanner-fields { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
+    .scanner-field { display: grid; gap: 6px; }
+    .scanner-field.wide { grid-column: 1 / -1; }
+    .scanner-field label { color: var(--muted); font-size: 12px; text-transform: uppercase; letter-spacing: .08em; font-weight: 800; }
+    .scanner-row { border: 1px solid rgba(48,76,71,.12); background: rgba(247,250,244,.84); border-radius: 18px; padding: 15px; display: grid; gap: 12px; }
+    .scanner-head { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 12px; align-items: start; }
+    .row-actions { display: flex; gap: 8px; flex-wrap: wrap; justify-content: flex-end; }
     .kpi-label { color: var(--muted); font-size: 12px; text-transform: uppercase; letter-spacing: .1em; }
     .kpi-value { font-size: 34px; font-weight: 850; letter-spacing: -.05em; margin-top: 8px; }
     .kpi-sub { color: var(--muted); font-size: 13px; margin-top: 6px; }
@@ -4005,7 +4012,7 @@ function renderEnterpriseSupportPage(pageName: EnterpriseSupportPageName): strin
     .empty, .notice { color: var(--muted); border: 1px dashed rgba(48,76,71,.22); border-radius: 18px; padding: 18px; background: rgba(247,250,244,.78); }
     .notice.error { color: var(--red); border-color: rgba(185,93,80,.3); }
     @media (max-width: 1100px) { .kpis, .two { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
-    @media (max-width: 760px) { .shell { grid-template-columns: 1fr; } .topbar { flex-direction: column; } .kpis, .two, .launch-check-row, .go-evidence-row, .row { grid-template-columns: 1fr; } .go-evidence-row > span:last-child { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; } .go-status { width: auto; } }
+    @media (max-width: 760px) { .shell { grid-template-columns: 1fr; } .topbar { flex-direction: column; } .kpis, .two, .launch-check-row, .go-evidence-row, .row, .scanner-form, .scanner-fields, .scanner-head { grid-template-columns: 1fr; } .go-evidence-row > span:last-child { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; } .go-status { width: auto; } .row-actions { justify-content: flex-start; } }
     ${ENTERPRISE_APP_SHELL_THEME}
     ${ENTERPRISE_STATIC_APP_POLISH_THEME}
   </style>
@@ -4126,6 +4133,10 @@ function renderEnterpriseSupportPage(pageName: EnterpriseSupportPageName): strin
         <div class="card" style="grid-column:1/-1">
           <div class="section-title"><h2>Integration rollout proof</h2><span class="mini" id="evidenceRolloutMeta">hold</span></div>
           <div id="evidenceRolloutList" class="list"></div>
+        </div>
+        <div class="card" style="grid-column:1/-1">
+          <div class="section-title"><h2>Scanner exposure proof</h2><span class="mini" id="evidenceScannerMeta">hold</span></div>
+          <div id="evidenceScannerList" class="list"></div>
         </div>
         <div class="card" style="grid-column:1/-1">
           <div class="section-title"><h2>Launch support proof</h2><span class="mini" id="evidenceSupportMeta">hold</span></div>
@@ -4619,8 +4630,41 @@ function renderEnterpriseSupportPage(pageName: EnterpriseSupportPageName): strin
       </section>
 
       <section id="scannerPanel" class="grid two" style="display:none">
-        <div class="card"><div class="section-title"><h2>Enterprise scanner status</h2><span class="mini">not enabled</span></div><div id="scannerList" class="list"></div></div>
-        <div class="card"><div class="section-title"><h2>Safe launch checklist</h2><span class="mini">before wiring APIs</span></div><div id="scannerChecklist" class="list"></div></div>
+        <div class="card">
+          <div class="section-title"><h2>Secret exposure intake</h2><span class="mini" id="scannerMeta">metadata only</span></div>
+          <form id="scannerFindingForm" class="scanner-form">
+            <div class="scanner-field"><label for="scannerRepository">repository</label><input id="scannerRepository" placeholder="customer/app-service" /></div>
+            <div class="scanner-field"><label for="scannerBranch">branch/ref</label><input id="scannerBranch" placeholder="main, release/2026-05, or commit hash" /></div>
+            <div class="scanner-field"><label for="scannerFindingType">finding type</label><select id="scannerFindingType"><option value="hardcoded_secret">hardcoded secret</option><option value="env_file">env/config file</option><option value="oauth_secret">OAuth/client secret</option><option value="webhook_secret">webhook signing secret</option><option value="provider_key">provider API key</option><option value="private_key">private key material</option><option value="other">other</option></select></div>
+            <div class="scanner-field"><label for="scannerSecretFamily">secret family</label><input id="scannerSecretFamily" placeholder="OpenAI, Resend, SendGrid, OAuth, Stripe" /></div>
+            <div class="scanner-field"><label for="scannerSeverity">severity</label><select id="scannerSeverity"><option value="critical">critical</option><option value="high">high</option><option value="medium">medium</option><option value="low">low</option></select></div>
+            <div class="scanner-field"><label for="scannerStatus">status</label><select id="scannerStatus"><option value="new">new</option><option value="confirmed">confirmed</option><option value="rotating">rotating</option><option value="rotated">rotated</option><option value="accepted_demo">accepted for demo</option><option value="false_positive">false positive</option><option value="blocked">blocked</option></select></div>
+            <div class="scanner-field"><label for="scannerOwner">owner</label><input id="scannerOwner" placeholder="security or app owner" /></div>
+            <div class="scanner-field"><label for="scannerProviderSlot">provider slot</label><input id="scannerProviderSlot" placeholder="provider slug or slot name" /></div>
+            <div class="scanner-field wide"><label for="scannerEvidenceRef">redacted scanner evidence</label><textarea id="scannerEvidenceRef" placeholder="Sanitized file path, scanner finding id, PR/ticket id, or hash only. Do not paste secret values, source files, request bodies, or customer payloads."></textarea></div>
+            <div class="scanner-field wide"><label for="scannerNote">remediation note</label><textarea id="scannerNote" placeholder="Rotation owner, revoke path, compensating control, or why this is demo-only. Metadata only."></textarea></div>
+            <button class="primary" type="submit">add finding</button>
+          </form>
+        </div>
+        <div class="card">
+          <div class="section-title"><h2>Scanner posture</h2><span class="mini">enterprise-safe</span></div>
+          <div id="scannerList" class="list"></div>
+        </div>
+        <div class="card" style="grid-column:1/-1">
+          <div class="section-title"><h2>Exposure findings</h2><span class="mini">saved in this browser</span></div>
+          <div id="scannerFindingList" class="list"></div>
+        </div>
+        <div class="card">
+          <div class="section-title"><h2>Remediation workflow</h2><span class="mini">customer handoff</span></div>
+          <div id="scannerChecklist" class="list"></div>
+        </div>
+        <div class="card">
+          <div class="section-title">
+            <h2>Scanner evidence JSON</h2>
+            <button id="copyScannerJsonBtn" type="button">copy scanner JSON</button>
+          </div>
+          <textarea id="scannerEvidencePacket" class="brief-box" readonly aria-label="Scanner evidence JSON"></textarea>
+        </div>
       </section>
 
       <section id="verifierPanel" class="grid two" style="display:none">
@@ -5529,6 +5573,170 @@ function renderEnterpriseSupportPage(pageName: EnterpriseSupportPageName): strin
           row('Secret boundary', 'Rollout evidence excludes ' + packet.secrets_excluded.join(', ') + '.', 'redacted', 'good')
         ];
       }
+      function scannerStorageKey() {
+        return 'vaultproof_scanner_findings::' + (currentOrgId || 'default');
+      }
+      function scannerSecretPattern(value) {
+        return /(sk-[a-z0-9_-]{8,}|gocspx-|eyJ[a-zA-Z0-9_-]{10,}|-----BEGIN|Bearer\\s+|service[_ -]?role|client[_ -]?secret|api[_ -]?key|password|private[_ -]?key|authorization:|cookie:|x-api-key|secret_access_key)/i.test(String(value || ''));
+      }
+      function redactScannerText(value) {
+        var textValue = String(value || '').trim();
+        if (!textValue) return '';
+        if (scannerSecretPattern(textValue)) return '[redacted: scanner field contained secret-like material]';
+        return textValue.slice(0, 500);
+      }
+      function readScannerFindings() {
+        try {
+          var parsed = JSON.parse(localStorage.getItem(scannerStorageKey()) || '[]');
+          var rows = Array.isArray(parsed) ? parsed : Object.keys(parsed || {}).map(function(key) { return parsed[key]; });
+          return rows.filter(function(row) { return row && typeof row === 'object'; }).map(function(row) {
+            return {
+              id: row.id || ('scanner-' + Math.random().toString(36).slice(2)),
+              repository: redactScannerText(row.repository),
+              branch: redactScannerText(row.branch),
+              finding_type: redactScannerText(row.finding_type || 'hardcoded_secret'),
+              secret_family: redactScannerText(row.secret_family),
+              severity: ['critical', 'high', 'medium', 'low'].indexOf(row.severity) !== -1 ? row.severity : 'high',
+              status: ['new', 'confirmed', 'rotating', 'rotated', 'accepted_demo', 'false_positive', 'blocked'].indexOf(row.status) !== -1 ? row.status : 'new',
+              owner: redactScannerText(row.owner),
+              provider_slot: redactScannerText(row.provider_slot),
+              evidence_ref: redactScannerText(row.evidence_ref),
+              note: redactScannerText(row.note),
+              created_at: row.created_at || null,
+              updated_at: row.updated_at || null
+            };
+          }).slice(0, 50);
+        } catch (_error) {
+          return [];
+        }
+      }
+      function writeScannerFindings(rows) {
+        localStorage.setItem(scannerStorageKey(), JSON.stringify((rows || []).slice(0, 50)));
+      }
+      function scannerStatusTone(status) {
+        if (status === 'rotated' || status === 'false_positive') return 'good';
+        if (status === 'blocked' || status === 'new' || status === 'confirmed') return 'bad';
+        return 'warn';
+      }
+      function scannerSeverityTone(severity) {
+        if (severity === 'critical' || severity === 'high') return 'bad';
+        if (severity === 'medium') return 'warn';
+        return 'good';
+      }
+      function scannerFindingOpen(finding) {
+        return ['new', 'confirmed', 'rotating', 'blocked'].indexOf(finding.status) !== -1;
+      }
+      function scannerSelected(value, expected) {
+        return String(value || '') === expected ? ' selected' : '';
+      }
+      function scannerCoverageRows(overview, bootstrap) {
+        var inventoryRows = apiInventoryRowsFromData(overview || {}, bootstrap || {});
+        return inventoryRows.map(function(row) {
+          var provider = row.provider || {};
+          return {
+            id: row.id,
+            project: {
+              id: row.project_id,
+              name: row.project_name,
+              vp_proj_id: row.vp_proj_id
+            },
+            provider: row.provider ? {
+              provider: provider.provider || null,
+              slug: provider.slug || null,
+              material_mode: provider.material_mode || null
+            } : null,
+            risk_level: row.annotation && row.annotation.risk_level || 'unset',
+            data_sensitivity: row.annotation && row.annotation.data_sensitivity || 'unset',
+            traffic: row.traffic || {},
+            coverage_status: 'manual_scanner_evidence_required'
+          };
+        });
+      }
+      function buildScannerExposurePacket(overview, bootstrap) {
+        var findings = readScannerFindings();
+        var coverage = scannerCoverageRows(overview || {}, bootstrap || {});
+        var openCritical = findings.filter(function(item) {
+          return scannerFindingOpen(item) && (item.severity === 'critical' || item.severity === 'high');
+        }).length;
+        var summary = {
+          total_findings: findings.length,
+          critical: findings.filter(function(item) { return item.severity === 'critical'; }).length,
+          high: findings.filter(function(item) { return item.severity === 'high'; }).length,
+          open_critical_or_high: openCritical,
+          rotating: findings.filter(function(item) { return item.status === 'rotating'; }).length,
+          rotated: findings.filter(function(item) { return item.status === 'rotated'; }).length,
+          accepted_for_demo: findings.filter(function(item) { return item.status === 'accepted_demo'; }).length,
+          false_positive: findings.filter(function(item) { return item.status === 'false_positive'; }).length,
+          blocked: findings.filter(function(item) { return item.status === 'blocked'; }).length,
+          coverage_candidates: coverage.length
+        };
+        var status = openCritical || summary.blocked ? 'hold' : findings.length ? 'ready_with_review' : 'needs_scan_evidence';
+        return {
+          packet_type: 'vaultproof_enterprise_scanner_exposure_review',
+          packet_version: 1,
+          status: status,
+          generated_at: new Date().toISOString(),
+          generated_from: location.origin + '/app/evidence',
+          scanner_page: '/app/scanner',
+          summary: summary,
+          findings: findings.map(function(item) {
+            return {
+              id: item.id,
+              repository: redactScannerText(item.repository),
+              branch: redactScannerText(item.branch),
+              finding_type: redactScannerText(item.finding_type),
+              secret_family: redactScannerText(item.secret_family),
+              severity: item.severity,
+              status: item.status,
+              owner: redactScannerText(item.owner),
+              provider_slot: redactScannerText(item.provider_slot),
+              evidence_ref: redactScannerText(item.evidence_ref),
+              note: redactScannerText(item.note),
+              created_at: item.created_at || null,
+              updated_at: item.updated_at || null
+            };
+          }),
+          coverage: coverage,
+          workflow_links: {
+            scanner: '/app/scanner',
+            provider_slots: '/app/keys',
+            policy_drift: '/app/policy',
+            rollout_manager: '/app/rollout',
+            launch: '/app/launch',
+            evidence: '/app/evidence',
+            audit: '/app/audit'
+          },
+          operator_actions: [
+            'Run customer-approved scanner locally or in CI with redaction enabled.',
+            'Record sanitized finding metadata only: repository, branch, class, owner, evidence id/hash, and ticket or PR link.',
+            'Rotate or revoke any exposed provider/OAuth/webhook/private-key material before paid customer data.',
+            'Link the remediation to Provider Slots, Policy Drift, Rollout Manager, and Launch go/no-go evidence.'
+          ],
+          secrets_excluded: [
+            'raw secret values',
+            'repository credentials',
+            'source file contents',
+            'provider API keys',
+            'OAuth client secrets',
+            'webhook signing secrets',
+            'private key material',
+            'bearer tokens',
+            'request bodies',
+            'response bodies',
+            'customer payloads'
+          ]
+        };
+      }
+      function scannerExposureProofRows(packet) {
+        var summary = packet.summary || {};
+        return [
+          row('Scanner exposure status', packet.status === 'hold' ? number(summary.open_critical_or_high) + ' open critical/high exposure findings must be remediated or explicitly accepted before paid traffic.' : packet.status === 'needs_scan_evidence' ? 'No scanner findings have been recorded yet. Add a redacted local/CI scan summary before customer security review.' : 'Scanner evidence is recorded for customer review with no raw secret values.', packet.status, packet.status === 'hold' ? 'bad' : 'warn'),
+          row('Finding summary', number(summary.total_findings) + ' findings, ' + number(summary.critical) + ' critical, ' + number(summary.high) + ' high, ' + number(summary.rotating) + ' rotating, ' + number(summary.rotated) + ' rotated.', 'exposure', summary.open_critical_or_high ? 'bad' : 'good'),
+          row('Coverage candidates', number(summary.coverage_candidates) + ' API/provider surfaces should have repository or CI scanner evidence attached before paid rollout.', 'coverage', summary.coverage_candidates ? 'warn' : 'good'),
+          linkRow('Open scanner', 'Record redacted scanner metadata, owners, rotation path, and evidence references for the customer packet.', '/app/scanner', 'scanner', 'good'),
+          row('Secret boundary', 'Scanner evidence excludes ' + packet.secrets_excluded.join(', ') + '.', 'redacted', 'good')
+        ];
+      }
       function buildApiProxySelfTestPacket(overview, bootstrap) {
         var slots = providerSlotsFromBootstrap(bootstrap);
         var totalCalls = Number(overview.totalCalls || overview.total_calls || 0);
@@ -5799,6 +6007,7 @@ function renderEnterpriseSupportPage(pageName: EnterpriseSupportPageName): strin
         var apiInventory = buildApiInventoryPacket(overview, bootstrap);
         var policyDrift = buildPolicyDriftPacket(overview, bootstrap);
         var integrationRollout = buildIntegrationRolloutPacket(overview, bootstrap);
+        var scannerExposure = buildScannerExposurePacket(overview, bootstrap);
         var support = buildLaunchSupportPacket(org, sso, readiness, overview, bootstrap, goNoGo);
         var monitoring = buildMonitoringEvidencePacket(org, sso, readiness, overview, bootstrap, goNoGo);
         var projectCount = projectCountFromData(org, overview, bootstrap);
@@ -5837,6 +6046,7 @@ function renderEnterpriseSupportPage(pageName: EnterpriseSupportPageName): strin
             { name: 'API inventory', status: apiInventory.status, tone: apiInventory.status === 'ready' ? 'good' : 'warn', detail: 'API surfaces are derived from projects, provider slots, policy, traffic evidence, and browser-local owner/review metadata without storing secrets.' },
             { name: 'Policy drift and exceptions', status: policyDrift.status, tone: policyDrift.status === 'hold' ? 'warn' : 'good', detail: 'Policy drift rows are derived from existing project/provider/policy/traffic evidence, with browser-local accepted-risk records, owners, expiry, and compensating controls.' },
             { name: 'Integration rollout', status: integrationRollout.status, tone: integrationRollout.status === 'hold' ? 'warn' : 'good', detail: 'Rollout rows tie API inventory, policy drift, owners, canary status, rollback path, and copy-safe dry-run snippets into one customer cutover plan.' },
+            { name: 'Secret exposure review', status: scannerExposure.status, tone: scannerExposure.status === 'hold' ? 'warn' : 'good', detail: 'Scanner intake records redacted repository exposure metadata, owners, rotation/remediation status, and customer-safe evidence references without uploading repo contents or secret values.' },
             { name: 'Runtime attestation', status: productionReady ? 'ready' : 'blocked', tone: productionReady ? 'good' : 'bad', detail: 'Readiness reports GCP confidential production posture, key release readiness, signature verification, replay protection, and executor reachability.' },
             { name: 'Audit and evidence', status: 'exportable', tone: 'good', detail: 'Evidence packet, audit CSV, access-review CSV, activity records, launch brief, and security review packet are customer-safe review artifacts.' },
             { name: 'Monitoring and edge protection', status: monitoring.status, tone: monitoring.status === 'ready' ? 'good' : 'warn', detail: 'Monitoring evidence links readiness, traffic/error/denial posture, alert workflow, Cloud Armor verification, live gate, and budget guardrails.' },
@@ -5851,6 +6061,7 @@ function renderEnterpriseSupportPage(pageName: EnterpriseSupportPageName): strin
             { title: 'API Inventory', href: '/app/inventory', detail: 'API catalog with owners, environment, risk, provider-slot mapping, policy posture, traffic evidence, review status, and JSON export.', tag: apiInventory.status, tone: apiInventory.status === 'ready' ? 'good' : 'warn' },
             { title: 'Policy Drift', href: '/app/policy', detail: 'Control gaps, demo-only material, owner gaps, stale traffic, accepted-risk records, expiry dates, and customer-safe JSON export.', tag: policyDrift.status, tone: policyDrift.status === 'hold' ? 'warn' : 'good' },
             { title: 'Rollout Manager', href: '/app/rollout', detail: 'Workload cutover plan with owners, integration mode, canary percentage, test status, rollback path, blockers, and evidence export.', tag: integrationRollout.status, tone: integrationRollout.status === 'hold' ? 'warn' : 'good' },
+            { title: 'Scanner Exposure', href: '/app/scanner', detail: 'Redacted repository exposure findings, owners, rotation status, scanner evidence references, and remediation workflow.', tag: scannerExposure.status, tone: scannerExposure.status === 'hold' ? 'warn' : 'good' },
             { title: 'Alerts', href: '/app/alerts', detail: 'Destinations, delivery logs, dispatch runs, and test-send workflow.', tag: 'monitoring', tone: 'good' },
             { title: 'Provider slots', href: '/app/keys', detail: 'Provider material mode, rotation status, dry-run self-test, email demo, and emergency revoke.', tag: 'keys', tone: providerCount ? 'good' : 'warn' },
             { title: 'Launch board', href: '/app/launch', detail: 'Go/no-go decision, operator-confirmed manual evidence, stale holds, and customer tasks.', tag: goNoGo.status, tone: goNoGo.status === 'go' ? 'good' : 'warn' },
@@ -5881,6 +6092,7 @@ function renderEnterpriseSupportPage(pageName: EnterpriseSupportPageName): strin
             api_inventory: apiInventory.status,
             policy_drift_exceptions: policyDrift.status,
             integration_rollout: integrationRollout.status,
+            scanner_exposure_review: scannerExposure.status,
             launch_support_readiness: support.status,
             monitoring_evidence: monitoring.status
           },
@@ -5904,7 +6116,7 @@ function renderEnterpriseSupportPage(pageName: EnterpriseSupportPageName): strin
           row('Security review packet status', packet.decision, packet.status, packet.status === 'ready_for_review' ? 'good' : 'warn'),
           row('Organization scope', (org.name || 'Selected workspace') + ' with ' + number(org.project_count) + ' projects, ' + number(org.member_count) + ' members, and ' + number(org.provider_slots) + ' provider slots.', org.id ? 'scoped' : 'select org', org.id ? 'good' : 'warn'),
           row('Go/no-go decision', 'Current launch board status is ' + packet.related_packets.go_no_go_status + '.', packet.related_packets.go_no_go_status, packet.related_packets.go_no_go_status === 'go' ? 'good' : 'warn'),
-          row('Related proof packets', 'Identity: ' + packet.related_packets.identity_login_qa + '. Rotation: ' + packet.related_packets.key_rotation_evidence + '. Pilot ops: ' + packet.related_packets.pilot_operations_evidence + '. Proxy self-test: ' + packet.related_packets.api_proxy_self_test + '. API inventory: ' + packet.related_packets.api_inventory + '. Policy drift: ' + packet.related_packets.policy_drift_exceptions + '. Rollout: ' + packet.related_packets.integration_rollout + '. Monitoring: ' + packet.related_packets.monitoring_evidence + '.', 'summary', 'good'),
+          row('Related proof packets', 'Identity: ' + packet.related_packets.identity_login_qa + '. Rotation: ' + packet.related_packets.key_rotation_evidence + '. Pilot ops: ' + packet.related_packets.pilot_operations_evidence + '. Proxy self-test: ' + packet.related_packets.api_proxy_self_test + '. API inventory: ' + packet.related_packets.api_inventory + '. Policy drift: ' + packet.related_packets.policy_drift_exceptions + '. Rollout: ' + packet.related_packets.integration_rollout + '. Scanner: ' + packet.related_packets.scanner_exposure_review + '. Monitoring: ' + packet.related_packets.monitoring_evidence + '.', 'summary', 'good'),
           row('Secret boundary', 'This packet excludes ' + packet.secrets_excluded.join(', ') + '.', 'redacted', 'good')
         ];
       }
@@ -6517,6 +6729,7 @@ function renderEnterpriseSupportPage(pageName: EnterpriseSupportPageName): strin
         var apiInventory = buildApiInventoryPacket(overview, bootstrap);
         var policyDrift = buildPolicyDriftPacket(overview, bootstrap);
         var integrationRollout = buildIntegrationRolloutPacket(overview, bootstrap);
+        var scannerExposure = buildScannerExposurePacket(overview, bootstrap);
         var support = buildLaunchSupportPacket(org, sso, readiness, overview, bootstrap, goNoGo);
         var monitoring = buildMonitoringEvidencePacket(org, sso, readiness, overview, bootstrap, goNoGo);
         var securityReview = buildSecurityReviewPacket(org, sso, readiness, overview, bootstrap, goNoGo);
@@ -6598,6 +6811,7 @@ function renderEnterpriseSupportPage(pageName: EnterpriseSupportPageName): strin
           api_inventory: apiInventory,
           policy_drift_exceptions: policyDrift,
           integration_rollout: integrationRollout,
+          scanner_exposure_review: scannerExposure,
           launch_support_readiness: support,
           monitoring_evidence: monitoring,
           security_review_packet: securityReview,
@@ -6611,6 +6825,7 @@ function renderEnterpriseSupportPage(pageName: EnterpriseSupportPageName): strin
             api_inventory: '/app/inventory',
             policy_drift: '/app/policy',
             integration_rollout: '/app/rollout',
+            scanner_exposure: '/app/scanner',
             provider_slots: '/app/keys',
             launch_checklist: '/app/launch',
             security_review: '/app/security-review',
@@ -6628,6 +6843,7 @@ function renderEnterpriseSupportPage(pageName: EnterpriseSupportPageName): strin
             'Review the API inventory for owners, environment, data sensitivity, risk, provider-slot mapping, policy posture, stale traffic, and review due items.',
             'Review policy drift and accepted-risk exceptions for owner, reason, compensating control, expiration date, next action, and launch hold status.',
             'Review the integration rollout plan for application owner, gateway owner, target date, canary percent, test status, rollback owner/path, blockers, and copy-safe dry-run snippet.',
+            'Review scanner exposure evidence for redacted finding metadata, owner, rotation status, evidence reference, and open critical/high remediation before paid traffic.',
             'Review launch support scope, internal admin boundary, approval gates, and customer handoff notes before pilot traffic.',
             'Review monitoring evidence, alert destination/test-send workflow, Cloud Armor verification, and budget alert posture before launch-week traffic.',
             'Share the security review packet with customer security, procurement, and technical reviewers after validating launch blockers.',
@@ -6651,6 +6867,7 @@ function renderEnterpriseSupportPage(pageName: EnterpriseSupportPageName): strin
         var apiInventory = packet.api_inventory || buildApiInventoryPacket(overview, bootstrap);
         var policyDrift = packet.policy_drift_exceptions || buildPolicyDriftPacket(overview, bootstrap);
         var integrationRollout = packet.integration_rollout || buildIntegrationRolloutPacket(overview, bootstrap);
+        var scannerExposure = packet.scanner_exposure_review || buildScannerExposurePacket(overview, bootstrap);
         var support = packet.launch_support_readiness || buildLaunchSupportPacket(org, sso, readiness, overview, bootstrap, buildGoNoGoStatus(org, sso, readiness, overview, bootstrap));
         var monitoring = packet.monitoring_evidence || buildMonitoringEvidencePacket(org, sso, readiness, overview, bootstrap, buildGoNoGoStatus(org, sso, readiness, overview, bootstrap));
         text('evidenceMeta', productionReady ? 'ready for review' : 'needs attention');
@@ -6669,6 +6886,7 @@ function renderEnterpriseSupportPage(pageName: EnterpriseSupportPageName): strin
           linkRow('API inventory export', 'Metadata-only API inventory with owners, risk, provider mapping, policy posture, traffic evidence, and review state.', '/app/inventory', 'inventory', 'good'),
           linkRow('Policy drift export', 'Customer-safe policy drift and accepted-risk evidence with owners, expiry, compensating controls, and launch status.', '/app/policy', 'policy drift', policyDrift.status === 'hold' ? 'warn' : 'good'),
           linkRow('Integration rollout export', 'Customer-safe cutover plan with application/gateway owners, canary status, rollback path, blockers, and copy-safe snippet guidance.', '/app/rollout', 'rollout', integrationRollout.status === 'hold' ? 'warn' : 'good'),
+          linkRow('Scanner exposure export', 'Customer-safe secret exposure intake with redacted finding metadata, owners, rotation status, and remediation evidence.', '/app/scanner', 'scanner', scannerExposure.status === 'hold' ? 'warn' : 'good'),
           linkRow('Provider slot posture', 'Protected provider slots, material mode, rotation, and emergency revoke state.', '/app/keys', 'open', 'good')
         ].join('');
         byId('evidenceProofList').innerHTML = [
@@ -6684,6 +6902,7 @@ function renderEnterpriseSupportPage(pageName: EnterpriseSupportPageName): strin
           linkRow('Review policy control', 'Confirm origins, gateways, CIDRs, upstream hosts, path prefixes, and rate limits.', '/app/control', 'control', 'good'),
           linkRow('Review policy drift', 'Confirm every critical/high drift row is closed, blocked intentionally, or accepted with owner and expiration date.', '/app/policy', 'policy drift', policyDrift.status === 'hold' ? 'warn' : 'good'),
           linkRow('Review integration rollout', 'Confirm first workload, owners, target date, canary percentage, rollback path, and dry-run evidence before live traffic.', '/app/rollout', 'rollout', integrationRollout.status === 'hold' ? 'warn' : 'good'),
+          linkRow('Review scanner exposure', 'Confirm redacted repository scan findings, owners, rotation/remediation status, and scanner evidence references before paid traffic.', '/app/scanner', 'scanner', scannerExposure.status === 'hold' ? 'warn' : 'good'),
           linkRow('Review technical guide', 'Use the implementation guide for architecture, trust boundaries, key custody, and troubleshooting answers.', '/app/technical-guide', 'guide', 'good'),
           linkRow('Review security packet', 'Share the concise architecture, controls, evidence links, open items, and customer-safe answers with security reviewers.', '/app/security-review', 'security', 'good'),
           linkRow('Review runbooks', 'Operator commands for verification, evidence capture, deploys, secrets, DNS, edge, SSH, and cleanup.', '/app/runbooks', 'runbooks', 'good')
@@ -6702,6 +6921,8 @@ function renderEnterpriseSupportPage(pageName: EnterpriseSupportPageName): strin
         byId('evidencePolicyDriftList').innerHTML = policyDriftProofRows(policyDrift).join('');
         text('evidenceRolloutMeta', integrationRollout.status);
         byId('evidenceRolloutList').innerHTML = integrationRolloutProofRows(integrationRollout).join('');
+        text('evidenceScannerMeta', scannerExposure.status);
+        byId('evidenceScannerList').innerHTML = scannerExposureProofRows(scannerExposure).join('');
         text('evidenceSupportMeta', support.status);
         byId('evidenceSupportList').innerHTML = launchSupportProofRows(support).join('');
         text('evidenceMonitoringMeta', monitoring.status);
@@ -6720,6 +6941,7 @@ function renderEnterpriseSupportPage(pageName: EnterpriseSupportPageName): strin
         var securityReview = buildSecurityReviewPacket(org, sso, readiness, overview, bootstrap, goNoGo);
         var pilotProposal = buildPilotProposalPacket(org, sso, readiness, overview, bootstrap, goNoGo);
         var pilotSuccess = buildPilotSuccessPacket(org, sso, readiness, overview, bootstrap, goNoGo);
+        var scannerExposure = buildScannerExposurePacket(overview, bootstrap);
         var emailProviders = emailProvidersFromData(overview, bootstrap);
         var providerCount = providerCountFromData(overview, bootstrap);
         var projectCount = projectCountFromData(org, overview, bootstrap);
@@ -6749,6 +6971,7 @@ function renderEnterpriseSupportPage(pageName: EnterpriseSupportPageName): strin
           'Security review packet status: ' + securityReview.status,
           'Pilot proposal status: ' + pilotProposal.status,
           'Pilot success tracker status: ' + pilotSuccess.status,
+          'Scanner exposure review status: ' + scannerExposure.status,
           '',
           '3. Walk the buyer through the product',
           '- Dashboard: current runtime, access, project, and evidence posture.',
@@ -6764,6 +6987,7 @@ function renderEnterpriseSupportPage(pageName: EnterpriseSupportPageName): strin
           '- Security review packet: architecture summary, control coverage, evidence links, open launch items, and common customer answers.',
           '- Pilot proposal builder: first workload scope, expected volume, price, commission math, support boundary, and close steps.',
           '- Pilot success tracker: weekly customer update, milestone proof, live traffic posture, blockers, and expansion decision trail.',
+          '- Scanner exposure intake: redacted repository findings, owner, rotation status, and evidence reference without uploading repo contents or secret values.',
           '- Launch checklist: go/no-go board, manual evidence, stale holds, and remaining blockers.',
           '',
           '4. Be crisp about boundaries',
@@ -6789,6 +7013,7 @@ function renderEnterpriseSupportPage(pageName: EnterpriseSupportPageName): strin
         var securityReview = buildSecurityReviewPacket(org, sso, readiness, overview, bootstrap, goNoGo);
         var pilotProposal = buildPilotProposalPacket(org, sso, readiness, overview, bootstrap, goNoGo);
         var pilotSuccess = buildPilotSuccessPacket(org, sso, readiness, overview, bootstrap, goNoGo);
+        var scannerExposure = buildScannerExposurePacket(overview, bootstrap);
         var providerCount = providerCountFromData(overview, bootstrap);
         var emailProviders = emailProvidersFromData(overview, bootstrap);
         text('demoMeta', goNoGo.status === 'go' ? 'ready to pilot' : 'hold for evidence');
@@ -6806,6 +7031,7 @@ function renderEnterpriseSupportPage(pageName: EnterpriseSupportPageName): strin
           linkRow('Security review packet', 'Show the copyable buyer packet for security, procurement, and technical review.', '/app/security-review', 'review', securityReview.status === 'ready_for_review' ? 'good' : 'warn'),
           linkRow('Pilot proposal', 'Show the first workload, price, owner group, expected traffic, support terms, and close steps.', '/app/pilot', 'proposal', pilotProposal.status === 'ready_to_send' ? 'good' : 'warn'),
           linkRow('Pilot success tracker', 'Show milestones, weekly update copy, traffic posture, blockers, and expansion decision evidence.', '/app/pilot-success', 'success', pilotSuccess.status === 'on_track' ? 'good' : 'warn'),
+          linkRow('Scanner exposure intake', 'Show redacted repo scan findings, owner, rotation state, evidence reference, and secret boundary.', '/app/scanner', 'scanner', scannerExposure.status === 'hold' ? 'warn' : 'good'),
           linkRow('Launch support room', 'Show support model, internal admin boundary, approval gates, and customer handoff package.', '/app/support', 'support', support.status === 'ready' ? 'good' : 'warn'),
           linkRow('Go/no-go board', 'Show the current launch decision, manual evidence rows, stale holds, and blockers.', '/app/launch', 'board', goNoGo.status === 'go' ? 'good' : 'warn')
         ].join('');
@@ -6820,6 +7046,7 @@ function renderEnterpriseSupportPage(pageName: EnterpriseSupportPageName): strin
           row('Security review packet', securityReview.status === 'ready_for_review' ? 'A copyable customer-safe packet is ready for security, procurement, and technical reviewers.' : 'Runtime readiness or organization scope still needs attention before sharing the review packet.', securityReview.status, securityReview.status === 'ready_for_review' ? 'good' : 'warn'),
           row('Pilot proposal builder', pilotProposal.status === 'ready_to_send' ? 'The paid-pilot proposal is scoped and ready to send after customer review.' : 'Use Pilot Proposal to confirm workload, provider path, owner group, price, support terms, and success metric.', pilotProposal.status, pilotProposal.status === 'ready_to_send' ? 'good' : 'warn'),
           row('Pilot success tracker', pilotSuccess.status === 'on_track' ? 'Pilot milestones, live checks, and weekly update proof are on track.' : 'Use Pilot Success to record kickoff, dry-run, customer review, low-volume traffic, and success metric evidence.', pilotSuccess.status, pilotSuccess.status === 'on_track' ? 'good' : 'warn'),
+          row('Secret exposure intake', scannerExposure.status === 'hold' ? 'Open critical/high exposure findings remain; rotate or explicitly accept demo-only risk before paid data.' : scannerExposure.status === 'needs_scan_evidence' ? 'Record a redacted local/CI scanner summary before relying on this proof point.' : 'Scanner evidence is recorded with redacted metadata and no raw secret values.', scannerExposure.status, scannerExposure.status === 'hold' ? 'bad' : 'warn'),
           row('No raw key exposure', 'Provider slots show posture and material mode without returning encrypted shares or plaintext provider material to the browser.', 'secret safe', 'good'),
           row('Policy denial evidence', 'The blocked-recipient test gives a buyer a concrete denial story: policy rejected unsafe traffic and recorded evidence.', 'auditable', 'good'),
           row('Access and audit exports', 'Members, Audit, Activity, and Evidence produce reviewable CSV/JSON artifacts for security teams.', 'exportable', 'good')
@@ -6832,6 +7059,7 @@ function renderEnterpriseSupportPage(pageName: EnterpriseSupportPageName): strin
           row('Self-test before live calls', apiProxy.status === 'ready' ? 'API proxy self-test evidence is visible for this organization.' : 'Use dry-run and blocked-recipient tests before enabling any live sandbox provider call.', 'proxy gate', apiProxy.status === 'ready' ? 'good' : 'warn'),
           row('Support boundary before pilot', support.status === 'ready' ? 'Support scope and internal admin boundaries are visible.' : 'Review support model and internal admin boundaries before the customer starts testing.', 'support gate', support.status === 'ready' ? 'good' : 'warn'),
           row('Monitoring before pilot', monitoring.status === 'ready' ? 'Monitoring evidence is ready for launch-week customer testing.' : 'Do not start pilot traffic until runtime, traffic, alert workflow, Cloud Armor, and budget evidence are reviewed.', 'monitoring gate', monitoring.status === 'ready' ? 'good' : 'warn'),
+          row('Scanner before paid data', scannerExposure.status === 'hold' ? 'Open exposure findings are a paid-data blocker until rotated, revoked, or explicitly accepted for demo-only use.' : 'Use Scanner to keep redacted exposure findings tied to owner and rotation evidence.', 'scanner gate', scannerExposure.status === 'hold' ? 'bad' : 'warn'),
           row('Do not mark GO casually', goNoGo.status === 'go' ? 'The board is green for this browser/org evidence state.' : 'The board is holding on: ' + goNoGo.blockers.join('; '), goNoGo.status, goNoGo.status === 'go' ? 'good' : 'warn'),
           row('Cloud Armor evidence', 'Keep Cloud Armor as a required operator-confirmed check until the live policy exists and verify passes.', 'manual proof', 'warn'),
           row('Key rotation before paid onboarding', 'Shared or exposed pilot keys should be rotated or explicitly accepted for demo-only use before paid customer data.', 'required', 'warn')
@@ -6941,6 +7169,131 @@ function renderEnterpriseSupportPage(pageName: EnterpriseSupportPageName): strin
         var brief = byId('pilotSuccessBrief');
         if (brief) brief.value = pilotSuccessBriefText(packet);
       }
+      function scannerInput(finding, field, label, placeholder) {
+        return '<div class="scanner-field"><label>' + escapeHtml(label) + '</label><input data-scanner-finding-id="' + escapeHtml(finding.id) + '" data-scanner-field="' + escapeHtml(field) + '" value="' + escapeHtml(finding[field] || '') + '" placeholder="' + escapeHtml(placeholder || '') + '" /></div>';
+      }
+      function scannerSelect(finding, field, label, options) {
+        return '<div class="scanner-field"><label>' + escapeHtml(label) + '</label><select data-scanner-finding-id="' + escapeHtml(finding.id) + '" data-scanner-field="' + escapeHtml(field) + '">' + options.map(function(option) {
+          return '<option value="' + escapeHtml(option.value) + '"' + scannerSelected(finding[field], option.value) + '>' + escapeHtml(option.label) + '</option>';
+        }).join('') + '</select></div>';
+      }
+      function renderScannerFinding(finding) {
+        return '<div class="scanner-row" data-scanner-card="' + escapeHtml(finding.id) + '">' +
+          '<div class="scanner-head"><div><div class="row-title">' + escapeHtml(finding.repository || 'Repository not set') + '</div>' +
+          '<div class="row-sub">' + escapeHtml((finding.secret_family || 'secret family unset') + ' - ' + (finding.branch || 'branch unset') + ' - updated ' + rel(finding.updated_at || finding.created_at)) + '</div>' +
+          '<div><span class="tag ' + scannerSeverityTone(finding.severity) + '">' + escapeHtml(finding.severity) + '</span><span class="tag ' + scannerStatusTone(finding.status) + '">' + escapeHtml(finding.status) + '</span><span class="tag">' + escapeHtml(finding.finding_type || 'finding') + '</span></div></div>' +
+          '<div class="row-actions"><button type="button" data-action="remove-scanner-finding" data-scanner-finding-id="' + escapeHtml(finding.id) + '">remove</button><a class="tag" href="/app/keys">provider slots</a><a class="tag" href="/app/policy">policy</a></div></div>' +
+          '<div class="scanner-fields">' +
+          scannerInput(finding, 'repository', 'repository', 'customer/app-service') +
+          scannerInput(finding, 'branch', 'branch/ref', 'main or commit hash') +
+          scannerSelect(finding, 'finding_type', 'finding type', [
+            { value: 'hardcoded_secret', label: 'hardcoded secret' },
+            { value: 'env_file', label: 'env/config file' },
+            { value: 'oauth_secret', label: 'OAuth/client secret' },
+            { value: 'webhook_secret', label: 'webhook signing secret' },
+            { value: 'provider_key', label: 'provider API key' },
+            { value: 'private_key', label: 'private key material' },
+            { value: 'other', label: 'other' }
+          ]) +
+          scannerInput(finding, 'secret_family', 'secret family', 'provider or secret class') +
+          scannerSelect(finding, 'severity', 'severity', [
+            { value: 'critical', label: 'critical' },
+            { value: 'high', label: 'high' },
+            { value: 'medium', label: 'medium' },
+            { value: 'low', label: 'low' }
+          ]) +
+          scannerSelect(finding, 'status', 'status', [
+            { value: 'new', label: 'new' },
+            { value: 'confirmed', label: 'confirmed' },
+            { value: 'rotating', label: 'rotating' },
+            { value: 'rotated', label: 'rotated' },
+            { value: 'accepted_demo', label: 'accepted for demo' },
+            { value: 'false_positive', label: 'false positive' },
+            { value: 'blocked', label: 'blocked' }
+          ]) +
+          scannerInput(finding, 'owner', 'owner', 'security or app owner') +
+          scannerInput(finding, 'provider_slot', 'provider slot', 'provider slug or slot name') +
+          '<div class="scanner-field wide"><label>redacted scanner evidence</label><textarea data-scanner-finding-id="' + escapeHtml(finding.id) + '" data-scanner-field="evidence_ref" placeholder="Sanitized path, scanner id, PR/ticket, or hash only. Do not paste secrets.">' + escapeHtml(finding.evidence_ref || '') + '</textarea></div>' +
+          '<div class="scanner-field wide"><label>remediation note</label><textarea data-scanner-finding-id="' + escapeHtml(finding.id) + '" data-scanner-field="note" placeholder="Metadata-only rotation/remediation note.">' + escapeHtml(finding.note || '') + '</textarea></div>' +
+          '</div></div>';
+      }
+      function saveScannerFindingField(target) {
+        var id = target.getAttribute('data-scanner-finding-id');
+        var field = target.getAttribute('data-scanner-field');
+        if (!id || !field) return;
+        var rows = readScannerFindings();
+        var now = new Date().toISOString();
+        rows = rows.map(function(row) {
+          if (row.id !== id) return row;
+          row[field] = redactScannerText(target.value);
+          row.updated_at = now;
+          return row;
+        });
+        writeScannerFindings(rows);
+        if (latestOrgPayload && latestReadiness) {
+          renderScannerPanel((latestOrgPayload && latestOrgPayload.organization) || {}, (latestOrgPayload && latestOrgPayload.sso_status) || {}, latestReadiness, latestOverview || {}, latestBootstrap || {});
+        }
+      }
+      function addScannerFindingFromForm() {
+        var now = new Date().toISOString();
+        var finding = {
+          id: 'scanner-' + Date.now().toString(36),
+          repository: redactScannerText(byId('scannerRepository') && byId('scannerRepository').value),
+          branch: redactScannerText(byId('scannerBranch') && byId('scannerBranch').value),
+          finding_type: redactScannerText(byId('scannerFindingType') && byId('scannerFindingType').value) || 'hardcoded_secret',
+          secret_family: redactScannerText(byId('scannerSecretFamily') && byId('scannerSecretFamily').value),
+          severity: byId('scannerSeverity') && byId('scannerSeverity').value || 'high',
+          status: byId('scannerStatus') && byId('scannerStatus').value || 'new',
+          owner: redactScannerText(byId('scannerOwner') && byId('scannerOwner').value),
+          provider_slot: redactScannerText(byId('scannerProviderSlot') && byId('scannerProviderSlot').value),
+          evidence_ref: redactScannerText(byId('scannerEvidenceRef') && byId('scannerEvidenceRef').value),
+          note: redactScannerText(byId('scannerNote') && byId('scannerNote').value),
+          created_at: now,
+          updated_at: now
+        };
+        if (!finding.repository && !finding.secret_family && !finding.evidence_ref) {
+          notice('Add repository, secret family, or redacted evidence reference before saving scanner evidence.');
+          return;
+        }
+        var rows = readScannerFindings();
+        rows.unshift(finding);
+        writeScannerFindings(rows);
+        ['scannerRepository', 'scannerBranch', 'scannerSecretFamily', 'scannerOwner', 'scannerProviderSlot', 'scannerEvidenceRef', 'scannerNote'].forEach(function(id) {
+          var el = byId(id);
+          if (el) el.value = '';
+        });
+        notice('Scanner finding saved as redacted metadata. No raw secret values are required.');
+        if (latestOrgPayload && latestReadiness) {
+          renderScannerPanel((latestOrgPayload && latestOrgPayload.organization) || {}, (latestOrgPayload && latestOrgPayload.sso_status) || {}, latestReadiness, latestOverview || {}, latestBootstrap || {});
+        }
+      }
+      function removeScannerFinding(id) {
+        writeScannerFindings(readScannerFindings().filter(function(row) { return row.id !== id; }));
+        if (latestOrgPayload && latestReadiness) {
+          renderScannerPanel((latestOrgPayload && latestOrgPayload.organization) || {}, (latestOrgPayload && latestOrgPayload.sso_status) || {}, latestReadiness, latestOverview || {}, latestBootstrap || {});
+        }
+      }
+      function renderScannerPanel(org, sso, readiness, overview, bootstrap) {
+        var packet = buildScannerExposurePacket(overview, bootstrap);
+        var summary = packet.summary || {};
+        text('scannerMeta', packet.status);
+        byId('scannerList').innerHTML = [
+          row('Enterprise scanner isolation', 'This page does not call legacy scanner endpoints, upload repositories, or store raw secret values. It records browser-local, redacted finding metadata for customer review.', 'isolated', 'good'),
+          row('Scanner evidence source', 'Use customer-approved local or CI scanning with redaction enabled, then record only sanitized repository, branch, finding class, owner, ticket, PR, or hash references.', 'manual', 'good'),
+          row('Open exposure posture', number(summary.open_critical_or_high) + ' open critical/high findings and ' + number(summary.blocked) + ' blocked findings are visible in this browser evidence state.', packet.status, packet.status === 'hold' ? 'bad' : 'warn'),
+          row('Provider/API coverage', number(summary.coverage_candidates) + ' API or provider surfaces should have scanner coverage attached before paid rollout.', 'coverage', summary.coverage_candidates ? 'warn' : 'good')
+        ].join('');
+        byId('scannerFindingList').innerHTML = packet.findings.length ? packet.findings.map(renderScannerFinding).join('') : '<div class="empty">No scanner findings recorded yet. Add a redacted local or CI scan summary above before customer security review.</div>';
+        byId('scannerChecklist').innerHTML = [
+          row('Run a redacted scan', 'Run the customer-approved repository scanner locally or in CI with redaction/masking enabled before copying metadata here.', 'required', 'warn'),
+          row('Do not paste secrets', 'Record finding id, sanitized path, repository, branch, owner, ticket, PR, or hash only. Secret-like input is redacted before browser storage and JSON export.', 'redacted', 'good'),
+          linkRow('Rotate provider slot', 'Use Provider Slots to rotate, revoke, or replace exposed provider material before paid customer data.', '/app/keys', 'slots', 'good'),
+          linkRow('Track policy exception', 'Use Policy Drift only for explicit demo-only acceptance with owner, reason, compensating control, and expiration date.', '/app/policy', 'policy', 'good'),
+          linkRow('Review rollout hold', 'Use Rollout Manager and Launch to keep open critical/high findings from becoming hidden launch risk.', '/app/rollout', 'rollout', packet.status === 'hold' ? 'warn' : 'good')
+        ].join('');
+        var packetBox = byId('scannerEvidencePacket');
+        if (packetBox) packetBox.value = JSON.stringify(packet, null, 2);
+      }
       function renderOrgSelector(payload) {
         var select = byId('orgSelect');
         var orgs = Array.isArray(payload.organizations) ? payload.organizations : [];
@@ -7030,6 +7383,9 @@ function renderEnterpriseSupportPage(pageName: EnterpriseSupportPageName): strin
         if (PAGE_MODE === 'pilot-success') {
           renderPilotSuccessPanel(org, sso, readiness, overview, bootstrap);
         }
+        if (PAGE_MODE === 'scanner') {
+          renderScannerPanel(org, sso, readiness, overview, bootstrap);
+        }
         if (PAGE_MODE === 'settings') {
           text('settingsMeta', org.kind || 'organization');
           byId('settingsList').innerHTML = [
@@ -7072,18 +7428,6 @@ function renderEnterpriseSupportPage(pageName: EnterpriseSupportPageName): strin
             linkRow('Launch support', 'Review support model, internal admin boundary, approval gates, and customer handoff package.', '/app/support', 'support', 'good'),
             linkRow('Technical guide', 'Answer architecture, key custody, caller-lock, GCP runtime, and troubleshooting questions.', '/app/technical-guide', 'guide', 'good'),
             linkRow('Runbooks', 'Keep verification, evidence, deploy, DNS, edge, SSH, and cleanup commands visible to operators.', '/app/runbooks', 'runbooks', 'good')
-          ].join('');
-        }
-        if (PAGE_MODE === 'scanner') {
-          byId('scannerList').innerHTML = [
-            row('Enterprise scanner APIs', 'No enterprise-safe scanner endpoint is enabled on this control plane yet.', 'disabled', 'warn'),
-            row('Enterprise scanner isolation', 'This page waits for organization-scoped scanner endpoints before enabling browser actions.', 'isolated', 'good'),
-            row('Recommended interim flow', 'Run local scanner tooling during onboarding, then attach sanitized reports to the enterprise audit package.', 'manual', 'warn')
-          ].join('');
-          byId('scannerChecklist').innerHTML = [
-            row('Tenant scoping', 'Scanner results must be scoped to organization/project before enabling browser actions.', 'required', 'warn'),
-            row('Finding redaction', 'Secrets and provider tokens must be masked before rendering or exporting.', 'required', 'warn'),
-            row('Remediation workflow', 'PR creation, ignore/allowlist, and migration actions need enterprise audit events.', 'required', 'warn')
           ].join('');
         }
         if (PAGE_MODE === 'verifier') {
@@ -7255,6 +7599,11 @@ function renderEnterpriseSupportPage(pageName: EnterpriseSupportPageName): strin
       if (pilotProposalForm) pilotProposalForm.addEventListener('submit', function(event) {
         event.preventDefault();
       });
+      var scannerFindingForm = byId('scannerFindingForm');
+      if (scannerFindingForm) scannerFindingForm.addEventListener('submit', function(event) {
+        event.preventDefault();
+        addScannerFindingFromForm();
+      });
       document.addEventListener('change', function(event) {
         var target = event.target;
         if (!target || !target.getAttribute) return;
@@ -7295,9 +7644,20 @@ function renderEnterpriseSupportPage(pageName: EnterpriseSupportPageName): strin
           }
           return;
         }
+        if (target.hasAttribute('data-scanner-field')) {
+          saveScannerFindingField(target);
+          return;
+        }
         if (!target.hasAttribute('data-launch-check')) return;
         setLaunchManualState(target.getAttribute('data-launch-check') || '', target.checked);
         reload();
+      });
+      document.addEventListener('click', function(event) {
+        var target = event.target;
+        if (!target || !target.getAttribute) return;
+        if (target.getAttribute('data-action') === 'remove-scanner-finding') {
+          removeScannerFinding(target.getAttribute('data-scanner-finding-id') || '');
+        }
       });
       var copyLaunchBriefBtn = byId('copyLaunchBriefBtn');
       if (copyLaunchBriefBtn) copyLaunchBriefBtn.addEventListener('click', async function() {
@@ -7388,6 +7748,19 @@ function renderEnterpriseSupportPage(pageName: EnterpriseSupportPageName): strin
         } catch (_) {
           brief.focus();
           brief.select();
+        }
+      });
+      var copyScannerJsonBtn = byId('copyScannerJsonBtn');
+      if (copyScannerJsonBtn) copyScannerJsonBtn.addEventListener('click', async function() {
+        var packet = byId('scannerEvidencePacket');
+        if (!packet) return;
+        try {
+          await navigator.clipboard.writeText(packet.value);
+          copyScannerJsonBtn.textContent = 'copied';
+          setTimeout(function() { copyScannerJsonBtn.textContent = 'copy scanner JSON'; }, 1400);
+        } catch (_) {
+          packet.focus();
+          packet.select();
         }
       });
       var downloadEvidencePacketBtn = byId('downloadEvidencePacketBtn');

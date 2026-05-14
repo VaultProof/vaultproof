@@ -252,7 +252,8 @@ const ENTERPRISE_SIDEBAR_NAV_GROUPS: readonly EnterpriseSidebarNavGroup[] = [
         page: 'scanner',
         href: '/app/scanner',
         label: 'Scanner',
-        blurb: 'Repository scanner launch checklist.',
+        blurb: 'Redacted repository exposure findings, owners, rotation, and evidence.',
+        activePill: 'new',
       },
       {
         page: 'runbooks',

@@ -38,6 +38,7 @@ Already built:
 - Managed Supabase remains the auth/database provider for the pilot
 - Policy drift and exceptions board at `https://enterprise.vaultproof.dev/app/policy` for customer-safe control-gap rows, browser-local accepted-risk records, owner/risk/expiry metadata, compensating controls, and JSON evidence
 - Integration rollout manager at `https://enterprise.vaultproof.dev/app/rollout` for workload cutover rows, app/gateway owners, integration mode, target date, support window, canary status, rollback path, blockers, copy-safe snippets, and JSON evidence
+- Scanner exposure intake at `https://enterprise.vaultproof.dev/app/scanner` for redacted repository exposure findings, owners, rotation/remediation status, provider-slot hints, and customer-safe JSON evidence
 
 Not yet customer-ready:
 
@@ -45,6 +46,7 @@ Not yet customer-ready:
 - Email API key demo dry-run and blocked-recipient policy evidence flow are built; live sandbox email sends need sealed provider material only if the demo specifically needs an actual delivered email.
 - Live MiniMax provider dispatch works for the demo; add a separate OpenAI slot only if the demo specifically needs OpenAI.
 - API inventory management still needs persistent audited records, CSV/OpenAPI import, automatic discovery, and production review workflow after the demo.
+- Scanner exposure intake still needs persistent audited records, CI/scanner imports, automatic discovery, and PR/remediation workflows after the demo.
 - Supabase OAuth/login settings still need to be confirmed for `enterprise.vaultproof.dev`.
 - Older migration/history docs still have Azure-era language; customer-facing app UI is cleaned for the GCP demo.
 
@@ -360,6 +362,38 @@ Demo success:
 - Snippets and evidence are copyable without exposing provider keys, bearer tokens, OAuth secrets, SAML material, request bodies, response bodies, or customer payloads.
 - The demo script can explain: "VaultProof gives your team a safe path from first protected call to production rollout."
 
+## Demo Feature: Scanner Exposure Intake
+
+This belongs in the enterprise demo because buyers often already have sensitive provider keys in repositories, CI logs, local env files, or old deployment configs. VaultProof should show a practical remediation workflow without asking customers to upload repository contents or secret values into a demo dashboard.
+
+Demo goal:
+
+- Give customer security and platform teams a place to record redacted repository exposure findings.
+- Track repository/ref, finding class, secret family, severity, status, owner, provider-slot hint, evidence reference, and remediation note.
+- Keep scanner data metadata-only: no source file contents, raw secret values, repo credentials, bearer tokens, OAuth client secrets, private keys, request bodies, response bodies, or customer payloads.
+- Tie exposure remediation to Provider Slots, Policy Drift, Rollout Manager, Launch go/no-go, and Evidence.
+
+First demo slice:
+
+- Built: `https://enterprise.vaultproof.dev/app/scanner` renders a customer-facing scanner exposure intake using the shared enterprise sidebar and light dashboard theme.
+- Built: save browser-local redacted scanner findings per organization under `vaultproof_scanner_findings::<orgId>` until audited scanner records exist.
+- Built: redact secret-like input before browser storage/export and avoid repository upload, `/api/scanner`, or scanner API calls in this slice.
+- Built: export `vaultproof_enterprise_scanner_exposure_review` JSON without repo contents or secret values.
+- Built: include scanner exposure proof under `scanner_exposure_review` in the evidence packet and link it from the security review packet and demo script.
+
+Production follow-up:
+
+- Add persistent `enterprise_scanner_findings` records with org/project RBAC, audit events, owner assignment, evidence references, and status transitions.
+- Add CI/scanner import from approved tools with redaction enforced before storage.
+- Add automatic discovery links into API Inventory, Policy Drift, Provider Slots, and Rollout Manager.
+- Add PR/remediation workflow, false-positive approval, expiry reminders, and notification routing for critical/high findings.
+
+Demo success:
+
+- A customer can see how exposed keys become assigned, rotated, accepted for demo-only use, or blocked before paid traffic.
+- Evidence is useful for security review without revealing the secret value that triggered the finding.
+- The demo script can explain: "VaultProof protects new calls and gives you a controlled path to clean up old exposed keys."
+
 ## Phase 5: Customer Scale
 
 Build after first customer proof:
@@ -370,6 +404,7 @@ Build after first customer proof:
 - Add persistent API inventory management with ownership, review workflow, drift detection, imports, and evidence exports.
 - Add persistent policy drift and exceptions management with approvals, expiry reminders, policy-as-code export, and alerting.
 - Add persistent integration rollout management with audited cutover records, canary gates, rollback paths, gateway template management, and launch evidence.
+- Add persistent scanner exposure management with audited findings, CI imports, automatic discovery, PR/remediation workflow, and alerting.
 - Add automated evidence bundle capture for each release.
 - Add a rollback script for edge, VM image, and DNS changes.
 - Clean older Azure migration/history docs into provider-neutral or clearly archived references before paid-production handoff.

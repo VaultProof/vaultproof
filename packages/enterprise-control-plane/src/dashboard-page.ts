@@ -482,7 +482,7 @@ export function renderEnterpriseDashboardPage(env: EnterpriseControlPlaneEnv = {
               <div class="row"><div><div class="row-title">Technical guide</div><div class="row-sub">Open the enterprise implementation reference for identity, network, key custody, attestation, and troubleshooting.</div></div><a class="tag good" href="/app/technical-guide">open</a></div>
               <div class="row"><div><div class="row-title">Launch plans</div><div class="row-sub">Track packaging, GCP edge readiness, and contract-facing guardrails.</div></div><a class="tag" href="/app/plans">open</a></div>
               <div class="row"><div><div class="row-title">AI Proof Verifier</div><div class="row-sub">Register external models and verify proof bundles without VaultProof running the model.</div></div><a class="tag warn" href="/app/verifier">beta</a></div>
-              <div class="row"><div><div class="row-title">Scanner</div><div class="row-sub">Launch checklist for enterprise repository scanning when the scoped API is ready.</div></div><a class="tag warn" href="/app/scanner">planned</a></div>
+              <div class="row"><div><div class="row-title">Scanner</div><div class="row-sub">Record redacted repo exposure findings, owners, rotation status, and evidence for customer review.</div></div><a class="tag good" href="/app/scanner">open</a></div>
             </div>
           </div>
         </section>
@@ -594,9 +594,9 @@ export function renderEnterpriseDashboardPage(env: EnterpriseControlPlaneEnv = {
               <p>Track GCP edge status, launch readiness, limits, and handoff notes.</p>
             </a>
             <a class="feature-card" href="/app/scanner">
-              <div class="feature-tags"><span class="feature-tag">visible</span><span class="feature-tag pending">future API</span></div>
-              <h3>Scanner entry</h3>
-              <p>Repository scanning is not enabled for enterprise yet; use this page for the launch checklist.</p>
+              <div class="feature-tags"><span class="feature-tag">live</span><span class="feature-tag">exposure</span></div>
+              <h3>Scanner exposure intake</h3>
+              <p>Record metadata-only repository exposure findings, redacted evidence references, owners, rotation state, and remediation status without uploading secrets.</p>
             </a>
             <a class="feature-card" href="/app/runbooks">
               <div class="feature-tags"><span class="feature-tag">live</span><span class="feature-tag">ops</span></div>
