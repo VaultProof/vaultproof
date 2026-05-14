@@ -49,12 +49,10 @@ function getRequestHostname(request: Request, url: URL): string {
 
 function redirectToInternalAdminLogin(url: URL): Response {
   const loginUrl = new URL('/app/login', url);
-  loginUrl.searchParams.set('internal_admin', 'true');
-  loginUrl.searchParams.set('next', `${url.pathname}${url.search}`);
   return new Response(null, {
     status: 302,
     headers: {
-      location: `${loginUrl.pathname}${loginUrl.search}`,
+      location: loginUrl.pathname,
       'cache-control': 'no-store',
       'x-robots-tag': 'noindex,nofollow',
     },

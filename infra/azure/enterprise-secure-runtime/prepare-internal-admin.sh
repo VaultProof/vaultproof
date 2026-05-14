@@ -129,8 +129,8 @@ if [[ "${RUN_NETWORK_CHECKS}" == "true" ]]; then
     ok "internal admin page is reachable"
   elif [[ "${internal_page_status}" == "302" ]]; then
     internal_page_location="$(http_location "${INTERNAL_ADMIN_URL%/}/")"
-    if [[ "${internal_page_location}" == "/app/login?internal_admin=true"* \
-      || "${internal_page_location}" == "${INTERNAL_ADMIN_URL%/}/app/login?internal_admin=true"* ]]; then
+    if [[ "${internal_page_location}" == "/app/login" \
+      || "${internal_page_location}" == "${INTERNAL_ADMIN_URL%/}/app/login" ]]; then
       ok "internal admin page redirects to employee login"
     else
       blocker "expected internal admin page to redirect to employee login, got Location: ${internal_page_location:-none}"

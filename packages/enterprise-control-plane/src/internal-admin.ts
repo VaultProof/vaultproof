@@ -799,7 +799,7 @@ export function renderInternalAdminPage(): string {
         </div>
         <div class="toolbar">
           <button id="refreshBtn" class="primary" type="button">refresh</button>
-          <a class="action" href="/app/login?internal_admin=true">employee sign in</a>
+          <a class="action" href="/app/login">employee sign in</a>
         </div>
       </div>
 
@@ -894,7 +894,7 @@ export function renderInternalAdminPage(): string {
         var el = byId('notice');
         if (!el) return;
         el.style.display = message ? 'block' : 'none';
-        el.innerHTML = message ? escapeHtml(message) + ' <a href="/app/login?internal_admin=true">Employee sign in</a>' : '';
+        el.innerHTML = message ? escapeHtml(message) + ' <a href="/app/login">Employee sign in</a>' : '';
       }
       async function fetchOverview() {
         var response = await fetch('/api/v1/internal-admin/overview', {

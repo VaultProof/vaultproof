@@ -3544,7 +3544,7 @@ async function assertInternalAdminConsole() {
     env,
   );
   if (unauthenticatedPageResponse.status !== 302
-    || !unauthenticatedPageResponse.headers.get('location')?.startsWith('/app/login?internal_admin=true')) {
+    || unauthenticatedPageResponse.headers.get('location') !== '/app/login') {
     throw new Error(`Expected internal admin page to redirect to login, got ${unauthenticatedPageResponse.status}`);
   }
 
@@ -3579,7 +3579,7 @@ async function assertInternalAdminConsole() {
     }),
     env,
   );
-  if (spoofedAdminHostResponse.headers.get('location')?.startsWith('/app/login?internal_admin=true')) {
+  if (spoofedAdminHostResponse.headers.get('location') === '/app/login') {
     throw new Error('Enterprise host must not route to internal admin via spoofed x-forwarded-host');
   }
 
@@ -3639,6 +3639,9 @@ async function assertInternalAdminConsole() {
     if (!pageHtml.includes(required)) {
       throw new Error(`Expected internal admin page to include ${required}`);
     }
+  }
+  if (pageHtml.includes('internal_admin=true') || pageHtml.includes('next=%2F')) {
+    throw new Error('Internal admin page must not expose admin mode or next-route query parameters in login links');
   }
   if (pageHtml.includes('https://api.vaultproof.dev') || pageHtml.includes('https://init.vaultproof.dev')) {
     throw new Error('Internal admin page must not use B2C API origins');
