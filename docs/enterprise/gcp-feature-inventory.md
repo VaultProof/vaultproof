@@ -5,11 +5,11 @@ Last updated: 2026-05-14
 This file tracks what VaultProof features exist, which ones have been adapted for Google Cloud, and what still blocks production cutover. Update it every time a build changes product behavior, runtime behavior, infrastructure behavior, or customer-facing claims.
 
 <!-- gcp-build-marker:start -->
-Last validated GCP image build: `36221e8`
+Last validated GCP image build: `1293a82`
 
-- Control plane digest: `sha256:d74d053a0444758da329850e01027069d99a38f2adc491dee7d40f0428029d0b`
-- Executor digest: `sha256:f83b4c5a7f61c3305cc2ce2ee1c2f5173a75f6bcdc1a6044c29dc8440b7c0219`
-- Updated: 2026-05-14T05:36:04.145Z
+- Control plane digest: `sha256:e27f2e922a11459fc219509fcf043d1e66afb47c484acf1560e323067fb8db66`
+- Executor digest: `sha256:00e3a61bd91a13571d6664ced5ec53d0c73b67a74eddad0dd633c6debf5e0b3f`
+- Updated: 2026-05-14T05:54:48.477Z
 <!-- gcp-build-marker:end -->
 
 ## Runtime Features
