@@ -17,7 +17,7 @@ These records point at Azure Front Door. Remove them when Azure is stopped or cl
 | TXT | `_dnsauth.admin` | Azure custom-domain validation token | Delete after Azure Front Door custom domain is no longer needed. |
 | TXT | `_dnsauth.enterprise` | Azure custom-domain validation token | Delete after Azure Front Door custom domain is no longer needed. |
 
-Do not leave `admin.vaultproof.dev` or `enterprise.vaultproof.dev` pointing to a closed Azure Front Door endpoint. `enterprise.vaultproof.dev` should point at the GCP enterprise runtime; VaultProof staff/admin pages should stay in the separate `vaultproof.dev` root/B2C system.
+Do not leave `admin.vaultproof.dev` or `enterprise.vaultproof.dev` pointing to a closed Azure Front Door endpoint. `enterprise.vaultproof.dev` should point at the GCP enterprise runtime for customers; `admin.vaultproof.dev` should point at the GCP edge only after the staff admin certificate, employee allowlist, and internal-admin smoke checks are ready.
 
 ## Keep
 
@@ -88,4 +88,4 @@ RUN_LIVE_EDGE=true RUN_LIVE_APP_QA=true STRICT_LIVE=true npm run gate:gcp-custom
 2. Keep main website, Worker routes, Zoho email, SPF/DKIM/DMARC, and known Google verification records.
 3. Leave ambiguous sender/bounce records in place until you confirm whether Cloudflare Email Routing, SES, Resend, or Railway are still used.
 4. Recreate `enterprise` as an A record to `34.102.179.105` only when you are ready to activate the GCP certificate.
-5. Recreate `admin` only after the internal admin GCP path is explicitly built and verified.
+5. Recreate `admin` for `admin.vaultproof.dev` after the internal admin GCP path is explicitly built, certificate-backed, allowlisted, and verified.

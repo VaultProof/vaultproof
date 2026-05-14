@@ -445,8 +445,9 @@ Status: \`${cloudArmorState}\`
 - \`https://${edgeDomain}/app/keys\` includes the API proxy self-test kit and email API key demo path: copy-safe dry-run requests with required caller-lock headers, Resend/SendGrid/Mailgun/Postmark/AWS SES slot defaults, protected email dry-run, blocked-recipient policy testing, no raw key reveal, launch/evidence coverage, and email-specific audit metadata.
 - \`https://${edgeDomain}/app/control\` and \`https://${edgeDomain}/app/org\` use the shared universal sidebar with explicit sidebar typography, hide the legacy static topbar/page frame, and clean old \`?org=<uuid>\` URLs back to canonical \`https://${edgeDomain}/app/control\` and \`https://${edgeDomain}/app/org\` while preserving the selected org in local storage.
 - Live HTML verification on both long-form URLs confirmed the universal sidebar, URL cleanup script, hidden legacy topbar, explicit sidebar font sizing, and no legacy sidebar/site-theme artifacts.
-- Staff/admin pages belong to the separate VaultProof B2C/root system on \`vaultproof.dev\`. The enterprise runtime does not default to an employee admin hostname, and \`enterprise.vaultproof.dev\` remains customer-facing only.
-- Root admin boundary page lives at \`vaultproof.dev/admin\` in the B2C static site so staff/B2C admin entry is distinct from enterprise customer login.
+- Staff/admin pages belong on \`admin.vaultproof.dev\`; \`enterprise.vaultproof.dev\` remains customer-facing only and does not expose \`/api/v1/internal-admin/*\`.
+- Root admin boundary page at \`vaultproof.dev/admin\` now points staff to \`admin.vaultproof.dev\` and keeps enterprise customer login on \`enterprise.vaultproof.dev\`.
+- Built in this update: the staff admin console can create enterprise businesses, invite/find the first owner, seed SSO metadata, create user invites, and show per-business login links such as \`https://${edgeDomain}/app/login?org=<business-id>\` without exposing service-role keys, OAuth secrets, SAML secrets, or invite tokens.
 
 ## Projects Page Performance
 

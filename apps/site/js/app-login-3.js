@@ -6,7 +6,10 @@
     : 'https://api.vaultproof.dev/api/v1';
   const IS_ENTERPRISE_HOST = window.location.hostname === 'enterprise.vaultproof.dev'
     || window.location.hostname.startsWith('enterprise.');
-  const IS_INTERNAL_ADMIN_HOST = false;
+  const IS_INTERNAL_ADMIN_HOST = window.location.hostname === 'admin.vaultproof.dev'
+    || window.location.hostname === 'internal-admin.vaultproof.test'
+    || window.location.hostname.startsWith('admin.')
+    || window.location.hostname.startsWith('internal-admin.');
   const IS_AZURE_CONTROL_PLANE_HOST = IS_ENTERPRISE_HOST || IS_INTERNAL_ADMIN_HOST;
   const INIT_API = IS_AZURE_CONTROL_PLANE_HOST
     ? `${window.location.origin}/api/v1/enterprise`
@@ -69,6 +72,11 @@
     return /^[a-z0-9.-]+\.[a-z]{2,}$/i.test(normalized || '') ? normalized : '';
   }
 
+  function normalizeOrgTarget(value) {
+    const trimmed = String(value || '').trim();
+    return /^[a-z0-9][a-z0-9_-]{0,79}$/i.test(trimmed) ? trimmed : '';
+  }
+
   function setPromoMessage(text, tone) {
     const msg = $('promoCodeMsg');
     if (!msg) return;
@@ -117,6 +125,8 @@
       if (cliContext.cliState) params.set('state', cliContext.cliState);
     }
     if (promo) params.set('promo', promo);
+    const orgTarget = normalizeOrgTarget(urlParams.get('org') || '');
+    if (orgTarget) params.set('org', orgTarget);
     if (extraParams && typeof extraParams === 'object') {
       Object.keys(extraParams).forEach(function(key) {
         const value = extraParams[key];
@@ -264,9 +274,17 @@
       const data = payload && typeof payload === 'object' && payload.data ? payload.data : payload;
       const organizations = Array.isArray(data && data.organizations) ? data.organizations : [];
       const activeOrganizationId = data && data.active_organization_id ? data.active_organization_id : null;
+      const requestedOrg = normalizeOrgTarget(urlParams.get('org') || '');
+      const requestedOrganization = requestedOrg
+        ? organizations.find(function(org) { return org.id === requestedOrg || org.slug === requestedOrg; }) || null
+        : null;
       const activeOrganization = organizations.find(function(org) { return org.id === activeOrganizationId; }) || null;
       const sharedOrganization = organizations.find(function(org) { return org.kind && org.kind !== 'personal'; }) || null;
 
+      if (requestedOrganization && requestedOrganization.kind && requestedOrganization.kind !== 'personal') {
+        localStorage.setItem(ACTIVE_ORG_STORAGE_KEY, requestedOrganization.id);
+        return `${enterpriseDashboardPath}?org=${encodeURIComponent(requestedOrganization.id)}`;
+      }
       if (activeOrganization && activeOrganization.kind && activeOrganization.kind !== 'personal') {
         localStorage.setItem(ACTIVE_ORG_STORAGE_KEY, activeOrganization.id);
         return `${enterpriseDashboardPath}?org=${encodeURIComponent(activeOrganization.id)}`;
@@ -663,6 +681,26 @@
     if (target) target.prepend(banner);
   }
 
+  function applyHostModeCopy() {
+    if (!IS_INTERNAL_ADMIN_HOST) return;
+    document.title = 'VaultProof Admin Login';
+    const kicker = document.querySelector('.auth-kicker');
+    const title = document.querySelector('.auth-title');
+    const subtitle = document.querySelector('.auth-subtitle');
+    const legal = document.querySelector('.legal');
+    const backLink = document.querySelector('.back-link a');
+    const footnote = document.querySelector('.auth-footnote');
+    if (kicker) kicker.textContent = 'VaultProof staff admin';
+    if (title) title.textContent = 'Employee sign in';
+    if (subtitle) subtitle.textContent = 'Use an approved VaultProof employee account to manage enterprise businesses, users, SSO, and per-business login links.';
+    if (legal) legal.textContent = 'Staff access is allowlisted and audited. Enterprise customer users should sign in at enterprise.vaultproof.dev.';
+    if (backLink) {
+      backLink.textContent = 'back to admin';
+      backLink.setAttribute('href', '/');
+    }
+    if (footnote) footnote.innerHTML = '<span>admin.vaultproof.dev</span><span>staff console</span>';
+  }
+
   async function applyPromoCode() {
     const input = $('promoCodeInput');
     const code = validatePromoCode(input.value.trim());
@@ -862,6 +900,7 @@
     const loopCount = detectAndBreakLoops();
     const cliContext = getCliContext();
 
+    applyHostModeCopy();
     prefillPromoFromUrl();
     prefillSsoDomainFromState();
     showCliBanner(cliContext);

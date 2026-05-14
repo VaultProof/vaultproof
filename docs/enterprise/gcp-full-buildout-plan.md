@@ -35,6 +35,7 @@ Already built:
 - Paid-pilot proposal builder at `https://enterprise.vaultproof.dev/app/pilot` for first workload scope, expected volume, monthly price, sales commission math, support boundary, incident-response terms, success metric, and close steps
 - Pilot success tracker at `https://enterprise.vaultproof.dev/app/pilot-success` for live checks, browser-local milestones, evidence links, blockers, weekly customer update copy, and expansion/no-go readiness
 - Paid-pilot tester readiness board at `https://enterprise.vaultproof.dev/app/testers` for browser-local tester roster, login/scenario status, scenario assignment, customer-safe feedback, blockers, and JSON evidence
+- Staff admin console at `https://admin.vaultproof.dev` in code for creating enterprise businesses, finding/inviting the first owner, seeding SSO metadata, adding users, and copying per-business login links; `enterprise.vaultproof.dev` remains customer-only
 - API inventory board at `https://enterprise.vaultproof.dev/app/inventory` for metadata-only API catalog rows derived from projects, provider slots, caller-lock policy, traffic rollups, browser-local owner/risk/review annotations, and customer-safe JSON evidence
 - Build-status and feature inventory docs
 - Managed Supabase remains the auth/database provider for the pilot
@@ -52,6 +53,7 @@ Not yet customer-ready:
 - Release evidence still needs persistent audited records, automated Cloud Build/deploy evidence capture, approval workflow, and rollback automation after the demo.
 - Paid-pilot tester readiness still needs persistent audited records, invite automation, scenario-specific feedback forms, and durable owner handoff after the demo.
 - Supabase OAuth/login settings still need to be confirmed for `enterprise.vaultproof.dev`.
+- `admin.vaultproof.dev` still needs live edge/DNS/certificate verification before staff should use it in production.
 - Older migration/history docs still have Azure-era language; customer-facing app UI is cleaned for the GCP demo.
 
 ## Launch Goal

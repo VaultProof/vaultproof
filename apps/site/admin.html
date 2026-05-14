@@ -127,28 +127,28 @@
       <div class="hero">
         <div class="kicker">vaultproof.dev admin boundary</div>
         <h1 id="admin-title">VaultProof Admin</h1>
-        <p>This root system is for VaultProof B2C and staff operations. Enterprise customer workspaces, SSO, projects, keys, launch evidence, and customer admins stay on the separate enterprise system.</p>
+        <p>Staff manages enterprise customers on the separate admin host. Enterprise customers sign in on the enterprise host and land inside their own business workspace.</p>
       </div>
       <div class="grid">
         <article class="card">
-          <h2>B2C And Staff Admin</h2>
-          <p>Use the root VaultProof system for public-site, B2C, and staff-only administration. Staff tools must stay behind authenticated allowlists before any live action is exposed.</p>
+          <h2>Staff Admin</h2>
+          <p>Create businesses, invite business admins, set SSO, and copy per-business login links from the employee-only admin console.</p>
           <div class="actions">
-            <a class="button" href="/app/login">Sign in</a>
-            <a class="button secondary" href="/status">Status</a>
+            <a class="button" href="https://admin.vaultproof.dev/app/login?internal_admin=true">Staff sign in</a>
+            <a class="button secondary" href="https://admin.vaultproof.dev/">Admin console</a>
           </div>
         </article>
         <article class="card">
           <h2>Enterprise Customers</h2>
-          <p>Enterprise users and enterprise customer admins use the dedicated enterprise subdomain. Do not route enterprise customer sessions through the B2C admin surface.</p>
+          <p>Business users sign in on the enterprise customer system. Each business can use its own login link with the organization id or configured SSO domain.</p>
           <div class="actions">
-            <a class="button" href="https://enterprise.vaultproof.dev/app/login">Enterprise sign in</a>
+            <a class="button" href="https://enterprise.vaultproof.dev/app/login">Customer sign in</a>
             <a class="button secondary" href="https://enterprise.vaultproof.dev/">Enterprise site</a>
           </div>
         </article>
         <article class="card">
           <h2>System Split</h2>
-          <p class="note">vaultproof.dev is the B2C/root system. enterprise.vaultproof.dev is the enterprise customer system. admin.vaultproof.dev is not part of the current production split.</p>
+          <p class="note">vaultproof.dev is the root/B2C system. admin.vaultproof.dev is the staff admin system. enterprise.vaultproof.dev is the enterprise customer system.</p>
         </article>
         <article class="card">
           <h2>Security Rule</h2>

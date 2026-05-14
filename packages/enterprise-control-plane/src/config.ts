@@ -4,7 +4,7 @@ import {
   type SignedSecureExecutionEnvelope,
 } from '@vaultproof/core';
 
-const DEFAULT_INTERNAL_ADMIN_HOSTNAME = '';
+const DEFAULT_INTERNAL_ADMIN_HOSTNAME = 'admin.vaultproof.dev';
 
 export type EnterpriseRuntimeTier = 'shared-demo' | 'dedicated-production';
 

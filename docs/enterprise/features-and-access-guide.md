@@ -160,13 +160,15 @@ Project roles are for one project at a time:
 
 ## VaultProof Employee Admin Console
 
-This is separate from the customer dashboard and must not be exposed through `enterprise.vaultproof.dev`. The current internal-admin code remains in the enterprise control-plane package for local/explicit staff-system wiring, but the GCP enterprise runtime no longer defaults to `admin.vaultproof.dev`.
+This is separate from the customer dashboard and must not be exposed through `enterprise.vaultproof.dev`. Staff uses `admin.vaultproof.dev`; enterprise customers use `enterprise.vaultproof.dev`.
 
 | Surface | URL | What It Does |
 | --- | --- | --- |
-| Root/B2C admin system | `vaultproof.dev` admin pages | VaultProof staff/admin belongs to the separate B2C/root system. It should manage B2C users and staff-only enterprise account operations without turning `enterprise.vaultproof.dev` into an employee console. |
-| Internal admin API | `/api/v1/internal-admin/overview` | Opt-in staff API code path for future explicit wiring. Requires a Supabase user session plus explicit employee email/domain allowlist. The browser never receives the Supabase service-role key. Successful overview views are written to the internal admin audit stream. |
-| Internal org detail | `/api/v1/internal-admin/orgs/<organization-id>` | Business detail for member timeline, SSO setup checklist, support notes, active projects, customer audit, destructive action approvals, execution/rollback plans, and evidence links back to the enterprise dashboard. The page includes approval-gated staff forms for SSO metadata, invitations, business/account status, support notes, and invite resend/revoke requests. Detail views are audit logged. |
+| Root/B2C admin entry | `vaultproof.dev/admin` | Lightweight root boundary page that points VaultProof staff to `admin.vaultproof.dev` and customers to `enterprise.vaultproof.dev`. |
+| Staff admin console | `https://admin.vaultproof.dev/` | Employee-only console for creating enterprise businesses, managing users/invites, setting SSO metadata, and copying per-business login links. It requires a Supabase user session plus explicit employee email/domain allowlist. |
+| Internal admin API | `/api/v1/internal-admin/overview` | Staff API available only on the configured admin host. The browser never receives the Supabase service-role key. Successful overview views are written to the internal admin audit stream. |
+| Internal business create | `POST /api/v1/internal-admin/orgs` | Approval-gated employee action for creating an enterprise business, finding or inviting the first owner through Supabase Auth, seeding owner membership, optionally seeding SSO metadata, and returning business login links without invite tokens or secrets. |
+| Internal org detail | `/api/v1/internal-admin/orgs/<organization-id>` | Business detail for member timeline, SSO checklist, per-business login links, support notes, active projects, customer audit, destructive action approvals, execution/rollback plans, and evidence links back to the enterprise dashboard. The page includes approval-gated staff forms for SSO metadata, invitations, business/account status, support notes, and invite resend/revoke requests. Detail views are audit logged. |
 | Internal SSO settings | `/api/v1/internal-admin/orgs/<organization-id>/sso-settings` | Approval-gated employee action for setting enterprise SSO metadata: company domain, provider label, login mode, and rollout status. It does not accept OAuth client secrets, SAML metadata XML, certificates, or IdP private material. Successful changes are written to both organization audit and internal admin audit. |
 | Internal invitation actions | `/api/v1/internal-admin/orgs/<organization-id>/invitations` and `/api/v1/internal-admin/orgs/<organization-id>/invitations/<invitation-id>/(resend|revoke)` | Approval-gated employee actions for creating an invite, recording a resend request, and revoking a pending invite. Resend is audit/request-only until email delivery tooling is wired. |
 | Internal business status | `/api/v1/internal-admin/orgs/<organization-id>/status` | Approval-gated employee status history for onboarding, active, at-risk, paused, and offboarding states. This tracks VaultProof support posture without mutating customer organization records. |
@@ -181,7 +183,7 @@ This is separate from the customer dashboard and must not be exposed through `en
 
 Required environment before explicitly wiring this code into a staff system:
 
-- `VAULTPROOF_INTERNAL_ADMIN_HOSTNAME=<explicit staff/admin host>`
+- `VAULTPROOF_INTERNAL_ADMIN_HOSTNAME=admin.vaultproof.dev` unless using the default staff host
 - `VAULTPROOF_INTERNAL_ADMIN_EMAILS=employee@vaultproof.dev,...` or `VAULTPROOF_INTERNAL_ADMIN_DOMAINS=vaultproof.dev`
 - Optional write-action gate: `VAULTPROOF_INTERNAL_ADMIN_ACTIONS_ENABLED=true`
 - Optional write-action approval secret: `VAULTPROOF_INTERNAL_ADMIN_APPROVAL_SECRET=<strong-random-secret>`
@@ -205,7 +207,7 @@ npm run prepare:enterprise-internal-admin
 
 This is read-only. It checks employee allowlist env, the required internal-admin/verifier tables, customer-host separation, the exact unauthenticated employee-login redirect, and internal-admin API auth behavior. The expected enterprise-host result remains `404` for `/api/v1/internal-admin/*`.
 
-Support notes, invitation create/resend-request/revoke, and business status updates are approval-gated write actions. Leave `VAULTPROOF_INTERNAL_ADMIN_ACTIONS_ENABLED` unset or `false` in production until the team is ready to operate employee writes. Every future write action should insert into `internal_admin_audit_events`.
+Business create, support notes, invitation create/resend-request/revoke, SSO settings, and business status updates are approval-gated write actions. Leave `VAULTPROOF_INTERNAL_ADMIN_ACTIONS_ENABLED` unset or `false` in production until the team is ready to operate employee writes. Every future write action should insert into `internal_admin_audit_events`.
 
 For destructive actions, use the action-request workflow first. `disable_org_access` can be requested only with customer authorization, rollback owner, rollback plan, and break-glass reason evidence; it can then be approved, rejected, dry-run planned, and rollback dry-run planned. The execution dry-run records current organization archive fields as rollback payload. The rollback dry-run reads that payload and records what would be restored. Neither endpoint mutates customer organization records in the current internal admin API.
 

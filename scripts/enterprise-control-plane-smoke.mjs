@@ -103,6 +103,8 @@ let internalAdminSupportNotes = [];
 let internalAdminBusinessStatusUpdates = [];
 let internalAdminActionRequests = [];
 let internalAdminActionExecutionRecords = [];
+let internalAdminCreatedBusiness = null;
+let internalAdminOwnerInvite = null;
 let bootstrapRpcCalls = 0;
 let authUserLookupCalls = 0;
 let projectKeyGetCalls = 0;
@@ -207,6 +209,8 @@ function installSupabaseStub() {
     updated_at: '2026-04-26T12:15:00.000Z',
   }];
   internalAdminActionExecutionRecords = [];
+  internalAdminCreatedBusiness = null;
+  internalAdminOwnerInvite = null;
   bootstrapRpcCalls = 0;
   authUserLookupCalls = 0;
   projectKeyGetCalls = 0;
@@ -232,6 +236,27 @@ function installSupabaseStub() {
         user: {
           id: 'user_123',
           email: stubAuthUserEmail,
+        },
+      });
+    }
+
+    if (url.includes('/auth/v1/admin/users') && method === 'GET') {
+      return jsonResponse({
+        users: [{
+          id: 'user_123',
+          email: stubAuthUserEmail,
+        }],
+      });
+    }
+
+    if (url.includes('/auth/v1/invite') && method === 'POST') {
+      const body = JSON.parse(init?.body || '{}');
+      internalAdminOwnerInvite = body;
+      return jsonResponse({
+        user: {
+          id: 'user_new_owner',
+          email: body.email,
+          user_metadata: body.data || {},
         },
       });
     }
@@ -596,6 +621,9 @@ function installSupabaseStub() {
     }
 
     if (url.includes('/rest/v1/organizations') && method === 'GET') {
+      if (decodedUrl.includes('select=id') && decodedUrl.includes('slug=eq.')) {
+        return jsonResponse(decodedUrl.includes('slug=eq.example-org') ? [{ id: 'org_123' }] : []);
+      }
       if (decodedUrl.includes('archived_by_user_id')) {
         return jsonResponse([{
           id: 'org_123',
@@ -631,6 +659,21 @@ function installSupabaseStub() {
         });
       }
       return jsonResponse(fakeOrganization);
+    }
+
+    if (url.includes('/rest/v1/organizations') && method === 'POST') {
+      const body = JSON.parse(init?.body || '{}');
+      internalAdminCreatedBusiness = {
+        id: 'org_created_123',
+        name: body.name,
+        slug: body.slug,
+        kind: body.kind || 'team',
+        owner_user_id: body.owner_user_id || 'user_new_owner',
+        created_at: body.created_at || '2026-04-27T12:00:00.000Z',
+        updated_at: body.updated_at || '2026-04-27T12:00:00.000Z',
+        archived_at: null,
+      };
+      return jsonResponse(internalAdminCreatedBusiness);
     }
 
     if (url.includes('/rest/v1/projects') && method === 'GET') {
@@ -2755,7 +2798,10 @@ async function assertEnterpriseLoginRoute() {
   if (
     loginScriptResponse.status !== 200
     || !loginScript.includes('IS_INTERNAL_ADMIN_HOST')
+    || !loginScript.includes("window.location.hostname === 'admin.vaultproof.dev'")
     || !loginScript.includes('/internal/admin')
+    || !loginScript.includes('normalizeOrgTarget')
+    || !loginScript.includes("params.set('org', orgTarget)")
     || !loginScript.includes('IS_AZURE_CONTROL_PLANE_HOST')
     || !loginScript.includes("loginWithProvider('azure'")
     || !loginScript.includes('signInWithOtp')
@@ -3546,13 +3592,15 @@ async function assertInternalAdminConsole() {
   }
   for (const required of [
     'VaultProof employees only',
-    'Manage businesses safely.',
+    'Manage enterprise customers.',
+    'Create business',
     'Businesses',
     'Users and access',
     'SSO rollout',
     'Enterprise account administration',
     'SSO settings',
     'Invite enterprise user',
+    'business_login_links',
     'Internal admin audit',
     'approval gate',
     '/api/v1/internal-admin/overview',
@@ -3580,6 +3628,7 @@ async function assertInternalAdminConsole() {
   for (const required of [
     'Business detail',
     'SSO setup checklist',
+    'Business login links',
     'data-internal-admin-action="org-account-management"',
     '/sso-settings',
     'save SSO',
@@ -3663,6 +3712,9 @@ async function assertInternalAdminConsole() {
   if (!Array.isArray(overview.businesses) || overview.businesses[0]?.name !== 'Example Org') {
     throw new Error(`Expected internal admin overview to include Example Org, got ${JSON.stringify(overview.businesses)}`);
   }
+  if (!overview.businesses[0]?.business_login_links?.find((link) => link.href.includes('/app/login?org=org_123'))) {
+    throw new Error(`Expected internal admin overview to include per-business login links, got ${JSON.stringify(overview.businesses[0]?.business_login_links)}`);
+  }
   if (!Array.isArray(overview.recent_internal_admin_audit)
     || overview.recent_internal_admin_audit[0]?.event_type !== 'internal_admin_overview_viewed') {
     throw new Error(`Expected internal admin overview to include employee audit stream, got ${JSON.stringify(overview.recent_internal_admin_audit)}`);
@@ -3707,8 +3759,70 @@ async function assertInternalAdminConsole() {
   if (!orgDetail.evidence_links?.find((link) => link.href.includes('/app/audit?organization_id=org_123'))) {
     throw new Error(`Expected org detail evidence links, got ${JSON.stringify(orgDetail.evidence_links)}`);
   }
+  if (!orgDetail.business?.business_login_links?.find((link) => link.href.includes('/app/login?org=org_123'))) {
+    throw new Error(`Expected org detail business login links, got ${JSON.stringify(orgDetail.business?.business_login_links)}`);
+  }
   if (!internalAdminAuditEvents.some((event) => event.event_type === 'internal_admin_org_detail_viewed')) {
     throw new Error(`Expected org detail request to insert audit event, got ${JSON.stringify(internalAdminAuditEvents)}`);
+  }
+
+  const disabledBusinessCreateResponse = await handleEnterpriseControlPlaneRequest(
+    buildHostRequest(INTERNAL_ADMIN_HOSTNAME, '/api/v1/internal-admin/orgs', {
+      method: 'POST',
+      headers: {
+        authorization: `Bearer ${AUTH_TOKEN}`,
+        'content-type': 'application/json',
+      },
+      body: JSON.stringify({
+        name: 'Pilot Customer',
+        owner_email: 'pilot-admin@example.com',
+        company_domain: 'pilot.example.com',
+      }),
+    }),
+    env,
+  );
+  if (disabledBusinessCreateResponse.status !== 403) {
+    throw new Error(`Expected internal business create to be disabled by default, got ${disabledBusinessCreateResponse.status}`);
+  }
+
+  const businessCreateResponse = await handleEnterpriseControlPlaneRequest(
+    buildHostRequest(INTERNAL_ADMIN_HOSTNAME, '/api/v1/internal-admin/orgs', {
+      method: 'POST',
+      headers: {
+        authorization: `Bearer ${AUTH_TOKEN}`,
+        'content-type': 'application/json',
+        'x-vaultproof-internal-admin-approval': 'approval-secret',
+      },
+      body: JSON.stringify({
+        name: 'Pilot Customer',
+        slug: 'pilot-customer',
+        owner_email: 'pilot-admin@example.com',
+        company_domain: 'pilot.example.com',
+        sso_provider: 'okta',
+      }),
+    }),
+    {
+      ...env,
+      internalAdminActionsEnabled: true,
+      internalAdminApprovalSecret: 'approval-secret',
+    },
+  );
+  const businessCreatePayload = await businessCreateResponse.json();
+  if (businessCreateResponse.status !== 201
+    || businessCreatePayload.business?.name !== 'Pilot Customer'
+    || businessCreatePayload.owner?.delivery !== 'supabase_invite_email_sent'
+    || internalAdminCreatedBusiness?.owner_user_id !== 'user_new_owner'
+    || internalAdminOwnerInvite?.email !== 'pilot-admin@example.com') {
+    throw new Error(`Expected approved business create, got ${businessCreateResponse.status}: ${JSON.stringify(businessCreatePayload)}`);
+  }
+  if (!businessCreatePayload.business?.business_login_links?.find((link) => link.href.includes('/app/login?org=org_created_123'))) {
+    throw new Error(`Expected created business to include login links, got ${JSON.stringify(businessCreatePayload.business?.business_login_links)}`);
+  }
+  if (!internalAdminAuditEvents.some((event) => event.event_type === 'internal_admin_business_created')) {
+    throw new Error(`Expected business create audit event, got ${JSON.stringify(internalAdminAuditEvents)}`);
+  }
+  if (!auditEvents.some((event) => event.event_type === 'organization_created' && event.metadata?.created_via === 'internal_admin')) {
+    throw new Error(`Expected customer org audit event for internal business create, got ${JSON.stringify(auditEvents)}`);
   }
 
   const disabledSsoResponse = await handleEnterpriseControlPlaneRequest(

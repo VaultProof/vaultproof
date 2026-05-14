@@ -4,6 +4,7 @@ import {
   isOrganizationRole,
   isValidDomain,
   normalizeDomain,
+  normalizeSlug,
   type OrganizationRole,
 } from '@vaultproof/core';
 import type { EnterpriseControlPlaneEnv } from './config.js';
@@ -113,6 +114,13 @@ interface InternalAdminActionExecutionRecordRow {
   created_at: string;
 }
 
+interface InternalAdminAuthUser {
+  id: string;
+  email?: string | null;
+  user_metadata?: Record<string, unknown> | null;
+  app_metadata?: Record<string, unknown> | null;
+}
+
 interface InternalAdminBreakGlassEvidence {
   customer_authorization_ref: string;
   rollback_owner_email: string;
@@ -139,6 +147,11 @@ function emailDomain(email: string): string {
 function truncateForAudit(value: string | null, maxLength = 160): string | null {
   if (!value) return null;
   return value.length > maxLength ? `${value.slice(0, maxLength - 1)}...` : value;
+}
+
+function normalizeInternalAdminEmail(value: unknown): string {
+  const email = typeof value === 'string' ? value.trim().toLowerCase() : '';
+  return /^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email) ? email : '';
 }
 
 function secureStringEquals(left: string, right: string): boolean {
@@ -658,6 +671,36 @@ function enterpriseEvidenceLinks(env: EnterpriseControlPlaneEnv, organizationId:
   }];
 }
 
+function enterpriseBusinessLoginLinks(
+  env: EnterpriseControlPlaneEnv,
+  organizationId: string,
+  companyDomain?: string | null,
+): Array<{
+  label: string;
+  href: string;
+}> {
+  const host = env.enterpriseHostname || 'enterprise.vaultproof.dev';
+  const base = `https://${host}`;
+  const org = encodeURIComponent(organizationId);
+  const links = [{
+    label: 'Business login',
+    href: `${base}/app/login?org=${org}`,
+  }, {
+    label: 'Business dashboard',
+    href: `${base}/app/dashboard?org=${org}`,
+  }];
+
+  const normalizedDomain = normalizeDomain(companyDomain || '');
+  if (normalizedDomain && isValidDomain(normalizedDomain)) {
+    links.push({
+      label: 'SSO login',
+      href: `${base}/app/login?sso_domain=${encodeURIComponent(normalizedDomain)}&org=${org}`,
+    });
+  }
+
+  return links;
+}
+
 export function renderInternalAdminPage(): string {
   return `<!doctype html>
 <html lang="en">
@@ -726,6 +769,8 @@ export function renderInternalAdminPage(): string {
     .admin-actions-toolbar { display:grid; grid-template-columns:minmax(220px, 360px) 1fr; gap:12px; align-items:end; }
     .danger { color:#fff; background:var(--red); border:0; }
     .inline-actions { display:flex; gap:8px; flex-wrap:wrap; margin-top:8px; }
+    .link-stack { display:flex; flex-wrap:wrap; gap:7px; margin-top:8px; }
+    .create-business { margin-bottom:16px; }
     @media (max-width: 1050px) { .shell { grid-template-columns:1fr; } .sidebar { position:relative; height:auto; } .topbar { flex-direction:column; } .toolbar { justify-content:flex-start; } .kpis, .two, .action-grid, .admin-actions-toolbar, .form-row { grid-template-columns:1fr; } }
   </style>
 </head>
@@ -734,7 +779,8 @@ export function renderInternalAdminPage(): string {
     <aside class="sidebar">
       <div class="brand"><div class="mark">VP</div><div><div class="brand-title">VaultProof Internal</div><div class="brand-sub">employee admin console</div></div></div>
       <div class="nav-label">manage</div>
-      <a class="nav-link active" href="#businesses"><span>Businesses</span><span class="tag">read</span></a>
+      <a class="nav-link active" href="#business-create"><span>Create business</span></a>
+      <a class="nav-link" href="#businesses"><span>Businesses</span><span class="tag">read</span></a>
       <a class="nav-link" href="#users"><span>Users</span></a>
       <a class="nav-link" href="#sso"><span>SSO</span></a>
       <a class="nav-link" href="#support"><span>Support</span></a>
@@ -748,8 +794,8 @@ export function renderInternalAdminPage(): string {
       <div class="topbar">
         <div>
           <div class="eyebrow">VaultProof employees only</div>
-          <h1>Manage businesses safely.</h1>
-          <p class="lead">See customer organizations, owners, users, projects, SSO rollout, readiness, and support signals without entering the customer-facing dashboard.</p>
+          <h1>Manage enterprise customers.</h1>
+          <p class="lead">Add businesses, invite business admins, set SSO, and copy the correct per-business login link without entering the customer-facing dashboard.</p>
         </div>
         <div class="toolbar">
           <button id="refreshBtn" class="primary" type="button">refresh</button>
@@ -765,6 +811,26 @@ export function renderInternalAdminPage(): string {
         <div class="card"><div class="kpi-label">projects</div><div id="kpiProjects" class="kpi-value">...</div><div class="kpi-sub">active customer scopes</div></div>
         <div class="card"><div class="kpi-label">pending invites</div><div id="kpiInvites" class="kpi-value">...</div><div class="kpi-sub">need follow-up</div></div>
         <div class="card"><div class="kpi-label">SSO configured</div><div id="kpiSso" class="kpi-value">...</div><div class="kpi-sub">team orgs</div></div>
+      </section>
+
+      <section class="card create-business" id="business-create">
+        <div class="section-title"><h2>Create business</h2><span class="mini">staff approval required</span></div>
+        <form id="createBusinessForm" class="action-form">
+          <div class="form-row">
+            <label class="field">business name<input name="name" placeholder="Acme Security"></label>
+            <label class="field">owner email<input name="owner_email" type="email" placeholder="admin@customer.com"></label>
+          </div>
+          <div class="form-row">
+            <label class="field">company domain<input name="company_domain" placeholder="customer.com"></label>
+            <label class="field">slug<input name="slug" placeholder="acme-security"></label>
+          </div>
+          <div class="form-row">
+            <label class="field">SSO provider<select name="sso_provider"><option value="microsoft-entra">microsoft-entra</option><option value="okta">okta</option><option value="google-workspace">google-workspace</option><option value="generic-saml">generic-saml</option><option value="supabase-saml">supabase-saml</option></select></label>
+            <label class="field">approval secret<input id="businessApprovalSecret" type="password" autocomplete="off" placeholder="required for writes"></label>
+          </div>
+          <button class="primary" type="submit">create business</button>
+          <div id="businessCreateStatus" class="form-status"></div>
+        </form>
       </section>
 
       <section class="grid two">
@@ -862,7 +928,7 @@ export function renderInternalAdminPage(): string {
         return payload;
       }
       function approvalSecret() {
-        var input = byId('adminApprovalSecret');
+        var input = byId('adminApprovalSecret') || byId('businessApprovalSecret');
         return input && input.value ? input.value.trim() : '';
       }
       function formValue(form, name) {
@@ -871,6 +937,12 @@ export function renderInternalAdminPage(): string {
       }
       function setActionStatus(message, tone) {
         var status = byId('adminActionStatus');
+        if (!status) return;
+        status.className = 'form-status ' + (tone || '');
+        status.textContent = message || '';
+      }
+      function setCreateStatus(message, tone) {
+        var status = byId('businessCreateStatus');
         if (!status) return;
         status.className = 'form-status ' + (tone || '');
         status.textContent = message || '';
@@ -896,6 +968,17 @@ export function renderInternalAdminPage(): string {
           var tone = item.status === 'done' || item.status === 'ready' ? 'good' : 'warn';
           return '<span class="tag ' + tone + '">' + escapeHtml(item.label || item.status || item) + '</span>';
         }).join('');
+      }
+      function linkTags(links) {
+        return (links || []).map(function(link) {
+          return '<a class="tag good" href="' + escapeHtml(link.href) + '">' + escapeHtml(link.label || 'link') + '</a>';
+        }).join('');
+      }
+      function businessRow(biz) {
+        var sso = biz.sso || {};
+        var sub = (biz.owner_email || 'owner unknown') + ' - ' + number(biz.member_count) + ' users - ' + number(biz.active_project_count) + ' projects - created ' + rel(biz.created_at);
+        var links = linkTags(biz.business_login_links || []);
+        return '<div class="row"><div><div class="row-title">' + escapeHtml(biz.name || biz.slug || biz.id) + '</div><div class="row-sub">' + escapeHtml(sub) + '</div><div class="link-stack">' + links + '</div></div><div><span class="tag ' + (sso.status === 'configured' ? 'good' : 'warn') + '">' + escapeHtml(sso.status === 'configured' ? 'SSO ready' : 'SSO todo') + '</span><a class="tag" href="/orgs/' + encodeURIComponent(biz.id) + '">detail</a></div></div>';
       }
       function roleOptions(selected) {
         return ['viewer', 'member', 'developer', 'auditor', 'iam_admin', 'security_admin', 'platform_admin', 'admin'].map(function(role) {
@@ -1002,6 +1085,33 @@ export function renderInternalAdminPage(): string {
           });
         });
       }
+      function bindCreateBusinessForm() {
+        var createForm = byId('createBusinessForm');
+        if (!createForm) return;
+        createForm.addEventListener('submit', async function(event) {
+          event.preventDefault();
+          try {
+            setCreateStatus('Creating business...', '');
+            var payload = await postAdminAction('/api/v1/internal-admin/orgs', {
+              name: formValue(createForm, 'name'),
+              owner_email: formValue(createForm, 'owner_email'),
+              company_domain: formValue(createForm, 'company_domain'),
+              slug: formValue(createForm, 'slug'),
+              sso_provider: formValue(createForm, 'sso_provider'),
+              login_mode: 'sso-first',
+              sso_status: 'requested'
+            });
+            var links = payload && payload.business && Array.isArray(payload.business.business_login_links)
+              ? payload.business.business_login_links
+              : [];
+            setCreateStatus('Business created. ' + (links[0] ? links[0].href : 'Open it from the business list.'), 'good');
+            createForm.reset();
+            await load();
+          } catch (error) {
+            setCreateStatus(error && error.message ? error.message : 'Business creation failed.', 'bad');
+          }
+        });
+      }
       function renderOrgDetail(payload) {
         var section = byId('org-detail');
         if (!section) return;
@@ -1012,6 +1122,7 @@ export function renderInternalAdminPage(): string {
         var timeline = Array.isArray(payload.member_timeline) ? payload.member_timeline : [];
         var supportNotes = Array.isArray(payload.support_notes) ? payload.support_notes : [];
         var evidenceLinks = Array.isArray(payload.evidence_links) ? payload.evidence_links : [];
+        var businessLoginLinks = Array.isArray(org.business_login_links) ? org.business_login_links : [];
         var invitations = Array.isArray(payload.invitations) ? payload.invitations : [];
         var pendingInvitations = invitations.filter(function(invite) { return invite.status === 'pending'; });
         var statusUpdates = Array.isArray(payload.business_status_updates) ? payload.business_status_updates : [];
@@ -1025,6 +1136,7 @@ export function renderInternalAdminPage(): string {
         html += '<div class="row"><div><div class="row-title">SSO setup checklist</div><div class="row-sub">' + ssoChecklist.map(function(item) { return escapeHtml(item.label + ': ' + item.detail); }).join('<br>') + '</div></div><div>' + tagList(ssoChecklist) + '</div></div>';
         html += '<div class="row"><div><div class="row-title">User/member timeline</div><div class="row-sub">' + (timeline.length ? timeline.slice(0, 8).map(function(item) { return escapeHtml(item.label + ' - ' + (item.detail || '') + ' - ' + rel(item.created_at)); }).join('<br>') : 'No member timeline events yet.') + '</div></div><span class="tag">timeline</span></div>';
         html += '<div class="row"><div><div class="row-title">Pending invitation actions</div><div class="row-sub">' + (pendingInvitations.length ? pendingInvitations.map(function(invite) { return escapeHtml(invite.email + ' as ' + invite.role + ' - API: POST /api/v1/internal-admin/orgs/' + org.id + '/invitations/' + invite.id + '/resend or /revoke'); }).join('<br>') : 'No pending invites for this business.') + '</div></div><span class="tag warn">approval gated</span></div>';
+        html += '<div class="row"><div><div class="row-title">Business login links</div><div class="row-sub">Use these links for this specific business. The customer-facing app stays on enterprise.vaultproof.dev.</div><div class="link-stack">' + linkTags(businessLoginLinks) + '</div></div><span class="tag good">per business</span></div>';
         html += '<div class="row"><div><div class="row-title">Support notes</div><div class="row-sub">' + (supportNotes.length ? supportNotes.map(function(note) { return escapeHtml(note.note_type + ': ' + note.body + ' - ' + (note.created_by_email || 'employee') + ' - ' + rel(note.created_at)); }).join('<br>') : (payload.support_notes_schema_ready ? 'No support notes yet.' : 'Support notes table is not applied yet.')) + '</div></div><span class="tag ' + (payload.support_notes_schema_ready ? 'good' : 'warn') + '">' + (payload.support_notes_schema_ready ? 'ready' : 'pending') + '</span></div>';
         html += '<div class="row"><div><div class="row-title">Destructive action approvals</div><div class="row-sub">' + (actionRequests.length ? actionRequests.map(function(action) { return escapeHtml(action.action_type + ' - ' + action.status + ' - requested by ' + action.requested_by_email + ' - ' + action.reason + ' - ' + rel(action.created_at)); }).join('<br>') : (payload.action_requests_schema_ready ? 'No destructive action requests yet.' : 'Action request table is not applied yet.')) + '</div></div><span class="tag ' + (payload.action_requests_schema_ready ? 'warn' : 'bad') + '">' + (payload.action_requests_schema_ready ? 'approval required' : 'pending') + '</span></div>';
         html += '<div class="row"><div><div class="row-title">Destructive execution and rollback ledger</div><div class="row-sub">' + (executionRecords.length ? executionRecords.map(function(record) { var direction = record.preflight_result && record.preflight_result.action_direction === 'rollback' ? 'rollback plan' : 'execution plan'; return escapeHtml(direction + ' - ' + record.action_type + ' - ' + record.execution_mode + ' - ' + record.status + ' - by ' + record.executed_by_email + ' - ' + rel(record.created_at)); }).join('<br>') : (payload.execution_records_schema_ready ? 'No execution or rollback plans have been recorded yet.' : 'Execution record table is not applied yet.')) + '</div></div><span class="tag ' + (payload.execution_records_schema_ready ? 'warn' : 'bad') + '">' + (payload.execution_records_schema_ready ? 'dry-run only' : 'pending') + '</span></div>';
@@ -1044,11 +1156,7 @@ export function renderInternalAdminPage(): string {
         text('ssoMeta', number(summary.sso_configured_count) + ' configured');
 
         var businesses = Array.isArray(payload.businesses) ? payload.businesses : [];
-        byId('businessList').innerHTML = businesses.length ? businesses.map(function(biz) {
-          var sso = biz.sso || {};
-          var sub = (biz.owner_email || 'owner unknown') + ' - ' + number(biz.member_count) + ' users - ' + number(biz.active_project_count) + ' projects - created ' + rel(biz.created_at);
-          return row(biz.name || biz.slug || biz.id, sub, sso.status === 'configured' ? 'SSO ready' : 'SSO todo', sso.status === 'configured' ? 'good' : 'warn', '/orgs/' + encodeURIComponent(biz.id), 'detail');
-        }).join('') : '<div class="empty">No businesses found.</div>';
+        byId('businessList').innerHTML = businesses.length ? businesses.map(businessRow).join('') : '<div class="empty">No businesses found.</div>';
 
         var supportRows = businesses.filter(function(biz) {
           return biz.pending_invitation_count || !(biz.sso && biz.sso.status === 'configured') || biz.archived_at;
@@ -1099,6 +1207,7 @@ export function renderInternalAdminPage(): string {
       }
       var refreshBtn = byId('refreshBtn');
       if (refreshBtn) refreshBtn.addEventListener('click', load);
+      bindCreateBusinessForm();
       load();
     })();
   </script>
@@ -1283,6 +1392,7 @@ async function handleInternalAdminOrgDetail(
       active_project_count: activeProjects.length,
       pending_invitation_count: pendingInvitations.length,
       sso,
+      business_login_links: enterpriseBusinessLoginLinks(env, organization.id, sso?.company_domain || null),
     },
     users: members.map((member) => ({
       user_id: member.user_id,
@@ -1390,6 +1500,268 @@ async function ensureInternalAdminOrganizationExists(
     return Response.json({ error: 'Organization not found.' }, { status: 404 });
   }
   return null;
+}
+
+async function findInternalAdminAuthUserByEmail(
+  env: EnterpriseControlPlaneEnv,
+  email: string,
+): Promise<{ user: InternalAdminAuthUser | null; error: Response | null }> {
+  const supabase = getSupabase(env);
+  for (let page = 1; page <= 10; page += 1) {
+    const { data, error } = await supabase.auth.admin.listUsers({
+      page,
+      perPage: 1000,
+    });
+    if (error) {
+      return {
+        user: null,
+        error: Response.json({ error: `Internal admin auth user lookup failed: ${error.message}` }, { status: 500 }),
+      };
+    }
+
+    const users = Array.isArray(data?.users) ? data.users as InternalAdminAuthUser[] : [];
+    const found = users.find((user) => user.email?.trim().toLowerCase() === email) || null;
+    if (found) return { user: found, error: null };
+    if (users.length < 1000) return { user: null, error: null };
+  }
+  return { user: null, error: null };
+}
+
+async function ensureInternalAdminBusinessOwnerUser(
+  env: EnterpriseControlPlaneEnv,
+  email: string,
+  businessName: string,
+  companyDomain: string | null,
+): Promise<{
+  user: InternalAdminAuthUser | null;
+  delivery: 'existing_user' | 'supabase_invite_email_sent';
+  error: Response | null;
+}> {
+  const existing = await findInternalAdminAuthUserByEmail(env, email);
+  if (existing.error) {
+    return { user: null, delivery: 'existing_user', error: existing.error };
+  }
+  if (existing.user) {
+    return { user: existing.user, delivery: 'existing_user', error: null };
+  }
+
+  const redirectTo = `https://${env.enterpriseHostname || 'enterprise.vaultproof.dev'}/app/login`;
+  const { data, error } = await getSupabase(env).auth.admin.inviteUserByEmail(email, {
+    redirectTo,
+    data: {
+      vaultproof_enterprise_admin_invite: true,
+      vaultproof_business_name: businessName,
+      vaultproof_company_domain: companyDomain,
+    },
+  });
+  if (error || !data.user) {
+    return {
+      user: null,
+      delivery: 'supabase_invite_email_sent',
+      error: Response.json({
+        error: `Supabase owner invite failed${error?.message ? `: ${error.message}` : '.'}`,
+      }, { status: 400 }),
+    };
+  }
+
+  return {
+    user: data.user as InternalAdminAuthUser,
+    delivery: 'supabase_invite_email_sent',
+    error: null,
+  };
+}
+
+async function handleCreateInternalAdminBusiness(
+  request: Request,
+  env: EnterpriseControlPlaneEnv,
+): Promise<Response> {
+  const authorized = await authorizeInternalAdmin(request, env);
+  if (authorized instanceof Response) return authorized;
+
+  const approvalError = requireInternalAdminActionApproval(request, env);
+  if (approvalError) return approvalError;
+
+  let body: Record<string, unknown>;
+  try {
+    const parsed = await request.json();
+    body = parsed && typeof parsed === 'object' && !Array.isArray(parsed)
+      ? parsed as Record<string, unknown>
+      : {};
+  } catch {
+    return Response.json({ error: 'Invalid JSON body.' }, { status: 400 });
+  }
+
+  const name = typeof body.name === 'string' ? body.name.trim() : '';
+  if (name.length < 2 || name.length > 120) {
+    return Response.json({ error: 'Business name must be between 2 and 120 characters.' }, { status: 400 });
+  }
+
+  const ownerEmail = normalizeInternalAdminEmail(body.owner_email);
+  if (!ownerEmail) {
+    return Response.json({ error: 'owner_email must be a valid email address.' }, { status: 400 });
+  }
+
+  const requestedSlug = typeof body.slug === 'string' ? normalizeSlug(body.slug) : normalizeSlug(name);
+  const slug = requestedSlug || null;
+  const companyDomain = normalizeDomain(typeof body.company_domain === 'string' ? body.company_domain : emailDomain(ownerEmail));
+  if (companyDomain && !isValidDomain(companyDomain)) {
+    return Response.json({ error: 'company_domain must be a valid domain.' }, { status: 400 });
+  }
+
+  const ssoProvider = normalizeInternalAdminSsoProvider(body.sso_provider || 'microsoft-entra');
+  if (ssoProvider instanceof Response) return ssoProvider;
+  const loginMode = validateInternalAdminSsoLoginMode(body.login_mode || 'sso-first');
+  if (!loginMode) {
+    return Response.json({ error: 'login_mode must be assisted or sso-first.' }, { status: 400 });
+  }
+  const ssoStatus = validateInternalAdminSsoStatus(body.sso_status || 'requested');
+  if (!ssoStatus) {
+    return Response.json({ error: 'sso_status must be requested or configured.' }, { status: 400 });
+  }
+
+  const supabase = getSupabase(env);
+  if (slug) {
+    const slugResult = await supabase
+      .from('organizations')
+      .select('id')
+      .eq('slug', slug)
+      .limit(1);
+    if (slugResult.error) {
+      return Response.json({ error: `Internal admin business slug lookup failed: ${slugResult.error.message}` }, { status: 500 });
+    }
+    if (normalizeRows(slugResult.data as MaybeArray<{ id: string }>).length) {
+      return Response.json({ error: 'That business slug is already taken.' }, { status: 400 });
+    }
+  }
+
+  const owner = await ensureInternalAdminBusinessOwnerUser(env, ownerEmail, name, companyDomain || null);
+  if (owner.error) return owner.error;
+  if (!owner.user?.id) {
+    return Response.json({ error: 'Could not create or find the owner user.' }, { status: 500 });
+  }
+
+  const now = new Date().toISOString();
+  const orgResult = await supabase
+    .from('organizations')
+    .insert({
+      name,
+      slug,
+      kind: 'team',
+      owner_user_id: owner.user.id,
+      created_at: now,
+      updated_at: now,
+    })
+    .select('id, name, slug, kind, owner_user_id, created_at, updated_at, archived_at')
+    .single();
+
+  if (orgResult.error || !orgResult.data) {
+    const message = orgResult.error?.message?.includes('organizations_slug_lower_uidx')
+      ? 'That business slug is already taken.'
+      : `Internal admin business create failed${orgResult.error?.message ? `: ${orgResult.error.message}` : '.'}`;
+    return Response.json({ error: message }, { status: 400 });
+  }
+
+  const organization = orgResult.data as {
+    id: string;
+    name: string | null;
+    slug: string | null;
+    kind: string;
+    owner_user_id: string;
+    created_at: string;
+    updated_at: string | null;
+    archived_at: string | null;
+  };
+
+  const membershipResult = await supabase
+    .from('organization_members')
+    .upsert({
+      organization_id: organization.id,
+      user_id: owner.user.id,
+      role: 'owner',
+      invited_by: authorized.auth.userId,
+    }, {
+      onConflict: 'organization_id,user_id',
+    });
+  if (membershipResult.error) {
+    return Response.json({ error: `Internal admin owner membership create failed: ${membershipResult.error.message}` }, { status: 500 });
+  }
+
+  let sso: Record<string, unknown> | null = null;
+  if (companyDomain) {
+    const ssoResult = await supabase
+      .from('organization_sso_settings')
+      .upsert({
+        organization_id: organization.id,
+        company_domain: companyDomain,
+        sso_provider: ssoProvider,
+        admin_email: ownerEmail,
+        status: ssoStatus,
+        login_mode: loginMode,
+        updated_at: now,
+      }, { onConflict: 'organization_id' })
+      .select('organization_id, company_domain, sso_provider, login_mode, status, created_at, updated_at')
+      .single();
+    if (ssoResult.error) {
+      return Response.json({ error: `Internal admin SSO seed failed: ${ssoResult.error.message}` }, { status: 400 });
+    }
+    sso = ssoResult.data as Record<string, unknown>;
+  }
+
+  await writeGovernanceAuditEvent(env, {
+    organization_id: organization.id,
+    actor_user_id: authorized.auth.userId,
+    actor_email: authorized.auth.email,
+    event_type: 'organization_created',
+    target_type: 'organization',
+    target_id: organization.id,
+    description: `Created enterprise business ${organization.name}`,
+    metadata: {
+      name: organization.name,
+      slug: organization.slug,
+      kind: organization.kind,
+      owner_email: ownerEmail,
+      company_domain: companyDomain || null,
+      created_via: 'internal_admin',
+    },
+  });
+
+  await writeInternalAdminAuditEvent(
+    env,
+    authorized.auth,
+    request,
+    'internal_admin_business_created',
+    {
+      organization_id: organization.id,
+      owner_email: ownerEmail,
+      company_domain: companyDomain || null,
+      owner_delivery: owner.delivery,
+      slug: organization.slug,
+    },
+  );
+
+  return Response.json({
+    business: {
+      ...organization,
+      owner_email: ownerEmail,
+      sso,
+      business_login_links: enterpriseBusinessLoginLinks(env, organization.id, companyDomain || null),
+    },
+    owner: {
+      id: owner.user.id,
+      email: ownerEmail,
+      delivery: owner.delivery,
+    },
+    guardrails: [
+      'Business creation requires the internal admin action gate and approval secret.',
+      'The owner receives a Supabase invite email when the account did not already exist.',
+      'The browser response includes business login URLs, not service-role keys, OAuth secrets, SAML secrets, or invite tokens.',
+    ],
+  }, {
+    status: 201,
+    headers: {
+      'cache-control': 'no-store',
+    },
+  });
 }
 
 async function handleUpdateInternalAdminSsoSettings(
@@ -2480,6 +2852,14 @@ export async function handleInternalAdminRoutes(
 
   if (
     request.method === 'POST'
+    && pathSegments.length === 1
+    && pathSegments[0] === 'orgs'
+  ) {
+    return handleCreateInternalAdminBusiness(request, env);
+  }
+
+  if (
+    request.method === 'POST'
     && pathSegments.length === 3
     && pathSegments[0] === 'orgs'
     && pathSegments[2] === 'sso-settings'
@@ -2749,6 +3129,7 @@ export async function handleInternalAdminRoutes(
       active_project_count: activeOrgProjects.length,
       pending_invitation_count: pendingOrgInvitations.length,
       sso,
+      business_login_links: enterpriseBusinessLoginLinks(env, organization.id, sso?.company_domain || null),
     };
   });
 
