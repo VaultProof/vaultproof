@@ -544,6 +544,7 @@ Ask these before approving production traffic:
 | AI Proof Verifier | `https://enterprise.vaultproof.dev/app/verifier` | External model registry, proof bundle verification, evidence storage, and Azure confidential binding. |
 | API Inventory | `https://enterprise.vaultproof.dev/app/inventory` | Metadata-only API catalog, owner/risk/review annotations, provider-slot mapping, traffic posture, and customer-safe evidence export. |
 | Policy Drift | `https://enterprise.vaultproof.dev/app/policy` | Control-gap board, browser-local accepted-risk records, expiry/owner metadata, and customer-safe policy drift evidence export. |
+| Rollout Manager | `https://enterprise.vaultproof.dev/app/rollout` | Workload cutover board, owners, integration mode, canary status, rollback path, blockers, copy-safe snippets, and customer-safe rollout evidence export. |
 | Provider slots | `https://enterprise.vaultproof.dev/app/keys` | Provider-slot status, rotation notes, Secure Key Release posture, and emergency revoke. |
 | Audit | `https://enterprise.vaultproof.dev/app/audit` | Governance/runtime audit events and CSV export. |
 | Activity | `https://enterprise.vaultproof.dev/app/activity` | Runtime events, provider request IDs, denials, latency, and attestation summaries. |

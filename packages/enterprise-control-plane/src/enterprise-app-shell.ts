@@ -5,6 +5,7 @@ export type EnterpriseAppNavPage =
   | 'projects'
   | 'inventory'
   | 'policy'
+  | 'rollout'
   | 'readiness'
   | 'health'
   | 'activity'
@@ -91,6 +92,13 @@ const ENTERPRISE_SIDEBAR_NAV_GROUPS: readonly EnterpriseSidebarNavGroup[] = [
         href: '/app/policy',
         label: 'Policy Drift',
         blurb: 'Control gaps, accepted-risk records, owners, expiry, and launch blockers.',
+        activePill: 'new',
+      },
+      {
+        page: 'rollout',
+        href: '/app/rollout',
+        label: 'Rollout Manager',
+        blurb: 'Workload cutover, canary status, owners, rollback, and evidence.',
         activePill: 'new',
       },
       {

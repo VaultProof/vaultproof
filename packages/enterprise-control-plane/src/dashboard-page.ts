@@ -478,6 +478,7 @@ export function renderEnterpriseDashboardPage(env: EnterpriseControlPlaneEnv = {
               <div class="row"><div><div class="row-title">Demo script</div><div class="row-sub">Run the buyer walkthrough with proof path, guardrails, Q&A, and close steps.</div></div><a class="tag good" href="/app/demo">open</a></div>
               <div class="row"><div><div class="row-title">Launch checklist</div><div class="row-sub">Turn readiness, policy, owners, evidence, alerts, and rollout actions into one customer go-live board.</div></div><a class="tag good" href="/app/launch">open</a></div>
               <div class="row"><div><div class="row-title">Evidence packet</div><div class="row-sub">Assemble runtime readiness, access review, audit, provider posture, and launch proof for customer security review.</div></div><a class="tag good" href="/app/evidence">open</a></div>
+              <div class="row"><div><div class="row-title">Rollout Manager</div><div class="row-sub">Plan one workload cutover with owners, canary, rollback, blockers, and evidence export.</div></div><a class="tag good" href="/app/rollout">open</a></div>
               <div class="row"><div><div class="row-title">Technical guide</div><div class="row-sub">Open the enterprise implementation reference for identity, network, key custody, attestation, and troubleshooting.</div></div><a class="tag good" href="/app/technical-guide">open</a></div>
               <div class="row"><div><div class="row-title">Launch plans</div><div class="row-sub">Track packaging, GCP edge readiness, and contract-facing guardrails.</div></div><a class="tag" href="/app/plans">open</a></div>
               <div class="row"><div><div class="row-title">AI Proof Verifier</div><div class="row-sub">Register external models and verify proof bundles without VaultProof running the model.</div></div><a class="tag warn" href="/app/verifier">beta</a></div>
@@ -516,6 +517,11 @@ export function renderEnterpriseDashboardPage(env: EnterpriseControlPlaneEnv = {
               <div class="feature-tags"><span class="feature-tag">live</span><span class="feature-tag">proof</span></div>
               <h3>Evidence packet</h3>
               <p>Customer proof packet with readiness, access review, audit export links, provider posture, rollout workflow, and downloadable JSON summary.</p>
+            </a>
+            <a class="feature-card" href="/app/rollout">
+              <div class="feature-tags"><span class="feature-tag">live</span><span class="feature-tag">cutover</span></div>
+              <h3>Rollout Manager</h3>
+              <p>Move one workload into VaultProof with owners, integration mode, canary percentage, rollback path, blockers, copy-safe snippets, and evidence export.</p>
             </a>
             <a class="feature-card" href="/app/technical-guide">
               <div class="feature-tags"><span class="feature-tag">live</span><span class="feature-tag">technical</span></div>

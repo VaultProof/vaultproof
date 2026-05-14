@@ -2104,9 +2104,9 @@ function renderEnterpriseAlertsPage(): string {
 </html>`;
 }
 
-function renderEnterpriseOperationsPage(pageName: 'activity' | 'projects' | 'inventory' | 'policy' | 'keys'): string {
-  const pageTitle = pageName === 'activity' ? 'Activity' : pageName === 'projects' ? 'Projects' : pageName === 'inventory' ? 'API Inventory' : pageName === 'policy' ? 'Policy Drift' : 'Provider Slots';
-  const pageKicker = pageName === 'activity' ? 'runtime feed' : pageName === 'projects' ? 'project inventory' : pageName === 'inventory' ? 'api inventory' : pageName === 'policy' ? 'accepted risk' : 'secrets posture';
+function renderEnterpriseOperationsPage(pageName: 'activity' | 'projects' | 'inventory' | 'policy' | 'rollout' | 'keys'): string {
+  const pageTitle = pageName === 'activity' ? 'Activity' : pageName === 'projects' ? 'Projects' : pageName === 'inventory' ? 'API Inventory' : pageName === 'policy' ? 'Policy Drift' : pageName === 'rollout' ? 'Rollout Manager' : 'Provider Slots';
+  const pageKicker = pageName === 'activity' ? 'runtime feed' : pageName === 'projects' ? 'project inventory' : pageName === 'inventory' ? 'api inventory' : pageName === 'policy' ? 'accepted risk' : pageName === 'rollout' ? 'workload cutover' : 'secrets posture';
   const pageLead = pageName === 'activity'
     ? 'Review secure proxy/runtime events, status codes, latency, provider request IDs, and attestation evidence hints.'
     : pageName === 'projects'
@@ -2115,7 +2115,9 @@ function renderEnterpriseOperationsPage(pageName: 'activity' | 'projects' | 'inv
         ? 'Catalog protected API surfaces by project, provider slot, owner, environment, risk, policy posture, traffic evidence, and review status without storing secrets.'
         : pageName === 'policy'
           ? 'Review caller-lock drift, missing controls, demo-only risk, accepted exceptions, owners, expiry dates, and remaining blockers before paid traffic.'
-          : 'Review active provider slots, trigger emergency revoke, and keep rotation posture visible without exposing upstream secrets.';
+          : pageName === 'rollout'
+            ? 'Move one customer workload into VaultProof with app and gateway owners, test status, canary percentage, rollback path, blockers, and customer-safe evidence.'
+            : 'Review active provider slots, trigger emergency revoke, and keep rotation posture visible without exposing upstream secrets.';
 
   return `<!doctype html>
 <html lang="en">
@@ -2190,6 +2192,7 @@ function renderEnterpriseOperationsPage(pageName: 'activity' | 'projects' | 'inv
           ${pageName === 'keys' ? '<button id="openProviderSlotForm" class="primary" type="button">add slot</button>' : ''}
           ${pageName === 'inventory' ? '<button id="copyInventoryJsonBtn" class="primary" type="button">copy inventory JSON</button>' : ''}
           ${pageName === 'policy' ? '<button id="copyPolicyJsonBtn" class="primary" type="button">copy policy JSON</button>' : ''}
+          ${pageName === 'rollout' ? '<button id="copyRolloutJsonBtn" class="primary" type="button">copy rollout JSON</button>' : ''}
           <button id="refreshBtn" type="button">refresh</button>
           <a class="primary" href="/app/control">open control</a>
         </div>
@@ -2304,6 +2307,21 @@ function renderEnterpriseOperationsPage(pageName: 'activity' | 'projects' | 'inv
         </div>
       </section>
 
+      <section id="rolloutPanel" class="grid two" style="display:none">
+        <div class="card" style="grid-column:1/-1">
+          <div class="section-title"><h2>Integration rollout board</h2><span id="rolloutMeta" class="mini">workload cutover</span></div>
+          <div id="rolloutList" class="list"><div class="empty">Loading integration rollout...</div></div>
+        </div>
+        <div class="card">
+          <div class="section-title"><h2>Rollout evidence</h2><span class="mini">no secrets</span></div>
+          <div id="rolloutSummaryList" class="list"></div>
+        </div>
+        <div class="card">
+          <div class="section-title"><h2>Cutover workflow</h2><span class="mini">customer-safe</span></div>
+          <div id="rolloutWorkflowList" class="list"></div>
+        </div>
+      </section>
+
       ${pageName === 'keys' ? `
       <section id="apiProxyTestPanel" class="card" style="display:none;margin-bottom:16px">
         <div class="section-title"><h2>Customer API proxy test kit</h2><span id="apiProxyTestMeta" class="mini">copy-safe</span></div>
@@ -2343,6 +2361,7 @@ function renderEnterpriseOperationsPage(pageName: 'activity' | 'projects' | 'inv
       var cachedOverview = {};
       var cachedInventoryRows = [];
       var cachedPolicyRows = [];
+      var cachedRolloutRows = [];
       var providerDefaults = {
         openai: { upstream: 'https://api.openai.com', header: 'authorization', template: 'Bearer {key}', demoPath: '/v1/models' },
         anthropic: { upstream: 'https://api.anthropic.com', header: 'x-api-key', template: '{key}', demoPath: '/v1/messages' },
@@ -3171,6 +3190,318 @@ function renderEnterpriseOperationsPage(pageName: 'activity' | 'projects' | 'inv
         cachedPolicyRows = buildPolicyRows();
         copyToClipboard(JSON.stringify(policyEvidencePacket(), null, 2), 'Policy drift JSON');
       }
+      function rolloutStorageKey() {
+        return 'vaultproof_integration_rollouts::' + (currentOrgId || 'default');
+      }
+      function readRolloutState() {
+        try {
+          var parsed = JSON.parse(localStorage.getItem(rolloutStorageKey()) || '{}');
+          return parsed && typeof parsed === 'object' && !Array.isArray(parsed) ? parsed : {};
+        } catch (_error) {
+          return {};
+        }
+      }
+      function writeRolloutState(value) {
+        localStorage.setItem(rolloutStorageKey(), JSON.stringify(value || {}));
+      }
+      function redactRolloutText(value) {
+        var textValue = String(value || '');
+        if (!textValue) return null;
+        if (/(sk-[a-z0-9_-]{8,}|gocspx-|eyJ[a-zA-Z0-9_-]{10,}|-----BEGIN|Bearer\\s+|service[_ -]?role|client[_ -]?secret|api[_ -]?key|password|private[_ -]?key|authorization:|cookie:)/i.test(textValue)) {
+          return '[redacted: rollout note contained secret-like material]';
+        }
+        return textValue;
+      }
+      function rolloutPercent(value) {
+        var parsed = Number(value || 0);
+        if (!Number.isFinite(parsed)) return 0;
+        return Math.max(0, Math.min(100, Math.round(parsed)));
+      }
+      function rolloutSnippet(row) {
+        if (!row.provider) return 'Create a provider slot before generating the protected-call snippet.';
+        var slug = row.provider.slug || row.provider.provider || 'provider';
+        var path = '/api/v1/enterprise/projects/' + encodeURIComponent(row.project.id) + '/providers/' + encodeURIComponent(slug) + '/execute';
+        var headers = {
+          authorization: 'Bearer YOUR_VAULTPROOF_SESSION_JWT',
+          'content-type': 'application/json',
+          'x-vaultproof-organization': currentOrgId || 'YOUR_ORGANIZATION_ID',
+          'x-vaultproof-customer-gateway': 'vaultproof-managed',
+          'x-vaultproof-client-class': 'server'
+        };
+        var body = {
+          method: 'GET',
+          upstream_path: row.provider.default_path || '/',
+          dry_run: true
+        };
+        return [
+          'fetch(' + JSON.stringify(location.origin + path) + ', {',
+          '  method: "POST",',
+          '  headers: ' + JSON.stringify(headers, null, 2).replace(/\\n/g, '\\n  ') + ',',
+          '  body: JSON.stringify(' + JSON.stringify(body, null, 2).replace(/\\n/g, '\\n  ') + ')',
+          '}).then(async (response) => ({',
+          '  status: response.status,',
+          '  body: await response.json().catch(() => null)',
+          '}));'
+        ].join('\\n');
+      }
+      function rolloutBlockers(row, state, policyRows) {
+        var blockers = [];
+        var annotation = row.annotation || {};
+        var canary = rolloutPercent(state.canary_percent);
+        var testStatus = state.test_status || 'not_started';
+        var openCriticalPolicy = policyRows.filter(function(policyRow) {
+          return (policyRow.severity === 'critical' || policyRow.severity === 'high') && policyRowStatus(policyRow) !== 'approved exception' && policyRowStatus(policyRow) !== 'demo accepted';
+        });
+        if (!row.provider) blockers.push('missing provider slot');
+        if (row.provider && row.provider.material_mode === 'demo-placeholder') blockers.push('demo-only provider material');
+        if (!row.policy || row.policy.complete !== true) blockers.push('caller-lock policy incomplete');
+        if (annotation.review_status === 'blocked') blockers.push('API inventory row blocked');
+        if (!annotation.business_owner || !annotation.technical_owner) blockers.push('API inventory owners missing');
+        if (!state.application) blockers.push('application/workload name missing');
+        if (!state.integration_mode) blockers.push('integration mode missing');
+        if (!state.app_owner) blockers.push('app owner missing');
+        if (!state.gateway_owner) blockers.push('gateway owner missing');
+        if (!state.target_date) blockers.push('target date missing');
+        if (!state.rollback_owner || !state.rollback_path) blockers.push('rollback owner/path missing');
+        if (Number(row.traffic && row.traffic.calls || 0) === 0 && ['dry_run_passed', 'denial_passed', 'canary_passed', 'live_verified'].indexOf(testStatus) === -1) blockers.push('dry-run or traffic evidence missing');
+        if (canary > 0 && ['dry_run_passed', 'denial_passed', 'canary_passed', 'live_verified'].indexOf(testStatus) === -1) blockers.push('canary needs test evidence');
+        if (openCriticalPolicy.length) blockers.push(openCriticalPolicy.length + ' critical/high policy drift rows');
+        if (state.rollout_status === 'blocked') blockers.push('rollout manually blocked');
+        return blockers;
+      }
+      function rolloutStatus(row) {
+        var blockers = row.blockers || [];
+        var state = row.rollout || {};
+        var canary = rolloutPercent(state.canary_percent);
+        if (state.rollout_status === 'rollback') return 'rollback';
+        if (blockers.length) return 'hold';
+        if (state.rollout_status === 'live' || state.test_status === 'live_verified') return 'live';
+        if (state.test_status === 'canary_passed' || canary > 0) return 'canary';
+        if (state.test_status === 'dry_run_passed' || state.test_status === 'denial_passed') return 'ready_for_canary';
+        if (state.application || state.integration_mode || state.app_owner || state.gateway_owner) return 'planned';
+        return 'draft';
+      }
+      function rolloutTone(status) {
+        if (status === 'live' || status === 'ready_for_canary') return 'good';
+        if (status === 'hold' || status === 'rollback') return 'bad';
+        return 'warn';
+      }
+      function buildRolloutRows() {
+        var rolloutState = readRolloutState();
+        var inventoryRows = buildInventoryRows();
+        var policyRows = buildPolicyRows();
+        return inventoryRows.map(function(row) {
+          var state = rolloutState[row.id] && typeof rolloutState[row.id] === 'object' ? rolloutState[row.id] : {};
+          var relatedPolicyRows = policyRows.filter(function(policyRow) { return policyRow.api_surface_id === row.id; });
+          var blockers = rolloutBlockers(row, state, relatedPolicyRows);
+          return {
+            id: row.id,
+            project: row.project,
+            provider: row.provider,
+            policy: row.policy,
+            traffic: row.traffic,
+            inventory_annotation: row.annotation || {},
+            policy_drift: relatedPolicyRows.map(function(policyRow) {
+              return { id: policyRow.id, title: policyRow.title, severity: policyRow.severity, status: policyRowStatus(policyRow) };
+            }),
+            rollout: state,
+            blockers: blockers
+          };
+        });
+      }
+      function rolloutInput(row, field, label, placeholder) {
+        var state = row.rollout || {};
+        return '<div class="inventory-field"><label>' + escapeHtml(label) + '</label><input data-rollout-row-id="' + escapeHtml(row.id) + '" data-rollout-field="' + escapeHtml(field) + '" value="' + escapeHtml(state[field] || '') + '" placeholder="' + escapeHtml(placeholder || '') + '" /></div>';
+      }
+      function rolloutSelect(row, field, label, options) {
+        var state = row.rollout || {};
+        return '<div class="inventory-field"><label>' + escapeHtml(label) + '</label><select data-rollout-row-id="' + escapeHtml(row.id) + '" data-rollout-field="' + escapeHtml(field) + '">' + options.map(function(option) {
+          return '<option value="' + escapeHtml(option.value) + '"' + selectedOption(state[field], option.value) + '>' + escapeHtml(option.label) + '</option>';
+        }).join('') + '</select></div>';
+      }
+      function renderRolloutRow(row) {
+        var state = row.rollout || {};
+        var provider = row.provider || {};
+        var providerLabel = row.provider ? provider.slug + ' / ' + provider.provider : 'no provider slot';
+        var status = rolloutStatus(row);
+        var blockers = row.blockers || [];
+        return '<div class="inventory-row" data-rollout-card="' + escapeHtml(row.id) + '">' +
+          '<div class="inventory-head"><div><div class="row-title">' + escapeHtml(state.application || row.inventory_annotation.business_service || row.project.name) + '</div>' +
+          '<div class="row-sub">' + escapeHtml(row.project.name) + ' - ' + escapeHtml(providerLabel) + ' - canary ' + rolloutPercent(state.canary_percent) + '% - last seen ' + escapeHtml(rel(row.traffic && row.traffic.last_seen_at)) + '</div>' +
+          '<div><span class="tag ' + rolloutTone(status) + '">' + escapeHtml(status) + '</span><span class="tag">' + escapeHtml(state.integration_mode || 'integration mode unset') + '</span><span class="tag">' + escapeHtml(state.test_status || 'test not started') + '</span><span class="tag ' + (blockers.length ? 'bad' : 'good') + '">' + blockers.length + ' blockers</span></div></div>' +
+          '<div class="row-actions"><button type="button" data-action="copy-rollout-snippet" data-rollout-row-id="' + escapeHtml(row.id) + '">copy snippet</button><a class="tag" href="/app/control">control</a><a class="tag" href="/app/policy">policy</a><a class="tag" href="/app/activity">activity</a></div></div>' +
+          '<div class="inventory-fields">' +
+          rolloutInput(row, 'application', 'application/workload', row.inventory_annotation.business_service || 'Customer billing API') +
+          rolloutSelect(row, 'environment', 'environment', [
+            { value: '', label: 'unset' },
+            { value: 'demo', label: 'demo' },
+            { value: 'dev', label: 'dev' },
+            { value: 'staging', label: 'staging' },
+            { value: 'production', label: 'production' }
+          ]) +
+          rolloutSelect(row, 'integration_mode', 'integration mode', [
+            { value: '', label: 'unset' },
+            { value: 'vaultproof_proxy', label: 'VaultProof proxy' },
+            { value: 'customer_gateway', label: 'customer gateway' },
+            { value: 'sdk', label: 'SDK' },
+            { value: 'sidecar', label: 'sidecar' },
+            { value: 'manual_test', label: 'manual test' }
+          ]) +
+          rolloutSelect(row, 'rollout_status', 'rollout status', [
+            { value: '', label: 'draft' },
+            { value: 'planned', label: 'planned' },
+            { value: 'in_progress', label: 'in progress' },
+            { value: 'canary', label: 'canary' },
+            { value: 'live', label: 'live' },
+            { value: 'blocked', label: 'blocked' },
+            { value: 'rollback', label: 'rollback' }
+          ]) +
+          rolloutInput(row, 'app_owner', 'app owner', row.inventory_annotation.technical_owner || 'Application owner') +
+          rolloutInput(row, 'gateway_owner', 'gateway owner', 'Platform owner') +
+          '<div class="inventory-field"><label>target date</label><input type="date" data-rollout-row-id="' + escapeHtml(row.id) + '" data-rollout-field="target_date" value="' + escapeHtml(state.target_date || '') + '" /></div>' +
+          rolloutInput(row, 'support_window', 'support window', 'Launch week / business hours') +
+          '<div class="inventory-field"><label>canary percent</label><input type="number" min="0" max="100" step="1" data-rollout-row-id="' + escapeHtml(row.id) + '" data-rollout-field="canary_percent" value="' + escapeHtml(state.canary_percent || '') + '" placeholder="0" /></div>' +
+          rolloutSelect(row, 'test_status', 'test status', [
+            { value: 'not_started', label: 'not started' },
+            { value: 'dry_run_passed', label: 'dry-run passed' },
+            { value: 'denial_passed', label: 'denial passed' },
+            { value: 'canary_passed', label: 'canary passed' },
+            { value: 'live_verified', label: 'live verified' },
+            { value: 'failed', label: 'failed' }
+          ]) +
+          rolloutInput(row, 'rollback_owner', 'rollback owner', 'Ops owner') +
+          '<div class="inventory-field wide"><label>rollback path</label><textarea data-rollout-row-id="' + escapeHtml(row.id) + '" data-rollout-field="rollback_path" placeholder="How to return traffic to the previous direct provider path or pause the workload.">' + escapeHtml(state.rollback_path || '') + '</textarea></div>' +
+          '<div class="inventory-field wide"><label>blockers</label><div class="row-sub">' + escapeHtml(blockers.length ? blockers.join('; ') : 'No derived blockers. Review customer change window and support plan before live traffic.') + '</div></div>' +
+          '<div class="inventory-field wide"><label>rollout note</label><textarea data-rollout-row-id="' + escapeHtml(row.id) + '" data-rollout-field="note" placeholder="Metadata-only note. Do not paste tokens, request bodies, response bodies, keys, or customer payloads.">' + escapeHtml(state.note || '') + '</textarea></div>' +
+          '</div></div>';
+      }
+      function saveRolloutField(target, rerender) {
+        var rowId = target.getAttribute('data-rollout-row-id');
+        var field = target.getAttribute('data-rollout-field');
+        if (!rowId || !field) return;
+        var state = readRolloutState();
+        var current = state[rowId] && typeof state[rowId] === 'object' ? state[rowId] : {};
+        current[field] = target.value || '';
+        current.updated_at = new Date().toISOString();
+        state[rowId] = current;
+        writeRolloutState(state);
+        cachedRolloutRows = buildRolloutRows();
+        if (rerender || ['rollout_status', 'test_status', 'canary_percent', 'target_date'].indexOf(field) !== -1) {
+          renderRollout();
+        } else {
+          renderRolloutSummary();
+        }
+      }
+      function rolloutSummary() {
+        var rows = cachedRolloutRows;
+        return {
+          total: rows.length,
+          live: rows.filter(function(row) { return rolloutStatus(row) === 'live'; }).length,
+          canary: rows.filter(function(row) { return rolloutStatus(row) === 'canary'; }).length,
+          ready_for_canary: rows.filter(function(row) { return rolloutStatus(row) === 'ready_for_canary'; }).length,
+          hold: rows.filter(function(row) { return rolloutStatus(row) === 'hold'; }).length,
+          draft: rows.filter(function(row) { return rolloutStatus(row) === 'draft'; }).length,
+          blocker_count: rows.reduce(function(total, row) { return total + (row.blockers || []).length; }, 0)
+        };
+      }
+      function rolloutEvidencePacket() {
+        var summary = rolloutSummary();
+        return {
+          packet_type: 'vaultproof_enterprise_integration_rollout',
+          packet_version: 1,
+          generated_at: new Date().toISOString(),
+          generated_from: location.origin + '/app/rollout',
+          organization_id: currentOrgId || null,
+          status: summary.hold ? 'hold' : summary.live || summary.ready_for_canary || summary.canary ? 'ready' : 'draft',
+          summary: summary,
+          rows: cachedRolloutRows.map(function(row) {
+            var state = row.rollout || {};
+            return {
+              id: row.id,
+              status: rolloutStatus(row),
+              project: row.project,
+              provider: row.provider,
+              traffic: row.traffic,
+              blockers: row.blockers,
+              policy_drift: row.policy_drift,
+              rollout: {
+                application: state.application || null,
+                environment: state.environment || null,
+                integration_mode: state.integration_mode || null,
+                rollout_status: state.rollout_status || null,
+                app_owner: state.app_owner || null,
+                gateway_owner: state.gateway_owner || null,
+                target_date: state.target_date || null,
+                support_window: state.support_window || null,
+                canary_percent: rolloutPercent(state.canary_percent),
+                test_status: state.test_status || 'not_started',
+                rollback_owner: state.rollback_owner || null,
+                rollback_path: redactRolloutText(state.rollback_path),
+                note: redactRolloutText(state.note),
+                updated_at: state.updated_at || null
+              },
+              snippet_preview: row.provider ? 'Copy-safe dry-run snippet available from /app/rollout. Uses YOUR_VAULTPROOF_SESSION_JWT placeholder only.' : 'Provider slot required before snippet is available.'
+            };
+          }),
+          workflow_links: {
+            rollout_manager: '/app/rollout',
+            api_inventory: '/app/inventory',
+            policy_drift: '/app/policy',
+            control: '/app/control',
+            provider_slots: '/app/keys',
+            activity: '/app/activity',
+            launch: '/app/launch',
+            evidence: '/app/evidence'
+          },
+          secrets_excluded: [
+            'raw provider keys',
+            'encrypted provider shares',
+            'bearer tokens',
+            'OAuth client secrets',
+            'SAML material',
+            'request bodies',
+            'response bodies',
+            'customer payloads'
+          ]
+        };
+      }
+      function renderRolloutSummary() {
+        if (PAGE_MODE !== 'rollout') return;
+        var summary = rolloutSummary();
+        byId('rolloutSummaryList').innerHTML = [
+          '<div class="row"><div><div class="row-title">Rollout status</div><div class="row-sub">' + number(summary.total) + ' candidate workloads, ' + number(summary.ready_for_canary) + ' ready for canary, ' + number(summary.canary) + ' in canary, ' + number(summary.live) + ' live, ' + number(summary.hold) + ' on hold.</div></div><span class="tag ' + (summary.hold ? 'bad' : 'good') + '">' + (summary.hold ? 'hold' : 'ready') + '</span></div>',
+          '<div class="row"><div><div class="row-title">Blockers</div><div class="row-sub">' + number(summary.blocker_count) + ' derived blockers across rollout rows. Close policy drift, owners, rollback, target date, and dry-run evidence before production traffic.</div></div><span class="tag warn">review</span></div>',
+          '<div class="row"><div><div class="row-title">Secret boundary</div><div class="row-sub">Rollout records and snippets use placeholders and exclude raw provider keys, encrypted shares, bearer tokens, OAuth secrets, SAML material, request bodies, response bodies, and customer payloads.</div></div><span class="tag good">redacted</span></div>'
+        ].join('');
+        byId('rolloutWorkflowList').innerHTML = [
+          '<div class="row"><div><div class="row-title">Choose first workload</div><div class="row-sub">Pick one API inventory row, set app/gateway owners, select the integration mode, and define the target date.</div></div><a class="tag good" href="/app/inventory">inventory</a></div>',
+          '<div class="row"><div><div class="row-title">Close rollout blockers</div><div class="row-sub">Resolve policy drift, provider material, caller lock, dry-run evidence, and rollback gaps before canary.</div></div><span><a class="tag" href="/app/policy">policy</a><a class="tag" href="/app/control">control</a></span></div>',
+          '<div class="row"><div><div class="row-title">Run copy-safe test</div><div class="row-sub">Use the snippet button for a dry-run request with VaultProof auth placeholders, gateway marker, and no raw provider key.</div></div><a class="tag" href="/app/keys">provider slots</a></div>',
+          '<div class="row"><div><div class="row-title">Launch evidence</div><div class="row-sub">Export vaultproof_enterprise_integration_rollout into Evidence and Security Review before live traffic.</div></div><span><a class="tag" href="/app/evidence">evidence</a><a class="tag" href="/app/launch">launch</a></span></div>'
+        ].join('');
+      }
+      function renderRollout() {
+        var panel = byId('rolloutPanel');
+        if (panel) panel.style.display = PAGE_MODE === 'rollout' ? 'grid' : 'none';
+        if (PAGE_MODE !== 'rollout') return;
+        cachedRolloutRows = buildRolloutRows();
+        text('rolloutMeta', cachedRolloutRows.length + ' candidate workloads');
+        byId('rolloutList').innerHTML = cachedRolloutRows.length ? cachedRolloutRows.map(renderRolloutRow).join('') : '<div class="empty">No API inventory rows are visible yet. Create one project and provider slot before building the customer rollout plan.</div>';
+        renderRolloutSummary();
+      }
+      function copyRolloutJson() {
+        cachedRolloutRows = buildRolloutRows();
+        copyToClipboard(JSON.stringify(rolloutEvidencePacket(), null, 2), 'Integration rollout JSON');
+      }
+      function copyRolloutSnippet(target) {
+        var rowId = target.getAttribute('data-rollout-row-id');
+        var row = cachedRolloutRows.find(function(item) { return item.id === rowId; });
+        if (!row) {
+          notice('Rollout row is not visible. Refresh and try again.');
+          return;
+        }
+        copyToClipboard(rolloutSnippet(row), 'Integration rollout dry-run snippet');
+      }
       function renderProjects() {
         byId('projectsPanel').style.display = PAGE_MODE === 'projects' ? 'grid' : 'none';
         if (PAGE_MODE !== 'projects') return;
@@ -3403,6 +3734,7 @@ function renderEnterpriseOperationsPage(pageName: 'activity' | 'projects' | 'inv
           renderProjects();
           renderInventory();
           renderPolicy();
+          renderRollout();
           renderKeys();
           await renderActivity();
         } catch (error) {
@@ -3433,6 +3765,9 @@ function renderEnterpriseOperationsPage(pageName: 'activity' | 'projects' | 'inv
       if (byId('copyPolicyJsonBtn')) {
         byId('copyPolicyJsonBtn').addEventListener('click', copyPolicyJson);
       }
+      if (byId('copyRolloutJsonBtn')) {
+        byId('copyRolloutJsonBtn').addEventListener('click', copyRolloutJson);
+      }
       document.addEventListener('input', function(event) {
         var target = event.target;
         if (!target || !target.getAttribute) return;
@@ -3442,6 +3777,10 @@ function renderEnterpriseOperationsPage(pageName: 'activity' | 'projects' | 'inv
         }
         if (target.getAttribute('data-policy-field')) {
           savePolicyField(target, false);
+          return;
+        }
+        if (target.getAttribute('data-rollout-field')) {
+          saveRolloutField(target, false);
         }
       });
       document.addEventListener('change', function(event) {
@@ -3453,11 +3792,19 @@ function renderEnterpriseOperationsPage(pageName: 'activity' | 'projects' | 'inv
         }
         if (target.getAttribute('data-policy-field')) {
           savePolicyField(target, true);
+          return;
+        }
+        if (target.getAttribute('data-rollout-field')) {
+          saveRolloutField(target, true);
         }
       });
       document.addEventListener('click', async function(event) {
         var target = event.target;
         if (!target || !target.getAttribute) return;
+        if (target.getAttribute('data-action') === 'copy-rollout-snippet') {
+          copyRolloutSnippet(target);
+          return;
+        }
         if (target.getAttribute('data-action') === 'prefill-email-slot') {
           prefillEmailSlot();
           return;
@@ -3775,6 +4122,10 @@ function renderEnterpriseSupportPage(pageName: EnterpriseSupportPageName): strin
         <div class="card" style="grid-column:1/-1">
           <div class="section-title"><h2>Policy drift proof</h2><span class="mini" id="evidencePolicyDriftMeta">hold</span></div>
           <div id="evidencePolicyDriftList" class="list"></div>
+        </div>
+        <div class="card" style="grid-column:1/-1">
+          <div class="section-title"><h2>Integration rollout proof</h2><span class="mini" id="evidenceRolloutMeta">hold</span></div>
+          <div id="evidenceRolloutList" class="list"></div>
         </div>
         <div class="card" style="grid-column:1/-1">
           <div class="section-title"><h2>Launch support proof</h2><span class="mini" id="evidenceSupportMeta">hold</span></div>
@@ -5013,6 +5364,171 @@ function renderEnterpriseSupportPage(pageName: EnterpriseSupportPageName): strin
           row('Secret boundary', 'Policy drift evidence excludes ' + packet.secrets_excluded.join(', ') + '.', 'redacted', 'good')
         ];
       }
+      function integrationRolloutStorageKey() {
+        return 'vaultproof_integration_rollouts::' + (currentOrgId || 'default');
+      }
+      function readIntegrationRollouts() {
+        try {
+          var parsed = JSON.parse(localStorage.getItem(integrationRolloutStorageKey()) || '{}');
+          return parsed && typeof parsed === 'object' && !Array.isArray(parsed) ? parsed : {};
+        } catch (_error) {
+          return {};
+        }
+      }
+      function redactIntegrationRolloutText(value) {
+        var textValue = String(value || '');
+        if (!textValue) return null;
+        if (/(sk-[a-z0-9_-]{8,}|gocspx-|eyJ[a-zA-Z0-9_-]{10,}|-----BEGIN|Bearer\\s+|service[_ -]?role|client[_ -]?secret|api[_ -]?key|password|private[_ -]?key|authorization:|cookie:)/i.test(textValue)) {
+          return '[redacted: rollout text contained secret-like material]';
+        }
+        return textValue;
+      }
+      function integrationRolloutPercent(value) {
+        var parsed = Number(value || 0);
+        if (!Number.isFinite(parsed)) return 0;
+        return Math.max(0, Math.min(100, Math.round(parsed)));
+      }
+      function integrationRolloutBlockers(inventoryRow, state, policyRows) {
+        var blockers = [];
+        var annotation = inventoryRow.annotation || {};
+        var statuses = Array.isArray(inventoryRow.statuses) ? inventoryRow.statuses : [];
+        var testStatus = state.test_status || 'not_started';
+        var canary = integrationRolloutPercent(state.canary_percent);
+        var openPolicy = policyRows.filter(function(policyRow) {
+          return (policyRow.severity === 'critical' || policyRow.severity === 'high') && !policyDriftExceptionActive(policyRow.exception) && policyDriftRowStatus(policyRow) !== 'blocked';
+        });
+        if (!inventoryRow.provider) blockers.push('missing provider slot');
+        if (inventoryRow.provider && inventoryRow.provider.material_mode === 'demo-placeholder') blockers.push('demo-only provider material');
+        if (statuses.indexOf('policy incomplete') !== -1) blockers.push('caller-lock policy incomplete');
+        if (statuses.indexOf('blocked') !== -1 || annotation.review_status === 'blocked') blockers.push('API inventory row blocked');
+        if (!annotation.business_owner || !annotation.technical_owner) blockers.push('API inventory owners missing');
+        if (!state.application) blockers.push('application/workload name missing');
+        if (!state.integration_mode) blockers.push('integration mode missing');
+        if (!state.app_owner) blockers.push('app owner missing');
+        if (!state.gateway_owner) blockers.push('gateway owner missing');
+        if (!state.target_date) blockers.push('target date missing');
+        if (!state.rollback_owner || !state.rollback_path) blockers.push('rollback owner/path missing');
+        if (Number(inventoryRow.traffic && inventoryRow.traffic.calls || 0) === 0 && ['dry_run_passed', 'denial_passed', 'canary_passed', 'live_verified'].indexOf(testStatus) === -1) blockers.push('dry-run or traffic evidence missing');
+        if (canary > 0 && ['dry_run_passed', 'denial_passed', 'canary_passed', 'live_verified'].indexOf(testStatus) === -1) blockers.push('canary needs test evidence');
+        if (openPolicy.length) blockers.push(openPolicy.length + ' critical/high policy drift rows');
+        if (state.rollout_status === 'blocked') blockers.push('rollout manually blocked');
+        return blockers;
+      }
+      function integrationRolloutRowStatus(row) {
+        var state = row.rollout || {};
+        var canary = integrationRolloutPercent(state.canary_percent);
+        if (state.rollout_status === 'rollback') return 'rollback';
+        if (row.blockers && row.blockers.length) return 'hold';
+        if (state.rollout_status === 'live' || state.test_status === 'live_verified') return 'live';
+        if (state.test_status === 'canary_passed' || canary > 0) return 'canary';
+        if (state.test_status === 'dry_run_passed' || state.test_status === 'denial_passed') return 'ready_for_canary';
+        if (state.application || state.integration_mode || state.app_owner || state.gateway_owner) return 'planned';
+        return 'draft';
+      }
+      function buildIntegrationRolloutPacket(overview, bootstrap) {
+        var inventoryRows = apiInventoryRowsFromData(overview || {}, bootstrap || {});
+        var policyRows = policyDriftRowsFromData(overview || {}, bootstrap || {});
+        var state = readIntegrationRollouts();
+        var rows = inventoryRows.map(function(inventoryRow) {
+          var rollout = state[inventoryRow.id] && typeof state[inventoryRow.id] === 'object' ? state[inventoryRow.id] : {};
+          var relatedPolicy = policyRows.filter(function(policyRow) { return policyRow.api_surface_id === inventoryRow.id; });
+          var blockers = integrationRolloutBlockers(inventoryRow, rollout, relatedPolicy);
+          return {
+            id: inventoryRow.id,
+            project: {
+              id: inventoryRow.project_id,
+              name: inventoryRow.project_name,
+              vp_proj_id: inventoryRow.vp_proj_id
+            },
+            provider: inventoryRow.provider,
+            traffic: inventoryRow.traffic,
+            rollout: rollout,
+            blockers: blockers,
+            policy_drift: relatedPolicy.map(function(policyRow) {
+              return { id: policyRow.id, title: policyRow.title, severity: policyRow.severity, status: policyDriftRowStatus(policyRow) };
+            })
+          };
+        });
+        var summary = {
+          total_workloads: rows.length,
+          live: rows.filter(function(item) { return integrationRolloutRowStatus(item) === 'live'; }).length,
+          canary: rows.filter(function(item) { return integrationRolloutRowStatus(item) === 'canary'; }).length,
+          ready_for_canary: rows.filter(function(item) { return integrationRolloutRowStatus(item) === 'ready_for_canary'; }).length,
+          hold: rows.filter(function(item) { return integrationRolloutRowStatus(item) === 'hold'; }).length,
+          draft: rows.filter(function(item) { return integrationRolloutRowStatus(item) === 'draft'; }).length,
+          blocker_count: rows.reduce(function(total, item) { return total + (item.blockers || []).length; }, 0)
+        };
+        var status = summary.hold ? 'hold' : summary.live || summary.canary || summary.ready_for_canary ? 'ready' : 'draft';
+        return {
+          packet_type: 'vaultproof_enterprise_integration_rollout',
+          packet_version: 1,
+          status: status,
+          generated_at: new Date().toISOString(),
+          generated_from: location.origin + '/app/evidence',
+          rollout_page: '/app/rollout',
+          summary: summary,
+          rows: rows.map(function(row) {
+            var rollout = row.rollout || {};
+            return {
+              id: row.id,
+              status: integrationRolloutRowStatus(row),
+              project: row.project,
+              provider: row.provider,
+              traffic: row.traffic,
+              blockers: row.blockers,
+              policy_drift: row.policy_drift,
+              rollout: {
+                application: rollout.application || null,
+                environment: rollout.environment || null,
+                integration_mode: rollout.integration_mode || null,
+                rollout_status: rollout.rollout_status || null,
+                app_owner: rollout.app_owner || null,
+                gateway_owner: rollout.gateway_owner || null,
+                target_date: rollout.target_date || null,
+                support_window: rollout.support_window || null,
+                canary_percent: integrationRolloutPercent(rollout.canary_percent),
+                test_status: rollout.test_status || 'not_started',
+                rollback_owner: rollout.rollback_owner || null,
+                rollback_path: redactIntegrationRolloutText(rollout.rollback_path),
+                note: redactIntegrationRolloutText(rollout.note),
+                updated_at: rollout.updated_at || null
+              }
+            };
+          }),
+          workflow_links: {
+            rollout_manager: '/app/rollout',
+            api_inventory: '/app/inventory',
+            policy_drift: '/app/policy',
+            control: '/app/control',
+            provider_slots: '/app/keys',
+            activity: '/app/activity',
+            launch: '/app/launch',
+            evidence: '/app/evidence'
+          },
+          snippets: {
+            dry_run: 'Copy-safe dry-run snippets are generated in /app/rollout with YOUR_VAULTPROOF_SESSION_JWT placeholders only.'
+          },
+          secrets_excluded: [
+            'raw provider keys',
+            'encrypted provider shares',
+            'bearer tokens',
+            'OAuth client secrets',
+            'SAML material',
+            'request bodies',
+            'response bodies',
+            'customer payloads'
+          ]
+        };
+      }
+      function integrationRolloutProofRows(packet) {
+        var summary = packet.summary || {};
+        return [
+          row('Integration rollout status', number(summary.total_workloads) + ' candidate workloads, ' + number(summary.ready_for_canary) + ' ready for canary, ' + number(summary.canary) + ' in canary, ' + number(summary.live) + ' live, ' + number(summary.hold) + ' on hold.', packet.status, packet.status === 'hold' ? 'bad' : 'good'),
+          row('Rollout blockers', number(summary.blocker_count) + ' blockers across rollout rows. Close owners, rollback, policy, provider material, and dry-run evidence before production traffic.', summary.blocker_count ? 'review' : 'clear', summary.blocker_count ? 'warn' : 'good'),
+          linkRow('Open rollout manager', 'Review application, environment, integration mode, owners, target date, canary percent, rollback path, and copy-safe dry-run snippets.', '/app/rollout', 'rollout', 'good'),
+          row('Secret boundary', 'Rollout evidence excludes ' + packet.secrets_excluded.join(', ') + '.', 'redacted', 'good')
+        ];
+      }
       function buildApiProxySelfTestPacket(overview, bootstrap) {
         var slots = providerSlotsFromBootstrap(bootstrap);
         var totalCalls = Number(overview.totalCalls || overview.total_calls || 0);
@@ -5282,6 +5798,7 @@ function renderEnterpriseSupportPage(pageName: EnterpriseSupportPageName): strin
         var apiProxy = buildApiProxySelfTestPacket(overview, bootstrap);
         var apiInventory = buildApiInventoryPacket(overview, bootstrap);
         var policyDrift = buildPolicyDriftPacket(overview, bootstrap);
+        var integrationRollout = buildIntegrationRolloutPacket(overview, bootstrap);
         var support = buildLaunchSupportPacket(org, sso, readiness, overview, bootstrap, goNoGo);
         var monitoring = buildMonitoringEvidencePacket(org, sso, readiness, overview, bootstrap, goNoGo);
         var projectCount = projectCountFromData(org, overview, bootstrap);
@@ -5319,6 +5836,7 @@ function renderEnterpriseSupportPage(pageName: EnterpriseSupportPageName): strin
             { name: 'Provider key custody', status: rotation.status, tone: rotation.status === 'accepted_for_demo' ? 'good' : 'warn', detail: 'Provider slots expose posture and material mode without returning plaintext keys or encrypted shares to customer browsers.' },
             { name: 'API inventory', status: apiInventory.status, tone: apiInventory.status === 'ready' ? 'good' : 'warn', detail: 'API surfaces are derived from projects, provider slots, policy, traffic evidence, and browser-local owner/review metadata without storing secrets.' },
             { name: 'Policy drift and exceptions', status: policyDrift.status, tone: policyDrift.status === 'hold' ? 'warn' : 'good', detail: 'Policy drift rows are derived from existing project/provider/policy/traffic evidence, with browser-local accepted-risk records, owners, expiry, and compensating controls.' },
+            { name: 'Integration rollout', status: integrationRollout.status, tone: integrationRollout.status === 'hold' ? 'warn' : 'good', detail: 'Rollout rows tie API inventory, policy drift, owners, canary status, rollback path, and copy-safe dry-run snippets into one customer cutover plan.' },
             { name: 'Runtime attestation', status: productionReady ? 'ready' : 'blocked', tone: productionReady ? 'good' : 'bad', detail: 'Readiness reports GCP confidential production posture, key release readiness, signature verification, replay protection, and executor reachability.' },
             { name: 'Audit and evidence', status: 'exportable', tone: 'good', detail: 'Evidence packet, audit CSV, access-review CSV, activity records, launch brief, and security review packet are customer-safe review artifacts.' },
             { name: 'Monitoring and edge protection', status: monitoring.status, tone: monitoring.status === 'ready' ? 'good' : 'warn', detail: 'Monitoring evidence links readiness, traffic/error/denial posture, alert workflow, Cloud Armor verification, live gate, and budget guardrails.' },
@@ -5332,6 +5850,7 @@ function renderEnterpriseSupportPage(pageName: EnterpriseSupportPageName): strin
             { title: 'Activity', href: '/app/activity', detail: 'Runtime status codes, latency, provider request IDs, denials, and attestation hints.', tag: 'events', tone: 'good' },
             { title: 'API Inventory', href: '/app/inventory', detail: 'API catalog with owners, environment, risk, provider-slot mapping, policy posture, traffic evidence, review status, and JSON export.', tag: apiInventory.status, tone: apiInventory.status === 'ready' ? 'good' : 'warn' },
             { title: 'Policy Drift', href: '/app/policy', detail: 'Control gaps, demo-only material, owner gaps, stale traffic, accepted-risk records, expiry dates, and customer-safe JSON export.', tag: policyDrift.status, tone: policyDrift.status === 'hold' ? 'warn' : 'good' },
+            { title: 'Rollout Manager', href: '/app/rollout', detail: 'Workload cutover plan with owners, integration mode, canary percentage, test status, rollback path, blockers, and evidence export.', tag: integrationRollout.status, tone: integrationRollout.status === 'hold' ? 'warn' : 'good' },
             { title: 'Alerts', href: '/app/alerts', detail: 'Destinations, delivery logs, dispatch runs, and test-send workflow.', tag: 'monitoring', tone: 'good' },
             { title: 'Provider slots', href: '/app/keys', detail: 'Provider material mode, rotation status, dry-run self-test, email demo, and emergency revoke.', tag: 'keys', tone: providerCount ? 'good' : 'warn' },
             { title: 'Launch board', href: '/app/launch', detail: 'Go/no-go decision, operator-confirmed manual evidence, stale holds, and customer tasks.', tag: goNoGo.status, tone: goNoGo.status === 'go' ? 'good' : 'warn' },
@@ -5361,6 +5880,7 @@ function renderEnterpriseSupportPage(pageName: EnterpriseSupportPageName): strin
             api_proxy_self_test: apiProxy.status,
             api_inventory: apiInventory.status,
             policy_drift_exceptions: policyDrift.status,
+            integration_rollout: integrationRollout.status,
             launch_support_readiness: support.status,
             monitoring_evidence: monitoring.status
           },
@@ -5384,7 +5904,7 @@ function renderEnterpriseSupportPage(pageName: EnterpriseSupportPageName): strin
           row('Security review packet status', packet.decision, packet.status, packet.status === 'ready_for_review' ? 'good' : 'warn'),
           row('Organization scope', (org.name || 'Selected workspace') + ' with ' + number(org.project_count) + ' projects, ' + number(org.member_count) + ' members, and ' + number(org.provider_slots) + ' provider slots.', org.id ? 'scoped' : 'select org', org.id ? 'good' : 'warn'),
           row('Go/no-go decision', 'Current launch board status is ' + packet.related_packets.go_no_go_status + '.', packet.related_packets.go_no_go_status, packet.related_packets.go_no_go_status === 'go' ? 'good' : 'warn'),
-          row('Related proof packets', 'Identity: ' + packet.related_packets.identity_login_qa + '. Rotation: ' + packet.related_packets.key_rotation_evidence + '. Pilot ops: ' + packet.related_packets.pilot_operations_evidence + '. Proxy self-test: ' + packet.related_packets.api_proxy_self_test + '. API inventory: ' + packet.related_packets.api_inventory + '. Policy drift: ' + packet.related_packets.policy_drift_exceptions + '. Monitoring: ' + packet.related_packets.monitoring_evidence + '.', 'summary', 'good'),
+          row('Related proof packets', 'Identity: ' + packet.related_packets.identity_login_qa + '. Rotation: ' + packet.related_packets.key_rotation_evidence + '. Pilot ops: ' + packet.related_packets.pilot_operations_evidence + '. Proxy self-test: ' + packet.related_packets.api_proxy_self_test + '. API inventory: ' + packet.related_packets.api_inventory + '. Policy drift: ' + packet.related_packets.policy_drift_exceptions + '. Rollout: ' + packet.related_packets.integration_rollout + '. Monitoring: ' + packet.related_packets.monitoring_evidence + '.', 'summary', 'good'),
           row('Secret boundary', 'This packet excludes ' + packet.secrets_excluded.join(', ') + '.', 'redacted', 'good')
         ];
       }
@@ -5996,6 +6516,7 @@ function renderEnterpriseSupportPage(pageName: EnterpriseSupportPageName): strin
         var apiProxy = buildApiProxySelfTestPacket(overview, bootstrap);
         var apiInventory = buildApiInventoryPacket(overview, bootstrap);
         var policyDrift = buildPolicyDriftPacket(overview, bootstrap);
+        var integrationRollout = buildIntegrationRolloutPacket(overview, bootstrap);
         var support = buildLaunchSupportPacket(org, sso, readiness, overview, bootstrap, goNoGo);
         var monitoring = buildMonitoringEvidencePacket(org, sso, readiness, overview, bootstrap, goNoGo);
         var securityReview = buildSecurityReviewPacket(org, sso, readiness, overview, bootstrap, goNoGo);
@@ -6076,6 +6597,7 @@ function renderEnterpriseSupportPage(pageName: EnterpriseSupportPageName): strin
           api_proxy_self_test: apiProxy,
           api_inventory: apiInventory,
           policy_drift_exceptions: policyDrift,
+          integration_rollout: integrationRollout,
           launch_support_readiness: support,
           monitoring_evidence: monitoring,
           security_review_packet: securityReview,
@@ -6088,6 +6610,7 @@ function renderEnterpriseSupportPage(pageName: EnterpriseSupportPageName): strin
             activity: '/app/activity',
             api_inventory: '/app/inventory',
             policy_drift: '/app/policy',
+            integration_rollout: '/app/rollout',
             provider_slots: '/app/keys',
             launch_checklist: '/app/launch',
             security_review: '/app/security-review',
@@ -6104,6 +6627,7 @@ function renderEnterpriseSupportPage(pageName: EnterpriseSupportPageName): strin
             'Run the API proxy dry-run self-test and blocked-recipient email denial test before the customer walkthrough.',
             'Review the API inventory for owners, environment, data sensitivity, risk, provider-slot mapping, policy posture, stale traffic, and review due items.',
             'Review policy drift and accepted-risk exceptions for owner, reason, compensating control, expiration date, next action, and launch hold status.',
+            'Review the integration rollout plan for application owner, gateway owner, target date, canary percent, test status, rollback owner/path, blockers, and copy-safe dry-run snippet.',
             'Review launch support scope, internal admin boundary, approval gates, and customer handoff notes before pilot traffic.',
             'Review monitoring evidence, alert destination/test-send workflow, Cloud Armor verification, and budget alert posture before launch-week traffic.',
             'Share the security review packet with customer security, procurement, and technical reviewers after validating launch blockers.',
@@ -6126,6 +6650,7 @@ function renderEnterpriseSupportPage(pageName: EnterpriseSupportPageName): strin
         var apiProxy = packet.api_proxy_self_test || buildApiProxySelfTestPacket(overview, bootstrap);
         var apiInventory = packet.api_inventory || buildApiInventoryPacket(overview, bootstrap);
         var policyDrift = packet.policy_drift_exceptions || buildPolicyDriftPacket(overview, bootstrap);
+        var integrationRollout = packet.integration_rollout || buildIntegrationRolloutPacket(overview, bootstrap);
         var support = packet.launch_support_readiness || buildLaunchSupportPacket(org, sso, readiness, overview, bootstrap, buildGoNoGoStatus(org, sso, readiness, overview, bootstrap));
         var monitoring = packet.monitoring_evidence || buildMonitoringEvidencePacket(org, sso, readiness, overview, bootstrap, buildGoNoGoStatus(org, sso, readiness, overview, bootstrap));
         text('evidenceMeta', productionReady ? 'ready for review' : 'needs attention');
@@ -6143,6 +6668,7 @@ function renderEnterpriseSupportPage(pageName: EnterpriseSupportPageName): strin
           linkRow('Activity review', 'Runtime events, status codes, latency, provider request IDs, and attestation hints.', '/app/activity', 'open', 'good'),
           linkRow('API inventory export', 'Metadata-only API inventory with owners, risk, provider mapping, policy posture, traffic evidence, and review state.', '/app/inventory', 'inventory', 'good'),
           linkRow('Policy drift export', 'Customer-safe policy drift and accepted-risk evidence with owners, expiry, compensating controls, and launch status.', '/app/policy', 'policy drift', policyDrift.status === 'hold' ? 'warn' : 'good'),
+          linkRow('Integration rollout export', 'Customer-safe cutover plan with application/gateway owners, canary status, rollback path, blockers, and copy-safe snippet guidance.', '/app/rollout', 'rollout', integrationRollout.status === 'hold' ? 'warn' : 'good'),
           linkRow('Provider slot posture', 'Protected provider slots, material mode, rotation, and emergency revoke state.', '/app/keys', 'open', 'good')
         ].join('');
         byId('evidenceProofList').innerHTML = [
@@ -6157,6 +6683,7 @@ function renderEnterpriseSupportPage(pageName: EnterpriseSupportPageName): strin
           linkRow('Review launch checklist', 'Confirm owners, policy, evidence exports, alerts, rollback, and first workload scope.', '/app/launch', 'launch', 'good'),
           linkRow('Review policy control', 'Confirm origins, gateways, CIDRs, upstream hosts, path prefixes, and rate limits.', '/app/control', 'control', 'good'),
           linkRow('Review policy drift', 'Confirm every critical/high drift row is closed, blocked intentionally, or accepted with owner and expiration date.', '/app/policy', 'policy drift', policyDrift.status === 'hold' ? 'warn' : 'good'),
+          linkRow('Review integration rollout', 'Confirm first workload, owners, target date, canary percentage, rollback path, and dry-run evidence before live traffic.', '/app/rollout', 'rollout', integrationRollout.status === 'hold' ? 'warn' : 'good'),
           linkRow('Review technical guide', 'Use the implementation guide for architecture, trust boundaries, key custody, and troubleshooting answers.', '/app/technical-guide', 'guide', 'good'),
           linkRow('Review security packet', 'Share the concise architecture, controls, evidence links, open items, and customer-safe answers with security reviewers.', '/app/security-review', 'security', 'good'),
           linkRow('Review runbooks', 'Operator commands for verification, evidence capture, deploys, secrets, DNS, edge, SSH, and cleanup.', '/app/runbooks', 'runbooks', 'good')
@@ -6173,6 +6700,8 @@ function renderEnterpriseSupportPage(pageName: EnterpriseSupportPageName): strin
         byId('evidenceApiInventoryList').innerHTML = apiInventoryProofRows(apiInventory).join('');
         text('evidencePolicyDriftMeta', policyDrift.status);
         byId('evidencePolicyDriftList').innerHTML = policyDriftProofRows(policyDrift).join('');
+        text('evidenceRolloutMeta', integrationRollout.status);
+        byId('evidenceRolloutList').innerHTML = integrationRolloutProofRows(integrationRollout).join('');
         text('evidenceSupportMeta', support.status);
         byId('evidenceSupportList').innerHTML = launchSupportProofRows(support).join('');
         text('evidenceMonitoringMeta', monitoring.status);
@@ -6899,7 +7428,7 @@ export function renderEnterprisePlannedAppPage(pageName: string, env: Enterprise
   if (pageName === 'members') return injectEnterpriseAnalytics(renderEnterpriseMembersPage(), env, 'members');
   if (pageName === 'audit') return injectEnterpriseAnalytics(renderEnterpriseAuditPage(), env, 'audit');
   if (pageName === 'alerts') return injectEnterpriseAnalytics(renderEnterpriseAlertsPage(), env, 'alerts');
-  if (pageName === 'activity' || pageName === 'projects' || pageName === 'inventory' || pageName === 'policy' || pageName === 'keys') {
+  if (pageName === 'activity' || pageName === 'projects' || pageName === 'inventory' || pageName === 'policy' || pageName === 'rollout' || pageName === 'keys') {
     return injectEnterpriseAnalytics(renderEnterpriseOperationsPage(pageName), env, pageName);
   }
   if (pageName === 'setup' || pageName === 'launch' || pageName === 'evidence' || pageName === 'demo' || pageName === 'technical-guide' || pageName === 'security-review' || pageName === 'verifier' || pageName === 'settings' || pageName === 'plans' || pageName === 'pilot' || pageName === 'pilot-success' || pageName === 'scanner' || pageName === 'support' || pageName === 'runbooks') {

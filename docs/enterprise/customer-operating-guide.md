@@ -723,6 +723,7 @@ Use this checklist for each production rollout.
 | Projects | `https://enterprise.vaultproof.dev/app/projects` |
 | API Inventory | `https://enterprise.vaultproof.dev/app/inventory` |
 | Policy Drift | `https://enterprise.vaultproof.dev/app/policy` |
+| Rollout Manager | `https://enterprise.vaultproof.dev/app/rollout` |
 | Control | `https://enterprise.vaultproof.dev/app/control` |
 | AI Proof Verifier | `https://enterprise.vaultproof.dev/app/verifier` |
 | Provider slots | `https://enterprise.vaultproof.dev/app/keys` |

@@ -37,14 +37,13 @@ Already built:
 - Build-status and feature inventory docs
 - Managed Supabase remains the auth/database provider for the pilot
 - Policy drift and exceptions board at `https://enterprise.vaultproof.dev/app/policy` for customer-safe control-gap rows, browser-local accepted-risk records, owner/risk/expiry metadata, compensating controls, and JSON evidence
-- Integration rollout management is now a planned enterprise demo feature for tracking safe workload cutover, canary status, gateway/SDK path, owners, blockers, rollback, and evidence without exposing secrets
+- Integration rollout manager at `https://enterprise.vaultproof.dev/app/rollout` for workload cutover rows, app/gateway owners, integration mode, target date, support window, canary status, rollback path, blockers, copy-safe snippets, and JSON evidence
 
 Not yet customer-ready:
 
 - Strict login readiness QA and final human OAuth/password browser QA still need to pass.
 - Email API key demo dry-run and blocked-recipient policy evidence flow are built; live sandbox email sends need sealed provider material only if the demo specifically needs an actual delivered email.
 - Live MiniMax provider dispatch works for the demo; add a separate OpenAI slot only if the demo specifically needs OpenAI.
-- Integration rollout management still needs its first customer-facing slice.
 - API inventory management still needs persistent audited records, CSV/OpenAPI import, automatic discovery, and production review workflow after the demo.
 - Supabase OAuth/login settings still need to be confirmed for `enterprise.vaultproof.dev`.
 - Older migration/history docs still have Azure-era language; customer-facing app UI is cleaned for the GCP demo.
@@ -187,7 +186,7 @@ Build:
 - Use the email API key protection demo flow described below.
 - Built: add the first API inventory management slice described below.
 - Built: add the first policy drift and exceptions slice described below.
-- Add the first integration rollout manager slice described below.
+- Built: add the first integration rollout manager slice described below.
 - Run `LOGIN_QA_REQUIRE_SESSION=true npm run qa:enterprise-login` with Supabase service-role env to verify the live login page, Supabase redirect allowlist, generated browser session, and authenticated enterprise org/bootstrap APIs.
 - Add `LOGIN_QA_OAUTH_PROVIDER=google` to the login QA command after the external OAuth provider app is configured.
 - Confirm API execution path through `/api/v1/enterprise/execute`.
@@ -339,11 +338,13 @@ Demo goal:
 
 First demo slice:
 
-- Add `https://enterprise.vaultproof.dev/app/rollout` or a Rollout tab on `https://enterprise.vaultproof.dev/app/launch` / `https://enterprise.vaultproof.dev/app/inventory`.
-- Derive candidate workloads from existing projects, provider slots, and API inventory rows once inventory exists.
-- Allow browser-local/manual fields first: application name, environment, integration mode, gateway owner, app owner, target date, canary percent, rollback path, test status, notes, and support window.
-- Show blockers from policy drift, provider material status, login QA, Cloud Armor/live gate, missing owner, missing rollback path, and stale/no traffic evidence.
-- Provide a copyable customer rollout brief and JSON evidence packet without secrets.
+- Built: `https://enterprise.vaultproof.dev/app/rollout` renders a customer-facing Integration Rollout board using the shared enterprise sidebar and light dashboard theme.
+- Built: derive candidate workloads from existing projects, provider slots, API inventory rows, policy drift, project health, traffic evidence, and `GET /api/v1/enterprise/projects/bootstrap`.
+- Built: store demo rollout state in browser local storage per organization under `vaultproof_integration_rollouts::<orgId>` until the audited table exists.
+- Built: capture application/workload, environment, integration mode, rollout status, app owner, gateway owner, target date, support window, canary percentage, test status, rollback owner/path, and notes.
+- Built: show blockers from policy drift, provider material status, caller-lock policy, missing app/gateway owner, missing target date, missing rollback path, inventory blockers, and stale/no traffic evidence.
+- Built: provide copy-safe dry-run snippets with `YOUR_VAULTPROOF_SESSION_JWT` placeholders and a copyable `vaultproof_enterprise_integration_rollout` JSON evidence packet without secrets.
+- Built: add links to API Inventory, Policy Drift, Provider Slots, Activity, Control, Launch, Evidence, and Security Review.
 
 Production follow-up:
 
@@ -390,6 +391,7 @@ Build after first customer proof:
 - Customer evidence packet at `https://enterprise.vaultproof.dev/app/evidence` is reviewed with the pilot user and includes the current go/no-go launch decision and blockers.
 - API inventory at `https://enterprise.vaultproof.dev/app/inventory` is reviewed for owner, environment, risk, data sensitivity, provider-slot mapping, caller-lock posture, traffic evidence, stale/no-traffic status, and review due items.
 - Policy drift board at `https://enterprise.vaultproof.dev/app/policy` is reviewed for control gaps, accepted-risk owner, reason, compensating control, expiration date, next action, and launch hold status.
+- Integration rollout manager at `https://enterprise.vaultproof.dev/app/rollout` is reviewed for first workload, integration mode, app/gateway owners, target date, canary percentage, dry-run/test status, rollback owner/path, blockers, and evidence export.
 - Email API key demo dry-run flow is policy-gated, audited, and tested before showing customers; live sandbox send is sealed first when needed.
 - Rollback path written down before sending real customer traffic.
 
