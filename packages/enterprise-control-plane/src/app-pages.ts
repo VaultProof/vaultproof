@@ -2167,14 +2167,20 @@ function renderEnterpriseOperationsPage(pageName: 'activity' | 'projects' | 'inv
     .inventory-field input, .inventory-field select { width: 100%; min-width: 0; }
     .inventory-field textarea { width: 100%; min-height: 74px; resize: vertical; border: 1px solid var(--line); background: rgba(255,255,255,.78); color: var(--text); border-radius: 13px; padding: 11px 12px; font: inherit; }
     .row-actions { display: flex; gap: 8px; flex-wrap: wrap; justify-content: flex-end; align-items: start; }
+    .slot-form { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; }
+    .slot-form label { display: grid; gap: 7px; color: var(--muted); font-size: 12px; font-weight: 800; letter-spacing: .08em; text-transform: uppercase; }
+    .slot-form input, .slot-form select { width: 100%; }
+    .slot-form .wide { grid-column: span 2; }
+    .slot-form-actions { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; margin-top: 14px; }
+    .slot-form-note { color: var(--muted); font-size: 13px; line-height: 1.45; margin: 0; }
     .tag { display: inline-block; color: var(--blue); font-size: 12px; border: 1px solid rgba(22,138,159,.24); border-radius: 999px; padding: 5px 8px; margin: 3px 4px 0 0; }
     .tag.good { color: var(--green); border-color: rgba(62,93,87,.24); }
     .tag.warn { color: var(--gold); border-color: rgba(213,169,20,.28); }
     .tag.bad { color: var(--red); border-color: rgba(185,93,80,.28); }
     .empty, .notice { color: var(--muted); border: 1px dashed rgba(48,76,71,.22); border-radius: 18px; padding: 18px; background: rgba(247,250,244,.78); }
     .notice.error { color: var(--red); border-color: rgba(185,93,80,.3); }
-    @media (max-width: 1100px) { .filters, .kpis, .two, .inventory-fields { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
-    @media (max-width: 760px) { .shell { grid-template-columns: 1fr; } .topbar { flex-direction: column; } .filters, .kpis, .two, .inventory-head, .inventory-fields { grid-template-columns: 1fr; } .inventory-field.wide { grid-column: auto; } }
+    @media (max-width: 1100px) { .filters, .kpis, .two, .inventory-fields, .slot-form { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+    @media (max-width: 760px) { .shell { grid-template-columns: 1fr; } .topbar { flex-direction: column; } .filters, .kpis, .two, .inventory-head, .inventory-fields, .slot-form { grid-template-columns: 1fr; } .inventory-field.wide, .slot-form .wide { grid-column: auto; } }
     ${ENTERPRISE_APP_SHELL_THEME}
     ${ENTERPRISE_STATIC_APP_POLISH_THEME}
   </style>
@@ -2193,7 +2199,7 @@ function renderEnterpriseOperationsPage(pageName: 'activity' | 'projects' | 'inv
         <div class="toolbar">
           <select id="orgSelect" aria-label="Organization"><option>Loading org...</option></select>
           ${pageName === 'keys' ? '<button id="openProviderSlotForm" class="primary" type="button">add slot</button>' : ''}
-          ${pageName === 'inventory' ? '<button id="copyInventoryJsonBtn" class="primary" type="button">copy inventory JSON</button>' : ''}
+          ${pageName === 'inventory' ? '<button id="openManualApiKeyForm" class="primary" type="button">add API key</button><button id="copyInventoryJsonBtn" class="primary" type="button">copy inventory JSON</button>' : ''}
           ${pageName === 'policy' ? '<button id="copyPolicyJsonBtn" class="primary" type="button">copy policy JSON</button>' : ''}
           ${pageName === 'rollout' ? '<button id="copyRolloutJsonBtn" class="primary" type="button">copy rollout JSON</button>' : ''}
           <button id="refreshBtn" type="button">refresh</button>
@@ -2281,6 +2287,82 @@ function renderEnterpriseOperationsPage(pageName: 'activity' | 'projects' | 'inv
       </section>
 
       <section id="inventoryPanel" class="grid two" style="display:none">
+        <div id="manualApiKeyFormPanel" class="card" style="display:none;grid-column:1/-1">
+          <div class="section-title"><h2>Add manual API key</h2><span class="mini">metadata only</span></div>
+          <form id="manualApiKeyForm">
+            <div class="slot-form">
+              <label>Project
+                <select id="manualKeyProject"></select>
+              </label>
+              <label>Provider
+                <input id="manualKeyProvider" list="manualApiKeyProviderOptions" placeholder="openai, stripe, resend" required maxlength="64" />
+              </label>
+              <label>API key label
+                <input id="manualKeyLabel" placeholder="Production billing key" required maxlength="96" />
+              </label>
+              <label>Key fingerprint
+                <input id="manualKeyReference" placeholder="last 4 or fingerprint only" maxlength="96" />
+              </label>
+              <label class="wide">Key location
+                <input id="manualKeyLocation" placeholder="GCP Secret Manager, customer vault, owner-held" maxlength="140" />
+              </label>
+              <label class="wide">Upstream scope
+                <input id="manualKeyScope" placeholder="api.provider.com/v1/messages, billing API, email send API" maxlength="180" />
+              </label>
+              <label>Business owner
+                <input id="manualKeyBusinessOwner" placeholder="Security owner" maxlength="96" />
+              </label>
+              <label>Technical owner
+                <input id="manualKeyTechnicalOwner" placeholder="Platform owner" maxlength="96" />
+              </label>
+              <label>Environment
+                <select id="manualKeyEnvironment">
+                  <option value="demo">demo</option>
+                  <option value="dev">dev</option>
+                  <option value="staging">staging</option>
+                  <option value="production">production</option>
+                </select>
+              </label>
+              <label>Rotation status
+                <select id="manualKeyRotationStatus">
+                  <option value="unknown">unknown</option>
+                  <option value="current">current</option>
+                  <option value="rotation_due">rotation due</option>
+                  <option value="rotated_for_demo">rotated for demo</option>
+                  <option value="accepted_demo_only">accepted demo only</option>
+                </select>
+              </label>
+              <label>Review status
+                <select id="manualKeyReviewStatus">
+                  <option value="needs_review">needs review</option>
+                  <option value="approved">approved</option>
+                  <option value="exception">exception</option>
+                  <option value="blocked">blocked</option>
+                </select>
+              </label>
+              <label>Next review
+                <input id="manualKeyNextReview" type="date" />
+              </label>
+            </div>
+            <datalist id="manualApiKeyProviderOptions">
+              <option value="openai"></option>
+              <option value="anthropic"></option>
+              <option value="minimax"></option>
+              <option value="resend"></option>
+              <option value="sendgrid"></option>
+              <option value="mailgun"></option>
+              <option value="postmark"></option>
+              <option value="stripe"></option>
+              <option value="twilio"></option>
+              <option value="snowflake"></option>
+            </datalist>
+            <div class="slot-form-actions">
+              <button class="primary" type="submit">save API key metadata</button>
+              <button id="cancelManualApiKeyForm" type="button">cancel</button>
+              <p class="slot-form-note">Do not paste raw API keys here. Store only provider, label, fingerprint/last four, owner, location, and review metadata.</p>
+            </div>
+          </form>
+        </div>
         <div class="card" style="grid-column:1/-1">
           <div class="section-title"><h2>API inventory board</h2><span id="inventoryMeta" class="mini">metadata-only</span></div>
           <div id="inventoryList" class="list"><div class="empty">Loading API inventory...</div></div>
@@ -2532,7 +2614,7 @@ function renderEnterpriseOperationsPage(pageName: 'activity' | 'projects' | 'inv
         ].join('\\n');
       }
       function copyToClipboard(value, label) {
-        function done() { notice((label || 'Value') + ' copied. No raw provider keys, encrypted shares, bearer tokens, OAuth secrets, request bodies, response bodies, or customer payloads are included.'); }
+        function done() { notice((label || 'Value') + ' copied. No raw provider keys, manually entered API keys, encrypted shares, bearer tokens, OAuth secrets, request bodies, response bodies, or customer payloads are included.'); }
         if (navigator.clipboard && navigator.clipboard.writeText) {
           navigator.clipboard.writeText(value).then(done).catch(function() { fallbackCopy(value); done(); });
           return;
@@ -2601,9 +2683,18 @@ function renderEnterpriseOperationsPage(pageName: 'activity' | 'projects' | 'inv
           }).join('') : '<option value="">No projects</option>';
           slotProject.disabled = !cachedProjects.length;
         }
+        var manualKeyProject = byId('manualKeyProject');
+        if (manualKeyProject) {
+          manualKeyProject.innerHTML = '<option value="">Unassigned inventory record</option>' + cachedProjects.map(function(project) {
+            return '<option value="' + escapeHtml(project.id) + '">' + escapeHtml(project.name || project.vp_proj_id) + ' - ' + escapeHtml(project.project_role || 'member') + '</option>';
+          }).join('');
+        }
       }
       function inventoryStorageKey() {
         return 'vaultproof_api_inventory::' + (currentOrgId || 'default');
+      }
+      function manualApiKeyStorageKey() {
+        return 'vaultproof_manual_api_keys::' + (currentOrgId || 'default');
       }
       function redactInventoryNote(value) {
         var textValue = String(value || '');
@@ -2623,6 +2714,133 @@ function renderEnterpriseOperationsPage(pageName: 'activity' | 'projects' | 'inv
       }
       function writeInventoryAnnotations(value) {
         localStorage.setItem(inventoryStorageKey(), JSON.stringify(value || {}));
+      }
+      function readManualApiKeys() {
+        try {
+          var parsed = JSON.parse(localStorage.getItem(manualApiKeyStorageKey()) || '{}');
+          return parsed && typeof parsed === 'object' && !Array.isArray(parsed) ? parsed : {};
+        } catch (_error) {
+          return {};
+        }
+      }
+      function writeManualApiKeys(value) {
+        localStorage.setItem(manualApiKeyStorageKey(), JSON.stringify(value || {}));
+      }
+      function redactManualApiKeyText(value) {
+        var textValue = String(value || '').trim();
+        if (!textValue) return '';
+        if (/(sk-[a-z0-9_-]{8,}|gocspx-|eyJ[a-zA-Z0-9_-]{10,}|-----BEGIN|Bearer\\s+\\S+|service[_ -]?role|client[_ -]?secret\\s*[:=]?\\s*\\S+|api[_ -]?key\\s*[:=]\\s*\\S+|password\\s*[:=]\\s*\\S+|private[_ -]?key)/i.test(textValue)) {
+          return '[redacted: secret-like material was not stored]';
+        }
+        return textValue.slice(0, 220);
+      }
+      function manualApiKeyRecord(id, value) {
+        var record = value && typeof value === 'object' ? value : {};
+        return {
+          id: id,
+          project_id: redactManualApiKeyText(record.project_id),
+          provider: redactManualApiKeyText(record.provider),
+          key_label: redactManualApiKeyText(record.key_label),
+          key_reference: redactManualApiKeyText(record.key_reference),
+          key_location: redactManualApiKeyText(record.key_location),
+          upstream_scope: redactManualApiKeyText(record.upstream_scope),
+          business_owner: redactManualApiKeyText(record.business_owner),
+          technical_owner: redactManualApiKeyText(record.technical_owner),
+          environment: redactManualApiKeyText(record.environment),
+          rotation_status: redactManualApiKeyText(record.rotation_status || 'unknown'),
+          review_status: redactManualApiKeyText(record.review_status || 'needs_review'),
+          next_review_date: redactManualApiKeyText(record.next_review_date),
+          created_at: redactManualApiKeyText(record.created_at),
+          updated_at: redactManualApiKeyText(record.updated_at)
+        };
+      }
+      function manualApiKeyRecords() {
+        var records = readManualApiKeys();
+        return Object.keys(records).map(function(id) {
+          return manualApiKeyRecord(id, records[id]);
+        }).filter(function(record) {
+          return record.provider || record.key_label || record.key_reference;
+        });
+      }
+      function findProject(projectId) {
+        return cachedProjects.find(function(project) { return project.id === projectId; }) || null;
+      }
+      function newManualApiKeyId() {
+        return 'manual-key::' + Date.now().toString(36) + '-' + Math.random().toString(36).slice(2, 8);
+      }
+      function setManualApiKeyFormVisible(visible) {
+        var panel = byId('manualApiKeyFormPanel');
+        if (!panel) return;
+        panel.style.display = visible ? 'block' : 'none';
+        if (visible) {
+          renderProjectOptions();
+          var provider = byId('manualKeyProvider');
+          if (provider) provider.focus();
+        }
+      }
+      function submitManualApiKeyForm(event) {
+        event.preventDefault();
+        var provider = redactManualApiKeyText(byId('manualKeyProvider') && byId('manualKeyProvider').value);
+        var keyLabel = redactManualApiKeyText(byId('manualKeyLabel') && byId('manualKeyLabel').value);
+        if (!provider || !keyLabel) {
+          notice('Provider and API key label are required.');
+          return;
+        }
+        var id = newManualApiKeyId();
+        var now = new Date().toISOString();
+        var records = readManualApiKeys();
+        records[id] = {
+          project_id: redactManualApiKeyText(byId('manualKeyProject') && byId('manualKeyProject').value),
+          provider: provider,
+          key_label: keyLabel,
+          key_reference: redactManualApiKeyText(byId('manualKeyReference') && byId('manualKeyReference').value),
+          key_location: redactManualApiKeyText(byId('manualKeyLocation') && byId('manualKeyLocation').value),
+          upstream_scope: redactManualApiKeyText(byId('manualKeyScope') && byId('manualKeyScope').value),
+          business_owner: redactManualApiKeyText(byId('manualKeyBusinessOwner') && byId('manualKeyBusinessOwner').value),
+          technical_owner: redactManualApiKeyText(byId('manualKeyTechnicalOwner') && byId('manualKeyTechnicalOwner').value),
+          environment: redactManualApiKeyText(byId('manualKeyEnvironment') && byId('manualKeyEnvironment').value),
+          rotation_status: redactManualApiKeyText(byId('manualKeyRotationStatus') && byId('manualKeyRotationStatus').value),
+          review_status: redactManualApiKeyText(byId('manualKeyReviewStatus') && byId('manualKeyReviewStatus').value),
+          next_review_date: redactManualApiKeyText(byId('manualKeyNextReview') && byId('manualKeyNextReview').value),
+          created_at: now,
+          updated_at: now
+        };
+        writeManualApiKeys(records);
+        if (event.target && event.target.reset) event.target.reset();
+        setManualApiKeyFormVisible(false);
+        cachedInventoryRows = buildInventoryRows();
+        renderInventory();
+        notice('Manual API key metadata saved. Raw keys are not stored in the inventory.');
+      }
+      function saveManualApiKeyField(target) {
+        var id = target.getAttribute('data-manual-key-id');
+        var field = target.getAttribute('data-manual-key-field');
+        if (!id || !field) return;
+        var records = readManualApiKeys();
+        var current = records[id] && typeof records[id] === 'object' ? records[id] : {};
+        current[field] = redactManualApiKeyText(target.value || '');
+        current.updated_at = new Date().toISOString();
+        records[id] = current;
+        writeManualApiKeys(records);
+        cachedInventoryRows = buildInventoryRows();
+        if (['provider', 'key_label', 'rotation_status'].indexOf(field) !== -1) {
+          renderInventory();
+        } else {
+          renderInventorySummary();
+        }
+      }
+      function deleteManualApiKey(id) {
+        if (!id) return;
+        if (!confirm('Remove this manual API key inventory record from this browser?')) return;
+        var records = readManualApiKeys();
+        delete records[id];
+        writeManualApiKeys(records);
+        var annotations = readInventoryAnnotations();
+        delete annotations[id];
+        writeInventoryAnnotations(annotations);
+        cachedInventoryRows = buildInventoryRows();
+        renderInventory();
+        notice('Manual API key inventory record removed from this browser.');
       }
       function saveInventoryField(target) {
         var rowId = target.getAttribute('data-inventory-row-id');
@@ -2686,6 +2904,91 @@ function renderEnterpriseOperationsPage(pageName: 'activity' | 'projects' | 'inv
       function inventoryDefaultPath(slot) {
         if (!slot) return 'not mapped';
         return slotIsEmailProvider(slot) ? emailDemoPath(slot) : providerDemoPath(slot);
+      }
+      function buildManualApiKeyInventoryRows(annotations) {
+        var health = projectHealthMap();
+        return manualApiKeyRecords().map(function(record) {
+          var project = findProject(record.project_id) || {
+            id: record.project_id || record.id,
+            name: record.project_id ? 'Manual API key project' : 'Unassigned manual API key',
+            vp_proj_id: record.project_id || 'manual-api-key',
+            project_role: 'inventory',
+            strict_origin: false,
+            allowed_origins: null,
+            caller_lock_policy: {}
+          };
+          var storedAnnotation = annotations[record.id] && typeof annotations[record.id] === 'object' ? annotations[record.id] : {};
+          var annotation = Object.assign({
+            business_owner: record.business_owner || '',
+            technical_owner: record.technical_owner || '',
+            environment: record.environment || '',
+            business_service: record.key_label || '',
+            data_sensitivity: '',
+            risk: '',
+            review_status: record.review_status || 'needs_review',
+            next_review_date: record.next_review_date || '',
+            note: ''
+          }, storedAnnotation || {});
+          var projectHealth = health[project.id] || {};
+          var policy = mergePolicy(project, null);
+          var coverage = policySummary(policy, project, null);
+          var calls = Number(projectHealth.calls || 0);
+          var errors = Number(projectHealth.errors || 0);
+          var denied = Number(projectHealth.denied || 0);
+          var lastActivity = projectHealth.lastActivity || null;
+          var statuses = [
+            { label: 'manual API key', tone: 'warn' },
+            { label: 'missing provider slot', tone: 'bad' },
+            { label: 'needs sealed ingest', tone: 'warn' }
+          ];
+          if (!coverage.complete) statuses.push({ label: 'policy incomplete', tone: 'warn' });
+          if (!calls) statuses.push({ label: 'no recent traffic', tone: 'warn' });
+          if (isReviewDue(annotation) || !annotation.review_status || annotation.review_status === 'needs_review') statuses.push({ label: 'review due', tone: 'warn' });
+          if (annotation.review_status === 'approved') statuses.push({ label: 'review approved', tone: 'good' });
+          if (annotation.review_status === 'blocked') statuses.push({ label: 'blocked', tone: 'bad' });
+          if (annotation.review_status === 'exception') statuses.push({ label: 'exception noted', tone: 'warn' });
+          return {
+            id: record.id,
+            project: {
+              id: project.id,
+              name: project.name || project.vp_proj_id || 'Manual API key',
+              vp_proj_id: project.vp_proj_id || null,
+              role: project.project_role,
+              strict_origin: project.strict_origin === true,
+              allowed_origins: project.allowed_origins || null
+            },
+            provider: null,
+            manual_key: {
+              id: record.id,
+              provider: record.provider || null,
+              key_label: record.key_label || null,
+              key_reference: record.key_reference || null,
+              key_location: record.key_location || null,
+              upstream_scope: record.upstream_scope || null,
+              rotation_status: record.rotation_status || 'unknown',
+              created_at: record.created_at || null,
+              updated_at: record.updated_at || null
+            },
+            policy: {
+              caller_lock_controls: coverage.label,
+              complete: false,
+              rate_limit_per_minute: policy.rate_limit_per_minute || null,
+              allowed_methods: Array.isArray(policy.allowed_methods) ? policy.allowed_methods : [],
+              allowed_upstream_hosts: Array.isArray(policy.allowed_upstream_hosts) ? policy.allowed_upstream_hosts : [],
+              allowed_upstream_path_prefixes: Array.isArray(policy.allowed_upstream_path_prefixes) ? policy.allowed_upstream_path_prefixes : [],
+              allowed_customer_gateways: Array.isArray(policy.allowed_customer_gateways) ? policy.allowed_customer_gateways : []
+            },
+            traffic: {
+              calls: calls,
+              errors: errors,
+              denied: denied,
+              last_seen_at: lastActivity,
+              stale: false
+            },
+            annotation: annotation,
+            statuses: statuses
+          };
+        });
       }
       function buildInventoryRows() {
         var annotations = readInventoryAnnotations();
@@ -2755,6 +3058,9 @@ function renderEnterpriseOperationsPage(pageName: 'activity' | 'projects' | 'inv
             });
           });
         });
+        buildManualApiKeyInventoryRows(annotations).forEach(function(row) {
+          rows.push(row);
+        });
         return rows;
       }
       function selectedOption(value, expected) {
@@ -2770,6 +3076,31 @@ function renderEnterpriseOperationsPage(pageName: 'activity' | 'projects' | 'inv
           return '<option value="' + escapeHtml(option.value) + '"' + selectedOption(annotation[field], option.value) + '>' + escapeHtml(option.label) + '</option>';
         }).join('') + '</select></div>';
       }
+      function manualApiKeyInput(row, field, label, placeholder) {
+        var record = row.manual_key || {};
+        return '<div class="inventory-field"><label>' + escapeHtml(label) + '</label><input data-manual-key-id="' + escapeHtml(row.id) + '" data-manual-key-field="' + escapeHtml(field) + '" value="' + escapeHtml(record[field] || '') + '" placeholder="' + escapeHtml(placeholder || '') + '" /></div>';
+      }
+      function manualApiKeySelect(row, field, label, options) {
+        var record = row.manual_key || {};
+        return '<div class="inventory-field"><label>' + escapeHtml(label) + '</label><select data-manual-key-id="' + escapeHtml(row.id) + '" data-manual-key-field="' + escapeHtml(field) + '">' + options.map(function(option) {
+          return '<option value="' + escapeHtml(option.value) + '"' + selectedOption(record[field], option.value) + '>' + escapeHtml(option.label) + '</option>';
+        }).join('') + '</select></div>';
+      }
+      function renderManualApiKeyFields(row) {
+        if (!row.manual_key) return '';
+        return manualApiKeyInput(row, 'key_label', 'API key label', 'Production billing key') +
+          manualApiKeyInput(row, 'provider', 'provider', 'openai, stripe, resend') +
+          manualApiKeyInput(row, 'key_reference', 'key fingerprint', 'last 4 or fingerprint only') +
+          manualApiKeyInput(row, 'key_location', 'key location', 'GCP Secret Manager or customer vault') +
+          '<div class="inventory-field wide"><label>upstream scope</label><input data-manual-key-id="' + escapeHtml(row.id) + '" data-manual-key-field="upstream_scope" value="' + escapeHtml(row.manual_key.upstream_scope || '') + '" placeholder="Provider API, endpoint family, or service scope" /></div>' +
+          manualApiKeySelect(row, 'rotation_status', 'rotation status', [
+            { value: 'unknown', label: 'unknown' },
+            { value: 'current', label: 'current' },
+            { value: 'rotation_due', label: 'rotation due' },
+            { value: 'rotated_for_demo', label: 'rotated for demo' },
+            { value: 'accepted_demo_only', label: 'accepted demo only' }
+          ]);
+      }
       function renderInventoryStatusTags(row) {
         return row.statuses.map(function(status) {
           return '<span class="tag ' + escapeHtml(status.tone) + '">' + escapeHtml(status.label) + '</span>';
@@ -2778,15 +3109,21 @@ function renderEnterpriseOperationsPage(pageName: 'activity' | 'projects' | 'inv
       function renderInventoryRow(row) {
         var annotation = row.annotation || {};
         var provider = row.provider || {};
-        var providerLabel = row.provider ? provider.slug + ' / ' + provider.provider : 'no provider slot';
+        var manualKey = row.manual_key || null;
+        var providerLabel = row.provider ? provider.slug + ' / ' + provider.provider : manualKey ? (manualKey.key_label || 'manual key') + ' / ' + (manualKey.provider || 'provider unset') : 'no provider slot';
         var traffic = row.traffic || {};
         var policy = row.policy || {};
+        var defaultPath = row.provider ? provider.default_path : manualKey ? (manualKey.upstream_scope || 'manual scope not set') : 'not mapped';
+        var actionHtml = row.manual_key
+          ? '<button class="danger" type="button" data-action="delete-manual-api-key" data-manual-key-id="' + escapeHtml(row.id) + '">remove</button><a class="tag" href="/app/keys">seal key</a><a class="tag" href="/app/control">control</a>'
+          : '<a class="tag" href="/app/control">control</a><a class="tag" href="/app/keys">provider slots</a><a class="tag" href="/app/activity">activity</a>';
         return '<div class="inventory-row" data-inventory-card="' + escapeHtml(row.id) + '">' +
           '<div class="inventory-head"><div><div class="row-title">' + escapeHtml(row.project.name) + ' - ' + escapeHtml(providerLabel) + '</div>' +
-          '<div class="row-sub">' + escapeHtml(row.project.vp_proj_id) + ' - default path ' + escapeHtml(provider.default_path || 'not mapped') + ' - last seen ' + escapeHtml(rel(traffic.last_seen_at)) + ' - calls ' + number(traffic.calls) + ' / errors ' + number(traffic.errors) + ' / denied ' + number(traffic.denied) + '</div>' +
+          '<div class="row-sub">' + escapeHtml(row.project.vp_proj_id) + ' - default path ' + escapeHtml(defaultPath) + ' - last seen ' + escapeHtml(rel(traffic.last_seen_at)) + ' - calls ' + number(traffic.calls) + ' / errors ' + number(traffic.errors) + ' / denied ' + number(traffic.denied) + '</div>' +
           '<div>' + renderInventoryStatusTags(row) + '<span class="tag">' + escapeHtml(policy.caller_lock_controls || 'policy not reported') + '</span><span class="tag">' + escapeHtml(provider.material_mode || 'missing material') + '</span></div></div>' +
-          '<div class="row-actions"><a class="tag" href="/app/control">control</a><a class="tag" href="/app/keys">provider slots</a><a class="tag" href="/app/activity">activity</a></div></div>' +
+          '<div class="row-actions">' + actionHtml + '</div></div>' +
           '<div class="inventory-fields">' +
+          renderManualApiKeyFields(row) +
           inventoryInput(row, 'business_owner', 'business owner', 'Security owner') +
           inventoryInput(row, 'technical_owner', 'technical owner', 'Platform owner') +
           inventorySelect(row, 'environment', 'environment', [
@@ -2828,6 +3165,8 @@ function renderEnterpriseOperationsPage(pageName: 'activity' | 'projects' | 'inv
           total: rows.length,
           protected: rows.filter(function(row) { return row.statuses.some(function(status) { return status.label === 'protected'; }); }).length,
           missing_provider_slot: rows.filter(function(row) { return !row.provider; }).length,
+          manual_api_keys: rows.filter(function(row) { return Boolean(row.manual_key); }).length,
+          needs_sealed_ingest: rows.filter(function(row) { return Boolean(row.manual_key) && !row.provider; }).length,
           policy_incomplete: rows.filter(function(row) { return !row.policy.complete; }).length,
           no_recent_traffic: rows.filter(function(row) { return Number(row.traffic.calls || 0) === 0; }).length,
           review_due: rows.filter(function(row) { return row.statuses.some(function(status) { return status.label === 'review due'; }); }).length,
@@ -2848,6 +3187,16 @@ function renderEnterpriseOperationsPage(pageName: 'activity' | 'projects' | 'inv
               id: row.id,
               project: row.project,
               provider: row.provider,
+              manual_key: row.manual_key ? {
+                provider: row.manual_key.provider || null,
+                key_label: row.manual_key.key_label || null,
+                key_reference: row.manual_key.key_reference || null,
+                key_location: row.manual_key.key_location || null,
+                upstream_scope: row.manual_key.upstream_scope || null,
+                rotation_status: row.manual_key.rotation_status || null,
+                created_at: row.manual_key.created_at || null,
+                updated_at: row.manual_key.updated_at || null
+              } : null,
               policy: row.policy,
               traffic: row.traffic,
               annotation: {
@@ -2876,6 +3225,7 @@ function renderEnterpriseOperationsPage(pageName: 'activity' | 'projects' | 'inv
           },
           secrets_excluded: [
             'raw provider keys',
+            'raw manually entered API keys',
             'encrypted provider shares',
             'bearer tokens',
             'OAuth client secrets',
@@ -2895,7 +3245,8 @@ function renderEnterpriseOperationsPage(pageName: 'activity' | 'projects' | 'inv
         if (PAGE_MODE !== 'inventory') return;
         var summary = inventorySummary();
         byId('inventorySummaryList').innerHTML = [
-          '<div class="row"><div><div class="row-title">API inventory status</div><div class="row-sub">' + number(summary.total) + ' metadata-only API surfaces are derived from projects and provider slots. ' + number(summary.protected) + ' currently look protected.</div></div><span class="tag ' + (summary.protected ? 'good' : 'warn') + '">' + number(summary.protected) + ' protected</span></div>',
+          '<div class="row"><div><div class="row-title">API inventory status</div><div class="row-sub">' + number(summary.total) + ' metadata-only API surfaces are derived from projects, provider slots, and manual API key records. ' + number(summary.protected) + ' currently look protected.</div></div><span class="tag ' + (summary.protected ? 'good' : 'warn') + '">' + number(summary.protected) + ' protected</span></div>',
+          '<div class="row"><div><div class="row-title">Manual API keys</div><div class="row-sub">' + number(summary.manual_api_keys) + ' browser-local manual API key records. ' + number(summary.needs_sealed_ingest) + ' still need a sealed provider slot before protected execution.</div></div><span class="tag warn">metadata only</span></div>',
           '<div class="row"><div><div class="row-title">Open review items</div><div class="row-sub">' + number(summary.missing_provider_slot) + ' missing provider slot, ' + number(summary.policy_incomplete) + ' policy incomplete, ' + number(summary.no_recent_traffic) + ' with no recent traffic, ' + number(summary.review_due) + ' due for review.</div></div><span class="tag warn">review due</span></div>',
           '<div class="row"><div><div class="row-title">Secret boundary</div><div class="row-sub">Inventory records are metadata-only and exclude raw provider keys, encrypted shares, bearer tokens, OAuth secrets, SAML material, request bodies, response bodies, and customer payloads.</div></div><span class="tag good">redacted</span></div>'
         ].join('');
@@ -3759,6 +4110,15 @@ function renderEnterpriseOperationsPage(pageName: 'activity' | 'projects' | 'inv
       if (byId('providerSlotForm')) {
         byId('providerSlotForm').addEventListener('submit', submitProviderSlotForm);
       }
+      if (byId('openManualApiKeyForm')) {
+        byId('openManualApiKeyForm').addEventListener('click', function() { setManualApiKeyFormVisible(true); });
+      }
+      if (byId('cancelManualApiKeyForm')) {
+        byId('cancelManualApiKeyForm').addEventListener('click', function() { setManualApiKeyFormVisible(false); });
+      }
+      if (byId('manualApiKeyForm')) {
+        byId('manualApiKeyForm').addEventListener('submit', submitManualApiKeyForm);
+      }
       if (byId('slotProvider')) {
         byId('slotProvider').addEventListener('change', function() { syncProviderDefaults(true); });
       }
@@ -3774,6 +4134,10 @@ function renderEnterpriseOperationsPage(pageName: 'activity' | 'projects' | 'inv
       document.addEventListener('input', function(event) {
         var target = event.target;
         if (!target || !target.getAttribute) return;
+        if (target.getAttribute('data-manual-key-field')) {
+          saveManualApiKeyField(target);
+          return;
+        }
         if (target.getAttribute('data-inventory-field')) {
           saveInventoryField(target);
           return;
@@ -3789,6 +4153,10 @@ function renderEnterpriseOperationsPage(pageName: 'activity' | 'projects' | 'inv
       document.addEventListener('change', function(event) {
         var target = event.target;
         if (!target || !target.getAttribute) return;
+        if (target.getAttribute('data-manual-key-field')) {
+          saveManualApiKeyField(target);
+          return;
+        }
         if (target.getAttribute('data-inventory-field')) {
           saveInventoryField(target);
           return;
@@ -3806,6 +4174,10 @@ function renderEnterpriseOperationsPage(pageName: 'activity' | 'projects' | 'inv
         if (!target || !target.getAttribute) return;
         if (target.getAttribute('data-action') === 'copy-rollout-snippet') {
           copyRolloutSnippet(target);
+          return;
+        }
+        if (target.getAttribute('data-action') === 'delete-manual-api-key') {
+          deleteManualApiKey(target.getAttribute('data-manual-key-id'));
           return;
         }
         if (target.getAttribute('data-action') === 'prefill-email-slot') {
@@ -5342,6 +5714,9 @@ function renderEnterpriseSupportPage(pageName: EnterpriseSupportPageName): strin
       function apiInventoryStorageKey() {
         return 'vaultproof_api_inventory::' + (currentOrgId || 'default');
       }
+      function manualApiKeyStorageKey() {
+        return 'vaultproof_manual_api_keys::' + (currentOrgId || 'default');
+      }
       function redactApiInventoryNote(value) {
         var textValue = String(value || '');
         if (!textValue) return null;
@@ -5357,6 +5732,47 @@ function renderEnterpriseSupportPage(pageName: EnterpriseSupportPageName): strin
         } catch (_error) {
           return {};
         }
+      }
+      function readManualApiKeys() {
+        try {
+          var parsed = JSON.parse(localStorage.getItem(manualApiKeyStorageKey()) || '{}');
+          return parsed && typeof parsed === 'object' && !Array.isArray(parsed) ? parsed : {};
+        } catch (_error) {
+          return {};
+        }
+      }
+      function redactManualApiKeyText(value) {
+        var textValue = String(value || '').trim();
+        if (!textValue) return '';
+        if (/(sk-[a-z0-9_-]{8,}|gocspx-|eyJ[a-zA-Z0-9_-]{10,}|-----BEGIN|Bearer\\s+\\S+|service[_ -]?role|client[_ -]?secret\\s*[:=]?\\s*\\S+|api[_ -]?key\\s*[:=]\\s*\\S+|password\\s*[:=]\\s*\\S+|private[_ -]?key)/i.test(textValue)) {
+          return '[redacted: secret-like material was not stored]';
+        }
+        return textValue.slice(0, 220);
+      }
+      function manualApiKeyRecords() {
+        var records = readManualApiKeys();
+        return Object.keys(records).map(function(id) {
+          var record = records[id] && typeof records[id] === 'object' ? records[id] : {};
+          return {
+            id: id,
+            project_id: redactManualApiKeyText(record.project_id),
+            provider: redactManualApiKeyText(record.provider),
+            key_label: redactManualApiKeyText(record.key_label),
+            key_reference: redactManualApiKeyText(record.key_reference),
+            key_location: redactManualApiKeyText(record.key_location),
+            upstream_scope: redactManualApiKeyText(record.upstream_scope),
+            business_owner: redactManualApiKeyText(record.business_owner),
+            technical_owner: redactManualApiKeyText(record.technical_owner),
+            environment: redactManualApiKeyText(record.environment),
+            rotation_status: redactManualApiKeyText(record.rotation_status || 'unknown'),
+            review_status: redactManualApiKeyText(record.review_status || 'needs_review'),
+            next_review_date: redactManualApiKeyText(record.next_review_date),
+            created_at: redactManualApiKeyText(record.created_at),
+            updated_at: redactManualApiKeyText(record.updated_at)
+          };
+        }).filter(function(record) {
+          return record.provider || record.key_label || record.key_reference;
+        });
       }
       function apiInventoryProjectHealthMap(overview) {
         var map = {};
@@ -5380,6 +5796,66 @@ function renderEnterpriseSupportPage(pageName: EnterpriseSupportPageName): strin
         var hasUpstream = (Array.isArray(effective.allowed_upstream_hosts) && effective.allowed_upstream_hosts.length > 0)
           || (Array.isArray(effective.allowed_upstream_path_prefixes) && effective.allowed_upstream_path_prefixes.length > 0);
         return project.strict_origin === true && hasGateway && hasMethod && hasUpstream && Boolean(slot);
+      }
+      function apiInventoryManualRows(overview, bootstrap, annotations) {
+        var projects = bootstrap && Array.isArray(bootstrap.projects) ? bootstrap.projects : [];
+        var health = apiInventoryProjectHealthMap(overview || {});
+        return manualApiKeyRecords().map(function(record) {
+          var project = projects.find(function(item) { return item.id === record.project_id; }) || {
+            id: record.project_id || record.id,
+            name: record.project_id ? 'Manual API key project' : 'Unassigned manual API key',
+            vp_proj_id: record.project_id || 'manual-api-key',
+            strict_origin: false
+          };
+          var storedAnnotation = annotations[record.id] && typeof annotations[record.id] === 'object' ? annotations[record.id] : {};
+          var reviewStatus = storedAnnotation.review_status || record.review_status || 'needs_review';
+          var projectHealth = health[project.id] || {};
+          var statuses = ['manual API key', 'missing provider slot', 'needs sealed ingest', 'policy incomplete'];
+          if (!Number(projectHealth.calls || 0)) statuses.push('no recent traffic');
+          if (!storedAnnotation.review_status || reviewStatus === 'needs_review') statuses.push('review due');
+          if (reviewStatus === 'blocked') statuses.push('blocked');
+          if (reviewStatus === 'exception') statuses.push('exception');
+          return {
+            id: record.id,
+            project_id: project.id,
+            project_name: project.name || project.vp_proj_id || 'Manual API key',
+            vp_proj_id: project.vp_proj_id || null,
+            provider: null,
+            manual_key: {
+              provider: record.provider || null,
+              key_label: record.key_label || null,
+              key_reference: record.key_reference || null,
+              key_location: record.key_location || null,
+              upstream_scope: record.upstream_scope || null,
+              rotation_status: record.rotation_status || 'unknown',
+              created_at: record.created_at || null,
+              updated_at: record.updated_at || null
+            },
+            policy: {
+              strict_origin: project.strict_origin === true,
+              complete: false
+            },
+            traffic: {
+              calls: Number(projectHealth.calls || 0),
+              errors: Number(projectHealth.errors || 0),
+              denied: Number(projectHealth.denied || 0),
+              last_seen_at: projectHealth.lastActivity || null
+            },
+            annotation: {
+              business_owner: storedAnnotation.business_owner || record.business_owner || null,
+              technical_owner: storedAnnotation.technical_owner || record.technical_owner || null,
+              environment: storedAnnotation.environment || record.environment || null,
+              business_service: storedAnnotation.business_service || record.key_label || null,
+              data_sensitivity: storedAnnotation.data_sensitivity || null,
+              risk: storedAnnotation.risk || null,
+              review_status: reviewStatus,
+              next_review_date: storedAnnotation.next_review_date || record.next_review_date || null,
+              updated_at: storedAnnotation.updated_at || record.updated_at || null,
+              note: redactApiInventoryNote(storedAnnotation.note)
+            },
+            statuses: statuses
+          };
+        });
       }
       function apiInventoryRowsFromData(overview, bootstrap) {
         var projects = bootstrap && Array.isArray(bootstrap.projects) ? bootstrap.projects : [];
@@ -5440,6 +5916,9 @@ function renderEnterpriseSupportPage(pageName: EnterpriseSupportPageName): strin
             });
           });
         });
+        apiInventoryManualRows(overview || {}, bootstrap || {}, annotations).forEach(function(row) {
+          rows.push(row);
+        });
         return rows;
       }
       function buildApiInventoryPacket(overview, bootstrap) {
@@ -5448,6 +5927,8 @@ function renderEnterpriseSupportPage(pageName: EnterpriseSupportPageName): strin
           total_api_surfaces: rows.length,
           protected: rows.filter(function(item) { return item.statuses.indexOf('protected') !== -1; }).length,
           missing_provider_slot: rows.filter(function(item) { return !item.provider; }).length,
+          manual_api_keys: rows.filter(function(item) { return Boolean(item.manual_key); }).length,
+          needs_sealed_ingest: rows.filter(function(item) { return Boolean(item.manual_key) && !item.provider; }).length,
           policy_incomplete: rows.filter(function(item) { return !item.policy.complete; }).length,
           no_recent_traffic: rows.filter(function(item) { return Number(item.traffic.calls || 0) === 0; }).length,
           review_due: rows.filter(function(item) { return item.statuses.indexOf('review due') !== -1; }).length,
@@ -5464,6 +5945,7 @@ function renderEnterpriseSupportPage(pageName: EnterpriseSupportPageName): strin
           rows: rows,
           secrets_excluded: [
             'raw provider keys',
+            'raw manually entered API keys',
             'encrypted provider shares',
             'bearer tokens',
             'OAuth client secrets',
@@ -5479,6 +5961,7 @@ function renderEnterpriseSupportPage(pageName: EnterpriseSupportPageName): strin
         return [
           row('API inventory status', packet.status === 'ready' ? 'Inventory is populated from existing enterprise projects/provider slots and ready for customer review.' : 'Inventory exists but still needs owner, provider-slot, policy, or review cleanup before pilot traffic.', packet.status, packet.status === 'ready' ? 'good' : 'warn'),
           row('Inventory surfaces', number(summary.total_api_surfaces) + ' API surfaces, ' + number(summary.protected) + ' protected, ' + number(summary.missing_provider_slot) + ' missing provider slot, ' + number(summary.policy_incomplete) + ' policy incomplete.', number(summary.total_api_surfaces), summary.protected ? 'good' : 'warn'),
+          row('Manual API keys', number(summary.manual_api_keys) + ' manual API key metadata records, ' + number(summary.needs_sealed_ingest) + ' still need sealed provider-slot ingest before protected execution.', 'metadata only', summary.needs_sealed_ingest ? 'warn' : 'good'),
           row('Review state', number(summary.review_due) + ' review due, ' + number(summary.no_recent_traffic) + ' with no recent traffic, ' + number(summary.blocked) + ' blocked.', 'review due', summary.blocked ? 'bad' : 'warn'),
           linkRow('Open API inventory', 'Review owner, environment, business service, data sensitivity, risk, review status, and notes saved in this browser.', '/app/inventory', 'inventory', 'good'),
           row('Secret boundary', 'Inventory evidence excludes ' + packet.secrets_excluded.join(', ') + '.', 'redacted', 'good')
