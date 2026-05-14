@@ -542,6 +542,7 @@ Ask these before approving production traffic:
 | Members | `https://enterprise.vaultproof.dev/app/members` | Roles, invites, project assignments, and access review export. |
 | Control | `https://enterprise.vaultproof.dev/app/control` | Project policy, caller lock, provider allowlists, and execution settings. |
 | AI Proof Verifier | `https://enterprise.vaultproof.dev/app/verifier` | External model registry, proof bundle verification, evidence storage, and Azure confidential binding. |
+| API Inventory | `https://enterprise.vaultproof.dev/app/inventory` | Metadata-only API catalog, owner/risk/review annotations, provider-slot mapping, traffic posture, and customer-safe evidence export. |
 | Provider slots | `https://enterprise.vaultproof.dev/app/keys` | Provider-slot status, rotation notes, Secure Key Release posture, and emergency revoke. |
 | Audit | `https://enterprise.vaultproof.dev/app/audit` | Governance/runtime audit events and CSV export. |
 | Activity | `https://enterprise.vaultproof.dev/app/activity` | Runtime events, provider request IDs, denials, latency, and attestation summaries. |

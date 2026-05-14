@@ -3,6 +3,7 @@ export type EnterpriseAppNavPage =
   | 'launch'
   | 'evidence'
   | 'projects'
+  | 'inventory'
   | 'readiness'
   | 'health'
   | 'activity'
@@ -76,6 +77,13 @@ const ENTERPRISE_SIDEBAR_NAV_GROUPS: readonly EnterpriseSidebarNavGroup[] = [
         href: '/app/projects',
         label: 'Projects',
         blurb: 'Project inventory, usage, and provider slot posture.',
+      },
+      {
+        page: 'inventory',
+        href: '/app/inventory',
+        label: 'API Inventory',
+        blurb: 'Protected API catalog, owners, risk, review status, and evidence.',
+        activePill: 'new',
       },
       {
         page: 'readiness',

@@ -33,9 +33,9 @@ Already built:
 - Buyer commercial package page at `https://enterprise.vaultproof.dev/app/plans` for paid-pilot scope, included controls, contract guardrails, security boundaries, and customer review links
 - Paid-pilot proposal builder at `https://enterprise.vaultproof.dev/app/pilot` for first workload scope, expected volume, monthly price, sales commission math, support boundary, incident-response terms, success metric, and close steps
 - Pilot success tracker at `https://enterprise.vaultproof.dev/app/pilot-success` for live checks, browser-local milestones, evidence links, blockers, weekly customer update copy, and expansion/no-go readiness
+- API inventory board at `https://enterprise.vaultproof.dev/app/inventory` for metadata-only API catalog rows derived from projects, provider slots, caller-lock policy, traffic rollups, browser-local owner/risk/review annotations, and customer-safe JSON evidence
 - Build-status and feature inventory docs
 - Managed Supabase remains the auth/database provider for the pilot
-- API inventory management is now a planned enterprise demo feature for cataloging APIs, provider slots, ownership, policy posture, traffic evidence, and review status without storing or displaying secrets
 - Policy drift and exceptions management is now a planned enterprise demo feature for turning inventory gaps into owner-assigned, expiry-bound remediation or accepted-risk decisions
 - Integration rollout management is now a planned enterprise demo feature for tracking safe workload cutover, canary status, gateway/SDK path, owners, blockers, rollback, and evidence without exposing secrets
 
@@ -44,9 +44,9 @@ Not yet customer-ready:
 - Strict login readiness QA and final human OAuth/password browser QA still need to pass.
 - Email API key demo dry-run and blocked-recipient policy evidence flow are built; live sandbox email sends need sealed provider material only if the demo specifically needs an actual delivered email.
 - Live MiniMax provider dispatch works for the demo; add a separate OpenAI slot only if the demo specifically needs OpenAI.
-- API inventory management still needs its first customer-facing slice.
 - Policy drift and exceptions management still needs its first customer-facing slice.
 - Integration rollout management still needs its first customer-facing slice.
+- API inventory management still needs persistent audited records, CSV/OpenAPI import, automatic discovery, and production review workflow after the demo.
 - Supabase OAuth/login settings still need to be confirmed for `enterprise.vaultproof.dev`.
 - Older migration/history docs still have Azure-era language; customer-facing app UI is cleaned for the GCP demo.
 
@@ -186,7 +186,7 @@ Build:
 - Confirm provider slots and allowed origins.
 - Seed a demo provider slot. Placeholder shares are acceptable for dashboard and dry-run validation; live provider dispatch later needs encrypted shares generated from the same unwrap root encrypted into GCP KMS.
 - Use the email API key protection demo flow described below.
-- Add the first API inventory management slice described below.
+- Built: add the first API inventory management slice described below.
 - Add the first policy drift and exceptions slice described below.
 - Add the first integration rollout manager slice described below.
 - Run `LOGIN_QA_REQUIRE_SESSION=true npm run qa:enterprise-login` with Supabase service-role env to verify the live login page, Supabase redirect allowlist, generated browser session, and authenticated enterprise org/bootstrap APIs.
@@ -268,12 +268,12 @@ Demo goal:
 
 First demo slice:
 
-- Add `https://enterprise.vaultproof.dev/app/inventory` or an inventory section on `https://enterprise.vaultproof.dev/app/projects`.
-- Derive initial rows from existing projects, provider slots, project policies, and access-log rollups.
-- Allow browser-local/manual annotations first: business owner, technical owner, environment, business service, data sensitivity, compliance tag, approval status, review note, and next review date.
-- Show status badges for `protected`, `missing provider slot`, `stale`, `no recent traffic`, `policy incomplete`, and `review due`.
-- Add links to Provider Slots, Control, Activity, Audit CSV, Access Review CSV, Launch, and Evidence.
-- Include inventory summary in the evidence packet without secrets.
+- Built: `https://enterprise.vaultproof.dev/app/inventory` renders a customer-facing API inventory board using the shared enterprise sidebar and light dashboard theme.
+- Built: derive initial rows from existing projects, provider slots, project policies, project health, access-log rollups, and `GET /api/v1/enterprise/projects/bootstrap`.
+- Built: allow browser-local/manual annotations first: business owner, technical owner, environment, business service, data sensitivity, risk, review status, review note, and next review date.
+- Built: show status badges for `protected`, `missing provider slot`, `stale`, `no recent traffic`, `policy incomplete`, `review due`, `blocked`, and `exception`.
+- Built: add links to Provider Slots, Control, Activity, Audit CSV, Access Review CSV, Launch, and Evidence.
+- Built: include API inventory proof under `api_inventory` in the evidence packet without secrets and add a copyable `vaultproof_enterprise_api_inventory` JSON export from `/app/inventory`.
 
 Production follow-up:
 
@@ -389,6 +389,7 @@ Build after first customer proof:
 - Cloud Armor policy is attached and `npm run verify:gcp-enterprise-cloud-armor` passes.
 - Customer launch checklist and go/no-go board at `https://enterprise.vaultproof.dev/app/launch` are reviewed with the pilot user, including browser-local manual evidence status/timestamps.
 - Customer evidence packet at `https://enterprise.vaultproof.dev/app/evidence` is reviewed with the pilot user and includes the current go/no-go launch decision and blockers.
+- API inventory at `https://enterprise.vaultproof.dev/app/inventory` is reviewed for owner, environment, risk, data sensitivity, provider-slot mapping, caller-lock posture, traffic evidence, stale/no-traffic status, and review due items.
 - Email API key demo dry-run flow is policy-gated, audited, and tested before showing customers; live sandbox send is sealed first when needed.
 - Rollback path written down before sending real customer traffic.
 

@@ -721,6 +721,7 @@ Use this checklist for each production rollout.
 | Org + SSO | `https://enterprise.vaultproof.dev/app/org` |
 | Members | `https://enterprise.vaultproof.dev/app/members` |
 | Projects | `https://enterprise.vaultproof.dev/app/projects` |
+| API Inventory | `https://enterprise.vaultproof.dev/app/inventory` |
 | Control | `https://enterprise.vaultproof.dev/app/control` |
 | AI Proof Verifier | `https://enterprise.vaultproof.dev/app/verifier` |
 | Provider slots | `https://enterprise.vaultproof.dev/app/keys` |

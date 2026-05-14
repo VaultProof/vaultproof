@@ -302,7 +302,6 @@ const nextSteps = readinessProductionReady
       ...(cloudArmorAttached && cloudArmorRulesReady
         ? ['Keep `npm run verify:gcp-enterprise-cloud-armor` in the strict live launch gate.']
         : ['Run `npm run configure:gcp-enterprise-cloud-armor`, then `npm run verify:gcp-enterprise-cloud-armor`.']),
-      'Build the first API inventory management slice for the demo: derived API rows from projects/provider slots/access logs, owner/risk/review annotations, stale/orphaned flags, and evidence export without secrets.',
       'Build the first policy drift and exceptions slice for the demo: control-gap rows, browser-local accepted-risk records, owner/risk/expiry fields, and launch/evidence summary without secrets.',
       'Build the first integration rollout manager slice for the demo: workload cutover rows, environment status, integration mode, owner/rollback fields, canary status, blockers, copy-safe snippets, and evidence export without secrets.',
       'Add a valid OpenAI Platform key only if the demo specifically needs OpenAI; MiniMax upstream dispatch is now live.',
@@ -433,7 +432,8 @@ Status: \`${cloudArmorState}\`
 - All customer-facing enterprise pages below live under \`https://${edgeDomain}\`; route-only mentions are in-app links on that subdomain.
 - \`https://${edgeDomain}/app/demo\` is the buyer walkthrough: live workspace facts, proof path, identity/OAuth proof kit, key-rotation proof kit, pilot operations proof kit, API proxy self-test kit, monitoring evidence kit, safety guardrails, objection answers, paid-pilot close steps, and a copyable demo talk track generated without secrets.
 - \`https://${edgeDomain}/app/launch\` is the customer go-live board: live readiness summary, auto/manual customer tasks, browser-saved checklist progress, safe-to-pilot go/no-go readiness, browser-local status/timestamp evidence with stale holds, workflow links, identity/OAuth, key-rotation, and pilot-operations evidence packets, and a copyable launch brief.
-- \`https://${edgeDomain}/app/evidence\` is the customer proof packet: runtime readiness, go/no-go launch decision and blockers, identity/login QA evidence, key-rotation/demo-only acceptance evidence, pilot operations rollback and budget/monitoring evidence, API proxy self-test evidence, launch support readiness, monitoring evidence with alert workflow/Cloud Armor/budget guardrails, access-review and audit export links, provider posture, rollout workflow, and copy/download JSON evidence summary without secrets.
+- \`https://${edgeDomain}/app/evidence\` is the customer proof packet: runtime readiness, go/no-go launch decision and blockers, identity/login QA evidence, key-rotation/demo-only acceptance evidence, pilot operations rollback and budget/monitoring evidence, API proxy self-test evidence, API inventory proof, launch support readiness, monitoring evidence with alert workflow/Cloud Armor/budget guardrails, access-review and audit export links, provider posture, rollout workflow, and copy/download JSON evidence summary without secrets.
+- \`https://${edgeDomain}/app/inventory\` is the customer API inventory board: metadata-only API surfaces from existing projects, provider slots, caller-lock policy, project health, and access-log rollups; browser-local owner/environment/risk/review annotations; protected/missing-provider/policy-incomplete/no-traffic/stale/review-due posture; workflow links; and copyable \`vaultproof_enterprise_api_inventory\` JSON without secrets.
 - \`https://${edgeDomain}/app/security-review\` is the buyer security packet: concise architecture summary, control coverage, evidence links, open review items, common customer answers, known limitations, secret exclusions, and copyable security/procurement review text.
 - \`https://${edgeDomain}/app/plans\` is the buyer package view: rollout posture, paid-pilot commercial package, contract guardrails, security boundaries, and direct links into evidence, launch, technical guide, and runbooks.
 - \`https://${edgeDomain}/app/pilot\` is the paid-pilot proposal builder: browser-local first workload scope, expected volume, monthly price, 20% sales commission math, support/incident-response terms, success metric, and copyable customer proposal text without secrets.
@@ -449,7 +449,7 @@ Status: \`${cloudArmorState}\`
 
 Status: \`built and deployed in bootstrap-rpc-20260510\`
 
-The enterprise Projects/Keys/Activity pages load organization options, accessible projects, provider slots, and overview stats through \`GET /api/v1/enterprise/projects/bootstrap\` instead of chaining \`/orgs\`, \`/projects\`, and \`/projects/stats/overview\` from the browser. In \`bootstrap-rpc-20260510\`, bootstrap now uses the service-role-only Supabase \`enterprise_projects_bootstrap(...)\` RPC, which wraps the existing \`enterprise_project_access_overview(...)\` rollup inside Postgres.
+The enterprise Projects/Inventory/Keys/Activity pages load organization options, accessible projects, provider slots, and overview stats through \`GET /api/v1/enterprise/projects/bootstrap\` instead of chaining \`/orgs\`, \`/projects\`, and \`/projects/stats/overview\` from the browser. In \`bootstrap-rpc-20260510\`, bootstrap now uses the service-role-only Supabase \`enterprise_projects_bootstrap(...)\` RPC, which wraps the existing \`enterprise_project_access_overview(...)\` rollup inside Postgres.
 
 The deployed bootstrap request removes these separate Supabase calls after auth:
 
@@ -530,13 +530,13 @@ Status: \`built and deployed in provider-material-status-20260509\`
 
 Project and Provider Slots pages now classify each active slot as \`live sealed\`, \`demo placeholder\`, \`mixed\`, or \`missing\` without returning \`share1_encrypted\` or \`share2_encrypted\` to the browser. After sealing provider material on 2026-05-10, live API verification returned one MiniMax slot for \`First Paid Pilot\` with \`material_mode: sealed-live\`, \`material_ready: true\`, and no encrypted share fields in the payload. The OpenAI slot was reset to \`demo-placeholder\` because the supplied key was for MiniMax.
 
-## Planned Feature: API Inventory Management
+## Feature: API Inventory Management
 
-Status: \`planned for enterprise demo\`
+Status: \`built for enterprise demo\`
 
-API inventory management is now in the enterprise feature plan. The first slice should give customer security and platform teams a metadata-only system of record for protected API surfaces: project, provider slot, owner, environment, business service, risk level, data sensitivity, caller-lock posture, policy status, last-seen traffic, denial/error posture, review status, and evidence/export links.
+\`https://${edgeDomain}/app/inventory\` gives customer security and platform teams a metadata-only system of record for protected API surfaces: project, provider slot, owner, environment, business service, risk level, data sensitivity, caller-lock posture, policy status, last-seen traffic, denial/error posture, review status, and evidence/export links.
 
-Demo implementation should start from existing data instead of new infrastructure: derive inventory rows from projects, provider slots, project policies, access logs, and rollups; add browser-local/manual annotations for owners and review notes; flag missing provider slots, stale APIs, no recent traffic, policy gaps, and review-due items; then include the summary in the evidence packet. Persistent audited inventory tables, CSV/OpenAPI import, and automatic discovery can follow after the customer demo slice.
+The demo slice starts from existing data instead of new infrastructure: it derives inventory rows from projects, provider slots, project policies, project health, access logs, and rollups; adds browser-local/manual annotations for owner, environment, business service, sensitivity, risk, review status, next review date, and notes; flags missing provider slots, stale APIs, no recent traffic, policy gaps, blocked rows, exceptions, and review-due items; then includes the summary in the evidence packet under \`api_inventory\`. Persistent audited inventory tables, CSV/OpenAPI import, and automatic discovery can follow after the customer demo slice.
 
 Inventory records must never store raw provider keys, bearer tokens, OAuth client secrets, SAML material, request bodies, response bodies, or customer payloads.
 

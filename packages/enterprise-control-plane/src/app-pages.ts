@@ -2104,13 +2104,15 @@ function renderEnterpriseAlertsPage(): string {
 </html>`;
 }
 
-function renderEnterpriseOperationsPage(pageName: 'activity' | 'projects' | 'keys'): string {
-  const pageTitle = pageName === 'activity' ? 'Activity' : pageName === 'projects' ? 'Projects' : 'Provider Slots';
-  const pageKicker = pageName === 'activity' ? 'runtime feed' : pageName === 'projects' ? 'project inventory' : 'secrets posture';
+function renderEnterpriseOperationsPage(pageName: 'activity' | 'projects' | 'inventory' | 'keys'): string {
+  const pageTitle = pageName === 'activity' ? 'Activity' : pageName === 'projects' ? 'Projects' : pageName === 'inventory' ? 'API Inventory' : 'Provider Slots';
+  const pageKicker = pageName === 'activity' ? 'runtime feed' : pageName === 'projects' ? 'project inventory' : pageName === 'inventory' ? 'api inventory' : 'secrets posture';
   const pageLead = pageName === 'activity'
     ? 'Review secure proxy/runtime events, status codes, latency, provider request IDs, and attestation evidence hints.'
     : pageName === 'projects'
       ? 'Track enterprise projects, provider coverage, caller-lock policy, traffic health, and quick links into Control.'
+      : pageName === 'inventory'
+        ? 'Catalog protected API surfaces by project, provider slot, owner, environment, risk, policy posture, traffic evidence, and review status without storing secrets.'
       : 'Review active provider slots, trigger emergency revoke, and keep rotation posture visible without exposing upstream secrets.';
 
   return `<!doctype html>
@@ -2149,14 +2151,23 @@ function renderEnterpriseOperationsPage(pageName: 'activity' | 'projects' | 'key
     .row { display: grid; grid-template-columns: 1fr auto; gap: 14px; align-items: start; border: 1px solid rgba(48,76,71,.10); border-radius: 18px; padding: 14px; background: rgba(247,250,244,.84); }
     .row-title { font-weight: 780; letter-spacing: -.02em; }
     .row-sub { color: var(--muted); font-size: 13px; margin-top: 5px; line-height: 1.45; }
+    .inventory-row { display: grid; gap: 14px; border: 1px solid rgba(48,76,71,.10); border-radius: 18px; padding: 14px; background: rgba(247,250,244,.84); }
+    .inventory-head { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 14px; align-items: start; }
+    .inventory-fields { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 10px; }
+    .inventory-field { display: grid; gap: 5px; min-width: 0; }
+    .inventory-field.wide { grid-column: span 2; }
+    .inventory-field label { color: var(--muted); font-size: 11px; text-transform: uppercase; letter-spacing: .08em; }
+    .inventory-field input, .inventory-field select { width: 100%; min-width: 0; }
+    .inventory-field textarea { width: 100%; min-height: 74px; resize: vertical; border: 1px solid var(--line); background: rgba(255,255,255,.78); color: var(--text); border-radius: 13px; padding: 11px 12px; font: inherit; }
+    .row-actions { display: flex; gap: 8px; flex-wrap: wrap; justify-content: flex-end; align-items: start; }
     .tag { display: inline-block; color: var(--blue); font-size: 12px; border: 1px solid rgba(22,138,159,.24); border-radius: 999px; padding: 5px 8px; margin: 3px 4px 0 0; }
     .tag.good { color: var(--green); border-color: rgba(62,93,87,.24); }
     .tag.warn { color: var(--gold); border-color: rgba(213,169,20,.28); }
     .tag.bad { color: var(--red); border-color: rgba(185,93,80,.28); }
     .empty, .notice { color: var(--muted); border: 1px dashed rgba(48,76,71,.22); border-radius: 18px; padding: 18px; background: rgba(247,250,244,.78); }
     .notice.error { color: var(--red); border-color: rgba(185,93,80,.3); }
-    @media (max-width: 1100px) { .filters, .kpis, .two { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
-    @media (max-width: 760px) { .shell { grid-template-columns: 1fr; } .topbar { flex-direction: column; } .filters, .kpis, .two { grid-template-columns: 1fr; } }
+    @media (max-width: 1100px) { .filters, .kpis, .two, .inventory-fields { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+    @media (max-width: 760px) { .shell { grid-template-columns: 1fr; } .topbar { flex-direction: column; } .filters, .kpis, .two, .inventory-head, .inventory-fields { grid-template-columns: 1fr; } .inventory-field.wide { grid-column: auto; } }
     ${ENTERPRISE_APP_SHELL_THEME}
     ${ENTERPRISE_STATIC_APP_POLISH_THEME}
   </style>
@@ -2175,6 +2186,7 @@ function renderEnterpriseOperationsPage(pageName: 'activity' | 'projects' | 'key
         <div class="toolbar">
           <select id="orgSelect" aria-label="Organization"><option>Loading org...</option></select>
           ${pageName === 'keys' ? '<button id="openProviderSlotForm" class="primary" type="button">add slot</button>' : ''}
+          ${pageName === 'inventory' ? '<button id="copyInventoryJsonBtn" class="primary" type="button">copy inventory JSON</button>' : ''}
           <button id="refreshBtn" type="button">refresh</button>
           <a class="primary" href="/app/control">open control</a>
         </div>
@@ -2259,6 +2271,21 @@ function renderEnterpriseOperationsPage(pageName: 'activity' | 'projects' | 'key
         </div>
       </section>
 
+      <section id="inventoryPanel" class="grid two" style="display:none">
+        <div class="card" style="grid-column:1/-1">
+          <div class="section-title"><h2>API inventory board</h2><span id="inventoryMeta" class="mini">metadata-only</span></div>
+          <div id="inventoryList" class="list"><div class="empty">Loading API inventory...</div></div>
+        </div>
+        <div class="card">
+          <div class="section-title"><h2>Inventory evidence</h2><span class="mini">no secrets</span></div>
+          <div id="inventorySummaryList" class="list"></div>
+        </div>
+        <div class="card">
+          <div class="section-title"><h2>Review workflow</h2><span class="mini">customer handoff</span></div>
+          <div id="inventoryWorkflowList" class="list"></div>
+        </div>
+      </section>
+
       ${pageName === 'keys' ? `
       <section id="apiProxyTestPanel" class="card" style="display:none;margin-bottom:16px">
         <div class="section-title"><h2>Customer API proxy test kit</h2><span id="apiProxyTestMeta" class="mini">copy-safe</span></div>
@@ -2296,6 +2323,7 @@ function renderEnterpriseOperationsPage(pageName: 'activity' | 'projects' | 'key
       var currentOrgId = localStorage.getItem(ACTIVE_ORG_STORAGE_KEY) || '';
       var cachedProjects = [];
       var cachedOverview = {};
+      var cachedInventoryRows = [];
       var providerDefaults = {
         openai: { upstream: 'https://api.openai.com', header: 'authorization', template: 'Bearer {key}', demoPath: '/v1/models' },
         anthropic: { upstream: 'https://api.anthropic.com', header: 'x-api-key', template: '{key}', demoPath: '/v1/messages' },
@@ -2463,7 +2491,7 @@ function renderEnterpriseOperationsPage(pageName: 'activity' | 'projects' | 'key
         ].join('\\n');
       }
       function copyToClipboard(value, label) {
-        function done() { notice((label || 'Self-test request') + ' copied. It uses the VaultProof session token placeholder and no raw provider key.'); }
+        function done() { notice((label || 'Value') + ' copied. No raw provider keys, encrypted shares, bearer tokens, OAuth secrets, request bodies, response bodies, or customer payloads are included.'); }
         if (navigator.clipboard && navigator.clipboard.writeText) {
           navigator.clipboard.writeText(value).then(done).catch(function() { fallbackCopy(value); done(); });
           return;
@@ -2532,6 +2560,323 @@ function renderEnterpriseOperationsPage(pageName: 'activity' | 'projects' | 'key
           }).join('') : '<option value="">No projects</option>';
           slotProject.disabled = !cachedProjects.length;
         }
+      }
+      function inventoryStorageKey() {
+        return 'vaultproof_api_inventory::' + (currentOrgId || 'default');
+      }
+      function redactInventoryNote(value) {
+        var textValue = String(value || '');
+        if (!textValue) return null;
+        if (/(sk-[a-z0-9_-]{8,}|gocspx-|eyJ[a-zA-Z0-9_-]{10,}|-----BEGIN|Bearer\\s+|service[_ -]?role|client[_ -]?secret|api[_ -]?key)/i.test(textValue)) {
+          return '[redacted: note contained secret-like material]';
+        }
+        return textValue;
+      }
+      function readInventoryAnnotations() {
+        try {
+          var parsed = JSON.parse(localStorage.getItem(inventoryStorageKey()) || '{}');
+          return parsed && typeof parsed === 'object' && !Array.isArray(parsed) ? parsed : {};
+        } catch (_error) {
+          return {};
+        }
+      }
+      function writeInventoryAnnotations(value) {
+        localStorage.setItem(inventoryStorageKey(), JSON.stringify(value || {}));
+      }
+      function saveInventoryField(target) {
+        var rowId = target.getAttribute('data-inventory-row-id');
+        var field = target.getAttribute('data-inventory-field');
+        if (!rowId || !field) return;
+        var annotations = readInventoryAnnotations();
+        var current = annotations[rowId] && typeof annotations[rowId] === 'object' ? annotations[rowId] : {};
+        current[field] = target.value || '';
+        current.updated_at = new Date().toISOString();
+        annotations[rowId] = current;
+        writeInventoryAnnotations(annotations);
+        cachedInventoryRows = buildInventoryRows();
+        if (field === 'review_status' || field === 'next_review_date') {
+          renderInventory();
+        } else {
+          renderInventorySummary();
+        }
+      }
+      function projectHealthMap() {
+        var map = {};
+        (Array.isArray(cachedOverview.projectHealth) ? cachedOverview.projectHealth : []).forEach(function(item) {
+          if (item && item.project_id) map[item.project_id] = item;
+        });
+        return map;
+      }
+      function arrayLength(value) {
+        return Array.isArray(value) ? value.filter(Boolean).length : 0;
+      }
+      function mergePolicy(project, slot) {
+        var base = project.caller_lock_policy || {};
+        var slug = slot && (slot.slug || slot.provider);
+        var override = slug && base.provider_overrides && base.provider_overrides[slug] && typeof base.provider_overrides[slug] === 'object'
+          ? base.provider_overrides[slug]
+          : {};
+        return Object.assign({}, base, override || {});
+      }
+      function policySummary(policy, project, slot) {
+        var checks = [
+          project.strict_origin === true,
+          arrayLength(policy.allowed_customer_gateways) > 0,
+          arrayLength(policy.allowed_methods) > 0,
+          arrayLength(policy.allowed_upstream_hosts) > 0 || arrayLength(policy.allowed_upstream_path_prefixes) > 0,
+          Boolean(slot && (policy.allowed_providers || []).indexOf(slot.provider) !== -1) || Boolean(slot)
+        ];
+        var passed = checks.filter(Boolean).length;
+        return {
+          passed: passed,
+          total: checks.length,
+          complete: passed >= 4,
+          label: passed + '/' + checks.length + ' caller-lock controls'
+        };
+      }
+      function isReviewDue(annotation) {
+        if (!annotation || !annotation.next_review_date) return false;
+        var reviewTime = new Date(annotation.next_review_date + 'T23:59:59Z').getTime();
+        return Number.isFinite(reviewTime) && reviewTime < Date.now();
+      }
+      function inventoryRowId(project, slot) {
+        return project.id + '::' + (slot ? (slot.key_id || slot.slug || slot.provider) : 'missing-provider');
+      }
+      function inventoryDefaultPath(slot) {
+        if (!slot) return 'not mapped';
+        return slotIsEmailProvider(slot) ? emailDemoPath(slot) : providerDemoPath(slot);
+      }
+      function buildInventoryRows() {
+        var annotations = readInventoryAnnotations();
+        var health = projectHealthMap();
+        var rows = [];
+        cachedProjects.forEach(function(project) {
+          var slots = Array.isArray(project.provider_slots) && project.provider_slots.length ? project.provider_slots : [null];
+          slots.forEach(function(slot) {
+            var rowId = inventoryRowId(project, slot);
+            var annotation = annotations[rowId] && typeof annotations[rowId] === 'object' ? annotations[rowId] : {};
+            var projectHealth = health[project.id] || {};
+            var policy = mergePolicy(project, slot);
+            var coverage = policySummary(policy, project, slot);
+            var calls = Number(projectHealth.calls || 0);
+            var errors = Number(projectHealth.errors || 0);
+            var denied = Number(projectHealth.denied || 0);
+            var lastActivity = projectHealth.lastActivity || null;
+            var lastActivityMs = lastActivity ? new Date(lastActivity).getTime() : NaN;
+            var stale = calls > 0 && Number.isFinite(lastActivityMs) && Date.now() - lastActivityMs > 30 * 24 * 60 * 60 * 1000;
+            var statuses = [];
+            if (!slot) statuses.push({ label: 'missing provider slot', tone: 'bad' });
+            if (slot && slot.material_ready === true && project.strict_origin === true && coverage.complete) statuses.push({ label: 'protected', tone: 'good' });
+            if (slot && slot.material_mode === 'demo-placeholder') statuses.push({ label: 'demo placeholder', tone: 'warn' });
+            if (!coverage.complete) statuses.push({ label: 'policy incomplete', tone: 'warn' });
+            if (!calls) statuses.push({ label: 'no recent traffic', tone: 'warn' });
+            if (stale) statuses.push({ label: 'stale', tone: 'warn' });
+            if (isReviewDue(annotation) || !annotation.review_status || annotation.review_status === 'needs_review') statuses.push({ label: 'review due', tone: 'warn' });
+            if (annotation.review_status === 'approved') statuses.push({ label: 'review approved', tone: 'good' });
+            if (annotation.review_status === 'blocked') statuses.push({ label: 'blocked', tone: 'bad' });
+            if (annotation.review_status === 'exception') statuses.push({ label: 'exception noted', tone: 'warn' });
+            rows.push({
+              id: rowId,
+              project: {
+                id: project.id,
+                name: project.name || project.vp_proj_id,
+                vp_proj_id: project.vp_proj_id,
+                role: project.project_role,
+                strict_origin: project.strict_origin === true,
+                allowed_origins: project.allowed_origins || null
+              },
+              provider: slot ? {
+                key_id: slot.key_id,
+                provider: slot.provider,
+                slug: slot.slug || slot.provider,
+                material_mode: slot.material_mode || 'missing',
+                material_ready: slot.material_ready === true,
+                default_path: inventoryDefaultPath(slot)
+              } : null,
+              policy: {
+                caller_lock_controls: coverage.label,
+                complete: coverage.complete,
+                rate_limit_per_minute: policy.rate_limit_per_minute || null,
+                allowed_methods: Array.isArray(policy.allowed_methods) ? policy.allowed_methods : [],
+                allowed_upstream_hosts: Array.isArray(policy.allowed_upstream_hosts) ? policy.allowed_upstream_hosts : [],
+                allowed_upstream_path_prefixes: Array.isArray(policy.allowed_upstream_path_prefixes) ? policy.allowed_upstream_path_prefixes : [],
+                allowed_customer_gateways: Array.isArray(policy.allowed_customer_gateways) ? policy.allowed_customer_gateways : []
+              },
+              traffic: {
+                calls: calls,
+                errors: errors,
+                denied: denied,
+                last_seen_at: lastActivity,
+                stale: stale
+              },
+              annotation: annotation,
+              statuses: statuses
+            });
+          });
+        });
+        return rows;
+      }
+      function selectedOption(value, expected) {
+        return String(value || '') === expected ? ' selected' : '';
+      }
+      function inventoryInput(row, field, label, placeholder) {
+        var annotation = row.annotation || {};
+        return '<div class="inventory-field"><label>' + escapeHtml(label) + '</label><input data-inventory-row-id="' + escapeHtml(row.id) + '" data-inventory-field="' + escapeHtml(field) + '" value="' + escapeHtml(annotation[field] || '') + '" placeholder="' + escapeHtml(placeholder || '') + '" /></div>';
+      }
+      function inventorySelect(row, field, label, options) {
+        var annotation = row.annotation || {};
+        return '<div class="inventory-field"><label>' + escapeHtml(label) + '</label><select data-inventory-row-id="' + escapeHtml(row.id) + '" data-inventory-field="' + escapeHtml(field) + '">' + options.map(function(option) {
+          return '<option value="' + escapeHtml(option.value) + '"' + selectedOption(annotation[field], option.value) + '>' + escapeHtml(option.label) + '</option>';
+        }).join('') + '</select></div>';
+      }
+      function renderInventoryStatusTags(row) {
+        return row.statuses.map(function(status) {
+          return '<span class="tag ' + escapeHtml(status.tone) + '">' + escapeHtml(status.label) + '</span>';
+        }).join('');
+      }
+      function renderInventoryRow(row) {
+        var annotation = row.annotation || {};
+        var provider = row.provider || {};
+        var providerLabel = row.provider ? provider.slug + ' / ' + provider.provider : 'no provider slot';
+        var traffic = row.traffic || {};
+        var policy = row.policy || {};
+        return '<div class="inventory-row" data-inventory-card="' + escapeHtml(row.id) + '">' +
+          '<div class="inventory-head"><div><div class="row-title">' + escapeHtml(row.project.name) + ' - ' + escapeHtml(providerLabel) + '</div>' +
+          '<div class="row-sub">' + escapeHtml(row.project.vp_proj_id) + ' - default path ' + escapeHtml(provider.default_path || 'not mapped') + ' - last seen ' + escapeHtml(rel(traffic.last_seen_at)) + ' - calls ' + number(traffic.calls) + ' / errors ' + number(traffic.errors) + ' / denied ' + number(traffic.denied) + '</div>' +
+          '<div>' + renderInventoryStatusTags(row) + '<span class="tag">' + escapeHtml(policy.caller_lock_controls || 'policy not reported') + '</span><span class="tag">' + escapeHtml(provider.material_mode || 'missing material') + '</span></div></div>' +
+          '<div class="row-actions"><a class="tag" href="/app/control">control</a><a class="tag" href="/app/keys">provider slots</a><a class="tag" href="/app/activity">activity</a></div></div>' +
+          '<div class="inventory-fields">' +
+          inventoryInput(row, 'business_owner', 'business owner', 'Security owner') +
+          inventoryInput(row, 'technical_owner', 'technical owner', 'Platform owner') +
+          inventorySelect(row, 'environment', 'environment', [
+            { value: '', label: 'unset' },
+            { value: 'demo', label: 'demo' },
+            { value: 'dev', label: 'dev' },
+            { value: 'staging', label: 'staging' },
+            { value: 'production', label: 'production' }
+          ]) +
+          inventoryInput(row, 'business_service', 'business service', 'Billing, support, AI assistant') +
+          inventorySelect(row, 'data_sensitivity', 'data sensitivity', [
+            { value: '', label: 'unset' },
+            { value: 'public', label: 'public' },
+            { value: 'internal', label: 'internal' },
+            { value: 'confidential', label: 'confidential' },
+            { value: 'restricted', label: 'restricted' }
+          ]) +
+          inventorySelect(row, 'risk', 'risk', [
+            { value: '', label: 'unset' },
+            { value: 'low', label: 'low' },
+            { value: 'medium', label: 'medium' },
+            { value: 'high', label: 'high' },
+            { value: 'critical', label: 'critical' }
+          ]) +
+          inventorySelect(row, 'review_status', 'review status', [
+            { value: 'needs_review', label: 'needs review' },
+            { value: 'approved', label: 'approved' },
+            { value: 'exception', label: 'exception' },
+            { value: 'blocked', label: 'blocked' }
+          ]) +
+          '<div class="inventory-field"><label>next review</label><input type="date" data-inventory-row-id="' + escapeHtml(row.id) + '" data-inventory-field="next_review_date" value="' + escapeHtml(annotation.next_review_date || '') + '" /></div>' +
+          '<div class="inventory-field wide"><label>review notes</label><textarea data-inventory-row-id="' + escapeHtml(row.id) + '" data-inventory-field="note" placeholder="Metadata-only note. Do not paste secrets, request bodies, response bodies, or customer payloads.">' + escapeHtml(annotation.note || '') + '</textarea></div>' +
+          '<div class="inventory-field wide"><label>policy evidence</label><div class="row-sub">Origins: ' + escapeHtml(row.project.strict_origin ? 'strict' : 'relaxed') + '. Methods: ' + escapeHtml((policy.allowed_methods || []).join(', ') || 'not set') + '. Hosts: ' + escapeHtml((policy.allowed_upstream_hosts || []).join(', ') || 'not set') + '. Paths: ' + escapeHtml((policy.allowed_upstream_path_prefixes || []).join(', ') || 'not set') + '. Gateways: ' + escapeHtml((policy.allowed_customer_gateways || []).join(', ') || 'not set') + '.</div></div>' +
+          '</div></div>';
+      }
+      function inventorySummary() {
+        var rows = cachedInventoryRows;
+        return {
+          total: rows.length,
+          protected: rows.filter(function(row) { return row.statuses.some(function(status) { return status.label === 'protected'; }); }).length,
+          missing_provider_slot: rows.filter(function(row) { return !row.provider; }).length,
+          policy_incomplete: rows.filter(function(row) { return !row.policy.complete; }).length,
+          no_recent_traffic: rows.filter(function(row) { return Number(row.traffic.calls || 0) === 0; }).length,
+          review_due: rows.filter(function(row) { return row.statuses.some(function(status) { return status.label === 'review due'; }); }).length,
+          blocked: rows.filter(function(row) { return row.annotation && row.annotation.review_status === 'blocked'; }).length
+        };
+      }
+      function inventoryEvidencePacket() {
+        var summary = inventorySummary();
+        return {
+          packet_type: 'vaultproof_enterprise_api_inventory',
+          packet_version: 1,
+          generated_at: new Date().toISOString(),
+          generated_from: location.origin + '/app/inventory',
+          organization_id: currentOrgId || null,
+          summary: summary,
+          rows: cachedInventoryRows.map(function(row) {
+            return {
+              id: row.id,
+              project: row.project,
+              provider: row.provider,
+              policy: row.policy,
+              traffic: row.traffic,
+              annotation: {
+                business_owner: row.annotation.business_owner || null,
+                technical_owner: row.annotation.technical_owner || null,
+                environment: row.annotation.environment || null,
+                business_service: row.annotation.business_service || null,
+                data_sensitivity: row.annotation.data_sensitivity || null,
+                risk: row.annotation.risk || null,
+                review_status: row.annotation.review_status || 'needs_review',
+                next_review_date: row.annotation.next_review_date || null,
+                updated_at: row.annotation.updated_at || null,
+                note: redactInventoryNote(row.annotation.note)
+              },
+              statuses: row.statuses.map(function(status) { return status.label; })
+            };
+          }),
+          workflow_links: {
+            control: '/app/control',
+            provider_slots: '/app/keys',
+            activity: '/app/activity',
+            launch: '/app/launch',
+            evidence: '/app/evidence',
+            audit_csv_30_days: evidenceExportHref('/api/v1/enterprise/audit?format=csv&days=30'),
+            access_review_csv: evidenceExportHref('/api/v1/enterprise/members/access-review?format=csv')
+          },
+          secrets_excluded: [
+            'raw provider keys',
+            'encrypted provider shares',
+            'bearer tokens',
+            'OAuth client secrets',
+            'SAML material',
+            'request bodies',
+            'response bodies',
+            'customer payloads'
+          ]
+        };
+      }
+      function evidenceExportHref(path) {
+        if (!currentOrgId) return path;
+        var joiner = path.indexOf('?') === -1 ? '?' : '&';
+        return path + joiner + 'org=' + encodeURIComponent(currentOrgId);
+      }
+      function renderInventorySummary() {
+        if (PAGE_MODE !== 'inventory') return;
+        var summary = inventorySummary();
+        byId('inventorySummaryList').innerHTML = [
+          '<div class="row"><div><div class="row-title">API inventory status</div><div class="row-sub">' + number(summary.total) + ' metadata-only API surfaces are derived from projects and provider slots. ' + number(summary.protected) + ' currently look protected.</div></div><span class="tag ' + (summary.protected ? 'good' : 'warn') + '">' + number(summary.protected) + ' protected</span></div>',
+          '<div class="row"><div><div class="row-title">Open review items</div><div class="row-sub">' + number(summary.missing_provider_slot) + ' missing provider slot, ' + number(summary.policy_incomplete) + ' policy incomplete, ' + number(summary.no_recent_traffic) + ' with no recent traffic, ' + number(summary.review_due) + ' due for review.</div></div><span class="tag warn">review due</span></div>',
+          '<div class="row"><div><div class="row-title">Secret boundary</div><div class="row-sub">Inventory records are metadata-only and exclude raw provider keys, encrypted shares, bearer tokens, OAuth secrets, SAML material, request bodies, response bodies, and customer payloads.</div></div><span class="tag good">redacted</span></div>'
+        ].join('');
+        byId('inventoryWorkflowList').innerHTML = [
+          '<div class="row"><div><div class="row-title">Control policy</div><div class="row-sub">Confirm origins, provider allowlists, upstream hosts, path prefixes, gateways, and rate limits.</div></div><a class="tag good" href="/app/control">control</a></div>',
+          '<div class="row"><div><div class="row-title">Provider slots</div><div class="row-sub">Review material mode, rotation status, protected email dry-run, and emergency revoke posture.</div></div><a class="tag good" href="/app/keys">provider slots</a></div>',
+          '<div class="row"><div><div class="row-title">Traffic and audit evidence</div><div class="row-sub">Use Activity, Audit CSV, and Access Review CSV for customer-safe review exports.</div></div><span><a class="tag" href="/app/activity">activity</a><a class="tag" href="' + escapeHtml(evidenceExportHref('/api/v1/enterprise/audit?format=csv&days=30')) + '">audit CSV</a><a class="tag" href="' + escapeHtml(evidenceExportHref('/api/v1/enterprise/members/access-review?format=csv')) + '">access review CSV</a></span></div>',
+          '<div class="row"><div><div class="row-title">Launch and evidence packets</div><div class="row-sub">Use Launch and Evidence to show remaining blockers before pilot traffic.</div></div><span><a class="tag" href="/app/launch">launch</a><a class="tag" href="/app/evidence">evidence</a></span></div>'
+        ].join('');
+      }
+      function renderInventory() {
+        var panel = byId('inventoryPanel');
+        if (panel) panel.style.display = PAGE_MODE === 'inventory' ? 'grid' : 'none';
+        if (PAGE_MODE !== 'inventory') return;
+        cachedInventoryRows = buildInventoryRows();
+        text('inventoryMeta', cachedInventoryRows.length + ' API surfaces');
+        byId('inventoryList').innerHTML = cachedInventoryRows.length ? cachedInventoryRows.map(renderInventoryRow).join('') : '<div class="empty">No projects or provider slots are visible yet. Create one project and provider slot before the customer API inventory review.</div>';
+        renderInventorySummary();
+      }
+      function copyInventoryJson() {
+        cachedInventoryRows = buildInventoryRows();
+        copyToClipboard(JSON.stringify(inventoryEvidencePacket(), null, 2), 'API inventory JSON');
       }
       function renderProjects() {
         byId('projectsPanel').style.display = PAGE_MODE === 'projects' ? 'grid' : 'none';
@@ -2763,6 +3108,7 @@ function renderEnterpriseOperationsPage(pageName: 'activity' | 'projects' | 'key
           updateKpis();
           renderProjectOptions();
           renderProjects();
+          renderInventory();
           renderKeys();
           await renderActivity();
         } catch (error) {
@@ -2787,6 +3133,19 @@ function renderEnterpriseOperationsPage(pageName: 'activity' | 'projects' | 'key
       if (byId('slotProvider')) {
         byId('slotProvider').addEventListener('change', function() { syncProviderDefaults(true); });
       }
+      if (byId('copyInventoryJsonBtn')) {
+        byId('copyInventoryJsonBtn').addEventListener('click', copyInventoryJson);
+      }
+      document.addEventListener('input', function(event) {
+        var target = event.target;
+        if (!target || !target.getAttribute || !target.getAttribute('data-inventory-field')) return;
+        saveInventoryField(target);
+      });
+      document.addEventListener('change', function(event) {
+        var target = event.target;
+        if (!target || !target.getAttribute || !target.getAttribute('data-inventory-field')) return;
+        saveInventoryField(target);
+      });
       document.addEventListener('click', async function(event) {
         var target = event.target;
         if (!target || !target.getAttribute) return;
@@ -3099,6 +3458,10 @@ function renderEnterpriseSupportPage(pageName: EnterpriseSupportPageName): strin
         <div class="card" style="grid-column:1/-1">
           <div class="section-title"><h2>API proxy self-test proof</h2><span class="mini" id="evidenceApiProxyMeta">hold</span></div>
           <div id="evidenceApiProxyList" class="list"></div>
+        </div>
+        <div class="card" style="grid-column:1/-1">
+          <div class="section-title"><h2>API inventory proof</h2><span class="mini" id="evidenceApiInventoryMeta">hold</span></div>
+          <div id="evidenceApiInventoryList" class="list"></div>
         </div>
         <div class="card" style="grid-column:1/-1">
           <div class="section-title"><h2>Launch support proof</h2><span class="mini" id="evidenceSupportMeta">hold</span></div>
@@ -4022,6 +4385,151 @@ function renderEnterpriseSupportPage(pageName: EnterpriseSupportPageName): strin
           row('Secrets excluded', packet.secrets_excluded.join(', '), 'redacted', 'good')
         ];
       }
+      function apiInventoryStorageKey() {
+        return 'vaultproof_api_inventory::' + (currentOrgId || 'default');
+      }
+      function redactApiInventoryNote(value) {
+        var textValue = String(value || '');
+        if (!textValue) return null;
+        if (/(sk-[a-z0-9_-]{8,}|gocspx-|eyJ[a-zA-Z0-9_-]{10,}|-----BEGIN|Bearer\\s+|service[_ -]?role|client[_ -]?secret|api[_ -]?key)/i.test(textValue)) {
+          return '[redacted: note contained secret-like material]';
+        }
+        return textValue;
+      }
+      function readApiInventoryAnnotations() {
+        try {
+          var parsed = JSON.parse(localStorage.getItem(apiInventoryStorageKey()) || '{}');
+          return parsed && typeof parsed === 'object' && !Array.isArray(parsed) ? parsed : {};
+        } catch (_error) {
+          return {};
+        }
+      }
+      function apiInventoryProjectHealthMap(overview) {
+        var map = {};
+        (Array.isArray(overview.projectHealth) ? overview.projectHealth : []).forEach(function(item) {
+          if (item && item.project_id) map[item.project_id] = item;
+        });
+        return map;
+      }
+      function apiInventoryRowId(project, slot) {
+        return project.id + '::' + (slot ? (slot.key_id || slot.slug || slot.provider) : 'missing-provider');
+      }
+      function apiInventoryPolicyComplete(project, slot) {
+        var policy = project.caller_lock_policy || {};
+        var slug = slot && (slot.slug || slot.provider);
+        var override = slug && policy.provider_overrides && policy.provider_overrides[slug] && typeof policy.provider_overrides[slug] === 'object'
+          ? policy.provider_overrides[slug]
+          : {};
+        var effective = Object.assign({}, policy, override || {});
+        var hasGateway = Array.isArray(effective.allowed_customer_gateways) && effective.allowed_customer_gateways.length > 0;
+        var hasMethod = Array.isArray(effective.allowed_methods) && effective.allowed_methods.length > 0;
+        var hasUpstream = (Array.isArray(effective.allowed_upstream_hosts) && effective.allowed_upstream_hosts.length > 0)
+          || (Array.isArray(effective.allowed_upstream_path_prefixes) && effective.allowed_upstream_path_prefixes.length > 0);
+        return project.strict_origin === true && hasGateway && hasMethod && hasUpstream && Boolean(slot);
+      }
+      function apiInventoryRowsFromData(overview, bootstrap) {
+        var projects = bootstrap && Array.isArray(bootstrap.projects) ? bootstrap.projects : [];
+        var annotations = readApiInventoryAnnotations();
+        var health = apiInventoryProjectHealthMap(overview || {});
+        var rows = [];
+        projects.forEach(function(project) {
+          var slots = Array.isArray(project.provider_slots) && project.provider_slots.length ? project.provider_slots : [null];
+          slots.forEach(function(slot) {
+            var rowId = apiInventoryRowId(project, slot);
+            var annotation = annotations[rowId] && typeof annotations[rowId] === 'object' ? annotations[rowId] : {};
+            var projectHealth = health[project.id] || {};
+            var calls = Number(projectHealth.calls || 0);
+            var policyComplete = apiInventoryPolicyComplete(project, slot);
+            var reviewStatus = annotation.review_status || 'needs_review';
+            var statuses = [];
+            if (slot && slot.material_ready === true && policyComplete) statuses.push('protected');
+            if (!slot) statuses.push('missing provider slot');
+            if (!policyComplete) statuses.push('policy incomplete');
+            if (!calls) statuses.push('no recent traffic');
+            if (!annotation.review_status || reviewStatus === 'needs_review') statuses.push('review due');
+            if (reviewStatus === 'blocked') statuses.push('blocked');
+            if (reviewStatus === 'exception') statuses.push('exception');
+            return rows.push({
+              id: rowId,
+              project_id: project.id,
+              project_name: project.name || project.vp_proj_id || 'Project',
+              vp_proj_id: project.vp_proj_id || null,
+              provider: slot ? {
+                provider: slot.provider || null,
+                slug: slot.slug || slot.provider || null,
+                material_mode: slot.material_mode || 'missing',
+                material_ready: slot.material_ready === true
+              } : null,
+              policy: {
+                strict_origin: project.strict_origin === true,
+                complete: policyComplete
+              },
+              traffic: {
+                calls: calls,
+                errors: Number(projectHealth.errors || 0),
+                denied: Number(projectHealth.denied || 0),
+                last_seen_at: projectHealth.lastActivity || null
+              },
+              annotation: {
+                business_owner: annotation.business_owner || null,
+                technical_owner: annotation.technical_owner || null,
+                environment: annotation.environment || null,
+                business_service: annotation.business_service || null,
+                data_sensitivity: annotation.data_sensitivity || null,
+                risk: annotation.risk || null,
+                review_status: reviewStatus,
+                next_review_date: annotation.next_review_date || null,
+                updated_at: annotation.updated_at || null,
+                note: redactApiInventoryNote(annotation.note)
+              },
+              statuses: statuses
+            });
+          });
+        });
+        return rows;
+      }
+      function buildApiInventoryPacket(overview, bootstrap) {
+        var rows = apiInventoryRowsFromData(overview || {}, bootstrap || {});
+        var summary = {
+          total_api_surfaces: rows.length,
+          protected: rows.filter(function(item) { return item.statuses.indexOf('protected') !== -1; }).length,
+          missing_provider_slot: rows.filter(function(item) { return !item.provider; }).length,
+          policy_incomplete: rows.filter(function(item) { return !item.policy.complete; }).length,
+          no_recent_traffic: rows.filter(function(item) { return Number(item.traffic.calls || 0) === 0; }).length,
+          review_due: rows.filter(function(item) { return item.statuses.indexOf('review due') !== -1; }).length,
+          blocked: rows.filter(function(item) { return item.statuses.indexOf('blocked') !== -1; }).length
+        };
+        return {
+          packet_type: 'vaultproof_enterprise_api_inventory',
+          packet_version: 1,
+          status: rows.length && summary.missing_provider_slot === 0 ? 'ready' : 'needs_review',
+          generated_at: new Date().toISOString(),
+          generated_from: location.origin + '/app/evidence',
+          inventory_page: '/app/inventory',
+          summary: summary,
+          rows: rows,
+          secrets_excluded: [
+            'raw provider keys',
+            'encrypted provider shares',
+            'bearer tokens',
+            'OAuth client secrets',
+            'SAML material',
+            'request bodies',
+            'response bodies',
+            'customer payloads'
+          ]
+        };
+      }
+      function apiInventoryProofRows(packet) {
+        var summary = packet.summary || {};
+        return [
+          row('API inventory status', packet.status === 'ready' ? 'Inventory is populated from existing enterprise projects/provider slots and ready for customer review.' : 'Inventory exists but still needs owner, provider-slot, policy, or review cleanup before pilot traffic.', packet.status, packet.status === 'ready' ? 'good' : 'warn'),
+          row('Inventory surfaces', number(summary.total_api_surfaces) + ' API surfaces, ' + number(summary.protected) + ' protected, ' + number(summary.missing_provider_slot) + ' missing provider slot, ' + number(summary.policy_incomplete) + ' policy incomplete.', number(summary.total_api_surfaces), summary.protected ? 'good' : 'warn'),
+          row('Review state', number(summary.review_due) + ' review due, ' + number(summary.no_recent_traffic) + ' with no recent traffic, ' + number(summary.blocked) + ' blocked.', 'review due', summary.blocked ? 'bad' : 'warn'),
+          linkRow('Open API inventory', 'Review owner, environment, business service, data sensitivity, risk, review status, and notes saved in this browser.', '/app/inventory', 'inventory', 'good'),
+          row('Secret boundary', 'Inventory evidence excludes ' + packet.secrets_excluded.join(', ') + '.', 'redacted', 'good')
+        ];
+      }
       function buildApiProxySelfTestPacket(overview, bootstrap) {
         var slots = providerSlotsFromBootstrap(bootstrap);
         var totalCalls = Number(overview.totalCalls || overview.total_calls || 0);
@@ -4289,6 +4797,7 @@ function renderEnterpriseSupportPage(pageName: EnterpriseSupportPageName): strin
         var rotation = buildKeyRotationPacket(goNoGo, bootstrap);
         var pilotOps = buildPilotOpsPacket(goNoGo, readiness, overview);
         var apiProxy = buildApiProxySelfTestPacket(overview, bootstrap);
+        var apiInventory = buildApiInventoryPacket(overview, bootstrap);
         var support = buildLaunchSupportPacket(org, sso, readiness, overview, bootstrap, goNoGo);
         var monitoring = buildMonitoringEvidencePacket(org, sso, readiness, overview, bootstrap, goNoGo);
         var projectCount = projectCountFromData(org, overview, bootstrap);
@@ -4324,6 +4833,7 @@ function renderEnterpriseSupportPage(pageName: EnterpriseSupportPageName): strin
             { name: 'Identity and RBAC', status: identityQa.status, tone: identityQa.status === 'ready' ? 'good' : 'warn', detail: 'Supabase-brokered enterprise session plus VaultProof organization membership, roles, project assignment, and access-review exports.' },
             { name: 'Caller-lock policy', status: 'built', tone: 'good', detail: 'Control policy can bind protected calls to approved origins, gateways, CIDRs, methods, upstream hosts, path prefixes, provider families, and rate limits.' },
             { name: 'Provider key custody', status: rotation.status, tone: rotation.status === 'accepted_for_demo' ? 'good' : 'warn', detail: 'Provider slots expose posture and material mode without returning plaintext keys or encrypted shares to customer browsers.' },
+            { name: 'API inventory', status: apiInventory.status, tone: apiInventory.status === 'ready' ? 'good' : 'warn', detail: 'API surfaces are derived from projects, provider slots, policy, traffic evidence, and browser-local owner/review metadata without storing secrets.' },
             { name: 'Runtime attestation', status: productionReady ? 'ready' : 'blocked', tone: productionReady ? 'good' : 'bad', detail: 'Readiness reports GCP confidential production posture, key release readiness, signature verification, replay protection, and executor reachability.' },
             { name: 'Audit and evidence', status: 'exportable', tone: 'good', detail: 'Evidence packet, audit CSV, access-review CSV, activity records, launch brief, and security review packet are customer-safe review artifacts.' },
             { name: 'Monitoring and edge protection', status: monitoring.status, tone: monitoring.status === 'ready' ? 'good' : 'warn', detail: 'Monitoring evidence links readiness, traffic/error/denial posture, alert workflow, Cloud Armor verification, live gate, and budget guardrails.' },
@@ -4335,6 +4845,7 @@ function renderEnterpriseSupportPage(pageName: EnterpriseSupportPageName): strin
             { title: 'Audit CSV', href: evidenceExportHref('/api/v1/enterprise/audit?format=csv&days=30'), detail: 'Governance and runtime event export for review.', tag: 'csv', tone: 'good' },
             { title: 'Access review CSV', href: evidenceExportHref('/api/v1/enterprise/members/access-review?format=csv'), detail: 'Members, roles, invitations, and project assignments.', tag: 'csv', tone: 'good' },
             { title: 'Activity', href: '/app/activity', detail: 'Runtime status codes, latency, provider request IDs, denials, and attestation hints.', tag: 'events', tone: 'good' },
+            { title: 'API Inventory', href: '/app/inventory', detail: 'API catalog with owners, environment, risk, provider-slot mapping, policy posture, traffic evidence, review status, and JSON export.', tag: apiInventory.status, tone: apiInventory.status === 'ready' ? 'good' : 'warn' },
             { title: 'Alerts', href: '/app/alerts', detail: 'Destinations, delivery logs, dispatch runs, and test-send workflow.', tag: 'monitoring', tone: 'good' },
             { title: 'Provider slots', href: '/app/keys', detail: 'Provider material mode, rotation status, dry-run self-test, email demo, and emergency revoke.', tag: 'keys', tone: providerCount ? 'good' : 'warn' },
             { title: 'Launch board', href: '/app/launch', detail: 'Go/no-go decision, operator-confirmed manual evidence, stale holds, and customer tasks.', tag: goNoGo.status, tone: goNoGo.status === 'go' ? 'good' : 'warn' },
@@ -4362,6 +4873,7 @@ function renderEnterpriseSupportPage(pageName: EnterpriseSupportPageName): strin
             key_rotation_evidence: rotation.status,
             pilot_operations_evidence: pilotOps.status,
             api_proxy_self_test: apiProxy.status,
+            api_inventory: apiInventory.status,
             launch_support_readiness: support.status,
             monitoring_evidence: monitoring.status
           },
@@ -4385,7 +4897,7 @@ function renderEnterpriseSupportPage(pageName: EnterpriseSupportPageName): strin
           row('Security review packet status', packet.decision, packet.status, packet.status === 'ready_for_review' ? 'good' : 'warn'),
           row('Organization scope', (org.name || 'Selected workspace') + ' with ' + number(org.project_count) + ' projects, ' + number(org.member_count) + ' members, and ' + number(org.provider_slots) + ' provider slots.', org.id ? 'scoped' : 'select org', org.id ? 'good' : 'warn'),
           row('Go/no-go decision', 'Current launch board status is ' + packet.related_packets.go_no_go_status + '.', packet.related_packets.go_no_go_status, packet.related_packets.go_no_go_status === 'go' ? 'good' : 'warn'),
-          row('Related proof packets', 'Identity: ' + packet.related_packets.identity_login_qa + '. Rotation: ' + packet.related_packets.key_rotation_evidence + '. Pilot ops: ' + packet.related_packets.pilot_operations_evidence + '. Proxy self-test: ' + packet.related_packets.api_proxy_self_test + '. Monitoring: ' + packet.related_packets.monitoring_evidence + '.', 'summary', 'good'),
+          row('Related proof packets', 'Identity: ' + packet.related_packets.identity_login_qa + '. Rotation: ' + packet.related_packets.key_rotation_evidence + '. Pilot ops: ' + packet.related_packets.pilot_operations_evidence + '. Proxy self-test: ' + packet.related_packets.api_proxy_self_test + '. API inventory: ' + packet.related_packets.api_inventory + '. Monitoring: ' + packet.related_packets.monitoring_evidence + '.', 'summary', 'good'),
           row('Secret boundary', 'This packet excludes ' + packet.secrets_excluded.join(', ') + '.', 'redacted', 'good')
         ];
       }
@@ -4995,6 +5507,7 @@ function renderEnterpriseSupportPage(pageName: EnterpriseSupportPageName): strin
         var rotation = buildKeyRotationPacket(goNoGo, bootstrap);
         var pilotOps = buildPilotOpsPacket(goNoGo, readiness, overview);
         var apiProxy = buildApiProxySelfTestPacket(overview, bootstrap);
+        var apiInventory = buildApiInventoryPacket(overview, bootstrap);
         var support = buildLaunchSupportPacket(org, sso, readiness, overview, bootstrap, goNoGo);
         var monitoring = buildMonitoringEvidencePacket(org, sso, readiness, overview, bootstrap, goNoGo);
         var securityReview = buildSecurityReviewPacket(org, sso, readiness, overview, bootstrap, goNoGo);
@@ -5073,6 +5586,7 @@ function renderEnterpriseSupportPage(pageName: EnterpriseSupportPageName): strin
           key_rotation_evidence: rotation,
           pilot_operations_evidence: pilotOps,
           api_proxy_self_test: apiProxy,
+          api_inventory: apiInventory,
           launch_support_readiness: support,
           monitoring_evidence: monitoring,
           security_review_packet: securityReview,
@@ -5083,6 +5597,7 @@ function renderEnterpriseSupportPage(pageName: EnterpriseSupportPageName): strin
             audit_csv_30_days: evidenceExportHref('/api/v1/enterprise/audit?format=csv&days=30'),
             access_review_csv: evidenceExportHref('/api/v1/enterprise/members/access-review?format=csv'),
             activity: '/app/activity',
+            api_inventory: '/app/inventory',
             provider_slots: '/app/keys',
             launch_checklist: '/app/launch',
             security_review: '/app/security-review',
@@ -5097,6 +5612,7 @@ function renderEnterpriseSupportPage(pageName: EnterpriseSupportPageName): strin
             'Rotate shared or exposed pilot keys before paid customer data, or keep a demo-only acceptance note in the launch board.',
             'Confirm rollback ownership, budget alert coverage, and launch-week monitoring ownership before live customer traffic.',
             'Run the API proxy dry-run self-test and blocked-recipient email denial test before the customer walkthrough.',
+            'Review the API inventory for owners, environment, data sensitivity, risk, provider-slot mapping, policy posture, stale traffic, and review due items.',
             'Review launch support scope, internal admin boundary, approval gates, and customer handoff notes before pilot traffic.',
             'Review monitoring evidence, alert destination/test-send workflow, Cloud Armor verification, and budget alert posture before launch-week traffic.',
             'Share the security review packet with customer security, procurement, and technical reviewers after validating launch blockers.',
@@ -5117,6 +5633,7 @@ function renderEnterpriseSupportPage(pageName: EnterpriseSupportPageName): strin
         var rotation = packet.key_rotation_evidence || buildKeyRotationPacket(buildGoNoGoStatus(org, sso, readiness, overview, bootstrap), bootstrap);
         var pilotOps = packet.pilot_operations_evidence || buildPilotOpsPacket(buildGoNoGoStatus(org, sso, readiness, overview, bootstrap), readiness, overview);
         var apiProxy = packet.api_proxy_self_test || buildApiProxySelfTestPacket(overview, bootstrap);
+        var apiInventory = packet.api_inventory || buildApiInventoryPacket(overview, bootstrap);
         var support = packet.launch_support_readiness || buildLaunchSupportPacket(org, sso, readiness, overview, bootstrap, buildGoNoGoStatus(org, sso, readiness, overview, bootstrap));
         var monitoring = packet.monitoring_evidence || buildMonitoringEvidencePacket(org, sso, readiness, overview, bootstrap, buildGoNoGoStatus(org, sso, readiness, overview, bootstrap));
         text('evidenceMeta', productionReady ? 'ready for review' : 'needs attention');
@@ -5132,6 +5649,7 @@ function renderEnterpriseSupportPage(pageName: EnterpriseSupportPageName): strin
           linkRow('Audit CSV', 'Governance and runtime evidence for the last 30 days.', packet.exports.audit_csv_30_days, 'CSV', 'good'),
           linkRow('Access review CSV', 'Members, roles, invitations, and project assignment evidence.', packet.exports.access_review_csv, 'CSV', 'good'),
           linkRow('Activity review', 'Runtime events, status codes, latency, provider request IDs, and attestation hints.', '/app/activity', 'open', 'good'),
+          linkRow('API inventory export', 'Metadata-only API inventory with owners, risk, provider mapping, policy posture, traffic evidence, and review state.', '/app/inventory', 'inventory', 'good'),
           linkRow('Provider slot posture', 'Protected provider slots, material mode, rotation, and emergency revoke state.', '/app/keys', 'open', 'good')
         ].join('');
         byId('evidenceProofList').innerHTML = [
@@ -5157,6 +5675,8 @@ function renderEnterpriseSupportPage(pageName: EnterpriseSupportPageName): strin
         byId('evidencePilotOpsList').innerHTML = pilotOpsRows(pilotOps).join('');
         text('evidenceApiProxyMeta', apiProxy.status);
         byId('evidenceApiProxyList').innerHTML = apiProxySelfTestRows(apiProxy).join('');
+        text('evidenceApiInventoryMeta', apiInventory.status);
+        byId('evidenceApiInventoryList').innerHTML = apiInventoryProofRows(apiInventory).join('');
         text('evidenceSupportMeta', support.status);
         byId('evidenceSupportList').innerHTML = launchSupportProofRows(support).join('');
         text('evidenceMonitoringMeta', monitoring.status);
@@ -5883,7 +6403,7 @@ export function renderEnterprisePlannedAppPage(pageName: string, env: Enterprise
   if (pageName === 'members') return injectEnterpriseAnalytics(renderEnterpriseMembersPage(), env, 'members');
   if (pageName === 'audit') return injectEnterpriseAnalytics(renderEnterpriseAuditPage(), env, 'audit');
   if (pageName === 'alerts') return injectEnterpriseAnalytics(renderEnterpriseAlertsPage(), env, 'alerts');
-  if (pageName === 'activity' || pageName === 'projects' || pageName === 'keys') {
+  if (pageName === 'activity' || pageName === 'projects' || pageName === 'inventory' || pageName === 'keys') {
     return injectEnterpriseAnalytics(renderEnterpriseOperationsPage(pageName), env, pageName);
   }
   if (pageName === 'setup' || pageName === 'launch' || pageName === 'evidence' || pageName === 'demo' || pageName === 'technical-guide' || pageName === 'security-review' || pageName === 'verifier' || pageName === 'settings' || pageName === 'plans' || pageName === 'pilot' || pageName === 'pilot-success' || pageName === 'scanner' || pageName === 'support' || pageName === 'runbooks') {

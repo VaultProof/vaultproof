@@ -97,7 +97,7 @@ If you see an auth message:
 | Alerts | `/app/alerts` | Alert destinations, delivery logs, dispatch runs, policy status, and admin test-send workflow. |
 | Activity | `/app/activity` | Runtime proxy/executor events, status codes, latency, provider request IDs, and attestation summaries. |
 | Projects | `/app/projects` | Project inventory, project health, provider slots, policy status, and quick links into Control. |
-| API Inventory | planned `/app/inventory` or `/app/projects` section | Planned enterprise system-of-record for APIs, owners, provider-slot mapping, environment, risk, data sensitivity, caller-lock posture, last-seen traffic, stale/orphaned status, review notes, and CSV/JSON evidence exports without secrets. |
+| API Inventory | `/app/inventory` | Enterprise system-of-record for API surfaces, owners, provider-slot mapping, environment, risk, data sensitivity, caller-lock posture, last-seen traffic, stale/no-traffic status, review notes, and customer-safe JSON evidence exports without secrets. |
 | Policy Drift + Exceptions | planned `/app/policy` or `/app/inventory` tab | Planned enterprise drift board for missing controls, accepted-risk records, owner/risk/expiry metadata, compensating controls, and customer-safe evidence exports without secrets. |
 | Integration Rollout | planned `/app/rollout` or `/app/launch` / `/app/inventory` tab | Planned enterprise rollout board for moving workloads into VaultProof with integration mode, app/gateway owners, environment status, canary percentage, rollback path, blockers, copy-safe snippets, and customer-safe evidence exports without secrets. |
 | Provider Slots | `/app/keys` | Active providers, emergency revoke, rotation checklist, and Secure Key Release notes. |

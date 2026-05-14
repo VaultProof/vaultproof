@@ -477,6 +477,7 @@ Best for:
 | --- | --- | --- |
 | workspace | Dashboard | Start here; review setup, readiness, posture, and shortcuts. |
 | workspace | Projects | Review project inventory, provider slots, and project health. |
+| workspace | API Inventory | Review metadata-only API surfaces, owners, environment, risk, provider-slot mapping, policy posture, traffic evidence, and review status. |
 | workspace | Activity | Inspect runtime/proxy/executor events. |
 | workspace | Alerts | Configure alert destinations and test delivery. |
 | workspace | Control | Edit project policy, caller lock, providers, and execution settings. |
