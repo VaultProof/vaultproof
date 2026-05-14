@@ -1,6 +1,6 @@
 # VaultProof GCP Build Status
 
-Last updated: 2026-05-13T23:32:16.288Z
+Last updated: 2026-05-14T00:18:29Z
 
 This file is the living inventory of what has been built for VaultProof on Google Cloud. It is refreshed after every successful enterprise image build by `infra/gcp/enterprise-secure-runtime/build-images.sh`.
 
@@ -169,6 +169,16 @@ Demo exceptions should be metadata-only and browser-local at first: owner, reaso
 
 Exception records must never store raw provider keys, bearer tokens, OAuth client secrets, SAML material, request bodies, response bodies, or customer payloads.
 
+## Planned Feature: Integration Rollout Manager
+
+Status: `planned for enterprise demo`
+
+Integration rollout management is now in the enterprise feature plan. The first slice should help a customer move one workload from direct provider calls into VaultProof by showing environment-by-environment rollout state, integration mode, app and gateway owners, target date, support window, canary percentage, test status, rollback path, blockers, and evidence links.
+
+Demo implementation should start from existing data instead of new infrastructure: derive candidate workloads from projects, provider slots, API inventory rows, policy drift/exceptions, launch go/no-go, activity/audit evidence, provider material status, and Cloud Armor/live gate posture; add browser-local/manual rollout notes; then generate copy-safe snippets, a customer rollout brief, and JSON evidence. Persistent audited rollout tables, gateway templates, canary metrics, approval gates, rollback links, and notifications can follow after the demo slice.
+
+Rollout records must never store raw provider keys, bearer tokens, OAuth client secrets, SAML material, request bodies, response bodies, or customer payloads.
+
 ## What's Next
 
 1. Run `LOGIN_QA_REQUIRE_SESSION=true npm run qa:enterprise-login` with Supabase service-role env for `ken@vaultproof.dev`.
@@ -178,8 +188,9 @@ Exception records must never store raw provider keys, bearer tokens, OAuth clien
 5. Keep `npm run verify:gcp-enterprise-cloud-armor` in the strict live launch gate.
 6. Build the first API inventory management slice for the demo: derived API rows from projects/provider slots/access logs, owner/risk/review annotations, stale/orphaned flags, and evidence export without secrets.
 7. Build the first policy drift and exceptions slice for the demo: control-gap rows, browser-local accepted-risk records, owner/risk/expiry fields, and launch/evidence summary without secrets.
-8. Add a valid OpenAI Platform key only if the demo specifically needs OpenAI; MiniMax upstream dispatch is now live.
-9. Keep running `npm run gate:gcp-first-goal`; it can generate a temporary Supabase magic-link test session when no `ENTERPRISE_TEST_ACCESS_TOKEN` is provided.
+8. Build the first integration rollout manager slice for the demo: workload cutover rows, environment status, integration mode, owner/rollback fields, canary status, blockers, copy-safe snippets, and evidence export without secrets.
+9. Add a valid OpenAI Platform key only if the demo specifically needs OpenAI; MiniMax upstream dispatch is now live.
+10. Keep running `npm run gate:gcp-first-goal`; it can generate a temporary Supabase magic-link test session when no `ENTERPRISE_TEST_ACCESS_TOKEN` is provided.
 
 ## Rough Monthly Cost
 

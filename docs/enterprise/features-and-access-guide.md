@@ -99,6 +99,7 @@ If you see an auth message:
 | Projects | `/app/projects` | Project inventory, project health, provider slots, policy status, and quick links into Control. |
 | API Inventory | planned `/app/inventory` or `/app/projects` section | Planned enterprise system-of-record for APIs, owners, provider-slot mapping, environment, risk, data sensitivity, caller-lock posture, last-seen traffic, stale/orphaned status, review notes, and CSV/JSON evidence exports without secrets. |
 | Policy Drift + Exceptions | planned `/app/policy` or `/app/inventory` tab | Planned enterprise drift board for missing controls, accepted-risk records, owner/risk/expiry metadata, compensating controls, and customer-safe evidence exports without secrets. |
+| Integration Rollout | planned `/app/rollout` or `/app/launch` / `/app/inventory` tab | Planned enterprise rollout board for moving workloads into VaultProof with integration mode, app/gateway owners, environment status, canary percentage, rollback path, blockers, copy-safe snippets, and customer-safe evidence exports without secrets. |
 | Provider Slots | `/app/keys` | Active providers, emergency revoke, rotation checklist, and Secure Key Release notes. |
 | Settings | `/app/settings` | Tenant preferences, session/security notices, and org defaults. |
 | Plans | `/app/plans` | Paid-pilot package, included controls, capacity envelope, contract guardrails, security boundaries, rollout posture, and customer review links. |

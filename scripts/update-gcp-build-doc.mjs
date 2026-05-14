@@ -304,6 +304,7 @@ const nextSteps = readinessProductionReady
         : ['Run `npm run configure:gcp-enterprise-cloud-armor`, then `npm run verify:gcp-enterprise-cloud-armor`.']),
       'Build the first API inventory management slice for the demo: derived API rows from projects/provider slots/access logs, owner/risk/review annotations, stale/orphaned flags, and evidence export without secrets.',
       'Build the first policy drift and exceptions slice for the demo: control-gap rows, browser-local accepted-risk records, owner/risk/expiry fields, and launch/evidence summary without secrets.',
+      'Build the first integration rollout manager slice for the demo: workload cutover rows, environment status, integration mode, owner/rollback fields, canary status, blockers, copy-safe snippets, and evidence export without secrets.',
       'Add a valid OpenAI Platform key only if the demo specifically needs OpenAI; MiniMax upstream dispatch is now live.',
       'Keep running `npm run gate:gcp-first-goal`; it can generate a temporary Supabase magic-link test session when no `ENTERPRISE_TEST_ACCESS_TOKEN` is provided.',
     ]
@@ -548,6 +549,16 @@ Policy drift and exceptions management is now in the enterprise feature plan. Th
 Demo exceptions should be metadata-only and browser-local at first: owner, reason, risk level, compensating control, expiration date, approval status, and next action. The launch and evidence packets should include the drift summary so customers can see whether risk is clean, accepted for demo, or blocking. Persistent audited exceptions, second-person approval, expiry reminders, policy-as-code export, and alerting can follow after the demo slice.
 
 Exception records must never store raw provider keys, bearer tokens, OAuth client secrets, SAML material, request bodies, response bodies, or customer payloads.
+
+## Planned Feature: Integration Rollout Manager
+
+Status: \`planned for enterprise demo\`
+
+Integration rollout management is now in the enterprise feature plan. The first slice should help a customer move one workload from direct provider calls into VaultProof by showing environment-by-environment rollout state, integration mode, app and gateway owners, target date, support window, canary percentage, test status, rollback path, blockers, and evidence links.
+
+Demo implementation should start from existing data instead of new infrastructure: derive candidate workloads from projects, provider slots, API inventory rows, policy drift/exceptions, launch go/no-go, activity/audit evidence, provider material status, and Cloud Armor/live gate posture; add browser-local/manual rollout notes; then generate copy-safe snippets, a customer rollout brief, and JSON evidence. Persistent audited rollout tables, gateway templates, canary metrics, approval gates, rollback links, and notifications can follow after the demo slice.
+
+Rollout records must never store raw provider keys, bearer tokens, OAuth client secrets, SAML material, request bodies, response bodies, or customer payloads.
 
 ## What's Next
 

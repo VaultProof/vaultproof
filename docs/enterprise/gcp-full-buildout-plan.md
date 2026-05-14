@@ -1,6 +1,6 @@
 # VaultProof GCP Full Buildout Plan
 
-Last updated: 2026-05-13
+Last updated: 2026-05-14
 
 This is the customer-demo buildout plan for moving VaultProof Enterprise from the current GCP pilot into a credible demo path that can support near-term customer conversations.
 
@@ -37,6 +37,7 @@ Already built:
 - Managed Supabase remains the auth/database provider for the pilot
 - API inventory management is now a planned enterprise demo feature for cataloging APIs, provider slots, ownership, policy posture, traffic evidence, and review status without storing or displaying secrets
 - Policy drift and exceptions management is now a planned enterprise demo feature for turning inventory gaps into owner-assigned, expiry-bound remediation or accepted-risk decisions
+- Integration rollout management is now a planned enterprise demo feature for tracking safe workload cutover, canary status, gateway/SDK path, owners, blockers, rollback, and evidence without exposing secrets
 
 Not yet customer-ready:
 
@@ -45,6 +46,7 @@ Not yet customer-ready:
 - Live MiniMax provider dispatch works for the demo; add a separate OpenAI slot only if the demo specifically needs OpenAI.
 - API inventory management still needs its first customer-facing slice.
 - Policy drift and exceptions management still needs its first customer-facing slice.
+- Integration rollout management still needs its first customer-facing slice.
 - Supabase OAuth/login settings still need to be confirmed for `enterprise.vaultproof.dev`.
 - Older migration/history docs still have Azure-era language; customer-facing app UI is cleaned for the GCP demo.
 
@@ -186,6 +188,7 @@ Build:
 - Use the email API key protection demo flow described below.
 - Add the first API inventory management slice described below.
 - Add the first policy drift and exceptions slice described below.
+- Add the first integration rollout manager slice described below.
 - Run `LOGIN_QA_REQUIRE_SESSION=true npm run qa:enterprise-login` with Supabase service-role env to verify the live login page, Supabase redirect allowlist, generated browser session, and authenticated enterprise org/bootstrap APIs.
 - Add `LOGIN_QA_OAUTH_PROVIDER=google` to the login QA command after the external OAuth provider app is configured.
 - Confirm API execution path through `/api/v1/enterprise/execute`.
@@ -323,6 +326,40 @@ Demo success:
 - No exception can quietly become permanent; every exception has a date and owner.
 - The demo script can explain: "VaultProof gives you active key protection and an operating model for the exceptions that always exist in real enterprises."
 
+## Demo Feature: Integration Rollout Manager
+
+This belongs in the enterprise demo because customers need a controlled way to move one workload from direct provider calls into VaultProof without surprise downtime or unclear ownership. It turns API inventory and policy drift into a practical cutover board.
+
+Demo goal:
+
+- Track rollout by application, API inventory row, project, provider slot, environment, integration mode, owner, target date, support window, canary percentage, rollback owner/path, and launch evidence.
+- Show integration modes: VaultProof-managed proxy, customer gateway, server SDK/runtime-token, and browser session path for demo-only use.
+- Generate copy-safe implementation snippets and gateway checklist items without secrets.
+- Tie rollout readiness to API inventory, policy drift/exceptions, launch go/no-go, activity/audit evidence, provider material status, and Cloud Armor/live gate posture.
+- Make it obvious whether a workload is `not started`, `dev wired`, `staging canary`, `production ready`, `rolled back`, or `blocked`.
+
+First demo slice:
+
+- Add `https://enterprise.vaultproof.dev/app/rollout` or a Rollout tab on `https://enterprise.vaultproof.dev/app/launch` / `https://enterprise.vaultproof.dev/app/inventory`.
+- Derive candidate workloads from existing projects, provider slots, and API inventory rows once inventory exists.
+- Allow browser-local/manual fields first: application name, environment, integration mode, gateway owner, app owner, target date, canary percent, rollback path, test status, notes, and support window.
+- Show blockers from policy drift, provider material status, login QA, Cloud Armor/live gate, missing owner, missing rollback path, and stale/no traffic evidence.
+- Provide a copyable customer rollout brief and JSON evidence packet without secrets.
+
+Production follow-up:
+
+- Add a persistent `enterprise_integration_rollouts` table with org/project RBAC, audited state transitions, owner assignments, canary gates, rollback paths, and release evidence.
+- Add gateway templates for Apigee, Azure API Management, Cloudflare Workers, NGINX, Envoy, and server SDK/runtime-token integration.
+- Add canary metrics, error-budget thresholds, approval gates for production cutover, and rollback runbook links.
+- Add notifications for blocked rollouts, missed target dates, failed canaries, and stale owner review.
+
+Demo success:
+
+- A customer can pick one API/workload and see exactly what remains before it can route through VaultProof.
+- The board shows owner, integration mode, environment, canary status, rollback path, blocker status, and evidence links in one place.
+- Snippets and evidence are copyable without exposing provider keys, bearer tokens, OAuth secrets, SAML material, request bodies, response bodies, or customer payloads.
+- The demo script can explain: "VaultProof gives your team a safe path from first protected call to production rollout."
+
 ## Phase 5: Customer Scale
 
 Build after first customer proof:
@@ -332,6 +369,7 @@ Build after first customer proof:
 - Add uptime checks and alerting policies. Status: customer-safe monitoring evidence kit built in `https://enterprise.vaultproof.dev/app/evidence`, `https://enterprise.vaultproof.dev/app/demo`, and `https://enterprise.vaultproof.dev/app/runbooks`; GCP-native uptime check and alert-policy resources are still a paid-production scale task.
 - Add persistent API inventory management with ownership, review workflow, drift detection, imports, and evidence exports.
 - Add persistent policy drift and exceptions management with approvals, expiry reminders, policy-as-code export, and alerting.
+- Add persistent integration rollout management with audited cutover records, canary gates, rollback paths, gateway template management, and launch evidence.
 - Add automated evidence bundle capture for each release.
 - Add a rollback script for edge, VM image, and DNS changes.
 - Clean older Azure migration/history docs into provider-neutral or clearly archived references before paid-production handoff.
