@@ -131,6 +131,7 @@ interface InternalAdminBreakGlassEvidence {
 
 interface InternalAdminCallRollupRow {
   project_id: string | null;
+  day: string | null;
   call_count: number | string | null;
   status_bucket: string | null;
   last_timestamp: string | null;
@@ -149,9 +150,14 @@ interface InternalAdminApiCallStats {
   last_api_call_at: string | null;
 }
 
+interface InternalAdminDailyApiCallStats extends InternalAdminApiCallStats {
+  day: string;
+}
+
 interface InternalAdminApiCallAnalytics {
   byProjectId: Map<string, InternalAdminApiCallStats>;
   totals: InternalAdminApiCallStats;
+  dailyTotals: InternalAdminDailyApiCallStats[];
   source: 'rollup_table' | 'raw_logs_sample' | 'missing';
   schemaReady: boolean;
 }
@@ -240,6 +246,7 @@ function mergeApiCallStats(
 function addRollupRowToStats(
   statsByProjectId: Map<string, InternalAdminApiCallStats>,
   totals: InternalAdminApiCallStats,
+  dailyTotalsByDay: Map<string, InternalAdminDailyApiCallStats>,
   row: InternalAdminCallRollupRow,
 ): void {
   const projectId = typeof row.project_id === 'string' ? row.project_id : '';
@@ -256,11 +263,18 @@ function addRollupRowToStats(
   mergeApiCallStats(existing, rowStats);
   statsByProjectId.set(projectId, existing);
   mergeApiCallStats(totals, rowStats);
+  const day = typeof row.day === 'string' && row.day ? row.day.slice(0, 10) : '';
+  if (day) {
+    const dailyStats = dailyTotalsByDay.get(day) || { ...emptyApiCallStats(), day };
+    mergeApiCallStats(dailyStats, rowStats);
+    dailyTotalsByDay.set(day, dailyStats);
+  }
 }
 
 function addRawAccessLogRowToStats(
   statsByProjectId: Map<string, InternalAdminApiCallStats>,
   totals: InternalAdminApiCallStats,
+  dailyTotalsByDay: Map<string, InternalAdminDailyApiCallStats>,
   row: InternalAdminRawAccessLogRow,
 ): void {
   const projectId = typeof row.project_id === 'string' ? row.project_id : '';
@@ -277,6 +291,20 @@ function addRawAccessLogRowToStats(
   mergeApiCallStats(existing, rowStats);
   statsByProjectId.set(projectId, existing);
   mergeApiCallStats(totals, rowStats);
+  const day = typeof row.timestamp === 'string' && row.timestamp ? row.timestamp.slice(0, 10) : '';
+  if (day) {
+    const dailyStats = dailyTotalsByDay.get(day) || { ...emptyApiCallStats(), day };
+    mergeApiCallStats(dailyStats, rowStats);
+    dailyTotalsByDay.set(day, dailyStats);
+  }
+}
+
+function sortedDailyApiCallStats(
+  dailyTotalsByDay: Map<string, InternalAdminDailyApiCallStats>,
+): InternalAdminDailyApiCallStats[] {
+  return [...dailyTotalsByDay.values()]
+    .sort((left, right) => left.day.localeCompare(right.day))
+    .slice(-30);
 }
 
 function isAllowedInternalAdminEmail(email: string, env: EnterpriseControlPlaneEnv): {
@@ -308,6 +336,7 @@ async function getInternalAdminApiCallAnalytics(
   const emptyResult: InternalAdminApiCallAnalytics = {
     byProjectId: new Map(),
     totals: emptyApiCallStats(),
+    dailyTotals: [],
     source: 'missing',
     schemaReady: true,
   };
@@ -320,19 +349,21 @@ async function getInternalAdminApiCallAnalytics(
   try {
     const rollupResult = await supabase
       .from('project_access_log_daily_rollups')
-      .select('project_id, call_count, status_bucket, last_timestamp')
+      .select('project_id, day, call_count, status_bucket, last_timestamp')
       .in('project_id', uniqueProjectIds)
       .limit(10000);
 
     if (!rollupResult.error) {
       const byProjectId = new Map<string, InternalAdminApiCallStats>();
       const totals = emptyApiCallStats();
+      const dailyTotalsByDay = new Map<string, InternalAdminDailyApiCallStats>();
       for (const row of normalizeRows(rollupResult.data as MaybeArray<InternalAdminCallRollupRow>)) {
-        addRollupRowToStats(byProjectId, totals, row);
+        addRollupRowToStats(byProjectId, totals, dailyTotalsByDay, row);
       }
       return {
         byProjectId,
         totals,
+        dailyTotals: sortedDailyApiCallStats(dailyTotalsByDay),
         source: 'rollup_table',
         schemaReady: true,
       };
@@ -356,12 +387,14 @@ async function getInternalAdminApiCallAnalytics(
     if (!rawResult.error) {
       const byProjectId = new Map<string, InternalAdminApiCallStats>();
       const totals = emptyApiCallStats();
+      const dailyTotalsByDay = new Map<string, InternalAdminDailyApiCallStats>();
       for (const row of normalizeRows(rawResult.data as MaybeArray<InternalAdminRawAccessLogRow>)) {
-        addRawAccessLogRowToStats(byProjectId, totals, row);
+        addRawAccessLogRowToStats(byProjectId, totals, dailyTotalsByDay, row);
       }
       return {
         byProjectId,
         totals,
+        dailyTotals: sortedDailyApiCallStats(dailyTotalsByDay),
         source: 'raw_logs_sample',
         schemaReady: false,
       };
@@ -948,8 +981,23 @@ export function renderInternalAdminPage(): string {
     .control-kpi { border:1px solid var(--line-soft); border-radius:18px; padding:15px; background:var(--row-bg); min-width:0; }
     .control-kpi.main { background:var(--accent-soft); border-color:rgba(23,107,75,.22); }
     .control-chart-grid { display:grid; grid-template-columns:minmax(0,1.1fr) minmax(0,1fr); gap:14px; }
+    .control-chart-grid.visual { grid-template-columns:minmax(0,1.45fr) minmax(320px,.75fr); }
     .control-panel { border:1px solid var(--line-soft); border-radius:20px; padding:16px; background:var(--row-bg); min-width:0; }
     .control-panel h3 { margin:0; font-size:16px; font-weight:600; letter-spacing:0; }
+    .chart-shell { margin-top:14px; min-height:220px; border:1px solid var(--line-soft); border-radius:18px; background:#fff; padding:14px; display:grid; align-items:end; overflow:hidden; }
+    .sparkline-chart { width:100%; height:220px; display:block; }
+    .sparkline-axis { color:var(--muted); font-size:11px; display:flex; justify-content:space-between; gap:10px; margin-top:8px; }
+    .donut-wrap { display:grid; grid-template-columns:132px 1fr; gap:14px; align-items:center; margin-top:14px; }
+    .donut-chart { width:132px; height:132px; border-radius:999px; display:grid; place-items:center; background:conic-gradient(var(--green) 0deg, var(--green) 1deg, rgba(32,48,39,.1) 1deg, rgba(32,48,39,.1) 360deg); }
+    .donut-hole { width:76px; height:76px; border-radius:999px; background:#fff; display:grid; place-items:center; text-align:center; border:1px solid var(--line-soft); color:var(--text); font-weight:600; }
+    .donut-hole span { display:block; color:var(--muted); font-size:11px; font-weight:400; margin-top:2px; }
+    .legend-list { display:grid; gap:8px; }
+    .legend-item { display:flex; justify-content:space-between; gap:10px; color:var(--muted); font-size:12px; }
+    .legend-item strong { color:var(--text); font-weight:600; }
+    .legend-dot { width:9px; height:9px; border-radius:999px; display:inline-block; margin-right:7px; }
+    .stacked-bar { display:flex; height:18px; overflow:hidden; border-radius:999px; background:rgba(32,48,39,.1); margin-top:14px; }
+    .stacked-segment { min-width:0; transition:width 160ms ease; }
+    .chart-summary { color:var(--muted); font-size:12px; line-height:1.45; margin-top:10px; }
     .chart-list { display:grid; gap:11px; margin-top:14px; }
     .chart-row { display:grid; gap:6px; }
     .chart-row-head { display:flex; justify-content:space-between; gap:12px; color:var(--muted); font-size:12px; }
@@ -992,7 +1040,7 @@ export function renderInternalAdminPage(): string {
     .inline-actions { display:flex; gap:8px; flex-wrap:wrap; margin-top:8px; }
     .link-stack { display:flex; flex-wrap:wrap; gap:7px; margin-top:8px; }
     .create-business { margin-bottom:16px; }
-    @media (max-width: 1050px) { .shell { grid-template-columns:1fr; padding:12px; } .sidebar { position:relative; top:0; max-height:none; height:auto; order:2; } .main { order:1; } .topbar { flex-direction:column; } .toolbar { justify-content:flex-start; } .kpis, .two, .action-grid, .admin-actions-toolbar, .form-row, .control-kpis, .control-chart-grid { grid-template-columns:1fr; } }
+    @media (max-width: 1050px) { .shell { grid-template-columns:1fr; padding:12px; } .sidebar { position:relative; top:0; max-height:none; height:auto; order:2; } .main { order:1; } .topbar { flex-direction:column; } .toolbar { justify-content:flex-start; } .kpis, .two, .action-grid, .admin-actions-toolbar, .form-row, .control-kpis, .control-chart-grid, .control-chart-grid.visual, .donut-wrap { grid-template-columns:1fr; } }
   </style>
 </head>
 <body>
@@ -1045,7 +1093,17 @@ export function renderInternalAdminPage(): string {
           <div class="control-kpi"><div class="kpi-label">SSO ready</div><div id="controlSso" class="kpi-value">...</div><div class="kpi-sub">configured businesses</div></div>
           <div class="control-kpi"><div class="kpi-label">pending invites</div><div id="controlPendingInvites" class="kpi-value">...</div><div class="kpi-sub">customer access follow-up</div></div>
         </div>
-        <div class="control-chart-grid">
+        <div class="control-chart-grid visual">
+          <div class="control-panel">
+            <div class="section-title"><h3>API call trend</h3><span id="apiTrendMeta" class="mini">daily rollup</span></div>
+            <div id="apiTrendChart" class="chart-shell"><div class="chart-empty">Loading API trend chart...</div></div>
+          </div>
+          <div class="control-panel">
+            <div class="section-title"><h3>Account mix</h3><span class="mini">business status</span></div>
+            <div id="accountMixDonut" class="donut-wrap"><div class="chart-empty">Loading account mix...</div></div>
+          </div>
+        </div>
+        <div class="control-chart-grid" style="margin-top:14px">
           <div class="control-panel">
             <div class="section-title"><h3>Businesses and users</h3><span class="mini">signed-on status</span></div>
             <div id="businessUserChart" class="chart-list"><div class="chart-empty">Loading business sign-on chart...</div></div>
@@ -1057,12 +1115,12 @@ export function renderInternalAdminPage(): string {
         </div>
         <div class="control-chart-grid" style="margin-top:14px">
           <div class="control-panel">
-            <div class="section-title"><h3>Account mix</h3><span class="mini">onboarding blockers</span></div>
-            <div id="accountMixChart" class="chart-list"><div class="chart-empty">Loading account mix...</div></div>
-          </div>
-          <div class="control-panel">
             <div class="section-title"><h3>Traffic health</h3><span class="mini">success, error, denied</span></div>
             <div id="trafficHealthChart" class="chart-list"><div class="chart-empty">Loading traffic health...</div></div>
+          </div>
+          <div class="control-panel">
+            <div class="section-title"><h3>Launch blockers</h3><span class="mini">chart view</span></div>
+            <div id="blockerChart" class="chart-list"><div class="chart-empty">Loading blocker chart...</div></div>
           </div>
         </div>
       </section>
@@ -1186,6 +1244,64 @@ export function renderInternalAdminPage(): string {
       function chartRow(title, metric, value, max, tone) {
         return '<div class="chart-row"><div class="chart-row-head"><strong>' + escapeHtml(title) + '</strong><span>' + escapeHtml(metric) + '</span></div><div class="chart-track"><div class="chart-bar ' + escapeHtml(tone || '') + '" style="width:' + percent(value, max) + '"></div></div></div>';
       }
+      function dayLabel(value) {
+        if (!value) return '';
+        var date = new Date(value + 'T00:00:00Z');
+        if (!Number.isFinite(date.getTime())) return String(value).slice(5);
+        return date.toLocaleDateString(undefined, { month: 'short', day: 'numeric', timeZone: 'UTC' });
+      }
+      function renderTrendChart(rows) {
+        var trend = Array.isArray(rows) ? rows.slice(-14) : [];
+        var total = trend.reduce(function(sum, row) { return sum + Number(row.call_count || 0); }, 0);
+        if (!trend.length || total <= 0) {
+          return '<div class="chart-empty">No daily API call trend is available yet.</div>';
+        }
+        var width = 640;
+        var height = 190;
+        var topPad = 16;
+        var bottom = 176;
+        var maxCalls = Math.max.apply(null, [1].concat(trend.map(function(row) { return Number(row.call_count || 0); })));
+        var step = trend.length > 1 ? width / (trend.length - 1) : width;
+        var points = trend.map(function(row, index) {
+          var x = trend.length > 1 ? Math.round(index * step) : Math.round(width / 2);
+          var y = Math.round(bottom - ((Number(row.call_count || 0) / maxCalls) * (bottom - topPad)));
+          return { x: x, y: y, calls: Number(row.call_count || 0), day: row.day || '' };
+        });
+        var line = points.map(function(point, index) {
+          return (index === 0 ? 'M' : 'L') + point.x + ' ' + point.y;
+        }).join(' ');
+        var area = line + ' L ' + points[points.length - 1].x + ' ' + bottom + ' L ' + points[0].x + ' ' + bottom + ' Z';
+        var circles = points.map(function(point) {
+          return '<circle cx="' + point.x + '" cy="' + point.y + '" r="4"><title>' + escapeHtml(dayLabel(point.day) + ': ' + number(point.calls) + ' calls') + '</title></circle>';
+        }).join('');
+        var first = trend[0] ? dayLabel(trend[0].day) : '';
+        var last = trend[trend.length - 1] ? dayLabel(trend[trend.length - 1].day) : '';
+        return '<div><svg class="sparkline-chart" viewBox="0 0 ' + width + ' 220" role="img" aria-label="Daily API call trend"><path d="M0 ' + bottom + ' H' + width + '" fill="none" stroke="rgba(32,48,39,.12)" stroke-width="1"></path><path d="' + area + '" fill="rgba(143,224,193,.22)"></path><path d="' + line + '" fill="none" stroke="#176b4b" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"></path><g fill="#10231d" stroke="#8fe0c1" stroke-width="3">' + circles + '</g></svg><div class="sparkline-axis"><span>' + escapeHtml(first) + '</span><span>peak ' + number(maxCalls) + ' calls</span><span>' + escapeHtml(last) + '</span></div></div>';
+      }
+      function renderDonut(items, center, label) {
+        var total = items.reduce(function(sum, item) { return sum + Number(item.value || 0); }, 0);
+        if (total <= 0) {
+          return '<div class="chart-empty">No account status data is visible yet.</div>';
+        }
+        var cursor = 0;
+        var segments = items.map(function(item) {
+          var start = cursor;
+          var size = (Number(item.value || 0) / total) * 360;
+          cursor += size;
+          return item.color + ' ' + Math.round(start) + 'deg ' + Math.round(cursor) + 'deg';
+        }).join(', ');
+        var legend = items.map(function(item) {
+          return '<div class="legend-item"><span><span class="legend-dot" style="background:' + escapeHtml(item.color) + '"></span>' + escapeHtml(item.label) + '</span><strong>' + number(item.value) + '</strong></div>';
+        }).join('');
+        return '<div class="donut-chart" style="background:conic-gradient(' + segments + ')"><div class="donut-hole">' + escapeHtml(center) + '<span>' + escapeHtml(label) + '</span></div></div><div class="legend-list">' + legend + '</div>';
+      }
+      function renderStackedBar(items, total) {
+        var maximum = Number(total || 0);
+        if (maximum <= 0) return '';
+        return '<div class="stacked-bar">' + items.map(function(item) {
+          return '<span class="stacked-segment" style="width:' + percent(item.value, maximum) + ';background:' + escapeHtml(item.color) + '"></span>';
+        }).join('') + '</div>';
+      }
       function renderControlCenter(payload) {
         var summary = payload.summary || {};
         var businesses = Array.isArray(payload.businesses) ? payload.businesses : [];
@@ -1207,6 +1323,13 @@ export function renderInternalAdminPage(): string {
         text('controlSso', number(summary.sso_configured_count));
         text('controlPendingInvites', number(summary.pending_invitation_count));
         text('controlApiMeta', (summary.api_call_source === 'rollup_table' ? 'rollup-backed' : 'traffic sample') + ' - ' + number(totalCalls) + ' calls');
+        text('apiTrendMeta', (Array.isArray(payload.api_call_trend) ? payload.api_call_trend.length : 0) + ' daily buckets');
+        byId('apiTrendChart').innerHTML = renderTrendChart(payload.api_call_trend);
+        byId('accountMixDonut').innerHTML = renderDonut([
+          { label: 'Signed on', value: signedOnBusinesses.length, color: '#176b4b' },
+          { label: 'No users yet', value: noUserBusinesses.length, color: '#d5a914' },
+          { label: 'Archived', value: archivedBusinesses.length, color: '#b95d50' }
+        ], number(activeBusinesses.length), 'active');
 
         var userMax = Math.max.apply(null, [1].concat(activeBusinesses.map(function(biz) { return Number(biz.member_count || 0); })));
         var businessUserRows = activeBusinesses
@@ -1232,27 +1355,26 @@ export function renderInternalAdminPage(): string {
           return chartRow(businessLabel(biz), number(calls) + ' calls' + last, calls, callMax, 'gold');
         }).join('') : '<div class="chart-empty">No API proxy calls are recorded in the admin snapshot yet.</div>';
 
-        var accountMixRows = [
-          { title: 'Signed-on businesses', metric: number(signedOnBusinesses.length), value: signedOnBusinesses.length, tone: '' },
-          { title: 'No users yet', metric: number(noUserBusinesses.length), value: noUserBusinesses.length, tone: 'warn' },
-          { title: 'SSO configured', metric: number(ssoReadyBusinesses.length), value: ssoReadyBusinesses.length, tone: 'gold' },
-          { title: 'Pending invites', metric: number(pendingInviteBusinesses.length), value: pendingInviteBusinesses.length, tone: 'warn' },
-          { title: 'Archived', metric: number(archivedBusinesses.length), value: archivedBusinesses.length, tone: 'warn' }
-        ];
-        var accountMax = Math.max.apply(null, [1].concat(accountMixRows.map(function(item) { return item.value; })));
-        byId('accountMixChart').innerHTML = accountMixRows.map(function(item) {
-          return chartRow(item.title, item.metric, item.value, accountMax, item.tone);
-        }).join('');
-
         var trafficRows = [
-          { title: 'Successful calls', metric: number(successCalls), value: successCalls, tone: '' },
-          { title: 'Provider/app errors', metric: number(nonDeniedErrors), value: nonDeniedErrors, tone: 'warn' },
-          { title: 'Denied by policy', metric: number(deniedCalls), value: deniedCalls, tone: 'warn' }
+          { title: 'Successful calls', metric: number(successCalls), value: successCalls, tone: '', color: '#176b4b' },
+          { title: 'Provider/app errors', metric: number(nonDeniedErrors), value: nonDeniedErrors, tone: 'warn', color: '#d5a914' },
+          { title: 'Denied by policy', metric: number(deniedCalls), value: deniedCalls, tone: 'warn', color: '#b95d50' }
         ];
         var trafficMax = Math.max.apply(null, [1].concat(trafficRows.map(function(item) { return item.value; })));
-        byId('trafficHealthChart').innerHTML = totalCalls > 0 ? trafficRows.map(function(item) {
+        byId('trafficHealthChart').innerHTML = totalCalls > 0 ? renderStackedBar(trafficRows, totalCalls) + trafficRows.map(function(item) {
           return chartRow(item.title, item.metric, item.value, trafficMax, item.tone);
-        }).join('') : '<div class="chart-empty">Traffic health appears after the API proxy records calls.</div>';
+        }).join('') + '<div class="chart-summary">' + number(totalCalls) + ' total calls across visible businesses.</div>' : '<div class="chart-empty">Traffic health appears after the API proxy records calls.</div>';
+
+        var blockerRows = [
+          { title: 'Pending invites', metric: number(summary.pending_invitation_count), value: Number(summary.pending_invitation_count || 0), tone: 'warn' },
+          { title: 'SSO not configured', metric: number(Math.max(0, activeBusinesses.length - ssoReadyBusinesses.length)), value: Math.max(0, activeBusinesses.length - ssoReadyBusinesses.length), tone: 'warn' },
+          { title: 'No users yet', metric: number(noUserBusinesses.length), value: noUserBusinesses.length, tone: 'warn' },
+          { title: 'Policy denials', metric: number(deniedCalls), value: deniedCalls, tone: 'warn' }
+        ];
+        var blockerMax = Math.max.apply(null, [1].concat(blockerRows.map(function(item) { return item.value; })));
+        byId('blockerChart').innerHTML = blockerRows.map(function(item) {
+          return chartRow(item.title, item.metric, item.value, blockerMax, item.tone);
+        }).join('');
       }
       function selectedOrgId() {
         var match = window.location.pathname.match(/\\/orgs\\/([^/]+)/);
@@ -3533,6 +3655,7 @@ export async function handleInternalAdminRoutes(
     },
     sso_schema_ready: ssoSchemaReady,
     migration_required: ssoSchemaReady ? null : 'Apply supabase/migrations/20260419010000_organization_sso_settings.sql',
+    api_call_trend: apiCallAnalytics.dailyTotals,
     businesses,
     users: members.slice(0, 100).map((member) => {
       const organization = orgById.get(member.organization_id);

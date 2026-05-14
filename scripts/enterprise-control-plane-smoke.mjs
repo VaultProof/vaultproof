@@ -3692,6 +3692,11 @@ async function assertInternalAdminConsole() {
     'Enterprise business command view',
     'businessUserChart',
     'businessCallChart',
+    'apiTrendChart',
+    'accountMixDonut',
+    'blockerChart',
+    'sparkline-chart',
+    'API call trend',
     'API calls by business',
     'controlTotalCalls',
     '--sidebar-muted',
@@ -3852,6 +3857,9 @@ async function assertInternalAdminConsole() {
   }
   if (overview.summary?.total_api_call_count !== 1 || overview.summary?.api_call_source !== 'rollup_table') {
     throw new Error(`Expected internal admin API call rollup summary, got ${JSON.stringify(overview.summary)}`);
+  }
+  if (!Array.isArray(overview.api_call_trend) || overview.api_call_trend[0]?.day !== '2026-04-26' || overview.api_call_trend[0]?.call_count !== 1) {
+    throw new Error(`Expected internal admin overview to include daily API call trend, got ${JSON.stringify(overview.api_call_trend)}`);
   }
   if (!Array.isArray(overview.businesses) || overview.businesses[0]?.name !== 'Example Org') {
     throw new Error(`Expected internal admin overview to include Example Org, got ${JSON.stringify(overview.businesses)}`);
