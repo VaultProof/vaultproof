@@ -3135,12 +3135,12 @@ async function assertEnterpriseLoginRoute() {
     {
       path: '/app/evidence',
       title: 'Evidence packet - VaultProof Enterprise',
-      required: ['Evidence readiness', 'Customer exports', 'Proof inventory', 'Review workflow', 'Identity/OAuth proof', 'Key rotation proof', 'Pilot operations proof', 'API proxy self-test proof', 'API inventory proof', 'Policy drift proof', 'Integration rollout proof', 'Scanner exposure proof', 'Launch support proof', 'Monitoring evidence proof', 'Release evidence proof', 'Paid-pilot tester proof', 'Go/no-go launch decision', 'go_no_go', 'manual_evidence', 'identity_login_qa', 'key_rotation_evidence', 'pilot_operations_evidence', 'api_proxy_self_test', 'api_inventory', 'policy_drift_exceptions', 'integration_rollout', 'scanner_exposure_review', 'launch_support_readiness', 'monitoring_evidence', 'release_evidence', 'pilot_tester_readiness', 'security_review_packet', 'pilot_proposal', 'pilot_success_tracker', 'vaultproof_enterprise_security_review_packet', 'vaultproof_enterprise_pilot_proposal', 'vaultproof_enterprise_pilot_success_tracker', 'vaultproof_enterprise_api_inventory', 'vaultproof_enterprise_policy_drift', 'vaultproof_enterprise_integration_rollout', 'vaultproof_enterprise_scanner_exposure_review', 'vaultproof_enterprise_release_evidence', 'vaultproof_enterprise_paid_pilot_tester_readiness', 'execute_endpoint_pattern', 'paid_onboarding_actions', 'rollback_paths', 'monitoring_review', 'budget_alert', 'live_gate', 'oauth_redirect_qa_command', 'Email API key protection', 'Evidence packet JSON', 'copy JSON', 'download JSON', 'vaultproof_enterprise_evidence_packet', 'email_provider_slots', '/app/inventory', '/app/policy', '/app/rollout', '/app/scanner', '/app/release', '/app/testers', '/app/launch', '/app/control', '/app/alerts', '/app/security-review', '/app/pilot', '/app/pilot-success', '/api/v1/enterprise/audit?format=csv&days=30', '/api/v1/enterprise/members/access-review?format=csv'],
+      required: ['Evidence readiness', 'Customer exports', 'Proof inventory', 'Review workflow', 'Identity/OAuth proof', 'Key rotation proof', 'Pilot operations proof', 'API proxy self-test proof', 'API inventory proof', 'Policy drift proof', 'Integration rollout proof', 'Scanner exposure proof', 'Launch support proof', 'Monitoring evidence proof', 'Release evidence proof', 'Paid-pilot tester proof', 'Contract entitlements proof', 'Go/no-go launch decision', 'go_no_go', 'manual_evidence', 'identity_login_qa', 'key_rotation_evidence', 'pilot_operations_evidence', 'api_proxy_self_test', 'api_inventory', 'policy_drift_exceptions', 'integration_rollout', 'scanner_exposure_review', 'launch_support_readiness', 'monitoring_evidence', 'release_evidence', 'pilot_tester_readiness', 'contract_entitlements', 'security_review_packet', 'pilot_proposal', 'pilot_success_tracker', 'vaultproof_enterprise_security_review_packet', 'vaultproof_enterprise_pilot_proposal', 'vaultproof_enterprise_pilot_success_tracker', 'vaultproof_enterprise_api_inventory', 'vaultproof_enterprise_policy_drift', 'vaultproof_enterprise_integration_rollout', 'vaultproof_enterprise_scanner_exposure_review', 'vaultproof_enterprise_release_evidence', 'vaultproof_enterprise_paid_pilot_tester_readiness', 'vaultproof_enterprise_entitlements', 'execute_endpoint_pattern', 'paid_onboarding_actions', 'rollback_paths', 'monitoring_review', 'budget_alert', 'live_gate', 'oauth_redirect_qa_command', 'Email API key protection', 'Evidence packet JSON', 'copy JSON', 'download JSON', 'vaultproof_enterprise_evidence_packet', 'email_provider_slots', '/app/inventory', '/app/policy', '/app/rollout', '/app/scanner', '/app/release', '/app/testers', '/app/entitlements', '/app/launch', '/app/control', '/app/alerts', '/app/security-review', '/app/pilot', '/app/pilot-success', '/api/v1/enterprise/audit?format=csv&days=30', '/api/v1/enterprise/members/access-review?format=csv'],
     },
     {
       path: '/app/demo',
       title: 'Demo script - VaultProof Enterprise',
-      required: ['Demo objective', 'Live proof path', 'Buyer proof points', 'Safety guardrails', 'Objection answers', 'Close path', 'Copyable demo talk track', 'Active Key Protection for every API call.', 'Email API key story', 'Identity/OAuth proof kit', 'Key rotation proof kit', 'Pilot operations proof kit', 'API proxy self-test kit', 'Launch support kit', 'Monitoring evidence kit', 'Release evidence kit', 'Paid-pilot tester readiness', 'Security review packet', 'Pilot proposal builder', 'Pilot success tracker', 'Secret exposure intake', 'Tester rehearsal before live demo', 'Monitoring before pilot', 'Release proof after deploy', 'Scanner before paid data', 'Policy denial evidence', 'Cloud Armor evidence', 'Why keep Supabase for the demo?', 'Is this only AI?', 'copy script', '/app/keys', '/app/evidence', '/app/security-review', '/app/pilot', '/app/pilot-success', '/app/testers', '/app/alerts', '/app/support', '/app/scanner', '/app/release', '/app/launch', '/app/plans', '/api/v1/enterprise/projects/bootstrap'],
+      required: ['Demo objective', 'Live proof path', 'Buyer proof points', 'Safety guardrails', 'Objection answers', 'Close path', 'Copyable demo talk track', 'Active Key Protection for every API call.', 'Email API key story', 'Identity/OAuth proof kit', 'Key rotation proof kit', 'Pilot operations proof kit', 'API proxy self-test kit', 'Launch support kit', 'Monitoring evidence kit', 'Release evidence kit', 'Paid-pilot tester readiness', 'Security review packet', 'Pilot proposal builder', 'Pilot success tracker', 'Contract entitlements', 'Secret exposure intake', 'Tester rehearsal before live demo', 'Monitoring before pilot', 'Release proof after deploy', 'Scanner before paid data', 'Policy denial evidence', 'Cloud Armor evidence', 'Why keep Supabase for the demo?', 'Is this only AI?', 'copy script', '/app/keys', '/app/evidence', '/app/security-review', '/app/pilot', '/app/pilot-success', '/app/testers', '/app/entitlements', '/app/alerts', '/app/support', '/app/scanner', '/app/release', '/app/launch', '/app/plans', '/api/v1/enterprise/projects/bootstrap'],
     },
     {
       path: '/app/technical-guide',
@@ -3150,7 +3150,7 @@ async function assertEnterpriseLoginRoute() {
     {
       path: '/app/security-review',
       title: 'Security review packet - VaultProof Enterprise',
-      required: ['Review readiness', 'Control coverage', 'Evidence map', 'Open review items', 'Copyable security review packet', 'vaultproof_enterprise_security_review_packet', 'Architecture summary', 'Control coverage', 'Evidence links', 'Common answers', 'Secrets excluded', 'Identity and RBAC', 'Caller-lock policy', 'Provider key custody', 'Policy drift and exceptions', 'Integration rollout', 'Secret exposure review', 'Release evidence', 'Paid-pilot tester readiness', 'Runtime attestation', 'Monitoring and edge protection', 'Security review packet status', 'scanner_exposure_review', 'release_evidence', 'pilot_tester_readiness', 'copy packet', '/app/evidence', '/app/audit', '/app/alerts', '/app/policy', '/app/rollout', '/app/scanner', '/app/release', '/app/testers', '/app/launch', '/app/runbooks'],
+      required: ['Review readiness', 'Control coverage', 'Evidence map', 'Open review items', 'Copyable security review packet', 'vaultproof_enterprise_security_review_packet', 'Architecture summary', 'Control coverage', 'Evidence links', 'Common answers', 'Secrets excluded', 'Identity and RBAC', 'Caller-lock policy', 'Provider key custody', 'Policy drift and exceptions', 'Integration rollout', 'Secret exposure review', 'Release evidence', 'Paid-pilot tester readiness', 'Contract entitlements', 'Runtime attestation', 'Monitoring and edge protection', 'Security review packet status', 'scanner_exposure_review', 'release_evidence', 'pilot_tester_readiness', 'contract_entitlements', 'copy packet', '/app/evidence', '/app/audit', '/app/alerts', '/app/policy', '/app/rollout', '/app/scanner', '/app/release', '/app/testers', '/app/entitlements', '/app/launch', '/app/runbooks'],
     },
     {
       path: '/app/release',
@@ -3180,6 +3180,7 @@ async function assertEnterpriseLoginRoute() {
         'Security boundaries',
         'provider/email key slot controls',
         'Buyer review path',
+        '/app/entitlements',
         '/app/security-review',
         '/app/pilot',
         '/app/pilot-success',
@@ -3187,6 +3188,11 @@ async function assertEnterpriseLoginRoute() {
         '/app/evidence',
         '/app/launch',
       ],
+    },
+    {
+      path: '/app/entitlements',
+      title: 'Entitlements - VaultProof Enterprise',
+      required: ['Contract intake', 'Paid-user readiness', 'Capacity envelope', 'Contract guardrails', 'Handoff path', 'Entitlements JSON', 'vaultproof_enterprise_entitlements', 'data-entitlement-field', 'contract status', 'monthly calls', 'provider slots', 'billing owner', 'success owner', 'support tier', 'incident response', 'renewal/review date', 'copy entitlements JSON', 'ready_for_paid_pilot', 'contract_review', 'Manual contract-controlled', '/app/evidence', '/app/plans', '/app/pilot', '/app/launch', '/app/support', '/app/security-review'],
     },
     {
       path: '/app/pilot',
@@ -3340,7 +3346,7 @@ function assertSecurityHeaders(path, response, html = '') {
 }
 
 async function assertEnterpriseSecurityHeaders() {
-  const htmlPaths = ['/', '/app/login', '/app/logout', '/app/dashboard', '/app/launch', '/app/evidence', '/app/demo', '/app/control', '/app/verifier', '/app/org', '/app/setup', '/app/technical-guide', '/app/security-review', '/app/pilot', '/app/pilot-success', '/app/testers', '/app/release', '/app/scanner', '/app/support', '/app/runbooks', '/app/inventory', '/app/policy', '/app/rollout'];
+  const htmlPaths = ['/', '/app/login', '/app/logout', '/app/dashboard', '/app/launch', '/app/evidence', '/app/demo', '/app/control', '/app/verifier', '/app/org', '/app/setup', '/app/technical-guide', '/app/security-review', '/app/entitlements', '/app/pilot', '/app/pilot-success', '/app/testers', '/app/release', '/app/scanner', '/app/support', '/app/runbooks', '/app/inventory', '/app/policy', '/app/rollout'];
   for (const path of htmlPaths) {
     const response = await handleEnterpriseControlPlaneRequest(
       buildRequest(path),
@@ -3403,6 +3409,7 @@ async function assertEnterpriseAppLinkCrawl() {
     '/app/setup',
     '/app/technical-guide',
     '/app/security-review',
+    '/app/entitlements',
     '/app/pilot',
     '/app/pilot-success',
     '/app/testers',
@@ -3468,6 +3475,7 @@ async function assertEnterpriseMixpanelAnalytics() {
     ['/app/setup', 'setup'],
     ['/app/technical-guide', 'technical-guide'],
     ['/app/security-review', 'security-review'],
+    ['/app/entitlements', 'entitlements'],
     ['/app/pilot', 'pilot'],
     ['/app/pilot-success', 'pilot-success'],
     ['/app/testers', 'testers'],

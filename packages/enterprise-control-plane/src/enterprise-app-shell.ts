@@ -21,6 +21,7 @@ export type EnterpriseAppNavPage =
   | 'technical-guide'
   | 'security-review'
   | 'settings'
+  | 'entitlements'
   | 'plans'
   | 'pilot'
   | 'pilot-success'
@@ -245,6 +246,13 @@ const ENTERPRISE_SIDEBAR_NAV_GROUPS: readonly EnterpriseSidebarNavGroup[] = [
         href: '/app/plans',
         label: 'Plans',
         blurb: 'Launch readiness, limits, and handoff notes.',
+      },
+      {
+        page: 'entitlements',
+        href: '/app/entitlements',
+        label: 'Entitlements',
+        blurb: 'Contract capacity, support tier, renewal, and paid-user guardrails.',
+        activePill: 'paid',
       },
       {
         page: 'pilot',
