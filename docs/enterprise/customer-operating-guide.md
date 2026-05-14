@@ -281,6 +281,7 @@ After an incident:
 | Settings | Admins review tenant defaults and security notices. |
 | Plans | Owners track APIM, TLS, limits, packaging, and rollout notes. |
 | Release evidence | Operators record build/image tag, approval, verification status, rollout state, rollback owner/path, and customer-safe release notes after deploys. |
+| Pilot testers | Operators prepare paid-pilot tester roster, login/scenario status, scenario assignment, customer-safe feedback, and blockers before guided sessions. |
 | Scanner | Teams record redacted repository exposure findings, owners, rotation/remediation status, and evidence references without uploading repo contents or secret values. |
 
 ## Recommended First Rollout
@@ -726,6 +727,7 @@ Use this checklist for each production rollout.
 | Policy Drift | `https://enterprise.vaultproof.dev/app/policy` |
 | Rollout Manager | `https://enterprise.vaultproof.dev/app/rollout` |
 | Release evidence | `https://enterprise.vaultproof.dev/app/release` |
+| Pilot testers | `https://enterprise.vaultproof.dev/app/testers` |
 | Control | `https://enterprise.vaultproof.dev/app/control` |
 | AI Proof Verifier | `https://enterprise.vaultproof.dev/app/verifier` |
 | Provider slots | `https://enterprise.vaultproof.dev/app/keys` |

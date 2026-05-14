@@ -34,6 +34,7 @@ Already built:
 - Buyer commercial package page at `https://enterprise.vaultproof.dev/app/plans` for paid-pilot scope, included controls, contract guardrails, security boundaries, and customer review links
 - Paid-pilot proposal builder at `https://enterprise.vaultproof.dev/app/pilot` for first workload scope, expected volume, monthly price, sales commission math, support boundary, incident-response terms, success metric, and close steps
 - Pilot success tracker at `https://enterprise.vaultproof.dev/app/pilot-success` for live checks, browser-local milestones, evidence links, blockers, weekly customer update copy, and expansion/no-go readiness
+- Paid-pilot tester readiness board at `https://enterprise.vaultproof.dev/app/testers` for browser-local tester roster, login/scenario status, scenario assignment, customer-safe feedback, blockers, and JSON evidence
 - API inventory board at `https://enterprise.vaultproof.dev/app/inventory` for metadata-only API catalog rows derived from projects, provider slots, caller-lock policy, traffic rollups, browser-local owner/risk/review annotations, and customer-safe JSON evidence
 - Build-status and feature inventory docs
 - Managed Supabase remains the auth/database provider for the pilot
@@ -49,6 +50,7 @@ Not yet customer-ready:
 - API inventory management still needs persistent audited records, CSV/OpenAPI import, automatic discovery, and production review workflow after the demo.
 - Scanner exposure intake still needs persistent audited records, CI/scanner imports, automatic discovery, and PR/remediation workflows after the demo.
 - Release evidence still needs persistent audited records, automated Cloud Build/deploy evidence capture, approval workflow, and rollback automation after the demo.
+- Paid-pilot tester readiness still needs persistent audited records, invite automation, scenario-specific feedback forms, and durable owner handoff after the demo.
 - Supabase OAuth/login settings still need to be confirmed for `enterprise.vaultproof.dev`.
 - Older migration/history docs still have Azure-era language; customer-facing app UI is cleaned for the GCP demo.
 
@@ -77,7 +79,7 @@ Goal 1 is the first milestone where Ken can start testing the sellable product p
 
 Current status: Goal 1 demo dry-run gate is done. The control-plane runtime env includes the public Supabase anon key. `npm run qa:enterprise-login` now exists for repeatable login readiness checks; strict mode still needs to be run with Supabase service-role env, then followed by final human OAuth/password browser QA.
 
-Customer packaging status: all enterprise buyer pages are on `https://enterprise.vaultproof.dev`. `https://enterprise.vaultproof.dev/app/plans` now carries the first sellable paid-pilot package view, `https://enterprise.vaultproof.dev/app/security-review` gives buyers a copyable security/procurement review packet, `https://enterprise.vaultproof.dev/app/release` records build/approval/verification/rollback proof after each deploy, `https://enterprise.vaultproof.dev/app/pilot` creates the first-workload proposal with price, commission, support, incident-response, and close-step terms, and `https://enterprise.vaultproof.dev/app/pilot-success` tracks weekly proof, milestones, blockers, and expansion/no-go readiness after kickoff. It keeps automated billing and hard plan enforcement out of scope for Goal 1; capacity, support cadence, retention, SSO depth, and dedicated-runtime terms stay contract-controlled until billing APIs exist.
+Customer packaging status: all enterprise buyer pages are on `https://enterprise.vaultproof.dev`. `https://enterprise.vaultproof.dev/app/plans` now carries the first sellable paid-pilot package view, `https://enterprise.vaultproof.dev/app/security-review` gives buyers a copyable security/procurement review packet, `https://enterprise.vaultproof.dev/app/release` records build/approval/verification/rollback proof after each deploy, `https://enterprise.vaultproof.dev/app/testers` prepares the paid-pilot tester roster and guided-session evidence, `https://enterprise.vaultproof.dev/app/pilot` creates the first-workload proposal with price, commission, support, incident-response, and close-step terms, and `https://enterprise.vaultproof.dev/app/pilot-success` tracks weekly proof, milestones, blockers, and expansion/no-go readiness after kickoff. It keeps automated billing and hard plan enforcement out of scope for Goal 1; capacity, support cadence, retention, SSO depth, and dedicated-runtime terms stay contract-controlled until billing APIs exist.
 
 ## Architecture
 
@@ -458,6 +460,7 @@ Build after first customer proof:
 - Customer launch checklist and go/no-go board at `https://enterprise.vaultproof.dev/app/launch` are reviewed with the pilot user, including browser-local manual evidence status/timestamps.
 - Customer evidence packet at `https://enterprise.vaultproof.dev/app/evidence` is reviewed with the pilot user and includes the current go/no-go launch decision and blockers.
 - Release evidence at `https://enterprise.vaultproof.dev/app/release` is reviewed after each deploy for build/image tag, approval, verification, rollout state, and rollback owner/path.
+- Paid-pilot tester readiness at `https://enterprise.vaultproof.dev/app/testers` is reviewed before guided customer testing for roster, login pass, scenario assignment, feedback notes, and blocker ownership.
 - API inventory at `https://enterprise.vaultproof.dev/app/inventory` is reviewed for owner, environment, risk, data sensitivity, provider-slot mapping, caller-lock posture, traffic evidence, stale/no-traffic status, and review due items.
 - Policy drift board at `https://enterprise.vaultproof.dev/app/policy` is reviewed for control gaps, accepted-risk owner, reason, compensating control, expiration date, next action, and launch hold status.
 - Integration rollout manager at `https://enterprise.vaultproof.dev/app/rollout` is reviewed for first workload, integration mode, app/gateway owners, target date, canary percentage, dry-run/test status, rollback owner/path, blockers, and evidence export.

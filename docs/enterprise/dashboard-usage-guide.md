@@ -487,6 +487,7 @@ Best for:
 | workspace | Org + SSO | Configure organization settings and Entra/Supabase SAML SSO. |
 | evidence | Evidence packet | Review customer-safe runtime, launch, inventory, scanner, release, monitoring, and security proof. |
 | evidence | Release evidence | Record build/image tag, approval, verification, rollout state, rollback owner/path, and customer-safe release notes. |
+| evidence | Pilot testers | Prepare paid-pilot tester roster, login/scenario status, assigned workflows, customer-safe feedback, and blockers before guided sessions. |
 | evidence | Members | Manage members, invites, project access, and access reviews. |
 | evidence | Audit | Search events and export governance/runtime evidence. |
 | evidence | Provider slots | Review active provider slots, rotation, and emergency revoke. |

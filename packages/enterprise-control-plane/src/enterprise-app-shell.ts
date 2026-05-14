@@ -24,6 +24,7 @@ export type EnterpriseAppNavPage =
   | 'plans'
   | 'pilot'
   | 'pilot-success'
+  | 'testers'
   | 'release'
   | 'scanner'
   | 'support'
@@ -213,6 +214,13 @@ const ENTERPRISE_SIDEBAR_NAV_GROUPS: readonly EnterpriseSidebarNavGroup[] = [
         label: 'Demo script',
         blurb: 'Buyer walkthrough, proof path, and objection answers.',
         activePill: 'demo',
+      },
+      {
+        page: 'testers',
+        href: '/app/testers',
+        label: 'Pilot testers',
+        blurb: 'Tester roster, login readiness, scenario assignments, feedback, and blockers.',
+        activePill: 'paid',
       },
       {
         page: 'technical-guide',
