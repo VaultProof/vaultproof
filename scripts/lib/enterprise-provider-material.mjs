@@ -178,6 +178,16 @@ export function normalizeAuthHeaderTemplate(raw) {
   return value;
 }
 
+function extraHeaderValueLooksLikeSecret(value) {
+  const trimmed = String(value || '').trim();
+  if (!trimmed || trimmed.includes('{key}')) return false;
+  if (/^(bearer|basic|token)\s+[A-Za-z0-9._~+/=-]{16,}$/i.test(trimmed)) return true;
+  if (/(?:sk-[A-Za-z0-9]|ghp_|github_pat_|xox[abprs]-|SG\.|re_[A-Za-z0-9]|glpat-|hf_|pcsk_|xkeysib-|secret_|ntn_|api[_-]?key|client[_-]?secret)/i.test(trimmed)) {
+    return true;
+  }
+  return /^[A-Za-z0-9._~+/=-]{48,}$/.test(trimmed);
+}
+
 export function normalizeExtraHeaders(raw) {
   if (raw === undefined || raw === null || raw === '') return {};
   const parsed = typeof raw === 'string' ? JSON.parse(raw) : raw;
@@ -193,6 +203,9 @@ export function normalizeExtraHeaders(raw) {
     }
     if (typeof valueRaw !== 'string' || valueRaw.length > 500 || /[\r\n]/.test(valueRaw)) {
       throw new Error(`EXTRA_HEADERS_JSON.${name} must be a short string without line breaks.`);
+    }
+    if (extraHeaderValueLooksLikeSecret(valueRaw)) {
+      throw new Error(`EXTRA_HEADERS_JSON.${name} must not contain raw secrets; use {key} for the protected provider key or store only non-secret fixed headers.`);
     }
     normalized[name] = valueRaw;
   }

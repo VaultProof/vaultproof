@@ -161,6 +161,14 @@ Status: `built and deployed in provider-material-status-20260509`
 
 Project and Provider Slots pages now classify each active slot as `live sealed`, `demo placeholder`, `mixed`, or `missing` without returning `share1_encrypted` or `share2_encrypted` to the browser. After sealing provider material on 2026-05-10, live API verification returned one MiniMax slot for `First Paid Pilot` with `material_mode: sealed-live`, `material_ready: true`, and no encrypted share fields in the payload. The OpenAI slot was reset to `demo-placeholder` because the supplied key was for MiniMax.
 
+## Feature: Enterprise Provider Preset Catalog
+
+Status: `built for enterprise demo`
+
+`https://enterprise.vaultproof.dev/app/keys` now supports a first-pass provider preset catalog for the auth patterns the secure executor already supports: generic bearer, generic custom-header, generic preformatted Basic, provider-specific bearer/header templates, and non-secret fixed extra headers. Presets include common AI, email, developer, observability, payments, and SaaS APIs such as MiniMax, GitHub, Notion, Cloudflare, Vercel, Slack, HubSpot, Airtable, Linear, Sentry, Clerk, Cohere, Mistral, Groq, OpenRouter, DeepSeek, Together, Fireworks, Replicate, Hugging Face, Pinecone, ElevenLabs, Brevo, and MailerSend.
+
+Provider-slot creation still creates demo-placeholder material in the browser flow and rejects raw live provider keys. Extra headers are accepted only as non-secret fixed headers or `{key}` templates for the protected provider key; secret-looking literal values are rejected in the dashboard API and local sealing helper.
+
 ## Feature: API Inventory Management
 
 Status: `built for enterprise demo`

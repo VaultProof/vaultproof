@@ -14,6 +14,7 @@ PROVIDER="openai" \
 PROVIDER_SLOT_SLUG="openai" \
 UPSTREAM_BASE_URL="https://api.openai.com" \
 AUTH_HEADER_TEMPLATE="Bearer {key}" \
+EXTRA_HEADERS_JSON='{}' \
 VAULT_UNWRAP_KEY_BASE64="..." \
 PROVIDER_API_KEY_FILE="/path/to/provider-key.txt" \
 npm run seal:enterprise-provider-slot
@@ -32,6 +33,19 @@ Safer alternatives:
 - `PROJECT_ID` or `VP_PROJECT_ID`
 - `PROVIDER_API_KEY`, `PROVIDER_API_KEY_FILE`, or stdin
 - `VAULT_UNWRAP_KEY_BASE64`, `VAULT_UNWRAP_KEY_HEX`, `VAULT_UNWRAP_KEY`, or `VAULT_UNWRAP_KEY_FILE`
+
+## Provider Presets And Extra Headers
+
+The enterprise dashboard now includes first-pass provider presets for generic bearer, generic custom-header, generic preformatted Basic, MiniMax, OpenAI, Anthropic, common AI providers, email providers, developer APIs, observability APIs, payments APIs, and SaaS APIs. The preset fills:
+
+- Provider slug.
+- Upstream base URL.
+- Auth header name.
+- Auth header template.
+- Optional dry-run path.
+- Optional non-secret extra headers, such as `anthropic-version` or `notion-version`.
+
+Use `EXTRA_HEADERS_JSON` only for non-secret fixed headers or values that reference the protected provider key with `{key}`. Do not put a second raw secret in `EXTRA_HEADERS_JSON`; the dashboard API and local sealing helper reject secret-looking literal values.
 
 ## What It Writes
 

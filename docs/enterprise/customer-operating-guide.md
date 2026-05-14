@@ -453,6 +453,8 @@ Before adding a provider slot, answer:
 After adding a provider slot:
 
 - Do not paste raw provider keys into tickets, docs, chat, or browser screenshots.
+- Use the generic bearer/header/basic presets for providers that work when the key is preformatted correctly.
+- Store only non-secret fixed values in extra headers, or use `{key}` when the protected provider key must be mirrored into a provider-specific header.
 - Confirm the provider slot appears in the dashboard.
 - Confirm Secure Key Release/readiness state.
 - Configure caller lock before real traffic.

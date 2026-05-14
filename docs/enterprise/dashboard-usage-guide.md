@@ -251,11 +251,14 @@ Open `Provider slots`.
 Use it to:
 
 - View active provider slots.
+- Create demo provider slots from generic bearer/header/basic presets or common provider presets.
+- Add non-secret fixed extra headers, such as API version headers, when a provider requires them.
 - Confirm rotation state.
 - Review Secure Key Release notes.
 - Emergency-revoke a provider slot if a key or integration is no longer trusted.
 
 Provider keys should not be visible in the dashboard. Enterprise execution reconstructs provider key material only inside confidential execution memory and zeroes plaintext after use.
+Extra headers should not contain raw secrets; use the protected `{key}` placeholder only when the same sealed provider key belongs in a provider-specific secondary header.
 
 For each slot, record:
 

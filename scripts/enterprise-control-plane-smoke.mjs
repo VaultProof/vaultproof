@@ -740,6 +740,9 @@ function installSupabaseStub() {
         provider: body.provider || 'openai',
         slug: body.slug || body.provider || 'openai',
         upstream_base_url: body.upstream_base_url || 'https://api.openai.com',
+        auth_header_name: body.auth_header_name || 'authorization',
+        auth_header_template: body.auth_header_template || 'Bearer {key}',
+        extra_headers: body.extra_headers || {},
         share1_encrypted: body.share1_encrypted,
         share2_encrypted: body.share2_encrypted,
         revoked_at: body.revoked_at || null,
@@ -2002,6 +2005,7 @@ async function assertEnterpriseCreateProviderSlot() {
         upstream_base_url: 'https://api.anthropic.com',
         auth_header_name: 'x-api-key',
         auth_header_template: '{key}',
+        extra_headers: { 'anthropic-version': '2023-06-01' },
       }),
     }),
     env,
@@ -2013,6 +2017,9 @@ async function assertEnterpriseCreateProviderSlot() {
   const createdSlot = providerSlotRows.find((slot) => slot.provider === 'anthropic');
   if (!createdSlot || !String(createdSlot.share1_encrypted || '').startsWith('demo-dashboard-placeholder-share-1:')) {
     throw new Error('Expected created provider slot to use demo placeholder material');
+  }
+  if (createdSlot.extra_headers?.['anthropic-version'] !== '2023-06-01') {
+    throw new Error(`Expected created provider slot to persist non-secret extra headers, got ${JSON.stringify(createdSlot.extra_headers)}`);
   }
   const createAudit = auditEvents.find((event) => event.event_type === 'enterprise_provider_slot_created');
   if (!createAudit || createAudit.metadata?.material_mode !== 'demo-placeholder') {
@@ -2039,6 +2046,28 @@ async function assertEnterpriseCreateProviderSlot() {
   const liveMaterialPayload = await liveMaterialResponse.json();
   if (liveMaterialResponse.status !== 501 || !String(liveMaterialPayload?.error || '').includes('Live provider key ingest is not enabled')) {
     throw new Error(`Expected live key material to be rejected, got ${liveMaterialResponse.status} ${JSON.stringify(liveMaterialPayload)}`);
+  }
+
+  const rawExtraHeaderResponse = await handleEnterpriseControlPlaneRequest(
+    buildRequest(`/api/v1/enterprise/projects/${PROJECT_ID}/providers`, {
+      method: 'POST',
+      headers: {
+        authorization: `Bearer ${AUTH_TOKEN}`,
+        'content-type': 'application/json',
+      },
+      body: JSON.stringify({
+        provider: 'github',
+        upstream_base_url: 'https://api.github.com',
+        auth_header_name: 'authorization',
+        auth_header_template: 'Bearer {key}',
+        extra_headers: { 'x-backup-key': 'sk-raw-secret-must-not-be-stored-in-extra-headers' },
+      }),
+    }),
+    env,
+  );
+  const rawExtraHeaderPayload = await rawExtraHeaderResponse.json();
+  if (rawExtraHeaderResponse.status !== 400 || !String(rawExtraHeaderPayload?.error || '').includes('must not contain raw secrets')) {
+    throw new Error(`Expected raw extra header secrets to be rejected, got ${rawExtraHeaderResponse.status} ${JSON.stringify(rawExtraHeaderPayload)}`);
   }
 
   const emailSlotResponse = await handleEnterpriseControlPlaneRequest(
@@ -3137,7 +3166,7 @@ async function assertEnterpriseLoginRoute() {
     {
       path: '/app/keys',
       title: 'Provider Slots - VaultProof Enterprise',
-      required: ['/api/v1/enterprise/projects', 'add slot', 'create slot', 'emergency revoke', 'live sealed material', 'demo placeholder material', 'Customer API proxy test kit', 'copy dry-run request', 'copy blocked-recipient request', 'YOUR_VAULTPROOF_SESSION_JWT', 'Email API key demo', 'protected email dry-run', 'blocked recipient test', 'Policy denial evidence', 'resend', 'sendgrid', 'postmark'],
+      required: ['/api/v1/enterprise/projects', 'add slot', 'create slot', 'Extra headers JSON', 'slotExtraHeaders', 'generic-bearer', 'generic-header', 'minimax', 'github', 'notion', 'cloudflare', 'anthropic-version', 'emergency revoke', 'live sealed material', 'demo placeholder material', 'Customer API proxy test kit', 'copy dry-run request', 'copy blocked-recipient request', 'YOUR_VAULTPROOF_SESSION_JWT', 'Email API key demo', 'protected email dry-run', 'blocked recipient test', 'Policy denial evidence', 'resend', 'sendgrid', 'postmark', 'brevo', 'mailersend'],
     },
   ];
   for (const page of operationsPages) {

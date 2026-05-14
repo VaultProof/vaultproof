@@ -349,6 +349,16 @@ function normalizeAuthHeaderTemplate(raw: string | null | undefined): { ok: true
   return { ok: true, value };
 }
 
+function extraHeaderValueLooksLikeSecret(value: string): boolean {
+  const trimmed = value.trim();
+  if (!trimmed || trimmed.includes('{key}')) return false;
+  if (/^(bearer|basic|token)\s+[A-Za-z0-9._~+/=-]{16,}$/i.test(trimmed)) return true;
+  if (/(?:sk-[A-Za-z0-9]|ghp_|github_pat_|xox[abprs]-|SG\.|re_[A-Za-z0-9]|glpat-|hf_|pcsk_|xkeysib-|secret_|ntn_|api[_-]?key|client[_-]?secret)/i.test(trimmed)) {
+    return true;
+  }
+  return /^[A-Za-z0-9._~+/=-]{48,}$/.test(trimmed);
+}
+
 function normalizeExtraHeaders(raw: unknown): { ok: true; value: Record<string, string> } | { ok: false; error: string } {
   if (raw === undefined || raw === null || raw === '') return { ok: true, value: {} };
   if (typeof raw !== 'object' || Array.isArray(raw)) {
@@ -364,6 +374,9 @@ function normalizeExtraHeaders(raw: unknown): { ok: true; value: Record<string, 
     }
     if (typeof valueRaw !== 'string' || valueRaw.length > 500 || /[\r\n]/.test(valueRaw)) {
       return { ok: false, error: `extra_headers.${name.value} must be a short string without line breaks` };
+    }
+    if (extraHeaderValueLooksLikeSecret(valueRaw)) {
+      return { ok: false, error: `extra_headers.${name.value} must not contain raw secrets; use {key} for the protected provider key or store only non-secret fixed headers` };
     }
     normalized[name.value] = valueRaw;
   }

@@ -12,6 +12,135 @@ const PUBLIC_SITE_ORIGIN = 'https://vaultproof.dev';
 const ENTERPRISE_AUTH_ERROR_MESSAGE = 'Your enterprise session expired or is missing. Sign in again to continue.';
 const DEMO_SUPABASE_CALLBACK_URL = 'https://gwzkjiomemjlhtrdrlan.supabase.co/auth/v1/callback';
 
+type EnterpriseProviderPreset = {
+  readonly id: string;
+  readonly upstream: string;
+  readonly header: string;
+  readonly template: string;
+  readonly demoPath?: string;
+  readonly emailPath?: string;
+  readonly extraHeaders?: Record<string, string>;
+};
+
+const ENTERPRISE_PROVIDER_SLOT_PRESETS: readonly EnterpriseProviderPreset[] = [
+  { id: 'generic-bearer', upstream: '', header: 'authorization', template: 'Bearer {key}', demoPath: '/' },
+  { id: 'generic-header', upstream: '', header: 'x-api-key', template: '{key}', demoPath: '/' },
+  { id: 'generic-basic', upstream: '', header: 'authorization', template: 'Basic {key}', demoPath: '/' },
+  { id: 'openai', upstream: 'https://api.openai.com', header: 'authorization', template: 'Bearer {key}', demoPath: '/v1/models' },
+  { id: 'anthropic', upstream: 'https://api.anthropic.com', header: 'x-api-key', template: '{key}', demoPath: '/v1/messages', extraHeaders: { 'anthropic-version': '2023-06-01' } },
+  { id: 'minimax', upstream: 'https://api.minimax.io', header: 'authorization', template: 'Bearer {key}', demoPath: '/v1' },
+  { id: 'groq', upstream: 'https://api.groq.com', header: 'authorization', template: 'Bearer {key}', demoPath: '/openai/v1/models' },
+  { id: 'xai', upstream: 'https://api.x.ai', header: 'authorization', template: 'Bearer {key}', demoPath: '/v1/models' },
+  { id: 'openrouter', upstream: 'https://openrouter.ai', header: 'authorization', template: 'Bearer {key}', demoPath: '/api/v1/models' },
+  { id: 'deepseek', upstream: 'https://api.deepseek.com', header: 'authorization', template: 'Bearer {key}', demoPath: '/v1/models' },
+  { id: 'mistral', upstream: 'https://api.mistral.ai', header: 'authorization', template: 'Bearer {key}', demoPath: '/v1/models' },
+  { id: 'together', upstream: 'https://api.together.xyz', header: 'authorization', template: 'Bearer {key}', demoPath: '/v1/models' },
+  { id: 'fireworks', upstream: 'https://api.fireworks.ai', header: 'authorization', template: 'Bearer {key}', demoPath: '/inference/v1/models' },
+  { id: 'cohere', upstream: 'https://api.cohere.com', header: 'authorization', template: 'Bearer {key}', demoPath: '/v2/models' },
+  { id: 'replicate', upstream: 'https://api.replicate.com', header: 'authorization', template: 'Bearer {key}', demoPath: '/v1/models' },
+  { id: 'huggingface', upstream: 'https://api-inference.huggingface.co', header: 'authorization', template: 'Bearer {key}', demoPath: '/' },
+  { id: 'perplexity', upstream: 'https://api.perplexity.ai', header: 'authorization', template: 'Bearer {key}', demoPath: '/models' },
+  { id: 'cerebras', upstream: 'https://api.cerebras.ai', header: 'authorization', template: 'Bearer {key}', demoPath: '/v1/models' },
+  { id: 'stability', upstream: 'https://api.stability.ai', header: 'authorization', template: 'Bearer {key}', demoPath: '/v1/user/account' },
+  { id: 'voyage', upstream: 'https://api.voyageai.com', header: 'authorization', template: 'Bearer {key}', demoPath: '/v1/models' },
+  { id: 'jina', upstream: 'https://api.jina.ai', header: 'authorization', template: 'Bearer {key}', demoPath: '/v1/models' },
+  { id: 'ai21', upstream: 'https://api.ai21.com', header: 'authorization', template: 'Bearer {key}', demoPath: '/studio/v1/models' },
+  { id: 'assemblyai', upstream: 'https://api.assemblyai.com', header: 'authorization', template: '{key}', demoPath: '/v2' },
+  { id: 'elevenlabs', upstream: 'https://api.elevenlabs.io', header: 'xi-api-key', template: '{key}', demoPath: '/v1/user' },
+  { id: 'pinecone', upstream: 'https://api.pinecone.io', header: 'api-key', template: '{key}', demoPath: '/indexes' },
+  { id: 'clerk', upstream: 'https://api.clerk.com', header: 'authorization', template: 'Bearer {key}', demoPath: '/v1/users' },
+  { id: 'resend', upstream: 'https://api.resend.com', header: 'authorization', template: 'Bearer {key}', emailPath: '/emails' },
+  { id: 'sendgrid', upstream: 'https://api.sendgrid.com', header: 'authorization', template: 'Bearer {key}', emailPath: '/v3/mail/send' },
+  { id: 'brevo', upstream: 'https://api.brevo.com', header: 'api-key', template: '{key}', emailPath: '/v3/smtp/email' },
+  { id: 'mailersend', upstream: 'https://api.mailersend.com', header: 'authorization', template: 'Bearer {key}', emailPath: '/v1/email' },
+  { id: 'mailgun', upstream: 'https://api.mailgun.net', header: 'authorization', template: 'Basic {key}', emailPath: '/v3/example.com/messages' },
+  { id: 'postmark', upstream: 'https://api.postmarkapp.com', header: 'x-postmark-server-token', template: '{key}', emailPath: '/email' },
+  { id: 'aws-ses', upstream: 'https://email.us-east-1.amazonaws.com', header: 'authorization', template: 'Bearer {key}', emailPath: '/' },
+  { id: 'stripe', upstream: 'https://api.stripe.com', header: 'authorization', template: 'Bearer {key}', demoPath: '/v1/customers' },
+  { id: 'twilio', upstream: 'https://api.twilio.com', header: 'authorization', template: 'Basic {key}', demoPath: '/2010-04-01/Accounts.json' },
+  { id: 'linear', upstream: 'https://api.linear.app', header: 'authorization', template: '{key}', demoPath: '/graphql' },
+  { id: 'notion', upstream: 'https://api.notion.com', header: 'authorization', template: 'Bearer {key}', demoPath: '/v1/users/me', extraHeaders: { 'notion-version': '2022-06-28' } },
+  { id: 'github', upstream: 'https://api.github.com', header: 'authorization', template: 'Bearer {key}', demoPath: '/user' },
+  { id: 'gitlab', upstream: 'https://gitlab.com', header: 'private-token', template: '{key}', demoPath: '/api/v4/user' },
+  { id: 'newrelic', upstream: 'https://api.newrelic.com', header: 'api-key', template: '{key}', demoPath: '/' },
+  { id: 'sentry', upstream: 'https://sentry.io/api', header: 'authorization', template: 'Bearer {key}', demoPath: '/0/' },
+  { id: 'planetscale', upstream: 'https://api.planetscale.com', header: 'authorization', template: '{key}', demoPath: '/' },
+  { id: 'neon', upstream: 'https://console.neon.tech/api', header: 'authorization', template: 'Bearer {key}', demoPath: '/v2/projects' },
+  { id: 'upstash', upstream: 'https://api.upstash.com', header: 'authorization', template: 'Bearer {key}', demoPath: '/' },
+  { id: 'vercel', upstream: 'https://api.vercel.com', header: 'authorization', template: 'Bearer {key}', demoPath: '/v2/user' },
+  { id: 'cloudflare', upstream: 'https://api.cloudflare.com', header: 'authorization', template: 'Bearer {key}', demoPath: '/client/v4/user/tokens/verify' },
+  { id: 'mapbox', upstream: 'https://api.mapbox.com', header: 'authorization', template: 'Bearer {key}', demoPath: '/' },
+  { id: 'paddle', upstream: 'https://api.paddle.com', header: 'authorization', template: 'Bearer {key}', demoPath: '/' },
+  { id: 'square', upstream: 'https://connect.squareup.com', header: 'authorization', template: 'Bearer {key}', demoPath: '/v2/locations' },
+  { id: 'discord', upstream: 'https://discord.com/api', header: 'authorization', template: 'Bot {key}', demoPath: '/users/@me' },
+  { id: 'slack', upstream: 'https://slack.com/api', header: 'authorization', template: 'Bearer {key}', demoPath: '/auth.test' },
+  { id: 'google', upstream: 'https://generativelanguage.googleapis.com', header: 'x-goog-api-key', template: '{key}', demoPath: '/v1beta/models' },
+  { id: 'langsmith', upstream: 'https://api.smith.langchain.com', header: 'x-api-key', template: '{key}', demoPath: '/' },
+  { id: 'posthog', upstream: 'https://us.posthog.com', header: 'authorization', template: 'Bearer {key}', demoPath: '/api/projects/' },
+  { id: 'sanity', upstream: 'https://api.sanity.io', header: 'authorization', template: 'Bearer {key}', demoPath: '/v2021-06-07/projects' },
+  { id: 'contentful', upstream: 'https://api.contentful.com', header: 'authorization', template: 'Bearer {key}', demoPath: '/spaces' },
+  { id: 'workos', upstream: 'https://api.workos.com', header: 'authorization', template: 'Bearer {key}', demoPath: '/organizations' },
+  { id: 'hubspot', upstream: 'https://api.hubapi.com', header: 'authorization', template: 'Bearer {key}', demoPath: '/account-info/v3/details' },
+  { id: 'firecrawl', upstream: 'https://api.firecrawl.dev', header: 'authorization', template: 'Bearer {key}', demoPath: '/' },
+  { id: 'e2b', upstream: 'https://api.e2b.dev', header: 'x-e2b-api-key', template: '{key}', demoPath: '/' },
+  { id: 'deepgram', upstream: 'https://api.deepgram.com', header: 'authorization', template: 'Token {key}', demoPath: '/v1/projects' },
+  { id: 'exa', upstream: 'https://api.exa.ai', header: 'x-api-key', template: '{key}', demoPath: '/' },
+  { id: 'tavily', upstream: 'https://api.tavily.com', header: 'authorization', template: 'Bearer {key}', demoPath: '/' },
+  { id: 'airtable', upstream: 'https://api.airtable.com', header: 'authorization', template: 'Bearer {key}', demoPath: '/v0/meta/whoami' },
+  { id: 'trigger', upstream: 'https://api.trigger.dev', header: 'authorization', template: 'Bearer {key}', demoPath: '/' },
+  { id: 'intercom', upstream: 'https://api.intercom.io', header: 'authorization', template: 'Bearer {key}', demoPath: '/me' },
+  { id: 'launchdarkly', upstream: 'https://app.launchdarkly.com', header: 'authorization', template: '{key}', demoPath: '/api/v2/projects' },
+  { id: 'snyk', upstream: 'https://api.snyk.io', header: 'authorization', template: 'token {key}', demoPath: '/rest/orgs' },
+  { id: 'pagerduty', upstream: 'https://api.pagerduty.com', header: 'authorization', template: 'Token token={key}', demoPath: '/users' },
+  { id: 'honeycomb', upstream: 'https://api.honeycomb.io', header: 'x-honeycomb-team', template: '{key}', demoPath: '/1/auth' },
+];
+
+const ENTERPRISE_EMAIL_PROVIDER_SLUGS: readonly string[] = [
+  'resend',
+  'sendgrid',
+  'brevo',
+  'mailersend',
+  'mailgun',
+  'postmark',
+  'aws-ses',
+  'aws_ses',
+];
+
+const ENTERPRISE_MANUAL_API_KEY_PROVIDER_OPTIONS: readonly string[] = Array.from(new Set([
+  ...ENTERPRISE_PROVIDER_SLOT_PRESETS.map((preset) => preset.id),
+  'algolia',
+  'datadog',
+  'grafana',
+  'okta',
+  'shopify',
+  'supabase',
+  'weaviate',
+  'database-url',
+  'oauth-client-secret',
+  'webhook-secret',
+  'jwt-secret',
+  'encryption-key',
+]));
+
+function renderDatalistOptions(values: readonly string[]): string {
+  return values.map((value) => `            <option value="${escapeHtml(value)}"></option>`).join('\n');
+}
+
+function renderEnterpriseProviderDefaultsJson(): string {
+  const defaults: Record<string, Record<string, unknown>> = {};
+  for (const preset of ENTERPRISE_PROVIDER_SLOT_PRESETS) {
+    defaults[preset.id] = {
+      upstream: preset.upstream,
+      header: preset.header,
+      template: preset.template,
+    };
+    if (preset.demoPath) defaults[preset.id].demoPath = preset.demoPath;
+    if (preset.emailPath) defaults[preset.id].emailPath = preset.emailPath;
+    if (preset.extraHeaders) defaults[preset.id].extraHeaders = preset.extraHeaders;
+  }
+  return JSON.stringify(defaults).replace(/</g, '\\u003c');
+}
+
 function escapeRegExp(value: string): string {
   return value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 }
@@ -1518,10 +1647,10 @@ function renderEnterpriseAuditPage(): string {
   <title>Audit - VaultProof Enterprise</title>
   <style>
     ${ENTERPRISE_RENDERED_APP_BASE_THEME}
-    select, button, input { border: 1px solid var(--line); background: rgba(255,255,255,.78); color: var(--text); border-radius: 13px; padding: 11px 12px; font: inherit; }
+    select, button, input, textarea { border: 1px solid var(--line); background: rgba(255,255,255,.78); color: var(--text); border-radius: 13px; padding: 11px 12px; font: inherit; }
     option { color: #111827; }
     button { cursor: pointer; }
-    input::placeholder { color: rgba(52,81,76,.48); }
+    input::placeholder, textarea::placeholder { color: rgba(52,81,76,.48); }
     .main { padding: 30px; max-width: 1380px; width: 100%; }
     .topbar { display: flex; justify-content: space-between; gap: 18px; align-items: flex-start; margin-bottom: 22px; }
     .kicker { color: var(--gold); font-size: 12px; text-transform: uppercase; letter-spacing: .16em; font-weight: 850; }
@@ -1788,11 +1917,11 @@ function renderEnterpriseAlertsPage(): string {
   <title>Alerts - VaultProof Enterprise</title>
   <style>
     ${ENTERPRISE_RENDERED_APP_BASE_THEME}
-    select, button, input { border: 1px solid var(--line); background: rgba(255,255,255,.78); color: var(--text); border-radius: 13px; padding: 11px 12px; font: inherit; }
+    select, button, input, textarea { border: 1px solid var(--line); background: rgba(255,255,255,.78); color: var(--text); border-radius: 13px; padding: 11px 12px; font: inherit; }
     option { color: #111827; }
     button { cursor: pointer; }
     button[disabled] { cursor: not-allowed; opacity: .58; }
-    input::placeholder { color: rgba(52,81,76,.48); }
+    input::placeholder, textarea::placeholder { color: rgba(52,81,76,.48); }
     .main { padding: 30px; max-width: 1380px; width: 100%; }
     .topbar { display: flex; justify-content: space-between; gap: 18px; align-items: flex-start; margin-bottom: 22px; }
     .kicker { color: var(--gold); font-size: 12px; text-transform: uppercase; letter-spacing: .16em; font-weight: 850; }
@@ -1824,7 +1953,8 @@ function renderEnterpriseAlertsPage(): string {
     .notice.error { color: var(--red); border-color: rgba(185,93,80,.3); }
     .slot-form { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; }
     .slot-form label { display: grid; gap: 7px; color: var(--muted); font-size: 12px; font-weight: 800; letter-spacing: .08em; text-transform: uppercase; }
-    .slot-form input, .slot-form select { width: 100%; }
+    .slot-form input, .slot-form select, .slot-form textarea { width: 100%; }
+    .slot-form textarea { min-height: 78px; resize: vertical; }
     .slot-form .wide { grid-column: span 2; }
     .slot-form-actions { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; margin-top: 14px; }
     .slot-form-note { color: var(--muted); font-size: 13px; line-height: 1.45; margin: 0; }
@@ -2131,10 +2261,10 @@ function renderEnterpriseOperationsPage(pageName: 'activity' | 'projects' | 'inv
   <title>${escapeHtml(pageTitle)} - VaultProof Enterprise</title>
   <style>
     ${ENTERPRISE_RENDERED_APP_BASE_THEME}
-    select, button, input { border: 1px solid var(--line); background: rgba(255,255,255,.78); color: var(--text); border-radius: 13px; padding: 11px 12px; font: inherit; }
+    select, button, input, textarea { border: 1px solid var(--line); background: rgba(255,255,255,.78); color: var(--text); border-radius: 13px; padding: 11px 12px; font: inherit; }
     option { color: #111827; }
     button { cursor: pointer; }
-    input::placeholder { color: rgba(52,81,76,.48); }
+    input::placeholder, textarea::placeholder { color: rgba(52,81,76,.48); }
     .main { padding: 30px; max-width: 1380px; width: 100%; }
     .topbar { display: flex; justify-content: space-between; gap: 18px; align-items: flex-start; margin-bottom: 22px; }
     .kicker { color: var(--gold); font-size: 12px; text-transform: uppercase; letter-spacing: .16em; font-weight: 850; }
@@ -2169,7 +2299,8 @@ function renderEnterpriseOperationsPage(pageName: 'activity' | 'projects' | 'inv
     .row-actions { display: flex; gap: 8px; flex-wrap: wrap; justify-content: flex-end; align-items: start; }
     .slot-form { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; }
     .slot-form label { display: grid; gap: 7px; color: var(--muted); font-size: 12px; font-weight: 800; letter-spacing: .08em; text-transform: uppercase; }
-    .slot-form input, .slot-form select { width: 100%; }
+    .slot-form input, .slot-form select, .slot-form textarea { width: 100%; }
+    .slot-form textarea { min-height: 78px; resize: vertical; }
     .slot-form .wide { grid-column: span 2; }
     .slot-form-actions { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; margin-top: 14px; }
     .slot-form-note { color: var(--muted); font-size: 13px; line-height: 1.45; margin: 0; }
@@ -2232,18 +2363,12 @@ function renderEnterpriseOperationsPage(pageName: 'activity' | 'projects' | 'inv
             <label class="wide">Auth template
               <input id="slotHeaderTemplate" value="Bearer {key}" required />
             </label>
+            <label class="wide">Extra headers JSON
+              <textarea id="slotExtraHeaders" placeholder='{"anthropic-version":"2023-06-01"}'></textarea>
+            </label>
           </div>
           <datalist id="providerSlotOptions">
-            <option value="openai"></option>
-            <option value="anthropic"></option>
-            <option value="resend"></option>
-            <option value="sendgrid"></option>
-            <option value="mailgun"></option>
-            <option value="postmark"></option>
-            <option value="aws-ses"></option>
-            <option value="stripe"></option>
-            <option value="twilio"></option>
-            <option value="snowflake"></option>
+${renderDatalistOptions(ENTERPRISE_PROVIDER_SLOT_PRESETS.map((preset) => preset.id))}
           </datalist>
           <div class="slot-form-actions">
             <button class="primary" type="submit">create slot</button>
@@ -2345,16 +2470,7 @@ function renderEnterpriseOperationsPage(pageName: 'activity' | 'projects' | 'inv
               </label>
             </div>
             <datalist id="manualApiKeyProviderOptions">
-              <option value="openai"></option>
-              <option value="anthropic"></option>
-              <option value="minimax"></option>
-              <option value="resend"></option>
-              <option value="sendgrid"></option>
-              <option value="mailgun"></option>
-              <option value="postmark"></option>
-              <option value="stripe"></option>
-              <option value="twilio"></option>
-              <option value="snowflake"></option>
+${renderDatalistOptions(ENTERPRISE_MANUAL_API_KEY_PROVIDER_OPTIONS)}
             </datalist>
             <div class="slot-form-actions">
               <button class="primary" type="submit">save API key metadata</button>
@@ -2447,18 +2563,8 @@ function renderEnterpriseOperationsPage(pageName: 'activity' | 'projects' | 'inv
       var cachedInventoryRows = [];
       var cachedPolicyRows = [];
       var cachedRolloutRows = [];
-      var providerDefaults = {
-        openai: { upstream: 'https://api.openai.com', header: 'authorization', template: 'Bearer {key}', demoPath: '/v1/models' },
-        anthropic: { upstream: 'https://api.anthropic.com', header: 'x-api-key', template: '{key}', demoPath: '/v1/messages' },
-        resend: { upstream: 'https://api.resend.com', header: 'authorization', template: 'Bearer {key}', emailPath: '/emails' },
-        sendgrid: { upstream: 'https://api.sendgrid.com', header: 'authorization', template: 'Bearer {key}', emailPath: '/v3/mail/send' },
-        mailgun: { upstream: 'https://api.mailgun.net', header: 'authorization', template: 'Basic {key}', emailPath: '/v3/example.com/messages' },
-        postmark: { upstream: 'https://api.postmarkapp.com', header: 'x-postmark-server-token', template: '{key}', emailPath: '/email' },
-        'aws-ses': { upstream: 'https://email.us-east-1.amazonaws.com', header: 'authorization', template: 'Bearer {key}', emailPath: '/' },
-        stripe: { upstream: 'https://api.stripe.com', header: 'authorization', template: 'Bearer {key}', demoPath: '/v1/customers' },
-        twilio: { upstream: 'https://api.twilio.com', header: 'authorization', template: 'Basic {key}', demoPath: '/2010-04-01/Accounts.json' },
-        snowflake: { upstream: 'https://snowflakecomputing.com', header: 'authorization', template: 'Bearer {key}', demoPath: '/api/v2/statements' }
-      };
+      var providerDefaults = ${renderEnterpriseProviderDefaultsJson()};
+      var emailProviderSlugs = ${JSON.stringify(ENTERPRISE_EMAIL_PROVIDER_SLUGS)};
       function byId(id) { return document.getElementById(id); }
       function text(id, value) { var el = byId(id); if (el) el.textContent = value == null ? '' : String(value); }
       function escapeHtml(value) {
@@ -2506,7 +2612,7 @@ function renderEnterpriseOperationsPage(pageName: 'activity' | 'projects' | 'inv
         return '<span class="tag ' + cls + '">' + escapeHtml(value == null ? 'unknown' : value) + '</span>';
       }
       function isEmailProvider(value) {
-        return ['resend', 'sendgrid', 'mailgun', 'postmark', 'aws-ses', 'aws_ses'].indexOf(String(value || '').trim().toLowerCase()) !== -1;
+        return emailProviderSlugs.indexOf(String(value || '').trim().toLowerCase()) !== -1;
       }
       function slotIsEmailProvider(slot) {
         return isEmailProvider(slot.provider) || isEmailProvider(slot.slug);
@@ -3950,10 +4056,14 @@ function renderEnterpriseOperationsPage(pageName: 'activity' | 'projects' | 'inv
         var upstream = byId('slotUpstream');
         var header = byId('slotHeaderName');
         var template = byId('slotHeaderTemplate');
+        var extraHeaders = byId('slotExtraHeaders');
         if (slug && (force || !slug.value || providerDefaults[slug.value])) slug.value = provider;
-        if (upstream && (force || !upstream.value)) upstream.value = defaults.upstream;
+        if (upstream && (force || !upstream.value)) upstream.value = defaults.upstream || '';
         if (header && (force || !header.value)) header.value = defaults.header;
         if (template && (force || !template.value)) template.value = defaults.template;
+        if (extraHeaders && (force || !extraHeaders.value)) {
+          extraHeaders.value = defaults.extraHeaders ? JSON.stringify(defaults.extraHeaders, null, 2) : '';
+        }
       }
       function setProviderSlotFormVisible(visible) {
         var panel = byId('providerSlotFormPanel');
@@ -3980,6 +4090,15 @@ function renderEnterpriseOperationsPage(pageName: 'activity' | 'projects' | 'inv
           auth_header_name: byId('slotHeaderName').value,
           auth_header_template: byId('slotHeaderTemplate').value
         };
+        var extraHeadersText = byId('slotExtraHeaders') && byId('slotExtraHeaders').value.trim();
+        if (extraHeadersText) {
+          try {
+            payload.extra_headers = JSON.parse(extraHeadersText);
+          } catch (error) {
+            notice('Extra headers must be valid JSON.');
+            return;
+          }
+        }
         try {
           await fetchJson('/api/v1/enterprise/projects/' + encodeURIComponent(projectId) + '/providers', {
             method: 'POST',
