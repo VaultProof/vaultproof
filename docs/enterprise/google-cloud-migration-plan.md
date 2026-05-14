@@ -56,7 +56,7 @@ Google Cloud KMS is not a 1:1 replacement for Azure Secure Key Release. Cloud KM
 6. Install Node.js and deploy this repo from GitHub/local source.
 7. Restore or rotate runtime env values into Secret Manager and VM env files.
 8. Wire external HTTPS load balancer for `enterprise.vaultproof.dev`.
-9. Keep VaultProof staff/admin pages out of `enterprise.vaultproof.dev`; wire enterprise account management through `admin.vaultproof.dev` and keep `vaultproof.dev/admin` as the root entry page.
+9. Keep VaultProof staff/admin pages out of `enterprise.vaultproof.dev`; wire enterprise account management through `admin.vaultproof.dev` and keep the root `/admin` route as a no-copy login redirect only.
 10. Run:
 
 ```bash

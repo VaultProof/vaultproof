@@ -16,7 +16,12 @@ import {
   handleInternalAdminRoutes,
   renderInternalAdminPage,
 } from './internal-admin.js';
-import { renderEnterpriseLoginPage, renderEnterpriseLoginScript, renderEnterpriseLogoutPage } from './login-page.js';
+import {
+  renderEnterpriseLoginPage,
+  renderEnterpriseLoginScript,
+  renderEnterpriseLogoutPage,
+  renderInternalAdminLoginPage,
+} from './login-page.js';
 import { handleEnterpriseAlertRoutes } from './routes/alerts.js';
 import { handleEnterpriseAuditRoutes } from './routes/audit.js';
 import { handleEnterpriseExecuteRoutes } from './routes/execute.js';
@@ -420,7 +425,9 @@ async function handleEnterpriseControlPlaneRequestInner(
   }
 
   if (isReadRequest && url.pathname === '/app/login') {
-    return new Response(renderEnterpriseLoginPage(env), {
+    return new Response(internalAdminSurface
+      ? renderInternalAdminLoginPage(env)
+      : renderEnterpriseLoginPage(env), {
       status: 200,
       headers: {
         'content-type': 'text/html; charset=utf-8',

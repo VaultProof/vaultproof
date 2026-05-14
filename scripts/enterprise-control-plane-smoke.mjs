@@ -3540,6 +3540,29 @@ async function assertInternalAdminConsole() {
     throw new Error(`Expected internal admin page to redirect to login, got ${unauthenticatedPageResponse.status}`);
   }
 
+  const adminLoginResponse = await handleEnterpriseControlPlaneRequest(
+    buildHostRequest(INTERNAL_ADMIN_HOSTNAME, '/app/login'),
+    env,
+  );
+  const adminLoginHtml = await adminLoginResponse.text();
+  if (adminLoginResponse.status !== 200
+    || !adminLoginHtml.includes('<title>Login</title>')
+    || !adminLoginHtml.includes('id="loginWithGoogleBtn"')
+    || !adminLoginHtml.includes('id="loginForm"')) {
+    throw new Error(`Expected minimal internal admin login page, got ${adminLoginResponse.status}`);
+  }
+  for (const forbidden of [
+    'Manage enterprise customers',
+    'employee admin console',
+    'Enterprise account administration',
+    'per-business login links',
+    'VaultProof Admin',
+  ]) {
+    if (adminLoginHtml.includes(forbidden)) {
+      throw new Error(`Internal admin login page should not expose ${forbidden}`);
+    }
+  }
+
   const spoofedAdminHostResponse = await handleEnterpriseControlPlaneRequest(
     buildHostRequest(ENTERPRISE_HOSTNAME, '/', {
       headers: {

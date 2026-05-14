@@ -581,6 +581,82 @@ export function renderEnterpriseLoginPage(env: EnterpriseControlPlaneEnv = {}): 
 </html>`, env, 'login');
 }
 
+export function renderInternalAdminLoginPage(env: EnterpriseControlPlaneEnv = {}): string {
+  void env;
+  return `<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="robots" content="noindex,nofollow,noarchive" />
+  <title>Login</title>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.101.1" integrity="sha384-0VpB0wAYDdhWCEv3+IjT0Z9Kgpvszkf70RFX3ro7l4QR5nywxsMaOpmvZKsfRF8I" crossorigin="anonymous"></script>
+  <style>
+    :root { color-scheme: light; --bg:#f6f7f2; --ink:#17231d; --line:#dfe5dc; }
+    * { box-sizing: border-box; }
+    body {
+      min-height: 100vh;
+      margin: 0;
+      display: grid;
+      place-items: center;
+      background: var(--bg);
+      color: var(--ink);
+      font-family: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+    .auth-card {
+      width: min(100% - 32px, 360px);
+      display: grid;
+      gap: 10px;
+    }
+    .hidden { display: none !important; }
+    .form-stack, .oauth-stack { display: grid; gap: 10px; }
+    .form-input, .btn {
+      width: 100%;
+      min-height: 44px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: #fff;
+      color: var(--ink);
+      padding: 0 12px;
+      font: inherit;
+    }
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      font-weight: 700;
+    }
+    .btn-primary { background: #10231d; color: #fff; border-color: #10231d; }
+    .btn-secondary { background: #fff; }
+    #authError, #loginError {
+      border: 1px solid rgba(185, 93, 80, 0.28);
+      border-radius: 8px;
+      color: #8d3228;
+      padding: 10px;
+      font-size: 13px;
+      line-height: 1.4;
+    }
+  </style>
+</head>
+<body>
+  <main id="authCard" class="auth-card">
+    <div id="authError" class="hidden"></div>
+    <div class="oauth-stack">
+      <button id="loginWithGoogleBtn" type="button" class="btn btn-secondary">Login</button>
+    </div>
+    <form id="loginForm" class="form-stack">
+      <input type="email" id="loginEmail" required autocomplete="email" class="form-input" placeholder="Email" />
+      <input type="password" id="loginPassword" required autocomplete="current-password" class="form-input" placeholder="Password" />
+      <div id="loginError" class="hidden"></div>
+      <button type="submit" id="loginBtn" class="btn btn-primary">Login</button>
+    </form>
+  </main>
+  <script src="/app/enterprise-login.js" defer></script>
+</body>
+</html>`;
+}
+
 function replaceJavaScriptConst(source: string, name: string, value: string | undefined): string {
   if (!value?.trim()) return source;
   return source.replace(

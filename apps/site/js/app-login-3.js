@@ -683,22 +683,22 @@
 
   function applyHostModeCopy() {
     if (!IS_INTERNAL_ADMIN_HOST) return;
-    document.title = 'VaultProof Admin Login';
+    document.title = 'Login';
     const kicker = document.querySelector('.auth-kicker');
     const title = document.querySelector('.auth-title');
     const subtitle = document.querySelector('.auth-subtitle');
     const legal = document.querySelector('.legal');
     const backLink = document.querySelector('.back-link a');
     const footnote = document.querySelector('.auth-footnote');
-    if (kicker) kicker.textContent = 'VaultProof staff admin';
-    if (title) title.textContent = 'Employee sign in';
-    if (subtitle) subtitle.textContent = 'Use an approved VaultProof employee account to manage enterprise businesses, users, SSO, and per-business login links.';
-    if (legal) legal.textContent = 'Staff access is allowlisted and audited. Enterprise customer users should sign in at enterprise.vaultproof.dev.';
+    if (kicker) kicker.textContent = '';
+    if (title) title.textContent = 'Login';
+    if (subtitle) subtitle.textContent = '';
+    if (legal) legal.textContent = '';
     if (backLink) {
-      backLink.textContent = 'back to admin';
+      backLink.textContent = '';
       backLink.setAttribute('href', '/');
     }
-    if (footnote) footnote.innerHTML = '<span>admin.vaultproof.dev</span><span>staff console</span>';
+    if (footnote) footnote.innerHTML = '';
   }
 
   async function applyPromoCode() {

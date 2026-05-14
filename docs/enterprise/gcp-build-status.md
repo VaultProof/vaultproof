@@ -68,7 +68,7 @@ Status: `attached and enforced`
 - `https://enterprise.vaultproof.dev/app/control` and `https://enterprise.vaultproof.dev/app/org` use the shared universal sidebar with explicit sidebar typography, hide the legacy static topbar/page frame, and clean old `?org=<uuid>` URLs back to canonical `https://enterprise.vaultproof.dev/app/control` and `https://enterprise.vaultproof.dev/app/org` while preserving the selected org in local storage.
 - Live HTML verification on both long-form URLs confirmed the universal sidebar, URL cleanup script, hidden legacy topbar, explicit sidebar font sizing, and no legacy sidebar/site-theme artifacts.
 - Staff/admin pages belong on `admin.vaultproof.dev`; `enterprise.vaultproof.dev` remains customer-facing only and does not expose `/api/v1/internal-admin/*`.
-- Root admin boundary page at `vaultproof.dev/admin` now points staff to `admin.vaultproof.dev` and keeps enterprise customer login on `enterprise.vaultproof.dev`.
+- Public root admin copy is removed; root `/admin` and `/vp-admin` now contain only a no-copy redirect/fallback login button to the dedicated admin login.
 - Built in this update: the staff admin console can create enterprise businesses, invite/find the first owner, seed SSO metadata, create user invites, and show per-business login links such as `https://enterprise.vaultproof.dev/app/login?org=<business-id>` without exposing service-role keys, OAuth secrets, SAML secrets, or invite tokens.
 - GCP edge now has the `vaultproof-enterprise-admin-cert` certificate attached for `admin.vaultproof.dev`; Cloudflare still needs an `admin` A record to `34.102.179.105` before Google can mark the certificate visible/active.
 

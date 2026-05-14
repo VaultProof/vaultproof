@@ -164,7 +164,7 @@ This is separate from the customer dashboard and must not be exposed through `en
 
 | Surface | URL | What It Does |
 | --- | --- | --- |
-| Root/B2C admin entry | `vaultproof.dev/admin` | Lightweight root boundary page that points VaultProof staff to `admin.vaultproof.dev` and customers to `enterprise.vaultproof.dev`. |
+| Root/B2C admin entry | root `/admin` | No-copy redirect/fallback login button to the dedicated admin login. No product, system split, or operational copy is shown. |
 | Staff admin console | `https://admin.vaultproof.dev/` | Employee-only console for creating enterprise businesses, managing users/invites, setting SSO metadata, and copying per-business login links. It requires a Supabase user session plus explicit employee email/domain allowlist. |
 | Internal admin API | `/api/v1/internal-admin/overview` | Staff API available only on the configured admin host. The browser never receives the Supabase service-role key. Successful overview views are written to the internal admin audit stream. |
 | Internal business create | `POST /api/v1/internal-admin/orgs` | Approval-gated employee action for creating an enterprise business, finding or inviting the first owner through Supabase Auth, seeding owner membership, optionally seeding SSO metadata, and returning business login links without invite tokens or secrets. |
