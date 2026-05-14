@@ -72,13 +72,6 @@ const ENTERPRISE_SIDEBAR_NAV_GROUPS: readonly EnterpriseSidebarNavGroup[] = [
         activePill: 'new',
       },
       {
-        page: 'launch',
-        href: '/app/launch',
-        label: 'Launch checklist',
-        blurb: 'Customer go-live tasks, owners, and next actions.',
-        activePill: 'ready',
-      },
-      {
         page: 'projects',
         href: '/app/projects',
         label: 'Projects',

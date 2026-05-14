@@ -480,7 +480,6 @@ export function renderEnterpriseDashboardPage(env: EnterpriseControlPlaneEnv = {
             <div class="list">
               <div class="row"><div><div class="row-title">Runbooks</div><div class="row-sub">Open the built deploy, evidence, verification, hardening, and cleanup playbooks.</div></div><a class="tag good" href="/app/runbooks">open</a></div>
               <div class="row"><div><div class="row-title">Demo script</div><div class="row-sub">Run the buyer walkthrough with proof path, guardrails, Q&A, and close steps.</div></div><a class="tag good" href="/app/demo">open</a></div>
-              <div class="row"><div><div class="row-title">Launch checklist</div><div class="row-sub">Turn readiness, policy, owners, evidence, alerts, and rollout actions into one customer go-live board.</div></div><a class="tag good" href="/app/launch">open</a></div>
               <div class="row"><div><div class="row-title">Evidence packet</div><div class="row-sub">Assemble runtime readiness, access review, audit, provider posture, and launch proof for customer security review.</div></div><a class="tag good" href="/app/evidence">open</a></div>
               <div class="row"><div><div class="row-title">Release evidence</div><div class="row-sub">Record build tag, approval, verification, rollout state, and rollback path after each enterprise deploy.</div></div><a class="tag good" href="/app/release">open</a></div>
               <div class="row"><div><div class="row-title">Pilot testers</div><div class="row-sub">Prepare tester roster, login status, scenarios, feedback, and blockers for paid-user review sessions.</div></div><a class="tag good" href="/app/testers">open</a></div>
@@ -513,11 +512,6 @@ export function renderEnterpriseDashboardPage(env: EnterpriseControlPlaneEnv = {
               <div class="feature-tags"><span class="feature-tag">live</span><span class="feature-tag">demo</span></div>
               <h3>Demo script</h3>
               <p>Buyer walkthrough with live workspace facts, proof path, safety guardrails, common objections, paid-pilot close steps, and a copyable talk track.</p>
-            </a>
-            <a class="feature-card" href="/app/launch">
-              <div class="feature-tags"><span class="feature-tag">live</span><span class="feature-tag">go-live</span></div>
-              <h3>Launch checklist</h3>
-              <p>Customer go-live board with live readiness, owner tasks, policy evidence, alerts, rollout steps, and a copyable launch brief.</p>
             </a>
             <a class="feature-card" href="/app/evidence">
               <div class="feature-tags"><span class="feature-tag">live</span><span class="feature-tag">proof</span></div>

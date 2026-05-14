@@ -801,6 +801,7 @@ export function renderInternalAdminPage(): string {
       <a class="nav-link" href="#support"><span>Support</span></a>
       <a class="nav-link" href="#org-detail"><span>Org detail</span></a>
       <div class="nav-label">proof</div>
+      <a class="nav-link" href="/app/launch"><span>Launch board</span><span class="tag">staff</span></a>
       <a class="nav-link" href="#runtime"><span>Runtime</span></a>
       <a class="nav-link" href="#audit"><span>Audit</span></a>
       <div class="sidebar-note"><strong>Safe first slice</strong><br />Read visibility is live. Employee writes stay disabled unless the approval gate and secret are enabled.</div>
@@ -814,6 +815,7 @@ export function renderInternalAdminPage(): string {
         </div>
         <div class="toolbar">
           <button id="refreshBtn" class="primary" type="button">refresh</button>
+          <a class="action" href="/app/launch">launch board</a>
           <a class="action" href="/app/login">employee sign in</a>
         </div>
       </div>

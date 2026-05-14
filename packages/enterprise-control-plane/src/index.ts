@@ -458,6 +458,37 @@ async function handleEnterpriseControlPlaneRequestInner(
     });
   }
 
+  if (isReadRequest && (url.pathname === '/app/launch' || url.pathname === '/app/launch.html')) {
+    if (!internalAdminSurface) {
+      return Response.json(
+        {
+          error: 'Launch board is available only on the VaultProof internal admin host.',
+        },
+        {
+          status: 404,
+          headers: {
+            'cache-control': 'no-store',
+            'x-robots-tag': 'noindex,nofollow',
+          },
+        },
+      );
+    }
+
+    const authorized = await authorizeInternalAdmin(request, env);
+    if (authorized instanceof Response) {
+      return redirectToInternalAdminLogin(url);
+    }
+
+    return new Response(renderEnterprisePlannedAppPage('launch', env), {
+      status: 200,
+      headers: {
+        'content-type': 'text/html; charset=utf-8',
+        'cache-control': 'no-store',
+        'x-robots-tag': 'noindex,nofollow',
+      },
+    });
+  }
+
   if (isReadRequest && (url.pathname === '/app/control' || url.pathname === '/app/control.html')) {
     return new Response(renderEnterpriseControlPage(env), {
       status: 200,

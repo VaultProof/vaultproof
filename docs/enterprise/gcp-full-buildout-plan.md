@@ -26,7 +26,7 @@ Already built:
 - Load-balancer backend custom origin-lock header injection
 - Cloud Armor edge policy helper for WAF-style scanner blocking and coarse per-IP rate limits
 - Customer demo script page at `https://enterprise.vaultproof.dev/app/demo` for buyer walkthrough, proof path, guardrails, Q&A, and close steps
-- Customer launch checklist page at `https://enterprise.vaultproof.dev/app/launch`, including safe-to-pilot go/no-go board with browser-local operator evidence status, timestamps, and stale holds
+- Staff-only launch checklist page at `https://admin.vaultproof.dev/app/launch`, including safe-to-pilot go/no-go board with browser-local operator evidence status, timestamps, and stale holds; `https://enterprise.vaultproof.dev/app/launch` is intentionally removed from the customer host
 - Customer evidence packet page at `https://enterprise.vaultproof.dev/app/evidence`, including go/no-go launch decision summary and blockers
 - Customer release evidence center at `https://enterprise.vaultproof.dev/app/release` for build/image tag, approver, verifier, rollout state, rollback owner/path, and customer-safe release proof
 - Customer launch support room at `https://enterprise.vaultproof.dev/app/support` for support model, internal admin boundary, approval gates, handoff checklist, and copyable support brief
@@ -525,7 +525,7 @@ Build after first customer proof:
 - Customer-facing docs reviewed for Azure-era leftovers.
 - Budget and monitoring reviewed daily during launch week.
 - Cloud Armor policy is attached and `npm run verify:gcp-enterprise-cloud-armor` passes.
-- Customer launch checklist and go/no-go board at `https://enterprise.vaultproof.dev/app/launch` are reviewed with the pilot user, including browser-local manual evidence status/timestamps.
+- Staff launch checklist and go/no-go board at `https://admin.vaultproof.dev/app/launch` are reviewed by VaultProof staff before pilot testing, including browser-local manual evidence status/timestamps.
 - Customer evidence packet at `https://enterprise.vaultproof.dev/app/evidence` is reviewed with the pilot user and includes the current go/no-go launch decision and blockers.
 - Release evidence at `https://enterprise.vaultproof.dev/app/release` is reviewed after each deploy for build/image tag, approval, verification, rollout state, and rollback owner/path.
 - Paid-pilot tester readiness at `https://enterprise.vaultproof.dev/app/testers` is reviewed before guided customer testing for roster, login pass, scenario assignment, feedback notes, and blocker ownership.

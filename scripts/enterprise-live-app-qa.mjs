@@ -14,7 +14,6 @@ const requiredAppPaths = [
   '/app',
   '/app/',
   '/app/dashboard',
-  '/app/launch',
   '/app/evidence',
   '/app/security-review',
   '/app/control',
@@ -178,6 +177,13 @@ async function assertPublicPagesAndLinks() {
   return pathsToCheck;
 }
 
+async function assertLaunchMovedToAdmin() {
+  const { response, text } = await fetchText('/app/launch');
+  if (response.status !== 404 || !text.includes('internal admin host')) {
+    throw new Error(`/app/launch should be removed from enterprise host and moved to admin host, got HTTP ${response.status}: ${text.slice(0, 200)}`);
+  }
+}
+
 function parseLoginScriptConfig(scriptText) {
   const supabaseUrl = scriptText.match(/const SUPABASE_URL = ["']([^"']+)["']/)?.[1] || '';
   const supabaseAnonKey = scriptText.match(/const SUPABASE_ANON_KEY = ["']([^"']+)["']/)?.[1] || '';
@@ -249,6 +255,7 @@ async function assertAuthenticatedEnterpriseApis(accessToken) {
 
 const readiness = await assertReadiness();
 const links = await assertPublicPagesAndLinks();
+await assertLaunchMovedToAdmin();
 const accessToken = await signInDemoUser();
 const authResult = await assertAuthenticatedEnterpriseApis(accessToken);
 

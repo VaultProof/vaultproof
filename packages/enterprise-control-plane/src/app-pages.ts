@@ -2869,7 +2869,7 @@ function renderEnterpriseOperationsPage(pageName: 'activity' | 'projects' | 'inv
             control: '/app/control',
             provider_slots: '/app/keys',
             activity: '/app/activity',
-            launch: '/app/launch',
+            security_review: '/app/security-review',
             evidence: '/app/evidence',
             audit_csv_30_days: evidenceExportHref('/api/v1/enterprise/audit?format=csv&days=30'),
             access_review_csv: evidenceExportHref('/api/v1/enterprise/members/access-review?format=csv')
@@ -2903,7 +2903,7 @@ function renderEnterpriseOperationsPage(pageName: 'activity' | 'projects' | 'inv
           '<div class="row"><div><div class="row-title">Control policy</div><div class="row-sub">Confirm origins, provider allowlists, upstream hosts, path prefixes, gateways, and rate limits.</div></div><a class="tag good" href="/app/control">control</a></div>',
           '<div class="row"><div><div class="row-title">Provider slots</div><div class="row-sub">Review material mode, rotation status, protected email dry-run, and emergency revoke posture.</div></div><a class="tag good" href="/app/keys">provider slots</a></div>',
           '<div class="row"><div><div class="row-title">Traffic and audit evidence</div><div class="row-sub">Use Activity, Audit CSV, and Access Review CSV for customer-safe review exports.</div></div><span><a class="tag" href="/app/activity">activity</a><a class="tag" href="' + escapeHtml(evidenceExportHref('/api/v1/enterprise/audit?format=csv&days=30')) + '">audit CSV</a><a class="tag" href="' + escapeHtml(evidenceExportHref('/api/v1/enterprise/members/access-review?format=csv')) + '">access review CSV</a></span></div>',
-          '<div class="row"><div><div class="row-title">Launch and evidence packets</div><div class="row-sub">Use Launch and Evidence to show remaining blockers before pilot traffic.</div></div><span><a class="tag" href="/app/launch">launch</a><a class="tag" href="/app/evidence">evidence</a></span></div>'
+          '<div class="row"><div><div class="row-title">Evidence and review packets</div><div class="row-sub">Use Evidence and Security Review to show remaining blockers before pilot traffic.</div></div><span><a class="tag" href="/app/evidence">evidence</a><a class="tag" href="/app/security-review">security review</a></span></div>'
         ].join('');
       }
       function renderInventory() {
@@ -3150,7 +3150,7 @@ function renderEnterpriseOperationsPage(pageName: 'activity' | 'projects' | 'inv
             control: '/app/control',
             provider_slots: '/app/keys',
             activity: '/app/activity',
-            launch: '/app/launch',
+            security_review: '/app/security-review',
             evidence: '/app/evidence'
           },
           secrets_excluded: [
@@ -3453,7 +3453,7 @@ function renderEnterpriseOperationsPage(pageName: 'activity' | 'projects' | 'inv
             control: '/app/control',
             provider_slots: '/app/keys',
             activity: '/app/activity',
-            launch: '/app/launch',
+            security_review: '/app/security-review',
             evidence: '/app/evidence'
           },
           secrets_excluded: [
@@ -3480,7 +3480,7 @@ function renderEnterpriseOperationsPage(pageName: 'activity' | 'projects' | 'inv
           '<div class="row"><div><div class="row-title">Choose first workload</div><div class="row-sub">Pick one API inventory row, set app/gateway owners, select the integration mode, and define the target date.</div></div><a class="tag good" href="/app/inventory">inventory</a></div>',
           '<div class="row"><div><div class="row-title">Close rollout blockers</div><div class="row-sub">Resolve policy drift, provider material, caller lock, dry-run evidence, and rollback gaps before canary.</div></div><span><a class="tag" href="/app/policy">policy</a><a class="tag" href="/app/control">control</a></span></div>',
           '<div class="row"><div><div class="row-title">Run copy-safe test</div><div class="row-sub">Use the snippet button for a dry-run request with VaultProof auth placeholders, gateway marker, and no raw provider key.</div></div><a class="tag" href="/app/keys">provider slots</a></div>',
-          '<div class="row"><div><div class="row-title">Launch evidence</div><div class="row-sub">Export vaultproof_enterprise_integration_rollout into Evidence and Security Review before live traffic.</div></div><span><a class="tag" href="/app/evidence">evidence</a><a class="tag" href="/app/launch">launch</a></span></div>'
+          '<div class="row"><div><div class="row-title">Launch evidence</div><div class="row-sub">Export vaultproof_enterprise_integration_rollout into Evidence and Security Review before live traffic.</div></div><span><a class="tag" href="/app/evidence">evidence</a><a class="tag" href="/app/security-review">security review</a></span></div>'
         ].join('');
       }
       function renderRollout() {
@@ -5017,8 +5017,8 @@ function renderEnterpriseSupportPage(pageName: EnterpriseSupportPageName): strin
         { id: 'first-workload-owner-accepted', title: 'First workload owner accepted', sub: 'The first protected workflow has an app owner, provider path, expected volume, and rollback owner.', action: 'Review /app/pilot, /app/inventory, and /app/rollout with the workload owner.', critical: true },
         { id: 'support-handoff-scheduled', title: 'Support handoff scheduled', sub: 'Launch-week support owner, escalation path, and optional incident-response add-on boundary are clear.', action: 'Review /app/support and schedule the customer support handoff.', critical: true },
         { id: 'capacity-renewal-reviewed', title: 'Capacity and renewal reviewed', sub: 'Monthly calls, provider slots, seats, renewal/review date, retention label, and billing owner have been reviewed.', action: 'Confirm /app/entitlements against the paid-pilot contract or demo acceptance.', critical: true },
-        { id: 'key-posture-accepted', title: 'Key posture accepted or rotation scheduled', sub: 'Shared/demo-only key posture is explicitly accepted for the demo or rotation is scheduled before paid customer data.', action: 'Use /app/launch key-rotation evidence and /app/keys provider-slot posture before the customer test.', critical: true },
-        { id: 'customer-testing-window-scheduled', title: 'Customer testing window scheduled', sub: 'The customer testing date, tester roster, first scenario, rollback owner, and feedback capture path are known.', action: 'Review /app/testers, /app/launch, and /app/pilot-success before the guided session.', critical: true }
+        { id: 'key-posture-accepted', title: 'Key posture accepted or rotation scheduled', sub: 'Shared/demo-only key posture is explicitly accepted for the demo or rotation is scheduled before paid customer data.', action: 'Use /app/evidence key-rotation proof and /app/keys provider-slot posture before the customer test.', critical: true },
+        { id: 'customer-testing-window-scheduled', title: 'Customer testing window scheduled', sub: 'The customer testing date, tester roster, first scenario, rollback owner, and feedback capture path are known.', action: 'Review /app/testers, /app/evidence, and /app/pilot-success before the guided session.', critical: true }
       ];
       var PAID_ONBOARDING_MANUAL_STALE_MS = 14 * 24 * 60 * 60 * 1000;
       function getPaidOnboardingManualState() {
@@ -5629,7 +5629,7 @@ function renderEnterpriseSupportPage(pageName: EnterpriseSupportPageName): strin
             control: '/app/control',
             provider_slots: '/app/keys',
             activity: '/app/activity',
-            launch: '/app/launch',
+            security_review: '/app/security-review',
             evidence: '/app/evidence'
           },
           secrets_excluded: [
@@ -5792,7 +5792,7 @@ function renderEnterpriseSupportPage(pageName: EnterpriseSupportPageName): strin
             control: '/app/control',
             provider_slots: '/app/keys',
             activity: '/app/activity',
-            launch: '/app/launch',
+            security_review: '/app/security-review',
             evidence: '/app/evidence'
           },
           snippets: {
@@ -5948,7 +5948,7 @@ function renderEnterpriseSupportPage(pageName: EnterpriseSupportPageName): strin
             provider_slots: '/app/keys',
             policy_drift: '/app/policy',
             rollout_manager: '/app/rollout',
-            launch: '/app/launch',
+            security_review: '/app/security-review',
             evidence: '/app/evidence',
             audit: '/app/audit'
           },
@@ -6090,7 +6090,6 @@ function renderEnterpriseSupportPage(pageName: EnterpriseSupportPageName): strin
           workflow_links: {
             release_evidence: '/app/release',
             evidence_packet: '/app/evidence',
-            launch_board: '/app/launch',
             rollout_manager: '/app/rollout',
             security_review: '/app/security-review',
             activity: '/app/activity',
@@ -6258,7 +6257,6 @@ function renderEnterpriseSupportPage(pageName: EnterpriseSupportPageName): strin
             testers: '/app/testers',
             members: '/app/members',
             org_sso: '/app/org',
-            launch: '/app/launch',
             evidence: '/app/evidence',
             api_proxy_self_test: '/app/keys',
             security_review: '/app/security-review',
@@ -6406,15 +6404,15 @@ function renderEnterpriseSupportPage(pageName: EnterpriseSupportPageName): strin
             budget_monitoring: manualEvidenceSummary(budget)
           },
           launch_week_workflow: [
-            'Review /readiness, /app/launch, /app/evidence, /app/activity, /app/audit, /app/keys, and /app/alerts before each customer test.',
+            'Review /readiness, /app/evidence, /app/activity, /app/audit, /app/keys, /app/alerts, and /app/support before each customer test.',
             'Record customer-visible notes in the launch brief or evidence packet, not in chat threads.',
             'Use the separate VaultProof staff/admin system only for employee support triage and approval-gated administrative actions.',
             'Escalate real incidents to the customer incident-response team unless 24-hour response is sold as an add-on.',
             'Export audit/access-review evidence after policy, key, member, or support-action changes.'
           ],
           customer_handoff: [
-            'Launch brief from /app/launch.',
             'Evidence JSON from /app/evidence.',
+            'Support brief from /app/support.',
             'Audit CSV and access-review CSV.',
             'API proxy self-test output from /app/keys.',
             'Named rollback owner/path and budget/monitoring review status.'
@@ -6638,7 +6636,7 @@ function renderEnterpriseSupportPage(pageName: EnterpriseSupportPageName): strin
             { title: 'Paid Onboarding', href: '/app/onboarding', detail: 'Customer activation board for owners, login handoff, first workload scope, support boundary, tester window, and JSON proof.', tag: onboarding.status, tone: onboarding.status === 'ready_for_customer_testing' ? 'good' : 'warn' },
             { title: 'Alerts', href: '/app/alerts', detail: 'Destinations, delivery logs, dispatch runs, and test-send workflow.', tag: 'monitoring', tone: 'good' },
             { title: 'Provider slots', href: '/app/keys', detail: 'Provider material mode, rotation status, dry-run self-test, email demo, and emergency revoke.', tag: 'keys', tone: providerCount ? 'good' : 'warn' },
-            { title: 'Launch board', href: '/app/launch', detail: 'Go/no-go decision, operator-confirmed manual evidence, stale holds, and customer tasks.', tag: goNoGo.status, tone: goNoGo.status === 'go' ? 'good' : 'warn' },
+            { title: 'Launch support', href: '/app/support', detail: 'Support model, staff handoff, operator boundaries, and customer tasks.', tag: support.status, tone: support.status === 'ready' ? 'good' : 'warn' },
             { title: 'Pilot success', href: '/app/pilot-success', detail: 'Milestones, live checks, weekly customer update, blockers, and expansion/no-go path.', tag: 'success', tone: 'good' },
             { title: 'Technical guide', href: '/app/technical-guide', detail: 'Architecture, identity, network, key custody, caller lock, evidence, and troubleshooting answers.', tag: 'guide', tone: 'good' },
             { title: 'Runbooks', href: '/app/runbooks', detail: 'Read-only verification commands, evidence bundle, launch gate, and gated infrastructure actions.', tag: 'ops', tone: 'good' }
@@ -6821,7 +6819,7 @@ function renderEnterpriseSupportPage(pageName: EnterpriseSupportPageName): strin
           close_steps: [
             'Confirm business, security, identity, network, developer, and incident owners.',
             'Approve the first workload, provider path, expected monthly calls, and success metric.',
-            'Review /app/security-review, /app/evidence, /app/launch, and /app/runbooks.',
+            'Review /app/security-review, /app/evidence, /app/support, and /app/runbooks.',
             'Sign paid-pilot order form with support and incident-response terms.',
             'Schedule launch-week validation and rollback owner review.'
           ],
@@ -6898,7 +6896,7 @@ function renderEnterpriseSupportPage(pageName: EnterpriseSupportPageName): strin
           'Review links:',
           '- Security review: ' + location.origin + '/app/security-review',
           '- Evidence packet: ' + location.origin + '/app/evidence',
-          '- Launch board: ' + location.origin + '/app/launch',
+          '- Launch support: ' + location.origin + '/app/support',
           '- Runbooks: ' + location.origin + '/app/runbooks',
           '',
           'Secrets excluded:',
@@ -6975,7 +6973,7 @@ function renderEnterpriseSupportPage(pageName: EnterpriseSupportPageName): strin
             { title: 'Security review', href: '/app/security-review', detail: 'Architecture, controls, evidence links, open items, and customer answers.', tag: 'review', tone: 'good' },
             { title: 'Evidence packet', href: '/app/evidence', detail: 'Customer-safe proof packet with readiness, launch, operations, support, and monitoring evidence.', tag: 'packet', tone: 'good' },
             { title: 'Activity', href: '/app/activity', detail: 'Runtime traffic, latency, denials, errors, provider request IDs, and attestation hints.', tag: totalCalls ? 'observed' : 'pending', tone: totalCalls ? 'good' : 'warn' },
-            { title: 'Launch board', href: '/app/launch', detail: 'Go/no-go decision, manual launch evidence, stale holds, and blockers.', tag: goNoGo.status, tone: goNoGo.status === 'go' ? 'good' : 'warn' },
+            { title: 'Launch support', href: '/app/support', detail: 'Support model, staff handoff, operator boundaries, and customer blockers.', tag: 'support', tone: 'good' },
             { title: 'Alerts', href: '/app/alerts', detail: 'Alert destinations, delivery logs, dispatch runs, and test-send workflow.', tag: 'monitor', tone: 'good' }
           ],
           secrets_excluded: [
@@ -7168,7 +7166,6 @@ function renderEnterpriseSupportPage(pageName: EnterpriseSupportPageName): strin
             plans: '/app/plans',
             onboarding: '/app/onboarding',
             pilot_proposal: '/app/pilot',
-            launch_board: '/app/launch',
             support_room: '/app/support',
             security_review: '/app/security-review'
           },
@@ -7384,7 +7381,6 @@ function renderEnterpriseSupportPage(pageName: EnterpriseSupportPageName): strin
           exports: {
             evidence_packet: '/app/evidence',
             entitlements: '/app/entitlements',
-            launch_board: '/app/launch',
             pilot_proposal: '/app/pilot',
             pilot_testers: '/app/testers',
             pilot_success: '/app/pilot-success',
@@ -7810,7 +7806,6 @@ function renderEnterpriseSupportPage(pageName: EnterpriseSupportPageName): strin
             entitlements: '/app/entitlements',
             paid_onboarding: '/app/onboarding',
             provider_slots: '/app/keys',
-            launch_checklist: '/app/launch',
             security_review: '/app/security-review',
             pilot_proposal: '/app/pilot',
             pilot_success: '/app/pilot-success'
@@ -7893,7 +7888,7 @@ function renderEnterpriseSupportPage(pageName: EnterpriseSupportPageName): strin
           row('Traffic evidence', number(packet.usage_summary.proxy_calls) + ' proxy calls, ' + number(packet.usage_summary.denied_calls) + ' denied, ' + number(packet.usage_summary.error_calls) + ' errors.', packet.usage_summary.proxy_calls ? 'observed' : 'pending', packet.usage_summary.error_calls || packet.usage_summary.denied_calls ? 'warn' : 'good')
         ].join('');
         byId('evidenceWorkflowList').innerHTML = [
-          linkRow('Review launch checklist', 'Confirm owners, policy, evidence exports, alerts, rollback, and first workload scope.', '/app/launch', 'launch', 'good'),
+          linkRow('Review launch support', 'Confirm support boundary, customer handoff, escalation path, and first workload scope.', '/app/support', 'support', 'good'),
           linkRow('Review policy control', 'Confirm origins, gateways, CIDRs, upstream hosts, path prefixes, and rate limits.', '/app/control', 'control', 'good'),
           linkRow('Review policy drift', 'Confirm every critical/high drift row is closed, blocked intentionally, or accepted with owner and expiration date.', '/app/policy', 'policy drift', policyDrift.status === 'hold' ? 'warn' : 'good'),
           linkRow('Review integration rollout', 'Confirm first workload, owners, target date, canary percentage, rollback path, and dry-run evidence before live traffic.', '/app/rollout', 'rollout', integrationRollout.status === 'hold' ? 'warn' : 'good'),
@@ -8060,7 +8055,7 @@ function renderEnterpriseSupportPage(pageName: EnterpriseSupportPageName): strin
           linkRow('Paid onboarding', 'Show customer activation owners, login handoff, first workload scope, support handoff, key posture, and testing window.', '/app/onboarding', 'onboarding', onboarding.status === 'ready_for_customer_testing' ? 'good' : 'warn'),
           linkRow('Scanner exposure intake', 'Show redacted repo scan findings, owner, rotation state, evidence reference, and secret boundary.', '/app/scanner', 'scanner', scannerExposure.status === 'hold' ? 'warn' : 'good'),
           linkRow('Launch support room', 'Show support model, internal admin boundary, approval gates, and customer handoff package.', '/app/support', 'support', support.status === 'ready' ? 'good' : 'warn'),
-          linkRow('Go/no-go board', 'Show the current launch decision, manual evidence rows, stale holds, and blockers.', '/app/launch', 'board', goNoGo.status === 'go' ? 'good' : 'warn')
+          linkRow('Go/no-go summary', 'Show the current launch decision, remaining blockers, and customer-safe evidence packet.', '/app/evidence', 'evidence', goNoGo.status === 'go' ? 'good' : 'warn')
         ].join('');
         byId('demoProofList').innerHTML = [
           row('GCP confidential runtime', productionReady ? 'Readiness reports production-ready with the expected GCP confidential security profile.' : 'Readiness is not green; use this as a blocker instead of a claim.', productionReady ? 'ready' : 'blocked', productionReady ? 'good' : 'bad'),
@@ -8111,7 +8106,7 @@ function renderEnterpriseSupportPage(pageName: EnterpriseSupportPageName): strin
           linkRow('Pilot testers', 'Prepare tester roster, login rehearsal state, scenario ownership, and blocker notes before the guided session.', '/app/testers', 'testers', pilotTesters.status === 'ready_for_guided_testing' ? 'good' : 'warn'),
           linkRow('Paid onboarding', 'Confirm activation owners, login handoff, first workload scope, support handoff, capacity review, key posture, and testing window.', '/app/onboarding', 'onboarding', onboarding.status === 'ready_for_customer_testing' ? 'good' : 'warn'),
           linkRow('Security review packet', 'Give customer reviewers the concise controls, evidence links, open items, and common answers packet.', '/app/security-review', 'review', securityReview.status === 'ready_for_review' ? 'good' : 'warn'),
-          linkRow('Launch evidence', 'Use Launch to prove remaining blockers are visible and assigned before customer traffic.', '/app/launch', 'launch', goNoGo.status === 'go' ? 'good' : 'warn'),
+          linkRow('Launch support', 'Use Support to prove support boundaries, handoff, and escalation paths are visible before customer traffic.', '/app/support', 'support', support.status === 'ready' ? 'good' : 'warn'),
           linkRow('Release evidence', 'Record the active build tag, approver, verification result, rollout state, rollback path, and customer-safe notes after each deploy.', '/app/release', 'release', releaseEvidence.status === 'ready_with_review' ? 'good' : 'warn'),
           linkRow('Support room', 'Use Support to explain launch-week support, evidence handoff, internal admin boundary, and approval gates.', '/app/support', 'support', support.status === 'ready' ? 'good' : 'warn'),
           linkRow('Runbooks', 'Use Runbooks for verification, deploy, evidence, secrets, DNS, edge, and cleanup commands.', '/app/runbooks', 'runbooks', 'good'),
@@ -8219,7 +8214,7 @@ function renderEnterpriseSupportPage(pageName: EnterpriseSupportPageName): strin
           '<div class="tester-head"><div><div class="row-title">' + escapeHtml(record.tester_name || 'Tester not named') + '</div>' +
           '<div class="row-sub">' + escapeHtml((record.team || 'team not set') + ' - ' + testerScenarioLabel(record.scenario) + ' - updated ' + rel(record.updated_at || record.created_at)) + '</div>' +
           '<div><span class="tag ' + testerStatusTone(record.status) + '">' + escapeHtml(record.status || 'not_invited') + '</span><span class="tag">' + escapeHtml(record.role || 'security_reviewer') + '</span><span class="tag">' + escapeHtml(record.owner || 'owner missing') + '</span></div></div>' +
-          '<div class="row-actions"><button type="button" data-action="remove-pilot-tester" data-tester-record-id="' + escapeHtml(record.id) + '">remove</button><a class="tag" href="/app/members">members</a><a class="tag" href="/app/launch">launch</a></div></div>' +
+          '<div class="row-actions"><button type="button" data-action="remove-pilot-tester" data-tester-record-id="' + escapeHtml(record.id) + '">remove</button><a class="tag" href="/app/members">members</a><a class="tag" href="/app/evidence">evidence</a></div></div>' +
           '<div class="tester-fields">' +
           testerInput(record, 'tester_name', 'tester name/email', 'security reviewer or tester@example.com') +
           testerInput(record, 'team', 'team', 'Security, platform, app team') +
@@ -8322,7 +8317,7 @@ function renderEnterpriseSupportPage(pageName: EnterpriseSupportPageName): strin
         byId('testerWorkflowList').innerHTML = [
           linkRow('Invite or confirm testers', 'Use Members to confirm organization access before the guided session.', '/app/members', 'members', 'good'),
           linkRow('Confirm Org + SSO', 'Use Org + SSO to confirm login path and company sign-in posture.', '/app/org', 'SSO', packet.organization.sso_provider_status === 'configured' ? 'good' : 'warn'),
-          linkRow('Run launch checks', 'Use Launch for strict login QA, Cloud Armor, key rotation, rollback, and budget evidence.', '/app/launch', 'launch', 'good'),
+          linkRow('Review launch proof', 'Use Evidence for strict login QA, Cloud Armor, key rotation, rollback, and budget evidence summaries.', '/app/evidence', 'evidence', 'good'),
           linkRow('Walk evidence packet', 'Use Evidence to show customer-safe proof and explain secret exclusions.', '/app/evidence', 'packet', 'good'),
           linkRow('Run API self-test', 'Use Provider Slots for protected dry-run and blocked-recipient denial evidence.', '/app/keys', 'self-test', 'good'),
           linkRow('Review security packet', 'Use Security Review for procurement and technical reviewer questions.', '/app/security-review', 'review', 'good'),
@@ -8726,7 +8721,6 @@ function renderEnterpriseSupportPage(pageName: EnterpriseSupportPageName): strin
             linkRow('Entitlements', 'Confirm contract status, capacity, owners, support tier, renewal date, and paid-user guardrails before onboarding.', '/app/entitlements', 'entitlements', 'good'),
             linkRow('Paid onboarding', 'Confirm activation owners, login handoff, first workload scope, support handoff, key posture, and customer testing window.', '/app/onboarding', 'onboarding', 'good'),
             linkRow('Pilot testers', 'Prepare tester roster, login status, scenario assignment, feedback, and blockers before the guided session.', '/app/testers', 'testers', 'good'),
-            linkRow('Launch checklist', 'Review owners, first workload, policy, alerts, evidence exports, and rollback owner.', '/app/launch', 'launch', 'good'),
             linkRow('Launch support', 'Review support model, internal admin boundary, approval gates, and customer handoff package.', '/app/support', 'support', 'good'),
             linkRow('Technical guide', 'Answer architecture, key custody, caller-lock, GCP runtime, and troubleshooting questions.', '/app/technical-guide', 'guide', 'good'),
             linkRow('Runbooks', 'Keep verification, evidence, deploy, DNS, edge, SSH, and cleanup commands visible to operators.', '/app/runbooks', 'runbooks', 'good')
