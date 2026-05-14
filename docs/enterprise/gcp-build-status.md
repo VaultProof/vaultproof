@@ -1,6 +1,6 @@
 # VaultProof GCP Build Status
 
-Last updated: 2026-05-14T07:28:27.646Z
+Last updated: 2026-05-14T07:46:26.686Z
 
 This file is the living inventory of what has been built for VaultProof on Google Cloud. It is refreshed after every successful enterprise image build by `infra/gcp/enterprise-secure-runtime/build-images.sh`.
 
@@ -47,18 +47,19 @@ Status: `attached and enforced`
 
 ## App Shell Notes
 
-- Build `1ace89e5` is the current deployed GCP image tag for both control plane and executor containers.
+- Build `08061081` is the current deployed GCP image tag for both control plane and executor containers.
 - Homepage hero headline is `Active Key Protection for every API call.`
 - All customer-facing enterprise pages below live under `https://enterprise.vaultproof.dev`; route-only mentions are in-app links on that subdomain.
-- `https://enterprise.vaultproof.dev/app/demo` is the buyer walkthrough: live workspace facts, proof path, identity/OAuth proof kit, key-rotation proof kit, pilot operations proof kit, API proxy self-test kit, monitoring evidence kit, paid-pilot tester readiness, safety guardrails, objection answers, paid-pilot close steps, and a copyable demo talk track generated without secrets.
+- `https://enterprise.vaultproof.dev/app/demo` is the buyer walkthrough: live workspace facts, proof path, identity/OAuth proof kit, key-rotation proof kit, pilot operations proof kit, API proxy self-test kit, monitoring evidence kit, paid-pilot tester readiness, paid-customer onboarding, safety guardrails, objection answers, paid-pilot close steps, and a copyable demo talk track generated without secrets.
 - `https://enterprise.vaultproof.dev/app/launch` is the customer go-live board: live readiness summary, auto/manual customer tasks, browser-saved checklist progress, safe-to-pilot go/no-go readiness, browser-local status/timestamp evidence with stale holds, workflow links, identity/OAuth, key-rotation, and pilot-operations evidence packets, and a copyable launch brief.
-- `https://enterprise.vaultproof.dev/app/evidence` is the customer proof packet: runtime readiness, go/no-go launch decision and blockers, identity/login QA evidence, key-rotation/demo-only acceptance evidence, pilot operations rollback and budget/monitoring evidence, API proxy self-test evidence, API inventory proof, policy drift proof, integration rollout proof, scanner exposure proof, release evidence proof, paid-pilot tester proof, launch support readiness, monitoring evidence with alert workflow/Cloud Armor/budget guardrails, access-review and audit export links, provider posture, rollout workflow, and copy/download JSON evidence summary without secrets.
+- `https://enterprise.vaultproof.dev/app/evidence` is the customer proof packet: runtime readiness, go/no-go launch decision and blockers, identity/login QA evidence, key-rotation/demo-only acceptance evidence, pilot operations rollback and budget/monitoring evidence, API proxy self-test evidence, API inventory proof, policy drift proof, integration rollout proof, scanner exposure proof, release evidence proof, paid-pilot tester proof, paid onboarding proof, launch support readiness, monitoring evidence with alert workflow/Cloud Armor/budget guardrails, access-review and audit export links, provider posture, rollout workflow, and copy/download JSON evidence summary without secrets.
 - `https://enterprise.vaultproof.dev/app/inventory` is the customer API inventory board: metadata-only API surfaces from existing projects, provider slots, caller-lock policy, project health, and access-log rollups; browser-local owner/environment/risk/review annotations; protected/missing-provider/policy-incomplete/no-traffic/stale/review-due posture; workflow links; and copyable `vaultproof_enterprise_api_inventory` JSON without secrets.
 - `https://enterprise.vaultproof.dev/app/policy` is the customer policy drift board: control-gap rows from existing project/provider/policy/inventory/traffic evidence; browser-local accepted-risk records with owner, reason, risk, compensating control, expiration date, approval status, and next action; launch hold summary; workflow links; and copyable `vaultproof_enterprise_policy_drift` JSON without secrets.
 - `https://enterprise.vaultproof.dev/app/rollout` is the customer integration rollout board: workload cutover rows from API inventory/policy/traffic evidence; browser-local application, integration mode, owner, target date, canary, test status, rollback, and support metadata; derived blockers; copy-safe dry-run snippets with placeholders; and copyable `vaultproof_enterprise_integration_rollout` JSON without secrets.
 - `https://enterprise.vaultproof.dev/app/scanner` is the scanner exposure intake: browser-local redacted repository exposure findings; owner, severity, status, provider-slot hint, evidence reference, and remediation metadata; no repository upload or `/api/scanner` calls; and copyable `vaultproof_enterprise_scanner_exposure_review` JSON without secrets.
 - `https://enterprise.vaultproof.dev/app/release` is the release evidence center: browser-local build/image tag, change summary, approver, verifier, verification status, rollout state, rollback owner/path, and customer-safe notes; it exports `vaultproof_enterprise_release_evidence` JSON without secrets and feeds Evidence, Demo, and Security Review.
 - `https://enterprise.vaultproof.dev/app/testers` is the paid-pilot tester readiness board: browser-local tester roster, login/scenario status, scenario assignment, blocker notes, customer-safe feedback, and copyable `vaultproof_enterprise_paid_pilot_tester_readiness` JSON without secrets.
+- `https://enterprise.vaultproof.dev/app/onboarding` is the paid-customer onboarding board: browser-local activation owners, enterprise admin login handoff, first workload owner, support handoff, capacity/renewal review, key posture, customer testing window, and copyable `vaultproof_enterprise_paid_onboarding` JSON without secrets.
 - `https://enterprise.vaultproof.dev/app/security-review` is the buyer security packet: concise architecture summary, control coverage, evidence links, open review items, common customer answers, known limitations, secret exclusions, and copyable security/procurement review text.
 - `https://enterprise.vaultproof.dev/app/plans` is the buyer package view: rollout posture, paid-pilot commercial package, contract guardrails, security boundaries, and direct links into evidence, launch, technical guide, and runbooks.
 - `https://enterprise.vaultproof.dev/app/pilot` is the paid-pilot proposal builder: browser-local first workload scope, expected volume, monthly price, 20% sales commission math, support/incident-response terms, success metric, and copyable customer proposal text without secrets.
@@ -217,6 +218,16 @@ The demo slice starts from browser-local records instead of new infrastructure: 
 
 Tester records must never store passwords, browser session tokens, Supabase service-role keys, OAuth client secrets, provider API keys, encrypted provider shares, origin-lock secrets, executor signing secrets, runtime-token secrets, request bodies, response bodies, or customer payloads.
 
+## Feature: Paid-Customer Onboarding
+
+Status: `built for enterprise demo`
+
+`https://enterprise.vaultproof.dev/app/onboarding` gives operators a customer-safe activation board after entitlements are accepted. It records customer kickoff owner, enterprise admin login handoff, first workload owner, support handoff, capacity/renewal review, key posture acceptance or rotation scheduling, and customer testing window.
+
+The demo slice starts from browser-local records instead of new infrastructure: it saves activation metadata in local storage per organization under `vaultproof_paid_onboarding:<orgId>`, redacts secret-like input before storage/export, computes a hold/ready-for-customer-testing status, and includes the summary in the evidence packet under `paid_onboarding`. Persistent audited onboarding records, invite automation, customer task notifications, and staff-admin activation workflow can follow after the customer demo slice.
+
+Onboarding records must never store provider keys, encrypted provider shares, Supabase service-role keys, browser session tokens, OAuth client secrets, origin-lock secrets, executor signing secrets, runtime-token secrets, request bodies, response bodies, or customer payloads.
+
 ## What's Next
 
 1. Run `LOGIN_QA_REQUIRE_SESSION=true npm run qa:enterprise-login` with Supabase service-role env for `ken@vaultproof.dev`.
@@ -258,14 +269,14 @@ Cost note: the current fixed estimate is above the existing `VaultProof Producti
 
 ## Build Pointer
 
-- Build tag: `1ace89e5`
+- Build tag: `08061081`
 - Registry: `us-central1-docker.pkg.dev/vaultproof-prod/vaultproof`
-- Control plane image: `us-central1-docker.pkg.dev/vaultproof-prod/vaultproof/enterprise-control-plane:1ace89e5`
-- Control plane digest: `sha256:60fc52eb6470edda82099c531017cdf7ea21e2db615c7d0c35baa68e95789bf5`
-- Control plane built at: `2026-05-14T07:27:49.323824874Z`
-- Executor image: `us-central1-docker.pkg.dev/vaultproof-prod/vaultproof/enterprise-secure-executor:1ace89e5`
-- Executor digest: `sha256:6eaa822624ffff03561a552de112f28f5688cfc5ea83d7bc64895e36184a1fc2`
-- Executor built at: `2026-05-14T07:28:02.527253352Z`
+- Control plane image: `us-central1-docker.pkg.dev/vaultproof-prod/vaultproof/enterprise-control-plane:08061081`
+- Control plane digest: `sha256:6a9d6ff84e9878042dffc5445110b85e0bf6b563e6c2a0a5e5be92d60e8c5f33`
+- Control plane built at: `2026-05-14T07:45:49.610897200Z`
+- Executor image: `us-central1-docker.pkg.dev/vaultproof-prod/vaultproof/enterprise-secure-executor:08061081`
+- Executor digest: `sha256:95a18014d8d52ea7486936821b4f88a7c0b17d9ce73b5f1789f18968e65aa225`
+- Executor built at: `2026-05-14T07:46:02.120919675Z`
 
 ## Project
 
