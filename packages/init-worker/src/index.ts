@@ -16,6 +16,38 @@ import { handleProxy } from './routes/proxy.js';
 import { checkFailedAuthRateLimit, rateLimitResponse } from './lib/rate-limit.js';
 import { getSupabase } from './lib/supabase.js';
 
+const CORS_ALLOWED_HEADERS = [
+  'Content-Type',
+  'Authorization',
+  'x-api-key',
+  'api-key',
+  'apikey',
+  'api-token',
+  'x-goog-api-key',
+  'xi-api-key',
+  'x-e2b-api-key',
+  'x-algolia-api-key',
+  'x-assemblyai-api-key',
+  'private-token',
+  'x-gitlab-token',
+  'x-honeycomb-team',
+  'dd-api-key',
+  'x-elasticemail-apikey',
+  'x-postage-server-token',
+  'x-postmark-server-token',
+  'x-sendlayer-api-key',
+  'x-smtp2go-api-key',
+  'accept',
+  'accept-language',
+  'anthropic-beta',
+  'anthropic-version',
+  'cache-control',
+  'idempotency-key',
+  'openai-beta',
+  'prefer',
+  'stripe-version',
+].join(', ');
+
 // Re-export the Durable Object class so wrangler can bind it.
 export { RateLimiter } from './do/rate-limiter.js';
 
@@ -35,7 +67,7 @@ function corsHeaders(origin: string, allowedOrigins: string[]): Record<string, s
   return {
     ...(allowOrigin ? { 'Access-Control-Allow-Origin': allowOrigin } : {}),
     'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
-    'Access-Control-Allow-Headers': 'Content-Type, Authorization',
+    'Access-Control-Allow-Headers': CORS_ALLOWED_HEADERS,
     'Access-Control-Max-Age': '86400',
   };
 }

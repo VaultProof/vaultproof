@@ -18,6 +18,10 @@ npx @vaultproof/init
 
 That scans your local `.env` files, splits matching API keys locally, uploads encrypted shares, and rewrites the environment to use a public `vp-proj-...` identifier plus per-provider proxy base URLs.
 
+For a private or unsupported HTTP API, add the plaintext key to `.env` and run `npx @vaultproof/init custom`. The CLI will ask for the upstream URL and auth header, then protect that key the same way.
+
+For runtime secrets that are not HTTP proxy keys, such as `DATABASE_URL`, `JWT_SECRET`, `SESSION_SECRET`, or webhook signing secrets, run `npx @vaultproof/init secrets add`. VaultProof stores them as split shares, rewrites the local value to a `vaultproof://...` placeholder, and can inject them into a process with `npx @vaultproof/init run -- <command>`.
+
 If you prefer a global install:
 
 ```bash
@@ -71,11 +75,20 @@ const openai = new OpenAI({
 
 ## Scanner — Find Exposed Keys
 
-The init flow scans `.env`, `.env.local`, `.env.production`, and `.env.development` for supported providers before rewriting them.
+The init flow scans `.env`, `.env.local`, `.env.production`, and `.env.development` against the 87-provider catalog before rewriting matched keys.
 
 ```bash
 # Scan only (no upload or rewrite)
 npx @vaultproof/init --dry-run
+
+# Protect a custom/internal API key from .env
+npx @vaultproof/init custom
+
+# Protect vault-only runtime secrets from .env
+npx @vaultproof/init secrets add
+
+# Run a command with vault-only secrets injected
+npx @vaultproof/init run -- npm run dev
 
 # Skip confirmation
 npx @vaultproof/init --yes
@@ -110,6 +123,10 @@ init.vaultproof.dev         Cloudflare Worker (init + proxy routes)
 npx @vaultproof/init
 npx @vaultproof/init --yes
 npx @vaultproof/init --dry-run
+npx @vaultproof/init custom
+npx @vaultproof/init secrets add
+npx @vaultproof/init secrets pull
+npx @vaultproof/init run -- npm run dev
 npx @vaultproof/init --check-legacy
 npx @vaultproof/init doctor
 ```

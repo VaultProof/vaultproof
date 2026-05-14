@@ -1,6 +1,6 @@
 {
-  "version": 1,
-  "updated": "2026-04-17",
+  "version": 2,
+  "updated": "2026-05-14",
   "providers": [
     {
       "id": "anthropic",
@@ -879,6 +879,140 @@
       "base_url_env_var": "INTERCOM_BASE_URL",
       "base_url_path_suffix": "/p/intercom",
       "detect": { "regex": "^dG9rO[A-Za-z0-9_-]{40,}$" }
+    },
+    {
+      "id": "minimax",
+      "label": "MiniMax",
+      "upstream_base_url": "https://api.minimax.io",
+      "auth_header_name": "Authorization",
+      "auth_header_template": "Bearer {key}",
+      "env_var_default": "MINIMAX_API_KEY",
+      "base_url_env_var": "MINIMAX_BASE_URL",
+      "base_url_path_suffix": "/p/minimax/v1",
+      "detect": { "regex": "^(?:sk-cp-|sk-|SK-)?[A-Za-z0-9._-]{20,160}$", "var_hint": "MINIMAX" }
+    },
+    {
+      "id": "voyage",
+      "label": "Voyage AI",
+      "upstream_base_url": "https://api.voyageai.com",
+      "auth_header_name": "Authorization",
+      "auth_header_template": "Bearer {key}",
+      "env_var_default": "VOYAGE_API_KEY",
+      "base_url_env_var": "VOYAGE_BASE_URL",
+      "base_url_path_suffix": "/p/voyage/v1",
+      "detect": { "regex": "^(?:pa-)?[A-Za-z0-9_-]{32,}$", "var_hint": "VOYAGE" }
+    },
+    {
+      "id": "jina",
+      "label": "Jina AI",
+      "upstream_base_url": "https://api.jina.ai",
+      "auth_header_name": "Authorization",
+      "auth_header_template": "Bearer {key}",
+      "env_var_default": "JINA_API_KEY",
+      "base_url_env_var": "JINA_BASE_URL",
+      "base_url_path_suffix": "/p/jina",
+      "detect": { "regex": "^jina_[A-Za-z0-9_-]{20,}$" }
+    },
+    {
+      "id": "ai21",
+      "label": "AI21",
+      "upstream_base_url": "https://api.ai21.com",
+      "auth_header_name": "Authorization",
+      "auth_header_template": "Bearer {key}",
+      "env_var_default": "AI21_API_KEY",
+      "base_url_env_var": "AI21_BASE_URL",
+      "base_url_path_suffix": "/p/ai21/studio/v1",
+      "detect": { "regex": "^[A-Za-z0-9._-]{20,160}$", "var_hint": "AI21" }
+    },
+    {
+      "id": "assemblyai",
+      "label": "AssemblyAI",
+      "upstream_base_url": "https://api.assemblyai.com",
+      "auth_header_name": "Authorization",
+      "auth_header_template": "{key}",
+      "env_var_default": "ASSEMBLYAI_API_KEY",
+      "base_url_env_var": "ASSEMBLYAI_BASE_URL",
+      "base_url_path_suffix": "/p/assemblyai",
+      "detect": { "regex": "^[A-Za-z0-9]{32}$", "var_hint": "ASSEMBLYAI" }
+    },
+    {
+      "id": "gitlab",
+      "label": "GitLab",
+      "upstream_base_url": "https://gitlab.com",
+      "auth_header_name": "PRIVATE-TOKEN",
+      "auth_header_template": "{key}",
+      "env_var_default": "GITLAB_TOKEN",
+      "base_url_env_var": "GITLAB_BASE_URL",
+      "base_url_path_suffix": "/p/gitlab/api/v4",
+      "detect": { "regex": "^glpat-[A-Za-z0-9_-]{20,}$" }
+    },
+    {
+      "id": "launchdarkly",
+      "label": "LaunchDarkly",
+      "upstream_base_url": "https://app.launchdarkly.com",
+      "auth_header_name": "Authorization",
+      "auth_header_template": "{key}",
+      "env_var_default": "LAUNCHDARKLY_ACCESS_TOKEN",
+      "base_url_env_var": "LAUNCHDARKLY_BASE_URL",
+      "base_url_path_suffix": "/p/launchdarkly/api/v2",
+      "detect": { "regex": "^(?:api-|rel-)?[A-Za-z0-9._-]{20,160}$", "var_hint": "LAUNCHDARKLY" }
+    },
+    {
+      "id": "snyk",
+      "label": "Snyk",
+      "upstream_base_url": "https://api.snyk.io",
+      "auth_header_name": "Authorization",
+      "auth_header_template": "token {key}",
+      "env_var_default": "SNYK_TOKEN",
+      "base_url_env_var": "SNYK_BASE_URL",
+      "base_url_path_suffix": "/p/snyk/rest",
+      "detect": { "regex": "^[A-Fa-f0-9-]{32,80}$", "var_hint": "SNYK" }
+    },
+    {
+      "id": "pagerduty",
+      "label": "PagerDuty",
+      "upstream_base_url": "https://api.pagerduty.com",
+      "auth_header_name": "Authorization",
+      "auth_header_template": "Token token={key}",
+      "env_var_default": "PAGERDUTY_API_KEY",
+      "base_url_env_var": "PAGERDUTY_BASE_URL",
+      "base_url_path_suffix": "/p/pagerduty",
+      "detect": { "regex": "^[A-Za-z0-9._-]{20,160}$", "var_hint": "PAGERDUTY" }
+    },
+    {
+      "id": "honeycomb",
+      "label": "Honeycomb",
+      "upstream_base_url": "https://api.honeycomb.io",
+      "auth_header_name": "X-Honeycomb-Team",
+      "auth_header_template": "{key}",
+      "env_var_default": "HONEYCOMB_API_KEY",
+      "base_url_env_var": "HONEYCOMB_BASE_URL",
+      "base_url_path_suffix": "/p/honeycomb",
+      "detect": { "regex": "^[A-Za-z0-9._-]{20,160}$", "var_hint": "HONEYCOMB" }
+    },
+    {
+      "id": "weaviate",
+      "label": "Weaviate",
+      "upstream_base_url": "dynamic",
+      "auth_header_name": "Authorization",
+      "auth_header_template": "Bearer {key}",
+      "env_var_default": "WEAVIATE_API_KEY",
+      "base_url_env_var": "WEAVIATE_BASE_URL",
+      "base_url_path_suffix": "/p/weaviate",
+      "upstream_from_env": "WEAVIATE_URL",
+      "detect": { "regex": "^[A-Za-z0-9._-]{20,160}$", "var_hint": "WEAVIATE" }
+    },
+    {
+      "id": "grafana",
+      "label": "Grafana",
+      "upstream_base_url": "dynamic",
+      "auth_header_name": "Authorization",
+      "auth_header_template": "Bearer {key}",
+      "env_var_default": "GRAFANA_SERVICE_ACCOUNT_TOKEN",
+      "base_url_env_var": "GRAFANA_BASE_URL",
+      "base_url_path_suffix": "/p/grafana",
+      "upstream_from_env": "GRAFANA_URL",
+      "detect": { "regex": "^glsa_[A-Za-z0-9_]{20,}$" }
     }
   ]
 }

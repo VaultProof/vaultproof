@@ -46,6 +46,28 @@ console.log('── parseProjectToken ──');
 
   const r8 = parseProjectToken(req({ Authorization: 'Bearer  vp-proj-doublespace' }));
   ok('double-space allowed (Bearer \\s+)', 'token' in r8 && r8.token === 'vp-proj-doublespace');
+
+  const r9 = parseProjectToken(req({ Authorization: 'vp-proj-raw-auth' }));
+  ok('raw Authorization token parses', 'token' in r9 && r9.token === 'vp-proj-raw-auth');
+
+  const r10 = parseProjectToken(req({ 'x-api-key': 'vp-proj-anthropic-style' }));
+  ok('x-api-key token parses', 'token' in r10 && r10.token === 'vp-proj-anthropic-style');
+
+  const r11 = parseProjectToken(req({ apikey: 'vp-proj-supabase-style' }));
+  ok('apikey token parses', 'token' in r11 && r11.token === 'vp-proj-supabase-style');
+
+  const r12 = parseProjectToken(req({ 'PRIVATE-TOKEN': 'vp-proj-gitlab-style' }));
+  ok('PRIVATE-TOKEN token parses', 'token' in r12 && r12.token === 'vp-proj-gitlab-style');
+
+  const r13 = parseProjectToken(req({ Authorization: 'token vp-proj-snyk-style' }));
+  ok('Snyk token scheme parses', 'token' in r13 && r13.token === 'vp-proj-snyk-style');
+
+  const r14 = parseProjectToken(req({ Authorization: 'Token token=vp-proj-pagerduty-style' }));
+  ok('PagerDuty token scheme parses', 'token' in r14 && r14.token === 'vp-proj-pagerduty-style');
+
+  const basic = btoa('vp-proj-basic-style:placeholder');
+  const r15 = parseProjectToken(req({ Authorization: `Basic ${basic}` }));
+  ok('Basic auth username token parses', 'token' in r15 && r15.token === 'vp-proj-basic-style');
 }
 
 // ── checkOriginLock ───────────────────────────────────────────────────

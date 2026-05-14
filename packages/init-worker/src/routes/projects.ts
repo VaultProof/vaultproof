@@ -21,7 +21,8 @@ import {
   resolveOrganizationMembership,
 } from '../lib/user-auth.js';
 import { getSupabase } from '../lib/supabase.js';
-import { encrypt } from '../crypto/encryption.js';
+import { decrypt, encrypt, zeroUint8Array } from '../crypto/encryption.js';
+import { combineShares, deserializeShare } from '../crypto/shamir.js';
 import {
   validateUpstreamUrl,
   validateHeaderName,
@@ -38,6 +39,7 @@ import { writeGovernanceAuditEvent } from '../lib/audit.js';
 
 const DASHBOARD_CACHE_TTL_MS = 8000;
 const dashboardStatsCache = new Map<string, { expiresAt: number; value: unknown }>();
+const VAULT_SECRET_PROVIDER_PREFIX = 'vaultenv-';
 
 function getDashboardCacheKey(userId: string, days: number, logLimit: number): string {
   return `${userId}:${days}:${logLimit}`;
@@ -63,6 +65,29 @@ function writeDashboardCache(key: string, value: unknown): void {
 function clearDashboardCacheForUser(userId: string): void {
   for (const key of dashboardStatsCache.keys()) {
     if (key.startsWith(`${userId}:`)) dashboardStatsCache.delete(key);
+  }
+}
+
+function isVaultOnlyProvider(provider: string | null | undefined): boolean {
+  return Boolean(provider?.startsWith(VAULT_SECRET_PROVIDER_PREFIX));
+}
+
+function reconstructStoredSecret(
+  row: { share1_encrypted: string; share2_b64: string },
+  env: Env,
+): string {
+  let reconstructed: Uint8Array | null = null;
+  let share1Plain: Uint8Array | null = null;
+  try {
+    const share1CipherBytes = Uint8Array.from(atob(row.share1_encrypted), (c) => c.charCodeAt(0));
+    share1Plain = decrypt(share1CipherBytes, env);
+    const share1 = deserializeShare(btoa(String.fromCharCode(...share1Plain)));
+    const share2 = deserializeShare(row.share2_b64);
+    reconstructed = combineShares([share1, share2]);
+    return new TextDecoder().decode(reconstructed);
+  } finally {
+    if (share1Plain) share1Plain.fill(0);
+    if (reconstructed) zeroUint8Array(reconstructed);
   }
 }
 
@@ -1827,6 +1852,48 @@ export async function handleProjects(
     });
     clearDashboardCacheForUser(auth.userId);
     return Response.json({ ok: true, revoked: data });
+  }
+
+  // GET /api/v1/init/projects/:id/secrets — retrieve vault-only env secrets for authenticated CLI injection
+  if (method === 'GET' && pathSegments.length === 2 && pathSegments[1] === 'secrets') {
+    const projectId = pathSegments[0];
+    const writableProject = await getWritableProject(env, auth.userId, projectId);
+    if (!writableProject.ok) {
+      return Response.json({ error: writableProject.error }, { status: writableProject.status });
+    }
+
+    const { data: keys, error } = await supabase
+      .from('project_keys')
+      .select('id, provider, env_var, share1_encrypted, share2_b64, created_at')
+      .eq('project_id', projectId)
+      .like('provider', `${VAULT_SECRET_PROVIDER_PREFIX}%`)
+      .is('revoked_at', null)
+      .order('created_at', { ascending: false });
+
+    if (error) {
+      return Response.json({ error: 'Failed to list vault-only secrets' }, { status: 500 });
+    }
+
+    try {
+      const secrets = ((keys || []) as Array<{
+        id: string;
+        provider: string;
+        env_var: string | null;
+        share1_encrypted: string;
+        share2_b64: string;
+        created_at: string;
+      }>).filter((key) => key.env_var && isVaultOnlyProvider(key.provider)).map((key) => ({
+        id: key.id,
+        provider: key.provider,
+        env_var: key.env_var!,
+        value: reconstructStoredSecret(key, env),
+        created_at: key.created_at,
+      }));
+
+      return Response.json({ secrets });
+    } catch {
+      return Response.json({ error: 'Failed to reconstruct vault-only secrets' }, { status: 500 });
+    }
   }
 
   // GET /api/v1/init/projects/:id/keys — list keys under a project

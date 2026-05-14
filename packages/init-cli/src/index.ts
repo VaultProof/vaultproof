@@ -8,6 +8,9 @@
  *   npx @vaultproof/init            # interactive
  *   npx @vaultproof/init --yes      # auto-confirm
  *   npx @vaultproof/init --dry-run  # scan only, no upload, no rewrite
+ *   npx @vaultproof/init custom     # protect a custom/internal API key
+ *   npx @vaultproof/init secrets add
+ *   npx @vaultproof/init run -- npm run dev
  *   npx @vaultproof/init migrate-from-legacy
  *   npx @vaultproof/init doctor
  */
@@ -16,15 +19,35 @@ import ora from 'ora';
 import fs from 'node:fs';
 import path from 'node:path';
 import os from 'node:os';
+import { spawn } from 'node:child_process';
 import { splitString, serializeShare } from '@vaultproof/shamir';
 import { scanDirectory, truncateKey, type Finding } from './scan.js';
-import { rewriteEnvFile, rewriteEnvFileForMigration, type MigrationEntry } from './rewrite.js';
+import { rewriteEnvFile, rewriteEnvFileForMigration, rewriteEnvFileForVaultSecrets, type MigrationEntry } from './rewrite.js';
 import { getJwt, getInitWorkerUrl, getProxyBaseUrl } from './config.js';
 import { loadProviders, type ProviderSpec } from './providers.js';
 import { listLegacyKeys, type LegacyKey } from './legacy.js';
-import { confirm, promptHidden } from './prompts.js';
+import { confirm, prompt, promptHidden } from './prompts.js';
 import { browserLogin } from './login.js';
 import { findStripeConstructors } from './stripe-helper.js';
+import {
+  buildCustomProviderSpec,
+  deriveBaseUrlEnvVar,
+  deriveCustomLabel,
+  deriveCustomProviderId,
+  isLikelyCustomSecretEntry,
+  validateCustomHeaderName,
+  validateCustomHeaderTemplate,
+  validateCustomUpstreamUrl,
+  validateEnvVarName,
+  validateProviderSlug,
+} from './custom-provider.js';
+import {
+  deriveVaultSecretProviderId,
+  formatDotEnvValue,
+  isLikelyVaultSecretEntry,
+  vaultSecretPlaceholder,
+  type VaultSecretEntry,
+} from './vault-secret.js';
 
 function printBanner(): void {
   const lines = [
@@ -62,20 +85,30 @@ function printBanner(): void {
   console.log(version + '\n');
 }
 
-function parseArgs(argv: string[]): { cmd: string; flags: Set<string> } {
+function parseArgs(argv: string[]): { cmd: string; flags: Set<string>; positionals: string[]; passthrough: string[] } {
   const args = argv.slice(2);
   const flags = new Set<string>();
+  const positionals: string[] = [];
+  const passthroughIndex = args.indexOf('--');
+  const cliArgs = passthroughIndex >= 0 ? args.slice(0, passthroughIndex) : args;
+  const passthrough = passthroughIndex >= 0 ? args.slice(passthroughIndex + 1) : [];
   let cmd = 'init';
-  for (const a of args) {
+  for (const a of cliArgs) {
     if (a.startsWith('-')) flags.add(a);
-    else if (!a.startsWith('-')) cmd = a;
+    else if (!a.startsWith('-')) positionals.push(a);
   }
-  return { cmd, flags };
+  if (positionals.length > 0) cmd = positionals[0];
+  return { cmd, flags, positionals, passthrough };
 }
 
 function printUsage(): void {
   console.log(chalk.dim('Usage:'));
   console.log(chalk.dim('  npx @vaultproof/init [--yes|-y] [--dry-run] [--check-legacy]'));
+  console.log(chalk.dim('  npx @vaultproof/init [--custom]'));
+  console.log(chalk.dim('  npx @vaultproof/init custom'));
+  console.log(chalk.dim('  npx @vaultproof/init secrets add'));
+  console.log(chalk.dim('  npx @vaultproof/init secrets pull [--stdout]'));
+  console.log(chalk.dim('  npx @vaultproof/init run -- <command>'));
   console.log(chalk.dim('  npx @vaultproof/init migrate-from-legacy'));
   console.log(chalk.dim('  npx @vaultproof/init doctor'));
 }
@@ -167,6 +200,9 @@ function classifyVaultProofMarker(name: string, value: string): string | null {
   }
   if ((name.endsWith('_API_KEY') || name.endsWith('_SECRET_KEY') || name.endsWith('_TOKEN')) && value.startsWith('vp-proj-')) {
     return 'provider key already replaced with project ID';
+  }
+  if (value.startsWith('vaultproof://')) {
+    return 'vault-only secret placeholder';
   }
   return null;
 }
@@ -265,7 +301,412 @@ function printScanReport(statuses: EnvFileStatus[], providerCount: number, marke
   console.log();
 }
 
-async function runInit(opts: { autoYes: boolean; dryRun: boolean }): Promise<void> {
+function envEntryKey(entry: EnvEntry): string {
+  return `${entry.file}:${entry.name}`;
+}
+
+function findingEntryKey(finding: Finding): string {
+  return `${finding.file}:${finding.varName}`;
+}
+
+function formatEnvEntrySource(cwd: string, entry: EnvEntry): string {
+  const relative = path.relative(cwd, entry.file) || path.basename(entry.file);
+  return `${relative}:${entry.line}`;
+}
+
+function allEnvEntries(statuses: EnvFileStatus[]): EnvEntry[] {
+  const entries: EnvEntry[] = [];
+  for (const status of statuses) {
+    if (!status.exists) continue;
+    entries.push(...parseEnvEntries(status.absolutePath));
+  }
+  return entries;
+}
+
+function readEnvValue(cwd: string, name: string): string {
+  const fromProcess = process.env[name];
+  if (fromProcess) return fromProcess;
+  for (const status of getEnvFileStatuses(cwd)) {
+    if (!status.exists) continue;
+    const entry = parseEnvEntries(status.absolutePath).find((item) => item.name === name);
+    if (entry?.value) return entry.value;
+  }
+  return '';
+}
+
+function envFileValues(cwd: string): Record<string, string> {
+  const values: Record<string, string> = {};
+  for (const status of getEnvFileStatuses(cwd)) {
+    if (!status.exists) continue;
+    for (const entry of parseEnvEntries(status.absolutePath)) {
+      values[entry.name] = entry.value;
+    }
+  }
+  return values;
+}
+
+async function ensureJwt(): Promise<string> {
+  let jwt = getJwt();
+  if (jwt) return jwt;
+
+  console.log(chalk.dim('\nOpening browser to log in...\n'));
+  const loginSpinner = ora('Waiting for login...').start();
+  const result = await browserLogin();
+  if (!result) {
+    loginSpinner.fail('Login timed out or was cancelled.');
+    process.exit(1);
+  }
+  loginSpinner.succeed(`Logged in as ${chalk.bold(result.email)}`);
+  jwt = result.token;
+  return jwt;
+}
+
+interface ProjectChoice {
+  id: string;
+  vp_proj_id: string;
+  name: string | null;
+}
+
+async function listProjects(jwt: string, apiUrl: string): Promise<ProjectChoice[]> {
+  const res = await fetch(`${apiUrl}/api/v1/init/projects`, {
+    headers: { Authorization: `Bearer ${jwt}` },
+  });
+  if (!res.ok) {
+    const text = await res.text();
+    throw new Error(`Could not list projects: ${res.status} ${text}`);
+  }
+  const data = (await res.json()) as { projects?: ProjectChoice[] };
+  return data.projects || [];
+}
+
+async function createProject(jwt: string, apiUrl: string, name: string): Promise<ProjectChoice> {
+  const res = await fetch(`${apiUrl}/api/v1/init/projects`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${jwt}` },
+    body: JSON.stringify({ name }),
+  });
+  if (!res.ok) {
+    const text = await res.text();
+    throw new Error(`Project creation failed: ${res.status} ${text}`);
+  }
+  return (await res.json()) as ProjectChoice;
+}
+
+async function chooseProject(jwt: string, apiUrl: string, opts: { autoYes: boolean; preferredProjectId?: string; createName: string }): Promise<ProjectChoice> {
+  const projects = await listProjects(jwt, apiUrl);
+  if (opts.preferredProjectId) {
+    const found = projects.find((project) => project.vp_proj_id === opts.preferredProjectId);
+    if (found) return found;
+    console.log(chalk.yellow(`Configured VAULTPROOF_PROJECT_ID ${opts.preferredProjectId} was not found on this account.`));
+  }
+
+  if (projects.length === 0) {
+    return await createProject(jwt, apiUrl, opts.createName);
+  }
+  if (projects.length === 1 || opts.autoYes) {
+    return projects[0];
+  }
+
+  console.log(chalk.bold('You have existing projects:\n'));
+  projects.forEach((project, index) => {
+    console.log(`  ${chalk.bold(String(index + 1))}. ${project.name || '(unnamed)'} ${chalk.dim(project.vp_proj_id)}`);
+  });
+  console.log(`  ${chalk.bold(String(projects.length + 1))}. ${chalk.dim('Create a new project')}`);
+  console.log();
+
+  const choice = await prompt(`Use which project? (1-${projects.length + 1}) `);
+  const idx = Number.parseInt(choice, 10);
+  if (Number.isInteger(idx) && idx >= 1 && idx <= projects.length) return projects[idx - 1];
+  return await createProject(jwt, apiUrl, opts.createName);
+}
+
+function promptWithDefault(question: string, defaultValue: string): Promise<string> {
+  return prompt(`${question} ${chalk.dim(`(${defaultValue})`)} `).then((answer) => answer || defaultValue);
+}
+
+async function promptValidated(
+  question: string,
+  defaultValue: string,
+  validate: (value: string) => { ok: boolean; error?: string },
+): Promise<string> {
+  while (true) {
+    const value = await promptWithDefault(question, defaultValue);
+    const result = validate(value);
+    if (result.ok) return value;
+    console.log(chalk.yellow(`  ${result.error || 'Invalid value'}`));
+  }
+}
+
+async function promptCustomProviderForEntry(
+  entry: EnvEntry,
+  cwd: string,
+  existingProviderIds: Set<string>,
+): Promise<Finding | null> {
+  console.log(chalk.bold(`\nCustom provider for ${entry.name}`));
+  console.log(chalk.dim(`  Source: ${formatEnvEntrySource(cwd, entry)}`));
+  console.log(chalk.dim('  Upstream must be a public HTTPS hostname. Private IPs, .internal, localhost, and custom ports are blocked.\n'));
+
+  const defaultSlug = deriveCustomProviderId(entry.name);
+  let slug = '';
+  while (!slug) {
+    const candidate = await promptValidated('Provider slug', defaultSlug, validateProviderSlug);
+    if (existingProviderIds.has(candidate)) {
+      console.log(chalk.yellow(`  "${candidate}" is already in the provider catalog. Choose a unique slug for this custom API.`));
+      continue;
+    }
+    slug = candidate;
+  }
+
+  const label = await promptWithDefault('Display name', deriveCustomLabel(slug));
+
+  let upstreamBaseUrl = '';
+  while (!upstreamBaseUrl) {
+    const raw = await prompt('Upstream base URL (for example https://api.yourcompany.com) ');
+    const checked = validateCustomUpstreamUrl(raw);
+    if (!checked.ok || !checked.normalizedUrl) {
+      console.log(chalk.yellow(`  ${checked.error || 'Invalid upstream URL'}`));
+      continue;
+    }
+    upstreamBaseUrl = checked.normalizedUrl;
+  }
+
+  const authHeaderName = await promptValidated(
+    'Auth header name',
+    'Authorization',
+    validateCustomHeaderName,
+  );
+  const authHeaderTemplate = await promptValidated(
+    'Auth header template, using {key}',
+    authHeaderName.toLowerCase() === 'authorization' ? 'Bearer {key}' : '{key}',
+    validateCustomHeaderTemplate,
+  );
+  const baseUrlEnvVar = await promptValidated(
+    'Base URL env var to add',
+    deriveBaseUrlEnvVar(entry.name),
+    (value) => {
+      const result = validateEnvVarName(value);
+      if (!result.ok) return result;
+      if (value.toUpperCase() === entry.name.toUpperCase()) {
+        return { ok: false, error: 'Base URL env var must be different from the API key env var' };
+      }
+      return { ok: true };
+    },
+  );
+
+  const provider = buildCustomProviderSpec({
+    id: slug,
+    label,
+    envVar: entry.name,
+    upstreamBaseUrl,
+    authHeaderName,
+    authHeaderTemplate,
+    baseUrlEnvVar,
+  });
+
+  return {
+    file: entry.file,
+    line: entry.line,
+    varName: entry.name,
+    value: entry.value,
+    provider,
+  };
+}
+
+async function collectCustomFindings(
+  cwd: string,
+  statuses: EnvFileStatus[],
+  existingFindings: Finding[],
+  catalogProviders: ProviderSpec[],
+  opts: { autoYes: boolean; forceCustom: boolean; customOnly: boolean },
+): Promise<Finding[]> {
+  if (!opts.forceCustom && opts.autoYes) return [];
+
+  const promptForCustom = opts.forceCustom
+    ? true
+    : await confirm(
+      existingFindings.length > 0
+        ? 'Add a custom/internal API key that was not auto-detected?'
+        : 'Add a custom/internal API key from your .env?',
+      false,
+    );
+  if (!promptForCustom) return [];
+
+  const matched = new Set(existingFindings.map(findingEntryKey));
+  const selected = new Set<string>();
+  const existingProviderIds = new Set(catalogProviders.map((provider) => provider.id));
+  const entries = allEnvEntries(statuses);
+  const customFindings: Finding[] = [];
+
+  while (true) {
+    const candidates = entries.filter((entry) => (
+      !matched.has(envEntryKey(entry))
+      && !selected.has(envEntryKey(entry))
+      && isLikelyCustomSecretEntry({ name: entry.name, value: entry.value })
+    ));
+
+    if (candidates.length === 0) {
+      console.log(chalk.yellow('\nNo obvious custom/internal API key candidates found in checked .env files.'));
+      console.log(chalk.dim('Add a NAME=plaintext-key entry such as INTERNAL_API_KEY=... to .env, then rerun `npx @vaultproof/init custom`.'));
+      break;
+    }
+
+    console.log(chalk.bold('\nPossible custom/internal keys:\n'));
+    candidates.forEach((entry, index) => {
+      console.log(
+        `  ${chalk.bold(String(index + 1).padStart(2))}. ${entry.name.padEnd(30)} ` +
+        `${chalk.dim(truncateKey(entry.value).padEnd(18))} ${chalk.dim(formatEnvEntrySource(cwd, entry))}`,
+      );
+    });
+    console.log();
+
+    const answer = await prompt('Choose a key number or env var name (blank to finish): ');
+    if (!answer) break;
+
+    const index = Number.parseInt(answer, 10);
+    const entry = Number.isInteger(index) && index >= 1 && index <= candidates.length
+      ? candidates[index - 1]
+      : candidates.find((candidate) => candidate.name.toUpperCase() === answer.toUpperCase());
+
+    if (!entry) {
+      console.log(chalk.yellow('  No matching key. Choose one of the listed numbers or names.'));
+      continue;
+    }
+
+    const customFinding = await promptCustomProviderForEntry(entry, cwd, existingProviderIds);
+    if (customFinding) {
+      customFindings.push(customFinding);
+      selected.add(envEntryKey(entry));
+      existingProviderIds.add(customFinding.provider.id);
+    }
+
+    if (!await confirm('Add another custom/internal API key?', false)) break;
+  }
+
+  return customFindings;
+}
+
+async function collectVaultSecretFindings(
+  cwd: string,
+  statuses: EnvFileStatus[],
+  opts: { autoYes: boolean; force: boolean },
+): Promise<VaultSecretEntry[]> {
+  if (!opts.force && opts.autoYes) return [];
+
+  const promptForVaultSecrets = opts.force
+    ? true
+    : await confirm('Protect vault-only secrets like DATABASE_URL, JWT_SECRET, and WEBHOOK_SECRET?', false);
+  if (!promptForVaultSecrets) return [];
+
+  const selected = new Set<string>();
+  const entries = allEnvEntries(statuses);
+  const vaultSecrets: VaultSecretEntry[] = [];
+
+  while (true) {
+    const candidates = entries.filter((entry) => (
+      !selected.has(envEntryKey(entry))
+      && isLikelyVaultSecretEntry({ name: entry.name, value: entry.value })
+    ));
+
+    if (candidates.length === 0) {
+      console.log(chalk.yellow('\nNo vault-only secret candidates found in checked .env files.'));
+      console.log(chalk.dim('Examples: DATABASE_URL=..., JWT_SECRET=..., SESSION_SECRET=..., WEBHOOK_SECRET=...'));
+      break;
+    }
+
+    if (opts.autoYes) {
+      for (const entry of candidates) {
+        vaultSecrets.push(entry);
+        selected.add(envEntryKey(entry));
+      }
+      break;
+    }
+
+    console.log(chalk.bold('\nPossible vault-only secrets:\n'));
+    candidates.forEach((entry, index) => {
+      console.log(
+        `  ${chalk.bold(String(index + 1).padStart(2))}. ${entry.name.padEnd(30)} ` +
+        `${chalk.dim(truncateKey(entry.value).padEnd(18))} ${chalk.dim(formatEnvEntrySource(cwd, entry))}`,
+      );
+    });
+    console.log();
+
+    const answer = await prompt('Choose a secret number or env var name (blank to finish, "all" for all): ');
+    if (!answer) break;
+
+    if (answer.toLowerCase() === 'all') {
+      for (const entry of candidates) {
+        vaultSecrets.push(entry);
+        selected.add(envEntryKey(entry));
+      }
+      break;
+    }
+
+    const index = Number.parseInt(answer, 10);
+    const entry = Number.isInteger(index) && index >= 1 && index <= candidates.length
+      ? candidates[index - 1]
+      : candidates.find((candidate) => candidate.name.toUpperCase() === answer.toUpperCase());
+
+    if (!entry) {
+      console.log(chalk.yellow('  No matching secret. Choose one of the listed numbers or names.'));
+      continue;
+    }
+
+    vaultSecrets.push(entry);
+    selected.add(envEntryKey(entry));
+
+    if (!await confirm('Add another vault-only secret?', false)) break;
+  }
+
+  return vaultSecrets;
+}
+
+async function uploadVaultSecret(
+  apiUrl: string,
+  jwt: string,
+  projectRowId: string,
+  secret: VaultSecretEntry,
+): Promise<void> {
+  const shares = splitString(secret.value, 2, 2);
+  const provider = deriveVaultSecretProviderId(secret.name);
+  const res = await fetch(`${apiUrl}/api/v1/init/projects/${projectRowId}/keys`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${jwt}` },
+    body: JSON.stringify({
+      provider,
+      slug: provider,
+      share1: serializeShare(shares[0]),
+      share2: serializeShare(shares[1]),
+      env_var: secret.name,
+      upstream_base_url: 'https://vaultproof.dev',
+      auth_header_name: 'Authorization',
+      auth_header_template: '{key}',
+      extra_headers: { 'x-vaultproof-kind': 'env-secret' },
+    }),
+  });
+  if (!res.ok) {
+    const text = await res.text();
+    throw new Error(`Upload failed for ${secret.name}: ${res.status} ${text}`);
+  }
+}
+
+interface PulledVaultSecret {
+  env_var: string;
+  value: string;
+}
+
+async function fetchVaultSecrets(apiUrl: string, jwt: string, projectRowId: string): Promise<PulledVaultSecret[]> {
+  const res = await fetch(`${apiUrl}/api/v1/init/projects/${projectRowId}/secrets`, {
+    headers: { Authorization: `Bearer ${jwt}` },
+  });
+  if (!res.ok) {
+    const text = await res.text();
+    throw new Error(`Could not fetch vault-only secrets: ${res.status} ${text}`);
+  }
+  const data = (await res.json()) as { secrets?: PulledVaultSecret[] };
+  return data.secrets || [];
+}
+
+async function runInit(opts: { autoYes: boolean; dryRun: boolean; forceCustom?: boolean; customOnly?: boolean }): Promise<void> {
   printBanner();
 
   const catalog = await loadProviders();
@@ -273,24 +714,52 @@ async function runInit(opts: { autoYes: boolean; dryRun: boolean }): Promise<voi
   const vaultProofMarkers = collectVaultProofMarkers(process.cwd(), envStatuses);
   printScanReport(envStatuses, catalog.providers.length, vaultProofMarkers);
 
-  const findings: Finding[] = scanDirectory(process.cwd(), catalog.providers);
+  const detectedFindings: Finding[] = opts.customOnly ? [] : scanDirectory(process.cwd(), catalog.providers);
+  const customFindings = await collectCustomFindings(
+    process.cwd(),
+    envStatuses,
+    detectedFindings,
+    catalog.providers,
+    {
+      autoYes: opts.autoYes,
+      forceCustom: Boolean(opts.forceCustom || opts.customOnly),
+      customOnly: Boolean(opts.customOnly),
+    },
+  );
+  const findings: Finding[] = [...detectedFindings, ...customFindings];
+  const vaultSecretFindings = await collectVaultSecretFindings(
+    process.cwd(),
+    envStatuses,
+    { autoYes: opts.autoYes, force: false },
+  );
 
-  if (findings.length === 0) {
-    console.log(chalk.yellow('No plaintext API keys detected.'));
+  if (findings.length === 0 && vaultSecretFindings.length === 0) {
+    console.log(chalk.yellow('No plaintext API keys or vault-only secrets detected.'));
     if (vaultProofMarkers.length > 0) {
       console.log(chalk.dim('This environment already appears to be configured for VaultProof.'));
     } else {
-      console.log(chalk.dim('No provider key patterns were found in checked .env files.'));
+      console.log(chalk.dim('No provider key patterns or vault-only secret candidates were found in checked .env files.'));
     }
     console.log(chalk.dim(`Provider catalog: ${catalog.providers.length} providers, version ${catalog.version}`));
     process.exit(0);
   }
 
-  console.log(chalk.bold(`Found ${findings.length} API key${findings.length === 1 ? '' : 's'}:\n`));
-  for (const f of findings) {
-    console.log(
-      `  ${chalk.green('✓')} ${f.varName.padEnd(26)} ${chalk.dim(truncateKey(f.value).padEnd(22))} ${chalk.dim('(' + f.provider.label + ')')}`,
-    );
+  if (findings.length > 0) {
+    console.log(chalk.bold(`Found ${findings.length} proxy API key${findings.length === 1 ? '' : 's'}:\n`));
+    for (const f of findings) {
+      console.log(
+        `  ${chalk.green('✓')} ${f.varName.padEnd(26)} ${chalk.dim(truncateKey(f.value).padEnd(22))} ${chalk.dim('(' + f.provider.label + ')')}`,
+      );
+    }
+  }
+
+  if (vaultSecretFindings.length > 0) {
+    console.log(chalk.bold(`\nFound ${vaultSecretFindings.length} vault-only secret${vaultSecretFindings.length === 1 ? '' : 's'}:\n`));
+    for (const secret of vaultSecretFindings) {
+      console.log(
+        `  ${chalk.green('✓')} ${secret.name.padEnd(26)} ${chalk.dim(truncateKey(secret.value).padEnd(22))} ${chalk.dim('(runtime injection)')}`,
+      );
+    }
   }
 
   // Detect skipped keys and explain why
@@ -306,6 +775,7 @@ async function runInit(opts: { autoYes: boolean; dryRun: boolean }): Promise<voi
       const [, varName, rawValue] = m;
       const value = rawValue.replace(/^["']|["']$/g, '');
       if (findings.some((f) => f.varName === varName)) continue;
+      if (vaultSecretFindings.some((secret) => secret.name === varName)) continue;
       if (varName.match(/WEBHOOK_SECRET|_WEBHOOK/) && value.startsWith('whsec_')) {
         skippedNotes.push(`${varName} — webhook secret (used locally for signature verification, not sent to Stripe)`);
       } else if (varName.match(/PRICE_ID|_PRICE_/) && value.startsWith('price_')) {
@@ -325,7 +795,8 @@ async function runInit(opts: { autoYes: boolean; dryRun: boolean }): Promise<voi
   }
 
   if (!opts.autoYes) {
-    const ok = await confirm(`Protect ${findings.length} key${findings.length === 1 ? '' : 's'} via Shamir splitting?`);
+    const total = findings.length + vaultSecretFindings.length;
+    const ok = await confirm(`Protect ${total} secret${total === 1 ? '' : 's'} via Shamir splitting?`);
     if (!ok) {
       console.log(chalk.dim('Cancelled.'));
       process.exit(0);
@@ -535,6 +1006,19 @@ async function runInit(opts: { autoYes: boolean; dryRun: boolean }): Promise<voi
     console.log(chalk.dim(`    Share 2 → VaultProof (encrypted with a different key)`));
     console.log(chalk.dim(`    A breach of VaultProof cannot expose this key`));
   }
+
+  for (const secret of vaultSecretFindings) {
+    const s = ora(`Splitting ${secret.name} (vault-only)...`).start();
+    try {
+      await uploadVaultSecret(apiUrl, jwt, projectRowId, secret);
+    } catch (err) {
+      s.fail(String(err));
+      process.exit(1);
+    }
+    s.succeed(`${chalk.bold(secret.name)} ${chalk.dim('(vault-only secret)')}`);
+    console.log(chalk.dim('    Stored for authenticated CLI retrieval and runtime injection'));
+    console.log(chalk.dim(`    Use: npx @vaultproof/init run -- <command>`));
+  }
   console.log();
 
   // ── Rewrite .env files ──
@@ -546,6 +1030,14 @@ async function runInit(opts: { autoYes: boolean; dryRun: boolean }): Promise<voi
       console.log(`\n${chalk.green('✓')} Rewrote ${chalk.bold(file)} (${rewritten} key${rewritten === 1 ? '' : 's'})`);
     }
     allManualNotes.push(...manualNotes);
+  }
+
+  const vaultSecretFilesToRewrite = Array.from(new Set(vaultSecretFindings.map((secret) => secret.file)));
+  for (const file of vaultSecretFilesToRewrite) {
+    const { rewritten } = rewriteEnvFileForVaultSecrets(file, vaultSecretFindings, { projectId, proxyBaseUrl });
+    if (rewritten > 0) {
+      console.log(`\n${chalk.green('✓')} Rewrote ${chalk.bold(file)} (${rewritten} vault-only secret${rewritten === 1 ? '' : 's'})`);
+    }
   }
 
   // ── Done ──
@@ -653,6 +1145,9 @@ async function runInit(opts: { autoYes: boolean; dryRun: boolean }): Promise<voi
       });
     }
   }
+  for (const secret of vaultSecretFindings) {
+    deployVars.push({ name: secret.name, value: vaultSecretPlaceholder(secret.name) });
+  }
 
   console.log(chalk.bold('\n── Deploy to production ──\n'));
   console.log(chalk.dim('Set these env vars on your hosting platform (Vercel, Railway, Netlify, etc.):\n'));
@@ -660,7 +1155,11 @@ async function runInit(opts: { autoYes: boolean; dryRun: boolean }): Promise<voi
     console.log(`  ${chalk.white(v.name)}=${chalk.dim(v.value)}`);
   }
 
-  console.log(chalk.dim('\nNone of these are secrets — safe to commit.\n'));
+  console.log(chalk.dim('\nThese are identifiers or VaultProof placeholders, not plaintext secrets.\n'));
+  if (vaultSecretFindings.length > 0) {
+    console.log(chalk.dim('For vault-only secrets, start your app with:'));
+    console.log(chalk.white('  npx @vaultproof/init run -- <your start command>\n'));
+  }
 
   const { prompt: promptInput } = await import('./prompts.js');
   const deployed = await confirm('Have you set these on your hosting platform?');
@@ -898,6 +1397,158 @@ async function runCheckLegacy(): Promise<void> {
   process.exit(0);
 }
 
+async function runSecretsAdd(opts: { autoYes: boolean; dryRun: boolean }): Promise<void> {
+  printBanner();
+
+  const catalog = await loadProviders();
+  const cwd = process.cwd();
+  const envStatuses = getEnvFileStatuses(cwd);
+  const markers = collectVaultProofMarkers(cwd, envStatuses);
+  printScanReport(envStatuses, catalog.providers.length, markers);
+
+  const vaultSecrets = await collectVaultSecretFindings(cwd, envStatuses, {
+    autoYes: opts.autoYes,
+    force: true,
+  });
+
+  if (vaultSecrets.length === 0) {
+    console.log(chalk.yellow('No vault-only secrets selected.'));
+    process.exit(0);
+  }
+
+  console.log(chalk.bold(`\nSelected ${vaultSecrets.length} vault-only secret${vaultSecrets.length === 1 ? '' : 's'}:\n`));
+  for (const secret of vaultSecrets) {
+    console.log(`  ${chalk.green('✓')} ${secret.name.padEnd(26)} ${chalk.dim(truncateKey(secret.value).padEnd(22))} ${chalk.dim(formatEnvEntrySource(cwd, secret))}`);
+  }
+
+  if (opts.dryRun) {
+    console.log(chalk.dim('\n(dry run — not uploading or rewriting)'));
+    process.exit(0);
+  }
+
+  if (!opts.autoYes) {
+    const ok = await confirm(`Protect ${vaultSecrets.length} vault-only secret${vaultSecrets.length === 1 ? '' : 's'}?`);
+    if (!ok) {
+      console.log(chalk.dim('Cancelled.'));
+      process.exit(0);
+    }
+  }
+
+  const jwt = await ensureJwt();
+  const apiUrl = getInitWorkerUrl();
+  const preferredProjectId = readEnvValue(cwd, 'VAULTPROOF_PROJECT_ID');
+  const project = await chooseProject(jwt, apiUrl, {
+    autoYes: opts.autoYes,
+    preferredProjectId: preferredProjectId || undefined,
+    createName: path.basename(cwd) || 'vaultproof-project',
+  });
+
+  for (const secret of vaultSecrets) {
+    const spinner = ora(`Splitting + uploading ${secret.name}...`).start();
+    try {
+      await uploadVaultSecret(apiUrl, jwt, project.id, secret);
+      spinner.succeed(`Protected ${chalk.bold(secret.name)}`);
+    } catch (err) {
+      spinner.fail(String(err));
+      process.exit(1);
+    }
+  }
+
+  const proxyBaseUrl = getProxyBaseUrl();
+  for (const file of Array.from(new Set(vaultSecrets.map((secret) => secret.file)))) {
+    const { rewritten } = rewriteEnvFileForVaultSecrets(file, vaultSecrets, {
+      projectId: project.vp_proj_id,
+      proxyBaseUrl,
+    });
+    if (rewritten > 0) {
+      console.log(`${chalk.green('✓')} Rewrote ${chalk.bold(file)} (${rewritten} vault-only secret${rewritten === 1 ? '' : 's'})`);
+    }
+  }
+
+  console.log(`\n${chalk.bold.green('Done.')} Vault-only secrets are stored for project ${chalk.bold(project.vp_proj_id)}.`);
+  console.log(chalk.dim('Run with injected secrets:'));
+  console.log(chalk.white('  npx @vaultproof/init run -- <your start command>'));
+}
+
+async function resolveProjectForVaultSecretRead(jwt: string, apiUrl: string, opts: { autoYes: boolean }): Promise<ProjectChoice> {
+  const preferredProjectId = readEnvValue(process.cwd(), 'VAULTPROOF_PROJECT_ID');
+  return await chooseProject(jwt, apiUrl, {
+    autoYes: opts.autoYes,
+    preferredProjectId: preferredProjectId || undefined,
+    createName: path.basename(process.cwd()) || 'vaultproof-project',
+  });
+}
+
+async function runSecretsPull(opts: { autoYes: boolean; stdout: boolean }): Promise<void> {
+  const jwt = await ensureJwt();
+  const apiUrl = getInitWorkerUrl();
+  const project = await resolveProjectForVaultSecretRead(jwt, apiUrl, opts);
+  const secrets = await fetchVaultSecrets(apiUrl, jwt, project.id);
+
+  if (secrets.length === 0) {
+    console.log(chalk.yellow('No vault-only secrets found for this project.'));
+    process.exit(0);
+  }
+
+  const lines = secrets
+    .sort((a, b) => a.env_var.localeCompare(b.env_var))
+    .map((secret) => `${secret.env_var}=${formatDotEnvValue(secret.value)}`);
+
+  if (opts.stdout) {
+    console.log(lines.join('\n'));
+    return;
+  }
+
+  const outPath = path.join(process.cwd(), '.env.vaultproof.local');
+  fs.writeFileSync(outPath, lines.join('\n') + '\n', { mode: 0o600 });
+  try { fs.chmodSync(outPath, 0o600); } catch { /* best effort */ }
+  console.log(`${chalk.green('✓')} Wrote ${secrets.length} secret${secrets.length === 1 ? '' : 's'} to ${chalk.bold(outPath)}`);
+  console.log(chalk.dim('This file contains plaintext secrets. Keep it out of git.'));
+}
+
+async function runWithVaultSecrets(opts: { autoYes: boolean; passthrough: string[] }): Promise<void> {
+  if (opts.passthrough.length === 0) {
+    console.error(chalk.red('Missing command. Usage: npx @vaultproof/init run -- <command>'));
+    process.exit(1);
+  }
+
+  const jwt = await ensureJwt();
+  const apiUrl = getInitWorkerUrl();
+  const project = await resolveProjectForVaultSecretRead(jwt, apiUrl, opts);
+  const secrets = await fetchVaultSecrets(apiUrl, jwt, project.id);
+
+  const localEnv = envFileValues(process.cwd());
+  const secretEnv: Record<string, string> = {};
+  for (const secret of secrets) secretEnv[secret.env_var] = secret.value;
+
+  const childEnv = {
+    ...localEnv,
+    ...process.env,
+    ...secretEnv,
+    VAULTPROOF_PROJECT_ID: project.vp_proj_id,
+  };
+
+  console.log(chalk.dim(`Injecting ${secrets.length} vault-only secret${secrets.length === 1 ? '' : 's'} for ${project.vp_proj_id}.`));
+  const child = spawn(opts.passthrough[0], opts.passthrough.slice(1), {
+    cwd: process.cwd(),
+    env: childEnv,
+    stdio: 'inherit',
+    shell: process.platform === 'win32',
+  });
+
+  child.on('exit', (code, signal) => {
+    if (signal) {
+      process.kill(process.pid, signal);
+      return;
+    }
+    process.exit(code ?? 0);
+  });
+  child.on('error', (err) => {
+    console.error(chalk.red(`Failed to start command: ${err.message}`));
+    process.exit(1);
+  });
+}
+
 async function runDoctor(): Promise<void> {
   printBanner();
   console.log(chalk.bold('VaultProof — health check\n'));
@@ -1002,10 +1653,11 @@ async function runDoctor(): Promise<void> {
 }
 
 async function main(): Promise<void> {
-  const { cmd, flags } = parseArgs(process.argv);
+  const { cmd, flags, positionals, passthrough } = parseArgs(process.argv);
   const autoYes = flags.has('--yes') || flags.has('-y');
   const dryRun = flags.has('--dry-run');
   const checkLegacy = flags.has('--check-legacy');
+  const forceCustom = flags.has('--custom');
   const showHelp = flags.has('--help') || flags.has('-h') || cmd === 'help';
 
   if (showHelp) {
@@ -1024,6 +1676,31 @@ async function main(): Promise<void> {
     return;
   }
 
+  if (cmd === 'custom') {
+    await runInit({ autoYes, dryRun, forceCustom: true, customOnly: true });
+    return;
+  }
+
+  if (cmd === 'secrets') {
+    const subcommand = positionals[1] || 'add';
+    if (subcommand === 'add') {
+      await runSecretsAdd({ autoYes, dryRun });
+      return;
+    }
+    if (subcommand === 'pull') {
+      await runSecretsPull({ autoYes, stdout: flags.has('--stdout') });
+      return;
+    }
+    console.error(chalk.red(`Unknown secrets command: ${subcommand}`));
+    printUsage();
+    process.exit(1);
+  }
+
+  if (cmd === 'run') {
+    await runWithVaultSecrets({ autoYes, passthrough });
+    return;
+  }
+
   if (cmd !== 'init') {
     console.error(chalk.red(`Unknown command: ${cmd}`));
     printUsage();
@@ -1035,7 +1712,7 @@ async function main(): Promise<void> {
     return;
   }
 
-  await runInit({ autoYes, dryRun });
+  await runInit({ autoYes, dryRun, forceCustom });
 }
 
 main().catch((err) => {

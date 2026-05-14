@@ -246,13 +246,26 @@
       linear:      { badge: 'bg-indigo-500/10 text-indigo-400 border-indigo-500/20', dot: 'bg-indigo-400' },
       notion:      { badge: 'bg-gray-500/10 text-gray-300 border-gray-500/20', dot: 'bg-gray-300' },
       github:      { badge: 'bg-gray-500/10 text-gray-300 border-gray-500/20', dot: 'bg-gray-300' },
+      minimax:     { badge: 'bg-rose-500/10 text-rose-300 border-rose-500/20', dot: 'bg-rose-300' },
+      voyage:      { badge: 'bg-emerald-500/10 text-emerald-300 border-emerald-500/20', dot: 'bg-emerald-300' },
+      jina:        { badge: 'bg-amber-500/10 text-amber-300 border-amber-500/20', dot: 'bg-amber-300' },
+      ai21:        { badge: 'bg-fuchsia-500/10 text-fuchsia-300 border-fuchsia-500/20', dot: 'bg-fuchsia-300' },
+      assemblyai:  { badge: 'bg-cyan-500/10 text-cyan-300 border-cyan-500/20', dot: 'bg-cyan-300' },
+      gitlab:      { badge: 'bg-orange-500/10 text-orange-300 border-orange-500/20', dot: 'bg-orange-300' },
+      launchdarkly:{ badge: 'bg-yellow-500/10 text-yellow-300 border-yellow-500/20', dot: 'bg-yellow-300' },
+      snyk:        { badge: 'bg-violet-500/10 text-violet-300 border-violet-500/20', dot: 'bg-violet-300' },
+      pagerduty:   { badge: 'bg-lime-500/10 text-lime-300 border-lime-500/20', dot: 'bg-lime-300' },
+      honeycomb:   { badge: 'bg-orange-500/10 text-orange-300 border-orange-500/20', dot: 'bg-orange-300' },
     };
 
     const providerDisplayNames = {
       openai: 'OpenAI', anthropic: 'Anthropic', stripe: 'Stripe', groq: 'Groq',
       mistral: 'Mistral', together: 'Together', fireworks: 'Fireworks', deepseek: 'DeepSeek',
       xai: 'xAI', openrouter: 'OpenRouter', resend: 'Resend', sendgrid: 'SendGrid',
-      linear: 'Linear', notion: 'Notion', github: 'GitHub',
+      linear: 'Linear', notion: 'Notion', github: 'GitHub', minimax: 'MiniMax',
+      voyage: 'Voyage AI', jina: 'Jina AI', ai21: 'AI21', assemblyai: 'AssemblyAI',
+      gitlab: 'GitLab', launchdarkly: 'LaunchDarkly', snyk: 'Snyk',
+      pagerduty: 'PagerDuty', honeycomb: 'Honeycomb',
     };
 
     function providerBadge(provider) {
@@ -594,7 +607,17 @@
       sendgrid: { upstream: 'https://api.sendgrid.com', header: 'Authorization', template: 'Bearer {key}' },
       linear: { upstream: 'https://api.linear.app', header: 'Authorization', template: '{key}' },
       notion: { upstream: 'https://api.notion.com', header: 'Authorization', template: 'Bearer {key}', extra: { 'Notion-Version': '2022-06-28' } },
-      github: { upstream: 'https://api.github.com', header: 'Authorization', template: 'Bearer {key}' }
+      github: { upstream: 'https://api.github.com', header: 'Authorization', template: 'Bearer {key}' },
+      minimax: { upstream: 'https://api.minimax.io', header: 'Authorization', template: 'Bearer {key}' },
+      voyage: { upstream: 'https://api.voyageai.com', header: 'Authorization', template: 'Bearer {key}' },
+      jina: { upstream: 'https://api.jina.ai', header: 'Authorization', template: 'Bearer {key}' },
+      ai21: { upstream: 'https://api.ai21.com', header: 'Authorization', template: 'Bearer {key}' },
+      assemblyai: { upstream: 'https://api.assemblyai.com', header: 'Authorization', template: '{key}' },
+      gitlab: { upstream: 'https://gitlab.com', header: 'PRIVATE-TOKEN', template: '{key}' },
+      launchdarkly: { upstream: 'https://app.launchdarkly.com', header: 'Authorization', template: '{key}' },
+      snyk: { upstream: 'https://api.snyk.io', header: 'Authorization', template: 'token {key}' },
+      pagerduty: { upstream: 'https://api.pagerduty.com', header: 'Authorization', template: 'Token token={key}' },
+      honeycomb: { upstream: 'https://api.honeycomb.io', header: 'X-Honeycomb-Team', template: '{key}' }
     };
 
     var DEFAULT_ENV_VARS = {
@@ -602,7 +625,11 @@
       groq: 'GROQ_API_KEY', mistral: 'MISTRAL_API_KEY', together: 'TOGETHER_API_KEY',
       fireworks: 'FIREWORKS_API_KEY', deepseek: 'DEEPSEEK_API_KEY', xai: 'XAI_API_KEY',
       openrouter: 'OPENROUTER_API_KEY', resend: 'RESEND_API_KEY', sendgrid: 'SENDGRID_API_KEY',
-      linear: 'LINEAR_API_KEY', notion: 'NOTION_API_KEY', github: 'GITHUB_TOKEN'
+      linear: 'LINEAR_API_KEY', notion: 'NOTION_API_KEY', github: 'GITHUB_TOKEN',
+      minimax: 'MINIMAX_API_KEY', voyage: 'VOYAGE_API_KEY', jina: 'JINA_API_KEY',
+      ai21: 'AI21_API_KEY', assemblyai: 'ASSEMBLYAI_API_KEY', gitlab: 'GITLAB_TOKEN',
+      launchdarkly: 'LAUNCHDARKLY_ACCESS_TOKEN', snyk: 'SNYK_TOKEN',
+      pagerduty: 'PAGERDUTY_API_KEY', honeycomb: 'HONEYCOMB_API_KEY'
     };
 
     // Detection patterns, ordered most-specific-first (same as providers.json)
@@ -617,6 +644,10 @@
       { id: 'linear', label: 'Linear', re: /^lin_api_[A-Za-z0-9]{32,}$/ },
       { id: 'notion', label: 'Notion', re: /^(?:secret_|ntn_)[A-Za-z0-9]{40,}$/ },
       { id: 'github', label: 'GitHub', re: /^(?:ghp_|github_pat_|ghs_|gho_|ghu_)[A-Za-z0-9_]{36,}$/ },
+      { id: 'minimax', label: 'MiniMax', re: /^sk-cp-[A-Za-z0-9._-]{20,}$/ },
+      { id: 'voyage', label: 'Voyage AI', re: /^pa-[A-Za-z0-9_-]{32,}$/ },
+      { id: 'jina', label: 'Jina AI', re: /^jina_[A-Za-z0-9_-]{20,}$/ },
+      { id: 'gitlab', label: 'GitLab', re: /^glpat-[A-Za-z0-9_-]{20,}$/ },
       { id: 'stripe', label: 'Stripe', re: /^sk_(?:live|test)_[A-Za-z0-9]{20,}$/ },
       { id: 'openai', label: 'OpenAI', re: /^sk-(?:proj-[A-Za-z0-9_-]{20,}|[A-Za-z0-9]{48,})$/ },
     ];

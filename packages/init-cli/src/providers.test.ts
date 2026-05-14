@@ -56,6 +56,18 @@ const SAMPLES: Sample[] = [
   { providerId: 'notion', varName: 'NOTION_API_KEY', value: 'ntn_' + 'a'.repeat(42) },
   { providerId: 'github', varName: 'GITHUB_TOKEN', value: 'ghp_' + 'a'.repeat(40) },
   { providerId: 'github', varName: 'GITHUB_TOKEN', value: 'github_pat_' + 'a'.repeat(82) },
+  { providerId: 'minimax', varName: 'MINIMAX_API_KEY', value: 'sk-cp-' + 'a'.repeat(48) },
+  { providerId: 'voyage', varName: 'VOYAGE_API_KEY', value: 'pa-' + 'a'.repeat(48) },
+  { providerId: 'jina', varName: 'JINA_API_KEY', value: 'jina_' + 'a'.repeat(48) },
+  { providerId: 'ai21', varName: 'AI21_API_KEY', value: 'a'.repeat(48) },
+  { providerId: 'assemblyai', varName: 'ASSEMBLYAI_API_KEY', value: 'A'.repeat(32) },
+  { providerId: 'gitlab', varName: 'GITLAB_TOKEN', value: 'glpat-' + 'a'.repeat(32) },
+  { providerId: 'launchdarkly', varName: 'LAUNCHDARKLY_ACCESS_TOKEN', value: 'api-' + 'a'.repeat(48) },
+  { providerId: 'snyk', varName: 'SNYK_TOKEN', value: 'a'.repeat(40) },
+  { providerId: 'pagerduty', varName: 'PAGERDUTY_API_KEY', value: 'p'.repeat(40) },
+  { providerId: 'honeycomb', varName: 'HONEYCOMB_API_KEY', value: 'h'.repeat(40) },
+  { providerId: 'weaviate', varName: 'WEAVIATE_API_KEY', value: 'w'.repeat(40) },
+  { providerId: 'grafana', varName: 'GRAFANA_SERVICE_ACCOUNT_TOKEN', value: 'glsa_' + 'g'.repeat(40) },
 ];
 
 let passed = 0;
@@ -122,6 +134,8 @@ const hintTests: Array<[string, string, string, string | null]> = [
   ['SECRET_TOKEN',   'a'.repeat(32),          'no-match',    null],     // 32 chars, no hint
   ['TOGETHER_KEY',   'f'.repeat(64),          'together',    'together'],
   ['SHA_HASH',       'f'.repeat(64),          'no-match',    null],     // 64 hex, no hint
+  ['ASSEMBLYAI_API_KEY', 'A'.repeat(32),      'assemblyai',  'assemblyai'],
+  ['RANDOM_API_KEY',     'A'.repeat(32),      'no-match',    null],     // same shape, no hint
 ];
 for (const [name, val, label, expected] of hintTests) {
   const envPath = path.join(tmpDir, '.env');

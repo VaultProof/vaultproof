@@ -13,6 +13,8 @@ import type { Env } from '../types.js';
 import { getSupabase } from './supabase.js';
 import { cacheGet, cacheSet } from './project-cache.js';
 
+const VAULT_SECRET_PROVIDER_PREFIX = 'vaultenv-';
+
 function normalizeOrigin(value: string): string | null {
   try {
     return new URL(value).origin.toLowerCase();
@@ -37,23 +39,81 @@ export interface AuthenticatedKey {
   extraHeaders: Record<string, string> | null;
 }
 
+const PROJECT_TOKEN_HEADER_NAMES = [
+  'authorization',
+  'x-api-key',
+  'api-key',
+  'apikey',
+  'api-token',
+  'x-goog-api-key',
+  'xi-api-key',
+  'x-e2b-api-key',
+  'x-algolia-api-key',
+  'x-assemblyai-api-key',
+  'private-token',
+  'x-gitlab-token',
+  'x-honeycomb-team',
+  'dd-api-key',
+  'x-elasticemail-apikey',
+  'x-postage-server-token',
+  'x-postmark-server-token',
+  'x-sendlayer-api-key',
+  'x-smtp2go-api-key',
+];
+
+function parseBasicProjectToken(value: string): string | null {
+  const encoded = value.match(/^Basic\s+(.+)$/i)?.[1]?.trim();
+  if (!encoded) return null;
+  try {
+    const decoded = atob(encoded);
+    const [user, pass] = decoded.split(':');
+    if (user?.startsWith('vp-proj-')) return user;
+    if (pass?.startsWith('vp-proj-')) return pass;
+  } catch {
+    return null;
+  }
+  return null;
+}
+
+function extractProjectToken(value: string | null): string | null {
+  const trimmed = value?.trim();
+  if (!trimmed) return null;
+  if (trimmed.startsWith('vp-proj-')) return trimmed;
+
+  const bearer = trimmed.match(/^Bearer\s+(.+)$/i)?.[1]?.trim();
+  if (bearer?.startsWith('vp-proj-')) return bearer;
+
+  const token = trimmed.match(/^Token\s+(.+)$/i)?.[1]?.trim();
+  if (token?.startsWith('vp-proj-')) return token;
+
+  const pagerDutyToken = trimmed.match(/^Token\s+token=(.+)$/i)?.[1]?.trim();
+  if (pagerDutyToken?.startsWith('vp-proj-')) return pagerDutyToken;
+
+  return parseBasicProjectToken(trimmed);
+}
+
 /**
- * Parse the bearer token. Pure, no I/O. Returns the project id string
- * if valid, or an error response descriptor.
+ * Parse the public project identifier. Pure, no I/O. Returns the project id
+ * string if valid, or an error response descriptor.
+ *
+ * Most SDKs send their configured API key in provider-specific headers
+ * (`x-api-key`, `api-key`, `PRIVATE-TOKEN`, etc.). After init rewrites a
+ * provider key to `vp-proj-...`, those headers must authenticate the proxy
+ * just like `Authorization: Bearer vp-proj-...` does.
  */
 export function parseProjectToken(
   request: Request,
 ): { token: string } | { error: string; status: number } {
-  const authHeader = request.headers.get('Authorization') || '';
-  const bearerMatch = authHeader.match(/^Bearer\s+(.+)$/i);
-  const token = bearerMatch?.[1]?.trim();
-  if (!token || !token.startsWith('vp-proj-')) {
-    return {
-      error: 'Missing or malformed project identifier. Expected `Authorization: Bearer vp-proj-...`',
-      status: 401,
-    };
+  for (const headerName of PROJECT_TOKEN_HEADER_NAMES) {
+    const token = extractProjectToken(request.headers.get(headerName));
+    if (token) {
+      return { token };
+    }
   }
-  return { token };
+  return {
+    error: 'Missing or malformed project identifier. Expected `vp-proj-...` in Authorization or a supported provider API-key header',
+    status: 401,
+  };
 }
 
 /**
@@ -124,6 +184,9 @@ export async function authenticateAndFetchKey(
   // the cache stores the allowlist string, not an authorization decision.
   const cached = cacheGet(token, slug);
   if (cached) {
+    if (cached.provider.startsWith(VAULT_SECRET_PROVIDER_PREFIX)) {
+      return { error: 'Vault-only secrets are not proxyable', status: 404 };
+    }
     const originErr = checkOriginLock(request, cached.allowedOrigins, cached.strictOrigin);
     if (originErr) return originErr;
 
@@ -213,6 +276,10 @@ export async function authenticateAndFetchKey(
       revoked_at: string | null;
     };
   };
+
+  if (row.provider.startsWith(VAULT_SECRET_PROVIDER_PREFIX)) {
+    return { error: 'Vault-only secrets are not proxyable', status: 404 };
+  }
 
   // Origin check against the JUST-FETCHED row. On subsequent cached hits
   // we'll re-check with the cached allowlist value.

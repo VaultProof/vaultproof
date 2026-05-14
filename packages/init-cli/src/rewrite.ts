@@ -11,6 +11,7 @@
 import fs from 'node:fs';
 import type { Finding } from './scan.js';
 import type { ProviderSpec } from './providers.js';
+import { vaultSecretPlaceholder, type VaultSecretEntry } from './vault-secret.js';
 
 export interface RewriteOptions {
   projectId: string;
@@ -152,6 +153,42 @@ export function rewriteEnvFileForMigration(
   const result = header + '\n' + migrated.join('\n') + '\n' + cleaned.join('\n');
   fs.writeFileSync(envPath, result);
   return { written: entries.length, manualNotes };
+}
+
+export function rewriteEnvFileForVaultSecrets(
+  envPath: string,
+  secrets: VaultSecretEntry[],
+  opts: RewriteOptions,
+): { rewritten: number } {
+  if (secrets.length === 0) return { rewritten: 0 };
+  if (!fs.existsSync(envPath)) return { rewritten: 0 };
+
+  const relevant = secrets.filter((secret) => secret.file === envPath);
+  if (relevant.length === 0) return { rewritten: 0 };
+
+  const original = fs.readFileSync(envPath, 'utf-8');
+  const lines = original.split('\n');
+  const secretNames = new Set(relevant.map((secret) => secret.name));
+  let projectIdSeen = false;
+  const rewrittenNames = new Set<string>();
+
+  const rewritten = lines.map((line) => {
+    const m = line.match(/^\s*([A-Za-z_][A-Za-z0-9_]*)\s*=/);
+    if (!m) return line;
+    if (m[1] === 'VAULTPROOF_PROJECT_ID') {
+      projectIdSeen = true;
+      return `VAULTPROOF_PROJECT_ID=${opts.projectId}`;
+    }
+    if (!secretNames.has(m[1])) return line;
+    rewrittenNames.add(m[1]);
+    return `${m[1]}=${vaultSecretPlaceholder(m[1])}`;
+  });
+
+  const result = projectIdSeen
+    ? rewritten.join('\n')
+    : buildHeader(opts, new Map(), []) + '\n' + rewritten.join('\n');
+  fs.writeFileSync(envPath, result);
+  return { rewritten: rewrittenNames.size };
 }
 
 function buildHeader(

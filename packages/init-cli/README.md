@@ -13,7 +13,7 @@ That's it. Scan, split, upload, rewrite. Your OpenAI, Stripe, Anthropic, and oth
 ## What it does
 
 1. **Scans** your `.env`, `.env.local`, `.env.production`, and `.env.development` files for API keys.
-2. **Identifies** each key by shape against a catalog of 15+ providers (OpenAI, Anthropic, Stripe, Groq, Mistral, Together, Fireworks, DeepSeek, xAI, OpenRouter, Resend, SendGrid, Linear, Notion, GitHub).
+2. **Identifies** each key by shape against a catalog of 87 providers across AI, email, payments, DevOps, observability, SaaS, and databases.
 3. **Splits** each key into two Shamir secret shares, locally in your terminal — the plaintext key is never sent to VaultProof.
 4. **Uploads** the two encrypted shares to the VaultProof init worker.
 5. **Rewrites** your `.env` with a single `VAULTPROOF_PROJECT_ID` identifier and per-provider `*_BASE_URL` lines pointing at the VaultProof proxy.
@@ -63,6 +63,15 @@ Your code doesn't change. Your OpenAI SDK still reads `OPENAI_API_KEY` and `OPEN
 # Interactive (recommended)
 npx @vaultproof/init
 
+# Protect a custom/internal API key from .env
+npx @vaultproof/init custom
+
+# Protect vault-only runtime secrets from .env
+npx @vaultproof/init secrets add
+
+# Run a command with vault-only secrets injected
+npx @vaultproof/init run -- npm run dev
+
 # Skip confirmation
 npx @vaultproof/init --yes
 
@@ -103,29 +112,61 @@ See [vaultproof.dev/docs](https://vaultproof.dev/docs) for the full architecture
 
 ---
 
+## Custom/internal APIs
+
+If you have an API key for a provider that is not in the catalog, or for an internal service you expose through a public API hostname, put the plaintext key in `.env` and run:
+
+```bash
+npx @vaultproof/init custom
+```
+
+The CLI prompts for the env var, provider slug, display name, upstream base URL, auth header, and header template. For example, `INTERNAL_API_KEY=ik_live_...` can become:
+
+```bash
+VAULTPROOF_PROJECT_ID=vp-proj-abc123
+INTERNAL_API_BASE_URL=https://init.vaultproof.dev/p/internal
+INTERNAL_API_KEY=vp-proj-abc123
+```
+
+The upstream must be a public HTTPS fully-qualified domain name. `localhost`, private IPs, `.internal`, `.local`, Cloudflare internal hostnames, embedded credentials, and custom ports are blocked before the key is uploaded.
+
+---
+
+## Vault-only runtime secrets
+
+Some `.env` values are not outbound API keys, so they cannot use the transparent HTTP proxy. Examples include database URLs, Redis URLs, JWT/session secrets, encryption keys, OAuth client secrets, and webhook signing secrets.
+
+Protect them with:
+
+```bash
+npx @vaultproof/init secrets add
+```
+
+The CLI rewrites plaintext values to placeholders:
+
+```bash
+VAULTPROOF_PROJECT_ID=vp-proj-abc123
+DATABASE_URL=vaultproof://DATABASE_URL
+JWT_SECRET=vaultproof://JWT_SECRET
+```
+
+Then run local commands with plaintext injected into the child process environment:
+
+```bash
+npx @vaultproof/init run -- npm run dev
+```
+
+If you need a plaintext file for a local tool, `npx @vaultproof/init secrets pull` writes `.env.vaultproof.local` with mode `0600`. That file contains real secrets, so keep it out of git.
+
+---
+
 ## Supported providers
 
-Detection is driven by [providers.json](https://vaultproof.dev/providers.json) which is fetched at runtime (with a bundled fallback). Today's catalog:
+Detection is driven by [providers.json](https://vaultproof.dev/providers.json) which is fetched at runtime (with a bundled fallback). Today's catalog has 87 provider signatures.
 
-| Provider | Key pattern | Env var rewrite |
-|---|---|---|
-| OpenAI | `sk-proj-...` / `sk-...` | `OPENAI_BASE_URL` |
-| Anthropic | `sk-ant-api03-...` | `ANTHROPIC_BASE_URL` |
-| Stripe | `sk_live_...` / `sk_test_...` | `STRIPE_BASE_URL` |
-| Groq | `gsk_...` | `GROQ_BASE_URL` |
-| xAI (Grok) | `xai-...` | `XAI_BASE_URL` |
-| OpenRouter | `sk-or-v1-...` | `OPENROUTER_BASE_URL` |
-| DeepSeek | `sk-...` (with `DEEPSEEK` in var name) | `DEEPSEEK_BASE_URL` |
-| Mistral | 32-char (with `MISTRAL` in var name) | `MISTRAL_BASE_URL` |
-| Together AI | 64-char hex (with `TOGETHER` in var name) | `TOGETHER_BASE_URL` |
-| Fireworks AI | `fw_...` | `FIREWORKS_BASE_URL` |
-| Resend | `re_...` | (client-side base URL) |
-| SendGrid | `SG.xxx.yyy` | (client-side base URL) |
-| Linear | `lin_api_...` | (client-side base URL) |
-| Notion | `secret_...` / `ntn_...` | (client-side base URL) |
-| GitHub | `ghp_...` / `github_pat_...` | (client-side base URL) |
+Common examples include OpenAI, Anthropic, Google/Gemini, MiniMax, Voyage AI, Jina AI, AI21, AssemblyAI, Groq, xAI, OpenRouter, DeepSeek, Mistral, Together AI, Fireworks AI, Cohere, Replicate, Hugging Face, Perplexity, Cerebras, ElevenLabs, Stripe, Paddle, Square, Resend, SendGrid, Mailgun, Postmark, Brevo, GitHub, GitLab, Linear, Notion, Slack, Discord, Supabase, Neon, PlanetScale, Upstash, Pinecone, Vercel, Cloudflare, Sentry, Datadog, New Relic, Grafana, Honeycomb, Snyk, PagerDuty, LaunchDarkly, HubSpot, Intercom, Airtable, Contentful, Sanity, Shopify, Firecrawl, E2B, Exa, Tavily, and Trigger.dev.
 
-Need a provider we don't support yet? Open an issue or PR on [github.com/windsurftemplate/vaultproof](https://github.com/windsurftemplate/vaultproof).
+Need a provider we don't support yet? Use `npx @vaultproof/init custom`, or open an issue or PR on [github.com/windsurftemplate/vaultproof](https://github.com/windsurftemplate/vaultproof).
 
 ---
 

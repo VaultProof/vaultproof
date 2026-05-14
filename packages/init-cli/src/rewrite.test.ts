@@ -9,7 +9,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import os from 'node:os';
-import { rewriteEnvFileForMigration, type MigrationEntry } from './rewrite.js';
+import { rewriteEnvFileForMigration, rewriteEnvFileForVaultSecrets, type MigrationEntry } from './rewrite.js';
 import type { ProviderSpec } from './providers.js';
 
 let passed = 0;
@@ -226,6 +226,56 @@ DATABASE_URL=postgres://safe
   const allFiles = fs.readdirSync(tmp);
   const backupFiles = allFiles.filter(f => f.includes('backup'));
   ok('zero backup files after rewrite', backupFiles.length === 0);
+}
+
+// ── Vault-only secret rewrite ───────────────────────────────────────────
+console.log('── vault-only secret rewrite ──');
+{
+  const envPath = resetEnv(`DATABASE_URL=postgres://user:pw@host/db
+JWT_SECRET=supersecret
+OPENAI_API_KEY=vp-proj-test
+`);
+
+  const result = rewriteEnvFileForVaultSecrets(
+    envPath,
+    [
+      { file: envPath, line: 1, name: 'DATABASE_URL', value: 'postgres://user:pw@host/db' },
+      { file: envPath, line: 2, name: 'JWT_SECRET', value: 'supersecret' },
+    ],
+    { projectId: 'vp-proj-vault', proxyBaseUrl: 'https://init.vaultproof.dev' },
+  );
+
+  const content = fs.readFileSync(envPath, 'utf-8');
+  ok('rewritten count = 2', result.rewritten === 2);
+  ok('database placeholder', content.includes('DATABASE_URL=vaultproof://DATABASE_URL'));
+  ok('jwt placeholder', content.includes('JWT_SECRET=vaultproof://JWT_SECRET'));
+  ok('project id header', content.includes('VAULTPROOF_PROJECT_ID=vp-proj-vault'));
+  ok('plaintext db removed', !content.includes('postgres://user:pw@host/db'));
+  ok('plaintext jwt removed', !content.includes('JWT_SECRET=supersecret'));
+}
+
+// ── Proxy rewrite followed by vault-only rewrite keeps BASE_URL lines ─────
+console.log('── combined proxy and vault-only rewrite ──');
+{
+  const envPath = resetEnv(`OPENAI_API_KEY=sk-proj-test123
+DATABASE_URL=postgres://user:pw@host/db
+`);
+
+  const { rewriteEnvFile } = await import('./rewrite.js');
+  const { scanEnvFile } = await import('./scan.js');
+  const findings = scanEnvFile(envPath, [OPENAI]);
+  rewriteEnvFile(envPath, findings, { projectId: 'vp-proj-combined', proxyBaseUrl: 'https://init.vaultproof.dev' });
+  rewriteEnvFileForVaultSecrets(
+    envPath,
+    [{ file: envPath, line: 2, name: 'DATABASE_URL', value: 'postgres://user:pw@host/db' }],
+    { projectId: 'vp-proj-combined', proxyBaseUrl: 'https://init.vaultproof.dev' },
+  );
+
+  const content = fs.readFileSync(envPath, 'utf-8');
+  ok('openai base url preserved', content.includes('OPENAI_BASE_URL=https://init.vaultproof.dev/p/openai/v1'));
+  ok('openai project id preserved', content.includes('OPENAI_API_KEY=vp-proj-combined'));
+  ok('database placeholder added', content.includes('DATABASE_URL=vaultproof://DATABASE_URL'));
+  ok('one project id after combined rewrite', content.match(/VAULTPROOF_PROJECT_ID=/g)?.length === 1);
 }
 
 // ── Cleanup ──────────────────────────────────────────────────────────────

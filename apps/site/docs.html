@@ -794,12 +794,21 @@ client = openai.<span class="fn">OpenAI</span>(
                         <span class="bg-cyan-500/15 text-cyan-400 text-xs font-bold px-2.5 py-1 rounded">FOR ANY SDK</span>
                         <h3 class="text-lg font-semibold text-white">Init CLI -- one command, every SDK works</h3>
                     </div>
-                    <p class="text-gray-500 text-sm mb-4">Run <code class="font-mono text-xs text-vp-cyan">npx @vaultproof/init</code> in any project. It scans your .env, splits each key, and adds per-provider <code class="font-mono text-xs">*_BASE_URL</code> entries. Your existing SDKs (Stripe, AWS, Twilio, Sendgrid -- anything) read the new base URL from the environment and route through VaultProof automatically.</p>
+                    <p class="text-gray-500 text-sm mb-4">Run <code class="font-mono text-xs text-vp-cyan">npx @vaultproof/init</code> in any project. It scans your .env, splits each key, and adds per-provider <code class="font-mono text-xs">*_BASE_URL</code> entries for supported header-based providers. Your OpenAI-compatible and API-key SDKs can then route through VaultProof with their normal environment variables.</p>
 
                     <div class="code-block">
                         <div class="code-header">bash</div>
 <pre class="text-gray-300"><span class="cmt"># Protect every key in your .env at once</span>
 npx @vaultproof/init
+
+<span class="cmt"># Protect a custom/internal API key from .env</span>
+npx @vaultproof/init custom
+
+<span class="cmt"># Protect vault-only runtime secrets from .env</span>
+npx @vaultproof/init secrets add
+
+<span class="cmt"># Run with vault-only secrets injected into the child process</span>
+npx @vaultproof/init run -- npm run dev
 
 <span class="cmt"># Preview what will happen without making changes</span>
 npx @vaultproof/init --dry-run
@@ -849,12 +858,21 @@ npx @vaultproof/init --check-legacy</pre>
                         <span class="bg-vp-accent/15 text-vp-accent text-xs font-bold px-2.5 py-1 rounded">FOR YOUR TERMINAL</span>
                         <h3 class="text-lg font-semibold text-white">CLI -- run from the command line</h3>
                     </div>
-                    <p class="text-gray-500 text-sm mb-4">The CLI has three modes. Run it from any project directory.</p>
+                    <p class="text-gray-500 text-sm mb-4">The CLI has a few focused commands. Run it from any project directory.</p>
 
                     <div class="code-block">
                         <div class="code-header">terminal</div>
 <pre class="text-gray-300"><span class="cmt"># Scan .env, split every key, rewrite environment</span>
 $ npx @vaultproof/init
+
+<span class="cmt"># Add an unsupported or internal API key from .env</span>
+$ npx @vaultproof/init custom
+
+<span class="cmt"># Store database URLs, JWT secrets, and webhook secrets</span>
+$ npx @vaultproof/init secrets add
+
+<span class="cmt"># Start a process with vault-only secrets injected</span>
+$ npx @vaultproof/init run -- npm run dev
 
 <span class="cmt"># Preview what will happen without making changes</span>
 $ npx @vaultproof/init --dry-run
@@ -1147,6 +1165,7 @@ $ npx @vaultproof/init --check-legacy</pre>
                 <!-- Supported Providers -->
                 <div class="mb-8">
                     <h3 class="text-lg font-semibold text-white mb-4">Supported Providers</h3>
+                    <p class="text-gray-500 text-sm mb-4">The init catalog currently includes 87 provider signatures. Common proxy-ready examples:</p>
                     <div class="bg-vp-surface border border-vp-border rounded-md overflow-hidden">
                         <table class="doc-table">
                             <thead><tr><th>Provider</th><th>Proxy Base URL</th><th>Upstream</th></tr></thead>
@@ -1165,6 +1184,31 @@ $ npx @vaultproof/init --check-legacy</pre>
                                     <td><code class="font-mono text-xs text-vp-accent">google</code></td>
                                     <td><code class="font-mono text-xs">https://init.vaultproof.dev/p/google</code></td>
                                     <td><code class="font-mono text-xs text-gray-500">https://generativelanguage.googleapis.com</code></td>
+                                </tr>
+                                <tr>
+                                    <td><code class="font-mono text-xs text-vp-accent">minimax</code></td>
+                                    <td><code class="font-mono text-xs">https://init.vaultproof.dev/p/minimax/v1</code></td>
+                                    <td><code class="font-mono text-xs text-gray-500">https://api.minimax.io</code></td>
+                                </tr>
+                                <tr>
+                                    <td><code class="font-mono text-xs text-vp-accent">voyage</code></td>
+                                    <td><code class="font-mono text-xs">https://init.vaultproof.dev/p/voyage/v1</code></td>
+                                    <td><code class="font-mono text-xs text-gray-500">https://api.voyageai.com</code></td>
+                                </tr>
+                                <tr>
+                                    <td><code class="font-mono text-xs text-vp-accent">jina</code></td>
+                                    <td><code class="font-mono text-xs">https://init.vaultproof.dev/p/jina</code></td>
+                                    <td><code class="font-mono text-xs text-gray-500">https://api.jina.ai</code></td>
+                                </tr>
+                                <tr>
+                                    <td><code class="font-mono text-xs text-vp-accent">ai21</code></td>
+                                    <td><code class="font-mono text-xs">https://init.vaultproof.dev/p/ai21/studio/v1</code></td>
+                                    <td><code class="font-mono text-xs text-gray-500">https://api.ai21.com</code></td>
+                                </tr>
+                                <tr>
+                                    <td><code class="font-mono text-xs text-vp-accent">assemblyai</code></td>
+                                    <td><code class="font-mono text-xs">https://init.vaultproof.dev/p/assemblyai</code></td>
+                                    <td><code class="font-mono text-xs text-gray-500">https://api.assemblyai.com</code></td>
                                 </tr>
                                 <tr>
                                     <td><code class="font-mono text-xs text-vp-accent">together</code></td>
@@ -1206,17 +1250,37 @@ $ npx @vaultproof/init --check-legacy</pre>
                                     <td><code class="font-mono text-xs">https://init.vaultproof.dev/p/replicate</code></td>
                                     <td><code class="font-mono text-xs text-gray-500">https://api.replicate.com</code></td>
                                 </tr>
+                                <tr>
+                                    <td><code class="font-mono text-xs text-vp-accent">gitlab</code></td>
+                                    <td><code class="font-mono text-xs">https://init.vaultproof.dev/p/gitlab/api/v4</code></td>
+                                    <td><code class="font-mono text-xs text-gray-500">https://gitlab.com</code></td>
+                                </tr>
+                                <tr>
+                                    <td><code class="font-mono text-xs text-vp-accent">launchdarkly</code></td>
+                                    <td><code class="font-mono text-xs">https://init.vaultproof.dev/p/launchdarkly/api/v2</code></td>
+                                    <td><code class="font-mono text-xs text-gray-500">https://app.launchdarkly.com</code></td>
+                                </tr>
+                                <tr>
+                                    <td><code class="font-mono text-xs text-vp-accent">snyk</code></td>
+                                    <td><code class="font-mono text-xs">https://init.vaultproof.dev/p/snyk/rest</code></td>
+                                    <td><code class="font-mono text-xs text-gray-500">https://api.snyk.io</code></td>
+                                </tr>
+                                <tr>
+                                    <td><code class="font-mono text-xs text-vp-accent">honeycomb</code></td>
+                                    <td><code class="font-mono text-xs">https://init.vaultproof.dev/p/honeycomb</code></td>
+                                    <td><code class="font-mono text-xs text-gray-500">https://api.honeycomb.io</code></td>
+                                </tr>
                             </tbody>
                         </table>
                     </div>
-                    <p class="text-gray-500 text-sm mt-3">You can also store keys for any custom provider. Custom providers work with the SDK and CLI but not the transparent proxy URL (no upstream URL configured).</p>
+                    <p class="text-gray-500 text-sm mt-3">Providers with account-specific upstreams, like Weaviate and Grafana, are supported by init when their service URL is present in your .env. For unsupported or internal HTTP APIs, run <code class="font-mono text-xs text-vp-accent">npx @vaultproof/init custom</code>.</p>
                 </div>
 
                 <!-- How Authentication Works -->
                 <div class="mb-8">
                     <h3 class="text-lg font-semibold text-white mb-4">How Authentication Works</h3>
                     <ol class="list-decimal list-inside space-y-2 text-sm text-gray-400">
-                        <li>Send your <code class="font-mono text-xs text-vp-accent">vp-proj-</code> project ID as the <code class="font-mono text-xs">Authorization: Bearer</code> header (this is the same field SDKs use for <code class="font-mono text-xs">apiKey</code>)</li>
+                        <li>Send your <code class="font-mono text-xs text-vp-accent">vp-proj-</code> project ID in <code class="font-mono text-xs">Authorization: Bearer</code> or in the provider API-key header your SDK already uses</li>
                         <li>VaultProof identifies your project and finds the stored key for that provider</li>
                         <li>The key is reconstructed from encrypted shares briefly in memory, used to call the upstream API, then zeroed</li>
                         <li>The response (including SSE streaming) is forwarded back to you transparently</li>
@@ -1285,7 +1349,7 @@ res = client.chat.completions.<span class="fn">create</span>(
                             <li><strong class="text-white">Run <code class="font-mono text-xs text-vp-accent">npx @vaultproof/init</code></strong> -- scans your .env, splits each key, rewrites the file</li>
                             <li><strong class="text-white">Your .env now contains</strong> a <code class="font-mono text-xs text-vp-accent">vp-proj-</code> project ID and per-provider <code class="font-mono text-xs">*_BASE_URL</code> entries</li>
                             <li><strong class="text-white">Your SDKs read the environment</strong> -- OpenAI, Anthropic, Stripe, and others all support <code class="font-mono text-xs">*_BASE_URL</code> env vars</li>
-                            <li><strong class="text-white">API calls route through VaultProof</strong> -- the proxy authenticates via <code class="font-mono text-xs">Authorization: Bearer vp-proj-...</code>, reconstructs your key briefly in memory, calls the provider, then zeros the key</li>
+                            <li><strong class="text-white">API calls route through VaultProof</strong> -- the proxy authenticates via <code class="font-mono text-xs">Authorization: Bearer vp-proj-...</code> or the provider API-key header, reconstructs your key briefly in memory, calls the provider, then zeros the key</li>
                         </ol>
                     </div>
                     <div class="code-block mb-4">
@@ -1345,6 +1409,7 @@ res = client.chat.completions.<span class="fn">create</span>(
                 <!-- Supported Providers -->
                 <div>
                     <h3 class="text-lg font-semibold text-white mb-4">Supported Providers</h3>
+                    <p class="text-gray-500 text-sm mb-4">The catalog includes 87 signatures. This table shows common proxy-ready providers and their auth style.</p>
                     <div class="bg-vp-surface border border-vp-border rounded-md overflow-hidden">
                         <table class="doc-table">
                             <thead><tr><th>Provider</th><th>Value</th><th>Base URL</th><th>Auth Header</th></tr></thead>
@@ -1366,6 +1431,36 @@ res = client.chat.completions.<span class="fn">create</span>(
                                     <td><code class="font-mono text-xs text-vp-accent">'google'</code></td>
                                     <td class="text-gray-500"><code class="font-mono text-xs">generativelanguage.googleapis.com</code></td>
                                     <td><code class="font-mono text-xs">x-goog-api-key</code></td>
+                                </tr>
+                                <tr>
+                                    <td class="text-white font-medium">MiniMax</td>
+                                    <td><code class="font-mono text-xs text-vp-accent">'minimax'</code></td>
+                                    <td class="text-gray-500"><code class="font-mono text-xs">api.minimax.io</code></td>
+                                    <td><code class="font-mono text-xs">Authorization: Bearer</code></td>
+                                </tr>
+                                <tr>
+                                    <td class="text-white font-medium">Voyage AI</td>
+                                    <td><code class="font-mono text-xs text-vp-accent">'voyage'</code></td>
+                                    <td class="text-gray-500"><code class="font-mono text-xs">api.voyageai.com</code></td>
+                                    <td><code class="font-mono text-xs">Authorization: Bearer</code></td>
+                                </tr>
+                                <tr>
+                                    <td class="text-white font-medium">Jina AI</td>
+                                    <td><code class="font-mono text-xs text-vp-accent">'jina'</code></td>
+                                    <td class="text-gray-500"><code class="font-mono text-xs">api.jina.ai</code></td>
+                                    <td><code class="font-mono text-xs">Authorization: Bearer</code></td>
+                                </tr>
+                                <tr>
+                                    <td class="text-white font-medium">AI21</td>
+                                    <td><code class="font-mono text-xs text-vp-accent">'ai21'</code></td>
+                                    <td class="text-gray-500"><code class="font-mono text-xs">api.ai21.com</code></td>
+                                    <td><code class="font-mono text-xs">Authorization: Bearer</code></td>
+                                </tr>
+                                <tr>
+                                    <td class="text-white font-medium">AssemblyAI</td>
+                                    <td><code class="font-mono text-xs text-vp-accent">'assemblyai'</code></td>
+                                    <td class="text-gray-500"><code class="font-mono text-xs">api.assemblyai.com</code></td>
+                                    <td><code class="font-mono text-xs">Authorization</code></td>
                                 </tr>
                                 <tr>
                                     <td class="text-white font-medium">Together.ai</td>
@@ -1415,10 +1510,34 @@ res = client.chat.completions.<span class="fn">create</span>(
                                     <td class="text-gray-500"><code class="font-mono text-xs">api.replicate.com</code></td>
                                     <td><code class="font-mono text-xs">Authorization: Bearer</code></td>
                                 </tr>
+                                <tr>
+                                    <td class="text-white font-medium">GitLab</td>
+                                    <td><code class="font-mono text-xs text-vp-accent">'gitlab'</code></td>
+                                    <td class="text-gray-500"><code class="font-mono text-xs">gitlab.com</code></td>
+                                    <td><code class="font-mono text-xs">PRIVATE-TOKEN</code></td>
+                                </tr>
+                                <tr>
+                                    <td class="text-white font-medium">LaunchDarkly</td>
+                                    <td><code class="font-mono text-xs text-vp-accent">'launchdarkly'</code></td>
+                                    <td class="text-gray-500"><code class="font-mono text-xs">app.launchdarkly.com</code></td>
+                                    <td><code class="font-mono text-xs">Authorization</code></td>
+                                </tr>
+                                <tr>
+                                    <td class="text-white font-medium">Snyk</td>
+                                    <td><code class="font-mono text-xs text-vp-accent">'snyk'</code></td>
+                                    <td class="text-gray-500"><code class="font-mono text-xs">api.snyk.io</code></td>
+                                    <td><code class="font-mono text-xs">Authorization: token</code></td>
+                                </tr>
+                                <tr>
+                                    <td class="text-white font-medium">Honeycomb</td>
+                                    <td><code class="font-mono text-xs text-vp-accent">'honeycomb'</code></td>
+                                    <td class="text-gray-500"><code class="font-mono text-xs">api.honeycomb.io</code></td>
+                                    <td><code class="font-mono text-xs">X-Honeycomb-Team</code></td>
+                                </tr>
                             </tbody>
                         </table>
                     </div>
-                    <p class="text-gray-500 text-sm mt-3">You can also store keys for any custom provider. Custom providers work with the SDK and CLI but not the transparent proxy URL (no upstream URL configured).</p>
+                    <p class="text-gray-500 text-sm mt-3">Providers with account-specific upstreams, like Weaviate and Grafana, are supported by init when their service URL is present in your .env. For unsupported or internal HTTP APIs, run <code class="font-mono text-xs text-vp-accent">npx @vaultproof/init custom</code>.</p>
                 </div>
 
                 <!-- Which Keys to Store -->
@@ -1520,6 +1639,57 @@ res = client.chat.completions.<span class="fn">create</span>(
 
 <span class="str">Done.</span> Your .env now uses vp-proj-a8Kj3mNp9x
   Backup saved: .env.backup.1712345678</pre>
+                            </div>
+                        </div>
+
+                        <div class="endpoint-card">
+                            <div class="flex items-baseline gap-3 mb-2">
+                                <code class="font-mono text-sm text-white font-semibold">npx @vaultproof/init custom</code>
+                            </div>
+                            <p class="text-gray-500 text-sm mb-3">Protect an unsupported or internal HTTP API key already present in your <code class="font-mono text-xs">.env</code>. The CLI prompts for the provider slug, upstream base URL, auth header name, and header template, then rewrites the selected key to use your <code class="font-mono text-xs text-vp-accent">vp-proj-</code> project ID.</p>
+                            <div class="code-block">
+                                <div class="code-header">terminal</div>
+<pre class="text-gray-300">$ npx @vaultproof/init custom
+
+<span class="str">Possible custom/internal keys:</span>
+  1. INTERNAL_API_KEY from .env
+
+  Provider slug: internal
+  Upstream base URL: https://api.example.com
+  Auth header: Authorization
+  Header template: Bearer {key}
+
+<span class="str">Done.</span> INTERNAL_API_KEY now routes through https://init.vaultproof.dev/p/internal</pre>
+                            </div>
+                        </div>
+
+                        <div class="endpoint-card">
+                            <div class="flex items-baseline gap-3 mb-2">
+                                <code class="font-mono text-sm text-white font-semibold">npx @vaultproof/init secrets add</code>
+                            </div>
+                            <p class="text-gray-500 text-sm mb-3">Protect runtime secrets that are not outbound HTTP API keys, including database URLs, Redis URLs, JWT/session secrets, encryption keys, OAuth client secrets, and webhook signing secrets. The CLI stores split shares and rewrites plaintext values to <code class="font-mono text-xs">vaultproof://</code> placeholders.</p>
+                            <div class="code-block">
+                                <div class="code-header">terminal</div>
+<pre class="text-gray-300">$ npx @vaultproof/init secrets add
+
+<span class="str">Possible vault-only secrets:</span>
+  1. DATABASE_URL from .env
+  2. JWT_SECRET from .env
+
+<span class="str">Done.</span> Use npx @vaultproof/init run -- npm run dev</pre>
+                            </div>
+                        </div>
+
+                        <div class="endpoint-card">
+                            <div class="flex items-baseline gap-3 mb-2">
+                                <code class="font-mono text-sm text-white font-semibold">npx @vaultproof/init run -- &lt;command&gt;</code>
+                            </div>
+                            <p class="text-gray-500 text-sm mb-3">Fetch vault-only secrets with your authenticated VaultProof session and inject them into a child process environment without writing plaintext back to <code class="font-mono text-xs">.env</code>.</p>
+                            <div class="code-block">
+                                <div class="code-header">terminal</div>
+<pre class="text-gray-300">$ npx @vaultproof/init run -- npm run dev
+
+<span class="str">Injecting 2 vault-only secrets for vp-proj-a8Kj3mNp9xRt2wQz.</span></pre>
                             </div>
                         </div>
 
@@ -1826,7 +1996,7 @@ res = client.chat.completions.<span class="fn">create</span>(
 
                 <div class="mb-10">
                     <h3 class="text-xl font-semibold text-white mb-5">Proxy</h3>
-                    <p class="text-gray-500 text-sm mb-4">Authenticated with <code class="font-mono text-xs text-vp-accent">Authorization: Bearer vp-proj-...</code>. Responses are forwarded from the provider, not wrapped by VaultProof.</p>
+                    <p class="text-gray-500 text-sm mb-4">Authenticated with <code class="font-mono text-xs text-vp-accent">Authorization: Bearer vp-proj-...</code> or a supported provider API-key header. Responses are forwarded from the provider, not wrapped by VaultProof.</p>
                     <div class="space-y-4">
                         <div class="endpoint-card">
                             <div class="flex items-center gap-3 mb-3">
@@ -1902,7 +2072,7 @@ res = client.chat.completions.<span class="fn">create</span>(
                 <h2 class="text-3xl font-bold text-white mb-2">Scanner</h2>
                 <p class="text-gray-500 mb-4">The init CLI includes a local env-file scanner as part of the migration flow.</p>
                 <div class="bg-cyan-500/5 border border-cyan-500/20 rounded-md px-4 py-3 mb-8">
-                    <p class="text-gray-400 text-xs"><span class="text-cyan-400 font-medium">Privacy:</span> The init scanner runs locally on your machine. It reads env files, detects supported provider keys, and only uploads encrypted Shamir shares after you confirm.</p>
+                    <p class="text-gray-400 text-xs"><span class="text-cyan-400 font-medium">Privacy:</span> The init scanner runs locally on your machine. It reads env files, detects supported provider keys or selected custom keys, and only uploads encrypted Shamir shares after you confirm.</p>
                 </div>
 
                 <div class="space-y-6">
@@ -1912,6 +2082,9 @@ res = client.chat.completions.<span class="fn">create</span>(
                         <div class="code-block mb-4">
                             <div class="code-header">commands</div>
 <pre class="text-gray-300">npx @vaultproof/init --dry-run
+npx @vaultproof/init custom
+npx @vaultproof/init secrets add
+npx @vaultproof/init run -- npm run dev
 npx @vaultproof/init --yes
 npx @vaultproof/init --check-legacy
 npx @vaultproof/init doctor</pre>
@@ -1919,6 +2092,8 @@ npx @vaultproof/init doctor</pre>
                         <ul class="text-gray-400 text-sm space-y-2 mb-4">
                             <li class="flex items-start gap-2"><span class="text-emerald-400 mt-0.5">&#10003;</span> <code class="font-mono text-xs text-vp-accent">.env</code>, <code class="font-mono text-xs">.env.local</code>, <code class="font-mono text-xs">.env.production</code>, and <code class="font-mono text-xs">.env.development</code></li>
                             <li class="flex items-start gap-2"><span class="text-emerald-400 mt-0.5">&#10003;</span> Provider-specific key patterns from the bundled provider catalog</li>
+                            <li class="flex items-start gap-2"><span class="text-emerald-400 mt-0.5">&#10003;</span> Custom/internal HTTP API keys when you run <code class="font-mono text-xs">custom</code></li>
+                            <li class="flex items-start gap-2"><span class="text-emerald-400 mt-0.5">&#10003;</span> Vault-only runtime secrets like database URLs, JWT secrets, and webhook secrets when you run <code class="font-mono text-xs">secrets add</code></li>
                             <li class="flex items-start gap-2"><span class="text-emerald-400 mt-0.5">&#10003;</span> Legacy <code class="font-mono text-xs">vp_live_</code> references when you run <code class="font-mono text-xs">--check-legacy</code></li>
                             <li class="flex items-start gap-2"><span class="text-emerald-400 mt-0.5">&#10003;</span> Worker, auth, and proxy reachability when you run <code class="font-mono text-xs">doctor</code></li>
                         </ul>
@@ -1986,7 +2161,7 @@ npx @vaultproof/init doctor</pre>
 
                     <div class="endpoint-card">
                         <h4 class="text-white font-semibold mb-2">"What providers are supported?"</h4>
-                        <p class="text-gray-400 text-sm">The current init catalog includes OpenAI, Anthropic, Stripe, Groq, xAI, OpenRouter, DeepSeek, Mistral, Together, Fireworks, Resend, SendGrid, Linear, Notion, GitHub, and more. For proxying, each stored key carries its own validated upstream URL and auth-header template, so the worker can support provider-specific routing without hardcoding every API path.</p>
+                        <p class="text-gray-400 text-sm">The current init catalog includes 87 provider signatures, including OpenAI, Anthropic, Google/Gemini, MiniMax, Voyage AI, Jina AI, AI21, AssemblyAI, Stripe, Groq, xAI, OpenRouter, DeepSeek, Mistral, Together, Fireworks, Resend, SendGrid, Linear, Notion, GitHub, GitLab, Sentry, Datadog, Grafana, Honeycomb, Snyk, PagerDuty, LaunchDarkly, Supabase, Neon, and more. For proxying, each stored key carries its own validated upstream URL and auth-header template, so the worker can support provider-specific routing without hardcoding every API path.</p>
                     </div>
 
                     <div class="endpoint-card">
