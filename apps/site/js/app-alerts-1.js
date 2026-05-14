@@ -392,7 +392,6 @@
       ...checklistItems.map((item) => `- ${item.done ? '[x]' : '[ ]'} ${item.label}`),
       '',
       'Reference links',
-      '- Org settings: /app/org',
       '- Docs: /docs',
       '- Security: /security',
       '- Enterprise demo: /enterprise-demo',
@@ -462,12 +461,6 @@
     const items = buildOpsChecklistItems();
     const completed = items.filter((item) => item.done).length;
     const resources = [
-      {
-        title: 'Org settings',
-        copy: 'Return to Org when you need ownership transfer, archive controls, or workspace-level setup details.',
-        href: currentOrganizationId ? `/app/org?org=${encodeURIComponent(currentOrganizationId)}` : '/app/org',
-        label: 'open org',
-      },
       {
         title: 'Security',
         copy: 'Share the security page when customers ask how alert routing and delivery are controlled.',
