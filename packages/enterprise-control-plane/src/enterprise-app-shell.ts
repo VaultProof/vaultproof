@@ -22,6 +22,7 @@ export type EnterpriseAppNavPage =
   | 'security-review'
   | 'settings'
   | 'entitlements'
+  | 'onboarding'
   | 'plans'
   | 'pilot'
   | 'pilot-success'
@@ -252,6 +253,13 @@ const ENTERPRISE_SIDEBAR_NAV_GROUPS: readonly EnterpriseSidebarNavGroup[] = [
         href: '/app/entitlements',
         label: 'Entitlements',
         blurb: 'Contract capacity, support tier, renewal, and paid-user guardrails.',
+        activePill: 'paid',
+      },
+      {
+        page: 'onboarding',
+        href: '/app/onboarding',
+        label: 'Onboarding',
+        blurb: 'Paid-customer activation, owners, milestones, and handoff evidence.',
         activePill: 'paid',
       },
       {
