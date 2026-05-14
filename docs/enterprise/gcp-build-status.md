@@ -72,6 +72,7 @@ Status: `attached and enforced`
 - Public root admin copy is removed; root `/admin` and `/vp-admin` now contain only a no-copy redirect/fallback login button to the dedicated admin login.
 - Built in this update: the staff admin console can create enterprise businesses, invite/find the first owner, seed SSO metadata, create user invites, and show per-business login links such as `https://enterprise.vaultproof.dev/app/login?org=<business-id>` without exposing service-role keys, OAuth secrets, SAML secrets, or invite tokens.
 - Admin login now exposes a clear `Continue with Google` button, sends Google OAuth with a `vaultproof.dev` hosted-domain hint, and still enforces the server-side internal admin allowlist. Non-`vaultproof.dev` emails are rejected even if they authenticate successfully with Supabase.
+- Admin overview/detail reads tolerate a missing `organization_sso_settings` migration by omitting SSO metadata and returning `migration_required` instead of blocking the whole staff console.
 - GCP edge now has the `vaultproof-enterprise-admin-cert` certificate attached for `admin.vaultproof.dev`; Cloudflare still needs an `admin` A record to `34.102.179.105` before Google can mark the certificate visible/active.
 
 ## Projects Page Performance

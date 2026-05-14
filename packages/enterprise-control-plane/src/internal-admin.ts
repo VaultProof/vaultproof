@@ -145,6 +145,17 @@ function emailDomain(email: string): string {
   return email.trim().toLowerCase().split('@').pop() || '';
 }
 
+function isMissingOrganizationSsoSettingsTable(error: { code?: string; message?: string } | null | undefined): boolean {
+  const message = String(error?.message || '').toLowerCase();
+  return error?.code === '42P01'
+    || error?.code === 'PGRST205'
+    || (message.includes('organization_sso_settings') && (
+      message.includes('schema cache')
+      || message.includes('does not exist')
+      || message.includes('could not find')
+    ));
+}
+
 function truncateForAudit(value: string | null, maxLength = 160): string | null {
   if (!value) return null;
   return value.length > maxLength ? `${value.slice(0, maxLength - 1)}...` : value;
@@ -1291,7 +1302,12 @@ async function handleInternalAdminOrgDetail(
     getInternalAdminActionExecutionRecords(env, orgId),
   ]);
 
-  const firstError = orgResult.error || memberResult.error || projectResult.error || inviteResult.error || ssoResult.error || auditResult.error;
+  const ssoSchemaReady = !isMissingOrganizationSsoSettingsTable(ssoResult.error);
+  if (ssoResult.error && !ssoSchemaReady) {
+    console.warn(`internal admin SSO settings read skipped: ${ssoResult.error.message}`);
+  }
+
+  const firstError = orgResult.error || memberResult.error || projectResult.error || inviteResult.error || (ssoSchemaReady ? ssoResult.error : null) || auditResult.error;
   if (firstError) {
     return Response.json({ error: `Internal admin org detail query failed: ${firstError.message}` }, { status: 500 });
   }
@@ -1332,14 +1348,14 @@ async function handleInternalAdminOrgDetail(
     status: string;
     created_at: string;
   }>);
-  const sso = normalizeRows(ssoResult.data as MaybeArray<{
+  const sso = ssoSchemaReady ? normalizeRows(ssoResult.data as MaybeArray<{
     organization_id: string;
     company_domain: string | null;
     sso_provider: string | null;
     login_mode: string | null;
     status: string | null;
     updated_at: string | null;
-  }>)[0] || null;
+  }>)[0] || null : null;
   const auditRows = normalizeRows(auditResult.data as MaybeArray<{
     id: string;
     organization_id: string | null;
@@ -1398,6 +1414,8 @@ async function handleInternalAdminOrgDetail(
       sso,
       business_login_links: enterpriseBusinessLoginLinks(env, organization.id, sso?.company_domain || null),
     },
+    sso_schema_ready: ssoSchemaReady,
+    migration_required: ssoSchemaReady ? null : 'Apply supabase/migrations/20260419010000_organization_sso_settings.sql',
     users: members.map((member) => ({
       user_id: member.user_id,
       email: memberEmailMap.get(member.user_id) || null,
@@ -3024,7 +3042,12 @@ export async function handleInternalAdminRoutes(
     getRecentInternalAdminAudit(env),
   ]);
 
-  const firstError = orgResult.error || memberResult.error || projectResult.error || inviteResult.error || ssoResult.error || auditResult.error;
+  const ssoSchemaReady = !isMissingOrganizationSsoSettingsTable(ssoResult.error);
+  if (ssoResult.error && !ssoSchemaReady) {
+    console.warn(`internal admin SSO settings read skipped: ${ssoResult.error.message}`);
+  }
+
+  const firstError = orgResult.error || memberResult.error || projectResult.error || inviteResult.error || (ssoSchemaReady ? ssoResult.error : null) || auditResult.error;
   if (firstError) {
     return Response.json({ error: `Internal admin query failed: ${firstError.message}` }, { status: 500 });
   }
@@ -3061,14 +3084,14 @@ export async function handleInternalAdminRoutes(
     status: string;
     created_at: string;
   }>);
-  const ssoRows = normalizeRows(ssoResult.data as MaybeArray<{
+  const ssoRows = ssoSchemaReady ? normalizeRows(ssoResult.data as MaybeArray<{
     organization_id: string;
     company_domain: string | null;
     sso_provider: string | null;
     login_mode: string | null;
     status: string | null;
     updated_at: string | null;
-  }>);
+  }>) : [];
   const auditRows = normalizeRows(auditResult.data as MaybeArray<{
     id: string;
     organization_id: string | null;
@@ -3158,6 +3181,8 @@ export async function handleInternalAdminRoutes(
       pending_invitation_count: pendingInvitations.length,
       sso_configured_count: configuredSso.length,
     },
+    sso_schema_ready: ssoSchemaReady,
+    migration_required: ssoSchemaReady ? null : 'Apply supabase/migrations/20260419010000_organization_sso_settings.sql',
     businesses,
     users: members.slice(0, 100).map((member) => {
       const organization = orgById.get(member.organization_id);
@@ -3192,6 +3217,9 @@ export async function handleInternalAdminRoutes(
       auditWriteSucceeded
         ? 'Employee console views are recorded in the internal admin audit stream.'
         : 'Internal admin audit migration is pending; employee views are allowed but not yet persisted.',
+      ssoSchemaReady
+        ? 'SSO metadata is available for per-business login guidance.'
+        : 'SSO metadata migration is pending; overview omits SSO settings until supabase/migrations/20260419010000_organization_sso_settings.sql is applied.',
       'Customer data views are read-only by default; safe employee writes require the disabled-by-default action gate and approval secret.',
     ],
   }, {

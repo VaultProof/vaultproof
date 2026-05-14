@@ -105,6 +105,7 @@ let internalAdminActionRequests = [];
 let internalAdminActionExecutionRecords = [];
 let internalAdminCreatedBusiness = null;
 let internalAdminOwnerInvite = null;
+let organizationSsoSettingsSchemaReady = true;
 let bootstrapRpcCalls = 0;
 let authUserLookupCalls = 0;
 let projectKeyGetCalls = 0;
@@ -211,6 +212,7 @@ function installSupabaseStub() {
   internalAdminActionExecutionRecords = [];
   internalAdminCreatedBusiness = null;
   internalAdminOwnerInvite = null;
+  organizationSsoSettingsSchemaReady = true;
   bootstrapRpcCalls = 0;
   authUserLookupCalls = 0;
   projectKeyGetCalls = 0;
@@ -262,6 +264,12 @@ function installSupabaseStub() {
     }
 
     if (url.includes('/rest/v1/organization_sso_settings')) {
+      if (!organizationSsoSettingsSchemaReady) {
+        return jsonResponse({
+          code: 'PGRST205',
+          message: "Could not find the table 'public.organization_sso_settings' in the schema cache",
+        }, 404);
+      }
       if (method === 'GET') {
         if (decodedUrl.includes('select=organization_id')) {
           return jsonResponse(ssoSettings ? [ssoSettings] : []);
@@ -3788,6 +3796,38 @@ async function assertInternalAdminConsole() {
   if (!internalAdminAuditEvents.some((event) => event.event_type === 'internal_admin_overview_viewed')) {
     throw new Error(`Expected internal admin overview request to insert audit event, got ${JSON.stringify(internalAdminAuditEvents)}`);
   }
+
+  organizationSsoSettingsSchemaReady = false;
+  const missingSsoOverviewResponse = await handleEnterpriseControlPlaneRequest(
+    buildHostRequest(INTERNAL_ADMIN_HOSTNAME, '/api/v1/internal-admin/overview', {
+      headers: {
+        authorization: `Bearer ${AUTH_TOKEN}`,
+      },
+    }),
+    env,
+  );
+  const missingSsoOverview = await missingSsoOverviewResponse.json();
+  if (missingSsoOverviewResponse.status !== 200
+    || missingSsoOverview.sso_schema_ready !== false
+    || !String(missingSsoOverview.migration_required || '').includes('organization_sso_settings')) {
+    throw new Error(`Expected internal admin overview to tolerate missing SSO schema, got ${missingSsoOverviewResponse.status}: ${JSON.stringify(missingSsoOverview)}`);
+  }
+
+  const missingSsoOrgDetailResponse = await handleEnterpriseControlPlaneRequest(
+    buildHostRequest(INTERNAL_ADMIN_HOSTNAME, '/api/v1/internal-admin/orgs/org_123', {
+      headers: {
+        authorization: `Bearer ${AUTH_TOKEN}`,
+      },
+    }),
+    env,
+  );
+  const missingSsoOrgDetail = await missingSsoOrgDetailResponse.json();
+  if (missingSsoOrgDetailResponse.status !== 200
+    || missingSsoOrgDetail.sso_schema_ready !== false
+    || !String(missingSsoOrgDetail.migration_required || '').includes('organization_sso_settings')) {
+    throw new Error(`Expected internal admin org detail to tolerate missing SSO schema, got ${missingSsoOrgDetailResponse.status}: ${JSON.stringify(missingSsoOrgDetail)}`);
+  }
+  organizationSsoSettingsSchemaReady = true;
 
   const orgDetailResponse = await handleEnterpriseControlPlaneRequest(
     buildHostRequest(INTERNAL_ADMIN_HOSTNAME, '/api/v1/internal-admin/orgs/org_123', {
