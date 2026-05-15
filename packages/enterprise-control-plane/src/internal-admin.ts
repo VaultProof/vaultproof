@@ -1057,6 +1057,10 @@ export function renderInternalAdminPage(): string {
       <a class="nav-link" href="#org-detail"><span>Org detail</span></a>
       <div class="nav-label">proof</div>
       <a class="nav-link" href="/app/launch"><span>Launch board</span><span class="tag">staff</span></a>
+      <a class="nav-link" href="/app/demo"><span>Demo script</span><span class="tag">staff</span></a>
+      <a class="nav-link" href="/app/onboarding"><span>Paid onboarding</span><span class="tag">staff</span></a>
+      <a class="nav-link" href="/app/support"><span>Support room</span><span class="tag">staff</span></a>
+      <a class="nav-link" href="/app/pilot-success"><span>Pilot success</span><span class="tag">staff</span></a>
       <a class="nav-link" href="#runtime"><span>Runtime</span></a>
       <a class="nav-link" href="#audit"><span>Audit</span></a>
       <div class="sidebar-note"><strong>Safe first slice</strong><br />Read visibility is live. Employee writes stay disabled unless the approval gate and secret are enabled.</div>
@@ -1071,6 +1075,10 @@ export function renderInternalAdminPage(): string {
         <div class="toolbar">
           <button id="refreshBtn" class="primary" type="button">refresh</button>
           <a class="action" href="/app/launch">launch board</a>
+          <a class="action" href="/app/demo">demo</a>
+          <a class="action" href="/app/onboarding">onboarding</a>
+          <a class="action" href="/app/support">support</a>
+          <a class="action" href="/app/pilot-success">pilot success</a>
           <a class="action" href="/app/login">employee sign in</a>
         </div>
       </div>

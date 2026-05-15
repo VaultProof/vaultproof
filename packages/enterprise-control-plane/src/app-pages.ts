@@ -5472,8 +5472,38 @@ function renderEnterpriseSupportPage(pageName: EnterpriseSupportPageName): strin
       function row(title, sub, tag, tone) {
         return '<div class="row"><div><div class="row-title">' + escapeHtml(title) + '</div><div class="row-sub">' + escapeHtml(sub || '') + '</div></div><span class="tag ' + (tone || '') + '">' + escapeHtml(tag || 'ready') + '</span></div>';
       }
+      var STAFF_ONLY_APP_PATHS = {
+        '/app/launch': true,
+        '/app/demo': true,
+        '/app/onboarding': true,
+        '/app/support': true,
+        '/app/pilot-success': true
+      };
+      function isInternalAdminHost() {
+        return location.hostname === 'admin.vaultproof.dev'
+          || location.hostname === 'internal-admin.vaultproof.test'
+          || location.pathname.indexOf('/internal/') === 0;
+      }
+      function customerSafeHref(href) {
+        var value = String(href || '');
+        if (!value || value.charAt(0) === '#') return value;
+        try {
+          var resolved = new URL(value, location.origin);
+          var path = resolved.pathname.replace(/\\.html$/, '').replace(/\\/+$/, '') || '/';
+          if (resolved.origin === location.origin && STAFF_ONLY_APP_PATHS[path] && !isInternalAdminHost()) {
+            return '#staff-only';
+          }
+        } catch (_) {
+          if (STAFF_ONLY_APP_PATHS[value] && !isInternalAdminHost()) return '#staff-only';
+        }
+        return value;
+      }
       function linkRow(title, sub, href, label, tone) {
-        return '<div class="row"><div><div class="row-title">' + escapeHtml(title) + '</div><div class="row-sub">' + escapeHtml(sub || '') + '</div></div><a class="tag ' + (tone || '') + '" href="' + escapeHtml(href) + '">' + escapeHtml(label || 'open') + '</a></div>';
+        var safeHref = customerSafeHref(href);
+        var action = safeHref === '#staff-only'
+          ? '<span class="tag warn">staff only</span>'
+          : '<a class="tag ' + (tone || '') + '" href="' + escapeHtml(safeHref) + '">' + escapeHtml(label || 'open') + '</a>';
+        return '<div class="row"><div><div class="row-title">' + escapeHtml(title) + '</div><div class="row-sub">' + escapeHtml(sub || '') + '</div></div>' + action + '</div>';
       }
       function launchStorageKey() {
         return 'vaultproof_launch_checklist:' + (currentOrgId || 'default');

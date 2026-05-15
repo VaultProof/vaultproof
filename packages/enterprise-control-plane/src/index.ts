@@ -59,6 +59,17 @@ function redirectToInternalAdminLogin(url: URL): Response {
   });
 }
 
+const INTERNAL_ADMIN_ONLY_APP_PAGES = new Set(['launch', 'demo', 'onboarding', 'support', 'pilot-success']);
+
+function internalAdminOnlyAppPageName(pathname: string): string | null {
+  if (!pathname.startsWith('/app/')) return null;
+  const pageName = pathname
+    .replace(/^\/app\//, '')
+    .replace(/\/+$/, '')
+    .replace(/\.html$/, '');
+  return INTERNAL_ADMIN_ONLY_APP_PAGES.has(pageName) ? pageName : null;
+}
+
 function normalizeOriginLockHeaderName(headerName?: string): string {
   return (headerName || 'x-vaultproof-origin-lock').trim().toLowerCase();
 }
@@ -458,11 +469,12 @@ async function handleEnterpriseControlPlaneRequestInner(
     });
   }
 
-  if (isReadRequest && (url.pathname === '/app/launch' || url.pathname === '/app/launch.html')) {
+  const internalAdminOnlyAppPage = isReadRequest ? internalAdminOnlyAppPageName(url.pathname) : null;
+  if (internalAdminOnlyAppPage) {
     if (!internalAdminSurface) {
       return Response.json(
         {
-          error: 'Launch board is available only on the VaultProof internal admin host.',
+          error: 'This staff page is available only on the VaultProof internal admin host.',
         },
         {
           status: 404,
@@ -479,7 +491,12 @@ async function handleEnterpriseControlPlaneRequestInner(
       return redirectToInternalAdminLogin(url);
     }
 
-    return new Response(renderEnterprisePlannedAppPage('launch', env), {
+    const plannedPage = renderEnterprisePlannedAppPage(internalAdminOnlyAppPage, env);
+    if (!plannedPage) {
+      return Response.json({ error: 'Not found' }, { status: 404 });
+    }
+
+    return new Response(plannedPage, {
       status: 200,
       headers: {
         'content-type': 'text/html; charset=utf-8',

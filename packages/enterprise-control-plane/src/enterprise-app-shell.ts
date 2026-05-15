@@ -204,13 +204,6 @@ const ENTERPRISE_SIDEBAR_NAV_GROUPS: readonly EnterpriseSidebarNavGroup[] = [
         blurb: 'Implementation guide for enterprise rollout.',
       },
       {
-        page: 'demo',
-        href: '/app/demo',
-        label: 'Demo script',
-        blurb: 'Buyer walkthrough, proof path, and objection answers.',
-        activePill: 'demo',
-      },
-      {
         page: 'testers',
         href: '/app/testers',
         label: 'Pilot testers',
@@ -249,29 +242,10 @@ const ENTERPRISE_SIDEBAR_NAV_GROUPS: readonly EnterpriseSidebarNavGroup[] = [
         activePill: 'paid',
       },
       {
-        page: 'onboarding',
-        href: '/app/onboarding',
-        label: 'Onboarding',
-        blurb: 'Paid-customer activation, owners, milestones, and handoff evidence.',
-        activePill: 'paid',
-      },
-      {
         page: 'pilot',
         href: '/app/pilot',
         label: 'Pilot proposal',
         blurb: 'Scope, price, owners, guardrails, and close copy.',
-      },
-      {
-        page: 'pilot-success',
-        href: '/app/pilot-success',
-        label: 'Pilot success',
-        blurb: 'Milestones, proof, blockers, and weekly update copy.',
-      },
-      {
-        page: 'support',
-        href: '/app/support',
-        label: 'Launch support',
-        blurb: 'Support model, escalation boundaries, and admin guardrails.',
       },
       {
         page: 'scanner',
