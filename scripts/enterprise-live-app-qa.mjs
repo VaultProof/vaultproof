@@ -1,6 +1,8 @@
 const DEFAULT_ENTERPRISE_URL = 'https://enterprise.vaultproof.dev';
+const DEFAULT_ADMIN_URL = 'https://admin.vaultproof.dev';
 
 const enterpriseUrl = normalizeBaseUrl(process.env.ENTERPRISE_URL || DEFAULT_ENTERPRISE_URL);
+const adminUrl = normalizeBaseUrl(process.env.ADMIN_URL || DEFAULT_ADMIN_URL);
 const demoEmail = process.env.ENTERPRISE_DEMO_EMAIL || process.env.DEMO_EMAIL || '';
 const demoPassword = process.env.ENTERPRISE_DEMO_PASSWORD || process.env.DEMO_PASSWORD || '';
 const expectedSecurityProfile = process.env.ENTERPRISE_EXPECTED_SECURITY_PROFILE || '';
@@ -30,13 +32,19 @@ const requiredAppPaths = [
   '/app/settings',
   '/app/plans',
   '/app/pilot',
-  '/app/pilot-success',
   '/app/testers',
   '/app/release',
   '/app/scanner',
-  '/app/support',
   '/health',
   '/readiness',
+];
+
+const staffOnlyPaths = [
+  '/app/launch',
+  '/app/demo',
+  '/app/onboarding',
+  '/app/pilot-success',
+  '/app/support',
 ];
 
 function normalizeBaseUrl(value) {
@@ -45,6 +53,10 @@ function normalizeBaseUrl(value) {
 
 function buildUrl(path) {
   return new URL(path, `${enterpriseUrl}/`).toString();
+}
+
+function buildAdminUrl(path) {
+  return new URL(path, `${adminUrl}/`).toString();
 }
 
 function unique(values) {
@@ -77,7 +89,15 @@ function extractEnterpriseLinks(html) {
 }
 
 async function fetchText(path, options = {}) {
-  const response = await fetch(buildUrl(path), {
+  return fetchTextFromUrl(buildUrl(path), options);
+}
+
+async function fetchAdminText(path, options = {}) {
+  return fetchTextFromUrl(buildAdminUrl(path), options);
+}
+
+async function fetchTextFromUrl(url, options = {}) {
+  const response = await fetch(url, {
     redirect: 'manual',
     ...options,
     headers: {
@@ -177,10 +197,17 @@ async function assertPublicPagesAndLinks() {
   return pathsToCheck;
 }
 
-async function assertLaunchMovedToAdmin() {
-  const { response, text } = await fetchText('/app/launch');
-  if (response.status !== 404 || !text.includes('internal admin host')) {
-    throw new Error(`/app/launch should be removed from enterprise host and moved to admin host, got HTTP ${response.status}: ${text.slice(0, 200)}`);
+async function assertStaffOnlyPagesMovedToAdmin() {
+  for (const path of staffOnlyPaths) {
+    const enterprise = await fetchText(path);
+    if (enterprise.response.status !== 404) {
+      throw new Error(`${path} should be removed from enterprise host and moved to admin host, got HTTP ${enterprise.response.status}: ${enterprise.text.slice(0, 200)}`);
+    }
+
+    const admin = await fetchAdminText(path);
+    if (![200, 302, 303].includes(admin.response.status)) {
+      throw new Error(`${path} should be reachable on admin host, got HTTP ${admin.response.status}: ${admin.text.slice(0, 200)}`);
+    }
   }
 }
 
@@ -255,16 +282,18 @@ async function assertAuthenticatedEnterpriseApis(accessToken) {
 
 const readiness = await assertReadiness();
 const links = await assertPublicPagesAndLinks();
-await assertLaunchMovedToAdmin();
+await assertStaffOnlyPagesMovedToAdmin();
 const accessToken = await signInDemoUser();
 const authResult = await assertAuthenticatedEnterpriseApis(accessToken);
 
 console.log(JSON.stringify({
   status: 'ok',
   enterpriseUrl,
+  adminUrl,
   production_ready: readiness.production_ready,
   security_profile: readiness.security_profile,
   checked_paths: requiredAppPaths.length,
+  checked_staff_only_paths: staffOnlyPaths.length,
   checked_links: links.length,
   authenticated_demo_org: authResult,
 }, null, 2));
