@@ -10,6 +10,7 @@
  *   npx @vaultproof/init --dry-run  # scan only, no upload, no rewrite
  *   npx @vaultproof/init custom     # protect a custom/internal API key
  *   npx @vaultproof/init secrets add
+ *   npx @vaultproof/init netops
  *   npx @vaultproof/init run -- npm run dev
  *   npx @vaultproof/init migrate-from-legacy
  *   npx @vaultproof/init doctor
@@ -48,6 +49,11 @@ import {
   vaultSecretPlaceholder,
   type VaultSecretEntry,
 } from './vault-secret.js';
+import {
+  rewriteNetOpsSecretFiles,
+  scanNetOpsSecrets,
+  type NetOpsSecretEntry,
+} from './netops.js';
 
 function printBanner(): void {
   const lines = [
@@ -108,6 +114,8 @@ function printUsage(): void {
   console.log(chalk.dim('  npx @vaultproof/init custom'));
   console.log(chalk.dim('  npx @vaultproof/init secrets add'));
   console.log(chalk.dim('  npx @vaultproof/init secrets pull [--stdout]'));
+  console.log(chalk.dim('  npx @vaultproof/init netops'));
+  console.log(chalk.dim('  npx @vaultproof/init netops run -- <command>'));
   console.log(chalk.dim('  npx @vaultproof/init run -- <command>'));
   console.log(chalk.dim('  npx @vaultproof/init migrate-from-legacy'));
   console.log(chalk.dim('  npx @vaultproof/init doctor'));
@@ -1470,6 +1478,131 @@ async function runSecretsAdd(opts: { autoYes: boolean; dryRun: boolean }): Promi
   console.log(chalk.white('  npx @vaultproof/init run -- <your start command>'));
 }
 
+async function selectNetOpsSecrets(
+  cwd: string,
+  candidates: NetOpsSecretEntry[],
+  opts: { autoYes: boolean },
+): Promise<NetOpsSecretEntry[]> {
+  if (opts.autoYes) return candidates;
+
+  const selected = new Set<string>();
+  const out: NetOpsSecretEntry[] = [];
+
+  while (true) {
+    const remaining = candidates.filter((entry) => !selected.has(`${entry.file}:${entry.line}:${entry.name}`));
+    if (remaining.length === 0) break;
+
+    console.log(chalk.bold('\nPossible NetOps secrets:\n'));
+    remaining.forEach((entry, index) => {
+      const label = `${entry.sourceKey} → ${entry.name}`;
+      console.log(
+        `  ${chalk.bold(String(index + 1).padStart(2))}. ${label.padEnd(44)} ` +
+        `${chalk.dim(truncateKey(entry.value).padEnd(18))} ${chalk.dim(formatEnvEntrySource(cwd, entry))}`,
+      );
+    });
+    console.log();
+
+    const answer = await prompt('Choose a secret number (blank to finish, "all" for all): ');
+    if (!answer) break;
+
+    if (answer.toLowerCase() === 'all') {
+      for (const entry of remaining) {
+        out.push(entry);
+        selected.add(`${entry.file}:${entry.line}:${entry.name}`);
+      }
+      break;
+    }
+
+    const index = Number.parseInt(answer, 10);
+    const entry = Number.isInteger(index) && index >= 1 && index <= remaining.length
+      ? remaining[index - 1]
+      : null;
+    if (!entry) {
+      console.log(chalk.yellow('  No matching secret. Choose one of the listed numbers.'));
+      continue;
+    }
+
+    out.push(entry);
+    selected.add(`${entry.file}:${entry.line}:${entry.name}`);
+
+    if (!await confirm('Add another NetOps secret?', false)) break;
+  }
+
+  return out;
+}
+
+async function runNetOpsAdd(opts: { autoYes: boolean; dryRun: boolean }): Promise<void> {
+  printBanner();
+  const cwd = process.cwd();
+  console.log(chalk.bold('VaultProof NetOps — Ansible and Terraform secret cleanup\n'));
+  console.log(chalk.dim('Scanning .env, inventory.yml, hosts.yml, group_vars, host_vars, terraform.tfvars, and *.auto.tfvars.\n'));
+
+  const candidates = scanNetOpsSecrets(cwd);
+  if (candidates.length === 0) {
+    console.log(chalk.yellow('No NetOps secret candidates found.'));
+    console.log(chalk.dim('Try names like ANSIBLE_PASSWORD, ansible_password, enable_secret, snmp_community, or device_password.'));
+    process.exit(0);
+  }
+
+  const selectedSecrets = await selectNetOpsSecrets(cwd, candidates, opts);
+  if (selectedSecrets.length === 0) {
+    console.log(chalk.yellow('No NetOps secrets selected.'));
+    process.exit(0);
+  }
+
+  console.log(chalk.bold(`\nSelected ${selectedSecrets.length} NetOps secret${selectedSecrets.length === 1 ? '' : 's'}:\n`));
+  for (const secret of selectedSecrets) {
+    console.log(`  ${chalk.green('✓')} ${secret.name.padEnd(34)} ${chalk.dim(secret.tool.padEnd(10))} ${chalk.dim(formatEnvEntrySource(cwd, secret))}`);
+  }
+
+  if (opts.dryRun) {
+    console.log(chalk.dim('\n(dry run — not uploading or rewriting)'));
+    process.exit(0);
+  }
+
+  if (!opts.autoYes) {
+    const ok = await confirm(`Protect ${selectedSecrets.length} NetOps secret${selectedSecrets.length === 1 ? '' : 's'}?`);
+    if (!ok) {
+      console.log(chalk.dim('Cancelled.'));
+      process.exit(0);
+    }
+  }
+
+  const jwt = await ensureJwt();
+  const apiUrl = getInitWorkerUrl();
+  const preferredProjectId = readEnvValue(cwd, 'VAULTPROOF_PROJECT_ID');
+  const project = await chooseProject(jwt, apiUrl, {
+    autoYes: opts.autoYes,
+    preferredProjectId: preferredProjectId || undefined,
+    createName: `${path.basename(cwd) || 'vaultproof'}-netops`,
+  });
+
+  for (const secret of selectedSecrets) {
+    const spinner = ora(`Splitting + uploading ${secret.name}...`).start();
+    try {
+      await uploadVaultSecret(apiUrl, jwt, project.id, secret);
+      spinner.succeed(`Protected ${chalk.bold(secret.name)}`);
+    } catch (err) {
+      spinner.fail(String(err));
+      process.exit(1);
+    }
+  }
+
+  const rewriteResults = rewriteNetOpsSecretFiles(selectedSecrets);
+  for (const result of rewriteResults) {
+    console.log(`${chalk.green('✓')} Rewrote ${chalk.bold(result.file)} (${result.rewritten} secret${result.rewritten === 1 ? '' : 's'})`);
+  }
+
+  if (rewriteResults.length === 0) {
+    console.log(chalk.dim('No files were rewritten. Secrets are stored and can be injected with netops run.'));
+  }
+
+  console.log(`\n${chalk.bold.green('Done.')} NetOps secrets are stored for project ${chalk.bold(project.vp_proj_id)}.`);
+  console.log(chalk.dim('Run automation with injected secrets:'));
+  console.log(chalk.white('  npx @vaultproof/init netops run -- ansible-playbook site.yml'));
+  console.log(chalk.white('  npx @vaultproof/init netops run -- terraform plan'));
+}
+
 async function resolveProjectForVaultSecretRead(jwt: string, apiUrl: string, opts: { autoYes: boolean }): Promise<ProjectChoice> {
   const preferredProjectId = readEnvValue(process.cwd(), 'VAULTPROOF_PROJECT_ID');
   return await chooseProject(jwt, apiUrl, {
@@ -1692,6 +1825,25 @@ async function main(): Promise<void> {
       return;
     }
     console.error(chalk.red(`Unknown secrets command: ${subcommand}`));
+    printUsage();
+    process.exit(1);
+  }
+
+  if (cmd === 'netops') {
+    const subcommand = positionals[1] || 'add';
+    if (subcommand === 'add') {
+      await runNetOpsAdd({ autoYes, dryRun });
+      return;
+    }
+    if (subcommand === 'run') {
+      await runWithVaultSecrets({ autoYes, passthrough });
+      return;
+    }
+    if (subcommand === 'pull') {
+      await runSecretsPull({ autoYes, stdout: flags.has('--stdout') });
+      return;
+    }
+    console.error(chalk.red(`Unknown netops command: ${subcommand}`));
     printUsage();
     process.exit(1);
   }

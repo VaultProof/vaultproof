@@ -72,6 +72,10 @@ npx @vaultproof/init secrets add
 # Run a command with vault-only secrets injected
 npx @vaultproof/init run -- npm run dev
 
+# Protect Ansible/Terraform network automation secrets
+npx @vaultproof/init netops
+npx @vaultproof/init netops run -- ansible-playbook site.yml
+
 # Skip confirmation
 npx @vaultproof/init --yes
 
@@ -157,6 +161,41 @@ npx @vaultproof/init run -- npm run dev
 ```
 
 If you need a plaintext file for a local tool, `npx @vaultproof/init secrets pull` writes `.env.vaultproof.local` with mode `0600`. That file contains real secrets, so keep it out of git.
+
+---
+
+## NetOps mode
+
+Network automation repos often keep credentials in Ansible inventory, `group_vars`, `host_vars`, and Terraform variable files. VaultProof can protect those too:
+
+```bash
+npx @vaultproof/init netops
+```
+
+The NetOps scanner checks:
+
+- `.env`, `.env.local`, `.env.production`, `.env.development`
+- `inventory.yml`, `inventory.yaml`, `hosts.yml`, `hosts.yaml`
+- `group_vars/**/*.yml`, `group_vars/**/*.yaml`
+- `host_vars/**/*.yml`, `host_vars/**/*.yaml`
+- `terraform.tfvars`, `*.auto.tfvars`
+
+It recognizes common network automation secrets such as `ansible_password`, `ansible_become_password`, `enable_secret`, `snmp_community`, `radius_shared_secret`, `tacacs_secret`, Meraki/Fortinet/Palo Alto tokens, and Terraform variables with names containing `password`, `secret`, `token`, `api_key`, `community`, or `private_key`.
+
+Ansible YAML values are rewritten to environment lookups:
+
+```yaml
+ansible_password: "{{ lookup('env', 'ANSIBLE_PASSWORD') }}"
+```
+
+Terraform `.tfvars` secret assignments are commented out and replaced at runtime through `TF_VAR_...` environment variables.
+
+Run automation with injected secrets:
+
+```bash
+npx @vaultproof/init netops run -- ansible-playbook site.yml
+npx @vaultproof/init netops run -- terraform plan
+```
 
 ---
 

@@ -22,6 +22,8 @@ For a private or unsupported HTTP API, add the plaintext key to `.env` and run `
 
 For runtime secrets that are not HTTP proxy keys, such as `DATABASE_URL`, `JWT_SECRET`, `SESSION_SECRET`, or webhook signing secrets, run `npx @vaultproof/init secrets add`. VaultProof stores them as split shares, rewrites the local value to a `vaultproof://...` placeholder, and can inject them into a process with `npx @vaultproof/init run -- <command>`.
 
+For network automation repos, run `npx @vaultproof/init netops`. It scans Ansible inventories, `group_vars`, `host_vars`, `.env`, `terraform.tfvars`, and `*.auto.tfvars`, then rewrites Ansible secrets to `lookup('env', ...)` and Terraform secrets to `TF_VAR_...` injection.
+
 If you prefer a global install:
 
 ```bash
@@ -90,6 +92,10 @@ npx @vaultproof/init secrets add
 # Run a command with vault-only secrets injected
 npx @vaultproof/init run -- npm run dev
 
+# Protect Ansible/Terraform network automation secrets
+npx @vaultproof/init netops
+npx @vaultproof/init netops run -- ansible-playbook site.yml
+
 # Skip confirmation
 npx @vaultproof/init --yes
 
@@ -127,6 +133,8 @@ npx @vaultproof/init custom
 npx @vaultproof/init secrets add
 npx @vaultproof/init secrets pull
 npx @vaultproof/init run -- npm run dev
+npx @vaultproof/init netops
+npx @vaultproof/init netops run -- ansible-playbook site.yml
 npx @vaultproof/init --check-legacy
 npx @vaultproof/init doctor
 ```

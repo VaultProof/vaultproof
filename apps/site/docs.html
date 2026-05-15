@@ -810,6 +810,10 @@ npx @vaultproof/init secrets add
 <span class="cmt"># Run with vault-only secrets injected into the child process</span>
 npx @vaultproof/init run -- npm run dev
 
+<span class="cmt"># Protect Ansible/Terraform network automation secrets</span>
+npx @vaultproof/init netops
+npx @vaultproof/init netops run -- ansible-playbook site.yml
+
 <span class="cmt"># Preview what will happen without making changes</span>
 npx @vaultproof/init --dry-run
 
@@ -873,6 +877,10 @@ $ npx @vaultproof/init secrets add
 
 <span class="cmt"># Start a process with vault-only secrets injected</span>
 $ npx @vaultproof/init run -- npm run dev
+
+<span class="cmt"># Protect and run network automation secrets</span>
+$ npx @vaultproof/init netops
+$ npx @vaultproof/init netops run -- ansible-playbook site.yml
 
 <span class="cmt"># Preview what will happen without making changes</span>
 $ npx @vaultproof/init --dry-run
@@ -1695,6 +1703,18 @@ res = client.chat.completions.<span class="fn">create</span>(
 
                         <div class="endpoint-card">
                             <div class="flex items-baseline gap-3 mb-2">
+                                <code class="font-mono text-sm text-white font-semibold">npx @vaultproof/init netops</code>
+                            </div>
+                            <p class="text-gray-500 text-sm mb-3">Protect network automation secrets in Ansible inventories, <code class="font-mono text-xs">group_vars</code>, <code class="font-mono text-xs">host_vars</code>, <code class="font-mono text-xs">.env</code>, <code class="font-mono text-xs">terraform.tfvars</code>, and <code class="font-mono text-xs">*.auto.tfvars</code>. Ansible values are rewritten to <code class="font-mono text-xs">lookup('env', ...)</code>; Terraform secrets are supplied through <code class="font-mono text-xs">TF_VAR_...</code>.</p>
+                            <div class="code-block">
+                                <div class="code-header">terminal</div>
+<pre class="text-gray-300">$ npx @vaultproof/init netops
+$ npx @vaultproof/init netops run -- ansible-playbook site.yml</pre>
+                            </div>
+                        </div>
+
+                        <div class="endpoint-card">
+                            <div class="flex items-baseline gap-3 mb-2">
                                 <code class="font-mono text-sm text-white font-semibold">npx @vaultproof/init --dry-run</code>
                             </div>
                             <p class="text-gray-500 text-sm mb-3">Preview what <code class="font-mono text-xs text-vp-accent">init</code> will do without making any changes. Shows which keys would be split and what your <code class="font-mono text-xs">.env</code> would look like after.</p>
@@ -2085,6 +2105,8 @@ res = client.chat.completions.<span class="fn">create</span>(
 npx @vaultproof/init custom
 npx @vaultproof/init secrets add
 npx @vaultproof/init run -- npm run dev
+npx @vaultproof/init netops
+npx @vaultproof/init netops run -- ansible-playbook site.yml
 npx @vaultproof/init --yes
 npx @vaultproof/init --check-legacy
 npx @vaultproof/init doctor</pre>
@@ -2094,6 +2116,7 @@ npx @vaultproof/init doctor</pre>
                             <li class="flex items-start gap-2"><span class="text-emerald-400 mt-0.5">&#10003;</span> Provider-specific key patterns from the bundled provider catalog</li>
                             <li class="flex items-start gap-2"><span class="text-emerald-400 mt-0.5">&#10003;</span> Custom/internal HTTP API keys when you run <code class="font-mono text-xs">custom</code></li>
                             <li class="flex items-start gap-2"><span class="text-emerald-400 mt-0.5">&#10003;</span> Vault-only runtime secrets like database URLs, JWT secrets, and webhook secrets when you run <code class="font-mono text-xs">secrets add</code></li>
+                            <li class="flex items-start gap-2"><span class="text-emerald-400 mt-0.5">&#10003;</span> Ansible and Terraform network automation secrets when you run <code class="font-mono text-xs">netops</code></li>
                             <li class="flex items-start gap-2"><span class="text-emerald-400 mt-0.5">&#10003;</span> Legacy <code class="font-mono text-xs">vp_live_</code> references when you run <code class="font-mono text-xs">--check-legacy</code></li>
                             <li class="flex items-start gap-2"><span class="text-emerald-400 mt-0.5">&#10003;</span> Worker, auth, and proxy reachability when you run <code class="font-mono text-xs">doctor</code></li>
                         </ul>

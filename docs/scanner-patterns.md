@@ -19,6 +19,8 @@ For unsupported or internal HTTP APIs, `npx @vaultproof/init custom` can select 
 
 For non-proxy runtime secrets, `npx @vaultproof/init secrets add` detects common names such as `DATABASE_URL`, `REDIS_URL`, `JWT_SECRET`, `SESSION_SECRET`, `ENCRYPTION_KEY`, and `WEBHOOK_SECRET`, then rewrites them to `vaultproof://` placeholders for `npx @vaultproof/init run -- <command>`.
 
+For network automation repos, `npx @vaultproof/init netops` scans Ansible inventories, `group_vars`, `host_vars`, `.env`, `terraform.tfvars`, and `*.auto.tfvars`. It rewrites Ansible secrets to `lookup('env', ...)`, comments Terraform secret assignments so `TF_VAR_...` can be injected, and runs automation with `npx @vaultproof/init netops run -- <command>`.
+
 ## Key Verification
 
 The scanner can verify if detected keys are still active for select providers, returning `active`, `revoked`, or `unknown`.
