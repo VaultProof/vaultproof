@@ -36,7 +36,7 @@ Safer alternatives:
 
 ## Provider Presets And Extra Headers
 
-The enterprise dashboard now includes first-pass provider presets for generic bearer, generic custom-header, generic preformatted Basic, MiniMax, OpenAI, Anthropic, common AI providers, email providers, developer APIs, observability APIs, payments APIs, and SaaS APIs. The preset fills:
+The enterprise dashboard now includes first-pass provider presets for generic bearer, generic custom-header, generic preformatted Basic, MiniMax, OpenAI, Anthropic, common AI providers, email providers, developer APIs, observability APIs, payments APIs, and SaaS APIs. It also includes account-specific presets such as Supabase, Algolia, Shopify, Weaviate, and Grafana with blank upstreams so the operator must enter the real customer `https://` host. The preset fills:
 
 - Provider slug.
 - Upstream base URL.
@@ -46,6 +46,8 @@ The enterprise dashboard now includes first-pass provider presets for generic be
 - Optional non-secret extra headers, such as `anthropic-version` or `notion-version`.
 
 Use `EXTRA_HEADERS_JSON` only for non-secret fixed headers or values that reference the protected provider key with `{key}`. Do not put a second raw secret in `EXTRA_HEADERS_JSON`; the dashboard API and local sealing helper reject secret-looking literal values.
+
+Datadog is intentionally kept as manual inventory metadata for now because a live Datadog call needs both `DD-API-KEY` and `DD-APPLICATION-KEY`. That should move into a dedicated multi-secret slot model instead of hiding a second secret in `EXTRA_HEADERS_JSON`.
 
 ## What It Writes
 
