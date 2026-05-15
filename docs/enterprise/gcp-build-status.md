@@ -1,6 +1,6 @@
 # VaultProof GCP Build Status
 
-Last updated: 2026-05-15T00:00:00.000-07:00
+Last updated: 2026-05-15T11:29:49-07:00
 
 This file is the living inventory of what has been built for VaultProof on Google Cloud. It is refreshed after every successful enterprise image build by `infra/gcp/enterprise-secure-runtime/build-images.sh`.
 
@@ -165,7 +165,7 @@ Project and Provider Slots pages now classify each active slot as `live sealed`,
 
 Status: `built for enterprise demo`
 
-`https://enterprise.vaultproof.dev/app/keys` now supports a first-pass provider preset catalog for the auth patterns the secure executor already supports: generic bearer, generic custom-header, generic preformatted Basic, provider-specific bearer/header templates, account-specific upstream hosts, and non-secret fixed extra headers. Presets include common AI, email, developer, observability, payments, and SaaS APIs such as MiniMax, GitHub, Notion, Cloudflare, Vercel, Slack, HubSpot, Airtable, Linear, Sentry, Clerk, Cohere, Mistral, Groq, OpenRouter, DeepSeek, Together, Fireworks, Replicate, Hugging Face, Pinecone, ElevenLabs, Brevo, MailerSend, SparkPost, Mailjet, ZeptoMail, SMTP2GO, Mailtrap, Supabase, Algolia, Shopify, Langfuse, Weaviate, and Grafana. Datadog remains metadata/manual-inventory only until multi-secret provider slots are built because it needs both an API key and an application key.
+`https://enterprise.vaultproof.dev/app/keys` now supports an expanded provider preset catalog for the auth patterns the secure executor already supports: generic bearer, generic custom-header, generic preformatted Basic, provider-specific bearer/header templates, account-specific upstream hosts, and non-secret fixed extra headers. Presets include common AI, email, developer, observability, payments, search, infrastructure, database/vector, and SaaS APIs such as MiniMax, GitHub, Notion, Cloudflare, Vercel, Slack, HubSpot, Airtable, Linear, Sentry, Clerk, Cohere, Mistral, Groq, OpenRouter, DeepSeek, Together, Fireworks, Replicate, Hugging Face, Pinecone, ElevenLabs, Brevo, MailerSend, SparkPost, Mailjet, ZeptoMail, SMTP2GO, Mailtrap, Supabase, Algolia, Shopify, Langfuse, Weaviate, Grafana, Azure OpenAI, NVIDIA, SambaNova, Fal, Brave Search, Serper, Unstructured, Qdrant, Turso, Netlify, DigitalOcean, Heroku, Okta, Opsgenie, Axiom, Rollbar, Asana, Monday, ClickUp, Figma, Zendesk, Jira, Adyen, and Chargebee. Datadog remains metadata/manual-inventory only until multi-secret provider slots are built because it needs both an API key and an application key.
 
 Provider-slot creation still creates demo-placeholder material in the browser flow and rejects raw live provider keys. Extra headers are accepted only as non-secret fixed headers or `{key}` templates for the protected provider key; secret-looking literal values are rejected in the dashboard API and local sealing helper. Presets with customer-specific upstream hosts intentionally leave `upstream_base_url` blank so an operator must enter the real public `https://` provider host before saving.
 

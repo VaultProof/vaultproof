@@ -251,7 +251,7 @@ General secret protection scope:
 Demo UI/API work:
 
 - Built: add email-provider options to Provider Slots for `resend`, `sendgrid`, `mailgun`, `postmark`, and `aws-ses`.
-- Built: add first-pass enterprise provider presets for generic bearer/header/basic auth plus common AI, email, developer, observability, payments, and SaaS APIs, including account-specific upstream presets for Supabase, Algolia, Shopify, Weaviate, and Grafana. The dashboard fills upstream/auth defaults when safe, leaves customer-specific upstreams blank, supports non-secret extra headers, and rejects secret-looking extra-header literals unless they use `{key}` for the protected provider key.
+- Built: add expanded enterprise provider presets for generic bearer/header/basic auth plus common AI, email, developer, observability, payments, search, infrastructure, database/vector, and SaaS APIs, including account-specific upstream presets for Supabase, Algolia, Shopify, Weaviate, Grafana, Azure OpenAI, Qdrant, Turso, Zendesk, Jira, Freshdesk, Adyen, and Chargebee. The dashboard fills upstream/auth defaults when safe, leaves customer-specific upstreams blank, supports non-secret extra headers, and rejects secret-looking extra-header literals unless they use `{key}` for the protected provider key.
 - Built: add a protected email dry-run action that validates policy/signing/audit without dispatching a live email.
 - Built: enforce email-specific sender domain, recipient domain, recipient address, and template ID policy on protected email-provider calls.
 - Built: add a blocked-recipient demo test that records denial evidence without exposing the raw email payload.
