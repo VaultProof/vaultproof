@@ -1,6 +1,6 @@
 # VaultProof GCP Build Status
 
-Last updated: 2026-05-15T18:49:38.375Z
+Last updated: 2026-05-16T07:40:24.985Z
 
 This file is the living inventory of what has been built for VaultProof on Google Cloud. It is refreshed after every successful enterprise image build by `infra/gcp/enterprise-secure-runtime/build-images.sh`.
 
@@ -47,7 +47,7 @@ Status: `attached and enforced`
 
 ## App Shell Notes
 
-- Build `5fac91ae` is the current deployed GCP image tag for both control plane and executor containers.
+- Build `6b00a063` is the current deployed GCP image tag for both control plane and executor containers.
 - Homepage hero headline is `Active Key Protection for every API call.`
 - Customer-facing enterprise pages live under `https://enterprise.vaultproof.dev`; staff-only operator pages live under `https://admin.vaultproof.dev`.
 - `https://admin.vaultproof.dev/app/launch` is the staff-only go/no-go launch board. `https://enterprise.vaultproof.dev/app/launch` is intentionally removed from the customer enterprise host and should return 404.
@@ -280,14 +280,14 @@ Cost note: the current fixed estimate is above the existing `VaultProof Producti
 
 ## Build Pointer
 
-- Build tag: `5fac91ae`
+- Build tag: `6b00a063`
 - Registry: `us-central1-docker.pkg.dev/vaultproof-prod/vaultproof`
-- Control plane image: `us-central1-docker.pkg.dev/vaultproof-prod/vaultproof/enterprise-control-plane:5fac91ae`
-- Control plane digest: `sha256:c4dcd5916e5d86c66af1780171aee7af1ef2412e544383e9c1e15984d4a636f1`
-- Control plane built at: `2026-05-15T18:49:02.141997014Z`
-- Executor image: `us-central1-docker.pkg.dev/vaultproof-prod/vaultproof/enterprise-secure-executor:5fac91ae`
-- Executor digest: `sha256:46d7c9a7bd20347dc1d20bdc6de8bdb5772aed54f31888f86e2a57eb2b57c829`
-- Executor built at: `2026-05-15T18:49:13.879385954Z`
+- Control plane image: `us-central1-docker.pkg.dev/vaultproof-prod/vaultproof/enterprise-control-plane:6b00a063`
+- Control plane digest: `sha256:5526bde10a43863527beaf4236950b90797327dc491a33ee943390b9dbd831ee`
+- Control plane built at: `2026-05-16T07:39:47.757298254Z`
+- Executor image: `us-central1-docker.pkg.dev/vaultproof-prod/vaultproof/enterprise-secure-executor:6b00a063`
+- Executor digest: `sha256:c2919f6b90dcaca2358a228bfc7c36be7e0153826d289805248952b76745d733`
+- Executor built at: `2026-05-16T07:40:00.023051339Z`
 
 ## Project
 
