@@ -62,6 +62,8 @@ const SAMPLES: Sample[] = [
   { providerId: 'ai21', varName: 'AI21_API_KEY', value: 'a'.repeat(48) },
   { providerId: 'assemblyai', varName: 'ASSEMBLYAI_API_KEY', value: 'A'.repeat(32) },
   { providerId: 'gitlab', varName: 'GITLAB_TOKEN', value: 'glpat-' + 'a'.repeat(32) },
+  { providerId: 'deepl', varName: 'DEEPL_API_KEY', value: '279a2e9d-83b3-c416-7e2d-f721593e42a0:fx' },
+  { providerId: 'deepl-pro', varName: 'DEEPL_API_KEY', value: '279a2e9d-83b3-c416-7e2d-f721593e42a0' },
   { providerId: 'launchdarkly', varName: 'LAUNCHDARKLY_ACCESS_TOKEN', value: 'api-' + 'a'.repeat(48) },
   { providerId: 'snyk', varName: 'SNYK_TOKEN', value: 'a'.repeat(40) },
   { providerId: 'pagerduty', varName: 'PAGERDUTY_API_KEY', value: 'p'.repeat(40) },

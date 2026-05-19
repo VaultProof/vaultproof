@@ -1,6 +1,6 @@
 {
-  "version": 2,
-  "updated": "2026-05-14",
+  "version": 3,
+  "updated": "2026-05-17",
   "providers": [
     {
       "id": "anthropic",
@@ -676,6 +676,33 @@
       "base_url_env_var": "GOOGLE_BASE_URL",
       "base_url_path_suffix": "/p/google",
       "detect": { "regex": "^AIzaSy[A-Za-z0-9_-]{33}$" }
+    },
+    {
+      "id": "deepl",
+      "label": "DeepL API Free",
+      "upstream_base_url": "https://api-free.deepl.com",
+      "auth_header_name": "Authorization",
+      "auth_header_template": "DeepL-Auth-Key {key}",
+      "env_var_default": "DEEPL_API_KEY",
+      "base_url_env_var": "DEEPL_BASE_URL",
+      "base_url_path_suffix": "/p/deepl",
+      "detect": {
+        "regex": "^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}:fx$"
+      }
+    },
+    {
+      "id": "deepl-pro",
+      "label": "DeepL API Pro",
+      "upstream_base_url": "https://api.deepl.com",
+      "auth_header_name": "Authorization",
+      "auth_header_template": "DeepL-Auth-Key {key}",
+      "env_var_default": "DEEPL_API_KEY",
+      "base_url_env_var": "DEEPL_BASE_URL",
+      "base_url_path_suffix": "/p/deepl-pro",
+      "detect": {
+        "regex": "^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$",
+        "var_hint": "DEEPL"
+      }
     },
     {
       "id": "algolia",

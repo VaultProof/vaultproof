@@ -7,6 +7,7 @@ export interface Env {
   RESEND_API_KEY?: string;
   ALERTS_FROM_EMAIL?: string;
   ALERTS_REPLY_TO_EMAIL?: string;
+  DEEPL_API_KEY?: string;
 }
 
 export interface ProjectRecord {

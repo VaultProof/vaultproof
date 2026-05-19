@@ -16,6 +16,31 @@
     ja: '日本語',
     'zh-CN': '简体中文'
   };
+  var DEEPL_TARGET_LOCALES = {
+    es: true,
+    fr: true,
+    de: true,
+    'pt-BR': true,
+    ru: true,
+    he: true,
+    ja: true,
+    'zh-CN': true
+  };
+  var LOCALE_STORAGE_KEY = 'vp_locale';
+  var TRANSLATE_API_URL = (window.location.hostname.indexOf('dev.vaultproof') !== -1)
+    ? 'https://vaultproof-init-staging.vaultproof.workers.dev/api/v1/site/translate'
+    : 'https://init.vaultproof.dev/api/v1/site/translate';
+  var MAX_TRANSLATION_NODES = 260;
+  var MAX_TRANSLATION_BATCH = 60;
+  var MAX_TRANSLATION_CHARS = 12000;
+  var translationCache = {};
+  var originalTextByNode = new WeakMap();
+  var translatedNodeSet = new WeakSet();
+  var translatedNodes = [];
+  var machineTranslationQueued = false;
+  var isApplyingMachineTranslation = false;
+  var suppressMachineTranslationObserver = false;
+  var translationGeneration = 0;
 
   var MESSAGES = {
     en: {
@@ -739,7 +764,21 @@
   var isRendering = false;
 
   function resolveInitialLocale() {
-    return normalizeLocale(navigator.language || navigator.userLanguage || DEFAULT_LOCALE);
+    return normalizeLocale(readStoredLocale() || DEFAULT_LOCALE);
+  }
+
+  function readStoredLocale() {
+    try {
+      return window.localStorage && window.localStorage.getItem(LOCALE_STORAGE_KEY);
+    } catch (_) {
+      return null;
+    }
+  }
+
+  function storeLocale(locale) {
+    try {
+      if (window.localStorage) window.localStorage.setItem(LOCALE_STORAGE_KEY, locale);
+    } catch (_) {}
   }
 
   function normalizeLocale(input) {
@@ -837,6 +876,52 @@
     var open = menu && menu.classList.contains('open');
     toggle.textContent = open ? t('nav.close') : t('nav.menu');
     toggle.setAttribute('aria-label', open ? t('nav.close') : t('nav.menu'));
+  }
+
+  function ensureLanguageControl() {
+    if (!document.body || document.getElementById('vpLanguageControl')) return;
+    if (!document.getElementById('vpLanguageControlStyles')) {
+      var style = document.createElement('style');
+      style.id = 'vpLanguageControlStyles';
+      style.textContent = [
+        '.vp-language-control{position:fixed;right:16px;bottom:16px;z-index:2147483000;display:flex;align-items:center;gap:8px;padding:8px 10px;border:1px solid rgba(23,23,23,.14);background:rgba(250,250,247,.94);box-shadow:0 12px 32px rgba(0,0,0,.14);backdrop-filter:blur(16px);font:500 12px/1.2 system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;color:#171717}',
+        '.vp-language-control select{border:0;background:transparent;color:inherit;font:inherit;outline:0;cursor:pointer;max-width:140px}',
+        '.vp-language-control.is-busy::after{content:"";width:8px;height:8px;border-radius:999px;background:#d97706;animation:vpLangPulse .8s ease-in-out infinite alternate}',
+        '@keyframes vpLangPulse{from{opacity:.35}to{opacity:1}}',
+        '@media (max-width:640px){.vp-language-control{right:10px;bottom:10px;max-width:calc(100vw - 20px)}}',
+        '@media print{.vp-language-control{display:none!important}}'
+      ].join('');
+      document.head.appendChild(style);
+    }
+
+    var wrap = document.createElement('div');
+    wrap.id = 'vpLanguageControl';
+    wrap.className = 'vp-language-control';
+    wrap.setAttribute('data-vp-no-translate', 'true');
+
+    var select = document.createElement('select');
+    select.id = 'vpLanguageSelect';
+    select.setAttribute('aria-label', t('label.language', null, 'Language'));
+    SUPPORTED_LOCALES.forEach(function (locale) {
+      var option = document.createElement('option');
+      option.value = locale;
+      option.textContent = LOCALE_LABELS[locale] || locale;
+      select.appendChild(option);
+    });
+    select.value = currentLocale;
+    select.addEventListener('change', function () {
+      setLocale(select.value);
+    });
+
+    wrap.appendChild(select);
+    document.body.appendChild(wrap);
+  }
+
+  function updateLanguageControl() {
+    var select = document.getElementById('vpLanguageSelect');
+    if (!select) return;
+    select.value = currentLocale;
+    select.setAttribute('aria-label', t('label.language', null, 'Language'));
   }
 
   function applyPathTranslations() {
@@ -995,6 +1080,7 @@
     setSidebarLabels();
     setDashboardMetaText();
     setPlansButtons();
+    updateLanguageControl();
   }
 
   function setSidebarLabels() {
@@ -1073,22 +1159,199 @@
     applySharedChrome();
     applyPathTranslations();
     isRendering = false;
+    queueMachineTranslation();
   }
 
   function setLocale(locale) {
     var next = normalizeLocale(locale);
     if (SUPPORTED_LOCALES.indexOf(next) === -1) next = DEFAULT_LOCALE;
+    restoreMachineTranslations();
     currentLocale = next;
+    storeLocale(currentLocale);
     render();
     window.dispatchEvent(new CustomEvent('vp:localechange', { detail: { locale: currentLocale } }));
   }
 
   var observer = new MutationObserver(function () {
-    if (isRendering) return;
+    if (isRendering || isApplyingMachineTranslation || suppressMachineTranslationObserver) return;
     queueRender();
   });
 
+  function canUseMachineTranslation(locale) {
+    return locale !== DEFAULT_LOCALE && Boolean(DEEPL_TARGET_LOCALES[locale]);
+  }
+
+  function setLanguageControlBusy(isBusy) {
+    var control = document.getElementById('vpLanguageControl');
+    if (control) control.classList.toggle('is-busy', Boolean(isBusy));
+  }
+
+  function restoreMachineTranslations() {
+    translationGeneration += 1;
+    if (!translatedNodes.length) return;
+    isApplyingMachineTranslation = true;
+    suppressMachineTranslationObserver = true;
+    try {
+      translatedNodes.forEach(function (node) {
+        if (node && originalTextByNode.has(node)) node.nodeValue = originalTextByNode.get(node);
+      });
+    } finally {
+      translatedNodes = [];
+      translatedNodeSet = new WeakSet();
+      isApplyingMachineTranslation = false;
+      window.setTimeout(function () { suppressMachineTranslationObserver = false; }, 0);
+    }
+  }
+
+  function queueMachineTranslation() {
+    if (!canUseMachineTranslation(currentLocale) || machineTranslationQueued) return;
+    machineTranslationQueued = true;
+    var locale = currentLocale;
+    var generation = translationGeneration;
+    window.setTimeout(function () {
+      machineTranslationQueued = false;
+      applyMachineTranslation(locale, generation);
+    }, 220);
+  }
+
+  function shouldSkipTranslationParent(parent) {
+    if (!parent || parent.nodeType !== 1) return true;
+    return Boolean(parent.closest('script,style,noscript,code,pre,kbd,samp,textarea,select,option,svg,canvas,[data-vp-no-translate]'));
+  }
+
+  function shouldTranslateText(text) {
+    var value = String(text || '').trim();
+    if (value.length < 2 || value.length > 1800) return false;
+    if (!/[A-Za-z\u00C0-\u024F\u0400-\u04FF\u3040-\u30FF\u3400-\u9FFF]/.test(value)) return false;
+    if (/^(https?:\/\/|mailto:|[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,})/i.test(value)) return false;
+    if (/^(vp-|sk-|pk_|ghp_|glpat-|xoxb-|AIza|SG\.)/i.test(value)) return false;
+    if (/^[\d\s.,:;+\-/()[\]{}#_*|<>=$%]+$/.test(value)) return false;
+    return true;
+  }
+
+  function collectTranslatableTextNodes() {
+    var nodes = [];
+    if (!document.body || typeof document.createTreeWalker !== 'function') return nodes;
+    var walker = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT, {
+      acceptNode: function (node) {
+        if (!node || !node.parentElement) return NodeFilter.FILTER_REJECT;
+        if (translatedNodeSet.has(node)) return NodeFilter.FILTER_REJECT;
+        if (shouldSkipTranslationParent(node.parentElement)) return NodeFilter.FILTER_REJECT;
+        return shouldTranslateText(node.nodeValue) ? NodeFilter.FILTER_ACCEPT : NodeFilter.FILTER_REJECT;
+      }
+    });
+    while (walker.nextNode() && nodes.length < MAX_TRANSLATION_NODES) {
+      nodes.push(walker.currentNode);
+    }
+    return nodes;
+  }
+
+  function splitWhitespace(value) {
+    var raw = String(value || '');
+    var leading = (raw.match(/^\s*/) || [''])[0];
+    var trailing = (raw.match(/\s*$/) || [''])[0];
+    return {
+      leading: leading,
+      text: raw.trim(),
+      trailing: trailing
+    };
+  }
+
+  function cacheForLocale(locale) {
+    if (!translationCache[locale]) translationCache[locale] = {};
+    return translationCache[locale];
+  }
+
+  function applyTranslatedNode(node, translated) {
+    if (!node || !translated) return;
+    if (!originalTextByNode.has(node)) originalTextByNode.set(node, node.nodeValue || '');
+    var parts = splitWhitespace(node.nodeValue);
+    isApplyingMachineTranslation = true;
+    suppressMachineTranslationObserver = true;
+    try {
+      node.nodeValue = parts.leading + translated + parts.trailing;
+      translatedNodeSet.add(node);
+      translatedNodes.push(node);
+    } finally {
+      isApplyingMachineTranslation = false;
+      window.setTimeout(function () { suppressMachineTranslationObserver = false; }, 0);
+    }
+  }
+
+  function translationBatches(texts) {
+    var batches = [];
+    var batch = [];
+    var chars = 0;
+    texts.forEach(function (text) {
+      var nextChars = chars + text.length;
+      if (batch.length >= MAX_TRANSLATION_BATCH || (batch.length && nextChars > MAX_TRANSLATION_CHARS)) {
+        batches.push(batch);
+        batch = [];
+        chars = 0;
+      }
+      batch.push(text);
+      chars += text.length;
+    });
+    if (batch.length) batches.push(batch);
+    return batches;
+  }
+
+  async function translateBatch(locale, texts) {
+    var response = await fetch(TRANSLATE_API_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ targetLang: locale, texts: texts })
+    });
+    if (!response.ok) throw new Error('translation failed');
+    var data = await response.json();
+    return Array.isArray(data.translations) ? data.translations : [];
+  }
+
+  async function applyMachineTranslation(locale, generation) {
+    if (locale !== currentLocale || generation !== translationGeneration || !canUseMachineTranslation(locale)) return;
+    var nodes = collectTranslatableTextNodes();
+    if (!nodes.length) return;
+
+    var cache = cacheForLocale(locale);
+    var pending = [];
+    var seen = {};
+    nodes.forEach(function (node) {
+      var source = splitWhitespace(node.nodeValue).text;
+      if (!source) return;
+      if (cache[source]) {
+        applyTranslatedNode(node, cache[source]);
+      } else if (!seen[source]) {
+        seen[source] = true;
+        pending.push(source);
+      }
+    });
+
+    if (!pending.length) return;
+    setLanguageControlBusy(true);
+    try {
+      var batches = translationBatches(pending);
+      for (var i = 0; i < batches.length; i++) {
+        if (locale !== currentLocale || generation !== translationGeneration) return;
+        var batch = batches[i];
+        var translated = await translateBatch(locale, batch);
+        batch.forEach(function (source, index) {
+          if (translated[index]) cache[source] = translated[index];
+        });
+      }
+      if (locale !== currentLocale || generation !== translationGeneration) return;
+      collectTranslatableTextNodes().forEach(function (node) {
+        var source = splitWhitespace(node.nodeValue).text;
+        if (cache[source]) applyTranslatedNode(node, cache[source]);
+      });
+    } catch (_) {
+      // Translation is a progressive enhancement; keep the English page usable.
+    } finally {
+      setLanguageControlBusy(false);
+    }
+  }
+
   function init() {
+    ensureLanguageControl();
     render();
     observer.observe(document.documentElement, {
       childList: true,

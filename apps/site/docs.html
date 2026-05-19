@@ -1180,7 +1180,7 @@ $ npx @vaultproof/init --check-legacy</pre>
                 <!-- Supported Providers -->
                 <div class="mb-8">
                     <h3 class="text-lg font-semibold text-white mb-4">Supported Providers</h3>
-                    <p class="text-gray-500 text-sm mb-4">The init catalog currently includes 87 provider signatures. Common proxy-ready examples:</p>
+                    <p class="text-gray-500 text-sm mb-4">The init catalog currently includes 89 provider signatures. Common proxy-ready examples:</p>
                     <div class="bg-vp-surface border border-vp-border rounded-md overflow-hidden">
                         <table class="doc-table">
                             <thead><tr><th>Provider</th><th>Proxy Base URL</th><th>Upstream</th></tr></thead>
@@ -1259,6 +1259,16 @@ $ npx @vaultproof/init --check-legacy</pre>
                                     <td><code class="font-mono text-xs text-vp-accent">deepseek</code></td>
                                     <td><code class="font-mono text-xs">https://init.vaultproof.dev/p/deepseek/v1</code></td>
                                     <td><code class="font-mono text-xs text-gray-500">https://api.deepseek.com</code></td>
+                                </tr>
+                                <tr>
+                                    <td><code class="font-mono text-xs text-vp-accent">deepl</code></td>
+                                    <td><code class="font-mono text-xs">https://init.vaultproof.dev/p/deepl</code></td>
+                                    <td><code class="font-mono text-xs text-gray-500">https://api-free.deepl.com</code></td>
+                                </tr>
+                                <tr>
+                                    <td><code class="font-mono text-xs text-vp-accent">deepl-pro</code></td>
+                                    <td><code class="font-mono text-xs">https://init.vaultproof.dev/p/deepl-pro</code></td>
+                                    <td><code class="font-mono text-xs text-gray-500">https://api.deepl.com</code></td>
                                 </tr>
                                 <tr>
                                     <td><code class="font-mono text-xs text-vp-accent">replicate</code></td>
@@ -1424,7 +1434,7 @@ res = client.chat.completions.<span class="fn">create</span>(
                 <!-- Supported Providers -->
                 <div>
                     <h3 class="text-lg font-semibold text-white mb-4">Supported Providers</h3>
-                    <p class="text-gray-500 text-sm mb-4">The catalog includes 87 signatures. This table shows common proxy-ready providers and their auth style.</p>
+                    <p class="text-gray-500 text-sm mb-4">The catalog includes 89 signatures. This table shows common proxy-ready providers and their auth style.</p>
                     <div class="bg-vp-surface border border-vp-border rounded-md overflow-hidden">
                         <table class="doc-table">
                             <thead><tr><th>Provider</th><th>Value</th><th>Base URL</th><th>Auth Header</th></tr></thead>
@@ -1518,6 +1528,18 @@ res = client.chat.completions.<span class="fn">create</span>(
                                     <td><code class="font-mono text-xs text-vp-accent">'deepseek'</code></td>
                                     <td class="text-gray-500"><code class="font-mono text-xs">api.deepseek.com</code></td>
                                     <td><code class="font-mono text-xs">Authorization: Bearer</code></td>
+                                </tr>
+                                <tr>
+                                    <td class="text-white font-medium">DeepL API Free</td>
+                                    <td><code class="font-mono text-xs text-vp-accent">'deepl'</code></td>
+                                    <td class="text-gray-500"><code class="font-mono text-xs">api-free.deepl.com</code></td>
+                                    <td><code class="font-mono text-xs">Authorization: DeepL-Auth-Key</code></td>
+                                </tr>
+                                <tr>
+                                    <td class="text-white font-medium">DeepL API Pro</td>
+                                    <td><code class="font-mono text-xs text-vp-accent">'deepl-pro'</code></td>
+                                    <td class="text-gray-500"><code class="font-mono text-xs">api.deepl.com</code></td>
+                                    <td><code class="font-mono text-xs">Authorization: DeepL-Auth-Key</code></td>
                                 </tr>
                                 <tr>
                                     <td class="text-white font-medium">Replicate</td>
@@ -2135,7 +2157,7 @@ npx @vaultproof/init doctor</pre>
                         <div class="grid grid-cols-2 md:grid-cols-3 gap-2 text-sm text-gray-400 mb-4">
                             <span>OpenAI, Anthropic, Groq</span>
                             <span>Stripe, Resend, SendGrid</span>
-                            <span>OpenRouter, DeepSeek, xAI</span>
+                            <span>OpenRouter, DeepSeek, xAI, DeepL</span>
                             <span>Mistral, Together, Fireworks</span>
                             <span>GitHub, Notion, Linear</span>
                             <span>Provider-specific env var hints</span>
@@ -2191,7 +2213,7 @@ npx @vaultproof/init doctor</pre>
 
                     <div class="endpoint-card">
                         <h4 class="text-white font-semibold mb-2">"What providers are supported?"</h4>
-                        <p class="text-gray-400 text-sm">The current init catalog includes 87 provider signatures, including OpenAI, Anthropic, Google/Gemini, MiniMax, Voyage AI, Jina AI, AI21, AssemblyAI, Stripe, Groq, xAI, OpenRouter, DeepSeek, Mistral, Together, Fireworks, Resend, SendGrid, Linear, Notion, GitHub, GitLab, Sentry, Datadog, Grafana, Honeycomb, Snyk, PagerDuty, LaunchDarkly, Supabase, Neon, and more. For proxying, each stored key carries its own validated upstream URL and auth-header template, so the worker can support provider-specific routing without hardcoding every API path.</p>
+                        <p class="text-gray-400 text-sm">The current init catalog includes 89 provider signatures, including OpenAI, Anthropic, Google/Gemini, DeepL, MiniMax, Voyage AI, Jina AI, AI21, AssemblyAI, Stripe, Groq, xAI, OpenRouter, DeepSeek, Mistral, Together, Fireworks, Resend, SendGrid, Linear, Notion, GitHub, GitLab, Sentry, Datadog, Grafana, Honeycomb, Snyk, PagerDuty, LaunchDarkly, Supabase, Neon, and more. For proxying, each stored key carries its own validated upstream URL and auth-header template, so the worker can support provider-specific routing without hardcoding every API path.</p>
                     </div>
 
                     <div class="endpoint-card">

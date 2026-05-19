@@ -11,9 +11,9 @@ The scanner runs multiple detection phases to find exposed secrets:
 3. **Code-Level Detection** — Detects SDK initializations, API URLs, and environment variable references
 4. **Git History Scan** — Scans recent commits for deleted lines matching key patterns (catches keys that were committed and then removed)
 
-## Supported Providers (87)
+## Supported Providers (89)
 
-The scanner detects API keys for 87 providers, including major AI, cloud, payment, DevOps, observability, email, database, and SaaS platforms.
+The scanner detects API keys for 89 providers, including major AI, cloud, payment, DevOps, observability, email, database, translation, and SaaS platforms.
 
 For unsupported or internal HTTP APIs, `npx @vaultproof/init custom` can select a key from `.env` and ask for the upstream URL and auth header instead of relying on a catalog signature.
 

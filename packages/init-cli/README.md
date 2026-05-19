@@ -13,7 +13,7 @@ That's it. Scan, split, upload, rewrite. Your OpenAI, Stripe, Anthropic, and oth
 ## What it does
 
 1. **Scans** your `.env`, `.env.local`, `.env.production`, and `.env.development` files for API keys.
-2. **Identifies** each key by shape against a catalog of 87 providers across AI, email, payments, DevOps, observability, SaaS, and databases.
+2. **Identifies** each key by shape against a catalog of 89 providers across AI, translation, email, payments, DevOps, observability, SaaS, and databases.
 3. **Splits** each key into two Shamir secret shares, locally in your terminal — the plaintext key is never sent to VaultProof.
 4. **Uploads** the two encrypted shares to the VaultProof init worker.
 5. **Rewrites** your `.env` with a single `VAULTPROOF_PROJECT_ID` identifier and per-provider `*_BASE_URL` lines pointing at the VaultProof proxy.
@@ -201,9 +201,9 @@ npx @vaultproof/init netops run -- terraform plan
 
 ## Supported providers
 
-Detection is driven by [providers.json](https://vaultproof.dev/providers.json) which is fetched at runtime (with a bundled fallback). Today's catalog has 87 provider signatures.
+Detection is driven by [providers.json](https://vaultproof.dev/providers.json) which is fetched at runtime (with a bundled fallback). Today's catalog has 89 provider signatures.
 
-Common examples include OpenAI, Anthropic, Google/Gemini, MiniMax, Voyage AI, Jina AI, AI21, AssemblyAI, Groq, xAI, OpenRouter, DeepSeek, Mistral, Together AI, Fireworks AI, Cohere, Replicate, Hugging Face, Perplexity, Cerebras, ElevenLabs, Stripe, Paddle, Square, Resend, SendGrid, Mailgun, Postmark, Brevo, GitHub, GitLab, Linear, Notion, Slack, Discord, Supabase, Neon, PlanetScale, Upstash, Pinecone, Vercel, Cloudflare, Sentry, Datadog, New Relic, Grafana, Honeycomb, Snyk, PagerDuty, LaunchDarkly, HubSpot, Intercom, Airtable, Contentful, Sanity, Shopify, Firecrawl, E2B, Exa, Tavily, and Trigger.dev.
+Common examples include OpenAI, Anthropic, Google/Gemini, DeepL, MiniMax, Voyage AI, Jina AI, AI21, AssemblyAI, Groq, xAI, OpenRouter, DeepSeek, Mistral, Together AI, Fireworks AI, Cohere, Replicate, Hugging Face, Perplexity, Cerebras, ElevenLabs, Stripe, Paddle, Square, Resend, SendGrid, Mailgun, Postmark, Brevo, GitHub, GitLab, Linear, Notion, Slack, Discord, Supabase, Neon, PlanetScale, Upstash, Pinecone, Vercel, Cloudflare, Sentry, Datadog, New Relic, Grafana, Honeycomb, Snyk, PagerDuty, LaunchDarkly, HubSpot, Intercom, Airtable, Contentful, Sanity, Shopify, Firecrawl, E2B, Exa, Tavily, and Trigger.dev.
 
 Need a provider we don't support yet? Use `npx @vaultproof/init custom`, or open an issue or PR on [github.com/windsurftemplate/vaultproof](https://github.com/windsurftemplate/vaultproof).
 

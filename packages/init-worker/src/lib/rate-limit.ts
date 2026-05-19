@@ -18,6 +18,7 @@
  *   - Project creation: 10/60s per user
  *   - Key upload: 60/60s per user
  *   - Failed auth: 100/60s per IP
+ *   - Site translation: 60/60s per IP
  */
 import type { Env } from '../types.js';
 
@@ -112,6 +113,15 @@ export async function checkFailedAuthRateLimit(
   const key = `failauth:${ip}`;
   if (!checkMemBucket(key, 30, 10_000)) return { ok: false, retryAfter: 10 };
   return checkDoWindow(env, key, 100, 60);
+}
+
+export async function checkSiteTranslationRateLimit(
+  env: Env,
+  ip: string,
+): Promise<{ ok: boolean; retryAfter?: number }> {
+  const key = `site-translate:${ip || 'unknown'}`;
+  if (!checkMemBucket(key, 12, 10_000)) return { ok: false, retryAfter: 10 };
+  return checkDoWindow(env, key, 60, 60);
 }
 
 export function rateLimitResponse(retryAfter: number): Response {

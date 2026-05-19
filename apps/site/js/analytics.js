@@ -4,7 +4,7 @@
   if (!window.__vpI18nLoaderAdded) {
     window.__vpI18nLoaderAdded = true;
     var i18nScript = document.createElement('script');
-    i18nScript.src = '/js/site-i18n.js?v=20260420';
+    i18nScript.src = '/js/site-i18n.js?v=20260519';
     i18nScript.defer = true;
     document.head.appendChild(i18nScript);
   }

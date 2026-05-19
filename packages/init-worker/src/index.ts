@@ -13,6 +13,7 @@ import { handleMembers } from './routes/members.js';
 import { handleOrganizations } from './routes/orgs.js';
 import { handleProjects } from './routes/projects.js';
 import { handleProxy } from './routes/proxy.js';
+import { handleSiteTranslate } from './routes/site-translate.js';
 import { checkFailedAuthRateLimit, rateLimitResponse } from './lib/rate-limit.js';
 import { getSupabase } from './lib/supabase.js';
 
@@ -121,6 +122,11 @@ export default {
         origin,
         allowedOrigins,
       );
+    }
+
+    if (url.pathname === '/api/v1/site/translate') {
+      const res = await handleSiteTranslate(request, env, origin, allowedOrigins);
+      return addCors(res, origin, allowedOrigins);
     }
 
     // ── /api/v1/init/projects/* ───────────────────────────────────────

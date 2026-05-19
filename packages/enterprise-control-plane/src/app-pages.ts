@@ -33,6 +33,8 @@ const ENTERPRISE_PROVIDER_SLOT_PRESETS: readonly EnterpriseProviderPreset[] = [
   { id: 'xai', upstream: 'https://api.x.ai', header: 'authorization', template: 'Bearer {key}', demoPath: '/v1/models' },
   { id: 'openrouter', upstream: 'https://openrouter.ai', header: 'authorization', template: 'Bearer {key}', demoPath: '/api/v1/models' },
   { id: 'deepseek', upstream: 'https://api.deepseek.com', header: 'authorization', template: 'Bearer {key}', demoPath: '/v1/models' },
+  { id: 'deepl', upstream: 'https://api-free.deepl.com', header: 'authorization', template: 'DeepL-Auth-Key {key}', demoPath: '/v2/usage' },
+  { id: 'deepl-pro', upstream: 'https://api.deepl.com', header: 'authorization', template: 'DeepL-Auth-Key {key}', demoPath: '/v2/usage' },
   { id: 'mistral', upstream: 'https://api.mistral.ai', header: 'authorization', template: 'Bearer {key}', demoPath: '/v1/models' },
   { id: 'together', upstream: 'https://api.together.xyz', header: 'authorization', template: 'Bearer {key}', demoPath: '/v1/models' },
   { id: 'fireworks', upstream: 'https://api.fireworks.ai', header: 'authorization', template: 'Bearer {key}', demoPath: '/inference/v1/models' },

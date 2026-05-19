@@ -2,7 +2,7 @@
 
 ## Supported Providers
 
-The provider catalog currently includes 87 signatures. These common providers work with VaultProof's header-based proxy out of the box:
+The provider catalog currently includes 89 signatures. These common providers work with VaultProof's header-based proxy out of the box:
 
 | Provider | Proxy Path | Auth Method |
 |----------|-----------|-------------|
@@ -21,6 +21,8 @@ The provider catalog currently includes 87 signatures. These common providers wo
 | Perplexity | `/p/perplexity/*` | Bearer token |
 | Fireworks AI | `/p/fireworks/inference/v1/*` | Bearer token |
 | DeepSeek | `/p/deepseek/v1/*` | Bearer token |
+| DeepL API Free | `/p/deepl/*` | `Authorization: DeepL-Auth-Key` |
+| DeepL API Pro | `/p/deepl-pro/*` | `Authorization: DeepL-Auth-Key` |
 | Replicate | `/p/replicate/*` | Bearer token |
 | Stripe | `/p/stripe/*` and `/v1/*` | Bearer token |
 | GitHub | `/p/github/*` | Bearer token |
