@@ -65,11 +65,6 @@ const PRIMARY_NAV: NavItem[] = [
     blurb: "Invites, org roles, and project permissions.",
   },
   {
-    href: "/audit",
-    label: "Audit",
-    blurb: "Governance events, policy changes, and proxy activity.",
-  },
-  {
     href: "/alerts",
     label: "Alerts",
     blurb: "Destinations, dispatch rules, and delivery history.",
@@ -84,7 +79,7 @@ const NAV_GROUPS: NavGroup[] = [
       { href: "/readiness", label: "Readiness", blurb: "Production readiness checks for runtime and edge posture." },
       { href: "/health", label: "Health", blurb: "Live health response for operators and uptime checks." },
       { href: "/app/activity", label: "Activity", blurb: "Runtime traffic, errors, hot endpoints, and provider mix." },
-      PRIMARY_NAV[5],
+      PRIMARY_NAV[4],
       { href: "/app/control", label: "Control", blurb: "Caller lock, provider policy, rates, and secure execution." },
       { href: "/app/verifier", label: "AI Proof Verifier", blurb: "Register models and verify external proof bundles.", pill: "beta" },
       { href: "/app/org", label: "Org + SSO", blurb: "Organization settings and Microsoft Entra SSO." },
@@ -96,7 +91,6 @@ const NAV_GROUPS: NavGroup[] = [
       PRIMARY_NAV[3],
       PRIMARY_NAV[4],
       PRIMARY_NAV[2],
-      { href: "/api/v1/enterprise/audit?format=csv&days=30", label: "Audit CSV", blurb: "Export governance and runtime evidence." },
       { href: "/api/v1/enterprise/members/access-review?format=csv", label: "Access review CSV", blurb: "Export members, roles, assignments, and invites." },
     ],
   },

@@ -47,7 +47,6 @@ const CONTROL_CENTER_LINKS = [
   ["Project health", "Review environments, traffic, policy status, and allowed origins.", "/projects"],
   ["Provider slots", "View active providers, rotation checklists, and emergency revoke controls.", "/keys"],
   ["Access evidence", "Review members, pending invites, roles, and project assignments.", "/members"],
-  ["Audit exports", "Search governance/runtime events and prepare CSV evidence.", "/audit"],
   ["Alert delivery", "Manage destinations, delivery logs, dispatch runs, and policy state.", "/alerts"],
 ] as const;
 
@@ -58,7 +57,6 @@ const ENTERPRISE_LINK_GROUPS = [
     links: [
       ["Production readiness", "/readiness"],
       ["Control-plane health", "/health"],
-      ["Audit CSV", "/api/v1/enterprise/audit?format=csv&days=30"],
       ["Access review CSV", "/api/v1/enterprise/members/access-review?format=csv"],
     ],
   },
@@ -398,8 +396,8 @@ export function ExecutivePortalShell() {
               <div className="rounded-2xl border border-white/8 bg-slate-950/35 px-3 py-2">Replay protection for signed envelopes</div>
             </div>
             <div className="mt-4 flex flex-wrap gap-2">
-              <Link href="/audit" className="rounded-2xl border border-white/10 bg-white/[0.04] px-4 py-3 text-sm font-medium text-white transition hover:border-white/20 hover:bg-white/[0.07]">
-                Audit evidence
+              <Link href="/members" className="rounded-2xl border border-white/10 bg-white/[0.04] px-4 py-3 text-sm font-medium text-white transition hover:border-white/20 hover:bg-white/[0.07]">
+                Access evidence
               </Link>
               <Link href="/keys" className="rounded-2xl bg-emerald-400 px-4 py-3 text-sm font-semibold text-slate-950 transition hover:bg-emerald-300">
                 Provider slots
