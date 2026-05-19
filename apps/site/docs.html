@@ -1180,7 +1180,7 @@ $ npx @vaultproof/init --check-legacy</pre>
                 <!-- Supported Providers -->
                 <div class="mb-8">
                     <h3 class="text-lg font-semibold text-white mb-4">Supported Providers</h3>
-                    <p class="text-gray-500 text-sm mb-4">The init catalog currently includes 89 provider signatures. Common proxy-ready examples:</p>
+                    <p class="text-gray-500 text-sm mb-4">The init catalog currently includes 104 provider signatures. Common proxy-ready examples:</p>
                     <div class="bg-vp-surface border border-vp-border rounded-md overflow-hidden">
                         <table class="doc-table">
                             <thead><tr><th>Provider</th><th>Proxy Base URL</th><th>Upstream</th></tr></thead>
@@ -1434,7 +1434,7 @@ res = client.chat.completions.<span class="fn">create</span>(
                 <!-- Supported Providers -->
                 <div>
                     <h3 class="text-lg font-semibold text-white mb-4">Supported Providers</h3>
-                    <p class="text-gray-500 text-sm mb-4">The catalog includes 89 signatures. This table shows common proxy-ready providers and their auth style.</p>
+                    <p class="text-gray-500 text-sm mb-4">The catalog includes 104 signatures. This table shows common proxy-ready providers and their auth style.</p>
                     <div class="bg-vp-surface border border-vp-border rounded-md overflow-hidden">
                         <table class="doc-table">
                             <thead><tr><th>Provider</th><th>Value</th><th>Base URL</th><th>Auth Header</th></tr></thead>
@@ -1444,6 +1444,12 @@ res = client.chat.completions.<span class="fn">create</span>(
                                     <td><code class="font-mono text-xs text-vp-accent">'openai'</code></td>
                                     <td class="text-gray-500"><code class="font-mono text-xs">api.openai.com</code></td>
                                     <td><code class="font-mono text-xs">Authorization: Bearer</code></td>
+                                </tr>
+                                <tr>
+                                    <td class="text-white font-medium">Azure OpenAI</td>
+                                    <td><code class="font-mono text-xs text-vp-accent">'azure-openai'</code></td>
+                                    <td class="text-gray-500"><code class="font-mono text-xs">AZURE_OPENAI_ENDPOINT</code></td>
+                                    <td><code class="font-mono text-xs">api-key</code></td>
                                 </tr>
                                 <tr>
                                     <td class="text-white font-medium">Anthropic</td>
@@ -1542,6 +1548,54 @@ res = client.chat.completions.<span class="fn">create</span>(
                                     <td><code class="font-mono text-xs">Authorization: DeepL-Auth-Key</code></td>
                                 </tr>
                                 <tr>
+                                    <td class="text-white font-medium">DigitalOcean</td>
+                                    <td><code class="font-mono text-xs text-vp-accent">'digitalocean'</code></td>
+                                    <td class="text-gray-500"><code class="font-mono text-xs">api.digitalocean.com</code></td>
+                                    <td><code class="font-mono text-xs">Authorization: Bearer</code></td>
+                                </tr>
+                                <tr>
+                                    <td class="text-white font-medium">Netlify / Render / Heroku</td>
+                                    <td><code class="font-mono text-xs text-vp-accent">'netlify'</code>, <code class="font-mono text-xs text-vp-accent">'render'</code>, <code class="font-mono text-xs text-vp-accent">'heroku'</code></td>
+                                    <td class="text-gray-500"><code class="font-mono text-xs">platform APIs</code></td>
+                                    <td><code class="font-mono text-xs">Authorization: Bearer</code></td>
+                                </tr>
+                                <tr>
+                                    <td class="text-white font-medium">Fastly</td>
+                                    <td><code class="font-mono text-xs text-vp-accent">'fastly'</code></td>
+                                    <td class="text-gray-500"><code class="font-mono text-xs">api.fastly.com</code></td>
+                                    <td><code class="font-mono text-xs">Fastly-Key</code></td>
+                                </tr>
+                                <tr>
+                                    <td class="text-white font-medium">HCP Terraform / Pulumi</td>
+                                    <td><code class="font-mono text-xs text-vp-accent">'terraform-cloud'</code>, <code class="font-mono text-xs text-vp-accent">'pulumi'</code></td>
+                                    <td class="text-gray-500"><code class="font-mono text-xs">IaC APIs</code></td>
+                                    <td><code class="font-mono text-xs">Bearer / token</code></td>
+                                </tr>
+                                <tr>
+                                    <td class="text-white font-medium">Jira / Zendesk / Freshdesk</td>
+                                    <td><code class="font-mono text-xs text-vp-accent">'jira'</code>, <code class="font-mono text-xs text-vp-accent">'zendesk'</code>, <code class="font-mono text-xs text-vp-accent">'freshdesk'</code></td>
+                                    <td class="text-gray-500"><code class="font-mono text-xs">account-specific URL</code></td>
+                                    <td><code class="font-mono text-xs">Authorization: Basic</code></td>
+                                </tr>
+                                <tr>
+                                    <td class="text-white font-medium">Twilio / Chargebee</td>
+                                    <td><code class="font-mono text-xs text-vp-accent">'twilio'</code>, <code class="font-mono text-xs text-vp-accent">'chargebee'</code></td>
+                                    <td class="text-gray-500"><code class="font-mono text-xs">api.twilio.com / site URL</code></td>
+                                    <td><code class="font-mono text-xs">Authorization: Basic</code></td>
+                                </tr>
+                                <tr>
+                                    <td class="text-white font-medium">Adyen</td>
+                                    <td><code class="font-mono text-xs text-vp-accent">'adyen'</code></td>
+                                    <td class="text-gray-500"><code class="font-mono text-xs">ADYEN_API_URL</code></td>
+                                    <td><code class="font-mono text-xs">X-API-Key</code></td>
+                                </tr>
+                                <tr>
+                                    <td class="text-white font-medium">npm Registry</td>
+                                    <td><code class="font-mono text-xs text-vp-accent">'npm-registry'</code></td>
+                                    <td class="text-gray-500"><code class="font-mono text-xs">registry.npmjs.org</code></td>
+                                    <td><code class="font-mono text-xs">Authorization: Bearer</code></td>
+                                </tr>
+                                <tr>
                                     <td class="text-white font-medium">Replicate</td>
                                     <td><code class="font-mono text-xs text-vp-accent">'replicate'</code></td>
                                     <td class="text-gray-500"><code class="font-mono text-xs">api.replicate.com</code></td>
@@ -1574,7 +1628,7 @@ res = client.chat.completions.<span class="fn">create</span>(
                             </tbody>
                         </table>
                     </div>
-                    <p class="text-gray-500 text-sm mt-3">Providers with account-specific upstreams, like Weaviate and Grafana, are supported by init when their service URL is present in your .env. For unsupported or internal HTTP APIs, run <code class="font-mono text-xs text-vp-accent">npx @vaultproof/init custom</code>.</p>
+                    <p class="text-gray-500 text-sm mt-3">Providers with account-specific upstreams, like Azure OpenAI, Jira, Zendesk, Freshdesk, Weaviate, and Grafana, are supported by init when their service URL is present in your .env. For unsupported or internal HTTP APIs, run <code class="font-mono text-xs text-vp-accent">npx @vaultproof/init custom</code>.</p>
                 </div>
 
                 <!-- Which Keys to Store -->
@@ -2158,7 +2212,9 @@ npx @vaultproof/init doctor</pre>
                             <span>OpenAI, Anthropic, Groq</span>
                             <span>Stripe, Resend, SendGrid</span>
                             <span>OpenRouter, DeepSeek, xAI, DeepL</span>
-                            <span>Mistral, Together, Fireworks</span>
+                            <span>Azure OpenAI, Twilio, Adyen</span>
+                            <span>Netlify, Render, Heroku</span>
+                            <span>Jira, Zendesk, Freshdesk</span>
                             <span>GitHub, Notion, Linear</span>
                             <span>Provider-specific env var hints</span>
                         </div>
@@ -2213,7 +2269,7 @@ npx @vaultproof/init doctor</pre>
 
                     <div class="endpoint-card">
                         <h4 class="text-white font-semibold mb-2">"What providers are supported?"</h4>
-                        <p class="text-gray-400 text-sm">The current init catalog includes 89 provider signatures, including OpenAI, Anthropic, Google/Gemini, DeepL, MiniMax, Voyage AI, Jina AI, AI21, AssemblyAI, Stripe, Groq, xAI, OpenRouter, DeepSeek, Mistral, Together, Fireworks, Resend, SendGrid, Linear, Notion, GitHub, GitLab, Sentry, Datadog, Grafana, Honeycomb, Snyk, PagerDuty, LaunchDarkly, Supabase, Neon, and more. For proxying, each stored key carries its own validated upstream URL and auth-header template, so the worker can support provider-specific routing without hardcoding every API path.</p>
+                        <p class="text-gray-400 text-sm">The current init catalog includes 104 provider signatures, including OpenAI, Azure OpenAI, Anthropic, Google/Gemini, DeepL, MiniMax, Voyage AI, Jina AI, AI21, AssemblyAI, Stripe, Chargebee, Adyen, Twilio, Groq, xAI, OpenRouter, DeepSeek, Mistral, Together, Fireworks, Resend, SendGrid, Linear, Notion, GitHub, GitLab, Jira, Zendesk, Freshdesk, Netlify, Render, Heroku, DigitalOcean, Fastly, HCP Terraform, Pulumi, npm Registry, Sentry, Datadog, Grafana, Honeycomb, Snyk, PagerDuty, LaunchDarkly, Supabase, Neon, and more. For proxying, each stored key carries its own validated upstream URL and auth-header template, so the worker can support provider-specific routing without hardcoding every API path.</p>
                     </div>
 
                     <div class="endpoint-card">

@@ -918,25 +918,31 @@ async function runInit(opts: { autoYes: boolean; dryRun: boolean; forceCustom?: 
   for (const f of findings) {
     const s = ora(`Splitting ${f.varName} (${f.provider.label})...`).start();
 
-    // Some providers (e.g. Langfuse) combine the secret with another env var
-    // before protecting (e.g. base64(publicKey:secretKey))
+    // Some providers combine the protected secret before splitting it. Examples:
+    // Langfuse/Twilio/Jira use base64(public-or-user-id:secret), while
+    // Chargebee/Freshdesk use base64(secret:) or base64(secret:X).
     let keyToSplit = f.value;
-    if (f.provider.combine_with_env && f.provider.combine_format) {
-      const otherVal = process.env[f.provider.combine_with_env] || (() => {
-        try {
-          const envContent = fs.readFileSync(f.file, 'utf-8');
-          const match = envContent.match(new RegExp(`^${f.provider.combine_with_env}\\s*=\\s*(.+)$`, 'm'));
-          return match ? match[1].trim().replace(/^["']|["']$/g, '') : '';
-        } catch { return ''; }
-      })();
-      if (otherVal) {
-        const combined = f.provider.combine_format
-          .replace('{env}', otherVal)
-          .replace('{key}', f.value);
-        keyToSplit = f.provider.combine_encoding === 'base64'
-          ? Buffer.from(combined).toString('base64')
-          : combined;
+    if (f.provider.combine_format) {
+      let otherVal = '';
+      if (f.provider.combine_with_env) {
+        otherVal = process.env[f.provider.combine_with_env] || (() => {
+          try {
+            const envContent = fs.readFileSync(f.file, 'utf-8');
+            const match = envContent.match(new RegExp(`^${f.provider.combine_with_env}\\s*=\\s*(.+)$`, 'm'));
+            return match ? match[1].trim().replace(/^["']|["']$/g, '') : '';
+          } catch { return ''; }
+        })();
+        if (!otherVal && f.provider.combine_format.includes('{env}')) {
+          s.fail(`${f.provider.label}: could not find ${f.provider.combine_with_env} in your .env. Add it and try again.`);
+          continue;
+        }
       }
+      const combined = f.provider.combine_format
+        .replace('{env}', otherVal)
+        .replace('{key}', f.value);
+      keyToSplit = f.provider.combine_encoding === 'base64'
+        ? Buffer.from(combined).toString('base64')
+        : combined;
     }
 
     const shares = splitString(keyToSplit, 2, 2);

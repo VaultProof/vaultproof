@@ -2,11 +2,12 @@
 
 ## Supported Providers
 
-The provider catalog currently includes 89 signatures. These common providers work with VaultProof's header-based proxy out of the box:
+The provider catalog currently includes 104 signatures. These common providers work with VaultProof's header-based proxy out of the box:
 
 | Provider | Proxy Path | Auth Method |
 |----------|-----------|-------------|
 | OpenAI | `/p/openai/v1/*` | Bearer token |
+| Azure OpenAI | `/p/azure-openai/openai/v1/*` | api-key header |
 | Anthropic | `/p/anthropic/*` | x-api-key header |
 | Google (Gemini) | `/p/google/*` | x-goog-api-key header |
 | MiniMax | `/p/minimax/v1/*` | Bearer token |
@@ -27,12 +28,26 @@ The provider catalog currently includes 89 signatures. These common providers wo
 | Stripe | `/p/stripe/*` and `/v1/*` | Bearer token |
 | GitHub | `/p/github/*` | Bearer token |
 | GitLab | `/p/gitlab/api/v4/*` | PRIVATE-TOKEN header |
+| DigitalOcean | `/p/digitalocean/v2/*` | Bearer token |
+| Netlify | `/p/netlify/api/v1/*` | Bearer token |
+| Render | `/p/render/v1/*` | Bearer token |
+| Heroku | `/p/heroku/*` | Bearer token |
+| Fastly | `/p/fastly/*` | Fastly-Key header |
+| HCP Terraform | `/p/terraform-cloud/api/v2/*` | Bearer token |
+| Pulumi Cloud | `/p/pulumi/*` | `Authorization: token` |
 | LaunchDarkly | `/p/launchdarkly/api/v2/*` | Authorization key |
 | Snyk | `/p/snyk/rest/*` | `Authorization: token` |
 | PagerDuty | `/p/pagerduty/*` | `Authorization: Token token=` |
 | Grafana | `/p/grafana/*` | Bearer token |
 | Honeycomb | `/p/honeycomb/*` | X-Honeycomb-Team header |
 | Supabase | `/p/supabase/*` | apikey + Bearer |
+| Jira Cloud | `/p/jira/rest/api/3/*` | Basic auth from email + token |
+| Zendesk | `/p/zendesk/api/v2/*` | Basic auth from email + token |
+| Freshdesk | `/p/freshdesk/api/v2/*` | Basic auth from API key |
+| Twilio | `/p/twilio/2010-04-01/*` | Basic auth from API key SID + secret |
+| Chargebee | `/p/chargebee/api/v2/*` | Basic auth from API key |
+| Adyen | `/p/adyen/*` | X-API-Key header |
+| npm Registry | `/p/npm-registry/*` | Bearer token |
 
 ## Custom/Internal APIs
 
@@ -50,7 +65,7 @@ These values are stored as split shares and rewritten to `vaultproof://NAME` pla
 
 ### OAuth-based APIs (no static API key)
 - **Google Cloud (OAuth)** — uses short-lived OAuth tokens, not static keys
-- **Microsoft Azure / Azure OpenAI** — uses Azure AD tokens or managed identity
+- **Microsoft Graph / Azure management APIs** — use Microsoft Entra tokens or managed identity
 - **GitHub API** — personal access tokens work, but GitHub Apps use JWT + installation tokens
 - **Slack API** — Bot tokens (`xoxb-`) work, but OAuth user tokens rotate
 - **Salesforce** — OAuth 2.0 flow, no static key
@@ -63,7 +78,7 @@ These values are stored as split shares and rewritten to `vaultproof://NAME` pla
 
 ### Multi-part auth (key + secret pairs)
 - **AWS (Access Key + Secret Key + Signature V4)** — AWS uses a signing process that requires both the access key ID and secret key to compute HMAC signatures per-request. VaultProof stores a single key, not key pairs, and doesn't implement SigV4.
-- **Twilio (Account SID + Auth Token)** — uses HTTP Basic Auth with two values. Could work if you concatenate as `SID:Token` but not natively supported.
+- **Twilio Account SID + Auth Token** — use Twilio API keys instead: `TWILIO_API_KEY_SID` plus `TWILIO_API_KEY_SECRET`.
 - **SendGrid** — Bearer token works, but some endpoints need additional account-level auth.
 
 ### Client-side / browser-only keys
@@ -90,7 +105,7 @@ These values are stored as split shares and rewritten to `vaultproof://NAME` pla
 | Provider | Caveat |
 |----------|--------|
 | SendGrid | Bearer token works for email API |
-| Twilio | If using API key auth (not Account SID) |
+| Twilio | API key SID + secret works when both env vars are present |
 | Pinecone | Bearer token |
 | Weaviate | Bearer token |
 | Hugging Face | Bearer token |

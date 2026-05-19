@@ -1,6 +1,6 @@
 {
-  "version": 3,
-  "updated": "2026-05-17",
+  "version": 4,
+  "updated": "2026-05-19",
   "providers": [
     {
       "id": "anthropic",
@@ -80,6 +80,22 @@
       "base_url_path_suffix": "/p/openai/v1",
       "detect": {
         "regex": "^sk-(?:proj-[A-Za-z0-9_-]{20,}|[A-Za-z0-9]{48,})$"
+      }
+    },
+    {
+      "id": "azure-openai",
+      "label": "Azure OpenAI",
+      "upstream_base_url": "dynamic",
+      "auth_header_name": "api-key",
+      "auth_header_template": "{key}",
+      "env_var_default": "AZURE_OPENAI_API_KEY",
+      "base_url_env_var": "AZURE_OPENAI_BASE_URL",
+      "base_url_path_suffix": "/p/azure-openai/openai/v1",
+      "upstream_from_env": "AZURE_OPENAI_ENDPOINT",
+      "note": "Set AZURE_OPENAI_ENDPOINT (e.g. https://my-resource.openai.azure.com) in your .env.",
+      "detect": {
+        "regex": "^[A-Za-z0-9_-]{32,120}$",
+        "var_hint": "AZURE_OPENAI"
       }
     },
     {
@@ -601,6 +617,85 @@
       "detect": { "regex": "^[A-Za-z0-9]{24}$", "var_hint": "VERCEL" }
     },
     {
+      "id": "netlify",
+      "label": "Netlify",
+      "upstream_base_url": "https://api.netlify.com",
+      "auth_header_name": "Authorization",
+      "auth_header_template": "Bearer {key}",
+      "env_var_default": "NETLIFY_AUTH_TOKEN",
+      "base_url_env_var": "NETLIFY_BASE_URL",
+      "base_url_path_suffix": "/p/netlify/api/v1",
+      "detect": { "regex": "^[A-Za-z0-9._-]{20,160}$", "var_hint": "NETLIFY" }
+    },
+    {
+      "id": "render",
+      "label": "Render",
+      "upstream_base_url": "https://api.render.com",
+      "auth_header_name": "Authorization",
+      "auth_header_template": "Bearer {key}",
+      "env_var_default": "RENDER_API_KEY",
+      "base_url_env_var": "RENDER_BASE_URL",
+      "base_url_path_suffix": "/p/render/v1",
+      "detect": { "regex": "^[A-Za-z0-9._-]{20,160}$", "var_hint": "RENDER" }
+    },
+    {
+      "id": "heroku",
+      "label": "Heroku",
+      "upstream_base_url": "https://api.heroku.com",
+      "auth_header_name": "Authorization",
+      "auth_header_template": "Bearer {key}",
+      "extra_headers": { "Accept": "application/vnd.heroku+json; version=3" },
+      "env_var_default": "HEROKU_API_KEY",
+      "base_url_env_var": "HEROKU_BASE_URL",
+      "base_url_path_suffix": "/p/heroku",
+      "detect": { "regex": "^(?:HRKU-)?[A-Za-z0-9._-]{20,160}$", "var_hint": "HEROKU" }
+    },
+    {
+      "id": "digitalocean",
+      "label": "DigitalOcean",
+      "upstream_base_url": "https://api.digitalocean.com",
+      "auth_header_name": "Authorization",
+      "auth_header_template": "Bearer {key}",
+      "env_var_default": "DIGITALOCEAN_TOKEN",
+      "base_url_env_var": "DIGITALOCEAN_BASE_URL",
+      "base_url_path_suffix": "/p/digitalocean/v2",
+      "detect": { "regex": "^(?:dop|doo)_v1_[A-Za-z0-9]{40,}$" }
+    },
+    {
+      "id": "fastly",
+      "label": "Fastly",
+      "upstream_base_url": "https://api.fastly.com",
+      "auth_header_name": "Fastly-Key",
+      "auth_header_template": "{key}",
+      "env_var_default": "FASTLY_API_TOKEN",
+      "base_url_env_var": "FASTLY_BASE_URL",
+      "base_url_path_suffix": "/p/fastly",
+      "detect": { "regex": "^[A-Za-z0-9._-]{20,160}$", "var_hint": "FASTLY" }
+    },
+    {
+      "id": "terraform-cloud",
+      "label": "HCP Terraform",
+      "upstream_base_url": "https://app.terraform.io",
+      "auth_header_name": "Authorization",
+      "auth_header_template": "Bearer {key}",
+      "env_var_default": "TERRAFORM_CLOUD_TOKEN",
+      "base_url_env_var": "TERRAFORM_CLOUD_BASE_URL",
+      "base_url_path_suffix": "/p/terraform-cloud/api/v2",
+      "detect": { "regex": "^[A-Za-z0-9._-]{20,160}$", "var_hint": "TERRAFORM" }
+    },
+    {
+      "id": "pulumi",
+      "label": "Pulumi Cloud",
+      "upstream_base_url": "https://api.pulumi.com",
+      "auth_header_name": "Authorization",
+      "auth_header_template": "token {key}",
+      "extra_headers": { "Accept": "application/vnd.pulumi+8", "Content-Type": "application/json" },
+      "env_var_default": "PULUMI_ACCESS_TOKEN",
+      "base_url_env_var": "PULUMI_BASE_URL",
+      "base_url_path_suffix": "/p/pulumi",
+      "detect": { "regex": "^[A-Za-z0-9._-]{20,160}$", "var_hint": "PULUMI" }
+    },
+    {
       "id": "cloudflare",
       "label": "Cloudflare",
       "upstream_base_url": "https://api.cloudflare.com",
@@ -634,6 +729,34 @@
       "detect": { "regex": "^pdl_(live|sbox)_[A-Za-z0-9]{30,}$" }
     },
     {
+      "id": "chargebee",
+      "label": "Chargebee",
+      "upstream_base_url": "dynamic",
+      "auth_header_name": "Authorization",
+      "auth_header_template": "Basic {key}",
+      "env_var_default": "CHARGEBEE_API_KEY",
+      "base_url_env_var": "CHARGEBEE_BASE_URL",
+      "base_url_path_suffix": "/p/chargebee/api/v2",
+      "upstream_from_env": "CHARGEBEE_SITE_URL",
+      "combine_format": "{key}:",
+      "combine_encoding": "base64",
+      "note": "Set CHARGEBEE_SITE_URL (e.g. https://example.chargebee.com) in your .env.",
+      "detect": { "regex": "^[A-Za-z0-9._-]{20,160}$", "var_hint": "CHARGEBEE" }
+    },
+    {
+      "id": "adyen",
+      "label": "Adyen",
+      "upstream_base_url": "dynamic",
+      "auth_header_name": "X-API-Key",
+      "auth_header_template": "{key}",
+      "env_var_default": "ADYEN_API_KEY",
+      "base_url_env_var": "ADYEN_BASE_URL",
+      "base_url_path_suffix": "/p/adyen",
+      "upstream_from_env": "ADYEN_API_URL",
+      "note": "Set ADYEN_API_URL to your Adyen checkout, terminal, or platform API endpoint.",
+      "detect": { "regex": "^[A-Za-z0-9._-]{20,160}$", "var_hint": "ADYEN" }
+    },
+    {
       "id": "square",
       "label": "Square",
       "upstream_base_url": "https://connect.squareup.com",
@@ -665,6 +788,21 @@
       "base_url_env_var": "SLACK_BASE_URL",
       "base_url_path_suffix": "/p/slack",
       "detect": { "regex": "^xoxb-[0-9]+-[0-9]+-[A-Za-z0-9]+$" }
+    },
+    {
+      "id": "twilio",
+      "label": "Twilio",
+      "upstream_base_url": "https://api.twilio.com",
+      "auth_header_name": "Authorization",
+      "auth_header_template": "Basic {key}",
+      "env_var_default": "TWILIO_API_KEY_SECRET",
+      "base_url_env_var": "TWILIO_BASE_URL",
+      "base_url_path_suffix": "/p/twilio/2010-04-01",
+      "combine_with_env": "TWILIO_API_KEY_SID",
+      "combine_format": "{env}:{key}",
+      "combine_encoding": "base64",
+      "note": "Set TWILIO_API_KEY_SID alongside TWILIO_API_KEY_SECRET so VaultProof can build Twilio Basic auth.",
+      "detect": { "regex": "^[A-Za-z0-9._-]{20,160}$", "var_hint": "TWILIO_API_KEY_SECRET" }
     },
     {
       "id": "google",
@@ -908,6 +1046,53 @@
       "detect": { "regex": "^dG9rO[A-Za-z0-9_-]{40,}$" }
     },
     {
+      "id": "jira",
+      "label": "Jira Cloud",
+      "upstream_base_url": "dynamic",
+      "auth_header_name": "Authorization",
+      "auth_header_template": "Basic {key}",
+      "env_var_default": "JIRA_API_TOKEN",
+      "base_url_env_var": "JIRA_API_BASE_URL",
+      "base_url_path_suffix": "/p/jira/rest/api/3",
+      "upstream_from_env": "JIRA_SITE_URL",
+      "combine_with_env": "JIRA_EMAIL",
+      "combine_format": "{env}:{key}",
+      "combine_encoding": "base64",
+      "note": "Set JIRA_SITE_URL (e.g. https://example.atlassian.net) and JIRA_EMAIL in your .env.",
+      "detect": { "regex": "^[A-Za-z0-9._-]{20,160}$", "var_hint": "JIRA" }
+    },
+    {
+      "id": "zendesk",
+      "label": "Zendesk",
+      "upstream_base_url": "dynamic",
+      "auth_header_name": "Authorization",
+      "auth_header_template": "Basic {key}",
+      "env_var_default": "ZENDESK_API_TOKEN",
+      "base_url_env_var": "ZENDESK_API_BASE_URL",
+      "base_url_path_suffix": "/p/zendesk/api/v2",
+      "upstream_from_env": "ZENDESK_SITE_URL",
+      "combine_with_env": "ZENDESK_EMAIL",
+      "combine_format": "{env}/token:{key}",
+      "combine_encoding": "base64",
+      "note": "Set ZENDESK_SITE_URL (e.g. https://example.zendesk.com) and ZENDESK_EMAIL in your .env.",
+      "detect": { "regex": "^[A-Za-z0-9._-]{20,160}$", "var_hint": "ZENDESK" }
+    },
+    {
+      "id": "freshdesk",
+      "label": "Freshdesk",
+      "upstream_base_url": "dynamic",
+      "auth_header_name": "Authorization",
+      "auth_header_template": "Basic {key}",
+      "env_var_default": "FRESHDESK_API_KEY",
+      "base_url_env_var": "FRESHDESK_API_BASE_URL",
+      "base_url_path_suffix": "/p/freshdesk/api/v2",
+      "upstream_from_env": "FRESHDESK_SITE_URL",
+      "combine_format": "{key}:X",
+      "combine_encoding": "base64",
+      "note": "Set FRESHDESK_SITE_URL (e.g. https://example.freshdesk.com) in your .env.",
+      "detect": { "regex": "^[A-Za-z0-9._-]{20,160}$", "var_hint": "FRESHDESK" }
+    },
+    {
       "id": "minimax",
       "label": "MiniMax",
       "upstream_base_url": "https://api.minimax.io",
@@ -1040,6 +1225,16 @@
       "base_url_path_suffix": "/p/grafana",
       "upstream_from_env": "GRAFANA_URL",
       "detect": { "regex": "^glsa_[A-Za-z0-9_]{20,}$" }
+    },
+    {
+      "id": "npm-registry",
+      "label": "npm Registry",
+      "upstream_base_url": "https://registry.npmjs.org",
+      "auth_header_name": "Authorization",
+      "auth_header_template": "Bearer {key}",
+      "env_var_default": "NPM_TOKEN",
+      "note": "Set npm's registry or your HTTP client's base URL to https://init.vaultproof.dev/p/npm-registry.",
+      "detect": { "regex": "^(?:npm_[A-Za-z0-9_-]{20,}|[a-f0-9]{36,})$", "var_hint": "NPM" }
     }
   ]
 }
