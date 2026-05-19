@@ -8,7 +8,7 @@ export default function ExecutivePage() {
     <AppShell
       eyebrow="Enterprise dashboard"
       title="Runtime, access, and evidence."
-      description="Monitor the provisioned organization workspace: confidential runtime posture, provider slots, team access, audit exports, alerts, and daily operating signals."
+      description="Monitor the provisioned organization workspace: confidential runtime posture, provider slots, team access, access evidence, alerts, and daily operating signals."
     >
       <ExecutivePortalShell />
     </AppShell>
