@@ -141,8 +141,6 @@
       'dashboard.browserTitle': 'Projects — VaultProof',
       'dashboard.title': 'Projects',
       'dashboard.desc': 'Every project holds split keys, proxy routes, and a scan history. Alerts fire when a key re-surfaces in a new commit.',
-      'dashboard.importEnv': 'import .env',
-      'dashboard.newProject': '+ new project',
       'dashboard.keysUnderVault': 'keys under vault',
       'dashboard.proxiedCalls': 'proxied calls · total',
       'dashboard.activeProviders': 'active providers',
@@ -315,8 +313,6 @@
       'dashboard.browserTitle': 'Proyectos — VaultProof',
       'dashboard.title': 'Proyectos',
       'dashboard.desc': 'Cada proyecto contiene claves divididas, rutas proxy y un historial de escaneos. Las alertas saltan cuando una clave reaparece en un nuevo commit.',
-      'dashboard.importEnv': 'importar .env',
-      'dashboard.newProject': '+ nuevo proyecto',
       'dashboard.keysUnderVault': 'claves en vault',
       'dashboard.proxiedCalls': 'llamadas por proxy · total',
       'dashboard.activeProviders': 'proveedores activos',
@@ -558,8 +554,6 @@
     'dashboard.browserTitle': 'Проекты — VaultProof',
     'dashboard.title': 'Проекты',
     'dashboard.desc': 'Каждый проект хранит разделенные ключи, прокси-маршруты и историю сканирования. Оповещения срабатывают, когда ключ снова появляется в новом коммите.',
-    'dashboard.importEnv': 'импорт .env',
-    'dashboard.newProject': '+ новый проект',
     'activity.browserTitle': 'Активность — VaultProof',
     'activity.title': 'Активность',
     'alerts.browserTitle': 'Оповещения — VaultProof',
@@ -652,8 +646,6 @@
     'dashboard.browserTitle': 'פרויקטים — VaultProof',
     'dashboard.title': 'פרויקטים',
     'dashboard.desc': 'כל פרויקט כולל מפתחות מפוצלים, נתיבי proxy והיסטוריית סריקות. התראות מופעלות כשמפתח מופיע מחדש ב-commit חדש.',
-    'dashboard.importEnv': 'ייבוא .env',
-    'dashboard.newProject': '+ פרויקט חדש',
     'dashboard.keysUnderVault': 'מפתחות ב-vault',
     'dashboard.proxiedCalls': 'קריאות proxy · סה״כ',
     'dashboard.activeProviders': 'ספקים פעילים',
@@ -1004,8 +996,6 @@
         document.title = t('dashboard.browserTitle');
         setText('.page-title', 'dashboard.title');
         setText('.page-desc', 'dashboard.desc');
-        setText('.page-actions .btn-outline', 'dashboard.importEnv');
-        setText('.page-actions .btn-primary', 'dashboard.newProject');
         setText('.kpi-cell:nth-child(1) .kpi-label', 'dashboard.keysUnderVault');
         setText('.kpi-cell:nth-child(2) .kpi-label', 'dashboard.proxiedCalls');
         setText('.kpi-cell:nth-child(3) .kpi-label', 'dashboard.activeProviders');
