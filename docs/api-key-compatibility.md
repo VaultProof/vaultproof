@@ -2,7 +2,7 @@
 
 ## Supported Providers
 
-The provider catalog currently includes 104 signatures. These common providers work with VaultProof's header-based proxy out of the box:
+The provider catalog currently includes 132 signatures. These common providers work with VaultProof's header-based proxy out of the box:
 
 | Provider | Proxy Path | Auth Method |
 |----------|-----------|-------------|
@@ -32,14 +32,40 @@ The provider catalog currently includes 104 signatures. These common providers w
 | Netlify | `/p/netlify/api/v1/*` | Bearer token |
 | Render | `/p/render/v1/*` | Bearer token |
 | Heroku | `/p/heroku/*` | Bearer token |
+| Railway | `/p/railway/*` | Bearer token |
+| Fly.io | `/p/fly/*` | Bearer token |
 | Fastly | `/p/fastly/*` | Fastly-Key header |
 | HCP Terraform | `/p/terraform-cloud/api/v2/*` | Bearer token |
 | Pulumi Cloud | `/p/pulumi/*` | `Authorization: token` |
+| CircleCI | `/p/circleci/*` | Circle-Token header |
+| Buildkite | `/p/buildkite/*` | Bearer token |
+| Bitbucket Cloud | `/p/bitbucket/2.0/*` | Basic auth from username + app password |
+| Semgrep | `/p/semgrep/*` | Bearer token |
+| SonarQube Cloud | `/p/sonarcloud/api/*` | Bearer token |
+| Qdrant | `/p/qdrant/*` | api-key header |
+| Turso | `/p/turso/*` | Bearer token |
+| Meilisearch | `/p/meilisearch/*` | Bearer token |
+| Typesense | `/p/typesense/*` | X-TYPESENSE-API-KEY header |
+| Elasticsearch | `/p/elasticsearch/*` | ApiKey auth |
 | LaunchDarkly | `/p/launchdarkly/api/v2/*` | Authorization key |
 | Snyk | `/p/snyk/rest/*` | `Authorization: token` |
 | PagerDuty | `/p/pagerduty/*` | `Authorization: Token token=` |
 | Grafana | `/p/grafana/*` | Bearer token |
 | Honeycomb | `/p/honeycomb/*` | X-Honeycomb-Team header |
+| Better Stack | `/p/betterstack/*` | Bearer token |
+| LogSnag | `/p/logsnag/v1/*` | Bearer token |
+| Raygun | `/p/raygun/*` | Bearer token |
+| Doppler | `/p/doppler/*` | Bearer token |
+| Segment HTTP API | `/p/segment/v1/*` | Basic auth from write key |
+| Plausible | `/p/plausible/api/v2/*` | Bearer token |
+| Webflow | `/p/webflow/*` | Bearer token |
+| Svix | `/p/svix/*` | Bearer token |
+| Knock | `/p/knock/*` | Bearer token |
+| Hume AI | `/p/hume/*` | X-Hume-Api-Key header |
+| RunPod | `/p/runpod/*` | Bearer token |
+| Browserbase | `/p/browserbase/*` | X-BB-API-Key header |
+| Okta | `/p/okta/api/v1/*` | SSWS token |
+| Stytch | `/p/stytch/v1/*` | Basic auth from project ID + secret |
 | Supabase | `/p/supabase/*` | apikey + Bearer |
 | Jira Cloud | `/p/jira/rest/api/3/*` | Basic auth from email + token |
 | Zendesk | `/p/zendesk/api/v2/*` | Basic auth from email + token |
