@@ -240,16 +240,16 @@
 
   async function resolveDashboardRoute(session, ssoResolution) {
     if (!session || !session.access_token) return './';
-    const enterpriseDashboardPath = IS_INTERNAL_ADMIN_HOST
+    const dashboardPath = IS_INTERNAL_ADMIN_HOST
       ? '/internal/admin'
       : IS_ENTERPRISE_HOST
         ? './dashboard'
-        : './control';
-    if (IS_INTERNAL_ADMIN_HOST) return enterpriseDashboardPath;
+        : './';
+    if (IS_INTERNAL_ADMIN_HOST) return dashboardPath;
 
     if (ssoResolution && ssoResolution.organization && ssoResolution.organization.id) {
       localStorage.setItem(ACTIVE_ORG_STORAGE_KEY, ssoResolution.organization.id);
-      return `${enterpriseDashboardPath}?org=${encodeURIComponent(ssoResolution.organization.id)}`;
+      return `${dashboardPath}?org=${encodeURIComponent(ssoResolution.organization.id)}`;
     }
 
     if (ssoResolution && ssoResolution.resolution === 'pending_access') {
@@ -258,7 +258,7 @@
       if (ssoResolution.organization && ssoResolution.organization.name) {
         params.set('workspace', ssoResolution.organization.name);
       }
-      return `${enterpriseDashboardPath}?${params.toString()}`;
+      return `${dashboardPath}?${params.toString()}`;
     }
 
     try {
@@ -283,15 +283,15 @@
 
       if (requestedOrganization && requestedOrganization.kind && requestedOrganization.kind !== 'personal') {
         localStorage.setItem(ACTIVE_ORG_STORAGE_KEY, requestedOrganization.id);
-        return `${enterpriseDashboardPath}?org=${encodeURIComponent(requestedOrganization.id)}`;
+        return `${dashboardPath}?org=${encodeURIComponent(requestedOrganization.id)}`;
       }
       if (activeOrganization && activeOrganization.kind && activeOrganization.kind !== 'personal') {
         localStorage.setItem(ACTIVE_ORG_STORAGE_KEY, activeOrganization.id);
-        return `${enterpriseDashboardPath}?org=${encodeURIComponent(activeOrganization.id)}`;
+        return `${dashboardPath}?org=${encodeURIComponent(activeOrganization.id)}`;
       }
       if (sharedOrganization) {
         localStorage.setItem(ACTIVE_ORG_STORAGE_KEY, sharedOrganization.id);
-        return `${enterpriseDashboardPath}?org=${encodeURIComponent(sharedOrganization.id)}`;
+        return `${dashboardPath}?org=${encodeURIComponent(sharedOrganization.id)}`;
       }
       localStorage.removeItem(ACTIVE_ORG_STORAGE_KEY);
 
@@ -308,7 +308,7 @@
           ? inviteData.pending_invitations_for_me
           : [];
         if (pendingInvites.length) {
-          return enterpriseDashboardPath;
+          return dashboardPath;
         }
       }
 
