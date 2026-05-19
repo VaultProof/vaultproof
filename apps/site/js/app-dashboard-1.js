@@ -493,7 +493,7 @@
     if (!alertScans.length) {
       alertsStatus.textContent = 'clear';
       alertsStatus.style.color = '#15803d';
-      alertsList.innerHTML = '<div class="alert-item"><span class="alert-glyph" style="color:#15803d">OK</span><div class="alert-text"><div class="alert-title">No open scanner alerts</div><div class="alert-meta">run a repo scan to surface findings here</div></div></div>';
+      alertsList.innerHTML = '<div class="alert-item"><span class="alert-glyph" data-vp-no-translate style="color:#15803d">OK</span><div class="alert-text"><div class="alert-title">No open scanner alerts</div><div class="alert-meta">run a repo scan to surface findings here</div></div></div>';
       return;
     }
 
@@ -506,7 +506,7 @@
       const scanTime = extractTimestamp(scan.startedAt, scan.started_at, scan.createdAt, scan.created_at);
       return `
         <div class="alert-item">
-          <span class="alert-glyph" style="color:${severity.color}">!!</span>
+          <span class="alert-glyph" data-vp-no-translate style="color:${severity.color}">!!</span>
           <div class="alert-text">
             <div class="alert-title">${findingsCount} scanner finding${findingsCount === 1 ? '' : 's'}</div>
             <div class="alert-meta">${escapeHtml(repoName)} · ${escapeHtml(scanTime ? relTime(scanTime) : 'recently scanned')}</div>

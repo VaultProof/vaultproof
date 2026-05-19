@@ -155,7 +155,7 @@
       'dashboard.filter.development': 'development',
       'dashboard.filter.idle': 'idle',
       'dashboard.recentActivity': 'recent activity',
-      'dashboard.openAlerts': 'open alerts ·',
+      'dashboard.openAlerts': 'open alerts',
       'dashboard.encryptedAtRest': 'encrypted at rest',
       'dashboard.noRecentActivity': 'no recent activity',
       'dashboard.noProjects': 'No projects match this filter.',
@@ -163,6 +163,7 @@
       'dashboard.needsReview': 'needs review',
       'dashboard.noOpenScannerAlerts': 'No open scanner alerts',
       'dashboard.runScan': 'run a repo scan to surface findings here',
+      'dashboard.scannerHistory': 'scanner history',
       'dashboard.unavailable': 'unavailable',
       'activity.browserTitle': 'Activity — VaultProof',
       'activity.title': 'Activity',
@@ -327,7 +328,7 @@
       'dashboard.filter.development': 'desarrollo',
       'dashboard.filter.idle': 'inactivo',
       'dashboard.recentActivity': 'actividad reciente',
-      'dashboard.openAlerts': 'alertas abiertas ·',
+      'dashboard.openAlerts': 'alertas abiertas',
       'dashboard.encryptedAtRest': 'cifrado en reposo',
       'dashboard.noRecentActivity': 'sin actividad reciente',
       'dashboard.noProjects': 'Ningún proyecto coincide con este filtro.',
@@ -335,6 +336,7 @@
       'dashboard.needsReview': 'requiere revisión',
       'dashboard.noOpenScannerAlerts': 'No hay alertas abiertas del escáner',
       'dashboard.runScan': 'ejecuta un escaneo del repo para ver hallazgos aquí',
+      'dashboard.scannerHistory': 'historial del escáner',
       'dashboard.unavailable': 'no disponible',
       'activity.browserTitle': 'Actividad — VaultProof',
       'activity.title': 'Actividad',
@@ -554,6 +556,12 @@
     'dashboard.browserTitle': 'Проекты — VaultProof',
     'dashboard.title': 'Проекты',
     'dashboard.desc': 'Каждый проект хранит разделенные ключи, прокси-маршруты и историю сканирования. Оповещения срабатывают, когда ключ снова появляется в новом коммите.',
+    'dashboard.openAlerts': 'оповещения',
+    'dashboard.clear': 'чисто',
+    'dashboard.needsReview': 'проверить',
+    'dashboard.noOpenScannerAlerts': 'Нет открытых оповещений',
+    'dashboard.runScan': 'запустите сканирование репозитория',
+    'dashboard.scannerHistory': 'история сканера',
     'activity.browserTitle': 'Активность — VaultProof',
     'activity.title': 'Активность',
     'alerts.browserTitle': 'Оповещения — VaultProof',
@@ -660,7 +668,7 @@
     'dashboard.filter.development': 'פיתוח',
     'dashboard.filter.idle': 'לא פעיל',
     'dashboard.recentActivity': 'פעילות אחרונה',
-    'dashboard.openAlerts': 'התראות פתוחות ·',
+    'dashboard.openAlerts': 'התראות פתוחות',
     'dashboard.encryptedAtRest': 'מוצפן במנוחה',
     'dashboard.noRecentActivity': 'אין פעילות אחרונה',
     'dashboard.noProjects': 'אין פרויקטים שתואמים לסינון הזה.',
@@ -668,6 +676,7 @@
     'dashboard.needsReview': 'דורש בדיקה',
     'dashboard.noOpenScannerAlerts': 'אין התראות סורק פתוחות',
     'dashboard.runScan': 'הריצו סריקת ריפו כדי לראות כאן ממצאים',
+    'dashboard.scannerHistory': 'היסטוריית סורק',
     'dashboard.unavailable': 'לא זמין',
     'activity.browserTitle': 'פעילות — VaultProof',
     'activity.title': 'פעילות',
@@ -709,6 +718,11 @@
     'scan.heroTitle': '事故になる前に露出したAPIキーを見つける。',
     'login.authTitle': 'VaultProof にサインイン',
     'dashboard.title': 'プロジェクト',
+    'dashboard.openAlerts': 'アラート',
+    'dashboard.clear': '正常',
+    'dashboard.noOpenScannerAlerts': '未対応のアラートはありません',
+    'dashboard.runScan': 'リポジトリをスキャンしてください',
+    'dashboard.scannerHistory': 'スキャナー履歴',
     'activity.title': 'アクティビティ',
     'alerts.title': 'アラート',
     'settings.title': '設定',
@@ -744,6 +758,11 @@
     'scan.heroTitle': '在暴露的 API 密钥变成事故之前先发现它们。',
     'login.authTitle': '登录 VaultProof',
     'dashboard.title': '项目',
+    'dashboard.openAlerts': '警报',
+    'dashboard.clear': '正常',
+    'dashboard.noOpenScannerAlerts': '没有待处理警报',
+    'dashboard.runScan': '运行仓库扫描以查看发现',
+    'dashboard.scannerHistory': '扫描器历史',
     'activity.title': '活动',
     'alerts.title': '警报',
     'settings.title': '设置',
@@ -996,6 +1015,7 @@
         document.title = t('dashboard.browserTitle');
         setText('.page-title', 'dashboard.title');
         setText('.page-desc', 'dashboard.desc');
+        setText('#openAlertsLabel', 'dashboard.openAlerts');
         setText('.kpi-cell:nth-child(1) .kpi-label', 'dashboard.keysUnderVault');
         setText('.kpi-cell:nth-child(2) .kpi-label', 'dashboard.proxiedCalls');
         setText('.kpi-cell:nth-child(3) .kpi-label', 'dashboard.activeProviders');
@@ -1095,6 +1115,14 @@
       'needs review': t('dashboard.needsReview')
     });
     replaceExactText('#activity-feed .activity-row span:last-child', { 'no recent activity': t('dashboard.noRecentActivity') });
+    replaceExactText('.alert-title', {
+      'Loading alerts…': t('alerts.loading'),
+      'No open scanner alerts': t('dashboard.noOpenScannerAlerts')
+    });
+    replaceExactText('.alert-meta', {
+      'scanner history': t('dashboard.scannerHistory'),
+      'run a repo scan to surface findings here': t('dashboard.runScan')
+    });
     replaceExactText('#kpi-keys-sub', { 'encrypted at rest': t('dashboard.encryptedAtRest'), unavailable: t('dashboard.unavailable') });
     replaceExactText('#kpi-calls-sub, #kpi-providers-sub, #kpi-errors-sub', { unavailable: t('dashboard.unavailable') });
     replaceExactText('#pageMeta', {

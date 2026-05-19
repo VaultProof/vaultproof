@@ -5,8 +5,8 @@
   <script async src="https://www.googletagmanager.com/gtag/js?id=G-NE5RYX1WTF"></script>
   <script src="/js/app-index-1.js" defer></script>
   <script src="/js/app-index-7.js" defer></script>
-  <script src="/js/site-i18n.js?v=20260519" defer></script>
-  <script src="/js/app-dashboard-1.js" defer data-app-shell-page-script></script>
+  <script src="/js/site-i18n.js?v=20260519b" defer></script>
+  <script src="/js/app-dashboard-1.js?v=20260519b" defer data-app-shell-page-script></script>
   <script src="/js/app-shell-router-1.js" defer></script>
 
   <link rel="icon" type="image/png" href="/favicon.png">
@@ -166,10 +166,11 @@
     .panel { border: var(--rule); border-radius: 4px; background: var(--bg-card); }
     .panel-head {
       padding: 12px 18px; border-bottom: var(--rule);
-      display: flex; align-items: center;
+      display: flex; align-items: center; gap: 8px 12px; flex-wrap: wrap;
       font-family: var(--mono); font-size: 11px; letter-spacing: 0.6px; text-transform: uppercase; color: var(--text-faint);
     }
-    .panel-head-right { margin-left: auto; text-transform: none; letter-spacing: 0; }
+    .panel-head-label { min-width: 0; overflow-wrap: anywhere; }
+    .panel-head-right { margin-left: auto; text-transform: none; letter-spacing: 0; white-space: nowrap; }
     .activity-list { padding: 8px 18px; }
     .activity-row {
       display: grid; grid-template-columns: 72px 80px 1fr;
@@ -179,13 +180,13 @@
     .activity-row:first-child { border-top: none; }
     .act-time { color: var(--text-faint); }
     .act-tag { color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.4px; font-size: 10px; }
-    .alert-item { padding: 14px 18px; border-top: var(--hair); display: flex; align-items: center; gap: 12px; }
+    .alert-item { padding: 14px 18px; border-top: var(--hair); display: flex; align-items: flex-start; gap: 12px; flex-wrap: wrap; }
     .alert-item:first-child { border-top: none; }
-    .alert-glyph { font-family: var(--mono); font-size: 11px; font-weight: 700; width: 16px; flex-shrink: 0; }
-    .alert-text { flex: 1; }
-    .alert-title { font-size: 13px; color: var(--text); }
-    .alert-meta { font-family: var(--mono); font-size: 11px; color: var(--text-faint); margin-top: 2px; }
-    .alert-badge { font-family: var(--mono); font-size: 10px; letter-spacing: 0.5px; text-transform: uppercase; padding: 2px 7px; border-radius: 3px; }
+    .alert-glyph { font-family: var(--mono); font-size: 11px; font-weight: 700; min-width: 16px; flex: 0 0 auto; }
+    .alert-text { flex: 1 1 180px; min-width: 0; }
+    .alert-title { font-size: 13px; line-height: 1.35; color: var(--text); overflow-wrap: anywhere; }
+    .alert-meta { font-family: var(--mono); font-size: 11px; line-height: 1.45; color: var(--text-faint); margin-top: 2px; overflow-wrap: anywhere; }
+    .alert-badge { font-family: var(--mono); font-size: 10px; letter-spacing: 0.5px; text-transform: uppercase; padding: 2px 7px; border-radius: 3px; white-space: nowrap; }
     .alert-review { font-family: var(--mono); font-size: 11px; color: var(--accent); cursor: pointer; flex-shrink: 0; }
 
     @media (max-width: 900px) {
@@ -213,6 +214,7 @@
       .table-wrap { overflow-x: auto; }
       .table-head,
       .table-row { min-width: 640px; }
+      .panel-head-right { margin-left: 0; }
     }
   </style>
   <link rel="stylesheet" href="/css/site-theme.css">
@@ -359,12 +361,12 @@
 
       <div class="panel">
         <div class="panel-head">
-          open alerts · <span id="alertsCount">—</span>
+          <span class="panel-head-label"><span id="openAlertsLabel">open alerts</span> · <span id="alertsCount">—</span></span>
           <span class="panel-head-right" id="alertsStatus" style="color:#b91c1c">loading…</span>
         </div>
         <div id="alertsList">
           <div class="alert-item">
-            <span class="alert-glyph" style="color:#8a8a82">—</span>
+            <span class="alert-glyph" data-vp-no-translate style="color:#8a8a82">—</span>
             <div class="alert-text">
               <div class="alert-title">Loading alerts…</div>
               <div class="alert-meta">scanner history</div>
