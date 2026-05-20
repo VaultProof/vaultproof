@@ -1,5 +1,5 @@
 {
-  "version": 5,
+  "version": 6,
   "updated": "2026-05-19",
   "providers": [
     {
@@ -1835,6 +1835,532 @@
       "detect": {
         "regex": "^(?:secret-|stytch_)?[A-Za-z0-9._-]{20,160}$",
         "var_hint": "STYTCH"
+      }
+    },
+    {
+      "id": "figma",
+      "label": "Figma",
+      "upstream_base_url": "https://api.figma.com",
+      "auth_header_name": "X-Figma-Token",
+      "auth_header_template": "{key}",
+      "env_var_default": "FIGMA_TOKEN",
+      "base_url_env_var": "FIGMA_BASE_URL",
+      "base_url_path_suffix": "/p/figma/v1",
+      "detect": {
+        "regex": "^(?:figd_)?[A-Za-z0-9._-]{20,160}$",
+        "var_hint": "FIGMA"
+      }
+    },
+    {
+      "id": "asana",
+      "label": "Asana",
+      "upstream_base_url": "https://app.asana.com",
+      "auth_header_name": "Authorization",
+      "auth_header_template": "Bearer {key}",
+      "env_var_default": "ASANA_ACCESS_TOKEN",
+      "base_url_env_var": "ASANA_BASE_URL",
+      "base_url_path_suffix": "/p/asana/api/1.0",
+      "detect": {
+        "regex": "^[A-Za-z0-9._-]{20,160}$",
+        "var_hint": "ASANA"
+      }
+    },
+    {
+      "id": "clickup",
+      "label": "ClickUp",
+      "upstream_base_url": "https://api.clickup.com",
+      "auth_header_name": "Authorization",
+      "auth_header_template": "{key}",
+      "env_var_default": "CLICKUP_API_TOKEN",
+      "base_url_env_var": "CLICKUP_BASE_URL",
+      "base_url_path_suffix": "/p/clickup/api/v2",
+      "detect": {
+        "regex": "^pk_[A-Za-z0-9._-]{20,}$|^[A-Za-z0-9._-]{20,160}$",
+        "var_hint": "CLICKUP"
+      }
+    },
+    {
+      "id": "monday",
+      "label": "monday.com",
+      "upstream_base_url": "https://api.monday.com",
+      "auth_header_name": "Authorization",
+      "auth_header_template": "{key}",
+      "extra_headers": {
+        "Content-Type": "application/json"
+      },
+      "env_var_default": "MONDAY_API_KEY",
+      "base_url_env_var": "MONDAY_BASE_URL",
+      "base_url_path_suffix": "/p/monday/v2",
+      "detect": {
+        "regex": "^[A-Za-z0-9._-]{20,240}$",
+        "var_hint": "MONDAY"
+      }
+    },
+    {
+      "id": "todoist",
+      "label": "Todoist",
+      "upstream_base_url": "https://api.todoist.com",
+      "auth_header_name": "Authorization",
+      "auth_header_template": "Bearer {key}",
+      "env_var_default": "TODOIST_API_TOKEN",
+      "base_url_env_var": "TODOIST_BASE_URL",
+      "base_url_path_suffix": "/p/todoist/rest/v2",
+      "detect": {
+        "regex": "^[A-Za-z0-9._-]{20,160}$",
+        "var_hint": "TODOIST"
+      }
+    },
+    {
+      "id": "coda",
+      "label": "Coda",
+      "upstream_base_url": "https://coda.io",
+      "auth_header_name": "Authorization",
+      "auth_header_template": "Bearer {key}",
+      "env_var_default": "CODA_API_TOKEN",
+      "base_url_env_var": "CODA_BASE_URL",
+      "base_url_path_suffix": "/p/coda/apis/v1",
+      "detect": {
+        "regex": "^[A-Za-z0-9._-]{20,160}$",
+        "var_hint": "CODA"
+      }
+    },
+    {
+      "id": "shortcut",
+      "label": "Shortcut",
+      "upstream_base_url": "https://api.app.shortcut.com",
+      "auth_header_name": "Shortcut-Token",
+      "auth_header_template": "{key}",
+      "env_var_default": "SHORTCUT_API_TOKEN",
+      "base_url_env_var": "SHORTCUT_BASE_URL",
+      "base_url_path_suffix": "/p/shortcut/api/v3",
+      "detect": {
+        "regex": "^[A-Za-z0-9._-]{20,160}$",
+        "var_hint": "SHORTCUT"
+      }
+    },
+    {
+      "id": "activecampaign",
+      "label": "ActiveCampaign",
+      "upstream_base_url": "dynamic",
+      "auth_header_name": "Api-Token",
+      "auth_header_template": "{key}",
+      "env_var_default": "ACTIVECAMPAIGN_API_KEY",
+      "base_url_env_var": "ACTIVECAMPAIGN_BASE_URL",
+      "base_url_path_suffix": "/p/activecampaign",
+      "upstream_from_env": "ACTIVECAMPAIGN_API_URL",
+      "note": "Set ACTIVECAMPAIGN_API_URL from your ActiveCampaign account, usually ending in /api/3.",
+      "detect": {
+        "regex": "^[A-Za-z0-9._-]{20,160}$",
+        "var_hint": "ACTIVECAMPAIGN"
+      }
+    },
+    {
+      "id": "klaviyo",
+      "label": "Klaviyo",
+      "upstream_base_url": "https://a.klaviyo.com",
+      "auth_header_name": "Authorization",
+      "auth_header_template": "Klaviyo-API-Key {key}",
+      "extra_headers": {
+        "revision": "2025-04-15"
+      },
+      "env_var_default": "KLAVIYO_PRIVATE_API_KEY",
+      "base_url_env_var": "KLAVIYO_BASE_URL",
+      "base_url_path_suffix": "/p/klaviyo/api",
+      "detect": {
+        "regex": "^pk_[A-Za-z0-9._-]{20,}$|^[A-Za-z0-9._-]{20,160}$",
+        "var_hint": "KLAVIYO"
+      }
+    },
+    {
+      "id": "iterable",
+      "label": "Iterable",
+      "upstream_base_url": "https://api.iterable.com",
+      "auth_header_name": "Api-Key",
+      "auth_header_template": "{key}",
+      "env_var_default": "ITERABLE_API_KEY",
+      "base_url_env_var": "ITERABLE_BASE_URL",
+      "base_url_path_suffix": "/p/iterable/api",
+      "detect": {
+        "regex": "^[A-Za-z0-9._-]{20,160}$",
+        "var_hint": "ITERABLE"
+      }
+    },
+    {
+      "id": "braze",
+      "label": "Braze",
+      "upstream_base_url": "dynamic",
+      "auth_header_name": "Authorization",
+      "auth_header_template": "Bearer {key}",
+      "env_var_default": "BRAZE_API_KEY",
+      "base_url_env_var": "BRAZE_BASE_URL",
+      "base_url_path_suffix": "/p/braze",
+      "upstream_from_env": "BRAZE_REST_ENDPOINT",
+      "note": "Set BRAZE_REST_ENDPOINT for your Braze instance, such as https://rest.iad-01.braze.com.",
+      "detect": {
+        "regex": "^[A-Za-z0-9._-]{20,160}$",
+        "var_hint": "BRAZE"
+      }
+    },
+    {
+      "id": "onesignal",
+      "label": "OneSignal",
+      "upstream_base_url": "https://api.onesignal.com",
+      "auth_header_name": "Authorization",
+      "auth_header_template": "Key {key}",
+      "env_var_default": "ONESIGNAL_REST_API_KEY",
+      "base_url_env_var": "ONESIGNAL_BASE_URL",
+      "base_url_path_suffix": "/p/onesignal",
+      "detect": {
+        "regex": "^[A-Za-z0-9._-]{20,160}$",
+        "var_hint": "ONESIGNAL"
+      }
+    },
+    {
+      "id": "novu",
+      "label": "Novu",
+      "upstream_base_url": "https://api.novu.co",
+      "auth_header_name": "Authorization",
+      "auth_header_template": "ApiKey {key}",
+      "env_var_default": "NOVU_SECRET_KEY",
+      "base_url_env_var": "NOVU_BASE_URL",
+      "base_url_path_suffix": "/p/novu/v2",
+      "detect": {
+        "regex": "^[A-Za-z0-9._-]{20,160}$",
+        "var_hint": "NOVU"
+      }
+    },
+    {
+      "id": "opsgenie",
+      "label": "Opsgenie",
+      "upstream_base_url": "https://api.opsgenie.com",
+      "auth_header_name": "Authorization",
+      "auth_header_template": "GenieKey {key}",
+      "env_var_default": "OPSGENIE_API_KEY",
+      "base_url_env_var": "OPSGENIE_BASE_URL",
+      "base_url_path_suffix": "/p/opsgenie/v2",
+      "detect": {
+        "regex": "^[A-Za-z0-9._-]{20,160}$",
+        "var_hint": "OPSGENIE"
+      }
+    },
+    {
+      "id": "statuspage",
+      "label": "Statuspage",
+      "upstream_base_url": "https://api.statuspage.io",
+      "auth_header_name": "Authorization",
+      "auth_header_template": "OAuth {key}",
+      "env_var_default": "STATUSPAGE_API_KEY",
+      "base_url_env_var": "STATUSPAGE_BASE_URL",
+      "base_url_path_suffix": "/p/statuspage/v1",
+      "detect": {
+        "regex": "^[A-Za-z0-9._-]{20,160}$",
+        "var_hint": "STATUSPAGE"
+      }
+    },
+    {
+      "id": "telnyx",
+      "label": "Telnyx",
+      "upstream_base_url": "https://api.telnyx.com",
+      "auth_header_name": "Authorization",
+      "auth_header_template": "Bearer {key}",
+      "env_var_default": "TELNYX_API_KEY",
+      "base_url_env_var": "TELNYX_BASE_URL",
+      "base_url_path_suffix": "/p/telnyx/v2",
+      "detect": {
+        "regex": "^[A-Za-z0-9._-]{20,160}$",
+        "var_hint": "TELNYX"
+      }
+    },
+    {
+      "id": "vonage",
+      "label": "Vonage",
+      "upstream_base_url": "https://api.nexmo.com",
+      "auth_header_name": "Authorization",
+      "auth_header_template": "Basic {key}",
+      "env_var_default": "VONAGE_API_SECRET",
+      "base_url_env_var": "VONAGE_BASE_URL",
+      "base_url_path_suffix": "/p/vonage",
+      "combine_with_env": "VONAGE_API_KEY",
+      "combine_format": "{env}:{key}",
+      "combine_encoding": "base64",
+      "note": "Set VONAGE_API_KEY alongside VONAGE_API_SECRET so VaultProof can build Vonage Basic auth.",
+      "detect": {
+        "regex": "^[A-Za-z0-9._-]{8,160}$",
+        "var_hint": "VONAGE_API_SECRET"
+      }
+    },
+    {
+      "id": "messagebird",
+      "label": "MessageBird",
+      "upstream_base_url": "https://rest.messagebird.com",
+      "auth_header_name": "Authorization",
+      "auth_header_template": "AccessKey {key}",
+      "env_var_default": "MESSAGEBIRD_ACCESS_KEY",
+      "base_url_env_var": "MESSAGEBIRD_BASE_URL",
+      "base_url_path_suffix": "/p/messagebird",
+      "detect": {
+        "regex": "^[A-Za-z0-9._-]{20,160}$",
+        "var_hint": "MESSAGEBIRD"
+      }
+    },
+    {
+      "id": "plivo",
+      "label": "Plivo",
+      "upstream_base_url": "https://api.plivo.com",
+      "auth_header_name": "Authorization",
+      "auth_header_template": "Basic {key}",
+      "env_var_default": "PLIVO_AUTH_TOKEN",
+      "base_url_env_var": "PLIVO_BASE_URL",
+      "base_url_path_suffix": "/p/plivo/v1/Account",
+      "combine_with_env": "PLIVO_AUTH_ID",
+      "combine_format": "{env}:{key}",
+      "combine_encoding": "base64",
+      "note": "Set PLIVO_AUTH_ID alongside PLIVO_AUTH_TOKEN so VaultProof can build Plivo Basic auth.",
+      "detect": {
+        "regex": "^[A-Za-z0-9._-]{20,160}$",
+        "var_hint": "PLIVO_AUTH_TOKEN"
+      }
+    },
+    {
+      "id": "directus",
+      "label": "Directus",
+      "upstream_base_url": "dynamic",
+      "auth_header_name": "Authorization",
+      "auth_header_template": "Bearer {key}",
+      "env_var_default": "DIRECTUS_TOKEN",
+      "base_url_env_var": "DIRECTUS_BASE_URL",
+      "base_url_path_suffix": "/p/directus",
+      "upstream_from_env": "DIRECTUS_URL",
+      "note": "Set DIRECTUS_URL in your .env.",
+      "detect": {
+        "regex": "^[A-Za-z0-9._-]{20,240}$",
+        "var_hint": "DIRECTUS"
+      }
+    },
+    {
+      "id": "strapi",
+      "label": "Strapi",
+      "upstream_base_url": "dynamic",
+      "auth_header_name": "Authorization",
+      "auth_header_template": "Bearer {key}",
+      "env_var_default": "STRAPI_API_TOKEN",
+      "base_url_env_var": "STRAPI_BASE_URL",
+      "base_url_path_suffix": "/p/strapi/api",
+      "upstream_from_env": "STRAPI_URL",
+      "note": "Set STRAPI_URL in your .env.",
+      "detect": {
+        "regex": "^[A-Za-z0-9._-]{20,240}$",
+        "var_hint": "STRAPI"
+      }
+    },
+    {
+      "id": "hygraph",
+      "label": "Hygraph",
+      "upstream_base_url": "dynamic",
+      "auth_header_name": "Authorization",
+      "auth_header_template": "Bearer {key}",
+      "env_var_default": "HYGRAPH_TOKEN",
+      "base_url_env_var": "HYGRAPH_BASE_URL",
+      "base_url_path_suffix": "/p/hygraph",
+      "upstream_from_env": "HYGRAPH_ENDPOINT",
+      "note": "Set HYGRAPH_ENDPOINT to your Hygraph Content or Management API endpoint.",
+      "detect": {
+        "regex": "^[A-Za-z0-9._-]{20,240}$",
+        "var_hint": "HYGRAPH"
+      }
+    },
+    {
+      "id": "datocms",
+      "label": "DatoCMS",
+      "upstream_base_url": "https://site-api.datocms.com",
+      "auth_header_name": "Authorization",
+      "auth_header_template": "Bearer {key}",
+      "extra_headers": {
+        "Accept": "application/json",
+        "X-Api-Version": "3"
+      },
+      "env_var_default": "DATOCMS_API_TOKEN",
+      "base_url_env_var": "DATOCMS_BASE_URL",
+      "base_url_path_suffix": "/p/datocms",
+      "detect": {
+        "regex": "^[A-Za-z0-9._-]{20,160}$",
+        "var_hint": "DATOCMS"
+      }
+    },
+    {
+      "id": "contentstack",
+      "label": "Contentstack",
+      "upstream_base_url": "https://api.contentstack.io",
+      "auth_header_name": "authorization",
+      "auth_header_template": "{key}",
+      "extra_headers": {
+        "api_key": "{env:CONTENTSTACK_API_KEY}"
+      },
+      "env_var_default": "CONTENTSTACK_MANAGEMENT_TOKEN",
+      "base_url_env_var": "CONTENTSTACK_BASE_URL",
+      "base_url_path_suffix": "/p/contentstack/v3",
+      "note": "Set CONTENTSTACK_API_KEY alongside CONTENTSTACK_MANAGEMENT_TOKEN.",
+      "detect": {
+        "regex": "^[A-Za-z0-9._-]{20,160}$",
+        "var_hint": "CONTENTSTACK"
+      }
+    },
+    {
+      "id": "storyblok",
+      "label": "Storyblok",
+      "upstream_base_url": "https://mapi.storyblok.com",
+      "auth_header_name": "Authorization",
+      "auth_header_template": "{key}",
+      "env_var_default": "STORYBLOK_PERSONAL_TOKEN",
+      "base_url_env_var": "STORYBLOK_BASE_URL",
+      "base_url_path_suffix": "/p/storyblok/v1",
+      "detect": {
+        "regex": "^[A-Za-z0-9._-]{20,160}$",
+        "var_hint": "STORYBLOK"
+      }
+    },
+    {
+      "id": "hashicorp-vault",
+      "label": "HashiCorp Vault",
+      "upstream_base_url": "dynamic",
+      "auth_header_name": "X-Vault-Token",
+      "auth_header_template": "{key}",
+      "env_var_default": "VAULT_TOKEN",
+      "base_url_env_var": "VAULT_PROXY_URL",
+      "base_url_path_suffix": "/p/hashicorp-vault/v1",
+      "upstream_from_env": "VAULT_ADDR",
+      "note": "Set VAULT_ADDR to your public HTTPS Vault address.",
+      "detect": {
+        "regex": "^(?:hvs.|hvb.|s.)?[A-Za-z0-9._-]{20,240}$",
+        "var_hint": "VAULT_TOKEN"
+      }
+    },
+    {
+      "id": "onepassword-connect",
+      "label": "1Password Connect",
+      "upstream_base_url": "dynamic",
+      "auth_header_name": "Authorization",
+      "auth_header_template": "Bearer {key}",
+      "env_var_default": "OP_CONNECT_TOKEN",
+      "base_url_env_var": "OP_CONNECT_BASE_URL",
+      "base_url_path_suffix": "/p/onepassword-connect/v1",
+      "upstream_from_env": "OP_CONNECT_HOST",
+      "note": "Set OP_CONNECT_HOST to your 1Password Connect server URL.",
+      "detect": {
+        "regex": "^[A-Za-z0-9._-]{20,240}$",
+        "var_hint": "OP_CONNECT"
+      }
+    },
+    {
+      "id": "linode",
+      "label": "Linode",
+      "upstream_base_url": "https://api.linode.com",
+      "auth_header_name": "Authorization",
+      "auth_header_template": "Bearer {key}",
+      "env_var_default": "LINODE_TOKEN",
+      "base_url_env_var": "LINODE_BASE_URL",
+      "base_url_path_suffix": "/p/linode/v4",
+      "detect": {
+        "regex": "^[A-Za-z0-9._-]{20,160}$",
+        "var_hint": "LINODE"
+      }
+    },
+    {
+      "id": "vultr",
+      "label": "Vultr",
+      "upstream_base_url": "https://api.vultr.com",
+      "auth_header_name": "Authorization",
+      "auth_header_template": "Bearer {key}",
+      "env_var_default": "VULTR_API_KEY",
+      "base_url_env_var": "VULTR_BASE_URL",
+      "base_url_path_suffix": "/p/vultr/v2",
+      "detect": {
+        "regex": "^[A-Za-z0-9._-]{20,160}$",
+        "var_hint": "VULTR"
+      }
+    },
+    {
+      "id": "hetzner",
+      "label": "Hetzner Cloud",
+      "upstream_base_url": "https://api.hetzner.cloud",
+      "auth_header_name": "Authorization",
+      "auth_header_template": "Bearer {key}",
+      "env_var_default": "HCLOUD_TOKEN",
+      "base_url_env_var": "HCLOUD_BASE_URL",
+      "base_url_path_suffix": "/p/hetzner/v1",
+      "detect": {
+        "regex": "^[A-Za-z0-9._-]{20,160}$",
+        "var_hint": "HCLOUD"
+      }
+    },
+    {
+      "id": "scaleway",
+      "label": "Scaleway",
+      "upstream_base_url": "https://api.scaleway.com",
+      "auth_header_name": "X-Auth-Token",
+      "auth_header_template": "{key}",
+      "env_var_default": "SCW_SECRET_KEY",
+      "base_url_env_var": "SCW_BASE_URL",
+      "base_url_path_suffix": "/p/scaleway",
+      "detect": {
+        "regex": "^[A-Za-z0-9._-]{20,160}$",
+        "var_hint": "SCW"
+      }
+    },
+    {
+      "id": "brave-search",
+      "label": "Brave Search",
+      "upstream_base_url": "https://api.search.brave.com",
+      "auth_header_name": "X-Subscription-Token",
+      "auth_header_template": "{key}",
+      "env_var_default": "BRAVE_SEARCH_API_KEY",
+      "base_url_env_var": "BRAVE_SEARCH_BASE_URL",
+      "base_url_path_suffix": "/p/brave-search/res/v1",
+      "detect": {
+        "regex": "^[A-Za-z0-9._-]{20,160}$",
+        "var_hint": "BRAVE_SEARCH"
+      }
+    },
+    {
+      "id": "apify",
+      "label": "Apify",
+      "upstream_base_url": "https://api.apify.com",
+      "auth_header_name": "Authorization",
+      "auth_header_template": "Bearer {key}",
+      "env_var_default": "APIFY_TOKEN",
+      "base_url_env_var": "APIFY_BASE_URL",
+      "base_url_path_suffix": "/p/apify/v2",
+      "detect": {
+        "regex": "^[A-Za-z0-9._-]{20,160}$",
+        "var_hint": "APIFY"
+      }
+    },
+    {
+      "id": "flagsmith",
+      "label": "Flagsmith",
+      "upstream_base_url": "https://api.flagsmith.com",
+      "auth_header_name": "Authorization",
+      "auth_header_template": "Token {key}",
+      "env_var_default": "FLAGSMITH_API_KEY",
+      "base_url_env_var": "FLAGSMITH_BASE_URL",
+      "base_url_path_suffix": "/p/flagsmith/api/v1",
+      "detect": {
+        "regex": "^[A-Za-z0-9._-]{20,160}$",
+        "var_hint": "FLAGSMITH"
+      }
+    },
+    {
+      "id": "splitio",
+      "label": "Split.io",
+      "upstream_base_url": "https://api.split.io",
+      "auth_header_name": "Authorization",
+      "auth_header_template": "Bearer {key}",
+      "env_var_default": "SPLIT_API_KEY",
+      "base_url_env_var": "SPLIT_BASE_URL",
+      "base_url_path_suffix": "/p/splitio/internal/api/v2",
+      "detect": {
+        "regex": "^[A-Za-z0-9._-]{20,160}$",
+        "var_hint": "SPLIT"
       }
     }
   ]

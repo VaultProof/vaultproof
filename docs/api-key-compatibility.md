@@ -2,7 +2,7 @@
 
 ## Supported Providers
 
-The provider catalog currently includes 132 signatures. These common providers work with VaultProof's header-based proxy out of the box:
+The provider catalog currently includes 167 signatures. These common providers work with VaultProof's header-based proxy out of the box:
 
 | Provider | Proxy Path | Auth Method |
 |----------|-----------|-------------|
@@ -28,7 +28,18 @@ The provider catalog currently includes 132 signatures. These common providers w
 | Stripe | `/p/stripe/*` and `/v1/*` | Bearer token |
 | GitHub | `/p/github/*` | Bearer token |
 | GitLab | `/p/gitlab/api/v4/*` | PRIVATE-TOKEN header |
+| Figma | `/p/figma/v1/*` | X-Figma-Token header |
+| Asana | `/p/asana/api/1.0/*` | Bearer token |
+| ClickUp | `/p/clickup/api/v2/*` | Authorization token |
+| monday.com | `/p/monday/v2/*` | Authorization token |
+| Todoist | `/p/todoist/rest/v2/*` | Bearer token |
+| Coda | `/p/coda/apis/v1/*` | Bearer token |
+| Shortcut | `/p/shortcut/api/v3/*` | Shortcut-Token header |
 | DigitalOcean | `/p/digitalocean/v2/*` | Bearer token |
+| Linode | `/p/linode/v4/*` | Bearer token |
+| Vultr | `/p/vultr/v2/*` | Bearer token |
+| Hetzner Cloud | `/p/hetzner/v1/*` | Bearer token |
+| Scaleway | `/p/scaleway/*` | X-Auth-Token header |
 | Netlify | `/p/netlify/api/v1/*` | Bearer token |
 | Render | `/p/render/v1/*` | Bearer token |
 | Heroku | `/p/heroku/*` | Bearer token |
@@ -42,12 +53,22 @@ The provider catalog currently includes 132 signatures. These common providers w
 | Bitbucket Cloud | `/p/bitbucket/2.0/*` | Basic auth from username + app password |
 | Semgrep | `/p/semgrep/*` | Bearer token |
 | SonarQube Cloud | `/p/sonarcloud/api/*` | Bearer token |
+| Brave Search | `/p/brave-search/res/v1/*` | X-Subscription-Token header |
+| Apify | `/p/apify/v2/*` | Bearer token |
 | Qdrant | `/p/qdrant/*` | api-key header |
 | Turso | `/p/turso/*` | Bearer token |
 | Meilisearch | `/p/meilisearch/*` | Bearer token |
 | Typesense | `/p/typesense/*` | X-TYPESENSE-API-KEY header |
 | Elasticsearch | `/p/elasticsearch/*` | ApiKey auth |
+| Directus | `/p/directus/*` | Bearer token |
+| Strapi | `/p/strapi/api/*` | Bearer token |
+| Hygraph | `/p/hygraph/*` | Bearer token |
+| DatoCMS | `/p/datocms/*` | Bearer token |
+| Contentstack | `/p/contentstack/v3/*` | authorization token + stack API key |
+| Storyblok | `/p/storyblok/v1/*` | Authorization token |
 | LaunchDarkly | `/p/launchdarkly/api/v2/*` | Authorization key |
+| Split.io | `/p/splitio/internal/api/v2/*` | Bearer token |
+| Flagsmith | `/p/flagsmith/api/v1/*` | Token auth |
 | Snyk | `/p/snyk/rest/*` | `Authorization: token` |
 | PagerDuty | `/p/pagerduty/*` | `Authorization: Token token=` |
 | Grafana | `/p/grafana/*` | Bearer token |
@@ -66,11 +87,25 @@ The provider catalog currently includes 132 signatures. These common providers w
 | Browserbase | `/p/browserbase/*` | X-BB-API-Key header |
 | Okta | `/p/okta/api/v1/*` | SSWS token |
 | Stytch | `/p/stytch/v1/*` | Basic auth from project ID + secret |
+| HashiCorp Vault | `/p/hashicorp-vault/v1/*` | X-Vault-Token header |
+| 1Password Connect | `/p/onepassword-connect/v1/*` | Bearer token |
 | Supabase | `/p/supabase/*` | apikey + Bearer |
 | Jira Cloud | `/p/jira/rest/api/3/*` | Basic auth from email + token |
 | Zendesk | `/p/zendesk/api/v2/*` | Basic auth from email + token |
 | Freshdesk | `/p/freshdesk/api/v2/*` | Basic auth from API key |
 | Twilio | `/p/twilio/2010-04-01/*` | Basic auth from API key SID + secret |
+| Telnyx | `/p/telnyx/v2/*` | Bearer token |
+| Vonage | `/p/vonage/*` | Basic auth from API key + secret |
+| MessageBird | `/p/messagebird/*` | AccessKey auth |
+| Plivo | `/p/plivo/v1/Account/*` | Basic auth from Auth ID + token |
+| ActiveCampaign | `/p/activecampaign/*` | Api-Token header |
+| Klaviyo | `/p/klaviyo/api/*` | Klaviyo-API-Key header |
+| Iterable | `/p/iterable/api/*` | Api-Key header |
+| Braze | `/p/braze/*` | Bearer token |
+| OneSignal | `/p/onesignal/*` | Key auth |
+| Novu | `/p/novu/v2/*` | ApiKey auth |
+| Opsgenie | `/p/opsgenie/v2/*` | GenieKey auth |
+| Statuspage | `/p/statuspage/v1/*` | OAuth API key header |
 | Chargebee | `/p/chargebee/api/v2/*` | Basic auth from API key |
 | Adyen | `/p/adyen/*` | X-API-Key header |
 | npm Registry | `/p/npm-registry/*` | Bearer token |
