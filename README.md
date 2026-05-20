@@ -77,7 +77,7 @@ const openai = new OpenAI({
 
 ## Scanner — Find Exposed Keys
 
-The init flow scans `.env`, `.env.local`, `.env.production`, and `.env.development` against the 200-provider catalog before rewriting matched keys.
+The init flow scans `.env`, `.env.local`, `.env.production`, and `.env.development` against the 225-provider catalog before rewriting matched keys.
 
 ```bash
 # Scan only (no upload or rewrite)

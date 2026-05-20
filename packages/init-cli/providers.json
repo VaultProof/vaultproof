@@ -1,5 +1,5 @@
 {
-  "version": 7,
+  "version": 8,
   "updated": "2026-05-20",
   "providers": [
     {
@@ -689,6 +689,20 @@
       "detect": {
         "regex": "^[A-Za-z0-9._-]{20,160}$",
         "var_hint": "NETLIFY"
+      }
+    },
+    {
+      "id": "prerender",
+      "label": "Prerender.io",
+      "upstream_base_url": "https://service.prerender.io",
+      "auth_header_name": "X-Prerender-Token",
+      "auth_header_template": "{key}",
+      "env_var_default": "PRERENDER_TOKEN",
+      "base_url_env_var": "PRERENDER_BASE_URL",
+      "base_url_path_suffix": "/p/prerender",
+      "detect": {
+        "regex": "^[A-Za-z0-9._:-]{20,240}$",
+        "var_hint": "PRERENDER"
       }
     },
     {
@@ -2857,6 +2871,366 @@
       "detect": {
         "regex": "^eyJ[A-Za-z0-9._-]{20,}$|^[A-Za-z0-9._-]{20,240}$",
         "var_hint": "PINATA"
+      }
+    },
+    {
+      "id": "deepinfra",
+      "label": "DeepInfra",
+      "upstream_base_url": "https://api.deepinfra.com",
+      "auth_header_name": "Authorization",
+      "auth_header_template": "Bearer {key}",
+      "env_var_default": "DEEPINFRA_API_KEY",
+      "base_url_env_var": "DEEPINFRA_BASE_URL",
+      "base_url_path_suffix": "/p/deepinfra",
+      "detect": {
+        "regex": "^[A-Za-z0-9._:-]{20,240}$",
+        "var_hint": "DEEPINFRA"
+      }
+    },
+    {
+      "id": "baseten",
+      "label": "Baseten",
+      "upstream_base_url": "dynamic",
+      "auth_header_name": "Authorization",
+      "auth_header_template": "Bearer {key}",
+      "env_var_default": "BASETEN_API_KEY",
+      "base_url_env_var": "BASETEN_BASE_URL",
+      "base_url_path_suffix": "/p/baseten",
+      "upstream_from_env": "BASETEN_MODEL_URL",
+      "note": "Set BASETEN_MODEL_URL to the model invocation URL from Baseten.",
+      "detect": {
+        "regex": "^[A-Za-z0-9._:-]{20,240}$",
+        "var_hint": "BASETEN"
+      }
+    },
+    {
+      "id": "cartesia",
+      "label": "Cartesia",
+      "upstream_base_url": "https://api.cartesia.ai",
+      "auth_header_name": "X-API-Key",
+      "auth_header_template": "{key}",
+      "env_var_default": "CARTESIA_API_KEY",
+      "base_url_env_var": "CARTESIA_BASE_URL",
+      "base_url_path_suffix": "/p/cartesia",
+      "detect": {
+        "regex": "^sk_car_[A-Za-z0-9._:-]{20,240}$",
+        "var_hint": "CARTESIA"
+      }
+    },
+    {
+      "id": "unstructured",
+      "label": "Unstructured",
+      "upstream_base_url": "https://api.unstructuredapp.io",
+      "auth_header_name": "unstructured-api-key",
+      "auth_header_template": "{key}",
+      "env_var_default": "UNSTRUCTURED_API_KEY",
+      "base_url_env_var": "UNSTRUCTURED_BASE_URL",
+      "base_url_path_suffix": "/p/unstructured",
+      "detect": {
+        "regex": "^[A-Za-z0-9._:-]{20,240}$",
+        "var_hint": "UNSTRUCTURED"
+      }
+    },
+    {
+      "id": "luma-ai",
+      "label": "Luma AI",
+      "upstream_base_url": "https://api.lumalabs.ai",
+      "auth_header_name": "Authorization",
+      "auth_header_template": "Bearer {key}",
+      "env_var_default": "LUMA_AGENTS_API_KEY",
+      "base_url_env_var": "LUMA_AGENTS_BASE_URL",
+      "base_url_path_suffix": "/p/luma-ai",
+      "detect": {
+        "regex": "^[A-Za-z0-9._:-]{20,240}$",
+        "var_hint": "LUMA"
+      }
+    },
+    {
+      "id": "portkey",
+      "label": "Portkey",
+      "upstream_base_url": "https://api.portkey.ai",
+      "auth_header_name": "x-portkey-api-key",
+      "auth_header_template": "{key}",
+      "env_var_default": "PORTKEY_API_KEY",
+      "base_url_env_var": "PORTKEY_BASE_URL",
+      "base_url_path_suffix": "/p/portkey",
+      "detect": {
+        "regex": "^[A-Za-z0-9._:-]{20,240}$",
+        "var_hint": "PORTKEY"
+      }
+    },
+    {
+      "id": "scale",
+      "label": "Scale AI",
+      "upstream_base_url": "https://api.scale.com",
+      "auth_header_name": "Authorization",
+      "auth_header_template": "Basic {key}",
+      "env_var_default": "SCALE_API_KEY",
+      "base_url_env_var": "SCALE_BASE_URL",
+      "base_url_path_suffix": "/p/scale",
+      "combine_format": "{key}:",
+      "combine_encoding": "base64",
+      "detect": {
+        "regex": "^[A-Za-z0-9._:-]{20,240}$",
+        "var_hint": "SCALE"
+      }
+    },
+    {
+      "id": "braintrust",
+      "label": "Braintrust",
+      "upstream_base_url": "https://api.braintrust.dev",
+      "auth_header_name": "Authorization",
+      "auth_header_template": "Bearer {key}",
+      "env_var_default": "BRAINTRUST_API_KEY",
+      "base_url_env_var": "BRAINTRUST_BASE_URL",
+      "base_url_path_suffix": "/p/braintrust",
+      "detect": {
+        "regex": "^[A-Za-z0-9._:-]{20,240}$",
+        "var_hint": "BRAINTRUST"
+      }
+    },
+    {
+      "id": "edenai",
+      "label": "Eden AI",
+      "upstream_base_url": "https://api.edenai.run",
+      "auth_header_name": "Authorization",
+      "auth_header_template": "Bearer {key}",
+      "env_var_default": "EDENAI_API_KEY",
+      "base_url_env_var": "EDENAI_BASE_URL",
+      "base_url_path_suffix": "/p/edenai",
+      "detect": {
+        "regex": "^[A-Za-z0-9._:-]{20,240}$",
+        "var_hint": "EDENAI"
+      }
+    },
+    {
+      "id": "virustotal",
+      "label": "VirusTotal",
+      "upstream_base_url": "https://www.virustotal.com",
+      "auth_header_name": "x-apikey",
+      "auth_header_template": "{key}",
+      "env_var_default": "VIRUSTOTAL_API_KEY",
+      "base_url_env_var": "VIRUSTOTAL_BASE_URL",
+      "base_url_path_suffix": "/p/virustotal/api/v3",
+      "detect": {
+        "regex": "^[A-Za-z0-9._:-]{20,240}$",
+        "var_hint": "VIRUSTOTAL"
+      }
+    },
+    {
+      "id": "ipinfo",
+      "label": "IPinfo",
+      "upstream_base_url": "https://api.ipinfo.io",
+      "auth_header_name": "Authorization",
+      "auth_header_template": "Bearer {key}",
+      "env_var_default": "IPINFO_TOKEN",
+      "base_url_env_var": "IPINFO_BASE_URL",
+      "base_url_path_suffix": "/p/ipinfo",
+      "detect": {
+        "regex": "^[A-Za-z0-9._:-]{20,240}$",
+        "var_hint": "IPINFO"
+      }
+    },
+    {
+      "id": "apollo",
+      "label": "Apollo",
+      "upstream_base_url": "https://api.apollo.io",
+      "auth_header_name": "X-Api-Key",
+      "auth_header_template": "{key}",
+      "env_var_default": "APOLLO_API_KEY",
+      "base_url_env_var": "APOLLO_BASE_URL",
+      "base_url_path_suffix": "/p/apollo",
+      "detect": {
+        "regex": "^[A-Za-z0-9._:-]{20,240}$",
+        "var_hint": "APOLLO"
+      }
+    },
+    {
+      "id": "buttondown",
+      "label": "Buttondown",
+      "upstream_base_url": "https://api.buttondown.com",
+      "auth_header_name": "Authorization",
+      "auth_header_template": "Token {key}",
+      "env_var_default": "BUTTONDOWN_API_KEY",
+      "base_url_env_var": "BUTTONDOWN_BASE_URL",
+      "base_url_path_suffix": "/p/buttondown/v1",
+      "detect": {
+        "regex": "^(api_key_)?[A-Za-z0-9._:-]{20,240}$",
+        "var_hint": "BUTTONDOWN"
+      }
+    },
+    {
+      "id": "close",
+      "label": "Close",
+      "upstream_base_url": "https://api.close.com",
+      "auth_header_name": "Authorization",
+      "auth_header_template": "Basic {key}",
+      "env_var_default": "CLOSE_API_KEY",
+      "base_url_env_var": "CLOSE_BASE_URL",
+      "base_url_path_suffix": "/p/close/api/v1",
+      "combine_format": "{key}:",
+      "combine_encoding": "base64",
+      "detect": {
+        "regex": "^[A-Za-z0-9._:-]{20,240}$",
+        "var_hint": "CLOSE"
+      }
+    },
+    {
+      "id": "greenhouse",
+      "label": "Greenhouse Harvest",
+      "upstream_base_url": "https://harvest.greenhouse.io",
+      "auth_header_name": "Authorization",
+      "auth_header_template": "Basic {key}",
+      "extra_headers": {
+        "On-Behalf-Of": "{env:GREENHOUSE_USER_ID}"
+      },
+      "env_var_default": "GREENHOUSE_HARVEST_API_KEY",
+      "base_url_env_var": "GREENHOUSE_BASE_URL",
+      "base_url_path_suffix": "/p/greenhouse/v1",
+      "combine_format": "{key}:",
+      "combine_encoding": "base64",
+      "note": "Set GREENHOUSE_USER_ID for Harvest endpoints that require the On-Behalf-Of header.",
+      "detect": {
+        "regex": "^[A-Za-z0-9._:-]{20,240}$",
+        "var_hint": "GREENHOUSE"
+      }
+    },
+    {
+      "id": "xendit",
+      "label": "Xendit",
+      "upstream_base_url": "https://api.xendit.co",
+      "auth_header_name": "Authorization",
+      "auth_header_template": "Basic {key}",
+      "env_var_default": "XENDIT_SECRET_KEY",
+      "base_url_env_var": "XENDIT_BASE_URL",
+      "base_url_path_suffix": "/p/xendit",
+      "combine_format": "{key}:",
+      "combine_encoding": "base64",
+      "detect": {
+        "regex": "^[A-Za-z0-9._:-]{20,240}$",
+        "var_hint": "XENDIT"
+      }
+    },
+    {
+      "id": "midtrans",
+      "label": "Midtrans",
+      "upstream_base_url": "https://api.midtrans.com",
+      "auth_header_name": "Authorization",
+      "auth_header_template": "Basic {key}",
+      "env_var_default": "MIDTRANS_SERVER_KEY",
+      "base_url_env_var": "MIDTRANS_BASE_URL",
+      "base_url_path_suffix": "/p/midtrans/v2",
+      "combine_format": "{key}:",
+      "combine_encoding": "base64",
+      "detect": {
+        "regex": "^(SB-)?Mid-server-[A-Za-z0-9._:-]{20,240}$|^[A-Za-z0-9._:-]{20,240}$",
+        "var_hint": "MIDTRANS"
+      }
+    },
+    {
+      "id": "coinbase-commerce",
+      "label": "Coinbase Commerce",
+      "upstream_base_url": "https://api.commerce.coinbase.com",
+      "auth_header_name": "X-CC-Api-Key",
+      "auth_header_template": "{key}",
+      "env_var_default": "COINBASE_COMMERCE_API_KEY",
+      "base_url_env_var": "COINBASE_COMMERCE_BASE_URL",
+      "base_url_path_suffix": "/p/coinbase-commerce",
+      "detect": {
+        "regex": "^[A-Za-z0-9._:-]{20,240}$",
+        "var_hint": "COINBASE_COMMERCE"
+      }
+    },
+    {
+      "id": "lokalise",
+      "label": "Lokalise",
+      "upstream_base_url": "https://api.lokalise.com",
+      "auth_header_name": "X-Api-Token",
+      "auth_header_template": "{key}",
+      "env_var_default": "LOKALISE_API_TOKEN",
+      "base_url_env_var": "LOKALISE_BASE_URL",
+      "base_url_path_suffix": "/p/lokalise/api2",
+      "detect": {
+        "regex": "^[A-Za-z0-9._:-]{20,240}$",
+        "var_hint": "LOKALISE"
+      }
+    },
+    {
+      "id": "crowdin",
+      "label": "Crowdin",
+      "upstream_base_url": "https://api.crowdin.com",
+      "auth_header_name": "Authorization",
+      "auth_header_template": "Bearer {key}",
+      "env_var_default": "CROWDIN_PERSONAL_TOKEN",
+      "base_url_env_var": "CROWDIN_BASE_URL",
+      "base_url_path_suffix": "/p/crowdin/api/v2",
+      "detect": {
+        "regex": "^[A-Za-z0-9._:-]{20,240}$",
+        "var_hint": "CROWDIN"
+      }
+    },
+    {
+      "id": "sendbird",
+      "label": "Sendbird",
+      "upstream_base_url": "dynamic",
+      "auth_header_name": "Api-Token",
+      "auth_header_template": "{key}",
+      "env_var_default": "SENDBIRD_API_TOKEN",
+      "base_url_env_var": "SENDBIRD_BASE_URL",
+      "base_url_path_suffix": "/p/sendbird/v3",
+      "upstream_from_env": "SENDBIRD_API_BASE_URL",
+      "note": "Set SENDBIRD_API_BASE_URL to your app endpoint, such as https://api-{application_id}.sendbird.com.",
+      "detect": {
+        "regex": "^[A-Za-z0-9._:-]{20,240}$",
+        "var_hint": "SENDBIRD"
+      }
+    },
+    {
+      "id": "mux",
+      "label": "Mux",
+      "upstream_base_url": "https://api.mux.com",
+      "auth_header_name": "Authorization",
+      "auth_header_template": "Basic {key}",
+      "env_var_default": "MUX_TOKEN_SECRET",
+      "base_url_env_var": "MUX_BASE_URL",
+      "base_url_path_suffix": "/p/mux",
+      "combine_with_env": "MUX_TOKEN_ID",
+      "combine_format": "{env}:{key}",
+      "combine_encoding": "base64",
+      "note": "Set MUX_TOKEN_ID alongside MUX_TOKEN_SECRET so VaultProof can build Basic auth.",
+      "detect": {
+        "regex": "^[A-Za-z0-9._:-]{20,240}$",
+        "var_hint": "MUX"
+      }
+    },
+    {
+      "id": "bunny",
+      "label": "bunny.net",
+      "upstream_base_url": "https://api.bunny.net",
+      "auth_header_name": "AccessKey",
+      "auth_header_template": "{key}",
+      "env_var_default": "BUNNY_API_KEY",
+      "base_url_env_var": "BUNNY_BASE_URL",
+      "base_url_path_suffix": "/p/bunny",
+      "detect": {
+        "regex": "^[A-Za-z0-9._:-]{20,240}$",
+        "var_hint": "BUNNY"
+      }
+    },
+    {
+      "id": "imagekit",
+      "label": "ImageKit",
+      "upstream_base_url": "https://api.imagekit.io",
+      "auth_header_name": "Authorization",
+      "auth_header_template": "Basic {key}",
+      "env_var_default": "IMAGEKIT_PRIVATE_KEY",
+      "base_url_env_var": "IMAGEKIT_BASE_URL",
+      "base_url_path_suffix": "/p/imagekit",
+      "combine_format": "{key}:",
+      "combine_encoding": "base64",
+      "detect": {
+        "regex": "^private_[A-Za-z0-9._:-]{20,240}$|^[A-Za-z0-9._:-]{20,240}$",
+        "var_hint": "IMAGEKIT"
       }
     }
   ]

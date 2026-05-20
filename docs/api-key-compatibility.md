@@ -2,7 +2,7 @@
 
 ## Supported Providers
 
-The provider catalog currently includes 200 signatures. These common providers work with VaultProof's header-based proxy out of the box:
+The provider catalog currently includes 225 signatures. These common providers work with VaultProof's header-based proxy out of the box:
 
 | Provider | Proxy Path | Auth Method |
 |----------|-----------|-------------|
@@ -88,6 +88,31 @@ The provider catalog currently includes 200 signatures. These common providers w
 | Dropbox | `/p/dropbox/2/*` | Bearer token |
 | Box | `/p/box/2.0/*` | Bearer token |
 | Pinata | `/p/pinata/*` | Bearer JWT |
+| DeepInfra | `/p/deepinfra/*` | Bearer token |
+| Baseten | `/p/baseten/*` | Bearer token + model URL env |
+| Cartesia | `/p/cartesia/*` | X-API-Key header |
+| Unstructured | `/p/unstructured/*` | unstructured-api-key header |
+| Luma AI | `/p/luma-ai/*` | Bearer token |
+| Portkey | `/p/portkey/*` | x-portkey-api-key header |
+| Scale AI | `/p/scale/*` | Basic auth from API key |
+| Braintrust | `/p/braintrust/*` | Bearer token |
+| Eden AI | `/p/edenai/*` | Bearer token |
+| VirusTotal | `/p/virustotal/api/v3/*` | x-apikey header |
+| IPinfo | `/p/ipinfo/*` | Bearer token |
+| Apollo | `/p/apollo/*` | X-Api-Key header |
+| Buttondown | `/p/buttondown/v1/*` | Authorization: Token |
+| Close | `/p/close/api/v1/*` | Basic auth from API key |
+| Greenhouse Harvest | `/p/greenhouse/v1/*` | Basic auth + optional On-Behalf-Of |
+| Xendit | `/p/xendit/*` | Basic auth from secret key |
+| Midtrans | `/p/midtrans/v2/*` | Basic auth from server key |
+| Coinbase Commerce | `/p/coinbase-commerce/*` | X-CC-Api-Key header |
+| Lokalise | `/p/lokalise/api2/*` | X-Api-Token header |
+| Crowdin | `/p/crowdin/api/v2/*` | Bearer token |
+| Sendbird | `/p/sendbird/v3/*` | Api-Token header + app URL env |
+| Mux | `/p/mux/*` | Basic auth from token ID + secret |
+| bunny.net | `/p/bunny/*` | AccessKey header |
+| Prerender.io | `/p/prerender/*` | X-Prerender-Token header |
+| ImageKit | `/p/imagekit/*` | Basic auth from private API key |
 | Qdrant | `/p/qdrant/*` | api-key header |
 | Turso | `/p/turso/*` | Bearer token |
 | Meilisearch | `/p/meilisearch/*` | Bearer token |
