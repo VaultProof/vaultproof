@@ -2,7 +2,7 @@
 
 ## Supported Providers
 
-The provider catalog currently includes 167 signatures. These common providers work with VaultProof's header-based proxy out of the box:
+The provider catalog currently includes 200 signatures. These common providers work with VaultProof's header-based proxy out of the box:
 
 | Provider | Proxy Path | Auth Method |
 |----------|-----------|-------------|
@@ -55,6 +55,39 @@ The provider catalog currently includes 167 signatures. These common providers w
 | SonarQube Cloud | `/p/sonarcloud/api/*` | Bearer token |
 | Brave Search | `/p/brave-search/res/v1/*` | X-Subscription-Token header |
 | Apify | `/p/apify/v2/*` | Bearer token |
+| fal.ai | `/p/fal-ai/*` | Authorization: Key |
+| Serper | `/p/serper/*` | X-API-KEY header |
+| Make | `/p/make/api/v2/*` | Authorization: Token |
+| n8n | `/p/n8n/api/v1/*` | X-N8N-API-KEY header |
+| Axiom | `/p/axiom/v2/*` | Bearer token |
+| InfluxDB | `/p/influxdb/api/v2/*` | Authorization: Token |
+| Rollbar | `/p/rollbar/api/1/*` | X-Rollbar-Access-Token header |
+| BugSnag | `/p/bugsnag/*` | Authorization: token + X-Version |
+| Codecov | `/p/codecov/api/v2/*` | bearer token |
+| BrowserStack | `/p/browserstack/*` | Basic auth from username + access key |
+| Auth0 | `/p/auth0/api/v2/*` | Bearer Management API token |
+| FusionAuth | `/p/fusionauth/api/*` | Authorization API key |
+| Aiven | `/p/aiven/v1/*` | aivenv1 token |
+| CockroachDB Cloud | `/p/cockroachdb/api/v1/*` | Bearer token |
+| DataStax Astra | `/p/datastax-astra/v2/*` | Bearer token |
+| Redis Cloud | `/p/redis-cloud/v1/*` | x-api-key + x-api-secret-key headers |
+| ClickHouse Cloud | `/p/clickhouse/v1/*` | Basic auth from key ID + secret |
+| Razorpay | `/p/razorpay/v1/*` | Basic auth from key ID + secret |
+| Mollie | `/p/mollie/v2/*` | Bearer token |
+| GoCardless | `/p/gocardless/*` | Bearer token + GoCardless-Version |
+| Mercado Pago | `/p/mercadopago/*` | Bearer token |
+| Wise | `/p/wise/v1/*` | Bearer token |
+| Shippo | `/p/shippo/*` | ShippoToken auth |
+| EasyPost | `/p/easypost/v2/*` | Basic auth from API key |
+| ShipEngine | `/p/shipengine/v1/*` | API-Key header |
+| Front | `/p/front/*` | Bearer token |
+| Help Scout | `/p/helpscout/v2/*` | Bearer token |
+| Calendly | `/p/calendly/*` | Bearer token |
+| Typeform | `/p/typeform/*` | Bearer token |
+| Productboard | `/p/productboard/*` | Bearer token |
+| Dropbox | `/p/dropbox/2/*` | Bearer token |
+| Box | `/p/box/2.0/*` | Bearer token |
+| Pinata | `/p/pinata/*` | Bearer JWT |
 | Qdrant | `/p/qdrant/*` | api-key header |
 | Turso | `/p/turso/*` | Bearer token |
 | Meilisearch | `/p/meilisearch/*` | Bearer token |
