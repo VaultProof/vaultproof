@@ -2,7 +2,7 @@
 
 ## Supported Providers
 
-The provider catalog currently includes 225 signatures. These common providers work with VaultProof's header-based proxy out of the box:
+The provider catalog currently includes 250 signatures. These common providers work with VaultProof's header-based proxy out of the box:
 
 | Provider | Proxy Path | Auth Method |
 |----------|-----------|-------------|
@@ -113,6 +113,31 @@ The provider catalog currently includes 225 signatures. These common providers w
 | bunny.net | `/p/bunny/*` | AccessKey header |
 | Prerender.io | `/p/prerender/*` | X-Prerender-Token header |
 | ImageKit | `/p/imagekit/*` | Basic auth from private API key |
+| SambaNova | `/p/sambanova/v1/*` | Bearer token |
+| NVIDIA NIM | `/p/nvidia-nim/v1/*` | Bearer token |
+| FriendliAI | `/p/friendli/serverless/v1/*` | Bearer token |
+| Hyperbolic | `/p/hyperbolic/v1/*` | Bearer token |
+| Vapi | `/p/vapi/*` | Bearer token |
+| Retell AI | `/p/retell/*` | Bearer token |
+| Rev AI | `/p/rev-ai/*` | Bearer token |
+| Speechmatics | `/p/speechmatics/v2/*` | Bearer token |
+| Gladia | `/p/gladia/v2/*` | x-gladia-key header |
+| Soniox | `/p/soniox/v1/*` | Bearer token |
+| Resemble AI | `/p/resemble-ai/*` | Bearer token |
+| Infobip | `/p/infobip/*` | Authorization: App |
+| Mailchimp Marketing | `/p/mailchimp/*` | Bearer token + datacenter URL env |
+| Fauna | `/p/fauna/*` | Bearer token |
+| Zilliz Cloud | `/p/zilliz/*` | Bearer token |
+| Pipedream | `/p/pipedream/*` | Bearer token |
+| Attio | `/p/attio/*` | Bearer token |
+| Recurly | `/p/recurly/*` | Basic auth from private API key |
+| Phrase Strings | `/p/phrase/*` | Authorization: token |
+| Transifex | `/p/transifex/*` | Bearer token |
+| RevenueCat | `/p/revenuecat/v2/*` | Bearer token |
+| Qovery | `/p/qovery/*` | Authorization: Token |
+| Northflank | `/p/northflank/*` | Bearer token |
+| Koyeb | `/p/koyeb/*` | Bearer token |
+| Deno Deploy | `/p/deno-deploy/*` | Bearer token |
 | Qdrant | `/p/qdrant/*` | api-key header |
 | Turso | `/p/turso/*` | Bearer token |
 | Meilisearch | `/p/meilisearch/*` | Bearer token |

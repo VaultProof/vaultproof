@@ -45,14 +45,32 @@ const PROJECT_TOKEN_HEADER_NAMES = [
   'api-key',
   'apikey',
   'api-token',
+  'fastly-key',
+  'circle-token',
+  'x-auth-token',
+  'x-subscription-token',
   'x-goog-api-key',
   'xi-api-key',
   'x-e2b-api-key',
   'x-algolia-api-key',
   'x-assemblyai-api-key',
+  'x-bb-api-key',
+  'x-hume-api-key',
+  'x-figma-token',
+  'x-api-token',
+  'x-gladia-key',
+  'x-apikey',
+  'x-cc-api-key',
+  'x-portkey-api-key',
+  'x-prerender-token',
+  'x-rollbar-access-token',
+  'x-typesense-api-key',
   'private-token',
   'x-gitlab-token',
   'x-honeycomb-team',
+  'shortcut-token',
+  'accesskey',
+  'unstructured-api-key',
   'dd-api-key',
   'x-elasticemail-apikey',
   'x-postage-server-token',
@@ -88,6 +106,9 @@ function extractProjectToken(value: string | null): string | null {
 
   const pagerDutyToken = trimmed.match(/^Token\s+token=(.+)$/i)?.[1]?.trim();
   if (pagerDutyToken?.startsWith('vp-proj-')) return pagerDutyToken;
+
+  const providerSchemeToken = trimmed.match(/^[A-Za-z][A-Za-z0-9._-]*\s+(.+)$/)?.[1]?.trim();
+  if (providerSchemeToken?.startsWith('vp-proj-')) return providerSchemeToken;
 
   return parseBasicProjectToken(trimmed);
 }

@@ -1,6 +1,6 @@
 {
-  "version": 8,
-  "updated": "2026-05-20",
+  "version": 9,
+  "updated": "2026-05-21",
   "providers": [
     {
       "id": "anthropic",
@@ -3231,6 +3231,364 @@
       "detect": {
         "regex": "^private_[A-Za-z0-9._:-]{20,240}$|^[A-Za-z0-9._:-]{20,240}$",
         "var_hint": "IMAGEKIT"
+      }
+    },
+    {
+      "id": "sambanova",
+      "label": "SambaNova",
+      "upstream_base_url": "https://api.sambanova.ai",
+      "auth_header_name": "Authorization",
+      "auth_header_template": "Bearer {key}",
+      "env_var_default": "SAMBANOVA_API_KEY",
+      "base_url_env_var": "SAMBANOVA_BASE_URL",
+      "base_url_path_suffix": "/p/sambanova/v1",
+      "detect": {
+        "regex": "^[A-Za-z0-9._:-]{20,240}$",
+        "var_hint": "SAMBANOVA"
+      }
+    },
+    {
+      "id": "nvidia-nim",
+      "label": "NVIDIA NIM",
+      "upstream_base_url": "https://integrate.api.nvidia.com",
+      "auth_header_name": "Authorization",
+      "auth_header_template": "Bearer {key}",
+      "env_var_default": "NVIDIA_API_KEY",
+      "base_url_env_var": "NVIDIA_BASE_URL",
+      "base_url_path_suffix": "/p/nvidia-nim/v1",
+      "detect": {
+        "regex": "^nvapi-[A-Za-z0-9._:-]{20,240}$|^[A-Za-z0-9._:-]{20,240}$",
+        "var_hint": "NVIDIA"
+      }
+    },
+    {
+      "id": "friendli",
+      "label": "FriendliAI",
+      "upstream_base_url": "https://api.friendli.ai",
+      "auth_header_name": "Authorization",
+      "auth_header_template": "Bearer {key}",
+      "env_var_default": "FRIENDLI_TOKEN",
+      "base_url_env_var": "FRIENDLI_BASE_URL",
+      "base_url_path_suffix": "/p/friendli/serverless/v1",
+      "detect": {
+        "regex": "^flp_[A-Za-z0-9._:-]{20,240}$|^[A-Za-z0-9._:-]{20,240}$",
+        "var_hint": "FRIENDLI"
+      }
+    },
+    {
+      "id": "hyperbolic",
+      "label": "Hyperbolic",
+      "upstream_base_url": "https://api.hyperbolic.xyz",
+      "auth_header_name": "Authorization",
+      "auth_header_template": "Bearer {key}",
+      "env_var_default": "HYPERBOLIC_API_KEY",
+      "base_url_env_var": "HYPERBOLIC_BASE_URL",
+      "base_url_path_suffix": "/p/hyperbolic/v1",
+      "detect": {
+        "regex": "^[A-Za-z0-9._:-]{20,240}$",
+        "var_hint": "HYPERBOLIC"
+      }
+    },
+    {
+      "id": "vapi",
+      "label": "Vapi",
+      "upstream_base_url": "https://api.vapi.ai",
+      "auth_header_name": "Authorization",
+      "auth_header_template": "Bearer {key}",
+      "env_var_default": "VAPI_API_KEY",
+      "base_url_env_var": "VAPI_BASE_URL",
+      "base_url_path_suffix": "/p/vapi",
+      "detect": {
+        "regex": "^[A-Za-z0-9._:-]{20,240}$",
+        "var_hint": "VAPI"
+      }
+    },
+    {
+      "id": "retell",
+      "label": "Retell AI",
+      "upstream_base_url": "https://api.retellai.com",
+      "auth_header_name": "Authorization",
+      "auth_header_template": "Bearer {key}",
+      "env_var_default": "RETELL_API_KEY",
+      "base_url_env_var": "RETELL_BASE_URL",
+      "base_url_path_suffix": "/p/retell",
+      "detect": {
+        "regex": "^[A-Za-z0-9._:-]{20,240}$",
+        "var_hint": "RETELL"
+      }
+    },
+    {
+      "id": "rev-ai",
+      "label": "Rev AI",
+      "upstream_base_url": "https://api.rev.ai/speechtotext/v1",
+      "auth_header_name": "Authorization",
+      "auth_header_template": "Bearer {key}",
+      "env_var_default": "REVAI_ACCESS_TOKEN",
+      "base_url_env_var": "REVAI_BASE_URL",
+      "base_url_path_suffix": "/p/rev-ai",
+      "detect": {
+        "regex": "^[A-Za-z0-9._:-]{20,240}$",
+        "var_hint": "REVAI"
+      }
+    },
+    {
+      "id": "speechmatics",
+      "label": "Speechmatics",
+      "upstream_base_url": "https://asr.api.speechmatics.com",
+      "auth_header_name": "Authorization",
+      "auth_header_template": "Bearer {key}",
+      "env_var_default": "SPEECHMATICS_API_KEY",
+      "base_url_env_var": "SPEECHMATICS_BASE_URL",
+      "base_url_path_suffix": "/p/speechmatics/v2",
+      "detect": {
+        "regex": "^[A-Za-z0-9._:-]{20,240}$",
+        "var_hint": "SPEECHMATICS"
+      }
+    },
+    {
+      "id": "gladia",
+      "label": "Gladia",
+      "upstream_base_url": "https://api.gladia.io",
+      "auth_header_name": "x-gladia-key",
+      "auth_header_template": "{key}",
+      "env_var_default": "GLADIA_API_KEY",
+      "base_url_env_var": "GLADIA_BASE_URL",
+      "base_url_path_suffix": "/p/gladia/v2",
+      "detect": {
+        "regex": "^[A-Za-z0-9._:-]{20,240}$",
+        "var_hint": "GLADIA"
+      }
+    },
+    {
+      "id": "soniox",
+      "label": "Soniox",
+      "upstream_base_url": "https://api.soniox.com",
+      "auth_header_name": "Authorization",
+      "auth_header_template": "Bearer {key}",
+      "env_var_default": "SONIOX_API_KEY",
+      "base_url_env_var": "SONIOX_BASE_URL",
+      "base_url_path_suffix": "/p/soniox/v1",
+      "detect": {
+        "regex": "^[A-Za-z0-9._:-]{20,240}$",
+        "var_hint": "SONIOX"
+      }
+    },
+    {
+      "id": "resemble-ai",
+      "label": "Resemble AI",
+      "upstream_base_url": "https://app.resemble.ai/api/v2",
+      "auth_header_name": "Authorization",
+      "auth_header_template": "Bearer {key}",
+      "env_var_default": "RESEMBLE_API_KEY",
+      "base_url_env_var": "RESEMBLE_BASE_URL",
+      "base_url_path_suffix": "/p/resemble-ai",
+      "note": "This default targets the Resemble API server. For synthesis-only calls, create a custom provider pointing at https://f.cluster.resemble.ai.",
+      "detect": {
+        "regex": "^[A-Za-z0-9._:-]{20,240}$",
+        "var_hint": "RESEMBLE"
+      }
+    },
+    {
+      "id": "infobip",
+      "label": "Infobip",
+      "upstream_base_url": "https://api.infobip.com",
+      "auth_header_name": "Authorization",
+      "auth_header_template": "App {key}",
+      "env_var_default": "INFOBIP_API_KEY",
+      "base_url_env_var": "INFOBIP_BASE_URL",
+      "base_url_path_suffix": "/p/infobip",
+      "detect": {
+        "regex": "^[A-Za-z0-9._:-]{20,240}$",
+        "var_hint": "INFOBIP"
+      }
+    },
+    {
+      "id": "mailchimp",
+      "label": "Mailchimp Marketing",
+      "upstream_base_url": "dynamic",
+      "auth_header_name": "Authorization",
+      "auth_header_template": "Bearer {key}",
+      "env_var_default": "MAILCHIMP_API_KEY",
+      "base_url_env_var": "MAILCHIMP_BASE_URL",
+      "base_url_path_suffix": "/p/mailchimp",
+      "upstream_from_env": "MAILCHIMP_API_BASE_URL",
+      "note": "Set MAILCHIMP_API_BASE_URL to your datacenter endpoint, such as https://us1.api.mailchimp.com/3.0.",
+      "detect": {
+        "regex": "^[A-Za-z0-9._:-]{20,240}$",
+        "var_hint": "MAILCHIMP"
+      }
+    },
+    {
+      "id": "fauna",
+      "label": "Fauna",
+      "upstream_base_url": "https://db.fauna.com",
+      "auth_header_name": "Authorization",
+      "auth_header_template": "Bearer {key}",
+      "env_var_default": "FAUNA_SECRET",
+      "base_url_env_var": "FAUNA_BASE_URL",
+      "base_url_path_suffix": "/p/fauna",
+      "detect": {
+        "regex": "^[A-Za-z0-9._:-]{20,240}$",
+        "var_hint": "FAUNA"
+      }
+    },
+    {
+      "id": "zilliz",
+      "label": "Zilliz Cloud",
+      "upstream_base_url": "https://api.cloud.zilliz.com",
+      "auth_header_name": "Authorization",
+      "auth_header_template": "Bearer {key}",
+      "env_var_default": "ZILLIZ_API_KEY",
+      "base_url_env_var": "ZILLIZ_BASE_URL",
+      "base_url_path_suffix": "/p/zilliz",
+      "detect": {
+        "regex": "^[A-Za-z0-9._:-]{20,240}$",
+        "var_hint": "ZILLIZ"
+      }
+    },
+    {
+      "id": "pipedream",
+      "label": "Pipedream",
+      "upstream_base_url": "https://api.pipedream.com/v1",
+      "auth_header_name": "Authorization",
+      "auth_header_template": "Bearer {key}",
+      "env_var_default": "PIPEDREAM_API_KEY",
+      "base_url_env_var": "PIPEDREAM_BASE_URL",
+      "base_url_path_suffix": "/p/pipedream",
+      "detect": {
+        "regex": "^[A-Za-z0-9._:-]{20,240}$",
+        "var_hint": "PIPEDREAM"
+      }
+    },
+    {
+      "id": "attio",
+      "label": "Attio",
+      "upstream_base_url": "https://api.attio.com/v2",
+      "auth_header_name": "Authorization",
+      "auth_header_template": "Bearer {key}",
+      "env_var_default": "ATTIO_API_TOKEN",
+      "base_url_env_var": "ATTIO_BASE_URL",
+      "base_url_path_suffix": "/p/attio",
+      "detect": {
+        "regex": "^[A-Za-z0-9._:-]{20,240}$",
+        "var_hint": "ATTIO"
+      }
+    },
+    {
+      "id": "recurly",
+      "label": "Recurly",
+      "upstream_base_url": "https://v3.recurly.com",
+      "auth_header_name": "Authorization",
+      "auth_header_template": "Basic {key}",
+      "extra_headers": {
+        "Accept": "application/vnd.recurly.v2021-02-25"
+      },
+      "env_var_default": "RECURLY_API_KEY",
+      "base_url_env_var": "RECURLY_BASE_URL",
+      "base_url_path_suffix": "/p/recurly",
+      "combine_format": "{key}:",
+      "combine_encoding": "base64",
+      "detect": {
+        "regex": "^[A-Za-z0-9._:-]{20,240}$",
+        "var_hint": "RECURLY"
+      }
+    },
+    {
+      "id": "phrase",
+      "label": "Phrase Strings",
+      "upstream_base_url": "https://api.phrase.com/v2",
+      "auth_header_name": "Authorization",
+      "auth_header_template": "token {key}",
+      "env_var_default": "PHRASE_ACCESS_TOKEN",
+      "base_url_env_var": "PHRASE_BASE_URL",
+      "base_url_path_suffix": "/p/phrase",
+      "detect": {
+        "regex": "^[A-Za-z0-9._:-]{20,240}$",
+        "var_hint": "PHRASE"
+      }
+    },
+    {
+      "id": "transifex",
+      "label": "Transifex",
+      "upstream_base_url": "https://rest.api.transifex.com",
+      "auth_header_name": "Authorization",
+      "auth_header_template": "Bearer {key}",
+      "env_var_default": "TRANSIFEX_API_TOKEN",
+      "base_url_env_var": "TRANSIFEX_BASE_URL",
+      "base_url_path_suffix": "/p/transifex",
+      "detect": {
+        "regex": "^[A-Za-z0-9._:/-]{20,240}$",
+        "var_hint": "TRANSIFEX"
+      }
+    },
+    {
+      "id": "revenuecat",
+      "label": "RevenueCat",
+      "upstream_base_url": "https://api.revenuecat.com",
+      "auth_header_name": "Authorization",
+      "auth_header_template": "Bearer {key}",
+      "env_var_default": "REVENUECAT_SECRET_API_KEY",
+      "base_url_env_var": "REVENUECAT_BASE_URL",
+      "base_url_path_suffix": "/p/revenuecat/v2",
+      "detect": {
+        "regex": "^(?:sk|atk)_[A-Za-z0-9._:-]{20,240}$|^[A-Za-z0-9._:-]{20,240}$",
+        "var_hint": "REVENUECAT"
+      }
+    },
+    {
+      "id": "qovery",
+      "label": "Qovery",
+      "upstream_base_url": "https://api.qovery.com",
+      "auth_header_name": "Authorization",
+      "auth_header_template": "Token {key}",
+      "env_var_default": "QOVERY_API_TOKEN",
+      "base_url_env_var": "QOVERY_BASE_URL",
+      "base_url_path_suffix": "/p/qovery",
+      "detect": {
+        "regex": "^[A-Za-z0-9._:-]{20,240}$",
+        "var_hint": "QOVERY"
+      }
+    },
+    {
+      "id": "northflank",
+      "label": "Northflank",
+      "upstream_base_url": "https://api.northflank.com/v1",
+      "auth_header_name": "Authorization",
+      "auth_header_template": "Bearer {key}",
+      "env_var_default": "NORTHFLANK_API_TOKEN",
+      "base_url_env_var": "NORTHFLANK_BASE_URL",
+      "base_url_path_suffix": "/p/northflank",
+      "detect": {
+        "regex": "^[A-Za-z0-9._:-]{20,240}$",
+        "var_hint": "NORTHFLANK"
+      }
+    },
+    {
+      "id": "koyeb",
+      "label": "Koyeb",
+      "upstream_base_url": "https://app.koyeb.com/v1",
+      "auth_header_name": "Authorization",
+      "auth_header_template": "Bearer {key}",
+      "env_var_default": "KOYEB_API_TOKEN",
+      "base_url_env_var": "KOYEB_BASE_URL",
+      "base_url_path_suffix": "/p/koyeb",
+      "detect": {
+        "regex": "^[A-Za-z0-9._:-]{20,240}$",
+        "var_hint": "KOYEB"
+      }
+    },
+    {
+      "id": "deno-deploy",
+      "label": "Deno Deploy",
+      "upstream_base_url": "https://api.deno.com/v1",
+      "auth_header_name": "Authorization",
+      "auth_header_template": "Bearer {key}",
+      "env_var_default": "DENO_DEPLOY_TOKEN",
+      "base_url_env_var": "DENO_DEPLOY_BASE_URL",
+      "base_url_path_suffix": "/p/deno-deploy",
+      "detect": {
+        "regex": "^ddo_[A-Za-z0-9._:-]{20,240}$|^[A-Za-z0-9._:-]{20,240}$",
+        "var_hint": "DENO_DEPLOY"
       }
     }
   ]

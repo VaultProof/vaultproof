@@ -68,6 +68,24 @@ console.log('── parseProjectToken ──');
   const basic = btoa('vp-proj-basic-style:placeholder');
   const r15 = parseProjectToken(req({ Authorization: `Basic ${basic}` }));
   ok('Basic auth username token parses', 'token' in r15 && r15.token === 'vp-proj-basic-style');
+
+  const r16 = parseProjectToken(req({ Authorization: 'DeepL-Auth-Key vp-proj-deepl-style' }));
+  ok('provider Authorization scheme parses', 'token' in r16 && r16.token === 'vp-proj-deepl-style');
+
+  const r17 = parseProjectToken(req({ Authorization: 'App vp-proj-infobip-style' }));
+  ok('Infobip App scheme parses', 'token' in r17 && r17.token === 'vp-proj-infobip-style');
+
+  const providerHeaderCases: Array<[string, string]> = [
+    ['x-gladia-key', 'vp-proj-gladia-style'],
+    ['x-portkey-api-key', 'vp-proj-portkey-style'],
+    ['x-cc-api-key', 'vp-proj-coinbase-style'],
+    ['accesskey', 'vp-proj-bunny-style'],
+    ['unstructured-api-key', 'vp-proj-unstructured-style'],
+  ];
+  for (const [header, value] of providerHeaderCases) {
+    const result = parseProjectToken(req({ [header]: value }));
+    ok(`${header} token parses`, 'token' in result && result.token === value);
+  }
 }
 
 // ── checkOriginLock ───────────────────────────────────────────────────
