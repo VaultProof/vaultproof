@@ -326,6 +326,8 @@ First demo slice:
 - Built: derive drift rows from existing projects, provider slots, caller-lock policy posture, provider material mode, API inventory annotations, project health, traffic rollups, and `GET /api/v1/enterprise/projects/bootstrap`.
 - Built: persist demo exceptions in browser local storage per organization under `vaultproof_policy_exceptions::<orgId>` until the audited table exists.
 - Built: show status for missing provider slot, demo-only provider material, strict-origin gaps, gateway/method/upstream-scope gaps, missing owners, stale or missing traffic evidence, review-due rows, blocked rows, active exceptions, expired exceptions, and open drift.
+- Built: add local drift filters for search, severity, status, and control so paid-user testers can focus on critical/high drift, expired exceptions, blockers, or one control family.
+- Built: add a copyable metadata-only policy drift brief with launch status, severity mix, active/expired exception counts, blocked rows, priority actions, and explicit secret-boundary language.
 - Built: add copyable customer-safe `vaultproof_enterprise_policy_drift` JSON without secrets and include the summary in the evidence packet under `policy_drift_exceptions`.
 - Built: add links to Control, Provider Slots, API Inventory, Activity, Launch, Evidence, and Security Review.
 

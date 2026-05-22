@@ -2382,6 +2382,7 @@ function renderEnterpriseOperationsPage(pageName: 'activity' | 'projects' | 'inv
     .filters { display: grid; grid-template-columns: minmax(180px, 1fr) minmax(150px, .7fr) minmax(180px, 1fr) auto; gap: 10px; margin-bottom: 16px; }
     .inventory-filters { grid-template-columns: minmax(220px, 1.4fr) repeat(4, minmax(130px, .72fr)) auto auto; }
     .inventory-bulk-review { grid-template-columns: minmax(180px, .8fr) minmax(170px, .7fr) auto; align-items: center; }
+    .policy-filters { grid-template-columns: minmax(220px, 1.4fr) repeat(3, minmax(150px, .72fr)) auto auto; }
     .kpi-label { color: var(--muted); font-size: 12px; text-transform: uppercase; letter-spacing: .1em; }
     .kpi-value { font-size: 34px; font-weight: 850; letter-spacing: -.05em; margin-top: 8px; }
     .kpi-sub { color: var(--muted); font-size: 13px; margin-top: 6px; }
@@ -2435,7 +2436,7 @@ function renderEnterpriseOperationsPage(pageName: 'activity' | 'projects' | 'inv
           <select id="orgSelect" aria-label="Organization"><option>Loading org...</option></select>
           ${pageName === 'keys' ? '<button id="openProviderSlotForm" class="primary" type="button">add slot</button>' : ''}
           ${pageName === 'inventory' ? '<button id="openManualApiKeyForm" class="primary" type="button">add API key</button><button id="openInventoryImportForm" type="button">import CSV/OpenAPI</button><button id="copyInventoryCsvBtn" type="button">copy inventory CSV</button><button id="copyInventoryReviewBriefBtn" type="button">copy review brief</button><button id="copyInventoryJsonBtn" class="primary" type="button">copy inventory JSON</button>' : ''}
-          ${pageName === 'policy' ? '<button id="copyPolicyJsonBtn" class="primary" type="button">copy policy JSON</button>' : ''}
+          ${pageName === 'policy' ? '<button id="copyPolicyBriefBtn" type="button">copy drift brief</button><button id="copyPolicyJsonBtn" class="primary" type="button">copy policy JSON</button>' : ''}
           ${pageName === 'rollout' ? '<button id="copyRolloutJsonBtn" class="primary" type="button">copy rollout JSON</button>' : ''}
           <button id="refreshBtn" type="button">refresh</button>
           <a class="primary" href="/app/control">open control</a>
@@ -2685,6 +2686,39 @@ ${renderDatalistOptions(ENTERPRISE_MANUAL_API_KEY_PROVIDER_OPTIONS)}
       <section id="policyPanel" class="grid two" style="display:none">
         <div class="card" style="grid-column:1/-1">
           <div class="section-title"><h2>Policy drift board</h2><span id="policyMeta" class="mini">accepted-risk records</span></div>
+          <form id="policyFilterForm" class="filters policy-filters">
+            <input id="policySearch" type="search" placeholder="Search control, project, provider, owner..." />
+            <select id="policySeverityFilter" aria-label="Policy severity">
+              <option value="">all severity</option>
+              <option value="critical">critical</option>
+              <option value="high">high</option>
+              <option value="medium">medium</option>
+            </select>
+            <select id="policyStatusFilter" aria-label="Policy status">
+              <option value="">all status</option>
+              <option value="open_drift">open drift</option>
+              <option value="accepted_demo">demo accepted</option>
+              <option value="approved_exception">approved exception</option>
+              <option value="expired_exception">expired exception</option>
+              <option value="blocked">blocked</option>
+            </select>
+            <select id="policyControlFilter" aria-label="Policy control">
+              <option value="">all controls</option>
+              <option value="missing-provider-slot">missing provider slot</option>
+              <option value="demo-placeholder-material">demo material</option>
+              <option value="strict-origin-missing">strict origin</option>
+              <option value="gateway-lock-missing">gateway lock</option>
+              <option value="method-lock-missing">method lock</option>
+              <option value="upstream-scope-missing">upstream scope</option>
+              <option value="inventory-owner-missing">owner metadata</option>
+              <option value="traffic-evidence-missing">traffic evidence</option>
+              <option value="traffic-evidence-stale">stale traffic</option>
+              <option value="inventory-review-due">review due</option>
+              <option value="inventory-blocked">inventory blocked</option>
+            </select>
+            <button class="primary" type="submit">apply filters</button>
+            <button id="clearPolicyFilters" type="button">clear</button>
+          </form>
           <div id="policyList" class="list"><div class="empty">Loading policy drift...</div></div>
         </div>
         <div class="card">
@@ -3405,7 +3439,7 @@ ${renderDatalistOptions(ENTERPRISE_MANUAL_API_KEY_PROVIDER_OPTIONS)}
           : {};
         return Object.assign({}, base, override || {});
       }
-      function policySummary(policy, project, slot) {
+      function callerLockPolicySummary(policy, project, slot) {
         var checks = [
           project.strict_origin === true,
           arrayLength(policy.allowed_customer_gateways) > 0,
@@ -3459,7 +3493,7 @@ ${renderDatalistOptions(ENTERPRISE_MANUAL_API_KEY_PROVIDER_OPTIONS)}
           }, storedAnnotation || {});
           var projectHealth = health[project.id] || {};
           var policy = mergePolicy(project, null);
-          var coverage = policySummary(policy, project, null);
+          var coverage = callerLockPolicySummary(policy, project, null);
           var calls = Number(projectHealth.calls || 0);
           var errors = Number(projectHealth.errors || 0);
           var denied = Number(projectHealth.denied || 0);
@@ -3534,7 +3568,7 @@ ${renderDatalistOptions(ENTERPRISE_MANUAL_API_KEY_PROVIDER_OPTIONS)}
             var annotation = annotations[rowId] && typeof annotations[rowId] === 'object' ? annotations[rowId] : {};
             var projectHealth = health[project.id] || {};
             var policy = mergePolicy(project, slot);
-            var coverage = policySummary(policy, project, slot);
+            var coverage = callerLockPolicySummary(policy, project, slot);
             var calls = Number(projectHealth.calls || 0);
             var errors = Number(projectHealth.errors || 0);
             var denied = Number(projectHealth.denied || 0);
@@ -4281,24 +4315,96 @@ ${renderDatalistOptions(ENTERPRISE_MANUAL_API_KEY_PROVIDER_OPTIONS)}
           renderPolicySummary();
         }
       }
-      function policySummary() {
-        var rows = cachedPolicyRows;
-        var activeExceptions = rows.filter(function(row) { return policyExceptionActive(row.exception); });
-        var criticalOpen = rows.filter(function(row) {
+      function policyFilterState() {
+        return {
+          search: ((byId('policySearch') && byId('policySearch').value) || '').trim().toLowerCase(),
+          severity: (byId('policySeverityFilter') && byId('policySeverityFilter').value) || '',
+          status: (byId('policyStatusFilter') && byId('policyStatusFilter').value) || '',
+          control: (byId('policyControlFilter') && byId('policyControlFilter').value) || ''
+        };
+      }
+      function policyStatusFilterValue(row) {
+        var status = policyRowStatus(row);
+        if (status === 'demo accepted') return 'accepted_demo';
+        if (status === 'approved exception') return 'approved_exception';
+        if (status === 'expired exception') return 'expired_exception';
+        if (status === 'blocked') return 'blocked';
+        return 'open_drift';
+      }
+      function policyRowSearchText(row) {
+        var exception = row.exception || {};
+        var project = row.project || {};
+        var provider = row.provider || {};
+        return [
+          row.id,
+          row.title,
+          row.detail,
+          row.severity,
+          row.control_id,
+          row.action,
+          policyRowStatus(row),
+          project.name,
+          project.vp_proj_id,
+          provider.provider,
+          provider.slug,
+          exception.owner,
+          exception.risk_level,
+          exception.approval_status,
+          exception.reason,
+          exception.compensating_control,
+          exception.next_action
+        ].filter(Boolean).join(' ').toLowerCase();
+      }
+      function policyRowMatchesFilters(row, filters) {
+        if (filters.search && policyRowSearchText(row).indexOf(filters.search) === -1) return false;
+        if (filters.severity && row.severity !== filters.severity) return false;
+        if (filters.status && policyStatusFilterValue(row) !== filters.status) return false;
+        if (filters.control && row.control_id !== filters.control) return false;
+        return true;
+      }
+      function policyFiltersActive(filters) {
+        return Boolean(filters && (filters.search || filters.severity || filters.status || filters.control));
+      }
+      function filteredPolicyRows(filters) {
+        var currentFilters = filters || policyFilterState();
+        return cachedPolicyRows.filter(function(row) {
+          return policyRowMatchesFilters(row, currentFilters);
+        });
+      }
+      function renderPolicyList() {
+        var filters = policyFilterState();
+        var visibleRows = filteredPolicyRows(filters);
+        var filtered = visibleRows.length !== cachedPolicyRows.length || policyFiltersActive(filters);
+        text('policyMeta', (filtered ? number(visibleRows.length) + ' of ' : '') + number(cachedPolicyRows.length) + ' drift rows');
+        if (!cachedPolicyRows.length) {
+          byId('policyList').innerHTML = '<div class="empty">No active policy drift is visible from the current projects, provider slots, inventory metadata, policy settings, and traffic evidence.</div>';
+          return;
+        }
+        byId('policyList').innerHTML = visibleRows.length ? visibleRows.map(renderPolicyRow).join('') : '<div class="empty">No policy drift rows match these filters. Clear filters or review API inventory, Control, and Provider Slots.</div>';
+      }
+      function policyDriftSummaryForRows(rows) {
+        var policyRows = Array.isArray(rows) ? rows : [];
+        var activeExceptions = policyRows.filter(function(row) { return policyExceptionActive(row.exception); });
+        var criticalOpen = policyRows.filter(function(row) {
           return (row.severity === 'critical' || row.severity === 'high') && !policyExceptionActive(row.exception) && policyRowStatus(row) !== 'blocked';
         });
         return {
-          total: rows.length,
-          critical: rows.filter(function(row) { return row.severity === 'critical'; }).length,
-          high: rows.filter(function(row) { return row.severity === 'high'; }).length,
+          total: policyRows.length,
+          critical: policyRows.filter(function(row) { return row.severity === 'critical'; }).length,
+          high: policyRows.filter(function(row) { return row.severity === 'high'; }).length,
+          medium: policyRows.filter(function(row) { return row.severity === 'medium'; }).length,
+          open_drift: policyRows.filter(function(row) { return policyStatusFilterValue(row) === 'open_drift'; }).length,
           active_exceptions: activeExceptions.length,
-          expired_exceptions: rows.filter(function(row) { return policyExceptionExpired(row.exception); }).length,
-          blocked: rows.filter(function(row) { return policyRowStatus(row) === 'blocked'; }).length,
-          launch_status: criticalOpen.length || rows.some(function(row) { return policyRowStatus(row) === 'blocked'; }) ? 'hold' : 'ready'
+          expired_exceptions: policyRows.filter(function(row) { return policyExceptionExpired(row.exception); }).length,
+          blocked: policyRows.filter(function(row) { return policyRowStatus(row) === 'blocked'; }).length,
+          launch_status: criticalOpen.length || policyRows.some(function(row) { return policyRowStatus(row) === 'blocked'; }) ? 'hold' : 'ready'
         };
       }
+      function policyDriftSummary() {
+        return policyDriftSummaryForRows(cachedPolicyRows);
+      }
       function policyEvidencePacket() {
-        var summary = policySummary();
+        var summary = policyDriftSummary();
         return {
           packet_type: 'vaultproof_enterprise_policy_drift',
           packet_version: 1,
@@ -4351,9 +4457,81 @@ ${renderDatalistOptions(ENTERPRISE_MANUAL_API_KEY_PROVIDER_OPTIONS)}
           ]
         };
       }
+      function policyBriefRowLabel(row) {
+        var project = row.project || {};
+        var provider = row.provider || {};
+        var providerLabel = row.provider ? (provider.slug || provider.provider || 'provider') : 'no provider slot';
+        return (project.name || project.vp_proj_id || 'Unassigned project') + ' / ' + providerLabel + ' / ' + row.control_id;
+      }
+      function policyBriefActions(row) {
+        var exception = row.exception || {};
+        var status = policyRowStatus(row);
+        var actions = [];
+        if (status === 'blocked') actions.push('resolve blocker before pilot traffic');
+        if (status === 'expired exception') actions.push('renew or close expired accepted-risk record');
+        if (status === 'open drift') actions.push(row.action);
+        if (!policyExceptionActive(exception) && (row.severity === 'critical' || row.severity === 'high')) actions.push('close or record owner-approved exception before paid traffic');
+        if (!exception.owner) actions.push('assign exception owner');
+        if (!exception.reason) actions.push('capture accepted-risk reason');
+        if (!exception.compensating_control) actions.push('capture compensating control');
+        if (!exception.expires_at) actions.push('set expiration date');
+        return actions.length ? actions : ['exception is recorded; verify it is still acceptable for the customer demo'];
+      }
+      function policyBriefPriority(row) {
+        var score = policySeverityRank(row.severity) * 10;
+        var status = policyRowStatus(row);
+        if (status === 'blocked') score += 100;
+        if (status === 'expired exception') score += 60;
+        if (status === 'open drift') score += 35;
+        if (!policyExceptionActive(row.exception) && (row.severity === 'critical' || row.severity === 'high')) score += 20;
+        return score;
+      }
+      function policyDriftBrief() {
+        var filters = policyFilterState();
+        var rows = filteredPolicyRows(filters);
+        var summary = policyDriftSummaryForRows(rows);
+        var scope = policyFiltersActive(filters) ? 'filtered drift rows' : 'all drift rows';
+        var priorityRows = rows.slice().sort(function(left, right) {
+          return policyBriefPriority(right) - policyBriefPriority(left);
+        }).filter(function(row) {
+          return policyBriefPriority(row) > 0;
+        }).slice(0, 12);
+        var lines = [
+          'VaultProof policy drift review brief',
+          'Generated: ' + new Date().toISOString(),
+          'Organization: ' + (currentOrgId || 'not selected'),
+          'Scope: ' + scope + ' (' + number(rows.length) + ' row(s))',
+          '',
+          'Summary:',
+          '- Total drift rows: ' + number(summary.total),
+          '- Critical: ' + number(summary.critical),
+          '- High: ' + number(summary.high),
+          '- Medium: ' + number(summary.medium),
+          '- Open drift: ' + number(summary.open_drift),
+          '- Active exceptions: ' + number(summary.active_exceptions),
+          '- Expired exceptions: ' + number(summary.expired_exceptions),
+          '- Blocked: ' + number(summary.blocked),
+          '- Launch status: ' + summary.launch_status,
+          '',
+          'Priority actions:'
+        ];
+        if (priorityRows.length) {
+          priorityRows.forEach(function(row) {
+            lines.push('- ' + policyBriefRowLabel(row) + ': ' + policyBriefActions(row).join('; '));
+          });
+        } else {
+          lines.push('- No priority policy drift rows in the current scope.');
+        }
+        lines.push(
+          '',
+          'Secret boundary:',
+          '- This brief is metadata-only. It excludes raw provider keys, encrypted shares, bearer tokens, OAuth secrets, SAML material, request bodies, response bodies, and customer payloads.'
+        );
+        return lines.join('\\n');
+      }
       function renderPolicySummary() {
         if (PAGE_MODE !== 'policy') return;
-        var summary = policySummary();
+        var summary = policyDriftSummary();
         byId('policySummaryList').innerHTML = [
           '<div class="row"><div><div class="row-title">Policy drift status</div><div class="row-sub">' + number(summary.total) + ' drift rows, ' + number(summary.critical) + ' critical, ' + number(summary.high) + ' high, ' + number(summary.active_exceptions) + ' active accepted-risk records.</div></div><span class="tag ' + (summary.launch_status === 'ready' ? 'good' : 'bad') + '">' + escapeHtml(summary.launch_status) + '</span></div>',
           '<div class="row"><div><div class="row-title">Exception hygiene</div><div class="row-sub">' + number(summary.expired_exceptions) + ' expired exceptions and ' + number(summary.blocked) + ' blocked rows. Every paid-user exception needs owner, reason, compensating control, expiration date, and next action.</div></div><span class="tag warn">review</span></div>',
@@ -4363,7 +4541,7 @@ ${renderDatalistOptions(ENTERPRISE_MANUAL_API_KEY_PROVIDER_OPTIONS)}
           '<div class="row"><div><div class="row-title">Close policy gaps</div><div class="row-sub">Fix strict origin, gateway lock, method lock, upstream scope, and provider-slot posture in Control and Provider Slots.</div></div><span><a class="tag good" href="/app/control">control</a><a class="tag good" href="/app/keys">provider slots</a></span></div>',
           '<div class="row"><div><div class="row-title">Own every API surface</div><div class="row-sub">Use API Inventory to set business owner, technical owner, data sensitivity, risk, review status, and next review date.</div></div><a class="tag good" href="/app/inventory">inventory</a></div>',
           '<div class="row"><div><div class="row-title">Prove runtime behavior</div><div class="row-sub">Run dry-run or low-volume traffic and review Activity before the customer walkthrough.</div></div><a class="tag" href="/app/activity">activity</a></div>',
-          '<div class="row"><div><div class="row-title">Launch packet</div><div class="row-sub">Export vaultproof_enterprise_policy_drift into Evidence and Security Review before paid traffic.</div></div><span><a class="tag" href="/app/evidence">evidence</a><a class="tag" href="/app/security-review">security review</a></span></div>'
+          '<div class="row"><div><div class="row-title">Launch packet</div><div class="row-sub">Export vaultproof_enterprise_policy_drift or copy the drift brief into Evidence and Security Review before paid traffic.</div></div><span><button class="tag good" type="button" data-action="copy-policy-brief">brief</button><a class="tag" href="/app/evidence">evidence</a><a class="tag" href="/app/security-review">security review</a></span></div>'
         ].join('');
       }
       function renderPolicy() {
@@ -4371,13 +4549,16 @@ ${renderDatalistOptions(ENTERPRISE_MANUAL_API_KEY_PROVIDER_OPTIONS)}
         if (panel) panel.style.display = PAGE_MODE === 'policy' ? 'grid' : 'none';
         if (PAGE_MODE !== 'policy') return;
         cachedPolicyRows = buildPolicyRows();
-        text('policyMeta', cachedPolicyRows.length + ' drift rows');
-        byId('policyList').innerHTML = cachedPolicyRows.length ? cachedPolicyRows.map(renderPolicyRow).join('') : '<div class="empty">No active policy drift is visible from the current projects, provider slots, inventory metadata, policy settings, and traffic evidence.</div>';
+        renderPolicyList();
         renderPolicySummary();
       }
       function copyPolicyJson() {
         cachedPolicyRows = buildPolicyRows();
         copyToClipboard(JSON.stringify(policyEvidencePacket(), null, 2), 'Policy drift JSON');
+      }
+      function copyPolicyBrief() {
+        cachedPolicyRows = buildPolicyRows();
+        copyToClipboard(policyDriftBrief(), 'Policy drift review brief');
       }
       function rolloutStorageKey() {
         return 'vaultproof_integration_rollouts::' + (currentOrgId || 'default');
@@ -4979,6 +5160,20 @@ ${renderDatalistOptions(ENTERPRISE_MANUAL_API_KEY_PROVIDER_OPTIONS)}
       if (byId('inventoryBulkReviewForm')) {
         byId('inventoryBulkReviewForm').addEventListener('submit', applyInventoryBulkReview);
       }
+      if (byId('policyFilterForm')) {
+        byId('policyFilterForm').addEventListener('submit', function(event) {
+          event.preventDefault();
+          renderPolicyList();
+        });
+      }
+      if (byId('clearPolicyFilters')) {
+        byId('clearPolicyFilters').addEventListener('click', function() {
+          ['policySearch', 'policySeverityFilter', 'policyStatusFilter', 'policyControlFilter'].forEach(function(id) {
+            if (byId(id)) byId(id).value = '';
+          });
+          renderPolicyList();
+        });
+      }
       if (byId('clearInventoryFilters')) {
         byId('clearInventoryFilters').addEventListener('click', function() {
           ['inventorySearch', 'inventoryStatusFilter', 'inventoryReviewFilter', 'inventoryRiskFilter', 'inventorySourceFilter'].forEach(function(id) {
@@ -5008,6 +5203,9 @@ ${renderDatalistOptions(ENTERPRISE_MANUAL_API_KEY_PROVIDER_OPTIONS)}
       if (byId('copyInventoryReviewBriefBtn')) {
         byId('copyInventoryReviewBriefBtn').addEventListener('click', copyInventoryReviewBrief);
       }
+      if (byId('copyPolicyBriefBtn')) {
+        byId('copyPolicyBriefBtn').addEventListener('click', copyPolicyBrief);
+      }
       if (byId('copyPolicyJsonBtn')) {
         byId('copyPolicyJsonBtn').addEventListener('click', copyPolicyJson);
       }
@@ -5019,6 +5217,10 @@ ${renderDatalistOptions(ENTERPRISE_MANUAL_API_KEY_PROVIDER_OPTIONS)}
         if (!target || !target.getAttribute) return;
         if (target.id === 'inventorySearch') {
           renderInventoryList();
+          return;
+        }
+        if (target.id === 'policySearch') {
+          renderPolicyList();
           return;
         }
         if (target.getAttribute('data-manual-key-field')) {
@@ -5042,6 +5244,10 @@ ${renderDatalistOptions(ENTERPRISE_MANUAL_API_KEY_PROVIDER_OPTIONS)}
         if (!target || !target.getAttribute) return;
         if (['inventoryStatusFilter', 'inventoryReviewFilter', 'inventoryRiskFilter', 'inventorySourceFilter'].indexOf(target.id) !== -1) {
           renderInventoryList();
+          return;
+        }
+        if (['policySeverityFilter', 'policyStatusFilter', 'policyControlFilter'].indexOf(target.id) !== -1) {
+          renderPolicyList();
           return;
         }
         if (target.getAttribute('data-manual-key-field')) {
@@ -5081,6 +5287,10 @@ ${renderDatalistOptions(ENTERPRISE_MANUAL_API_KEY_PROVIDER_OPTIONS)}
         }
         if (target.getAttribute('data-action') === 'copy-inventory-review-brief') {
           copyInventoryReviewBrief();
+          return;
+        }
+        if (target.getAttribute('data-action') === 'copy-policy-brief') {
+          copyPolicyBrief();
           return;
         }
         if (target.getAttribute('data-action') === 'copy-inventory-json') {

@@ -3153,7 +3153,7 @@ async function assertEnterpriseLoginRoute() {
     {
       path: '/app/policy',
       title: 'Policy Drift - VaultProof Enterprise',
-      required: ['/api/v1/enterprise/projects/bootstrap', 'Policy drift board', 'Exception evidence', 'accepted-risk records', 'vaultproof_policy_exceptions', 'data-policy-field', 'exception owner', 'accepted-risk reason', 'compensating control', 'expiration date', 'copy policy JSON', 'vaultproof_enterprise_policy_drift', 'strict-origin-missing', 'gateway-lock-missing', '/app/control', '/app/inventory', '/app/keys', '/app/activity', '/app/evidence', '/app/security-review'],
+      required: ['/api/v1/enterprise/projects/bootstrap', 'Policy drift board', 'Exception evidence', 'accepted-risk records', 'vaultproof_policy_exceptions', 'policyFilterForm', 'policySearch', 'policySeverityFilter', 'policyStatusFilter', 'policyControlFilter', 'clearPolicyFilters', 'policyRowMatchesFilters', 'filteredPolicyRows', 'copy drift brief', 'copyPolicyBriefBtn', 'copyPolicyBrief', 'copy-policy-brief', 'policyDriftBrief', 'VaultProof policy drift review brief', 'data-policy-field', 'exception owner', 'accepted-risk reason', 'compensating control', 'expiration date', 'copy policy JSON', 'vaultproof_enterprise_policy_drift', 'strict-origin-missing', 'gateway-lock-missing', '/app/control', '/app/inventory', '/app/keys', '/app/activity', '/app/evidence', '/app/security-review'],
     },
     {
       path: '/app/rollout',
