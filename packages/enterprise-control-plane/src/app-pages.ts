@@ -2383,6 +2383,7 @@ function renderEnterpriseOperationsPage(pageName: 'activity' | 'projects' | 'inv
     .inventory-filters { grid-template-columns: minmax(220px, 1.4fr) repeat(4, minmax(130px, .72fr)) auto auto; }
     .inventory-bulk-review { grid-template-columns: minmax(180px, .8fr) minmax(170px, .7fr) auto; align-items: center; }
     .policy-filters { grid-template-columns: minmax(220px, 1.4fr) repeat(3, minmax(150px, .72fr)) auto auto; }
+    .rollout-filters { grid-template-columns: minmax(220px, 1.4fr) repeat(4, minmax(130px, .72fr)) auto auto; }
     .kpi-label { color: var(--muted); font-size: 12px; text-transform: uppercase; letter-spacing: .1em; }
     .kpi-value { font-size: 34px; font-weight: 850; letter-spacing: -.05em; margin-top: 8px; }
     .kpi-sub { color: var(--muted); font-size: 13px; margin-top: 6px; }
@@ -2437,7 +2438,7 @@ function renderEnterpriseOperationsPage(pageName: 'activity' | 'projects' | 'inv
           ${pageName === 'keys' ? '<button id="openProviderSlotForm" class="primary" type="button">add slot</button>' : ''}
           ${pageName === 'inventory' ? '<button id="openManualApiKeyForm" class="primary" type="button">add API key</button><button id="openInventoryImportForm" type="button">import CSV/OpenAPI</button><button id="copyInventoryCsvBtn" type="button">copy inventory CSV</button><button id="copyInventoryReviewBriefBtn" type="button">copy review brief</button><button id="copyInventoryJsonBtn" class="primary" type="button">copy inventory JSON</button>' : ''}
           ${pageName === 'policy' ? '<button id="copyPolicyBriefBtn" type="button">copy drift brief</button><button id="copyPolicyJsonBtn" class="primary" type="button">copy policy JSON</button>' : ''}
-          ${pageName === 'rollout' ? '<button id="copyRolloutJsonBtn" class="primary" type="button">copy rollout JSON</button>' : ''}
+          ${pageName === 'rollout' ? '<button id="copyRolloutBriefBtn" type="button">copy rollout brief</button><button id="copyRolloutJsonBtn" class="primary" type="button">copy rollout JSON</button>' : ''}
           <button id="refreshBtn" type="button">refresh</button>
           <a class="primary" href="/app/control">open control</a>
         </div>
@@ -2734,6 +2735,47 @@ ${renderDatalistOptions(ENTERPRISE_MANUAL_API_KEY_PROVIDER_OPTIONS)}
       <section id="rolloutPanel" class="grid two" style="display:none">
         <div class="card" style="grid-column:1/-1">
           <div class="section-title"><h2>Integration rollout board</h2><span id="rolloutMeta" class="mini">workload cutover</span></div>
+          <form id="rolloutFilterForm" class="filters rollout-filters">
+            <input id="rolloutSearch" type="search" placeholder="Search workload, project, provider, owner..." />
+            <select id="rolloutStatusFilter" aria-label="Rollout status">
+              <option value="">all status</option>
+              <option value="hold">hold</option>
+              <option value="draft">draft</option>
+              <option value="planned">planned</option>
+              <option value="ready_for_canary">ready for canary</option>
+              <option value="canary">canary</option>
+              <option value="live">live</option>
+              <option value="rollback">rollback</option>
+            </select>
+            <select id="rolloutModeFilter" aria-label="Integration mode">
+              <option value="">all modes</option>
+              <option value="vaultproof_proxy">VaultProof proxy</option>
+              <option value="customer_gateway">customer gateway</option>
+              <option value="sdk">SDK</option>
+              <option value="sidecar">sidecar</option>
+              <option value="manual_test">manual test</option>
+              <option value="unset">mode unset</option>
+            </select>
+            <select id="rolloutTestFilter" aria-label="Test status">
+              <option value="">all tests</option>
+              <option value="not_started">not started</option>
+              <option value="dry_run_passed">dry-run passed</option>
+              <option value="denial_passed">denial passed</option>
+              <option value="canary_passed">canary passed</option>
+              <option value="live_verified">live verified</option>
+              <option value="failed">failed</option>
+            </select>
+            <select id="rolloutBlockerFilter" aria-label="Blockers">
+              <option value="">all blocker states</option>
+              <option value="has_blockers">has blockers</option>
+              <option value="no_blockers">no blockers</option>
+              <option value="owner_gaps">owner gaps</option>
+              <option value="rollback_gaps">rollback gaps</option>
+              <option value="test_gaps">test evidence gaps</option>
+            </select>
+            <button class="primary" type="submit">apply filters</button>
+            <button id="clearRolloutFilters" type="button">clear</button>
+          </form>
           <div id="rolloutList" class="list"><div class="empty">Loading integration rollout...</div></div>
         </div>
         <div class="card">
@@ -4762,17 +4804,100 @@ ${renderDatalistOptions(ENTERPRISE_MANUAL_API_KEY_PROVIDER_OPTIONS)}
           renderRolloutSummary();
         }
       }
-      function rolloutSummary() {
-        var rows = cachedRolloutRows;
+      function rolloutFilterState() {
         return {
-          total: rows.length,
-          live: rows.filter(function(row) { return rolloutStatus(row) === 'live'; }).length,
-          canary: rows.filter(function(row) { return rolloutStatus(row) === 'canary'; }).length,
-          ready_for_canary: rows.filter(function(row) { return rolloutStatus(row) === 'ready_for_canary'; }).length,
-          hold: rows.filter(function(row) { return rolloutStatus(row) === 'hold'; }).length,
-          draft: rows.filter(function(row) { return rolloutStatus(row) === 'draft'; }).length,
-          blocker_count: rows.reduce(function(total, row) { return total + (row.blockers || []).length; }, 0)
+          search: ((byId('rolloutSearch') && byId('rolloutSearch').value) || '').trim().toLowerCase(),
+          status: (byId('rolloutStatusFilter') && byId('rolloutStatusFilter').value) || '',
+          mode: (byId('rolloutModeFilter') && byId('rolloutModeFilter').value) || '',
+          test: (byId('rolloutTestFilter') && byId('rolloutTestFilter').value) || '',
+          blockers: (byId('rolloutBlockerFilter') && byId('rolloutBlockerFilter').value) || ''
         };
+      }
+      function rolloutRowSearchText(row) {
+        var state = row.rollout || {};
+        var project = row.project || {};
+        var provider = row.provider || {};
+        var annotation = row.inventory_annotation || {};
+        return [
+          row.id,
+          rolloutStatus(row),
+          project.name,
+          project.vp_proj_id,
+          provider.provider,
+          provider.slug,
+          annotation.business_service,
+          annotation.business_owner,
+          annotation.technical_owner,
+          state.application,
+          state.environment,
+          state.integration_mode,
+          state.rollout_status,
+          state.app_owner,
+          state.gateway_owner,
+          state.support_window,
+          state.test_status,
+          state.rollback_owner,
+          state.rollback_path,
+          state.note,
+          (row.blockers || []).join(' '),
+          (row.policy_drift || []).map(function(item) { return [item.title, item.severity, item.status].join(' '); }).join(' ')
+        ].filter(Boolean).join(' ').toLowerCase();
+      }
+      function rolloutRowMatchesFilters(row, filters) {
+        var state = row.rollout || {};
+        var mode = state.integration_mode || 'unset';
+        var testStatus = state.test_status || 'not_started';
+        var blockers = row.blockers || [];
+        if (filters.search && rolloutRowSearchText(row).indexOf(filters.search) === -1) return false;
+        if (filters.status && rolloutStatus(row) !== filters.status) return false;
+        if (filters.mode && mode !== filters.mode) return false;
+        if (filters.test && testStatus !== filters.test) return false;
+        if (filters.blockers === 'has_blockers' && !blockers.length) return false;
+        if (filters.blockers === 'no_blockers' && blockers.length) return false;
+        if (filters.blockers === 'owner_gaps' && !blockers.some(function(blocker) { return /owner/i.test(blocker); })) return false;
+        if (filters.blockers === 'rollback_gaps' && !blockers.some(function(blocker) { return /rollback/i.test(blocker); })) return false;
+        if (filters.blockers === 'test_gaps' && !blockers.some(function(blocker) { return /dry-run|traffic|test evidence|canary/i.test(blocker); })) return false;
+        return true;
+      }
+      function rolloutFiltersActive(filters) {
+        return Boolean(filters && (filters.search || filters.status || filters.mode || filters.test || filters.blockers));
+      }
+      function filteredRolloutRows(filters) {
+        var currentFilters = filters || rolloutFilterState();
+        return cachedRolloutRows.filter(function(row) {
+          return rolloutRowMatchesFilters(row, currentFilters);
+        });
+      }
+      function renderRolloutList() {
+        var filters = rolloutFilterState();
+        var visibleRows = filteredRolloutRows(filters);
+        var filtered = visibleRows.length !== cachedRolloutRows.length || rolloutFiltersActive(filters);
+        text('rolloutMeta', (filtered ? number(visibleRows.length) + ' of ' : '') + number(cachedRolloutRows.length) + ' candidate workloads');
+        if (!cachedRolloutRows.length) {
+          byId('rolloutList').innerHTML = '<div class="empty">No API inventory rows are visible yet. Create one project and provider slot before building the customer rollout plan.</div>';
+          return;
+        }
+        byId('rolloutList').innerHTML = visibleRows.length ? visibleRows.map(renderRolloutRow).join('') : '<div class="empty">No rollout rows match these filters. Clear filters or review API Inventory, Policy Drift, and Provider Slots.</div>';
+      }
+      function rolloutSummaryForRows(rows) {
+        var rolloutRows = Array.isArray(rows) ? rows : [];
+        return {
+          total: rolloutRows.length,
+          live: rolloutRows.filter(function(row) { return rolloutStatus(row) === 'live'; }).length,
+          canary: rolloutRows.filter(function(row) { return rolloutStatus(row) === 'canary'; }).length,
+          ready_for_canary: rolloutRows.filter(function(row) { return rolloutStatus(row) === 'ready_for_canary'; }).length,
+          planned: rolloutRows.filter(function(row) { return rolloutStatus(row) === 'planned'; }).length,
+          hold: rolloutRows.filter(function(row) { return rolloutStatus(row) === 'hold'; }).length,
+          rollback: rolloutRows.filter(function(row) { return rolloutStatus(row) === 'rollback'; }).length,
+          draft: rolloutRows.filter(function(row) { return rolloutStatus(row) === 'draft'; }).length,
+          owner_gaps: rolloutRows.filter(function(row) { return (row.blockers || []).some(function(blocker) { return /owner/i.test(blocker); }); }).length,
+          rollback_gaps: rolloutRows.filter(function(row) { return (row.blockers || []).some(function(blocker) { return /rollback/i.test(blocker); }); }).length,
+          test_gaps: rolloutRows.filter(function(row) { return (row.blockers || []).some(function(blocker) { return /dry-run|traffic|test evidence|canary/i.test(blocker); }); }).length,
+          blocker_count: rolloutRows.reduce(function(total, row) { return total + (row.blockers || []).length; }, 0)
+        };
+      }
+      function rolloutSummary() {
+        return rolloutSummaryForRows(cachedRolloutRows);
       }
       function rolloutEvidencePacket() {
         var summary = rolloutSummary();
@@ -4835,6 +4960,85 @@ ${renderDatalistOptions(ENTERPRISE_MANUAL_API_KEY_PROVIDER_OPTIONS)}
           ]
         };
       }
+      function rolloutBriefRowLabel(row) {
+        var state = row.rollout || {};
+        var project = row.project || {};
+        var provider = row.provider || {};
+        var providerLabel = row.provider ? (provider.slug || provider.provider || 'provider') : 'no provider slot';
+        return (state.application || (row.inventory_annotation || {}).business_service || project.name || project.vp_proj_id || 'Unnamed workload') + ' / ' + providerLabel;
+      }
+      function rolloutBriefActions(row) {
+        var state = row.rollout || {};
+        var blockers = row.blockers || [];
+        var actions = [];
+        if (!state.application) actions.push('name the application/workload');
+        if (!state.integration_mode) actions.push('choose integration mode');
+        if (!state.app_owner || !state.gateway_owner) actions.push('assign app and gateway owners');
+        if (!state.target_date) actions.push('set target date');
+        if (!state.rollback_owner || !state.rollback_path) actions.push('confirm rollback owner/path');
+        if (blockers.length) actions.push('close blockers: ' + blockers.slice(0, 4).join('; '));
+        if (rolloutStatus(row) === 'ready_for_canary') actions.push('schedule canary and support window');
+        if (rolloutStatus(row) === 'canary') actions.push('review canary evidence before live traffic');
+        if (rolloutStatus(row) === 'live') actions.push('keep monitoring and release evidence current');
+        return actions.length ? actions : ['ready for customer cutover review'];
+      }
+      function rolloutBriefPriority(row) {
+        var status = rolloutStatus(row);
+        var score = (row.blockers || []).length * 10;
+        if (status === 'hold') score += 80;
+        if (status === 'rollback') score += 70;
+        if (status === 'draft') score += 35;
+        if (status === 'planned') score += 20;
+        if (status === 'ready_for_canary') score += 12;
+        if ((row.policy_drift || []).some(function(item) { return item.severity === 'critical' || item.severity === 'high'; })) score += 20;
+        return score;
+      }
+      function rolloutBrief() {
+        var filters = rolloutFilterState();
+        var rows = filteredRolloutRows(filters);
+        var summary = rolloutSummaryForRows(rows);
+        var scope = rolloutFiltersActive(filters) ? 'filtered rollout rows' : 'all rollout rows';
+        var priorityRows = rows.slice().sort(function(left, right) {
+          return rolloutBriefPriority(right) - rolloutBriefPriority(left);
+        }).filter(function(row) {
+          return rolloutBriefPriority(row) > 0;
+        }).slice(0, 12);
+        var lines = [
+          'VaultProof integration rollout brief',
+          'Generated: ' + new Date().toISOString(),
+          'Organization: ' + (currentOrgId || 'not selected'),
+          'Scope: ' + scope + ' (' + number(rows.length) + ' row(s))',
+          '',
+          'Summary:',
+          '- Candidate workloads: ' + number(summary.total),
+          '- Live: ' + number(summary.live),
+          '- Canary: ' + number(summary.canary),
+          '- Ready for canary: ' + number(summary.ready_for_canary),
+          '- Planned: ' + number(summary.planned),
+          '- Draft: ' + number(summary.draft),
+          '- Hold: ' + number(summary.hold),
+          '- Rollback: ' + number(summary.rollback),
+          '- Total blockers: ' + number(summary.blocker_count),
+          '- Owner gaps: ' + number(summary.owner_gaps),
+          '- Rollback gaps: ' + number(summary.rollback_gaps),
+          '- Test evidence gaps: ' + number(summary.test_gaps),
+          '',
+          'Priority actions:'
+        ];
+        if (priorityRows.length) {
+          priorityRows.forEach(function(row) {
+            lines.push('- ' + rolloutBriefRowLabel(row) + ' [' + rolloutStatus(row) + ']: ' + rolloutBriefActions(row).join('; '));
+          });
+        } else {
+          lines.push('- No priority rollout blockers in the current scope.');
+        }
+        lines.push(
+          '',
+          'Secret boundary:',
+          '- This brief is metadata-only. It excludes raw provider keys, encrypted shares, bearer tokens, OAuth secrets, SAML material, request bodies, response bodies, and customer payloads.'
+        );
+        return lines.join('\\n');
+      }
       function renderRolloutSummary() {
         if (PAGE_MODE !== 'rollout') return;
         var summary = rolloutSummary();
@@ -4847,7 +5051,7 @@ ${renderDatalistOptions(ENTERPRISE_MANUAL_API_KEY_PROVIDER_OPTIONS)}
           '<div class="row"><div><div class="row-title">Choose first workload</div><div class="row-sub">Pick one API inventory row, set app/gateway owners, select the integration mode, and define the target date.</div></div><a class="tag good" href="/app/inventory">inventory</a></div>',
           '<div class="row"><div><div class="row-title">Close rollout blockers</div><div class="row-sub">Resolve policy drift, provider material, caller lock, dry-run evidence, and rollback gaps before canary.</div></div><span><a class="tag" href="/app/policy">policy</a><a class="tag" href="/app/control">control</a></span></div>',
           '<div class="row"><div><div class="row-title">Run copy-safe test</div><div class="row-sub">Use the snippet button for a dry-run request with VaultProof auth placeholders, gateway marker, and no raw provider key.</div></div><a class="tag" href="/app/keys">provider slots</a></div>',
-          '<div class="row"><div><div class="row-title">Launch evidence</div><div class="row-sub">Export vaultproof_enterprise_integration_rollout into Evidence and Security Review before live traffic.</div></div><span><a class="tag" href="/app/evidence">evidence</a><a class="tag" href="/app/security-review">security review</a></span></div>'
+          '<div class="row"><div><div class="row-title">Launch evidence</div><div class="row-sub">Export vaultproof_enterprise_integration_rollout or copy the rollout brief into Evidence and Security Review before live traffic.</div></div><span><button class="tag good" type="button" data-action="copy-rollout-brief">brief</button><a class="tag" href="/app/evidence">evidence</a><a class="tag" href="/app/security-review">security review</a></span></div>'
         ].join('');
       }
       function renderRollout() {
@@ -4855,13 +5059,16 @@ ${renderDatalistOptions(ENTERPRISE_MANUAL_API_KEY_PROVIDER_OPTIONS)}
         if (panel) panel.style.display = PAGE_MODE === 'rollout' ? 'grid' : 'none';
         if (PAGE_MODE !== 'rollout') return;
         cachedRolloutRows = buildRolloutRows();
-        text('rolloutMeta', cachedRolloutRows.length + ' candidate workloads');
-        byId('rolloutList').innerHTML = cachedRolloutRows.length ? cachedRolloutRows.map(renderRolloutRow).join('') : '<div class="empty">No API inventory rows are visible yet. Create one project and provider slot before building the customer rollout plan.</div>';
+        renderRolloutList();
         renderRolloutSummary();
       }
       function copyRolloutJson() {
         cachedRolloutRows = buildRolloutRows();
         copyToClipboard(JSON.stringify(rolloutEvidencePacket(), null, 2), 'Integration rollout JSON');
+      }
+      function copyRolloutBrief() {
+        cachedRolloutRows = buildRolloutRows();
+        copyToClipboard(rolloutBrief(), 'Integration rollout brief');
       }
       function copyRolloutSnippet(target) {
         var rowId = target.getAttribute('data-rollout-row-id');
@@ -5166,12 +5373,26 @@ ${renderDatalistOptions(ENTERPRISE_MANUAL_API_KEY_PROVIDER_OPTIONS)}
           renderPolicyList();
         });
       }
+      if (byId('rolloutFilterForm')) {
+        byId('rolloutFilterForm').addEventListener('submit', function(event) {
+          event.preventDefault();
+          renderRolloutList();
+        });
+      }
       if (byId('clearPolicyFilters')) {
         byId('clearPolicyFilters').addEventListener('click', function() {
           ['policySearch', 'policySeverityFilter', 'policyStatusFilter', 'policyControlFilter'].forEach(function(id) {
             if (byId(id)) byId(id).value = '';
           });
           renderPolicyList();
+        });
+      }
+      if (byId('clearRolloutFilters')) {
+        byId('clearRolloutFilters').addEventListener('click', function() {
+          ['rolloutSearch', 'rolloutStatusFilter', 'rolloutModeFilter', 'rolloutTestFilter', 'rolloutBlockerFilter'].forEach(function(id) {
+            if (byId(id)) byId(id).value = '';
+          });
+          renderRolloutList();
         });
       }
       if (byId('clearInventoryFilters')) {
@@ -5212,6 +5433,9 @@ ${renderDatalistOptions(ENTERPRISE_MANUAL_API_KEY_PROVIDER_OPTIONS)}
       if (byId('copyRolloutJsonBtn')) {
         byId('copyRolloutJsonBtn').addEventListener('click', copyRolloutJson);
       }
+      if (byId('copyRolloutBriefBtn')) {
+        byId('copyRolloutBriefBtn').addEventListener('click', copyRolloutBrief);
+      }
       document.addEventListener('input', function(event) {
         var target = event.target;
         if (!target || !target.getAttribute) return;
@@ -5221,6 +5445,10 @@ ${renderDatalistOptions(ENTERPRISE_MANUAL_API_KEY_PROVIDER_OPTIONS)}
         }
         if (target.id === 'policySearch') {
           renderPolicyList();
+          return;
+        }
+        if (target.id === 'rolloutSearch') {
+          renderRolloutList();
           return;
         }
         if (target.getAttribute('data-manual-key-field')) {
@@ -5250,6 +5478,10 @@ ${renderDatalistOptions(ENTERPRISE_MANUAL_API_KEY_PROVIDER_OPTIONS)}
           renderPolicyList();
           return;
         }
+        if (['rolloutStatusFilter', 'rolloutModeFilter', 'rolloutTestFilter', 'rolloutBlockerFilter'].indexOf(target.id) !== -1) {
+          renderRolloutList();
+          return;
+        }
         if (target.getAttribute('data-manual-key-field')) {
           saveManualApiKeyField(target);
           return;
@@ -5271,6 +5503,10 @@ ${renderDatalistOptions(ENTERPRISE_MANUAL_API_KEY_PROVIDER_OPTIONS)}
         if (!target || !target.getAttribute) return;
         if (target.getAttribute('data-action') === 'copy-rollout-snippet') {
           copyRolloutSnippet(target);
+          return;
+        }
+        if (target.getAttribute('data-action') === 'copy-rollout-brief') {
+          copyRolloutBrief();
           return;
         }
         if (target.getAttribute('data-action') === 'open-inventory-import') {

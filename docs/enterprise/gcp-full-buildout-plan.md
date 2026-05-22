@@ -365,6 +365,8 @@ First demo slice:
 - Built: store demo rollout state in browser local storage per organization under `vaultproof_integration_rollouts::<orgId>` until the audited table exists.
 - Built: capture application/workload, environment, integration mode, rollout status, app owner, gateway owner, target date, support window, canary percentage, test status, rollback owner/path, and notes.
 - Built: show blockers from policy drift, provider material status, caller-lock policy, missing app/gateway owner, missing target date, missing rollback path, inventory blockers, and stale/no traffic evidence.
+- Built: add local rollout filters for search, rollout status, integration mode, test status, and blocker type so paid-user testers can focus on hold rows, canary-ready workloads, owner gaps, rollback gaps, or test-evidence gaps.
+- Built: add a copyable metadata-only rollout brief with status mix, blocker counts, owner/rollback/test gaps, priority actions, and explicit secret-boundary language.
 - Built: provide copy-safe dry-run snippets with `YOUR_VAULTPROOF_SESSION_JWT` placeholders and a copyable `vaultproof_enterprise_integration_rollout` JSON evidence packet without secrets.
 - Built: add links to API Inventory, Policy Drift, Provider Slots, Activity, Control, Launch, Evidence, and Security Review.
 

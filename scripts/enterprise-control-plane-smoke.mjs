@@ -3158,7 +3158,7 @@ async function assertEnterpriseLoginRoute() {
     {
       path: '/app/rollout',
       title: 'Rollout Manager - VaultProof Enterprise',
-      required: ['/api/v1/enterprise/projects/bootstrap', 'Integration rollout board', 'Rollout evidence', 'workload cutover', 'vaultproof_integration_rollouts', 'data-rollout-field', 'application/workload', 'integration mode', 'app owner', 'gateway owner', 'canary percent', 'rollback path', 'copy rollout JSON', 'copy snippet', 'vaultproof_enterprise_integration_rollout', 'YOUR_VAULTPROOF_SESSION_JWT', '/app/control', '/app/inventory', '/app/policy', '/app/keys', '/app/activity', '/app/evidence', '/app/security-review'],
+      required: ['/api/v1/enterprise/projects/bootstrap', 'Integration rollout board', 'Rollout evidence', 'workload cutover', 'vaultproof_integration_rollouts', 'rolloutFilterForm', 'rolloutSearch', 'rolloutStatusFilter', 'rolloutModeFilter', 'rolloutTestFilter', 'rolloutBlockerFilter', 'clearRolloutFilters', 'rolloutRowMatchesFilters', 'filteredRolloutRows', 'copy rollout brief', 'copyRolloutBriefBtn', 'copyRolloutBrief', 'copy-rollout-brief', 'rolloutBrief', 'VaultProof integration rollout brief', 'data-rollout-field', 'application/workload', 'integration mode', 'app owner', 'gateway owner', 'canary percent', 'rollback path', 'copy rollout JSON', 'copy snippet', 'vaultproof_enterprise_integration_rollout', 'YOUR_VAULTPROOF_SESSION_JWT', '/app/control', '/app/inventory', '/app/policy', '/app/keys', '/app/activity', '/app/evidence', '/app/security-review'],
     },
     {
       path: '/app/keys',
