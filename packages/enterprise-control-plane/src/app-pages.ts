@@ -5997,6 +5997,26 @@ function renderEnterpriseSupportPage(pageName: EnterpriseSupportPageName): strin
           <div id="testerReadinessList" class="list"></div>
         </div>
         <div class="card" style="grid-column:1/-1">
+          <div class="section-title">
+            <h2>Guided session plan</h2>
+            <div class="evidence-actions">
+              <span id="testerSessionMeta" class="mini">not scheduled</span>
+              <button id="copyTesterSessionBriefBtn" type="button">copy session brief</button>
+            </div>
+          </div>
+          <form id="testerSessionForm" class="tester-form">
+            <div class="tester-field"><label for="testerSessionStatus">session status</label><select id="testerSessionStatus" data-tester-session-field="status"><option value="not_scheduled">not scheduled</option><option value="scheduled">scheduled</option><option value="in_progress">in progress</option><option value="complete">complete</option><option value="blocked">blocked</option></select></div>
+            <div class="tester-field"><label for="testerSessionWindow">session window</label><input id="testerSessionWindow" data-tester-session-field="session_window" placeholder="2026-06-01 10:00 PT" /></div>
+            <div class="tester-field"><label for="testerSessionFacilitator">VaultProof facilitator</label><input id="testerSessionFacilitator" data-tester-session-field="facilitator" placeholder="demo/session owner" /></div>
+            <div class="tester-field"><label for="testerSessionCustomerOwner">customer owner</label><input id="testerSessionCustomerOwner" data-tester-session-field="customer_owner" placeholder="buyer, security, or platform owner" /></div>
+            <div class="tester-field wide"><label for="testerSessionSuccess">success criteria</label><textarea id="testerSessionSuccess" data-tester-session-field="success_criteria" placeholder="What must be true at the end of the guided test. Metadata only."></textarea></div>
+            <div class="tester-field wide"><label for="testerSessionAction">customer action</label><textarea id="testerSessionAction" data-tester-session-field="customer_action" placeholder="Decision, follow-up, or next test action expected from the customer."></textarea></div>
+            <div class="tester-field wide"><label for="testerSessionNote">session note</label><textarea id="testerSessionNote" data-tester-session-field="session_note" placeholder="Customer-safe session note. Do not paste passwords, tokens, provider keys, request bodies, or customer payloads."></textarea></div>
+          </form>
+          <div id="testerSessionList" class="list" style="margin-top:14px"></div>
+          <textarea id="testerSessionBrief" class="brief-box" readonly aria-label="Tester session brief"></textarea>
+        </div>
+        <div class="card" style="grid-column:1/-1">
           <div class="section-title"><h2>Tester roster</h2><span class="mini">saved in this browser</span></div>
           <div id="testerRosterList" class="list"></div>
         </div>
@@ -6733,6 +6753,7 @@ function renderEnterpriseSupportPage(pageName: EnterpriseSupportPageName): strin
       var latestEntitlementsPacket = null;
       var latestPaidOnboardingPacket = null;
       var latestPilotSuccessPacket = null;
+      var latestPilotTesterPacket = null;
       function byId(id) { return document.getElementById(id); }
       function text(id, value) { var el = byId(id); if (el) el.textContent = value == null ? '' : String(value); }
       function escapeHtml(value) {
@@ -8144,6 +8165,9 @@ function renderEnterpriseSupportPage(pageName: EnterpriseSupportPageName): strin
       function pilotTesterStorageKey() {
         return 'vaultproof_pilot_testers::' + (currentOrgId || 'default');
       }
+      function pilotTesterSessionStorageKey() {
+        return 'vaultproof_pilot_tester_session::' + (currentOrgId || 'default');
+      }
       function testerSecretPattern(value) {
         return /(sk-[a-z0-9_-]{8,}|gocspx-|eyJ[a-zA-Z0-9_-]{10,}|-----BEGIN|Bearer\\s+|service[_ -]?role|client[_ -]?secret|api[_ -]?key|password|private[_ -]?key|authorization:|cookie:|x-api-key|secret_access_key|origin[_ -]?lock|runtime[_ -]?token|executor[_ -]?signing)/i.test(String(value || ''));
       }
@@ -8201,8 +8225,67 @@ function renderEnterpriseSupportPage(pageName: EnterpriseSupportPageName): strin
       function writePilotTesterRecords(rows) {
         localStorage.setItem(pilotTesterStorageKey(), JSON.stringify((rows || []).slice(0, 60)));
       }
+      function defaultPilotTesterSessionState() {
+        return {
+          status: 'not_scheduled',
+          session_window: '',
+          facilitator: '',
+          customer_owner: '',
+          success_criteria: '',
+          customer_action: '',
+          session_note: ''
+        };
+      }
+      function getPilotTesterSessionState() {
+        try {
+          var parsed = JSON.parse(localStorage.getItem(pilotTesterSessionStorageKey()) || '{}');
+          return Object.assign(defaultPilotTesterSessionState(), parsed && typeof parsed === 'object' ? parsed : {});
+        } catch (_) {
+          return defaultPilotTesterSessionState();
+        }
+      }
+      function normalizeTesterSessionStatus(value) {
+        var status = String(value || '').toLowerCase();
+        return ['not_scheduled', 'scheduled', 'in_progress', 'complete', 'blocked'].indexOf(status) !== -1 ? status : 'not_scheduled';
+      }
+      function setPilotTesterSessionState(field, value) {
+        var state = getPilotTesterSessionState();
+        state[field] = field === 'status' ? normalizeTesterSessionStatus(value) : redactTesterText(value);
+        state.updated_at = new Date().toISOString();
+        localStorage.setItem(pilotTesterSessionStorageKey(), JSON.stringify(state));
+      }
+      function buildTesterSessionPacket(state) {
+        var normalized = Object.assign(defaultPilotTesterSessionState(), state || {});
+        normalized.status = normalizeTesterSessionStatus(normalized.status);
+        var ready = ['scheduled', 'in_progress', 'complete'].indexOf(normalized.status) !== -1 &&
+          Boolean(String(normalized.session_window || '').trim()) &&
+          Boolean(String(normalized.facilitator || '').trim()) &&
+          Boolean(String(normalized.customer_owner || '').trim()) &&
+          Boolean(String(normalized.success_criteria || '').trim());
+        var actions = [];
+        if (normalized.status === 'blocked') actions.push('Resolve session blocker before inviting paid-pilot testers.');
+        if (!normalized.session_window) actions.push('Record the guided session window.');
+        if (!normalized.facilitator) actions.push('Assign a VaultProof facilitator.');
+        if (!normalized.customer_owner) actions.push('Confirm the customer owner who can make the next decision.');
+        if (!normalized.success_criteria) actions.push('Write the customer-safe success criteria for this guided session.');
+        if (!actions.length) actions.push('Run the guided session, capture feedback, and move any blockers to the right evidence board.');
+        return {
+          status: normalized.status,
+          ready: ready,
+          session_window: redactTesterText(normalized.session_window) || null,
+          facilitator: redactTesterText(normalized.facilitator) || null,
+          customer_owner: redactTesterText(normalized.customer_owner) || null,
+          success_criteria: redactTesterText(normalized.success_criteria) || null,
+          customer_action: redactTesterText(normalized.customer_action) || null,
+          session_note: redactTesterText(normalized.session_note) || null,
+          updated_at: normalized.updated_at || null,
+          next_actions: actions,
+          secret_boundary: 'Session planning is metadata-only and excludes passwords, tokens, provider keys, request bodies, responses, and customer payloads.'
+        };
+      }
       function buildPilotTesterReadinessPacket(org, sso, readiness, overview, bootstrap) {
         var testers = readPilotTesterRecords();
+        var guidedSession = buildTesterSessionPacket(getPilotTesterSessionState());
         var productionReady = readiness.production_ready === true;
         var loginReadyStatuses = ['login_passed', 'scenario_passed', 'feedback_received', 'complete'];
         var scenarioReadyStatuses = ['scenario_passed', 'feedback_received', 'complete'];
@@ -8219,10 +8302,12 @@ function renderEnterpriseSupportPage(pageName: EnterpriseSupportPageName): strin
         if (!testers.length) blockers.push('No paid-pilot testers are recorded for this organization.');
         if (testers.length && !loginPassed) blockers.push('No tester has a recorded login pass yet.');
         if (blocked) blockers.push(number(blocked) + ' tester rows have a login blocker or blocker note.');
+        if (testers.length && !guidedSession.ready) blockers.push('Guided session plan is incomplete.');
+        if (guidedSession.status === 'blocked') blockers.push('Guided session is blocked.');
         var status = blockers.length ? (testers.length ? 'hold' : 'needs_testers') : 'ready_for_guided_testing';
         return {
           packet_type: 'vaultproof_enterprise_paid_pilot_tester_readiness',
-          packet_version: 1,
+          packet_version: 2,
           status: status,
           generated_at: new Date().toISOString(),
           generated_from: location.origin + '/app/testers',
@@ -8251,8 +8336,10 @@ function renderEnterpriseSupportPage(pageName: EnterpriseSupportPageName): strin
             complete: complete,
             blocked: blocked,
             scenario_count: Object.keys(scenarios).length,
+            guided_session_ready: guidedSession.ready,
             blockers: blockers
           },
+          guided_session: guidedSession,
           testers: testers,
           tester_scenarios: [
             { id: 'login_and_sso', title: 'Login and SSO', path: '/app/login', success: 'Tester signs in and lands on the enterprise dashboard for the selected organization.' },
@@ -8277,6 +8364,7 @@ function renderEnterpriseSupportPage(pageName: EnterpriseSupportPageName): strin
           operator_actions: [
             'Invite testers from /app/members or confirm SSO assignment before the session.',
             'Run a real login rehearsal for at least one tester before the meeting.',
+            'Record the guided session window, facilitator, customer owner, and success criteria before paid-pilot testing.',
             'Assign each tester one primary scenario so feedback is focused.',
             'Record blockers and feedback as metadata only; do not paste passwords, tokens, provider keys, request bodies, or customer payloads.',
             'Move blockers into Launch, Policy Drift, Rollout, Scanner, or Release Evidence before paid traffic.'
@@ -10843,6 +10931,60 @@ function renderEnterpriseSupportPage(pageName: EnterpriseSupportPageName): strin
           '<div class="tester-field wide"><label>feedback note</label><textarea data-tester-record-id="' + escapeHtml(record.id) + '" data-tester-field="feedback" placeholder="Customer-safe feedback, next step, or objection. Metadata only.">' + escapeHtml(record.feedback || '') + '</textarea></div>' +
           '</div></div>';
       }
+      function testerSessionRows(packet) {
+        var session = packet.guided_session || {};
+        return [
+          row('Guided session status', session.ready ? 'Session plan is ready for customer testing.' : 'Record session status, window, facilitator, customer owner, and success criteria before guided testing.', session.status || 'not_scheduled', session.ready ? 'good' : session.status === 'blocked' ? 'bad' : 'warn'),
+          row('Session window', session.session_window || 'missing', session.session_window ? 'scheduled' : 'missing', session.session_window ? 'good' : 'warn'),
+          row('Facilitator', session.facilitator || 'missing', session.facilitator ? 'owner' : 'missing', session.facilitator ? 'good' : 'warn'),
+          row('Customer owner', session.customer_owner || 'missing', session.customer_owner ? 'owner' : 'missing', session.customer_owner ? 'good' : 'warn'),
+          row('Success criteria', session.success_criteria || 'missing', session.success_criteria ? 'criteria' : 'missing', session.success_criteria ? 'good' : 'warn'),
+          row('Customer action', session.customer_action || 'No customer action recorded yet.', 'next', session.customer_action ? 'good' : 'warn'),
+          row('Session note', session.session_note || 'No customer-safe session note recorded.', 'note', session.session_note ? 'good' : 'warn')
+        ].concat((session.next_actions || []).map(function(action) {
+          return row('Session action', action, 'next', action.indexOf('Resolve') === 0 ? 'bad' : 'warn');
+        }));
+      }
+      function testerSessionBriefText(packet) {
+        var session = packet.guided_session || {};
+        var summary = packet.summary || {};
+        var testers = (packet.testers || []).map(function(item) {
+          return (item.tester_name || 'tester') + ' - ' + testerScenarioLabel(item.scenario) + ' - ' + (item.status || 'not_invited') + (item.owner ? ' - owner ' + item.owner : '');
+        });
+        return [
+          'VaultProof paid-pilot guided tester session brief',
+          'Generated: ' + packet.generated_at,
+          'Organization: ' + ((packet.organization && packet.organization.name) || 'selected workspace'),
+          'Tester readiness: ' + packet.status,
+          'Guided session: ' + (session.status || 'not_scheduled') + ' / ready: ' + (session.ready ? 'yes' : 'no'),
+          'Session window: ' + (session.session_window || 'missing'),
+          'VaultProof facilitator: ' + (session.facilitator || 'missing'),
+          'Customer owner: ' + (session.customer_owner || 'missing'),
+          '',
+          'Success criteria:',
+          '- ' + (session.success_criteria || 'missing'),
+          '',
+          'Customer action:',
+          '- ' + (session.customer_action || 'not recorded'),
+          '',
+          'Tester roster:',
+          '- ' + (testers.length ? testers.join('\\n- ') : 'none recorded'),
+          '',
+          'Readiness counts:',
+          '- Total testers: ' + number(summary.total_testers),
+          '- Invited: ' + number(summary.invited),
+          '- Login passed: ' + number(summary.login_passed),
+          '- Scenario passed: ' + number(summary.scenario_passed),
+          '- Feedback received: ' + number(summary.feedback_received),
+          '- Blockers: ' + (summary.blockers && summary.blockers.length ? summary.blockers.join('; ') : 'none'),
+          '',
+          'Next actions:',
+          '- ' + ((session.next_actions || []).length ? session.next_actions.join('\\n- ') : 'Run the guided session and capture feedback.'),
+          '',
+          'Secret boundary:',
+          '- ' + (session.secret_boundary || 'Metadata only; no secrets or payloads are included.')
+        ].join('\\n');
+      }
       function savePilotTesterField(target) {
         var id = target.getAttribute('data-tester-record-id');
         var field = target.getAttribute('data-tester-field');
@@ -10900,13 +11042,32 @@ function renderEnterpriseSupportPage(pageName: EnterpriseSupportPageName): strin
       function renderPilotTestersPanel(org, sso, readiness, overview, bootstrap) {
         var packet = buildPilotTesterReadinessPacket(org, sso, readiness, overview, bootstrap);
         var summary = packet.summary || {};
+        var sessionState = getPilotTesterSessionState();
+        [
+          ['testerSessionStatus', 'status'],
+          ['testerSessionWindow', 'session_window'],
+          ['testerSessionFacilitator', 'facilitator'],
+          ['testerSessionCustomerOwner', 'customer_owner'],
+          ['testerSessionSuccess', 'success_criteria'],
+          ['testerSessionAction', 'customer_action'],
+          ['testerSessionNote', 'session_note']
+        ].forEach(function(item) {
+          var el = byId(item[0]);
+          if (el && document.activeElement !== el) el.value = sessionState[item[1]] || '';
+        });
+        latestPilotTesterPacket = packet;
         text('testerMeta', packet.status);
+        text('testerSessionMeta', packet.guided_session.ready ? 'ready' : packet.guided_session.status || 'not scheduled');
         byId('testerReadinessList').innerHTML = [
           row('Paid-pilot tester readiness', packet.status === 'ready_for_guided_testing' ? 'Tester roster has a login pass and no unresolved blocker notes in this browser evidence state.' : 'Hold until testers are recorded, at least one login pass is confirmed, and blocker notes are resolved.', packet.status, packet.status === 'ready_for_guided_testing' ? 'good' : 'warn'),
           row('Tester progress', number(summary.total_testers) + ' testers, ' + number(summary.invited) + ' invited, ' + number(summary.login_passed) + ' login passed, ' + number(summary.scenario_passed) + ' scenario passed, ' + number(summary.feedback_received) + ' feedback received.', summary.total_testers ? 'recorded' : 'missing', summary.total_testers ? 'good' : 'warn'),
+          row('Guided session', packet.guided_session.ready ? 'Guided session plan has a window, facilitator, customer owner, and success criteria.' : 'Guided session plan is not ready yet.', packet.guided_session.status, packet.guided_session.ready ? 'good' : 'warn'),
           row('Runtime and SSO context', 'Runtime production-ready: ' + (packet.runtime.production_ready ? 'yes' : 'no') + '. SSO/login posture: ' + (packet.organization.sso_provider_status || 'not confirmed') + '.', packet.runtime.production_ready ? 'ready' : 'blocked', packet.runtime.production_ready ? 'good' : 'bad'),
           row('Blockers', summary.blockers && summary.blockers.length ? summary.blockers.join('; ') : 'No tester blockers recorded in this browser evidence state.', summary.blocked ? 'blocked' : 'clear', summary.blocked ? 'bad' : 'good')
         ].join('');
+        byId('testerSessionList').innerHTML = testerSessionRows(packet).join('');
+        var sessionBrief = byId('testerSessionBrief');
+        if (sessionBrief) sessionBrief.value = testerSessionBriefText(packet);
         byId('testerRosterList').innerHTML = packet.testers.length ? packet.testers.map(renderPilotTesterRecord).join('') : '<div class="empty">No pilot testers saved yet. Add at least one tester, assign a scenario, and record login status before the guided session.</div>';
         byId('testerWorkflowList').innerHTML = [
           linkRow('Invite or confirm testers', 'Use Members to confirm organization access before the guided session.', '/app/members', 'members', 'good'),
@@ -11543,6 +11704,10 @@ function renderEnterpriseSupportPage(pageName: EnterpriseSupportPageName): strin
         event.preventDefault();
         addPilotTesterFromForm();
       });
+      var testerSessionForm = byId('testerSessionForm');
+      if (testerSessionForm) testerSessionForm.addEventListener('submit', function(event) {
+        event.preventDefault();
+      });
       document.addEventListener('change', function(event) {
         var target = event.target;
         if (!target || !target.getAttribute) return;
@@ -11642,6 +11807,13 @@ function renderEnterpriseSupportPage(pageName: EnterpriseSupportPageName): strin
         }
         if (target.hasAttribute('data-tester-field')) {
           savePilotTesterField(target);
+          return;
+        }
+        if (target.hasAttribute('data-tester-session-field')) {
+          setPilotTesterSessionState(target.getAttribute('data-tester-session-field') || '', target.value);
+          if (latestOrgPayload && latestReadiness) {
+            renderPilotTestersPanel((latestOrgPayload && latestOrgPayload.organization) || {}, (latestOrgPayload && latestOrgPayload.sso_status) || {}, latestReadiness, latestOverview || {}, latestBootstrap || {});
+          }
           return;
         }
         if (!target.hasAttribute('data-launch-check')) return;
@@ -11826,6 +11998,23 @@ function renderEnterpriseSupportPage(pageName: EnterpriseSupportPageName): strin
         } catch (_) {
           packet.focus();
           packet.select();
+        }
+      });
+      var copyTesterSessionBriefBtn = byId('copyTesterSessionBriefBtn');
+      if (copyTesterSessionBriefBtn) copyTesterSessionBriefBtn.addEventListener('click', async function() {
+        if (!latestPilotTesterPacket) return;
+        var textValue = testerSessionBriefText(latestPilotTesterPacket);
+        try {
+          await navigator.clipboard.writeText(textValue);
+          copyTesterSessionBriefBtn.textContent = 'copied';
+          setTimeout(function() { copyTesterSessionBriefBtn.textContent = 'copy session brief'; }, 1400);
+        } catch (_) {
+          var brief = byId('testerSessionBrief');
+          if (brief) {
+            brief.value = textValue;
+            brief.focus();
+            brief.select();
+          }
         }
       });
       var copyEntitlementsCapacityBriefBtn = byId('copyEntitlementsCapacityBriefBtn');

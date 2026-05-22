@@ -3221,7 +3221,7 @@ async function assertEnterpriseLoginRoute() {
     {
       path: '/app/testers',
       title: 'Pilot testers - VaultProof Enterprise',
-      required: ['Tester intake', 'Tester readiness', 'Tester roster', 'Scenario workflow', 'Tester readiness JSON', 'vaultproof_pilot_testers', 'data-tester-field', 'tester name/email', 'login and SSO', 'API proxy self-test', 'provider slot review', 'copy tester JSON', 'vaultproof_enterprise_paid_pilot_tester_readiness', 'ready_for_guided_testing', '/app/members', '/app/org', '/app/evidence', '/app/keys', '/app/security-review'],
+      required: ['Tester intake', 'Tester readiness', 'Guided session plan', 'testerSessionForm', 'data-tester-session-field', 'testerSessionList', 'testerSessionBrief', 'copy session brief', 'copyTesterSessionBriefBtn', 'testerSessionBriefText', 'VaultProof paid-pilot guided tester session brief', 'guided_session', 'guided_session_ready', 'session_window', 'success_criteria', 'customer_action', 'Tester roster', 'Scenario workflow', 'Tester readiness JSON', 'vaultproof_pilot_testers', 'vaultproof_pilot_tester_session', 'data-tester-field', 'tester name/email', 'login and SSO', 'API proxy self-test', 'provider slot review', 'copy tester JSON', 'vaultproof_enterprise_paid_pilot_tester_readiness', 'ready_for_guided_testing', '/app/members', '/app/org', '/app/evidence', '/app/keys', '/app/security-review'],
     },
     {
       path: '/app/settings',
