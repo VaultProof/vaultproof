@@ -188,7 +188,7 @@ export default {
     }
 
     // ── /api/v1/init/audit ────────────────────────────────────────────
-    if (url.pathname === '/api/v1/init/audit') {
+    if (url.pathname === '/api/v1/init/audit' || url.pathname === '/api/v1/init/audit/export') {
       const res = await handleAudit(request, env);
       if (res.status === 401) {
         const ip = request.headers.get('cf-connecting-ip') || '';

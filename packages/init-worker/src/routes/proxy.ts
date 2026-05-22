@@ -22,6 +22,7 @@ import { getSupabase } from '../lib/supabase.js';
 import { decrypt, zeroUint8Array } from '../crypto/encryption.js';
 import { deserializeShare, combineShares } from '../crypto/shamir.js';
 import { checkProxyRateLimit, rateLimitResponse } from '../lib/rate-limit.js';
+import { buildAuditChainProof, extractAuditChainProof } from '../lib/audit-chain.js';
 
 const SAFE_FORWARD_HEADERS = new Set([
   'content-type',
@@ -62,7 +63,40 @@ function queueProjectProxyLog(
   const write = async () => {
     try {
       const supabase = getSupabase(env);
-      const { error } = await supabase.from('project_access_logs').insert(log);
+      let previousHash: string | null = null;
+      try {
+        const { data: previousRows } = await supabase
+          .from('project_access_logs')
+          .select('metadata')
+          .eq('project_id', log.project_id)
+          .order('timestamp', { ascending: false })
+          .limit(1);
+        const previousMetadata = (previousRows?.[0]?.metadata || null) as Record<string, unknown> | null;
+        previousHash = extractAuditChainProof(previousMetadata)?.chain_hash || null;
+      } catch (e) {
+        console.error('Failed to read previous audit-chain hash:', e);
+      }
+
+      const timestamp = new Date().toISOString();
+      const metadata = log.metadata || {};
+      const auditChain = buildAuditChainProof(
+        {
+          ...log,
+          error: log.error ?? null,
+          metadata,
+          timestamp,
+        },
+        previousHash,
+        env,
+      );
+      const { error } = await supabase.from('project_access_logs').insert({
+        ...log,
+        timestamp,
+        metadata: {
+          ...metadata,
+          audit_chain: auditChain,
+        },
+      });
       if (error) {
         console.error('Failed to insert project proxy log:', error.message);
       }

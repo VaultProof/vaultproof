@@ -46,6 +46,7 @@ jobs:
           npx tsx src/lib/rate-limit.test.ts
           npx tsx src/lib/project-auth.test.ts
           npx tsx src/lib/project-cache.test.ts
+          npx tsx src/lib/audit-chain.test.ts
           npx tsx src/crypto/fast-crypt.test.ts
           npx tsx test/shamir-roundtrip.ts
         working-directory: packages/init-worker

@@ -1,6 +1,12 @@
 import type { Env } from '../types.js';
 import { authenticateUser, resolveOrganizationMembership } from '../lib/user-auth.js';
 import { getSupabase } from '../lib/supabase.js';
+import {
+  buildProjectAccessLogAuditEvent,
+  canonicalJson,
+  extractAuditChainProof,
+  getAuditSigningPublicKeyInfo,
+} from '../lib/audit-chain.js';
 
 function parseDays(request: Request, fallback = 30): number {
   const raw = Number(new URL(request.url).searchParams.get('days'));
@@ -17,6 +23,15 @@ function parseLimit(request: Request, fallback = 100): number {
   const limit = Math.floor(raw);
   if (limit < 1) return 1;
   if (limit > 500) return 500;
+  return limit;
+}
+
+function parseExportLimit(request: Request, fallback = 1000): number {
+  const raw = Number(new URL(request.url).searchParams.get('limit'));
+  if (!Number.isFinite(raw)) return fallback;
+  const limit = Math.floor(raw);
+  if (limit < 1) return 1;
+  if (limit > 5000) return 5000;
   return limit;
 }
 
@@ -69,6 +84,10 @@ export async function handleAudit(request: Request, env: Env): Promise<Response>
   }
 
   const supabase = getSupabase(env);
+  if (new URL(request.url).pathname === '/api/v1/init/audit/export') {
+    return handleAuditExport(request, env, supabase, membership);
+  }
+
   const days = parseDays(request, 30);
   const limit = parseLimit(request, 100);
   const fetchLimit = limit + 1;
@@ -285,6 +304,121 @@ export async function handleAudit(request: Request, env: Env): Promise<Response>
     },
     has_more: hasMore,
     next_before: nextBefore,
+    events,
+  });
+}
+
+async function handleAuditExport(
+  request: Request,
+  env: Env,
+  supabase: any,
+  membership: {
+    organization_id: string;
+    organization_name: string;
+    organization_kind: string;
+    organization_role: string;
+  },
+): Promise<Response> {
+  const days = parseDays(request, 30);
+  const limit = parseExportLimit(request, 1000);
+  const projectFilter = parseProjectFilter(request);
+  const since = new Date(Date.now() - days * 24 * 60 * 60 * 1000).toISOString();
+
+  const { data: projectRows } = await supabase
+    .from('projects')
+    .select('id, name, vp_proj_id')
+    .eq('organization_id', membership.organization_id)
+    .is('revoked_at', null);
+
+  const projects = (projectRows || []) as Array<{
+    id: string;
+    name: string | null;
+    vp_proj_id: string;
+  }>;
+  const projectIds = projects.map((project) => project.id);
+  const filteredProjectIds = projectFilter
+    ? projectIds.filter((projectId) => projectId === projectFilter)
+    : projectIds;
+
+  if (!filteredProjectIds.length) {
+    return Response.json({
+      format: 'vaultproof.project_access_log.audit_chain.v1',
+      generated_at: new Date().toISOString(),
+      organization: {
+        id: membership.organization_id,
+        name: membership.organization_name,
+        kind: membership.organization_kind,
+        current_role: membership.organization_role,
+      },
+      filters: { days, limit, project_id: projectFilter },
+      signing_keys: [],
+      events: [],
+    });
+  }
+
+  const { data: rows } = await supabase
+    .from('project_access_logs')
+    .select('id, project_id, project_key_id, provider, slug, method, upstream_path, status_code, latency_ms, error, metadata, timestamp')
+    .in('project_id', filteredProjectIds)
+    .gte('timestamp', since)
+    .order('timestamp', { ascending: true })
+    .limit(limit);
+
+  const signingKey = getAuditSigningPublicKeyInfo(env);
+  const events = ((rows || []) as Array<{
+    id: string;
+    project_id: string;
+    project_key_id: string;
+    provider: string;
+    slug: string;
+    method: string;
+    upstream_path: string;
+    status_code: number;
+    latency_ms: number;
+    error: string | null;
+    metadata: Record<string, unknown> | null;
+    timestamp: string;
+  }>).map((row) => {
+    const proof = extractAuditChainProof(row.metadata);
+    const event = buildProjectAccessLogAuditEvent(row);
+    return {
+      id: row.id,
+      project_id: row.project_id,
+      project_key_id: row.project_key_id,
+      timestamp: row.timestamp,
+      event,
+      event_canonical_json: canonicalJson(event),
+      audit_chain: proof,
+      raw: {
+        provider: row.provider,
+        slug: row.slug,
+        method: row.method,
+        upstream_path: row.upstream_path,
+        status_code: row.status_code,
+        latency_ms: row.latency_ms,
+        error: row.error,
+        metadata: row.metadata ? { ...row.metadata, audit_chain: undefined } : {},
+      },
+    };
+  });
+
+  return Response.json({
+    format: 'vaultproof.project_access_log.audit_chain.v1',
+    generated_at: new Date().toISOString(),
+    organization: {
+      id: membership.organization_id,
+      name: membership.organization_name,
+      kind: membership.organization_kind,
+      current_role: membership.organization_role,
+    },
+    filters: { days, limit, project_id: projectFilter },
+    verification: {
+      event_hash: 'sha256(canonical_json(event))',
+      chain_hash: 'sha256(canonical_json({version, previous_hash, event_hash}))',
+      signature_payload: 'vaultproof-audit-chain-v1\\n{chain_hash}',
+      canonical_json: 'JSON with object keys sorted recursively and undefined values normalized away',
+    },
+    signing_keys: signingKey ? [signingKey] : [],
     events,
   });
 }

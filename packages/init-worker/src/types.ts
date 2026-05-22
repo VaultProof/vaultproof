@@ -8,6 +8,9 @@ export interface Env {
   ALERTS_FROM_EMAIL?: string;
   ALERTS_REPLY_TO_EMAIL?: string;
   DEEPL_API_KEY?: string;
+  AUDIT_CHAIN_ED25519_PRIVATE_KEY_B64?: string;
+  AUDIT_CHAIN_HMAC_KEY?: string;
+  AUDIT_CHAIN_KEY_ID?: string;
 }
 
 export interface ProjectRecord {
