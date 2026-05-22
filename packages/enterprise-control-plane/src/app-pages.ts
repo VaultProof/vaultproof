@@ -6489,6 +6489,16 @@ function renderEnterpriseSupportPage(pageName: EnterpriseSupportPageName): strin
           <div class="section-title"><h2>Activation milestones</h2><span class="mini">saved in this browser</span></div>
           <div id="onboardingMilestoneList" class="list"></div>
         </div>
+        <div class="card" style="grid-column:1/-1">
+          <div class="section-title">
+            <h2>Role task checklist</h2>
+            <div class="evidence-actions">
+              <span id="onboardingTaskMeta" class="mini">customer owners</span>
+              <button id="copyOnboardingTaskBriefBtn" type="button">copy task brief</button>
+            </div>
+          </div>
+          <div id="onboardingTaskList" class="list"></div>
+        </div>
         <div class="card">
           <div class="section-title"><h2>Evidence path</h2><span class="mini">customer testing</span></div>
           <div id="onboardingEvidenceList" class="list"></div>
@@ -6678,6 +6688,7 @@ function renderEnterpriseSupportPage(pageName: EnterpriseSupportPageName): strin
       var latestBootstrap = null;
       var latestSecurityReviewPacket = null;
       var latestEntitlementsPacket = null;
+      var latestPaidOnboardingPacket = null;
       function byId(id) { return document.getElementById(id); }
       function text(id, value) { var el = byId(id); if (el) el.textContent = value == null ? '' : String(value); }
       function escapeHtml(value) {
@@ -6811,6 +6822,13 @@ function renderEnterpriseSupportPage(pageName: EnterpriseSupportPageName): strin
         { id: 'capacity-renewal-reviewed', title: 'Capacity and renewal reviewed', sub: 'Monthly calls, provider slots, seats, renewal/review date, retention label, and billing owner have been reviewed.', action: 'Confirm /app/entitlements against the paid-pilot contract or demo acceptance.', critical: true },
         { id: 'key-posture-accepted', title: 'Key posture accepted or rotation scheduled', sub: 'Shared/demo-only key posture is explicitly accepted for the demo or rotation is scheduled before paid customer data.', action: 'Use /app/evidence key-rotation proof and /app/keys provider-slot posture before the customer test.', critical: true },
         { id: 'customer-testing-window-scheduled', title: 'Customer testing window scheduled', sub: 'The customer testing date, tester roster, first scenario, rollback owner, and feedback capture path are known.', action: 'Review /app/testers, /app/evidence, and /app/pilot-success before the guided session.', critical: true }
+      ];
+      var PAID_ONBOARDING_ROLE_TASKS = [
+        { id: 'task-security-review', role: 'security', title: 'Security review owner', sub: 'Security owner reviews evidence, security packet, key posture, and remaining blockers.', action: 'Assign a security reviewer and walk /app/security-review plus /app/evidence before testing.' },
+        { id: 'task-platform-owner', role: 'platform', title: 'Platform owner', sub: 'Platform owner confirms login path, SSO posture, gateway/origin constraints, and rollback contact.', action: 'Assign a platform owner and review /app/org, /app/control, /app/rollout, and runbooks.' },
+        { id: 'task-app-owner', role: 'app owner', title: 'First workload app owner', sub: 'Application owner confirms first API workflow, expected traffic, provider path, and test success criteria.', action: 'Assign the first workload owner and review /app/pilot, /app/inventory, and /app/keys.' },
+        { id: 'task-billing-owner', role: 'billing', title: 'Billing and renewal owner', sub: 'Billing owner confirms package, allowance, renewal/review date, support tier, and expansion path.', action: 'Assign billing owner and review /app/entitlements plus /app/plans.' },
+        { id: 'task-support-owner', role: 'support', title: 'Support handoff owner', sub: 'Support owner confirms launch-week contact, escalation path, feedback capture, and optional incident-response boundary.', action: 'Assign support owner and review /app/support plus /app/pilot-success.' }
       ];
       var PAID_ONBOARDING_MANUAL_STALE_MS = 14 * 24 * 60 * 60 * 1000;
       function getPaidOnboardingManualState() {
@@ -9398,6 +9416,34 @@ function renderEnterpriseSupportPage(pageName: EnterpriseSupportPageName): strin
           });
         });
       }
+      function paidOnboardingRoleTaskRows() {
+        var state = getPaidOnboardingManualState();
+        return PAID_ONBOARDING_ROLE_TASKS.map(function(item) {
+          var record = state[item.id] && typeof state[item.id] === 'object' ? state[item.id] : {};
+          var status = normalizePaidOnboardingStatus(record.status, record.passed);
+          var stale = status === 'passed' && isStalePaidOnboardingEvidence(record.updated_at);
+          return Object.assign({}, item, {
+            status: status,
+            passed: status === 'passed' && !stale,
+            blocked: status === 'blocked',
+            stale: stale,
+            updated_at: record.updated_at || null,
+            owner: safeOnboardingText(record.owner) || null,
+            due_date: safeOnboardingText(record.due_date) || null,
+            note: safeOnboardingText(record.note) || null
+          });
+        });
+      }
+      function paidOnboardingTaskSummary(tasks) {
+        return {
+          total: tasks.length,
+          passed: tasks.filter(function(item) { return item.passed; }).length,
+          blocked: tasks.filter(function(item) { return item.blocked; }).length,
+          missing: tasks.filter(function(item) { return item.status === 'missing' || item.stale; }).length,
+          stale: tasks.filter(function(item) { return item.stale; }).length,
+          status: tasks.some(function(item) { return item.blocked; }) ? 'blocked' : tasks.every(function(item) { return item.passed; }) ? 'complete' : 'assigning'
+        };
+      }
       function buildPaidOnboardingAutomatedChecks(org, sso, readiness, overview, bootstrap, goNoGo, entitlements, pilotTesters) {
         var projectCount = projectCountFromData(org, overview, bootstrap);
         var memberCount = Number(org.member_count || 0);
@@ -9423,15 +9469,19 @@ function renderEnterpriseSupportPage(pageName: EnterpriseSupportPageName): strin
         var support = buildLaunchSupportPacket(org, sso, readiness, overview, bootstrap, goNoGo);
         var automated = buildPaidOnboardingAutomatedChecks(org, sso, readiness, overview, bootstrap, goNoGo, entitlements, pilotTesters);
         var manual = paidOnboardingManualRows();
+        var roleTasks = paidOnboardingRoleTaskRows();
+        var taskSummary = paidOnboardingTaskSummary(roleTasks);
         var blockers = automated.filter(function(item) { return item.critical && !item.passed; }).map(function(item) {
           return item.title + ': ' + item.detail;
         }).concat(manual.filter(function(item) { return item.critical && (!item.passed || item.blocked || item.stale); }).map(function(item) {
           return item.title + ': ' + (item.blocked ? 'blocked' : item.stale ? 'stale' : 'missing') + '. ' + item.action;
+        })).concat(roleTasks.filter(function(item) { return item.blocked; }).map(function(item) {
+          return item.title + ': blocked. ' + item.action;
         }));
         var status = blockers.length ? 'hold_for_activation' : 'ready_for_customer_testing';
         return {
           packet_type: 'vaultproof_enterprise_paid_onboarding',
-          packet_version: 1,
+          packet_version: 2,
           status: status,
           decision: status === 'ready_for_customer_testing' ? 'Paid-customer activation is ready for guided testing on enterprise.vaultproof.dev.' : 'Hold customer activation until automated gates and critical manual handoff evidence are complete.',
           generated_at: new Date().toISOString(),
@@ -9453,6 +9503,21 @@ function renderEnterpriseSupportPage(pageName: EnterpriseSupportPageName): strin
               title: item.title,
               status: item.status,
               critical: item.critical === true,
+              owner: item.owner,
+              due_date: item.due_date,
+              updated_at: item.updated_at,
+              stale: item.stale === true,
+              note: item.note,
+              action: item.action
+            };
+          }),
+          role_task_summary: taskSummary,
+          role_task_checklist: roleTasks.map(function(item) {
+            return {
+              id: item.id,
+              role: item.role,
+              title: item.title,
+              status: item.status,
               owner: item.owner,
               due_date: item.due_date,
               updated_at: item.updated_at,
@@ -9509,11 +9574,13 @@ function renderEnterpriseSupportPage(pageName: EnterpriseSupportPageName): strin
         var org = packet.organization || {};
         var automatedPassed = packet.automated_checks.filter(function(item) { return item.passed; }).length;
         var manualPassed = packet.manual_evidence.filter(function(item) { return item.status === 'passed' && item.stale !== true; }).length;
+        var taskSummary = packet.role_task_summary || {};
         return [
           row('Paid onboarding status', packet.decision, packet.status, packet.status === 'ready_for_customer_testing' ? 'good' : 'warn'),
           row('Organization scope', (org.name || 'Selected workspace') + ' on enterprise.vaultproof.dev with ' + number(org.project_count) + ' projects, ' + number(org.member_count) + ' members, and ' + number(org.provider_slots) + ' provider slots.', org.id ? 'scoped' : 'select org', org.id ? 'good' : 'warn'),
           row('Automated gates', number(automatedPassed) + ' of ' + number(packet.automated_checks.length) + ' automated activation checks pass.', automatedPassed + '/' + packet.automated_checks.length, automatedPassed === packet.automated_checks.length ? 'good' : 'warn'),
           row('Manual handoff evidence', number(manualPassed) + ' of ' + number(packet.manual_evidence.length) + ' critical activation milestones are current.', manualPassed + '/' + packet.manual_evidence.length, manualPassed === packet.manual_evidence.length ? 'good' : 'warn'),
+          row('Role task checklist', number(taskSummary.passed) + ' of ' + number(taskSummary.total) + ' role tasks complete. Blocked: ' + number(taskSummary.blocked) + '. Missing: ' + number(taskSummary.missing) + '.', taskSummary.status || 'assigning', taskSummary.blocked ? 'bad' : taskSummary.status === 'complete' ? 'good' : 'warn'),
           row('Customer login URL', packet.handoff.customer_login_url, 'enterprise login', 'good')
         ].concat(packet.automated_checks.map(function(item) {
           return row(item.title, item.detail, item.passed ? 'pass' : item.critical ? 'block' : 'watch', item.passed ? 'good' : item.critical ? 'bad' : 'warn');
@@ -9530,6 +9597,35 @@ function renderEnterpriseSupportPage(pageName: EnterpriseSupportPageName): strin
           '<span><span class="launch-check-title">' + escapeHtml(item.title) + '</span><span class="launch-check-sub">' + escapeHtml(item.sub) + '</span><span class="go-action"><code>' + escapeHtml(item.action) + '</code></span><span class="go-action">' + escapeHtml(item.updated_at ? 'updated ' + rel(item.updated_at) + (item.stale ? ' - stale after 14 days' : '') : 'no timestamp yet') + '</span></span>' +
           '<span class="onboarding-controls"><select class="go-status" data-onboarding-status="' + escapeHtml(item.id) + '">' + statusOptions + '</select><input data-onboarding-owner="' + escapeHtml(item.id) + '" value="' + escapeHtml(item.owner || '') + '" placeholder="owner" /><input data-onboarding-due="' + escapeHtml(item.id) + '" value="' + escapeHtml(item.due_date || '') + '" placeholder="due date or test window" /><textarea class="go-note" data-onboarding-note="' + escapeHtml(item.id) + '" placeholder="customer-safe note; no secrets">' + escapeHtml(item.note || '') + '</textarea></span>' +
         '</div>';
+      }
+      function paidOnboardingTaskRow(item) {
+        var status = item.status || 'missing';
+        var complete = item.passed && !item.stale;
+        var statusOptions = paidOnboardingOption(status, 'missing', 'missing') + paidOnboardingOption(status, 'passed', 'passed') + paidOnboardingOption(status, 'blocked', 'blocked');
+        return '<div class="go-evidence-row onboarding-evidence-row" data-complete="' + (complete ? 'true' : 'false') + '">' +
+          '<input type="checkbox" data-onboarding-check="' + escapeHtml(item.id) + '"' + (complete ? ' checked' : '') + ' />' +
+          '<span><span class="launch-check-title">' + escapeHtml(item.title) + '</span><span class="tag">' + escapeHtml(item.role) + '</span><span class="launch-check-sub">' + escapeHtml(item.sub) + '</span><span class="go-action"><code>' + escapeHtml(item.action) + '</code></span><span class="go-action">' + escapeHtml(item.updated_at ? 'updated ' + rel(item.updated_at) + (item.stale ? ' - stale after 14 days' : '') : 'no timestamp yet') + '</span></span>' +
+          '<span class="onboarding-controls"><select class="go-status" data-onboarding-status="' + escapeHtml(item.id) + '">' + statusOptions + '</select><input data-onboarding-owner="' + escapeHtml(item.id) + '" value="' + escapeHtml(item.owner || '') + '" placeholder="customer owner" /><input data-onboarding-due="' + escapeHtml(item.id) + '" value="' + escapeHtml(item.due_date || '') + '" placeholder="due date" /><textarea class="go-note" data-onboarding-note="' + escapeHtml(item.id) + '" placeholder="task note; no secrets">' + escapeHtml(item.note || '') + '</textarea></span>' +
+        '</div>';
+      }
+      function paidOnboardingTaskBriefText(packet) {
+        var tasks = packet.role_task_checklist || [];
+        var summary = packet.role_task_summary || {};
+        return [
+          'VaultProof paid onboarding task brief',
+          'Generated: ' + packet.generated_at,
+          'Organization: ' + ((packet.organization && packet.organization.name) || 'selected workspace'),
+          'Status: ' + packet.status,
+          'Task checklist: ' + number(summary.passed) + '/' + number(summary.total) + ' complete, ' + number(summary.blocked) + ' blocked, ' + number(summary.missing) + ' missing',
+          '',
+          'Role tasks:',
+          tasks.length ? '- ' + tasks.map(function(item) {
+            return item.role + ' - ' + item.title + ': ' + item.status + '; owner: ' + (item.owner || 'missing') + '; due: ' + (item.due_date || 'missing') + '; action: ' + item.action;
+          }).join('\\n- ') : '- No role tasks available.',
+          '',
+          'Secret boundary:',
+          '- This task brief is metadata-only and excludes ' + packet.secrets_excluded.join(', ') + '.'
+        ].join('\\n');
       }
       function paidOnboardingHandoffRows(packet) {
         var handoff = packet.handoff || {};
@@ -9557,10 +9653,14 @@ function renderEnterpriseSupportPage(pageName: EnterpriseSupportPageName): strin
       function renderPaidOnboardingPanel(org, sso, readiness, overview, bootstrap) {
         var goNoGo = buildGoNoGoStatus(org, sso, readiness, overview, bootstrap);
         var packet = buildPaidOnboardingPacket(org, sso, readiness, overview, bootstrap, goNoGo);
+        latestPaidOnboardingPacket = packet;
+        var taskSummary = packet.role_task_summary || {};
         text('onboardingMeta', packet.status === 'ready_for_customer_testing' ? 'ready' : 'hold');
+        text('onboardingTaskMeta', number(taskSummary.passed) + '/' + number(taskSummary.total) + ' complete');
         byId('onboardingSummaryList').innerHTML = paidOnboardingSummaryRows(packet).join('');
         byId('onboardingHandoffList').innerHTML = paidOnboardingHandoffRows(packet).join('');
         byId('onboardingMilestoneList').innerHTML = paidOnboardingManualRows().map(paidOnboardingManualRow).join('');
+        byId('onboardingTaskList').innerHTML = paidOnboardingRoleTaskRows().map(paidOnboardingTaskRow).join('');
         byId('onboardingEvidenceList').innerHTML = paidOnboardingEvidenceRows(packet).join('');
         var packetBox = byId('onboardingPacket');
         if (packetBox) packetBox.value = JSON.stringify(packet, null, 2);
@@ -11322,6 +11422,23 @@ function renderEnterpriseSupportPage(pageName: EnterpriseSupportPageName): strin
         } catch (_) {
           packet.focus();
           packet.select();
+        }
+      });
+      var copyOnboardingTaskBriefBtn = byId('copyOnboardingTaskBriefBtn');
+      if (copyOnboardingTaskBriefBtn) copyOnboardingTaskBriefBtn.addEventListener('click', async function() {
+        if (!latestPaidOnboardingPacket) return;
+        var textValue = paidOnboardingTaskBriefText(latestPaidOnboardingPacket);
+        try {
+          await navigator.clipboard.writeText(textValue);
+          copyOnboardingTaskBriefBtn.textContent = 'copied';
+          setTimeout(function() { copyOnboardingTaskBriefBtn.textContent = 'copy task brief'; }, 1400);
+        } catch (_) {
+          var packet = byId('onboardingPacket');
+          if (packet) {
+            packet.value = textValue;
+            packet.focus();
+            packet.select();
+          }
         }
       });
       var copyOnboardingJsonBtn = byId('copyOnboardingJsonBtn');
