@@ -5740,6 +5740,7 @@ function renderEnterpriseSupportPage(pageName: EnterpriseSupportPageName): strin
     .evidence-actions { display: flex; gap: 10px; flex-wrap: wrap; }
     .brief-box { width: 100%; min-height: 210px; font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace; font-size: 12px; line-height: 1.55; }
     .demo-script { min-height: 330px; }
+    .review-filters { display: grid; grid-template-columns: minmax(220px, 1.3fr) minmax(150px, .7fr) auto; gap: 10px; margin-bottom: 14px; }
     .scanner-form, .scanner-fields, .release-form, .release-fields, .tester-form, .tester-fields, .entitlement-form { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
     .scanner-field, .release-field, .tester-field, .entitlement-field { display: grid; gap: 6px; }
     .scanner-field.wide, .release-field.wide, .tester-field.wide, .entitlement-field.wide { grid-column: 1 / -1; }
@@ -5767,7 +5768,7 @@ function renderEnterpriseSupportPage(pageName: EnterpriseSupportPageName): strin
     .empty, .notice { color: var(--muted); border: 1px dashed rgba(48,76,71,.22); border-radius: 18px; padding: 18px; background: rgba(247,250,244,.78); }
     .notice.error { color: var(--red); border-color: rgba(185,93,80,.3); }
     @media (max-width: 1100px) { .kpis, .two { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
-    @media (max-width: 760px) { .shell { grid-template-columns: 1fr; } .topbar { flex-direction: column; } .kpis, .two, .launch-check-row, .go-evidence-row, .onboarding-evidence-row, .row, .scanner-form, .scanner-fields, .scanner-head, .release-form, .release-fields, .release-head, .tester-form, .tester-fields, .tester-head, .entitlement-form { grid-template-columns: 1fr; } .go-evidence-row > span:last-child:not(.onboarding-controls) { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; } .go-status { width: auto; } .row-actions { justify-content: flex-start; } }
+    @media (max-width: 760px) { .shell { grid-template-columns: 1fr; } .topbar { flex-direction: column; } .kpis, .two, .launch-check-row, .go-evidence-row, .onboarding-evidence-row, .row, .review-filters, .scanner-form, .scanner-fields, .scanner-head, .release-form, .release-fields, .release-head, .tester-form, .tester-fields, .tester-head, .entitlement-form { grid-template-columns: 1fr; } .go-evidence-row > span:last-child:not(.onboarding-controls) { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; } .go-status { width: auto; } .row-actions { justify-content: flex-start; } }
     ${ENTERPRISE_APP_SHELL_THEME}
     ${ENTERPRISE_STATIC_APP_POLISH_THEME}
   </style>
@@ -6384,13 +6385,26 @@ function renderEnterpriseSupportPage(pageName: EnterpriseSupportPageName): strin
           <div id="securityReviewEvidenceList" class="list"></div>
         </div>
         <div class="card">
-          <div class="section-title"><h2>Open review items</h2><span class="mini">before paid pilot</span></div>
+          <div class="section-title"><h2>Open review items</h2><span id="securityReviewOpenMeta" class="mini">before paid pilot</span></div>
+          <form id="securityReviewOpenFilterForm" class="review-filters">
+            <input id="securityReviewOpenSearch" type="search" placeholder="Search blockers, limitations, controls..." />
+            <select id="securityReviewOpenType" aria-label="Open review item type">
+              <option value="">all open items</option>
+              <option value="blocker">blockers</option>
+              <option value="review">review items</option>
+              <option value="known_limitation">known limitations</option>
+            </select>
+            <button id="clearSecurityReviewFilters" type="button">clear</button>
+          </form>
           <div id="securityReviewOpenList" class="list"></div>
         </div>
         <div class="card" style="grid-column:1/-1">
           <div class="section-title">
             <h2>Copyable security review packet</h2>
-            <button id="copySecurityReviewBtn" type="button">copy packet</button>
+            <div class="evidence-actions">
+              <button id="copySecurityReviewBriefBtn" type="button">copy review brief</button>
+              <button id="copySecurityReviewBtn" type="button">copy packet</button>
+            </div>
           </div>
           <textarea id="securityReviewBrief" class="brief-box demo-script" readonly aria-label="Security review packet"></textarea>
         </div>
@@ -6645,6 +6659,7 @@ function renderEnterpriseSupportPage(pageName: EnterpriseSupportPageName): strin
       var latestReadiness = null;
       var latestOverview = null;
       var latestBootstrap = null;
+      var latestSecurityReviewPacket = null;
       function byId(id) { return document.getElementById(id); }
       function text(id, value) { var el = byId(id); if (el) el.textContent = value == null ? '' : String(value); }
       function escapeHtml(value) {
@@ -8590,12 +8605,52 @@ function renderEnterpriseSupportPage(pageName: EnterpriseSupportPageName): strin
           return linkRow(link.title, link.detail, link.href, link.tag, link.tone);
         });
       }
-      function securityReviewOpenRows(packet) {
-        return packet.open_items.map(function(item) {
-          return row(item.title, item.detail, item.tag, item.tone);
-        }).concat(packet.known_limitations.map(function(item) {
-          return row('Known limitation', item, 'transparent', 'warn');
+      function securityReviewOpenFilterState() {
+        return {
+          search: ((byId('securityReviewOpenSearch') && byId('securityReviewOpenSearch').value) || '').trim().toLowerCase(),
+          type: (byId('securityReviewOpenType') && byId('securityReviewOpenType').value) || ''
+        };
+      }
+      function securityReviewOpenItems(packet) {
+        return (packet.open_items || []).map(function(item) {
+          return {
+            title: item.title,
+            detail: item.detail,
+            tag: item.tag,
+            tone: item.tone,
+            type: item.tag === 'blocker' ? 'blocker' : 'review'
+          };
+        }).concat((packet.known_limitations || []).map(function(item) {
+          return {
+            title: 'Known limitation',
+            detail: item,
+            tag: 'transparent',
+            tone: 'warn',
+            type: 'known_limitation'
+          };
         }));
+      }
+      function securityReviewOpenItemMatches(item, filters) {
+        var textValue = [item.title, item.detail, item.tag, item.type].filter(Boolean).join(' ').toLowerCase();
+        if (filters.search && textValue.indexOf(filters.search) === -1) return false;
+        if (filters.type && item.type !== filters.type) return false;
+        return true;
+      }
+      function filteredSecurityReviewOpenItems(packet, filters) {
+        var currentFilters = filters || securityReviewOpenFilterState();
+        return securityReviewOpenItems(packet).filter(function(item) {
+          return securityReviewOpenItemMatches(item, currentFilters);
+        });
+      }
+      function renderSecurityReviewOpenItems(packet) {
+        if (PAGE_MODE !== 'security-review') return;
+        var filters = securityReviewOpenFilterState();
+        var items = filteredSecurityReviewOpenItems(packet, filters);
+        var allItems = securityReviewOpenItems(packet);
+        text('securityReviewOpenMeta', (items.length !== allItems.length || filters.search || filters.type ? number(items.length) + ' of ' : '') + number(allItems.length) + ' items');
+        byId('securityReviewOpenList').innerHTML = items.length ? items.map(function(item) {
+          return row(item.title, item.detail, item.tag, item.tone);
+        }).join('') : '<div class="empty">No security review items match these filters.</div>';
       }
       function securityReviewBriefText(packet) {
         return [
@@ -8631,6 +8686,37 @@ function renderEnterpriseSupportPage(pageName: EnterpriseSupportPageName): strin
           '',
           'Secrets excluded:',
           '- ' + packet.secrets_excluded.join('\\n- ')
+        ].join('\\n');
+      }
+      function securityReviewFocusBriefText(packet) {
+        var filters = securityReviewOpenFilterState();
+        var items = filteredSecurityReviewOpenItems(packet, filters);
+        var blockerCount = items.filter(function(item) { return item.type === 'blocker'; }).length;
+        var limitationCount = items.filter(function(item) { return item.type === 'known_limitation'; }).length;
+        return [
+          'VaultProof Enterprise security review brief',
+          'Generated: ' + packet.generated_at,
+          'Status: ' + packet.status,
+          'Organization: ' + (packet.organization.name || 'selected workspace'),
+          'Scope: ' + (filters.search || filters.type ? 'filtered open review items' : 'all open review items') + ' (' + number(items.length) + ' item(s))',
+          '',
+          'Decision:',
+          '- ' + packet.decision,
+          '',
+          'Open review summary:',
+          '- Blockers: ' + number(blockerCount),
+          '- Known limitations: ' + number(limitationCount),
+          '- Go/no-go: ' + packet.related_packets.go_no_go_status,
+          '- API inventory: ' + packet.related_packets.api_inventory,
+          '- Policy drift: ' + packet.related_packets.policy_drift_exceptions,
+          '- Integration rollout: ' + packet.related_packets.integration_rollout,
+          '- Monitoring: ' + packet.related_packets.monitoring_evidence,
+          '',
+          'Items to discuss:',
+          items.length ? '- ' + items.map(function(item) { return item.title + ': ' + item.detail; }).join('\\n- ') : '- No open review items match the current filter.',
+          '',
+          'Secret boundary:',
+          '- This brief is metadata-only and excludes ' + packet.secrets_excluded.join(', ') + '.'
         ].join('\\n');
       }
       function parseMoney(value, fallback) {
@@ -10042,11 +10128,12 @@ function renderEnterpriseSupportPage(pageName: EnterpriseSupportPageName): strin
       function renderSecurityReviewPanel(org, sso, readiness, overview, bootstrap) {
         var goNoGo = buildGoNoGoStatus(org, sso, readiness, overview, bootstrap);
         var packet = buildSecurityReviewPacket(org, sso, readiness, overview, bootstrap, goNoGo);
+        latestSecurityReviewPacket = packet;
         text('securityReviewMeta', packet.status === 'ready_for_review' ? 'ready for review' : 'hold for review');
         byId('securityReviewStatusList').innerHTML = securityReviewStatusRows(packet).join('');
         byId('securityReviewControlList').innerHTML = securityReviewControlRows(packet).join('');
         byId('securityReviewEvidenceList').innerHTML = securityReviewEvidenceRows(packet).join('');
-        byId('securityReviewOpenList').innerHTML = securityReviewOpenRows(packet).join('');
+        renderSecurityReviewOpenItems(packet);
         var brief = byId('securityReviewBrief');
         if (brief) brief.value = securityReviewBriefText(packet);
       }
@@ -10792,6 +10879,25 @@ function renderEnterpriseSupportPage(pageName: EnterpriseSupportPageName): strin
         event.preventDefault();
         addReleaseRecordFromForm();
       });
+      var securityReviewOpenFilterForm = byId('securityReviewOpenFilterForm');
+      if (securityReviewOpenFilterForm) securityReviewOpenFilterForm.addEventListener('submit', function(event) {
+        event.preventDefault();
+        if (latestSecurityReviewPacket) renderSecurityReviewOpenItems(latestSecurityReviewPacket);
+      });
+      var securityReviewOpenSearch = byId('securityReviewOpenSearch');
+      if (securityReviewOpenSearch) securityReviewOpenSearch.addEventListener('input', function() {
+        if (latestSecurityReviewPacket) renderSecurityReviewOpenItems(latestSecurityReviewPacket);
+      });
+      var securityReviewOpenType = byId('securityReviewOpenType');
+      if (securityReviewOpenType) securityReviewOpenType.addEventListener('change', function() {
+        if (latestSecurityReviewPacket) renderSecurityReviewOpenItems(latestSecurityReviewPacket);
+      });
+      var clearSecurityReviewFilters = byId('clearSecurityReviewFilters');
+      if (clearSecurityReviewFilters) clearSecurityReviewFilters.addEventListener('click', function() {
+        if (byId('securityReviewOpenSearch')) byId('securityReviewOpenSearch').value = '';
+        if (byId('securityReviewOpenType')) byId('securityReviewOpenType').value = '';
+        if (latestSecurityReviewPacket) renderSecurityReviewOpenItems(latestSecurityReviewPacket);
+      });
       var pilotTesterForm = byId('pilotTesterForm');
       if (pilotTesterForm) pilotTesterForm.addEventListener('submit', function(event) {
         event.preventDefault();
@@ -10958,6 +11064,23 @@ function renderEnterpriseSupportPage(pageName: EnterpriseSupportPageName): strin
         } catch (_) {
           brief.focus();
           brief.select();
+        }
+      });
+      var copySecurityReviewBriefBtn = byId('copySecurityReviewBriefBtn');
+      if (copySecurityReviewBriefBtn) copySecurityReviewBriefBtn.addEventListener('click', async function() {
+        if (!latestSecurityReviewPacket) return;
+        var textValue = securityReviewFocusBriefText(latestSecurityReviewPacket);
+        try {
+          await navigator.clipboard.writeText(textValue);
+          copySecurityReviewBriefBtn.textContent = 'copied';
+          setTimeout(function() { copySecurityReviewBriefBtn.textContent = 'copy review brief'; }, 1400);
+        } catch (_) {
+          var brief = byId('securityReviewBrief');
+          if (brief) {
+            brief.value = textValue;
+            brief.focus();
+            brief.select();
+          }
         }
       });
       var copySecurityReviewBtn = byId('copySecurityReviewBtn');
