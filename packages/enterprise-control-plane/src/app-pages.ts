@@ -6463,6 +6463,19 @@ function renderEnterpriseSupportPage(pageName: EnterpriseSupportPageName): strin
           </form>
           <div id="entitlementsBillingList" class="list" style="margin-top:14px"></div>
         </div>
+        <div class="card" style="grid-column:1/-1">
+          <div class="section-title"><h2>Amendment and renewal log</h2><span id="entitlementsRenewalMeta" class="mini">renewal watch</span></div>
+          <form id="entitlementAmendmentForm" class="entitlement-form">
+            <div class="entitlement-field"><label for="entitlementAmendmentType">change type</label><select id="entitlementAmendmentType"><option value="allowance_change">allowance change</option><option value="commercial_change">commercial change</option><option value="support_change">support change</option><option value="renewal_review">renewal review</option><option value="risk_acceptance">risk acceptance</option><option value="other">other</option></select></div>
+            <div class="entitlement-field"><label for="entitlementAmendmentStatus">status</label><select id="entitlementAmendmentStatus"><option value="proposed">proposed</option><option value="approved">approved</option><option value="active">active</option><option value="blocked">blocked</option></select></div>
+            <div class="entitlement-field"><label for="entitlementAmendmentEffective">effective date</label><input id="entitlementAmendmentEffective" placeholder="2026-07-01" /></div>
+            <div class="entitlement-field"><label for="entitlementAmendmentOwner">owner</label><input id="entitlementAmendmentOwner" placeholder="billing, success, or buyer owner" /></div>
+            <div class="entitlement-field wide"><label for="entitlementAmendmentNote">customer-safe note</label><textarea id="entitlementAmendmentNote" placeholder="Allowance change, renewal decision, support term, or blocker. Do not paste card numbers, bank data, tokens, secrets, request bodies, or customer payloads."></textarea></div>
+            <div class="entitlement-field wide"><button id="addEntitlementAmendmentBtn" class="primary" type="submit">add amendment</button></div>
+          </form>
+          <div id="entitlementsRenewalList" class="list" style="margin-top:14px"></div>
+          <div id="entitlementAmendmentList" class="list" style="margin-top:14px"></div>
+        </div>
         <div class="card">
           <div class="section-title">
             <h2>Usage guardrails</h2>
@@ -6847,7 +6860,8 @@ function renderEnterpriseSupportPage(pageName: EnterpriseSupportPageName): strin
       }
       function setEntitlementsState(field, value) {
         var state = getEntitlementsState();
-        state[field] = String(value == null ? '' : value);
+        var redactedFields = ['renewal_date', 'billing_owner', 'success_owner', 'retention_label', 'customer_note', 'procurement_owner', 'payment_terms', 'expansion_review_date', 'billing_note'];
+        state[field] = redactedFields.indexOf(field) !== -1 ? (redactEntitlementNote(value) || '') : String(value == null ? '' : value);
         state.updated_at = new Date().toISOString();
         localStorage.setItem(entitlementsStorageKey(), JSON.stringify(state));
       }
@@ -9278,10 +9292,75 @@ function renderEnterpriseSupportPage(pageName: EnterpriseSupportPageName): strin
       function redactEntitlementNote(value) {
         var note = String(value || '').trim();
         if (!note) return null;
-        if (/(sk-[a-z0-9_-]{8,}|gocspx-|eyJ[a-zA-Z0-9_-]{10,}|-----BEGIN|Bearer\\s+|service[_ -]?role|client[_ -]?secret|api[_ -]?key|password|token)/i.test(note)) {
+        if (/(sk-[a-z0-9_-]{8,}|gocspx-|eyJ[a-zA-Z0-9_-]{10,}|-----BEGIN|Bearer\\s+|service[_ -]?role|client[_ -]?secret|api[_ -]?key|password|token|card number|bank account|routing number|cvv|cvc)/i.test(note)) {
           return '[redacted: note contained secret-like material]';
         }
         return note;
+      }
+      function entitlementDateDeltaDays(value) {
+        if (!value) return null;
+        var parsed = new Date(String(value).trim());
+        if (!Number.isFinite(parsed.getTime())) return null;
+        var today = new Date();
+        var todayMidnight = new Date(today.getFullYear(), today.getMonth(), today.getDate()).getTime();
+        var targetMidnight = new Date(parsed.getFullYear(), parsed.getMonth(), parsed.getDate()).getTime();
+        return Math.round((targetMidnight - todayMidnight) / 86400000);
+      }
+      function normalizeEntitlementAmendment(record) {
+        var now = new Date().toISOString();
+        var source = record && typeof record === 'object' ? record : {};
+        return {
+          id: String(source.id || ('amendment-' + Date.now().toString(36))),
+          change_type: entitlementAllowedValue(source.change_type, ['allowance_change', 'commercial_change', 'support_change', 'renewal_review', 'risk_acceptance', 'other'], 'other'),
+          status: entitlementAllowedValue(source.status, ['proposed', 'approved', 'active', 'blocked'], 'proposed'),
+          effective_date: redactEntitlementNote(source.effective_date) || '',
+          owner: redactEntitlementNote(source.owner) || '',
+          note: redactEntitlementNote(source.note) || '',
+          created_at: source.created_at || now,
+          updated_at: source.updated_at || source.created_at || now
+        };
+      }
+      function readEntitlementAmendments() {
+        var state = getEntitlementsState();
+        var rows = Array.isArray(state.amendments) ? state.amendments : [];
+        return rows.map(normalizeEntitlementAmendment).filter(function(row) {
+          return row.id && (row.owner || row.note || row.effective_date || row.status);
+        }).slice(0, 20);
+      }
+      function writeEntitlementAmendments(rows) {
+        var state = getEntitlementsState();
+        state.amendments = rows.map(normalizeEntitlementAmendment).slice(0, 20);
+        state.updated_at = new Date().toISOString();
+        localStorage.setItem(entitlementsStorageKey(), JSON.stringify(state));
+      }
+      function entitlementRenewalSummary(state, billingHandoff, amendments) {
+        var candidates = [];
+        var renewalDays = entitlementDateDeltaDays(state.renewal_date);
+        var expansionDays = entitlementDateDeltaDays(billingHandoff && billingHandoff.expansion_review_date);
+        if (renewalDays !== null) candidates.push({ type: 'contract renewal/review', date: String(state.renewal_date || ''), days_until: renewalDays });
+        if (expansionDays !== null) candidates.push({ type: 'expansion review', date: String((billingHandoff && billingHandoff.expansion_review_date) || ''), days_until: expansionDays });
+        candidates.sort(function(a, b) { return a.days_until - b.days_until; });
+        var next = candidates[0] || null;
+        var pending = (amendments || []).filter(function(item) {
+          return item.status === 'proposed' || item.status === 'blocked';
+        });
+        var status = !next ? 'missing_review_date' : next.days_until <= 0 ? 'review_due' : next.days_until <= 30 ? 'review_soon' : 'scheduled';
+        if (pending.some(function(item) { return item.status === 'blocked'; })) status = 'amendment_blocked';
+        var actions = [];
+        if (!next) actions.push('Record renewal/review date or expansion review date.');
+        if (next && next.days_until <= 0) actions.push('Run renewal or expansion review now.');
+        if (next && next.days_until > 0 && next.days_until <= 30) actions.push('Prepare renewal, allowance, support, and billing review before the due date.');
+        if (pending.length) actions.push('Resolve ' + number(pending.length) + ' proposed or blocked amendment records.');
+        if (!actions.length) actions.push('Keep renewal and amendment review in the customer success cadence.');
+        return {
+          status: status,
+          next_review_type: next ? next.type : null,
+          next_review_date: next ? next.date : null,
+          days_until_next_review: next ? next.days_until : null,
+          pending_amendments: pending.length,
+          total_amendments: (amendments || []).length,
+          next_actions: actions
+        };
       }
       function buildEntitlementsPacket(org, sso, readiness, overview, bootstrap, goNoGo) {
         var state = getEntitlementsState();
@@ -9307,7 +9386,6 @@ function renderEnterpriseSupportPage(pageName: EnterpriseSupportPageName): strin
         if (providerAllowance && providerCount > providerAllowance) blockers.push('Visible provider slots exceed the contract allowance.');
         if (seatAllowance && memberCount > seatAllowance) blockers.push('Visible members exceed the contract seat allowance.');
         if (goNoGo && goNoGo.status !== 'go') blockers.push('Go/no-go launch board is still on hold.');
-        var status = blockers.length ? 'contract_review' : 'ready_for_paid_pilot';
         var utilization = callAllowance ? Math.round(totalCalls * 1000 / callAllowance) / 10 : 0;
         var capacity = {
           monthly_call_allowance: callAllowance,
@@ -9341,6 +9419,11 @@ function renderEnterpriseSupportPage(pageName: EnterpriseSupportPageName): strin
         billingHandoff.status = billingHandoff.ready ? 'commercial_ready' : 'commercial_review';
         billingHandoff.status_tone = entitlementBillingTone(billingHandoff);
         billingHandoff.next_actions = entitlementBillingNextAction(billingHandoff);
+        var amendments = readEntitlementAmendments();
+        var renewalSummary = entitlementRenewalSummary(state, billingHandoff, amendments);
+        if (renewalSummary.status === 'amendment_blocked') blockers.push('Contract amendment log has a blocked change.');
+        if (renewalSummary.status === 'review_due') blockers.push('Contract renewal or expansion review is due.');
+        var status = blockers.length ? 'contract_review' : 'ready_for_paid_pilot';
         return {
           packet_type: 'vaultproof_enterprise_entitlements',
           packet_version: 3,
@@ -9375,6 +9458,12 @@ function renderEnterpriseSupportPage(pageName: EnterpriseSupportPageName): strin
             review_links: ['/app/evidence', '/app/activity', '/app/inventory', '/app/rollout', '/app/plans']
           },
           billing_handoff: billingHandoff,
+          amendment_history: {
+            records: amendments,
+            renewal_summary: renewalSummary,
+            latest_record: amendments[0] || null,
+            secrets_excluded: ['card numbers', 'bank data', 'provider keys', 'tokens', 'request bodies', 'customer payloads']
+          },
           support: {
             support_tier: state.support_tier || 'founder-led launch-week support',
             incident_response_add_on: state.incident_response_add_on || 'optional add-on',
@@ -9480,11 +9569,51 @@ function renderEnterpriseSupportPage(pageName: EnterpriseSupportPageName): strin
           return row('Commercial action', action, 'next', action.indexOf('Resolve') === 0 ? 'bad' : 'warn');
         }));
       }
+      function entitlementAmendmentLabel(value) {
+        var labels = {
+          allowance_change: 'allowance change',
+          commercial_change: 'commercial change',
+          support_change: 'support change',
+          renewal_review: 'renewal review',
+          risk_acceptance: 'risk acceptance',
+          other: 'other'
+        };
+        return labels[value] || labels.other;
+      }
+      function entitlementsRenewalRows(packet) {
+        var history = packet.amendment_history || {};
+        var summary = history.renewal_summary || {};
+        return [
+          row('Renewal watch', summary.next_review_date ? (summary.next_review_type + ' on ' + summary.next_review_date + ' (' + number(summary.days_until_next_review) + ' days).') : 'No renewal or expansion review date is recorded yet.', summary.status || 'missing_review_date', summary.status === 'scheduled' ? 'good' : summary.status === 'amendment_blocked' || summary.status === 'review_due' ? 'bad' : 'warn'),
+          row('Amendment count', number(summary.total_amendments) + ' amendment records, ' + number(summary.pending_amendments) + ' proposed or blocked.', summary.pending_amendments ? 'review' : 'clear', summary.pending_amendments ? 'warn' : 'good')
+        ].concat((summary.next_actions || []).map(function(action) {
+          return row('Renewal action', action, 'next', action.indexOf('Resolve') === 0 || action.indexOf('Run') === 0 ? 'bad' : 'warn');
+        }));
+      }
+      function renderEntitlementAmendmentRecord(record) {
+        var tone = record.status === 'active' || record.status === 'approved' ? 'good' : record.status === 'blocked' ? 'bad' : 'warn';
+        var detail = [
+          entitlementAmendmentLabel(record.change_type),
+          record.effective_date ? 'effective ' + record.effective_date : 'no effective date',
+          record.owner ? 'owner ' + record.owner : 'owner missing',
+          record.note || 'No customer-safe note recorded.'
+        ].join(' - ');
+        return '<div class="row">' +
+          '<div><div class="row-title">' + escapeHtml(entitlementAmendmentLabel(record.change_type)) + '</div><div class="row-sub">' + escapeHtml(detail) + '</div></div>' +
+          '<span class="row-actions"><span class="tag ' + tone + '">' + escapeHtml(record.status || 'proposed') + '</span><button type="button" data-remove-entitlement-amendment="' + escapeHtml(record.id) + '">remove</button></span>' +
+        '</div>';
+      }
+      function entitlementAmendmentRows(packet) {
+        var records = ((packet.amendment_history || {}).records || []);
+        return records.length ? records.map(renderEntitlementAmendmentRecord).join('') : '<div class="empty">No amendment records yet. Add contract, capacity, support, renewal, or commercial changes as customer-safe metadata.</div>';
+      }
       function entitlementsCapacityBriefText(packet) {
         var contract = packet.contract || {};
         var capacity = packet.capacity || {};
         var usage = packet.usage_guardrails || {};
         var handoff = packet.billing_handoff || {};
+        var history = packet.amendment_history || {};
+        var renewal = history.renewal_summary || {};
         return [
           'VaultProof entitlement capacity brief',
           'Generated: ' + packet.generated_at,
@@ -9493,6 +9622,7 @@ function renderEnterpriseSupportPage(pageName: EnterpriseSupportPageName): strin
           'Paid-user status: ' + packet.status,
           'Capacity status: ' + (usage.capacity_status || 'missing_allowance'),
           'Commercial handoff: ' + (handoff.status || 'commercial_review'),
+          'Renewal/amendments: ' + (renewal.status || 'missing_review_date'),
           '',
           'Contract envelope:',
           '- Monthly calls: ' + number(capacity.observed_proxy_calls) + ' observed of ' + number(capacity.monthly_call_allowance) + ' allowed (' + number(capacity.call_utilization_percent) + '% used, ' + number(capacity.remaining_calls) + ' remaining)',
@@ -9513,6 +9643,11 @@ function renderEnterpriseSupportPage(pageName: EnterpriseSupportPageName): strin
           '- Payment terms: ' + (handoff.payment_terms || 'missing'),
           '- Expansion review: ' + (handoff.expansion_review_date || 'not scheduled'),
           '- Next action: ' + ((handoff.next_actions || []).length ? handoff.next_actions.join('\\n- ') : 'Keep billing review in the renewal cadence.'),
+          '',
+          'Renewal and amendment log:',
+          '- Next review: ' + (renewal.next_review_date ? renewal.next_review_type + ' on ' + renewal.next_review_date + ' (' + number(renewal.days_until_next_review) + ' days)' : 'missing'),
+          '- Amendment records: ' + number(renewal.total_amendments) + ' total, ' + number(renewal.pending_amendments) + ' pending or blocked',
+          '- Latest amendment: ' + (history.latest_record ? entitlementAmendmentLabel(history.latest_record.change_type) + ' / ' + history.latest_record.status + ' / ' + (history.latest_record.effective_date || 'no effective date') : 'none'),
           '',
           'Boundary:',
           '- ' + (usage.hard_limit_enforcement || 'Manual contract-controlled for this demo.'),
@@ -9543,6 +9678,39 @@ function renderEnterpriseSupportPage(pageName: EnterpriseSupportPageName): strin
           linkRow('Support evidence', 'Confirm support scope, incident-response add-on boundary, and admin separation from the customer-safe proof packet.', packet.exports.support_room, 'support', 'good'),
           linkRow('Security review', 'Share architecture, controls, evidence links, known limitations, and customer-safe answers.', packet.exports.security_review, 'security', 'good')
         ];
+      }
+      function addEntitlementAmendmentFromForm() {
+        var record = normalizeEntitlementAmendment({
+          id: 'amendment-' + Date.now().toString(36),
+          change_type: byId('entitlementAmendmentType') && byId('entitlementAmendmentType').value,
+          status: byId('entitlementAmendmentStatus') && byId('entitlementAmendmentStatus').value,
+          effective_date: byId('entitlementAmendmentEffective') && byId('entitlementAmendmentEffective').value,
+          owner: byId('entitlementAmendmentOwner') && byId('entitlementAmendmentOwner').value,
+          note: byId('entitlementAmendmentNote') && byId('entitlementAmendmentNote').value,
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString()
+        });
+        if (!record.owner && !record.note && !record.effective_date) {
+          notice('Add an owner, effective date, or customer-safe note before saving an amendment.');
+          return;
+        }
+        var rows = readEntitlementAmendments();
+        rows.unshift(record);
+        writeEntitlementAmendments(rows);
+        ['entitlementAmendmentEffective', 'entitlementAmendmentOwner', 'entitlementAmendmentNote'].forEach(function(id) {
+          var el = byId(id);
+          if (el) el.value = '';
+        });
+        notice('Entitlement amendment saved as browser-local metadata.');
+        if (latestOrgPayload && latestReadiness) {
+          renderEntitlementsPanel((latestOrgPayload && latestOrgPayload.organization) || {}, (latestOrgPayload && latestOrgPayload.sso_status) || {}, latestReadiness, latestOverview || {}, latestBootstrap || {});
+        }
+      }
+      function removeEntitlementAmendment(id) {
+        writeEntitlementAmendments(readEntitlementAmendments().filter(function(record) { return record.id !== id; }));
+        if (latestOrgPayload && latestReadiness) {
+          renderEntitlementsPanel((latestOrgPayload && latestOrgPayload.organization) || {}, (latestOrgPayload && latestOrgPayload.sso_status) || {}, latestReadiness, latestOverview || {}, latestBootstrap || {});
+        }
       }
       function renderEntitlementsPanel(org, sso, readiness, overview, bootstrap) {
         var goNoGo = buildGoNoGoStatus(org, sso, readiness, overview, bootstrap);
@@ -9576,9 +9744,12 @@ function renderEnterpriseSupportPage(pageName: EnterpriseSupportPageName): strin
         text('entitlementsMeta', state.updated_at ? 'updated ' + rel(state.updated_at) : 'browser-local');
         text('entitlementsStatusMeta', packet.status === 'ready_for_paid_pilot' ? 'ready' : 'contract review');
         text('entitlementsBillingMeta', (packet.billing_handoff || {}).status || 'commercial review');
+        text('entitlementsRenewalMeta', ((packet.amendment_history || {}).renewal_summary || {}).status || 'renewal watch');
         byId('entitlementsSummaryList').innerHTML = entitlementsSummaryRows(packet).join('');
         byId('entitlementsCapacityList').innerHTML = entitlementsCapacityRows(packet).join('');
         byId('entitlementsBillingList').innerHTML = entitlementsBillingRows(packet).join('');
+        byId('entitlementsRenewalList').innerHTML = entitlementsRenewalRows(packet).join('');
+        byId('entitlementAmendmentList').innerHTML = entitlementAmendmentRows(packet);
         byId('entitlementsUsageMeterList').innerHTML = entitlementsUsageMeterRows(packet).join('');
         byId('entitlementsUsageGuardrailList').innerHTML = entitlementsUsageGuardrailRows(packet).join('');
         byId('entitlementsGuardrailList').innerHTML = entitlementsGuardrailRows(packet).join('');
@@ -11333,6 +11504,11 @@ function renderEnterpriseSupportPage(pageName: EnterpriseSupportPageName): strin
       if (entitlementsBillingForm) entitlementsBillingForm.addEventListener('submit', function(event) {
         event.preventDefault();
       });
+      var entitlementAmendmentForm = byId('entitlementAmendmentForm');
+      if (entitlementAmendmentForm) entitlementAmendmentForm.addEventListener('submit', function(event) {
+        event.preventDefault();
+        addEntitlementAmendmentFromForm();
+      });
       var scannerFindingForm = byId('scannerFindingForm');
       if (scannerFindingForm) scannerFindingForm.addEventListener('submit', function(event) {
         event.preventDefault();
@@ -11483,6 +11659,9 @@ function renderEnterpriseSupportPage(pageName: EnterpriseSupportPageName): strin
         }
         if (target.getAttribute('data-action') === 'remove-pilot-tester') {
           removePilotTester(target.getAttribute('data-tester-record-id') || '');
+        }
+        if (target.hasAttribute('data-remove-entitlement-amendment')) {
+          removeEntitlementAmendment(target.getAttribute('data-remove-entitlement-amendment') || '');
         }
       });
       var copyLaunchBriefBtn = byId('copyLaunchBriefBtn');
