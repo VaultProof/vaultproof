@@ -5750,10 +5750,10 @@ function renderEnterpriseSupportPage(pageName: EnterpriseSupportPageName): strin
     .entitlement-meter-fill { display: block; height: 100%; width: 0; border-radius: inherit; background: linear-gradient(135deg, var(--green), var(--primary-bg)); }
     .entitlement-meter-fill.warn { background: linear-gradient(135deg, var(--gold), #f3d86f); }
     .entitlement-meter-fill.bad { background: linear-gradient(135deg, var(--red), #e5a197); }
-    .scanner-form, .scanner-fields, .release-form, .release-fields, .tester-form, .tester-fields, .entitlement-form { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
-    .scanner-field, .release-field, .tester-field, .entitlement-field { display: grid; gap: 6px; }
-    .scanner-field.wide, .release-field.wide, .tester-field.wide, .entitlement-field.wide { grid-column: 1 / -1; }
-    .scanner-field label, .release-field label, .tester-field label, .entitlement-field label { color: var(--muted); font-size: 12px; text-transform: uppercase; letter-spacing: .08em; font-weight: 800; }
+    .scanner-form, .scanner-fields, .release-form, .release-fields, .tester-form, .tester-fields, .entitlement-form, .pilot-success-form { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
+    .scanner-field, .release-field, .tester-field, .entitlement-field, .pilot-success-field { display: grid; gap: 6px; }
+    .scanner-field.wide, .release-field.wide, .tester-field.wide, .entitlement-field.wide, .pilot-success-field.wide { grid-column: 1 / -1; }
+    .scanner-field label, .release-field label, .tester-field label, .entitlement-field label, .pilot-success-field label { color: var(--muted); font-size: 12px; text-transform: uppercase; letter-spacing: .08em; font-weight: 800; }
     .scanner-row, .release-row, .tester-row { border: 1px solid rgba(48,76,71,.12); background: rgba(247,250,244,.84); border-radius: 18px; padding: 15px; display: grid; gap: 12px; }
     .scanner-head, .release-head, .tester-head { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 12px; align-items: start; }
     .onboarding-evidence-row { grid-template-columns: 22px minmax(0, 1fr) minmax(260px, .44fr); }
@@ -5777,7 +5777,7 @@ function renderEnterpriseSupportPage(pageName: EnterpriseSupportPageName): strin
     .empty, .notice { color: var(--muted); border: 1px dashed rgba(48,76,71,.22); border-radius: 18px; padding: 18px; background: rgba(247,250,244,.78); }
     .notice.error { color: var(--red); border-color: rgba(185,93,80,.3); }
     @media (max-width: 1100px) { .kpis, .two { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
-    @media (max-width: 760px) { .shell { grid-template-columns: 1fr; } .topbar { flex-direction: column; } .kpis, .two, .launch-check-row, .go-evidence-row, .onboarding-evidence-row, .row, .review-filters, .scanner-form, .scanner-fields, .scanner-head, .release-form, .release-fields, .release-head, .tester-form, .tester-fields, .tester-head, .entitlement-form { grid-template-columns: 1fr; } .go-evidence-row > span:last-child:not(.onboarding-controls) { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; } .go-status { width: auto; } .row-actions { justify-content: flex-start; } }
+    @media (max-width: 760px) { .shell { grid-template-columns: 1fr; } .topbar { flex-direction: column; } .kpis, .two, .launch-check-row, .go-evidence-row, .onboarding-evidence-row, .row, .review-filters, .scanner-form, .scanner-fields, .scanner-head, .release-form, .release-fields, .release-head, .tester-form, .tester-fields, .tester-head, .entitlement-form, .pilot-success-form { grid-template-columns: 1fr; } .go-evidence-row > span:last-child:not(.onboarding-controls) { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; } .go-status { width: auto; } .row-actions { justify-content: flex-start; } }
     ${ENTERPRISE_APP_SHELL_THEME}
     ${ENTERPRISE_STATIC_APP_POLISH_THEME}
   </style>
@@ -6575,6 +6575,24 @@ function renderEnterpriseSupportPage(pageName: EnterpriseSupportPageName): strin
         </div>
         <div class="card" style="grid-column:1/-1">
           <div class="section-title">
+            <h2>Expansion decision</h2>
+            <div class="evidence-actions">
+              <span id="pilotSuccessDecisionMeta" class="mini">not ready</span>
+              <button id="copyPilotSuccessDecisionBtn" type="button">copy decision brief</button>
+            </div>
+          </div>
+          <form id="pilotSuccessDecisionForm" class="pilot-success-form">
+            <div class="pilot-success-field"><label for="pilotSuccessDecisionStatus">decision</label><select id="pilotSuccessDecisionStatus" data-pilot-success-decision-field="decision_status"><option value="not_ready">not ready</option><option value="expand">expand</option><option value="hold">hold</option><option value="no_go">no-go</option></select></div>
+            <div class="pilot-success-field"><label for="pilotSuccessDecisionPackage">next package/path</label><input id="pilotSuccessDecisionPackage" data-pilot-success-decision-field="next_package" placeholder="Expansion account, standard, regulated, or hold path" /></div>
+            <div class="pilot-success-field"><label for="pilotSuccessDecisionOwner">owner</label><input id="pilotSuccessDecisionOwner" data-pilot-success-decision-field="owner" placeholder="customer or VaultProof owner" /></div>
+            <div class="pilot-success-field"><label for="pilotSuccessDecisionTarget">target date</label><input id="pilotSuccessDecisionTarget" data-pilot-success-decision-field="target_date" placeholder="2026-06-30" /></div>
+            <div class="pilot-success-field wide"><label for="pilotSuccessDecisionNextStep">next step</label><textarea id="pilotSuccessDecisionNextStep" data-pilot-success-decision-field="next_step" placeholder="Expansion action, hold condition, or no-go reason. Metadata only."></textarea></div>
+            <div class="pilot-success-field wide"><label for="pilotSuccessDecisionNote">decision note</label><textarea id="pilotSuccessDecisionNote" data-pilot-success-decision-field="note" placeholder="Customer-safe decision note. Do not paste tokens, keys, request bodies, or payloads."></textarea></div>
+          </form>
+          <div id="pilotSuccessDecisionList" class="list" style="margin-top:14px"></div>
+        </div>
+        <div class="card" style="grid-column:1/-1">
+          <div class="section-title">
             <h2>Copyable weekly update</h2>
             <button id="copyPilotSuccessBtn" type="button">copy update</button>
           </div>
@@ -6689,6 +6707,7 @@ function renderEnterpriseSupportPage(pageName: EnterpriseSupportPageName): strin
       var latestSecurityReviewPacket = null;
       var latestEntitlementsPacket = null;
       var latestPaidOnboardingPacket = null;
+      var latestPilotSuccessPacket = null;
       function byId(id) { return document.getElementById(id); }
       function text(id, value) { var el = byId(id); if (el) el.textContent = value == null ? '' : String(value); }
       function escapeHtml(value) {
@@ -6895,6 +6914,30 @@ function renderEnterpriseSupportPage(pageName: EnterpriseSupportPageName): strin
         var state = getPilotSuccessState();
         var existing = state[id] && typeof state[id] === 'object' ? state[id] : {};
         state[id] = Object.assign({}, existing, patch || {}, { updated_at: new Date().toISOString() });
+        localStorage.setItem(pilotSuccessStorageKey(), JSON.stringify(state));
+      }
+      function defaultPilotSuccessDecisionState() {
+        return {
+          decision_status: 'not_ready',
+          next_package: 'Expansion account',
+          owner: '',
+          target_date: '',
+          next_step: 'Confirm expansion terms, next workload, support boundary, and success metric.',
+          note: ''
+        };
+      }
+      function getPilotSuccessDecisionState() {
+        var state = getPilotSuccessState();
+        var record = state.expansion_decision && typeof state.expansion_decision === 'object' ? state.expansion_decision : {};
+        return Object.assign(defaultPilotSuccessDecisionState(), record);
+      }
+      function setPilotSuccessDecisionState(field, value) {
+        var state = getPilotSuccessState();
+        var record = state.expansion_decision && typeof state.expansion_decision === 'object' ? state.expansion_decision : {};
+        var next = Object.assign(defaultPilotSuccessDecisionState(), record);
+        next[field] = field === 'decision_status' ? String(value || 'not_ready') : (safeOnboardingText(value) || '');
+        next.updated_at = new Date().toISOString();
+        state.expansion_decision = next;
         localStorage.setItem(pilotSuccessStorageKey(), JSON.stringify(state));
       }
       function getLaunchManualState() {
@@ -8912,6 +8955,7 @@ function renderEnterpriseSupportPage(pageName: EnterpriseSupportPageName): strin
       function buildPilotSuccessPacket(org, sso, readiness, overview, bootstrap, goNoGo) {
         var proposal = buildPilotProposalPacket(org, sso, readiness, overview, bootstrap, goNoGo);
         var state = getPilotSuccessState();
+        var decisionState = getPilotSuccessDecisionState();
         var totalCalls = Number(overview.totalCalls || overview.total_calls || 0);
         var deniedCalls = Number(overview.deniedCalls || overview.denied_calls || 0);
         var errorCalls = Number(overview.errorCalls || overview.error_calls || 0);
@@ -8936,9 +8980,11 @@ function renderEnterpriseSupportPage(pageName: EnterpriseSupportPageName): strin
           .concat(manual.filter(function(item) { return item.critical && !item.passed; }).map(function(item) { return item.title; }));
         var manualPassed = manual.filter(function(item) { return item.passed; }).length;
         var autoPassed = auto.filter(function(item) { return item.passed; }).length;
+        var decisionStatus = ['expand', 'hold', 'no_go'].indexOf(String(decisionState.decision_status || '').toLowerCase()) !== -1 ? String(decisionState.decision_status || '').toLowerCase() : 'not_ready';
+        var decisionReady = decisionStatus !== 'not_ready' && Boolean(String(decisionState.owner || '').trim()) && Boolean(String(decisionState.target_date || '').trim());
         return {
           packet_type: 'vaultproof_enterprise_pilot_success_tracker',
-          packet_version: 1,
+          packet_version: 2,
           status: blockers.length ? 'at_risk' : 'on_track',
           generated_at: new Date().toISOString(),
           generated_from: location.origin + '/app/pilot-success',
@@ -8973,6 +9019,19 @@ function renderEnterpriseSupportPage(pageName: EnterpriseSupportPageName): strin
             milestones_passed: manualPassed,
             milestones_total: manual.length
           },
+          expansion_decision: {
+            decision_status: decisionStatus,
+            ready: decisionReady,
+            next_package: safeOnboardingText(decisionState.next_package) || null,
+            owner: safeOnboardingText(decisionState.owner) || null,
+            target_date: safeOnboardingText(decisionState.target_date) || null,
+            next_step: safeOnboardingText(decisionState.next_step) || null,
+            note: safeOnboardingText(decisionState.note) || null,
+            updated_at: decisionState.updated_at || null,
+            recommendation: decisionReady
+              ? (decisionStatus === 'expand' ? 'Prepare expansion terms, next workload scope, and capacity/support review.' : decisionStatus === 'hold' ? 'Keep pilot open with a named unblock condition and next review date.' : 'Record no-go reason and retain customer-safe evidence for follow-up.')
+              : 'Set decision, owner, and target date before closing the pilot review.'
+          },
           blockers: blockers,
           evidence_links: [
             { title: 'Pilot proposal', href: '/app/pilot', detail: 'Scope, price, support terms, success metric, and close steps.', tag: proposal.status, tone: proposal.status === 'ready_to_send' ? 'good' : 'warn' },
@@ -8998,11 +9057,13 @@ function renderEnterpriseSupportPage(pageName: EnterpriseSupportPageName): strin
       function pilotSuccessStatusRows(packet) {
         var progress = packet.progress || {};
         var telemetry = packet.telemetry || {};
+        var decision = packet.expansion_decision || {};
         return [
           row('Pilot success status', packet.status === 'on_track' ? 'Pilot evidence is on track for the scoped first workload.' : 'Pilot is at risk until blockers are closed: ' + packet.blockers.join('; '), packet.status, packet.status === 'on_track' ? 'good' : 'warn'),
           row('Success metric', packet.proposal.success_metric || 'No success metric set yet.', packet.proposal.status || 'draft', packet.proposal.status === 'ready_to_send' ? 'good' : 'warn'),
           row('Automated proof progress', number(progress.automated_passed) + '/' + number(progress.automated_total) + ' live checks passed.', 'live checks', progress.automated_passed === progress.automated_total ? 'good' : 'warn'),
           row('Milestone progress', number(progress.milestones_passed) + '/' + number(progress.milestones_total) + ' customer milestones complete.', 'milestones', progress.milestones_passed === progress.milestones_total ? 'good' : 'warn'),
+          row('Expansion decision', decision.ready ? 'Decision path is recorded with owner and target date.' : 'Set decision, owner, and target date before closing the pilot review.', decision.decision_status || 'not_ready', decision.ready ? 'good' : 'warn'),
           row('Traffic watch', number(telemetry.proxy_calls) + ' calls, ' + number(telemetry.error_calls) + ' errors, ' + number(telemetry.denied_calls) + ' denied.', telemetry.proxy_calls ? 'observed' : 'pending', telemetry.error_calls || telemetry.denied_calls ? 'warn' : telemetry.proxy_calls ? 'good' : 'warn')
         ];
       }
@@ -9024,9 +9085,53 @@ function renderEnterpriseSupportPage(pageName: EnterpriseSupportPageName): strin
           return linkRow(link.title, link.detail, link.href, link.tag, link.tone);
         });
       }
+      function pilotSuccessDecisionRows(packet) {
+        var decision = packet.expansion_decision || {};
+        return [
+          row('Decision status', decision.recommendation || 'Set decision, owner, and target date before closing the pilot review.', decision.decision_status || 'not_ready', decision.ready ? 'good' : 'warn'),
+          row('Decision owner', decision.owner || 'missing', decision.owner ? 'owner' : 'missing', decision.owner ? 'good' : 'warn'),
+          row('Target date', decision.target_date || 'missing', decision.target_date ? 'scheduled' : 'missing', decision.target_date ? 'good' : 'warn'),
+          row('Next package/path', decision.next_package || 'not set', 'package', decision.next_package ? 'good' : 'warn'),
+          row('Next step', decision.next_step || 'not set', 'next', decision.next_step ? 'good' : 'warn'),
+          row('Decision note', decision.note || 'No customer-safe note recorded.', 'note', decision.note ? 'good' : 'warn')
+        ];
+      }
+      function pilotSuccessDecisionBriefText(packet) {
+        var decision = packet.expansion_decision || {};
+        return [
+          'VaultProof pilot expansion decision brief',
+          'Generated: ' + packet.generated_at,
+          'Organization: ' + (packet.organization.name || 'selected workspace'),
+          'Pilot status: ' + packet.status,
+          'Decision: ' + (decision.decision_status || 'not_ready'),
+          'Decision ready: ' + (decision.ready ? 'yes' : 'no'),
+          'Owner: ' + (decision.owner || 'missing'),
+          'Target date: ' + (decision.target_date || 'missing'),
+          'Next package/path: ' + (decision.next_package || 'not set'),
+          '',
+          'Recommendation:',
+          '- ' + (decision.recommendation || 'Set decision, owner, and target date before closing the pilot review.'),
+          '',
+          'Next step:',
+          '- ' + (decision.next_step || 'not set'),
+          '',
+          'Decision note:',
+          '- ' + (decision.note || 'none'),
+          '',
+          'Evidence context:',
+          '- Live checks: ' + number((packet.progress || {}).automated_passed) + '/' + number((packet.progress || {}).automated_total),
+          '- Milestones: ' + number((packet.progress || {}).milestones_passed) + '/' + number((packet.progress || {}).milestones_total),
+          '- Traffic: ' + number((packet.telemetry || {}).proxy_calls) + ' calls, ' + number((packet.telemetry || {}).error_calls) + ' errors, ' + number((packet.telemetry || {}).denied_calls) + ' denied',
+          '- Open blockers: ' + (packet.blockers.length ? packet.blockers.join('; ') : 'none'),
+          '',
+          'Secret boundary:',
+          '- This brief is metadata-only and excludes ' + packet.secrets_excluded.join(', ') + '.'
+        ].join('\\n');
+      }
       function pilotSuccessBriefText(packet) {
         var telemetry = packet.telemetry || {};
         var progress = packet.progress || {};
+        var decision = packet.expansion_decision || {};
         var completedMilestones = packet.milestones.filter(function(item) {
           return item.passed;
         }).map(function(item) {
@@ -9046,6 +9151,7 @@ function renderEnterpriseSupportPage(pageName: EnterpriseSupportPageName): strin
           '- Customer milestones: ' + number(progress.milestones_passed) + '/' + number(progress.milestones_total),
           '- Traffic: ' + number(telemetry.proxy_calls) + ' calls, ' + number(telemetry.error_calls) + ' errors, ' + number(telemetry.denied_calls) + ' denied',
           '- Go/no-go: ' + telemetry.go_no_go_status,
+          '- Expansion decision: ' + (decision.decision_status || 'not_ready') + (decision.owner ? ' owned by ' + decision.owner : ''),
           '',
           'Completed milestones:',
           '- ' + (completedMilestones.length ? completedMilestones.join('\\n- ') : 'none yet'),
@@ -10398,10 +10504,25 @@ function renderEnterpriseSupportPage(pageName: EnterpriseSupportPageName): strin
       function renderPilotSuccessPanel(org, sso, readiness, overview, bootstrap) {
         var goNoGo = buildGoNoGoStatus(org, sso, readiness, overview, bootstrap);
         var packet = buildPilotSuccessPacket(org, sso, readiness, overview, bootstrap, goNoGo);
+        latestPilotSuccessPacket = packet;
+        var decisionState = getPilotSuccessDecisionState();
+        [
+          ['pilotSuccessDecisionStatus', 'decision_status'],
+          ['pilotSuccessDecisionPackage', 'next_package'],
+          ['pilotSuccessDecisionOwner', 'owner'],
+          ['pilotSuccessDecisionTarget', 'target_date'],
+          ['pilotSuccessDecisionNextStep', 'next_step'],
+          ['pilotSuccessDecisionNote', 'note']
+        ].forEach(function(item) {
+          var el = byId(item[0]);
+          if (el && document.activeElement !== el) el.value = decisionState[item[1]] || '';
+        });
         text('pilotSuccessMeta', packet.status === 'on_track' ? 'on track' : 'at risk');
+        text('pilotSuccessDecisionMeta', packet.expansion_decision.ready ? packet.expansion_decision.decision_status : 'not ready');
         byId('pilotSuccessStatusList').innerHTML = pilotSuccessStatusRows(packet).join('');
         byId('pilotSuccessMilestoneList').innerHTML = pilotSuccessMilestoneRows(packet).join('');
         byId('pilotSuccessEvidenceList').innerHTML = pilotSuccessEvidenceRows(packet).join('');
+        byId('pilotSuccessDecisionList').innerHTML = pilotSuccessDecisionRows(packet).join('');
         var brief = byId('pilotSuccessBrief');
         if (brief) brief.value = pilotSuccessBriefText(packet);
       }
@@ -11102,6 +11223,10 @@ function renderEnterpriseSupportPage(pageName: EnterpriseSupportPageName): strin
       if (pilotProposalForm) pilotProposalForm.addEventListener('submit', function(event) {
         event.preventDefault();
       });
+      var pilotSuccessDecisionForm = byId('pilotSuccessDecisionForm');
+      if (pilotSuccessDecisionForm) pilotSuccessDecisionForm.addEventListener('submit', function(event) {
+        event.preventDefault();
+      });
       var scannerFindingForm = byId('scannerFindingForm');
       if (scannerFindingForm) scannerFindingForm.addEventListener('submit', function(event) {
         event.preventDefault();
@@ -11171,6 +11296,13 @@ function renderEnterpriseSupportPage(pageName: EnterpriseSupportPageName): strin
         }
         if (target.hasAttribute('data-pilot-success-note')) {
           setPilotSuccessState(target.getAttribute('data-pilot-success-note') || '', { note: target.value });
+          if (latestOrgPayload && latestReadiness) {
+            renderPilotSuccessPanel((latestOrgPayload && latestOrgPayload.organization) || {}, (latestOrgPayload && latestOrgPayload.sso_status) || {}, latestReadiness, latestOverview || {}, latestBootstrap || {});
+          }
+          return;
+        }
+        if (target.hasAttribute('data-pilot-success-decision-field')) {
+          setPilotSuccessDecisionState(target.getAttribute('data-pilot-success-decision-field') || '', target.value);
           if (latestOrgPayload && latestReadiness) {
             renderPilotSuccessPanel((latestOrgPayload && latestOrgPayload.organization) || {}, (latestOrgPayload && latestOrgPayload.sso_status) || {}, latestReadiness, latestOverview || {}, latestBootstrap || {});
           }
@@ -11353,6 +11485,23 @@ function renderEnterpriseSupportPage(pageName: EnterpriseSupportPageName): strin
         } catch (_) {
           brief.focus();
           brief.select();
+        }
+      });
+      var copyPilotSuccessDecisionBtn = byId('copyPilotSuccessDecisionBtn');
+      if (copyPilotSuccessDecisionBtn) copyPilotSuccessDecisionBtn.addEventListener('click', async function() {
+        if (!latestPilotSuccessPacket) return;
+        var textValue = pilotSuccessDecisionBriefText(latestPilotSuccessPacket);
+        try {
+          await navigator.clipboard.writeText(textValue);
+          copyPilotSuccessDecisionBtn.textContent = 'copied';
+          setTimeout(function() { copyPilotSuccessDecisionBtn.textContent = 'copy decision brief'; }, 1400);
+        } catch (_) {
+          var brief = byId('pilotSuccessBrief');
+          if (brief) {
+            brief.value = textValue;
+            brief.focus();
+            brief.select();
+          }
         }
       });
       var copyScannerJsonBtn = byId('copyScannerJsonBtn');

@@ -3811,12 +3811,19 @@ async function assertInternalAdminConsole() {
     {
       path: '/app/pilot-success',
       title: 'Pilot success tracker - VaultProof Enterprise',
-      required: ['Success posture', 'Evidence path', 'Success milestones', 'Copyable weekly update', 'vaultproof_enterprise_pilot_success_tracker', 'copy update'],
+      required: ['Success posture', 'Evidence path', 'Success milestones', 'Expansion decision', 'pilotSuccessDecisionMeta', 'pilotSuccessDecisionList', 'pilotSuccessDecisionForm', 'data-pilot-success-decision-field', 'copy decision brief', 'copyPilotSuccessDecisionBtn', 'pilotSuccessDecisionBriefText', 'VaultProof pilot expansion decision brief', 'expansion_decision', 'Copyable weekly update', 'vaultproof_enterprise_pilot_success_tracker', 'copy update'],
       localStorageRequired: [
         "return 'vaultproof_pilot_success:' + (currentOrgId || 'default');",
         'localStorage.setItem(pilotSuccessStorageKey(), JSON.stringify(state));',
+        'expansion_decision',
+        'pilotSuccessDecisionForm',
+        'data-pilot-success-decision-field',
+        'setPilotSuccessDecisionState',
+        'copyPilotSuccessDecisionBtn',
+        'pilotSuccessDecisionBriefText',
         "target.hasAttribute('data-pilot-success-check')",
         "target.hasAttribute('data-pilot-success-note')",
+        "target.hasAttribute('data-pilot-success-decision-field')",
       ],
     },
   ]) {
