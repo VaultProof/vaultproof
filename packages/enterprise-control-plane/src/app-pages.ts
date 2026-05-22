@@ -6451,6 +6451,18 @@ function renderEnterpriseSupportPage(pageName: EnterpriseSupportPageName): strin
           <div class="section-title"><h2>Capacity envelope</h2><span class="mini">observed vs contract</span></div>
           <div id="entitlementsCapacityList" class="list"></div>
         </div>
+        <div class="card" style="grid-column:1/-1">
+          <div class="section-title"><h2>Commercial handoff</h2><span id="entitlementsBillingMeta" class="mini">billing review</span></div>
+          <form id="entitlementsBillingForm" class="entitlement-form">
+            <div class="entitlement-field"><label for="entitlementInvoiceStatus">invoice status</label><select id="entitlementInvoiceStatus" data-entitlement-field="invoice_status"><option value="not_started">not started</option><option value="quote_sent">quote sent</option><option value="po_pending">PO pending</option><option value="invoice_ready">invoice ready</option><option value="paid">paid</option><option value="blocked">blocked</option></select></div>
+            <div class="entitlement-field"><label for="entitlementPoStatus">PO status</label><select id="entitlementPoStatus" data-entitlement-field="purchase_order_status"><option value="not_required">not required</option><option value="requested">requested</option><option value="received">received</option><option value="blocked">blocked</option></select></div>
+            <div class="entitlement-field"><label for="entitlementProcurementOwner">procurement owner</label><input id="entitlementProcurementOwner" data-entitlement-field="procurement_owner" placeholder="buyer, finance, or procurement owner" /></div>
+            <div class="entitlement-field"><label for="entitlementPaymentTerms">payment terms</label><input id="entitlementPaymentTerms" data-entitlement-field="payment_terms" placeholder="Net 30 after pilot acceptance" /></div>
+            <div class="entitlement-field"><label for="entitlementExpansionReview">expansion review</label><input id="entitlementExpansionReview" data-entitlement-field="expansion_review_date" placeholder="2026-07-15" /></div>
+            <div class="entitlement-field wide"><label for="entitlementBillingNote">billing-safe note</label><textarea id="entitlementBillingNote" data-entitlement-field="billing_note" placeholder="PO, invoice, procurement, or expansion note. Do not paste card numbers, bank data, tokens, secrets, request bodies, or customer payloads."></textarea></div>
+          </form>
+          <div id="entitlementsBillingList" class="list" style="margin-top:14px"></div>
+        </div>
         <div class="card">
           <div class="section-title">
             <h2>Usage guardrails</h2>
@@ -6815,6 +6827,12 @@ function renderEnterpriseSupportPage(pageName: EnterpriseSupportPageName): strin
           billing_owner: '',
           success_owner: '',
           retention_label: '30-day audit export during pilot',
+          invoice_status: 'not_started',
+          purchase_order_status: 'not_required',
+          procurement_owner: '',
+          payment_terms: '',
+          expansion_review_date: '',
+          billing_note: '',
           customer_note: ''
         };
       }
@@ -9227,6 +9245,36 @@ function renderEnterpriseSupportPage(pageName: EnterpriseSupportPageName): strin
       function entitlementContractReady(status) {
         return ['accepted_demo', 'signed', 'active'].indexOf(String(status || '').toLowerCase()) !== -1;
       }
+      function entitlementAllowedValue(value, allowed, fallback) {
+        var normalized = String(value || '').toLowerCase();
+        return allowed.indexOf(normalized) !== -1 ? normalized : fallback;
+      }
+      function entitlementBillingReady(handoff) {
+        var invoiceStatus = String((handoff && handoff.invoice_status) || '').toLowerCase();
+        var poStatus = String((handoff && handoff.purchase_order_status) || '').toLowerCase();
+        return ['invoice_ready', 'paid'].indexOf(invoiceStatus) !== -1 &&
+          ['not_required', 'received'].indexOf(poStatus) !== -1 &&
+          Boolean(String((handoff && handoff.procurement_owner) || '').trim()) &&
+          Boolean(String((handoff && handoff.payment_terms) || '').trim());
+      }
+      function entitlementBillingTone(handoff) {
+        if (entitlementBillingReady(handoff)) return 'good';
+        if (String((handoff && handoff.invoice_status) || '').toLowerCase() === 'blocked' || String((handoff && handoff.purchase_order_status) || '').toLowerCase() === 'blocked') return 'bad';
+        return 'warn';
+      }
+      function entitlementBillingNextAction(handoff) {
+        var actions = [];
+        var invoiceStatus = String((handoff && handoff.invoice_status) || '').toLowerCase();
+        var poStatus = String((handoff && handoff.purchase_order_status) || '').toLowerCase();
+        if (!String((handoff && handoff.procurement_owner) || '').trim()) actions.push('Assign the buyer finance/procurement owner.');
+        if (!String((handoff && handoff.payment_terms) || '').trim()) actions.push('Record customer-safe payment terms.');
+        if (invoiceStatus === 'not_started') actions.push('Send quote or mark invoice ready before closing paid onboarding.');
+        if (invoiceStatus === 'quote_sent' || invoiceStatus === 'po_pending') actions.push('Track PO or invoice approval before expansion traffic.');
+        if (invoiceStatus === 'blocked' || poStatus === 'blocked') actions.push('Resolve commercial blocker before treating the account as paid-ready.');
+        if (poStatus === 'requested') actions.push('Confirm PO received or not required.');
+        if (!actions.length) actions.push('Keep invoice and expansion review in the renewal cadence.');
+        return actions;
+      }
       function redactEntitlementNote(value) {
         var note = String(value || '').trim();
         if (!note) return null;
@@ -9280,9 +9328,22 @@ function renderEnterpriseSupportPage(pageName: EnterpriseSupportPageName): strin
           error_calls: errorCalls
         };
         var capacityStatus = entitlementCapacityStatus(capacity);
+        var billingHandoff = {
+          invoice_status: entitlementAllowedValue(state.invoice_status, ['not_started', 'quote_sent', 'po_pending', 'invoice_ready', 'paid', 'blocked'], 'not_started'),
+          purchase_order_status: entitlementAllowedValue(state.purchase_order_status, ['not_required', 'requested', 'received', 'blocked'], 'not_required'),
+          procurement_owner: redactEntitlementNote(state.procurement_owner),
+          payment_terms: redactEntitlementNote(state.payment_terms),
+          expansion_review_date: redactEntitlementNote(state.expansion_review_date),
+          billing_note: redactEntitlementNote(state.billing_note),
+          updated_at: state.updated_at || null
+        };
+        billingHandoff.ready = entitlementBillingReady(billingHandoff);
+        billingHandoff.status = billingHandoff.ready ? 'commercial_ready' : 'commercial_review';
+        billingHandoff.status_tone = entitlementBillingTone(billingHandoff);
+        billingHandoff.next_actions = entitlementBillingNextAction(billingHandoff);
         return {
           packet_type: 'vaultproof_enterprise_entitlements',
-          packet_version: 2,
+          packet_version: 3,
           status: status,
           decision: status === 'ready_for_paid_pilot' ? 'Paid-user contract package is ready for the selected enterprise organization.' : 'Hold paid-user onboarding until contract, capacity, owners, and launch evidence are complete.',
           generated_at: new Date().toISOString(),
@@ -9313,6 +9374,7 @@ function renderEnterpriseSupportPage(pageName: EnterpriseSupportPageName): strin
             actions: entitlementUsageActions(capacity, capacityStatus),
             review_links: ['/app/evidence', '/app/activity', '/app/inventory', '/app/rollout', '/app/plans']
           },
+          billing_handoff: billingHandoff,
           support: {
             support_tier: state.support_tier || 'founder-led launch-week support',
             incident_response_add_on: state.incident_response_add_on || 'optional add-on',
@@ -9329,9 +9391,10 @@ function renderEnterpriseSupportPage(pageName: EnterpriseSupportPageName): strin
           exports: {
             evidence_packet: '/app/evidence',
             plans: '/app/plans',
-            onboarding: '/app/onboarding',
+            onboarding: '/app/evidence',
             pilot_proposal: '/app/pilot',
-            support_room: '/app/support',
+            launch_board: '/app/evidence',
+            support_room: '/app/evidence',
             security_review: '/app/security-review'
           },
           secrets_excluded: [
@@ -9350,12 +9413,14 @@ function renderEnterpriseSupportPage(pageName: EnterpriseSupportPageName): strin
       function entitlementsSummaryRows(packet) {
         var contract = packet.contract || {};
         var org = packet.organization || {};
+        var billing = packet.billing_handoff || {};
         return [
           row('Paid-user status', packet.decision, packet.status, packet.status === 'ready_for_paid_pilot' ? 'good' : 'warn'),
           row('Organization scope', (org.name || 'Selected workspace') + ' on enterprise.vaultproof.dev. SSO/login status: ' + (org.sso_provider_status || 'not confirmed') + '.', org.id ? 'scoped' : 'select org', org.id ? 'good' : 'warn'),
           row('Contract status', contract.contract_status || 'draft', entitlementContractReady(contract.contract_status) ? 'accepted' : 'draft', entitlementContractReady(contract.contract_status) ? 'good' : 'warn'),
           row('Package', contract.package_label || 'Enterprise paid pilot', packet.support.runtime_label || 'runtime', 'good'),
           row('Billing owner', contract.billing_owner || 'missing', contract.billing_owner ? 'set' : 'missing', contract.billing_owner ? 'good' : 'warn'),
+          row('Commercial handoff', billing.ready ? 'Invoice/PO handoff is recorded for this paid account.' : 'Finish invoice status, PO status, procurement owner, and payment terms before treating the account as commercially closed.', billing.status || 'commercial_review', billing.status_tone || 'warn'),
           row('Customer success owner', contract.success_owner || 'missing', contract.success_owner ? 'set' : 'missing', contract.success_owner ? 'good' : 'warn'),
           row('Renewal/review date', contract.renewal_date || 'missing', contract.renewal_date ? 'scheduled' : 'missing', contract.renewal_date ? 'good' : 'warn'),
           row('Go/no-go dependency', packet.blockers.indexOf('Go/no-go launch board is still on hold.') === -1 ? 'Launch board is not blocking the paid-user package.' : 'Finish the launch board before paid onboarding.', 'launch', packet.blockers.indexOf('Go/no-go launch board is still on hold.') === -1 ? 'good' : 'warn')
@@ -9401,10 +9466,25 @@ function renderEnterpriseSupportPage(pageName: EnterpriseSupportPageName): strin
           return row('Usage action', action, 'next', action.indexOf('Pause') === 0 ? 'bad' : 'warn');
         }));
       }
+      function entitlementsBillingRows(packet) {
+        var handoff = packet.billing_handoff || {};
+        return [
+          row('Billing handoff status', handoff.ready ? 'Commercial handoff has enough metadata for a paid-pilot close path.' : 'Record invoice status, PO status, procurement owner, and payment terms before treating the account as commercially closed.', handoff.status || 'commercial_review', handoff.status_tone || 'warn'),
+          row('Invoice status', handoff.invoice_status || 'not_started', 'invoice', handoff.invoice_status === 'paid' || handoff.invoice_status === 'invoice_ready' ? 'good' : handoff.invoice_status === 'blocked' ? 'bad' : 'warn'),
+          row('PO status', handoff.purchase_order_status || 'not_required', 'purchase order', handoff.purchase_order_status === 'not_required' || handoff.purchase_order_status === 'received' ? 'good' : handoff.purchase_order_status === 'blocked' ? 'bad' : 'warn'),
+          row('Procurement owner', handoff.procurement_owner || 'missing', handoff.procurement_owner ? 'owner' : 'missing', handoff.procurement_owner ? 'good' : 'warn'),
+          row('Payment terms', handoff.payment_terms || 'missing', handoff.payment_terms ? 'terms' : 'missing', handoff.payment_terms ? 'good' : 'warn'),
+          row('Expansion review', handoff.expansion_review_date || 'not scheduled', handoff.expansion_review_date ? 'scheduled' : 'review', handoff.expansion_review_date ? 'good' : 'warn'),
+          row('Billing note', handoff.billing_note || 'No billing-safe note recorded.', 'note', handoff.billing_note ? 'good' : 'warn')
+        ].concat((handoff.next_actions || []).map(function(action) {
+          return row('Commercial action', action, 'next', action.indexOf('Resolve') === 0 ? 'bad' : 'warn');
+        }));
+      }
       function entitlementsCapacityBriefText(packet) {
         var contract = packet.contract || {};
         var capacity = packet.capacity || {};
         var usage = packet.usage_guardrails || {};
+        var handoff = packet.billing_handoff || {};
         return [
           'VaultProof entitlement capacity brief',
           'Generated: ' + packet.generated_at,
@@ -9412,6 +9492,7 @@ function renderEnterpriseSupportPage(pageName: EnterpriseSupportPageName): strin
           'Package: ' + (contract.package_label || 'Enterprise paid pilot'),
           'Paid-user status: ' + packet.status,
           'Capacity status: ' + (usage.capacity_status || 'missing_allowance'),
+          'Commercial handoff: ' + (handoff.status || 'commercial_review'),
           '',
           'Contract envelope:',
           '- Monthly calls: ' + number(capacity.observed_proxy_calls) + ' observed of ' + number(capacity.monthly_call_allowance) + ' allowed (' + number(capacity.call_utilization_percent) + '% used, ' + number(capacity.remaining_calls) + ' remaining)',
@@ -9425,9 +9506,17 @@ function renderEnterpriseSupportPage(pageName: EnterpriseSupportPageName): strin
           'Actions:',
           '- ' + ((usage.actions || []).length ? usage.actions.join('\\n- ') : 'Keep usage review in the renewal cadence.'),
           '',
+          'Commercial handoff:',
+          '- Invoice status: ' + (handoff.invoice_status || 'not_started'),
+          '- PO status: ' + (handoff.purchase_order_status || 'not_required'),
+          '- Procurement owner: ' + (handoff.procurement_owner || 'missing'),
+          '- Payment terms: ' + (handoff.payment_terms || 'missing'),
+          '- Expansion review: ' + (handoff.expansion_review_date || 'not scheduled'),
+          '- Next action: ' + ((handoff.next_actions || []).length ? handoff.next_actions.join('\\n- ') : 'Keep billing review in the renewal cadence.'),
+          '',
           'Boundary:',
           '- ' + (usage.hard_limit_enforcement || 'Manual contract-controlled for this demo.'),
-          '- No provider keys, encrypted shares, service-role keys, browser sessions, OAuth secrets, origin-lock values, signing secrets, runtime-token secrets, or unwrap roots are included.'
+          '- Commercial handoff is metadata-only. No card numbers, bank data, provider keys, encrypted shares, service-role keys, browser sessions, OAuth secrets, origin-lock values, signing secrets, runtime-token secrets, or unwrap roots are included.'
         ].join('\\n');
       }
       function entitlementsGuardrailRows(packet) {
@@ -9435,7 +9524,8 @@ function renderEnterpriseSupportPage(pageName: EnterpriseSupportPageName): strin
           row('Support tier', packet.support.support_tier, 'support', 'good'),
           row('Incident response boundary', packet.support.response_boundary + ' Current setting: ' + packet.support.incident_response_add_on + '.', 'contract', packet.support.incident_response_add_on === 'included' ? 'good' : 'warn'),
           row('Retention', (packet.contract && packet.contract.retention_label) || 'not set', 'contract', packet.contract && packet.contract.retention_label ? 'good' : 'warn'),
-          row('Billing enforcement', 'Manual contract-controlled entitlement evidence for this demo. Billing APIs and hard limit enforcement are a later paid buildout.', 'manual', 'warn'),
+          row('Billing enforcement', 'Commercial handoff is metadata-only for this demo. Billing APIs, invoice automation, and hard limit enforcement are a later paid buildout.', 'manual', 'warn'),
+          row('Commercial status', ((packet.billing_handoff || {}).next_actions || []).join(' ') || 'Billing handoff is ready.', (packet.billing_handoff || {}).status || 'commercial_review', (packet.billing_handoff || {}).status_tone || 'warn'),
           row('Secrets excluded', packet.secrets_excluded.join(', '), 'redacted', 'good')
         ].concat(packet.guardrails.map(function(item) {
           return row('Guardrail', item, 'paid-user', item.indexOf('contract-controlled') === -1 ? 'good' : 'warn');
@@ -9447,10 +9537,10 @@ function renderEnterpriseSupportPage(pageName: EnterpriseSupportPageName): strin
         return [
           linkRow('Evidence packet', 'Export the full customer-safe proof packet, including entitlements status.', packet.exports.evidence_packet, 'evidence', 'good'),
           linkRow('Plans', 'Review packaging, starting price, expansion path, and contract-facing guardrails.', packet.exports.plans, 'plans', 'good'),
-          linkRow('Paid onboarding', 'Turn accepted contract terms into owners, login handoff, first workload scope, support handoff, and testing-window evidence.', packet.exports.onboarding, 'onboarding', packet.status === 'ready_for_paid_pilot' ? 'good' : 'warn'),
+          linkRow('Paid onboarding evidence', 'Customer-safe onboarding status appears in Evidence; staff workflow stays on admin.vaultproof.dev.', packet.exports.onboarding, 'onboarding', packet.status === 'ready_for_paid_pilot' ? 'good' : 'warn'),
           linkRow('Pilot proposal', 'Confirm first workload, expected traffic, price, support terms, and close steps.', packet.exports.pilot_proposal, 'proposal', 'good'),
-          linkRow('Launch board', 'Close go/no-go blockers before paid customer traffic.', packet.exports.launch_board, 'launch', packet.status === 'ready_for_paid_pilot' ? 'good' : 'warn'),
-          linkRow('Launch support', 'Confirm support scope, incident-response add-on boundary, and admin separation.', packet.exports.support_room, 'support', 'good'),
+          linkRow('Launch readiness evidence', 'Close go/no-go blockers before paid customer traffic; customer-safe status is summarized in Evidence.', packet.exports.launch_board, 'launch', packet.status === 'ready_for_paid_pilot' ? 'good' : 'warn'),
+          linkRow('Support evidence', 'Confirm support scope, incident-response add-on boundary, and admin separation from the customer-safe proof packet.', packet.exports.support_room, 'support', 'good'),
           linkRow('Security review', 'Share architecture, controls, evidence links, known limitations, and customer-safe answers.', packet.exports.security_review, 'security', 'good')
         ];
       }
@@ -9472,6 +9562,12 @@ function renderEnterpriseSupportPage(pageName: EnterpriseSupportPageName): strin
           ['entitlementBillingOwner', 'billing_owner'],
           ['entitlementSuccessOwner', 'success_owner'],
           ['entitlementRetention', 'retention_label'],
+          ['entitlementInvoiceStatus', 'invoice_status'],
+          ['entitlementPoStatus', 'purchase_order_status'],
+          ['entitlementProcurementOwner', 'procurement_owner'],
+          ['entitlementPaymentTerms', 'payment_terms'],
+          ['entitlementExpansionReview', 'expansion_review_date'],
+          ['entitlementBillingNote', 'billing_note'],
           ['entitlementNotes', 'customer_note']
         ].forEach(function(pair) {
           var el = byId(pair[0]);
@@ -9479,8 +9575,10 @@ function renderEnterpriseSupportPage(pageName: EnterpriseSupportPageName): strin
         });
         text('entitlementsMeta', state.updated_at ? 'updated ' + rel(state.updated_at) : 'browser-local');
         text('entitlementsStatusMeta', packet.status === 'ready_for_paid_pilot' ? 'ready' : 'contract review');
+        text('entitlementsBillingMeta', (packet.billing_handoff || {}).status || 'commercial review');
         byId('entitlementsSummaryList').innerHTML = entitlementsSummaryRows(packet).join('');
         byId('entitlementsCapacityList').innerHTML = entitlementsCapacityRows(packet).join('');
+        byId('entitlementsBillingList').innerHTML = entitlementsBillingRows(packet).join('');
         byId('entitlementsUsageMeterList').innerHTML = entitlementsUsageMeterRows(packet).join('');
         byId('entitlementsUsageGuardrailList').innerHTML = entitlementsUsageGuardrailRows(packet).join('');
         byId('entitlementsGuardrailList').innerHTML = entitlementsGuardrailRows(packet).join('');
@@ -11225,6 +11323,14 @@ function renderEnterpriseSupportPage(pageName: EnterpriseSupportPageName): strin
       });
       var pilotSuccessDecisionForm = byId('pilotSuccessDecisionForm');
       if (pilotSuccessDecisionForm) pilotSuccessDecisionForm.addEventListener('submit', function(event) {
+        event.preventDefault();
+      });
+      var entitlementsForm = byId('entitlementsForm');
+      if (entitlementsForm) entitlementsForm.addEventListener('submit', function(event) {
+        event.preventDefault();
+      });
+      var entitlementsBillingForm = byId('entitlementsBillingForm');
+      if (entitlementsBillingForm) entitlementsBillingForm.addEventListener('submit', function(event) {
         event.preventDefault();
       });
       var scannerFindingForm = byId('scannerFindingForm');
