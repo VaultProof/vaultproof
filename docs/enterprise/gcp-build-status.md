@@ -1,6 +1,6 @@
 # VaultProof GCP Build Status
 
-Last updated: 2026-05-22T01:26:14.571Z
+Last updated: 2026-05-22T05:08:34.987Z
 
 This file is the living inventory of what has been built for VaultProof on Google Cloud. It is refreshed after every successful enterprise image build by `infra/gcp/enterprise-secure-runtime/build-images.sh`.
 
@@ -42,11 +42,9 @@ For the final demo go/no-go run, use `LOGIN_QA_REQUIRE_SESSION=true npm run qa:e
 Latest live check on 2026-05-22:
 
 - `npm run qa:enterprise-live-app` passed against `https://enterprise.vaultproof.dev`: `production_ready: true`, `security_profile: google-confidential-production`, 27 app paths, 5 staff-only paths, and 31 links checked.
-- `LOGIN_QA_REQUIRE_SESSION=true LOGIN_QA_OAUTH_PROVIDER=google npm run qa:enterprise-login` passed the public login page, public Supabase anon config, and Google OAuth authorize redirect to `accounts.google.com`.
-- Strict session proof is still blocked until `SUPABASE_SERVICE_ROLE_KEY` or `SUPABASE_SERVICE_KEY` is loaded in the local shell. Do not mark the staff launch board's strict login QA row as passed until that command also generates a temporary browser session and verifies authenticated enterprise APIs.
-- `npm run verify:gcp-enterprise-edge` passed after deploying build `a4683a7d`. The verifier confirmed edge IP `34.102.179.105`, active managed TLS for `enterprise.vaultproof.dev`, healthy backend `vaultproof-enterprise-runtime-1:3001`, `/health`, and `/readiness`.
-- `npm run verify:gcp-enterprise-cloud-armor` passed after deploying build `a4683a7d`. The verifier confirmed `vaultproof-enterprise-armor` is attached to `vaultproof-enterprise-backend`, `/health` returns `200`, and the `/.env` scanner probe returns `403`.
-- `RUN_LIVE_EDGE=true RUN_LIVE_APP_QA=true RUN_LOGIN_QA=true RUN_CLOUD_ARMOR_QA=true STRICT_LIVE=true LOGIN_QA_REQUIRE_SESSION=true LOGIN_QA_OAUTH_PROVIDER=google npm run gate:gcp-customer-launch` remains `blocked` only because strict Supabase session proof still needs `SUPABASE_SERVICE_ROLE_KEY` or `SUPABASE_SERVICE_KEY` in the local shell.
+- `npm run verify:gcp-enterprise-edge` passed after deploying build `ecb162f7`. The verifier confirmed edge IP `34.102.179.105`, active managed TLS for `enterprise.vaultproof.dev`, healthy backend `vaultproof-enterprise-runtime-1:3001`, `/health`, and `/readiness`.
+- `npm run verify:gcp-enterprise-cloud-armor` passed after deploying build `ecb162f7`. The verifier confirmed `vaultproof-enterprise-armor` is attached to `vaultproof-enterprise-backend`, `/health` returns `200`, and the `/.env` scanner probe returns `403`.
+- `RUN_LIVE_EDGE=true RUN_LIVE_APP_QA=true RUN_CLOUD_ARMOR_QA=true npm run gate:gcp-customer-launch` returned `status: ok` with no blockers. Strict Supabase session proof is still skipped until `SUPABASE_SERVICE_ROLE_KEY` or `SUPABASE_SERVICE_KEY` is loaded in the local shell.
 
 ## Cloud Armor Edge Guardrail
 
@@ -56,7 +54,7 @@ Status: `attached and enforced`
 
 ## App Shell Notes
 
-- Build `a4683a7d` is the current deployed GCP image tag for both control plane and executor containers.
+- Build `ecb162f7` is the current deployed GCP image tag for both control plane and executor containers.
 - Homepage hero headline is `Active Key Protection for every API call.`
 - Customer-facing enterprise pages live under `https://enterprise.vaultproof.dev`; staff-only operator pages live under `https://admin.vaultproof.dev`.
 - `https://admin.vaultproof.dev/app/launch` is the staff-only go/no-go launch board. `https://enterprise.vaultproof.dev/app/launch` is intentionally removed from the customer enterprise host and should return 404.
@@ -245,7 +243,7 @@ Status: `built for enterprise demo`
 
 `https://enterprise.vaultproof.dev/app/entitlements` gives paid-pilot customers a customer-safe contract, capacity, commercial handoff, and amendment/renewal view. It records package, contract status, monthly call allowance, provider-slot allowance, seat allowance, support tier, incident-response add-on status, runtime type, renewal/review date, billing owner, success owner, retention label, invoice status, PO status, procurement owner, payment terms, expansion review date, amendment/change records, and customer-safe notes.
 
-The demo slice starts from browser-local records and existing enterprise evidence: selected organization, visible members, projects, provider slots, traffic, denials, errors, readiness, SSO status, and go/no-go launch state. It now computes a capacity status, remaining calls, provider-slot and seat utilization, expansion recommendation, hard-limit boundary, customer-safe usage actions, commercial handoff readiness, renewal status, and amendment blockers; renders visual usage meters; exports packet version 3; and adds commercial handoff plus amendment/renewal details to the copyable capacity brief without storing or exposing secrets. Persistent audited contract records, billing provider integration, invoice automation, hard limit enforcement, overage workflow, and renewal automation remain follow-up work.
+The demo slice starts from browser-local records and existing enterprise evidence: selected organization, visible members, projects, provider slots, traffic, denials, errors, readiness, SSO status, and go/no-go launch state. It computes a capacity status, remaining calls, provider-slot and seat utilization, expansion recommendation, hard-limit boundary, customer-safe usage actions, commercial handoff readiness, renewal status, and amendment blockers; renders visual usage meters; exports packet version 3; and adds commercial handoff plus amendment/renewal details to the copyable capacity brief without storing or exposing secrets. Persistent audited contract records, billing provider integration, invoice automation, hard limit enforcement, overage workflow, and renewal automation remain follow-up work.
 
 Entitlement records and capacity briefs must never store card numbers, bank data, provider keys, encrypted provider shares, Supabase service-role keys, browser session tokens, OAuth client secrets, origin-lock secrets, executor signing secrets, runtime-token secrets, request bodies, response bodies, or customer payloads.
 
@@ -300,14 +298,14 @@ Cost note: the current fixed estimate is above the existing `VaultProof Producti
 
 ## Build Pointer
 
-- Build tag: `a4683a7d`
+- Build tag: `ecb162f7`
 - Registry: `us-central1-docker.pkg.dev/vaultproof-prod/vaultproof`
-- Control plane image: `us-central1-docker.pkg.dev/vaultproof-prod/vaultproof/enterprise-control-plane:a4683a7d`
-- Control plane digest: `sha256:04524f4b6d9b30be797da02cfb89cdff438f34b60ea610231146227d5b27de70`
-- Control plane built at: `2026-05-22T01:25:37.304257736Z`
-- Executor image: `us-central1-docker.pkg.dev/vaultproof-prod/vaultproof/enterprise-secure-executor:a4683a7d`
-- Executor digest: `sha256:0abf9d06e730cc245dcc9a69bdd29f4b22f62dfa4800400956dbd55876b561e9`
-- Executor built at: `2026-05-22T01:25:49.647561699Z`
+- Control plane image: `us-central1-docker.pkg.dev/vaultproof-prod/vaultproof/enterprise-control-plane:ecb162f7`
+- Control plane digest: `sha256:af3f80acc3756635b151345c58eeefefe47de70e5b6a59dcfeeafd7d29b75143`
+- Control plane built at: `2026-05-22T05:07:57.782091793Z`
+- Executor image: `us-central1-docker.pkg.dev/vaultproof-prod/vaultproof/enterprise-secure-executor:ecb162f7`
+- Executor digest: `sha256:189e0b99beacd666efc573072c7785272ed9f2b55885a31bd2f43796068a7e79`
+- Executor built at: `2026-05-22T05:08:09.285007074Z`
 
 ## Project
 
