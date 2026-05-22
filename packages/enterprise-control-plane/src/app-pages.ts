@@ -2432,7 +2432,7 @@ function renderEnterpriseOperationsPage(pageName: 'activity' | 'projects' | 'inv
         <div class="toolbar">
           <select id="orgSelect" aria-label="Organization"><option>Loading org...</option></select>
           ${pageName === 'keys' ? '<button id="openProviderSlotForm" class="primary" type="button">add slot</button>' : ''}
-          ${pageName === 'inventory' ? '<button id="openManualApiKeyForm" class="primary" type="button">add API key</button><button id="copyInventoryJsonBtn" class="primary" type="button">copy inventory JSON</button>' : ''}
+          ${pageName === 'inventory' ? '<button id="openManualApiKeyForm" class="primary" type="button">add API key</button><button id="openInventoryImportForm" type="button">import CSV/OpenAPI</button><button id="copyInventoryJsonBtn" class="primary" type="button">copy inventory JSON</button>' : ''}
           ${pageName === 'policy' ? '<button id="copyPolicyJsonBtn" class="primary" type="button">copy policy JSON</button>' : ''}
           ${pageName === 'rollout' ? '<button id="copyRolloutJsonBtn" class="primary" type="button">copy rollout JSON</button>' : ''}
           <button id="refreshBtn" type="button">refresh</button>
@@ -2514,6 +2514,42 @@ ${renderDatalistOptions(ENTERPRISE_PROVIDER_SLOT_PRESETS.map((preset) => preset.
       </section>
 
       <section id="inventoryPanel" class="grid two" style="display:none">
+        <div id="inventoryImportFormPanel" class="card" style="display:none;grid-column:1/-1">
+          <div class="section-title"><h2>Import CSV/OpenAPI</h2><span class="mini">metadata only</span></div>
+          <form id="inventoryImportForm">
+            <div class="slot-form">
+              <label>Project
+                <select id="inventoryImportProject"></select>
+              </label>
+              <label>Format
+                <select id="inventoryImportFormat">
+                  <option value="auto">auto detect</option>
+                  <option value="csv">CSV</option>
+                  <option value="openapi">OpenAPI JSON</option>
+                </select>
+              </label>
+              <label>Default owner
+                <input id="inventoryImportOwner" placeholder="Platform owner" maxlength="96" />
+              </label>
+              <label>Default environment
+                <select id="inventoryImportEnvironment">
+                  <option value="demo">demo</option>
+                  <option value="dev">dev</option>
+                  <option value="staging">staging</option>
+                  <option value="production">production</option>
+                </select>
+              </label>
+              <label class="wide">Import data
+                <textarea id="inventoryImportText" placeholder="CSV columns: provider,key_label,upstream_scope,business_owner,technical_owner,environment,business_service,data_sensitivity,risk,review_status,next_review_date. Or paste OpenAPI JSON with info, servers, paths, and securitySchemes." required></textarea>
+              </label>
+            </div>
+            <div class="slot-form-actions">
+              <button class="primary" type="submit">import inventory metadata</button>
+              <button id="cancelInventoryImportForm" type="button">cancel</button>
+              <p class="slot-form-note">Imports create metadata-only API inventory hints. Do not paste raw API keys, bearer tokens, request bodies, response bodies, or customer payloads.</p>
+            </div>
+          </form>
+        </div>
         <div id="manualApiKeyFormPanel" class="card" style="display:none;grid-column:1/-1">
           <div class="section-title"><h2>Add manual API key</h2><span class="mini">metadata only</span></div>
           <form id="manualApiKeyForm">
@@ -2897,6 +2933,12 @@ ${renderDatalistOptions(ENTERPRISE_MANUAL_API_KEY_PROVIDER_OPTIONS)}
             return '<option value="' + escapeHtml(project.id) + '">' + escapeHtml(project.name || project.vp_proj_id) + ' - ' + escapeHtml(project.project_role || 'member') + '</option>';
           }).join('');
         }
+        var inventoryImportProject = byId('inventoryImportProject');
+        if (inventoryImportProject) {
+          inventoryImportProject.innerHTML = '<option value="">Unassigned import records</option>' + cachedProjects.map(function(project) {
+            return '<option value="' + escapeHtml(project.id) + '">' + escapeHtml(project.name || project.vp_proj_id) + ' - ' + escapeHtml(project.project_role || 'member') + '</option>';
+          }).join('');
+        }
       }
       function inventoryStorageKey() {
         return 'vaultproof_api_inventory::' + (currentOrgId || 'default');
@@ -2954,10 +2996,17 @@ ${renderDatalistOptions(ENTERPRISE_MANUAL_API_KEY_PROVIDER_OPTIONS)}
           upstream_scope: redactManualApiKeyText(record.upstream_scope),
           business_owner: redactManualApiKeyText(record.business_owner),
           technical_owner: redactManualApiKeyText(record.technical_owner),
+          business_service: redactManualApiKeyText(record.business_service),
+          data_sensitivity: redactManualApiKeyText(record.data_sensitivity),
+          risk: redactManualApiKeyText(record.risk),
           environment: redactManualApiKeyText(record.environment),
           rotation_status: redactManualApiKeyText(record.rotation_status || 'unknown'),
           review_status: redactManualApiKeyText(record.review_status || 'needs_review'),
           next_review_date: redactManualApiKeyText(record.next_review_date),
+          source: redactManualApiKeyText(record.source),
+          source_format: redactManualApiKeyText(record.source_format),
+          source_detail: redactManualApiKeyText(record.source_detail),
+          imported_at: redactManualApiKeyText(record.imported_at),
           created_at: redactManualApiKeyText(record.created_at),
           updated_at: redactManualApiKeyText(record.updated_at)
         };
@@ -2985,6 +3034,226 @@ ${renderDatalistOptions(ENTERPRISE_MANUAL_API_KEY_PROVIDER_OPTIONS)}
           var provider = byId('manualKeyProvider');
           if (provider) provider.focus();
         }
+      }
+      function setInventoryImportFormVisible(visible) {
+        var panel = byId('inventoryImportFormPanel');
+        if (!panel) return;
+        panel.style.display = visible ? 'block' : 'none';
+        if (visible) {
+          renderProjectOptions();
+          var input = byId('inventoryImportText');
+          if (input) input.focus();
+        }
+      }
+      function normalizeImportHeader(value) {
+        return String(value || '').trim().toLowerCase().replace(/[^a-z0-9]+/g, '_').replace(/^_+|_+$/g, '');
+      }
+      function parseCsvRows(textValue) {
+        var rows = [];
+        var row = [];
+        var value = '';
+        var inQuotes = false;
+        var text = String(textValue || '').replace(/\\r\\n/g, '\\n').replace(/\\r/g, '\\n');
+        for (var index = 0; index < text.length; index += 1) {
+          var character = text[index];
+          if (character === '"') {
+            if (inQuotes && text[index + 1] === '"') {
+              value += '"';
+              index += 1;
+            } else {
+              inQuotes = !inQuotes;
+            }
+          } else if (character === ',' && !inQuotes) {
+            row.push(value);
+            value = '';
+          } else if (character === '\\n' && !inQuotes) {
+            row.push(value);
+            if (row.some(function(cell) { return String(cell || '').trim(); })) rows.push(row);
+            row = [];
+            value = '';
+          } else {
+            value += character;
+          }
+        }
+        row.push(value);
+        if (row.some(function(cell) { return String(cell || '').trim(); })) rows.push(row);
+        return rows;
+      }
+      function csvHeaderAlias(header) {
+        var normalized = normalizeImportHeader(header);
+        var aliases = {
+          label: 'key_label',
+          name: 'key_label',
+          api: 'key_label',
+          api_name: 'key_label',
+          key_name: 'key_label',
+          api_key_label: 'key_label',
+          service: 'business_service',
+          business_unit: 'business_service',
+          app: 'business_service',
+          application: 'business_service',
+          owner: 'business_owner',
+          business_owner_email: 'business_owner',
+          technical_owner_email: 'technical_owner',
+          fingerprint: 'key_reference',
+          last4: 'key_reference',
+          last_four: 'key_reference',
+          reference: 'key_reference',
+          location: 'key_location',
+          secret_location: 'key_location',
+          scope: 'upstream_scope',
+          host: 'upstream_scope',
+          url: 'upstream_scope',
+          path: 'upstream_scope',
+          endpoint: 'upstream_scope',
+          data: 'data_sensitivity',
+          sensitivity: 'data_sensitivity',
+          status: 'review_status',
+          review: 'review_status',
+          next_review: 'next_review_date',
+          rotation: 'rotation_status',
+          source: 'source_detail'
+        };
+        return aliases[normalized] || normalized;
+      }
+      function importField(value, field) {
+        var redacted = redactManualApiKeyText(value);
+        if (field !== 'project_id' && /[A-Za-z0-9_-]{36,}/.test(redacted) && !/^https?:\\/\\//i.test(redacted)) {
+          return '[redacted: secret-like import value was not stored]';
+        }
+        return redacted;
+      }
+      function normalizeImportedRecord(rawRecord, defaults) {
+        var raw = rawRecord && typeof rawRecord === 'object' ? rawRecord : {};
+        var provider = importField(raw.provider || raw.provider_slug || raw.security_scheme || '', 'provider');
+        var keyLabel = importField(raw.key_label || raw.operation_id || raw.summary || raw.name || provider || 'Imported API surface', 'key_label');
+        return {
+          project_id: importField(raw.project_id || defaults.project_id || '', 'project_id'),
+          provider: provider || 'unknown-provider',
+          key_label: keyLabel || 'Imported API surface',
+          key_reference: importField(raw.key_reference || raw.fingerprint || raw.last_four || '', 'key_reference'),
+          key_location: importField(raw.key_location || raw.secret_location || raw.location || 'customer inventory import', 'key_location'),
+          upstream_scope: importField(raw.upstream_scope || raw.endpoint || raw.path || raw.url || '', 'upstream_scope'),
+          business_owner: importField(raw.business_owner || defaults.owner || '', 'business_owner'),
+          technical_owner: importField(raw.technical_owner || defaults.owner || '', 'technical_owner'),
+          business_service: importField(raw.business_service || raw.service || raw.tag || raw.group || '', 'business_service'),
+          data_sensitivity: importField(raw.data_sensitivity || raw.sensitivity || '', 'data_sensitivity'),
+          risk: importField(raw.risk || '', 'risk'),
+          environment: importField(raw.environment || defaults.environment || 'demo', 'environment'),
+          rotation_status: importField(raw.rotation_status || 'unknown', 'rotation_status'),
+          review_status: importField(raw.review_status || 'needs_review', 'review_status'),
+          next_review_date: importField(raw.next_review_date || '', 'next_review_date'),
+          source: 'vaultproof_inventory_import',
+          source_format: importField(defaults.format || raw.source_format || 'csv', 'source_format'),
+          source_detail: importField(raw.source_detail || '', 'source_detail')
+        };
+      }
+      function parseInventoryCsv(textValue, defaults) {
+        var rows = parseCsvRows(textValue);
+        if (!rows.length) return [];
+        var headers = rows.shift().map(csvHeaderAlias);
+        var hasRecognizedHeader = headers.some(function(header) {
+          return ['provider', 'key_label', 'upstream_scope', 'business_owner', 'technical_owner', 'environment', 'business_service', 'data_sensitivity', 'risk', 'review_status'].indexOf(header) !== -1;
+        });
+        if (!hasRecognizedHeader) {
+          rows.unshift(headers);
+          headers = ['provider', 'key_label', 'upstream_scope', 'business_owner', 'technical_owner', 'environment', 'business_service', 'data_sensitivity', 'risk', 'review_status', 'next_review_date'];
+        }
+        return rows.map(function(row) {
+          var raw = {};
+          headers.forEach(function(header, index) {
+            if (!header) return;
+            raw[header] = row[index] || '';
+          });
+          return normalizeImportedRecord(raw, Object.assign({}, defaults, { format: 'csv' }));
+        }).filter(function(record) {
+          return record.provider || record.key_label || record.upstream_scope;
+        });
+      }
+      function inferProviderFromOpenApi(serverUrl, schemeName) {
+        var source = String(schemeName || serverUrl || '').toLowerCase();
+        var matched = Object.keys(providerDefaults || {}).map(function(id) {
+          return Object.assign({ id: id }, providerDefaults[id] || {});
+        }).find(function(preset) {
+          return source.indexOf(preset.id.replace(/-/g, '')) !== -1 || source.indexOf(preset.id) !== -1 || (preset.upstream && source.indexOf(new URL(preset.upstream).hostname.replace(/^api\\./, '')) !== -1);
+        });
+        return matched ? matched.id : (schemeName ? String(schemeName).toLowerCase().replace(/[^a-z0-9-]+/g, '-') : 'openapi');
+      }
+      function parseOpenApiInventoryHints(textValue, defaults) {
+        var spec = JSON.parse(String(textValue || ''));
+        if (!spec || typeof spec !== 'object' || !spec.paths || typeof spec.paths !== 'object') {
+          throw new Error('OpenAPI import needs JSON with a paths object.');
+        }
+        var title = spec.info && spec.info.title ? String(spec.info.title) : 'OpenAPI service';
+        var servers = Array.isArray(spec.servers) && spec.servers.length ? spec.servers : [{ url: '' }];
+        var serverUrl = servers[0] && servers[0].url ? String(servers[0].url) : '';
+        var securitySchemes = spec.components && spec.components.securitySchemes && typeof spec.components.securitySchemes === 'object' ? spec.components.securitySchemes : {};
+        var schemeNames = Object.keys(securitySchemes);
+        var provider = inferProviderFromOpenApi(serverUrl, schemeNames[0] || title);
+        var methods = ['get', 'post', 'put', 'patch', 'delete', 'head'];
+        var records = [];
+        Object.keys(spec.paths).forEach(function(pathname) {
+          var pathItem = spec.paths[pathname];
+          if (!pathItem || typeof pathItem !== 'object') return;
+          methods.forEach(function(method) {
+            var operation = pathItem[method];
+            if (!operation || typeof operation !== 'object') return;
+            var operationSecurity = Array.isArray(operation.security) && operation.security[0] ? Object.keys(operation.security[0])[0] : '';
+            var operationProvider = inferProviderFromOpenApi(serverUrl, operationSecurity || schemeNames[0] || title);
+            var label = operation.operationId || operation.summary || (method.toUpperCase() + ' ' + pathname);
+            var tags = Array.isArray(operation.tags) ? operation.tags.filter(Boolean) : [];
+            records.push(normalizeImportedRecord({
+              provider: operationProvider || provider,
+              key_label: label,
+              upstream_scope: (serverUrl ? serverUrl.replace(/\\/$/, '') : '') + pathname,
+              business_service: tags[0] || title,
+              source_detail: 'OpenAPI ' + method.toUpperCase() + ' ' + pathname
+            }, Object.assign({}, defaults, { format: 'openapi' })));
+          });
+        });
+        return records;
+      }
+      function submitInventoryImportForm(event) {
+        event.preventDefault();
+        var textInput = byId('inventoryImportText');
+        var importText = textInput ? String(textInput.value || '').trim() : '';
+        if (!importText) {
+          notice('Paste CSV or OpenAPI JSON metadata before importing.');
+          return;
+        }
+        var format = byId('inventoryImportFormat') && byId('inventoryImportFormat').value || 'auto';
+        var defaults = {
+          project_id: byId('inventoryImportProject') && byId('inventoryImportProject').value || '',
+          owner: byId('inventoryImportOwner') && byId('inventoryImportOwner').value || '',
+          environment: byId('inventoryImportEnvironment') && byId('inventoryImportEnvironment').value || 'demo'
+        };
+        var recordsToImport = [];
+        if (format === 'csv' || (format === 'auto' && importText[0] !== '{')) {
+          recordsToImport = parseInventoryCsv(importText, defaults);
+        } else {
+          recordsToImport = parseOpenApiInventoryHints(importText, defaults);
+        }
+        if (!recordsToImport.length) {
+          notice('No importable API inventory metadata was found.');
+          return;
+        }
+        var limited = recordsToImport.slice(0, 50);
+        var now = new Date().toISOString();
+        var records = readManualApiKeys();
+        limited.forEach(function(record) {
+          var id = newManualApiKeyId();
+          records[id] = Object.assign({}, record, {
+            created_at: now,
+            updated_at: now,
+            imported_at: now
+          });
+        });
+        writeManualApiKeys(records);
+        if (event.target && event.target.reset) event.target.reset();
+        setInventoryImportFormVisible(false);
+        cachedInventoryRows = buildInventoryRows();
+        renderInventory();
+        notice('Imported ' + number(limited.length) + ' metadata-only API inventory hint' + (limited.length === 1 ? '' : 's') + '. Raw keys and request payloads were not stored.');
       }
       function submitManualApiKeyForm(event) {
         event.preventDefault();
@@ -3130,9 +3399,9 @@ ${renderDatalistOptions(ENTERPRISE_MANUAL_API_KEY_PROVIDER_OPTIONS)}
             business_owner: record.business_owner || '',
             technical_owner: record.technical_owner || '',
             environment: record.environment || '',
-            business_service: record.key_label || '',
-            data_sensitivity: '',
-            risk: '',
+            business_service: record.business_service || record.key_label || '',
+            data_sensitivity: record.data_sensitivity || '',
+            risk: record.risk || '',
             review_status: record.review_status || 'needs_review',
             next_review_date: record.next_review_date || '',
             note: ''
@@ -3149,6 +3418,7 @@ ${renderDatalistOptions(ENTERPRISE_MANUAL_API_KEY_PROVIDER_OPTIONS)}
             { label: 'missing provider slot', tone: 'bad' },
             { label: 'needs sealed ingest', tone: 'warn' }
           ];
+          if (record.source === 'vaultproof_inventory_import') statuses.push({ label: (record.source_format === 'openapi' ? 'OpenAPI import' : 'CSV import'), tone: 'good' });
           if (!coverage.complete) statuses.push({ label: 'policy incomplete', tone: 'warn' });
           if (!calls) statuses.push({ label: 'no recent traffic', tone: 'warn' });
           if (isReviewDue(annotation) || !annotation.review_status || annotation.review_status === 'needs_review') statuses.push({ label: 'review due', tone: 'warn' });
@@ -3174,6 +3444,10 @@ ${renderDatalistOptions(ENTERPRISE_MANUAL_API_KEY_PROVIDER_OPTIONS)}
               key_location: record.key_location || null,
               upstream_scope: record.upstream_scope || null,
               rotation_status: record.rotation_status || 'unknown',
+              source: record.source || null,
+              source_format: record.source_format || null,
+              source_detail: record.source_detail || null,
+              imported_at: record.imported_at || null,
               created_at: record.created_at || null,
               updated_at: record.updated_at || null
             },
@@ -3374,6 +3648,7 @@ ${renderDatalistOptions(ENTERPRISE_MANUAL_API_KEY_PROVIDER_OPTIONS)}
           protected: rows.filter(function(row) { return row.statuses.some(function(status) { return status.label === 'protected'; }); }).length,
           missing_provider_slot: rows.filter(function(row) { return !row.provider; }).length,
           manual_api_keys: rows.filter(function(row) { return Boolean(row.manual_key); }).length,
+          imported_api_hints: rows.filter(function(row) { return Boolean(row.manual_key) && row.manual_key.source === 'vaultproof_inventory_import'; }).length,
           needs_sealed_ingest: rows.filter(function(row) { return Boolean(row.manual_key) && !row.provider; }).length,
           policy_incomplete: rows.filter(function(row) { return !row.policy.complete; }).length,
           no_recent_traffic: rows.filter(function(row) { return Number(row.traffic.calls || 0) === 0; }).length,
@@ -3402,6 +3677,10 @@ ${renderDatalistOptions(ENTERPRISE_MANUAL_API_KEY_PROVIDER_OPTIONS)}
                 key_location: row.manual_key.key_location || null,
                 upstream_scope: row.manual_key.upstream_scope || null,
                 rotation_status: row.manual_key.rotation_status || null,
+                source: row.manual_key.source || null,
+                source_format: row.manual_key.source_format || null,
+                source_detail: row.manual_key.source_detail || null,
+                imported_at: row.manual_key.imported_at || null,
                 created_at: row.manual_key.created_at || null,
                 updated_at: row.manual_key.updated_at || null
               } : null,
@@ -3455,10 +3734,12 @@ ${renderDatalistOptions(ENTERPRISE_MANUAL_API_KEY_PROVIDER_OPTIONS)}
         byId('inventorySummaryList').innerHTML = [
           '<div class="row"><div><div class="row-title">API inventory status</div><div class="row-sub">' + number(summary.total) + ' metadata-only API surfaces are derived from projects, provider slots, and manual API key records. ' + number(summary.protected) + ' currently look protected.</div></div><span class="tag ' + (summary.protected ? 'good' : 'warn') + '">' + number(summary.protected) + ' protected</span></div>',
           '<div class="row"><div><div class="row-title">Manual API keys</div><div class="row-sub">' + number(summary.manual_api_keys) + ' browser-local manual API key records. ' + number(summary.needs_sealed_ingest) + ' still need a sealed provider slot before protected execution.</div></div><span class="tag warn">metadata only</span></div>',
+          '<div class="row"><div><div class="row-title">CSV/OpenAPI imports</div><div class="row-sub">' + number(summary.imported_api_hints) + ' imported API inventory hints are saved as browser-local metadata, then reviewed like manually added key records.</div></div><span class="tag good">vaultproof_inventory_import</span></div>',
           '<div class="row"><div><div class="row-title">Open review items</div><div class="row-sub">' + number(summary.missing_provider_slot) + ' missing provider slot, ' + number(summary.policy_incomplete) + ' policy incomplete, ' + number(summary.no_recent_traffic) + ' with no recent traffic, ' + number(summary.review_due) + ' due for review.</div></div><span class="tag warn">review due</span></div>',
           '<div class="row"><div><div class="row-title">Secret boundary</div><div class="row-sub">Inventory records are metadata-only and exclude raw provider keys, encrypted shares, bearer tokens, OAuth secrets, SAML material, request bodies, response bodies, and customer payloads.</div></div><span class="tag good">redacted</span></div>'
         ].join('');
         byId('inventoryWorkflowList').innerHTML = [
+          '<div class="row"><div><div class="row-title">Import customer API list</div><div class="row-sub">Paste CSV or OpenAPI JSON to create metadata-only API inventory hints, then assign owners and review status before sealed ingest.</div></div><button class="tag good" type="button" data-action="open-inventory-import">import</button></div>',
           '<div class="row"><div><div class="row-title">Control policy</div><div class="row-sub">Confirm origins, provider allowlists, upstream hosts, path prefixes, gateways, and rate limits.</div></div><a class="tag good" href="/app/control">control</a></div>',
           '<div class="row"><div><div class="row-title">Provider slots</div><div class="row-sub">Review material mode, rotation status, protected email dry-run, and emergency revoke posture.</div></div><a class="tag good" href="/app/keys">provider slots</a></div>',
           '<div class="row"><div><div class="row-title">Traffic and audit evidence</div><div class="row-sub">Use Activity, Audit CSV, and Access Review CSV for customer-safe review exports.</div></div><span><a class="tag" href="/app/activity">activity</a><a class="tag" href="' + escapeHtml(evidenceExportHref('/api/v1/enterprise/audit?format=csv&days=30')) + '">audit CSV</a><a class="tag" href="' + escapeHtml(evidenceExportHref('/api/v1/enterprise/members/access-review?format=csv')) + '">access review CSV</a></span></div>',
@@ -4334,6 +4615,15 @@ ${renderDatalistOptions(ENTERPRISE_MANUAL_API_KEY_PROVIDER_OPTIONS)}
       if (byId('openManualApiKeyForm')) {
         byId('openManualApiKeyForm').addEventListener('click', function() { setManualApiKeyFormVisible(true); });
       }
+      if (byId('openInventoryImportForm')) {
+        byId('openInventoryImportForm').addEventListener('click', function() { setInventoryImportFormVisible(true); });
+      }
+      if (byId('cancelInventoryImportForm')) {
+        byId('cancelInventoryImportForm').addEventListener('click', function() { setInventoryImportFormVisible(false); });
+      }
+      if (byId('inventoryImportForm')) {
+        byId('inventoryImportForm').addEventListener('submit', submitInventoryImportForm);
+      }
       if (byId('cancelManualApiKeyForm')) {
         byId('cancelManualApiKeyForm').addEventListener('click', function() { setManualApiKeyFormVisible(false); });
       }
@@ -4395,6 +4685,10 @@ ${renderDatalistOptions(ENTERPRISE_MANUAL_API_KEY_PROVIDER_OPTIONS)}
         if (!target || !target.getAttribute) return;
         if (target.getAttribute('data-action') === 'copy-rollout-snippet') {
           copyRolloutSnippet(target);
+          return;
+        }
+        if (target.getAttribute('data-action') === 'open-inventory-import') {
+          setInventoryImportFormVisible(true);
           return;
         }
         if (target.getAttribute('data-action') === 'delete-manual-api-key') {
@@ -6014,10 +6308,17 @@ function renderEnterpriseSupportPage(pageName: EnterpriseSupportPageName): strin
             upstream_scope: redactManualApiKeyText(record.upstream_scope),
             business_owner: redactManualApiKeyText(record.business_owner),
             technical_owner: redactManualApiKeyText(record.technical_owner),
+            business_service: redactManualApiKeyText(record.business_service),
+            data_sensitivity: redactManualApiKeyText(record.data_sensitivity),
+            risk: redactManualApiKeyText(record.risk),
             environment: redactManualApiKeyText(record.environment),
             rotation_status: redactManualApiKeyText(record.rotation_status || 'unknown'),
             review_status: redactManualApiKeyText(record.review_status || 'needs_review'),
             next_review_date: redactManualApiKeyText(record.next_review_date),
+            source: redactManualApiKeyText(record.source),
+            source_format: redactManualApiKeyText(record.source_format),
+            source_detail: redactManualApiKeyText(record.source_detail),
+            imported_at: redactManualApiKeyText(record.imported_at),
             created_at: redactManualApiKeyText(record.created_at),
             updated_at: redactManualApiKeyText(record.updated_at)
           };
@@ -6062,6 +6363,7 @@ function renderEnterpriseSupportPage(pageName: EnterpriseSupportPageName): strin
           var reviewStatus = storedAnnotation.review_status || record.review_status || 'needs_review';
           var projectHealth = health[project.id] || {};
           var statuses = ['manual API key', 'missing provider slot', 'needs sealed ingest', 'policy incomplete'];
+          if (record.source === 'vaultproof_inventory_import') statuses.push(record.source_format === 'openapi' ? 'OpenAPI import' : 'CSV import');
           if (!Number(projectHealth.calls || 0)) statuses.push('no recent traffic');
           if (!storedAnnotation.review_status || reviewStatus === 'needs_review') statuses.push('review due');
           if (reviewStatus === 'blocked') statuses.push('blocked');
@@ -6079,6 +6381,10 @@ function renderEnterpriseSupportPage(pageName: EnterpriseSupportPageName): strin
               key_location: record.key_location || null,
               upstream_scope: record.upstream_scope || null,
               rotation_status: record.rotation_status || 'unknown',
+              source: record.source || null,
+              source_format: record.source_format || null,
+              source_detail: record.source_detail || null,
+              imported_at: record.imported_at || null,
               created_at: record.created_at || null,
               updated_at: record.updated_at || null
             },
@@ -6096,9 +6402,9 @@ function renderEnterpriseSupportPage(pageName: EnterpriseSupportPageName): strin
               business_owner: storedAnnotation.business_owner || record.business_owner || null,
               technical_owner: storedAnnotation.technical_owner || record.technical_owner || null,
               environment: storedAnnotation.environment || record.environment || null,
-              business_service: storedAnnotation.business_service || record.key_label || null,
-              data_sensitivity: storedAnnotation.data_sensitivity || null,
-              risk: storedAnnotation.risk || null,
+              business_service: storedAnnotation.business_service || record.business_service || record.key_label || null,
+              data_sensitivity: storedAnnotation.data_sensitivity || record.data_sensitivity || null,
+              risk: storedAnnotation.risk || record.risk || null,
               review_status: reviewStatus,
               next_review_date: storedAnnotation.next_review_date || record.next_review_date || null,
               updated_at: storedAnnotation.updated_at || record.updated_at || null,
@@ -6179,6 +6485,7 @@ function renderEnterpriseSupportPage(pageName: EnterpriseSupportPageName): strin
           protected: rows.filter(function(item) { return item.statuses.indexOf('protected') !== -1; }).length,
           missing_provider_slot: rows.filter(function(item) { return !item.provider; }).length,
           manual_api_keys: rows.filter(function(item) { return Boolean(item.manual_key); }).length,
+          imported_api_hints: rows.filter(function(item) { return Boolean(item.manual_key) && item.manual_key.source === 'vaultproof_inventory_import'; }).length,
           needs_sealed_ingest: rows.filter(function(item) { return Boolean(item.manual_key) && !item.provider; }).length,
           policy_incomplete: rows.filter(function(item) { return !item.policy.complete; }).length,
           no_recent_traffic: rows.filter(function(item) { return Number(item.traffic.calls || 0) === 0; }).length,
@@ -6213,6 +6520,7 @@ function renderEnterpriseSupportPage(pageName: EnterpriseSupportPageName): strin
           row('API inventory status', packet.status === 'ready' ? 'Inventory is populated from existing enterprise projects/provider slots and ready for customer review.' : 'Inventory exists but still needs owner, provider-slot, policy, or review cleanup before pilot traffic.', packet.status, packet.status === 'ready' ? 'good' : 'warn'),
           row('Inventory surfaces', number(summary.total_api_surfaces) + ' API surfaces, ' + number(summary.protected) + ' protected, ' + number(summary.missing_provider_slot) + ' missing provider slot, ' + number(summary.policy_incomplete) + ' policy incomplete.', number(summary.total_api_surfaces), summary.protected ? 'good' : 'warn'),
           row('Manual API keys', number(summary.manual_api_keys) + ' manual API key metadata records, ' + number(summary.needs_sealed_ingest) + ' still need sealed provider-slot ingest before protected execution.', 'metadata only', summary.needs_sealed_ingest ? 'warn' : 'good'),
+          row('Imported API hints', number(summary.imported_api_hints) + ' CSV/OpenAPI inventory hints are included without raw keys, request bodies, response bodies, or customer payloads.', 'vaultproof_inventory_import', summary.imported_api_hints ? 'good' : 'warn'),
           row('Review state', number(summary.review_due) + ' review due, ' + number(summary.no_recent_traffic) + ' with no recent traffic, ' + number(summary.blocked) + ' blocked.', 'review due', summary.blocked ? 'bad' : 'warn'),
           linkRow('Open API inventory', 'Review owner, environment, business service, data sensitivity, risk, review status, and notes saved in this browser.', '/app/inventory', 'inventory', 'good'),
           row('Secret boundary', 'Inventory evidence excludes ' + packet.secrets_excluded.join(', ') + '.', 'redacted', 'good')

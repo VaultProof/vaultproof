@@ -3148,7 +3148,7 @@ async function assertEnterpriseLoginRoute() {
     {
       path: '/app/inventory',
       title: 'API Inventory - VaultProof Enterprise',
-      required: ['/api/v1/enterprise/projects/bootstrap', 'API inventory board', 'add API key', 'manual API key', 'vaultproof_manual_api_keys', 'data-manual-key-field', 'key fingerprint', 'needs sealed ingest', 'vaultproof_api_inventory', 'data-inventory-field', 'business owner', 'technical owner', 'data sensitivity', 'review status', 'review due', 'copy inventory JSON', 'vaultproof_enterprise_api_inventory', '/app/control', '/app/keys', '/app/activity', '/app/evidence', '/app/security-review', '/api/v1/enterprise/audit?format=csv&days=30', '/api/v1/enterprise/members/access-review?format=csv'],
+      required: ['/api/v1/enterprise/projects/bootstrap', 'API inventory board', 'add API key', 'manual API key', 'vaultproof_manual_api_keys', 'data-manual-key-field', 'key fingerprint', 'needs sealed ingest', 'import CSV/OpenAPI', 'inventoryImportForm', 'parseInventoryCsv', 'parseOpenApiInventoryHints', 'vaultproof_inventory_import', 'imported_api_hints', 'vaultproof_api_inventory', 'data-inventory-field', 'business owner', 'technical owner', 'data sensitivity', 'review status', 'review due', 'copy inventory JSON', 'vaultproof_enterprise_api_inventory', '/app/control', '/app/keys', '/app/activity', '/app/evidence', '/app/security-review', '/api/v1/enterprise/audit?format=csv&days=30', '/api/v1/enterprise/members/access-review?format=csv'],
     },
     {
       path: '/app/policy',

@@ -50,7 +50,7 @@ Not yet customer-ready:
 - Strict login readiness QA and final human OAuth/password browser QA still need to pass.
 - Email API key demo dry-run and blocked-recipient policy evidence flow are built; live sandbox email sends need sealed provider material only if the demo specifically needs an actual delivered email.
 - Live MiniMax provider dispatch works for the demo; add a separate OpenAI slot only if the demo specifically needs OpenAI.
-- API inventory management still needs persistent audited records, CSV/OpenAPI import, automatic discovery, and production review workflow after the demo.
+- API inventory management now has browser-local CSV/OpenAPI JSON import for demo metadata; it still needs persistent audited records, durable imports, automatic discovery, and production review workflow after the demo.
 - Scanner exposure intake still needs persistent audited records, CI/scanner imports, automatic discovery, and PR/remediation workflows after the demo.
 - Release evidence still needs persistent audited records, automated Cloud Build/deploy evidence capture, approval workflow, and rollback automation after the demo.
 - Paid-pilot tester readiness still needs persistent audited records, invite automation, scenario-specific feedback forms, and durable owner handoff after the demo.
@@ -285,6 +285,7 @@ First demo slice:
 - Built: `https://enterprise.vaultproof.dev/app/inventory` renders a customer-facing API inventory board using the shared enterprise sidebar and light dashboard theme.
 - Built: derive initial rows from existing projects, provider slots, project policies, project health, access-log rollups, and `GET /api/v1/enterprise/projects/bootstrap`.
 - Built: allow browser-local/manual annotations first: business owner, technical owner, environment, business service, data sensitivity, risk, review status, review note, and next review date.
+- Built: add browser-local CSV/OpenAPI JSON import for metadata-only API inventory hints so a customer can paste an approved API list, route catalog, or OpenAPI document and review imported surfaces without storing raw keys, bearer tokens, request bodies, responses, or payloads.
 - Built: show status badges for `protected`, `missing provider slot`, `stale`, `no recent traffic`, `policy incomplete`, `review due`, `blocked`, and `exception`.
 - Built: add links to Provider Slots, Control, Activity, Audit CSV, Access Review CSV, Launch, and Evidence.
 - Built: include API inventory proof under `api_inventory` in the evidence packet without secrets and add a copyable `vaultproof_enterprise_api_inventory` JSON export from `/app/inventory`.
@@ -292,7 +293,7 @@ First demo slice:
 Production follow-up:
 
 - Add a persistent `enterprise_api_inventory` table with org/project RBAC, audit events on every change, and service-role-only reads.
-- Add import/export for CSV and OpenAPI hints.
+- Add persistent import/export for CSV and OpenAPI hints backed by audited database records instead of browser-local demo storage.
 - Add automatic discovery from access logs, provider slots, gateway routes, and future scanner findings.
 - Add ownership and review workflows: assign owner, approve API, mark exception, require rotation, archive API, and record review completion.
 - Add policy drift checks: inventory says protected but provider slot revoked, project policy missing caller lock, no traffic for 30/60/90 days, new provider observed without an owner, or sensitive data tag missing.
