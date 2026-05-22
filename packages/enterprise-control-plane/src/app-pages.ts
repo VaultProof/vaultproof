@@ -2380,6 +2380,7 @@ function renderEnterpriseOperationsPage(pageName: 'activity' | 'projects' | 'inv
     .two { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); }
     .card { border: 1px solid var(--line); background: linear-gradient(180deg, rgba(255,255,255,.98), rgba(247,250,244,.86)); border-radius: 24px; padding: 20px; box-shadow: 0 22px 90px rgba(48,76,71,.16); }
     .filters { display: grid; grid-template-columns: minmax(180px, 1fr) minmax(150px, .7fr) minmax(180px, 1fr) auto; gap: 10px; margin-bottom: 16px; }
+    .inventory-filters { grid-template-columns: minmax(220px, 1.4fr) repeat(4, minmax(130px, .72fr)) auto auto; }
     .kpi-label { color: var(--muted); font-size: 12px; text-transform: uppercase; letter-spacing: .1em; }
     .kpi-value { font-size: 34px; font-weight: 850; letter-spacing: -.05em; margin-top: 8px; }
     .kpi-sub { color: var(--muted); font-size: 13px; margin-top: 6px; }
@@ -2432,7 +2433,7 @@ function renderEnterpriseOperationsPage(pageName: 'activity' | 'projects' | 'inv
         <div class="toolbar">
           <select id="orgSelect" aria-label="Organization"><option>Loading org...</option></select>
           ${pageName === 'keys' ? '<button id="openProviderSlotForm" class="primary" type="button">add slot</button>' : ''}
-          ${pageName === 'inventory' ? '<button id="openManualApiKeyForm" class="primary" type="button">add API key</button><button id="openInventoryImportForm" type="button">import CSV/OpenAPI</button><button id="copyInventoryJsonBtn" class="primary" type="button">copy inventory JSON</button>' : ''}
+          ${pageName === 'inventory' ? '<button id="openManualApiKeyForm" class="primary" type="button">add API key</button><button id="openInventoryImportForm" type="button">import CSV/OpenAPI</button><button id="copyInventoryCsvBtn" type="button">copy inventory CSV</button><button id="copyInventoryJsonBtn" class="primary" type="button">copy inventory JSON</button>' : ''}
           ${pageName === 'policy' ? '<button id="copyPolicyJsonBtn" class="primary" type="button">copy policy JSON</button>' : ''}
           ${pageName === 'rollout' ? '<button id="copyRolloutJsonBtn" class="primary" type="button">copy rollout JSON</button>' : ''}
           <button id="refreshBtn" type="button">refresh</button>
@@ -2619,6 +2620,44 @@ ${renderDatalistOptions(ENTERPRISE_MANUAL_API_KEY_PROVIDER_OPTIONS)}
         </div>
         <div class="card" style="grid-column:1/-1">
           <div class="section-title"><h2>API inventory board</h2><span id="inventoryMeta" class="mini">metadata-only</span></div>
+          <form id="inventoryFilterForm" class="filters inventory-filters">
+            <input id="inventorySearch" type="search" placeholder="Search project, provider, owner, scope..." />
+            <select id="inventoryStatusFilter" aria-label="Inventory status">
+              <option value="">all statuses</option>
+              <option value="protected">protected</option>
+              <option value="manual">manual API keys</option>
+              <option value="imported">CSV/OpenAPI imports</option>
+              <option value="missing_provider_slot">missing provider slot</option>
+              <option value="needs_sealed_ingest">needs sealed ingest</option>
+              <option value="policy_incomplete">policy incomplete</option>
+              <option value="no_recent_traffic">no recent traffic</option>
+              <option value="review_due">review due</option>
+              <option value="blocked">blocked</option>
+            </select>
+            <select id="inventoryReviewFilter" aria-label="Review status">
+              <option value="">all reviews</option>
+              <option value="needs_review">needs review</option>
+              <option value="approved">approved</option>
+              <option value="exception">exception</option>
+              <option value="blocked">blocked</option>
+            </select>
+            <select id="inventoryRiskFilter" aria-label="Risk">
+              <option value="">all risk</option>
+              <option value="low">low</option>
+              <option value="medium">medium</option>
+              <option value="high">high</option>
+              <option value="critical">critical</option>
+            </select>
+            <select id="inventorySourceFilter" aria-label="Source">
+              <option value="">all sources</option>
+              <option value="project_slot">project/provider rows</option>
+              <option value="manual">manual key metadata</option>
+              <option value="imported">imported API hints</option>
+            </select>
+            <button class="primary" type="submit">apply filters</button>
+            <button id="copyFilteredInventoryCsvBtn" type="button">copy filtered CSV</button>
+            <button id="clearInventoryFilters" type="button">clear</button>
+          </form>
           <div id="inventoryList" class="list"><div class="empty">Loading API inventory...</div></div>
         </div>
         <div class="card">
@@ -3330,7 +3369,7 @@ ${renderDatalistOptions(ENTERPRISE_MANUAL_API_KEY_PROVIDER_OPTIONS)}
         annotations[rowId] = current;
         writeInventoryAnnotations(annotations);
         cachedInventoryRows = buildInventoryRows();
-        if (field === 'review_status' || field === 'next_review_date') {
+        if (['review_status', 'next_review_date', 'risk', 'environment', 'data_sensitivity'].indexOf(field) !== -1) {
           renderInventory();
         } else {
           renderInventorySummary();
@@ -3656,6 +3695,91 @@ ${renderDatalistOptions(ENTERPRISE_MANUAL_API_KEY_PROVIDER_OPTIONS)}
           blocked: rows.filter(function(row) { return row.annotation && row.annotation.review_status === 'blocked'; }).length
         };
       }
+      function inventoryFilterState() {
+        return {
+          search: ((byId('inventorySearch') && byId('inventorySearch').value) || '').trim().toLowerCase(),
+          status: (byId('inventoryStatusFilter') && byId('inventoryStatusFilter').value) || '',
+          review: (byId('inventoryReviewFilter') && byId('inventoryReviewFilter').value) || '',
+          risk: (byId('inventoryRiskFilter') && byId('inventoryRiskFilter').value) || '',
+          source: (byId('inventorySourceFilter') && byId('inventorySourceFilter').value) || ''
+        };
+      }
+      function inventoryRowHasStatus(row, status) {
+        return (row.statuses || []).some(function(item) {
+          return item && item.label === status;
+        });
+      }
+      function inventoryRowSearchText(row) {
+        var annotation = row.annotation || {};
+        var provider = row.provider || {};
+        var manualKey = row.manual_key || {};
+        var project = row.project || {};
+        return [
+          row.id,
+          project.name,
+          project.vp_proj_id,
+          project.id,
+          provider.provider,
+          provider.slug,
+          provider.material_mode,
+          provider.default_path,
+          manualKey.provider,
+          manualKey.key_label,
+          manualKey.key_reference,
+          manualKey.key_location,
+          manualKey.upstream_scope,
+          manualKey.source_format,
+          annotation.business_owner,
+          annotation.technical_owner,
+          annotation.environment,
+          annotation.business_service,
+          annotation.data_sensitivity,
+          annotation.risk,
+          annotation.review_status,
+          annotation.note,
+          (row.statuses || []).map(function(status) { return status.label || status; }).join(' ')
+        ].filter(Boolean).join(' ').toLowerCase();
+      }
+      function inventoryRowMatchesFilters(row, filters) {
+        var annotation = row.annotation || {};
+        var manualKey = row.manual_key || {};
+        if (filters.search && inventoryRowSearchText(row).indexOf(filters.search) === -1) return false;
+        if (filters.review && (annotation.review_status || 'needs_review') !== filters.review) return false;
+        if (filters.risk && (annotation.risk || '') !== filters.risk) return false;
+        if (filters.source === 'project_slot' && !row.provider) return false;
+        if (filters.source === 'manual' && !row.manual_key) return false;
+        if (filters.source === 'imported' && manualKey.source !== 'vaultproof_inventory_import') return false;
+        if (filters.status === 'protected' && !inventoryRowHasStatus(row, 'protected')) return false;
+        if (filters.status === 'manual' && !row.manual_key) return false;
+        if (filters.status === 'imported' && manualKey.source !== 'vaultproof_inventory_import') return false;
+        if (filters.status === 'missing_provider_slot' && row.provider) return false;
+        if (filters.status === 'needs_sealed_ingest' && !inventoryRowHasStatus(row, 'needs sealed ingest')) return false;
+        if (filters.status === 'policy_incomplete' && !inventoryRowHasStatus(row, 'policy incomplete')) return false;
+        if (filters.status === 'no_recent_traffic' && !inventoryRowHasStatus(row, 'no recent traffic')) return false;
+        if (filters.status === 'review_due' && !inventoryRowHasStatus(row, 'review due')) return false;
+        if (filters.status === 'blocked' && (annotation.review_status || '') !== 'blocked') return false;
+        return true;
+      }
+      function inventoryFiltersActive(filters) {
+        return Boolean(filters && (filters.search || filters.status || filters.review || filters.risk || filters.source));
+      }
+      function filteredInventoryRows(filters) {
+        var currentFilters = filters || inventoryFilterState();
+        return cachedInventoryRows.filter(function(row) {
+          return inventoryRowMatchesFilters(row, currentFilters);
+        });
+      }
+      function renderInventoryList() {
+        var filters = inventoryFilterState();
+        var visibleRows = filteredInventoryRows(filters);
+        var filtered = visibleRows.length !== cachedInventoryRows.length || inventoryFiltersActive(filters);
+        text('inventoryMeta', (filtered ? number(visibleRows.length) + ' of ' : '') + number(cachedInventoryRows.length) + ' API surfaces');
+        if (!cachedInventoryRows.length) {
+          byId('inventoryList').innerHTML = '<div class="empty">No projects or provider slots are visible yet. Create one project and provider slot before the customer API inventory review.</div>';
+          return;
+        }
+        byId('inventoryList').innerHTML = visibleRows.length ? visibleRows.map(renderInventoryRow).join('') : '<div class="empty">No API inventory rows match these filters. Clear filters or import more metadata before customer review.</div>';
+      }
       function inventoryEvidencePacket() {
         var summary = inventorySummary();
         return {
@@ -3665,6 +3789,7 @@ ${renderDatalistOptions(ENTERPRISE_MANUAL_API_KEY_PROVIDER_OPTIONS)}
           generated_from: location.origin + '/app/inventory',
           organization_id: currentOrgId || null,
           summary: summary,
+          export_formats: ['json', 'csv'],
           rows: cachedInventoryRows.map(function(row) {
             return {
               id: row.id,
@@ -3723,6 +3848,80 @@ ${renderDatalistOptions(ENTERPRISE_MANUAL_API_KEY_PROVIDER_OPTIONS)}
           ]
         };
       }
+      function csvCell(value) {
+        var textValue = value == null ? '' : String(value);
+        return '"' + textValue.replace(/"/g, '""') + '"';
+      }
+      function inventoryEvidenceCsv(rows) {
+        var exportRows = Array.isArray(rows) ? rows : cachedInventoryRows;
+        var headers = [
+          'inventory_id',
+          'project_name',
+          'project_id',
+          'vp_project_id',
+          'provider',
+          'provider_slug',
+          'material_mode',
+          'manual_key_label',
+          'manual_key_reference',
+          'key_location',
+          'upstream_scope',
+          'business_owner',
+          'technical_owner',
+          'environment',
+          'business_service',
+          'data_sensitivity',
+          'risk',
+          'review_status',
+          'next_review_date',
+          'policy_complete',
+          'caller_lock_controls',
+          'traffic_calls',
+          'traffic_errors',
+          'traffic_denied',
+          'last_seen_at',
+          'statuses',
+          'source_format'
+        ];
+        var lines = [headers.map(csvCell).join(',')];
+        exportRows.forEach(function(row) {
+          var manualKey = row.manual_key || {};
+          var provider = row.provider || {};
+          var annotation = row.annotation || {};
+          var traffic = row.traffic || {};
+          var policy = row.policy || {};
+          lines.push([
+            row.id,
+            row.project && row.project.name,
+            row.project && row.project.id,
+            row.project && row.project.vp_proj_id,
+            provider.provider || manualKey.provider || '',
+            provider.slug || '',
+            provider.material_mode || '',
+            manualKey.key_label || '',
+            manualKey.key_reference || '',
+            manualKey.key_location || '',
+            manualKey.upstream_scope || provider.default_path || '',
+            annotation.business_owner || '',
+            annotation.technical_owner || '',
+            annotation.environment || '',
+            annotation.business_service || '',
+            annotation.data_sensitivity || '',
+            annotation.risk || '',
+            annotation.review_status || 'needs_review',
+            annotation.next_review_date || '',
+            policy.complete === true ? 'true' : 'false',
+            policy.caller_lock_controls || '',
+            Number(traffic.calls || 0),
+            Number(traffic.errors || 0),
+            Number(traffic.denied || 0),
+            traffic.last_seen_at || '',
+            (row.statuses || []).map(function(status) { return status.label || status; }).join('; '),
+            manualKey.source_format || ''
+          ].map(csvCell).join(','));
+        });
+        return lines.join('\\n');
+      }
       function evidenceExportHref(path) {
         if (!currentOrgId) return path;
         var joiner = path.indexOf('?') === -1 ? '?' : '&';
@@ -3740,6 +3939,7 @@ ${renderDatalistOptions(ENTERPRISE_MANUAL_API_KEY_PROVIDER_OPTIONS)}
         ].join('');
         byId('inventoryWorkflowList').innerHTML = [
           '<div class="row"><div><div class="row-title">Import customer API list</div><div class="row-sub">Paste CSV or OpenAPI JSON to create metadata-only API inventory hints, then assign owners and review status before sealed ingest.</div></div><button class="tag good" type="button" data-action="open-inventory-import">import</button></div>',
+          '<div class="row"><div><div class="row-title">Export customer-safe inventory</div><div class="row-sub">Copy full CSV, filtered CSV, or JSON for security review, procurement, access review, or renewal notes without exposing raw provider keys or payloads.</div></div><span><button class="tag good" type="button" data-action="copy-inventory-csv">CSV</button><button class="tag good" type="button" data-action="copy-filtered-inventory-csv">filtered CSV</button><button class="tag" type="button" data-action="copy-inventory-json">JSON</button></span></div>',
           '<div class="row"><div><div class="row-title">Control policy</div><div class="row-sub">Confirm origins, provider allowlists, upstream hosts, path prefixes, gateways, and rate limits.</div></div><a class="tag good" href="/app/control">control</a></div>',
           '<div class="row"><div><div class="row-title">Provider slots</div><div class="row-sub">Review material mode, rotation status, protected email dry-run, and emergency revoke posture.</div></div><a class="tag good" href="/app/keys">provider slots</a></div>',
           '<div class="row"><div><div class="row-title">Traffic and audit evidence</div><div class="row-sub">Use Activity, Audit CSV, and Access Review CSV for customer-safe review exports.</div></div><span><a class="tag" href="/app/activity">activity</a><a class="tag" href="' + escapeHtml(evidenceExportHref('/api/v1/enterprise/audit?format=csv&days=30')) + '">audit CSV</a><a class="tag" href="' + escapeHtml(evidenceExportHref('/api/v1/enterprise/members/access-review?format=csv')) + '">access review CSV</a></span></div>',
@@ -3751,13 +3951,23 @@ ${renderDatalistOptions(ENTERPRISE_MANUAL_API_KEY_PROVIDER_OPTIONS)}
         if (panel) panel.style.display = PAGE_MODE === 'inventory' ? 'grid' : 'none';
         if (PAGE_MODE !== 'inventory') return;
         cachedInventoryRows = buildInventoryRows();
-        text('inventoryMeta', cachedInventoryRows.length + ' API surfaces');
-        byId('inventoryList').innerHTML = cachedInventoryRows.length ? cachedInventoryRows.map(renderInventoryRow).join('') : '<div class="empty">No projects or provider slots are visible yet. Create one project and provider slot before the customer API inventory review.</div>';
+        renderInventoryList();
         renderInventorySummary();
       }
       function copyInventoryJson() {
         cachedInventoryRows = buildInventoryRows();
         copyToClipboard(JSON.stringify(inventoryEvidencePacket(), null, 2), 'API inventory JSON');
+      }
+      function copyInventoryCsv() {
+        cachedInventoryRows = buildInventoryRows();
+        copyToClipboard(inventoryEvidenceCsv(), 'API inventory CSV');
+      }
+      function copyFilteredInventoryCsv() {
+        cachedInventoryRows = buildInventoryRows();
+        var filters = inventoryFilterState();
+        var rows = filteredInventoryRows(filters);
+        var label = inventoryFiltersActive(filters) ? 'Filtered API inventory CSV' : 'API inventory CSV';
+        copyToClipboard(inventoryEvidenceCsv(rows), label);
       }
       function policyStorageKey() {
         return 'vaultproof_policy_exceptions::' + (currentOrgId || 'default');
@@ -4624,6 +4834,23 @@ ${renderDatalistOptions(ENTERPRISE_MANUAL_API_KEY_PROVIDER_OPTIONS)}
       if (byId('inventoryImportForm')) {
         byId('inventoryImportForm').addEventListener('submit', submitInventoryImportForm);
       }
+      if (byId('inventoryFilterForm')) {
+        byId('inventoryFilterForm').addEventListener('submit', function(event) {
+          event.preventDefault();
+          renderInventoryList();
+        });
+      }
+      if (byId('clearInventoryFilters')) {
+        byId('clearInventoryFilters').addEventListener('click', function() {
+          ['inventorySearch', 'inventoryStatusFilter', 'inventoryReviewFilter', 'inventoryRiskFilter', 'inventorySourceFilter'].forEach(function(id) {
+            if (byId(id)) byId(id).value = '';
+          });
+          renderInventoryList();
+        });
+      }
+      if (byId('copyFilteredInventoryCsvBtn')) {
+        byId('copyFilteredInventoryCsvBtn').addEventListener('click', copyFilteredInventoryCsv);
+      }
       if (byId('cancelManualApiKeyForm')) {
         byId('cancelManualApiKeyForm').addEventListener('click', function() { setManualApiKeyFormVisible(false); });
       }
@@ -4636,6 +4863,9 @@ ${renderDatalistOptions(ENTERPRISE_MANUAL_API_KEY_PROVIDER_OPTIONS)}
       if (byId('copyInventoryJsonBtn')) {
         byId('copyInventoryJsonBtn').addEventListener('click', copyInventoryJson);
       }
+      if (byId('copyInventoryCsvBtn')) {
+        byId('copyInventoryCsvBtn').addEventListener('click', copyInventoryCsv);
+      }
       if (byId('copyPolicyJsonBtn')) {
         byId('copyPolicyJsonBtn').addEventListener('click', copyPolicyJson);
       }
@@ -4645,6 +4875,10 @@ ${renderDatalistOptions(ENTERPRISE_MANUAL_API_KEY_PROVIDER_OPTIONS)}
       document.addEventListener('input', function(event) {
         var target = event.target;
         if (!target || !target.getAttribute) return;
+        if (target.id === 'inventorySearch') {
+          renderInventoryList();
+          return;
+        }
         if (target.getAttribute('data-manual-key-field')) {
           saveManualApiKeyField(target);
           return;
@@ -4664,6 +4898,10 @@ ${renderDatalistOptions(ENTERPRISE_MANUAL_API_KEY_PROVIDER_OPTIONS)}
       document.addEventListener('change', function(event) {
         var target = event.target;
         if (!target || !target.getAttribute) return;
+        if (['inventoryStatusFilter', 'inventoryReviewFilter', 'inventoryRiskFilter', 'inventorySourceFilter'].indexOf(target.id) !== -1) {
+          renderInventoryList();
+          return;
+        }
         if (target.getAttribute('data-manual-key-field')) {
           saveManualApiKeyField(target);
           return;
@@ -4689,6 +4927,18 @@ ${renderDatalistOptions(ENTERPRISE_MANUAL_API_KEY_PROVIDER_OPTIONS)}
         }
         if (target.getAttribute('data-action') === 'open-inventory-import') {
           setInventoryImportFormVisible(true);
+          return;
+        }
+        if (target.getAttribute('data-action') === 'copy-inventory-csv') {
+          copyInventoryCsv();
+          return;
+        }
+        if (target.getAttribute('data-action') === 'copy-filtered-inventory-csv') {
+          copyFilteredInventoryCsv();
+          return;
+        }
+        if (target.getAttribute('data-action') === 'copy-inventory-json') {
+          copyInventoryJson();
           return;
         }
         if (target.getAttribute('data-action') === 'delete-manual-api-key') {
