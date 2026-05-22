@@ -68,6 +68,7 @@ Status: `attached and enforced`
 - `https://enterprise.vaultproof.dev/app/scanner` is the scanner exposure intake: browser-local redacted repository exposure findings; owner, severity, status, provider-slot hint, evidence reference, and remediation metadata; no repository upload or `/api/scanner` calls; and copyable `vaultproof_enterprise_scanner_exposure_review` JSON without secrets.
 - `https://enterprise.vaultproof.dev/app/release` is the release evidence center: browser-local build/image tag, change summary, approver, verifier, verification status, rollout state, rollback owner/path, and customer-safe notes; it exports `vaultproof_enterprise_release_evidence` JSON without secrets and feeds Evidence, Demo, and Security Review.
 - `https://enterprise.vaultproof.dev/app/testers` is the paid-pilot tester readiness board: browser-local tester roster, login/scenario status, scenario assignment, blocker notes, customer-safe feedback, and copyable `vaultproof_enterprise_paid_pilot_tester_readiness` JSON without secrets.
+- `https://enterprise.vaultproof.dev/app/entitlements` is the paid-user entitlement board: browser-local contract/capacity metadata, usage meters for calls/provider slots/seats, capacity status, expansion recommendation, hard-limit boundary, copyable capacity brief, and copyable `vaultproof_enterprise_entitlements` JSON without secrets.
 - `https://admin.vaultproof.dev/app/onboarding` is the staff-only paid-customer onboarding board: browser-local activation owners, enterprise admin login handoff, first workload owner, support handoff, capacity/renewal review, key posture, customer testing window, and copyable `vaultproof_enterprise_paid_onboarding` JSON without secrets. `https://enterprise.vaultproof.dev/app/onboarding` is intentionally removed from the customer enterprise host and should return 404.
 - `https://enterprise.vaultproof.dev/app/security-review` is the buyer security packet: concise architecture summary, control coverage, evidence links, searchable/filterable open review items, common customer answers, known limitations, secret exclusions, copyable full security/procurement review text, and a copyable focused review brief for the currently filtered blockers/limitations.
 - `https://enterprise.vaultproof.dev/app/plans` is the buyer package view: rollout posture, paid-pilot commercial package, contract guardrails, security boundaries, and direct links into evidence, support, technical guide, and runbooks.
@@ -237,6 +238,16 @@ Status: `built for enterprise demo`
 The demo slice starts from browser-local records instead of new infrastructure: it saves redacted tester metadata in local storage per organization under `vaultproof_pilot_testers::<orgId>`, redacts secret-like input before storage/export, computes a hold/ready-for-guided-testing status, and includes the summary in the evidence packet under `pilot_tester_readiness`. Persistent audited tester records, invite automation, scenario-specific forms, and structured feedback workflow can follow after the customer demo slice.
 
 Tester records must never store passwords, browser session tokens, Supabase service-role keys, OAuth client secrets, provider API keys, encrypted provider shares, origin-lock secrets, executor signing secrets, runtime-token secrets, request bodies, response bodies, or customer payloads.
+
+## Feature: Paid-User Entitlements
+
+Status: `built for enterprise demo`
+
+`https://enterprise.vaultproof.dev/app/entitlements` gives paid-pilot customers a customer-safe contract and capacity view. It records package, contract status, monthly call allowance, provider-slot allowance, seat allowance, support tier, incident-response add-on status, runtime type, renewal/review date, billing owner, success owner, retention label, and customer-safe notes.
+
+The demo slice starts from browser-local records and existing enterprise evidence: selected organization, visible members, projects, provider slots, traffic, denials, errors, readiness, SSO status, and go/no-go launch state. It now computes a capacity status, remaining calls, provider-slot and seat utilization, expansion recommendation, hard-limit boundary, and customer-safe usage actions; renders visual usage meters; exports packet version 2; and adds a copyable capacity brief without storing or exposing secrets. Persistent audited contract records, billing provider integration, invoice status, hard limit enforcement, overage workflow, and renewal automation remain follow-up work.
+
+Entitlement records and capacity briefs must never store provider keys, encrypted provider shares, Supabase service-role keys, browser session tokens, OAuth client secrets, origin-lock secrets, executor signing secrets, runtime-token secrets, request bodies, response bodies, or customer payloads.
 
 ## Feature: Paid-Customer Onboarding
 

@@ -3247,7 +3247,7 @@ async function assertEnterpriseLoginRoute() {
     {
       path: '/app/entitlements',
       title: 'Entitlements - VaultProof Enterprise',
-      required: ['Contract intake', 'Paid-user readiness', 'Capacity envelope', 'Contract guardrails', 'Handoff path', 'Entitlements JSON', 'vaultproof_enterprise_entitlements', 'data-entitlement-field', 'contract status', 'monthly calls', 'provider slots', 'billing owner', 'success owner', 'support tier', 'incident response', 'renewal/review date', 'copy entitlements JSON', 'ready_for_paid_pilot', 'contract_review', 'Manual contract-controlled', '/app/evidence', '/app/plans', '/app/pilot', '/app/security-review'],
+      required: ['Contract intake', 'Paid-user readiness', 'Capacity envelope', 'Usage guardrails', 'entitlementsUsageMeterList', 'entitlementsUsageGuardrailList', 'capacity_status', 'remaining_calls', 'expansion_recommendation', 'hard_limit_enforcement', 'copy capacity brief', 'copyEntitlementsCapacityBriefBtn', 'entitlementsCapacityBriefText', 'VaultProof entitlement capacity brief', 'Contract guardrails', 'Handoff path', 'Entitlements JSON', 'vaultproof_enterprise_entitlements', 'data-entitlement-field', 'contract status', 'monthly calls', 'provider slots', 'billing owner', 'success owner', 'support tier', 'incident response', 'renewal/review date', 'copy entitlements JSON', 'ready_for_paid_pilot', 'contract_review', 'Manual contract-controlled', '/app/evidence', '/app/plans', '/app/pilot', '/app/security-review'],
     },
     {
       path: '/app/pilot',

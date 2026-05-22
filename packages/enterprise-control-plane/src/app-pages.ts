@@ -5741,6 +5741,15 @@ function renderEnterpriseSupportPage(pageName: EnterpriseSupportPageName): strin
     .brief-box { width: 100%; min-height: 210px; font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace; font-size: 12px; line-height: 1.55; }
     .demo-script { min-height: 330px; }
     .review-filters { display: grid; grid-template-columns: minmax(220px, 1.3fr) minmax(150px, .7fr) auto; gap: 10px; margin-bottom: 14px; }
+    .entitlement-meter-list { display: grid; gap: 12px; margin-bottom: 14px; }
+    .entitlement-meter { border: 1px solid rgba(48,76,71,.10); border-radius: 18px; padding: 14px; background: rgba(247,250,244,.84); }
+    .entitlement-meter-head { display: flex; justify-content: space-between; gap: 12px; align-items: baseline; flex-wrap: wrap; }
+    .entitlement-meter-title { font-weight: 780; letter-spacing: -.02em; }
+    .entitlement-meter-value { color: var(--muted); font-size: 12px; text-align: right; }
+    .entitlement-meter-track { height: 10px; border-radius: 999px; background: rgba(48,76,71,.12); overflow: hidden; margin-top: 10px; }
+    .entitlement-meter-fill { display: block; height: 100%; width: 0; border-radius: inherit; background: linear-gradient(135deg, var(--green), var(--primary-bg)); }
+    .entitlement-meter-fill.warn { background: linear-gradient(135deg, var(--gold), #f3d86f); }
+    .entitlement-meter-fill.bad { background: linear-gradient(135deg, var(--red), #e5a197); }
     .scanner-form, .scanner-fields, .release-form, .release-fields, .tester-form, .tester-fields, .entitlement-form { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
     .scanner-field, .release-field, .tester-field, .entitlement-field { display: grid; gap: 6px; }
     .scanner-field.wide, .release-field.wide, .tester-field.wide, .entitlement-field.wide { grid-column: 1 / -1; }
@@ -6443,6 +6452,14 @@ function renderEnterpriseSupportPage(pageName: EnterpriseSupportPageName): strin
           <div id="entitlementsCapacityList" class="list"></div>
         </div>
         <div class="card">
+          <div class="section-title">
+            <h2>Usage guardrails</h2>
+            <button id="copyEntitlementsCapacityBriefBtn" type="button">copy capacity brief</button>
+          </div>
+          <div id="entitlementsUsageMeterList" class="entitlement-meter-list"></div>
+          <div id="entitlementsUsageGuardrailList" class="list"></div>
+        </div>
+        <div class="card">
           <div class="section-title"><h2>Contract guardrails</h2><span class="mini">paid customer</span></div>
           <div id="entitlementsGuardrailList" class="list"></div>
         </div>
@@ -6660,6 +6677,7 @@ function renderEnterpriseSupportPage(pageName: EnterpriseSupportPageName): strin
       var latestOverview = null;
       var latestBootstrap = null;
       var latestSecurityReviewPacket = null;
+      var latestEntitlementsPacket = null;
       function byId(id) { return document.getElementById(id); }
       function text(id, value) { var el = byId(id); if (el) el.textContent = value == null ? '' : String(value); }
       function escapeHtml(value) {
@@ -9045,6 +9063,43 @@ function renderEnterpriseSupportPage(pageName: EnterpriseSupportPageName): strin
         var n = Number(String(value || '').replace(/,/g, '').trim());
         return Number.isFinite(n) && n > 0 ? n : 0;
       }
+      function entitlementUtilization(used, allowance) {
+        var denominator = Number(allowance || 0);
+        if (!denominator) return 0;
+        return Math.round(Number(used || 0) * 1000 / denominator) / 10;
+      }
+      function entitlementMeterWidth(used, allowance) {
+        return Math.max(0, Math.min(100, Math.round(entitlementUtilization(used, allowance))));
+      }
+      function entitlementCapacityStatus(capacity) {
+        if (!capacity.monthly_call_allowance || !capacity.provider_slot_allowance || !capacity.seat_allowance) return 'missing_allowance';
+        if (capacity.observed_proxy_calls > capacity.monthly_call_allowance || capacity.active_provider_slots > capacity.provider_slot_allowance || capacity.visible_members > capacity.seat_allowance) return 'over_contract';
+        if (capacity.call_utilization_percent >= 80 || capacity.provider_slot_utilization_percent >= 80 || capacity.seat_utilization_percent >= 80) return 'expansion_review';
+        if (!capacity.observed_proxy_calls) return 'pilot_not_observed';
+        return 'within_contract';
+      }
+      function entitlementCapacityTone(status) {
+        if (status === 'within_contract') return 'good';
+        if (status === 'over_contract') return 'bad';
+        return 'warn';
+      }
+      function entitlementCapacityRecommendation(status) {
+        if (status === 'over_contract') return 'Hold paid onboarding or expansion traffic until the contract allowance is amended or usage is reduced.';
+        if (status === 'expansion_review') return 'Schedule an expansion review before the customer approaches the contracted allowance.';
+        if (status === 'pilot_not_observed') return 'Run the protected API proxy self-test and capture traffic before treating the allowance as proven.';
+        if (status === 'missing_allowance') return 'Record monthly call, provider-slot, and seat allowances before customer onboarding.';
+        return 'Usage fits inside the current contract envelope; keep monitoring before renewal.';
+      }
+      function entitlementUsageActions(capacity, usageStatus) {
+        var actions = [];
+        if (usageStatus === 'missing_allowance') actions.push('Record contract allowances for monthly calls, provider slots, and seats.');
+        if (usageStatus === 'pilot_not_observed') actions.push('Run /app/keys protected dry-run or the customer workflow to create traffic evidence.');
+        if (usageStatus === 'expansion_review') actions.push('Review expansion package, provider-slot allowance, and support tier before the next traffic increase.');
+        if (usageStatus === 'over_contract') actions.push('Pause paid onboarding or amend the contract before accepting more traffic.');
+        if (capacity.denied_calls || capacity.error_calls) actions.push('Review Activity, Policy Drift, and Integration Rollout before using the capacity proof with a customer.');
+        if (!actions.length) actions.push('Keep usage review in the renewal cadence and monitor Evidence after every deploy.');
+        return actions;
+      }
       function entitlementContractReady(status) {
         return ['accepted_demo', 'signed', 'active'].indexOf(String(status || '').toLowerCase()) !== -1;
       }
@@ -9082,9 +9137,28 @@ function renderEnterpriseSupportPage(pageName: EnterpriseSupportPageName): strin
         if (goNoGo && goNoGo.status !== 'go') blockers.push('Go/no-go launch board is still on hold.');
         var status = blockers.length ? 'contract_review' : 'ready_for_paid_pilot';
         var utilization = callAllowance ? Math.round(totalCalls * 1000 / callAllowance) / 10 : 0;
+        var capacity = {
+          monthly_call_allowance: callAllowance,
+          observed_proxy_calls: totalCalls,
+          remaining_calls: callAllowance ? Math.max(0, callAllowance - totalCalls) : 0,
+          call_utilization_percent: utilization,
+          call_headroom_percent: callAllowance ? Math.max(0, Math.round((callAllowance - totalCalls) * 1000 / callAllowance) / 10) : 0,
+          provider_slot_allowance: providerAllowance,
+          active_provider_slots: providerCount,
+          provider_slots_remaining: providerAllowance ? Math.max(0, providerAllowance - providerCount) : 0,
+          provider_slot_utilization_percent: entitlementUtilization(providerCount, providerAllowance),
+          seat_allowance: seatAllowance,
+          visible_members: memberCount,
+          seats_remaining: seatAllowance ? Math.max(0, seatAllowance - memberCount) : 0,
+          seat_utilization_percent: entitlementUtilization(memberCount, seatAllowance),
+          visible_projects: projectCount,
+          denied_calls: deniedCalls,
+          error_calls: errorCalls
+        };
+        var capacityStatus = entitlementCapacityStatus(capacity);
         return {
           packet_type: 'vaultproof_enterprise_entitlements',
-          packet_version: 1,
+          packet_version: 2,
           status: status,
           decision: status === 'ready_for_paid_pilot' ? 'Paid-user contract package is ready for the selected enterprise organization.' : 'Hold paid-user onboarding until contract, capacity, owners, and launch evidence are complete.',
           generated_at: new Date().toISOString(),
@@ -9106,17 +9180,14 @@ function renderEnterpriseSupportPage(pageName: EnterpriseSupportPageName): strin
             customer_note: redactEntitlementNote(state.customer_note),
             updated_at: state.updated_at || null
           },
-          capacity: {
-            monthly_call_allowance: callAllowance,
-            observed_proxy_calls: totalCalls,
-            call_utilization_percent: utilization,
-            provider_slot_allowance: providerAllowance,
-            active_provider_slots: providerCount,
-            seat_allowance: seatAllowance,
-            visible_members: memberCount,
-            visible_projects: projectCount,
-            denied_calls: deniedCalls,
-            error_calls: errorCalls
+          capacity: capacity,
+          usage_guardrails: {
+            capacity_status: capacityStatus,
+            status_tone: entitlementCapacityTone(capacityStatus),
+            expansion_recommendation: entitlementCapacityRecommendation(capacityStatus),
+            hard_limit_enforcement: 'Manual contract-controlled for this demo; automated hard usage limits, overage billing, and invoice status remain production follow-up work.',
+            actions: entitlementUsageActions(capacity, capacityStatus),
+            review_links: ['/app/evidence', '/app/activity', '/app/inventory', '/app/rollout', '/app/plans']
           },
           support: {
             support_tier: state.support_tier || 'founder-led launch-week support',
@@ -9176,6 +9247,65 @@ function renderEnterpriseSupportPage(pageName: EnterpriseSupportPageName): strin
           row('Traffic quality', number(capacity.error_calls) + ' errors and ' + number(capacity.denied_calls) + ' denials are visible in the overview window.', capacity.error_calls || capacity.denied_calls ? 'watch' : 'clean', capacity.error_calls || capacity.denied_calls ? 'warn' : 'good')
         ];
       }
+      function entitlementMeter(title, used, allowance, percent, tone) {
+        var width = entitlementMeterWidth(used, allowance);
+        var label = allowance ? number(used) + ' of ' + number(allowance) + ' - ' + number(percent) + '%' : number(used) + ' observed - allowance missing';
+        return '<div class="entitlement-meter">' +
+          '<div class="entitlement-meter-head"><div class="entitlement-meter-title">' + escapeHtml(title) + '</div><div class="entitlement-meter-value">' + escapeHtml(label) + '</div></div>' +
+          '<div class="entitlement-meter-track" aria-hidden="true"><span class="entitlement-meter-fill ' + escapeHtml(tone || '') + '" style="width:' + width + '%"></span></div>' +
+        '</div>';
+      }
+      function entitlementsUsageMeterRows(packet) {
+        var capacity = packet.capacity || {};
+        var usage = packet.usage_guardrails || {};
+        var tone = usage.status_tone || entitlementCapacityTone(entitlementCapacityStatus(capacity));
+        return [
+          entitlementMeter('Monthly calls', capacity.observed_proxy_calls || 0, capacity.monthly_call_allowance || 0, capacity.call_utilization_percent || 0, tone),
+          entitlementMeter('Provider slots', capacity.active_provider_slots || 0, capacity.provider_slot_allowance || 0, capacity.provider_slot_utilization_percent || 0, capacity.active_provider_slots > capacity.provider_slot_allowance && capacity.provider_slot_allowance ? 'bad' : capacity.provider_slot_utilization_percent >= 80 ? 'warn' : 'good'),
+          entitlementMeter('Seats', capacity.visible_members || 0, capacity.seat_allowance || 0, capacity.seat_utilization_percent || 0, capacity.visible_members > capacity.seat_allowance && capacity.seat_allowance ? 'bad' : capacity.seat_utilization_percent >= 80 ? 'warn' : 'good')
+        ];
+      }
+      function entitlementsUsageGuardrailRows(packet) {
+        var capacity = packet.capacity || {};
+        var usage = packet.usage_guardrails || {};
+        return [
+          row('Capacity status', usage.expansion_recommendation || 'Record capacity allowances before onboarding.', usage.capacity_status || 'missing_allowance', usage.status_tone || 'warn'),
+          row('Remaining calls', number(capacity.remaining_calls) + ' calls remain inside the recorded monthly allowance. Headroom: ' + number(capacity.call_headroom_percent) + '%.', capacity.monthly_call_allowance ? 'headroom' : 'missing', capacity.monthly_call_allowance && capacity.observed_proxy_calls <= capacity.monthly_call_allowance ? 'good' : 'warn'),
+          row('Expansion recommendation', usage.expansion_recommendation || 'Record capacity allowances before onboarding.', 'expansion', usage.status_tone || 'warn'),
+          row('Hard limit enforcement', usage.hard_limit_enforcement || 'Manual contract-controlled for this demo.', 'manual', 'warn')
+        ].concat((usage.actions || []).map(function(action) {
+          return row('Usage action', action, 'next', action.indexOf('Pause') === 0 ? 'bad' : 'warn');
+        }));
+      }
+      function entitlementsCapacityBriefText(packet) {
+        var contract = packet.contract || {};
+        var capacity = packet.capacity || {};
+        var usage = packet.usage_guardrails || {};
+        return [
+          'VaultProof entitlement capacity brief',
+          'Generated: ' + packet.generated_at,
+          'Organization: ' + ((packet.organization && packet.organization.name) || 'selected workspace'),
+          'Package: ' + (contract.package_label || 'Enterprise paid pilot'),
+          'Paid-user status: ' + packet.status,
+          'Capacity status: ' + (usage.capacity_status || 'missing_allowance'),
+          '',
+          'Contract envelope:',
+          '- Monthly calls: ' + number(capacity.observed_proxy_calls) + ' observed of ' + number(capacity.monthly_call_allowance) + ' allowed (' + number(capacity.call_utilization_percent) + '% used, ' + number(capacity.remaining_calls) + ' remaining)',
+          '- Provider slots: ' + number(capacity.active_provider_slots) + ' visible of ' + number(capacity.provider_slot_allowance) + ' allowed (' + number(capacity.provider_slot_utilization_percent) + '% used)',
+          '- Seats: ' + number(capacity.visible_members) + ' visible of ' + number(capacity.seat_allowance) + ' allowed (' + number(capacity.seat_utilization_percent) + '% used)',
+          '- Traffic quality: ' + number(capacity.error_calls) + ' errors and ' + number(capacity.denied_calls) + ' denials in the current overview evidence',
+          '',
+          'Recommendation:',
+          '- ' + (usage.expansion_recommendation || 'Record capacity allowances before customer onboarding.'),
+          '',
+          'Actions:',
+          '- ' + ((usage.actions || []).length ? usage.actions.join('\\n- ') : 'Keep usage review in the renewal cadence.'),
+          '',
+          'Boundary:',
+          '- ' + (usage.hard_limit_enforcement || 'Manual contract-controlled for this demo.'),
+          '- No provider keys, encrypted shares, service-role keys, browser sessions, OAuth secrets, origin-lock values, signing secrets, runtime-token secrets, or unwrap roots are included.'
+        ].join('\\n');
+      }
       function entitlementsGuardrailRows(packet) {
         return [
           row('Support tier', packet.support.support_tier, 'support', 'good'),
@@ -9203,6 +9333,7 @@ function renderEnterpriseSupportPage(pageName: EnterpriseSupportPageName): strin
       function renderEntitlementsPanel(org, sso, readiness, overview, bootstrap) {
         var goNoGo = buildGoNoGoStatus(org, sso, readiness, overview, bootstrap);
         var packet = buildEntitlementsPacket(org, sso, readiness, overview, bootstrap, goNoGo);
+        latestEntitlementsPacket = packet;
         var state = getEntitlementsState();
         [
           ['entitlementPackage', 'package_label'],
@@ -9226,6 +9357,8 @@ function renderEnterpriseSupportPage(pageName: EnterpriseSupportPageName): strin
         text('entitlementsStatusMeta', packet.status === 'ready_for_paid_pilot' ? 'ready' : 'contract review');
         byId('entitlementsSummaryList').innerHTML = entitlementsSummaryRows(packet).join('');
         byId('entitlementsCapacityList').innerHTML = entitlementsCapacityRows(packet).join('');
+        byId('entitlementsUsageMeterList').innerHTML = entitlementsUsageMeterRows(packet).join('');
+        byId('entitlementsUsageGuardrailList').innerHTML = entitlementsUsageGuardrailRows(packet).join('');
         byId('entitlementsGuardrailList').innerHTML = entitlementsGuardrailRows(packet).join('');
         byId('entitlementsHandoffList').innerHTML = entitlementsHandoffRows(packet).join('');
         var packetBox = byId('entitlementsPacket');
@@ -9896,7 +10029,7 @@ function renderEnterpriseSupportPage(pageName: EnterpriseSupportPageName): strin
         text('evidenceTesterMeta', pilotTesters.status);
         byId('evidenceTesterList').innerHTML = pilotTesterProofRows(pilotTesters).join('');
         text('evidenceEntitlementsMeta', entitlements.status);
-        byId('evidenceEntitlementsList').innerHTML = entitlementsSummaryRows(entitlements).concat(entitlementsCapacityRows(entitlements)).join('');
+        byId('evidenceEntitlementsList').innerHTML = entitlementsSummaryRows(entitlements).concat(entitlementsCapacityRows(entitlements)).concat(entitlementsUsageGuardrailRows(entitlements)).join('');
         text('evidenceOnboardingMeta', onboarding.status);
         byId('evidenceOnboardingList').innerHTML = paidOnboardingSummaryRows(onboarding).concat(paidOnboardingEvidenceRows(onboarding)).join('');
         var packetBox = byId('evidencePacket');
@@ -11159,6 +11292,23 @@ function renderEnterpriseSupportPage(pageName: EnterpriseSupportPageName): strin
         } catch (_) {
           packet.focus();
           packet.select();
+        }
+      });
+      var copyEntitlementsCapacityBriefBtn = byId('copyEntitlementsCapacityBriefBtn');
+      if (copyEntitlementsCapacityBriefBtn) copyEntitlementsCapacityBriefBtn.addEventListener('click', async function() {
+        if (!latestEntitlementsPacket) return;
+        var textValue = entitlementsCapacityBriefText(latestEntitlementsPacket);
+        try {
+          await navigator.clipboard.writeText(textValue);
+          copyEntitlementsCapacityBriefBtn.textContent = 'copied';
+          setTimeout(function() { copyEntitlementsCapacityBriefBtn.textContent = 'copy capacity brief'; }, 1400);
+        } catch (_) {
+          var packet = byId('entitlementsPacket');
+          if (packet) {
+            packet.value = textValue;
+            packet.focus();
+            packet.select();
+          }
         }
       });
       var copyEntitlementsJsonBtn = byId('copyEntitlementsJsonBtn');
