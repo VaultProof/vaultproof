@@ -2381,6 +2381,7 @@ function renderEnterpriseOperationsPage(pageName: 'activity' | 'projects' | 'inv
     .card { border: 1px solid var(--line); background: linear-gradient(180deg, rgba(255,255,255,.98), rgba(247,250,244,.86)); border-radius: 24px; padding: 20px; box-shadow: 0 22px 90px rgba(48,76,71,.16); }
     .filters { display: grid; grid-template-columns: minmax(180px, 1fr) minmax(150px, .7fr) minmax(180px, 1fr) auto; gap: 10px; margin-bottom: 16px; }
     .inventory-filters { grid-template-columns: minmax(220px, 1.4fr) repeat(4, minmax(130px, .72fr)) auto auto; }
+    .inventory-bulk-review { grid-template-columns: minmax(180px, .8fr) minmax(170px, .7fr) auto; align-items: center; }
     .kpi-label { color: var(--muted); font-size: 12px; text-transform: uppercase; letter-spacing: .1em; }
     .kpi-value { font-size: 34px; font-weight: 850; letter-spacing: -.05em; margin-top: 8px; }
     .kpi-sub { color: var(--muted); font-size: 13px; margin-top: 6px; }
@@ -2657,6 +2658,17 @@ ${renderDatalistOptions(ENTERPRISE_MANUAL_API_KEY_PROVIDER_OPTIONS)}
             <button class="primary" type="submit">apply filters</button>
             <button id="copyFilteredInventoryCsvBtn" type="button">copy filtered CSV</button>
             <button id="clearInventoryFilters" type="button">clear</button>
+          </form>
+          <form id="inventoryBulkReviewForm" class="filters inventory-bulk-review">
+            <select id="bulkInventoryReviewStatus" aria-label="Bulk review status">
+              <option value="">mark visible rows...</option>
+              <option value="approved">approved</option>
+              <option value="exception">exception</option>
+              <option value="blocked">blocked</option>
+              <option value="needs_review">needs review</option>
+            </select>
+            <input id="bulkInventoryNextReview" type="date" aria-label="Optional next review date" />
+            <button class="primary" type="submit">apply filtered review</button>
           </form>
           <div id="inventoryList" class="list"><div class="empty">Loading API inventory...</div></div>
         </div>
@@ -3821,6 +3833,7 @@ ${renderDatalistOptions(ENTERPRISE_MANUAL_API_KEY_PROVIDER_OPTIONS)}
                 review_status: row.annotation.review_status || 'needs_review',
                 next_review_date: row.annotation.next_review_date || null,
                 updated_at: row.annotation.updated_at || null,
+                bulk_reviewed_at: row.annotation.bulk_reviewed_at || null,
                 note: redactInventoryNote(row.annotation.note)
               },
               statuses: row.statuses.map(function(status) { return status.label; })
@@ -3874,6 +3887,7 @@ ${renderDatalistOptions(ENTERPRISE_MANUAL_API_KEY_PROVIDER_OPTIONS)}
           'risk',
           'review_status',
           'next_review_date',
+          'bulk_reviewed_at',
           'policy_complete',
           'caller_lock_controls',
           'traffic_calls',
@@ -3910,6 +3924,7 @@ ${renderDatalistOptions(ENTERPRISE_MANUAL_API_KEY_PROVIDER_OPTIONS)}
             annotation.risk || '',
             annotation.review_status || 'needs_review',
             annotation.next_review_date || '',
+            annotation.bulk_reviewed_at || '',
             policy.complete === true ? 'true' : 'false',
             policy.caller_lock_controls || '',
             Number(traffic.calls || 0),
@@ -3968,6 +3983,37 @@ ${renderDatalistOptions(ENTERPRISE_MANUAL_API_KEY_PROVIDER_OPTIONS)}
         var rows = filteredInventoryRows(filters);
         var label = inventoryFiltersActive(filters) ? 'Filtered API inventory CSV' : 'API inventory CSV';
         copyToClipboard(inventoryEvidenceCsv(rows), label);
+      }
+      function applyInventoryBulkReview(event) {
+        if (event) event.preventDefault();
+        cachedInventoryRows = buildInventoryRows();
+        var status = (byId('bulkInventoryReviewStatus') && byId('bulkInventoryReviewStatus').value) || '';
+        if (['approved', 'exception', 'blocked', 'needs_review'].indexOf(status) === -1) {
+          notice('Choose a review status before applying a bulk inventory review.');
+          return;
+        }
+        var rows = filteredInventoryRows(inventoryFilterState());
+        if (!rows.length) {
+          notice('No visible inventory rows match the current filters.');
+          return;
+        }
+        if (!confirm('Apply review status "' + status.replace('_', ' ') + '" to ' + rows.length + ' visible API inventory row(s)?')) return;
+        var annotations = readInventoryAnnotations();
+        var nextReview = (byId('bulkInventoryNextReview') && byId('bulkInventoryNextReview').value) || '';
+        var now = new Date().toISOString();
+        rows.forEach(function(row) {
+          var current = annotations[row.id] && typeof annotations[row.id] === 'object' ? annotations[row.id] : {};
+          current.review_status = status;
+          if (nextReview) current.next_review_date = nextReview;
+          current.updated_at = now;
+          current.bulk_reviewed_at = now;
+          annotations[row.id] = current;
+        });
+        writeInventoryAnnotations(annotations);
+        if (byId('bulkInventoryReviewStatus')) byId('bulkInventoryReviewStatus').value = '';
+        cachedInventoryRows = buildInventoryRows();
+        renderInventory();
+        notice('Updated ' + rows.length + ' visible inventory row(s).');
       }
       function policyStorageKey() {
         return 'vaultproof_policy_exceptions::' + (currentOrgId || 'default');
@@ -4839,6 +4885,9 @@ ${renderDatalistOptions(ENTERPRISE_MANUAL_API_KEY_PROVIDER_OPTIONS)}
           event.preventDefault();
           renderInventoryList();
         });
+      }
+      if (byId('inventoryBulkReviewForm')) {
+        byId('inventoryBulkReviewForm').addEventListener('submit', applyInventoryBulkReview);
       }
       if (byId('clearInventoryFilters')) {
         byId('clearInventoryFilters').addEventListener('click', function() {

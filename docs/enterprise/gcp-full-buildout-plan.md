@@ -287,6 +287,7 @@ First demo slice:
 - Built: allow browser-local/manual annotations first: business owner, technical owner, environment, business service, data sensitivity, risk, review status, review note, and next review date.
 - Built: add browser-local CSV/OpenAPI JSON import for metadata-only API inventory hints so a customer can paste an approved API list, route catalog, or OpenAPI document and review imported surfaces without storing raw keys, bearer tokens, request bodies, responses, or payloads.
 - Built: add local inventory search and filters for status, review state, risk, and source so paid-user testers can find imported/manual/provider rows quickly without new backend calls, then copy a filtered CSV for the rows they are reviewing.
+- Built: add a bulk filtered review action so operators can mark the currently filtered rows as approved, exception, blocked, or needs review with an optional next-review date and timestamped evidence metadata.
 - Built: show status badges for `protected`, `missing provider slot`, `stale`, `no recent traffic`, `policy incomplete`, `review due`, `blocked`, and `exception`.
 - Built: add links to Provider Slots, Control, Activity, Audit CSV, Access Review CSV, Launch, and Evidence.
 - Built: include API inventory proof under `api_inventory` in the evidence packet without secrets and add copyable customer-safe full CSV, filtered CSV, plus `vaultproof_enterprise_api_inventory` JSON exports from `/app/inventory`.
