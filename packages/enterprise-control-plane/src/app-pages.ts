@@ -7098,6 +7098,7 @@ function renderEnterpriseSupportPage(pageName: EnterpriseSupportPageName): strin
       <section id="runbooksPanel" class="grid two" style="display:none">
         <div class="card"><div class="section-title"><h2>Safe verification commands</h2><span class="mini">read-only checks</span></div><div id="runbooksSafeList" class="list"></div></div>
         <div class="card"><div class="section-title"><h2>Gated infrastructure actions</h2><span class="mini">operator approval</span></div><div id="runbooksGatedList" class="list"></div></div>
+        <div class="card" style="grid-column:1/-1"><div class="section-title"><h2>Key exposure response runbook</h2><span class="mini" id="runbooksExposureMeta">incident mode</span></div><div id="runbooksExposureList" class="list"></div></div>
       </section>
     </main>
   </div>
@@ -12021,6 +12022,10 @@ function renderEnterpriseSupportPage(pageName: EnterpriseSupportPageName): strin
           loadVerifier();
         }
         if (PAGE_MODE === 'runbooks') {
+          var scannerExposureForRunbook = buildScannerExposurePacket(overview, bootstrap);
+          var exposureResponseForRunbook = buildKeyExposureResponsePacket(overview, bootstrap, scannerExposureForRunbook);
+          var exposureSummaryForRunbook = exposureResponseForRunbook.summary || {};
+          text('runbooksExposureMeta', exposureResponseForRunbook.status);
           byId('runbooksSafeList').innerHTML = [
             row('Hardening status', 'npm run status:enterprise-hardening runs the safe verifier, TLS preflight, gateway plan, alternate-access prep/check, SSH plan, and old prototype inventory in one read-only pass.', 'read-only', 'good'),
             row('Production verifier', 'npm run verify:gcp-enterprise-edge checks the GCP edge, backend health, managed TLS, and live readiness.', 'read-only', 'good'),
@@ -12065,6 +12070,18 @@ function renderEnterpriseSupportPage(pageName: EnterpriseSupportPageName): strin
             row('SSH hardening', 'npm run harden:enterprise-ssh can plan, close, or reopen bootstrap SSH with readiness, alternate-access, and confirmation gates.', 'approval', 'warn'),
             row('GCP runtime reset rollback', 'gcloud compute instances reset vaultproof-enterprise-runtime-1 --zone=us-central1-a --project=vaultproof-prod resets the current enterprise runtime VM when the named rollback owner approves.', 'operator', 'warn'),
             row('old prototype cleanup', 'npm run cleanup:enterprise-container-apps inventories the old prototype resources and requires action-specific confirmation before ingress disable/restore/delete.', 'approval', 'warn')
+          ].join('');
+          byId('runbooksExposureList').innerHTML = [
+            row('Current exposure response status', exposureResponseForRunbook.decision, exposureResponseForRunbook.status, exposureResponseForRunbook.status === 'hold' ? 'bad' : exposureResponseForRunbook.status === 'ready_to_contain' ? 'good' : 'warn'),
+            row('Triage linked scanner findings', number(exposureSummaryForRunbook.linked_scanner_findings) + ' scanner findings are linked to provider slots; ' + number(exposureSummaryForRunbook.open_critical_or_high_linked_findings) + ' linked critical/high findings remain open.', exposureSummaryForRunbook.open_critical_or_high_linked_findings ? 'hold' : 'review', exposureSummaryForRunbook.open_critical_or_high_linked_findings ? 'bad' : 'good'),
+            linkRow('Open Provider Slots incident mode', 'Copy the customer-safe incident JSON, review material mode, and emergency revoke affected provider slots without exposing raw upstream keys.', '/app/keys', 'incident JSON', 'good'),
+            linkRow('Open Scanner findings', 'Update linked exposure findings only after rotation, revoke, false-positive review, or explicit demo-only acceptance.', '/app/scanner', 'scanner', exposureSummaryForRunbook.open_critical_or_high_linked_findings ? 'warn' : 'good'),
+            linkRow('Export activity evidence', 'Review routed traffic, denials, latency, provider request IDs, and attestation hints for what VaultProof actually saw.', '/app/activity', 'activity', 'good'),
+            linkRow('Export audit CSV', 'Attach governance and runtime audit evidence to the security-review packet for the response window.', evidenceExportHref('/api/v1/enterprise/audit?format=csv&days=30'), 'audit CSV', 'good'),
+            linkRow('Share Evidence packet', 'Use Evidence after Provider Slots and Scanner are updated so customers see exposure response, scanner, rotation, and proof-boundary status together.', '/app/evidence', 'evidence', 'good'),
+            row('Proof boundary', exposureResponseForRunbook.proof_boundary.vaultproof_controls + ' ' + exposureResponseForRunbook.proof_boundary.outside_boundary, 'boundary', 'good'),
+            row('Operator order', exposureResponseForRunbook.operator_actions.join(' '), 'sequence', 'good'),
+            row('Secret boundary', 'Never paste provider API keys, OAuth secrets, webhook secrets, private keys, bearer tokens, request bodies, response bodies, or customer payloads into incident notes or packets.', 'redacted', 'good')
           ].join('');
         }
       }

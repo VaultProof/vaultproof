@@ -88,6 +88,7 @@ Live production-confidential path:
 - Control plane `/readiness` summarizes whole-path demo readiness and production-confidential blockers.
 - Enterprise caller-lock policy supports origin, provider allowlists, upstream method/host/path policy, per-project/provider rate limits, customer gateway, client class, device identity requirement, fleet, firmware, IPv4/IPv6 CIDR, mTLS certificate identity checks, and stricter per-provider overrides.
 - Enterprise admins can emergency-revoke provider slots; revoked keys are excluded from future execution dispatch.
+- Enterprise Provider Slots, Evidence, Security Review, and Runbooks now include a customer-safe key exposure response workflow: linked scanner findings, provider-slot containment status, emergency revoke path, rotation scope, proof-boundary language, incident JSON, and audit/activity export links without exposing raw provider material.
 - Enterprise audit events can be exported as CSV from the control plane.
 - Execution dispatch audit events include executor result metadata and customer-verifiable Azure attestation evidence summaries.
 - Enterprise execution now supports a safe `dry_run` / `validate_only` mode that authenticates, enforces caller-lock/execution policy, signs the secure-execution envelope, writes validation audit metadata, and skips upstream provider dispatch. `npm run qa:enterprise-live-execute` uses this path by default when passed a Supabase access token on stdin.
