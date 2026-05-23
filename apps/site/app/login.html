@@ -401,54 +401,6 @@
       margin-bottom: 14px;
     }
 
-    .sso-block {
-      border: 1px solid rgba(215, 224, 235, 0.96);
-      border-radius: 10px;
-      background: #f8fbff;
-      padding: 12px;
-      margin-bottom: 14px;
-      display: grid;
-      gap: 10px;
-    }
-
-    .sso-kicker {
-      font-family: var(--font-mono);
-      font-size: 10.5px;
-      letter-spacing: 0.08em;
-      text-transform: uppercase;
-      color: var(--accent);
-    }
-
-    .sso-title {
-      font-family: var(--font-display);
-      font-size: 18px;
-      font-weight: 620;
-      letter-spacing: -0.04em;
-    }
-
-    .sso-copy {
-      color: var(--text-muted);
-      font-size: 12.5px;
-      line-height: 1.5;
-    }
-
-    .sso-row {
-      display: grid;
-      grid-template-columns: 1fr;
-      gap: 8px;
-      align-items: center;
-    }
-
-    .sso-row .btn {
-      width: 100%;
-    }
-
-    .sso-hint {
-      font-family: var(--font-mono);
-      font-size: 10.5px;
-      color: var(--text-faint);
-    }
-
     .promo-toggle {
       width: 100%;
       border: 0;
@@ -796,30 +748,24 @@
       .auth-wrap,
       .auth-card,
       .entry-card,
-      .sso-block,
       .promo-block {
         width: 330px;
         max-width: 330px;
         min-width: 0;
       }
 
-      .auth-card .sso-block,
       .auth-card .promo-block {
         width: 100%;
         max-width: 100%;
       }
 
       .auth-subtitle,
-      .entry-copy,
-      .sso-copy,
-      .sso-hint {
+      .entry-copy {
         overflow-wrap: anywhere;
       }
 
       .auth-title { font-size: 26px; }
       .entry-split { grid-template-columns: 1fr; }
-      .sso-row { grid-template-columns: 1fr; }
-      .sso-row .btn { width: 100%; }
     }
 
     @media (max-width: 480px) {
@@ -945,18 +891,6 @@
                 <button type="button" id="promoApplyBtn" class="btn btn-small">apply</button>
               </div>
               <p id="promoCodeMsg" class="hidden"></p>
-            </div>
-
-            <div class="sso-block">
-              <div class="sso-kicker">shared workspace sso</div>
-              <div class="sso-title">Continue with company SSO</div>
-              <p class="sso-copy">Enter your company domain to start a shared-workspace sign-in through Supabase Auth. Use this when your team has SAML SSO configured.</p>
-              <div class="sso-row">
-                <input id="ssoDomainInput" type="text" class="form-input" placeholder="company.com or you@company.com" />
-                <button id="ssoContinueBtn" type="button" class="btn btn-secondary">continue with sso</button>
-              </div>
-              <div class="sso-hint">If SSO is not configured for that domain yet, use GitHub, Google, or email and we will still route you into the right workspace.</div>
-              <div id="ssoStatus" class="hidden"></div>
             </div>
 
             <div class="oauth-stack">
