@@ -1,28 +1,28 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <!-- Google Analytics -->
-  <script async src="https://www.googletagmanager.com/gtag/js?id=G-NE5RYX1WTF"></script>
-  <script src="/js/index-1.js" defer></script>
-  <script src="/js/index-5.js" defer></script>
-
-  <link rel="icon" type="image/png" href="/favicon.png">
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>VaultProof | API key security built for the age of AI agents.</title>
-  <meta name="description" content="VaultProof splits, encrypts, and proxies your API keys so they stay out of your code, .env files, and agent workflows.">
-  <meta name="keywords" content="API key security, API key management, API proxy, split-key encryption, OpenAI, Anthropic, Mistral, Groq, key vault, AI agent security">
-  <meta property="og:title" content="VaultProof — API key security built for the age of AI agents">
-  <meta property="og:description" content="VaultProof splits, encrypts, and proxies your API keys — designed for developers and AI agents.">
+  <title>VaultProof | Active key protection for AI agents</title>
+  <meta name="description" content="VaultProof splits, encrypts, and proxies API keys so apps and AI agents never handle raw provider secrets.">
+  <meta name="keywords" content="API key security, API key management, API proxy, split-key encryption, OpenAI, Anthropic, MCP, AI agent security">
+  <meta property="og:title" content="VaultProof - Active key protection for AI agents">
+  <meta property="og:description" content="Split, encrypt, and proxy API keys so apps and agents never hold the real thing.">
   <meta property="og:url" content="https://vaultproof.dev">
   <meta property="og:type" content="website">
   <meta property="og:image" content="https://vaultproof.dev/ogimage.png">
   <meta name="twitter:card" content="summary">
-  <meta name="twitter:title" content="VaultProof — API key security built for the age of AI agents">
-  <meta name="twitter:description" content="VaultProof splits, encrypts, and proxies your API keys — designed for developers and AI agents.">
+  <meta name="twitter:title" content="VaultProof - Active key protection for AI agents">
+  <meta name="twitter:description" content="Split, encrypt, and proxy API keys so apps and agents never hold the real thing.">
+  <meta name="twitter:image" content="https://vaultproof.dev/ogimage.png">
   <meta name="referrer" content="strict-origin-when-cross-origin">
   <link rel="canonical" href="https://vaultproof.dev">
-  <meta name="twitter:image" content="https://vaultproof.dev/ogimage.png">
+  <link rel="icon" type="image/png" href="/favicon.png">
+
+  <!-- Google Analytics -->
+  <script async src="https://www.googletagmanager.com/gtag/js?id=G-NE5RYX1WTF"></script>
+  <script src="/js/index-1.js" defer></script>
+  <script src="/js/index-5.js" defer></script>
 
   <script type="application/ld+json">
   {
@@ -33,33 +33,43 @@
         "@id": "https://vaultproof.dev/#organization",
         "name": "VaultProof",
         "url": "https://vaultproof.dev",
-        "logo": { "@type": "ImageObject", "url": "https://vaultproof.dev/og-image2.png" },
-        "description": "API key security built for the age of AI agents."
+        "logo": {
+          "@type": "ImageObject",
+          "url": "https://vaultproof.dev/og-image2.png"
+        },
+        "description": "API key security for apps and AI agents."
       },
       {
         "@type": "WebSite",
         "@id": "https://vaultproof.dev/#website",
         "name": "VaultProof",
         "url": "https://vaultproof.dev",
-        "description": "VaultProof splits, encrypts, and proxies your API keys so they stay out of your code, .env files, and agent workflows.",
-        "publisher": { "@id": "https://vaultproof.dev/#organization" }
+        "publisher": {
+          "@id": "https://vaultproof.dev/#organization"
+        }
       },
       {
         "@type": "SoftwareApplication",
         "name": "VaultProof",
         "url": "https://vaultproof.dev",
         "applicationCategory": "SecurityApplication",
-        "operatingSystem": "Web",
-        "description": "VaultProof splits, encrypts, and proxies your API keys so they stay out of your code, .env files, and agent workflows. Designed for developers and AI agents.",
-        "offers": { "@type": "Offer", "price": "0", "priceCurrency": "USD" },
-        "publisher": { "@id": "https://vaultproof.dev/#organization" },
+        "operatingSystem": "Web, CLI",
+        "description": "VaultProof splits, encrypts, and proxies API keys so apps and AI agents do not handle raw provider secrets.",
+        "offers": {
+          "@type": "Offer",
+          "price": "0",
+          "priceCurrency": "USD"
+        },
+        "publisher": {
+          "@id": "https://vaultproof.dev/#organization"
+        },
         "featureList": [
           "Split-key encryption",
           "Secure API proxy",
-          "Origin/domain locking",
-          "Provider restrictions",
-          "Usage monitoring dashboard",
-          "SSE streaming support"
+          "AI agent proxy tokens",
+          "MCP server support",
+          "Per-call audit logs",
+          "CLI migration workflow"
         ]
       },
       {
@@ -67,34 +77,26 @@
         "mainEntity": [
           {
             "@type": "Question",
-            "name": "Does this work with the SDKs I already use?",
+            "name": "Can VaultProof read my API key?",
             "acceptedAnswer": {
               "@type": "Answer",
-              "text": "Yes. For providers supported by the init flow, you usually update the env values your SDK already reads: the API key becomes a public vp-proj identifier and the base URL points at VaultProof. Your SDK calls stay the same. The migration flow is npx @vaultproof/init, which scans your .env files and rewrites them for you."
+              "text": "VaultProof stores encrypted shares separately and does not store whole plaintext API keys at rest. During a proxied call, the key is assembled briefly in memory, used for the upstream request, and then cleared."
             }
           },
           {
             "@type": "Question",
-            "name": "How is this different from Vault, Doppler, or AWS Secrets Manager?",
+            "name": "Does VaultProof work with existing SDKs?",
             "acceptedAnswer": {
               "@type": "Answer",
-              "text": "Those tools protect your keys at rest. They encrypt the key in storage and hand it to your app when you ask for it. VaultProof keeps the key out of your app entirely. Your code never holds the real key. We're a layer on top of your existing vault, not a replacement."
+              "text": "Yes. The init flow rewrites environment variables so supported SDKs keep using their existing API key and base URL settings while requests route through VaultProof."
             }
           },
           {
             "@type": "Question",
-            "name": "How much latency does the proxy add?",
+            "name": "How is VaultProof different from a traditional vault?",
             "acceptedAnswer": {
               "@type": "Answer",
-              "text": "Typically under 100ms. For a 2-10 second LLM response, you won't notice. SSE streaming is fully supported."
-            }
-          },
-          {
-            "@type": "Question",
-            "name": "Can VaultProof see my API keys?",
-            "acceptedAnswer": {
-              "@type": "Answer",
-              "text": "No. Your key is split into two encrypted shares before it leaves your device. We hold one share encrypted with our server key. The other is encrypted with your developer key. Neither share alone reveals anything."
+              "text": "Traditional vaults usually return the whole secret to the application. VaultProof is designed to keep the raw provider key out of application code and AI agent context by routing calls through a proxy."
             }
           }
         ]
@@ -105,1073 +107,2017 @@
 
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter+Tight:wght@500;600;700;800&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700&amp;family=Geist+Mono:wght@400;500;600;700&amp;display=swap" rel="stylesheet">
 
   <style>
-    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    *, *::before, *::after {
+      box-sizing: border-box;
+    }
 
     :root {
-      --accent: #d97706;
-      --bg: #fafaf7;
-      --bg-mid: #f3f3ee;
-      --bg-card: #fff;
-      --rule: 1px solid #e7e5de;
-      --text: #171717;
-      --text-mid: #3f3f37;
-      --text-muted: #525252;
-      --text-faint: #8a8a82;
-      --font-display: "Inter Tight", "Inter", system-ui, sans-serif;
-      --font-body: "Inter", system-ui, sans-serif;
-      --font-mono: "JetBrains Mono", "IBM Plex Mono", ui-monospace, monospace;
+      --bg: #e7eef6;
+      --panel: #ffffff;
+      --panel-soft: #f5f8fb;
+      --ink: #142235;
+      --muted: #536276;
+      --faint: #8290a3;
+      --line: #d7e0eb;
+      --line-strong: #bcc9d8;
+      --inverse: #0d1521;
+      --inverse-soft: #172335;
+      --inverse-text: #f7fbff;
+      --green: #0f766e;
+      --amber: #9a6400;
+      --red: #c2410c;
+      --orange: #c2410c;
+      --orange-dark: #9a3412;
+      --blue: #1d4ed8;
+      --blue-soft: #dce9f6;
+      --wash-blue: #dbe8f5;
+      --wash-orange: #f4d7bd;
+      --wash-amber: #f4e5bd;
+      --wash-mint: #dff3ee;
+      --wash-clay: #ead8c8;
+      --shadow: 0 24px 70px rgba(15, 23, 42, 0.10);
+      --sans: "Geist", -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;
+      --mono: "Geist Mono", "SFMono-Regular", Consolas, monospace;
     }
 
-    html, body {
-      background: #e8e6e0;
-      color: var(--text);
-      font-family: var(--font-body);
-      font-size: 15px;
+    html {
+      scroll-behavior: smooth;
+      background: #ffffff;
+    }
+
+    body {
+      margin: 0;
+      background: #ffffff;
+      color: var(--ink);
+      font-family: var(--sans);
+      font-size: 16px;
       line-height: 1.5;
       -webkit-font-smoothing: antialiased;
+      text-rendering: optimizeLegibility;
     }
 
-    .page {
-      max-width: 1280px;
-      margin: 0 auto;
-      background: var(--bg);
-      border-left: var(--rule);
-      border-right: var(--rule);
+    a {
+      color: inherit;
+      text-decoration: none;
+    }
+
+    button,
+    input {
+      font: inherit;
+    }
+
+    .page-shell {
+      width: min(1440px, 100%);
       min-height: 100vh;
-    }
-
-    a { color: inherit; text-decoration: none; }
-
-    @keyframes blink { 50% { opacity: 0; } }
-    .cursor {
-      display: inline-block; width: 8px; height: 14px;
-      background: var(--accent); vertical-align: -3px;
-      animation: blink 1.1s steps(1) infinite;
-    }
-
-    /* ── NAV ── */
-    .nav {
-      display: flex; align-items: center;
-      padding: 14px 40px;
-      border-bottom: var(--rule);
-      font-family: var(--font-mono); font-size: 12px;
-      background: var(--bg);
-      position: sticky; top: 0; z-index: 100;
-    }
-    .nav-logo { display: flex; align-items: center; gap: 8px; }
-    .nav-logo-name { font-weight: 600; letter-spacing: 0.5px; }
-    .nav-logo-version { color: var(--text-faint); margin-left: 6px; }
-    .nav-spacer { flex: 1; }
-    .nav-links { display: flex; gap: 24px; color: var(--text-muted); }
-    .nav-links a:hover { color: var(--text); }
-    .nav-sign-in { color: var(--text-faint); margin-left: 24px; margin-right: 12px; }
-    .nav-cta {
-      padding: 6px 12px;
-      background: var(--text); color: var(--bg);
-      border-radius: 3px; font-size: 12px;
-      cursor: pointer;
-    }
-    .nav-cta:hover { background: #333; }
-
-    /* ── HERO ── */
-    .hero {
-      display: grid;
-      grid-template-columns: 1fr 1.3fr;
-      border-bottom: var(--rule);
-      min-height: 480px;
-    }
-    .hero-left {
-      padding: 56px 40px 48px;
-      border-right: var(--rule);
-      display: flex; flex-direction: column;
-      justify-content: space-between;
-    }
-    .hero-eyebrow {
-      font-family: var(--font-mono); font-size: 11px;
-      color: var(--accent); letter-spacing: 0.8px;
-      margin-bottom: 28px;
-    }
-    .hero-h1 {
-      font-family: var(--font-display);
-      font-weight: 600;
-      font-size: 44px; line-height: 1.08;
-      letter-spacing: -1.2px;
-    }
-    .hero-sub {
-      margin-top: 24px;
-      font-size: 15px; line-height: 1.55;
-      color: var(--text-mid); max-width: 440px;
-    }
-    .hero-cta-group { margin-top: 40px; }
-    .hero-cta-cmd {
-      font-family: var(--font-mono); font-size: 13px;
-      border: var(--rule); border-radius: 4px;
-      background: var(--bg-card); padding: 12px 14px;
-      display: flex; align-items: center; gap: 10px;
-      cursor: pointer;
-    }
-    .hero-cta-cmd-prompt { color: var(--accent); }
-    .hero-cta-cmd-text { flex: 1; }
-    .hero-cta-cmd-hint { color: var(--text-faint); font-size: 11px; }
-    .hero-cta-link {
-      margin-top: 12px;
-      font-family: var(--font-mono); font-size: 12px;
-      color: var(--text-muted);
-    }
-    .hero-cta-link a:hover { color: var(--text); }
-    .hero-right {
-      padding: 28px;
-      background: var(--bg-mid);
-    }
-
-    /* ── SCANNER FEED ── */
-    .scanner {
-      font-family: var(--font-mono); font-size: 12px;
-      line-height: 22px;
-      background: var(--bg);
-      border: 1px solid #e5e5de;
-      border-radius: 6px;
+      margin: 0 auto;
+      background: linear-gradient(180deg, #dbe7f3 0%, var(--bg) 28%, #e8f0f7 100%);
+      border-left: 1px solid rgba(215, 224, 235, 0.28);
+      border-right: 1px solid rgba(215, 224, 235, 0.28);
+      box-shadow: none;
       overflow: hidden;
-      height: 100%;
     }
-    .scanner-chrome {
-      display: flex; align-items: center; gap: 10px;
-      padding: 8px 12px; border-bottom: 1px solid #e5e5de;
-      background: var(--bg-mid); font-size: 11px; color: #6b6b64;
+
+    .site-nav {
+      position: sticky;
+      top: 0;
+      z-index: 20;
+      display: flex;
+      align-items: center;
+      gap: 24px;
+      min-height: 56px;
+      padding: 0 36px;
+      border-bottom: 1px solid var(--line);
+      background: rgba(248, 251, 255, 0.88);
+      backdrop-filter: blur(18px);
     }
-    .scanner-dots { display: flex; gap: 5px; }
-    .scanner-dot {
-      width: 9px; height: 9px; border-radius: 50%;
-      background: #e5e5de;
+
+    .brand {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      font-weight: 650;
+      letter-spacing: -0.01em;
+      white-space: nowrap;
     }
-    .scanner-chrome-title { flex: 1; text-align: center; letter-spacing: 0.2px; }
-    .scanner-chrome-live { color: var(--accent); }
-    .scanner-body { padding: 10px 14px; }
-    .scanner-cmd { color: #8a8a82; margin-bottom: 8px; }
-    .scanner-cmd .prompt { color: var(--accent); }
-    .scanner-stat { color: var(--text-muted); }
-    .scanner-stat .num { color: var(--text); }
-    .scanner-stat .acc { color: var(--accent); }
-    .scanner-stat .err { color: #b91c1c; font-weight: 600; }
-    .scanner-divider {
-      margin: 10px 0;
-      border-top: 1px dashed #e5e5de;
-      padding-top: 10px;
-    }
-    .scanner-row {
+
+    .brand-mark {
+      width: 18px;
+      height: 18px;
+      border: 1px solid var(--ink);
+      border-radius: 999px;
       display: grid;
-      grid-template-columns: 28px 1fr 110px 180px 80px;
-      align-items: center; gap: 10px;
-      padding: 2px 6px; border-radius: 3px;
+      place-items: center;
+      font-family: var(--mono);
+      font-size: 9px;
+      line-height: 1;
     }
-    .scanner-row:nth-child(odd) { background: rgba(0,0,0,0.015); }
-    .scanner-glyph { font-weight: 700; }
-    .scanner-file { color: #262626; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-    .scanner-line { color: #8a8a82; }
-    .scanner-badge {
-      padding: 1px 7px; border-radius: 3px;
-      font-size: 10px; text-transform: uppercase; letter-spacing: 0.4px;
+
+    .brand-version {
+      color: var(--faint);
+      font-family: var(--mono);
+      font-size: 12px;
+      font-weight: 500;
+    }
+
+    .nav-links,
+    .nav-actions {
+      display: flex;
+      align-items: center;
+      gap: 20px;
+    }
+
+    .nav-links {
+      margin-left: 12px;
+      color: var(--muted);
+      font-size: 12px;
+    }
+
+    .nav-actions {
+      margin-left: auto;
+      gap: 10px;
+    }
+
+    .nav-link,
+    .footer-link {
+      transition: color 160ms ease;
+    }
+
+    .nav-link:hover,
+    .footer-link:hover {
+      color: var(--ink);
+    }
+
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      min-height: 34px;
+      padding: 0 14px;
+      border: 1px solid var(--line-strong);
+      border-radius: 999px;
+      background: var(--panel);
+      color: var(--ink);
+      font-size: 12px;
+      font-weight: 560;
+      white-space: nowrap;
+      cursor: pointer;
+      transition: border-color 160ms ease, background 160ms ease, color 160ms ease, transform 160ms ease;
+    }
+
+    .btn:hover {
+      border-color: #c8c8c8;
+      transform: translateY(-1px);
+    }
+
+    .btn-dark {
+      border-color: var(--inverse);
+      background: var(--inverse);
+      color: var(--inverse-text);
+    }
+
+    .btn-dark:hover {
+      background: var(--inverse-soft);
+      color: var(--inverse-text);
+    }
+
+    .btn-plain {
+      border-color: transparent;
+      background: transparent;
+      color: var(--muted);
+    }
+
+    .btn-plain:hover {
+      color: var(--ink);
+      border-color: transparent;
+      transform: none;
+    }
+
+    .mobile-toggle {
+      display: none;
+      margin-left: auto;
+      border-radius: 999px;
+    }
+
+    .mobile-menu {
+      display: none;
+      padding: 16px 24px 22px;
+      border-bottom: 1px solid var(--line);
+      background: #edf4fa;
+    }
+
+    .mobile-menu.open {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 10px;
+    }
+
+    .mobile-menu a {
+      padding: 10px 12px;
+      border: 1px solid var(--line);
+      border-radius: 10px;
+      background: var(--panel);
+      color: var(--muted);
+      font-size: 14px;
+    }
+
+    .hero {
+      padding: 92px 32px 86px;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.14);
+      text-align: center;
+      background:
+        radial-gradient(circle at 50% 34%, rgba(194, 65, 12, 0.36), transparent 28%),
+        radial-gradient(circle at 20% 22%, rgba(56, 189, 248, 0.18), transparent 24%),
+        linear-gradient(140deg, #09111d 0%, #102137 42%, #183755 72%, #23445f 100%);
+      color: var(--inverse-text);
+    }
+
+    .hero-copy {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      min-width: 0;
+      padding: 0;
+    }
+
+    .hero h1 {
+      max-width: 1040px;
+      margin: 0 auto;
+      font-size: clamp(48px, 6.25vw, 82px);
+      font-weight: 650;
+      letter-spacing: -0.052em;
+      line-height: 0.98;
+      text-wrap: balance;
+    }
+
+    .hero-title-gradient {
+      display: block;
+      color: transparent;
+      background: linear-gradient(96deg, #f8fbff 0%, #8fd0ff 36%, #f08a35 74%, #c2410c 100%);
+      background-clip: text;
+      -webkit-background-clip: text;
+    }
+
+    .hero-title-rest {
+      display: block;
+      color: #f5f9fd;
+    }
+
+    .hero-subcopy {
+      max-width: 620px;
+      margin: 20px auto 0;
+      color: rgba(247, 251, 255, 0.72);
+      font-size: 16px;
+      line-height: 1.45;
+      letter-spacing: -0.02em;
+      text-wrap: balance;
+    }
+
+    .hero-actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px;
+      justify-content: center;
+      margin-top: 24px;
+    }
+
+    .hero .btn-dark {
+      border-color: rgba(255, 255, 255, 0.22);
+      background: #f8fbff;
+      color: #102137;
+      box-shadow: 0 16px 46px rgba(2, 8, 23, 0.18);
+    }
+
+    .hero .btn-dark:hover {
+      background: #ffffff;
+      color: #102137;
+    }
+
+    .install-card {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      width: auto;
+      min-height: 34px;
+      margin-top: 0;
+      padding: 0 14px;
+      border: 1px solid rgba(255, 255, 255, 0.20);
+      border-radius: 999px;
+      background: rgba(255, 255, 255, 0.94);
+      box-shadow: 0 16px 46px rgba(2, 8, 23, 0.18);
+      color: #102137;
+      cursor: pointer;
+    }
+
+    .install-card span {
+      min-width: 0;
+    }
+
+    .hero-cta-cmd-prompt {
+      color: var(--orange);
+      font-family: var(--mono);
+      font-size: 15px;
+      font-weight: 700;
+    }
+
+    .hero-cta-cmd-text {
+      flex: 1;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      font-family: var(--mono);
+      font-size: 14px;
+    }
+
+    .hero-cta-cmd-hint {
+      color: var(--faint);
+      font-family: var(--mono);
+      font-size: 11px;
+      text-transform: uppercase;
+    }
+
+    .hero-visual {
+      min-width: 0;
+      padding: 48px 0 0;
+    }
+
+    .vault-card {
+      position: relative;
+      width: min(100%, 970px);
+      margin: 0 auto;
+      border: 1px solid var(--line-strong);
+      border-radius: 18px;
+      background:
+        radial-gradient(circle at 50% 50%, rgba(194, 65, 12, 0.22), transparent 33%),
+        linear-gradient(125deg, rgba(236, 244, 252, 0.98) 0%, rgba(255, 248, 239, 0.94) 45%, rgba(213, 228, 243, 0.98) 100%),
+        #ffffff;
+      box-shadow: 0 34px 90px rgba(2, 8, 23, 0.32);
+      overflow: hidden;
+    }
+
+    .split-map {
+      display: grid;
+      grid-template-columns: minmax(160px, 1fr) minmax(260px, 1.22fr) minmax(160px, 1fr);
+      grid-template-rows: auto auto;
+      gap: 48px 64px;
+      align-items: center;
+      padding: 66px 54px 58px;
+    }
+
+    @keyframes split-line-flow {
+      from {
+        background-position: 0 0;
+      }
+      to {
+        background-position: 32px 0;
+      }
+    }
+
+    .split-line {
+      position: absolute;
+      z-index: 0;
+      left: 50%;
+      top: 50%;
+      width: 280px;
+      height: 2px;
+      background: repeating-linear-gradient(90deg, rgba(194, 65, 12, 0.82) 0 3px, transparent 3px 10px);
+      background-size: 32px 2px;
+      transform-origin: 0 50%;
+      pointer-events: none;
+      opacity: 0.72;
+      animation: split-line-flow 1.6s linear infinite;
+    }
+
+    .split-line-top-left {
+      transform: rotate(198deg);
+    }
+
+    .split-line-top-right {
+      transform: rotate(-18deg);
+    }
+
+    .split-line-bottom-left {
+      transform: rotate(162deg);
+    }
+
+    .split-line-bottom-right {
+      transform: rotate(18deg);
+    }
+
+    .split-card {
+      position: relative;
+      z-index: 1;
+      min-width: 0;
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      background: rgba(255, 255, 255, 0.94);
+      padding: 18px;
+      text-align: left;
+      box-shadow: 0 14px 36px rgba(15, 23, 42, 0.08);
+    }
+
+    .split-card-share {
+      color: var(--red);
+      font-family: var(--mono);
+      font-size: 10px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+    }
+
+    .split-card-title {
+      margin-top: 10px;
+      font-size: 25px;
+      font-weight: 650;
+      letter-spacing: -0.06em;
+      line-height: 1;
+    }
+
+    .split-code {
+      display: grid;
+      gap: 5px;
+      margin-top: 10px;
+      color: var(--muted);
+      font-family: var(--mono);
+      font-size: 12px;
+      letter-spacing: -0.03em;
+    }
+
+    .split-card-note {
+      margin-top: 12px;
+      color: var(--faint);
+      font-size: 11px;
+      line-height: 1.45;
+    }
+
+    .split-core {
+      position: relative;
+      z-index: 2;
+      grid-column: 2;
+      grid-row: 1 / span 2;
+      justify-self: center;
+      width: min(100%, 330px);
+      padding: 25px 24px 21px;
+      border-radius: 13px;
+      background: var(--inverse);
+      color: var(--inverse-text);
+      text-align: left;
+      overflow: hidden;
+      box-shadow: 0 20px 55px rgba(23, 23, 23, 0.28);
+    }
+
+    .split-core-label {
+      color: #858585;
+      font-family: var(--mono);
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+    }
+
+    .split-core-secret {
+      margin-top: 12px;
+      overflow: hidden;
+      color: #ffffff;
+      font-family: var(--mono);
+      font-size: 17px;
+      letter-spacing: -0.05em;
+      white-space: nowrap;
+      text-overflow: ellipsis;
+    }
+
+    .split-core-note {
+      margin-top: 13px;
+      color: #8d8d8d;
+      font-family: var(--mono);
+      font-size: 10px;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+    }
+
+    .split-caption {
+      grid-column: 1 / -1;
+      color: var(--faint);
+      font-family: var(--mono);
+      font-size: 10px;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+    }
+
+    .hex-line {
+      display: flex;
+      gap: 5px;
+      min-width: 0;
+      overflow: hidden;
+      white-space: nowrap;
+    }
+
+    .hex-muted {
+      color: var(--faint);
+    }
+
+    .logo-strip {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: center;
+      gap: 24px;
+      min-height: 96px;
+      padding: 22px 32px;
+      border-bottom: 1px solid var(--line);
+      background: linear-gradient(180deg, #dbe8f5 0%, #edf4fa 100%);
+    }
+
+    .logo-strip div {
+      min-height: auto;
+      display: inline-flex;
+      justify-content: center;
+      padding: 0;
+      border-right: 0;
+      color: var(--muted);
+      font-family: var(--mono);
+      font-size: 12px;
+      font-weight: 600;
+      text-align: center;
+      text-transform: uppercase;
+      letter-spacing: 0.03em;
+    }
+
+    .logo-strip div:first-child {
+      flex-basis: 100%;
+      color: var(--faint);
+      font-weight: 500;
+      font-size: 10px;
+    }
+
+    .metric-row {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      border-bottom: 1px solid var(--line);
+      background: linear-gradient(95deg, #f8fbff 0%, #e5eef8 48%, #e1f1ed 100%);
+    }
+
+    .metric {
+      min-height: 126px;
+      padding: 30px;
+      border-right: 1px solid var(--line);
       text-align: center;
     }
-    .scanner-key { color: var(--text-muted); font-size: 11px; }
-    .scanner-status { color: #8a8a82; font-size: 10px; text-transform: uppercase; letter-spacing: 0.4px; }
-    .scanner-tail { color: var(--text-muted); }
-    .scanner-tail .ok { color: var(--accent); }
-    .scanner-tail .num { color: var(--text); }
 
-    .sev-critical { background: rgba(220,38,38,0.08); color: #b91c1c; }
-    .sev-high     { background: rgba(234,88,12,0.08);  color: #c2410c; }
-    .sev-medium   { background: rgba(202,138,4,0.08);  color: #a16207; }
-    .sev-low      { background: rgba(100,116,139,0.08); color: #475569; }
-
-    /* ── SECTIONS ── */
-    section { padding: 64px 40px; border-bottom: var(--rule); }
-    .section-label {
-      font-family: var(--font-mono); font-size: 11px;
-      color: var(--text-faint); letter-spacing: 0.8px;
-      margin-bottom: 8px;
-    }
-    .section-h2 {
-      font-family: var(--font-display); font-weight: 600;
-      font-size: 28px; letter-spacing: -0.5px;
-    }
-    .section-sub {
-      font-size: 14px; line-height: 1.55; color: var(--text-mid);
-      max-width: 540px; margin-top: 10px;
+    .metric:last-child {
+      border-right: 0;
     }
 
-    /* ── HOW IT WORKS ── */
-    .steps-grid {
-      margin-top: 40px;
-      display: grid; grid-template-columns: repeat(3, 1fr);
-      border: var(--rule); border-radius: 4px;
-      overflow: hidden; background: var(--bg-card);
-    }
-    .step { padding: 28px; }
-    .step + .step { border-left: var(--rule); }
-    .step-header {
-      display: flex; align-items: baseline; gap: 10px;
-      margin-bottom: 16px;
-    }
-    .step-num { font-family: var(--font-mono); font-size: 11px; color: var(--accent); }
-    .step-name { font-family: var(--font-display); font-weight: 600; font-size: 20px; }
-    .step-desc { font-size: 13.5px; line-height: 1.55; color: var(--text-mid); }
-    .step-code {
-      margin-top: 18px; padding: 8px 10px;
-      font-family: var(--font-mono); font-size: 11px;
-      background: var(--bg); border: var(--rule);
-      border-radius: 3px; color: var(--text-muted);
+    .metric-value {
+      font-size: clamp(30px, 4.2vw, 46px);
+      font-weight: 620;
+      line-height: 1;
+      letter-spacing: -0.06em;
     }
 
-    /* ── COMPARISON ── */
-    .compare-header-row {
-      display: flex; align-items: baseline;
-      justify-content: space-between; margin-bottom: 24px;
+    .metric-label {
+      margin-top: 9px;
+      color: var(--muted);
+      font-family: var(--mono);
+      font-size: 10px;
+      font-weight: 600;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
     }
-    .compare-date {
-      font-family: var(--font-mono); font-size: 11px;
-      color: var(--text-faint);
+
+    .section {
+      padding: 104px 44px;
+      border-bottom: 1px solid var(--line);
+      background: var(--section-bg, var(--bg));
     }
-    .compare-table {
-      border: var(--rule); border-radius: 4px;
-      overflow: hidden; background: var(--bg-card);
+
+    #product {
+      --section-bg: linear-gradient(180deg, #e4edf6 0%, #f4f8fc 48%, #dbe7f3 100%);
     }
-    .compare-row {
+
+    #pricing {
+      --section-bg: #f6f6f1;
+    }
+
+    #security {
+      --section-bg: linear-gradient(135deg, #d8e5f2 0%, #edf6f2 55%, #e2ebf4 100%);
+    }
+
+    #faq {
+      --section-bg: linear-gradient(180deg, #f6f9fc 0%, #e6eff8 100%);
+    }
+
+    #how-it-works {
+      --section-bg: linear-gradient(135deg, #d7e5f2 0%, #f1f6fb 50%, #e4edf6 100%);
+    }
+
+    #providers {
+      --section-bg: linear-gradient(180deg, #e8f0f8 0%, #f8fbff 55%, #dde9f5 100%);
+    }
+
+    .section-head {
+      display: block;
+      max-width: 760px;
+      margin: 0 auto 42px;
+      text-align: center;
+    }
+
+    .section-kicker {
+      margin: 0 0 12px;
+      color: #6f7f94;
+      font-family: var(--mono);
+      font-size: 12px;
+      font-weight: 700;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+    }
+
+    .section-title {
+      margin: 0;
+      font-size: clamp(32px, 3.7vw, 46px);
+      font-weight: 620;
+      letter-spacing: -0.045em;
+      line-height: 1.06;
+      text-wrap: balance;
+    }
+
+    .section-copy {
+      max-width: 640px;
+      margin: 14px auto 0;
+      color: var(--muted);
+      font-size: 15px;
+      line-height: 1.55;
+      letter-spacing: -0.02em;
+      text-wrap: balance;
+    }
+
+    #providers .section-head {
+      max-width: 920px;
+    }
+
+    #providers .section-title {
+      max-width: 860px;
+      margin-inline: auto;
+      font-size: clamp(28px, 3.35vw, 42px);
+      letter-spacing: -0.038em;
+    }
+
+    .comparison {
+      max-width: 1120px;
+      margin: 0 auto;
+      border: 1px solid var(--line-strong);
+      border-radius: 12px;
+      background: rgba(255, 255, 255, 0.90);
+      box-shadow: 0 18px 52px rgba(15, 23, 42, 0.07);
+      overflow: hidden;
+    }
+
+    .comparison-row {
       display: grid;
-      grid-template-columns: 1.6fr repeat(4, 1fr);
+      grid-template-columns: minmax(230px, 1.55fr) repeat(4, minmax(105px, 1fr));
+      border-bottom: 1px solid var(--line);
     }
-    .compare-row + .compare-row { border-top: var(--rule); }
-    .compare-row.header-row { background: var(--bg); }
-    .compare-row.stripe { background: rgba(0,0,0,0.015); }
-    .compare-cell {
-      padding: 14px 18px;
-    }
-    .compare-cell + .compare-cell { border-left: var(--rule); }
-    .compare-cell-label { font-size: 13.5px; color: #262626; }
-    .compare-col-name {
-      font-family: var(--font-display); font-weight: 600;
-      font-size: 16px; letter-spacing: -0.2px;
-      display: flex; align-items: center; gap: 8px;
-    }
-    .compare-col-mono {
-      font-family: var(--font-mono); font-size: 10.5px;
-      color: var(--text-faint); margin-top: 3px;
-    }
-    .compare-val {
-      font-family: var(--font-mono); font-size: 12.5px;
-      display: flex; align-items: center; gap: 6px;
-    }
-    .compare-yes { color: #16a34a; }
-    .compare-no  { color: var(--text-faint); text-decoration: line-through; }
-    .compare-us-yes { color: var(--accent); }
-    .compare-us-no  { color: var(--text-faint); text-decoration: line-through; }
-    .compare-cap-cell { font-family: var(--font-mono); font-size: 11px; color: var(--text-faint); letter-spacing: 0.8px; text-transform: uppercase; }
-    .compare-us-bg { background: var(--bg); }
 
-    /* ── PROVIDERS ── */
-    .providers-header {
-      display: flex; align-items: baseline;
-      justify-content: space-between; margin-bottom: 24px;
+    .comparison-row:last-child {
+      border-bottom: 0;
     }
-    .providers-request {
-      font-family: var(--font-mono); font-size: 12px;
-      color: var(--accent);
-    }
-    .providers-grid {
-      display: grid; grid-template-columns: repeat(6, 1fr);
-      border: var(--rule); border-radius: 4px;
-      overflow: hidden; background: var(--bg-card);
-    }
-    .provider-cell {
-      padding: 20px 16px;
-      font-family: var(--font-mono); font-size: 12px;
-      display: flex; align-items: center;
-      justify-content: space-between;
-    }
-    .provider-cell:nth-child(n+7) { border-top: var(--rule); }
-    .provider-cell:not(:nth-child(6n+1)) { border-left: var(--rule); }
-    .provider-dot { color: var(--accent); font-size: 10px; }
 
-    /* ── PRICING ── */
+    .comparison-cell {
+      min-width: 0;
+      padding: 18px 20px;
+      border-right: 1px solid var(--line);
+      color: var(--muted);
+      font-size: 13px;
+    }
+
+    .comparison-cell:last-child {
+      border-right: 0;
+    }
+
+    .comparison-head .comparison-cell {
+      color: var(--ink);
+      font-family: var(--mono);
+      font-size: 12px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+    }
+
+    .comparison-feature {
+      color: var(--ink);
+    }
+
+    .dot {
+      display: inline-flex;
+      width: 10px;
+      height: 10px;
+      border-radius: 999px;
+      background: var(--green);
+      vertical-align: middle;
+    }
+
+    .dash {
+      color: var(--faint);
+      font-family: var(--mono);
+    }
+
+    .small-note {
+      color: var(--muted);
+      font-size: 12px;
+      line-height: 1.45;
+    }
+
     .pricing-grid {
-      margin-top: 36px;
-      display: grid; grid-template-columns: repeat(4, 1fr);
-      border: var(--rule); border-radius: 4px;
-      overflow: hidden; background: var(--bg-card);
-    }
-    .pricing-card { padding: 24px; position: relative; }
-    .pricing-card + .pricing-card { border-left: var(--rule); }
-    .pricing-card.featured { background: var(--bg); }
-    .pricing-recommended {
-      position: absolute; top: 12px; right: 12px;
-      font-family: var(--font-mono); font-size: 10px;
-      color: var(--accent); letter-spacing: 0.6px;
-    }
-    .pricing-tier { font-family: var(--font-mono); font-size: 12px; color: var(--text-faint); letter-spacing: 0.4px; }
-    .pricing-price-row { margin-top: 16px; display: flex; align-items: baseline; gap: 6px; }
-    .pricing-price { font-family: var(--font-display); font-size: 32px; font-weight: 600; }
-    .pricing-period { font-size: 12px; color: var(--text-faint); }
-    .pricing-tagline { font-size: 12.5px; color: var(--text-muted); margin-top: 4px; margin-bottom: 20px; }
-    .pricing-details {
-      border-top: var(--rule); padding-top: 14px;
-      font-family: var(--font-mono); font-size: 11.5px;
-      color: var(--text-muted);
-    }
-    .pricing-row { display: flex; justify-content: space-between; padding: 4px 0; }
-    .pricing-row-val { color: var(--text); }
-    .pricing-cta {
-      margin-top: 20px;
-      display: block; text-align: center;
-      padding: 9px 14px; border-radius: 3px;
-      font-family: var(--font-mono); font-size: 11.5px;
-      background: var(--text); color: var(--bg);
-      cursor: pointer; border: var(--rule);
-    }
-    .pricing-cta:hover { background: #333; }
-    .pricing-cta.outline {
-      background: transparent; color: var(--text-muted);
-    }
-    .pricing-cta.outline:hover { background: rgba(0,0,0,0.04); color: var(--text); }
-
-    /* ── FOOTER ── */
-    footer {
-      padding: 48px 40px 24px;
-      background: var(--bg);
-      border-top: var(--rule);
-    }
-    .footer-grid {
       display: grid;
-      grid-template-columns: 1.2fr repeat(4, 1fr);
-      gap: 32px; margin-bottom: 40px;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      align-items: stretch;
+      gap: 0;
+      max-width: 1360px;
+      margin: 0 auto;
+      border: 1px solid #ddd9cf;
+      border-radius: 6px;
+      background: #fbfbf8;
+      overflow: hidden;
+      box-shadow: none;
     }
-    .footer-brand-name {
-      font-family: var(--font-mono); font-size: 14px;
-      font-weight: 600; letter-spacing: 0.5px;
-      margin-bottom: 12px;
-      display: flex; align-items: center; gap: 6px;
+
+    #pricing .section-head {
+      max-width: 1360px;
+      text-align: left;
     }
-    .footer-brand-desc {
-      font-size: 12.5px; line-height: 1.55;
-      color: var(--text-muted); max-width: 260px;
+
+    #pricing .section-kicker {
+      color: #858179;
+      font-weight: 500;
+      letter-spacing: 0.16em;
     }
-    .footer-status {
-      margin-top: 16px;
-      font-family: var(--font-mono); font-size: 11px;
-      color: var(--text-faint);
+
+    #pricing .section-title {
+      max-width: 760px;
+      font-size: clamp(34px, 3.4vw, 48px);
+      letter-spacing: -0.055em;
     }
-    .footer-col-head {
-      font-family: var(--font-mono); font-size: 10.5px;
-      letter-spacing: 0.8px; text-transform: uppercase;
-      color: var(--text-faint); margin-bottom: 14px;
+
+    #pricing .section-copy {
+      display: none;
     }
-    .footer-links { list-style: none; }
-    .footer-links li { margin-bottom: 8px; }
-    .footer-links a {
-      font-family: var(--font-mono); font-size: 12px;
-      color: #262626;
+
+    .price-card {
+      position: relative;
+      display: flex;
+      flex-direction: column;
+      min-width: 0;
+      min-height: 360px;
+      padding: 32px 30px 28px;
+      border: 0;
+      border-right: 1px solid #ddd9cf;
+      border-radius: 0;
+      background: #fbfbf8;
+      box-shadow: none;
     }
-    .footer-links a:hover { color: var(--accent); }
+
+    .price-card:last-child {
+      border-right: 0;
+    }
+
+    .price-card.recommended {
+      background: #f8f7f2;
+    }
+
+    .plan-top {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      min-height: 18px;
+    }
+
+    .recommended-tag {
+      display: inline-flex;
+      align-items: center;
+      gap: 7px;
+      color: var(--orange);
+      font-family: var(--mono);
+      font-size: 11px;
+      letter-spacing: 0.12em;
+    }
+
+    .recommended-tag::before {
+      content: "";
+      width: 6px;
+      height: 6px;
+      border-radius: 999px;
+      background: var(--orange);
+    }
+
+    .plan-label {
+      color: #858179;
+      font-family: var(--mono);
+      font-size: 14px;
+      font-weight: 500;
+      letter-spacing: 0.08em;
+      text-transform: lowercase;
+    }
+
+    .plan-price {
+      display: flex;
+      align-items: baseline;
+      gap: 5px;
+      margin-top: 32px;
+    }
+
+    .plan-price strong {
+      font-size: 45px;
+      font-weight: 620;
+      letter-spacing: -0.055em;
+      line-height: 1;
+    }
+
+    .plan-price span {
+      color: var(--muted);
+      font-size: 14px;
+    }
+
+    .plan-copy {
+      min-height: 24px;
+      margin: 14px 0 28px;
+      color: var(--muted);
+      font-size: 15px;
+      line-height: 1.45;
+    }
+
+    .plan-meter {
+      display: grid;
+      gap: 12px;
+      margin: 0 0 30px;
+      padding-top: 24px;
+      border-top: 1px solid #ddd9cf;
+      font-family: var(--mono);
+      font-size: 13px;
+    }
+
+    .plan-meter-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      min-width: 0;
+    }
+
+    .plan-meter-row span {
+      color: #595650;
+    }
+
+    .plan-meter-row strong {
+      color: var(--ink);
+      font-weight: 500;
+    }
+
+    #pricing .price-card .btn {
+      width: 100%;
+      margin-top: auto;
+      min-height: 40px;
+      border-color: #ddd9cf;
+      border-radius: 3px;
+      background: transparent;
+      color: #3f3d38;
+      font-family: var(--mono);
+      font-size: 13px;
+      font-weight: 500;
+      text-transform: lowercase;
+    }
+
+    #pricing .price-card.recommended .btn {
+      border-color: var(--inverse);
+      background: var(--inverse);
+      color: var(--inverse-text);
+    }
+
+    .security-grid {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 14px;
+      max-width: 1200px;
+      margin: 0 auto;
+    }
+
+    .security-card,
+    .step-card,
+    .provider-card {
+      min-width: 0;
+      border: 1px solid var(--line-strong);
+      border-radius: 12px;
+      background: var(--panel);
+      box-shadow: 0 16px 42px rgba(15, 23, 42, 0.06);
+    }
+
+    .security-card {
+      padding: 24px;
+      text-align: center;
+    }
+
+    .security-card:nth-child(1) {
+      background: #eef6fd;
+    }
+
+    .security-card:nth-child(2) {
+      background: #f5e7d8;
+    }
+
+    .security-card:nth-child(3) {
+      background: #e6f4ef;
+    }
+
+    .security-card:nth-child(4) {
+      background: #eef2f7;
+    }
+
+    .security-code {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-width: 46px;
+      height: 30px;
+      margin-bottom: 20px;
+      padding: 0 10px;
+      border: 1px solid var(--line);
+      border-radius: 999px;
+      color: var(--muted);
+      font-family: var(--mono);
+      font-size: 12px;
+      font-weight: 600;
+    }
+
+    .security-title {
+      margin: 0 0 8px;
+      font-size: 19px;
+      font-weight: 620;
+      letter-spacing: -0.04em;
+    }
+
+    .security-copy {
+      margin: 0;
+      color: var(--muted);
+      font-size: 14px;
+      line-height: 1.5;
+    }
+
+    .faq-list {
+      max-width: 900px;
+      margin: 0 auto;
+      border: 1px solid var(--line-strong);
+      border-radius: 12px;
+      background: rgba(255, 255, 255, 0.92);
+      box-shadow: 0 18px 50px rgba(15, 23, 42, 0.06);
+      overflow: hidden;
+    }
+
+    .faq-item {
+      border-bottom: 1px solid var(--line);
+    }
+
+    .faq-item:last-child {
+      border-bottom: 0;
+    }
+
+    .faq-item summary {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 18px;
+      min-height: 72px;
+      padding: 0 24px;
+      cursor: pointer;
+      list-style: none;
+      font-size: 15px;
+      font-weight: 560;
+      letter-spacing: -0.03em;
+    }
+
+    .faq-item summary::-webkit-details-marker {
+      display: none;
+    }
+
+    .faq-item summary::after {
+      content: "+";
+      flex: 0 0 auto;
+      color: var(--muted);
+      font-family: var(--mono);
+      font-size: 20px;
+    }
+
+    .faq-item[open] summary::after {
+      content: "-";
+    }
+
+    .faq-item p {
+      max-width: 780px;
+      margin: 0;
+      padding: 0 24px 24px;
+      color: var(--muted);
+      font-size: 15px;
+      line-height: 1.65;
+    }
+
+    .steps {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 14px;
+      max-width: 1140px;
+      margin: 0 auto;
+    }
+
+    .step-card {
+      padding: 24px;
+      border-radius: 12px;
+    }
+
+    .step-card:nth-child(1) {
+      background: #f5e7d8;
+    }
+
+    .step-card:nth-child(2) {
+      background: #edf6ff;
+    }
+
+    .step-card:nth-child(3) {
+      background: #e6f4ef;
+    }
+
+    .step-number {
+      color: var(--faint);
+      font-family: var(--mono);
+      font-size: 12px;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+    }
+
+    .step-card h3 {
+      margin: 22px 0 10px;
+      font-size: 24px;
+      font-weight: 620;
+      letter-spacing: -0.06em;
+      line-height: 1.02;
+    }
+
+    .step-card p {
+      margin: 0;
+      color: var(--muted);
+      font-size: 15px;
+      line-height: 1.55;
+    }
+
+    .provider-grid {
+      display: grid;
+      grid-template-columns: repeat(6, minmax(0, 1fr));
+      gap: 10px;
+      max-width: 980px;
+      margin: 0 auto;
+    }
+
+    .provider-card {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      min-height: 70px;
+      padding: 0 16px;
+      color: var(--muted);
+      font-family: var(--mono);
+      font-size: 13px;
+      background: rgba(255, 255, 255, 0.90);
+    }
+
+    .agent-section {
+      display: grid;
+      grid-template-columns: minmax(0, 0.85fr) minmax(380px, 1fr);
+      gap: 46px;
+      align-items: center;
+      background:
+        radial-gradient(circle at 78% 18%, rgba(194, 65, 12, 0.18), transparent 28%),
+        linear-gradient(135deg, #08111d 0%, #102137 52%, #18324d 100%);
+      color: var(--inverse-text);
+      padding-left: max(44px, calc((100% - 1200px) / 2));
+      padding-right: max(44px, calc((100% - 1200px) / 2));
+    }
+
+    .agent-section .section-kicker,
+    .agent-section .section-copy {
+      color: #bdbdbd;
+    }
+
+    .agent-section .section-title {
+      color: var(--inverse-text);
+      font-size: clamp(34px, 4.4vw, 56px);
+    }
+
+    .agent-actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px;
+      margin-top: 28px;
+    }
+
+    .agent-actions .btn {
+      border-color: rgba(255, 255, 255, 0.18);
+      background: rgba(255, 255, 255, 0.08);
+      color: var(--inverse-text);
+    }
+
+    .agent-actions .btn-dark {
+      border-color: var(--inverse-text);
+      background: var(--inverse-text);
+      color: var(--inverse);
+    }
+
+    .code-window {
+      min-width: 0;
+      border: 1px solid rgba(255, 255, 255, 0.14);
+      border-radius: 12px;
+      background: #0c1420;
+      overflow: hidden;
+      box-shadow: 0 28px 90px rgba(0, 0, 0, 0.28);
+    }
+
+    .code-top {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      padding: 16px 20px;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.12);
+      color: #9fb0c4;
+      font-family: var(--mono);
+      font-size: 12px;
+    }
+
+    .code-dots {
+      display: flex;
+      gap: 6px;
+    }
+
+    .code-dots span {
+      width: 9px;
+      height: 9px;
+      border-radius: 999px;
+      background: #314156;
+    }
+
+    .code-window pre {
+      margin: 0;
+      padding: 22px;
+      overflow-x: auto;
+      color: #edf5ff;
+      font-family: var(--mono);
+      font-size: 13px;
+      line-height: 1.7;
+      white-space: pre;
+    }
+
+    .code-comment {
+      color: #8090a4;
+    }
+
+    .code-key {
+      color: #f3c284;
+    }
+
+    .code-value {
+      color: #8fe0c2;
+    }
+
+    .site-footer {
+      padding: 48px 36px 30px;
+      background: linear-gradient(90deg, #dbe7f3 0%, #f4f8fc 52%, #dce8f4 100%);
+    }
+
+    .footer-layout {
+      display: grid;
+      grid-template-columns: minmax(230px, 1.1fr) repeat(5, minmax(130px, 1fr));
+      align-items: start;
+      gap: 34px;
+      color: var(--faint);
+      font-family: var(--mono);
+      font-size: 12px;
+    }
+
+    .footer-brand {
+      display: grid;
+      gap: 16px;
+    }
+
+    .footer-tagline {
+      max-width: 240px;
+      margin: 0;
+      color: var(--muted);
+      font-family: var(--sans);
+      font-size: 14px;
+      line-height: 1.5;
+      letter-spacing: -0.02em;
+    }
+
+    .footer-group {
+      display: grid;
+      gap: 10px;
+    }
+
+    .footer-heading {
+      margin: 0 0 4px;
+      color: var(--ink);
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+    }
+
+    .footer-link {
+      color: var(--muted);
+      font-size: 12px;
+    }
+
     .footer-bottom {
-      border-top: var(--rule); padding-top: 16px;
-      font-family: var(--font-mono); font-size: 11px;
-      color: var(--text-faint);
-      display: flex; justify-content: space-between;
-    }
-    /* ── MOBILE ── */
-    @media (max-width: 768px) {
-      .page { border-left: none; border-right: none; }
-
-      .nav { padding: 12px 16px; }
-      .nav-links { display: none; }
-      .nav-sign-in { display: none; }
-      .nav-cta { display: none; }
-      .mobile-toggle { display: inline-flex; }
-
-      .hero { grid-template-columns: 1fr; }
-      .hero-left { padding: 36px 20px 32px; border-right: none; border-bottom: var(--rule); }
-      .hero-h1 { font-size: 32px; }
-      .hero-right { padding: 20px; }
-
-      section { padding: 44px 20px; }
-
-      .steps-grid { grid-template-columns: 1fr; }
-      .step + .step { border-left: none; border-top: var(--rule); }
-
-      .compare-row { grid-template-columns: 1.4fr repeat(2, 1fr); }
-      .compare-row > *:nth-child(4),
-      .compare-row > *:nth-child(5) { display: none; }
-
-      .providers-grid { grid-template-columns: repeat(3, 1fr); }
-      .provider-cell:nth-child(n+4) { border-top: var(--rule); }
-      .provider-cell:not(:nth-child(3n+1)) { border-left: var(--rule); }
-      .provider-cell:nth-child(n+7) { border-top: var(--rule); }
-
-      .pricing-grid { grid-template-columns: 1fr 1fr; }
-      .pricing-card + .pricing-card { border-left: none; border-top: var(--rule); }
-      .pricing-card:nth-child(2n) { border-left: var(--rule); }
-
-      .footer-grid { grid-template-columns: 1fr 1fr; gap: 24px; }
-      .footer-bottom { flex-direction: column; gap: 6px; }
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 18px;
+      margin-top: 38px;
+      padding-top: 22px;
+      border-top: 1px solid var(--line);
+      color: var(--faint);
+      font-family: var(--mono);
+      font-size: 12px;
     }
 
-    @media (max-width: 480px) {
-      .pricing-grid { grid-template-columns: 1fr; }
-      .pricing-card:nth-child(2n) { border-left: none; }
-      .footer-grid { grid-template-columns: 1fr 1fr; }
-      .compare-row { grid-template-columns: 1fr repeat(2, 1fr); }
+    .footer-bottom-links {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: flex-end;
+      gap: 16px;
     }
+
+    .footer-copy {
+      margin: 0;
+    }
+
+    @media (max-width: 1080px) {
+      .site-nav {
+        padding: 0 24px;
+      }
+
+      .nav-links,
+      .nav-actions {
+        display: none;
+      }
+
+      .mobile-toggle {
+        display: inline-flex;
+      }
+
+      .hero {
+        padding: 70px 24px 76px;
+      }
+
+      .hero-visual {
+        padding: 42px 0 0;
+      }
+
+      .split-map {
+        gap: 36px 34px;
+        padding: 50px 34px 44px;
+      }
+
+      .split-line {
+        width: 220px;
+      }
+
+      .hero-copy,
+      .section,
+      .site-footer {
+        padding-left: 32px;
+        padding-right: 32px;
+      }
+
+      .metric-row,
+      .security-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+
+      .metric:nth-child(2n),
+      .security-card:nth-child(2n) {
+        border-right: 0;
+      }
+
+      .section-head,
+      .agent-section {
+        grid-template-columns: 1fr;
+      }
+
+      .comparison {
+        overflow-x: auto;
+      }
+
+      .comparison-row {
+        min-width: 760px;
+      }
+
+      .pricing-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+
+      .pricing-grid .price-card {
+        border-bottom: 1px solid #ddd9cf;
+      }
+
+      .pricing-grid .price-card:nth-child(2n) {
+        border-right: 0;
+      }
+
+      .pricing-grid .price-card:nth-last-child(-n+2) {
+        border-bottom: 0;
+      }
+
+      .steps {
+        grid-template-columns: 1fr;
+      }
+
+      .provider-grid {
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+      }
+
+      .footer-layout {
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+      }
+
+      .footer-brand {
+        grid-column: 1 / -1;
+      }
+
+      .footer-bottom {
+        align-items: flex-start;
+        flex-direction: column;
+      }
+
+      .footer-bottom-links {
+        justify-content: flex-start;
+      }
+    }
+
+    @media (max-width: 640px) {
+      .page-shell {
+        border-left: 0;
+        border-right: 0;
+      }
+
+      .site-nav {
+        min-height: 58px;
+        padding: 0 16px;
+      }
+
+      .brand-version {
+        display: none;
+      }
+
+      .mobile-menu.open {
+        grid-template-columns: 1fr;
+      }
+
+      .hero {
+        min-height: auto;
+        padding: 54px 16px 58px;
+      }
+
+      .hero-copy {
+        padding: 0;
+      }
+
+      .hero-visual {
+        display: none;
+      }
+
+      .hero h1 {
+        width: min(100%, 344px);
+        max-width: 100%;
+        font-size: 35px;
+        letter-spacing: -0.045em;
+        line-height: 1.02;
+        overflow-wrap: break-word;
+      }
+
+      .hero-subcopy {
+        width: min(100%, 270px);
+        max-width: 100%;
+        font-size: 15px;
+        overflow-wrap: break-word;
+      }
+
+      .hero-actions,
+      .agent-actions {
+        flex-direction: column;
+        align-items: stretch;
+      }
+
+      .hero-actions .btn,
+      .hero-actions .install-card,
+      .agent-actions .btn {
+        width: 100%;
+      }
+
+      .vault-card {
+        border-radius: 16px;
+      }
+
+      .split-map {
+        grid-template-columns: 1fr;
+        grid-template-rows: auto;
+        gap: 14px;
+        padding: 18px;
+      }
+
+      .split-line {
+        display: none;
+      }
+
+      .split-core {
+        grid-column: auto;
+        grid-row: auto;
+        width: 100%;
+      }
+
+      .split-caption {
+        grid-column: auto;
+      }
+
+      .logo-strip,
+      .metric-row,
+      .security-grid,
+      .provider-grid,
+      .footer-layout {
+        grid-template-columns: 1fr;
+      }
+
+      .logo-strip div,
+      .metric {
+        border-right: 0;
+      }
+
+      .metric {
+        min-height: 126px;
+        border-bottom: 1px solid var(--line);
+      }
+
+      .metric:last-child {
+        border-bottom: 0;
+      }
+
+      .section,
+      .site-footer {
+        padding: 62px 20px;
+      }
+
+      .section-head {
+        gap: 18px;
+        margin-bottom: 30px;
+      }
+
+      .section-title {
+        font-size: clamp(30px, 9vw, 42px);
+      }
+
+      #providers .section-title {
+        font-size: clamp(28px, 8.5vw, 38px);
+      }
+
+      .section-copy {
+        font-size: 16px;
+      }
+
+      .comparison-row {
+        min-width: 680px;
+      }
+
+      .pricing-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .pricing-grid .price-card {
+        border-right: 0;
+        border-bottom: 1px solid #ddd9cf;
+      }
+
+      .pricing-grid .price-card:nth-last-child(-n+2) {
+        border-bottom: 1px solid #ddd9cf;
+      }
+
+      .pricing-grid .price-card:last-child {
+        border-bottom: 0;
+      }
+
+      .agent-section {
+        padding-top: 62px;
+        padding-bottom: 62px;
+        padding-left: 20px;
+        padding-right: 20px;
+      }
+
+      .code-window pre {
+        font-size: 12px;
+      }
+
+      .footer-bottom-links {
+        gap: 12px 16px;
+      }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      .split-line {
+        animation: none;
+      }
+    }
+
   </style>
-  <link rel="stylesheet" href="/css/site-theme.css">
-  <!-- Mixpanel -->
-  <script type="text/javascript">
-    (function(e,c){if(!c.__SV){var l,h;window.mixpanel=c;c._i=[];c.init=function(q,r,f){function t(d,a){var g=a.split(".");2==g.length&&(d=d[g[0]],a=g[1]);d[a]=function(){d.push([a].concat(Array.prototype.slice.call(arguments,0)))}}var b=c;"undefined"!==typeof f?b=c[f]=[]:f="mixpanel";b.people=b.people||[];b.toString=function(d){var a="mixpanel";"mixpanel"!==f&&(a+="."+f);d||(a+=" (stub)");return a};b.people.toString=function(){return b.toString(1)+".people (stub)"};l="disable time_event track track_pageview track_links track_forms track_with_groups add_group set_group remove_group register register_once alias unregister identify name_tag set_config reset opt_in_tracking opt_out_tracking has_opted_in_tracking has_opted_out_tracking clear_opt_in_out_tracking start_batch_senders start_session_recording stop_session_recording people.set people.set_once people.unset people.increment people.append people.union people.track_charge people.clear_charges people.delete_user people.remove".split(" ");
-    for(h=0;h<l.length;h++)t(b,l[h]);var n="set set_once union unset remove delete".split(" ");b.get_group=function(){function d(p){a[p]=function(){b.push([g,[p].concat(Array.prototype.slice.call(arguments,0))])}}for(var a={},g=["get_group"].concat(Array.prototype.slice.call(arguments,0)),m=0;m<n.length;m++)d(n[m]);return a};c._i.push([q,r,f])};c.__SV=1.2;var k=e.createElement("script");k.type="text/javascript";k.async=!0;k.src="undefined"!==typeof MIXPANEL_CUSTOM_LIB_URL?MIXPANEL_CUSTOM_LIB_URL:"file:"===e.location.protocol&&"//cdn.mxpnl.com/libs/mixpanel-2-latest.min.js".match(/^\/\//)?"https://cdn.mxpnl.com/libs/mixpanel-2-latest.min.js":"//cdn.mxpnl.com/libs/mixpanel-2-latest.min.js";e=e.getElementsByTagName("script")[0];e.parentNode.insertBefore(k,e)}})(document,window.mixpanel||[]);
-    mixpanel.init('0c509a4ba7934ed67e169f51b6947664', { autocapture: true, record_sessions_percent: 100 });
-  </script>
 </head>
+
 <body>
+  <div class="page-shell" data-i18n-lock>
+    <nav class="site-nav" aria-label="Main navigation">
+      <a class="brand" href="/" aria-label="VaultProof home">
+        <span class="brand-mark">VP</span>
+        <span>VaultProof</span>
+        <span class="brand-version">v1.4.2</span>
+      </a>
 
-<div class="page">
+      <div class="nav-links" aria-label="Primary">
+        <a class="nav-link" href="#product">Product</a>
+        <a class="nav-link" href="/docs">Docs</a>
+        <a class="nav-link" href="/docs#sdk-reference" data-i18n-lock>SDK</a>
+        <a class="nav-link" href="/docs#cli-reference" data-i18n-lock>CLI</a>
+        <a class="nav-link" href="#pricing">Pricing</a>
+      </div>
 
-<!-- NAV -->
-<nav class="nav">
-  <div class="nav-logo">
-    <span class="nav-logo-name">VaultProof</span>
-    <span class="nav-logo-version">v0.4.2</span>
-  </div>
-  <div class="nav-spacer"></div>
-  <div class="nav-links">
-    <a href="/scan">scanner</a>
-    <a href="/docs">docs</a>
-    <a href="/blog">insights</a>
-    <a href="/#pricing">pricing</a>
-  </div>
-  <a href="/app/login" class="nav-sign-in">sign in</a>
-  <a href="/app/login" class="nav-cta">get started</a>
-  <button id="mobileToggle" type="button" class="mobile-toggle" aria-label="Toggle menu" aria-expanded="false">menu</button>
-</nav>
+      <div class="nav-actions">
+        <a class="btn btn-plain" href="/app/login">Sign in</a>
+        <a class="btn btn-dark" href="/app/login">Get a key</a>
+      </div>
 
-<div id="mobileMenu" class="mobile-menu">
-  <a href="/scan">scanner</a>
-  <a href="/docs">docs</a>
-  <a href="/blog">insights</a>
-  <a href="/#pricing">pricing</a>
-  <a href="/app/login">sign in</a>
-  <a href="/app/login">get started</a>
-</div>
+      <button id="mobileToggle" type="button" class="btn mobile-toggle" aria-label="Toggle menu" aria-expanded="false">menu</button>
+    </nav>
 
-<!-- HERO -->
-<section class="hero" style="padding:0; border-bottom: var(--rule);">
-  <!-- left -->
-  <div class="hero-left">
-    <div>
-      <div class="hero-eyebrow">A safer home for your API keys</div>
-      <h1 class="hero-h1">Stop shipping secrets<br>in plain text.</h1>
-      <p class="hero-sub">We find the keys scattered across your repo, split them so no single database holds a whole one, and quietly proxy your API calls. Your SDK doesn't know the difference.</p>
+    <div id="mobileMenu" class="mobile-menu" aria-label="Mobile navigation">
+      <a href="#product">Product</a>
+      <a href="/docs">Docs</a>
+      <a href="/docs#sdk-reference" data-i18n-lock>SDK</a>
+      <a href="/docs#cli-reference" data-i18n-lock>CLI</a>
+      <a href="#pricing">Pricing</a>
+      <a href="/security">Security</a>
+      <a href="/status">Status</a>
+      <a href="/app/login">Get a key</a>
     </div>
-    <div class="hero-cta-group">
-      <div class="hero-cta-cmd" data-copy-command="npx @vaultproof/init">
-        <span class="hero-cta-cmd-prompt">❯</span>
-        <span class="hero-cta-cmd-text">npx @vaultproof/init</span>
-        <span class="hero-cta-cmd-hint">⌘ C</span>
-      </div>
-      <div class="hero-cta-link">
-        <a href="#how-it-works">How it works →</a>
-      </div>
-    </div>
-  </div>
 
-  <!-- right — scanner -->
-  <div class="hero-right">
-    <div class="scanner">
-      <div class="scanner-chrome">
-        <div class="scanner-dots">
-          <div class="scanner-dot"></div>
-          <div class="scanner-dot"></div>
-          <div class="scanner-dot"></div>
-        </div>
-        <span class="scanner-chrome-title">~/scan.log</span>
-        <span class="scanner-chrome-live">● live</span>
-      </div>
-      <div class="scanner-body">
-        <div class="scanner-cmd"><span class="prompt">❯</span> npx @vaultproof/init scan .</div>
-        <div class="scanner-stat">
-          <span style="color:var(--text-faint)">→</span>
-          walking tree <span class="num">1,247</span> files
-          · <span class="num">318,402</span> lines
-          · <span class="acc">812ms</span>
-        </div>
-        <div class="scanner-stat" style="margin-bottom:10px">
-          <span style="color:var(--text-faint)">→</span>
-          <span class="num">9</span> providers matched
-          · <span class="err">8 exposed</span>
-        </div>
+    <main>
+      <section class="hero" id="top">
+        <div class="hero-copy">
+          <h1><span class="hero-title-gradient">Active key protection</span><span class="hero-title-rest">for the age of AI agents.</span></h1>
+          <p class="hero-subcopy">VaultProof splits, encrypts, and proxies your API keys so apps, agents, and MCP tools never handle the raw provider secret.</p>
 
-        <div class="scanner-divider">
-          <div class="scanner-row">
-            <span class="scanner-glyph sev-critical" style="color:#b91c1c">!!</span>
-            <span class="scanner-file">apps/web/.env.production<span class="scanner-line">:4</span></span>
-            <span class="scanner-badge sev-critical">openai</span>
-            <span class="scanner-key">sk-proj-7Yx9qL2v…M3nQpK</span>
-            <span class="scanner-status">unsplit</span>
-          </div>
-          <div class="scanner-row">
-            <span class="scanner-glyph sev-critical" style="color:#b91c1c">!!</span>
-            <span class="scanner-file">apps/web/.env.production<span class="scanner-line">:12</span></span>
-            <span class="scanner-badge sev-critical">stripe</span>
-            <span class="scanner-key">sk_live_51Nx…Hq2P</span>
-            <span class="scanner-status">unsplit</span>
-          </div>
-          <div class="scanner-row">
-            <span class="scanner-glyph sev-critical" style="color:#b91c1c">!!</span>
-            <span class="scanner-file">services/worker/src/client.ts<span class="scanner-line">:8</span></span>
-            <span class="scanner-badge sev-critical">anthropic</span>
-            <span class="scanner-key">sk-ant-api03-kR9…xT4</span>
-            <span class="scanner-status">hardcoded</span>
-          </div>
-          <div class="scanner-row">
-            <span class="scanner-glyph sev-critical" style="color:#b91c1c">!!</span>
-            <span class="scanner-file">.env.local<span class="scanner-line">:2</span></span>
-            <span class="scanner-badge sev-critical">openai</span>
-            <span class="scanner-key">sk-proj-7Yx9qL2v…M3nQpK</span>
-            <span class="scanner-status">duplicate</span>
-          </div>
-          <div class="scanner-row">
-            <span class="scanner-glyph sev-high" style="color:#c2410c">! </span>
-            <span class="scanner-file">README.md<span class="scanner-line">:41</span></span>
-            <span class="scanner-badge sev-high">groq</span>
-            <span class="scanner-key">gsk_LHp8…eM3f</span>
-            <span class="scanner-status">docs</span>
-          </div>
-          <div class="scanner-row">
-            <span class="scanner-glyph sev-high" style="color:#c2410c">! </span>
-            <span class="scanner-file">packages/ai/lib/mistral.ts<span class="scanner-line">:17</span></span>
-            <span class="scanner-badge sev-high">mistral</span>
-            <span class="scanner-key">sk-ant…REDACTED</span>
-            <span class="scanner-status">inline</span>
-          </div>
-          <div class="scanner-row">
-            <span class="scanner-glyph sev-medium" style="color:#a16207">. </span>
-            <span class="scanner-file">scripts/seed.ts<span class="scanner-line">:22</span></span>
-            <span class="scanner-badge sev-medium">replicate</span>
-            <span class="scanner-key">r8_8Hq2P…xM3f</span>
-            <span class="scanner-status">inline</span>
-          </div>
-          <div class="scanner-row">
-            <span class="scanner-glyph sev-critical" style="color:#b91c1c">!!</span>
-            <span class="scanner-file">.git/objects/pack/HEAD~4<span class="scanner-line">:0</span></span>
-            <span class="scanner-badge sev-critical">openai</span>
-            <span class="scanner-key">sk-proj-kZ4p…REDACTED</span>
-            <span class="scanner-status">history</span>
-          </div>
-          <div class="scanner-row">
-            <span class="scanner-glyph sev-high" style="color:#c2410c">! </span>
-            <span class="scanner-file">apps/dashboard/.env<span class="scanner-line">:3</span></span>
-            <span class="scanner-badge sev-high">supabase</span>
-            <span class="scanner-key">eyJhbGciOi…cGciOi</span>
-            <span class="scanner-status">unsplit</span>
-          </div>
-          <div class="scanner-row">
-            <span class="scanner-glyph sev-low" style="color:#475569">- </span>
-            <span class="scanner-file">docs/examples/openai.ts<span class="scanner-line">:5</span></span>
-            <span class="scanner-badge sev-low">openai</span>
-            <span class="scanner-key">sk-proj-demo</span>
-            <span class="scanner-status">allowlisted</span>
+          <div class="hero-actions">
+            <a class="btn btn-dark" href="/app/login">Get started - it is free</a>
+            <button class="install-card" type="button" data-copy-command="npx @vaultproof/init" aria-label="Copy install command">
+              <span class="hero-cta-cmd-prompt">$</span>
+              <span class="hero-cta-cmd-text">npx @vaultproof/init</span>
+            </button>
           </div>
         </div>
 
-        <div class="scanner-tail" style="margin-top:10px; border-top:1px dashed #e5e5de; padding-top:10px">
-          <span class="ok">✓</span> proposed: split <span class="num">7</span> live keys · rewrite <span class="num">4</span> files
+        <div class="hero-visual" aria-label="Split key protection diagram">
+          <div class="vault-card split-map">
+            <span class="split-line split-line-top-left" aria-hidden="true"></span>
+            <span class="split-line split-line-top-right" aria-hidden="true"></span>
+            <span class="split-line split-line-bottom-left" aria-hidden="true"></span>
+            <span class="split-line split-line-bottom-right" aria-hidden="true"></span>
+
+            <div class="split-card">
+              <div class="split-card-share">Share 1 - browser</div>
+              <div class="split-card-title">9c bd ba aa</div>
+              <div class="split-code">
+                <div class="hex-line"><span>d8</span><span>c9</span><span>86</span><span>17</span></div>
+                <div class="hex-line hex-muted"><span>0f</span><span>44</span><span>9b</span><span>...</span></div>
+              </div>
+              <div class="split-card-note">Held only by your session.</div>
+            </div>
+
+            <div class="split-core">
+              <div class="split-core-label">Your API key</div>
+              <div class="split-core-secret">sk-proj-736b2d70726f6a5f...</div>
+              <div class="split-core-note">Proxy assembles for the call, then clears it.</div>
+            </div>
+
+            <div class="split-card">
+              <div class="split-card-share">Share 2 - vault</div>
+              <div class="split-card-title">a9 c6 f7 e4</div>
+              <div class="split-code">
+                <div class="hex-line"><span>15</span><span>c2</span><span>23</span><span>2d</span></div>
+                <div class="hex-line hex-muted"><span>encrypted</span><span>...</span></div>
+              </div>
+              <div class="split-card-note">Stored encrypted and policy gated.</div>
+            </div>
+
+            <div class="split-card">
+              <div class="split-card-share">Share 1 alone</div>
+              <div class="split-card-title">useless.</div>
+              <div class="split-card-note">It cannot call a provider or reconstruct a secret by itself.</div>
+            </div>
+
+            <div class="split-card">
+              <div class="split-card-share">Share 2 alone</div>
+              <div class="split-card-title">useless.</div>
+              <div class="split-card-note">It is insufficient without the caller share and an allowed proxy request.</div>
+            </div>
+
+            <div class="split-caption">Shamir (2,2) over GF(256) - client-side split</div>
+          </div>
         </div>
-        <div style="color:var(--text-faint)">
-          <span style="color:var(--accent)">❯</span>
-          <span class="cursor"></span>
+      </section>
+
+      <section class="logo-strip" aria-label="Supported provider examples">
+        <div>Built for teams using</div>
+        <div>OpenAI</div>
+        <div>Anthropic</div>
+        <div>Google AI</div>
+        <div>Notion</div>
+        <div>Runway</div>
+        <div>Vercel</div>
+        <div>Arc</div>
+      </section>
+
+      <section class="metric-row" aria-label="Product metrics">
+        <div class="metric">
+          <div class="metric-value">99.9%</div>
+          <div class="metric-label">proxy uptime target</div>
         </div>
-      </div>
-    </div>
-  </div>
-</section>
-
-<!-- HOW IT WORKS -->
-<section id="how-it-works">
-  <div class="section-label">01 / FLOW</div>
-  <h2 class="section-h2">Three moves. No key ever lives whole.</h2>
-  <div class="steps-grid">
-    <div class="step">
-      <div class="step-header">
-        <span class="step-num">01</span>
-        <span class="step-name">scan</span>
-      </div>
-      <p class="step-desc">The init CLI walks your repo, parses .env files, and matches supported provider patterns. Git history gets the last 10 commits.</p>
-      <div class="step-code">npx @vaultproof/init scan .</div>
-    </div>
-    <div class="step">
-      <div class="step-header">
-        <span class="step-num">02</span>
-        <span class="step-name">split</span>
-      </div>
-      <p class="step-desc">Each live key is split locally into two encrypted shares. Share 1 is sealed at rest on our servers. Share 2 is bound to your developer key.</p>
-      <div class="step-code">key = share_1 ⊕ share_2</div>
-    </div>
-    <div class="step">
-      <div class="step-header">
-        <span class="step-num">03</span>
-        <span class="step-name">proxy</span>
-      </div>
-      <p class="step-desc">Your SDK keeps its existing interface. Requests hit api.vaultproof.dev, the worker reconstructs the key in RAM for ≈100ms, forwards, zeroes.</p>
-      <div class="step-code">OPENAI_BASE_URL=vaultproof.dev</div>
-    </div>
-  </div>
-</section>
-
-<!-- COMPARISON -->
-<section id="compare">
-  <div class="compare-header-row">
-    <div>
-      <div class="section-label">02 / COMPARISON</div>
-      <h2 class="section-h2">How we differ from the usual suspects.</h2>
-      <p class="section-sub">Other tools secure where the key lives. We change the fact that a whole key ever has to live anywhere.</p>
-    </div>
-    <span class="compare-date">last updated · 2026-04-18</span>
-  </div>
-
-  <div class="compare-table">
-    <!-- header -->
-    <div class="compare-row header-row">
-      <div class="compare-cell compare-cap-cell">capability</div>
-      <div class="compare-cell compare-us-bg">
-        <div class="compare-col-name" style="color:var(--accent)">
-          <span style="font-size:9px">●</span> VaultProof
+        <div class="metric">
+          <div class="metric-value">2</div>
+          <div class="metric-label">shares required</div>
         </div>
-        <div class="compare-col-mono">vp-proj-…</div>
-      </div>
-      <div class="compare-cell">
-        <div class="compare-col-name">Doppler</div>
-        <div class="compare-col-mono">env sync</div>
-      </div>
-      <div class="compare-cell">
-        <div class="compare-col-name">Infisical</div>
-        <div class="compare-col-mono">vault + api</div>
-      </div>
-      <div class="compare-cell">
-        <div class="compare-col-name">.env</div>
-        <div class="compare-col-mono">plain file</div>
-      </div>
-    </div>
+        <div class="metric">
+          <div class="metric-value">SSE</div>
+          <div class="metric-label">streaming ready</div>
+        </div>
+        <div class="metric">
+          <div class="metric-value">0</div>
+          <div class="metric-label">plaintext keys at rest</div>
+        </div>
+      </section>
 
-    <!-- rows -->
-    <div class="compare-row">
-      <div class="compare-cell compare-cell-label">Key never exists whole on disk</div>
-      <div class="compare-cell compare-us-bg"><span class="compare-val compare-us-yes"><span>✓</span> yes</span></div>
-      <div class="compare-cell"><span class="compare-val compare-no"><span>✕</span> no</span></div>
-      <div class="compare-cell"><span class="compare-val compare-no"><span>✕</span> no</span></div>
-      <div class="compare-cell"><span class="compare-val compare-no"><span>✕</span> no</span></div>
-    </div>
-    <div class="compare-row stripe">
-      <div class="compare-cell compare-cell-label">Client-side encrypted split</div>
-      <div class="compare-cell compare-us-bg"><span class="compare-val compare-us-yes"><span>✓</span> 2-of-2</span></div>
-      <div class="compare-cell"><span class="compare-val" style="color:var(--text-faint);opacity:0.5">—</span></div>
-      <div class="compare-cell"><span class="compare-val" style="color:var(--text-faint);opacity:0.5">—</span></div>
-      <div class="compare-cell"><span class="compare-val" style="color:var(--text-faint);opacity:0.5">—</span></div>
-    </div>
-    <div class="compare-row">
-      <div class="compare-cell compare-cell-label">Transparent provider proxy</div>
-      <div class="compare-cell compare-us-bg"><span class="compare-val compare-us-yes"><span>✓</span> yes</span></div>
-      <div class="compare-cell"><span class="compare-val compare-no"><span>✕</span> no</span></div>
-      <div class="compare-cell"><span class="compare-val compare-no"><span>✕</span> no</span></div>
-      <div class="compare-cell"><span class="compare-val compare-no"><span>✕</span> no</span></div>
-    </div>
-    <div class="compare-row stripe">
-      <div class="compare-cell compare-cell-label">Works with unmodified SDKs</div>
-      <div class="compare-cell compare-us-bg"><span class="compare-val compare-us-yes"><span>✓</span> yes</span></div>
-      <div class="compare-cell"><span class="compare-val compare-yes"><span>✓</span> yes</span></div>
-      <div class="compare-cell"><span class="compare-val compare-yes"><span>✓</span> yes</span></div>
-      <div class="compare-cell"><span class="compare-val compare-yes"><span>✓</span> yes</span></div>
-    </div>
-    <div class="compare-row">
-      <div class="compare-cell compare-cell-label">Exposed-key scanner (broad provider coverage)</div>
-      <div class="compare-cell compare-us-bg"><span class="compare-val compare-us-yes">built-in</span></div>
-      <div class="compare-cell"><span class="compare-val" style="color:var(--text-muted)">add-on</span></div>
-      <div class="compare-cell"><span class="compare-val" style="color:var(--text-muted)">partial</span></div>
-      <div class="compare-cell"><span class="compare-val compare-no"><span>✕</span> no</span></div>
-    </div>
-    <div class="compare-row stripe">
-      <div class="compare-cell compare-cell-label">Origin-locked tokens</div>
-      <div class="compare-cell compare-us-bg"><span class="compare-val compare-us-yes"><span>✓</span> yes</span></div>
-      <div class="compare-cell"><span class="compare-val compare-no"><span>✕</span> no</span></div>
-      <div class="compare-cell"><span class="compare-val compare-no"><span>✕</span> no</span></div>
-      <div class="compare-cell"><span class="compare-val compare-no"><span>✕</span> no</span></div>
-    </div>
-    <div class="compare-row">
-      <div class="compare-cell compare-cell-label">Zero plaintext at rest (single store)</div>
-      <div class="compare-cell compare-us-bg"><span class="compare-val compare-us-yes"><span>✓</span> yes</span></div>
-      <div class="compare-cell"><span class="compare-val compare-no"><span>✕</span> no</span></div>
-      <div class="compare-cell"><span class="compare-val compare-no"><span>✕</span> no</span></div>
-      <div class="compare-cell"><span class="compare-val compare-no"><span>✕</span> no</span></div>
-    </div>
-    <div class="compare-row stripe">
-      <div class="compare-cell compare-cell-label">Edge latency (p50)</div>
-      <div class="compare-cell compare-us-bg"><span class="compare-val compare-us-yes">41ms</span></div>
-      <div class="compare-cell"><span class="compare-val" style="color:var(--text-faint);opacity:0.5">—</span></div>
-      <div class="compare-cell"><span class="compare-val" style="color:var(--text-faint);opacity:0.5">—</span></div>
-      <div class="compare-cell"><span class="compare-val" style="color:var(--text-faint);opacity:0.5">—</span></div>
-    </div>
-    <div class="compare-row">
-      <div class="compare-cell compare-cell-label">Free tier</div>
-      <div class="compare-cell compare-us-bg"><span class="compare-val compare-us-yes">10k/mo</span></div>
-      <div class="compare-cell"><span class="compare-val compare-yes"><span>✓</span> yes</span></div>
-      <div class="compare-cell"><span class="compare-val compare-yes"><span>✓</span> yes</span></div>
-      <div class="compare-cell"><span class="compare-val" style="color:var(--text-muted)">∞</span></div>
-    </div>
-    <div class="compare-row stripe" style="border-bottom:none">
-      <div class="compare-cell compare-cell-label">Open source core</div>
-      <div class="compare-cell compare-us-bg"><span class="compare-val compare-us-yes"><span>✓</span> yes</span></div>
-      <div class="compare-cell"><span class="compare-val compare-no"><span>✕</span> no</span></div>
-      <div class="compare-cell"><span class="compare-val compare-yes"><span>✓</span> yes</span></div>
-      <div class="compare-cell"><span class="compare-val compare-yes"><span>✓</span> yes</span></div>
-    </div>
-  </div>
-</section>
+      <section class="section" id="product">
+        <div class="section-head">
+          <div>
+            <p class="section-kicker">VS THE FIELD</p>
+            <h2 class="section-title">One column of dots, for a reason.</h2>
+          </div>
+          <p class="section-copy">VaultProof is for teams that need API keys to be usable without being handed directly to apps, build logs, agents, or context windows.</p>
+        </div>
 
-<!-- PROVIDERS -->
-<section id="providers" style="padding: 56px 40px;">
-  <div class="providers-header">
-    <div>
-      <div class="section-label">03 / PROVIDERS</div>
-      <h2 class="section-h2" style="font-size:22px; letter-spacing:-0.3px">250 provider signatures · custom APIs · NetOps env secrets</h2>
-    </div>
-    <a href="mailto:hello@vaultproof.dev" class="providers-request">+ request a provider →</a>
-  </div>
-  <div class="providers-grid">
-    <div class="provider-cell">openai <span class="provider-dot">●</span></div>
-    <div class="provider-cell">azure-openai <span class="provider-dot">●</span></div>
-    <div class="provider-cell">anthropic <span class="provider-dot">●</span></div>
-    <div class="provider-cell">stripe <span class="provider-dot">●</span></div>
-    <div class="provider-cell">google <span class="provider-dot">●</span></div>
-    <div class="provider-cell">mistral <span class="provider-dot">●</span></div>
-    <div class="provider-cell">groq <span class="provider-dot">●</span></div>
-    <div class="provider-cell">together <span class="provider-dot">●</span></div>
-    <div class="provider-cell">perplexity <span class="provider-dot">●</span></div>
-    <div class="provider-cell">deepseek <span class="provider-dot">●</span></div>
-    <div class="provider-cell">digitalocean <span class="provider-dot">●</span></div>
-    <div class="provider-cell">netlify <span class="provider-dot">●</span></div>
-    <div class="provider-cell">render <span class="provider-dot">●</span></div>
-    <div class="provider-cell">heroku <span class="provider-dot">●</span></div>
-    <div class="provider-cell">fastly <span class="provider-dot">●</span></div>
-    <div class="provider-cell">deepl <span class="provider-dot">●</span></div>
-    <div class="provider-cell">deepl-pro <span class="provider-dot">●</span></div>
-    <div class="provider-cell">cohere <span class="provider-dot">●</span></div>
-    <div class="provider-cell">replicate <span class="provider-dot">●</span></div>
-    <div class="provider-cell">fireworks <span class="provider-dot">●</span></div>
-    <div class="provider-cell">minimax <span class="provider-dot">●</span></div>
-    <div class="provider-cell">voyage <span class="provider-dot">●</span></div>
-    <div class="provider-cell">jina <span class="provider-dot">●</span></div>
-    <div class="provider-cell">ai21 <span class="provider-dot">●</span></div>
-    <div class="provider-cell">assemblyai <span class="provider-dot">●</span></div>
-    <div class="provider-cell">gitlab <span class="provider-dot">●</span></div>
-    <div class="provider-cell">twilio <span class="provider-dot">●</span></div>
-    <div class="provider-cell">jira <span class="provider-dot">●</span></div>
-    <div class="provider-cell">zendesk <span class="provider-dot">●</span></div>
-    <div class="provider-cell">freshdesk <span class="provider-dot">●</span></div>
-    <div class="provider-cell">chargebee <span class="provider-dot">●</span></div>
-    <div class="provider-cell">adyen <span class="provider-dot">●</span></div>
-    <div class="provider-cell">terraform-cloud <span class="provider-dot">●</span></div>
-    <div class="provider-cell">pulumi <span class="provider-dot">●</span></div>
-    <div class="provider-cell">npm-registry <span class="provider-dot">●</span></div>
-    <div class="provider-cell">qdrant <span class="provider-dot">●</span></div>
-    <div class="provider-cell">meilisearch <span class="provider-dot">●</span></div>
-    <div class="provider-cell">typesense <span class="provider-dot">●</span></div>
-    <div class="provider-cell">elasticsearch <span class="provider-dot">●</span></div>
-    <div class="provider-cell">turso <span class="provider-dot">●</span></div>
-    <div class="provider-cell">railway <span class="provider-dot">●</span></div>
-    <div class="provider-cell">fly <span class="provider-dot">●</span></div>
-    <div class="provider-cell">circleci <span class="provider-dot">●</span></div>
-    <div class="provider-cell">buildkite <span class="provider-dot">●</span></div>
-    <div class="provider-cell">semgrep <span class="provider-dot">●</span></div>
-    <div class="provider-cell">sonarcloud <span class="provider-dot">●</span></div>
-    <div class="provider-cell">betterstack <span class="provider-dot">●</span></div>
-    <div class="provider-cell">logsnag <span class="provider-dot">●</span></div>
-    <div class="provider-cell">raygun <span class="provider-dot">●</span></div>
-    <div class="provider-cell">doppler <span class="provider-dot">●</span></div>
-    <div class="provider-cell">segment <span class="provider-dot">●</span></div>
-    <div class="provider-cell">plausible <span class="provider-dot">●</span></div>
-    <div class="provider-cell">webflow <span class="provider-dot">●</span></div>
-    <div class="provider-cell">svix <span class="provider-dot">●</span></div>
-    <div class="provider-cell">knock <span class="provider-dot">●</span></div>
-    <div class="provider-cell">hume <span class="provider-dot">●</span></div>
-    <div class="provider-cell">runpod <span class="provider-dot">●</span></div>
-    <div class="provider-cell">browserbase <span class="provider-dot">●</span></div>
-    <div class="provider-cell">paystack <span class="provider-dot">●</span></div>
-    <div class="provider-cell">lemonsqueezy <span class="provider-dot">●</span></div>
-    <div class="provider-cell">okta <span class="provider-dot">●</span></div>
-    <div class="provider-cell">stytch <span class="provider-dot">●</span></div>
-    <div class="provider-cell">figma <span class="provider-dot">●</span></div>
-    <div class="provider-cell">asana <span class="provider-dot">●</span></div>
-    <div class="provider-cell">clickup <span class="provider-dot">●</span></div>
-    <div class="provider-cell">monday <span class="provider-dot">●</span></div>
-    <div class="provider-cell">todoist <span class="provider-dot">●</span></div>
-    <div class="provider-cell">coda <span class="provider-dot">●</span></div>
-    <div class="provider-cell">shortcut <span class="provider-dot">●</span></div>
-    <div class="provider-cell">activecampaign <span class="provider-dot">●</span></div>
-    <div class="provider-cell">klaviyo <span class="provider-dot">●</span></div>
-    <div class="provider-cell">iterable <span class="provider-dot">●</span></div>
-    <div class="provider-cell">braze <span class="provider-dot">●</span></div>
-    <div class="provider-cell">onesignal <span class="provider-dot">●</span></div>
-    <div class="provider-cell">novu <span class="provider-dot">●</span></div>
-    <div class="provider-cell">opsgenie <span class="provider-dot">●</span></div>
-    <div class="provider-cell">statuspage <span class="provider-dot">●</span></div>
-    <div class="provider-cell">telnyx <span class="provider-dot">●</span></div>
-    <div class="provider-cell">vonage <span class="provider-dot">●</span></div>
-    <div class="provider-cell">messagebird <span class="provider-dot">●</span></div>
-    <div class="provider-cell">plivo <span class="provider-dot">●</span></div>
-    <div class="provider-cell">directus <span class="provider-dot">●</span></div>
-    <div class="provider-cell">strapi <span class="provider-dot">●</span></div>
-    <div class="provider-cell">hygraph <span class="provider-dot">●</span></div>
-    <div class="provider-cell">datocms <span class="provider-dot">●</span></div>
-    <div class="provider-cell">contentstack <span class="provider-dot">●</span></div>
-    <div class="provider-cell">storyblok <span class="provider-dot">●</span></div>
-    <div class="provider-cell">hashicorp-vault <span class="provider-dot">●</span></div>
-    <div class="provider-cell">1password-connect <span class="provider-dot">●</span></div>
-    <div class="provider-cell">linode <span class="provider-dot">●</span></div>
-    <div class="provider-cell">vultr <span class="provider-dot">●</span></div>
-    <div class="provider-cell">hetzner <span class="provider-dot">●</span></div>
-    <div class="provider-cell">scaleway <span class="provider-dot">●</span></div>
-    <div class="provider-cell">brave-search <span class="provider-dot">●</span></div>
-    <div class="provider-cell">apify <span class="provider-dot">●</span></div>
-    <div class="provider-cell">flagsmith <span class="provider-dot">●</span></div>
-    <div class="provider-cell">splitio <span class="provider-dot">●</span></div>
-    <div class="provider-cell">fal-ai <span class="provider-dot">●</span></div>
-    <div class="provider-cell">serper <span class="provider-dot">●</span></div>
-    <div class="provider-cell">make <span class="provider-dot">●</span></div>
-    <div class="provider-cell">n8n <span class="provider-dot">●</span></div>
-    <div class="provider-cell">axiom <span class="provider-dot">●</span></div>
-    <div class="provider-cell">influxdb <span class="provider-dot">●</span></div>
-    <div class="provider-cell">rollbar <span class="provider-dot">●</span></div>
-    <div class="provider-cell">bugsnag <span class="provider-dot">●</span></div>
-    <div class="provider-cell">codecov <span class="provider-dot">●</span></div>
-    <div class="provider-cell">browserstack <span class="provider-dot">●</span></div>
-    <div class="provider-cell">auth0 <span class="provider-dot">●</span></div>
-    <div class="provider-cell">fusionauth <span class="provider-dot">●</span></div>
-    <div class="provider-cell">aiven <span class="provider-dot">●</span></div>
-    <div class="provider-cell">cockroachdb <span class="provider-dot">●</span></div>
-    <div class="provider-cell">datastax-astra <span class="provider-dot">●</span></div>
-    <div class="provider-cell">redis-cloud <span class="provider-dot">●</span></div>
-    <div class="provider-cell">clickhouse <span class="provider-dot">●</span></div>
-    <div class="provider-cell">razorpay <span class="provider-dot">●</span></div>
-    <div class="provider-cell">mollie <span class="provider-dot">●</span></div>
-    <div class="provider-cell">gocardless <span class="provider-dot">●</span></div>
-    <div class="provider-cell">mercadopago <span class="provider-dot">●</span></div>
-    <div class="provider-cell">wise <span class="provider-dot">●</span></div>
-    <div class="provider-cell">shippo <span class="provider-dot">●</span></div>
-    <div class="provider-cell">easypost <span class="provider-dot">●</span></div>
-    <div class="provider-cell">shipengine <span class="provider-dot">●</span></div>
-    <div class="provider-cell">front <span class="provider-dot">●</span></div>
-    <div class="provider-cell">helpscout <span class="provider-dot">●</span></div>
-    <div class="provider-cell">calendly <span class="provider-dot">●</span></div>
-    <div class="provider-cell">typeform <span class="provider-dot">●</span></div>
-    <div class="provider-cell">productboard <span class="provider-dot">●</span></div>
-    <div class="provider-cell">dropbox <span class="provider-dot">●</span></div>
-    <div class="provider-cell">box <span class="provider-dot">●</span></div>
-    <div class="provider-cell">pinata <span class="provider-dot">●</span></div>
-    <div class="provider-cell">deepinfra <span class="provider-dot">●</span></div>
-    <div class="provider-cell">baseten <span class="provider-dot">●</span></div>
-    <div class="provider-cell">cartesia <span class="provider-dot">●</span></div>
-    <div class="provider-cell">unstructured <span class="provider-dot">●</span></div>
-    <div class="provider-cell">luma-ai <span class="provider-dot">●</span></div>
-    <div class="provider-cell">portkey <span class="provider-dot">●</span></div>
-    <div class="provider-cell">scale <span class="provider-dot">●</span></div>
-    <div class="provider-cell">braintrust <span class="provider-dot">●</span></div>
-    <div class="provider-cell">edenai <span class="provider-dot">●</span></div>
-    <div class="provider-cell">virustotal <span class="provider-dot">●</span></div>
-    <div class="provider-cell">ipinfo <span class="provider-dot">●</span></div>
-    <div class="provider-cell">apollo <span class="provider-dot">●</span></div>
-    <div class="provider-cell">buttondown <span class="provider-dot">●</span></div>
-    <div class="provider-cell">close <span class="provider-dot">●</span></div>
-    <div class="provider-cell">greenhouse <span class="provider-dot">●</span></div>
-    <div class="provider-cell">xendit <span class="provider-dot">●</span></div>
-    <div class="provider-cell">midtrans <span class="provider-dot">●</span></div>
-    <div class="provider-cell">coinbase-commerce <span class="provider-dot">●</span></div>
-    <div class="provider-cell">lokalise <span class="provider-dot">●</span></div>
-    <div class="provider-cell">crowdin <span class="provider-dot">●</span></div>
-    <div class="provider-cell">sendbird <span class="provider-dot">●</span></div>
-    <div class="provider-cell">mux <span class="provider-dot">●</span></div>
-    <div class="provider-cell">bunny <span class="provider-dot">●</span></div>
-    <div class="provider-cell">prerender <span class="provider-dot">●</span></div>
-    <div class="provider-cell">imagekit <span class="provider-dot">●</span></div>
-    <div class="provider-cell">sambanova <span class="provider-dot">●</span></div>
-    <div class="provider-cell">nvidia-nim <span class="provider-dot">●</span></div>
-    <div class="provider-cell">friendli <span class="provider-dot">●</span></div>
-    <div class="provider-cell">hyperbolic <span class="provider-dot">●</span></div>
-    <div class="provider-cell">vapi <span class="provider-dot">●</span></div>
-    <div class="provider-cell">retell <span class="provider-dot">●</span></div>
-    <div class="provider-cell">rev-ai <span class="provider-dot">●</span></div>
-    <div class="provider-cell">speechmatics <span class="provider-dot">●</span></div>
-    <div class="provider-cell">gladia <span class="provider-dot">●</span></div>
-    <div class="provider-cell">soniox <span class="provider-dot">●</span></div>
-    <div class="provider-cell">resemble-ai <span class="provider-dot">●</span></div>
-    <div class="provider-cell">infobip <span class="provider-dot">●</span></div>
-    <div class="provider-cell">mailchimp <span class="provider-dot">●</span></div>
-    <div class="provider-cell">fauna <span class="provider-dot">●</span></div>
-    <div class="provider-cell">zilliz <span class="provider-dot">●</span></div>
-    <div class="provider-cell">pipedream <span class="provider-dot">●</span></div>
-    <div class="provider-cell">attio <span class="provider-dot">●</span></div>
-    <div class="provider-cell">recurly <span class="provider-dot">●</span></div>
-    <div class="provider-cell">phrase <span class="provider-dot">●</span></div>
-    <div class="provider-cell">transifex <span class="provider-dot">●</span></div>
-    <div class="provider-cell">revenuecat <span class="provider-dot">●</span></div>
-    <div class="provider-cell">qovery <span class="provider-dot">●</span></div>
-    <div class="provider-cell">northflank <span class="provider-dot">●</span></div>
-    <div class="provider-cell">koyeb <span class="provider-dot">●</span></div>
-    <div class="provider-cell">deno-deploy <span class="provider-dot">●</span></div>
-    <div class="provider-cell">snyk <span class="provider-dot">●</span></div>
-    <div class="provider-cell">grafana <span class="provider-dot">●</span></div>
-    <div class="provider-cell">honeycomb <span class="provider-dot">●</span></div>
-    <div class="provider-cell">pagerduty <span class="provider-dot">●</span></div>
-    <div class="provider-cell">launchdarkly <span class="provider-dot">●</span></div>
-    <div class="provider-cell">weaviate <span class="provider-dot">●</span></div>
-  </div>
-</section>
+        <div class="comparison" role="table" aria-label="VaultProof comparison">
+          <div class="comparison-row comparison-head" role="row">
+            <div class="comparison-cell" role="columnheader">Capability</div>
+            <div class="comparison-cell" role="columnheader">VaultProof</div>
+            <div class="comparison-cell" role="columnheader">Doppler</div>
+            <div class="comparison-cell" role="columnheader">HCP Vault</div>
+            <div class="comparison-cell" role="columnheader">1Password</div>
+          </div>
+          <div class="comparison-row" role="row">
+            <div class="comparison-cell comparison-feature" role="cell">Key never sits whole in app config</div>
+            <div class="comparison-cell" role="cell"><span class="dot" aria-label="Included"></span></div>
+            <div class="comparison-cell dash" role="cell">--</div>
+            <div class="comparison-cell dash" role="cell">--</div>
+            <div class="comparison-cell dash" role="cell">--</div>
+          </div>
+          <div class="comparison-row" role="row">
+            <div class="comparison-cell comparison-feature" role="cell">Split-key storage before upload</div>
+            <div class="comparison-cell" role="cell"><span class="dot" aria-label="Included"></span></div>
+            <div class="comparison-cell dash" role="cell">--</div>
+            <div class="comparison-cell dash" role="cell">--</div>
+            <div class="comparison-cell dash" role="cell">--</div>
+          </div>
+          <div class="comparison-row" role="row">
+            <div class="comparison-cell comparison-feature" role="cell">Proxy URL for AI agents</div>
+            <div class="comparison-cell" role="cell"><span class="dot" aria-label="Included"></span></div>
+            <div class="comparison-cell dash" role="cell">--</div>
+            <div class="comparison-cell dash" role="cell">--</div>
+            <div class="comparison-cell dash" role="cell">--</div>
+          </div>
+          <div class="comparison-row" role="row">
+            <div class="comparison-cell comparison-feature" role="cell">MCP authentication route</div>
+            <div class="comparison-cell" role="cell"><span class="dot" aria-label="Included"></span></div>
+            <div class="comparison-cell dash" role="cell">--</div>
+            <div class="comparison-cell dash" role="cell">--</div>
+            <div class="comparison-cell dash" role="cell">--</div>
+          </div>
+          <div class="comparison-row" role="row">
+            <div class="comparison-cell comparison-feature" role="cell">Per-call audit log</div>
+            <div class="comparison-cell" role="cell"><span class="dot" aria-label="Included"></span></div>
+            <div class="comparison-cell" role="cell"><span class="dot" aria-label="Available"></span></div>
+            <div class="comparison-cell" role="cell"><span class="dot" aria-label="Available"></span></div>
+            <div class="comparison-cell dash" role="cell">--</div>
+          </div>
+          <div class="comparison-row" role="row">
+            <div class="comparison-cell comparison-feature" role="cell">Dedicated enterprise runtime</div>
+            <div class="comparison-cell small-note" role="cell">Enterprise</div>
+            <div class="comparison-cell dash" role="cell">--</div>
+            <div class="comparison-cell small-note" role="cell">Available</div>
+            <div class="comparison-cell dash" role="cell">--</div>
+          </div>
+        </div>
+      </section>
 
-<!-- PRICING -->
-<section id="pricing">
-  <div class="section-label">04 / PRICING</div>
-  <h2 class="section-h2">Scan is free. Proxy is metered.</h2>
-  <div class="pricing-grid">
-    <!-- Free -->
-    <div class="pricing-card">
-      <div class="pricing-tier">free</div>
-      <div class="pricing-price-row">
-        <span class="pricing-price">$0</span>
-        <span class="pricing-period">/mo</span>
-      </div>
-      <div class="pricing-tagline">Scan + try the proxy</div>
-      <div class="pricing-details">
-        <div class="pricing-row"><span>calls/mo</span><span class="pricing-row-val">10,000</span></div>
-        <div class="pricing-row"><span>key slots</span><span class="pricing-row-val">3</span></div>
-        <div class="pricing-row"><span>audit log</span><span class="pricing-row-val">7d</span></div>
-      </div>
-      <a href="/app/login" class="pricing-cta outline">get started →</a>
-    </div>
-    <!-- Starter -->
-    <div class="pricing-card">
-      <div class="pricing-tier">starter</div>
-      <div class="pricing-price-row">
-        <span class="pricing-price">$5</span>
-        <span class="pricing-period">/mo</span>
-      </div>
-      <div class="pricing-tagline">Side projects</div>
-      <div class="pricing-details">
-        <div class="pricing-row"><span>calls/mo</span><span class="pricing-row-val">50,000</span></div>
-        <div class="pricing-row"><span>key slots</span><span class="pricing-row-val">10</span></div>
-        <div class="pricing-row"><span>audit log</span><span class="pricing-row-val">30d</span></div>
-      </div>
-      <a href="/app/login" class="pricing-cta outline">start starter →</a>
-    </div>
-    <!-- Pro -->
-    <div class="pricing-card featured">
-      <div class="pricing-recommended">● recommended</div>
-      <div class="pricing-tier">pro</div>
-      <div class="pricing-price-row">
-        <span class="pricing-price">$20</span>
-        <span class="pricing-period">/mo</span>
-      </div>
-      <div class="pricing-tagline">Small teams</div>
-      <div class="pricing-details">
-        <div class="pricing-row"><span>calls/mo</span><span class="pricing-row-val">500,000</span></div>
-        <div class="pricing-row"><span>key slots</span><span class="pricing-row-val">50</span></div>
-        <div class="pricing-row"><span>audit log</span><span class="pricing-row-val">1y</span></div>
-      </div>
-      <a href="/app/login" class="pricing-cta">start pro →</a>
-    </div>
-    <!-- Enterprise -->
-    <div class="pricing-card">
-      <div class="pricing-tier">enterprise</div>
-      <div class="pricing-price-row">
-        <span class="pricing-price">talk</span>
-      </div>
-      <div class="pricing-tagline">Custom SLA &amp; audit</div>
-      <div class="pricing-details">
-        <div class="pricing-row"><span>calls/mo</span><span class="pricing-row-val">∞</span></div>
-        <div class="pricing-row"><span>key slots</span><span class="pricing-row-val">1,000</span></div>
-        <div class="pricing-row"><span>audit log</span><span class="pricing-row-val">custom</span></div>
-      </div>
-      <a href="/enterprise-demo" class="pricing-cta outline">contact us →</a>
-    </div>
-  </div>
-</section>
+      <section class="section" id="pricing">
+        <div class="section-head">
+          <div>
+            <p class="section-kicker">04 / PRICING</p>
+            <h2 class="section-title">Scan is free. Proxy is metered.</h2>
+          </div>
+        </div>
 
-<!-- FOOTER -->
-<footer>
-  <div class="footer-grid">
-    <div>
-      <div class="footer-brand-name">
-        VaultProof
+        <div class="pricing-grid">
+          <article class="price-card">
+            <div class="plan-top">
+              <div class="plan-label">free</div>
+            </div>
+            <div class="plan-price"><strong>$0</strong><span>/mo</span></div>
+            <p class="plan-copy">Scan + try the proxy</p>
+            <div class="plan-meter">
+              <div class="plan-meter-row"><span>calls/mo</span><strong>10,000</strong></div>
+              <div class="plan-meter-row"><span>key slots</span><strong>3</strong></div>
+              <div class="plan-meter-row"><span>audit log</span><strong>7d</strong></div>
+            </div>
+            <a class="btn" href="/app/login">get started</a>
+          </article>
+
+          <article class="price-card">
+            <div class="plan-top">
+              <div class="plan-label">starter</div>
+            </div>
+            <div class="plan-price"><strong>$5</strong><span>/mo</span></div>
+            <p class="plan-copy">Side projects</p>
+            <div class="plan-meter">
+              <div class="plan-meter-row"><span>calls/mo</span><strong>50,000</strong></div>
+              <div class="plan-meter-row"><span>key slots</span><strong>10</strong></div>
+              <div class="plan-meter-row"><span>audit log</span><strong>30d</strong></div>
+            </div>
+            <a class="btn" href="/app/login">get started</a>
+          </article>
+
+          <article class="price-card recommended">
+            <div class="plan-top">
+              <div class="plan-label">pro</div>
+              <div class="recommended-tag">recommended</div>
+            </div>
+            <div class="plan-price"><strong>$20</strong><span>/mo</span></div>
+            <p class="plan-copy">Small teams</p>
+            <div class="plan-meter">
+              <div class="plan-meter-row"><span>calls/mo</span><strong>500,000</strong></div>
+              <div class="plan-meter-row"><span>key slots</span><strong>50</strong></div>
+              <div class="plan-meter-row"><span>audit log</span><strong>1y</strong></div>
+            </div>
+            <a class="btn" href="/app/login">get started</a>
+          </article>
+
+          <article class="price-card">
+            <div class="plan-top">
+              <div class="plan-label">enterprise</div>
+            </div>
+            <div class="plan-price"><strong>talk</strong></div>
+            <p class="plan-copy">Custom SLA &amp; audit</p>
+            <div class="plan-meter">
+              <div class="plan-meter-row"><span>calls/mo</span><strong>&infin;</strong></div>
+              <div class="plan-meter-row"><span>key slots</span><strong>1,000</strong></div>
+              <div class="plan-meter-row"><span>audit log</span><strong>custom</strong></div>
+            </div>
+            <a class="btn" href="/enterprise-demo">contact us -&gt;</a>
+          </article>
+        </div>
+      </section>
+
+      <section class="section" id="security">
+        <div class="section-head">
+          <div>
+            <p class="section-kicker">SECURITY</p>
+            <h2 class="section-title">Auditable so your security team does not have to guess.</h2>
+          </div>
+          <p class="section-copy">The security model is documented in public: where keys exist, what is stored, what is logged, and what VaultProof deliberately does not protect against.</p>
+        </div>
+
+        <div class="security-grid">
+          <article class="security-card">
+            <div class="security-code">TM</div>
+            <h3 class="security-title">Threat model</h3>
+            <p class="security-copy">Explicit assumptions, exclusions, and breach scenarios for security teams.</p>
+          </article>
+          <article class="security-card">
+            <div class="security-code">LOG</div>
+            <h3 class="security-title">Audit trail</h3>
+            <p class="security-copy">Per-call metadata for investigations without logging raw provider keys.</p>
+          </article>
+          <article class="security-card">
+            <div class="security-code">MCP</div>
+            <h3 class="security-title">Agent auth</h3>
+            <p class="security-copy">Agents receive scoped proxy credentials and normal provider-compatible URLs.</p>
+          </article>
+          <article class="security-card">
+            <div class="security-code">OSS</div>
+            <h3 class="security-title">Open components</h3>
+            <p class="security-copy">The CLI and split-key flow can be inspected, tested, and run locally.</p>
+          </article>
+        </div>
+      </section>
+
+      <section class="section" id="faq">
+        <div class="section-head">
+          <div>
+            <p class="section-kicker">FAQ</p>
+            <h2 class="section-title">What teams ask before switching.</h2>
+          </div>
+          <p class="section-copy">Short answers first. The longer versions live in the docs and security architecture pages.</p>
+        </div>
+
+        <div class="faq-list">
+          <details class="faq-item" open>
+            <summary>What if VaultProof goes down?</summary>
+            <p>Your fallback depends on your chosen deployment and policy. Enterprise deployments can use dedicated runtime options, and teams can define operational procedures for break-glass access. The public docs cover the proxy and runtime model.</p>
+          </details>
+          <details class="faq-item">
+            <summary>Can VaultProof itself read my key?</summary>
+            <p>VaultProof is designed so raw keys are not stored whole at rest. During proxy use, the key is assembled briefly in memory to call the upstream provider, then cleared. The security page documents that boundary directly.</p>
+          </details>
+          <details class="faq-item">
+            <summary>How is this different from Vault or Doppler?</summary>
+            <p>Traditional secret managers protect values at rest and then hand the full secret to the app. VaultProof focuses on keeping the raw provider key out of the app and agent context by using a proxy URL and split shares.</p>
+          </details>
+          <details class="faq-item">
+            <summary>Does it work with Claude Code, Cursor, or Codex?</summary>
+            <p>Yes. The agent gets a proxy credential and provider-compatible base URL. It can call the model while the real provider key stays out of prompts, logs, and local environment files.</p>
+          </details>
+          <details class="faq-item">
+            <summary>What is the latency overhead?</summary>
+            <p>There is an extra proxy hop. The practical impact depends on provider, region, and workload. For LLM calls, the model response usually dominates total request time, and VaultProof supports streaming responses.</p>
+          </details>
+        </div>
+      </section>
+
+      <section class="section" id="how-it-works">
+        <div class="section-head">
+          <div>
+            <p class="section-kicker">HOW IT WORKS</p>
+            <h2 class="section-title">Split before storage. Reconstruct only to call.</h2>
+          </div>
+          <p class="section-copy">The workflow is intentionally boring: scan env files, split keys, rewrite config, route calls through a provider-compatible proxy.</p>
+        </div>
+
+        <div class="steps">
+          <article class="step-card">
+            <div class="step-number">STEP 01</div>
+            <h3>You split.</h3>
+            <p>The CLI finds API keys and creates separate shares before the whole secret is uploaded anywhere.</p>
+          </article>
+          <article class="step-card">
+            <div class="step-number">STEP 02</div>
+            <h3>We store one encrypted share.</h3>
+            <p>The stored share is policy controlled and mathematically insufficient on its own.</p>
+          </article>
+          <article class="step-card">
+            <div class="step-number">STEP 03</div>
+            <h3>The proxy calls upstream.</h3>
+            <p>The key is assembled for the request, sent to the provider, then removed from memory.</p>
+          </article>
+        </div>
+      </section>
+
+      <section class="section" id="providers">
+        <div class="section-head">
+          <div>
+            <p class="section-kicker">WORKS WITH</p>
+            <h2 class="section-title">250 provider signatures &middot; custom APIs &middot; NetOps env secrets</h2>
+          </div>
+          <p class="section-copy">Start with the built-in provider catalog, or define a custom HTTP provider for internal services.</p>
+        </div>
+
+        <div class="provider-grid">
+          <div class="provider-card">OpenAI</div>
+          <div class="provider-card">Anthropic</div>
+          <div class="provider-card">Google AI</div>
+          <div class="provider-card">Mistral</div>
+          <div class="provider-card">Cohere</div>
+          <div class="provider-card">Groq</div>
+          <div class="provider-card">Perplexity</div>
+          <div class="provider-card">DeepSeek</div>
+          <div class="provider-card">Fireworks</div>
+          <div class="provider-card">Together</div>
+          <div class="provider-card">Replicate</div>
+          <div class="provider-card">Custom</div>
+        </div>
+      </section>
+
+      <section class="section agent-section" id="agents">
+        <div>
+          <p class="section-kicker">FOR AI AGENTS</p>
+          <h2 class="section-title">Your agent gets a proxy URL. Never the key.</h2>
+          <p class="section-copy">Hand Claude, Codex, Cursor, or an MCP server a VaultProof project token and provider-compatible base URL. The agent does its work without seeing the raw sk- value.</p>
+          <div class="agent-actions">
+            <a class="btn btn-dark" href="/docs#proxy-url-reference" data-i18n-lock>Read proxy docs</a>
+            <a class="btn" href="/mcp-auth">MCP auth</a>
+          </div>
+        </div>
+
+        <div class="code-window" aria-label="Agent environment example">
+          <div class="code-top">
+            <div class="code-dots" aria-hidden="true"><span></span><span></span><span></span></div>
+            <span>agent.env</span>
+          </div>
+          <pre><span class="code-comment"># Agent prompt
+# Use this proxy URL. Do not log secrets.</span>
+OPENAI_API_KEY=<span class="code-key">vp-proj_7b3a9f1c8e</span>
+OPENAI_BASE_URL=<span class="code-value">https://proxy.vaultproof.dev/v1</span>
+
+<span class="code-comment"># Agent makes a normal provider call.</span>
+curl https://proxy.vaultproof.dev/v1/chat/completions \
+  -H "Authorization: Bearer $OPENAI_API_KEY" \
+  -d '{"model":"gpt-4o","messages":[...]}'</pre>
+        </div>
+      </section>
+    </main>
+
+    <footer class="site-footer">
+      <div class="footer-layout">
+        <div class="footer-brand">
+          <a class="brand" href="/">
+            <span class="brand-mark">VP</span>
+            <span>VaultProof</span>
+            <span class="brand-version">v1.4.2</span>
+          </a>
+          <p class="footer-tagline">Split-key API protection for apps, agents, and teams that cannot afford raw secrets in the wrong place.</p>
+        </div>
+
+        <nav class="footer-group" aria-label="Product links">
+          <h2 class="footer-heading">Product</h2>
+          <a class="footer-link" href="#product">Overview</a>
+          <a class="footer-link" href="#pricing">Pricing</a>
+          <a class="footer-link" href="/scan">Repo scanner</a>
+          <a class="footer-link" href="/compare">Compare</a>
+          <a class="footer-link" href="/demo">Demo</a>
+          <a class="footer-link" href="/status">Status</a>
+        </nav>
+
+        <nav class="footer-group" aria-label="Developer links">
+          <h2 class="footer-heading">Developers</h2>
+          <a class="footer-link" href="/docs">Docs</a>
+          <a class="footer-link" href="/docs#sdk-reference" data-i18n-lock>SDK</a>
+          <a class="footer-link" href="/docs#cli-reference" data-i18n-lock>CLI</a>
+          <a class="footer-link" href="/guides">Guides</a>
+          <a class="footer-link" href="/mcp-auth">MCP auth</a>
+          <a class="footer-link" href="/verify">Verify</a>
+        </nav>
+
+        <nav class="footer-group" aria-label="Security links">
+          <h2 class="footer-heading">Security</h2>
+          <a class="footer-link" href="/security">Security</a>
+          <a class="footer-link" href="/security#what-we-protect">Threat model</a>
+          <a class="footer-link" href="/cicd-kubernetes">CI/CD Kubernetes</a>
+          <a class="footer-link" href="/abuse">Report abuse</a>
+        </nav>
+
+        <nav class="footer-group" aria-label="Resource links">
+          <h2 class="footer-heading">Resources</h2>
+          <a class="footer-link" href="/blog">Blog</a>
+          <a class="footer-link" href="/blog/leaked-api-key">Leaked API keys</a>
+          <a class="footer-link" href="/blog/secure-openai-api-key">Secure OpenAI keys</a>
+          <a class="footer-link" href="/blog/vaultproof-vs-doppler-vault">VaultProof vs vaults</a>
+          <a class="footer-link" href="/blog/mcp-config-secrets-leak">MCP config secrets</a>
+        </nav>
+
+        <nav class="footer-group" aria-label="Company links">
+          <h2 class="footer-heading">Company</h2>
+          <a class="footer-link" href="/enterprise-demo">Enterprise</a>
+          <a class="footer-link" href="/app/login">Sign in</a>
+          <a class="footer-link" href="/app/login">Get a key</a>
+          <a class="footer-link" href="/privacy">Privacy</a>
+          <a class="footer-link" href="/terms">Terms</a>
+        </nav>
       </div>
-      <p class="footer-brand-desc">Split-key secrets and a transparent edge proxy. Your API keys never exist whole on a server.</p>
-      <div class="footer-status">● operational · p50 41ms</div>
-    </div>
 
-    <div>
-      <div class="footer-col-head">product</div>
-      <ul class="footer-links">
-        <li><a href="/scan">scanner</a></li>
-        <li><a href="/verify">verify</a></li>
-        <li><a href="/cicd-kubernetes">cicd + kubernetes</a></li>
-        <li><a href="/compare">compare</a></li>
-        <li><a href="/#pricing">pricing</a></li>
-      </ul>
-    </div>
-
-    <div>
-      <div class="footer-col-head">developers</div>
-      <ul class="footer-links">
-        <li><a href="/docs">docs</a></li>
-        <li><a href="/guides">guides</a></li>
-        <li><a href="/mcp-auth">mcp auth</a></li>
-        <li><a href="/status">status</a></li>
-        <li><a href="https://github.com/VaultProof/vaultproof" target="_blank" rel="noopener">github</a></li>
-      </ul>
-    </div>
-
-    <div>
-      <div class="footer-col-head">resources</div>
-      <ul class="footer-links">
-        <li><a href="/blog">insights</a></li>
-        <li><a href="/blog/vaultproof-vs-doppler-vault">vaultproof vs doppler</a></li>
-        <li><a href="/blog/secure-openai-api-key">securing openai keys</a></li>
-        <li><a href="/blog/vibe-coding-leaking-secrets">vibe coding &amp; secrets</a></li>
-        <li><a href="/blog/mcp-config-secrets-leak">mcp config leaks</a></li>
-        <li><a href="/blog/trivy-supply-chain-attack">trivy supply chain</a></li>
-        <li><a href="/blog/cisco-trivy-hack">cisco/trivy hack</a></li>
-        <li><a href="/blog/leaked-api-key">leaked api key</a></li>
-      </ul>
-    </div>
-
-    <div>
-      <div class="footer-col-head">company</div>
-      <ul class="footer-links">
-        <li><a href="/security">security</a></li>
-        <li><a href="/abuse">abuse</a></li>
-        <li><a href="/terms">terms</a></li>
-        <li><a href="/privacy">privacy</a></li>
-        <li><a href="/enterprise-demo">enterprise demo</a></li>
-        <li><a href="/app/login">sign in</a></li>
-        <li><a href="mailto:hello@vaultproof.dev">contact</a></li>
-      </ul>
-    </div>
+      <div class="footer-bottom">
+        <p class="footer-copy">&copy; 2026 VaultProof Ltd. Built in Derry.</p>
+        <nav class="footer-bottom-links" aria-label="Legal links">
+          <a class="footer-link" href="/privacy">Privacy policy</a>
+          <a class="footer-link" href="/terms">Terms of service</a>
+          <a class="footer-link" href="/abuse">Abuse</a>
+        </nav>
+      </div>
+    </footer>
   </div>
 
-  <div class="footer-bottom">
-    <span>© 2026 VaultProof · all shares are encrypted at rest</span>
-    <span>status ● operational · 99.98% uptime · us-east · eu-west · ap-east</span>
-  </div>
-</footer>
-
-</div><!-- /.page -->
-
-<script src="/js/analytics.js" defer></script>
+  <script src="/js/analytics.js" defer></script>
 </body>
 </html>

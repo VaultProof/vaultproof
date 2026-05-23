@@ -859,6 +859,7 @@
 
   function applyKnownAnchorTranslations(root) {
     Array.prototype.forEach.call((root || document).querySelectorAll('a[href]'), function (link) {
+      if (link.hasAttribute('data-i18n-lock') || link.closest('[data-i18n-lock]')) return;
       var href = link.getAttribute('href') || '';
       var path = href.split('#')[0];
       var text = (link.textContent || '').trim().toLowerCase();
