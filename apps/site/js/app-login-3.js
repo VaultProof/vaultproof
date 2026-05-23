@@ -77,6 +77,11 @@
     return /^[a-z0-9][a-z0-9_-]{0,79}$/i.test(trimmed) ? trimmed : '';
   }
 
+  function rememberDashboardOrg(orgId, dashboardPath) {
+    if (orgId) localStorage.setItem(ACTIVE_ORG_STORAGE_KEY, orgId);
+    return dashboardPath || './';
+  }
+
   function setPromoMessage(text, tone) {
     const msg = $('promoCodeMsg');
     if (!msg) return;
@@ -248,8 +253,7 @@
     if (IS_INTERNAL_ADMIN_HOST) return dashboardPath;
 
     if (ssoResolution && ssoResolution.organization && ssoResolution.organization.id) {
-      localStorage.setItem(ACTIVE_ORG_STORAGE_KEY, ssoResolution.organization.id);
-      return `${dashboardPath}?org=${encodeURIComponent(ssoResolution.organization.id)}`;
+      return rememberDashboardOrg(ssoResolution.organization.id, dashboardPath);
     }
 
     if (ssoResolution && ssoResolution.resolution === 'pending_access') {
@@ -282,16 +286,13 @@
       const sharedOrganization = organizations.find(function(org) { return org.kind && org.kind !== 'personal'; }) || null;
 
       if (requestedOrganization && requestedOrganization.kind && requestedOrganization.kind !== 'personal') {
-        localStorage.setItem(ACTIVE_ORG_STORAGE_KEY, requestedOrganization.id);
-        return `${dashboardPath}?org=${encodeURIComponent(requestedOrganization.id)}`;
+        return rememberDashboardOrg(requestedOrganization.id, dashboardPath);
       }
       if (activeOrganization && activeOrganization.kind && activeOrganization.kind !== 'personal') {
-        localStorage.setItem(ACTIVE_ORG_STORAGE_KEY, activeOrganization.id);
-        return `${dashboardPath}?org=${encodeURIComponent(activeOrganization.id)}`;
+        return rememberDashboardOrg(activeOrganization.id, dashboardPath);
       }
       if (sharedOrganization) {
-        localStorage.setItem(ACTIVE_ORG_STORAGE_KEY, sharedOrganization.id);
-        return `${dashboardPath}?org=${encodeURIComponent(sharedOrganization.id)}`;
+        return rememberDashboardOrg(sharedOrganization.id, dashboardPath);
       }
       localStorage.removeItem(ACTIVE_ORG_STORAGE_KEY);
 

@@ -6,6 +6,7 @@
     ? 'https://vaultproof-init-staging.vaultproof.workers.dev/api/v1/init'
     : 'https://init.vaultproof.dev/api/v1/init';
   const SUPABASE_AUTH_STORAGE_KEY = 'sb-gwzkjiomemjlhtrdrlan-auth-token';
+  const ACTIVE_ORG_STORAGE_KEY = 'vaultproof_active_org';
   const ACCENT = '#c2410c';
   const ACTION_LABELS = {
     api_call: 'API Call',
@@ -37,6 +38,20 @@
   let usageChart = null;
   let currentProjectRows = [];
   let currentProjectFilter = 'all';
+
+  function cleanDashboardOrgParam() {
+    const params = new URLSearchParams(window.location.search);
+    const orgId = params.get('org');
+    if (!orgId) return;
+    if (/^[a-z0-9][a-z0-9_-]{0,79}$/i.test(orgId)) {
+      localStorage.setItem(ACTIVE_ORG_STORAGE_KEY, orgId);
+    }
+    params.delete('org');
+    const next = `${window.location.pathname}${params.toString() ? '?' + params.toString() : ''}${window.location.hash || ''}`;
+    window.history.replaceState({}, '', next);
+  }
+
+  cleanDashboardOrgParam();
 
   if (!token) {
     window.location.href = 'login';
