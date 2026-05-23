@@ -6,7 +6,7 @@
     ? 'https://vaultproof-init-staging.vaultproof.workers.dev/api/v1/init'
     : 'https://init.vaultproof.dev/api/v1/init';
   const SUPABASE_AUTH_STORAGE_KEY = 'sb-gwzkjiomemjlhtrdrlan-auth-token';
-  const ACCENT = '#d97706';
+  const ACCENT = '#c2410c';
   const ACTION_LABELS = {
     api_call: 'API Call',
     transparent_proxy: 'Proxy',
@@ -16,10 +16,10 @@
     revoke: 'Revoked',
   };
   const ACTION_COLORS = {
-    api_call: '#525252',
-    transparent_proxy: '#525252',
+    api_call: '#536276',
+    transparent_proxy: '#536276',
     key_retrieval: '#15803d',
-    key_rotation: '#d97706',
+    key_rotation: ACCENT,
     revoke: '#b91c1c',
   };
   const CALL_LIMITS = {
@@ -447,9 +447,9 @@
       const sparkColor = project.status === 'alert'
         ? '#b91c1c'
         : project.status === 'ready'
-          ? '#d97706'
+          ? ACCENT
           : project.status === 'idle'
-            ? '#c4c4bd'
+            ? '#bcc9d8'
             : ACCENT;
       const bars = buildDistributionBars(project.sparkValues, sparkColor);
       const statusLabel = project.status === 'ready' ? 'ready' : project.status;
@@ -523,8 +523,8 @@
   }
 
   function buildChart(labels, calls, errors) {
-    const mono = "'JetBrains Mono', ui-monospace, monospace";
-    const rule = '#e7e5de';
+    const mono = "'Geist Mono', 'SFMono-Regular', Consolas, monospace";
+    const rule = '#d7e0eb';
     const canvas = document.getElementById('usageChart');
     if (!canvas || typeof Chart === 'undefined') return;
     const ctx = canvas.getContext('2d');
@@ -538,7 +538,7 @@
             label: 'calls',
             data: calls,
             borderColor: ACCENT,
-            backgroundColor: 'rgba(217,119,6,0.06)',
+            backgroundColor: 'rgba(194,65,12,0.07)',
             fill: true,
             tension: 0.4,
             pointRadius: 0,
@@ -568,8 +568,8 @@
           legend: { display: false },
           tooltip: {
             backgroundColor: '#fff',
-            titleColor: '#171717',
-            bodyColor: '#525252',
+            titleColor: '#142235',
+            bodyColor: '#536276',
             borderColor: rule,
             borderWidth: 1,
             cornerRadius: 4,
@@ -581,13 +581,13 @@
         scales: {
           x: {
             grid: { color: rule },
-            ticks: { color: '#8a8a82', font: { family: mono, size: 10 }, maxTicksLimit: 8 },
+            ticks: { color: '#8290a3', font: { family: mono, size: 10 }, maxTicksLimit: 8 },
             border: { display: false },
           },
           y: {
             grid: { color: rule },
             ticks: {
-              color: '#8a8a82',
+              color: '#8290a3',
               font: { family: mono, size: 10 },
               callback(value) {
                 return value >= 1000 ? `${(value / 1000).toFixed(0)}k` : value;
