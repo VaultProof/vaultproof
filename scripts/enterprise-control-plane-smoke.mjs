@@ -3806,7 +3806,7 @@ async function assertInternalAdminConsole() {
     {
       path: '/app/support',
       title: 'Launch support room - VaultProof Enterprise',
-      required: ['Support readiness', 'Internal admin boundary', 'Support brief', 'launch_support_readiness', 'copy brief'],
+      required: ['Support readiness', 'Internal admin boundary', 'Launch-week workflow', 'Exposure response handoff', 'supportExposureList', 'Provider Slots incident JSON', 'Exposure response status', 'Exposure response decision', 'Exposure linked scanner findings', 'launch_support_readiness', 'copy brief'],
     },
     {
       path: '/app/pilot-success',

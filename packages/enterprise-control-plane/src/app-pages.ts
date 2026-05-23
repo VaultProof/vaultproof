@@ -6410,6 +6410,10 @@ function renderEnterpriseSupportPage(pageName: EnterpriseSupportPageName): strin
           <div id="supportWorkflowList" class="list"></div>
         </div>
         <div class="card">
+          <div class="section-title"><h2>Exposure response handoff</h2><span class="mini">customer-safe</span></div>
+          <div id="supportExposureList" class="list"></div>
+        </div>
+        <div class="card">
           <div class="section-title"><h2>Customer handoff</h2><span class="mini">what to share</span></div>
           <div id="supportHandoffList" class="list"></div>
         </div>
@@ -8993,6 +8997,8 @@ function renderEnterpriseSupportPage(pageName: EnterpriseSupportPageName): strin
         var manual = goNoGoManualById(goNoGo);
         var rollback = manual['rollback-owner-confirmed'];
         var budget = manual['budget-monitoring-reviewed'];
+        var scannerExposure = buildScannerExposurePacket(overview, bootstrap);
+        var keyExposureResponse = buildKeyExposureResponsePacket(overview, bootstrap, scannerExposure);
         var ready = readiness.production_ready === true && Boolean(currentOrgId) && projectCount > 0 && memberCount > 0 && providerCount > 0;
         return {
           status: ready ? 'ready' : 'hold',
@@ -9023,6 +9029,14 @@ function renderEnterpriseSupportPage(pageName: EnterpriseSupportPageName): strin
             rollback_owner_path: manualEvidenceSummary(rollback),
             budget_monitoring: manualEvidenceSummary(budget)
           },
+          exposure_response: {
+            status: keyExposureResponse.status,
+            decision: keyExposureResponse.decision,
+            summary: keyExposureResponse.summary,
+            workflow_links: keyExposureResponse.workflow_links,
+            proof_boundary: keyExposureResponse.proof_boundary,
+            operator_actions: keyExposureResponse.operator_actions
+          },
           launch_week_workflow: [
             'Review /readiness, /app/evidence, /app/activity, /app/audit, /app/keys, /app/alerts, and /app/support before each customer test.',
             'Record customer-visible notes in the launch brief or evidence packet, not in chat threads.',
@@ -9033,6 +9047,7 @@ function renderEnterpriseSupportPage(pageName: EnterpriseSupportPageName): strin
           customer_handoff: [
             'Evidence JSON from /app/evidence.',
             'Support brief from /app/support.',
+            'Key exposure response JSON from /app/keys when an exposure review is active.',
             'Audit CSV and access-review CSV.',
             'API proxy self-test output from /app/keys.',
             'Named rollback owner/path and budget/monitoring review status.'
@@ -9083,6 +9098,20 @@ function renderEnterpriseSupportPage(pageName: EnterpriseSupportPageName): strin
           row('Budget/monitoring evidence', packet.manual_evidence.budget_monitoring.updated_at ? 'Budget/monitoring recorded ' + rel(packet.manual_evidence.budget_monitoring.updated_at) + '.' : 'Budget/monitoring review has not been recorded in this browser evidence yet.', packet.manual_evidence.budget_monitoring.status || 'missing', packet.manual_evidence.budget_monitoring.status === 'passed' ? 'good' : 'warn')
         ];
       }
+      function launchSupportExposureRows(packet) {
+        var response = packet.exposure_response || {};
+        var summary = response.summary || {};
+        var boundary = response.proof_boundary || {};
+        return [
+          row('Exposure response status', response.decision || 'Key exposure response packet is not available yet.', response.status || 'missing', response.status === 'hold' ? 'bad' : response.status === 'ready_to_contain' ? 'good' : 'warn'),
+          row('Provider-slot containment', number(summary.total_provider_slots) + ' slots in scope; ' + number(summary.live_sealed_slots) + ' live-sealed; ' + number(summary.provider_slots_needing_rotation) + ' need rotation or review.', summary.total_provider_slots ? 'slots' : 'missing', summary.provider_slots_needing_rotation ? 'warn' : 'good'),
+          row('Linked scanner findings', number(summary.linked_scanner_findings) + ' linked findings; ' + number(summary.open_critical_or_high_linked_findings) + ' linked critical/high findings remain open.', summary.open_critical_or_high_linked_findings ? 'hold' : 'review', summary.open_critical_or_high_linked_findings ? 'bad' : 'good'),
+          linkRow('Provider Slots incident JSON', 'Copy the customer-safe exposure response JSON and use emergency revoke for affected provider slots.', '/app/keys', 'incident', 'good'),
+          linkRow('Scanner remediation', 'Update scanner findings after rotation, revoke, false-positive review, or demo-only acceptance.', '/app/scanner', 'scanner', summary.open_critical_or_high_linked_findings ? 'warn' : 'good'),
+          linkRow('Runbook sequence', 'Use the operator runbook for activity/audit exports, proof-boundary language, and response order.', '/app/runbooks', 'runbook', 'good'),
+          row('Proof boundary', (boundary.vaultproof_controls || '') + ' ' + (boundary.outside_boundary || ''), 'boundary', 'good')
+        ];
+      }
       function launchSupportHandoffRows(packet) {
         return [
           row('Customer handoff package', packet.customer_handoff.join(' '), 'shareable', 'good'),
@@ -9094,6 +9123,7 @@ function renderEnterpriseSupportPage(pageName: EnterpriseSupportPageName): strin
       function launchSupportProofRows(packet) {
         return launchSupportReadinessRows(packet)
           .concat(launchSupportBoundaryRows(packet))
+          .concat(launchSupportExposureRows(packet))
           .concat(launchSupportHandoffRows(packet));
       }
       function buildMonitoringEvidencePacket(org, sso, readiness, overview, bootstrap, goNoGo) {
@@ -11322,6 +11352,8 @@ function renderEnterpriseSupportPage(pageName: EnterpriseSupportPageName): strin
         var goNoGo = buildGoNoGoStatus(org, sso, readiness, overview, bootstrap);
         var support = buildLaunchSupportPacket(org, sso, readiness, overview, bootstrap, goNoGo);
         var coverage = support.coverage || {};
+        var exposure = support.exposure_response || {};
+        var exposureSummary = exposure.summary || {};
         return [
           'VaultProof Enterprise launch support brief',
           'Organization: ' + (coverage.organization_name || org.name || 'selected workspace'),
@@ -11334,6 +11366,10 @@ function renderEnterpriseSupportPage(pageName: EnterpriseSupportPageName): strin
           'Members: ' + number(coverage.member_count),
           'Provider slots: ' + number(coverage.provider_slots),
           'Proxy calls observed: ' + number(coverage.proxy_calls),
+          'Exposure response status: ' + (exposure.status || 'missing'),
+          'Exposure response decision: ' + (exposure.decision || 'not available'),
+          'Exposure linked scanner findings: ' + number(exposureSummary.linked_scanner_findings) + ' total / ' + number(exposureSummary.open_critical_or_high_linked_findings) + ' open critical-high',
+          'Exposure provider-slot rotation scope: ' + number(exposureSummary.provider_slots_needing_rotation),
           'Employee admin surface: ' + support.internal_admin_surface,
           'Employee admin system: ' + support.internal_admin_boundary.hostname,
           'Internal admin mode: ' + support.internal_admin_boundary.default_mode,
@@ -11345,6 +11381,12 @@ function renderEnterpriseSupportPage(pageName: EnterpriseSupportPageName): strin
           '',
           'Launch-week workflow:',
           '- ' + support.launch_week_workflow.join('\\n- '),
+          '',
+          'Exposure response handoff:',
+          '- Provider Slots incident JSON: ' + location.origin + '/app/keys',
+          '- Scanner remediation: ' + location.origin + '/app/scanner',
+          '- Operator runbook: ' + location.origin + '/app/runbooks',
+          '- Proof boundary: ' + (((exposure.proof_boundary || {}).vaultproof_controls || '') + ' ' + ((exposure.proof_boundary || {}).outside_boundary || '')).trim(),
         ].join('\\n');
       }
       function renderSupportPanel(org, sso, readiness, overview, bootstrap) {
@@ -11354,6 +11396,7 @@ function renderEnterpriseSupportPage(pageName: EnterpriseSupportPageName): strin
         byId('supportReadinessList').innerHTML = launchSupportReadinessRows(support).join('');
         byId('supportBoundaryList').innerHTML = launchSupportBoundaryRows(support).join('');
         byId('supportWorkflowList').innerHTML = launchSupportWorkflowRows(support).join('');
+        byId('supportExposureList').innerHTML = launchSupportExposureRows(support).join('');
         byId('supportHandoffList').innerHTML = launchSupportHandoffRows(support).join('');
         var brief = byId('supportBrief');
         if (brief) brief.value = supportBriefText(org, sso, readiness, overview, bootstrap);
