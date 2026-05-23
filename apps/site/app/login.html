@@ -14,62 +14,77 @@
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.101.1" integrity="sha384-0VpB0wAYDdhWCEv3+IjT0Z9Kgpvszkf70RFX3ro7l4QR5nywxsMaOpmvZKsfRF8I" crossorigin="anonymous"></script>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Inter+Tight:wght@500;600;700;800&amp;family=Inter:wght@400;500;600;700&amp;family=JetBrains+Mono:wght@400;500;600&amp;display=swap" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700&amp;family=Geist+Mono:wght@400;500;600;700&amp;display=swap" rel="stylesheet" />
   <script src="/js/app-login-2.js" defer></script>
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
     :root {
-      --accent: #d97706;
-      --bg: #fafaf7;
-      --bg-mid: #f3f3ee;
-      --bg-card: #fff;
-      --rule: 1px solid #e7e5de;
-      --rule-strong: 1px solid #d8d5cc;
-      --text: #171717;
-      --text-mid: #3f3f37;
-      --text-muted: #525252;
-      --text-faint: #8a8a82;
+      --accent: #c2410c;
+      --accent-dark: #9a3412;
+      --blue: #1d4ed8;
+      --bg: #e7eef6;
+      --bg-mid: #edf4fa;
+      --bg-card: #ffffff;
+      --rule-color: #d7e0eb;
+      --rule-strong-color: #bcc9d8;
+      --rule: 1px solid var(--rule-color);
+      --rule-strong: 1px solid var(--rule-strong-color);
+      --text: #142235;
+      --text-mid: #38485c;
+      --text-muted: #536276;
+      --text-faint: #8290a3;
+      --inverse: #0d1521;
+      --inverse-soft: #172335;
+      --inverse-text: #f7fbff;
       --danger: #b91c1c;
-      --success: #16a34a;
-      --font-display: "Inter Tight", "Inter", system-ui, sans-serif;
-      --font-body: "Inter", system-ui, sans-serif;
-      --font-mono: "JetBrains Mono", "IBM Plex Mono", ui-monospace, monospace;
+      --success: #0f766e;
+      --font-display: "Geist", -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;
+      --font-body: "Geist", -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;
+      --font-mono: "Geist Mono", "SFMono-Regular", Consolas, monospace;
     }
 
     html, body {
       min-height: 100%;
-      background: #e8e6e0;
+      background: #ffffff;
       color: var(--text);
       font-family: var(--font-body);
-      font-size: 15px;
+      font-size: 16px;
       line-height: 1.5;
       -webkit-font-smoothing: antialiased;
+      text-rendering: optimizeLegibility;
     }
 
-    body { min-height: 100vh; }
+    body {
+      min-height: 100vh;
+      overflow-x: hidden;
+    }
     a { color: inherit; text-decoration: none; }
     button, input { font: inherit; }
     button { cursor: pointer; }
     .hidden { display: none !important; }
 
     .page {
-      max-width: 1280px;
+      width: min(1440px, 100%);
       margin: 0 auto;
       min-height: 100vh;
-      background: var(--bg);
-      border-left: var(--rule);
-      border-right: var(--rule);
+      background: linear-gradient(180deg, #dbe7f3 0%, var(--bg) 36%, #e8f0f7 100%);
+      border-left: 1px solid rgba(215, 224, 235, 0.28);
+      border-right: 1px solid rgba(215, 224, 235, 0.28);
+      overflow: hidden;
     }
 
     .nav {
       display: flex;
       align-items: center;
-      padding: 14px 40px;
+      gap: 24px;
+      min-height: 56px;
+      padding: 0 36px;
       border-bottom: var(--rule);
       font-family: var(--font-mono);
       font-size: 12px;
-      background: var(--bg);
+      background: rgba(248, 251, 255, 0.88);
+      backdrop-filter: blur(18px);
       position: sticky;
       top: 0;
       z-index: 20;
@@ -80,24 +95,39 @@
       align-items: center;
       gap: 8px;
       min-width: 0;
+      font-family: var(--font-body);
     }
 
     .nav-logo-name {
-      font-weight: 600;
-      letter-spacing: 0.5px;
+      font-weight: 650;
+      letter-spacing: -0.01em;
+    }
+
+    .nav-logo-mark {
+      width: 18px;
+      height: 18px;
+      border: 1px solid var(--text);
+      border-radius: 999px;
+      display: grid;
+      place-items: center;
+      font-family: var(--font-mono);
+      font-size: 9px;
+      line-height: 1;
     }
 
     .nav-logo-version {
       color: var(--text-faint);
       margin-left: 6px;
+      font-family: var(--font-mono);
     }
 
     .nav-spacer { flex: 1; }
 
     .nav-links {
       display: flex;
-      gap: 24px;
+      gap: 20px;
       color: var(--text-muted);
+      margin-left: 12px;
     }
 
     .nav-links a:hover,
@@ -107,70 +137,82 @@
 
     .nav-sign-in {
       color: var(--text-faint);
-      margin-left: 24px;
-      margin-right: 12px;
+      margin-left: 0;
+      margin-right: 0;
+      font-family: var(--font-mono);
     }
 
     .nav-cta {
-      padding: 6px 12px;
-      background: var(--text);
-      color: var(--bg);
-      border-radius: 3px;
+      min-height: 34px;
+      padding: 0 14px;
+      background: var(--inverse);
+      color: var(--inverse-text);
+      border-radius: 999px;
       font-size: 12px;
+      font-family: var(--font-mono);
     }
 
-    .nav-cta:hover { background: #333; }
+    .nav-cta:hover { background: var(--inverse-soft); }
 
     .login-layout {
       min-height: calc(100vh - 51px);
       display: grid;
-      grid-template-columns: minmax(0, 1fr) 470px;
+      grid-template-columns: minmax(0, 0.95fr) minmax(430px, 0.62fr);
       border-bottom: var(--rule);
+      min-width: 0;
     }
 
     .intro-panel {
-      padding: 56px 40px 40px;
-      border-right: var(--rule);
+      padding: 76px 56px 50px;
+      border-right: 0;
       display: flex;
       flex-direction: column;
-      justify-content: flex-start;
-      gap: 28px;
+      justify-content: space-between;
+      gap: 40px;
+      background:
+        radial-gradient(circle at 28% 18%, rgba(56, 189, 248, 0.17), transparent 24%),
+        radial-gradient(circle at 68% 34%, rgba(194, 65, 12, 0.30), transparent 28%),
+        linear-gradient(140deg, #09111d 0%, #102137 46%, #183755 100%);
+      color: var(--inverse-text);
     }
 
     .eyebrow {
       font-family: var(--font-mono);
       font-size: 11px;
-      color: var(--accent);
-      letter-spacing: 0.8px;
+      color: rgba(247, 251, 255, 0.68);
+      letter-spacing: 0.12em;
       text-transform: uppercase;
-      margin-bottom: 28px;
+      margin-bottom: 22px;
     }
 
     .intro-h1 {
       font-family: var(--font-display);
-      font-size: 44px;
-      line-height: 1.08;
-      letter-spacing: -1.2px;
-      font-weight: 600;
-      max-width: 560px;
+      font-size: clamp(48px, 5.2vw, 74px);
+      line-height: 0.98;
+      letter-spacing: -0.052em;
+      font-weight: 650;
+      max-width: 720px;
+      text-wrap: balance;
     }
 
     .intro-sub {
-      margin-top: 24px;
-      color: var(--text-mid);
-      max-width: 500px;
+      margin-top: 22px;
+      color: rgba(247, 251, 255, 0.72);
+      max-width: 560px;
       line-height: 1.58;
+      letter-spacing: -0.02em;
     }
 
     .trust-grid {
       margin-top: 36px;
       display: grid;
       grid-template-columns: repeat(3, minmax(0, 1fr));
-      border: var(--rule);
-      border-radius: 4px;
+      border: 1px solid rgba(255, 255, 255, 0.15);
+      border-radius: 12px;
       overflow: hidden;
-      background: var(--bg-card);
+      background: rgba(255, 255, 255, 0.08);
       max-width: 640px;
+      backdrop-filter: blur(18px);
     }
 
     .trust-item {
@@ -178,12 +220,12 @@
       min-height: 112px;
     }
 
-    .trust-item + .trust-item { border-left: var(--rule); }
+    .trust-item + .trust-item { border-left: 1px solid rgba(255, 255, 255, 0.14); }
 
     .trust-num {
       font-family: var(--font-mono);
       font-size: 11px;
-      color: var(--accent);
+      color: #f3a66d;
       margin-bottom: 10px;
     }
 
@@ -191,25 +233,26 @@
       font-family: var(--font-display);
       font-size: 18px;
       font-weight: 600;
-      letter-spacing: -0.2px;
+      letter-spacing: -0.04em;
       margin-bottom: 6px;
     }
 
     .trust-copy {
       font-size: 12px;
       line-height: 1.45;
-      color: var(--text-muted);
+      color: rgba(247, 251, 255, 0.66);
     }
 
     .session-log {
       font-family: var(--font-mono);
       font-size: 12px;
       line-height: 22px;
-      background: var(--bg);
-      border: 1px solid #e5e5de;
-      border-radius: 6px;
+      background: #0c1420;
+      border: 1px solid rgba(255, 255, 255, 0.14);
+      border-radius: 12px;
       overflow: hidden;
       max-width: 640px;
+      box-shadow: 0 28px 90px rgba(0, 0, 0, 0.28);
     }
 
     .session-chrome {
@@ -217,10 +260,10 @@
       align-items: center;
       gap: 10px;
       padding: 8px 12px;
-      border-bottom: 1px solid #e5e5de;
-      background: var(--bg-mid);
+      border-bottom: 1px solid rgba(255, 255, 255, 0.12);
+      background: rgba(255, 255, 255, 0.03);
       font-size: 11px;
-      color: #6b6b64;
+      color: #9fb0c4;
     }
 
     .session-dots {
@@ -232,7 +275,7 @@
       width: 9px;
       height: 9px;
       border-radius: 50%;
-      background: #e5e5de;
+      background: #314156;
     }
 
     .session-title {
@@ -241,7 +284,7 @@
       letter-spacing: 0.2px;
     }
 
-    .session-live { color: var(--accent); }
+    .session-live { color: #f3a66d; }
     .session-body { padding: 12px 14px; }
 
     .log-row {
@@ -253,23 +296,26 @@
       border-radius: 3px;
     }
 
-    .log-row:nth-child(odd) { background: rgba(0, 0, 0, 0.015); }
-    .log-glyph { color: var(--accent); font-weight: 700; }
-    .log-key { color: #262626; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-    .log-val { color: var(--text-faint); text-align: right; }
-    .log-success { color: var(--success); }
+    .log-row:nth-child(odd) { background: rgba(255, 255, 255, 0.03); }
+    .log-glyph { color: #f3a66d; font-weight: 700; }
+    .log-key { color: #edf5ff; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .log-val { color: #8090a4; text-align: right; }
+    .log-success { color: #8fe0c2; }
 
     .auth-panel {
-      background: var(--bg-mid);
-      padding: 48px 40px;
+      background:
+        linear-gradient(180deg, #f8fbff 0%, #edf4fa 100%);
+      padding: 56px 42px;
       display: flex;
       align-items: center;
       justify-content: center;
+      min-width: 0;
     }
 
     .auth-wrap {
       width: 100%;
-      max-width: 390px;
+      max-width: 430px;
+      min-width: 0;
     }
 
     .mobile-brand { display: none; }
@@ -282,23 +328,24 @@
       font-family: var(--font-mono);
       font-size: 11px;
       color: var(--accent);
-      letter-spacing: 0.8px;
+      letter-spacing: 0.12em;
       text-transform: uppercase;
       margin-bottom: 8px;
     }
 
     .auth-title {
       font-family: var(--font-display);
-      font-size: 28px;
-      line-height: 1.1;
-      letter-spacing: -0.5px;
-      font-weight: 600;
+      font-size: 34px;
+      line-height: 1.04;
+      letter-spacing: -0.045em;
+      font-weight: 650;
     }
 
     .auth-subtitle {
       color: var(--text-muted);
-      font-size: 13px;
+      font-size: 14px;
       margin-top: 8px;
+      line-height: 1.5;
     }
 
     .entry-split {
@@ -309,16 +356,16 @@
     }
 
     .entry-card {
-      border: var(--rule);
-      border-radius: 4px;
-      background: #fcfcf9;
+      border: 1px solid rgba(188, 201, 216, 0.78);
+      border-radius: 10px;
+      background: rgba(255, 255, 255, 0.72);
       padding: 12px 14px;
     }
 
     .entry-label {
       font-family: var(--font-mono);
       font-size: 10.5px;
-      letter-spacing: 0.7px;
+      letter-spacing: 0.08em;
       text-transform: uppercase;
       color: var(--accent);
     }
@@ -326,8 +373,8 @@
     .entry-title {
       font-family: var(--font-display);
       font-size: 18px;
-      font-weight: 600;
-      letter-spacing: -0.3px;
+      font-weight: 620;
+      letter-spacing: -0.04em;
       margin-top: 6px;
     }
 
@@ -340,24 +387,24 @@
 
     .auth-card {
       background: var(--bg-card);
-      border: var(--rule);
-      border-radius: 4px;
-      padding: 22px;
-      box-shadow: 0 18px 45px rgba(23, 23, 23, 0.08);
+      border: 1px solid rgba(188, 201, 216, 0.9);
+      border-radius: 12px;
+      padding: 24px;
+      box-shadow: 0 24px 70px rgba(15, 23, 42, 0.10);
     }
 
     .promo-block {
-      border: var(--rule);
-      border-radius: 4px;
-      background: var(--bg);
+      border: 1px solid rgba(215, 224, 235, 0.96);
+      border-radius: 10px;
+      background: #f8fbff;
       padding: 10px;
       margin-bottom: 14px;
     }
 
     .sso-block {
-      border: var(--rule);
-      border-radius: 4px;
-      background: #fcfcf9;
+      border: 1px solid rgba(215, 224, 235, 0.96);
+      border-radius: 10px;
+      background: #f8fbff;
       padding: 12px;
       margin-bottom: 14px;
       display: grid;
@@ -367,7 +414,7 @@
     .sso-kicker {
       font-family: var(--font-mono);
       font-size: 10.5px;
-      letter-spacing: 0.7px;
+      letter-spacing: 0.08em;
       text-transform: uppercase;
       color: var(--accent);
     }
@@ -375,8 +422,8 @@
     .sso-title {
       font-family: var(--font-display);
       font-size: 18px;
-      font-weight: 600;
-      letter-spacing: -0.3px;
+      font-weight: 620;
+      letter-spacing: -0.04em;
     }
 
     .sso-copy {
@@ -387,9 +434,13 @@
 
     .sso-row {
       display: grid;
-      grid-template-columns: minmax(0, 1fr) auto;
+      grid-template-columns: 1fr;
       gap: 8px;
       align-items: center;
+    }
+
+    .sso-row .btn {
+      width: 100%;
     }
 
     .sso-hint {
@@ -420,9 +471,9 @@
     .form-input {
       width: 100%;
       height: 42px;
-      background: var(--bg);
-      border: var(--rule);
-      border-radius: 3px;
+      background: #f8fbff;
+      border: 1px solid var(--rule-color);
+      border-radius: 8px;
       color: var(--text);
       padding: 0 12px;
       font-size: 13px;
@@ -433,8 +484,8 @@
     .form-input::placeholder { color: var(--text-faint); }
 
     .form-input:focus {
-      border-color: rgba(217, 119, 6, 0.6);
-      box-shadow: 0 0 0 3px rgba(217, 119, 6, 0.11);
+      border-color: rgba(194, 65, 12, 0.58);
+      box-shadow: 0 0 0 3px rgba(194, 65, 12, 0.11);
       background: #fff;
     }
 
@@ -457,8 +508,8 @@
 
     .btn {
       min-height: 42px;
-      border-radius: 3px;
-      border: var(--rule);
+      border-radius: 999px;
+      border: 1px solid var(--rule-color);
       display: inline-flex;
       align-items: center;
       justify-content: center;
@@ -476,29 +527,29 @@
 
     .btn-primary {
       width: 100%;
-      background: var(--text);
-      color: var(--bg);
-      border-color: var(--text);
+      background: var(--inverse);
+      color: var(--inverse-text);
+      border-color: var(--inverse);
     }
 
-    .btn-primary:hover { background: #333; }
+    .btn-primary:hover { background: var(--inverse-soft); }
 
     .btn-secondary {
       width: 100%;
-      background: transparent;
+      background: #ffffff;
       color: var(--text-muted);
     }
 
     .btn-secondary:hover {
-      background: rgba(0, 0, 0, 0.035);
+      background: #f8fbff;
       color: var(--text);
     }
 
     .btn-small {
       min-height: 36px;
-      background: var(--text);
-      color: var(--bg);
-      border-color: var(--text);
+      background: var(--inverse);
+      color: var(--inverse-text);
+      border-color: var(--inverse);
     }
 
     .oauth-stack {
@@ -523,18 +574,19 @@
     .divider::after {
       content: "";
       height: 1px;
-      background: #e5e5de;
+      background: var(--rule-color);
       flex: 1;
     }
 
     .auth-tabs {
       display: grid;
       grid-template-columns: 1fr 1fr;
-      border: var(--rule);
-      border-radius: 4px;
+      border: 1px solid var(--rule-color);
+      border-radius: 999px;
       overflow: hidden;
-      background: var(--bg);
+      background: #f8fbff;
       margin-bottom: 16px;
+      padding: 3px;
     }
 
     .auth-tabs button {
@@ -549,23 +601,24 @@
       transition: background 0.15s, color 0.15s !important;
     }
 
-    .auth-tabs button + button { border-left: var(--rule) !important; }
+    .auth-tabs button + button { border-left: 0 !important; }
 
     .auth-tabs #loginTab[class*="bg-"],
     .auth-tabs #registerTab[class*="bg-"] {
-      background: var(--text) !important;
-      color: var(--bg) !important;
+      background: var(--inverse) !important;
+      color: var(--inverse-text) !important;
+      border-radius: 999px !important;
     }
 
     .auth-tabs button:hover {
       color: var(--text) !important;
-      background: rgba(0, 0, 0, 0.035) !important;
+      background: rgba(215, 224, 235, 0.52) !important;
     }
 
     .auth-tabs #loginTab[class*="bg-"]:hover,
     .auth-tabs #registerTab[class*="bg-"]:hover {
-      background: #333 !important;
-      color: var(--bg) !important;
+      background: var(--inverse-soft) !important;
+      color: var(--inverse-text) !important;
     }
 
     .form-stack {
@@ -576,7 +629,9 @@
     .form-row {
       display: flex;
       align-items: center;
-      justify-content: flex-end;
+      justify-content: space-between;
+      gap: 12px;
+      flex-wrap: wrap;
     }
 
     .text-button {
@@ -638,7 +693,7 @@
     .legal {
       margin-top: 18px;
       padding-top: 16px;
-      border-top: var(--rule);
+      border-top: 1px solid var(--rule-color);
       color: var(--text-faint);
       font-size: 11.5px;
       line-height: 1.5;
@@ -682,11 +737,11 @@
 
       .intro-panel {
         border-right: none;
-        border-bottom: var(--rule);
-        padding: 40px 24px;
+        border-bottom: 0;
+        padding: 54px 32px;
       }
 
-      .intro-h1 { font-size: 36px; }
+      .intro-h1 { font-size: 46px; }
       .auth-panel { padding: 36px 20px 44px; }
       .auth-wrap { max-width: 520px; }
     }
@@ -695,32 +750,76 @@
       .page {
         border-left: none;
         border-right: none;
+        width: 100vw;
+        max-width: 100vw;
       }
 
-      .nav { padding: 12px 16px; }
+      .login-layout {
+        width: 100vw;
+        max-width: 100vw;
+        overflow: hidden;
+      }
+
+      .nav {
+        min-height: 58px;
+        padding: 0 16px;
+      }
       .nav-links,
       .nav-sign-in,
+      .nav-cta,
       .nav-logo-version { display: none; }
 
       .intro-panel { display: none; }
       .mobile-brand {
-        display: flex;
+        display: none;
         align-items: center;
-        justify-content: center;
+        justify-content: flex-start;
         gap: 8px;
         margin-bottom: 22px;
-        font-family: var(--font-mono);
+        font-family: var(--font-body);
         font-size: 13px;
-        font-weight: 600;
+        font-weight: 650;
       }
 
       .auth-panel {
-        min-height: calc(100vh - 47px);
+        min-height: calc(100vh - 58px);
         align-items: flex-start;
+        justify-content: center;
+        width: 100%;
+        max-width: 100vw;
+        min-width: 0;
+        padding-left: 20px;
+        padding-right: 20px;
+        overflow: hidden;
+      }
+
+      .auth-wrap,
+      .auth-card,
+      .entry-card,
+      .sso-block,
+      .promo-block {
+        width: 330px;
+        max-width: 330px;
+        min-width: 0;
+      }
+
+      .auth-card .sso-block,
+      .auth-card .promo-block {
+        width: 100%;
+        max-width: 100%;
+      }
+
+      .auth-subtitle,
+      .entry-copy,
+      .sso-copy,
+      .sso-hint {
+        overflow-wrap: anywhere;
       }
 
       .auth-title { font-size: 26px; }
       .entry-split { grid-template-columns: 1fr; }
+      .sso-row { grid-template-columns: 1fr; }
+      .sso-row .btn { width: 100%; }
     }
 
     @media (max-width: 480px) {
@@ -730,32 +829,33 @@
       .auth-footnote { flex-direction: column; gap: 4px; }
     }
   </style>
-  <link rel="stylesheet" href="/css/site-theme.css">
 </head>
 <body>
   <div class="page">
     <nav class="nav">
       <a href="/" class="nav-logo">
+        <span class="nav-logo-mark">VP</span>
         <span class="nav-logo-name">VaultProof</span>
-        <span class="nav-logo-version">v0.4.2</span>
+        <span class="nav-logo-version">v1.4.2</span>
       </a>
       <div class="nav-spacer"></div>
       <div class="nav-links">
-        <a href="/scan">scanner</a>
-        <a href="/docs">docs</a>
-        <a href="/blog">insights</a>
-        <a href="/#pricing">pricing</a>
+        <a href="/#product">Product</a>
+        <a href="/docs">Docs</a>
+        <a href="/docs#sdk-reference" data-i18n-lock>SDK</a>
+        <a href="/docs#cli-reference" data-i18n-lock>CLI</a>
+        <a href="/#pricing">Pricing</a>
       </div>
-      <a href="/app/login" class="nav-sign-in">sign in</a>
-      <a href="/app/login" class="nav-cta">get started</a>
+      <a href="/app/login" class="nav-sign-in">Sign in</a>
+      <a href="/app/login" class="nav-cta">Get a key</a>
     </nav>
 
     <main class="login-layout">
       <section class="intro-panel" aria-label="VaultProof authentication overview">
         <div>
-          <div class="eyebrow">00 / Secure access</div>
-          <h1 class="intro-h1">Enter the vault. Keep the keys out.</h1>
-          <p class="intro-sub">Sign in to manage split-key projects, provider proxying, origin locks, and activity logs from the same system that keeps whole API keys away from your apps.</p>
+          <div class="eyebrow">Secure access</div>
+          <h1 class="intro-h1">Access the vault. Never expose the key.</h1>
+          <p class="intro-sub">Sign in to manage split-key projects, provider proxying, agent credentials, and activity logs from the same system that keeps whole API keys away from your apps.</p>
 
           <div class="trust-grid">
             <div class="trust-item">
@@ -820,17 +920,17 @@
           <div class="auth-heading">
             <div class="auth-kicker">dashboard access</div>
             <h2 class="auth-title">Sign in to VaultProof</h2>
-            <p class="auth-subtitle">Solo developers land in the standard Projects workspace. Team and business accounts use the separate enterprise dashboard once a shared org is active.</p>
+            <p class="auth-subtitle">Route into the right workspace for protected API keys, proxy tokens, scans, and team controls.</p>
             <div class="entry-split" aria-label="Access paths">
               <div class="entry-card">
-                <div class="entry-label">solo developers</div>
+                <div class="entry-label">individual</div>
                 <div class="entry-title">Projects workspace</div>
-                <p class="entry-copy">Use the regular VaultProof dashboard for individual projects, keys, scans, and day-to-day setup.</p>
+                <p class="entry-copy">Manage personal projects, keys, scans, and day-to-day setup.</p>
               </div>
               <div class="entry-card">
-                <div class="entry-label">teams and businesses</div>
+                <div class="entry-label">team</div>
                 <div class="entry-title">Enterprise workspace</div>
-                <p class="entry-copy">Shared orgs land in a separate operator dashboard for access, governance, runtime posture, and alert delivery.</p>
+                <p class="entry-copy">Use shared org controls for access, governance, runtime posture, and alerts.</p>
               </div>
             </div>
           </div>
