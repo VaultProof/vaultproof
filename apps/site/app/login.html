@@ -268,43 +268,6 @@
       line-height: 1.5;
     }
 
-    .entry-split {
-      display: grid;
-      grid-template-columns: repeat(2, minmax(0, 1fr));
-      gap: 10px;
-      margin-top: 18px;
-    }
-
-    .entry-card {
-      border: 1px solid rgba(188, 201, 216, 0.78);
-      border-radius: 10px;
-      background: rgba(255, 255, 255, 0.72);
-      padding: 12px 14px;
-    }
-
-    .entry-label {
-      font-family: var(--font-mono);
-      font-size: 10.5px;
-      letter-spacing: 0.08em;
-      text-transform: uppercase;
-      color: var(--accent);
-    }
-
-    .entry-title {
-      font-family: var(--font-display);
-      font-size: 18px;
-      font-weight: 620;
-      letter-spacing: -0.04em;
-      margin-top: 6px;
-    }
-
-    .entry-copy {
-      margin-top: 6px;
-      color: var(--text-muted);
-      font-size: 12.5px;
-      line-height: 1.5;
-    }
-
     .auth-card {
       background: var(--bg-card);
       border: 1px solid rgba(188, 201, 216, 0.9);
@@ -658,7 +621,6 @@
 
       .auth-wrap,
       .auth-card,
-      .entry-card,
       .promo-block {
         width: 330px;
         max-width: 330px;
@@ -670,13 +632,11 @@
         max-width: 100%;
       }
 
-      .auth-subtitle,
-      .entry-copy {
+      .auth-subtitle {
         overflow-wrap: anywhere;
       }
 
       .auth-title { font-size: 26px; }
-      .entry-split { grid-template-columns: 1fr; }
     }
 
     @media (max-width: 480px) {
@@ -760,18 +720,6 @@
             <div class="auth-kicker">dashboard access</div>
             <h2 class="auth-title">Sign in to VaultProof</h2>
             <p class="auth-subtitle">Route into the right workspace for protected API keys, proxy tokens, scans, and team controls.</p>
-            <div class="entry-split" aria-label="Access paths">
-              <div class="entry-card">
-                <div class="entry-label">individual</div>
-                <div class="entry-title">Projects workspace</div>
-                <p class="entry-copy">Manage personal projects, keys, scans, and day-to-day setup.</p>
-              </div>
-              <div class="entry-card">
-                <div class="entry-label">team</div>
-                <div class="entry-title">Enterprise workspace</div>
-                <p class="entry-copy">Use shared org controls for access, governance, runtime posture, and alerts.</p>
-              </div>
-            </div>
           </div>
 
           <div id="authCard" class="auth-card">
