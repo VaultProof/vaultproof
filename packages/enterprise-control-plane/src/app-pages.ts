@@ -5358,8 +5358,73 @@ ${renderDatalistOptions(ENTERPRISE_MANUAL_API_KEY_PROVIDER_OPTIONS)}
           note: redactInventoryNote(byId('exposureIncidentNote') && byId('exposureIncidentNote').value)
         };
       }
+      function scannerStorageKey() {
+        return 'vaultproof_scanner_findings::' + (currentOrgId || 'default');
+      }
+      function scannerSecretPattern(value) {
+        return /(sk-[a-z0-9_-]{8,}|gocspx-|eyJ[a-zA-Z0-9_-]{10,}|-----BEGIN|Bearer\\s+|service[_ -]?role|client[_ -]?secret|api[_ -]?key|password|private[_ -]?key|authorization:|cookie:|x-api-key|secret_access_key)/i.test(String(value || ''));
+      }
+      function redactScannerText(value) {
+        var textValue = String(value || '').trim();
+        if (!textValue) return '';
+        if (scannerSecretPattern(textValue)) return '[redacted: scanner field contained secret-like material]';
+        return textValue.slice(0, 500);
+      }
+      function readExposureScannerFindings() {
+        try {
+          var parsed = JSON.parse(localStorage.getItem(scannerStorageKey()) || '[]');
+          var rows = Array.isArray(parsed) ? parsed : Object.keys(parsed || {}).map(function(key) { return parsed[key]; });
+          return rows.filter(function(row) { return row && typeof row === 'object'; }).map(function(row) {
+            return {
+              id: row.id || ('scanner-' + Math.random().toString(36).slice(2)),
+              repository: redactScannerText(row.repository),
+              branch: redactScannerText(row.branch),
+              finding_type: redactScannerText(row.finding_type || 'hardcoded_secret'),
+              secret_family: redactScannerText(row.secret_family),
+              severity: ['critical', 'high', 'medium', 'low'].indexOf(row.severity) !== -1 ? row.severity : 'high',
+              status: ['new', 'confirmed', 'rotating', 'rotated', 'accepted_demo', 'false_positive', 'blocked'].indexOf(row.status) !== -1 ? row.status : 'new',
+              owner: redactScannerText(row.owner),
+              provider_slot: redactScannerText(row.provider_slot),
+              evidence_ref: redactScannerText(row.evidence_ref),
+              note: redactScannerText(row.note),
+              created_at: row.created_at || null,
+              updated_at: row.updated_at || null
+            };
+          }).slice(0, 50);
+        } catch (_error) {
+          return [];
+        }
+      }
+      function scannerFindingOpen(finding) {
+        return ['new', 'confirmed', 'rotating', 'blocked'].indexOf(finding.status) !== -1;
+      }
+      function scannerFindingMatchesSlot(finding, slot) {
+        if (!finding || !slot) return false;
+        var haystack = [
+          finding.provider_slot,
+          finding.secret_family,
+          finding.note,
+          finding.evidence_ref
+        ].filter(Boolean).join(' ').toLowerCase();
+        var provider = String(slot.provider || '').toLowerCase();
+        var slug = String(slot.slug || slot.provider || '').toLowerCase();
+        return Boolean(haystack && ((provider && haystack.indexOf(provider) !== -1) || (slug && haystack.indexOf(slug) !== -1)));
+      }
+      function exposureScannerSummary(findings) {
+        var rows = Array.isArray(findings) ? findings : readExposureScannerFindings();
+        var open = rows.filter(scannerFindingOpen);
+        return {
+          total_findings: rows.length,
+          open_findings: open.length,
+          open_critical_or_high: open.filter(function(row) { return row.severity === 'critical' || row.severity === 'high'; }).length,
+          rotating: rows.filter(function(row) { return row.status === 'rotating'; }).length,
+          rotated: rows.filter(function(row) { return row.status === 'rotated'; }).length,
+          accepted_for_demo: rows.filter(function(row) { return row.status === 'accepted_demo'; }).length
+        };
+      }
       function exposureResponseRows() {
         var health = projectHealthMap();
+        var scannerFindings = readExposureScannerFindings();
         var rows = [];
         cachedProjects.forEach(function(project) {
           (project.provider_slots || []).forEach(function(slot) {
@@ -5388,7 +5453,8 @@ ${renderDatalistOptions(ENTERPRISE_MANUAL_API_KEY_PROVIDER_OPTIONS)}
                 errors: Number(projectHealth.errors || 0),
                 denied: Number(projectHealth.denied || 0),
                 last_seen_at: projectHealth.lastActivity || null
-              }
+              },
+              scanner_findings: scannerFindings.filter(function(finding) { return scannerFindingMatchesSlot(finding, slot); })
             };
             row.risk = exposureResponseRisk(row);
             row.actions = exposureResponseActions(row);
@@ -5398,18 +5464,22 @@ ${renderDatalistOptions(ENTERPRISE_MANUAL_API_KEY_PROVIDER_OPTIONS)}
         return rows;
       }
       function exposureResponseRisk(row) {
+        var openScannerFindings = (row.scanner_findings || []).filter(scannerFindingOpen);
+        if (openScannerFindings.some(function(finding) { return finding.severity === 'critical' || finding.severity === 'high'; })) return 'scanner_open_exposure';
         if (!row.provider.material_ready || row.provider.material_mode !== 'sealed-live') return 'needs_rotation';
         if (Number(row.traffic.denied || 0) > 0 || Number(row.traffic.errors || 0) > 0) return 'review_activity';
         if (!Number(row.traffic.calls || 0)) return 'needs_usage_evidence';
         return 'ready_to_contain';
       }
       function exposureRiskTone(risk) {
-        if (risk === 'needs_rotation') return 'bad';
+        if (risk === 'scanner_open_exposure' || risk === 'needs_rotation') return 'bad';
         if (risk === 'review_activity' || risk === 'needs_usage_evidence') return 'warn';
         return 'good';
       }
       function exposureResponseActions(row) {
         var actions = [];
+        var openScannerFindings = (row.scanner_findings || []).filter(scannerFindingOpen);
+        if (openScannerFindings.length) actions.push('close ' + openScannerFindings.length + ' linked scanner finding' + (openScannerFindings.length === 1 ? '' : 's'));
         if (row.can_emergency_revoke) actions.push('emergency revoke available from Provider Slots');
         else actions.push('assign an owner/admin to revoke this slot');
         if (!row.provider.material_ready || row.provider.material_mode !== 'sealed-live') actions.push('rotate upstream credential and seal a live provider slot');
@@ -5421,18 +5491,25 @@ ${renderDatalistOptions(ENTERPRISE_MANUAL_API_KEY_PROVIDER_OPTIONS)}
       }
       function exposureResponseSummary(rows) {
         var list = Array.isArray(rows) ? rows : exposureResponseRows();
+        var scanner = exposureScannerSummary();
         return {
           total_provider_slots: list.length,
           sealed_live: list.filter(function(row) { return row.provider.material_mode === 'sealed-live'; }).length,
           demo_or_unready: list.filter(function(row) { return row.provider.material_mode !== 'sealed-live' || !row.provider.material_ready; }).length,
           emergency_revoke_available: list.filter(function(row) { return row.can_emergency_revoke; }).length,
+          linked_scanner_findings: list.reduce(function(total, row) { return total + (row.scanner_findings || []).length; }, 0),
+          open_scanner_findings: scanner.open_findings,
+          open_critical_or_high_scanner_findings: scanner.open_critical_or_high,
+          scanner_findings_recorded: scanner.total_findings,
           needs_rotation: list.filter(function(row) { return row.risk === 'needs_rotation'; }).length,
+          scanner_open_exposure: list.filter(function(row) { return row.risk === 'scanner_open_exposure'; }).length,
           needs_activity_review: list.filter(function(row) { return row.risk === 'review_activity'; }).length,
           needs_usage_evidence: list.filter(function(row) { return row.risk === 'needs_usage_evidence'; }).length
         };
       }
       function exposureResponsePacket() {
         var rows = exposureResponseRows();
+        var scannerFindings = readExposureScannerFindings();
         return {
           packet_type: 'vaultproof_enterprise_key_exposure_response',
           packet_version: 1,
@@ -5449,7 +5526,37 @@ ${renderDatalistOptions(ENTERPRISE_MANUAL_API_KEY_PROVIDER_OPTIONS)}
               risk: row.risk,
               can_emergency_revoke: row.can_emergency_revoke,
               traffic: row.traffic,
+              linked_scanner_findings: (row.scanner_findings || []).map(function(finding) {
+                return {
+                  id: finding.id,
+                  repository: finding.repository || null,
+                  branch: finding.branch || null,
+                  finding_type: finding.finding_type || null,
+                  secret_family: finding.secret_family || null,
+                  severity: finding.severity,
+                  status: finding.status,
+                  owner: finding.owner || null,
+                  provider_slot: finding.provider_slot || null,
+                  evidence_ref: finding.evidence_ref || null,
+                  note: finding.note || null
+                };
+              }),
               recommended_actions: row.actions
+            };
+          }),
+          scanner_findings: scannerFindings.map(function(finding) {
+            return {
+              id: finding.id,
+              repository: finding.repository || null,
+              branch: finding.branch || null,
+              finding_type: finding.finding_type || null,
+              secret_family: finding.secret_family || null,
+              severity: finding.severity,
+              status: finding.status,
+              owner: finding.owner || null,
+              provider_slot: finding.provider_slot || null,
+              evidence_ref: finding.evidence_ref || null,
+              note: finding.note || null
             };
           }),
           workflow_links: {
@@ -5479,7 +5586,7 @@ ${renderDatalistOptions(ENTERPRISE_MANUAL_API_KEY_PROVIDER_OPTIONS)}
         var packet = exposureResponsePacket();
         var summary = packet.summary;
         var priority = packet.provider_slots.filter(function(row) {
-          return row.risk === 'needs_rotation' || row.risk === 'review_activity';
+          return row.risk === 'scanner_open_exposure' || row.risk === 'needs_rotation' || row.risk === 'review_activity';
         }).slice(0, 12);
         var lines = [
           'VaultProof key exposure response brief',
@@ -5492,7 +5599,11 @@ ${renderDatalistOptions(ENTERPRISE_MANUAL_API_KEY_PROVIDER_OPTIONS)}
           '- Live sealed slots: ' + number(summary.sealed_live),
           '- Demo or unready slots: ' + number(summary.demo_or_unready),
           '- Emergency revoke available: ' + number(summary.emergency_revoke_available),
+          '- Scanner findings recorded: ' + number(summary.scanner_findings_recorded),
+          '- Open scanner findings: ' + number(summary.open_scanner_findings),
+          '- Open critical/high scanner findings: ' + number(summary.open_critical_or_high_scanner_findings),
           '- Needs rotation: ' + number(summary.needs_rotation),
+          '- Scanner-linked open exposure: ' + number(summary.scanner_open_exposure),
           '- Needs activity review: ' + number(summary.needs_activity_review),
           '- Needs usage evidence: ' + number(summary.needs_usage_evidence),
           '',
@@ -5516,10 +5627,12 @@ ${renderDatalistOptions(ENTERPRISE_MANUAL_API_KEY_PROVIDER_OPTIONS)}
       function renderExposureResponseRow(row) {
         var tone = exposureRiskTone(row.risk);
         var slug = row.provider.slug || row.provider.provider || 'provider';
+        var linkedScanner = (row.scanner_findings || []).filter(scannerFindingOpen);
+        var scannerTag = linkedScanner.length ? '<span class="tag bad">' + linkedScanner.length + ' open scanner finding' + (linkedScanner.length === 1 ? '' : 's') + '</span>' : '';
         var revokeButton = row.can_emergency_revoke
           ? '<button type="button" class="danger" data-action="revoke-slot" data-project-id="' + escapeHtml(row.project.id) + '" data-slug="' + escapeHtml(slug) + '">emergency revoke</button>'
           : '<span class="tag warn">admin required</span>';
-        return '<div class="row"><div><div class="row-title">' + escapeHtml(row.project.name || row.project.vp_proj_id || 'Project') + ' - ' + escapeHtml(slug) + '</div><div class="row-sub">Material ' + escapeHtml(row.provider.material_mode || 'missing') + ' - calls ' + number(row.traffic.calls) + ' - denied ' + number(row.traffic.denied) + ' - last seen ' + escapeHtml(rel(row.traffic.last_seen_at)) + '</div><div><span class="tag ' + tone + '">' + escapeHtml(row.risk) + '</span><span class="tag">' + escapeHtml(row.provider.provider || 'provider') + '</span><span class="tag ' + (row.project.strict_origin ? 'good' : 'warn') + '">' + (row.project.strict_origin ? 'strict origin' : 'origin relaxed') + '</span></div><div class="row-sub">' + row.actions.map(escapeHtml).join(' - ') + '</div></div><div class="row-actions">' + revokeButton + '<button type="button" data-action="copy-proxy-dry-run" data-project-id="' + escapeHtml(row.project.id) + '" data-slug="' + escapeHtml(slug) + '">copy dry-run</button><a class="tag" href="/app/activity">activity</a></div></div>';
+        return '<div class="row"><div><div class="row-title">' + escapeHtml(row.project.name || row.project.vp_proj_id || 'Project') + ' - ' + escapeHtml(slug) + '</div><div class="row-sub">Material ' + escapeHtml(row.provider.material_mode || 'missing') + ' - calls ' + number(row.traffic.calls) + ' - denied ' + number(row.traffic.denied) + ' - last seen ' + escapeHtml(rel(row.traffic.last_seen_at)) + '</div><div><span class="tag ' + tone + '">' + escapeHtml(row.risk) + '</span><span class="tag">' + escapeHtml(row.provider.provider || 'provider') + '</span><span class="tag ' + (row.project.strict_origin ? 'good' : 'warn') + '">' + (row.project.strict_origin ? 'strict origin' : 'origin relaxed') + '</span>' + scannerTag + '</div><div class="row-sub">' + row.actions.map(escapeHtml).join(' - ') + '</div></div><div class="row-actions">' + revokeButton + '<button type="button" data-action="copy-proxy-dry-run" data-project-id="' + escapeHtml(row.project.id) + '" data-slug="' + escapeHtml(slug) + '">copy dry-run</button><a class="tag" href="/app/scanner">scanner</a><a class="tag" href="/app/activity">activity</a></div></div>';
       }
       function renderExposureResponse() {
         var panel = byId('exposureResponsePanel');
@@ -5531,6 +5644,7 @@ ${renderDatalistOptions(ENTERPRISE_MANUAL_API_KEY_PROVIDER_OPTIONS)}
         byId('exposureResponseChecklist').innerHTML = [
           '<div class="row"><div><div class="row-title">Contain through VaultProof first</div><div class="row-sub">Emergency revoke pauses provider-slot usage without exposing or copying raw upstream keys.</div></div><span class="tag good">kill switch</span></div>',
           '<div class="row"><div><div class="row-title">Rotate upstream second</div><div class="row-sub">Create new upstream provider credentials, seal them into VaultProof, run dry-run evidence, then retire exposed raw env vars.</div></div><span class="tag warn">rotation</span></div>',
+          '<div class="row"><div><div class="row-title">Scanner findings linked</div><div class="row-sub">' + number(summary.linked_scanner_findings) + ' provider-slot matches from ' + number(summary.scanner_findings_recorded) + ' redacted scanner findings. Open critical/high findings stay visible until marked rotating, rotated, false positive, or demo accepted in Scanner.</div></div><a class="tag ' + (summary.open_critical_or_high_scanner_findings ? 'bad' : 'good') + '" href="/app/scanner">' + number(summary.open_critical_or_high_scanner_findings) + ' critical/high open</a></div>',
           '<div class="row"><div><div class="row-title">Prove what VaultProof saw</div><div class="row-sub">Export audit CSV, activity, and this incident JSON for security review. Past direct-provider usage outside VaultProof remains outside this proof boundary.</div></div><span><button class="tag good" type="button" data-action="copy-exposure-response-json">JSON</button><a class="tag" href="' + escapeHtml(evidenceExportHref('/api/v1/enterprise/audit?format=csv&days=30')) + '">audit CSV</a></span></div>'
         ].join('');
         byId('exposureResponseList').innerHTML = rows.length ? rows.map(renderExposureResponseRow).join('') : '<div class="empty">No provider slots are visible yet. Add provider slots before using VaultProof as the incident response control layer.</div>';
@@ -6123,6 +6237,10 @@ function renderEnterpriseSupportPage(pageName: EnterpriseSupportPageName): strin
         <div class="card" style="grid-column:1/-1">
           <div class="section-title"><h2>Key rotation proof</h2><span class="mini" id="evidenceKeyRotationMeta">hold</span></div>
           <div id="evidenceKeyRotationList" class="list"></div>
+        </div>
+        <div class="card" style="grid-column:1/-1">
+          <div class="section-title"><h2>Key exposure response proof</h2><span class="mini" id="evidenceExposureResponseMeta">hold</span></div>
+          <div id="evidenceExposureResponseList" class="list"></div>
         </div>
         <div class="card" style="grid-column:1/-1">
           <div class="section-title"><h2>Pilot operations proof</h2><span class="mini" id="evidencePilotOpsMeta">hold</span></div>
@@ -8259,6 +8377,164 @@ function renderEnterpriseSupportPage(pageName: EnterpriseSupportPageName): strin
           row('Secret boundary', 'Scanner evidence excludes ' + packet.secrets_excluded.join(', ') + '.', 'redacted', 'good')
         ];
       }
+      function providerSlotEvidenceRowsFromBootstrap(bootstrap) {
+        var projects = bootstrap && Array.isArray(bootstrap.projects) ? bootstrap.projects : [];
+        var rows = [];
+        projects.forEach(function(project) {
+          (project.provider_slots || []).forEach(function(slot) {
+            rows.push({
+              project: {
+                id: project.id || null,
+                name: project.name || null,
+                vp_proj_id: project.vp_proj_id || null,
+                strict_origin: project.strict_origin === true
+              },
+              provider: {
+                key_id: slot.key_id || null,
+                provider: slot.provider || null,
+                slug: slot.slug || slot.provider || null,
+                material_mode: slot.material_mode || 'missing',
+                material_ready: slot.material_ready === true
+              }
+            });
+          });
+        });
+        return rows;
+      }
+      function scannerFindingMatchesProviderSlot(finding, slot) {
+        if (!finding || !slot) return false;
+        var haystack = [
+          finding.provider_slot,
+          finding.secret_family,
+          finding.note,
+          finding.evidence_ref
+        ].filter(Boolean).join(' ').toLowerCase();
+        var provider = String(slot.provider || '').toLowerCase();
+        var slug = String(slot.slug || slot.provider || '').toLowerCase();
+        return Boolean(haystack && ((provider && haystack.indexOf(provider) !== -1) || (slug && haystack.indexOf(slug) !== -1)));
+      }
+      function exposureResponseRiskForSlot(row) {
+        var openLinked = (row.linked_scanner_findings || []).filter(scannerFindingOpen);
+        if (openLinked.some(function(finding) { return finding.severity === 'critical' || finding.severity === 'high'; })) return 'scanner_open_exposure';
+        if (!row.provider.material_ready || row.provider.material_mode !== 'sealed-live') return 'needs_rotation';
+        return 'ready_to_contain';
+      }
+      function exposureResponseActionsForSlot(row) {
+        var actions = [];
+        var openLinked = (row.linked_scanner_findings || []).filter(scannerFindingOpen);
+        if (openLinked.length) actions.push('Close ' + openLinked.length + ' linked scanner finding' + (openLinked.length === 1 ? '' : 's') + ' or record accepted demo-only risk.');
+        if (!row.provider.material_ready || row.provider.material_mode !== 'sealed-live') actions.push('Rotate upstream credential and seal a live provider slot before paid data.');
+        actions.push('Use Provider Slots for emergency revoke and copy-safe incident JSON before sharing evidence.');
+        return actions;
+      }
+      function buildKeyExposureResponsePacket(overview, bootstrap, scannerExposure) {
+        var scannerPacket = scannerExposure || buildScannerExposurePacket(overview || {}, bootstrap || {});
+        var scannerFindings = Array.isArray(scannerPacket.findings) ? scannerPacket.findings : [];
+        var rows = providerSlotEvidenceRowsFromBootstrap(bootstrap || {}).map(function(row) {
+          var linked = scannerFindings.filter(function(finding) { return scannerFindingMatchesProviderSlot(finding, row.provider); });
+          var responseRow = {
+            project: row.project,
+            provider: row.provider,
+            linked_scanner_findings: linked.map(function(finding) {
+              return {
+                id: finding.id,
+                repository: finding.repository || null,
+                branch: finding.branch || null,
+                finding_type: finding.finding_type || null,
+                secret_family: finding.secret_family || null,
+                severity: finding.severity,
+                status: finding.status,
+                owner: finding.owner || null,
+                provider_slot: finding.provider_slot || null,
+                evidence_ref: finding.evidence_ref || null,
+                note: finding.note || null
+              };
+            })
+          };
+          responseRow.risk = exposureResponseRiskForSlot(responseRow);
+          responseRow.recommended_actions = exposureResponseActionsForSlot(responseRow);
+          return responseRow;
+        });
+        var openLinked = rows.reduce(function(total, row) {
+          return total + (row.linked_scanner_findings || []).filter(scannerFindingOpen).length;
+        }, 0);
+        var openCriticalLinked = rows.reduce(function(total, row) {
+          return total + (row.linked_scanner_findings || []).filter(function(finding) {
+            return scannerFindingOpen(finding) && (finding.severity === 'critical' || finding.severity === 'high');
+          }).length;
+        }, 0);
+        var summary = {
+          total_provider_slots: rows.length,
+          live_sealed_slots: rows.filter(function(row) { return row.provider.material_mode === 'sealed-live' && row.provider.material_ready === true; }).length,
+          demo_or_unready_slots: rows.filter(function(row) { return row.provider.material_mode !== 'sealed-live' || row.provider.material_ready !== true; }).length,
+          linked_scanner_findings: rows.reduce(function(total, row) { return total + (row.linked_scanner_findings || []).length; }, 0),
+          open_linked_scanner_findings: openLinked,
+          open_critical_or_high_linked_findings: openCriticalLinked,
+          scanner_findings_recorded: scannerPacket.summary && scannerPacket.summary.total_findings || scannerFindings.length,
+          open_critical_or_high_scanner_findings: scannerPacket.summary && scannerPacket.summary.open_critical_or_high || 0,
+          provider_slots_needing_rotation: rows.filter(function(row) { return row.risk === 'scanner_open_exposure' || row.risk === 'needs_rotation'; }).length
+        };
+        var status = !summary.total_provider_slots ? 'needs_provider_slots' : openCriticalLinked ? 'hold' : summary.provider_slots_needing_rotation ? 'rotation_review' : 'ready_to_contain';
+        return {
+          packet_type: 'vaultproof_enterprise_key_exposure_response',
+          packet_version: 2,
+          status: status,
+          decision: status === 'ready_to_contain'
+            ? 'Provider slots are live-sealed with no linked open critical/high scanner exposure in this browser evidence state.'
+            : status === 'hold'
+              ? 'Hold paid traffic until linked critical/high scanner exposure is rotated, revoked, or explicitly accepted for demo-only review.'
+              : status === 'needs_provider_slots'
+                ? 'Add provider slots before VaultProof can act as the incident containment layer.'
+                : 'Review rotation posture before paid customer data; at least one provider slot is not live-sealed.',
+          generated_at: new Date().toISOString(),
+          generated_from: location.origin + '/app/evidence',
+          summary: summary,
+          provider_slots: rows,
+          proof_boundary: {
+            vaultproof_controls: 'VaultProof can revoke provider-slot use, copy incident JSON, and prove routed traffic, denials, and audit events that pass through VaultProof.',
+            outside_boundary: 'Direct raw-provider-key use outside VaultProof still requires upstream provider rotation and customer-side log review.'
+          },
+          workflow_links: {
+            provider_slots: '/app/keys',
+            scanner: '/app/scanner',
+            activity: '/app/activity',
+            audit: '/app/audit',
+            evidence: '/app/evidence',
+            security_review: '/app/security-review'
+          },
+          operator_actions: [
+            'Open Provider Slots and copy the key exposure response JSON.',
+            'Emergency revoke affected provider slots before copying or rotating raw upstream credentials.',
+            'Rotate upstream provider credentials, seal new material into VaultProof, and retire exposed env vars.',
+            'Close linked scanner findings only after rotation, revoke, false-positive review, or explicit demo-only acceptance.',
+            'Export audit CSV and activity evidence for the customer security review packet.'
+          ],
+          secrets_excluded: [
+            'raw provider keys',
+            'encrypted provider shares',
+            'OAuth client secrets',
+            'webhook signing secrets',
+            'private key material',
+            'bearer tokens',
+            'request bodies',
+            'response bodies',
+            'customer payloads'
+          ]
+        };
+      }
+      function keyExposureResponseProofRows(packet) {
+        var summary = packet.summary || {};
+        return [
+          row('Exposure response status', packet.decision, packet.status, packet.status === 'hold' ? 'bad' : packet.status === 'ready_to_contain' ? 'good' : 'warn'),
+          row('Provider slot containment', number(summary.total_provider_slots) + ' provider slots in scope, ' + number(summary.live_sealed_slots) + ' live-sealed, ' + number(summary.demo_or_unready_slots) + ' demo or unready.', summary.total_provider_slots ? 'slots' : 'missing', summary.total_provider_slots ? 'good' : 'warn'),
+          row('Linked scanner exposure', number(summary.linked_scanner_findings) + ' scanner findings linked to provider slots; ' + number(summary.open_critical_or_high_linked_findings) + ' linked critical/high findings remain open.', summary.open_critical_or_high_linked_findings ? 'hold' : 'review', summary.open_critical_or_high_linked_findings ? 'bad' : 'good'),
+          row('Rotation scope', number(summary.provider_slots_needing_rotation) + ' provider slots need rotation or review before paid customer data.', summary.provider_slots_needing_rotation ? 'rotate' : 'clear', summary.provider_slots_needing_rotation ? 'warn' : 'good'),
+          linkRow('Open Provider Slots', 'Use incident mode to emergency revoke affected slots and copy the customer-safe response JSON.', '/app/keys', 'incident', 'good'),
+          linkRow('Open Scanner', 'Close or update linked exposure findings after rotation, revoke, or explicit demo-only acceptance.', '/app/scanner', 'scanner', summary.open_critical_or_high_linked_findings ? 'warn' : 'good'),
+          row('Proof boundary', packet.proof_boundary.vaultproof_controls + ' ' + packet.proof_boundary.outside_boundary, 'boundary', 'good'),
+          row('Secret boundary', 'Response evidence excludes ' + packet.secrets_excluded.join(', ') + '.', 'redacted', 'good')
+        ];
+      }
       function releaseEvidenceStorageKey() {
         return 'vaultproof_release_evidence::' + (currentOrgId || 'default');
       }
@@ -8911,6 +9187,7 @@ function renderEnterpriseSupportPage(pageName: EnterpriseSupportPageName): strin
         var policyDrift = buildPolicyDriftPacket(overview, bootstrap);
         var integrationRollout = buildIntegrationRolloutPacket(overview, bootstrap);
         var scannerExposure = buildScannerExposurePacket(overview, bootstrap);
+        var keyExposureResponse = buildKeyExposureResponsePacket(overview, bootstrap, scannerExposure);
         var support = buildLaunchSupportPacket(org, sso, readiness, overview, bootstrap, goNoGo);
         var monitoring = buildMonitoringEvidencePacket(org, sso, readiness, overview, bootstrap, goNoGo);
         var releaseEvidence = buildReleaseEvidencePacket(org, sso, readiness, overview, bootstrap);
@@ -8954,6 +9231,7 @@ function renderEnterpriseSupportPage(pageName: EnterpriseSupportPageName): strin
             { name: 'Policy drift and exceptions', status: policyDrift.status, tone: policyDrift.status === 'hold' ? 'warn' : 'good', detail: 'Policy drift rows are derived from existing project/provider/policy/traffic evidence, with browser-local accepted-risk records, owners, expiry, and compensating controls.' },
             { name: 'Integration rollout', status: integrationRollout.status, tone: integrationRollout.status === 'hold' ? 'warn' : 'good', detail: 'Rollout rows tie API inventory, policy drift, owners, canary status, rollback path, and copy-safe dry-run snippets into one customer cutover plan.' },
             { name: 'Secret exposure review', status: scannerExposure.status, tone: scannerExposure.status === 'hold' ? 'warn' : 'good', detail: 'Scanner intake records redacted repository exposure metadata, owners, rotation/remediation status, and customer-safe evidence references without uploading repo contents or secret values.' },
+            { name: 'Key exposure response', status: keyExposureResponse.status, tone: keyExposureResponse.status === 'hold' ? 'bad' : keyExposureResponse.status === 'ready_to_contain' ? 'good' : 'warn', detail: 'Provider Slots ties exposure findings to protected provider slots, emergency revoke, rotation review, customer-safe incident JSON, and an explicit VaultProof proof boundary.' },
             { name: 'Release evidence', status: releaseEvidence.status, tone: releaseEvidence.status === 'ready_with_review' ? 'good' : 'warn', detail: 'Release evidence records build/image tags, approver, verifier, QA/gate summary, rollout state, rollback owner/path, and customer-safe notes without exposing secrets.' },
             { name: 'Paid-pilot tester readiness', status: pilotTesters.status, tone: pilotTesters.status === 'ready_for_guided_testing' ? 'good' : 'warn', detail: 'Pilot tester evidence tracks roster, login status, scenario assignments, feedback, and blockers in browser-local metadata without storing secrets.' },
             { name: 'Contract entitlements', status: entitlements.status, tone: entitlements.status === 'ready_for_paid_pilot' ? 'good' : 'warn', detail: 'Contract package, capacity envelope, support tier, renewal owner, and incident-response boundary are tracked as customer-safe browser-local metadata for the paid demo.' },
@@ -8973,6 +9251,7 @@ function renderEnterpriseSupportPage(pageName: EnterpriseSupportPageName): strin
             { title: 'Policy Drift', href: '/app/policy', detail: 'Control gaps, demo-only material, owner gaps, stale traffic, accepted-risk records, expiry dates, and customer-safe JSON export.', tag: policyDrift.status, tone: policyDrift.status === 'hold' ? 'warn' : 'good' },
             { title: 'Rollout Manager', href: '/app/rollout', detail: 'Workload cutover plan with owners, integration mode, canary percentage, test status, rollback path, blockers, and evidence export.', tag: integrationRollout.status, tone: integrationRollout.status === 'hold' ? 'warn' : 'good' },
             { title: 'Scanner Exposure', href: '/app/scanner', detail: 'Redacted repository exposure findings, owners, rotation status, scanner evidence references, and remediation workflow.', tag: scannerExposure.status, tone: scannerExposure.status === 'hold' ? 'warn' : 'good' },
+            { title: 'Key Exposure Response', href: '/app/keys', detail: 'Provider-slot incident mode with linked scanner findings, emergency revoke, rotation scope, and customer-safe response JSON.', tag: keyExposureResponse.status, tone: keyExposureResponse.status === 'hold' ? 'bad' : keyExposureResponse.status === 'ready_to_contain' ? 'good' : 'warn' },
             { title: 'Release Evidence', href: '/app/release', detail: 'Build/image tag, approval, verification, rollout state, rollback owner/path, and customer-safe release proof.', tag: releaseEvidence.status, tone: releaseEvidence.status === 'ready_with_review' ? 'good' : 'warn' },
             { title: 'Pilot Testers', href: '/app/testers', detail: 'Paid-pilot tester roster, login readiness, scenario assignment, feedback capture, blocker state, and JSON packet.', tag: pilotTesters.status, tone: pilotTesters.status === 'ready_for_guided_testing' ? 'good' : 'warn' },
             { title: 'Entitlements', href: '/app/entitlements', detail: 'Contract capacity, support tier, renewal/review date, billing owner, success owner, and paid-user guardrails.', tag: entitlements.status, tone: entitlements.status === 'ready_for_paid_pilot' ? 'good' : 'warn' },
@@ -8990,11 +9269,13 @@ function renderEnterpriseSupportPage(pageName: EnterpriseSupportPageName): strin
           known_limitations: [
             'Manual go/no-go evidence is browser-local for this demo slice; persistent audit-backed manual evidence can come later.',
             'Plan limits, traffic envelopes, retention terms, and support cadence remain contract-controlled until billing/limits APIs are built.',
-            '24-hour incident response is optional add-on coverage unless the customer contract includes it.'
+            '24-hour incident response is optional add-on coverage unless the customer contract includes it.',
+            'VaultProof can prove and control routed provider usage; direct raw-key use outside VaultProof still requires upstream provider rotation and customer-side log review.'
           ],
           security_answers: [
             { question: 'Will provider keys appear in the browser or evidence packet?', answer: 'No. Customer pages show provider posture and material mode only. Raw keys, encrypted shares, service-role keys, origin-lock values, signing secrets, alert webhook secrets, and unwrap roots are excluded.' },
             { question: 'How is a stolen browser session limited?', answer: 'The session still needs organization membership, project access, caller-lock policy, allowed provider/upstream policy, rate limits, request signing, executor verification, and runtime readiness before protected provider work proceeds.' },
+            { question: 'What happens after an external platform or repository key exposure?', answer: 'Provider Slots can copy a customer-safe incident packet, show linked scanner findings, emergency revoke VaultProof-routed provider use, and guide upstream rotation. Direct raw-key use outside VaultProof remains outside the VaultProof proof boundary.' },
             { question: 'What can the customer export for review?', answer: 'Readiness, evidence packet JSON, audit CSV, access-review CSV, activity records, launch brief, and this security review packet.' },
             { question: 'Who owns incident response?', answer: 'Base pilot uses the customer incident-response team plus VaultProof launch support. 24-hour incident response can be sold as an add-on.' }
           ],
@@ -9008,6 +9289,7 @@ function renderEnterpriseSupportPage(pageName: EnterpriseSupportPageName): strin
             policy_drift_exceptions: policyDrift.status,
             integration_rollout: integrationRollout.status,
             scanner_exposure_review: scannerExposure.status,
+            key_exposure_response: keyExposureResponse.status,
             launch_support_readiness: support.status,
             release_evidence: releaseEvidence.status,
             pilot_tester_readiness: pilotTesters.status,
@@ -9035,7 +9317,7 @@ function renderEnterpriseSupportPage(pageName: EnterpriseSupportPageName): strin
           row('Security review packet status', packet.decision, packet.status, packet.status === 'ready_for_review' ? 'good' : 'warn'),
           row('Organization scope', (org.name || 'Selected workspace') + ' with ' + number(org.project_count) + ' projects, ' + number(org.member_count) + ' members, and ' + number(org.provider_slots) + ' provider slots.', org.id ? 'scoped' : 'select org', org.id ? 'good' : 'warn'),
           row('Go/no-go decision', 'Current launch board status is ' + packet.related_packets.go_no_go_status + '.', packet.related_packets.go_no_go_status, packet.related_packets.go_no_go_status === 'go' ? 'good' : 'warn'),
-          row('Related proof packets', 'Identity: ' + packet.related_packets.identity_login_qa + '. Rotation: ' + packet.related_packets.key_rotation_evidence + '. Pilot ops: ' + packet.related_packets.pilot_operations_evidence + '. Proxy self-test: ' + packet.related_packets.api_proxy_self_test + '. API inventory: ' + packet.related_packets.api_inventory + '. Policy drift: ' + packet.related_packets.policy_drift_exceptions + '. Rollout: ' + packet.related_packets.integration_rollout + '. Scanner: ' + packet.related_packets.scanner_exposure_review + '. Release: ' + packet.related_packets.release_evidence + '. Testers: ' + packet.related_packets.pilot_tester_readiness + '. Entitlements: ' + packet.related_packets.contract_entitlements + '. Paid onboarding: ' + packet.related_packets.paid_onboarding + '. Monitoring: ' + packet.related_packets.monitoring_evidence + '.', 'summary', 'good'),
+          row('Related proof packets', 'Identity: ' + packet.related_packets.identity_login_qa + '. Rotation: ' + packet.related_packets.key_rotation_evidence + '. Pilot ops: ' + packet.related_packets.pilot_operations_evidence + '. Proxy self-test: ' + packet.related_packets.api_proxy_self_test + '. API inventory: ' + packet.related_packets.api_inventory + '. Policy drift: ' + packet.related_packets.policy_drift_exceptions + '. Rollout: ' + packet.related_packets.integration_rollout + '. Scanner: ' + packet.related_packets.scanner_exposure_review + '. Exposure response: ' + packet.related_packets.key_exposure_response + '. Release: ' + packet.related_packets.release_evidence + '. Testers: ' + packet.related_packets.pilot_tester_readiness + '. Entitlements: ' + packet.related_packets.contract_entitlements + '. Paid onboarding: ' + packet.related_packets.paid_onboarding + '. Monitoring: ' + packet.related_packets.monitoring_evidence + '.', 'summary', 'good'),
           row('Secret boundary', 'This packet excludes ' + packet.secrets_excluded.join(', ') + '.', 'redacted', 'good')
         ];
       }
@@ -10608,6 +10890,7 @@ function renderEnterpriseSupportPage(pageName: EnterpriseSupportPageName): strin
         var policyDrift = buildPolicyDriftPacket(overview, bootstrap);
         var integrationRollout = buildIntegrationRolloutPacket(overview, bootstrap);
         var scannerExposure = buildScannerExposurePacket(overview, bootstrap);
+        var keyExposureResponse = buildKeyExposureResponsePacket(overview, bootstrap, scannerExposure);
         var support = buildLaunchSupportPacket(org, sso, readiness, overview, bootstrap, goNoGo);
         var monitoring = buildMonitoringEvidencePacket(org, sso, readiness, overview, bootstrap, goNoGo);
         var releaseEvidence = buildReleaseEvidencePacket(org, sso, readiness, overview, bootstrap);
@@ -10694,6 +10977,7 @@ function renderEnterpriseSupportPage(pageName: EnterpriseSupportPageName): strin
           policy_drift_exceptions: policyDrift,
           integration_rollout: integrationRollout,
           scanner_exposure_review: scannerExposure,
+          key_exposure_response: keyExposureResponse,
           launch_support_readiness: support,
           monitoring_evidence: monitoring,
           release_evidence: releaseEvidence,
@@ -10712,6 +10996,7 @@ function renderEnterpriseSupportPage(pageName: EnterpriseSupportPageName): strin
             policy_drift: '/app/policy',
             integration_rollout: '/app/rollout',
             scanner_exposure: '/app/scanner',
+            key_exposure_response: '/app/keys',
             release_evidence: '/app/release',
             pilot_testers: '/app/testers',
             entitlements: '/app/entitlements',
@@ -10733,6 +11018,7 @@ function renderEnterpriseSupportPage(pageName: EnterpriseSupportPageName): strin
             'Review policy drift and accepted-risk exceptions for owner, reason, compensating control, expiration date, next action, and launch hold status.',
             'Review the integration rollout plan for application owner, gateway owner, target date, canary percent, test status, rollback owner/path, blockers, and copy-safe dry-run snippet.',
             'Review scanner exposure evidence for redacted finding metadata, owner, rotation status, evidence reference, and open critical/high remediation before paid traffic.',
+            'Review key exposure response proof for linked scanner findings, provider-slot containment, emergency revoke, rotation scope, and proof boundaries.',
             'Review launch support scope, internal admin boundary, approval gates, and customer handoff notes before pilot traffic.',
             'Review monitoring evidence, alert destination/test-send workflow, Cloud Armor verification, and budget alert posture before launch-week traffic.',
             'Review release evidence for build/image tag, approver, verifier, QA/gate result, rollout state, rollback owner/path, and customer-safe notes after each deploy.',
@@ -10761,6 +11047,7 @@ function renderEnterpriseSupportPage(pageName: EnterpriseSupportPageName): strin
         var policyDrift = packet.policy_drift_exceptions || buildPolicyDriftPacket(overview, bootstrap);
         var integrationRollout = packet.integration_rollout || buildIntegrationRolloutPacket(overview, bootstrap);
         var scannerExposure = packet.scanner_exposure_review || buildScannerExposurePacket(overview, bootstrap);
+        var keyExposureResponse = packet.key_exposure_response || buildKeyExposureResponsePacket(overview, bootstrap, scannerExposure);
         var support = packet.launch_support_readiness || buildLaunchSupportPacket(org, sso, readiness, overview, bootstrap, buildGoNoGoStatus(org, sso, readiness, overview, bootstrap));
         var monitoring = packet.monitoring_evidence || buildMonitoringEvidencePacket(org, sso, readiness, overview, bootstrap, buildGoNoGoStatus(org, sso, readiness, overview, bootstrap));
         var releaseEvidence = packet.release_evidence || buildReleaseEvidencePacket(org, sso, readiness, overview, bootstrap);
@@ -10784,6 +11071,7 @@ function renderEnterpriseSupportPage(pageName: EnterpriseSupportPageName): strin
           linkRow('Policy drift export', 'Customer-safe policy drift and accepted-risk evidence with owners, expiry, compensating controls, and launch status.', '/app/policy', 'policy drift', policyDrift.status === 'hold' ? 'warn' : 'good'),
           linkRow('Integration rollout export', 'Customer-safe cutover plan with application/gateway owners, canary status, rollback path, blockers, and copy-safe snippet guidance.', '/app/rollout', 'rollout', integrationRollout.status === 'hold' ? 'warn' : 'good'),
           linkRow('Scanner exposure export', 'Customer-safe secret exposure intake with redacted finding metadata, owners, rotation status, and remediation evidence.', '/app/scanner', 'scanner', scannerExposure.status === 'hold' ? 'warn' : 'good'),
+          linkRow('Key exposure response export', 'Customer-safe incident response packet with linked scanner findings, provider-slot containment, emergency revoke path, and rotation scope.', '/app/keys', 'incident', keyExposureResponse.status === 'hold' ? 'warn' : 'good'),
           linkRow('Release evidence export', 'Customer-safe release proof with build/image tag, approval, verification, rollout state, and rollback path.', '/app/release', 'release', releaseEvidence.status === 'ready_with_review' ? 'good' : 'warn'),
           linkRow('Paid-pilot tester export', 'Customer-safe tester roster, login readiness, scenario assignments, feedback, and blocker metadata.', '/app/testers', 'testers', pilotTesters.status === 'ready_for_guided_testing' ? 'good' : 'warn'),
           linkRow('Entitlements export', 'Customer-safe paid-user package, capacity, support tier, renewal, and incident-response boundary.', '/app/entitlements', 'entitlements', entitlements.status === 'ready_for_paid_pilot' ? 'good' : 'warn'),
@@ -10804,6 +11092,7 @@ function renderEnterpriseSupportPage(pageName: EnterpriseSupportPageName): strin
           linkRow('Review policy drift', 'Confirm every critical/high drift row is closed, blocked intentionally, or accepted with owner and expiration date.', '/app/policy', 'policy drift', policyDrift.status === 'hold' ? 'warn' : 'good'),
           linkRow('Review integration rollout', 'Confirm first workload, owners, target date, canary percentage, rollback path, and dry-run evidence before live traffic.', '/app/rollout', 'rollout', integrationRollout.status === 'hold' ? 'warn' : 'good'),
           linkRow('Review scanner exposure', 'Confirm redacted repository scan findings, owners, rotation/remediation status, and scanner evidence references before paid traffic.', '/app/scanner', 'scanner', scannerExposure.status === 'hold' ? 'warn' : 'good'),
+          linkRow('Review key exposure response', 'Confirm linked scanner findings, provider-slot containment, rotation scope, and proof boundary before sharing the incident packet.', '/app/keys', 'incident', keyExposureResponse.status === 'hold' ? 'warn' : 'good'),
           linkRow('Review release evidence', 'Confirm the active build tag, approval, verification, rollout state, rollback path, and customer-safe release notes.', '/app/release', 'release', releaseEvidence.status === 'ready_with_review' ? 'good' : 'warn'),
           linkRow('Review pilot testers', 'Confirm tester roster, login status, scenario assignments, feedback, and blockers before the guided session.', '/app/testers', 'testers', pilotTesters.status === 'ready_for_guided_testing' ? 'good' : 'warn'),
           linkRow('Review entitlements', 'Confirm contract status, package, capacity, billing owner, success owner, support tier, renewal date, and IR boundary before paid onboarding.', '/app/entitlements', 'entitlements', entitlements.status === 'ready_for_paid_pilot' ? 'good' : 'warn'),
@@ -10828,6 +11117,8 @@ function renderEnterpriseSupportPage(pageName: EnterpriseSupportPageName): strin
         byId('evidenceRolloutList').innerHTML = integrationRolloutProofRows(integrationRollout).join('');
         text('evidenceScannerMeta', scannerExposure.status);
         byId('evidenceScannerList').innerHTML = scannerExposureProofRows(scannerExposure).join('');
+        text('evidenceExposureResponseMeta', keyExposureResponse.status);
+        byId('evidenceExposureResponseList').innerHTML = keyExposureResponseProofRows(keyExposureResponse).join('');
         text('evidenceSupportMeta', support.status);
         byId('evidenceSupportList').innerHTML = launchSupportProofRows(support).join('');
         text('evidenceMonitoringMeta', monitoring.status);
