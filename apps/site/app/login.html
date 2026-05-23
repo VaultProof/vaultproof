@@ -74,88 +74,8 @@
       overflow: hidden;
     }
 
-    .nav {
-      display: flex;
-      align-items: center;
-      gap: 24px;
-      min-height: 56px;
-      padding: 0 36px;
-      border-bottom: var(--rule);
-      font-family: var(--font-mono);
-      font-size: 12px;
-      background: rgba(248, 251, 255, 0.88);
-      backdrop-filter: blur(18px);
-      position: sticky;
-      top: 0;
-      z-index: 20;
-    }
-
-    .nav-logo {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      min-width: 0;
-      font-family: var(--font-body);
-    }
-
-    .nav-logo-name {
-      font-weight: 650;
-      letter-spacing: -0.01em;
-    }
-
-    .nav-logo-mark {
-      width: 18px;
-      height: 18px;
-      border: 1px solid var(--text);
-      border-radius: 999px;
-      display: grid;
-      place-items: center;
-      font-family: var(--font-mono);
-      font-size: 9px;
-      line-height: 1;
-    }
-
-    .nav-logo-version {
-      color: var(--text-faint);
-      margin-left: 6px;
-      font-family: var(--font-mono);
-    }
-
-    .nav-spacer { flex: 1; }
-
-    .nav-links {
-      display: flex;
-      gap: 20px;
-      color: var(--text-muted);
-      margin-left: 12px;
-    }
-
-    .nav-links a:hover,
-    .nav-sign-in:hover {
-      color: var(--text);
-    }
-
-    .nav-sign-in {
-      color: var(--text-faint);
-      margin-left: 0;
-      margin-right: 0;
-      font-family: var(--font-mono);
-    }
-
-    .nav-cta {
-      min-height: 34px;
-      padding: 0 14px;
-      background: var(--inverse);
-      color: var(--inverse-text);
-      border-radius: 999px;
-      font-size: 12px;
-      font-family: var(--font-mono);
-    }
-
-    .nav-cta:hover { background: var(--inverse-soft); }
-
     .login-layout {
-      min-height: calc(100vh - 51px);
+      min-height: 100vh;
       display: grid;
       grid-template-columns: minmax(0, 0.95fr) minmax(430px, 0.62fr);
       border-bottom: var(--rule);
@@ -712,15 +632,6 @@
         overflow: hidden;
       }
 
-      .nav {
-        min-height: 58px;
-        padding: 0 16px;
-      }
-      .nav-links,
-      .nav-sign-in,
-      .nav-cta,
-      .nav-logo-version { display: none; }
-
       .intro-panel { display: none; }
       .mobile-brand {
         display: none;
@@ -778,24 +689,6 @@
 </head>
 <body>
   <div class="page">
-    <nav class="nav">
-      <a href="/" class="nav-logo">
-        <span class="nav-logo-mark">VP</span>
-        <span class="nav-logo-name">VaultProof</span>
-        <span class="nav-logo-version">v1.4.2</span>
-      </a>
-      <div class="nav-spacer"></div>
-      <div class="nav-links">
-        <a href="/#product">Product</a>
-        <a href="/docs">Docs</a>
-        <a href="/docs#sdk-reference" data-i18n-lock>SDK</a>
-        <a href="/docs#cli-reference" data-i18n-lock>CLI</a>
-        <a href="/#pricing">Pricing</a>
-      </div>
-      <a href="/app/login" class="nav-sign-in">Sign in</a>
-      <a href="/app/login" class="nav-cta">Get a key</a>
-    </nav>
-
     <main class="login-layout">
       <section class="intro-panel" aria-label="VaultProof authentication overview">
         <div>
