@@ -2435,7 +2435,7 @@ function renderEnterpriseOperationsPage(pageName: 'activity' | 'projects' | 'inv
         </div>
         <div class="toolbar">
           <select id="orgSelect" aria-label="Organization"><option>Loading org...</option></select>
-          ${pageName === 'keys' ? '<button id="openProviderSlotForm" class="primary" type="button">add slot</button>' : ''}
+          ${pageName === 'keys' ? '<button id="openProviderSlotForm" class="primary" type="button">add slot</button><button id="copyExposureResponseReportBtn" type="button">copy incident report</button>' : ''}
           ${pageName === 'inventory' ? '<button id="openManualApiKeyForm" class="primary" type="button">add API key</button><button id="openInventoryImportForm" type="button">import CSV/OpenAPI</button><button id="copyInventoryCsvBtn" type="button">copy inventory CSV</button><button id="copyInventoryReviewBriefBtn" type="button">copy review brief</button><button id="copyInventoryJsonBtn" class="primary" type="button">copy inventory JSON</button>' : ''}
           ${pageName === 'policy' ? '<button id="copyPolicyBriefBtn" type="button">copy drift brief</button><button id="copyPolicyJsonBtn" class="primary" type="button">copy policy JSON</button>' : ''}
           ${pageName === 'rollout' ? '<button id="copyRolloutBriefBtn" type="button">copy rollout brief</button><button id="copyRolloutJsonBtn" class="primary" type="button">copy rollout JSON</button>' : ''}
@@ -2792,6 +2792,47 @@ ${renderDatalistOptions(ENTERPRISE_MANUAL_API_KEY_PROVIDER_OPTIONS)}
       <section id="apiProxyTestPanel" class="card" style="display:none;margin-bottom:16px">
         <div class="section-title"><h2>Customer API proxy test kit</h2><span id="apiProxyTestMeta" class="mini">copy-safe</span></div>
         <div id="apiProxyTestList" class="list"><div class="empty">Loading self-test kit...</div></div>
+      </section>
+
+      <section id="exposureResponsePanel" class="grid two" style="display:none;margin-bottom:16px">
+        <div class="card">
+          <div class="section-title"><h2>Key exposure response</h2><span id="exposureResponseMeta" class="mini">incident mode</span></div>
+          <form id="exposureResponseForm" class="slot-form">
+            <label>Incident label
+              <input id="exposureIncidentName" value="External platform credential review" maxlength="120" />
+            </label>
+            <label>Source
+              <input id="exposureIncidentSource" value="Vercel-style env exposure" maxlength="120" />
+            </label>
+            <label>Mode
+              <select id="exposureIncidentMode">
+                <option value="triage">triage</option>
+                <option value="containment">containment</option>
+                <option value="rotation">rotation</option>
+                <option value="postmortem">postmortem</option>
+              </select>
+            </label>
+            <label>Owner
+              <input id="exposureIncidentOwner" placeholder="security owner" maxlength="96" />
+            </label>
+            <label class="wide">Customer-safe note
+              <textarea id="exposureIncidentNote" placeholder="Metadata-only note. Do not paste API keys, bearer tokens, OAuth secrets, request bodies, response bodies, or customer payloads."></textarea>
+            </label>
+          </form>
+          <div class="slot-form-actions">
+            <button class="primary" type="button" data-action="copy-exposure-response-json">copy incident JSON</button>
+            <button type="button" data-action="copy-exposure-response-brief">copy brief</button>
+            <a class="tag" href="/app/audit">audit</a>
+          </div>
+        </div>
+        <div class="card">
+          <div class="section-title"><h2>Response checklist</h2><span class="mini">no raw keys</span></div>
+          <div id="exposureResponseChecklist" class="list"></div>
+        </div>
+        <div class="card" style="grid-column:1/-1">
+          <div class="section-title"><h2>Affected provider slots</h2><span class="mini">kill switch + rotation</span></div>
+          <div id="exposureResponseList" class="list"><div class="empty">Loading exposure response posture...</div></div>
+        </div>
       </section>
 
       <section id="emailKeyDemoPanel" class="grid two" style="display:none;margin-bottom:16px">
@@ -5308,6 +5349,198 @@ ${renderDatalistOptions(ENTERPRISE_MANUAL_API_KEY_PROVIDER_OPTIONS)}
         }
         copyToClipboard(proxySelfTestSnippet(item.project, item.slot, options || {}), options && options.blocked ? 'Blocked-recipient self-test request' : 'Dry-run self-test request');
       }
+      function exposureIncidentState() {
+        return {
+          label: redactManualApiKeyText(byId('exposureIncidentName') && byId('exposureIncidentName').value) || 'External platform credential review',
+          source: redactManualApiKeyText(byId('exposureIncidentSource') && byId('exposureIncidentSource').value) || 'credential exposure',
+          mode: redactManualApiKeyText(byId('exposureIncidentMode') && byId('exposureIncidentMode').value) || 'triage',
+          owner: redactManualApiKeyText(byId('exposureIncidentOwner') && byId('exposureIncidentOwner').value),
+          note: redactInventoryNote(byId('exposureIncidentNote') && byId('exposureIncidentNote').value)
+        };
+      }
+      function exposureResponseRows() {
+        var health = projectHealthMap();
+        var rows = [];
+        cachedProjects.forEach(function(project) {
+          (project.provider_slots || []).forEach(function(slot) {
+            var slug = slot.slug || slot.provider;
+            var projectHealth = health[project.id] || {};
+            var materialMode = slot.material_mode || 'missing';
+            var row = {
+              id: project.id + '::' + slug,
+              project: {
+                id: project.id,
+                name: project.name || project.vp_proj_id,
+                vp_proj_id: project.vp_proj_id,
+                role: project.project_role,
+                strict_origin: project.strict_origin === true
+              },
+              provider: {
+                key_id: slot.key_id || null,
+                provider: slot.provider || null,
+                slug: slug,
+                material_mode: materialMode,
+                material_ready: slot.material_ready === true
+              },
+              can_emergency_revoke: project.project_role === 'owner' || project.project_role === 'admin',
+              traffic: {
+                calls: Number(projectHealth.calls || 0),
+                errors: Number(projectHealth.errors || 0),
+                denied: Number(projectHealth.denied || 0),
+                last_seen_at: projectHealth.lastActivity || null
+              }
+            };
+            row.risk = exposureResponseRisk(row);
+            row.actions = exposureResponseActions(row);
+            rows.push(row);
+          });
+        });
+        return rows;
+      }
+      function exposureResponseRisk(row) {
+        if (!row.provider.material_ready || row.provider.material_mode !== 'sealed-live') return 'needs_rotation';
+        if (Number(row.traffic.denied || 0) > 0 || Number(row.traffic.errors || 0) > 0) return 'review_activity';
+        if (!Number(row.traffic.calls || 0)) return 'needs_usage_evidence';
+        return 'ready_to_contain';
+      }
+      function exposureRiskTone(risk) {
+        if (risk === 'needs_rotation') return 'bad';
+        if (risk === 'review_activity' || risk === 'needs_usage_evidence') return 'warn';
+        return 'good';
+      }
+      function exposureResponseActions(row) {
+        var actions = [];
+        if (row.can_emergency_revoke) actions.push('emergency revoke available from Provider Slots');
+        else actions.push('assign an owner/admin to revoke this slot');
+        if (!row.provider.material_ready || row.provider.material_mode !== 'sealed-live') actions.push('rotate upstream credential and seal a live provider slot');
+        else actions.push('disable VaultProof slot first, then rotate upstream if exposed');
+        if (!Number(row.traffic.calls || 0)) actions.push('run a dry-run request after rotation to create usage evidence');
+        if (Number(row.traffic.denied || 0) > 0 || Number(row.traffic.errors || 0) > 0) actions.push('review denied/error activity in Audit');
+        if (!row.project.strict_origin) actions.push('tighten origin/caller policy before restoring traffic');
+        return actions;
+      }
+      function exposureResponseSummary(rows) {
+        var list = Array.isArray(rows) ? rows : exposureResponseRows();
+        return {
+          total_provider_slots: list.length,
+          sealed_live: list.filter(function(row) { return row.provider.material_mode === 'sealed-live'; }).length,
+          demo_or_unready: list.filter(function(row) { return row.provider.material_mode !== 'sealed-live' || !row.provider.material_ready; }).length,
+          emergency_revoke_available: list.filter(function(row) { return row.can_emergency_revoke; }).length,
+          needs_rotation: list.filter(function(row) { return row.risk === 'needs_rotation'; }).length,
+          needs_activity_review: list.filter(function(row) { return row.risk === 'review_activity'; }).length,
+          needs_usage_evidence: list.filter(function(row) { return row.risk === 'needs_usage_evidence'; }).length
+        };
+      }
+      function exposureResponsePacket() {
+        var rows = exposureResponseRows();
+        return {
+          packet_type: 'vaultproof_enterprise_key_exposure_response',
+          packet_version: 1,
+          generated_at: new Date().toISOString(),
+          generated_from: location.origin + '/app/keys',
+          organization_id: currentOrgId || null,
+          incident: exposureIncidentState(),
+          summary: exposureResponseSummary(rows),
+          provider_slots: rows.map(function(row) {
+            return {
+              id: row.id,
+              project: row.project,
+              provider: row.provider,
+              risk: row.risk,
+              can_emergency_revoke: row.can_emergency_revoke,
+              traffic: row.traffic,
+              recommended_actions: row.actions
+            };
+          }),
+          workflow_links: {
+            provider_slots: '/app/keys',
+            control: '/app/control',
+            activity: '/app/activity',
+            audit: '/app/audit',
+            audit_csv_30_days: evidenceExportHref('/api/v1/enterprise/audit?format=csv&days=30'),
+            scanner: '/app/scanner',
+            security_review: '/app/security-review',
+            evidence: '/app/evidence'
+          },
+          secrets_excluded: [
+            'raw provider keys',
+            'encrypted provider shares',
+            'bearer tokens',
+            'OAuth client secrets',
+            'service-role keys',
+            'origin-lock values',
+            'request bodies',
+            'response bodies',
+            'customer payloads'
+          ]
+        };
+      }
+      function exposureResponseBrief() {
+        var packet = exposureResponsePacket();
+        var summary = packet.summary;
+        var priority = packet.provider_slots.filter(function(row) {
+          return row.risk === 'needs_rotation' || row.risk === 'review_activity';
+        }).slice(0, 12);
+        var lines = [
+          'VaultProof key exposure response brief',
+          'Generated: ' + packet.generated_at,
+          'Organization: ' + (packet.organization_id || 'not selected'),
+          'Incident: ' + packet.incident.label + ' / ' + packet.incident.source + ' / ' + packet.incident.mode,
+          '',
+          'Summary:',
+          '- Provider slots in scope: ' + number(summary.total_provider_slots),
+          '- Live sealed slots: ' + number(summary.sealed_live),
+          '- Demo or unready slots: ' + number(summary.demo_or_unready),
+          '- Emergency revoke available: ' + number(summary.emergency_revoke_available),
+          '- Needs rotation: ' + number(summary.needs_rotation),
+          '- Needs activity review: ' + number(summary.needs_activity_review),
+          '- Needs usage evidence: ' + number(summary.needs_usage_evidence),
+          '',
+          'Priority actions:'
+        ];
+        if (priority.length) {
+          priority.forEach(function(row) {
+            lines.push('- ' + (row.project.name || row.project.vp_proj_id || 'Project') + ' / ' + (row.provider.slug || row.provider.provider || 'provider') + ' [' + row.risk + ']: ' + row.recommended_actions.join('; '));
+          });
+        } else {
+          lines.push('- No provider-slot blockers in the current response scope.');
+        }
+        lines.push(
+          '',
+          'Operating boundary:',
+          '- VaultProof can immediately disable or audit traffic routed through VaultProof. Raw keys still living directly in external env vars must be rotated upstream and moved behind a provider slot.',
+          '- This brief excludes raw provider keys, encrypted shares, bearer tokens, OAuth secrets, request bodies, response bodies, and customer payloads.'
+        );
+        return lines.join('\\n');
+      }
+      function renderExposureResponseRow(row) {
+        var tone = exposureRiskTone(row.risk);
+        var slug = row.provider.slug || row.provider.provider || 'provider';
+        var revokeButton = row.can_emergency_revoke
+          ? '<button type="button" class="danger" data-action="revoke-slot" data-project-id="' + escapeHtml(row.project.id) + '" data-slug="' + escapeHtml(slug) + '">emergency revoke</button>'
+          : '<span class="tag warn">admin required</span>';
+        return '<div class="row"><div><div class="row-title">' + escapeHtml(row.project.name || row.project.vp_proj_id || 'Project') + ' - ' + escapeHtml(slug) + '</div><div class="row-sub">Material ' + escapeHtml(row.provider.material_mode || 'missing') + ' - calls ' + number(row.traffic.calls) + ' - denied ' + number(row.traffic.denied) + ' - last seen ' + escapeHtml(rel(row.traffic.last_seen_at)) + '</div><div><span class="tag ' + tone + '">' + escapeHtml(row.risk) + '</span><span class="tag">' + escapeHtml(row.provider.provider || 'provider') + '</span><span class="tag ' + (row.project.strict_origin ? 'good' : 'warn') + '">' + (row.project.strict_origin ? 'strict origin' : 'origin relaxed') + '</span></div><div class="row-sub">' + row.actions.map(escapeHtml).join(' - ') + '</div></div><div class="row-actions">' + revokeButton + '<button type="button" data-action="copy-proxy-dry-run" data-project-id="' + escapeHtml(row.project.id) + '" data-slug="' + escapeHtml(slug) + '">copy dry-run</button><a class="tag" href="/app/activity">activity</a></div></div>';
+      }
+      function renderExposureResponse() {
+        var panel = byId('exposureResponsePanel');
+        if (panel) panel.style.display = PAGE_MODE === 'keys' ? 'grid' : 'none';
+        if (PAGE_MODE !== 'keys') return;
+        var rows = exposureResponseRows();
+        var summary = exposureResponseSummary(rows);
+        text('exposureResponseMeta', number(summary.total_provider_slots) + ' slots / ' + number(summary.needs_rotation) + ' rotate');
+        byId('exposureResponseChecklist').innerHTML = [
+          '<div class="row"><div><div class="row-title">Contain through VaultProof first</div><div class="row-sub">Emergency revoke pauses provider-slot usage without exposing or copying raw upstream keys.</div></div><span class="tag good">kill switch</span></div>',
+          '<div class="row"><div><div class="row-title">Rotate upstream second</div><div class="row-sub">Create new upstream provider credentials, seal them into VaultProof, run dry-run evidence, then retire exposed raw env vars.</div></div><span class="tag warn">rotation</span></div>',
+          '<div class="row"><div><div class="row-title">Prove what VaultProof saw</div><div class="row-sub">Export audit CSV, activity, and this incident JSON for security review. Past direct-provider usage outside VaultProof remains outside this proof boundary.</div></div><span><button class="tag good" type="button" data-action="copy-exposure-response-json">JSON</button><a class="tag" href="' + escapeHtml(evidenceExportHref('/api/v1/enterprise/audit?format=csv&days=30')) + '">audit CSV</a></span></div>'
+        ].join('');
+        byId('exposureResponseList').innerHTML = rows.length ? rows.map(renderExposureResponseRow).join('') : '<div class="empty">No provider slots are visible yet. Add provider slots before using VaultProof as the incident response control layer.</div>';
+      }
+      function copyExposureResponseJson() {
+        copyToClipboard(JSON.stringify(exposureResponsePacket(), null, 2), 'Key exposure response JSON');
+      }
+      function copyExposureResponseBrief() {
+        copyToClipboard(exposureResponseBrief(), 'Key exposure response brief');
+      }
       async function reload() {
         if (!token) {
           notice('Enterprise session missing.');
@@ -5325,6 +5558,7 @@ ${renderDatalistOptions(ENTERPRISE_MANUAL_API_KEY_PROVIDER_OPTIONS)}
           renderInventory();
           renderPolicy();
           renderRollout();
+          renderExposureResponse();
           renderKeys();
           await renderActivity();
         } catch (error) {
@@ -5436,6 +5670,9 @@ ${renderDatalistOptions(ENTERPRISE_MANUAL_API_KEY_PROVIDER_OPTIONS)}
       if (byId('copyRolloutBriefBtn')) {
         byId('copyRolloutBriefBtn').addEventListener('click', copyRolloutBrief);
       }
+      if (byId('copyExposureResponseReportBtn')) {
+        byId('copyExposureResponseReportBtn').addEventListener('click', copyExposureResponseBrief);
+      }
       document.addEventListener('input', function(event) {
         var target = event.target;
         if (!target || !target.getAttribute) return;
@@ -5507,6 +5744,14 @@ ${renderDatalistOptions(ENTERPRISE_MANUAL_API_KEY_PROVIDER_OPTIONS)}
         }
         if (target.getAttribute('data-action') === 'copy-rollout-brief') {
           copyRolloutBrief();
+          return;
+        }
+        if (target.getAttribute('data-action') === 'copy-exposure-response-json') {
+          copyExposureResponseJson();
+          return;
+        }
+        if (target.getAttribute('data-action') === 'copy-exposure-response-brief') {
+          copyExposureResponseBrief();
           return;
         }
         if (target.getAttribute('data-action') === 'open-inventory-import') {

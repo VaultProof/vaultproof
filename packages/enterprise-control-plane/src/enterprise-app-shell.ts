@@ -178,7 +178,7 @@ const ENTERPRISE_SIDEBAR_NAV_GROUPS: readonly EnterpriseSidebarNavGroup[] = [
         page: 'keys',
         href: '/app/keys',
         label: 'Provider slots',
-        blurb: 'Provider key slots, material mode, and emergency revoke.',
+        blurb: 'Provider key slots, exposure response, material mode, and emergency revoke.',
       },
       {
         id: 'auditExportLink',
