@@ -492,6 +492,7 @@ export function renderEnterpriseDashboardPage(env: EnterpriseControlPlaneEnv = {
           <div class="card">
             <div class="section-title"><h2>Operator shortcuts</h2><span class="mini">business-safe links</span></div>
             <div class="list">
+              <div class="row"><div><div class="row-title">Enterprise docs</div><div class="row-sub">Open the enterprise-only docs index for setup, SSO, key exposure response, evidence, and runbooks.</div></div><a class="tag good" href="/app/docs">open</a></div>
               <div class="row"><div><div class="row-title">Runbooks</div><div class="row-sub">Open the built deploy, evidence, verification, hardening, and cleanup playbooks.</div></div><a class="tag good" href="/app/runbooks">open</a></div>
               <div class="row"><div><div class="row-title">Evidence packet</div><div class="row-sub">Assemble runtime readiness, access review, audit, provider posture, and launch proof for customer security review.</div></div><a class="tag good" href="/app/evidence">open</a></div>
               <div class="row"><div><div class="row-title">Release evidence</div><div class="row-sub">Record build tag, approval, verification, rollout state, and rollback path after each enterprise deploy.</div></div><a class="tag good" href="/app/release">open</a></div>
@@ -516,6 +517,11 @@ export function renderEnterpriseDashboardPage(env: EnterpriseControlPlaneEnv = {
             <span class="mini">operational links</span>
           </div>
           <div class="feature-grid">
+            <a class="feature-card" href="/app/docs">
+              <div class="feature-tags"><span class="feature-tag">live</span><span class="feature-tag">docs</span></div>
+              <h3>Enterprise docs</h3>
+              <p>Enterprise-only documentation for setup, SSO, provider slots, key exposure response, evidence, and operational boundaries.</p>
+            </a>
             <a class="feature-card" href="/app/setup">
               <div class="feature-tags"><span class="feature-tag">live</span><span class="feature-tag">start here</span></div>
               <h3>Setup guide</h3>

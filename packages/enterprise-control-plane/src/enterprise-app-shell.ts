@@ -16,6 +16,7 @@ export type EnterpriseAppNavPage =
   | 'members'
   | 'audit'
   | 'keys'
+  | 'docs'
   | 'setup'
   | 'demo'
   | 'technical-guide'
@@ -198,6 +199,13 @@ const ENTERPRISE_SIDEBAR_NAV_GROUPS: readonly EnterpriseSidebarNavGroup[] = [
     label: 'guides',
     items: [
       {
+        page: 'docs',
+        href: '/app/docs',
+        label: 'Enterprise docs',
+        blurb: 'Enterprise-only docs for setup, SSO, exposure response, evidence, and operations.',
+        activePill: 'docs',
+      },
+      {
         page: 'setup',
         href: '/app/setup',
         label: 'Setup guide',
@@ -267,8 +275,8 @@ const ENTERPRISE_SIDEBAR_NAV_GROUPS: readonly EnterpriseSidebarNavGroup[] = [
     items: [
       {
         href: 'https://vaultproof.dev/docs',
-        label: 'Docs',
-        blurb: 'Public product docs and enterprise references.',
+        label: 'Public docs',
+        blurb: 'Public product docs for non-enterprise VaultProof users.',
         external: true,
       },
       {

@@ -3045,6 +3045,8 @@ async function assertEnterpriseLoginRoute() {
       'Workspace',
       'Setup access checklist',
       'Workspace tools',
+      'Enterprise docs',
+      '/app/docs',
       'Setup guide',
       '/app/setup',
       'Technical guide',
@@ -3203,6 +3205,11 @@ async function assertEnterpriseLoginRoute() {
   }
 
   const supportPages = [
+    {
+      path: '/app/docs',
+      title: 'Enterprise docs - VaultProof Enterprise',
+      required: ['Enterprise-only documentation', 'Enterprise docs index', 'Key exposure response', 'Exposure response sequence', 'Enterprise SSO docs', 'Provider Slots', 'scanner_open_exposure', 'needs_rotation', 'ready_to_contain', 'incident JSON packet', 'VaultProof can immediately disable or audit traffic routed through VaultProof', '/app/setup', '/app/technical-guide', '/app/security-review', '/app/runbooks', '/app/evidence', '/app/keys', '/app/scanner'],
+    },
     {
       path: '/app/setup',
       title: 'Enterprise setup guide - VaultProof Enterprise',

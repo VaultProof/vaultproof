@@ -87,6 +87,7 @@ If you see an auth message:
 | Homepage | `https://enterprise.vaultproof.dev/` | Public enterprise landing page with the product story, architecture, proof points, and CTAs. |
 | Login | `/app/login` | Enterprise-only login, SSO start, password reset, and approved access messaging. |
 | Dashboard | `/app/dashboard` | Business-ready enterprise command center with sidebar navigation, Overview/Security/Access/Operations/Workspace tabs, runtime posture, org summary, project health, members/access, audit, recent activity, and a workspace tools map. |
+| Enterprise Docs | `/app/docs` | Enterprise-only documentation index for setup, SSO, provider slots, key exposure response, evidence, runbooks, and operating boundaries. |
 | Setup Guide | `/app/setup` | Enterprise implementation guide for purchased workspaces, covering environment mapping, Entra SSO, members, gateway choices, projects, provider slots, policy, evidence, alerts, go-live, and operations. |
 | Technical Guide | `/app/technical-guide` | Detailed implementation reference for identity, network patterns, project modeling, caller lock, provider key custody, GCP runtime posture, evidence, alerts, rollout, and troubleshooting. |
 | Control | `/app/control` | Project policy, provider overrides, incoming invites, export summaries, and secure execution posture. |
@@ -107,6 +108,36 @@ If you see an auth message:
 | Plans | `/app/plans` | Paid-pilot package, included controls, capacity envelope, contract guardrails, security boundaries, rollout posture, and customer review links. |
 | Scanner | `/app/scanner` | Enterprise-safe secret exposure intake for redacted repository findings, owners, rotation/remediation status, provider-slot hints, and customer-safe `vaultproof_enterprise_scanner_exposure_review` evidence exports without repo contents or secret values. |
 | Runbooks | `/app/runbooks` | Operator guide for production verification, evidence capture, deployment, secret checks, DNS/edge checks, SSH hardening, and cleanup. |
+
+## Key Exposure Response
+
+Key exposure response is the enterprise incident workflow for a suspected provider API key leak. It lives in Provider Slots at `/app/keys` and is summarized in Enterprise Docs, Evidence, Security Review, Support, and Runbooks.
+
+What it does:
+
+- Links redacted scanner findings from `/app/scanner` to matching provider slots.
+- Shows which provider slots are affected and whether each slot is live-sealed, unready, missing rotation, or ready to contain.
+- Flags high-risk states such as `scanner_open_exposure`, `needs_rotation`, `review_activity`, and `needs_usage_evidence`.
+- Provides an emergency revoke path for VaultProof-routed provider-slot usage.
+- Exports a customer-safe incident JSON packet and brief without raw provider keys, bearer tokens, OAuth secrets, encrypted shares, request bodies, responses, or customer payloads.
+
+What it does not do:
+
+- It does not automatically rotate the key at the upstream provider.
+- It does not prove direct raw-key use that bypassed VaultProof.
+- It does not store raw scanner output, repositories, provider API keys, tokens, or customer payloads.
+- It does not remove old secrets from customer platforms such as CI variables, hosting environment variables, local `.env` files, or chat/ticket history.
+
+Operator order:
+
+1. Record redacted scanner metadata in `/app/scanner`.
+2. Open `/app/keys` and review linked findings and affected provider slots.
+3. Emergency revoke affected VaultProof provider slots if routed use should pause immediately.
+4. Rotate the upstream provider credential and seal the replacement into VaultProof.
+5. Run a dry-run or low-volume request to create post-rotation Activity and Audit evidence.
+6. Export the incident JSON, audit CSV, and Evidence packet for customer security review.
+
+Boundary: VaultProof can immediately disable or audit traffic routed through VaultProof. Any same raw key still living outside VaultProof must be rotated upstream and removed from the customer environment.
 
 ## VaultProof AI Proof Verifier
 

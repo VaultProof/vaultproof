@@ -12,6 +12,7 @@ This guide is for teams that have already purchased VaultProof and are ready to 
 | --- | --- | --- |
 | Enterprise login | `https://enterprise.vaultproof.dev/app/login` | Sign in with an approved enterprise account or SSO path. |
 | Dashboard | `https://enterprise.vaultproof.dev/app/dashboard` | Start here after login. |
+| Enterprise docs | `https://enterprise.vaultproof.dev/app/docs` | Enterprise-only docs for setup, SSO, key exposure response, evidence, runbooks, and operating boundaries. |
 | Setup guide | `https://enterprise.vaultproof.dev/app/setup` | Enterprise implementation guide for identity, gateways, projects, provider keys, policy, evidence, and go-live. |
 | Technical guide | `https://enterprise.vaultproof.dev/app/technical-guide` | Detailed implementation reference for identity, network, gateway, caller-lock, key custody, attestation, evidence, rollout, and troubleshooting. |
 | AI Proof Verifier | `https://enterprise.vaultproof.dev/app/verifier` | Register external models, verify proof bundles, and store evidence without VaultProof running the model. |

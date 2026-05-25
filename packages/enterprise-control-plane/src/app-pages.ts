@@ -6073,10 +6073,15 @@ ${renderDatalistOptions(ENTERPRISE_MANUAL_API_KEY_PROVIDER_OPTIONS)}
 </html>`;
 }
 
-type EnterpriseSupportPageName = 'setup' | 'launch' | 'evidence' | 'demo' | 'technical-guide' | 'security-review' | 'verifier' | 'settings' | 'entitlements' | 'onboarding' | 'plans' | 'pilot' | 'pilot-success' | 'testers' | 'release' | 'scanner' | 'support' | 'runbooks';
+type EnterpriseSupportPageName = 'docs' | 'setup' | 'launch' | 'evidence' | 'demo' | 'technical-guide' | 'security-review' | 'verifier' | 'settings' | 'entitlements' | 'onboarding' | 'plans' | 'pilot' | 'pilot-success' | 'testers' | 'release' | 'scanner' | 'support' | 'runbooks';
 
 function renderEnterpriseSupportPage(pageName: EnterpriseSupportPageName): string {
   const supportPageCopy: Record<EnterpriseSupportPageName, { title: string; kicker: string; lead: string }> = {
+    docs: {
+      title: 'Enterprise docs',
+      kicker: 'enterprise documentation',
+      lead: 'Enterprise-only documentation for customer teams using VaultProof after purchase. Use this page for setup, SSO, provider slots, key exposure response, evidence, runbooks, and operating boundaries without mixing in public developer docs.',
+    },
     setup: {
       title: 'Enterprise setup guide',
       kicker: 'welcome to VaultProof',
@@ -6593,6 +6598,72 @@ function renderEnterpriseSupportPage(pageName: EnterpriseSupportPageName): strin
           </div>
           <textarea id="releaseEvidencePacket" class="brief-box" readonly aria-label="Release evidence JSON"></textarea>
         </div>
+      </section>
+
+      <section id="enterpriseDocsPanel" class="doc-guide" style="display:none">
+        <article class="doc-section">
+          <span class="doc-kicker">Start here</span>
+          <h2>Enterprise docs index</h2>
+          <p>This page is the customer-facing index for VaultProof Enterprise documentation. The public docs at <code>vaultproof.dev/docs</code> are still available for general product and developer references, but enterprise rollout, SSO, provider-slot custody, evidence, and incident response belong here.</p>
+          <p>Use these links when a customer asks where to start, how to set up identity, how key custody works, or what to do after a suspected provider-key exposure.</p>
+          <div class="list">
+            <div class="row"><div><div class="row-title">Setup guide</div><div class="row-sub">Rollout sequence for identity, gateways, projects, provider slots, policy, evidence, alerts, and gradual go-live.</div></div><a class="tag good" href="/app/setup">open</a></div>
+            <div class="row"><div><div class="row-title">Technical guide</div><div class="row-sub">Architecture, trust boundaries, SSO, caller lock, key custody, GCP runtime posture, audit evidence, and troubleshooting.</div></div><a class="tag good" href="/app/technical-guide">open</a></div>
+            <div class="row"><div><div class="row-title">Security review</div><div class="row-sub">Customer-safe security and procurement packet with control coverage, evidence links, open items, and common answers.</div></div><a class="tag good" href="/app/security-review">open</a></div>
+            <div class="row"><div><div class="row-title">Runbooks</div><div class="row-sub">Operator commands for production verification, evidence capture, deploy checks, DNS, edge, and cleanup.</div></div><a class="tag good" href="/app/runbooks">open</a></div>
+            <div class="row"><div><div class="row-title">Evidence packet</div><div class="row-sub">Customer proof packet for readiness, access review, audit, API inventory, scanner exposure, key exposure response, release, and monitoring.</div></div><a class="tag good" href="/app/evidence">open</a></div>
+          </div>
+        </article>
+
+        <article class="doc-section">
+          <span class="doc-kicker">Incident response</span>
+          <h2>Key exposure response</h2>
+          <p>Key exposure response is the enterprise incident workflow for a suspected provider API key leak. It lives on <code>/app/keys</code> because Provider Slots are where VaultProof can pause, revoke, rotate, and prove protected provider access.</p>
+          <p>Use it when a scanner finding, platform incident, exposed environment variable, copied credential, or customer security report says a provider key may have escaped its intended boundary.</p>
+          <h3>What it does</h3>
+          <ul>
+            <li>Links redacted scanner findings from <code>/app/scanner</code> to matching provider slots.</li>
+            <li>Shows which provider slots are affected and whether each slot is live-sealed, unready, missing rotation, or ready to contain.</li>
+            <li>Flags high-risk states such as <code>scanner_open_exposure</code>, <code>needs_rotation</code>, <code>review_activity</code>, and <code>needs_usage_evidence</code>.</li>
+            <li>Gives owners an emergency revoke path for VaultProof-routed provider-slot usage.</li>
+            <li>Creates a customer-safe incident JSON packet and brief without raw keys, bearer tokens, OAuth secrets, encrypted shares, request bodies, responses, or customer payloads.</li>
+            <li>Feeds Evidence, Security Review, Support, and Runbooks so the customer can see what was contained and what still needs work.</li>
+          </ul>
+          <h3>What it does not do</h3>
+          <ul>
+            <li>It does not automatically rotate a key at the upstream provider.</li>
+            <li>It does not prove direct raw-key use that bypassed VaultProof.</li>
+            <li>It does not store raw scanner output, repositories, provider API keys, tokens, or customer payloads.</li>
+            <li>It does not remove old secrets from customer platforms such as CI variables, hosting environment variables, local <code>.env</code> files, or chat/ticket history.</li>
+          </ul>
+          <div class="doc-note"><strong>Boundary:</strong> VaultProof can immediately disable or audit traffic routed through VaultProof. Any same raw key still living outside VaultProof must be rotated upstream and removed from the customer environment.</div>
+        </article>
+
+        <article class="doc-section">
+          <span class="doc-kicker">Operator order</span>
+          <h2>Exposure response sequence</h2>
+          <ol>
+            <li>Open <code>/app/scanner</code> and record only redacted finding metadata: repository, branch/ref, secret family, severity, owner, provider-slot hint, evidence reference, and remediation note.</li>
+            <li>Open <code>/app/keys</code> and review the Key exposure response panel for linked scanner findings and affected provider slots.</li>
+            <li>Emergency revoke affected provider slots first when VaultProof-routed use should pause immediately.</li>
+            <li>Rotate the upstream provider credential in the provider account, then seal the replacement into a live VaultProof provider slot.</li>
+            <li>Run a dry-run or low-volume test request so Activity and Audit show post-rotation evidence.</li>
+            <li>Update linked scanner findings only after revoke, upstream rotation, false-positive review, or explicit demo-only acceptance.</li>
+            <li>Export the incident JSON, audit CSV, and Evidence packet for customer security review.</li>
+          </ol>
+        </article>
+
+        <article class="doc-section">
+          <span class="doc-kicker">SSO and access</span>
+          <h2>Enterprise SSO docs</h2>
+          <p>Customer SSO setup starts in <code>admin.vaultproof.dev</code>, then customers sign in at <code>enterprise.vaultproof.dev/app/login</code>. VaultProof stores safe rollout metadata such as company domain, provider name, login mode, and status. SAML XML, certificates, IdP private material, OAuth client secrets, and Supabase service-role keys stay out of the browser forms.</p>
+          <ul>
+            <li>Use <code>/app/org</code> for customer-visible organization and SSO status.</li>
+            <li>Use the internal admin business detail page to set company domain, provider, rollout status, and to run the Supabase SAML broker check.</li>
+            <li>Use Supabase SAML configuration to register the customer IdP metadata URL or XML.</li>
+            <li>Keep a documented break-glass admin path before enforcing SSO-first access.</li>
+          </ul>
+        </article>
       </section>
 
       <section id="setupPanel" class="doc-guide" style="display:none">
@@ -12067,10 +12138,11 @@ function renderEnterpriseSupportPage(pageName: EnterpriseSupportPageName): strin
         text('kpiMembers', number(org.member_count));
         text('kpiOrgRole', org.role || 'member');
         text('kpiCalls', number(overview.totalCalls));
-        byId('supportKpis').style.display = PAGE_MODE === 'setup' || PAGE_MODE === 'technical-guide' ? 'none' : 'grid';
+        byId('supportKpis').style.display = PAGE_MODE === 'docs' || PAGE_MODE === 'setup' || PAGE_MODE === 'technical-guide' ? 'none' : 'grid';
         byId('launchPanel').style.display = PAGE_MODE === 'launch' ? 'grid' : 'none';
         byId('evidencePanel').style.display = PAGE_MODE === 'evidence' ? 'grid' : 'none';
         byId('demoPanel').style.display = PAGE_MODE === 'demo' ? 'grid' : 'none';
+        byId('enterpriseDocsPanel').style.display = PAGE_MODE === 'docs' ? 'block' : 'none';
         byId('setupPanel').style.display = PAGE_MODE === 'setup' ? 'block' : 'none';
         byId('technicalGuidePanel').style.display = PAGE_MODE === 'technical-guide' ? 'block' : 'none';
         byId('settingsPanel').style.display = PAGE_MODE === 'settings' ? 'grid' : 'none';
@@ -12845,7 +12917,7 @@ export function renderEnterprisePlannedAppPage(pageName: string, env: Enterprise
   if (pageName === 'activity' || pageName === 'projects' || pageName === 'inventory' || pageName === 'policy' || pageName === 'rollout' || pageName === 'keys') {
     return injectEnterpriseAnalytics(renderEnterpriseOperationsPage(pageName), env, pageName);
   }
-  if (pageName === 'setup' || pageName === 'launch' || pageName === 'evidence' || pageName === 'demo' || pageName === 'technical-guide' || pageName === 'security-review' || pageName === 'verifier' || pageName === 'settings' || pageName === 'entitlements' || pageName === 'onboarding' || pageName === 'plans' || pageName === 'pilot' || pageName === 'pilot-success' || pageName === 'testers' || pageName === 'release' || pageName === 'scanner' || pageName === 'support' || pageName === 'runbooks') {
+  if (pageName === 'docs' || pageName === 'setup' || pageName === 'launch' || pageName === 'evidence' || pageName === 'demo' || pageName === 'technical-guide' || pageName === 'security-review' || pageName === 'verifier' || pageName === 'settings' || pageName === 'entitlements' || pageName === 'onboarding' || pageName === 'plans' || pageName === 'pilot' || pageName === 'pilot-success' || pageName === 'testers' || pageName === 'release' || pageName === 'scanner' || pageName === 'support' || pageName === 'runbooks') {
     return injectEnterpriseAnalytics(renderEnterpriseSupportPage(pageName), env, pageName);
   }
 
