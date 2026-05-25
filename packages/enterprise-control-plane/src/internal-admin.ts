@@ -1172,13 +1172,11 @@ export function renderInternalAdminPage(env: EnterpriseControlPlaneEnv = {}): st
       <a class="nav-link" href="/app/pilot-success"><span>Pilot success</span><span class="tag">staff</span></a>
       <a class="nav-link" href="#runtime"><span>Runtime</span></a>
       <a class="nav-link" href="#audit"><span>Audit</span></a>
-      <div class="sidebar-note"><strong>Safe first slice</strong><br />Read visibility is live. Employee writes stay disabled unless the approval gate and secret are enabled.</div>
     </aside>
     <main class="main">
       <div class="topbar">
         <div>
-          <div class="eyebrow">VaultProof employees only</div>
-          <h1>Manage enterprise customers.</h1>
+          <h1>Enterprise customer operations</h1>
           <p class="lead">Add businesses, invite business admins, set SSO, and copy the correct per-business login link without entering the customer-facing dashboard.</p>
         </div>
         <div class="toolbar">
@@ -1188,7 +1186,6 @@ export function renderInternalAdminPage(env: EnterpriseControlPlaneEnv = {}): st
           <a class="action" href="/app/onboarding">onboarding</a>
           <a class="action" href="/app/support">support</a>
           <a class="action" href="/app/pilot-success">pilot success</a>
-          <a class="action" href="/app/login">employee sign in</a>
         </div>
       </div>
 
@@ -1340,7 +1337,7 @@ export function renderInternalAdminPage(env: EnterpriseControlPlaneEnv = {}): st
         var el = byId('notice');
         if (!el) return;
         el.style.display = message ? 'block' : 'none';
-        el.innerHTML = message ? escapeHtml(message) + ' <a href="/app/login">Employee sign in</a>' : '';
+        el.textContent = message || '';
       }
       async function fetchOverview() {
         var response = await fetch('/api/v1/internal-admin/overview', {

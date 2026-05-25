@@ -3790,8 +3790,7 @@ async function assertInternalAdminConsole() {
     throw new Error(`Expected internal admin HEAD check to return 200, got ${headPageResponse.status}`);
   }
   for (const required of [
-    'VaultProof employees only',
-    'Manage enterprise customers.',
+    'Enterprise customer operations',
     'Control Center',
     'Enterprise business command view',
     'businessUserChart',
@@ -3835,6 +3834,18 @@ async function assertInternalAdminConsole() {
   }
   if (pageHtml.includes('internal_admin=true') || pageHtml.includes('next=%2F')) {
     throw new Error('Internal admin page must not expose admin mode or next-route query parameters in login links');
+  }
+  for (const forbidden of [
+    'Safe first slice',
+    'Read visibility is live',
+    'VaultProof employees only',
+    'Manage enterprise customers.',
+    'employee sign in',
+    'Employee sign in',
+  ]) {
+    if (pageHtml.includes(forbidden)) {
+      throw new Error(`Internal admin page should not include removed copy: ${forbidden}`);
+    }
   }
   if (pageHtml.includes('https://api.vaultproof.dev') || pageHtml.includes('https://init.vaultproof.dev')) {
     throw new Error('Internal admin page must not use B2C API origins');
