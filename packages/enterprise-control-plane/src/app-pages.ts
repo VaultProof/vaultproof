@@ -6616,6 +6616,66 @@ function renderEnterpriseSupportPage(pageName: EnterpriseSupportPageName): strin
         </article>
 
         <article class="doc-section">
+          <span class="doc-kicker">Dashboard</span>
+          <h2>Dashboard functions</h2>
+          <p>The dashboard is the daily control center. It brings runtime posture, organization access, evidence, provider-key risk, project health, and operator shortcuts into one place before teams go deeper into the workspace pages.</p>
+          <div class="list">
+            <div class="row"><div><div class="row-title">Control center header</div><div class="row-sub">Shows the active operating context, links to provider slots and policy control, and points operators to readiness before expanding rollout.</div></div><a class="tag good" href="/app/dashboard">dashboard</a></div>
+            <div class="row"><div><div class="row-title">Overview tab</div><div class="row-sub">Shows production runtime status, project count, member count, 30-day calls, confidential runtime posture, organization role, and the first three launch actions.</div></div><span class="tag good">daily check</span></div>
+            <div class="row"><div><div class="row-title">Security tab</div><div class="row-sub">Groups runtime controls, evidence links, audit/access exports, caller-lock policy, provider slots, and runbook paths for security review.</div></div><span class="tag good">security</span></div>
+            <div class="row"><div><div class="row-title">Access tab</div><div class="row-sub">Summarizes membership, SSO, alerts, and the setup access checklist before inviting a broader business team.</div></div><span class="tag good">access</span></div>
+            <div class="row"><div><div class="row-title">Operations tab</div><div class="row-sub">Shows project health, runtime activity, recent audit events, and business-safe operator shortcuts.</div></div><span class="tag good">operations</span></div>
+            <div class="row"><div><div class="row-title">Workspace tab</div><div class="row-sub">Lists every enterprise tool with a short description so admins can jump to the right feature page.</div></div><span class="tag good">catalog</span></div>
+          </div>
+        </article>
+
+        <article class="doc-section">
+          <span class="doc-kicker">Catalog</span>
+          <h2>Workspace features and functions</h2>
+          <p>These are the customer-facing enterprise workspace functions exposed from the dashboard and sidebar.</p>
+          <div class="list">
+            <div class="row"><div><div class="row-title">Enterprise docs</div><div class="row-sub">Enterprise-only documentation for setup, SSO, provider slots, key exposure response, evidence, runbooks, and operating boundaries.</div></div><a class="tag good" href="/app/docs">open</a></div>
+            <div class="row"><div><div class="row-title">Setup guide</div><div class="row-sub">Implementation sequence for mapping environments, connecting SSO, choosing gateways, configuring projects, protecting provider slots, and going live safely.</div></div><a class="tag good" href="/app/setup">open</a></div>
+            <div class="row"><div><div class="row-title">Provider slots</div><div class="row-sub">Provider key slots, material mode, email API key demo slots, dry-run request snippets, emergency revoke, rotation review, and key exposure response.</div></div><a class="tag good" href="/app/keys">open</a></div>
+            <div class="row"><div><div class="row-title">Projects</div><div class="row-sub">Project inventory, usage, provider slot posture, policy status, and quick links into Control.</div></div><a class="tag good" href="/app/projects">open</a></div>
+            <div class="row"><div><div class="row-title">API Inventory</div><div class="row-sub">Metadata-only API catalog with owners, risk, data sensitivity, provider-slot mapping, review status, imports, filtered CSV, review brief, and JSON export.</div></div><a class="tag good" href="/app/inventory">open</a></div>
+            <div class="row"><div><div class="row-title">Policy Drift</div><div class="row-sub">Control-gap board for missing provider slots, caller-lock gaps, stale/no traffic, accepted-risk records, compensating controls, expirations, and launch blockers.</div></div><a class="tag good" href="/app/policy">open</a></div>
+            <div class="row"><div><div class="row-title">Rollout Manager</div><div class="row-sub">Workload cutover planning with integration mode, app/gateway owners, canary, rollback path, support window, blockers, dry-run snippets, and evidence export.</div></div><a class="tag good" href="/app/rollout">open</a></div>
+            <div class="row"><div><div class="row-title">Control</div><div class="row-sub">Project policy, provider allowlists, caller-lock rules, rate limits, upstream restrictions, and secure execution settings.</div></div><a class="tag good" href="/app/control">open</a></div>
+            <div class="row"><div><div class="row-title">Activity</div><div class="row-sub">Runtime and proxy events with status codes, latency, provider request IDs, denial details, and attestation summaries.</div></div><a class="tag good" href="/app/activity">open</a></div>
+            <div class="row"><div><div class="row-title">Alerts</div><div class="row-sub">Alert destinations, delivery logs, dispatch runs, policy state, and admin test-send workflow.</div></div><a class="tag good" href="/app/alerts">open</a></div>
+            <div class="row"><div><div class="row-title">Readiness</div><div class="row-sub">Production gate for control plane, executor, GCP confidential runtime, Cloud KMS path, attestation, replay protection, and origin lock.</div></div><a class="tag good" href="/readiness">open</a></div>
+            <div class="row"><div><div class="row-title">Health</div><div class="row-sub">Lightweight control-plane health response for monitoring, edge verification, and operator checks.</div></div><a class="tag good" href="/health">open</a></div>
+            <div class="row"><div><div class="row-title">AI Proof Verifier</div><div class="row-sub">Registers external models, verifies submitted proof bundles, and ties evidence to project policy, audit, and runtime posture without VaultProof running the model.</div></div><a class="tag warn" href="/app/verifier">beta</a></div>
+            <div class="row"><div><div class="row-title">Org + SSO</div><div class="row-sub">Organization identity, company domain, SSO status, Entra/Supabase SAML rollout, roles, and workspace ownership.</div></div><a class="tag good" href="/app/org">open</a></div>
+            <div class="row"><div><div class="row-title">Members</div><div class="row-sub">People, invitations, roles, project assignments, invite create/revoke, and access-review export.</div></div><a class="tag good" href="/app/members">open</a></div>
+            <div class="row"><div><div class="row-title">Audit</div><div class="row-sub">Governance and runtime event timeline with search, filters, evidence-friendly event details, and CSV export.</div></div><a class="tag good" href="/app/audit">open</a></div>
+            <div class="row"><div><div class="row-title">Evidence packet</div><div class="row-sub">Customer proof packet with readiness, access review, audit links, API inventory, policy drift, rollout, scanner, release, monitoring, and key exposure response summaries.</div></div><a class="tag good" href="/app/evidence">open</a></div>
+            <div class="row"><div><div class="row-title">Release evidence</div><div class="row-sub">Customer-safe release proof for build tag, approval, verification status, rollout state, rollback owner/path, and JSON export.</div></div><a class="tag good" href="/app/release">open</a></div>
+            <div class="row"><div><div class="row-title">Security review</div><div class="row-sub">Buyer/security/procurement packet with architecture, control coverage, evidence links, open review items, common answers, and copyable briefs.</div></div><a class="tag good" href="/app/security-review">open</a></div>
+            <div class="row"><div><div class="row-title">Scanner</div><div class="row-sub">Redacted repository exposure findings, owners, severity, rotation/remediation status, provider-slot hints, and customer-safe scanner evidence JSON.</div></div><a class="tag good" href="/app/scanner">open</a></div>
+            <div class="row"><div><div class="row-title">Pilot testers</div><div class="row-sub">Paid-pilot tester roster, login/scenario status, guided session plan, feedback, blockers, and readiness JSON.</div></div><a class="tag good" href="/app/testers">open</a></div>
+            <div class="row"><div><div class="row-title">Plans</div><div class="row-sub">Paid-pilot package, capacity envelope, contract guardrails, security boundaries, rollout posture, and customer review links.</div></div><a class="tag good" href="/app/plans">open</a></div>
+            <div class="row"><div><div class="row-title">Entitlements</div><div class="row-sub">Contract package, capacity, support tier, renewal owner, billing handoff, amendment log, usage meters, and paid-user guardrails.</div></div><a class="tag good" href="/app/entitlements">open</a></div>
+            <div class="row"><div><div class="row-title">Pilot proposal</div><div class="row-sub">First-workload scope, provider path, owner group, expected calls, price, support boundary, success metric, and copyable proposal.</div></div><a class="tag good" href="/app/pilot">open</a></div>
+            <div class="row"><div><div class="row-title">Settings</div><div class="row-sub">Tenant defaults, organization identity, SSO state, session notices, and security notices.</div></div><a class="tag good" href="/app/settings">open</a></div>
+            <div class="row"><div><div class="row-title">Runbooks</div><div class="row-sub">Operator commands for production verification, evidence, deploy, secret rotation, DNS, edge, SSH hardening, cleanup, and incident response.</div></div><a class="tag good" href="/app/runbooks">open</a></div>
+          </div>
+        </article>
+
+        <article class="doc-section">
+          <span class="doc-kicker">Exports</span>
+          <h2>Dashboard exports and evidence functions</h2>
+          <p>The dashboard points operators to evidence exports that are safe for customer security review. These exports must not include provider keys, service-role keys, OAuth secrets, SAML material, request bodies, response bodies, or customer payloads.</p>
+          <ul>
+            <li><code>/api/v1/enterprise/audit?format=csv&amp;days=30</code> exports the last 30 days of governance and runtime audit evidence.</li>
+            <li><code>/api/v1/enterprise/members/access-review?format=csv</code> exports members, roles, and project access for access review.</li>
+            <li><code>vaultproof_enterprise_evidence_packet</code> summarizes readiness, launch posture, identity proof, key rotation, exposure response, API inventory, policy drift, rollout, scanner, release, testers, entitlements, onboarding, and monitoring.</li>
+            <li><code>vaultproof_enterprise_key_exposure_response</code> documents linked scanner findings, provider-slot containment, emergency revoke path, rotation scope, proof boundary, and incident response steps.</li>
+          </ul>
+        </article>
+
+        <article class="doc-section">
           <span class="doc-kicker">Incident response</span>
           <h2>Key exposure response</h2>
           <p>Key exposure response is the enterprise incident workflow for a suspected provider API key leak. It lives on <code>/app/keys</code> because Provider Slots are where VaultProof can pause, revoke, rotate, and prove protected provider access.</p>

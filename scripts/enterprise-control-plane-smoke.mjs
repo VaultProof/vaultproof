@@ -3208,7 +3208,7 @@ async function assertEnterpriseLoginRoute() {
     {
       path: '/app/docs',
       title: 'Enterprise docs - VaultProof Enterprise',
-      required: ['Enterprise-only documentation', 'Enterprise docs index', 'Key exposure response', 'Exposure response sequence', 'Enterprise SSO docs', 'Provider Slots', 'scanner_open_exposure', 'needs_rotation', 'ready_to_contain', 'incident JSON packet', 'VaultProof can immediately disable or audit traffic routed through VaultProof', '/app/setup', '/app/technical-guide', '/app/security-review', '/app/runbooks', '/app/evidence', '/app/keys', '/app/scanner'],
+      required: ['Enterprise-only documentation', 'Enterprise docs index', 'Dashboard functions', 'Overview tab', 'Security tab', 'Access tab', 'Operations tab', 'Workspace tab', 'Workspace features and functions', 'API Inventory', 'Policy Drift', 'Rollout Manager', 'AI Proof Verifier', 'Org + SSO', 'Dashboard exports and evidence functions', 'vaultproof_enterprise_evidence_packet', 'vaultproof_enterprise_key_exposure_response', 'Key exposure response', 'Exposure response sequence', 'Enterprise SSO docs', 'Provider Slots', 'scanner_open_exposure', 'needs_rotation', 'ready_to_contain', 'incident JSON packet', 'VaultProof can immediately disable or audit traffic routed through VaultProof', '/app/setup', '/app/technical-guide', '/app/security-review', '/app/runbooks', '/app/evidence', '/app/keys', '/app/scanner', '/app/inventory', '/app/policy', '/app/rollout'],
     },
     {
       path: '/app/setup',
