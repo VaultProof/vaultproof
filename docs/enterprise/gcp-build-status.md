@@ -1,6 +1,6 @@
 # VaultProof GCP Build Status
 
-Last updated: 2026-05-25T08:37:33.633Z
+Last updated: 2026-05-25T09:08:05.836Z
 
 This file is the living inventory of what has been built for VaultProof on Google Cloud. It is refreshed after every successful enterprise image build by `infra/gcp/enterprise-secure-runtime/build-images.sh`.
 
@@ -41,9 +41,9 @@ For the final demo go/no-go run, use `LOGIN_QA_REQUIRE_SESSION=true npm run qa:e
 
 Latest live check on 2026-05-22:
 
-- `npm run qa:enterprise-live-app` passed against `https://enterprise.vaultproof.dev`: `production_ready: true`, `security_profile: google-confidential-production`, 27 app paths, 5 staff-only paths, and 31 links checked.
-- `npm run verify:gcp-enterprise-edge` passed after deploying build `5a13d7d3`. The verifier confirmed edge IP `34.102.179.105`, active managed TLS for `enterprise.vaultproof.dev`, healthy backend `vaultproof-enterprise-runtime-1:3001`, `/health`, and `/readiness`.
-- `npm run verify:gcp-enterprise-cloud-armor` passed after deploying build `5a13d7d3`. The verifier confirmed `vaultproof-enterprise-armor` is attached to `vaultproof-enterprise-backend`, `/health` returns `200`, and the `/.env` scanner probe returns `403`.
+- `npm run qa:enterprise-live-app` passed against `https://enterprise.vaultproof.dev`: `production_ready: true`, `security_profile: google-confidential-production`, 28 app paths, 5 staff-only paths, and the discovered enterprise links checked.
+- `npm run verify:gcp-enterprise-edge` passed after deploying build `b4f8e425`. The verifier confirmed edge IP `34.102.179.105`, active managed TLS for `enterprise.vaultproof.dev`, healthy backend `vaultproof-enterprise-runtime-1:3001`, `/health`, and `/readiness`.
+- `npm run verify:gcp-enterprise-cloud-armor` passed after deploying build `b4f8e425`. The verifier confirmed `vaultproof-enterprise-armor` is attached to `vaultproof-enterprise-backend`, `/health` returns `200`, and the `/.env` scanner probe returns `403`.
 - `RUN_LIVE_EDGE=true RUN_LIVE_APP_QA=true RUN_CLOUD_ARMOR_QA=true npm run gate:gcp-customer-launch` returned `status: ok` with no blockers. Strict Supabase session proof is still skipped until `SUPABASE_SERVICE_ROLE_KEY` or `SUPABASE_SERVICE_KEY` is loaded in the local shell.
 
 ## Cloud Armor Edge Guardrail
@@ -54,11 +54,12 @@ Status: `attached and enforced`
 
 ## App Shell Notes
 
-- Build `5a13d7d3` is the current deployed GCP image tag for both control plane and executor containers.
+- Build `b4f8e425` is the current deployed GCP image tag for both control plane and executor containers.
 - Homepage hero headline is `Active Key Protection for every API call.`
 - Customer-facing enterprise pages live under `https://enterprise.vaultproof.dev`; staff-only operator pages live under `https://admin.vaultproof.dev`.
 - `https://admin.vaultproof.dev/app/launch` is the staff-only go/no-go launch board. `https://enterprise.vaultproof.dev/app/launch` is intentionally removed from the customer enterprise host and should return 404.
 - `https://admin.vaultproof.dev/app/demo` is the staff-only buyer walkthrough: live workspace facts, proof path, identity/OAuth proof kit, key-rotation proof kit, pilot operations proof kit, API proxy self-test kit, monitoring evidence kit, paid-pilot tester readiness, paid-customer onboarding, safety guardrails, objection answers, paid-pilot close steps, and a copyable demo talk track generated without secrets. `https://enterprise.vaultproof.dev/app/demo` is intentionally removed from the customer enterprise host and should return 404.
+- `https://enterprise.vaultproof.dev/app/docs` is the enterprise-only documentation index for purchased customers: setup, technical guide, security review, runbooks, evidence, provider slots, scanner, SSO notes, key exposure response, proof boundary, and links to the customer-safe operating pages without mixing in public developer docs.
 - `https://enterprise.vaultproof.dev/app/evidence` is the customer proof packet: runtime readiness, go/no-go launch decision and blockers, identity/login QA evidence, key-rotation/demo-only acceptance evidence, pilot operations rollback and budget/monitoring evidence, API proxy self-test evidence, API inventory proof, policy drift proof, integration rollout proof, scanner exposure proof, release evidence proof, paid-pilot tester proof, paid onboarding proof, launch support readiness, monitoring evidence with alert workflow/Cloud Armor/budget guardrails, access-review and audit export links, provider posture, rollout workflow, and copy/download JSON evidence summary without secrets.
 - `https://enterprise.vaultproof.dev/app/inventory` is the customer API inventory board: metadata-only API surfaces from existing projects, provider slots, manual API key records, browser-local CSV/OpenAPI JSON import hints, caller-lock policy, project health, and access-log rollups; browser-local owner/environment/risk/review annotations; search and filters for status, review, risk, and source; bulk review actions for currently filtered rows; protected/manual-key/missing-provider/needs-sealed-ingest/policy-incomplete/no-traffic/stale/review-due posture; workflow links; and copyable full CSV, filtered CSV, review brief, plus `vaultproof_enterprise_api_inventory` JSON without secrets.
 - `https://enterprise.vaultproof.dev/app/policy` is the customer policy drift board: control-gap rows from existing project/provider/policy/inventory/traffic evidence; browser-local accepted-risk records with owner, reason, risk, compensating control, expiration date, approval status, and next action; filters for search, severity, status, and control; launch hold summary; workflow links; copyable drift brief; and copyable `vaultproof_enterprise_policy_drift` JSON without secrets.
@@ -298,14 +299,14 @@ Cost note: the current fixed estimate is above the existing `VaultProof Producti
 
 ## Build Pointer
 
-- Build tag: `5a13d7d3`
+- Build tag: `b4f8e425`
 - Registry: `us-central1-docker.pkg.dev/vaultproof-prod/vaultproof`
-- Control plane image: `us-central1-docker.pkg.dev/vaultproof-prod/vaultproof/enterprise-control-plane:5a13d7d3`
-- Control plane digest: `sha256:01e7cd5f3c9c63cb4283bd3914b203d9e44b7b53a560537cbc5866fe08afb098`
-- Control plane built at: `2026-05-25T08:37:00.821216696Z`
-- Executor image: `us-central1-docker.pkg.dev/vaultproof-prod/vaultproof/enterprise-secure-executor:5a13d7d3`
-- Executor digest: `sha256:e3f8b38f0d08d6137dc55973efce461621e78d41becc160b5534677fd0c29b51`
-- Executor built at: `2026-05-25T08:37:12.115378711Z`
+- Control plane image: `us-central1-docker.pkg.dev/vaultproof-prod/vaultproof/enterprise-control-plane:b4f8e425`
+- Control plane digest: `sha256:b5a150e04a68a82c2789acaa6bfd4ccea7bd5edd6ba0b0650c9d76bf115e4053`
+- Control plane built at: `2026-05-25T09:07:30.472539624Z`
+- Executor image: `us-central1-docker.pkg.dev/vaultproof-prod/vaultproof/enterprise-secure-executor:b4f8e425`
+- Executor digest: `sha256:43706df66b12bed74b71934f5dea91bd02e8351de32954e917ab75d5a73bd714`
+- Executor built at: `2026-05-25T09:07:42.343409663Z`
 
 ## Project
 
