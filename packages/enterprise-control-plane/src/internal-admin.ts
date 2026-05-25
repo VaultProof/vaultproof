@@ -8,6 +8,7 @@ import {
   type OrganizationRole,
 } from '@vaultproof/core';
 import { getEnterpriseHostname, type EnterpriseControlPlaneEnv } from './config.js';
+import { injectEnterpriseAnalytics } from './analytics.js';
 import { writeGovernanceAuditEvent } from './audit.js';
 import { authenticateUser, type EnterpriseUserAuth } from './auth.js';
 import { getSupabase } from './supabase.js';
@@ -1040,8 +1041,8 @@ function enterpriseBusinessLoginLinks(
   return links;
 }
 
-export function renderInternalAdminPage(): string {
-  return `<!doctype html>
+export function renderInternalAdminPage(env: EnterpriseControlPlaneEnv = {}): string {
+  return injectEnterpriseAnalytics(`<!doctype html>
 <html lang="en">
 <head>
   <meta charset="utf-8" />
@@ -1832,7 +1833,7 @@ export function renderInternalAdminPage(): string {
     })();
   </script>
 </body>
-</html>`;
+</html>`, env, 'internal-admin');
 }
 
 async function handleInternalAdminOrgDetail(

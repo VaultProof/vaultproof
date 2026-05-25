@@ -3480,6 +3480,7 @@ async function assertEnterpriseAppLinkCrawl() {
     '/app/keys',
     '/app/verifier',
     '/app/evidence',
+    '/app/docs',
     '/app/setup',
     '/app/technical-guide',
     '/app/security-review',
@@ -3512,6 +3513,9 @@ async function assertEnterpriseAppLinkCrawl() {
     if (html.includes('https://init.vaultproof.dev') || html.includes('https://api.vaultproof.dev')) {
       throw new Error(`Enterprise app link ${path} references B2C API origins`);
     }
+    if (html.includes('cdn.mxpnl.com') || html.includes('Enterprise Page Viewed')) {
+      throw new Error(`Enterprise app link ${path} must not load Mixpanel unless ENTERPRISE_MIXPANEL_TOKEN is configured`);
+    }
 
     for (const href of extractHrefValues(html)) {
       if (!href || href.startsWith('#') || href.startsWith('mailto:') || href.startsWith('javascript:')) continue;
@@ -3540,24 +3544,35 @@ async function assertEnterpriseMixpanelAnalytics() {
 
   const pageChecks = [
     ['/', 'homepage'],
+    ['/app', 'dashboard'],
     ['/app/login', 'login'],
     ['/app/dashboard', 'dashboard'],
+    ['/app/activity', 'activity'],
+    ['/app/alerts', 'alerts'],
+    ['/app/control', 'control'],
+    ['/app/org', 'org'],
+    ['/app/projects', 'projects'],
+    ['/app/inventory', 'inventory'],
+    ['/app/policy', 'policy'],
+    ['/app/rollout', 'rollout'],
+    ['/app/keys', 'keys'],
+    ['/app/verifier', 'verifier'],
     ['/app/evidence', 'evidence'],
+    ['/app/docs', 'docs'],
     ['/app/setup', 'setup'],
     ['/app/technical-guide', 'technical-guide'],
     ['/app/security-review', 'security-review'],
+    ['/app/settings', 'settings'],
+    ['/app/plans', 'plans'],
     ['/app/entitlements', 'entitlements'],
     ['/app/pilot', 'pilot'],
     ['/app/testers', 'testers'],
     ['/app/release', 'release'],
-    ['/app/verifier', 'verifier'],
     ['/app/members', 'members'],
-    ['/app/policy', 'policy'],
-    ['/app/rollout', 'rollout'],
     ['/app/scanner', 'scanner'],
-    ['/app/control', 'control'],
-    ['/app/org', 'org'],
     ['/app/runbooks', 'runbooks'],
+    ['/app/audit', 'audit'],
+    ['/app/logout', 'logout'],
   ];
 
   for (const [path, pageName] of pageChecks) {
@@ -3595,6 +3610,68 @@ async function assertEnterpriseMixpanelAnalytics() {
   const recordingHtml = await recordingResponse.text();
   if (!recordingHtml.includes('"record_sessions_percent":5') || !recordingHtml.includes('"autocapture":true')) {
     throw new Error('Expected explicit enterprise Mixpanel recording/autocapture env flags to be reflected');
+  }
+
+  installSupabaseStub();
+  stubAuthUserEmail = 'owner@vaultproof.dev';
+  const adminEnv = {
+    enterpriseHostname: ENTERPRISE_HOSTNAME,
+    internalAdminHostname: INTERNAL_ADMIN_HOSTNAME,
+    internalAdminAllowedEmails: 'owner@vaultproof.dev',
+    supabaseUrl: 'https://supabase.example.co',
+    supabaseServiceRoleKey: 'service-role-key',
+    mixpanelToken: 'mixpanel-enterprise-smoke-token',
+  };
+  const adminLoginResponse = await handleEnterpriseControlPlaneRequest(
+    buildHostRequest(INTERNAL_ADMIN_HOSTNAME, '/app/login'),
+    adminEnv,
+  );
+  const adminLoginHtml = await adminLoginResponse.text();
+  if (adminLoginResponse.status !== 200
+    || !adminLoginHtml.includes('Enterprise Page Viewed')
+    || !adminLoginHtml.includes('var pageName = "internal-admin-login";')) {
+    throw new Error(`Expected internal admin login page to include Mixpanel analytics, got ${adminLoginResponse.status}`);
+  }
+
+  const adminSessionResponse = await handleEnterpriseControlPlaneRequest(
+    buildHostRequest(INTERNAL_ADMIN_HOSTNAME, '/api/v1/internal-admin/session', {
+      method: 'POST',
+      headers: {
+        authorization: `Bearer ${AUTH_TOKEN}`,
+      },
+    }),
+    adminEnv,
+  );
+  const adminSessionCookie = adminSessionResponse.headers.get('set-cookie') || '';
+  if (adminSessionResponse.status !== 200 || !adminSessionCookie.includes('vp_internal_admin_session=')) {
+    throw new Error(`Expected internal admin session for Mixpanel coverage checks, got ${adminSessionResponse.status}`);
+  }
+
+  for (const [path, pageName] of [
+    ['/', 'internal-admin'],
+    ['/orgs/org_123', 'internal-admin'],
+    ['/app/launch', 'launch'],
+    ['/app/demo', 'demo'],
+    ['/app/onboarding', 'onboarding'],
+    ['/app/support', 'support'],
+    ['/app/pilot-success', 'pilot-success'],
+  ]) {
+    const response = await handleEnterpriseControlPlaneRequest(
+      buildHostRequest(INTERNAL_ADMIN_HOSTNAME, path, {
+        headers: {
+          cookie: adminSessionCookie.split(';')[0],
+        },
+      }),
+      adminEnv,
+    );
+    const html = await response.text();
+    if (response.status !== 200
+      || !html.includes('cdn.mxpnl.com/libs/mixpanel-2-latest.min.js')
+      || !html.includes('mixpanel-enterprise-smoke-token')
+      || !html.includes('Enterprise Page Viewed')
+      || !html.includes(`var pageName = "${pageName}";`)) {
+      throw new Error(`Expected internal admin analytics page ${path} to track ${pageName}, got ${response.status}`);
+    }
   }
 }
 

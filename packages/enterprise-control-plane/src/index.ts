@@ -399,7 +399,7 @@ async function handleEnterpriseControlPlaneRequestInner(
     if (authorized instanceof Response) {
       return redirectToInternalAdminLogin(url);
     }
-    return new Response(renderInternalAdminPage(), {
+    return new Response(renderInternalAdminPage(env), {
       status: 200,
       headers: {
         'content-type': 'text/html; charset=utf-8',
@@ -447,7 +447,7 @@ async function handleEnterpriseControlPlaneRequestInner(
   }
 
   if (isReadRequest && (url.pathname === '/app/logout' || url.pathname === '/app/logout.html')) {
-    return new Response(renderEnterpriseLogoutPage(), {
+    return new Response(renderEnterpriseLogoutPage(env), {
       status: 200,
       headers: {
         'content-type': 'text/html; charset=utf-8',

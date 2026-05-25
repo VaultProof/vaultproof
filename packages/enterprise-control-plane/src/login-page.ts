@@ -582,8 +582,7 @@ export function renderEnterpriseLoginPage(env: EnterpriseControlPlaneEnv = {}): 
 }
 
 export function renderInternalAdminLoginPage(env: EnterpriseControlPlaneEnv = {}): string {
-  void env;
-  return `<!doctype html>
+  return injectEnterpriseAnalytics(`<!doctype html>
 <html lang="en">
 <head>
   <meta charset="utf-8" />
@@ -654,7 +653,7 @@ export function renderInternalAdminLoginPage(env: EnterpriseControlPlaneEnv = {}
   </main>
   <script src="/app/enterprise-login.js" defer></script>
 </body>
-</html>`;
+</html>`, env, 'internal-admin-login');
 }
 
 function replaceJavaScriptConst(source: string, name: string, value: string | undefined): string {
@@ -672,8 +671,8 @@ export function renderEnterpriseLoginScript(env: EnterpriseControlPlaneEnv = {})
   return script;
 }
 
-export function renderEnterpriseLogoutPage(): string {
-  return `<!doctype html>
+export function renderEnterpriseLogoutPage(env: EnterpriseControlPlaneEnv = {}): string {
+  return injectEnterpriseAnalytics(`<!doctype html>
 <html lang="en">
 <head>
   <meta charset="utf-8" />
@@ -723,5 +722,5 @@ export function renderEnterpriseLogoutPage(): string {
     })();
   </script>
 </body>
-</html>`;
+</html>`, env, 'logout');
 }

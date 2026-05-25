@@ -208,10 +208,13 @@ Control plane:
 SUPABASE_URL='https://...supabase.co' \
 SUPABASE_SERVICE_ROLE_KEY='...' \
 VAULTPROOF_INTERNAL_ADMIN_DOMAINS='vaultproof.dev' \
+ENTERPRISE_MIXPANEL_TOKEN='optional-project-token' \
 ENTERPRISE_EXECUTOR_SIGNING_KEY_ID='enterprise-gcp-v1' \
 ENTERPRISE_EXECUTOR_SIGNING_SECRET='...' \
 bash infra/gcp/enterprise-secure-runtime/render-control-plane-env.sh > enterprise-control-plane.env
 ```
+
+`ENTERPRISE_MIXPANEL_TOKEN` enables enterprise page analytics across the customer and staff HTML surfaces. `ENTERPRISE_MIXPANEL_AUTOCAPTURE` and `ENTERPRISE_MIXPANEL_RECORD_SESSIONS_PERCENT` default to off/0 for enterprise privacy unless explicitly set.
 
 Review the files, then add them as Secret Manager versions:
 
