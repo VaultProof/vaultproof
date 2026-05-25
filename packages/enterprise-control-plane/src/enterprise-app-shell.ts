@@ -199,13 +199,6 @@ const ENTERPRISE_SIDEBAR_NAV_GROUPS: readonly EnterpriseSidebarNavGroup[] = [
     label: 'guides',
     items: [
       {
-        page: 'docs',
-        href: '/app/docs',
-        label: 'Enterprise docs',
-        blurb: 'Enterprise-only docs for setup, SSO, exposure response, evidence, and operations.',
-        activePill: 'docs',
-      },
-      {
         page: 'setup',
         href: '/app/setup',
         label: 'Setup guide',
@@ -274,10 +267,11 @@ const ENTERPRISE_SIDEBAR_NAV_GROUPS: readonly EnterpriseSidebarNavGroup[] = [
     label: 'help',
     items: [
       {
-        href: 'https://vaultproof.dev/docs',
-        label: 'Public docs',
-        blurb: 'Public product docs for non-enterprise VaultProof users.',
-        external: true,
+        page: 'docs',
+        href: '/app/docs',
+        label: 'Enterprise docs',
+        blurb: 'Enterprise-only docs for setup, SSO, exposure response, evidence, and operations.',
+        activePill: 'docs',
       },
       {
         href: 'https://vaultproof.dev/status',
