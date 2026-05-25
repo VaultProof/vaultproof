@@ -1,6 +1,6 @@
 # VaultProof GCP Build Status
 
-Last updated: 2026-05-25T09:08:05.836Z
+Last updated: 2026-05-25T09:34:00.021Z
 
 This file is the living inventory of what has been built for VaultProof on Google Cloud. It is refreshed after every successful enterprise image build by `infra/gcp/enterprise-secure-runtime/build-images.sh`.
 
@@ -42,8 +42,8 @@ For the final demo go/no-go run, use `LOGIN_QA_REQUIRE_SESSION=true npm run qa:e
 Latest live check on 2026-05-22:
 
 - `npm run qa:enterprise-live-app` passed against `https://enterprise.vaultproof.dev`: `production_ready: true`, `security_profile: google-confidential-production`, 28 app paths, 5 staff-only paths, and the discovered enterprise links checked.
-- `npm run verify:gcp-enterprise-edge` passed after deploying build `b4f8e425`. The verifier confirmed edge IP `34.102.179.105`, active managed TLS for `enterprise.vaultproof.dev`, healthy backend `vaultproof-enterprise-runtime-1:3001`, `/health`, and `/readiness`.
-- `npm run verify:gcp-enterprise-cloud-armor` passed after deploying build `b4f8e425`. The verifier confirmed `vaultproof-enterprise-armor` is attached to `vaultproof-enterprise-backend`, `/health` returns `200`, and the `/.env` scanner probe returns `403`.
+- `npm run verify:gcp-enterprise-edge` passed after deploying build `400db7f7`. The verifier confirmed edge IP `34.102.179.105`, active managed TLS for `enterprise.vaultproof.dev`, healthy backend `vaultproof-enterprise-runtime-1:3001`, `/health`, and `/readiness`.
+- `npm run verify:gcp-enterprise-cloud-armor` passed after deploying build `400db7f7`. The verifier confirmed `vaultproof-enterprise-armor` is attached to `vaultproof-enterprise-backend`, `/health` returns `200`, and the `/.env` scanner probe returns `403`.
 - `RUN_LIVE_EDGE=true RUN_LIVE_APP_QA=true RUN_CLOUD_ARMOR_QA=true npm run gate:gcp-customer-launch` returned `status: ok` with no blockers. Strict Supabase session proof is still skipped until `SUPABASE_SERVICE_ROLE_KEY` or `SUPABASE_SERVICE_KEY` is loaded in the local shell.
 
 ## Cloud Armor Edge Guardrail
@@ -54,7 +54,7 @@ Status: `attached and enforced`
 
 ## App Shell Notes
 
-- Build `b4f8e425` is the current deployed GCP image tag for both control plane and executor containers.
+- Build `400db7f7` is the current deployed GCP image tag for both control plane and executor containers.
 - Homepage hero headline is `Active Key Protection for every API call.`
 - Customer-facing enterprise pages live under `https://enterprise.vaultproof.dev`; staff-only operator pages live under `https://admin.vaultproof.dev`.
 - `https://admin.vaultproof.dev/app/launch` is the staff-only go/no-go launch board. `https://enterprise.vaultproof.dev/app/launch` is intentionally removed from the customer enterprise host and should return 404.
@@ -299,14 +299,14 @@ Cost note: the current fixed estimate is above the existing `VaultProof Producti
 
 ## Build Pointer
 
-- Build tag: `b4f8e425`
+- Build tag: `400db7f7`
 - Registry: `us-central1-docker.pkg.dev/vaultproof-prod/vaultproof`
-- Control plane image: `us-central1-docker.pkg.dev/vaultproof-prod/vaultproof/enterprise-control-plane:b4f8e425`
-- Control plane digest: `sha256:b5a150e04a68a82c2789acaa6bfd4ccea7bd5edd6ba0b0650c9d76bf115e4053`
-- Control plane built at: `2026-05-25T09:07:30.472539624Z`
-- Executor image: `us-central1-docker.pkg.dev/vaultproof-prod/vaultproof/enterprise-secure-executor:b4f8e425`
-- Executor digest: `sha256:43706df66b12bed74b71934f5dea91bd02e8351de32954e917ab75d5a73bd714`
-- Executor built at: `2026-05-25T09:07:42.343409663Z`
+- Control plane image: `us-central1-docker.pkg.dev/vaultproof-prod/vaultproof/enterprise-control-plane:400db7f7`
+- Control plane digest: `sha256:48a60f512c56c94477919cd1cf9d9c8e4c0c159e2f9c8a46b3ec510e2ed19c56`
+- Control plane built at: `2026-05-25T09:33:22.529835366Z`
+- Executor image: `us-central1-docker.pkg.dev/vaultproof-prod/vaultproof/enterprise-secure-executor:400db7f7`
+- Executor digest: `sha256:3667275df4d862c80b3fac1088a2944488569ce0a6a5e950e0bd8b6ef1c8b7d7`
+- Executor built at: `2026-05-25T09:33:35.784911775Z`
 
 ## Project
 
