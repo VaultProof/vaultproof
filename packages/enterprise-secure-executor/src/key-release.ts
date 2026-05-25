@@ -1,6 +1,6 @@
 import type { SecureExecutionAttestationEvidence } from '@vaultproof/core';
 import { execFile } from 'node:child_process';
-import { createHash, randomUUID } from 'node:crypto';
+import { createHash, createHmac, randomUUID } from 'node:crypto';
 import { promisify } from 'node:util';
 
 const execFileAsync = promisify(execFile);
@@ -242,8 +242,8 @@ export class GcpKmsVaultUnwrapKeyProvider implements VaultUnwrapKeyProvider {
 
     return {
       provider,
-      projectId: this.input.projectId || parseGcpKmsResourcePart(keyResource, 'projects') || null,
-      location: this.input.location || parseGcpKmsResourcePart(keyResource, 'locations') || null,
+      projectId: parseGcpKmsResourcePart(keyResource, 'projects') || this.input.projectId || null,
+      location: parseGcpKmsResourcePart(keyResource, 'locations') || this.input.location || null,
       attestationTokenHash,
       keyId: keyResource,
       keyVersion: this.input.keyVersion || null,
@@ -263,6 +263,125 @@ export class GcpKmsVaultUnwrapKeyProvider implements VaultUnwrapKeyProvider {
 
   private fetchImpl(): typeof fetch {
     return this.input.fetchImpl || fetch;
+  }
+}
+
+export class AwsKmsVaultUnwrapKeyProvider implements VaultUnwrapKeyProvider {
+  readonly mode = 'aws-kms';
+  readonly hardwareBound: boolean;
+
+  constructor(private readonly input: {
+    region?: string;
+    keyId?: string;
+    keyArn?: string;
+    keyVersion?: string;
+    keySpec?: string;
+    keyUsage?: string;
+    keyState?: string;
+    keyOrigin?: string;
+    encryptedVaultUnwrapKeyBase64?: string;
+    accessKeyId?: string;
+    secretAccessKey?: string;
+    sessionToken?: string;
+    cacheTtlMs?: number;
+    fetchImpl?: typeof fetch;
+    attestationTokenHash?: string;
+    attestationToken?: string;
+    executorBuildDigest?: string;
+    confidentialVmResourceId?: string;
+    measurementSummary?: string;
+    secureBoot?: boolean;
+    imageDigest?: string;
+    roleArn?: string;
+    attestationType?: string;
+    isolationProvider?: 'aws-nitro-enclave' | 'aws-ec2';
+  }) {
+    const origin = (input.keyOrigin || '').trim().toUpperCase();
+    this.hardwareBound = origin === 'AWS_CLOUDHSM' || origin === 'EXTERNAL_KEY_STORE';
+  }
+
+  private cachedVaultUnwrapKey: { value: string; expiresAt: number } | null = null;
+  private cachedCredentials: { value: AwsCredentials; expiresAt: number } | null = null;
+
+  async getVaultUnwrapKey(): Promise<string> {
+    if (!this.input.encryptedVaultUnwrapKeyBase64) {
+      throw new Error('AWS KMS requires AWS_KMS_ENCRYPTED_VAULT_UNWRAP_KEY_BASE64.');
+    }
+
+    const now = Date.now();
+    if (this.cachedVaultUnwrapKey && this.cachedVaultUnwrapKey.expiresAt > now) {
+      return this.cachedVaultUnwrapKey.value;
+    }
+
+    const region = getRequiredAwsRegion(this.input.region, this.input.keyArn || this.input.keyId);
+    const credentials = await this.getCredentials();
+    const payload = await decryptAwsKmsCiphertext({
+      fetchImpl: this.fetchImpl(),
+      region,
+      keyId: this.input.keyArn || this.input.keyId,
+      ciphertextBlob: this.input.encryptedVaultUnwrapKeyBase64,
+      credentials,
+    });
+    const ttlMs = normalizeReleasedKeyCacheTtlMs(this.input.cacheTtlMs);
+    this.cachedVaultUnwrapKey = {
+      value: payload.plaintext,
+      expiresAt: now + ttlMs,
+    };
+    return payload.plaintext;
+  }
+
+  async getAttestationEvidence(): Promise<SecureExecutionAttestationEvidence | null> {
+    const keyId = this.input.keyArn || this.input.keyId || null;
+    return {
+      provider: this.input.isolationProvider || 'aws-ec2',
+      region: this.input.region || parseAwsArnPart(keyId, 'region') || null,
+      accountId: parseAwsArnPart(keyId, 'accountId') || null,
+      attestationTokenHash: this.input.attestationTokenHash
+        || (this.input.attestationToken ? sha256Base64Url(this.input.attestationToken) : null),
+      keyId,
+      keyArn: keyId?.startsWith('arn:') ? keyId : null,
+      keyVersion: this.input.keyVersion || null,
+      keySpec: this.input.keySpec || null,
+      keyUsage: this.input.keyUsage || null,
+      keyState: this.input.keyState || null,
+      keyOrigin: this.input.keyOrigin || null,
+      executorBuildDigest: this.input.executorBuildDigest || null,
+      confidentialVmResourceId: this.input.confidentialVmResourceId || null,
+      claims: {
+        attestationType: this.input.attestationType || 'aws-kms-runtime-evidence',
+        secureBoot: this.input.secureBoot ?? null,
+        vmIsolation: this.input.isolationProvider || 'aws-ec2',
+        measurementSummary: this.input.measurementSummary || null,
+        imageDigest: this.input.imageDigest || null,
+        roleArn: this.input.roleArn || null,
+      },
+    };
+  }
+
+  private fetchImpl(): typeof fetch {
+    return this.input.fetchImpl || fetch;
+  }
+
+  private async getCredentials(): Promise<AwsCredentials> {
+    if (this.input.accessKeyId && this.input.secretAccessKey) {
+      return {
+        accessKeyId: this.input.accessKeyId,
+        secretAccessKey: this.input.secretAccessKey,
+        sessionToken: this.input.sessionToken,
+      };
+    }
+
+    const now = Date.now();
+    if (this.cachedCredentials && this.cachedCredentials.expiresAt > now) {
+      return this.cachedCredentials.value;
+    }
+
+    const fetched = await fetchAwsInstanceCredentials(this.fetchImpl());
+    this.cachedCredentials = {
+      value: fetched.credentials,
+      expiresAt: fetched.expiresAt,
+    };
+    return fetched.credentials;
   }
 }
 
@@ -303,6 +422,28 @@ export function buildVaultUnwrapKeyProvider(input: {
   gcpServiceAccountEmail?: string;
   gcpAttestationType?: string;
   gcpIsolationProvider?: 'gcp-confidential-vm' | 'gcp-confidential-space';
+  awsRegion?: string;
+  awsKmsKeyId?: string;
+  awsKmsKeyArn?: string;
+  awsKmsKeyVersion?: string;
+  awsKmsKeySpec?: string;
+  awsKmsKeyUsage?: string;
+  awsKmsKeyState?: string;
+  awsKmsKeyOrigin?: string;
+  awsKmsEncryptedVaultUnwrapKeyBase64?: string;
+  awsAccessKeyId?: string;
+  awsSecretAccessKey?: string;
+  awsSessionToken?: string;
+  awsKmsCacheTtlMs?: number;
+  awsAttestationTokenHash?: string;
+  awsAttestationToken?: string;
+  awsConfidentialVmResourceId?: string;
+  awsMeasurementSummary?: string;
+  awsSecureBoot?: boolean;
+  awsImageDigest?: string;
+  awsRoleArn?: string;
+  awsAttestationType?: string;
+  awsIsolationProvider?: 'aws-nitro-enclave' | 'aws-ec2';
   fetchImpl?: typeof fetch;
   keyProvider?: VaultUnwrapKeyProvider;
 }): VaultUnwrapKeyProvider {
@@ -334,6 +475,34 @@ export function buildVaultUnwrapKeyProvider(input: {
         serviceAccountEmail: input.gcpServiceAccountEmail,
         attestationType: input.gcpAttestationType,
         isolationProvider: input.gcpIsolationProvider,
+      });
+    }
+    if (cloudProvider === 'aws' || cloudProvider === 'amazon' || cloudProvider === 'amazon-web-services') {
+      return new AwsKmsVaultUnwrapKeyProvider({
+        region: input.awsRegion,
+        keyId: input.awsKmsKeyId,
+        keyArn: input.awsKmsKeyArn,
+        keyVersion: input.awsKmsKeyVersion,
+        keySpec: input.awsKmsKeySpec,
+        keyUsage: input.awsKmsKeyUsage,
+        keyState: input.awsKmsKeyState,
+        keyOrigin: input.awsKmsKeyOrigin,
+        encryptedVaultUnwrapKeyBase64: input.awsKmsEncryptedVaultUnwrapKeyBase64,
+        accessKeyId: input.awsAccessKeyId,
+        secretAccessKey: input.awsSecretAccessKey,
+        sessionToken: input.awsSessionToken,
+        cacheTtlMs: input.awsKmsCacheTtlMs,
+        fetchImpl: input.fetchImpl,
+        attestationTokenHash: input.awsAttestationTokenHash,
+        attestationToken: input.awsAttestationToken,
+        executorBuildDigest: input.executorBuildDigest,
+        confidentialVmResourceId: input.awsConfidentialVmResourceId,
+        measurementSummary: input.awsMeasurementSummary,
+        secureBoot: input.awsSecureBoot,
+        imageDigest: input.awsImageDigest,
+        roleArn: input.awsRoleArn,
+        attestationType: input.awsAttestationType,
+        isolationProvider: input.awsIsolationProvider,
       });
     }
 
@@ -389,6 +558,192 @@ function parseGcpKmsResourcePart(resource: string, partName: string): string | n
   const index = parts.indexOf(partName);
   if (index < 0 || index + 1 >= parts.length) return null;
   return parts[index + 1] || null;
+}
+
+interface AwsCredentials {
+  accessKeyId: string;
+  secretAccessKey: string;
+  sessionToken?: string;
+}
+
+function getRequiredAwsRegion(region: string | undefined, keyId: string | undefined): string {
+  const explicit = region?.trim();
+  if (explicit) return explicit;
+  const arnRegion = parseAwsArnPart(keyId || '', 'region');
+  if (arnRegion) return arnRegion;
+  throw new Error('AWS KMS requires AWS_REGION or an AWS KMS key ARN with a region.');
+}
+
+function parseAwsArnPart(arn: string | null | undefined, partName: 'region' | 'accountId'): string | null {
+  if (!arn?.startsWith('arn:')) return null;
+  const parts = arn.split(':');
+  if (parts.length < 6) return null;
+  if (partName === 'region') return parts[3] || null;
+  return parts[4] || null;
+}
+
+function sha256Hex(value: string): string {
+  return createHash('sha256').update(value).digest('hex');
+}
+
+function hmac(key: Buffer | string, value: string): Buffer {
+  return createHmac('sha256', key).update(value).digest();
+}
+
+function awsDate(value = new Date()): { amzDate: string; dateStamp: string } {
+  const iso = value.toISOString().replace(/[:-]|\.\d{3}/g, '');
+  return {
+    amzDate: iso,
+    dateStamp: iso.slice(0, 8),
+  };
+}
+
+function buildAwsAuthorizationHeader(input: {
+  credentials: AwsCredentials;
+  region: string;
+  service: string;
+  method: string;
+  path: string;
+  host: string;
+  headers: Record<string, string>;
+  payload: string;
+  amzDate: string;
+  dateStamp: string;
+}): { authorization: string; signedHeaders: string } {
+  const canonicalHeaderEntries = Object.entries(input.headers)
+    .map(([key, value]) => [key.toLowerCase(), String(value).trim().replace(/\s+/g, ' ')] as const)
+    .sort(([left], [right]) => left.localeCompare(right));
+  const canonicalHeaders = canonicalHeaderEntries.map(([key, value]) => `${key}:${value}\n`).join('');
+  const signedHeaders = canonicalHeaderEntries.map(([key]) => key).join(';');
+  const payloadHash = sha256Hex(input.payload);
+  const canonicalRequest = [
+    input.method,
+    input.path,
+    '',
+    canonicalHeaders,
+    signedHeaders,
+    payloadHash,
+  ].join('\n');
+  const credentialScope = `${input.dateStamp}/${input.region}/${input.service}/aws4_request`;
+  const stringToSign = [
+    'AWS4-HMAC-SHA256',
+    input.amzDate,
+    credentialScope,
+    sha256Hex(canonicalRequest),
+  ].join('\n');
+  const dateKey = hmac(`AWS4${input.credentials.secretAccessKey}`, input.dateStamp);
+  const regionKey = hmac(dateKey, input.region);
+  const serviceKey = hmac(regionKey, input.service);
+  const signingKey = hmac(serviceKey, 'aws4_request');
+  const signature = createHmac('sha256', signingKey).update(stringToSign).digest('hex');
+  return {
+    authorization: [
+      `AWS4-HMAC-SHA256 Credential=${input.credentials.accessKeyId}/${credentialScope}`,
+      `SignedHeaders=${signedHeaders}`,
+      `Signature=${signature}`,
+    ].join(', '),
+    signedHeaders,
+  };
+}
+
+async function decryptAwsKmsCiphertext(input: {
+  fetchImpl: typeof fetch;
+  region: string;
+  keyId?: string;
+  ciphertextBlob: string;
+  credentials: AwsCredentials;
+}): Promise<{ plaintext: string; keyId: string | null }> {
+  const host = `kms.${input.region}.amazonaws.com`;
+  const body: Record<string, unknown> = {
+    CiphertextBlob: input.ciphertextBlob,
+  };
+  if (input.keyId) body.KeyId = input.keyId;
+  const payload = JSON.stringify(body);
+  const dates = awsDate();
+  const headers: Record<string, string> = {
+    'content-type': 'application/x-amz-json-1.1',
+    host,
+    'x-amz-date': dates.amzDate,
+    'x-amz-target': 'TrentService.Decrypt',
+  };
+  if (input.credentials.sessionToken) {
+    headers['x-amz-security-token'] = input.credentials.sessionToken;
+  }
+  const signed = buildAwsAuthorizationHeader({
+    credentials: input.credentials,
+    region: input.region,
+    service: 'kms',
+    method: 'POST',
+    path: '/',
+    host,
+    headers,
+    payload,
+    amzDate: dates.amzDate,
+    dateStamp: dates.dateStamp,
+  });
+
+  const response = await input.fetchImpl(`https://${host}/`, {
+    method: 'POST',
+    headers: {
+      ...headers,
+      authorization: signed.authorization,
+    },
+    body: payload,
+  });
+  const responsePayload = await response.json().catch(() => null) as { Plaintext?: string; KeyId?: string; __type?: string; message?: string; Message?: string } | null;
+  if (!response.ok || !responsePayload?.Plaintext) {
+    throw new Error(responsePayload?.message || responsePayload?.Message || `AWS KMS decrypt failed with ${response.status}`);
+  }
+  return {
+    plaintext: responsePayload.Plaintext,
+    keyId: responsePayload.KeyId || null,
+  };
+}
+
+async function fetchAwsInstanceMetadataToken(fetchImpl: typeof fetch): Promise<string | null> {
+  const response = await fetchImpl('http://169.254.169.254/latest/api/token', {
+    method: 'PUT',
+    headers: {
+      'x-aws-ec2-metadata-token-ttl-seconds': '21600',
+    },
+  }).catch(() => null);
+  if (!response?.ok) return null;
+  return response.text();
+}
+
+async function fetchAwsInstanceCredentials(fetchImpl: typeof fetch): Promise<{ credentials: AwsCredentials; expiresAt: number }> {
+  const token = await fetchAwsInstanceMetadataToken(fetchImpl);
+  const metadataHeaders = token ? { 'x-aws-ec2-metadata-token': token } : undefined;
+  const roleResponse = await fetchImpl('http://169.254.169.254/latest/meta-data/iam/security-credentials/', {
+    headers: metadataHeaders,
+  });
+  const roleName = (await roleResponse.text()).trim().split(/\s+/)[0] || '';
+  if (!roleResponse.ok || !roleName) {
+    throw new Error(`AWS instance metadata role lookup failed with ${roleResponse.status}`);
+  }
+
+  const credentialsResponse = await fetchImpl(`http://169.254.169.254/latest/meta-data/iam/security-credentials/${encodeURIComponent(roleName)}`, {
+    headers: metadataHeaders,
+  });
+  const payload = await credentialsResponse.json().catch(() => null) as {
+    AccessKeyId?: string;
+    SecretAccessKey?: string;
+    Token?: string;
+    Expiration?: string;
+    Message?: string;
+  } | null;
+  if (!credentialsResponse.ok || !payload?.AccessKeyId || !payload.SecretAccessKey) {
+    throw new Error(payload?.Message || `AWS instance metadata credential lookup failed with ${credentialsResponse.status}`);
+  }
+  const expiresAt = payload.Expiration ? Date.parse(payload.Expiration) - 5 * 60_000 : Date.now() + 55 * 60_000;
+  return {
+    credentials: {
+      accessKeyId: payload.AccessKeyId,
+      secretAccessKey: payload.SecretAccessKey,
+      sessionToken: payload.Token,
+    },
+    expiresAt: Math.max(Date.now() + 60_000, expiresAt),
+  };
 }
 
 function decodeAttestationClaims(jwt: string): { secureBoot: boolean | null; measurementSummary: string | null } | null {

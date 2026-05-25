@@ -72,6 +72,12 @@ const ENTERPRISE_SIDEBAR_NAV_GROUPS: readonly EnterpriseSidebarNavGroup[] = [
         activePill: 'new',
       },
       {
+        page: 'keys',
+        href: '/app/keys',
+        label: 'Provider slots',
+        blurb: 'Provider key slots, exposure response, material mode, and emergency revoke.',
+      },
+      {
         page: 'projects',
         href: '/app/projects',
         label: 'Projects',
@@ -173,12 +179,6 @@ const ENTERPRISE_SIDEBAR_NAV_GROUPS: readonly EnterpriseSidebarNavGroup[] = [
         href: '/app/audit',
         label: 'Audit',
         blurb: 'Governance and runtime events for review.',
-      },
-      {
-        page: 'keys',
-        href: '/app/keys',
-        label: 'Provider slots',
-        blurb: 'Provider key slots, exposure response, material mode, and emergency revoke.',
       },
       {
         id: 'auditExportLink',
@@ -341,51 +341,51 @@ export const ENTERPRISE_APP_SHELL_THEME = `
     /* enterprise-universal-sidebar */
     :root {
       color-scheme: light;
-      --bg: #f6f7f2;
-      --bg-mid: #edf1ea;
-      --bg-card: rgba(255, 255, 255, 0.88);
-      --paper: #fbfcf8;
-      --surface: #f1f5ef;
-      --panel: rgba(255, 255, 255, 0.76);
-      --panel-strong: rgba(255, 255, 255, 0.96);
+      --bg: #f5f7fb;
+      --bg-mid: #e9eff5;
+      --bg-card: rgba(255, 255, 255, 0.92);
+      --paper: #ffffff;
+      --surface: #eef3f7;
+      --panel: rgba(255, 255, 255, 0.86);
+      --panel-strong: rgba(255, 255, 255, 0.98);
       --card-bg: #ffffff;
-      --row-bg: #f7faf4;
-      --sidebar-bg: #10231d;
-      --sidebar-card-bg: #0a1914;
+      --row-bg: #f8fafc;
+      --sidebar-bg: #18201f;
+      --sidebar-card-bg: #101615;
       --sidebar-text: #ffffff;
-      --sidebar-muted: rgba(143, 224, 193, 0.78);
+      --sidebar-muted: rgba(188, 216, 210, 0.74);
       --sidebar-link: rgba(255, 255, 255, 0.88);
-      --sidebar-link-active-bg: rgba(143, 224, 193, 0.15);
-      --sidebar-link-active-border: rgba(143, 224, 193, 0.40);
-      --control-bg: rgba(255, 255, 255, 0.78);
-      --page-bg: #f6f7f2;
-      --line: rgba(32, 48, 39, 0.14);
-      --line-soft: rgba(32, 48, 39, 0.09);
-      --rule: 1px solid rgba(32, 48, 39, 0.14);
-      --hair: 1px solid rgba(32, 48, 39, 0.09);
-      --text: #17231d;
-      --text-muted: #52625a;
-      --text-faint: #7d8c84;
-      --muted: #52625a;
-      --soft: #7d8c84;
-      --nav-text: #52625a;
-      --action-text: #17231d;
-      --gold: #176b4b;
-      --accent: #176b4b;
-      --accent-soft: rgba(23, 107, 75, 0.13);
-      --green: #176b4b;
-      --red: #b95d50;
-      --blue: #168a9f;
-      --ok: #176b4b;
-      --warn: #8a5a13;
-      --danger: #b95d50;
+      --sidebar-link-active-bg: rgba(20, 184, 166, 0.16);
+      --sidebar-link-active-border: rgba(94, 234, 212, 0.42);
+      --control-bg: rgba(255, 255, 255, 0.92);
+      --page-bg: #f5f7fb;
+      --line: rgba(26, 40, 52, 0.14);
+      --line-soft: rgba(26, 40, 52, 0.08);
+      --rule: 1px solid rgba(26, 40, 52, 0.14);
+      --hair: 1px solid rgba(26, 40, 52, 0.08);
+      --text: #17202a;
+      --text-muted: #526170;
+      --text-faint: #7a8794;
+      --muted: #526170;
+      --soft: #7a8794;
+      --nav-text: #526170;
+      --action-text: #17202a;
+      --gold: #0f766e;
+      --accent: #0f766e;
+      --accent-soft: rgba(20, 184, 166, 0.12);
+      --green: #15803d;
+      --red: #dc2626;
+      --blue: #2563eb;
+      --ok: #15803d;
+      --warn: #b45309;
+      --danger: #dc2626;
       --ink: #ffffff;
-      --primary-bg: #8fe0c1;
-      --primary-text: #10231d;
-      --primary-border: #8fe0c1;
-      --option-bg: #fbfcf8;
-      --option-text: #17231d;
-      --shadow: 0 22px 72px rgba(22, 35, 29, 0.12);
+      --primary-bg: #14b8a6;
+      --primary-text: #052f2b;
+      --primary-border: #14b8a6;
+      --option-bg: #ffffff;
+      --option-text: #17202a;
+      --shadow: 0 18px 54px rgba(26, 40, 52, 0.10);
     }
     body {
       background: var(--page-bg) !important;
@@ -522,10 +522,10 @@ export const ENTERPRISE_APP_SHELL_THEME = `
     .sidebar.enterprise-app-sidebar .sidebar-panel {
       background: var(--sidebar-bg);
       color: var(--sidebar-text);
-      border: 1px solid rgba(143, 224, 193, 0.18);
-      border-radius: 22px;
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      border-radius: 8px;
       padding: 16px;
-      box-shadow: 0 22px 70px rgba(16, 35, 29, 0.20);
+      box-shadow: 0 24px 70px rgba(26, 40, 52, 0.22);
       overflow: visible;
     }
     .sidebar.enterprise-app-sidebar .brand {
@@ -541,7 +541,7 @@ export const ENTERPRISE_APP_SHELL_THEME = `
       color: var(--sidebar-text, var(--text));
     }
     .sidebar.enterprise-app-sidebar .brand-sub {
-      color: #8fe0c1;
+      color: #5eead4;
       font-size: 12px;
       margin-top: 4px;
       font-weight: 400;
@@ -551,12 +551,12 @@ export const ENTERPRISE_APP_SHELL_THEME = `
     .sidebar.enterprise-app-sidebar .workspace-card {
       border: 1px solid rgba(255, 255, 255, 0.10);
       background: rgba(255, 255, 255, 0.07);
-      border-radius: 18px;
+      border-radius: 8px;
       padding: 16px;
       margin: 0 0 18px;
     }
     .sidebar.enterprise-app-sidebar .workspace-kicker {
-      color: #8fe0c1;
+      color: #5eead4;
       font-size: 11px;
       font-weight: 400;
       letter-spacing: 0.18em;
@@ -578,8 +578,8 @@ export const ENTERPRISE_APP_SHELL_THEME = `
       display: inline-flex;
       color: rgba(255, 255, 255, 0.60);
       border: 1px solid rgba(255, 255, 255, 0.10);
-      background: #0a1914;
-      border-radius: 12px;
+      background: var(--sidebar-card-bg);
+      border-radius: 8px;
       padding: 10px 12px;
       font-size: 12px;
       font-weight: 400;
@@ -601,7 +601,7 @@ export const ENTERPRISE_APP_SHELL_THEME = `
     .sidebar.enterprise-app-sidebar .nav-link {
       display: block;
       padding: 10px 12px;
-      border-radius: 14px;
+      border-radius: 8px;
       color: var(--sidebar-link, var(--nav-text));
       margin-bottom: 5px;
       border: 1px solid rgba(255, 255, 255, 0.08);
@@ -648,8 +648,8 @@ export const ENTERPRISE_APP_SHELL_THEME = `
     }
     .sidebar.enterprise-app-sidebar .nav-pill {
       font-size: 10px;
-      color: #8fe0c1;
-      border: 1px solid rgba(143, 224, 193, 0.34);
+      color: #5eead4;
+      border: 1px solid rgba(94, 234, 212, 0.34);
       border-radius: 999px;
       padding: 2px 7px;
       font-weight: 400;
@@ -659,8 +659,8 @@ export const ENTERPRISE_APP_SHELL_THEME = `
       width: 7px;
       height: 7px;
       border-radius: 999px;
-      background: #8fe0c1;
-      box-shadow: 0 0 0 4px rgba(143, 224, 193, 0.13);
+      background: #5eead4;
+      box-shadow: 0 0 0 4px rgba(94, 234, 212, 0.13);
       flex: 0 0 auto;
     }
     @media (max-width: 980px) {

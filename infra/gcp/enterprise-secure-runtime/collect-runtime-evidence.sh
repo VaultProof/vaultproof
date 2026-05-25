@@ -7,9 +7,24 @@ ZONE="${ZONE:-us-central1-a}"
 VM_NAME="${VM_NAME:-vaultproof-enterprise-runtime-1}"
 KEY_RING="${KEY_RING:-vaultproof-runtime}"
 KMS_KEY="${KMS_KEY:-vaultproof-unwrap}"
-GCP_KMS_KEY_VERSION="${GCP_KMS_KEY_VERSION:-1}"
+GCP_KMS_KEY_VERSION="${GCP_KMS_KEY_VERSION:-${CUSTOMER_GCP_KMS_KEY_VERSION:-}}"
+GCP_KMS_CRYPTO_KEY_RESOURCE="${GCP_KMS_CRYPTO_KEY_RESOURCE:-${CUSTOMER_GCP_KMS_CRYPTO_KEY_RESOURCE:-}}"
 OUTPUT_FORMAT="${OUTPUT_FORMAT:-env}"
 EVIDENCE_OUTPUT_FILE="${EVIDENCE_OUTPUT_FILE:-}"
+
+KMS_PROJECT_ID="${KMS_PROJECT_ID:-${PROJECT_ID}}"
+KMS_LOCATION="${KMS_LOCATION:-${LOCATION}}"
+
+if [[ -n "${GCP_KMS_CRYPTO_KEY_RESOURCE}" ]]; then
+  if [[ ! "${GCP_KMS_CRYPTO_KEY_RESOURCE}" =~ ^projects/([^/]+)/locations/([^/]+)/keyRings/([^/]+)/cryptoKeys/([^/]+)$ ]]; then
+    echo "GCP_KMS_CRYPTO_KEY_RESOURCE must look like projects/<project>/locations/<location>/keyRings/<ring>/cryptoKeys/<key>." >&2
+    exit 1
+  fi
+  KMS_PROJECT_ID="${BASH_REMATCH[1]}"
+  KMS_LOCATION="${BASH_REMATCH[2]}"
+  KEY_RING="${BASH_REMATCH[3]}"
+  KMS_KEY="${BASH_REMATCH[4]}"
+fi
 
 require_command() {
   local command="$1"
@@ -55,27 +70,41 @@ gcloud compute instances describe "${VM_NAME}" \
   --format=json > "${vm_json}"
 
 gcloud kms keys describe "${KMS_KEY}" \
-  --location="${LOCATION}" \
+  --location="${KMS_LOCATION}" \
   --keyring="${KEY_RING}" \
-  --project="${PROJECT_ID}" \
+  --project="${KMS_PROJECT_ID}" \
   --format=json > "${kms_key_json}"
 
+if [[ -z "${GCP_KMS_KEY_VERSION}" ]]; then
+  GCP_KMS_KEY_VERSION="$(
+    node -e "const key=require(process.argv[1]); const name=key.primary && key.primary.name || ''; process.stdout.write(name.split('/').pop() || '')" "${kms_key_json}"
+  )"
+fi
+
+if [[ -z "${GCP_KMS_KEY_VERSION}" ]]; then
+  echo "GCP_KMS_KEY_VERSION is required because the KMS primary version could not be discovered." >&2
+  exit 1
+fi
+
 gcloud kms keys versions describe "${GCP_KMS_KEY_VERSION}" \
-  --location="${LOCATION}" \
+  --location="${KMS_LOCATION}" \
   --keyring="${KEY_RING}" \
   --key="${KMS_KEY}" \
-  --project="${PROJECT_ID}" \
+  --project="${KMS_PROJECT_ID}" \
   --format=json > "${kms_version_json}"
 
 GCP_EVIDENCE_VM_JSON="${vm_json}" \
 GCP_EVIDENCE_KMS_KEY_JSON="${kms_key_json}" \
 GCP_EVIDENCE_KMS_VERSION_JSON="${kms_version_json}" \
 PROJECT_ID="${PROJECT_ID}" \
+KMS_PROJECT_ID="${KMS_PROJECT_ID}" \
 LOCATION="${LOCATION}" \
+KMS_LOCATION="${KMS_LOCATION}" \
 ZONE="${ZONE}" \
 VM_NAME="${VM_NAME}" \
 KEY_RING="${KEY_RING}" \
 KMS_KEY="${KMS_KEY}" \
+GCP_KMS_CRYPTO_KEY_RESOURCE="${GCP_KMS_CRYPTO_KEY_RESOURCE}" \
 GCP_KMS_KEY_VERSION="${GCP_KMS_KEY_VERSION}" \
 VAULTPROOF_EXECUTOR_BUILD_DIGEST="${VAULTPROOF_EXECUTOR_BUILD_DIGEST}" \
 OUTPUT_FORMAT="${OUTPUT_FORMAT}" \
@@ -113,11 +142,14 @@ const kmsKey = readJson(process.env.GCP_EVIDENCE_KMS_KEY_JSON);
 const kmsVersion = readJson(process.env.GCP_EVIDENCE_KMS_VERSION_JSON);
 
 const projectId = process.env.PROJECT_ID;
+const kmsProjectId = process.env.KMS_PROJECT_ID || projectId;
 const location = process.env.LOCATION;
+const kmsLocation = process.env.KMS_LOCATION || location;
 const zone = process.env.ZONE;
 const vmName = process.env.VM_NAME;
 const keyRing = process.env.KEY_RING;
 const kmsKeyName = process.env.KMS_KEY;
+const explicitKmsResource = process.env.GCP_KMS_CRYPTO_KEY_RESOURCE || '';
 const keyVersion = process.env.GCP_KMS_KEY_VERSION;
 const executorDigest = process.env.VAULTPROOF_EXECUTOR_BUILD_DIGEST;
 
@@ -129,7 +161,7 @@ const serviceAccounts = Array.isArray(vm.serviceAccounts) ? vm.serviceAccounts :
 const runtimeServiceAccount = serviceAccounts[0]?.email || null;
 const protectionLevel = kmsVersion.protectionLevel || kmsKey.versionTemplate?.protectionLevel || null;
 const keyState = kmsVersion.state || null;
-const kmsResource = `projects/${projectId}/locations/${location}/keyRings/${keyRing}/cryptoKeys/${kmsKeyName}`;
+const kmsResource = explicitKmsResource || `projects/${kmsProjectId}/locations/${kmsLocation}/keyRings/${keyRing}/cryptoKeys/${kmsKeyName}`;
 const vmResource = `projects/${projectId}/zones/${zone}/instances/${vmName}`;
 const confidentialType = confidential.confidentialInstanceType || null;
 const confidentialEnabled = confidential.enableConfidentialCompute === true || Boolean(confidentialType);
@@ -160,6 +192,8 @@ const measurementSummary = [
   `secureBoot:${shielded.enableSecureBoot === true}`,
   `vtpm:${shielded.enableVtpm === true}`,
   `integrity:${shielded.enableIntegrityMonitoring === true}`,
+  `kmsProject:${kmsProjectId}`,
+  `kmsLocation:${kmsLocation}`,
   `kms:${protectionLevel || 'unknown'}`,
   `executor:${executorDigest}`,
 ].join(';');
@@ -168,6 +202,8 @@ const evidence = {
   collectedAt: new Date().toISOString(),
   projectId,
   location,
+  kmsProjectId,
+  kmsLocation,
   zone,
   vm: {
     name: vm.name || null,
@@ -242,6 +278,7 @@ if (process.env.OUTPUT_FORMAT === 'json') {
   console.log(envLine('GCP_ATTESTATION_TOKEN_HASH', attestationTokenHash));
   console.log(envLine('GCP_MEASUREMENT_SUMMARY', measurementSummary));
   console.log(envLine('GCP_CONFIDENTIAL_VM_RESOURCE_ID', vmResource));
+  console.log(envLine('GCP_KMS_CRYPTO_KEY_RESOURCE', kmsResource));
   console.log(envLine('GCP_KMS_KEY_VERSION', keyVersion));
   console.log(envLine('GCP_KMS_PROTECTION_LEVEL', protectionLevel));
   console.log(envLine('GCP_ATTESTATION_EXPECTED_IMAGE_DIGEST', executorDigest));

@@ -22,6 +22,9 @@ const requiredFiles = [
   'infra/gcp/enterprise-secure-runtime/publish-runtime-secrets.sh',
   'infra/gcp/enterprise-secure-runtime/collect-runtime-evidence.sh',
   'infra/gcp/enterprise-secure-runtime/prepare-first-goal-runtime.sh',
+  'scripts/gcp-customer-kms-preflight.mjs',
+  'scripts/aws-customer-kms-preflight.mjs',
+  'docs/enterprise/customer-managed-kms.md',
   'scripts/enterprise-login-readiness.mjs',
 ];
 
@@ -93,6 +96,18 @@ runStep('GCP Cloud Armor verifier syntax', 'bash', ['-n', 'infra/gcp/enterprise-
 runStep('GCP secret publisher syntax', 'bash', ['-n', 'infra/gcp/enterprise-secure-runtime/publish-runtime-secrets.sh']);
 runStep('GCP runtime evidence collector syntax', 'bash', ['-n', 'infra/gcp/enterprise-secure-runtime/collect-runtime-evidence.sh']);
 runStep('GCP first-goal runtime preparer syntax', 'bash', ['-n', 'infra/gcp/enterprise-secure-runtime/prepare-first-goal-runtime.sh']);
+runStep('GCP customer KMS preflight syntax', 'node', ['--check', 'scripts/gcp-customer-kms-preflight.mjs']);
+runStep('GCP customer KMS preflight self-test', 'npm', ['run', 'preflight:gcp-customer-kms'], {
+  env: {
+    SELF_TEST: 'true',
+  },
+});
+runStep('AWS customer KMS preflight syntax', 'node', ['--check', 'scripts/aws-customer-kms-preflight.mjs']);
+runStep('AWS customer KMS preflight self-test', 'npm', ['run', 'preflight:aws-customer-kms'], {
+  env: {
+    SELF_TEST: 'true',
+  },
+});
 runStep('GCP build doc generator syntax', 'node', ['--check', 'scripts/update-gcp-build-doc.mjs']);
 runStep('Enterprise login readiness syntax', 'node', ['--check', 'scripts/enterprise-login-readiness.mjs']);
 runStep('Enterprise build', 'npm', ['run', 'build:enterprise']);

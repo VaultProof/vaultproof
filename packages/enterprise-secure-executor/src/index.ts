@@ -3,6 +3,7 @@ import {
   isExpiredExecutionRequest,
   type SecureExecutionResult,
   type SignedSecureExecutionEnvelope,
+  type AwsSecureExecutionAttestationEvidence,
   type GcpSecureExecutionAttestationEvidence,
   type SecureExecutionAttestationEvidence,
 } from '@vaultproof/core';
@@ -68,6 +69,28 @@ export interface EnterpriseSecureExecutorEnv {
   gcpServiceAccountEmail?: string;
   gcpAttestationType?: string;
   gcpIsolationProvider?: 'gcp-confidential-vm' | 'gcp-confidential-space';
+  awsRegion?: string;
+  awsKmsKeyId?: string;
+  awsKmsKeyArn?: string;
+  awsKmsKeyVersion?: string;
+  awsKmsKeySpec?: string;
+  awsKmsKeyUsage?: string;
+  awsKmsKeyState?: string;
+  awsKmsKeyOrigin?: string;
+  awsKmsEncryptedVaultUnwrapKeyBase64?: string;
+  awsAccessKeyId?: string;
+  awsSecretAccessKey?: string;
+  awsSessionToken?: string;
+  awsKmsCacheTtlMs?: number;
+  awsAttestationTokenHash?: string;
+  awsAttestationToken?: string;
+  awsConfidentialVmResourceId?: string;
+  awsMeasurementSummary?: string;
+  awsSecureBoot?: boolean;
+  awsImageDigest?: string;
+  awsRoleArn?: string;
+  awsAttestationType?: string;
+  awsIsolationProvider?: 'aws-nitro-enclave' | 'aws-ec2';
   keyProvider?: VaultUnwrapKeyProvider;
   replayGuard?: ReplayGuard;
 }
@@ -111,6 +134,9 @@ function buildProductionReadiness(input: {
   const cloudProvider = inferCloudProvider(input.env, input.keyProvider);
   if (cloudProvider === 'gcp') {
     return buildGcpProductionReadiness(input);
+  }
+  if (cloudProvider === 'aws') {
+    return buildAwsProductionReadiness(input);
   }
 
   return buildAzureProductionReadiness(input);
@@ -290,11 +316,152 @@ function buildGcpProductionReadiness(input: {
   };
 }
 
-function inferCloudProvider(env: EnterpriseSecureExecutorEnv, keyProvider: VaultUnwrapKeyProvider): 'azure' | 'gcp' {
+function buildAwsProductionReadiness(input: {
+  acceptedKeyIds: string[];
+  materialResolver: EnterpriseExecutionMaterialResolver;
+  keyProvider: VaultUnwrapKeyProvider;
+  attestationEvidence: SecureExecutionAttestationEvidence | null;
+  replayProtectionReady: boolean;
+  env: EnterpriseSecureExecutorEnv;
+}): { ready: boolean; securityProfile: string; blockers: string[] } {
+  const blockers: string[] = [];
+  const executorMode = (input.env.executorMode || 'demo').trim().toLowerCase();
+  const hasKmsKey = Boolean(input.env.awsKmsKeyArn || input.env.awsKmsKeyId);
+
+  if (input.materialResolver instanceof NullExecutionMaterialResolver) {
+    blockers.push('execution material resolver is not configured');
+  }
+  if (!input.acceptedKeyIds.length) {
+    blockers.push('no accepted control-plane signing keys are configured');
+  }
+  if (input.keyProvider instanceof NullVaultUnwrapKeyProvider) {
+    blockers.push('vault unwrap key release is not configured');
+  }
+  if (input.keyProvider.mode !== 'aws-kms') {
+    blockers.push(`key release mode is ${input.keyProvider.mode}`);
+  }
+  if (executorMode !== 'confidential') {
+    blockers.push(`executor mode is ${executorMode}`);
+  }
+  if (!input.env.awsRegion && !input.env.awsKmsKeyArn) {
+    blockers.push('AWS region is not configured');
+  }
+  if (!hasKmsKey) {
+    blockers.push('AWS KMS key ID or ARN is not configured');
+  }
+  if (!input.env.awsKmsEncryptedVaultUnwrapKeyBase64) {
+    blockers.push('AWS encrypted vault unwrap key is not configured');
+  }
+
+  if (!input.attestationEvidence) {
+    blockers.push('AWS attestation evidence is not ready');
+  } else {
+    const evidence = input.attestationEvidence;
+    if (!['aws-nitro-enclave', 'aws-ec2'].includes(evidence.provider)) {
+      blockers.push('attestation provider is not AWS');
+    }
+    const awsEvidence = evidence as AwsSecureExecutionAttestationEvidence;
+    if (awsEvidence.provider !== 'aws-nitro-enclave') {
+      blockers.push('AWS Nitro Enclave isolation evidence is missing');
+    }
+    if (!awsEvidence.attestationTokenHash) {
+      blockers.push('AWS attestation token hash is missing');
+    }
+    if (!awsEvidence.region) {
+      blockers.push('AWS region evidence is missing');
+    }
+    if (!awsEvidence.keyId && !awsEvidence.keyArn) {
+      blockers.push('AWS KMS key evidence is missing');
+    }
+    if (!awsEvidence.keyState) {
+      blockers.push('AWS KMS key state is missing');
+    }
+    if (!awsEvidence.keySpec) {
+      blockers.push('AWS KMS key spec is missing');
+    }
+    if (!awsEvidence.keyUsage) {
+      blockers.push('AWS KMS key usage is missing');
+    }
+    if (!awsEvidence.executorBuildDigest) {
+      blockers.push('executor build digest is missing');
+    }
+    if (!awsEvidence.confidentialVmResourceId) {
+      blockers.push('AWS confidential runtime resource ID is missing');
+    }
+    if (!awsEvidence.claims?.attestationType) {
+      blockers.push('AWS attestation claim summary is missing');
+    }
+    if (!awsEvidence.claims?.measurementSummary) {
+      blockers.push('measurement summary is missing');
+    }
+  }
+
+  if (!input.replayProtectionReady) {
+    blockers.push('replay protection is not ready');
+  }
+
+  return {
+    ready: blockers.length === 0,
+    securityProfile: blockers.length === 0 ? 'aws-kms-confidential-production' : 'demo-or-incomplete',
+    blockers,
+  };
+}
+
+function inferCloudProvider(env: EnterpriseSecureExecutorEnv, keyProvider: VaultUnwrapKeyProvider): 'azure' | 'gcp' | 'aws' {
   const configured = env.enterpriseCloudProvider?.trim().toLowerCase();
   if (configured === 'gcp' || configured === 'google' || configured === 'google-cloud') return 'gcp';
+  if (configured === 'aws' || configured === 'amazon' || configured === 'amazon-web-services') return 'aws';
   if (keyProvider.mode === 'gcp-cloud-kms') return 'gcp';
+  if (keyProvider.mode === 'aws-kms') return 'aws';
   return 'azure';
+}
+
+function summarizeKeyReleaseEvidence(
+  evidence: SecureExecutionAttestationEvidence | null,
+): Record<string, unknown> | null {
+  if (!evidence) return null;
+  if (evidence.provider === 'gcp-confidential-vm' || evidence.provider === 'gcp-confidential-space') {
+    return {
+      provider: evidence.provider,
+      project_id: evidence.projectId,
+      location: evidence.location,
+      key_id: evidence.keyId,
+      key_version: evidence.keyVersion,
+      key_protection_level: evidence.keyProtectionLevel,
+      confidential_vm_resource_id: evidence.confidentialVmResourceId,
+      executor_build_digest: evidence.executorBuildDigest,
+      attestation_token_hash_present: Boolean(evidence.attestationTokenHash),
+      measurement_summary_present: Boolean(evidence.claims?.measurementSummary),
+    };
+  }
+  if (evidence.provider === 'aws-nitro-enclave' || evidence.provider === 'aws-ec2') {
+    return {
+      provider: evidence.provider,
+      region: evidence.region,
+      account_id: evidence.accountId,
+      key_id: evidence.keyId,
+      key_arn: evidence.keyArn,
+      key_version: evidence.keyVersion,
+      key_spec: evidence.keySpec,
+      key_usage: evidence.keyUsage,
+      key_state: evidence.keyState,
+      key_origin: evidence.keyOrigin,
+      confidential_vm_resource_id: evidence.confidentialVmResourceId,
+      executor_build_digest: evidence.executorBuildDigest,
+      attestation_token_hash_present: Boolean(evidence.attestationTokenHash),
+      measurement_summary_present: Boolean(evidence.claims?.measurementSummary),
+    };
+  }
+
+  return {
+    provider: evidence.provider,
+    key_id: evidence.keyId,
+    key_version: evidence.keyVersion,
+    confidential_vm_resource_id: evidence.confidentialVmResourceId,
+    executor_build_digest: evidence.executorBuildDigest,
+    attestation_token_hash_present: Boolean(evidence.attestationTokenHash),
+    measurement_summary_present: Boolean(evidence.claims?.measurementSummary),
+  };
 }
 
 async function executeEnvelope(
@@ -379,6 +546,7 @@ export async function handleEnterpriseSecureExecutorRequestWithEnv(
       key_release_ready: !(keyProvider instanceof NullVaultUnwrapKeyProvider),
       key_release_mode: keyProvider.mode,
       key_release_hardware_bound: keyProvider.hardwareBound,
+      key_release_evidence: summarizeKeyReleaseEvidence(attestationEvidence),
       attestation_evidence_ready: Boolean(attestationEvidence),
       replay_protection_ready: true,
       production_ready: productionReadiness.ready,

@@ -36,6 +36,9 @@ Last validated GCP image build: `ecb162f7`
 | Standard Cloud KMS unwrap key | Built | `vaultproof-unwrap`, protection level `SOFTWARE`, version `1`. No HSM. |
 | Executor KMS decrypt IAM | Built | `vaultproof-executor` has `roles/cloudkms.cryptoKeyDecrypter` on the key. |
 | GCP KMS executor provider | Implemented | `GcpKmsVaultUnwrapKeyProvider` decrypts encrypted unwrap root ciphertext through Cloud KMS. |
+| Customer-managed GCP KMS preflight | Built | `npm run preflight:gcp-customer-kms` validates a customer Cloud KMS crypto key, round-trips a temporary unwrap root, checks visible key IAM for the executor identity, and emits deployable executor env when supplied the real unwrap root. See `docs/enterprise/customer-managed-kms.md`. |
+| AWS KMS executor provider | Implemented | `AwsKmsVaultUnwrapKeyProvider` decrypts encrypted unwrap root ciphertext through AWS KMS direct API calls with SigV4. See `docs/enterprise/aws-customer-managed-kms.md`. |
+| Customer-managed AWS KMS preflight | Built | `npm run preflight:aws-customer-kms` validates a customer AWS KMS key, round-trips a temporary unwrap root, optionally simulates runtime role decrypt access, and emits deployable executor env when supplied the real unwrap root. |
 | In-process unwrap key cache | Implemented | GCP provider uses the same short TTL clamp as Azure release material. |
 | GCP attestation evidence shape | Implemented | Evidence includes provider, project/location, token hash, key/version, protection level, VM resource, image digest, service account, and measurement summary. |
 | GCP production readiness profile | Implemented | Executor reports `google-confidential-production` when required GCP config/evidence is present. |

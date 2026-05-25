@@ -129,6 +129,32 @@ function getEnv(): EnterpriseSecureExecutorEnv {
       : process.env.GCP_ISOLATION_PROVIDER === 'gcp-confidential-vm'
         ? 'gcp-confidential-vm'
         : undefined,
+    awsRegion: process.env.AWS_REGION || process.env.AWS_DEFAULT_REGION,
+    awsKmsKeyId: process.env.AWS_KMS_KEY_ID,
+    awsKmsKeyArn: process.env.AWS_KMS_KEY_ARN,
+    awsKmsKeyVersion: process.env.AWS_KMS_KEY_VERSION,
+    awsKmsKeySpec: process.env.AWS_KMS_KEY_SPEC,
+    awsKmsKeyUsage: process.env.AWS_KMS_KEY_USAGE,
+    awsKmsKeyState: process.env.AWS_KMS_KEY_STATE,
+    awsKmsKeyOrigin: process.env.AWS_KMS_KEY_ORIGIN,
+    awsKmsEncryptedVaultUnwrapKeyBase64: process.env.AWS_KMS_ENCRYPTED_VAULT_UNWRAP_KEY_BASE64,
+    awsAccessKeyId: process.env.AWS_ACCESS_KEY_ID,
+    awsSecretAccessKey: process.env.AWS_SECRET_ACCESS_KEY,
+    awsSessionToken: process.env.AWS_SESSION_TOKEN,
+    awsKmsCacheTtlMs: Number.parseInt(process.env.AWS_KMS_CACHE_TTL_MS || '', 10),
+    awsAttestationTokenHash: process.env.AWS_ATTESTATION_TOKEN_HASH,
+    awsAttestationToken: process.env.AWS_ATTESTATION_TOKEN,
+    awsConfidentialVmResourceId: process.env.AWS_CONFIDENTIAL_VM_RESOURCE_ID,
+    awsMeasurementSummary: process.env.AWS_MEASUREMENT_SUMMARY,
+    awsSecureBoot: process.env.AWS_SECURE_BOOT === 'true',
+    awsImageDigest: process.env.AWS_ATTESTATION_EXPECTED_IMAGE_DIGEST,
+    awsRoleArn: process.env.AWS_ROLE_ARN,
+    awsAttestationType: process.env.AWS_ATTESTATION_TYPE,
+    awsIsolationProvider: process.env.AWS_ISOLATION_PROVIDER === 'aws-nitro-enclave'
+      ? 'aws-nitro-enclave'
+      : process.env.AWS_ISOLATION_PROVIDER === 'aws-ec2'
+        ? 'aws-ec2'
+        : undefined,
   };
 }
 

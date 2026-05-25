@@ -328,23 +328,23 @@ function readEnterpriseAppPage(filename: string): string {
 const ENTERPRISE_RENDERED_APP_BASE_THEME = `
     :root {
       color-scheme: light;
-      --bg: #f6f7f2;
-      --panel: rgba(255, 255, 255, 0.76);
-      --line: rgba(32, 48, 39, 0.14);
-      --line-soft: rgba(32, 48, 39, 0.09);
-      --text: #17231d;
-      --muted: #52625a;
-      --soft: #7d8c84;
-      --gold: #176b4b;
-      --green: #176b4b;
-      --red: #b95d50;
-      --blue: #168a9f;
-      --ink: #17231d;
-      --primary-bg: #8fe0c1;
-      --primary-text: #10231d;
-      --primary-border: #8fe0c1;
-      --warn: #8a5a13;
-      --page-bg: #f6f7f2;
+      --bg: #f5f7fb;
+      --panel: rgba(255, 255, 255, 0.86);
+      --line: rgba(26, 40, 52, 0.14);
+      --line-soft: rgba(26, 40, 52, 0.08);
+      --text: #17202a;
+      --muted: #526170;
+      --soft: #7a8794;
+      --gold: #0f766e;
+      --green: #15803d;
+      --red: #dc2626;
+      --blue: #2563eb;
+      --ink: #ffffff;
+      --primary-bg: #14b8a6;
+      --primary-text: #052f2b;
+      --primary-border: #14b8a6;
+      --warn: #b45309;
+      --page-bg: #f5f7fb;
     }
     * { box-sizing: border-box; }
     body {
@@ -363,7 +363,7 @@ const ENTERPRISE_RENDERED_APP_BASE_THEME = `
       min-height: 42px;
       padding: 0 14px;
       border: 1px solid var(--line);
-      border-radius: 13px;
+      border-radius: 8px;
       font: inherit;
       line-height: 1;
       white-space: nowrap;
@@ -373,33 +373,34 @@ const ENTERPRISE_RENDERED_APP_BASE_THEME = `
 const ENTERPRISE_STATIC_APP_THEME = `
     :root {
       color-scheme: light;
-      --accent: #176b4b;
-      --accent-soft: rgba(23, 107, 75, 0.13);
-      --bg: #f6f7f2;
-      --bg-mid: #edf1ea;
-      --bg-card: rgba(255, 255, 255, 0.88);
-      --paper: #fbfcf8;
-      --surface: #f1f5ef;
-      --rule: 1px solid rgba(32, 48, 39, 0.14);
-      --hair: 1px solid rgba(32, 48, 39, 0.09);
-      --line: rgba(32, 48, 39, 0.14);
-      --text: #17231d;
-      --text-muted: #52625a;
-      --text-faint: #7d8c84;
-      --muted: #52625a;
-      --soft: #7d8c84;
-      --gold: #176b4b;
-      --green: #176b4b;
-      --red: #b95d50;
-      --blue: #168a9f;
-      --ok: #176b4b;
-      --warn: #8a5a13;
-      --danger: #b95d50;
+      --accent: #0f766e;
+      --accent-soft: rgba(20, 184, 166, 0.12);
+      --bg: #f5f7fb;
+      --bg-mid: #e9eff5;
+      --bg-card: rgba(255, 255, 255, 0.92);
+      --paper: #ffffff;
+      --surface: #eef3f7;
+      --rule: 1px solid rgba(26, 40, 52, 0.14);
+      --hair: 1px solid rgba(26, 40, 52, 0.08);
+      --line: rgba(26, 40, 52, 0.14);
+      --text: #17202a;
+      --text-muted: #526170;
+      --text-faint: #7a8794;
+      --muted: #526170;
+      --soft: #7a8794;
+      --gold: #0f766e;
+      --green: #15803d;
+      --red: #dc2626;
+      --blue: #2563eb;
+      --ok: #15803d;
+      --warn: #b45309;
+      --danger: #dc2626;
       --ink: #ffffff;
-      --primary-bg: #8fe0c1;
-      --primary-text: #10231d;
-      --primary-border: #8fe0c1;
-      --page-bg: #f6f7f2;
+      --primary-bg: #14b8a6;
+      --primary-text: #052f2b;
+      --primary-border: #14b8a6;
+      --page-bg: #f5f7fb;
+      --row-bg: #f8fafc;
       --display: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
       --body: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
       --mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace;
@@ -424,29 +425,29 @@ const ENTERPRISE_STATIC_APP_THEME = `
     .panel, .kpi-grid, .banner, .invite-panel, .action-strip, .member-card, .policy-card, .policy-provider-card, .exec-card, .resource-card, .checklist-box, .callout {
       border: 1px solid var(--line);
       background: #ffffff;
-      border-radius: 24px;
-      box-shadow: 0 22px 72px rgba(48,76,71,.16);
+      border-radius: 8px;
+      box-shadow: 0 18px 54px rgba(26,40,52,.10);
       color: var(--text);
     }
-    .panel-head, .list-row, .invite-row { border-color: rgba(48, 76, 71, 0.12); }
+    .panel-head, .list-row, .invite-row { border-color: rgba(26, 40, 52, 0.12); }
     .resource-title, .list-title, .member-email, .policy-title, .exec-title, .banner-title { color: var(--text); }
     .org-select, .form-input, .form-select, .policy-input, .policy-textarea, select, input, textarea {
       border: 1px solid var(--line);
       background: rgba(255, 255, 255, 0.78);
       color: var(--text);
-      border-radius: 13px;
+      border-radius: 8px;
     }
     option { color: #111827; }
-    .btn-primary { background: linear-gradient(135deg, var(--gold), #f3df95); color: var(--ink); border: 0; font-weight: 850; border-radius: 13px; }
-    .btn-outline, .btn-danger { background: rgba(255, 255, 255, 0.78); color: var(--text); border: 1px solid var(--line); border-radius: 13px; }
+    .btn-primary { background: var(--primary-bg); color: var(--primary-text); border: 1px solid var(--primary-border); font-weight: 850; border-radius: 8px; }
+    .btn-outline, .btn-danger { background: rgba(255, 255, 255, 0.78); color: var(--text); border: 1px solid var(--line); border-radius: 8px; }
     .btn-danger { color: var(--red); border-color: rgba(251, 113, 133, 0.34); }
     .subnav-link { background: rgba(255, 255, 255, 0.78); color: var(--muted); border: 1px solid var(--line); }
-    .subnav-link.active { color: var(--ink); background: linear-gradient(135deg, var(--gold), #f3df95); border-color: transparent; }
+    .subnav-link.active { color: var(--primary-text); background: var(--primary-bg); border-color: var(--primary-border); }
     .pill.neutral { background: rgba(255, 255, 255, 0.78); color: var(--muted); }
-    .pill.ok { background: rgba(62, 93, 87, 0.1); color: var(--green); border-color: rgba(62, 93, 87, 0.24); }
-    .pill.warn { background: rgba(213, 169, 20, 0.1); color: var(--gold); border-color: rgba(213, 169, 20, 0.28); }
+    .pill.ok { background: rgba(21, 128, 61, 0.1); color: var(--green); border-color: rgba(21, 128, 61, 0.24); }
+    .pill.warn { background: rgba(180, 83, 9, 0.1); color: var(--gold); border-color: rgba(180, 83, 9, 0.28); }
     .pill.danger { background: rgba(251, 113, 133, 0.12); color: var(--red); border-color: rgba(251, 113, 133, 0.28); }
-    .kpi-cell + .kpi-cell { border-left-color: rgba(48, 76, 71, 0.12); }
+    .kpi-cell + .kpi-cell { border-left-color: rgba(26, 40, 52, 0.12); }
     .empty { color: var(--muted); }
     .resource-link { color: var(--gold); }
     @media (max-width: 980px) {
@@ -469,8 +470,8 @@ const ENTERPRISE_STATIC_APP_POLISH_THEME = `
     main.main > .topbar,
     .page-header {
       border: 1px solid var(--line) !important;
-      background: #fbfcf8 !important;
-      border-radius: 20px !important;
+      background: #ffffff !important;
+      border-radius: 8px !important;
       padding: 20px !important;
       box-shadow: none !important;
     }
@@ -507,7 +508,7 @@ const ENTERPRISE_STATIC_APP_POLISH_THEME = `
     .panel-head,
     .checklist-title,
     .slot-form label {
-      color: #7d8c84 !important;
+      color: var(--soft) !important;
       font-weight: 400 !important;
     }
     .lead,
@@ -546,7 +547,7 @@ const ENTERPRISE_STATIC_APP_POLISH_THEME = `
     .list-sub,
     .banner-note,
     .form-copy {
-      color: #5f6f67 !important;
+      color: var(--muted) !important;
       font-size: 13px !important;
       line-height: 1.45 !important;
     }
@@ -560,6 +561,7 @@ const ENTERPRISE_STATIC_APP_POLISH_THEME = `
       color: var(--primary-text) !important;
       border-color: var(--primary-border) !important;
       font-weight: 600 !important;
+      border-radius: 8px !important;
       box-shadow: none !important;
     }
     .btn-outline,
@@ -570,6 +572,7 @@ const ENTERPRISE_STATIC_APP_POLISH_THEME = `
     select,
     input,
     textarea {
+      border-radius: 8px !important;
       font-weight: 500 !important;
     }
     .card,
@@ -588,7 +591,8 @@ const ENTERPRISE_STATIC_APP_POLISH_THEME = `
     .doc-section {
       background: #ffffff !important;
       border-color: var(--line) !important;
-      box-shadow: 0 18px 48px rgba(22, 35, 29, 0.10) !important;
+      border-radius: 8px !important;
+      box-shadow: 0 18px 54px rgba(26, 40, 52, 0.10) !important;
     }
     .action-strip,
     .list-row,
@@ -598,8 +602,36 @@ const ENTERPRISE_STATIC_APP_POLISH_THEME = `
     .role-card,
     .feature,
     .member-project,
-    .pill {
-      background: #f7faf4 !important;
+    .pill,
+    .org-switcher,
+    .control-kpi,
+    .control-panel,
+    .chart-shell,
+    .chart-empty,
+    .inventory-row,
+    .launch-check-row,
+    .go-evidence-row,
+    .evidence-callout,
+    .entitlement-meter,
+    .scanner-row,
+    .release-row,
+    .tester-row {
+      background: var(--row-bg, #f8fafc) !important;
+      border-color: var(--line-soft) !important;
+      border-radius: 8px !important;
+    }
+    .subnav {
+      background: rgba(255, 255, 255, 0.78) !important;
+      border-color: var(--line) !important;
+      border-radius: 8px !important;
+      box-shadow: none !important;
+    }
+    .banner,
+    .action-strip,
+    .kpi-cell,
+    .panel,
+    .doc-section {
+      background-image: none !important;
     }
     .kpi-value {
       font-weight: 600 !important;
@@ -633,7 +665,7 @@ const ENTERPRISE_STATIC_APP_POLISH_THEME = `
     }
     .doc-note {
       border-left-color: var(--primary-bg) !important;
-      background: rgba(143, 224, 193, 0.12) !important;
+      background: rgba(20, 184, 166, 0.10) !important;
     }
 `;
 
@@ -642,15 +674,15 @@ const ENTERPRISE_CONTROL_PAGE_THEME = `
     .page-header {
       margin-bottom: 18px;
       padding-bottom: 18px;
-      border-bottom: 1px solid rgba(48, 76, 71, 0.10);
+      border-bottom: 1px solid rgba(26, 40, 52, 0.10);
     }
     .page-heading::before {
       content: "Enterprise operations";
       width: max-content;
       padding: 6px 10px;
-      border: 1px solid rgba(213, 169, 20, 0.26);
+      border: 1px solid rgba(180, 83, 9, 0.26);
       border-radius: 999px;
-      background: rgba(213, 169, 20, 0.1);
+      background: rgba(180, 83, 9, 0.1);
       color: var(--gold);
       font-family: var(--mono);
       font-size: 10px;
@@ -666,9 +698,9 @@ const ENTERPRISE_CONTROL_PAGE_THEME = `
     .org-switcher {
       min-width: 280px;
       padding: 12px;
-      border: 1px solid rgba(48, 76, 71, 0.14);
-      border-radius: 18px;
-      background: rgba(247, 250, 244, 0.82);
+      border: 1px solid rgba(26, 40, 52, 0.14);
+      border-radius: 8px;
+      background: rgba(248, 250, 252, 0.82);
     }
     .org-switcher-label,
     .action-strip-label,
@@ -676,7 +708,7 @@ const ENTERPRISE_CONTROL_PAGE_THEME = `
     .panel-head,
     .banner-kicker,
     .checklist-title {
-      color: rgba(52, 81, 76, 0.58);
+      color: rgba(82, 97, 112, 0.58);
       font-weight: 850;
       letter-spacing: .12em;
     }
@@ -684,7 +716,7 @@ const ENTERPRISE_CONTROL_PAGE_THEME = `
     .page-desc {
       max-width: 780px;
       margin: 0 0 18px;
-      color: rgba(52, 81, 76, 0.72);
+      color: rgba(82, 97, 112, 0.72);
       font-size: 15px;
       line-height: 1.65;
     }
@@ -696,17 +728,17 @@ const ENTERPRISE_CONTROL_PAGE_THEME = `
       max-width: 100%;
       margin: 0 0 16px;
       padding: 7px;
-      border: 1px solid rgba(48, 76, 71, 0.14);
-      border-radius: 18px;
+      border: 1px solid rgba(26, 40, 52, 0.14);
+      border-radius: 8px;
       background: rgba(255, 255, 255, 0.66);
-      box-shadow: inset 0 1px 0 rgba(52, 81, 76, 0.05);
+      box-shadow: inset 0 1px 0 rgba(82, 97, 112, 0.05);
     }
     .subnav-link {
       padding: 9px 12px;
-      border-radius: 13px;
+      border-radius: 8px;
       background: transparent;
       border-color: transparent;
-      color: rgba(52, 81, 76, 0.68);
+      color: rgba(82, 97, 112, 0.68);
       font-weight: 800;
     }
     .subnav-link:hover {
@@ -715,14 +747,14 @@ const ENTERPRISE_CONTROL_PAGE_THEME = `
     }
     .subnav-link.active {
       color: var(--ink);
-      box-shadow: 0 12px 34px rgba(213, 169, 20, 0.18);
+      box-shadow: 0 12px 34px rgba(180, 83, 9, 0.18);
     }
     .action-strip {
       margin-bottom: 18px;
       padding: 14px;
-      border-radius: 22px;
+      border-radius: 8px;
       background:
-        linear-gradient(135deg, rgba(213, 169, 20, 0.12), transparent 48%),
+        linear-gradient(135deg, rgba(180, 83, 9, 0.12), transparent 48%),
         rgba(255, 255, 255, 0.72);
     }
     .action-strip .btn-outline {
@@ -738,10 +770,10 @@ const ENTERPRISE_CONTROL_PAGE_THEME = `
       gap: 20px;
       margin-bottom: 18px;
       padding: 22px;
-      border-radius: 28px;
+      border-radius: 8px;
       background:
-        radial-gradient(circle at 18% 0%, rgba(213, 169, 20, 0.22), transparent 28rem),
-        linear-gradient(180deg, rgba(48, 76, 71, 0.14), rgba(247, 250, 244, 0.86));
+        radial-gradient(circle at 18% 0%, rgba(180, 83, 9, 0.22), transparent 28rem),
+        linear-gradient(180deg, rgba(26, 40, 52, 0.14), rgba(248, 250, 252, 0.86));
     }
     .banner-title {
       font-size: clamp(28px, 4vw, 44px);
@@ -754,9 +786,9 @@ const ENTERPRISE_CONTROL_PAGE_THEME = `
       line-height: 1.65;
     }
     .banner-note {
-      border-left: 1px solid rgba(48, 76, 71, 0.14);
+      border-left: 1px solid rgba(26, 40, 52, 0.14);
       padding-left: 18px;
-      color: rgba(52, 81, 76, 0.70);
+      color: rgba(82, 97, 112, 0.70);
     }
     .kpi-grid {
       grid-template-columns: repeat(4, minmax(0, 1fr));
@@ -771,14 +803,14 @@ const ENTERPRISE_CONTROL_PAGE_THEME = `
     .kpi-cell {
       min-height: 150px;
       padding: 18px;
-      border: 1px solid rgba(48, 76, 71, 0.14);
-      border-radius: 24px;
+      border: 1px solid rgba(26, 40, 52, 0.14);
+      border-radius: 8px;
       background:
-        linear-gradient(180deg, rgba(48, 76, 71, 0.12), rgba(247, 250, 244, 0.78)),
-        rgba(247, 250, 244, 0.78);
+        linear-gradient(180deg, rgba(26, 40, 52, 0.12), rgba(248, 250, 252, 0.78)),
+        rgba(248, 250, 252, 0.78);
       box-shadow: 0 18px 70px rgba(0, 0, 0, 0.16);
     }
-    .kpi-cell + .kpi-cell { border-left: 1px solid rgba(48, 76, 71, 0.14); }
+    .kpi-cell + .kpi-cell { border-left: 1px solid rgba(26, 40, 52, 0.14); }
     .kpi-value {
       margin-top: 10px;
       color: var(--text);
@@ -788,7 +820,7 @@ const ENTERPRISE_CONTROL_PAGE_THEME = `
     }
     .kpi-sub {
       margin-top: 12px;
-      color: rgba(52, 81, 76, 0.62);
+      color: rgba(82, 97, 112, 0.62);
       line-height: 1.45;
       white-space: normal;
     }
@@ -798,17 +830,17 @@ const ENTERPRISE_CONTROL_PAGE_THEME = `
     }
     .stack { gap: 18px; }
     .panel {
-      border-radius: 26px;
+      border-radius: 8px;
       overflow: hidden;
       background:
-        linear-gradient(180deg, rgba(255, 255, 255, 0.92), rgba(247, 250, 244, 0.76)),
-        rgba(247, 250, 244, 0.72);
+        linear-gradient(180deg, rgba(255, 255, 255, 0.92), rgba(248, 250, 252, 0.76)),
+        rgba(248, 250, 252, 0.72);
     }
     .panel-head {
       min-height: 54px;
       padding: 16px 18px;
-      border-bottom: 1px solid rgba(48, 76, 71, 0.10);
-      background: rgba(247, 250, 244, 0.72);
+      border-bottom: 1px solid rgba(26, 40, 52, 0.10);
+      background: rgba(248, 250, 252, 0.72);
     }
     .panel-head-right {
       color: var(--muted);
@@ -824,7 +856,7 @@ const ENTERPRISE_CONTROL_PAGE_THEME = `
     }
     .list-row {
       padding: 13px 4px;
-      border-bottom: 1px dashed rgba(48, 76, 71, 0.12);
+      border-bottom: 1px dashed rgba(26, 40, 52, 0.12);
     }
     .member-card,
     .policy-card,
@@ -832,16 +864,16 @@ const ENTERPRISE_CONTROL_PAGE_THEME = `
     .exec-card,
     .resource-card,
     .checklist-box {
-      border-radius: 18px;
-      background: rgba(247, 250, 244, 0.82);
-      border-color: rgba(48, 76, 71, 0.12);
+      border-radius: 8px;
+      background: rgba(248, 250, 252, 0.82);
+      border-color: rgba(26, 40, 52, 0.12);
     }
     .member-grid {
       grid-template-columns: repeat(2, minmax(0, 1fr));
     }
     .member-project,
     .pill {
-      border-color: rgba(48, 76, 71, 0.16);
+      border-color: rgba(26, 40, 52, 0.16);
       background: rgba(255, 255, 255, 0.68);
     }
     .policy-grid {
@@ -854,7 +886,7 @@ const ENTERPRISE_CONTROL_PAGE_THEME = `
     .list-rank,
     .list-meta,
     .invite-sub {
-      color: rgba(52, 81, 76, 0.55);
+      color: rgba(82, 97, 112, 0.55);
     }
     .policy-message,
     .exec-message {
@@ -864,7 +896,7 @@ const ENTERPRISE_CONTROL_PAGE_THEME = `
       margin: 0 14px 14px;
     }
     .checklist-item {
-      color: rgba(52, 81, 76, 0.68);
+      color: rgba(82, 97, 112, 0.68);
     }
     @media (max-width: 1180px) {
       .kpi-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
@@ -877,7 +909,7 @@ const ENTERPRISE_CONTROL_PAGE_THEME = `
       .banner { grid-template-columns: 1fr; }
       .banner-note {
         border-left: 0;
-        border-top: 1px solid rgba(48, 76, 71, 0.14);
+        border-top: 1px solid rgba(26, 40, 52, 0.14);
         padding-left: 0;
         padding-top: 16px;
       }
@@ -897,15 +929,15 @@ const ENTERPRISE_ORG_PAGE_THEME = `
     .page-header {
       margin-bottom: 18px;
       padding-bottom: 18px;
-      border-bottom: 1px solid rgba(48, 76, 71, 0.10);
+      border-bottom: 1px solid rgba(26, 40, 52, 0.10);
     }
     .page-heading::before {
       content: "Organization setup";
       width: max-content;
       padding: 6px 10px;
-      border: 1px solid rgba(213, 169, 20, 0.26);
+      border: 1px solid rgba(180, 83, 9, 0.26);
       border-radius: 999px;
-      background: rgba(213, 169, 20, 0.1);
+      background: rgba(180, 83, 9, 0.1);
       color: var(--gold);
       font-family: var(--mono);
       font-size: 10px;
@@ -921,9 +953,9 @@ const ENTERPRISE_ORG_PAGE_THEME = `
     .org-switcher {
       min-width: 280px;
       padding: 12px;
-      border: 1px solid rgba(48, 76, 71, 0.14);
-      border-radius: 18px;
-      background: rgba(247, 250, 244, 0.82);
+      border: 1px solid rgba(26, 40, 52, 0.14);
+      border-radius: 8px;
+      background: rgba(248, 250, 252, 0.82);
     }
     .org-switcher-label,
     .action-strip-label,
@@ -932,14 +964,14 @@ const ENTERPRISE_ORG_PAGE_THEME = `
     .banner-kicker,
     .form-label,
     .checklist-title {
-      color: rgba(52, 81, 76, 0.58);
+      color: rgba(82, 97, 112, 0.58);
       font-weight: 850;
       letter-spacing: .12em;
     }
     .page-desc {
       max-width: 820px;
       margin: 0 0 18px;
-      color: rgba(52, 81, 76, 0.72);
+      color: rgba(82, 97, 112, 0.72);
       font-size: 15px;
       line-height: 1.65;
     }
@@ -951,17 +983,17 @@ const ENTERPRISE_ORG_PAGE_THEME = `
       max-width: 100%;
       margin: 0 0 16px;
       padding: 7px;
-      border: 1px solid rgba(48, 76, 71, 0.14);
-      border-radius: 18px;
+      border: 1px solid rgba(26, 40, 52, 0.14);
+      border-radius: 8px;
       background: rgba(255, 255, 255, 0.66);
-      box-shadow: inset 0 1px 0 rgba(52, 81, 76, 0.05);
+      box-shadow: inset 0 1px 0 rgba(82, 97, 112, 0.05);
     }
     .subnav-link {
       padding: 9px 12px;
-      border-radius: 13px;
+      border-radius: 8px;
       background: transparent;
       border-color: transparent;
-      color: rgba(52, 81, 76, 0.68);
+      color: rgba(82, 97, 112, 0.68);
       font-weight: 800;
     }
     .subnav-link:hover {
@@ -970,14 +1002,14 @@ const ENTERPRISE_ORG_PAGE_THEME = `
     }
     .subnav-link.active {
       color: var(--ink);
-      box-shadow: 0 12px 34px rgba(213, 169, 20, 0.18);
+      box-shadow: 0 12px 34px rgba(180, 83, 9, 0.18);
     }
     .action-strip {
       margin-bottom: 18px;
       padding: 14px;
-      border-radius: 22px;
+      border-radius: 8px;
       background:
-        linear-gradient(135deg, rgba(62, 93, 87, 0.1), transparent 46%),
+        linear-gradient(135deg, rgba(21, 128, 61, 0.1), transparent 46%),
         rgba(255, 255, 255, 0.72);
     }
     .action-strip .btn-outline {
@@ -995,11 +1027,11 @@ const ENTERPRISE_ORG_PAGE_THEME = `
       gap: 20px;
       margin-bottom: 18px;
       padding: 22px;
-      border-radius: 28px;
+      border-radius: 8px;
       background:
-        radial-gradient(circle at 18% 0%, rgba(62, 93, 87, 0.18), transparent 28rem),
-        radial-gradient(circle at 78% 0%, rgba(213, 169, 20, 0.18), transparent 24rem),
-        linear-gradient(180deg, rgba(48, 76, 71, 0.14), rgba(247, 250, 244, 0.86));
+        radial-gradient(circle at 18% 0%, rgba(21, 128, 61, 0.18), transparent 28rem),
+        radial-gradient(circle at 78% 0%, rgba(180, 83, 9, 0.18), transparent 24rem),
+        linear-gradient(180deg, rgba(26, 40, 52, 0.14), rgba(248, 250, 252, 0.86));
     }
     .banner-title {
       font-size: clamp(28px, 4vw, 44px);
@@ -1012,9 +1044,9 @@ const ENTERPRISE_ORG_PAGE_THEME = `
       line-height: 1.65;
     }
     .banner-note {
-      border-left: 1px solid rgba(48, 76, 71, 0.14);
+      border-left: 1px solid rgba(26, 40, 52, 0.14);
       padding-left: 18px;
-      color: rgba(52, 81, 76, 0.70);
+      color: rgba(82, 97, 112, 0.70);
     }
     .kpi-grid {
       grid-template-columns: repeat(4, minmax(0, 1fr));
@@ -1029,14 +1061,14 @@ const ENTERPRISE_ORG_PAGE_THEME = `
     .kpi-cell {
       min-height: 150px;
       padding: 18px;
-      border: 1px solid rgba(48, 76, 71, 0.14);
-      border-radius: 24px;
+      border: 1px solid rgba(26, 40, 52, 0.14);
+      border-radius: 8px;
       background:
-        linear-gradient(180deg, rgba(48, 76, 71, 0.12), rgba(247, 250, 244, 0.78)),
-        rgba(247, 250, 244, 0.78);
+        linear-gradient(180deg, rgba(26, 40, 52, 0.12), rgba(248, 250, 252, 0.78)),
+        rgba(248, 250, 252, 0.78);
       box-shadow: 0 18px 70px rgba(0, 0, 0, 0.16);
     }
-    .kpi-cell + .kpi-cell { border-left: 1px solid rgba(48, 76, 71, 0.14); }
+    .kpi-cell + .kpi-cell { border-left: 1px solid rgba(26, 40, 52, 0.14); }
     .kpi-value {
       margin-top: 10px;
       color: var(--text);
@@ -1047,7 +1079,7 @@ const ENTERPRISE_ORG_PAGE_THEME = `
     }
     .kpi-sub {
       margin-top: 12px;
-      color: rgba(52, 81, 76, 0.62);
+      color: rgba(82, 97, 112, 0.62);
       line-height: 1.45;
       white-space: normal;
     }
@@ -1057,17 +1089,17 @@ const ENTERPRISE_ORG_PAGE_THEME = `
     }
     .stack { gap: 18px; }
     .panel {
-      border-radius: 26px;
+      border-radius: 8px;
       overflow: hidden;
       background:
-        linear-gradient(180deg, rgba(255, 255, 255, 0.92), rgba(247, 250, 244, 0.76)),
-        rgba(247, 250, 244, 0.72);
+        linear-gradient(180deg, rgba(255, 255, 255, 0.92), rgba(248, 250, 252, 0.76)),
+        rgba(248, 250, 252, 0.72);
     }
     .panel-head {
       min-height: 54px;
       padding: 16px 18px;
-      border-bottom: 1px solid rgba(48, 76, 71, 0.10);
-      background: rgba(247, 250, 244, 0.72);
+      border-bottom: 1px solid rgba(26, 40, 52, 0.10);
+      background: rgba(248, 250, 252, 0.72);
     }
     .panel-head-right {
       color: var(--muted);
@@ -1091,19 +1123,19 @@ const ENTERPRISE_ORG_PAGE_THEME = `
     .form-select,
     .org-select {
       min-height: 42px;
-      border-radius: 14px;
-      background: rgba(247, 250, 244, 0.84);
-      border-color: rgba(48, 76, 71, 0.16);
+      border-radius: 8px;
+      background: rgba(248, 250, 252, 0.84);
+      border-color: rgba(26, 40, 52, 0.16);
       color: var(--text);
     }
     .form-input::placeholder {
-      color: rgba(52, 81, 76, 0.34);
+      color: rgba(82, 97, 112, 0.34);
     }
     .form-input:disabled,
     .form-select:disabled,
     .org-select:disabled {
-      background: rgba(247, 250, 244, 0.78);
-      color: rgba(52, 81, 76, 0.42);
+      background: rgba(248, 250, 252, 0.78);
+      color: rgba(82, 97, 112, 0.42);
     }
     .form-inline {
       gap: 10px;
@@ -1111,15 +1143,15 @@ const ENTERPRISE_ORG_PAGE_THEME = `
     .form-copy,
     .callout,
     .resource-copy {
-      color: rgba(52, 81, 76, 0.68);
+      color: rgba(82, 97, 112, 0.68);
       line-height: 1.55;
     }
     .callout,
     .resource-card,
     .checklist-box {
-      border-radius: 18px;
-      background: rgba(247, 250, 244, 0.82);
-      border-color: rgba(48, 76, 71, 0.12);
+      border-radius: 8px;
+      background: rgba(248, 250, 252, 0.82);
+      border-color: rgba(26, 40, 52, 0.12);
     }
     .callout strong {
       color: var(--text);
@@ -1139,26 +1171,26 @@ const ENTERPRISE_ORG_PAGE_THEME = `
       margin: 0 14px 14px;
     }
     .checklist-item {
-      color: rgba(52, 81, 76, 0.68);
+      color: rgba(82, 97, 112, 0.68);
     }
     .list-row {
       padding: 13px 4px;
-      border-bottom: 1px dashed rgba(48, 76, 71, 0.12);
+      border-bottom: 1px dashed rgba(26, 40, 52, 0.12);
     }
     .list-rank,
     .list-meta,
     .list-sub {
-      color: rgba(52, 81, 76, 0.55);
+      color: rgba(82, 97, 112, 0.55);
     }
     .pill {
-      border-color: rgba(48, 76, 71, 0.16);
+      border-color: rgba(26, 40, 52, 0.16);
       background: rgba(255, 255, 255, 0.68);
     }
     .btn-danger {
       background: rgba(251, 113, 133, 0.1);
       color: var(--red);
       border-color: rgba(251, 113, 133, 0.32);
-      border-radius: 13px;
+      border-radius: 8px;
     }
     .btn-danger:hover {
       background: rgba(251, 113, 133, 0.16);
@@ -1174,7 +1206,7 @@ const ENTERPRISE_ORG_PAGE_THEME = `
       .banner { grid-template-columns: 1fr; }
       .banner-note {
         border-left: 0;
-        border-top: 1px solid rgba(48, 76, 71, 0.14);
+        border-top: 1px solid rgba(26, 40, 52, 0.14);
         padding-left: 0;
         padding-top: 16px;
       }
@@ -1337,12 +1369,12 @@ function renderEnterpriseMembersPage(): string {
     .kicker { color: var(--gold); font-size: 12px; text-transform: uppercase; letter-spacing: .16em; font-weight: 850; }
     h1 { margin: 8px 0 8px; font-size: clamp(38px, 6vw, 74px); line-height: .92; letter-spacing: -.075em; }
     .lead { color: var(--muted); line-height: 1.6; max-width: 720px; }
-    select, button, input, textarea { border: 1px solid var(--line); background: rgba(255,255,255,.78); color: var(--text); border-radius: 13px; padding: 11px 12px; font: inherit; }
+    select, button, input, textarea { border: 1px solid var(--line); background: rgba(255,255,255,.78); color: var(--text); border-radius: 8px; padding: 11px 12px; font: inherit; }
     option { color: #111827; }
     button { cursor: pointer; }
-    input::placeholder { color: rgba(52,81,76,.48); }
+    input::placeholder { color: rgba(82,97,112,.48); }
     .primary { background: linear-gradient(135deg, var(--gold), #f3df95); color: var(--ink); border: 0; font-weight: 850; }
-    .danger { color: var(--red); border-color: rgba(185,93,80,.34); }
+    .danger { color: var(--red); border-color: rgba(220,38,38,.34); }
     .toolbar { display: flex; gap: 10px; flex-wrap: wrap; justify-content: flex-end; }
     .form-row { display: grid; grid-template-columns: minmax(220px, 1fr) minmax(240px, .42fr) auto; gap: 10px; align-items: center; }
     .inline-actions { display: flex; gap: 8px; justify-content: flex-end; align-items: center; flex-wrap: wrap; }
@@ -1350,7 +1382,7 @@ function renderEnterpriseMembersPage(): string {
     .grid { display: grid; gap: 16px; }
     .kpis { grid-template-columns: repeat(4, minmax(0, 1fr)); margin-bottom: 16px; }
     .two { grid-template-columns: minmax(0, 1fr) minmax(340px, .72fr); }
-    .card { border: 1px solid var(--line); background: linear-gradient(180deg, rgba(255,255,255,.98), rgba(247,250,244,.86)); border-radius: 24px; padding: 20px; box-shadow: 0 22px 90px rgba(48,76,71,.16); }
+    .card { border: 1px solid var(--line); background: linear-gradient(180deg, rgba(255,255,255,.98), rgba(248,250,252,.86)); border-radius: 8px; padding: 20px; box-shadow: 0 22px 90px rgba(26,40,52,.16); }
     .kpi-label { color: var(--muted); font-size: 12px; text-transform: uppercase; letter-spacing: .1em; }
     .kpi-value { font-size: 34px; font-weight: 850; letter-spacing: -.05em; margin-top: 8px; }
     .kpi-sub { color: var(--muted); font-size: 13px; margin-top: 6px; }
@@ -1358,19 +1390,19 @@ function renderEnterpriseMembersPage(): string {
     .section-title h2 { margin: 0; font-size: 19px; letter-spacing: -.03em; }
     .mini { color: var(--muted); font-size: 13px; }
     .list { display: grid; gap: 10px; }
-    .row { display: grid; grid-template-columns: 1fr auto; gap: 14px; align-items: center; border: 1px solid rgba(48,76,71,.10); border-radius: 17px; padding: 13px; background: rgba(247,250,244,.84); }
+    .row { display: grid; grid-template-columns: 1fr auto; gap: 14px; align-items: center; border: 1px solid rgba(26,40,52,.10); border-radius: 8px; padding: 13px; background: rgba(248,250,252,.84); }
     .row-title { font-weight: 760; }
     .row-sub { color: var(--muted); font-size: 13px; margin-top: 4px; }
-    .tag { color: var(--blue); font-size: 12px; border: 1px solid rgba(22,138,159,.24); border-radius: 999px; padding: 5px 8px; }
-    .tag.good { color: var(--green); border-color: rgba(62,93,87,.24); }
-    .tag.warn { color: var(--gold); border-color: rgba(213,169,20,.28); }
+    .tag { color: var(--blue); font-size: 12px; border: 1px solid rgba(37,99,235,.24); border-radius: 999px; padding: 5px 8px; }
+    .tag.good { color: var(--green); border-color: rgba(21,128,61,.24); }
+    .tag.warn { color: var(--gold); border-color: rgba(180,83,9,.28); }
     .role-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; }
-    .role-card { border: 1px solid rgba(48,76,71,.10); border-radius: 17px; padding: 13px; background: rgba(247,250,244,.80); }
+    .role-card { border: 1px solid rgba(26,40,52,.10); border-radius: 8px; padding: 13px; background: rgba(248,250,252,.80); }
     .role-card strong { display: block; margin-bottom: 5px; }
     .role-card p { color: var(--muted); font-size: 13px; line-height: 1.45; margin: 0 0 9px; }
     .role-card .tag { display: inline-block; margin: 0 5px 5px 0; }
-    .empty, .notice { color: var(--muted); border: 1px dashed rgba(48,76,71,.22); border-radius: 18px; padding: 18px; background: rgba(247,250,244,.78); }
-    .notice.error { color: var(--red); border-color: rgba(185,93,80,.3); }
+    .empty, .notice { color: var(--muted); border: 1px dashed rgba(26,40,52,.22); border-radius: 8px; padding: 18px; background: rgba(248,250,252,.78); }
+    .notice.error { color: var(--red); border-color: rgba(220,38,38,.3); }
     @media (max-width: 980px) { .shell { grid-template-columns: 1fr; } .topbar { flex-direction: column; } .kpis, .two, .role-grid, .form-row { grid-template-columns: 1fr; } }
     ${ENTERPRISE_APP_SHELL_THEME}
     ${ENTERPRISE_STATIC_APP_POLISH_THEME}
@@ -1749,10 +1781,10 @@ function renderEnterpriseAuditPage(): string {
   <title>Audit - VaultProof Enterprise</title>
   <style>
     ${ENTERPRISE_RENDERED_APP_BASE_THEME}
-    select, button, input, textarea { border: 1px solid var(--line); background: rgba(255,255,255,.78); color: var(--text); border-radius: 13px; padding: 11px 12px; font: inherit; }
+    select, button, input, textarea { border: 1px solid var(--line); background: rgba(255,255,255,.78); color: var(--text); border-radius: 8px; padding: 11px 12px; font: inherit; }
     option { color: #111827; }
     button { cursor: pointer; }
-    input::placeholder, textarea::placeholder { color: rgba(52,81,76,.48); }
+    input::placeholder, textarea::placeholder { color: rgba(82,97,112,.48); }
     .main { padding: 30px; max-width: 1380px; width: 100%; }
     .topbar { display: flex; justify-content: space-between; gap: 18px; align-items: flex-start; margin-bottom: 22px; }
     .kicker { color: var(--gold); font-size: 12px; text-transform: uppercase; letter-spacing: .16em; font-weight: 850; }
@@ -1762,7 +1794,7 @@ function renderEnterpriseAuditPage(): string {
     .primary { background: linear-gradient(135deg, var(--gold), #f3df95); color: var(--ink); border: 0; font-weight: 850; }
     .grid { display: grid; gap: 16px; }
     .kpis { grid-template-columns: repeat(4, minmax(0, 1fr)); margin-bottom: 16px; }
-    .card { border: 1px solid var(--line); background: linear-gradient(180deg, rgba(255,255,255,.98), rgba(247,250,244,.86)); border-radius: 24px; padding: 20px; box-shadow: 0 22px 90px rgba(48,76,71,.16); }
+    .card { border: 1px solid var(--line); background: linear-gradient(180deg, rgba(255,255,255,.98), rgba(248,250,252,.86)); border-radius: 8px; padding: 20px; box-shadow: 0 22px 90px rgba(26,40,52,.16); }
     .filters { display: grid; grid-template-columns: 1.1fr .85fr .9fr .9fr 1.3fr auto; gap: 10px; margin-bottom: 16px; }
     .kpi-label { color: var(--muted); font-size: 12px; text-transform: uppercase; letter-spacing: .1em; }
     .kpi-value { font-size: 34px; font-weight: 850; letter-spacing: -.05em; margin-top: 8px; }
@@ -1771,18 +1803,18 @@ function renderEnterpriseAuditPage(): string {
     .section-title h2 { margin: 0; font-size: 19px; letter-spacing: -.03em; }
     .mini { color: var(--muted); font-size: 13px; }
     .list { display: grid; gap: 10px; }
-    .event { display: grid; grid-template-columns: 160px 1fr auto; gap: 14px; align-items: start; border: 1px solid rgba(48,76,71,.10); border-radius: 18px; padding: 14px; background: rgba(247,250,244,.84); }
+    .event { display: grid; grid-template-columns: 160px 1fr auto; gap: 14px; align-items: start; border: 1px solid rgba(26,40,52,.10); border-radius: 8px; padding: 14px; background: rgba(248,250,252,.84); }
     .event-time { color: var(--muted); font-size: 13px; line-height: 1.45; }
     .event-title { font-weight: 780; letter-spacing: -.02em; }
     .event-sub { color: var(--muted); font-size: 13px; margin-top: 5px; line-height: 1.45; }
-    .tag { display: inline-block; color: var(--blue); font-size: 12px; border: 1px solid rgba(22,138,159,.24); border-radius: 999px; padding: 5px 8px; margin: 3px 4px 0 0; }
-    .tag.good { color: var(--green); border-color: rgba(62,93,87,.24); }
-    .tag.warn { color: var(--gold); border-color: rgba(213,169,20,.28); }
-    .tag.bad { color: var(--red); border-color: rgba(185,93,80,.28); }
+    .tag { display: inline-block; color: var(--blue); font-size: 12px; border: 1px solid rgba(37,99,235,.24); border-radius: 999px; padding: 5px 8px; margin: 3px 4px 0 0; }
+    .tag.good { color: var(--green); border-color: rgba(21,128,61,.24); }
+    .tag.warn { color: var(--gold); border-color: rgba(180,83,9,.28); }
+    .tag.bad { color: var(--red); border-color: rgba(220,38,38,.28); }
     details { margin-top: 8px; color: var(--muted); font-size: 13px; }
-    pre { white-space: pre-wrap; word-break: break-word; border: 1px solid rgba(48,76,71,.12); border-radius: 14px; padding: 12px; background: rgba(48,76,71,.18); color: #4e6862; overflow: auto; }
-    .empty, .notice { color: var(--muted); border: 1px dashed rgba(48,76,71,.22); border-radius: 18px; padding: 18px; background: rgba(247,250,244,.78); }
-    .notice.error { color: var(--red); border-color: rgba(185,93,80,.3); }
+    pre { white-space: pre-wrap; word-break: break-word; border: 1px solid rgba(26,40,52,.12); border-radius: 8px; padding: 12px; background: rgba(26,40,52,.18); color: #526170; overflow: auto; }
+    .empty, .notice { color: var(--muted); border: 1px dashed rgba(26,40,52,.22); border-radius: 8px; padding: 18px; background: rgba(248,250,252,.78); }
+    .notice.error { color: var(--red); border-color: rgba(220,38,38,.3); }
     @media (max-width: 1100px) { .filters { grid-template-columns: repeat(2, minmax(0, 1fr)); } .kpis { grid-template-columns: repeat(2, minmax(0, 1fr)); } .event { grid-template-columns: 1fr; } }
     @media (max-width: 760px) { .shell { grid-template-columns: 1fr; } .topbar { flex-direction: column; } .filters, .kpis { grid-template-columns: 1fr; } }
     ${ENTERPRISE_APP_SHELL_THEME}
@@ -2019,11 +2051,11 @@ function renderEnterpriseAlertsPage(): string {
   <title>Alerts - VaultProof Enterprise</title>
   <style>
     ${ENTERPRISE_RENDERED_APP_BASE_THEME}
-    select, button, input, textarea { border: 1px solid var(--line); background: rgba(255,255,255,.78); color: var(--text); border-radius: 13px; padding: 11px 12px; font: inherit; }
+    select, button, input, textarea { border: 1px solid var(--line); background: rgba(255,255,255,.78); color: var(--text); border-radius: 8px; padding: 11px 12px; font: inherit; }
     option { color: #111827; }
     button { cursor: pointer; }
     button[disabled] { cursor: not-allowed; opacity: .58; }
-    input::placeholder, textarea::placeholder { color: rgba(52,81,76,.48); }
+    input::placeholder, textarea::placeholder { color: rgba(82,97,112,.48); }
     .main { padding: 30px; max-width: 1380px; width: 100%; }
     .topbar { display: flex; justify-content: space-between; gap: 18px; align-items: flex-start; margin-bottom: 22px; }
     .kicker { color: var(--gold); font-size: 12px; text-transform: uppercase; letter-spacing: .16em; font-weight: 850; }
@@ -2034,7 +2066,7 @@ function renderEnterpriseAlertsPage(): string {
     .grid { display: grid; gap: 16px; }
     .kpis { grid-template-columns: repeat(4, minmax(0, 1fr)); margin-bottom: 16px; }
     .two { grid-template-columns: minmax(0, .85fr) minmax(0, 1.15fr); }
-    .card { border: 1px solid var(--line); background: linear-gradient(180deg, rgba(255,255,255,.98), rgba(247,250,244,.86)); border-radius: 24px; padding: 20px; box-shadow: 0 22px 90px rgba(48,76,71,.16); }
+    .card { border: 1px solid var(--line); background: linear-gradient(180deg, rgba(255,255,255,.98), rgba(248,250,252,.86)); border-radius: 8px; padding: 20px; box-shadow: 0 22px 90px rgba(26,40,52,.16); }
     .filters { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)) auto; gap: 10px; margin-bottom: 16px; }
     .kpi-label { color: var(--muted); font-size: 12px; text-transform: uppercase; letter-spacing: .1em; }
     .kpi-value { font-size: 34px; font-weight: 850; letter-spacing: -.05em; margin-top: 8px; }
@@ -2043,16 +2075,16 @@ function renderEnterpriseAlertsPage(): string {
     .section-title h2 { margin: 0; font-size: 19px; letter-spacing: -.03em; }
     .mini { color: var(--muted); font-size: 13px; }
     .list { display: grid; gap: 10px; }
-    .row { display: grid; grid-template-columns: 1fr auto; gap: 14px; align-items: start; border: 1px solid rgba(48,76,71,.10); border-radius: 18px; padding: 14px; background: rgba(247,250,244,.84); }
+    .row { display: grid; grid-template-columns: 1fr auto; gap: 14px; align-items: start; border: 1px solid rgba(26,40,52,.10); border-radius: 8px; padding: 14px; background: rgba(248,250,252,.84); }
     .row-actions { display: flex; gap: 8px; flex-wrap: wrap; justify-content: flex-end; }
     .row-title { font-weight: 780; letter-spacing: -.02em; }
     .row-sub { color: var(--muted); font-size: 13px; margin-top: 5px; line-height: 1.45; }
-    .tag { display: inline-block; color: var(--blue); font-size: 12px; border: 1px solid rgba(22,138,159,.24); border-radius: 999px; padding: 5px 8px; margin: 3px 4px 0 0; }
-    .tag.good { color: var(--green); border-color: rgba(62,93,87,.24); }
-    .tag.warn { color: var(--gold); border-color: rgba(213,169,20,.28); }
-    .tag.bad { color: var(--red); border-color: rgba(185,93,80,.28); }
-    .empty, .notice { color: var(--muted); border: 1px dashed rgba(48,76,71,.22); border-radius: 18px; padding: 18px; background: rgba(247,250,244,.78); }
-    .notice.error { color: var(--red); border-color: rgba(185,93,80,.3); }
+    .tag { display: inline-block; color: var(--blue); font-size: 12px; border: 1px solid rgba(37,99,235,.24); border-radius: 999px; padding: 5px 8px; margin: 3px 4px 0 0; }
+    .tag.good { color: var(--green); border-color: rgba(21,128,61,.24); }
+    .tag.warn { color: var(--gold); border-color: rgba(180,83,9,.28); }
+    .tag.bad { color: var(--red); border-color: rgba(220,38,38,.28); }
+    .empty, .notice { color: var(--muted); border: 1px dashed rgba(26,40,52,.22); border-radius: 8px; padding: 18px; background: rgba(248,250,252,.78); }
+    .notice.error { color: var(--red); border-color: rgba(220,38,38,.3); }
     .slot-form { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; }
     .slot-form label { display: grid; gap: 7px; color: var(--muted); font-size: 12px; font-weight: 800; letter-spacing: .08em; text-transform: uppercase; }
     .slot-form input, .slot-form select, .slot-form textarea { width: 100%; }
@@ -2347,7 +2379,7 @@ function renderEnterpriseOperationsPage(pageName: 'activity' | 'projects' | 'inv
     : pageName === 'projects'
       ? 'Track enterprise projects, provider coverage, caller-lock policy, traffic health, and quick links into Control.'
       : pageName === 'inventory'
-        ? 'Catalog protected API surfaces by project, provider slot, owner, environment, risk, policy posture, traffic evidence, and review status without storing secrets.'
+        ? 'Map every API surface, owner, protection state, policy control, traffic signal, and review decision without storing secrets.'
         : pageName === 'policy'
           ? 'Review caller-lock drift, missing controls, demo-only risk, accepted exceptions, owners, expiry dates, and remaining blockers before paid traffic.'
           : pageName === 'rollout'
@@ -2363,10 +2395,10 @@ function renderEnterpriseOperationsPage(pageName: 'activity' | 'projects' | 'inv
   <title>${escapeHtml(pageTitle)} - VaultProof Enterprise</title>
   <style>
     ${ENTERPRISE_RENDERED_APP_BASE_THEME}
-    select, button, input, textarea { border: 1px solid var(--line); background: rgba(255,255,255,.78); color: var(--text); border-radius: 13px; padding: 11px 12px; font: inherit; }
+    select, button, input, textarea { border: 1px solid var(--line); background: rgba(255,255,255,.78); color: var(--text); border-radius: 8px; padding: 11px 12px; font: inherit; }
     option { color: #111827; }
     button { cursor: pointer; }
-    input::placeholder, textarea::placeholder { color: rgba(52,81,76,.48); }
+    input::placeholder, textarea::placeholder { color: rgba(82,97,112,.48); }
     .main { padding: 30px; max-width: 1380px; width: 100%; }
     .topbar { display: flex; justify-content: space-between; gap: 18px; align-items: flex-start; margin-bottom: 22px; }
     .kicker { color: var(--gold); font-size: 12px; text-transform: uppercase; letter-spacing: .16em; font-weight: 850; }
@@ -2374,14 +2406,14 @@ function renderEnterpriseOperationsPage(pageName: 'activity' | 'projects' | 'inv
     .lead { color: var(--muted); line-height: 1.6; max-width: 780px; }
     .toolbar { display: flex; gap: 10px; flex-wrap: wrap; justify-content: flex-end; }
     .primary { background: linear-gradient(135deg, var(--gold), #f3df95); color: var(--ink); border: 0; font-weight: 850; }
-    .danger { color: var(--red); border-color: rgba(185,93,80,.34); }
+    .danger { color: var(--red); border-color: rgba(220,38,38,.34); }
     .grid { display: grid; gap: 16px; }
     .kpis { grid-template-columns: repeat(4, minmax(0, 1fr)); margin-bottom: 16px; }
     .two { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); }
-    .card { border: 1px solid var(--line); background: linear-gradient(180deg, rgba(255,255,255,.98), rgba(247,250,244,.86)); border-radius: 24px; padding: 20px; box-shadow: 0 22px 90px rgba(48,76,71,.16); }
+    .card { border: 1px solid var(--line); background: linear-gradient(180deg, rgba(255,255,255,.98), rgba(248,250,252,.86)); border-radius: 8px; padding: 20px; box-shadow: 0 22px 90px rgba(26,40,52,.16); }
     .filters { display: grid; grid-template-columns: minmax(180px, 1fr) minmax(150px, .7fr) minmax(180px, 1fr) auto; gap: 10px; margin-bottom: 16px; }
     .inventory-filters { grid-template-columns: minmax(220px, 1.4fr) repeat(4, minmax(130px, .72fr)) auto auto; }
-    .inventory-bulk-review { grid-template-columns: minmax(180px, .8fr) minmax(170px, .7fr) auto; align-items: center; }
+    .inventory-bulk-review { display: grid; grid-template-columns: minmax(180px, .8fr) minmax(170px, .7fr) auto; gap: 10px; align-items: center; margin: 0; }
     .policy-filters { grid-template-columns: minmax(220px, 1.4fr) repeat(3, minmax(150px, .72fr)) auto auto; }
     .rollout-filters { grid-template-columns: minmax(220px, 1.4fr) repeat(4, minmax(130px, .72fr)) auto auto; }
     .kpi-label { color: var(--muted); font-size: 12px; text-transform: uppercase; letter-spacing: .1em; }
@@ -2391,17 +2423,46 @@ function renderEnterpriseOperationsPage(pageName: 'activity' | 'projects' | 'inv
     .section-title h2 { margin: 0; font-size: 19px; letter-spacing: -.03em; }
     .mini { color: var(--muted); font-size: 13px; }
     .list { display: grid; gap: 10px; }
-    .row { display: grid; grid-template-columns: 1fr auto; gap: 14px; align-items: start; border: 1px solid rgba(48,76,71,.10); border-radius: 18px; padding: 14px; background: rgba(247,250,244,.84); }
+    .row { display: grid; grid-template-columns: 1fr auto; gap: 14px; align-items: start; border: 1px solid rgba(26,40,52,.10); border-radius: 8px; padding: 14px; background: rgba(248,250,252,.84); }
     .row-title { font-weight: 780; letter-spacing: -.02em; }
     .row-sub { color: var(--muted); font-size: 13px; margin-top: 5px; line-height: 1.45; }
-    .inventory-row { display: grid; gap: 14px; border: 1px solid rgba(48,76,71,.10); border-radius: 18px; padding: 14px; background: rgba(247,250,244,.84); }
+    .inventory-row { display: grid; gap: 14px; border: 1px solid rgba(26,40,52,.10); border-radius: 8px; padding: 14px; background: rgba(248,250,252,.84); }
     .inventory-head { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 14px; align-items: start; }
     .inventory-fields { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 10px; }
     .inventory-field { display: grid; gap: 5px; min-width: 0; }
     .inventory-field.wide { grid-column: span 2; }
     .inventory-field label { color: var(--muted); font-size: 11px; text-transform: uppercase; letter-spacing: .08em; }
     .inventory-field input, .inventory-field select { width: 100%; min-width: 0; }
-    .inventory-field textarea { width: 100%; min-height: 74px; resize: vertical; border: 1px solid var(--line); background: rgba(255,255,255,.78); color: var(--text); border-radius: 13px; padding: 11px 12px; font: inherit; }
+    .inventory-field textarea { width: 100%; min-height: 74px; resize: vertical; border: 1px solid var(--line); background: rgba(255,255,255,.78); color: var(--text); border-radius: 8px; padding: 11px 12px; font: inherit; }
+    .inventory-page { display: grid; gap: 16px; }
+    .inventory-layout { display: grid; grid-template-columns: minmax(0, 1fr) minmax(300px, 360px); gap: 16px; align-items: start; }
+    .inventory-main, .inventory-side-rail { display: grid; gap: 16px; min-width: 0; }
+    .inventory-panel { border: 1px solid var(--line); background: linear-gradient(180deg, rgba(255,255,255,.98), rgba(248,250,252,.88)); border-radius: 8px; padding: 18px; box-shadow: 0 18px 70px rgba(26,40,52,.12); min-width: 0; }
+    .inventory-command-head, .inventory-board-head { display: flex; justify-content: space-between; align-items: flex-start; gap: 14px; margin-bottom: 14px; }
+    .inventory-command-head h2, .inventory-board-head h2 { margin: 0; font-size: 18px; letter-spacing: -.02em; }
+    .inventory-command-head p, .inventory-board-head p { margin: 5px 0 0; color: var(--muted); font-size: 13px; line-height: 1.45; }
+    .inventory-filter-grid { display: grid; grid-template-columns: minmax(260px, 1.4fr) repeat(4, minmax(128px, .7fr)) auto auto; gap: 10px; margin: 0; }
+    .inventory-command-actions { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 12px; align-items: center; margin-top: 12px; }
+    .inventory-export-row { display: flex; justify-content: flex-end; gap: 8px; flex-wrap: wrap; }
+    .inventory-export-row button, .inventory-command-actions button { white-space: nowrap; }
+    .inventory-table-head { display: grid; grid-template-columns: minmax(280px, 1.45fr) minmax(160px, .74fr) minmax(130px, .58fr) minmax(130px, .58fr) minmax(130px, .58fr) minmax(180px, .7fr); gap: 14px; padding: 0 12px 8px; color: rgba(82,97,112,.64); font-size: 11px; font-weight: 850; letter-spacing: .08em; text-transform: uppercase; border-bottom: 1px solid rgba(26,40,52,.10); }
+    .inventory-list { gap: 0; }
+    .inventory-record { border-bottom: 1px solid rgba(26,40,52,.12); padding: 16px 12px; background: rgba(255,255,255,.5); }
+    .inventory-record:last-child { border-bottom: 0; }
+    .inventory-record-main { display: grid; grid-template-columns: minmax(280px, 1.45fr) minmax(160px, .74fr) minmax(130px, .58fr) minmax(130px, .58fr) minmax(130px, .58fr) minmax(180px, .7fr); gap: 14px; align-items: start; }
+    .inventory-record-title { font-weight: 850; letter-spacing: -.02em; overflow-wrap: anywhere; }
+    .inventory-record-sub { color: var(--muted); font-size: 12px; line-height: 1.42; margin-top: 5px; overflow-wrap: anywhere; }
+    .inventory-cell-label { color: rgba(82,97,112,.58); font-size: 11px; text-transform: uppercase; letter-spacing: .08em; font-weight: 850; margin-bottom: 5px; display: none; }
+    .inventory-cell-value { font-size: 13px; line-height: 1.42; overflow-wrap: anywhere; }
+    .inventory-cell-value strong { display: block; color: var(--text); font-size: 14px; letter-spacing: -.01em; }
+    .inventory-status-list { margin-top: 8px; }
+    .inventory-record-actions { display: flex; gap: 8px; flex-wrap: wrap; justify-content: flex-end; }
+    .inventory-detail-grid { margin-top: 14px; padding-top: 14px; border-top: 1px solid rgba(26,40,52,.10); grid-template-columns: repeat(4, minmax(0, 1fr)); }
+    .inventory-policy-note { border: 1px solid rgba(26,40,52,.10); border-radius: 8px; padding: 10px 12px; background: rgba(248,250,252,.74); }
+    .inventory-summary-metrics { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; margin-bottom: 12px; }
+    .inventory-metric-card { border: 1px solid rgba(26,40,52,.10); border-radius: 8px; padding: 12px; background: rgba(248,250,252,.74); }
+    .inventory-metric-card strong { display: block; font-size: 24px; letter-spacing: -.04em; }
+    .inventory-metric-card span { color: var(--muted); font-size: 12px; text-transform: uppercase; letter-spacing: .08em; font-weight: 800; }
     .row-actions { display: flex; gap: 8px; flex-wrap: wrap; justify-content: flex-end; align-items: start; }
     .slot-form { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; }
     .slot-form label { display: grid; gap: 7px; color: var(--muted); font-size: 12px; font-weight: 800; letter-spacing: .08em; text-transform: uppercase; }
@@ -2410,14 +2471,15 @@ function renderEnterpriseOperationsPage(pageName: 'activity' | 'projects' | 'inv
     .slot-form .wide { grid-column: span 2; }
     .slot-form-actions { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; margin-top: 14px; }
     .slot-form-note { color: var(--muted); font-size: 13px; line-height: 1.45; margin: 0; }
-    .tag { display: inline-block; color: var(--blue); font-size: 12px; border: 1px solid rgba(22,138,159,.24); border-radius: 999px; padding: 5px 8px; margin: 3px 4px 0 0; }
-    .tag.good { color: var(--green); border-color: rgba(62,93,87,.24); }
-    .tag.warn { color: var(--gold); border-color: rgba(213,169,20,.28); }
-    .tag.bad { color: var(--red); border-color: rgba(185,93,80,.28); }
-    .empty, .notice { color: var(--muted); border: 1px dashed rgba(48,76,71,.22); border-radius: 18px; padding: 18px; background: rgba(247,250,244,.78); }
-    .notice.error { color: var(--red); border-color: rgba(185,93,80,.3); }
-    @media (max-width: 1100px) { .filters, .kpis, .two, .inventory-fields, .slot-form { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
-    @media (max-width: 760px) { .shell { grid-template-columns: 1fr; } .topbar { flex-direction: column; } .filters, .kpis, .two, .inventory-head, .inventory-fields, .slot-form { grid-template-columns: 1fr; } .inventory-field.wide, .slot-form .wide { grid-column: auto; } }
+    .tag { display: inline-block; color: var(--blue); font-size: 12px; border: 1px solid rgba(37,99,235,.24); border-radius: 999px; padding: 5px 8px; margin: 3px 4px 0 0; }
+    .tag.good { color: var(--green); border-color: rgba(21,128,61,.24); }
+    .tag.warn { color: var(--gold); border-color: rgba(180,83,9,.28); }
+    .tag.bad { color: var(--red); border-color: rgba(220,38,38,.28); }
+    .empty, .notice { color: var(--muted); border: 1px dashed rgba(26,40,52,.22); border-radius: 8px; padding: 18px; background: rgba(248,250,252,.78); }
+    .notice.error { color: var(--red); border-color: rgba(220,38,38,.3); }
+    @media (max-width: 1180px) { .inventory-layout { grid-template-columns: 1fr; } .inventory-side-rail { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+    @media (max-width: 1100px) { .filters, .kpis, .two, .inventory-fields, .slot-form { grid-template-columns: repeat(2, minmax(0, 1fr)); } .inventory-filter-grid, .inventory-command-actions, .inventory-record-main, .inventory-detail-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } .inventory-table-head { display: none; } .inventory-cell-label { display: block; } .inventory-record-actions { justify-content: flex-start; } }
+    @media (max-width: 760px) { .shell { grid-template-columns: 1fr; } .topbar { flex-direction: column; } .filters, .kpis, .two, .inventory-head, .inventory-fields, .slot-form, .inventory-filter-grid, .inventory-bulk-review, .inventory-command-actions, .inventory-record-main, .inventory-detail-grid, .inventory-side-rail { grid-template-columns: 1fr; } .inventory-field.wide, .slot-form .wide { grid-column: auto; } .inventory-command-head, .inventory-board-head { flex-direction: column; } .inventory-export-row { justify-content: flex-start; } }
     ${ENTERPRISE_APP_SHELL_THEME}
     ${ENTERPRISE_STATIC_APP_POLISH_THEME}
   </style>
@@ -2436,7 +2498,7 @@ function renderEnterpriseOperationsPage(pageName: 'activity' | 'projects' | 'inv
         <div class="toolbar">
           <select id="orgSelect" aria-label="Organization"><option>Loading org...</option></select>
           ${pageName === 'keys' ? '<button id="openProviderSlotForm" class="primary" type="button">add slot</button><button id="copyExposureResponseReportBtn" type="button">copy incident report</button>' : ''}
-          ${pageName === 'inventory' ? '<button id="openManualApiKeyForm" class="primary" type="button">add API key</button><button id="openInventoryImportForm" type="button">import CSV/OpenAPI</button><button id="copyInventoryCsvBtn" type="button">copy inventory CSV</button><button id="copyInventoryReviewBriefBtn" type="button">copy review brief</button><button id="copyInventoryJsonBtn" class="primary" type="button">copy inventory JSON</button>' : ''}
+          ${pageName === 'inventory' ? '<button id="openManualApiKeyForm" class="primary" type="button">add API key</button><button id="openInventoryImportForm" type="button">import CSV/OpenAPI</button>' : ''}
           ${pageName === 'policy' ? '<button id="copyPolicyBriefBtn" type="button">copy drift brief</button><button id="copyPolicyJsonBtn" class="primary" type="button">copy policy JSON</button>' : ''}
           ${pageName === 'rollout' ? '<button id="copyRolloutBriefBtn" type="button">copy rollout brief</button><button id="copyRolloutJsonBtn" class="primary" type="button">copy rollout JSON</button>' : ''}
           <button id="refreshBtn" type="button">refresh</button>
@@ -2517,7 +2579,7 @@ ${renderDatalistOptions(ENTERPRISE_PROVIDER_SLOT_PRESETS.map((preset) => preset.
         </div>
       </section>
 
-      <section id="inventoryPanel" class="grid two" style="display:none">
+      <section id="inventoryPanel" class="inventory-page" style="display:none">
         <div id="inventoryImportFormPanel" class="card" style="display:none;grid-column:1/-1">
           <div class="section-title"><h2>Import CSV/OpenAPI</h2><span class="mini">metadata only</span></div>
           <form id="inventoryImportForm">
@@ -2621,66 +2683,103 @@ ${renderDatalistOptions(ENTERPRISE_MANUAL_API_KEY_PROVIDER_OPTIONS)}
             </div>
           </form>
         </div>
-        <div class="card" style="grid-column:1/-1">
-          <div class="section-title"><h2>API inventory board</h2><span id="inventoryMeta" class="mini">metadata-only</span></div>
-          <form id="inventoryFilterForm" class="filters inventory-filters">
-            <input id="inventorySearch" type="search" placeholder="Search project, provider, owner, scope..." />
-            <select id="inventoryStatusFilter" aria-label="Inventory status">
-              <option value="">all statuses</option>
-              <option value="protected">protected</option>
-              <option value="manual">manual API keys</option>
-              <option value="imported">CSV/OpenAPI imports</option>
-              <option value="missing_provider_slot">missing provider slot</option>
-              <option value="needs_sealed_ingest">needs sealed ingest</option>
-              <option value="policy_incomplete">policy incomplete</option>
-              <option value="no_recent_traffic">no recent traffic</option>
-              <option value="review_due">review due</option>
-              <option value="blocked">blocked</option>
-            </select>
-            <select id="inventoryReviewFilter" aria-label="Review status">
-              <option value="">all reviews</option>
-              <option value="needs_review">needs review</option>
-              <option value="approved">approved</option>
-              <option value="exception">exception</option>
-              <option value="blocked">blocked</option>
-            </select>
-            <select id="inventoryRiskFilter" aria-label="Risk">
-              <option value="">all risk</option>
-              <option value="low">low</option>
-              <option value="medium">medium</option>
-              <option value="high">high</option>
-              <option value="critical">critical</option>
-            </select>
-            <select id="inventorySourceFilter" aria-label="Source">
-              <option value="">all sources</option>
-              <option value="project_slot">project/provider rows</option>
-              <option value="manual">manual key metadata</option>
-              <option value="imported">imported API hints</option>
-            </select>
-            <button class="primary" type="submit">apply filters</button>
-            <button id="copyFilteredInventoryCsvBtn" type="button">copy filtered CSV</button>
-            <button id="clearInventoryFilters" type="button">clear</button>
-          </form>
-          <form id="inventoryBulkReviewForm" class="filters inventory-bulk-review">
-            <select id="bulkInventoryReviewStatus" aria-label="Bulk review status">
-              <option value="">mark visible rows...</option>
-              <option value="approved">approved</option>
-              <option value="exception">exception</option>
-              <option value="blocked">blocked</option>
-              <option value="needs_review">needs review</option>
-            </select>
-            <input id="bulkInventoryNextReview" type="date" aria-label="Optional next review date" />
-            <button class="primary" type="submit">apply filtered review</button>
-          </form>
-          <div id="inventoryList" class="list"><div class="empty">Loading API inventory...</div></div>
-        </div>
-        <div class="card">
-          <div class="section-title"><h2>Inventory evidence</h2><span class="mini">no secrets</span></div>
-          <div id="inventorySummaryList" class="list"></div>
-        </div>
-        <div class="card">
-          <div class="section-title"><h2>Review workflow</h2><span class="mini">customer handoff</span></div>
-          <div id="inventoryWorkflowList" class="list"></div>
+        <div class="inventory-layout">
+          <div class="inventory-main">
+            <section class="inventory-panel inventory-command-panel">
+              <div class="inventory-command-head">
+                <div>
+                  <h2>Review queue</h2>
+                  <p>Filter the API surface list, apply review decisions in bulk, and export customer-safe evidence.</p>
+                </div>
+                <span id="inventoryMeta" class="tag good">metadata-only</span>
+              </div>
+              <form id="inventoryFilterForm" class="inventory-filter-grid">
+                <input id="inventorySearch" type="search" placeholder="Search project, provider, owner, scope..." />
+                <select id="inventoryStatusFilter" aria-label="Inventory status">
+                  <option value="">all statuses</option>
+                  <option value="protected">protected</option>
+                  <option value="manual">manual API keys</option>
+                  <option value="imported">CSV/OpenAPI imports</option>
+                  <option value="missing_provider_slot">missing provider slot</option>
+                  <option value="needs_sealed_ingest">needs sealed ingest</option>
+                  <option value="policy_incomplete">policy incomplete</option>
+                  <option value="no_recent_traffic">no recent traffic</option>
+                  <option value="review_due">review due</option>
+                  <option value="blocked">blocked</option>
+                </select>
+                <select id="inventoryReviewFilter" aria-label="Review status">
+                  <option value="">all reviews</option>
+                  <option value="needs_review">needs review</option>
+                  <option value="approved">approved</option>
+                  <option value="exception">exception</option>
+                  <option value="blocked">blocked</option>
+                </select>
+                <select id="inventoryRiskFilter" aria-label="Risk">
+                  <option value="">all risk</option>
+                  <option value="low">low</option>
+                  <option value="medium">medium</option>
+                  <option value="high">high</option>
+                  <option value="critical">critical</option>
+                </select>
+                <select id="inventorySourceFilter" aria-label="Source">
+                  <option value="">all sources</option>
+                  <option value="project_slot">project/provider rows</option>
+                  <option value="manual">manual key metadata</option>
+                  <option value="imported">imported API hints</option>
+                </select>
+                <button class="primary" type="submit">apply filters</button>
+                <button id="clearInventoryFilters" type="button">clear</button>
+              </form>
+              <div class="inventory-command-actions">
+                <form id="inventoryBulkReviewForm" class="inventory-bulk-review">
+                  <select id="bulkInventoryReviewStatus" aria-label="Bulk review status">
+                    <option value="">mark visible rows...</option>
+                    <option value="approved">approved</option>
+                    <option value="exception">exception</option>
+                    <option value="blocked">blocked</option>
+                    <option value="needs_review">needs review</option>
+                  </select>
+                  <input id="bulkInventoryNextReview" type="date" aria-label="Optional next review date" />
+                  <button class="primary" type="submit">apply filtered review</button>
+                </form>
+                <div class="inventory-export-row">
+                  <button id="copyInventoryCsvBtn" type="button">copy inventory CSV</button>
+                  <button id="copyFilteredInventoryCsvBtn" type="button">copy filtered CSV</button>
+                  <button id="copyInventoryReviewBriefBtn" type="button">copy review brief</button>
+                  <button id="copyInventoryJsonBtn" class="primary" type="button">copy inventory JSON</button>
+                </div>
+              </div>
+            </section>
+
+            <section class="inventory-panel inventory-board-panel">
+              <div class="inventory-board-head">
+                <div>
+                  <h2>API inventory board</h2>
+                  <p>Each row is metadata-only. Use Provider Slots when a raw key needs protected execution.</p>
+                </div>
+              </div>
+              <div class="inventory-table-head" aria-hidden="true">
+                <div>API surface</div>
+                <div>Owner</div>
+                <div>Policy</div>
+                <div>Traffic</div>
+                <div>Review</div>
+                <div>Actions</div>
+              </div>
+              <div id="inventoryList" class="list inventory-list"><div class="empty">Loading API inventory...</div></div>
+            </section>
+          </div>
+
+          <aside class="inventory-side-rail">
+            <section class="inventory-panel">
+              <div class="section-title"><h2>Inventory evidence</h2><span class="mini">no secrets</span></div>
+              <div id="inventorySummaryList" class="list"></div>
+            </section>
+            <section class="inventory-panel">
+              <div class="section-title"><h2>Review workflow</h2><span class="mini">customer handoff</span></div>
+              <div id="inventoryWorkflowList" class="list"></div>
+            </section>
+          </aside>
         </div>
       </section>
 
@@ -3752,9 +3851,24 @@ ${renderDatalistOptions(ENTERPRISE_MANUAL_API_KEY_PROVIDER_OPTIONS)}
           ]);
       }
       function renderInventoryStatusTags(row) {
-        return row.statuses.map(function(status) {
+        var statuses = Array.isArray(row.statuses) ? row.statuses : [];
+        var visible = statuses.slice(0, 4).map(function(status) {
           return '<span class="tag ' + escapeHtml(status.tone) + '">' + escapeHtml(status.label) + '</span>';
-        }).join('');
+        });
+        if (statuses.length > visible.length) {
+          visible.push('<span class="tag">+' + number(statuses.length - visible.length) + '</span>');
+        }
+        return visible.join('');
+      }
+      function inventoryReviewTone(value) {
+        if (value === 'approved') return 'good';
+        if (value === 'blocked') return 'bad';
+        return 'warn';
+      }
+      function inventoryRiskTone(value) {
+        if (value === 'critical' || value === 'high') return value === 'critical' ? 'bad' : 'warn';
+        if (value === 'low' || value === 'medium') return 'good';
+        return '';
       }
       function renderInventoryRow(row) {
         var annotation = row.annotation || {};
@@ -3764,15 +3878,27 @@ ${renderDatalistOptions(ENTERPRISE_MANUAL_API_KEY_PROVIDER_OPTIONS)}
         var traffic = row.traffic || {};
         var policy = row.policy || {};
         var defaultPath = row.provider ? provider.default_path : manualKey ? (manualKey.upstream_scope || 'manual scope not set') : 'not mapped';
+        var reviewStatus = annotation.review_status || 'needs_review';
+        var risk = annotation.risk || '';
+        var ownerPrimary = annotation.business_owner || annotation.technical_owner || 'owner unset';
+        var ownerSecondary = annotation.business_owner && annotation.technical_owner ? annotation.technical_owner : (annotation.business_owner || annotation.technical_owner ? 'second owner unset' : 'assign business and technical owner');
+        var trafficTone = Number(traffic.errors || 0) || Number(traffic.denied || 0) ? 'warn' : Number(traffic.calls || 0) ? 'good' : 'warn';
         var actionHtml = row.manual_key
-          ? '<button class="danger" type="button" data-action="delete-manual-api-key" data-manual-key-id="' + escapeHtml(row.id) + '">remove</button><a class="tag" href="/app/keys">seal key</a><a class="tag" href="/app/control">control</a>'
-          : '<a class="tag" href="/app/control">control</a><a class="tag" href="/app/keys">provider slots</a><a class="tag" href="/app/activity">activity</a>';
-        return '<div class="inventory-row" data-inventory-card="' + escapeHtml(row.id) + '">' +
-          '<div class="inventory-head"><div><div class="row-title">' + escapeHtml(row.project.name) + ' - ' + escapeHtml(providerLabel) + '</div>' +
-          '<div class="row-sub">' + escapeHtml(row.project.vp_proj_id) + ' - default path ' + escapeHtml(defaultPath) + ' - last seen ' + escapeHtml(rel(traffic.last_seen_at)) + ' - calls ' + number(traffic.calls) + ' / errors ' + number(traffic.errors) + ' / denied ' + number(traffic.denied) + '</div>' +
-          '<div>' + renderInventoryStatusTags(row) + '<span class="tag">' + escapeHtml(policy.caller_lock_controls || 'policy not reported') + '</span><span class="tag">' + escapeHtml(provider.material_mode || 'missing material') + '</span></div></div>' +
-          '<div class="row-actions">' + actionHtml + '</div></div>' +
-          '<div class="inventory-fields">' +
+          ? '<button class="danger" type="button" data-action="delete-manual-api-key" data-manual-key-id="' + escapeHtml(row.id) + '">remove</button><a class="tag good" href="/app/keys">seal key</a><a class="tag" href="/app/control">control</a>'
+          : '<a class="tag good" href="/app/control">control</a><a class="tag" href="/app/keys">provider slots</a><a class="tag" href="/app/activity">activity</a>';
+        return '<article class="inventory-record" data-inventory-card="' + escapeHtml(row.id) + '">' +
+          '<div class="inventory-record-main">' +
+            '<div class="inventory-identity"><div class="inventory-cell-label">API surface</div><div class="inventory-record-title">' + escapeHtml(row.project.name) + '</div>' +
+              '<div class="inventory-record-sub">' + escapeHtml(providerLabel) + ' - ' + escapeHtml(row.project.vp_proj_id || row.project.id || 'project') + '</div>' +
+              '<div class="inventory-record-sub">Scope: ' + escapeHtml(defaultPath) + '</div>' +
+              '<div class="inventory-status-list">' + renderInventoryStatusTags(row) + '</div></div>' +
+            '<div><div class="inventory-cell-label">Owner</div><div class="inventory-cell-value"><strong>' + escapeHtml(ownerPrimary) + '</strong>' + escapeHtml(ownerSecondary) + '</div></div>' +
+            '<div><div class="inventory-cell-label">Policy</div><div class="inventory-cell-value"><span class="tag ' + (policy.complete ? 'good' : 'warn') + '">' + escapeHtml(policy.complete ? 'ready' : 'incomplete') + '</span><div class="inventory-record-sub">' + escapeHtml(policy.caller_lock_controls || 'policy not reported') + '</div></div></div>' +
+            '<div><div class="inventory-cell-label">Traffic</div><div class="inventory-cell-value"><span class="tag ' + trafficTone + '">' + number(traffic.calls) + ' calls</span><div class="inventory-record-sub">' + number(traffic.errors) + ' errors - ' + number(traffic.denied) + ' denied - last ' + escapeHtml(rel(traffic.last_seen_at)) + '</div></div></div>' +
+            '<div><div class="inventory-cell-label">Review</div><div class="inventory-cell-value"><span class="tag ' + inventoryReviewTone(reviewStatus) + '">' + escapeHtml(reviewStatus.replace(/_/g, ' ')) + '</span>' + (risk ? '<span class="tag ' + inventoryRiskTone(risk) + '">' + escapeHtml(risk) + ' risk</span>' : '<span class="tag">risk unset</span>') + '<div class="inventory-record-sub">next ' + escapeHtml(annotation.next_review_date || 'not scheduled') + '</div></div></div>' +
+            '<div class="inventory-record-actions">' + actionHtml + '</div>' +
+          '</div>' +
+          '<div class="inventory-fields inventory-detail-grid">' +
           renderManualApiKeyFields(row) +
           inventoryInput(row, 'business_owner', 'business owner', 'Security owner') +
           inventoryInput(row, 'technical_owner', 'technical owner', 'Platform owner') +
@@ -3806,8 +3932,8 @@ ${renderDatalistOptions(ENTERPRISE_MANUAL_API_KEY_PROVIDER_OPTIONS)}
           ]) +
           '<div class="inventory-field"><label>next review</label><input type="date" data-inventory-row-id="' + escapeHtml(row.id) + '" data-inventory-field="next_review_date" value="' + escapeHtml(annotation.next_review_date || '') + '" /></div>' +
           '<div class="inventory-field wide"><label>review notes</label><textarea data-inventory-row-id="' + escapeHtml(row.id) + '" data-inventory-field="note" placeholder="Metadata-only note. Do not paste secrets, request bodies, response bodies, or customer payloads.">' + escapeHtml(annotation.note || '') + '</textarea></div>' +
-          '<div class="inventory-field wide"><label>policy evidence</label><div class="row-sub">Origins: ' + escapeHtml(row.project.strict_origin ? 'strict' : 'relaxed') + '. Methods: ' + escapeHtml((policy.allowed_methods || []).join(', ') || 'not set') + '. Hosts: ' + escapeHtml((policy.allowed_upstream_hosts || []).join(', ') || 'not set') + '. Paths: ' + escapeHtml((policy.allowed_upstream_path_prefixes || []).join(', ') || 'not set') + '. Gateways: ' + escapeHtml((policy.allowed_customer_gateways || []).join(', ') || 'not set') + '.</div></div>' +
-          '</div></div>';
+          '<div class="inventory-field wide"><label>policy evidence</label><div class="inventory-policy-note row-sub">Origins: ' + escapeHtml(row.project.strict_origin ? 'strict' : 'relaxed') + '. Methods: ' + escapeHtml((policy.allowed_methods || []).join(', ') || 'not set') + '. Hosts: ' + escapeHtml((policy.allowed_upstream_hosts || []).join(', ') || 'not set') + '. Paths: ' + escapeHtml((policy.allowed_upstream_path_prefixes || []).join(', ') || 'not set') + '. Gateways: ' + escapeHtml((policy.allowed_customer_gateways || []).join(', ') || 'not set') + '. Material: ' + escapeHtml(provider.material_mode || 'missing material') + '.</div></div>' +
+          '</div></article>';
       }
       function inventorySummaryForRows(rows) {
         var inventoryRows = Array.isArray(rows) ? rows : [];
@@ -4148,20 +4274,25 @@ ${renderDatalistOptions(ENTERPRISE_MANUAL_API_KEY_PROVIDER_OPTIONS)}
       function renderInventorySummary() {
         if (PAGE_MODE !== 'inventory') return;
         var summary = inventorySummary();
-        byId('inventorySummaryList').innerHTML = [
-          '<div class="row"><div><div class="row-title">API inventory status</div><div class="row-sub">' + number(summary.total) + ' metadata-only API surfaces are derived from projects, provider slots, and manual API key records. ' + number(summary.protected) + ' currently look protected.</div></div><span class="tag ' + (summary.protected ? 'good' : 'warn') + '">' + number(summary.protected) + ' protected</span></div>',
-          '<div class="row"><div><div class="row-title">Manual API keys</div><div class="row-sub">' + number(summary.manual_api_keys) + ' browser-local manual API key records. ' + number(summary.needs_sealed_ingest) + ' still need a sealed provider slot before protected execution.</div></div><span class="tag warn">metadata only</span></div>',
-          '<div class="row"><div><div class="row-title">CSV/OpenAPI imports</div><div class="row-sub">' + number(summary.imported_api_hints) + ' imported API inventory hints are saved as browser-local metadata, then reviewed like manually added key records.</div></div><span class="tag good">vaultproof_inventory_import</span></div>',
-          '<div class="row"><div><div class="row-title">Open review items</div><div class="row-sub">' + number(summary.missing_provider_slot) + ' missing provider slot, ' + number(summary.policy_incomplete) + ' policy incomplete, ' + number(summary.no_recent_traffic) + ' with no recent traffic, ' + number(summary.review_due) + ' due for review.</div></div><span class="tag warn">review due</span></div>',
-          '<div class="row"><div><div class="row-title">Secret boundary</div><div class="row-sub">Inventory records are metadata-only and exclude raw provider keys, encrypted shares, bearer tokens, OAuth secrets, SAML material, request bodies, response bodies, and customer payloads.</div></div><span class="tag good">redacted</span></div>'
-        ].join('');
+        byId('inventorySummaryList').innerHTML =
+          '<div class="inventory-summary-metrics">' +
+            '<div class="inventory-metric-card"><strong>' + number(summary.total) + '</strong><span>surfaces</span></div>' +
+            '<div class="inventory-metric-card"><strong>' + number(summary.protected) + '</strong><span>protected</span></div>' +
+            '<div class="inventory-metric-card"><strong>' + number(summary.review_due) + '</strong><span>review due</span></div>' +
+            '<div class="inventory-metric-card"><strong>' + number(summary.blocked) + '</strong><span>blocked</span></div>' +
+          '</div>' +
+          [
+            '<div class="row"><div><div class="row-title">Coverage</div><div class="row-sub">' + number(summary.missing_provider_slot) + ' missing provider slot, ' + number(summary.policy_incomplete) + ' policy incomplete, and ' + number(summary.no_recent_traffic) + ' without traffic evidence.</div></div><span class="tag ' + (summary.missing_provider_slot || summary.policy_incomplete ? 'warn' : 'good') + '">' + (summary.missing_provider_slot || summary.policy_incomplete ? 'review' : 'ready') + '</span></div>',
+            '<div class="row"><div><div class="row-title">Manual records</div><div class="row-sub">' + number(summary.manual_api_keys) + ' metadata-only manual key records; ' + number(summary.needs_sealed_ingest) + ' need sealed ingest before protected execution.</div></div><span class="tag warn">metadata</span></div>',
+            '<div class="row"><div><div class="row-title">Imports</div><div class="row-sub">' + number(summary.imported_api_hints) + ' CSV/OpenAPI hints are saved locally and reviewed like manual records.</div></div><span class="tag good">safe import</span></div>',
+            '<div class="row"><div><div class="row-title">Secret boundary</div><div class="row-sub">Inventory records exclude raw provider keys, encrypted shares, bearer tokens, OAuth secrets, SAML material, request bodies, response bodies, and customer payloads.</div></div><span class="tag good">redacted</span></div>'
+          ].join('');
         byId('inventoryWorkflowList').innerHTML = [
-          '<div class="row"><div><div class="row-title">Import customer API list</div><div class="row-sub">Paste CSV or OpenAPI JSON to create metadata-only API inventory hints, then assign owners and review status before sealed ingest.</div></div><button class="tag good" type="button" data-action="open-inventory-import">import</button></div>',
-          '<div class="row"><div><div class="row-title">Export customer-safe inventory</div><div class="row-sub">Copy full CSV, filtered CSV, review brief, or JSON for security review, procurement, access review, or renewal notes without exposing raw provider keys or payloads.</div></div><span><button class="tag good" type="button" data-action="copy-inventory-csv">CSV</button><button class="tag good" type="button" data-action="copy-filtered-inventory-csv">filtered CSV</button><button class="tag good" type="button" data-action="copy-inventory-review-brief">brief</button><button class="tag" type="button" data-action="copy-inventory-json">JSON</button></span></div>',
-          '<div class="row"><div><div class="row-title">Control policy</div><div class="row-sub">Confirm origins, provider allowlists, upstream hosts, path prefixes, gateways, and rate limits.</div></div><a class="tag good" href="/app/control">control</a></div>',
-          '<div class="row"><div><div class="row-title">Provider slots</div><div class="row-sub">Review material mode, rotation status, protected email dry-run, and emergency revoke posture.</div></div><a class="tag good" href="/app/keys">provider slots</a></div>',
-          '<div class="row"><div><div class="row-title">Traffic and audit evidence</div><div class="row-sub">Use Activity, Audit CSV, and Access Review CSV for customer-safe review exports.</div></div><span><a class="tag" href="/app/activity">activity</a><a class="tag" href="' + escapeHtml(evidenceExportHref('/api/v1/enterprise/audit?format=csv&days=30')) + '">audit CSV</a><a class="tag" href="' + escapeHtml(evidenceExportHref('/api/v1/enterprise/members/access-review?format=csv')) + '">access review CSV</a></span></div>',
-          '<div class="row"><div><div class="row-title">Evidence and review packets</div><div class="row-sub">Use Evidence and Security Review to show remaining blockers before pilot traffic.</div></div><span><a class="tag" href="/app/evidence">evidence</a><a class="tag" href="/app/security-review">security review</a></span></div>'
+          '<div class="row"><div><div class="row-title">1. Import or add metadata</div><div class="row-sub">Bring in CSV/OpenAPI hints or add one manual API record. Keep raw keys out of the inventory.</div></div><button class="tag good" type="button" data-action="open-inventory-import">import</button></div>',
+          '<div class="row"><div><div class="row-title">2. Seal the real key</div><div class="row-sub">Move the selected provider behind VaultProof once ownership, scope, and risk are known.</div></div><a class="tag good" href="/app/keys">provider slots</a></div>',
+          '<div class="row"><div><div class="row-title">3. Tighten policy</div><div class="row-sub">Confirm origin, method, upstream, gateway, and rate controls before customer traffic.</div></div><a class="tag good" href="/app/control">control</a></div>',
+          '<div class="row"><div><div class="row-title">4. Export proof</div><div class="row-sub">Use the command bar for CSV, filtered CSV, brief, or JSON exports.</div></div><span><a class="tag" href="/app/evidence">evidence</a><a class="tag" href="/app/security-review">review</a></span></div>',
+          '<div class="row"><div><div class="row-title">Traffic and audit</div><div class="row-sub">Use Activity, Audit CSV, and Access Review CSV when a customer asks what changed or who can reach it.</div></div><span><a class="tag" href="/app/activity">activity</a><a class="tag" href="' + escapeHtml(evidenceExportHref('/api/v1/enterprise/audit?format=csv&days=30')) + '">audit CSV</a><a class="tag" href="' + escapeHtml(evidenceExportHref('/api/v1/enterprise/members/access-review?format=csv')) + '">access CSV</a></span></div>'
         ].join('');
       }
       function renderInventory() {
@@ -6050,8 +6181,8 @@ function renderEnterpriseSupportPage(pageName: EnterpriseSupportPageName): strin
   <title>${escapeHtml(pageTitle)} - VaultProof Enterprise</title>
   <style>
     ${ENTERPRISE_RENDERED_APP_BASE_THEME}
-    select, button, input, textarea { border: 1px solid var(--line); background: rgba(255,255,255,.78); color: var(--text); border-radius: 13px; padding: 11px 12px; font: inherit; }
-    input::placeholder, textarea::placeholder { color: rgba(52,81,76,.48); }
+    select, button, input, textarea { border: 1px solid var(--line); background: rgba(255,255,255,.78); color: var(--text); border-radius: 8px; padding: 11px 12px; font: inherit; }
+    input::placeholder, textarea::placeholder { color: rgba(82,97,112,.48); }
     textarea { min-height: 120px; resize: vertical; line-height: 1.45; }
     option { color: #111827; }
     button { cursor: pointer; }
@@ -6066,46 +6197,46 @@ function renderEnterpriseSupportPage(pageName: EnterpriseSupportPageName): strin
     .grid { display: grid; gap: 16px; }
     .kpis { grid-template-columns: repeat(4, minmax(0, 1fr)); margin-bottom: 16px; }
     .two { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); }
-    .card { border: 1px solid var(--line); background: linear-gradient(180deg, rgba(255,255,255,.98), rgba(247,250,244,.86)); border-radius: 24px; padding: 20px; box-shadow: 0 22px 90px rgba(48,76,71,.16); }
+    .card { border: 1px solid var(--line); background: linear-gradient(180deg, rgba(255,255,255,.98), rgba(248,250,252,.86)); border-radius: 8px; padding: 20px; box-shadow: 0 22px 90px rgba(26,40,52,.16); }
     .doc-guide { display: none; max-width: 940px; }
-    .doc-section { border: 1px solid var(--line); background: linear-gradient(180deg, rgba(48,76,71,.12), rgba(247,250,244,.76)); border-radius: 24px; padding: 24px; margin-bottom: 18px; box-shadow: 0 22px 90px rgba(48,76,71,.12); }
+    .doc-section { border: 1px solid var(--line); background: linear-gradient(180deg, rgba(26,40,52,.12), rgba(248,250,252,.76)); border-radius: 8px; padding: 24px; margin-bottom: 18px; box-shadow: 0 22px 90px rgba(26,40,52,.12); }
     .doc-section h2 { margin: 0 0 10px; font-size: 26px; letter-spacing: -.045em; }
     .doc-section h3 { margin: 18px 0 8px; font-size: 16px; letter-spacing: -.02em; color: var(--text); }
     .doc-section p { margin: 0 0 12px; color: var(--muted); line-height: 1.68; }
     .doc-section ul, .doc-section ol { margin: 10px 0 0; padding-left: 22px; color: var(--muted); line-height: 1.68; }
     .doc-section li { margin: 7px 0; }
     .doc-section code { color: var(--gold); }
-    .doc-note { border-left: 3px solid var(--gold); padding: 12px 14px; margin-top: 14px; border-radius: 0 14px 14px 0; background: rgba(213,169,20,.08); color: var(--text); }
+    .doc-note { border-left: 3px solid var(--gold); padding: 12px 14px; margin-top: 14px; border-radius: 0 8px 8px 0; background: rgba(180,83,9,.08); color: var(--text); }
     .doc-note strong { color: var(--gold); }
     .doc-kicker { display: block; color: var(--gold); font-size: 12px; text-transform: uppercase; letter-spacing: .14em; font-weight: 850; margin-bottom: 8px; }
-    .launch-progress { height: 11px; border-radius: 999px; background: rgba(48,76,71,.12); overflow: hidden; margin-top: 16px; }
+    .launch-progress { height: 11px; border-radius: 999px; background: rgba(26,40,52,.12); overflow: hidden; margin-top: 16px; }
     .launch-progress span { display: block; height: 100%; width: 0; background: linear-gradient(135deg, var(--green), var(--primary-bg)); border-radius: inherit; transition: width 180ms ease; }
-    .launch-check-row { display: grid; grid-template-columns: 22px 1fr auto; gap: 12px; align-items: start; border: 1px solid rgba(48,76,71,.10); border-radius: 18px; padding: 14px; background: rgba(247,250,244,.84); }
+    .launch-check-row { display: grid; grid-template-columns: 22px 1fr auto; gap: 12px; align-items: start; border: 1px solid rgba(26,40,52,.10); border-radius: 8px; padding: 14px; background: rgba(248,250,252,.84); }
     .launch-check-row input { width: 18px; height: 18px; margin: 2px 0 0; accent-color: var(--green); }
     .launch-check-title { font-weight: 780; letter-spacing: -.02em; }
     .launch-check-sub { color: var(--muted); font-size: 13px; line-height: 1.45; margin-top: 5px; }
-    .launch-check-row[data-complete="true"] { border-color: rgba(62,93,87,.24); background: rgba(143,224,193,.11); }
+    .launch-check-row[data-complete="true"] { border-color: rgba(21,128,61,.24); background: rgba(20,184,166,.11); }
     .go-decision { display: grid; gap: 8px; margin-bottom: 14px; }
     .go-decision-title { font-size: 24px; font-weight: 850; letter-spacing: -.045em; }
-    .go-evidence-row { display: grid; grid-template-columns: 22px minmax(0, 1fr) auto; gap: 12px; align-items: start; border: 1px solid rgba(48,76,71,.10); border-radius: 18px; padding: 14px; background: rgba(247,250,244,.84); }
+    .go-evidence-row { display: grid; grid-template-columns: 22px minmax(0, 1fr) auto; gap: 12px; align-items: start; border: 1px solid rgba(26,40,52,.10); border-radius: 8px; padding: 14px; background: rgba(248,250,252,.84); }
     .go-evidence-row input[type="checkbox"] { width: 18px; height: 18px; margin: 2px 0 0; accent-color: var(--green); }
-    .go-evidence-row[data-complete="true"] { border-color: rgba(62,93,87,.24); background: rgba(143,224,193,.11); }
-    .go-note { width: 100%; min-height: 42px; margin-top: 10px; padding: 10px 11px; border: 1px solid var(--line); border-radius: 13px; background: rgba(255,255,255,.78); color: var(--text); font: inherit; }
+    .go-evidence-row[data-complete="true"] { border-color: rgba(21,128,61,.24); background: rgba(20,184,166,.11); }
+    .go-note { width: 100%; min-height: 42px; margin-top: 10px; padding: 10px 11px; border: 1px solid var(--line); border-radius: 8px; background: rgba(255,255,255,.78); color: var(--text); font: inherit; }
     .go-status { width: 100%; min-width: 118px; border: 1px solid var(--line); border-radius: 999px; background: rgba(255,255,255,.78); color: var(--text); font: inherit; font-size: 12px; padding: 8px 10px; }
     .go-action { display: block; color: var(--muted); font-size: 12px; margin-top: 7px; line-height: 1.45; }
     .go-action code { color: var(--gold); font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace; overflow-wrap: anywhere; word-break: break-word; }
-    .evidence-callout { display: grid; gap: 10px; border: 1px solid rgba(62,93,87,.22); background: rgba(143,224,193,.10); border-radius: 18px; padding: 16px; }
+    .evidence-callout { display: grid; gap: 10px; border: 1px solid rgba(21,128,61,.22); background: rgba(20,184,166,.10); border-radius: 8px; padding: 16px; }
     .evidence-callout strong { font-size: 18px; letter-spacing: -.03em; }
     .evidence-actions { display: flex; gap: 10px; flex-wrap: wrap; }
     .brief-box { width: 100%; min-height: 210px; font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace; font-size: 12px; line-height: 1.55; }
     .demo-script { min-height: 330px; }
     .review-filters { display: grid; grid-template-columns: minmax(220px, 1.3fr) minmax(150px, .7fr) auto; gap: 10px; margin-bottom: 14px; }
     .entitlement-meter-list { display: grid; gap: 12px; margin-bottom: 14px; }
-    .entitlement-meter { border: 1px solid rgba(48,76,71,.10); border-radius: 18px; padding: 14px; background: rgba(247,250,244,.84); }
+    .entitlement-meter { border: 1px solid rgba(26,40,52,.10); border-radius: 8px; padding: 14px; background: rgba(248,250,252,.84); }
     .entitlement-meter-head { display: flex; justify-content: space-between; gap: 12px; align-items: baseline; flex-wrap: wrap; }
     .entitlement-meter-title { font-weight: 780; letter-spacing: -.02em; }
     .entitlement-meter-value { color: var(--muted); font-size: 12px; text-align: right; }
-    .entitlement-meter-track { height: 10px; border-radius: 999px; background: rgba(48,76,71,.12); overflow: hidden; margin-top: 10px; }
+    .entitlement-meter-track { height: 10px; border-radius: 999px; background: rgba(26,40,52,.12); overflow: hidden; margin-top: 10px; }
     .entitlement-meter-fill { display: block; height: 100%; width: 0; border-radius: inherit; background: linear-gradient(135deg, var(--green), var(--primary-bg)); }
     .entitlement-meter-fill.warn { background: linear-gradient(135deg, var(--gold), #f3d86f); }
     .entitlement-meter-fill.bad { background: linear-gradient(135deg, var(--red), #e5a197); }
@@ -6113,7 +6244,7 @@ function renderEnterpriseSupportPage(pageName: EnterpriseSupportPageName): strin
     .scanner-field, .release-field, .tester-field, .entitlement-field, .pilot-success-field { display: grid; gap: 6px; }
     .scanner-field.wide, .release-field.wide, .tester-field.wide, .entitlement-field.wide, .pilot-success-field.wide { grid-column: 1 / -1; }
     .scanner-field label, .release-field label, .tester-field label, .entitlement-field label, .pilot-success-field label { color: var(--muted); font-size: 12px; text-transform: uppercase; letter-spacing: .08em; font-weight: 800; }
-    .scanner-row, .release-row, .tester-row { border: 1px solid rgba(48,76,71,.12); background: rgba(247,250,244,.84); border-radius: 18px; padding: 15px; display: grid; gap: 12px; }
+    .scanner-row, .release-row, .tester-row { border: 1px solid rgba(26,40,52,.12); background: rgba(248,250,252,.84); border-radius: 8px; padding: 15px; display: grid; gap: 12px; }
     .scanner-head, .release-head, .tester-head { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 12px; align-items: start; }
     .onboarding-evidence-row { grid-template-columns: 22px minmax(0, 1fr) minmax(260px, .44fr); }
     .onboarding-controls { display: grid; gap: 8px; min-width: 240px; }
@@ -6126,15 +6257,15 @@ function renderEnterpriseSupportPage(pageName: EnterpriseSupportPageName): strin
     .section-title h2 { margin: 0; font-size: 19px; letter-spacing: -.03em; }
     .mini { color: var(--muted); font-size: 13px; }
     .list { display: grid; gap: 10px; }
-    .row { display: grid; grid-template-columns: 1fr auto; gap: 14px; align-items: start; border: 1px solid rgba(48,76,71,.10); border-radius: 18px; padding: 14px; background: rgba(247,250,244,.84); }
+    .row { display: grid; grid-template-columns: 1fr auto; gap: 14px; align-items: start; border: 1px solid rgba(26,40,52,.10); border-radius: 8px; padding: 14px; background: rgba(248,250,252,.84); }
     .row-title { font-weight: 780; letter-spacing: -.02em; }
     .row-sub { color: var(--muted); font-size: 13px; margin-top: 5px; line-height: 1.45; }
-    .tag { display: inline-block; color: var(--blue); font-size: 12px; border: 1px solid rgba(22,138,159,.24); border-radius: 999px; padding: 5px 8px; margin: 3px 4px 0 0; }
-    .tag.good { color: var(--green); border-color: rgba(62,93,87,.24); }
-    .tag.warn { color: var(--gold); border-color: rgba(213,169,20,.28); }
-    .tag.bad { color: var(--red); border-color: rgba(185,93,80,.28); }
-    .empty, .notice { color: var(--muted); border: 1px dashed rgba(48,76,71,.22); border-radius: 18px; padding: 18px; background: rgba(247,250,244,.78); }
-    .notice.error { color: var(--red); border-color: rgba(185,93,80,.3); }
+    .tag { display: inline-block; color: var(--blue); font-size: 12px; border: 1px solid rgba(37,99,235,.24); border-radius: 999px; padding: 5px 8px; margin: 3px 4px 0 0; }
+    .tag.good { color: var(--green); border-color: rgba(21,128,61,.24); }
+    .tag.warn { color: var(--gold); border-color: rgba(180,83,9,.28); }
+    .tag.bad { color: var(--red); border-color: rgba(220,38,38,.28); }
+    .empty, .notice { color: var(--muted); border: 1px dashed rgba(26,40,52,.22); border-radius: 8px; padding: 18px; background: rgba(248,250,252,.78); }
+    .notice.error { color: var(--red); border-color: rgba(220,38,38,.3); }
     @media (max-width: 1100px) { .kpis, .two { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
     @media (max-width: 760px) { .shell { grid-template-columns: 1fr; } .topbar { flex-direction: column; } .kpis, .two, .launch-check-row, .go-evidence-row, .onboarding-evidence-row, .row, .review-filters, .scanner-form, .scanner-fields, .scanner-head, .release-form, .release-fields, .release-head, .tester-form, .tester-fields, .tester-head, .entitlement-form, .pilot-success-form { grid-template-columns: 1fr; } .go-evidence-row > span:last-child:not(.onboarding-controls) { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; } .go-status { width: auto; } .row-actions { justify-content: flex-start; } }
     ${ENTERPRISE_APP_SHELL_THEME}
@@ -12731,14 +12862,14 @@ export function renderEnterprisePlannedAppPage(pageName: string, env: Enterprise
   <style>
     ${ENTERPRISE_RENDERED_APP_BASE_THEME}
     .main { padding: 30px; max-width: 1380px; width: 100%; }
-    .card { width: min(940px, 100%); border: 1px solid var(--line); border-radius: 24px; background: linear-gradient(180deg, rgba(255,255,255,.98), rgba(247,250,244,.86)); padding: clamp(24px, 5vw, 48px); box-shadow: 0 22px 72px rgba(48,76,71,.18); }
+    .card { width: min(940px, 100%); border: 1px solid var(--line); border-radius: 8px; background: linear-gradient(180deg, rgba(255,255,255,.98), rgba(248,250,252,.86)); padding: clamp(24px, 5vw, 48px); box-shadow: 0 22px 72px rgba(26,40,52,.18); }
     .kicker { color: var(--gold); font-size: 12px; text-transform: uppercase; letter-spacing: .16em; font-weight: 850; }
     h1 { margin: 10px 0 12px; font-size: clamp(40px, 7vw, 82px); letter-spacing: -.075em; line-height: .9; }
     .summary { color: var(--muted); font-size: 17px; line-height: 1.65; max-width: 760px; }
     .grid { margin-top: 28px; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
-    .feature { border: 1px solid var(--line-soft); border-radius: 18px; padding: 14px; background: rgba(247,250,244,.82); color: var(--text); }
+    .feature { border: 1px solid var(--line-soft); border-radius: 8px; padding: 14px; background: rgba(248,250,252,.82); color: var(--text); }
     .actions { margin-top: 30px; display: flex; gap: 12px; flex-wrap: wrap; }
-    .btn { border: 1px solid var(--line); border-radius: 15px; padding: 12px 14px; background: rgba(255,255,255,.78); }
+    .btn { border: 1px solid var(--line); border-radius: 8px; padding: 12px 14px; background: rgba(255,255,255,.78); }
     .btn.primary { background: linear-gradient(135deg, var(--gold), #f3df95); color: var(--ink); border: 0; font-weight: 850; }
     .note { margin-top: 20px; color: var(--muted); font-size: 13px; }
     @media (max-width: 720px) { .grid { grid-template-columns: 1fr; } }

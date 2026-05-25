@@ -14,6 +14,7 @@ import {
   InMemoryReplayGuard,
 } from '../packages/enterprise-secure-executor/dist/enterprise-secure-executor/src/replay-guard.js';
 import {
+  AwsKmsVaultUnwrapKeyProvider,
   AzureSecureKeyReleaseProvider,
   GcpKmsVaultUnwrapKeyProvider,
 } from '../packages/enterprise-secure-executor/dist/enterprise-secure-executor/src/key-release.js';
@@ -328,6 +329,75 @@ async function assertHealthReadinessProfiles() {
   }
   if (gcpProductionPayload?.security_profile !== 'google-confidential-production') {
     throw new Error('Expected production health profile to identify Google confidential production');
+  }
+  if (gcpProductionPayload?.key_release_evidence?.key_id !== 'projects/vaultproof-prod/locations/us-central1/keyRings/vaultproof-runtime/cryptoKeys/vaultproof-unwrap') {
+    throw new Error(`Expected GCP key release evidence in private health, got ${JSON.stringify(gcpProductionPayload?.key_release_evidence)}`);
+  }
+
+  const awsProductionHealth = await handleEnterpriseSecureExecutorRequestWithEnv(
+    new Request('http://localhost/health'),
+    {
+      acceptedSigningKeys: {
+        [SIGNING_KEY_ID]: SIGNING_SECRET,
+      },
+      materialResolver: {
+        resolveExecutionMaterial: async () => ({
+          apiKey: 'sk-enterprise-smoke',
+          upstreamBaseUrl: 'https://api.openai.com',
+          authHeaderName: 'authorization',
+          authHeaderTemplate: 'Bearer {key}',
+          extraHeaders: null,
+        }),
+      },
+      enterpriseCloudProvider: 'aws',
+      executorMode: 'confidential',
+      awsRegion: 'us-east-1',
+      awsKmsKeyArn: 'arn:aws:kms:us-east-1:111122223333:key/1234abcd-12ab-34cd-56ef-1234567890ab',
+      awsKmsKeyVersion: '1',
+      awsKmsKeySpec: 'SYMMETRIC_DEFAULT',
+      awsKmsKeyUsage: 'ENCRYPT_DECRYPT',
+      awsKmsKeyState: 'Enabled',
+      awsKmsKeyOrigin: 'AWS_KMS',
+      awsKmsEncryptedVaultUnwrapKeyBase64: 'aws-kms-ciphertext',
+      keyProvider: {
+        mode: 'aws-kms',
+        hardwareBound: false,
+        getVaultUnwrapKey: async () => 'unused-in-health-smoke',
+        getAttestationEvidence: async () => ({
+          provider: 'aws-nitro-enclave',
+          region: 'us-east-1',
+          accountId: '111122223333',
+          attestationTokenHash: 'aws-attestation-token-sha256',
+          keyId: 'arn:aws:kms:us-east-1:111122223333:key/1234abcd-12ab-34cd-56ef-1234567890ab',
+          keyArn: 'arn:aws:kms:us-east-1:111122223333:key/1234abcd-12ab-34cd-56ef-1234567890ab',
+          keyVersion: '1',
+          keySpec: 'SYMMETRIC_DEFAULT',
+          keyUsage: 'ENCRYPT_DECRYPT',
+          keyState: 'Enabled',
+          keyOrigin: 'AWS_KMS',
+          executorBuildDigest: 'sha256:aws-executor-build',
+          confidentialVmResourceId: 'arn:aws:ec2:us-east-1:111122223333:instance/i-0123456789abcdef0',
+          claims: {
+            attestationType: 'aws-nitro-enclave',
+            secureBoot: true,
+            vmIsolation: 'aws-nitro-enclave',
+            measurementSummary: 'nitro-enclave;pcr0:approved',
+            imageDigest: 'sha256:aws-executor-build',
+            roleArn: 'arn:aws:iam::111122223333:role/vaultproof-executor',
+          },
+        }),
+      },
+    },
+  );
+  const awsProductionPayload = await awsProductionHealth.json();
+  if (awsProductionPayload?.production_ready !== true) {
+    throw new Error(`Expected AWS production health profile to be ready, got ${JSON.stringify(awsProductionPayload)}`);
+  }
+  if (awsProductionPayload?.security_profile !== 'aws-kms-confidential-production') {
+    throw new Error('Expected production health profile to identify AWS KMS confidential production');
+  }
+  if (awsProductionPayload?.key_release_evidence?.key_arn !== 'arn:aws:kms:us-east-1:111122223333:key/1234abcd-12ab-34cd-56ef-1234567890ab') {
+    throw new Error(`Expected AWS key release evidence in private health, got ${JSON.stringify(awsProductionPayload?.key_release_evidence)}`);
   }
 
   const staticTokenHealth = await handleEnterpriseSecureExecutorRequestWithEnv(
@@ -680,6 +750,124 @@ async function assertGcpKmsVaultUnwrapKeyProvider() {
   if (evidence?.keyProtectionLevel !== 'SOFTWARE') {
     throw new Error('Expected GCP KMS software protection level in evidence');
   }
+
+  const customerProvider = new GcpKmsVaultUnwrapKeyProvider({
+    projectId: 'vaultproof-prod',
+    location: 'us-central1',
+    cryptoKeyResource: 'projects/customer-prod/locations/us/keyRings/customer-runtime/cryptoKeys/customer-unwrap',
+    keyVersion: '7',
+    keyProtectionLevel: 'SOFTWARE',
+    encryptedVaultUnwrapKeyBase64: 'customer-kms-ciphertext',
+    accessToken: 'gcp-access-token',
+    fetchImpl: async (input, init) => {
+      const url = typeof input === 'string' ? input : input instanceof URL ? input.toString() : input.url;
+      if (url !== 'https://cloudkms.googleapis.com/v1/projects/customer-prod/locations/us/keyRings/customer-runtime/cryptoKeys/customer-unwrap:decrypt') {
+        throw new Error(`Unexpected customer GCP KMS decrypt URL: ${url}`);
+      }
+      const body = JSON.parse(init?.body || '{}');
+      if (body.ciphertext !== 'customer-kms-ciphertext') {
+        throw new Error('Expected customer encrypted unwrap key ciphertext to be sent to KMS');
+      }
+      return new Response(JSON.stringify({ plaintext: expectedKey }), {
+        status: 200,
+        headers: {
+          'content-type': 'application/json',
+        },
+      });
+    },
+    attestationTokenHash: 'customer-gcp-attestation-token-sha256',
+    executorBuildDigest: 'sha256:gcp-executor-build',
+    confidentialVmResourceId: 'projects/vaultproof-prod/zones/us-central1-a/instances/vaultproof-enterprise-runtime-1',
+    measurementSummary: 'sev-snp;secureboot:true',
+  });
+  await customerProvider.getVaultUnwrapKey();
+  const customerEvidence = await customerProvider.getAttestationEvidence();
+  if (customerEvidence?.projectId !== 'customer-prod' || customerEvidence?.location !== 'us') {
+    throw new Error(`Expected explicit customer KMS resource to own evidence project/location, got ${JSON.stringify(customerEvidence)}`);
+  }
+}
+
+async function assertAwsKmsVaultUnwrapKeyProvider() {
+  const expectedKey = Buffer.from('0123456789abcdef0123456789abcdef').toString('base64');
+  let decryptCallCount = 0;
+  const provider = new AwsKmsVaultUnwrapKeyProvider({
+    region: 'us-east-1',
+    keyArn: 'arn:aws:kms:us-east-1:111122223333:key/1234abcd-12ab-34cd-56ef-1234567890ab',
+    keyVersion: '1',
+    keySpec: 'SYMMETRIC_DEFAULT',
+    keyUsage: 'ENCRYPT_DECRYPT',
+    keyState: 'Enabled',
+    keyOrigin: 'AWS_KMS',
+    encryptedVaultUnwrapKeyBase64: 'aws-kms-ciphertext',
+    accessKeyId: 'AKIAIOSFODNN7EXAMPLE',
+    secretAccessKey: 'wJalrXUtnFEMI/K7MDENG+bPxRfiCYEXAMPLEKEY',
+    sessionToken: 'aws-session-token',
+    cacheTtlMs: 25,
+    fetchImpl: async (input, init) => {
+      decryptCallCount += 1;
+      const url = typeof input === 'string' ? input : input instanceof URL ? input.toString() : input.url;
+      if (url !== 'https://kms.us-east-1.amazonaws.com/') {
+        throw new Error(`Unexpected AWS KMS decrypt URL: ${url}`);
+      }
+      const headers = new Headers(init?.headers);
+      if (headers.get('x-amz-target') !== 'TrentService.Decrypt') {
+        throw new Error('Expected AWS KMS decrypt target header');
+      }
+      if (!headers.get('authorization')?.startsWith('AWS4-HMAC-SHA256 Credential=AKIAIOSFODNN7EXAMPLE/')) {
+        throw new Error(`Expected AWS SigV4 authorization header, got ${headers.get('authorization')}`);
+      }
+      if (headers.get('x-amz-security-token') !== 'aws-session-token') {
+        throw new Error('Expected AWS session token header');
+      }
+      const body = JSON.parse(init?.body || '{}');
+      if (body.CiphertextBlob !== 'aws-kms-ciphertext') {
+        throw new Error('Expected encrypted unwrap key ciphertext to be sent to AWS KMS');
+      }
+      if (body.KeyId !== 'arn:aws:kms:us-east-1:111122223333:key/1234abcd-12ab-34cd-56ef-1234567890ab') {
+        throw new Error('Expected AWS KMS KeyId to be sent');
+      }
+      return new Response(JSON.stringify({
+        Plaintext: expectedKey,
+        KeyId: 'arn:aws:kms:us-east-1:111122223333:key/1234abcd-12ab-34cd-56ef-1234567890ab',
+      }), {
+        status: 200,
+        headers: {
+          'content-type': 'application/x-amz-json-1.1',
+        },
+      });
+    },
+    attestationTokenHash: 'aws-attestation-token-sha256',
+    executorBuildDigest: 'sha256:aws-executor-build',
+    confidentialVmResourceId: 'arn:aws:ec2:us-east-1:111122223333:instance/i-0123456789abcdef0',
+    measurementSummary: 'nitro-enclave;pcr0:approved',
+    secureBoot: true,
+    imageDigest: 'sha256:aws-executor-build',
+    roleArn: 'arn:aws:iam::111122223333:role/vaultproof-executor',
+    attestationType: 'aws-nitro-enclave',
+    isolationProvider: 'aws-nitro-enclave',
+  });
+
+  const released = await provider.getVaultUnwrapKey();
+  if (released !== expectedKey) {
+    throw new Error('Expected AWS KMS decrypt plaintext to become the AES-256 unwrap key');
+  }
+  const cached = await provider.getVaultUnwrapKey();
+  if (cached !== expectedKey || decryptCallCount !== 1) {
+    throw new Error('Expected AWS KMS unwrap material to be cached in memory before TTL expiry');
+  }
+  await new Promise((resolve) => setTimeout(resolve, 35));
+  const refreshed = await provider.getVaultUnwrapKey();
+  if (refreshed !== expectedKey || decryptCallCount !== 2) {
+    throw new Error('Expected AWS KMS unwrap material to be refreshed after TTL expiry');
+  }
+
+  const evidence = await provider.getAttestationEvidence();
+  if (evidence?.provider !== 'aws-nitro-enclave') {
+    throw new Error('Expected AWS Nitro Enclave evidence from KMS provider');
+  }
+  if (evidence?.region !== 'us-east-1' || evidence?.accountId !== '111122223333') {
+    throw new Error(`Expected AWS key ARN to populate evidence region/account, got ${JSON.stringify(evidence)}`);
+  }
 }
 
 async function assertInvalidEnvelope() {
@@ -727,5 +915,6 @@ await assertDemoSeedRouteRequiresExplicitOptIn();
 await assertAzureSecureKeyReleaseProvider();
 await assertAzureSecureKeyReleaseProviderCanGenerateAttestationToken();
 await assertGcpKmsVaultUnwrapKeyProvider();
+await assertAwsKmsVaultUnwrapKeyProvider();
 await assertInvalidEnvelope();
 console.log('enterprise secure executor smoke test passed');

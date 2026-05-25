@@ -30,19 +30,19 @@ export function renderEnterpriseLoginPage(env: EnterpriseControlPlaneEnv = {}): 
   <style>
     :root {
       color-scheme: light;
-      --bg: #f6f7f2;
+      --bg: #f5f7fb;
       --paper: #ffffff;
-      --surface: #f7faf4;
-      --ink: #17231d;
-      --ink-soft: #52625a;
-      --muted: #7d8c84;
-      --line: #dfe5dc;
-      --line-strong: #ccd8cf;
-      --line-soft: rgba(32, 48, 39, 0.09);
-      --accent: #176b4b;
-      --accent-soft: rgba(143, 224, 193, 0.16);
-      --primary-bg: #8fe0c1;
-      --success: #176b4b;
+      --surface: #f8fafc;
+      --ink: #17202a;
+      --ink-soft: #526170;
+      --muted: #7a8794;
+      --line: rgba(26, 40, 52, 0.14);
+      --line-strong: rgba(26, 40, 52, 0.22);
+      --line-soft: rgba(26, 40, 52, 0.08);
+      --accent: #0f766e;
+      --accent-soft: rgba(20, 184, 166, 0.12);
+      --primary-bg: #14b8a6;
+      --success: #15803d;
       --display: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
       --body: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
       --mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace;
@@ -87,10 +87,10 @@ export function renderEnterpriseLoginPage(env: EnterpriseControlPlaneEnv = {}): 
     .hero {
       min-height: 660px;
       border: 0.5px solid var(--line);
-      border-radius: 18px;
+      border-radius: 8px;
       padding: 34px;
-      background: rgba(251, 249, 244, 0.72);
-      box-shadow: 0 1px 0 rgba(255,255,255,.5) inset, 0 28px 80px -30px rgba(20,18,14,.22);
+      background: rgba(255, 255, 255, 0.86);
+      box-shadow: 0 18px 54px rgba(26, 40, 52, 0.10);
       display: flex;
       flex-direction: column;
       justify-content: space-between;
@@ -114,7 +114,7 @@ export function renderEnterpriseLoginPage(env: EnterpriseControlPlaneEnv = {}): 
       width: 340px;
       height: 340px;
       border-radius: 999px;
-      background: rgba(139, 90, 60, 0.15);
+      background: rgba(20, 184, 166, 0.12);
       filter: blur(28px);
     }
     .brand {
@@ -169,7 +169,7 @@ export function renderEnterpriseLoginPage(env: EnterpriseControlPlaneEnv = {}): 
     }
     .proof {
       border: 0.5px solid var(--line);
-      background: rgba(242, 238, 229, 0.7);
+      background: var(--surface);
       border-radius: 12px;
       padding: 18px;
     }
@@ -190,9 +190,9 @@ export function renderEnterpriseLoginPage(env: EnterpriseControlPlaneEnv = {}): 
       background: var(--paper);
       color: var(--ink);
       border: 0.5px solid var(--line);
-      border-radius: 18px;
+      border-radius: 8px;
       padding: 28px;
-      box-shadow: 0 1px 0 rgba(255,255,255,.6) inset, 0 28px 80px -30px rgba(20,18,14,.28);
+      box-shadow: 0 18px 54px rgba(26, 40, 52, 0.10);
     }
     .auth-kicker, .sso-kicker {
       font-family: var(--mono);
@@ -222,7 +222,7 @@ export function renderEnterpriseLoginPage(env: EnterpriseControlPlaneEnv = {}): 
       border: 0.5px solid var(--line);
       border-radius: 12px;
       padding: 15px;
-      background: rgba(242, 238, 229, 0.58);
+      background: var(--surface);
     }
     .entry-label {
       font-family: var(--mono);
@@ -240,14 +240,14 @@ export function renderEnterpriseLoginPage(env: EnterpriseControlPlaneEnv = {}): 
     .form-input {
       width: 100%;
       border: 0.5px solid var(--line);
-      background: #fffdf8;
+      background: #ffffff;
       border-radius: 9px;
       padding: 12px 13px;
       color: var(--ink);
       outline: none;
       font: 400 14px/1.2 var(--body);
     }
-    .form-input:focus { border-color: rgba(139, 90, 60, 0.65); box-shadow: 0 0 0 3px var(--accent-soft); }
+    .form-input:focus { border-color: rgba(20, 184, 166, 0.55); box-shadow: 0 0 0 3px var(--accent-soft); }
     .btn {
       width: 100%;
       border: 0.5px solid var(--line);
@@ -287,7 +287,7 @@ export function renderEnterpriseLoginPage(env: EnterpriseControlPlaneEnv = {}): 
       border-radius: 9px;
       padding: 10px;
       font-size: 13px;
-      border: 0.5px solid rgba(139, 90, 60, 0.24);
+      border: 0.5px solid rgba(20, 184, 166, 0.24);
       background: var(--accent-soft);
     }
     .legal { margin-top: 6px; }
@@ -314,9 +314,9 @@ export function renderEnterpriseLoginPage(env: EnterpriseControlPlaneEnv = {}): 
     .hero,
     .login-card {
       border: 1px solid var(--line);
-      border-radius: 24px;
+      border-radius: 8px;
       background: #ffffff;
-      box-shadow: none;
+      box-shadow: 0 18px 54px rgba(26, 40, 52, 0.10);
     }
     .hero {
       min-height: 620px;
@@ -337,9 +337,9 @@ export function renderEnterpriseLoginPage(env: EnterpriseControlPlaneEnv = {}): 
       font-weight: 600;
     }
     .pill {
-      border: 1px solid #ccd8cf;
-      background: #fbfcf8;
-      color: #3d6f5b;
+      border: 1px solid var(--line);
+      background: var(--surface);
+      color: var(--accent);
       font: 600 11px/1 var(--body);
       text-transform: uppercase;
       padding: 7px 10px;
@@ -368,8 +368,8 @@ export function renderEnterpriseLoginPage(env: EnterpriseControlPlaneEnv = {}): 
     .sso-block,
     .promo-block {
       border: 1px solid var(--line);
-      background: #f7faf4;
-      border-radius: 16px;
+      background: var(--surface);
+      border-radius: 8px;
       box-shadow: none;
     }
     .proof strong,
@@ -378,7 +378,7 @@ export function renderEnterpriseLoginPage(env: EnterpriseControlPlaneEnv = {}): 
     .entry-label,
     .divider,
     .auth-footnote {
-      color: #7d8c84;
+      color: var(--soft, var(--muted));
       font: 400 11px/1.2 var(--body);
       text-transform: uppercase;
     }
@@ -390,7 +390,7 @@ export function renderEnterpriseLoginPage(env: EnterpriseControlPlaneEnv = {}): 
     .legal,
     .back-link,
     .reset-copy {
-      color: #5f6f67;
+      color: var(--ink-soft);
       font-size: 13px;
       line-height: 1.5;
     }
@@ -408,19 +408,19 @@ export function renderEnterpriseLoginPage(env: EnterpriseControlPlaneEnv = {}): 
       font-weight: 600;
     }
     .form-input {
-      border: 1px solid #ccd8cf;
+      border: 1px solid var(--line);
       background: #ffffff;
-      border-radius: 13px;
+      border-radius: 8px;
       color: var(--ink);
       font: 400 14px/1.2 var(--body);
     }
     .form-input:focus {
-      border-color: rgba(23, 107, 75, 0.35);
-      box-shadow: 0 0 0 3px rgba(143, 224, 193, 0.18);
+      border-color: rgba(20, 184, 166, 0.45);
+      box-shadow: 0 0 0 3px rgba(20, 184, 166, 0.12);
     }
     .btn {
       border: 1px solid var(--line);
-      border-radius: 13px;
+      border-radius: 8px;
       font: 500 14px/1 var(--body);
       box-shadow: none;
     }
@@ -430,7 +430,7 @@ export function renderEnterpriseLoginPage(env: EnterpriseControlPlaneEnv = {}): 
     }
     .btn-primary {
       background: var(--primary-bg);
-      color: #10231d;
+      color: #052f2b;
       border-color: var(--primary-bg);
       font-weight: 600;
     }
@@ -453,8 +453,8 @@ export function renderEnterpriseLoginPage(env: EnterpriseControlPlaneEnv = {}): 
     #ssoStatus,
     #promoCodeMsg,
     #recoveryStatus {
-      border: 1px solid rgba(23, 107, 75, 0.24);
-      background: rgba(143, 224, 193, 0.14);
+      border: 1px solid rgba(20, 184, 166, 0.24);
+      background: rgba(20, 184, 166, 0.10);
       color: var(--ink);
     }
     @media (min-width: 640px) {
@@ -592,7 +592,7 @@ export function renderInternalAdminLoginPage(env: EnterpriseControlPlaneEnv = {}
   <title>Login</title>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.101.1" integrity="sha384-0VpB0wAYDdhWCEv3+IjT0Z9Kgpvszkf70RFX3ro7l4QR5nywxsMaOpmvZKsfRF8I" crossorigin="anonymous"></script>
   <style>
-    :root { color-scheme: light; --bg:#f6f7f2; --ink:#17231d; --line:#dfe5dc; }
+    :root { color-scheme: light; --bg:#f5f7fb; --ink:#17202a; --line:rgba(26,40,52,.14); --primary:#14b8a6; --primary-text:#052f2b; --red:#dc2626; }
     * { box-sizing: border-box; }
     body {
       min-height: 100vh;
@@ -627,12 +627,12 @@ export function renderInternalAdminLoginPage(env: EnterpriseControlPlaneEnv = {}
       cursor: pointer;
       font-weight: 700;
     }
-    .btn-primary { background: #10231d; color: #fff; border-color: #10231d; }
+    .btn-primary { background: var(--primary); color: var(--primary-text); border-color: var(--primary); }
     .btn-secondary { background: #fff; }
     #authError, #loginError {
-      border: 1px solid rgba(185, 93, 80, 0.28);
+      border: 1px solid rgba(220, 38, 38, 0.24);
       border-radius: 8px;
-      color: #8d3228;
+      color: var(--red);
       padding: 10px;
       font-size: 13px;
       line-height: 1.4;
@@ -681,14 +681,14 @@ export function renderEnterpriseLogoutPage(): string {
   <meta name="robots" content="noindex" />
   <title>Signing out - VaultProof Enterprise</title>
   <style>
-    :root { color-scheme: light; --bg: #dcebe8; --panel: rgba(255,255,255,.88); --line: rgba(48,76,71,.16); --text: #34514c; --muted: #667b75; --gold: #d5a914; --ink: #304b46; }
+    :root { color-scheme: light; --bg: #f5f7fb; --panel: rgba(255,255,255,.94); --line: rgba(26,40,52,.14); --text: #17202a; --muted: #526170; --gold: #0f766e; --ink: #052f2b; --primary: #14b8a6; }
     * { box-sizing: border-box; }
-    body { margin: 0; min-height: 100vh; display: grid; place-items: center; font-family: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; color: var(--text); background: linear-gradient(135deg, #dcebe8 0%, #eef6f2 50%, #c9ddda 100%); }
-    main { width: min(100% - 32px, 560px); border: 1px solid var(--line); background: linear-gradient(180deg, rgba(255,255,255,.98), rgba(247,250,244,.86)); border-radius: 28px; padding: 34px; box-shadow: 0 22px 72px rgba(48,76,71,.18); }
+    body { margin: 0; min-height: 100vh; display: grid; place-items: center; font-family: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; color: var(--text); background: var(--bg); }
+    main { width: min(100% - 32px, 560px); border: 1px solid var(--line); background: #ffffff; border-radius: 8px; padding: 34px; box-shadow: 0 18px 54px rgba(26,40,52,.10); }
     .kicker { color: var(--gold); font-size: 12px; text-transform: uppercase; letter-spacing: .16em; font-weight: 850; }
     h1 { margin: 10px 0; font-size: clamp(34px, 8vw, 58px); line-height: .92; letter-spacing: -.065em; }
     p { color: var(--muted); line-height: 1.6; margin: 0 0 18px; }
-    a { display: inline-flex; border-radius: 14px; padding: 11px 13px; color: var(--ink); background: linear-gradient(135deg, var(--gold), #f3df95); text-decoration: none; font-weight: 850; }
+    a { display: inline-flex; border-radius: 8px; padding: 11px 13px; color: var(--ink); background: var(--primary); text-decoration: none; font-weight: 850; }
   </style>
 </head>
 <body>

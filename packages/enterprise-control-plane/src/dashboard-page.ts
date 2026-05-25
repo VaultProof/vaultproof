@@ -15,18 +15,27 @@ export function renderEnterpriseDashboardPage(env: EnterpriseControlPlaneEnv = {
   <style>
     :root {
       color-scheme: light;
-      --bg: #f6f7f2;
-      --panel: rgba(255, 255, 255, 0.76);
-      --panel-strong: rgba(255, 255, 255, 0.96);
-      --line: rgba(32, 48, 39, 0.14);
-      --text: #17231d;
-      --muted: #52625a;
-      --soft: #7d8c84;
-      --gold: #176b4b;
-      --green: #176b4b;
-      --red: #b95d50;
-      --blue: #168a9f;
+      --bg: #f5f7fb;
+      --panel: rgba(255, 255, 255, 0.86);
+      --panel-strong: rgba(255, 255, 255, 0.98);
+      --card-bg: #ffffff;
+      --row-bg: #f8fafc;
+      --line: rgba(26, 40, 52, 0.14);
+      --line-soft: rgba(26, 40, 52, 0.08);
+      --text: #17202a;
+      --muted: #526170;
+      --soft: #7a8794;
+      --gold: #0f766e;
+      --green: #15803d;
+      --red: #dc2626;
+      --blue: #2563eb;
+      --warn: #b45309;
       --ink: #ffffff;
+      --control-bg: rgba(255, 255, 255, 0.92);
+      --primary-bg: #14b8a6;
+      --primary-text: #052f2b;
+      --primary-border: #14b8a6;
+      --shadow: 0 18px 54px rgba(26, 40, 52, 0.10);
     }
     * { box-sizing: border-box; }
     body {
@@ -35,7 +44,7 @@ export function renderEnterpriseDashboardPage(env: EnterpriseControlPlaneEnv = {
       font-family: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
       font-weight: 400;
       color: var(--text);
-      background: #f6f7f2;
+      background: var(--bg);
     }
     a { color: inherit; text-decoration: none; }
     ${ENTERPRISE_APP_SHELL_THEME}
@@ -49,21 +58,24 @@ export function renderEnterpriseDashboardPage(env: EnterpriseControlPlaneEnv = {
       width: 100%;
     }
     .enterprise-page-shell {
-      background: #ffffff;
-      border: 1px solid var(--line);
-      border-radius: 24px;
-      padding: 20px;
-      box-shadow: var(--shadow);
+      background: transparent;
+      border: 0;
+      border-radius: 0;
+      padding: 0;
+      box-shadow: none;
+      display: grid;
+      gap: 18px;
     }
     .dashboard-head-card,
     .control-center-card {
       border: 1px solid var(--line);
-      background: #fbfcf8;
-      border-radius: 20px;
-      padding: 20px;
+      background: #ffffff;
+      border-radius: 8px;
+      padding: 22px;
+      box-shadow: var(--shadow);
     }
     .dashboard-head-card {
-      margin-bottom: 16px;
+      margin-bottom: 0;
     }
     .control-center-card {
       background: #ffffff;
@@ -75,8 +87,8 @@ export function renderEnterpriseDashboardPage(env: EnterpriseControlPlaneEnv = {
     .eyebrow {
       display: inline-flex;
       color: var(--green);
-      background: rgba(23, 107, 75, 0.10);
-      border: 1px solid rgba(23, 107, 75, 0.18);
+      background: rgba(21, 128, 61, 0.10);
+      border: 1px solid rgba(21, 128, 61, 0.18);
       border-radius: 999px;
       padding: 6px 9px;
       font-size: 11px;
@@ -97,7 +109,7 @@ export function renderEnterpriseDashboardPage(env: EnterpriseControlPlaneEnv = {
       border: 1px solid var(--line);
       background: var(--control-bg);
       color: var(--text);
-      border-radius: 13px;
+      border-radius: 8px;
       padding: 11px 12px;
       font: inherit;
     }
@@ -118,7 +130,7 @@ export function renderEnterpriseDashboardPage(env: EnterpriseControlPlaneEnv = {
       display: block;
       border: 1px solid var(--line-soft);
       background: #ffffff;
-      border-radius: 16px;
+      border-radius: 8px;
       padding: 14px;
       min-height: 116px;
     }
@@ -135,7 +147,7 @@ export function renderEnterpriseDashboardPage(env: EnterpriseControlPlaneEnv = {
       margin-top: 8px;
     }
     .context-copy {
-      color: #5f6f67;
+      color: var(--muted);
       font-size: 13px;
       line-height: 1.5;
       margin-top: 6px;
@@ -154,7 +166,7 @@ export function renderEnterpriseDashboardPage(env: EnterpriseControlPlaneEnv = {
       margin: 0;
     }
     .control-copy {
-      color: #5f6f67;
+      color: var(--muted);
       margin: 6px 0 0;
       max-width: 700px;
       line-height: 1.5;
@@ -173,39 +185,39 @@ export function renderEnterpriseDashboardPage(env: EnterpriseControlPlaneEnv = {
     .card {
       border: 1px solid var(--line);
       background: var(--card-bg);
-      border-radius: 24px;
+      border-radius: 8px;
       padding: 20px;
       box-shadow: var(--shadow);
     }
     .kpi-label { color: var(--soft); font-size: 12px; font-weight: 400; text-transform: uppercase; letter-spacing: 0; }
     .kpi-value { font-size: 34px; font-weight: 600; letter-spacing: 0; margin-top: 8px; }
-    .kpi-sub { color: #5f6f67; margin-top: 6px; font-size: 13px; }
+    .kpi-sub { color: var(--muted); margin-top: 6px; font-size: 13px; }
     .status-pill {
       display: inline-flex; align-items: center; gap: 8px;
       border-radius: 999px; padding: 7px 10px; font-size: 12px; font-weight: 600;
-      background: rgba(62, 93, 87, 0.09); color: var(--green); border: 1px solid rgba(62, 93, 87, 0.22);
+      background: rgba(21, 128, 61, 0.10); color: var(--green); border: 1px solid rgba(21, 128, 61, 0.22);
     }
-    .status-pill.warn { background: rgba(213, 169, 20, 0.13); color: #94730a; border-color: rgba(213, 169, 20, 0.32); }
-    .status-pill.bad { background: rgba(185, 93, 80, 0.12); color: var(--red); border-color: rgba(185, 93, 80, 0.28); }
+    .status-pill.warn { background: rgba(180, 83, 9, 0.10); color: var(--warn); border-color: rgba(180, 83, 9, 0.28); }
+    .status-pill.bad { background: rgba(220, 38, 38, 0.12); color: var(--red); border-color: rgba(220, 38, 38, 0.28); }
     .section-title { display: flex; justify-content: space-between; gap: 12px; align-items: center; margin-bottom: 14px; }
     .section-title h2 { margin: 0; font-size: 19px; letter-spacing: 0; }
-    .section-title p { margin: 4px 0 0; color: #5f6f67; font-size: 13px; line-height: 1.45; }
-    .mini { color: #5f6f67; font-size: 13px; }
+    .section-title p { margin: 4px 0 0; color: var(--muted); font-size: 13px; line-height: 1.45; }
+    .mini { color: var(--muted); font-size: 13px; }
     .list { display: grid; gap: 10px; }
     .business-card h2, .intent-card h3, .action-card h3 { margin: 0; letter-spacing: 0; }
-    .business-card p, .intent-card p, .action-card p { margin: 8px 0 0; color: #5f6f67; line-height: 1.5; font-size: 13px; }
+    .business-card p, .intent-card p, .action-card p { margin: 8px 0 0; color: var(--muted); line-height: 1.5; font-size: 13px; }
     .tabbar {
       display: flex;
       gap: 8px;
       flex-wrap: wrap;
       border: 1px solid var(--line);
-      border-radius: 18px;
+      border-radius: 8px;
       padding: 8px;
       margin-bottom: 18px;
       background: var(--row-bg);
     }
     .tab-button {
-      border-radius: 12px;
+      border-radius: 7px;
       padding: 10px 12px;
       color: var(--nav-text);
       background: transparent;
@@ -222,7 +234,7 @@ export function renderEnterpriseDashboardPage(env: EnterpriseControlPlaneEnv = {
     .intent-grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px; }
     .intent-card, .action-card {
       border: 1px solid var(--line-soft);
-      border-radius: 20px;
+      border-radius: 8px;
       padding: 16px;
       background: var(--row-bg);
     }
@@ -232,40 +244,40 @@ export function renderEnterpriseDashboardPage(env: EnterpriseControlPlaneEnv = {
     .row {
       display: grid; grid-template-columns: 1fr auto; gap: 14px; align-items: center;
       border: 1px solid var(--line-soft);
-      border-radius: 17px; padding: 13px;
+      border-radius: 8px; padding: 13px;
       background: var(--row-bg);
     }
     .row-title { font-weight: 600; }
     .row-sub { color: var(--muted); font-size: 13px; margin-top: 4px; }
-    .tag { color: var(--blue); font-size: 12px; border: 1px solid rgba(22, 138, 159, 0.24); border-radius: 999px; padding: 5px 8px; }
-    .tag.good { color: var(--green); border-color: rgba(62, 93, 87, 0.24); }
-    .tag.warn { color: #94730a; border-color: rgba(213, 169, 20, 0.32); }
-    .tag.bad { color: var(--red); border-color: rgba(185, 93, 80, 0.28); }
+    .tag { color: var(--blue); font-size: 12px; border: 1px solid rgba(37, 99, 235, 0.24); border-radius: 999px; padding: 5px 8px; }
+    .tag.good { color: var(--green); border-color: rgba(21, 128, 61, 0.24); }
+    .tag.warn { color: var(--warn); border-color: rgba(180, 83, 9, 0.30); }
+    .tag.bad { color: var(--red); border-color: rgba(220, 38, 38, 0.28); }
     .empty, .error {
       color: var(--muted);
       border: 1px dashed var(--line);
-      border-radius: 18px;
+      border-radius: 8px;
       padding: 18px;
       background: var(--row-bg);
     }
-    .error { color: var(--red); border-color: rgba(185, 93, 80, 0.3); }
+    .error { color: var(--red); border-color: rgba(220, 38, 38, 0.3); }
     .actions { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 14px; }
-    .action { border: 1px solid var(--line); border-radius: 14px; padding: 10px 12px; color: var(--action-text); background: var(--control-bg); }
+    .action { border: 1px solid var(--line); border-radius: 8px; padding: 10px 12px; color: var(--action-text); background: var(--control-bg); }
     .action.primary { color: var(--primary-text, var(--text)); }
     .feature-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; margin: 16px 0; }
     .feature-card {
       display: flex; flex-direction: column; gap: 10px;
       min-height: 170px; border: 1px solid var(--line-soft);
-      border-radius: 22px; padding: 16px;
+      border-radius: 8px; padding: 16px;
       background: var(--card-bg);
       transition: transform 160ms ease, border-color 160ms ease, background 160ms ease;
     }
-    .feature-card:hover { transform: translateY(-2px); border-color: rgba(23, 107, 75, 0.28); background: #f7faf4; }
+    .feature-card:hover { transform: translateY(-2px); border-color: rgba(20, 184, 166, 0.32); background: var(--row-bg); }
     .feature-card h3 { margin: 0; font-size: 16px; line-height: 1.15; letter-spacing: 0; }
     .feature-card p { margin: 0; color: var(--muted); font-size: 13px; line-height: 1.45; flex: 1; }
     .feature-tags { display: flex; gap: 6px; flex-wrap: wrap; }
-    .feature-tag { color: var(--green); border: 1px solid rgba(62, 93, 87, 0.22); border-radius: 999px; padding: 4px 7px; font-size: 11px; }
-    .feature-tag.pending { color: #94730a; border-color: rgba(213, 169, 20, 0.32); }
+    .feature-tag { color: var(--green); border: 1px solid rgba(21, 128, 61, 0.22); border-radius: 999px; padding: 4px 7px; font-size: 11px; }
+    .feature-tag.pending { color: var(--warn); border-color: rgba(180, 83, 9, 0.30); }
     @media (max-width: 980px) {
       .topbar { flex-direction: column; }
       .toolbar { justify-content: flex-start; }
@@ -289,10 +301,11 @@ export function renderEnterpriseDashboardPage(env: EnterpriseControlPlaneEnv = {
             <div>
               <div class="eyebrow">Enterprise dashboard</div>
               <h1>Runtime, access, and evidence.</h1>
-              <p class="lead">Monitor the live enterprise account and jump into the pages your team needs.</p>
+              <p class="lead">Monitor runtime readiness, customer access, provider-key posture, and evidence exports from one operator workspace.</p>
             </div>
             <div class="toolbar">
               <button id="refreshBtn" type="button">refresh</button>
+              <a class="action" href="/app/keys">provider slots</a>
               <a class="action primary" href="/app/control">open control</a>
             </div>
           </div>
@@ -301,12 +314,12 @@ export function renderEnterpriseDashboardPage(env: EnterpriseControlPlaneEnv = {
             <a class="context-card" href="/app/dashboard">
               <div class="context-label">You are here</div>
               <div class="context-title">Control center</div>
-              <div class="context-copy">A single operational view for runtime posture, users, evidence, and launch actions.</div>
+              <div class="context-copy">A focused operating view for runtime posture, users, evidence, and launch actions.</div>
             </a>
             <a class="context-card" href="/app/org">
               <div class="context-label">Active org</div>
               <div class="context-title">Provisioned workspace</div>
-              <div class="context-copy">VaultProof sets up the organization workspace; operators review status and SSO here.</div>
+              <div class="context-copy">Review organization status, SSO, domain policy, and workspace ownership.</div>
             </a>
             <a class="context-card" href="/readiness" target="_blank" rel="noopener">
               <div class="context-label">Next best step</div>
@@ -322,9 +335,10 @@ export function renderEnterpriseDashboardPage(env: EnterpriseControlPlaneEnv = {
           <div class="control-center-intro">
             <div>
               <h2 class="control-title">Control center</h2>
-              <p class="control-copy">Use the tabs below for daily operator checks. The sidebar keeps every enterprise page and evidence export in reach.</p>
+              <p class="control-copy">Use the tabs below for daily operator checks. The sidebar keeps provider slots, policy, users, audit, and evidence in reach.</p>
             </div>
             <div class="control-links" aria-label="Primary operator links">
+              <a class="action" href="/app/keys">provider slots</a>
               <a class="action" href="/app/members">members</a>
               <a class="action" href="/app/audit">audit</a>
               <a class="action" href="/app/evidence">evidence</a>
@@ -399,7 +413,7 @@ export function renderEnterpriseDashboardPage(env: EnterpriseControlPlaneEnv = {
             <div class="feature-tags"><span class="feature-tag">policy</span><span class="feature-tag">keys</span></div>
             <h3>3. Lock down projects</h3>
             <p>Review provider slots, caller-lock rules, allowed origins, and emergency revoke controls.</p>
-            <a class="action" href="/app/control">open policy control</a>
+            <a class="action" href="/app/keys">open provider slots</a>
           </div>
         </section>
       </section>

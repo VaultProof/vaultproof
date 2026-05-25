@@ -82,9 +82,34 @@ export interface GcpSecureExecutionAttestationEvidence {
   };
 }
 
+export interface AwsSecureExecutionAttestationEvidence {
+  provider: 'aws-nitro-enclave' | 'aws-ec2';
+  region?: string | null;
+  accountId?: string | null;
+  attestationTokenHash?: string | null;
+  keyId?: string | null;
+  keyArn?: string | null;
+  keyVersion?: string | null;
+  keySpec?: string | null;
+  keyUsage?: string | null;
+  keyState?: string | null;
+  keyOrigin?: string | null;
+  executorBuildDigest?: string | null;
+  confidentialVmResourceId?: string | null;
+  claims?: {
+    attestationType?: string | null;
+    secureBoot?: boolean | null;
+    vmIsolation?: string | null;
+    measurementSummary?: string | null;
+    imageDigest?: string | null;
+    roleArn?: string | null;
+  };
+}
+
 export type SecureExecutionAttestationEvidence =
   | AzureSecureExecutionAttestationEvidence
-  | GcpSecureExecutionAttestationEvidence;
+  | GcpSecureExecutionAttestationEvidence
+  | AwsSecureExecutionAttestationEvidence;
 
 function sortRecord(value: Record<string, unknown>): Record<string, unknown> {
   return Object.keys(value)

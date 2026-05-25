@@ -12,25 +12,25 @@ export function renderEnterpriseHomepage(env: EnterpriseControlPlaneEnv = {}): s
   <style>
     :root {
       color-scheme: light;
-      --bg: #f6f7f2;
-      --paper: #fbfcf8;
-      --surface: #f7faf4;
+      --bg: #f5f7fb;
+      --paper: #ffffff;
+      --surface: #f8fafc;
       --card-bg: #ffffff;
-      --row-bg: #f7faf4;
-      --ink: #17231d;
-      --ink-soft: #52625a;
-      --muted: #7d8c84;
-      --line: #dfe5dc;
-      --line-strong: #ccd8cf;
-      --line-soft: rgba(32, 48, 39, 0.09);
-      --accent: #176b4b;
-      --accent-ink: #10231d;
-      --accent-soft: rgba(143, 224, 193, 0.16);
-      --primary-bg: #8fe0c1;
-      --success: #176b4b;
-      --danger: #b95d50;
-      --blue: #168a9f;
-      --shadow: none;
+      --row-bg: #f8fafc;
+      --ink: #17202a;
+      --ink-soft: #526170;
+      --muted: #7a8794;
+      --line: rgba(26, 40, 52, 0.14);
+      --line-strong: rgba(26, 40, 52, 0.22);
+      --line-soft: rgba(26, 40, 52, 0.08);
+      --accent: #0f766e;
+      --accent-ink: #ffffff;
+      --accent-soft: rgba(20, 184, 166, 0.12);
+      --primary-bg: #14b8a6;
+      --success: #15803d;
+      --danger: #dc2626;
+      --blue: #2563eb;
+      --shadow: 0 18px 54px rgba(26, 40, 52, 0.10);
       --display: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
       --body: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
       --mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace;
@@ -55,7 +55,7 @@ export function renderEnterpriseHomepage(env: EnterpriseControlPlaneEnv = {}): s
       position: sticky;
       top: 0;
       z-index: 50;
-      background: rgba(220, 235, 232, 0.88);
+      background: rgba(245, 247, 251, 0.90);
       -webkit-backdrop-filter: blur(14px);
       backdrop-filter: blur(14px);
       border-bottom: 0.5px solid var(--line);
@@ -113,7 +113,7 @@ export function renderEnterpriseHomepage(env: EnterpriseControlPlaneEnv = {}): s
       position: absolute;
       inset: -10% -8%;
       pointer-events: none;
-      background-image: radial-gradient(rgba(48, 76, 71, 0.12) 1px, transparent 1px);
+      background-image: radial-gradient(rgba(26, 40, 52, 0.10) 1px, transparent 1px);
       background-size: 28px 28px;
       mask-image: radial-gradient(ellipse at center, black 30%, transparent 74%);
       -webkit-mask-image: radial-gradient(ellipse at center, black 30%, transparent 74%);
@@ -190,7 +190,7 @@ export function renderEnterpriseHomepage(env: EnterpriseControlPlaneEnv = {}): s
       border: 0.5px solid var(--line);
       border-radius: 9px;
       padding: 5px 18px;
-      box-shadow: 0 1px 0 rgba(255,255,255,.5) inset, var(--shadow);
+      box-shadow: var(--shadow);
     }
     .vp-feed-row {
       display: grid;
@@ -279,7 +279,7 @@ export function renderEnterpriseHomepage(env: EnterpriseControlPlaneEnv = {}): s
       height: 18px;
       border: 6px solid var(--success);
       border-right: 0;
-      border-radius: 18px 0 0 18px;
+      border-radius: 8px 0 0 8px;
       position: relative;
     }
     .vp-key-glyph::before {
@@ -316,7 +316,7 @@ export function renderEnterpriseHomepage(env: EnterpriseControlPlaneEnv = {}): s
       margin: 0 auto 9px;
       border-radius: 999px;
       background: var(--accent);
-      box-shadow: 0 0 0 0 rgba(213, 169, 20, .35);
+      box-shadow: 0 0 0 0 rgba(20, 184, 166, .24);
       animation: vp-region-pulse 6s linear infinite;
     }
     .vp-shard {
@@ -491,7 +491,7 @@ export function renderEnterpriseHomepage(env: EnterpriseControlPlaneEnv = {}): s
     }
     .vp-code-card code span { display: block; padding: 0 20px; white-space: pre; }
     .vp-code-muted { color: var(--muted); }
-    .vp-code-remove { background: rgba(185, 93, 80, .14); color: var(--muted); }
+    .vp-code-remove { background: rgba(220, 38, 38, .14); color: var(--muted); }
     .vp-code-add { background: var(--accent-soft); color: var(--ink); }
     .vp-code-sign { color: var(--success); display: inline-flex; align-items: center; gap: 6px; }
     .vp-cursor {
@@ -585,8 +585,8 @@ export function renderEnterpriseHomepage(env: EnterpriseControlPlaneEnv = {}): s
       width: min(1480px, calc(100vw - 48px));
     }
     .vp-nav {
-      background: #10231d;
-      border-bottom: 1px solid rgba(143, 224, 193, 0.18);
+      background: #18201f;
+      border-bottom: 1px solid rgba(94, 234, 212, 0.18);
       -webkit-backdrop-filter: none;
       backdrop-filter: none;
     }
@@ -611,7 +611,7 @@ export function renderEnterpriseHomepage(env: EnterpriseControlPlaneEnv = {}): s
       font-weight: 600;
     }
     .vp-brand-sub {
-      color: #8fe0c1;
+      color: #5eead4;
       font: 400 12px/1 var(--body);
       text-transform: uppercase;
     }
@@ -627,7 +627,7 @@ export function renderEnterpriseHomepage(env: EnterpriseControlPlaneEnv = {}): s
     }
     .vp-btn {
       min-height: 42px;
-      border-radius: 13px;
+      border-radius: 8px;
       border: 1px solid var(--line);
       font: 500 14px/1 var(--body);
       box-shadow: none;
@@ -653,7 +653,7 @@ export function renderEnterpriseHomepage(env: EnterpriseControlPlaneEnv = {}): s
     }
     .vp-section.surface,
     .vp-footer {
-      background: #fbfcf8;
+      background: #ffffff;
     }
     .vp-hero {
       padding: 28px 0 44px;
@@ -661,7 +661,7 @@ export function renderEnterpriseHomepage(env: EnterpriseControlPlaneEnv = {}): s
     .vp-hero .vp-container {
       background: #ffffff;
       border: 1px solid var(--line);
-      border-radius: 24px;
+      border-radius: 8px;
       padding: 20px;
     }
     .vp-grid-bg,
@@ -742,7 +742,7 @@ export function renderEnterpriseHomepage(env: EnterpriseControlPlaneEnv = {}): s
     .vp-final {
       background: #ffffff;
       border: 1px solid var(--line);
-      border-radius: 18px;
+      border-radius: 8px;
       box-shadow: none;
     }
     .vp-feed-card {
@@ -788,7 +788,7 @@ export function renderEnterpriseHomepage(env: EnterpriseControlPlaneEnv = {}): s
     .vp-node p,
     .vp-compliance-card p,
     .vp-footer ul {
-      color: #5f6f67;
+      color: var(--ink-soft);
       font-size: 13px;
       line-height: 1.5;
     }
@@ -810,8 +810,8 @@ export function renderEnterpriseHomepage(env: EnterpriseControlPlaneEnv = {}): s
     .vp-region i,
     .vp-window-dots i,
     .vp-dot {
-      border-color: rgba(143, 224, 193, 0.40);
-      background: #8fe0c1;
+      border-color: rgba(20, 184, 166, 0.40);
+      background: var(--primary-bg);
       color: var(--accent-ink);
     }
     .vp-key-glyph,
@@ -823,7 +823,7 @@ export function renderEnterpriseHomepage(env: EnterpriseControlPlaneEnv = {}): s
       background: var(--accent);
     }
     .vp-shard {
-      border: 1px solid rgba(23, 107, 75, 0.24);
+      border: 1px solid rgba(20, 184, 166, 0.24);
       border-radius: 8px;
       font-weight: 600;
     }
@@ -832,7 +832,7 @@ export function renderEnterpriseHomepage(env: EnterpriseControlPlaneEnv = {}): s
     }
     .vp-code-card .vp-code-add,
     .vp-code-add {
-      background: rgba(143, 224, 193, 0.14);
+      background: rgba(20, 184, 166, 0.12);
       color: var(--accent);
     }
     .vp-code-card pre {
@@ -853,7 +853,7 @@ export function renderEnterpriseHomepage(env: EnterpriseControlPlaneEnv = {}): s
     .vp-compliance-card,
     .vp-belief {
       border: 1px solid var(--line);
-      border-radius: 16px;
+      border-radius: 8px;
       background: #ffffff;
     }
     .vp-belief {
@@ -888,13 +888,13 @@ export function renderEnterpriseHomepage(env: EnterpriseControlPlaneEnv = {}): s
     @keyframes vp-blink { 0%, 50% { opacity: 1; } 51%, 100% { opacity: 0; } }
     @keyframes vp-feed-in { from { opacity: 0; transform: translateY(-12px); } to { opacity: 1; transform: translateY(0); } }
     @keyframes vp-key-core { 0%, 5%, 95%, 100% { opacity: 1; } 15%, 90% { opacity: .18; } }
-    @keyframes vp-region-pulse { 0%, 40% { box-shadow: 0 0 0 0 rgba(213,169,20,.28); } 52% { box-shadow: 0 0 0 12px rgba(213,169,20,.13); } 70%, 100% { box-shadow: 0 0 0 18px transparent; } }
+    @keyframes vp-region-pulse { 0%, 40% { box-shadow: 0 0 0 0 rgba(20,184,166,.22); } 52% { box-shadow: 0 0 0 12px rgba(20,184,166,.10); } 70%, 100% { box-shadow: 0 0 0 18px transparent; } }
     @keyframes vp-shard {
       0%, 5% { transform: translate(-50%, -50%) rotate(0deg); opacity: 1; }
       35%, 65% { transform: translate(calc(-50% + var(--tx)), calc(-50% + var(--ty))) rotate(var(--rot)); opacity: 1; }
       95%, 100% { transform: translate(-50%, -50%) rotate(0deg); opacity: 1; }
     }
-    @keyframes vp-node-pulse { 0%, 50% { box-shadow: 0 0 0 0 rgba(213,169,20,.28); } 58% { box-shadow: 0 0 0 8px rgba(213,169,20,.18); } 74%, 100% { box-shadow: 0 0 0 16px transparent; } }
+    @keyframes vp-node-pulse { 0%, 50% { box-shadow: 0 0 0 0 rgba(20,184,166,.22); } 58% { box-shadow: 0 0 0 8px rgba(20,184,166,.12); } 74%, 100% { box-shadow: 0 0 0 16px transparent; } }
     @keyframes vp-beam { 0%, 60% { transform: scaleX(0); transform-origin: left; opacity: 0; } 65% { transform: scaleX(0); opacity: 1; } 85% { transform: scaleX(1); opacity: 1; } 92%, 100% { transform: scaleX(1); opacity: 0; } }
     @keyframes vp-zero-flash { 0%, 88% { background: var(--paper); } 90% { background: var(--accent-soft); } 100% { background: var(--paper); } }
     @media (max-width: 980px) {

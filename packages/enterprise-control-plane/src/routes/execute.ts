@@ -1138,6 +1138,13 @@ function summarizeAttestationEvidence(value: unknown): Record<string, unknown> |
     keyId?: string | null;
     keyVersion?: string | null;
     keyProtectionLevel?: string | null;
+    keyArn?: string | null;
+    keySpec?: string | null;
+    keyUsage?: string | null;
+    keyState?: string | null;
+    keyOrigin?: string | null;
+    region?: string | null;
+    accountId?: string | null;
     projectId?: string | null;
     location?: string | null;
     executorBuildDigest?: string | null;
@@ -1152,6 +1159,7 @@ function summarizeAttestationEvidence(value: unknown): Record<string, unknown> |
         measurementSummary?: string | null;
         imageDigest?: string | null;
         serviceAccountEmail?: string | null;
+        roleArn?: string | null;
       }
     : {};
   return {
@@ -1162,8 +1170,15 @@ function summarizeAttestationEvidence(value: unknown): Record<string, unknown> |
     key_id: evidence.keyId || null,
     key_version: evidence.keyVersion || null,
     key_protection_level: evidence.keyProtectionLevel || null,
+    key_arn: evidence.keyArn || null,
+    key_spec: evidence.keySpec || null,
+    key_usage: evidence.keyUsage || null,
+    key_state: evidence.keyState || null,
+    key_origin: evidence.keyOrigin || null,
     gcp_project_id: evidence.projectId || null,
     gcp_location: evidence.location || null,
+    aws_region: evidence.region || null,
+    aws_account_id: evidence.accountId || null,
     executor_build_digest: evidence.executorBuildDigest || null,
     confidential_vm_resource_id: evidence.confidentialVmResourceId || null,
     claims: {
@@ -1173,6 +1188,7 @@ function summarizeAttestationEvidence(value: unknown): Record<string, unknown> |
       measurement_summary: claims.measurementSummary || null,
       image_digest: claims.imageDigest || null,
       service_account_email: claims.serviceAccountEmail || null,
+      role_arn: claims.roleArn || null,
     },
   };
 }

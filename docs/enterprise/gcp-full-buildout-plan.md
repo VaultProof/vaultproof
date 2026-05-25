@@ -4,7 +4,7 @@ Last updated: 2026-05-14
 
 This is the customer-demo buildout plan for moving VaultProof Enterprise from the current GCP pilot into a credible demo path that can support near-term customer conversations.
 
-The plan keeps the first customer launch deliberately narrow: one shared GCP production runtime, standard Cloud KMS, one public HTTPS edge for `enterprise.vaultproof.dev`, strong readiness gates, and a repeatable onboarding runbook. No HSM is included in this buildout.
+The plan keeps the first customer launch deliberately narrow: one shared GCP production runtime, standard Cloud KMS, one public HTTPS edge for `enterprise.vaultproof.dev`, strong readiness gates, and a repeatable onboarding runbook. Customer-managed GCP Cloud KMS is the first customer custody lane; AWS KMS is now a parallel adapter/onboarding lane, while Azure, HSM, Vault Transit, and external key manager lanes stay out of the initial buildout unless a customer requires them. No HSM is included in this buildout.
 
 Database/auth decision for Goal 1: keep managed Supabase for the demo. Do not move the demo database to Cloud SQL, AlloyDB, or self-hosted Supabase yet, because VaultProof currently depends on Supabase Auth/OAuth/session handling, Admin Auth APIs, REST/service-role APIs, `auth.users`, and Supabase migrations. We can start fresh later after the demo. See `docs/enterprise/gcp-supabase-decision.md`.
 
@@ -17,6 +17,8 @@ Already built:
 - Bootstrap Confidential VM: `vaultproof-enterprise-runtime-1`
 - Artifact Registry images for control plane and secure executor
 - Standard Cloud KMS unwrap key: `vaultproof-unwrap`
+- Customer-managed GCP KMS preflight: `npm run preflight:gcp-customer-kms`
+- Customer-managed AWS KMS preflight: `npm run preflight:aws-customer-kms`
 - Secret Manager containers for runtime env bundles
 - Secret Manager origin-lock value: `enterprise-origin-lock-secret`
 - IAP-only SSH access to the VM
