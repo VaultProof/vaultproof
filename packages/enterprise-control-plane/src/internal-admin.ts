@@ -7,7 +7,7 @@ import {
   normalizeSlug,
   type OrganizationRole,
 } from '@vaultproof/core';
-import type { EnterpriseControlPlaneEnv } from './config.js';
+import { getEnterpriseHostname, type EnterpriseControlPlaneEnv } from './config.js';
 import { writeGovernanceAuditEvent } from './audit.js';
 import { authenticateUser, type EnterpriseUserAuth } from './auth.js';
 import { getSupabase } from './supabase.js';
@@ -650,6 +650,112 @@ function normalizeInternalAdminSsoProvider(value: unknown): string | null | Resp
   return provider;
 }
 
+function ssoStartRedirectUrl(env: EnterpriseControlPlaneEnv, companyDomain: string): string {
+  const params = new URLSearchParams({
+    auth: 'sso',
+    sso_domain: companyDomain,
+  });
+  return `https://${getEnterpriseHostname(env)}/app/login?${params.toString()}`;
+}
+
+function responseErrorMessage(payload: unknown, fallback: string): string {
+  if (payload && typeof payload === 'object') {
+    const record = payload as Record<string, unknown>;
+    for (const key of ['message', 'error_description', 'error', 'msg']) {
+      if (typeof record[key] === 'string' && record[key]) return record[key] as string;
+    }
+  }
+  return fallback;
+}
+
+async function checkSupabaseSsoStart(env: EnterpriseControlPlaneEnv, companyDomain: string): Promise<{
+  broker_status: 'ready' | 'blocked';
+  checked_at: string;
+  company_domain: string;
+  error: string | null;
+  redirect_host: string | null;
+  redirect_to: string;
+  supabase_status: number | null;
+}> {
+  const checkedAt = new Date().toISOString();
+  const redirectTo = ssoStartRedirectUrl(env, companyDomain);
+  if (!env.supabaseUrl || !env.supabaseAnonKey) {
+    return {
+      broker_status: 'blocked',
+      checked_at: checkedAt,
+      company_domain: companyDomain,
+      error: 'Supabase public auth config is missing on the enterprise control plane.',
+      redirect_host: null,
+      redirect_to: redirectTo,
+      supabase_status: null,
+    };
+  }
+
+  let payload: unknown = null;
+  let status: number | null = null;
+  try {
+    const response = await fetch(`${env.supabaseUrl.replace(/\/+$/, '')}/auth/v1/sso`, {
+      method: 'POST',
+      headers: {
+        accept: 'application/json',
+        apikey: env.supabaseAnonKey,
+        authorization: `Bearer ${env.supabaseAnonKey}`,
+        'content-type': 'application/json',
+      },
+      body: JSON.stringify({
+        domain: companyDomain,
+        redirect_to: redirectTo,
+        skip_http_redirect: true,
+      }),
+    });
+    status = response.status;
+    payload = await response.json().catch(() => null);
+    const redirectUrl = payload && typeof payload === 'object'
+      ? typeof (payload as Record<string, unknown>).url === 'string'
+        ? (payload as Record<string, unknown>).url as string
+        : ''
+      : '';
+    let redirectHost: string | null = null;
+    if (redirectUrl) {
+      try {
+        redirectHost = new URL(redirectUrl).hostname;
+      } catch {
+        redirectHost = null;
+      }
+    }
+    if (response.ok && redirectUrl) {
+      return {
+        broker_status: 'ready',
+        checked_at: checkedAt,
+        company_domain: companyDomain,
+        error: null,
+        redirect_host: redirectHost,
+        redirect_to: redirectTo,
+        supabase_status: status,
+      };
+    }
+    return {
+      broker_status: 'blocked',
+      checked_at: checkedAt,
+      company_domain: companyDomain,
+      error: responseErrorMessage(payload, `Supabase SSO start returned HTTP ${response.status}.`),
+      redirect_host: redirectHost,
+      redirect_to: redirectTo,
+      supabase_status: status,
+    };
+  } catch (error) {
+    return {
+      broker_status: 'blocked',
+      checked_at: checkedAt,
+      company_domain: companyDomain,
+      error: error instanceof Error ? error.message : 'Supabase SSO start check failed.',
+      redirect_host: null,
+      redirect_to: redirectTo,
+      supabase_status: status,
+    };
+  }
+}
+
 function validateInternalAdminActionType(value: unknown): InternalAdminActionRequestRow['action_type'] | null {
   return value === 'disable_org_access' ? value : null;
 }
@@ -1017,6 +1123,8 @@ export function renderInternalAdminPage(): string {
     .row { display:grid; grid-template-columns:1fr auto; gap:14px; align-items:start; border:1px solid var(--line-soft); border-radius:17px; padding:14px; background:var(--row-bg); }
     .row-title { font-weight:600; letter-spacing:0; }
     .row-sub { color:var(--muted); font-size:13px; margin-top:5px; line-height:1.45; }
+    .row-sub.good { color:var(--green); }
+    .row-sub.bad { color:var(--red); }
     .tag { display:inline-block; color:var(--blue); border:1px solid rgba(37,99,235,.24); border-radius:999px; padding:5px 8px; font-size:12px; margin:3px 4px 0 0; white-space:nowrap; }
     .tag.good { color:var(--green); border-color:rgba(62,93,87,.24); }
     .tag.warn { color:var(--warn); border-color:rgba(180,83,9,.30); }
@@ -1435,6 +1543,25 @@ export function renderInternalAdminPage(): string {
         if (!response.ok) throw new Error((payload && payload.error) || 'Admin action failed.');
         return payload;
       }
+      async function postAdminCheck(path, body) {
+        var response = await fetch(path, {
+          method: 'POST',
+          headers: {
+            Authorization: 'Bearer ' + token,
+            'Content-Type': 'application/json'
+          },
+          body: body ? JSON.stringify(body) : '{}'
+        });
+        var payload = await response.json().catch(function() { return null; });
+        if (!response.ok) throw new Error((payload && payload.error) || 'Admin check failed.');
+        return payload;
+      }
+      function setSsoBrokerCheckStatus(message, tone) {
+        var status = byId('ssoBrokerCheckStatus');
+        if (!status) return;
+        status.className = 'row-sub ' + (tone || '');
+        status.textContent = message || '';
+      }
       function tagList(items) {
         return (items || []).map(function(item) {
           var tone = item.status === 'done' || item.status === 'ready' ? 'good' : 'warn';
@@ -1468,7 +1595,7 @@ export function renderInternalAdminPage(): string {
         return '<div class="admin-action-panel" data-internal-admin-action="org-account-management">'
           + '<div class="admin-actions-toolbar"><label class="field">approval secret<input id="adminApprovalSecret" type="password" autocomplete="off" placeholder="required for writes"></label><div><div class="row-title">Enterprise account administration</div><div class="row-sub">Use this staff-only page only in the configured VaultProof staff admin system to set SSO metadata, invite admins, record account status, and keep support notes. Secrets and IdP private material stay out of these forms.</div><div id="adminActionStatus" class="form-status"></div></div></div>'
           + '<div class="action-grid">'
-          + '<form id="ssoSettingsForm" class="action-form"><h3>SSO settings</h3><label class="field">company domain<input name="company_domain" value="' + escapeHtml(sso.company_domain || '') + '" placeholder="customer.com"></label><div class="form-row"><label class="field">provider<select name="sso_provider"><option value="microsoft-entra"' + (provider === 'microsoft-entra' ? ' selected' : '') + '>microsoft-entra</option><option value="okta"' + (provider === 'okta' ? ' selected' : '') + '>okta</option><option value="google-workspace"' + (provider === 'google-workspace' ? ' selected' : '') + '>google-workspace</option><option value="generic-saml"' + (provider === 'generic-saml' ? ' selected' : '') + '>generic-saml</option><option value="supabase-saml"' + (provider === 'supabase-saml' ? ' selected' : '') + '>supabase-saml</option></select></label><label class="field">rollout status<select name="status"><option value="requested"' + (ssoStatus === 'requested' ? ' selected' : '') + '>requested</option><option value="configured"' + (ssoStatus === 'configured' ? ' selected' : '') + '>configured</option></select></label></div><label class="field">login mode<select name="login_mode"><option value="sso-first"' + (loginMode === 'sso-first' ? ' selected' : '') + '>sso-first</option><option value="assisted"' + (loginMode === 'assisted' ? ' selected' : '') + '>assisted</option></select></label><button class="primary" type="submit">save SSO</button></form>'
+          + '<form id="ssoSettingsForm" class="action-form"><h3>SSO settings</h3><label class="field">company domain<input name="company_domain" value="' + escapeHtml(sso.company_domain || '') + '" placeholder="customer.com"></label><div class="form-row"><label class="field">provider<select name="sso_provider"><option value="microsoft-entra"' + (provider === 'microsoft-entra' ? ' selected' : '') + '>microsoft-entra</option><option value="okta"' + (provider === 'okta' ? ' selected' : '') + '>okta</option><option value="google-workspace"' + (provider === 'google-workspace' ? ' selected' : '') + '>google-workspace</option><option value="generic-saml"' + (provider === 'generic-saml' ? ' selected' : '') + '>generic-saml</option><option value="supabase-saml"' + (provider === 'supabase-saml' ? ' selected' : '') + '>supabase-saml</option></select></label><label class="field">rollout status<select name="status"><option value="requested"' + (ssoStatus === 'requested' ? ' selected' : '') + '>requested</option><option value="configured"' + (ssoStatus === 'configured' ? ' selected' : '') + '>configured</option></select></label></div><label class="field">login mode<select name="login_mode"><option value="sso-first"' + (loginMode === 'sso-first' ? ' selected' : '') + '>sso-first</option><option value="assisted"' + (loginMode === 'assisted' ? ' selected' : '') + '>assisted</option></select></label><div class="row"><div><div class="row-title">Supabase SAML broker check</div><div class="row-sub" id="ssoBrokerCheckStatus">Checks whether the company domain returns a real SSO redirect. If Supabase SAML is disabled, this will show blocked.</div></div><button type="button" id="ssoBrokerCheckBtn">check SSO start</button></div><button class="primary" type="submit">save SSO</button></form>'
           + '<form id="inviteForm" class="action-form"><h3>Invite enterprise user</h3><label class="field">email<input name="email" type="email" placeholder="identity.owner@customer.com"></label><label class="field">role<select name="role">' + roleOptions('iam_admin') + '</select></label><button class="primary" type="submit">create invite</button></form>'
           + '<form id="businessStatusForm" class="action-form"><h3>Account status</h3><div class="form-row"><label class="field">status<select name="status"><option value="onboarding"' + (currentStatus && currentStatus.status === 'onboarding' ? ' selected' : '') + '>onboarding</option><option value="active"' + (currentStatus && currentStatus.status === 'active' ? ' selected' : '') + '>active</option><option value="at_risk"' + (currentStatus && currentStatus.status === 'at_risk' ? ' selected' : '') + '>at_risk</option><option value="paused"' + (currentStatus && currentStatus.status === 'paused' ? ' selected' : '') + '>paused</option><option value="offboarding"' + (currentStatus && currentStatus.status === 'offboarding' ? ' selected' : '') + '>offboarding</option></select></label><label class="field">plan label<input name="plan_label" value="' + escapeHtml(currentStatus && currentStatus.plan_label ? currentStatus.plan_label : '') + '" placeholder="Enterprise Pilot"></label></div><label class="field">summary<textarea name="summary" placeholder="Current account status">' + escapeHtml(currentStatus && currentStatus.summary ? currentStatus.summary : '') + '</textarea></label><label class="field">next step<input name="next_step" value="' + escapeHtml(currentStatus && currentStatus.next_step ? currentStatus.next_step : '') + '" placeholder="Next customer/admin action"></label><button class="primary" type="submit">record status</button></form>'
           + '<form id="supportNoteForm" class="action-form"><h3>Support note</h3><label class="field">note type<select name="note_type"><option value="support_note">support_note</option><option value="onboarding">onboarding</option><option value="security">security</option><option value="billing">billing</option><option value="go_live">go_live</option></select></label><label class="field">note<textarea name="body" placeholder="Customer-visible context, no secrets"></textarea></label><button class="primary" type="submit">add note</button></form>'
@@ -1492,6 +1619,26 @@ export function renderInternalAdminPage(): string {
             renderOrgDetail(await fetchOrgDetail(orgId));
           } catch (error) {
             setActionStatus(error && error.message ? error.message : 'SSO update failed.', 'bad');
+          }
+        });
+        var ssoBrokerCheckBtn = byId('ssoBrokerCheckBtn');
+        if (ssoBrokerCheckBtn && ssoForm) ssoBrokerCheckBtn.addEventListener('click', async function() {
+          try {
+            ssoBrokerCheckBtn.disabled = true;
+            setSsoBrokerCheckStatus('Checking Supabase SAML broker...', '');
+            var payload = await postAdminCheck('/api/v1/internal-admin/orgs/' + encodeURIComponent(orgId) + '/sso-start-check', {
+              company_domain: formValue(ssoForm, 'company_domain')
+            });
+            var check = payload.sso_start_check || {};
+            if (check.broker_status === 'ready') {
+              setSsoBrokerCheckStatus('Ready: Supabase returned an IdP redirect for ' + (check.company_domain || 'this domain') + '.', 'good');
+            } else {
+              setSsoBrokerCheckStatus('Blocked: ' + (check.error || 'Supabase did not return an SSO redirect.'), 'bad');
+            }
+          } catch (error) {
+            setSsoBrokerCheckStatus(error && error.message ? error.message : 'SSO start check failed.', 'bad');
+          } finally {
+            ssoBrokerCheckBtn.disabled = false;
           }
         });
         var inviteForm = byId('inviteForm');
@@ -2368,6 +2515,120 @@ async function handleUpdateInternalAdminSsoSettings(
       'SSO settings updates require the approval secret header.',
       'This endpoint stores only provider metadata and rollout status. It does not accept OAuth client secrets, SAML metadata XML, certificates, or IdP private material.',
       'The customer organization audit and internal admin audit streams both record the change.',
+    ],
+  }, {
+    headers: {
+      'cache-control': 'no-store',
+    },
+  });
+}
+
+async function handleCheckInternalAdminSsoStart(
+  request: Request,
+  env: EnterpriseControlPlaneEnv,
+  organizationId: string,
+): Promise<Response> {
+  const orgId = decodeURIComponent(organizationId || '').trim();
+  if (!orgId) {
+    return Response.json({ error: 'Organization ID is required.' }, { status: 400 });
+  }
+
+  const authorized = await authorizeInternalAdmin(request, env);
+  if (authorized instanceof Response) return authorized;
+
+  let requestedDomain = '';
+  if (request.method === 'POST') {
+    try {
+      const parsed = await request.json();
+      if (parsed && typeof parsed === 'object' && !Array.isArray(parsed)) {
+        requestedDomain = typeof (parsed as Record<string, unknown>).company_domain === 'string'
+          ? (parsed as Record<string, unknown>).company_domain as string
+          : '';
+      }
+    } catch {
+      return Response.json({ error: 'Invalid JSON body.' }, { status: 400 });
+    }
+  }
+
+  const supabase = getSupabase(env);
+  const [orgResult, ssoResult] = await Promise.all([
+    supabase
+      .from('organizations')
+      .select('id, kind')
+      .eq('id', orgId)
+      .limit(1),
+    supabase
+      .from('organization_sso_settings')
+      .select('organization_id, company_domain, sso_provider, login_mode, status, updated_at')
+      .eq('organization_id', orgId)
+      .limit(1),
+  ]);
+
+  if (orgResult.error) {
+    return Response.json({ error: `Internal admin org lookup failed: ${orgResult.error.message}` }, { status: 500 });
+  }
+  const organization = normalizeRows(orgResult.data as MaybeArray<{ id: string; kind: string }>)[0];
+  if (!organization) {
+    return Response.json({ error: 'Organization not found.' }, { status: 404 });
+  }
+  if (organization.kind !== 'team') {
+    return Response.json({ error: 'SSO checks are only available on enterprise team organizations.' }, { status: 400 });
+  }
+
+  if (ssoResult.error) {
+    const migrationRequired = isMissingOrganizationSsoSettingsTable(ssoResult.error)
+      ? 'Apply supabase/migrations/20260419010000_organization_sso_settings.sql'
+      : null;
+    return Response.json({
+      error: migrationRequired || `Internal admin SSO settings lookup failed: ${ssoResult.error.message}`,
+      migration_required: migrationRequired,
+    }, { status: migrationRequired ? 501 : 500 });
+  }
+
+  const sso = normalizeRows(ssoResult.data as MaybeArray<{
+    organization_id: string;
+    company_domain: string | null;
+    sso_provider: string | null;
+    login_mode: string | null;
+    status: string | null;
+    updated_at: string | null;
+  }>)[0] || null;
+  const companyDomain = normalizeDomain(requestedDomain || sso?.company_domain || '');
+  if (!companyDomain) {
+    return Response.json({ error: 'company_domain is required before checking SSO start.' }, { status: 400 });
+  }
+  if (!isValidDomain(companyDomain)) {
+    return Response.json({ error: 'company_domain must be a valid domain.' }, { status: 400 });
+  }
+
+  const check = await checkSupabaseSsoStart(env, companyDomain);
+  await writeInternalAdminAuditEvent(
+    env,
+    authorized.auth,
+    request,
+    'internal_admin_sso_start_checked',
+    {
+      organization_id: orgId,
+      company_domain: companyDomain,
+      broker_status: check.broker_status,
+      supabase_status: check.supabase_status,
+      redirect_host: check.redirect_host,
+      error: truncateForAudit(check.error),
+    },
+  );
+
+  return Response.json({
+    sso_start_check: {
+      ...check,
+      organization_id: orgId,
+      sso_provider: sso?.sso_provider || null,
+      rollout_status: sso?.status || 'not_configured',
+      login_mode: sso?.login_mode || null,
+    },
+    guardrails: [
+      'This checks the public Supabase SAML broker start path for the configured company domain.',
+      'A ready result means Supabase returned an IdP redirect URL; it does not complete the customer browser login.',
+      'If the result says SAML 2.0 is disabled, enable/configure Supabase SAML before marking the business configured.',
     ],
   }, {
     headers: {
@@ -3345,6 +3606,15 @@ export async function handleInternalAdminRoutes(
     && pathSegments[2] === 'sso-settings'
   ) {
     return handleUpdateInternalAdminSsoSettings(request, env, pathSegments[1] || '');
+  }
+
+  if (
+    request.method === 'POST'
+    && pathSegments.length === 3
+    && pathSegments[0] === 'orgs'
+    && pathSegments[2] === 'sso-start-check'
+  ) {
+    return handleCheckInternalAdminSsoStart(request, env, pathSegments[1] || '');
   }
 
   if (

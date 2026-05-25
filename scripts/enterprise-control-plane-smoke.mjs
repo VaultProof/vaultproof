@@ -238,6 +238,16 @@ function installSupabaseStub() {
     const decodedUrl = decodeURIComponent(url);
     const method = (init?.method || 'GET').toUpperCase();
 
+    if (url.includes('/auth/v1/sso') && method === 'POST') {
+      const body = JSON.parse(init?.body || '{}');
+      if (!body.domain || !body.redirect_to || body.skip_http_redirect !== true) {
+        throw new Error(`Expected SSO start check body, got ${JSON.stringify(body)}`);
+      }
+      return jsonResponse({
+        url: `https://idp.example.com/sso?domain=${encodeURIComponent(body.domain)}`,
+      });
+    }
+
     if (url.includes('/auth/v1/user') && method === 'GET') {
       authUserLookupCalls += 1;
       const authHeader = new Headers(init?.headers).get('authorization');
@@ -4183,6 +4193,33 @@ async function assertInternalAdminConsole() {
   }
   if (!auditEvents.some((event) => event.event_type === 'organization_sso_settings_updated' && event.metadata?.updated_via === 'internal_admin')) {
     throw new Error(`Expected customer org audit event for internal SSO settings update, got ${JSON.stringify(auditEvents)}`);
+  }
+
+  const ssoStartCheckResponse = await handleEnterpriseControlPlaneRequest(
+    buildHostRequest(INTERNAL_ADMIN_HOSTNAME, '/api/v1/internal-admin/orgs/org_123/sso-start-check', {
+      method: 'POST',
+      headers: {
+        authorization: `Bearer ${AUTH_TOKEN}`,
+        'content-type': 'application/json',
+      },
+      body: JSON.stringify({
+        company_domain: 'pilot.example.com',
+      }),
+    }),
+    {
+      ...env,
+      supabaseUrl: 'https://supabase.example.co',
+      supabaseAnonKey: 'anon-key',
+    },
+  );
+  const ssoStartCheckPayload = await ssoStartCheckResponse.json();
+  if (ssoStartCheckResponse.status !== 200
+    || ssoStartCheckPayload.sso_start_check?.broker_status !== 'ready'
+    || ssoStartCheckPayload.sso_start_check?.redirect_host !== 'idp.example.com') {
+    throw new Error(`Expected internal SSO start check to verify broker redirect, got ${ssoStartCheckResponse.status}: ${JSON.stringify(ssoStartCheckPayload)}`);
+  }
+  if (!internalAdminAuditEvents.some((event) => event.event_type === 'internal_admin_sso_start_checked')) {
+    throw new Error(`Expected internal SSO start check audit event, got ${JSON.stringify(internalAdminAuditEvents)}`);
   }
 
   const disabledNoteResponse = await handleEnterpriseControlPlaneRequest(
