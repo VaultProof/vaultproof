@@ -946,7 +946,7 @@ export function renderEnterpriseHomepage(env: EnterpriseControlPlaneEnv = {}): s
         </nav>
         <div class="vp-actions">
           <a class="vp-signin" href="/app/login">Sign in</a>
-          <a class="vp-btn primary" href="mailto:security@vaultproof.dev?subject=VaultProof%20Enterprise%20demo">Book a demo →</a>
+          <a class="vp-btn primary" href="mailto:security@vaultproof.dev?subject=VaultProof%20Enterprise%20pilot%20walkthrough">Book a walkthrough →</a>
         </div>
       </div>
     </header>
@@ -1112,9 +1112,9 @@ export function renderEnterpriseHomepage(env: EnterpriseControlPlaneEnv = {}): s
           <div class="vp-two-col" style="align-items:baseline;margin-bottom:32px">
             <div>
               <div class="vp-eyebrow"><strong>§ 07</strong><span>Trust · the honest version</span></div>
-              <h2 class="vp-heading">We're early. <em>The safe GCP demo is live.</em></h2>
+              <h2 class="vp-heading">We're early. <em>The guided pilot environment is live.</em></h2>
             </div>
-            <p class="vp-copy" style="margin:0">VaultProof is in private beta. We do not claim certifications before auditors sign them. Today we have a live secure GCP demo, a clear enterprise dashboard, and a roadmap toward the proof big companies need.</p>
+            <p class="vp-copy" style="margin:0">VaultProof is in private beta. We do not claim certifications before auditors sign them. Today we have a live secure GCP pilot environment, a clear enterprise dashboard, and a roadmap toward the proof big companies need.</p>
           </div>
           <div class="vp-compliance-grid">
             <article class="vp-compliance-card"><h3>SOC 2 Type II</h3><p>Pursuing · Type I observation underway</p></article>

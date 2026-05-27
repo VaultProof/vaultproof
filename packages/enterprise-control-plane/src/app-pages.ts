@@ -2381,7 +2381,7 @@ function renderEnterpriseOperationsPage(pageName: 'activity' | 'projects' | 'inv
       : pageName === 'inventory'
         ? 'Map every API surface, owner, protection state, policy control, traffic signal, and review decision without storing secrets.'
         : pageName === 'policy'
-          ? 'Review caller-lock drift, missing controls, demo-only risk, accepted exceptions, owners, expiry dates, and remaining blockers before paid traffic.'
+          ? 'Review caller-lock drift, missing controls, placeholder-material risk, accepted exceptions, owners, expiry dates, and remaining blockers before paid traffic.'
           : pageName === 'rollout'
             ? 'Move one customer workload into VaultProof with app and gateway owners, test status, canary percentage, rollback path, blockers, and customer-safe evidence.'
             : 'Review active provider slots, trigger emergency revoke, and keep rotation posture visible without exposing upstream secrets.';
@@ -2516,7 +2516,7 @@ function renderEnterpriseOperationsPage(pageName: 'activity' | 'projects' | 'inv
 
       ${pageName === 'keys' ? `
       <section id="providerSlotFormPanel" class="card" style="display:none;margin-bottom:16px">
-        <div class="section-title"><h2>Add provider slot</h2><span class="mini">demo material</span></div>
+        <div class="section-title"><h2>Add provider slot</h2><span class="mini">placeholder material</span></div>
         <form id="providerSlotForm">
           <div class="slot-form">
             <label>Project
@@ -2605,7 +2605,7 @@ ${renderDatalistOptions(ENTERPRISE_PROVIDER_SLOT_PRESETS.map((preset) => preset.
               </label>
               <label>Default environment
                 <select id="inventoryImportEnvironment">
-                  <option value="demo">demo</option>
+                  <option value="demo">sandbox</option>
                   <option value="dev">dev</option>
                   <option value="staging">staging</option>
                   <option value="production">production</option>
@@ -2652,7 +2652,7 @@ ${renderDatalistOptions(ENTERPRISE_PROVIDER_SLOT_PRESETS.map((preset) => preset.
               </label>
               <label>Environment
                 <select id="manualKeyEnvironment">
-                  <option value="demo">demo</option>
+                  <option value="demo">sandbox</option>
                   <option value="dev">dev</option>
                   <option value="staging">staging</option>
                   <option value="production">production</option>
@@ -2663,8 +2663,8 @@ ${renderDatalistOptions(ENTERPRISE_PROVIDER_SLOT_PRESETS.map((preset) => preset.
                   <option value="unknown">unknown</option>
                   <option value="current">current</option>
                   <option value="rotation_due">rotation due</option>
-                  <option value="rotated_for_demo">rotated for demo</option>
-                  <option value="accepted_demo_only">accepted demo only</option>
+                  <option value="rotated_for_demo">rotated for pilot</option>
+                  <option value="accepted_demo_only">accepted for pilot</option>
                 </select>
               </label>
               <label>Review status
@@ -2803,7 +2803,7 @@ ${renderDatalistOptions(ENTERPRISE_MANUAL_API_KEY_PROVIDER_OPTIONS)}
             <select id="policyStatusFilter" aria-label="Policy status">
               <option value="">all status</option>
               <option value="open_drift">open drift</option>
-              <option value="accepted_demo">demo accepted</option>
+              <option value="accepted_demo">pilot accepted</option>
               <option value="approved_exception">approved exception</option>
               <option value="expired_exception">expired exception</option>
               <option value="blocked">blocked</option>
@@ -2811,7 +2811,7 @@ ${renderDatalistOptions(ENTERPRISE_MANUAL_API_KEY_PROVIDER_OPTIONS)}
             <select id="policyControlFilter" aria-label="Policy control">
               <option value="">all controls</option>
               <option value="missing-provider-slot">missing provider slot</option>
-              <option value="demo-placeholder-material">demo material</option>
+              <option value="demo-placeholder-material">placeholder material</option>
               <option value="strict-origin-missing">strict origin</option>
               <option value="gateway-lock-missing">gateway lock</option>
               <option value="method-lock-missing">method lock</option>
@@ -2942,7 +2942,7 @@ ${renderDatalistOptions(ENTERPRISE_MANUAL_API_KEY_PROVIDER_OPTIONS)}
 
       <section id="emailKeyDemoPanel" class="grid two" style="display:none;margin-bottom:16px">
         <div class="card">
-          <div class="section-title"><h2>Email API key demo</h2><span class="mini">required for demo</span></div>
+          <div class="section-title"><h2>Email API key walkthrough</h2><span class="mini">required for pilot</span></div>
           <div id="emailKeyDemoList" class="list"></div>
         </div>
         <div class="card">
@@ -2951,7 +2951,7 @@ ${renderDatalistOptions(ENTERPRISE_MANUAL_API_KEY_PROVIDER_OPTIONS)}
             <div class="row"><div><div class="row-title">What this proves</div><div class="row-sub">The customer app sends through VaultProof without storing, viewing, copying, logging, or emailing the raw email-provider key.</div></div><span class="tag good">use-only</span></div>
             <div class="row"><div><div class="row-title">Policy boundary</div><div class="row-sub">Lock sender domains, recipient allowlists, template IDs, gateway markers, and per-minute limits before live sends.</div></div><span class="tag warn">policy</span></div>
             <div class="row"><div><div class="row-title">Policy denial evidence</div><div class="row-sub">Blocked email attempts record sender domain, recipient domains, recipient count, template IDs, caller-lock facts, and protected-secret classification without writing the raw email payload.</div></div><span class="tag bad">deny + audit</span></div>
-            <div class="row"><div><div class="row-title">Demo path</div><div class="row-sub">Use protected email dry-run first. Live sandbox send should wait until a sealed provider key is loaded with the local ingest helper.</div></div><span class="tag">dry-run first</span></div>
+            <div class="row"><div><div class="row-title">First run</div><div class="row-sub">Use protected email dry-run first. Live sandbox send should wait until a sealed provider key is loaded with the local ingest helper.</div></div><span class="tag">dry-run first</span></div>
           </div>
         </div>
       </section>` : ''}
@@ -2986,6 +2986,27 @@ ${renderDatalistOptions(ENTERPRISE_MANUAL_API_KEY_PROVIDER_OPTIONS)}
         return /not authenticated/i.test(value) ? ${JSON.stringify(ENTERPRISE_AUTH_ERROR_MESSAGE)} : value;
       }
       function number(value) { var n = Number(value || 0); return Number.isFinite(n) ? n.toLocaleString() : '0'; }
+      function displayRuntimeTier(value) {
+        var tier = String(value || '');
+        if (tier === 'shared-demo') return 'shared pilot runtime';
+        if (tier === 'dedicated-production') return 'dedicated production runtime';
+        return tier || 'not reported';
+      }
+      function displayPilotStatus(value) {
+        var status = String(value || '');
+        if (status === 'accepted_for_pilot' || status === 'accepted_for_demo') return 'accepted for pilot';
+        if (status === 'ready_for_guided_testing') return 'ready for guided testing';
+        if (status === 'ready_for_paid_pilot') return 'ready for paid pilot';
+        if (status === 'ready_for_customer_testing') return 'ready for customer testing';
+        return status.replace(/_/g, ' ');
+      }
+      function displayMaterialMode(value) {
+        var mode = String(value || '');
+        if (mode === 'sealed-live') return 'live sealed material';
+        if (mode === 'demo-placeholder') return 'placeholder material';
+        if (mode === 'mixed') return 'mixed material state';
+        return mode ? mode.replace(/_/g, ' ') : 'material missing';
+      }
       function rel(value) {
         if (!value) return 'never';
         var diff = Date.now() - new Date(value).getTime();
@@ -3052,15 +3073,15 @@ ${renderDatalistOptions(ENTERPRISE_MANUAL_API_KEY_PROVIDER_OPTIONS)}
         if (provider === 'sendgrid') {
           return {
             personalizations: [{ to: [{ email: recipient }] }],
-            from: { email: 'demo@vaultproof.dev' },
-            template_id: 'vaultproof-demo',
+            from: { email: 'pilot@vaultproof.dev' },
+            template_id: 'vaultproof-pilot',
             subject: 'VaultProof protected email dry-run',
             content: [{ type: 'text/plain', value: 'VaultProof policy validated this email-provider call without exposing the raw key.' }]
           };
         }
         if (provider === 'mailgun') {
           return {
-            from: 'VaultProof Demo <demo@vaultproof.dev>',
+            from: 'VaultProof Pilot <pilot@vaultproof.dev>',
             to: recipient,
             subject: 'VaultProof protected email dry-run',
             text: 'VaultProof policy validated this email-provider call without exposing the raw key.'
@@ -3068,18 +3089,18 @@ ${renderDatalistOptions(ENTERPRISE_MANUAL_API_KEY_PROVIDER_OPTIONS)}
         }
         if (provider === 'postmark') {
           return {
-            From: 'demo@vaultproof.dev',
+            From: 'pilot@vaultproof.dev',
             To: recipient,
-            TemplateId: 'vaultproof-demo',
+            TemplateId: 'vaultproof-pilot',
             Subject: 'VaultProof protected email dry-run',
             TextBody: 'VaultProof policy validated this email-provider call without exposing the raw key.'
           };
         }
         if (provider === 'aws-ses' || provider === 'aws_ses') {
           return {
-            Source: 'demo@vaultproof.dev',
+            Source: 'pilot@vaultproof.dev',
             Destination: { ToAddresses: [recipient] },
-            Template: 'vaultproof-demo',
+            Template: 'vaultproof-pilot',
             Message: {
               Subject: { Data: 'VaultProof protected email dry-run' },
               Body: { Text: { Data: 'VaultProof policy validated this email-provider call without exposing the raw key.' } }
@@ -3087,7 +3108,7 @@ ${renderDatalistOptions(ENTERPRISE_MANUAL_API_KEY_PROVIDER_OPTIONS)}
           };
         }
         return {
-          from: 'VaultProof Demo <demo@vaultproof.dev>',
+          from: 'VaultProof Pilot <pilot@vaultproof.dev>',
           to: [recipient],
           subject: 'VaultProof protected email dry-run',
           text: 'VaultProof policy validated this email-provider call without exposing the raw key.'
@@ -3182,7 +3203,7 @@ ${renderDatalistOptions(ENTERPRISE_MANUAL_API_KEY_PROVIDER_OPTIONS)}
         }, 0);
         text('kpiProjects', number(cachedProjects.length));
         text('kpiKeys', number(slotCount));
-        text('kpiProviders', slotCount ? (liveSlotCount + ' live sealed / ' + demoSlotCount + ' demo') : 'no active slots');
+        text('kpiProviders', slotCount ? (liveSlotCount + ' live sealed / ' + demoSlotCount + ' placeholder') : 'no active slots');
         text('kpiCalls', number(cachedOverview.totalCalls));
         text('kpiDenied', number(cachedOverview.deniedCalls));
       }
@@ -3766,7 +3787,7 @@ ${renderDatalistOptions(ENTERPRISE_MANUAL_API_KEY_PROVIDER_OPTIONS)}
             var statuses = [];
             if (!slot) statuses.push({ label: 'missing provider slot', tone: 'bad' });
             if (slot && slot.material_ready === true && project.strict_origin === true && coverage.complete) statuses.push({ label: 'protected', tone: 'good' });
-            if (slot && slot.material_mode === 'demo-placeholder') statuses.push({ label: 'demo placeholder', tone: 'warn' });
+            if (slot && slot.material_mode === 'demo-placeholder') statuses.push({ label: 'placeholder material', tone: 'warn' });
             if (!coverage.complete) statuses.push({ label: 'policy incomplete', tone: 'warn' });
             if (!calls) statuses.push({ label: 'no recent traffic', tone: 'warn' });
             if (stale) statuses.push({ label: 'stale', tone: 'warn' });
@@ -3852,8 +3873,8 @@ ${renderDatalistOptions(ENTERPRISE_MANUAL_API_KEY_PROVIDER_OPTIONS)}
             { value: 'unknown', label: 'unknown' },
             { value: 'current', label: 'current' },
             { value: 'rotation_due', label: 'rotation due' },
-            { value: 'rotated_for_demo', label: 'rotated for demo' },
-            { value: 'accepted_demo_only', label: 'accepted demo only' }
+            { value: 'rotated_for_demo', label: 'rotated for pilot' },
+            { value: 'accepted_demo_only', label: 'accepted for pilot' }
           ]);
       }
       function renderInventoryStatusTags(row) {
@@ -3910,7 +3931,7 @@ ${renderDatalistOptions(ENTERPRISE_MANUAL_API_KEY_PROVIDER_OPTIONS)}
           inventoryInput(row, 'technical_owner', 'technical owner', 'Platform owner') +
           inventorySelect(row, 'environment', 'environment', [
             { value: '', label: 'unset' },
-            { value: 'demo', label: 'demo' },
+            { value: 'demo', label: 'sandbox' },
             { value: 'dev', label: 'dev' },
             { value: 'staging', label: 'staging' },
             { value: 'production', label: 'production' }
@@ -3938,7 +3959,7 @@ ${renderDatalistOptions(ENTERPRISE_MANUAL_API_KEY_PROVIDER_OPTIONS)}
           ]) +
           '<div class="inventory-field"><label>next review</label><input type="date" data-inventory-row-id="' + escapeHtml(row.id) + '" data-inventory-field="next_review_date" value="' + escapeHtml(annotation.next_review_date || '') + '" /></div>' +
           '<div class="inventory-field wide"><label>review notes</label><textarea data-inventory-row-id="' + escapeHtml(row.id) + '" data-inventory-field="note" placeholder="Metadata-only note. Do not paste secrets, request bodies, response bodies, or customer payloads.">' + escapeHtml(annotation.note || '') + '</textarea></div>' +
-          '<div class="inventory-field wide"><label>policy evidence</label><div class="inventory-policy-note row-sub">Origins: ' + escapeHtml(row.project.strict_origin ? 'strict' : 'relaxed') + '. Methods: ' + escapeHtml((policy.allowed_methods || []).join(', ') || 'not set') + '. Hosts: ' + escapeHtml((policy.allowed_upstream_hosts || []).join(', ') || 'not set') + '. Paths: ' + escapeHtml((policy.allowed_upstream_path_prefixes || []).join(', ') || 'not set') + '. Gateways: ' + escapeHtml((policy.allowed_customer_gateways || []).join(', ') || 'not set') + '. Material: ' + escapeHtml(provider.material_mode || 'missing material') + '.</div></div>' +
+          '<div class="inventory-field wide"><label>policy evidence</label><div class="inventory-policy-note row-sub">Origins: ' + escapeHtml(row.project.strict_origin ? 'strict' : 'relaxed') + '. Methods: ' + escapeHtml((policy.allowed_methods || []).join(', ') || 'not set') + '. Hosts: ' + escapeHtml((policy.allowed_upstream_hosts || []).join(', ') || 'not set') + '. Paths: ' + escapeHtml((policy.allowed_upstream_path_prefixes || []).join(', ') || 'not set') + '. Gateways: ' + escapeHtml((policy.allowed_customer_gateways || []).join(', ') || 'not set') + '. Material: ' + escapeHtml(displayMaterialMode(provider.material_mode || 'missing')) + '.</div></div>' +
           '</div></article>';
       }
       function inventorySummaryForRows(rows) {
@@ -4063,7 +4084,7 @@ ${renderDatalistOptions(ENTERPRISE_MANUAL_API_KEY_PROVIDER_OPTIONS)}
             return {
               id: row.id,
               project: row.project,
-              provider: row.provider,
+              provider: Object.assign({}, row.provider, { material_mode: displayMaterialMode(row.provider && row.provider.material_mode) }),
               manual_key: row.manual_key ? {
                 provider: row.manual_key.provider || null,
                 key_label: row.manual_key.key_label || null,
@@ -4398,13 +4419,13 @@ ${renderDatalistOptions(ENTERPRISE_MANUAL_API_KEY_PROVIDER_OPTIONS)}
       function policyRowStatus(row) {
         var exception = row.exception || {};
         if (exception.approval_status === 'blocked') return 'blocked';
-        if (policyExceptionActive(exception)) return exception.approval_status === 'approved' ? 'approved exception' : 'demo accepted';
+        if (policyExceptionActive(exception)) return exception.approval_status === 'approved' ? 'approved exception' : 'pilot accepted';
         if (policyExceptionExpired(exception)) return 'expired exception';
         return 'open drift';
       }
       function policyRowTone(row) {
         var status = policyRowStatus(row);
-        if (status === 'approved exception' || status === 'demo accepted') return 'good';
+        if (status === 'approved exception' || status === 'pilot accepted') return 'good';
         if (status === 'blocked' || row.severity === 'critical') return 'bad';
         return 'warn';
       }
@@ -4440,13 +4461,13 @@ ${renderDatalistOptions(ENTERPRISE_MANUAL_API_KEY_PROVIDER_OPTIONS)}
             addPolicyRow(rows, inventoryRow, 'missing-provider-slot', 'Missing provider slot', 'This project has no mapped provider slot, so VaultProof cannot prove which upstream API is protected.', 'critical', 'Create a provider slot in /app/keys, then map the caller policy in /app/control.');
           }
           if (inventoryRow.provider && provider.material_mode === 'demo-placeholder') {
-            addPolicyRow(rows, inventoryRow, 'demo-placeholder-material', 'Demo-only provider material', 'The provider slot uses demo placeholder material. That is acceptable for a demo only when explicitly accepted and dated.', 'high', 'Rotate to sealed live material before paid customer data, or record a demo-only exception with an expiry.');
+            addPolicyRow(rows, inventoryRow, 'demo-placeholder-material', 'Placeholder provider material', 'The provider slot uses placeholder material. That is acceptable for a controlled pilot only when explicitly accepted and dated.', 'high', 'Rotate to sealed live material before paid customer data, or record a temporary exception with an expiry.');
           }
           if (inventoryRow.project && inventoryRow.project.strict_origin !== true) {
             addPolicyRow(rows, inventoryRow, 'strict-origin-missing', 'Strict origin not enabled', 'Strict origin enforcement is not active for this project, which weakens browser-origin binding.', 'critical', 'Enable strict origin and confirm allowed origins in /app/control.');
           }
           if (!Array.isArray(policy.allowed_customer_gateways) || policy.allowed_customer_gateways.length === 0) {
-            addPolicyRow(rows, inventoryRow, 'gateway-lock-missing', 'Customer gateway lock missing', 'No approved customer gateway marker is visible for this API surface.', 'high', 'Add allowed_customer_gateways in /app/control or document the accepted demo gateway path.');
+            addPolicyRow(rows, inventoryRow, 'gateway-lock-missing', 'Customer gateway lock missing', 'No approved customer gateway marker is visible for this API surface.', 'high', 'Add allowed_customer_gateways in /app/control or document the accepted pilot gateway path.');
           }
           if (!Array.isArray(policy.allowed_methods) || policy.allowed_methods.length === 0) {
             addPolicyRow(rows, inventoryRow, 'method-lock-missing', 'Allowed methods not set', 'The caller-lock policy does not report an allowed HTTP method list for this surface.', 'medium', 'Set the smallest allowed method list in /app/control.');
@@ -4458,7 +4479,7 @@ ${renderDatalistOptions(ENTERPRISE_MANUAL_API_KEY_PROVIDER_OPTIONS)}
             addPolicyRow(rows, inventoryRow, 'inventory-owner-missing', 'Owner metadata missing', 'Business owner and technical owner are required before a buyer can treat this API as operationally owned.', 'medium', 'Open /app/inventory and set both owners for this API surface.');
           }
           if (Number(traffic.calls || 0) === 0) {
-            addPolicyRow(rows, inventoryRow, 'traffic-evidence-missing', 'No recent traffic evidence', 'No proxy traffic is visible for this API surface, so the demo cannot prove live runtime behavior yet.', 'medium', 'Run a dry-run request from /app/keys and review /app/activity.');
+            addPolicyRow(rows, inventoryRow, 'traffic-evidence-missing', 'No recent traffic evidence', 'No proxy traffic is visible for this API surface, so the walkthrough cannot prove live runtime behavior yet.', 'medium', 'Run a dry-run request from /app/keys and review /app/activity.');
           }
           if (traffic.stale) {
             addPolicyRow(rows, inventoryRow, 'traffic-evidence-stale', 'Traffic evidence is stale', 'The last observed proxy activity is older than 30 days.', 'medium', 'Run a fresh dry-run or low-volume test and review /app/activity.');
@@ -4499,7 +4520,7 @@ ${renderDatalistOptions(ENTERPRISE_MANUAL_API_KEY_PROVIDER_OPTIONS)}
           '<div class="inventory-fields">' +
           policySelect(row, 'approval_status', 'exception status', [
             { value: '', label: 'open' },
-            { value: 'accepted_demo', label: 'accepted for demo' },
+            { value: 'accepted_demo', label: 'accepted for pilot' },
             { value: 'approved', label: 'approved exception' },
             { value: 'blocked', label: 'blocked' }
           ]) +
@@ -4545,7 +4566,7 @@ ${renderDatalistOptions(ENTERPRISE_MANUAL_API_KEY_PROVIDER_OPTIONS)}
       }
       function policyStatusFilterValue(row) {
         var status = policyRowStatus(row);
-        if (status === 'demo accepted') return 'accepted_demo';
+        if (status === 'pilot accepted') return 'accepted_demo';
         if (status === 'approved exception') return 'approved_exception';
         if (status === 'expired exception') return 'expired_exception';
         if (status === 'blocked') return 'blocked';
@@ -4695,7 +4716,7 @@ ${renderDatalistOptions(ENTERPRISE_MANUAL_API_KEY_PROVIDER_OPTIONS)}
         if (!exception.reason) actions.push('capture accepted-risk reason');
         if (!exception.compensating_control) actions.push('capture compensating control');
         if (!exception.expires_at) actions.push('set expiration date');
-        return actions.length ? actions : ['exception is recorded; verify it is still acceptable for the customer demo'];
+        return actions.length ? actions : ['exception is recorded; verify it is still acceptable for the customer walkthrough'];
       }
       function policyBriefPriority(row) {
         var score = policySeverityRank(row.severity) * 10;
@@ -4840,10 +4861,10 @@ ${renderDatalistOptions(ENTERPRISE_MANUAL_API_KEY_PROVIDER_OPTIONS)}
         var canary = rolloutPercent(state.canary_percent);
         var testStatus = state.test_status || 'not_started';
         var openCriticalPolicy = policyRows.filter(function(policyRow) {
-          return (policyRow.severity === 'critical' || policyRow.severity === 'high') && policyRowStatus(policyRow) !== 'approved exception' && policyRowStatus(policyRow) !== 'demo accepted';
+          return (policyRow.severity === 'critical' || policyRow.severity === 'high') && policyRowStatus(policyRow) !== 'approved exception' && policyRowStatus(policyRow) !== 'pilot accepted';
         });
         if (!row.provider) blockers.push('missing provider slot');
-        if (row.provider && row.provider.material_mode === 'demo-placeholder') blockers.push('demo-only provider material');
+        if (row.provider && row.provider.material_mode === 'demo-placeholder') blockers.push('placeholder provider material');
         if (!row.policy || row.policy.complete !== true) blockers.push('caller-lock policy incomplete');
         if (annotation.review_status === 'blocked') blockers.push('API inventory row blocked');
         if (!annotation.business_owner || !annotation.technical_owner) blockers.push('API inventory owners missing');
@@ -4924,7 +4945,7 @@ ${renderDatalistOptions(ENTERPRISE_MANUAL_API_KEY_PROVIDER_OPTIONS)}
           rolloutInput(row, 'application', 'application/workload', row.inventory_annotation.business_service || 'Customer billing API') +
           rolloutSelect(row, 'environment', 'environment', [
             { value: '', label: 'unset' },
-            { value: 'demo', label: 'demo' },
+            { value: 'demo', label: 'sandbox' },
             { value: 'dev', label: 'dev' },
             { value: 'staging', label: 'staging' },
             { value: 'production', label: 'production' }
@@ -5267,7 +5288,7 @@ ${renderDatalistOptions(ENTERPRISE_MANUAL_API_KEY_PROVIDER_OPTIONS)}
           var providers = (project.provider_slots || []).map(function(slot) { return slot.slug || slot.provider; });
           var liveSlots = (project.provider_slots || []).filter(function(slot) { return slot.material_mode === 'sealed-live'; }).length;
           var demoSlots = (project.provider_slots || []).filter(function(slot) { return slot.material_mode === 'demo-placeholder'; }).length;
-          return '<div class="row"><div><div class="row-title">' + escapeHtml(project.name || project.vp_proj_id) + '</div><div class="row-sub">' + escapeHtml(project.vp_proj_id) + ' - ' + escapeHtml(project.project_role) + ' via ' + escapeHtml(project.access_via) + ' - created ' + escapeHtml(rel(project.created_at)) + '</div><div><span class="tag ' + (project.strict_origin ? 'good' : 'warn') + '">' + (project.strict_origin ? 'strict origin' : 'origin relaxed') + '</span><span class="tag">' + providers.length + ' provider slots</span><span class="tag ' + (liveSlots ? 'good' : 'warn') + '">' + liveSlots + ' live sealed</span><span class="tag ' + (demoSlots ? 'warn' : '') + '">' + demoSlots + ' demo</span><span class="tag">' + (policy.rate_limit_per_minute ? policy.rate_limit_per_minute + '/min' : 'no project rate cap') + '</span></div></div><a class="tag" href="/app/control">control</a></div>';
+          return '<div class="row"><div><div class="row-title">' + escapeHtml(project.name || project.vp_proj_id) + '</div><div class="row-sub">' + escapeHtml(project.vp_proj_id) + ' - ' + escapeHtml(project.project_role) + ' via ' + escapeHtml(project.access_via) + ' - created ' + escapeHtml(rel(project.created_at)) + '</div><div><span class="tag ' + (project.strict_origin ? 'good' : 'warn') + '">' + (project.strict_origin ? 'strict origin' : 'origin relaxed') + '</span><span class="tag">' + providers.length + ' provider slots</span><span class="tag ' + (liveSlots ? 'good' : 'warn') + '">' + liveSlots + ' live sealed</span><span class="tag ' + (demoSlots ? 'warn' : '') + '">' + demoSlots + ' placeholder</span><span class="tag">' + (policy.rate_limit_per_minute ? policy.rate_limit_per_minute + '/min' : 'no project rate cap') + '</span></div></div><a class="tag" href="/app/control">control</a></div>';
         }).join('') : '<div class="empty">No active enterprise projects yet.</div>';
         var health = Array.isArray(cachedOverview.projectHealth) ? cachedOverview.projectHealth : [];
         text('healthMeta', (cachedOverview.healthWindowDays || 7) + 'd window');
@@ -5302,9 +5323,10 @@ ${renderDatalistOptions(ENTERPRISE_MANUAL_API_KEY_PROVIDER_OPTIONS)}
           var slug = item.slot.slug || item.slot.provider;
           var materialMode = item.slot.material_mode || 'missing';
           var materialClass = materialMode === 'sealed-live' ? 'good' : materialMode === 'demo-placeholder' ? 'warn' : 'bad';
+          var materialLabel = displayMaterialMode(materialMode);
           var denyButton = slotIsEmailProvider(item.slot) ? '<button type="button" data-action="copy-proxy-deny-test" data-project-id="' + escapeHtml(item.project.id) + '" data-slug="' + escapeHtml(slug) + '">copy blocked-recipient request</button>' : '';
-          return '<div class="row"><div><div class="row-title">' + escapeHtml(slug) + ' API proxy self-test</div><div class="row-sub">POST /api/v1/enterprise/projects/' + escapeHtml(item.project.id) + '/providers/' + escapeHtml(slug) + '/execute - dry-run request with VaultProof auth, gateway marker, client class, and organization header. No raw provider key is copied into the customer app.</div><div><span class="tag ' + materialClass + '">' + escapeHtml(materialMode) + '</span><span class="tag good">YOUR_VAULTPROOF_SESSION_JWT</span><span class="tag">x-vaultproof-customer-gateway</span><span class="tag">audit evidence</span></div></div><div class="row-actions"><button type="button" class="primary" data-action="copy-proxy-dry-run" data-project-id="' + escapeHtml(item.project.id) + '" data-slug="' + escapeHtml(slug) + '">copy dry-run request</button>' + denyButton + '</div></div>';
-        }).join('') : '<div class="empty">No provider slots are visible yet. Add a demo provider slot before sharing the customer API proxy self-test kit.</div>';
+          return '<div class="row"><div><div class="row-title">' + escapeHtml(slug) + ' API proxy self-test</div><div class="row-sub">POST /api/v1/enterprise/projects/' + escapeHtml(item.project.id) + '/providers/' + escapeHtml(slug) + '/execute - dry-run request with VaultProof auth, gateway marker, client class, and organization header. No raw provider key is copied into the customer app.</div><div><span class="tag ' + materialClass + '">' + escapeHtml(materialLabel) + '</span><span class="tag good">YOUR_VAULTPROOF_SESSION_JWT</span><span class="tag">x-vaultproof-customer-gateway</span><span class="tag">audit evidence</span></div></div><div class="row-actions"><button type="button" class="primary" data-action="copy-proxy-dry-run" data-project-id="' + escapeHtml(item.project.id) + '" data-slug="' + escapeHtml(slug) + '">copy dry-run request</button>' + denyButton + '</div></div>';
+        }).join('') : '<div class="empty">No provider slots are visible yet. Add a provider slot before sharing the customer API proxy self-test kit.</div>';
       }
       function renderKeys() {
         byId('keysPanel').style.display = PAGE_MODE === 'keys' ? 'block' : 'none';
@@ -5323,9 +5345,10 @@ ${renderDatalistOptions(ENTERPRISE_MANUAL_API_KEY_PROVIDER_OPTIONS)}
           byId('emailKeyDemoList').innerHTML = emailRows.length ? emailRows.map(function(item) {
             var materialMode = item.slot.material_mode || 'missing';
             var materialClass = materialMode === 'sealed-live' ? 'good' : materialMode === 'demo-placeholder' ? 'warn' : 'bad';
+            var materialLabel = displayMaterialMode(materialMode);
             var action = '<button type="button" class="primary" data-action="email-dry-run" data-project-id="' + escapeHtml(item.project.id) + '" data-provider="' + escapeHtml(item.slot.provider) + '" data-slug="' + escapeHtml(item.slot.slug || item.slot.provider) + '">protected email dry-run</button><button type="button" data-action="email-deny-test" data-project-id="' + escapeHtml(item.project.id) + '" data-provider="' + escapeHtml(item.slot.provider) + '" data-slug="' + escapeHtml(item.slot.slug || item.slot.provider) + '">blocked recipient test</button>';
-            return '<div class="row"><div><div class="row-title">' + escapeHtml(emailProviderLabel(item.slot.provider)) + ' protected send</div><div class="row-sub">' + escapeHtml(item.project.name || item.project.vp_proj_id) + ' - path ' + escapeHtml(emailDemoPath(item.slot)) + ' - material ' + escapeHtml(materialMode) + '</div><div><span class="tag ' + materialClass + '">' + escapeHtml(materialMode) + '</span><span class="tag good">no raw key in browser</span><span class="tag">audit evidence</span><span class="tag warn">recipient allowlist</span></div></div>' + action + '</div>';
-          }).join('') : '<div class="row"><div><div class="row-title">No email provider key protected yet</div><div class="row-sub">Create a Resend, SendGrid, Mailgun, Postmark, or AWS SES provider slot, then run protected email dry-run before the customer demo.</div><div><span class="tag warn">required for demo</span><span class="tag">raw keys stay out</span></div></div><button type="button" class="primary" data-action="prefill-email-slot">create resend slot</button></div>';
+            return '<div class="row"><div><div class="row-title">' + escapeHtml(emailProviderLabel(item.slot.provider)) + ' protected send</div><div class="row-sub">' + escapeHtml(item.project.name || item.project.vp_proj_id) + ' - path ' + escapeHtml(emailDemoPath(item.slot)) + ' - material ' + escapeHtml(materialLabel) + '</div><div><span class="tag ' + materialClass + '">' + escapeHtml(materialLabel) + '</span><span class="tag good">no raw key in browser</span><span class="tag">audit evidence</span><span class="tag warn">recipient allowlist</span></div></div>' + action + '</div>';
+          }).join('') : '<div class="row"><div><div class="row-title">No email provider key protected yet</div><div class="row-sub">Create a Resend, SendGrid, Mailgun, Postmark, or AWS SES provider slot, then run protected email dry-run before the customer walkthrough.</div><div><span class="tag warn">required for pilot</span><span class="tag">raw keys stay out</span></div></div><button type="button" class="primary" data-action="prefill-email-slot">create resend slot</button></div>';
         }
         byId('keyList').innerHTML = rows.length ? rows.map(function(item) {
           var policy = item.project.caller_lock_policy || {};
@@ -5336,7 +5359,7 @@ ${renderDatalistOptions(ENTERPRISE_MANUAL_API_KEY_PROVIDER_OPTIONS)}
           var action = emailAction + revokeAction;
           var materialMode = item.slot.material_mode || 'missing';
           var materialClass = materialMode === 'sealed-live' ? 'good' : materialMode === 'demo-placeholder' ? 'warn' : 'bad';
-          var materialLabel = materialMode === 'sealed-live' ? 'live sealed material' : materialMode === 'demo-placeholder' ? 'demo placeholder material' : materialMode === 'mixed' ? 'mixed material state' : 'material missing';
+          var materialLabel = displayMaterialMode(materialMode);
           var secretKind = slotIsEmailProvider(item.slot) ? 'email API key' : 'provider API key';
           return '<div class="row"><div><div class="row-title">' + escapeHtml(item.slot.slug || item.slot.provider) + '</div><div class="row-sub">' + escapeHtml(item.project.name || item.project.vp_proj_id) + ' - provider ' + escapeHtml(item.slot.provider) + ' - key id ' + escapeHtml(item.slot.key_id) + '</div><div><span class="tag good">active</span><span class="tag">' + escapeHtml(secretKind) + '</span><span class="tag ' + materialClass + '">' + materialLabel + '</span><span class="tag">' + (override ? 'provider override' : 'project policy') + '</span><span class="tag">rotation: manual checklist</span><span class="tag">SKR: executor-bound</span></div></div><div style="display:flex;gap:8px;flex-wrap:wrap;justify-content:flex-end">' + action + '</div></div>';
         }).join('') : '<div class="empty">No active provider slots found.</div>';
@@ -5453,7 +5476,7 @@ ${renderDatalistOptions(ENTERPRISE_MANUAL_API_KEY_PROVIDER_OPTIONS)}
           if (res.status === 403) {
             notice('Policy denial evidence recorded: ' + friendlyErrorMessage((payload && payload.error) || 'blocked recipient rejected') + '.');
           } else if (res.ok) {
-            notice('Blocked recipient test was accepted. Add an email recipient-domain or recipient allowlist before using this as the denial demo.');
+            notice('Blocked recipient test was accepted. Add an email recipient-domain or recipient allowlist before using this as denial evidence.');
           } else {
             notice(friendlyErrorMessage((payload && payload.error) || ('Blocked recipient test failed: ' + res.status)));
           }
@@ -5556,7 +5579,7 @@ ${renderDatalistOptions(ENTERPRISE_MANUAL_API_KEY_PROVIDER_OPTIONS)}
           open_critical_or_high: open.filter(function(row) { return row.severity === 'critical' || row.severity === 'high'; }).length,
           rotating: rows.filter(function(row) { return row.status === 'rotating'; }).length,
           rotated: rows.filter(function(row) { return row.status === 'rotated'; }).length,
-          accepted_for_demo: rows.filter(function(row) { return row.status === 'accepted_demo'; }).length
+          accepted_for_pilot: rows.filter(function(row) { return row.status === 'accepted_demo'; }).length
         };
       }
       function exposureResponseRows() {
@@ -5632,7 +5655,7 @@ ${renderDatalistOptions(ENTERPRISE_MANUAL_API_KEY_PROVIDER_OPTIONS)}
         return {
           total_provider_slots: list.length,
           sealed_live: list.filter(function(row) { return row.provider.material_mode === 'sealed-live'; }).length,
-          demo_or_unready: list.filter(function(row) { return row.provider.material_mode !== 'sealed-live' || !row.provider.material_ready; }).length,
+          placeholder_or_unready: list.filter(function(row) { return row.provider.material_mode !== 'sealed-live' || !row.provider.material_ready; }).length,
           emergency_revoke_available: list.filter(function(row) { return row.can_emergency_revoke; }).length,
           linked_scanner_findings: list.reduce(function(total, row) { return total + (row.scanner_findings || []).length; }, 0),
           open_scanner_findings: scanner.open_findings,
@@ -5734,7 +5757,7 @@ ${renderDatalistOptions(ENTERPRISE_MANUAL_API_KEY_PROVIDER_OPTIONS)}
           'Summary:',
           '- Provider slots in scope: ' + number(summary.total_provider_slots),
           '- Live sealed slots: ' + number(summary.sealed_live),
-          '- Demo or unready slots: ' + number(summary.demo_or_unready),
+          '- Placeholder or unready slots: ' + number(summary.placeholder_or_unready),
           '- Emergency revoke available: ' + number(summary.emergency_revoke_available),
           '- Scanner findings recorded: ' + number(summary.scanner_findings_recorded),
           '- Open scanner findings: ' + number(summary.open_scanner_findings),
@@ -5769,7 +5792,7 @@ ${renderDatalistOptions(ENTERPRISE_MANUAL_API_KEY_PROVIDER_OPTIONS)}
         var revokeButton = row.can_emergency_revoke
           ? '<button type="button" class="danger" data-action="revoke-slot" data-project-id="' + escapeHtml(row.project.id) + '" data-slug="' + escapeHtml(slug) + '">emergency revoke</button>'
           : '<span class="tag warn">admin required</span>';
-        return '<div class="row"><div><div class="row-title">' + escapeHtml(row.project.name || row.project.vp_proj_id || 'Project') + ' - ' + escapeHtml(slug) + '</div><div class="row-sub">Material ' + escapeHtml(row.provider.material_mode || 'missing') + ' - calls ' + number(row.traffic.calls) + ' - denied ' + number(row.traffic.denied) + ' - last seen ' + escapeHtml(rel(row.traffic.last_seen_at)) + '</div><div><span class="tag ' + tone + '">' + escapeHtml(row.risk) + '</span><span class="tag">' + escapeHtml(row.provider.provider || 'provider') + '</span><span class="tag ' + (row.project.strict_origin ? 'good' : 'warn') + '">' + (row.project.strict_origin ? 'strict origin' : 'origin relaxed') + '</span>' + scannerTag + '</div><div class="row-sub">' + row.actions.map(escapeHtml).join(' - ') + '</div></div><div class="row-actions">' + revokeButton + '<button type="button" data-action="copy-proxy-dry-run" data-project-id="' + escapeHtml(row.project.id) + '" data-slug="' + escapeHtml(slug) + '">copy dry-run</button><a class="tag" href="/app/scanner">scanner</a><a class="tag" href="/app/activity">activity</a></div></div>';
+        return '<div class="row"><div><div class="row-title">' + escapeHtml(row.project.name || row.project.vp_proj_id || 'Project') + ' - ' + escapeHtml(slug) + '</div><div class="row-sub">Material ' + escapeHtml(displayMaterialMode(row.provider.material_mode || 'missing')) + ' - calls ' + number(row.traffic.calls) + ' - denied ' + number(row.traffic.denied) + ' - last seen ' + escapeHtml(rel(row.traffic.last_seen_at)) + '</div><div><span class="tag ' + tone + '">' + escapeHtml(row.risk) + '</span><span class="tag">' + escapeHtml(row.provider.provider || 'provider') + '</span><span class="tag ' + (row.project.strict_origin ? 'good' : 'warn') + '">' + (row.project.strict_origin ? 'strict origin' : 'origin relaxed') + '</span>' + scannerTag + '</div><div class="row-sub">' + row.actions.map(escapeHtml).join(' - ') + '</div></div><div class="row-actions">' + revokeButton + '<button type="button" data-action="copy-proxy-dry-run" data-project-id="' + escapeHtml(row.project.id) + '" data-slug="' + escapeHtml(slug) + '">copy dry-run</button><a class="tag" href="/app/scanner">scanner</a><a class="tag" href="/app/activity">activity</a></div></div>';
       }
       function renderExposureResponse() {
         var panel = byId('exposureResponsePanel');
@@ -5781,7 +5804,7 @@ ${renderDatalistOptions(ENTERPRISE_MANUAL_API_KEY_PROVIDER_OPTIONS)}
         byId('exposureResponseChecklist').innerHTML = [
           '<div class="row"><div><div class="row-title">Contain through VaultProof first</div><div class="row-sub">Emergency revoke pauses provider-slot usage without exposing or copying raw upstream keys.</div></div><span class="tag good">kill switch</span></div>',
           '<div class="row"><div><div class="row-title">Rotate upstream second</div><div class="row-sub">Create new upstream provider credentials, seal them into VaultProof, run dry-run evidence, then retire exposed raw env vars.</div></div><span class="tag warn">rotation</span></div>',
-          '<div class="row"><div><div class="row-title">Scanner findings linked</div><div class="row-sub">' + number(summary.linked_scanner_findings) + ' provider-slot matches from ' + number(summary.scanner_findings_recorded) + ' redacted scanner findings. Open critical/high findings stay visible until marked rotating, rotated, false positive, or demo accepted in Scanner.</div></div><a class="tag ' + (summary.open_critical_or_high_scanner_findings ? 'bad' : 'good') + '" href="/app/scanner">' + number(summary.open_critical_or_high_scanner_findings) + ' critical/high open</a></div>',
+          '<div class="row"><div><div class="row-title">Scanner findings linked</div><div class="row-sub">' + number(summary.linked_scanner_findings) + ' provider-slot matches from ' + number(summary.scanner_findings_recorded) + ' redacted scanner findings. Open critical/high findings stay visible until marked rotating, rotated, false positive, or pilot accepted in Scanner.</div></div><a class="tag ' + (summary.open_critical_or_high_scanner_findings ? 'bad' : 'good') + '" href="/app/scanner">' + number(summary.open_critical_or_high_scanner_findings) + ' critical/high open</a></div>',
           '<div class="row"><div><div class="row-title">Prove what VaultProof saw</div><div class="row-sub">Export audit CSV, activity, and this incident JSON for security review. Past direct-provider usage outside VaultProof remains outside this proof boundary.</div></div><span><button class="tag good" type="button" data-action="copy-exposure-response-json">JSON</button><a class="tag" href="' + escapeHtml(evidenceExportHref('/api/v1/enterprise/audit?format=csv&days=30')) + '">audit CSV</a></span></div>'
         ].join('');
         byId('exposureResponseList').innerHTML = rows.length ? rows.map(renderExposureResponseRow).join('') : '<div class="empty">No provider slots are visible yet. Add provider slots before using VaultProof as the incident response control layer.</div>';
@@ -6104,9 +6127,9 @@ function renderEnterpriseSupportPage(pageName: EnterpriseSupportPageName): strin
       lead: 'Assemble the proof a customer security team asks for first: runtime readiness, access review, audit exports, provider posture, policy workflow, and a downloadable JSON packet scoped to the selected organization.',
     },
     demo: {
-      title: 'Demo script',
+      title: 'Buyer walkthrough',
       kicker: 'customer walkthrough',
-      lead: 'Run a repeatable buyer demo that shows active key protection, a safe email API key story, runtime evidence, launch blockers, pricing packaging, and the next paid-pilot step without exposing secrets.',
+      lead: 'Run a repeatable buyer walkthrough that shows active key protection, a safe email API key story, runtime evidence, launch blockers, pricing packaging, and the next paid-pilot step without exposing secrets.',
     },
     testers: {
       title: 'Pilot testers',
@@ -6126,7 +6149,7 @@ function renderEnterpriseSupportPage(pageName: EnterpriseSupportPageName): strin
     verifier: {
       title: 'AI Proof Verifier',
       kicker: 'verifier-first evidence',
-      lead: 'Register models that run outside VaultProof, submit proof bundles from those external jobs, verify the evidence, and tie demo results to the shared enterprise runtime attestation, project policy, RBAC, and audit.',
+      lead: 'Register models that run outside VaultProof, submit proof bundles from those external jobs, verify the evidence, and tie pilot results to the shared enterprise runtime attestation, project policy, RBAC, and audit.',
     },
     settings: {
       title: 'Settings',
@@ -6450,7 +6473,7 @@ function renderEnterpriseSupportPage(pageName: EnterpriseSupportPageName): strin
 
       <section id="demoPanel" class="grid two" style="display:none">
         <div class="card">
-          <div class="section-title"><h2>Demo objective</h2><span class="mini" id="demoMeta">buyer flow</span></div>
+          <div class="section-title"><h2>Walkthrough objective</h2><span class="mini" id="demoMeta">buyer flow</span></div>
           <div id="demoObjectiveList" class="list"></div>
         </div>
         <div class="card">
@@ -6462,7 +6485,7 @@ function renderEnterpriseSupportPage(pageName: EnterpriseSupportPageName): strin
           <div id="demoProofList" class="list"></div>
         </div>
         <div class="card">
-          <div class="section-title"><h2>Safety guardrails</h2><span class="mini">demo only</span></div>
+          <div class="section-title"><h2>Safety guardrails</h2><span class="mini">pilot controlled</span></div>
           <div id="demoGuardrailList" class="list"></div>
         </div>
         <div class="card">
@@ -6475,10 +6498,10 @@ function renderEnterpriseSupportPage(pageName: EnterpriseSupportPageName): strin
         </div>
         <div class="card" style="grid-column:1/-1">
           <div class="section-title">
-            <h2>Copyable demo talk track</h2>
+            <h2>Copyable walkthrough talk track</h2>
             <button id="copyDemoScriptBtn" type="button">copy script</button>
           </div>
-          <textarea id="demoScript" class="brief-box demo-script" readonly aria-label="Demo talk track"></textarea>
+          <textarea id="demoScript" class="brief-box demo-script" readonly aria-label="Walkthrough talk track"></textarea>
         </div>
       </section>
 
@@ -6512,7 +6535,7 @@ function renderEnterpriseSupportPage(pageName: EnterpriseSupportPageName): strin
           <form id="testerSessionForm" class="tester-form">
             <div class="tester-field"><label for="testerSessionStatus">session status</label><select id="testerSessionStatus" data-tester-session-field="status"><option value="not_scheduled">not scheduled</option><option value="scheduled">scheduled</option><option value="in_progress">in progress</option><option value="complete">complete</option><option value="blocked">blocked</option></select></div>
             <div class="tester-field"><label for="testerSessionWindow">session window</label><input id="testerSessionWindow" data-tester-session-field="session_window" placeholder="2026-06-01 10:00 PT" /></div>
-            <div class="tester-field"><label for="testerSessionFacilitator">VaultProof facilitator</label><input id="testerSessionFacilitator" data-tester-session-field="facilitator" placeholder="demo/session owner" /></div>
+            <div class="tester-field"><label for="testerSessionFacilitator">VaultProof facilitator</label><input id="testerSessionFacilitator" data-tester-session-field="facilitator" placeholder="walkthrough/session owner" /></div>
             <div class="tester-field"><label for="testerSessionCustomerOwner">customer owner</label><input id="testerSessionCustomerOwner" data-tester-session-field="customer_owner" placeholder="buyer, security, or platform owner" /></div>
             <div class="tester-field wide"><label for="testerSessionSuccess">success criteria</label><textarea id="testerSessionSuccess" data-tester-session-field="success_criteria" placeholder="What must be true at the end of the guided test. Metadata only."></textarea></div>
             <div class="tester-field wide"><label for="testerSessionAction">customer action</label><textarea id="testerSessionAction" data-tester-session-field="customer_action" placeholder="Decision, follow-up, or next test action expected from the customer."></textarea></div>
@@ -6572,11 +6595,11 @@ function renderEnterpriseSupportPage(pageName: EnterpriseSupportPageName): strin
         <div class="card">
           <div class="section-title"><h2>Release intake</h2><span id="releaseMeta" class="mini">browser-local</span></div>
           <form id="releaseEvidenceForm" class="release-form">
-            <div class="release-field"><label for="releaseLabel">release label</label><input id="releaseLabel" placeholder="enterprise demo release 2026-05-13" /></div>
+            <div class="release-field"><label for="releaseLabel">release label</label><input id="releaseLabel" placeholder="enterprise pilot release 2026-05-13" /></div>
             <div class="release-field"><label for="releaseBuildTag">build/image tag</label><input id="releaseBuildTag" placeholder="git sha or container tag" /></div>
             <div class="release-field"><label for="releaseApprover">approver</label><input id="releaseApprover" placeholder="operator or customer owner" /></div>
             <div class="release-field"><label for="releaseVerifier">verifier</label><input id="releaseVerifier" placeholder="person who ran QA/gates" /></div>
-            <div class="release-field"><label for="releaseVerificationStatus">verification status</label><select id="releaseVerificationStatus"><option value="pending">pending</option><option value="passed">passed</option><option value="failed">failed</option><option value="blocked">blocked</option><option value="accepted_demo">accepted for demo</option></select></div>
+            <div class="release-field"><label for="releaseVerificationStatus">verification status</label><select id="releaseVerificationStatus"><option value="pending">pending</option><option value="passed">passed</option><option value="failed">failed</option><option value="blocked">blocked</option><option value="accepted_demo">accepted for pilot</option></select></div>
             <div class="release-field"><label for="releaseRolloutStatus">rollout status</label><select id="releaseRolloutStatus"><option value="planned">planned</option><option value="canary">canary</option><option value="live">live</option><option value="rolled_back">rolled back</option><option value="paused">paused</option></select></div>
             <div class="release-field"><label for="releaseRollbackOwner">rollback owner</label><input id="releaseRollbackOwner" placeholder="operator name or team" /></div>
             <div class="release-field"><label for="releaseRollbackPath">rollback path</label><input id="releaseRollbackPath" placeholder="previous build tag, reset plan, or runbook ref" /></div>
@@ -6642,7 +6665,7 @@ function renderEnterpriseSupportPage(pageName: EnterpriseSupportPageName): strin
           <div class="list">
             <div class="row"><div><div class="row-title">Enterprise docs</div><div class="row-sub">Enterprise-only documentation for setup, SSO, provider slots, key exposure response, evidence, runbooks, and operating boundaries.</div></div><a class="tag good" href="/app/docs">open</a></div>
             <div class="row"><div><div class="row-title">Setup guide</div><div class="row-sub">Implementation sequence for mapping environments, connecting SSO, choosing gateways, configuring projects, protecting provider slots, and going live safely.</div></div><a class="tag good" href="/app/setup">open</a></div>
-            <div class="row"><div><div class="row-title">Provider slots</div><div class="row-sub">Provider key slots, material mode, email API key demo slots, dry-run request snippets, emergency revoke, rotation review, and key exposure response.</div></div><a class="tag good" href="/app/keys">open</a></div>
+            <div class="row"><div><div class="row-title">Provider slots</div><div class="row-sub">Provider key slots, material mode, protected email API key slots, dry-run request snippets, emergency revoke, rotation review, and key exposure response.</div></div><a class="tag good" href="/app/keys">open</a></div>
             <div class="row"><div><div class="row-title">Projects</div><div class="row-sub">Project inventory, usage, provider slot posture, policy status, and quick links into Control.</div></div><a class="tag good" href="/app/projects">open</a></div>
             <div class="row"><div><div class="row-title">API Inventory</div><div class="row-sub">Metadata-only API catalog with owners, risk, data sensitivity, provider-slot mapping, review status, imports, filtered CSV, review brief, and JSON export.</div></div><a class="tag good" href="/app/inventory">open</a></div>
             <div class="row"><div><div class="row-title">Policy Drift</div><div class="row-sub">Control-gap board for missing provider slots, caller-lock gaps, stale/no traffic, accepted-risk records, compensating controls, expirations, and launch blockers.</div></div><a class="tag good" href="/app/policy">open</a></div>
@@ -6714,7 +6737,7 @@ function renderEnterpriseSupportPage(pageName: EnterpriseSupportPageName): strin
             <li>Emergency revoke affected provider slots first when VaultProof-routed use should pause immediately.</li>
             <li>Rotate the upstream provider credential in the provider account, then seal the replacement into a live VaultProof provider slot.</li>
             <li>Run a dry-run or low-volume test request so Activity and Audit show post-rotation evidence.</li>
-            <li>Update linked scanner findings only after revoke, upstream rotation, false-positive review, or explicit demo-only acceptance.</li>
+            <li>Update linked scanner findings only after revoke, upstream rotation, false-positive review, or explicit pilot-limited acceptance.</li>
             <li>Export the incident JSON, audit CSV, and Evidence packet for customer security review.</li>
           </ol>
         </article>
@@ -7084,7 +7107,7 @@ function renderEnterpriseSupportPage(pageName: EnterpriseSupportPageName): strin
           <div class="section-title"><h2>Contract intake</h2><span id="entitlementsMeta" class="mini">browser-local</span></div>
           <form id="entitlementsForm" class="entitlement-form">
             <div class="entitlement-field"><label for="entitlementPackage">package</label><select id="entitlementPackage" data-entitlement-field="package_label"><option value="Enterprise paid pilot">Enterprise paid pilot</option><option value="Enterprise standard">Enterprise standard</option><option value="Regulated enterprise">Regulated enterprise</option><option value="Expansion account">Expansion account</option></select></div>
-            <div class="entitlement-field"><label for="entitlementStatus">contract status</label><select id="entitlementStatus" data-entitlement-field="contract_status"><option value="draft">draft</option><option value="accepted_demo">accepted for demo</option><option value="signed">signed</option><option value="active">active</option><option value="blocked">blocked</option></select></div>
+            <div class="entitlement-field"><label for="entitlementStatus">contract status</label><select id="entitlementStatus" data-entitlement-field="contract_status"><option value="draft">draft</option><option value="accepted_demo">accepted for pilot</option><option value="signed">signed</option><option value="active">active</option><option value="blocked">blocked</option></select></div>
             <div class="entitlement-field"><label for="entitlementCalls">monthly calls</label><input id="entitlementCalls" data-entitlement-field="monthly_call_allowance" inputmode="numeric" placeholder="100000" /></div>
             <div class="entitlement-field"><label for="entitlementSlots">provider slots</label><input id="entitlementSlots" data-entitlement-field="provider_slot_allowance" inputmode="numeric" placeholder="3" /></div>
             <div class="entitlement-field"><label for="entitlementSeats">seats</label><input id="entitlementSeats" data-entitlement-field="seat_allowance" inputmode="numeric" placeholder="10" /></div>
@@ -7289,11 +7312,11 @@ function renderEnterpriseSupportPage(pageName: EnterpriseSupportPageName): strin
             <div class="scanner-field"><label for="scannerFindingType">finding type</label><select id="scannerFindingType"><option value="hardcoded_secret">hardcoded secret</option><option value="env_file">env/config file</option><option value="oauth_secret">OAuth/client secret</option><option value="webhook_secret">webhook signing secret</option><option value="provider_key">provider API key</option><option value="private_key">private key material</option><option value="other">other</option></select></div>
             <div class="scanner-field"><label for="scannerSecretFamily">secret family</label><input id="scannerSecretFamily" placeholder="OpenAI, Resend, SendGrid, OAuth, Stripe" /></div>
             <div class="scanner-field"><label for="scannerSeverity">severity</label><select id="scannerSeverity"><option value="critical">critical</option><option value="high">high</option><option value="medium">medium</option><option value="low">low</option></select></div>
-            <div class="scanner-field"><label for="scannerStatus">status</label><select id="scannerStatus"><option value="new">new</option><option value="confirmed">confirmed</option><option value="rotating">rotating</option><option value="rotated">rotated</option><option value="accepted_demo">accepted for demo</option><option value="false_positive">false positive</option><option value="blocked">blocked</option></select></div>
+            <div class="scanner-field"><label for="scannerStatus">status</label><select id="scannerStatus"><option value="new">new</option><option value="confirmed">confirmed</option><option value="rotating">rotating</option><option value="rotated">rotated</option><option value="accepted_demo">accepted for pilot</option><option value="false_positive">false positive</option><option value="blocked">blocked</option></select></div>
             <div class="scanner-field"><label for="scannerOwner">owner</label><input id="scannerOwner" placeholder="security or app owner" /></div>
             <div class="scanner-field"><label for="scannerProviderSlot">provider slot</label><input id="scannerProviderSlot" placeholder="provider slug or slot name" /></div>
             <div class="scanner-field wide"><label for="scannerEvidenceRef">redacted scanner evidence</label><textarea id="scannerEvidenceRef" placeholder="Sanitized file path, scanner finding id, PR/ticket id, or hash only. Do not paste secret values, source files, request bodies, or customer payloads."></textarea></div>
-            <div class="scanner-field wide"><label for="scannerNote">remediation note</label><textarea id="scannerNote" placeholder="Rotation owner, revoke path, compensating control, or why this is demo-only. Metadata only."></textarea></div>
+            <div class="scanner-field wide"><label for="scannerNote">remediation note</label><textarea id="scannerNote" placeholder="Rotation owner, revoke path, compensating control, or why this is pilot-limited. Metadata only."></textarea></div>
             <button class="primary" type="submit">add finding</button>
           </form>
         </div>
@@ -7320,8 +7343,8 @@ function renderEnterpriseSupportPage(pageName: EnterpriseSupportPageName): strin
 
       <section id="verifierPanel" class="grid two" style="display:none">
         <div class="card" style="grid-column:1/-1">
-          <div class="section-title"><h2>Shared demo attestation</h2><span class="mini">one confidential runtime proof</span></div>
-          <p class="mini">Demo proof records use the shared VaultProof Enterprise confidential runtime attestation. That proves the VaultProof verifier/control path is running with the expected GCP confidential posture; it does not mean VaultProof ran the customer model.</p>
+          <div class="section-title"><h2>Shared pilot attestation</h2><span class="mini">one confidential runtime proof</span></div>
+          <p class="mini">Pilot proof records use the shared VaultProof Enterprise confidential runtime attestation. That proves the VaultProof verifier/control path is running with the expected GCP confidential posture; it does not mean VaultProof ran the customer model.</p>
           <div id="verifierAttestationList" class="list" style="margin-top:12px"></div>
         </div>
         <div class="card">
@@ -7400,6 +7423,27 @@ function renderEnterpriseSupportPage(pageName: EnterpriseSupportPageName): strin
         return /not authenticated/i.test(value) ? ${JSON.stringify(ENTERPRISE_AUTH_ERROR_MESSAGE)} : value;
       }
       function number(value) { var n = Number(value || 0); return Number.isFinite(n) ? n.toLocaleString() : '0'; }
+      function displayRuntimeTier(value) {
+        var tier = String(value || '');
+        if (tier === 'shared-demo') return 'shared pilot runtime';
+        if (tier === 'dedicated-production') return 'dedicated production runtime';
+        return tier || 'not reported';
+      }
+      function displayPilotStatus(value) {
+        var status = String(value || '');
+        if (status === 'accepted_for_pilot' || status === 'accepted_for_demo') return 'accepted for pilot';
+        if (status === 'ready_for_guided_testing') return 'ready for guided testing';
+        if (status === 'ready_for_paid_pilot') return 'ready for paid pilot';
+        if (status === 'ready_for_customer_testing') return 'ready for customer testing';
+        return status.replace(/_/g, ' ');
+      }
+      function displayMaterialMode(value) {
+        var mode = String(value || '');
+        if (mode === 'sealed-live') return 'live sealed material';
+        if (mode === 'demo-placeholder') return 'placeholder material';
+        if (mode === 'mixed') return 'mixed material state';
+        return mode ? mode.replace(/_/g, ' ') : 'material missing';
+      }
       function rel(value) {
         if (!value) return 'never';
         var diff = Date.now() - new Date(value).getTime();
@@ -7527,8 +7571,8 @@ function renderEnterpriseSupportPage(pageName: EnterpriseSupportPageName): strin
         { id: 'enterprise-admin-login-sent', title: 'Enterprise admin login path sent', sub: 'The first customer admin knows to sign in on enterprise.vaultproof.dev and not on the B2C/root site.', action: 'Send https://enterprise.vaultproof.dev/app/login to the customer admin after entitlement review.', critical: true },
         { id: 'first-workload-owner-accepted', title: 'First workload owner accepted', sub: 'The first protected workflow has an app owner, provider path, expected volume, and rollback owner.', action: 'Review /app/pilot, /app/inventory, and /app/rollout with the workload owner.', critical: true },
         { id: 'support-handoff-scheduled', title: 'Support handoff scheduled', sub: 'Launch-week support owner, escalation path, and optional incident-response add-on boundary are clear.', action: 'Review /app/support and schedule the customer support handoff.', critical: true },
-        { id: 'capacity-renewal-reviewed', title: 'Capacity and renewal reviewed', sub: 'Monthly calls, provider slots, seats, renewal/review date, retention label, and billing owner have been reviewed.', action: 'Confirm /app/entitlements against the paid-pilot contract or demo acceptance.', critical: true },
-        { id: 'key-posture-accepted', title: 'Key posture accepted or rotation scheduled', sub: 'Shared/demo-only key posture is explicitly accepted for the demo or rotation is scheduled before paid customer data.', action: 'Use /app/evidence key-rotation proof and /app/keys provider-slot posture before the customer test.', critical: true },
+        { id: 'capacity-renewal-reviewed', title: 'Capacity and renewal reviewed', sub: 'Monthly calls, provider slots, seats, renewal/review date, retention label, and billing owner have been reviewed.', action: 'Confirm /app/entitlements against the paid-pilot contract or pilot acceptance.', critical: true },
+        { id: 'key-posture-accepted', title: 'Key posture accepted or rotation scheduled', sub: 'Shared or pilot-limited key posture is explicitly accepted for the walkthrough or rotation is scheduled before paid customer data.', action: 'Use /app/evidence key-rotation proof and /app/keys provider-slot posture before the customer test.', critical: true },
         { id: 'customer-testing-window-scheduled', title: 'Customer testing window scheduled', sub: 'The customer testing date, tester roster, first scenario, rollback owner, and feedback capture path are known.', action: 'Review /app/testers, /app/evidence, and /app/pilot-success before the guided session.', critical: true }
       ];
       var PAID_ONBOARDING_ROLE_TASKS = [
@@ -7670,9 +7714,9 @@ function renderEnterpriseSupportPage(pageName: EnterpriseSupportPageName): strin
       var GO_NO_GO_MANUAL_ITEMS = [
         { id: 'strict-login-qa', title: 'Strict login QA run', action: 'LOGIN_QA_REQUIRE_SESSION=true npm run qa:enterprise-login', sub: 'Automated Supabase redirect, generated session, and authenticated enterprise API checks passed.', critical: true },
         { id: 'human-login-qa', title: 'Human login QA completed', action: 'Browser-test https://enterprise.vaultproof.dev/app/login with ken@vaultproof.dev', sub: 'A real browser sign-in has been clicked through on the enterprise hostname.', critical: true },
-        { id: 'supabase-redirect-oauth', title: 'Supabase redirect/OAuth settings confirmed', action: 'Confirm https://enterprise.vaultproof.dev/app/login is allowed and the external OAuth callback is https://gwzkjiomemjlhtrdrlan.supabase.co/auth/v1/callback', sub: 'Supabase Auth settings match the enterprise demo hostname and external OAuth provider app.', critical: true },
+        { id: 'supabase-redirect-oauth', title: 'Supabase redirect/OAuth settings confirmed', action: 'Confirm https://enterprise.vaultproof.dev/app/login is allowed and the external OAuth callback is https://gwzkjiomemjlhtrdrlan.supabase.co/auth/v1/callback', sub: 'Supabase Auth settings match the enterprise hostname and external OAuth provider app.', critical: true },
         { id: 'cloud-armor-verified', title: 'Cloud Armor verification passed', action: 'npm run verify:gcp-enterprise-cloud-armor', sub: 'Scanner-path blocking, expected rules, live health, and blocked /.env probe have been verified.', critical: true },
-        { id: 'key-rotation-reviewed', title: 'Key rotation status', action: 'Rotate exposed/shared pilot keys before paid onboarding, or document demo-only acceptance for this walkthrough', sub: 'Shared pilot keys, service-role keys, and origin-lock values have been reviewed for this launch decision.', critical: true },
+        { id: 'key-rotation-reviewed', title: 'Key rotation status', action: 'Rotate exposed/shared pilot keys before paid onboarding, or document pilot-limited acceptance for this walkthrough', sub: 'Shared pilot keys, service-role keys, and origin-lock values have been reviewed for this launch decision.', critical: true },
         { id: 'rollback-owner-confirmed', title: 'Rollback owner/path confirmed', action: 'Name the owner who can pause traffic, revoke provider slots, reset the VM image, or roll back DNS/edge changes', sub: 'The rollback path is known before customer traffic starts.', critical: true },
         { id: 'budget-monitoring-reviewed', title: 'Budget/monitoring reviewed', action: 'Review budget alert, uptime expectations, denial/error monitoring, and launch-week owner coverage', sub: 'The customer pilot will not run blind on cost, availability, or provider errors.', critical: true }
       ];
@@ -7761,15 +7805,15 @@ function renderEnterpriseSupportPage(pageName: EnterpriseSupportPageName): strin
         var counts = slotMaterialCounts(bootstrap);
         var providers = providersFromBootstrap(bootstrap);
         var emailProviders = emailProvidersFromData({}, bootstrap);
-        var status = item && item.passed ? 'accepted_for_demo' : 'hold';
+        var status = item && item.passed ? 'accepted_for_pilot' : 'hold';
         return {
           status: status,
-          decision: status === 'accepted_for_demo' ? 'Pilot key posture is rotated or explicitly accepted for demo-only use in this browser evidence record.' : 'Hold until exposed/shared pilot keys are rotated or explicitly accepted for demo-only use.',
+          decision: status === 'accepted_for_pilot' ? 'Pilot key posture is rotated or explicitly accepted for pilot-limited use in this browser evidence record.' : 'Hold until exposed/shared pilot keys are rotated or explicitly accepted for pilot-limited use.',
           manual_evidence: manualEvidenceSummary(item),
           provider_material_summary: {
             total_provider_slots: counts.total,
             live_sealed_slots: counts.live_sealed,
-            demo_placeholder_slots: counts.demo_placeholder,
+            placeholder_slots: counts.demo_placeholder,
             mixed_slots: counts.mixed,
             missing_slots: counts.missing,
             providers: providers,
@@ -7778,14 +7822,14 @@ function renderEnterpriseSupportPage(pageName: EnterpriseSupportPageName): strin
           paid_onboarding_actions: [
             'Rotate the shared MiniMax pilot key before paid customer data.',
             'Use sealed local ingest for any future live provider key material.',
-            'Rotate Supabase service-role credentials after setup/demo wiring stabilizes.',
+            'Rotate Supabase service-role credentials after setup wiring stabilizes.',
             'Rotate origin-lock, executor signing, and runtime-token secrets before paid onboarding.',
-            'Keep browser raw-key ingest disabled; dashboard demo slots may stay placeholder-only.'
+            'Keep browser raw-key ingest disabled; dashboard-created slots may stay placeholder-only.'
           ],
           operator_commands: {
-            sealed_provider_ingest: 'SUPABASE_URL=... SUPABASE_SERVICE_ROLE_KEY=... VAULT_UNWRAP_KEY_BASE64=... DEMO_PROVIDER_API_KEY=... npm run seal:enterprise-provider-slot',
-            first_goal_gate: 'GOAL1_DEMO_ONLY=false npm run gate:gcp-first-goal',
-            launch_evidence_note: 'Mark Key rotation status passed only after rotation or explicit demo-only acceptance is recorded.'
+            sealed_provider_ingest: 'SUPABASE_URL=... SUPABASE_SERVICE_ROLE_KEY=... VAULT_UNWRAP_KEY_BASE64=... PROVIDER_API_KEY=... npm run seal:enterprise-provider-slot',
+            first_goal_gate: 'npm run gate:gcp-first-goal with strict live material mode enabled',
+            launch_evidence_note: 'Mark Key rotation status passed only after rotation or explicit pilot-limited acceptance is recorded.'
           },
           secrets_excluded: [
             'raw provider keys',
@@ -7803,12 +7847,12 @@ function renderEnterpriseSupportPage(pageName: EnterpriseSupportPageName): strin
         var summary = packet.provider_material_summary || {};
         var material = [
           (summary.live_sealed_slots || 0) + ' live sealed',
-          (summary.demo_placeholder_slots || 0) + ' demo placeholder',
+          (summary.placeholder_slots || 0) + ' placeholder',
           (summary.mixed_slots || 0) + ' mixed',
           (summary.missing_slots || 0) + ' missing'
         ].join(', ');
         return [
-          row('Rotation decision', packet.decision, packet.status, packet.status === 'accepted_for_demo' ? 'good' : 'warn'),
+          row('Rotation decision', packet.decision, displayPilotStatus(packet.status), packet.status === 'accepted_for_pilot' ? 'good' : 'warn'),
           row('Evidence timestamp', evidence.updated_at ? 'Last updated ' + rel(evidence.updated_at) + (evidence.stale ? '; stale after 7 days.' : '.') : 'No key-rotation evidence timestamp yet.', evidence.status || 'missing', evidence.status === 'passed' && !evidence.stale ? 'good' : 'warn'),
           row('Provider material modes', material, (summary.total_provider_slots || 0) + ' slots', summary.live_sealed_slots ? 'good' : 'warn'),
           row('Providers in scope', (summary.providers && summary.providers.length ? summary.providers.join(', ') : 'none visible') + (summary.email_providers && summary.email_providers.length ? '. Email providers: ' + summary.email_providers.join(', ') + '.' : ''), 'inventory', summary.total_provider_slots ? 'good' : 'warn'),
@@ -8184,7 +8228,7 @@ function renderEnterpriseSupportPage(pageName: EnterpriseSupportPageName): strin
       function policyDriftRowStatus(row) {
         var exception = row.exception || {};
         if (exception.approval_status === 'blocked') return 'blocked';
-        if (policyDriftExceptionActive(exception)) return exception.approval_status === 'approved' ? 'approved exception' : 'demo accepted';
+        if (policyDriftExceptionActive(exception)) return exception.approval_status === 'approved' ? 'approved exception' : 'pilot accepted';
         if (policyDriftExceptionExpired(exception)) return 'expired exception';
         return 'open drift';
       }
@@ -8222,7 +8266,7 @@ function renderEnterpriseSupportPage(pageName: EnterpriseSupportPageName): strin
             addPolicyDriftRow(rows, exceptions, inventoryRow, 'missing-provider-slot', 'Missing provider slot', 'This API surface has no mapped provider slot, so protected execution cannot be proven.', 'critical', 'Create a provider slot and map it to project policy.');
           }
           if (inventoryRow.provider && inventoryRow.provider.material_mode === 'demo-placeholder') {
-            addPolicyDriftRow(rows, exceptions, inventoryRow, 'demo-placeholder-material', 'Demo-only provider material', 'This provider slot is running demo placeholder material and needs paid-traffic acceptance or live sealed material.', 'high', 'Rotate to sealed live material before paid data, or record a demo-only accepted-risk expiry.');
+            addPolicyDriftRow(rows, exceptions, inventoryRow, 'demo-placeholder-material', 'Placeholder provider material', 'This provider slot is running placeholder material and needs paid-traffic acceptance or live sealed material.', 'high', 'Rotate to sealed live material before paid data, or record a pilot-limited accepted-risk expiry.');
           }
           if (statuses.indexOf('policy incomplete') !== -1) {
             addPolicyDriftRow(rows, exceptions, inventoryRow, 'policy-incomplete', 'Caller-lock policy incomplete', 'Strict origin, gateway, method, provider, host, or path-prefix controls are not complete for this API surface.', inventoryRow.policy && inventoryRow.policy.strict_origin ? 'high' : 'critical', 'Close caller-lock policy gaps in /app/control.');
@@ -8355,7 +8399,7 @@ function renderEnterpriseSupportPage(pageName: EnterpriseSupportPageName): strin
           return (policyRow.severity === 'critical' || policyRow.severity === 'high') && !policyDriftExceptionActive(policyRow.exception) && policyDriftRowStatus(policyRow) !== 'blocked';
         });
         if (!inventoryRow.provider) blockers.push('missing provider slot');
-        if (inventoryRow.provider && inventoryRow.provider.material_mode === 'demo-placeholder') blockers.push('demo-only provider material');
+        if (inventoryRow.provider && inventoryRow.provider.material_mode === 'demo-placeholder') blockers.push('placeholder provider material');
         if (statuses.indexOf('policy incomplete') !== -1) blockers.push('caller-lock policy incomplete');
         if (statuses.indexOf('blocked') !== -1 || annotation.review_status === 'blocked') blockers.push('API inventory row blocked');
         if (!annotation.business_owner || !annotation.technical_owner) blockers.push('API inventory owners missing');
@@ -8556,7 +8600,7 @@ function renderEnterpriseSupportPage(pageName: EnterpriseSupportPageName): strin
             provider: row.provider ? {
               provider: provider.provider || null,
               slug: provider.slug || null,
-              material_mode: provider.material_mode || null
+              material_mode: displayMaterialMode(provider.material_mode || 'missing')
             } : null,
             risk_level: row.annotation && row.annotation.risk_level || 'unset',
             data_sensitivity: row.annotation && row.annotation.data_sensitivity || 'unset',
@@ -8578,7 +8622,7 @@ function renderEnterpriseSupportPage(pageName: EnterpriseSupportPageName): strin
           open_critical_or_high: openCritical,
           rotating: findings.filter(function(item) { return item.status === 'rotating'; }).length,
           rotated: findings.filter(function(item) { return item.status === 'rotated'; }).length,
-          accepted_for_demo: findings.filter(function(item) { return item.status === 'accepted_demo'; }).length,
+          accepted_for_pilot: findings.filter(function(item) { return item.status === 'accepted_demo'; }).length,
           false_positive: findings.filter(function(item) { return item.status === 'false_positive'; }).length,
           blocked: findings.filter(function(item) { return item.status === 'blocked'; }).length,
           coverage_candidates: coverage.length
@@ -8695,7 +8739,7 @@ function renderEnterpriseSupportPage(pageName: EnterpriseSupportPageName): strin
       function exposureResponseActionsForSlot(row) {
         var actions = [];
         var openLinked = (row.linked_scanner_findings || []).filter(scannerFindingOpen);
-        if (openLinked.length) actions.push('Close ' + openLinked.length + ' linked scanner finding' + (openLinked.length === 1 ? '' : 's') + ' or record accepted demo-only risk.');
+        if (openLinked.length) actions.push('Close ' + openLinked.length + ' linked scanner finding' + (openLinked.length === 1 ? '' : 's') + ' or record accepted pilot-limited risk.');
         if (!row.provider.material_ready || row.provider.material_mode !== 'sealed-live') actions.push('Rotate upstream credential and seal a live provider slot before paid data.');
         actions.push('Use Provider Slots for emergency revoke and copy-safe incident JSON before sharing evidence.');
         return actions;
@@ -8739,7 +8783,7 @@ function renderEnterpriseSupportPage(pageName: EnterpriseSupportPageName): strin
         var summary = {
           total_provider_slots: rows.length,
           live_sealed_slots: rows.filter(function(row) { return row.provider.material_mode === 'sealed-live' && row.provider.material_ready === true; }).length,
-          demo_or_unready_slots: rows.filter(function(row) { return row.provider.material_mode !== 'sealed-live' || row.provider.material_ready !== true; }).length,
+          placeholder_or_unready_slots: rows.filter(function(row) { return row.provider.material_mode !== 'sealed-live' || row.provider.material_ready !== true; }).length,
           linked_scanner_findings: rows.reduce(function(total, row) { return total + (row.linked_scanner_findings || []).length; }, 0),
           open_linked_scanner_findings: openLinked,
           open_critical_or_high_linked_findings: openCriticalLinked,
@@ -8755,14 +8799,20 @@ function renderEnterpriseSupportPage(pageName: EnterpriseSupportPageName): strin
           decision: status === 'ready_to_contain'
             ? 'Provider slots are live-sealed with no linked open critical/high scanner exposure in this browser evidence state.'
             : status === 'hold'
-              ? 'Hold paid traffic until linked critical/high scanner exposure is rotated, revoked, or explicitly accepted for demo-only review.'
+              ? 'Hold paid traffic until linked critical/high scanner exposure is rotated, revoked, or explicitly accepted for pilot-limited review.'
               : status === 'needs_provider_slots'
                 ? 'Add provider slots before VaultProof can act as the incident containment layer.'
                 : 'Review rotation posture before paid customer data; at least one provider slot is not live-sealed.',
           generated_at: new Date().toISOString(),
           generated_from: location.origin + '/app/evidence',
           summary: summary,
-          provider_slots: rows,
+          provider_slots: rows.map(function(row) {
+            return Object.assign({}, row, {
+              provider: Object.assign({}, row.provider, {
+                material_mode: displayMaterialMode(row.provider && row.provider.material_mode)
+              })
+            });
+          }),
           proof_boundary: {
             vaultproof_controls: 'VaultProof can revoke provider-slot use, copy incident JSON, and prove routed traffic, denials, and audit events that pass through VaultProof.',
             outside_boundary: 'Direct raw-provider-key use outside VaultProof still requires upstream provider rotation and customer-side log review.'
@@ -8779,7 +8829,7 @@ function renderEnterpriseSupportPage(pageName: EnterpriseSupportPageName): strin
             'Open Provider Slots and copy the key exposure response JSON.',
             'Emergency revoke affected provider slots before copying or rotating raw upstream credentials.',
             'Rotate upstream provider credentials, seal new material into VaultProof, and retire exposed env vars.',
-            'Close linked scanner findings only after rotation, revoke, false-positive review, or explicit demo-only acceptance.',
+            'Close linked scanner findings only after rotation, revoke, false-positive review, or explicit pilot-limited acceptance.',
             'Export audit CSV and activity evidence for the customer security review packet.'
           ],
           secrets_excluded: [
@@ -8799,11 +8849,11 @@ function renderEnterpriseSupportPage(pageName: EnterpriseSupportPageName): strin
         var summary = packet.summary || {};
         return [
           row('Exposure response status', packet.decision, packet.status, packet.status === 'hold' ? 'bad' : packet.status === 'ready_to_contain' ? 'good' : 'warn'),
-          row('Provider slot containment', number(summary.total_provider_slots) + ' provider slots in scope, ' + number(summary.live_sealed_slots) + ' live-sealed, ' + number(summary.demo_or_unready_slots) + ' demo or unready.', summary.total_provider_slots ? 'slots' : 'missing', summary.total_provider_slots ? 'good' : 'warn'),
+          row('Provider slot containment', number(summary.total_provider_slots) + ' provider slots in scope, ' + number(summary.live_sealed_slots) + ' live-sealed, ' + number(summary.placeholder_or_unready_slots) + ' placeholder or unready.', summary.total_provider_slots ? 'slots' : 'missing', summary.total_provider_slots ? 'good' : 'warn'),
           row('Linked scanner exposure', number(summary.linked_scanner_findings) + ' scanner findings linked to provider slots; ' + number(summary.open_critical_or_high_linked_findings) + ' linked critical/high findings remain open.', summary.open_critical_or_high_linked_findings ? 'hold' : 'review', summary.open_critical_or_high_linked_findings ? 'bad' : 'good'),
           row('Rotation scope', number(summary.provider_slots_needing_rotation) + ' provider slots need rotation or review before paid customer data.', summary.provider_slots_needing_rotation ? 'rotate' : 'clear', summary.provider_slots_needing_rotation ? 'warn' : 'good'),
           linkRow('Open Provider Slots', 'Use incident mode to emergency revoke affected slots and copy the customer-safe response JSON.', '/app/keys', 'incident', 'good'),
-          linkRow('Open Scanner', 'Close or update linked exposure findings after rotation, revoke, or explicit demo-only acceptance.', '/app/scanner', 'scanner', summary.open_critical_or_high_linked_findings ? 'warn' : 'good'),
+          linkRow('Open Scanner', 'Close or update linked exposure findings after rotation, revoke, or explicit pilot-limited acceptance.', '/app/scanner', 'scanner', summary.open_critical_or_high_linked_findings ? 'warn' : 'good'),
           row('Proof boundary', packet.proof_boundary.vaultproof_controls + ' ' + packet.proof_boundary.outside_boundary, 'boundary', 'good'),
           row('Secret boundary', 'Response evidence excludes ' + packet.secrets_excluded.join(', ') + '.', 'redacted', 'good')
         ];
@@ -8876,7 +8926,7 @@ function renderEnterpriseSupportPage(pageName: EnterpriseSupportPageName): strin
         if (!productionReady) blockers.push('Runtime readiness is not production-ready.');
         if (!records.length) blockers.push('No release evidence record is saved for this organization.');
         if (latest && !approvalReady) blockers.push('Latest release record is missing an approver.');
-        if (latest && !verificationReady) blockers.push('Latest release record verification is not passed or demo-accepted.');
+        if (latest && !verificationReady) blockers.push('Latest release record verification is not passed or pilot-accepted.');
         if (latest && !rollbackReady) blockers.push('Latest release record is missing rollback owner/path.');
         if (latest && !rolloutReady) blockers.push('Latest release record is not canary or live.');
         if (blockedRollout) blockers.push('Latest release record is paused or rolled back.');
@@ -8898,7 +8948,7 @@ function renderEnterpriseSupportPage(pageName: EnterpriseSupportPageName): strin
           runtime: {
             production_ready: productionReady,
             security_profile: readiness.security_profile || null,
-            runtime_tier: readiness.runtime_tier || null,
+            runtime_tier: displayRuntimeTier(readiness.runtime_tier),
             customer_dedicated_runtime: readiness.customer_dedicated_runtime === true
           },
           latest_release: latest,
@@ -9119,7 +9169,7 @@ function renderEnterpriseSupportPage(pageName: EnterpriseSupportPageName): strin
           runtime: {
             production_ready: productionReady,
             security_profile: readiness.security_profile || null,
-            runtime_tier: readiness.runtime_tier || null
+            runtime_tier: displayRuntimeTier(readiness.runtime_tier)
           },
           summary: {
             total_testers: testers.length,
@@ -9221,12 +9271,12 @@ function renderEnterpriseSupportPage(pageName: EnterpriseSupportPageName): strin
             return {
               provider: slot.provider || null,
               slug: slot.slug || slot.provider || null,
-              material_mode: slot.material_mode || 'missing',
+              material_mode: displayMaterialMode(slot.material_mode || 'missing'),
               material_ready: slot.material_ready === true,
               secret_kind: isEmailProviderName(slot.provider || slot.slug) ? 'email_api_key' : 'provider_api_key'
             };
           }),
-          email_demo: {
+          email_walkthrough: {
             providers: emailProviders,
             dry_run_available: emailProviders.length > 0,
             blocked_recipient_test_available: emailProviders.length > 0
@@ -9245,7 +9295,7 @@ function renderEnterpriseSupportPage(pageName: EnterpriseSupportPageName): strin
       function apiProxySelfTestRows(packet) {
         var traffic = packet.traffic_evidence || {};
         var slots = packet.provider_slots || [];
-        var email = packet.email_demo || {};
+        var email = packet.email_walkthrough || {};
         return [
           row('API proxy self-test status', packet.status === 'ready' ? 'Provider slots and traffic evidence are visible for a customer dry-run walkthrough.' : 'Hold until a provider slot and at least one proxy test event are visible.', packet.status, packet.status === 'ready' ? 'good' : 'warn'),
           row('Execute endpoint pattern', packet.execute_endpoint_pattern, 'customer test', 'good'),
@@ -9254,7 +9304,7 @@ function renderEnterpriseSupportPage(pageName: EnterpriseSupportPageName): strin
           row('Provider slots in scope', slots.length ? slots.map(function(slot) { return (slot.slug || slot.provider || 'provider') + ' (' + slot.material_mode + ')'; }).join(', ') : 'No provider slots visible yet.', slots.length + ' slots', slots.length ? 'good' : 'warn'),
           row('Email denial test', email.blocked_recipient_test_available ? 'Protected email dry-run and blocked-recipient test are available for: ' + email.providers.join(', ') + '.' : 'Add an email provider slot to show the denial evidence path.', email.blocked_recipient_test_available ? 'available' : 'todo', email.blocked_recipient_test_available ? 'good' : 'warn'),
           row('Traffic evidence', number(traffic.proxy_calls) + ' calls, ' + number(traffic.error_calls) + ' errors, ' + number(traffic.denied_calls) + ' denied.', traffic.proxy_calls ? 'observed' : 'pending', traffic.error_calls || traffic.denied_calls ? 'warn' : traffic.proxy_calls ? 'good' : 'warn'),
-          row('Pass criteria', packet.pass_criteria.join(' '), 'demo proof', 'good'),
+          row('Pass criteria', packet.pass_criteria.join(' '), 'pilot proof', 'good'),
           row('Secrets excluded', packet.secrets_excluded.join(', '), 'redacted', 'good')
         ];
       }
@@ -9375,7 +9425,7 @@ function renderEnterpriseSupportPage(pageName: EnterpriseSupportPageName): strin
           row('Provider-slot containment', number(summary.total_provider_slots) + ' slots in scope; ' + number(summary.live_sealed_slots) + ' live-sealed; ' + number(summary.provider_slots_needing_rotation) + ' need rotation or review.', summary.total_provider_slots ? 'slots' : 'missing', summary.provider_slots_needing_rotation ? 'warn' : 'good'),
           row('Linked scanner findings', number(summary.linked_scanner_findings) + ' linked findings; ' + number(summary.open_critical_or_high_linked_findings) + ' linked critical/high findings remain open.', summary.open_critical_or_high_linked_findings ? 'hold' : 'review', summary.open_critical_or_high_linked_findings ? 'bad' : 'good'),
           linkRow('Provider Slots incident JSON', 'Copy the customer-safe exposure response JSON and use emergency revoke for affected provider slots.', '/app/keys', 'incident', 'good'),
-          linkRow('Scanner remediation', 'Update scanner findings after rotation, revoke, false-positive review, or demo-only acceptance.', '/app/scanner', 'scanner', summary.open_critical_or_high_linked_findings ? 'warn' : 'good'),
+          linkRow('Scanner remediation', 'Update scanner findings after rotation, revoke, false-positive review, or pilot-limited acceptance.', '/app/scanner', 'scanner', summary.open_critical_or_high_linked_findings ? 'warn' : 'good'),
           linkRow('Runbook sequence', 'Use the operator runbook for activity/audit exports, proof-boundary language, and response order.', '/app/runbooks', 'runbook', 'good'),
           row('Proof boundary', (boundary.vaultproof_controls || '') + ' ' + (boundary.outside_boundary || ''), 'boundary', 'good')
         ];
@@ -9431,7 +9481,7 @@ function renderEnterpriseSupportPage(pageName: EnterpriseSupportPageName): strin
             'Traffic, denial, and error posture from enterprise overview/bootstrap data.',
             'Alert destinations, delivery logs, and test-send workflow from /app/alerts.',
             'Cloud Armor verification is operator-confirmed until policy state is exposed through a trusted backend source.',
-            'Budget/monitoring review is operator-confirmed in the launch board for this demo slice.'
+            'Budget/monitoring review is operator-confirmed in the launch board for this pilot workflow.'
           ],
           operator_commands: {
             live_gate: 'RUN_LIVE_EDGE=true RUN_LIVE_APP_QA=true RUN_CLOUD_ARMOR_QA=true npm run gate:gcp-customer-launch',
@@ -9520,12 +9570,12 @@ function renderEnterpriseSupportPage(pageName: EnterpriseSupportPageName): strin
             'The control plane validates session, organization membership, project access, caller lock, policy, and request signing metadata.',
             'Protected provider work is sent to the secure executor through the enterprise runtime path.',
             'The executor verifies request signatures, replay protection, attestation posture, and key-release readiness before using protected provider material.',
-            'GCP edge, origin lock, Cloud Armor, request-size limits, and runtime readiness checks sit in front of the shared demo runtime.'
+            'GCP edge, origin lock, Cloud Armor, request-size limits, and runtime readiness checks sit in front of the shared pilot runtime.'
           ],
           controls: [
             { name: 'Identity and RBAC', status: identityQa.status, tone: identityQa.status === 'ready' ? 'good' : 'warn', detail: 'Supabase-brokered enterprise session plus VaultProof organization membership, roles, project assignment, and access-review exports.' },
             { name: 'Caller-lock policy', status: 'built', tone: 'good', detail: 'Control policy can bind protected calls to approved origins, gateways, CIDRs, methods, upstream hosts, path prefixes, provider families, and rate limits.' },
-            { name: 'Provider key custody', status: rotation.status, tone: rotation.status === 'accepted_for_demo' ? 'good' : 'warn', detail: 'Provider slots expose posture and material mode without returning plaintext keys or encrypted shares to customer browsers.' },
+            { name: 'Provider key custody', status: displayPilotStatus(rotation.status), tone: rotation.status === 'accepted_for_pilot' ? 'good' : 'warn', detail: 'Provider slots expose posture and material mode without returning plaintext keys or encrypted shares to customer browsers.' },
             { name: 'API inventory', status: apiInventory.status, tone: apiInventory.status === 'ready' ? 'good' : 'warn', detail: 'API surfaces are derived from projects, provider slots, policy, traffic evidence, and browser-local owner/review metadata without storing secrets.' },
             { name: 'Policy drift and exceptions', status: policyDrift.status, tone: policyDrift.status === 'hold' ? 'warn' : 'good', detail: 'Policy drift rows are derived from existing project/provider/policy/traffic evidence, with browser-local accepted-risk records, owners, expiry, and compensating controls.' },
             { name: 'Integration rollout', status: integrationRollout.status, tone: integrationRollout.status === 'hold' ? 'warn' : 'good', detail: 'Rollout rows tie API inventory, policy drift, owners, canary status, rollback path, and copy-safe dry-run snippets into one customer cutover plan.' },
@@ -9533,7 +9583,7 @@ function renderEnterpriseSupportPage(pageName: EnterpriseSupportPageName): strin
             { name: 'Key exposure response', status: keyExposureResponse.status, tone: keyExposureResponse.status === 'hold' ? 'bad' : keyExposureResponse.status === 'ready_to_contain' ? 'good' : 'warn', detail: 'Provider Slots ties exposure findings to protected provider slots, emergency revoke, rotation review, customer-safe incident JSON, and an explicit VaultProof proof boundary.' },
             { name: 'Release evidence', status: releaseEvidence.status, tone: releaseEvidence.status === 'ready_with_review' ? 'good' : 'warn', detail: 'Release evidence records build/image tags, approver, verifier, QA/gate summary, rollout state, rollback owner/path, and customer-safe notes without exposing secrets.' },
             { name: 'Paid-pilot tester readiness', status: pilotTesters.status, tone: pilotTesters.status === 'ready_for_guided_testing' ? 'good' : 'warn', detail: 'Pilot tester evidence tracks roster, login status, scenario assignments, feedback, and blockers in browser-local metadata without storing secrets.' },
-            { name: 'Contract entitlements', status: entitlements.status, tone: entitlements.status === 'ready_for_paid_pilot' ? 'good' : 'warn', detail: 'Contract package, capacity envelope, support tier, renewal owner, and incident-response boundary are tracked as customer-safe browser-local metadata for the paid demo.' },
+            { name: 'Contract entitlements', status: entitlements.status, tone: entitlements.status === 'ready_for_paid_pilot' ? 'good' : 'warn', detail: 'Contract package, capacity envelope, support tier, renewal owner, and incident-response boundary are tracked as customer-safe browser-local metadata for the paid pilot.' },
             { name: 'Paid customer onboarding', status: onboarding.status, tone: onboarding.status === 'ready_for_customer_testing' ? 'good' : 'warn', detail: 'Activation milestones connect entitlements, launch readiness, customer login handoff, first workload ownership, support coverage, and customer testing evidence.' },
             { name: 'Runtime attestation', status: productionReady ? 'ready' : 'blocked', tone: productionReady ? 'good' : 'bad', detail: 'Readiness reports GCP confidential production posture, key release readiness, signature verification, replay protection, and executor reachability.' },
             { name: 'Audit and evidence', status: 'exportable', tone: 'good', detail: 'Evidence packet, audit CSV, access-review CSV, activity records, launch brief, and security review packet are customer-safe review artifacts.' },
@@ -9547,7 +9597,7 @@ function renderEnterpriseSupportPage(pageName: EnterpriseSupportPageName): strin
             { title: 'Access review CSV', href: evidenceExportHref('/api/v1/enterprise/members/access-review?format=csv'), detail: 'Members, roles, invitations, and project assignments.', tag: 'csv', tone: 'good' },
             { title: 'Activity', href: '/app/activity', detail: 'Runtime status codes, latency, provider request IDs, denials, and attestation hints.', tag: 'events', tone: 'good' },
             { title: 'API Inventory', href: '/app/inventory', detail: 'API catalog with owners, environment, risk, provider-slot mapping, policy posture, traffic evidence, review status, and JSON export.', tag: apiInventory.status, tone: apiInventory.status === 'ready' ? 'good' : 'warn' },
-            { title: 'Policy Drift', href: '/app/policy', detail: 'Control gaps, demo-only material, owner gaps, stale traffic, accepted-risk records, expiry dates, and customer-safe JSON export.', tag: policyDrift.status, tone: policyDrift.status === 'hold' ? 'warn' : 'good' },
+            { title: 'Policy Drift', href: '/app/policy', detail: 'Control gaps, placeholder material, owner gaps, stale traffic, accepted-risk records, expiry dates, and customer-safe JSON export.', tag: policyDrift.status, tone: policyDrift.status === 'hold' ? 'warn' : 'good' },
             { title: 'Rollout Manager', href: '/app/rollout', detail: 'Workload cutover plan with owners, integration mode, canary percentage, test status, rollback path, blockers, and evidence export.', tag: integrationRollout.status, tone: integrationRollout.status === 'hold' ? 'warn' : 'good' },
             { title: 'Scanner Exposure', href: '/app/scanner', detail: 'Redacted repository exposure findings, owners, rotation status, scanner evidence references, and remediation workflow.', tag: scannerExposure.status, tone: scannerExposure.status === 'hold' ? 'warn' : 'good' },
             { title: 'Key Exposure Response', href: '/app/keys', detail: 'Provider-slot incident mode with linked scanner findings, emergency revoke, rotation scope, and customer-safe response JSON.', tag: keyExposureResponse.status, tone: keyExposureResponse.status === 'hold' ? 'bad' : keyExposureResponse.status === 'ready_to_contain' ? 'good' : 'warn' },
@@ -9556,7 +9606,7 @@ function renderEnterpriseSupportPage(pageName: EnterpriseSupportPageName): strin
             { title: 'Entitlements', href: '/app/entitlements', detail: 'Contract capacity, support tier, renewal/review date, billing owner, success owner, and paid-user guardrails.', tag: entitlements.status, tone: entitlements.status === 'ready_for_paid_pilot' ? 'good' : 'warn' },
             { title: 'Paid Onboarding', href: '/app/onboarding', detail: 'Customer activation board for owners, login handoff, first workload scope, support boundary, tester window, and JSON proof.', tag: onboarding.status, tone: onboarding.status === 'ready_for_customer_testing' ? 'good' : 'warn' },
             { title: 'Alerts', href: '/app/alerts', detail: 'Destinations, delivery logs, dispatch runs, and test-send workflow.', tag: 'monitoring', tone: 'good' },
-            { title: 'Provider slots', href: '/app/keys', detail: 'Provider material mode, rotation status, dry-run self-test, email demo, and emergency revoke.', tag: 'keys', tone: providerCount ? 'good' : 'warn' },
+            { title: 'Provider slots', href: '/app/keys', detail: 'Provider material mode, rotation status, dry-run self-test, protected email workflow, and emergency revoke.', tag: 'keys', tone: providerCount ? 'good' : 'warn' },
             { title: 'Launch support', href: '/app/support', detail: 'Support model, staff handoff, operator boundaries, and customer tasks.', tag: support.status, tone: support.status === 'ready' ? 'good' : 'warn' },
             { title: 'Pilot success', href: '/app/pilot-success', detail: 'Milestones, live checks, weekly customer update, blockers, and expansion/no-go path.', tag: 'success', tone: 'good' },
             { title: 'Technical guide', href: '/app/technical-guide', detail: 'Architecture, identity, network, key custody, caller lock, evidence, and troubleshooting answers.', tag: 'guide', tone: 'good' },
@@ -9566,7 +9616,7 @@ function renderEnterpriseSupportPage(pageName: EnterpriseSupportPageName): strin
             { title: 'No critical go/no-go blockers in this browser evidence state', detail: 'Still review customer-specific contract, traffic, retention, support, and incident-response expectations before paid rollout.', tag: 'review', tone: 'good' }
           ],
           known_limitations: [
-            'Manual go/no-go evidence is browser-local for this demo slice; persistent audit-backed manual evidence can come later.',
+            'Manual go/no-go evidence is browser-local for this pilot workflow; persistent audit-backed manual evidence can come later.',
             'Plan limits, traffic envelopes, retention terms, and support cadence remain contract-controlled until billing/limits APIs are built.',
             '24-hour incident response is optional add-on coverage unless the customer contract includes it.',
             'VaultProof can prove and control routed provider usage; direct raw-key use outside VaultProof still requires upstream provider rotation and customer-side log review.'
@@ -9581,7 +9631,7 @@ function renderEnterpriseSupportPage(pageName: EnterpriseSupportPageName): strin
           related_packets: {
             go_no_go_status: goNoGo.status,
             identity_login_qa: identityQa.status,
-            key_rotation_evidence: rotation.status,
+            key_rotation_evidence: displayPilotStatus(rotation.status),
             pilot_operations_evidence: pilotOps.status,
             api_proxy_self_test: apiProxy.status,
             api_inventory: apiInventory.status,
@@ -10367,7 +10417,7 @@ function renderEnterpriseSupportPage(pageName: EnterpriseSupportPageName): strin
             capacity_status: capacityStatus,
             status_tone: entitlementCapacityTone(capacityStatus),
             expansion_recommendation: entitlementCapacityRecommendation(capacityStatus),
-            hard_limit_enforcement: 'Manual contract-controlled for this demo; automated hard usage limits, overage billing, and invoice status remain production follow-up work.',
+            hard_limit_enforcement: 'Manual contract-controlled for this pilot; automated hard usage limits, overage billing, and invoice status remain production follow-up work.',
             actions: entitlementUsageActions(capacity, capacityStatus),
             review_links: ['/app/evidence', '/app/activity', '/app/inventory', '/app/rollout', '/app/plans']
           },
@@ -10385,7 +10435,7 @@ function renderEnterpriseSupportPage(pageName: EnterpriseSupportPageName): strin
             response_boundary: 'Base enterprise package uses customer incident-response ownership plus VaultProof launch support unless a 24-hour response add-on is included in the contract.'
           },
           guardrails: [
-            'Enterprise entitlements are contract-controlled for this demo slice; billing APIs and hard limit enforcement can come later.',
+            'Enterprise entitlements are contract-controlled for this pilot workflow; billing APIs and hard limit enforcement can come later.',
             'Capacity changes should be reviewed against API inventory, policy drift, rollout, monitoring, support tier, and renewal terms.',
             'Raw provider keys, encrypted shares, service-role keys, origin-lock values, signing secrets, and browser tokens are excluded from this packet.',
             'Enterprise customers use enterprise.vaultproof.dev; VaultProof staff/admin workflows stay on the separate admin.vaultproof.dev system.'
@@ -10464,7 +10514,7 @@ function renderEnterpriseSupportPage(pageName: EnterpriseSupportPageName): strin
           row('Capacity status', usage.expansion_recommendation || 'Record capacity allowances before onboarding.', usage.capacity_status || 'missing_allowance', usage.status_tone || 'warn'),
           row('Remaining calls', number(capacity.remaining_calls) + ' calls remain inside the recorded monthly allowance. Headroom: ' + number(capacity.call_headroom_percent) + '%.', capacity.monthly_call_allowance ? 'headroom' : 'missing', capacity.monthly_call_allowance && capacity.observed_proxy_calls <= capacity.monthly_call_allowance ? 'good' : 'warn'),
           row('Expansion recommendation', usage.expansion_recommendation || 'Record capacity allowances before onboarding.', 'expansion', usage.status_tone || 'warn'),
-          row('Hard limit enforcement', usage.hard_limit_enforcement || 'Manual contract-controlled for this demo.', 'manual', 'warn')
+          row('Hard limit enforcement', usage.hard_limit_enforcement || 'Manual contract-controlled for this pilot.', 'manual', 'warn')
         ].concat((usage.actions || []).map(function(action) {
           return row('Usage action', action, 'next', action.indexOf('Pause') === 0 ? 'bad' : 'warn');
         }));
@@ -10564,7 +10614,7 @@ function renderEnterpriseSupportPage(pageName: EnterpriseSupportPageName): strin
           '- Latest amendment: ' + (history.latest_record ? entitlementAmendmentLabel(history.latest_record.change_type) + ' / ' + history.latest_record.status + ' / ' + (history.latest_record.effective_date || 'no effective date') : 'none'),
           '',
           'Boundary:',
-          '- ' + (usage.hard_limit_enforcement || 'Manual contract-controlled for this demo.'),
+          '- ' + (usage.hard_limit_enforcement || 'Manual contract-controlled for this pilot.'),
           '- Commercial handoff is metadata-only. No card numbers, bank data, provider keys, encrypted shares, service-role keys, browser sessions, OAuth secrets, origin-lock values, signing secrets, runtime-token secrets, or unwrap roots are included.'
         ].join('\\n');
       }
@@ -10573,7 +10623,7 @@ function renderEnterpriseSupportPage(pageName: EnterpriseSupportPageName): strin
           row('Support tier', packet.support.support_tier, 'support', 'good'),
           row('Incident response boundary', packet.support.response_boundary + ' Current setting: ' + packet.support.incident_response_add_on + '.', 'contract', packet.support.incident_response_add_on === 'included' ? 'good' : 'warn'),
           row('Retention', (packet.contract && packet.contract.retention_label) || 'not set', 'contract', packet.contract && packet.contract.retention_label ? 'good' : 'warn'),
-          row('Billing enforcement', 'Commercial handoff is metadata-only for this demo. Billing APIs, invoice automation, and hard limit enforcement are a later paid buildout.', 'manual', 'warn'),
+          row('Billing enforcement', 'Commercial handoff is metadata-only for this pilot. Billing APIs, invoice automation, and hard limit enforcement are a later paid buildout.', 'manual', 'warn'),
           row('Commercial status', ((packet.billing_handoff || {}).next_actions || []).join(' ') || 'Billing handoff is ready.', (packet.billing_handoff || {}).status || 'commercial_review', (packet.billing_handoff || {}).status_tone || 'warn'),
           row('Secrets excluded', packet.secrets_excluded.join(', '), 'redacted', 'good')
         ].concat(packet.guardrails.map(function(item) {
@@ -10982,7 +11032,7 @@ function renderEnterpriseSupportPage(pageName: EnterpriseSupportPageName): strin
           { id: 'project-scope', title: 'Project scope exists', sub: projectCount + ' project scopes are visible.', passed: projectCount > 0, critical: true },
           { id: 'members-visible', title: 'Members visible', sub: memberCount + ' members are visible for access review.', passed: memberCount > 0, critical: true },
           { id: 'provider-slots-visible', title: 'Provider slots visible', sub: providerCount + ' provider/app connections are visible.', passed: providerCount > 0, critical: true },
-          { id: 'email-demo-ready', title: 'Email provider demo readiness', sub: emailProviders.length ? 'Email API key demo provider visible: ' + emailProviders.join(', ') + '.' : 'Add Resend, SendGrid, Mailgun, Postmark, or AWS SES before this demo path.', passed: emailProviders.length > 0, critical: true },
+          { id: 'email-demo-ready', title: 'Email provider readiness', sub: emailProviders.length ? 'Email API key provider visible: ' + emailProviders.join(', ') + '.' : 'Add Resend, SendGrid, Mailgun, Postmark, or AWS SES before this pilot path.', passed: emailProviders.length > 0, critical: true },
           { id: 'traffic-evidence', title: 'Traffic evidence observed', sub: totalCalls + ' proxy calls are visible in the overview window.', passed: totalCalls > 0, critical: true },
           { id: 'sso-status', title: 'SSO/login posture reported', sub: sso.provider_status || 'not confirmed', passed: Boolean(sso.provider_status), critical: false }
         ];
@@ -11061,7 +11111,7 @@ function renderEnterpriseSupportPage(pageName: EnterpriseSupportPageName): strin
           { id: 'members-added', auto: true, complete: memberCount > 0, tag: 'todo', title: 'Members are visible', sub: memberCount + ' organization members are visible.' },
           { id: 'sso-confirmed', auto: true, complete: sso.provider_status === 'configured', tag: 'confirm', title: 'SSO or login path confirmed', sub: sso.provider_status === 'configured' ? 'Company sign-in is configured.' : 'Confirm SSO or the assisted login path before customer testing.' },
           { id: 'provider-posture', auto: true, complete: providerCount > 0, tag: 'todo', title: 'Provider posture visible', sub: providerCount + ' provider/app connections are visible in the overview.' },
-          { id: 'email-key-protected', auto: true, complete: emailProviders.length > 0, tag: 'email key', title: 'Email provider key protected', sub: emailProviders.length ? 'Email API key demo provider visible: ' + emailProviders.join(', ') + '.' : 'Add Resend, SendGrid, Mailgun, Postmark, or AWS SES before customer demo.' },
+          { id: 'email-key-protected', auto: true, complete: emailProviders.length > 0, tag: 'email key', title: 'Email provider key protected', sub: emailProviders.length ? 'Email API key provider visible: ' + emailProviders.join(', ') + '.' : 'Add Resend, SendGrid, Mailgun, Postmark, or AWS SES before the customer walkthrough.' },
           { id: 'traffic-observed', auto: true, complete: totalCalls > 0, tag: 'manual', title: 'Test traffic observed', sub: totalCalls + ' proxy calls are visible in the overview window.' },
           { id: 'owners-confirmed', tag: 'owner', title: 'Customer owners confirmed', sub: 'Business, security, identity, network, developer, and incident owners are named.' },
           { id: 'first-workload-picked', tag: 'scope', title: 'First workload selected', sub: 'One low-risk production workflow, one provider path, and one owner group are chosen.' },
@@ -11091,8 +11141,8 @@ function renderEnterpriseSupportPage(pageName: EnterpriseSupportPageName): strin
           'Enterprise login URL: ' + identityQa.login_url,
           'Supabase redirect allowlist: ' + identityQa.allowed_redirect_uri,
           'External OAuth callback: ' + identityQa.external_oauth_callback_uri,
-          'Key rotation proof status: ' + rotation.status,
-          'Provider material modes: ' + rotation.provider_material_summary.live_sealed_slots + ' live sealed / ' + rotation.provider_material_summary.demo_placeholder_slots + ' demo placeholder / ' + rotation.provider_material_summary.missing_slots + ' missing',
+          'Key rotation proof status: ' + displayPilotStatus(rotation.status),
+          'Provider material modes: ' + rotation.provider_material_summary.live_sealed_slots + ' live sealed / ' + rotation.provider_material_summary.placeholder_slots + ' placeholder / ' + rotation.provider_material_summary.missing_slots + ' missing',
           'Pilot operations proof status: ' + pilotOps.status,
           'Rollback owner/path: ' + pilotOps.manual_evidence.rollback_owner_path.status,
           'Budget/monitoring review: ' + pilotOps.manual_evidence.budget_monitoring.status,
@@ -11153,7 +11203,7 @@ function renderEnterpriseSupportPage(pageName: EnterpriseSupportPageName): strin
           goNoGo.manual.map(goNoGoManualRow).join('');
         text('identityQaMeta', identityQa.status);
         byId('identityQaList').innerHTML = identityQaRows(identityQa).join('');
-        text('keyRotationMeta', rotation.status);
+        text('keyRotationMeta', displayPilotStatus(rotation.status));
         byId('keyRotationList').innerHTML = keyRotationRows(rotation).join('');
         text('pilotOpsMeta', pilotOps.status);
         byId('pilotOpsList').innerHTML = pilotOpsRows(pilotOps).join('');
@@ -11216,9 +11266,9 @@ function renderEnterpriseSupportPage(pageName: EnterpriseSupportPageName): strin
           },
           runtime_readiness: {
             production_ready: readiness.production_ready === true,
-            demo_ready: readiness.demo_ready === true,
+            pilot_ready: readiness.demo_ready === true,
             security_profile: readiness.security_profile || null,
-            runtime_tier: readiness.runtime_tier || null,
+            runtime_tier: displayRuntimeTier(readiness.runtime_tier),
             customer_dedicated_runtime: readiness.customer_dedicated_runtime === true,
             control_plane: {
               executor_configured: controlPlane.executor_configured === true,
@@ -11310,7 +11360,7 @@ function renderEnterpriseSupportPage(pageName: EnterpriseSupportPageName): strin
             'Review the go/no-go launch decision and close any hold blockers.',
             'Export audit CSV and access-review CSV for the review packet.',
             'Confirm caller-lock policy, provider slot posture, and emergency revoke owners.',
-            'Rotate shared or exposed pilot keys before paid customer data, or keep a demo-only acceptance note in the launch board.',
+            'Rotate shared or exposed pilot keys before paid customer data, or keep a pilot-limited acceptance note in the launch board.',
             'Confirm rollback ownership, budget alert coverage, and launch-week monitoring ownership before live customer traffic.',
             'Run the API proxy dry-run self-test and blocked-recipient email denial test before the customer walkthrough.',
             'Review the API inventory for owners, environment, data sensitivity, risk, provider-slot mapping, policy posture, stale traffic, and review due items.',
@@ -11327,7 +11377,7 @@ function renderEnterpriseSupportPage(pageName: EnterpriseSupportPageName): strin
             'Share the security review packet with customer security, procurement, and technical reviewers after validating launch blockers.',
             'Use the pilot proposal builder to confirm workload, provider path, owner group, price, support boundary, and success metric before the paid-pilot close.',
             'Use the pilot success tracker for weekly customer updates, milestone proof, and expansion/no-go decisions.',
-            'For the email API key demo, verify sender, recipient, template, gateway, and rate policy before live sends.',
+            'For the protected email API key workflow, verify sender, recipient, template, gateway, and rate policy before live sends.',
             'Keep provider keys, encrypted shares, service-role keys, origin-lock values, and signing secrets out of customer packets.'
           ]
         };
@@ -11357,7 +11407,7 @@ function renderEnterpriseSupportPage(pageName: EnterpriseSupportPageName): strin
         byId('evidenceReadinessList').innerHTML = [
           row('Production readiness', productionReady ? 'Control plane and confidential executor report production-ready.' : (readiness.production_blockers || []).join('; '), productionReady ? 'ready' : 'blocked', productionReady ? 'good' : 'bad'),
           row('Go/no-go launch decision', packet.go_no_go.status === 'go' ? 'Launch board says GO for pilot testing.' : 'Launch board says HOLD: ' + packet.go_no_go.blockers.join('; '), packet.go_no_go.status, packet.go_no_go.status === 'go' ? 'good' : 'bad'),
-          row('Security profile', readiness.security_profile || 'not reported', readiness.runtime_tier || 'runtime', readiness.security_profile === 'google-confidential-production' ? 'good' : 'warn'),
+          row('Security profile', readiness.security_profile || 'not reported', displayRuntimeTier(readiness.runtime_tier), readiness.security_profile === 'google-confidential-production' ? 'good' : 'warn'),
           row('Origin lock', controlPlane.origin_lock_configured ? 'GCP edge origin-lock header is configured and enforced by the control plane.' : 'Origin lock still needs configuration review.', controlPlane.origin_lock_required ? 'required' : 'optional', controlPlane.origin_lock_configured ? 'good' : 'warn'),
           row('Executor evidence', executor.reachable ? 'Executor health is reachable through the private runtime path. Key release: ' + (executorHealth.key_release_ready ? 'ready' : 'attention') + '. Attestation: ' + (executorHealth.attestation_evidence_ready ? 'ready' : 'attention') + '.' : 'Executor health was not reachable from readiness.', executor.reachable ? 'reachable' : 'attention', executor.reachable ? 'good' : 'bad')
         ].join('');
@@ -11382,7 +11432,7 @@ function renderEnterpriseSupportPage(pageName: EnterpriseSupportPageName): strin
           row('Projects', number(packet.organization.project_count) + ' project scopes are visible for this organization.', number(packet.organization.project_count), packet.organization.project_count ? 'good' : 'warn'),
           row('Members', number(packet.organization.member_count) + ' members are visible for access review.', number(packet.organization.member_count), packet.organization.member_count ? 'good' : 'warn'),
           row('Provider posture', number(packet.usage_summary.active_provider_slots) + ' active provider/app connections are visible in overview.', number(packet.usage_summary.active_provider_slots), packet.usage_summary.active_provider_slots ? 'good' : 'warn'),
-          row('Email API key protection', packet.usage_summary.email_provider_slots ? 'Email demo provider slots visible: ' + packet.usage_summary.email_providers.join(', ') + '. Run protected email dry-run before the customer walkthrough.' : 'No email provider key slot is visible yet. Add Resend, SendGrid, Mailgun, Postmark, or AWS SES before the demo.', packet.usage_summary.email_provider_slots ? 'ready' : 'todo', packet.usage_summary.email_provider_slots ? 'good' : 'warn'),
+          row('Email API key protection', packet.usage_summary.email_provider_slots ? 'Email provider slots visible: ' + packet.usage_summary.email_providers.join(', ') + '. Run protected email dry-run before the customer walkthrough.' : 'No email provider key slot is visible yet. Add Resend, SendGrid, Mailgun, Postmark, or AWS SES before the walkthrough.', packet.usage_summary.email_provider_slots ? 'ready' : 'todo', packet.usage_summary.email_provider_slots ? 'good' : 'warn'),
           row('Traffic evidence', number(packet.usage_summary.proxy_calls) + ' proxy calls, ' + number(packet.usage_summary.denied_calls) + ' denied, ' + number(packet.usage_summary.error_calls) + ' errors.', packet.usage_summary.proxy_calls ? 'observed' : 'pending', packet.usage_summary.error_calls || packet.usage_summary.denied_calls ? 'warn' : 'good')
         ].join('');
         byId('evidenceWorkflowList').innerHTML = [
@@ -11402,7 +11452,7 @@ function renderEnterpriseSupportPage(pageName: EnterpriseSupportPageName): strin
         ].join('');
         text('evidenceIdentityMeta', identityQa.status);
         byId('evidenceIdentityList').innerHTML = identityQaRows(identityQa).join('');
-        text('evidenceKeyRotationMeta', rotation.status);
+        text('evidenceKeyRotationMeta', displayPilotStatus(rotation.status));
         byId('evidenceKeyRotationList').innerHTML = keyRotationRows(rotation).join('');
         text('evidencePilotOpsMeta', pilotOps.status);
         byId('evidencePilotOpsList').innerHTML = pilotOpsRows(pilotOps).join('');
@@ -11454,7 +11504,7 @@ function renderEnterpriseSupportPage(pageName: EnterpriseSupportPageName): strin
         var projectCount = projectCountFromData(org, overview, bootstrap);
         var blockers = goNoGo.blockers.length ? goNoGo.blockers.join('; ') : 'none';
         return [
-          'VaultProof Enterprise demo talk track',
+          'VaultProof Enterprise walkthrough talk track',
           'Headline: Active Key Protection for every API call.',
           '',
           '1. Open with the risk',
@@ -11464,13 +11514,13 @@ function renderEnterpriseSupportPage(pageName: EnterpriseSupportPageName): strin
           'Organization: ' + (org.name || 'selected workspace'),
           'Projects visible: ' + number(projectCount),
           'Provider slots visible: ' + number(providerCount),
-          'Email provider demo slots: ' + (emailProviders.length ? emailProviders.join(', ') : 'none yet'),
+          'Email provider slots: ' + (emailProviders.length ? emailProviders.join(', ') : 'none yet'),
           'Proxy calls observed: ' + number(overview.totalCalls),
           'Runtime production-ready: ' + (readiness.production_ready === true ? 'yes' : 'no'),
           'SSO/login status: ' + (sso.provider_status || 'not confirmed'),
           'Identity/OAuth proof status: ' + identityQa.status,
           'OAuth callback: ' + identityQa.external_oauth_callback_uri,
-          'Key rotation proof status: ' + rotation.status,
+          'Key rotation proof status: ' + displayPilotStatus(rotation.status),
           'Pilot operations proof status: ' + pilotOps.status,
           'API proxy self-test status: ' + apiProxy.status,
           'Launch support proof status: ' + support.status,
@@ -11506,7 +11556,7 @@ function renderEnterpriseSupportPage(pageName: EnterpriseSupportPageName): strin
           '- Launch checklist: go/no-go board, manual evidence, stale holds, and remaining blockers.',
           '',
           '4. Be crisp about boundaries',
-          'VaultProof does not show raw provider keys in the browser, customer packet, logs, or ordinary dashboard views. Demo dry-runs are safe by default. Live sandbox delivery needs sealed provider material first.',
+          'VaultProof does not show raw provider keys in the browser, customer packet, logs, or ordinary dashboard views. Dry-runs are safe by default. Live sandbox delivery needs sealed provider material first.',
           '',
           '5. Current go/no-go',
           'Decision: ' + (goNoGo.status === 'go' ? 'GO' : 'HOLD'),
@@ -11538,12 +11588,12 @@ function renderEnterpriseSupportPage(pageName: EnterpriseSupportPageName): strin
         text('demoMeta', goNoGo.status === 'go' ? 'ready to pilot' : 'hold for evidence');
         byId('demoObjectiveList').innerHTML = [
           row('Active Key Protection for every API call.', 'Start with a simple claim buyers remember: VaultProof protects sensitive provider/API calls while keeping raw keys out of app code, browser storage, logs, and customer packets.', 'headline', 'good'),
-          row('Email API key story', emailProviders.length ? 'Use ' + emailProviders.join(', ') + ' as the easy-to-understand demo secret.' : 'Create or select an email provider slot before relying on the email-key story.', emailProviders.length ? 'ready' : 'todo', emailProviders.length ? 'good' : 'warn'),
+          row('Email API key story', emailProviders.length ? 'Use ' + emailProviders.join(', ') + ' as the easy-to-understand protected secret.' : 'Create or select an email provider slot before relying on the email-key story.', emailProviders.length ? 'ready' : 'todo', emailProviders.length ? 'good' : 'warn'),
           row('One paid-pilot ask', 'Close on one low-risk workflow, one owner group, one provider path, exported evidence, and rollback owner.', 'focused', 'good')
         ].join('');
         byId('demoPathList').innerHTML = [
           linkRow('Dashboard posture', 'Show runtime readiness, organization scope, project count, member count, and quick links.', '/app/dashboard', 'open', 'good'),
-          linkRow('Provider slot demo', 'Show material mode, protected email dry-run, blocked recipient test, policy denial evidence, and emergency revoke.', '/app/keys', 'open', providerCount ? 'good' : 'warn'),
+          linkRow('Provider slot walkthrough', 'Show material mode, protected email dry-run, blocked recipient test, policy denial evidence, and emergency revoke.', '/app/keys', 'open', providerCount ? 'good' : 'warn'),
           linkRow('Runtime activity', 'Show status codes, denial events, latency, provider request IDs, and recent traffic.', '/app/activity', 'open', overview.totalCalls ? 'good' : 'warn'),
           linkRow('Alert operations', 'Show monitoring destinations, delivery logs, dispatch runs, and test-send workflow.', '/app/alerts', 'open', monitoring.status === 'ready' ? 'good' : 'warn'),
           linkRow('Release evidence', 'Show active build/image tag, approval, verification, rollout state, rollback path, and customer-safe notes.', '/app/release', 'release', releaseEvidence.status === 'ready_with_review' ? 'good' : 'warn'),
@@ -11561,7 +11611,7 @@ function renderEnterpriseSupportPage(pageName: EnterpriseSupportPageName): strin
         byId('demoProofList').innerHTML = [
           row('GCP confidential runtime', productionReady ? 'Readiness reports production-ready with the expected GCP confidential security profile.' : 'Readiness is not green; use this as a blocker instead of a claim.', productionReady ? 'ready' : 'blocked', productionReady ? 'good' : 'bad'),
           row('Identity/OAuth proof kit', identityQa.status === 'ready' ? 'Login QA evidence is recorded with redirect allowlist and external OAuth callback facts.' : 'Use Launch to record strict login QA, human browser QA, and Supabase redirect/OAuth confirmation.', identityQa.status, identityQa.status === 'ready' ? 'good' : 'warn'),
-          row('Key rotation proof kit', rotation.status === 'accepted_for_demo' ? 'Launch evidence records either rotation or explicit demo-only acceptance for shared pilot key posture.' : 'Use Launch to record key rotation or demo-only acceptance before a customer pilot.', rotation.status, rotation.status === 'accepted_for_demo' ? 'good' : 'warn'),
+          row('Key rotation proof kit', rotation.status === 'accepted_for_pilot' ? 'Launch evidence records either rotation or explicit pilot-limited acceptance for shared pilot key posture.' : 'Use Launch to record key rotation or pilot-limited acceptance before a customer pilot.', displayPilotStatus(rotation.status), rotation.status === 'accepted_for_pilot' ? 'good' : 'warn'),
           row('Pilot operations proof kit', pilotOps.status === 'ready' ? 'Rollback ownership and budget/monitoring review evidence are recorded for this pilot.' : 'Use Launch to record rollback owner/path and budget/monitoring review before customer traffic.', pilotOps.status, pilotOps.status === 'ready' ? 'good' : 'warn'),
           row('API proxy self-test kit', apiProxy.status === 'ready' ? 'Provider slots and proxy traffic evidence are visible; use Provider Slots to copy the safe dry-run request.' : 'Use Provider Slots to run/copy a dry-run request and create proxy traffic evidence before the customer walkthrough.', apiProxy.status, apiProxy.status === 'ready' ? 'good' : 'warn'),
           row('Launch support kit', support.status === 'ready' ? 'Support model, internal admin boundary, and customer handoff package are ready for the pilot story.' : 'Use Support to review launch-week support scope and customer handoff boundaries.', support.status, support.status === 'ready' ? 'good' : 'warn'),
@@ -11573,32 +11623,32 @@ function renderEnterpriseSupportPage(pageName: EnterpriseSupportPageName): strin
           row('Pilot success tracker', pilotSuccess.status === 'on_track' ? 'Pilot milestones, live checks, and weekly update proof are on track.' : 'Use Pilot Success to record kickoff, dry-run, customer review, low-volume traffic, and success metric evidence.', pilotSuccess.status, pilotSuccess.status === 'on_track' ? 'good' : 'warn'),
           row('Contract entitlements', entitlements.status === 'ready_for_paid_pilot' ? 'Paid-user package, capacity, support tier, owners, renewal, and guardrails are recorded for this organization.' : 'Use Entitlements to finish contract status, capacity, billing owner, success owner, support tier, renewal date, and launch dependency checks.', entitlements.status, entitlements.status === 'ready_for_paid_pilot' ? 'good' : 'warn'),
           row('Paid onboarding', onboarding.status === 'ready_for_customer_testing' ? 'Activation owners, login handoff, support handoff, key posture, and customer testing window are recorded for this organization.' : 'Use Paid Onboarding to finish customer activation owners, login handoff, workload owner, support handoff, capacity review, key posture, and testing window.', onboarding.status, onboarding.status === 'ready_for_customer_testing' ? 'good' : 'warn'),
-          row('Secret exposure intake', scannerExposure.status === 'hold' ? 'Open critical/high exposure findings remain; rotate or explicitly accept demo-only risk before paid data.' : scannerExposure.status === 'needs_scan_evidence' ? 'Record a redacted local/CI scanner summary before relying on this proof point.' : 'Scanner evidence is recorded with redacted metadata and no raw secret values.', scannerExposure.status, scannerExposure.status === 'hold' ? 'bad' : 'warn'),
+          row('Secret exposure intake', scannerExposure.status === 'hold' ? 'Open critical/high exposure findings remain; rotate or explicitly accept pilot-limited risk before paid data.' : scannerExposure.status === 'needs_scan_evidence' ? 'Record a redacted local/CI scanner summary before relying on this proof point.' : 'Scanner evidence is recorded with redacted metadata and no raw secret values.', scannerExposure.status, scannerExposure.status === 'hold' ? 'bad' : 'warn'),
           row('No raw key exposure', 'Provider slots show posture and material mode without returning encrypted shares or plaintext provider material to the browser.', 'secret safe', 'good'),
           row('Policy denial evidence', 'The blocked-recipient test gives a buyer a concrete denial story: policy rejected unsafe traffic and recorded evidence.', 'auditable', 'good'),
           row('Access and audit exports', 'Members, Audit, Activity, and Evidence produce reviewable CSV/JSON artifacts for security teams.', 'exportable', 'good')
         ].join('');
         byId('demoGuardrailList').innerHTML = [
-          row('Demo dry-run first', 'Use dry-run provider execution unless sealed sandbox provider material is intentionally installed for this demo.', 'safe default', 'good'),
-          row('Login proof before customer testing', identityQa.status === 'ready' ? 'Identity proof is recorded for this organization.' : 'Do not invite a customer pilot user until login/OAuth proof is recorded or explicitly accepted as a demo hold.', 'identity gate', identityQa.status === 'ready' ? 'good' : 'warn'),
-          row('Rotate before paid data', rotation.status === 'accepted_for_demo' ? 'Demo-only key posture is acknowledged; rotate shared material before paid customer data.' : 'Shared/exposed pilot keys still need rotation or an explicit demo-only acceptance note.', 'key gate', rotation.status === 'accepted_for_demo' ? 'good' : 'warn'),
+          row('Dry-run first', 'Use dry-run provider execution unless sealed sandbox provider material is intentionally installed for this walkthrough.', 'safe default', 'good'),
+          row('Login proof before customer testing', identityQa.status === 'ready' ? 'Identity proof is recorded for this organization.' : 'Do not invite a customer pilot user until login/OAuth proof is recorded or explicitly accepted as a pilot hold.', 'identity gate', identityQa.status === 'ready' ? 'good' : 'warn'),
+          row('Rotate before paid data', rotation.status === 'accepted_for_pilot' ? 'Pilot-limited key posture is acknowledged; rotate shared material before paid customer data.' : 'Shared/exposed pilot keys still need rotation or an explicit pilot-limited acceptance note.', 'key gate', rotation.status === 'accepted_for_pilot' ? 'good' : 'warn'),
           row('Rollback/monitoring before traffic', pilotOps.status === 'ready' ? 'Rollback and monitoring ownership is recorded for this organization.' : 'Do not start pilot traffic until rollback owner/path and budget/monitoring review are recorded.', 'ops gate', pilotOps.status === 'ready' ? 'good' : 'warn'),
           row('Self-test before live calls', apiProxy.status === 'ready' ? 'API proxy self-test evidence is visible for this organization.' : 'Use dry-run and blocked-recipient tests before enabling any live sandbox provider call.', 'proxy gate', apiProxy.status === 'ready' ? 'good' : 'warn'),
           row('Support boundary before pilot', support.status === 'ready' ? 'Support scope and internal admin boundaries are visible.' : 'Review support model and internal admin boundaries before the customer starts testing.', 'support gate', support.status === 'ready' ? 'good' : 'warn'),
           row('Monitoring before pilot', monitoring.status === 'ready' ? 'Monitoring evidence is ready for launch-week customer testing.' : 'Do not start pilot traffic until runtime, traffic, alert workflow, Cloud Armor, and budget evidence are reviewed.', 'monitoring gate', monitoring.status === 'ready' ? 'good' : 'warn'),
           row('Release proof after deploy', releaseEvidence.status === 'ready_with_review' ? 'The current release is recorded with approval, verification, and rollback evidence.' : 'Do not present a deploy as customer-ready until Release Evidence records approver, verifier, build tag, rollout state, and rollback path.', 'release gate', releaseEvidence.status === 'ready_with_review' ? 'good' : 'warn'),
-          row('Tester rehearsal before live demo', pilotTesters.status === 'ready_for_guided_testing' ? 'Paid-pilot tester rehearsal evidence is ready for this browser/org state.' : 'Record at least one login pass, assigned scenarios, and blocker-free tester evidence before inviting testers.', 'tester gate', pilotTesters.status === 'ready_for_guided_testing' ? 'good' : 'warn'),
+          row('Tester rehearsal before live walkthrough', pilotTesters.status === 'ready_for_guided_testing' ? 'Paid-pilot tester rehearsal evidence is ready for this browser/org state.' : 'Record at least one login pass, assigned scenarios, and blocker-free tester evidence before inviting testers.', 'tester gate', pilotTesters.status === 'ready_for_guided_testing' ? 'good' : 'warn'),
           row('Customer activation before paid testing', onboarding.status === 'ready_for_customer_testing' ? 'Paid onboarding is ready for a guided customer testing session.' : 'Keep customer activation on hold until the paid onboarding board is complete.', 'onboarding gate', onboarding.status === 'ready_for_customer_testing' ? 'good' : 'warn'),
-          row('Scanner before paid data', scannerExposure.status === 'hold' ? 'Open exposure findings are a paid-data blocker until rotated, revoked, or explicitly accepted for demo-only use.' : 'Use Scanner to keep redacted exposure findings tied to owner and rotation evidence.', 'scanner gate', scannerExposure.status === 'hold' ? 'bad' : 'warn'),
+          row('Scanner before paid data', scannerExposure.status === 'hold' ? 'Open exposure findings are a paid-data blocker until rotated, revoked, or explicitly accepted for pilot-limited use.' : 'Use Scanner to keep redacted exposure findings tied to owner and rotation evidence.', 'scanner gate', scannerExposure.status === 'hold' ? 'bad' : 'warn'),
           row('Do not mark GO casually', goNoGo.status === 'go' ? 'The board is green for this browser/org evidence state.' : 'The board is holding on: ' + goNoGo.blockers.join('; '), goNoGo.status, goNoGo.status === 'go' ? 'good' : 'warn'),
           row('Cloud Armor evidence', 'Keep Cloud Armor as a required operator-confirmed check until the live policy exists and verify passes.', 'manual proof', 'warn'),
-          row('Key rotation before paid onboarding', 'Shared or exposed pilot keys should be rotated or explicitly accepted for demo-only use before paid customer data.', 'required', 'warn')
+          row('Key rotation before paid onboarding', 'Shared or exposed pilot keys should be rotated or explicitly accepted for pilot-limited use before paid customer data.', 'required', 'warn')
         ].join('');
         byId('demoObjectionList').innerHTML = [
           row('Why charge for this?', 'The value is reducing key-leak blast radius, speeding security review, giving audit evidence, and avoiding incident cleanup from abused provider keys.', 'value', 'good'),
-          row('Why keep Supabase for the demo?', 'Supabase keeps OAuth/session/Admin Auth working now; a fresh GCP database can be planned after the demo without delaying customer conversations.', 'practical', 'good'),
+          row('Why keep Supabase for the pilot?', 'Supabase keeps OAuth/session/Admin Auth working now; a fresh GCP database can be planned after the pilot without delaying customer conversations.', 'practical', 'good'),
           row('Do customers need incident response included?', 'Most enterprise buyers have their own teams. Treat 24-hour response as optional add-on or higher-tier coverage, not a mandatory base feature.', 'package', 'good'),
-          row('Is this only AI?', 'No. The email-key demo proves the broader category: VaultProof protects sensitive API calls, including email, model, automation, and partner providers.', 'broader', 'good')
+          row('Is this only AI?', 'No. The email-key workflow proves the broader category: VaultProof protects sensitive API calls, including email, model, automation, and partner providers.', 'broader', 'good')
         ].join('');
         byId('demoCloseList').innerHTML = [
           linkRow('Package and price', 'Use Plans for the paid-pilot scope, $5k/month starting package, guardrails, and expansion path.', '/app/plans', 'plans', 'good'),
@@ -11944,7 +11994,7 @@ function renderEnterpriseSupportPage(pageName: EnterpriseSupportPageName): strin
           '<div><span class="tag ' + releaseVerificationTone(record.verification_status) + '">' + escapeHtml(record.verification_status || 'pending') + '</span><span class="tag ' + releaseRolloutTone(record.rollout_status) + '">' + escapeHtml(record.rollout_status || 'planned') + '</span><span class="tag">' + escapeHtml(record.approver || 'approver missing') + '</span></div></div>' +
           '<div class="row-actions"><button type="button" data-action="remove-release-record" data-release-record-id="' + escapeHtml(record.id) + '">remove</button><a class="tag" href="/app/runbooks">runbooks</a><a class="tag" href="/app/rollout">rollout</a></div></div>' +
           '<div class="release-fields">' +
-          releaseInput(record, 'release_label', 'release label', 'enterprise demo release') +
+          releaseInput(record, 'release_label', 'release label', 'enterprise pilot release') +
           releaseInput(record, 'build_tag', 'build/image tag', 'git sha or image tag') +
           releaseInput(record, 'approver', 'approver', 'operator or customer owner') +
           releaseInput(record, 'verifier', 'verifier', 'person who ran QA/gates') +
@@ -11953,7 +12003,7 @@ function renderEnterpriseSupportPage(pageName: EnterpriseSupportPageName): strin
             { value: 'passed', label: 'passed' },
             { value: 'failed', label: 'failed' },
             { value: 'blocked', label: 'blocked' },
-            { value: 'accepted_demo', label: 'accepted for demo' }
+            { value: 'accepted_demo', label: 'accepted for pilot' }
           ]) +
           releaseSelect(record, 'rollout_status', 'rollout status', [
             { value: 'planned', label: 'planned' },
@@ -12086,7 +12136,7 @@ function renderEnterpriseSupportPage(pageName: EnterpriseSupportPageName): strin
             { value: 'confirmed', label: 'confirmed' },
             { value: 'rotating', label: 'rotating' },
             { value: 'rotated', label: 'rotated' },
-            { value: 'accepted_demo', label: 'accepted for demo' },
+            { value: 'accepted_demo', label: 'accepted for pilot' },
             { value: 'false_positive', label: 'false positive' },
             { value: 'blocked', label: 'blocked' }
           ]) +
@@ -12167,7 +12217,7 @@ function renderEnterpriseSupportPage(pageName: EnterpriseSupportPageName): strin
           row('Run a redacted scan', 'Run the customer-approved repository scanner locally or in CI with redaction/masking enabled before copying metadata here.', 'required', 'warn'),
           row('Do not paste secrets', 'Record finding id, sanitized path, repository, branch, owner, ticket, PR, or hash only. Secret-like input is redacted before browser storage and JSON export.', 'redacted', 'good'),
           linkRow('Rotate provider slot', 'Use Provider Slots to rotate, revoke, or replace exposed provider material before paid customer data.', '/app/keys', 'slots', 'good'),
-          linkRow('Track policy exception', 'Use Policy Drift only for explicit demo-only acceptance with owner, reason, compensating control, and expiration date.', '/app/policy', 'policy', 'good'),
+          linkRow('Track policy exception', 'Use Policy Drift only for explicit pilot-limited acceptance with owner, reason, compensating control, and expiration date.', '/app/policy', 'policy', 'good'),
           linkRow('Review rollout hold', 'Use Rollout Manager and Launch to keep open critical/high findings from becoming hidden launch risk.', '/app/rollout', 'rollout', packet.status === 'hold' ? 'warn' : 'good')
         ].join('');
         var packetBox = byId('scannerEvidencePacket');
@@ -12358,7 +12408,7 @@ function renderEnterpriseSupportPage(pageName: EnterpriseSupportPageName): strin
             row('Strict login QA', 'LOGIN_QA_REQUIRE_SESSION=true npm run qa:enterprise-login validates live login redirects, generates a temporary Supabase session, and checks authenticated enterprise APIs when service-role env is loaded.', 'identity', 'good'),
             row('OAuth redirect QA', 'LOGIN_QA_OAUTH_PROVIDER=google npm run qa:enterprise-login checks the public Supabase OAuth authorize redirect after the external provider app is configured.', 'identity', 'good'),
             row('Sealed provider ingest', 'npm run seal:enterprise-provider-slot is the local operator path for live provider material. Keep raw keys out of browser forms and customer packets.', 'rotation', 'good'),
-            row('Strict live material gate', 'GOAL1_DEMO_ONLY=false npm run gate:gcp-first-goal requires live encrypted provider material instead of demo placeholders before paid customer data.', 'rotation', 'good'),
+            row('Strict live material gate', 'Run the first-goal gate in strict live-material mode so live encrypted provider material is required instead of placeholders before paid customer data.', 'rotation', 'good'),
             row('Secret rotation preparation', 'npm run prepare:enterprise-secret-rotation plans the install order and can generate fresh executor signing material without printing secrets.', 'read-only', 'good'),
             row('Private origin preparation', 'npm run prepare:enterprise-private-origin inventories edge, gateway, VM network posture, and private-origin migration choices without changing live infrastructure.', 'read-only', 'good'),
             row('Gateway JWT validation preparation', 'npm run prepare:enterprise-apim-jwt plans Supabase or Entra JWT validation settings before enabling gateway JWT validation and can discover the Supabase issuer from the live enterprise login script.', 'read-only', 'good'),
@@ -12387,7 +12437,7 @@ function renderEnterpriseSupportPage(pageName: EnterpriseSupportPageName): strin
             row('Current exposure response status', exposureResponseForRunbook.decision, exposureResponseForRunbook.status, exposureResponseForRunbook.status === 'hold' ? 'bad' : exposureResponseForRunbook.status === 'ready_to_contain' ? 'good' : 'warn'),
             row('Triage linked scanner findings', number(exposureSummaryForRunbook.linked_scanner_findings) + ' scanner findings are linked to provider slots; ' + number(exposureSummaryForRunbook.open_critical_or_high_linked_findings) + ' linked critical/high findings remain open.', exposureSummaryForRunbook.open_critical_or_high_linked_findings ? 'hold' : 'review', exposureSummaryForRunbook.open_critical_or_high_linked_findings ? 'bad' : 'good'),
             linkRow('Open Provider Slots incident mode', 'Copy the customer-safe incident JSON, review material mode, and emergency revoke affected provider slots without exposing raw upstream keys.', '/app/keys', 'incident JSON', 'good'),
-            linkRow('Open Scanner findings', 'Update linked exposure findings only after rotation, revoke, false-positive review, or explicit demo-only acceptance.', '/app/scanner', 'scanner', exposureSummaryForRunbook.open_critical_or_high_linked_findings ? 'warn' : 'good'),
+            linkRow('Open Scanner findings', 'Update linked exposure findings only after rotation, revoke, false-positive review, or explicit pilot-limited acceptance.', '/app/scanner', 'scanner', exposureSummaryForRunbook.open_critical_or_high_linked_findings ? 'warn' : 'good'),
             linkRow('Export activity evidence', 'Review routed traffic, denials, latency, provider request IDs, and attestation hints for what VaultProof actually saw.', '/app/activity', 'activity', 'good'),
             linkRow('Export audit CSV', 'Attach governance and runtime audit evidence to the security-review packet for the response window.', evidenceExportHref('/api/v1/enterprise/audit?format=csv&days=30'), 'audit CSV', 'good'),
             linkRow('Share Evidence packet', 'Use Evidence after Provider Slots and Scanner are updated so customers see exposure response, scanner, rotation, and proof-boundary status together.', '/app/evidence', 'evidence', 'good'),
@@ -12414,7 +12464,7 @@ function renderEnterpriseSupportPage(pageName: EnterpriseSupportPageName): strin
         });
         byId('verifierAttestationList').innerHTML = row(
           sharedAttestation.label || 'Shared enterprise runtime attestation',
-          'Mode: ' + (sharedAttestation.mode || 'shared-enterprise-runtime-attestation') + '. Tier: ' + (sharedAttestation.runtime_tier || 'shared-demo') + '. Source: ' + (sharedAttestation.source || '/readiness') + '. Dynamic guest attestation is required; static attestation tokens stay disabled.',
+          'Mode: ' + (sharedAttestation.mode || 'shared-enterprise-runtime-attestation') + '. Tier: ' + displayRuntimeTier(sharedAttestation.runtime_tier) + '. Source: ' + (sharedAttestation.source || '/readiness') + '. Dynamic guest attestation is required; static attestation tokens stay disabled.',
           sharedAttestation.customer_dedicated_runtime ? 'dedicated' : 'shared',
           'good'
         );

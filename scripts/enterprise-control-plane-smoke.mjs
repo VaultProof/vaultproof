@@ -3065,7 +3065,7 @@ async function assertEnterpriseLoginRoute() {
       'AI Proof Verifier',
       '/app/verifier',
       'Provider slots',
-      'email API key demo slots',
+      'protected email API key slots',
       'Members and invites',
       'Audit and exports',
       'Org and Entra SSO',
@@ -3179,7 +3179,7 @@ async function assertEnterpriseLoginRoute() {
     {
       path: '/app/keys',
       title: 'Provider Slots - VaultProof Enterprise',
-      required: ['/api/v1/enterprise/projects', 'add slot', 'create slot', 'Extra headers JSON', 'slotExtraHeaders', 'generic-bearer', 'generic-header', 'minimax', 'github', 'notion', 'cloudflare', 'anthropic-version', 'apikey', 'x-algolia-application-id', 'emergency revoke', 'live sealed material', 'demo placeholder material', 'Customer API proxy test kit', 'copy dry-run request', 'copy blocked-recipient request', 'YOUR_VAULTPROOF_SESSION_JWT', 'Email API key demo', 'protected email dry-run', 'blocked recipient test', 'Policy denial evidence', 'resend', 'sendgrid', 'postmark', 'brevo', 'mailersend', 'sendinblue', 'sparkpost', 'mailtrap', 'supabase', 'algolia', 'shopify', 'grafana', 'weaviate', 'langfuse', 'azure-openai', 'nvidia', 'sambanova', 'fal', 'brave-search', 'serper', 'unstructured', 'qdrant', 'turso', 'netlify', 'digitalocean', 'heroku', 'fly', 'railway', 'terraform-cloud', 'pulumi', 'fastly', 'tailscale', 'azure-management', 'gcp-resource-manager', 'microsoft-graph', 'google-workspace', 'bitbucket', 'circleci', 'buildkite', 'dockerhub', 'quay', 'npm-registry', 'betterstack', 'logsnag', 'raygun', 'semgrep', 'sonarcloud', 'elasticsearch', 'elastic-cloud', 'meilisearch', 'typesense', 'kubernetes', 'hashicorp-vault', 'onepassword-connect', 'doppler', 'infisical', 'segment', 'plausible', 'hume', 'runpod', 'webflow', 'salesforce', 'zoho-crm', 'zoom', 'facebook-graph', 'linkedin', 'wordpress', 'okta', 'opsgenie', 'axiom', 'rollbar', 'asana', 'monday', 'clickup', 'figma', 'zendesk', 'jira', 'adyen', 'chargebee', 'x-figma-token', 'SSWS {key}', 'GenieKey {key}', 'ApiKey {key}', 'x-vault-token', 'circle-token', 'Zoho-oauthtoken {key}', 'fastly-key', 'application/vnd.heroku+json; version=3'],
+      required: ['/api/v1/enterprise/projects', 'add slot', 'create slot', 'Extra headers JSON', 'slotExtraHeaders', 'generic-bearer', 'generic-header', 'minimax', 'github', 'notion', 'cloudflare', 'anthropic-version', 'apikey', 'x-algolia-application-id', 'emergency revoke', 'live sealed material', 'placeholder material', 'Customer API proxy test kit', 'copy dry-run request', 'copy blocked-recipient request', 'YOUR_VAULTPROOF_SESSION_JWT', 'Email API key walkthrough', 'protected email dry-run', 'blocked recipient test', 'Policy denial evidence', 'resend', 'sendgrid', 'postmark', 'brevo', 'mailersend', 'sendinblue', 'sparkpost', 'mailtrap', 'supabase', 'algolia', 'shopify', 'grafana', 'weaviate', 'langfuse', 'azure-openai', 'nvidia', 'sambanova', 'fal', 'brave-search', 'serper', 'unstructured', 'qdrant', 'turso', 'netlify', 'digitalocean', 'heroku', 'fly', 'railway', 'terraform-cloud', 'pulumi', 'fastly', 'tailscale', 'azure-management', 'gcp-resource-manager', 'microsoft-graph', 'google-workspace', 'bitbucket', 'circleci', 'buildkite', 'dockerhub', 'quay', 'npm-registry', 'betterstack', 'logsnag', 'raygun', 'semgrep', 'sonarcloud', 'elasticsearch', 'elastic-cloud', 'meilisearch', 'typesense', 'kubernetes', 'hashicorp-vault', 'onepassword-connect', 'doppler', 'infisical', 'segment', 'plausible', 'hume', 'runpod', 'webflow', 'salesforce', 'zoho-crm', 'zoom', 'facebook-graph', 'linkedin', 'wordpress', 'okta', 'opsgenie', 'axiom', 'rollbar', 'asana', 'monday', 'clickup', 'figma', 'zendesk', 'jira', 'adyen', 'chargebee', 'x-figma-token', 'SSWS {key}', 'GenieKey {key}', 'ApiKey {key}', 'x-vault-token', 'circle-token', 'Zoho-oauthtoken {key}', 'fastly-key', 'application/vnd.heroku+json; version=3'],
     },
   ];
   for (const page of operationsPages) {
@@ -3283,7 +3283,7 @@ async function assertEnterpriseLoginRoute() {
     {
       path: '/app/verifier',
       title: 'AI Proof Verifier - VaultProof Enterprise',
-      required: ['Model registry', 'Register external model', 'Submit proof bundle', 'Shared demo attestation', 'Shared enterprise runtime attestation', 'verify evidence only', '/api/v1/enterprise/verifier', 'VaultProof does not run it'],
+      required: ['Model registry', 'Register external model', 'Submit proof bundle', 'Shared pilot attestation', 'Shared enterprise runtime attestation', 'verify evidence only', '/api/v1/enterprise/verifier', 'VaultProof does not run it'],
     },
     {
       path: '/app/runbooks',
@@ -3817,7 +3817,7 @@ async function assertInternalAdminConsole() {
     'Internal admin audit',
     'approval gate',
     'Launch board',
-    'Demo script',
+    'Buyer walkthrough',
     'Paid onboarding',
     'Support room',
     'Pilot success',
@@ -3885,8 +3885,8 @@ async function assertInternalAdminConsole() {
   for (const internalPage of [
     {
       path: '/app/demo',
-      title: 'Demo script - VaultProof Enterprise',
-      required: ['Demo objective', 'Copyable demo talk track', 'Launch support kit', 'Paid onboarding', 'copy script'],
+      title: 'Buyer walkthrough - VaultProof Enterprise',
+      required: ['Walkthrough objective', 'Copyable walkthrough talk track', 'Launch support kit', 'Paid onboarding', 'copy script'],
     },
     {
       path: '/app/onboarding',

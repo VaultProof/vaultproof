@@ -1,6 +1,6 @@
 // ── Guided Tour ──
   var tourSteps = [
-    { target: '#demo-banner', text: 'Welcome to VaultProof! This is a demo of your dashboard. Let\u2019s walk through how everything works.', position: 'bottom' },
+    { target: '#demo-banner', text: 'Welcome to VaultProof! This preview shows how the dashboard works with sample data.', position: 'bottom' },
     { target: '#stats-cards', text: 'These cards show your real-time usage \u2014 total keys stored, active providers, API calls today, and error rate.', position: 'bottom' },
     { target: '#keys-table', text: 'This is where your API keys live. Each key is split before storage \u2014 the full key is only assembled briefly during API calls. You can add, rotate, or revoke keys here.', position: 'bottom' },
     { target: '#keys-header', text: 'To store a key, click \u2018Add Key\u2019, choose your provider (OpenAI, Anthropic, etc.), and paste your key. It\u2019s split instantly in your browser.', position: 'bottom' },

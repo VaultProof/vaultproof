@@ -732,12 +732,12 @@
     if (!list) return;
 
     if (!IS_ENTERPRISE_HOST) {
-      list.innerHTML = '<div class="empty">Secure execution demo is available only on enterprise.vaultproof.dev.</div>';
+      list.innerHTML = '<div class="empty">Secure execution self-test is available only on enterprise.vaultproof.dev.</div>';
       return;
     }
 
     if (!runnableProjects.length) {
-      list.innerHTML = '<div class="empty">No OpenAI provider slots are available yet. Add one to an enterprise project to run the secure execution demo.</div>';
+      list.innerHTML = '<div class="empty">No OpenAI provider slots are available yet. Add one to an enterprise project to run the secure execution self-test.</div>';
       return;
     }
 
@@ -828,10 +828,10 @@
     const completed = items.filter((item) => item.done).length;
     const resourceCards = [
       {
-        title: 'Enterprise demo',
-        copy: 'Use the enterprise demo for buyer walkthroughs and architecture framing before a pilot review.',
+        title: 'Enterprise pilot',
+        copy: 'Use the enterprise pilot walkthrough for buyer sessions and architecture framing before a pilot review.',
         href: '/enterprise-demo',
-        label: 'open enterprise demo',
+        label: 'open enterprise pilot',
       },
       {
         title: 'Docs',
@@ -910,7 +910,7 @@
       ...checklistItems.map((item) => `- ${item.done ? '[x]' : '[ ]'} ${item.label}`),
       '',
       'Useful links',
-      '- Enterprise demo: /enterprise-demo',
+      '- Enterprise pilot: /enterprise-demo',
       '- Docs: /docs',
       '- Security: /security',
       '- Org settings: /app/org',
@@ -1099,7 +1099,7 @@
     });
 
     if (!res?.ok) {
-      const errorMessage = res?.data?.error || res?.data?.execution?.error || 'Could not run secure execution demo.';
+      const errorMessage = res?.data?.error || res?.data?.execution?.error || 'Could not run secure execution self-test.';
       setButtonState(trigger, false, `run ${slug}`);
       setInlineMessage(messageEl, errorMessage, 'danger');
       toast(errorMessage, 'danger');

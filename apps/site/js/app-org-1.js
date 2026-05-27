@@ -483,10 +483,10 @@
     const completed = items.filter((item) => item.done).length;
     const resources = [
       {
-        title: 'Enterprise demo',
-        copy: 'Use the enterprise demo for buyer walkthroughs while the org is being provisioned.',
+        title: 'Enterprise pilot',
+        copy: 'Use the enterprise pilot walkthrough for buyers while the org is being provisioned.',
         href: '/enterprise-demo',
-        label: 'open enterprise demo',
+        label: 'open enterprise pilot',
       },
       {
         title: 'Docs',
@@ -596,7 +596,7 @@
       ...checklistItems.map((item) => `- ${item.done ? '[x]' : '[ ]'} ${item.label}`),
       '',
       'Reference links',
-      '- Enterprise demo: /enterprise-demo',
+      '- Enterprise pilot: /enterprise-demo',
       '- Docs: /docs',
       '- Security: /security',
     ].join('\n');

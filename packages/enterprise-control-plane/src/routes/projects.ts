@@ -1235,7 +1235,7 @@ export async function handleEnterpriseProjectRoutes(
 
     if ((body.api_key && body.api_key.trim()) || (body.provider_key && body.provider_key.trim())) {
       return Response.json(
-        { error: 'Live provider key ingest is not enabled in this dashboard build. Create a demo slot here, or use the sealed local seed flow for real key material.' },
+        { error: 'Live provider key ingest is not enabled in this dashboard build. Create a placeholder slot here, or use the sealed local seed flow for real key material.' },
         { status: 501 },
       );
     }

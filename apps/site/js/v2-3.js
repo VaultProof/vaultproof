@@ -156,7 +156,7 @@
             if (e.key === 'Enter') handleCTA();
         });
 
-        // Demo split-key animation
+        // Preview split-key animation
         function runDemo() {
             var input = document.getElementById('demoInput').value;
             var output = document.getElementById('demoOutput');

@@ -154,7 +154,7 @@
     cicd: {
       label: 'CI/CD Pattern',
       title: 'Keep provider keys out of pipelines that attackers love to target.',
-      body: 'The CI/CD demo should show that even if a job runner or action is compromised, the third-party provider key is not sitting in plaintext inside the workflow. You route the call, apply policy, and retain a cleaner incident-response story.',
+      body: 'The CI/CD walkthrough should show that even if a job runner or action is compromised, the third-party provider key is not sitting in plaintext inside the workflow. You route the call, apply policy, and retain a cleaner incident-response story.',
       checklist: [
         'Replace provider secret injection with a project ID and proxy path.',
         'Apply IP policy or pipeline-specific controls at the gateway.',

@@ -580,7 +580,7 @@ export function renderEnterpriseDashboardPage(env: EnterpriseControlPlaneEnv = {
             <a class="feature-card" href="/app/keys">
               <div class="feature-tags"><span class="feature-tag">live</span><span class="feature-tag">secrets</span></div>
               <h3>Provider slots</h3>
-              <p>View active providers, email API key demo slots, emergency revoke controls, rotation checklists, and Cloud KMS notes.</p>
+              <p>View active providers, protected email API key slots, emergency revoke controls, rotation checklists, and Cloud KMS notes.</p>
             </a>
             <a class="feature-card" href="/app/activity">
               <div class="feature-tags"><span class="feature-tag">live</span><span class="feature-tag">runtime</span></div>
@@ -724,16 +724,16 @@ export function renderEnterpriseDashboardPage(env: EnterpriseControlPlaneEnv = {
         var runtimeTier = payload && payload.runtime_tier === 'shared-demo' ? 'shared-demo' : 'dedicated-production';
         var sharedDemo = runtimeTier === 'shared-demo';
         text('kpiRuntime', ready ? 'ready' : 'watch');
-        text('kpiRuntimeSub', ready ? (sharedDemo ? 'shared demo runtime' : 'GCP confidential production') : 'needs review');
+        text('kpiRuntimeSub', ready ? (sharedDemo ? 'shared pilot runtime' : 'GCP confidential production') : 'needs review');
         var pill = byId('runtimePill');
         if (pill) {
-          pill.textContent = ready ? (sharedDemo ? 'shared demo ready' : 'production ready') : 'not production ready';
+          pill.textContent = ready ? (sharedDemo ? 'shared pilot ready' : 'production ready') : 'not production ready';
           pill.className = 'status-pill ' + (ready ? '' : 'bad');
         }
         var blockers = Array.isArray(payload && payload.production_blockers) ? payload.production_blockers : [];
         text('runtimeDetail', ready
           ? (sharedDemo
-            ? 'Shared enterprise demo runtime is confidential-ready. It is safe for demos, but it is not a dedicated customer production runtime.'
+            ? 'Shared enterprise pilot runtime is confidential-ready. It is suitable for guided first-user walkthroughs, but it is not a dedicated customer production runtime.'
             : 'GCP edge, control plane, executor, attestation, replay protection, and Cloud KMS all report production-ready.')
           : (blockers.length ? blockers.join(' | ') : 'Readiness is incomplete.'));
       }
