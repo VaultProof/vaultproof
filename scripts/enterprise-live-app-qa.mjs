@@ -32,7 +32,6 @@ const requiredAppPaths = [
   '/app/keys',
   '/app/settings',
   '/app/plans',
-  '/app/pilot',
   '/app/testers',
   '/app/release',
   '/app/scanner',
@@ -44,6 +43,7 @@ const staffOnlyPaths = [
   '/app/launch',
   '/app/demo',
   '/app/onboarding',
+  '/app/pilot',
   '/app/pilot-success',
   '/app/support',
 ];
