@@ -23,6 +23,7 @@ const edgeSslCertificate = process.env.EDGE_SSL_CERTIFICATE || 'vaultproof-enter
 const edgeForwardingRule = process.env.EDGE_FORWARDING_RULE || 'vaultproof-enterprise-https';
 let buildTag = process.env.BUILD_TAG || '';
 const buildDocPath = resolve('docs/enterprise/gcp-build-status.md');
+const buildStatusDate = new Date().toISOString().slice(0, 10);
 let existingBuildDoc = '';
 try {
   existingBuildDoc = readFileSync(buildDocPath, 'utf8');
@@ -418,7 +419,7 @@ Status: \`partially verified live on 2026-05-22; strict session proof still bloc
 
 For the final demo go/no-go run, use \`LOGIN_QA_REQUIRE_SESSION=true npm run qa:enterprise-login\` with Supabase service-role env loaded. That strict mode generates a temporary magic-link session for \`ken@vaultproof.dev\`, which also proves the Supabase Auth redirect allowlist accepts \`https://${edgeDomain}/app/login\`, then calls \`/api/v1/enterprise/orgs\`, \`/orgs/current\`, and \`/projects/bootstrap\` with the generated browser session. To verify a specific external provider redirect, add \`LOGIN_QA_OAUTH_PROVIDER=google\` after the provider is configured.
 
-Latest live check on 2026-05-22:
+Latest live check on ${buildStatusDate}:
 
 - \`npm run qa:enterprise-live-app\` passed against \`https://${edgeDomain}\`: \`production_ready: true\`, \`security_profile: google-confidential-production\`, 27 app paths, 6 staff-only paths, and the discovered enterprise links checked.
 - \`npm run verify:gcp-enterprise-edge\` passed after deploying build \`${buildTag}\`. The verifier confirmed edge IP \`${edgeIp}\`, active managed TLS for \`${edgeDomain}\`, healthy backend \`${vmName}:3001\`, \`/health\`, and \`/readiness\`.
