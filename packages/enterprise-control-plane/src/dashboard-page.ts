@@ -83,40 +83,46 @@ export function renderEnterpriseDashboardPage(env: EnterpriseControlPlaneEnv = {
       display: grid;
       gap: 16px;
     }
-    .dashboard-head-card,
     .control-center-card {
       border: 1px solid var(--line);
-      background: var(--dashboard-panel);
+      background: #ffffff;
       border-radius: 8px;
       padding: 18px;
       box-shadow: 0 20px 60px rgba(44, 48, 55, 0.08);
     }
-    .dashboard-head-card {
-      margin-bottom: 0;
-      display: grid;
-      gap: 16px;
-    }
-    .control-center-card {
-      background: #ffffff;
-      padding: 18px;
-    }
-    .topbar {
-      display: grid;
-      grid-template-columns: minmax(0, 1fr);
-      align-items: stretch;
-      gap: 16px;
-      margin-bottom: 0;
+    .dashboard-hero {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-end;
+      gap: 18px;
+      padding: 4px 2px 10px;
+      border-bottom: 1px solid var(--line-soft);
     }
     .hero-copy {
       display: grid;
       align-content: center;
-      min-height: 196px;
-      border: 1px solid rgba(44, 48, 55, 0.08);
-      border-radius: 8px;
-      padding: clamp(22px, 4vw, 34px);
-      background: #ffffff;
+      gap: 8px;
+      min-width: 0;
     }
-    .dashboard-refresh-control { margin-top: 18px; }
+    .hero-status {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      color: var(--muted);
+      border: 1px solid var(--line-soft);
+      border-radius: 999px;
+      padding: 8px 11px;
+      background: #ffffff;
+      font-size: 12px;
+      white-space: nowrap;
+    }
+    .hero-status-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 999px;
+      background: var(--green);
+      box-shadow: 0 0 0 4px rgba(21, 128, 61, 0.12);
+    }
     .eyebrow {
       display: inline-flex;
       color: var(--dashboard-rose);
@@ -129,9 +135,9 @@ export function renderEnterpriseDashboardPage(env: EnterpriseControlPlaneEnv = {
       letter-spacing: 0.16em;
       font-weight: 600;
     }
-    h1 { color: var(--dashboard-ink); font-size: 1.875rem; font-weight: 650; letter-spacing: 0; line-height: 2.25rem; margin: 12px 0 12px; max-width: 760px; }
+    h1 { color: var(--dashboard-ink); font-size: 1.875rem; font-weight: 650; letter-spacing: 0; line-height: 2.25rem; margin: 0; max-width: 760px; }
     @media (min-width: 640px) {
-      h1 { font-size: 2.6rem; }
+      h1 { font-size: 2.25rem; }
     }
     .lead { color: var(--muted); max-width: 760px; font-size: 14px; line-height: 1.75; }
     @media (min-width: 640px) {
@@ -154,42 +160,6 @@ export function renderEnterpriseDashboardPage(env: EnterpriseControlPlaneEnv = {
       color: var(--primary-text, var(--text));
       border-color: var(--primary-border, var(--gold));
       font-weight: 600;
-    }
-    .chart-context-grid {
-      display: grid;
-      grid-template-columns: repeat(4, minmax(0, 1fr));
-      gap: 10px;
-      margin-bottom: 14px;
-    }
-    .context-card {
-      display: block;
-      border: 1px solid var(--line-soft);
-      background: #f8fafc;
-      border-radius: 8px;
-      padding: 13px;
-      min-height: 96px;
-    }
-    .context-card.critical {
-      border-color: rgba(217, 119, 6, 0.28);
-      background: #fffaf3;
-    }
-    .context-label {
-      color: var(--dashboard-rose);
-      font-size: 11px;
-      font-weight: 600;
-      letter-spacing: 0.16em;
-      text-transform: uppercase;
-    }
-    .context-title {
-      font-size: 17px;
-      font-weight: 600;
-      margin-top: 8px;
-    }
-    .context-copy {
-      color: var(--muted);
-      font-size: 13px;
-      line-height: 1.5;
-      margin-top: 6px;
     }
     .control-center-intro {
       display: flex;
@@ -549,53 +519,70 @@ export function renderEnterpriseDashboardPage(env: EnterpriseControlPlaneEnv = {
     .coverage-value { color: var(--dashboard-ink); font-size: 20px; font-weight: 680; }
     .coverage-item .meter { margin-top: 8px; }
     .trend-chart {
-      display: grid;
-      gap: 10px;
-    }
-    .trend-bars {
-      display: grid;
-      grid-template-columns: repeat(var(--trend-days, 7), minmax(12px, 1fr));
-      gap: 8px;
-      align-items: end;
-      min-height: 138px;
+      min-height: 276px;
       border: 1px solid var(--line-soft);
       border-radius: 8px;
-      padding: 12px 10px 10px;
-      background: var(--row-bg);
-    }
-    .trend-column {
-      display: grid;
-      grid-template-rows: 1fr auto auto;
-      gap: 5px;
-      align-items: end;
-      min-width: 0;
-      height: 112px;
-    }
-    .trend-bar {
-      width: 100%;
-      min-height: 3px;
-      height: var(--height, 3px);
-      border-radius: 999px 999px 3px 3px;
-      background: var(--primary-bg);
-    }
-    .trend-column.has-errors .trend-bar { background: var(--warn); }
-    .trend-column.has-denied .trend-bar { background: var(--red); }
-    .trend-value {
-      color: var(--dashboard-ink);
-      font-size: 11px;
-      font-weight: 650;
-      text-align: center;
-    }
-    .trend-label {
-      color: var(--muted);
-      font-size: 10px;
-      text-align: center;
+      padding: 14px;
+      background: #ffffff;
       overflow: hidden;
-      text-overflow: ellipsis;
-      white-space: nowrap;
     }
-    .trend-column.compact .trend-value {
-      display: none;
+    .trend-line-chart {
+      display: grid;
+      gap: 10px;
+      min-width: 0;
+    }
+    .trend-plot {
+      display: grid;
+      grid-template-columns: 58px minmax(0, 1fr);
+      gap: 10px;
+      align-items: stretch;
+      min-width: 0;
+    }
+    .trend-scale {
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      color: var(--muted);
+      font-size: 11px;
+      line-height: 1.2;
+      text-align: right;
+      padding: 10px 0 24px;
+    }
+    .trend-svg {
+      display: block;
+      width: 100%;
+      height: 220px;
+      overflow: visible;
+    }
+    .trend-grid-line {
+      stroke: var(--line-soft);
+      stroke-width: 1;
+    }
+    .trend-area {
+      fill: rgba(49, 95, 149, 0.10);
+    }
+    .trend-line {
+      fill: none;
+      stroke: var(--primary-bg);
+      stroke-width: 3;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+    }
+    .trend-marker {
+      fill: #ffffff;
+      stroke: var(--primary-bg);
+      stroke-width: 2;
+    }
+    .trend-marker.warn { stroke: var(--warn); }
+    .trend-marker.bad { stroke: var(--red); }
+    .trend-axis {
+      display: flex;
+      justify-content: space-between;
+      gap: 12px;
+      color: var(--muted);
+      font-size: 12px;
+      grid-column: 2;
+      margin-top: -8px;
     }
     .row {
       display: grid; grid-template-columns: 1fr auto; gap: 14px; align-items: center;
@@ -635,14 +622,17 @@ export function renderEnterpriseDashboardPage(env: EnterpriseControlPlaneEnv = {
     .feature-tag { color: var(--green); border: 1px solid rgba(21, 128, 61, 0.22); border-radius: 999px; padding: 4px 7px; font-size: 11px; }
     .feature-tag.pending { color: var(--warn); border-color: rgba(180, 83, 9, 0.30); }
     @media (max-width: 980px) {
-      .topbar { grid-template-columns: 1fr; }
+      .dashboard-hero { align-items: flex-start; flex-direction: column; }
       .toolbar { justify-content: flex-start; }
-      .chart-context-grid, .two, .dashboard-overview-grid, .feature-grid, .intent-grid, .action-grid, .top-insight-grid, .call-summary-grid { grid-template-columns: 1fr; }
+      .two, .dashboard-overview-grid, .feature-grid, .intent-grid, .action-grid, .top-insight-grid, .call-summary-grid { grid-template-columns: 1fr; }
       .call-overview-head { align-items: stretch; }
       .timeframe-toggle { width: 100%; }
       .timeframe-button { flex: 1; }
       .control-center-intro { flex-direction: column; }
       .overview-rail { grid-template-columns: 1fr; }
+      .trend-plot { grid-template-columns: 1fr; }
+      .trend-scale { display: none; }
+      .trend-axis { grid-column: 1; }
     }
     @media (min-width: 981px) and (max-width: 1220px) {
       .feature-grid, .intent-grid, .action-grid, .top-insight-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
@@ -656,17 +646,12 @@ export function renderEnterpriseDashboardPage(env: EnterpriseControlPlaneEnv = {
 
     <main class="main enterprise-dashboard-main">
       <section class="enterprise-page-shell">
-        <section class="dashboard-head-card" aria-label="Enterprise control center overview">
-          <div class="topbar">
-            <div class="hero-copy">
-              <div class="eyebrow">Enterprise dashboard</div>
-              <h1>API Key Security Overview</h1>
-              <div class="dashboard-refresh-control" aria-label="Dashboard data controls">
-                <button id="refreshBtn" type="button">Refresh data</button>
-              </div>
-            </div>
+        <section class="dashboard-hero" aria-label="Enterprise control center overview">
+          <div class="hero-copy">
+            <div class="eyebrow">Enterprise dashboard</div>
+            <h1>API Key Security Overview</h1>
           </div>
-
+          <div class="hero-status"><span class="hero-status-dot"></span><span>Live workspace</span></div>
         </section>
 
       <div id="authNotice" class="error" style="display:none"></div>
@@ -707,28 +692,6 @@ export function renderEnterpriseDashboardPage(env: EnterpriseControlPlaneEnv = {
                 <div class="call-summary-item"><span class="call-summary-label">Allowed</span><strong id="callWindowAllowed" class="call-summary-value">...</strong></div>
                 <div class="call-summary-item"><span class="call-summary-label">Blocked</span><strong id="callWindowBlocked" class="call-summary-value">...</strong></div>
                 <div class="call-summary-item"><span class="call-summary-label">Errors</span><strong id="callWindowErrors" class="call-summary-value">...</strong></div>
-              </div>
-              <div class="chart-context-grid" aria-label="API key and project summary">
-                <div class="context-card">
-                  <div class="context-label">Protected API keys</div>
-                  <div id="contextKeySlots" class="context-title">...</div>
-                  <div class="context-copy">Active provider slots protected by VaultProof.</div>
-                </div>
-                <div class="context-card">
-                  <div class="context-label">Keys ready</div>
-                  <div id="contextLiveSealed" class="context-title">...</div>
-                  <div class="context-copy">Protected keys ready to send traffic.</div>
-                </div>
-                <div class="context-card">
-                  <div class="context-label">Projects covered</div>
-                  <div id="contextProjectsWithSlots" class="context-title">...</div>
-                  <div class="context-copy">Projects mapped to protected provider credentials.</div>
-                </div>
-                <div class="context-card critical">
-                  <div class="context-label">Blocked / error calls</div>
-                  <div id="contextDeniedErrors" class="context-title">...</div>
-                  <div class="context-copy">Requests that need review before scaling.</div>
-                </div>
               </div>
               <div id="trendMeta" class="mini call-chart-meta">7 days</div>
               <div id="callTrendChart" class="trend-chart"><div class="empty">Loading API calls...</div></div>
@@ -1297,18 +1260,61 @@ export function renderEnterpriseDashboardPage(env: EnterpriseControlPlaneEnv = {
         }, 0);
         var otherErrorTotal = Math.max(errorTotal - deniedTotal, 0);
         var allowedTotal = Math.max(total - errorTotal, 0);
-        var compact = list.length > 14;
-        chart.innerHTML = '<div class="trend-bars" style="--trend-days:' + Math.max(list.length, 1) + '">' + list.map(function(item) {
+        var width = 640;
+        var height = 220;
+        var top = 16;
+        var right = 18;
+        var bottom = 188;
+        var left = 8;
+        var plotWidth = width - left - right;
+        var plotHeight = bottom - top;
+        var points = list.map(function(item, index) {
           var calls = rawNumber(item.calls);
-          var denied = rawNumber(item.denied);
-          var errors = rawNumber(item.errors);
-          var height = Math.max(3, Math.round((calls / maxCalls) * 86));
-          var label = compact ? String(item.day || '').slice(8) : String(item.day || '').slice(5);
-          var className = denied ? 'trend-column has-denied' : errors ? 'trend-column has-errors' : 'trend-column';
-          if (compact) className += ' compact';
-          return '<div class="' + className + '"><div class="trend-bar" title="' + number(calls) + ' calls" style="--height:' + height + 'px"></div><div class="trend-value">' + number(calls) + '</div><div class="trend-label">' + escapeHtml(label) + '</div></div>';
-        }).join('') + '</div>';
-        text('trendMeta', number(total) + ' calls / ' + days + 'd' + (dashboardSampleDataActive ? ' - sample data' : ''));
+          var x = list.length === 1 ? left + plotWidth / 2 : left + (index * plotWidth / (list.length - 1));
+          var y = top + (1 - (calls / maxCalls)) * plotHeight;
+          return {
+            x: Math.round(x * 100) / 100,
+            y: Math.round(y * 100) / 100,
+            calls: calls,
+            day: item.day,
+            denied: rawNumber(item.denied),
+            errors: rawNumber(item.errors),
+          };
+        });
+        var linePath = points.map(function(point, index) {
+          return (index ? 'L ' : 'M ') + point.x + ' ' + point.y;
+        }).join(' ');
+        var areaPath = points.length
+          ? 'M ' + points[0].x + ' ' + bottom + ' ' + points.map(function(point) { return 'L ' + point.x + ' ' + point.y; }).join(' ') + ' L ' + points[points.length - 1].x + ' ' + bottom + ' Z'
+          : '';
+        var gridLines = [top, top + plotHeight / 2, bottom].map(function(y) {
+          y = Math.round(y * 100) / 100;
+          return '<line class="trend-grid-line" x1="0" x2="' + width + '" y1="' + y + '" y2="' + y + '"></line>';
+        }).join('');
+        var markers = points.map(function(point, index) {
+          var isLast = index === points.length - 1;
+          if (!isLast && !point.denied && !point.errors) return '';
+          var className = point.denied ? 'trend-marker bad' : point.errors ? 'trend-marker warn' : 'trend-marker';
+          var radius = isLast ? 5 : 4;
+          var title = number(point.calls) + ' calls on ' + String(point.day || '').slice(5) + (point.denied ? ', blocked traffic' : point.errors ? ', errors present' : '');
+          return '<circle class="' + className + '" cx="' + point.x + '" cy="' + point.y + '" r="' + radius + '"><title>' + escapeHtml(title) + '</title></circle>';
+        }).join('');
+        var startLabel = list[0] ? String(list[0].day || '').slice(5) : '';
+        var endLabel = list[list.length - 1] ? String(list[list.length - 1].day || '').slice(5) : '';
+        chart.innerHTML =
+          '<div class="trend-line-chart">' +
+            '<div class="trend-plot">' +
+              '<div class="trend-scale"><span>Peak ' + number(maxCalls) + '</span><span>0</span></div>' +
+              '<svg class="trend-svg" viewBox="0 0 ' + width + ' ' + height + '" role="img" aria-label="Daily API calls over the selected window">' +
+                gridLines +
+                '<path class="trend-area" d="' + areaPath + '"></path>' +
+                '<path class="trend-line" d="' + linePath + '"></path>' +
+                markers +
+              '</svg>' +
+              '<div class="trend-axis"><span>' + escapeHtml(startLabel) + '</span><span>' + escapeHtml(endLabel) + '</span></div>' +
+            '</div>' +
+          '</div>';
+        text('trendMeta', 'Selected window: ' + days + 'd' + (dashboardSampleDataActive ? ' - sample data' : ''));
         text('callWindowTotal', number(total));
         text('callWindowAllowed', number(allowedTotal));
         text('callWindowBlocked', number(deniedTotal));
@@ -1433,10 +1439,6 @@ export function renderEnterpriseDashboardPage(env: EnterpriseControlPlaneEnv = {
         var trafficDenied = rawNumber(traffic.deniedCalls || overview.deniedCalls);
         var trafficOtherErrors = traffic.otherErrorCalls === undefined ? Math.max(trafficErrors - trafficDenied, 0) : rawNumber(traffic.otherErrorCalls);
         var trafficOk = traffic.okCalls === undefined ? Math.max(trafficTotal - trafficErrors, 0) : rawNumber(traffic.okCalls);
-        text('contextKeySlots', number(totalSlots));
-        text('contextLiveSealed', number(liveSealed) + ' / ' + number(totalSlots));
-        text('contextProjectsWithSlots', number(rawNumber(coverage.withProviderSlots)) + '/' + number(rawNumber(coverage.totalProjects || overview.totalProjects)));
-        text('contextDeniedErrors', number(trafficDenied) + ' / ' + number(trafficErrors));
         setDonut(slotSummary);
         renderTrafficBreakdown({
           totalCalls: trafficTotal,
@@ -1535,8 +1537,6 @@ export function renderEnterpriseDashboardPage(env: EnterpriseControlPlaneEnv = {
           setNotice(error && error.message ? error.message : 'Dashboard failed to load.');
         }
       }
-      var refreshBtn = byId('refreshBtn');
-      if (refreshBtn) refreshBtn.addEventListener('click', loadDashboard);
       document.querySelectorAll('[data-dashboard-tab]').forEach(function(button) {
         button.addEventListener('click', function() {
           selectDashboardTab(button.getAttribute('data-dashboard-tab') || 'overview');

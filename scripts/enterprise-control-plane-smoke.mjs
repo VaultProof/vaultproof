@@ -2956,11 +2956,13 @@ async function assertEnterpriseLoginRoute() {
       'font-size: 14px;',
       'font-weight: 600;',
       'font-size: 1.875rem',
-      'font-size: 2.6rem',
     ]) {
       if (!pageHtml.includes(required)) {
         throw new Error(`Expected ${path} to use the main enterprise dashboard shell theme (${required})`);
       }
+    }
+    if (!pageHtml.includes('font-size: 2.6rem') && !pageHtml.includes('font-size: 2.25rem')) {
+      throw new Error(`Expected ${path} to use a responsive enterprise hero heading size`);
     }
     if (pageHtml.includes('https://admin.vaultproof.dev/internal/admin')) {
       throw new Error(`Expected ${path} customer shell to keep internal admin off the enterprise host`);
@@ -3057,8 +3059,8 @@ async function assertEnterpriseLoginRoute() {
       'API Key Security Overview',
       'enterprise-page-shell',
       'control-center-card',
-      'dashboard-refresh-control',
-      'chart-context-grid',
+      'dashboard-hero',
+      'hero-status',
       'dashboard-overview-grid',
       'top-insight-grid',
       'overview-rail',
@@ -3075,14 +3077,11 @@ async function assertEnterpriseLoginRoute() {
       'API Calls',
       'callWindowTotal',
       'callWindowAllowed',
-      'Protected API keys',
-      'contextKeySlots',
-      'Keys ready',
-      'contextLiveSealed',
-      'Projects covered',
-      'contextProjectsWithSlots',
-      'Blocked / error calls',
-      'contextDeniedErrors',
+      'Selected window:',
+      'trend-line-chart',
+      'trend-svg',
+      'trend-area',
+      'trend-axis',
       'data-call-range="7"',
       'data-call-range="14"',
       'data-call-range="30"',
@@ -3121,9 +3120,6 @@ async function assertEnterpriseLoginRoute() {
     if (dashboardHtml.indexOf('API Calls') > dashboardHtml.indexOf('Needs attention')) {
       throw new Error('Expected enterprise dashboard API call chart to render before attention items');
     }
-    if (dashboardHtml.indexOf('<div class="chart-context-grid"') < dashboardHtml.indexOf('<h2>API Calls</h2>')) {
-      throw new Error('Expected enterprise dashboard summary cards to live inside the API Calls chart area');
-    }
     for (const forbiddenFeature of [
       'Set up and run your business account.',
       'Use this dashboard to finish onboarding',
@@ -3143,6 +3139,12 @@ async function assertEnterpriseLoginRoute() {
       'Workspace status',
       'API calls over time',
       'dashboard-context-grid',
+      'dashboard-refresh-control',
+      'Refresh data',
+      'chart-context-grid',
+      'contextKeySlots',
+      'trend-bars',
+      'trend-column',
       'Provider material',
       'Traffic outcome',
       'API call trend',
