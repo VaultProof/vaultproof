@@ -1050,7 +1050,7 @@ export function renderInternalAdminPage(env: EnterpriseControlPlaneEnv = {}): st
   <meta name="robots" content="noindex,nofollow" />
   <title>VaultProof Internal Admin</title>
   <style>
-    :root { color-scheme: light; --bg:#f5f7fb; --bg-mid:#e9eff5; --paper:#fff; --panel:rgba(255,255,255,.86); --panel-strong:rgba(255,255,255,.98); --card-bg:#fff; --row-bg:#f8fafc; --surface:#eef3f7; --line:rgba(26,40,52,.14); --line-soft:rgba(26,40,52,.08); --text:#17202a; --muted:#526170; --soft:#7a8794; --gold:#0f766e; --accent:#0f766e; --accent-soft:rgba(20,184,166,.12); --green:#15803d; --red:#dc2626; --blue:#2563eb; --warn:#b45309; --ink:#fff; --primary-bg:#14b8a6; --primary-text:#052f2b; --primary-border:#14b8a6; --control-bg:rgba(255,255,255,.92); --option-bg:#fff; --option-text:#17202a; --sidebar-bg:#18201f; --sidebar-card-bg:#101615; --sidebar-text:#fff; --sidebar-muted:rgba(188,216,210,.74); --sidebar-link:rgba(255,255,255,.88); --sidebar-link-active-bg:rgba(20,184,166,.16); --sidebar-link-active-border:rgba(94,234,212,.42); --sidebar-line:rgba(94,234,212,.18); --shadow:0 18px 54px rgba(26,40,52,.10); }
+    :root { color-scheme: light; --bg:#f5f7fb; --bg-mid:#e9eff5; --paper:#fff; --panel:rgba(255,255,255,.86); --panel-strong:rgba(255,255,255,.98); --card-bg:#fff; --row-bg:#f8fafc; --surface:#eef3f7; --line:rgba(26,40,52,.14); --line-soft:rgba(26,40,52,.08); --text:#17202a; --muted:#526170; --soft:#7a8794; --gold:#315f95; --accent:#315f95; --accent-soft:rgba(49, 95, 149, .12); --green:#15803d; --red:#dc2626; --blue:#2563eb; --warn:#b45309; --ink:#fff; --primary-bg:#315f95; --primary-text:#ffffff; --primary-border:#315f95; --control-bg:rgba(255,255,255,.92); --option-bg:#fff; --option-text:#17202a; --sidebar-bg:#18201f; --sidebar-card-bg:#101615; --sidebar-text:#fff; --sidebar-muted:rgba(188,216,210,.74); --sidebar-link:rgba(255,255,255,.88); --sidebar-link-active-bg:rgba(49, 95, 149, .16); --sidebar-link-active-border:rgba(111, 158, 213, .42); --sidebar-line:rgba(111, 158, 213, .18); --shadow:0 18px 54px rgba(26,40,52,.10); }
     * { box-sizing: border-box; }
     body { margin:0; min-height:100vh; font-family: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; font-weight:400; color:var(--text); background:var(--bg); }
     a { color: inherit; text-decoration: none; }
@@ -1059,11 +1059,11 @@ export function renderInternalAdminPage(env: EnterpriseControlPlaneEnv = {}): st
     .brand { display:flex; gap:12px; align-items:center; margin-bottom:14px; padding:4px 4px 16px; border-bottom:1px solid rgba(255,255,255,.1); }
     .mark { width:38px; height:38px; border-radius:14px; display:grid; place-items:center; background:var(--primary-bg); color:var(--primary-text); font-weight:700; }
     .brand-title { font-weight:600; font-size:16px; line-height:1.12; letter-spacing:0; color:var(--sidebar-text); }
-    .brand-sub { color:#5eead4; font-size:12px; margin-top:4px; font-weight:400; letter-spacing:.16em; text-transform:uppercase; }
+    .brand-sub { color:#6f9ed5; font-size:12px; margin-top:4px; font-weight:400; letter-spacing:.16em; text-transform:uppercase; }
     .nav-label { color:rgba(255,255,255,.35); font-size:11px; font-weight:400; text-transform:uppercase; letter-spacing:.18em; margin:16px 0 8px 10px; }
     .nav-link { display:flex; justify-content:space-between; gap:10px; padding:10px 12px; border-radius:8px; color:var(--sidebar-link); border:1px solid rgba(255,255,255,.08); margin-bottom:5px; font-size:14px; font-weight:600; line-height:1.25; }
     .nav-link:hover, .nav-link.active { background:var(--sidebar-link-active-bg); border-color:var(--sidebar-link-active-border); color:var(--sidebar-text); }
-    .sidebar .tag { color:#5eead4; border-color:rgba(94,234,212,.34); background:rgba(94,234,212,.08); }
+    .sidebar .tag { color:#6f9ed5; border-color:rgba(111, 158, 213, .34); background:rgba(111, 158, 213, .08); }
     .sidebar-note { margin-top:18px; border:1px solid rgba(255,255,255,.1); border-radius:8px; padding:14px; color:rgba(255,255,255,.7); background:rgba(255,255,255,.07); font-size:12px; line-height:1.45; }
     .main { min-width:0; padding:20px; max-width:none; width:100%; background:#fff; border:1px solid var(--line); border-radius:8px; box-shadow:var(--shadow); }
     .topbar { display:flex; justify-content:space-between; gap:18px; align-items:flex-start; margin-bottom:22px; }
@@ -1086,7 +1086,7 @@ export function renderInternalAdminPage(env: EnterpriseControlPlaneEnv = {}): st
     .control-title p { margin:6px 0 0; color:var(--muted); max-width:760px; line-height:1.5; }
     .control-kpis { display:grid; grid-template-columns:1.25fr repeat(4, minmax(0,1fr)); gap:12px; margin-bottom:16px; }
     .control-kpi { border:1px solid var(--line-soft); border-radius:8px; padding:15px; background:var(--row-bg); min-width:0; }
-    .control-kpi.main { background:var(--accent-soft); border-color:rgba(20,184,166,.22); }
+    .control-kpi.main { background:var(--accent-soft); border-color:rgba(49, 95, 149, .22); }
     .control-chart-grid { display:grid; grid-template-columns:minmax(0,1.1fr) minmax(0,1fr); gap:14px; }
     .control-chart-grid.visual { grid-template-columns:minmax(0,1.45fr) minmax(320px,.75fr); }
     .control-panel { border:1px solid var(--line-soft); border-radius:8px; padding:16px; background:var(--row-bg); min-width:0; }
@@ -1392,7 +1392,7 @@ export function renderInternalAdminPage(env: EnterpriseControlPlaneEnv = {}): st
         }).join('');
         var first = trend[0] ? dayLabel(trend[0].day) : '';
         var last = trend[trend.length - 1] ? dayLabel(trend[trend.length - 1].day) : '';
-        return '<div><svg class="sparkline-chart" viewBox="0 0 ' + width + ' 220" role="img" aria-label="Daily API call trend"><path d="M0 ' + bottom + ' H' + width + '" fill="none" stroke="rgba(26,40,52,.12)" stroke-width="1"></path><path d="' + area + '" fill="rgba(20,184,166,.18)"></path><path d="' + line + '" fill="none" stroke="#0f766e" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"></path><g fill="#052f2b" stroke="#14b8a6" stroke-width="3">' + circles + '</g></svg><div class="sparkline-axis"><span>' + escapeHtml(first) + '</span><span>peak ' + number(maxCalls) + ' calls</span><span>' + escapeHtml(last) + '</span></div></div>';
+        return '<div><svg class="sparkline-chart" viewBox="0 0 ' + width + ' 220" role="img" aria-label="Daily API call trend"><path d="M0 ' + bottom + ' H' + width + '" fill="none" stroke="rgba(26,40,52,.12)" stroke-width="1"></path><path d="' + area + '" fill="rgba(49, 95, 149, .18)"></path><path d="' + line + '" fill="none" stroke="#315f95" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"></path><g fill="#ffffff" stroke="#315f95" stroke-width="3">' + circles + '</g></svg><div class="sparkline-axis"><span>' + escapeHtml(first) + '</span><span>peak ' + number(maxCalls) + ' calls</span><span>' + escapeHtml(last) + '</span></div></div>';
       }
       function renderDonut(items, center, label) {
         var total = items.reduce(function(sum, item) { return sum + Number(item.value || 0); }, 0);

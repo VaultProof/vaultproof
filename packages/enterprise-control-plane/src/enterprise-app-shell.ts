@@ -361,8 +361,8 @@ export const ENTERPRISE_APP_SHELL_THEME = `
       --sidebar-text: #ffffff;
       --sidebar-muted: rgba(188, 216, 210, 0.74);
       --sidebar-link: rgba(255, 255, 255, 0.88);
-      --sidebar-link-active-bg: rgba(20, 184, 166, 0.16);
-      --sidebar-link-active-border: rgba(94, 234, 212, 0.42);
+      --sidebar-link-active-bg: rgba(49, 95, 149, 0.16);
+      --sidebar-link-active-border: rgba(111, 158, 213, 0.42);
       --control-bg: rgba(255, 255, 255, 0.92);
       --page-bg: #f5f7fb;
       --line: rgba(26, 40, 52, 0.14);
@@ -376,9 +376,9 @@ export const ENTERPRISE_APP_SHELL_THEME = `
       --soft: #7a8794;
       --nav-text: #526170;
       --action-text: #17202a;
-      --gold: #0f766e;
-      --accent: #0f766e;
-      --accent-soft: rgba(20, 184, 166, 0.12);
+      --gold: #315f95;
+      --accent: #315f95;
+      --accent-soft: rgba(49, 95, 149, 0.12);
       --green: #15803d;
       --red: #dc2626;
       --blue: #2563eb;
@@ -386,9 +386,9 @@ export const ENTERPRISE_APP_SHELL_THEME = `
       --warn: #b45309;
       --danger: #dc2626;
       --ink: #ffffff;
-      --primary-bg: #14b8a6;
-      --primary-text: #052f2b;
-      --primary-border: #14b8a6;
+      --primary-bg: #315f95;
+      --primary-text:#ffffff;
+      --primary-border: #315f95;
       --option-bg: #ffffff;
       --option-text: #17202a;
       --shadow: 0 18px 54px rgba(26, 40, 52, 0.10);
@@ -547,7 +547,7 @@ export const ENTERPRISE_APP_SHELL_THEME = `
       color: var(--sidebar-text, var(--text));
     }
     .sidebar.enterprise-app-sidebar .brand-sub {
-      color: #5eead4;
+      color: #6f9ed5;
       font-size: 12px;
       margin-top: 4px;
       font-weight: 400;
@@ -562,7 +562,7 @@ export const ENTERPRISE_APP_SHELL_THEME = `
       margin: 0 0 18px;
     }
     .sidebar.enterprise-app-sidebar .workspace-kicker {
-      color: #5eead4;
+      color: #6f9ed5;
       font-size: 11px;
       font-weight: 400;
       letter-spacing: 0.18em;
@@ -604,10 +604,10 @@ export const ENTERPRISE_APP_SHELL_THEME = `
     }
     .sidebar.enterprise-app-sidebar .nav-group[open] {
       background: rgba(255, 255, 255, 0.055);
-      border-color: rgba(94, 234, 212, 0.16);
+      border-color: rgba(111, 158, 213, 0.16);
     }
     .sidebar.enterprise-app-sidebar .nav-group.active-group {
-      border-color: rgba(94, 234, 212, 0.26);
+      border-color: rgba(111, 158, 213, 0.26);
     }
     .sidebar.enterprise-app-sidebar .nav-group-summary {
       display: flex;
@@ -651,7 +651,7 @@ export const ENTERPRISE_APP_SHELL_THEME = `
       margin: 0;
     }
     .sidebar.enterprise-app-sidebar .active-group .nav-label {
-      color: #5eead4;
+      color: #6f9ed5;
     }
     .sidebar.enterprise-app-sidebar .nav-group-count {
       color: rgba(255, 255, 255, 0.48);
@@ -718,8 +718,8 @@ export const ENTERPRISE_APP_SHELL_THEME = `
     }
     .sidebar.enterprise-app-sidebar .nav-pill {
       font-size: 10px;
-      color: #5eead4;
-      border: 1px solid rgba(94, 234, 212, 0.34);
+      color: #6f9ed5;
+      border: 1px solid rgba(111, 158, 213, 0.34);
       border-radius: 999px;
       padding: 2px 7px;
       font-weight: 400;
@@ -729,8 +729,8 @@ export const ENTERPRISE_APP_SHELL_THEME = `
       width: 7px;
       height: 7px;
       border-radius: 999px;
-      background: #5eead4;
-      box-shadow: 0 0 0 4px rgba(94, 234, 212, 0.13);
+      background: #6f9ed5;
+      box-shadow: 0 0 0 4px rgba(111, 158, 213, 0.13);
       flex: 0 0 auto;
     }
     @media (max-width: 980px) {

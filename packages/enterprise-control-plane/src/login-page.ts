@@ -39,9 +39,9 @@ export function renderEnterpriseLoginPage(env: EnterpriseControlPlaneEnv = {}): 
       --line: rgba(26, 40, 52, 0.14);
       --line-strong: rgba(26, 40, 52, 0.22);
       --line-soft: rgba(26, 40, 52, 0.08);
-      --accent: #0f766e;
-      --accent-soft: rgba(20, 184, 166, 0.12);
-      --primary-bg: #14b8a6;
+      --accent: #315f95;
+      --accent-soft: rgba(49, 95, 149, 0.12);
+      --primary-bg: #315f95;
       --success: #15803d;
       --display: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
       --body: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
@@ -114,7 +114,7 @@ export function renderEnterpriseLoginPage(env: EnterpriseControlPlaneEnv = {}): 
       width: 340px;
       height: 340px;
       border-radius: 999px;
-      background: rgba(20, 184, 166, 0.12);
+      background: rgba(49, 95, 149, 0.12);
       filter: blur(28px);
     }
     .brand {
@@ -247,7 +247,7 @@ export function renderEnterpriseLoginPage(env: EnterpriseControlPlaneEnv = {}): 
       outline: none;
       font: 400 14px/1.2 var(--body);
     }
-    .form-input:focus { border-color: rgba(20, 184, 166, 0.55); box-shadow: 0 0 0 3px var(--accent-soft); }
+    .form-input:focus { border-color: rgba(49, 95, 149, 0.55); box-shadow: 0 0 0 3px var(--accent-soft); }
     .btn {
       width: 100%;
       border: 0.5px solid var(--line);
@@ -287,7 +287,7 @@ export function renderEnterpriseLoginPage(env: EnterpriseControlPlaneEnv = {}): 
       border-radius: 9px;
       padding: 10px;
       font-size: 13px;
-      border: 0.5px solid rgba(20, 184, 166, 0.24);
+      border: 0.5px solid rgba(49, 95, 149, 0.24);
       background: var(--accent-soft);
     }
     .legal { margin-top: 6px; }
@@ -415,8 +415,8 @@ export function renderEnterpriseLoginPage(env: EnterpriseControlPlaneEnv = {}): 
       font: 400 14px/1.2 var(--body);
     }
     .form-input:focus {
-      border-color: rgba(20, 184, 166, 0.45);
-      box-shadow: 0 0 0 3px rgba(20, 184, 166, 0.12);
+      border-color: rgba(49, 95, 149, 0.45);
+      box-shadow: 0 0 0 3px rgba(49, 95, 149, 0.12);
     }
     .btn {
       border: 1px solid var(--line);
@@ -430,7 +430,7 @@ export function renderEnterpriseLoginPage(env: EnterpriseControlPlaneEnv = {}): 
     }
     .btn-primary {
       background: var(--primary-bg);
-      color: #052f2b;
+      color: #ffffff;
       border-color: var(--primary-bg);
       font-weight: 600;
     }
@@ -453,8 +453,8 @@ export function renderEnterpriseLoginPage(env: EnterpriseControlPlaneEnv = {}): 
     #ssoStatus,
     #promoCodeMsg,
     #recoveryStatus {
-      border: 1px solid rgba(20, 184, 166, 0.24);
-      background: rgba(20, 184, 166, 0.10);
+      border: 1px solid rgba(49, 95, 149, 0.24);
+      background: rgba(49, 95, 149, 0.10);
       color: var(--ink);
     }
     @media (min-width: 640px) {
@@ -591,7 +591,7 @@ export function renderInternalAdminLoginPage(env: EnterpriseControlPlaneEnv = {}
   <title>Login</title>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.101.1" integrity="sha384-0VpB0wAYDdhWCEv3+IjT0Z9Kgpvszkf70RFX3ro7l4QR5nywxsMaOpmvZKsfRF8I" crossorigin="anonymous"></script>
   <style>
-    :root { color-scheme: light; --bg:#f5f7fb; --ink:#17202a; --line:rgba(26,40,52,.14); --primary:#14b8a6; --primary-text:#052f2b; --red:#dc2626; }
+    :root { color-scheme: light; --bg:#f5f7fb; --ink:#17202a; --line:rgba(26,40,52,.14); --primary:#315f95; --primary-text:#ffffff; --red:#dc2626; }
     * { box-sizing: border-box; }
     body {
       min-height: 100vh;
@@ -680,7 +680,7 @@ export function renderEnterpriseLogoutPage(env: EnterpriseControlPlaneEnv = {}):
   <meta name="robots" content="noindex" />
   <title>Signing out - VaultProof Enterprise</title>
   <style>
-    :root { color-scheme: light; --bg: #f5f7fb; --panel: rgba(255,255,255,.94); --line: rgba(26,40,52,.14); --text: #17202a; --muted: #526170; --gold: #0f766e; --ink: #052f2b; --primary: #14b8a6; }
+    :root { color-scheme: light; --bg: #f5f7fb; --panel: rgba(255,255,255,.94); --line: rgba(26,40,52,.14); --text: #17202a; --muted: #526170; --gold: #315f95; --ink: #ffffff; --primary: #315f95; }
     * { box-sizing: border-box; }
     body { margin: 0; min-height: 100vh; display: grid; place-items: center; font-family: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; color: var(--text); background: var(--bg); }
     main { width: min(100% - 32px, 560px); border: 1px solid var(--line); background: #ffffff; border-radius: 8px; padding: 34px; box-shadow: 0 18px 54px rgba(26,40,52,.10); }

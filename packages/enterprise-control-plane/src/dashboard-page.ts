@@ -3,6 +3,7 @@ import type { EnterpriseControlPlaneEnv } from './config.js';
 import { ENTERPRISE_APP_SHELL_THEME, renderEnterpriseAppSidebar } from './enterprise-app-shell.js';
 
 const ENTERPRISE_AUTH_ERROR_MESSAGE = 'Your enterprise session expired or is missing. Sign in again to continue.';
+const ENABLE_ENTERPRISE_DASHBOARD_SAMPLE_DATA = true; // Set to false to remove the empty-dashboard sample dataset.
 
 export function renderEnterpriseDashboardPage(env: EnterpriseControlPlaneEnv = {}): string {
   return injectEnterpriseAnalytics(`<!doctype html>
@@ -25,20 +26,20 @@ export function renderEnterpriseDashboardPage(env: EnterpriseControlPlaneEnv = {
       --text: #18212b;
       --muted: #5e6b78;
       --soft: #718090;
-      --gold: #0f766e;
+      --gold: #315f95;
       --green: #15803d;
       --red: #dc2626;
       --blue: #2563eb;
       --warn: #d97706;
       --ink: #ffffff;
       --control-bg: #ffffff;
-      --primary-bg: #0f766e;
+      --primary-bg: #315f95;
       --primary-text: #ffffff;
-      --primary-border: #0f766e;
+      --primary-border: #315f95;
       --shadow: 0 18px 54px rgba(24, 33, 43, 0.09);
       --dashboard-ink: #18212b;
       --dashboard-cloud: #d9e1ea;
-      --dashboard-rose: #0f766e;
+      --dashboard-rose: #315f95;
       --dashboard-panel: #f6f8fb;
       --dashboard-track: #e7edf3;
     }
@@ -53,6 +54,17 @@ export function renderEnterpriseDashboardPage(env: EnterpriseControlPlaneEnv = {
     }
     a { color: inherit; text-decoration: none; }
     ${ENTERPRISE_APP_SHELL_THEME}
+    :root {
+      --gold: #315f95;
+      --accent: #315f95;
+      --accent-soft: rgba(49, 95, 149, 0.12);
+      --primary-bg: #315f95;
+      --primary-text: #ffffff;
+      --primary-border: #315f95;
+      --dashboard-rose: #315f95;
+      --sidebar-link-active-bg: rgba(49, 95, 149, 0.20);
+      --sidebar-link-active-border: rgba(111, 158, 213, 0.44);
+    }
     .enterprise-dashboard-main,
     .enterprise-dashboard-main * {
       letter-spacing: 0 !important;
@@ -90,7 +102,7 @@ export function renderEnterpriseDashboardPage(env: EnterpriseControlPlaneEnv = {
     }
     .topbar {
       display: grid;
-      grid-template-columns: minmax(0, 1fr) minmax(260px, 360px);
+      grid-template-columns: minmax(0, 1fr);
       align-items: stretch;
       gap: 16px;
       margin-bottom: 0;
@@ -103,33 +115,6 @@ export function renderEnterpriseDashboardPage(env: EnterpriseControlPlaneEnv = {
       border-radius: 8px;
       padding: clamp(22px, 4vw, 34px);
       background: #ffffff;
-    }
-    .security-status-card {
-      display: grid;
-      align-content: space-between;
-      gap: 14px;
-      border: 1px solid rgba(15, 118, 110, 0.18);
-      border-radius: 8px;
-      padding: 18px;
-      background: #ffffff;
-      box-shadow: 0 18px 46px rgba(24, 33, 43, 0.06);
-    }
-    .status-card-top {
-      display: flex;
-      justify-content: space-between;
-      align-items: flex-start;
-      gap: 14px;
-    }
-    .status-card-title {
-      color: var(--dashboard-ink);
-      font-size: 15px;
-      font-weight: 700;
-    }
-    .status-card-copy {
-      color: var(--muted);
-      font-size: 13px;
-      line-height: 1.5;
-      margin: 6px 0 0;
     }
     .dashboard-refresh-control { margin-top: 18px; }
     .eyebrow {
@@ -170,19 +155,19 @@ export function renderEnterpriseDashboardPage(env: EnterpriseControlPlaneEnv = {
       border-color: var(--primary-border, var(--gold));
       font-weight: 600;
     }
-    .dashboard-context-grid {
+    .chart-context-grid {
       display: grid;
       grid-template-columns: repeat(4, minmax(0, 1fr));
       gap: 10px;
+      margin-bottom: 14px;
     }
     .context-card {
       display: block;
       border: 1px solid var(--line-soft);
-      background: #ffffff;
+      background: #f8fafc;
       border-radius: 8px;
       padding: 13px;
-      min-height: 118px;
-      box-shadow: 0 12px 30px rgba(44, 48, 55, 0.05);
+      min-height: 96px;
     }
     .context-card.critical {
       border-color: rgba(217, 119, 6, 0.28);
@@ -255,7 +240,7 @@ export function renderEnterpriseDashboardPage(env: EnterpriseControlPlaneEnv = {
     .status-pill.warn { background: rgba(180, 83, 9, 0.10); color: var(--warn); border-color: rgba(180, 83, 9, 0.28); }
     .status-pill.bad { background: rgba(220, 38, 38, 0.12); color: var(--red); border-color: rgba(220, 38, 38, 0.28); }
     .attention-card {
-      border-color: rgba(15, 118, 110, 0.18);
+      border-color: rgba(49, 95, 149, 0.18);
       background: linear-gradient(180deg, #ffffff, #f8fafc);
     }
     .attention-list {
@@ -364,7 +349,7 @@ export function renderEnterpriseDashboardPage(env: EnterpriseControlPlaneEnv = {
     .action-card { display: flex; flex-direction: column; gap: 10px; min-height: 176px; }
     .action-card .action { margin-top: auto; align-self: flex-start; }
     .call-overview-card {
-      border-color: rgba(15, 118, 110, 0.20);
+      border-color: rgba(49, 95, 149, 0.20);
       background: linear-gradient(180deg, #ffffff, #f8fbfc);
     }
     .call-overview-head {
@@ -643,7 +628,7 @@ export function renderEnterpriseDashboardPage(env: EnterpriseControlPlaneEnv = {
       background: var(--card-bg);
       transition: transform 160ms ease, border-color 160ms ease, background 160ms ease;
     }
-    .feature-card:hover { transform: translateY(-2px); border-color: rgba(20, 184, 166, 0.32); background: var(--row-bg); }
+    .feature-card:hover { transform: translateY(-2px); border-color: rgba(49, 95, 149, 0.32); background: var(--row-bg); }
     .feature-card h3 { margin: 0; font-size: 16px; line-height: 1.15; letter-spacing: 0; }
     .feature-card p { margin: 0; color: var(--muted); font-size: 13px; line-height: 1.45; flex: 1; }
     .feature-tags { display: flex; gap: 6px; flex-wrap: wrap; }
@@ -652,7 +637,7 @@ export function renderEnterpriseDashboardPage(env: EnterpriseControlPlaneEnv = {
     @media (max-width: 980px) {
       .topbar { grid-template-columns: 1fr; }
       .toolbar { justify-content: flex-start; }
-      .dashboard-context-grid, .two, .dashboard-overview-grid, .feature-grid, .intent-grid, .action-grid, .top-insight-grid, .call-summary-grid { grid-template-columns: 1fr; }
+      .chart-context-grid, .two, .dashboard-overview-grid, .feature-grid, .intent-grid, .action-grid, .top-insight-grid, .call-summary-grid { grid-template-columns: 1fr; }
       .call-overview-head { align-items: stretch; }
       .timeframe-toggle { width: 100%; }
       .timeframe-button { flex: 1; }
@@ -660,7 +645,7 @@ export function renderEnterpriseDashboardPage(env: EnterpriseControlPlaneEnv = {
       .overview-rail { grid-template-columns: 1fr; }
     }
     @media (min-width: 981px) and (max-width: 1220px) {
-      .dashboard-context-grid, .feature-grid, .intent-grid, .action-grid, .top-insight-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+      .feature-grid, .intent-grid, .action-grid, .top-insight-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
       .overview-rail { grid-template-columns: repeat(2, minmax(0, 1fr)); }
     }
   </style>
@@ -680,39 +665,8 @@ export function renderEnterpriseDashboardPage(env: EnterpriseControlPlaneEnv = {
                 <button id="refreshBtn" type="button">Refresh data</button>
               </div>
             </div>
-            <div class="security-status-card" aria-label="Workspace security status">
-              <div class="status-card-top">
-                <div>
-                  <div class="status-card-title">Workspace status</div>
-                  <p id="workspaceStatusDetail" class="status-card-copy">Loading runtime, key readiness, API call results, and coverage signals...</p>
-                </div>
-                <span id="workspaceStatusPill" class="status-pill warn">checking</span>
-              </div>
-            </div>
           </div>
 
-          <div class="dashboard-context-grid" aria-label="Control center orientation">
-            <div class="context-card">
-              <div class="context-label">Protected API keys</div>
-              <div id="contextKeySlots" class="context-title">...</div>
-              <div class="context-copy">Active provider slots protected by VaultProof for this organization.</div>
-            </div>
-            <div class="context-card">
-              <div class="context-label">Keys ready</div>
-              <div id="contextLiveSealed" class="context-title">...</div>
-              <div class="context-copy">Protected keys ready to send traffic to providers.</div>
-            </div>
-            <div class="context-card">
-              <div class="context-label">Projects covered</div>
-              <div id="contextProjectsWithSlots" class="context-title">...</div>
-              <div class="context-copy">Enterprise project coverage across protected provider credentials.</div>
-            </div>
-            <div class="context-card critical">
-              <div class="context-label">Blocked / error calls</div>
-              <div id="contextDeniedErrors" class="context-title">...</div>
-              <div class="context-copy">Requests that need review before expanding usage.</div>
-            </div>
-          </div>
         </section>
 
       <div id="authNotice" class="error" style="display:none"></div>
@@ -739,7 +693,7 @@ export function renderEnterpriseDashboardPage(env: EnterpriseControlPlaneEnv = {
             <section class="card call-overview-card" aria-label="API calls overview">
               <div class="section-title call-overview-head">
                 <div>
-                  <h2>API calls over time</h2>
+                  <h2>API Calls</h2>
                   <p>How many requests are running through VaultProof, with blocked and error days highlighted.</p>
                 </div>
                 <div class="timeframe-toggle" role="group" aria-label="API call time range">
@@ -753,6 +707,28 @@ export function renderEnterpriseDashboardPage(env: EnterpriseControlPlaneEnv = {
                 <div class="call-summary-item"><span class="call-summary-label">Allowed</span><strong id="callWindowAllowed" class="call-summary-value">...</strong></div>
                 <div class="call-summary-item"><span class="call-summary-label">Blocked</span><strong id="callWindowBlocked" class="call-summary-value">...</strong></div>
                 <div class="call-summary-item"><span class="call-summary-label">Errors</span><strong id="callWindowErrors" class="call-summary-value">...</strong></div>
+              </div>
+              <div class="chart-context-grid" aria-label="API key and project summary">
+                <div class="context-card">
+                  <div class="context-label">Protected API keys</div>
+                  <div id="contextKeySlots" class="context-title">...</div>
+                  <div class="context-copy">Active provider slots protected by VaultProof.</div>
+                </div>
+                <div class="context-card">
+                  <div class="context-label">Keys ready</div>
+                  <div id="contextLiveSealed" class="context-title">...</div>
+                  <div class="context-copy">Protected keys ready to send traffic.</div>
+                </div>
+                <div class="context-card">
+                  <div class="context-label">Projects covered</div>
+                  <div id="contextProjectsWithSlots" class="context-title">...</div>
+                  <div class="context-copy">Projects mapped to protected provider credentials.</div>
+                </div>
+                <div class="context-card critical">
+                  <div class="context-label">Blocked / error calls</div>
+                  <div id="contextDeniedErrors" class="context-title">...</div>
+                  <div class="context-copy">Requests that need review before scaling.</div>
+                </div>
               </div>
               <div id="trendMeta" class="mini call-chart-meta">7 days</div>
               <div id="callTrendChart" class="trend-chart"><div class="empty">Loading API calls...</div></div>
@@ -989,10 +965,10 @@ export function renderEnterpriseDashboardPage(env: EnterpriseControlPlaneEnv = {
       var token = localStorage.getItem('vaultproof_token') || '';
       var currentOrgId = localStorage.getItem(ACTIVE_ORG_STORAGE_KEY) || '';
       var loadSequence = 0;
-      var latestReadiness = null;
-      var latestOverview = null;
       var latestCallTrend = [];
       var callTrendRangeDays = 7;
+      var DASHBOARD_SAMPLE_DATA_ENABLED = ${ENABLE_ENTERPRISE_DASHBOARD_SAMPLE_DATA ? 'true' : 'false'};
+      var dashboardSampleDataActive = false;
       function byId(id) { return document.getElementById(id); }
       function text(id, value) { var el = byId(id); if (el) el.textContent = value == null ? '' : String(value); }
       function escapeHtml(value) {
@@ -1019,44 +995,123 @@ export function renderEnterpriseDashboardPage(env: EnterpriseControlPlaneEnv = {
       function plural(value, singular, pluralLabel) {
         return rawNumber(value) === 1 ? singular : (pluralLabel || singular + 's');
       }
-      function updateWorkspaceStatus() {
-        var readiness = latestReadiness || {};
-        var overview = latestOverview || {};
-        var summary = overview.providerSlotSummary || {};
-        var coverage = overview.projectCoverage || {};
+      function daysAgoIso(days) {
+        var date = new Date();
+        date.setUTCDate(date.getUTCDate() - rawNumber(days));
+        return date.toISOString();
+      }
+      function dayKey(daysAgo) {
+        var date = new Date();
+        date.setUTCHours(0, 0, 0, 0);
+        date.setUTCDate(date.getUTCDate() - rawNumber(daysAgo));
+        return date.toISOString().slice(0, 10);
+      }
+      function buildDashboardSampleOverview() {
+        var dayValues = [82, 96, 74, 118, 131, 145, 109, 156, 168, 141, 174, 188, 160, 192, 205, 214, 176, 221, 238, 210, 247, 265, 230, 276, 294, 249, 318, 337, 302, 356];
+        var callTrend = dayValues.map(function(calls, index) {
+          var denied = index % 9 === 0 ? 3 : index % 5 === 0 ? 1 : 0;
+          var otherErrors = index % 7 === 0 ? 2 : index % 11 === 0 ? 1 : 0;
+          return {
+            day: dayKey(dayValues.length - index - 1),
+            calls: calls,
+            denied: denied,
+            errors: denied + otherErrors,
+          };
+        });
+        var totalCalls = callTrend.reduce(function(sum, item) { return sum + rawNumber(item.calls); }, 0);
+        var deniedCalls = callTrend.reduce(function(sum, item) { return sum + rawNumber(item.denied); }, 0);
+        var errorCalls = callTrend.reduce(function(sum, item) { return sum + rawNumber(item.errors); }, 0);
+        var otherErrorCalls = Math.max(errorCalls - deniedCalls, 0);
+        return {
+          totalProjects: 5,
+          totalKeys: 12,
+          providers: ['openai', 'anthropic', 'stripe', 'sendgrid', 'google'],
+          providerCount: 5,
+          activeApps: 5,
+          totalCalls: totalCalls,
+          errorCalls: errorCalls,
+          deniedCalls: deniedCalls,
+          errorRate: totalCalls ? Math.round((errorCalls / totalCalls) * 1000) / 10 : 0,
+          healthWindowDays: 30,
+          statsSource: 'sample_dashboard',
+          accessLogStatsSource: 'sample_dashboard',
+          providerSlotSummary: {
+            totalSlots: 12,
+            liveSealedSlots: 9,
+            placeholderSlots: 2,
+            mixedSlots: 1,
+            missingSlots: 0,
+          },
+          providerUsage: [
+            { provider: 'openai', labels: ['Customer API', 'AI agent runtime'], slots: 4, liveSealedSlots: 3, placeholderSlots: 1, mixedSlots: 0, missingSlots: 0, recentCalls: 2240, denied: 5, errors: 8, lastActivity: daysAgoIso(0) },
+            { provider: 'anthropic', labels: ['AI agent runtime'], slots: 2, liveSealedSlots: 1, placeholderSlots: 1, mixedSlots: 0, missingSlots: 0, recentCalls: 1465, denied: 4, errors: 6, lastActivity: daysAgoIso(0) },
+            { provider: 'stripe', labels: ['Billing'], slots: 2, liveSealedSlots: 2, placeholderSlots: 0, mixedSlots: 0, missingSlots: 0, recentCalls: 812, denied: 1, errors: 2, lastActivity: daysAgoIso(1) },
+            { provider: 'sendgrid', labels: ['Notifications'], slots: 2, liveSealedSlots: 2, placeholderSlots: 0, mixedSlots: 0, missingSlots: 0, recentCalls: 694, denied: 0, errors: 1, lastActivity: daysAgoIso(1) },
+            { provider: 'google', labels: ['Analytics'], slots: 2, liveSealedSlots: 1, placeholderSlots: 0, mixedSlots: 1, missingSlots: 0, recentCalls: 433, denied: 2, errors: 3, lastActivity: daysAgoIso(2) },
+          ],
+          trafficBreakdown: {
+            totalCalls: totalCalls,
+            okCalls: Math.max(totalCalls - errorCalls, 0),
+            deniedCalls: deniedCalls,
+            errorCalls: errorCalls,
+            otherErrorCalls: otherErrorCalls,
+          },
+          projectCoverage: {
+            totalProjects: 5,
+            withProviderSlots: 5,
+            withoutProviderSlots: 0,
+            withTraffic: 4,
+            needingAttention: 2,
+          },
+          callTrend: callTrend,
+          projectHealth: [
+            { name: 'Customer API', calls: 1920, denied: 3, errors: 4, lastActivity: daysAgoIso(0) },
+            { name: 'AI agent runtime', calls: 1710, denied: 6, errors: 9, lastActivity: daysAgoIso(0) },
+            { name: 'Billing', calls: 812, denied: 1, errors: 2, lastActivity: daysAgoIso(1) },
+            { name: 'Notifications', calls: 694, denied: 0, errors: 1, lastActivity: daysAgoIso(1) },
+            { name: 'Analytics', calls: 433, denied: 2, errors: 3, lastActivity: daysAgoIso(2) },
+          ],
+          alerts: [
+            { severity: 'warning', title: 'Anthropic slot is still demo-only', detail: 'Replace the placeholder key before routing production agent traffic.' },
+            { severity: 'warning', title: 'Google analytics slot has partial setup', detail: 'One project has provider mapping but still needs a sealed production key.' },
+            { severity: 'info', title: 'OpenAI traffic is active', detail: 'Customer API and agent runtime requests are moving through the protected proxy.' },
+          ],
+          pilotReview: {
+            headline: 'Sample enterprise workspace',
+          },
+          recentActivity: [
+            { description: 'OpenAI proxy call allowed', action: 'proxy.allowed', timestamp: daysAgoIso(0), metadata: { status_code: 200 }, keySlot: { provider: 'openai' } },
+            { description: 'Anthropic request blocked by policy', action: 'proxy.denied', timestamp: daysAgoIso(0), metadata: { status_code: 403 }, keySlot: { provider: 'anthropic' } },
+            { description: 'Stripe billing key used', action: 'proxy.allowed', timestamp: daysAgoIso(1), metadata: { status_code: 200 }, keySlot: { provider: 'stripe' } },
+            { description: 'SendGrid message sent', action: 'proxy.allowed', timestamp: daysAgoIso(1), metadata: { status_code: 200 }, keySlot: { provider: 'sendgrid' } },
+            { description: 'Google analytics key needs review', action: 'proxy.error', timestamp: daysAgoIso(2), metadata: { status_code: 502 }, keySlot: { provider: 'google' } },
+          ],
+        };
+      }
+      function overviewCallTrendTotal(overview) {
+        var trend = Array.isArray(overview && overview.callTrend) ? overview.callTrend : [];
+        return trend.reduce(function(sum, item) {
+          return sum + rawNumber(item.calls) + rawNumber(item.denied) + rawNumber(item.errors);
+        }, 0);
+      }
+      function overviewHasRealDashboardData(overview) {
+        if (!overview) return false;
+        var slotSummary = overview.providerSlotSummary || {};
         var traffic = overview.trafficBreakdown || {};
-        var runtimeReady = readiness.production_ready === true;
-        var totalSlots = rawNumber(summary.totalSlots || overview.totalKeys);
-        var liveSealed = rawNumber(summary.liveSealedSlots);
-        var needsReview = Math.max(totalSlots - liveSealed, 0);
-        var totalProjects = rawNumber(coverage.totalProjects || overview.totalProjects);
-        var coveredProjects = rawNumber(coverage.withProviderSlots);
-        var denied = rawNumber(traffic.deniedCalls || overview.deniedCalls);
-        var errors = rawNumber(traffic.errorCalls || overview.errorCalls);
-        var status = 'healthy';
-        var label = 'Healthy';
-        var detail = 'Runtime, key readiness, project coverage, and API call results are in a good operating state.';
-        var tone = '';
-        if (!runtimeReady || totalSlots === 0) {
-          status = 'blocked';
-          label = 'Blocked';
-          tone = 'bad';
-          detail = !runtimeReady
-            ? 'Runtime readiness is not green. Review readiness before relying on protected key traffic.'
-            : 'No protected provider keys are connected yet. Add a provider slot before using this workspace.';
-        } else if (needsReview > 0 || denied > 0 || errors > 0 || coveredProjects < totalProjects) {
-          status = 'review';
-          label = 'Needs review';
-          tone = 'warn';
-          detail = 'Some key readiness, project coverage, or API call results need review before broader rollout.';
+        var providerUsage = Array.isArray(overview.providerUsage) ? overview.providerUsage : [];
+        return rawNumber(traffic.totalCalls || overview.totalCalls) > 0
+          || rawNumber(slotSummary.totalSlots || overview.totalKeys) > 0
+          || rawNumber(overview.providerCount) > 0
+          || providerUsage.length > 0
+          || overviewCallTrendTotal(overview) > 0;
+      }
+      function resolveDashboardOverview(overview) {
+        dashboardSampleDataActive = false;
+        if (DASHBOARD_SAMPLE_DATA_ENABLED && !overviewHasRealDashboardData(overview)) {
+          dashboardSampleDataActive = true;
+          return buildDashboardSampleOverview();
         }
-        var pill = byId('workspaceStatusPill');
-        if (pill) {
-          pill.textContent = label;
-          pill.className = 'status-pill ' + tone;
-        }
-        text('workspaceStatusDetail', detail);
-        return status;
+        return overview || {};
       }
       function setDonut(summary) {
         summary = summary || {};
@@ -1066,7 +1121,7 @@ export function renderEnterpriseDashboardPage(env: EnterpriseControlPlaneEnv = {
         var mixed = rawNumber(summary.mixedSlots);
         var missing = rawNumber(summary.missingSlots);
         var values = [
-          { label: 'Ready for traffic', value: live, color: '#0f766e' },
+          { label: 'Ready for traffic', value: live, color: '#15803d' },
           { label: 'Demo only', value: placeholder, color: '#d97706' },
           { label: 'Partial setup', value: mixed, color: '#2563eb' },
           { label: 'Missing', value: missing, color: '#dc2626' },
@@ -1097,7 +1152,7 @@ export function renderEnterpriseDashboardPage(env: EnterpriseControlPlaneEnv = {
         var denied = rawNumber(traffic.deniedCalls);
         var otherErrors = rawNumber(traffic.otherErrorCalls);
         var segments = [
-          { label: 'Allowed', value: ok, color: '#0f766e' },
+          { label: 'Allowed', value: ok, color: '#15803d' },
           { label: 'Blocked', value: denied, color: '#d97706' },
           { label: 'Errors', value: otherErrors, color: '#dc2626' },
         ];
@@ -1118,7 +1173,7 @@ export function renderEnterpriseDashboardPage(env: EnterpriseControlPlaneEnv = {
         }
       }
       function coverageItem(label, value, detail, width, tone) {
-        var color = tone === 'bad' ? '#dc2626' : tone === 'warn' ? '#d97706' : tone === 'blue' ? '#2563eb' : '#0f766e';
+        var color = tone === 'bad' ? '#dc2626' : tone === 'warn' ? '#d97706' : tone === 'blue' ? '#315f95' : '#15803d';
         return '<div class="coverage-item"><div class="coverage-top"><span class="coverage-label">' + escapeHtml(label) + '</span><strong class="coverage-value">' + escapeHtml(value) + '</strong></div><div class="provider-meta">' + escapeHtml(detail) + '</div><div class="meter"><span style="--width:' + Math.max(0, Math.min(100, width)) + '%;--fill:' + color + '"></span></div></div>';
       }
       function renderCoverageRows(id, coverage, summary) {
@@ -1167,7 +1222,7 @@ export function renderEnterpriseDashboardPage(env: EnterpriseControlPlaneEnv = {
           var tone = denied || errors ? 'warn' : live && !review ? 'good' : 'warn';
           var labelText = Array.isArray(item.labels) && item.labels.length ? item.labels.join(', ') : item.provider;
           var width = Math.max(percent(calls || slots, maxValue), slots ? 8 : 3);
-          return '<div class="provider-row"><div class="provider-row-head"><div><div class="provider-name">' + escapeHtml(item.provider || 'unknown') + '</div><div class="provider-meta">' + escapeHtml(labelText) + ' - ' + number(slots) + ' ' + plural(slots, 'slot') + ' - ' + number(calls) + ' recent ' + plural(calls, 'call') + '</div></div><span class="tag ' + tone + '">' + (denied || errors ? 'watch' : live ? 'ready' : 'setup') + '</span></div><div class="meter"><span style="--width:' + width + '%;--fill:' + (tone === 'good' ? '#0f766e' : '#d97706') + '"></span></div><div class="provider-meta">' + number(live) + ' live sealed - ' + number(review) + ' needs review - last ' + escapeHtml(relativeTime(item.lastActivity)) + '</div></div>';
+          return '<div class="provider-row"><div class="provider-row-head"><div><div class="provider-name">' + escapeHtml(item.provider || 'unknown') + '</div><div class="provider-meta">' + escapeHtml(labelText) + ' - ' + number(slots) + ' ' + plural(slots, 'slot') + ' - ' + number(calls) + ' recent ' + plural(calls, 'call') + '</div></div><span class="tag ' + tone + '">' + (denied || errors ? 'watch' : live ? 'ready' : 'setup') + '</span></div><div class="meter"><span style="--width:' + width + '%;--fill:' + (tone === 'good' ? '#15803d' : '#d97706') + '"></span></div><div class="provider-meta">' + number(live) + ' ready - ' + number(review) + ' needs review - last ' + escapeHtml(relativeTime(item.lastActivity)) + '</div></div>';
         }).join('') : '<div class="empty">No provider slots or runtime activity are visible yet.</div>';
         if (id === 'providerUsageList') text('providerUsageMeta', number(usage.length) + ' provider ' + plural(usage.length, 'group'));
         if (id === 'keyMapProviderList') text('keyMapMeta', number(totalSlots) + ' active ' + plural(totalSlots, 'slot'));
@@ -1253,7 +1308,7 @@ export function renderEnterpriseDashboardPage(env: EnterpriseControlPlaneEnv = {
           if (compact) className += ' compact';
           return '<div class="' + className + '"><div class="trend-bar" title="' + number(calls) + ' calls" style="--height:' + height + 'px"></div><div class="trend-value">' + number(calls) + '</div><div class="trend-label">' + escapeHtml(label) + '</div></div>';
         }).join('') + '</div>';
-        text('trendMeta', number(total) + ' calls / ' + days + 'd');
+        text('trendMeta', number(total) + ' calls / ' + days + 'd' + (dashboardSampleDataActive ? ' - sample data' : ''));
         text('callWindowTotal', number(total));
         text('callWindowAllowed', number(allowedTotal));
         text('callWindowBlocked', number(deniedTotal));
@@ -1323,7 +1378,6 @@ export function renderEnterpriseDashboardPage(env: EnterpriseControlPlaneEnv = {
         });
       }
       function renderReadiness(payload) {
-        latestReadiness = payload || {};
         var ready = payload && payload.production_ready === true;
         var runtimeTier = payload && payload.runtime_tier === 'shared-demo' ? 'shared-demo' : 'dedicated-production';
         var sharedDemo = runtimeTier === 'shared-demo';
@@ -1340,7 +1394,6 @@ export function renderEnterpriseDashboardPage(env: EnterpriseControlPlaneEnv = {
             ? 'Shared enterprise runtime is confidential-ready. It is suitable for scoped customer evaluation, but it is not a dedicated customer production runtime.'
             : 'GCP edge, control plane, executor, attestation, replay protection, and Cloud KMS all report production-ready.')
           : (blockers.length ? blockers.join(' | ') : 'Readiness is incomplete.'));
-        updateWorkspaceStatus();
       }
       function resolveProvisionedOrg(orgs, activeId) {
         if (!orgs.length) {
@@ -1368,8 +1421,7 @@ export function renderEnterpriseDashboardPage(env: EnterpriseControlPlaneEnv = {
         text('kpiMembersSub', (payload.sso_status && payload.sso_status.provider_status === 'configured') ? 'SSO configured' : 'SSO not fully configured');
       }
       function renderOverview(overview) {
-        overview = overview || {};
-        latestOverview = overview;
+        overview = resolveDashboardOverview(overview);
         var slotSummary = overview.providerSlotSummary || {};
         var coverage = overview.projectCoverage || {};
         var traffic = overview.trafficBreakdown || {};
@@ -1385,7 +1437,6 @@ export function renderEnterpriseDashboardPage(env: EnterpriseControlPlaneEnv = {
         text('contextLiveSealed', number(liveSealed) + ' / ' + number(totalSlots));
         text('contextProjectsWithSlots', number(rawNumber(coverage.withProviderSlots)) + '/' + number(rawNumber(coverage.totalProjects || overview.totalProjects)));
         text('contextDeniedErrors', number(trafficDenied) + ' / ' + number(trafficErrors));
-        updateWorkspaceStatus();
         setDonut(slotSummary);
         renderTrafficBreakdown({
           totalCalls: trafficTotal,

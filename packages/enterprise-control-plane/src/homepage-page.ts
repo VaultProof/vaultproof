@@ -23,10 +23,10 @@ export function renderEnterpriseHomepage(env: EnterpriseControlPlaneEnv = {}): s
       --line: rgba(26, 40, 52, 0.14);
       --line-strong: rgba(26, 40, 52, 0.22);
       --line-soft: rgba(26, 40, 52, 0.08);
-      --accent: #0f766e;
+      --accent: #315f95;
       --accent-ink: #ffffff;
-      --accent-soft: rgba(20, 184, 166, 0.12);
-      --primary-bg: #14b8a6;
+      --accent-soft: rgba(49, 95, 149, 0.12);
+      --primary-bg: #315f95;
       --success: #15803d;
       --danger: #dc2626;
       --blue: #2563eb;
@@ -316,7 +316,7 @@ export function renderEnterpriseHomepage(env: EnterpriseControlPlaneEnv = {}): s
       margin: 0 auto 9px;
       border-radius: 999px;
       background: var(--accent);
-      box-shadow: 0 0 0 0 rgba(20, 184, 166, .24);
+      box-shadow: 0 0 0 0 rgba(49, 95, 149, .24);
       animation: vp-region-pulse 6s linear infinite;
     }
     .vp-shard {
@@ -586,7 +586,7 @@ export function renderEnterpriseHomepage(env: EnterpriseControlPlaneEnv = {}): s
     }
     .vp-nav {
       background: #18201f;
-      border-bottom: 1px solid rgba(94, 234, 212, 0.18);
+      border-bottom: 1px solid rgba(111, 158, 213, 0.18);
       -webkit-backdrop-filter: none;
       backdrop-filter: none;
     }
@@ -611,7 +611,7 @@ export function renderEnterpriseHomepage(env: EnterpriseControlPlaneEnv = {}): s
       font-weight: 600;
     }
     .vp-brand-sub {
-      color: #5eead4;
+      color: #6f9ed5;
       font: 400 12px/1 var(--body);
       text-transform: uppercase;
     }
@@ -810,7 +810,7 @@ export function renderEnterpriseHomepage(env: EnterpriseControlPlaneEnv = {}): s
     .vp-region i,
     .vp-window-dots i,
     .vp-dot {
-      border-color: rgba(20, 184, 166, 0.40);
+      border-color: rgba(49, 95, 149, 0.40);
       background: var(--primary-bg);
       color: var(--accent-ink);
     }
@@ -823,7 +823,7 @@ export function renderEnterpriseHomepage(env: EnterpriseControlPlaneEnv = {}): s
       background: var(--accent);
     }
     .vp-shard {
-      border: 1px solid rgba(20, 184, 166, 0.24);
+      border: 1px solid rgba(49, 95, 149, 0.24);
       border-radius: 8px;
       font-weight: 600;
     }
@@ -832,7 +832,7 @@ export function renderEnterpriseHomepage(env: EnterpriseControlPlaneEnv = {}): s
     }
     .vp-code-card .vp-code-add,
     .vp-code-add {
-      background: rgba(20, 184, 166, 0.12);
+      background: rgba(49, 95, 149, 0.12);
       color: var(--accent);
     }
     .vp-code-card pre {
@@ -888,13 +888,13 @@ export function renderEnterpriseHomepage(env: EnterpriseControlPlaneEnv = {}): s
     @keyframes vp-blink { 0%, 50% { opacity: 1; } 51%, 100% { opacity: 0; } }
     @keyframes vp-feed-in { from { opacity: 0; transform: translateY(-12px); } to { opacity: 1; transform: translateY(0); } }
     @keyframes vp-key-core { 0%, 5%, 95%, 100% { opacity: 1; } 15%, 90% { opacity: .18; } }
-    @keyframes vp-region-pulse { 0%, 40% { box-shadow: 0 0 0 0 rgba(20,184,166,.22); } 52% { box-shadow: 0 0 0 12px rgba(20,184,166,.10); } 70%, 100% { box-shadow: 0 0 0 18px transparent; } }
+    @keyframes vp-region-pulse { 0%, 40% { box-shadow: 0 0 0 0 rgba(49, 95, 149, .22); } 52% { box-shadow: 0 0 0 12px rgba(49, 95, 149, .10); } 70%, 100% { box-shadow: 0 0 0 18px transparent; } }
     @keyframes vp-shard {
       0%, 5% { transform: translate(-50%, -50%) rotate(0deg); opacity: 1; }
       35%, 65% { transform: translate(calc(-50% + var(--tx)), calc(-50% + var(--ty))) rotate(var(--rot)); opacity: 1; }
       95%, 100% { transform: translate(-50%, -50%) rotate(0deg); opacity: 1; }
     }
-    @keyframes vp-node-pulse { 0%, 50% { box-shadow: 0 0 0 0 rgba(20,184,166,.22); } 58% { box-shadow: 0 0 0 8px rgba(20,184,166,.12); } 74%, 100% { box-shadow: 0 0 0 16px transparent; } }
+    @keyframes vp-node-pulse { 0%, 50% { box-shadow: 0 0 0 0 rgba(49, 95, 149, .22); } 58% { box-shadow: 0 0 0 8px rgba(49, 95, 149, .12); } 74%, 100% { box-shadow: 0 0 0 16px transparent; } }
     @keyframes vp-beam { 0%, 60% { transform: scaleX(0); transform-origin: left; opacity: 0; } 65% { transform: scaleX(0); opacity: 1; } 85% { transform: scaleX(1); opacity: 1; } 92%, 100% { transform: scaleX(1); opacity: 0; } }
     @keyframes vp-zero-flash { 0%, 88% { background: var(--paper); } 90% { background: var(--accent-soft); } 100% { background: var(--paper); } }
     @media (max-width: 980px) {

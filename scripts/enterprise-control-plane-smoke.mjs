@@ -2823,7 +2823,7 @@ async function assertEnterpriseLoginRoute() {
     'Your app talks to <em>VaultProof</em> instead of holding keys.',
     'Keep your code. <em>Stop storing the key.</em>',
     'enterprise-homepage-dashboard-match',
-    '--primary-bg: #14b8a6',
+    '--primary-bg: #315f95',
     '--body: ui-sans-serif',
     'letter-spacing: 0 !important',
     '/app/login',
@@ -2865,7 +2865,7 @@ async function assertEnterpriseLoginRoute() {
   }
   for (const required of [
     'enterprise-login-dashboard-match',
-    '--primary-bg: #14b8a6',
+    '--primary-bg: #315f95',
     '--body: ui-sans-serif',
     'letter-spacing: 0 !important',
     'Sign in to the place where your <em>API keys stay safe.</em>',
@@ -2944,7 +2944,7 @@ async function assertEnterpriseLoginRoute() {
       'enterprise-universal-sidebar',
       '--sidebar-bg: #18201f',
       '--card-bg: #ffffff',
-      '--primary-bg: #14b8a6',
+      '--primary-bg: #315f95',
       '.sidebar.enterprise-app-sidebar .nav-link',
       'border: 1px solid rgba(255, 255, 255, 0.08);',
       'color: rgba(255, 255, 255, 0.35);',
@@ -3057,13 +3057,11 @@ async function assertEnterpriseLoginRoute() {
       'API Key Security Overview',
       'enterprise-page-shell',
       'control-center-card',
-      'security-status-card',
       'dashboard-refresh-control',
-      'dashboard-context-grid',
+      'chart-context-grid',
       'dashboard-overview-grid',
       'top-insight-grid',
       'overview-rail',
-      'Workspace status',
       'Needs attention',
       'attentionList',
       'Evidence readiness',
@@ -3074,12 +3072,23 @@ async function assertEnterpriseLoginRoute() {
       'Security',
       'Access',
       'Operations',
-      'API calls over time',
+      'API Calls',
       'callWindowTotal',
       'callWindowAllowed',
+      'Protected API keys',
+      'contextKeySlots',
+      'Keys ready',
+      'contextLiveSealed',
+      'Projects covered',
+      'contextProjectsWithSlots',
+      'Blocked / error calls',
+      'contextDeniedErrors',
       'data-call-range="7"',
       'data-call-range="14"',
       'data-call-range="30"',
+      'DASHBOARD_SAMPLE_DATA_ENABLED',
+      'sample_dashboard',
+      'sample data',
       'Key readiness',
       'materialDonut',
       'API call results',
@@ -3109,8 +3118,11 @@ async function assertEnterpriseLoginRoute() {
         throw new Error(`Expected enterprise dashboard feature map to include ${requiredFeature}`);
       }
     }
-    if (dashboardHtml.indexOf('API calls over time') > dashboardHtml.indexOf('Needs attention')) {
+    if (dashboardHtml.indexOf('API Calls') > dashboardHtml.indexOf('Needs attention')) {
       throw new Error('Expected enterprise dashboard API call chart to render before attention items');
+    }
+    if (dashboardHtml.indexOf('<div class="chart-context-grid"') < dashboardHtml.indexOf('<h2>API Calls</h2>')) {
+      throw new Error('Expected enterprise dashboard summary cards to live inside the API Calls chart area');
     }
     for (const forbiddenFeature of [
       'Set up and run your business account.',
@@ -3127,6 +3139,10 @@ async function assertEnterpriseLoginRoute() {
       'Use these pages to configure the account',
       'dashboard-primary-actions',
       'Enterprise key security metrics',
+      'security-status-card',
+      'Workspace status',
+      'API calls over time',
+      'dashboard-context-grid',
       'Provider material',
       'Traffic outcome',
       'API call trend',
@@ -3846,7 +3862,7 @@ async function assertInternalAdminConsole() {
     'API calls by business',
     'controlTotalCalls',
     '--sidebar-muted',
-    '--primary-bg:#14b8a6',
+    '--primary-bg:#315f95',
     '--sidebar-bg:#18201f',
     '--bg:#f5f7fb',
     'Create business',
