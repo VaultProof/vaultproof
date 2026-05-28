@@ -15,32 +15,32 @@ export function renderEnterpriseDashboardPage(env: EnterpriseControlPlaneEnv = {
   <style>
     :root {
       color-scheme: light;
-      --bg: #f5f7fb;
-      --panel: rgba(255, 255, 255, 0.86);
-      --panel-strong: rgba(255, 255, 255, 0.98);
+      --bg: #f6f8fb;
+      --panel: rgba(255, 255, 255, 0.9);
+      --panel-strong: #ffffff;
       --card-bg: #ffffff;
       --row-bg: #f8fafc;
-      --line: rgba(26, 40, 52, 0.14);
-      --line-soft: rgba(26, 40, 52, 0.08);
-      --text: #17202a;
-      --muted: #526170;
-      --soft: #7a8794;
+      --line: #d9e1ea;
+      --line-soft: #e7edf3;
+      --text: #18212b;
+      --muted: #5e6b78;
+      --soft: #718090;
       --gold: #0f766e;
       --green: #15803d;
       --red: #dc2626;
       --blue: #2563eb;
-      --warn: #b45309;
+      --warn: #d97706;
       --ink: #ffffff;
-      --control-bg: rgba(255, 255, 255, 0.92);
-      --primary-bg: #14b8a6;
-      --primary-text: #052f2b;
-      --primary-border: #14b8a6;
-      --shadow: 0 18px 54px rgba(26, 40, 52, 0.10);
-      --dashboard-ink: #2c3037;
-      --dashboard-cloud: #d6d7d9;
-      --dashboard-rose: #7e505d;
-      --dashboard-panel: #fbfcfd;
-      --dashboard-track: #edf1f5;
+      --control-bg: #ffffff;
+      --primary-bg: #0f766e;
+      --primary-text: #ffffff;
+      --primary-border: #0f766e;
+      --shadow: 0 18px 54px rgba(24, 33, 43, 0.09);
+      --dashboard-ink: #18212b;
+      --dashboard-cloud: #d9e1ea;
+      --dashboard-rose: #0f766e;
+      --dashboard-panel: #f6f8fb;
+      --dashboard-track: #e7edf3;
     }
     * { box-sizing: border-box; }
     body {
@@ -49,7 +49,7 @@ export function renderEnterpriseDashboardPage(env: EnterpriseControlPlaneEnv = {
       font-family: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
       font-weight: 400;
       color: var(--text);
-      background: #f4f6f8;
+      background: #f6f8fb;
     }
     a { color: inherit; text-decoration: none; }
     ${ENTERPRISE_APP_SHELL_THEME}
@@ -104,49 +104,58 @@ export function renderEnterpriseDashboardPage(env: EnterpriseControlPlaneEnv = {
       padding: clamp(22px, 4vw, 34px);
       background: #ffffff;
     }
-    .hero-sidecar {
+    .security-status-card {
       display: grid;
-      gap: 12px;
-      border: 1px solid rgba(44, 48, 55, 0.08);
+      align-content: space-between;
+      gap: 14px;
+      border: 1px solid rgba(15, 118, 110, 0.18);
       border-radius: 8px;
-      padding: 16px;
-      background: #f8fafc;
+      padding: 18px;
+      background: #ffffff;
+      box-shadow: 0 18px 46px rgba(24, 33, 43, 0.06);
     }
-    .hero-sidecar-title {
+    .status-card-top {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      gap: 14px;
+    }
+    .status-card-title {
       color: var(--dashboard-ink);
-      font-size: 14px;
+      font-size: 15px;
       font-weight: 700;
     }
-    .hero-sidecar-copy {
+    .status-card-copy {
       color: var(--muted);
       font-size: 13px;
       line-height: 1.5;
-      margin: 0;
+      margin: 6px 0 0;
     }
-    .hero-signal-grid {
+    .status-check-grid {
       display: grid;
-      grid-template-columns: repeat(2, minmax(0, 1fr));
       gap: 8px;
     }
-    .hero-signal {
+    .status-check {
       display: grid;
-      gap: 5px;
-      min-height: 74px;
+      grid-template-columns: minmax(0, 1fr) auto;
+      gap: 10px;
+      align-items: center;
       border: 1px solid var(--line-soft);
       border-radius: 8px;
       padding: 10px;
-      background: #ffffff;
-    }
-    .hero-signal strong {
-      color: var(--text);
-      font-size: 20px;
-      font-weight: 680;
-      line-height: 1;
-    }
-    .hero-signal span {
+      background: var(--row-bg);
       color: var(--muted);
-      font-size: 12px;
-      line-height: 1.3;
+      font-size: 13px;
+    }
+    .status-check strong {
+      color: var(--dashboard-ink);
+      font-size: 13px;
+    }
+    .dashboard-primary-actions {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      margin-top: 18px;
     }
     .eyebrow {
       display: inline-flex;
@@ -199,6 +208,10 @@ export function renderEnterpriseDashboardPage(env: EnterpriseControlPlaneEnv = {
       padding: 13px;
       min-height: 118px;
       box-shadow: 0 12px 30px rgba(44, 48, 55, 0.05);
+    }
+    .context-card.critical {
+      border-color: rgba(217, 119, 6, 0.28);
+      background: #fffaf3;
     }
     .context-label {
       color: var(--dashboard-rose);
@@ -302,8 +315,8 @@ export function renderEnterpriseDashboardPage(env: EnterpriseControlPlaneEnv = {
       background: var(--primary-bg);
     }
     .metric-card:nth-child(2)::before { background: #2563eb; }
-    .metric-card:nth-child(3)::before { background: #7e505d; }
-    .metric-card:nth-child(4)::before { background: #b45309; }
+    .metric-card:nth-child(3)::before { background: #15803d; }
+    .metric-card:nth-child(4)::before { background: #d97706; }
     .kpi-label { color: var(--soft); font-size: 12px; font-weight: 400; text-transform: uppercase; letter-spacing: 0; }
     .kpi-value { color: var(--dashboard-ink); font-size: 36px; font-weight: 680; letter-spacing: 0; margin-top: 14px; }
     .kpi-sub { color: var(--muted); margin-top: 6px; font-size: 13px; }
@@ -314,6 +327,26 @@ export function renderEnterpriseDashboardPage(env: EnterpriseControlPlaneEnv = {
     }
     .status-pill.warn { background: rgba(180, 83, 9, 0.10); color: var(--warn); border-color: rgba(180, 83, 9, 0.28); }
     .status-pill.bad { background: rgba(220, 38, 38, 0.12); color: var(--red); border-color: rgba(220, 38, 38, 0.28); }
+    .attention-card {
+      border-color: rgba(15, 118, 110, 0.18);
+      background: linear-gradient(180deg, #ffffff, #f8fafc);
+    }
+    .attention-list {
+      display: grid;
+      gap: 10px;
+    }
+    .attention-row {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) auto;
+      gap: 14px;
+      align-items: center;
+      border: 1px solid var(--line-soft);
+      border-radius: 8px;
+      padding: 13px;
+      background: #ffffff;
+    }
+    .attention-row.warn { border-color: rgba(217, 119, 6, 0.28); background: #fffaf3; }
+    .attention-row.bad { border-color: rgba(220, 38, 38, 0.24); background: #fff7f7; }
     .section-title { display: flex; justify-content: space-between; gap: 12px; align-items: center; margin-bottom: 14px; }
     .section-title h2 { margin: 0; font-size: 19px; letter-spacing: 0; }
     .section-title p { margin: 4px 0 0; color: var(--muted); font-size: 13px; line-height: 1.45; }
@@ -405,7 +438,7 @@ export function renderEnterpriseDashboardPage(env: EnterpriseControlPlaneEnv = {
     .action-card .action { margin-top: auto; align-self: flex-start; }
     .chart-grid {
       display: grid;
-      grid-template-columns: minmax(0, 0.95fr) minmax(0, 1.1fr) minmax(0, 0.95fr);
+      grid-template-columns: repeat(4, minmax(0, 1fr));
       gap: 14px;
     }
     .visual-card {
@@ -431,7 +464,7 @@ export function renderEnterpriseDashboardPage(env: EnterpriseControlPlaneEnv = {
       border-radius: 50%;
       display: grid;
       place-items: center;
-      background: conic-gradient(#edf1f5 0deg 360deg);
+      background: conic-gradient(#e7edf3 0deg 360deg);
       box-shadow: inset 0 0 0 1px rgba(44, 48, 55, 0.08);
       position: relative;
     }
@@ -477,7 +510,7 @@ export function renderEnterpriseDashboardPage(env: EnterpriseControlPlaneEnv = {
       min-height: 22px;
       border-radius: 999px;
       overflow: hidden;
-      background: #edf1f5;
+      background: #e7edf3;
       border: 1px solid rgba(44, 48, 55, 0.08);
     }
     .bar-segment {
@@ -516,7 +549,7 @@ export function renderEnterpriseDashboardPage(env: EnterpriseControlPlaneEnv = {
     .meter {
       height: 8px;
       border-radius: 999px;
-      background: #e7ebf0;
+      background: #e7edf3;
       overflow: hidden;
     }
     .meter > span {
@@ -545,6 +578,52 @@ export function renderEnterpriseDashboardPage(env: EnterpriseControlPlaneEnv = {
     .coverage-label { color: var(--muted); font-size: 13px; }
     .coverage-value { color: var(--dashboard-ink); font-size: 20px; font-weight: 680; }
     .coverage-item .meter { margin-top: 8px; }
+    .trend-chart {
+      display: grid;
+      gap: 10px;
+    }
+    .trend-bars {
+      display: grid;
+      grid-template-columns: repeat(7, minmax(22px, 1fr));
+      gap: 8px;
+      align-items: end;
+      min-height: 138px;
+      border: 1px solid var(--line-soft);
+      border-radius: 8px;
+      padding: 12px 10px 10px;
+      background: var(--row-bg);
+    }
+    .trend-column {
+      display: grid;
+      grid-template-rows: 1fr auto auto;
+      gap: 5px;
+      align-items: end;
+      min-width: 0;
+      height: 112px;
+    }
+    .trend-bar {
+      width: 100%;
+      min-height: 3px;
+      height: var(--height, 3px);
+      border-radius: 999px 999px 3px 3px;
+      background: var(--primary-bg);
+    }
+    .trend-column.has-errors .trend-bar { background: var(--warn); }
+    .trend-column.has-denied .trend-bar { background: var(--red); }
+    .trend-value {
+      color: var(--dashboard-ink);
+      font-size: 11px;
+      font-weight: 650;
+      text-align: center;
+    }
+    .trend-label {
+      color: var(--muted);
+      font-size: 10px;
+      text-align: center;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
     .row {
       display: grid; grid-template-columns: 1fr auto; gap: 14px; align-items: center;
       border: 1px solid var(--line-soft);
@@ -606,46 +685,51 @@ export function renderEnterpriseDashboardPage(env: EnterpriseControlPlaneEnv = {
           <div class="topbar">
             <div class="hero-copy">
               <div class="eyebrow">Enterprise dashboard</div>
-              <h1>Runtime, access, and evidence.</h1>
-              <p class="lead">Monitor runtime readiness, access, provider-key posture, and evidence exports from one enterprise workspace.</p>
-              <div class="toolbar hero-toolbar" aria-label="Dashboard actions">
-                <button id="refreshBtn" type="button">refresh data</button>
+              <h1>API Key Security Overview</h1>
+              <p class="lead">See which provider keys are protected, where traffic is flowing, what needs review, and which evidence is ready for your organization.</p>
+              <div class="dashboard-primary-actions" aria-label="Dashboard actions">
+                <button class="primary" type="button" data-dashboard-jump="operations">Review issues</button>
+                <a class="action" href="/app/keys">Open provider slots</a>
+                <a class="action" href="/app/evidence">Export evidence</a>
+                <button id="refreshBtn" type="button">Refresh data</button>
               </div>
             </div>
-            <div class="hero-sidecar" aria-label="Enterprise API key snapshot">
-              <div>
-                <div class="hero-sidecar-title">API key picture</div>
-                <p class="hero-sidecar-copy">Provider families, sealed material, project coverage, and runtime traffic in one readable view.</p>
+            <div class="security-status-card" aria-label="Workspace security status">
+              <div class="status-card-top">
+                <div>
+                  <div class="status-card-title">Workspace status</div>
+                  <p id="workspaceStatusDetail" class="status-card-copy">Loading runtime, key material, traffic, and coverage signals...</p>
+                </div>
+                <span id="workspaceStatusPill" class="status-pill warn">checking</span>
               </div>
-              <div class="hero-signal-grid">
-                <div class="hero-signal"><span>Provider families</span><strong id="heroProviderFamilies">...</strong></div>
-                <div class="hero-signal"><span>Key slots</span><strong id="heroKeySlots">...</strong></div>
-                <div class="hero-signal"><span>Material ready</span><strong id="heroMaterialReady">...</strong></div>
-                <div class="hero-signal"><span>Traffic mix</span><strong id="heroTrafficMix">...</strong></div>
+              <div class="status-check-grid">
+                <div class="status-check"><span>Key material</span><strong id="statusMaterial">...</strong></div>
+                <div class="status-check"><span>Traffic health</span><strong id="statusTraffic">...</strong></div>
+                <div class="status-check"><span>Project coverage</span><strong id="statusCoverage">...</strong></div>
               </div>
             </div>
           </div>
 
           <div class="dashboard-context-grid" aria-label="Control center orientation">
             <div class="context-card">
-              <div class="context-label">API keys in scope</div>
+              <div class="context-label">Protected API keys</div>
               <div id="contextKeySlots" class="context-title">...</div>
               <div class="context-copy">Active provider slots protected by VaultProof for this organization.</div>
             </div>
             <div class="context-card">
-              <div class="context-label">Provider families</div>
-              <div id="contextProviderFamilies" class="context-title">...</div>
-              <div class="context-copy">Distinct upstream providers represented by the active key slots.</div>
+              <div class="context-label">Live sealed keys</div>
+              <div id="contextLiveSealed" class="context-title">...</div>
+              <div class="context-copy">Slots with sealed material ready for upstream dispatch.</div>
             </div>
             <div class="context-card">
-              <div class="context-label">Projects with keys</div>
+              <div class="context-label">Projects covered</div>
               <div id="contextProjectsWithSlots" class="context-title">...</div>
               <div class="context-copy">Enterprise project coverage across protected provider credentials.</div>
             </div>
-            <div class="context-card">
-              <div class="context-label">Projects with traffic</div>
-              <div id="contextProjectsWithTraffic" class="context-title">...</div>
-              <div class="context-copy">Projects that have produced proxy activity during the current health window.</div>
+            <div class="context-card critical">
+              <div class="context-label">Denied / error calls</div>
+              <div id="contextDeniedErrors" class="context-title">...</div>
+              <div class="context-copy">Requests that need review before expanding usage.</div>
             </div>
           </div>
         </section>
@@ -674,15 +758,26 @@ export function renderEnterpriseDashboardPage(env: EnterpriseControlPlaneEnv = {
           </nav>
 
       <section id="tab-overview" class="tab-panel" data-tab-panel="overview">
-        <section class="grid kpis" aria-label="Enterprise KPIs">
-          <div class="card metric-card"><div class="kpi-label">production runtime</div><div id="kpiRuntime" class="kpi-value">...</div><div id="kpiRuntimeSub" class="kpi-sub">checking GCP runtime</div></div>
-          <div class="card metric-card"><div class="kpi-label">projects</div><div id="kpiProjects" class="kpi-value">...</div><div id="kpiProjectsSub" class="kpi-sub">enterprise scopes</div></div>
-          <div class="card metric-card"><div class="kpi-label">members</div><div id="kpiMembers" class="kpi-value">...</div><div id="kpiMembersSub" class="kpi-sub">active org access</div></div>
-          <div class="card metric-card"><div class="kpi-label">30d calls</div><div id="kpiCalls" class="kpi-value">...</div><div id="kpiCallsSub" class="kpi-sub">proxy activity</div></div>
+        <section class="grid kpis" aria-label="Enterprise key security metrics">
+          <div class="card metric-card"><div class="kpi-label">protected API keys</div><div id="kpiProtectedKeys" class="kpi-value">...</div><div id="kpiProtectedKeysSub" class="kpi-sub">provider slots in scope</div></div>
+          <div class="card metric-card"><div class="kpi-label">live sealed keys</div><div id="kpiLiveSealed" class="kpi-value">...</div><div id="kpiLiveSealedSub" class="kpi-sub">ready for dispatch</div></div>
+          <div class="card metric-card"><div class="kpi-label">projects covered</div><div id="kpiProjectsCovered" class="kpi-value">...</div><div id="kpiProjectsCoveredSub" class="kpi-sub">with provider slots</div></div>
+          <div class="card metric-card"><div class="kpi-label">denied / error calls</div><div id="kpiDeniedErrors" class="kpi-value">...</div><div id="kpiDeniedErrorsSub" class="kpi-sub">needs review</div></div>
         </section>
 
         <section class="dashboard-overview-grid" aria-label="Dashboard overview workspace">
           <div class="overview-primary">
+            <section class="card attention-card" aria-label="Dashboard attention items">
+              <div class="section-title">
+                <div>
+                  <h2>Needs attention</h2>
+                  <p>Highest-priority key, traffic, coverage, and policy work for this organization.</p>
+                </div>
+                <span id="attentionMeta" class="mini">loading</span>
+              </div>
+              <div id="attentionList" class="attention-list"><div class="empty">Loading attention items...</div></div>
+            </section>
+
             <section class="grid two">
               <div class="card">
                 <div class="section-title">
@@ -744,6 +839,17 @@ export function renderEnterpriseDashboardPage(env: EnterpriseControlPlaneEnv = {
                 </div>
                 <div id="projectCoverageList" class="coverage-grid"><div class="empty">Loading coverage...</div></div>
               </div>
+
+              <div class="card visual-card">
+                <div class="section-title">
+                  <div>
+                    <h2>API call trend</h2>
+                    <p>Daily protected-call volume, with warning colors for error or denial days.</p>
+                  </div>
+                  <span id="trendMeta" class="mini">7 days</span>
+                </div>
+                <div id="callTrendChart" class="trend-chart"><div class="empty">Loading trend...</div></div>
+              </div>
             </section>
 
             <section class="card">
@@ -760,10 +866,10 @@ export function renderEnterpriseDashboardPage(env: EnterpriseControlPlaneEnv = {
 
           <aside class="overview-rail" aria-label="Workspace readiness summary">
             <div class="rail-card accent">
-              <div class="rail-title">Rollout path</div>
-              <div class="rail-value">1</div>
-              <p class="rail-copy">Workload, provider path, owner group, and success metric before expansion.</p>
-              <span class="tag good">scoped rollout</span>
+              <div class="rail-title">Evidence readiness</div>
+              <div class="rail-value">Proof</div>
+              <p class="rail-copy">Security review can use runtime, access, audit, policy, release, tester, and exposure evidence.</p>
+              <span class="tag good">customer safe</span>
             </div>
             <div class="rail-card">
               <div class="rail-title">Key exposure response</div>
@@ -771,14 +877,14 @@ export function renderEnterpriseDashboardPage(env: EnterpriseControlPlaneEnv = {
               <span class="tag good">contained in slots</span>
             </div>
             <div class="rail-card">
-              <div class="rail-title">Evidence packet</div>
-              <p class="rail-copy">Readiness, access review, audit, policy, rollout, release, tester, and exposure proof for security review.</p>
-              <span class="tag good">customer safe</span>
+              <div class="rail-title">Access and SSO</div>
+              <p class="rail-copy">Review owners, admins, pending invites, SSO state, and access-review CSV before adding more teams.</p>
+              <span class="tag good">reviewable</span>
             </div>
             <div class="rail-card">
-              <div class="rail-title">Customer enablement</div>
-              <p class="rail-copy">Prepare tester login state, scenario, feedback capture, blocker notes, and success criteria.</p>
-              <span class="tag">session ready</span>
+              <div class="rail-title">Runtime operations</div>
+              <p class="rail-copy">Use activity, alerts, audit, and runbooks to investigate denied calls or provider material drift.</p>
+              <span class="tag">operational</span>
             </div>
           </aside>
         </section>
@@ -903,6 +1009,8 @@ export function renderEnterpriseDashboardPage(env: EnterpriseControlPlaneEnv = {
       var token = localStorage.getItem('vaultproof_token') || '';
       var currentOrgId = localStorage.getItem(ACTIVE_ORG_STORAGE_KEY) || '';
       var loadSequence = 0;
+      var latestReadiness = null;
+      var latestOverview = null;
       function byId(id) { return document.getElementById(id); }
       function text(id, value) { var el = byId(id); if (el) el.textContent = value == null ? '' : String(value); }
       function escapeHtml(value) {
@@ -929,6 +1037,48 @@ export function renderEnterpriseDashboardPage(env: EnterpriseControlPlaneEnv = {
       function plural(value, singular, pluralLabel) {
         return rawNumber(value) === 1 ? singular : (pluralLabel || singular + 's');
       }
+      function updateWorkspaceStatus() {
+        var readiness = latestReadiness || {};
+        var overview = latestOverview || {};
+        var summary = overview.providerSlotSummary || {};
+        var coverage = overview.projectCoverage || {};
+        var traffic = overview.trafficBreakdown || {};
+        var runtimeReady = readiness.production_ready === true;
+        var totalSlots = rawNumber(summary.totalSlots || overview.totalKeys);
+        var liveSealed = rawNumber(summary.liveSealedSlots);
+        var needsReview = Math.max(totalSlots - liveSealed, 0);
+        var totalProjects = rawNumber(coverage.totalProjects || overview.totalProjects);
+        var coveredProjects = rawNumber(coverage.withProviderSlots);
+        var denied = rawNumber(traffic.deniedCalls || overview.deniedCalls);
+        var errors = rawNumber(traffic.errorCalls || overview.errorCalls);
+        var status = 'healthy';
+        var label = 'Healthy';
+        var detail = 'Runtime, key material, coverage, and traffic are in a good operating state.';
+        var tone = '';
+        if (!runtimeReady || totalSlots === 0) {
+          status = 'blocked';
+          label = 'Blocked';
+          tone = 'bad';
+          detail = !runtimeReady
+            ? 'Runtime readiness is not green. Review readiness before relying on protected key traffic.'
+            : 'No protected provider keys are connected yet. Add a provider slot before using this workspace.';
+        } else if (needsReview > 0 || denied > 0 || errors > 0 || coveredProjects < totalProjects) {
+          status = 'review';
+          label = 'Needs review';
+          tone = 'warn';
+          detail = 'Some key material, project coverage, or traffic outcomes need review before broader rollout.';
+        }
+        var pill = byId('workspaceStatusPill');
+        if (pill) {
+          pill.textContent = label;
+          pill.className = 'status-pill ' + tone;
+        }
+        text('workspaceStatusDetail', detail);
+        text('statusMaterial', totalSlots ? number(liveSealed) + '/' + number(totalSlots) + ' live sealed' : 'no keys');
+        text('statusTraffic', number(denied) + ' denied / ' + number(errors) + ' errors');
+        text('statusCoverage', totalProjects ? number(coveredProjects) + '/' + number(totalProjects) + ' projects' : 'no projects');
+        return status;
+      }
       function setDonut(summary) {
         summary = summary || {};
         var total = rawNumber(summary.totalSlots);
@@ -937,8 +1087,8 @@ export function renderEnterpriseDashboardPage(env: EnterpriseControlPlaneEnv = {
         var mixed = rawNumber(summary.mixedSlots);
         var missing = rawNumber(summary.missingSlots);
         var values = [
-          { label: 'Live sealed', value: live, color: '#14b8a6' },
-          { label: 'Placeholder', value: placeholder, color: '#b45309' },
+          { label: 'Live sealed', value: live, color: '#0f766e' },
+          { label: 'Placeholder', value: placeholder, color: '#d97706' },
           { label: 'Mixed', value: mixed, color: '#2563eb' },
           { label: 'Missing', value: missing, color: '#dc2626' },
         ];
@@ -951,7 +1101,7 @@ export function renderEnterpriseDashboardPage(env: EnterpriseControlPlaneEnv = {
         });
         var donut = byId('materialDonut');
         if (donut) {
-          donut.style.background = total > 0 ? 'conic-gradient(' + stops.join(', ') + ')' : 'conic-gradient(#edf1f5 0deg 360deg)';
+          donut.style.background = total > 0 ? 'conic-gradient(' + stops.join(', ') + ')' : 'conic-gradient(#e7edf3 0deg 360deg)';
           donut.innerHTML = '<div class="donut-center"><strong>' + percent(live, total) + '%</strong><span>live</span></div>';
         }
         var legend = byId('materialLegend');
@@ -968,8 +1118,8 @@ export function renderEnterpriseDashboardPage(env: EnterpriseControlPlaneEnv = {
         var denied = rawNumber(traffic.deniedCalls);
         var otherErrors = rawNumber(traffic.otherErrorCalls);
         var segments = [
-          { label: 'Successful', value: ok, color: '#14b8a6' },
-          { label: 'Denied', value: denied, color: '#b45309' },
+          { label: 'Successful', value: ok, color: '#0f766e' },
+          { label: 'Denied', value: denied, color: '#d97706' },
           { label: 'Other errors', value: otherErrors, color: '#dc2626' },
         ];
         var bar = byId('trafficOutcomeBar');
@@ -978,7 +1128,7 @@ export function renderEnterpriseDashboardPage(env: EnterpriseControlPlaneEnv = {
             ? segments.map(function(item) {
                 return '<span class="bar-segment" style="--width:' + percent(item.value, total) + '%;--fill:' + item.color + '"></span>';
               }).join('')
-            : '<span class="bar-segment" style="--width:100%;--fill:#edf1f5"></span>';
+            : '<span class="bar-segment" style="--width:100%;--fill:#e7edf3"></span>';
         }
         text('trafficMeta', number(total) + ' ' + plural(total, 'call'));
         var legend = byId('trafficLegend');
@@ -989,7 +1139,7 @@ export function renderEnterpriseDashboardPage(env: EnterpriseControlPlaneEnv = {
         }
       }
       function coverageItem(label, value, detail, width, tone) {
-        var color = tone === 'bad' ? '#dc2626' : tone === 'warn' ? '#b45309' : tone === 'blue' ? '#2563eb' : '#14b8a6';
+        var color = tone === 'bad' ? '#dc2626' : tone === 'warn' ? '#d97706' : tone === 'blue' ? '#2563eb' : '#0f766e';
         return '<div class="coverage-item"><div class="coverage-top"><span class="coverage-label">' + escapeHtml(label) + '</span><strong class="coverage-value">' + escapeHtml(value) + '</strong></div><div class="provider-meta">' + escapeHtml(detail) + '</div><div class="meter"><span style="--width:' + Math.max(0, Math.min(100, width)) + '%;--fill:' + color + '"></span></div></div>';
       }
       function renderCoverageRows(id, coverage, summary) {
@@ -1038,10 +1188,70 @@ export function renderEnterpriseDashboardPage(env: EnterpriseControlPlaneEnv = {
           var tone = denied || errors ? 'warn' : live && !review ? 'good' : 'warn';
           var labelText = Array.isArray(item.labels) && item.labels.length ? item.labels.join(', ') : item.provider;
           var width = Math.max(percent(calls || slots, maxValue), slots ? 8 : 3);
-          return '<div class="provider-row"><div class="provider-row-head"><div><div class="provider-name">' + escapeHtml(item.provider || 'unknown') + '</div><div class="provider-meta">' + escapeHtml(labelText) + ' - ' + number(slots) + ' ' + plural(slots, 'slot') + ' - ' + number(calls) + ' recent ' + plural(calls, 'call') + '</div></div><span class="tag ' + tone + '">' + (denied || errors ? 'watch' : live ? 'ready' : 'setup') + '</span></div><div class="meter"><span style="--width:' + width + '%;--fill:' + (tone === 'good' ? '#14b8a6' : '#b45309') + '"></span></div><div class="provider-meta">' + number(live) + ' live sealed - ' + number(review) + ' needs review - last ' + escapeHtml(relativeTime(item.lastActivity)) + '</div></div>';
+          return '<div class="provider-row"><div class="provider-row-head"><div><div class="provider-name">' + escapeHtml(item.provider || 'unknown') + '</div><div class="provider-meta">' + escapeHtml(labelText) + ' - ' + number(slots) + ' ' + plural(slots, 'slot') + ' - ' + number(calls) + ' recent ' + plural(calls, 'call') + '</div></div><span class="tag ' + tone + '">' + (denied || errors ? 'watch' : live ? 'ready' : 'setup') + '</span></div><div class="meter"><span style="--width:' + width + '%;--fill:' + (tone === 'good' ? '#0f766e' : '#d97706') + '"></span></div><div class="provider-meta">' + number(live) + ' live sealed - ' + number(review) + ' needs review - last ' + escapeHtml(relativeTime(item.lastActivity)) + '</div></div>';
         }).join('') : '<div class="empty">No provider slots or runtime activity are visible yet.</div>';
         if (id === 'providerUsageList') text('providerUsageMeta', number(usage.length) + ' provider ' + plural(usage.length, 'group'));
         if (id === 'keyMapProviderList') text('keyMapMeta', number(totalSlots) + ' active ' + plural(totalSlots, 'slot'));
+      }
+      function attentionRow(item) {
+        var tone = item.tone || '';
+        return '<div class="attention-row ' + tone + '"><div><div class="row-title">' + escapeHtml(item.title) + '</div><div class="row-sub">' + escapeHtml(item.detail || '') + '</div></div><a class="tag ' + tone + '" href="' + escapeHtml(item.href || '/app/evidence') + '">' + escapeHtml(item.action || 'review') + '</a></div>';
+      }
+      function renderAttentionItems(overview, totalSlots, liveSealed, coverage, traffic) {
+        var items = [];
+        var denied = rawNumber(traffic.deniedCalls || overview.deniedCalls);
+        var otherErrors = rawNumber(traffic.otherErrorCalls);
+        var totalErrors = rawNumber(traffic.errorCalls || overview.errorCalls);
+        var reviewCount = Math.max(totalSlots - liveSealed, 0);
+        var withoutSlots = rawNumber(coverage.withoutProviderSlots);
+        if (totalSlots === 0) {
+          items.push({ title: 'Connect the first protected provider key', detail: 'This workspace has no provider slots in scope yet.', href: '/app/keys', action: 'Open provider slots', tone: 'warn' });
+        }
+        if (reviewCount > 0) {
+          items.push({ title: 'Review key material before production use', detail: number(reviewCount) + ' provider ' + plural(reviewCount, 'slot') + ' need sealed material or material review.', href: '/app/keys', action: 'Review keys', tone: 'warn' });
+        }
+        if (denied > 0 || otherErrors > 0 || totalErrors > denied) {
+          items.push({ title: 'Review denied or error traffic', detail: number(denied) + ' denied and ' + number(Math.max(totalErrors - denied, otherErrors)) + ' other error calls are in the current window.', href: '/app/activity', action: 'View activity', tone: denied ? 'bad' : 'warn' });
+        }
+        if (withoutSlots > 0) {
+          items.push({ title: 'Projects missing key coverage', detail: number(withoutSlots) + ' ' + plural(withoutSlots, 'project') + (withoutSlots === 1 ? ' is' : ' are') + ' not mapped to an active provider slot.', href: '/app/inventory', action: 'Review inventory', tone: 'warn' });
+        }
+        if (totalSlots > 0 && rawNumber(traffic.totalCalls || overview.totalCalls) === 0) {
+          items.push({ title: 'No protected runtime traffic yet', detail: 'Provider slots exist, but no workflow has sent traffic through VaultProof in this window.', href: '/app/rollout', action: 'Open rollout', tone: 'warn' });
+        }
+        var list = byId('attentionList');
+        if (list) {
+          list.innerHTML = items.length
+            ? items.slice(0, 5).map(attentionRow).join('')
+            : '<div class="attention-row"><div><div class="row-title">No active attention items</div><div class="row-sub">Key material, project coverage, and traffic outcomes do not show dashboard-level blockers.</div></div><a class="tag good" href="/app/evidence">Export evidence</a></div>';
+        }
+        text('attentionMeta', items.length ? number(items.length) + ' open' : 'clear');
+      }
+      function renderCallTrend(trend) {
+        var list = Array.isArray(trend) ? trend.slice(-7) : [];
+        var chart = byId('callTrendChart');
+        if (!chart) return;
+        if (!list.length) {
+          chart.innerHTML = '<div class="empty">No trend data yet.</div>';
+          text('trendMeta', 'no data');
+          return;
+        }
+        var maxCalls = list.reduce(function(max, item) {
+          return Math.max(max, rawNumber(item.calls));
+        }, 1);
+        var total = list.reduce(function(sum, item) {
+          return sum + rawNumber(item.calls);
+        }, 0);
+        chart.innerHTML = '<div class="trend-bars">' + list.map(function(item) {
+          var calls = rawNumber(item.calls);
+          var denied = rawNumber(item.denied);
+          var errors = rawNumber(item.errors);
+          var height = Math.max(3, Math.round((calls / maxCalls) * 86));
+          var label = String(item.day || '').slice(5);
+          var className = denied ? 'trend-column has-denied' : errors ? 'trend-column has-errors' : 'trend-column';
+          return '<div class="' + className + '"><div class="trend-bar" title="' + number(calls) + ' calls" style="--height:' + height + 'px"></div><div class="trend-value">' + number(calls) + '</div><div class="trend-label">' + escapeHtml(label) + '</div></div>';
+        }).join('') + '</div>';
+        text('trendMeta', number(total) + ' calls / 7d');
       }
       function relativeTime(value) {
         if (!value) return 'never';
@@ -1107,6 +1317,7 @@ export function renderEnterpriseDashboardPage(env: EnterpriseControlPlaneEnv = {
         });
       }
       function renderReadiness(payload) {
+        latestReadiness = payload || {};
         var ready = payload && payload.production_ready === true;
         var runtimeTier = payload && payload.runtime_tier === 'shared-demo' ? 'shared-demo' : 'dedicated-production';
         var sharedDemo = runtimeTier === 'shared-demo';
@@ -1123,6 +1334,7 @@ export function renderEnterpriseDashboardPage(env: EnterpriseControlPlaneEnv = {
             ? 'Shared enterprise runtime is confidential-ready. It is suitable for scoped customer evaluation, but it is not a dedicated customer production runtime.'
             : 'GCP edge, control plane, executor, attestation, replay protection, and Cloud KMS all report production-ready.')
           : (blockers.length ? blockers.join(' | ') : 'Readiness is incomplete.'));
+        updateWorkspaceStatus();
       }
       function resolveProvisionedOrg(orgs, activeId) {
         if (!orgs.length) {
@@ -1151,6 +1363,7 @@ export function renderEnterpriseDashboardPage(env: EnterpriseControlPlaneEnv = {
       }
       function renderOverview(overview) {
         overview = overview || {};
+        latestOverview = overview;
         var slotSummary = overview.providerSlotSummary || {};
         var coverage = overview.projectCoverage || {};
         var traffic = overview.trafficBreakdown || {};
@@ -1163,21 +1376,22 @@ export function renderEnterpriseDashboardPage(env: EnterpriseControlPlaneEnv = {
         var trafficDenied = rawNumber(traffic.deniedCalls || overview.deniedCalls);
         var trafficOtherErrors = traffic.otherErrorCalls === undefined ? Math.max(trafficErrors - trafficDenied, 0) : rawNumber(traffic.otherErrorCalls);
         var trafficOk = traffic.okCalls === undefined ? Math.max(trafficTotal - trafficErrors, 0) : rawNumber(traffic.okCalls);
-        text('kpiProjects', number(overview.totalProjects));
-        text('kpiProjectsSub', number(totalSlots) + ' active key slots');
-        text('kpiCalls', number(overview.totalCalls));
-        text('kpiCallsSub', number(overview.deniedCalls) + ' denied / ' + number(overview.errorCalls) + ' errors');
-        text('heroProviderFamilies', number(slotSummary.providerCount || overview.providerCount));
-        text('heroKeySlots', number(totalSlots));
-        text('heroMaterialReady', percent(liveSealed, totalSlots) + '%');
-        text('heroTrafficMix', number(trafficOk) + '/' + number(trafficTotal));
+        text('kpiProtectedKeys', number(totalSlots));
+        text('kpiProtectedKeysSub', number(slotSummary.providerCount || overview.providerCount) + ' provider ' + plural(slotSummary.providerCount || overview.providerCount, 'family', 'families'));
+        text('kpiLiveSealed', number(liveSealed));
+        text('kpiLiveSealedSub', percent(liveSealed, totalSlots) + '% material ready');
+        text('kpiProjectsCovered', number(rawNumber(coverage.withProviderSlots)) + '/' + number(rawNumber(coverage.totalProjects || overview.totalProjects)));
+        text('kpiProjectsCoveredSub', number(rawNumber(coverage.withoutProviderSlots)) + ' without active slots');
+        text('kpiDeniedErrors', number(trafficDenied) + ' / ' + number(trafficErrors));
+        text('kpiDeniedErrorsSub', number(trafficOk) + ' successful calls');
         text('contextKeySlots', number(totalSlots));
-        text('contextProviderFamilies', number(slotSummary.providerCount || overview.providerCount));
+        text('contextLiveSealed', number(liveSealed) + ' / ' + number(totalSlots));
         text('contextProjectsWithSlots', number(rawNumber(coverage.withProviderSlots)) + '/' + number(rawNumber(coverage.totalProjects || overview.totalProjects)));
-        text('contextProjectsWithTraffic', number(rawNumber(coverage.withTraffic)) + '/' + number(rawNumber(coverage.totalProjects || overview.totalProjects)));
+        text('contextDeniedErrors', number(trafficDenied) + ' / ' + number(trafficErrors));
         text('summaryLiveSealed', number(liveSealed));
         text('summaryNeedsReview', number(needsReview));
         text('summaryDenied', number(overview.deniedCalls));
+        updateWorkspaceStatus();
         setDonut(slotSummary);
         renderTrafficBreakdown({
           totalCalls: trafficTotal,
@@ -1190,6 +1404,8 @@ export function renderEnterpriseDashboardPage(env: EnterpriseControlPlaneEnv = {
         renderMaterialRows(slotSummary);
         renderProviderUsageList('providerUsageList', providerUsage, totalSlots);
         renderProviderUsageList('keyMapProviderList', providerUsage, totalSlots);
+        renderAttentionItems(overview, totalSlots, liveSealed, coverage, traffic);
+        renderCallTrend(overview.callTrend);
         var review = overview.pilotReview || {};
         text('projectHealthMeta', review.headline || '');
         text('activityMeta', number((overview.recentActivity || []).length) + ' recent events');
@@ -1278,6 +1494,14 @@ export function renderEnterpriseDashboardPage(env: EnterpriseControlPlaneEnv = {
       document.querySelectorAll('[data-dashboard-tab]').forEach(function(button) {
         button.addEventListener('click', function() {
           selectDashboardTab(button.getAttribute('data-dashboard-tab') || 'overview');
+        });
+      });
+      document.querySelectorAll('[data-dashboard-jump]').forEach(function(button) {
+        button.addEventListener('click', function() {
+          var tab = button.getAttribute('data-dashboard-jump') || 'overview';
+          selectDashboardTab(tab);
+          var panel = document.querySelector('[data-tab-panel="' + tab + '"]');
+          if (panel && panel.scrollIntoView) panel.scrollIntoView({ behavior: 'smooth', block: 'start' });
         });
       });
       selectDashboardTab('overview');

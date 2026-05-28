@@ -2230,6 +2230,7 @@ async function assertEnterpriseProjectOverviewRollup() {
     || bootstrapPayload.overview.providerUsage?.[0]?.recentCalls !== 1
     || bootstrapPayload.overview.trafficBreakdown?.okCalls !== 1
     || bootstrapPayload.overview.projectCoverage?.withProviderSlots !== 1
+    || !Array.isArray(bootstrapPayload.overview.callTrend)
   ) {
     throw new Error(`Expected bootstrap overview to include provider key visual summaries, got ${JSON.stringify(bootstrapPayload.overview)}`);
   }
@@ -2258,6 +2259,7 @@ async function assertEnterpriseProjectOverviewRollup() {
     || overviewPayload.providerUsage?.[0]?.provider !== 'openai'
     || overviewPayload.trafficBreakdown?.okCalls !== 1
     || overviewPayload.projectCoverage?.withProviderSlots !== 1
+    || !Array.isArray(overviewPayload.callTrend)
   ) {
     throw new Error(`Expected projects stats overview to include dashboard visual summaries, got ${JSON.stringify(overviewPayload)}`);
   }
@@ -3052,16 +3054,19 @@ async function assertEnterpriseLoginRoute() {
     }
     for (const requiredFeature of [
       'Enterprise dashboard',
-      'Runtime, access, and evidence.',
+      'API Key Security Overview',
       'enterprise-page-shell',
       'control-center-card',
-      'hero-sidecar',
-      'hero-signal-grid',
+      'security-status-card',
+      'dashboard-primary-actions',
       'dashboard-overview-grid',
       'metric-card',
       'overview-rail',
-      'API key picture',
-      'Rollout path',
+      'Enterprise key security metrics',
+      'Workspace status',
+      'Needs attention',
+      'attentionList',
+      'Evidence readiness',
       'Control center',
       'Enterprise dashboard tabs',
       'Overview',
@@ -3075,6 +3080,8 @@ async function assertEnterpriseLoginRoute() {
       'trafficOutcomeBar',
       'Project coverage',
       'projectCoverageList',
+      'API call trend',
+      'callTrendChart',
       'Provider usage',
       'providerUsageList',
       'Key map by provider',
@@ -3084,6 +3091,7 @@ async function assertEnterpriseLoginRoute() {
       'providerSlotSummary',
       'providerUsage',
       'trafficBreakdown',
+      'callTrend',
       'Setup access checklist',
       'Release evidence',
       'Tester readiness',

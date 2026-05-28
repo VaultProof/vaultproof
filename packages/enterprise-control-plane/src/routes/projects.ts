@@ -419,6 +419,13 @@ type ProjectHealthAggregate = {
   lastActivity: string | null;
 };
 
+type DailyCallTrend = {
+  day: string;
+  calls: number;
+  errors: number;
+  denied: number;
+};
+
 type AccessLogOverview = {
   source: 'rollup_rpc' | 'raw_fallback';
   totalCalls: number;
@@ -426,6 +433,7 @@ type AccessLogOverview = {
   deniedCalls: number;
   projectHealth: ProjectHealthAggregate[];
   recentLogs: AccessLogRecentRow[];
+  callTrend: DailyCallTrend[];
 };
 
 type OverviewProviderKey = {
@@ -526,6 +534,7 @@ function normalizeRollupOverviewPayload(payload: unknown): AccessLogOverview | n
     deniedCalls: countValue(record.denied_calls),
     projectHealth: normalizeProjectHealthAggregates(record.project_health),
     recentLogs: normalizeRecentAccessLogRows(record.recent_activity),
+    callTrend: [],
   };
 }
 
@@ -537,7 +546,89 @@ function emptyAccessLogOverview(source: AccessLogOverview['source']): AccessLogO
     deniedCalls: 0,
     projectHealth: [],
     recentLogs: [],
+    callTrend: [],
   };
+}
+
+function trendStartDate(days = 7): Date {
+  const start = new Date();
+  start.setUTCHours(0, 0, 0, 0);
+  start.setUTCDate(start.getUTCDate() - Math.max(days - 1, 0));
+  return start;
+}
+
+function createTrendBuckets(days = 7): Map<string, DailyCallTrend> {
+  const buckets = new Map<string, DailyCallTrend>();
+  const start = trendStartDate(days);
+  for (let index = 0; index < days; index += 1) {
+    const day = new Date(start);
+    day.setUTCDate(start.getUTCDate() + index);
+    const key = day.toISOString().slice(0, 10);
+    buckets.set(key, { day: key, calls: 0, errors: 0, denied: 0 });
+  }
+  return buckets;
+}
+
+function addTrendCount(
+  buckets: Map<string, DailyCallTrend>,
+  dayValue: string | null | undefined,
+  statusCode: number | null | undefined,
+  count = 1,
+): void {
+  if (!dayValue) return;
+  const parsed = dayValue.length === 10 ? new Date(`${dayValue}T00:00:00.000Z`) : new Date(dayValue);
+  if (!Number.isFinite(parsed.getTime())) return;
+  const day = parsed.toISOString().slice(0, 10);
+  const bucket = buckets.get(day);
+  if (!bucket) return;
+  const safeCount = countValue(count);
+  bucket.calls += safeCount;
+  if ((statusCode || 0) >= 400) bucket.errors += safeCount;
+  if (isDeniedStatus(statusCode || null)) bucket.denied += safeCount;
+}
+
+function addTrendBucketCount(
+  buckets: Map<string, DailyCallTrend>,
+  dayValue: string | null | undefined,
+  statusBucket: string | null | undefined,
+  count = 1,
+): void {
+  if (!dayValue) return;
+  const bucket = buckets.get(String(dayValue).slice(0, 10));
+  if (!bucket) return;
+  const safeCount = countValue(count);
+  bucket.calls += safeCount;
+  if (statusBucket === 'error' || statusBucket === 'denied') bucket.errors += safeCount;
+  if (statusBucket === 'denied') bucket.denied += safeCount;
+}
+
+function sortedTrend(buckets: Map<string, DailyCallTrend>): DailyCallTrend[] {
+  return [...buckets.values()].sort((a, b) => a.day.localeCompare(b.day));
+}
+
+async function fetchRollupCallTrend(
+  supabase: any,
+  projectIds: string[],
+  days = 7,
+): Promise<DailyCallTrend[]> {
+  if (projectIds.length === 0) return sortedTrend(createTrendBuckets(days));
+  const buckets = createTrendBuckets(days);
+  try {
+    const since = trendStartDate(days).toISOString().slice(0, 10);
+    const { data, error } = await supabase
+      .from('project_access_log_daily_rollups')
+      .select('day, call_count, status_bucket')
+      .in('project_id', projectIds)
+      .gte('day', since)
+      .limit(10000);
+    if (error) return sortedTrend(buckets);
+    for (const row of (data || []) as Array<{ day?: string | null; call_count?: number | null; status_bucket?: string | null }>) {
+      addTrendBucketCount(buckets, row.day, row.status_bucket, row.call_count || 0);
+    }
+  } catch {
+    return sortedTrend(buckets);
+  }
+  return sortedTrend(buckets);
 }
 
 function emptyKeyVisualSummary(totalProjects = 0): Record<string, unknown> {
@@ -568,6 +659,7 @@ function emptyKeyVisualSummary(totalProjects = 0): Record<string, unknown> {
       withTraffic: 0,
       needingAttention: 0,
     },
+    callTrend: sortedTrend(createTrendBuckets()),
   };
 }
 
@@ -605,6 +697,7 @@ async function fetchRawAccessLogOverview(
   ]);
 
   const projectHealthStats = new Map<string, ProjectHealthAggregate>();
+  const trendBuckets = createTrendBuckets();
   for (const log of (projectHealthLogsRes?.data || []) as Array<{ project_id: string; status_code: number | null; timestamp: string }>) {
     const existing = projectHealthStats.get(log.project_id) || {
       project_id: log.project_id,
@@ -616,6 +709,7 @@ async function fetchRawAccessLogOverview(
     existing.calls += 1;
     if ((log.status_code || 0) >= 400) existing.errors += 1;
     if (isDeniedStatus(log.status_code)) existing.denied += 1;
+    addTrendCount(trendBuckets, log.timestamp, log.status_code, 1);
     if (!existing.lastActivity || log.timestamp > existing.lastActivity) existing.lastActivity = log.timestamp;
     projectHealthStats.set(log.project_id, existing);
   }
@@ -627,6 +721,7 @@ async function fetchRawAccessLogOverview(
     deniedCalls: deniedCallsRes?.count || 0,
     projectHealth: [...projectHealthStats.values()],
     recentLogs: normalizeRecentAccessLogRows(recentLogsRes?.data || []),
+    callTrend: sortedTrend(trendBuckets),
   };
 }
 
@@ -643,7 +738,12 @@ async function fetchAccessLogOverview(
     });
     if (!error) {
       const normalized = normalizeRollupOverviewPayload(Array.isArray(data) ? data[0] : data);
-      if (normalized) return normalized;
+      if (normalized) {
+        return {
+          ...normalized,
+          callTrend: await fetchRollupCallTrend(supabase, projectIds),
+        };
+      }
     }
   } catch {
     // The migration may not be applied yet; fall back to the legacy raw-log path.
@@ -1010,6 +1110,7 @@ function buildOverviewStatsFromAccess(
     providerUsage,
     trafficBreakdown,
     projectCoverage,
+    callTrend: accessOverview.callTrend,
     healthWindowDays,
     statsSource: statsSourceOverride || accessOverview.source,
     accessLogStatsSource: accessOverview.source,
