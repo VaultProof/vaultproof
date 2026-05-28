@@ -3058,11 +3058,10 @@ async function assertEnterpriseLoginRoute() {
       'enterprise-page-shell',
       'control-center-card',
       'security-status-card',
-      'dashboard-primary-actions',
+      'dashboard-refresh-control',
+      'dashboard-context-grid',
       'dashboard-overview-grid',
-      'metric-card',
       'overview-rail',
-      'Enterprise key security metrics',
       'Workspace status',
       'Needs attention',
       'attentionList',
@@ -3104,6 +3103,9 @@ async function assertEnterpriseLoginRoute() {
         throw new Error(`Expected enterprise dashboard feature map to include ${requiredFeature}`);
       }
     }
+    if (dashboardHtml.indexOf('Provider material') > dashboardHtml.indexOf('Needs attention')) {
+      throw new Error('Expected enterprise dashboard overview charts to render before attention items');
+    }
     for (const forbiddenFeature of [
       'Set up and run your business account.',
       'Use this dashboard to finish onboarding',
@@ -3117,9 +3119,13 @@ async function assertEnterpriseLoginRoute() {
       'Workspace tools',
       'Operator shortcuts',
       'Use these pages to configure the account',
+      'dashboard-primary-actions',
+      'Enterprise key security metrics',
+      'Open provider slots',
+      'Export evidence',
     ]) {
       if (dashboardHtml.includes(forbiddenFeature)) {
-        throw new Error(`Enterprise dashboard must not include public marketing/login card copy: ${forbiddenFeature}`);
+        throw new Error(`Enterprise dashboard must not include forbidden copy or duplicate navigation: ${forbiddenFeature}`);
       }
     }
   }

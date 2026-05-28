@@ -151,12 +151,7 @@ export function renderEnterpriseDashboardPage(env: EnterpriseControlPlaneEnv = {
       color: var(--dashboard-ink);
       font-size: 13px;
     }
-    .dashboard-primary-actions {
-      display: flex;
-      gap: 8px;
-      flex-wrap: wrap;
-      margin-top: 18px;
-    }
+    .dashboard-refresh-control { margin-top: 18px; }
     .eyebrow {
       display: inline-flex;
       color: var(--dashboard-rose);
@@ -251,33 +246,7 @@ export function renderEnterpriseDashboardPage(env: EnterpriseControlPlaneEnv = {
       line-height: 1.5;
       font-size: 14px;
     }
-    .control-summary {
-      display: grid;
-      grid-template-columns: repeat(3, minmax(110px, 1fr));
-      gap: 8px;
-      flex: 0 0 auto;
-      min-width: min(100%, 420px);
-    }
-    .summary-chip {
-      border: 1px solid var(--line-soft);
-      border-radius: 8px;
-      padding: 11px;
-      background: #f8fafc;
-    }
-    .summary-chip span {
-      display: block;
-      color: var(--soft);
-      font-size: 11px;
-      text-transform: uppercase;
-    }
-    .summary-chip strong {
-      display: block;
-      color: var(--dashboard-ink);
-      font-size: 20px;
-      margin-top: 5px;
-    }
     .grid { display: grid; gap: 14px; }
-    .kpis { grid-template-columns: repeat(4, minmax(0, 1fr)); margin-bottom: 0; }
     .two { grid-template-columns: minmax(0, 1.15fr) minmax(340px, 0.85fr); }
     .dashboard-overview-grid {
       display: grid;
@@ -298,28 +267,6 @@ export function renderEnterpriseDashboardPage(env: EnterpriseControlPlaneEnv = {
       padding: 18px;
       box-shadow: 0 16px 42px rgba(44, 48, 55, 0.07);
     }
-    .metric-card {
-      position: relative;
-      min-height: 140px;
-      overflow: hidden;
-      border-color: rgba(44, 48, 55, 0.10);
-    }
-    .metric-card::before {
-      content: "";
-      position: absolute;
-      left: 18px;
-      right: 18px;
-      top: 0;
-      height: 3px;
-      border-radius: 0 0 999px 999px;
-      background: var(--primary-bg);
-    }
-    .metric-card:nth-child(2)::before { background: #2563eb; }
-    .metric-card:nth-child(3)::before { background: #15803d; }
-    .metric-card:nth-child(4)::before { background: #d97706; }
-    .kpi-label { color: var(--soft); font-size: 12px; font-weight: 400; text-transform: uppercase; letter-spacing: 0; }
-    .kpi-value { color: var(--dashboard-ink); font-size: 36px; font-weight: 680; letter-spacing: 0; margin-top: 14px; }
-    .kpi-sub { color: var(--muted); margin-top: 6px; font-size: 13px; }
     .status-pill {
       display: inline-flex; align-items: center; gap: 8px;
       border-radius: 999px; padding: 7px 10px; font-size: 12px; font-weight: 600;
@@ -664,9 +611,8 @@ export function renderEnterpriseDashboardPage(env: EnterpriseControlPlaneEnv = {
     @media (max-width: 980px) {
       .topbar { grid-template-columns: 1fr; }
       .toolbar { justify-content: flex-start; }
-      .dashboard-context-grid, .kpis, .two, .dashboard-overview-grid, .feature-grid, .intent-grid, .action-grid, .chart-grid { grid-template-columns: 1fr; }
+      .dashboard-context-grid, .two, .dashboard-overview-grid, .feature-grid, .intent-grid, .action-grid, .chart-grid { grid-template-columns: 1fr; }
       .control-center-intro { flex-direction: column; }
-      .control-summary { width: 100%; }
       .overview-rail { grid-template-columns: 1fr; }
     }
     @media (min-width: 981px) and (max-width: 1220px) {
@@ -686,11 +632,7 @@ export function renderEnterpriseDashboardPage(env: EnterpriseControlPlaneEnv = {
             <div class="hero-copy">
               <div class="eyebrow">Enterprise dashboard</div>
               <h1>API Key Security Overview</h1>
-              <p class="lead">See which provider keys are protected, where traffic is flowing, what needs review, and which evidence is ready for your organization.</p>
-              <div class="dashboard-primary-actions" aria-label="Dashboard actions">
-                <button class="primary" type="button" data-dashboard-jump="operations">Review issues</button>
-                <a class="action" href="/app/keys">Open provider slots</a>
-                <a class="action" href="/app/evidence">Export evidence</a>
+              <div class="dashboard-refresh-control" aria-label="Dashboard data controls">
                 <button id="refreshBtn" type="button">Refresh data</button>
               </div>
             </div>
@@ -742,11 +684,6 @@ export function renderEnterpriseDashboardPage(env: EnterpriseControlPlaneEnv = {
               <h2 class="control-title">Control center</h2>
               <p class="control-copy">Daily workspace view for runtime posture, provider-key coverage, material readiness, traffic health, and customer-safe evidence signals.</p>
             </div>
-            <div class="control-summary" aria-label="Dashboard live summary">
-              <div class="summary-chip"><span>live sealed</span><strong id="summaryLiveSealed">...</strong></div>
-              <div class="summary-chip"><span>needs review</span><strong id="summaryNeedsReview">...</strong></div>
-              <div class="summary-chip"><span>denied</span><strong id="summaryDenied">...</strong></div>
-            </div>
           </div>
 
           <nav class="tabbar" aria-label="Enterprise dashboard tabs">
@@ -758,50 +695,8 @@ export function renderEnterpriseDashboardPage(env: EnterpriseControlPlaneEnv = {
           </nav>
 
       <section id="tab-overview" class="tab-panel" data-tab-panel="overview">
-        <section class="grid kpis" aria-label="Enterprise key security metrics">
-          <div class="card metric-card"><div class="kpi-label">protected API keys</div><div id="kpiProtectedKeys" class="kpi-value">...</div><div id="kpiProtectedKeysSub" class="kpi-sub">provider slots in scope</div></div>
-          <div class="card metric-card"><div class="kpi-label">live sealed keys</div><div id="kpiLiveSealed" class="kpi-value">...</div><div id="kpiLiveSealedSub" class="kpi-sub">ready for dispatch</div></div>
-          <div class="card metric-card"><div class="kpi-label">projects covered</div><div id="kpiProjectsCovered" class="kpi-value">...</div><div id="kpiProjectsCoveredSub" class="kpi-sub">with provider slots</div></div>
-          <div class="card metric-card"><div class="kpi-label">denied / error calls</div><div id="kpiDeniedErrors" class="kpi-value">...</div><div id="kpiDeniedErrorsSub" class="kpi-sub">needs review</div></div>
-        </section>
-
         <section class="dashboard-overview-grid" aria-label="Dashboard overview workspace">
           <div class="overview-primary">
-            <section class="card attention-card" aria-label="Dashboard attention items">
-              <div class="section-title">
-                <div>
-                  <h2>Needs attention</h2>
-                  <p>Highest-priority key, traffic, coverage, and policy work for this organization.</p>
-                </div>
-                <span id="attentionMeta" class="mini">loading</span>
-              </div>
-              <div id="attentionList" class="attention-list"><div class="empty">Loading attention items...</div></div>
-            </section>
-
-            <section class="grid two">
-              <div class="card">
-                <div class="section-title">
-                  <div>
-                    <h2>Confidential runtime posture</h2>
-                    <p>Current status for the production key path.</p>
-                  </div>
-                  <span id="runtimePill" class="status-pill warn">checking</span>
-                </div>
-                <div id="runtimeDetail" class="mini">Waiting for readiness...</div>
-              </div>
-
-              <div class="card">
-                <div class="section-title">
-                  <div>
-                    <h2>Organization</h2>
-                    <p>VaultProof provisions the organization workspace; enterprise admins review role, SSO state, and controls here.</p>
-                  </div>
-                  <span id="orgRole" class="tag">...</span>
-                </div>
-                <div id="orgDetail" class="mini">Loading organization...</div>
-              </div>
-            </section>
-
             <section class="chart-grid" aria-label="API key organization picture">
               <div class="card visual-card">
                 <div class="section-title">
@@ -861,6 +756,41 @@ export function renderEnterpriseDashboardPage(env: EnterpriseControlPlaneEnv = {
                 <span id="providerUsageMeta" class="mini">loading</span>
               </div>
               <div id="providerUsageList" class="provider-bars"><div class="empty">Loading provider usage...</div></div>
+            </section>
+
+            <section class="card attention-card" aria-label="Dashboard attention items">
+              <div class="section-title">
+                <div>
+                  <h2>Needs attention</h2>
+                  <p>Highest-priority key, traffic, coverage, and policy work for this organization.</p>
+                </div>
+                <span id="attentionMeta" class="mini">loading</span>
+              </div>
+              <div id="attentionList" class="attention-list"><div class="empty">Loading attention items...</div></div>
+            </section>
+
+            <section class="grid two">
+              <div class="card">
+                <div class="section-title">
+                  <div>
+                    <h2>Confidential runtime posture</h2>
+                    <p>Current status for the production key path.</p>
+                  </div>
+                  <span id="runtimePill" class="status-pill warn">checking</span>
+                </div>
+                <div id="runtimeDetail" class="mini">Waiting for readiness...</div>
+              </div>
+
+              <div class="card">
+                <div class="section-title">
+                  <div>
+                    <h2>Organization</h2>
+                    <p>VaultProof provisions the organization workspace; enterprise admins review role, SSO state, and controls here.</p>
+                  </div>
+                  <span id="orgRole" class="tag">...</span>
+                </div>
+                <div id="orgDetail" class="mini">Loading organization...</div>
+              </div>
             </section>
           </div>
 
@@ -1195,7 +1125,7 @@ export function renderEnterpriseDashboardPage(env: EnterpriseControlPlaneEnv = {
       }
       function attentionRow(item) {
         var tone = item.tone || '';
-        return '<div class="attention-row ' + tone + '"><div><div class="row-title">' + escapeHtml(item.title) + '</div><div class="row-sub">' + escapeHtml(item.detail || '') + '</div></div><a class="tag ' + tone + '" href="' + escapeHtml(item.href || '/app/evidence') + '">' + escapeHtml(item.action || 'review') + '</a></div>';
+        return '<div class="attention-row ' + tone + '"><div><div class="row-title">' + escapeHtml(item.title) + '</div><div class="row-sub">' + escapeHtml(item.detail || '') + '</div></div><span class="tag ' + tone + '">' + escapeHtml(item.area || 'Review') + '</span></div>';
       }
       function renderAttentionItems(overview, totalSlots, liveSealed, coverage, traffic) {
         var items = [];
@@ -1205,25 +1135,25 @@ export function renderEnterpriseDashboardPage(env: EnterpriseControlPlaneEnv = {
         var reviewCount = Math.max(totalSlots - liveSealed, 0);
         var withoutSlots = rawNumber(coverage.withoutProviderSlots);
         if (totalSlots === 0) {
-          items.push({ title: 'Connect the first protected provider key', detail: 'This workspace has no provider slots in scope yet.', href: '/app/keys', action: 'Open provider slots', tone: 'warn' });
+          items.push({ title: 'Connect the first protected provider key', detail: 'This workspace has no provider slots in scope yet.', area: 'Provider slots', tone: 'warn' });
         }
         if (reviewCount > 0) {
-          items.push({ title: 'Review key material before production use', detail: number(reviewCount) + ' provider ' + plural(reviewCount, 'slot') + ' need sealed material or material review.', href: '/app/keys', action: 'Review keys', tone: 'warn' });
+          items.push({ title: 'Review key material before production use', detail: number(reviewCount) + ' provider ' + plural(reviewCount, 'slot') + ' need sealed material or material review.', area: 'Provider slots', tone: 'warn' });
         }
         if (denied > 0 || otherErrors > 0 || totalErrors > denied) {
-          items.push({ title: 'Review denied or error traffic', detail: number(denied) + ' denied and ' + number(Math.max(totalErrors - denied, otherErrors)) + ' other error calls are in the current window.', href: '/app/activity', action: 'View activity', tone: denied ? 'bad' : 'warn' });
+          items.push({ title: 'Review denied or error traffic', detail: number(denied) + ' denied and ' + number(Math.max(totalErrors - denied, otherErrors)) + ' other error calls are in the current window.', area: 'Activity', tone: denied ? 'bad' : 'warn' });
         }
         if (withoutSlots > 0) {
-          items.push({ title: 'Projects missing key coverage', detail: number(withoutSlots) + ' ' + plural(withoutSlots, 'project') + (withoutSlots === 1 ? ' is' : ' are') + ' not mapped to an active provider slot.', href: '/app/inventory', action: 'Review inventory', tone: 'warn' });
+          items.push({ title: 'Projects missing key coverage', detail: number(withoutSlots) + ' ' + plural(withoutSlots, 'project') + (withoutSlots === 1 ? ' is' : ' are') + ' not mapped to an active provider slot.', area: 'API Inventory', tone: 'warn' });
         }
         if (totalSlots > 0 && rawNumber(traffic.totalCalls || overview.totalCalls) === 0) {
-          items.push({ title: 'No protected runtime traffic yet', detail: 'Provider slots exist, but no workflow has sent traffic through VaultProof in this window.', href: '/app/rollout', action: 'Open rollout', tone: 'warn' });
+          items.push({ title: 'No protected runtime traffic yet', detail: 'Provider slots exist, but no workflow has sent traffic through VaultProof in this window.', area: 'Rollout', tone: 'warn' });
         }
         var list = byId('attentionList');
         if (list) {
           list.innerHTML = items.length
             ? items.slice(0, 5).map(attentionRow).join('')
-            : '<div class="attention-row"><div><div class="row-title">No active attention items</div><div class="row-sub">Key material, project coverage, and traffic outcomes do not show dashboard-level blockers.</div></div><a class="tag good" href="/app/evidence">Export evidence</a></div>';
+            : '<div class="attention-row"><div><div class="row-title">No active attention items</div><div class="row-sub">Key material, project coverage, and traffic outcomes do not show dashboard-level blockers.</div></div><span class="tag good">Clear</span></div>';
         }
         text('attentionMeta', items.length ? number(items.length) + ' open' : 'clear');
       }
@@ -1370,27 +1300,15 @@ export function renderEnterpriseDashboardPage(env: EnterpriseControlPlaneEnv = {
         var providerUsage = Array.isArray(overview.providerUsage) ? overview.providerUsage : [];
         var totalSlots = rawNumber(slotSummary.totalSlots || overview.totalKeys);
         var liveSealed = rawNumber(slotSummary.liveSealedSlots);
-        var needsReview = Math.max(totalSlots - liveSealed, 0);
         var trafficTotal = rawNumber(traffic.totalCalls || overview.totalCalls);
         var trafficErrors = rawNumber(traffic.errorCalls || overview.errorCalls);
         var trafficDenied = rawNumber(traffic.deniedCalls || overview.deniedCalls);
         var trafficOtherErrors = traffic.otherErrorCalls === undefined ? Math.max(trafficErrors - trafficDenied, 0) : rawNumber(traffic.otherErrorCalls);
         var trafficOk = traffic.okCalls === undefined ? Math.max(trafficTotal - trafficErrors, 0) : rawNumber(traffic.okCalls);
-        text('kpiProtectedKeys', number(totalSlots));
-        text('kpiProtectedKeysSub', number(slotSummary.providerCount || overview.providerCount) + ' provider ' + plural(slotSummary.providerCount || overview.providerCount, 'family', 'families'));
-        text('kpiLiveSealed', number(liveSealed));
-        text('kpiLiveSealedSub', percent(liveSealed, totalSlots) + '% material ready');
-        text('kpiProjectsCovered', number(rawNumber(coverage.withProviderSlots)) + '/' + number(rawNumber(coverage.totalProjects || overview.totalProjects)));
-        text('kpiProjectsCoveredSub', number(rawNumber(coverage.withoutProviderSlots)) + ' without active slots');
-        text('kpiDeniedErrors', number(trafficDenied) + ' / ' + number(trafficErrors));
-        text('kpiDeniedErrorsSub', number(trafficOk) + ' successful calls');
         text('contextKeySlots', number(totalSlots));
         text('contextLiveSealed', number(liveSealed) + ' / ' + number(totalSlots));
         text('contextProjectsWithSlots', number(rawNumber(coverage.withProviderSlots)) + '/' + number(rawNumber(coverage.totalProjects || overview.totalProjects)));
         text('contextDeniedErrors', number(trafficDenied) + ' / ' + number(trafficErrors));
-        text('summaryLiveSealed', number(liveSealed));
-        text('summaryNeedsReview', number(needsReview));
-        text('summaryDenied', number(overview.deniedCalls));
         updateWorkspaceStatus();
         setDonut(slotSummary);
         renderTrafficBreakdown({
@@ -1494,14 +1412,6 @@ export function renderEnterpriseDashboardPage(env: EnterpriseControlPlaneEnv = {
       document.querySelectorAll('[data-dashboard-tab]').forEach(function(button) {
         button.addEventListener('click', function() {
           selectDashboardTab(button.getAttribute('data-dashboard-tab') || 'overview');
-        });
-      });
-      document.querySelectorAll('[data-dashboard-jump]').forEach(function(button) {
-        button.addEventListener('click', function() {
-          var tab = button.getAttribute('data-dashboard-jump') || 'overview';
-          selectDashboardTab(tab);
-          var panel = document.querySelector('[data-tab-panel="' + tab + '"]');
-          if (panel && panel.scrollIntoView) panel.scrollIntoView({ behavior: 'smooth', block: 'start' });
         });
       });
       selectDashboardTab('overview');
