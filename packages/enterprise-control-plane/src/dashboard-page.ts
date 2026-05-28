@@ -36,6 +36,11 @@ export function renderEnterpriseDashboardPage(env: EnterpriseControlPlaneEnv = {
       --primary-text: #052f2b;
       --primary-border: #14b8a6;
       --shadow: 0 18px 54px rgba(26, 40, 52, 0.10);
+      --dashboard-ink: #2c3037;
+      --dashboard-cloud: #d6d7d9;
+      --dashboard-rose: #7e505d;
+      --dashboard-panel: #fbfcfd;
+      --dashboard-track: #edf1f5;
     }
     * { box-sizing: border-box; }
     body {
@@ -44,7 +49,7 @@ export function renderEnterpriseDashboardPage(env: EnterpriseControlPlaneEnv = {
       font-family: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
       font-weight: 400;
       color: var(--text);
-      background: var(--bg);
+      background: #f4f6f8;
     }
     a { color: inherit; text-decoration: none; }
     ${ENTERPRISE_APP_SHELL_THEME}
@@ -64,31 +69,89 @@ export function renderEnterpriseDashboardPage(env: EnterpriseControlPlaneEnv = {
       padding: 0;
       box-shadow: none;
       display: grid;
-      gap: 18px;
+      gap: 16px;
     }
     .dashboard-head-card,
     .control-center-card {
       border: 1px solid var(--line);
-      background: #ffffff;
+      background: var(--dashboard-panel);
       border-radius: 8px;
-      padding: 22px;
-      box-shadow: var(--shadow);
+      padding: 18px;
+      box-shadow: 0 20px 60px rgba(44, 48, 55, 0.08);
     }
     .dashboard-head-card {
       margin-bottom: 0;
+      display: grid;
+      gap: 16px;
     }
     .control-center-card {
       background: #ffffff;
+      padding: 18px;
     }
     .topbar {
-      display: flex; justify-content: space-between; align-items: flex-start; gap: 20px;
-      margin-bottom: 18px;
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) minmax(260px, 360px);
+      align-items: stretch;
+      gap: 16px;
+      margin-bottom: 0;
+    }
+    .hero-copy {
+      display: grid;
+      align-content: center;
+      min-height: 196px;
+      border: 1px solid rgba(44, 48, 55, 0.08);
+      border-radius: 8px;
+      padding: clamp(22px, 4vw, 34px);
+      background: #ffffff;
+    }
+    .hero-sidecar {
+      display: grid;
+      gap: 12px;
+      border: 1px solid rgba(44, 48, 55, 0.08);
+      border-radius: 8px;
+      padding: 16px;
+      background: #f8fafc;
+    }
+    .hero-sidecar-title {
+      color: var(--dashboard-ink);
+      font-size: 14px;
+      font-weight: 700;
+    }
+    .hero-sidecar-copy {
+      color: var(--muted);
+      font-size: 13px;
+      line-height: 1.5;
+      margin: 0;
+    }
+    .hero-action-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 8px;
+    }
+    .hero-action {
+      display: grid;
+      gap: 5px;
+      min-height: 74px;
+      border: 1px solid var(--line-soft);
+      border-radius: 8px;
+      padding: 10px;
+      background: #ffffff;
+    }
+    .hero-action strong {
+      color: var(--text);
+      font-size: 13px;
+      font-weight: 700;
+    }
+    .hero-action span {
+      color: var(--muted);
+      font-size: 12px;
+      line-height: 1.3;
     }
     .eyebrow {
       display: inline-flex;
-      color: var(--green);
-      background: rgba(21, 128, 61, 0.10);
-      border: 1px solid rgba(21, 128, 61, 0.18);
+      color: var(--dashboard-rose);
+      background: rgba(126, 80, 93, 0.08);
+      border: 1px solid rgba(126, 80, 93, 0.16);
       border-radius: 999px;
       padding: 6px 9px;
       font-size: 11px;
@@ -96,7 +159,7 @@ export function renderEnterpriseDashboardPage(env: EnterpriseControlPlaneEnv = {
       letter-spacing: 0.16em;
       font-weight: 600;
     }
-    h1 { font-size: 1.875rem; font-weight: 600; letter-spacing: 0; line-height: 2.25rem; margin: 12px 0 12px; max-width: 760px; }
+    h1 { color: var(--dashboard-ink); font-size: 1.875rem; font-weight: 650; letter-spacing: 0; line-height: 2.25rem; margin: 12px 0 12px; max-width: 760px; }
     @media (min-width: 640px) {
       h1 { font-size: 2.6rem; }
     }
@@ -104,7 +167,8 @@ export function renderEnterpriseDashboardPage(env: EnterpriseControlPlaneEnv = {
     @media (min-width: 640px) {
       .lead { font-size: 16px; }
     }
-    .toolbar { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; justify-content: flex-end; }
+    .toolbar { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+    .hero-toolbar { margin-top: 18px; }
     select, button {
       border: 1px solid var(--line);
       background: var(--control-bg);
@@ -123,19 +187,20 @@ export function renderEnterpriseDashboardPage(env: EnterpriseControlPlaneEnv = {
     }
     .dashboard-context-grid {
       display: grid;
-      grid-template-columns: repeat(3, minmax(0, 1fr));
-      gap: 12px;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 10px;
     }
     .context-card {
       display: block;
       border: 1px solid var(--line-soft);
       background: #ffffff;
       border-radius: 8px;
-      padding: 14px;
-      min-height: 116px;
+      padding: 13px;
+      min-height: 118px;
+      box-shadow: 0 12px 30px rgba(44, 48, 55, 0.05);
     }
     .context-label {
-      color: var(--green);
+      color: var(--dashboard-rose);
       font-size: 11px;
       font-weight: 600;
       letter-spacing: 0.16em;
@@ -157,7 +222,7 @@ export function renderEnterpriseDashboardPage(env: EnterpriseControlPlaneEnv = {
       justify-content: space-between;
       align-items: flex-start;
       gap: 18px;
-      margin-bottom: 14px;
+      margin-bottom: 16px;
     }
     .control-title {
       font-size: 22px;
@@ -179,18 +244,49 @@ export function renderEnterpriseDashboardPage(env: EnterpriseControlPlaneEnv = {
       justify-content: flex-end;
       flex: 0 0 auto;
     }
-    .grid { display: grid; gap: 16px; }
-    .kpis { grid-template-columns: repeat(4, minmax(0, 1fr)); margin-bottom: 16px; }
+    .grid { display: grid; gap: 14px; }
+    .kpis { grid-template-columns: repeat(4, minmax(0, 1fr)); margin-bottom: 0; }
     .two { grid-template-columns: minmax(0, 1.15fr) minmax(340px, 0.85fr); }
+    .dashboard-overview-grid {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) minmax(310px, 0.36fr);
+      gap: 14px;
+      align-items: start;
+    }
+    .overview-primary,
+    .overview-rail {
+      display: grid;
+      gap: 14px;
+      min-width: 0;
+    }
     .card {
       border: 1px solid var(--line);
       background: var(--card-bg);
       border-radius: 8px;
-      padding: 20px;
-      box-shadow: var(--shadow);
+      padding: 18px;
+      box-shadow: 0 16px 42px rgba(44, 48, 55, 0.07);
     }
+    .metric-card {
+      position: relative;
+      min-height: 140px;
+      overflow: hidden;
+      border-color: rgba(44, 48, 55, 0.10);
+    }
+    .metric-card::before {
+      content: "";
+      position: absolute;
+      left: 18px;
+      right: 18px;
+      top: 0;
+      height: 3px;
+      border-radius: 0 0 999px 999px;
+      background: var(--primary-bg);
+    }
+    .metric-card:nth-child(2)::before { background: #2563eb; }
+    .metric-card:nth-child(3)::before { background: #7e505d; }
+    .metric-card:nth-child(4)::before { background: #b45309; }
     .kpi-label { color: var(--soft); font-size: 12px; font-weight: 400; text-transform: uppercase; letter-spacing: 0; }
-    .kpi-value { font-size: 34px; font-weight: 600; letter-spacing: 0; margin-top: 8px; }
+    .kpi-value { color: var(--dashboard-ink); font-size: 36px; font-weight: 680; letter-spacing: 0; margin-top: 14px; }
     .kpi-sub { color: var(--muted); margin-top: 6px; font-size: 13px; }
     .status-pill {
       display: inline-flex; align-items: center; gap: 8px;
@@ -212,9 +308,9 @@ export function renderEnterpriseDashboardPage(env: EnterpriseControlPlaneEnv = {
       flex-wrap: wrap;
       border: 1px solid var(--line);
       border-radius: 8px;
-      padding: 8px;
-      margin-bottom: 18px;
-      background: var(--row-bg);
+      padding: 7px;
+      margin-bottom: 16px;
+      background: #f8fafc;
     }
     .tab-button {
       border-radius: 7px;
@@ -237,6 +333,50 @@ export function renderEnterpriseDashboardPage(env: EnterpriseControlPlaneEnv = {
       border-radius: 8px;
       padding: 16px;
       background: var(--row-bg);
+    }
+    .rail-card {
+      display: grid;
+      gap: 12px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 16px;
+      background: #ffffff;
+      box-shadow: 0 16px 42px rgba(44, 48, 55, 0.07);
+    }
+    .rail-card.accent {
+      background: #2c3037;
+      border-color: #2c3037;
+      color: #ffffff;
+    }
+    .rail-card.accent .rail-title,
+    .rail-card.accent .rail-value {
+      color: #ffffff;
+    }
+    .rail-card.accent .rail-copy,
+    .rail-card.accent .rail-meta {
+      color: rgba(255, 255, 255, 0.72);
+    }
+    .rail-title {
+      color: var(--dashboard-ink);
+      font-size: 14px;
+      font-weight: 700;
+    }
+    .rail-value {
+      color: var(--dashboard-ink);
+      font-size: 28px;
+      font-weight: 700;
+      line-height: 1;
+    }
+    .rail-copy,
+    .rail-meta {
+      color: var(--muted);
+      font-size: 13px;
+      line-height: 1.45;
+      margin: 0;
+    }
+    .rail-actions {
+      display: grid;
+      gap: 8px;
     }
     .action-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; }
     .action-card { display: flex; flex-direction: column; gap: 10px; min-height: 176px; }
@@ -279,14 +419,14 @@ export function renderEnterpriseDashboardPage(env: EnterpriseControlPlaneEnv = {
     .feature-tag { color: var(--green); border: 1px solid rgba(21, 128, 61, 0.22); border-radius: 999px; padding: 4px 7px; font-size: 11px; }
     .feature-tag.pending { color: var(--warn); border-color: rgba(180, 83, 9, 0.30); }
     @media (max-width: 980px) {
-      .topbar { flex-direction: column; }
+      .topbar { grid-template-columns: 1fr; }
       .toolbar { justify-content: flex-start; }
-      .dashboard-context-grid, .kpis, .two, .feature-grid, .intent-grid, .action-grid { grid-template-columns: 1fr; }
+      .dashboard-context-grid, .kpis, .two, .dashboard-overview-grid, .feature-grid, .intent-grid, .action-grid { grid-template-columns: 1fr; }
       .control-center-intro { flex-direction: column; }
       .control-links { justify-content: flex-start; }
     }
     @media (min-width: 981px) and (max-width: 1220px) {
-      .feature-grid, .intent-grid, .action-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+      .dashboard-context-grid, .feature-grid, .intent-grid, .action-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
     }
   </style>
 </head>
@@ -298,15 +438,27 @@ export function renderEnterpriseDashboardPage(env: EnterpriseControlPlaneEnv = {
       <section class="enterprise-page-shell">
         <section class="dashboard-head-card" aria-label="Enterprise control center overview">
           <div class="topbar">
-            <div>
+            <div class="hero-copy">
               <div class="eyebrow">Enterprise dashboard</div>
               <h1>Runtime, access, and evidence.</h1>
               <p class="lead">Monitor runtime readiness, customer access, provider-key posture, and evidence exports from one operator workspace.</p>
+              <div class="toolbar hero-toolbar" aria-label="Dashboard actions">
+                <button id="refreshBtn" type="button">refresh</button>
+                <a class="action" href="/app/keys">provider slots</a>
+                <a class="action primary" href="/app/control">open control</a>
+              </div>
             </div>
-            <div class="toolbar">
-              <button id="refreshBtn" type="button">refresh</button>
-              <a class="action" href="/app/keys">provider slots</a>
-              <a class="action primary" href="/app/control">open control</a>
+            <div class="hero-sidecar" aria-label="Enterprise pilot snapshot">
+              <div>
+                <div class="hero-sidecar-title">Guided enterprise pilot</div>
+                <p class="hero-sidecar-copy">One workload, one provider path, one owner group, and evidence the customer can review.</p>
+              </div>
+              <div class="hero-action-grid">
+                <a class="hero-action" href="/app/inventory"><strong>Inventory</strong><span>Map API surfaces.</span></a>
+                <a class="hero-action" href="/app/policy"><strong>Policy</strong><span>Review blockers.</span></a>
+                <a class="hero-action" href="/app/evidence"><strong>Evidence</strong><span>Export proof.</span></a>
+                <a class="hero-action" href="/app/testers"><strong>Testers</strong><span>Track sessions.</span></a>
+              </div>
             </div>
           </div>
 
@@ -320,6 +472,11 @@ export function renderEnterpriseDashboardPage(env: EnterpriseControlPlaneEnv = {
               <div class="context-label">Active org</div>
               <div class="context-title">Provisioned workspace</div>
               <div class="context-copy">Review organization status, SSO, domain policy, and workspace ownership.</div>
+            </a>
+            <a class="context-card" href="/app/inventory">
+              <div class="context-label">API map</div>
+              <div class="context-title">Inventory first</div>
+              <div class="context-copy">Capture owners, risk, environments, provider mapping, and review state.</div>
             </a>
             <a class="context-card" href="/readiness" target="_blank" rel="noopener">
               <div class="context-label">Next best step</div>
@@ -358,63 +515,93 @@ export function renderEnterpriseDashboardPage(env: EnterpriseControlPlaneEnv = {
 
       <section id="tab-overview" class="tab-panel" data-tab-panel="overview">
         <section class="grid kpis" aria-label="Enterprise KPIs">
-          <div class="card"><div class="kpi-label">production runtime</div><div id="kpiRuntime" class="kpi-value">...</div><div id="kpiRuntimeSub" class="kpi-sub">checking GCP runtime</div></div>
-          <div class="card"><div class="kpi-label">projects</div><div id="kpiProjects" class="kpi-value">...</div><div id="kpiProjectsSub" class="kpi-sub">enterprise scopes</div></div>
-          <div class="card"><div class="kpi-label">members</div><div id="kpiMembers" class="kpi-value">...</div><div id="kpiMembersSub" class="kpi-sub">active org access</div></div>
-          <div class="card"><div class="kpi-label">30d calls</div><div id="kpiCalls" class="kpi-value">...</div><div id="kpiCallsSub" class="kpi-sub">proxy activity</div></div>
+          <div class="card metric-card"><div class="kpi-label">production runtime</div><div id="kpiRuntime" class="kpi-value">...</div><div id="kpiRuntimeSub" class="kpi-sub">checking GCP runtime</div></div>
+          <div class="card metric-card"><div class="kpi-label">projects</div><div id="kpiProjects" class="kpi-value">...</div><div id="kpiProjectsSub" class="kpi-sub">enterprise scopes</div></div>
+          <div class="card metric-card"><div class="kpi-label">members</div><div id="kpiMembers" class="kpi-value">...</div><div id="kpiMembersSub" class="kpi-sub">active org access</div></div>
+          <div class="card metric-card"><div class="kpi-label">30d calls</div><div id="kpiCalls" class="kpi-value">...</div><div id="kpiCallsSub" class="kpi-sub">proxy activity</div></div>
         </section>
 
-        <section class="grid two">
-          <div class="card">
-            <div class="section-title">
-              <div>
-                <h2>Confidential runtime posture</h2>
-                <p>Current status for the production key path.</p>
+        <section class="dashboard-overview-grid" aria-label="Dashboard overview workspace">
+          <div class="overview-primary">
+            <section class="grid two">
+              <div class="card">
+                <div class="section-title">
+                  <div>
+                    <h2>Confidential runtime posture</h2>
+                    <p>Current status for the production key path.</p>
+                  </div>
+                  <span id="runtimePill" class="status-pill warn">checking</span>
+                </div>
+                <div id="runtimeDetail" class="mini">Waiting for readiness...</div>
+                <div class="actions">
+                  <a class="action" href="/readiness" target="_blank" rel="noopener">open readiness JSON</a>
+                  <a class="action" href="/health" target="_blank" rel="noopener">open health JSON</a>
+                </div>
               </div>
-              <span id="runtimePill" class="status-pill warn">checking</span>
-            </div>
-            <div id="runtimeDetail" class="mini">Waiting for readiness...</div>
-            <div class="actions">
-              <a class="action" href="/readiness" target="_blank" rel="noopener">open readiness JSON</a>
-              <a class="action" href="/health" target="_blank" rel="noopener">open health JSON</a>
-            </div>
+
+              <div class="card">
+                <div class="section-title">
+                  <div>
+                    <h2>Organization</h2>
+                    <p>VaultProof provisions the organization workspace; operators review role, SSO state, and controls here.</p>
+                  </div>
+                  <span id="orgRole" class="tag">...</span>
+                </div>
+                <div id="orgDetail" class="mini">Loading organization...</div>
+                <div class="actions">
+                  <a class="action" href="/app/org">manage SSO</a>
+                  <a class="action" href="/app/control">policy control</a>
+                </div>
+              </div>
+            </section>
+
+            <section class="grid action-grid">
+              <div class="action-card">
+                <div class="feature-tags"><span class="feature-tag">daily check</span><span class="feature-tag">go live</span></div>
+                <h3>1. Confirm the runtime is ready</h3>
+                <p>Check this before inviting more users or routing production traffic.</p>
+                <a class="action" href="/readiness" target="_blank" rel="noopener">check readiness</a>
+              </div>
+              <div class="action-card">
+                <div class="feature-tags"><span class="feature-tag">access</span><span class="feature-tag">SSO</span></div>
+                <h3>2. Review who can use it</h3>
+                <p>Open Members for roles and access-review evidence, then Org + SSO for Entra setup.</p>
+                <a class="action" href="/app/members">review access</a>
+              </div>
+              <div class="action-card">
+                <div class="feature-tags"><span class="feature-tag">policy</span><span class="feature-tag">keys</span></div>
+                <h3>3. Lock down projects</h3>
+                <p>Review provider slots, caller-lock rules, allowed origins, and emergency revoke controls.</p>
+                <a class="action" href="/app/keys">open provider slots</a>
+              </div>
+            </section>
           </div>
 
-          <div class="card">
-            <div class="section-title">
-              <div>
-                <h2>Organization</h2>
-                <p>VaultProof provisions the organization workspace; operators review role, SSO state, and controls here.</p>
+          <aside class="overview-rail" aria-label="Pilot readiness summary">
+            <div class="rail-card accent">
+              <div class="rail-title">Pilot path</div>
+              <div class="rail-value">1</div>
+              <p class="rail-copy">Workload, provider path, owner group, and success metric before expansion.</p>
+              <div class="rail-actions">
+                <a class="action primary" href="/app/pilot">pilot proposal</a>
               </div>
-              <span id="orgRole" class="tag">...</span>
             </div>
-            <div id="orgDetail" class="mini">Loading organization...</div>
-            <div class="actions">
-              <a class="action" href="/app/org">manage SSO</a>
-              <a class="action" href="/app/control">policy control</a>
+            <div class="rail-card">
+              <div class="rail-title">Key exposure response</div>
+              <p class="rail-copy">Provider Slots ties scanner findings, slot containment, emergency revoke, rotation review, and customer-safe incident JSON together.</p>
+              <a class="tag good" href="/app/keys">open provider slots</a>
             </div>
-          </div>
-        </section>
-
-        <section class="grid action-grid">
-          <div class="action-card">
-            <div class="feature-tags"><span class="feature-tag">daily check</span><span class="feature-tag">go live</span></div>
-            <h3>1. Confirm the runtime is ready</h3>
-            <p>Check this before inviting more users or routing production traffic.</p>
-            <a class="action" href="/readiness" target="_blank" rel="noopener">check readiness</a>
-          </div>
-          <div class="action-card">
-            <div class="feature-tags"><span class="feature-tag">access</span><span class="feature-tag">SSO</span></div>
-            <h3>2. Review who can use it</h3>
-            <p>Open Members for roles and access-review evidence, then Org + SSO for Entra setup.</p>
-            <a class="action" href="/app/members">review access</a>
-          </div>
-          <div class="action-card">
-            <div class="feature-tags"><span class="feature-tag">policy</span><span class="feature-tag">keys</span></div>
-            <h3>3. Lock down projects</h3>
-            <p>Review provider slots, caller-lock rules, allowed origins, and emergency revoke controls.</p>
-            <a class="action" href="/app/keys">open provider slots</a>
-          </div>
+            <div class="rail-card">
+              <div class="rail-title">Evidence packet</div>
+              <p class="rail-copy">Readiness, access review, audit, policy, rollout, release, tester, and exposure proof for security review.</p>
+              <a class="tag good" href="/app/evidence">open evidence</a>
+            </div>
+            <div class="rail-card">
+              <div class="rail-title">Next customer session</div>
+              <p class="rail-copy">Prepare tester login state, scenario, feedback capture, blocker notes, and success criteria.</p>
+              <a class="tag" href="/app/testers">open testers</a>
+            </div>
+          </aside>
         </section>
       </section>
 

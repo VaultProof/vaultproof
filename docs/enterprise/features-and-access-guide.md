@@ -29,6 +29,10 @@ Paid customer dedicated environment runbook:
 
 - `docs/enterprise/paid-customer-dedicated-environment-runbook.md`
 
+Guided pilot playbook:
+
+- `docs/enterprise/guided-pilot-playbook.md`
+
 The enterprise product is served by the GCP enterprise control plane and backed by `/api/v1/enterprise/*`.
 
 ## Which Enterprise Doc To Use
@@ -39,6 +43,7 @@ The enterprise product is served by the GCP enterprise control plane and backed 
 | `docs/enterprise/dashboard-usage-guide.md` | Dashboard users. | You need step-by-step instructions for using the pages in the enterprise dashboard. |
 | `docs/enterprise/technical-implementation-guide.md` | Technical reviewers, architects, network/platform/identity/security teams. | You need architecture, trust boundaries, identity, gateway, key custody, attestation, rollout, or troubleshooting detail. |
 | `docs/enterprise/paid-customer-dedicated-environment-runbook.md` | VaultProof operators and customer onboarding owners. | A demo converts to paid, or a customer needs a dedicated runtime, database, SSO, gateway, monitoring, and evidence boundary. |
+| `docs/enterprise/guided-pilot-playbook.md` | Nelson, Max, VaultProof pilot owners. | You need to qualify design partners, run first calls, guide setup, capture feedback, and turn early customers into product-market-fit evidence. |
 | `docs/enterprise/features-and-access-guide.md` | VaultProof team, customer reviewers, handoff packages. | You need the full list of built features, URLs, hardening, and operator commands. |
 
 The current production-confidential runtime is:

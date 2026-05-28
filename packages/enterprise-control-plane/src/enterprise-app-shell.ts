@@ -310,11 +310,22 @@ function enterpriseAppNavLink(activePage: EnterpriseAppNavPage, item: Enterprise
         </a>`;
 }
 
+function enterpriseSidebarGroupHasActivePage(activePage: EnterpriseAppNavPage, group: EnterpriseSidebarNavGroup): boolean {
+  return group.items.some((item) => item.page === activePage);
+}
+
 function enterpriseSidebarNavGroup(activePage: EnterpriseAppNavPage, group: EnterpriseSidebarNavGroup): string {
-  return `<div class="nav-group">
-        <div class="nav-label">${escapeHtml(group.label)}</div>
-        ${group.items.map((item) => enterpriseAppNavLink(activePage, item)).join('')}
-      </div>`;
+  const open = enterpriseSidebarGroupHasActivePage(activePage, group) || group.label === 'workspace';
+  const activeClass = enterpriseSidebarGroupHasActivePage(activePage, group) ? ' active-group' : '';
+  return `<details class="nav-group${activeClass}"${open ? ' open' : ''}>
+        <summary class="nav-group-summary">
+          <span class="nav-label">${escapeHtml(group.label)}</span>
+          <span class="nav-group-count">${group.items.length}</span>
+        </summary>
+        <div class="nav-group-links">
+          ${group.items.map((item) => enterpriseAppNavLink(activePage, item)).join('')}
+        </div>
+      </details>`;
 }
 
 export function renderEnterpriseAppSidebar(activePage: EnterpriseAppNavPage, _subtitle = ENTERPRISE_SIDEBAR_SUBTITLE): string {
@@ -589,23 +600,87 @@ export const ENTERPRISE_APP_SHELL_THEME = `
     }
     .sidebar.enterprise-app-sidebar .nav-groups {
       display: grid;
-      gap: 16px;
+      gap: 8px;
     }
-    .sidebar.enterprise-app-sidebar .nav-group { margin: 0; }
+    .sidebar.enterprise-app-sidebar .nav-group {
+      margin: 0;
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      border-radius: 8px;
+      background: rgba(255, 255, 255, 0.035);
+      overflow: hidden;
+    }
+    .sidebar.enterprise-app-sidebar .nav-group[open] {
+      background: rgba(255, 255, 255, 0.055);
+      border-color: rgba(94, 234, 212, 0.16);
+    }
+    .sidebar.enterprise-app-sidebar .nav-group.active-group {
+      border-color: rgba(94, 234, 212, 0.26);
+    }
+    .sidebar.enterprise-app-sidebar .nav-group-summary {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      min-height: 42px;
+      padding: 11px 12px;
+      cursor: pointer;
+      list-style: none;
+      user-select: none;
+    }
+    .sidebar.enterprise-app-sidebar .nav-group-summary::-webkit-details-marker {
+      display: none;
+    }
+    .sidebar.enterprise-app-sidebar .nav-group-summary::after {
+      content: "";
+      width: 8px;
+      height: 8px;
+      border-right: 1.5px solid rgba(255, 255, 255, 0.62);
+      border-bottom: 1.5px solid rgba(255, 255, 255, 0.62);
+      transform: rotate(45deg);
+      transition: transform 160ms ease;
+      flex: 0 0 auto;
+      margin-left: auto;
+    }
+    .sidebar.enterprise-app-sidebar .nav-group[open] > .nav-group-summary::after {
+      transform: rotate(225deg);
+      margin-top: 5px;
+    }
+    .sidebar.enterprise-app-sidebar .nav-group-summary:hover,
+    .sidebar.enterprise-app-sidebar .nav-group.active-group > .nav-group-summary {
+      background: rgba(255, 255, 255, 0.06);
+    }
     .sidebar.enterprise-app-sidebar .nav-label {
       color: rgba(255, 255, 255, 0.35);
       font-size: 11px;
       font-weight: 400;
       text-transform: uppercase;
       letter-spacing: 0.18em;
-      margin: 0 0 8px 10px;
+      margin: 0;
+    }
+    .sidebar.enterprise-app-sidebar .active-group .nav-label {
+      color: #5eead4;
+    }
+    .sidebar.enterprise-app-sidebar .nav-group-count {
+      color: rgba(255, 255, 255, 0.48);
+      border: 1px solid rgba(255, 255, 255, 0.10);
+      background: rgba(16, 22, 21, 0.68);
+      border-radius: 999px;
+      padding: 2px 7px;
+      font-size: 11px;
+      line-height: 1.2;
+      flex: 0 0 auto;
+    }
+    .sidebar.enterprise-app-sidebar .nav-group-links {
+      display: grid;
+      gap: 5px;
+      padding: 0 8px 8px;
     }
     .sidebar.enterprise-app-sidebar .nav-link {
       display: block;
       padding: 10px 12px;
       border-radius: 8px;
       color: var(--sidebar-link, var(--nav-text));
-      margin-bottom: 5px;
+      margin: 0;
       border: 1px solid rgba(255, 255, 255, 0.08);
       text-decoration: none;
       font-size: 14px;

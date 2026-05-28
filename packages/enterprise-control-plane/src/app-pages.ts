@@ -6567,6 +6567,18 @@ function renderEnterpriseSupportPage(pageName: EnterpriseSupportPageName): strin
           <div id="supportReadinessList" class="list"></div>
         </div>
         <div class="card">
+          <div class="section-title"><h2>Guided pilot guide</h2><span class="mini">Nelson + Max</span></div>
+          <div id="supportGuidedPilotList" class="list"></div>
+        </div>
+        <div class="card">
+          <div class="section-title"><h2>Buyer qualification</h2><span class="mini">PMF signal</span></div>
+          <div id="supportQualificationList" class="list"></div>
+        </div>
+        <div class="card">
+          <div class="section-title"><h2>Customer setup sequence</h2><span class="mini">guided onboarding</span></div>
+          <div id="supportSetupSequenceList" class="list"></div>
+        </div>
+        <div class="card">
           <div class="section-title"><h2>Internal admin boundary</h2><span class="mini">employee only</span></div>
           <div id="supportBoundaryList" class="list"></div>
         </div>
@@ -9322,6 +9334,31 @@ function renderEnterpriseSupportPage(pageName: EnterpriseSupportPageName): strin
           status: ready ? 'ready' : 'hold',
           support_model: 'Founder-led launch-week support for the first paid pilot. 24-hour incident response is an optional add-on, not included in the base pilot package.',
           support_page: location.origin + '/app/support',
+          guided_pilot_positioning: {
+            ready_for: 'Guided design partners and paid pilots where VaultProof walks the customer through one real API/key workflow.',
+            not_ready_for: 'Fully self-serve enterprise signup, SSO, broad team invite, production cutover, and unsupported operation.',
+            pmf_focus: 'Use the enterprise site for PMF: API-heavy Seed/Series A companies building AI agents, preparing for SOC 2, or fighting credential sprawl.'
+          },
+          buyer_qualification: [
+            'Seed or Series A, 10-50 people, API-heavy product, AI/fintech/devtools/healthtech/data/security-adjacent.',
+            'Trigger is live: just raised, security review coming, SOC 2 in progress, AI agents touching keys, or engineering team scaling.',
+            'Buyer can name one real provider/API key, the app that uses it, the owner, and the risk if it leaks.',
+            'Good call outcome is a tester, technical review, paid-pilot path, or clear customer quote that proves the pain.'
+          ],
+          guided_demo_sequence: [
+            'Dashboard: runtime posture, org scope, workspace tabs, and where the customer starts.',
+            'API Inventory: owners, risk, environment, provider-slot mapping, review state, and evidence export.',
+            'Provider Slots: material status, dry-run, blocked-recipient denial, emergency revoke, and key exposure response.',
+            'Policy, Activity, Audit, Evidence, Security Review: show controls, proof, and customer-safe exports.',
+            'Pilot Testers and Pilot Proposal: close on one workload, one provider path, one owner group, and one success metric.'
+          ],
+          customer_setup_sequence: [
+            'Create or confirm the business in admin.vaultproof.dev, then invite the first owner or confirm the login path.',
+            'Pick SSO mode, first workload, provider path, owner group, success metric, and testing window.',
+            'Record the API surface in /app/inventory, confirm project scope, and map it to the provider slot.',
+            'Configure provider slot and policy, then run dry-run before live upstream dispatch.',
+            'Confirm Activity, Audit, Evidence, Tester readiness, and Pilot Success before asking for expansion.'
+          ],
           internal_admin_surface: 'VaultProof staff/admin belongs to the separate VaultProof B2C/root admin system, not enterprise.vaultproof.dev.',
           internal_admin_boundary: {
             hostname: 'vaultproof.dev admin system',
@@ -9396,6 +9433,34 @@ function renderEnterpriseSupportPage(pageName: EnterpriseSupportPageName): strin
           row('Runtime support posture', (coverage.runtime_production_ready ? 'Production-ready runtime. ' : 'Runtime is not production-ready. ') + 'Security profile: ' + (coverage.security_profile || 'not reported') + '.', coverage.runtime_production_ready ? 'ready' : 'blocked', coverage.runtime_production_ready ? 'good' : 'bad'),
           row('Customer scope', number(coverage.project_count) + ' projects, ' + number(coverage.member_count) + ' members, ' + number(coverage.provider_slots) + ' provider slots.', currentOrgId ? 'scoped' : 'select org', currentOrgId ? 'good' : 'warn'),
           row('Traffic watch', number(coverage.proxy_calls) + ' calls, ' + number(coverage.error_calls) + ' errors, ' + number(coverage.denied_calls) + ' denied.', coverage.proxy_calls ? 'observed' : 'pending', coverage.error_calls || coverage.denied_calls ? 'warn' : coverage.proxy_calls ? 'good' : 'warn')
+        ];
+      }
+      function launchSupportGuidedPilotRows(packet) {
+        var positioning = packet.guided_pilot_positioning || {};
+        return [
+          row('Are we ready?', positioning.ready_for || 'Ready for guided design partners and paid pilots.', 'guided pilot', 'good'),
+          row('Do not promise yet', positioning.not_ready_for || 'Do not position VaultProof as fully self-serve enterprise onboarding yet.', 'not self-serve', 'warn'),
+          row('PMF focus', positioning.pmf_focus || 'Use enterprise pilots to find product-market fit.', 'enterprise first', 'good'),
+          row('Demo sequence', (packet.guided_demo_sequence || []).join(' '), 'talk track', 'good'),
+          linkRow('Full repo playbook', 'Use docs/enterprise/guided-pilot-playbook.md for outreach, qualification, call agenda, setup steps, and PMF review.', '/app/support', 'internal doc', 'good')
+        ];
+      }
+      function launchSupportQualificationRows(packet) {
+        return [
+          row('Ideal customer', (packet.buyer_qualification || []).join(' '), 'ICP', 'good'),
+          row('First call ask', 'Ask for a guided walkthrough to see whether VaultProof solves a real key-security problem. Do not ask them to self-onboard alone.', 'guided demo', 'good'),
+          row('Strong PMF signal', 'They can name one provider key, owner, app, security trigger, and next tester or technical reviewer.', 'signal', 'good'),
+          row('Weak PMF signal', 'They need a fully self-serve procurement-grade rollout before trying one guided workflow, or cannot name a real API/key problem.', 'filter', 'warn')
+        ];
+      }
+      function launchSupportSetupSequenceRows(packet) {
+        var setup = packet.customer_setup_sequence || [];
+        return [
+          row('Guided setup order', setup.join(' '), 'onboarding', 'good'),
+          linkRow('API Inventory', 'Record the customer API surface, owners, environment, risk, data sensitivity, and provider-slot mapping.', '/app/inventory', 'step 1', 'good'),
+          linkRow('Provider Slots', 'Create or review the protected provider slot, dry-run request, material status, policy denial, and exposure response.', '/app/keys', 'step 2', 'good'),
+          linkRow('Pilot Testers', 'Record tester roster, login state, scenario, feedback, blockers, session window, and customer success criteria.', '/app/testers', 'step 3', 'good'),
+          linkRow('Pilot Success', 'After the guided session, capture weekly update copy, milestones, blockers, and expansion or hold decision.', '/app/pilot-success', 'step 4', 'good')
         ];
       }
       function launchSupportBoundaryRows(packet) {
@@ -11677,6 +11742,9 @@ function renderEnterpriseSupportPage(pageName: EnterpriseSupportPageName): strin
           'Organization: ' + (coverage.organization_name || org.name || 'selected workspace'),
           'Support readiness: ' + support.status,
           'Support model: ' + support.support_model,
+          'Guided pilot ready for: ' + ((support.guided_pilot_positioning || {}).ready_for || 'guided design partners and paid pilots'),
+          'Not ready to promise: ' + ((support.guided_pilot_positioning || {}).not_ready_for || 'fully self-serve enterprise onboarding'),
+          'PMF focus: ' + ((support.guided_pilot_positioning || {}).pmf_focus || 'enterprise pilots first'),
           'Runtime production-ready: ' + (coverage.runtime_production_ready ? 'yes' : 'no'),
           'Security profile: ' + (coverage.security_profile || 'not reported'),
           'SSO/login status: ' + (coverage.sso_provider_status || sso.provider_status || 'not confirmed'),
@@ -11693,6 +11761,15 @@ function renderEnterpriseSupportPage(pageName: EnterpriseSupportPageName): strin
           'Internal admin mode: ' + support.internal_admin_boundary.default_mode,
           'Approval gate: ' + support.internal_admin_boundary.writes,
           'Incident response boundary: base pilot uses customer IR plus VaultProof launch support; 24-hour response is an optional add-on.',
+          '',
+          'Buyer qualification:',
+          '- ' + (support.buyer_qualification || []).join('\\n- '),
+          '',
+          'Demo sequence:',
+          '- ' + (support.guided_demo_sequence || []).join('\\n- '),
+          '',
+          'Guided customer setup:',
+          '- ' + (support.customer_setup_sequence || []).join('\\n- '),
           '',
           'Customer handoff:',
           '- ' + support.customer_handoff.join('\\n- '),
@@ -11712,6 +11789,9 @@ function renderEnterpriseSupportPage(pageName: EnterpriseSupportPageName): strin
         var support = buildLaunchSupportPacket(org, sso, readiness, overview, bootstrap, goNoGo);
         text('supportMeta', support.status === 'ready' ? 'ready for pilot' : 'hold for evidence');
         byId('supportReadinessList').innerHTML = launchSupportReadinessRows(support).join('');
+        byId('supportGuidedPilotList').innerHTML = launchSupportGuidedPilotRows(support).join('');
+        byId('supportQualificationList').innerHTML = launchSupportQualificationRows(support).join('');
+        byId('supportSetupSequenceList').innerHTML = launchSupportSetupSequenceRows(support).join('');
         byId('supportBoundaryList').innerHTML = launchSupportBoundaryRows(support).join('');
         byId('supportWorkflowList').innerHTML = launchSupportWorkflowRows(support).join('');
         byId('supportExposureList').innerHTML = launchSupportExposureRows(support).join('');
