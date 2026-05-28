@@ -129,7 +129,7 @@ Then walk the customer-facing product in this order:
 7. `/app/evidence` - show customer-safe JSON proof with secrets excluded.
 8. `/app/security-review` - show the buyer/security packet and copyable answers.
 9. `/app/testers` - show how the guided tester session is tracked.
-10. `/app/pilot` - show the first paid pilot package: one workload, one provider path, one owner group, success metric, support boundary, and close steps.
+10. `https://admin.vaultproof.dev/app/pilot` - staff-only proposal builder for the first paid pilot package: one workload, one provider path, one owner group, success metric, support boundary, and close steps.
 
 Do not over-demo every page. The point is to make the buyer say:
 

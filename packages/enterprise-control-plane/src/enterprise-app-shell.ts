@@ -207,9 +207,8 @@ const ENTERPRISE_SIDEBAR_NAV_GROUPS: readonly EnterpriseSidebarNavGroup[] = [
       {
         page: 'testers',
         href: '/app/testers',
-        label: 'Pilot testers',
+        label: 'Tester readiness',
         blurb: 'Tester roster, login readiness, scenario assignments, feedback, and blockers.',
-        activePill: 'paid',
       },
       {
         page: 'technical-guide',
@@ -221,7 +220,7 @@ const ENTERPRISE_SIDEBAR_NAV_GROUPS: readonly EnterpriseSidebarNavGroup[] = [
         page: 'security-review',
         href: '/app/security-review',
         label: 'Security review',
-        blurb: 'Copyable buyer packet for security and procurement review.',
+        blurb: 'Security and procurement packet with customer-safe proof.',
       },
       {
         page: 'settings',
@@ -233,20 +232,14 @@ const ENTERPRISE_SIDEBAR_NAV_GROUPS: readonly EnterpriseSidebarNavGroup[] = [
         page: 'plans',
         href: '/app/plans',
         label: 'Plans',
-        blurb: 'Launch readiness, limits, and handoff notes.',
+        blurb: 'Package limits, rollout readiness, and customer guardrails.',
       },
       {
         page: 'entitlements',
         href: '/app/entitlements',
         label: 'Entitlements',
-        blurb: 'Contract capacity, support tier, renewal, and paid-user guardrails.',
+        blurb: 'Contract capacity, support tier, renewal, and usage guardrails.',
         activePill: 'paid',
-      },
-      {
-        page: 'pilot',
-        href: '/app/pilot',
-        label: 'Pilot proposal',
-        blurb: 'Scope, price, owners, guardrails, and close copy.',
       },
       {
         page: 'scanner',

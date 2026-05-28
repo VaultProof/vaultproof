@@ -428,6 +428,15 @@ type AccessLogOverview = {
   recentLogs: AccessLogRecentRow[];
 };
 
+type OverviewProviderKey = {
+  id: string;
+  project_id?: string | null;
+  provider: string;
+  slug: string | null;
+  material_mode?: ProviderMaterialMode;
+  material_ready?: boolean;
+};
+
 function countValue(value: unknown): number {
   const numeric = Number(value || 0);
   return Number.isFinite(numeric) && numeric > 0 ? numeric : 0;
@@ -528,6 +537,37 @@ function emptyAccessLogOverview(source: AccessLogOverview['source']): AccessLogO
     deniedCalls: 0,
     projectHealth: [],
     recentLogs: [],
+  };
+}
+
+function emptyKeyVisualSummary(totalProjects = 0): Record<string, unknown> {
+  return {
+    providerSlotSummary: {
+      totalSlots: 0,
+      liveSealedSlots: 0,
+      placeholderSlots: 0,
+      mixedSlots: 0,
+      missingSlots: 0,
+      materialReadySlots: 0,
+      providerCount: 0,
+      projectsWithSlots: 0,
+      projectsWithoutSlots: totalProjects,
+    },
+    providerUsage: [],
+    trafficBreakdown: {
+      totalCalls: 0,
+      okCalls: 0,
+      deniedCalls: 0,
+      otherErrorCalls: 0,
+      errorCalls: 0,
+    },
+    projectCoverage: {
+      totalProjects,
+      withProviderSlots: 0,
+      withoutProviderSlots: totalProjects,
+      withTraffic: 0,
+      needingAttention: 0,
+    },
   };
 }
 
@@ -684,12 +724,13 @@ async function buildProjectsPayload(
 
 function buildOverviewStatsFromAccess(
   projects: Array<{ id: string; vp_proj_id: string; name: string | null }>,
-  keys: Array<{ id: string; provider: string; slug: string | null }>,
+  keys: OverviewProviderKey[],
   accessOverview: AccessLogOverview,
   healthWindowDays: number,
   statsSourceOverride?: 'bootstrap_rpc',
 ): Record<string, unknown> {
   const projectIds = projects.map((p) => p.id);
+  const keyVisualSummary = emptyKeyVisualSummary(projectIds.length);
 
   if (projectIds.length === 0) {
     return {
@@ -710,7 +751,7 @@ function buildOverviewStatsFromAccess(
         id: 'setup:no_projects',
         severity: 'info',
         title: 'No active projects yet',
-        detail: 'Create one project and connect one provider to start a pilot review cycle.',
+        detail: 'Create one project and connect one provider to start a rollout review cycle.',
         project_id: null,
         project_name: null,
       }],
@@ -724,18 +765,107 @@ function buildOverviewStatsFromAccess(
         topProject: null,
       },
       recentActivity: [],
+      ...keyVisualSummary,
     };
   }
   const providers = [...new Set(keys.map((k) => k.provider).filter(Boolean))];
-  const keyMap = new Map<string, { provider: string; label: string }>();
+  const keyMap = new Map<string, { provider: string; label: string; project_id: string | null }>();
   for (const key of keys) {
-    keyMap.set(key.id, { provider: key.provider, label: key.slug || key.provider });
+    keyMap.set(key.id, { provider: key.provider, label: key.slug || key.provider, project_id: key.project_id || null });
   }
 
   const totalCalls = accessOverview.totalCalls;
   const errorCalls = accessOverview.errorCalls;
   const deniedCalls = accessOverview.deniedCalls;
   const errorRate = totalCalls > 0 ? (errorCalls / totalCalls) * 100 : 0;
+  const providerSlotSummary = {
+    totalSlots: keys.length,
+    liveSealedSlots: 0,
+    placeholderSlots: 0,
+    mixedSlots: 0,
+    missingSlots: 0,
+    materialReadySlots: 0,
+    providerCount: providers.length,
+    projectsWithSlots: 0,
+    projectsWithoutSlots: 0,
+  };
+  const providerStats = new Map<string, {
+    provider: string;
+    slots: number;
+    liveSealedSlots: number;
+    placeholderSlots: number;
+    mixedSlots: number;
+    missingSlots: number;
+    recentCalls: number;
+    errors: number;
+    denied: number;
+    lastActivity: string | null;
+    projectIds: Set<string>;
+    labels: Set<string>;
+  }>();
+  const ensureProviderStat = (provider: string) => {
+    const normalizedProvider = provider || 'unknown';
+    const existing = providerStats.get(normalizedProvider);
+    if (existing) return existing;
+    const created = {
+      provider: normalizedProvider,
+      slots: 0,
+      liveSealedSlots: 0,
+      placeholderSlots: 0,
+      mixedSlots: 0,
+      missingSlots: 0,
+      recentCalls: 0,
+      errors: 0,
+      denied: 0,
+      lastActivity: null,
+      projectIds: new Set<string>(),
+      labels: new Set<string>(),
+    };
+    providerStats.set(normalizedProvider, created);
+    return created;
+  };
+
+  const projectsWithSlots = new Set<string>();
+  for (const key of keys) {
+    const materialMode = isProviderMaterialMode(key.material_mode)
+      ? key.material_mode
+      : key.material_ready === true ? 'sealed-live' : 'missing';
+    const provider = key.provider || 'unknown';
+    const providerStat = ensureProviderStat(provider);
+    providerStat.slots += 1;
+    providerStat.labels.add(key.slug || provider);
+    if (key.project_id) {
+      providerStat.projectIds.add(key.project_id);
+      projectsWithSlots.add(key.project_id);
+    }
+    if (materialMode === 'sealed-live') {
+      providerSlotSummary.liveSealedSlots += 1;
+      providerSlotSummary.materialReadySlots += 1;
+      providerStat.liveSealedSlots += 1;
+    } else if (materialMode === 'demo-placeholder') {
+      providerSlotSummary.placeholderSlots += 1;
+      providerStat.placeholderSlots += 1;
+    } else if (materialMode === 'mixed') {
+      providerSlotSummary.mixedSlots += 1;
+      providerStat.mixedSlots += 1;
+    } else {
+      providerSlotSummary.missingSlots += 1;
+      providerStat.missingSlots += 1;
+    }
+  }
+  providerSlotSummary.projectsWithSlots = projectsWithSlots.size;
+  providerSlotSummary.projectsWithoutSlots = Math.max(projectIds.length - projectsWithSlots.size, 0);
+
+  for (const log of accessOverview.recentLogs) {
+    const keyInfo = log.project_key_id ? keyMap.get(log.project_key_id) : null;
+    const providerStat = ensureProviderStat(keyInfo?.provider || log.provider || log.slug || 'unknown');
+    providerStat.recentCalls += 1;
+    if ((log.status_code || 0) >= 400) providerStat.errors += 1;
+    if (isDeniedStatus(log.status_code)) providerStat.denied += 1;
+    if (log.project_id) providerStat.projectIds.add(log.project_id);
+    if (keyInfo?.label || log.slug || log.provider) providerStat.labels.add(keyInfo?.label || log.slug || log.provider || 'unknown');
+    if (!providerStat.lastActivity || log.timestamp > providerStat.lastActivity) providerStat.lastActivity = log.timestamp;
+  }
 
   const projectHealthStats = new Map<string, {
     project_id: string;
@@ -777,6 +907,41 @@ function buildOverviewStatsFromAccess(
   const projectsWithTraffic = projectHealth.filter((project) => project.calls > 0);
   const projectsNeedingAttention = projectHealth.filter((project) => project.denied > 0 || project.errors > 0);
   const topProject = projectHealth.find((project) => project.calls > 0) || null;
+  const providerUsage = [...providerStats.values()]
+    .map((stat) => ({
+      provider: stat.provider,
+      slots: stat.slots,
+      liveSealedSlots: stat.liveSealedSlots,
+      placeholderSlots: stat.placeholderSlots,
+      mixedSlots: stat.mixedSlots,
+      missingSlots: stat.missingSlots,
+      recentCalls: stat.recentCalls,
+      errors: stat.errors,
+      denied: stat.denied,
+      lastActivity: stat.lastActivity,
+      projectCount: stat.projectIds.size,
+      labels: [...stat.labels].slice(0, 5),
+    }))
+    .sort((a, b) => {
+      if (b.recentCalls !== a.recentCalls) return b.recentCalls - a.recentCalls;
+      if (b.slots !== a.slots) return b.slots - a.slots;
+      return a.provider.localeCompare(b.provider);
+    })
+    .slice(0, 8);
+  const trafficBreakdown = {
+    totalCalls,
+    okCalls: Math.max(totalCalls - errorCalls, 0),
+    deniedCalls,
+    otherErrorCalls: Math.max(errorCalls - deniedCalls, 0),
+    errorCalls,
+  };
+  const projectCoverage = {
+    totalProjects: projectIds.length,
+    withProviderSlots: providerSlotSummary.projectsWithSlots,
+    withoutProviderSlots: providerSlotSummary.projectsWithoutSlots,
+    withTraffic: projectsWithTraffic.length,
+    needingAttention: projectsNeedingAttention.length,
+  };
 
   const alerts: Array<Record<string, unknown>> = [];
   if (keys.length === 0) {
@@ -784,7 +949,7 @@ function buildOverviewStatsFromAccess(
       id: 'setup:no_provider_keys',
       severity: 'info',
       title: 'No provider credentials connected',
-      detail: 'Add one provider key to turn this organization into a real pilot instead of a shell setup.',
+      detail: 'Add one provider key to turn this organization into a protected workspace instead of a shell setup.',
       project_id: null,
       project_name: null,
     });
@@ -841,6 +1006,10 @@ function buildOverviewStatsFromAccess(
     errorCalls,
     deniedCalls,
     errorRate,
+    providerSlotSummary,
+    providerUsage,
+    trafficBreakdown,
+    projectCoverage,
     healthWindowDays,
     statsSource: statsSourceOverride || accessOverview.source,
     accessLogStatsSource: accessOverview.source,
@@ -848,11 +1017,11 @@ function buildOverviewStatsFromAccess(
     alerts: alerts.slice(0, 6),
     pilotReview: {
       status: totalCalls === 0 ? 'setup' : deniedCalls > 0 || errorRate >= 2 || projectsNeedingAttention.length > 0 ? 'watch' : 'healthy',
-      headline: totalCalls === 0 ? 'Pilot is still in setup' : deniedCalls > 0 || errorRate >= 2 || projectsNeedingAttention.length > 0 ? 'Pilot is running, but keep it under watch' : 'Pilot looks healthy',
+      headline: totalCalls === 0 ? 'Workspace is still in setup' : deniedCalls > 0 || errorRate >= 2 || projectsNeedingAttention.length > 0 ? 'Workspace is running, but keep it under watch' : 'Workspace looks healthy',
       recommendation: totalCalls === 0
         ? 'Route one real workflow through the proxy before expanding the rollout.'
         : deniedCalls > 0 || errorRate >= 2 || projectsNeedingAttention.length > 0
-          ? 'Traffic is flowing, but there are still denial or error signals to clean up before using the pilot as a sales proof point.'
+          ? 'Traffic is flowing, but there are still denial or error signals to clean up before expanding usage.'
           : 'Traffic is flowing without meaningful denial or error pressure.',
       evaluationWindowDays: healthWindowDays,
       projectsWithTraffic: projectsWithTraffic.length,
@@ -885,13 +1054,30 @@ async function buildInitOverviewStats(
   const [{ data: keyRows }, accessOverview] = await Promise.all([
     supabase
       .from('project_keys')
-      .select('id, project_id, provider, slug')
+      .select('id, project_id, provider, slug, share1_encrypted, share2_encrypted')
       .in('project_id', projectIds)
       .is('revoked_at', null),
     fetchAccessLogOverview(supabase, projectIds, healthWindowSince),
   ]);
 
-  const keys = (keyRows || []) as Array<{ id: string; provider: string; slug: string | null }>;
+  const keys = ((keyRows || []) as Array<{
+    id: string;
+    project_id: string | null;
+    provider: string;
+    slug: string | null;
+    share1_encrypted?: string | null;
+    share2_encrypted?: string | null;
+  }>).map((row) => {
+    const materialMode = resolveProviderMaterialMode(row);
+    return {
+      id: row.id,
+      project_id: row.project_id,
+      provider: row.provider,
+      slug: row.slug,
+      material_mode: materialMode,
+      material_ready: materialMode === 'sealed-live',
+    };
+  });
   return buildOverviewStatsFromAccess(projects, keys, accessOverview, healthWindowDays);
 }
 
@@ -993,8 +1179,11 @@ async function fetchProjectsBootstrapRpc(
       || emptyAccessLogOverview('rollup_rpc');
     const keys = projects.flatMap((project) => project.provider_slots.map((slot) => ({
       id: slot.key_id,
+      project_id: project.id,
       provider: slot.provider,
       slug: slot.slug,
+      material_mode: slot.material_mode,
+      material_ready: slot.material_ready,
     })));
 
     return {

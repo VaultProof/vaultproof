@@ -59,7 +59,7 @@ function redirectToInternalAdminLogin(url: URL): Response {
   });
 }
 
-const INTERNAL_ADMIN_ONLY_APP_PAGES = new Set(['launch', 'demo', 'onboarding', 'support', 'pilot-success']);
+const INTERNAL_ADMIN_ONLY_APP_PAGES = new Set(['launch', 'demo', 'onboarding', 'support', 'pilot', 'pilot-success']);
 
 function internalAdminOnlyAppPageName(pathname: string): string | null {
   if (!pathname.startsWith('/app/')) return null;

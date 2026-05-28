@@ -2224,6 +2224,15 @@ async function assertEnterpriseProjectOverviewRollup() {
   if (bootstrapPayload.overview.totalCalls !== 1 || bootstrapPayload.overview.recentActivity?.[0]?.metadata?.status_code !== 200) {
     throw new Error(`Expected rollup overview traffic summary, got ${JSON.stringify(bootstrapPayload.overview)}`);
   }
+  if (
+    bootstrapPayload.overview.providerSlotSummary?.placeholderSlots !== 1
+    || bootstrapPayload.overview.providerUsage?.[0]?.provider !== 'openai'
+    || bootstrapPayload.overview.providerUsage?.[0]?.recentCalls !== 1
+    || bootstrapPayload.overview.trafficBreakdown?.okCalls !== 1
+    || bootstrapPayload.overview.projectCoverage?.withProviderSlots !== 1
+  ) {
+    throw new Error(`Expected bootstrap overview to include provider key visual summaries, got ${JSON.stringify(bootstrapPayload.overview)}`);
+  }
   const slot = bootstrapPayload.projects?.[0]?.provider_slots?.[0];
   if (slot?.material_mode !== 'demo-placeholder' || slot?.material_ready !== false) {
     throw new Error(`Expected provider slot material status without exposing shares, got ${JSON.stringify(slot)}`);
@@ -2243,6 +2252,14 @@ async function assertEnterpriseProjectOverviewRollup() {
   const overviewPayload = await overviewResponse.json();
   if (overviewResponse.status !== 200 || overviewPayload?.statsSource !== 'rollup_rpc') {
     throw new Error(`Expected projects stats overview to use rollup stats, got ${overviewResponse.status} ${JSON.stringify(overviewPayload)}`);
+  }
+  if (
+    overviewPayload.providerSlotSummary?.placeholderSlots !== 1
+    || overviewPayload.providerUsage?.[0]?.provider !== 'openai'
+    || overviewPayload.trafficBreakdown?.okCalls !== 1
+    || overviewPayload.projectCoverage?.withProviderSlots !== 1
+  ) {
+    throw new Error(`Expected projects stats overview to include dashboard visual summaries, got ${JSON.stringify(overviewPayload)}`);
   }
 }
 
@@ -3039,49 +3056,41 @@ async function assertEnterpriseLoginRoute() {
       'enterprise-page-shell',
       'control-center-card',
       'hero-sidecar',
+      'hero-signal-grid',
       'dashboard-overview-grid',
       'metric-card',
       'overview-rail',
-      'Guided enterprise pilot',
-      'Pilot path',
+      'API key picture',
+      'Rollout path',
       'Control center',
-      'Provisioned workspace',
-      'Confirm readiness',
       'Enterprise dashboard tabs',
       'Overview',
+      'Key Map',
       'Security',
       'Access',
       'Operations',
-      'Workspace',
+      'Provider material',
+      'materialDonut',
+      'Traffic outcome',
+      'trafficOutcomeBar',
+      'Project coverage',
+      'projectCoverageList',
+      'Provider usage',
+      'providerUsageList',
+      'Key map by provider',
+      'keyMapProviderList',
+      'Material readiness',
+      'Organization coverage',
+      'providerSlotSummary',
+      'providerUsage',
+      'trafficBreakdown',
       'Setup access checklist',
-      'Workspace tools',
-      'Enterprise docs',
-      '/app/docs',
-      'Setup guide',
-      '/app/setup',
-      'Technical guide',
-      '/app/technical-guide',
-      'Policy control',
-      'Policy Drift',
-      '/app/policy',
-      'Rollout Manager',
-      '/app/rollout',
-      'Scanner exposure intake',
-      '/app/scanner',
       'Release evidence',
-      '/app/release',
-      'Pilot testers',
-      '/app/testers',
-      'AI Proof Verifier',
-      '/app/verifier',
+      'Tester readiness',
       'Provider slots',
-      'protected email API key slots',
-      'Members and invites',
-      'Audit and exports',
-      'Org and Entra SSO',
-      'Launch plans',
-      'Operator runbooks',
-      '/app/runbooks',
+      'Access review',
+      'Attention signals',
+      'Operational runbooks',
     ]) {
       if (!dashboardHtml.includes(requiredFeature)) {
         throw new Error(`Expected enterprise dashboard feature map to include ${requiredFeature}`);
@@ -3097,6 +3106,9 @@ async function assertEnterpriseLoginRoute() {
       'Public page for people who have not signed in yet',
       'Enterprise login',
       'Enterprise-only sign-in',
+      'Workspace tools',
+      'Operator shortcuts',
+      'Use these pages to configure the account',
     ]) {
       if (dashboardHtml.includes(forbiddenFeature)) {
         throw new Error(`Enterprise dashboard must not include public marketing/login card copy: ${forbiddenFeature}`);
@@ -3218,7 +3230,7 @@ async function assertEnterpriseLoginRoute() {
     {
       path: '/app/docs',
       title: 'Enterprise docs - VaultProof Enterprise',
-      required: ['Enterprise-only documentation', 'Enterprise docs index', 'Dashboard functions', 'Overview tab', 'Security tab', 'Access tab', 'Operations tab', 'Workspace tab', 'Workspace features and functions', 'API Inventory', 'Policy Drift', 'Rollout Manager', 'AI Proof Verifier', 'Org + SSO', 'Dashboard exports and evidence functions', 'vaultproof_enterprise_evidence_packet', 'vaultproof_enterprise_key_exposure_response', 'Key exposure response', 'Exposure response sequence', 'Enterprise SSO docs', 'Provider Slots', 'scanner_open_exposure', 'needs_rotation', 'ready_to_contain', 'incident JSON packet', 'VaultProof can immediately disable or audit traffic routed through VaultProof', '/app/setup', '/app/technical-guide', '/app/security-review', '/app/runbooks', '/app/evidence', '/app/keys', '/app/scanner', '/app/inventory', '/app/policy', '/app/rollout'],
+      required: ['Enterprise-only documentation', 'Enterprise docs index', 'Dashboard functions', 'Overview tab', 'Key Map tab', 'Security tab', 'Access tab', 'Operations tab', 'Workspace features and functions', 'API Inventory', 'Policy Drift', 'Rollout Manager', 'AI Proof Verifier', 'Org + SSO', 'Dashboard exports and evidence functions', 'vaultproof_enterprise_evidence_packet', 'vaultproof_enterprise_key_exposure_response', 'Key exposure response', 'Exposure response sequence', 'Enterprise SSO docs', 'Provider Slots', 'scanner_open_exposure', 'needs_rotation', 'ready_to_contain', 'incident JSON packet', 'VaultProof can immediately disable or audit traffic routed through VaultProof', '/app/setup', '/app/technical-guide', '/app/security-review', '/app/runbooks', '/app/evidence', '/app/keys', '/app/scanner', '/app/inventory', '/app/policy', '/app/rollout'],
     },
     {
       path: '/app/setup',
@@ -3228,7 +3240,7 @@ async function assertEnterpriseLoginRoute() {
     {
       path: '/app/evidence',
       title: 'Evidence packet - VaultProof Enterprise',
-      required: ['Evidence readiness', 'Customer exports', 'Proof inventory', 'Review workflow', 'Identity/OAuth proof', 'Key rotation proof', 'Key exposure response proof', 'Pilot operations proof', 'API proxy self-test proof', 'API inventory proof', 'Policy drift proof', 'Integration rollout proof', 'Scanner exposure proof', 'Launch support proof', 'Monitoring evidence proof', 'Release evidence proof', 'Paid-pilot tester proof', 'Contract entitlements proof', 'Paid onboarding proof', 'Go/no-go launch decision', 'go_no_go', 'manual_evidence', 'identity_login_qa', 'key_rotation_evidence', 'key_exposure_response', 'pilot_operations_evidence', 'api_proxy_self_test', 'api_inventory', 'policy_drift_exceptions', 'integration_rollout', 'scanner_exposure_review', 'launch_support_readiness', 'monitoring_evidence', 'release_evidence', 'pilot_tester_readiness', 'contract_entitlements', 'paid_onboarding', 'security_review_packet', 'pilot_proposal', 'pilot_success_tracker', 'vaultproof_enterprise_security_review_packet', 'vaultproof_enterprise_pilot_proposal', 'vaultproof_enterprise_pilot_success_tracker', 'vaultproof_enterprise_api_inventory', 'vaultproof_enterprise_policy_drift', 'vaultproof_enterprise_integration_rollout', 'vaultproof_enterprise_scanner_exposure_review', 'vaultproof_enterprise_key_exposure_response', 'vaultproof_enterprise_release_evidence', 'vaultproof_enterprise_paid_pilot_tester_readiness', 'vaultproof_enterprise_entitlements', 'vaultproof_enterprise_paid_onboarding', 'execute_endpoint_pattern', 'paid_onboarding_actions', 'rollback_paths', 'monitoring_review', 'budget_alert', 'live_gate', 'oauth_redirect_qa_command', 'Email API key protection', 'Evidence packet JSON', 'copy JSON', 'download JSON', 'vaultproof_enterprise_evidence_packet', 'email_provider_slots', '/app/inventory', '/app/policy', '/app/rollout', '/app/scanner', '/app/release', '/app/testers', '/app/entitlements', '/app/control', '/app/alerts', '/app/security-review', '/app/pilot', '/api/v1/enterprise/audit?format=csv&days=30', '/api/v1/enterprise/members/access-review?format=csv'],
+      required: ['Evidence readiness', 'Customer exports', 'Proof inventory', 'Review workflow', 'Identity/OAuth proof', 'Key rotation proof', 'Key exposure response proof', 'Pilot operations proof', 'API proxy self-test proof', 'API inventory proof', 'Policy drift proof', 'Integration rollout proof', 'Scanner exposure proof', 'Launch support proof', 'Monitoring evidence proof', 'Release evidence proof', 'Paid-pilot tester proof', 'Contract entitlements proof', 'Paid onboarding proof', 'Go/no-go launch decision', 'go_no_go', 'manual_evidence', 'identity_login_qa', 'key_rotation_evidence', 'key_exposure_response', 'pilot_operations_evidence', 'api_proxy_self_test', 'api_inventory', 'policy_drift_exceptions', 'integration_rollout', 'scanner_exposure_review', 'launch_support_readiness', 'monitoring_evidence', 'release_evidence', 'pilot_tester_readiness', 'contract_entitlements', 'paid_onboarding', 'security_review_packet', 'vaultproof_enterprise_security_review_packet', 'vaultproof_enterprise_api_inventory', 'vaultproof_enterprise_policy_drift', 'vaultproof_enterprise_integration_rollout', 'vaultproof_enterprise_scanner_exposure_review', 'vaultproof_enterprise_key_exposure_response', 'vaultproof_enterprise_release_evidence', 'vaultproof_enterprise_paid_pilot_tester_readiness', 'vaultproof_enterprise_entitlements', 'vaultproof_enterprise_paid_onboarding', 'execute_endpoint_pattern', 'paid_onboarding_actions', 'rollback_paths', 'monitoring_review', 'budget_alert', 'live_gate', 'oauth_redirect_qa_command', 'Email API key protection', 'Evidence packet JSON', 'copy JSON', 'download JSON', 'vaultproof_enterprise_evidence_packet', 'email_provider_slots', '/app/inventory', '/app/policy', '/app/rollout', '/app/scanner', '/app/release', '/app/testers', '/app/entitlements', '/app/control', '/app/alerts', '/app/security-review', '/api/v1/enterprise/audit?format=csv&days=30', '/api/v1/enterprise/members/access-review?format=csv'],
     },
     {
       path: '/app/technical-guide',
@@ -3270,7 +3282,6 @@ async function assertEnterpriseLoginRoute() {
         'Buyer review path',
         '/app/entitlements',
         '/app/security-review',
-        '/app/pilot',
         '/app/testers',
         '/app/evidence',
       ],
@@ -3278,12 +3289,7 @@ async function assertEnterpriseLoginRoute() {
     {
       path: '/app/entitlements',
       title: 'Entitlements - VaultProof Enterprise',
-      required: ['Contract intake', 'Paid-user readiness', 'Capacity envelope', 'Commercial handoff', 'entitlementsBillingForm', 'entitlementsBillingList', 'entitlementsBillingRows', 'billing_handoff', 'commercial_ready', 'commercial_review', 'invoice status', 'PO status', 'procurement owner', 'payment terms', 'billing-safe note', 'Amendment and renewal log', 'entitlementAmendmentForm', 'entitlementsRenewalList', 'entitlementAmendmentList', 'amendment_history', 'renewal_summary', 'missing_review_date', 'review_due', 'review_soon', 'amendment_blocked', 'add amendment', 'removeEntitlementAmendment', 'Usage guardrails', 'entitlementsUsageMeterList', 'entitlementsUsageGuardrailList', 'capacity_status', 'remaining_calls', 'expansion_recommendation', 'hard_limit_enforcement', 'copy capacity brief', 'copyEntitlementsCapacityBriefBtn', 'entitlementsCapacityBriefText', 'VaultProof entitlement capacity brief', 'Contract guardrails', 'Handoff path', 'Paid onboarding evidence', 'Launch readiness evidence', 'Support evidence', 'Entitlements JSON', 'vaultproof_enterprise_entitlements', 'data-entitlement-field', 'contract status', 'monthly calls', 'provider slots', 'billing owner', 'success owner', 'support tier', 'incident response', 'renewal/review date', 'copy entitlements JSON', 'ready_for_paid_pilot', 'contract_review', 'Manual contract-controlled', '/app/evidence', '/app/plans', '/app/pilot', '/app/security-review'],
-    },
-    {
-      path: '/app/pilot',
-      title: 'Pilot proposal - VaultProof Enterprise',
-      required: ['Pilot scope', 'Commercial summary', 'Guardrails', 'Close checklist', 'Copyable pilot proposal', 'VaultProof Enterprise paid-pilot proposal', '20% sales commission', 'Incident response', 'copy proposal', 'vaultproof_pilot_proposal', 'data-pilot-field', 'monthly_price_usd', 'incident_response_add_on', 'support_tier', '/app/security-review', '/app/evidence', '/app/runbooks'],
+      required: ['Contract intake', 'Paid-user readiness', 'Capacity envelope', 'Commercial handoff', 'entitlementsBillingForm', 'entitlementsBillingList', 'entitlementsBillingRows', 'billing_handoff', 'commercial_ready', 'commercial_review', 'invoice status', 'PO status', 'procurement owner', 'payment terms', 'billing-safe note', 'Amendment and renewal log', 'entitlementAmendmentForm', 'entitlementsRenewalList', 'entitlementAmendmentList', 'amendment_history', 'renewal_summary', 'missing_review_date', 'review_due', 'review_soon', 'amendment_blocked', 'add amendment', 'removeEntitlementAmendment', 'Usage guardrails', 'entitlementsUsageMeterList', 'entitlementsUsageGuardrailList', 'capacity_status', 'remaining_calls', 'expansion_recommendation', 'hard_limit_enforcement', 'copy capacity brief', 'copyEntitlementsCapacityBriefBtn', 'entitlementsCapacityBriefText', 'VaultProof entitlement capacity brief', 'Contract guardrails', 'Handoff path', 'Paid onboarding evidence', 'Launch readiness evidence', 'Support evidence', 'Entitlements JSON', 'vaultproof_enterprise_entitlements', 'data-entitlement-field', 'contract status', 'monthly calls', 'provider slots', 'billing owner', 'success owner', 'support tier', 'incident response', 'renewal/review date', 'copy entitlements JSON', 'ready_for_paid_pilot', 'contract_review', 'Manual contract-controlled', '/app/evidence', '/app/plans', '/app/security-review'],
     },
     {
       path: '/app/scanner',
@@ -3298,7 +3304,7 @@ async function assertEnterpriseLoginRoute() {
     {
       path: '/app/runbooks',
       title: 'Runbooks - VaultProof Enterprise',
-      required: ['Hardening status', 'Production verifier', 'Evidence bundle', 'Security review packet', 'Pilot proposal review', 'Pilot success review', 'Pilot tester rehearsal', 'Monitoring evidence review', 'Pilot live launch gate', 'RUN_LIVE_EDGE=true RUN_LIVE_APP_QA=true RUN_CLOUD_ARMOR_QA=true npm run gate:gcp-customer-launch', 'Handoff package', 'npm run package:enterprise-handoff', 'Handoff gate', 'npm run gate:enterprise-handoff', 'Finish gate', 'blocker/warning details', 'npm run gate:enterprise-finish', 'Key exposure response runbook', 'runbooksExposureMeta', 'Current exposure response status', 'Open Provider Slots incident mode', 'incident JSON', 'Export audit CSV', 'Proof boundary', 'Operator order', 'mTLS caller-lock preparation', 'npm run prepare:enterprise-mtls', 'Gateway JWT validation preparation', 'discover the Supabase issuer', 'gateway policy template smoke', 'caller-lock header delete/override', 'npm run test:enterprise-apim-policies', 'Origin TLS certificate plan', 'Origin TLS preparation plan', 'Origin DNS guardrail', 'Origin DNS record', 'DNS record updates', 'Origin TLS preflight', 'TLS origin cutover', 'gateway cutover', 'GCP runtime reset rollback', 'old prototype cleanup'],
+      required: ['Hardening status', 'Production verifier', 'Evidence bundle', 'Security review packet', 'Tester readiness review', 'Monitoring evidence review', 'Customer launch gate', 'RUN_LIVE_EDGE=true RUN_LIVE_APP_QA=true RUN_CLOUD_ARMOR_QA=true npm run gate:gcp-customer-launch', 'Handoff package', 'npm run package:enterprise-handoff', 'Handoff gate', 'npm run gate:enterprise-handoff', 'Finish gate', 'blocker/warning details', 'npm run gate:enterprise-finish', 'Key exposure response runbook', 'runbooksExposureMeta', 'Current exposure response status', 'Open Provider Slots incident mode', 'incident JSON', 'Export audit CSV', 'Proof boundary', 'Operator order', 'mTLS caller-lock preparation', 'npm run prepare:enterprise-mtls', 'Gateway JWT validation preparation', 'discover the Supabase issuer', 'gateway policy template smoke', 'caller-lock header delete/override', 'npm run test:enterprise-apim-policies', 'Origin TLS certificate plan', 'Origin TLS preparation plan', 'Origin DNS guardrail', 'Origin DNS record', 'DNS record updates', 'Origin TLS preflight', 'TLS origin cutover', 'gateway cutover', 'GCP runtime reset rollback', 'old prototype cleanup'],
     },
   ];
   for (const page of supportPages) {
@@ -3326,7 +3332,7 @@ async function assertEnterpriseLoginRoute() {
     assertDashboardShellTheme(page.path, html);
   }
 
-  for (const internalPagePath of ['/app/launch', '/app/demo', '/app/onboarding', '/app/support', '/app/pilot-success']) {
+  for (const internalPagePath of ['/app/launch', '/app/demo', '/app/onboarding', '/app/support', '/app/pilot', '/app/pilot-success']) {
     const enterpriseInternalPageResponse = await handleEnterpriseControlPlaneRequest(
       buildRequest(internalPagePath),
       {
@@ -3432,7 +3438,7 @@ function assertSecurityHeaders(path, response, html = '') {
 }
 
 async function assertEnterpriseSecurityHeaders() {
-  const htmlPaths = ['/', '/app/login', '/app/logout', '/app/dashboard', '/app/evidence', '/app/control', '/app/verifier', '/app/org', '/app/setup', '/app/technical-guide', '/app/security-review', '/app/entitlements', '/app/pilot', '/app/testers', '/app/release', '/app/scanner', '/app/runbooks', '/app/inventory', '/app/policy', '/app/rollout'];
+  const htmlPaths = ['/', '/app/login', '/app/logout', '/app/dashboard', '/app/evidence', '/app/control', '/app/verifier', '/app/org', '/app/setup', '/app/technical-guide', '/app/security-review', '/app/entitlements', '/app/testers', '/app/release', '/app/scanner', '/app/runbooks', '/app/inventory', '/app/policy', '/app/rollout'];
   for (const path of htmlPaths) {
     const response = await handleEnterpriseControlPlaneRequest(
       buildRequest(path),
@@ -3495,7 +3501,6 @@ async function assertEnterpriseAppLinkCrawl() {
     '/app/technical-guide',
     '/app/security-review',
     '/app/entitlements',
-    '/app/pilot',
     '/app/testers',
     '/app/release',
     '/app/settings',
@@ -3575,7 +3580,6 @@ async function assertEnterpriseMixpanelAnalytics() {
     ['/app/settings', 'settings'],
     ['/app/plans', 'plans'],
     ['/app/entitlements', 'entitlements'],
-    ['/app/pilot', 'pilot'],
     ['/app/testers', 'testers'],
     ['/app/release', 'release'],
     ['/app/members', 'members'],
@@ -3664,6 +3668,7 @@ async function assertEnterpriseMixpanelAnalytics() {
     ['/app/demo', 'demo'],
     ['/app/onboarding', 'onboarding'],
     ['/app/support', 'support'],
+    ['/app/pilot', 'pilot'],
     ['/app/pilot-success', 'pilot-success'],
   ]) {
     const response = await handleEnterpriseControlPlaneRequest(
@@ -3714,7 +3719,7 @@ async function assertInternalAdminConsole() {
     || unauthenticatedLaunchResponse.headers.get('location') !== '/app/login') {
     throw new Error(`Expected internal admin launch board to redirect to login, got ${unauthenticatedLaunchResponse.status}`);
   }
-  for (const internalPagePath of ['/app/demo', '/app/onboarding', '/app/support', '/app/pilot-success']) {
+  for (const internalPagePath of ['/app/demo', '/app/onboarding', '/app/support', '/app/pilot', '/app/pilot-success']) {
     const unauthenticatedInternalPageResponse = await handleEnterpriseControlPlaneRequest(
       buildHostRequest(INTERNAL_ADMIN_HOSTNAME, internalPagePath),
       env,
@@ -3830,11 +3835,13 @@ async function assertInternalAdminConsole() {
     'Buyer walkthrough',
     'Paid onboarding',
     'Support room',
+    'Pilot proposal',
     'Pilot success',
     '/app/launch',
     '/app/demo',
     '/app/onboarding',
     '/app/support',
+    '/app/pilot',
     '/app/pilot-success',
     '/api/v1/internal-admin/overview',
   ]) {

@@ -123,12 +123,12 @@ export function renderEnterpriseDashboardPage(env: EnterpriseControlPlaneEnv = {
       line-height: 1.5;
       margin: 0;
     }
-    .hero-action-grid {
+    .hero-signal-grid {
       display: grid;
       grid-template-columns: repeat(2, minmax(0, 1fr));
       gap: 8px;
     }
-    .hero-action {
+    .hero-signal {
       display: grid;
       gap: 5px;
       min-height: 74px;
@@ -137,12 +137,13 @@ export function renderEnterpriseDashboardPage(env: EnterpriseControlPlaneEnv = {
       padding: 10px;
       background: #ffffff;
     }
-    .hero-action strong {
+    .hero-signal strong {
       color: var(--text);
-      font-size: 13px;
-      font-weight: 700;
+      font-size: 20px;
+      font-weight: 680;
+      line-height: 1;
     }
-    .hero-action span {
+    .hero-signal span {
       color: var(--muted);
       font-size: 12px;
       line-height: 1.3;
@@ -237,19 +238,37 @@ export function renderEnterpriseDashboardPage(env: EnterpriseControlPlaneEnv = {
       line-height: 1.5;
       font-size: 14px;
     }
-    .control-links {
-      display: flex;
+    .control-summary {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(110px, 1fr));
       gap: 8px;
-      flex-wrap: wrap;
-      justify-content: flex-end;
       flex: 0 0 auto;
+      min-width: min(100%, 420px);
+    }
+    .summary-chip {
+      border: 1px solid var(--line-soft);
+      border-radius: 8px;
+      padding: 11px;
+      background: #f8fafc;
+    }
+    .summary-chip span {
+      display: block;
+      color: var(--soft);
+      font-size: 11px;
+      text-transform: uppercase;
+    }
+    .summary-chip strong {
+      display: block;
+      color: var(--dashboard-ink);
+      font-size: 20px;
+      margin-top: 5px;
     }
     .grid { display: grid; gap: 14px; }
     .kpis { grid-template-columns: repeat(4, minmax(0, 1fr)); margin-bottom: 0; }
     .two { grid-template-columns: minmax(0, 1.15fr) minmax(340px, 0.85fr); }
     .dashboard-overview-grid {
       display: grid;
-      grid-template-columns: minmax(0, 1fr) minmax(310px, 0.36fr);
+      grid-template-columns: minmax(0, 1fr);
       gap: 14px;
       align-items: start;
     }
@@ -343,6 +362,9 @@ export function renderEnterpriseDashboardPage(env: EnterpriseControlPlaneEnv = {
       background: #ffffff;
       box-shadow: 0 16px 42px rgba(44, 48, 55, 0.07);
     }
+    .overview-rail {
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+    }
     .rail-card.accent {
       background: #2c3037;
       border-color: #2c3037;
@@ -381,6 +403,148 @@ export function renderEnterpriseDashboardPage(env: EnterpriseControlPlaneEnv = {
     .action-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; }
     .action-card { display: flex; flex-direction: column; gap: 10px; min-height: 176px; }
     .action-card .action { margin-top: auto; align-self: flex-start; }
+    .chart-grid {
+      display: grid;
+      grid-template-columns: minmax(0, 0.95fr) minmax(0, 1.1fr) minmax(0, 0.95fr);
+      gap: 14px;
+    }
+    .visual-card {
+      display: grid;
+      gap: 14px;
+      min-width: 0;
+    }
+    .visual-body {
+      display: grid;
+      gap: 12px;
+      align-items: center;
+    }
+    .donut-wrap {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr);
+      gap: 14px;
+      align-items: center;
+      justify-items: center;
+    }
+    .donut {
+      width: 148px;
+      aspect-ratio: 1;
+      border-radius: 50%;
+      display: grid;
+      place-items: center;
+      background: conic-gradient(#edf1f5 0deg 360deg);
+      box-shadow: inset 0 0 0 1px rgba(44, 48, 55, 0.08);
+      position: relative;
+    }
+    .donut::after {
+      content: "";
+      position: absolute;
+      inset: 26px;
+      border-radius: 50%;
+      background: #ffffff;
+      box-shadow: 0 0 0 1px rgba(44, 48, 55, 0.08);
+    }
+    .donut-center {
+      position: relative;
+      z-index: 1;
+      display: grid;
+      gap: 3px;
+      text-align: center;
+    }
+    .donut-center strong { color: var(--dashboard-ink); font-size: 26px; line-height: 1; }
+    .donut-center span { color: var(--muted); font-size: 12px; }
+    .legend {
+      display: grid;
+      gap: 8px;
+      width: 100%;
+    }
+    .legend-row {
+      display: grid;
+      grid-template-columns: 10px minmax(0, 1fr) auto;
+      gap: 8px;
+      align-items: center;
+      color: var(--muted);
+      font-size: 13px;
+    }
+    .legend-dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 999px;
+      background: var(--dot, var(--primary-bg));
+    }
+    .bar-stack {
+      display: flex;
+      width: 100%;
+      min-height: 22px;
+      border-radius: 999px;
+      overflow: hidden;
+      background: #edf1f5;
+      border: 1px solid rgba(44, 48, 55, 0.08);
+    }
+    .bar-segment {
+      min-width: 0;
+      width: var(--width, 0%);
+      background: var(--fill, var(--primary-bg));
+    }
+    .provider-bars {
+      display: grid;
+      gap: 10px;
+    }
+    .provider-row {
+      display: grid;
+      gap: 8px;
+      border: 1px solid var(--line-soft);
+      border-radius: 8px;
+      padding: 12px;
+      background: var(--row-bg);
+    }
+    .provider-row-head {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) auto;
+      gap: 10px;
+      align-items: start;
+    }
+    .provider-name {
+      color: var(--dashboard-ink);
+      font-size: 15px;
+      font-weight: 650;
+    }
+    .provider-meta {
+      color: var(--muted);
+      font-size: 12px;
+      margin-top: 3px;
+    }
+    .meter {
+      height: 8px;
+      border-radius: 999px;
+      background: #e7ebf0;
+      overflow: hidden;
+    }
+    .meter > span {
+      display: block;
+      height: 100%;
+      width: var(--width, 0%);
+      border-radius: inherit;
+      background: var(--fill, var(--primary-bg));
+    }
+    .coverage-grid {
+      display: grid;
+      gap: 10px;
+    }
+    .coverage-item {
+      border: 1px solid var(--line-soft);
+      border-radius: 8px;
+      padding: 12px;
+      background: var(--row-bg);
+    }
+    .coverage-top {
+      display: flex;
+      align-items: baseline;
+      justify-content: space-between;
+      gap: 10px;
+    }
+    .coverage-label { color: var(--muted); font-size: 13px; }
+    .coverage-value { color: var(--dashboard-ink); font-size: 20px; font-weight: 680; }
+    .coverage-item .meter { margin-top: 8px; }
     .row {
       display: grid; grid-template-columns: 1fr auto; gap: 14px; align-items: center;
       border: 1px solid var(--line-soft);
@@ -421,12 +585,14 @@ export function renderEnterpriseDashboardPage(env: EnterpriseControlPlaneEnv = {
     @media (max-width: 980px) {
       .topbar { grid-template-columns: 1fr; }
       .toolbar { justify-content: flex-start; }
-      .dashboard-context-grid, .kpis, .two, .dashboard-overview-grid, .feature-grid, .intent-grid, .action-grid { grid-template-columns: 1fr; }
+      .dashboard-context-grid, .kpis, .two, .dashboard-overview-grid, .feature-grid, .intent-grid, .action-grid, .chart-grid { grid-template-columns: 1fr; }
       .control-center-intro { flex-direction: column; }
-      .control-links { justify-content: flex-start; }
+      .control-summary { width: 100%; }
+      .overview-rail { grid-template-columns: 1fr; }
     }
     @media (min-width: 981px) and (max-width: 1220px) {
-      .dashboard-context-grid, .feature-grid, .intent-grid, .action-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+      .dashboard-context-grid, .feature-grid, .intent-grid, .action-grid, .chart-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+      .overview-rail { grid-template-columns: repeat(2, minmax(0, 1fr)); }
     }
   </style>
 </head>
@@ -441,48 +607,46 @@ export function renderEnterpriseDashboardPage(env: EnterpriseControlPlaneEnv = {
             <div class="hero-copy">
               <div class="eyebrow">Enterprise dashboard</div>
               <h1>Runtime, access, and evidence.</h1>
-              <p class="lead">Monitor runtime readiness, customer access, provider-key posture, and evidence exports from one operator workspace.</p>
+              <p class="lead">Monitor runtime readiness, access, provider-key posture, and evidence exports from one enterprise workspace.</p>
               <div class="toolbar hero-toolbar" aria-label="Dashboard actions">
-                <button id="refreshBtn" type="button">refresh</button>
-                <a class="action" href="/app/keys">provider slots</a>
-                <a class="action primary" href="/app/control">open control</a>
+                <button id="refreshBtn" type="button">refresh data</button>
               </div>
             </div>
-            <div class="hero-sidecar" aria-label="Enterprise pilot snapshot">
+            <div class="hero-sidecar" aria-label="Enterprise API key snapshot">
               <div>
-                <div class="hero-sidecar-title">Guided enterprise pilot</div>
-                <p class="hero-sidecar-copy">One workload, one provider path, one owner group, and evidence the customer can review.</p>
+                <div class="hero-sidecar-title">API key picture</div>
+                <p class="hero-sidecar-copy">Provider families, sealed material, project coverage, and runtime traffic in one readable view.</p>
               </div>
-              <div class="hero-action-grid">
-                <a class="hero-action" href="/app/inventory"><strong>Inventory</strong><span>Map API surfaces.</span></a>
-                <a class="hero-action" href="/app/policy"><strong>Policy</strong><span>Review blockers.</span></a>
-                <a class="hero-action" href="/app/evidence"><strong>Evidence</strong><span>Export proof.</span></a>
-                <a class="hero-action" href="/app/testers"><strong>Testers</strong><span>Track sessions.</span></a>
+              <div class="hero-signal-grid">
+                <div class="hero-signal"><span>Provider families</span><strong id="heroProviderFamilies">...</strong></div>
+                <div class="hero-signal"><span>Key slots</span><strong id="heroKeySlots">...</strong></div>
+                <div class="hero-signal"><span>Material ready</span><strong id="heroMaterialReady">...</strong></div>
+                <div class="hero-signal"><span>Traffic mix</span><strong id="heroTrafficMix">...</strong></div>
               </div>
             </div>
           </div>
 
           <div class="dashboard-context-grid" aria-label="Control center orientation">
-            <a class="context-card" href="/app/dashboard">
-              <div class="context-label">You are here</div>
-              <div class="context-title">Control center</div>
-              <div class="context-copy">A focused operating view for runtime posture, users, evidence, and launch actions.</div>
-            </a>
-            <a class="context-card" href="/app/org">
-              <div class="context-label">Active org</div>
-              <div class="context-title">Provisioned workspace</div>
-              <div class="context-copy">Review organization status, SSO, domain policy, and workspace ownership.</div>
-            </a>
-            <a class="context-card" href="/app/inventory">
-              <div class="context-label">API map</div>
-              <div class="context-title">Inventory first</div>
-              <div class="context-copy">Capture owners, risk, environments, provider mapping, and review state.</div>
-            </a>
-            <a class="context-card" href="/readiness" target="_blank" rel="noopener">
-              <div class="context-label">Next best step</div>
-              <div class="context-title">Confirm readiness</div>
-              <div class="context-copy">Check runtime, access, provider policy, and evidence before expanding rollout.</div>
-            </a>
+            <div class="context-card">
+              <div class="context-label">API keys in scope</div>
+              <div id="contextKeySlots" class="context-title">...</div>
+              <div class="context-copy">Active provider slots protected by VaultProof for this organization.</div>
+            </div>
+            <div class="context-card">
+              <div class="context-label">Provider families</div>
+              <div id="contextProviderFamilies" class="context-title">...</div>
+              <div class="context-copy">Distinct upstream providers represented by the active key slots.</div>
+            </div>
+            <div class="context-card">
+              <div class="context-label">Projects with keys</div>
+              <div id="contextProjectsWithSlots" class="context-title">...</div>
+              <div class="context-copy">Enterprise project coverage across protected provider credentials.</div>
+            </div>
+            <div class="context-card">
+              <div class="context-label">Projects with traffic</div>
+              <div id="contextProjectsWithTraffic" class="context-title">...</div>
+              <div class="context-copy">Projects that have produced proxy activity during the current health window.</div>
+            </div>
           </div>
         </section>
 
@@ -492,25 +656,21 @@ export function renderEnterpriseDashboardPage(env: EnterpriseControlPlaneEnv = {
           <div class="control-center-intro">
             <div>
               <h2 class="control-title">Control center</h2>
-              <p class="control-copy">Use the tabs below for daily operator checks. The sidebar keeps provider slots, policy, users, audit, and evidence in reach.</p>
+              <p class="control-copy">Daily workspace view for runtime posture, provider-key coverage, material readiness, traffic health, and customer-safe evidence signals.</p>
             </div>
-            <div class="control-links" aria-label="Primary operator links">
-              <a class="action" href="/app/keys">provider slots</a>
-              <a class="action" href="/app/members">members</a>
-              <a class="action" href="/app/audit">audit</a>
-              <a class="action" href="/app/evidence">evidence</a>
-              <a class="action" href="/app/release">release</a>
-              <a class="action" href="/app/testers">testers</a>
-              <a class="action" href="/app/runbooks">runbooks</a>
+            <div class="control-summary" aria-label="Dashboard live summary">
+              <div class="summary-chip"><span>live sealed</span><strong id="summaryLiveSealed">...</strong></div>
+              <div class="summary-chip"><span>needs review</span><strong id="summaryNeedsReview">...</strong></div>
+              <div class="summary-chip"><span>denied</span><strong id="summaryDenied">...</strong></div>
             </div>
           </div>
 
           <nav class="tabbar" aria-label="Enterprise dashboard tabs">
             <button class="tab-button active" type="button" data-dashboard-tab="overview">Overview</button>
+            <button class="tab-button" type="button" data-dashboard-tab="keymap">Key Map</button>
             <button class="tab-button" type="button" data-dashboard-tab="security">Security</button>
             <button class="tab-button" type="button" data-dashboard-tab="access">Access</button>
             <button class="tab-button" type="button" data-dashboard-tab="operations">Operations</button>
-            <button class="tab-button" type="button" data-dashboard-tab="features">Workspace</button>
           </nav>
 
       <section id="tab-overview" class="tab-panel" data-tab-panel="overview">
@@ -533,75 +693,129 @@ export function renderEnterpriseDashboardPage(env: EnterpriseControlPlaneEnv = {
                   <span id="runtimePill" class="status-pill warn">checking</span>
                 </div>
                 <div id="runtimeDetail" class="mini">Waiting for readiness...</div>
-                <div class="actions">
-                  <a class="action" href="/readiness" target="_blank" rel="noopener">open readiness JSON</a>
-                  <a class="action" href="/health" target="_blank" rel="noopener">open health JSON</a>
-                </div>
               </div>
 
               <div class="card">
                 <div class="section-title">
                   <div>
                     <h2>Organization</h2>
-                    <p>VaultProof provisions the organization workspace; operators review role, SSO state, and controls here.</p>
+                    <p>VaultProof provisions the organization workspace; enterprise admins review role, SSO state, and controls here.</p>
                   </div>
                   <span id="orgRole" class="tag">...</span>
                 </div>
                 <div id="orgDetail" class="mini">Loading organization...</div>
-                <div class="actions">
-                  <a class="action" href="/app/org">manage SSO</a>
-                  <a class="action" href="/app/control">policy control</a>
-                </div>
               </div>
             </section>
 
-            <section class="grid action-grid">
-              <div class="action-card">
-                <div class="feature-tags"><span class="feature-tag">daily check</span><span class="feature-tag">go live</span></div>
-                <h3>1. Confirm the runtime is ready</h3>
-                <p>Check this before inviting more users or routing production traffic.</p>
-                <a class="action" href="/readiness" target="_blank" rel="noopener">check readiness</a>
+            <section class="chart-grid" aria-label="API key organization picture">
+              <div class="card visual-card">
+                <div class="section-title">
+                  <div>
+                    <h2>Provider material</h2>
+                    <p>Live-sealed, placeholder, mixed, and missing key material across active slots.</p>
+                  </div>
+                </div>
+                <div class="donut-wrap">
+                  <div id="materialDonut" class="donut"><div class="donut-center"><strong>0%</strong><span>live</span></div></div>
+                  <div id="materialLegend" class="legend"></div>
+                </div>
               </div>
-              <div class="action-card">
-                <div class="feature-tags"><span class="feature-tag">access</span><span class="feature-tag">SSO</span></div>
-                <h3>2. Review who can use it</h3>
-                <p>Open Members for roles and access-review evidence, then Org + SSO for Entra setup.</p>
-                <a class="action" href="/app/members">review access</a>
+
+              <div class="card visual-card">
+                <div class="section-title">
+                  <div>
+                    <h2>Traffic outcome</h2>
+                    <p>Successful, denied, and error calls across the current enterprise project set.</p>
+                  </div>
+                  <span id="trafficMeta" class="mini">0 calls</span>
+                </div>
+                <div class="visual-body">
+                  <div id="trafficOutcomeBar" class="bar-stack" aria-label="Traffic outcome chart"></div>
+                  <div id="trafficLegend" class="legend"></div>
+                </div>
               </div>
-              <div class="action-card">
-                <div class="feature-tags"><span class="feature-tag">policy</span><span class="feature-tag">keys</span></div>
-                <h3>3. Lock down projects</h3>
-                <p>Review provider slots, caller-lock rules, allowed origins, and emergency revoke controls.</p>
-                <a class="action" href="/app/keys">open provider slots</a>
+
+              <div class="card visual-card">
+                <div class="section-title">
+                  <div>
+                    <h2>Project coverage</h2>
+                    <p>How much of the organization has key slots and observed runtime activity.</p>
+                  </div>
+                </div>
+                <div id="projectCoverageList" class="coverage-grid"><div class="empty">Loading coverage...</div></div>
               </div>
+            </section>
+
+            <section class="card">
+              <div class="section-title">
+                <div>
+                  <h2>Provider usage</h2>
+                  <p>Provider slots grouped with recent proxy activity, denials, and material state.</p>
+                </div>
+                <span id="providerUsageMeta" class="mini">loading</span>
+              </div>
+              <div id="providerUsageList" class="provider-bars"><div class="empty">Loading provider usage...</div></div>
             </section>
           </div>
 
-          <aside class="overview-rail" aria-label="Pilot readiness summary">
+          <aside class="overview-rail" aria-label="Workspace readiness summary">
             <div class="rail-card accent">
-              <div class="rail-title">Pilot path</div>
+              <div class="rail-title">Rollout path</div>
               <div class="rail-value">1</div>
               <p class="rail-copy">Workload, provider path, owner group, and success metric before expansion.</p>
-              <div class="rail-actions">
-                <a class="action primary" href="/app/pilot">pilot proposal</a>
-              </div>
+              <span class="tag good">scoped rollout</span>
             </div>
             <div class="rail-card">
               <div class="rail-title">Key exposure response</div>
               <p class="rail-copy">Provider Slots ties scanner findings, slot containment, emergency revoke, rotation review, and customer-safe incident JSON together.</p>
-              <a class="tag good" href="/app/keys">open provider slots</a>
+              <span class="tag good">contained in slots</span>
             </div>
             <div class="rail-card">
               <div class="rail-title">Evidence packet</div>
               <p class="rail-copy">Readiness, access review, audit, policy, rollout, release, tester, and exposure proof for security review.</p>
-              <a class="tag good" href="/app/evidence">open evidence</a>
+              <span class="tag good">customer safe</span>
             </div>
             <div class="rail-card">
-              <div class="rail-title">Next customer session</div>
+              <div class="rail-title">Customer enablement</div>
               <p class="rail-copy">Prepare tester login state, scenario, feedback capture, blocker notes, and success criteria.</p>
-              <a class="tag" href="/app/testers">open testers</a>
+              <span class="tag">session ready</span>
             </div>
           </aside>
+        </section>
+      </section>
+
+      <section id="tab-keymap" class="tab-panel" data-tab-panel="keymap" hidden>
+        <section class="grid two">
+          <div class="card">
+            <div class="section-title">
+              <div>
+                <h2>Key map by provider</h2>
+                <p>Provider families, active slots, recent calls, denied requests, and material readiness.</p>
+              </div>
+              <span id="keyMapMeta" class="mini">loading</span>
+            </div>
+            <div id="keyMapProviderList" class="provider-bars"><div class="empty">Loading key map...</div></div>
+          </div>
+
+          <div class="card">
+            <div class="section-title">
+              <div>
+                <h2>Material readiness</h2>
+                <p>Live-sealed slots are ready for real upstream dispatch; placeholders need sealed ingest before production use.</p>
+              </div>
+            </div>
+            <div id="keyMaterialRows" class="coverage-grid"><div class="empty">Loading material summary...</div></div>
+          </div>
+        </section>
+
+        <section class="card">
+          <div class="section-title">
+            <div>
+              <h2>Organization coverage</h2>
+              <p>Project-level coverage for provider slots, observed runtime traffic, and attention signals.</p>
+            </div>
+          </div>
+          <div id="keyCoverageRows" class="coverage-grid"><div class="empty">Loading organization coverage...</div></div>
         </section>
       </section>
 
@@ -615,21 +829,21 @@ export function renderEnterpriseDashboardPage(env: EnterpriseControlPlaneEnv = {
 
         <section class="grid two">
           <div class="card">
-            <div class="section-title"><h2>Evidence links</h2><span class="mini">safe to open</span></div>
+            <div class="section-title"><h2>Evidence posture</h2><span class="mini">customer safe</span></div>
             <div class="list">
-              <div class="row"><div><div class="row-title">Production readiness</div><div class="row-sub">Proof that the live runtime and executor report production-ready.</div></div><a class="tag good" href="/readiness" target="_blank" rel="noopener">open</a></div>
-              <div class="row"><div><div class="row-title">Release evidence</div><div class="row-sub">Customer-safe proof of build tag, approval, verification, rollout state, and rollback path.</div></div><a class="tag good" href="/app/release">open</a></div>
-              <div class="row"><div><div class="row-title">Pilot testers</div><div class="row-sub">Browser-local roster, login readiness, scenario assignment, feedback, and blockers for paid-user sessions.</div></div><a class="tag good" href="/app/testers">open</a></div>
-              <div class="row"><div><div class="row-title">Audit export</div><div class="row-sub">CSV evidence for governance and runtime events.</div></div><a class="tag good" href="/api/v1/enterprise/audit?format=csv&days=30">export</a></div>
-              <div class="row"><div><div class="row-title">Access review</div><div class="row-sub">CSV evidence for members, roles, and project access.</div></div><a class="tag good" href="/api/v1/enterprise/members/access-review?format=csv">export</a></div>
+              <div class="row"><div><div class="row-title">Production readiness</div><div class="row-sub">Proof that the live runtime and executor report production-ready.</div></div><span class="tag good">ready</span></div>
+              <div class="row"><div><div class="row-title">Release evidence</div><div class="row-sub">Customer-safe proof of build tag, approval, verification, rollout state, and rollback path.</div></div><span class="tag good">recorded</span></div>
+              <div class="row"><div><div class="row-title">Tester readiness</div><div class="row-sub">Browser-local roster, login readiness, scenario assignment, feedback, and blockers for customer sessions.</div></div><span class="tag good">tracked</span></div>
+              <div class="row"><div><div class="row-title">Audit export</div><div class="row-sub">CSV evidence for governance and runtime events.</div></div><span class="tag good">available</span></div>
+              <div class="row"><div><div class="row-title">Access review</div><div class="row-sub">CSV evidence for members, roles, and project access.</div></div><span class="tag good">available</span></div>
             </div>
           </div>
           <div class="card">
-            <div class="section-title"><h2>Security controls</h2><span class="mini">where to work</span></div>
+            <div class="section-title"><h2>Security controls</h2><span class="mini">coverage</span></div>
             <div class="list">
-              <div class="row"><div><div class="row-title">Caller lock and provider policy</div><div class="row-sub">Limit execution by origin, gateway, device, provider, method, host, path, and rate.</div></div><a class="tag" href="/app/control">control</a></div>
-              <div class="row"><div><div class="row-title">Provider slots</div><div class="row-sub">View active provider keys and emergency-revoke a slot.</div></div><a class="tag" href="/app/keys">keys</a></div>
-              <div class="row"><div><div class="row-title">Operator runbooks</div><div class="row-sub">Verification, evidence, deploys, secret rotation, DNS, edge, SSH, and cleanup.</div></div><a class="tag" href="/app/runbooks">runbooks</a></div>
+              <div class="row"><div><div class="row-title">Caller lock and provider policy</div><div class="row-sub">Limit execution by origin, gateway, device, provider, method, host, path, and rate.</div></div><span class="tag">policy</span></div>
+              <div class="row"><div><div class="row-title">Provider slots</div><div class="row-sub">Active provider keys stay protected behind material mode and emergency revoke controls.</div></div><span class="tag">keys</span></div>
+              <div class="row"><div><div class="row-title">Operational runbooks</div><div class="row-sub">Verification, evidence, deploys, secret rotation, DNS, edge, SSH, and cleanup.</div></div><span class="tag">ops</span></div>
             </div>
           </div>
         </section>
@@ -640,17 +854,12 @@ export function renderEnterpriseDashboardPage(env: EnterpriseControlPlaneEnv = {
           <div class="card">
             <div class="section-title"><h2>Access and alerts</h2><span id="accessMeta" class="mini"></span></div>
             <div id="accessList" class="list"><div class="empty">Loading access...</div></div>
-            <div class="actions">
-              <a class="action" href="/app/members">open members</a>
-              <a class="action" href="/app/alerts">open alerts</a>
-              <a class="action" href="/app/org">open Org + SSO</a>
-            </div>
           </div>
           <div class="card">
             <div class="section-title"><h2>Setup access checklist</h2><span class="mini">before rollout</span></div>
             <div class="list">
               <div class="row"><div><div class="row-title">SSO path</div><div class="row-sub">Use Entra ID through Supabase SAML broker/session provider for customer-facing SSO.</div></div><span class="tag">Org + SSO</span></div>
-              <div class="row"><div><div class="row-title">Admin review</div><div class="row-sub">Confirm owners/admins are the right people before onboarding a business team.</div></div><span class="tag">Members</span></div>
+              <div class="row"><div><div class="row-title">Access review</div><div class="row-sub">Confirm owners and admins are the right people before expanding team access.</div></div><span class="tag">Members</span></div>
               <div class="row"><div><div class="row-title">Alert delivery</div><div class="row-sub">Set destinations and test delivery before relying on incident notifications.</div></div><span class="tag">Alerts</span></div>
             </div>
           </div>
@@ -672,151 +881,17 @@ export function renderEnterpriseDashboardPage(env: EnterpriseControlPlaneEnv = {
 
         <section class="grid two">
           <div class="card">
-            <div class="section-title"><h2>Recent audit</h2><a class="mini" href="/api/v1/enterprise/audit?format=csv&days=30">export CSV</a></div>
+            <div class="section-title"><h2>Recent audit</h2><span class="mini">latest events</span></div>
             <div id="auditList" class="list"><div class="empty">Loading audit...</div></div>
           </div>
 
           <div class="card">
-            <div class="section-title"><h2>Operator shortcuts</h2><span class="mini">business-safe links</span></div>
-            <div class="list">
-              <div class="row"><div><div class="row-title">Enterprise docs</div><div class="row-sub">Open the enterprise-only docs index for setup, SSO, key exposure response, evidence, and runbooks.</div></div><a class="tag good" href="/app/docs">open</a></div>
-              <div class="row"><div><div class="row-title">Runbooks</div><div class="row-sub">Open the built deploy, evidence, verification, hardening, and cleanup playbooks.</div></div><a class="tag good" href="/app/runbooks">open</a></div>
-              <div class="row"><div><div class="row-title">Evidence packet</div><div class="row-sub">Assemble runtime readiness, access review, audit, provider posture, and launch proof for customer security review.</div></div><a class="tag good" href="/app/evidence">open</a></div>
-              <div class="row"><div><div class="row-title">Release evidence</div><div class="row-sub">Record build tag, approval, verification, rollout state, and rollback path after each enterprise deploy.</div></div><a class="tag good" href="/app/release">open</a></div>
-              <div class="row"><div><div class="row-title">Pilot testers</div><div class="row-sub">Prepare tester roster, login status, scenarios, feedback, and blockers for paid-user review sessions.</div></div><a class="tag good" href="/app/testers">open</a></div>
-              <div class="row"><div><div class="row-title">Rollout Manager</div><div class="row-sub">Plan one workload cutover with owners, canary, rollback, blockers, and evidence export.</div></div><a class="tag good" href="/app/rollout">open</a></div>
-              <div class="row"><div><div class="row-title">Technical guide</div><div class="row-sub">Open the enterprise implementation reference for identity, network, key custody, attestation, and troubleshooting.</div></div><a class="tag good" href="/app/technical-guide">open</a></div>
-              <div class="row"><div><div class="row-title">Launch plans</div><div class="row-sub">Track packaging, GCP edge readiness, and contract-facing guardrails.</div></div><a class="tag" href="/app/plans">open</a></div>
-              <div class="row"><div><div class="row-title">AI Proof Verifier</div><div class="row-sub">Register external models and verify proof bundles without VaultProof running the model.</div></div><a class="tag warn" href="/app/verifier">beta</a></div>
-              <div class="row"><div><div class="row-title">Scanner</div><div class="row-sub">Record redacted repo exposure findings, owners, rotation status, and evidence for customer review.</div></div><a class="tag good" href="/app/scanner">open</a></div>
-            </div>
+            <div class="section-title"><h2>Attention signals</h2><span class="mini">from overview</span></div>
+            <div id="operationSummaryList" class="list"><div class="empty">Loading attention signals...</div></div>
           </div>
         </section>
       </section>
 
-      <section id="tab-features" class="tab-panel" data-tab-panel="features" hidden>
-        <section class="card" aria-label="Enterprise workspace tools">
-          <div class="section-title">
-            <div>
-              <h2>Workspace tools</h2>
-              <p>Use these pages to configure the account, monitor usage, export evidence, and run operator checks.</p>
-            </div>
-            <span class="mini">operational links</span>
-          </div>
-          <div class="feature-grid">
-            <a class="feature-card" href="/app/docs">
-              <div class="feature-tags"><span class="feature-tag">live</span><span class="feature-tag">docs</span></div>
-              <h3>Enterprise docs</h3>
-              <p>Enterprise-only documentation for setup, SSO, provider slots, key exposure response, evidence, and operational boundaries.</p>
-            </a>
-            <a class="feature-card" href="/app/setup">
-              <div class="feature-tags"><span class="feature-tag">live</span><span class="feature-tag">start here</span></div>
-              <h3>Setup guide</h3>
-              <p>Enterprise implementation guide for mapping environments, connecting SSO, choosing gateways, configuring projects, protecting provider slots, and going live safely.</p>
-            </a>
-            <a class="feature-card" href="/app/evidence">
-              <div class="feature-tags"><span class="feature-tag">live</span><span class="feature-tag">proof</span></div>
-              <h3>Evidence packet</h3>
-              <p>Customer proof packet with readiness, access review, audit export links, provider posture, rollout workflow, and downloadable JSON summary.</p>
-            </a>
-            <a class="feature-card" href="/app/release">
-              <div class="feature-tags"><span class="feature-tag">live</span><span class="feature-tag">change proof</span></div>
-              <h3>Release evidence</h3>
-              <p>Record the active build/image tag, approval, verification result, rollout state, rollback path, and customer-safe release notes after each deploy.</p>
-            </a>
-            <a class="feature-card" href="/app/testers">
-              <div class="feature-tags"><span class="feature-tag">live</span><span class="feature-tag">paid pilot</span></div>
-              <h3>Pilot testers</h3>
-              <p>Prepare paid-user tester roster, login readiness, scenario assignments, customer-safe feedback, blockers, and a copyable JSON packet before guided sessions.</p>
-            </a>
-            <a class="feature-card" href="/app/rollout">
-              <div class="feature-tags"><span class="feature-tag">live</span><span class="feature-tag">cutover</span></div>
-              <h3>Rollout Manager</h3>
-              <p>Move one workload into VaultProof with owners, integration mode, canary percentage, rollback path, blockers, copy-safe snippets, and evidence export.</p>
-            </a>
-            <a class="feature-card" href="/app/technical-guide">
-              <div class="feature-tags"><span class="feature-tag">live</span><span class="feature-tag">technical</span></div>
-              <h3>Technical guide</h3>
-              <p>Detailed enterprise reference for identity, GCP/network patterns, caller lock, key custody, attestation, evidence, rollout, and troubleshooting.</p>
-            </a>
-            <a class="feature-card" href="/readiness" target="_blank" rel="noopener">
-              <div class="feature-tags"><span class="feature-tag">live</span><span class="feature-tag">proof</span></div>
-              <h3>Production readiness</h3>
-              <p>Current production gate for runtime, executor, attestation, and Cloud KMS posture.</p>
-            </a>
-            <a class="feature-card" href="/health" target="_blank" rel="noopener">
-              <div class="feature-tags"><span class="feature-tag">live</span><span class="feature-tag">health</span></div>
-              <h3>Control-plane health</h3>
-              <p>Lightweight status endpoint for GCP edge, monitoring, runtime checks, and operators.</p>
-            </a>
-            <a class="feature-card" href="/app/control">
-              <div class="feature-tags"><span class="feature-tag">live</span><span class="feature-tag">policy</span></div>
-              <h3>Policy control</h3>
-              <p>Edit project policy, provider allowlists, caller-lock rules, rate limits, and secure execution settings.</p>
-            </a>
-            <a class="feature-card" href="/app/verifier">
-              <div class="feature-tags"><span class="feature-tag">visible</span><span class="feature-tag pending">verifier beta</span></div>
-              <h3>AI Proof Verifier</h3>
-              <p>Register models that run outside VaultProof, verify submitted proof bundles, store evidence, and bind results to project policy, audit, and runtime posture.</p>
-            </a>
-            <a class="feature-card" href="/app/projects">
-              <div class="feature-tags"><span class="feature-tag">live</span><span class="feature-tag">inventory</span></div>
-              <h3>Project inventory</h3>
-              <p>Review project health, provider slot posture, policy status, and quick paths into Control.</p>
-            </a>
-            <a class="feature-card" href="/app/keys">
-              <div class="feature-tags"><span class="feature-tag">live</span><span class="feature-tag">secrets</span></div>
-              <h3>Provider slots</h3>
-              <p>View active providers, protected email API key slots, emergency revoke controls, rotation checklists, and Cloud KMS notes.</p>
-            </a>
-            <a class="feature-card" href="/app/activity">
-              <div class="feature-tags"><span class="feature-tag">live</span><span class="feature-tag">runtime</span></div>
-              <h3>Runtime activity</h3>
-              <p>See proxy and executor events, status codes, latency, provider request IDs, and attestation summaries.</p>
-            </a>
-            <a class="feature-card" href="/app/members">
-              <div class="feature-tags"><span class="feature-tag">live</span><span class="feature-tag">access</span></div>
-              <h3>Members and invites</h3>
-              <p>Manage members, pending invites, roles, project assignments, and access-review exports.</p>
-            </a>
-            <a class="feature-card" href="/app/audit">
-              <div class="feature-tags"><span class="feature-tag">live</span><span class="feature-tag">evidence</span></div>
-              <h3>Audit and exports</h3>
-              <p>Search governance/runtime events, export CSV evidence, and review customer-verifiable metadata.</p>
-            </a>
-            <a class="feature-card" href="/app/alerts">
-              <div class="feature-tags"><span class="feature-tag">live</span><span class="feature-tag">monitoring</span></div>
-              <h3>Alerts</h3>
-              <p>Manage alert destinations, delivery logs, dispatch runs, policy state, and admin test-send workflow.</p>
-            </a>
-            <a class="feature-card" href="/app/org">
-              <div class="feature-tags"><span class="feature-tag">live</span><span class="feature-tag">SSO</span></div>
-              <h3>Org and Entra SSO</h3>
-              <p>Configure organization settings and the Microsoft Entra ID SSO path through Supabase SAML.</p>
-            </a>
-            <a class="feature-card" href="/app/settings">
-              <div class="feature-tags"><span class="feature-tag">live</span><span class="feature-tag">tenant</span></div>
-              <h3>Tenant settings</h3>
-              <p>Review tenant defaults, organization identity, SSO state, and session/security notices.</p>
-            </a>
-            <a class="feature-card" href="/app/plans">
-              <div class="feature-tags"><span class="feature-tag">live</span><span class="feature-tag pending">cutover pending</span></div>
-              <h3>Launch plans</h3>
-              <p>Track GCP edge status, launch readiness, limits, and handoff notes.</p>
-            </a>
-            <a class="feature-card" href="/app/scanner">
-              <div class="feature-tags"><span class="feature-tag">live</span><span class="feature-tag">exposure</span></div>
-              <h3>Scanner exposure intake</h3>
-              <p>Record metadata-only repository exposure findings, redacted evidence references, owners, rotation state, and remediation status without uploading secrets.</p>
-            </a>
-            <a class="feature-card" href="/app/runbooks">
-              <div class="feature-tags"><span class="feature-tag">live</span><span class="feature-tag">ops</span></div>
-              <h3>Operator runbooks</h3>
-              <p>Verification, evidence, deploy, secret rotation, DNS, edge, SSH, and cleanup commands.</p>
-            </a>
-          </div>
-        </section>
-      </section>
         </section>
       </section>
     </main>
@@ -842,6 +917,131 @@ export function renderEnterpriseDashboardPage(env: EnterpriseControlPlaneEnv = {
       function number(value) {
         var n = Number(value || 0);
         return Number.isFinite(n) ? n.toLocaleString() : '0';
+      }
+      function rawNumber(value) {
+        var n = Number(value || 0);
+        return Number.isFinite(n) && n > 0 ? n : 0;
+      }
+      function percent(part, total) {
+        total = rawNumber(total);
+        return total > 0 ? Math.round((rawNumber(part) / total) * 100) : 0;
+      }
+      function plural(value, singular, pluralLabel) {
+        return rawNumber(value) === 1 ? singular : (pluralLabel || singular + 's');
+      }
+      function setDonut(summary) {
+        summary = summary || {};
+        var total = rawNumber(summary.totalSlots);
+        var live = rawNumber(summary.liveSealedSlots);
+        var placeholder = rawNumber(summary.placeholderSlots);
+        var mixed = rawNumber(summary.mixedSlots);
+        var missing = rawNumber(summary.missingSlots);
+        var values = [
+          { label: 'Live sealed', value: live, color: '#14b8a6' },
+          { label: 'Placeholder', value: placeholder, color: '#b45309' },
+          { label: 'Mixed', value: mixed, color: '#2563eb' },
+          { label: 'Missing', value: missing, color: '#dc2626' },
+        ];
+        var cursor = 0;
+        var stops = values.map(function(item) {
+          var size = total > 0 ? (item.value / total) * 360 : 0;
+          var stop = item.color + ' ' + cursor.toFixed(2) + 'deg ' + (cursor + size).toFixed(2) + 'deg';
+          cursor += size;
+          return stop;
+        });
+        var donut = byId('materialDonut');
+        if (donut) {
+          donut.style.background = total > 0 ? 'conic-gradient(' + stops.join(', ') + ')' : 'conic-gradient(#edf1f5 0deg 360deg)';
+          donut.innerHTML = '<div class="donut-center"><strong>' + percent(live, total) + '%</strong><span>live</span></div>';
+        }
+        var legend = byId('materialLegend');
+        if (legend) {
+          legend.innerHTML = values.map(function(item) {
+            return '<div class="legend-row"><span class="legend-dot" style="--dot:' + item.color + '"></span><span>' + item.label + '</span><strong>' + number(item.value) + '</strong></div>';
+          }).join('');
+        }
+      }
+      function renderTrafficBreakdown(traffic) {
+        traffic = traffic || {};
+        var total = rawNumber(traffic.totalCalls);
+        var ok = rawNumber(traffic.okCalls);
+        var denied = rawNumber(traffic.deniedCalls);
+        var otherErrors = rawNumber(traffic.otherErrorCalls);
+        var segments = [
+          { label: 'Successful', value: ok, color: '#14b8a6' },
+          { label: 'Denied', value: denied, color: '#b45309' },
+          { label: 'Other errors', value: otherErrors, color: '#dc2626' },
+        ];
+        var bar = byId('trafficOutcomeBar');
+        if (bar) {
+          bar.innerHTML = total > 0
+            ? segments.map(function(item) {
+                return '<span class="bar-segment" style="--width:' + percent(item.value, total) + '%;--fill:' + item.color + '"></span>';
+              }).join('')
+            : '<span class="bar-segment" style="--width:100%;--fill:#edf1f5"></span>';
+        }
+        text('trafficMeta', number(total) + ' ' + plural(total, 'call'));
+        var legend = byId('trafficLegend');
+        if (legend) {
+          legend.innerHTML = segments.map(function(item) {
+            return '<div class="legend-row"><span class="legend-dot" style="--dot:' + item.color + '"></span><span>' + item.label + '</span><strong>' + number(item.value) + '</strong></div>';
+          }).join('');
+        }
+      }
+      function coverageItem(label, value, detail, width, tone) {
+        var color = tone === 'bad' ? '#dc2626' : tone === 'warn' ? '#b45309' : tone === 'blue' ? '#2563eb' : '#14b8a6';
+        return '<div class="coverage-item"><div class="coverage-top"><span class="coverage-label">' + escapeHtml(label) + '</span><strong class="coverage-value">' + escapeHtml(value) + '</strong></div><div class="provider-meta">' + escapeHtml(detail) + '</div><div class="meter"><span style="--width:' + Math.max(0, Math.min(100, width)) + '%;--fill:' + color + '"></span></div></div>';
+      }
+      function renderCoverageRows(id, coverage, summary) {
+        coverage = coverage || {};
+        summary = summary || {};
+        var totalProjects = rawNumber(coverage.totalProjects);
+        var withSlots = rawNumber(coverage.withProviderSlots);
+        var withTraffic = rawNumber(coverage.withTraffic);
+        var needingAttention = rawNumber(coverage.needingAttention);
+        var totalSlots = rawNumber(summary.totalSlots);
+        var live = rawNumber(summary.liveSealedSlots);
+        var rows = [
+          coverageItem('Projects with key slots', number(withSlots) + '/' + number(totalProjects), number(rawNumber(coverage.withoutProviderSlots)) + ' projects without active slots', percent(withSlots, totalProjects), withSlots === totalProjects && totalProjects ? 'good' : 'warn'),
+          coverageItem('Projects with traffic', number(withTraffic) + '/' + number(totalProjects), 'Proxy activity observed in the health window', percent(withTraffic, totalProjects), withTraffic ? 'blue' : 'warn'),
+          coverageItem('Material ready', number(live) + '/' + number(totalSlots), 'Live-sealed slots ready for upstream dispatch', percent(live, totalSlots), live === totalSlots && totalSlots ? 'good' : 'warn'),
+          coverageItem('Needs attention', number(needingAttention), 'Projects with denied or error traffic', totalProjects ? percent(needingAttention, totalProjects) : 0, needingAttention ? 'bad' : 'good'),
+        ];
+        var list = byId(id);
+        if (list) list.innerHTML = rows.join('');
+      }
+      function renderMaterialRows(summary) {
+        summary = summary || {};
+        var total = rawNumber(summary.totalSlots);
+        var rows = [
+          coverageItem('Live sealed', number(summary.liveSealedSlots), 'Ready provider material', percent(summary.liveSealedSlots, total), 'good'),
+          coverageItem('Placeholder', number(summary.placeholderSlots), 'Placeholder slots awaiting sealed ingest', percent(summary.placeholderSlots, total), rawNumber(summary.placeholderSlots) ? 'warn' : 'good'),
+          coverageItem('Mixed or missing', number(rawNumber(summary.mixedSlots) + rawNumber(summary.missingSlots)), 'Incomplete encrypted shares', percent(rawNumber(summary.mixedSlots) + rawNumber(summary.missingSlots), total), rawNumber(summary.mixedSlots) + rawNumber(summary.missingSlots) ? 'bad' : 'good'),
+        ];
+        var list = byId('keyMaterialRows');
+        if (list) list.innerHTML = rows.join('');
+      }
+      function renderProviderUsageList(id, usage, totalSlots) {
+        var list = byId(id);
+        if (!list) return;
+        usage = Array.isArray(usage) ? usage : [];
+        var maxValue = usage.reduce(function(max, item) {
+          return Math.max(max, rawNumber(item.recentCalls), rawNumber(item.slots));
+        }, 1);
+        list.innerHTML = usage.length ? usage.map(function(item) {
+          var slots = rawNumber(item.slots);
+          var live = rawNumber(item.liveSealedSlots);
+          var review = rawNumber(item.placeholderSlots) + rawNumber(item.mixedSlots) + rawNumber(item.missingSlots);
+          var calls = rawNumber(item.recentCalls);
+          var denied = rawNumber(item.denied);
+          var errors = rawNumber(item.errors);
+          var tone = denied || errors ? 'warn' : live && !review ? 'good' : 'warn';
+          var labelText = Array.isArray(item.labels) && item.labels.length ? item.labels.join(', ') : item.provider;
+          var width = Math.max(percent(calls || slots, maxValue), slots ? 8 : 3);
+          return '<div class="provider-row"><div class="provider-row-head"><div><div class="provider-name">' + escapeHtml(item.provider || 'unknown') + '</div><div class="provider-meta">' + escapeHtml(labelText) + ' - ' + number(slots) + ' ' + plural(slots, 'slot') + ' - ' + number(calls) + ' recent ' + plural(calls, 'call') + '</div></div><span class="tag ' + tone + '">' + (denied || errors ? 'watch' : live ? 'ready' : 'setup') + '</span></div><div class="meter"><span style="--width:' + width + '%;--fill:' + (tone === 'good' ? '#14b8a6' : '#b45309') + '"></span></div><div class="provider-meta">' + number(live) + ' live sealed - ' + number(review) + ' needs review - last ' + escapeHtml(relativeTime(item.lastActivity)) + '</div></div>';
+        }).join('') : '<div class="empty">No provider slots or runtime activity are visible yet.</div>';
+        if (id === 'providerUsageList') text('providerUsageMeta', number(usage.length) + ' provider ' + plural(usage.length, 'group'));
+        if (id === 'keyMapProviderList') text('keyMapMeta', number(totalSlots) + ' active ' + plural(totalSlots, 'slot'));
       }
       function relativeTime(value) {
         if (!value) return 'never';
@@ -911,16 +1111,16 @@ export function renderEnterpriseDashboardPage(env: EnterpriseControlPlaneEnv = {
         var runtimeTier = payload && payload.runtime_tier === 'shared-demo' ? 'shared-demo' : 'dedicated-production';
         var sharedDemo = runtimeTier === 'shared-demo';
         text('kpiRuntime', ready ? 'ready' : 'watch');
-        text('kpiRuntimeSub', ready ? (sharedDemo ? 'shared pilot runtime' : 'GCP confidential production') : 'needs review');
+        text('kpiRuntimeSub', ready ? (sharedDemo ? 'shared enterprise runtime' : 'GCP confidential production') : 'needs review');
         var pill = byId('runtimePill');
         if (pill) {
-          pill.textContent = ready ? (sharedDemo ? 'shared pilot ready' : 'production ready') : 'not production ready';
+          pill.textContent = ready ? (sharedDemo ? 'shared runtime ready' : 'production ready') : 'not production ready';
           pill.className = 'status-pill ' + (ready ? '' : 'bad');
         }
         var blockers = Array.isArray(payload && payload.production_blockers) ? payload.production_blockers : [];
         text('runtimeDetail', ready
           ? (sharedDemo
-            ? 'Shared enterprise pilot runtime is confidential-ready. It is suitable for guided first-user walkthroughs, but it is not a dedicated customer production runtime.'
+            ? 'Shared enterprise runtime is confidential-ready. It is suitable for scoped customer evaluation, but it is not a dedicated customer production runtime.'
             : 'GCP edge, control plane, executor, attestation, replay protection, and Cloud KMS all report production-ready.')
           : (blockers.length ? blockers.join(' | ') : 'Readiness is incomplete.'));
       }
@@ -951,13 +1151,56 @@ export function renderEnterpriseDashboardPage(env: EnterpriseControlPlaneEnv = {
       }
       function renderOverview(overview) {
         overview = overview || {};
+        var slotSummary = overview.providerSlotSummary || {};
+        var coverage = overview.projectCoverage || {};
+        var traffic = overview.trafficBreakdown || {};
+        var providerUsage = Array.isArray(overview.providerUsage) ? overview.providerUsage : [];
+        var totalSlots = rawNumber(slotSummary.totalSlots || overview.totalKeys);
+        var liveSealed = rawNumber(slotSummary.liveSealedSlots);
+        var needsReview = Math.max(totalSlots - liveSealed, 0);
+        var trafficTotal = rawNumber(traffic.totalCalls || overview.totalCalls);
+        var trafficErrors = rawNumber(traffic.errorCalls || overview.errorCalls);
+        var trafficDenied = rawNumber(traffic.deniedCalls || overview.deniedCalls);
+        var trafficOtherErrors = traffic.otherErrorCalls === undefined ? Math.max(trafficErrors - trafficDenied, 0) : rawNumber(traffic.otherErrorCalls);
+        var trafficOk = traffic.okCalls === undefined ? Math.max(trafficTotal - trafficErrors, 0) : rawNumber(traffic.okCalls);
         text('kpiProjects', number(overview.totalProjects));
-        text('kpiProjectsSub', number(overview.totalKeys) + ' active key slots');
+        text('kpiProjectsSub', number(totalSlots) + ' active key slots');
         text('kpiCalls', number(overview.totalCalls));
         text('kpiCallsSub', number(overview.deniedCalls) + ' denied / ' + number(overview.errorCalls) + ' errors');
+        text('heroProviderFamilies', number(slotSummary.providerCount || overview.providerCount));
+        text('heroKeySlots', number(totalSlots));
+        text('heroMaterialReady', percent(liveSealed, totalSlots) + '%');
+        text('heroTrafficMix', number(trafficOk) + '/' + number(trafficTotal));
+        text('contextKeySlots', number(totalSlots));
+        text('contextProviderFamilies', number(slotSummary.providerCount || overview.providerCount));
+        text('contextProjectsWithSlots', number(rawNumber(coverage.withProviderSlots)) + '/' + number(rawNumber(coverage.totalProjects || overview.totalProjects)));
+        text('contextProjectsWithTraffic', number(rawNumber(coverage.withTraffic)) + '/' + number(rawNumber(coverage.totalProjects || overview.totalProjects)));
+        text('summaryLiveSealed', number(liveSealed));
+        text('summaryNeedsReview', number(needsReview));
+        text('summaryDenied', number(overview.deniedCalls));
+        setDonut(slotSummary);
+        renderTrafficBreakdown({
+          totalCalls: trafficTotal,
+          okCalls: trafficOk,
+          deniedCalls: trafficDenied,
+          otherErrorCalls: trafficOtherErrors,
+        });
+        renderCoverageRows('projectCoverageList', coverage, slotSummary);
+        renderCoverageRows('keyCoverageRows', coverage, slotSummary);
+        renderMaterialRows(slotSummary);
+        renderProviderUsageList('providerUsageList', providerUsage, totalSlots);
+        renderProviderUsageList('keyMapProviderList', providerUsage, totalSlots);
         var review = overview.pilotReview || {};
         text('projectHealthMeta', review.headline || '');
         text('activityMeta', number((overview.recentActivity || []).length) + ' recent events');
+        var alerts = Array.isArray(overview.alerts) ? overview.alerts : [];
+        var operationList = byId('operationSummaryList');
+        if (operationList) {
+          operationList.innerHTML = alerts.length ? alerts.slice(0, 5).map(function(alert) {
+            var tone = alert.severity === 'critical' ? 'bad' : alert.severity === 'warning' ? 'warn' : 'good';
+            return '<div class="row"><div><div class="row-title">' + escapeHtml(alert.title || 'Attention signal') + '</div><div class="row-sub">' + escapeHtml(alert.detail || '') + '</div></div><span class="tag ' + tone + '">' + escapeHtml(alert.severity || 'info') + '</span></div>';
+          }).join('') : '<div class="row"><div><div class="row-title">No active attention signals</div><div class="row-sub">Provider slots, traffic, and project health do not show dashboard-level blockers.</div></div><span class="tag good">clear</span></div>';
+        }
         var projects = Array.isArray(overview.projectHealth) ? overview.projectHealth : [];
         var projectList = byId('projectHealthList');
         if (projectList) {
