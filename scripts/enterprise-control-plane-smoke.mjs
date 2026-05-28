@@ -3061,6 +3061,7 @@ async function assertEnterpriseLoginRoute() {
       'dashboard-refresh-control',
       'dashboard-context-grid',
       'dashboard-overview-grid',
+      'top-insight-grid',
       'overview-rail',
       'Workspace status',
       'Needs attention',
@@ -3073,19 +3074,24 @@ async function assertEnterpriseLoginRoute() {
       'Security',
       'Access',
       'Operations',
-      'Provider material',
+      'API calls over time',
+      'callWindowTotal',
+      'callWindowAllowed',
+      'data-call-range="7"',
+      'data-call-range="14"',
+      'data-call-range="30"',
+      'Key readiness',
       'materialDonut',
-      'Traffic outcome',
+      'API call results',
       'trafficOutcomeBar',
       'Project coverage',
       'projectCoverageList',
-      'API call trend',
       'callTrendChart',
       'Provider usage',
       'providerUsageList',
       'Key map by provider',
       'keyMapProviderList',
-      'Material readiness',
+      'Key setup readiness',
       'Organization coverage',
       'providerSlotSummary',
       'providerUsage',
@@ -3103,8 +3109,8 @@ async function assertEnterpriseLoginRoute() {
         throw new Error(`Expected enterprise dashboard feature map to include ${requiredFeature}`);
       }
     }
-    if (dashboardHtml.indexOf('Provider material') > dashboardHtml.indexOf('Needs attention')) {
-      throw new Error('Expected enterprise dashboard overview charts to render before attention items');
+    if (dashboardHtml.indexOf('API calls over time') > dashboardHtml.indexOf('Needs attention')) {
+      throw new Error('Expected enterprise dashboard API call chart to render before attention items');
     }
     for (const forbiddenFeature of [
       'Set up and run your business account.',
@@ -3121,6 +3127,14 @@ async function assertEnterpriseLoginRoute() {
       'Use these pages to configure the account',
       'dashboard-primary-actions',
       'Enterprise key security metrics',
+      'Provider material',
+      'Traffic outcome',
+      'API call trend',
+      'Material readiness',
+      'status-check-grid',
+      'statusMaterial',
+      'statusTraffic',
+      'statusCoverage',
       'Open provider slots',
       'Export evidence',
     ]) {

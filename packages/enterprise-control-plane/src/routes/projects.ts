@@ -445,6 +445,8 @@ type OverviewProviderKey = {
   material_ready?: boolean;
 };
 
+const DASHBOARD_TRAFFIC_WINDOW_DAYS = 30;
+
 function countValue(value: unknown): number {
   const numeric = Number(value || 0);
   return Number.isFinite(numeric) && numeric > 0 ? numeric : 0;
@@ -550,14 +552,14 @@ function emptyAccessLogOverview(source: AccessLogOverview['source']): AccessLogO
   };
 }
 
-function trendStartDate(days = 7): Date {
+function trendStartDate(days = DASHBOARD_TRAFFIC_WINDOW_DAYS): Date {
   const start = new Date();
   start.setUTCHours(0, 0, 0, 0);
   start.setUTCDate(start.getUTCDate() - Math.max(days - 1, 0));
   return start;
 }
 
-function createTrendBuckets(days = 7): Map<string, DailyCallTrend> {
+function createTrendBuckets(days = DASHBOARD_TRAFFIC_WINDOW_DAYS): Map<string, DailyCallTrend> {
   const buckets = new Map<string, DailyCallTrend>();
   const start = trendStartDate(days);
   for (let index = 0; index < days; index += 1) {
@@ -609,7 +611,7 @@ function sortedTrend(buckets: Map<string, DailyCallTrend>): DailyCallTrend[] {
 async function fetchRollupCallTrend(
   supabase: any,
   projectIds: string[],
-  days = 7,
+  days = DASHBOARD_TRAFFIC_WINDOW_DAYS,
 ): Promise<DailyCallTrend[]> {
   if (projectIds.length === 0) return sortedTrend(createTrendBuckets(days));
   const buckets = createTrendBuckets(days);
@@ -659,7 +661,7 @@ function emptyKeyVisualSummary(totalProjects = 0): Record<string, unknown> {
       withTraffic: 0,
       needingAttention: 0,
     },
-    callTrend: sortedTrend(createTrendBuckets()),
+    callTrend: sortedTrend(createTrendBuckets(DASHBOARD_TRAFFIC_WINDOW_DAYS)),
   };
 }
 
@@ -667,6 +669,7 @@ async function fetchRawAccessLogOverview(
   supabase: any,
   projectIds: string[],
   healthWindowSince: string,
+  trendDays = DASHBOARD_TRAFFIC_WINDOW_DAYS,
 ): Promise<AccessLogOverview> {
   const [totalCallsRes, errorCallsRes, deniedCallsRes, recentLogsRes, projectHealthLogsRes] = await Promise.all([
     supabase
@@ -697,7 +700,7 @@ async function fetchRawAccessLogOverview(
   ]);
 
   const projectHealthStats = new Map<string, ProjectHealthAggregate>();
-  const trendBuckets = createTrendBuckets();
+  const trendBuckets = createTrendBuckets(trendDays);
   for (const log of (projectHealthLogsRes?.data || []) as Array<{ project_id: string; status_code: number | null; timestamp: string }>) {
     const existing = projectHealthStats.get(log.project_id) || {
       project_id: log.project_id,
@@ -729,6 +732,7 @@ async function fetchAccessLogOverview(
   supabase: any,
   projectIds: string[],
   healthWindowSince: string,
+  trendDays = DASHBOARD_TRAFFIC_WINDOW_DAYS,
 ): Promise<AccessLogOverview> {
   try {
     const { data, error } = await supabase.rpc('enterprise_project_access_overview', {
@@ -741,7 +745,7 @@ async function fetchAccessLogOverview(
       if (normalized) {
         return {
           ...normalized,
-          callTrend: await fetchRollupCallTrend(supabase, projectIds),
+          callTrend: await fetchRollupCallTrend(supabase, projectIds, trendDays),
         };
       }
     }
@@ -749,7 +753,7 @@ async function fetchAccessLogOverview(
     // The migration may not be applied yet; fall back to the legacy raw-log path.
   }
 
-  return fetchRawAccessLogOverview(supabase, projectIds, healthWindowSince);
+  return fetchRawAccessLogOverview(supabase, projectIds, healthWindowSince, trendDays);
 }
 
 async function listActiveProjects(
@@ -1145,7 +1149,7 @@ async function buildInitOverviewStats(
   supabase: any,
 ): Promise<Record<string, unknown>> {
   const projectIds = projects.map((p) => p.id);
-  const healthWindowDays = 7;
+  const healthWindowDays = DASHBOARD_TRAFFIC_WINDOW_DAYS;
   const healthWindowSince = new Date(Date.now() - (healthWindowDays * 24 * 60 * 60 * 1000)).toISOString();
 
   if (projectIds.length === 0) {
@@ -1259,7 +1263,7 @@ async function fetchProjectsBootstrapRpc(
   userId: string,
   requestedOrganizationId: string | null,
 ): Promise<ProjectsBootstrapPayload | null> {
-  const healthWindowDays = 7;
+  const healthWindowDays = DASHBOARD_TRAFFIC_WINDOW_DAYS;
   const healthWindowSince = new Date(Date.now() - (healthWindowDays * 24 * 60 * 60 * 1000)).toISOString();
 
   try {
