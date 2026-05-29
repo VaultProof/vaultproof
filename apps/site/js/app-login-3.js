@@ -77,6 +77,21 @@
     return /^[a-z0-9][a-z0-9_-]{0,79}$/i.test(trimmed) ? trimmed : '';
   }
 
+  function normalizeNextPath(value) {
+    const raw = String(value || '').trim();
+    if (!raw) return '';
+    try {
+      const parsed = new URL(raw, window.location.origin);
+      if (parsed.origin !== window.location.origin) return '';
+      const pathname = parsed.pathname.replace(/\/+$/, '') || '/app';
+      if (pathname !== '/app' && !pathname.startsWith('/app/')) return '';
+      if (pathname === '/app/login' || pathname === '/app/logout' || pathname === '/app/enterprise-login.js') return '';
+      return `${pathname}${parsed.search}`;
+    } catch {
+      return '';
+    }
+  }
+
   function rememberDashboardOrg(orgId, dashboardPath) {
     if (orgId) localStorage.setItem(ACTIVE_ORG_STORAGE_KEY, orgId);
     return dashboardPath || './';
@@ -132,6 +147,8 @@
     if (promo) params.set('promo', promo);
     const orgTarget = normalizeOrgTarget(urlParams.get('org') || '');
     if (orgTarget) params.set('org', orgTarget);
+    const nextPath = normalizeNextPath(urlParams.get('next') || '');
+    if (nextPath) params.set('next', nextPath);
     if (extraParams && typeof extraParams === 'object') {
       Object.keys(extraParams).forEach(function(key) {
         const value = extraParams[key];
@@ -245,10 +262,11 @@
 
   async function resolveDashboardRoute(session, ssoResolution) {
     if (!session || !session.access_token) return './';
+    const requestedNextPath = IS_ENTERPRISE_HOST ? normalizeNextPath(urlParams.get('next')) : '';
     const dashboardPath = IS_INTERNAL_ADMIN_HOST
       ? '/internal/admin'
       : IS_ENTERPRISE_HOST
-        ? './dashboard'
+        ? requestedNextPath || './dashboard'
         : './';
     if (IS_INTERNAL_ADMIN_HOST) return dashboardPath;
 
@@ -272,7 +290,7 @@
           'Content-Type': 'application/json',
         },
       });
-      if (!res.ok) return './';
+      if (!res.ok) return dashboardPath;
 
       const payload = await res.json().catch(function() { return null; });
       const data = payload && typeof payload === 'object' && payload.data ? payload.data : payload;
@@ -313,10 +331,10 @@
         }
       }
 
-      return './';
+      return IS_ENTERPRISE_HOST ? dashboardPath : './';
     } catch (error) {
       console.warn('Dashboard route resolution failed:', error);
-      return './';
+      return dashboardPath;
     }
   }
 
@@ -335,10 +353,29 @@
     }
   }
 
+  async function establishEnterpriseCustomerSession(session) {
+    if (!IS_ENTERPRISE_HOST || !session || !session.access_token) return;
+    const res = await fetch('/api/v1/enterprise/session', {
+      method: 'POST',
+      headers: {
+        Authorization: 'Bearer ' + session.access_token,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        purpose: 'customer_app_session',
+      }),
+    });
+    if (!res.ok) {
+      const payload = await res.json().catch(function() { return null; });
+      throw new Error((payload && payload.error) || 'Enterprise session could not be established.');
+    }
+  }
+
   async function finalizeAuthenticatedSession(session, user, cliContext) {
     if (!session) return;
     storeLocalSession(session, user);
     await establishInternalAdminSession(session);
+    await establishEnterpriseCustomerSession(session);
     await redeemPendingPromo(session);
     if (redirectToCli(cliContext, session, user)) return;
     const ssoResolution = await resolveSsoMembership(session);
@@ -750,6 +787,12 @@
     const forceLogout = urlParams.get('logout') === '1';
     if (!forceLogout) return false;
     clearStoredAuth();
+    if (IS_ENTERPRISE_HOST) {
+      fetch('/api/v1/enterprise/session', {
+        method: 'DELETE',
+        credentials: 'same-origin',
+      }).catch(function() {});
+    }
     sbClient.auth.signOut({ scope: 'global' }).catch(function() {});
     if (!urlParams.get('code')) {
       window.history.replaceState({}, '', '/app/login');

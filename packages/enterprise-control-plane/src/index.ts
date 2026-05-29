@@ -11,6 +11,12 @@ import { renderEnterpriseControlPage, renderEnterpriseOrgPage, renderEnterpriseP
 import { renderEnterpriseDashboardPage } from './dashboard-page.js';
 import { renderEnterpriseHomepage } from './homepage-page.js';
 import {
+  authenticateEnterpriseCustomerSession,
+  authenticateUser,
+  clearEnterpriseCustomerSessionCookie,
+  createEnterpriseCustomerSessionCookie,
+} from './auth.js';
+import {
   authorizeInternalAdmin,
   clearInternalAdminSessionCookie,
   handleInternalAdminRoutes,
@@ -55,6 +61,78 @@ function redirectToInternalAdminLogin(url: URL): Response {
       location: loginUrl.pathname,
       'cache-control': 'no-store',
       'x-robots-tag': 'noindex,nofollow',
+    },
+  });
+}
+
+function shouldRequireEnterpriseCustomerSession(env: EnterpriseControlPlaneEnv): boolean {
+  return Boolean(env.supabaseUrl && env.supabaseServiceRoleKey);
+}
+
+function redirectToEnterpriseLogin(url: URL): Response {
+  const loginUrl = new URL('/app/login', url);
+  const nextPath = `${url.pathname}${url.search}`;
+  if (nextPath && nextPath !== '/app/login') {
+    loginUrl.searchParams.set('next', nextPath);
+  }
+
+  return new Response(null, {
+    status: 302,
+    headers: {
+      location: `${loginUrl.pathname}${loginUrl.search}`,
+      'cache-control': 'no-store',
+      'x-robots-tag': 'noindex,nofollow',
+    },
+  });
+}
+
+async function requireEnterpriseCustomerPageSession(
+  request: Request,
+  url: URL,
+  env: EnterpriseControlPlaneEnv,
+): Promise<Response | null> {
+  if (!shouldRequireEnterpriseCustomerSession(env)) return null;
+
+  const auth = await authenticateEnterpriseCustomerSession(request, env);
+  return auth ? null : redirectToEnterpriseLogin(url);
+}
+
+async function handleEnterpriseCustomerSessionRoute(
+  request: Request,
+  env: EnterpriseControlPlaneEnv,
+): Promise<Response> {
+  if (request.method === 'DELETE') {
+    return Response.json({ ok: true }, {
+      headers: {
+        'cache-control': 'no-store',
+        'set-cookie': clearEnterpriseCustomerSessionCookie(),
+      },
+    });
+  }
+
+  if (request.method !== 'POST') {
+    return Response.json({ error: 'Method not allowed.' }, { status: 405 });
+  }
+
+  const authHeader = request.headers.get('authorization') || '';
+  const token = authHeader.startsWith('Bearer ') ? authHeader.slice(7).trim() : '';
+  if (!token) {
+    return Response.json({ error: 'Not authenticated. Sign in to VaultProof Enterprise.' }, { status: 401 });
+  }
+
+  const auth = await authenticateUser(request, env);
+  if (!auth) {
+    return Response.json({ error: 'Not authenticated. Sign in to VaultProof Enterprise.' }, { status: 401 });
+  }
+
+  return Response.json({
+    ok: true,
+    email: auth.email,
+    expires_in: 60 * 60,
+  }, {
+    headers: {
+      'cache-control': 'no-store',
+      'set-cookie': createEnterpriseCustomerSessionCookie(token),
     },
   });
 }
@@ -423,6 +501,9 @@ async function handleEnterpriseControlPlaneRequestInner(
     isReadRequest &&
     (url.pathname === '/app' || url.pathname === '/app/' || url.pathname === '/app/dashboard' || url.pathname === '/app/dashboard.html')
   ) {
+    const sessionRedirect = await requireEnterpriseCustomerPageSession(request, url, env);
+    if (sessionRedirect) return sessionRedirect;
+
     return new Response(renderEnterpriseDashboardPage(env), {
       status: 200,
       headers: {
@@ -447,14 +528,17 @@ async function handleEnterpriseControlPlaneRequestInner(
   }
 
   if (isReadRequest && (url.pathname === '/app/logout' || url.pathname === '/app/logout.html')) {
+    const headers = new Headers({
+      'content-type': 'text/html; charset=utf-8',
+      'cache-control': 'no-store',
+      'x-robots-tag': 'noindex',
+    });
+    headers.append('set-cookie', clearInternalAdminSessionCookie());
+    headers.append('set-cookie', clearEnterpriseCustomerSessionCookie());
+
     return new Response(renderEnterpriseLogoutPage(env), {
       status: 200,
-      headers: {
-        'content-type': 'text/html; charset=utf-8',
-        'cache-control': 'no-store',
-        'x-robots-tag': 'noindex',
-        'set-cookie': clearInternalAdminSessionCookie(),
-      },
+      headers,
     });
   }
 
@@ -507,6 +591,9 @@ async function handleEnterpriseControlPlaneRequestInner(
   }
 
   if (isReadRequest && (url.pathname === '/app/control' || url.pathname === '/app/control.html')) {
+    const sessionRedirect = await requireEnterpriseCustomerPageSession(request, url, env);
+    if (sessionRedirect) return sessionRedirect;
+
     return new Response(renderEnterpriseControlPage(env), {
       status: 200,
       headers: {
@@ -518,6 +605,9 @@ async function handleEnterpriseControlPlaneRequestInner(
   }
 
   if (isReadRequest && (url.pathname === '/app/org' || url.pathname === '/app/org.html')) {
+    const sessionRedirect = await requireEnterpriseCustomerPageSession(request, url, env);
+    if (sessionRedirect) return sessionRedirect;
+
     return new Response(renderEnterpriseOrgPage(env), {
       status: 200,
       headers: {
@@ -535,6 +625,9 @@ async function handleEnterpriseControlPlaneRequestInner(
       .replace(/\/+$/, '');
     const plannedPage = renderEnterprisePlannedAppPage(plannedPageName, env);
     if (plannedPage) {
+      const sessionRedirect = await requireEnterpriseCustomerPageSession(request, url, env);
+      if (sessionRedirect) return sessionRedirect;
+
       return new Response(plannedPage, {
         status: 200,
         headers: {
@@ -565,6 +658,10 @@ async function handleEnterpriseControlPlaneRequestInner(
   }
 
   if (pathSegments[0] === 'api' && pathSegments[1] === 'v1' && pathSegments[2] === 'enterprise') {
+    if (pathSegments.length === 4 && pathSegments[3] === 'session') {
+      return handleEnterpriseCustomerSessionRoute(request, env);
+    }
+
     const enterpriseExecuteResponse = await handleEnterpriseExecuteRoutes(request, env, pathSegments.slice(3));
     if (enterpriseExecuteResponse) return enterpriseExecuteResponse;
     const enterpriseRouteResponse = await handleEnterpriseOrganizationRoutes(request, env, pathSegments.slice(3));

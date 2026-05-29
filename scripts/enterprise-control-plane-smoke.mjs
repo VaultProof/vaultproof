@@ -2824,9 +2824,10 @@ async function assertEnterpriseLoginRoute() {
     'Keep your code. <em>Stop storing the key.</em>',
     'enterprise-homepage-dashboard-match',
     'color-scheme: dark',
-    '--bg: #020403',
-    '--paper: #050807',
-    '--primary-bg: #00d18b',
+    '--bg: #0b0f14',
+    '--paper: #111827',
+    '--accent: #8ab4f8',
+    '--primary-bg: #8ab4f8',
     '--body: ui-sans-serif',
     'letter-spacing: 0 !important',
     '/app/login',
@@ -2842,6 +2843,9 @@ async function assertEnterpriseLoginRoute() {
   }
   if (rootHtml.includes('fonts.googleapis.com') || rootHtml.includes('Newsreader') || rootHtml.includes('Inter Tight')) {
     throw new Error('Enterprise homepage must use the dashboard system-font theme, not the old editorial font theme');
+  }
+  if (rootHtml.includes('vp-mark')) {
+    throw new Error('Enterprise homepage must not render a standalone logo mark');
   }
   if (rootHtml.includes('cdn.mxpnl.com') || rootHtml.includes('Enterprise Page Viewed')) {
     throw new Error('Enterprise homepage Mixpanel analytics must be disabled unless ENTERPRISE_MIXPANEL_TOKEN is configured');
@@ -3478,6 +3482,99 @@ async function assertEnterpriseLoginRoute() {
     }
   }
   assertDashboardShellTheme('/app/org', orgHtml);
+}
+
+async function assertEnterpriseCustomerAppSessionGate() {
+  installSupabaseStub();
+
+  const env = {
+    enterpriseHostname: ENTERPRISE_HOSTNAME,
+    supabaseUrl: 'https://supabase.example.co',
+    supabaseServiceRoleKey: 'service-role-key',
+  };
+
+  const anonymousDashboardResponse = await handleEnterpriseControlPlaneRequest(
+    buildRequest('/app/dashboard'),
+    env,
+  );
+  if (anonymousDashboardResponse.status !== 302
+    || anonymousDashboardResponse.headers.get('location') !== '/app/login?next=%2Fapp%2Fdashboard') {
+    throw new Error(`Expected anonymous dashboard to redirect to login, got ${anonymousDashboardResponse.status} ${anonymousDashboardResponse.headers.get('location')}`);
+  }
+
+  const anonymousInventoryResponse = await handleEnterpriseControlPlaneRequest(
+    buildRequest('/app/inventory?window=7d'),
+    env,
+  );
+  if (anonymousInventoryResponse.status !== 302
+    || anonymousInventoryResponse.headers.get('location') !== '/app/login?next=%2Fapp%2Finventory%3Fwindow%3D7d') {
+    throw new Error(`Expected anonymous inventory to preserve next redirect, got ${anonymousInventoryResponse.status} ${anonymousInventoryResponse.headers.get('location')}`);
+  }
+
+  const sessionResponse = await handleEnterpriseControlPlaneRequest(
+    buildRequest('/api/v1/enterprise/session', {
+      method: 'POST',
+      headers: {
+        authorization: `Bearer ${AUTH_TOKEN}`,
+      },
+    }),
+    env,
+  );
+  const sessionCookie = sessionResponse.headers.get('set-cookie') || '';
+  const sessionPayload = await sessionResponse.json();
+  if (sessionResponse.status !== 200
+    || sessionPayload?.ok !== true
+    || sessionPayload?.email !== 'owner@example.com'
+    || JSON.stringify(sessionPayload).includes(AUTH_TOKEN)
+    || !sessionCookie.includes('vp_enterprise_session=')
+    || !sessionCookie.includes('HttpOnly')
+    || !sessionCookie.includes('Secure')
+    || !sessionCookie.includes('SameSite=Lax')
+    || !sessionCookie.includes('Path=/')
+    || !sessionCookie.includes('Max-Age=3600')) {
+    throw new Error(`Expected enterprise customer session cookie without leaking token in JSON payload, got ${sessionResponse.status}: ${sessionCookie} ${JSON.stringify(sessionPayload)}`);
+  }
+
+  const authenticatedDashboardResponse = await handleEnterpriseControlPlaneRequest(
+    buildRequest('/app/dashboard', {
+      headers: {
+        cookie: `vp_enterprise_session=${encodeURIComponent(AUTH_TOKEN)}`,
+      },
+    }),
+    env,
+  );
+  const authenticatedDashboardHtml = await authenticatedDashboardResponse.text();
+  if (authenticatedDashboardResponse.status !== 200
+    || !authenticatedDashboardHtml.includes('Enterprise Dashboard - VaultProof')) {
+    throw new Error(`Expected authenticated dashboard page, got ${authenticatedDashboardResponse.status}`);
+  }
+
+  const logoutResponse = await handleEnterpriseControlPlaneRequest(
+    buildRequest('/app/logout'),
+    env,
+  );
+  const logoutCookie = logoutResponse.headers.get('set-cookie') || '';
+  if (logoutResponse.status !== 200
+    || !logoutCookie.includes('vp_enterprise_session=')
+    || !logoutCookie.includes('vp_internal_admin_session=')) {
+    throw new Error(`Expected logout to clear customer and admin cookies, got ${logoutResponse.status}: ${logoutCookie}`);
+  }
+
+  const loginScriptResponse = await handleEnterpriseControlPlaneRequest(
+    buildRequest('/app/enterprise-login.js'),
+    env,
+  );
+  const loginScript = await loginScriptResponse.text();
+  for (const required of [
+    'normalizeNextPath',
+    'establishEnterpriseCustomerSession',
+    '/api/v1/enterprise/session',
+    "params.set('next', nextPath)",
+  ]) {
+    if (!loginScript.includes(required)) {
+      throw new Error(`Expected enterprise login script to include ${required}`);
+    }
+  }
 }
 
 function assertSecurityHeaders(path, response, html = '') {
@@ -4951,6 +5048,7 @@ async function assertFrontDoorOriginLock() {
 }
 
 await assertEnterpriseLoginRoute();
+await assertEnterpriseCustomerAppSessionGate();
 await assertEnterpriseSecurityHeaders();
 await assertEnterpriseAppLinkCrawl();
 await assertInternalAdminConsole();

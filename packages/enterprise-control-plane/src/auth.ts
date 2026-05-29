@@ -18,6 +18,8 @@ export interface EnterpriseUserAuth {
 }
 
 const INTERNAL_ADMIN_SESSION_COOKIE = 'vp_internal_admin_session';
+const ENTERPRISE_CUSTOMER_SESSION_COOKIE = 'vp_enterprise_session';
+const ENTERPRISE_CUSTOMER_SESSION_MAX_AGE_SECONDS = 60 * 60;
 
 export interface ResolveOrganizationSsoBody {
   company_domain?: string | null;
@@ -72,6 +74,49 @@ export async function authenticateUser(
   if (!userId || !email) return null;
 
   return { userId, email };
+}
+
+export async function authenticateEnterpriseCustomerSession(
+  request: Request,
+  env: EnterpriseControlPlaneEnv,
+): Promise<EnterpriseUserAuth | null> {
+  const token = readCookie(request, ENTERPRISE_CUSTOMER_SESSION_COOKIE);
+  if (!token || token.startsWith('vp_') || token.startsWith('vp-proj-')) return null;
+
+  const supabase = getSupabase(env);
+  const { data, error } = await supabase.auth.getUser(token);
+  if (error || !data?.user) return null;
+
+  const userId = data.user.id;
+  const email = data.user.email;
+  if (!userId || !email) return null;
+
+  return { userId, email };
+}
+
+export function createEnterpriseCustomerSessionCookie(
+  token: string,
+  maxAgeSeconds = ENTERPRISE_CUSTOMER_SESSION_MAX_AGE_SECONDS,
+): string {
+  return [
+    `${ENTERPRISE_CUSTOMER_SESSION_COOKIE}=${encodeURIComponent(token)}`,
+    'Path=/',
+    `Max-Age=${maxAgeSeconds}`,
+    'HttpOnly',
+    'Secure',
+    'SameSite=Lax',
+  ].join('; ');
+}
+
+export function clearEnterpriseCustomerSessionCookie(): string {
+  return [
+    `${ENTERPRISE_CUSTOMER_SESSION_COOKIE}=`,
+    'Path=/',
+    'Max-Age=0',
+    'HttpOnly',
+    'Secure',
+    'SameSite=Lax',
+  ].join('; ');
 }
 
 function readCookie(request: Request, name: string): string {

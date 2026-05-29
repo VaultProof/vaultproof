@@ -12,24 +12,24 @@ export function renderEnterpriseHomepage(env: EnterpriseControlPlaneEnv = {}): s
   <style>
     :root {
       color-scheme: dark;
-      --bg: #020403;
-      --paper: #050807;
-      --surface: #08100d;
-      --card-bg: rgba(5, 8, 7, 0.88);
-      --row-bg: rgba(8, 16, 13, 0.82);
-      --ink: #f7fff9;
-      --ink-soft: #a7b4ad;
-      --muted: #6f7c75;
-      --line: rgba(247, 255, 249, 0.12);
-      --line-strong: rgba(0, 209, 139, 0.34);
-      --line-soft: rgba(247, 255, 249, 0.07);
-      --accent: #00d18b;
-      --accent-ink: #03100b;
-      --accent-soft: rgba(0, 209, 139, 0.14);
-      --primary-bg: #00d18b;
-      --success: #4ade80;
+      --bg: #0b0f14;
+      --paper: #111827;
+      --surface: #151d29;
+      --card-bg: rgba(17, 24, 39, 0.88);
+      --row-bg: rgba(21, 29, 41, 0.82);
+      --ink: #f8fafc;
+      --ink-soft: #a8b3c2;
+      --muted: #7d8794;
+      --line: rgba(248, 250, 252, 0.12);
+      --line-strong: rgba(138, 180, 248, 0.34);
+      --line-soft: rgba(248, 250, 252, 0.07);
+      --accent: #8ab4f8;
+      --accent-ink: #08111f;
+      --accent-soft: rgba(138, 180, 248, 0.14);
+      --primary-bg: #8ab4f8;
+      --success: #8ab4f8;
       --danger: #f87171;
-      --blue: #6ee7b7;
+      --blue: #8ab4f8;
       --shadow: 0 26px 80px rgba(0, 0, 0, 0.46);
       --display: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
       --body: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
@@ -68,7 +68,6 @@ export function renderEnterpriseHomepage(env: EnterpriseControlPlaneEnv = {}): s
       gap: 24px;
     }
     .vp-brand { display: flex; align-items: center; gap: 12px; min-width: 190px; }
-    .vp-mark { width: 22px; height: 22px; display: block; }
     .vp-brand-title { font-size: 16px; font-weight: 500; letter-spacing: -0.005em; }
     .vp-brand-sub {
       margin-left: 8px;
@@ -316,7 +315,7 @@ export function renderEnterpriseHomepage(env: EnterpriseControlPlaneEnv = {}): s
       margin: 0 auto 9px;
       border-radius: 999px;
       background: var(--accent);
-      box-shadow: 0 0 0 0 rgba(0, 209, 139, .24);
+      box-shadow: 0 0 0 0 rgba(138, 180, 248, .24);
       animation: vp-region-pulse 6s linear infinite;
     }
     .vp-shard {
@@ -578,15 +577,15 @@ export function renderEnterpriseHomepage(env: EnterpriseControlPlaneEnv = {}): s
       letter-spacing: 0 !important;
     }
     body {
-      background: #020403;
+      background: #0b0f14;
     }
     .vp-page {
       position: relative;
       isolation: isolate;
       background:
-        radial-gradient(circle at 12% 18%, rgba(0, 209, 139, 0.12), transparent 30rem),
-        radial-gradient(circle at 88% 16%, rgba(0, 209, 139, 0.08), transparent 28rem),
-        linear-gradient(180deg, #020403 0%, #030606 50%, #020403 100%);
+        radial-gradient(circle at 12% 18%, rgba(138, 180, 248, 0.12), transparent 30rem),
+        radial-gradient(circle at 88% 16%, rgba(138, 180, 248, 0.08), transparent 28rem),
+        linear-gradient(180deg, #0b0f14 0%, #0d1219 50%, #0b0f14 100%);
       color: var(--ink);
     }
     .vp-page::before,
@@ -600,10 +599,10 @@ export function renderEnterpriseHomepage(env: EnterpriseControlPlaneEnv = {}): s
     .vp-page::before {
       opacity: 0.72;
       background-image:
-        linear-gradient(90deg, rgba(0, 209, 139, 0.08) 1px, transparent 1px),
-        linear-gradient(0deg, rgba(247, 255, 249, 0.035) 1px, transparent 1px),
-        linear-gradient(35deg, transparent 47%, rgba(0, 209, 139, 0.16) 47.2%, rgba(0, 209, 139, 0.16) 47.55%, transparent 47.8%),
-        linear-gradient(138deg, transparent 54%, rgba(247, 255, 249, 0.08) 54.2%, rgba(247, 255, 249, 0.08) 54.5%, transparent 54.8%);
+        linear-gradient(90deg, rgba(138, 180, 248, 0.08) 1px, transparent 1px),
+        linear-gradient(0deg, rgba(248, 250, 252, 0.035) 1px, transparent 1px),
+        linear-gradient(35deg, transparent 47%, rgba(138, 180, 248, 0.16) 47.2%, rgba(138, 180, 248, 0.16) 47.55%, transparent 47.8%),
+        linear-gradient(138deg, transparent 54%, rgba(248, 250, 252, 0.08) 54.2%, rgba(248, 250, 252, 0.08) 54.5%, transparent 54.8%);
       background-size: 420px 420px, 140px 140px, 760px 760px, 620px 620px;
       background-position: center top, center top, 18% 0, 72% 12%;
       mask-image: radial-gradient(ellipse at 56% 28%, black 0%, transparent 70%);
@@ -611,7 +610,7 @@ export function renderEnterpriseHomepage(env: EnterpriseControlPlaneEnv = {}): s
     }
     .vp-page::after {
       opacity: 0.22;
-      background-image: linear-gradient(rgba(247, 255, 249, 0.08) 1px, transparent 1px);
+      background-image: linear-gradient(rgba(248, 250, 252, 0.08) 1px, transparent 1px);
       background-size: 100% 7px;
       mix-blend-mode: screen;
     }
@@ -625,8 +624,8 @@ export function renderEnterpriseHomepage(env: EnterpriseControlPlaneEnv = {}): s
       width: min(1220px, calc(100vw - 48px));
     }
     .vp-nav {
-      background: rgba(2, 4, 3, 0.74);
-      border-bottom: 1px solid rgba(0, 209, 139, 0.12);
+      background: rgba(11, 15, 20, 0.74);
+      border-bottom: 1px solid rgba(138, 180, 248, 0.12);
       -webkit-backdrop-filter: blur(18px);
       backdrop-filter: blur(18px);
     }
@@ -639,15 +638,6 @@ export function renderEnterpriseHomepage(env: EnterpriseControlPlaneEnv = {}): s
       gap: 12px;
       min-width: 240px;
       color: var(--ink);
-    }
-    .vp-mark {
-      display: block;
-      width: 30px;
-      height: 30px;
-      padding: 5px;
-      color: var(--accent);
-      border: 1px solid rgba(0, 209, 139, 0.45);
-      background: rgba(0, 209, 139, 0.07);
     }
     .vp-brand-title {
       color: var(--ink);
@@ -662,7 +652,7 @@ export function renderEnterpriseHomepage(env: EnterpriseControlPlaneEnv = {}): s
     }
     .vp-links a,
     .vp-signin {
-      color: rgba(247, 255, 249, 0.68);
+      color: rgba(248, 250, 252, 0.68);
       font: 700 12px/1 var(--body);
     }
     .vp-links a:hover,
@@ -672,7 +662,7 @@ export function renderEnterpriseHomepage(env: EnterpriseControlPlaneEnv = {}): s
     .vp-btn {
       min-height: 46px;
       border-radius: 0;
-      border: 1px solid rgba(247, 255, 249, 0.18);
+      border: 1px solid rgba(248, 250, 252, 0.18);
       font: 800 12px/1 var(--mono);
       box-shadow: none;
       text-transform: uppercase;
@@ -684,9 +674,9 @@ export function renderEnterpriseHomepage(env: EnterpriseControlPlaneEnv = {}): s
       font-weight: 800;
     }
     .vp-btn.secondary {
-      background: rgba(2, 4, 3, 0.66);
+      background: rgba(11, 15, 20, 0.66);
       color: var(--ink);
-      border-color: rgba(247, 255, 249, 0.18);
+      border-color: rgba(248, 250, 252, 0.18);
     }
     .vp-btn:hover {
       transform: none;
@@ -694,12 +684,12 @@ export function renderEnterpriseHomepage(env: EnterpriseControlPlaneEnv = {}): s
     }
     .vp-section {
       overflow: hidden;
-      border-bottom: 1px solid rgba(247, 255, 249, 0.08);
-      background: rgba(2, 4, 3, 0.90);
+      border-bottom: 1px solid rgba(248, 250, 252, 0.08);
+      background: rgba(11, 15, 20, 0.90);
     }
     .vp-section.surface,
     .vp-footer {
-      background: rgba(5, 8, 7, 0.94);
+      background: rgba(17, 24, 39, 0.94);
     }
     .vp-hero {
       min-height: calc(100vh - 74px);
@@ -718,10 +708,10 @@ export function renderEnterpriseHomepage(env: EnterpriseControlPlaneEnv = {}): s
       display: block;
       opacity: 0.85;
       background-image:
-        linear-gradient(90deg, rgba(0, 209, 139, 0.10) 1px, transparent 1px),
-        linear-gradient(0deg, rgba(247, 255, 249, 0.04) 1px, transparent 1px),
-        linear-gradient(41deg, transparent 46%, rgba(0, 209, 139, 0.20) 46.1%, rgba(0, 209, 139, 0.20) 46.35%, transparent 46.55%),
-        linear-gradient(132deg, transparent 55%, rgba(247, 255, 249, 0.10) 55.1%, rgba(247, 255, 249, 0.10) 55.35%, transparent 55.55%);
+        linear-gradient(90deg, rgba(138, 180, 248, 0.10) 1px, transparent 1px),
+        linear-gradient(0deg, rgba(248, 250, 252, 0.04) 1px, transparent 1px),
+        linear-gradient(41deg, transparent 46%, rgba(138, 180, 248, 0.20) 46.1%, rgba(138, 180, 248, 0.20) 46.35%, transparent 46.55%),
+        linear-gradient(132deg, transparent 55%, rgba(248, 250, 252, 0.10) 55.1%, rgba(248, 250, 252, 0.10) 55.35%, transparent 55.55%);
       background-size: 260px 260px, 92px 92px, 780px 780px, 640px 640px;
       mask-image: radial-gradient(ellipse at center, black 18%, transparent 76%);
       -webkit-mask-image: radial-gradient(ellipse at center, black 18%, transparent 76%);
@@ -731,8 +721,8 @@ export function renderEnterpriseHomepage(env: EnterpriseControlPlaneEnv = {}): s
       max-width: 840px;
       margin: 0 0 34px;
       padding: 0 0 15px;
-      border-bottom: 1px solid rgba(247, 255, 249, 0.09);
-      color: rgba(247, 255, 249, 0.42);
+      border-bottom: 1px solid rgba(248, 250, 252, 0.09);
+      color: rgba(248, 250, 252, 0.42);
     }
     .vp-eyebrow {
       display: inline-flex;
@@ -740,8 +730,8 @@ export function renderEnterpriseHomepage(env: EnterpriseControlPlaneEnv = {}): s
       gap: 8px;
       width: auto;
       color: var(--accent);
-      background: rgba(0, 209, 139, 0.07);
-      border: 1px solid rgba(0, 209, 139, 0.28);
+      background: rgba(138, 180, 248, 0.07);
+      border: 1px solid rgba(138, 180, 248, 0.28);
       border-radius: 0;
       padding: 8px 12px;
       font: 800 11px/1.2 var(--mono);
@@ -822,8 +812,8 @@ export function renderEnterpriseHomepage(env: EnterpriseControlPlaneEnv = {}): s
     .vp-card,
     .vp-compliance-card,
     .vp-final {
-      background: rgba(5, 8, 7, 0.82);
-      border: 1px solid rgba(247, 255, 249, 0.13);
+      background: rgba(17, 24, 39, 0.82);
+      border: 1px solid rgba(248, 250, 252, 0.13);
       border-radius: 0;
       box-shadow: 0 22px 80px rgba(0, 0, 0, 0.40);
     }
@@ -831,7 +821,7 @@ export function renderEnterpriseHomepage(env: EnterpriseControlPlaneEnv = {}): s
       position: relative;
       padding: 48px 20px 12px;
       background:
-        linear-gradient(180deg, rgba(247, 255, 249, 0.035), transparent 46%),
+        linear-gradient(180deg, rgba(248, 250, 252, 0.035), transparent 46%),
         rgba(1, 3, 2, 0.90);
     }
     .vp-feed-card::before {
@@ -852,7 +842,7 @@ export function renderEnterpriseHomepage(env: EnterpriseControlPlaneEnv = {}): s
       top: 39px;
       left: 0;
       right: 0;
-      border-top: 1px solid rgba(247, 255, 249, 0.08);
+      border-top: 1px solid rgba(248, 250, 252, 0.08);
     }
     .vp-feed-head,
     .vp-code-head,
@@ -885,7 +875,7 @@ export function renderEnterpriseHomepage(env: EnterpriseControlPlaneEnv = {}): s
       max-width: 620px;
       margin-top: 42px;
       padding-top: 26px;
-      border-top: 1px solid rgba(247, 255, 249, 0.10);
+      border-top: 1px solid rgba(248, 250, 252, 0.10);
     }
     .vp-proof-stat,
     .vp-threat-row,
@@ -917,21 +907,21 @@ export function renderEnterpriseHomepage(env: EnterpriseControlPlaneEnv = {}): s
       grid-template-columns: minmax(0, 0.88fr) minmax(420px, 1.12fr);
     }
     .vp-figure {
-      border-color: rgba(0, 209, 139, 0.18);
+      border-color: rgba(138, 180, 248, 0.18);
       background:
-        radial-gradient(circle at 58% 42%, rgba(0, 209, 139, 0.16), transparent 18rem),
-        rgba(5, 8, 7, 0.80);
+        radial-gradient(circle at 58% 42%, rgba(138, 180, 248, 0.16), transparent 18rem),
+        rgba(17, 24, 39, 0.80);
     }
     .vp-figure-grid {
       opacity: 0.78;
       background-image:
-        linear-gradient(rgba(0, 209, 139, 0.10) 1px, transparent 1px),
-        linear-gradient(90deg, rgba(247, 255, 249, 0.06) 1px, transparent 1px),
-        linear-gradient(35deg, transparent 48%, rgba(0, 209, 139, 0.12) 48.2%, transparent 48.5%);
+        linear-gradient(rgba(138, 180, 248, 0.10) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(248, 250, 252, 0.06) 1px, transparent 1px),
+        linear-gradient(35deg, transparent 48%, rgba(138, 180, 248, 0.12) 48.2%, transparent 48.5%);
       background-size: 52px 52px, 52px 52px, 440px 440px;
     }
     .vp-node-dot {
-      background: rgba(0, 209, 139, 0.06);
+      background: rgba(138, 180, 248, 0.06);
       border: 1px solid var(--line-strong);
       color: var(--accent);
       font-family: var(--body);
@@ -942,7 +932,7 @@ export function renderEnterpriseHomepage(env: EnterpriseControlPlaneEnv = {}): s
     .vp-region i,
     .vp-window-dots i,
     .vp-dot {
-      border-color: rgba(0, 209, 139, 0.40);
+      border-color: rgba(138, 180, 248, 0.40);
       background: var(--primary-bg);
       color: var(--accent-ink);
     }
@@ -955,7 +945,7 @@ export function renderEnterpriseHomepage(env: EnterpriseControlPlaneEnv = {}): s
       background: var(--accent);
     }
     .vp-shard {
-      border: 1px solid rgba(0, 209, 139, 0.24);
+      border: 1px solid rgba(138, 180, 248, 0.24);
       border-radius: 0;
       font-weight: 600;
     }
@@ -964,7 +954,7 @@ export function renderEnterpriseHomepage(env: EnterpriseControlPlaneEnv = {}): s
     }
     .vp-code-card .vp-code-add,
     .vp-code-add {
-      background: rgba(0, 209, 139, 0.12);
+      background: rgba(138, 180, 248, 0.12);
       color: var(--accent);
     }
     .vp-code-card pre {
@@ -978,18 +968,18 @@ export function renderEnterpriseHomepage(env: EnterpriseControlPlaneEnv = {}): s
     .vp-feature-grid,
     .vp-compliance-grid,
     .vp-belief-grid {
-      border-top: 1px solid rgba(247, 255, 249, 0.13);
-      border-left: 1px solid rgba(247, 255, 249, 0.13);
+      border-top: 1px solid rgba(248, 250, 252, 0.13);
+      border-left: 1px solid rgba(248, 250, 252, 0.13);
       gap: 0;
     }
     .vp-card,
     .vp-compliance-card,
     .vp-belief {
       border: 0;
-      border-right: 1px solid rgba(247, 255, 249, 0.13);
-      border-bottom: 1px solid rgba(247, 255, 249, 0.13);
+      border-right: 1px solid rgba(248, 250, 252, 0.13);
+      border-bottom: 1px solid rgba(248, 250, 252, 0.13);
       border-radius: 0;
-      background: rgba(5, 8, 7, 0.70);
+      background: rgba(17, 24, 39, 0.70);
       box-shadow: none;
     }
     .vp-belief {
@@ -1002,11 +992,11 @@ export function renderEnterpriseHomepage(env: EnterpriseControlPlaneEnv = {}): s
     .vp-final {
       padding: clamp(48px, 8vw, 86px) 24px;
       background:
-        radial-gradient(circle at 50% 0%, rgba(0, 209, 139, 0.13), transparent 28rem),
-        rgba(5, 8, 7, 0.82);
+        radial-gradient(circle at 50% 0%, rgba(138, 180, 248, 0.13), transparent 28rem),
+        rgba(17, 24, 39, 0.82);
     }
     .vp-footer {
-      background: #020403;
+      background: #0b0f14;
     }
     .vp-footer-grid {
       border-top: 1px solid var(--line);
@@ -1044,13 +1034,13 @@ export function renderEnterpriseHomepage(env: EnterpriseControlPlaneEnv = {}): s
     @keyframes vp-blink { 0%, 50% { opacity: 1; } 51%, 100% { opacity: 0; } }
     @keyframes vp-feed-in { from { opacity: 0; transform: translateY(-12px); } to { opacity: 1; transform: translateY(0); } }
     @keyframes vp-key-core { 0%, 5%, 95%, 100% { opacity: 1; } 15%, 90% { opacity: .18; } }
-    @keyframes vp-region-pulse { 0%, 40% { box-shadow: 0 0 0 0 rgba(0, 209, 139, .22); } 52% { box-shadow: 0 0 0 12px rgba(0, 209, 139, .10); } 70%, 100% { box-shadow: 0 0 0 18px transparent; } }
+    @keyframes vp-region-pulse { 0%, 40% { box-shadow: 0 0 0 0 rgba(138, 180, 248, .22); } 52% { box-shadow: 0 0 0 12px rgba(138, 180, 248, .10); } 70%, 100% { box-shadow: 0 0 0 18px transparent; } }
     @keyframes vp-shard {
       0%, 5% { transform: translate(-50%, -50%) rotate(0deg); opacity: 1; }
       35%, 65% { transform: translate(calc(-50% + var(--tx)), calc(-50% + var(--ty))) rotate(var(--rot)); opacity: 1; }
       95%, 100% { transform: translate(-50%, -50%) rotate(0deg); opacity: 1; }
     }
-    @keyframes vp-node-pulse { 0%, 50% { box-shadow: 0 0 0 0 rgba(0, 209, 139, .22); } 58% { box-shadow: 0 0 0 8px rgba(0, 209, 139, .12); } 74%, 100% { box-shadow: 0 0 0 16px transparent; } }
+    @keyframes vp-node-pulse { 0%, 50% { box-shadow: 0 0 0 0 rgba(138, 180, 248, .22); } 58% { box-shadow: 0 0 0 8px rgba(138, 180, 248, .12); } 74%, 100% { box-shadow: 0 0 0 16px transparent; } }
     @keyframes vp-beam { 0%, 60% { transform: scaleX(0); transform-origin: left; opacity: 0; } 65% { transform: scaleX(0); opacity: 1; } 85% { transform: scaleX(1); opacity: 1; } 92%, 100% { transform: scaleX(1); opacity: 0; } }
     @keyframes vp-zero-flash { 0%, 88% { background: var(--paper); } 90% { background: var(--accent-soft); } 100% { background: var(--paper); } }
     @media (max-width: 980px) {
@@ -1083,13 +1073,6 @@ export function renderEnterpriseHomepage(env: EnterpriseControlPlaneEnv = {}): s
     <header class="vp-nav">
       <div class="vp-container vp-nav-inner">
         <a class="vp-brand" href="/" aria-label="VaultProof Enterprise home">
-          <svg class="vp-mark" viewBox="0 0 24 24" aria-hidden="true">
-            <rect x="2" y="2" width="9" height="9" stroke="currentColor" stroke-width="1.4" fill="none"></rect>
-            <rect x="13" y="2" width="9" height="9" stroke="currentColor" stroke-width="1.4" fill="none"></rect>
-            <rect x="2" y="13" width="9" height="9" stroke="currentColor" stroke-width="1.4" fill="none"></rect>
-            <rect x="13" y="13" width="9" height="9" fill="currentColor"></rect>
-            <path d="M11.5 6.5h1M6.5 11.5v1M17.5 11.5v1M11.5 17.5h1" stroke="currentColor" stroke-width="1.4" stroke-linecap="square"></path>
-          </svg>
           <span><span class="vp-brand-title">VaultProof</span><span class="vp-brand-sub">Enterprise</span></span>
         </a>
         <nav class="vp-links" aria-label="Primary">
@@ -1302,7 +1285,7 @@ export function renderEnterpriseHomepage(env: EnterpriseControlPlaneEnv = {}): s
       <div class="vp-container vp-pad" style="padding-bottom:64px">
         <div class="vp-footer-grid">
           <div>
-            <div class="vp-brand" style="min-width:0"><svg class="vp-mark" viewBox="0 0 24 24" aria-hidden="true"><rect x="2" y="2" width="9" height="9" stroke="currentColor" stroke-width="1.4" fill="none"></rect><rect x="13" y="2" width="9" height="9" stroke="currentColor" stroke-width="1.4" fill="none"></rect><rect x="2" y="13" width="9" height="9" stroke="currentColor" stroke-width="1.4" fill="none"></rect><rect x="13" y="13" width="9" height="9" fill="currentColor"></rect></svg><span class="vp-brand-title">VaultProof</span></div>
+            <div class="vp-brand" style="min-width:0"><span class="vp-brand-title">VaultProof</span></div>
             <p>A safer home for enterprise API keys. Your app calls VaultProof; VaultProof safely uses the key; your app never stores the raw secret.</p>
           </div>
           <div><h3>Platform</h3><ul><li>Secure API gateway</li><li>Safe key use</li><li>Access rules</li><li>Audit records</li><li>Cloud KMS custody</li></ul></div>
