@@ -421,7 +421,7 @@ For the final demo go/no-go run, use \`LOGIN_QA_REQUIRE_SESSION=true npm run qa:
 
 Latest live check on ${buildStatusDate}:
 
-- \`npm run qa:enterprise-live-app\` passed against \`https://${edgeDomain}\`: \`production_ready: true\`, \`security_profile: google-confidential-production\`, 27 app paths, 6 staff-only paths, and the discovered enterprise links checked.
+- \`npm run qa:enterprise-live-app\` passed against \`https://${edgeDomain}\`: \`production_ready: true\`, \`security_profile: google-confidential-production\`, 26 app paths, 7 staff-only paths, and the discovered enterprise links checked.
 - \`npm run verify:gcp-enterprise-edge\` passed after deploying build \`${buildTag}\`. The verifier confirmed edge IP \`${edgeIp}\`, active managed TLS for \`${edgeDomain}\`, healthy backend \`${vmName}:3001\`, \`/health\`, and \`/readiness\`.
 - \`npm run verify:gcp-enterprise-cloud-armor\` passed after deploying build \`${buildTag}\`. The verifier confirmed \`${edgeSecurityPolicy}\` is attached to \`${edgeBackendService}\`, \`/health\` returns \`200\`, and the \`/.env\` scanner probe returns \`403\`.
 - \`RUN_LIVE_EDGE=true RUN_LIVE_APP_QA=true RUN_CLOUD_ARMOR_QA=true npm run gate:gcp-customer-launch\` returned \`status: ok\` with no blockers. Strict Supabase session proof is still skipped until \`SUPABASE_SERVICE_ROLE_KEY\` or \`SUPABASE_SERVICE_KEY\` is loaded in the local shell.
