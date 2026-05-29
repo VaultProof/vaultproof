@@ -782,6 +782,141 @@ const ENTERPRISE_STATIC_APP_POLISH_THEME = `
     }
 `;
 
+const ENTERPRISE_INVENTORY_SHADCN_THEME = `
+    /* inventory-board-shadcn-polish */
+    .inventory-board-panel {
+      overflow: hidden;
+      background: var(--card, #111827) !important;
+      border: 1px solid var(--border, var(--line, #2a3442)) !important;
+      box-shadow: 0 18px 48px rgba(0, 0, 0, 0.24) !important;
+    }
+    .inventory-board-head {
+      margin: -18px -18px 0 !important;
+      padding: 18px;
+      background: linear-gradient(180deg, rgba(21, 29, 41, 0.78), rgba(17, 24, 39, 0.92));
+      border-bottom: 1px solid var(--border, var(--line, #2a3442));
+    }
+    .inventory-board-head h2 {
+      font-size: 1.125rem !important;
+      line-height: 1.6rem !important;
+      font-weight: 600 !important;
+    }
+    .inventory-board-head p {
+      max-width: 620px;
+      color: var(--muted-foreground, var(--muted, #a8b3c2)) !important;
+    }
+    .inventory-board-panel .inventory-table-head {
+      margin: 0 -18px;
+      padding: 12px 18px;
+      background: var(--muted-bg, #151d29);
+      border-bottom: 1px solid var(--border, var(--line, #2a3442));
+      color: var(--muted-foreground, var(--muted, #a8b3c2)) !important;
+    }
+    .inventory-board-panel .inventory-list {
+      gap: 10px !important;
+      padding-top: 12px;
+    }
+    .inventory-board-panel .inventory-record {
+      border: 1px solid var(--border, var(--line, #2a3442)) !important;
+      border-radius: 8px !important;
+      background: rgba(17, 24, 39, 0.92) !important;
+      padding: 16px !important;
+      box-shadow: none !important;
+    }
+    .inventory-board-panel .inventory-record:hover {
+      border-color: rgba(138, 180, 248, 0.34) !important;
+      background: var(--muted-bg, #151d29) !important;
+    }
+    .inventory-board-panel .inventory-record-title,
+    .inventory-board-panel .inventory-cell-value strong {
+      color: var(--foreground, var(--text, #f8fafc)) !important;
+      font-weight: 600 !important;
+    }
+    .inventory-board-panel .inventory-record-sub,
+    .inventory-board-panel .inventory-cell-label {
+      color: var(--muted-foreground, var(--muted, #a8b3c2)) !important;
+    }
+    .inventory-board-panel .inventory-status-list {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      margin-top: 10px;
+    }
+    .inventory-board-panel .tag {
+      display: inline-flex !important;
+      align-items: center;
+      min-height: 26px;
+      border-radius: 999px !important;
+      padding: 4px 8px !important;
+      background: rgba(168, 179, 194, 0.08) !important;
+      border-color: rgba(168, 179, 194, 0.18) !important;
+      color: var(--muted-foreground, var(--muted, #a8b3c2)) !important;
+      line-height: 1;
+    }
+    .inventory-board-panel .tag.good {
+      background: rgba(74, 222, 128, 0.10) !important;
+      border-color: rgba(74, 222, 128, 0.24) !important;
+      color: var(--green, #4ade80) !important;
+    }
+    .inventory-board-panel .tag.warn {
+      background: rgba(251, 191, 36, 0.10) !important;
+      border-color: rgba(251, 191, 36, 0.26) !important;
+      color: var(--warn, #fbbf24) !important;
+    }
+    .inventory-board-panel .tag.bad {
+      background: rgba(248, 113, 113, 0.10) !important;
+      border-color: rgba(248, 113, 113, 0.26) !important;
+      color: var(--red, #f87171) !important;
+    }
+    .inventory-board-panel .inventory-record-actions a.tag,
+    .inventory-board-panel .inventory-record-actions button {
+      min-height: 34px;
+      border-radius: 8px !important;
+      padding: 8px 10px !important;
+      justify-content: center;
+    }
+    .inventory-board-panel .inventory-record-actions a.tag.good {
+      background: var(--primary-bg, #8ab4f8) !important;
+      border-color: var(--primary-border, #8ab4f8) !important;
+      color: var(--primary-text, #08111f) !important;
+    }
+    .inventory-board-panel .inventory-detail-grid {
+      margin-top: 16px !important;
+      padding-top: 16px !important;
+      border-top: 1px solid var(--border, var(--line, #2a3442)) !important;
+      gap: 12px !important;
+    }
+    .inventory-board-panel .inventory-field label {
+      color: var(--muted-foreground, var(--muted, #a8b3c2)) !important;
+      font-weight: 500 !important;
+      text-transform: none !important;
+    }
+    .inventory-board-panel .inventory-field input,
+    .inventory-board-panel .inventory-field select,
+    .inventory-board-panel .inventory-field textarea,
+    .inventory-board-panel .inventory-policy-note {
+      background: var(--background, #0b0f14) !important;
+      border-color: var(--border, var(--line, #2a3442)) !important;
+      color: var(--foreground, var(--text, #f8fafc)) !important;
+    }
+    .inventory-board-panel .inventory-policy-note {
+      border-radius: 8px !important;
+      line-height: 1.55 !important;
+    }
+    @media (max-width: 760px) {
+      .inventory-board-head,
+      .inventory-board-panel .inventory-table-head {
+        margin-left: -14px;
+        margin-right: -14px;
+        padding-left: 14px;
+        padding-right: 14px;
+      }
+      .inventory-board-panel .inventory-record {
+        padding: 14px !important;
+      }
+    }
+`;
+
 const ENTERPRISE_CONTROL_PAGE_THEME = `
     /* control-dashboard-theme */
     .page-header {
@@ -1446,8 +1581,8 @@ const plannedEnterprisePages: Record<string, {
     kicker: 'tenant defaults',
     summary: 'Enterprise settings will collect tenant-level preferences and security notices that do not belong in SSO setup.',
     features: ['Session/security notices', 'Dashboard preferences', 'Tenant defaults', 'Operational contact hints'],
-    primaryHref: '/app/org',
-    primaryLabel: 'open org settings',
+    primaryHref: '/app/dashboard',
+    primaryLabel: 'back to dashboard',
   },
   plans: {
     title: 'Plans',
@@ -2203,6 +2338,19 @@ function renderEnterpriseAlertsPage(): string {
     .slot-form input, .slot-form select, .slot-form textarea { width: 100%; }
     .slot-form textarea { min-height: 78px; resize: vertical; }
     .slot-form .wide { grid-column: span 2; }
+    .keys-form-panel .slot-form,
+    .keys-exposure-form-card .slot-form { gap: 14px; align-items: end; }
+    .keys-form-panel input,
+    .keys-form-panel select,
+    .keys-form-panel textarea,
+    .keys-exposure-form-card input,
+    .keys-exposure-form-card select,
+    .keys-exposure-form-card textarea { min-height: 46px; }
+    .keys-provider-slot-form { grid-template-columns: minmax(220px, .9fr) minmax(190px, .72fr) minmax(190px, .72fr) minmax(260px, 1.2fr); }
+    .keys-incident-layout { grid-template-columns: minmax(0, 1fr) minmax(320px, .46fr); }
+    .keys-exposure-form-card { grid-column: 1 / -1; }
+    .keys-incident-form { grid-template-columns: minmax(220px, 1fr) minmax(220px, 1fr) minmax(180px, .72fr) minmax(220px, 1fr); }
+    .keys-incident-form .wide { grid-column: 1 / -1; }
     .slot-form-actions { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; margin-top: 14px; }
     .slot-form-note { color: var(--muted); font-size: 13px; line-height: 1.45; margin: 0; }
     @media (max-width: 1100px) { .filters, .kpis, .two { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
@@ -2582,6 +2730,32 @@ function renderEnterpriseOperationsPage(pageName: 'activity' | 'projects' | 'inv
     .inventory-metric-card { border: 1px solid rgba(26,40,52,.10); border-radius: 8px; padding: 12px; background: rgba(248,250,252,.74); }
     .inventory-metric-card strong { display: block; font-size: 24px; letter-spacing: -.04em; }
     .inventory-metric-card span { color: var(--muted); font-size: 12px; text-transform: uppercase; letter-spacing: .08em; font-weight: 800; }
+    .key-overview-panel { overflow: hidden; }
+    .key-overview-grid { display: grid; grid-template-columns: minmax(230px, .86fr) minmax(0, 1.35fr) minmax(230px, .86fr); gap: 16px; align-items: stretch; }
+    .key-total-card, .key-chart-card { border: 1px solid rgba(26,40,52,.10); border-radius: 8px; padding: 16px; background: rgba(248,250,252,.78); min-width: 0; }
+    .key-total-card { display: grid; align-content: space-between; gap: 18px; }
+    .key-total-value { font-size: clamp(44px, 7vw, 82px); line-height: .9; letter-spacing: -.06em; font-weight: 850; color: var(--text); }
+    .key-total-sub { color: var(--muted); line-height: 1.45; font-size: 13px; }
+    .key-stat-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
+    .key-stat { border: 1px solid rgba(26,40,52,.10); border-radius: 8px; padding: 12px; background: rgba(255,255,255,.55); }
+    .key-stat strong { display: block; font-size: 24px; letter-spacing: -.04em; }
+    .key-stat span { color: var(--muted); font-size: 11px; text-transform: uppercase; letter-spacing: .08em; font-weight: 850; }
+    .key-chart-title { display: flex; justify-content: space-between; gap: 10px; align-items: center; margin-bottom: 12px; }
+    .key-chart-title h3 { margin: 0; font-size: 15px; letter-spacing: -.01em; }
+    .key-chart-bars { display: grid; gap: 11px; }
+    .key-chart-row { display: grid; gap: 6px; }
+    .key-chart-head { display: flex; justify-content: space-between; gap: 12px; color: var(--muted); font-size: 12px; }
+    .key-chart-head strong { color: var(--text); font-size: 13px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .key-chart-track { height: 12px; border-radius: 999px; background: rgba(26,40,52,.10); overflow: hidden; }
+    .key-chart-fill { display: block; height: 100%; width: var(--width, 0%); border-radius: inherit; background: var(--fill, var(--gold)); }
+    .key-donut-wrap { display: grid; place-items: center; gap: 12px; }
+    .key-donut { width: 150px; aspect-ratio: 1; border-radius: 999px; display: grid; place-items: center; background: conic-gradient(var(--green) 0deg, var(--green) 1deg, rgba(26,40,52,.10) 1deg 360deg); box-shadow: inset 0 0 0 1px rgba(26,40,52,.10); }
+    .key-donut-hole { width: 86px; aspect-ratio: 1; border-radius: 999px; display: grid; place-items: center; text-align: center; background: rgba(255,255,255,.96); border: 1px solid rgba(26,40,52,.10); font-weight: 850; line-height: 1.1; }
+    .key-donut-hole span { display: block; color: var(--muted); font-size: 11px; font-weight: 800; letter-spacing: .04em; text-transform: uppercase; margin-top: 3px; }
+    .key-legend { display: grid; gap: 8px; width: 100%; }
+    .key-legend-row { display: flex; justify-content: space-between; gap: 12px; color: var(--muted); font-size: 12px; }
+    .key-legend-row strong { color: var(--text); }
+    .key-legend-dot { width: 9px; height: 9px; border-radius: 999px; display: inline-block; margin-right: 7px; vertical-align: middle; background: var(--dot, var(--gold)); }
     .row-actions { display: flex; gap: 8px; flex-wrap: wrap; justify-content: flex-end; align-items: start; }
     .slot-form { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; }
     .slot-form label { display: grid; gap: 7px; color: var(--muted); font-size: 12px; font-weight: 800; letter-spacing: .08em; text-transform: uppercase; }
@@ -2597,10 +2771,11 @@ function renderEnterpriseOperationsPage(pageName: 'activity' | 'projects' | 'inv
     .empty, .notice { color: var(--muted); border: 1px dashed rgba(26,40,52,.22); border-radius: 8px; padding: 18px; background: rgba(248,250,252,.78); }
     .notice.error { color: var(--red); border-color: rgba(220,38,38,.3); }
     @media (max-width: 1360px) { .inventory-record-main, .inventory-detail-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } .inventory-table-head { display: none; } .inventory-cell-label { display: block; } .inventory-record-actions { justify-content: flex-start; } }
-    @media (max-width: 1100px) { .filters, .kpis, .two, .inventory-fields, .slot-form { grid-template-columns: repeat(2, minmax(0, 1fr)); } .inventory-filter-grid #inventorySearch { grid-column: auto; } }
-    @media (max-width: 760px) { .shell { grid-template-columns: 1fr; } .topbar { flex-direction: column; } .filters, .kpis, .two, .inventory-head, .inventory-fields, .slot-form, .inventory-filter-grid, .inventory-bulk-review, .inventory-command-actions, .inventory-record-main, .inventory-detail-grid, .inventory-side-rail { grid-template-columns: 1fr; } .inventory-field.wide, .slot-form .wide, .inventory-filter-grid #inventorySearch { grid-column: auto; } .inventory-command-head, .inventory-board-head { flex-direction: column; } .inventory-export-row { justify-content: flex-start; } }
+    @media (max-width: 1100px) { .filters, .kpis, .two, .inventory-fields, .slot-form, .keys-provider-slot-form, .keys-incident-form, .key-overview-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } .key-chart-card:last-child { grid-column: 1 / -1; } .inventory-filter-grid #inventorySearch { grid-column: auto; } }
+    @media (max-width: 760px) { .shell { grid-template-columns: 1fr; } .topbar { flex-direction: column; } .filters, .kpis, .two, .inventory-head, .inventory-fields, .slot-form, .keys-provider-slot-form, .keys-incident-form, .keys-incident-layout, .inventory-filter-grid, .inventory-bulk-review, .inventory-command-actions, .inventory-record-main, .inventory-detail-grid, .inventory-side-rail, .key-overview-grid, .key-stat-grid { grid-template-columns: 1fr; } .key-chart-card:last-child { grid-column: auto; } .inventory-field.wide, .slot-form .wide, .inventory-filter-grid #inventorySearch { grid-column: auto; } .inventory-command-head, .inventory-board-head { flex-direction: column; } .inventory-export-row { justify-content: flex-start; } }
     ${ENTERPRISE_APP_SHELL_THEME}
     ${ENTERPRISE_STATIC_APP_POLISH_THEME}
+    ${pageName === 'inventory' ? ENTERPRISE_INVENTORY_SHADCN_THEME : ''}
   </style>
 </head>
 <body>
@@ -2628,10 +2803,40 @@ function renderEnterpriseOperationsPage(pageName: 'activity' | 'projects' | 'inv
       <div id="notice" class="notice error" style="display:none"></div>
 
       ${pageName === 'keys' ? `
-      <section id="providerSlotFormPanel" class="card" style="display:none;margin-bottom:16px">
+      <section id="keyOverviewPanel" class="card key-overview-panel" style="display:none;margin-bottom:16px">
+        <div class="section-title"><h2>Key inventory</h2><span id="keyOverviewMeta" class="mini">loading</span></div>
+        <div class="key-overview-grid">
+          <div class="key-total-card">
+            <div>
+              <div class="kpi-label">protected API keys in system</div>
+              <div id="keyTotalValue" class="key-total-value">...</div>
+              <div id="keyTotalSub" class="key-total-sub">Provider slots represent API keys protected behind VaultProof. Raw key values are not shown here.</div>
+            </div>
+            <div id="keySystemSummaryList" class="list"></div>
+          </div>
+          <div class="key-chart-card">
+            <div class="key-chart-title"><h3>Provider breakdown</h3><span id="keyProviderChartMeta" class="mini">by slot count</span></div>
+            <div id="keyProviderChart" class="key-chart-bars"><div class="empty">Loading provider chart...</div></div>
+          </div>
+          <div class="key-chart-card">
+            <div class="key-chart-title"><h3>Readiness mix</h3><span id="keyReadinessMeta" class="mini">material status</span></div>
+            <div class="key-donut-wrap">
+              <div id="keyStatusDonut" class="key-donut"><div id="keyDonutCenter" class="key-donut-hole">0<span>keys</span></div></div>
+              <div id="keyStatusLegend" class="key-legend"></div>
+              <div class="key-stat-grid">
+                <div class="key-stat"><strong id="keyLiveValue">0</strong><span>live sealed</span></div>
+                <div class="key-stat"><strong id="keyReviewValue">0</strong><span>needs review</span></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>` : ''}
+
+      ${pageName === 'keys' ? `
+      <section id="providerSlotFormPanel" class="card keys-form-panel" style="display:none;margin-bottom:16px">
         <div class="section-title"><h2>Add provider slot</h2><span class="mini">placeholder material</span></div>
         <form id="providerSlotForm">
-          <div class="slot-form">
+          <div class="slot-form keys-provider-slot-form">
             <label>Project
               <select id="slotProject" required></select>
             </label>
@@ -2743,7 +2948,7 @@ ${renderDatalistOptions(ENTERPRISE_PROVIDER_SLOT_PRESETS.map((preset) => preset.
                 <select id="manualKeyProject"></select>
               </label>
               <label>Provider
-                <input id="manualKeyProvider" list="manualApiKeyProviderOptions" placeholder="openai, stripe, resend" required maxlength="64" />
+                <input id="manualKeyProvider" list="manualApiKeyProviderOptions" placeholder="openai, stripe, deepl" required maxlength="64" />
               </label>
               <label>API key label
                 <input id="manualKeyLabel" placeholder="Production billing key" required maxlength="96" />
@@ -3007,15 +3212,10 @@ ${renderDatalistOptions(ENTERPRISE_MANUAL_API_KEY_PROVIDER_OPTIONS)}
       </section>
 
       ${pageName === 'keys' ? `
-      <section id="apiProxyTestPanel" class="card" style="display:none;margin-bottom:16px">
-        <div class="section-title"><h2>Customer API proxy test kit</h2><span id="apiProxyTestMeta" class="mini">copy-safe</span></div>
-        <div id="apiProxyTestList" class="list"><div class="empty">Loading self-test kit...</div></div>
-      </section>
-
-      <section id="exposureResponsePanel" class="grid two" style="display:none;margin-bottom:16px">
-        <div class="card">
+      <section id="exposureResponsePanel" class="grid keys-incident-layout" style="display:none;margin-bottom:16px">
+        <div class="card keys-exposure-form-card">
           <div class="section-title"><h2>Key exposure response</h2><span id="exposureResponseMeta" class="mini">incident mode</span></div>
-          <form id="exposureResponseForm" class="slot-form">
+          <form id="exposureResponseForm" class="slot-form keys-incident-form">
             <label>Incident label
               <input id="exposureIncidentName" value="External platform credential review" maxlength="120" />
             </label>
@@ -3073,6 +3273,12 @@ ${renderDatalistOptions(ENTERPRISE_MANUAL_API_KEY_PROVIDER_OPTIONS)}
         <div class="section-title"><h2>Provider slots</h2><span id="keyMeta" class="mini"></span></div>
         <div id="keyList" class="list"><div class="empty">Loading provider slots...</div></div>
       </section>
+
+      ${pageName === 'keys' ? `
+      <section id="apiProxyTestPanel" class="card" style="display:none;margin-top:16px">
+        <div class="section-title"><h2>Customer API proxy test kit</h2><span id="apiProxyTestMeta" class="mini">copy-safe</span></div>
+        <div id="apiProxyTestList" class="list"><div class="empty">Loading self-test kit...</div></div>
+      </section>` : ''}
     </main>
   </div>
 
@@ -5426,6 +5632,103 @@ ${renderDatalistOptions(ENTERPRISE_MANUAL_API_KEY_PROVIDER_OPTIONS)}
           return '<div class="row"><div><div class="row-title">' + escapeHtml(event.description || event.event_type) + '</div><div class="row-sub">' + escapeHtml(rel(event.timestamp)) + ' - ' + escapeHtml(project.name || project.vp_proj_id || 'unknown project') + ' - ' + escapeHtml(meta.provider || meta.slug || 'unknown provider') + ' - ' + escapeHtml(meta.latency_ms == null ? 'latency n/a' : meta.latency_ms + 'ms') + (meta.provider_request_id ? ' - request ' + escapeHtml(meta.provider_request_id) : '') + '</div></div>' + statusTag(event.status) + '</div>';
         }).join('') : '<div class="empty">No runtime activity matches these filters.</div>';
       }
+      function collectKeyRows() {
+        var rows = [];
+        cachedProjects.forEach(function(project) {
+          (project.provider_slots || []).forEach(function(slot) {
+            rows.push({ project: project, slot: slot });
+          });
+        });
+        return rows;
+      }
+      function summarizeKeyRows(rows) {
+        var summary = {
+          total: rows.length,
+          live: 0,
+          placeholder: 0,
+          mixed: 0,
+          missing: 0,
+          email: 0,
+          providers: {},
+          projects: {}
+        };
+        rows.forEach(function(item) {
+          var mode = item.slot.material_mode || 'missing';
+          if (mode === 'sealed-live') summary.live += 1;
+          else if (mode === 'demo-placeholder') summary.placeholder += 1;
+          else if (mode === 'mixed') summary.mixed += 1;
+          else summary.missing += 1;
+          if (slotIsEmailProvider(item.slot)) summary.email += 1;
+          var provider = item.slot.slug || item.slot.provider || 'unknown';
+          summary.providers[provider] = (summary.providers[provider] || 0) + 1;
+          var projectId = item.project.id || item.project.vp_proj_id || item.project.name || 'project';
+          summary.projects[projectId] = true;
+        });
+        summary.review = summary.placeholder + summary.mixed + summary.missing;
+        summary.providerCount = Object.keys(summary.providers).length;
+        summary.projectCount = Object.keys(summary.projects).length;
+        return summary;
+      }
+      function renderKeyOverview(rows) {
+        var panel = byId('keyOverviewPanel');
+        if (panel) panel.style.display = PAGE_MODE === 'keys' ? 'block' : 'none';
+        if (PAGE_MODE !== 'keys') return;
+        var summary = summarizeKeyRows(rows);
+        text('keyOverviewMeta', number(summary.total) + ' protected API key ' + (summary.total === 1 ? 'slot' : 'slots'));
+        text('keyTotalValue', number(summary.total));
+        text('keyTotalSub', number(summary.providerCount) + ' provider group' + (summary.providerCount === 1 ? '' : 's') + ' across ' + number(summary.projectCount) + ' project' + (summary.projectCount === 1 ? '' : 's') + '. Raw key values are not shown here.');
+        text('keyLiveValue', number(summary.live));
+        text('keyReviewValue', number(summary.review));
+        text('keyReadinessMeta', summary.total ? number(Math.round((summary.live / summary.total) * 100)) + '% live sealed' : 'no keys yet');
+        var donut = byId('keyStatusDonut');
+        var center = byId('keyDonutCenter');
+        if (center) center.innerHTML = number(summary.total) + '<span>keys</span>';
+        if (donut) {
+          if (summary.total) {
+            var liveDeg = Math.round((summary.live / summary.total) * 360);
+            var placeholderDeg = Math.round((summary.placeholder / summary.total) * 360);
+            var mixedDeg = Math.round((summary.mixed / summary.total) * 360);
+            var a = liveDeg;
+            var b = liveDeg + placeholderDeg;
+            var c = liveDeg + placeholderDeg + mixedDeg;
+            donut.style.background = 'conic-gradient(#15803d 0deg ' + a + 'deg, #b45309 ' + a + 'deg ' + b + 'deg, #2563eb ' + b + 'deg ' + c + 'deg, #dc2626 ' + c + 'deg 360deg)';
+          } else {
+            donut.style.background = 'conic-gradient(rgba(82,97,112,.22) 0deg 360deg)';
+          }
+        }
+        var legend = byId('keyStatusLegend');
+        if (legend) {
+          legend.innerHTML = [
+            '<div class="key-legend-row"><span><i class="key-legend-dot" style="--dot:#15803d"></i>Live sealed</span><strong>' + number(summary.live) + '</strong></div>',
+            '<div class="key-legend-row"><span><i class="key-legend-dot" style="--dot:#b45309"></i>Placeholder</span><strong>' + number(summary.placeholder) + '</strong></div>',
+            '<div class="key-legend-row"><span><i class="key-legend-dot" style="--dot:#2563eb"></i>Mixed</span><strong>' + number(summary.mixed) + '</strong></div>',
+            '<div class="key-legend-row"><span><i class="key-legend-dot" style="--dot:#dc2626"></i>Missing</span><strong>' + number(summary.missing) + '</strong></div>'
+          ].join('');
+        }
+        var providerRows = Object.keys(summary.providers).map(function(provider) {
+          return { provider: provider, count: summary.providers[provider] };
+        }).sort(function(a, b) {
+          return b.count - a.count || a.provider.localeCompare(b.provider);
+        });
+        text('keyProviderChartMeta', providerRows.length ? number(providerRows.length) + ' providers' : 'by slot count');
+        var maxCount = providerRows.reduce(function(max, row) { return Math.max(max, row.count); }, 0);
+        var chart = byId('keyProviderChart');
+        if (chart) {
+          chart.innerHTML = providerRows.length ? providerRows.slice(0, 10).map(function(row, index) {
+            var width = maxCount ? Math.max(8, Math.round((row.count / maxCount) * 100)) : 0;
+            var fill = index === 0 ? '#315f95' : index === 1 ? '#15803d' : index === 2 ? '#b45309' : '#2563eb';
+            return '<div class="key-chart-row"><div class="key-chart-head"><strong>' + escapeHtml(row.provider) + '</strong><span>' + number(row.count) + ' ' + (row.count === 1 ? 'key' : 'keys') + '</span></div><div class="key-chart-track"><span class="key-chart-fill" style="--width:' + width + '%;--fill:' + fill + '"></span></div></div>';
+          }).join('') : '<div class="empty">No protected API keys are visible yet. Add a provider slot to start the key inventory.</div>';
+        }
+        var summaryList = byId('keySystemSummaryList');
+        if (summaryList) {
+          summaryList.innerHTML = [
+            '<div class="row"><div><div class="row-title">Ready for traffic</div><div class="row-sub">' + number(summary.live) + ' live-sealed API key ' + (summary.live === 1 ? 'slot is' : 'slots are') + ' ready for protected execution.</div></div><span class="tag ' + (summary.live ? 'good' : 'warn') + '">' + number(summary.live) + '</span></div>',
+            '<div class="row"><div><div class="row-title">Needs review</div><div class="row-sub">' + number(summary.review) + ' key ' + (summary.review === 1 ? 'slot needs' : 'slots need') + ' sealed material, mixed-state cleanup, or setup review before paid traffic.</div></div><span class="tag ' + (summary.review ? 'warn' : 'good') + '">' + (summary.review ? 'review' : 'clear') + '</span></div>',
+            '<div class="row"><div><div class="row-title">Email API keys</div><div class="row-sub">' + number(summary.email) + ' email provider ' + (summary.email === 1 ? 'key is' : 'keys are') + ' available for protected send and blocked-recipient evidence.</div></div><span class="tag">' + number(summary.email) + '</span></div>'
+          ].join('');
+        }
+      }
       function renderApiProxyTestKit(rows) {
         var panel = byId('apiProxyTestPanel');
         if (panel) panel.style.display = PAGE_MODE === 'keys' ? 'block' : 'none';
@@ -5445,12 +5748,8 @@ ${renderDatalistOptions(ENTERPRISE_MANUAL_API_KEY_PROVIDER_OPTIONS)}
         byId('keysPanel').style.display = PAGE_MODE === 'keys' ? 'block' : 'none';
         if (byId('emailKeyDemoPanel')) byId('emailKeyDemoPanel').style.display = PAGE_MODE === 'keys' ? 'grid' : 'none';
         if (PAGE_MODE !== 'keys') return;
-        var rows = [];
-        cachedProjects.forEach(function(project) {
-          (project.provider_slots || []).forEach(function(slot) {
-            rows.push({ project: project, slot: slot });
-          });
-        });
+        var rows = collectKeyRows();
+        renderKeyOverview(rows);
         renderApiProxyTestKit(rows);
         text('keyMeta', rows.length + ' active provider slots');
         var emailRows = rows.filter(function(item) { return slotIsEmailProvider(item.slot); });
@@ -6790,7 +7089,7 @@ function renderEnterpriseSupportPage(pageName: EnterpriseSupportPageName): strin
           <div class="list">
             <div class="row"><div><div class="row-title">Enterprise docs</div><div class="row-sub">Enterprise-only documentation for setup, SSO, provider slots, key exposure response, evidence, runbooks, and operating boundaries.</div></div><a class="tag good" href="/app/docs">open</a></div>
             <div class="row"><div><div class="row-title">Setup guide</div><div class="row-sub">Implementation sequence for mapping environments, connecting SSO, choosing gateways, configuring projects, protecting provider slots, and going live safely.</div></div><a class="tag good" href="/app/setup">open</a></div>
-            <div class="row"><div><div class="row-title">Provider slots</div><div class="row-sub">Provider key slots, material mode, protected email API key slots, dry-run request snippets, emergency revoke, rotation review, and key exposure response.</div></div><a class="tag good" href="/app/keys">open</a></div>
+            <div class="row"><div><div class="row-title">Provider slots</div><div class="row-sub">Provider key slots for OpenAI, Anthropic, DeepL, email APIs, and other services with material mode, dry-run snippets, emergency revoke, rotation review, and key exposure response.</div></div><a class="tag good" href="/app/keys">open</a></div>
             <div class="row"><div><div class="row-title">Projects</div><div class="row-sub">Project inventory, usage, provider slot posture, policy status, and quick links into Control.</div></div><a class="tag good" href="/app/projects">open</a></div>
             <div class="row"><div><div class="row-title">API Inventory</div><div class="row-sub">Metadata-only API catalog with owners, risk, data sensitivity, provider-slot mapping, review status, imports, filtered CSV, review brief, and JSON export.</div></div><a class="tag good" href="/app/inventory">open</a></div>
             <div class="row"><div><div class="row-title">Policy Drift</div><div class="row-sub">Control-gap board for missing provider slots, caller-lock gaps, stale/no traffic, accepted-risk records, compensating controls, expirations, and launch blockers.</div></div><a class="tag good" href="/app/policy">open</a></div>
@@ -6801,7 +7100,6 @@ function renderEnterpriseSupportPage(pageName: EnterpriseSupportPageName): strin
             <div class="row"><div><div class="row-title">Readiness</div><div class="row-sub">Production gate for control plane, executor, GCP confidential runtime, Cloud KMS path, attestation, replay protection, and origin lock.</div></div><a class="tag good" href="/readiness">open</a></div>
             <div class="row"><div><div class="row-title">Health</div><div class="row-sub">Lightweight control-plane health response for monitoring, edge verification, and operator checks.</div></div><a class="tag good" href="/health">open</a></div>
             <div class="row"><div><div class="row-title">AI Proof Verifier</div><div class="row-sub">Registers external models, verifies submitted proof bundles, and ties evidence to project policy, audit, and runtime posture without VaultProof running the model.</div></div><a class="tag warn" href="/app/verifier">beta</a></div>
-            <div class="row"><div><div class="row-title">Org + SSO</div><div class="row-sub">Organization identity, company domain, SSO status, Entra/Supabase SAML rollout, roles, and workspace ownership.</div></div><a class="tag good" href="/app/org">open</a></div>
             <div class="row"><div><div class="row-title">Members</div><div class="row-sub">People, invitations, roles, project assignments, invite create/revoke, and access-review export.</div></div><a class="tag good" href="/app/members">open</a></div>
             <div class="row"><div><div class="row-title">Audit</div><div class="row-sub">Governance and runtime event timeline with search, filters, evidence-friendly event details, and CSV export.</div></div><a class="tag good" href="/app/audit">open</a></div>
             <div class="row"><div><div class="row-title">Evidence packet</div><div class="row-sub">Customer proof packet with readiness, access review, audit links, API inventory, policy drift, rollout, scanner, release, monitoring, and key exposure response summaries.</div></div><a class="tag good" href="/app/evidence">open</a></div>
@@ -6871,7 +7169,7 @@ function renderEnterpriseSupportPage(pageName: EnterpriseSupportPageName): strin
           <h2>Enterprise SSO docs</h2>
           <p>Customer SSO setup starts in <code>admin.vaultproof.dev</code>, then customers sign in at <code>enterprise.vaultproof.dev/app/login</code>. VaultProof stores safe rollout metadata such as company domain, provider name, login mode, and status. SAML XML, certificates, IdP private material, OAuth client secrets, and Supabase service-role keys stay out of the browser forms.</p>
           <ul>
-            <li>Use <code>/app/org</code> for customer-visible organization and SSO status.</li>
+            <li>VaultProof configures organization and SSO rollout from the internal admin workspace before customer access expands.</li>
             <li>Use the internal admin business detail page to set company domain, provider, rollout status, and to run the Supabase SAML broker check.</li>
             <li>Use Supabase SAML configuration to register the customer IdP metadata URL or XML.</li>
             <li>Keep a documented break-glass admin path before enforcing SSO-first access.</li>
@@ -7706,7 +8004,7 @@ function renderEnterpriseSupportPage(pageName: EnterpriseSupportPageName): strin
       ];
       var PAID_ONBOARDING_ROLE_TASKS = [
         { id: 'task-security-review', role: 'security', title: 'Security review owner', sub: 'Security owner reviews evidence, security packet, key posture, and remaining blockers.', action: 'Assign a security reviewer and walk /app/security-review plus /app/evidence before testing.' },
-        { id: 'task-platform-owner', role: 'platform', title: 'Platform owner', sub: 'Platform owner confirms login path, SSO posture, gateway/origin constraints, and rollback contact.', action: 'Assign a platform owner and review /app/org, /app/control, /app/rollout, and runbooks.' },
+        { id: 'task-platform-owner', role: 'platform', title: 'Platform owner', sub: 'Platform owner confirms login path, SSO posture, gateway/origin constraints, and rollback contact.', action: 'Assign a platform owner and review /app/members, /app/control, /app/rollout, and runbooks.' },
         { id: 'task-app-owner', role: 'app owner', title: 'First workload app owner', sub: 'Application owner confirms first API workflow, expected traffic, provider path, and test success criteria.', action: 'Assign the first workload owner and review /app/pilot, /app/inventory, and /app/keys.' },
         { id: 'task-billing-owner', role: 'billing', title: 'Billing and renewal owner', sub: 'Billing owner confirms package, allowance, renewal/review date, support tier, and expansion path.', action: 'Assign billing owner and review /app/entitlements plus /app/plans.' },
         { id: 'task-support-owner', role: 'support', title: 'Support handoff owner', sub: 'Support owner confirms launch-week contact, escalation path, feedback capture, and optional incident-response boundary.', action: 'Assign support owner and review /app/support plus /app/pilot-success.' }
@@ -9326,7 +9624,7 @@ function renderEnterpriseSupportPage(pageName: EnterpriseSupportPageName): strin
           workflow_links: {
             testers: '/app/testers',
             members: '/app/members',
-            org_sso: '/app/org',
+            org_sso: '/app/settings',
             evidence: '/app/evidence',
             api_proxy_self_test: '/app/keys',
             security_review: '/app/security-review',
@@ -12152,7 +12450,7 @@ function renderEnterpriseSupportPage(pageName: EnterpriseSupportPageName): strin
         byId('testerRosterList').innerHTML = packet.testers.length ? packet.testers.map(renderPilotTesterRecord).join('') : '<div class="empty">No pilot testers saved yet. Add at least one tester, assign a scenario, and record login status before the guided session.</div>';
         byId('testerWorkflowList').innerHTML = [
           linkRow('Invite or confirm testers', 'Use Members to confirm organization access before the guided session.', '/app/members', 'members', 'good'),
-          linkRow('Confirm Org + SSO', 'Use Org + SSO to confirm login path and company sign-in posture.', '/app/org', 'SSO', packet.organization.sso_provider_status === 'configured' ? 'good' : 'warn'),
+          linkRow('Confirm access posture', 'Use Settings and Members to confirm login path and company sign-in posture.', '/app/settings', 'SSO', packet.organization.sso_provider_status === 'configured' ? 'good' : 'warn'),
           linkRow('Review launch proof', 'Use Evidence for strict login QA, Cloud Armor, key rotation, rollback, and budget evidence summaries.', '/app/evidence', 'evidence', 'good'),
           linkRow('Walk evidence packet', 'Use Evidence to show customer-safe proof and explain secret exclusions.', '/app/evidence', 'packet', 'good'),
           linkRow('Run API self-test', 'Use Provider Slots for protected dry-run and blocked-recipient denial evidence.', '/app/keys', 'self-test', 'good'),
@@ -12468,7 +12766,7 @@ function renderEnterpriseSupportPage(pageName: EnterpriseSupportPageName): strin
           ].join('');
           byId('setupReferenceList').innerHTML = [
             linkRow('Dashboard overview', 'Check runtime readiness, organization health, projects, members, calls, and shortcuts.', '/app/dashboard', 'dashboard', 'good'),
-            linkRow('Org + SSO', 'Confirm your organization details and company sign-in status.', '/app/org', 'open', 'good'),
+            linkRow('Settings', 'Confirm tenant defaults, security notices, and sign-in posture.', '/app/settings', 'open', 'good'),
             linkRow('Members', 'Invite teammates, assign roles, manage project access, and export access reviews.', '/app/members', 'open', 'good'),
             linkRow('Projects', 'Review project inventory, provider slots, policy status, and health.', '/app/projects', 'open', 'good'),
             linkRow('Control', 'Set caller lock, provider allowlists, upstream restrictions, rate limits, and secure execution policy.', '/app/control', 'open', 'good'),
@@ -13259,7 +13557,7 @@ export function renderEnterprisePlannedAppPage(pageName: string, env: Enterprise
         <a class="btn primary" href="${escapeHtml(page.primaryHref)}">${escapeHtml(page.primaryLabel)}</a>
         <a class="btn" href="/app/dashboard">dashboard</a>
         <a class="btn" href="/app/control">control</a>
-        <a class="btn" href="/app/org">org + SSO</a>
+        <a class="btn" href="/app/settings">settings</a>
       </div>
       <div class="note">Navigation baseline is live. This page is scheduled for API-backed enterprise features in Phase 6 of the build plan.</div>
       </section>

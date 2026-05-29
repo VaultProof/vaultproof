@@ -605,15 +605,32 @@ async function handleEnterpriseControlPlaneRequestInner(
   }
 
   if (isReadRequest && (url.pathname === '/app/org' || url.pathname === '/app/org.html')) {
-    const sessionRedirect = await requireEnterpriseCustomerPageSession(request, url, env);
-    if (sessionRedirect) return sessionRedirect;
+    if (!internalAdminSurface) {
+      return Response.json(
+        {
+          error: 'This admin page is available only on the VaultProof internal admin host.',
+        },
+        {
+          status: 404,
+          headers: {
+            'cache-control': 'no-store',
+            'x-robots-tag': 'noindex,nofollow',
+          },
+        },
+      );
+    }
+
+    const authorized = await authorizeInternalAdmin(request, env);
+    if (authorized instanceof Response) {
+      return redirectToInternalAdminLogin(url);
+    }
 
     return new Response(renderEnterpriseOrgPage(env), {
       status: 200,
       headers: {
         'content-type': 'text/html; charset=utf-8',
         'cache-control': 'no-store',
-        'x-robots-tag': 'noindex',
+        'x-robots-tag': 'noindex,nofollow',
       },
     });
   }

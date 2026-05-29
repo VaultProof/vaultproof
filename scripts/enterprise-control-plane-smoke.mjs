@@ -2936,7 +2936,6 @@ async function assertEnterpriseLoginRoute() {
       '/app/control',
       '/app/policy',
       '/app/verifier',
-      '/app/org',
       'Readiness',
       'Health',
       '/app/technical-guide',
@@ -2987,6 +2986,9 @@ async function assertEnterpriseLoginRoute() {
     }
     if (pageHtml.includes('https://admin.vaultproof.dev/internal/admin')) {
       throw new Error(`Expected ${path} customer shell to keep internal admin off the enterprise host`);
+    }
+    if (pageHtml.includes('href="/app/org"')) {
+      throw new Error(`Expected ${path} customer shell to keep Org + SSO off the enterprise sidebar`);
     }
     for (const pageSpecificSidebarSubtitle of [
       'policy control',
@@ -3133,6 +3135,9 @@ async function assertEnterpriseLoginRoute() {
       'providerUsage',
       'trafficBreakdown',
       'callTrend',
+      'deepl',
+      'Localization',
+      'DeepL translation usage is protected',
       'Setup access checklist',
       'Release evidence',
       'Tester readiness',
@@ -3260,7 +3265,7 @@ async function assertEnterpriseLoginRoute() {
     {
       path: '/app/inventory',
       title: 'API Inventory - VaultProof Enterprise',
-      required: ['/api/v1/enterprise/projects/bootstrap', 'API inventory board', 'add API key', 'manual API key', 'vaultproof_manual_api_keys', 'data-manual-key-field', 'key fingerprint', 'needs sealed ingest', 'import CSV/OpenAPI', 'inventoryImportForm', 'parseInventoryCsv', 'parseOpenApiInventoryHints', 'vaultproof_inventory_import', 'imported_api_hints', 'inventoryFilterForm', 'inventorySearch', 'inventoryStatusFilter', 'inventoryReviewFilter', 'inventoryRiskFilter', 'inventorySourceFilter', 'apply filters', 'clearInventoryFilters', 'copy filtered CSV', 'copyFilteredInventoryCsvBtn', 'copyFilteredInventoryCsv', 'copy-filtered-inventory-csv', 'filteredInventoryRows', 'inventoryBulkReviewForm', 'bulkInventoryReviewStatus', 'bulkInventoryNextReview', 'apply filtered review', 'applyInventoryBulkReview', 'bulk_reviewed_at', 'copy review brief', 'copyInventoryReviewBriefBtn', 'copyInventoryReviewBrief', 'copy-inventory-review-brief', 'inventoryReviewBrief', 'VaultProof API inventory review brief', 'Priority actions', 'inventoryRowMatchesFilters', 'vaultproof_api_inventory', 'data-inventory-field', 'business owner', 'technical owner', 'data sensitivity', 'review status', 'review due', 'copy inventory CSV', 'copyInventoryCsvBtn', 'copy-inventory-csv', 'inventoryEvidenceCsv', 'export_formats', 'copy inventory JSON', 'vaultproof_enterprise_api_inventory', '/app/control', '/app/keys', '/app/activity', '/app/evidence', '/app/security-review', '/api/v1/enterprise/audit?format=csv&days=30', '/api/v1/enterprise/members/access-review?format=csv'],
+      required: ['/api/v1/enterprise/projects/bootstrap', 'API inventory board', 'inventory-board-shadcn-polish', '.inventory-board-panel .inventory-record', '.inventory-board-panel .tag.good', 'add API key', 'manual API key', 'vaultproof_manual_api_keys', 'data-manual-key-field', 'key fingerprint', 'needs sealed ingest', 'import CSV/OpenAPI', 'inventoryImportForm', 'parseInventoryCsv', 'parseOpenApiInventoryHints', 'vaultproof_inventory_import', 'imported_api_hints', 'inventoryFilterForm', 'inventorySearch', 'inventoryStatusFilter', 'inventoryReviewFilter', 'inventoryRiskFilter', 'inventorySourceFilter', 'apply filters', 'clearInventoryFilters', 'copy filtered CSV', 'copyFilteredInventoryCsvBtn', 'copyFilteredInventoryCsv', 'copy-filtered-inventory-csv', 'filteredInventoryRows', 'inventoryBulkReviewForm', 'bulkInventoryReviewStatus', 'bulkInventoryNextReview', 'apply filtered review', 'applyInventoryBulkReview', 'bulk_reviewed_at', 'copy review brief', 'copyInventoryReviewBriefBtn', 'copyInventoryReviewBrief', 'copy-inventory-review-brief', 'inventoryReviewBrief', 'VaultProof API inventory review brief', 'Priority actions', 'inventoryRowMatchesFilters', 'vaultproof_api_inventory', 'data-inventory-field', 'business owner', 'technical owner', 'data sensitivity', 'review status', 'review due', 'copy inventory CSV', 'copyInventoryCsvBtn', 'copy-inventory-csv', 'inventoryEvidenceCsv', 'export_formats', 'copy inventory JSON', 'vaultproof_enterprise_api_inventory', '/app/control', '/app/keys', '/app/activity', '/app/evidence', '/app/security-review', '/api/v1/enterprise/audit?format=csv&days=30', '/api/v1/enterprise/members/access-review?format=csv'],
     },
     {
       path: '/app/policy',
@@ -3275,7 +3280,7 @@ async function assertEnterpriseLoginRoute() {
     {
       path: '/app/keys',
       title: 'Provider Slots - VaultProof Enterprise',
-      required: ['/api/v1/enterprise/projects', 'add slot', 'create slot', 'Extra headers JSON', 'slotExtraHeaders', 'generic-bearer', 'generic-header', 'minimax', 'github', 'notion', 'cloudflare', 'anthropic-version', 'apikey', 'x-algolia-application-id', 'emergency revoke', 'live sealed material', 'placeholder material', 'Customer API proxy test kit', 'copy dry-run request', 'copy blocked-recipient request', 'YOUR_VAULTPROOF_SESSION_JWT', 'Email API key walkthrough', 'protected email dry-run', 'blocked recipient test', 'Policy denial evidence', 'resend', 'sendgrid', 'postmark', 'brevo', 'mailersend', 'sendinblue', 'sparkpost', 'mailtrap', 'supabase', 'algolia', 'shopify', 'grafana', 'weaviate', 'langfuse', 'azure-openai', 'nvidia', 'sambanova', 'fal', 'brave-search', 'serper', 'unstructured', 'qdrant', 'turso', 'netlify', 'digitalocean', 'heroku', 'fly', 'railway', 'terraform-cloud', 'pulumi', 'fastly', 'tailscale', 'azure-management', 'gcp-resource-manager', 'microsoft-graph', 'google-workspace', 'bitbucket', 'circleci', 'buildkite', 'dockerhub', 'quay', 'npm-registry', 'betterstack', 'logsnag', 'raygun', 'semgrep', 'sonarcloud', 'elasticsearch', 'elastic-cloud', 'meilisearch', 'typesense', 'kubernetes', 'hashicorp-vault', 'onepassword-connect', 'doppler', 'infisical', 'segment', 'plausible', 'hume', 'runpod', 'webflow', 'salesforce', 'zoho-crm', 'zoom', 'facebook-graph', 'linkedin', 'wordpress', 'okta', 'opsgenie', 'axiom', 'rollbar', 'asana', 'monday', 'clickup', 'figma', 'zendesk', 'jira', 'adyen', 'chargebee', 'x-figma-token', 'SSWS {key}', 'GenieKey {key}', 'ApiKey {key}', 'x-vault-token', 'circle-token', 'Zoho-oauthtoken {key}', 'fastly-key', 'application/vnd.heroku+json; version=3'],
+      required: ['/api/v1/enterprise/projects', 'Key inventory', 'keyOverviewPanel', 'protected API keys in system', 'keyProviderChart', 'keyStatusDonut', 'keySystemSummaryList', 'Provider breakdown', 'Readiness mix', 'add slot', 'create slot', 'Extra headers JSON', 'slotExtraHeaders', 'generic-bearer', 'generic-header', 'minimax', 'deepl', 'deepl-pro', 'DeepL-Auth-Key {key}', 'api-free.deepl.com', 'api.deepl.com', 'github', 'notion', 'cloudflare', 'anthropic-version', 'apikey', 'x-algolia-application-id', 'emergency revoke', 'live sealed material', 'placeholder material', 'Customer API proxy test kit', 'copy dry-run request', 'copy blocked-recipient request', 'YOUR_VAULTPROOF_SESSION_JWT', 'Email API key walkthrough', 'protected email dry-run', 'blocked recipient test', 'Policy denial evidence', 'resend', 'sendgrid', 'postmark', 'brevo', 'mailersend', 'sendinblue', 'sparkpost', 'mailtrap', 'supabase', 'algolia', 'shopify', 'grafana', 'weaviate', 'langfuse', 'azure-openai', 'nvidia', 'sambanova', 'fal', 'brave-search', 'serper', 'unstructured', 'qdrant', 'turso', 'netlify', 'digitalocean', 'heroku', 'fly', 'railway', 'terraform-cloud', 'pulumi', 'fastly', 'tailscale', 'azure-management', 'gcp-resource-manager', 'microsoft-graph', 'google-workspace', 'bitbucket', 'circleci', 'buildkite', 'dockerhub', 'quay', 'npm-registry', 'betterstack', 'logsnag', 'raygun', 'semgrep', 'sonarcloud', 'elasticsearch', 'elastic-cloud', 'meilisearch', 'typesense', 'kubernetes', 'hashicorp-vault', 'onepassword-connect', 'doppler', 'infisical', 'segment', 'plausible', 'hume', 'runpod', 'webflow', 'salesforce', 'zoho-crm', 'zoom', 'facebook-graph', 'linkedin', 'wordpress', 'okta', 'opsgenie', 'axiom', 'rollbar', 'asana', 'monday', 'clickup', 'figma', 'zendesk', 'jira', 'adyen', 'chargebee', 'x-figma-token', 'SSWS {key}', 'GenieKey {key}', 'ApiKey {key}', 'x-vault-token', 'circle-token', 'Zoho-oauthtoken {key}', 'fastly-key', 'application/vnd.heroku+json; version=3'],
     },
   ];
   for (const page of operationsPages) {
@@ -3297,6 +3302,14 @@ async function assertEnterpriseLoginRoute() {
     if (html.includes('https://init.vaultproof.dev') || html.includes('https://api.vaultproof.dev')) {
       throw new Error(`Enterprise operations page ${page.path} must not load B2C APIs`);
     }
+    if (page.path === '/app/keys') {
+      if (html.indexOf('id="keyOverviewPanel"') > html.indexOf('id="keysPanel"')) {
+        throw new Error('Expected key inventory chart to render above the provider slot list');
+      }
+      if (html.indexOf('id="apiProxyTestPanel"') < html.indexOf('id="keysPanel"')) {
+        throw new Error('Expected customer API proxy test kit to render at the bottom of the keys page');
+      }
+    }
     assertDashboardShellTheme(page.path, html);
   }
 
@@ -3304,7 +3317,7 @@ async function assertEnterpriseLoginRoute() {
     {
       path: '/app/docs',
       title: 'Enterprise docs - VaultProof Enterprise',
-      required: ['Enterprise-only documentation', 'Enterprise docs index', 'Dashboard functions', 'Overview tab', 'Key Map tab', 'Security tab', 'Access tab', 'Operations tab', 'Workspace features and functions', 'API Inventory', 'Policy Drift', 'Rollout Manager', 'AI Proof Verifier', 'Org + SSO', 'Dashboard exports and evidence functions', 'vaultproof_enterprise_evidence_packet', 'vaultproof_enterprise_key_exposure_response', 'Key exposure response', 'Exposure response sequence', 'Enterprise SSO docs', 'Provider Slots', 'scanner_open_exposure', 'needs_rotation', 'ready_to_contain', 'incident JSON packet', 'VaultProof can immediately disable or audit traffic routed through VaultProof', '/app/setup', '/app/technical-guide', '/app/security-review', '/app/runbooks', '/app/evidence', '/app/keys', '/app/scanner', '/app/inventory', '/app/policy', '/app/rollout'],
+      required: ['Enterprise-only documentation', 'Enterprise docs index', 'Dashboard functions', 'Overview tab', 'Key Map tab', 'Security tab', 'Access tab', 'Operations tab', 'Workspace features and functions', 'API Inventory', 'Policy Drift', 'Rollout Manager', 'AI Proof Verifier', 'OpenAI, Anthropic, DeepL', 'Dashboard exports and evidence functions', 'vaultproof_enterprise_evidence_packet', 'vaultproof_enterprise_key_exposure_response', 'Key exposure response', 'Exposure response sequence', 'Enterprise SSO docs', 'Provider Slots', 'scanner_open_exposure', 'needs_rotation', 'ready_to_contain', 'incident JSON packet', 'VaultProof can immediately disable or audit traffic routed through VaultProof', '/app/setup', '/app/technical-guide', '/app/security-review', '/app/runbooks', '/app/evidence', '/app/keys', '/app/scanner', '/app/inventory', '/app/policy', '/app/rollout'],
     },
     {
       path: '/app/setup',
@@ -3334,7 +3347,7 @@ async function assertEnterpriseLoginRoute() {
     {
       path: '/app/testers',
       title: 'Pilot testers - VaultProof Enterprise',
-      required: ['Tester intake', 'Tester readiness', 'Guided session plan', 'testerSessionForm', 'data-tester-session-field', 'testerSessionList', 'testerSessionBrief', 'copy session brief', 'copyTesterSessionBriefBtn', 'testerSessionBriefText', 'VaultProof paid-pilot guided tester session brief', 'guided_session', 'guided_session_ready', 'session_window', 'success_criteria', 'customer_action', 'Tester roster', 'Scenario workflow', 'Tester readiness JSON', 'vaultproof_pilot_testers', 'vaultproof_pilot_tester_session', 'data-tester-field', 'tester name/email', 'login and SSO', 'API proxy self-test', 'provider slot review', 'copy tester JSON', 'vaultproof_enterprise_paid_pilot_tester_readiness', 'ready_for_guided_testing', '/app/members', '/app/org', '/app/evidence', '/app/keys', '/app/security-review'],
+      required: ['Tester intake', 'Tester readiness', 'Guided session plan', 'testerSessionForm', 'data-tester-session-field', 'testerSessionList', 'testerSessionBrief', 'copy session brief', 'copyTesterSessionBriefBtn', 'testerSessionBriefText', 'VaultProof paid-pilot guided tester session brief', 'guided_session', 'guided_session_ready', 'session_window', 'success_criteria', 'customer_action', 'Tester roster', 'Scenario workflow', 'Tester readiness JSON', 'vaultproof_pilot_testers', 'vaultproof_pilot_tester_session', 'data-tester-field', 'tester name/email', 'login and SSO', 'API proxy self-test', 'provider slot review', 'copy tester JSON', 'vaultproof_enterprise_paid_pilot_tester_readiness', 'ready_for_guided_testing', '/app/members', '/app/settings', '/app/evidence', '/app/keys', '/app/security-review'],
     },
     {
       path: '/app/settings',
@@ -3458,32 +3471,22 @@ async function assertEnterpriseLoginRoute() {
       enterpriseHostname: ENTERPRISE_HOSTNAME,
     },
   );
-  const orgHtml = await orgResponse.text();
-  if (orgResponse.status !== 200 || !orgHtml.includes('Org — VaultProof')) {
-    throw new Error(`Expected enterprise org page, got ${orgResponse.status}`);
+  const orgBody = await orgResponse.text();
+  if (orgResponse.status !== 404 || !orgBody.includes('internal admin host')) {
+    throw new Error(`Expected enterprise org page to move behind internal admin, got ${orgResponse.status}`);
   }
-  if (!orgHtml.includes('https://vaultproof.dev/js/app-org-1.js')) {
-    throw new Error('Expected org page static scripts to load from public site origin');
+
+  const unauthenticatedAdminOrgResponse = await handleEnterpriseControlPlaneRequest(
+    buildHostRequest(INTERNAL_ADMIN_HOSTNAME, '/app/org'),
+    {
+      enterpriseHostname: ENTERPRISE_HOSTNAME,
+      internalAdminHostname: INTERNAL_ADMIN_HOSTNAME,
+    },
+  );
+  if (unauthenticatedAdminOrgResponse.status !== 302
+    || unauthenticatedAdminOrgResponse.headers.get('location') !== '/app/login') {
+    throw new Error(`Expected admin org page to require internal admin login, got ${unauthenticatedAdminOrgResponse.status}`);
   }
-  if (!orgHtml.includes('org-dashboard-theme')) {
-    throw new Error('Expected org page to include the dashboard-matched org theme');
-  }
-  if (
-    !orgHtml.includes('enterprise-static-canonical-org-url')
-    || !orgHtml.includes('.page > .topbar { display: none !important; }')
-    || orgHtml.includes('/app/control?org=')
-  ) {
-    throw new Error('Expected org page to use canonical app URLs and hide the legacy static topbar');
-  }
-  if (orgHtml.includes('/css/site-theme.css')) {
-    throw new Error('Org page must not load public site-theme.css over the enterprise dashboard theme');
-  }
-  for (const legacySidebarToken of ['sidebar-group', 'sidebar-head', 'sidebar-item', 'sidebar-dot', 'usage-box']) {
-    if (orgHtml.includes(legacySidebarToken)) {
-      throw new Error(`Org page must not include legacy sidebar artifact ${legacySidebarToken}`);
-    }
-  }
-  assertDashboardShellTheme('/app/org', orgHtml);
 }
 
 async function assertEnterpriseCustomerAppSessionGate() {
@@ -3605,7 +3608,7 @@ function assertSecurityHeaders(path, response, html = '') {
 }
 
 async function assertEnterpriseSecurityHeaders() {
-  const htmlPaths = ['/', '/app/login', '/app/logout', '/app/dashboard', '/app/evidence', '/app/control', '/app/verifier', '/app/org', '/app/setup', '/app/technical-guide', '/app/security-review', '/app/entitlements', '/app/testers', '/app/release', '/app/scanner', '/app/runbooks', '/app/inventory', '/app/policy', '/app/rollout'];
+  const htmlPaths = ['/', '/app/login', '/app/logout', '/app/dashboard', '/app/evidence', '/app/control', '/app/verifier', '/app/setup', '/app/technical-guide', '/app/security-review', '/app/entitlements', '/app/testers', '/app/release', '/app/scanner', '/app/runbooks', '/app/inventory', '/app/policy', '/app/rollout'];
   for (const path of htmlPaths) {
     const response = await handleEnterpriseControlPlaneRequest(
       buildRequest(path),
@@ -3651,7 +3654,6 @@ async function assertEnterpriseAppLinkCrawl() {
     '/app',
     '/app/dashboard',
     '/app/control',
-    '/app/org',
     '/app/members',
     '/app/audit',
     '/app/alerts',
@@ -3732,7 +3734,6 @@ async function assertEnterpriseMixpanelAnalytics() {
     ['/app/activity', 'activity'],
     ['/app/alerts', 'alerts'],
     ['/app/control', 'control'],
-    ['/app/org', 'org'],
     ['/app/projects', 'projects'],
     ['/app/inventory', 'inventory'],
     ['/app/policy', 'policy'],
@@ -3834,6 +3835,7 @@ async function assertEnterpriseMixpanelAnalytics() {
     ['/app/launch', 'launch'],
     ['/app/demo', 'demo'],
     ['/app/onboarding', 'onboarding'],
+    ['/app/org', 'org'],
     ['/app/support', 'support'],
     ['/app/pilot', 'pilot'],
     ['/app/pilot-success', 'pilot-success'],
@@ -3886,7 +3888,7 @@ async function assertInternalAdminConsole() {
     || unauthenticatedLaunchResponse.headers.get('location') !== '/app/login') {
     throw new Error(`Expected internal admin launch board to redirect to login, got ${unauthenticatedLaunchResponse.status}`);
   }
-  for (const internalPagePath of ['/app/demo', '/app/onboarding', '/app/support', '/app/pilot', '/app/pilot-success']) {
+  for (const internalPagePath of ['/app/demo', '/app/onboarding', '/app/org', '/app/support', '/app/pilot', '/app/pilot-success']) {
     const unauthenticatedInternalPageResponse = await handleEnterpriseControlPlaneRequest(
       buildHostRequest(INTERNAL_ADMIN_HOSTNAME, internalPagePath),
       env,
@@ -4001,12 +4003,14 @@ async function assertInternalAdminConsole() {
     'Launch board',
     'Buyer walkthrough',
     'Paid onboarding',
+    'Org workspace',
     'Support room',
     'Pilot proposal',
     'Pilot success',
     '/app/launch',
     '/app/demo',
     '/app/onboarding',
+    '/app/org',
     '/app/support',
     '/app/pilot',
     '/app/pilot-success',
@@ -4091,6 +4095,11 @@ async function assertInternalAdminConsole() {
         "target.hasAttribute('data-onboarding-due')",
         "target.hasAttribute('data-onboarding-note')",
       ],
+    },
+    {
+      path: '/app/org',
+      title: 'Org — VaultProof',
+      required: ['Org — VaultProof', 'org-dashboard-theme', 'enterprise-static-canonical-org-url', 'https://vaultproof.dev/js/app-org-1.js', '.page > .topbar { display: none !important; }'],
     },
     {
       path: '/app/support',

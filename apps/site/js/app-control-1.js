@@ -846,10 +846,10 @@
         label: 'open security',
       },
       {
-        title: 'Org setup',
-        copy: 'Use the org page for ownership transfer, archive controls, and team-admin setup before rollout starts.',
-        href: '/app/org',
-        label: 'open org settings',
+        title: 'Settings',
+        copy: 'Use Settings and Members for tenant defaults, security notices, access posture, and team-admin setup before rollout starts.',
+        href: '/app/settings',
+        label: 'open settings',
       },
     ];
 
@@ -913,7 +913,7 @@
       '- Enterprise pilot: /enterprise-demo',
       '- Docs: /docs',
       '- Security: /security',
-      '- Org settings: /app/org',
+      '- Settings: /app/settings',
     ].join('\n');
   }
 

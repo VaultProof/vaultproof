@@ -1168,6 +1168,7 @@ export function renderInternalAdminPage(env: EnterpriseControlPlaneEnv = {}): st
       <a class="nav-link" href="/app/launch"><span>Launch board</span><span class="tag">staff</span></a>
       <a class="nav-link" href="/app/demo"><span>Buyer walkthrough</span><span class="tag">staff</span></a>
       <a class="nav-link" href="/app/onboarding"><span>Paid onboarding</span><span class="tag">staff</span></a>
+      <a class="nav-link" href="/app/org"><span>Org workspace</span><span class="tag">staff</span></a>
       <a class="nav-link" href="/app/support"><span>Support room</span><span class="tag">staff</span></a>
       <a class="nav-link" href="/app/pilot"><span>Pilot proposal</span><span class="tag">staff</span></a>
       <a class="nav-link" href="/app/pilot-success"><span>Pilot success</span><span class="tag">staff</span></a>
@@ -1185,6 +1186,7 @@ export function renderInternalAdminPage(env: EnterpriseControlPlaneEnv = {}): st
           <a class="action" href="/app/launch">launch board</a>
           <a class="action" href="/app/demo">walkthrough</a>
           <a class="action" href="/app/onboarding">onboarding</a>
+          <a class="action" href="/app/org">org workspace</a>
           <a class="action" href="/app/support">support</a>
           <a class="action" href="/app/pilot">pilot proposal</a>
           <a class="action" href="/app/pilot-success">pilot success</a>

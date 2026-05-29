@@ -144,12 +144,6 @@ const ENTERPRISE_SIDEBAR_NAV_GROUPS: readonly EnterpriseSidebarNavGroup[] = [
         blurb: 'Register external models and validate proof bundles.',
         pill: 'beta',
       },
-      {
-        page: 'org',
-        href: '/app/org',
-        label: 'Org + SSO',
-        blurb: 'Enterprise identity, Entra SSO, roles, and domains.',
-      },
     ],
   },
   {

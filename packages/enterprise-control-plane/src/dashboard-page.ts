@@ -992,7 +992,7 @@ export function renderEnterpriseDashboardPage(env: EnterpriseControlPlaneEnv = {
           <div class="card">
             <div class="section-title"><h2>Setup access checklist</h2><span class="mini">before rollout</span></div>
             <div class="list">
-              <div class="row"><div><div class="row-title">SSO path</div><div class="row-sub">Use Entra ID through Supabase SAML broker/session provider for customer-facing SSO.</div></div><span class="tag">Org + SSO</span></div>
+              <div class="row"><div><div class="row-title">SSO path</div><div class="row-sub">Use Entra ID through Supabase SAML broker/session provider for customer-facing SSO.</div></div><span class="tag">SSO posture</span></div>
               <div class="row"><div><div class="row-title">Access review</div><div class="row-sub">Confirm owners and admins are the right people before expanding team access.</div></div><span class="tag">Members</span></div>
               <div class="row"><div><div class="row-title">Alert delivery</div><div class="row-sub">Set destinations and test delivery before relying on incident notifications.</div></div><span class="tag">Alerts</span></div>
             </div>
@@ -1095,11 +1095,11 @@ export function renderEnterpriseDashboardPage(env: EnterpriseControlPlaneEnv = {
         var errorCalls = callTrend.reduce(function(sum, item) { return sum + rawNumber(item.errors); }, 0);
         var otherErrorCalls = Math.max(errorCalls - deniedCalls, 0);
         return {
-          totalProjects: 5,
-          totalKeys: 12,
-          providers: ['openai', 'anthropic', 'stripe', 'sendgrid', 'google'],
-          providerCount: 5,
-          activeApps: 5,
+          totalProjects: 6,
+          totalKeys: 14,
+          providers: ['openai', 'anthropic', 'stripe', 'sendgrid', 'deepl', 'google'],
+          providerCount: 6,
+          activeApps: 6,
           totalCalls: totalCalls,
           errorCalls: errorCalls,
           deniedCalls: deniedCalls,
@@ -1108,8 +1108,8 @@ export function renderEnterpriseDashboardPage(env: EnterpriseControlPlaneEnv = {
           statsSource: 'sample_dashboard',
           accessLogStatsSource: 'sample_dashboard',
           providerSlotSummary: {
-            totalSlots: 12,
-            liveSealedSlots: 9,
+            totalSlots: 14,
+            liveSealedSlots: 11,
             placeholderSlots: 2,
             mixedSlots: 1,
             missingSlots: 0,
@@ -1119,6 +1119,7 @@ export function renderEnterpriseDashboardPage(env: EnterpriseControlPlaneEnv = {
             { provider: 'anthropic', labels: ['AI agent runtime'], slots: 2, liveSealedSlots: 1, placeholderSlots: 1, mixedSlots: 0, missingSlots: 0, recentCalls: 1465, denied: 4, errors: 6, lastActivity: daysAgoIso(0) },
             { provider: 'stripe', labels: ['Billing'], slots: 2, liveSealedSlots: 2, placeholderSlots: 0, mixedSlots: 0, missingSlots: 0, recentCalls: 812, denied: 1, errors: 2, lastActivity: daysAgoIso(1) },
             { provider: 'sendgrid', labels: ['Notifications'], slots: 2, liveSealedSlots: 2, placeholderSlots: 0, mixedSlots: 0, missingSlots: 0, recentCalls: 694, denied: 0, errors: 1, lastActivity: daysAgoIso(1) },
+            { provider: 'deepl', labels: ['Translation'], slots: 2, liveSealedSlots: 2, placeholderSlots: 0, mixedSlots: 0, missingSlots: 0, recentCalls: 367, denied: 0, errors: 0, lastActivity: daysAgoIso(1) },
             { provider: 'google', labels: ['Analytics'], slots: 2, liveSealedSlots: 1, placeholderSlots: 0, mixedSlots: 1, missingSlots: 0, recentCalls: 433, denied: 2, errors: 3, lastActivity: daysAgoIso(2) },
           ],
           trafficBreakdown: {
@@ -1129,10 +1130,10 @@ export function renderEnterpriseDashboardPage(env: EnterpriseControlPlaneEnv = {
             otherErrorCalls: otherErrorCalls,
           },
           projectCoverage: {
-            totalProjects: 5,
-            withProviderSlots: 5,
+            totalProjects: 6,
+            withProviderSlots: 6,
             withoutProviderSlots: 0,
-            withTraffic: 4,
+            withTraffic: 5,
             needingAttention: 2,
           },
           callTrend: callTrend,
@@ -1141,11 +1142,13 @@ export function renderEnterpriseDashboardPage(env: EnterpriseControlPlaneEnv = {
             { name: 'AI agent runtime', calls: 1710, denied: 6, errors: 9, lastActivity: daysAgoIso(0) },
             { name: 'Billing', calls: 812, denied: 1, errors: 2, lastActivity: daysAgoIso(1) },
             { name: 'Notifications', calls: 694, denied: 0, errors: 1, lastActivity: daysAgoIso(1) },
+            { name: 'Localization', calls: 367, denied: 0, errors: 0, lastActivity: daysAgoIso(1) },
             { name: 'Analytics', calls: 433, denied: 2, errors: 3, lastActivity: daysAgoIso(2) },
           ],
           alerts: [
             { severity: 'warning', title: 'Anthropic slot is still demo-only', detail: 'Replace the placeholder key before routing production agent traffic.' },
             { severity: 'warning', title: 'Google analytics slot has partial setup', detail: 'One project has provider mapping but still needs a sealed production key.' },
+            { severity: 'info', title: 'DeepL translation usage is protected', detail: 'Translation traffic is visible in the provider map without exposing the upstream DeepL key.' },
             { severity: 'info', title: 'OpenAI traffic is active', detail: 'Customer API and agent runtime requests are moving through the protected proxy.' },
           ],
           pilotReview: {
@@ -1156,6 +1159,7 @@ export function renderEnterpriseDashboardPage(env: EnterpriseControlPlaneEnv = {
             { description: 'Anthropic request blocked by policy', action: 'proxy.denied', timestamp: daysAgoIso(0), metadata: { status_code: 403 }, keySlot: { provider: 'anthropic' } },
             { description: 'Stripe billing key used', action: 'proxy.allowed', timestamp: daysAgoIso(1), metadata: { status_code: 200 }, keySlot: { provider: 'stripe' } },
             { description: 'SendGrid message sent', action: 'proxy.allowed', timestamp: daysAgoIso(1), metadata: { status_code: 200 }, keySlot: { provider: 'sendgrid' } },
+            { description: 'DeepL translation call allowed', action: 'proxy.allowed', timestamp: daysAgoIso(1), metadata: { status_code: 200 }, keySlot: { provider: 'deepl' } },
             { description: 'Google analytics key needs review', action: 'proxy.error', timestamp: daysAgoIso(2), metadata: { status_code: 502 }, keySlot: { provider: 'google' } },
           ],
         };

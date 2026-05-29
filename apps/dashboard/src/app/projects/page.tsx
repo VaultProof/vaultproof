@@ -575,7 +575,7 @@ export default function ProjectsPage() {
                   </div>
                   <div className="rounded-2xl border border-white/6 bg-slate-950/40 p-4">
                     <div className="text-sm font-semibold text-white">2. Add a provider key</div>
-                    <div className="mt-2 text-sm leading-6 text-slate-300">Connect OpenAI, Stripe, Anthropic, or another provider through VaultProof.</div>
+                    <div className="mt-2 text-sm leading-6 text-slate-300">Connect OpenAI, DeepL, Stripe, Anthropic, or another provider through VaultProof.</div>
                   </div>
                   <div className="rounded-2xl border border-white/6 bg-slate-950/40 p-4">
                     <div className="text-sm font-semibold text-white">3. Invite teammates</div>

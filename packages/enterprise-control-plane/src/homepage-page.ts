@@ -1177,7 +1177,7 @@ export function renderEnterpriseHomepage(env: EnterpriseControlPlaneEnv = {}): s
             <div class="vp-wire"></div><div class="vp-beam"></div>
             <article class="vp-node"><div class="vp-node-dot">01</div><div><h3>Your app</h3><p>Your app calls VaultProof instead of putting the API key in code or an env var.</p></div></article>
             <article class="vp-node"><div class="vp-node-dot">02</div><div><h3>VaultProof</h3><p>We check the rules, gather the key pieces, and unlock the key inside a protected GCP runtime.</p></div></article>
-            <article class="vp-node"><div class="vp-node-dot">03</div><div><h3>Provider</h3><p>VaultProof sends the approved request to OpenAI, Stripe, Twilio, Snowflake, or another provider.</p></div></article>
+            <article class="vp-node"><div class="vp-node-dot">03</div><div><h3>Provider</h3><p>VaultProof sends the approved request to OpenAI, DeepL, Stripe, Twilio, Snowflake, or another provider.</p></div></article>
             <article class="vp-node"><div class="vp-node-dot">04</div><div><h3>Receipt</h3><p>The key is erased from memory and your security team gets a record of what happened.</p></div></article>
           </div>
         </div>
@@ -1188,7 +1188,7 @@ export function renderEnterpriseHomepage(env: EnterpriseControlPlaneEnv = {}): s
           <div>
             <div class="vp-eyebrow"><strong>§ 04</strong><span>How teams start</span></div>
             <h2 class="vp-heading">Keep your code. <em>Stop storing the key.</em></h2>
-            <p class="vp-copy">You keep using OpenAI, Stripe, Twilio, Snowflake, and the tools you already have. The change is simple: the real key moves out of your app and into VaultProof.</p>
+            <p class="vp-copy">You keep using OpenAI, DeepL, Stripe, Twilio, Snowflake, and the tools you already have. The change is simple: the real key moves out of your app and into VaultProof.</p>
             <div class="vp-checklist">
               <span>Start with one important API key</span>
               <span>Keep your current provider SDKs and app logic</span>
@@ -1226,7 +1226,7 @@ export function renderEnterpriseHomepage(env: EnterpriseControlPlaneEnv = {}): s
             <article class="vp-card"><div class="vp-card-num">03 / 06</div><h3>Clear rules</h3><p>Choose which project, website, provider, and customer gateway is allowed to use each key.</p></article>
             <article class="vp-card"><div class="vp-card-num">04 / 06</div><h3>Simple audit records</h3><p>Every key use creates a clear record your security team can review.</p></article>
             <article class="vp-card"><div class="vp-card-num">05 / 06</div><h3>You can own the keys</h3><p>Use Cloud KMS or a customer-owned gateway pattern when your company needs ownership and shutoff controls.</p></article>
-            <article class="vp-card"><div class="vp-card-num">06 / 06</div><h3>Works with major APIs</h3><p>Protect calls to OpenAI, Stripe, Twilio, Snowflake, Datadog, and other APIs from one place.</p></article>
+            <article class="vp-card"><div class="vp-card-num">06 / 06</div><h3>Works with major APIs</h3><p>Protect calls to OpenAI, DeepL, Stripe, Twilio, Snowflake, Datadog, and other APIs from one place.</p></article>
           </div>
         </div>
       </section>
@@ -1325,6 +1325,7 @@ export function renderEnterpriseHomepage(env: EnterpriseControlPlaneEnv = {}): s
       var services = [
         { lib: 'Stripe', pkg: 'stripe', envVar: 'STRIPE_KEY', vp: 'vp://stripe-live', ctor: 'new Stripe', call: 'charges.create' },
         { lib: 'OpenAI', pkg: 'openai', envVar: 'OPENAI_API_KEY', vp: 'vp://openai-prod', ctor: 'new OpenAI', call: 'responses.create' },
+        { lib: 'DeepL', pkg: 'deepl-node', envVar: 'DEEPL_AUTH_KEY', vp: 'vp://deepl-prod', ctor: 'new DeepL.Translator', call: 'translateText' },
         { lib: 'Twilio', pkg: 'twilio', envVar: 'TWILIO_TOKEN', vp: 'vp://twilio-main', ctor: 'twilio', call: 'messages.create' },
         { lib: 'Snowflake', pkg: 'snowflake-sdk', envVar: 'SNOW_PASSWORD', vp: 'vp://snowflake-warehouse', ctor: 'snowflake.createConnection', call: 'execute' }
       ];

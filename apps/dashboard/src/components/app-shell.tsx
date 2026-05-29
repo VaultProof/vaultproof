@@ -82,7 +82,6 @@ const NAV_GROUPS: NavGroup[] = [
       PRIMARY_NAV[4],
       { href: "/app/control", label: "Control", blurb: "Caller lock, provider policy, rates, and secure execution." },
       { href: "/app/verifier", label: "AI Proof Verifier", blurb: "Register models and verify external proof bundles.", pill: "beta" },
-      { href: "/app/org", label: "Org + SSO", blurb: "Organization settings and Microsoft Entra SSO." },
     ],
   },
   {

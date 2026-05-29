@@ -66,7 +66,7 @@ const ENTERPRISE_LINK_GROUPS = [
     links: [
       ["Policy control", "/app/control"],
       ["Provider slots", "/keys"],
-      ["Org + Entra SSO", "/app/org"],
+      ["Members + access", "/app/members"],
       ["AI Proof Verifier", "/app/verifier"],
     ],
   },
