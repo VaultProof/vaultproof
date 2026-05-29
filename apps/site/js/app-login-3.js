@@ -120,6 +120,10 @@
   function getCliContext() {
     const rawCliCallback = urlParams.get('cli_callback');
     const cliState = urlParams.get('state');
+    if (rawCliCallback && IS_AZURE_CONTROL_PLANE_HOST) {
+      console.warn('cli_callback rejected on enterprise control-plane hosts');
+      return { cliCallback: null, cliState: cliState || '' };
+    }
     if (!rawCliCallback) {
       return { cliCallback: null, cliState: cliState || '' };
     }
@@ -180,6 +184,7 @@
 
   function storeLocalSession(session, user) {
     if (!session) return;
+    if (IS_AZURE_CONTROL_PLANE_HOST) return;
     localStorage.setItem('vaultproof_token', session.access_token);
     if (session.refresh_token) {
       localStorage.setItem('vaultproof_refresh_token', session.refresh_token);
@@ -188,6 +193,20 @@
       id: (user && user.id) || (session.user && session.user.id) || '',
       email: (user && user.email) || (session.user && session.user.email) || '',
     }));
+  }
+
+  function clearControlPlaneBrowserTokens() {
+    if (!IS_AZURE_CONTROL_PLANE_HOST) return;
+    ['vaultproof_token', 'vaultproof_refresh_token', 'vaultproof_user'].forEach(function(key) {
+      localStorage.removeItem(key);
+    });
+    [localStorage, sessionStorage].forEach(function(storage) {
+      Object.keys(storage).forEach(function(key) {
+        if (key.startsWith('sb-') || key.includes('auth-token')) {
+          storage.removeItem(key);
+        }
+      });
+    });
   }
 
   async function recordSsoStart(domain) {
@@ -383,6 +402,7 @@
       setSsoStatus(ssoResolution.error, 'error');
     }
     const dashboardRoute = await resolveDashboardRoute(session, ssoResolution);
+    clearControlPlaneBrowserTokens();
     safeRedirect(dashboardRoute);
   }
 
@@ -805,6 +825,7 @@
     if (loopHistory.length >= 3) {
       sessionStorage.removeItem(LOOP_KEY);
       localStorage.removeItem('vaultproof_token');
+      localStorage.removeItem('vaultproof_refresh_token');
       localStorage.removeItem('vaultproof_user');
       localStorage.removeItem(PROMO_KEY);
       console.warn('Login loop detected — cleared local auth state');

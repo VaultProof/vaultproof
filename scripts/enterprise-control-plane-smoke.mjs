@@ -546,6 +546,14 @@ function installSupabaseStub() {
         enabled: true,
         created_at: '2026-04-20T13:00:00.000Z',
         updated_at: '2026-04-21T13:00:00.000Z',
+      }, {
+        id: 'alert_dest_private_webhook_123',
+        channel_type: 'webhook',
+        label: 'Blocked metadata webhook',
+        target: 'https://metadata.google.internal/computeMetadata/v1',
+        enabled: true,
+        created_at: '2026-04-20T14:00:00.000Z',
+        updated_at: '2026-04-21T14:00:00.000Z',
       }]);
     }
 
@@ -2117,6 +2125,38 @@ async function assertEnterpriseCreateProviderSlot() {
     throw new Error(`Expected raw extra header secrets to be rejected, got ${rawExtraHeaderResponse.status} ${JSON.stringify(rawExtraHeaderPayload)}`);
   }
 
+  for (const [index, upstreamBaseUrl] of [
+    'https://localhost',
+    'https://127.0.0.1',
+    'https://[::1]',
+    'https://[fc00::1]',
+    'https://metadata.google.internal',
+  ].entries()) {
+    const privateUpstreamResponse = await handleEnterpriseControlPlaneRequest(
+      buildRequest(`/api/v1/enterprise/projects/${PROJECT_ID}/providers`, {
+        method: 'POST',
+        headers: {
+          authorization: `Bearer ${AUTH_TOKEN}`,
+          'content-type': 'application/json',
+        },
+        body: JSON.stringify({
+          provider: `blocked_${index}`,
+          upstream_base_url: upstreamBaseUrl,
+          auth_header_name: 'authorization',
+          auth_header_template: 'Bearer {key}',
+        }),
+      }),
+      env,
+    );
+    const privateUpstreamPayload = await privateUpstreamResponse.json();
+    if (
+      privateUpstreamResponse.status !== 400
+      || !String(privateUpstreamPayload?.error || '').includes('public provider host')
+    ) {
+      throw new Error(`Expected private upstream ${upstreamBaseUrl} to be rejected, got ${privateUpstreamResponse.status} ${JSON.stringify(privateUpstreamPayload)}`);
+    }
+  }
+
   const emailSlotResponse = await handleEnterpriseControlPlaneRequest(
     buildRequest(`/api/v1/enterprise/projects/${PROJECT_ID}/providers`, {
       method: 'POST',
@@ -2532,7 +2572,7 @@ async function assertEnterpriseAlertsApi() {
   if (payload?.policy?.dispatch_enabled !== true || payload?.policy?.minimum_severity !== 'warning') {
     throw new Error(`Expected alert policy in alerts API payload, got ${JSON.stringify(payload?.policy)}`);
   }
-  if (!Array.isArray(payload?.destinations) || payload.destinations.length !== 2) {
+  if (!Array.isArray(payload?.destinations) || payload.destinations.length !== 3) {
     throw new Error(`Expected alert destinations in alerts API payload, got ${JSON.stringify(payload?.destinations)}`);
   }
   if (!String(payload.destinations[0].target_masked || '').includes('se***@example.com')) {
@@ -2575,6 +2615,33 @@ async function assertEnterpriseAlertsApi() {
   }
   if (alertTestDispatchRun?.trigger_source !== 'manual' || alertTestDispatchRun?.status !== 'dispatched') {
     throw new Error(`Expected alert test dispatch run insert, got ${JSON.stringify(alertTestDispatchRun)}`);
+  }
+
+  const blockedWebhookResponse = await handleEnterpriseControlPlaneRequest(
+    buildRequest('/api/v1/enterprise/alerts/test-send', {
+      method: 'POST',
+      headers: {
+        authorization: `Bearer ${AUTH_TOKEN}`,
+        'content-type': 'application/json',
+        'x-vaultproof-organization': 'org_123',
+      },
+      body: JSON.stringify({
+        destination_id: 'alert_dest_private_webhook_123',
+      }),
+    }),
+    {
+      enterpriseHostname: ENTERPRISE_HOSTNAME,
+      supabaseUrl: 'https://supabase.example.co',
+      supabaseServiceRoleKey: 'service-role-key',
+    },
+  );
+  const blockedWebhookPayload = await blockedWebhookResponse.json();
+  if (
+    blockedWebhookResponse.status !== 200
+    || blockedWebhookPayload?.status !== 'failed'
+    || !String(blockedWebhookPayload?.detail || '').includes('public host')
+  ) {
+    throw new Error(`Expected private webhook destination to be blocked safely, got ${blockedWebhookResponse.status} ${JSON.stringify(blockedWebhookPayload)}`);
   }
 
   const deniedResponse = await handleEnterpriseControlPlaneRequest(
@@ -3639,7 +3706,7 @@ async function assertEnterpriseCustomerAppSessionGate() {
     || !sessionCookie.includes('vp_enterprise_session=')
     || !sessionCookie.includes('HttpOnly')
     || !sessionCookie.includes('Secure')
-    || !sessionCookie.includes('SameSite=Lax')
+    || !sessionCookie.includes('SameSite=Strict')
     || !sessionCookie.includes('Path=/')
     || !sessionCookie.includes('Max-Age=3600')) {
     throw new Error(`Expected enterprise customer session cookie without leaking token in JSON payload, got ${sessionResponse.status}: ${sessionCookie} ${JSON.stringify(sessionPayload)}`);
@@ -4054,7 +4121,11 @@ async function assertInternalAdminConsole() {
     env,
   );
   const sessionCookie = sessionResponse.headers.get('set-cookie') || '';
-  if (sessionResponse.status !== 200 || !sessionCookie.includes('vp_internal_admin_session=')) {
+  if (
+    sessionResponse.status !== 200
+    || !sessionCookie.includes('vp_internal_admin_session=')
+    || !sessionCookie.includes('SameSite=Strict')
+  ) {
     throw new Error(`Expected internal admin session cookie, got ${sessionResponse.status}: ${sessionCookie}`);
   }
 

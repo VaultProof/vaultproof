@@ -14519,7 +14519,7 @@ function renderEnterpriseSupportPage(pageName: EnterpriseSupportPageName): strin
           byId('securityList').innerHTML = [
             row('Production readiness', productionReady ? 'Control plane and executor report production-ready.' : (readiness.production_blockers || []).join('; '), productionReady ? 'ready' : 'blocked', productionReady ? 'good' : 'bad'),
             row('Origin lock', readiness.control_plane && readiness.control_plane.origin_lock_configured ? 'GCP edge/custom origin lock configured.' : 'Origin lock is not configured.', readiness.control_plane && readiness.control_plane.origin_lock_required ? 'required' : 'optional', readiness.control_plane && readiness.control_plane.origin_lock_configured ? 'good' : 'warn'),
-            row('Dashboard session storage', 'Enterprise pages read the Supabase session from local storage and call only enterprise control-plane APIs.', 'enterprise only', 'good')
+            row('Dashboard session storage', 'Enterprise pages use the HttpOnly enterprise session cookie and call only enterprise control-plane APIs.', 'enterprise only', 'good')
           ].join('');
         }
         if (PAGE_MODE === 'entitlements') {

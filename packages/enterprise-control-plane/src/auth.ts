@@ -62,7 +62,8 @@ export async function authenticateUser(
   const authHeader = request.headers.get('authorization') || '';
   const token = authHeader.startsWith('Bearer ')
     ? authHeader.slice(7)
-    : readCookie(request, INTERNAL_ADMIN_SESSION_COOKIE);
+    : readCookie(request, INTERNAL_ADMIN_SESSION_COOKIE)
+      || readCookie(request, ENTERPRISE_CUSTOMER_SESSION_COOKIE);
   if (!token || token.startsWith('vp_') || token.startsWith('vp-proj-')) return null;
 
   const supabase = getSupabase(env);
@@ -104,7 +105,7 @@ export function createEnterpriseCustomerSessionCookie(
     `Max-Age=${maxAgeSeconds}`,
     'HttpOnly',
     'Secure',
-    'SameSite=Lax',
+    'SameSite=Strict',
   ].join('; ');
 }
 
@@ -115,7 +116,7 @@ export function clearEnterpriseCustomerSessionCookie(): string {
     'Max-Age=0',
     'HttpOnly',
     'Secure',
-    'SameSite=Lax',
+    'SameSite=Strict',
   ].join('; ');
 }
 

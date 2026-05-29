@@ -18,6 +18,9 @@ import {
   AzureSecureKeyReleaseProvider,
   GcpKmsVaultUnwrapKeyProvider,
 } from '../packages/enterprise-secure-executor/dist/enterprise-secure-executor/src/key-release.js';
+import {
+  executeUpstreamRequest,
+} from '../packages/enterprise-secure-executor/dist/enterprise-secure-executor/src/upstream.js';
 
 const SIGNING_KEY_ID = 'enterprise-local';
 const SIGNING_SECRET = 'local-smoke-secret';
@@ -908,6 +911,43 @@ async function assertInvalidEnvelope() {
   }
 }
 
+async function assertUpstreamResponseSizeLimit() {
+  const result = await executeUpstreamRequest(
+    {
+      requestId: 'req_smoke_large_response',
+      projectId: 'proj_123',
+      projectKeyId: 'pk_123',
+      organizationId: 'org_123',
+      provider: 'openai',
+      slug: 'primary',
+      method: 'GET',
+      upstreamPath: '/v1/models',
+      query: '',
+      headers: {},
+      bodyBase64: null,
+      issuedAt: new Date().toISOString(),
+      expiresAt: new Date(Date.now() + 60_000).toISOString(),
+      nonce: 'nonce-smoke-large-response',
+    },
+    {
+      apiKey: 'sk-enterprise-smoke',
+      upstreamBaseUrl: 'https://api.openai.com',
+      authHeaderName: 'authorization',
+      authHeaderTemplate: 'Bearer {key}',
+      extraHeaders: null,
+    },
+    {
+      fetchImpl: async () => new Response('x'.repeat((5 * 1024 * 1024) + 1), {
+        status: 200,
+        headers: { 'content-type': 'text/plain' },
+      }),
+    },
+  );
+  if (result.status !== 502 || result.error !== 'upstream_response_too_large') {
+    throw new Error(`Expected oversized upstream response to be blocked, got ${JSON.stringify(result)}`);
+  }
+}
+
 await assertValidEnvelope();
 await assertReplayBlocked();
 await assertHealthReadinessProfiles();
@@ -917,4 +957,5 @@ await assertAzureSecureKeyReleaseProviderCanGenerateAttestationToken();
 await assertGcpKmsVaultUnwrapKeyProvider();
 await assertAwsKmsVaultUnwrapKeyProvider();
 await assertInvalidEnvelope();
+await assertUpstreamResponseSizeLimit();
 console.log('enterprise secure executor smoke test passed');

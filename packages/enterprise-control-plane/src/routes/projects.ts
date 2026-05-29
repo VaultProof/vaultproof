@@ -320,6 +320,41 @@ function isPrivateIpv4(hostname: string): boolean {
     || a === 0;
 }
 
+function normalizeHostnameLiteral(hostname: string): string {
+  return hostname.trim().toLowerCase().replace(/^\[|\]$/g, '');
+}
+
+function isPrivateIpv6(hostname: string): boolean {
+  const normalized = normalizeHostnameLiteral(hostname);
+  if (!normalized.includes(':')) return false;
+  if (normalized === '::' || normalized === '::1') return true;
+  if (normalized.startsWith('::ffff:')) {
+    return isPrivateIpv4(normalized.slice('::ffff:'.length));
+  }
+  const firstHextet = Number.parseInt(normalized.split(':')[0] || '0', 16);
+  if (!Number.isFinite(firstHextet)) return true;
+  return (firstHextet >= 0xfc00 && firstHextet <= 0xfdff)
+    || (firstHextet >= 0xfe80 && firstHextet <= 0xfebf);
+}
+
+function isBlockedMetadataHost(hostname: string): boolean {
+  const normalized = normalizeHostnameLiteral(hostname);
+  return normalized === 'metadata'
+    || normalized === 'metadata.google.internal'
+    || normalized === 'metadata.google'
+    || normalized === '169.254.169.254';
+}
+
+function isBlockedProviderHostname(hostname: string): boolean {
+  const normalized = normalizeHostnameLiteral(hostname);
+  return normalized === 'localhost'
+    || normalized.endsWith('.localhost')
+    || normalized.endsWith('.local')
+    || isPrivateIpv4(normalized)
+    || isPrivateIpv6(normalized)
+    || isBlockedMetadataHost(normalized);
+}
+
 function normalizeUpstreamBaseUrl(raw: string | null | undefined): { ok: true; value: string } | { ok: false; error: string } {
   const value = String(raw || '').trim();
   if (!value) return { ok: false, error: 'upstream_base_url is required' };
@@ -332,7 +367,7 @@ function normalizeUpstreamBaseUrl(raw: string | null | undefined): { ok: true; v
   if (url.protocol !== 'https:') return { ok: false, error: 'upstream_base_url must use https' };
   if (url.username || url.password) return { ok: false, error: 'upstream_base_url cannot include credentials' };
   const hostname = url.hostname.toLowerCase();
-  if (hostname === 'localhost' || hostname.endsWith('.local') || isPrivateIpv4(hostname)) {
+  if (isBlockedProviderHostname(hostname)) {
     return { ok: false, error: 'upstream_base_url must point to a public provider host' };
   }
   url.hash = '';

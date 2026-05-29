@@ -1,5 +1,6 @@
 import { createServer, type IncomingMessage, type ServerResponse } from 'node:http';
 import { handleEnterpriseControlPlaneRequest, type EnterpriseControlPlaneEnv } from './index.js';
+import { withEnterpriseSecurityHeaders } from './security-headers.js';
 
 const MAX_REQUEST_BODY_BYTES = 5 * 1024 * 1024;
 
@@ -123,9 +124,14 @@ async function main(): Promise<void> {
       const message = statusCode === 413
         ? 'Request body too large'
         : error instanceof Error ? error.message : 'Unexpected server error';
-      res.statusCode = statusCode;
-      res.setHeader('content-type', 'application/json');
-      res.end(JSON.stringify({ error: message }));
+      const response = await withEnterpriseSecurityHeaders(Response.json(
+        { error: message },
+        {
+          status: statusCode,
+          headers: { 'cache-control': 'no-store' },
+        },
+      ));
+      await writeWebResponse(response, res);
     }
   });
 

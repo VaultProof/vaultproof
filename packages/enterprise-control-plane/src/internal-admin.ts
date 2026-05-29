@@ -446,7 +446,7 @@ function internalAdminSessionCookie(token: string): string {
     `Max-Age=${INTERNAL_ADMIN_SESSION_MAX_AGE_SECONDS}`,
     'HttpOnly',
     'Secure',
-    'SameSite=Lax',
+    'SameSite=Strict',
   ].join('; ');
 }
 
@@ -457,7 +457,7 @@ export function clearInternalAdminSessionCookie(): string {
     'Max-Age=0',
     'HttpOnly',
     'Secure',
-    'SameSite=Lax',
+    'SameSite=Strict',
   ].join('; ');
 }
 

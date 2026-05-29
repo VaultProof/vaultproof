@@ -78,5 +78,12 @@
   "devDependencies": {
     "turbo": "^2.4.0",
     "typescript": "^5.7.0"
+  },
+  "overrides": {
+    "next": {
+      "postcss": "8.5.15"
+    },
+    "postcss": "8.5.15",
+    "ws": "8.21.0"
   }
 }

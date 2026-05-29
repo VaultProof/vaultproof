@@ -15,6 +15,9 @@ export interface ExecuteUpstreamDependencies {
   fetchImpl?: typeof fetch;
 }
 
+const UPSTREAM_FETCH_TIMEOUT_MS = 30_000;
+const MAX_UPSTREAM_RESPONSE_BYTES = 5 * 1024 * 1024;
+
 const SAFE_FORWARD_HEADERS = new Set([
   'content-type',
   'accept',
@@ -90,6 +93,40 @@ function sanitizeResponseHeaders(headers: Headers): Record<string, string> {
   return output;
 }
 
+async function readResponseBodyBase64(response: Response): Promise<string | null> {
+  if (!response.body) return null;
+
+  const contentLength = Number(response.headers.get('content-length') || 0);
+  if (Number.isFinite(contentLength) && contentLength > MAX_UPSTREAM_RESPONSE_BYTES) {
+    throw new Error('upstream_response_too_large');
+  }
+
+  const reader = response.body.getReader();
+  const chunks: Uint8Array[] = [];
+  let totalBytes = 0;
+
+  while (true) {
+    const { done, value } = await reader.read();
+    if (done) break;
+    if (!value) continue;
+    totalBytes += value.byteLength;
+    if (totalBytes > MAX_UPSTREAM_RESPONSE_BYTES) {
+      await reader.cancel();
+      throw new Error('upstream_response_too_large');
+    }
+    chunks.push(value);
+  }
+
+  if (!chunks.length) return null;
+  const body = new Uint8Array(totalBytes);
+  let offset = 0;
+  for (const chunk of chunks) {
+    body.set(chunk, offset);
+    offset += chunk.byteLength;
+  }
+  return toBase64(body);
+}
+
 function getProviderRequestId(headers: Headers): string | null {
   return headers.get('x-request-id') || headers.get('request-id');
 }
@@ -114,6 +151,8 @@ export async function executeUpstreamRequest(
   }
 
   const requestBody = request.bodyBase64 ? toArrayBuffer(request.bodyBase64) : undefined;
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), UPSTREAM_FETCH_TIMEOUT_MS);
 
   try {
     const upstreamResponse = await fetchImpl(upstreamUrl, {
@@ -121,11 +160,10 @@ export async function executeUpstreamRequest(
       headers: forwardHeaders,
       body: ['GET', 'HEAD'].includes(request.method) ? undefined : requestBody,
       redirect: 'manual',
+      signal: controller.signal,
     });
 
-    const responseBody = upstreamResponse.body
-      ? toBase64(new Uint8Array(await upstreamResponse.arrayBuffer()))
-      : null;
+    const responseBody = await readResponseBodyBase64(upstreamResponse);
 
     return {
       requestId: request.requestId,
@@ -144,5 +182,7 @@ export async function executeUpstreamRequest(
       providerRequestId: null,
       error: error instanceof Error ? error.message : 'upstream_fetch_failed',
     };
+  } finally {
+    clearTimeout(timeout);
   }
 }

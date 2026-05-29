@@ -159,6 +159,24 @@ function toBase64Url(bytes: Uint8Array): string {
   return base64.replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/g, '');
 }
 
+function fromBase64Url(value: string): Uint8Array | null {
+  const normalized = value.replace(/-/g, '+').replace(/_/g, '/');
+  const padded = normalized.padEnd(normalized.length + ((4 - (normalized.length % 4)) % 4), '=');
+  try {
+    if (typeof atob === 'function') {
+      const binary = atob(padded);
+      const bytes = new Uint8Array(binary.length);
+      for (let index = 0; index < binary.length; index += 1) {
+        bytes[index] = binary.charCodeAt(index);
+      }
+      return bytes;
+    }
+    return new Uint8Array(Buffer.from(padded, 'base64'));
+  } catch {
+    return null;
+  }
+}
+
 async function signBytes(message: string, secret: string): Promise<string> {
   const encoder = new TextEncoder();
   const key = await crypto.subtle.importKey(
@@ -171,6 +189,26 @@ async function signBytes(message: string, secret: string): Promise<string> {
 
   const signature = await crypto.subtle.sign('HMAC', key, encoder.encode(message));
   return toBase64Url(new Uint8Array(signature));
+}
+
+async function verifyBytes(message: string, signature: string, secret: string): Promise<boolean> {
+  const signatureBytes = fromBase64Url(signature);
+  if (!signatureBytes) return false;
+  const signatureBuffer = signatureBytes.buffer.slice(
+    signatureBytes.byteOffset,
+    signatureBytes.byteOffset + signatureBytes.byteLength,
+  ) as ArrayBuffer;
+
+  const encoder = new TextEncoder();
+  const key = await crypto.subtle.importKey(
+    'raw',
+    encoder.encode(secret),
+    { name: 'HMAC', hash: 'SHA-256' },
+    false,
+    ['verify'],
+  );
+
+  return crypto.subtle.verify('HMAC', key, signatureBuffer, encoder.encode(message));
 }
 
 export function canonicalizeSecureExecutionRequest(request: SecureExecutionRequest): string {
@@ -200,8 +238,7 @@ export async function verifySignedSecureExecutionEnvelope(
   envelope: SignedSecureExecutionEnvelope,
   secret: string,
 ): Promise<boolean> {
-  const expected = await signSecureExecutionRequest(envelope.request, secret);
-  return expected === envelope.signature;
+  return verifyBytes(canonicalizeSecureExecutionRequest(envelope.request), envelope.signature, secret);
 }
 
 export function isExpiredExecutionRequest(

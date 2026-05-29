@@ -160,6 +160,64 @@ function maskTarget(channelType: AlertChannelType, target: string): string {
   }
 }
 
+function normalizeHostnameLiteral(hostname: string): string {
+  return hostname.trim().toLowerCase().replace(/^\[|\]$/g, '');
+}
+
+function isPrivateIpv4(hostname: string): boolean {
+  const match = hostname.match(/^(\d{1,3})\.(\d{1,3})\.(\d{1,3})\.(\d{1,3})$/);
+  if (!match) return false;
+  const parts = match.slice(1).map((part) => Number(part));
+  if (parts.some((part) => !Number.isInteger(part) || part < 0 || part > 255)) return true;
+  const [a, b] = parts;
+  return a === 10
+    || a === 127
+    || (a === 169 && b === 254)
+    || (a === 172 && b >= 16 && b <= 31)
+    || (a === 192 && b === 168)
+    || a === 0;
+}
+
+function isPrivateIpv6(hostname: string): boolean {
+  const normalized = normalizeHostnameLiteral(hostname);
+  if (!normalized.includes(':')) return false;
+  if (normalized === '::' || normalized === '::1') return true;
+  if (normalized.startsWith('::ffff:')) {
+    return isPrivateIpv4(normalized.slice('::ffff:'.length));
+  }
+  const firstHextet = Number.parseInt(normalized.split(':')[0] || '0', 16);
+  if (!Number.isFinite(firstHextet)) return true;
+  return (firstHextet >= 0xfc00 && firstHextet <= 0xfdff)
+    || (firstHextet >= 0xfe80 && firstHextet <= 0xfebf);
+}
+
+function isBlockedWebhookHostname(hostname: string): boolean {
+  const normalized = normalizeHostnameLiteral(hostname);
+  return normalized === 'localhost'
+    || normalized.endsWith('.localhost')
+    || normalized.endsWith('.local')
+    || normalized === 'metadata'
+    || normalized === 'metadata.google.internal'
+    || normalized === 'metadata.google'
+    || normalized === '169.254.169.254'
+    || isPrivateIpv4(normalized)
+    || isPrivateIpv6(normalized);
+}
+
+function validateWebhookTarget(target: string): { ok: true; url: string } | { ok: false; error: string } {
+  let url: URL;
+  try {
+    url = new URL(target);
+  } catch {
+    return { ok: false, error: 'Webhook target is not a valid URL.' };
+  }
+  if (url.protocol !== 'https:') return { ok: false, error: 'Webhook target must use https.' };
+  if (url.username || url.password) return { ok: false, error: 'Webhook target cannot include credentials.' };
+  if (isBlockedWebhookHostname(url.hostname)) return { ok: false, error: 'Webhook target must point to a public host.' };
+  url.hash = '';
+  return { ok: true, url: url.toString() };
+}
+
 async function parseJsonBody(request: Request): Promise<Record<string, unknown>> {
   try {
     const body = await request.json();
@@ -178,13 +236,25 @@ async function deliverTestAlert(destination: DestinationRow, organizationName: s
     };
   }
 
+  const webhookTarget = validateWebhookTarget(destination.target);
+  if (!webhookTarget.ok) {
+    return {
+      status: 'failed',
+      detail: webhookTarget.error,
+      responseStatus: null,
+    };
+  }
+
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), 5000);
   try {
-    const response = await fetch(destination.target, {
+    const response = await fetch(webhookTarget.url, {
       method: 'POST',
       headers: {
         'content-type': 'application/json',
         'user-agent': 'VaultProof Enterprise Alerts',
       },
+      signal: controller.signal,
       body: JSON.stringify({
         event: 'vaultproof.enterprise.alert.test',
         organization: organizationName,
@@ -204,6 +274,8 @@ async function deliverTestAlert(destination: DestinationRow, organizationName: s
       detail: `Webhook test-send to ${destination.label || destination.id} failed: ${error instanceof Error ? error.message : 'unknown error'}.`,
       responseStatus: null,
     };
+  } finally {
+    clearTimeout(timeout);
   }
 }
 
