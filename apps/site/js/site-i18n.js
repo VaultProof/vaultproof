@@ -896,9 +896,10 @@
       var style = document.createElement('style');
       style.id = 'vpLanguageControlStyles';
       style.textContent = [
-        '.vp-language-control{position:fixed;right:16px;bottom:16px;z-index:2147483000;display:flex;align-items:center;gap:8px;padding:8px 10px;border:1px solid rgba(23,23,23,.14);background:rgba(250,250,247,.94);box-shadow:0 12px 32px rgba(0,0,0,.14);backdrop-filter:blur(16px);font:500 12px/1.2 system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;color:#171717}',
+        '.vp-language-control{position:fixed;right:16px;bottom:16px;z-index:2147483000;display:flex;align-items:center;gap:8px;padding:8px 10px;border:1px solid rgba(0,229,255,.28);background:rgba(5,9,12,.72);box-shadow:0 18px 46px rgba(0,0,0,.24);backdrop-filter:blur(16px);font:500 12px/1.2 system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;color:rgba(247,251,255,.82)}',
         '.vp-language-control select{border:0;background:transparent;color:inherit;font:inherit;outline:0;cursor:pointer;max-width:140px}',
-        '.vp-language-control.is-busy::after{content:"";width:8px;height:8px;border-radius:999px;background:#d97706;animation:vpLangPulse .8s ease-in-out infinite alternate}',
+        '.vp-language-control select option{background:#05090c;color:#f7fbff}',
+        '.vp-language-control.is-busy::after{content:"";width:8px;height:8px;border-radius:999px;background:#00e5ff;animation:vpLangPulse .8s ease-in-out infinite alternate}',
         '@keyframes vpLangPulse{from{opacity:.35}to{opacity:1}}',
         '@media (max-width:640px){.vp-language-control{right:10px;bottom:10px;max-width:calc(100vw - 20px)}}',
         '@media print{.vp-language-control{display:none!important}}'
