@@ -29,20 +29,21 @@ export function renderEnterpriseLoginPage(env: EnterpriseControlPlaneEnv = {}): 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.101.1" integrity="sha384-0VpB0wAYDdhWCEv3+IjT0Z9Kgpvszkf70RFX3ro7l4QR5nywxsMaOpmvZKsfRF8I" crossorigin="anonymous"></script>
   <style>
     :root {
-      color-scheme: light;
-      --bg: #f5f7fb;
-      --paper: #ffffff;
-      --surface: #f8fafc;
-      --ink: #17202a;
-      --ink-soft: #526170;
-      --muted: #7a8794;
-      --line: rgba(26, 40, 52, 0.14);
-      --line-strong: rgba(26, 40, 52, 0.22);
-      --line-soft: rgba(26, 40, 52, 0.08);
-      --accent: #315f95;
-      --accent-soft: rgba(49, 95, 149, 0.12);
-      --primary-bg: #315f95;
-      --success: #15803d;
+      color-scheme: dark;
+      --bg: #0b0f14;
+      --paper: #111827;
+      --surface: #151d29;
+      --ink: #f8fafc;
+      --ink-soft: #a8b3c2;
+      --muted: #7d8998;
+      --line: #2a3442;
+      --line-strong: #3c4a5c;
+      --line-soft: rgba(168, 179, 194, 0.12);
+      --accent: #8ab4f8;
+      --accent-soft: rgba(138, 180, 248, 0.14);
+      --primary-bg: #8ab4f8;
+      --primary-text: #08111f;
+      --success: #4ade80;
       --display: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
       --body: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
       --mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace;
@@ -89,8 +90,8 @@ export function renderEnterpriseLoginPage(env: EnterpriseControlPlaneEnv = {}): 
       border: 0.5px solid var(--line);
       border-radius: 8px;
       padding: 34px;
-      background: rgba(255, 255, 255, 0.86);
-      box-shadow: 0 18px 54px rgba(26, 40, 52, 0.10);
+      background: rgba(17, 24, 39, 0.92);
+      box-shadow: 0 18px 48px rgba(0, 0, 0, 0.24);
       display: flex;
       flex-direction: column;
       justify-content: space-between;
@@ -114,7 +115,7 @@ export function renderEnterpriseLoginPage(env: EnterpriseControlPlaneEnv = {}): 
       width: 340px;
       height: 340px;
       border-radius: 999px;
-      background: rgba(49, 95, 149, 0.12);
+      background: rgba(138, 180, 248, 0.12);
       filter: blur(28px);
     }
     .brand {
@@ -240,14 +241,14 @@ export function renderEnterpriseLoginPage(env: EnterpriseControlPlaneEnv = {}): 
     .form-input {
       width: 100%;
       border: 0.5px solid var(--line);
-      background: #ffffff;
+      background: var(--surface);
       border-radius: 9px;
       padding: 12px 13px;
       color: var(--ink);
       outline: none;
       font: 400 14px/1.2 var(--body);
     }
-    .form-input:focus { border-color: rgba(49, 95, 149, 0.55); box-shadow: 0 0 0 3px var(--accent-soft); }
+    .form-input:focus { border-color: rgba(138, 180, 248, 0.55); box-shadow: 0 0 0 3px var(--accent-soft); }
     .btn {
       width: 100%;
       border: 0.5px solid var(--line);
@@ -260,7 +261,7 @@ export function renderEnterpriseLoginPage(env: EnterpriseControlPlaneEnv = {}): 
     }
     .btn:hover { transform: translateY(-1px); }
     .btn-primary { background: var(--ink); color: var(--bg); border-color: var(--ink); }
-    .btn-secondary { background: #fffdf8; color: var(--ink); }
+    .btn-secondary { background: var(--surface); color: var(--ink); }
     .btn-small { width: auto; padding: 10px 12px; }
     .oauth-stack, .form-stack { display: grid; gap: 10px; }
     .sso-row, .promo-row { display: grid; grid-template-columns: 1fr auto; gap: 8px; margin-top: 10px; }
@@ -287,7 +288,7 @@ export function renderEnterpriseLoginPage(env: EnterpriseControlPlaneEnv = {}): 
       border-radius: 9px;
       padding: 10px;
       font-size: 13px;
-      border: 0.5px solid rgba(49, 95, 149, 0.24);
+      border: 0.5px solid rgba(138, 180, 248, 0.24);
       background: var(--accent-soft);
     }
     .legal { margin-top: 6px; }
@@ -315,8 +316,8 @@ export function renderEnterpriseLoginPage(env: EnterpriseControlPlaneEnv = {}): 
     .login-card {
       border: 1px solid var(--line);
       border-radius: 8px;
-      background: #ffffff;
-      box-shadow: 0 18px 54px rgba(26, 40, 52, 0.10);
+      background: var(--paper);
+      box-shadow: 0 18px 48px rgba(0, 0, 0, 0.24);
     }
     .hero {
       min-height: 620px;
@@ -409,14 +410,14 @@ export function renderEnterpriseLoginPage(env: EnterpriseControlPlaneEnv = {}): 
     }
     .form-input {
       border: 1px solid var(--line);
-      background: #ffffff;
+      background: var(--surface);
       border-radius: 8px;
       color: var(--ink);
       font: 400 14px/1.2 var(--body);
     }
     .form-input:focus {
-      border-color: rgba(49, 95, 149, 0.45);
-      box-shadow: 0 0 0 3px rgba(49, 95, 149, 0.12);
+      border-color: rgba(138, 180, 248, 0.45);
+      box-shadow: 0 0 0 3px rgba(138, 180, 248, 0.12);
     }
     .btn {
       border: 1px solid var(--line);
@@ -430,13 +431,13 @@ export function renderEnterpriseLoginPage(env: EnterpriseControlPlaneEnv = {}): 
     }
     .btn-primary {
       background: var(--primary-bg);
-      color: #ffffff;
+      color: var(--primary-text);
       border-color: var(--primary-bg);
       font-weight: 600;
     }
     .btn-secondary,
     .btn-small {
-      background: #ffffff;
+      background: var(--surface);
       color: var(--ink);
       border-color: var(--line);
     }
@@ -454,7 +455,7 @@ export function renderEnterpriseLoginPage(env: EnterpriseControlPlaneEnv = {}): 
     #promoCodeMsg,
     #recoveryStatus {
       border: 1px solid rgba(49, 95, 149, 0.24);
-      background: rgba(49, 95, 149, 0.10);
+      background: rgba(138, 180, 248, 0.10);
       color: var(--ink);
     }
     @media (min-width: 640px) {
@@ -680,10 +681,10 @@ export function renderEnterpriseLogoutPage(env: EnterpriseControlPlaneEnv = {}):
   <meta name="robots" content="noindex" />
   <title>Signing out - VaultProof Enterprise</title>
   <style>
-    :root { color-scheme: light; --bg: #f5f7fb; --panel: rgba(255,255,255,.94); --line: rgba(26,40,52,.14); --text: #17202a; --muted: #526170; --gold: #315f95; --ink: #ffffff; --primary: #315f95; }
+    :root { color-scheme: dark; --bg: #0b0f14; --panel: #111827; --line: #2a3442; --text: #f8fafc; --muted: #a8b3c2; --gold: #8ab4f8; --ink: #08111f; --primary: #8ab4f8; }
     * { box-sizing: border-box; }
     body { margin: 0; min-height: 100vh; display: grid; place-items: center; font-family: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; color: var(--text); background: var(--bg); }
-    main { width: min(100% - 32px, 560px); border: 1px solid var(--line); background: #ffffff; border-radius: 8px; padding: 34px; box-shadow: 0 18px 54px rgba(26,40,52,.10); }
+    main { width: min(100% - 32px, 560px); border: 1px solid var(--line); background: var(--panel); border-radius: 8px; padding: 34px; box-shadow: 0 18px 48px rgba(0,0,0,.24); }
     .kicker { color: var(--gold); font-size: 12px; text-transform: uppercase; letter-spacing: .16em; font-weight: 850; }
     h1 { margin: 10px 0; font-size: clamp(34px, 8vw, 58px); line-height: .92; letter-spacing: -.065em; }
     p { color: var(--muted); line-height: 1.6; margin: 0 0 18px; }

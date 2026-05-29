@@ -327,24 +327,24 @@ function readEnterpriseAppPage(filename: string): string {
 
 const ENTERPRISE_RENDERED_APP_BASE_THEME = `
     :root {
-      color-scheme: light;
-      --bg: #f5f7fb;
-      --panel: rgba(255, 255, 255, 0.86);
-      --line: rgba(26, 40, 52, 0.14);
-      --line-soft: rgba(26, 40, 52, 0.08);
-      --text: #17202a;
-      --muted: #526170;
-      --soft: #7a8794;
-      --gold: #315f95;
-      --green: #15803d;
-      --red: #dc2626;
-      --blue: #2563eb;
-      --ink: #ffffff;
-      --primary-bg: #315f95;
-      --primary-text:#ffffff;
-      --primary-border: #315f95;
-      --warn: #b45309;
-      --page-bg: #f5f7fb;
+      color-scheme: dark;
+      --bg: #0b0f14;
+      --panel: #111827;
+      --line: #2a3442;
+      --line-soft: rgba(168, 179, 194, 0.12);
+      --text: #f8fafc;
+      --muted: #a8b3c2;
+      --soft: #7d8998;
+      --gold: #8ab4f8;
+      --green: #4ade80;
+      --red: #f87171;
+      --blue: #93c5fd;
+      --ink: #08111f;
+      --primary-bg: #8ab4f8;
+      --primary-text:#08111f;
+      --primary-border: #8ab4f8;
+      --warn: #fbbf24;
+      --page-bg: #0b0f14;
     }
     * { box-sizing: border-box; }
     body {
@@ -372,35 +372,35 @@ const ENTERPRISE_RENDERED_APP_BASE_THEME = `
 
 const ENTERPRISE_STATIC_APP_THEME = `
     :root {
-      color-scheme: light;
-      --accent: #315f95;
-      --accent-soft: rgba(49, 95, 149, 0.12);
-      --bg: #f5f7fb;
-      --bg-mid: #e9eff5;
-      --bg-card: rgba(255, 255, 255, 0.92);
-      --paper: #ffffff;
-      --surface: #eef3f7;
-      --rule: 1px solid rgba(26, 40, 52, 0.14);
-      --hair: 1px solid rgba(26, 40, 52, 0.08);
-      --line: rgba(26, 40, 52, 0.14);
-      --text: #17202a;
-      --text-muted: #526170;
-      --text-faint: #7a8794;
-      --muted: #526170;
-      --soft: #7a8794;
-      --gold: #315f95;
-      --green: #15803d;
-      --red: #dc2626;
-      --blue: #2563eb;
-      --ok: #15803d;
-      --warn: #b45309;
-      --danger: #dc2626;
-      --ink: #ffffff;
-      --primary-bg: #315f95;
-      --primary-text:#ffffff;
-      --primary-border: #315f95;
-      --page-bg: #f5f7fb;
-      --row-bg: #f8fafc;
+      color-scheme: dark;
+      --accent: #8ab4f8;
+      --accent-soft: rgba(138, 180, 248, 0.14);
+      --bg: #0b0f14;
+      --bg-mid: #121a25;
+      --bg-card: #111827;
+      --paper: #111827;
+      --surface: #151d29;
+      --rule: 1px solid #2a3442;
+      --hair: 1px solid #2a3442;
+      --line: #2a3442;
+      --text: #f8fafc;
+      --text-muted: #a8b3c2;
+      --text-faint: #a8b3c2;
+      --muted: #a8b3c2;
+      --soft: #7d8998;
+      --gold: #8ab4f8;
+      --green: #4ade80;
+      --red: #f87171;
+      --blue: #93c5fd;
+      --ok: #4ade80;
+      --warn: #fbbf24;
+      --danger: #f87171;
+      --ink: #08111f;
+      --primary-bg: #8ab4f8;
+      --primary-text:#08111f;
+      --primary-border: #8ab4f8;
+      --page-bg: #0b0f14;
+      --row-bg: #151d29;
       --display: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
       --body: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
       --mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace;
@@ -424,30 +424,30 @@ const ENTERPRISE_STATIC_APP_THEME = `
     .page-desc, .page-meta, .list-sub, .resource-copy, .banner-copy, .banner-note, .form-copy, .callout { color: var(--muted); }
     .panel, .kpi-grid, .banner, .invite-panel, .action-strip, .member-card, .policy-card, .policy-provider-card, .exec-card, .resource-card, .checklist-box, .callout {
       border: 1px solid var(--line);
-      background: #ffffff;
+      background: var(--paper);
       border-radius: 8px;
-      box-shadow: 0 18px 54px rgba(26,40,52,.10);
+      box-shadow: 0 18px 48px rgba(0, 0, 0, 0.24);
       color: var(--text);
     }
-    .panel-head, .list-row, .invite-row { border-color: rgba(26, 40, 52, 0.12); }
+    .panel-head, .list-row, .invite-row { border-color: var(--line-soft); }
     .resource-title, .list-title, .member-email, .policy-title, .exec-title, .banner-title { color: var(--text); }
     .org-select, .form-input, .form-select, .policy-input, .policy-textarea, select, input, textarea {
       border: 1px solid var(--line);
-      background: rgba(255, 255, 255, 0.78);
+      background: var(--surface);
       color: var(--text);
       border-radius: 8px;
     }
-    option { color: #111827; }
+    option { color: var(--text); background: var(--paper); }
     .btn-primary { background: var(--primary-bg); color: var(--primary-text); border: 1px solid var(--primary-border); font-weight: 850; border-radius: 8px; }
-    .btn-outline, .btn-danger { background: rgba(255, 255, 255, 0.78); color: var(--text); border: 1px solid var(--line); border-radius: 8px; }
+    .btn-outline, .btn-danger { background: var(--surface); color: var(--text); border: 1px solid var(--line); border-radius: 8px; }
     .btn-danger { color: var(--red); border-color: rgba(251, 113, 133, 0.34); }
-    .subnav-link { background: rgba(255, 255, 255, 0.78); color: var(--muted); border: 1px solid var(--line); }
+    .subnav-link { background: var(--surface); color: var(--muted); border: 1px solid var(--line); }
     .subnav-link.active { color: var(--primary-text); background: var(--primary-bg); border-color: var(--primary-border); }
-    .pill.neutral { background: rgba(255, 255, 255, 0.78); color: var(--muted); }
-    .pill.ok { background: rgba(21, 128, 61, 0.1); color: var(--green); border-color: rgba(21, 128, 61, 0.24); }
-    .pill.warn { background: rgba(180, 83, 9, 0.1); color: var(--gold); border-color: rgba(180, 83, 9, 0.28); }
+    .pill.neutral { background: var(--surface); color: var(--muted); }
+    .pill.ok { background: rgba(74, 222, 128, 0.10); color: var(--green); border-color: rgba(74, 222, 128, 0.24); }
+    .pill.warn { background: rgba(251, 191, 36, 0.10); color: var(--warn); border-color: rgba(251, 191, 36, 0.28); }
     .pill.danger { background: rgba(251, 113, 133, 0.12); color: var(--red); border-color: rgba(251, 113, 133, 0.28); }
-    .kpi-cell + .kpi-cell { border-left-color: rgba(26, 40, 52, 0.12); }
+    .kpi-cell + .kpi-cell { border-left-color: var(--line-soft); }
     .empty { color: var(--muted); }
     .resource-link { color: var(--gold); }
     @media (max-width: 980px) {
@@ -470,10 +470,10 @@ const ENTERPRISE_STATIC_APP_POLISH_THEME = `
     main.main > .topbar,
     .page-header {
       border: 1px solid var(--line) !important;
-      background: #ffffff !important;
+      background: var(--card, var(--paper, #111827)) !important;
       border-radius: 8px !important;
       padding: 20px !important;
-      box-shadow: none !important;
+      box-shadow: 0 18px 48px rgba(0, 0, 0, 0.18) !important;
     }
     h1,
     .page-title {
@@ -589,10 +589,10 @@ const ENTERPRISE_STATIC_APP_POLISH_THEME = `
     .resource-card,
     .checklist-box,
     .doc-section {
-      background: #ffffff !important;
+      background: var(--card, var(--paper, #111827)) !important;
       border-color: var(--line) !important;
       border-radius: 8px !important;
-      box-shadow: 0 18px 54px rgba(26, 40, 52, 0.10) !important;
+      box-shadow: 0 18px 48px rgba(0, 0, 0, 0.22) !important;
     }
     .action-strip,
     .list-row,
@@ -616,12 +616,12 @@ const ENTERPRISE_STATIC_APP_POLISH_THEME = `
     .scanner-row,
     .release-row,
     .tester-row {
-      background: var(--row-bg, #f8fafc) !important;
+      background: var(--row-bg, #151d29) !important;
       border-color: var(--line-soft) !important;
       border-radius: 8px !important;
     }
     .subnav {
-      background: rgba(255, 255, 255, 0.78) !important;
+      background: var(--surface, #151d29) !important;
       border-color: var(--line) !important;
       border-radius: 8px !important;
       box-shadow: none !important;
@@ -661,11 +661,124 @@ const ENTERPRISE_STATIC_APP_POLISH_THEME = `
     .resource-link,
     .doc-section code,
     .doc-note strong {
-      color: var(--green) !important;
+      color: var(--accent, var(--primary-bg)) !important;
     }
     .doc-note {
       border-left-color: var(--primary-bg) !important;
-      background: rgba(49, 95, 149, 0.10) !important;
+      background: rgba(138, 180, 248, 0.12) !important;
+    }
+    html,
+    body {
+      background: var(--page-bg, #0b0f14) !important;
+      color: var(--text, #f8fafc) !important;
+    }
+    .page,
+    .layout,
+    .shell {
+      background: transparent !important;
+    }
+    .btn-outline,
+    .btn-danger,
+    .action,
+    .action-strip .btn-outline,
+    .btn-danger:hover,
+    .subnav-link:hover,
+    .secondary,
+    button:not(.primary):not(.btn-primary),
+    select,
+    input,
+    textarea,
+    .org-select,
+    .form-input,
+    .form-select,
+    .policy-input,
+    .policy-textarea,
+    .go-note,
+    .go-status,
+    .inventory-field textarea {
+      background: var(--surface, #151d29) !important;
+      color: var(--text, #f8fafc) !important;
+      border-color: var(--line, #2a3442) !important;
+    }
+    option {
+      background: var(--option-bg, var(--paper, #111827)) !important;
+      color: var(--option-text, var(--text, #f8fafc)) !important;
+    }
+    input::placeholder,
+    textarea::placeholder {
+      color: var(--soft, #7d8998) !important;
+      opacity: 1 !important;
+    }
+    button:disabled,
+    input:disabled,
+    select:disabled,
+    textarea:disabled,
+    .form-input:disabled,
+    .form-select:disabled,
+    .org-select:disabled {
+      background: rgba(21, 29, 41, 0.72) !important;
+      color: rgba(168, 179, 194, 0.62) !important;
+    }
+    pre,
+    code {
+      background: rgba(11, 15, 20, 0.36) !important;
+      color: var(--text, #f8fafc) !important;
+      border-color: var(--line-soft, rgba(168, 179, 194, 0.12)) !important;
+    }
+    .inventory-table-head,
+    .inventory-cell-label,
+    .policy-label,
+    .policy-hint,
+    .member-meta,
+    .exec-meta,
+    .list-rank,
+    .list-meta,
+    .invite-sub,
+    .form-label,
+    .form-hint,
+    .org-switcher-status,
+    .panel-head-right,
+    .checklist-item {
+      color: var(--muted, #a8b3c2) !important;
+    }
+    .inventory-panel,
+    .inventory-policy-note,
+    .inventory-metric-card,
+    .empty,
+    .notice,
+    .form-card,
+    .role-card,
+    .control-panel,
+    .member-project,
+    .callout,
+    .resource-card,
+    .checklist-box {
+      background: var(--row-bg, #151d29) !important;
+      border-color: var(--line, #2a3442) !important;
+      color: var(--text, #f8fafc) !important;
+    }
+    .tag,
+    .pill,
+    .feature-tag {
+      background: rgba(138, 180, 248, 0.10) !important;
+      border-color: rgba(138, 180, 248, 0.26) !important;
+      color: var(--accent, #8ab4f8) !important;
+    }
+    .tag.good,
+    .pill.ok {
+      background: rgba(74, 222, 128, 0.10) !important;
+      border-color: rgba(74, 222, 128, 0.26) !important;
+      color: var(--green, #4ade80) !important;
+    }
+    .tag.bad,
+    .pill.danger,
+    .danger,
+    .btn-danger,
+    .btn-danger:hover,
+    .notice.error {
+      background: rgba(248, 113, 113, 0.10) !important;
+      border-color: rgba(248, 113, 113, 0.28) !important;
+      color: var(--red, #f87171) !important;
     }
 `;
 

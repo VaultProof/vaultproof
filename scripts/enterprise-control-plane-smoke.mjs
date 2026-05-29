@@ -2823,7 +2823,10 @@ async function assertEnterpriseLoginRoute() {
     'Your app talks to <em>VaultProof</em> instead of holding keys.',
     'Keep your code. <em>Stop storing the key.</em>',
     'enterprise-homepage-dashboard-match',
-    '--primary-bg: #315f95',
+    'color-scheme: dark',
+    '--bg: #020403',
+    '--paper: #050807',
+    '--primary-bg: #00d18b',
     '--body: ui-sans-serif',
     'letter-spacing: 0 !important',
     '/app/login',
@@ -2865,7 +2868,10 @@ async function assertEnterpriseLoginRoute() {
   }
   for (const required of [
     'enterprise-login-dashboard-match',
-    '--primary-bg: #315f95',
+    'color-scheme: dark',
+    '--bg: #0b0f14',
+    '--paper: #111827',
+    '--primary-bg: #8ab4f8',
     '--body: ui-sans-serif',
     'letter-spacing: 0 !important',
     'Sign in to the place where your <em>API keys stay safe.</em>',
